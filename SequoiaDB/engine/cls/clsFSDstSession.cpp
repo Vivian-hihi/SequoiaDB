@@ -791,13 +791,11 @@ namespace engine
                  sessionName(), fullName ) ;
 
          // create local cs and collection
-         rc = _replayer.replayCrtCS( meta.csName.c_str(),
-                                     utilGetCSUniqueID( meta.clUniqueID ),
+         rc = _replayer.replayCrtCS( meta.csName.c_str(), utilGetCSUniqueID( meta.clUniqueID ),
                                      meta.pageSize, meta.lobPageSize,
                                      meta.csType, eduCB() ) ;
          rc = _replayer.replayCrtCollection( fullName, meta.clUniqueID,
-                                             meta.attributes, eduCB(),
-                                             meta.compType,
+                                             meta.attributes, eduCB(), meta.compType,
                                              ( meta.extOptions.isEmpty() ?
                                                NULL : &meta.extOptions ) ) ;
          if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
@@ -808,14 +806,7 @@ namespace engine
             goto done ;
          }
 
-         rc = _onMetaDone( meta ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Session[%s]: Failed to check meta for "
-                    "collection [%s], rc: %d", sessionName(), fullName, rc ) ;
-            _disconnect() ;
-            goto done ;
-         }
+         _onMetaDone( meta ) ;
       }
       catch ( std::exception &e )
       {
@@ -2303,7 +2294,6 @@ namespace engine
    void _clsSplitDstSession::_onAttach ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSPLDS_ONATH );
-
       // the task already start, need to clean up the dirty data
       if ( CLS_TASK_STATUS_RUN == _pTask->status() ||
            CLS_TASK_STATUS_PAUSE == _pTask->status() )
@@ -2313,10 +2303,11 @@ namespace engine
                   _pTask->taskName(), _pTask->status() ) ;
 
          EDUID cleanupJobID = PMD_INVALID_EDUID ;
-         startCleanupJob( _pTask->clFullName(), _pTask->clUniqueID(),
-                          _pTask->splitKeyObj(), _pTask->splitEndKeyObj(),
-                          FALSE, _pTask->isHashSharding(),
-                          pmdGetKRCB()->getDPSCB(), &cleanupJobID ) ;
+         startCleanupJob( _pTask->clFullName(), _pTask->splitKeyObj(),
+                          _pTask->splitEndKeyObj(), FALSE,
+                          _pTask->isHashSharding(),
+                          pmdGetKRCB()->getDPSCB(),
+                          &cleanupJobID ) ;
          while ( rtnGetJobMgr()->findJob ( cleanupJobID ) )
          {
             ossSleep ( OSS_ONE_SEC ) ;
@@ -2369,14 +2360,11 @@ namespace engine
          if ( 0 != _needSyncData && _step <= STEP_META )
          {
             EDUID cleanupJobID = PMD_INVALID_EDUID ;
-            startCleanupJob( _pTask->clFullName(), _pTask->clUniqueID(),
-                             _pTask->splitKeyObj(), _pTask->splitEndKeyObj(),
-                             FALSE, _pTask->isHashSharding(),
-                             pmdGetKRCB()->getDPSCB(), &cleanupJobID ) ;
-            PD_LOG( PDDEBUG, "Session[%s]: split[%s] start clean up job "
-                    "[%llu] collection [%s] uniqueID [%llu]", sessionName(),
-                    _pTask->taskName(), cleanupJobID, _pTask->clFullName(),
-                    _pTask->clUniqueID() ) ;
+            startCleanupJob( _pTask->clFullName(), _pTask->splitKeyObj(),
+                             _pTask->splitEndKeyObj(), FALSE,
+                             _pTask->isHashSharding(),
+                             pmdGetKRCB()->getDPSCB(),
+                             &cleanupJobID ) ;
             while ( rtnGetJobMgr()->findJob( cleanupJobID ) )
             {
                ossSleep ( OSS_ONE_SEC ) ;
@@ -2482,31 +2470,6 @@ namespace engine
       return TRUE ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLDS__ONMETADONE, "_clsSplitDstSession::_onMetaDone" )
-   INT32 _clsSplitDstSession::_onMetaDone ( const _clMetaData & meta )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB__CLSSPLDS__ONMETADONE ) ;
-
-      SDB_ASSERT( UTIL_IS_VALID_CLUNIQUEID( meta.clUniqueID ),
-                  "unique ID in collection's meta is invalid" ) ;
-      SDB_ASSERT( UTIL_IS_VALID_CLUNIQUEID( _pTask->clUniqueID() ),
-                  "unique ID in split task is invalid" ) ;
-
-      PD_CHECK( _pTask->clUniqueID() == meta.clUniqueID, SDB_DMS_NOTEXIST,
-                error, PDERROR, "Failed to check meta of colleciton [%s], "
-                "task is %llu, meta is %llu", _pTask->clFullName(),
-                _pTask->clUniqueID(), meta.clUniqueID ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB__CLSSPLDS__ONMETADONE, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
    // this function prepare a split begin request and send to source
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLDS__BEGIN, "_clsSplitDstSession::_begin" )
    void _clsSplitDstSession::_begin ()
@@ -2583,7 +2546,6 @@ namespace engine
 
          EDUID cleanupJobID = PMD_INVALID_EDUID ;
          if ( SDB_OK != startCleanupJob( _pTask->clFullName(),
-                                         _pTask->clUniqueID(),
                                          _pTask->splitKeyObj(),
                                          _pTask->splitEndKeyObj(), FALSE,
                                          _pTask->isHashSharding(),
@@ -2957,3 +2919,4 @@ namespace engine
    }
 
 }
+

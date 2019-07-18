@@ -400,7 +400,6 @@ namespace engine
    {
       _sourceID = 0 ;
       _dstID = 0 ;
-      _clUniqueID = UTIL_UNIQUEID_NULL ;
       _status = CLS_TASK_STATUS_READY ;
       _taskType = CLS_TASK_SPLIT ;
       _percent  = 0.0 ;
@@ -633,6 +632,7 @@ namespace engine
                       CLS_SPLIT_TASK_LOCK_END, jobObj.toString().c_str() ) ;
             _lockEnd = ele.numberInt() ;
          }*/
+
       }
       catch ( std::exception &e )
       {
@@ -828,15 +828,6 @@ namespace engine
          {
             goto done ;
          }
-         else if ( _clUniqueID != pOtherSplit->_clUniqueID ||
-                   _shardingType != pOtherSplit->_shardingType ||
-                   0 != _shardingKey.woCompare( pOtherSplit->_shardingKey ) )
-         {
-            // unique ID is different, or sharding type is different,
-            // or sharding key is different, wait old one to be finished
-            ret = TRUE ;
-            goto done ;
-         }
          /*else if ( ( splitEndKeyObj().isEmpty() ||
                      pOtherSplit->splitEndKeyObj().isEmpty() ) &&
                    ( sourceID() == pOtherSplit->sourceID() ||
@@ -859,7 +850,6 @@ namespace engine
                                               _getOrdering(), false ) ;
             if ( 0 == beginResult )
             {
-               // same task
                ret = TRUE ;
                goto done ;
             }
@@ -868,7 +858,6 @@ namespace engine
                                                  _getOrdering(), false ) > 0 ||
                         splitEndKeyObj().isEmpty() ) )
             {
-               // covered
                ret = TRUE ;
                goto done ;
             }
@@ -877,7 +866,6 @@ namespace engine
                                                  _getOrdering(), false ) < 0 ||
                         pOtherSplit->splitEndKeyObj().isEmpty() ) )
             {
-               // covered
                ret = TRUE ;
                goto done ;
             }
@@ -897,18 +885,6 @@ namespace engine
    const CHAR* _clsSplitTask::clFullName () const
    {
       return _clFullName.c_str() ;
-   }
-
-   utilCLUniqueID _clsSplitTask::clUniqueID () const
-   {
-      return _clUniqueID ;
-   }
-
-   void _clsSplitTask::setCLUniqueID ( utilCLUniqueID clUniqueID )
-   {
-      SDB_ASSERT( UTIL_UNIQUEID_NULL == _clUniqueID,
-                  "unique ID already exists" ) ;
-      _clUniqueID = clUniqueID ;
    }
 
    const CHAR* _clsSplitTask::shardingType () const

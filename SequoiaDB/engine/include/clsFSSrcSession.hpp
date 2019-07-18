@@ -95,8 +95,7 @@ namespace engine
          virtual INT32       _isReady () = 0 ;
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) = 0 ;
-         virtual INT32     _onFSMeta ( const CHAR *clFullName,
-                                       utilCLUniqueID clUniqueID ) = 0 ;
+         virtual INT32     _onFSMeta ( const CHAR *clFullName ) = 0 ;
          virtual void      _onNotifyOver( const CHAR *clFullName ) = 0 ;
          virtual INT32     _scanType () const = 0 ;
          virtual BOOLEAN   _canSwitchWhenSyncLog() = 0 ;
@@ -172,7 +171,6 @@ namespace engine
          INT32                            _needData ;
          BOOLEAN                          _init ;
          std::string                      _curCollecitonName ;
-         utilCLUniqueID                   _curCLUniqueID ;
 
          _clsReplicateSet                 *_pRepl ;
          MsgHeader                        _disconnectMsg ;
@@ -221,8 +219,7 @@ namespace engine
       virtual INT32 _onLobFilter( const bson::OID &oid,
                                   UINT32 sequence,
                                   BOOLEAN &need2Send ) ;
-      virtual INT32   _onFSMeta ( const CHAR *clFullName,
-                                  utilCLUniqueID clUniqueID ) ;
+      virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
       virtual void    _onNotifyOver( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
       virtual BOOLEAN _canSwitchWhenSyncLog() ;
@@ -262,8 +259,7 @@ namespace engine
          virtual INT32       _isReady() ;
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) ;
-         virtual INT32   _onFSMeta ( const CHAR *clFullName,
-                                     utilCLUniqueID clUniqueID ) ;
+         virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
          virtual void    _onNotifyOver( const CHAR *clFullName ) ;
          virtual INT32   _scanType () const ;
          virtual BOOLEAN _canSwitchWhenSyncLog() ;

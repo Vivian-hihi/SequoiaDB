@@ -175,7 +175,6 @@ namespace engine
 #define CLS_SPLIT_MASK_SHARDINGTYPE       0x00000800
 #define CLS_SPLIT_MASK_PERCENT            0x00001000
 //#define CLS_SPLIT_MASK_LOCKEND            0x00002000
-#define CLS_SPLIT_MASK_UNIQUEID           0x00004000
 
 //#define CLS_SPLIT_TASK_LOCK_END           "LockEnd"
 
@@ -211,8 +210,6 @@ namespace engine
 
       public:
          const CHAR*             clFullName () const ;
-         utilCLUniqueID          clUniqueID () const ;
-         void                    setCLUniqueID ( utilCLUniqueID clUniqueID ) ;
          const CHAR*             shardingType () const ;
          const CHAR*             sourceName () const ;
          const CHAR*             dstName () const ;
@@ -234,7 +231,6 @@ namespace engine
          std::string             _shardingType ;
          UINT32                  _sourceID ;
          UINT32                  _dstID ;
-         utilCLUniqueID          _clUniqueID ;
          BSONObj                 _splitKeyObj ;
          BSONObj                 _splitEndKeyObj ;
          BSONObj                 _shardingKey ;

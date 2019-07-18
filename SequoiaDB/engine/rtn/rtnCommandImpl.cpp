@@ -1756,8 +1756,7 @@ namespace engine
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
                                     SDB_DMSCB *dmsCB,
-                                    SDB_DPSCB *dpsCB,
-                                    utilCLUniqueID expCLUniqueID )
+                                    SDB_DPSCB *dpsCB )
    {
       INT32 rc                            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPCLCOMMAND ) ;
@@ -1775,35 +1774,20 @@ namespace engine
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   pCollection, rc ) ;
-
-      if ( UTIL_UNIQUEID_NULL != expCLUniqueID )
+      if ( rc )
       {
-         utilCSUniqueID expCSUniqueID = utilGetCSUniqueID( expCLUniqueID ) ;
-         utilCSUniqueID curCSUniqueID = su->CSUniqueID() ;
-         utilCLUniqueID curCLUniqueID = UTIL_UNIQUEID_NULL ;
-         UINT16 collectionID = DMS_INVALID_MBID ;
-
-         PD_CHECK( curCSUniqueID == expCSUniqueID, SDB_DMS_CS_NOTEXIST, error,
-                   PDWARNING, "Failed to check CS unique ID for collection %s, "
-                   "current %u, expected %u", pCollection, curCSUniqueID,
-                   expCSUniqueID ) ;
-
-         rc = su->data()->findCollection ( pCollectionShortName, collectionID,
-                                           &curCLUniqueID ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to get collection %s, rc: %d",
-                      pCollection, rc ) ;
-
-         PD_CHECK( curCLUniqueID == expCLUniqueID, SDB_DMS_NOTEXIST, error,
-                   PDWARNING, "Failed to check CL unique ID for collection %s, "
-                   "current %llu, expected %llu", pCollection, curCLUniqueID,
-                   expCLUniqueID ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
+         goto error ;
       }
 
       rc = su->data()->dropCollection ( pCollectionShortName, cb, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to drop collection %s, rc: %d",
-                   pCollection, rc ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
+                  pCollection, rc ) ;
+         goto error ;
+      }
 
       PD_LOG( PDEVENT, "Drop collection[%s] succeed", pCollection ) ;
 

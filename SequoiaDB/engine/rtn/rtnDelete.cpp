@@ -285,7 +285,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRAVERDEL, "rtnTraversalDelete" )
    INT32 rtnTraversalDelete ( const CHAR *pCollectionName,
-                              utilCLUniqueID clUniqueID,
                               const BSONObj &key,
                               const CHAR *pIndexName,
                               INT32 dir,
@@ -325,13 +324,6 @@ namespace engine
       rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection[%s] mb context, "
                    "rc: %d", pCollectionName, rc ) ;
-
-      PD_CHECK( UTIL_UNIQUEID_NULL == clUniqueID ||
-                mbContext->mb()->_clUniqueID == clUniqueID,
-                SDB_DMS_NOTEXIST, error, PDERROR,
-                "Failed to get collection[%s] mb context, unique IDs are "
-                "different, given %llu, actual %llu", pCollectionName,
-                clUniqueID, mbContext->mb()->_clUniqueID ) ;
 
       try
       {

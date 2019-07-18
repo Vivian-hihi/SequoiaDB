@@ -281,7 +281,6 @@ namespace engine
                                           pmdAsycSessionMgr *pSessionMgr ) ;
          INT32       _prepareTask () ;
          INT32       _addTaskInnerSession ( const CHAR *objdata ) ;
-         INT32       _checkSplitTask ( clsSplitTask * task ) ;
 
       //msg and event function
       protected:
