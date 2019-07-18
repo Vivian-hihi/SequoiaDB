@@ -64,7 +64,7 @@ TEST_F( opCursor12742, opCursor )
    INT32 rc = SDB_OK ;
    BSONObj obj ;
    rc = cursor.next( obj ) ;
-   EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "get next shouldn't succeed" ;
+   EXPECT_EQ( SDB_DMS_EOC, rc ) << "get next shouldn't succeed" ;
    rc = cursor.current( obj ) ;
    EXPECT_EQ( SDB_DMS_CONTEXT_IS_CLOSE, rc ) << "get current shouldn't succeed" ;
 }
