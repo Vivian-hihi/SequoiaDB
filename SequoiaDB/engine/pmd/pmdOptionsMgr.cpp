@@ -71,7 +71,7 @@ namespace engine
                                        level == PMD_CFG_CHANGE_FORBIDDEN ) ? \
                                        FALSE : TRUE )
    #define PMD_OPTION_BRK_TIME_DEFAULT (7000)
-   #define PMD_OPTION_OPR_TIME_DEFAULT (300000)
+   #define PMD_OPTION_OPR_TIME_DEFAULT (60000)
    #define PMD_OPTION_DFT_MAXPOOL      (50)
    #define PMD_MAX_PREF_POOL           (0) // modify 200 to 0
    #define PMD_MAX_SUB_QUERY           (10)
@@ -2326,16 +2326,16 @@ done:
 
       // --maxsocketpernode
       rdxUInt( pEX, PMD_OPTION_MAXSOCKET_PER_NODE, _maxSockPerNode, FALSE,
-               PMD_CFG_CHANGE_RUN, 1, TRUE ) ;
+               PMD_CFG_CHANGE_RUN, 5, FALSE ) ;
       rdvMinMax( pEX, _maxSockPerNode, 1, 100, TRUE ) ;
 
       // --maxsocketperthread
       rdxUInt( pEX, PMD_OPTION_MAXSOCKET_PER_THREAD, _maxSockPerThread, FALSE,
-               PMD_CFG_CHANGE_RUN, 0, TRUE ) ;
+               PMD_CFG_CHANGE_RUN, 1, FALSE ) ;
 
       // --maxsocketthread
       rdxUInt( pEX, PMD_OPTION_MAX_SOCKET_THREAD, _maxSockThread, FALSE,
-               PMD_CFG_CHANGE_RUN, 1, TRUE ) ;
+               PMD_CFG_CHANGE_RUN, 10, FALSE ) ;
       rdvMinMax( pEX, _maxSockThread, 1, 100, TRUE ) ;
 
       // --tcmaxsize
