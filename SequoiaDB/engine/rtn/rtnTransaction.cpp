@@ -575,9 +575,7 @@ namespace engine
                     dpsTransIDToString( transID ).c_str(),
                     iterMap->second._mapPendingObj.size() ) ;
          }
-         /// add his trans
-         pTransCB->addHisTrans( transID, DPS_TRANS_ROLLBACK,
-                                iterMap->second._lsn ) ;
+
          /// remove the transaction
          pTransMap->erase( iterMap->first ) ;
          tmpTransMap.erase(iterMap ) ;

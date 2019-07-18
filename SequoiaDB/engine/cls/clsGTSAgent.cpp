@@ -78,6 +78,7 @@ namespace engine
       TRANS_MAP *pTransMap = pTransCB->getTransMap() ;
       TRANS_MAP tmpTransMap ;
       TRANS_MAP::iterator it ;
+      BOOLEAN isStoped = FALSE ;
 
       // to avoid erase iterator and insert in the same map
       pTransCB->cloneTransMap( tmpTransMap ) ;
@@ -102,18 +103,21 @@ namespace engine
                rc = _commitTrans( transID, transInfo._lsn, transInfo._lsn ) ;
                if ( SDB_OK == rc )
                {
-                  pTransCB->addHisTrans( transID, DPS_TRANS_COMMIT,
-                                         transInfo._lsn ) ;
                   pTransMap->erase( transID ) ;
                   tmpTransMap.erase( it++ ) ;
                   continue ;
                }
             }
+            else if ( !pTransCB->isDoRollback() )
+            {
+               isStoped = TRUE ;
+               break ;
+            }
          }
          ++it ;
       }
 
-      return SDB_OK ;
+      return isStoped ? SDB_CLS_NOT_PRIMARY : SDB_OK;
    }
 
    INT32 _clsGTSAgent::checkTransStatus( DPS_TRANS_ID transID,

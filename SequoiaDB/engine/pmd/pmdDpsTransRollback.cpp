@@ -64,11 +64,16 @@ namespace engine
             }
             else if ( PMD_EDU_EVENT_ACTIVE == event._eventType )
             {
+               rc = SDB_OK ;
                if ( pTransCB->getEventHandler() )
                {
-                  pTransCB->getEventHandler()->onRollbackAll() ;
+                  rc = pTransCB->getEventHandler()->onRollbackAll() ;
                }
-               rc = rtnTransRollbackAll( cb );
+
+               if ( SDB_OK == rc )
+               {
+                  rc = rtnTransRollbackAll( cb ) ;
+               }
             }
             pmdEduEventRelease( event, cb ) ;
          }

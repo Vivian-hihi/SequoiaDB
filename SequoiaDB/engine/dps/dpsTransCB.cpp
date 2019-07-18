@@ -349,19 +349,8 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_DPSTRANSCB_SVTRANSINFO ) ;
 
-      if ( DPS_INVALID_TRANS_ID == transID ||
-           sdbGetDPSCB()->isInRestore() )
-      {
-         goto done ;
-      }
-
-      if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) &&
-           pmdIsPrimary() )
-      {
-         // in primary, transaction-info save in EDUCB
-         goto done ;
-      }
-      else
+      if ( DPS_INVALID_TRANS_ID != transID &&
+           !sdbGetDPSCB()->isInRestore() )
       {
          DPS_LSN_OFFSET lastLsn = DPS_INVALID_LSN_OFFSET ;
 
@@ -451,26 +440,14 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSCB_DELTRANSCB ) ;
 
-      DPS_LSN_OFFSET lastLsn = DPS_INVALID_LSN_OFFSET ;
-      INT32 status = DPS_TRANS_DOING ;
+      TRANS_CB_MAP::iterator it ;
+      transID = getTransID( transID ) ;
 
+      ossScopedLock _lock( &_CBMapMutex ) ;
+      it = _cbMap.find( transID ) ;
+      if ( it != _cbMap.end() )
       {
-         TRANS_CB_MAP::iterator it ;
-         transID = getTransID( transID ) ;
-
-         ossScopedLock _lock( &_CBMapMutex ) ;
-         it = _cbMap.find( transID ) ;
-         if ( it != _cbMap.end() )
-         {
-            lastLsn = it->second->getCurTransLsn() ;
-            status = it->second->getTransStatus() ;
-            _cbMap.erase( it ) ;
-         }
-      }
-
-      if ( DPS_INVALID_LSN_OFFSET != lastLsn )
-      {
-         addHisTrans( transID, status, lastLsn ) ;
+         _cbMap.erase( it ) ;
       }
 
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_DELTRANSCB ) ;
@@ -734,16 +711,6 @@ namespace engine
       /// first check in-line trans, then check history trans
       INT32 transStatus = DPS_TRANS_UNKNOWN ;
       transID = DPS_TRANS_GET_ID( transID ) ;
-
-      {
-         ossScopedLock _lock( &_CBMapMutex ) ;
-         TRANS_CB_MAP::iterator it = _cbMap.find( transID ) ;
-         if ( it != _cbMap.end() )
-         {
-            transStatus = it->second->getTransStatus() ;
-            goto done ;
-         }
-      }
 
       {
          ossScopedLock _lock( &_MapMutex ) ;
