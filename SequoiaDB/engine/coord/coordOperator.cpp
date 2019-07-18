@@ -438,8 +438,7 @@ namespace engine
          }
       }
 
-      if ( retry && _isTrans( cb, pSrcMsg ) &&
-           SDB_OK != cb->getTransRC() )
+      if ( _isTrans( cb, pSrcMsg ) && SDB_OK != cb->getTransRC() )
       {
          retry = FALSE ;
          errRC = cb->getTransRC() ;
