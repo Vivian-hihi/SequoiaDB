@@ -197,17 +197,36 @@ public class GroupMgr {
     public boolean checkBusiness(int timeOutSecond, boolean ignoreIndeploy) throws ReliabilityException {
         refresh();
         long timestamp = System.currentTimeMillis();
-        while (!checkBusiness(false, ignoreIndeploy)) {
-            if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
-                return checkBusiness(true, ignoreIndeploy);
-            }
-            try {
+        boolean isPrintRes = false ;
+        boolean ret = false ;
+        ReliabilityException prev = null ;
+        do{
+           try{
+               ret = checkBusiness(isPrintRes, ignoreIndeploy) ;
+               if ( ret ){
+                   break ;
+               }
+           }catch(ReliabilityException e){
+               if ( prev == null || prev.getExceptionType() != e.getExceptionType()){
+                   e.printStackTrace() ;
+                   prev = e ;
+               }
+               if ( isPrintRes ){
+                   throw e ;
+               }
+           }           
+           try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+           } catch (InterruptedException e) {
                 // ignore
-            }
-        }
-        return true;
+           }
+           
+           if (System.currentTimeMillis() - timestamp >= timeOutSecond * 1000) {
+               isPrintRes = true ;
+           }
+        }while(!isPrintRes); 
+        
+        return ret;
     }
 
     /**
