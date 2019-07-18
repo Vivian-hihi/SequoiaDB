@@ -7,19 +7,19 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.testcommon.CommLib;
 
 /*
  * @FileName:
@@ -44,11 +44,11 @@ public class CappedCL11782 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        
+
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
-        
+
         cs = sdb.getCollectionSpace(csName);
         cappedCS = sdb.getCollectionSpace(cappedCSName);
         cs.createCollection(clName);
@@ -63,7 +63,10 @@ public class CappedCL11782 extends SdbTestBase {
 
     @DataProvider(name = "updateConf")
     public Object[][] createIndex() {
-        return new Object[][] { { (BSONObject) JSON.parse("{maxreplsync:0}") },
+        return new Object[][] { /*
+                                 * { (BSONObject) JSON.parse("{maxreplsync:0}")
+                                 * },会导致ci虚拟机重放太慢
+                                 */
                 { (BSONObject) JSON.parse("{maxreplsync:200}") }, { (BSONObject) JSON.parse("{maxreplsync:10}") } };
     }
 
