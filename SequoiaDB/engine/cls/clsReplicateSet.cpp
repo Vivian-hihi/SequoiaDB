@@ -45,6 +45,7 @@
 #include "clsFSSrcSession.hpp"
 #include "pmdStartup.hpp"
 #include "msgMessage.hpp"
+#include "pmdController.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
@@ -194,6 +195,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSET_INIT ) ;
 
+      _netFrame *pNetFrame = NULL ;
+
       if ( !_agent )
       {
          rc = SDB_INVALIDARG ;
@@ -212,6 +215,13 @@ namespace engine
 
       rc = _replBucket.init() ;
       PD_RC_CHECK( rc, PDERROR, "Init repl bucket failed, rc: %d", rc ) ;
+
+      pNetFrame = _agent->getFrame() ;
+      /// register repl net agent to net monitor for connections
+      pNetFrame->setBeatInfo( pmdGetOptionCB()->getOprTimeout() ) ;
+
+      sdbGetPMDController()->registerNet( pNetFrame,
+                                          MSG_ROUTE_REPL_SERVICE ) ;
 
       _totalLogSize = (UINT64)pmdGetOptionCB()->getReplLogFileSz()*
                       (UINT64)pmdGetOptionCB()->getReplLogFileNum() ;
@@ -267,6 +277,10 @@ namespace engine
       if ( _logger )
       {
          _logger->unregEventHandler( this ) ;
+      }
+      if ( _agent )
+      {
+         sdbGetPMDController()->unregNet( _agent->getFrame() ) ;
       }
       return SDB_OK ;
    }
