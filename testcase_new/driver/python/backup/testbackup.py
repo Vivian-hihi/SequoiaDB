@@ -10,7 +10,7 @@ class SdbTestBackup(testlib.SdbTestBase):
 
    def test_backup_12494(self):
       self.db.remove_backup({"Name": "mybk"})
-      self.db.backup_offline({"Name": "mybk"})
+      self.db.backup({"Name": "mybk"})
       cur = self.db.list_backup({})
       l = testlib.get_all_records_noid(cur)
       names = []
@@ -32,7 +32,7 @@ class SdbTestBackup(testlib.SdbTestBase):
          self.skipTest("not support standlone mode")
       self.db.remove_backup({"Name": "mybk"})
       group_name=testlib.get_data_groups()[0]["GroupName"]
-      self.db.backup_offline({"Name": "mybk","GroupName":[group_name]})
+      self.db.backup({"Name": "mybk","GroupName":[group_name]})
       cur = self.db.list_backup({"Name": "mybk1"})
       l = testlib.get_all_records_noid(cur)
       for x in l:
