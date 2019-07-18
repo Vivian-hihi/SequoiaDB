@@ -920,6 +920,11 @@ namespace engine
          contextID = -1 ;
          goto error ;
       }
+      else if ( pContext->eof() &&
+                contextID == eduCB()->getCurAutoTransCtxID() )
+      {
+         eduCB()->setCurAutoTransCtxID( -1 ) ;
+      }
 
    done:
       if ( SDB_DMS_EOC == rc )
