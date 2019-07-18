@@ -140,9 +140,9 @@
 
   	```
 	# 错误的示例
-	cl = db.get_collection("foo.bar");  
- 	condition = {"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}; 
- 	cl.delete ( condition=condition ); 
+	cl = db.get_collection("foo.bar")
+ 	condition = {"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}
+ 	cl.delete ( condition=condition )
 	  ```
 
 	正确使用示例如下，用户需要使用 ObjectId 类构建对应的对象 ID，然后再执行删除操作。
@@ -150,9 +150,9 @@
 	 ```
 	# 正确的示例
 	from bson import * 
-	oid = ObjectId("5d035e2bb4d450b04fcd0dff");	 
-	condition = {"_id":oid}; 
-	cl.delete ( condition=condition ); 
+	oid = ObjectId("5d035e2bb4d450b04fcd0dff")
+	condition = {"_id":oid}
+	cl.delete ( condition=condition )
 	 ```
 
     其他特殊类型，如二进制数据、高精度数、日期、时间戳等，使用方式与对象 ID 类型类似，都需使用 python 驱动的对应的构造方法来构造。
