@@ -48,6 +48,7 @@ namespace engine
 {
 
    _clsCleanupJob::_clsCleanupJob ( const std::string &clFullName,
+                                    utilCLUniqueID clUniqueID,
                                     const BSONObj &splitKeyObj,
                                     const BSONObj &splitEndKeyObj,
                                     BOOLEAN hasShardingIndex,
@@ -59,6 +60,7 @@ namespace engine
       _splitEndKeyObj = splitEndKeyObj.getOwned() ;
       _hasShardingIndex = hasShardingIndex ;
       _isHashSharding = isHashSharding ;
+      _clUniqueID = clUniqueID ;
 
       _dpsCB = dpsCB ;
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
@@ -163,6 +165,7 @@ namespace engine
       _clsCatalogSet* catSet = NULL ;
       INT32 w = 1 ;
       BOOLEAN dropCollection = FALSE ;
+      BOOLEAN needClean = TRUE ;
 
       if ( _dpsCB )
       {
@@ -181,10 +184,14 @@ namespace engine
          if ( SDB_DMS_NOTEXIST == rc )
          {
             dropCollection = TRUE ;
+            PD_LOG( PDDEBUG, "%s: Could not find collection [%s] in catalog, "
+                    "drop collection", name(), _clFullName.c_str() ) ;
             break ;
          }
          else if ( SDB_OK != rc )
          {
+            PD_LOG( PDDEBUG, "%s: Failed to find collection [%s] in catalog, "
+                    "rc: %d, retry", name(), _clFullName.c_str(), rc ) ;
             continue ;
          }
 
@@ -192,12 +199,42 @@ namespace engine
          catSet = catAgent->collectionSet( _clFullName.c_str() ) ;
          if ( catSet )
          {
-            // w = catSet->getW () ;
-            dropCollection = ( 0 == catSet->groupCount() ) ? TRUE : FALSE ;
+            if ( UTIL_UNIQUEID_NULL == _clUniqueID ||
+                 _clUniqueID == catSet->clUniqueID() )
+            {
+               // same collection ( not re-create )
+               // w = catSet->getW () ;
+               dropCollection = ( 0 == catSet->groupCount() ) ? TRUE : FALSE ;
+               PD_LOG( PDDEBUG, "%s: Found catalog cache for collection [%s], "
+                       "need drop collection: %s", name(), _clFullName.c_str(),
+                       dropCollection ? "TRUE" : "FALSE" ) ;
+            }
+            else if ( 0 == catSet->groupCount() )
+            {
+               // re-create on other group: drop collection
+               dropCollection = TRUE ;
+               PD_LOG( PDDEBUG, "%s: Found catalog cache for collection [%s] "
+                       "on other group, expected %llu, found %llu, "
+                       "drop collection", name(), _clFullName.c_str(),
+                       _clUniqueID, catSet->clUniqueID() ) ;
+            }
+            else
+            {
+               // re-create on this group: do nothing
+               // new one will drop the remained collection
+               dropCollection = FALSE ;
+               needClean = FALSE ;
+               PD_LOG( PDDEBUG, "%s: Found catalog cache for collection [%s] "
+                       "on this group, expected %llu, found %llu, "
+                       "do nothing", name(), _clFullName.c_str(),
+                       _clUniqueID, catSet->clUniqueID() ) ;
+            }
          }
          else
          {
             catAgent->release_r() ;
+            PD_LOG( PDDEBUG, "%s: no catalog cache for collection [%s] found, "
+                    "retry", name(), _clFullName.c_str() ) ;
             continue ;
          }
 
@@ -232,6 +269,11 @@ namespace engine
             goto done ;
          }
          pTaskMgr->releaseReg( SHARED ) ;
+      }
+
+      if ( !needClean )
+      {
+         goto done ;
       }
 
       if ( CLS_CLEANUP_BY_SHARDINGINDEX == _cleanupType() )
@@ -704,6 +746,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STRARTCLNJOB, "startCleanupJob" )
    INT32 startCleanupJob( const std::string &clFullName,
+                          utilCLUniqueID clUniqueID,
                           const BSONObj &splitKeyObj,
                           const BSONObj &splitEndKeyObj,
                           BOOLEAN hasShardingIndex,
@@ -716,6 +759,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_STRARTCLNJOB );
 
       _clsCleanupJob *pJob = SDB_OSS_NEW _clsCleanupJob( clFullName,
+                                                         clUniqueID,
                                                          splitKeyObj,
                                                          splitEndKeyObj,
                                                          hasShardingIndex,

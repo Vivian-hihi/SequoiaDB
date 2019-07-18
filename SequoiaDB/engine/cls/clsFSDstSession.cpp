@@ -2303,11 +2303,10 @@ namespace engine
                   _pTask->taskName(), _pTask->status() ) ;
 
          EDUID cleanupJobID = PMD_INVALID_EDUID ;
-         startCleanupJob( _pTask->clFullName(), _pTask->splitKeyObj(),
-                          _pTask->splitEndKeyObj(), FALSE,
-                          _pTask->isHashSharding(),
-                          pmdGetKRCB()->getDPSCB(),
-                          &cleanupJobID ) ;
+         startCleanupJob( _pTask->clFullName(), _pTask->clUniqueID(),
+                          _pTask->splitKeyObj(), _pTask->splitEndKeyObj(),
+                          FALSE, _pTask->isHashSharding(),
+                          pmdGetKRCB()->getDPSCB(), &cleanupJobID ) ;
          while ( rtnGetJobMgr()->findJob ( cleanupJobID ) )
          {
             ossSleep ( OSS_ONE_SEC ) ;
@@ -2360,11 +2359,10 @@ namespace engine
          if ( 0 != _needSyncData && _step <= STEP_META )
          {
             EDUID cleanupJobID = PMD_INVALID_EDUID ;
-            startCleanupJob( _pTask->clFullName(), _pTask->splitKeyObj(),
-                             _pTask->splitEndKeyObj(), FALSE,
-                             _pTask->isHashSharding(),
-                             pmdGetKRCB()->getDPSCB(),
-                             &cleanupJobID ) ;
+            startCleanupJob( _pTask->clFullName(), _pTask->clUniqueID(),
+                             _pTask->splitKeyObj(), _pTask->splitEndKeyObj(),
+                             FALSE, _pTask->isHashSharding(),
+                             pmdGetKRCB()->getDPSCB(), &cleanupJobID ) ;
             while ( rtnGetJobMgr()->findJob( cleanupJobID ) )
             {
                ossSleep ( OSS_ONE_SEC ) ;
@@ -2546,6 +2544,7 @@ namespace engine
 
          EDUID cleanupJobID = PMD_INVALID_EDUID ;
          if ( SDB_OK != startCleanupJob( _pTask->clFullName(),
+                                         _pTask->clUniqueID(),
                                          _pTask->splitKeyObj(),
                                          _pTask->splitEndKeyObj(), FALSE,
                                          _pTask->isHashSharding(),

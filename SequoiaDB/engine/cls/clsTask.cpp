@@ -400,6 +400,7 @@ namespace engine
    {
       _sourceID = 0 ;
       _dstID = 0 ;
+      _clUniqueID = UTIL_UNIQUEID_NULL ;
       _status = CLS_TASK_STATUS_READY ;
       _taskType = CLS_TASK_SPLIT ;
       _percent  = 0.0 ;
@@ -435,6 +436,7 @@ namespace engine
       //_lockEnd = FALSE ;
 
       _clFullName    = clFullName ;
+      _clUniqueID    = cataSet.clUniqueID() ;
       _sourceID      = sourceID ;
       _sourceName    = sourceName ;
       _dstID         = dstID ;
@@ -633,6 +635,18 @@ namespace engine
             _lockEnd = ele.numberInt() ;
          }*/
 
+         ele = jobObj.getField( CAT_CL_UNIQUEID ) ;
+         if ( ele.eoo() )
+         {
+            _clUniqueID = UTIL_UNIQUEID_NULL ;
+         }
+         else
+         {
+            PD_CHECK( ele.type() == NumberLong, SDB_INVALIDARG, error, PDERROR,
+                      "Field[%s] invalid in split task[%s]",
+                      CAT_CL_UNIQUEID, jobObj.toString().c_str() ) ;
+            _clUniqueID = (utilCLUniqueID)ele.numberLong() ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -710,6 +724,10 @@ namespace engine
       {
          builder.append( CLS_SPLIT_TASK_LOCK_END, _lockEnd ) ;
       }*/
+      if ( mask & CLS_SPLIT_MASK_UNIQUEID )
+      {
+         builder.append( CAT_CL_UNIQUEID, (INT64)_clUniqueID ) ;
+      }
 
       return builder.obj() ;
    }
@@ -885,6 +903,11 @@ namespace engine
    const CHAR* _clsSplitTask::clFullName () const
    {
       return _clFullName.c_str() ;
+   }
+
+   utilCLUniqueID _clsSplitTask::clUniqueID () const
+   {
+      return _clUniqueID ;
    }
 
    const CHAR* _clsSplitTask::shardingType () const

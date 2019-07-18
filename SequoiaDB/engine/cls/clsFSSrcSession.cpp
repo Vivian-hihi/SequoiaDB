@@ -2765,6 +2765,7 @@ namespace engine
          }
 
          if ( SDB_OK != startCleanupJob( _curCollecitonName,
+                                         UTIL_UNIQUEID_NULL,
                                          _rangeKeyObj,
                                          _hasEndRange ? _rangeEndKeyObj :
                                                         BSONObj(),

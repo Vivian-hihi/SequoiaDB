@@ -54,6 +54,7 @@ namespace engine
    {
       public:
          _clsCleanupJob( const std::string &clFullName,
+                         utilCLUniqueID clUniqueID,
                          const BSONObj &splitKeyObj,
                          const BSONObj &splitEndKeyObj,
                          BOOLEAN hasShardingIndex,
@@ -93,6 +94,7 @@ namespace engine
          BSONObj              _splitEndKeyObj ;
          BOOLEAN              _hasShardingIndex ;
          BOOLEAN              _isHashSharding ;
+         utilCLUniqueID       _clUniqueID ;
 
          std::string          _name ;
 
@@ -103,6 +105,7 @@ namespace engine
    typedef class _clsCleanupJob clsCleanupJob ;
 
    INT32 startCleanupJob ( const std::string &clFullName,
+                           utilCLUniqueID clUniqueID,
                            const BSONObj &splitKeyObj,
                            const BSONObj &splitEndKeyObj,
                            BOOLEAN hasShardingIndex,
