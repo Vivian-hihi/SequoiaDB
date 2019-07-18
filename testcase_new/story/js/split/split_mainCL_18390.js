@@ -54,5 +54,5 @@ function main()
       }
    }
     
-   commDropCL( db, csName, clName, true, true, "drop CL in the end." );
+   commDropCL( db, csName, mainClName, true, true, "drop CL in the end." );
 }
