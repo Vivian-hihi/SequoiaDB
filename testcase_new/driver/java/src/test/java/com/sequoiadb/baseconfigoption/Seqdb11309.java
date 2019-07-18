@@ -6,9 +6,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import static org.testng.Assert.*;
 
 /**
@@ -19,10 +16,7 @@ import static org.testng.Assert.*;
 public class Seqdb11309 extends SdbTestBase {
 
     @BeforeClass
-    public void setUp() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() +
-                ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-    }
+    public void setUp() {}
 
     @Test
     public void test() {
@@ -49,8 +43,5 @@ public class Seqdb11309 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() +
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-    }
+    public void tearDown() {}
 }
