@@ -1184,8 +1184,8 @@ namespace engine
 
             while ( TRUE )
             {
-               rc = rtnAlterCommand( objectName, objectType, alterObject,
-                                     eduCB, _dpsCB ) ;
+               rc = rtnAlter( objectName, objectType, alterObject,
+                              eduCB, _dpsCB ) ;
                if ( SDB_LOCK_FAILED == rc )
                {
                   ossSleep( 100 ) ;
