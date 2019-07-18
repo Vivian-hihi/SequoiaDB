@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-修改用户设置
+修改用户配置
 
 ##参数##
 
@@ -37,7 +37,7 @@ options 参数详细说明如下：
 
 ##示例##
 
-* 修改进程最大内存大小
+* 修改指定用户组中的用户的 home 目录
 
   ```lang-javascript
   > System.setUserConfigs( { "name": "username", "Group": "groupname", "dir": "/home/username" } )

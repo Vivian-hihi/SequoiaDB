@@ -1,6 +1,6 @@
 ##NAME##
 
-delUser - Delete a user
+delUser - Delete a system user
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Delete a user
+Delete a system user
 
 ##PARAMETERS##
 
@@ -39,8 +39,8 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Delete a user
+* Delete a system user
 
 ```lang-javascript
-> System.delUser( { "name": "newUser2" } )
+> System.delUser( { "name": "newUser" } )
 ```

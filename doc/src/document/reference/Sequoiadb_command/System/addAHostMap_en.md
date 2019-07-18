@@ -20,7 +20,7 @@ Add a host to ip address mapping to the host file
 | ------- | -------- | ------------ | ---------------- | -------- |
 | hostname     | string   | ---     | hostname       | yes       |
 | ip     | string   | ---          | ip address     | yes       |
-| replace | boolean  | true        | replace or not | not      |
+| isReplace | boolean  | true        | replace or not | not      |
 
 ##RETURN VALUE##
 

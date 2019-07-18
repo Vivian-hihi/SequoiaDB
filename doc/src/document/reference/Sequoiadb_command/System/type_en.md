@@ -4,7 +4,7 @@ type - Acquire the type of operating system
 
 ##SYNOPSIS##
 
-***System.getReleaseInfo()***
+***System.type()***
 
 ##CATEGORY##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return Acquire the type of operating system.
+On success, return the type of operating system.
 
 On error, exception will be thrown.
 

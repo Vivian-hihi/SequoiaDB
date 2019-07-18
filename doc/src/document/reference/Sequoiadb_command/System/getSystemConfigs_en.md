@@ -1,6 +1,6 @@
 ##NAME##
 
-getReleaseInfo - Acquire the information of system configuration
+getSystemConfigs - Acquire the information of system configuration
 
 ##SYNOPSIS##
 

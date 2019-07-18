@@ -1,6 +1,6 @@
 ##NAME##
 
-addAHostMap - Modify process resource limits
+setProcUlimitConfigs - Modify process resource limits
 
 ##SYNOPSIS##
 

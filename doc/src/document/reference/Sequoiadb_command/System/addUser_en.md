@@ -1,6 +1,6 @@
 ##NAME##
 
-addGroup - Add a user
+addUser - Add a system user
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Add a user
+Add a system user
 
 ##PARAMETERS##
 
@@ -25,7 +25,7 @@ The detail description of 'users' parameter is as follow:
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |
 | name    | string |   yes  | { "name": newUser }     | user name  |
-| group    | string |  not   | { "group": newUser }     | user group name  |
+| group    | string |  not   | { "group": newGroup }     | user group name  |
 
 ##RETURN VALUE##
 

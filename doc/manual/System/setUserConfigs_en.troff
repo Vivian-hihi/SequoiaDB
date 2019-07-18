@@ -120,7 +120,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Add a user
+Modiify the home directory of users in the specified user group
 .IP
 .nf
 \f[C]

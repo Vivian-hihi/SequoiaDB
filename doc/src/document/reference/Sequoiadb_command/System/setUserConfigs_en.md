@@ -40,7 +40,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Add a user
+* Modiify the home directory of users in the specified user group 
 
 ```lang-javascript
 > System.setUserConfigs( { "name": "username", "Group": "groupname", "dir": "/home/username" } )

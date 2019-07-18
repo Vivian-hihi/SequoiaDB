@@ -1,6 +1,6 @@
 ##NAME##
 
-getHostName - Acquire the process id
+getPID - Acquire the process id
 
 ##SYNOPSIS##
 

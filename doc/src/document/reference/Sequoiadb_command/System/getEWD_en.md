@@ -4,7 +4,7 @@ getEWD - Acquire current directory
 
 ##SYNOPSIS##
 
-***System.getDiskInfo()***
+***System.getEWD()***
 
 ##CATEGORY##
 

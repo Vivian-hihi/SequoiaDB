@@ -1,6 +1,6 @@
 ##NAME##
 
-getAHostMap - Acquire CPU information
+getCpuInfo - Acquire CPU information
 
 ##SYNOPSIS##
 
@@ -52,4 +52,4 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
     "Idle": 3513293040,
     "Other": 3023840
 }
-````
+```

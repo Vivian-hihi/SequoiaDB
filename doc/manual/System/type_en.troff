@@ -7,7 +7,7 @@
 type \- Acquire the type of operating system
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.getReleaseInfo()\f[]\f[]
+\f[B]\f[I]System.type()\f[]\f[]
 .SH CATEGORY
 .PP
 System
@@ -19,7 +19,7 @@ Acquire the type of operating system
 NULL
 .SH RETURN VALUE
 .PP
-On success, return Acquire the type of operating system.
+On success, return the type of operating system.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

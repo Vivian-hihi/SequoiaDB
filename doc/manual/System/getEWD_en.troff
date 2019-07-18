@@ -7,7 +7,7 @@
 getEWD \- Acquire current directory
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.getDiskInfo()\f[]\f[]
+\f[B]\f[I]System.getEWD()\f[]\f[]
 .SH CATEGORY
 .PP
 System

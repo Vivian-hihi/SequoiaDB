@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-delUser \- Delete a user
+delUser \- Delete a system user
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.delUser( <users> )\f[]\f[]
@@ -14,7 +14,7 @@ delUser \- Delete a user
 System
 .SH DESCRIPTION
 .PP
-Delete a user
+Delete a system user
 .SH PARAMETERS
 .PP
 .TS
@@ -107,10 +107,10 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Delete a user
+Delete a system user
 .IP
 .nf
 \f[C]
->\ System.delUser(\ {\ "name":\ "newUser2"\ }\ )
+>\ System.delUser(\ {\ "name":\ "newUser"\ }\ )
 \f[]
 .fi
