@@ -2,7 +2,7 @@
 @description:	commlib of FullText		
 @Date : 2018-09-18
 @Author: liuxiaoxuan
-                     
+@call：fullText、fulltext_rlb、fullText_sync                
 ****************************************************/
 var cmd = new Cmd();     
 var HEADER = "'Content-Type: application/json'";
