@@ -342,6 +342,21 @@ namespace engine
          }
       }
 
+      /// collection's unique id changed
+      if ( UTIL_UNIQUEID_NULL != _clUniqueID &&
+           _clUniqueID != catSet->clUniqueID() )
+      {
+         if ( 0 == catSet->groupCount() )
+         {
+            rc = SDB_DMS_NOTEXIST ;
+         }
+         else
+         {
+            rc = SDB_DMS_EOC ;
+         }
+         goto error ;
+      }
+
       if ( CLS_CLEANUP_BY_CATAINFO == _cleanupType() )
       {
          rc = catSet->findGroupID( page._oid, page._sequence, belongTo ) ;
@@ -629,49 +644,67 @@ namespace engine
             catAgent->lock_r() ;
             catSet = catAgent->collectionSet( _clFullName.c_str() ) ;
 
-            if ( catSet && CLS_CLEANUP_BY_CATAINFO == cleanType )
+            if ( catSet )
             {
-               if ( !catSet->isObjInGroup( recordObj, groupID) )
+               /// collection's unique id changed
+               if ( UTIL_UNIQUEID_NULL != _clUniqueID &&
+                    _clUniqueID != catSet->clUniqueID() )
                {
-                  needDel = TRUE ;
-                  // w = catSet->getW() ;
+                  if ( 0 == catSet->groupCount() )
+                  {
+                     rc = SDB_DMS_NOTEXIST ;
+                  }
+                  else
+                  {
+                     rc = SDB_DMS_EOC ;
+                  }
+                  goto error ;
                }
-            }
-            else if ( catSet && CLS_CLEANUP_BY_RANGE == cleanType )
-            {
-               BSONObj keyObj ;
-               rc = catSet->genKeyObj( recordObj, keyObj ) ;
-               if ( rc )
+
+               if ( CLS_CLEANUP_BY_CATAINFO == cleanType )
                {
-                  PD_LOG( PDWARNING, "Gen key obj failed, rc: %d, obj: %s, "
-                          "cata info: %s", rc, recordObj.toString().c_str(),
-                          catSet->toCataInfoBson().toString().c_str() ) ;
-               }
-               else if ( _isHashSharding )
-               {
-                  INT32 hashValue = clsPartition( keyObj,
-                                                  catSet->getPartitionBit(),
-                                                  catSet->getInternalV() ) ;
-                  if ( hashValue >= _splitKeyObj.firstElement().numberInt() &&
-                       ( _splitEndKeyObj.isEmpty() ||
-                      hashValue < _splitEndKeyObj.firstElement().numberInt() ) &&
-                      !catSet->isKeyInGroup( BSON(""<<hashValue), groupID ) )
+                  if ( !catSet->isObjInGroup( recordObj, groupID) )
                   {
                      needDel = TRUE ;
                      // w = catSet->getW() ;
                   }
                }
-               else
+               else if ( CLS_CLEANUP_BY_RANGE == cleanType )
                {
-                  if ( keyObj.woCompare( _splitKeyObj, *catSet->getOrdering(),
-                                         false ) >= 0 &&
-                       ( _splitEndKeyObj.isEmpty() ||
-                         keyObj.woCompare( _splitEndKeyObj,
-                                    *catSet->getOrdering(), false ) < 0 ) &&
-                       !catSet->isKeyInGroup( keyObj, groupID ) )
+                  BSONObj keyObj ;
+                  rc = catSet->genKeyObj( recordObj, keyObj ) ;
+                  if ( rc )
                   {
-                     needDel = TRUE ;
-                     // w = catSet->getW() ;
+                     PD_LOG( PDWARNING, "Gen key obj failed, rc: %d, obj: %s, "
+                             "cata info: %s", rc, recordObj.toString().c_str(),
+                             catSet->toCataInfoBson().toString().c_str() ) ;
+                  }
+                  else if ( _isHashSharding )
+                  {
+                     INT32 hashValue = clsPartition( keyObj,
+                                                     catSet->getPartitionBit(),
+                                                     catSet->getInternalV() ) ;
+                     if ( hashValue >= _splitKeyObj.firstElement().numberInt() &&
+                          ( _splitEndKeyObj.isEmpty() ||
+                         hashValue < _splitEndKeyObj.firstElement().numberInt() ) &&
+                         !catSet->isKeyInGroup( BSON(""<<hashValue), groupID ) )
+                     {
+                        needDel = TRUE ;
+                        // w = catSet->getW() ;
+                     }
+                  }
+                  else if ( catSet->getOrdering() )
+                  {
+                     if ( keyObj.woCompare( _splitKeyObj, *catSet->getOrdering(),
+                                            false ) >= 0 &&
+                          ( _splitEndKeyObj.isEmpty() ||
+                            keyObj.woCompare( _splitEndKeyObj,
+                                       *catSet->getOrdering(), false ) < 0 ) &&
+                          !catSet->isKeyInGroup( keyObj, groupID ) )
+                     {
+                        needDel = TRUE ;
+                        // w = catSet->getW() ;
+                     }
                   }
                }
             }
