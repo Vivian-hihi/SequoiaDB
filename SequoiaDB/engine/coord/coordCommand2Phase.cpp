@@ -496,15 +496,15 @@ namespace engine
       // The command could be rollbacked in two conditions:
       // 1. There are succeed Data Groups
       // 2. There are Catalog context to rollback catalog
-      if ( !sucGroupLst.empty () && NULL != pCoordCtxForCata )
-      {
-         // Rollback Catalog first if needed
-         if ( _flagRollbackCataBeforeData() && NULL != pCoordCtxForCata )
-         {
-            rtnCB->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
-            pCoordCtxForCata = NULL ;
-         }
 
+      // Rollback Catalog first if needed
+      if ( _flagRollbackCataBeforeData() && NULL != pCoordCtxForCata )
+      {
+         rtnCB->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
+         pCoordCtxForCata = NULL ;
+      }
+      if ( !sucGroupLst.empty () )
+      {
          // Generate rollback message to succeed Data Groups
          rc = _generateRollbackDataMsg( pMsg, cb, pArguments,
                                         &pRollbackMsgBuf,
@@ -512,22 +512,23 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING, "Generate rollback message to data failed "
                       "for command[%s, target:%s], rc: %d", getName(),
                       pArguments->_targetName.c_str(), rc ) ;
-
+         cb->startRollback() ;
          rc = _rollbackOnDataGroup( (MsgHeader*)pRollbackMsgBuf, cb,
                                     pArguments, sucGroupLst ) ;
+         cb->stopRollback() ;
          PD_RC_CHECK( rc, PDWARNING, "Do rollback phase on data failed for "
                       "command[%s, target:%s], rc: %d", getName(),
                       pArguments->_targetName.c_str(), rc ) ;
-
-         if ( NULL != pCoordCtxForCata )
-         {
-            rtnCB->contextDelete( pCoordCtxForCata->contextID(), cb ) ;
-            pCoordCtxForCata = NULL ;
-         }
-
-         PD_LOG( PDINFO, "Do rollback phase on data done for command[%s, "
-                 "target:%s]", getName(), pArguments->_targetName.c_str() ) ;
       }
+      if ( NULL != pCoordCtxForCata )
+      {
+         rtnCB->contextDelete( pCoordCtxForCata->contextID(), cb ) ;
+         pCoordCtxForCata = NULL ;
+      }
+
+      PD_LOG( PDINFO, "Do rollback phase on data done for command[%s, "
+              "target:%s]", getName(), pArguments->_targetName.c_str() ) ;
+
 
    done :
       if ( NULL == pCoordCtxForCata )
