@@ -371,6 +371,8 @@ namespace engine
                                                             pItemSub ) ) ;
                /// remove from pItem's sub item
                itemIt = pItemMap->erase( itemIt ) ;
+               /// set parent to this
+               pItemSub->_pParent = this ;
             }
             else
             {
