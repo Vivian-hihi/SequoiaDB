@@ -4575,7 +4575,6 @@ namespace engine
    }
 
    INT32 catBuildHashSplitTask ( const CHAR * collection,
-                                 utilCLUniqueID clUniqueID,
                                  const CHAR * srcGroup,
                                  const CHAR * dstGroup,
                                  UINT32 beginBound,
@@ -4585,7 +4584,6 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       splitTask = BSON( CAT_COLLECTION_NAME << collection <<
-                        CAT_CL_UNIQUEID << (INT64)clUniqueID <<
                         CAT_SOURCE_NAME << srcGroup <<
                         CAT_TARGET_NAME << dstGroup <<
                         CAT_SPLITVALUE_NAME << BSON( "" << beginBound ) <<

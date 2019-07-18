@@ -1748,8 +1748,7 @@ namespace engine
             }
 
             taskID = catCB->getCatlogueMgr()->assignTaskID() ;
-            rc = catBuildHashSplitTask( collection, cataSet.clUniqueID(),
-                                        srcGroup, dstGroup,
+            rc = catBuildHashSplitTask( collection, srcGroup, dstGroup,
                                         beginBound, endBound, splitInfo ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build split info, rc: %d", rc ) ;
 
