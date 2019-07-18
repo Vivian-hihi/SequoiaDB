@@ -35,9 +35,28 @@ function checkGroupBusiness( timeoutSecond, csName, clName )
       {
          throw buildException( "checkGroupBusiness()", null, "check group bussiness", "success", "time out" );
       }
+   }
    
-      checkConsistency( csName, clName );
-      println( "check group bussiness success!" );
+   //  校验主备节点LSN
+   doTimes = 1;
+   while( doTimes <= timeoutSecond )
+   {      
+      var primaryNodeLSNs = getPrimaryNodeLSNs( groupNames );
+      if( !checkLSN( groupNames , primaryNodeLSNs) )
+      {
+         doTimes++;
+         sleep( 1000 );
+      }
+      else 
+      {
+         println( "check group bussiness success!" );
+         break;
+      }
+   } 
+   
+   if( doTimes > timeoutSecond )
+   {
+      throw buildException( "checkGroupBusiness()", null, "check group business", "success", "time out" );
    }
 }
 
