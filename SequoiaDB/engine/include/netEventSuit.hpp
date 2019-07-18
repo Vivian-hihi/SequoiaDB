@@ -48,6 +48,7 @@
 #include "ossRWMutex.hpp"
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
+#include "utilPooledObject.hpp"
 #include <boost/asio/steady_timer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
@@ -65,7 +66,7 @@ namespace engine
       _netEventSuit define
    */
    class _netEventSuit : public boost::enable_shared_from_this<_netEventSuit>,
-                         public _IIOService
+                         public _IIOService, public utilPooledObject
    {
       public:
          typedef set<NET_HANDLE>                SET_HANDLE ;

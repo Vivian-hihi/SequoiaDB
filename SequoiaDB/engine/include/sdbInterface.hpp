@@ -458,7 +458,7 @@ namespace engine
    /*
       _IIOService define
    */
-   class _IIOService : public SDBObject
+   class _IIOService
    {
       public:
          _IIOService() {}

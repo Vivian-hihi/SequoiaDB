@@ -44,6 +44,7 @@
 #include "netDef.hpp"
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
+#include "utilPooledObject.hpp"
 
 #include <string>
 #include <boost/enable_shared_from_this.hpp>
@@ -71,7 +72,7 @@ namespace engine
    */
    class _netEventHandler :
          public boost::enable_shared_from_this<_netEventHandler>,
-         public SDBObject
+         public utilPooledObject
    {
       public:
          _netEventHandler( netEvSuitPtr evSuitPtr,

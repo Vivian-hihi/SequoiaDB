@@ -155,7 +155,7 @@ namespace engine
       UINT32 retries = 0 ;
    retry:
       _mtx.get_shared() ;
-      if ( _vecEH.size() == _capacity || retries == 2 )
+      if ( _vecEH.size() >= _capacity || retries == 2 )
       {
          if ( _vecEH.size() == 0 )
          {
@@ -171,9 +171,10 @@ namespace engine
       else
       {
          _mtx.release_shared() ;
-         // release the s latch and try create EV handler
-         //if we failed to create the EV handler, goto retry
-         if ( !_createEH( eh ) )
+
+         _createEH( eh ) ;
+
+         if ( !eh.get() )
          {
             retries++ ;
             goto retry ;
@@ -195,22 +196,28 @@ namespace engine
    BOOLEAN _netEHSegment::_createEH( NET_EH &eh )
    {
       BOOLEAN ret = FALSE ;
+
+      _netEventHandler *pEH = NULL ;
+      /// create a new socket
+      pEH = SDB_OSS_NEW _netEventHandler( _pFrame->_getEvSuit( TRUE ),
+                                          _pFrame->_handle.inc() ) ;
+      if ( !pEH )
+      {
+         PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
+         goto done ;
+      }
+      eh = NET_EH(pEH) ;
+      eh->id( _id ) ;
+
       _mtx.get() ;
       if ( _vecEH.size() < _capacity )
       {
-         _netEventHandler *pEH = NULL ;
-         /// create a new socket
-         pEH = SDB_OSS_NEW _netEventHandler( _pFrame->_getEvSuit( TRUE ),
-                                             _pFrame->_handle.inc() ) ;
-         if ( !pEH )
-         {
-            PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
-            goto done ;
-         }
-         eh = NET_EH(pEH) ;
-         eh->id( _id ) ;
          _vecEH.push_back(eh) ;
          ret = TRUE ;
+      }
+      else
+      {
+         eh = _vecEH[_index.inc() % _vecEH.size() ] ;
       }
 
    done:
@@ -237,11 +244,6 @@ namespace engine
    void _netEHSegment::addEH( NET_EH eh )
    {
       _mtx.get() ;
-      if ( _vecEH.size() == _capacity )
-      {
-         _capacity++ ;
-      }
-
       _vecEH.push_back(eh) ;
       _mtx.release() ;
    }
