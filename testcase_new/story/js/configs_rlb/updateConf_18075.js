@@ -61,7 +61,7 @@ function main()
       var runOptions = new SdbSnapshotOption().cond( { NodeName: nodeName } ).options( { "mode": "run", "expand": false } )
       var afterSnapshot = getConfSnapshot( db, runOptions );
    
-      checkSnapshot(afterSnapshot, expConfig);
+      checkSnapshotInLast(afterSnapshot, expConfig);
    }
    finally
    {
@@ -124,7 +124,7 @@ function testUpdateConf( db, hostName, groupName, svcName, config, expConfig )
    }   
    
    var snapshotLocalInfo = getConfSnapshot( db, localOptions );
-   checkSnapshot(snapshotLocalInfo, expConfig);
+   checkSnapshotInLast(snapshotLocalInfo, expConfig);
    
 }
 
@@ -148,13 +148,13 @@ function getConfSnapshot( db, options )
    return obj ;
 }
 
-function checkSnapshot(actSnapshot, expConfig)
+function checkSnapshotInLast(actSnapshot, expConfig)
 {
    for( var key in expConfig )
    {
       if( actSnapshot[key].toString().toUpperCase() != expConfig[key].toString().toUpperCase() )
       {
-         throw buildException( "testUpdateConf", null, "check local snapshot" + 
+         throw buildException( "checkSnapshotInLast", null, "check local snapshot" + 
                options, key + ":" + actSnapshot[key], key + ":" + expConfig[key] ) ;
       }
    }
