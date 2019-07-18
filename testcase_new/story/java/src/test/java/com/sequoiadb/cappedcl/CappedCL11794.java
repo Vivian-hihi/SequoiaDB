@@ -11,6 +11,7 @@ import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -21,6 +22,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
+import com.sequoiadb.testcommon.CommLib;
 
 /**
  * FileName: seqDB-11794:多个固定集合并发pop
@@ -44,6 +46,10 @@ public class CappedCL11794 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
+        }
 
         // 构造插入的字符串
         strBuffer = new StringBuffer();

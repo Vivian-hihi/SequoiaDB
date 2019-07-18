@@ -11,6 +11,7 @@ import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -20,6 +21,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
+import com.sequoiadb.testcommon.CommLib;
 
 /**
  * FileName: seqDB-11808:查询时做pop操作
@@ -43,6 +45,11 @@ public class CappedCL11808 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
+        }
+        
         cappedCS = sdb.getCollectionSpace(cappedCSName);
         cappedCL = cappedCS.createCollection(cappedCLName, (BSONObject) JSON.parse("{Capped:true, Size:10240}"));
 
