@@ -91,7 +91,7 @@ public class Transaction18645 extends SdbTestBase {
         taskMgr.execute();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
-        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "GROUP ERROR");
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");
 
         // 待集群正常后，分别在非事务及事务中执行count/query查询，覆盖：表扫描、索引扫描
         // 非事务表扫描/索引扫描
@@ -125,5 +125,6 @@ public class Transaction18645 extends SdbTestBase {
         cursor = cl2.query(null, null, "{a:1}", "{'':'idx18645'}");
         actList = TransUtil.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
+        cursor.close();
     }
 }

@@ -106,12 +106,13 @@ public class Transaction18521 extends SdbTestBase {
         taskMgr.execute();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
-        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "GROUP ERROR");
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");
 
         // 待集群正常后，查询所有账户的金额总和
         sdb = new Sequoiadb(coordUrl, "", "");
         DBCursor cursor = sdb.exec("select sum(balance) as balance from " + csName + "." + clName);
         double balance = (double) cursor.getNext().get("balance");
+        cursor.close();
         Assert.assertEquals((int) balance, 100000000);
     }
 }

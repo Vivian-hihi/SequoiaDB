@@ -95,7 +95,7 @@ public class Transaction18518 extends SdbTestBase {
         taskMgr.execute();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
-        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "GROUP ERROR");
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");
 
         // 待集群正常后，查询所有账户的金额总和
         int count = 0;

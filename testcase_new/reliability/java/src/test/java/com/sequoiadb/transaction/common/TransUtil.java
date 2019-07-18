@@ -107,12 +107,12 @@ public class TransUtil {
     public static void createCLs(Sequoiadb sdb, String csName, String hashCLName, String mainCLName, String subCLName1,
             String subCLName2) {
         sdb.getCollectionSpace(csName).createCollection(hashCLName, (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':1}"));
         DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(mainCLName, (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':-1}"));
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':1}"));
         sdb.getCollectionSpace(csName).createCollection(subCLName1);
         sdb.getCollectionSpace(csName).createCollection(subCLName2, (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':1}"));
         mainCL.attachCollection(csName + "." + subCLName1,
                 (BSONObject) JSON.parse("{LowBound:{'account':{'$minKey':1}}, UpBound:{'account':3000}}"));
         mainCL.attachCollection(csName + "." + subCLName2,
