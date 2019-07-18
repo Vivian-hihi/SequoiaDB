@@ -60,6 +60,7 @@
    var times = 0;
    var maxRetryTimes = 10;
    var rg = db.createRG(groupName);
+   dbPath = RSRVNODEDIR+"data/"+svcName;
    do
    {
       try
