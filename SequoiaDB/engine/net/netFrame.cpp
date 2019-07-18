@@ -395,6 +395,7 @@ namespace engine
 
       /// stop all evSuit
       _stopAllEvSuit() ;
+      close() ;
 
       /// wait all evSuit stop
       while( TRUE )
@@ -425,8 +426,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__NETFRAME_STOP );
       closeListen() ;
       _mainSuitPtr->getIOService().stop() ;
-      _stopAllEvSuit() ;
-      close() ;
       PD_TRACE_EXIT ( SDB__NETFRAME_STOP );
    }
 
