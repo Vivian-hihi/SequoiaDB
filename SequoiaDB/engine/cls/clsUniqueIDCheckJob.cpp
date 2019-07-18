@@ -101,6 +101,7 @@ namespace engine
               "Start job[%s]: check cs/cl unique id by cs/cl name", name() ) ;
 
       while ( !PMD_IS_DB_DOWN() &&
+              !cb->isForced() &&
               pmdIsPrimary() &&
               pDmsCB->nullCSUniqueIDCnt() > 0 )
       {
@@ -150,7 +151,9 @@ namespace engine
                     "Job[%s]: Check collection space[%s]",
                     name(), cs._name ) ;
 
-            if ( PMD_IS_DB_DOWN() || !pmdIsPrimary() )
+            if ( PMD_IS_DB_DOWN() ||
+                 cb->isForced() ||
+                 !pmdIsPrimary() )
             {
                break ;
             }
@@ -302,7 +305,8 @@ namespace engine
               name() ) ;
 
       // wait _clsVSPrimary::active() set primary
-      while ( !PMD_IS_DB_DOWN() )
+      while ( !PMD_IS_DB_DOWN() &&
+              !cb->isForced() )
       {
          if ( loopCnt++ != 0 )
          {
@@ -318,7 +322,9 @@ namespace engine
 
       /// 1. check if the cs/cl unique id on catalog have been generated.
       loopCnt = 0 ;
-      while ( !PMD_IS_DB_DOWN() && pmdIsPrimary() )
+      while ( !PMD_IS_DB_DOWN() &&
+              !cb->isForced() &&
+              pmdIsPrimary() )
       {
          if ( loopCnt++ != 0 )
          {
@@ -365,7 +371,10 @@ namespace engine
       _pFreezeWindow->unregisterCL( NULL, NULL, _opID ) ;
       _hasBlockGlobal = FALSE ;
 
-      while ( !PMD_IS_DB_DOWN() && pmdIsPrimary() && !csList.empty() )
+      while ( !PMD_IS_DB_DOWN() &&
+              !cb->isForced() &&
+              pmdIsPrimary() &&
+              !csList.empty() )
       {
          _renameCSCL( csList, TRUE ) ;
 
@@ -411,7 +420,9 @@ namespace engine
                  "Job[%s]: Check cs[name: %s, id: %u]",
                  name(), cs._name, csUniqueID ) ;
 
-         if ( PMD_IS_DB_DOWN() || !pmdIsPrimary() )
+         if ( PMD_IS_DB_DOWN() ||
+              cb->isForced() ||
+              !pmdIsPrimary() )
          {
             break ;
          }
