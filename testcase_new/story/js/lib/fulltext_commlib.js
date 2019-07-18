@@ -619,10 +619,10 @@ function checkConsistency(csName, clName)
    var timeout = 600;
    var doTimes = 0; 
    
+   //get primary nodes
+   var primaryNodeLSNs = getPrimaryNodeLSNs(groups);
    while(true)
    {
-      //get primary nodes
-      var primaryNodeLSNs = getPrimaryNodeLSNs(groups);
       lsnFlag = checkLSN(groups, primaryNodeLSNs);
       if(!lsnFlag)
       {
