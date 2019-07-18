@@ -54,7 +54,7 @@ namespace engine
    class _rtnExtDataHandler : public _IDmsExtDataHandler
    {
       typedef ossPoolMap<rtnExtDataProcessor*, INT32> LOCK_INFO_MAP ;
-      typedef LOCK_INFO_MAP::iterator LOCK_INFO_MAP_ITR ;  
+      typedef LOCK_INFO_MAP::iterator LOCK_INFO_MAP_ITR ;
    public:
       _rtnExtDataHandler( rtnExtDataProcessorMgr *edpMgr ) ;
       virtual ~_rtnExtDataHandler() ;
@@ -161,6 +161,7 @@ namespace engine
       ossAtomic32             _refCount ;
       rtnExtDataProcessorMgr  *_edpMgr ;
       rtnExtContextMgr        _contextMgr ;
+      ossSpinXLatch           _latch ;
       LOCK_INFO_MAP           _lockInfo ;
    } ;
    typedef _rtnExtDataHandler rtnExtDataHandler ;

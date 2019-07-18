@@ -755,11 +755,12 @@ namespace engine
       }
 
       rc = _edpMgr->getProcessorByExtName( extName, lockType, processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get external processor for[%s] failed[%d]", 
+      PD_RC_CHECK( rc, PDERROR, "Get external processor for[%s] failed[%d]",
                    extName, rc ) ;
       if ( processor )
       {
          handle = processor ;
+         ossScopedLock lock( &_latch ) ;
          _lockInfo[ processor ] = lockType ;
       }
       else
@@ -783,6 +784,7 @@ namespace engine
       rtnExtDataProcessor *processor = (rtnExtDataProcessor *)handle ;
       if ( processor )
       {
+         ossScopedLock lock( &_latch ) ;
          LOCK_INFO_MAP_ITR itr = _lockInfo.find( processor ) ;
          if ( itr != _lockInfo.end() )
          {
