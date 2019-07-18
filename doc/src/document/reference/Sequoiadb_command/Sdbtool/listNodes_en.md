@@ -26,7 +26,7 @@ The detail description of 'options' parameter is as follow:
 
 | Attributes | Type | Default | Format | Description |
 | ---------- | ---- | ------- | ------ | ----------- |
-| type       | string | db  | { type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } | display information about all nodes(Does not include the cm node of the standalone mode)<br>display information about data nodes, coordination nodes and catalog nodes<br>display infomation about om node<br>display infomation about cm node |
+| type       | string | db  | { type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } | display information about all nodes <br>display information about data nodes, coordination nodes and catalog nodes<br>display infomation about om node<br>display infomation about cm node |
 | mode       | string | run | { mode: "run" }<br>{ mode: "local" } | display infomation about running nodes<br>display infomation about local nodes whether run or not | 
 | role       | string | --- | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | display infomation about data nodes<br>display infomation about coord nodes<br>display infomation about catalog nodes<br>display infomation about standalone nodes<br>display infomation about om node<br>display infomation about cm node |
 | svcname    | string | --- | { svcname: "11790" } | display node information of the specified port | 

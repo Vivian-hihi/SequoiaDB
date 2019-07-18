@@ -22,7 +22,7 @@ options 参数详细说明如下：
 
 | 属性 | 值类型 | 默认值 | 格式 | 描述 |
 | ---- | ------ | ------ | ---- | ---- |
-| type | string |  db |{ type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } |  显示所有节点的信息（不包括 standalon 模式的 cm 节点）<br>显示数据节点，协调节点和编目节点的信息<br>显示 om 节点的信息<br>显示 cm 节点的信息 |
+| type | string |  db |{ type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } |  显示所有节点的信息<br>显示数据节点，协调节点和编目节点的信息<br>显示 om 节点的信息<br>显示 cm 节点的信息 |
 | mode | string | run |{ mode: "run" }<br>{ mode: "local" } | 显示正在运行的节点的信息<br>显示本地节点的信息，无论是否正在运行 |
 | role      | string | 空 | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | 显示数据节点的信息<br>显示协调节点的信息<br>显示编目节点的信息<br>显示 standalone 节点的信息<br>显示 om 节点的信息<br>显示 cm 节点的信息 |
 | svcname   | string | 空 | { svcname: "11790" } | 显示指定端口节点的信息 |

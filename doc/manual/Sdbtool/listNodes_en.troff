@@ -164,7 +164,7 @@ T}@T{
 T}@T{
 { type: "db" }
 T}@T{
-about all nodes(Does
+about all nodes
 T}
 T{
 T}@T{
@@ -173,7 +173,7 @@ T}@T{
 T}@T{
 { type: "om" }
 T}@T{
-not include the cm node
+display information
 T}
 T{
 T}@T{
@@ -182,23 +182,7 @@ T}@T{
 T}@T{
 { type: "cm" }
 T}@T{
-of the standalone mode)
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-display information
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-about data nodes, 
+about data nodes,
 T}
 T{
 T}@T{
