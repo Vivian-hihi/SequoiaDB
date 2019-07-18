@@ -45,40 +45,13 @@ function _getErrorResult( msg )
                         sprintf( msg, result[FIELD_DETAIL] ) ) ;
 }
 
-function _getInstallPath( oma )
-{
-   var defaultFilePath = '/etc/default/sequoiasql-postgresql' ;
-   var installPath = '' ;
-
-   for( var i = 0; i <= 10; ++i )
-   {
-      try
-      {
-         var config = oma.getIniConfigs( i == 0 ? defaultFilePath : defaultFilePath + i ).toObj() ;
-         installPath = config[FIELD_INSTALL_DIR] ;
-         break ;
-      }
-      catch( e )
-      {
-      }
-   }
-
-   if ( installPath.length == 0 )
-   {
-      rc = SDB_INVALIDARG ;
-      var error = new SdbError( rc, "PostgreSQL Install path not found" ) ;
-      PD_LOGGER.log( PDERROR, error ) ;
-      throw error ;
-   }
-
-   return installPath ;
-}
-
 function _getConfig( PD_LOGGER, oma, dbpath )
 {
    var configPath = catPath( dbpath, 'postgresql.conf' ) ;
    var config = {} ;
    var newConfig = {} ;
+
+   newConfig[FIELD_PORT2] = '5432' ;
 
    try
    {
@@ -232,7 +205,10 @@ function _syncConfig( PD_LOGGER )
 
    if ( typeof( installPath ) != 'string' || installPath.length == 0 )
    {
-      installPath = _getInstallPath( oma ) ;
+      rc = SDB_SYS ;
+      var error = new SdbError( rc, "Install Path is empty" ) ;
+      PD_LOGGER.log( PDERROR, error ) ;
+      throw error ;
    }
 
    var config = _findInstanceConfig( PD_LOGGER, oma, businessName, 
