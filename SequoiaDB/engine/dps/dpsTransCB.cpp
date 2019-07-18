@@ -390,7 +390,6 @@ namespace engine
          }
       }
 
-   done:
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_SVTRANSINFO ) ;
       return ;
    }
