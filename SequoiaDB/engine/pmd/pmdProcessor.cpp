@@ -1432,7 +1432,7 @@ namespace engine
       // rollback transaction
       if ( DPS_INVALID_TRANS_ID != eduCB()->getTransID() )
       {
-         INT32 rc = rtnTransRollback( eduCB(), getDPSCB() ) ;
+         INT32 rc = doRollback() ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",

@@ -710,6 +710,9 @@ namespace engine
       {
          sdbGetPMDController()->getRSManager()->registerEDU( eduCB() ) ;
       }
+
+      /// disable transautocommit
+      eduCB()->getTransExecutor()->setTransAutoCommit( FALSE, TRUE ) ;
    }
 
    void _pmdRestSession::_onDetach()
