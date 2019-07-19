@@ -66,7 +66,6 @@ TEST_F( queryAndRemoveTest12544, queryAndRemove12544 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to query" ;
    rc = cursor1.next( obj ) ;
    ASSERT_EQ( SDB_DMS_EOC, rc ) << "fail to get next" ;
-   ASSERT_EQ( 1, obj.getField( "a" ).Int() ) << "fail to check a value" ;
    rc = cursor1.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close cursor1" ;
 
