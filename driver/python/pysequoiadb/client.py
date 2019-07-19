@@ -1282,7 +1282,7 @@ class client(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         Info:
-           GroupName   :  The replica groups which to be backuped, if not assigen,default all replica groups.
+           GroupName   :  The replica groups which to be backuped, if not assign, default all replica groups.
            Path        :  The backup path, if not assign, use the backup path assigned in configuration file.
            Name        :  The name for the backup.
            Description :  The description for the backup.
