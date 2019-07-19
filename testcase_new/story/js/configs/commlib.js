@@ -55,7 +55,7 @@ var Configs = ( function() {
       this.runConfigs.push( new ConfDesp( "usessl", "bool", "FALSE", "TRUE", 1234 ) ) ;
       this.runConfigs.push( new ConfDesp( "auth", "bool", "TRUE", "FALSE", 1234 ) ) ;
       this.runConfigs.push( new ConfDesp( "planbuckets", "int", 500, 200, "125" ) ) ;
-      this.runConfigs.push( new ConfDesp( "optimeout", "int", 300000, 100000, "20" ) ) ;
+      this.runConfigs.push( new ConfDesp( "optimeout", "int", 60000, 100000, "20" ) ) ;
       this.runConfigs.push( new ConfDesp( "overflowratio", "int", 12, 22, "11" ) ) ;
       this.runConfigs.push( new ConfDesp( "extendthreshold", "int", 32, 64, "22" ) ) ;
       this.runConfigs.push( new ConfDesp( "signalinterval", "int", 0, 20, "20" ) ) ;
