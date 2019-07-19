@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-获取当前所在的目录
+获取当前 sdb shell 所在的目录
 
 ##参数##
 
@@ -16,7 +16,7 @@ System
 
 ##返回值##
 
-返回当前所在的目录
+返回当前 sdb shell 所在的目录
 
 ##错误##
 
@@ -27,7 +27,7 @@ System
 
 ##示例##
 
-* 获取当前所在的目录
+* 获取当前 sdb shell 所在的目录
 
   ```lang-javascript
   > System.getEWD()

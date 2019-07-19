@@ -1,6 +1,6 @@
 ##NAME##
 
-getEWD - Acquire current directory
+getEWD - Acquire current directory of sdb shell
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire current directory
+Acquire current directory of sdb shell
 
 ##PARAMETERS##
 
@@ -30,7 +30,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire current directory
+* Acquire current directory of sdb shell
 
 ```lang-javascript
 > System.getEWD()

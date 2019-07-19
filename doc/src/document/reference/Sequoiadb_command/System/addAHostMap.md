@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-往host文件添加一条主机到IP地址的映射关系
+往host文件添加一条主机名到IP地址的映射关系
 
 ##参数##
 
@@ -31,7 +31,7 @@ System
 
 ##示例##
 
-* 添加一条映射关系
+* 往host文件添加一条主机名到IP地址的映射关系
 
   ```lang-javascript
   > System.addAHostMap( "hostname", "1.1.1.1" )

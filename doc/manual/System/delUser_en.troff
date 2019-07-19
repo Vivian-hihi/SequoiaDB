@@ -90,7 +90,7 @@ string
 T}@T{
 not
 T}@T{
-{ "group": newUser }
+{ "group": groupname }
 T}@T{
 user group name
 T}

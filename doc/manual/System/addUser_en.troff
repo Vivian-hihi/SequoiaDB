@@ -90,11 +90,17 @@ string
 T}@T{
 not
 T}@T{
-{ "group": newGroup }
+{ "group": groupname }
 T}@T{
 user group name
 T}
 .TE
+.PP
+\f[B]Note:\f[]
+.PP
+The group parameter must be an existing user group.
+If not specified, a user group with the same name as the name paramter is
+created by default.
 .SH RETURN VALUE
 .PP
 On success, return void.

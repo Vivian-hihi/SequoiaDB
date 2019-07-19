@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-addAHostMap \- Add a host to ip address mapping to the host file
+addAHostMap \- Add a host name to ip address mapping to the host file
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.addAHostMap( <hostname>, <ip>, [isReplace] )\f[]\f[]
@@ -14,7 +14,7 @@ addAHostMap \- Add a host to ip address mapping to the host file
 System
 .SH DESCRIPTION
 .PP
-Add a host to ip address mapping to the host file
+Add a host name to ip address mapping to the host file
 .SH PARAMETERS
 .PP
 .TS
@@ -86,7 +86,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Add a host to ip address mapping to the host file
+Add a host name to ip address mapping to the host file
 .IP
 .nf
 \f[C]

@@ -34,5 +34,5 @@ configs 参数可修改的字段见[getProcUlimitConfigs](reference/Sequoiadb_co
 * 修改进程最大内存大小
 
   ```lang-javascript
-  > System.setProcUlimitConfigs( { "max_memory_size": -1, "open_files": 1024 } )
+  > System.setProcUlimitConfigs( { "max_memory_size": -1 } )
   ```

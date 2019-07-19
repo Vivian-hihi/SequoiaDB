@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getHostsMap \- Acquire all host to ip address mapping in the host file
+getHostsMap \- Acquire all host names to ip address mapping in the host file
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.getHostsMap()\f[]\f[]
@@ -13,13 +13,13 @@ getHostsMap \- Acquire all host to ip address mapping in the host file
 System
 .SH DESCRIPTION
 .PP
-Acquire all host to ip address mapping in the host file
+Acquire all host names to ip address mapping in the host file
 .SH PARAMETERS
 .PP
 NULL
 .SH RETURN VALUE
 .PP
-On success, return all host to ip address mapping in the host file.
+On success, return all host names to ip address mapping in the host file.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire all host to ip address mapping to the host file
+Acquire all host names to ip address mapping to the host file
 .IP
 .nf
 \f[C]

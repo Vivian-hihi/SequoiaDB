@@ -25,7 +25,11 @@ The detail description of 'users' parameter is as follow:
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |
 | name    | string |   yes  | { "name": newUser }     | user name  |
-| group    | string |  not   | { "group": newGroup }     | user group name  |
+| group    | string |  not   | { "group": groupname }     | user group name  |
+
+**Note:**
+
+The group parameter must be an existing user group. If not specified, a user group with the same name as the name paramter is created by default.
 
 ##RETURN VALUE##
 

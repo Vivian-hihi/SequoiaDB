@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getEWD \- Acquire current directory
+getEWD \- Acquire current directory of sdb shell
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.getEWD()\f[]\f[]
@@ -13,7 +13,7 @@ getEWD \- Acquire current directory
 System
 .SH DESCRIPTION
 .PP
-Acquire current directory
+Acquire current directory of sdb shell
 .SH PARAMETERS
 .PP
 NULL
@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire current directory
+Acquire current directory of sdb shell
 .IP
 .nf
 \f[C]

@@ -18,7 +18,7 @@ List the information of logged-in users
 
 | Name      | Type     | Default | Description              | Required or not |
 | --------- | -------- | ------ | -----------------------   | -------- |
-| options   | JSON     | no details are displayed by default | search pattern  | not       |
+| options   | JSON     | no details are displayed by default | display pattern  | not       |
 | filter    | JSON     | display all logged-in users by default | filter, display all by default          | not      |
 
 The detail description of 'options' parameter is as follow:

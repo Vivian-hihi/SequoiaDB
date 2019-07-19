@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-delAHostMap \- Delete a host to ip address mapping in the host file
+delAHostMap \- Delete a host name to ip address mapping in the host file
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.delAHostMap( <hostname> )\f[]\f[]
@@ -14,7 +14,7 @@ delAHostMap \- Delete a host to ip address mapping in the host file
 System
 .SH DESCRIPTION
 .PP
-Delete a host to ip address mapping in the host file
+Delete a host name to ip address mapping in the host file
 .SH PARAMETERS
 .PP
 .TS
@@ -60,7 +60,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Delete a host to ip address mapping to the host file
+Delete a host name to ip address mapping in the host file
 .IP
 .nf
 \f[C]

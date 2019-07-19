@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-host文件的IP与主机的映射关系
+获取 host 文件的 IP 与主机名的映射关系
 
 ##参数##
 
@@ -16,7 +16,7 @@ host文件的IP与主机的映射关系
 
 ##返回值##
 
-返回host文件的IP与主机的映射关系
+返回 host 文件的 IP 与主机名的映射关系
 
 ##错误##
 
@@ -27,7 +27,7 @@ host文件的IP与主机的映射关系
 
 ##示例##
 
-* 获取host文件的IP与主机的映射关系
+* 获取 host 文件的 IP 与主机名的映射关系
 
 	```lang-javascript
   > System.getHostsMap()

@@ -18,7 +18,7 @@ List the information of user groups
 
 | Name      | Type     | Default           | Description          | Required or not |
 | --------- | -------- | ----------------- | -----------------------------  | -------- |
-| options   | JSON     | no details are displayed by default | search pattern | not       |
+| options   | JSON     | no details are displayed by default | display pattern | not       |
 | filter    | JSON     | display all groups by default | filter | not |
 
 The detail description of 'options' parameter is as follow:

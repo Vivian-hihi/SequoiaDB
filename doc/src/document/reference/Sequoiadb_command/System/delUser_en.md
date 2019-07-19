@@ -25,7 +25,7 @@ The detail description of 'users' parameter is as follow:
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |
 | name    | string |   yes  | { "name": newUser }     | user name  |
-| group    | string |  not   | { "group": newUser }     | user group name  |
+| group    | string |  not   | { "group": groupname }     | user group name  |
 
 ##RETURN VALUE##
 

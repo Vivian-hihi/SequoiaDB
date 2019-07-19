@@ -1,6 +1,6 @@
 ##NAME##
 
-getHostsMap - Acquire all host to ip address mapping in the host file
+getHostsMap - Acquire all host names to ip address mapping in the host file
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire all host to ip address mapping in the host file
+Acquire all host names to ip address mapping in the host file
 
 ##PARAMETERS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return all host to ip address mapping in the host file.
+On success, return all host names to ip address mapping in the host file.
 
 On error, exception will be thrown.
 
@@ -30,7 +30,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire all host to ip address mapping to the host file
+* Acquire all host names to ip address mapping to the host file
 
 ```lang-javascript
 > System.getHostsMap()

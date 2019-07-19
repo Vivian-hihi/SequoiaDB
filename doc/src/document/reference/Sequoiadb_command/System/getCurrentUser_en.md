@@ -1,6 +1,6 @@
 ##NAME##
 
-getCurrentUser - Acquire current user
+getCurrentUser - Acquire current user information
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire current user
+Acquire current user information
 
 ##PARAMETERS##
 
@@ -30,7 +30,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire current user
+* Acquire current user information
 
 ```lang-javascript
 > System.getCurrentUser()

@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getCurrentUser \- Acquire current user
+getCurrentUser \- Acquire current user information
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.getCurrentUser()\f[]\f[]
@@ -13,7 +13,7 @@ getCurrentUser \- Acquire current user
 System
 .SH DESCRIPTION
 .PP
-Acquire current user
+Acquire current user information
 .SH PARAMETERS
 .PP
 NULL
@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire current user
+Acquire current user information
 .IP
 .nf
 \f[C]
