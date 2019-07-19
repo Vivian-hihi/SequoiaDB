@@ -79,7 +79,6 @@ public class FullText15834 extends SdbTestBase {
         while (cur.hasNext()) {
             cur.getNext();
             recordNum++;
-            System.out.println(recordNum);
         }
         cur.close();
 
