@@ -64,7 +64,7 @@ public class FullText12120 extends SdbTestBase {
         // 固定集合中新增一条操作类型未更新的记录，es中数据与原集合数据一致
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIdxName, 20001));
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
-        List<BSONObject> records = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
+        List<BSONObject> records = FullTextDBUtils.getReadList(cappedCL.query());
         Assert.assertEquals(records.get(0).get("Type"), 3);
     }
 

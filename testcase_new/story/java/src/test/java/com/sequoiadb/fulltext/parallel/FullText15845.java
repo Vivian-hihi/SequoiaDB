@@ -71,7 +71,7 @@ public class FullText15845 extends SdbTestBase {
 
         Assert.assertEquals(cl.getCount(), 0, "cl be truncate, should no record.");
         if (dropIndexThread.getRetCode() != 0) {
-            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 0));
             cl.dropIndex(indexName);
         }
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));

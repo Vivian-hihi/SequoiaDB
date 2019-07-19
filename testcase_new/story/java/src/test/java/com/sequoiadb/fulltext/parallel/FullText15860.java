@@ -55,7 +55,7 @@ public class FullText15860 extends SdbTestBase {
         }
         cs = sdb.getCollectionSpace(csName);
         cl = cs.createCollection(clName);
-
+        
         List<ObjectId> lobList = writeLob(cl, 100);
         lobTruncateList.addAll(lobList.subList(0, 50));
         lobRemoveList.addAll(lobList.subList(50, 70));
@@ -90,7 +90,7 @@ public class FullText15860 extends SdbTestBase {
         thread.run();
 
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
-        Assert.assertTrue(FullTextUtils.isRecordEquals(cl));
+        Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));
         checkLobOpr();
     }
 
@@ -298,7 +298,7 @@ public class FullText15860 extends SdbTestBase {
         DBCursor lobCur = cl.listLobs();
         while (lobCur.hasNext()) {
             BSONObject lobInfo = lobCur.getNext();
-            ObjectId id = (ObjectId) lobInfo.get("id");
+            ObjectId id = (ObjectId) lobInfo.get("Oid");
             DBLob lob = cl.openLob(id);
             byte[] content = new byte[(int) lobSize];
             lob.read(content);

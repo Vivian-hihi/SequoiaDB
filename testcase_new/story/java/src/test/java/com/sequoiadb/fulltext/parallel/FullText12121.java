@@ -63,7 +63,7 @@ public class FullText12121 extends SdbTestBase {
         // 固定集合中新增一条操作类型为删除，值正确的记录
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIdxName, insertNum));
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
-        List<BSONObject> records = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
+        List<BSONObject> records = FullTextDBUtils.getReadList(cappedCL.query());
         Assert.assertEquals(records.get(0).get("Type"), 2);
     }
 

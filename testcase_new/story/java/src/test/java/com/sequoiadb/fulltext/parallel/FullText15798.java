@@ -68,10 +68,10 @@ public class FullText15798 extends SdbTestBase {
 
         // 原始集合及固定集合中记录均被清空，主备节点数据一致
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIdxName, 0));
-        List<BSONObject> actRecords = FullTextDBUtils.getRecordsFromCL(cl.query());
+        List<BSONObject> actRecords = FullTextDBUtils.getReadList(cl.query());
         Assert.assertEquals(actRecords.size(), 0);
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
-        actRecords = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
+        actRecords = FullTextDBUtils.getReadList(cappedCL.query());
         Assert.assertEquals(actRecords.size(), 0);
     }
 

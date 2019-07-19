@@ -100,7 +100,7 @@ public class FullText15835 extends SdbTestBase {
             }
         }
 
-        Assert.assertTrue(FullTextUtils.isRecordEquals(cl));
+        Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));
 
     }
 

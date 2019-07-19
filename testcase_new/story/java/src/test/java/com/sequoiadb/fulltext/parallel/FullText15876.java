@@ -65,7 +65,7 @@ public class FullText15876 extends SdbTestBase {
         FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
-    @Test
+    @Test(enabled=false)
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();

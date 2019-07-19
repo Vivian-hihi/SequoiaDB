@@ -79,11 +79,12 @@ public class FullText15834 extends SdbTestBase {
         while (cur.hasNext()) {
             cur.getNext();
             recordNum++;
+            System.out.println(recordNum);
         }
         cur.close();
 
         Assert.assertEquals(recordNum, insertNum * 2, "use fulltext index search record");
-        Assert.assertTrue(FullTextUtils.isRecordEquals(cl));
+        Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));
     }
 
     @AfterClass

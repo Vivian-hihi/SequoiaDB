@@ -61,7 +61,7 @@ public class FullText15875 extends SdbTestBase {
         FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
-    @Test
+    @Test(enabled=false)
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();
@@ -99,6 +99,7 @@ public class FullText15875 extends SdbTestBase {
                 cl2.truncate();
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
+        	e.printStackTrace();
                 if (e.getErrorCode() != -23 && e.getErrorCode() != -190 && e.getErrorCode() != -147) {
                     throw e;
                 }
@@ -116,6 +117,7 @@ public class FullText15875 extends SdbTestBase {
                 cs.dropCollection(CL_NAME);
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
+        	e.printStackTrace();
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190 && e.getErrorCode() != -321) {
                     throw e;
                 }
