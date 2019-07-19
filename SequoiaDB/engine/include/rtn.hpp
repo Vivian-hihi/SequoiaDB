@@ -528,6 +528,8 @@ namespace engine
    INT32 rtnTransCommit( _pmdEDUCB *cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollback( _pmdEDUCB * cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollbackAll( _pmdEDUCB * cb );
+   INT32 rtnTransSaveWaitCommit ( _pmdEDUCB * cb, SDB_DPSCB * dpsCB,
+                                  BOOLEAN & savedAsWaitCommit ) ;
 
    void  rtnUnsetTransContext( _pmdEDUCB *cb, SDB_RTNCB *rtnCB ) ;
 

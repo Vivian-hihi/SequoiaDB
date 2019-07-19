@@ -602,6 +602,65 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSSAVEWAITCOMMIT, "rtnTransSaveWaitCommit" )
+   INT32 rtnTransSaveWaitCommit ( _pmdEDUCB * cb, SDB_DPSCB * dpsCB,
+                                  BOOLEAN & savedAsWaitCommit )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_RTNTRANSSAVEWAITCOMMIT ) ;
+
+      SDB_ASSERT( cb, "cb can't be null" ) ;
+
+      DPS_LSN_OFFSET curLsnOffset = cb->getCurTransLsn() ;
+      DPS_TRANS_ID transID = cb->getTransID() ;
+      MAP_TRANS_PENDING_OBJ mapPendingObj ;
+
+      savedAsWaitCommit = FALSE ;
+
+      if ( DPS_INVALID_TRANS_ID == transID ||
+           DPS_INVALID_LSN_OFFSET == curLsnOffset ||
+           !dpsCB ||
+           !pmdGetKRCB()->isCBValue( SDB_CB_CLS ) ||
+           pmdIsPrimary() )
+      {
+         // no trans ID/LSN, or no dps, or not cluster mode,
+         // or is primary, in those cases, should not clear, goto done
+         goto done ;
+      }
+
+      // in cluster mode, when not primary, need add trans info to map
+      sdbGetTransCB()->addTransInfo( transID, curLsnOffset,
+                                     cb->getTransStatus(),
+                                     mapPendingObj ) ;
+      mapPendingObj.clear() ;
+
+      // just clear meta-block statistics
+      cb->getTransExecutor()->clearMBStats() ;
+
+      sdbGetTransCB()->delTransCB( transID ) ;
+      cb->setTransID( DPS_INVALID_TRANS_ID ) ;
+      cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;
+      cb->setRelatedTransLSN( DPS_INVALID_LSN_OFFSET ) ;
+
+      // clear all lsn mapping
+      cb->getTransExecutor()->clearRecordMap() ;
+      sdbGetTransCB()->transLockReleaseAll( cb ) ;
+
+      // reduce the reservedLogSpace from dps for the transaction
+      sdbGetTransCB()->releaseRBLogSpace( cb ) ;
+
+      savedAsWaitCommit = TRUE ;
+
+      PD_LOG ( PDEVENT, "Save transaction(ID:%s, IDAttr:%s) as wait-commit "
+               "finished", dpsTransIDToString( transID ).c_str(),
+               dpsTransIDAttrToString( transID ).c_str() ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNTRANSSAVEWAITCOMMIT, rc ) ;
+      return rc ;
+   }
+
    INT32 rtnTransTryOrTestLockCL( const CHAR *pCollection,
                                   INT32 lockType,
                                   BOOLEAN isTest,

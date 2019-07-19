@@ -423,6 +423,18 @@ namespace engine
                goto rollback ;
             }
          } while( pmdIsPrimary() ) ;
+         {
+            BOOLEAN savedAsWaitCommit = FALSE ;
+            rc = rtnTransSaveWaitCommit( _pEDUCB, _pDpsCB, savedAsWaitCommit ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            else if ( savedAsWaitCommit )
+            {
+               goto done ;
+            }
+         }
       }
 
    rollback:
