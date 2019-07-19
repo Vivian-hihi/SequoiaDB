@@ -105,12 +105,16 @@
 
   ```lang-python
   try:
-       rule = {"$set":{ "age":19}}
-       print rule
-  	   cl.update( rule )
-  except SDBBaseError as e：
+      cl = db.get_collection("foo.bar")
+ 	  condition = {"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}
+ 	  cl.delete ( condition=condition )
+  except SDBBaseError as e:
 	   print(e.detail)
 
+  """
+   异常信息为：
+	pysequoiadb.error.SDBInvalidArgument: SDB_INVALIDARG(-6), Invalid Argument, detail: Failed to delete
+  """
   ```
 
 ##集群操作##

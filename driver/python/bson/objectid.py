@@ -93,14 +93,14 @@ class ObjectId(object):
                                                  "bson.errors.InvalidId".
         For example:
             >>> from bson import ObjectId
-            >>> ObjectId()
+            >>> ObjectId() # No parameter, mean "oid" is "None". will automatically generate a "oid"
             ObjectId('5d2c2af987abdf4f92f2f786')
 
-            >>> ObjectId('666f6f2d6261722d71757578')
-            ObjectId('666f6f2d6261722d71757578')
+            >>> ObjectId('5d2c2af987abdf4f92f2f786') # A 12 byte str parameter.
+            ObjectId('5d2c2af987abdf4f92f2f786')
 
-            >>> ObjectId(u'666f6f2d6261722d71757578')
-            ObjectId('666f6f2d6261722d71757578')
+            >>> ObjectId(u'5d2c2af987abdf4f92f2f786') # A 24 character Unicode parameter.
+            ObjectId('5d2c2af987abdf4f92f2f786')
 
         """
         if oid is None:

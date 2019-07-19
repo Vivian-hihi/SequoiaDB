@@ -606,12 +606,12 @@ class BSON(binary_type):
             contain '.', raising :class:`~bson.errors.InvalidDocument` in
             either case
 
-        if you want use special type ,you should user the corresponding
+        If you want use special type, you should use the corresponding
         special type class. like "$oid" corresponding ObjectId, in error eg,
-        '$oid' will be as common type rather than special type
+        document will be as common type rather than special type
             eg:
-                oid = Object("5d035e2bb4d450b04fcd0dff")
-                document = {"_oid" : oid}
+                oid = ObjectId("5d035e2bb4d450b04fcd0dff")
+                document = {"_id" : oid}
             error eg:
                 document = {"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}
 
