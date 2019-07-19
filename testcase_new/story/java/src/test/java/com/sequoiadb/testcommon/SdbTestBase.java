@@ -63,7 +63,7 @@ public class SdbTestBase {
     public static final String RCUSERBS = "rcuserbs";
 
     private static ConfigOptions options = new ConfigOptions();
-    private static String testGroup = null;
+    public static String testGroup = null;
     private static final int newIndexScanStep = 100;
     public static final int timeOutLen = 120;
     private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();

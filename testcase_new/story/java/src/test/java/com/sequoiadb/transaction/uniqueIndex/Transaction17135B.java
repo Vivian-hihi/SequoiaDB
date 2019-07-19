@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
@@ -22,7 +21,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = { "rc", "ru" })
+@Test(groups = { "rc", "ru", "rcuserbs" })
 public class Transaction17135B extends SdbTestBase {
 
     private String clName = "transCL_17135B";
@@ -74,13 +73,9 @@ public class Transaction17135B extends SdbTestBase {
 
         // 1 delete record R1
         cl1.delete("{b:1}");
-        try {
-            // 2 create unique index
-            cl2.createIndex("a", "{a:1}", true, false);
-            Assert.fail("create index should be error");
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-        }
+
+        // 2 create unique index
+        TransUtils.createUniIdxErr(cl2, "a", "{a:1}");
 
         sdb1.rollback();
         sdb2.rollback();

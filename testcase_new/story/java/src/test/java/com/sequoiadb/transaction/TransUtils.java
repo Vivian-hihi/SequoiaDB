@@ -456,8 +456,38 @@ public class TransUtils {
         }
         Collections.sort(list, new sortList(sortField));
     }
+
+    /**
+     * 创建唯一索引预期报 -38，rcuserbs 模式预期报 -334
+     * 
+     * @param cl
+     * @param idxName
+     * @param idxKey
+     */
+    public static void createUniIdxErr(DBCollection cl, String idxName, String idxKey) {
+        try {
+            cl.createIndex(idxName, idxKey, true, false);
+            Assert.fail("CREATE IDX SHOULD THROW ERR");
+        } catch (BaseException e) {
+            if ("rcuserbs".equals(SdbTestBase.testGroup)) {
+                if (-334 != e.getErrorCode()) {
+                    throw e;
+                }
+            } else {
+                if (-38 != e.getErrorCode()) {
+                    throw e;
+                }
+            }
+        }
+    }
 }
 
+/**
+ * 
+ * @description 排序类
+ * @author yinzhen
+ * @date 2019年7月19日
+ */
 class sortList implements Comparator<BSONObject> {
     private String sortField;
 
