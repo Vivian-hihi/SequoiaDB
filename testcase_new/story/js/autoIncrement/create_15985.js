@@ -56,6 +56,8 @@ function main()
    var rc = dbcl.find();
    checkRec( rc, expRecs );
    
+   dbcl.dropAutoIncrement(["a.aa", "a.bb"]);
+   
    commDropCL( db, COMMCSNAME, clName );
 }
 

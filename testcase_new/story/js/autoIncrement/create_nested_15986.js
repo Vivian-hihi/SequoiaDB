@@ -47,6 +47,8 @@ function main()
       checkSequence( sequenceNames[i], {} );
    }
    
+   dbcl.dropAutoIncrement(["a.aa", "b.bb.bbb"]);
+   
    commDropCL( db, COMMCSNAME, clName );
 }
 

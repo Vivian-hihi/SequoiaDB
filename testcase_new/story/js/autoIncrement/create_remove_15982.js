@@ -43,6 +43,8 @@ function main()
    expRecs = [ { "a" : 777 }, { "id1" : 1, "a" : 77 } ];
    checkRec( rc, expRecs );
    
+   dbcl.dropAutoIncrement(field);
+   
    dbcl.remove();
    
     while(dbcl.find().next())
