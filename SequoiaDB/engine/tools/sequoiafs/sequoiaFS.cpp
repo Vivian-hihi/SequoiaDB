@@ -228,7 +228,7 @@ error:
 }
 
 INT32 getCollection(sdbCollectionSpace &cs, const CHAR *clName,
-                    sdbCollection &cl, UINT16 replsize)
+                    sdbCollection &cl, INT32 replsize)
 {
    INT32 rc = SDB_OK;
 
