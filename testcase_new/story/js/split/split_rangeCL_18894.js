@@ -50,15 +50,15 @@ function insertData( dbcl, insertNums )
    var times = insertNums/batchNums;
    for(var k = 0; k < times; k++)
    {  
-	  var doc = [];
-	  for( var i = 0; i < batchNums; ++i )
+      var doc = [];
+      for( var i = 0; i < batchNums; ++i )
       {
-		 var no = i;
-		 var a  = i;
-		 var test = "test" + i;
-		 var objs = { "a" : a, "no" : no, "test" : test}; 		 
-		 doc.push(objs);
-	  }
-	  dbcl.insert( doc );  
+         var no = i;
+         var a  = i;
+         var test = "test" + i;
+	 var objs = { "a" : a, "no" : no, "test" : test}; 		 
+	 doc.push(objs);
+      }
+      dbcl.insert( doc );  
    }  
 }
