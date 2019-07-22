@@ -76,7 +76,9 @@ public class Fulltext11989 extends SdbTestBase {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
+            if (!esIndexName.isEmpty() && !cappedName.isEmpty()) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
+            }
         } finally {
             if (sdb != null) {
                 sdb.close();
