@@ -1,12 +1,17 @@
 /****************************************************************
 @decription:   Deploy SequoiaDB, MySQL, PostgreSQL
 
-@input:        sdb:   Boolean
-               mysql: Boolean
-               pg:    Boolean
-               cm:    Number, default: 11790
+@input:        sdb:        Boolean
+               mysql:      Boolean
+               pg:         Boolean
+               cm:         Number, default: 11790
+               mysqlPath:  String, mysql install path. Use it when you have
+                           multiple installations of SequoiaSQL-MySQL.
+               pgPath:     String, pg install path. Use when have multiple
+                           installations of SequoiaSQL-PostgreSQL.
 
-               eg: bin/sdb -f quickDeploy.js -e 'var sdb=true; var mysql=true; var cm=11790'
+               eg: bin/sdb -f quickDeploy.js -e 'var sdb=true; var mysql=true; var cm=11790"'
+               eg: bin/sdb -f quickDeploy.js -e 'var mysql=true; var mysqlPath="/opt/sequoiasql/mysql"'
 
 @author:       Ting YU 2019-04-12
 ****************************************************************/
@@ -60,6 +65,38 @@ else if( cm.constructor !== Number )
    throw "Invalid para[cm], should be Number" ;
 }
 
+if ( typeof( mysqlPath ) === "undefined" )
+{
+   var mysqlPath = "" ;
+}
+else if( mysqlPath.constructor !== String )
+{
+   throw "Invalid para[mysqlPath], should be String" ;
+}
+else
+{
+   if ( !mysql )
+   {
+      throw "Para[mysqlPath] can be set only when [mysql] is specified" ;
+   }
+}
+
+if ( typeof( pgPath ) === "undefined" )
+{
+   var pgPath = "" ;
+}
+else if( pgPath.constructor !== String )
+{
+   throw "Invalid para[pgPath], should be String" ;
+}
+else
+{
+   if ( !pg )
+   {
+      throw "Para[pgPath] can be set only when [pg] is specified" ;
+   }
+}
+
 // set global variable
 var DEPLOY_SEQUOIADB  = sdb ;
 var DEPLOY_MYSQL      = mysql ;
@@ -68,75 +105,51 @@ var LOCAL_CM_PORT     = cm ;
 var TMP_COORD_SVC     = 18800 ;
 var MY_HOSTNAME       = System.getHostName() ;
 var NODE_CONF         = {} ;
+var MYSQL_INSTALL_PATH = mysqlPath ;
+var PG_INSTALL_PATH   = pgPath ;
 
 // run!
 main() ;
 
 function main()
 {
-   var ignoreNotInstall = true ;
-   if ( USER_SET_DEPLOY ) ignoreNotInstall = false ;
-
    if ( DEPLOY_SEQUOIADB )
    {
       deploySequoiadb() ;
    }
    if ( DEPLOY_MYSQL )
    {
-      deployMysql( ignoreNotInstall ) ;
+      deployMysql() ;
    }
    if ( DEPLOY_POSTGRESQL )
    {
-      deployPostgresql( ignoreNotInstall ) ;
+      deployPostgresql() ;
    }
 }
 
-// return obj:
-// {
-//   "VERSION": "3.2",
-//   "USER": "sdbadmin",
-//   "INSTALL_DIR": "/opt/sequoiasql/mysql",
-//   "MD5": "818cea64849dff4c1b572a6d6af5d757"
-// }
-function getSqlInstallInfo( dbType, ignoreNotInstall )
+/**
+ * Convert ini file to json obj. ini file format as "a=1\nb=2"
+ *
+ * @param  fileName Name of ini file
+ * @return jsonObj  It is json obj, eg: { "a":1, "b":2 }.
+ *                  If file not exist, return undefined.
+ */
+function iniFile2Obj( fileName )
 {
-   var systemFile = "" ;
-   var dbFullType = "" ;
-   if ( dbType == "mysql" )
-   {
-      systemFile = "/etc/default/sequoiasql-mysql" ;
-      dbFullType = "SequoiaSQL-MySQL" ;
-   }
-   else if ( dbType == "postgresql" )
-   {
-      systemFile = "/etc/default/sequoiasql-postgresql" ;
-      dbFullType = "SequoiaSQL-PostgreSQL" ;
-   }
-   else
-   {
-      println( "Invalid type[" + dbType + "]!") ;
-      throw "ERROR" ;
-   }
+   var exist = File.exist( fileName ) ;
+   if ( !exist ) return ;
 
+   // get file
    try
    {
-      var file = new File( systemFile, 0644, SDB_FILE_READONLY ) ;
+      var file = new File( fileName, 0644, SDB_FILE_READONLY ) ;
    }
    catch( e )
    {
-      if ( e == -4 )
-      {
-         if ( ignoreNotInstall ) return ;
-         println( "ERROR: This machine has not installed " +
-                  dbFullType + "!" ) ;
-         throw "ERROR" ;
-      }
-      else
-      {
-         throw e ;
-      }
+      throw e ;
    }
 
+   // get file content
    var infoObj = {} ;
    while( true )
    {
@@ -156,6 +169,85 @@ function getSqlInstallInfo( dbType, ignoreNotInstall )
 
       var conf = aLine.split( "=" ) ;
       infoObj[ conf[0] ] = conf[1] ;
+   }
+   return infoObj ;
+}
+
+/**
+ * Get installation information, eg: user, installPath
+ *
+ * @param  dbType           database type, mysql or pg
+ * @param  ignoreNotInstall Ignore error if installation not exist
+ * @param  installPath      install path
+ * @return jsonObj          installation info, eg:
+ * {
+ *   "VERSION": "3.2",
+ *   "USER": "sdbadmin",
+ *   "INSTALL_DIR": "/opt/sequoiasql/mysql",
+ *   "MD5": "818cea64849dff4c1b572a6d6af5d757"
+ * }
+ */
+function getSqlInstallInfo( dbType, ignoreNotInstall, installPath )
+{
+   if ( typeof( installPath ) === "undefined" ) installPath = "" ;
+
+   var dbTypeStr  = "SequoiaSQL-MySQL" ;
+   var paraStr    = "--mysql and --mysqlPath" ;
+   var titleStr   = "\n************ Deploy SequoiaSQL-MySQL *****************" ;
+   var systemFile = "sequoiasql-mysql" ;
+   var systemDir  = "/etc/default/" ;
+   if ( dbType == "pg" )
+   {
+      systemFile  = "sequoiasql-postgresql" ;
+      dbTypeStr   = "SequoiaSQL-PostgreSQL" ;
+      paraStr     = "--pg and --pgPath" ;
+      titleStr    = "\n************ Deploy SequoiaSQL-PostgreSQL ************" ;
+   }
+   else if ( dbType != "mysql" )
+   {
+      println( "Invalid type[" + dbType + "]!") ;
+      throw "ERROR" ;
+   }
+
+   // find all /etc/default/sequoiasql-mysql[i]
+   var foundOut = false ;
+   var bsonArr = File.find( { mode: 'n',
+                              value: '"' + systemFile + '*"',
+                              pathname: systemDir } ) ;
+   if ( bsonArr.size() == 0 && ignoreNotInstall )
+   {
+      return ;
+   }
+   println( titleStr ) ; // we should print tile here, in case print error below
+   if ( bsonArr.size() == 0 )
+   {
+      println( "ERROR: This machine hasn't installed " + dbTypeStr + "!" ) ;
+      throw "ERROR" ;
+   }
+   if ( installPath == "" && bsonArr.size() > 1 )
+   {
+      println( "There are multiple "+dbTypeStr+" on this machine. You should "+
+               "specify one installation path by " + paraStr + ".") ;
+      throw "ERROR" ;
+   }
+
+   // loop every /etc/default/sequoiasql-mysql[i]
+   var infoObj = {} ;
+   while ( bsonArr.more() )
+   {
+      var systemFileFullName = bsonArr.next().toObj().pathname ;
+
+      infoObj = iniFile2Obj( systemFileFullName ) ;
+      if ( installPath != "" && infoObj.INSTALL_DIR == installPath )
+      {
+         foundOut = true ;
+         break ;
+      }
+   }
+   if ( installPath != "" && !foundOut )
+   {
+      println( "There is not "+dbTypeStr+" installation in "+installPath+"!" ) ;
+      throw "ERROR" ;
    }
 
    return infoObj ;
@@ -225,7 +317,7 @@ function getSqlConf( dbType, installedPath )
    {
       confFile = "mysql.conf" ;
    }
-   else if ( dbType == "postgresql" )
+   else if ( dbType == "pg" )
    {
       confFile = "postgresql.conf" ;
    }
@@ -896,25 +988,18 @@ function deploySequoiadb()
    removeTmpCoord() ;
 }
 
-function deployMysql( ignoreNotInstall )
+function deployMysql()
 {
-   if ( !ignoreNotInstall )
-   {
-      println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
-   }
+   var ignoreNotInstall = !USER_SET_DEPLOY ;
 
    // check it has installation or not
-   var installInfo = getSqlInstallInfo( "mysql", ignoreNotInstall ) ;
+   var installInfo = getSqlInstallInfo( "mysql", ignoreNotInstall,
+                                        MYSQL_INSTALL_PATH ) ;
    if ( installInfo == undefined && ignoreNotInstall )
    {
       return ;
    }
    var installedPath = installInfo.INSTALL_DIR ;
-
-   if ( ignoreNotInstall )
-   {
-      println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
-   }
 
    // check user
    checkUser( "mysql", installInfo ) ;
@@ -989,33 +1074,26 @@ function deployMysql( ignoreNotInstall )
 
 function deployPostgresql( ignoreNotInstall )
 {
-   if ( !ignoreNotInstall )
-   {
-      println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
-   }
+   var ignoreNotInstall = !USER_SET_DEPLOY ;
 
    // check it has installation or not
-   var installInfo = getSqlInstallInfo( "postgresql", ignoreNotInstall ) ;
+   var installInfo = getSqlInstallInfo( "pg", ignoreNotInstall,
+                                        PG_INSTALL_PATH ) ;
    if ( installInfo == undefined && ignoreNotInstall )
    {
       return ;
    }
    var installedPath = installInfo.INSTALL_DIR ;
 
-   if ( ignoreNotInstall )
-   {
-      println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
-   }
-
    // check user
-   checkUser( "postgresql", installInfo ) ;
+   checkUser( "pg", installInfo ) ;
 
    var sqlCtl = installedPath + "/bin/sdb_sql_ctl" ;
    var psql = installedPath + "/bin/psql" ;
    var cmd = new Cmd() ;
 
    // get configure
-   var allConf = getSqlConf( "postgresql", installedPath ) ;
+   var allConf = getSqlConf( "pg", installedPath ) ;
 
    // create instance
    var dbName = "foo" ;
