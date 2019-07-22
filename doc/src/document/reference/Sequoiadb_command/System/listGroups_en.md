@@ -43,7 +43,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* List all groups
+* List the information of all user groups
 
 ```lang-javascript
 > System.listGroups()

@@ -136,7 +136,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-List all groups
+List the information of all user groups
 .IP
 .nf
 \f[C]

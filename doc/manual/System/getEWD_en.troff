@@ -19,7 +19,7 @@ Acquire current directory of sdb shell
 NULL
 .SH RETURN VALUE
 .PP
-On success, return disk information.
+On success, return current directory of sdb shell.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

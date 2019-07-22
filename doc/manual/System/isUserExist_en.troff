@@ -14,7 +14,7 @@ isUserExist \- Determine if a user exists
 System
 .SH DESCRIPTION
 .PP
-Determine if a user exist
+Determine if a user exists
 .SH PARAMETERS
 .PP
 .TS
@@ -50,7 +50,7 @@ T}
 .TE
 .SH RETURN VALUE
 .PP
-On success, return true or false.
+On success, return true if it is a user, otherwise return false.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -60,7 +60,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Determine if a user group exist
+Determine if a user group exists
 .IP
 .nf
 \f[C]

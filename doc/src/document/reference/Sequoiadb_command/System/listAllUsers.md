@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-列出所有用户
+列出所有用户信息
 
 ##参数##
 
@@ -40,7 +40,7 @@ options 参数详细说明如下：
 
 ##示例##
 
-* 默认显示所有用户；
+* 列出所有用户信息；
 
   ```lang-javascript
   > System.listAllUsers( )

@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return disk information.
+On success, return current directory of sdb shell.
 
 On error, exception will be thrown.
 

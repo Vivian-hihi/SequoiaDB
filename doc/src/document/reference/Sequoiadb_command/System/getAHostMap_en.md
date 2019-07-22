@@ -1,6 +1,6 @@
 ##NAME##
 
-getAHostMap - Acquire a host to ip address mapping in the host file
+getAHostMap - Acquire a hostname to ip address mapping in the host file
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire a host to ip address mapping in the host file
+Acquire a hostname to ip address mapping in the host file
 
 ##PARAMETERS##
 
@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire a host to ip address mapping to the host file
+* Acquire a hostname to ip address mapping in the host file
 
 ```lang-javascript
 > System.getAHostMap( "localhost" )

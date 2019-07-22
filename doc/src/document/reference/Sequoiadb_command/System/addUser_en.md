@@ -29,7 +29,7 @@ The detail description of 'users' parameter is as follow:
 
 **Note:**
 
-The group parameter must be an existing user group. If not specified, a user group with the same name as the name paramter is created by default.
+The group parameter must be an existing user group. If not specified, a user group with the same name as the name parameter is created by default.
 
 ##RETURN VALUE##
 

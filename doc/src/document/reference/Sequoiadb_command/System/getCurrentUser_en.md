@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return current user.
+On success, return current user information.
 
 On error, exception will be thrown.
 

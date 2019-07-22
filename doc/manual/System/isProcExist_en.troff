@@ -14,7 +14,7 @@ isProcExist \- Determine if a process exists
 System
 .SH DESCRIPTION
 .PP
-Determine if a process exist
+Determine if a process exists
 .SH PARAMETERS
 .PP
 .TS
@@ -123,7 +123,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-exist base on process
+exists base on process
 T}@T{
 T}
 T{
@@ -156,7 +156,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-exist base on service
+exists base on service
 T}@T{
 T}
 T{
@@ -170,7 +170,7 @@ T}
 .TE
 .SH RETURN VALUE
 .PP
-On success, return true or false.
+On success, return true if it is a process, otherwise return false.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

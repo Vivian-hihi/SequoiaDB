@@ -1,6 +1,6 @@
 ##NAME##
 
-getPID - Acquire the process id
+getPID - Acquire the process id of sdb shell
 
 ##SYNOPSIS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return process id of sdb shell.
+On success, return the process id of sdb shell.
 
 On error, exception will be thrown.
 

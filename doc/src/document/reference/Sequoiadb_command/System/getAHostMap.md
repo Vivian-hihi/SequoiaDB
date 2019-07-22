@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-获得指定主机名在host文件中对应的IP地址
+获取指定主机名在host文件中对应的IP地址
 
 ##参数##
 
@@ -29,7 +29,7 @@ System
 
 ##示例##
 
-* 获得指定主机名在host文件中对应的IP地址
+* 获取指定主机名在host文件中对应的IP地址
 
   ```lang-javascript
   > System.getAHostMap( "localhost" )

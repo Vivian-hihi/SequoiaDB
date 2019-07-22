@@ -33,7 +33,7 @@ The optional parameter filter supports the AND, the OR, the NOT and exact matchi
 
 ##RETURN VALUE##
 
-On success, return the information of user groups.
+On success, return the information of logged-in users.
 
 On error, exception will be thrown.
 
@@ -43,7 +43,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* List all users
+* List the information of all logged-in users
 
 ```lang-javascript
 > System.listLoginUsers()

@@ -1,6 +1,6 @@
 ##NAME##
 
-listAllUsers - List users
+listAllUsers - List the information of users
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-List users
+List the information of users
 
 ##PARAMETERS##
 
@@ -43,7 +43,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* List all users
+* List the information of all users
 
 ```lang-javascript
 > System.listAllUsers( )

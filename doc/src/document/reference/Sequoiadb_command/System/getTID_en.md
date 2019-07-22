@@ -1,6 +1,6 @@
 ##NAME##
 
-getTID - Acquire the thread id
+getTID - Acquire the thread id of sdb shell
 
 ##SYNOPSIS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return thread id of sdb shell.
+On success, return the thread id of sdb shell.
 
 On error, exception will be thrown.
 

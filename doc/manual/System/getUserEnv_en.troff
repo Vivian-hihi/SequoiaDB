@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getUserEnv \- Acquire the environment variable
+getUserEnv \- Acquire the environment variable for the current user
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.getUserEnv()\f[]\f[]

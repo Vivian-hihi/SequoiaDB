@@ -40,5 +40,6 @@ users 参数详细说明如下：
 * 删除系统用户
 
   ```lang-javascript
+  > System.addUser( { "name": "newUser" } )
   > System.delUser( { "name": "newUser" } )
   ```

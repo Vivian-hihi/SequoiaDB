@@ -1,6 +1,6 @@
 ##NAME##
 
-listProcess - List processes
+listProcess - List the information of processes
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-List processes
+List the information of processes
 
 ##PARAMETERS##
 
@@ -43,7 +43,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* List all users
+* List the information of processes
 
 ```lang-javascript
 > System.listProcess()

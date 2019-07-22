@@ -22,7 +22,7 @@ Determine whether a port is usable
 
 ##RETURN VALUE##
 
-On success, return true or false.
+On success, return true if the port is usable, otherwise return false.
 
 On error, exception will be thrown.
 

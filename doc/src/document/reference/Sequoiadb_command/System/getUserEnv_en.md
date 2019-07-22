@@ -1,6 +1,6 @@
 ##NAME##
 
-getUserEnv - Acquire the environment variable
+getUserEnv - Acquire the environment variable for the current user
 
 ##SYNOPSIS##
 

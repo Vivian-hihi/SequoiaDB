@@ -111,6 +111,7 @@ Delete a system user
 .IP
 .nf
 \f[C]
+>\ System.addUser(\ {\ "name":\ "newUser"\ }\ )
 >\ System.delUser(\ {\ "name":\ "newUser"\ }\ )
 \f[]
 .fi

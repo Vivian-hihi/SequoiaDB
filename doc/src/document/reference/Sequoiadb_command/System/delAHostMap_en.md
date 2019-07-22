@@ -1,6 +1,6 @@
 ##NAME##
 
-delAHostMap - Delete a host name to ip address mapping in the host file
+delAHostMap - Delete a hostname to ip address mapping in the host file
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Delete a host name to ip address mapping in the host file
+Delete a hostname to ip address mapping in the host file
 
 ##PARAMETERS##
 
@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Delete a host name to ip address mapping in the host file
+* Delete a hostname to ip address mapping in the host file
 
 ```lang-javascript
 > System.delAHostMap( "hostname" )

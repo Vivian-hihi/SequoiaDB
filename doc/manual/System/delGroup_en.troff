@@ -64,6 +64,7 @@ Delete a user group
 .IP
 .nf
 \f[C]
+>\ System.addGroup(\ {\ "name":\ "newGroup"\ }\ )
 >\ System.delGroup(\ "newGroup"\ )
 \f[]
 .fi

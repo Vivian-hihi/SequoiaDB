@@ -1,6 +1,6 @@
 ##NAME##
 
-addAHostMap - Add a host name to ip address mapping to the host file
+addAHostMap - Add a hostname to ip address mapping to the host file
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Add a host name to ip address mapping to the host file
+Add a hostname to ip address mapping to the host file
 
 ##PARAMETERS##
 
@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Add a host name to ip address mapping to the host file
+* Add a hostname to ip address mapping to the host file
 
 ```lang-javascript
 > System.addAHostMap( "hostname", "1.1.1.1" )

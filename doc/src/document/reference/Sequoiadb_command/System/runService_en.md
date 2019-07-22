@@ -20,7 +20,7 @@ Run the service
 | ------- | -------- | ------------ | ---------------- | -------- |
 | servicename   | string   | --- | service program name   | yes    |
 | command     | string   | ---   | the command corresponding to service name   | yes    |
-| option | string  | ""    | command option | not     |
+| option | string  | NULL    | command option | not     |
 
 ##RETURN VALUE##
 

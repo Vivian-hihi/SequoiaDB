@@ -32,5 +32,6 @@ System
 * 删除一个用户组
 
   ```lang-javascript
+  > System.addGroup( { "name": "newGroup" } )
   > System.delGroup( "newGroup" )
   ```

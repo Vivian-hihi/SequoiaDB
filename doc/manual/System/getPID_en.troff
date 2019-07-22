@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getPID \- Acquire the process id
+getPID \- Acquire the process id of sdb shell
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.getPID()\f[]\f[]
@@ -19,7 +19,7 @@ Acquire the process id of sdb shell
 NULL
 .SH RETURN VALUE
 .PP
-On success, return process id of sdb shell.
+On success, return the process id of sdb shell.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

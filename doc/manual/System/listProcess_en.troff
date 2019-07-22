@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-listProcess \- List processes
+listProcess \- List the information of processes
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.listProcess( [options], [filter] )\f[]\f[]
@@ -14,7 +14,7 @@ listProcess \- List processes
 System
 .SH DESCRIPTION
 .PP
-List processes
+List the information of processes
 .SH PARAMETERS
 .PP
 .TS
@@ -136,7 +136,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-List all users
+List the information of processes
 .IP
 .nf
 \f[C]

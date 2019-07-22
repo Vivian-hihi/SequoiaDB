@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-getAHostMap \- Acquire a host to ip address mapping in the host file
+getAHostMap \- Acquire a hostname to ip address mapping in the host file
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.getAHostMap( <hostname> )\f[]\f[]
@@ -14,7 +14,7 @@ getAHostMap \- Acquire a host to ip address mapping in the host file
 System
 .SH DESCRIPTION
 .PP
-Acquire a host to ip address mapping in the host file
+Acquire a hostname to ip address mapping in the host file
 .SH PARAMETERS
 .PP
 .TS
@@ -60,7 +60,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire a host to ip address mapping to the host file
+Acquire a hostname to ip address mapping in the host file
 .IP
 .nf
 \f[C]

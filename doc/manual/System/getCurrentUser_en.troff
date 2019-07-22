@@ -19,7 +19,7 @@ Acquire current user information
 NULL
 .SH RETURN VALUE
 .PP
-On success, return current user.
+On success, return current user information.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

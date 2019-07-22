@@ -22,7 +22,7 @@ Determine whether the host is reachable
 
 ##RETURN VALUE##
 
-On success, return true or false.
+On success, return true if the network can reach the specified host, otherwise return false.
 
 On error, exception will be thrown.
 
