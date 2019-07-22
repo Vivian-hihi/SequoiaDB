@@ -488,6 +488,9 @@ public class FullTextDBUtils {
      * @Date 2019-05-09
      */
     private boolean isExistCS(Sequoiadb db, String csName, boolean expExist) throws Exception {
+	if(csName.isEmpty()){
+	    return false;
+	}
 	List<String> rgNames = CommLib.getDataGroupNames(db);
 	boolean csExist = false;
 	for (String rgName : rgNames) {
@@ -513,6 +516,9 @@ public class FullTextDBUtils {
      * @Date 2019-05-09
      */
     private boolean isExistCS(Sequoiadb db, String csName, String rgName, boolean expExist) throws Exception {
+	if(csName.isEmpty()){
+	    return false;
+	}
 	boolean csExist = false;
 	List<String> nodeList = CommLib.getNodeAddress(db, rgName);
 	for (String nodeAddress : nodeList) {

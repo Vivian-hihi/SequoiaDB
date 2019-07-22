@@ -36,6 +36,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  */
 public class FullText15846 extends SdbTestBase {
 
+    private int timeout = 600000;
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
@@ -83,7 +84,7 @@ public class FullText15846 extends SdbTestBase {
     public void test() throws Exception {
 
         DropIndexThread dropIndex = new DropIndexThread();
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor(timeout);
         thread.addWorker(dropIndex);
         thread.addWorker(new TruncateLobThread());
         thread.addWorker(new PutLobThread());

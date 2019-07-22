@@ -144,7 +144,7 @@ public class FullTextUtils {
     */
     public static boolean isCountRightInES(List<String> esIndexNames, int expectCount) throws Exception {
         boolean isSync = false;
-        int timeout = 3600; // 超时 1h
+        int timeout = 600; // 超时 10min
         int interval = 1; // 每次检测间隔时间1s
         int doTimes = 0;
         int actCount = 0;
@@ -156,20 +156,21 @@ public class FullTextUtils {
                 actCount += ( FullTextESUtils.getCountFromES(esIndexName) );
             }
 
-            if (actCount == expectCount) {
-                isSync = true;
-                break;
-            } else {
-                doTimes++;
-                // System.out.println("esIndexNames: " + esIndexNames.toString()
-                // + ", doTimes: " + doTimes + ", actCount: "
-                // + actCount + ", expectCount: " + expectCount);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+	    if (actCount == expectCount) {
+		isSync = true;
+		break;
+	    } else {
+		doTimes++;
+		if (doTimes % 60 == 0) {
+		    System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes
+			    + ", actCount: " + actCount + ", expectCount: " + expectCount);
+		}
+		try {
+		    Thread.sleep(1000);
+		} catch (InterruptedException e) {
+		    e.printStackTrace();
+		}
+	    }
         }
         // 同步失败后，打印所有索引名
         if (!isSync) {
@@ -191,7 +192,7 @@ public class FullTextUtils {
      */
     public static boolean isLastLidInES(List<String> esIndexNames, List<DBCollection> cappedCLs) throws Exception {
         boolean isSync = false;
-        int timeout = 3600; // 超时 1h
+        int timeout = 600; // 超时 10min
         int interval = 1; // 每次检测间隔时间1s
         int doTimes;
 
@@ -213,20 +214,20 @@ public class FullTextUtils {
                     isSync = true;
                 }
 
-                if (isSync) {
-                    break;
-                } else {
-                    doTimes++;
-//                     System.out.println("esIndexName: " +
-//                     esIndexNames.get(i).toString() + ", doTimes: " + doTimes
-//                     + ", commitID: " + commitID + ", lastLogicalID: " +
-//                     lastLogicalIDs.get(i).toString());
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+		if (isSync) {
+		    break;
+		} else {
+		    doTimes++;
+		    if (doTimes % 60 == 0) {
+			System.out.println("esIndexName: " + esIndexNames.get(i).toString() + ", doTimes: " + doTimes
+				+ ", commitID: " + commitID + ", lastLogicalID: " + lastLogicalIDs.get(i).toString());
+		    }
+		    try {
+			Thread.sleep(1000);
+		    } catch (InterruptedException e) {
+			e.printStackTrace();
+		    }
+		}
             }
             // 如果最终没有完成同步则打屏
             if (!isSync) {
@@ -302,7 +303,7 @@ public class FullTextUtils {
     private static boolean isLogicalIDEqualCLLid(DBCollection cl, String esIndexName) throws Exception {
         boolean isSync = false;
         int preCLLid = -1;
-        int timeout = 3600; // timeout 1h
+        int timeout = 600; // timeout 10min
         int interval = 1; // interval 1s
         int doTimes;
 
