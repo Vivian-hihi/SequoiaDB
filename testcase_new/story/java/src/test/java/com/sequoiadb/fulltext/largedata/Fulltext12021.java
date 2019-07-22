@@ -57,11 +57,13 @@ public class Fulltext12021 extends SdbTestBase {
                 false, false);
         cappedName = FullTextDBUtils.getCappedName(cl, fullTextIndexName);
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullTextIndexName);
-        cl.split(srcGroup, desGroup, (BSONObject) JSON.parse("{recordId:0}"), (BSONObject) JSON.parse("{recordId:10}"));
+        int desRange = 100000;
+        cl.split(srcGroup, desGroup, (BSONObject) JSON.parse("{recordId:0}"),
+                (BSONObject) JSON.parse("{recordId:" + desRange + "}"));
         FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
-        checkData(desGroup, "{recordId:{$gte:0,$lt:10}}", 10);
-        checkData(srcGroup, "{recordId:{$gte:" + 10 + ",$lt:" + FullTextUtils.INSERT_NUMS + "}}",
-                ( FullTextUtils.INSERT_NUMS - 10 ));
+        checkData(desGroup, "{recordId:{$gte:0,$lt:" + desRange + "}}", desRange);
+        checkData(srcGroup, "{recordId:{$gte:" + desRange + ",$lt:" + FullTextUtils.INSERT_NUMS + "}}",
+                (FullTextUtils.INSERT_NUMS - desRange));
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullTextIndexName, FullTextUtils.INSERT_NUMS));
     }
 
