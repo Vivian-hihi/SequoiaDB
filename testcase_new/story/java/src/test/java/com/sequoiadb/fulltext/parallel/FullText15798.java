@@ -73,6 +73,9 @@ public class FullText15798 extends SdbTestBase {
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
         actRecords = FullTextDBUtils.getReadList(cappedCL.query());
         Assert.assertEquals(actRecords.size(), 0);
+
+        // 全文检索校验
+        FullTextUtils.isRecordEqualsByMulQueryMode(cl);
     }
 
     @AfterClass

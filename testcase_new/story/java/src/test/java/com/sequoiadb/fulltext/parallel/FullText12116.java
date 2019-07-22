@@ -93,6 +93,9 @@ public class FullText12116 extends SdbTestBase {
                 db2.close();
             }
         }
+
+        // 全文检索校验
+        FullTextUtils.isRecordEqualsByMulQueryMode(cl);
     }
 
     @AfterClass
