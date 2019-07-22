@@ -56,8 +56,8 @@ function insertData( dbcl, insertNums )
          var no = i;
          var a  = i;
          var test = "test" + i;
-         var objs = { "a" : a, "no" : no, "test" : test}; 		 
-	     doc.push(objs);
+         var objs = { "a" : a, "no" : no, "test" : test};
+         doc.push(objs);
       }
       dbcl.insert( doc );  
    }  
