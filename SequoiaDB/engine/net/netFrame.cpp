@@ -381,6 +381,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_RUN ) ;
 
+      INT32 retryCount = 0 ;
+
       /// start dummy timer
       rc = _innerTimeHandle.startDummyTimer() ;
       if ( rc )
@@ -403,6 +405,13 @@ namespace engine
          if ( getEvSuitSize() > 0 )
          {
             ossSleep( 200 ) ;
+            // sub-network may be added after quiesced
+            // let's retry stop after each second
+            ++ retryCount ;
+            if ( 0 == retryCount % 5 )
+            {
+               _stopAllEvSuit() ;
+            }
             continue ;
          }
          break ;
