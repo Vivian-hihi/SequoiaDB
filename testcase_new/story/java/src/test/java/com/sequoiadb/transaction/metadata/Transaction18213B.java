@@ -90,6 +90,10 @@ public class Transaction18213B extends SdbTestBase {
                 insertDatas(cl, 10000, 20000);
                 cl.delete("{$and:[{a:{$gte:0}},{a:{$lt:5000}}]}", "{'':'idx18213'}");
                 cl.update("{$and:[{a:{$gte:5000}},{a:{$lt:15000}}]}", "{$inc:{a:10}}", "{}'':'idx18213'");
+            } catch (BaseException e) {
+                if (-321 != e.getErrorCode()) {
+                    throw e;
+                }
             } finally {
                 db.commit();
                 db.close();
