@@ -82,7 +82,7 @@ namespace engine
       DPS_TRANS_UNKNOWN       = 99
    } ;
 
-   #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RC
+   #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RU
    #define DPS_TRANS_DFT_TIMEOUT          (60)  /* 1 minute */
    #define DPS_TRANS_LOCKWAIT_DFT         FALSE
    #define DPS_TRANS_AUTOCOMMIT_DFT       FALSE
