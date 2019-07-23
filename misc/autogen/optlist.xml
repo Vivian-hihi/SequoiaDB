@@ -538,7 +538,8 @@
       <detail>
          <en>1. It specifies whether transaction turns on or not.<fig></fig>
              2. If it is not specifed, the default value is true.</en>
-         <cn>1. 指定是否打开事务。<fig></fig>2. 如果不指定，则默认为true。</cn>
+         <cn>1. 指定是否打开事务。<fig></fig>
+             2. 如果不指定，则默认为true。</cn>
       </detail>
       <typeofweb>boolean</typeofweb>
    </opt>
@@ -1830,8 +1831,8 @@
       <name>PMD_OPTION_TRANS_ISOLATION</name>
       <long>transisolation</long>
       <description>
-         <en>Specify the isolation level of transaction, 0 for RU, 1 for RC, 2 for RS. Default is 1</en>
-         <cn>指定事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。默认为1。</cn>
+         <en>Specify the isolation level of transaction, 0 for RU, 1 for RC, 2 for RS. Default is 0</en>
+         <cn>指定事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。默认为0。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -1842,13 +1843,13 @@
          <cn>下一次事务中生效</cn>
       </reloadstrategy>
       <detail>
-         <en>1. Specify the isolation level of transaction. Value is 0(RU), 1(RC), 2(RS). Default is 1.<fig></fig>
+         <en>1. Specify the isolation level of transaction. Value is 0(RU), 1(RC), 2(RS). Default is 0.<fig></fig>
            2. Value enumeration:<fig></fig>
              ● 0: RU, read uncommited<fig></fig>
              ● 1: RC, read commited.<fig></fig>
              ● 2: RS, read stability.<fig></fig>
          </en>
-         <cn>1. 指定事务隔离级别，默认是1。<fig></fig>
+         <cn>1. 指定事务隔离级别，默认是0。<fig></fig>
            2. 取值列表：<fig></fig>
              ● 0: RU，读未提交。<fig></fig>
              ● 1: RC, 读已提交。<fig></fig>
@@ -1856,7 +1857,7 @@
          </cn>
       </detail>
       <type>int</type>
-      <default>1</default>
+      <default>0</default>
       <hidden>false</hidden>
       <typeofweb>num</typeofweb>
    </opt>
@@ -2092,7 +2093,7 @@
       <long>maxsocketpernode</long>
       <description>
         <en>The max number of socket between two nodes. Value range:[1,100], default is 5</en>
-        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为5</cn>
+        <cn>两个节点之间的最大连接数，取值范围：[1,100]，默认为5</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -2100,7 +2101,7 @@
       </reloadable>
       <detail>
         <en>The max number of socket between two nodes. Value range:[1,100], default is 5.</en>
-        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为5。</cn>
+        <cn>两个节点之间的最大连接数，取值范围：[1,100]，默认为5。</cn>
       </detail>
       <type>int</type>
       <default>5</default>
