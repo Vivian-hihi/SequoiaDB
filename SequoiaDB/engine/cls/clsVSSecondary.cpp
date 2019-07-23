@@ -155,4 +155,16 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSVSSD_ACTIVE ) ;
       return ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_FORCEACTIVE, "_clsVSSecondary::forceActive" )
+   void _clsVSSecondary::forceActive ( INT32 & next )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSVSSD_FORCEACTIVE ) ;
+      _timeout() = 0 ;
+      _hasPrint = FALSE ;
+      next = id() ;
+      PD_TRACE_EXIT ( SDB__CLSVSSD_FORCEACTIVE ) ;
+      return ;
+   }
+
 }

@@ -71,6 +71,11 @@ namespace engine
       virtual void active( INT32 &next ) = 0 ;
       virtual void deactive () {}
 
+      virtual void forceActive ( INT32 & next )
+      {
+         active( next ) ;
+      }
+
       virtual const CHAR *name() const { return "" ;}
 
    public:

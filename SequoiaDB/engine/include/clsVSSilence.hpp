@@ -57,6 +57,8 @@ namespace engine
 
       virtual void active( INT32 &next ) ;
 
+      virtual void forceActive ( INT32 & next ) ;
+
       virtual const CHAR *name() const { return "Silence" ;}
    } ;
 }

@@ -62,7 +62,7 @@ namespace engine
 
    #define CLS_VOTE_FIRST_STATUS             ( 0 )
 
-   #define CLS_VOTE_ACTIVE_STATUS( next ) \
+   #define CLS_VOTE_ACTIVE_STATUS( next, force ) \
            do { \
               SDB_ASSERT( next < (INT32)_status.size() &&\
                           0 <= next,\
@@ -81,7 +81,14 @@ namespace engine
                  prevVS = _current ; \
                  PD_LOG( PDINFO, "vote change to %s", _current->name() ) ;\
                  now = _current->id() ;\
-                 _current->active( nextStatus ) ;\
+                 if ( force )\
+                 {\
+                    _current->forceActive( nextStatus ) ;\
+                 }\
+                 else\
+                 {\
+                    _current->active( nextStatus ) ;\
+                 }\
                  SDB_ASSERT( nextStatus < (INT32)_status.size() &&\
                      0 <= nextStatus,\
                      "valid: 0 <= status < status.size()" ) ;\
@@ -121,7 +128,7 @@ namespace engine
       CLS_VOTE_REGISGER_STATUS( _clsVSAnnounce, rc ) ;
       CLS_VOTE_REGISGER_STATUS( _clsVSPrimary, rc ) ;
 
-      CLS_VOTE_ACTIVE_STATUS( CLS_VOTE_FIRST_STATUS ) ;
+      CLS_VOTE_ACTIVE_STATUS( CLS_VOTE_FIRST_STATUS, FALSE ) ;
    done:
       PD_TRACE_EXITRC ( SDB__CLSVTMH_INIT, rc ) ;
       return rc ;
@@ -164,7 +171,7 @@ namespace engine
          {
             goto error ;
          }
-         CLS_VOTE_ACTIVE_STATUS( next ) ;
+         CLS_VOTE_ACTIVE_STATUS( next, FALSE ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__CLSVTMH_HDINPUT, rc ) ;
@@ -196,7 +203,7 @@ namespace engine
       {
          INT32 next = CLS_INVALID_VOTE_ID ;
          _current->handleTimeout( millisec, next ) ;
-         CLS_VOTE_ACTIVE_STATUS( next ) ;
+         CLS_VOTE_ACTIVE_STATUS( next, FALSE ) ;
          goto done ;
       }
    done :
@@ -208,7 +215,7 @@ namespace engine
    void _clsVoteMachine::force( const INT32 &id, UINT32 millis )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_FORCE ) ;
-      CLS_VOTE_ACTIVE_STATUS( id ) ;
+      CLS_VOTE_ACTIVE_STATUS( id, TRUE ) ;
       if ( 0 < millis )
       {
          _forceMillis = millis ;

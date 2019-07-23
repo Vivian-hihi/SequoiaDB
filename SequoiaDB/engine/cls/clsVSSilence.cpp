@@ -105,4 +105,15 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSVSSL_ACTIVE ) ;
       return ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_FORCEACTIVE, "_clsVSSilence::forceActive" )
+   void _clsVSSilence::forceActive ( INT32 & next )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSVSSL_FORCEACTIVE ) ;
+      _timeout() = 0 ;
+      next = id() ;
+      PD_TRACE_EXIT ( SDB__CLSVSSL_FORCEACTIVE ) ;
+      return ;
+   }
+
 }

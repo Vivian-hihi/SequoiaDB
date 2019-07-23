@@ -265,7 +265,7 @@ namespace engine
 
       if ( _active )
       {
-         _vote.force( CLS_ELECTION_STATUS_SEC ) ;
+         _vote.force( CLS_ELECTION_STATUS_SEC, OSS_SINT32_MAX ) ;
       }
 
       return SDB_OK ;
