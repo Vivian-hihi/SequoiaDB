@@ -16,11 +16,9 @@ import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: TestWriteLob13234.java
-* test content:no seek to write lob of write mode 
-* testlink case:seqDB-13234
+* @Description seqDB-13234:no seek to write lob of write mode* 
 * @author wuyan
-    * @Date    2017.11.2
+* @Date    2017.11.2
 * @version 1.00
 */
 public class RewriteLob13234 extends SdbTestBase {
@@ -42,16 +40,11 @@ public class RewriteLob13234 extends SdbTestBase {
 	private CollectionSpace cs = null;	
     	
 	@BeforeClass
-	public void setUp(){				
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}
-		
+	public void setUp(){		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";	
+				+ "ReplSize:0}";	
 		RandomWriteLobUtil.createCL(cs, clName, clOptions );
 	}	
 		
@@ -63,11 +56,8 @@ public class RewriteLob13234 extends SdbTestBase {
 			ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);
 			
 			byte[] rewriteBuff = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);			
-			writeLob(dbcl, oid, rewriteBuff);
-			
-			checkResult( dbcl, oid, lobBuff, rewriteBuff);				
-		}catch(BaseException e){
-			Assert.assertTrue(false,"no seek to write lob fail:"+e.getMessage()+e.getStackTrace());	
+			writeLob(dbcl, oid, rewriteBuff);			
+			RandomWriteLobUtil.checkRewriteLobResult( dbcl, oid, 0, rewriteBuff,lobBuff );
 		}
 		
 	}
@@ -87,20 +77,7 @@ public class RewriteLob13234 extends SdbTestBase {
 	private void writeLob(DBCollection cl, ObjectId oid, byte[] rewriteBuff){				
 		try(DBLob lob = cl.openLob(oid,DBLob.SDB_LOB_WRITE )){			
 			lob.write(rewriteBuff);					    	    
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"write lob fail"+e.getMessage());
 		}			
-	}
-	
-	private void checkResult( DBCollection cl, ObjectId oid, byte[] lobBuff, byte[] rewriteBuff) {
-		byte[] expBuff = RandomWriteLobUtil.appendBuff(lobBuff, rewriteBuff, 0);
-		//check the rewrite lob 
-		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, rewriteBuff.length, 0);		
-		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
-		
-		//check the all write lob 
-		byte[] actAllLobBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, expBuff.length, 0);
-		RandomWriteLobUtil.assertByteArrayEqual(actAllLobBuff, expBuff);		
 	}	
 }
 

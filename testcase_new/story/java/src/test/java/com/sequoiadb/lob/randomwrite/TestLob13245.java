@@ -6,89 +6,75 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Logger;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.*;
+import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
 /**
- * Created by laojingtang on 17-12-1.
- */
-public class TestLob13245 extends SdbTestBase {
-    Logger log = Logger.getLogger(LobTest13237.class.getName());
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
+* @Description seqDB-13245 : 写lob超过锁定范围
+* @author laojingtang
+* @UpdateAuthor wuyan
+* @Date    2017.12.1
+* @UpdateDate 2019.07.17
+* @version 1.10
+*/
+public class TestLob13245 extends SdbTestBase {    
+    private Sequoiadb db = null;
+    private DBCollection dbcl = null;
+    private CollectionSpace cs = null;    
+    private String clName = "lobcl_13245";
 
     @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl, "", "");
-        CommLib comm = new CommLib();
-        if (comm.isStandAlone(db)) {
-            throw new SkipException("can not support standalone");
-        }
-        cs = db.getCollectionSpace(csName);
-        List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
-
+    public void setUp() {       
+        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");        
+        cs = db.getCollectionSpace(SdbTestBase.csName);
         dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
     }
+    
+    @Test
+    public void testLob13245() {
+        ObjectId id = RandomWriteLobUtil.createEmptyLob(dbcl);
 
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
-
-    /**
-     * 1、重新打开已存在lob
-     * 2、seek指定写lob偏移量
-     * 3、锁定（lock（））数据段
-     * 4、写入lob，其中写入lob超过锁定范围（存在不在锁定范围内的数据）
-     * 5、检查操作结果
-     * 1、写入lob失败，查询lob信息和原有lob信息一致
-     *
-     * @param lobsize
-     */
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
-    public void testLob13245(long lobsize) {
-        ObjectId id = createEmptyLob(dbcl);
-
-        byte[] bytes = getRandomBytes((int) lobsize + 100);
-
-        try (DBLob lob = dbcl.openLob(id, DBLob.SDB_LOB_WRITE)) {
-            lob.lock(0, lobsize);
+        int lobSize = 1024 * 50;
+        byte[] lobBytes = RandomWriteLobUtil.getRandomBytes( lobSize );
+        long offset = 0;
+        long lockLength = lobSize - 1;
+        try ( DBLob lob = dbcl.openLob(id, DBLob.SDB_LOB_WRITE)) {
+            lob.lock(offset, lockLength);
             try {
-                lob.write(bytes);
-                Assert.fail("should throw exception!");
-            } catch (BaseException e) {
-                if (e.getErrorCode() != SDBError.SDB_INVALIDARG.getErrorCode())
+                lob.write(lobBytes);
+                Assert.fail("write lob size exceed the lock length should fail!");
+            } catch (BaseException e) {            	
+                if (e.getErrorCode() != SDBError.SDB_INVALIDARG.getErrorCode())            	
                     throw e;
             }
         }
-        try(DBLob lob=dbcl.openLob(id)) {
-            if(lob.getSize()!=0){
-                byte[] actual=new byte[(int)lobsize];
-                lob.read(actual);
-                Assert.assertEquals(actual, Arrays.copyOf(bytes,(int)lobsize));
-            }
-
-        }
-    }
+        
+        //check lob content,the actual lob size is 0
+        try( DBLob lob = dbcl.openLob( id ) ) {
+        	byte[] actual=RandomWriteLobUtil.readLob( lob);
+            Assert.assertEquals(actual.length, 0);
+         }       
+    } 
+    
+    @AfterClass
+    public void tearDown(){		
+		try{					
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}			
+		}finally{
+			if(db != null){
+				db.close();
+			}
+		}
+	}	
 }

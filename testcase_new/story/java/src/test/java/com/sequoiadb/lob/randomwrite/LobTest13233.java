@@ -4,97 +4,83 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.assertByteArrayEqual;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.getRandomBytes;
+import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
 /**
- * Created by laojingtang on 17-11-22.
- */
+* @Description seqDB-13233 : 未加锁写lob
+* @author laojingtang
+* @UpdateAuthor wuyan
+* @Date    2017.11.2
+* @UpdateDate 2019.07.16
+* @version 1.10
+*/
 public class LobTest13233 extends SdbTestBase {
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
-    private static Map<Integer, byte[]> randomBytesMap = new HashMap<>();
-
-    @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl,"","");
-        cs = db.getCollectionSpace(csName);
-        if(CommLib.isStandAlone(db))
-            throw new SkipException("skip for standlone");
-        List<String> groupNames = RandomWriteLobUtil.getDataGroups(db);
-        if(groupNames.size()<2)
-            throw new SkipException("need at least 2 groups");
-
-        dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}"));
-        dbcl.split(groupNames.get(0), groupNames.get(1), 50);
-    }
-
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
-
-    @DataProvider(name = "test13233DataProvider")
+	@DataProvider(name = "test13233DataProvider")
     public static Object[][] test13233DataProvider() {
         return new Object[][]{
-                {1024, 500, 500},
-                {1024, 1023, 1},
-                {1024, 1024, 500}
+        	//oldLobSize, newLobSize, offset
+        	//test a: newLobSize < oldLobSize
+            {1024, 500, 500},
+            //test b: newLobSize = oldLobSize
+            {1024, 1023, 1},
+            //test c: newLobSize > oldLobSize
+            {1024, 1024, 500}
         };
     }
+	
+    private Sequoiadb db = null;
+    private DBCollection dbcl = null;
+    private CollectionSpace cs = null;    
+    private String clName = "lobcl_13233";    
 
-    /**
-     * 1、打开已存在lob对象
-     * 2、未加锁，seek指定偏移写入lob数据，其中写入lob数据覆盖如下场景：
-     * a、新写lob数据长度小于原有lob
-     * b、新写lob数据长度等于原有lob
-     * c、新写lob数据长度大于原有lob
-     * 3、检查操作结果
-     * 1、写入lob成功，读取lob数据正确（比较MD5值相同）；分别检查如下：
-     * a场景：读取lob数据包含新插入数据和未覆盖数据
-     * bc场景：读取lob数据和新插入lob一致（全覆盖写入）
-     */
-    @Test(dataProvider = "test13233DataProvider")
-    public void testLob13233(int lobSize, int newDataSize, int offset) {
-        DBLob lob = dbcl.createLob();
-        byte[] randomBytes = getRandomBytes(lobSize);
-        lob.write(randomBytes);
-        lob.close();
-        ObjectId oid = lob.getID();
-
-        lob = dbcl.openLob(oid, DBLob.SDB_LOB_WRITE);
-        lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
-        byte[] newData = getRandomBytes(newDataSize);
-        lob.write(newData);
-        lob.close();
-
-        lob = dbcl.openLob(oid);
-        byte[] actual = new byte[(int) lob.getSize()];
-        lob.read(actual);
-        lob.close();
-
-        assertByteArrayEqual(actual, RandomWriteLobUtil.appendBuff(randomBytes, newData, offset));
+    @BeforeClass
+    public void setUp() {       
+        db = new Sequoiadb(coordUrl,"","");
+        cs = db.getCollectionSpace(SdbTestBase.csName);
+        dbcl = cs.createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));       
     }
+    
+    @Test(dataProvider = "test13233DataProvider")
+    public void testLob13233(int lobSize, int newDataSize, int offset) {        
+        byte[] randomBytes = RandomWriteLobUtil.getRandomBytes(lobSize);        
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, randomBytes);
+
+        //seek and write lob
+        byte[] newData = RandomWriteLobUtil.getRandomBytes(newDataSize);
+        try (DBLob lob = dbcl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+        	 lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);             
+             lob.write(newData);
+		}
+        
+        //read lob and check the lob content
+        try (DBLob lob = dbcl.openLob(oid)) {
+        	 byte[] actual = new byte[(int) lob.getSize()];
+             lob.read(actual);
+             lob.close();
+             RandomWriteLobUtil.assertByteArrayEqual(actual, RandomWriteLobUtil.appendBuff(randomBytes, newData, offset));
+	    }       
+    }
+    
+    @AfterClass
+    public void tearDown() {
+    	try{			
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}			
+		}finally{
+			if( db != null ){
+				db.close();
+			}
+		}       
+    }   
 }

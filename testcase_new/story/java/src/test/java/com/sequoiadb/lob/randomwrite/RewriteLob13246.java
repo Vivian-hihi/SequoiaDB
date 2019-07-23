@@ -14,26 +14,26 @@ import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* @Description  seqDB-13238:lock the data segment to write lob,set different offset positions to covering rewrite lob
+* @Description  seqDB-13246:lock the all lob to write,set different offset positions to covering rewrite lob
 * @author wuyan
-* @Date    2017.11.2
+* @Date    2019.07.16
 * @version 1.00
 */
-public class RewriteLob13238 extends SdbTestBase {	
+public class RewriteLob13246 extends SdbTestBase {	
 	@DataProvider(name = "pagesizeProvider", parallel = true)
 	public Object[][] generatePageSize(){
 		return new Object[][]{
 			//the parameter is  writeLobSize, offset, rewriteLobSize
 			//start from the start position
-			new Object[]{1024*1024, 0, 1024*512},
+			new Object[]{1024*1024, 0, 1024 * 1024 * 2},
 			//start from the middle position
-			new Object[]{1024*1024, 1024*512, 1024*1024},
+			new Object[]{1024*1024, 1024*512, 1024 * 1024},
 			//start from the end postition
 			new Object[]{1024*512,  1024*512, 1024*4},			
 		};
 	}	
 	
-	private String clName = "writelob13238";	
+	private String clName = "writelob13246";	
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;	
     	
@@ -55,8 +55,8 @@ public class RewriteLob13238 extends SdbTestBase {
 			ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);
 			
 			byte[] rewriteBuff = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);			
-			rewriteLob(dbcl, oid, offset, rewriteBuff);			
-			RandomWriteLobUtil.checkRewriteLobResult( dbcl, oid, offset, rewriteBuff, lobBuff);			
+			lockAndRewriteLob(dbcl, oid, offset, rewriteBuff);			
+			RandomWriteLobUtil.checkRewriteLobResult( dbcl, oid, offset, rewriteBuff, lobBuff);				
 		}
 	}
 	
@@ -65,19 +65,19 @@ public class RewriteLob13238 extends SdbTestBase {
 		try{					
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
-			}			
+			}
+			sdb.close();
 		}finally{
 			if( sdb != null ){
 				sdb.close();
 			}
 		}
-	}	
+	}
 	
-	
-	
-	private void rewriteLob(DBCollection cl,ObjectId oid,int offset,byte[] rewriteBuff){		
+	private void lockAndRewriteLob(DBCollection cl,ObjectId oid,int offset,byte[] rewriteBuff){	
+		long lockLength = -1;
 		try(DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)){				
-			lob.lockAndSeek(offset, rewriteBuff.length);
+			lob.lockAndSeek(offset, lockLength);
 			lob.write(rewriteBuff);			    
 		}			
 	}

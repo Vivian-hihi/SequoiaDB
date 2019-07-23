@@ -19,15 +19,12 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * FileName: WriteAndRemoveSameLob13231.java test content:concurrent delete when
- * writing lob testlink case:seqDB-13231
- * 
+ * @Description testlink case:seqDB-13231:concurrent delete when writing lob  * 
  * @author wuyan
  * @Date 2017.11.7
  * @version 1.00
  */
 public class WriteAndRemoveSameLob13231 extends SdbTestBase {
-
 	private String clName = "writelob13231";
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
@@ -37,14 +34,9 @@ public class WriteAndRemoveSameLob13231 extends SdbTestBase {
 
 	@BeforeClass
 	public void setUp() {		
-		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		} catch (BaseException e) {
-			Assert.assertTrue(false, "connect %s failed," + SdbTestBase.coordUrl + e.getMessage());
-		}
-
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024," + "ReplSize:0,Compressed:true}";
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,ReplSize:0}";
 		cl = RandomWriteLobUtil.createCL(cs, clName, clOptions);
 	}
 
@@ -60,8 +52,7 @@ public class WriteAndRemoveSameLob13231 extends SdbTestBase {
 		boolean writeOk  = writeLob.isSuccess();
 		boolean removeOk = removeLob.isSuccess();
 		if ( writeOk && !removeOk ) {
-			int removeErrcode = getErrCode(removeLob);
-			
+			int removeErrcode = getErrCode(removeLob);			
 			if (-268 != removeErrcode && -317 != removeErrcode && -4 != removeErrcode) {
 				Assert.assertTrue(false, "remove fail:" + removeErrcode);
 			}
@@ -85,10 +76,9 @@ public class WriteAndRemoveSameLob13231 extends SdbTestBase {
 		try {			
 			if (cs.isCollectionExist(clName)) {
 				cs.dropCollection(clName);
-			}
-			sdb.disconnect();
-		} catch (BaseException e) {
-			Assert.assertTrue(false, "clean up failed:" + e.getMessage());
+			}			
+		} finally{
+			sdb.close();
 		}
 	}
 
@@ -123,8 +113,6 @@ public class WriteAndRemoveSameLob13231 extends SdbTestBase {
 	}
 
 	private void checkResult(ObjectId oid) {
-//		byte[] expBuff = RandomWriteLobUtil.readLob(cl, oid);
-//		RandomWriteLobUtil.assertByteArrayEqual(testLobBuff, expBuff);
 		try (DBLob lob = cl.openLob(oid)) {
 	    	byte[] actAllLob = new byte[(int)lob.getSize()];
 	           lob.read(actAllLob);

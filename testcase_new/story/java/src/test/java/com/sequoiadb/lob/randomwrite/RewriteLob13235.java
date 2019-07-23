@@ -20,9 +20,8 @@ import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- * FileName: TestWriteLob13235.java test content:no lock the data segment to
- * write lob,test the lob pieces size boundary value testlink case:seqDB-13235
- * 
+ * @Description seqDB-13235:no lock the data segment to write lob,
+ *              test the lob pieces size boundary value. * 
  * @author wuyan
  * @Date 2017.11.2
  * @version 1.00
@@ -51,36 +50,32 @@ public class RewriteLob13235 extends SdbTestBase {
 	Random random = new Random();
 
 	@BeforeClass
-	public void setUp() {		
-		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		} catch (BaseException e) {
-			Assert.assertTrue(false, "connect %s failed," + SdbTestBase.coordUrl + e.getMessage());
-		}
+	public void setUp() {	
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
 	}
 
 	@Test(dataProvider = "pagesizeProvider")
 	public void testLob(int lobPageSize, int offset, int length) {
-		DBCollection cl = createCsAndCl(lobPageSize);
+		DBCollection cl = createCsAndCl(sdb, lobPageSize);
 		int writeSize = 1024 * 1024;
 		byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
 		ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, lobBuff);
 
 		byte[] rewritelobBuff = RandomWriteLobUtil.getRandomBytes(length);
-		rewriteLob(cl, oid, offset, rewritelobBuff);
-
-		checkResult(cl, oid, offset, rewritelobBuff, lobBuff);
+		rewriteLob(cl, oid, offset, rewritelobBuff);		
+		RandomWriteLobUtil.checkRewriteLobResult(cl, oid, offset, rewritelobBuff, lobBuff);
 	}
 
 	@AfterClass
 	public void tearDown() {
 		try {			
 			if (sdb.isCollectionSpaceExist(csName)) {
-				dropCS();
+				sdb.dropCollectionSpace(csName);
+			}			
+		} finally{
+			if(sdb != null){
+				sdb.close();
 			}
-			sdb.close();
-		} catch (BaseException e) {
-			Assert.assertTrue(false, "clean up failed:" + e.getMessage());
 		}
 	}
 
@@ -93,41 +88,16 @@ public class RewriteLob13235 extends SdbTestBase {
 			Assert.assertTrue(false, "rewrite lob fail" + e.getMessage());
 		}
 	}
-
-	private void checkResult(DBCollection cl, ObjectId oid, int offset, byte[] rewriteBuff, byte[] lobBuff) {
-		// check the rewrite lob
-		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, rewriteBuff.length, offset);
-		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
-
-		// check the all write lob
-		byte[] expBuff = RandomWriteLobUtil.appendBuff(lobBuff, rewriteBuff, offset);
-		byte[] actAllLobBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, expBuff.length, 0);
-		RandomWriteLobUtil.assertByteArrayEqual(actAllLobBuff, expBuff);
-	}
-
-	private DBCollection createCsAndCl(int lobPagesize) {
+	
+	private DBCollection createCsAndCl(Sequoiadb sdb,int lobPagesize) {
 		if (sdb.isCollectionSpaceExist(csName)) {
 			sdb.dropCollectionSpace(csName);
 		}
-
 		BSONObject options = new BasicBSONObject();
 		options.put("LobPageSize", lobPagesize);
-		DBCollection cl = null;
-		try {
-			cs = sdb.createCollectionSpace(csName, options);
-			cl = cs.createCollection(clName);
-		} catch (BaseException e) {
-			Assert.assertTrue(false, "create CS/CL fail " + e.getErrorType() + ":" + e.getMessage());
-		}
+		cs = sdb.createCollectionSpace(csName, options);
+		DBCollection cl = cs.createCollection(clName);		
 		return cl;
-	}
-
-	private void dropCS() {
-		try {
-			sdb.dropCollectionSpace(csName);
-		} catch (BaseException e) {
-			Assert.assertTrue(false, "create CS/CL fail " + e.getErrorType() + ":" + e.getMessage());
-		}
 	}
 
 }

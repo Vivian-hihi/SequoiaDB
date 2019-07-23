@@ -2,57 +2,47 @@ package com.sequoiadb.lob.randomwrite;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Logger;
 
 /**
- * Created by laojingtang on 17-11-16.
+ * @Description seqDB-13391 : 切分表上执行truncate lob操作 
+ * @Author laojingtang
+ * @UpdateAuthor wuyan
+ * @Date 2017-11-16
+ * @UpdateDate 2019-07-23
+ * @Version 1.00
  */
-public class LobTruncate13391 extends SdbTestBase {
-    Logger log = Logger.getLogger(LobTruncate13391.class.getSimpleName());
-    String csName, clName;
-    Sequoiadb db;
-    CollectionSpace cs;
-    DBCollection dbcl;
-    final int lobSize = 1024;
-    final byte[] _randomDatas = RandomWriteLobUtil.getRandomBytes(lobSize);
-    List<String> groupNames;
+public class LobTruncate13391 extends SdbTestBase {   
+    private String  clName = "truncateLobCL_13391";
+    private Sequoiadb db;
+    private CollectionSpace cs;
+    private DBCollection dbcl;
+    private final int lobSize = 1024 * 1024 * 5; 
 
     @BeforeClass
-    public void setupClass() {
-        db = new Sequoiadb(SdbTestBase.coordUrl,"","");
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        cs = db.getCollectionSpace(csName);
-        if(CommLib.isStandAlone(db))
-            throw new SkipException("");
-        groupNames = RandomWriteLobUtil.getDataGroups(db);
-        if (groupNames.size() < 2)
-            throw new SkipException("");
-        dbcl = cs.createCollection(
-                clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",Group:'" + groupNames.get(0) + "'}")
-        );
-    }
-
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
+    public void setUp() {
+        db = new Sequoiadb(SdbTestBase.coordUrl,"","");       
+        cs = db.getCollectionSpace(SdbTestBase.csName);
+        if (CommLib.isStandAlone(db) || CommLib.OneGroupMode(db)) {
+            throw new SkipException("less than two groups will skip!");
+        }
+       
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}");
+        dbcl = cs.createCollection( clName, clOpt); 
+        String srcGroupName = RandomWriteLobUtil.getSrcGroupName(db, SdbTestBase.csName, clName);   
+        String dstGroupName = RandomWriteLobUtil.getSplitGroupName(db, srcGroupName);       
+        dbcl.split(srcGroupName, dstGroupName, 50);
     }
 
     /**
@@ -63,21 +53,28 @@ public class LobTruncate13391 extends SdbTestBase {
      */
     @Test
     public void testLob13391() {
-        dbcl.split(groupNames.get(0), groupNames.get(1), 50);
-        ObjectId id;
-        try (DBLob lob = dbcl.createLob()) {
-            lob.write(_randomDatas);
-            id = lob.getID();
-        }
+    	byte[] writeData = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, writeData);   
+        
+        long length = 1024 * 512;
+        dbcl.truncateLob(oid, length);
 
-        dbcl.truncateLob(id, 100);
-
-        try (DBLob lob = dbcl.openLob(id)) {
-            Assert.assertEquals(lob.getSize(), 100);
-            RandomWriteLobUtil.assertByteArrayEqual(RandomWriteLobUtil.readLob(lob), Arrays.copyOf(_randomDatas, 100));
+        byte[] expData = Arrays.copyOf(writeData, (int) length);
+        byte[] actData = RandomWriteLobUtil.readLob(dbcl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
+    }
+    
+    @AfterClass
+    public void tearDown() {
+        try {
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+        }finally {
+            if (null != db) {
+                db.close();
+            }
         }
     }
-
-
 }
 

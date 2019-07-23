@@ -5,7 +5,6 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -15,17 +14,14 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 
 /**
-* FileName: TestWriteLob13236.java
-* test content:lock the data segment to write lob,test the lob pieces size boundary value
-* testlink case:seqDB-13236
+* @Description seqDB-13236:lock the data segment to write lob,test the lob pieces size boundary value
 * @author wuyan
-    * @Date    2017.11.2
+* @Date    2017.11.2
 * @version 1.00
 */
 public class RewriteLob13236 extends SdbTestBase {
@@ -52,36 +48,32 @@ public class RewriteLob13236 extends SdbTestBase {
 	private CollectionSpace cs = null;		
     	
 	@BeforeClass
-	public void setUp(){				
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}		
+	public void setUp(){		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");			
 	}	
 	
 	@Test(dataProvider = "pagesizeProvider")
 	public void testLob(int lobPageSize, int offset,int length){	
-		DBCollection cl = createCL(lobPageSize);	
-		//long writeSize = 1048576;	
-		int writeSize = 1048576;	
+		DBCollection cl = createCSAndCL(sdb, lobPageSize);			
+		int writeSize = 1024 * 1024;	
 		byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
 		ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, lobBuff);
 		
 		byte[] rewritelobBuff = RandomWriteLobUtil.getRandomBytes(length);
 		rewriteLob(cl, oid, offset, rewritelobBuff);
-		checkResult(cl, oid, offset,rewritelobBuff, lobBuff);			
+		RandomWriteLobUtil.checkRewriteLobResult(cl, oid, offset,rewritelobBuff, lobBuff);		
 	}
 	
 	@AfterClass
 	public void tearDown(){		
-		try{					
-			if(sdb.isCollectionSpaceExist(csName)){
-				dropCS();
+		try {			
+			if (sdb.isCollectionSpaceExist(csName)) {
+				sdb.dropCollectionSpace(csName);
+			}			
+		} finally{
+			if(sdb != null){
+				sdb.close();
 			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}
 	}	
 		
@@ -89,53 +81,20 @@ public class RewriteLob13236 extends SdbTestBase {
 		try(DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)){			
 			lob.lockAndSeek(offset, rewriteBuff.length);
 			lob.write(rewriteBuff);			
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"rewrite lob fail"+e.getMessage());
 		}				
 	}	
 		
-	private void checkResult(DBCollection cl,ObjectId oid,int offset, byte[] rewriteBuff, byte[] lobBuff){		
-		//check the rewrite lob 
-		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, rewriteBuff.length, offset);		
-		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
-		
-		//check the all write lob 
-		byte[] expBuff = RandomWriteLobUtil.appendBuff(lobBuff, rewriteBuff, offset);		
-		byte[] actAllLobBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, expBuff.length, 0);
-				
-	    	    
-		RandomWriteLobUtil.assertByteArrayEqual(actAllLobBuff, expBuff);
-	}
-		
-	private DBCollection createCL(int lobPagesize){
+	private DBCollection createCSAndCL(Sequoiadb sdb,int lobPagesize){
 		if (sdb.isCollectionSpaceExist(csName)){
 			sdb.dropCollectionSpace(csName);
 		}
 		
 		BSONObject options = new BasicBSONObject();
-		options.put("LobPageSize", lobPagesize);	
-		DBCollection cl = null;
-		try
-		{
-			cs = sdb.createCollectionSpace(csName, options);	
-			cl = cs.createCollection(clName);
-		}catch(BaseException e){
-			Assert.assertTrue(false,"create CS/CL fail "+e.getErrorType()+":"+e.getMessage());			
-		}
+		options.put("LobPageSize", lobPagesize);
+		cs = sdb.createCollectionSpace(csName, options);	
+		DBCollection cl = cs.createCollection(clName);		
 		return cl;
-	}
-	
-	private void dropCS(){
-		try{
-			sdb.dropCollectionSpace(csName);		
-		}catch(BaseException e){
-			Assert.assertTrue(false,"create CS/CL fail "+e.getErrorType()+":"+e.getMessage());
-		}
 	}	
-	
-	
-	
-	
 }
 
 

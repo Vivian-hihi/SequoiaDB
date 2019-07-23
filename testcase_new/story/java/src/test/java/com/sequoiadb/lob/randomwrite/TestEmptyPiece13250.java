@@ -4,9 +4,8 @@ package com.sequoiadb.lob.randomwrite;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -14,7 +13,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -49,22 +47,14 @@ public class TestEmptyPiece13250 extends SdbTestBase {
     private CollectionSpace cs = null;
     private DBCollection cl = null;
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");            
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);
     }
 
     @DataProvider
@@ -90,35 +80,26 @@ public class TestEmptyPiece13250 extends SdbTestBase {
     
     @Test(dataProvider="rangeProvider")
     public void testLob(LobPart part) {
-        try {
-            byte[] data = new byte[0];
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+    	byte[] data = new byte[0];
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                lockAndSeekAndWriteLob(lob, part);
-                expData = updateExpData(expData, part);
-            }
-            
-            byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
-            RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+        try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+            lockAndSeekAndWriteLob(lob, part);
+            expData = updateExpData(expData, part);
         }
+            
+        byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");        
     }
 
-    @AfterTest
+    @AfterClass
     public void tearDown() {
         try {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        } finally {
+        }finally {
             if (null != sdb) {
                 sdb.close();
             }

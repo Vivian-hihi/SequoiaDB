@@ -4,36 +4,19 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
-
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.assertByteArrayEqual;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.getRandomBytes;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.readLob;
+import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
 /**
-* FileName: LobTest13227.java
-* test content:
-* 测试用例 seqDB-13227 :: 版本: 1 :: 写lob同时并发读lob
-* 1、打开lob（创建模式是指定lob oid）
-* 2、写入lob数据，写入过程中读取该lob数据（读取lob时获取指定lob oid）
-* 3、检查操作结果
-* 1、写入lob成功，读取lob操作失败，返回对应错误信息
-* 2、再次读取lob数据和插入lob数据一致（比较MD5值相同）
-* testlink case:seqDB-13227
+* @Description seqDB-13227 : 写lob同时读lob
 * @author laojingtang
 * @UpdateAuthor wangkexin
 * @Date    2017.11.2
@@ -42,78 +25,60 @@ import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.readLob;
 */
 
 public class LobTest13227 extends SdbTestBase {
-    Logger log = Logger.getLogger(LobTest13237.class.getName());
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
+    private Sequoiadb db = null;
+    private DBCollection dbcl = null;
+    private CollectionSpace cs = null;   
+    private String clName = "cl_" + this.getClass().getSimpleName();
 
     @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl, "", "");
-        cs = db.getCollectionSpace(csName);
-        if(CommLib.isStandAlone(db))
-            throw new SkipException("");
+    public void setUp() {        
+        db = new Sequoiadb(coordUrl, "", "");       
+        cs = db.getCollectionSpace(SdbTestBase.csName);        
         dbcl = cs.createCollection(clName,
         		(BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-    }
+    }  
 
+    @Test
+    public void testLob(){
+        ObjectId oid = ObjectId.get();
+        int lobSize = 1024 * 1024 * 10;
+        byte[] expectBytes = RandomWriteLobUtil.getRandomBytes(lobSize);
+        DBLob lob = null;
+        lob = this.dbcl.createLob(oid);
+        lob.write(expectBytes);
+        readLobInWritingLob( oid, lobSize);
+        lob.close();         
+       
+        //check write lob 
+        byte[] actualBytes = RandomWriteLobUtil.readLob(dbcl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actualBytes, expectBytes);
+    }  
+    
     @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
+    public void tearDown() {
+    	try{			
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}			
+		}finally{
+			if( db != null ){
+				db.close();
+			}
+		}       
     }
-
-
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
-    public void test13227(final int lobsize) throws InterruptedException {
-        final ObjectId oid = ObjectId.get();
-        final byte[] expectBytes = getRandomBytes(lobsize);
-
-        final AtomicBoolean canRead = new AtomicBoolean(false);
-
-        DbClOperateTask writeThread = new DbClOperateTask(csName, clName) {
-            @Override
-            protected void exec() throws Exception {
-                DBLob lob = null;
-                lob = this.dbcl.createLob(oid);
-                lob.write(expectBytes);
-                canRead.set(true);
-                lob.close();
-            }
-        };
-
-        DbClOperateTask readThread = new DbClOperateTask(csName, clName) {
-            @Override
-            protected void exec() throws Exception {
-                while (true) {
-                    if (canRead.get()) {
-                        byte[] actualBytes = new byte[lobsize];
-                        DBLob lob = null;
-                        lob = this.dbcl.openLob(oid);
-                        lob.read(actualBytes);
-                        lob.close();
-                        break;
-                    } else {
-                        Thread.sleep(500);
-                    }
-                }
-            }
-        }.ignoreExceptionCode(SDBError.SDB_FNE.getErrorCode())
-                .ignoreExceptionCode(SDBError.SDB_LOB_IS_IN_USE.getErrorCode());
-
-        writeThread.start();
-        readThread.start();
-        writeThread.join();
-        readThread.join();
-
-        Assert.assertTrue(writeThread.isTaskSuccess(), writeThread.getErrorMsg());
-        Assert.assertTrue(readThread.isTaskSuccess(), readThread.getErrorMsg());
-
-        byte[] actualBytes = readLob(dbcl, oid);
-        assertByteArrayEqual(actualBytes, expectBytes);
+    
+    private void readLobInWritingLob(ObjectId oid,int lobSize){
+    	try{
+    		byte[] actualBytes = new byte[lobSize];
+    		DBLob lob = this.dbcl.openLob(oid);
+            lob.read(actualBytes);
+            lob.close();
+            Assert.fail("read lob must be fail in writing lob!");
+    	}catch( BaseException e){
+    		//-317：SDB_LOB_IS_IN_USE
+    		if( e.getErrorCode() != -317){
+    			Assert.fail("read lob fail! e=" + e.getErrorCode()+ e.getMessage());
+    		}
+    	}    	
     }
 }

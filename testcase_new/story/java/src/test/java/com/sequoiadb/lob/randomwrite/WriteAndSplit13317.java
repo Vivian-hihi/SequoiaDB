@@ -4,7 +4,6 @@ package com.sequoiadb.lob.randomwrite;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -14,7 +13,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -45,70 +43,51 @@ public class WriteAndSplit13317 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            CommLib comm = new CommLib(); // from package testcommon
-            if (comm.isStandAlone(sdb) || comm.OneGroupMode(sdb)) {
-                throw new SkipException("no groups to split");
-            }
-            
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");    	  
+        if (CommLib.isStandAlone(sdb)  || CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("no groups to split");
         }
+            
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);       
     }
 
     @Test
     public void testLob() {
-        try {
-            int lobSize = 2 * 1024 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+    	int lobSize = 2 * 1024 * 1024;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            LobPart partA = new LobPart(0          , 256 * 1024);
-            LobPart partB = new LobPart(256  * 1024, 768 * 1024);
-            LobPart partC = new LobPart(1024 * 1024, 512 * 1024);
+        LobPart partA = new LobPart(0          , 256 * 1024);
+        LobPart partB = new LobPart(256  * 1024, 768 * 1024);
+        LobPart partC = new LobPart(1024 * 1024, 512 * 1024);
             
-            String srcGroupName = RandomWriteLobUtil.getSrcGroupName(sdb, csName, clName);
-            String dstGroupName = RandomWriteLobUtil.getSplitGroupName(sdb, srcGroupName);
-            long taskId = 0;
-            
-            DBLob lob = null;
-            try {
-                taskId = cl.splitAsync(srcGroupName, dstGroupName, 50);
-                lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);
+        String srcGroupName = RandomWriteLobUtil.getSrcGroupName(sdb, csName, clName);
+        String dstGroupName = RandomWriteLobUtil.getSplitGroupName(sdb, srcGroupName);
+        long taskId = 0;            
+       
+        taskId = cl.splitAsync(srcGroupName, dstGroupName, 50);      
+         
+        try( DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE) ){
+        	lockAndSeekAndWriteLob(lob, partA);
+            lockAndSeekAndWriteLob(lob, partB);
+            lockAndSeekAndWriteLob(lob, partC);
+        }        
                 
-                lockAndSeekAndWriteLob(lob, partA);
-                lockAndSeekAndWriteLob(lob, partB);
-                lockAndSeekAndWriteLob(lob, partC);
-                
-                expData = updateExpData(expData, partA);
-                expData = updateExpData(expData, partB);
-                expData = updateExpData(expData, partC);
-            } finally {
-                if (null != lob) {
-                    lob.close();
-                }
-            }
+        expData = updateExpData(expData, partA);
+        expData = updateExpData(expData, partB);
+        expData = updateExpData(expData, partC);
+                  
+        long[] taskIdArr = {taskId};
+        sdb.waitTasks(taskIdArr);
             
-            long[] taskIdArr = {taskId};
-            sdb.waitTasks(taskIdArr);
-            
-            byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
-            RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+        byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
+       
     }
 
     @AfterClass
@@ -117,10 +96,7 @@ public class WriteAndSplit13317 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        } finally {
+        }finally {
             if (null != sdb) {
                 sdb.close();
             }

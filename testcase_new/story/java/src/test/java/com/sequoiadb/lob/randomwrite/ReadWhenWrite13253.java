@@ -43,49 +43,37 @@ public class ReadWhenWrite13253 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);
     }
 
     @Test
     public void testLob() {
-        try {
-            int lobSize = 100 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+    	int lobSize = 100 * 1024;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            try (DBLob wLob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                // Note: no matter lock or not, opening again must fail.
-                 wLob.lock(0, wLob.getSize());
-                
-                try (DBLob rLob = cl.openLob(oid, DBLob.SDB_LOB_READ)) {
-                    Assert.fail("open shouldn't succeed when lob is in use");
-                } catch (BaseException e) {
-                    if (-317 != e.getErrorCode()) { // -317: SDB_LOB_IS_IN_USE
-                        throw e;
-                    }
+        try (DBLob wLob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+        	
+            // Note: no matter lock or not, opening again must fail.
+            wLob.lock(0, wLob.getSize());                
+            try (DBLob rLob = cl.openLob(oid, DBLob.SDB_LOB_READ)) {
+                Assert.fail("open shouldn't succeed when lob is in use");
+            } catch (BaseException e) {
+                if (-317 != e.getErrorCode()) { // -317: SDB_LOB_IS_IN_USE
+                    throw e;
                 }
             }
-            
-            byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
-            RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
         }
+            
+        byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");        
     }
 
     @AfterClass
@@ -94,9 +82,6 @@ public class ReadWhenWrite13253 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
                 sdb.close();

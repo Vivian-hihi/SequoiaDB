@@ -12,60 +12,61 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.List;
-import java.util.logging.Logger;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.*;
+import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
 /**
- * Created by laojingtang on 17-12-1.
- */
-public class TestLob13240 extends SdbTestBase {
-    Logger log = Logger.getLogger(LobTest13237.class.getName());
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
+* @Description seqDB-13240 : 锁定连续范围数据段写lob
+* @author laojingtang
+* @UpdateAuthor wuyan
+* @Date    2017.12.1
+* @UpdateDate 2019.07.16
+* @version 1.10
+*/
+public class TestLob13240 extends SdbTestBase {    
+    private Sequoiadb sdb = null;
+    private DBCollection dbcl = null;
+    private CollectionSpace cs = null;    
+    private String clName = "lobcl_13240";
+    private ObjectId id = null;
+    private int writeSize = 1024 * 1024 * 10;
 
     @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl, "", "");
-        cs = db.getCollectionSpace(csName);
-
+    public void setUp() {       
+        sdb = new Sequoiadb(coordUrl, "", "");
+        cs = sdb.getCollectionSpace(SdbTestBase.csName);
         dbcl = cs.createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-    }
+        
+        byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
+        id = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);
+    }   
 
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
-
-    /**
-     * 1、打开已存在lob对象
-     * 2、锁定多个连续范围数据段
-     * 3、写入lob
-     * 4、检查操作结果
-     * 1、写入lob成功，查询lob信息和实际插入信息一致（比较MD5值）
-     *
-     * @param lobsize
-     */
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
-    public void testLob13240(int lobsize) {
-        ObjectId id = createEmptyLob(dbcl);
-
-        byte[] bytes = getRandomBytes(lobsize);
-
+    @Test
+    public void testLob13240() {  
+    	byte[] writeLobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
         try (DBLob lob = dbcl.openLob(id, DBLob.SDB_LOB_WRITE)) {
-            lob.lock(0, 512);
-            lob.lock(512, lobsize);
-            lob.write(bytes);
+        	int offset = 0;
+        	int length = 1024 * 257;
+            lob.lock(offset, length);
+            lob.lock(length, writeSize);
+            lob.write(writeLobBuff);
         }
 
-        assertByteArrayEqual(readLob(dbcl, id), bytes);
+        //check lock and write lob result.
+        byte[] readLobBuff = RandomWriteLobUtil.readLob(dbcl, id);
+        RandomWriteLobUtil.assertByteArrayEqual( readLobBuff, writeLobBuff);
     }
+    
+    @AfterClass
+	public void tearDown() {
+		try {			
+			if (cs.isCollectionExist(clName)) {
+				cs.dropCollection(clName);
+			}			
+		} finally{
+			if(sdb != null){
+				sdb.close();
+			}
+		}
+	}
 }

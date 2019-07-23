@@ -15,7 +15,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -46,85 +45,65 @@ public class TruncateEmptyPiece13392 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");            
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);        
     }
 
     // a、truncate空切片 
     @Test
     public void testLob() {
-        try {
-            int lobSize = 1;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+    	int lobSize = 1;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            // make the first data piece empty
-            long firstDataPagePos = lobPageSize - lobMetaSize;
-            long secondDataPagePos = firstDataPagePos + lobPageSize;
-            try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                lob.seek(secondDataPagePos, DBLob.SDB_LOB_SEEK_SET);
-                byte[] data2 = new byte[lobPageSize];
-                lob.write(data2);
-                expData = RandomWriteLobUtil.appendBuff(expData, data2, lobPageSize);
-            }
-            
-            // let empty piece be the last piece 
-            cl.truncateLob(oid, secondDataPagePos);
-            expData = Arrays.copyOfRange(expData, 0, (int) secondDataPagePos);
-            checkLobDataAndSize(cl, oid, expData, secondDataPagePos);
-            
-            // only truncate empty piece
-            cl.truncateLob(oid, firstDataPagePos);
-            expData = Arrays.copyOfRange(expData, 0, (int) firstDataPagePos);
-            checkLobDataAndSize(cl, oid, expData, firstDataPagePos);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+        // make the first data piece empty
+        long firstDataPagePos = lobPageSize - lobMetaSize;
+        long secondDataPagePos = firstDataPagePos + lobPageSize;
+        try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+            lob.seek(secondDataPagePos, DBLob.SDB_LOB_SEEK_SET);
+            byte[] data2 = new byte[lobPageSize];
+            lob.write(data2);
+            expData = RandomWriteLobUtil.appendBuff(expData, data2, lobPageSize);
         }
+            
+        // let empty piece be the last piece 
+        cl.truncateLob(oid, secondDataPagePos);
+        expData = Arrays.copyOfRange(expData, 0, (int) secondDataPagePos);
+        checkLobDataAndSize(cl, oid, expData, secondDataPagePos);
+            
+        // only truncate empty piece
+        cl.truncateLob(oid, firstDataPagePos);
+        expData = Arrays.copyOfRange(expData, 0, (int) firstDataPagePos);
+        checkLobDataAndSize(cl, oid, expData, firstDataPagePos);        
+       
     }
     
     // b、truncate数据包含空切片 
     @Test
     public void testLob2() {
-        try {
-            int lobSize = 1;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+        int lobSize = 1;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            // make the first data piece empty
-            long firstDataPagePos = lobPageSize - lobMetaSize;
-            long secondDataPagePos = firstDataPagePos + lobPageSize;
-            try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                lob.seek(secondDataPagePos, DBLob.SDB_LOB_SEEK_SET);
-                byte[] data2 = new byte[lobPageSize];
-                lob.write(data2);
-                expData = RandomWriteLobUtil.appendBuff(expData, data2, lobPageSize);
-            }
-            
-            // truncate data that contains empty piece
-            cl.truncateLob(oid, firstDataPagePos);
-            expData = Arrays.copyOfRange(expData, 0, (int) firstDataPagePos);
-            checkLobDataAndSize(cl, oid, expData, firstDataPagePos);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+        // make the first data piece empty
+        long firstDataPagePos = lobPageSize - lobMetaSize;
+        long secondDataPagePos = firstDataPagePos + lobPageSize;
+        try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+            lob.seek(secondDataPagePos, DBLob.SDB_LOB_SEEK_SET);
+            byte[] data2 = new byte[lobPageSize];
+            lob.write(data2);
+            expData = RandomWriteLobUtil.appendBuff(expData, data2, lobPageSize);
         }
+            
+        // truncate data that contains empty piece
+        cl.truncateLob(oid, firstDataPagePos);
+        expData = Arrays.copyOfRange(expData, 0, (int) firstDataPagePos);
+        checkLobDataAndSize(cl, oid, expData, firstDataPagePos);        
     }
 
     @AfterClass
@@ -133,9 +112,6 @@ public class TruncateEmptyPiece13392 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
                 sdb.close();

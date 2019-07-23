@@ -5,7 +5,6 @@ import java.util.Arrays;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -14,7 +13,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -42,45 +40,31 @@ public class LockAndRead13257 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");            
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);        
     }
 
     @Test
     public void testLob() {
-        try {
-            int lobSize = 300 * 1024;
-            byte[] writeData = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, writeData);
+    	int lobSize = 300 * 1024;
+        byte[] writeData = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, writeData);
             
-            int offset = 50;
-            int length = 100;
-            byte[] readData = new byte[length]; 
-            try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_READ)) {
-                lob.lock(offset, length);
-                lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
-                lob.read(readData);
-            }
-            
-            byte[] expData = Arrays.copyOfRange(writeData, offset, offset + length);
-            RandomWriteLobUtil.assertByteArrayEqual(readData, expData, "lob data is wrong");
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+        int offset = 50;
+        int length = 100;
+        byte[] readData = new byte[length]; 
+        try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_READ)) {
+            lob.lock(offset, length);
+            lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
+            lob.read(readData);
         }
+            
+        byte[] expData = Arrays.copyOfRange(writeData, offset, offset + length);
+        RandomWriteLobUtil.assertByteArrayEqual(readData, expData, "lob data is wrong");        
     }
 
     @AfterClass
@@ -89,9 +73,6 @@ public class LockAndRead13257 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
                 sdb.close();

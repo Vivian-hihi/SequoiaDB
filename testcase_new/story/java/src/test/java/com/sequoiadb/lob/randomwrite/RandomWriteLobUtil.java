@@ -13,11 +13,14 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 
 import java.io.*;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 /**
  * FileName: RandomWriteLobUtil.java
@@ -27,10 +30,7 @@ import java.util.logging.Logger;
  * @version 1.00
  */
 class RandomWriteLobUtil {
-
-    final private static Logger log = Logger.getLogger(RandomWriteLobUtil.class.getName());
-
-    static DBCollection createCL(CollectionSpace cs, String clName, String option) {
+    public  static DBCollection createCL(CollectionSpace cs, String clName, String option) {
         DBCollection cl = null;
         BSONObject options = (BSONObject) JSON.parse(option);
         try {
@@ -45,7 +45,7 @@ class RandomWriteLobUtil {
         return cl;
     }
 
-    static DBCollection createCL(CollectionSpace cs, String clName) {
+    public static DBCollection createCL(CollectionSpace cs, String clName) {
         DBCollection cl = null;
         try {
             if (cs.isCollectionExist(clName)) {
@@ -58,7 +58,7 @@ class RandomWriteLobUtil {
         return cl;
     }
 
-    static byte[] appendBuff(byte[] oldBuff, byte[] buff4Append, int offset) {
+    public static byte[] appendBuff(byte[] oldBuff, byte[] buff4Append, int offset) {
         byte[] newBuff;
         if (oldBuff.length >= offset + buff4Append.length) {
             newBuff = new byte[oldBuff.length];
@@ -76,18 +76,18 @@ class RandomWriteLobUtil {
      * @param length generating byte stream size
      * @return byte[] bytes
      */
-    static byte[] getRandomBytes(int length) {
+    public static byte[] getRandomBytes(int length) {
         byte[] bytes = new byte[length];
         Random random = new Random();
         random.nextBytes(bytes);
         return bytes;
     }
 
-    static String getRandomString(int size) {
+    public static String getRandomString(int size) {
         return Arrays.toString(getRandomBytes(size));
     }
 
-    static ArrayList<String> getDataGroups(Sequoiadb sdb) {
+    public static ArrayList<String> getDataGroups(Sequoiadb sdb) {
         ArrayList<String> groupList = sdb.getReplicaGroupNames();
         groupList.remove("SYSCatalogGroup");
         groupList.remove("SYSCoord");
@@ -95,7 +95,7 @@ class RandomWriteLobUtil {
         return groupList;
     }
 
-    static String chooseDataGroups(Sequoiadb sdb, int groupsNum) {
+    public static String chooseDataGroups(Sequoiadb sdb, int groupsNum) {
         ArrayList<String> groupList = getDataGroups(sdb);
         int length = (groupsNum > groupList.size()) ? groupList.size() : groupsNum;
         String ret = "";
@@ -105,9 +105,9 @@ class RandomWriteLobUtil {
         return (ret.length() == 0) ? ret : ret.substring(0, ret.length() - 1);
     }
 
-    static String getSrcGroupName(Sequoiadb sdb, String csName, String clName) {
+   public static String getSrcGroupName(Sequoiadb sdb, String csName, String clName) {
         String groupName = "";
-        String cond = String.format("{Name:\"%s.%s\"}", csName, clName);
+        String cond = String.format("{Name:\"%s.%s\"}", csName, clName);        
         DBCursor cr = sdb.getSnapshot(8, cond, null, null);
         while (cr.hasNext()) {
             BSONObject obj = cr.getNext();
@@ -121,7 +121,7 @@ class RandomWriteLobUtil {
         return groupName;
     }
 
-    static String getSplitGroupName(Sequoiadb sdb, String groupName) {
+    public static String getSplitGroupName(Sequoiadb sdb, String groupName) {
         String tarRgName = "";
         List<String> groupList = getDataGroups(sdb);
         for (String name : groupList) {
@@ -133,11 +133,11 @@ class RandomWriteLobUtil {
         return tarRgName;
     }
 
-    static void assertByteArrayEqual(byte[] actual, byte[] expect) {
+    public static void assertByteArrayEqual(byte[] actual, byte[] expect) {
         assertByteArrayEqual(actual, expect, "");
     }
 
-    static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
+    public static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
         if (!Arrays.equals(actual, expect)) {
             String workDirPath = SdbTestBase.getWorkDir();
             File workDir = new File(workDirPath);
@@ -175,7 +175,7 @@ class RandomWriteLobUtil {
         }
     }
 
-    private static String getCallerName() {
+    public static String getCallerName() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         String thisClassName = stackTrace[1].getClassName();
         String currClassName = null;
@@ -197,7 +197,7 @@ class RandomWriteLobUtil {
      * @param lob
      * @param expect
      */
-    static void writeLobAndExpectData2File(DBLob lob, byte[] expect) {
+    public static void writeLobAndExpectData2File(DBLob lob, byte[] expect) {
         String path = SdbTestBase.getWorkDir();
 
         File dir = new File(path);
@@ -249,14 +249,13 @@ class RandomWriteLobUtil {
      * @param dbLob
      * @return return all the lob data.
      */
-    static byte[] readLob(DBLob dbLob, int retryTime) {
+    public static byte[] readLob(DBLob dbLob, int retryTime) {
         for (int i = 0; i < retryTime; i++) {
             try {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 dbLob.read(outputStream);
                 return outputStream.toByteArray();
-            } catch (BaseException e) {
-                log.warning(e.getMessage());
+            } catch (BaseException e) {                
                 if (e.getErrorCode() != SDBError.SDB_FNE.getErrorCode())
                     throw e;
                 else if (i == 5) {
@@ -274,20 +273,20 @@ class RandomWriteLobUtil {
     }
 
 
-    static byte[] readLob(DBCollection dbcl, ObjectId id, int retryTime) {
+    public static byte[] readLob(DBCollection dbcl, ObjectId id, int retryTime) {
         DBLob lob = dbcl.openLob(id);
         byte[] b = readLob(lob, retryTime);
         lob.close();
         return b;
     }
 
-    static byte[] readLob(DBLob lob) {
+    public static byte[] readLob(DBLob lob) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         lob.read(outputStream);
         return outputStream.toByteArray();
     }
 
-    static byte[] readLob(DBCollection dbcl, ObjectId id) {
+    public static byte[] readLob(DBCollection dbcl, ObjectId id) {
         byte[] res;
         try (DBLob lob = dbcl.openLob(id)) {
             res = readLob(lob);
@@ -295,7 +294,7 @@ class RandomWriteLobUtil {
         return res;
     }
 
-    static byte[] readLob(Sequoiadb db, String csName, String clName, ObjectId id) {
+    public static byte[] readLob(Sequoiadb db, String csName, String clName, ObjectId id) {
         return readLob(db.getCollectionSpace(csName).getCollection(clName),
                 id);
     }
@@ -306,13 +305,13 @@ class RandomWriteLobUtil {
      * @param dbcl
      * @return
      */
-    static ObjectId createEmptyLob(DBCollection dbcl, ObjectId id) {
+    public static ObjectId createEmptyLob(DBCollection dbcl, ObjectId id) {
         try (DBLob lob = dbcl.createLob(id)) {
             return lob.getID();
         }
     }
 
-    static ObjectId createEmptyLob(DBCollection dbcl) {
+    public static ObjectId createEmptyLob(DBCollection dbcl) {
         return createEmptyLob(dbcl, null);
     }
 
@@ -323,27 +322,27 @@ class RandomWriteLobUtil {
      * @param id
      * @return
      */
-    static ObjectId createAndWriteLob(DBCollection dbcl, ObjectId id, byte[] data) {
+    public static ObjectId createAndWriteLob(DBCollection dbcl, ObjectId id, byte[] data) {
         DBLob lob = dbcl.createLob(id);
         lob.write(data);
         lob.close();
         return lob.getID();
     }
 
-    static ObjectId createAndWriteLob(DBCollection dbcl, byte[] data) {
+    public static ObjectId createAndWriteLob(DBCollection dbcl, byte[] data) {
         return createAndWriteLob(dbcl, null, data);
     }
 
-    static ObjectId createAndWriteLob(Sequoiadb db, String csName, String clName, ObjectId id, byte[] data) {
+    public static ObjectId createAndWriteLob(Sequoiadb db, String csName, String clName, ObjectId id, byte[] data) {
         return createAndWriteLob(db.getCollectionSpace(csName).getCollection(clName),
                 id, data);
     }
 
-    static ObjectId createAndWriteLob(Sequoiadb db, String csName, String clName, byte[] data) {
+    public static ObjectId createAndWriteLob(Sequoiadb db, String csName, String clName, byte[] data) {
         return createAndWriteLob(db.getCollectionSpace(csName).getCollection(clName), data);
     }
 
-    static byte[] seekAndReadLob(DBCollection dbcl, ObjectId lobid, int readSize, int offset) {
+    public static byte[] seekAndReadLob(DBCollection dbcl, ObjectId lobid, int readSize, int offset) {
         byte[] b = new byte[readSize];
         try (DBLob lob = dbcl.openLob(lobid)) {
             lob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
@@ -351,8 +350,43 @@ class RandomWriteLobUtil {
         }
         return b;
     }
+    
+    public static void checkRewriteLobResult( DBCollection cl, ObjectId oid,int offset, byte[] rewriteBuff, byte[] lobBuff) {
+		//check the rewrite lob 
+		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, rewriteBuff.length, offset);		
+		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
+		
+		//check the all write lob 
+		byte[] expBuff = appendBuff(lobBuff, rewriteBuff, offset);
+		byte[] actAllLobBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, expBuff.length, 0);
+		RandomWriteLobUtil.assertByteArrayEqual(actAllLobBuff, expBuff);		
+	}	
 
 
+    public static String getMd5(Object inbuff){
+        MessageDigest md5 = null;
+        String value = "";
+        
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            if(inbuff instanceof ByteBuffer){
+                md5.update((ByteBuffer)inbuff);
+            }else if(inbuff instanceof String){
+                md5.update(((String)inbuff).getBytes());
+            }else if(inbuff instanceof byte[]){
+            	md5.update((byte[]) inbuff);
+            }else{
+            	Assert.fail("invalid parameter!");
+            }
+            BigInteger bi = new BigInteger(1, md5.digest());
+            value = bi.toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Assert.fail("fail to get md5!"+e.getMessage());
+        }
+        return value;
+    }
+    
     public static class LobSizedataProvider {
         @DataProvider(name = "lobSizeDataProvider")
         public static Object[][] lobSizeDataProvider() {

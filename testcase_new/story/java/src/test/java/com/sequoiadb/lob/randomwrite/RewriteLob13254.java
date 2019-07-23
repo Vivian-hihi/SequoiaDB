@@ -12,16 +12,13 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: RewriteLob13254.java
-* test content:read empty lob piece
-* testlink case:seqDB-13254
+* @Description seqDB-13254: read empty lob piece. 
 * @author wuyan
-    * @Date    2017.11.7
+* @Date    2017.11.7
 * @version 1.00
 */
 public class RewriteLob13254 extends SdbTestBase {
@@ -34,22 +31,16 @@ public class RewriteLob13254 extends SdbTestBase {
 	
     	
 	@BeforeClass
-	public void setUp(){				
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}	
-		
+	public void setUp(){
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024}";
 		cl = RandomWriteLobUtil.createCL(cs, clName, clOptions );		
 	}	
 	
 	@Test
 	public void testLob(){			
-		int writeSize = 261120;
+		int writeSize = 1024 * 255;
 		testLobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
 		ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, testLobBuff);		
 		rewriteLob(oid);
@@ -64,10 +55,11 @@ public class RewriteLob13254 extends SdbTestBase {
 		try{					
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
+			}			
+		}finally{
+			if(sdb != null){
+				sdb.close();
 			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}
 	}	
 	
@@ -83,11 +75,11 @@ public class RewriteLob13254 extends SdbTestBase {
 	}	
 	
 	private void rewriteLob(ObjectId oid){	
-		//contain 1 and 2 pieces
-		int offset1 = 261120;
-		int lobSize = 524288;
-		//contian 5 and 6 pieces
-		int offset2 = 1309696;		
+		//contain 1 and 2 pieces, lobPageSize is 1024 *256, the first piece(0) size is 255k
+		int offset1 = 1024 * 255;
+		int lobSize = 1024 * 512;
+		//contian 5 and 6 pieces			
+		int offset2 = 1024 * 255 + 1024 * 256 * 4;
 		byte[] rewriteBuff = RandomWriteLobUtil.getRandomBytes(lobSize);	
 		
 		try(DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);){				
@@ -97,8 +89,6 @@ public class RewriteLob13254 extends SdbTestBase {
 			lob.write(rewriteBuff);				
 			byte[] testBuff = RandomWriteLobUtil.appendBuff(testLobBuff, rewriteBuff, offset1);			
 			testWriteBuff = RandomWriteLobUtil.appendBuff(testBuff, rewriteBuff, offset2);				   
-		}catch(BaseException e){
-			Assert.assertTrue(false,"rewrite lob fail"+e.getMessage());
 		}		
 	}	
 	
@@ -107,14 +97,13 @@ public class RewriteLob13254 extends SdbTestBase {
 		byte[] rbuff = null;
 		try(DBLob rLob = cl.openLob(oid);)
 		{		
-			int offset = 785408;
-			rbuff = new byte[ 262144];
+			//the 3th pieces is empty pieces
+			int offset = 1024 * ( 255 + 256 * 2);
+			rbuff = new byte[ 1024 * 256];
 			rLob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
 			rLob.read(rbuff);	
-			byte[] testnullBuff = new byte[ 262144];		
+			byte[] testnullBuff = new byte[ 1024 * 256];		
 			RandomWriteLobUtil.assertByteArrayEqual(rbuff, testnullBuff);
-		}catch(BaseException e){
-			Assert.assertTrue(false,"read null pieces fail"+e.getMessage());
 		}	
 	}
 	
@@ -122,16 +111,14 @@ public class RewriteLob13254 extends SdbTestBase {
 		byte[] rbuff = null;
 		try(DBLob rLob = cl.openLob(oid);)
 		{		
-			//read the 4 and 5 pieces, and the 4 pieces is null
-			int offset = 1047552;
-			int length = 524288;
+			//read the 4 and 5 pieces, and the 4 pieces is null,the read length is 256k+256k			
+			int offset = 1024 * ( 255 + 256 * 3);
+			int length = 1024 * 256 * 2;
 			rbuff = new byte[ length];
 			rLob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
 			rLob.read(rbuff);	
 			byte[] containsNullBuff = Arrays.copyOfRange( testWriteBuff, offset, offset + length );
 			RandomWriteLobUtil.assertByteArrayEqual(rbuff, containsNullBuff);
-		}catch(BaseException e){
-			Assert.assertTrue(false,"read null pieces fail"+e.getMessage());
 		}	
 	}
 	

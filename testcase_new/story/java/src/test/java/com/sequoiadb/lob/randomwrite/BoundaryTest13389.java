@@ -45,27 +45,19 @@ public class BoundaryTest13389 extends SdbTestBase {
     
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
-    private DBCollection cl = null;
-    
+
     @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',ReplSize:0}");
+        cs.createCollection(clName, clOpt);       
     }
     
-    @DataProvider
+    @DataProvider(name = "lengthProvider",parallel = true)
     public Object[][] lengthProvider() {
         Object[][] result = null;
         long firstDataPagePos = lobPageSize - lobMetaSize;
@@ -84,25 +76,23 @@ public class BoundaryTest13389 extends SdbTestBase {
 
     @Test(dataProvider="lengthProvider")
     public void testLob(long length) {
-        try {
-            int lobSize = 2 * lobPageSize;
+    	try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+    		DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+    		int lobSize = 2 * lobPageSize;
             byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
             ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
             
+                
             cl.truncateLob(oid, length);
-            expData = Arrays.copyOfRange(expData, 0, (int) length);
-            
+            byte[] expData = Arrays.copyOfRange(data, 0, (int) length);
+                
             byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
             RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-            
+                
             long actSize = getSizeByListLobs(cl, oid);
             Assert.assertEquals(actSize, length, "wrong length after truncate lob");
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+    	}        
+        
     }
 
     @AfterClass

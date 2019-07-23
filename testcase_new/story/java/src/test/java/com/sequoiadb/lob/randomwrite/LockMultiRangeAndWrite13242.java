@@ -14,7 +14,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -42,55 +41,44 @@ public class LockMultiRangeAndWrite13242 extends SdbTestBase {
     private DBCollection cl = null;
     
     @BeforeClass
-    public void setUp() {
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+    public void setUp() {  
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");            
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);       
     }
 
     @Test
     public void testLob() {
-        try {
-            int lobSize = 300 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+    	int lobSize = 300 * 1024;
+    	byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            LobPart partA = new LobPart(0         , 100 * 1024);
-            LobPart partB = new LobPart(120 * 1024, 80 * 1024);
-            LobPart partC = new LobPart(210 * 1024, 50 * 1024);
+        LobPart partA = new LobPart(0         , 100 * 1024);
+        LobPart partB = new LobPart(120 * 1024, 80 * 1024);
+        LobPart partC = new LobPart(210 * 1024, 50 * 1024);
             
-            try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                lockLob(lob, partA);
-                lockLob(lob, partB);
-                lockLob(lob, partC);
+        try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+            lockLob(lob, partA);
+            lockLob(lob, partB);
+            lockLob(lob, partC);
                 
-                seekAndWriteLob(lob, partA);
-                seekAndWriteLob(lob, partB);
-                seekAndWriteLob(lob, partC);
+            seekAndWriteLob(lob, partA);
+            seekAndWriteLob(lob, partB);
+            seekAndWriteLob(lob, partC);
                 
-                expData = updateExpData(expData, partA);
-                expData = updateExpData(expData, partB);
-                expData = updateExpData(expData, partC);
-            }
-            
-            byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
-            RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-            int actLobSize = getLobSizeByList(cl, oid);
-            Assert.assertEquals(actLobSize, lobSize, "lob size is wrong");
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+            expData = updateExpData(expData, partA);
+            expData = updateExpData(expData, partB);
+            expData = updateExpData(expData, partC);
         }
+            
+        byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
+        int actLobSize = getLobSizeByList(cl, oid);
+        Assert.assertEquals(actLobSize, lobSize, "lob size is wrong");
     }
 
     @AfterClass
@@ -99,9 +87,6 @@ public class LockMultiRangeAndWrite13242 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
                 sdb.close();

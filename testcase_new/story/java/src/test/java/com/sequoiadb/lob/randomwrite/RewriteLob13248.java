@@ -1,7 +1,5 @@
 package com.sequoiadb.lob.randomwrite;
 
-import java.util.Random;
-
 import org.bson.types.ObjectId;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,37 +13,37 @@ import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* @Description seqDB-13239:lock the data segment to write lob,the lock offset exceeds the maximum length of lob
+* @Description seqDB-13248:lock the data segment to write lob,and locking data segment range discontinuity
 * @author wuyan
 * @Date    2017.11.7
 * @version 1.00
 */
-public class RewriteLob13239 extends SdbTestBase {	
-	private String clName = "writelob13239";	
+public class RewriteLob13248 extends SdbTestBase {
+	private String clName = "writelob13248";	
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;	
 	private static DBCollection cl = null; 
-	private Random random = new Random();	
+	private byte[] testLobBuff= null;	
     	
 	@BeforeClass
 	public void setUp(){		
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
-		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);		
 		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash'}";
 		cl = RandomWriteLobUtil.createCL(cs, clName, clOptions );		
 	}	
 	
 	@Test
-	public void testLob(){		
-		int writeSize = random.nextInt(1024 * 1024 * 2);
-		byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
-		ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, lobBuff);
+	public void testLob(){
+		int writeSize = 1024 * 1024 * 1;
+		testLobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
+		ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, testLobBuff);
+			
+		int offset =  1024;
+		int reWriteLobSize = 1024 * 256;		
+		byte[] lastWriteBuff = rewriteLob(oid, offset, reWriteLobSize);
 		
-		int offset = writeSize + random.nextInt(1024 * 256 );
-		int rewriteLobSize = random.nextInt(1024 * 1024 * 2);
-		byte[] rewriteBuff = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);	
-		rewriteLob(oid, offset, rewriteBuff);			
-		RandomWriteLobUtil.checkRewriteLobResult(cl, oid, offset, rewriteBuff, lobBuff);	
+		RandomWriteLobUtil.checkRewriteLobResult(cl, oid, offset, lastWriteBuff,testLobBuff);		
 	}
 	
 	@AfterClass
@@ -61,14 +59,19 @@ public class RewriteLob13239 extends SdbTestBase {
 		}
 	}	
 	
-	private void rewriteLob(ObjectId oid,int offset,byte[] rewriteBuff){		
+	private byte[] rewriteLob(ObjectId oid, int offset, int writeLobSize){		
+		int lockCount = 10;
+		byte[] rewriteBuff = new byte[writeLobSize];
 		try(DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)){				
-			lob.lockAndSeek(offset, rewriteBuff.length);
-			lob.write(rewriteBuff);			    
-		}			
-	}
-	
-	
+			for( int i = 0; i < lockCount; i++){
+				rewriteBuff = RandomWriteLobUtil.getRandomBytes(writeLobSize);
+				lob.lockAndSeek(offset, writeLobSize);
+				lob.write(rewriteBuff);		
+			}			
+		}
+		//get the last written lobBuff		
+		return rewriteBuff;
+	}	
 }
 
 

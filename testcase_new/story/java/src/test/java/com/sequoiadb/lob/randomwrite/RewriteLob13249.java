@@ -15,13 +15,11 @@ import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: RewriteLob13249.java
-* test content:write empty pieces over limits, 
+* @Description seqDB-13249:write empty pieces over limits, 
 * 					record empty pieces metadata information no more than 320 bytes ,
-*                   No more than 40 empty pieces   
-* testlink case:seqDB-13249
+*                   No more than 40 empty pieces  *
 * @author wuyan
-    * @Date    2017.11.7
+* @Date    2017.11.7
 * @version 1.00
 */
 public class RewriteLob13249 extends SdbTestBase {
@@ -31,16 +29,10 @@ public class RewriteLob13249 extends SdbTestBase {
 	private static DBCollection cl = null; 
     	
 	@BeforeClass
-	public void setUp(){				
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}	
-		
+	public void setUp(){		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024}";
 		cl = RandomWriteLobUtil.createCL(cs, clName, clOptions );		
 	}	
 	
@@ -57,10 +49,11 @@ public class RewriteLob13249 extends SdbTestBase {
 		try{					
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
+			}			
+		}finally{
+			if(sdb != null){
+				sdb.close();
 			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}
 	}		
 		
@@ -68,8 +61,9 @@ public class RewriteLob13249 extends SdbTestBase {
 	private void rewriteLob(ObjectId oid){		
 		try(DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);){	
 			int rewriteLobSize = 262144;
-			for( int i=0; i<40; i++){					
-				int offset = (i*2+2) * 524288;				
+			int maxEmptyPieces = 40;
+			for( int i = 0; i < maxEmptyPieces; i++ ){					
+				int offset = ( i*2 + 2 ) * 524288;				
 				byte[] rewriteBuff = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);
 				lob.lockAndSeek(offset, rewriteLobSize);
 				lob.write(rewriteBuff);							
@@ -77,7 +71,7 @@ public class RewriteLob13249 extends SdbTestBase {
 			Assert.fail("the number of empty pieces exceeds the limit to be reported wrong");
 		}catch(BaseException e){
 			if( -319 != e.getErrorCode()){
-				Assert.assertTrue(false,"empty pieces num limit check faild"+e.getMessage());
+				Assert.fail("empty pieces num limit check faild!e=" + e.getErrorCode() + e.getMessage());
 			}			
 		}				
 	}		

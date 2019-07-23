@@ -1,16 +1,10 @@
 package com.sequoiadb.lob.randomwrite;
 
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.assertByteArrayEqual;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.createEmptyLob;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.getRandomBytes;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.readLob;
+import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
-import java.util.logging.Logger;
+import java.util.Random;
 
-import org.bson.BSONObject;
 import org.bson.types.ObjectId;
-import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -19,75 +13,72 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.testcommon.SdbTestBase;
 
+
 /**
- * Created by laojingtang on 17-12-1.
- */
-public class TestLob13255 extends SdbTestBase {
-    Logger log = Logger.getLogger(LobTest13237.class.getName());
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
+* @Description seqDB-13255 : 重复多次读写lob
+* @author laojingtang
+* @UpdateAuthor wuyan
+* @Date    2017.12.1
+* @UpdateDate 2019.07.17
+* @version 1.10
+*/
+public class TestLob13255 extends SdbTestBase {   
+    private Sequoiadb db = null;
+    private DBCollection dbcl = null;
+    private CollectionSpace cs = null;    
+    private String clName = "lobcl_13255";
+    private Random random = new Random();
+    private byte[] lobBuff= null;
 
     @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl, "", "");
-        cs = db.getCollectionSpace(csName);
+    public void setUp() {
+        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cs = db.getCollectionSpace(SdbTestBase.csName);
+        dbcl = cs.createCollection(clName);        
+    }    
 
-        dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-    }
+    @Test
+    public void testLob13255(){
+    	int writeSize = random.nextInt( 1024 * 1024 * 10 );
+        lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);		
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);	        
 
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
-
-    /**
-     * 1、重新打开lob
-     * 2、指定范围锁定数据段（lockAndSeek）
-     * 3、写入lob
-     * 4、过程中删除lob（如在写入lob数据，未close前执行删除）
-     * 5、检查写入和删除lob结果
-     * 1、写入lob成功，删除lob失败，返回对应错误信息
-     * 2、读取lob检查写入lob信息正确
-     *
-     * @param lobsize
-     */
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
-    public void testLob13252(int lobsize) {
-        ObjectId id = createEmptyLob(dbcl);
-
-        byte[] randomByte = getRandomBytes(lobsize);
-
-        try (DBLob lob = dbcl.openLob(id, DBLob.SDB_LOB_WRITE)) {
-            lob.lockAndSeek(0, lobsize);
-            lob.write(randomByte);
-            try {
-                dbcl.removeLob(id);
-                Assert.fail("should throw exception");
-            } catch (BaseException e) {
-                if (e.getErrorCode() != SDBError.SDB_LOB_IS_IN_USE.getErrorCode()) {
-                    log.warning(e.getMessage());
-                    throw e;
-                }
+        int offset = 1024;
+        int reWriteSize = 1024 * 256;
+        int writeCount = 10;
+        byte[] reWriteBuff = new byte[ reWriteSize ];
+        for( int i = 0; i < writeCount; i++ ){        	
+        	reWriteBuff = RandomWriteLobUtil.getRandomBytes(reWriteSize);
+            try (DBLob lob = dbcl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+                lob.lockAndSeek(offset, reWriteSize);
+                lob.write(reWriteBuff);           
             }
+            
+            //check the rewrite lob 
+    		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(dbcl, oid, reWriteBuff.length, offset);		
+    		RandomWriteLobUtil.assertByteArrayEqual(actBuff, reWriteBuff,"write count:" + i + " is content error!");
+              
         }
-
-        try {
-            assertByteArrayEqual(readLob(dbcl, id), randomByte, "oid: " + id.toString());
-        } catch (Throwable e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
+        
+        //check the all write lob 
+        byte[] expBuff = RandomWriteLobUtil.appendBuff(lobBuff, reWriteBuff, offset);
+      	byte[] actAllLobBuff = RandomWriteLobUtil.seekAndReadLob(dbcl, oid, expBuff.length, 0);
+      	RandomWriteLobUtil.assertByteArrayEqual(actAllLobBuff, expBuff);     
     }
+    
+    @AfterClass
+    public void tearDown(){		
+		try{					
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}			
+		}finally{
+			if(db != null){
+				db.close();
+			}
+		}
+	}	
 
 }

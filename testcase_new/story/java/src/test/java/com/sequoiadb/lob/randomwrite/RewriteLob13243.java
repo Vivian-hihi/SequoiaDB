@@ -1,7 +1,6 @@
 package com.sequoiadb.lob.randomwrite;
 
 import java.util.Arrays;
-import java.util.Random;
 
 import org.bson.types.ObjectId;
 import org.testng.Assert;
@@ -13,16 +12,13 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: RewriteLob13243.java
-* test content:lock the data segment to write lob,and locking data segment range intersection
-* testlink case:seqDB-13243
+* @Description seqDB-13243:lock the data segment to write lob,and locking data segment range intersection
 * @author wuyan
-    * @Date    2017.11.7
+* @Date   2017.11.7
 * @version 1.00
 */
 public class RewriteLob13243 extends SdbTestBase {
@@ -30,20 +26,13 @@ public class RewriteLob13243 extends SdbTestBase {
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;	
 	private static DBCollection cl = null; 	
-	private byte[] testLobBuff= null;	
-	private Random random = new Random();
+	private byte[] testLobBuff= null;		
     	
 	@BeforeClass
 	public void setUp(){				
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}	
-		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024}";
 		cl = RandomWriteLobUtil.createCL(cs, clName, clOptions );		
 	}	
 	
@@ -61,10 +50,11 @@ public class RewriteLob13243 extends SdbTestBase {
 		try{					
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
+			}			
+		}finally{
+			if(sdb != null){
+				sdb.close();
 			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}
 	}	
 	
@@ -99,8 +89,6 @@ public class RewriteLob13243 extends SdbTestBase {
 			long actWriteLobSize = lob.getSize();
 			long expLobSize = offset1 + rewriteSize;
 			Assert.assertEquals(actWriteLobSize, expLobSize,"the lobsize is different!");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"rewrite lob fail"+e.getMessage());
 		}		
 	}
 }

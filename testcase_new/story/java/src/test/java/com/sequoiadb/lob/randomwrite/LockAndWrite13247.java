@@ -42,61 +42,47 @@ public class LockAndWrite13247 extends SdbTestBase {
     
     @BeforeClass
     public void setUp() {
-
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cl = cs.createCollection(clName, clOpt);
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");            
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cl = cs.createCollection(clName, clOpt);         
     }
 
     @Test
     public void testLob() {
-        try {
-            int lobSize = 512 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            byte[] expData = data;
+    	int lobSize = 512 * 1024;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        byte[] expData = data;
             
-            LobPart partA = new LobPart(100 * 1024, 28 * 1024);
-            LobPart partB = new LobPart(128 * 1024, 1 * 1024);
-            LobPart partC = new LobPart(129 * 1024, 101 * 1024);
-            LobPart partD = new LobPart(230 * 1024, 120 * 1024);
+        LobPart partA = new LobPart(100 * 1024, 28 * 1024);
+        LobPart partB = new LobPart(128 * 1024, 1 * 1024);
+        LobPart partC = new LobPart(129 * 1024, 101 * 1024);
+        LobPart partD = new LobPart(230 * 1024, 120 * 1024);
             
-            // merged part covers the range from A to D
-            int offset = partA.getOffset();
-            int length = (partD.getOffset() + partD.getLength()) - partA.getOffset();
-            LobPart mergedPart = new LobPart(offset, length);
+        // merged part covers the range from A to D
+        int offset = partA.getOffset();
+        int length = (partD.getOffset() + partD.getLength()) - partA.getOffset();
+        LobPart mergedPart = new LobPart(offset, length);
             
-            try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
-                lockLob(lob, partA);
-                lockLob(lob, partC);
-                seekAndWriteLob(lob, partA);
-                seekAndWriteLob(lob, partC);
-                expData = updateExpData(expData, partA);
-                expData = updateExpData(expData, partC);
+        try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+            lockLob(lob, partA);
+            lockLob(lob, partC);
+            seekAndWriteLob(lob, partA);
+            seekAndWriteLob(lob, partC);
+            expData = updateExpData(expData, partA);
+            expData = updateExpData(expData, partC);
                 
-                lockLob(lob, partB);
-                lockLob(lob, partD);
-                seekAndWriteLob(lob, mergedPart);
-                expData = updateExpData(expData, mergedPart);
-            }
-            
-            byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
-            RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-            
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+            lockLob(lob, partB);
+            lockLob(lob, partD);
+            seekAndWriteLob(lob, mergedPart);
+            expData = updateExpData(expData, mergedPart);
         }
+            
+        byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");       
     }
 
     @AfterClass

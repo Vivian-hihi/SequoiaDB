@@ -35,7 +35,7 @@ public class LobTest13266 extends SdbTestBase {
 	private int writeFailNum = 0;
 
 	@BeforeClass
-	public void setupClass() {
+	public void setUp() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cs = sdb.getCollectionSpace(SdbTestBase.csName);
 		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024," + "ReplSize:0,Compressed:true}";
@@ -70,7 +70,7 @@ public class LobTest13266 extends SdbTestBase {
 	}
 
 	@AfterClass
-	public void afterClass() {
+	public void tearDown() {
 		try {
 			if (cs.isCollectionExist(clName)) {
 				cs.dropCollection(clName);

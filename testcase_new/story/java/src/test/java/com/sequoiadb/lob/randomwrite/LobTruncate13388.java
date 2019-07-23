@@ -2,49 +2,40 @@ package com.sequoiadb.lob.randomwrite;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
- * Created by laojingtang on 17-11-20.
- */
+* @Description seqDB-13388 : 执行truncate lob操作
+* @author laojingtang
+* @UpdateAuthor wuyan
+* @Date    2017.11.20
+* @UpdateDate 2019.07.22
+* @version 1.10
+*/
+
 public class LobTruncate13388 extends SdbTestBase {
-    String csName, clName;
-    Sequoiadb db;
-    CollectionSpace cs;
-    DBCollection dbcl;
-    final int lobSize = 1024;
-    final byte[] _randomDatas = RandomWriteLobUtil.getRandomBytes(lobSize);
+    private String clName = "truncateLobCL_13388";
+    private Sequoiadb db;
+    private CollectionSpace cs;
+    private DBCollection dbcl;
 
     @BeforeClass
-    public void setupClass() {
-        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        cs = db.getCollectionSpace(csName);
-        dbcl = cs.createCollection(
-                clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}")
-        );
-    }
-
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
+    public void setUp() {
+        db = new Sequoiadb(SdbTestBase.coordUrl, "", ""); 
+        cs = db.getCollectionSpace(SdbTestBase.csName);
+        dbcl = cs.createCollection( clName,(BSONObject) JSON.parse("{ShardingKey:{\"_id\":1}}"));
+    }    
 
     /**
      * 1、指定oid执行truncateLob操作，删除超过指定长度部分的数据
@@ -53,18 +44,37 @@ public class LobTruncate13388 extends SdbTestBase {
      * 2、执行listLobs查看lob大小为truncate操作时指定大小
      */
     @Test
-    public void testLob13388() {
-        ObjectId id;
-        try (DBLob lob = dbcl.createLob()) {
-            lob.write(_randomDatas);
-            id = lob.getID();
-        }
+    public void testLob13388() {        
+        int writeSize = 1024 * 5;
+        byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);
 
-        dbcl.truncateLob(id, 100);
-
-        try (DBLob lob = dbcl.openLob(id)) {
-            Assert.assertEquals(lob.getSize(), 100);
-            RandomWriteLobUtil.assertByteArrayEqual(RandomWriteLobUtil.readLob(lob,5), Arrays.copyOf(_randomDatas, 100));
-        }
+        long length = 100;
+        dbcl.truncateLob(oid, length);
+        
+        //check result
+        byte[] actData = RandomWriteLobUtil.readLob(dbcl, oid);
+        byte[] expData = Arrays.copyOf(lobBuff, (int) length);
+        RandomWriteLobUtil.assertByteArrayEqual( actData, expData);  
+        try(DBCursor listLob = dbcl.listLobs()){
+			while(listLob.hasNext()){				
+				BSONObject obj = listLob.getNext();	                         
+	            long actLobSize = (Long) obj.get("Size");
+	            Assert.assertEquals(actLobSize, length);				
+			}	
+		}	
     }
+    
+    @AfterClass
+	public void tearDown() {
+		try {			
+			if (cs.isCollectionExist(clName)) {
+				cs.dropCollection(clName);
+			}			
+		} finally{
+			if(db != null){
+				db.close();
+			}
+		}
+	}
 }
