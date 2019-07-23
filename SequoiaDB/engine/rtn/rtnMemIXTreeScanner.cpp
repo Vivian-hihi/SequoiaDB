@@ -210,6 +210,12 @@ namespace engine
             goto error ;
          }
 
+         if ( found && !isReadonly() )
+         {
+            _savedRID._offset -= 1 ;
+            found = FALSE ;
+         }
+
          // mark _init to true so that advance won't call keyLocate again
          _init = TRUE ;
          // remove the eof flag so we will restart scan on the tree
@@ -369,6 +375,55 @@ namespace engine
                _memIdxTree->resetPos( _curIndexPos ) ;
             }
          }
+         else if ( !isReadonly() )
+         {
+            // if it's update or delete index scan, the index structure may get
+            // changed so everytime we have to compare _curIndexPos and onmem
+            // rid, as well as the stored object
+
+            BOOLEAN isSame = FALSE ;
+
+            rc = isCursorSame( _savedObj, _savedRID, isSame ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            // if not the same, we must have something changed in
+            // the index, let's relocate RID
+            if ( !isSame )
+            {
+               rc = relocateRID( isSame ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
+                  goto error ;
+               }
+               if ( isSame && ( !getSharedInfo() ||
+                                !getSharedInfo()->exists( _savedRID ) ) )
+               {
+                  isSame = FALSE ;
+               }
+            }
+            // if both on recordRID and key object are the same, let's
+            // say the index is not changed, that means we should move on
+            // to the next.
+            if ( isSame )
+            {
+               rc = _memIdxTree->advance( _curIndexPos, _direction ) ;
+               if ( rc )
+               {
+                  if ( SDB_IXM_EOC != rc )
+                  {
+                     PD_LOG( PDERROR, "Advance memery tree to next by "
+                             "direction(%d) failed, rc: %d", _direction, rc ) ;
+                     goto error ;
+                  }
+                  rc = SDB_OK ;
+                  _memIdxTree->resetPos( _curIndexPos ) ;
+               }
+            }
+         } // if ( !isReadonly() )
       }
 
       // after getting the first key location or advanced to next, let's
@@ -459,7 +514,18 @@ namespace engine
                }*/
 
                rid = _savedRID ;
-               _savedRID.reset() ;
+
+               // if we are write mode, let's record the _savedObj as well
+               if ( !isReadonly() )
+               {
+                  _savedObj = _curKeyObj.getOwned() ;
+               }
+               else
+               {
+                  // in readonly scenario, _savedRID should always be null
+                  // unless pauseScan() is called
+                  _savedRID.reset() ;
+               }
                rc = SDB_OK ;
                break ;
             }
@@ -509,23 +575,27 @@ namespace engine
          goto done ;
       }
 
-      // for read mode, let's copy _savedObj
-      try
+      // for write mode, since we write _savedRID and _savedObj in advance, we
+      // don't do it here
+      if ( isReadonly() )
       {
-         const preIdxTreeNodeKey& nodeKey =
-            _memIdxTree->getNodeKey( _curIndexPos ) ;
-         _savedRID = nodeKey.getRID() ;
-         _savedObj = nodeKey.getKeyObj().getOwned() ;
+         try
+         {
+            const preIdxTreeNodeKey& nodeKey =
+               _memIdxTree->getNodeKey( _curIndexPos ) ;
+            _savedRID = nodeKey.getRID() ;
+            _savedObj = nodeKey.getKeyObj().getOwned() ;
 
-         PD_LOG( PDDEBUG, "Paused in obj(%s) with rid(%d,%d)",
-                 _savedObj.toString().c_str(),
-                 _savedRID._extent, _savedRID._offset ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
+            PD_LOG( PDDEBUG, "Paused in obj(%s) with rid(%d,%d)",
+                    _savedObj.toString().c_str(),
+                    _savedRID._extent, _savedRID._offset ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
 
    done:
@@ -614,32 +684,46 @@ namespace engine
       if ( _curIndexPos == _memIdxTree->find( &_savedObj, _savedRID ) &&
            !_memIdxTree->getNodeData( _curIndexPos ).isRecordDeleted() )
       {
+         // this means the last scaned record is still here
+         isSame = TRUE ;
+         _curKeyObj = _savedObj ;
+      }
+      else
+      {
+         isSame = FALSE ;
+      }
+
+      if ( !isReadonly() )
+      {
+         goto done ;
+      }
+
+      if ( isSame )
+      {
          // this means the last scaned record is still here, so let's
          // reset _savedRID so that we'll call advance()
          _savedRID.reset() ;
-         isSame = TRUE ;
-         _curKeyObj = _savedObj ;
-         goto done ;
       }
-
-      isSame = FALSE ;
-
-      // when we get here, it means something changed and we need to
-      // relocateRID
-      // note relocateRID may relocate to the index that already read. However
-      // after advance() returning the RID we'll check if the index already has
-      // been read, so we should be save to not reset _savedRID
-      rc = relocateRID( isSame ) ;
-      if ( rc )
+      else
       {
-         PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
-         goto error ;
-      }
-      if ( isSame )
-      {
-         _savedRID.reset() ;
-         _curKeyObj = _savedObj ;
-         goto done ;
+         // when we get here, it means something changed and we need to
+         // relocateRID
+         // note relocateRID may relocate to the index that already read.
+         // However after advance() returning the RID we'll check if the
+         // index already has been read, so we should be save to not
+         // reset _savedRID
+         rc = relocateRID( isSame ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
+            goto error ;
+         }
+         if ( isSame )
+         {
+            _savedRID.reset() ;
+            _curKeyObj = _savedObj ;
+            goto done ;
+         }
       }
 
    done :
