@@ -37,7 +37,7 @@ public class CappedCL11782 extends SdbTestBase {
     private CollectionSpace cappedCS = null;
     private String cappedCLName = "cappedCL_11782";
     private String clName = "cl_11782";
-    private int stringLength = CappedCLUtils.getRandomStringLength(1, 2000);
+    private int stringLength = CappedCLUtils.getRandomStringLength(1, 4000);
     private StringBuffer strBuffer = null;
     private int threadNum = 5;
 

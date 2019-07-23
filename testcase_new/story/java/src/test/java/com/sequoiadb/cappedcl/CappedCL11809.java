@@ -25,17 +25,17 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
- * FileName: seqDB-11793:pop与insert并发
+ * FileName: seqDB-11809:insert/pop/query/truncate并发
  * 
  * @author zhaoyu
- * @Date 2019.7.17
+ * @Date 2019.7.22
  */
-public class CappedCL11793 extends SdbTestBase {
+public class CappedCL11809 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cappedCS = null;
     private DBCollection cappedCL = null;
-    private String cappedCLName = "cappedCL_11793";
+    private String cappedCLName = "cappedCL_11809";
     private StringBuffer strBuffer = null;
     private int stringLength = CappedCLUtils.getRandomStringLength(1, 100);
     private int insertNum = 10000;
@@ -69,6 +69,8 @@ public class CappedCL11793 extends SdbTestBase {
         for (int i = 0; i < threadNum; i++) {
             te.addWorker(new InsertThread());
             te.addWorker(new PopThread());
+            te.addWorker(new QueryThread());
+            te.addWorker(new TruncateThread());
         }
 
         te.run();
@@ -103,6 +105,10 @@ public class CappedCL11793 extends SdbTestBase {
                 }
                 System.out.println(this.getClass().getName().toString() + " stop at:"
                         + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
             } finally {
                 db.close();
             }
@@ -129,8 +135,13 @@ public class CappedCL11793 extends SdbTestBase {
                 cursor.close();
 
                 // 获取pop的logicalID
-                int pos = new Random().nextInt(lids.size());
-                long logicalID = lids.get(pos);
+                int pos = 0;
+                long logicalID = 0;
+                if (lids.size() != 0) {
+                    pos = new Random().nextInt(lids.size());
+                    logicalID = lids.get(pos);
+                }
+
                 System.out.println("random logicalID: " + logicalID);
                 // pop记录
                 BSONObject popObj = new BasicBSONObject();
@@ -145,7 +156,58 @@ public class CappedCL11793 extends SdbTestBase {
                         + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
 
             } catch (BaseException e) {
-                if (e.getErrorCode() != -6) {
+                if (e.getErrorCode() != -6 && e.getErrorCode() != -321) {
+                    throw e;
+                }
+            } finally {
+                db.close();
+            }
+
+        }
+    }
+
+    private class QueryThread {
+
+        @ExecuteOrder(step = 1, desc = "查询记录")
+        public void insert() {
+            Sequoiadb db = null;
+            DBCollection cl = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
+                System.out.println(this.getClass().getName().toString() + " start at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+                DBCursor cursor = cl.query();
+                while (cursor.hasNext()) {
+                    cursor.getNext();
+                }
+                cursor.close();
+                System.out.println(this.getClass().getName().toString() + " stop at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
+            } finally {
+                db.close();
+            }
+        }
+    }
+
+    private class TruncateThread {
+        @ExecuteOrder(step = 1, desc = "truncate记录")
+        public void truncateCappedCL() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
+                System.out.println(this.getClass().getName().toString() + " start at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+                cl.truncate();
+                System.out.println(this.getClass().getName().toString() + " stop at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -190) {
                     throw e;
                 }
             } finally {

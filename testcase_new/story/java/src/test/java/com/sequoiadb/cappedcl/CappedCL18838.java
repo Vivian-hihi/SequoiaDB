@@ -21,26 +21,27 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
- * FileName: seqDB-11793:pop与insert并发
+ * FileName: seqDB-18838:插入/pop/query/truncate时，删除固定集合
  * 
  * @author zhaoyu
- * @Date 2019.7.17
+ * @Date 2019.7.22
  */
-public class CappedCL11793 extends SdbTestBase {
+public class CappedCL18838 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cappedCS = null;
     private DBCollection cappedCL = null;
-    private String cappedCLName = "cappedCL_11793";
+    private String cappedCLName = "cappedCL_18838";
     private StringBuffer strBuffer = null;
     private int stringLength = CappedCLUtils.getRandomStringLength(1, 100);
     private int insertNum = 10000;
     private ThreadExecutor te = new ThreadExecutor(1800000);
-    private int threadNum = 5;
+    private int threadNum = 3;
 
     @BeforeClass
     public void setUp() {
@@ -69,19 +70,29 @@ public class CappedCL11793 extends SdbTestBase {
         for (int i = 0; i < threadNum; i++) {
             te.addWorker(new InsertThread());
             te.addWorker(new PopThread());
+            te.addWorker(new QueryThread());
+            te.addWorker(new TruncateThread());
         }
+        DropCLThread dropCLThread = new DropCLThread();
+        te.addWorker(dropCLThread);
 
         te.run();
 
         // 插入与pop并发不校验_id值，校验主备一致性
-        Assert.assertTrue(CappedCLUtils.checkRecord(sdb, cappedCSName, cappedCLName));
-
+        if (dropCLThread.getRetCode() != 0) {
+            Assert.assertTrue(CappedCLUtils.checkRecord(sdb, cappedCSName, cappedCLName));
+        } else {
+            Assert.assertFalse((cappedCS.isCollectionExist(cappedCLName)));
+        }
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            cappedCS.dropCollection(cappedCLName);
+            if (cappedCS.isCollectionExist(cappedCLName)) {
+                cappedCS.dropCollection(cappedCLName);
+            }
+
         } finally {
             sdb.close();
         }
@@ -103,6 +114,10 @@ public class CappedCL11793 extends SdbTestBase {
                 }
                 System.out.println(this.getClass().getName().toString() + " stop at:"
                         + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -23) {
+                    throw e;
+                }
             } finally {
                 db.close();
             }
@@ -129,8 +144,13 @@ public class CappedCL11793 extends SdbTestBase {
                 cursor.close();
 
                 // 获取pop的logicalID
-                int pos = new Random().nextInt(lids.size());
-                long logicalID = lids.get(pos);
+                int pos = 0;
+                long logicalID = 0;
+                if (lids.size() != 0) {
+                    pos = new Random().nextInt(lids.size());
+                    logicalID = lids.get(pos);
+                }
+
                 System.out.println("random logicalID: " + logicalID);
                 // pop记录
                 BSONObject popObj = new BasicBSONObject();
@@ -145,9 +165,84 @@ public class CappedCL11793 extends SdbTestBase {
                         + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
 
             } catch (BaseException e) {
-                if (e.getErrorCode() != -6) {
+                if (e.getErrorCode() != -6 && e.getErrorCode() != -321 && e.getErrorCode() != -23) {
                     throw e;
                 }
+            } finally {
+                db.close();
+            }
+
+        }
+    }
+
+    private class QueryThread {
+
+        @ExecuteOrder(step = 1, desc = "查询记录")
+        public void insert() {
+            Sequoiadb db = null;
+            DBCollection cl = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
+                System.out.println(this.getClass().getName().toString() + " start at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+                DBCursor cursor = cl.query();
+                while (cursor.hasNext()) {
+                    cursor.getNext();
+                }
+                cursor.close();
+                System.out.println(this.getClass().getName().toString() + " stop at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -23) {
+                    throw e;
+                }
+            } finally {
+                db.close();
+            }
+        }
+    }
+
+    private class TruncateThread {
+        @ExecuteOrder(step = 1, desc = "truncate记录")
+        public void insert() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
+                System.out.println(this.getClass().getName().toString() + " start at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+                cl.truncate();
+                System.out.println(this.getClass().getName().toString() + " stop at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -23 && e.getErrorCode() != -190) {
+                    throw e;
+                }
+            } finally {
+                db.close();
+            }
+
+        }
+    }
+
+    private class DropCLThread extends ResultStore {
+        @ExecuteOrder(step = 1, desc = "删除集合")
+        public void dropcappedCL() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                CollectionSpace cs = db.getCollectionSpace(cappedCSName);
+                System.out.println(this.getClass().getName().toString() + " start at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+                cs.dropCollection(cappedCLName);
+                System.out.println(this.getClass().getName().toString() + " stop at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -190) {
+                    throw e;
+                }
+                saveResult(e.getErrorCode(), e);
             } finally {
                 db.close();
             }
