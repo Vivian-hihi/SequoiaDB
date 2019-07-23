@@ -75,7 +75,7 @@ public class TestLob13252 extends SdbTestBase {
 		} else if (!lockAndRewriteLob.isSuccess()) {
 			Assert.assertTrue(removeLob.isSuccess(), removeLob.getErrorMsg());
 			BaseException e = (BaseException) (lockAndRewriteLob.getExceptions().get(0));
-			if (-268 != e.getErrorCode() && -4 != e.getErrorCode()) {
+			if (-268 != e.getErrorCode() && -4 != e.getErrorCode() && -317 != e.getErrorCode()) {
 				Assert.fail("lockAndRewriteLob must fail:" + e.getErrorCode() + " " + removeLob.getErrorMsg());
 			}
 			// check the remove result
