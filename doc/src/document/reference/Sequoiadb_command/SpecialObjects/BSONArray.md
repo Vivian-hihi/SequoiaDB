@@ -1,30 +1,32 @@
-BSON 数组。数据类型的介绍可参考[数组](data_model/datatype/array.md)
+BSON 数组。
+
+数据类型的介绍可参考[数组](data_model/datatype/array.md)。
 
 ##语法##
 
-**BSONArray().size()**
+**BSONArray.size()**
 
-**BSONArray().more()**
+**BSONArray.more()**
 
-**BSONArray().next()**
+**BSONArray.next()**
 
-**BSONArray().pos()**
+**BSONArray.pos()**
 
-**BSONArray().toArray()**
+**BSONArray.toArray()**
 
-**BSONArray().index()**
+**BSONArray.index()**
 
-**BSONArray().toString()**
+**BSONArray.toString()**
 
 ##方法##
 
 ###size()###
 
-获取 BSONArray 的大小
+获取 BSONArray 的大小。
 
 ###more()###
 
-判断 BSONArray 下一条记录是否会空，返回 false 表示下一条记录为空。
+判断 BSONArray 下一条记录是否为空，返回 false 表示下一条记录为空。
 
 ###next()###
 
@@ -32,7 +34,7 @@ BSON 数组。数据类型的介绍可参考[数组](data_model/datatype/array.m
 
 ###pos()###
 
-获取 BSONArray 当前的记录。
+获取 BSONArray 当前下标的记录。
 
 ###toArray()###
 
@@ -55,28 +57,28 @@ BSON 数组。数据类型的介绍可参考[数组](data_model/datatype/array.m
 
 ##示例##
 
-* 获取 BSONArray ( 关于 oma 的详解介绍可参考 [oma](reference/Sequoiadb_command/Oma/Oma.md) )
+* 获取 BSONArray ( 关于 oma 的详解介绍可参考 [oma](reference/Sequoiadb_command/Oma/Oma.md) )。
 
    ```lang-javascript
    > var oma = new Oma( "localhost", 11790 )
    > var bsonArray = oma.listNodes()
    ```
 
-* 获取 BSONArray 的大小
+* 获取 BSONArray 的大小。
 
    ```lang-javascript
    > bsonArray.size() 
    3
    ```
 
-* 判断 BSONArray 下一条记录是否为空
+* 判断 BSONArray 下一条记录是否为空。
 
    ```lang-javascript
    > bsonArray.more() 
    true
    ```
 
-* 获取 BSONArray 的下一条记录
+* 获取 BSONArray 的下一条记录。
 
    ```lang-javascript
    > bsonArray.next() 
@@ -95,7 +97,7 @@ BSON 数组。数据类型的介绍可参考[数组](data_model/datatype/array.m
    }   
    ```
 
-* 获取 BSONArray 当前的记录
+* 获取 BSONArray 当前的记录。
 
    ```lang-javascript
    > bsonArray.pos() 
@@ -114,7 +116,7 @@ BSON 数组。数据类型的介绍可参考[数组](data_model/datatype/array.m
    }
    ```
 
-* 把 BSONArray 转为普通数组
+* 把 BSONArray 转为普通数组。
 
    ```lang-javascript
    > var array = bsonArray.toArray() 
@@ -122,14 +124,14 @@ BSON 数组。数据类型的介绍可参考[数组](data_model/datatype/array.m
    true
    ```
 
-* 获取 BSONArray 当前的下标
+* 获取 BSONArray 当前的下标。
 
    ```lang-javascript
    > bsonArray.index() 
    1
    ```
 
-* 把 BSONArray 以字符串的形式输出
+* 把 BSONArray 以字符串的形式输出。
 
    ```lang-javascript
    > bsonArray.toString() 

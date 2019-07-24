@@ -1,26 +1,28 @@
-BSON 对象。数据类型的介绍可参考[数据类型](data_model/datatype/datatype.md)
+BSON 对象。
+
+数据类型的介绍可参考[数据类型](data_model/datatype/datatype.md)
 
 ##语法##
 
-**BSONObj().toJson()**
+**BSONObj.toJson()**
 
-**BSONObj().toObj()**
+**BSONObj.toObj()**
 
-**BSONObj().toString()**
+**BSONObj.toString()**
 
 ##方法##
 
 ###toJson()###
 
-把 BSONObj 转换成 JSON 字符串
+把 BSONObj 转换成 JSON 字符串。
 
 ###toObj()###
 
-把 BSONObj 转换成 JSON 对象
+把 BSONObj 转换成 JSON 对象。
 
 ###toString()###
 
-把 BSONObj 以字符串的形式输出
+把 BSONObj 以字符串的形式输出。
 
 ##错误##
 
@@ -31,21 +33,21 @@ BSON 对象。数据类型的介绍可参考[数据类型](data_model/datatype/d
 
 ##示例##
 
-* 获取 BSON 对象
+* 获取 BSON 对象。
 
    ```lang-javascript
-   > var db = new Sdb( "localhost", 50000 )
+   > var db = new Sdb( "localhost", 11810 )
    > var bsonObj = db.foo.bar.find().current()
    ```
 
-* 把 BSONObj 转换成 JSON 字符串
+* 把 BSONObj 转换成 JSON 字符串。
 
    ```lang-javascript
    > bsonObj.toJson() 
    { "_id": { "$oid": "5d240ab1117b8a87cbfd10eb" }, "age": 17, "name": "tom" }
    ```
 
-* 把 BSONObj 转换成 JSON 对象
+* 把 BSONObj 转换成 JSON 对象。
 
    ```lang-javascript
    > var obj = bsonObj.toObj()
@@ -55,7 +57,7 @@ BSON 对象。数据类型的介绍可参考[数据类型](data_model/datatype/d
    tom 
    ```
 
-* 把 BSONObj 以字符串的形式输出
+* 把 BSONObj 以字符串的形式输出。
 
    ```lang-javascript
    > bsonObj.toString()

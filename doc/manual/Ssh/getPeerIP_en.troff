@@ -19,7 +19,7 @@ Get remote host\[aq]s IP adress.
 NULL
 .SH RETURN VALUE
 .PP
-On success, return remote host\[aq]s IP adress.
+On success, return remote host's IP adress.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
