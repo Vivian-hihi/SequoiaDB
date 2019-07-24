@@ -350,6 +350,7 @@ namespace engine
          UINT32                           _maxSockPerThread ;  /// 0 for unlimited
          UINT32                           _maxThreadNum ;
 
+         ossRWMutex                       _suiteExitMutex ;
          BOOLEAN                          _suiteStopFlag ;
    } ;
 

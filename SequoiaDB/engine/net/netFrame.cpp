@@ -864,6 +864,12 @@ namespace engine
       netEHSegPtr ptr ;
       PD_TRACE_ENTRY ( SDB__NETFRAME__GETHANDLE ) ;
 
+      // protect exit of sub-network
+      ossScopedRWLock scopeLock( &_suiteExitMutex, SHARED ) ;
+
+      PD_CHECK( !_suiteStopFlag, SDB_QUIESCED, error, PDWARNING,
+                "Suite service of net frame is stopped" ) ;
+
       _mtx.get_shared() ;
       itr = _route.find(id.value) ;
 
@@ -1349,6 +1355,9 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE2 );
       MAP_EVENT_IT itr ;
+
+      // protect exit of sub-network
+      ossScopedRWLock scopeLock( &_suiteExitMutex, EXCLUSIVE ) ;
 
       _mtx.get_shared() ;
       itr = _opposite.begin() ;
