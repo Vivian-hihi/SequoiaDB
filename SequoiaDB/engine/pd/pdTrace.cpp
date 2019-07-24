@@ -103,6 +103,7 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
          pdTraceRecord record ;
          CHAR *pBuffer = NULL ;
          UINT16 lastSize = TRACE_RECORD_MAX_SIZE - record._recordSize ;
+         UINT64 offset = 0 ;
 
          record.saveCurTime() ;
          record._functionID = code ;
@@ -132,14 +133,18 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
             }
          }
 
-         pBuffer = pdCB->reserveMemory( record._recordSize ) ;
+         pBuffer = pdCB->reserveMemory( record._recordSize, offset ) ;
          if ( !pBuffer )
          {
             goto done ;
          }
 
          pBuffer = pdCB->fillIn( pBuffer, (const CHAR*)&record,
-                                 sizeof( record ) ) ;
+                                 sizeof( record ), &offset ) ;
+         if ( !pBuffer )
+         {
+            goto done ;
+         }
 
          for ( INT8 i = 0 ; i < PD_TRACE_MAX_ARG_NUM ; ++i )
          {
@@ -248,10 +253,11 @@ UINT64 _pdTraceCB::getFreeSize()
    return free ;
 }
 
-CHAR* _pdTraceCB::reserveMemory( UINT32 size )
+CHAR* _pdTraceCB::reserveMemory( UINT32 size, UINT64& offset )
 {
    CHAR *ptr = NULL ;
    UINT64 end = 0 ;
+   UINT64 tmpEnd = 0 ;
    UINT64 begin = 0 ;
    UINT64 cur = 0 ;
    pdAllocPair *pAllocPair = NULL ;
@@ -265,6 +271,13 @@ retry:
    pAllocPair = ( pdAllocPair* )_ptr.fetch() ;
    end = pAllocPair->_e ;
    begin = pAllocPair->_b.add( size ) ;
+
+   // in case that end value is too old
+   tmpEnd = pAllocPair->_e ;
+   if ( ( tmpEnd - end ) >= ( TRACE_CHUNK_SIZE << 1 ) )
+   {
+      end = tmpEnd ;
+   }
    cur = begin + size ;
 
    if ( cur > end )
@@ -279,6 +292,7 @@ retry:
 
       if ( _alloc.compareAndSwap( 0, 1 ) )
       {
+         // If the chunk has been switched 1 time, 2 times ..., just goto retry
          if ( end == ((pdAllocPair*)_ptr.fetch())->_e )
          {
             _ptr2->_b.swap( end ) ;
@@ -298,13 +312,18 @@ retry:
    }
    ptr = _pBuffer + ( begin % _size ) ;
 
+   // write "begin" to the first 8 bytes, fillIn() will check it
+   *((UINT64*)ptr) = begin ;
+   offset = begin ;
+
 done:
    return ptr ;
 error:
    goto done ;
 }
 
-CHAR* _pdTraceCB::fillIn( CHAR *pPos, const CHAR *pInput, INT32 size )
+CHAR* _pdTraceCB::fillIn( CHAR *pPos, const CHAR *pInput, INT32 size,
+                          UINT64* pOffset )
 {
    CHAR *pRetAddr        = NULL ;
 
@@ -313,6 +332,18 @@ CHAR* _pdTraceCB::fillIn( CHAR *pPos, const CHAR *pInput, INT32 size )
    SDB_ASSERT( pPos >= _pBuffer, "pos can't be smaller than buffer" ) ;
    // end offset must be in valid range
    SDB_ASSERT( pPos + size <= _pBuffer + _size, "end pos over the buffer" ) ;
+
+   // In reserveMemory(), "begin" is writen to the first 8 bytes. If find
+   // an inconsistency now, the memory is reassigned (caused by a buffer
+   // circle), we shouldn't write the memory.
+   if ( pOffset )
+   {
+      if ( *pOffset != *((UINT64*)pPos) )
+      {
+         pRetAddr = NULL ;
+         goto done ;
+      }
+   }
 
    // if we are asked to write too big data, let's just skip it
    if ( size < 0 || size >= TRACE_RECORD_MAX_SIZE )

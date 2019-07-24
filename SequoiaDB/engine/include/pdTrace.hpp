@@ -414,8 +414,9 @@ public:
    _pdTraceCB() ;
    ~_pdTraceCB() ;
 
-   CHAR*          reserveMemory( UINT32 size ) ;
-   CHAR*          fillIn ( CHAR *pPos, const CHAR *pInput, INT32 size ) ;
+   CHAR*          reserveMemory( UINT32 size, UINT64& offset ) ;
+   CHAR*          fillIn ( CHAR *pPos, const CHAR *pInput, INT32 size,
+                           UINT64* pOffset = NULL ) ;
 
    void           startWrite() ;
    void           finishWrite() ;
