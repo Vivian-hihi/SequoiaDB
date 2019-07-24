@@ -52,7 +52,7 @@ T}
 Note:
 .RE
 .PP
-	It can\[aq]t get the size of the binary file.
+It can\[aq]t get the size of the binary file.
 If you want to get the size fo the binary file, you can reference getLength
 .RE
 .SH RETURN VALUE

@@ -8,7 +8,7 @@
 listNodes \- Display node information.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]Sdbtool.listNodes( [option], [filter], [rootPath] )\f[]\f[]
+\f[B]\f[I]Sdbtool.listNodes( [options], [filter], [rootPath] )\f[]\f[]
 .SH CATEGORY
 .PP
 Sdbtool

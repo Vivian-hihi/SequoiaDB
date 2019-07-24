@@ -23,7 +23,7 @@ Moving to a specified position in a file.
 
 The optional values of the 'where' parameter are as follows:
 
-| 可选值 | 描述                                                             |
+| Optional values | Description |
 | ------ | ---------------------------------------------------------------- |
 |   b    | File offset is offset                                            |
 |   c    | File offset is the offset of the current file cursor plus offset |

@@ -37,7 +37,7 @@ The optional values of the 'mode' parameter are as follows：
 
 >Note：
 
->These flags can be combined with bitwise OR operator( | ).
+>These flags can be combined with bitwise or operator( | ).
 
 ##RETURN VALUE##
 

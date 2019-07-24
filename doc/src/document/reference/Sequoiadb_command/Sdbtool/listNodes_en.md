@@ -4,7 +4,7 @@ listNodes - Display node information.
 
 ##SYNOPSIS##
 
-***Sdbtool.listNodes( [option], [filter], [rootPath] )***
+***Sdbtool.listNodes( [options], [filter], [rootPath] )***
 
 ##CATEGORY##
 

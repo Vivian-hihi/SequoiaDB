@@ -1,10 +1,10 @@
 ##NAME##
 
-toBase64Code() - Convert binary stream to base64 encoded.
+toBase64Code - Convert binary stream to base64 encoded.
 
 ##SYNOPSIS##
 
-***toBase64Code()***
+**toBase64Code()**
 
 ##CATEGORY##
 
@@ -36,7 +36,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var file = new File( "/opt/sequoiadb/file.dump" )
 ```
 
-* Read the contents of the file into the fileContent object（For more detail, please reference [File::readContent](reference/Sequoiadb_command/File/readContent)）;
+* Read the contents of the file into the fileContent object( For more detail, please reference [File::readContent](reference/Sequoiadb_command/File/readContent) );
 
 ```lang-javascript
 > var content = file.readContent( 10 )

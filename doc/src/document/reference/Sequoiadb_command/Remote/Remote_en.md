@@ -1,6 +1,6 @@
 ##NAME##
 
-new - Create a Remote object.
+Remote - Create a Remote object.
 
 ##SYNOPSIS##
 

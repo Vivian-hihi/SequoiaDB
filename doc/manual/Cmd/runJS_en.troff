@@ -18,7 +18,7 @@ Execute the JavaScript code remotely.
 .PP
 \f[B]Note:\f[]
 .PP
-	runJS() should be called by remote cmd obj
+runJS() should be called by remote Command obj
 .RE
 .SH PARAMETERS
 .PP

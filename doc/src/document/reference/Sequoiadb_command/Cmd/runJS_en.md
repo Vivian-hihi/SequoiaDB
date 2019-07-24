@@ -16,7 +16,7 @@ Execute the JavaScript code remotely.
 
 >**Note:** 
 
->runJS() should be called by remote cmd obj
+>runJS() should be called by remote Command obj
 
 ##PARAMETERS##
 

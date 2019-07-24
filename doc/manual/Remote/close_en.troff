@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Create a remote object.
+Create a Remote object.
 .IP
 .nf
 \f[C]

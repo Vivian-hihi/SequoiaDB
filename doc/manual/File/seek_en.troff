@@ -70,9 +70,9 @@ l l l.
 T{
 0
 T}@T{
-可选值
+Optional values
 T}@T{
-描述
+Description
 T}
 _
 T{
@@ -112,11 +112,13 @@ T}@T{
 size plus offset
 T}
 .TE
-
+.RS
+.PP
 Note:
 .RE
+.RS
 .PP
-	When the "where" parameter is \[aq]e\[aq], the "offset" parameter can be
+When the "where" parameter is \[aq]e\[aq], the "offset" parameter can be
 negative.
 .RE
 .SH RETURN VALUE

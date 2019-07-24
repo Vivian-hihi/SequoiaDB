@@ -1,6 +1,6 @@
 ##语法##
 
-***Sdbtool.listNodes( [option], [filter], [rootPath] )***
+***Sdbtool.listNodes( [options], [filter], [rootPath] )***
 
 ##类别##
 
@@ -26,7 +26,7 @@ options 参数详细说明如下：
 | mode | string | run |{ mode: "run" }<br>{ mode: "local" } | 显示正在运行的节点的信息<br>显示本地节点的信息，无论是否正在运行 |
 | role      | string | 空 | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | 显示数据节点的信息<br>显示协调节点的信息<br>显示编目节点的信息<br>显示 standalone 节点的信息<br>显示 om 节点的信息<br>显示 cm 节点的信息 |
 | svcname   | string | 空 | { svcname: "11790" } | 显示指定端口节点的信息 |
-| showalone | bool | false | { showalone：true }<br>{ showalone: false } | 是否显示以 stndalone 模式启动的 cm 节点的信息 |
+| showalone | bool | false | { showalone：true }<br>{ showalone: false } | 是否显示以 standalone 模式启动的 cm 节点的信息 |
 | expand    | bool | false | { expand: true }<br>{ expand: false } | 是否显示详细的扩展配置 |
 
 > Note：

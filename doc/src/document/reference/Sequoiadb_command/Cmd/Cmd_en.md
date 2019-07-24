@@ -1,6 +1,6 @@
 ##NAME##
 
-new - Create a Command object.
+Cmd - Create a Command object.
 
 ##SYNOPSIS##
 

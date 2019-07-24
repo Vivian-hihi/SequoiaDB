@@ -30,7 +30,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Create a remote object.
+* Create a Remote object.
 
 ```lang-javascript
 > var remoteObj = new Remote( "192.168.20.71", 11790 )
