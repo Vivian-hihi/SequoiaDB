@@ -97,7 +97,6 @@ public class Transaction18047 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            TransUtils.insertRandomDatas(cl, 10000, 20000);
             cl.delete(null, "{'':'a'}");
         }
     }
