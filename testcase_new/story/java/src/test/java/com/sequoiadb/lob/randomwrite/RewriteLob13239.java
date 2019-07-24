@@ -41,11 +41,16 @@ public class RewriteLob13239 extends SdbTestBase {
 		byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
 		ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, lobBuff);
 		
-		int offset = writeSize + random.nextInt(1024 * 256 );
+		int offset = writeSize + random.nextInt(1024 * 254 );
 		int rewriteLobSize = random.nextInt(1024 * 1024 * 2);
 		byte[] rewriteBuff = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);	
-		rewriteLob(oid, offset, rewriteBuff);			
-		RandomWriteLobUtil.checkRewriteLobResult(cl, oid, offset, rewriteBuff, lobBuff);	
+		rewriteLob(oid, offset, rewriteBuff);	
+		//check the rewrite lob 
+		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, rewriteBuff.length, offset);		
+		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
+		//check the old lob 
+		byte[] actOldLobBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, lobBuff.length, 0);		
+		RandomWriteLobUtil.assertByteArrayEqual(actOldLobBuff, lobBuff);			
 	}
 	
 	@AfterClass
