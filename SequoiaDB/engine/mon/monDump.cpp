@@ -2675,6 +2675,8 @@ namespace engine
          /// add name & space name
          ob.append ( FIELD_NAME_NAME, full._name ) ;
          ob.append ( FIELD_NAME_UNIQUEID, full._csUniqueID ) ;
+         ob.append ( FIELD_NAME_ID, full._suID ) ;
+         ob.append ( FIELD_NAME_LOGICAL_ID, full._csLID ) ;
 
          /// add detial
          BSONArrayBuilder sub( ob.subarrayStart( FIELD_NAME_COLLECTION ) ) ;

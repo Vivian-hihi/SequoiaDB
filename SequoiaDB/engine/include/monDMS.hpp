@@ -413,6 +413,8 @@ namespace engine
    public :
       CHAR _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       utilCSUniqueID _csUniqueID ;
+      INT32          _suID ;
+      UINT32         _csLID ;
       MON_CL_SIM_VEC _collections ;
       INT32 _pageSize ;
       INT32 _clNum ;
@@ -443,6 +445,8 @@ namespace engine
       {
          ossMemset ( _name, 0, sizeof(_name)) ;
          _csUniqueID = UTIL_UNIQUEID_NULL ;
+         _suID = -1 ;
+         _csLID = 0 ;
          _pageSize = 0 ;
          _clNum    = 0 ;
          _totalRecordNum = 0 ;
@@ -471,6 +475,8 @@ namespace engine
          ossStrcpy ( _name, right._name ) ;
          _csUniqueID = right._csUniqueID ;
          _collections = right._collections ;
+         _suID = right._suID ;
+         _csLID = right._csLID ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
          _totalRecordNum = right._totalRecordNum ;
@@ -508,6 +514,8 @@ namespace engine
          ossStrcpy ( _name, right._name ) ;
          _csUniqueID = right._csUniqueID ;
          _collections = right._collections ;
+         _suID = right._suID ;
+         _csLID = right._csLID ;
          _pageSize = right._pageSize ;
          _clNum    = right._clNum ;
          _totalRecordNum = right._totalRecordNum ;

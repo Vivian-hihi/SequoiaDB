@@ -2900,6 +2900,8 @@ namespace engine
       ossMemset( collectionSpace._name, 0, sizeof(collectionSpace._name) ) ;
       ossStrncpy( collectionSpace._name, CSName(), DMS_COLLECTION_SPACE_NAME_SZ );
       collectionSpace._csUniqueID = CSUniqueID() ;
+      collectionSpace._suID = CSID() ;
+      collectionSpace._csLID = LogicalCSID() ;
       collectionSpace._pageSize = getPageSize() ;
       collectionSpace._lobPageSize = getLobPageSize() ;
       collectionSpace._totalSize = totalSize() ;
