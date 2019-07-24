@@ -20,16 +20,15 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestLobSplitAndRead7849.java
-* test content:read lob ,when cl split  
-* testlink cases:seqDB-7849
+* @Description seqDB-7849: read lob ,when cl split 
 * @author wuyan
-    * @Date    2016.10.9
-    * @update  [2017.12.20]
+* @Date    2016.10.9
+* @update  [2017.12.20]
 * @version 1.00
 */
 public class TestLobSplitAndRead7849 extends SdbTestBase {	
@@ -44,21 +43,21 @@ public class TestLobSplitAndRead7849 extends SdbTestBase {
 				= new LinkedBlockingQueue<SaveOidAndMd5>();	
 	
 	@BeforeClass
-	public void setUp(){	
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}
-		if (LobOprUtils.isStandAlone(sdb)){
+	public void setUp(){
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		
+		if (CommLib.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
 		
-		if (LobOprUtils.OneGroupMode(sdb)){
+		if (CommLib.OneGroupMode(sdb)){
 			throw new SkipException("less two groups skip testcase");
 		}
-				
-		createCL();
+		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,"
+				+ "ReplSize:0,Compressed:true}";    		    
+	    cl = cs.createCollection(clName,(BSONObject) JSON.parse(clOptions));		
 		
 		//write lob 		
 		int lobtimes = 100;	
@@ -86,10 +85,7 @@ public class TestLobSplitAndRead7849 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){		
 		try{			
-			cs.dropCollection(clName);
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+			cs.dropCollection(clName);			
 		}finally{
 			if ( null != sdb ){
 				sdb.close();
@@ -106,10 +102,7 @@ public class TestLobSplitAndRead7849 extends SdbTestBase {
             	DBCollection cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);            	
 				int percent = 50;		
 				cl1.split(sourceRGName, targetRGName,percent);
-            }catch(BaseException e){
-            	Assert.assertTrue(false,"split fail\n"+"srcGroup:"+sourceRGName
-									+"\ntarGroup"+targetRGName+e.getMessage());
-            }	
+            }
 		}
 	}		
 			
@@ -165,17 +158,5 @@ public class TestLobSplitAndRead7849 extends SdbTestBase {
 			id2md5.offer(new SaveOidAndMd5(oid, prevMd5));				
 		}		
 	}		
-		
-	private void createCL(){		
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,"
-					+ "ReplSize:0,Compressed:true}";
-		    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);		    
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
+	
 }

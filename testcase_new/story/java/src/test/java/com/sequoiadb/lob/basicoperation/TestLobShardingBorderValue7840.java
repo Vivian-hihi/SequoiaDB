@@ -1,159 +1,101 @@
 package com.sequoiadb.lob.basicoperation;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.nio.ByteBuffer;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
-import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.base.DBLob;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: TestLobShardingBorderValue7840.java
-* test content:test boundary value of the lob sharding.
-* testlink case:seqDB-7840
+* @Description seqDB-7840: test boundary value of the lob sharding.
 * @author wuyan
-    * @Date    2016.9.12
+* @Date   2016.9.12
 * @version 1.00
 */
 public class TestLobShardingBorderValue7840 extends SdbTestBase {
-	@DataProvider(name = "pagesizeProvider")
+	@DataProvider(name = "pagesizeProvider",parallel= true)
 	public Object[][] generatePageSize(){
-		return new Object[][]{		
-				
-			//sharding after just over 1 pages,lobsize is 768k
-			new Object[]{0,786432},
-		    //sharding after less than 1kb, lobsize is 511k
-			new Object[]{0,523264},
-	        //sharding after more than 1kb,lobsize is 266k
-			new Object[]{0, 263168},
-			//sharding after just over 1 pages,lobsize is 512k
-			new Object[]{524288, 524288},
-			//sharding after less than 1kb, lobsize is 511k
-			new Object[]{524288, 523264},
-			//sharding after more than 1kb,lobsize is 513k
-			new Object[]{524288, 525312},
+		return new Object[][]{					
+			//sharding after just over 1 pages,lobsize is 255k
+			new Object[]{0,256 * 1024 - 1024 },
+		    //sharding after less than 1kb, pageSize is 4K , lobsize is 14k
+			new Object[]{4096, 4 * 4 * 1024 - 2 * 1024},
+	        //sharding after more than 1kb,lobsize is 80k
+			new Object[]{8192, 8 * 10 * 1024 },
+			//sharding after just over 1 pages,lobsize is 15k
+			new Object[]{16384, 16 * 1024 - 1024 },
+			//sharding after less than 1kb, lobsize is 30k
+			new Object[]{32768, 32 * 1024 - 2 * 1024},
+			//sharding after more than 1kb,lobsize is 128k
+			new Object[]{131072, 128 * 1024},
+			//sharding after less than 1kb, lobsize is 254k
+			new Object[]{65536, 64 * 4 * 1024 - 2 * 1024},
+			//sharding after more than 1kb,lobsize is 512k
+			new Object[]{524288, 512 * 1024},
 		};
 	}
 	
 	private String csName = "cs_lob7840";
-	private String clName = "cl_lob7840";
-	private Sequoiadb sdb = null;
-	private CollectionSpace cs = null;
-	private DBCollection cl = null;    
+	private String clName = "cl_lob7840";  
 	
 	@BeforeClass
-	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}		
-	}
+	public void setUp(){					
+	}	
 		
-	private void createCL(int lobPagesize){
+	@Test(dataProvider = "pagesizeProvider")
+	public void putLobinAnyPageSize(int lobPageSize, int length){
+		String currentCSName = csName + "_" + lobPageSize;
+		try( Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+			DBCollection dbcl = createCL(sdb, currentCSName, lobPageSize);	
+			putLob(dbcl, length);
+			sdb.dropCollectionSpace(currentCSName);	
+		}			
+	}
+	
+	@AfterClass
+	public void tearDown(){					
+	}
+	
+	private DBCollection createCL(Sequoiadb sdb, String csName,int lobPagesize){
 		if (sdb.isCollectionSpaceExist(csName)){
 			sdb.dropCollectionSpace(csName);
 		}
 		
 		BSONObject options = new BasicBSONObject();
 		options.put("LobPageSize", lobPagesize);		
-		try
-		{
-			cs = sdb.createCollectionSpace(csName, options);	
-			cl = cs.createCollection(clName);
-		}catch(BaseException e){
-			Assert.assertTrue(false,"create CS/CL fail "+e.getErrorType()+":"+e.getMessage());			
-		}
+		CollectionSpace cs = sdb.createCollectionSpace(csName, options);	
+		DBCollection cl = cs.createCollection(clName);	
+		return cl;
 	}
 	
-	private void dropCS(){
-		try{
-			sdb.dropCollectionSpace(csName);		
-		}catch(BaseException e){
-			Assert.assertTrue(false,"create CS/CL fail "+e.getErrorType()+":"+e.getMessage());
-		}
-	}	
-	
+
 	/**
-	 * put and read lob ,then check write and read stream MD5 value
+	 * put and read lob ,then check write and read lob data
 	 * @param length
 	 *        write lob size
 	 */	
-	private void putLob(int length){
-		String lobSb = LobOprUtils.getRandomString(length);
-		ObjectId oid  = null;			
-		String prevMd5 = "";
-		DBLob lob = null;
-		try{			
-			lob = cl.createLob();
-			lob.write(lobSb.getBytes());
+	private void putLob(DBCollection cl,int length){
+		//write lob
+		byte[] wlobBuff = LobOprUtils.getRandomBytes(length);
+		ObjectId oid = LobOprUtils.createAndWriteLob(cl, wlobBuff);	
 		
-			prevMd5 = LobOprUtils.getMd5(lobSb);
-		    oid = lob.getID();
-		}catch(BaseException e){	
-			Assert.assertTrue(false,"write lob fail:"+e.getMessage()+e.getStackTrace());
-		}finally{
-			if (lob != null){
-				lob.close();
-			}
+		byte[] rbuff = new byte[length];
+		try(DBLob rLob = cl.openLob( oid, DBLob.SDB_LOB_READ )){						
+			rLob.read(rbuff);					
 		}
-				
-		DBLob rLob = null;
-		try
-		{
-			rLob = cl.openLob(oid);
-			
-			byte[] rbuff = new byte[1024];			
-			int readLen =0;			
-			ByteBuffer bytebuff = ByteBuffer.allocate((int)length);			
-			while ((readLen = rLob.read(rbuff)) != -1){			
-				bytebuff.put(rbuff, 0, readLen);				
-			}			
-			bytebuff.rewind();
 		
-			String curMd5 = LobOprUtils.getMd5(bytebuff);		
-			Assert.assertEquals(prevMd5, curMd5);
-		}catch(BaseException e){
-			Assert.assertTrue(false,"read lob fail:"+e.getMessage()+e.getStackTrace());			
-		}finally{
-			if (rLob != null){
-				rLob.close();
-			}
-		}
+		LobOprUtils.assertByteArrayEqual(rbuff, wlobBuff, "lob data is wrong!");		
 	}
 	
-	@AfterClass
-	public void tearDown(){		
-		try{			
-			sdb.disconnect();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}finally{
-		}
-	}
-	
-	
-	@Test(dataProvider = "pagesizeProvider")
-	public void putLobinAnyPageSize(int lobPageSize, int length){
-		createCL(lobPageSize);			
-		putLob(length);
-		dropCS();		
-	}		
 }
 
 

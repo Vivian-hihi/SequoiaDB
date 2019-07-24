@@ -23,15 +23,14 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestLobSplitAndWrite7847.java
-* test content:when spliting ,write/read/remove lob  
-* testlink cases:seqDB-7847
+* @Description seqDB-7847: when spliting ,write/read/remove lob 
 * @author wuyan
-    * @Date    2016.10.9
+* @Date    2016.10.9
 * @version 1.00
 */
 public class TestLobSplitAndWrite7847 extends SdbTestBase {	
@@ -46,21 +45,19 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}
-		if (LobOprUtils.isStandAlone(sdb)){
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		
+		if (CommLib.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
 		
-		if (LobOprUtils.OneGroupMode(sdb)){
+		if (CommLib.OneGroupMode(sdb)){
 			throw new SkipException("less two groups skip testcase");
-		}
-		
-		sdb.setSessionAttr( (BSONObject) JSON.parse("{'PreferedInstance':'M'}"));
-		createCL();
+		}		
+	
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,ReplSize:0}";	    			
+	    dbcl = cs.createCollection(clName,(BSONObject) JSON.parse(clOptions));	
 		int lobtimes = 100;
         writeLobAndGetMd5(dbcl, lobtimes); 
 	}	
@@ -95,10 +92,7 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
-			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+			}			
 		}finally{
 			if ( null != sdb ){
 				sdb.close();
@@ -118,10 +112,7 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 				cond.put("Partition", 512);
 				endCond.put("partition", 2560);				
 				cl1.split(sourceRGName, targetRGName,cond,endCond);
-            }catch(BaseException e){
-            	Assert.assertTrue(false,"split fail\n"+"srcGroup:"+sourceRGName
-									+"\ntarGroup"+targetRGName+e.getMessage());
-            }	
+            }
 		}
 	}		
 			
@@ -146,8 +137,7 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 					byte[] rbuff = new byte[(int) rLob.getSize()];
 					rLob.read(rbuff);
 					String curMd5 = LobOprUtils.getMd5(rbuff);
-					String prevMd5 =  getLobMd5ByOid(existOid);
-	        		Assert.assertEquals(curMd5, prevMd5); 			  
+					String prevMd5 =  getLobMd5ByOid(existOid);	        				  
 	        		Assert.assertEquals(curMd5, prevMd5,"the list oid:"+existOid.toString());      			  
 				}				
 			}	
@@ -157,27 +147,27 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 	}
 	
 	// find the md5 from expected queue
-		private String getLobMd5ByOid(ObjectId lobOid){
-			Iterator<LobInfo> iterator = lobInfoQue.iterator();
-			boolean found = false;
-			String findMd5 = "";
-			while(iterator.hasNext()){
-				LobInfo current = iterator.next();
-				ObjectId oid = current.getOid();				
-				if ( oid.equals(lobOid) ){				
-					findMd5 = current.getMd5();    			
-					lobInfoQue.remove(current);
-			    	found = true;
-			    	break;
-				}
+	private String getLobMd5ByOid(ObjectId lobOid){
+		Iterator<LobInfo> iterator = lobInfoQue.iterator();
+		boolean found = false;
+		String findMd5 = "";
+		while(iterator.hasNext()){
+			LobInfo current = iterator.next();
+			ObjectId oid = current.getOid();				
+			if ( oid.equals(lobOid) ){				
+				findMd5 = current.getMd5();    			
+				lobInfoQue.remove(current);
+			    found = true;
+			    break;
 			}
-					
-			//if oid does not exist in the queue,than error
-			if (!found) {
-				throw new RuntimeException("oid[" + lobOid + "] not found");
-			}		
-			return findMd5;
 		}
+					
+		//if oid does not exist in the queue,than error
+		if (!found) {
+			throw new RuntimeException("oid[" + lobOid + "] not found");
+		}		
+		return findMd5;
+	}
 	
 	private class PutLobsTask extends SdbThreadBase {
         @Override
@@ -201,19 +191,6 @@ public class TestLobSplitAndWrite7847 extends SdbTestBase {
 			lobInfoQue.offer(new LobInfo( oid, prevMd5));			
 		}		
 	}	
-	
-	public void createCL(){		
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,"
-					+ "ReplSize:0,Compressed:true}";
-		    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    dbcl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
 	
 	private class LobInfo{
 		private ObjectId oid;

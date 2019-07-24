@@ -1,6 +1,5 @@
 package com.sequoiadb.lob.basicoperation;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import org.bson.types.ObjectId;
@@ -19,16 +18,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestWriteLobAndDropCL13889.java
-* test content:when drop cl of write lob 
-* testlink case:seqDB-13889
+* @Description seqDB-13889: when drop cl of write lob 
 * @author wuyan
-    * @Date    2016.9.12
-    * @update  [2017.12.21]
+* @Date    2016.9.12
+* @update  [2017.12.21]
 * @version 1.00
 */
-public class TestWriteLobAndDropCL13889 extends SdbTestBase {
-	
+public class TestWriteLobAndDropCL13889 extends SdbTestBase {	
 	private String clName = "cl_lob13889";	
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;	
@@ -36,12 +32,9 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
     	
 	@BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
-		createCL();
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);			
+	    cs.createCollection(clName);	
 	}		
 		
 	@Test
@@ -57,10 +50,15 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
 	
 	@AfterClass
 	public void tearDown(){
-		if( cs.isCollectionExist(clName)){
-			cs.dropCollection(clName);
-		}
-		sdb.close();
+		try {
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+        }finally {
+            if (null != sdb) {
+                sdb.close();
+            }
+        }
 	}	
 	
 	private class PutLobsTask extends SdbThreadBase {
@@ -68,7 +66,7 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
         public void exec() throws BaseException{
             try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){                
                 DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);  
-                int writeLobSize = random.nextInt(1024*1024);
+                int writeLobSize = random.nextInt( 1024 * 1024 );
     			byte[] wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
     			ObjectId oid = LobOprUtils.createAndWriteLob(dbcl, wlobBuff);	
     			
@@ -76,11 +74,11 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
     			try( DBLob rLob = dbcl.openLob(oid,DBLob.SDB_LOB_READ)){                	
         			byte[] rbuff = new byte[(int) rLob.getSize()];
         			rLob.read(rbuff);        			
-        			Arrays.equals(rbuff, wlobBuff);
+        			LobOprUtils.assertByteArrayEqual(rbuff, wlobBuff, "lob:" + oid.toString() + " data is wrong!");
         		}   
             }catch(BaseException e){            	
 		    	if ( e.getErrorCode() != -317 && e.getErrorCode() != -23 && e.getErrorCode() != -4){
-		    		Assert.assertTrue(false,"write fail "+e.getErrorType()+":"+e.getMessage());
+		    		throw e;
 		    	}			    
 		    }
         }
@@ -96,17 +94,8 @@ public class TestWriteLobAndDropCL13889 extends SdbTestBase {
 			e.printStackTrace();
 		}    	
     	cs.dropCollection(clName);
-	}
+	}	
 	
-	private void createCL(){			
-	    try
-	    {	    	
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cs.createCollection(clName);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
 }
 
  

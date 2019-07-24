@@ -1,12 +1,9 @@
 package com.sequoiadb.lob.basicoperation;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.BSONObject;
 import org.bson.types.ObjectId;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -21,9 +18,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestConcurrentWriteLob10423.java
-* test content:Concurrent write lob ,contains the same oid and different oid
-* testlink case:seqDB-10423
+* @Description seqDB-10423: Concurrent write lob ,contains the same oid and different oid
 * @author wuyan
 * @Date    2016.9.12
 * @version 1.00
@@ -38,9 +33,9 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
     	
 	@BeforeClass
 	public void setUp(){
-		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		sdb.setSessionAttr( (BSONObject) JSON.parse("{'PreferedInstance':'M'}"));
-		createCL();
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);			
+		cl = cs.createCollection(clName);	
 	}		
 		
 	@Test
@@ -48,7 +43,7 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 		WriteAndReadLobTask writeDiffLobTask = new WriteAndReadLobTask();
 		writeDiffLobTask.start(50);
 		
-		int writeLobSize = random.nextInt(1024*1024);;
+		int writeLobSize = random.nextInt( 1024 * 1024 * 5 );
 		byte[] lobBuff = LobOprUtils.getRandomBytes(writeLobSize);	
 		ObjectId oid = new ObjectId("5a3b6f23c5d07c3000f73a8b");
 		WriteSameOidLobTask writeSameLobTask = new WriteSameOidLobTask( oid, lobBuff );
@@ -59,7 +54,7 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 		//write lob of same oid only one success,than check the write success lob
 		int expSuccessNum = 1;
 		Assert.assertEquals(sameOidWriteOKCount.get(), expSuccessNum);	
-		checkWriteSameOidLobResult( cl, oid,lobBuff);
+		checkWriteSameOidLobResult( cl, oid, lobBuff);
 	}
 
 	@AfterClass
@@ -68,8 +63,6 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}finally {
 			if( sdb != null){
 				sdb.close();
@@ -80,7 +73,7 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 	private class WriteAndReadLobTask extends SdbThreadBase {		
 		@Override
 		public void exec() throws Exception {
-			int writeLobSize = random.nextInt(1024*1024);;
+			int writeLobSize = random.nextInt( 1024 * 1024 * 3);
 			byte[] lobBuff = LobOprUtils.getRandomBytes(writeLobSize);	
 		    try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")){		    	
 		    	DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);	
@@ -93,8 +86,8 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 				//read and check the lob data
 				try(DBLob rLob = cl.openLob(oid)){
 					byte[] rbuff = new byte[(int) rLob.getSize()];
-					rLob.read(rbuff);	
-					Arrays.equals(rbuff, lobBuff);
+					rLob.read(rbuff);									
+					LobOprUtils.assertByteArrayEqual(rbuff, lobBuff, "lob:" + oid.toString() + "  data is wrong!");
 				}				
 		    }
 		}
@@ -120,28 +113,18 @@ public class TestConcurrentWriteLob10423 extends SdbTestBase {
 				sameOidWriteOKCount.getAndIncrement();
 		    }catch(BaseException e){
 		    	if ( e.getErrorCode() != -317 && e.getErrorCode() != -5){
-		    		Assert.assertTrue(false,"same oid write fail "+e.getErrorType()+":"+e.getMessage());
+		    		throw e;		    				    	
 		    	}			    
 		    }
 		}
-	}
-	
-	public void createCL(){						
-	    try
-	    {
-	    	 cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-	    	 cl = cs.createCollection(clName);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
+	}		
 	
 	private void checkWriteSameOidLobResult(DBCollection cl,ObjectId oid, byte[] lobBuff){		
 		//read and check the lob data
 		try(DBLob rLob = cl.openLob(oid)){
 			byte[] rbuff = new byte[(int) rLob.getSize()];
 			rLob.read(rbuff);	
-			Arrays.equals(rbuff, lobBuff);
+			LobOprUtils.assertByteArrayEqual(rbuff, lobBuff, "lob:" + oid.toString() + "  data is wrong!");
 		}
 	}
 }

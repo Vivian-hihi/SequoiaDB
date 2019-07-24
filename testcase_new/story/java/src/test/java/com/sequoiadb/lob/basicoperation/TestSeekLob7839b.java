@@ -15,15 +15,15 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 
 /**
-* FileName: TestSeekLob7839b.java
-* test content:lob seek:seek read lob from more than one group
+* @Description seqDB-7839:lob seek:seek read lob from more than one group
 * testlink case:seqDB-7839
 * @author wuyan
-    * @Date   2017.12.19    * 
+* @Date   2017.12.19   
 * @version 1.00
 */
 
@@ -36,25 +36,24 @@ public class TestSeekLob7839b extends SdbTestBase {
 	private byte[] wlobBuff = null;  
 	
 	@BeforeClass
-	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
+	public void setUp(){		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		
-		if (LobOprUtils.isStandAlone(sdb)){
+		if (CommLib.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
 		
-		if (LobOprUtils.OneGroupMode(sdb)){
+		if (CommLib.OneGroupMode(sdb)){
 			throw new SkipException("less two groups skip testcase");
 		}
 		
-		
-		createCL( );	
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+	    BSONObject options = (BSONObject)JSON.parse("{ShardingKey:{a:1,b:-1},"
+	    		+ "ShardingType:'hash',Partition:4096,ReplSize:0}");
+	    cl = cs.createCollection( clName, options );		
+			
 		//write lob
-		int writeLobSize = 1024*1024*2;
+		int writeLobSize = 1024 * 1024 * 5;
 		wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
 		oid = LobOprUtils.createAndWriteLob(cl, wlobBuff);	
 		splitCL();
@@ -69,7 +68,7 @@ public class TestSeekLob7839b extends SdbTestBase {
 			rLob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
 			rLob.read(rbuff);
 			byte[] expBuff = Arrays.copyOfRange(wlobBuff, offset, offset+readsize);
-			Arrays.equals(rbuff, expBuff);
+			LobOprUtils.assertByteArrayEqual(rbuff, expBuff, "lob data is wrong!");			
 		}					
 	}
 	
@@ -89,25 +88,12 @@ public class TestSeekLob7839b extends SdbTestBase {
 		}	
 	}
 	
-	private void createCL(){						
-	    try
-	    {
-	    	cs = sdb.getCollectionSpace(SdbTestBase.csName);
-		    BSONObject options = (BSONObject)JSON.parse("{ShardingKey:{a:1,b:-1},"
-		    		+ "ShardingType:'hash',Partition:4096,ReplSize:0}");
-		    cl = cs.createCollection( clName, options );			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
 	
 	private void splitCL(){	
-		String sourceRGName = "";
-		String targetRGName = "";
+		String sourceRGName = LobOprUtils.getSrcGroupName(sdb,SdbTestBase.csName,clName);			
+		String targetRGName = LobOprUtils.getSplitGroupName(sourceRGName);
 		try{
-			int percent = 50;
-			sourceRGName = LobOprUtils.getSrcGroupName(sdb,SdbTestBase.csName,clName);			
-			targetRGName = LobOprUtils.getSplitGroupName(sourceRGName);
+			int percent = 50;			
 			cl.split(sourceRGName, targetRGName, percent);
 		}catch(BaseException e){
 			Assert.assertTrue(false,"split fail:"+e.getMessage()+"srcRGName:"+sourceRGName

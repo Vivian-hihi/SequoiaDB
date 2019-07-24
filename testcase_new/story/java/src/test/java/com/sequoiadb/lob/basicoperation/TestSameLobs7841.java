@@ -3,15 +3,11 @@ package com.sequoiadb.lob.basicoperation;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import org.bson.BSONObject;
 import org.bson.types.ObjectId;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 
-import java.util.Arrays;
 import java.util.Random;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
@@ -20,15 +16,12 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: TestSameLobs7841.java
-* test content:write the same lob
-* testlink case:seqDB-7841
+* @Description seqDB-7841: write the same lob* 
 * @author wuyan
-    * @Date    2016.9.12
+* @Date    2016.9.12
 * @version 1.00
 */
-public class TestSameLobs7841 extends SdbTestBase {
-	
+public class TestSameLobs7841 extends SdbTestBase {	
 	private String clName = "cl_lob7841";
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
@@ -37,12 +30,9 @@ public class TestSameLobs7841 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
-		createCL();
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);			
+		cs.createCollection(clName);	
 		int writeLobSize = random.nextInt(1024*1024);	
 		wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
 	}		
@@ -61,9 +51,8 @@ public class TestSameLobs7841 extends SdbTestBase {
 			try( DBLob rLob= dbcl.openLob(oid)){			
 				rLob.read(rbuff);			
 			}
-			Arrays.equals(rbuff, wlobBuff);
-		}
-		
+			LobOprUtils.assertByteArrayEqual(rbuff, wlobBuff, "lob data is wrong!");
+		}		
 	}	
 	
 	@AfterClass
@@ -71,8 +60,7 @@ public class TestSameLobs7841 extends SdbTestBase {
 		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
-			}
-			sdb.close();
+			}			
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}finally{
@@ -81,27 +69,5 @@ public class TestSameLobs7841 extends SdbTestBase {
 			}
 		}
 	}	
-	
-	private void createCL(){						
-	    try
-	    {
-	    	String clOptions = "{ReplSize:0}";
-	    	BSONObject options =(BSONObject) JSON.parse(clOptions);	    	
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
-	
-	
-	
-		
-	
-	
-	
-	
-	
-	
 }
 

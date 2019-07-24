@@ -4,7 +4,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 
@@ -13,18 +12,15 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.base.DBLob;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 
 /**
-* FileName: TestSeekLob7839.java
-* test content:lob seek 
-* testlink case:seqDB-7839
-* @author wuyan
-    * @Date    2016.9.12    * 
-* @version 1.00
-* update:  wuyan  2017.12.19
+* @Description seqDB-7839:lob偏移读操作 * 
+* @Author wuyan
+* @Date    2016.9.12    
+* @Version 1.00
+* @Update:  wuyan  2017.12.19
 */
 
 public class TestSeekLob7839 extends SdbTestBase {
@@ -51,15 +47,11 @@ public class TestSeekLob7839 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
-		
-		createCL( );
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);			
+	    cl = cs.createCollection(clName);	
 		//write lob
-		int writeLobSize = 1024*1024*2;
+		int writeLobSize = 1024 * 1024 * 2;
 		wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
 		oid = LobOprUtils.createAndWriteLob(cl, wlobBuff);		
 	}
@@ -74,7 +66,7 @@ public class TestSeekLob7839 extends SdbTestBase {
 				rLob.seek(offset, DBLob.SDB_LOB_SEEK_SET);
 				rLob.read(rbuff);
 				byte[] expBuff = Arrays.copyOfRange(wlobBuff, offset, offset+readsize);
-				Arrays.equals(rbuff, expBuff);
+				LobOprUtils.assertByteArrayEqual(rbuff, expBuff, "lob data is wrong!");
 			}			
 		}			
 	}
@@ -84,27 +76,13 @@ public class TestSeekLob7839 extends SdbTestBase {
 		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
-			}			
-			sdb.close();			
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+			}						
 		}finally{
 			if( null != sdb ){
 				sdb.close();				
 			}
 		}	
 	}
-	
-	private void createCL(){						
-	    try
-	    {
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cl = cs.createCollection(clName);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
-	
 	
 
 	

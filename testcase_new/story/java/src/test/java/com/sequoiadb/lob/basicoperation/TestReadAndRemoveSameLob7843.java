@@ -1,13 +1,7 @@
 package com.sequoiadb.lob.basicoperation;
 
-import java.nio.ByteBuffer;
-
 import java.util.Random;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
-import org.bson.util.JSON;
 import org.testng.Assert;
 
 import org.testng.annotations.AfterClass;
@@ -24,96 +18,81 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestReadAndRemoveLobs7843.java
-* test content:when delete lob of reading 
-* testlink case:seqDB-7843
+* @Description seqDB-7843:concurrent reading when deleting the same lob
 * @author wuyan
-    * @Date    2016.9.12
+* @Date    2016.9.12
 * @version 1.00
 */
-public class TestReadAndRemoveSameLob7843 extends SdbTestBase {
-	
+public class TestReadAndRemoveSameLob7843 extends SdbTestBase {	
 	private String clName = "cl_lob7843";	
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private DBCollection cl = null;
-	private static ObjectId oid = null;	
-	private String prevMd5 = ""; 
+	private static ObjectId oid  =  new ObjectId("30bb5667c5d061d6f579d0bb");		
+	private static byte[] testLobBuff= null;
 	private Random random = new Random();	
     	
 	@BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
-		}
-		createCL();
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',ReplSize:0}";
+		cl = LobOprUtils.createCL(cs, clName, clOptions);	
+		
+		int writeSize = random.nextInt( 1024 * 1024 * 2 );		
+		testLobBuff = LobOprUtils.getRandomBytes(writeSize);	
+		createAndWriteLob(cl, oid, testLobBuff);
 	}		
 		
 	@Test
-	public void testSplitAndWrite(){	
-		putLob();
-		ReadLob readLob = new ReadLob();
-		readLob.start();
-		removeLob();
-	    if(!readLob.isSuccess()){
-	    	Assert.fail(readLob.getErrorMsg());
-	    } 	    
-	}
+	public void testSplitAndWrite(){		
+		RemoveLobTask removeLob = new RemoveLobTask();
+		ReadLobTask   readLob   = new ReadLobTask();
+		removeLob.start();
+		readLob.start();		
+		Assert.assertTrue( removeLob.isSuccess(), removeLob.getErrorMsg());
+		Assert.assertTrue( readLob.isSuccess(), readLob.getErrorMsg());
+	}		
 	
-	
-	public class ReadLob extends SdbThreadBase{
+	private class RemoveLobTask extends SdbThreadBase {		
 		@Override
-        public void exec() throws BaseException{	   
-                        
-            try(Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
-            	DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-            	String curMd5 ="";
-            	DBLob rLob = null;
-    			rLob = cl2.openLob(oid);			
-    			byte[] rbuff = new byte[1024];
-    			int readLen =0;		    
-    			ByteBuffer bytebuff = ByteBuffer.allocate((int)rLob.getSize());
-    			while ((readLen = rLob.read(rbuff)) != -1){
-    				bytebuff.put(rbuff, 0, readLen);
-    			}
-    			bytebuff.rewind();	
-    			rLob.close();
-    			curMd5 = LobOprUtils.getMd5(bytebuff);
-    			Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
-				
-            }catch(BaseException e){
-            	if(-4 != e.getErrorCode() && -317 != e.getErrorCode() && -268 != e.getErrorCode()&& -269 != e.getErrorCode()){    		
-    				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
-    			}	
-            }		
-		}
-	}	
-
-	
-	public void removeLob(){                        
-		try(Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){  
-			DBCollection cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-            cl1.removeLob(oid);    		
-    		boolean IsNotExist = true;
-    		DBCursor cur1 = cl.listLobs();	
-    		while(cur1.hasNext()){
-    			BasicBSONObject obj = (BasicBSONObject)cur1.getNext();
-    			if (obj.getObjectId("Oid").equals(oid)){
-    				IsNotExist = false;
-    				break;
-    			}
-    		}
-    		cur1.close();
-    		Assert.assertTrue(IsNotExist,"lob remove fail");				
-         }catch(BaseException e){
-            if(-4 != e.getErrorCode() && -317 != e.getErrorCode() && -268 != e.getErrorCode()&& -269 != e.getErrorCode()){    
-    			Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
-    		}	
-         }		
+		public void exec() throws Exception {		   	    
+		    try(Sequoiadb sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+				DBCollection cl2 = sdb2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);					
+				cl2.removeLob(oid);					
+				//if remove success,check the remove result
+				DBCursor listCursor1 = cl2.listLobs();		
+				Assert.assertEquals(listCursor1.hasNext(),false,"list lob not null");
+				listCursor1.close();
+			}catch(BaseException e){				
+				if( -268 != e.getErrorCode() && -317 != e.getErrorCode()){
+					throw e;
+				}				
+			}	
+		}		
 	}
-		
+	
+	private class ReadLobTask extends SdbThreadBase {		
+		@Override
+		public void exec() throws Exception {			
+		    DBLob rLob = null;		    
+		    try(Sequoiadb sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+				DBCollection cl1 = sdb1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);	
+				rLob = cl1.openLob(oid);				
+				byte[] rbuff = new byte[ (int) rLob.getSize()];						
+				rLob.read(rbuff);
+				rLob.close();
+				//if read success,check read result
+				String curMd5 = LobOprUtils.getMd5(rbuff);
+				String prevMd5 = LobOprUtils.getMd5(testLobBuff);
+    			Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
+			}catch(BaseException e){				
+				if( -4 != e.getErrorCode() && -268 != e.getErrorCode() && -317 != e.getErrorCode()){
+					throw e;
+				}				
+			}	   
+		}		
+	}
 
 	@AfterClass
 	public void tearDown(){		
@@ -128,47 +107,11 @@ public class TestReadAndRemoveSameLob7843 extends SdbTestBase {
 		}
 	}	
 	
-
-	private void putLob(){
-		int lobsize = random.nextInt(1048576);		
-		String lobSb = LobOprUtils.getRandomString(lobsize);		
-		DBLob lob = null;
-		try{
-			lob = cl.createLob();
-			lob.write(lobSb.getBytes());
-			oid = lob.getID();
-			prevMd5 = LobOprUtils.getMd5(lobSb);
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"write lob fail"+e.getMessage());
-		}finally{
-			if (lob != null){
-				lob.close();
-			}
-		}				
-	}
-	
-	
-	public void createCL(){
-		try{
-			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
-				sdb.createCollectionSpace(SdbTestBase.csName);	
-			}
-		}catch(BaseException e){
-			//-33 CS exist,ignore exceptions
-			Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
-	    }					
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
-	    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-	    	
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
+	private void createAndWriteLob(DBCollection dbcl, ObjectId id, byte[] data) {
+		DBLob lob = dbcl.createLob(id);
+	    lob.write(data);
+	    lob.close();
+	}	
 }
 
  

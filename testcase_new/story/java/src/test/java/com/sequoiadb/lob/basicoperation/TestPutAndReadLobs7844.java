@@ -20,21 +20,18 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestPutAndReadLobs7844.java
-* test content:when write lob of reading 
-* testlink case:seqDB-7844
+* @Description seqDB-7844: when write lob of reading 
 * @author wuyan
-    * @Date    2016.9.12
-    * @update  2017.12.19
+* @Date    2016.9.12
+* @update  2017.12.19
 * @version 1.00
 */
 public class TestPutAndReadLobs7844 extends SdbTestBase {
 	private String clName = "cl_lob7844";	
-	private static Sequoiadb sdb = null;
-	private CollectionSpace cs = null;
-	
+	private Sequoiadb sdb = null;
+	private CollectionSpace cs = null;	
 	private Random random = new Random();
-	class LobInfo{
+	private class LobInfo{
 		public ObjectId oid ;
 		public String md5 ;
 	}	
@@ -42,17 +39,14 @@ public class TestPutAndReadLobs7844 extends SdbTestBase {
 	
     	
 	@BeforeClass
-	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}
+	public void setUp(){		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);	
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash'}";		    		
+	    DBCollection cl  = cs.createCollection(clName,(BSONObject) JSON.parse(clOptions));		
 		
-		DBCollection cl = createCL();
 		int lobtimes = 30;
-        writeLobAndGetMd5(cl, lobtimes);  
-		
+        writeLobAndGetMd5(cl, lobtimes); 		
 	}		
 	
 	@Test
@@ -77,23 +71,8 @@ public class TestPutAndReadLobs7844 extends SdbTestBase {
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}
-	}	
+	}
 	
-	public DBCollection createCL(){	
-		DBCollection cl = null;
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024,"
-				+ "ReplSize:0,Compressed:true}";
-	    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-	    	
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	    return cl;
-	 }		
 	
 	private class PutLobsTask extends SdbThreadBase {
         @Override
@@ -127,7 +106,7 @@ public class TestPutAndReadLobs7844 extends SdbTestBase {
 	
 	private void writeLobAndGetMd5(DBCollection cl, int lobtimes){
 		for( int i = 0; i< lobtimes; i++){
-			int writeLobSize = random.nextInt(1024*1024);;
+			int writeLobSize = random.nextInt(1024 * 1024);
 			byte[] wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
 			ObjectId oid = LobOprUtils.createAndWriteLob(cl, wlobBuff);	
 			

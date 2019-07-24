@@ -24,15 +24,14 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: TestLobSplit7846.java
-* test content:lob split
-* testlink case:seqDB-7846
+* @Description seqDB-7846: lob split
 * @author wuyan
-    * @Date    2016.9.12
-    * @update  [2017.12.20]
+* @Date    2016.9.12
+* @update  [2017.12.20]
 * @version 1.00
 */
 
@@ -53,48 +52,40 @@ public class TestLobSplit7846 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}
-		if (LobOprUtils.isStandAlone(sdb)){
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		
+		if (CommLib.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
 		
-		if (LobOprUtils.OneGroupMode(sdb)){
+		if (CommLib.OneGroupMode(sdb)){
 			throw new SkipException("less two groups skip testcase");
-		}
+		}		
 		
-		sdb.setSessionAttr((BSONObject)JSON.parse("{ PreferedInstance: 'M' }"));
-		createCL();		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		BSONObject options = (BSONObject)JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',Partition:4096}");
+		cl = cs.createCollection(clName, options);			
 		writeLobAndGetMd5(lobNums);
 	}
 			
 	@Test
-	void testSplitLob(){	
-		try{	
-			//test a:split by cond
-			splitCLByCond();			
-			double expErrorValue = 0.5;				
-			splitRGList.add(sourceRGName);
-			splitRGList.add(targetRGName);
-			LobOprUtils.checkSplitResult(sdb, csName, clName, splitRGList, expErrorValue);
+	public void testSplitLob() throws InterruptedException{		
+		//test a:split by cond
+		splitCLByCond();			
+		double expErrorValue = 0.5;				
+		splitRGList.add(sourceRGName);
+		splitRGList.add(targetRGName);
+		LobOprUtils.checkSplitResult(sdb, csName, clName, splitRGList, expErrorValue);
 			
-			//test b:split by percent,eg:split from targetRG to srcRG
-			splitCLByPercent();
-			//compare the total lobnums ,check the split range by cataInfo
-			checkLobNums( lobNums);	
-			checkSplitResultByCataInfo();			
+		//test b:split by percent,eg:split from targetRG to srcRG
+		splitCLByPercent();
+		//compare the total lobnums ,check the split range by cataInfo
+		checkLobNums( lobNums);	
+		checkSplitResultByCataInfo();			
 			
-			//testpoint a and b is contain the testpoint c ,check the lobdata after split
-			int lobNums = 100;
-			readLobAndCheckMd5(lobNums);
-
-		}catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		//testpoint a and b is contain the testpoint c ,check the lobdata after split
+		int lobNums = 100;
+		readLobAndCheckMd5(lobNums);	
 	}
 	
 	@AfterClass
@@ -102,10 +93,7 @@ public class TestLobSplit7846 extends SdbTestBase {
 		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
-			}
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+			}			
 		}finally{
 			if( null != sdb){
 				sdb.close();
@@ -137,26 +125,11 @@ public class TestLobSplit7846 extends SdbTestBase {
 			Assert.assertTrue(false,"split fail:"+e.getMessage()+"srcRGName:"+sourceRGName
 					+"\n tarRGName:"+targetRGName);
 		}		
-	}		
-	
-	
-	//create cs ,then create hashcl
-	public void createCL(){				
-		try
-		{
-			cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-			BSONObject options = new BasicBSONObject();
-			options = (BSONObject)JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',Partition:4096}");
-			cl = cs.createCollection(clName, options);			
-		}catch(BaseException e){	
-			Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-		}
 	}	
-	
 	
 	private void writeLobAndGetMd5(int lobtimes){
 		for( int i = 0; i< lobtimes; i++){
-			int writeLobSize = random.nextInt(1024*1024);;
+			int writeLobSize = random.nextInt( 1024 * 1024 );
 			byte[] wlobBuff = LobOprUtils.getRandomBytes(writeLobSize);
 			ObjectId oid = LobOprUtils.createAndWriteLob(cl, wlobBuff);	
 			
@@ -186,7 +159,7 @@ public class TestLobSplit7846 extends SdbTestBase {
 				rLob.read(rbuff);        			
 				String curMd5 = LobOprUtils.getMd5(rbuff);
 				String prevMd5 = id2md5.get(oid);
-				Assert.assertEquals(curMd5, prevMd5);
+				Assert.assertEquals(curMd5, prevMd5," the lob oid :" + oid.toString() + " read data error!");
 				id2md5.remove(oid);        			
 			}     
 		}		  		

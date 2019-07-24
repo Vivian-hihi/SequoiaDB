@@ -1,10 +1,15 @@
 package com.sequoiadb.lob.basicoperation;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -20,6 +25,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
 * FileName: Commlib.java
@@ -30,28 +36,7 @@ import com.sequoiadb.exception.BaseException;
 */
 public class LobOprUtils {
 	
-	public static ArrayList<String> groupList;
-	
-	public static boolean isStandAlone(Sequoiadb sdb){
-		try{
-			sdb.listReplicaGroups();		
-		}catch(BaseException e){
-			if( e.getErrorCode() == -159 ){
-				System.out.printf("run mode is standalone");	 
-				return true;
-			} 	
-		}	
-		return false;
-	}
-	
-	 public static boolean OneGroupMode(Sequoiadb sdb){
-		 if(getDataGroups(sdb).size() < 2){
-			System.out.printf("only one group");
-			return true;
-		 }
-		 return false;
-	 }
-	
+	public static ArrayList<String> groupList;	
 	/**
 	 * get the buff MD5 value
 	 * @param inbuff
@@ -130,8 +115,9 @@ public class LobOprUtils {
 		 return groupList;
 	 } 
 	
-	public static String chooseDataGroups(Sequoiadb sdb,int groupsNum){
+	public static String chooseDataGroups(Sequoiadb sdb){
 		groupList = getDataGroups(sdb);
+		int groupsNum = groupList.size();
 		int length = (groupsNum > groupList.size())?groupList.size():groupsNum;
 		String ret = "";
 		for(int i=0; i<length; i++){
@@ -171,21 +157,18 @@ public class LobOprUtils {
 	}
 	
 	
-	public static void createDomain(Sequoiadb sdb,String domainName,int groupsNum){
-		try{			
-			getDataGroups(sdb);
+	public static void createDomain(Sequoiadb sdb,String domainName){
+		try{
 			BSONObject options = new BasicBSONObject();			
-			options = (BSONObject)JSON.parse("{'Groups': [" + chooseDataGroups(sdb,groupsNum) + "],AutoSplit:true}");
-			sdb.createDomain(domainName, options);
-			System.out.printf("create domain is ok--\n");
-			
+			options = (BSONObject)JSON.parse("{'Groups': [" + chooseDataGroups(sdb) + "],AutoSplit:true}");
+			sdb.createDomain(domainName, options);			
 		}catch(BaseException e){
 			Assert.assertTrue(false,"createDomain fail " + +e.getErrorCode()+e.getMessage());
 		}
 	}
 
        
-    private static DBCollection createCL(CollectionSpace cs, String clName, String option) {
+    public static DBCollection createCL(CollectionSpace cs, String clName, String option) {
         DBCollection cl = null;
         BSONObject options = (BSONObject) JSON.parse(option);
         try {
@@ -200,17 +183,8 @@ public class LobOprUtils {
         return cl;
     }
 
-    private static DBCollection createCL(CollectionSpace cs, String clName) {
-        DBCollection cl = null;
-        try {
-            if (cs.isCollectionExist(clName)) {
-                cs.dropCollection(clName);
-            }
-            cl = cs.createCollection(clName);
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage());
-        }
-        return cl;
+    public static DBCollection createCL(CollectionSpace cs, String clName) {
+    	return createCL(cs, clName, null);
     }
     
     public static byte[] appendBuff(byte[] oldBuff, byte[] buff4Append, int offset) {
@@ -312,4 +286,62 @@ public class LobOprUtils {
 		Assert.assertEquals(actListNums,count,"list lobs error."+"allCount:"+actListNums);			
 	}
     
+    public static void assertByteArrayEqual(byte[] actual, byte[] expect) {
+        assertByteArrayEqual(actual, expect, "");
+    }
+
+    public static void assertByteArrayEqual(byte[] actual, byte[] expect, String msg) {
+        if (!Arrays.equals(actual, expect)) {
+            String workDirPath = SdbTestBase.getWorkDir();
+            File workDir = new File(workDirPath);
+            if (!workDir.isDirectory())
+                throw new RuntimeException("the path can not use: " + workDirPath);
+
+            String callerClassName = getCallerName();
+            File fileActual = new File(workDirPath + File.separator + callerClassName + "_actual");
+            File fileExpect = new File(workDirPath + File.separator + callerClassName + "_expect");
+            try {
+                if (fileActual.exists()) {
+                    fileActual.delete();
+                    fileActual.createNewFile();
+                }
+                if (fileExpect.exists()) {
+                    fileExpect.delete();
+                    fileExpect.createNewFile();
+                }
+
+                try (FileOutputStream out = new FileOutputStream(fileActual)) {
+                    out.write(actual);
+                    out.flush();
+                }
+                try (FileOutputStream out = new FileOutputStream(fileExpect)) {
+                    out.write(expect);
+                    out.flush();
+                }
+
+                Assert.fail(msg + "; data is written into files in " + workDirPath);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static String getCallerName() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        String thisClassName = stackTrace[1].getClassName();
+        String currClassName = null;
+        for (int i = 2; i < stackTrace.length; ++i) {
+            currClassName = stackTrace[i].getClassName();
+            if (!currClassName.equals(thisClassName)) {
+                break;
+            }
+        }
+        String classFullName = currClassName;
+        String[] classNameArr = classFullName.split("\\.");
+        String simpleClassName = classNameArr[classNameArr.length - 1];
+        return simpleClassName;
+    }
+
 }

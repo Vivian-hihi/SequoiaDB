@@ -3,7 +3,6 @@ package com.sequoiadb.lob.basicoperation;
 import java.util.Random;
 
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
@@ -20,8 +19,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @FileName:seqDB-10424:并发删除相同lob 
- * 插入lob数据，多个客户端并发执行删除lob操作
+ * @Description:seqDB-10424:并发删除相同lob  * 	
  * @Author linsuqiang
  * @Date 2016-12-12
  * @Version 1.00
@@ -30,6 +28,7 @@ public class TestLob10424 extends SdbTestBase {
     private String clName = "cl_10424";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
+    private DBCollection cl = null;
     private ObjectId delOid = null; // which lob will be delete
     private int delLobSize;    
     
@@ -44,13 +43,11 @@ public class TestLob10424 extends SdbTestBase {
     }
     
     @BeforeClass
-    public void setUp(){
-        try{
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        }catch(BaseException e){            
-            Assert.fail(e.getMessage());
-        }
-        DBCollection cl = createCL();
+    public void setUp(){ 
+    	sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");         
+        cs = sdb.getCollectionSpace(SdbTestBase.csName);    
+        BSONObject options = (BSONObject)JSON.parse("{ShardingKey:{a:1,b:-1},ShardingType:'hash',Partition:4096}");
+        cl = cs.createCollection(clName, options);    
         Md5Data md5Data = buildAndPutLob(cl);
         delOid = md5Data.oid;
     }
@@ -61,20 +58,18 @@ public class TestLob10424 extends SdbTestBase {
             if(cs.isCollectionExist(clName)){
                 cs.dropCollection(clName);
             }
-        }catch(BaseException e){
-            Assert.fail(e.getMessage());
         }finally{
-            sdb.close();;
+        	if( null != sdb ){
+        		sdb.close();
+        	}            
         }
     }
     
     @Test
     public void test(){
         RemoveLobsThread removeLobsThread = new RemoveLobsThread();
-        removeLobsThread.start(10);
-        if(!removeLobsThread.isSuccess()){
-            Assert.fail(removeLobsThread.getErrorMsg());
-        }
+        removeLobsThread.start(10); 
+        Assert.assertTrue( removeLobsThread.isSuccess(), removeLobsThread.getErrorMsg());       
         checkRemain();
     }
     
@@ -85,7 +80,7 @@ public class TestLob10424 extends SdbTestBase {
             DBCollection cl = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
                 // do remove lob
                 cl.removeLob(delOid);
             }catch(BaseException e){
@@ -102,26 +97,7 @@ public class TestLob10424 extends SdbTestBase {
         }
     }
 
-    public DBCollection createCL(){
-        try{
-            if(!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
-                sdb.createCollectionSpace(SdbTestBase.csName);    
-            }
-        }catch(BaseException e){
-            //-33 CS exist,ignore exceptions
-            Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
-        }
-        DBCollection cl = null;
-        try{
-            cs = sdb.getCollectionSpace(SdbTestBase.csName);    
-            BSONObject options = new BasicBSONObject();
-            options = (BSONObject)JSON.parse("{ShardingKey:{a:1,b:-1},ShardingType:'hash',Partition:4096}");
-            cl = cs.createCollection(clName, options);    
-        }catch(BaseException e){
-            Assert.fail(e.getMessage());
-        }
-        return cl;
-    }
+    
     
     public Md5Data buildAndPutLob(DBCollection cl){
         // build a lob and get it's md5, then insert
@@ -131,24 +107,16 @@ public class TestLob10424 extends SdbTestBase {
         delLobSize = lobsize;
         String lobSb = LobOprUtils.getRandomString(lobsize);
         Md5Data prevMd5 = new Md5Data();
-        DBLob lob = null;
-        try{
-            lob = cl.createLob();
+        
+        try( DBLob lob = cl.createLob()){           
             lob.write(lobSb.getBytes());
             prevMd5.oid = lob.getID();
             prevMd5.md5 = LobOprUtils.getMd5(lobSb);
-        }catch(BaseException e){    
-            Assert.fail(e.getMessage());
-        }finally{
-            if(lob != null){
-                lob.close();
-            }
         }
         return prevMd5;
     }
     
-    public void checkRemain(){
-        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+    public void checkRemain(){        
         // check whether lob is removed
         try{
             cl.openLob(delOid);
@@ -157,25 +125,21 @@ public class TestLob10424 extends SdbTestBase {
             Assert.assertEquals(e.getErrorCode(), -4, e.getMessage());
         }
         // check whether lob remains
-        try{
-            // insert a new lob with delOid
-            String lobSb = LobOprUtils.getRandomString(delLobSize);
-            DBLob wLob = cl.createLob(delOid);
-            wLob.write(lobSb.getBytes());
-            String prevMd5 = LobOprUtils.getMd5(lobSb);
-            wLob.close();
-            // read the new lob
-            DBLob rLob = cl.openLob(delOid);
-            byte[] buff = new byte[(int)rLob.getSize()];
-            rLob.read(buff);
-            String afterMd5 = LobOprUtils.getMd5(buff);
-            rLob.close();
-            // check the correctness of the new lob
-            if(!prevMd5.equals(afterMd5)){
-                Assert.fail("lob remains! the lob oid ="+delOid);
-            }
-        }catch(BaseException e){
-            Assert.fail(e.getMessage());
-        }
+        // insert a new lob with delOid
+        String lobSb = LobOprUtils.getRandomString(delLobSize);
+        DBLob wLob = cl.createLob(delOid);
+        wLob.write(lobSb.getBytes());
+        String prevMd5 = LobOprUtils.getMd5(lobSb);
+        wLob.close();
+        // read the new lob
+        DBLob rLob = cl.openLob(delOid);
+        byte[] buff = new byte[(int)rLob.getSize()];
+        rLob.read(buff);
+        String afterMd5 = LobOprUtils.getMd5(buff);
+        rLob.close();
+        // check the correctness of the new lob
+        if(!prevMd5.equals(afterMd5)){
+            Assert.fail("lob remains! the lob oid ="+delOid);
+        }        
     }
 }

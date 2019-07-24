@@ -22,17 +22,16 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* FileName: TestLobConcurrentOpr10425.java
-* test content:write and read lob ,when remove lob  
-* testlink cases:seqDB-10425
-* @author wuyan
-    * @Date    2016.10.9
-    * @update  [2017.12.20]
-* @version 1.00
+* @Description: write and read lob ,when remove lob  
+* @Author wuyan
+* @Date    2016.10.9
+* @Apdate  [2017.12.20]
+* @Version 1.00
 */
 public class TestLobConcurrentOpr10425 extends SdbTestBase {	
 	private String clName = "cl_lob10425";	
@@ -45,20 +44,19 @@ public class TestLobConcurrentOpr10425 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){	
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}
-		if (LobOprUtils.isStandAlone(sdb)){
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");		
+		if (CommLib.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
 		
-		if (LobOprUtils.OneGroupMode(sdb)){
+		if (CommLib.OneGroupMode(sdb)){
 			throw new SkipException("less two groups skip testcase");
 		}
-				
-		createCL();		
+		
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,ReplSize:0}";    		    
+	    cl = cs.createCollection(clName,(BSONObject) JSON.parse(clOptions));
+			
 		//write lob 		
 		int lobtimes = 100;	
         writeLobAndGetMd5(cl, lobtimes); 
@@ -86,8 +84,6 @@ public class TestLobConcurrentOpr10425 extends SdbTestBase {
 	public void tearDown(){		
 		try{			
 			cs.dropCollection(clName);
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}finally{
 			if ( null != sdb ){
 				sdb.close();
@@ -207,18 +203,6 @@ public class TestLobConcurrentOpr10425 extends SdbTestBase {
 			String prevMd5 = LobOprUtils.getMd5(wlobBuff);
 			id2md5.offer(new SaveOidAndMd5(oid, prevMd5));				
 		}		
-	}		
-		
-	private void createCL(){		
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,"
-					+ "ReplSize:0,Compressed:true}";
-		    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);		    
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
+	}	
+	
 }

@@ -1,121 +1,102 @@
 package com.sequoiadb.lob.basicoperation;
 
-import java.util.Random;
-
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* FileName: TestRemoveLobs7842.java
-* test content:remove lobs
-* testlink case:seqDB-7842
+* @Description seqDB-7842: remove lobs* 
 * @author wuyan
-    * @Date    2016.9.12
+* @Date    2016.9.12
 * @version 1.00
 */
 public class TestRemoveLobs7842 extends SdbTestBase {
+	@DataProvider(name = "lobSizeProvider")
+	public Object[][] generateLobSize(){
+		return new Object[][]{
+			//the parameter : lobsize
+			//test a ：it is just a piece with lobmeta，only on one group
+			new Object[]{1024 *3 },
+			//test b : it is many pieces,split to all groups
+			new Object[]{1024 * 1024},			
+		};
+	}
 	
-	private String clName = "cl_lob7842";	
+	private String clName = "cl_lob7842";
+	private String csName = "cs_lob7842";
+	private String domainName = "domain_lob7842";
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
-	private DBCollection cl = null;
-	private Random random = new Random(); 	
-	private static final String LOB_OID = "Oid";
-    private static final String LOB_SIZE = "Size";
-    private static final String LOB_AVAILABLE = "Available";
-	
+	private DBCollection cl = null;	
     	
     @BeforeClass
 	public void setUp(){
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+coordUrl+e.getMessage());
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		if (CommLib.isStandAlone(sdb)){
+			throw new SkipException("is standalone skip testcase");
 		}
-		
-		createCL();
-	}		
-
-    public void createCL(){
-		try{
-			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
-				sdb.createCollectionSpace(SdbTestBase.csName);	
-			}
-		}catch(BaseException e){
-			//-33 CS exist,ignore exceptions
-			Assert.assertEquals(-33,e.getErrorCode(),e.getMessage());
-	    }					
-	    try
-	    {
-	    	String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096,"
-					+ "ReplSize:0,Compressed:true}";
-		    	BSONObject options =(BSONObject) JSON.parse(clOptions);
-		    cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-		    cl = cs.createCollection(clName,options);			
-	    }catch(BaseException e){
-		    Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-	    }
-	 }	
+	
+		createDomain(sdb);
+		cs = sdb.createCollectionSpace(csName,(BSONObject) JSON.parse("{LobPageSize:4096,Domain:'" + domainName + "'}"));			
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',ReplSize:0,AutoSplit:true}";	   	    
+	    cl = cs.createCollection(clName,(BSONObject) JSON.parse(clOptions));	
+	}
+    
+    @Test(dataProvider = "lobSizeProvider")
+	public void removeLob( int lobSize ){ 
+    	try( Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+    		DBCollection dbcl = sdb.getCollectionSpace(csName).getCollection(clName);
+    		byte[] wlobBuff = LobOprUtils.getRandomBytes(lobSize);
+    		ObjectId oid = LobOprUtils.createAndWriteLob(cl, wlobBuff);	
+    		dbcl.removeLob(oid);
+    		//check the remove result
+    		DBCursor listCursor1 = dbcl.listLobs();		
+    		Assert.assertEquals(listCursor1.hasNext(),false,"list lob not null");
+    	}
+    	
+	}   
 	
     @AfterClass
 	public void tearDown(){		
-		try{			
-			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
-			}
-			sdb.disconnect();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		try{
+			if(sdb.isCollectionSpaceExist(csName))
+				sdb.dropCollectionSpace(csName);
+			if(sdb.isDomainExist(domainName)){
+				sdb.dropDomain(domainName);
+			}						
 		}finally{
+			if( null != sdb )
+				sdb.close();
         }
 	}
     
-    @Test
-	public void removeLob(){
-    	DBLob lob = null;
-    	ObjectId id = null;
-    	int lobsize =0;
-    	try{
-    		lobsize = random.nextInt(1048576);		
-    		String lobStringBuff = LobOprUtils.getRandomString(lobsize);
-    		lob = cl.createLob();
-    		lob.write(lobStringBuff.getBytes());
-    		id = lob.getID();    		
-    	}catch(BaseException e){
-            Assert.assertTrue(false,e.getMessage());
-        }finally{
-            if(lob != null){
-            	lob.close();            		
-            } 
-        }
-		
-		DBCursor listCursor = cl.listLobs();
-		while ( listCursor.hasNext() ) {
-            BSONObject obj = listCursor.getNext();
-            ObjectId queryLobId = (ObjectId) obj.get(LOB_OID);
-            Assert.assertEquals(true, queryLobId.equals(id),"query lob id different");             
-            long actLobSize           = (Long) obj.get(LOB_SIZE);
-            boolean isAvailable = (Boolean) obj.get(LOB_AVAILABLE);
-            Assert.assertEquals( true, isAvailable,"lob is not available");
-            Assert.assertEquals( lobsize, actLobSize,"query lobSize different");
-        }
-		cl.removeLob(id);
-		//check the remove result
-		DBCursor listCursor1 = cl.listLobs();		
-		Assert.assertEquals(listCursor1.hasNext(),false,"list lob not null");
-	}	
+    
 
+    private void  createDomain(Sequoiadb sdb){
+    	if(sdb.isCollectionSpaceExist(csName)){
+    		sdb.dropCollectionSpace(csName);
+    	}
+			
+    	if(sdb.isDomainExist(domainName)){
+			sdb.dropDomain(domainName);
+		}
+		BSONObject options = new BasicBSONObject();
+		options = (BSONObject)JSON.parse("{'Groups': [" 
+						+ LobOprUtils.chooseDataGroups(sdb) + "],AutoSplit:true}");
+		sdb.createDomain(domainName, options);			
+	}
 }
