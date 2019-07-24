@@ -79,6 +79,7 @@ public class SplitHash11558B extends SdbTestBase {
         for (int i = 0; i < invalidDataArr.size(); i++) {
             String clName = clNames.get(i);
             DBCollection cl = cls.get(i);
+            System.out.println("clName: " + clName);
 
             // insert multiple valid sharding key
             for (int j = 0; j < validDataArr.size(); j++) {
@@ -96,7 +97,8 @@ public class SplitHash11558B extends SdbTestBase {
             cl.insert(invDoc);
 
             // percent split
-            ThreadExecutor es = new ThreadExecutor();
+            int timeout = 300000;
+            ThreadExecutor es = new ThreadExecutor(timeout);
             es.addWorker(new percentSplit(clName, 50));
             es.addWorker(new deleteInvalidRecs(clName, invDoc));
             es.run();
@@ -146,6 +148,17 @@ public class SplitHash11558B extends SdbTestBase {
             if (runSuccess) {
                 for (int i = 0; i < clNames.size(); i++) {
                     cs.dropCollection(clNames.get(i));
+                }
+            } else {
+                for (int i = 0; i < clNames.size(); i++) {
+                    DBCollection cl = cs.getCollection(clNames.get(i));
+                    DBCursor cursor = cl.query();
+                    ArrayList<BSONObject> recsArr = new ArrayList<>();
+                    while (cursor.hasNext()) {
+                        BSONObject recs = cursor.getNext();
+                        recsArr.add(recs);
+                    }
+                    System.out.println("teardown query " + clNames.get(i) + ": " + recsArr);
                 }
             }
         } finally {
