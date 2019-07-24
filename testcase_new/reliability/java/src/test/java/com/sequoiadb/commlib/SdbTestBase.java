@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;
@@ -26,6 +27,7 @@ public class SdbTestBase {
     public static String hostName;
     public static String serviceName;
     public static String csName;
+    public static String cappedCSName;
     public static int reservedPortBegin;
     public static int reservedPortEnd;
     public static String reservedDir;
@@ -81,6 +83,7 @@ public class SdbTestBase {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
+        cappedCSName = COMMCSNAME + "_capped";
         reservedPortBegin = RSRVPORTBEGIN;
         reservedPortEnd = RSRVPORTEND;
         reservedDir = RSRVNODEDIR;
@@ -220,6 +223,10 @@ public class SdbTestBase {
             if (db.isCollectionSpaceExist(csName)) {
                 db.dropCollectionSpace(csName);
             }
+
+            if (db.isCollectionSpaceExist(cappedCSName)) {
+                db.dropCollectionSpace(cappedCSName);
+            }
         } catch (BaseException e) {
             e.printStackTrace();
         } finally {
@@ -236,8 +243,15 @@ public class SdbTestBase {
                 sdb.dropCollectionSpace(csName);
             }
             sdb.createCollectionSpace(csName);
+
+            // 创建公共的固定集合空间
+            if (sdb.isCollectionSpaceExist(cappedCSName)) {
+                sdb.dropCollectionSpace(cappedCSName);
+            }
+            sdb.createCollectionSpace(cappedCSName, (BSONObject) JSON.parse("{Capped:true}"));
         } catch (BaseException e) {
-            System.out.printf("create CollectionSpace %s failed, errMsg:%s\n", csName, e.getMessage());
+            System.out.printf("create CollectionSpace %s failed, errMsg:%s\n", csName + " or " + cappedCSName,
+                    e.getMessage());
             isCreateSuccess = false;
         }
         return isCreateSuccess;
