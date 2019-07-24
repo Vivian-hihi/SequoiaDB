@@ -71,7 +71,6 @@ function main(){
    // 通过本coord和其它coord插入记录查询
    var count = countFlag.count - 1;
    for(var i in coordList){
-	  println(coordList[i]);
       var dbcl = new Sdb(coordList[i]).getCS(COMMCSNAME).getCL(clName);
       var cur = dbcl.find().sort({"id1":1});
       insertData_2(dbcl, countFlag, count, expList);
@@ -98,6 +97,5 @@ function insertData_2(cl, countFlag, count, expList)
 		expList.push({a:i, id1:110 + i - count, id2: -220 - i + count});
 	}
 	countFlag.count = countFlag.count + 3;
-	println(countFlag.count);
 	expList.sort(compare("id1"))
 }
