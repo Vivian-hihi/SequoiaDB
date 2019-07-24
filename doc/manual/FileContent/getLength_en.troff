@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Open a banary file and get a file descriptor;
+Open a banary file and get a file descriptor.
 .IP
 .nf
 \f[C]
@@ -38,7 +38,7 @@ Open a banary file and get a file descriptor;
 .fi
 .IP \[bu] 2
 Read the contents of the file into the fileContent object( For more detail,
-please reference File::readContent );
+please reference File::readContent ).
 .IP
 .nf
 \f[C]

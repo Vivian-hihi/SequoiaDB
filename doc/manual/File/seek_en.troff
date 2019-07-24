@@ -112,11 +112,9 @@ T}@T{
 size plus offset
 T}
 .TE
-.RS
-.PP
+
 Note:
 .RE
-.RS
 .PP
 When the "where" parameter is \[aq]e\[aq], the "offset" parameter can be
 negative.
@@ -133,7 +131,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Open a file and get a file descriptor;
+Open a file and get a file descriptor.
 .IP
 .nf
 \f[C]
@@ -144,7 +142,7 @@ Open a file and get a file descriptor;
 \f[]
 .fi
 .IP \[bu] 2
-Moving cursor, and perform an offset operation from the beginning of the file;
+Moving cursor, and perform an offset operation from the beginning of the file.
 .IP
 .nf
 \f[C]
@@ -160,7 +158,7 @@ sequoiadb\ is\ wonderful.
 .fi
 .IP \[bu] 2
 Moving cursor, and perform an offset operation from the current cursor position
-of the file;
+of the file.
 .IP
 .nf
 \f[C]

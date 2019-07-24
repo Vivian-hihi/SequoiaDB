@@ -45,7 +45,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Open a file and get a file descriptor;
+* Open a file and get a file descriptor.
 
 ```lang-javascript
 > var file = new File( "/opt/sequoiadb/file.txt" )
@@ -54,7 +54,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 1:wonderful sequoiadb.
 ```
 
-* Moving cursor, and perform an offset operation from the beginning of the file;
+* Moving cursor, and perform an offset operation from the beginning of the file.
 
 ```lang-javascript
 > file.seek(2)
@@ -67,7 +67,7 @@ sequoiadb is wonderful.
 1:wonderful sequoiadb.
 ```
 
-* Moving cursor, and perform an offset operation from the current cursor position of the file;
+* Moving cursor, and perform an offset operation from the current cursor position of the file.
 
 ```lang-javascript
 > file.seek(2)

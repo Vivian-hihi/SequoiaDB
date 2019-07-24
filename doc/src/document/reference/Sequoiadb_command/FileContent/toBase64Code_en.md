@@ -30,19 +30,19 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Open a banary file and get a file descriptor;
+* Open a banary file and get a file descriptor.
 
 ```lang-javascript
 > var file = new File( "/opt/sequoiadb/file.dump" )
 ```
 
-* Read the contents of the file into the fileContent object( For more detail, please reference [File::readContent](reference/Sequoiadb_command/File/readContent) );
+* Read the contents of the file into the fileContent object( For more detail, please reference [File::readContent](reference/Sequoiadb_command/File/readContent) ).
 
 ```lang-javascript
 > var content = file.readContent( 10 )
 ```
 
-* Convert the binary stream in the fileContent to base64 encoded;
+* Convert the binary stream in the fileContent to base64 encoded.
 
 ```lang-javascript
 > var base64String = content.toBase64Code()

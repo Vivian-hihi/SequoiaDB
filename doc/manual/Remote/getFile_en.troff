@@ -237,7 +237,7 @@ Create a file object remotely.
 \f[]
 .fi
 .IP \[bu] 2
-Read the contents of the file.(For more detial, please reference to read)
+Read the contents of the file.( For more detial, please reference to read ).
 .IP
 .nf
 \f[C]
