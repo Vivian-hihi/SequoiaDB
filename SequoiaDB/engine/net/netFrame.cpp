@@ -277,7 +277,8 @@ namespace engine
     _timerID( NET_INVALID_TIMER_ID ),
     _netOut( 0 ),
     _netIn( 0 ),
-    _innerTimeHandle( this )
+    _innerTimeHandle( this ),
+    _suiteStopFlag( FALSE )
    {
       _pThreadFunc = NULL ;
       _local.value = MSG_INVALID_ROUTEID ;
@@ -433,6 +434,11 @@ namespace engine
    void _netFrame::stop()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_STOP );
+
+      _suiteMtx.get() ;
+      _suiteStopFlag = TRUE ;
+      _suiteMtx.release() ;
+
       closeListen() ;
       _mainSuitPtr->getIOService().stop() ;
       PD_TRACE_EXIT ( SDB__NETFRAME_STOP );
@@ -1609,6 +1615,12 @@ namespace engine
          {
             _suiteMtx.get() ;
             hasLock = TRUE ;
+         }
+
+         if ( _suiteStopFlag )
+         {
+            PD_LOG( PDWARNING, "Suite service of net frame is stopped" ) ;
+            goto done ;
          }
 
          itr = _vecEvSuit.begin() ;
