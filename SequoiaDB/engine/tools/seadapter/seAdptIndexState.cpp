@@ -510,6 +510,10 @@ namespace seadapter
                    handle, rc ) ;
 
    done:
+      if ( killCtxMsg )
+      {
+         msgReleaseBuffer( killCtxMsg, _session->eduCB() ) ;
+      }
       return rc ;
    error:
       goto done ;
