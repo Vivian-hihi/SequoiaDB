@@ -58,13 +58,6 @@ public class FullTextUtils {
                     + " didn't rebuild to completed in the ES");
         }
 
-        // 检查ES端索引名是否存在
-        for (String esIndexName : esIndexNames) {
-            if (!FullTextESUtils.isIndexCreatedInES(esIndexName)) {
-                throw new Exception(cl.getFullName() + " fullIndex: " + esIndexName + " is not exist in ES");
-            }
-        }
-
         // 检查索引数是否已完全同步到ES
         if (!isCountRightInES(esIndexNames, expectCount)) {
             throw new Exception(cl.getFullName() + " fulltext: " + esIndexNames + " are not all sync to es");
@@ -110,13 +103,6 @@ public class FullTextUtils {
             if (!isFulltextRebuild(subCL, textIndexName)) {
                 throw new Exception("The " + subCL.getFullName() + "'s textIndex: " + textIndexName
                         + " didn't rebuild to completed in the ES");
-            }
-        }
-
-        // 检查ES端索引名是否存在
-        for (String esIndexName : esIndexNames) {
-            if (!FullTextESUtils.isIndexCreatedInES(esIndexName)) {
-                throw new Exception(esIndexName + " is not exist in ES");
             }
         }
 
@@ -340,9 +326,10 @@ public class FullTextUtils {
                     break;
                 } else {
                     doTimes++;
-                    // System.out.println( "esIndexName: " + esIndexName +
-                    // ",doTimes: " + doTimes + ", previousCLLid: "
-                    // + preCLLid + ", currentCLLID: " + curCLLID );
+		    if (doTimes % 60 == 0) {
+			System.out.println("esIndexName: " + esIndexName + ",doTimes: " + doTimes + ", previousCLLid: "
+				+ preCLLid + ", currentCLLID: " + curCLLID);
+		    }
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
@@ -352,9 +339,10 @@ public class FullTextUtils {
             } catch (Exception e) {
                 if (e.getMessage().equals("no such index")) {
                     doTimes++;
-                    // System.out.println(
-                    // "esIndexName: " + esIndexName + ", doTimes: " + doTimes +
-                    // " is being truncated now" );
+                    if (doTimes % 30 == 0) {
+			System.out.println(
+				"esIndexName: " + esIndexName + ", doTimes: " + doTimes + " is not exist or being truncated now");
+                    }
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e2) {
