@@ -16,7 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.cappedCL.Utils;
+import com.sequoiadb.cappedCL.CappedCLUtils;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -42,7 +42,7 @@ public class CappedCLKillNode15793 extends SdbTestBase {
     private String cappedCLName = "cappedCL_killNode_15793";
     private String dataGroupName;
     private StringBuffer strBuffer = null;
-    private int stringLength = Utils.getRandomStringLength(1, 2000);
+    private int stringLength = CappedCLUtils.getRandomStringLength(1, 2000);
     private int threadNum = 10;
 
     @BeforeClass

@@ -1,7 +1,6 @@
 package com.sequoiadb.cappedCL.killnode;
 
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import java.util.Random;
 import org.testng.Assert;
@@ -23,7 +22,7 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import com.sequoiadb.cappedCL.Utils;
+import com.sequoiadb.cappedCL.CappedCLUtils;
 
 /**
  * @FileName seqDB-15794: 逆向pop，pop操作同时数据组所有节点异常重启
@@ -31,14 +30,11 @@ import com.sequoiadb.cappedCL.Utils;
  * @Date 2019-07-23
  */
 
-public class PopAndKillAllNodes15794A extends SdbTestBase{
+public class CappedCLKillNode15794A extends SdbTestBase{
 
      private GroupMgr groupMgr = null; 
      private Sequoiadb sdb = null;
-     private boolean clearFlag = false;
-     private CollectionSpace cs = null;
      private DBCollection cl = null;
-     private String csName = "story_cappedCS_killNode_15794A"; 
      private String clName = "cappedCL_killNode_15794A"; 
      private String groupName = null;	
 	
@@ -49,17 +45,13 @@ public class PopAndKillAllNodes15794A extends SdbTestBase{
              throw new SkipException("checkBusiness failed");
          }
          sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-         try {
-             sdb.dropCollectionSpace(csName);
-         } catch (BaseException e) {
-             if(-34 != e.getErrorCode()) 
-                 throw e;
-         }   	  
-        
-         cs = sdb.createCollectionSpace(csName, (BSONObject)JSON.parse("{Capped:true}"));
-         cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Capped:true, Size:1024, AutoIndexId:false}"));
+         
          groupName = groupMgr.getAllDataGroupName().get(0);
          System.out.println("group: " + groupName);
+         cl = sdb.getCollectionSpace(cappedCSName)
+                 .createCollection(clName, (BSONObject) JSON.parse(
+                         "{Capped:true,Size:1024,AutoIndexId:false,Group:'"
+                                 + groupName + "'}"));  
      }
 	
      @Test 
@@ -67,12 +59,12 @@ public class PopAndKillAllNodes15794A extends SdbTestBase{
          // 插入大量数据
          int insertNums = 300000;
          int strLength = 1024;
-         Utils.insertRecords(cl, insertNums, strLength);
+         CappedCLUtils.insertRecords(cl, insertNums, strLength);
  
          GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);      
          TaskMgr mgr = new TaskMgr();
          for (NodeWrapper node : dataGroup.getNodes()) {
-             FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(node, 1);
+             FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(node, 0);
              mgr.addTask(faultMakeTask);
          }
          mgr.addTask(new PopTask());
@@ -81,24 +73,16 @@ public class PopAndKillAllNodes15794A extends SdbTestBase{
          Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
          Assert.assertEquals(groupMgr.checkBusinessWithLSN(1200), true, "check LSN consistency fail");
         
-         // 再次插入数据
-         Utils.insertRecords(cl, 1000, 8);
-         // 校验主备一致
-         Assert.assertEquals(dataGroup.checkInspect(300), true, "data is different on " + dataGroup.getGroupName());
-            
-         clearFlag = true;                    
+         // 环境恢复后，执行insert/pop并检查主备一致
+         CappedCLUtils.insertRecords(cl, 10000, 8);  
+         CappedCLUtils.pop(cl, CappedCLUtils.getLogicalID(cl,100), 1);        
+         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName()); 
      }
 
      @AfterClass
      public void tearDown() {
-         try {
-             if(clearFlag) {
-                 sdb.dropCollectionSpace(csName);
-             }
-         } finally {
-             if(sdb != null) {
-                 sdb.close();     
-             }
+         if(sdb != null) {
+             sdb.close();     
          }
      }
 
@@ -106,12 +90,12 @@ public class PopAndKillAllNodes15794A extends SdbTestBase{
          @Override
          public void exec() throws Exception {
              try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
-                  CollectionSpace cs = db.getCollectionSpace(csName);
+                  CollectionSpace cs = db.getCollectionSpace(cappedCSName);
                   DBCollection cl = cs.getCollection(clName);
                   // 逆向pop
-                  long logicalID = Utils.getLogicalID(cl, new Random().nextInt(100));
+                  long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(100));
                   int direction = -1;
-                  Utils.pop(cl, logicalID, direction);
+                  CappedCLUtils.pop(cl, logicalID, direction);
              } catch (BaseException e) {
                  System.out.println("kill all nodes while poping: " + e.getErrorCode());              
              }

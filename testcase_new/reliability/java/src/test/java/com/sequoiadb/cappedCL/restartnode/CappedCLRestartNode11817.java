@@ -1,0 +1,116 @@
+package com.sequoiadb.cappedCL.restartnode;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.cappedCL.CappedCLUtils;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fault.NodeRestart;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
+
+/**
+ * @FileName seqDB-11817: insert and pop records in capped CL when slave node is restarted
+ * @Author liuxiaoxuan
+ * @Date 2017-10-16
+ */
+public class CappedCLRestartNode11817 extends SdbTestBase{
+
+    private GroupMgr groupMgr = null;
+    private Sequoiadb sdb = null;
+    private DBCollection cl = null;
+    private String clName = "restartNode_cappedcl_11817";
+    private String dataGroupName = null;
+    private int insertNums = 10000;
+    private final int strLength = 968;
+	
+    @BeforeClass
+    public void setup() throws ReliabilityException {
+        groupMgr = GroupMgr.getInstance();
+        //check environment for 120s
+        if(!groupMgr.checkBusiness(120)) {
+            throw new SkipException("checkBusiness failed");
+        }
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        dataGroupName = groupMgr.getAllDataGroupName().get(0);
+        System.out.println("group: " + dataGroupName);
+        cl = sdb.getCollectionSpace(cappedCSName)
+                .createCollection(clName, (BSONObject) JSON.parse(
+                        "{Capped:true,Size:1024,AutoIndexId:false,Group:'"
+                                + dataGroupName + "'}"));  
+        CappedCLUtils.insertRecords(cl, insertNums, strLength);
+    }
+	
+    @Test
+    public void curdAndRestartNodeTest() throws ReliabilityException {
+        GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
+        NodeWrapper slaveNode = dataGroup.getSlave();
+        FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(slaveNode, 0, 10);
+        TaskMgr taskMgr = new TaskMgr(faultMakeTask ,new InsertTask(),new PopTask());
+        taskMgr.execute();
+			
+        Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
+        Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
+	         
+        //check insert/pop, and data consistency
+        CappedCLUtils.insertRecords(cl, 10000, 8);  
+        CappedCLUtils.pop(cl, CappedCLUtils.getLogicalID(cl,100), 1);        
+        Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName()); 
+    }
+	
+    @AfterClass
+    public void tearDown() {
+        if(sdb != null) {
+            sdb.close();
+        }	
+    }
+	
+    private class InsertTask extends OperateTask{
+        @Override
+        public void exec() throws Exception {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
+                CollectionSpace cs = db.getCollectionSpace(cappedCSName);
+                DBCollection cl = cs.getCollection(clName);
+        	   
+                //insert
+                insertNums = 32768;
+                CappedCLUtils.insertRecords(cl, insertNums, strLength);
+            } catch (BaseException e) {
+                e.printStackTrace();
+                System.out.println("kill master node while inserting: " + e.getErrorCode());
+            }
+        }
+    }
+	
+    private class PopTask extends OperateTask{
+        @Override
+        public void exec() throws Exception {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
+                CollectionSpace cs = db.getCollectionSpace(cappedCSName);
+                DBCollection cl = cs.getCollection(clName);
+        	   
+                //pop 
+                long logicalID = CappedCLUtils.getLogicalID(cl, 10);
+                int direction = -1;
+                CappedCLUtils.pop(cl, logicalID, direction);
+            } catch (BaseException e) {
+                e.printStackTrace();
+                System.out.println("kill master node while inserting: " + e.getErrorCode());
+            }
+        }
+    }
+}

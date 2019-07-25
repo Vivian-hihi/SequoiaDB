@@ -1,7 +1,6 @@
 package com.sequoiadb.cappedCL.killnode;
 
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import java.util.Random;
 import org.testng.Assert;
@@ -23,23 +22,20 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import com.sequoiadb.cappedCL.Utils;
+import com.sequoiadb.cappedCL.CappedCLUtils;
 
 /**
- * @FileName seqDB-15791: 插入记录扩数据文件，执行pop操作，再次插入记录的同时备节点异常重启
+ * @FileName seqDB-15790: 插入记录未扩数据文件，执行pop操作，再次插入记录的同时主节点异常重启
  * @Author liuxiaoxuan
  * @Date 2019-07-23
  */
 
-public class InsertAndKillSlaveNode15791B extends SdbTestBase{
+public class CappedCLKillNode15790A extends SdbTestBase{
 
      private GroupMgr groupMgr = null;
-     private Sequoiadb sdb = null;
-     private boolean clearFlag = false;
-     private CollectionSpace cs = null;
+     private Sequoiadb sdb = null; 
      private DBCollection cl = null;
-     private String csName = "story_cappedCS_killNode_15791B"; 
-     private String clName = "cappedCL_killNode_15791B"; 
+     private String clName = "cappedCL_killNode_15790A"; 
      private String groupName = null;	
 	
      @BeforeClass
@@ -49,56 +45,47 @@ public class InsertAndKillSlaveNode15791B extends SdbTestBase{
              throw new SkipException("checkBusiness failed");
          }
          sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-         try {
-             sdb.dropCollectionSpace(csName);
-         } catch (BaseException e) {
-             if(-34 != e.getErrorCode())
-                 throw e;
-         }    	  
-        
-         cs = sdb.createCollectionSpace(csName, (BSONObject)JSON.parse("{Capped:true}"));
-         cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Capped:true, Size:1024, AutoIndexId:false}"));
          groupName = groupMgr.getAllDataGroupName().get(0);
          System.out.println("group: " + groupName);
+         cl = sdb.getCollectionSpace(cappedCSName)
+                 .createCollection(clName, (BSONObject) JSON.parse(
+                         "{Capped:true,Size:1024,AutoIndexId:false,Group:'"
+                                 + groupName + "'}"));  
     }
 	
     @Test
     public void createCLAndKillNodeTest() throws ReliabilityException {
-         // 插入数据扩文件
-         int insertNums = 200000;
-         int strLength = 512;
-         Utils.insertRecords(cl, insertNums, strLength);
+         // 插入数据未扩文件
+         int insertNums = 1000;
+         int strLength = 16;
+         CappedCLUtils.insertRecords(cl, insertNums, strLength);
         
-         // 正向pop
-         long logicalID = Utils.getLogicalID(cl, new Random().nextInt(100000));
-         int direction = 1;
-         Utils.pop(cl, logicalID, direction);
+         // 逆向pop
+         long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(500));
+         int direction = -1;
+         CappedCLUtils.pop(cl, logicalID, direction);
      
-        	GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
-         NodeWrapper slaveNode = dataGroup.getSlave();
+         GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
+         NodeWrapper masterNode = dataGroup.getMaster();
 			
-         FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(slaveNode.hostName(), slaveNode.svcName(), 1);
+         FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(masterNode.hostName(), masterNode.svcName(), 1);
          TaskMgr mgr = new TaskMgr(faultMakeTask);
          mgr.addTask(new InsertTask());
          mgr.execute();
 			         
          Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
          Assert.assertEquals(groupMgr.checkBusinessWithLSN(1200), true, "check LSN consistency fail");
-         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName());
-            
-         clearFlag = true;                    
+         
+         // 环境恢复后，执行insert/pop并检查主备一致
+         CappedCLUtils.insertRecords(cl, 10000, 8);  
+         CappedCLUtils.pop(cl, CappedCLUtils.getLogicalID(cl,100), 1);        
+         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName()); 
     }
 
     @AfterClass
     public void tearDown() {
-         try {
-             if(clearFlag) {
-                 sdb.dropCollectionSpace(csName);
-             }
-         } finally {
-             if(sdb != null) {
-                 sdb.close();     
-             }
+         if(sdb != null) {
+             sdb.close();     
          }
     }
 
@@ -110,9 +97,10 @@ public class InsertAndKillSlaveNode15791B extends SdbTestBase{
                  DBCollection cl = cs.getCollection(clName);
                  int insertNums = 10000;
                  int strLength = 32;
-                 Utils.insertRecords(cl, insertNums, strLength);
+                 CappedCLUtils.insertRecords(cl, insertNums, strLength);
              } catch (BaseException e) {
-                 System.out.println("kill slave node while inserting: " + e.getErrorCode());              
+                 e.printStackTrace();
+                 System.out.println("kill master node while inserting: " + e.getErrorCode());              
              }
          }
     } 	

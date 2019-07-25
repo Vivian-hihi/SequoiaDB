@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.cappedCL.Utils;
+import com.sequoiadb.cappedCL.CappedCLUtils;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -38,7 +38,7 @@ public class CappedCLKillNode15788A extends SdbTestBase {
     private String cappedCLName = "cappedCL_killNode_15788A";
     private String dataGroupName;
     private StringBuffer strBuffer = null;
-    private int stringLength = Utils.getRandomStringLength(1, 2000);
+    private int stringLength = CappedCLUtils.getRandomStringLength(1, 2000);
     private int threadNum = 10;
 
     @BeforeClass
@@ -89,7 +89,7 @@ public class CappedCLKillNode15788A extends SdbTestBase {
             cl.insert(insertObj);
 
             // 校验主节点id字段
-            Assert.assertTrue(Utils.checkLogicalID(sdb, cappedCSName, cappedCLName, stringLength));
+            Assert.assertTrue(CappedCLUtils.checkLogicalID(sdb, cappedCSName, cappedCLName, stringLength));
             Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
             Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
 
