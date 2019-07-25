@@ -74,7 +74,7 @@ public class SplitHash11558B extends SdbTestBase {
         }
     }
 
-    @Test
+    @Test(enabled = false) // jira-4318
     private void test() throws Exception {
         for (int i = 0; i < invalidDataArr.size(); i++) {
             String clName = clNames.get(i);
