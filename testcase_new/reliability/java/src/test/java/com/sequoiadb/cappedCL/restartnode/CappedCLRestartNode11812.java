@@ -62,7 +62,7 @@ public class CappedCLRestartNode11812 extends SdbTestBase {
             GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
             NodeWrapper slaveNode = dataGroup.getSlave();
 
-            FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(slaveNode, 1, 0);
+            FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(slaveNode, 1, 10);
             TaskMgr mgr = new TaskMgr(faultMakeTask);
             mgr.addTask(new createCappedCLTask());
             mgr.execute();
@@ -101,7 +101,7 @@ public class CappedCLRestartNode11812 extends SdbTestBase {
                 options.put("Capped", true);
                 options.put("Size", 1024);
                 options.put("Group", dataGroupName);
-                for (int num = 0; num < 1000; num++) {
+                for (int num = 0; num < 400; num++) {
                     cappedCS.createCollection(cappedCLName + "_" + num, options);
                     successCLCounts++;
                 }

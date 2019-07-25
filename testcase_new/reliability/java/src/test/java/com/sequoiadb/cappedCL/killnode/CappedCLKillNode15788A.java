@@ -10,7 +10,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.cappedCL.Utils;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -23,18 +25,21 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-11812:创建固定集合时，备节点异常重启
- * @Author liuxiaoxuan
- * @Date 2017-07-31
+ * @FileName seqDB-15788:插入记录同时主节点异常重启
+ * @Author zhaoyu
+ * @Date 2019-7-24
  */
-public class CappedCLKillNode11812 extends SdbTestBase {
+public class CappedCLKillNode15788A extends SdbTestBase {
 
     private GroupMgr groupMgr = null;
     private Sequoiadb sdb = null;
-    private String cappedCSName = "cappedCS_killNode_11812";
-    private String cappedCLName = "cappedCL_killNode_11812";
-    private int successCLCounts = 0;
-    String dataGroupName;
+    private CollectionSpace cs = null;
+    private DBCollection cl = null;
+    private String cappedCLName = "cappedCL_killNode_15788A";
+    private String dataGroupName;
+    private StringBuffer strBuffer = null;
+    private int stringLength = Utils.getRandomStringLength(1, 2000);
+    private int threadNum = 10;
 
     @BeforeClass
     public void setUp() {
@@ -43,11 +48,16 @@ public class CappedCLKillNode11812 extends SdbTestBase {
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
+
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            if (sdb.isCollectionSpaceExist(cappedCSName)) {
-                sdb.dropCollectionSpace(cappedCSName);
+            cs = sdb.getCollectionSpace(cappedCSName);
+            cl = cs.createCollection(cappedCLName, (BSONObject) JSON.parse("{Capped:true,Size:1024}"));
+
+            // 构造插入的字符串
+            strBuffer = new StringBuffer();
+            for (int len = 0; len < stringLength; len++) {
+                strBuffer.append("a");
             }
-            sdb.createCollectionSpace(cappedCSName, (BSONObject) JSON.parse("{Capped:true}"));
         } catch (ReliabilityException e) {
             e.printStackTrace();
             Assert.fail(this.getClass().getName() + "setUp error, error description:" + e.getMessage());
@@ -60,20 +70,29 @@ public class CappedCLKillNode11812 extends SdbTestBase {
         try {
             dataGroupName = groupMgr.getAllDataGroupName().get(0);
             GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
-            NodeWrapper slaveNode = dataGroup.getSlave();
+            NodeWrapper primaryNode = dataGroup.getMaster();
 
-            FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(slaveNode.hostName(), slaveNode.svcName(), 1);
+            FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(primaryNode.hostName(), primaryNode.svcName(),
+                    1 + (int) Math.random() * 10);
             TaskMgr mgr = new TaskMgr(faultMakeTask);
-            mgr.addTask(new createCappedCLTask());
+            for (int i = 0; i < threadNum; i++) {
+                mgr.addTask(new InsertTask());
+            }
+
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
             Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
             Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
 
-            for (int num = 0; num < successCLCounts; num++) {
-                CollectionSpace cappedCS = sdb.getCollectionSpace(cappedCSName);
-                cappedCS.getCollection(cappedCLName + "_" + num).insert("{a:'Check cl'}");
-            }
+            BasicBSONObject insertObj = new BasicBSONObject();
+            insertObj.put("a", strBuffer.toString());
+            cl.insert(insertObj);
+
+            // 校验主节点id字段
+            Assert.assertTrue(Utils.checkLogicalID(sdb, cappedCSName, cappedCLName, stringLength));
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
+            Assert.assertEquals(dataGroup.checkInspect(60), true, "data is different on " + dataGroup.getGroupName());
+
         } catch (ReliabilityException e) {
             e.printStackTrace();
             Assert.fail("test reliabilityException: " + e.getMessage());
@@ -83,7 +102,7 @@ public class CappedCLKillNode11812 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            sdb.dropCollectionSpace(cappedCSName);
+            cs.dropCollection(cappedCLName);
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -91,22 +110,18 @@ public class CappedCLKillNode11812 extends SdbTestBase {
         }
     }
 
-    private class createCappedCLTask extends OperateTask {
-
+    private class InsertTask extends OperateTask {
         @Override
         public void exec() throws Exception {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                CollectionSpace cappedCS = db.getCollectionSpace(cappedCSName);
-                BSONObject options = new BasicBSONObject();
-                options.put("Capped", true);
-                options.put("Size", 1024);
-                options.put("Group", dataGroupName);
-                for (int num = 0; num < 400; num++) {
-                    cappedCS.createCollection(cappedCLName + "_" + num, options);
-                    successCLCounts++;
+                DBCollection cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
+                for (int i = 0; i < 10000; i++) {
+                    BasicBSONObject insertObj = new BasicBSONObject();
+                    insertObj.put("a", strBuffer.toString());
+                    cl.insert(insertObj);
                 }
             } catch (BaseException e) {
-                throw e;
+                e.printStackTrace();
             }
         }
     }

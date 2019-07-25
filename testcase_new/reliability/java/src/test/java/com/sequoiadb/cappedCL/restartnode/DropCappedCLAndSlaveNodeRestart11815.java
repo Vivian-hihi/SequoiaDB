@@ -1,5 +1,13 @@
 package com.sequoiadb.cappedCL.restartnode;
 
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.cappedCL.Utils;
@@ -13,14 +21,6 @@ import com.sequoiadb.fault.NodeRestart;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 
 /**
  * @FileName seqDB-11813 dropping collection when slave node disk restart
@@ -46,20 +46,18 @@ public class DropCappedCLAndSlaveNodeRestart11815 extends SdbTestBase {
     public void setUp() {
 
         try {
-            //print the testcase begin time
-            Utils.printBeginTime(this);
             groupMgr = GroupMgr.getInstance();
-            //check whether environment is normal
+            // check whether environment is normal
             if (!groupMgr.checkBusiness(CHECK_TIME)) {
                 throw new SkipException("checkBusiness failed");
             }
 
             db = new Sequoiadb(coordUrl, "", "");
             clGroupName = groupMgr.getAllDataGroupName().get(0);
-            //create cs for dropping
+            // create cs for dropping
             createCSForDropping(db);
         } catch (ReliabilityException e) {
-            if(db != null) {
+            if (db != null) {
                 db.close();
             }
             e.printStackTrace();
@@ -69,10 +67,9 @@ public class DropCappedCLAndSlaveNodeRestart11815 extends SdbTestBase {
     }
 
     /**
-     * 1. dropping capped collection when slave node restart
-     * 2. check whether DropCLTask worked successfully
-     * 3. check whether environment is normal and LSN is consistent
-     * 4. check whether catalog group lsn is consistent
+     * 1. dropping capped collection when slave node restart 2. check whether
+     * DropCLTask worked successfully 3. check whether environment is normal and
+     * LSN is consistent 4. check whether catalog group lsn is consistent
      */
     @Test
     public void test() {
@@ -81,23 +78,23 @@ public class DropCappedCLAndSlaveNodeRestart11815 extends SdbTestBase {
             dataGroup = groupMgr.getGroupByName(clGroupName);
             NodeWrapper slaveNode = dataGroup.getSlave();
 
-            //set tasks
-            FaultMakeTask fault = NodeRestart.getFaultMakeTask(slaveNode,0,10);
+            // set tasks
+            FaultMakeTask fault = NodeRestart.getFaultMakeTask(slaveNode, 0, 10);
             taskMgr = new TaskMgr(fault);
             taskMgr.addTask(new DropCLTask());
             taskMgr.execute();
 
-            //check status
+            // check status
             Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600),true);
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true);
             GroupWrapper catalogGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            Assert.assertEquals(catalogGroup.checkInspect(60),true);
+            Assert.assertEquals(catalogGroup.checkInspect(60), true);
 
             runSuccess = true;
         } catch (ReliabilityException e) {
-            Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e,this));
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
-            if(db != null) {
+            if (db != null) {
                 db.close();
             }
         }
@@ -119,27 +116,27 @@ public class DropCappedCLAndSlaveNodeRestart11815 extends SdbTestBase {
             if (db != null) {
                 db.close();
             }
-            Utils.printEndTime(this);
         }
     }
 
     private void createCSForDropping(Sequoiadb db) {
-        BSONObject csOption = (BSONObject)JSON.parse("{Capped:true}");
-        BSONObject clOption = (BSONObject)JSON.parse("{Capped:true,Size:100,Max:0,AutoIndexId:false,Group:'"+clGroupName+"'}");
-        for(int i = 0;i<CS_NUM;i++) {
-            String csName = CSNAMEBASE+"_"+i;
-            CollectionSpace cs = db.createCollectionSpace(csName,csOption);
-            for(int j = 0;j<CL_NUM;j++) {
-                String clName = CLNAMEBASE+"_"+j;
-                cs.createCollection(clName,clOption);
+        BSONObject csOption = (BSONObject) JSON.parse("{Capped:true}");
+        BSONObject clOption = (BSONObject) JSON
+                .parse("{Capped:true,Size:100,Max:0,AutoIndexId:false,Group:'" + clGroupName + "'}");
+        for (int i = 0; i < CS_NUM; i++) {
+            String csName = CSNAMEBASE + "_" + i;
+            CollectionSpace cs = db.createCollectionSpace(csName, csOption);
+            for (int j = 0; j < CL_NUM; j++) {
+                String clName = CLNAMEBASE + "_" + j;
+                cs.createCollection(clName, clOption);
             }
         }
     }
 
     private void dropCSs(Sequoiadb db) {
-        for(int i = 0;i<CS_NUM;i++) {
-            String csName = CSNAMEBASE+"_"+i;
-            if(db.isCollectionSpaceExist(csName)) {
+        for (int i = 0; i < CS_NUM; i++) {
+            String csName = CSNAMEBASE + "_" + i;
+            if (db.isCollectionSpaceExist(csName)) {
                 db.dropCollectionSpace(csName);
             } else {
                 break;
@@ -155,13 +152,13 @@ public class DropCappedCLAndSlaveNodeRestart11815 extends SdbTestBase {
         public void exec() throws Exception {
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                for(int i = 0; i< CS_NUM; i++) {
+                for (int i = 0; i < CS_NUM; i++) {
                     String csName = CSNAMEBASE + "_" + i;
-                    if(db.isCollectionSpaceExist(csName)) {
+                    if (db.isCollectionSpaceExist(csName)) {
                         CollectionSpace cs = db.getCollectionSpace(csName);
-                        for(int j = 0;j<CL_NUM;j++) {
+                        for (int j = 0; j < CL_NUM; j++) {
                             String clName = CLNAMEBASE + "_" + j;
-                            if(cs.isCollectionExist(clName)) {
+                            if (cs.isCollectionExist(clName)) {
                                 cs.dropCollection(clName);
                             }
                         }
@@ -170,11 +167,10 @@ public class DropCappedCLAndSlaveNodeRestart11815 extends SdbTestBase {
             } catch (BaseException e) {
                 throw e;
             } finally {
-                if(db != null) {
+                if (db != null) {
                     db.close();
                 }
             }
         }
     }
 }
-

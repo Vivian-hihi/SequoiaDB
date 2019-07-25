@@ -1,5 +1,16 @@
 package com.sequoiadb.cappedCL.diskfull;
 
+import java.util.Random;
+
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -14,16 +25,6 @@ import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.Random;
 
 /**
  * @FileName seqDB-11820 operating data when slave node disk is full
@@ -40,7 +41,7 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
     private boolean runSuccess = false;
     private static final int INSERT_COUNT = 10000;
     private static final int INSERT_ONCE = 3;
-    private static final int SDB_NO_SPACE = -11;        //no disk space
+    private static final int SDB_NO_SPACE = -11; // no disk space
     private final String CSNAME = "cs_11819_slave";
     private final String CLNAME = "cl_11819_slave";
     private static final int CHECK_TIME = 120;
@@ -49,10 +50,8 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
     public void setUp() {
 
         try {
-            //print testcase begin time
-            Utils.printBeginTime(this);
             groupMgr = GroupMgr.getInstance();
-            //check whether environment is normal
+            // check whether environment is normal
             if (!groupMgr.checkBusiness(CHECK_TIME)) {
                 throw new SkipException("checkBusiness failed");
             }
@@ -62,7 +61,7 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
             createOperateDataCL(db);
             InsertDataForPop(db);
         } catch (ReliabilityException e) {
-            if(db != null) {
+            if (db != null) {
                 db.close();
             }
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
@@ -71,11 +70,10 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
     }
 
     /**
-     * 1. operating data and slave node disk full
-     * 2. restore slave node disk
-     * 3. check whether InsertTask and PopTask worked successfully
-     * 4. check whether environment is normal and LSN is consistent
-     * 5. check whether data group lsn is consistent
+     * 1. operating data and slave node disk full 2. restore slave node disk 3.
+     * check whether InsertTask and PopTask worked successfully 4. check whether
+     * environment is normal and LSN is consistent 5. check whether data group
+     * lsn is consistent
      */
     @Test
     public void test() {
@@ -84,16 +82,16 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
             NodeWrapper priNode = dataGroup.getMaster();
             System.out.println(priNode.hostName());
 
-            //set tasks
+            // set tasks
             FaultMakeTask faultTask = DiskFull.getFaultMakeTask(priNode.hostName(), SdbTestBase.reservedDir, 0, 10);
             taskMgr = new TaskMgr(faultTask);
             taskMgr.addTask(new InsertTask());
             taskMgr.addTask(new PopTask());
             taskMgr.execute();
-            //check status
+            // check status
             Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
-            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600),true);
-            Assert.assertEquals(dataGroup.checkInspect(60),true);
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true);
+            Assert.assertEquals(dataGroup.checkInspect(60), true);
 
             db = new Sequoiadb(coordUrl, "", "");
             OperateData(db);
@@ -102,12 +100,11 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
             e.printStackTrace();
             Assert.fail(e.getMessage());
         } finally {
-            if(db != null) {
+            if (db != null) {
                 db.close();
             }
         }
     }
-
 
     @AfterClass()
     public void tearDown() {
@@ -125,7 +122,6 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
             if (db != null) {
                 db.close();
             }
-            Utils.printEndTime(this);
         }
     }
 
@@ -136,27 +132,27 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try {
-                db = new Sequoiadb(coordUrl,"","");
+                db = new Sequoiadb(coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(CSNAME).getCollection(CLNAME);
                 Random random = new Random();
-                byte[] bytes = new byte[ 1024 * 1024 ];
+                byte[] bytes = new byte[1024 * 1024];
                 random.nextBytes(bytes);
-                for(int i = 0;i<INSERT_COUNT;i++) {
-                    for(int j =0;j<INSERT_ONCE;j++) {
+                for (int i = 0; i < INSERT_COUNT; i++) {
+                    for (int j = 0; j < INSERT_ONCE; j++) {
                         BSONObject object = new BasicBSONObject();
-                        object.put("id","insert");
-                        object.put("value",bytes);
+                        object.put("id", "insert");
+                        object.put("value", bytes);
                         cl.insert(object);
                     }
                 }
             } catch (BaseException e) {
-                if(e.getErrorCode() == SDB_NO_SPACE ) {
+                if (e.getErrorCode() == SDB_NO_SPACE) {
                     System.out.println(e.getMessage());
                 } else {
                     throw e;
                 }
             } finally {
-                if(db != null) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -171,71 +167,74 @@ public class OperateDataAndSlaveNodeDiskFull11820 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try {
-                db = new Sequoiadb(coordUrl,"","");
+                db = new Sequoiadb(coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(CSNAME).getCollection(CLNAME);
-                for(int i = 0;i<INSERT_COUNT;i++) {
-                    for(int j =0;j<INSERT_ONCE;j++) {
+                for (int i = 0; i < INSERT_COUNT; i++) {
+                    for (int j = 0; j < INSERT_ONCE; j++) {
                         BSONObject object = new BasicBSONObject();
-                        object.put("id",i*INSERT_ONCE+j);
-                        DBCursor cursor= cl.query(object,null,null,null);
+                        object.put("id", i * INSERT_ONCE + j);
+                        DBCursor cursor = cl.query(object, null, null, null);
                         long logicalID = 0;
-                        if(cursor.hasNext()) {
-                            logicalID= (long)cursor.getNext().get("_id");
+                        if (cursor.hasNext()) {
+                            logicalID = (long) cursor.getNext().get("_id");
                         }
                         BSONObject popObject = new BasicBSONObject();
-                        popObject.put("LogicalID",logicalID);
-                        popObject.put("Direction",1);
+                        popObject.put("LogicalID", logicalID);
+                        popObject.put("Direction", 1);
                         cl.pop(popObject);
                     }
                 }
             } catch (BaseException e) {
-                if(e.getErrorCode() == SDB_NO_SPACE) {
+                if (e.getErrorCode() == SDB_NO_SPACE) {
                     System.out.println(e.getMessage());
                 } else {
                     throw e;
                 }
             } finally {
-                if(db != null) {
+                if (db != null) {
                     db.close();
                 }
             }
 
         }
     }
+
     public void OperateData(Sequoiadb db) {
         DBCollection cl = db.getCollectionSpace(CSNAME).getCollection(CLNAME);
-        for(int i =0;i<INSERT_COUNT;i++) {
+        for (int i = 0; i < INSERT_COUNT; i++) {
             BSONObject object = new BasicBSONObject();
-            object.put("id","checkCorrect");
-            object.put("value","correct");
+            object.put("id", "checkCorrect");
+            object.put("value", "correct");
             cl.insert(object);
             BSONObject findObject = new BasicBSONObject();
-            findObject.put("id","checkCorrect");
-            DBCursor cursor= cl.query(findObject,null,null,null);
+            findObject.put("id", "checkCorrect");
+            DBCursor cursor = cl.query(findObject, null, null, null);
             long logicalID = 0;
-            if(cursor.hasNext()) {
-                logicalID= (long)cursor.getNext().get("_id");
+            if (cursor.hasNext()) {
+                logicalID = (long) cursor.getNext().get("_id");
             }
             BSONObject popObject = new BasicBSONObject();
-            popObject.put("LogicalID",logicalID);
-            popObject.put("Direction",1);
+            popObject.put("LogicalID", logicalID);
+            popObject.put("Direction", 1);
             cl.pop(popObject);
         }
     }
 
     public void createOperateDataCL(Sequoiadb db) {
-        BSONObject csOption = (BSONObject)JSON.parse("{Capped:true}");
-        BSONObject clOption = (BSONObject)JSON.parse("{Capped:true,Size:2000,Max:0,AutoIndexId:false,Group:'"+dataGroup.getGroupName()+"'}");
-        db.createCollectionSpace(CSNAME,csOption).createCollection(CLNAME,clOption);
+        BSONObject csOption = (BSONObject) JSON.parse("{Capped:true}");
+        BSONObject clOption = (BSONObject) JSON
+                .parse("{Capped:true,Size:2000,Max:0,AutoIndexId:false,Group:'" + dataGroup.getGroupName() + "'}");
+        db.createCollectionSpace(CSNAME, csOption).createCollection(CLNAME, clOption);
     }
 
     public void InsertDataForPop(Sequoiadb db) {
         DBCollection cl = db.getCollectionSpace(CSNAME).getCollection(CLNAME);
-        for(int i = 0;i<INSERT_COUNT;i++) {
-            for(int j =0;j<INSERT_ONCE;j++) {
+        for (int i = 0; i < INSERT_COUNT; i++) {
+            for (int j = 0; j < INSERT_ONCE; j++) {
                 BSONObject object = new BasicBSONObject();
-                object.put("id",i*INSERT_ONCE+j);
-                object.put("value","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                object.put("id", i * INSERT_ONCE + j);
+                object.put("value",
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                 cl.insert(object);
             }
         }

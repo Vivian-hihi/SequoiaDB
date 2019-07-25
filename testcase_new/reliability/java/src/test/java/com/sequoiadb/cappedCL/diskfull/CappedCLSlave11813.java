@@ -103,7 +103,7 @@ public class CappedCLSlave11813 extends SdbTestBase {
                 options.put("Capped", true);
                 options.put("Size", 1024);
                 options.put("Group", dataGroupName);
-                for (int num = 0; num < 500; num++) {
+                for (int num = 0; num < 400; num++) {
                     cappedCS.createCollection(cappedCLName + "_" + num, options);
                     successCLCounts++;
                 }
