@@ -50,7 +50,7 @@ T}
 .TE
 .SH RETURN VALUE
 .PP
-On success, return true if it is a user, otherwise return false.
+On success, return true if the user exists, otherwise return false.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -60,7 +60,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Determine if a user group exists
+Determine if a user exists
 .IP
 .nf
 \f[C]

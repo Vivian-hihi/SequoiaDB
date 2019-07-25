@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Determine if a user group exist
+Determine if a user group exists
 
 ##PARAMETERS##
 
@@ -22,7 +22,7 @@ Determine if a user group exist
 
 ##RETURN VALUE##
 
-On success, return true if it is a user gruop, otherwise return false.
+On success, return true if the user gruop exists, otherwise return false.
 
 On error, exception will be thrown.
 

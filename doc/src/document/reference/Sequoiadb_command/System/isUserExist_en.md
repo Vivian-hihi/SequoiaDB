@@ -22,7 +22,7 @@ Determine if a user exists
 
 ##RETURN VALUE##
 
-On success, return true if it is a user, otherwise return false.
+On success, return true if the user exists, otherwise return false.
 
 On error, exception will be thrown.
 
@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Determine if a user group exists
+* Determine if a user exists
 
 ```lang-javascript
 > System.isUserExist( "root" )

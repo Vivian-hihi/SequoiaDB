@@ -170,7 +170,7 @@ T}
 .TE
 .SH RETURN VALUE
 .PP
-On success, return true if it is a process, otherwise return false.
+On success, return true if the process exists, otherwise return false.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

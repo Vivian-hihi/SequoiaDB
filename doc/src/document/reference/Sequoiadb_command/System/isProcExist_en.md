@@ -29,7 +29,7 @@ The detail description of 'options' parameter is as follow:
 
 ##RETURN VALUE##
 
-On success, return true if it is a process, otherwise return false.
+On success, return true if the process exists, otherwise return false.
 
 On error, exception will be thrown.
 
