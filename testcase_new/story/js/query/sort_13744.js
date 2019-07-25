@@ -3,223 +3,100 @@
 @Modify list :
                2015-01-16 pusheng Ding  Init
 ******************************************************************************/
-SUBCL1NAME = CHANGEDPREFIX + "_sub1";
-SUBCL2NAME = CHANGEDPREFIX + "_sub2";
-SUBCL3NAME = CHANGEDPREFIX + "_sub3";
-CLINDEX1 = CHANGEDPREFIX + "IND1" ;
-rownums = 10000;
-
-function test_subCl_index_query() 
+main();
+function main() 
 {
-
-   try{
-      commDropCL( db, COMMCSNAME, SUBCL1NAME, true, true,
-                  "drop sub cl1 in the beginning" ) ;
-      commDropCL( db, COMMCSNAME, SUBCL2NAME, true, true,
-                  "drop sub cl2 in the beginning" ) ;
-      commDropCL( db, COMMCSNAME, SUBCL3NAME, true, true,
-                  "drop sub cl3 in the beginning" ) ;
-      commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
-                  "drop main cl in the beginning" ) ;
-   }catch( e ){
-      println( "failed to drop cl, rc = " + e );
-      throw e;
-   }
-
-   //create CS
-   try{
-      var varCS = commCreateCS( db, COMMCSNAME, true, "create CS in the beginning" );
-   }catch(e)
+   if( commIsStandalone(db) )
    {
-      println("can't create CS:" + COMMCSNAME + " rc="+e);
-      throw e;
+      println(" Deploy mode is standalone!");
+      return;
    }
-   println("createCS " + COMMCSNAME + " finished");
+    
+   var csName = COMMCSNAME;
+   var subCLName1 = "subcl13744_1";
+   var subCLName2 = "subcl13744_2";
+   var subCLName3 = "subcl13744_3";
+   var mainclName = "maincl13744";
+   var indexName = "index13744";
+   var rownums = 10000;
+   
+   commDropCL( db, csName, subCLName1, true, true, "drop sub cl1 in the beginning" ) ;
+   commDropCL( db, csName, subCLName2, true, true, "drop sub cl2 in the beginning" ) ;
+   commDropCL( db, csName, subCLName3, true, true, "drop sub cl3 in the beginning" ) ;
+   commDropCL( db, csName, mainclName, true, true, "drop main cl in the beginning" ) ;
 
-   //create main-cl
-   try{
-      var mainCL = varCS.createCL(COMMCLNAME,{ShardingKey:{a:1} , ReplSize:0,IsMainCL:true});
-   }catch(e)
-   {
-      println("can't create main-CL:" + COMMCLNAME + " rc="+e);
-      throw e;
-   }
-   println("createCL " + COMMCLNAME + " finished");
+   var options = {ShardingKey:{a:1} , ReplSize:0, IsMainCL:true};
+   var mainCL = commCreateCLByOption( db, csName, mainclName, options, true, false, "create main cl." );
 
-   //create sub-cl
-   try{
-      var subCL1 = varCS.createCL(SUBCL1NAME,{ShardingKey:{b:1},ShardingType:"hash",Partition:4096});
-      var subCL2 = varCS.createCL(SUBCL2NAME,{ReplSize:2});
-      var subCL3 = varCS.createCL(SUBCL3NAME,{Compressed:true});
-   }catch(e)
-   {
-      println("can't create sub-CL");
-      throw e;
-   }
-
-   //attach sub-cl
-   try{
-      mainCL.attachCL(COMMCSNAME + "." + SUBCL1NAME,{LowBound:{a:-10000},UpBound:{a:0}});
-      mainCL.attachCL(COMMCSNAME + "." + SUBCL2NAME,{LowBound:{a:0},UpBound:{a:6000}});
-      mainCL.attachCL(COMMCSNAME + "." + SUBCL3NAME,{LowBound:{a:6000},UpBound:{a:20000}});
-   }catch(e)
-   {
-      if( false == commIsStandalone( db ) )
-      {
-         println("attach sub-CL fail!");
-         throw e;
-      }
-   }
-   println("attach sub-CL finish!");
+   var suboptions1 = {ShardingKey:{b:1},ShardingType:"hash",Partition:4096};
+   commCreateCLByOption( db, csName, subCLName1, suboptions1, true, false, "create sub cl 1." );
+   
+   var suboptions2 = {ReplSize:2};
+   commCreateCLByOption( db, csName, subCLName2, suboptions2, true, false, "create sub cl 2." );
+   
+   var suboptions3 = {Compressed:true};
+   commCreateCLByOption( db, csName, subCLName3, suboptions3, true, false, "create sub cl 3." );
+   
+   mainCL.attachCL(csName + "." + subCLName1,{LowBound:{a:-10000},UpBound:{a:0}});
+   mainCL.attachCL(csName + "." + subCLName2,{LowBound:{a:0},UpBound:{a:6000}});
+   mainCL.attachCL(csName + "." + subCLName3,{LowBound:{a:6000},UpBound:{a:20000}});
 
    //insert data
-   try{
-      var records = [];
-      for(var i=0;i<rownums;i++)  
-      {
-          records.push({a:rownums-i,b:i,c:"abcdefghijkl"+i});
-      }
-      mainCL.insert(records);
-   }catch(e)
+   var records = [];
+   for(var i=0;i<rownums;i++)  
    {
-      println("insert-data into mainCL fail! rc="+e);
+      records.push({a:rownums-i,b:i,c:"abcdefghijkl"+i});
    }
-   println("insert-data into mainCL succ!");
+   mainCL.insert(records);
 
    //query1
    //select a,b,c from foo.bar order by a desc
-   try{
-      var sel = mainCL.find(null,{a:0,b:0,c:'c'}).sort({a:-1});
-      var flag=true;
-      //expected result {a:rownums,...} {a:rownums-1,...} ... {a:1,...}
-      var i = rownums;
-      while(sel.next()){
-         var ret = sel.current();
-         if(ret.toObj()['a']!=i){
-            flag = false;
-            throw "query1-result-uncorrect";
-         }
-         i--;
-         if(i<0){
-            break;
-         }
-      }
-      sel.close();
-      if(flag && i!=0){
-         flag = false;
-         throw "query1-result-uncorrect";
-      }
-   }catch(e){
-      if(e!="query1-result-uncorrect"){
-         println("'select a,b,c from foo.bar order by a desc' fail! rc="+e);
-         throw e;
-      }else{
-         println("'select a,b,c from foo.bar order by a desc' verify record fail!");
-         throw e;
-      }
-   }
+   var sel = mainCL.find(null,{a:0,b:0,c:'c'}).sort({a:-1});
+   checkRec( sel, records );
    println("'select a,b,c from foo.bar order by a desc' finished!");
 
    //create index
-   try{
-      mainCL.createIndex(CLINDEX1,{a:1, b:1},true);
-   }catch( e ){
-      println("create indexes fail");
-      throw e ;
-   }
-   println("create indexes finished!");
+   mainCL.createIndex(indexName,{a:1, b:1},true);
 
    //query2
    //select b from foo.bar order by b
-   try{
-      db.setSessionAttr( {PreferedInstance:'M'} ) ;
-      // 走索引查询
-      var selExplain = mainCL.find(null,{b:0}).sort({b:1}).hint({"":CLINDEX1}).explain().toArray();
-      for( var j = 0; j < selExplain.length; ++j )
+   db.setSessionAttr( {PreferedInstance:'M'} ) ;
+   // 走索引查询
+   var selExplain = mainCL.find(null,{b:0}).sort({b:1}).hint({"":indexName}).explain().toArray();
+   for( var j = 0; j < selExplain.length; ++j )
+   {
+      var selObj = eval( "(" + selExplain[j] + ")" );
+      if( "ixscan" != selObj["SubCollections"][0]["ScanType"] )
       {
-         var selObj = eval( "(" + selExplain[i] + ")" );
-         if( "ixscan" != selObj["SubCollections"][0]["ScanType"] )
-         {
-            println( "explain: " + selExplain[i] );
-            throw "failed to run index query";
-         }
+         println( "explain: " + selExplain[j] );
+         throw "failed to run index query";
       }
-      var sel = mainCL.find(null,{b:0}).sort({b:1}).hint({"":CLINDEX1});
-      var flag=true;
-      //expected result {b:0} {b:1} ... {b:rownums-1}
-      var i = 0;
-      while(sel.next()){
-         var ret = sel.current();
-         if(ret.toObj()['b']!=i){
-            flag = false;
-            throw "query2-result-uncorrect";
-         }
-         i++;
-         if(i>rownums){
-            break;
-         }
+   }
+   var sel = mainCL.find(null,{b:0}).sort({b:1}).hint({"":indexName});
+   //expected result {b:0} {b:1} ... {b:rownums-1}
+   var i = 0;
+   while(sel.next())
+   {
+      var ret = sel.current();
+      if(ret.toObj()['b']!=i)
+      {
+         throw buildException("main()", null, "failed to run index query, check rc : b=" + ret.toObj()['b'], i, ret.toObj()['b']);
       }
-      sel.close();
-      if(flag && i!=rownums){
-         flag = false;
-         throw "query2-result-uncorrect";
-      }
-   }catch(e){
-      if(e!="query2-result-uncorrect"){
-         println("'select b from foo.bar order by b' fail! rc="+e + ", selExplain is: " + selExplain );
-         throw e;
-      }else{
-         println("'select b from foo.bar order by b' verify record fail!");
-         throw e;
-      }
+      i++;
+   }
+   if( i !== rownums )
+   {
+      throw "returned record number is : " + i;
    }
    println("'select b from foo.bar order by b' finished!");
 
-   //attach sub-cl
-   try{
-       mainCL.detachCL(COMMCSNAME + "." + SUBCL1NAME);
-       mainCL.detachCL(COMMCSNAME + "." + SUBCL2NAME);
-       mainCL.detachCL(COMMCSNAME + "." + SUBCL3NAME);
-   }catch(e)
-   {
-      if( false == commIsStandalone( db ) )
-      {
-         println("detach sub-CL fail!");
-         throw e;
-      }
-   }
+   mainCL.detachCL(COMMCSNAME + "." + subCLName1);
+   mainCL.detachCL(COMMCSNAME + "." + subCLName2);
+   mainCL.detachCL(COMMCSNAME + "." + subCLName3);
    println("detach sub-CL finish!");
 
-   try
-   {
-       commDropCL( db, COMMCSNAME, SUBCL1NAME, false, false,
-                   "drop sub cl1 in the end" ) ;
-       commDropCL( db, COMMCSNAME, SUBCL2NAME, false, false,
-                   "drop sub cl2 in the end" ) ;
-       commDropCL( db, COMMCSNAME, SUBCL3NAME, false, false,
-                   "drop sub cl3 in the end" ) ;
-       commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-                   "drop main cl in the end" ) ;
-   }
-   catch ( e )
-   {
-      println( "failed to drop cs, rc= " + e ) ;
-      throw e ;
-   }
-}
-
-// Add inspect standalone run mode
-try
-{
-   // Inspect the run mode is standalone or not
-   if( true == commIsStandalone( db ) )
-      throw "ModeStandAlone" ;
-   test_subCl_index_query();
-}
-catch( e )
-{
-   if( "ModeStandAlone" == e )
-      println( "The run mode is standalone" ) ;
-   else
-      throw e ;
+   commDropCL( db, csName, subCLName1, false, false, "drop sub cl1 cl in the end" ) ;
+   commDropCL( db, csName, subCLName2, false, false, "drop sub cl2 in the end" ) ;
+   commDropCL( db, csName, subCLName3, false, false, "drop sub cl3 in the end" ) ;
+   commDropCL( db, csName, mainclName, false, false, "drop main cl in the end" ) ;
 }
