@@ -32,6 +32,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  */
 
 public class FullText15874 extends SdbTestBase {
+    private final int TIME_OUT = 600000; 
     private Random random = new Random();
     private final String CL_NAME = "cl_es_15874";
     private final String IDX_NAME = "idx_es_15874";
@@ -68,7 +69,7 @@ public class FullText15874 extends SdbTestBase {
 
     @Test
     private void test() throws Exception {
-        ThreadExecutor es = new ThreadExecutor();
+        ThreadExecutor es = new ThreadExecutor(TIME_OUT);
         ThreadTruncate threadTruncate = new ThreadTruncate();
         es.addWorker(threadTruncate);
         es.addWorker(new ThreadInsert());

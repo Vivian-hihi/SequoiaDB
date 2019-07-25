@@ -82,7 +82,7 @@ public class FullText15852 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, FULLTEXT_IDX_NAME, INSERT_RECS_NUM));
     }
 
-    @Test
+    @Test(enabled=false)
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
         es.addWorker(new ThreadInsert());

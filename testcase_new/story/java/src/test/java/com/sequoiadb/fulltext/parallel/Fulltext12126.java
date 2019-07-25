@@ -150,6 +150,7 @@ public class Fulltext12126 extends SdbTestBase {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             try {
+        	System.out.println(csName +"."+ clName + " getRetCode() = " + getRetCode());
                 if (getRetCode() == 0) {
                     try {
                         // 固定集合及ES端的全文索引已删除成功
@@ -163,7 +164,7 @@ public class Fulltext12126 extends SdbTestBase {
                         }
                     }
                 } else {
-                    Assert.assertTrue(FullTextUtils.isIndexCreated(cl, esIndexName, insertNum));
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));
                 }
             } finally {
                 db.close();

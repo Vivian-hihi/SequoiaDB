@@ -80,21 +80,23 @@ public class FullText15837 extends SdbTestBase {
 
         Assert.assertEquals(cl.getCount(), insertNum + 10000);
 
-        DBCursor cur = null;
-        try {
-            cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
-                    "{'': '" + indexName + "'}");
-            if (cur.hasNext()) {
-                cur.getNext();
-            }
-            Assert.fail("use not exist fulltext search should be failed!");
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -52, e.getMessage());
-        } finally {
-            if (cur != null) {
-                cur.close();
-            }
-        }
+	DBCursor cur = null;
+	try {
+	    cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+		    "{'': '" + indexName + "'}");
+	    if (cur.hasNext()) {
+		cur.getNext();
+	    }
+	    Assert.fail("use not exist fulltext search should be failed!");
+	} catch (BaseException e) {
+	    if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+		throw e;
+	    }
+	} finally {
+	    if (cur != null) {
+		cur.close();
+	    }
+	}
     }
 
     @AfterClass
