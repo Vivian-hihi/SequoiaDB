@@ -97,7 +97,7 @@ public class SplitHash11558B extends SdbTestBase {
             cl.insert(invDoc);
 
             // percent split
-            int timeout = 300000;
+            int timeout = 900000; // 15min
             ThreadExecutor es = new ThreadExecutor(timeout);
             es.addWorker(new percentSplit(clName, 50));
             es.addWorker(new deleteInvalidRecs(clName, invDoc));
