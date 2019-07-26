@@ -577,6 +577,7 @@ namespace engine
                                           const dmsRecordID &rid )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN leftEOF = TRUE, rightEOF = TRUE ;
 
       _savedObj = keyObj.getOwned() ;
       _savedRID = rid ;
@@ -590,6 +591,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
+         leftEOF = _leftIXScanner->eof() ;
       }
 
       if ( _rightEnabled && _rightIXScanner )
@@ -601,10 +603,10 @@ namespace engine
                     rc ) ;
             goto error ;
          }
+         rightEOF = _rightIXScanner->eof() ;
       }
 
-      _eof = ( _leftIXScanner->eof() && _rightIXScanner->eof() ) ?
-             TRUE : FALSE ;
+      _eof = ( leftEOF && rightEOF ) ? TRUE : FALSE ;
       _fromDir = SCAN_NONE ;
 
    done:
