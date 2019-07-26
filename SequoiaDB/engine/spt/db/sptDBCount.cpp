@@ -180,9 +180,10 @@ namespace engine
       ss << "   hint( <hint> )   "
          << "Traverse the result set by the specified index" << endl ;
       ss << "   valueOf()        "
-         << "Return the original value of the CLCount" << endl ;
+         << "Return the original value of the CLCount( It's a hidden method )"
+         << endl ;
       ss << "   toString()       "
-         << "Convert CLCount to string format" << endl ;
+         << "Convert CLCount to string format( It's a hidden method )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

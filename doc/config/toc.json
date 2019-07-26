@@ -3535,7 +3535,13 @@
                            "file": "SdbTraceOption",
                            "cn": "SdbTraceOption",
                            "en": "SdbTraceOption"
-                         }
+                        },
+                        {
+                           "id": 1562923945,
+                           "file": "CLCount",
+                           "cn": "CLCount",
+                           "en": "CLCount"
+                        }
                      ]
                   },
                   {
@@ -3562,12 +3568,6 @@
                            "cn": "BSONObj",
                            "en": "BSONObj"
                         },	
-                        {
-                           "id": 1562923945,
-                           "file": "CLCount",
-                           "cn": "CLCount",
-                           "en": "CLCount"
-                        },
                         {
                            "id": 1440658409,
                            "file": "MaxKey",
