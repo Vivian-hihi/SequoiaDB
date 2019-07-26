@@ -26,7 +26,7 @@
    <test name="normaltest">
       <packages>
          <package name="com.sequoiadb.crud.backup" />
-         <package name="com.sequoiadb.serial" />   
+         <package name="com.sequoiadb.serial" />
          <package name="com.sequoiadb.datasourceserial" />
          <package name="com.sequoiadb.session.accessisolation" />
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
@@ -34,6 +34,7 @@
          <package name="com.sequoiadb.sync"/>
          <package name="com.sequoiadb.dataconsistency"/>
          <package name="com.sequoiadb.subcl.serial" />
+         <package name="com.sequoiadb.split.serial" />
       </packages>    
    </test>
 </suite>

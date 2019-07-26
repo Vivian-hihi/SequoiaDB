@@ -1,4 +1,4 @@
-package com.sequoiadb.split;
+package com.sequoiadb.split.serial;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,7 +23,7 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.threadexecutor.annotation.ExpectBlock;
 
-/**
+/**  jira-4318
  * @description seqDB-11558:数组进行切分
  *              插入分区键字段为数组且包含多个元素的记录，然后百分比切分，卡住后删除包含多个元素的数组记录，检查结果
  *              再次插入包含多个元素的数组记录,检查结果 
@@ -34,11 +34,12 @@ import com.sequoiadb.threadexecutor.annotation.ExpectBlock;
  */
 
 public class SplitHash11558B extends SdbTestBase {
+    private final int THREAD_TIMEOUT = 900000; // 15min
     private Sequoiadb sdb;
     private String srcRg;
     private String dstRg;
     private CollectionSpace cs;
-    private final static String CL_NAME_BASE = "cl_hash_11558_B";
+    private final String CL_NAME_BASE = "cl_hash_11558_B";
     private ArrayList<DBCollection> cls = new ArrayList<>();
     private ArrayList<String> clNames = new ArrayList<>();
     private ArrayList<Object> validDataArr = new ArrayList<>();
@@ -74,7 +75,7 @@ public class SplitHash11558B extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false) // jira-4318
+    @Test
     private void test() throws Exception {
         for (int i = 0; i < invalidDataArr.size(); i++) {
             String clName = clNames.get(i);
@@ -97,8 +98,7 @@ public class SplitHash11558B extends SdbTestBase {
             cl.insert(invDoc);
 
             // percent split
-            int timeout = 900000; // 15min
-            ThreadExecutor es = new ThreadExecutor(timeout);
+            ThreadExecutor es = new ThreadExecutor(THREAD_TIMEOUT);
             es.addWorker(new percentSplit(clName, 50));
             es.addWorker(new deleteInvalidRecs(clName, invDoc));
             es.run();
