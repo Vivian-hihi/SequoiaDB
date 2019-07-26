@@ -2198,6 +2198,15 @@ namespace engine
          goto error ;
       }
 
+      rc = su->data()->getMBContext( &mbContext, clShortName, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                   "rc: %d", pCollectionName, rc ) ;
+
+      if ( NULL != cb )
+      {
+         cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
+      }
+
       // If the collection name start with 'SYS', and it's the same with
       // collection space name, it's a capped collection for a text index.
       // Be sure to take protection before pop on it.
@@ -2210,15 +2219,6 @@ namespace engine
          rc = extHandler->acquireLock( clShortName, EXCLUSIVE, lockHandle ) ;
          PD_RC_CHECK( rc, PDERROR, "Acquire external lock for collection[%s] "
                       "failed[%d]", pCollectionName, rc ) ;
-      }
-
-      rc = su->data()->getMBContext( &mbContext, clShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                   "rc: %d", pCollectionName, rc ) ;
-
-      if ( NULL != cb )
-      {
-         cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
       }
 
       rc = su->data()->popRecord( mbContext, logicalID, cb, dpsCB, direction ) ;
