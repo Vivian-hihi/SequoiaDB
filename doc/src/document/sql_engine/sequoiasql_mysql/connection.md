@@ -148,6 +148,8 @@
 |sequoiadb_bulk_insert_size   |整数  |2000    |Yes|Global|批量插入时每批的插入记录数。|
 |sequoiadb_conn_addr          |字符串|"localhost:11810" |Yes|Global|SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
 |sequoiadb_debug_log          |布尔  |OFF    |Yes|Global|是否打印debug日志。|
+|sequoiadb_execute_only_in_mysql|布尔|OFF    |Yes|Global,<br>Session|DDL命令只在MySQL侧执行，不下压到SDB执行。|
+|sequoiadb_optimizer_select_count|布尔|ON    |Yes|Global|是否开启优化select count(*)行为。|
 |sequoiadb_password           |字符串|""     |Yes|Global|SequoiaDB鉴权密码。|
 |sequoiadb_replica_size       |整数  |1     |Yes|Global|写操作需同步的副本数。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
 |sequoiadb_selector_pushdown_threshold|无符号整型|30|Yes|Global,<br>Session|查询字段下压触发阈值，取值范围[0-100]，单位：百分比。|
@@ -165,6 +167,7 @@
 > * 自动分区时，主键或唯一索引只在建表时对应分区键。建表后添加删除主键或唯一索引都不会更改分区键。
 > * sequoiadb_use_autocommit 配置项已弃用。
 > * sequoiadb_selector_pushdown_threshold，查询语句中，查询字段下压的触发阈值。查询字段个数/表总字段个数的百分比小于等于该阈值进行下压，否则不下压。
+> * sequoiadb_execute_only_in_mysql 开启后，DDL 语句只在 MySQL 侧执行，即只更改 MySQL 侧表元数据信息，而不会下压到 SDB 侧同步表 DDL 操作。
 
 配置参数有三种修改方式。
 
