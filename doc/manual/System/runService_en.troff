@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-runService \- Run the service
+runService \- Run the service command
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.runService( <servicename>, <command>, [option] )\f[]\f[]
@@ -14,7 +14,7 @@ runService \- Run the service
 System
 .SH DESCRIPTION
 .PP
-Run the service
+Run the service command
 .SH PARAMETERS
 .PP
 .TS
@@ -92,7 +92,7 @@ T}
 .TE
 .SH RETURN VALUE
 .PP
-On success, return void.
+On success, return the information of service command execution.
 .PP
 On error, exception will be thrown.
 .SH ERRORS

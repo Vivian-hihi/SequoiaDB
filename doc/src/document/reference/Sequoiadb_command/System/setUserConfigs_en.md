@@ -1,6 +1,6 @@
 ##NAME##
 
-setUserConfigs - Setting user configuration
+setUserConfigs - Setting user configurations
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Setting user configuration
+Setting user configurations
 
 ##PARAMETERS##
 

@@ -48,6 +48,9 @@ T}@T{
 yes
 T}
 .TE
+.PP
+Fields that can be modified in the configs parameter can be found in the example
+in getProcUlimitConfigs
 .SH RETURN VALUE
 .PP
 On success, return void.

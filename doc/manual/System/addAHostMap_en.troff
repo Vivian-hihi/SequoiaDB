@@ -69,9 +69,25 @@ boolean
 T}@T{
 true
 T}@T{
-replace or not
+whether to replace the
 T}@T{
 not
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+target mapping
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+relationship
+T}@T{
 T}
 .TE
 .SH RETURN VALUE

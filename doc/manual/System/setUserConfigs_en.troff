@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-setUserConfigs \- Setting user configuration
+setUserConfigs \- Setting user configurations
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]System.setUserConfigs( <options> )\f[]\f[]
@@ -14,7 +14,7 @@ setUserConfigs \- Setting user configuration
 System
 .SH DESCRIPTION
 .PP
-Setting user configuration
+Setting user configurations
 .SH PARAMETERS
 .PP
 .TS

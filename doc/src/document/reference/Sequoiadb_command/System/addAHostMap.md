@@ -16,7 +16,7 @@ System
 | ------- | -------- | ------------ | ---------------- | -------- |
 | hostname     | string   | ---          | 主机名       | 是       |
 | ip     | string   | ---          | IP地址     | 是       |
-| isReplace | boolean  | true        | 是否替换映射关系 | 否       |
+| isReplace | boolean  | true        | 是否替换目标映射关系 | 否       |
 
 ##返回值##
 

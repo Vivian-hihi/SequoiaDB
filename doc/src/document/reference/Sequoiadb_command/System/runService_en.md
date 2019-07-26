@@ -1,6 +1,6 @@
 ##NAME##
 
-runService - Run the service
+runService - Run the service command
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Run the service
+Run the service command
 
 ##PARAMETERS##
 
@@ -24,7 +24,7 @@ Run the service
 
 ##RETURN VALUE##
 
-On success, return void.
+On success, return the information of service command execution.
 
 On error, exception will be thrown.
 

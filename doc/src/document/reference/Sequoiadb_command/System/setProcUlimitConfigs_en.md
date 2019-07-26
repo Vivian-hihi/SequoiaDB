@@ -20,6 +20,8 @@ Modify process resource limits
 | ------- | -------- | ------------ | ---------------- | -------- |
 | configs  | JSON   | ---  | new resource limits   | yes       |
 
+Fields that can be modified in the configs parameter can be found in the example in getProcUlimitConfigs
+
 ##RETURN VALUE##
 
 On success, return void.

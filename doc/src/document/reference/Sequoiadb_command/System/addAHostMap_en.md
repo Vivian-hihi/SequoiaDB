@@ -20,7 +20,7 @@ Add a hostname to ip address mapping to the host file
 | ------- | -------- | ------------ | ---------------- | -------- |
 | hostname     | string   | ---     | hostname       | yes       |
 | ip     | string   | ---          | ip address     | yes       |
-| isReplace | boolean  | true        | replace or not | not      |
+| isReplace | boolean  | true        | whether to replace the target mapping relationship | not      |
 
 ##RETURN VALUE##
 
