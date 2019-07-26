@@ -723,7 +723,7 @@ public class ObjectServiceImpl implements ObjectService {
                 if (parentId != null){
                     queryDbCursorCur = metaDao.queryMetaListByParentId(metaCsName,
                             metaClName, bucket.getBucketId(), parentIdName, parentId,
-                            prefix, keyMarker, specifiedVersionId, false);
+                            prefix, keyMarker, specifiedVersionId, true);
                 }
 
                 filter = new VersionsFilter(queryDbCursorCur, queryDbCursorDir,
