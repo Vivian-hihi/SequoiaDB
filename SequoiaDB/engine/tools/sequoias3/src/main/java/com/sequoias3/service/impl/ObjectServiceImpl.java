@@ -1177,7 +1177,7 @@ public class ObjectServiceImpl implements ObjectService {
 
             logger.info("write cur meta begin");
             //写元数据
-            String completeEtag = eTag.substring(0, 30);
+            String completeEtag = eTag+"-f";
             VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
             ObjectMeta objectMeta = buildObjectMetaFromUpload(upload, false,
                     generateNoVersionFlag(versioningStatusType));
