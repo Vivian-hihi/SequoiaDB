@@ -46,7 +46,7 @@
 
 | SQL 语句 | API 语句        |
 | -------- | -------------- |
-|  SELECT \<sel\> FROM $\<snapshot\> WHERE \<cond\> ORDER BY \<sort\>  |   db.snapshot( <snapType>, [cond], [sel], [sort] ) |
+|  select \<sel\> from $\<snapshot\> where \<cond\> order by \<sort\>  |   db.snapshot( <snapType>, [cond], [sel], [sort] ) |
 | db.exec( "select * from $SNAPSHOT_CONTEXT where SessionID = 20" ) | 过滤指定条件的记录。db.snapshot(SDB_SNAP_CONTEXTS, { SessionID: 20 } ) |
 | db.exec( " select NodeName from $SNAPSHOT_CONTEXT " ) | 只显示记录的指定字段。db.snapshot(SDB_SNAP_CONTEXTS, {}, { NodeName:""} ) |
 | db.exec( " select * from $SNAPSHOT_CONTEXT order by SessionID" ) | 根据指定字段进行排序。db.snapshot(SDB_SNAP_CONTEXTS, {}, {}, { "SessionID": 1 } ) |
@@ -54,11 +54,11 @@
 下面列出了 SQL 快照查询语句的操作在 API 中使用指定[快照查询参数](reference/Sequoiadb_command/AuxiliaryObjects/SdbSnapshotOption.md)的对应快照操作：
 
 ```
-SELECT <sel> FROM $<snapshot>
-               WHERE <cond>
-               ORDER BY <sort>
-               LIMIT <limit>
-               OFFSET <skip> /*+use_option(<options>)*/
+select <sel> from $<snapshot>
+               where <cond>
+               order by <sort>
+               limit <limit>
+               offset <skip> /*+use_option(<options>)*/
 ```
 
 对应

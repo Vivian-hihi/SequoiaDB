@@ -57,6 +57,7 @@ $SNAPSHOT_CL
 ##示例##
 
 ```lang-javascript
+> db.exec( "select * from $SNAPSHOT_CL" )
 {
   "Name": "newcs.newcl",
   "UniqueID": 4294967297,

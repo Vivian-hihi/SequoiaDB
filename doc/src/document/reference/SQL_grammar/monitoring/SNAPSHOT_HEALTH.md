@@ -14,7 +14,7 @@ $SNAPSHOT_HEALTH
 | -------------------- | ------ | ---------------------------------------------- |
 | NodeName             | 字符串 | 节点名，为“< HostName > : < ServiceName >” |
 | IsPrimary            | 布尔   | 是否为主节点 |
-| ServiceStatus        | 布尔   | 是否为可提供服务状态<br>一些特殊状态，例如[全量同步](infrastructure/replication/replicate.md)会使该状态为 false |              
+| ServiceStatus        | 布尔   | 是否为可提供服务状态<br>一些特殊状态，例如[全量同步](infrastructure/replication/replicate.md#全量同步)会使该状态为 false |              
 | Status               | 字符串 | 节点状态，为 “Normal” / “Rebuilding” / “FullSync” / “OfflineBackup”  |
 | BeginLSN.Offset      | 长整型 | 起始 LSN 的偏移 |
 | BeginLSN.Version     | 整型   | 起始 LSN 的版本号 |
@@ -63,7 +63,6 @@ $SNAPSHOT_HEALTH
 查看数据节点 20000 上的健康检测信息
 
 ```lang-javascript
-> db=new Sdb( 'localhost: 20000' )
 > db.exec( "select * from $SNAPSHOT_HEALTH" )
 {
   "NodeName": "hostname:20000",
