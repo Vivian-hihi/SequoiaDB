@@ -258,9 +258,10 @@ namespace engine
                BSONElement e = obj.getField( FIELD_NAME_STATUS ) ;
                status = ( DPS_TRANS_STATUS )e.numberInt() ;
 
-               PD_LOG( PDEVENT, "Check trans(%s) by group(%u) succeed["
+               PD_LOG( PDEVENT, "Check trans(%s) by node(%u,%u) succeed["
                        "Status:%s(%d)]", dpsTransIDToString( transID ).c_str(),
-                       group, dpsTransStatusToString( status ), status ) ;
+                       group, pReply->header.routeID.columns.nodeID,
+                       dpsTransStatusToString( status ), status ) ;
             }
             catch( std::exception &e )
             {
