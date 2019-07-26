@@ -159,7 +159,7 @@ namespace engine
       // unset the eof flag. There is a case when disk scan finished
       // but merge scan detect changes in mem tree scan due to possible update
       // or rollback. we must restart/continue the disk scan after relocateRID.
-      _eof  = FALSE ;
+      _eof  = _curIndexRID.isNull() ? TRUE : FALSE ;
 
    done :
       PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_RELORID1, rc ) ;

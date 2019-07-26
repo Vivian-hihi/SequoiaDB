@@ -219,7 +219,7 @@ namespace engine
          // mark _init to true so that advance won't call keyLocate again
          _init = TRUE ;
          // remove the eof flag so we will restart scan on the tree
-         _eof = FALSE ;
+         _eof = _memIdxTree->isPosValid( _curIndexPos ) ? FALSE : TRUE ;
       }
 
    done :
@@ -643,6 +643,7 @@ namespace engine
 
          if ( !_memIdxTree.get() )
          {
+            _eof = TRUE ;
             _available = FALSE ;
             goto done ;
          }

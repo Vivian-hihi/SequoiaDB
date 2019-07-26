@@ -603,7 +603,8 @@ namespace engine
          }
       }
 
-      _eof = TRUE ;
+      _eof = ( _leftIXScanner->eof() && _rightIXScanner->eof() ) ?
+             TRUE : FALSE ;
       _fromDir = SCAN_NONE ;
 
    done:
