@@ -178,6 +178,8 @@ namespace engine
    {
       stringstream ss ;
       ss << "   --Constructor methods for class BSONObj : " << endl ;
+      ss << "   BSONObj(<json>)/new BSONObj(<json>)   "
+         << "Create a BSONObj object" << endl ;
       ss << "   --Static methods for class BSONObj : " << endl ;
       ss << "   --Instance methods for class BSONObj : " << endl ;
       ss << "   toJson()     "

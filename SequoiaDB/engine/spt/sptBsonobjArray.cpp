@@ -110,19 +110,19 @@ namespace engine
       ss << "   --Constructor methods for class BSONArray : " << endl ;
       ss << "   --Static methods for class BSONArray : " << endl ;
       ss << "   --Instance methods for class BSONArray : " << endl ;
-      ss << "   BSONArray().size()       "
+      ss << "   size()       "
          << "Get the size of BSONArray" << endl ;
-      ss << "   BSONArray().more()       "
+      ss << "   more()       "
          << "Determine if there is another element" << endl ;
-      ss << "   BSONArray().next()       "
+      ss << "   next()       "
          << "Get the next element" << endl ;
-      ss << "   BSONArray().pos()        "
+      ss << "   pos()        "
          << "Get the current element" << endl ;
-      ss << "   BSONArray().toArray()    "
+      ss << "   toArray()    "
          << "Convert BSONArray to array format" << endl ;
-      ss << "   BSONArray().toString()   "
+      ss << "   toString()   "
          << "Convert BSONArray to string" << endl ;
-      ss << "   BSONArray().index()      "
+      ss << "   index()      "
          << "Get the current subscript" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
