@@ -85,17 +85,19 @@ public class Transaction18524 extends SdbTestBase {
     }
 
     @Test(dataProvider = "getCL")
-    public void test(String clName) throws ReliabilityException {
+    public void test(String clName) throws ReliabilityException, InterruptedException {
         // 异常重启转账程序连接的coord节点
         TaskMgr taskMgr = new TaskMgr();
         NodeWrapper coordNode = TransUtil.getCoordNode(sdb);
-        FaultMakeTask task = KillNode.getFaultMakeTask(coordNode, 180);
+        FaultMakeTask task = KillNode.getFaultMakeTask(coordNode, 60);
         taskMgr.addTask(task);
+        TransUtil.setCurrentTask(task);
 
         for (int i = 0; i < 200; i++) {
             taskMgr.addTask(new TransferTh(csName, clName, coordUrl, true));
         }
         taskMgr.execute();
+        TransUtil.waitCurrentTaskSuccess();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");

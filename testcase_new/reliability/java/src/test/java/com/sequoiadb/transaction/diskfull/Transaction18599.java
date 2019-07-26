@@ -56,6 +56,7 @@ public class Transaction18599 extends SdbTestBase {
             throw new SkipException("GROUP ERROR");
         }
 
+        // 如果磁盘满的主机不是同时拥有主备节点，就重启其中一个节点
         String hostName = groupMgr.getGroupByName(groupNames.get(0)).getMaster().hostName();
         for (int i = 1; i < groupNames.size(); i++) {
             GroupWrapper groupWrapper = groupMgr.getGroupByName(groupNames.get(i));
@@ -97,18 +98,20 @@ public class Transaction18599 extends SdbTestBase {
     }
 
     @Test(dataProvider = "getCL")
-    public void test(String clName) throws ReliabilityException {
+    public void test(String clName) throws ReliabilityException, InterruptedException {
         // 构造磁盘主节点/备节点磁盘满
         TaskMgr taskMgr = new TaskMgr();
         GroupWrapper group = groupMgr.getGroupByName(groupNames.get(0));
         NodeWrapper node = group.getMaster();
-        FaultMakeTask task = DiskFull.getFaultMakeTask(node.hostName(), SdbTestBase.reservedDir, 180, 20);
+        FaultMakeTask task = DiskFull.getFaultMakeTask(node.hostName(), SdbTestBase.reservedDir, 60, 10);
         taskMgr.addTask(task);
+        TransUtil.setCurrentTask(task);
 
         for (int i = 0; i < 200; i++) {
             taskMgr.addTask(new TransferTh(csName, clName));
         }
         taskMgr.execute();
+        TransUtil.waitCurrentTaskSuccess();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");

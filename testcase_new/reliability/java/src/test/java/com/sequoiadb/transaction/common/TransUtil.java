@@ -3,6 +3,8 @@ package com.sequoiadb.transaction.common;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -16,8 +18,49 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.task.FaultMakeTask;
 
 public class TransUtil {
+    /**
+     * 转账线程执行标志
+     */
+    public static volatile boolean runFlag = true;
+
+    /**
+     * 当前正在构造的异常
+     */
+    public static FaultMakeTask currentTask;
+
+    /**
+     * 初始化线程执行标记和构造异常
+     * 
+     * @param task
+     */
+    public static void setCurrentTask(FaultMakeTask task) {
+        runFlag = true;
+        currentTask = task;
+    }
+
+    /**
+     * 等待当前正在构造的异常构造成功，构造成功后，触发10秒钟执行标记为 false
+     * 
+     * @return
+     * @throws InterruptedException
+     */
+    public static void waitCurrentTaskSuccess() throws InterruptedException {
+        int count = 0;
+        while (!currentTask.isMakeSuccess()) {
+            Thread.sleep(1000);
+            if (count++ == 120) {
+                break;
+            }
+        }
+        if (currentTask.isMakeSuccess()) {
+            Timer timer = new Timer();
+            timer.schedule(new TaskEndTime(), 10 * 1000);
+        }
+    }
+
     /**
      * 插入数据 10000 个账户，每个账户 10000 元
      * 
@@ -152,5 +195,19 @@ public class TransUtil {
         }
         cursor.close();
         return actRList;
+    }
+}
+
+/**
+ * 
+ * @description TransUtil.java
+ * @author yinzhen
+ * @date 2019年7月22日
+ */
+class TaskEndTime extends TimerTask {
+    @Override
+    public void run() {
+        TransUtil.runFlag = false;
+        System.gc();
     }
 }

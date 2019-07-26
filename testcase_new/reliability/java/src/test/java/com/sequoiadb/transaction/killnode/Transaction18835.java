@@ -80,19 +80,21 @@ public class Transaction18835 extends SdbTestBase {
     }
 
     @Test(dataProvider = "getCL")
-    public void test(String clName) throws ReliabilityException {
+    public void test(String clName) throws ReliabilityException, InterruptedException {
         // 正常重启一个数据主节点
         TaskMgr taskMgr = new TaskMgr();
         String groupName = groupNames.get(0);
         GroupWrapper group = groupMgr.getGroupByName(groupName);
         NodeWrapper node = group.getMaster();
-        FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 180, 10);
+        FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 60, 10);
         taskMgr.addTask(task);
+        TransUtil.setCurrentTask(task);
 
         for (int i = 0; i < 200; i++) {
             taskMgr.addTask(new TransferTh(csName, clName));
         }
         taskMgr.execute();
+        TransUtil.waitCurrentTaskSuccess();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");

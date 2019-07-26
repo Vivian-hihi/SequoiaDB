@@ -86,24 +86,26 @@ public class Transaction18521 extends SdbTestBase {
     }
 
     @Test(dataProvider = "getCL")
-    public void test(String clName) throws ReliabilityException {
+    public void test(String clName) throws ReliabilityException, InterruptedException {
         // 正常重启所有数据节点的主节点及转账程序连接的coord节点
         TaskMgr taskMgr = new TaskMgr();
         for (String groupName : groupNames) {
             groupMgr.setSdb(new Sequoiadb(SdbTestBase.coordUrl, "", ""));
             GroupWrapper group = groupMgr.getGroupByName(groupName);
             NodeWrapper node = group.getMaster();
-            FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 180, 10, 20);
+            FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 60, 10, 20);
             taskMgr.addTask(task);
         }
         NodeWrapper coordNode = TransUtil.getCoordNode(sdb);
-        FaultMakeTask task = NodeRestart.getFaultMakeTask(coordNode, 180, 10, 20);
+        FaultMakeTask task = NodeRestart.getFaultMakeTask(coordNode, 60, 10, 20);
         taskMgr.addTask(task);
+        TransUtil.setCurrentTask(task);
 
         for (int i = 0; i < 200; i++) {
             taskMgr.addTask(new TransferTh(csName, clName, coordUrl, true));
         }
         taskMgr.execute();
+        TransUtil.waitCurrentTaskSuccess();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");

@@ -83,13 +83,15 @@ public class Transaction18825 extends SdbTestBase {
         TaskMgr taskMgr = new TaskMgr();
         String coordUrl = TransUtil.getCoordUrl(sdb);
         NodeWrapper coordNode = TransUtil.getCoordNode(new Sequoiadb(coordUrl, "", ""));
-        FaultMakeTask task = BrokenNetwork.getFaultMakeTask(coordNode.hostName(), 180, 10);
+        FaultMakeTask task = BrokenNetwork.getFaultMakeTask(coordNode.hostName(), 60, 10);
         taskMgr.addTask(task);
+        TransUtil.setCurrentTask(task);
 
         for (int i = 0; i < 200; i++) {
             taskMgr.addTask(new TransferTh(csName, clName, coordUrl, true));
         }
         taskMgr.execute();
+        TransUtil.waitCurrentTaskSuccess();
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(300), "GROUP ERROR");
