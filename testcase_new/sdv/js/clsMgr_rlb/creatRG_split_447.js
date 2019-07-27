@@ -27,6 +27,8 @@ function main()
    // clean env
    commDropCL( db, COMMCSNAME, clName, true, true, "Failed to drop CL in the pre-condition." ); 
    removeDataGroup( tmpGroupName, true );
+   var coordGroup = commGetGroups( db, true, "", true, false, true );
+   var hostname = coordGroup[0][1].HostName;
    
    println("\n---Begin to createCL and insert records");
    var options = {ShardingKey:{a:1}, ShardingType:"range", ReplSize:0};
@@ -40,7 +42,7 @@ function main()
    try
    {
       println("\n---Begin to createRG");
-      logSourcePaths = createDataGroups( COORDHOSTNAME , tmpGroupName, nodeNum );
+      logSourcePaths = createDataGroups( hostname , tmpGroupName, nodeNum );
       var targetRg = tmpGroupName;
    
       println("\n---Begin to split and check results");
