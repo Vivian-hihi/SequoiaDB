@@ -2905,7 +2905,8 @@ namespace engine
          INT32 status = transCB->checkTransStatus( pReq->transID, lsn ) ;
 
          if ( DPS_TRANS_WAIT_COMMIT == status &&
-              DPS_INVALID_LSN_OFFSET != lsn )
+              DPS_INVALID_LSN_OFFSET != lsn &&
+              pReplCB->groupSize() > 1 )
          {
             // TODO: should wait for replSize - 1
             checkRC = pReplCB->sync( lsn, pmdGetThreadEDUCB(), 2, 10 ) ;
