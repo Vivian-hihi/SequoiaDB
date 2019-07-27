@@ -70,7 +70,9 @@ public class CappedCLKillNode15790A extends SdbTestBase{
 			
          FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(masterNode.hostName(), masterNode.svcName(), 1);
          TaskMgr mgr = new TaskMgr(faultMakeTask);
-         mgr.addTask(new InsertTask());
+         for ( int i = 0; i < 10; i++ ) {
+             mgr.addTask(new InsertTask());
+         }   
          mgr.execute();
 			         
          Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
@@ -84,16 +86,20 @@ public class CappedCLKillNode15790A extends SdbTestBase{
 
     @AfterClass
     public void tearDown() {
-         if(sdb != null) {
-             sdb.close();     
-         }
+        try {
+            sdb.getCollectionSpace(cappedCSName).dropCollection(clName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
+        }
     }
 
     private class InsertTask extends OperateTask{
          @Override
          public void exec() throws Exception {
              try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
-                 CollectionSpace cs = db.getCollectionSpace(csName);
+                 CollectionSpace cs = db.getCollectionSpace(cappedCSName);
                  DBCollection cl = cs.getCollection(clName);
                  int insertNums = 10000;
                  int strLength = 32;

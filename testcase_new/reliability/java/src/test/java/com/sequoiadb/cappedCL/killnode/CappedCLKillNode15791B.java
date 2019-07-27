@@ -16,7 +16,6 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
@@ -70,7 +69,9 @@ public class CappedCLKillNode15791B extends SdbTestBase{
 			
          FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(slaveNode.hostName(), slaveNode.svcName(), 1);
          TaskMgr mgr = new TaskMgr(faultMakeTask);
-         mgr.addTask(new InsertTask());
+         for ( int i = 0; i < 10; i++ ) {
+             mgr.addTask(new InsertTask());
+         }   
          mgr.execute();
 			         
          Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
@@ -84,9 +85,13 @@ public class CappedCLKillNode15791B extends SdbTestBase{
 
     @AfterClass
     public void tearDown() {
-         if(sdb != null) {
-             sdb.close();     
-         }
+        try {
+            sdb.getCollectionSpace(cappedCSName).dropCollection(clName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
+        }
     }
 
     private class InsertTask extends OperateTask{
@@ -98,10 +103,7 @@ public class CappedCLKillNode15791B extends SdbTestBase{
                  int insertNums = 10000;
                  int strLength = 32;
                  CappedCLUtils.insertRecords(cl, insertNums, strLength);
-             } catch (BaseException e) {
-                 e.printStackTrace();
-                 System.out.println("kill slave node while inserting: " + e.getErrorCode());              
-             }
+             } 
          }
     } 	
 }

@@ -7,7 +7,6 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.FaultMakeTask;
@@ -35,7 +34,6 @@ public class CappedCLSlave11820 extends SdbTestBase {
     private Sequoiadb db = null;
     private DBCollection cl = null;
     private final String CLNAME = "cl_11819_slave";
-    private static final int SDB_NO_SPACE = -11;        //no disk space
 
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -69,8 +67,10 @@ public class CappedCLSlave11820 extends SdbTestBase {
         NodeWrapper slaveNode = dataGroup.getSlave();
         FaultMakeTask faultTask = DiskFull.getFaultMakeTask(slaveNode.hostName(), SdbTestBase.reservedDir, 1, 10);
         TaskMgr taskMgr = new TaskMgr(faultTask);
-        taskMgr.addTask(new InsertTask());
-        taskMgr.addTask(new PopTask());
+        for ( int i = 0; i < 5; i++ ) {
+            taskMgr.addTask(new InsertTask());
+            taskMgr.addTask(new PopTask());
+        }       
         taskMgr.execute();
         // check business
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
@@ -87,8 +87,12 @@ public class CappedCLSlave11820 extends SdbTestBase {
 
     @AfterClass()
     public void tearDown() {
-        if (db != null) {
-            db.close();
+        try {
+            db.getCollectionSpace(cappedCSName).dropCollection(CLNAME);
+        } finally {
+            if (db != null) {
+                db.close();
+            }
         }
     }
 
@@ -101,12 +105,6 @@ public class CappedCLSlave11820 extends SdbTestBase {
                 int insertNums = 100000;
                 int strLength = 256;
                 CappedCLUtils.insertRecords(cl, insertNums, strLength);
-            } catch (BaseException e) {
-                if(e.getErrorCode() == SDB_NO_SPACE) {
-                    System.out.println(e.getMessage());
-                } else {
-                    throw e;
-                }
             } 
         }
     }
@@ -120,12 +118,6 @@ public class CappedCLSlave11820 extends SdbTestBase {
                 long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(200000));
                 int direction = 1;
                 CappedCLUtils.pop(cl, logicalID, direction);
-            } catch (BaseException e) {
-                if(e.getErrorCode() == SDB_NO_SPACE) {
-                    System.out.println(e.getMessage());
-                } else {
-                    throw e;
-                }
             } 
         }
     }

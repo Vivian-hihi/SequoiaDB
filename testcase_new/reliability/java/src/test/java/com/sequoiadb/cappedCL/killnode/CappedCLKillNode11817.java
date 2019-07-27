@@ -16,7 +16,6 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
@@ -61,7 +60,11 @@ public class CappedCLKillNode11817 extends SdbTestBase{
         NodeWrapper slaveNode = dataGroup.getSlave();
 			
         FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(slaveNode.hostName(), slaveNode.svcName(), 0);
-        TaskMgr taskMgr = new TaskMgr(faultMakeTask ,new InsertTask(), new PopTask());
+        TaskMgr taskMgr = new TaskMgr(faultMakeTask);
+        for ( int i = 0; i < 5; i++ ) {
+             taskMgr.addTask(new InsertTask());
+             taskMgr.addTask(new PopTask());
+        }   
         taskMgr.execute();
 			
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
@@ -75,8 +78,12 @@ public class CappedCLKillNode11817 extends SdbTestBase{
 	
     @AfterClass
     public void tearDown() {
-        if(sdb != null) {
-            sdb.close();
+        try {
+            sdb.getCollectionSpace(cappedCSName).dropCollection(clName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
         }
     }
 	
@@ -89,10 +96,7 @@ public class CappedCLKillNode11817 extends SdbTestBase{
                 //insert
                 insertNums = 32768;
                 CappedCLUtils.insertRecords(cl, insertNums, strLength);
-            } catch (BaseException e) {
-                e.printStackTrace();
-                System.out.println("kill slave node while inserting: " + e.getErrorCode());
-            }
+            } 
         }            
     }
 	
@@ -106,9 +110,6 @@ public class CappedCLKillNode11817 extends SdbTestBase{
                 long logicalID = CappedCLUtils.getLogicalID(cl, 1);
                 int direction = -1;
                 CappedCLUtils.pop(cl, logicalID, direction);
-            } catch (BaseException e) { 
-                e.printStackTrace();
-                System.out.println("kill slave node while poping: " + e.getErrorCode());
             }
         }
     }

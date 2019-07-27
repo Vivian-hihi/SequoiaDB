@@ -70,7 +70,9 @@ public class CappedCLKillNode15790B extends SdbTestBase{
 			
           FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(masterNode.hostName(), masterNode.svcName(), 1);
           TaskMgr mgr = new TaskMgr(faultMakeTask);
-          mgr.addTask(new InsertTask());
+          for ( int i = 0; i < 10; i++ ) {
+              mgr.addTask(new InsertTask());
+          }   
           mgr.execute();
 			         
           Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
@@ -84,9 +86,13 @@ public class CappedCLKillNode15790B extends SdbTestBase{
 
      @AfterClass
      public void tearDown() {
-          if(sdb != null) {
-              sdb.close();     
-          }
+        try {
+            sdb.getCollectionSpace(cappedCSName).dropCollection(clName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
+        }
      }
 
      private class InsertTask extends OperateTask{

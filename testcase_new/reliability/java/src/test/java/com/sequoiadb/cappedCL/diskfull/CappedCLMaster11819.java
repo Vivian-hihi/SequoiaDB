@@ -34,7 +34,6 @@ public class CappedCLMaster11819 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private GroupWrapper dataGroup = null;
     private Sequoiadb db = null;
-    private static final int SDB_NO_SPACE = -11;        //no disk space
     private DBCollection cl = null;
     private final String CLNAME = "cl_11819_master";
 
@@ -70,8 +69,10 @@ public class CappedCLMaster11819 extends SdbTestBase {
         NodeWrapper masterNode = dataGroup.getMaster();
         FaultMakeTask faultTask = DiskFull.getFaultMakeTask(masterNode.hostName(), SdbTestBase.reservedDir, 1, 10);
         TaskMgr taskMgr = new TaskMgr(faultTask);
-        taskMgr.addTask(new InsertTask());
-        taskMgr.addTask(new PopTask());
+        for ( int i = 0; i < 5; i++ ) {
+            taskMgr.addTask(new InsertTask());
+            taskMgr.addTask(new PopTask());
+        }       
         taskMgr.execute();
         // check business
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
@@ -88,8 +89,12 @@ public class CappedCLMaster11819 extends SdbTestBase {
 
     @AfterClass()
     public void tearDown() {
-        if (db != null) {
-            db.close();
+        try {
+            db.getCollectionSpace(cappedCSName).dropCollection(CLNAME);
+        } finally {
+            if (db != null) {
+                db.close();
+            }
         }
     }
 
@@ -103,11 +108,8 @@ public class CappedCLMaster11819 extends SdbTestBase {
                 int strLength = 256;
                 CappedCLUtils.insertRecords(cl, insertNums, strLength);
             } catch (BaseException e) {
-                if(e.getErrorCode() == SDB_NO_SPACE ) {
-                    System.out.println(e.getMessage());
-                } else {
-                    throw e;
-                }
+                e.printStackTrace(); 
+                System.out.println("master node disk full while inserting: " + e.getErrorCode());
             } 
         }
     }
@@ -122,11 +124,8 @@ public class CappedCLMaster11819 extends SdbTestBase {
                 int direction = 1;
                 CappedCLUtils.pop(cl, logicalID, direction);
             } catch (BaseException e) {
-                if(e.getErrorCode() == SDB_NO_SPACE) {
-                    System.out.println(e.getMessage());
-                } else {
-                    throw e;
-                }
+                e.printStackTrace(); 
+                System.out.println("master node disk full while poping: " + e.getErrorCode());
             } 
         }
     }

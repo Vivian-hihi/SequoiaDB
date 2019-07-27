@@ -16,7 +16,6 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
 import com.sequoiadb.task.FaultMakeTask;
@@ -60,7 +59,11 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
         GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
         NodeWrapper slaveNode = dataGroup.getSlave();
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(slaveNode, 0, 10);
-        TaskMgr taskMgr = new TaskMgr(faultMakeTask ,new InsertTask(),new PopTask());
+        TaskMgr taskMgr = new TaskMgr(faultMakeTask);
+        for ( int i = 0; i < 5; i++ ) {
+             taskMgr.addTask(new InsertTask());
+             taskMgr.addTask(new PopTask());
+        }   
         taskMgr.execute();
 			
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
@@ -74,9 +77,13 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
 	
     @AfterClass
     public void tearDown() {
-        if(sdb != null) {
-            sdb.close();
-        }	
+        try {
+            sdb.getCollectionSpace(cappedCSName).dropCollection(clName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
+        }
     }
 	
     private class InsertTask extends OperateTask{
@@ -89,10 +96,7 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
                 //insert
                 insertNums = 32768;
                 CappedCLUtils.insertRecords(cl, insertNums, strLength);
-            } catch (BaseException e) {
-                e.printStackTrace();
-                System.out.println("kill master node while inserting: " + e.getErrorCode());
-            }
+            } 
         }
     }
 	
@@ -107,10 +111,7 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
                 long logicalID = CappedCLUtils.getLogicalID(cl, 10);
                 int direction = -1;
                 CappedCLUtils.pop(cl, logicalID, direction);
-            } catch (BaseException e) {
-                e.printStackTrace();
-                System.out.println("kill master node while inserting: " + e.getErrorCode());
-            }
+            } 
         }
     }
 }

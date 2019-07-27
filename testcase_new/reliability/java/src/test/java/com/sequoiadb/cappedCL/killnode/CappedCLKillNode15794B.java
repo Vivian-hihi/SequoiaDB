@@ -65,8 +65,10 @@ public class CappedCLKillNode15794B extends SdbTestBase{
          for (NodeWrapper node : dataGroup.getNodes()) {
              FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(node, 0);
              mgr.addTask(faultMakeTask);
-         }
-         mgr.addTask(new PopTask());
+         }   
+         for ( int i = 0; i < 10; i++ ) {
+             mgr.addTask(new PopTask());
+         }   
          mgr.execute();
 			         
          Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
@@ -80,9 +82,13 @@ public class CappedCLKillNode15794B extends SdbTestBase{
 
      @AfterClass
      public void tearDown() {
-         if(sdb != null) {
-             sdb.close();     
-         }
+        try {
+            sdb.getCollectionSpace(cappedCSName).dropCollection(clName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
+        }
      }
 
      private class PopTask extends OperateTask{
