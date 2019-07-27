@@ -3,7 +3,7 @@
 
 [快速使用SequoiaDB](quickstart.md)
 
-##SequoiaDB version 3.2.2 版本说明##
+##SequoiaDB version 3.2.3 版本说明##
 
 **接口变更：**
 
