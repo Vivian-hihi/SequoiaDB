@@ -56,21 +56,6 @@ public class Transaction18519 extends SdbTestBase {
             throw new SkipException("GROUP ERROR");
         }
 
-        // 如果构造断网的主机是连接的coord节点所在的主机，就重启该主节点
-        for (int i = 0; i < groupNames.size(); i++) {
-            GroupWrapper groupWrapper = groupMgr.getGroupByName(groupNames.get(i));
-            String host = groupWrapper.getMaster().hostName();
-            if (host.equals(sdb.getHost())) {
-                NodeWrapper nodeWrapper = groupWrapper.getMaster();
-                FaultMakeTask task = NodeRestart.getFaultMakeTask(nodeWrapper, 0, 0);
-                TaskMgr taskMgr = new TaskMgr(task);
-                taskMgr.execute();
-
-                Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
-                Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "GROUP ERROR");
-            }
-        }
-
         // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为1，且已切分到所有组上，切分键为账户字段
         // 并插入数据 10000 个账户，每个账户 10000 元
         TransUtil.createCLsAndInsertData(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
@@ -96,6 +81,21 @@ public class Transaction18519 extends SdbTestBase {
 
     @Test(dataProvider = "getCL")
     public void test(String clName) throws ReliabilityException, InterruptedException {
+        // 如果构造断网的主机是连接的coord节点所在的主机，就重启该主节点
+        for (int i = 0; i < groupNames.size(); i++) {
+            GroupWrapper groupWrapper = groupMgr.getGroupByName(groupNames.get(i));
+            String host = groupWrapper.getMaster().hostName();
+            if (host.equals(sdb.getHost())) {
+                NodeWrapper nodeWrapper = groupWrapper.getMaster();
+                FaultMakeTask task = NodeRestart.getFaultMakeTask(nodeWrapper, 0, 0);
+                TaskMgr taskMgr = new TaskMgr(task);
+                taskMgr.execute();
+
+                Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
+                Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "GROUP ERROR");
+            }
+        }
+
         // 部分数据节点的主节点断网
         FaultMakeTask task = null;
         TaskMgr taskMgr = new TaskMgr();

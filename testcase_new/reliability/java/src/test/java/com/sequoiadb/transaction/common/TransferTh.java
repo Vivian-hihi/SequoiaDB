@@ -74,7 +74,7 @@ public class TransferTh extends OperateTask {
 
                 int accountA = (int) (Math.random() * 10000);
                 int accountB = (int) (Math.random() * 10000);
-                int transAmount = 100;
+                int transAmount = (int) (Math.random() * 200);
 
                 db.beginTransaction();
                 cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}", "{'':'$shard'}");
