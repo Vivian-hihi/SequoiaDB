@@ -243,9 +243,9 @@ namespace engine
          }
          else if ( rc )
          {
-            PD_LOG( PDERROR, "Check trans(%s) by group(%u) failed, "
+            PD_LOG( PDERROR, "Check trans(%s) by node(%u,%u) failed, "
                     "rc: %d", dpsTransIDToString( transID ).c_str(),
-                    group, rc ) ;
+                    group, pReply->header.routeID.columns.nodeID, rc ) ;
             goto error ;
          }
          else if ( 1 == pReply->numReturned &&
