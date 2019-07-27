@@ -97,7 +97,7 @@ BSON 数组。
    }   
    ```
 
-* 获取 BSONArray 当前的记录。
+* 获取 BSONArray 当前下标的记录。
 
    ```lang-javascript
    > bsonArray.pos() 

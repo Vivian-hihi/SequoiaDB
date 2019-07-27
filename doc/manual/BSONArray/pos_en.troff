@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-pos \- Get the current element.
+pos \- Get the element of current subscript.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]BSONArray.pos()\f[]\f[]
@@ -13,7 +13,7 @@ pos \- Get the current element.
 BSONArray
 .SH DESCRIPTION
 .PP
-Get the current element.
+Get the element of current subscript.
 .SH PARAMETERS
 .PP
 NULL
@@ -38,7 +38,7 @@ Get a BSONArray.( For more detail about oma, please reference to Oma )
 \f[]
 .fi
 .IP \[bu] 2
-Get the current elememt.
+Get the element of current subscript.
 .IP
 .nf
 \f[C]

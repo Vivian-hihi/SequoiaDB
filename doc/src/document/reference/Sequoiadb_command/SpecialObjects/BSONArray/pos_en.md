@@ -1,6 +1,6 @@
 ##NAME##
 
-pos - Get the current element.
+pos - Get the element of current subscript.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ BSONArray
 
 ##DESCRIPTION##
 
-Get the current element.
+Get the element of current subscript.
 
 ##PARAMETERS##
 
@@ -37,7 +37,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var bsonArray = oma.listNodes()
 ```
 
-* Get the current elememt.
+* Get the element of current subscript.
 
 ```lang-javascript
 > bsonArray.pos()
