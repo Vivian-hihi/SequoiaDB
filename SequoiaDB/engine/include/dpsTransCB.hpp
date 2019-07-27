@@ -241,7 +241,7 @@ namespace engine
       void     delHisTrans( DPS_TRANS_ID transID ) ;
       void     clearHisTrans() ;
       void     clearOutDateHisTrans( DPS_LSN_OFFSET lsn ) ;
-      INT32    checkTransStatus( DPS_TRANS_ID transID ) ;
+      INT32    checkTransStatus( DPS_TRANS_ID transID, DPS_LSN_OFFSET & lsn ) ;
 
       void     clearTransInfo() ;
 

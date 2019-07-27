@@ -241,6 +241,16 @@ namespace engine
             pRecvMsg = NULL ;
             continue ;
          }
+         else if ( SDB_CLS_WAIT_SYNC_FAILED == rc )
+         {
+            /// the node is crashed, sleep some seconds
+            PD_LOG( PDWARNING, "Group(%d) primary node is sync waiting, "
+                    "sleep 10 seconds", group ) ;
+            ossSleep( 10 * OSS_ONE_SEC ) ;
+            SDB_OSS_FREE( ( CHAR* )pRecvMsg ) ;
+            pRecvMsg = NULL ;
+            continue ;
+         }
          else if ( rc )
          {
             PD_LOG( PDERROR, "Check trans(%s) by group(%u) failed, "

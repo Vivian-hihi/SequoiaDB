@@ -705,11 +705,13 @@ namespace engine
       }
    }
 
-   INT32 dpsTransCB::checkTransStatus( DPS_TRANS_ID transID )
+   INT32 dpsTransCB::checkTransStatus( DPS_TRANS_ID transID,
+                                       DPS_LSN_OFFSET & lsn )
    {
       /// first check in-line trans, then check history trans
       INT32 transStatus = DPS_TRANS_UNKNOWN ;
       transID = DPS_TRANS_GET_ID( transID ) ;
+      lsn = DPS_INVALID_LSN_OFFSET ;
 
       {
          ossScopedLock _lock( &_MapMutex ) ;
@@ -717,6 +719,7 @@ namespace engine
          if ( it != _TransMap.end() )
          {
             transStatus = it->second._status ;
+            lsn = it->second._lsn ;
             goto done ;
          }
       }
@@ -727,6 +730,7 @@ namespace engine
          if ( it != _hisTransStatus.end() )
          {
             transStatus = it->second._status ;
+            lsn = it->second._lsn ;
             goto done ;
          }
       }

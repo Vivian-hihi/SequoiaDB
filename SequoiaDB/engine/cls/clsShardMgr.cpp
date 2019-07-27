@@ -2898,9 +2898,29 @@ namespace engine
       }
       else
       {
-         reply.flags = SDB_OK ;
+         INT32 checkRC = SDB_OK ;
+         DPS_LSN_OFFSET lsn = DPS_INVALID_LSN_OFFSET ;
+
          MsgClsTransCheckReq *pReq = ( MsgClsTransCheckReq* )msg ;
-         INT32 status = transCB->checkTransStatus( pReq->transID ) ;
+         INT32 status = transCB->checkTransStatus( pReq->transID, lsn ) ;
+
+         if ( DPS_TRANS_WAIT_COMMIT == status &&
+              DPS_INVALID_LSN_OFFSET != lsn )
+         {
+            // TODO: should wait for replSize - 1
+            checkRC = pReplCB->sync( lsn, pmdGetThreadEDUCB(), 2, 10 ) ;
+            if ( SDB_OK != checkRC )
+            {
+               PD_LOG( PDWARNING, "Failed to check sync for transaction "
+                       "[%llu] lsn [%llu], rc: %d", pReq->transID, lsn, rc ) ;
+               checkRC = SDB_CLS_WAIT_SYNC_FAILED ;
+            }
+            reply.flags = checkRC ;
+         }
+         else
+         {
+            reply.flags = SDB_OK ;
+         }
 
          retObj = BSON( FIELD_NAME_TRANSACTION_ID << (INT64)pReq->transID <<
                         FIELD_NAME_STATUS << status ) ;
