@@ -44,12 +44,10 @@ namespace engine
 
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBCount, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBCount, destruct )
-   JS_STATIC_FUNC_DEFINE( _sptDBCount, help )
 
    JS_BEGIN_MAPPING( _sptDBCount, "CLCount" )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
-      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBCount::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBCount::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBCount::bsonToJSObj )
@@ -167,24 +165,5 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _sptDBCount::help( const _sptArguments &arg,
-                            _sptReturnVal &rval,
-                            BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "   --Constructor methods for class CLCount : " << endl ;
-      ss << "   --Static methods for class CLCount : " << endl ;
-      ss << "   --Instance methods for class CLCount : " << endl ;
-      ss << "   hint( <hint> )   "
-         << "Traverse the result set by the specified index" << endl ;
-      ss << "   valueOf()        "
-         << "Return the original value of the CLCount( It's a hidden method )"
-         << endl ;
-      ss << "   toString()       "
-         << "Convert CLCount to string format( It's a hidden method )" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
    }
 }

@@ -59,10 +59,6 @@ namespace engine
       const vector< BSONObj >& getBsonArray() const { return _vecObj ; }
 
    public:
-      static INT32 help( const _sptArguments &arg,
-                         _sptReturnVal &rval,
-                         bson::BSONObj &detail ) ;
-
       INT32 construct( const _sptArguments &arg,
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;

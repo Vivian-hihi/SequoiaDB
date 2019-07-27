@@ -50,9 +50,6 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptBsonobjArray, getIndex)
    JS_RESOLVE_FUNC_DEFINE(_sptBsonobjArray, resolve)
 
-   /* static function define */
-   JS_STATIC_FUNC_DEFINE(_sptBsonobjArray, help)
-
    JS_BEGIN_MAPPING( _sptBsonobjArray, "BSONArray" )
      JS_ADD_MEMBER_FUNC( "size", size )
      JS_ADD_MEMBER_FUNC( "more", more )
@@ -62,9 +59,6 @@ namespace engine
      JS_ADD_CONSTRUCT_FUNC( construct )
      JS_ADD_DESTRUCT_FUNC( destruct )
      JS_ADD_RESOLVE_FUNC(resolve)
-     /* static function */
-     JS_ADD_STATIC_FUNC("help", help)
-
      JS_SET_CVT_TO_BSON_FUNC( _sptBsonobjArray::cvtToBSON )
      JS_SET_JSOBJ_TO_BSON_FUNC( _sptBsonobjArray::fmpToBSON )
      JS_SET_BSON_TO_JSOBJ_FUNC( _sptBsonobjArray::bsonToJSObj )
@@ -99,32 +93,6 @@ namespace engine
 
    INT32 _sptBsonobjArray::destruct()
    {
-      return SDB_OK ;
-   }
-
-   INT32 _sptBsonobjArray::help( const _sptArguments &arg,
-                                 _sptReturnVal &rval,
-                                 BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "   --Constructor methods for class BSONArray : " << endl ;
-      ss << "   --Static methods for class BSONArray : " << endl ;
-      ss << "   --Instance methods for class BSONArray : " << endl ;
-      ss << "   size()       "
-         << "Get the size of BSONArray" << endl ;
-      ss << "   more()       "
-         << "Determine if there is another element" << endl ;
-      ss << "   next()       "
-         << "Get the next element" << endl ;
-      ss << "   pos()        "
-         << "Get the current element" << endl ;
-      ss << "   toArray()    "
-         << "Convert BSONArray to array format" << endl ;
-      ss << "   toString()   "
-         << "Convert BSONArray to string" << endl ;
-      ss << "   index()      "
-         << "Get the current subscript" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
