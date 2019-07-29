@@ -47,14 +47,8 @@
 
 namespace engine
 {
-   #define RTN_INVALID_LOCK_HANDLE   NULL
-
-   typedef void*     LOCK_HANDLE ;
-
    class _rtnExtDataHandler : public _IDmsExtDataHandler
    {
-      typedef ossPoolMap<rtnExtDataProcessor*, INT32> LOCK_INFO_MAP ;
-      typedef LOCK_INFO_MAP::iterator LOCK_INFO_MAP_ITR ;
    public:
       _rtnExtDataHandler( rtnExtDataProcessorMgr *edpMgr ) ;
       virtual ~_rtnExtDataHandler() ;
@@ -121,11 +115,6 @@ namespace engine
 
       virtual INT32 abortOperation( DMS_EXTOPR_TYPE type, _pmdEDUCB *cb ) ;
 
-      INT32 acquireLock( const CHAR *extName, INT32 lockType,
-                         LOCK_HANDLE &handle ) ;
-
-      void releaseLock( LOCK_HANDLE handle ) ;
-
    private:
       BOOLEAN _hasExtName( const ixmIndexCB &indexCB ) ;
 
@@ -161,8 +150,6 @@ namespace engine
       ossAtomic32             _refCount ;
       rtnExtDataProcessorMgr  *_edpMgr ;
       rtnExtContextMgr        _contextMgr ;
-      ossSpinXLatch           _latch ;
-      LOCK_INFO_MAP           _lockInfo ;
    } ;
    typedef _rtnExtDataHandler rtnExtDataHandler ;
 

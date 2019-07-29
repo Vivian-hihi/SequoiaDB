@@ -1480,52 +1480,41 @@ namespace engine
                                                          INT32 lockType,
                                                          rtnExtDataProcessor *&processor )
    {
-      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME ) ;
+
       UINT16 checkNum = 0 ;
       processor = NULL  ;
 
-      if ( !extName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "External data name is invalid" ) ;
-         goto error ;
-      }
+      ossScopedLock lock( &_mutex, SHARED ) ;
 
+      for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
-         ossScopedLock lock( &_mutex, SHARED ) ;
-         for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
+         if ( !_processors[i].isActive() )
          {
-            if ( !_processors[i].isActive() )
+            continue ;
+         }
+         if ( _processors[i].isOwnedByExt( extName ) )
+         {
+            ossRWMutex *mutex = &_processorLocks[i] ;
+            if ( SHARED == lockType )
             {
-               continue ;
+               mutex->lock_r() ;
             }
-            if ( _processors[i].isOwnedByExt( extName ) )
+            else if ( EXCLUSIVE == lockType )
             {
-               ossRWMutex *mutex = &_processorLocks[i] ;
-               if ( SHARED == lockType )
-               {
-                  mutex->lock_r() ;
-               }
-               else if ( EXCLUSIVE == lockType )
-               {
-                  mutex->lock_w() ;
-               }
-               processor = &_processors[i] ;
-               break ;
+               mutex->lock_w() ;
             }
-            if ( ++checkNum >= _number )
-            {
-               break ;
-            }
+            processor = &_processors[i] ;
+            break ;
+         }
+         if ( ++checkNum >= _number )
+         {
+            break ;
          }
       }
 
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME ) ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS, "_rtnExtDataProcessorMgr::unlockProcessors" )

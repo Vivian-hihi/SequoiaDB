@@ -739,64 +739,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_ACQUIRELOCK, "_rtnExtDataHandler::acquireLock" )
-   INT32 _rtnExtDataHandler::acquireLock( const CHAR *extName, INT32 lockType,
-                                          LOCK_HANDLE &handle )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ACQUIRELOCK ) ;
-      rtnExtDataProcessor *processor = NULL ;
-
-      SDB_ASSERT( extName, "External name is NULL" ) ;
-
-      if ( -1 == lockType )
-      {
-         goto done ;
-      }
-
-      rc = _edpMgr->getProcessorByExtName( extName, lockType, processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get external processor for[%s] failed[%d]",
-                   extName, rc ) ;
-      if ( processor )
-      {
-         handle = processor ;
-         ossScopedLock lock( &_latch ) ;
-         _lockInfo[ processor ] = lockType ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Get processor for[%s] failed", extName ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ACQUIRELOCK, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_RELEASELOCK, "_rtnExtDataHandler::releaseLock" )
-   void _rtnExtDataHandler::releaseLock( LOCK_HANDLE handle )
-   {
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_RELEASELOCK ) ;
-      rtnExtDataProcessor *processor = (rtnExtDataProcessor *)handle ;
-      if ( processor )
-      {
-         ossScopedLock lock( &_latch ) ;
-         LOCK_INFO_MAP_ITR itr = _lockInfo.find( processor ) ;
-         if ( itr != _lockInfo.end() )
-         {
-            vector<rtnExtDataProcessor *> processors ;
-            processors.push_back( itr->first ) ;
-            _edpMgr->unlockProcessors( processors, itr->second ) ;
-            _lockInfo.erase( itr ) ;
-         }
-      }
-      PD_TRACE_EXIT( SDB__RTNEXTDATAHANDLER_RELEASELOCK ) ;
-   }
-
    BOOLEAN _rtnExtDataHandler::_hasExtName( const ixmIndexCB &indexCB )
    {
       return ( ossStrlen( indexCB.getExtDataName() ) > 0 ) ;

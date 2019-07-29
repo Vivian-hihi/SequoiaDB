@@ -2169,8 +2169,6 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       dmsMBContext *mbContext = NULL ;
       dmsRecordID recordID ;
-      rtnExtDataHandler *extHandler = NULL ;
-      LOCK_HANDLE lockHandle = RTN_INVALID_LOCK_HANDLE ;
 
       if ( logicalID < 0 )
       {
@@ -2207,28 +2205,10 @@ namespace engine
          cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
       }
 
-      // If the collection name start with 'SYS', and it's the same with
-      // collection space name, it's a capped collection for a text index.
-      // Be sure to take protection before pop on it.
-      if ( ossStrncasecmp( clShortName, SYS_PREFIX,
-                           ossStrlen( SYS_PREFIX ) ) == 0
-           && ossStrncasecmp( pCollectionName, clShortName,
-                              ossStrlen(clShortName) ) == 0 )
-      {
-         extHandler = rtnGetExtDataHandler() ;
-         rc = extHandler->acquireLock( clShortName, EXCLUSIVE, lockHandle ) ;
-         PD_RC_CHECK( rc, PDERROR, "Acquire external lock for collection[%s] "
-                      "failed[%d]", pCollectionName, rc ) ;
-      }
-
       rc = su->data()->popRecord( mbContext, logicalID, cb, dpsCB, direction ) ;
       PD_RC_CHECK( rc, PDERROR, "Pop record failed, rc: %d", rc ) ;
 
    done:
-      if ( RTN_INVALID_LOCK_HANDLE != lockHandle )
-      {
-         extHandler->releaseLock( lockHandle ) ;
-      }
       if ( NULL != cb )
       {
          cb->unregisterMonCRUDCB() ;
