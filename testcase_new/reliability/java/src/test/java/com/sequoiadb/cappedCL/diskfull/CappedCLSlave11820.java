@@ -22,7 +22,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * @FileName seqDB-11820 operating data when slave node disk is full
+ * @FileName seqDB-11820 数据操作时，备节点磁盘空间满
  * @author xiejianhong
  * @Date 2017-08-16
  * @version 1.0
@@ -38,7 +38,6 @@ public class CappedCLSlave11820 extends SdbTestBase {
     @BeforeClass
     public void setUp() throws ReliabilityException {
         groupMgr = GroupMgr.getInstance();
-        //check whether environment is normal
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness failed");
         }
@@ -55,13 +54,6 @@ public class CappedCLSlave11820 extends SdbTestBase {
         CappedCLUtils.insertRecords(cl, insertNums, strLength);
     }
 
-    /**
-     * 1. operating data and slave node disk full
-     * 2. restore slave node disk
-     * 3. check whether InsertTask and PopTask worked successfully
-     * 4. check whether environment is normal and LSN is consistent
-     * 5. check whether data group lsn is consistent
-     */
     @Test
     public void test() throws ReliabilityException {
         NodeWrapper slaveNode = dataGroup.getSlave();
@@ -69,14 +61,14 @@ public class CappedCLSlave11820 extends SdbTestBase {
         TaskMgr taskMgr = new TaskMgr(faultTask);
         for ( int i = 0; i < 5; i++ ) {
             taskMgr.addTask(new InsertTask());
-            taskMgr.addTask(new PopTask());
         }       
+        taskMgr.addTask(new PopTask());
         taskMgr.execute();
-        // check business
+        // 检查环境
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600),true);
         
-        // check insert/pop, and data consistency
+        // 环境恢复后，执行insert/pop并检查主备一致
         CappedCLUtils.insertRecords(cl, 10000, 16);
         long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(100));
         int direction = -1;

@@ -25,7 +25,7 @@ public class CappedCLUtils {
      }
 	
 	    /*
-	     * insert records
+	     * 插入数据
 	     * @param cl
 	     * @param insertNums
 	     * @param strLength
@@ -39,7 +39,7 @@ public class CappedCLUtils {
       }
 	
 	     /*
-	      * pop records
+	      * pop记录
 	      * @param cl
 	      * @param logicalID
 	      * @param direction
@@ -52,7 +52,7 @@ public class CappedCLUtils {
        }
 	
 	      /*
-	       * get one logicalID in capped CL
+	       * 获取固定集合的LID
 	       * @param cl
 	       * @param skip
 	       */
@@ -77,7 +77,7 @@ public class CappedCLUtils {
         }
 	
       	/*
-	       * get random string for records
+	       * 获取随机字符串
 	       * @param length
 	       */
 	       public static String getRandomString(int length) {

@@ -22,7 +22,7 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-11814: droping the CappedCLs when primary node is killed
+ * @FileName seqDB-11814: 删除集合时，主节点正常/异常重启
  * @Author liuxiaoxuan
  * @Date 2017-07-31
  */
@@ -68,7 +68,7 @@ public class CappedCLKillNode11814 extends SdbTestBase{
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(1200), true, "check LSN consistency fail");     
         
-        // check create cl and data consistency
+        // 环境恢复后，创建集合并检查主备一致
         sdb.getCollectionSpace(csName).createCollection(clName + "_after_killnode",
                     (BSONObject) JSON.parse("{Capped:true,Size:1024,AutoIndexId:false,Group:'" + groupName + "'}"));                      
         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName());

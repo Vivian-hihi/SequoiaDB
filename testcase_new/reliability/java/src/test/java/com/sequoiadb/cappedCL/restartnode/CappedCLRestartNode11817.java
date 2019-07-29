@@ -2,6 +2,7 @@ package com.sequoiadb.cappedCL.restartnode;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
+import java.util.Random;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -23,7 +24,7 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-11817: insert and pop records in capped CL when slave node is restarted
+ * @FileName seqDB-11817: 数据操作时，备节点正常/异常重启
  * @Author liuxiaoxuan
  * @Date 2017-10-16
  */
@@ -40,7 +41,6 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
     @BeforeClass
     public void setup() throws ReliabilityException {
         groupMgr = GroupMgr.getInstance();
-        //check environment for 120s
         if(!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness failed");
         }
@@ -62,14 +62,14 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         for ( int i = 0; i < 5; i++ ) {
              taskMgr.addTask(new InsertTask());
-             taskMgr.addTask(new PopTask());
         }   
+        taskMgr.addTask(new PopTask());
         taskMgr.execute();
 			
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
 	         
-        //check insert/pop, and data consistency
+        // 环境恢复后，insert/pop并检查主备一致
         CappedCLUtils.insertRecords(cl, 10000, 8);  
         CappedCLUtils.pop(cl, CappedCLUtils.getLogicalID(cl,100), 1);        
         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName()); 
@@ -92,8 +92,6 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
                 CollectionSpace cs = db.getCollectionSpace(cappedCSName);
                 DBCollection cl = cs.getCollection(clName);
-        	   
-                //insert
                 insertNums = 32768;
                 CappedCLUtils.insertRecords(cl, insertNums, strLength);
             } 
@@ -106,9 +104,7 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
                 CollectionSpace cs = db.getCollectionSpace(cappedCSName);
                 DBCollection cl = cs.getCollection(clName);
-        	   
-                //pop 
-                long logicalID = CappedCLUtils.getLogicalID(cl, 10);
+                long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(9000));
                 int direction = -1;
                 CappedCLUtils.pop(cl, logicalID, direction);
             } 

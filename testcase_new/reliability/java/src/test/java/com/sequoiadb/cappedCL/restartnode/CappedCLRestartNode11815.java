@@ -14,7 +14,6 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
 import com.sequoiadb.task.FaultMakeTask;
@@ -22,7 +21,7 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-11815: droping the CappedCLs when slave node is restarted
+ * @FileName seqDB-11815: 删除集合时，备节点正常/异常重启
  * @Author xiejianhong
  * @Date 2017-07-31
  */
@@ -34,7 +33,6 @@ public class CappedCLRestartNode11815 extends SdbTestBase{
     private String csName = "story_cappedCS_restartNode_11815"; 
     private String clName = "cappedCL_restartNode_11815"; 
     private String groupName = null;
-    private int dropCLCounts = 0;
 	
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -58,9 +56,9 @@ public class CappedCLRestartNode11815 extends SdbTestBase{
     @Test
     public void dropCLAndRestartNodeTest() throws ReliabilityException {
         GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
-        NodeWrapper primaryNode = dataGroup.getMaster();
+        NodeWrapper slaveNode = dataGroup.getSlave();
 			
-        FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(primaryNode, 1, 10);
+        FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(slaveNode, 1, 10);
         TaskMgr mgr = new TaskMgr(faultMakeTask);
         mgr.addTask(new DropCappedCLTask());
         mgr.execute();
@@ -68,7 +66,7 @@ public class CappedCLRestartNode11815 extends SdbTestBase{
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
             
-        // check create cl and data consistency
+        // 环境恢复后，创建集合并检查主备一致
         sdb.getCollectionSpace(csName).createCollection(clName + "_after_startnode",
                     (BSONObject) JSON.parse("{Capped:true,Size:1024,AutoIndexId:false,Group:'" + groupName + "'}"));                      
         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName());    
@@ -93,9 +91,6 @@ public class CappedCLRestartNode11815 extends SdbTestBase{
                 for (int clNum = 1; clNum <= 1000; clNum++) {
                     cs.dropCollection(clName + "_" + clNum);
                 }
-            } catch (BaseException e) {
-                e.printStackTrace();
-                System.out.println("the drop CL num is = " + dropCLCounts);
             } 
         }
     }
