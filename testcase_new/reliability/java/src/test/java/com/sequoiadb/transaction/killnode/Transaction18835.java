@@ -9,7 +9,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
@@ -62,16 +61,8 @@ public class Transaction18835 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            cs.dropCollection(hashCLName);
-            cs.dropCollection(mainCLName);
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    public void tearDown() throws InterruptedException {
+        TransUtil.cleanEnv(sdb, csName, hashCLName, mainCLName);
     }
 
     @DataProvider(name = "getCL")

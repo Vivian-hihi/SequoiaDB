@@ -9,6 +9,7 @@ import java.util.TimerTask;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -17,6 +18,7 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
 
@@ -42,7 +44,8 @@ public class TransUtil {
     }
 
     /**
-     * 等待当前正在构造的异常构造成功，构造成功后，触发10秒钟执行标记为 false
+     * 等待当前正在构造的异常构造成功，构造成功后，触发10秒钟执行标记为
+     * false，使用这个方法首先要调用setCurrentTask方法，将构造的异常task对象赋值
      * 
      * @return
      * @throws InterruptedException
@@ -195,6 +198,68 @@ public class TransUtil {
         }
         cursor.close();
         return actRList;
+    }
+
+    /**
+     * 清理环境规避 -190 错误码，可以删除 CS，删除 CL 以及关闭 SDB
+     * 
+     * @param sdb
+     * @param csName
+     * @param clNames 集合名，可以填写多个
+     * @throws InterruptedException
+     */
+    public static void cleanEnv(Sequoiadb sdb, String csName, String... clNames) throws InterruptedException {
+        cleanEnv(sdb, csName, false, clNames);
+    }
+
+    /**
+     * 清理环境规避 -190 错误码，可以删除 CS，删除 CL 以及关闭 SDB
+     * 
+     * @param sdb
+     * @param csName
+     * @param dropCS  为 true 时直接删除 cs
+     * @param clNames 集合名，可以填写多个
+     * @throws InterruptedException
+     */
+    public static void cleanEnv(Sequoiadb sdb, String csName, boolean dropCS, String... clNames)
+            throws InterruptedException {
+        try {
+            if (dropCS) {
+                int count = 0;
+                while (count++ < 1000) {
+                    try {
+                        sdb.dropCollectionSpace(csName);
+                        break;
+                    } catch (BaseException e) {
+                        if (-190 != e.getErrorCode()) {
+                            throw e;
+                        }
+                    }
+                    Thread.sleep(200);
+                }
+            } else {
+                CollectionSpace cs = sdb.getCollectionSpace(csName);
+                for (String clName : clNames) {
+                    int count = 0;
+                    while (count++ < 1000) {
+                        try {
+                            cs.dropCollection(clName);
+                            break;
+                        } catch (BaseException e) {
+                            if (-190 != e.getErrorCode()) {
+                                throw e;
+                            }
+                        }
+                        Thread.sleep(200);
+                    }
+                }
+            }
+        } finally {
+            if (sdb != null) {
+                sdb.closeAllCursors();
+                sdb.close();
+            }
+        }
     }
 }
 
