@@ -1,6 +1,6 @@
 ##NAME##
 
-getPeerIP - Get IP adress of remote host.
+getPeerIP - Get IP address of remote host.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ Ssh
 
 ##DESCRIPTION##
 
-Get IP adress of remote host.
+Get IP address of remote host.
 
 ##PARAMETERS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return remote host's IP adress.
+On success, return IP address of remote host.
 
 On error, exception will be thrown.
 
@@ -40,7 +40,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var ssh = new Ssh( "192.168.20.72", "sdbadmin", "sdbadmin", 22 )
 ```
 
-* Get IP adress of remote host.
+* Get IP address of remote host.
 
 ```lang-javascript
 > ssh.getPeerIP()

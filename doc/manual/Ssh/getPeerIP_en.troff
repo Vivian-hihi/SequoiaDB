@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getPeerIP \- Get IP adress of remote host.
+getPeerIP \- Get IP address of remote host.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]getPeerIP()\f[]\f[]
@@ -13,13 +13,13 @@ getPeerIP \- Get IP adress of remote host.
 Ssh
 .SH DESCRIPTION
 .PP
-Get IP adress of remote host.
+Get IP address of remote host.
 .SH PARAMETERS
 .PP
 NULL
 .SH RETURN VALUE
 .PP
-On success, return remote host's IP adress.
+On success, return remote host's IP address.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -45,7 +45,7 @@ Suppose the local host is "192.168.20.71".
 \f[]
 .fi
 .IP \[bu] 2
-Get IP adress of remote host.
+Get IP address of remote host.
 .IP
 .nf
 \f[C]
