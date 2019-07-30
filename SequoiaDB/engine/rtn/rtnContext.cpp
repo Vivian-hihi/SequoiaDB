@@ -844,6 +844,7 @@ namespace engine
    }
 
    _rtnContextBuilder::_rtnContextBuilder()
+      : _contextInfoVector( RTN_CONTEXT_CAT_END )
    {
    }
 
@@ -889,15 +890,7 @@ namespace engine
 
    const _rtnContextInfo* _rtnContextBuilder::find( RTN_CONTEXT_TYPE type ) const
    {
-      ctx_info_iterator it = _contextInfoMap.find( type ) ;
-      if ( it != _contextInfoMap.end() )
-      {
-         return (*it).second ;
-      }
-      else
-      {
-         return NULL ;
-      }
+      return _contextInfoVector[type] ;
    }
 
    INT32 _rtnContextBuilder::_register( RTN_CONTEXT_TYPE type,
@@ -949,7 +942,7 @@ namespace engine
 
       try
       {
-         _contextInfoMap.insert( pair_type( contextInfo->type, contextInfo ) ) ;
+         _contextInfoVector[contextInfo->type] = contextInfo ;
       }
       catch( std::exception &e )
       {
@@ -962,16 +955,17 @@ namespace engine
 
    void _rtnContextBuilder::_releaseContextInfos()
    {
-      for ( ctx_info_iterator it = _contextInfoMap.begin() ;
-            it != _contextInfoMap.end() ;
-            it++ )
+      for ( ctx_info_iterator it = _contextInfoVector.begin() ;
+            it != _contextInfoVector.end(); ++it )
       {
-         _rtnContextInfo* info = (*it).second ;
-         SDB_ASSERT( NULL != info, "info is null" ) ;
-         SDB_OSS_DEL info ;
+         _rtnContextInfo* info = *it ;
+         if ( NULL != info )
+         {
+            SDB_OSS_DEL info ;
+         }
       }
 
-      _contextInfoMap.clear() ;
+      _contextInfoVector.clear() ;
    }
 
    _rtnContextBuilder* sdbGetRTNContextBuilder()

@@ -518,11 +518,10 @@ namespace engine
       void _releaseContextInfos() ;
 
    private:
-      typedef ossPoolMap<RTN_CONTEXT_TYPE, _rtnContextInfo*> CONTEXT_INFO_MAP;
+      typedef ossPoolVector<_rtnContextInfo*> CONTEXT_INFO_VECTOR;
 
-      CONTEXT_INFO_MAP _contextInfoMap ;
-      typedef std::pair<RTN_CONTEXT_TYPE, _rtnContextInfo*> pair_type ;
-      typedef CONTEXT_INFO_MAP::const_iterator ctx_info_iterator ;
+      CONTEXT_INFO_VECTOR _contextInfoVector ;
+      typedef CONTEXT_INFO_VECTOR::const_iterator ctx_info_iterator ;
    } ;
 
    _rtnContextBuilder* sdbGetRTNContextBuilder() ;
