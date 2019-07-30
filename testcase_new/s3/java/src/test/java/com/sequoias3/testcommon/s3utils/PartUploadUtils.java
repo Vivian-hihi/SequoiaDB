@@ -2,7 +2,6 @@ package com.sequoias3.testcommon.s3utils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -12,11 +11,11 @@ import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ListPartsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.PartListing;
+import com.amazonaws.services.s3.model.PartSummary;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.sequoias3.testcommon.S3TestBase;
@@ -62,8 +61,7 @@ public class PartUploadUtils extends S3TestBase {
 	 */
 	public static List<PartETag> partUpload(AmazonS3 s3Client, String bucketName, String key, String uploadId, File file){
 		return PartUploadUtils.partUpload( s3Client, bucketName, key, uploadId, file,PartUploadUtils.partLimitMinSize);
-	}
-	
+	}	
 	
 	public static List<PartETag> partUpload(AmazonS3 s3Client, String bucketName, String key, String uploadId, File file,long partSize){
 		List<PartETag> partEtags = new ArrayList<>();
@@ -76,11 +74,11 @@ public class PartUploadUtils extends S3TestBase {
 					.withBucketName(bucketName).withKey(key).withUploadId(uploadId);
 			UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
 			partEtags.add(uploadPartResult.getPartETag());
-			filePosition += partSize;	
+			filePosition += partSize;				
 		}	
 		return partEtags;
-	}
-
+	}	
+	
 	/**
 	 * complete multipart upload *
 	 * 
@@ -99,52 +97,35 @@ public class PartUploadUtils extends S3TestBase {
 				.withPartETags(partEtags);		
 		CompleteMultipartUploadResult result = s3Client.completeMultipartUpload(completeRequest);
 		return result;
-	}
-	
-	
+	}	
 	
 	/**
-	 * list objects with delimiter,than check the correctness of the returned
-	 * result *
-	 * 
+	 * list Parts,than check the partNumber of the returned result 
 	 * @author wuyan
 	 * @param s3Client
 	 * @param bucketName
-	 * @param delimiter
-	 *            specify the delimiter to list
-	 * @param expKeyList
-	 *            generated directory list,expected to match commonPrefixes
-	 * @param matchContentsList
-	 *            the keys expected to not match delimter
+	 * @param keyName	             
+	 * @param partEtags	             
+	 * @param uploadId	 *            
 	 */
-	public static void listObjectsWithDelimiter(AmazonS3 s3Client, String bucketName, String delimiter,
-			List<String> expKeyList, List<String> matchContentsList) {
-		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
-		request.withDelimiter(delimiter);
-		ListObjectsV2Result result = s3Client.listObjectsV2(request);
-		List<String> commonPrefixes = result.getCommonPrefixes();
-		Collections.sort(expKeyList);
-		Collections.sort(commonPrefixes);
-		Assert.assertEquals(commonPrefixes, expKeyList,
-				"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + expKeyList.toString());
-		// objects do not match delimiter are displayed in contents,num is 10
-		List<String> actContentsList = new ArrayList<>();
-		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		for (S3ObjectSummary os : objects) {
-			String key = os.getKey();
-			actContentsList.add(key);
+	public static void listPartsAndCheckPartNumbers( AmazonS3 s3Client, String bucketName, String keyName,List<PartETag> partEtags,String uploadId ){
+		List<Integer> expPartNumbersList = new ArrayList<>();	
+		for (PartETag expPartNumbers : partEtags) {
+			int partNumber = expPartNumbers.getPartNumber();			
+			expPartNumbersList.add(partNumber);
 		}
-
+		
+		ListPartsRequest request = new ListPartsRequest( bucketName, keyName, uploadId);
+		PartListing listResult = s3Client.listParts(request);
+		List<PartSummary> listParts = listResult.getParts();
+		List<Integer> actPartNumbersList = new ArrayList<>();		
+		for (PartSummary partNumbers : listParts) {
+			int partNumber = partNumbers.getPartNumber();			
+			actPartNumbersList.add(partNumber);
+		}
+		
 		// check the keyName
-		Collections.sort(actContentsList);
-		Collections.sort(matchContentsList);
-		Assert.assertEquals(actContentsList, matchContentsList, "actcontent:" + actContentsList.toString());
+		Assert.assertEquals(actPartNumbersList, expPartNumbersList, "actPartNumbersList:" + actPartNumbersList);
 	}
-
-	
-
-	
-	
-	
 	
 }
