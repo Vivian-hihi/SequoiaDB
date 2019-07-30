@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-toObj \- Convert BSONObj to string format.
+toString \- Convert BSONObj to string format.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]BSONObj.toString()\f[]\f[]
