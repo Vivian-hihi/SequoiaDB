@@ -365,4 +365,43 @@ public class TestTools {
 		int index = fullClassName.lastIndexOf(".");
 		return fullClassName.substring(index + 1);
 	}
+	
+	/**
+	 * read the entire file length after the seek, to compare the read result 
+	 * @author wuyan
+	 * @param sourceFile
+	 * @param size
+	 *           seek size.
+	 * @param outputFile
+	 *           seek read than write file
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public static void seekReadFile(String sourceFile, int size, String outputFile)
+			throws FileNotFoundException, IOException {
+		RandomAccessFile raf = null;
+		OutputStream fos = null;
+		try {
+			raf = new RandomAccessFile(sourceFile, "rw");
+			fos = new FileOutputStream(outputFile);
+			raf.seek(size);
+			int readSize = 0;
+			int off = 0;
+			int len = 1024 * 1024;
+			byte[] buf = new byte[off + len];
+			while (true) {
+				readSize = raf.read(buf, off, len);
+				if (readSize <= 0) {
+					break;
+				}
+				fos.write(buf, off, readSize);
+			}
+		} finally {
+			if (raf != null)
+				raf.close();
+			if (fos != null)
+				fos.close();
+		}
+	}
+
 }
