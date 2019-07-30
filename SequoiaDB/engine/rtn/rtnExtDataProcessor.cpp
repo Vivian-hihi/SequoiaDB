@@ -1480,41 +1480,53 @@ namespace engine
                                                          INT32 lockType,
                                                          rtnExtDataProcessor *&processor )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME ) ;
 
       UINT16 checkNum = 0 ;
       processor = NULL  ;
 
-      ossScopedLock lock( &_mutex, SHARED ) ;
-
-      for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
+      if ( !extName )
       {
-         if ( !_processors[i].isActive() )
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "External data name is invalid" ) ;
+         goto error ;
+      }
+
+      {
+         ossScopedLock lock( &_mutex, SHARED ) ;
+         for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
          {
-            continue ;
-         }
-         if ( _processors[i].isOwnedByExt( extName ) )
-         {
-            ossRWMutex *mutex = &_processorLocks[i] ;
-            if ( SHARED == lockType )
+            if ( !_processors[i].isActive() )
             {
-               mutex->lock_r() ;
+               continue ;
             }
-            else if ( EXCLUSIVE == lockType )
+            if ( _processors[i].isOwnedByExt( extName ) )
             {
-               mutex->lock_w() ;
+               ossRWMutex *mutex = &_processorLocks[i] ;
+               if ( SHARED == lockType )
+               {
+                  mutex->lock_r() ;
+               }
+               else if ( EXCLUSIVE == lockType )
+               {
+                  mutex->lock_w() ;
+               }
+               processor = &_processors[i] ;
+               break ;
             }
-            processor = &_processors[i] ;
-            break ;
-         }
-         if ( ++checkNum >= _number )
-         {
-            break ;
+            if ( ++checkNum >= _number )
+            {
+               break ;
+            }
          }
       }
 
-      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME ) ;
-      return SDB_OK ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS, "_rtnExtDataProcessorMgr::unlockProcessors" )
@@ -1527,22 +1539,21 @@ namespace engine
          return ;
       }
 
+      _aquireMetaLock( SHARED ) ;
+      for ( std::vector<rtnExtDataProcessor *>::iterator itr = processors.begin() ;
+            itr != processors.end(); ++itr )
       {
-         ossScopedLock lock( &_mutex, SHARED ) ;
-         for ( std::vector<rtnExtDataProcessor *>::iterator itr = processors.begin() ;
-               itr != processors.end(); ++itr )
+         ossRWMutex *mutex = &_processorLocks[ (*itr)->getID() ] ;
+         if ( SHARED == lockType )
          {
-            ossRWMutex *mutex = &_processorLocks[ (*itr)->getID() ] ;
-            if ( SHARED == lockType )
-            {
-               mutex->release_r() ;
-            }
-            else
-            {
-               mutex->release_w() ;
-            }
+            mutex->release_r() ;
+         }
+         else
+         {
+            mutex->release_w() ;
          }
       }
+      _releaseMetaLock( SHARED ) ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS ) ;
    }
 
@@ -1561,7 +1572,7 @@ namespace engine
             goto done ;
          }
 
-         ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+         _aquireMetaLock( EXCLUSIVE ) ;
          processor->reset() ;
          --_number ;
          if ( SHARED == lockType )
@@ -1572,6 +1583,7 @@ namespace engine
          {
             _processorLocks[id].release_w() ;
          }
+         _releaseMetaLock( EXCLUSIVE ) ;
       }
    done:
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR ) ;
@@ -1583,7 +1595,7 @@ namespace engine
                                                     INT32 lockType )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS ) ;
-      ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+      _aquireMetaLock( EXCLUSIVE ) ;
 
       for ( vector<rtnExtDataProcessor*>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
@@ -1605,6 +1617,7 @@ namespace engine
             _processorLocks[id].release_w() ;
          }
       }
+      _releaseMetaLock( EXCLUSIVE ) ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS ) ;
    }
 
@@ -1613,7 +1626,7 @@ namespace engine
                                             const CHAR *newName )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_RENAMECS ) ;
-      ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+      _aquireMetaLock( EXCLUSIVE ) ;
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
@@ -1623,6 +1636,7 @@ namespace engine
          }
       }
 
+      _releaseMetaLock( EXCLUSIVE ) ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_RENAMECS ) ;
       return SDB_OK ;
    }
@@ -1633,7 +1647,7 @@ namespace engine
                                             const CHAR *newCLName )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_RENAMECL ) ;
-      ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+      _aquireMetaLock( EXCLUSIVE ) ;
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
@@ -1643,8 +1657,54 @@ namespace engine
          }
       }
 
+      _releaseMetaLock( EXCLUSIVE ) ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_RENAMECL ) ;
       return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR__AQUIREMETALOCK, "_rtnExtDataProcessorMgr::_aquireMetaLock" )
+   void _rtnExtDataProcessorMgr::_aquireMetaLock( OSS_LATCH_MODE lockType )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR__AQUIREMETALOCK ) ;
+      BOOLEAN locked = FALSE ;
+   retry:
+      if ( EXCLUSIVE == lockType )
+      {
+         locked = _mutex.try_get() ;
+      }
+      else if ( SHARED == lockType )
+      {
+         locked = _mutex.try_get_shared() ;
+      }
+      else
+      {
+         goto done ;
+      }
+
+      if ( !locked )
+      {
+         ossSleep( 10 ) ;
+         goto retry ;
+      }
+
+   done:
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR__AQUIREMETALOCK ) ;
+      return ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR__RELEASEMETALOCK, "_rtnExtDataProcessorMgr::_releaseMetaLock" )
+   void _rtnExtDataProcessorMgr::_releaseMetaLock( OSS_LATCH_MODE lockType )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR__RELEASEMETALOCK ) ;
+      if ( EXCLUSIVE == lockType )
+      {
+         _mutex.release() ;
+      }
+      else if ( SHARED == lockType )
+      {
+         _mutex.release_shared() ;
+      }
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR__RELEASEMETALOCK ) ;
    }
 
    rtnExtDataProcessorMgr* rtnGetExtDataProcessorMgr()

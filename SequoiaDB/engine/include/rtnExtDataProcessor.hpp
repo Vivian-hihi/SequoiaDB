@@ -254,6 +254,10 @@ namespace engine
                       const CHAR *newCLName ) ;
 
    private:
+      void _aquireMetaLock( OSS_LATCH_MODE lockType ) ;
+      void _releaseMetaLock( OSS_LATCH_MODE lockType ) ;
+
+   private:
       // Mutex to protect meta data change.
       ossSpinSLatch        _mutex ;
       UINT16               _number ;
