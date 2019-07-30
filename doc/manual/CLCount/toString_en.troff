@@ -7,7 +7,7 @@
 toString \- Convert CLCount to string format( It's a hidden method ).
 .SH SYNOPSIS
 .PP
-\f[B]clcount.toString()\f[]
+\f[B]CLCount.toString()\f[]
 .SH CATEGORY
 .PP
 CLCount

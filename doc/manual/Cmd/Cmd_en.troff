@@ -7,7 +7,7 @@
 Cmd \- Create a Command object.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]var cmd = new Cmd() / var cmd = remoteObj.getCmd()\f[]\f[]
+\f[B]\f[I]new Cmd() / remoteObj.getCmd()\f[]\f[]
 .SH CATEGORY
 .PP
 Cmd

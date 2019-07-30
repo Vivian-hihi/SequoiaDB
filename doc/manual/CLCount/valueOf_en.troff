@@ -7,7 +7,7 @@
 valueOf \- Return the original value of the CLCount( It's a hidden method ).
 .SH SYNOPSIS
 .PP
-\f[B]clcount.valueOf()\f[]
+\f[B]CLCount.valueOf()\f[]
 .SH CATEGORY
 .PP
 CLCount

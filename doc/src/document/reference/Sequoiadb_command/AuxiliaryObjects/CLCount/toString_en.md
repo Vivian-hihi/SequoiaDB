@@ -4,7 +4,7 @@ toString - Convert CLCount to string format( It's a hidden method ).
 
 ##SYNOPSIS##
 
-**clcount.toString()**
+**CLCount.toString()**
 
 ##CATEGORY##
 

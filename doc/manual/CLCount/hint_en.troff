@@ -8,7 +8,7 @@
 hint \- Traverse the result set by the specified index.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]clcount.hint(<hint>)\f[]\f[]
+\f[B]\f[I]CLCount.hint(<hint>)\f[]\f[]
 .SH CATEGORY
 .PP
 CLCount
@@ -58,7 +58,7 @@ The database does not care about the field of the object, but instead uses its
 field value to confirm the name of the index to use.
 When the field value is null, it indicates a table scan.
 The format of the parameter "hint" are as follow:
-\f[C]{\ "":\ null\ }、\ {\ "":\ "indexname"\ }、\ {\ "0":\ "indexname0",\ "1":\ "indexname1",\ "2":\ "indexname2"\ }\f[].
+\f[C]{\ "":\ null\ },\ {\ "":\ "indexname"\ },\ {\ "0":\ "indexname0",\ "1":\ "indexname1",\ "2":\ "indexname2"\ }\f[].
 .RE
 .PP
 .IP "2." 3

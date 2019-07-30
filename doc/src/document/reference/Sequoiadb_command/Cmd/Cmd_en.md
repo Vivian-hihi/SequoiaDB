@@ -4,7 +4,7 @@ Cmd - Create a Command object.
 
 ##SYNOPSIS##
 
-***var cmd = new Cmd() / var cmd =  [remoteObj](reference/Sequoiadb_command/Remote/Remote.md).getCmd()***
+***new Cmd() / [remoteObj](reference/Sequoiadb_command/Remote/Remote.md).getCmd()***
 
 ##CATEGORY##
 

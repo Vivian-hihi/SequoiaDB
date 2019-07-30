@@ -4,6 +4,8 @@ BSON 对象。
 
 ##语法##
 
+**BSONObj(\<json\>) / new BSONObj(\<json\>)**
+
 **BSONObj.toJson()**
 
 **BSONObj.toObj()**
@@ -11,6 +13,14 @@ BSON 对象。
 **BSONObj.toString()**
 
 ##方法##
+
+###BSONObj(\<json\>) / new BSONObj(\<json\>)###
+
+创建 BSONObj 对象
+
+| 参数名 | 参数类型 | 默认值 | 描述      | 是否必填 |
+| ------ | -------- | ------ | --------- | -------- |
+| json   | JSON     | ---    | json 数据 | 是       |
 
 ###toJson()###
 
@@ -70,3 +80,12 @@ BSON 对象。
    }
    ```
 
+* BSONObj 对象也可以自己创建。
+
+   ```lang-javascript
+   > var newBSONObj = new BSONObj( { name: "fang" } )
+   > newBSONObj
+   {
+      "name": "fang"
+   }
+   ```

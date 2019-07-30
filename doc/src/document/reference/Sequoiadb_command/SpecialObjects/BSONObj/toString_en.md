@@ -1,6 +1,6 @@
 ##NAME##
 
-toObj - Convert BSONObj to string format.
+toString - Convert BSONObj to string format.
 
 ##SYNOPSIS##
 
