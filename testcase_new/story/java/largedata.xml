@@ -27,7 +27,7 @@
    <test name="fulltext" parallel="classes" thread-count="5">
       <packages>
          <!--  全文索引用例count会卡住，暂时屏蔽 -->
-         <!-- <package name="com.sequoiadb.fulltext.largedata" /> -->
+         <package name="com.sequoiadb.fulltext.largedata" />
       </packages>    
    </test>
    
