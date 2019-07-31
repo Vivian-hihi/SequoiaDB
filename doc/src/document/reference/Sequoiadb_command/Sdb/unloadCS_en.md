@@ -1,6 +1,6 @@
 ##NAME##
 
-unloadCS -  Unload the specific collection space.
+unloadCS -  Unload the specific collection space from memory.
 
 ##SYNOPSIS##
 
@@ -12,24 +12,14 @@ Sdb
 
 ##DESCRIPTION##
 
-Unload the specific collection space.
+Unload the specific collection space from memory.
 
 ##PARAMETERS##
 
 | Name    | Type   | Default | Description                          | Required or not |
 | ------- | ------ | ------- | ------------------------------------ | --------------- |
 | csName  | string | ---     | collection space name                | yes             |
-| options | string | NULL    | specify collection space information | not             |
-
-The detail description of 'options' parameter is as follow:
-
-| Attributes | Type   | Description            | Required or not |
-| ---------- | ------ | ---------------------- | --------------- |
-| GroupID    | int    | replication group ID   | not             |
-| GroupName  | string | replication group name | not             |
-| NodeID     | int    | node ID                | not             |
-| HostName   | string | hostname               | not             |
-| svcname    | string | the port of the node   | not             |
+| options | string | NULL    | [command position parameter](reference/Sequoiadb_command/Overview/location.md) | not             |
 
 >**Note:**
 
@@ -47,8 +37,49 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Unload the specific collection space named "foo".(Suppose the specific collection space named "foo" existes)
+* Query data. (Suppose the specific collection space named "foo" existes and the current sequoiadb is started in standalone mode)
+
+```lang-javascript
+> db.foo.bar.find()
+{
+   "_id": {
+     "$oid": "5d36c9d5c6b1cee56abefc7e"
+   },
+   "name": "fang",
+   "age": 18
+}
+```  
+
+* Unload the collection space named foo from memory.
 
 ```lang-javascript
 > db.unloadCS( "foo" )
 ```
+
+* Query data.
+
+```lang-javascript
+> db.foo.bar.find()
+uncaught exception: -34
+Collection space does not exist
+``` 
+
+* Load the collection space named into memory.
+
+```lang-javascript
+> db.loadCS( "foo" )
+```
+
+* Query data again.
+
+```lang-javascript
+> db.foo.bar.find()
+{
+   "_id": {
+     "$oid": "5d36c9d5c6b1cee56abefc7e"
+   },
+   "name": "fang",
+   "age": 18
+}
+```
+

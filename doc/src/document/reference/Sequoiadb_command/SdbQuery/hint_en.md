@@ -22,7 +22,7 @@ Traversing the result set by the specified index.
 
 > **Note:** 
  
-> 1. The parameter "hint" is a Json object. The database does not care about the field of the object, but instead uses its field value to confirm the name of the index to use. When the field value is null, it indicates a table scan. The format of the parameter "hint" are as follow: ```{ "": null }、 { "": "indexname" }、 { "0": "indexname0", "1": "indexname1", "2": "indexname2" }```.
+> 1. The parameter "hint" is a Json object. The database does not care about the field of the object, but instead uses its field value to confirm the name of the index to use. When the field value is null, it indicates a table scan. The format of the parameter "hint" are as follow: ```{ "": null }, { "": "indexname" }, { "0": "indexname0", "1": "indexname1", "2": "indexname2" }```.
 
 > 2. Before SequoiaDB-v3.0, When an index is specified by using hint(), once the database traverses to an index that can be used (or a table scan), it stops traversing and moves to the index (or table scan) for data lookup. 
 

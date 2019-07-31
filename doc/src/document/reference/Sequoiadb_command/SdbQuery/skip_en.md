@@ -4,7 +4,7 @@ skip - Specify which record the result set will return from.
 
 ##SYNOPSIS##
 
-***query.skip( \[num\] )***
+***query.skip( \<num\> )***
 
 ##CATEGORY##
 

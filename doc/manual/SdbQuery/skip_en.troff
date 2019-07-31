@@ -8,7 +8,7 @@
 skip \- Specify which record the result set will return from.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]query.skip( [num] )\f[]\f[]
+\f[B]\f[I]query.skip( <num> )\f[]\f[]
 .SH CATEGORY
 .PP
 SdbQuery

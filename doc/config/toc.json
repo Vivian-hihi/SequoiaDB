@@ -2551,6 +2551,12 @@
                            "en": "explain()"
                         },
                         {
+                           "id": 1564555250,
+                           "file": "flags",
+                           "cn": "flags()",
+                           "en": "flags()"
+                        },                        
+                        {
                            "id": 1537862277,
                            "file": "getQueryMeta",
                            "cn": "getQueryMeta()",

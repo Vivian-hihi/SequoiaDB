@@ -1,6 +1,6 @@
 ##语法##
 
-***query.skip( [num] )***
+***query.skip( \<num\> )***
 
 ##类别##
 

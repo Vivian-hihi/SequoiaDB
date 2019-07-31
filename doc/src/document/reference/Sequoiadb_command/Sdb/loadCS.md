@@ -8,24 +8,14 @@ Sdb
 
 ##描述##
 
-加载集合空间。
+加载集合空间到内存。
 
 ##参数##
 
 | 参数名  | 参数类型 | 默认值  | 描述               | 是否必填 |
 | ------- | -------- | ------- | ------------------ | -------- |
 | csName  | string   | ---     | 集合空间名         | 是       |
-| options | string   | 空      | 指定集合空间的信息 | 否       |
-
-options 参数详细说明如下：
-
-| 属性      | 值类型 | 描述       | 是否<br>必填 |
-| --------- | ------ | ---------- | ------------ |
-| GroupID   | int    | 复制组 ID  | 否           |
-| GroupName | string | 复制组名称 | 否           |
-| NodeID    | int    | 节点 ID    | 否           |
-| HostName  | string | 主机名     | 否           |
-| svcname   | string | 节点的端口 | 否           |
+| options | string   | 空      | [命令位置参数](reference/Sequoiadb_command/Overview/location.md) | 否       |
 
 >**Note:**
 
@@ -44,9 +34,48 @@ options 参数详细说明如下：
 
 ##示例##
 
-* 加载集合空间 “foo” 。（假定存在集合空间 “foo” ）
+* 查询数据。（假定存在集合空间 “foo”，而且当前 SequoiaDB 是独立模式启动的）
 
-  ```lang-javascript
-  > db.loadCS( "foo" )
-  ```
-	
+   ```lang-javascript
+   > db.foo.bar.find()
+   {
+      "_id": {
+        "$oid": "5d36c9d5c6b1cee56abefc7e"
+      },
+      "name": "fang",
+      "age": 18
+   }
+   ```  
+
+* 卸载内存中的集合空间 “foo”。
+
+   ```lang-javascript
+   > db.unloadCS( "foo" )
+   ```
+
+* 查询数据。
+
+   ```lang-javascript
+   > db.foo.bar.find()
+   uncaught exception: -34
+   Collection space does not exist
+   ``` 
+
+* 加载集合空间 “foo” 到内存中。
+
+   ```lang-javascript
+   > db.loadCS( "foo" )
+   ```
+
+* 再次查询数据。
+
+   ```lang-javascript
+   > db.foo.bar.find()
+   {
+      "_id": {
+        "$oid": "5d36c9d5c6b1cee56abefc7e"
+      },
+      "name": "fang",
+      "age": 18
+   }
+   ```  
