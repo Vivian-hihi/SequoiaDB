@@ -39,7 +39,6 @@
          <package name="com.sequoiadb.subcl"/>
          <package name="com.sequoiadb.split"/>
          <package name="com.sequoiadb.sortOptimize"/>
-         <!-- 全文索引用例暂时不上CI -->
          <package name="com.sequoiadb.fulltext.parallel"/>
          <package name="com.sequoiadb.cappedcl" />
       </packages>      
