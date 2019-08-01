@@ -1747,27 +1747,6 @@ function commMakeDir( host, dir )
     } 
 }
 
-function getESIndexNames(csName, clName, textIndexName)
-{
-   // check cappedcl name is valid
-   var dbcl = db.getCS(csName).getCL(clName);
-   var cappedCLName = this.getCappedCLName(dbcl, textIndexName);
-
-   // get es index names
-   var esIndexNames = new Array();
-   var clGroupNames = commGetCLGroups(db, csName + "." + clName);
-   clGroupNames = removeDuplicateItems(clGroupNames);
-   // sort groupname, in order to mapping esIndexNames <-> cappedCLs
-   clGroupNames.sort();
-   for(var i in clGroupNames)
-   {
-      esIndexNames.push(FULLTEXTPREFIX + cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
-   }
-	
-   // if sharding cl, return all indices
-   return esIndexNames;
-}
-
 // common database connection
 try
 {
