@@ -4,7 +4,6 @@
 #include "client.hpp"
 #include <stdlib.h>
 ///< implement client
-
 using namespace sdbclient;
 
 static ossOnce errorCallbackOnce = OSS_ONCE_INIT ;
@@ -2202,7 +2201,7 @@ __METHOD_IMP(cl_bulk_insert)
    PYOBJECT *obj         = NULL ;
    PYOBJECT *list_object = NULL ;
    sdbCollection *cl     = NULL ;
-
+   bson::BSONObj pResult ;
    std::vector< bson::BSONObj > vec_bson ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OiO", &obj, &flags, &list_object ) )
@@ -2213,14 +2212,14 @@ __METHOD_IMP(cl_bulk_insert)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    MAKE_PYLIST_TO_VECTOR( list_object, vec_bson ) ;
-   rc = cl->bulkInsert( flags, vec_bson ) ;
+   rc = cl->insert( vec_bson, flags, &pResult ) ;
    if ( rc )
    {
       goto done ;
    }
 
 done:
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_PYBYTES_SIZE( rc, pResult.objdata(),pResult.objsize() ) ;
 }
 
 __METHOD_IMP(cl_insert)
@@ -2248,6 +2247,37 @@ __METHOD_IMP(cl_insert)
 done:
    DELETE_CPPOBJECT( object ) ;
    return MAKE_RETURN_INT_PYSTRING( rc, id.toString().c_str() ) ;
+}
+
+__METHOD_IMP(cl_insert_with_flags)
+{
+   INT32 rc                    = 0 ;
+   INT32 flags                 = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_object       = NULL ;
+   PYOBJECT *bson_pResult       = NULL ;
+   sdbCollection *cl           = NULL ;
+   const bson::BSONObj *object = NULL ;
+   bson::BSONObj pResult ;
+   if ( !PARSE_PYTHON_ARGS( args, "OOi", &obj, &bson_object, &flags ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_object, object ) ;
+
+   rc = cl->insert( *object, flags, &pResult ) ;
+
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( object ) ;
+   return MAKE_RETURN_INT_PYBYTES_SIZE( rc, pResult.objdata(),pResult.objsize() ) ;
 }
 
 __METHOD_IMP(cl_update)
@@ -2520,17 +2550,16 @@ done:
 __METHOD_IMP(cl_create_index)
 {
    INT32 rc                       = 0 ;
-   BOOLEAN is_unique              = 0 ;
-   BOOLEAN is_enforced            = 0 ;
-   INT32 sort_buffer_size         = 0 ;
    PYOBJECT *obj                  = NULL ;
    PYOBJECT *bson_index_def       = NULL ;
+   PYOBJECT *bson_options         = NULL ;
    sdbCollection *cl              = NULL ;
    const bson::BSONObj *index_def = NULL ;
+   const bson::BSONObj *options   = NULL ;
    const CHAR *name               = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOsiii", &obj, &bson_index_def, &name,
-      &is_unique, &is_enforced, &sort_buffer_size ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OOsO", &obj, &bson_index_def, &name,
+      &bson_options ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -2538,8 +2567,8 @@ __METHOD_IMP(cl_create_index)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_index_def, index_def ) ;
-
-   rc = cl->createIndex( *index_def, name, is_unique, is_enforced, sort_buffer_size ) ;
+   CAST_PYBSON_TO_CPPBSON(bson_options, options ) ;
+   rc = cl->createIndex( *index_def, name, *options ) ;
    if ( rc )
    {
       goto done ;
@@ -5050,6 +5079,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_split_async_by_percent",       cl_split_async_by_percent,       METH_VARARGS},
    {"cl_bulk_insert",                  cl_bulk_insert,                  METH_VARARGS},
    {"cl_insert",                       cl_insert,                       METH_VARARGS},
+   {"cl_insert_with_flags",            cl_insert_with_flags,            METH_VARARGS},
    {"cl_update",                       cl_update,                       METH_VARARGS},
    {"cl_upsert",                       cl_upsert,                       METH_VARARGS},
    {"cl_delete",                       cl_del,                          METH_VARARGS},

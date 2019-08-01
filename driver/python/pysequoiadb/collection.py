@@ -283,14 +283,22 @@ class collection(object):
 
         Parameters:
            Name        Type       Info:
-           flags       int        0 or 1, see Info as below.
+           flags       int        See Info as below.
            records     list/tuple The list of inserted records.
+        Return values:
+           If flags equal 2 and record inserted successfully. will return a dict which contains the "_id"
+           of the successfully inserted records. eg: { '_id': [{ '$oid': '5d3ff650e87b5f4c7ee7d37c'},
+           { '$oid': '5d3ff650e87b5f4c7ee7d37d'}]}. else return a empty dict. eg: {}.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         Info:
-           flags : 0 or 1.
-           0 : stop insertting when hit index key duplicate error
-           1 : continue insertting records even though index key duplicate error hit
+           flags :
+           0 : While 0 is set(default to be 0), database will stop inserting when some records hit index
+               key duplicate error.
+           1 : If some records hit index key duplicate error, database will skip them and go on inserting.
+           2 : Return the value of "_id" field in the record.
+           4 : If the record hit index key duplicate error, database will replace the existing record by
+               the inserting new record and then go on inserting.
         """
         if not isinstance(flags, int):
             raise SDBTypeError("flags must be an instance of int")
@@ -302,8 +310,11 @@ class collection(object):
             record = bson.BSON.encode(elem)
             container.append(record)
 
-        rc = sdb.cl_bulk_insert(self._cl, flags, container)
+        rc, bson_string = sdb.cl_bulk_insert(self._cl, flags, container)
         raise_if_error(rc, "Failed to insert records")
+        result, size = bson._bson_to_dict(bson_string, dict, False,
+                                          bson.OLD_UUID_SUBTYPE, True)
+        return result
 
     def insert(self, record):
         """Insert a record into current collection.
@@ -312,7 +323,7 @@ class collection(object):
            Name      Type    Info:
            records   dict    The inserted record.
         Return values:
-           ObjectId of record inserted
+           A ObjectId object of record inserted. eg:  { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
@@ -324,6 +335,40 @@ class collection(object):
         raise_if_error(rc, "Failed to insert record")
         oid = bson.ObjectId(id_str)
         return oid
+
+    def insert_with_flags(self, record, flags=0):
+        """Insert a record into current collection.
+
+         Parameters:
+            Name      Type    Info:
+            records   dict    The inserted record.
+            flags     int     See Info as below.
+         Return values:
+            If flags equal 2 and record inserted successfully. will return a dict which contains the "_id"
+            of the successfully inserted record. eg: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }.
+            else return a empty dict. eg: {}
+         Exceptions:
+            pysequoiadb.error.SDBBaseError
+         Info:
+           flags :
+           0 : While 0 is set(default to be 0), database will stop inserting when some records hit index
+               key duplicate error.
+           1 : If some records hit index key duplicate error, database will skip them and go on inserting.
+           2 : Return the value of "_id" field in the record.
+           4 : If the record hit index key duplicate error, database will replace the existing record by
+               the inserting new record and then go on inserting.
+         """
+        if not isinstance(record, dict):
+            raise SDBTypeError("record must be an instance of dict")
+        if not isinstance(flags, int):
+            raise SDBTypeError("flags must be an instance of int")
+
+        bson_record = bson.BSON.encode(record)
+        rc, bson_string = sdb.cl_insert_with_flags(self._cl, bson_record, flags)
+        raise_if_error(rc, "Failed to insert record")
+        result, size = bson._bson_to_dict(bson_string, dict, False,
+                                          bson.OLD_UUID_SUBTYPE, True)
+        return result
 
     def update(self, rule, **kwargs):
         """Update the matching documents in current collection.
@@ -787,43 +832,60 @@ class collection(object):
 
     def create_index(self, index_def, idx_name, is_unique=False, is_enforced=False, buffer_size=64):
         """Create an index in current collection.
-
         Parameters:
            Name         Type  Info:
            index_def    dict  The dict object of index element.
-                                    e.g. {'name':1, 'age':-1}
+                            e.g. {'name':1, 'age':-1}
            idx_name     str   The index name.
            is_unique    bool  Whether the index elements are unique or not.
            is_enforced  bool  Whether the index is enforced unique This
-                                    element is meaningful when isUnique is set to
-                                    true.
+                            element is meaningful when isUnique is set to
+                            true.
            buffer_size  int   The size of sort buffer used when creating index,
-                                    the unit is MB, zero means don't use sort buffer
+                            the unit is MB, zero means don't use sort buffer
         Exceptions:
            pysequoiadb.error.SDBBaseError
+
+        """
+        if not isinstance(is_unique, bool):
+            raise SDBTypeError("is_unique must be an instance of bool")
+        if not isinstance(is_enforced, bool):
+            raise SDBTypeError("is_unique must be an instance of bool")
+        if not isinstance(buffer_size, int):
+            raise SDBTypeError("is_unique must be an instance of int")
+
+        options = {"Unique":is_unique, "Enforced":is_enforced, "NotNull":False, "SortBufferSize":buffer_size}
+        self.create_index_with_options(index_def, idx_name, options)
+
+
+    def create_index_with_options(self, index_def, idx_name, options=None):
+        """Create an index in current collection.
+
+        Parameters:
+           Name         Type     Info:
+           index_def    dict     The dict object of index element.
+                                    e.g. {'name':1, 'age':-1}
+           idx_name     str      The index name.
+           options      dict     The configuration options for index. visit this url:
+                                 "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-0"
+                                 to get more details.
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+
         """
         if not isinstance(index_def, dict):
             raise SDBTypeError("index definition must be an instance of dict")
         if not isinstance(idx_name, str_type):
             raise SDBTypeError("index name must be an instance of str_type")
-        if not isinstance(is_unique, bool):
-            raise SDBTypeError("is_unique must be an instance of bool")
-        if not isinstance(is_enforced, bool):
-            raise SDBTypeError("is_enforced must be an instance of bool")
-        if not isinstance(buffer_size, int):
-            raise SDBTypeError("is_enforced must be an instance of bool")
+        if options is None:
+            options = {}
+        elif not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
 
-        unique = 0
-        enforce = 0
         bson_index_def = bson.BSON.encode(index_def)
+        bson_options = bson.BSON.encode(options)
+        rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name, bson_options)
 
-        if is_unique:
-            unique = 1
-        if is_enforced:
-            enforced = 1
-
-        rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name,
-                                 is_unique, is_enforced, buffer_size)
         raise_if_error(rc, "Failed to create index")
 
     def get_indexes(self, idx_name=None):
