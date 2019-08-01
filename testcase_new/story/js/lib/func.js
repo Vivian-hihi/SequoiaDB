@@ -1747,6 +1747,168 @@ function commMakeDir( host, dir )
     } 
 }
 
+/* *****************************************************************************
+@discription: create domain
+@author: zhaoyu
+@parameter
+***************************************************************************** */
+function commCreateDomain( db, domainName, groupNames, options, ignoreExisted, message)
+{
+   var outmessage = "";
+   if ( options == undefined ) { options = {} ; }
+   if ( message !== undefined && message !== "" ) { var outmessage = ",message:" + message; }
+   if ( ignoreExisted == undefined ) { ignoreExisted = false ; }
+   try
+   {
+      return db.createDomain(domainName, groupNames, options);
+   }catch(e)
+   {
+      if(e !== -215 || !ignoreExisted)
+      {
+         println( "commCreateDomain, create domain: " + domainName + " failed: " + e + outmessage ) ;
+         throw e;
+      }
+   }
+   
+   try
+   {
+      return db.getDomain(domainName);
+   }
+   catch ( e )
+   {
+      println( "commCreateDomain, get domain: " + domainName + " failed: " + e + outmessage ) ;
+      throw e ;
+   }
+   
+   
+}
+
+/* *****************************************************************************
+@discription: drop domain
+@author: zhaoyu
+@parameter
+***************************************************************************** */
+function commDropDomain( db, domainName, ignoreNotExist, message)
+{
+   var outmessage = "";
+   if ( message !== undefined && message !== "" ) { var outmessage = ",message:" + message; }
+   if ( ignoreNotExist == undefined ) { ignoreNotExist = true ; }
+   try
+   {
+      var domain = db.getDomain(domainName);
+      var cursor = domain.listCollectionSpaces();
+      while(cursor.next())
+      {
+         var csName = cursor.current().toObj().Name;
+         db.dropCS(csName);
+      }
+      db.dropDomain(domainName); 
+   }catch(e)
+   {
+      if( e !== -214 || !ignoreNotExist)
+      {
+         println( "commDropDomain, drop domain: " + domainName + " failed: " + e + outmessage ) ;
+         throw e ;
+      }
+   }
+   
+}
+
+/* *****************************************************************************
+@discription: create procedure
+@author: zhaoyu
+@parameter
+***************************************************************************** */
+function commCreateProcedure( db, code, ignoreExisted, message)
+{
+   var outmessage = "";
+   if ( message !== undefined && message !== "" ) { var outmessage = ",message:" + message; }
+   if ( ignoreExisted == undefined ) { ignoreExisted = false ; }
+   try
+   {
+      db.createProcedure(code);
+   }catch(e)
+   {
+      if(e !== -38 || !ignoreExisted)
+      {
+         println( "commCreateProcedure, create procedure: " + code + " failed: " + e + outmessage ) ;
+         throw e;
+      }
+   }
+}
+
+/* *****************************************************************************
+@discription: remove procedure
+@author: zhaoyu
+@parameter
+***************************************************************************** */
+function commRemoveProcedure( db, functionName, ignoreNotExist, message)
+{
+   var outmessage = "";
+   if ( message !== undefined && message !== "" ) { var outmessage = ",message:" + message; }
+   if ( ignoreNotExist == undefined ) { ignoreNotExist = true ; }
+   try
+   {
+      db.removeProcedure(functionName); 
+   }catch(e)
+   {
+      if( e !== -233 || !ignoreNotExist)
+      {
+         println( "commRemoveProcedure, remove procedure: " + functionName + " failed: " + e + outmessage ) ;
+         throw e ;
+      }
+   }
+   
+}
+
+/* *****************************************************************************
+@discription: create userName
+@author: zhaoyu
+@parameter
+***************************************************************************** */
+function commCreateUsr( db, userName, password, options, ignoreExisted, message)
+{
+   var outmessage = "";
+   if ( options == undefined ) { options = {} ;}
+   if ( message !== undefined && message !== "" ) { var outmessage = ",message:" + message; }
+   if ( ignoreExisted == undefined ) { ignoreExisted = false ; }
+   try
+   {
+      db.createUsr(userName, password, options);
+   }catch(e)
+   {
+      if(e !== -295 || !ignoreExisted)
+      {
+         println( "commCreateUsr, create userName: " + userName + " failed: " + e + outmessage ) ;
+         throw e;
+      }
+   }
+}
+
+/* *****************************************************************************
+@discription: drop userName
+@author: zhaoyu
+@parameter
+***************************************************************************** */
+function commDropUsr( db, userName, password, ignoreNotExist, message)
+{
+   var outmessage = "";
+   if ( message !== undefined && message !== "" ) { var outmessage = ",message:" + message; }
+   if ( ignoreNotExist == undefined ) { ignoreNotExist = true ; }
+   try
+   {
+      db.dropUsr(userName, password); 
+   }catch(e)
+   {
+      if( e !== -300 || !ignoreNotExist)
+      {
+         println( "commDropUsr, drop userName: " + userName + " failed: " + e + outmessage ) ;
+         throw e ;
+      }
+   }
+   
+}
+
 // common database connection
 try
 {
