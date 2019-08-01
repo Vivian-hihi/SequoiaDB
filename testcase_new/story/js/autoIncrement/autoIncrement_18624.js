@@ -29,18 +29,18 @@ function main(){
    
    // 通过本coord和其它coord插入记录查询
    var coordList = getCoordNodeNames();
-   var countFlag = {count:0};
+   var insertCount = {count:0};
    var expList = [];
    for(var i in coordList){
 	   var dbcl = new Sdb(coordList[i]).getCS(COMMCSNAME).getCL(clName);
 	   var cur = dbcl.find().sort({"id1":1});
-	   insertData_1(dbcl, countFlag, expList);
+	   expList = insertAndGetExpList(cl, -1, 1, (-100 - insertCount.count + 1), (100 + insertCount.count - 1), expList, insertCount);
 	   checkRec( cur, expList );
    }
    
    // 修改自增属性字段，自增序列修改为自减序列、自减序列修改为自增序列，同时使修改前自增序列的CurrentValue不在修改后[MinValue,MaxValue]范围内
-   expSequenceObj_1 = {CacheSize:1, AcquireSize:1, Increment:1, StartValue:102, CurrentValue:(-100 - countFlag.count + 1), "MaxValue":100000, "MinValue":0};
-   expSequenceObj_2 = {CacheSize:1, AcquireSize:1, Increment:-1, StartValue:-202, CurrentValue:(100 + countFlag.count - 1), MinValue:-100000, MaxValue:-200};
+   expSequenceObj_1 = {CacheSize:1, AcquireSize:1, Increment:1, StartValue:102, CurrentValue:(-100 - insertCount.count + 1), "MaxValue":100000, "MinValue":0};
+   expSequenceObj_2 = {CacheSize:1, AcquireSize:1, Increment:-1, StartValue:-202, CurrentValue:(100 + insertCount.count - 1), MinValue:-100000, MaxValue:-200};
    cl.alter({AutoIncrement:{Field: "id1", CacheSize:1, AcquireSize:1, Increment:1, StartValue:102, MinValue:0, MaxValue:100000}});
    cl.alter({AutoIncrement:{Field: "id2", CacheSize:1, AcquireSize:1, Increment:-1, StartValue:-202, MinValue:-100000, MaxValue:-200}});
    checkSequence(sequenceName_1, expSequenceObj_1);
@@ -51,7 +51,7 @@ function main(){
       for(var i in coordList){
          var dbcl = new Sdb(coordList[i]).getCS(COMMCSNAME).getCL(clName);
          var cur = dbcl.find().sort({"id1":1});
-         insertData_1(dbcl, countFlag, expList);
+		 expList = insertAndGetExpList(cl, 1, -1, (-100 - insertCount.count + 1), (100 + insertCount.count - 1), expList, insertCount);
          checkRec( cur, expList );
       }
    }catch(e){
@@ -69,33 +69,26 @@ function main(){
    checkSequence(sequenceName_2, expSequenceObj_2);
    
    // 通过本coord和其它coord插入记录查询
-   var count = countFlag.count - 1;
+   insertCount.count = 0;
    for(var i in coordList){
       var dbcl = new Sdb(coordList[i]).getCS(COMMCSNAME).getCL(clName);
       var cur = dbcl.find().sort({"id1":1});
-      insertData_2(dbcl, countFlag, count, expList);
+	  insertAndGetExpList(dbcl, 1, -1, 110 + insertCount.count, -220 - insertCount.count, expList, insertCount)
       checkRec( cur, expList );
    }
    
    commDropCL( db, COMMCSNAME, clName, true, true );
 }
 
-function insertData_1(cl, countFlag, expList)
+function insertAndGetExpList(cl, increment_1, increment_2, currentValue_1, currentValue_2, expList, insertCount)
 {
-	for(var i = countFlag.count; i < countFlag.count + 3; i++){
-		cl.insert({a:i});
-		expList.push({a:i, id1:-100 - i, id2: 100 + i});
-	}
-	countFlag.count = countFlag.count + 3;
-	expList.sort(compare("id1"))
-}
-
-function insertData_2(cl, countFlag, count, expList)
-{
-	for(var i = countFlag.count; i < countFlag.count + 3; i++){
-		cl.insert({a:i});
-		expList.push({a:i, id1:110 + i - count, id2: -220 - i + count});
-	}
-	countFlag.count = countFlag.count + 3;
-	expList.sort(compare("id1"))
+   for(var i = 0; i < 3; i++){
+      cl.insert({a: i});
+	  currentValue_1 = currentValue_1 + increment_1;
+	  currentValue_2 = currentValue_2 + increment_2;
+      expList.push({a: i, id1: currentValue_1, id2: currentValue_2});
+	  insertCount.count++;
+   }
+   expList.sort(compare("id1"));
+   return expList;
 }
