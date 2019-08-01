@@ -25,7 +25,8 @@ function main(db)
    var groups = commGetGroups(db);
    var groupName1 = groups[0][0].GroupName;
    var groupName2 = groups[1][0].GroupName;
-   var domain = createDomain( db, domainName, groupName1, groupName2 );
+   commDropDomain( db, domainName);
+   var domain = commCreateDomain( db, domainName, [ groupName1, groupName2 ], { AutoSplit: true });
    
    //´´½¨cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
@@ -73,25 +74,12 @@ function checkDatas( csName2, clName)
    }  
 }
 
-function createDomain( db, domainName, groupName1, groupName2 )
-{
-   try 
-   {
-      var mydomain = db.createDomain( domainName, [ groupName1, groupName2 ], { AutoSplit: true } );
-      return mydomain;
-   }
-   catch( e )
-   {
-      throw buildException("createDomain fail", e, "create", "success", e); 
-   }
-}
-
 function afterClear( db, domainName, csName2 )
 {
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
    try 
    {
-      db.dropDomain( domainName );
+      commDropDomain( db, domainName);
    }
    catch( e )
    {

@@ -165,35 +165,6 @@ function clSetAttributes( cl, options )
 }
 
 /* *****************************************************************************
-@discription: delete domain
-@author: wuyan
-@parameter
-	dmName:the domain to be deleted
-   ignoreExisted: default = true, value: true/false
-   message: user define message, default:""
-***************************************************************************** */
-function dropDomain( db, dmName, ignoreNotExist, message )
-{
-   if ( ignoreNotExist == undefined ) { ignoreNotExist = true ; }
-   if ( message == undefined ) { message = "" ; }
-   try
-   {
-      db.dropDomain( dmName ) ;
-   }
-   catch( e )
-   {
-      if ( e === -214 && ignoreNotExist )
-      {
-         // think right
-      }
-      else
-      {
-      	throw buildException("drop domain",e,message,"dropDomain sucessfully","dropDomain fail");
-      }
-   }
-}
-
-/* *****************************************************************************
 @discription: insert data into cl
 @author: wangkexin
 @parameter

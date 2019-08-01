@@ -300,22 +300,3 @@ function truncateMixtureTable( db, mainCLName, subCSNamePre,  subCLNum, recordNu
    }
 }
 */
-
-function truncateDropDomain( db, domainName, ignoreNotExist )
-{
-   try
-   {
-      db.dropDomain( domainName );
-   }
-   catch( e )
-   {
-      if( -214 == e && ignoreNotExist == true )
-      {
-         // ingore not exist domain
-      }
-      else
-      {
-         throw buildException( funcName, e );
-      }
-   }
-}

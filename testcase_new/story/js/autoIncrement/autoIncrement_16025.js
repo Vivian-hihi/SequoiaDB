@@ -18,18 +18,8 @@ function main()
    var fieldName = "id";
    var domainName = "domain_16025";
    commDropCS( db, csName);
-   try
-   {
-      db.dropDomain(domainName); 
-   }catch(e)
-   {
-      if(-214 !== e)
-      {
-         throw e;
-      }
-   }
-   
-   db.createDomain(domainName,[dataGroupNames[0], dataGroupNames[1]], {AutoSplit: true});
+   commDropDomain( db, domainName);
+   commCreateDomain( db, domainName, [dataGroupNames[0], dataGroupNames[1]], {AutoSplit: true});
    commCreateCS( db, csName, null, null, {Domain:domainName} );
    var cacheSize = 20;
    var acquireSize = 11;
@@ -101,6 +91,6 @@ function main()
    println("---check insert after alter autoIncrement success");
    
    commDropCS( db, csName);
-   db.dropDomain(domainName);
+   commDropDomain( db, domainName);
 }
 main()

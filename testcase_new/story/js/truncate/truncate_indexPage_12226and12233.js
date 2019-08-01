@@ -74,7 +74,7 @@ function testTruncateMixtureCLMultiIndex( db )
       commDropCS( db, subCS1, true, "drop sub cs1 begin" );
       commDropCS( db, subCS2, true, "drop sub cs2 begin" );
       commDropCS( db, mainCS, true, "drop main cs begin" );
-      truncateDropDomain( db, domainName, true );
+      commDropDomain( db, domainName);
       // create domain
       var domainRGs = new Array();
       var groups = commGetGroups( db );
@@ -82,7 +82,7 @@ function testTruncateMixtureCLMultiIndex( db )
       {
          domainRGs[i] = groups[i][0]["GroupName"];
       }
-      db.createDomain( domainName, domainRGs, {"AutoSplit": true} );
+      commCreateDomain( db, domainName, domainRGs, {AutoSplit:true});
 
       var mainCL = commCreateCLByOption( db, mainCS, COMMCLNAME, mainCLOption, true,
                                          true, false, "create collection begin" );
@@ -118,7 +118,7 @@ function testTruncateMixtureCLMultiIndex( db )
       commDropCS( db, subCS1, false, "drop sub cs1 end" );
       commDropCS( db, subCS2, false, "drop sub cs2 end" );
       commDropCS( db, mainCS, false, "drop main cs end" );
-      truncateDropDomain( db, domainName, false);
+      commDropDomain( db, domainName);
    }
    catch( e )
    {

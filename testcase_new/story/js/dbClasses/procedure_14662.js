@@ -188,7 +188,8 @@ function evalSdbDomain( db )
 {
    var groups = getDataGroups( db ) ;
    var domainName = "testDomain14662" ;
-   db.createDomain( domainName, groups ) ;
+   commDropDomain( db, domainName);
+   commCreateDomain( db, domainName, groups); 
    
    db.createProcedure( function getSdbDomain( host, svc, domainname ) {
                        var sdb = new Sdb( host, svc ) ;
@@ -204,7 +205,7 @@ function evalSdbDomain( db )
    }
    db.removeProcedure( "getSdbDomain" ) ;
    
-   db.dropDomain( domainName ) ;
+   commDropDomain( db, domainName);
 }
    
 function evalCLCount( db )

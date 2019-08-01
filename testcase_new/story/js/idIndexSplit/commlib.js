@@ -130,22 +130,3 @@ function checkSplitResult( srcGroup, desGroup, clName, csName )
 	   throw "SPLIT_ERROR";	
 	}	
 }
-
-
-function dropDomain( domName, csName )
-{
-	//drop CS before
-   commDropCS( db, csName );
-   
-   try
-	{
-	   db.dropDomain( domName );
-	}catch( e )
-	{
-		if( e !== -214 )
-		{
-			println( "drop domain failed!" ) ;
-         throw e ;
-		}	
-	} 
-}

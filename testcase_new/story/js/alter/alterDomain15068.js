@@ -28,8 +28,8 @@ function main()
    var group1 = allGroupName[0];
    var group2 = allGroupName[1];
    
-   var domain = db.createDomain(domainName, [group1,group2],{AutoSplit:true});
-   
+   commDropDomain( db, domainName);
+   var domain = commCreateDomain( db, domainName, [group1,group2], {AutoSplit:true}); 
    
    println("---domain alter AutoSplit to false---");
    domain.setAttributes({AutoSplit: false})
@@ -46,7 +46,7 @@ function main()
    checkCL( [group1,group2], csName, clName );
    
    db.dropCS( csName );
-   db.dropDomain( domainName );
+   commDropDomain( db, domainName);
    println("---end the test---");
 }
 

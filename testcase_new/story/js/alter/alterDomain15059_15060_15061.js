@@ -27,7 +27,8 @@ function main()
    var group2 = allGroupName[1];
    var group3 = allGroupName[2];
    
-   var domain = db.createDomain(domainName, [group1]);
+   commDropDomain( db, domainName);
+   var domain = commCreateDomain( db, domainName, [group1]);
    
    println("---domain add groups---");
    domain.addGroups({Groups:[group2,group3]});
@@ -45,7 +46,7 @@ function main()
    domain.setGroups({Groups:[group2]});
    checkDomain( db, domainName, [group2], undefined, undefined );
    
-   db.dropDomain( domainName );
+   commDropDomain( db, domainName);
    println("---end the test---");
 }
 

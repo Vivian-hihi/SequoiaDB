@@ -22,7 +22,8 @@ function main( db )
    }
    
    var domainName = "testDomain14669" ;
-   var domain = db.createDomain( domainName, groups ) ;
+   commDropDomain( db, domainName);
+   var domain = commCreateDomain( db, domainName, groups); 
    
    var obj = domain.listGroups().next().toObj() ;
    
@@ -50,4 +51,6 @@ function main( db )
                groupArr[i]["GroupName"] ) ;
       }
    }
+   
+   commDropDomain( db, domainName);
 }

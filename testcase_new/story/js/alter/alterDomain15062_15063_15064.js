@@ -29,7 +29,8 @@ function main()
    var group2 = allGroupName[1];
    var group3 = allGroupName[2];
    
-   var domain = db.createDomain(domainName, [group1,group2],{AutoSplit:true});
+   commDropDomain( db, domainName);
+   var domain = commCreateDomain( db, domainName, [group1,group2], {AutoSplit:true});
    db.createCS(csName,{Domain:domainName})
    //commCreateCL( db, csName, clName, 1, false, true, false, "create CL in the begin" );
    var clOption = {ShardingKey:{a:1},ShardingType:'hash'};
@@ -60,7 +61,7 @@ function main()
    checkDomain( db, domainName, [group1,group2,group3], true, undefined );
    
    db.dropCS( csName );
-   db.dropDomain( domainName );
+   commDropDomain( db, domainName);
    println("---end the test---");
 }
 

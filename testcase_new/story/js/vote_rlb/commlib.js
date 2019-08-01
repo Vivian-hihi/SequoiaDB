@@ -101,19 +101,8 @@ function havePrimInGroup( db, groupName )
          }
       }
       // Drop Domain in the beginning
-      try
-      {
-         db.dropDomain( domname ) ;
-      }
-      catch( e )
-      {
-         if( -214 != e )
-         {
-            //println( "Failed to drop domain in the beginning, rc = " + e ) ;
-            throw e ;
-         }
-      }
-      db.createDomain( domname, [ groupName ] ) ;
+      commDropDomain( db, domname);
+      commCreateDomain( db, domname, [ groupName ]);
       var cs = db.createCS( csname, { "Domain" : domname } ) ;
       var cl = cs.createCL( clname ) ;
       cl.insert( { "testPrim" : "CannotInsertData" } ) ;

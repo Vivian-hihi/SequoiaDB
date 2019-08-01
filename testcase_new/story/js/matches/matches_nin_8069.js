@@ -14,7 +14,7 @@ function main()
       var cl = readyCL( clName );
    	
    	var dataType = [ "int", "double", "null", "string", "bool", 
-   	                 "long", "oid", "regex", "binary", "date", "timestamp" ];   //length: 11
+   	                 "long", "oid", "regex", "binary", "date", "timestamp" ]; 
    	var rawData  = [ {int:    -2147483648}, 
    	                 {double: -1.7E+308}, 
    	                 {null:   null}, 
@@ -25,8 +25,7 @@ function main()
    	                 {regex:  {"$regex": "^rg", "$options": "i"}}, 
    	                 {binary: {"$binary": "aGVsbG8gd29ybGQ=", "$type": "1"}}, 
    	                 {date:   {"$date": "2038-01-18"}}, 
-   	                 {timestamp: {"$timestamp": "2038-01-18-23.59.59.999999"}},
-   	                 {tmp: 1} ];  //length: 12
+   	                 {timestamp: {"$timestamp": "2038-01-18-23.59.59.999999"}}];
       insertRecs( cl, rawData, dataType );
       
       var rc = findRecs( cl, rawData, dataType );

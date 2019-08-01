@@ -32,15 +32,14 @@ function createCSAndCheckResult( domainNameLen, groupName )
    var csName = "cs4511";
    var clName = "cl4511"
    commDropCS( db, csName, true, "clear cs in the beginning." )
-   clearDomain( domainName );
-   
-   db.createDomain( domainName, [ groupName ] );   
+   commDropDomain( db, domainName);
+   commCreateDomain( db, domainName, [ groupName ]);   
    var cs = db.createCS( csName , { Domain: domainName}); 
    cs.createCL( clName );  
    checkCSInDomain(domainName, csName);  
 	
 	commDropCS( db, csName, false, "clear cs in the ending." ); 
-	clearDomain( domainName );
+	commDropDomain( db, domainName);
 }
 
 function getRandomString(len) 
@@ -66,22 +65,6 @@ function getRandomString(len)
    }
    
    return str;
-}
-
-function clearDomain( domainName )
-{
-   try
-   {
-      db.dropDomain( domainName );      
-   }
-   catch ( e )
-	{	
-	   //-214:Domain does not exist
-	   if ( -214 != e )
-	   {
-	      throw buildException("check create cs",e);		
-	   }	   
-	}
 }
 
 function checkCSInDomain(domainName, csName)

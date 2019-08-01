@@ -25,11 +25,11 @@ function main(  )
          
          // Drop CS and domain in the beginning
          println("---begin to drop cs and domain in the beginning");
-         clearDomain( db, domainName ) ;
+         commDropDomain( db, domainName);
         
          //create  domain cs cl 
-         println("---begin to create  a domain with contain two group ");    
-         db.createDomain( domainName, [ group[0],group[1] ] ) ;
+         println("---begin to create  a domain with contain two group ");  
+         commCreateDomain( db, domainName, [ group[0],group[1] ]);  
          commCreateCS( db, newCS, false, "create CS specify domain",
                        { "Domain" : domainName } ) ;
          db.getCS( newCS ).createCL(newCL, {Group:group[0]});
@@ -78,7 +78,7 @@ function main(  )
         
         
         //clean environment
-        clearDomain( db, domainName ) ;
+        commDropDomain( db, domainName);
         
      }
     
@@ -110,45 +110,3 @@ function getGroup( db )
       throw e ;
    }
 }
-// Clear domain in the beginning or in the end
-function clearDomain( db, domName )
-{
-
-   try
-   {   
-      var dom = db.getDomain(domName) ;
-      
-      println("---begin to get csName ") ;
-      var domCSarr = new Array() ;
-      var domCS = dom.listCollectionSpaces() ;
-      while( domCS.next() )
-      {
-         domCSarr.push( domCS.current().toObj()["Name"] ) ;
-      }
-      
-      println("---begin to drop collection space ");
-      if( "" != domCSarr )
-      {
-         for( var j = 0 ; j < domCSarr.length ; j++ )
-         {
-            db.dropCS( domCSarr[j] ) ;
-                  
-         }
-      }
-      
-      println("---begin to drop domain ");         
-      db.dropDomain(domName);
-   }
-   catch(e)
-   {
-      if( e !=-214)
-      {
-         throw buildException("check return code","",
-                        'db.getDomain(domName)',
-                        "throw -214 or did not throw error",e) ;
-      }
-   }
-
-
-}
-      

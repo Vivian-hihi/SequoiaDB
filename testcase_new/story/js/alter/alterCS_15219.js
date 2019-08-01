@@ -18,11 +18,11 @@ function main(db)
         
 	   //clean environment before test
 	   commDropCS( db, csName, true, "drop cs" ); 
-	   dropDomain( db, domainName, true, "Delete domain before test" ); 	     
+	   commDropDomain( db, domainName);     
   
       //create domain,cs,cl 
-      var groupNames = getGroupName(db);       
-      db.createDomain(domainName, [groupNames[0]]);              
+      var groupNames = getGroupName(db);
+      commCreateDomain( db, domainName, [groupNames[0]]);                 
       var dbcs = commCreateCS( db, csName, false, "create CS");                 
       
       //alter pageSize /domain/lobpageSize
@@ -35,7 +35,7 @@ function main(db)
       
       //clean
       commDropCS( db, csName, true, "clear cs" ); 
-      dropDomain( db, domainName, true, "Delete domain after test" ); 	  
+      commDropDomain( db, domainName); 
    }
    catch( e )
    {

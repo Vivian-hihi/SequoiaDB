@@ -23,9 +23,8 @@ function main()
    var srcGroup = groupNames[0];
    var desGroup = groupNames[1];
 	
-   dropDomain( domName, csName );
-	
-   db.createDomain( domName, [srcGroup, desGroup] );
+   commDropDomain( db, domName);
+	commCreateDomain( db, domName, [srcGroup, desGroup]);
 	
    var dbcl = db.createCS( csName,{Domain:domName} ).createCL( clName,{ShardingKey:{a:1}, ShardingType:"hash",AutoIndexId:false,AutoSplit:true} )
 
@@ -43,7 +42,7 @@ function main()
    checkSplitResult( srcGroup, desGroup, clName, csName )
    
    commDropCS( db, csName )
-   dropDomain( domName, csName );
+   commDropDomain( db, domName);
 }
 
 main()

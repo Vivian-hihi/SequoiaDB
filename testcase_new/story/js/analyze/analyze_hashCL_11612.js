@@ -30,22 +30,13 @@ function main()
    
    //清理环境
    commDropCS( db, csName);
-   try
-   {
-      db.dropDomain(domainName);
-   }catch(e)
-   {
-      if(e !== -214)
-      {
-         throw e;
-      }
-   }
+   commDropDomain( db, domainName);
    
    //获取组
    var groups = getGroupName( db );
    
    //创建域
-   db.createDomain(domainName,[groups[0][0],groups[1][0]],{AutoSplit:true});
+   commCreateDomain( db, domainName, [groups[0][0],groups[1][0]],{AutoSplit:true});
    
    //创建切分表
    csOption = {Domain: domainName}
@@ -126,7 +117,7 @@ function main()
    
    //清理环境
    commDropCS( db, csName);
-   db.dropDomain(domainName);
+   commDropDomain( db, domainName);
    db1.close();
    //db2.close();
 

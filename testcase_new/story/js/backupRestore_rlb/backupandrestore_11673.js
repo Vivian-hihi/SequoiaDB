@@ -36,26 +36,11 @@ function()
    
    this.groupNames.push( backupandrestoreGroup ) ;
    this.domainName = "backup11673" ;
-   try
-   {
-      commDropCS( this.db, this.csName, true, "dropCS in the beginning") ; 
-      this.db.getDomain( this.domainName ) ;
-      this.db.dropDomain( this.domainName ) ;
-   }
-   catch( e )
-   {
-      if ( e !== -214)
-         throw new Error( "getDomain(" + this.domainName +"),err=" + e ) ;
-   }
    
-   try
-   {
-      this.db.createDomain( this.domainName, this.groupNames, {AutoSplit:true} ) ;
-   }
-   catch(e)
-   {
-      throw new Error( "createDomain(" + domainName +"),err=" + e ) ;
-   }
+   commDropCS( this.db, this.csName, true, "dropCS in the beginning") ; 
+   commDropDomain( this.db, this.domainName);
+   
+   commCreateDomain( this.db, this.domainName, this.groupNames, {AutoSplit:true});
    
    var csOpt = {Domain:this.domainName, LobPageSize:4096 } ;
    commCreateCS( this.db, this.csName, false, "create cs in begin", csOpt ) ;
@@ -124,16 +109,7 @@ function()
 {
    bakRemoveBackups( this.db, CHANGEDPREFIX, true ) ;
    commDropCS( this.db, this.csName, true, "dropCS in the end");
-   try
-   {
-      this.db.getDomain( this.domainName ) ;
-      this.db.dropDomain( this.domainName ) ;
-   }
-   catch( e )
-   {
-      if ( e !== -214)
-         throw new Error( "getDomain(" + this.domainName +"),err=" + e ) ;
-   }
+   commDropDomain( this.db, this.domainName);
    
 }  
    

@@ -45,7 +45,8 @@ function main()
             totalDataRGNames.push( totalDataRGArray[i][0].GroupName );
         }
 
-        db.createDomain( domainName, totalDataRGNames, {AutoSplit:true} );
+        commDropDomain( db, domainName);
+        commCreateDomain( db, domainName, totalDataRGNames, {AutoSplit:true});
         commCreateCS( db, csName, true, "", {Domain:domainName} );
 
         println( "start to create main cl." );
@@ -71,7 +72,7 @@ function main()
         //清除环境
         commDropCS( db, csName, true, "drop CS in the end" );
         removeDataRG( db, newDataRGNames );
-        db.dropDomain( domainName );
+        commDropDomain( db, domainName);
     }
 }
 

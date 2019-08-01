@@ -165,7 +165,7 @@ function testSplitClIndex( db )
       var cl = commCreateCLByOption( db, COMMCSNAME, clName, optionObj, true, false,
                                      "failed create collection in the beginning" );
       commDropIndex( cl, indexName, true );
-      try{ db.dropDomain( domainName ); }catch(e){}
+      commDropDomain( db, domainName);
       try
       {
          var groups = commGetGroups( db );
@@ -175,7 +175,7 @@ function testSplitClIndex( db )
             domainGroups[i] = groups[i][0].GroupName;
          }
          println( "group: " + domainGroups);
-         db.createDomain( domainName, domainGroups, {"AutoSplit": true} );
+         commCreateDomain( db, domainName, domainGroups, {"AutoSplit": true});
       }
       catch( e )
       {
@@ -206,7 +206,7 @@ function testSplitClIndex( db )
    {
       commDropCL( db, COMMCSNAME, clName, false, false,
                   "drop main collection end, " + funcName );
-      try{ db.dropDomain( domainName ); }catch(e){}
+      commDropDomain( db, domainName);
    }
 }
 

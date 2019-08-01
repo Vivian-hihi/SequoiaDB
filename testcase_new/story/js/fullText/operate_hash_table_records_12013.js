@@ -15,14 +15,15 @@ function main()
       println("Deploy one group");
       return;
    }
-
-   db.createDomain("testDomain", [groups[0][0]["GroupName"], groups[1][0]["GroupName"]])
+   domainName = "testDomain";
+   commDropDomain( db, domainName);
+   commCreateDomain( db, domainName, [groups[0][0]["GroupName"], groups[1][0]["GroupName"]]);
    var clName = COMMCLNAME + "_ES_12013";
    var csName = "cs12013";
    commDropCL(db, csName, clName, true, true);
    commDropCS( db, csName );
    
-   var dbcs = db.createCS(csName, {Domain : "testDomain"});
+   var dbcs = db.createCS(csName, {Domain : domainName});
    var dbcl = commCreateCLByOption( db, csName, clName, {ShardingType : "hash", ShardingKey : {a : 1}, AutoSplit : true} );
    
    //索引字段覆盖：非分区键
@@ -123,7 +124,7 @@ function main()
    println("================================full index on ShardingKey================================");
    
    commDropCS( db, csName );
-   db.dropDomain("testDomain");
+   commDropDomain( db, domainName);
 }
 
 main()

@@ -32,14 +32,14 @@ function main(db)
         
 	   //clean environment before test
 	   commDropCS( db, csName, true, "drop cs" ); 
-	   dropDomain( db, domainName1, true, "Delete domain before test" ); 
-	   dropDomain( db, domainName2, true, "Delete domain before test" ); 
-	   dropDomain( db, domainName3, true, "Delete domain before test" );       
+      commDropDomain( db, domainName1);
+      commDropDomain( db, domainName2);
+      commDropDomain( db, domainName3); 
   
-      //create domain,cs,cl       
-      db.createDomain(domainName1, [groupNames[0]]);   
-      db.createDomain(domainName2, groupNames); 
-      db.createDomain(domainName3, [groupNames[1]]);              
+      //create domain,cs,cl
+      commCreateDomain( db, domainName1, [groupNames[0]]);
+      commCreateDomain( db, domainName2, groupNames);
+      commCreateDomain( db, domainName3, [groupNames[1]]);              
       var dbcs = commCreateCS( db, csName, false, "create CS");
       var dbcl = commCreateCLByOption( db, csName, clName, {Group:groupNames[0]});              
       
@@ -67,9 +67,9 @@ function main(db)
       
       //clean
       commDropCS( db, csName, true, "clear cs" ); 
-      dropDomain( db, domainName1, true, "Delete domain after test" ); 
-	   dropDomain( db, domainName2, true, "Delete domain after test" ); 
-	   dropDomain( db, domainName3, true, "Delete domain after test" );           
+      commDropDomain( db, domainName1);
+      commDropDomain( db, domainName2);
+      commDropDomain( db, domainName3);         
    }
    catch( e )
    {

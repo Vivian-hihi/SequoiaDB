@@ -13,10 +13,12 @@ function main()
  
    var clName = COMMCLNAME + "_16008";
    var field = "id1";
+   var domainName = "domain_16008"; 
    
    commDropCL(db, COMMCSNAME, clName);
+   commDropDomain( db, domainName);
   
-   db.createDomain("domain1", [dataGroupNames[0]]);
+   commCreateDomain( db, domainName, [dataGroupNames[0]]);
    var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, { Group : dataGroupNames[0], ShardingKey : { a : 1 }, 
                                    ShardingType : "range", AutoIncrement : { Field : field, Increment : 2,
                                    StartValue : 2, MinValue : 2, MaxValue : 998, CacheSize : 10, 
@@ -42,8 +44,7 @@ function main()
    }
    
    commDropCL( db, COMMCSNAME, clName );
-   
-   db.dropDomain("domain1");
+   commDropDomain( db, domainName);
 }
  
 main();

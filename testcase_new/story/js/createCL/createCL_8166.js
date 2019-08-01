@@ -3,6 +3,7 @@
 @modify list:
    2014-2-24 wenjing wang  Init
 ***************************************************************************** */
+var domainname = CHANGEDPREFIX + "tdomain";
 function getDataGroupNames( db )
 {
    try
@@ -221,11 +222,11 @@ function checkremove(cl, recordnumber)
 // 水平分区表上使用该选项，让其自动切分，所以建在域中
 function createCLwithHorizontalpartitiontable(db, csname, clname)
 {
-   var domainname = CHANGEDPREFIX + "tdomain";
+   commDropDomain( db, domainname);
    try
    {
       var groupnames = getDataGroupNames(db);
-      db.createDomain(domainname, groupnames, {AutoSplit:true});
+      commCreateDomain( db, domainname, groupnames, {AutoSplit: true});
    }
    catch(e)
    {
@@ -266,7 +267,7 @@ function createCLwithHorizontalpartitiontable(db, csname, clname)
  
       cs.dropCL(clname);
       db.dropCS(csname);
-      db.dropDomain(domainname);
+      commDropDomain( db, domainname);
    }
    catch(e)
    {
@@ -331,6 +332,7 @@ function createCLwithVerticalpartitiontable(db, csname, clname)
 function clean(db,csname)
 {
    commDropCS(db,csname,true);
+   commDropDomain( db, domainname);
    db.close();
 }
 

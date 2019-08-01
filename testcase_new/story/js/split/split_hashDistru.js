@@ -418,7 +418,8 @@ function createDomainCSCL( csName, clName, domName, SDKEYNAME, partition )
 	
    //create domain
    println( "\n----begin to create domain in groups: "+groupsName );
-	var dom = db.createDomain( domName, groupsName, {AutoSplit:true} );
+   commDropDomain( db, domName);
+   var dom = commCreateDomain( db, domName, groupsName, {AutoSplit:true});
 	
 	//create cs
 	println( "\n----begin to create cs in domain" );
@@ -441,19 +442,7 @@ function ready( csName, domName )
    println( "\n----begin to execute ready()" );
    
    commDropCS( db, csName, true, "drop cs in ready" );
-   
-	try
-	{
-		db.dropDomain(domName);
-	}
-	catch(e)
-	{
-		if(e == -256)
-		{
-			println("drop domain in ready");
-			throw e;
-		}
-	}
+	commDropDomain( db, domName);
 }
 
 function clean( csName, domName )
@@ -461,19 +450,7 @@ function clean( csName, domName )
    println( "\n----begin to execute clean()" );
    
    commDropCS( db, csName, true, "drop cs in finally");
-    		
-	try
-	{
-		db.dropDomain(domName);
-	}
-	catch(e)
-	{
-		if(e != -214)
-		{
-			println("drop domain in finally");
-			throw e;
-		}
-	}
+	commDropDomain( db, domName);
 }
 
 function getRandomPartition()

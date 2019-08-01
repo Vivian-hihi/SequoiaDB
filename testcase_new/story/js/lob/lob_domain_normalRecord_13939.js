@@ -22,7 +22,8 @@ function main( db )
    try
    {
       var names = lobGetAllGroupNames( db ) ;
-      var domain = db.createDomain( domName, names, { "AutoSplit": true } ) ; // create domain
+      commDropDomain( db, domName);
+      var domain = commCreateDomain( db, domName, names, { "AutoSplit": true });
       println( "success to create domain" ) ;
       var cs = lobCreateCS( db, DOMCSNAME, domName ) ;
       println( "success to create collection space attach domain" ) ;
@@ -69,10 +70,7 @@ function main( db )
          commDropCS( db, DOMCSNAME, true, "drop collection in the end, correct" ) ;
       }
       
-      if ( typeof( domain ) !== "undefined" )
-      {
-         db.dropDomain( domName );
-      }
+      commDropDomain( db, domName);
      
       cmd.run( "rm -rf " + testFile ) ;
       if ( lobFileIsExist( getTestFile ) )

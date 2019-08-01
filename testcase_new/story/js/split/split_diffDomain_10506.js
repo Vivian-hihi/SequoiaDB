@@ -29,7 +29,8 @@ function main()
     var tarGrName_b = groupsInfo[1][0];
     var tarGrName_c = groupsInfo[2][0];
     
-    db.createDomain( domainName, [ srcGrName_a, tarGrName_b ],{ AutoSplit:true } );
+    commDropDomain( db, domainName);
+    commCreateDomain( db, domainName, [ srcGrName_a, tarGrName_b ],{ AutoSplit:true });
     println("autosplit srcGrName :" + srcGrName_a + " , tarGrName : " + tarGrName_b);
     commCreateCS(db, csName, false, "", {Domain:domainName});
     var options = {ShardingKey:{a:1},ShardingType:"hash",ReplSize:0};
@@ -76,7 +77,7 @@ function main()
     
     println("--clean cs and domain");
     commDropCS( db, csName, true, "drop CS in the end" );
-    db.dropDomain(domainName);
+    commDropDomain( db, domainName);
 }
 
 function checkCoordResult( db, csName, clName, expCount )

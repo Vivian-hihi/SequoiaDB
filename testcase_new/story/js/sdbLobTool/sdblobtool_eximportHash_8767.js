@@ -56,21 +56,13 @@ function main( db )
    group[1] = rg[1][0].GroupName ;
    group[2] = rg[2][0].GroupName ; 
    var lobdomain ;
-   try
-   {
-      lobdomain = db.createDomain( 'lobdomain', [ group[0], group[1] ], { AutoSplit:true } ) ;
-   }
-   catch( e )
-   {
-      if( e == -215 )
-         lobdomain = db.getDomain( 'lobdomain' ) ;
-      else
-         throw ">fail to create domain" ;
-   }
+   var domName = 'lobdomain';
+   commDropDomain( db, domName);
+   lobdomain = commCreateDomain( db, domName, [ group[0], group[1] ], { AutoSplit:true });
    
    try
    {
-      commCreateCS( db, CsName, true, "create testHashCS in the begining", { "Domain":"lobdomain" } ) ;
+      commCreateCS( db, CsName, true, "create testHashCS in the begining", { "Domain":domName} ) ;
       var expCl = commCreateCLByOption( db, CsName, expClName, 
                                 { ReplSize:0,"ShardingKey":{"OID":1}, "ShardingType":"hash", "Partition":2048 }, 
                                 true, true, true, "create export cl in the begining" ) ;
@@ -118,7 +110,7 @@ function main( db )
       commDropCL( db, CsName, impClName, true, true, "clean import CL in the end" ) ;
       commDropCL( db, CsName, expClName, true, true, "clean export CL in the end" ) ;
       commDropCS( db, CsName, true, "clean the collection space in the end" ) ;
-      db.dropDomain( "lobdomain" ) ;
+      commDropDomain( db, domName);
    }
      
 }

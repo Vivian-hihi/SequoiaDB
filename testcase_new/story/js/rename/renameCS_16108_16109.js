@@ -23,12 +23,16 @@ function main(db)
    var csName3 = CHANGEDPREFIX+"_rename16108_3";
    var clName = CHANGEDPREFIX+"rename16108";
    
-   var domain = createDomain( db, domainName );
-   
    //´´½¨cs cl
    commDropCS( db, csName1, true, "ignoreNotExist is true" );
    commDropCS( db, csName2, true, "ignoreNotExist is true" );
    commDropCS( db, csName3, true, "ignoreNotExist is true" );
+   commDropDomain( db, domainName);
+   
+   var groups = commGetGroups(db);
+   var groupName1 = groups[0][0].GroupName;
+   var groupName2 = groups[1][0].GroupName;
+   var domain = commCreateDomain( db, domainName, [ groupName1, groupName2 ], { AutoSplit: true });
    var varCS = commCreateCS( db, csName1, true, "create CS", {Domain:domainName} );
    var varCL = commCreateCLByOption( db, csName1, clName, {}, true, false, "create cl in the beginning" )
    insertData(varCL, 100);
@@ -62,22 +66,6 @@ function testRenameCS16109( db, domain, csName2, csName3, clName )
    checkDatas( csName3, clName);
 }
 
-function createDomain( db, domainName)
-{
-   var groups = commGetGroups(db);
-   var groupName1 = groups[0][0].GroupName;
-   var groupName2 = groups[1][0].GroupName;
-   try 
-   {
-      var mydomain = db.createDomain( domainName, [ groupName1, groupName2 ], { AutoSplit: true } );
-      return mydomain;
-   }
-   catch( e )
-   {
-      throw buildException("createDomain fail", e, "create", "success", e); 
-   }
-}
-
 function checkDatas( csName3, clName)
 {   
    try
@@ -103,7 +91,7 @@ function afterClear( db, domainName, csName3 )
    commDropCS( db, csName3, true, "ignoreNotExist is true" );
    try 
    {
-      db.dropDomain( domainName );
+      commDropDomain( db, domainName);
    }
    catch( e )
    {

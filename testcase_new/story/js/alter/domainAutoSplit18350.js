@@ -28,11 +28,11 @@ function main()
 
    //clean environment before test
    commDropCS( db, csName, true, "drop CS in the beginning." );
-   dropDomain( db, domainName, true, "drop Domain in the beginning." );
+   commDropDomain( db, domainName);
 
    var group1 = allGroupName[0];
    var group2 = allGroupName[1];
-   db.createDomain( domainName, [ group1, group2 ], { AutoSplit: false } );
+   commCreateDomain( db, domainName, [ group1, group2 ],{AutoSplit:false});
    db.createCS( csName, { Domain : domainName } );
    var cl_1 = commCreateCL( db, csName, clName1 );
 
@@ -59,5 +59,5 @@ function main()
 
    //clean
    commDropCS( db, csName, true, "clean cs" );
-   dropDomain( db, domainName );
+   commDropDomain( db, domainName);
 }

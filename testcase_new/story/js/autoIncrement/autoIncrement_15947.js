@@ -17,18 +17,9 @@ function main()
    var field = "id";
    var domainName = "domain_15947";
    commDropCS( db, csName);
-   try
-   {
-      db.dropDomain(domainName); 
-   }catch(e)
-   {
-      if(-214 !== e)
-      {
-         throw e;
-      }
-   } 
+   commDropDomain( db, domainName);
    
-   db.createDomain(domainName,[dataGroupNames[0], dataGroupNames[1]], {AutoSplit: true});
+   commCreateDomain( db, domainName, [dataGroupNames[0], dataGroupNames[1]],{AutoSplit:true});
    commCreateCS( db, csName, null, null, {Domain:domainName} );
    var cacheSize = 10;
    var acquireSize = 1;
@@ -57,6 +48,6 @@ function main()
    checkRec(actR, expR);
    
    commDropCS( db, csName);
-   db.dropDomain(domainName);
+   commDropDomain( db, domainName);
 }
 main()
