@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.CommLib;
@@ -114,6 +115,10 @@ public class FullText15880 extends SdbTestBase {
                     db.sync(options);
                 }
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
             }
         }
     }

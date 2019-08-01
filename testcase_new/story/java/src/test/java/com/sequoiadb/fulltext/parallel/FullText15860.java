@@ -192,7 +192,7 @@ public class FullText15860 extends SdbTestBase {
                     }
                     cur.close();
                 } catch (BaseException e) {
-                    if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                    if (e.getErrorCode() != -6 && e.getErrorCode() != -52 && e.getErrorCode() != -321) {
                         e.printStackTrace();
                         Assert.fail(e.getMessage());
                     }

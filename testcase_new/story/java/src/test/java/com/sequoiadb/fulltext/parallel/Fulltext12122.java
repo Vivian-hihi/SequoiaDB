@@ -225,7 +225,11 @@ public class Fulltext12122 extends SdbTestBase {
                     insertObjs.add((BSONObject) JSON.parse("{ a: '" + strA + "', b: 'new_insert_12122_" + i + "'}"));
                 }
                 cl.insert(insertObjs, 0);
-            } finally {
+            } catch (BaseException e) {
+                if (-321 != e.getErrorCode()) {
+                    Assert.fail("actual exception: " + e.getErrorCode());
+                }
+            }finally {
                 System.out.println(this.getClass().getName().toString() + " insert end at:"
                     + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
@@ -251,6 +255,10 @@ public class Fulltext12122 extends SdbTestBase {
                 new BasicBSONObject("a", "fulltext12122_after_update"));
                 BSONObject matcher = new BasicBSONObject("id", new BasicBSONObject("$lt", 2000));
                 cl.update(matcher, modifier, null);
+            } catch (BaseException e) {
+                if (-321 != e.getErrorCode()) {
+                    Assert.fail("actual exception: " + e.getErrorCode());
+                }
             } finally {
                 System.out.println(this.getClass().getName().toString() + " update end at:"
                     + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
@@ -275,6 +283,10 @@ public class Fulltext12122 extends SdbTestBase {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 BSONObject matcher = new BasicBSONObject("id", new BasicBSONObject("$gt", 5000));
                 cl.delete(matcher);
+            } catch (BaseException e) {
+                if (-321 != e.getErrorCode()) {
+                    Assert.fail("actual exception: " + e.getErrorCode());
+                }
             } finally {
                 System.out.println(this.getClass().getName().toString() + " delete end at:"
                     + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));

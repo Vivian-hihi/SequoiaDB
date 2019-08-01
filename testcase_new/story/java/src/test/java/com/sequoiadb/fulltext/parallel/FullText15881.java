@@ -127,7 +127,7 @@ public class FullText15881 extends SdbTestBase {
                 cl2.alterCollection(options);
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
-                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190 && e.getErrorCode() != -321) {
                     throw e;
                 }
                 saveResult(-1, e);
