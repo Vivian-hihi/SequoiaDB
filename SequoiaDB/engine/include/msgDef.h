@@ -91,6 +91,7 @@
 #define FIELD_NAME_COLLECTIONSPACE           "CollectionSpace"
 #define FIELD_NAME_CATALOGINFO               "CataInfo"
 #define FIELD_NAME_SHARDINGKEY               "ShardingKey"
+#define FIELD_NAME_LOBSHARDINGKEY_FORMAT     "LobShardingKeyFormat"
 #define FIELD_NAME_COMPRESSED                "Compressed"
 #define FIELD_NAME_COMPRESSIONTYPE           "CompressionType"
 #define FIELD_NAME_STRICTDATAMODE            "StrictDataMode"

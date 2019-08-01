@@ -195,6 +195,12 @@ namespace engine
          return _catlogSet.findSubCLName( recordObj, subCLName ) ;
       }
 
+      INT32 getSubCLNameByLobID( const _utilLobID &lobID,
+                                 string &subCLName )
+      {
+         return _catlogSet.findLobSubCLName( lobID, subCLName ) ;
+      }
+
       INT32 getMatchSubCLs( const BSONObj &matcher,
                             CoordSubCLlist &subCLList )
       {
@@ -299,6 +305,11 @@ namespace engine
       const clsAutoIncSet& getAutoIncSet() const
       {
          return *( _catlogSet.getAutoIncSet() ) ;
+      }
+
+      INT32 getLobShardingKeyFormat()
+      {
+         return _catlogSet.getLobShardingKeyFormat() ;
       }
 
    private:

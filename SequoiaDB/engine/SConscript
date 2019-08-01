@@ -189,7 +189,8 @@ utilFiles = [
       "util/utilRenameLogger.cpp",
       "util/utilInsertResult.cpp",
       "util/utilResult.cpp",
-      "util/utilTypeCast.c"
+      "util/utilTypeCast.c",
+      "util/utilLobID.cpp"
       ]
 
 rtnFiles = [

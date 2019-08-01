@@ -1276,6 +1276,11 @@ namespace engine
    private:
       INT64 _contextID ;
       bson::BSONObj _query ;
+      bson::BSONObj _selector ;
+      bson::BSONObj _orderBy ;
+      bson::BSONObj _hint ;
+      INT64 _skip ;
+      INT64 _returnNum ;
       const CHAR *_fullName ;
    } ;
 

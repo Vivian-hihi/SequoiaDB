@@ -272,7 +272,7 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
          INT16 value2  = 0 ;
          INT32 i       = 0 ;
          INT32 ndigits = 0 ;
-         // size 
+         // size
          size = *(INT32*)&data[*off] ;
          ossEndianConvert4 ( size, newSize ) ;
          *(INT32*)&data[*off] = newSize ;
@@ -283,17 +283,17 @@ static BOOLEAN bson_endian_convert ( CHAR *data, off_t *off, BOOLEAN l2r )
          *(INT32*)&data[*off] = value4 ;
          *off += sizeof(INT32) ;
 
-         // scale 
+         // scale
          ossEndianConvert2 ( *(INT16*)&data[*off], value2 ) ;
          *(INT16*)&data[*off] = value2 ;
          *off += sizeof(INT16) ;
 
-         // weight 
+         // weight
          ossEndianConvert2 ( *(INT16*)&data[*off], value2 ) ;
          *(INT16*)&data[*off] = value2 ;
          *off += sizeof(INT16) ;
 
-         ndigits = ( ( l2r?size:newSize ) - SDB_DECIMAL_HEADER_SIZE ) / 
+         ndigits = ( ( l2r?size:newSize ) - SDB_DECIMAL_HEADER_SIZE ) /
                    ( sizeof( INT16 ) ) ;
          for ( i = 0 ; i < ndigits; i++ )
          {
@@ -2002,7 +2002,7 @@ INT32 clientBuildLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
    {
       packetLength += sizeof( MsgLobTuple ) ;
    }
-   
+
    if ( NULL != data )
    {
       packetLength += ossRoundUpToMultipleX( *len, 4 ) ;
@@ -2162,7 +2162,7 @@ INT32 clientBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 done:
    return rc ;
 error:
-   goto done ;   
+   goto done ;
 }
 
 INT32 clientBuildTruncateLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
@@ -2183,7 +2183,7 @@ INT32 clientBuildTruncateLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 done:
    return rc ;
 error:
-   goto done ;   
+   goto done ;
 }
 
 INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
@@ -2523,6 +2523,25 @@ error:
    goto done ;
 }
 
+INT32 clientBuildCreateLobIDMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                    const CHAR *pMeta, SINT32 flags, SINT16 w,
+                                    UINT64 reqID, BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsgCpp( ppBuffer, bufferSize,
+                              MSG_BS_LOB_CREATELOBID_REQ, pMeta,
+                              flags, w, -1, reqID,
+                              NULL, NULL, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 clientBuildRemoveLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                                   const CHAR *pMeta,
                                   SINT32 flags, SINT16 w,
@@ -2562,7 +2581,7 @@ INT32 clientBuildTruncateLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
 done:
    return rc ;
 error:
-   goto done ;   
+   goto done ;
 }
 
 INT32 clientBuildAuthCrtMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
@@ -2895,13 +2914,13 @@ INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
    {
       rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
-   }   
+   }
    rc = bson_finish( &obj ) ;
    if ( SDB_OK != rc )
    {
       rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
-   }   
+   }
 
    bsonSize = bson_size( &obj ) ;
    msgLen = sizeof( MsgAuthentication ) +

@@ -34,7 +34,6 @@
 using namespace bson ;
 namespace engine
 {
-   #define SPT_TIMESTAMP_NAME "Timestamp"
    #define SPT_TIMESTAMP_TIME_FIELD "_t"
    #define SPT_TIMESTAMP_SPECIAL_FIELD "$timestamp"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBTimestamp, construct )
@@ -84,6 +83,8 @@ namespace engine
                       localTm.tm_sec,                  // 6) Second (UINT32)
                       currentTime.microtm ) ;
          timeStr = buf ;
+         _t = t ;
+         _inc = currentTime.microtm ;
       }
       else if( arg.argc() == 1 )
       {
@@ -102,6 +103,9 @@ namespace engine
             detail = BSON( SPT_ERR << "Failed to convert string to time" );
             goto error ;
          }
+
+         _t = tm ;
+         _inc = usec ;
       }
       else if( arg.argc() == 2 )
       {
@@ -145,6 +149,8 @@ namespace engine
                       localTm.tm_sec,                  // 6) Second (UINT32)
                       inc ) ;
          timeStr = buf ;
+         _t = t ;
+         _inc = inc ;
       }
       else
       {
@@ -163,6 +169,17 @@ namespace engine
    {
       return SDB_OK ;
    }
+
+   time_t _sptDBTimestamp::getSeconds()
+   {
+      return _t ;
+   }
+
+   UINT32 _sptDBTimestamp::getInc()
+   {
+      return _inc ;
+   }
+
    INT32 _sptDBTimestamp::cvtToBSON( const CHAR* key, const sptObject &value,
                                      BOOLEAN isSpecialObj,
                                      BSONObjBuilder& builder,

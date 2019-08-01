@@ -52,6 +52,7 @@
 #include "dms.hpp"
 #include "utilUniqueID.hpp"
 #include "clsAutoIncItem.hpp"
+#include "utilLobID.hpp"
 
 using namespace bson ;
 
@@ -215,6 +216,8 @@ namespace engine
                                           VEC_GROUP_ID &vecGroup );
          INT32             findSubCLName ( const BSONObj &obj,
                                            string &subCLName ) ;
+         INT32             findLobSubCLName( const _utilLobID &lobID,
+                                             string &subCLName ) ;
          INT32             findSubCLNames( const BSONObj &matcher,
                                            vector< string > &subCLList,
                                            CLS_SUBCL_SORT_TYPE sortType =
@@ -277,6 +280,8 @@ namespace engine
          const clsAutoIncSet*    getAutoIncSet() const ;
          clsAutoIncSet*          getAutoIncSet() ;
 
+         INT32 getLobShardingKeyFormat() ;
+
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -310,6 +315,8 @@ namespace engine
          INT32             _removeItem( clsCatalogItem *item ) ;
          INT32             _addItem( clsCatalogItem *item ) ;
          void              _remakeGroupIDs() ;
+         INT32             _parseLobKeyFormat( const CHAR *formatStr ) ;
+         BOOLEAN           _checkLobBound( const BSONObj &boundObj ) ;
 
       private:
          INT32             _version ;
@@ -339,6 +346,8 @@ namespace engine
          std::multimap<UINT32, std::string> _subCLList ;
 
          clsAutoIncSet     _autoIncSet ;
+
+         INT32             _lobShardingKeyFormat ;
 
          BOOLEAN           _isMainCL ;
          std::string       _mainCLName ;
@@ -587,6 +596,26 @@ namespace engine
    /// cls catalog agent tool fucntions :
    INT32    clsPartition( const BSONObj &keyObj, UINT32 partitionBit, UINT32 internalV ) ;
    INT32    clsPartition( const bson::OID &oid, UINT32 sequence, UINT32 partitionBit ) ;
+
+   enum SDB_LOBKEY_FORMAT
+   {
+      //YYYYMMDD
+      SDB_TIME_DAY     = 0,
+
+      //YYYYMM
+      SDB_TIME_MONTH   = 1,
+
+      //YYYY
+      SDB_TIME_YEAR    = 2,
+
+      //invalid
+      SDB_TIME_INVALID = 100
+   } ;
+
+   BOOLEAN clsCheckAndParseLobKeyFormat( const CHAR *keyFormat,
+                                         INT32 *result = NULL ) ;
+   INT32 clsGetTimeStr( INT32 seconds, SDB_LOBKEY_FORMAT format,
+                        std::string &result ) ;
 
    /// global function
    clsShardingKeySite* clsGetShardingKeySite() ;

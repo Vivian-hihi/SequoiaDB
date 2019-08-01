@@ -84,10 +84,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__PREPARE, "_rtnLocalLobStream::_prepare" )
-   INT32 _rtnLocalLobStream::_prepare( const CHAR *fullName,
-                                       const bson::OID &oid,
-                                       INT32 mode,
-                                       _pmdEDUCB *cb )
+   INT32 _rtnLocalLobStream::_prepare( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__PREPARE ) ;
@@ -95,7 +92,7 @@ namespace engine
       const CHAR *clName = NULL ;
       _dmsCB = sdbGetDMSCB() ;
 
-      if ( SDB_LOB_MODE_READ != mode )
+      if ( SDB_LOB_MODE_READ != mode() )
       {
          rc = _dmsCB->writable( cb ) ;
          if ( rc )
@@ -106,12 +103,12 @@ namespace engine
          _writeDMS = TRUE ;
       }
 
-      rc = rtnResolveCollectionNameAndLock( fullName, _dmsCB,
+      rc = rtnResolveCollectionNameAndLock( getFullName(), _dmsCB,
                                             &_su, &clName, suID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to resolve collection name:%s",
-                 fullName ) ;
+                 getFullName() ) ;
          goto error ;
       }
 
@@ -123,7 +120,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _getAccessPrivilege( fullName, oid, mode ) ;
+      rc = _getAccessPrivilege( getFullName(), getOID(), mode() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to get lob privilege:%d", rc ) ;
@@ -140,8 +137,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__GETACCESSPRIVILEGE, "_rtnLocalLobStream::_getAccessPrivilege" )
    INT32 _rtnLocalLobStream::_getAccessPrivilege( const CHAR *fullName,
-                                                     const bson::OID &oid,
-                                                     INT32 mode )
+                                                  const bson::OID &oid,
+                                                  INT32 mode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__GETACCESSPRIVILEGE ) ;
@@ -546,7 +543,7 @@ namespace engine
 
       for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
             itr != tuples.end() ;
-            ++itr ) 
+            ++itr )
       {
          SDB_ASSERT( !itr->empty(), "can not be empty" ) ;
          if ( cb->isInterrupted() )
@@ -717,7 +714,7 @@ namespace engine
 
       for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
             itr != tuples.end() ;
-            ++itr ) 
+            ++itr )
       {
          SDB_ASSERT( !itr->empty(), "can not be empty" ) ;
          if ( cb->isInterrupted() )

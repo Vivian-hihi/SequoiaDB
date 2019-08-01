@@ -88,6 +88,8 @@ namespace engine
          netRouteAgent* getRouteAgent() ;
          pmdRemoteSessionMgr* getRSManager() ;
 
+         _MsgRouteID getRouteID() ;
+
       protected:
          virtual void onTimer ( UINT64 timerID, UINT32 interval ) ;
          INT32 _reply ( const NET_HANDLE &handle,

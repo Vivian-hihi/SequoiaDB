@@ -147,8 +147,11 @@ namespace engine
 
       INT32 _extendBuf( UINT32 len ) ;
 
+      const CHAR *_getRealCLName() ;
+
    private:
       std::string          _fullName ;
+      std::string          _subCLName ;
       bson::OID            _oid ;
       BSONObj              _metaObj ;
       INT32                _mode ;

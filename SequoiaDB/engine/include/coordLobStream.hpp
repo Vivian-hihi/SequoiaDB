@@ -63,10 +63,7 @@ namespace engine
                                       _rtnContextBuf *buf ) ;
 
       private:
-         virtual INT32 _prepare( const CHAR *fullName,
-                                 const bson::OID &oid,
-                                 INT32 mode,
-                                 _pmdEDUCB *cb ) ;
+         virtual INT32 _prepare( _pmdEDUCB *cb ) ;
 
          virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
                                       _dmsLobMeta &meta,
@@ -99,7 +96,7 @@ namespace engine
 
          virtual INT32 _completeLob( const _rtnLobTuple &tuple,
                                      _pmdEDUCB *cb ) ;
-    
+
          virtual INT32 _rollback( _pmdEDUCB *cb ) ;
 
          virtual INT32 _queryAndInvalidateMetaData( _pmdEDUCB *cb,
@@ -281,8 +278,17 @@ namespace engine
 
          void  _releaseEmptyPageBuf() ;
 
+         INT32 _getSubCLInfo( CoordCataInfoPtr &mainCLcataPtr,
+                              const _utilLobID &lobId, _pmdEDUCB *cb,
+                              CoordCataInfoPtr &subCLcataPtr ) ;
+
+         void _getGroupLst( CoordGroupList &groupLst ) ;
+         INT32 _getLobGroupID( const OID &oid, UINT32 sequence,
+                               UINT32 &groupID) ;
+
       private:
          CoordCataInfoPtr _cataInfo ;
+         CoordCataInfoPtr _subCLInfo ;
          CoordGroupMap    _mapGroupInfo ;
          UINT32           _pageSize ;
 
@@ -306,6 +312,10 @@ namespace engine
 
          CHAR*                _emptyPageBuf ;
          BOOLEAN              _mainStreamOpened ;
+
+         // is need check lobId in MainCL
+         // it's not need to check when cl is not MainCL anyway
+         BOOLEAN              _isNeedCheckLobID ;
    } ;
    typedef _coordLobStream coordLobStream ;
 

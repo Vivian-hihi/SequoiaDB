@@ -1,0 +1,100 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2018 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+   Source File Name = utilLobID.hpp
+
+   Descriptive Name =
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          2019/07/05  LinYoubin  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef UTIL_LOBID_HPP__
+#define UTIL_LOBID_HPP__
+
+#include "ossUtil.h"
+#include <string>
+
+using namespace std ;
+
+namespace engine
+{
+   /*
+      _utilLobID define
+   */
+
+   class _utilSerialAllocator : public SDBObject
+   {
+   public:
+      _utilSerialAllocator() ;
+      ~_utilSerialAllocator() ;
+
+   public:
+      UINT32 fetchAndIncrement() ;
+
+   private:
+      _ossAtomic32 _atomicSerial ;
+   } ;
+
+   class _utilLobID : public SDBObject
+   {
+   public:
+      _utilLobID() ;
+      ~_utilLobID() ;
+
+   public:
+      INT32 init( const CHAR *hexValue ) ;
+      INT32 init( INT64 seconds, UINT16 id ) ;
+
+      string toString() const ;
+
+      INT64 getSeconds() const ;
+
+   private:
+      void _setOddCheckBit() ;
+      INT32 _checkOddBit() ;
+      void _toSerialValue( UINT8 *serialValue ) const ;
+      INT32 _toSerialValue( const CHAR *hexValue, UINT8 *serialValue ) const ;
+      INT32 _fromHex( const CHAR c, INT32 &reslut ) const ;
+      BOOLEAN _bitIsOne( UINT8 value, INT32 pos ) ;
+
+   private:
+      INT64 _seconds ;   // just use lower 6 bytes
+      UINT8 _oddCheck ;  // just use lower 6 bits
+      UINT16 _id ;
+      UINT32 _serial ;   // serial number
+
+   private:
+      // 1's number is Odd or not in one byte
+      static INT32 _isOddArray[256] ;
+      static _utilSerialAllocator _serialAllocator ;
+   } ;
+}
+
+#endif // UTIL_LOBID_HPP__
+

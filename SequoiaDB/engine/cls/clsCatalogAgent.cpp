@@ -43,6 +43,7 @@
 #include "utilBsonHash.hpp"
 #include "utilCommon.hpp"
 #include "ossMemPool.hpp"
+#include "utilLobID.hpp"
 
 #include "../bson/lib/md5.hpp"
 #include "../bson/lib/md5.h"
@@ -445,6 +446,7 @@ namespace engine
       _maxSize = 0 ;
       _maxRecNum = 0 ;
       _overwrite = FALSE ;
+      _lobShardingKeyFormat = SDB_TIME_INVALID ;
    }
 
    _clsCatalogSet::~_clsCatalogSet ()
@@ -662,6 +664,8 @@ namespace engine
       _overwrite = FALSE ;
 
       _autoIncSet.clear() ;
+
+      _lobShardingKeyFormat = SDB_TIME_INVALID ;
 
       PD_TRACE_EXIT ( SDB__CLSCTSET__CLEAR ) ;
    }
@@ -1698,6 +1702,21 @@ namespace engine
          _mainCLName.clear() ;
       }
 
+      // LobShardingKeyFormat
+      _lobShardingKeyFormat = SDB_TIME_INVALID ;
+      ele = catSet.getField( CAT_LOBSHARDINGKEYFORMAT_NAME );
+      if ( ele.type() == String )
+      {
+         if ( !clsCheckAndParseLobKeyFormat( ele.valuestr(),
+                                             &_lobShardingKeyFormat ) )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Init %s[%s] failed, rc: %d",
+                    CAT_LOBSHARDINGKEYFORMAT_NAME, ele.valuestr(), rc ) ;
+            goto error ;
+         }
+      }
+
       // auto increment parse
       ele = catSet.getField( CAT_AUTOINCREMENT ) ;
       if ( !ele.eoo() )
@@ -2095,6 +2114,12 @@ namespace engine
    {
       return _isMainCL;
    }
+
+   INT32 _clsCatalogSet::getLobShardingKeyFormat()
+   {
+      return _lobShardingKeyFormat ;
+   }
+
    INT32 _clsCatalogSet::getSubCLList( vector< string > &subCLLst,
                                        CLS_SUBCL_SORT_TYPE sortType )
    {
@@ -2145,6 +2170,22 @@ namespace engine
       return _mainCLName ;
    }
 
+   BOOLEAN _clsCatalogSet::_checkLobBound( const BSONObj &boundObj )
+   {
+      if ( boundObj.nFields() != 1 )
+      {
+         return FALSE ;
+      }
+
+      BSONType type = boundObj.firstElement().type() ;
+      if ( type != String && type != MinKey && type != MaxKey )
+      {
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
    INT32 _clsCatalogSet::addSubCL ( const CHAR *subCLName,
                                     const BSONObj &lowBound,
                                     const BSONObj &upBound,
@@ -2165,6 +2206,18 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "failed to get low-bound(rc=%d)", rc );
       rc = genKeyObj( upBound, upBoundObj );
       PD_RC_CHECK( rc, PDERROR, "failed to get up-bound(rc=%d)", rc );
+
+      if ( _lobShardingKeyFormat != SDB_TIME_INVALID )
+      {
+         if ( !_checkLobBound(lowBoundObj) || !_checkLobBound(upBoundObj) )
+         {
+            rc = SDB_BOUND_INVALID ;
+            PD_LOG( PDERROR, "LowBound or upBound in invalid in lob MainCL:"
+                    "lowBound=%s,upBound=%s", lowBoundObj.toString().c_str(),
+                    upBoundObj.toString().c_str() ) ;
+            goto error ;
+         }
+      }
 
       // build new item
       pNewItem = SDB_OSS_NEW clsCatalogItem( FALSE, TRUE );
@@ -2355,6 +2408,68 @@ namespace engine
    clsAutoIncSet* _clsCatalogSet::getAutoIncSet()
    {
       return &_autoIncSet ;
+   }
+
+   INT32 _clsCatalogSet::findLobSubCLName( const _utilLobID &lobID,
+                                           string &subCLName )
+   {
+      INT32 rc = SDB_OK ;
+      time_t t = 0 ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+      struct tm tmpTm ;
+
+      if ( SDB_TIME_INVALID == _lobShardingKeyFormat )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Operation only support in a Lob MainCL:cl=%s,"
+                 "cata=%s", name(), toCataInfoBson().toString().c_str() ) ;
+         goto error ;
+      }
+
+      t = (time_t) lobID.getSeconds() ;
+      ossLocalTime( t, tmpTm ) ;
+      if ( SDB_TIME_DAY == _lobShardingKeyFormat )
+      {
+         ossSnprintf( szTimestmpStr, sizeof( szTimestmpStr ), "%04d%02d%02d",
+                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1, tmpTm.tm_mday ) ;
+      }
+      else if ( SDB_TIME_MONTH == _lobShardingKeyFormat )
+      {
+         ossSnprintf( szTimestmpStr, sizeof( szTimestmpStr ), "%04d%02d",
+                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1 ) ;
+      }
+      else if ( SDB_TIME_YEAR == _lobShardingKeyFormat )
+      {
+         ossSnprintf( szTimestmpStr, sizeof( szTimestmpStr ), "%04d",
+                      tmpTm.tm_year + 1900 ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unregconized lobShardingKeyFormat(%d):cl=%s,cata=%s",
+                 _lobShardingKeyFormat, name(),
+                 toCataInfoBson().toString().c_str() ) ;
+         goto error ;
+      }
+
+      builder.append( _shardingKey.firstElement().fieldName(),
+                      szTimestmpStr ) ;
+      obj = builder.obj() ;
+
+      rc = findSubCLName ( obj, subCLName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Operation only support in a Lob MainCL:cl=%s,"
+                 "cata=%s", name(), toCataInfoBson().toString().c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,
@@ -3449,7 +3564,7 @@ namespace engine
          curTime = ( UINT64 )time( NULL ) ;
       }
 
-      it = _vecNodes.begin() ;      
+      it = _vecNodes.begin() ;
       while ( it != _vecNodes.end() )
       {
          if ( it->_id.columns.nodeID == nodeID )
@@ -3905,4 +4020,36 @@ namespace engine
       return &s_skSite ;
    }
 
+   BOOLEAN clsCheckAndParseLobKeyFormat( const CHAR *keyFormat, INT32 *result )
+   {
+      BOOLEAN isValid = FALSE ;
+      INT32 tmpResult = SDB_TIME_INVALID ;
+
+      if ( NULL == keyFormat )
+      {
+         //do nothing here
+      }
+      else if ( ossStrcasecmp( keyFormat, "YYYYMMDD" ) == 0 )
+      {
+         tmpResult = SDB_TIME_DAY ;
+         isValid = TRUE ;
+      }
+      else if ( ossStrcasecmp( keyFormat, "YYYYMM" ) == 0 )
+      {
+         tmpResult = SDB_TIME_MONTH ;
+         isValid = TRUE ;
+      }
+      else if ( ossStrcasecmp( keyFormat, "YYYY" ) == 0 )
+      {
+         tmpResult = SDB_TIME_YEAR ;
+         isValid = TRUE ;
+      }
+
+      if ( isValid && NULL != result )
+      {
+         *result = tmpResult ;
+      }
+
+      return isValid ;
+   }
 }

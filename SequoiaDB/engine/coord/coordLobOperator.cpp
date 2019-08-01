@@ -38,6 +38,7 @@
 #include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "coordCB.hpp"
 
 using namespace bson ;
 
@@ -54,6 +55,50 @@ namespace engine
 
    _coordOpenLob::~_coordOpenLob()
    {
+   }
+
+   INT32 _coordOpenLob::_appendOID( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      OID oid ;
+      _utilLobID lobId ;
+      string newIDStr ;
+      _MsgRouteID routeId = sdbGetCoordCB()->getRouteID() ;
+
+      if ( MSG_INVALID_ROUTEID == routeId.value )
+      {
+         rc = SDB_INVALID_ROUTEID ;
+         PD_LOG( PDERROR, "Coord's route id must be exist "
+                 "when generate lob ID:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = lobId.init( ossGetCurrentMilliseconds() / 1000,
+                       routeId.columns.nodeID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create lob id:rc=%d", rc ) ;
+
+      newIDStr = lobId.toString() ;
+
+      try
+      {
+         oid.init( newIDStr ) ;
+         builder.appendElements( obj ) ;
+         builder.appendOID( FIELD_NAME_LOB_OID, &oid ) ;
+         obj = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to init Object id:exception=%s,rc=%d",
+                 e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_OPENLOB_EXE, "_coordOpenLob::execute" )
@@ -78,6 +123,12 @@ namespace engine
          goto error ;
       }
 
+      if ( !obj.hasElement( FIELD_NAME_LOB_OID ) )
+      {
+         rc = _appendOID( obj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to append lob id:rc=%d", rc ) ;
+      }
+
       // add last op info
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "Option:%s", obj.toString().c_str() ) ;
@@ -90,6 +141,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+
       rc = rtnOpenLob( obj, header->flags, cb, NULL, pStream,
                        0, contextID, *buf ) ;
       if ( SDB_OK != rc )
@@ -210,7 +262,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
-         goto error ;   
+         goto error ;
       }
 
       *buf = rtnContextBuf( data, readLen, 1 ) ;
@@ -253,7 +305,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
          goto error ;
-      } 
+      }
 
       // add last op info
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
@@ -302,7 +354,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
          goto error ;
-      } 
+      }
 
       // add last op info
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
@@ -541,6 +593,102 @@ namespace engine
             PD_LOG( PDERROR, "failed to close lob with exception:%d", rcTmp ) ;
          }
       }
+      goto done ;
+   }
+
+   /*
+      _coordCreateLobID implement
+   */
+   _coordCreateLobID::_coordCreateLobID()
+   {
+   }
+
+   _coordCreateLobID::~_coordCreateLobID()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_CREATELOBID_EXE, "_coordCreateLobID::execute" )
+   INT32 _coordCreateLobID::execute( MsgHeader *pMsg, pmdEDUCB *cb,
+                                     INT64 &contextID, rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_CREATELOBID_EXE ) ;
+
+      const MsgOpLob *header = NULL ;
+      BSONObj obj ;
+      BSONElement ele ;
+      contextID = -1 ;
+      INT64 seconds = 0 ;
+      _utilLobID lobID ;
+      _MsgRouteID routeId = sdbGetCoordCB()->getRouteID() ;
+
+      if ( MSG_INVALID_ROUTEID == routeId.value )
+      {
+         rc = SDB_INVALID_ROUTEID ;
+         PD_LOG( PDERROR, "Coord's route id must be exist "
+                 "when generate lob ID:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgExtractCreateLobIDRequest( (const CHAR*)pMsg, &header,
+                                         obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to extract create LobID msg:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( obj.isEmpty() )
+      {
+         seconds = ossGetCurrentMilliseconds() / 1000 ;
+      }
+      else
+      {
+         ele = obj.getField( FIELD_NAME_LOB_CREATETIME ) ;
+         if ( Timestamp != ele.type() )
+         {
+            PD_LOG( PDERROR, "Invalid type of field[%s]:obj=%s",
+                    FIELD_NAME_LOB_CREATETIME,
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         seconds = ele.timestampTime().millis / 1000 ;
+      }
+
+      rc = lobID.init( seconds, routeId.columns.nodeID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to ini lobID:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder builder ;
+         OID oid ;
+         oid.init( lobID.toString() ) ;
+         builder.appendOID( FIELD_NAME_LOB_OID, &oid ) ;
+         obj = builder.obj() ;
+
+         if ( NULL != buf )
+         {
+            *buf = obj ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to init Object id:exception=%s,rc=%d",
+                 e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_CREATELOBID_EXE, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 }

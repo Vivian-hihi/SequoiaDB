@@ -57,10 +57,7 @@ namespace engine
          return _su ;
       }
    private:
-      virtual INT32 _prepare( const CHAR *fullName,
-                              const bson::OID &oid,
-                              INT32 mode,
-                              _pmdEDUCB *cb ) ;
+      virtual INT32 _prepare( _pmdEDUCB *cb ) ;
 
       virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
                                    _dmsLobMeta &meta,
@@ -73,7 +70,7 @@ namespace engine
 
       virtual INT32 _getLobPageSize( INT32 &pageSize ) ;
 
-      virtual INT32 _write( const _rtnLobTuple &tuple, 
+      virtual INT32 _write( const _rtnLobTuple &tuple,
                             _pmdEDUCB *cb,
                             BOOLEAN orUpdate = FALSE ) ;
 

@@ -41,13 +41,15 @@ using namespace bson ;
 
 namespace engine
 {
-   RTN_CTX_AUTO_REGISTER(_rtnContextListLob, RTN_CONTEXT_LIST_LOB, "LIST_LOB")
+   RTN_CTX_AUTO_REGISTER(_rtnContextListLob, RTN_CONTEXT_LIST_LOB, "LIST_LOB") ;
 
    _rtnContextListLob::_rtnContextListLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _buf( NULL ),
     _bufLen( 0 ),
-    _fetchLobHead( TRUE )
+    _fetchLobHead( TRUE ),
+    _skip( 0 ),
+    _returnNum( -1 )
    {
 
    }
@@ -68,26 +70,43 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTLISTLOB_OPEN, "_rtnContextListLob::open" )
-   INT32 _rtnContextListLob::open( const BSONObj &condition,
-                                   _pmdEDUCB *cb )
+   INT32 _rtnContextListLob::open( const BSONObj &query,
+                                   const BSONObj &selector, const BSONObj &hint,
+                                   INT64 skip, INT64 returnNum, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLISTLOB_OPEN ) ;
       BSONElement fullName ;
 
-      fullName = condition.getField( FIELD_NAME_COLLECTION ) ;
+      _query = query.getOwned() ;
+      _selector = selector.getOwned() ;
+      _hint = hint.getOwned() ;
+      _skip = skip ;
+      _returnNum = returnNum ;
+
+      if ( !_selector.isEmpty() )
+      {
+         rc = _selectorParser.loadPattern ( _selector ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to load selector pattern[%s], rc=%d",
+                      _selector.toString().c_str(), rc ) ;
+      }
+
+      rc = _matchTree.loadPattern( _query ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load matchTree pattern[%s], rc=%d",
+                   _query.toString().c_str(), rc ) ;
+
+      fullName = _hint.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != fullName.type() )
       {
-         PD_LOG( PDERROR, "invalid collection name in condition:%s",
-                 condition.toString( FALSE, TRUE ).c_str() ) ;
+         PD_LOG( PDERROR, "invalid collection name in hint:%s",
+                 _hint.toString( FALSE, TRUE ).c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      _fetchLobHead = condition.getField( FIELD_NAME_LOB_LIST_PIECES_MODE ).eoo() ;
+      _fetchLobHead = _hint.getField( FIELD_NAME_LOB_LIST_PIECES_MODE ).eoo() ;
 
-      rc = _fetcher.init( fullName.valuestr(),
-                          _fetchLobHead ) ;
+      rc = _fetcher.init( fullName.valuestr(), _fetchLobHead ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to init lob fetcher:%d", rc ) ;
@@ -111,28 +130,63 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLISTLOB__PREPAGEDATA ) ;
       BSONObj obj ;
-      for ( INT32 i = 0; i < 100; ++i )
+      INT32 returnObjNum = 0 ;
+
+      while ( returnObjNum < 100 && 0 != _returnNum )
       {
+         BOOLEAN isMatch = FALSE ;
          rc = _fetchLobHead ?_getMetaInfo( cb, obj ) :
                              _getSequenceInfo( cb, obj ) ;
          if ( SDB_OK == rc )
          {
-            rc = append( obj ) ;
-            if ( SDB_OK != rc )
+            rc = _matchTree.matches( obj, isMatch ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to matches obj[%s]:rc=%d",
+                         obj.toString().c_str(), rc ) ;
+            if ( isMatch )
             {
-               PD_LOG( PDERROR, "failed to append data to context:%d", rc ) ;
-               goto error ;
+               BSONObj selObj ;
+               if ( _skip > 0 )
+               {
+                  --_skip ;
+                  continue ;
+               }
+
+               if ( _returnNum > 0 )
+               {
+                  --_returnNum ;
+               }
+
+               if ( _selectorParser.isInitialized() )
+               {
+                  rc = _selectorParser.select( obj, selObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to select obj[%s]:rc=%d",
+                               obj.toString().c_str(), rc ) ;
+               }
+               else
+               {
+                  selObj = obj ;
+               }
+
+               rc = append( selObj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to append data to context:%d",
+                            rc ) ;
+               returnObjNum++ ;
             }
          }
          else if ( SDB_DMS_EOC == rc )
          {
             _hitEnd = TRUE ;
-            goto error ;   
+            goto error ;
          }
          else if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get lob data:%d", rc ) ;
             goto error ;
+         }
+
+         if ( 0 == _returnNum )
+         {
+            _hitEnd = TRUE ;
          }
       }
    done:
@@ -293,7 +347,7 @@ namespace engine
          goto error ;
       }
    done:
-      return rc; 
+      return rc;
    error:
       goto done ;
    }

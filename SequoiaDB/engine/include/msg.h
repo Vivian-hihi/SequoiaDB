@@ -367,6 +367,8 @@ enum MSG_TYPE
    MSG_BS_LOB_LOCK_RES                 = MAKE_REPLY_TYPE( MSG_BS_LOB_LOCK_REQ ),
    MSG_BS_LOB_TRUNCATE_REQ             = 8008,
    MSG_BS_LOB_TRUNCATE_RES             = MAKE_REPLY_TYPE( MSG_BS_LOB_TRUNCATE_REQ ),
+   MSG_BS_LOB_CREATELOBID_REQ          = 8009,
+   MSG_BS_LOB_CREATELOBID_RES          = MAKE_REPLY_TYPE( MSG_BS_LOB_CREATELOBID_REQ ),
    MSG_LOB_END                         = 8999,
 
    MSG_OM_BEGIN                        = 9000,

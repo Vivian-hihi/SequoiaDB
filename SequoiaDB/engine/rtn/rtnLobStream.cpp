@@ -144,12 +144,12 @@ namespace engine
          _meta._modificationTime = _meta._createTime ;
       }
 
-      rc = _prepare( fullName, oid, mode, cb ) ;
+      rc = _prepare( cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to prepare to open lob[%s]"
                  " in collection[%s], rc:%d",
-                 oid.str().c_str(), fullName, rc ) ;
+                 oid.str().c_str(), _fullName, rc ) ;
          goto error ;
       }
 
@@ -268,6 +268,7 @@ namespace engine
       {
          BSONObjBuilder builder ;
          /// we can get nothing when mode is create.
+         builder.appendOID( FIELD_NAME_LOB_OID, (OID *)&_oid ) ;
          builder.append( FIELD_NAME_LOB_SIZE, _meta._lobLen ) ;
          builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
          builder.append( FIELD_NAME_VERSION, (INT32)_meta._version ) ;
@@ -402,7 +403,7 @@ namespace engine
          goto done ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY == _mode ) 
+      if ( SDB_LOB_MODE_CREATEONLY == _mode )
       {
          PD_LOG( PDERROR, "Lob[%s] is closed with exception, rollback",
                  getOID().str().c_str() ) ;
@@ -526,7 +527,7 @@ namespace engine
       // some data will not be removed when rollback
       _offset += len ;
       // update lobLen immediately,
-      // for _offset can be set to front position by seek 
+      // for _offset can be set to front position by seek
       _meta._lobLen = OSS_MAX( _meta._lobLen, _offset ) ;
 
       while ( _lw.getNextWriteSequences( tuples )  )
@@ -627,7 +628,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to read:%d", rc ) ;
-         goto error ;      
+         goto error ;
       }
 
       rc = _readv( tuples, cb, _hasPiecesInfo ? &_lobPieces : NULL ) ;
@@ -1323,7 +1324,7 @@ namespace engine
       {
          if ( piecesInfoSize > 0 )
          {
-            CHAR* piecesInfoBuf = (CHAR*)tuple.data + DMS_LOB_META_LENGTH 
+            CHAR* piecesInfoBuf = (CHAR*)tuple.data + DMS_LOB_META_LENGTH
                                   - piecesInfoSize ;
 
             rc = _lobPieces.saveTo( piecesInfoBuf, piecesInfoSize ) ;
@@ -1357,7 +1358,7 @@ namespace engine
 
          ossMemcpy( buf, (const CHAR*)&_meta, sizeof( _meta ) ) ;
 
-         CHAR* piecesInfoBuf = buf + DMS_LOB_META_LENGTH 
+         CHAR* piecesInfoBuf = buf + DMS_LOB_META_LENGTH
                                - piecesInfoSize ;
 
          rc = _lobPieces.saveTo( piecesInfoBuf, piecesInfoSize ) ;

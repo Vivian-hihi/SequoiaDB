@@ -501,7 +501,7 @@ do                                                            \
       }
       // then let's read the object
       obj.init ( &_pReceiveBuffer [ _offset ] ) ;
-     
+
       if ( TRUE == getOwned )
       {
           obj = obj.copy();
@@ -2560,7 +2560,7 @@ do                                                            \
 
    INT32 _sdbCollectionImpl::_getRetLobInfo( CHAR **ppBuffer,
                                              INT32 *pBufSize,
-                                             const OID &oid,
+                                             const OID *oid,
                                              INT32 mode,
                                              SINT64 contextID,
                                              _sdbLob **lob )
@@ -2605,13 +2605,30 @@ do                                                            \
       // set attribute of the newly created _sdbLob object
       ((_sdbLobImpl*)*lob)->_attachConnection( _connection ) ;
       ((_sdbLobImpl*)*lob)->_attachCollection( this ) ;
-      ((_sdbLobImpl*)*lob)->_oid = oid ;
+      if ( NULL != oid )
+      {
+         ((_sdbLobImpl*)*lob)->_oid = *oid ;
+      }
       ((_sdbLobImpl*)*lob)->_contextID = contextID ;
       ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
       ((_sdbLobImpl*)*lob)->_mode = mode ;
       ((_sdbLobImpl*)*lob)->_lobSize = 0 ;
       ((_sdbLobImpl*)*lob)->_createTime = 0 ;
       ((_sdbLobImpl*)*lob)->_modificationTime = 0 ;
+
+      ele = obj.getField( FIELD_NAME_LOB_OID ) ;
+      if ( !ele.eoo() )
+      {
+         if ( jstOID == ele.type() )
+         {
+            ((_sdbLobImpl*)*lob)->_oid = ele.OID() ;
+         }
+         else
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
 
       ele = obj.getField( FIELD_NAME_LOB_SIZE ) ;
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
@@ -2735,10 +2752,8 @@ do                                                            \
    INT32 _sdbCollectionImpl::createLob( _sdbLob **lob, const bson::OID *oid )
    {
       INT32 rc = SDB_OK ;
-      BSONObj obj ;
-      SINT64 contextID = -1 ;
-      BOOLEAN locked = FALSE ;
       OID oidObj ;
+      BOOLEAN isRemoteOld = FALSE ;
 
       // check
       if ( '\0' == _collectionFullName[0] || NULL == _connection )
@@ -2747,22 +2762,62 @@ do                                                            \
          goto error ;
       }
 
-      // build oid
-      if ( oid )
+      if ( NULL != oid )
       {
          oidObj = *oid ;
       }
+
+      if ( !_connection->_getIsOldVersionLobServer() )
+      {
+         rc = _createLob( lob, &oidObj, isRemoteOld ) ;
+         if ( isRemoteOld )
+         {
+            // deal with old version server. oid should be generate in client side
+            oidObj = OID::gen() ;
+            rc = _createLob( lob, &oidObj, isRemoteOld ) ;
+            if ( SDB_OK == rc )
+            {
+               _connection->_setIsOldVersionLobServer( TRUE ) ;
+            }
+         }
+      }
       else
       {
-         oidObj = OID::gen() ;
+         // deal with old version server. oid should be generate in client side
+            oidObj = OID::gen() ;
+            rc = _createLob( lob, &oidObj, isRemoteOld ) ;
       }
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::_createLob( _sdbLob **lob, const bson::OID *oid,
+                                         BOOLEAN &isRemoteOld )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      SINT64 contextID = -1 ;
+      BOOLEAN locked = FALSE ;
+      isRemoteOld = FALSE ;
 
       // append info
       try
       {
          BSONObjBuilder bob ;
          bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
-         bob.appendOID( FIELD_NAME_LOB_OID, &oidObj ) ;
+         if( NULL != oid && oid->isSet() )
+         {
+            bob.appendOID( FIELD_NAME_LOB_OID, (bson::OID *)oid ) ;
+         }
+
          bob.append( FIELD_NAME_LOB_OPEN_MODE, SDB_LOB_CREATEONLY ) ;
          obj = bob.obj() ;
       }
@@ -2794,6 +2849,15 @@ do                                                            \
                                        contextID ) ;
       _connection->unlock() ;
       locked = FALSE ;
+
+      if ( SDB_INVALIDARG == rc )
+      {
+         if ( NULL == oid || !oid->isSet() )
+         {
+            isRemoteOld = TRUE ;
+         }
+      }
+
       if ( SDB_OK == rc )
       {
          // check return msg header
@@ -2807,7 +2871,7 @@ do                                                            \
          goto error ;
       }
 
-      rc = _getRetLobInfo( &_pReceiveBuffer, &_receiveBufferSize, oidObj,
+      rc = _getRetLobInfo( &_pReceiveBuffer, &_receiveBufferSize, oid,
                            SDB_LOB_CREATEONLY, contextID, lob ) ;
       if ( rc )
       {
@@ -2826,6 +2890,7 @@ do                                                            \
          delete *lob ;
          *lob = NULL ;
       }
+
       goto done ;
    }
 
@@ -3012,7 +3077,7 @@ do                                                            \
          goto error ;
       }
 
-      rc = _getRetLobInfo( &_pReceiveBuffer, &_receiveBufferSize, oid,
+      rc = _getRetLobInfo( &_pReceiveBuffer, &_receiveBufferSize, &oid,
                            mode, contextID, lob ) ;
       if ( rc )
       {
@@ -3034,11 +3099,17 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::listLobs ( _sdbCursor **cursor )
+   INT32 _sdbCollectionImpl::listLobs( _sdbCursor **cursor,
+                                       const bson::BSONObj &condition,
+                                       const bson::BSONObj &selected,
+                                       const bson::BSONObj &orderBy,
+                                       const bson::BSONObj &hint,
+                                       INT64 numToSkip,
+                                       INT64 numToReturn )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
-      BSONObj obj ;
+      BSONObj newHint ;
 
       // check
       if ( '\0' == _collectionFullName[0] || NULL == _connection )
@@ -3046,19 +3117,44 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       // append info
       try
       {
+         bob.appendElements( hint ) ;
          bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
-         obj = bob.obj() ;
+         newHint = bob.obj() ;
       }
       catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
-      // run command
-      rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, obj, cursor ) ;
+
+      if ( !_connection->_getIsOldVersionLobServer() )
+      {
+         // run command
+         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &condition,
+                            &selected, &orderBy, &newHint, numToSkip,
+                            numToReturn, cursor ) ;
+         if ( SDB_INVALIDARG == rc )
+         {
+            // deal with old version server. clName is in the query field
+            rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &newHint,
+                               NULL, NULL, NULL, 0, -1, cursor ) ;
+            if ( SDB_OK == rc )
+            {
+               _connection->_setIsOldVersionLobServer( TRUE ) ;
+            }
+         }
+      }
+      else
+      {
+         // deal with old version server. clName is in the query field
+         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &newHint, NULL,
+                            NULL, NULL, 0, -1, cursor ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -3073,23 +3169,44 @@ do                                                            \
    INT32 _sdbCollectionImpl::listLobPieces( _sdbCursor **cursor )
    {
       INT32 rc = SDB_OK ;
-      BSONObj query ;
+      BSONObj obj ;
 
       try
       {
          BSONObjBuilder queryBuilder ;
          queryBuilder.append( FIELD_NAME_COLLECTION, this->getFullName() ) ;
          queryBuilder.appendBool( FIELD_NAME_LOB_LIST_PIECES_MODE, TRUE ) ;
-         query = queryBuilder.obj() ;
+         obj = queryBuilder.obj() ;
       }
       catch( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
+
       // run command
-      rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
-                         query, cursor ) ;
+      if ( !_connection->_getIsOldVersionLobServer() )
+      {
+         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, NULL, NULL,
+                            NULL, &obj, 0, -1, cursor ) ;
+         if ( SDB_INVALIDARG == rc )
+         {
+            // deal with old version server. clName is in the query field
+            rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &obj, NULL,
+                               NULL, NULL, 0, -1, cursor ) ;
+            if ( SDB_OK == rc )
+            {
+               _connection->_setIsOldVersionLobServer( TRUE ) ;
+            }
+         }
+      }
+      else
+      {
+         // deal with old version server. clName is in the query field
+         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &obj, NULL,
+                            NULL, NULL, 0, -1, cursor ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -3101,8 +3218,105 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbCollectionImpl::createLobID( bson::OID &oid, INT64 *pSeconds )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BOOLEAN locked = FALSE ;
+      const MsgOpReply* reply = NULL ;
+      BSONObj dateInfo ;
+
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( NULL != pSeconds )
+      {
+         try
+         {
+            BSONObjBuilder builder ;
+            builder.appendTimestamp( FIELD_NAME_LOB_CREATETIME,
+                                     *pSeconds * 1000, 0 ) ;
+            dateInfo = builder.obj() ;
+         }
+         catch ( std::exception )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+
+      // build msg
+      rc = clientBuildCreateLobIDMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                         dateInfo.objdata(), 0, 1, 0,
+                                         _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg from engine
+      rc = _connection->_recvExtract( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+
+      reply = ( const MsgOpReply * )( _pReceiveBuffer ) ;
+      if ( reply->numReturned > 0 &&
+           (UINT32)reply->header.messageLength >
+           ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
+      {
+         // get reply bson from received msg
+         const CHAR* bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
+         try
+         {
+            BSONObj obj = BSONObj( bsonBuf ) ;
+            BSONElement ele = obj.getField( FIELD_NAME_LOB_OID ) ;
+            if ( jstOID != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            oid = ele.OID() ;
+         }
+         catch ( std::exception )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+   done:
+      if ( locked )
+      {
+         _connection->unlock() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sdbCollectionImpl::_runCmdOfLob ( const CHAR *cmd,
-                                            const BSONObj &obj,
+                                            const BSONObj *query,
+                                            const BSONObj *selector,
+                                            const BSONObj *orderBy,
+                                            const BSONObj *hint,
+                                            INT64 skip,
+                                            INT64 returnNum,
                                             _sdbCursor **cursor )
    {
       INT32 rc = SDB_OK ;
@@ -3114,9 +3328,8 @@ do                                                            \
          goto error ;
       }
 
-      rc = _connection->_runCommand( cmd, &obj, NULL, NULL, NULL,
-                                     0, 0, 0, -1,
-                                     cursor ) ;
+      rc = _connection->_runCommand( cmd, query, selector, orderBy, hint,
+                                     0, 0, skip, returnNum, cursor ) ;
       /// ignore update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -6231,6 +6444,8 @@ do                                                            \
       initHashTable( &_tb ) ;
       // get current time
       ossGetCurrentTime(_lastAliveTime) ;
+
+      _isOldVersionLobServer = FALSE ;
    }
 
    _sdbImpl::~_sdbImpl ()
@@ -8516,6 +8731,16 @@ do                                                            \
       return rc ;
    error :
       goto done ;
+   }
+
+   BOOLEAN _sdbImpl::_getIsOldVersionLobServer()
+   {
+      return _isOldVersionLobServer ;
+   }
+
+   void _sdbImpl::_setIsOldVersionLobServer( BOOLEAN isOldVersionServer )
+   {
+      _isOldVersionLobServer = isOldVersionServer ;
    }
 
    void _sdbImpl::_clearSessionAttrCache ( BOOLEAN needLock )

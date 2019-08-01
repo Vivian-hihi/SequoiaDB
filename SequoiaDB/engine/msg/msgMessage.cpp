@@ -2660,6 +2660,26 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTCREATELOBIDREQ, "msgExtractCreateLobIDRequest" )
+INT32 msgExtractCreateLobIDRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                    BSONObj &obj )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTCREATELOBIDREQ ) ;
+   rc = msgExtractLobRequest( pBuffer, header, obj, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "Failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTCREATELOBIDREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREREADRESULT, "msgExtractReadResult" )
 INT32 msgExtractReadResult( const MsgOpReply *header,
                             const MsgLobTuple **begin,

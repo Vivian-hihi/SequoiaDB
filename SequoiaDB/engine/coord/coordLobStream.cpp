@@ -78,10 +78,7 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_PREPARE, "_coordLobStream::_prepare" )
-   INT32 _coordLobStream::_prepare( const CHAR *fullName,
-                                    const bson::OID &oid,
-                                    INT32 mode,
-                                    _pmdEDUCB *cb )
+   INT32 _coordLobStream::_prepare( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_PREPARE ) ;
@@ -97,20 +94,20 @@ namespace engine
       rc = _updateCataInfo( FALSE, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to update catalog info of:%s, rc:%d",
-                 fullName, rc ) ;
+         PD_LOG( PDERROR, "Failed to update catalog info of:%s, rc:%d",
+                 getFullName(), rc ) ;
          goto error ;
       }
 
       /// set primary
-      _groupSession.getGroupSel()->setPrimary( ( SDB_LOB_MODE_READ != mode ) ?
+      _groupSession.getGroupSel()->setPrimary( ( SDB_LOB_MODE_READ != mode() ) ?
                                                TRUE : FALSE ) ;
       _groupSession.getGroupCtrl()->setMaxRetryTimes( LOB_MAX_RETRYTIMES ) ;
 
-      rc = _openSubStreams( fullName, oid, mode, cb ) ;
+      rc = _openSubStreams( getFullName(), getOID(), mode(), cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open sub streams:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to open sub streams:%d", rc ) ;
          goto error ;
       }
 
@@ -119,6 +116,58 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _coordLobStream::_getSubCLInfo( CoordCataInfoPtr &mainCLcataPtr,
+                                         const _utilLobID &lobId,
+                                         _pmdEDUCB *cb,
+                                         CoordCataInfoPtr &subCLcataPtr )
+   {
+      INT32 rc = SDB_OK ;
+      string subCLName ;
+      rc = mainCLcataPtr->getSubCLNameByLobID( lobId, subCLName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Couldn't find the lobId[%s]'s sub-collection "
+                 "in MainCL(%s), rc: %d", lobId.toString().c_str(),
+                 mainCLcataPtr->getName(), rc ) ;
+         goto error ;
+      }
+
+
+      rc = _pResource->getOrUpdateCataInfo( subCLName.c_str(),
+                                            subCLcataPtr, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get sub-collection[%s]'s catalog info "
+                   "failed, rc: %d", subCLName.c_str(), rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordLobStream::_getGroupLst( CoordGroupList &groupLst )
+   {
+      if ( _cataInfo->isMainCL() )
+      {
+         _subCLInfo->getGroupLst( groupLst ) ;
+      }
+      else
+      {
+         _cataInfo->getGroupLst( groupLst ) ;
+      }
+   }
+
+   INT32 _coordLobStream::_getLobGroupID( const OID &oid, UINT32 sequence,
+                                          UINT32 &groupID)
+   {
+      if ( _cataInfo->isMainCL() )
+      {
+         return _subCLInfo->getLobGroupID( oid, sequence, groupID ) ;
+      }
+      else
+      {
+         return _cataInfo->getLobGroupID( oid, sequence, groupID ) ;
+      }
    }
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_UPDATECATAINFO, "_coordLobStream::_updateCataInfo" )
@@ -137,11 +186,6 @@ namespace engine
          rc = _pResource->updateCataInfo( getFullName(), _cataInfo, cb ) ;
          if ( rc )
          {
-            /// Lob doesn't support main collection
-            if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
-            {
-               rc = SDB_DMS_NOTEXIST ;
-            }
             PD_LOG( PDERROR, "Update collection[%s] catalog info failed, "
                     "rc: %d", getFullName(), rc ) ;
             goto error ;
@@ -150,9 +194,32 @@ namespace engine
 
       if ( _cataInfo->isMainCL() )
       {
-         PD_LOG( PDERROR, "can not open a lob in main cl" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         string oidStr = getOID().str() ;
+         _utilLobID lobId ;
+         INT32 lobShardingKeyFormat = _cataInfo->getLobShardingKeyFormat() ;
+         if ( SDB_TIME_INVALID == lobShardingKeyFormat )
+         {
+            PD_LOG( PDERROR, "Can not open a lob in main cl without "
+                    "LobShardingFormat" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = lobId.init( oidStr.c_str() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Invalid Oid in lob's MainCL:Oid=%s,rc=%d",
+                    oidStr.c_str(), rc ) ;
+            goto error ;
+         }
+
+         rc  = _getSubCLInfo( _cataInfo, lobId, cb, _subCLInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Invalid Oid in lob's MainCL:id=%s,rc=%d",
+                    oidStr.c_str(), rc ) ;
+            goto error ;
+         }
       }
       else if ( _cataInfo->isRangeSharded() )
       {
@@ -160,27 +227,23 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      else
+
+      rc = _getLobGroupID( getOID(), DMS_LOB_META_SEQUENCE, _metaGroup ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _cataInfo->getLobGroupID( getOID(),
-                                        DMS_LOB_META_SEQUENCE,
-                                        _metaGroup ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get meta group:%d", rc ) ;
-            goto error ;
-         }
-         // get group info
-         rc = _pResource->getOrUpdateGroupInfo( _metaGroup, _metaGroupInfo,
-                                                cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Get meta group info[%u] failed, rc: %d",
-                    _metaGroup, rc ) ;
-            goto error ;
-         }
-         _mapGroupInfo[ _metaGroup ] = _metaGroupInfo ;
+         PD_LOG( PDERROR, "failed to get meta group:%d", rc ) ;
+         goto error ;
       }
+      // get group info
+      rc = _pResource->getOrUpdateGroupInfo( _metaGroup, _metaGroupInfo,
+                                             cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Get meta group info[%u] failed, rc: %d",
+                 _metaGroup, rc ) ;
+         goto error ;
+      }
+      _mapGroupInfo[ _metaGroup ] = _metaGroupInfo ;
    done:
       PD_TRACE_EXITRC( COORD_LOBSTREAM_UPDATECATAINFO, rc ) ;
       return rc ;
@@ -238,6 +301,11 @@ namespace engine
              .append( FIELD_NAME_LOB_OID, oid )
              .append( FIELD_NAME_LOB_OPEN_MODE, mode )
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, FALSE ) ;
+      if ( _cataInfo->isMainCL() )
+      {
+         builder.append( FIELD_NAME_SUBCLNAME, _subCLInfo->getName() ) ;
+      }
+
       if ( SDB_LOB_MODE_READ == mode )
       {
          /// send meta data to every group.
@@ -260,7 +328,7 @@ namespace engine
 
          if ( !pSpecGroupID )
          {
-            _cataInfo->getGroupLst( gpLst ) ;
+            _getGroupLst( gpLst ) ;
             SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
          }
          else
@@ -378,6 +446,11 @@ namespace engine
              .append( FIELD_NAME_LOB_OID, oid )
              .append( FIELD_NAME_LOB_OPEN_MODE, mode )
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, TRUE ) ;
+      if ( _cataInfo->isMainCL() )
+      {
+         builder.append( FIELD_NAME_SUBCLNAME, _subCLInfo->getName() ) ;
+      }
+
       if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
          builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)_getMeta()._createTime ) ;
@@ -751,19 +824,18 @@ namespace engine
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
          header.version = _cataInfo->getVersion() ;
-         rc = _cataInfo->getLobGroupID( getOID(),
-                                        tuple.tuple.columns.sequence,
-                                        groupID ) ;
+         rc = _getLobGroupID( getOID(), tuple.tuple.columns.sequence,
+                              groupID ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to get destination:%d", rc ) ;
             goto error ;
          }
 
          rc = _getSubStream( groupID, &sub, cb ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get sub stream:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to get sub stream:%d", rc ) ;
             goto error ;
          }
 
@@ -1357,9 +1429,7 @@ namespace engine
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
          header.version = _cataInfo->getVersion() ;
-         rc = _cataInfo->getLobGroupID( getOID(),
-                                        DMS_LOB_META_SEQUENCE,
-                                        groupID ) ;
+         rc = _getLobGroupID( getOID(), DMS_LOB_META_SEQUENCE, groupID ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
@@ -1955,9 +2025,7 @@ namespace engine
             continue ;
          }
 
-         rc = _cataInfo->getLobGroupID( getOID(),
-                                        tuple->columns.sequence,
-                                        groupID ) ;
+         rc = _getLobGroupID( getOID(), tuple->columns.sequence, groupID ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
@@ -2006,9 +2074,7 @@ namespace engine
 
       _dataGroups.clear() ;
 
-      rc = _cataInfo->getLobGroupID( getOID(),
-                                     t.columns.sequence,
-                                     groupID ) ;
+      rc = _getLobGroupID( getOID(), t.columns.sequence, groupID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;

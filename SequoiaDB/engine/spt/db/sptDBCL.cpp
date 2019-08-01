@@ -38,6 +38,7 @@
 #include "msgDef.h"
 #include "ossFile.hpp"
 #include "utilStr.hpp"
+#include "sptDBTimestamp.hpp"
 
 using namespace bson ;
 using namespace sdbclient ;
@@ -69,6 +70,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, getLob )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, deleteLob )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, listLobs )
+   JS_MEMBER_FUNC_DEFINE( _sptDBCL, createLobID )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, listLobPieces )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, truncateLob )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, truncate )
@@ -108,6 +110,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "getLob", getLob )
       JS_ADD_MEMBER_FUNC( "deleteLob", deleteLob )
       JS_ADD_MEMBER_FUNC( "listLobs", listLobs )
+      JS_ADD_MEMBER_FUNC( "createLobID", createLobID )
       JS_ADD_MEMBER_FUNC( "listLobPieces", listLobPieces )
       JS_ADD_MEMBER_FUNC( "truncate", truncate )
       JS_ADD_MEMBER_FUNC( "createIdIndex", createIdIndex )
@@ -1376,7 +1379,7 @@ namespace engine
       rc = arg.getString( 1, oidStr ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
-         oid = OID::gen() ;
+         //oid is generated from server side
       }
       else if( SDB_OK != rc )
       {
@@ -1401,7 +1404,20 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to open file" ) ;
          goto error ;
       }
-      rc = _cl.openLob( lob, oid, SDB_LOB_CREATEONLY ) ;
+
+      if ( oid.isSet() )
+      {
+         rc = _cl.createLob( lob, &oid ) ;
+      }
+      else
+      {
+         rc = _cl.createLob( lob, NULL ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = lob.getOid( oid ) ;
+         }
+      }
+
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to open lob" ) ;
@@ -1668,25 +1684,168 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptDBCL::createLobID( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      OID oid ;
+      string objectName ;
+      INT64 seconds = 0 ;
+      _sptDBTimestamp *timestamp = NULL ;
+
+      if ( arg.argc() > 1 )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Not more than 1 parameters" ) ;
+         goto error ;
+      }
+
+      if( 0 == arg.argc() )
+      {
+         rc = _cl.createLobID( oid ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to list createLobID" ) ;
+            goto error ;
+         }
+
+         rval.getReturnVal().setValue( oid.toString() ) ;
+         goto done ;
+      }
+
+      if( arg.isNull(0) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Parameter can't be NULL" ) ;
+         goto error ;
+      }
+
+      objectName = arg.getUserObjClassName(0) ;
+      if ( SPT_TIMESTAMP_NAME != objectName )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Parameter must be Timestamp" ) ;
+         goto error ;
+      }
+
+      rc = arg.getUserObj( 0, _sptDBTimestamp::__desc,
+                           (const void **)&timestamp ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << ( arg.hasErrMsg() ? arg.getErrMsg() :
+                                     "Parameter must be Timestamp" ) ) ;
+         goto error ;
+      }
+
+      seconds = timestamp->getSeconds() ;
+      rc = _cl.createLobID( oid, &seconds ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to create lobID" ) ;
+         goto error ;
+      }
+
+      rval.getReturnVal().setValue( oid.toString() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptDBCL::listLobs( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       _sdbCursor *pCursor = NULL ;
-      if( arg.argc() != 0 )
+      string objectName ;
+      BSONObj obj ;
+      BSONObj cond ;
+      BSONObj sel ;
+      BSONObj order ;
+      BSONObj hint ;
+      INT64 numToSkip = 0 ;
+      INT64 numToRet = -1 ;
+
+      if( arg.argc() == 0 )
+      {
+         rc = _cl.listLobs( &pCursor ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to list lobs" ) ;
+            goto error ;
+         }
+         SPT_SET_CURSOR_TO_RETURNVAL( pCursor ) ;
+         goto done ;
+      }
+
+      if ( arg.argc() > 1 )
       {
          rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "No parameters are required" ) ;
+         detail = BSON( SPT_ERR << "Not more than 1 parameters" ) ;
          goto error ;
       }
-      rc = _cl.listLobs( &pCursor ) ;
+
+      if( arg.isNull(0) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Parameter can't be NULL" ) ;
+         goto error ;
+      }
+
+      objectName = arg.getUserObjClassName(0) ;
+      if ( SPT_QUERYOPTION_NAME != objectName )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Parameter should be SdbQueryOption" ) ;
+         goto error ;
+      }
+
+      rc = arg.getBsonobj( 0, obj ) ;
+      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << ( arg.hasErrMsg() ? arg.getErrMsg() :
+                                     "Parameter must be obj" ) ) ;
+         goto error ;
+      }
+
+      if ( obj.hasField( SPT_OPTIONBASE_COND_FIELD ) )
+      {
+         cond = obj.getObjectField( SPT_OPTIONBASE_COND_FIELD ) ;
+      }
+      if ( obj.hasField( SPT_OPTIONBASE_SEL_FIELD ) )
+      {
+         sel = obj.getObjectField( SPT_OPTIONBASE_SEL_FIELD ) ;
+      }
+      if ( obj.hasField( SPT_OPTIONBASE_SORT_FIELD ) )
+      {
+         order = obj.getObjectField( SPT_OPTIONBASE_SORT_FIELD ) ;
+      }
+      if ( obj.hasField( SPT_OPTIONBASE_HINT_FIELD ) )
+      {
+         hint = obj.getObjectField( SPT_OPTIONBASE_HINT_FIELD ) ;
+      }
+      if ( obj.hasField( SPT_OPTIONBASE_SKIP_FIELD ) )
+      {
+         numToSkip = obj.getIntField( SPT_OPTIONBASE_SKIP_FIELD ) ;
+      }
+      if ( obj.hasField( SPT_OPTIONBASE_LIMIT_FIELD ) )
+      {
+         numToRet = obj.getIntField( SPT_OPTIONBASE_LIMIT_FIELD ) ;
+      }
+
+      rc = _cl.listLobs( &pCursor, cond, sel, order, hint, numToSkip,
+                         numToRet ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to list lobs" ) ;
          goto error ;
       }
       SPT_SET_CURSOR_TO_RETURNVAL( pCursor ) ;
+      goto done ;
+
    done:
       return rc ;
    error:

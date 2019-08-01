@@ -147,6 +147,11 @@ INT32 clientBuildOpenLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                                 UINT64 reqID,
                                 BOOLEAN endianConvert ) ;
 
+INT32 clientBuildCreateLobIDMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                    const CHAR *pMeta, SINT32 flags, SINT16 w,
+                                    UINT64 reqID, BOOLEAN endianConvert ) ;
+
+
 INT32 clientBuildRemoveLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                                   const CHAR *pMeta,
                                   SINT32 flags, SINT16 w,

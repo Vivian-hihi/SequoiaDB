@@ -95,7 +95,7 @@ namespace engine
       ON_MSG ( MSG_CAT_GRP_CHANGE_NTY, _onCatalogChangeNtyMsg )
 
       ON_EVENT( PMD_EDU_EVENT_TRANS_STOP, _onTransStopEvnt )
-   END_OBJ_MSG_MAP()
+   END_OBJ_MSG_MAP() ;
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSDSESS__CLSSHDSESS, "_clsShdSession::_clsShdSession" )
    _clsShdSession::_clsShdSession ( UINT64 sessionID, _schedTaskInfo *pTaskInfo )
@@ -2989,6 +2989,7 @@ namespace engine
       {
       case CMD_GET_COUNT:
       case CMD_GET_INDEXES:
+      case CMD_LIST_LOB:
          rc = _getOnMainCL( pCommandName, pCommand->collectionFullName(),
                             flags, numToSkip, numToReturn, pQuery, pField,
                             pOrderBy, pHint, w, contextID );
@@ -3066,6 +3067,43 @@ namespace engine
       goto done;
    }
 
+   INT32 _clsShdSession::_replaceToSubCLName( BSONObj &matcher,
+                                              const CHAR *subCLName )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObjIterator iterTmp( matcher );
+         while( iterTmp.more() )
+         {
+            BSONElement beTmp = iterTmp.next();
+            if ( 0 != ossStrcmp( beTmp.fieldName(), FIELD_NAME_COLLECTION ))
+            {
+               builder.append( beTmp );
+            }
+            else
+            {
+               builder.append( FIELD_NAME_COLLECTION, subCLName ) ;
+            }
+         }
+
+         matcher = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to set subcl: %s",
+                  sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsShdSession::_getOnMainCL( const CHAR *pCommand,
                                        const CHAR *pCollection,
                                        INT32 flags,
@@ -3078,15 +3116,16 @@ namespace engine
                                        INT16 w,
                                        SINT64 &contextID )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       const CHAR *pSubCLName = NULL ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCLSet ;
-      BSONObj boNewMatcher;
-      rtnContextMainCL *pContextMainCL = NULL;
-      BSONObj boMatcher;
-      BSONObj boEmpty;
-      BSONObj boHint;
+      BSONObj boNewMatcher ;
+      rtnContextMainCL *pContextMainCL = NULL ;
+      BSONObj boMatcher ;
+      BSONObj orderBy ;
+      BSONObj boEmpty ;
+      BSONObj boHint ;
       _rtnCommand *pCommandTmp = NULL;
       INT64 subNumToReturn = numToReturn ;
       INT64 subNumToSkip = 0 ;
@@ -3097,6 +3136,7 @@ namespace engine
       try
       {
          boMatcher = BSONObj( pQuery );
+         orderBy = BSONObj( pOrderBy ) ;
          BSONObj boHintTmp = BSONObj( pHint );
          BSONObjBuilder bobHint;
          BSONObjIterator iter( boHintTmp );
@@ -3149,7 +3189,7 @@ namespace engine
          pContextMainCL->setPrepareMoreData( TRUE ) ;
       }
 
-      rc = pContextMainCL->open( boEmpty, numToReturn, numToSkip ) ;
+      rc = pContextMainCL->open( orderBy, numToReturn, numToSkip ) ;
       PD_RC_CHECK( rc, PDERROR, "open main-collection context failed(rc=%d)",
                    rc );
 
@@ -3184,6 +3224,7 @@ namespace engine
                        "rc: %d", sessionName(), pCommand, rc ) ;
                break ;
             }
+
             rc = rtnInitCommand( pCommandTmp, flags, subNumToSkip,
                                  subNumToReturn, boNewMatcher.objdata(),
                                  pField, pOrderBy,

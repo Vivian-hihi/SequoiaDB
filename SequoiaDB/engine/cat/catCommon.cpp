@@ -4085,6 +4085,21 @@ namespace engine
             fieldMask |= UTIL_CL_SHDKEY_FIELD ;
             clInfo._isSharding = TRUE ;
          }
+         else if ( ossStrcmp( eleTmp.fieldName(),
+                              CAT_LOBSHARDINGKEYFORMAT_NAME ) == 0 )
+         {
+            PD_CHECK( String == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_LOBSHARDINGKEYFORMAT_NAME, eleTmp.type() ) ;
+            PD_CHECK( clsCheckAndParseLobKeyFormat( eleTmp.valuestr() ),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Lob sharding key format [%s] definition is invalid",
+                      eleTmp.valuestr() ) ;
+
+            clInfo._lobShardingKeyFormat = eleTmp.valuestr() ;
+            fieldMask |= UTIL_CL_LOBKEYFORMAT_FIELD ;
+         }
          // repl size
          else if ( ossStrcmp( eleTmp.fieldName(), CAT_CATALOG_W_NAME ) == 0 )
          {
@@ -4512,6 +4527,26 @@ namespace engine
          }
       }
 
+      if ( clInfo._lobShardingKeyFormat != NULL )
+      {
+         if ( !clInfo._isMainCL )
+         {
+            PD_LOG( PDWARNING,
+                    "Field[%s] can't be set when collection is not MainCL",
+                    CAT_LOBSHARDINGKEYFORMAT_NAME ) ;
+            rc = SDB_INVALIDARG ;
+         }
+
+         if ( clInfo._shardingKey.nFields() != 1 )
+         {
+            PD_LOG( PDWARNING,
+                    "Field[%s] can't be more than one key when support lob in"
+                    "MainCL",
+                    CAT_SHARDINGKEY_NAME ) ;
+            rc = SDB_INVALIDARG ;
+         }
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCHECKANDBUILDCATARECORD, rc ) ;
       return rc ;
@@ -4888,6 +4923,12 @@ namespace engine
             }
          }
          builder.appendElements( clInfo._autoIncSet.toBson() ) ;
+      }
+
+      if ( mask & UTIL_CL_LOBKEYFORMAT_FIELD )
+      {
+         builder.append( CAT_LOBSHARDINGKEYFORMAT_NAME,
+                         clInfo._lobShardingKeyFormat ) ;
       }
 
       catRecord = builder.obj () ;

@@ -81,7 +81,7 @@ namespace engine
       INT32 lock( _pmdEDUCB *cb,
                   INT64 offset,
                   INT64 length ) ;
- 
+
       /// buf may be invalid when do next read.
       /// copy data to your own buf if necessary.
       INT32 next( _pmdEDUCB *cb,
@@ -110,7 +110,7 @@ namespace engine
 
       OSS_INLINE SINT64 curOffset() const
       {
-         return _offset ; 
+         return _offset ;
       }
 
       virtual _dmsStorageUnit *getSU() = 0 ;
@@ -196,10 +196,7 @@ namespace engine
       UINT32 _getSequence( INT64 offset ) const ;
 
    private:
-      virtual INT32 _prepare( const CHAR *fullName,
-                              const bson::OID &oid,
-                              INT32 mode,
-                              _pmdEDUCB *cb ) = 0 ;
+      virtual INT32 _prepare( _pmdEDUCB *cb ) = 0 ;
 
       virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
                                    _dmsLobMeta &meta,

@@ -51,6 +51,9 @@ namespace engine
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
+
+      private:
+         INT32 _appendOID( BSONObj &obj ) ;
    } ;
    typedef _coordOpenLob coordOpenLob ;
 
@@ -149,6 +152,22 @@ namespace engine
                                 rtnContextBuf *buf ) ;
    } ;
    typedef _coordTruncateLob coordTruncateLob ;
+
+   /*
+      _coordCreateLobID define
+   */
+   class _coordCreateLobID : public _coordOperator
+   {
+      public:
+         _coordCreateLobID() ;
+         virtual ~_coordCreateLobID() ;
+      public:
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCreateLobID coordCreateLobID ;
 }
 
 #endif // COORD_LOB_OPERATOR_HPP__

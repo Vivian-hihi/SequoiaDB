@@ -227,7 +227,8 @@ utilFiles = [
       "util/utilCipherMgr.cpp",
       "util/utilCipher.c",
       "util/utilPidFile.cpp",
-      "util/utilTypeCast.c"
+      "util/utilTypeCast.c",
+      "util/utilLobID.cpp"
       ]
 
 dpsFiles = [

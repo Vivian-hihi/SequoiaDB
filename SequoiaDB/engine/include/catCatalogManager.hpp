@@ -66,6 +66,7 @@ namespace engine
       const CHAR  *_pCLName ;
       utilCLUniqueID _clUniqueID ;
       BSONObj     _shardingKey ;
+      const CHAR  *_lobShardingKeyFormat ;
       INT32       _replSize ;
       BOOLEAN     _enSureShardIndex ;
       const CHAR  *_pShardingType ;
@@ -118,6 +119,7 @@ namespace engine
          _maxRecNum           = 0 ;
          _maxSize             = 0 ;
          _overwrite           = FALSE ;
+         _lobShardingKeyFormat = NULL ;
          _autoIncSet.clear() ;
       }
    };

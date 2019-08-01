@@ -122,7 +122,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER_RELCMDINFO, "_rtnCmdBuilder::_releaseCmdInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER_RELCMDINFO, "_rtnCmdBuilder::_releaseCmdInfo" )
    void _rtnCmdBuilder::_releaseCmdInfo ( _cmdBuilderInfo *pCmdInfo )
    {
       PD_TRACE_ENTRY ( SDB__RTNCMDBUILDER_RELCMDINFO ) ;
@@ -141,7 +141,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__RTNCMDBUILDER_RELCMDINFO ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__REGISTER, "_rtnCmdBuilder::_register" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__REGISTER, "_rtnCmdBuilder::_register" )
    INT32 _rtnCmdBuilder::_register ( const CHAR * name, CDM_NEW_FUNC pFunc )
    {
       INT32 rc = SDB_OK ;
@@ -174,7 +174,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__INSERT, "_rtnCmdBuilder::_insert" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__INSERT, "_rtnCmdBuilder::_insert" )
    INT32 _rtnCmdBuilder::_insert ( _cmdBuilderInfo * pCmdInfo,
                                    const CHAR * name, CDM_NEW_FUNC pFunc )
    {
@@ -281,7 +281,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__FIND, "_rtnCmdBuilder::_find" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__FIND, "_rtnCmdBuilder::_find" )
    CDM_NEW_FUNC _rtnCmdBuilder::_find ( const CHAR * name )
    {
       PD_TRACE_ENTRY ( SDB__RTNCMDBUILDER__FIND ) ;
@@ -324,7 +324,7 @@ namespace engine
       return pFunc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__NEAR, "_rtnCmdBuilder::_near" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDBUILDER__NEAR, "_rtnCmdBuilder::_near" )
    UINT32 _rtnCmdBuilder::_near ( const CHAR *str1, const CHAR *str2 )
    {
       PD_TRACE_ENTRY ( SDB__RTNCMDBUILDER__NEAR ) ;
@@ -344,7 +344,7 @@ namespace engine
       return &cmdBuilder ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDASSIT__RTNCMDASSIT, "_rtnCmdAssit::_rtnCmdAssit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCMDASSIT__RTNCMDASSIT, "_rtnCmdAssit::_rtnCmdAssit" )
    _rtnCmdAssit::_rtnCmdAssit ( CDM_NEW_FUNC pFunc )
    {
       PD_TRACE_ENTRY ( SDB__RTNCMDASSIT__RTNCMDASSIT ) ;
@@ -505,7 +505,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollection)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollection) ;
    _rtnCreateCollection::_rtnCreateCollection ()
    :_collectionName ( NULL ),
     _attributes( 0 ),
@@ -533,7 +533,7 @@ namespace engine
       return TRUE ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL_INIT, "_rtnCreateCollection::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL_INIT, "_rtnCreateCollection::init" )
    INT32 _rtnCreateCollection::init( INT32 flags, INT64 numToSkip,
                                      INT64 numToReturn,
                                      const CHAR * pMatcherBuff,
@@ -783,7 +783,7 @@ namespace engine
       return _collectionName ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL_DOIT, "_rtnCreateCollection::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL_DOIT, "_rtnCreateCollection::doit" )
    INT32 _rtnCreateCollection::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                       SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                       INT16 w , INT64 *pContextID )
@@ -836,7 +836,8 @@ namespace engine
    // collection in the collection space.
    // Attention: This should only be done on data node in a cluster when the
    // command is from shard plane.
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL__CLEAN, "_rtnCreateCollection::_clean" )
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECL__CLEAN, "_rtnCreateCollection::_clean" )
    void _rtnCreateCollection::_clean( pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB )
    {
@@ -860,7 +861,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNCREATECL__CLEAN ) ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace) ;
    _rtnCreateCollectionspace::_rtnCreateCollectionspace ()
    :_spaceName( NULL ),
     _csUniqueID( UTIL_CSUNIQUEID_LOCAL ),
@@ -926,7 +927,7 @@ namespace engine
       return rtnGetStringElement ( mather, FIELD_NAME_NAME, &_spaceName ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECS_DOIT, "_rtnCreateCollectionspace::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECS_DOIT, "_rtnCreateCollectionspace::doit" )
    INT32 _rtnCreateCollectionspace::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                            SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                            INT16 w , INT64 *pContextID )
@@ -951,7 +952,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateIndex)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateIndex) ;
 
    _rtnCreateIndex::_rtnCreateIndex ()
    : _collectionName ( NULL ),
@@ -984,7 +985,7 @@ namespace engine
       return _collectionName ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX_INIT, "_rtnCreateIndex::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX_INIT, "_rtnCreateIndex::init" )
    INT32 _rtnCreateIndex::init ( INT32 flags, INT64 numToSkip,
                                  INT64 numToReturn,
                                  const CHAR * pMatcherBuff,
@@ -1061,7 +1062,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX_DOIT, "_rtnCreateIndex::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX_DOIT, "_rtnCreateIndex::doit" )
    INT32 _rtnCreateIndex::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                  SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                  INT16 w , INT64 *pContextID )
@@ -1103,7 +1104,7 @@ namespace engine
    }
 
    // Check if there is mixed use of normal index and text index.
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX__VALIDATEDEF, "_rtnCreateIndex::_validateDef" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEINDEX__VALIDATEDEF, "_rtnCreateIndex::_validateDef" )
    INT32 _rtnCreateIndex::_validateDef( const BSONObj &index )
    {
       INT32 rc = SDB_OK ;
@@ -1149,7 +1150,7 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollection)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollection) ;
 
    _rtnDropCollection::_rtnDropCollection ()
    :_collectionName ( NULL )
@@ -1191,7 +1192,7 @@ namespace engine
       return rtnGetStringElement ( arg, FIELD_NAME_NAME, &_collectionName ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCL_DOIT, "_rtnDropCollection::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCL_DOIT, "_rtnDropCollection::doit" )
    INT32 _rtnDropCollection::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                     SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                     INT16 w , INT64 *pContextID )
@@ -1233,7 +1234,7 @@ namespace engine
       goto done;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollectionspace)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollectionspace) ;
 
    _rtnDropCollectionspace::_rtnDropCollectionspace ()
    :_spaceName ( NULL )
@@ -1276,7 +1277,7 @@ namespace engine
       return rtnGetStringElement ( arg, FIELD_NAME_NAME, &_spaceName ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCS_DOIT, "_rtnDropCollectionspace::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCS_DOIT, "_rtnDropCollectionspace::doit" )
    INT32 _rtnDropCollectionspace::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                          INT16 w , INT64 *pContextID )
@@ -1318,7 +1319,7 @@ namespace engine
       goto done;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropIndex)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropIndex) ;
 
    _rtnDropIndex::_rtnDropIndex ()
    :_collectionName ( NULL )
@@ -1349,7 +1350,7 @@ namespace engine
       return TRUE ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPINDEX_INIT, "_rtnDropIndex::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPINDEX_INIT, "_rtnDropIndex::init" )
    INT32 _rtnDropIndex::init ( INT32 flags, INT64 numToSkip,
                                INT64 numToReturn,
                                const CHAR * pMatcherBuff,
@@ -1380,7 +1381,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPINDEX_DOIT, "_rtnDropIndex::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPINDEX_DOIT, "_rtnDropIndex::doit" )
    INT32 _rtnDropIndex::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                INT16 w , INT64 *pContextID )
@@ -1422,7 +1423,7 @@ namespace engine
       return _options.getCLFullName() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNGET_INIT, "_rtnGet::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNGET_INIT, "_rtnGet::init" )
    INT32 _rtnGet::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                          const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                          const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -1467,7 +1468,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNGET_DOIT, "_rtnGet::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNGET_DOIT, "_rtnGet::doit" )
    INT32 _rtnGet::doit( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                         SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                         INT16 w , INT64 *pContextID )
@@ -1484,7 +1485,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetCount)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetCount) ;
    _rtnGetCount::_rtnGetCount ()
    {
    }
@@ -1503,7 +1504,7 @@ namespace engine
       return CMD_GET_COUNT ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetIndexes)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetIndexes) ;
    _rtnGetIndexes::_rtnGetIndexes ()
    {
    }
@@ -1522,7 +1523,7 @@ namespace engine
       return CMD_GET_INDEXES ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetDatablocks)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetDatablocks) ;
    _rtnGetDatablocks::_rtnGetDatablocks ()
    {
    }
@@ -1541,7 +1542,7 @@ namespace engine
       return CMD_GET_DATABLOCKS ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetQueryMeta)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetQueryMeta) ;
    _rtnGetQueryMeta::_rtnGetQueryMeta ()
    {
    }
@@ -1608,7 +1609,7 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection) ;
    _rtnRenameCollection::_rtnRenameCollection ()
       :_clShortName ( NULL ), _newCLShortName ( NULL ), _csName( NULL )
    {
@@ -1758,7 +1759,7 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollectionSpace)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollectionSpace) ;
    _rtnRenameCollectionSpace::_rtnRenameCollectionSpace()
    {
       _oldName = NULL ;
@@ -1893,7 +1894,7 @@ namespace engine
       return _collectionName ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREORG_INIT, "_rtnReorg::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREORG_INIT, "_rtnReorg::init" )
    INT32 _rtnReorg::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                            const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                            const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -1955,7 +1956,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOffline)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOffline) ;
    _rtnReorgOffline::_rtnReorgOffline ()
    {
    }
@@ -1974,7 +1975,7 @@ namespace engine
       return CMD_REORG_OFFLINE ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOnline)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOnline) ;
    _rtnReorgOnline::_rtnReorgOnline ()
    {
    }
@@ -1993,7 +1994,7 @@ namespace engine
       return CMD_REORG_ONLINE ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgRecover)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgRecover) ;
    _rtnReorgRecover::_rtnReorgRecover ()
    {
    }
@@ -2012,7 +2013,7 @@ namespace engine
       return CMD_REORG_RECOVER ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnShutdown)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnShutdown) ;
    _rtnShutdown::_rtnShutdown ()
    {
    }
@@ -2063,7 +2064,7 @@ namespace engine
    {
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTEST_INIT, "_rtnTest::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTEST_INIT, "_rtnTest::init" )
    INT32 _rtnTest::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                           const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                           const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -2076,7 +2077,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTEST_DOIT, "_rtnTest::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTEST_DOIT, "_rtnTest::doit" )
    INT32 _rtnTest::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                           SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                           INT16 w , INT64 *pContextID )
@@ -2102,7 +2103,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollection)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollection) ;
    _rtnTestCollection::_rtnTestCollection ()
    {
    }
@@ -2126,7 +2127,7 @@ namespace engine
       return _collectionName ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollectionspace)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollectionspace) ;
    _rtnTestCollectionspace::_rtnTestCollectionspace ()
    {
    }
@@ -2145,7 +2146,7 @@ namespace engine
       return CMD_TEST_COLLECTIONSPACE ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSetPDLevel)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSetPDLevel) ;
    _rtnSetPDLevel::_rtnSetPDLevel()
    {
       _pdLevel = PDEVENT ;
@@ -2165,7 +2166,7 @@ namespace engine
       return CMD_SET_PDLEVEL ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETPDLEVEL_INIT, "_rtnSetPDLevel::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETPDLEVEL_INIT, "_rtnSetPDLevel::init" )
    INT32 _rtnSetPDLevel::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                 const CHAR * pMatcherBuff,
                                 const CHAR * pSelectBuff,
@@ -2197,7 +2198,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETPDLEVEL_DOIT, "_rtnSetPDLevel::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETPDLEVEL_DOIT, "_rtnSetPDLevel::doit" )
    INT32 _rtnSetPDLevel::doit ( _pmdEDUCB * cb, _SDB_DMSCB * dmsCB,
                                 _SDB_RTNCB * rtnCB, _dpsLogWrapper * dpsCB,
                                 INT16 w, INT64 * pContextID )
@@ -2210,7 +2211,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReloadConfig)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReloadConfig) ;
 
    _rtnReloadConfig::_rtnReloadConfig()
    {
@@ -2403,7 +2404,7 @@ error:
    goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnUpdateConfig)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnUpdateConfig) ;
 
    _rtnUpdateConfig::_rtnUpdateConfig()
    {
@@ -2529,7 +2530,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDeleteConfig)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDeleteConfig) ;
 
    _rtnDeleteConfig::_rtnDeleteConfig()
    {
@@ -2625,7 +2626,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStart)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStart) ;
    _rtnTraceStart::_rtnTraceStart ()
    {
       _mask = 0xFFFFFFFF ;
@@ -2683,7 +2684,7 @@ error:
       return isValid ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_INIT, "_rtnTraceStart::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_INIT, "_rtnTraceStart::init" )
    INT32 _rtnTraceStart::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                 const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                                 const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -2844,7 +2845,7 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_DOIT, "_rtnTraceStart::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_DOIT, "_rtnTraceStart::doit" )
    INT32 _rtnTraceStart::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                 INT16 w, INT64 *pContextID )
@@ -2857,7 +2858,7 @@ error:
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceResume)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceResume) ;
    _rtnTraceResume::_rtnTraceResume ()
    {
    }
@@ -2875,7 +2876,7 @@ error:
       return CMD_TRACE_RESUME ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACERESUME_INIT, "_rtnTraceResume::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACERESUME_INIT, "_rtnTraceResume::init" )
    INT32 _rtnTraceResume::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                 const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                                 const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -2886,7 +2887,7 @@ error:
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACERESUME_DOIT, "_rtnTraceResume::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACERESUME_DOIT, "_rtnTraceResume::doit" )
    INT32 _rtnTraceResume::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                 INT16 w, INT64 *pContextID )
@@ -2905,7 +2906,7 @@ error:
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStop)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStop) ;
    _rtnTraceStop::_rtnTraceStop ()
    {
       _pDumpFileName = FALSE ;
@@ -2924,7 +2925,7 @@ error:
       return CMD_TRACE_STOP ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTOP_INIT, "_rtnTraceStop::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTOP_INIT, "_rtnTraceStop::init" )
    INT32 _rtnTraceStop::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                                const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -2954,7 +2955,7 @@ error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTOP_DOIT, "_rtnTraceStop::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTOP_DOIT, "_rtnTraceStop::doit" )
    INT32 _rtnTraceStop::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                INT16 w, INT64 *pContextID )
@@ -3035,7 +3036,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStatus)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStatus) ;
    _rtnTraceStatus::_rtnTraceStatus ()
    {
    }
@@ -3053,7 +3054,7 @@ error:
       return CMD_TRACE_STATUS ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTATUS_INIT, "_rtnTraceStatus::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTATUS_INIT, "_rtnTraceStatus::init" )
    INT32 _rtnTraceStatus::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                  const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
                                  const CHAR * pOrderByBuff, const CHAR * pHintBuff )
@@ -3071,7 +3072,7 @@ error:
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTATUS_DOIT, "_rtnTraceStatus::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTATUS_DOIT, "_rtnTraceStatus::doit" )
    INT32 _rtnTraceStatus::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                  _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                  INT16 w, INT64 *pContextID )
@@ -3135,7 +3136,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnLoad)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnLoad) ;
    _rtnLoad::_rtnLoad ()
    {
       _parameters.pFieldArray = NULL ;
@@ -3430,7 +3431,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnExportConf)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnExportConf) ;
 
    _rtnExportConf::_rtnExportConf()
    {
@@ -3518,7 +3519,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveBackup)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveBackup) ;
    _rtnRemoveBackup::_rtnRemoveBackup()
    {
       _path          = NULL ;
@@ -3595,7 +3596,7 @@ error:
 
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnForceSession )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnForceSession ) ;
    INT32 _rtnForceSession::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                   const CHAR *pMatcherBuff,
                                   const CHAR *pSelectBuff,
@@ -3660,12 +3661,11 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListLob)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListLob) ;
    _rtnListLob::_rtnListLob()
-   :_contextID( -1 ),
+   :_contextID( -1 ), _skip( 0 ), _returnNum( -1 ),
     _fullName( NULL )
    {
-
    }
 
    _rtnListLob::~_rtnListLob()
@@ -3686,20 +3686,25 @@ error:
       try
       {
          _query = BSONObj( pMatcherBuff ) ;
-         BSONElement ele = _query.getField( FIELD_NAME_COLLECTION ) ;
+         _selector = BSONObj( pSelectBuff ) ;
+         _orderBy = BSONObj( pOrderByBuff ) ;
+         _hint = BSONObj( pHintBuff ) ;
+
+         BSONElement ele = _hint.getField( FIELD_NAME_COLLECTION ) ;
          if ( String != ele.type() )
          {
-            PD_LOG( PDERROR, "invalid collection name in condition:%s",
-                    _query.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            // old version message, need to move query to hint
+            _hint = _query ;
+            _query = BSONObj() ;
+
+            ele = _hint.getField( FIELD_NAME_COLLECTION ) ;
          }
+
          _fullName = ele.valuestr() ;
       }
       catch ( std::exception &e )
       {
-         PD_LOG( PDERROR, "unexpected err happened:%s",
-                 e.what() ) ;
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -3734,12 +3739,19 @@ error:
          goto error ;
       }
 
-      SDB_ASSERT( NULL != context, "can not be null" ) ;
-      rc = context->open( _query, cb ) ;
-      if ( SDB_OK != rc )
+      if ( _orderBy.isEmpty() )
       {
-         PD_LOG( PDERROR, "failed to open list lob context:%d", rc ) ;
-         goto error ;
+         rc = context->open( _query, _selector, _hint, _skip, _returnNum, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to open list lob context:%d", rc ) ;
+      }
+      else
+      {
+         rc = context->open( _query, _selector, _hint, 0, -1, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to open list lob context:%d", rc ) ;
+
+         rc = rtnSort( (rtnContext**)&context, _orderBy, cb,
+                       _skip, _returnNum, _contextID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 
       *pContextID = _contextID ;
@@ -3755,7 +3767,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSetSessionAttr )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSetSessionAttr ) ;
 
    /*
       _rtnLocalSessionProp implement
@@ -3876,7 +3888,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnGetSessionAttr )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnGetSessionAttr ) ;
 
    _rtnGetSessionAttr::_rtnGetSessionAttr ()
    {
@@ -3909,7 +3921,7 @@ error:
       return SDB_OK ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTruncate)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTruncate) ;
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNTRUNCATE_INIT, "_rtnTruncate::init" )
    INT32 _rtnTruncate::init( INT32 flags, INT64 numToSkip,
                              INT64 numToReturn,
@@ -3971,7 +3983,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnPop )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnPop ) ;
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNPOP_INIT, "_rtnPop::init" )
    INT32 _rtnPop::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                          const CHAR *pMatcherBuff,
@@ -4070,7 +4082,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB ) ;
    _rtnSyncDB::_rtnSyncDB()
    {
       _syncType = 1 ;
@@ -4177,7 +4189,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnLoadCollectionSpace )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnLoadCollectionSpace ) ;
    _rtnLoadCollectionSpace::_rtnLoadCollectionSpace()
    : _csName( NULL ),
      _needChangeID( FALSE ),
@@ -4277,7 +4289,7 @@ error:
       _clInfoObj = clInfoObj.getOwned() ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace ) ;
    _rtnUnloadCollectionSpace::_rtnUnloadCollectionSpace()
    {
    }
@@ -4307,7 +4319,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAnalyze )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAnalyze ) ;
    _rtnAnalyze::_rtnAnalyze()
    {
       _csname = NULL ;

@@ -99,6 +99,11 @@ namespace engine
       return &_remoteSessionMgr ;
    }
 
+   _MsgRouteID _CoordCB::getRouteID()
+   {
+      return _selfNodeID ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__COORDCB_INIT, "_CoordCB::init" )
    INT32 _CoordCB::init ()
    {

@@ -1698,6 +1698,16 @@ namespace engine
             rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
             break ;
          }
+         case MSG_BS_LOB_CREATELOBID_REQ:
+         {
+            coordCreateLobID opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
          case MSG_AUTH_CRTUSR_REQ :
          {
             coordAuthCrtOperator opr ;

@@ -34,6 +34,8 @@
 #include "sptApi.hpp"
 namespace engine
 {
+   #define SPT_TIMESTAMP_NAME "Timestamp"
+
    class _sptDBTimestamp : public SDBObject
    {
    JS_DECLARE_CLASS( _sptDBTimestamp )
@@ -55,6 +57,14 @@ namespace engine
       static INT32 help( const _sptArguments &arg,
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
+
+   public:
+      time_t getSeconds() ;
+      UINT32 getInc() ;
+
+   private:
+      time_t _t ;
+      UINT32 _inc ;
    };
    typedef _sptDBTimestamp sptDBTimestamp ;
 }

@@ -904,6 +904,12 @@ namespace engine
 
       CHAR *pQuery = NULL ;
       BSONObj query ;
+      CHAR *pHint = NULL ;
+      BSONObj hint ;
+      CHAR *pCollectionName = NULL ;
+      INT32 flag ;
+      CHAR *pNewMsg = NULL ;
+      INT32 bufferSize = 0 ;
 
       rtnContextCoord *context = NULL ;
       coordQueryOperator queryOpr( TRUE ) ;
@@ -912,24 +918,45 @@ namespace engine
 
       contextID = -1 ;
 
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName,
                             NULL, NULL, &pQuery,
-                            NULL, NULL, NULL ) ;
-
+                            NULL, NULL, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse message failed, rc: %d", rc ) ;
 
       try
       {
          query = BSONObj( pQuery ) ;
-         BSONElement ele = query.getField( FIELD_NAME_COLLECTION ) ;
-         if ( String != ele.type() )
+         hint = BSONObj( pHint ) ;
+         BSONElement ele = hint.getField( FIELD_NAME_COLLECTION ) ;
+         if ( String == ele.type() )
          {
-            PD_LOG( PDERROR, "invalid obj of list lob:%s",
-                    query.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            // new version message, collection is in hint field
+            queryConf._realCLName = ele.valuestr() ;
          }
-         queryConf._realCLName = ele.valuestr() ;
+         else
+         {
+            BSONObj dummy ;
+            BSONObj newQuery ;
+            // old version message, collection is in query field
+            ele = query.getField( FIELD_NAME_COLLECTION ) ;
+            if ( String != ele.type() )
+            {
+               PD_LOG( PDERROR, "invalid obj of list lob:%s",
+                       query.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            queryConf._realCLName = ele.valuestr() ;
+            hint = query ;
+            rc = msgBuildQueryMsg( &pNewMsg, &bufferSize, pCollectionName, flag,
+                                   pMsg->requestID, 0, -1, &dummy, &dummy,
+                                   &dummy, &hint, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to build new message:rc=%d",
+                         rc ) ;
+            pMsg = (MsgHeader *)pNewMsg ;
+         }
+
       }
       catch ( std::exception &e )
       {
@@ -945,8 +972,7 @@ namespace engine
          goto error ;
       }
 
-      queryConf._openEmptyContext = TRUE ;
-      queryConf._allCataGroups = TRUE ;
+      queryConf._allCataGroups = TRUE;
       rc = queryOpr.queryOrDoOnCL( pMsg, cb, &context,
                                    sendOpt, &queryConf, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "List lobs[%s] on groups failed, rc: %d",
@@ -956,6 +982,10 @@ namespace engine
       contextID = context->contextID() ;
 
    done:
+      if ( NULL != pNewMsg )
+      {
+         msgReleaseBuffer( pNewMsg, cb ) ;
+      }
       return rc ;
    error:
       if ( context )

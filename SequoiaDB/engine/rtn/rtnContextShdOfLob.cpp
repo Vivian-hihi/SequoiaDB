@@ -85,7 +85,7 @@ namespace engine
          }
          else if ( SDB_LOB_MODE_REMOVE == _mode && _isMainShd )
          {
-            rtnQueryAndInvalidateLob( _fullName.c_str(),
+            rtnQueryAndInvalidateLob( _getRealCLName(),
                                       _oid, cb, _w,
                                       _dpsCB, _meta,
                                       _su, _mbContext ) ;
@@ -143,13 +143,13 @@ namespace engine
          _writeDMS = TRUE ;
       }
 
-      rc = rtnResolveCollectionNameAndLock( _fullName.c_str(),
+      rc = rtnResolveCollectionNameAndLock( _getRealCLName(),
                                             _dmsCB, &_su,
                                             &clName, suID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to get cs lock: %s, rc: %d",
-                 _fullName.c_str(), rc ) ;
+                 _getRealCLName(), rc ) ;
          goto error ;
       }
 
@@ -158,7 +158,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to get collection[%s] mb context, rc: %d",
-                 _fullName.c_str(), rc ) ;
+                 _getRealCLName(), rc ) ;
          goto error ;
       }
 
@@ -220,7 +220,7 @@ namespace engine
 
       if ( orUpdate )
       {
-         rc = rtnWriteOrUpdateLob( _fullName.c_str(),
+         rc = rtnWriteOrUpdateLob( _getRealCLName(),
                                    _oid, sequence,
                                    offset, len, data, cb,
                                    _w, _dpsCB, _su, _mbContext,
@@ -228,7 +228,7 @@ namespace engine
       }
       else
       {
-         rc = rtnWriteLob( _fullName.c_str(),
+         rc = rtnWriteLob( _getRealCLName(),
                            _oid, sequence,
                            offset, len, data, cb,
                            _w, _dpsCB, _su, _mbContext ) ;
@@ -347,7 +347,7 @@ namespace engine
             }
          }
 
-         rc = rtnUpdateLob( _fullName.c_str(),
+         rc = rtnUpdateLob( _getRealCLName(),
                             _oid, sequence,
                             offset, len, data, cb,
                             _w, _dpsCB, _su, _mbContext ) ;
@@ -378,7 +378,7 @@ namespace engine
       }
       else
       {
-         rc = rtnUpdateLob( _fullName.c_str(),
+         rc = rtnUpdateLob( _getRealCLName(),
                             _oid, sequence,
                             offset, len, data, cb,
                             _w, _dpsCB, _su, _mbContext ) ;
@@ -407,8 +407,13 @@ namespace engine
 
    void _rtnContextShdOfLob::_toString( stringstream &ss )
    {
-      ss << ",Name:" << _fullName.c_str()
-         << ",OID:" << _oid.toString().c_str()
+      ss << ",Name:" << _fullName.c_str() ;
+      if ( !_subCLName.empty() )
+      {
+         ss << ",SubCLName:" << _subCLName.c_str() ;
+      }
+
+      ss << ",OID:" << _oid.toString().c_str()
          << ",Mode:" << _mode
          << ",IsMainShard:" << _isMainShd
          << ",BuffLen:" << _bufLen ;
@@ -442,6 +447,12 @@ namespace engine
          goto error ;
       }
       _fullName = ele.String() ;
+
+      ele = lob.getField( FIELD_NAME_SUBCLNAME ) ;
+      if ( String == ele.type() )
+      {
+         _subCLName = ele.String() ;
+      }
 
       ele = lob.getField( FIELD_NAME_LOB_OID ) ;
       if ( jstOID != ele.type() )
@@ -542,7 +553,7 @@ namespace engine
       for ( INT32 i = 0 ; i < RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES ; i++ )
       {
          rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
-                     _fullName, _oid, _mode, contextID(),
+                     _getRealCLName(), _oid, _mode, contextID(),
                      SDB_LOB_MODE_WRITE == _mode ? &_accessInfo : NULL ) ;
          if ( SDB_OK == rc )
          {
@@ -813,7 +824,7 @@ namespace engine
       {
          _dmsLobMeta meta ;
 
-         rc = rtnGetLobMetaData( _fullName.c_str(),
+         rc = rtnGetLobMetaData( _getRealCLName(),
                                  _oid, cb, meta,
                                  _su, _mbContext ) ;
          if ( SDB_FNE == rc )
@@ -834,7 +845,7 @@ namespace engine
       }
       else if ( _isMainShd && SDB_LOB_MODE_REMOVE == _mode )
       {
-         rc = rtnGetLobMetaData( _fullName.c_str(),
+         rc = rtnGetLobMetaData( _getRealCLName(),
                                  _oid, cb, _meta,
                                  _su, _mbContext, TRUE ) ;
          if ( SDB_OK != rc )
@@ -944,7 +955,7 @@ namespace engine
          }
          else
          {
-            rc = rtnReadLob( _fullName.c_str(),
+            rc = rtnReadLob( _getRealCLName(),
                              _oid, t.columns.sequence,
                              t.columns.offset, t.columns.len,
                              cb, dataOfTuple, onceRead,
@@ -977,7 +988,7 @@ namespace engine
    INT32 _rtnContextShdOfLob::remove( UINT32 sequence,
                                       _pmdEDUCB *cb )
    {
-      return rtnRemoveLobPiece( _fullName.c_str(),
+      return rtnRemoveLobPiece( _getRealCLName(),
                                 _oid, sequence, cb,
                                 _w, _dpsCB, _su, _mbContext ) ;
    }
@@ -1037,7 +1048,7 @@ namespace engine
       if ( _hasLobPrivilege )
       {
          sdbGetRTNCB()->getLobAccessManager()->releaseAccessPrivilege(
-            _fullName, _oid, _mode, contextID() ) ;
+            _getRealCLName(), _oid, _mode, contextID() ) ;
          _hasLobPrivilege = FALSE ;
       }
       if ( _mbContext && _su )
@@ -1075,7 +1086,7 @@ namespace engine
             break ;
          }
 
-         rc = rtnRemoveLobPiece( _fullName.c_str(),
+         rc = rtnRemoveLobPiece( _getRealCLName(),
                                  _oid, *itr, cb,
                                  _w, _dpsCB, _su, _mbContext ) ;
          if ( SDB_OK != rc )
@@ -1124,7 +1135,7 @@ namespace engine
          builder.append( FIELD_NAME_LOB_FLAG, (INT32)_meta._flag ) ;
          builder.append( FIELD_NAME_LOB_PIECESINFONUM, _meta._piecesInfoNum ) ;
          if ( _meta.hasPiecesInfo() &&
-              ( SDB_LOB_MODE_READ == _mode || 
+              ( SDB_LOB_MODE_READ == _mode ||
                 SDB_LOB_MODE_WRITE == _mode ||
                 SDB_LOB_MODE_TRUNCATE == _mode ) )
          {
@@ -1175,6 +1186,18 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   const CHAR *_rtnContextShdOfLob::_getRealCLName()
+   {
+      if ( !_subCLName.empty() )
+      {
+         return _subCLName.c_str() ;
+      }
+      else
+      {
+         return _fullName.c_str() ;
+      }
    }
 }
 

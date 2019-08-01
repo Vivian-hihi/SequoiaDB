@@ -53,8 +53,9 @@ namespace engine
       virtual _dmsStorageUnit*  getSU () ;
 
    public:
-      INT32 open( const BSONObj &condition,
-                  _pmdEDUCB *cb ) ;
+      INT32 open( const BSONObj &query, const BSONObj &selector,
+                  const BSONObj &hint, INT64 skip,
+                  INT64 returnNum, _pmdEDUCB *cb ) ;
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
@@ -70,6 +71,14 @@ namespace engine
       UINT32 _bufLen ;
       std::string _fullName ;
       BOOLEAN _fetchLobHead ;
+      BSONObj _query ;
+      BSONObj _selector ;
+      BSONObj _hint ;
+      INT64 _skip ;
+      INT64 _returnNum ;
+
+      _mthSelector _selectorParser ;
+      _mthMatchTree _matchTree ;
    } ;
    typedef class _rtnContextListLob rtnContextListLob ;
 }

@@ -144,6 +144,10 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
+      INT32 createLobID( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
+
       INT32 listLobPieces( const _sptArguments &arg,
                            _sptReturnVal &rval,
                            bson::BSONObj &detail ) ;

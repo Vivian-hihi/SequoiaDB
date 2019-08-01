@@ -418,6 +418,9 @@ INT32 msgExtractRemoveLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
                                   BSONObj &obj ) ;
 INT32 msgExtractTruncateLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
                                     BSONObj &obj ) ;
+INT32 msgExtractCreateLobIDRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                    BSONObj &obj ) ;
+
 
 INT32 msgExtractReadResult( const MsgOpReply *header,
                             const MsgLobTuple **begin,
