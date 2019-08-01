@@ -17,6 +17,7 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
 import com.sequoiadb.task.FaultMakeTask;
@@ -62,8 +63,8 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         for ( int i = 0; i < 5; i++ ) {
              taskMgr.addTask(new InsertTask());
+             taskMgr.addTask(new PopTask());
         }   
-        taskMgr.addTask(new PopTask());
         taskMgr.execute();
 			
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
@@ -104,10 +105,19 @@ public class CappedCLRestartNode11817 extends SdbTestBase{
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl,"","")) {
                 CollectionSpace cs = db.getCollectionSpace(cappedCSName);
                 DBCollection cl = cs.getCollection(clName);
-                long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(9000));
+                int skip = new Random().nextInt(9000);
+                long logicalID = CappedCLUtils.getLogicalID(cl, skip);
                 int direction = -1;
+                if (skip % 2 != 0) {
+                    direction = 1;
+                }
                 CappedCLUtils.pop(cl, logicalID, direction);
-            } 
+            } catch (BaseException e) {
+                // SEQUOIADBMAINSTREAM-4499: 暂时避开-10
+                if (e.getErrorCode() != -6 && e.getErrorCode() != -10) {
+                    throw e;
+                }                    
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -20,6 +21,7 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+import com.sequoiadb.cappedCL.CappedCLUtils;
 
 /**
  * @FileName seqDB-11814: 删除集合时，主节点正常/异常重启
@@ -68,9 +70,11 @@ public class CappedCLKillNode11814 extends SdbTestBase{
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(1200), true, "check LSN consistency fail");     
         
-        // 环境恢复后，创建集合并检查主备一致
-        sdb.getCollectionSpace(csName).createCollection(clName + "_after_killnode",
-                    (BSONObject) JSON.parse("{Capped:true,Size:1024,AutoIndexId:false,Group:'" + groupName + "'}"));                      
+        // 环境恢复后，插入/pop并检查主备一致
+        DBCollection cl = sdb.getCollectionSpace(csName).createCollection(clName + "_after_startnode",
+                    (BSONObject) JSON.parse("{Capped:true,Size:1024,AutoIndexId:false,Group:'" + groupName + "'}")); 
+        CappedCLUtils.insertRecords(cl, 1000, 8); 
+        CappedCLUtils.pop(cl, CappedCLUtils.getLogicalID(cl,100), 1);                  
         Assert.assertEquals(dataGroup.checkInspect(120), true, "data is different on " + dataGroup.getGroupName());
     }
 	

@@ -63,8 +63,8 @@ public class CappedCLRestartNode11816 extends SdbTestBase{
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         for ( int i = 0; i < 5; i++ ) {
              taskMgr.addTask(new InsertTask());
-        }   
-        taskMgr.addTask(new PopTask());
+             taskMgr.addTask(new PopTask());
+        }         
         taskMgr.execute();
 			
         Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
@@ -112,8 +112,12 @@ public class CappedCLRestartNode11816 extends SdbTestBase{
                 DBCollection cl = cs.getCollection(clName);
         	   
                 //pop 
-                long logicalID = CappedCLUtils.getLogicalID(cl, new Random().nextInt(90000));
+                int skip = new Random().nextInt(90000);
+                long logicalID = CappedCLUtils.getLogicalID(cl, skip);
                 int direction = -1;
+                if (skip % 2 != 0) {
+                    direction = 1;
+                }
                 CappedCLUtils.pop(cl, logicalID, direction); 
             } catch (BaseException e) {
                 e.printStackTrace();
