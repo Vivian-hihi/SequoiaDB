@@ -198,9 +198,10 @@ INT32 _ossSocket::initSocket ()
    _fd = socket ( AF_INET, SOCK_STREAM, IPPROTO_TCP ) ;
    if ( SOCKET_INVALIDSOCKET == _fd )
    {
-      PD_LOG ( PDERROR, "Failed to initialize socket, error = %d",
-               SOCKET_GETLASTERROR ) ;
-      rc = (SOCKET_EMFILE == SOCKET_GETLASTERROR ) ?
+      PD_LOG ( PDERROR, "Failed to initialize socket, errno: %d( %s )",
+               SOCKET_GETLASTERROR,
+               ossGetLastSysErrMsg( SOCKET_GETLASTERROR ) ) ;
+      rc = ( SOCKET_EMFILE == SOCKET_GETLASTERROR ) ?
            SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       goto error ;
    }
@@ -407,7 +408,8 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
          {
             continue ;
          }
-         PD_LOG ( PDERROR, "Failed to select from socket, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to select from socket, errno: %d( %s )",
+                  rc, ossGetLastSysErrMsg( rc ) ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -434,7 +436,7 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
 
             INT32 error = ossSSLGetError ( _sslHandle ) ;
             char* errorMsg = ossSSLGetErrorMessage ( error ) ;
-            PD_LOG ( PDERROR, "SSL failed to send, error = %d, %s",
+            PD_LOG ( PDERROR, "SSL failed to send, errno: %d( %s )",
                      error, errorMsg ) ;
             rc = SDB_NETWORK ;
             goto error;
@@ -471,7 +473,9 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
             retries ++ ;
             continue ;
          }
-         PD_LOG ( PDERROR, "Failed to send, rc = %d", SOCKET_GETLASTERROR ) ;
+         PD_LOG ( PDERROR, "Failed to send, errno: %d( %s )",
+                  SOCKET_GETLASTERROR,
+                  ossGetLastSysErrMsg( SOCKET_GETLASTERROR ) ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -581,7 +585,7 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
 
             INT32 err = ossSSLGetError ( _sslHandle ) ;
             char* errMsg = ossSSLGetErrorMessage ( err ) ;
-            PD_LOG ( PDERROR, "SSL failed to recv, error = %d, %s",
+            PD_LOG ( PDERROR, "SSL failed to recv, errno: %d( %s )",
                      err, errMsg ) ;
             rc = SDB_NETWORK ;
             goto error;
@@ -763,7 +767,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
 
    if ( fcntl( native(), F_SETFL, flags & ~O_NONBLOCK ) <0 )
    {
-      PD_LOG( PDERROR, "failed to fcntl sock:%d",native() ) ;
+      PD_LOG( PDERROR, "failed to fcntl sock: %d",native() ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -782,7 +786,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
    rc = getsockname ( _fd, (sockaddr*)&_sockAddress, &_addressLen ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to get local address, rc=%d", rc ) ;
+      PD_LOG ( PDERROR, "Failed to get local address, rc = %d", rc ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -790,7 +794,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
    rc = getpeername ( _fd, (sockaddr*)&_peerAddress, &_peerAddressLen ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to get peer address, rc=%d", rc ) ;
+      PD_LOG ( PDERROR, "Failed to get peer address, rc = %d", rc ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -896,7 +900,8 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
       sysError = SOCKET_GETLASTERROR ;
       rc = ( SOCKET_EMFILE == sysError ) ? SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       PD_LOG ( ( rc == SDB_NETWORK ? PDERROR : PDINFO ) ,
-               "Failed to accept socket, errno: %d, rc: %d", sysError, rc ) ;
+               "Failed to accept socket, errno: %d( %s ), rc: %d",
+               sysError, ossGetLastSysErrMsg( sysError ), rc ) ;
       goto error ;
    }
 
@@ -986,7 +991,7 @@ INT32 _ossSocket::secure ()
    {
       INT32 error = ossSSLERRGetError () ;
       char* errorMsg = ossSSLERRGetErrorMessage ( error ) ;
-      PD_LOG ( PDERROR, "failed to create SSL handle, error = %d, %s",
+      PD_LOG ( PDERROR, "failed to create SSL handle, errno: %d( %s )",
                error, errorMsg ) ;
       ret = SDB_NETWORK ;
       goto error ;
@@ -997,7 +1002,7 @@ INT32 _ossSocket::secure ()
    {
       INT32 error = ossSSLGetError ( _sslHandle ) ;
       char* errorMsg = ossSSLGetErrorMessage ( error ) ;
-      PD_LOG ( PDERROR, "SSL failed to connect, error = %d, %s",
+      PD_LOG ( PDERROR, "SSL failed to connect, errno: %d( %s )",
                error, errorMsg ) ;
       ret = SDB_NETWORK ;
       goto error ;
@@ -1057,7 +1062,7 @@ INT32 _ossSocket::doSSLHandshake ( const CHAR* initialBytes, INT32 len )
    {
       INT32 error = ossSSLERRGetError () ;
       char* errorMsg = ossSSLERRGetErrorMessage ( error ) ;
-      PD_LOG ( PDERROR, "Failed to create SSL handle, error = %d, %s",
+      PD_LOG ( PDERROR, "Failed to create SSL handle, errno: %d( %s )",
                error, errorMsg ) ;
       ret = SDB_NETWORK ;
       goto error ;
@@ -1068,7 +1073,7 @@ INT32 _ossSocket::doSSLHandshake ( const CHAR* initialBytes, INT32 len )
    {
       INT32 error = ossSSLGetError ( _sslHandle ) ;
       char* errorMsg = ossSSLGetErrorMessage ( error ) ;
-      PD_LOG ( PDERROR, "SSL failed to accept, error = %d, %s",
+      PD_LOG ( PDERROR, "SSL failed to accept, errno: %d( %s )",
                error, errorMsg ) ;
       ret = SDB_NETWORK ;
       goto error ;
@@ -1248,7 +1253,8 @@ retry:
       {
          goto retry ;
       }
-      PD_LOG( PDERROR, "select(2) error: %d(%s)", rc, strerror(rc) ) ;
+      PD_LOG( PDERROR, "select(2), error: %d( %s )",
+              rc, ossGetLastSysErrMsg( rc ) ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -1272,7 +1278,8 @@ retry:
    if ( SDB_OK != err )
    {
       errno = err ;
-      PD_LOG( PDERROR, "failed to connect to remote, errno: %d", err ) ;
+      PD_LOG( PDERROR, "failed to connect to remote, errno: %d( %s )",
+              errno, ossGetLastSysErrMsg( errno ) ) ;
       rc = SDB_NET_CANNOT_CONNECT ;
       goto error ;
    }
