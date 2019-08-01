@@ -104,8 +104,7 @@ var DEPLOY_POSTGRESQL = pg ;
 var LOCAL_CM_PORT     = cm ;
 var TMP_COORD_SVC     = 18800 ;
 var MY_HOSTNAME       = System.getHostName() ;
-var NODE_CONF         = {} ;
-var MYSQL_INSTALL_PATH = mysqlPath ;
+var MYSQL_INSTALL_PATH= mysqlPath ;
 var PG_INSTALL_PATH   = pgPath ;
 
 // run!
@@ -797,7 +796,7 @@ function createCoord( nodesConf )
       try
       {
          var rg = db.getCoordRG() ;
-         rg.createNode( hostName, service, dbPath, NODE_CONF ) ;
+         rg.createNode( hostName, service, dbPath ) ;
       }
       catch( e )
       {
@@ -822,9 +821,215 @@ function createCoord( nodesConf )
    }
 }
 
+/**
+ * Map, similar to STL map.
+ * Different is second value is array, and if first value has been existed in
+ * UtilMap, second value will add to array.
+ *
+ * @function  add( "group1", "hostname1" )
+ * @function  delete( "group1" )
+ * @function  hasNext()
+ * @function  curFirst()
+ * @function  curSecond()
+ */
+function UtilMap()
+{
+   this._dataFirst = [] ;   // [group1,       group2,       group3 ...]
+   this._dataSecond= [] ;   // [[host1,host2],[host1,host2],[host1,host2]...]
+   this.add        = _add ;
+   this.delete     = _delete ;
+   this.hasNext    = _hasNext ;
+   this.curFirst   = _curFirst ;
+   this.curSecond  = _curSecond ;
+   this._curPos    = -1 ;
+   function _add( first, second )
+   {
+      var pos = this._dataFirst.indexOf( first ) ;
+      if ( pos == -1 )
+      {
+         this._dataFirst.push( first );
+         this._dataSecond.push( [second] );
+      }
+      else
+      {
+         var i = this._dataSecond[pos].indexOf( second ) ;
+         if ( i == -1 )
+         {
+            this._dataSecond[pos].push( second ) ;
+         }
+      }
+   }
+   function _delete( first )
+   {
+      var pos = this._dataFirst.indexOf( first ) ;
+      if ( pos == -1 ) return ;
+
+      delete this._dataFirst[pos] ;
+      delete this._dataSecond[pos] ;
+   }
+   function _hasNext()
+   {
+      this._curPos++ ;
+      if ( this._curPos >= this._dataFirst.length )
+      {
+         return false ;
+      }
+      return true ;
+   }
+   function _curFirst()
+   {
+      if ( this._curPos >= this._dataFirst.length )
+      {
+         return ;
+      }
+      return this._dataFirst[this._curPos] ;
+   }
+   function _curSecond()
+   {
+      if ( this._curPos >= this._dataSecond.length )
+      {
+         return ;
+      }
+      return this._dataSecond[this._curPos] ;
+   }
+}
+
+/**
+ * Secial queue, it is a priority queue.
+ * The element which is ranked in front of the array has higher priority than
+ * the element behind. If  want to lower the priority, use put2Tail().
+ *
+ * @function  add( "hostname1" )
+ * @function  put2Tail( "hostname1" )
+ * @function  getPriority( "hostname1" )
+ * @function  print()
+ */
+function UtilPriorityQueue()
+{
+   this._dataStore = [] ;
+   this.add        = _add ;
+   this.put2Tail   = _put2Tail ;
+   this.getPriority= _getPriority ;
+   this.print      = _print ;
+   function _add( data )
+   {
+      if ( this._dataStore.indexOf( data ) != -1 )
+      {
+         return false ;
+      }
+      this._dataStore.push( data ) ;
+      return true ;
+   }
+   function _getPriority( data )
+   {
+      return this._dataStore.indexOf( data ) ;
+   }
+   function _put2Tail( data )
+   {
+      var pos = this._dataStore.indexOf( data ) ;
+      if ( pos == -1 )
+      {
+         return false ;
+      }
+      this._dataStore.splice( pos, 1 ) ;
+      this._dataStore.push( data ) ;
+      return true ;
+   }
+   function _print()
+   {
+      println( this._dataStore ) ;
+   }
+}
+
+/**
+ * Balance weight of vote, to make the primary node evenly on different hosts
+ *
+ * @param  nodesInfo, as below
+ * [
+ *    [ "group1", "hostname1", 11810, "dbpath1", {} ],
+ *    [ "group2", "hostname2", 11820, "dbpath2", {} ],
+ *    ...
+ * ]
+ * @return undefined, but set nodesInfo as below
+ * [
+ *    [ "group1", "hostname1", 11810, "dbpath1", { weight: 20 } ],
+ *    [ "group2", "hostname2", 11820, "dbpath2", {} ],
+ *    ...
+ * ]
+ */
+function balanceVoteWeight( nodesInfo )
+{
+   var hostPriorityQue = new UtilPriorityQueue() ;
+   var groupMap = new UtilMap() ;
+   var highWeightNodes = [] ;
+
+   // construct host and group info
+   for ( var i in nodesInfo )
+   {
+      var aNode     = nodesInfo[i] ;
+      var groupName = aNode[1] ;
+      var hostName  = aNode[2] ;
+      hostPriorityQue.add( hostName ) ;
+      groupMap.add( groupName, hostName ) ;
+   }
+
+   // loop every group to find out higher priority node
+   while( groupMap.hasNext() )
+   {
+      var groupName = groupMap.curFirst() ;
+      var hostList  = groupMap.curSecond() ;
+
+      if( hostList.length < 2 )
+      {
+         // if only one node, don't need to specified { weight: 20 }
+         continue ;
+      }
+
+      var higherPri = Infinity ;
+      var higherPriHost = "" ;
+      for( var i in hostList )
+      {
+         var pri = hostPriorityQue.getPriority( hostList[i] ) ;
+         if ( pri < higherPri )
+         {
+            higherPri = pri ;
+            higherPriHost = hostList[i] ;
+         }
+      }
+      hostPriorityQue.put2Tail( higherPriHost ) ;
+      highWeightNodes.push( { "GroupName": groupName,
+                              "HostName":  higherPriHost } ) ;
+   }
+
+   // set node configure: {weight: 20}. default node weight is 10.
+   for ( var i in nodesInfo )
+   {
+      var aNode     = nodesInfo[i] ;
+      var groupName = aNode[1] ;
+      var hostName  = aNode[2] ;
+      var nodeConf  = aNode[5] ;
+      for( var j in highWeightNodes )
+      {
+         var hwGroupName = highWeightNodes[j].GroupName ;
+         var hwHostName  = highWeightNodes[j].HostName ;
+         if ( hwGroupName == groupName &&
+              hwHostName  == hostName )
+         {
+            // set weight
+            nodeConf.weight = 20 ;
+            // lower priority of this host
+            highWeightNodes.splice( j, 1 ) ;
+            break ;
+         }
+      }
+   }
+}
+
 function createData( nodesConf )
 {
    if ( nodesConf.length == 0 ) return ;
+
+   balanceVoteWeight( nodesConf ) ;
 
    var db = new Sdb( MY_HOSTNAME, TMP_COORD_SVC ) ;
 
@@ -835,6 +1040,7 @@ function createData( nodesConf )
       var hostName = aNodeConf[2] ;
       var service = aNodeConf[3] ;
       var dbPath = aNodeConf[4] ;
+      var configure = aNodeConf[5] ;
 
       try
       {
@@ -856,7 +1062,7 @@ function createData( nodesConf )
 
       try
       {
-         rg.createNode( hostName, service, dbPath, NODE_CONF ) ;
+         rg.createNode( hostName, service, dbPath, configure ) ;
       }
       catch( e )
       {
@@ -951,6 +1157,7 @@ function deploySequoiadb()
    {
       var aNodeConf = nodesConf[i] ;
       var role = aNodeConf[0] ;
+      aNodeConf[ aNodeConf.length ] = {} ; // default node configure is null
       if ( role == "catalog" )
       {
          catalogConf.push( aNodeConf ) ;
