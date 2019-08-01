@@ -180,9 +180,9 @@ namespace engine
       INT32 _prepareUpdate( const BSONObj &originalObj, const BSONObj &newObj,
                             BSONObj &recordObj ) ;
 
-      INT32 _prepareRecord( _rtnExtOprType oprType,
-                            const BSONElement &idEle,
-                            const BSONObj *dataObj,
+      INT32 _genRecordByKeySet( BSONObjSet keySet, BSONObj &record ) ;
+
+      INT32 _prepareRecord( _rtnExtOprType oprType, const BSONElement &idEle,
                             BSONObj &recordObj,
                             const BSONElement *newIdEle = NULL ) ;
 

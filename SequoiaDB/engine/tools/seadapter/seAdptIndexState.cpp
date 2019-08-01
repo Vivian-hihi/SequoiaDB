@@ -1389,15 +1389,18 @@ namespace seadapter
             }
             else if ( Array == ele.type() )
             {
-               // Array with only one element(String type) will be indexed.
                BSONObjIterator itr( ele.embeddedObject() ) ;
-               BSONElement subEle = itr.next() ;
-               if ( !itr.more() && ( String == subEle.type() ) )
+               while ( itr.more() )
                {
-                  builder.appendAs( subEle, ele.fieldName() ) ;
-                  if ( !hasStrField )
+                  // If the array contains string, index it on ES.
+                  if ( String == itr.next().type() )
                   {
-                     hasStrField = TRUE ;
+                     builder.append( ele ) ;
+                     if ( !hasStrField )
+                     {
+                        hasStrField = TRUE ;
+                     }
+                     break ;
                   }
                }
             }
@@ -2039,6 +2042,19 @@ namespace seadapter
                if ( String == ele.type() )
                {
                   builder.append( ele ) ;
+               }
+               else if ( Array == ele.type() )
+               {
+                  BSONObjIterator itr( ele.embeddedObject() ) ;
+                  while ( itr.more() )
+                  {
+                     // If the array contains string, index it on ES.
+                     if ( String == itr.next().type() )
+                     {
+                        builder.append( ele ) ;
+                        break ;
+                     }
+                  }
                }
             }
 

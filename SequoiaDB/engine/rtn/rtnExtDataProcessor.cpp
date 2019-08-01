@@ -234,18 +234,8 @@ namespace engine
          }
 
          rc = SDB_OK ;
-
-         // Record with array in its index key will never be indexed on
-         // Elasticsearch, and no record for it will be inserted into capped
-         // collection.
          if ( DMS_EXTOPR_TYPE_UPDATE != type )
          {
-            // Array for insert and delete, skip.
-            if ( _keySet.size() > 1 )
-            {
-               _keySet.clear() ;
-               goto done ;
-            }
             _needOprRec = ( _keySet.size() > 0 ) ;
          }
          else
@@ -661,33 +651,112 @@ namespace engine
       return ( 0 == ossStrcmp( targetName, _meta._targetName ) ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__GENRECORDBYKEYSET, "_rtnExtDataProcessor::_genRecordByKeySet" )
+   INT32 _rtnExtDataProcessor::_genRecordByKeySet( BSONObjSet keySet,
+                                                   BSONObj &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__GENRECORDBYKEYSET ) ;
+      SDB_ASSERT( !keySet.empty(), "Key set is empty") ;
+
+      try
+      {
+         if ( 1 == keySet.size() )
+         {
+            // Key set size is 1, so no array.
+            record = *( keySet.begin() ) ;
+         }
+         else
+         {
+            // One of the index field is of type array. Resume the array from
+            // the keys. Compare the elements of the first and second key. If
+            // they are not the same, that's the array field.
+            BSONObjBuilder builder ;
+            BOOLEAN found = FALSE ;
+            // BSONObj objFirst = *(_keySet.begin()) ;
+            // BSONObj objSecond = *(++_keySet.begin()) ;
+            BSONObjIterator itrFirst( *(_keySet.begin()) ) ;
+            BSONObjIterator itrSecond( *(++_keySet.begin()) ) ;
+
+            while ( itrFirst.more() )
+            {
+               BSONElement lNextEle = itrFirst.next() ;
+               BSONElement rNextEle = itrSecond.next() ;
+               if ( found || 0 == lNextEle.woCompare( rNextEle, true) )
+               {
+                  // Same, it's not the array field.
+                  builder.append( lNextEle ) ;
+               }
+               else
+               {
+                  // Found the array field.
+                  const CHAR *arrField = lNextEle.fieldName() ;
+                  BSONArrayBuilder arrBuilder( builder.subarrayStart( arrField ) ) ;
+                  arrBuilder.append( lNextEle.valuestrsafe() ) ;
+                  arrBuilder.append( rNextEle.valuestrsafe() ) ;
+                  // Get the array field from all key record.
+                  BSONObjSet::iterator itr = _keySet.begin() ;
+                  // Skip the first and second key.
+                  std::advance( itr, 2 ) ;
+                  while ( itr != _keySet.end() )
+                  {
+                     arrBuilder.append( itr->getStringField( arrField ) ) ;
+                     ++itr ;
+                  }
+                  arrBuilder.done() ;
+                  found = TRUE ;
+               }
+            }
+            record = builder.obj() ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__GENRECORDBYKEYSET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
    INT32 _rtnExtDataProcessor::_prepareRecord( _rtnExtOprType oprType,
                                                const BSONElement &idEle,
-                                               const BSONObj *dataObj,
                                                BSONObj &recordObj,
                                                const BSONElement *newIdEle )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD ) ;
-      BSONObjBuilder objBuilder ;
-
-      if ( RTN_EXT_INVALID == oprType )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Invalid operation type[ %d ]", oprType ) ;
-         goto error ;
-      }
 
       try
       {
+         BSONObjSet keySet ;
+         BSONObjBuilder objBuilder ;
+         BOOLEAN needData = FALSE ;
+
          // 1. Append operation type.
          objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
          // 2. Append the _id as _rid.
          objBuilder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
          // 3. Insert new _id if the _id field has been modified.
-         if ( RTN_EXT_UPDATE_WITH_ID == oprType )
+         switch ( oprType )
          {
+         case RTN_EXT_INSERT:
+            needData = TRUE ;
+            keySet = _keySet ;
+            break ;
+         case RTN_EXT_UPDATE:
+            needData = TRUE ;
+            keySet = _keySetNew ;
+            break ;
+         case RTN_EXT_UPDATE_WITH_ID:
+            needData = TRUE ;
+            keySet = _keySetNew ;
             if ( !newIdEle )
             {
                rc = SDB_SYS ;
@@ -695,19 +764,30 @@ namespace engine
                goto error ;
             }
             objBuilder.appendAs( *newIdEle, RTN_FIELD_NAME_RID_NEW ) ;
+            break ;
+         case RTN_EXT_INVALID:
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid operation type[%d]", oprType ) ;
+            goto error ;
+         default:
+            break ;
          }
+
          // 4. Append data if necessarry.
-         if ( RTN_EXT_INSERT == oprType || RTN_EXT_UPDATE == oprType ||
-              RTN_EXT_UPDATE_WITH_ID == oprType )
+         if ( needData )
          {
-            if ( !dataObj )
+            BSONObj record ;
+            if ( keySet.empty() )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Data object is NULL for operation type[ %d ]",
+               PD_LOG( PDERROR, "Key object is empty for operation type[%d]",
                        oprType ) ;
                goto error ;
             }
-            objBuilder.append( RTN_FIELD_NAME_SOURCE, *dataObj ) ;
+            rc = _genRecordByKeySet( keySet, record ) ;
+            PD_RC_CHECK( rc, PDERROR, "Generate record by key set failed: %d",
+                         rc ) ;
+            objBuilder.append( RTN_FIELD_NAME_SOURCE, record ) ;
          }
 
          recordObj = objBuilder.obj() ;
@@ -822,13 +902,8 @@ namespace engine
             goto error ;
          }
 
-         {
-            BSONObjSet::iterator it = _keySet.begin();
-            BSONObj object( *it ) ;
-            rc = _prepareRecord( RTN_EXT_INSERT, ele, &object, recordObj ) ;
-            PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
-                         rc ) ;
-         }
+         rc = _prepareRecord( RTN_EXT_INSERT, ele, recordObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]", rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -874,7 +949,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _prepareRecord( RTN_EXT_DELETE, ele, NULL, recordObj ) ;
+         rc = _prepareRecord( RTN_EXT_DELETE, ele, recordObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
                       rc ) ;
       }
@@ -937,16 +1012,14 @@ namespace engine
             BSONObj object( *it ) ;
             if ( idModified )
             {
-               rc = _prepareRecord( RTN_EXT_UPDATE_WITH_ID, idEle,
-                                    &object, recordObj, &idEleNew ) ;
+               rc = _prepareRecord( RTN_EXT_UPDATE_WITH_ID, idEle, recordObj,
+                                    &idEleNew ) ;
             }
             else
             {
-               rc = _prepareRecord( RTN_EXT_UPDATE, idEleNew,
-                                    &object, recordObj ) ;
+               rc = _prepareRecord( RTN_EXT_UPDATE, idEleNew, recordObj ) ;
             }
-            PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
-                         rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Add operation record failed[%d]", rc ) ;
          }
       }
       catch ( std::exception &e )
