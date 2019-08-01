@@ -92,6 +92,22 @@ belong to one and only one collection.
 or not, default to be false.
 
         Format: `StrictDataMode:true|false`
+        
+    13. `AutoIncrement` ( *Object* )：Specify auto increment field
+
+        Format: `AutoIncrement:{Field: <field1>, ...}` or `AutoIncrement:[ {Field: <field1>, ...}, {Field: <field2>, ...}, ... ]`
+
+        Example: `AutoIncrement: { Field: "userID", Generated: "always" }`
+
+        * See [AutoIncrement](data_model/auto_increment.md) for more detail.
+        
+    14. `LobShardingKeyFormat` ( *String* )：Specify Lob ShardingKey's value format on MainCL. Can be one of the follow:
+    
+        * "YYYYMMDD": Transform a lob's ID to date string format, for example: "20190701".
+        * "YYYYMM": Transform a lob's ID to month string format, for example: "201907".
+        * "YYYY"：Transform a lob's ID to year string format, for example: "2019".
+    
+        Format: `LobShardingKeyFormat:"YYYYMMDD"|"YYYYMM"|"YYYY"`
 
     **Note:**
 
@@ -174,3 +190,37 @@ Since v1.0.
     Takes 0.1250s.
     ```
 
+4. Deal with main collection with lob.
+    * Create a main collection "maincl" in collection space "foo" with LobShardingKeyFormat "YYYYMMDD".
+
+    ```lang-javascript
+    > db.foo.createCL("maincl", { LobShardingKeyFormat:"YYYYMMDD", ShardingKey:{ date:1 }, IsMainCL:true, ShardingType:"range" } )
+    localhost:11810.foo.maincl
+    Takes 0.058532s.
+    > db.foo.createCL("subcl")
+    localhost:11810.foo.subcl
+    Takes 0.294612s.
+    > db.foo.maincl.attachCL( "foo.subcl", { LowBound: { date: "20190701" }, UpBound: { date: "20190801" } } )
+    Takes 0.008561s.
+    ```
+
+    * Time between[20190701, 20190801), Lob which is putted into collection "maincl" will be actually stored in foo.subcl
+
+    ```lang-javascript
+    > Timestamp()
+    Timestamp("2019-07-23-18.04.07.539050")
+    > db.foo.maincl.putLob('/opt/data/test.dat')
+    00005d36dbee370002de8080
+    Takes 0.246062s.
+    ```
+
+    * Time can be specified to a particular time.
+
+    ```lang-javascript
+    > db.foo.maincl.createLobID(Timestamp("2019-07-23-18.04.07.539050"))
+    00005d36db97360002de8081
+    Takes 0.108365s.
+    > db.foo.maincl.putLob('/opt/data/test.dat', '00005d36db97360002de8081')
+    00005d36db97360002de8081
+    Takes 0.002216s.
+    ```

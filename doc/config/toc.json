@@ -2331,6 +2331,12 @@
                            "en": "createIndex()"
                         },
                         {
+                           "id": 1563882538,
+                           "file": "createLobID",
+                           "cn": "createLobID()",
+                           "en": "createLobID()"
+                        },
+                        {
                            "id": 1432190831,
                            "file": "deleteLob",
                            "cn": "deleteLob()",

@@ -92,6 +92,14 @@ Collection Space
         例子：`AutoIncrement: { Field: "userID", Generated: "always" }`
 
         * 参数详情请参考[自增字段介绍](data_model/auto_increment.md)
+        
+    14. `LobShardingKeyFormat` ( *String* )：指定大对象生成主表切分键键值的格式。目前支持将大对象ID中的时间属性转换成如下字符串形式：
+    
+        * "YYYYMMDD"：将大对象ID的时间属性转换为年月日的字符串形式，如"20190701"。
+        * "YYYYMM"：将大对象ID的时间属性转换为年月的字符串形式，如"201907"。
+        * "YYYY"：将大对象ID的时间属性转换为年的字符串形式，如"2019"。
+    
+        格式：`LobShardingKeyFormat:"YYYYMMDD"|"YYYYMM"|"YYYY"`
 
     **注意：**
 
@@ -116,6 +124,8 @@ Collection Space
     * 不使用 AutoSplit 参数时，若该集合从属于某个域，该域的 AutoSplit 参数将作用于当前集合。
     
     * 压缩算法选择策略：snappy 压缩算法是以单条记录为单位进行压缩，记录内部的数据重复度直接影响到压缩率。因此，当记录内部数据重复度较高，如每条记录的字段名、字段值相似，使用 snappy 算法可获得良好的压缩性能。如果记录内部数据重复度很低，但记录间具有更高的相似性，如不同记录之间有相同的字段名，相近的字段值等，则使用 lzw 算法更优。
+    
+    * LobShardingKeyFormat 只能在主表中使用，同时要求切分键只能有一个切分字段。
 
 ##返回值##
 
@@ -167,4 +177,41 @@ v1.0及以上版本。
     localhost:11810.foo.bar
     Takes 0.120450s.
     ```
+    
+4. 在主表下使用大对象
+    * 在集合空间 foo 下创建支持大对象的主集合 maincl，同时关联子表 subcl。
+
+    ```lang-javascript
+    > db.foo.createCL("maincl", { LobShardingKeyFormat:"YYYYMMDD", ShardingKey:{ date:1 }, IsMainCL:true, ShardingType:"range" } )
+    localhost:11810.foo.maincl
+    Takes 0.058532s.
+    > db.foo.createCL("subcl")
+    localhost:11810.foo.subcl
+    Takes 0.294612s.
+    > db.foo.maincl.attachCL( "foo.subcl", { LowBound: { date: "20190701" }, UpBound: { date: "20190801" } } )
+    Takes 0.008561s.
+    ```
+    
+    * 在[20190701, 20190801)之间创建的大对象数据则会落在集合 foo.subcl 中
+
+    ```lang-javascript
+    > Timestamp()
+    Timestamp("2019-07-23-18.04.07.539050")
+    > db.foo.maincl.putLob('/opt/data/test.dat')
+    00005d36dbee370002de8080
+    Takes 0.246062s.
+    ```
+    
+    * 也可以指定大对象ID的时间属性
+
+    ```lang-javascript
+    > db.foo.maincl.createLobID(Timestamp("2019-07-23-18.04.07.539050"))
+    00005d36db97360002de8081
+    Takes 0.108365s.
+    > db.foo.maincl.putLob('/opt/data/test.dat', '00005d36db97360002de8081')
+    00005d36db97360002de8081
+    Takes 0.002216s.
+    ```
+    
+    
 

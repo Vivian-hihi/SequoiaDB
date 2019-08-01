@@ -130,6 +130,33 @@ operations or not, default to be false.
 .PP
 Format: \f[C]StrictDataMode:true|false\f[]
 .RE
+.IP "13." 4
+\f[C]AutoIncrement\f[] ( \f[I]Object\f[] )：Specify auto increment field
+.RS 4
+.PP
+Format: \f[C]AutoIncrement:{Field:\ <field1>,\ ...}\f[] or
+\f[C]AutoIncrement:[\ {Field:\ <field1>,\ ...},\ {Field:\ <field2>,\ ...},\ ...\ ]\f[]
+.PP
+Example: \f[C]AutoIncrement:\ {\ Field:\ "userID",\ Generated:\ "always"\ }\f[]
+.IP \[bu] 2
+See AutoIncrement for more detail.
+.RE
+.IP "14." 4
+\f[C]LobShardingKeyFormat\f[] ( \f[I]String\f[] )：Specify Lob ShardingKey\[aq]s
+value format on MainCL.
+Can be one of the follow:
+.RS 4
+.IP \[bu] 2
+"YYYYMMDD": Transform a lob\[aq]s ID to date string format, for example:
+"20190701".
+.IP \[bu] 2
+"YYYYMM": Transform a lob\[aq]s ID to month string format, for example:
+"201907".
+.IP \[bu] 2
+"YYYY"：Transform a lob\[aq]s ID to year string format, for example: "2019".
+.PP
+Format: \f[C]LobShardingKeyFormat:"YYYYMMDD"|"YYYYMM"|"YYYY"\f[]
+.RE
 .PP
 \f[B]Note:\f[]
 .IP \[bu] 2
@@ -303,6 +330,52 @@ on.
 >\ db.foo.createCL(\ "bar",\ {\ StrictDataMode:\ true\ }\ )
 localhost:11810.foo.bar
 Takes\ 0.1250s.
+\f[]
+.fi
+.RE
+.IP "4." 3
+Deal with main collection with lob.
+.RS 4
+.IP \[bu] 2
+Create a main collection "maincl" in collection space "foo" with
+LobShardingKeyFormat "YYYYMMDD".
+.IP
+.nf
+\f[C]
+>\ db.foo.createCL("maincl",\ {\ LobShardingKeyFormat:"YYYYMMDD",\ ShardingKey:{\ date:1\ },\ IsMainCL:true,\ ShardingType:"range"\ }\ )
+localhost:11810.foo.maincl
+Takes\ 0.058532s.
+>\ db.foo.createCL("subcl")
+localhost:11810.foo.subcl
+Takes\ 0.294612s.
+>\ db.foo.maincl.attachCL(\ "foo.subcl",\ {\ LowBound:\ {\ date:\ "20190701"\ },\ UpBound:\ {\ date:\ "20190801"\ }\ }\ )
+Takes\ 0.008561s.
+\f[]
+.fi
+.IP \[bu] 2
+Time between[20190701, 20190801), Lob which is putted into collection "maincl"
+will be actually stored in foo.subcl
+.IP
+.nf
+\f[C]
+>\ Timestamp()
+Timestamp("2019\-07\-23\-18.04.07.539050")
+>\ db.foo.maincl.putLob(\[aq]/opt/data/test.dat\[aq])
+00005d36dbee370002de8080
+Takes\ 0.246062s.
+\f[]
+.fi
+.IP \[bu] 2
+Time can be specified to a particular time.
+.IP
+.nf
+\f[C]
+>\ db.foo.maincl.createLobID(Timestamp("2019\-07\-23\-18.04.07.539050"))
+00005d36db97360002de8081
+Takes\ 0.108365s.
+>\ db.foo.maincl.putLob(\[aq]/opt/data/test.dat\[aq],\ \[aq]00005d36db97360002de8081\[aq])
+00005d36db97360002de8081
+Takes\ 0.002216s.
 \f[]
 .fi
 .RE
