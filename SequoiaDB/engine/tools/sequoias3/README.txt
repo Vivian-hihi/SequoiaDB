@@ -17,7 +17,7 @@
 您可以使用该默认管理员用户创建新的用户，然后使用新用户角色进行桶操作，对象操作。
 默认管理员账户名：administrator
 默认管理员AccessKeyID：ABCDEFGHIJKLMNOPQRST
-设置Authorization的Header值为Credential=ABCDEFGHIJKLMNOPQRST/20180524/china/s3/aws4_request
+默认管理员用户SecreatKeyID：abcdefghijklmnopqrstuvwxyz0123456789ABCD
 
 错误排查：
 1.如果系统启动失败
