@@ -7,12 +7,8 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -20,21 +16,18 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
- * @FileName FullText15847.java 增删改记录过程中反复创建删除全文索引 
+ * @FileName FullText15847.java 增删改记录过程中反复创建删除全文索引
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15847 extends SdbTestBase {
+public class FullText15847 extends FullTestBase {
 
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String clName = "es_15847";
     private String indexName = "fulltextIndex15847";
     private String cappedName = null;
@@ -45,15 +38,14 @@ public class FullText15847 extends SdbTestBase {
     private int deleteNum = insertNum / 2;
     private boolean indexExist = true;
 
-    @BeforeClass
-    public void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
         FullTextDBUtils.insertData(cl, insertNum);
 
         BSONObject indexObj = new BasicBSONObject();
@@ -111,16 +103,9 @@ public class FullText15847 extends SdbTestBase {
 
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 
     private class TextIndexThread {
@@ -162,7 +147,7 @@ public class FullText15847 extends SdbTestBase {
                 int insertNum1 = insertNum + testInsertNum / 10;
                 for (int i = 0; i < 10; i++) {
                     for (int j = insertNum; j < insertNum1; j++) {
-                        int recordNum = i * ( testInsertNum / 10 ) + j;
+                        int recordNum = i * (testInsertNum / 10) + j;
                         insertObjs.add((BSONObject) JSON.parse("{recordId: " + recordNum + ", a: '" + clName + recordNum
                                 + "', b: '" + strB + "', c: '" + strC + "', d: '" + strD + "'}"));
                     }

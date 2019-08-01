@@ -9,12 +9,8 @@ import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
@@ -24,17 +20,18 @@ import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
  * @FileName seqDB-15851:集合中存在全文索引，增删改/全文检索/查询记录/lob操作时创建/删除普通索引
- * @Author  huangxiaoni 
+ * @Author huangxiaoni
  * @Date 2019.4.25
  */
 
-public class FullText15851 extends SdbTestBase {
+public class FullText15851 extends FullTestBase {
     private final int TIMEOUT = 600000;
     private Random random = new Random();
 
@@ -50,25 +47,20 @@ public class FullText15851 extends SdbTestBase {
     private final String NORMAL_IDX_NAME_2 = "idx_15851_2";
     private final BSONObject NORMAL_IDX_KEY_2 = new BasicBSONObject("c", 1);
 
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs;
-    private DBCollection cl;
     private String cappedCSName;
     private ArrayList<ObjectId> lobIds1 = new ArrayList<>();
     private ArrayList<ObjectId> lobIds2 = new ArrayList<>();
 
     private String esIndexName;
 
-    @BeforeClass
-    private void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, CL_NAME);
+    }
 
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("Skip standAlone mode");
-        }
-
-        cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = cs.createCollection(CL_NAME);
+    @Override
+    protected void caseInit() throws Exception {
         cl.createIndex(FULLTEXT_IDX_NAME, FULLTEXT_IDX_KEY, false, false);
         cl.createIndex(NORMAL_IDX_NAME_1, NORMAL_IDX_KEY_1, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, FULLTEXT_IDX_NAME);
@@ -108,16 +100,9 @@ public class FullText15851 extends SdbTestBase {
         // 分别在每个并发线程检查数据对应操作的数据正确性。在 ThreadFullTextSearch 线程 step2 检查数据一致性。
     }
 
-    @AfterClass
-    private void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCSName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCSName));
     }
 
     private class ThreadInsert {

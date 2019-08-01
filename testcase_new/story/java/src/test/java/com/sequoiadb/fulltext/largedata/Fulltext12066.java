@@ -3,43 +3,37 @@ package com.sequoiadb.fulltext.largedata;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * @Description seqDB-12066: 集合上存在全文索引，删除集合
  * @author yinzhen
  * @date 2018/11/20
  */
-public class Fulltext12066 extends SdbTestBase {
-    private Sequoiadb sdb;
+public class Fulltext12066 extends FullTestBase {
     private CollectionSpace cs;
-    private DBCollection cl;
     private String clName = "cl12066";
     private String fullIndexName = "fullIndex12066";
     private String cappedName;
     private String esIndexName;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
+
+    @Override
+    protected void caseInit() throws Exception {
         cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
     }
 
     @Test
@@ -81,15 +75,8 @@ public class Fulltext12066 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 }

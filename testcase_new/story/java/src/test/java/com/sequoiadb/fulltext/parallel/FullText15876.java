@@ -6,18 +6,14 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -29,7 +25,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.5.14
  */
 
-public class FullText15876 extends SdbTestBase {
+public class FullText15876 extends FullTestBase {
     private Random random = new Random();
     private final String CS_NAME = "cs_es_15876";
     private final String CL_NAME = "cl_es_15876";
@@ -37,27 +33,18 @@ public class FullText15876 extends SdbTestBase {
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
 
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs;
-    private DBCollection cl;
     private String cappedCSName;
-
     private String esIndexName;
 
-    @BeforeClass
-    private void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CSNAME, CS_NAME);
+        caseProp.setProperty(CLNAME, CL_NAME);
+    }
 
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("Skip standAlone mode");
-        }
-
-        if (sdb.isCollectionSpaceExist(CS_NAME)) {
-            // 清理后重新创建，避免前一次跑的结果对其有影响
-            sdb.dropCollectionSpace(CS_NAME);
-        }
-        cs = sdb.createCollectionSpace(CS_NAME);
-        cl = cs.createCollection(CL_NAME);
+    @Override
+    protected void caseInit() throws Exception {
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
         esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
@@ -65,7 +52,7 @@ public class FullText15876 extends SdbTestBase {
         FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
-    @Test(enabled=false)
+    @Test(enabled = false)
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();
@@ -89,22 +76,9 @@ public class FullText15876 extends SdbTestBase {
         }
     }
 
-    @AfterClass
-    private void tearDown() throws Exception {
-        try {
-            try {
-                sdb.dropCollectionSpace(CS_NAME);
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -34) {
-                    throw e;
-                }
-            }
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCSName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCSName));
     }
 
     private class ThreadTruncate extends ResultStore {

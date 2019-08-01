@@ -2,30 +2,20 @@ package com.sequoiadb.fulltext.largedata;
 
 import java.util.List;
 
-import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * @Description seqDB-11988:hash切分表加入域使用自动切分，创建/删除全文索引
  * @author yinzhen
  * @date 2018/11/13
  */
-public class Fulltext11988 extends SdbTestBase {
-    private Sequoiadb sdb;
-    private DBCollection cl;
+public class Fulltext11988 extends FullTestBase {
     private String clName = "hashTableIndex11988";
     private String fullIndexName = "fullIndex11988";
     private List<String> groupNames;
@@ -34,30 +24,21 @@ public class Fulltext11988 extends SdbTestBase {
     private String esIndexName;
     private String cappedCLName;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
+
         groupNames = CommLib.getDataGroupNames(sdb);
-        if (CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("ONE GROUP MODE");
-        }
+        caseProp.setProperty(DOMAIN, doMainName);
+        caseProp.setProperty(DOMAINOPT, "{Groups:['" + groupNames.get(0) + "', '" + groupNames.get(1) + "']}");
 
-        if (sdb.isCollectionSpaceExist(csName)) {
-            sdb.dropCollectionSpace(csName);
-        }
-        if (sdb.isDomainExist(doMainName)) {
-            sdb.dropDomain(doMainName);
-        }
+        // hash 切分表加入域使用自动切分
+        caseProp.setProperty(CSNAME, csName);
+        caseProp.setProperty(CSOPT, "{Domain:'" + doMainName + "'}");
 
-        // hash切分表加入域使用自动切分
-        sdb.createDomain(doMainName,
-                (BSONObject) JSON.parse("{Groups:['" + groupNames.get(0) + "', '" + groupNames.get(1) + "']}"));
-        CollectionSpace cs = sdb.createCollectionSpace(csName, (BSONObject) JSON.parse("{Domain:'doMain11988'}"));
-        cl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'hash', AutoSplit:true}"));
+        caseProp.setProperty(CLNAME, clName);
+        caseProp.setProperty(CLOPT, "{ShardingKey:{a:1}, ShardingType:'hash', AutoSplit:true}");
     }
 
     @Test
@@ -76,16 +57,8 @@ public class Fulltext11988 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollectionSpace(sdb, csName);
-            sdb.dropDomain(doMainName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 }

@@ -7,19 +7,14 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * FileName: Fulltext14397.java test content: 集合空间删除后重建相同的全文索引
@@ -27,11 +22,9 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author liuxiaoxuan
  * @Date 2018.11.21
  */
-public class Fulltext14397 extends SdbTestBase {
+public class Fulltext14397 extends FullTestBase {
 
-    private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String csName = "ES_cs_14397";
     private String clName = "ES_cl_14397";
     private String textIndexName = "fulltext14397";
@@ -39,26 +32,18 @@ public class Fulltext14397 extends SdbTestBase {
     private String esIndexName = null;
     private BSONObject indexObj = new BasicBSONObject();
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-
-        cs = sdb.createCollectionSpace(this.csName);
-        cl = cs.createCollection(clName);
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CSNAME, csName);
+        caseProp.setProperty(CLNAME, clName);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollectionSpace(sdb, csName);
+    @Override
+    protected void caseFini() throws Exception {
         // 检查全文索引是否残留
         if (esIndexName != null) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        }
-        if (sdb != null) {
-            sdb.close();
         }
     }
 

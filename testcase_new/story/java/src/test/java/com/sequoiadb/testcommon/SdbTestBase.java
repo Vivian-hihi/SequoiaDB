@@ -312,13 +312,15 @@ public class SdbTestBase {
                 modifyNodeConfAndRestart(false, "after");
             }
             sequoiadb = new Sequoiadb(SdbTestBase.coordUrl, "", "", options);
-            if (sequoiadb.isCollectionSpaceExist(csName)) {
-                sequoiadb.dropCollectionSpace(csName);
-            }
+
+            // if (sequoiadb.isCollectionSpaceExist(csName)) {
+            // sequoiadb.dropCollectionSpace(csName);
+            // }
+
             // drop capped cs
-            if (sequoiadb.isCollectionSpaceExist(cappedCSName)) {
-                sequoiadb.dropCollectionSpace(cappedCSName);
-            }
+            // if (sequoiadb.isCollectionSpaceExist(cappedCSName)) {
+            // sequoiadb.dropCollectionSpace(cappedCSName);
+            // }
             // sdb.close() ;
         } catch (BaseException e) {
             e.printStackTrace();

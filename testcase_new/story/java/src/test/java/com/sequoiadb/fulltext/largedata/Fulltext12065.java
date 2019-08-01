@@ -3,46 +3,33 @@ package com.sequoiadb.fulltext.largedata;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * @Description seqDB-12065: 集合空间上存在全文索引，删除集合空间
  * @author yinzhen
  * @date 2018/11/19
  */
-public class Fulltext12065 extends SdbTestBase {
-    private Sequoiadb sdb;
-    private DBCollection cl;
+public class Fulltext12065 extends FullTestBase {
     private String csName = "cs12065";
     private String clName = "cl12065";
     private String fullIndexName = "fullIndex12065";
     private String cappedName;
     private String esIndexName;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
-        if (sdb.isCollectionSpaceExist(csName)) {
-            sdb.dropCollectionSpace(csName);
-        }
-        CollectionSpace cs = sdb.createCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+
+        caseProp.setProperty(CSNAME, csName);
+        caseProp.setProperty(CLNAME, clName);
     }
 
     @Test
@@ -84,15 +71,8 @@ public class Fulltext12065 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollectionSpace(sdb, csName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 }

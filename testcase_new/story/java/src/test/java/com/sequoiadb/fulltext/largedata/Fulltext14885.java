@@ -3,48 +3,33 @@ package com.sequoiadb.fulltext.largedata;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * @Description seqDB-14885: 正在查询固定集合时删除全文索引
  * @author yinzhen
  * @date 2018/11/20
  */
-public class Fulltext14885 extends SdbTestBase {
-    private Sequoiadb sdb;
-    private CollectionSpace cs;
-    private DBCollection cl;
+public class Fulltext14885 extends FullTestBase {
     private String csName14885 = "cs14885";
     private String clName = "dropCollection14885";
     private String fullIndexName = "fullIndex14885";
     private String esIndexName;
     private String cappedCLName;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
-        if (sdb.isCollectionSpaceExist(csName14885)) {
-            sdb.dropCollectionSpace(csName14885);
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CSNAME, csName14885);
 
-        cs = sdb.createCollectionSpace(csName14885);
-        cl = cs.createCollection(clName);
+        caseProp.setProperty(CLNAME, clName);
     }
 
     @Test
@@ -90,16 +75,9 @@ public class Fulltext14885 extends SdbTestBase {
         checkContext();
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollectionSpace(sdb, csName14885);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 
     private void checkContext() throws InterruptedException {

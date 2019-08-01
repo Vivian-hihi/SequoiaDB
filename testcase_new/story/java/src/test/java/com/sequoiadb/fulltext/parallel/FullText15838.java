@@ -6,9 +6,6 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -19,6 +16,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -28,27 +26,23 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author luweikang
  * @Date 2019年5月6日
  */
-public class FullText15838 extends SdbTestBase {
-
-    private Sequoiadb sdb = null;
+public class FullText15838 extends FullTestBase {
     private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String clName = "es_15838";
     private String indexName = "fulltextIndex15838";
     private String sourceGruop = null;
     private String targetGruop = null;
     private int insertNum = 100000;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
+    }
+
+    @Override
+    protected void caseInit() throws Exception {
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
-        if (groupNames.size() < 2) {
-            throw new SkipException("group less 2");
-        }
         sourceGruop = groupNames.get(0);
         targetGruop = groupNames.get(1);
         cs = sdb.getCollectionSpace(csName);
@@ -85,19 +79,13 @@ public class FullText15838 extends SdbTestBase {
         Assert.assertEquals(recordNum, insertNum, "use fulltext index search record");
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            List<String> cappedNames = new ArrayList<String>();
-            cappedNames.add(FullTextDBUtils.getCappedName(cl, indexName));
-            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, indexName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedNames));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        List<String> cappedNames = new ArrayList<String>();
+        cappedNames.add(FullTextDBUtils.getCappedName(cl, indexName));
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, indexName);
+        FullTextDBUtils.dropCollection(cs, clName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedNames));
     }
 
     private class CreateIndexThread {

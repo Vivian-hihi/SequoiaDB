@@ -6,20 +6,15 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
@@ -28,24 +23,21 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author yinzhen
  * @Date 2019-4-22
  */
-public class FullText15798 extends SdbTestBase {
+public class FullText15798 extends FullTestBase {
     private String clName = "cl15798";
-    private DBCollection cl;
-    private Sequoiadb sdb;
     private String fullIdxName = "idx15798";
     private String esIndexName;
     private String cappedCLName;
     private int insertNum = 20000;
 
-    @BeforeClass
-    public void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("STANDALONE MODE");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
 
-        cl = sdb.getCollectionSpace(csName).createCollection(clName);
-
+    @Override
+    protected void caseInit() throws Exception {
         insertData(cl, insertNum);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
                 false);
@@ -78,17 +70,9 @@ public class FullText15798 extends SdbTestBase {
         FullTextUtils.isRecordEqualsByMulQueryMode(cl);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 
     private class InsertData {

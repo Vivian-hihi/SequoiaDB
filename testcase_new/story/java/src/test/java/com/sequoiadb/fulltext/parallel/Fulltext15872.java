@@ -11,9 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -23,7 +20,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -35,8 +32,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019-05-14
  */
 
-public class Fulltext15872 extends SdbTestBase {
-    private Sequoiadb sdb = null;
+public class Fulltext15872 extends FullTestBase {
     private List<String> csNames = new ArrayList<String>();
     private List<String> clNames = new ArrayList<String>();
     private String csBasicName = "cs15872";
@@ -51,13 +47,13 @@ public class Fulltext15872 extends SdbTestBase {
     private List<String> esIndexNames = new ArrayList<String>();
     private List<String> cappedCLNames = new ArrayList<String>();
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
         for (int i = 0; i < csNum; i++) {
             String csName = csBasicName + "_" + i;
             csNames.add(csName);
@@ -87,8 +83,8 @@ public class Fulltext15872 extends SdbTestBase {
         }
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
+    @Override
+    protected void caseFini() throws Exception {
         try {
             for (String csName : csNames) {
                 FullTextDBUtils.dropCollectionSpace(sdb, csName);

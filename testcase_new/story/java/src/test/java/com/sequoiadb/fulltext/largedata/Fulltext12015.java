@@ -7,19 +7,14 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * FileName: Fulltext12015.java test content: 主子表中插入/更新/删除包含全文索引字段的记录
@@ -27,35 +22,35 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author liuxiaoxuan
  * @Date 2018.11.27
  */
-public class Fulltext12015 extends SdbTestBase {
+public class Fulltext12015 extends FullTestBase {
 
-    private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection maincl = null;
     private String mainCLName = "ES_12015_maincl";
     private String subCLName1 = "ES_12015_subcl_1";
     private String subCLName2 = "ES_12015_subcl_2";
-    String textIndexName = "fulltext12015";
+    private String textIndexName = "fulltext12015";
+    private List<String> cappedNames;
 
     List<String> esIndexNames = new ArrayList<>();
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
 
-        if (CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("current environment less than two groups ");
-        }
+        caseProp.setProperty(CLNAME, mainCLName);
+        caseProp.setProperty(CLOPT, "{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}");
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
         // 创建主子表
         cs = sdb.getCollectionSpace(csName);
-        maincl = cs.createCollection(mainCLName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}"));
+        maincl = cs.getCollection(mainCLName);
         cs.createCollection(subCLName1);
         cs.createCollection(subCLName2, (BSONObject) JSON.parse("{ShardingKey:{a0:1}, ShardingType:'hash'}"));
+
         // 挂载子表
         BSONObject options1 = (BSONObject) JSON.parse("{LowBound:{a:'testa'}, UpBound:{a:'testa 999999'}}");
         BSONObject options2 = (BSONObject) JSON.parse("{LowBound:{a:'zzza'}, UpBound:{a:'zzza 999999'}}");
@@ -63,12 +58,8 @@ public class Fulltext12015 extends SdbTestBase {
         maincl.attachCollection(csName + "." + subCLName2, options2);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        List<String> cappedNames = FullTextDBUtils.getESIndexNames(maincl, textIndexName);
-        FullTextDBUtils.dropCollection(cs, subCLName1);
-        FullTextDBUtils.dropCollection(cs, subCLName2);
-        FullTextDBUtils.dropCollection(cs, mainCLName);
+    @Override
+    protected void caseFini() throws Exception {
         // 检查全文索引是否残留
         if (esIndexNames != null) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedNames));
@@ -108,12 +99,14 @@ public class Fulltext12015 extends SdbTestBase {
         // 更新数据，更新后再次插入
         update(maincl);
         insertData(maincl, 10000);
+
         // 检查ES端索引数据是否完成同步，主备节点上主表的原始集合、固定集合数据是否一致
         Assert.assertTrue(FullTextUtils.isMainCLIndexCreated(maincl, textIndexName, FullTextUtils.INSERT_NUMS + 10000));
-
         remove(maincl);
+
         // 检查ES端索引数据是否完成同步，主备节点上主表的原始集合、固定集合数据是否一致
         Assert.assertTrue(FullTextUtils.isMainCLIndexCreated(maincl, textIndexName, (int) maincl.getCount()));
+        cappedNames = FullTextDBUtils.getESIndexNames(maincl, textIndexName);
     }
 
     private void insertData(DBCollection cl, int insertNums) {

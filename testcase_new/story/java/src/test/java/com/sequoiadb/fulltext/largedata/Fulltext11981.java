@@ -3,18 +3,11 @@ package com.sequoiadb.fulltext.largedata;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * FileName: Fulltext11981.java test content: 在非空集合中创建/删除全文索引
@@ -22,33 +15,17 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author liuxiaoxuan
  * @Date 2018.11.20
  */
-public class Fulltext11981 extends SdbTestBase {
+public class Fulltext11981 extends FullTestBase {
 
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String clName = "ES_11981";
     private final String textIndexName = "fulltext11981";
     private String cappedName = null;
     private String esIndexName = null;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
-    }
-
-    @AfterClass
-    public void tearDown() {
-        FullTextDBUtils.dropCollection(cs, clName);
-        if (sdb != null) {
-            sdb.close();
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
     }
 
     @Test

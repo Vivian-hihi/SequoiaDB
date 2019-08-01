@@ -8,9 +8,6 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -19,7 +16,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -30,8 +27,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019-05-10
  */
 
-public class Fulltext12123 extends SdbTestBase {
-    private Sequoiadb sdb = null;
+public class Fulltext12123 extends FullTestBase {
     private List<String> csNames = new ArrayList<String>();
     private List<String> clNames = new ArrayList<String>();
     private String csBasicName = "cs12123";
@@ -42,13 +38,13 @@ public class Fulltext12123 extends SdbTestBase {
     private int insertNum = 20000;
     private ThreadExecutor te = new ThreadExecutor(3600000);
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
         for (int i = 0; i < csNum; i++) {
             String csName = csBasicName + "_" + i;
             csNames.add(csName);
@@ -75,36 +71,31 @@ public class Fulltext12123 extends SdbTestBase {
         }
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            List<String> esIndexNames = new ArrayList<String>();
-            List<String> cappedCLNames = new ArrayList<String>();
-            for (String csName : csNames) {
-                if (sdb.isCollectionSpaceExist(csName)) {
-                    CollectionSpace cs = sdb.getCollectionSpace(csName);
-                    for (String clName : clNames) {
-                        DBCollection cl = cs.getCollection(clName);
-                        if (cl.isIndexExist(indexName)) {
-                            String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-                            esIndexNames.add(esIndexName);
-                            String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-                            cappedCLNames.add(cappedCLName);
-                        }
+    @Override
+    protected void caseFini() throws Exception {
+        List<String> esIndexNames = new ArrayList<String>();
+        List<String> cappedCLNames = new ArrayList<String>();
+        for (String csName : csNames) {
+            if (sdb.isCollectionSpaceExist(csName)) {
+                CollectionSpace cs = sdb.getCollectionSpace(csName);
+                for (String clName : clNames) {
+                    DBCollection cl = cs.getCollection(clName);
+                    if (cl.isIndexExist(indexName)) {
+                        String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+                        esIndexNames.add(esIndexName);
+                        String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+                        cappedCLNames.add(cappedCLName);
                     }
                 }
+            }
 
-            }
-            for (String csName : csNames) {
-                FullTextDBUtils.dropCollectionSpace(sdb, csName);
-            }
-            if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedCLNames));
-            }
-        } finally {
-            sdb.close();
         }
-
+        for (String csName : csNames) {
+            FullTextDBUtils.dropCollectionSpace(sdb, csName);
+        }
+        if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedCLNames));
+        }
     }
 
     @Test
@@ -151,12 +142,12 @@ public class Fulltext12123 extends SdbTestBase {
                         }
                     }
                     // 只校验删除全文索引成功时，固定集合删除成功的逻辑；成功的逻辑在if分支已校验
-                    if (( i + 1 ) * j + 1 <= cappedCLNames.size()) {
-                        System.out.println("cappedCLNames.get((i + 1) * j):" + cappedCLNames.get(( i + 1 ) * j));
-                        System.out.println("esIndexNames.get((i + 1) * j):" + esIndexNames.get(( i + 1 ) * j));
+                    if ((i + 1) * j + 1 <= cappedCLNames.size()) {
+                        System.out.println("cappedCLNames.get((i + 1) * j):" + cappedCLNames.get((i + 1) * j));
+                        System.out.println("esIndexNames.get((i + 1) * j):" + esIndexNames.get((i + 1) * j));
 
-                        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(( i + 1 ) * j),
-                                cappedCLNames.get(( i + 1 ) * j)));
+                        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get((i + 1) * j),
+                                cappedCLNames.get((i + 1) * j)));
                     }
                 }
             }

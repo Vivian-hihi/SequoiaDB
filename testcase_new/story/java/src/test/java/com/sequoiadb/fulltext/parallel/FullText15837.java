@@ -3,19 +3,15 @@ package com.sequoiadb.fulltext.parallel;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -25,11 +21,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author luweikang
  * @Date 2019年5月6日
  */
-public class FullText15837 extends SdbTestBase {
-
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
+public class FullText15837 extends FullTestBase {
     private String csName = "cs_15837";
     private String clName = "es_15837";
     private String indexName = "fulltextIndex15837";
@@ -37,19 +29,15 @@ public class FullText15837 extends SdbTestBase {
     private String esIndexName = null;
     private int insertNum = 100000;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CSNAME, csName);
+        caseProp.setProperty(CLNAME, clName);
+    }
 
-        if (sdb.isCollectionSpaceExist(csName)) {
-            sdb.dropCollectionSpace(csName);
-        }
-        cs = sdb.createCollectionSpace(csName);
-        cl = cs.createCollection(clName);
-
+    @Override
+    protected void caseInit() throws Exception {
         FullTextDBUtils.insertData(cl, insertNum);
     }
 
@@ -80,38 +68,28 @@ public class FullText15837 extends SdbTestBase {
 
         Assert.assertEquals(cl.getCount(), insertNum + 10000);
 
-	DBCursor cur = null;
-	try {
-	    cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
-		    "{'': '" + indexName + "'}");
-	    if (cur.hasNext()) {
-		cur.getNext();
-	    }
-	    Assert.fail("use not exist fulltext search should be failed!");
-	} catch (BaseException e) {
-	    if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
-		throw e;
-	    }
-	} finally {
-	    if (cur != null) {
-		cur.close();
-	    }
-	}
-    }
-
-    @AfterClass
-    public void tearDown() throws Exception {
+        DBCursor cur = null;
         try {
-            FullTextDBUtils.dropCollection(cs, clName);
-            if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
+            cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                    "{'': '" + indexName + "'}");
+            if (cur.hasNext()) {
+                cur.getNext();
             }
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
+            Assert.fail("use not exist fulltext search should be failed!");
+        } catch (BaseException e) {
+            if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                throw e;
+            }
         } finally {
-            if (sdb != null) {
-                sdb.close();
+            if (cur != null) {
+                cur.close();
             }
         }
+    }
+
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 
     private class DropIndexThread {

@@ -9,9 +9,6 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -21,7 +18,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -32,29 +29,28 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author
  * @Date liuxiaoxuan 2019.5.10
  */
-public class Fulltext12127 extends SdbTestBase {
+public class Fulltext12127 extends FullTestBase {
     private final int TIMEOUT = 600000;
-    private Sequoiadb db = null;
     private List<DBCollection> cls = new ArrayList<>();
     private String textIndexName = "fulltext12127";
     private List<String> cappedNames = new ArrayList<>();
     private List<String> esIndexNames = new ArrayList<>();
     ThreadExecutor te = new ThreadExecutor(TIMEOUT);
 
-    @BeforeClass
-    public void setUp() {
-        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(db)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
         // 创建集合空间和集合，总共两个集合空间，每个集合空间对应2个集合
         for (int csNum = 0; csNum < 2; csNum++) {
             String csName = "cs12127_" + csNum;
-            if (db.isCollectionSpaceExist(csName)) {
-                db.dropCollectionSpace(csName);
+            if (sdb.isCollectionSpaceExist(csName)) {
+                sdb.dropCollectionSpace(csName);
             }
-            CollectionSpace cs = db.createCollectionSpace(csName);
+            CollectionSpace cs = sdb.createCollectionSpace(csName);
             for (int clNum = 0; clNum < 2; clNum++) {
                 String clName = "12127_cl_" + clNum;
                 DBCollection cl = cs.createCollection(clName);
@@ -69,20 +65,14 @@ public class Fulltext12127 extends SdbTestBase {
         }
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            for (int csNum = 0; csNum < 2; csNum++) {
-                String csName = "cs12127_" + csNum;
-                FullTextDBUtils.dropCollectionSpace(db, csName);
-            }
-            for (int i = 0; i < esIndexNames.size(); i++) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
-            }
-        } finally {
-            if (db != null) {
-                db.close();
-            }
+    @Override
+    protected void caseFini() throws Exception {
+        for (int csNum = 0; csNum < 2; csNum++) {
+            String csName = "cs12127_" + csNum;
+            FullTextDBUtils.dropCollectionSpace(sdb, csName);
+        }
+        for (int i = 0; i < esIndexNames.size(); i++) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i)));
         }
     }
 
@@ -93,7 +83,7 @@ public class Fulltext12127 extends SdbTestBase {
 
         for (int csNum = 0; csNum < 2; csNum++) {
             String csName = "cs12127_" + csNum;
-            CollectionSpace cs = db.getCollectionSpace(csName);
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
             // 在每个集合空间下创建新的集合
             te.addWorker(new CreateCLThread(csName, "12127_new_cl"));
             for (int clNum = 0; clNum < 2; clNum++) {
@@ -131,13 +121,13 @@ public class Fulltext12127 extends SdbTestBase {
         for (int i = 0; i < newDropCLThreads.size(); i++) {
             // 集合依然存在的情况下，且全文索引删除成功，执行全文检索报错
             if (newDropCLThreads.get(i).getRetCode() != 0 && dropTextIndexThreads.get(i).getRetCode() == 0) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i)));
                 DBCollection cl = cls.get(i);
                 // 插入数据正常
                 FullTextDBUtils.insertData(cl, 100);
                 BSONObject matcher = (BSONObject) JSON.parse("{'':{'$Text':{'query':{'match_all':{}}}}}");
                 DBCursor cursor = cl.query(matcher, null, null, null);
-   
+
                 try {
                     cursor = cl.query(matcher, null, null, null);
                     Assert.fail("query should fail");
@@ -175,11 +165,11 @@ public class Fulltext12127 extends SdbTestBase {
             }
             // 集合不存在
             else if (newDropCLThreads.get(i).getRetCode() != 0) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i)));
             }
         }
     }
- 
+
     class DropTextIndexThread extends ResultStore {
         private String csName;
         private String clName;
@@ -192,7 +182,7 @@ public class Fulltext12127 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropTextIndex() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(textIndexName);
@@ -203,7 +193,7 @@ public class Fulltext12127 extends SdbTestBase {
                 saveResult(e.getErrorCode(), e);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -220,7 +210,7 @@ public class Fulltext12127 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         public void createTextIndex() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
@@ -233,7 +223,7 @@ public class Fulltext12127 extends SdbTestBase {
                 }
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -245,17 +235,17 @@ public class Fulltext12127 extends SdbTestBase {
         public CreateCLThread(String csName, String clName) {
             this.csName = csName;
             this.clName = clName;
-        } 
+        }
 
         @ExecuteOrder(step = 1, desc = "创建集合")
         public void createCL() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 sdb.getCollectionSpace(csName).createCollection(clName);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -265,7 +255,7 @@ public class Fulltext12127 extends SdbTestBase {
         private String clName = null;
 
         public DropCLThread(String csName, String clName) {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             this.csName = csName;
             this.clName = clName;
         }
@@ -273,7 +263,7 @@ public class Fulltext12127 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除集合")
         public void dropCL() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 sdb.getCollectionSpace(csName).dropCollection(clName);
             } catch (BaseException e) {
@@ -283,7 +273,7 @@ public class Fulltext12127 extends SdbTestBase {
                 saveResult(e.getErrorCode(), e);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }

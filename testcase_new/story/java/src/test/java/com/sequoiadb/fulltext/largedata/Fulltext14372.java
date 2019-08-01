@@ -6,41 +6,33 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * @Description seqDB-14372:无存量数据，插入记录
  * @author yinzhen
  * @date 2018/11/19
  */
-public class Fulltext14372 extends SdbTestBase {
-    private Sequoiadb sdb;
-    private DBCollection cl;
+public class Fulltext14372 extends FullTestBase {
     private String clName = "insertRecords14372";
     private String fullIndexName = "fullIndex14372";
     private String cappedName = null;
     private String esIndexName = null;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
-        CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = cs.createCollection(clName);
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+
+        caseProp.setProperty(CLNAME, clName);
+    }
+
+    @Override
+    protected void caseInit() throws Exception {
         cl.createIndex(fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
                 false);
@@ -56,19 +48,11 @@ public class Fulltext14372 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, FullTextUtils.INSERT_NUMS * 2));
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            // check fulltext deleted
-            if (esIndexName != null) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-            }
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
+    @Override
+    protected void caseFini() throws Exception {
+        // check fulltext deleted
+        if (esIndexName != null) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
         }
     }
 

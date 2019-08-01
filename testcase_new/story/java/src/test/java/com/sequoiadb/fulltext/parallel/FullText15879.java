@@ -8,9 +8,6 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -20,6 +17,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -31,14 +29,13 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.5.14
  */
 
-public class FullText15879 extends SdbTestBase {
+public class FullText15879 extends FullTestBase {
     private Random random = new Random();
     private final String CL_NAME = "cl_es_15879";
     private final String IDX_NAME = "idx_es_15879";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
 
-    private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private List<String> cappedCSNames = new ArrayList<String>();
@@ -47,14 +44,13 @@ public class FullText15879 extends SdbTestBase {
 
     private List<String> esIndexNames;
 
-    @BeforeClass
-    private void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+    }
 
-        if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
-        }
-
+    @Override
+    protected void caseInit() throws Exception {
         ArrayList<String> rgNames = CommLib.getDataGroupNames(sdb);
         srcRgName = rgNames.get(0);
         dstRgName = rgNames.get(1);
@@ -102,16 +98,10 @@ public class FullText15879 extends SdbTestBase {
         }
     }
 
-    @AfterClass
-    private void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedCSNames));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        FullTextDBUtils.dropCollection(cs, CL_NAME);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedCSNames));
     }
 
     private class ThreadTruncate extends ResultStore {

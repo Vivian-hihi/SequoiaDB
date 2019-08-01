@@ -7,19 +7,15 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * FileName: Fulltext11990:主子表中创建/删除全文索引
@@ -27,9 +23,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author liuxiaoxuan
  * @Date 2018.11.27
  */
-public class Fulltext11990 extends SdbTestBase {
-
-    private Sequoiadb sdb = null;
+public class Fulltext11990 extends FullTestBase {
     private CollectionSpace cs = null;
     private DBCollection maincl = null;
     private String mainCLName = "ES_11990_maincl";
@@ -39,37 +33,29 @@ public class Fulltext11990 extends SdbTestBase {
     private String srcGroupName = "";
     private String destGroupName = "";
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
 
-        if (CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("current environment less than two groups ");
-        }
+        // 创建主子表
+        caseProp.setProperty(CLNAME, mainCLName);
+        caseProp.setProperty(CLOPT, "{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}");
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
+        maincl = sdb.getCollectionSpace(csName).getCollection(mainCLName);
         ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
         srcGroupName = groupsName.get(0);
         destGroupName = groupsName.get(1);
-        // 创建主子表
+
         cs = sdb.getCollectionSpace(csName);
-        maincl = cs.createCollection(mainCLName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}"));
         cs.createCollection(subCLName1, (BSONObject) JSON.parse("{Group:'" + srcGroupName + "'}"));
         DBCollection subcl = cs.createCollection(subCLName2,
                 (BSONObject) JSON.parse("{ShardingKey:{a0:1}, ShardingType:'hash', Group:'" + srcGroupName + "'}"));
         subcl.split(srcGroupName, destGroupName, 50);
         cs.createCollection(subCLName3, (BSONObject) JSON.parse("{Group:'" + destGroupName + "'}"));
-    }
-
-    @AfterClass
-    public void tearDown() {
-        FullTextDBUtils.dropCollection(cs, mainCLName);
-        if (sdb != null) {
-            sdb.close();
-        }
     }
 
     @Test

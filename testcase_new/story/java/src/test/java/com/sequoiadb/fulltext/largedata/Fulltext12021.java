@@ -10,22 +10,16 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
-public class Fulltext12021 extends SdbTestBase {
-    private Sequoiadb sdb = null;
-    private DBCollection cl;
+public class Fulltext12021 extends FullTestBase {
     private String clName = "ES_cl_12021";
     private String fullTextIndexName = "fullIndex12021";
     private String srcGroup = null;
@@ -33,22 +27,16 @@ public class Fulltext12021 extends SdbTestBase {
     private String cappedName = null;
     private String esIndexName = null;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
-        if (CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("current environment less than tow groups ");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
 
         List<String> groupsName = CommLib.getDataGroupNames(sdb);
         srcGroup = groupsName.get(0);
         desGroup = groupsName.get(1);
-
-        cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject) JSON
-                .parse("{ShardingType:'range', ShardingKey:{recordId:1, a:1}, Group:'" + srcGroup + "'}"));
+        caseProp.setProperty(CLNAME, clName);
+        caseProp.setProperty(CLOPT, "{ShardingType:'range', ShardingKey:{recordId:1, a:1}, Group:'" + srcGroup + "'}");
     }
 
     @Test
@@ -81,14 +69,8 @@ public class Fulltext12021 extends SdbTestBase {
         }
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        } finally {
-            sdb.close();
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 }

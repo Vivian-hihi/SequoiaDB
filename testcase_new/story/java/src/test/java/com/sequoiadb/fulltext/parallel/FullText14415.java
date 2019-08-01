@@ -1,18 +1,14 @@
 package com.sequoiadb.fulltext.parallel;
 
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -22,23 +18,21 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author yinzhen
  * @Date 2019-4-22
  */
-public class FullText14415 extends SdbTestBase {
+public class FullText14415 extends FullTestBase {
     private String clName = "cl14415";
-    private Sequoiadb sdb;
-    private DBCollection cl;
     private String fullIdxName = "idx14415";
     private String esIndexName;
     private String cappedCLName;
     private int insertNum = 20000;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("STANDALONE MODE");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
 
-        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+    @Override
+    protected void caseInit() throws Exception {
         FullTextDBUtils.insertData(cl, insertNum);
         cl.createIndex("idx1", "{'d':1, 'e':1}", false, false);
         cl.createIndex("idx2", "{'a':1, 'b':1}", false, false);
@@ -95,17 +89,9 @@ public class FullText14415 extends SdbTestBase {
         FullTextUtils.isRecordEqualsByMulQueryMode(cl);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 
     private class CreateFullIdx {

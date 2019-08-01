@@ -7,17 +7,14 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -25,8 +22,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author yinzhen
  * @date 2018/11/28
  */
-public class Fulltext15799 extends SdbTestBase {
-    private Sequoiadb sdb;
+public class Fulltext15799 extends FullTestBase {
     private DBCollection mainCL;
     private String mainCLName = "maincl15799";
     private String fullIndexName = "fullIndex15799";
@@ -38,19 +34,19 @@ public class Fulltext15799 extends SdbTestBase {
     private String cappedCSName01;
     private String cappedCSName02;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
 
-        if (CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("current environment less than two groups ");
-        }
+        caseProp.setProperty(CLNAME, mainCLName);
+        caseProp.setProperty(CLOPT, "{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}");
+    }
+
+    @Override
+    protected void caseInit() throws Exception {
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        mainCL = cs.createCollection(mainCLName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}"));
+        mainCL = cs.getCollection(mainCLName);
     }
 
     @Test
@@ -81,12 +77,8 @@ public class Fulltext15799 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isMainCLIndexCreated(mainCL, fullIndexName, 0));
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        FullTextDBUtils.dropCollection(cs, mainCLName);
-        FullTextDBUtils.dropCollection(cs, subCLName1);
-        FullTextDBUtils.dropCollection(cs, subCLName2);
+    @Override
+    protected void caseFini() throws Exception {
         esIndexNames01.addAll(esIndexNames02);
         List<String> cappedNames = new ArrayList<>();
         cappedNames.add(cappedCSName01);

@@ -9,9 +9,6 @@ import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -24,17 +21,18 @@ import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
  * @FileName seqDB-15854:集合中存在全文索引，增删改/全文检索/查询记录/lob操作时split集合
- * @Author huangxiaoni 
+ * @Author huangxiaoni
  * @Date 2019.5.8
  */
 
-public class FullText15854 extends SdbTestBase {
+public class FullText15854 extends FullTestBase {
     private final int TIMEOUT = 600000;
 
     private final String CL_NAME = "cl_es_15854";
@@ -45,9 +43,7 @@ public class FullText15854 extends SdbTestBase {
     private final String FULLTEXT_IDX_NAME = "idx_es_15854";
     private final BSONObject FULLTEXT_IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
 
-    private Sequoiadb sdb = null;
     private CollectionSpace cs;
-    private DBCollection cl;
     private List<String> cappedCSNames = new ArrayList<String>();
     private String srcRgName;
     private String dstRgName;
@@ -56,14 +52,13 @@ public class FullText15854 extends SdbTestBase {
 
     private List<String> esIndexNames;
 
-    @BeforeClass
-    private void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+    }
 
-        if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
-        }
-
+    @Override
+    protected void caseInit() throws Exception {
         ArrayList<String> rgNames = CommLib.getDataGroupNames(sdb);
         srcRgName = rgNames.get(0);
         dstRgName = rgNames.get(1);
@@ -111,8 +106,8 @@ public class FullText15854 extends SdbTestBase {
         // 分别在每个并发线程检查数据对应操作的数据正确性。在 ThreadFullTextSearch 线程 step2 检查数据一致性。
     }
 
-    @AfterClass
-    private void tearDown() throws Exception {
+    @Override
+    protected void caseFini() throws Exception {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedCSNames));

@@ -3,19 +3,14 @@ package com.sequoiadb.fulltext.parallel;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
@@ -24,24 +19,22 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author yinzhen
  * @Date 2019-4-28
  */
-public class FullText14414 extends SdbTestBase {
+public class FullText14414 extends FullTestBase {
     private String clName = "cl14414";
-    private Sequoiadb sdb;
-    private DBCollection cl;
     private String fullIdxName = "idx14414";
     private String cappedCLName;
     private String esIndexName;
     private AtomicInteger atoint = new AtomicInteger(0);
     private int insertNum = 20000;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("STANDALONE MODE");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
 
-        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+    @Override
+    protected void caseInit() throws Exception {
         FullTextDBUtils.insertData(cl, insertNum);
     }
 
@@ -59,17 +52,9 @@ public class FullText14414 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 
     private class CreateAndDropIdx {

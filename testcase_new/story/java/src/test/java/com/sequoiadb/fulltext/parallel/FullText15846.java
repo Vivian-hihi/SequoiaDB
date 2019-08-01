@@ -10,12 +10,8 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
@@ -23,7 +19,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -34,12 +30,9 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15846 extends SdbTestBase {
+public class FullText15846 extends FullTestBase {
 
     private int timeout = 600000;
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String clName = "es_15846";
     private String indexName = "fulltextIndex15846";
     private String cappedName = null;
@@ -51,15 +44,14 @@ public class FullText15846 extends SdbTestBase {
     private List<ObjectId> lobReadList = new ArrayList<ObjectId>();
     private List<ObjectId> lobPutList = new ArrayList<ObjectId>();
 
-    @BeforeClass
-    public void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
 
+    @Override
+    protected void caseInit() throws Exception {
         List<ObjectId> lobList = writeLob(cl, 100);
         lobTruncateList.addAll(lobList.subList(0, 50));
         lobRemoveList.addAll(lobList.subList(50, 70));
@@ -125,16 +117,9 @@ public class FullText15846 extends SdbTestBase {
         checkLobResult();
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 
     private class DropIndexThread extends ResultStore {

@@ -9,12 +9,8 @@ import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
@@ -23,7 +19,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -33,11 +29,8 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15860 extends SdbTestBase {
+public class FullText15860 extends FullTestBase {
 
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String clName = "es_15860";
     private String indexName = "fulltextIndex15860";
     private int insertNum = 20000;
@@ -46,16 +39,17 @@ public class FullText15860 extends SdbTestBase {
     private List<ObjectId> lobRemoveList = new ArrayList<ObjectId>();
     private List<ObjectId> lobReadList = new ArrayList<ObjectId>();
     private List<ObjectId> lobPutList = new ArrayList<ObjectId>();
+    private String esIndexName;
+    private String cappedName;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
-        
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
+
+    @Override
+    protected void caseInit() throws Exception {
         List<ObjectId> lobList = writeLob(cl, 100);
         lobTruncateList.addAll(lobList.subList(0, 50));
         lobRemoveList.addAll(lobList.subList(50, 70));
@@ -92,20 +86,14 @@ public class FullText15860 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
         Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));
         checkLobOpr();
+
+        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-            String cappedName = FullTextDBUtils.getCappedName(cl, indexName);
-            FullTextDBUtils.dropCollection(cs, clName);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+    @Override
+    protected void caseFini() throws Exception {
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName));
     }
 
     private class InsertThread {
@@ -141,7 +129,7 @@ public class FullText15860 extends SdbTestBase {
         private void update() throws InterruptedException {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.update("{recordId: {$gte: 0, $lt: " + ( insertNum / 2 ) + "}}", "{$set: {b: 'text'}}", null);
+                cl.update("{recordId: {$gte: 0, $lt: " + (insertNum / 2) + "}}", "{$set: {b: 'text'}}", null);
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             }
@@ -154,7 +142,7 @@ public class FullText15860 extends SdbTestBase {
         private void delete() throws InterruptedException {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.delete("{recordId: {$gte: " + ( insertNum / 2 ) + ", $lt: " + insertNum + "}}");
+                cl.delete("{recordId: {$gte: " + (insertNum / 2) + ", $lt: " + insertNum + "}}");
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             }

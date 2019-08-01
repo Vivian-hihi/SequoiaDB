@@ -7,21 +7,16 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Node;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextESUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.fulltext.utils.StringUtils;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.FullTestBase;
 
 /**
  * FileName: Fulltext12016: 插入记录并创建全文索引再执行hash切分
@@ -29,11 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author liuxiaoxuan
  * @Date 2018.11.20
  */
-public class Fulltext12016 extends SdbTestBase {
+public class Fulltext12016 extends FullTestBase {
 
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
     private String clName = "ES_hash_12016";
     private String textIndexName = "fulltext12016";
     private String srcGroupName = "";
@@ -42,37 +34,23 @@ public class Fulltext12016 extends SdbTestBase {
     private List<String> cappedNames = null;
     private List<String> esIndexNames = null;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-
-        if (CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("current environment less than two groups ");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(IGNOREONEGROUP, "true");
 
         ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
         srcGroupName = groupsName.get(0);
         destGroupName = groupsName.get(1);
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',Group:'" + srcGroupName + "'}"));
+        caseProp.setProperty(CLNAME, clName);
+        caseProp.setProperty(CLOPT, "{ShardingKey:{a:1},ShardingType:'hash',Group:'" + srcGroupName + "'}");
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            FullTextDBUtils.dropCollection(cs, clName);
-            // 检查全文索引是否残留
-            if (esIndexNames != null) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedNames));
-            }
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
+    @Override
+    protected void caseFini() throws Exception {
+        // 检查全文索引是否残留
+        if (esIndexNames != null) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedNames));
         }
     }
 

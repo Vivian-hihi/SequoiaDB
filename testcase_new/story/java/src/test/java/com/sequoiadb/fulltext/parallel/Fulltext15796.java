@@ -9,9 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -21,7 +18,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -33,49 +30,33 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019-05-09
  */
 
-public class Fulltext15796 extends SdbTestBase {
-    private Sequoiadb sdb = null;
-    private CollectionSpace cs = null;
-    private DBCollection cl = null;
+public class Fulltext15796 extends FullTestBase {
     private String clName = "cl15796";
     private String indexName = "fulltext15796";
     private int insertNum = 30000;
     private AtomicInteger atomic = new AtomicInteger(insertNum);
     private ThreadExecutor te = new ThreadExecutor(3600000);
+    private String esIndexName;
+    private String cappedCLName;
 
-    @BeforeClass
-    public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
+    @Override
+    protected void initTestProp() {
+        caseProp.setProperty(IGNORESTANDALONE, "true");
+        caseProp.setProperty(CLNAME, clName);
+    }
 
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+    @Override
+    protected void caseInit() throws Exception {
         cl.createIndex("id", "{id:1}", false, false);
         cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
         insertRecord(cl, insertNum);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        try {
-            String esIndexName = null;
-            String cappedCLName = null;
-            if (cs.isCollectionExist(clName)) {
-                DBCollection cl = cs.getCollection(clName);
-                esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-                cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-            }
-
-            FullTextDBUtils.dropCollection(cs, clName);
-            if (esIndexName != null && cappedCLName != null) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
-            }
-        } finally {
-            sdb.close();
+    @Override
+    protected void caseFini() throws Exception {
+        if (esIndexName != null && cappedCLName != null) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
         }
-
     }
 
     @Test
@@ -88,6 +69,12 @@ public class Fulltext15796 extends SdbTestBase {
         te.addWorker(new DropCL());
         te.run();
 
+        CollectionSpace cs = sdb.getCollectionSpace(csName);
+        if (cs.isCollectionExist(clName)) {
+            DBCollection cl = cs.getCollection(clName);
+            esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+            cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+        }
     }
 
     private class Insert {
