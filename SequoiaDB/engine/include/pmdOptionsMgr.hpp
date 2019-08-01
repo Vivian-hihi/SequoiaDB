@@ -217,6 +217,7 @@ namespace engine
                                        const string &newValue,
                                        PMD_CFG_CHANGE changeLevel,
                                        BOOLEAN useDefault ) ;
+         BOOLEAN _isDigitalStr( const CHAR* pStr ) ;
 
       private:
          MAP_K2V*                _pMapKeyField ;

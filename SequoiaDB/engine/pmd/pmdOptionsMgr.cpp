@@ -178,15 +178,30 @@ namespace engine
          {
             rc = SDB_FIELD_NOT_EXIST ;
          }
-         else if ( !ele.isNumber() )
+         else if ( ele.isNumber() )
          {
-            PD_LOG( PDERROR, "Field[%s] type[%d] is not number", pFieldName,
-                    ele.type() ) ;
-            rc = SDB_INVALIDARG ;
+            readValue = (INT32)ele.numberInt() ;
+         }
+         else if ( String == ele.type() )
+         {
+            string tempStr = ele.String() ;
+
+            if( _isDigitalStr( tempStr.c_str() ) )
+            {
+               readValue = (INT32)ossAtoi( tempStr.c_str() ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Field[%s] type[%d] is not number",
+                       pFieldName, ele.type() ) ;
+            }
          }
          else
          {
-            readValue = (INT32)ele.numberInt() ;
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Field[%s] type[%d] is not number",
+                    pFieldName, ele.type() ) ;
          }
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
@@ -232,6 +247,24 @@ namespace engine
       return rc ;
    }
 
+   BOOLEAN _pmdCfgExchange::_isDigitalStr( const CHAR* pStr )
+   {
+      BOOLEAN isFirstChar = TRUE ;
+      if ( NULL == pStr ) return FALSE ;
+      while ( *pStr )
+      {
+         CHAR c = *pStr++ ;
+         if ( ( '-' == c || '+' == c ) && isFirstChar )
+         {
+            isFirstChar = FALSE ;
+            continue ;
+         }
+         if ( c < '0' || c > '9' )
+            return FALSE ;
+      }
+      return TRUE ;
+   }
+
    INT32 _pmdCfgExchange::readString( const CHAR *pFieldName, CHAR *pValue,
                                       UINT32 len, PMD_CFG_CHANGE changeLevel )
    {
@@ -245,15 +278,24 @@ namespace engine
          {
             rc = SDB_FIELD_NOT_EXIST ;
          }
-         else if ( String != ele.type() )
+         else if ( String == ele.type() )
          {
-            PD_LOG( PDERROR, "Field[%s] type[%d] is not string", pFieldName,
-                    ele.type() ) ;
-            rc = SDB_INVALIDARG ;
+            string tempStr = ele.String() ;
+
+            if( _isDigitalStr( tempStr.c_str() ) )
+            {
+               readValue = (INT32)ossAtoi( tempStr.c_str() ) ? "TRUE" : "FALSE" ;
+            }
+            else
+            {
+               readValue = tempStr ;
+            }
          }
          else
          {
-            readValue = ele.String() ;
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "The type[%d] of field[%s] is invalid",
+                    ele.type(), pFieldName ) ;
          }
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
