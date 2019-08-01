@@ -6,24 +6,7 @@
 // js file to import/importOnce in procedure, no permission
 var noPermFile     = WORKDIR + "/noPermFile_12816.js" ;  
 
-function createNoPermFile()
-{
-   try
-   {
-      var cmd = new Cmd() ;
-      cmd.run( "rm -rf " + noPermFile ) ;
-      var file = new File( noPermFile ) ;
-      file.write( "1+2" ) ;
-      file.close() ;
-      File.chmod( noPermFile, 0000 ) ;
-   }
-   catch( e )
-   {
-      throw buildException( "createNoPermFile", null, 
-            "create file " + noPermFile, 0, e ) ;
-   }
-}
-
+main();
 function main()
 {
    if( commIsStandalone( db ) )
@@ -43,8 +26,9 @@ function main()
    // create procedure to import file and test
    try
    {
-      db.createProcedure( function testImport( file ) { return import( file ) } ) ;
-      db.eval( "testImport( \"" + noPermFile + "\" )" ) ;
+      checkProcedure( "testImportNoPermFile12816" );
+      db.createProcedure( function testImportNoPermFile12816( file ) { return import( file ) } ) ;
+      db.eval( "testImportNoPermFile12816( \"" + noPermFile + "\" )" ) ;
       throw 0 ;
    }
    catch( e )
@@ -55,13 +39,14 @@ function main()
                "test import file " + noPermFile + " in procedure", -3, e ) ;    
       }
    }
-   db.removeProcedure( "testImport" ) ;
+   db.removeProcedure( "testImportNoPermFile12816" ) ;
 
    // create procedure to importOnce file and test
    try
    {
-      db.createProcedure( function testImportOnce( file ) { return importOnce( file ) } ) ;
-      db.eval( "testImportOnce( \"" + noPermFile + "\" )" ) ;
+      checkProcedure( "testImportOnceNoPermFile12816" );
+      db.createProcedure( function testImportOnceNoPermFile12816( file ) { return importOnce( file ) } ) ;
+      db.eval( "testImportOnceNoPermFile12816( \"" + noPermFile + "\" )" ) ;
       throw 0 ;
    }
    catch( e )
@@ -72,11 +57,36 @@ function main()
                "test importOnce file " + noPermFile + " in procedure", -3, e ) ;
       }    
    }
-   db.removeProcedure( "testImportOnce" ) ; 
+   db.removeProcedure( "testImportOnceNoPermFile12816" ) ; 
    
    // remove file
    File.chmod( noPermFile, 0755 ) ;  
    removeFile( noPermFile ) ;
 }
 
-main()
+function createNoPermFile()
+{
+   try
+   {
+      var cmd = new Cmd() ;
+      cmd.run( "rm -rf " + noPermFile ) ;
+      var file = new File( noPermFile ) ;
+      file.write( "1+2" ) ;
+      file.close() ;
+      File.chmod( noPermFile, 0000 ) ;
+   }
+   catch( e )
+   {
+      throw buildException( "createNoPermFile", null, 
+            "create file " + noPermFile, 0, e ) ;
+   }
+}
+
+function checkProcedure( procedureName )
+{
+    var cursor = db.listProcedures({name:procedureName});
+    if(cursor.next())
+    {
+        db.removeProcedure( procedureName ) ;
+    }
+}

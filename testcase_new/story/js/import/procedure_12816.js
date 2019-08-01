@@ -8,6 +8,58 @@ var importFile     = WORKDIR + "/procedureImport_12816.js" ;
 // js file to importOnce in procedure    
 var importOnceFile = WORKDIR + "/procedureImportOnce_12816.js" ; 
 
+main();
+function main()
+{
+    if( commIsStandalone( db ) )
+    {
+        println( "Run mode is Standalone, cannot use procedure" ) ;
+        return ;
+    }
+
+    // creat import importOnce file
+    createImportFile() ;
+    createImportOnceFile() ;
+
+    // create procedure to import file and test
+    try
+    {
+        checkProcedure( "testImport12816" );
+        db.createProcedure( function testImport12816( file ) { return import( file ) } ) ;
+        var result = db.eval( "testImport12816( \"" + importFile + "\" )" ) ;
+        db.removeProcedure( "testImport12816" ) ;
+    }
+    catch( e )
+    {
+        throw buildException( null, null, "test import in procedure", 0, e ) ;    
+    }
+    if( result !== 3 )
+    {
+        throw buildException( null, null, "test procedure result", 3, result ) ;
+    }
+
+    // create procedure to importOnce file and test
+    try
+    {
+        checkProcedure( "testImportOnce12816" );
+        db.createProcedure( function testImportOnce12816( file ) { return importOnce( file ) } ) ;
+        var result = db.eval( "testImportOnce12816( \"" + importOnceFile + "\" )" ) ;
+        db.removeProcedure( "testImportOnce12816" ) ;
+    }
+    catch( e )
+    {
+        throw buildException( null, null, "test importOnce in procedure", 0, e ) ;    
+    }
+    if( result !== 2 )
+    {
+        throw buildException( null, null, "test procedure result", 2, result ) ;
+    }
+
+    // remove file   
+    removeFile( importFile ) ;
+    removeFile( importOnceFile ) ;
+}
+
 function createImportFile()
 {
     try
@@ -42,53 +94,11 @@ function createImportOnceFile()
     }  
 }
 
-function main()
+function checkProcedure( procedureName )
 {
-    if( commIsStandalone( db ) )
+    var cursor = db.listProcedures({name:procedureName});
+    if(cursor.next())
     {
-        println( "Run mode is Standalone, cannot use procedure" ) ;
-        return ;
+        db.removeProcedure( procedureName ) ;
     }
-
-    // creat import importOnce file
-    createImportFile() ;
-    createImportOnceFile() ;
-
-    // create procedure to import file and test
-    try
-    {
-        db.createProcedure( function testImport( file ) { return import( file ) } ) ;
-        var result = db.eval( "testImport( \"" + importFile + "\" )" ) ;
-        db.removeProcedure( "testImport" ) ;
-    }
-    catch( e )
-    {
-        throw buildException( null, null, "test import in procedure", 0, e ) ;    
-    }
-    if( result !== 3 )
-    {
-        throw buildException( null, null, "test procedure result", 3, result ) ;
-    }
-
-    // create procedure to importOnce file and test
-    try
-    {
-        db.createProcedure( function testImportOnce( file ) { return importOnce( file ) } ) ;
-        var result = db.eval( "testImportOnce( \"" + importOnceFile + "\" )" ) ;
-        db.removeProcedure( "testImportOnce" ) ;
-    }
-    catch( e )
-    {
-        throw buildException( null, null, "test importOnce in procedure", 0, e ) ;    
-    }
-    if( result !== 2 )
-    {
-        throw buildException( null, null, "test procedure result", 2, result ) ;
-    }
-
-    // remove file   
-    removeFile( importFile ) ;
-    removeFile( importOnceFile ) ;
 }
-
-main()
