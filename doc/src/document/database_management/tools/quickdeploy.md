@@ -36,6 +36,18 @@ quickDeploy.sh [ options ] ...
 
   指定 sdbcm 端口号，默认为11790。当 sdbcm 为非默认端口号时，要求所有安装了 SequoiaDB 的主机 sdbcm 端口必须一致
   
+**--mysqlPath \<mysql installation path\>**
+
+  quickDeploy.sh 只支持部署一个 SequoiaSQL-MySQL。当机器上装有多个 SequoiaSQL-MySQL 时，指定一个 SequoiaSQL-MySQL 的安装路径。
+
+  需要配合 --mysql 使用。
+  
+**--pgPath \<pg installation path\>**
+
+  quickDeploy.sh 只支持部署一个 SequoiaSQL-PostgreSQL。当机器上装有多个 SequoiaSQL-PostgreSQL 时，指定一个 SequoiaSQL-PostgreSQL 的安装路径。
+
+  需要配合 --pg 使用。
+
 > **Note:**
 > 
 > - 当不指定 --sdb / --mysql / --pg 参数时，quickDeploy.sh 会自动确认本机是否安装了 SequoiaDB / SequoiaSQL-MySQL / SequoiaSQL-PostgreSQL，已安装了的会自动部署
