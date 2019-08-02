@@ -950,7 +950,9 @@ namespace engine
          {
             hasSend = TRUE ;
          }
-         else if ( SDB_NET_INVALID_HANDLE != rc )
+         else if ( SDB_NET_INVALID_HANDLE != rc ||
+                   ( NULL != _pHandle &&
+                     !_pHandle->canReconnect( this, pSub ) ) )
          {
             PD_LOG( PDERROR, "Session[%s] send msg to node[%s] failed, "
                     "rc: %d", _pEDUCB->toString().c_str(),

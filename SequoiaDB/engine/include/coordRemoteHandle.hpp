@@ -136,6 +136,9 @@ namespace engine
 
          virtual void   setUserData( UINT64 data ) ;
 
+         virtual BOOLEAN canReconnect ( _pmdRemoteSession * session,
+                                        _pmdSubSession * subSession ) ;
+
       protected:
 
          INT32          _sessionInit( _pmdRemoteSession *pSession,

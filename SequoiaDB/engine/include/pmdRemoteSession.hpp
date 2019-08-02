@@ -106,6 +106,12 @@ namespace engine
          }
 
          virtual void   setUserData( UINT64 data ) {}
+
+         virtual BOOLEAN canReconnect ( _pmdRemoteSession * session,
+                                        _pmdSubSession * subSession )
+         {
+            return TRUE ;
+         }
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 

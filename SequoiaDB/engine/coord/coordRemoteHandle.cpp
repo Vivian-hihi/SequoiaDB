@@ -813,6 +813,29 @@ namespace engine
       }
    }
 
+   BOOLEAN _coordRemoteHandlerBase::canReconnect ( _pmdRemoteSession * session,
+                                                   _pmdSubSession * subSession )
+   {
+      SDB_ASSERT( NULL != session, "remote session is invalid" ) ;
+      SDB_ASSERT( NULL != subSession, "sub session is invalid" ) ;
+
+      pmdEDUCB * cb = session->getEDUCB() ;
+      if ( cb->isTransaction() )
+      {
+         pmdRemoteSessionSite * site = (pmdRemoteSessionSite *)
+                                                         cb->getRemoteSite() ;
+         coordSessionPropSite * propSite = (coordSessionPropSite *)
+                                                         site->getUserData() ;
+         UINT32 groupID = subSession->getNodeID().columns.groupID ;
+         // could not reconnect transaction node during transaction
+         if ( propSite->hasTransNode( groupID ) )
+         {
+            return FALSE ;
+         }
+      }
+      return TRUE ;
+   }
+
    INT32 _coordRemoteHandlerBase::_buildPacketWithUpdateSched( _pmdRemoteSession *pSession,
                                                                _pmdSubSession *pSub,
                                                                const BSONObj &objSched )
