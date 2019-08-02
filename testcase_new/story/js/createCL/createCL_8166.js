@@ -332,7 +332,6 @@ function createCLwithVerticalpartitiontable(db, csname, clname)
 function clean(db,csname)
 {
    commDropCS(db,csname,true);
-   commDropDomain( db, domainname);
    db.close();
 }
 
