@@ -31,7 +31,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.4.25
  */
 
-public class FullText15851 extends FullTestBase {
+public class Fulltext15851 extends FullTestBase {
     private final int TIMEOUT = 600000;
     private Random random = new Random();
 

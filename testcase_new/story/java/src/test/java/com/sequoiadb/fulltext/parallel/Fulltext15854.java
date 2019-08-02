@@ -32,7 +32,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.5.8
  */
 
-public class FullText15854 extends FullTestBase {
+public class Fulltext15854 extends FullTestBase {
     private final int TIMEOUT = 600000;
 
     private final String CL_NAME = "cl_es_15854";

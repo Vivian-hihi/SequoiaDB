@@ -17,7 +17,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author yinzhen
  * @Date 2019-4-30
  */
-public class FullText15826 extends FullTestBase {
+public class Fulltext15826 extends FullTestBase {
     private String clName = "cl15826";
     private String fullIdxName = "idx15826";
     private String cappedCLName;

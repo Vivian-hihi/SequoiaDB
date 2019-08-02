@@ -24,7 +24,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.5.8
  */
 
-public class FullText15859 extends FullTestBase {
+public class Fulltext15859 extends FullTestBase {
     private final int THREAD_NUM = 2;
     private final String CL_NAME = "cl_es_15859";
     private final String IDX_NAME = "idx_es_15859";

@@ -22,7 +22,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.4.25
  */
 
-public class FullText15855 extends FullTestBase {
+public class Fulltext15855 extends FullTestBase {
     private final int TIMEOUT = 600000;
     private final int THREAD_NUM = 2;
     private final String CL_NAME = "cl_es_15855";

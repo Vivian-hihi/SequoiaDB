@@ -25,7 +25,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.5.14
  */
 
-public class FullText15880 extends FullTestBase {
+public class Fulltext15880 extends FullTestBase {
     private Random random = new Random();
     private final String CS_NAME = "cs_es_15880";
     private final String CL_NAME = "cl_es_15880";

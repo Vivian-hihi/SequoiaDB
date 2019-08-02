@@ -28,7 +28,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15842 extends FullTestBase {
+public class Fulltext15842 extends FullTestBase {
 
     private String clName = "es_15842";
     private String indexName = "fulltextIndex15842";
