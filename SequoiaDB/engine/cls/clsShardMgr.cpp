@@ -2904,11 +2904,14 @@ namespace engine
          MsgClsTransCheckReq *pReq = ( MsgClsTransCheckReq* )msg ;
          INT32 status = transCB->checkTransStatus( pReq->transID, lsn ) ;
 
+         // for wait-commit status, we need to make sure pre-commit log
+         // is replicated to at least one other replicate node ( group with
+         // multiple nodes )
          if ( DPS_TRANS_WAIT_COMMIT == status &&
               DPS_INVALID_LSN_OFFSET != lsn &&
               pReplCB->groupSize() > 1 )
          {
-            // TODO: should wait for replSize - 1
+            // just wait for one replica node in this special case
             checkRC = pReplCB->sync( lsn, pmdGetThreadEDUCB(), 2, 10 ) ;
             if ( SDB_OK != checkRC )
             {

@@ -320,6 +320,45 @@ namespace engine
             _pRtnCB->contextDelete ( contextID, NULL ) ;
          }
 
+         // for wait-commit status, we need to make sure pre-commit log
+         // is replicated to at least one other replicate node ( group with
+         // multiple nodes )
+         // wait for 5 minutes
+         if ( DPS_TRANS_WAIT_COMMIT == _pEDUCB->getTransStatus() &&
+              DPS_INVALID_LSN_OFFSET != _pEDUCB->getCurTransLsn() )
+         {
+            replCB * replCB = sdbGetClsCB()->getReplCB() ;
+            UINT32 timeout = 0 ;
+
+            _pEDUCB->resetDisconnect() ;
+            while ( replCB->groupSize() > 1 &&
+                    pmdIsPrimary() &&
+                    timeout < 5 * 60 * OSS_ONE_SEC )
+            {
+               // just wait for one replica node in this special case
+               INT32 checkRC = replCB->sync( _pEDUCB->getCurTransLsn(),
+                                             _pEDUCB, 2, OSS_ONE_SEC ) ;
+               if ( SDB_OK == checkRC )
+               {
+                  break ;
+               }
+               else if ( SDB_TIMEOUT == checkRC ||
+                         SDB_CLS_WAIT_SYNC_FAILED == checkRC )
+               {
+                  // could wait again
+                  timeout += OSS_ONE_SEC ;
+                  continue ;
+               }
+               else
+               {
+                  PD_LOG( PDWARNING, "Failed to wait sync for pre-commit "
+                          "lsn [%llu], rc: %d", _pEDUCB->getCurTransLsn(),
+                          checkRC ) ;
+                  break ;
+               }
+            }
+         }
+
          INT32 rcTmp = _rollbackTrans( NULL, 0 ) ;
          if ( rcTmp)
          {
