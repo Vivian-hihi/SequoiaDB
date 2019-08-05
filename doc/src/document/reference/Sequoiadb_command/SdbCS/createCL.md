@@ -92,14 +92,6 @@ Collection Space
         例子：`AutoIncrement: { Field: "userID", Generated: "always" }`
 
         * 参数详情请参考[自增字段介绍](data_model/auto_increment.md)
-        
-    14. `LobShardingKeyFormat` ( *String* )：指定大对象生成主表切分键键值的格式。目前支持将大对象ID中的时间属性转换成如下字符串形式：
-    
-        * "YYYYMMDD"：将大对象ID的时间属性转换为年月日的字符串形式，如"20190701"。
-        * "YYYYMM"：将大对象ID的时间属性转换为年月的字符串形式，如"201907"。
-        * "YYYY"：将大对象ID的时间属性转换为年的字符串形式，如"2019"。
-    
-        格式：`LobShardingKeyFormat:"YYYYMMDD"|"YYYYMM"|"YYYY"`
 
     **注意：**
 
@@ -124,8 +116,7 @@ Collection Space
     * 不使用 AutoSplit 参数时，若该集合从属于某个域，该域的 AutoSplit 参数将作用于当前集合。
     
     * 压缩算法选择策略：snappy 压缩算法是以单条记录为单位进行压缩，记录内部的数据重复度直接影响到压缩率。因此，当记录内部数据重复度较高，如每条记录的字段名、字段值相似，使用 snappy 算法可获得良好的压缩性能。如果记录内部数据重复度很低，但记录间具有更高的相似性，如不同记录之间有相同的字段名，相近的字段值等，则使用 lzw 算法更优。
-    
-    * LobShardingKeyFormat 只能在主表中使用，同时要求切分键只能有一个切分字段。
+
 
 ##返回值##
 
@@ -177,41 +168,62 @@ v1.0及以上版本。
     localhost:11810.foo.bar
     Takes 0.120450s.
     ```
-    
-4. 在主表下使用大对象
-    * 在集合空间 foo 下创建支持大对象的主集合 maincl，同时关联子表 subcl。
+
+##注意事项##
+ 创建主分区集合（对应主表）或是子分区集合（对应子表）之后，在使用主分区集合/子分区集合时需要注意一些特殊情况：
+
+1. 从主分区集合中执行写操作时，replSize、AutoIncrement 会沿用主分区集合对应的属性。
+2. 从子分区集合中执行写操作时，replSize、AutoIncrement 会沿用子分区集合对应的属性。
+
+
+###例子###
+验证从主分区集合和子分区集合中执行写操作时，AutoIncrement 属性的对应情况。
+
+创建主分区集合 masterCL，自增字段为：masterID。
 
     ```lang-javascript
-    > db.foo.createCL("maincl", { LobShardingKeyFormat:"YYYYMMDD", ShardingKey:{ date:1 }, IsMainCL:true, ShardingType:"range" } )
-    localhost:11810.foo.maincl
-    Takes 0.058532s.
-    > db.foo.createCL("subcl")
-    localhost:11810.foo.subcl
-    Takes 0.294612s.
-    > db.foo.maincl.attachCL( "foo.subcl", { LowBound: { date: "20190701" }, UpBound: { date: "20190801" } } )
-    Takes 0.008561s.
+    > db.foo.createCL("masterCL",{ IsMainCL: true, ShardingKey: { a: 1 },     ShardingType: "range", AutoIncrement: { Field: "masterID" } })
+    localhost:11810.foo.masterCL
+    Takes 0.002450s.
     ```
-    
-    * 在[20190701, 20190801)之间创建的大对象数据则会落在集合 foo.subcl 中
+创建子分区集合 slaveCL，自增字段为：slaveID。
 
     ```lang-javascript
-    > Timestamp()
-    Timestamp("2019-07-23-18.04.07.539050")
-    > db.foo.maincl.putLob('/opt/data/test.dat')
-    00005d36dbee370002de8080
-    Takes 0.246062s.
+    > db.foo.createCL("slaveCL",{ ShardingKey: { b: 1 }, ShardingType:     "hash", Partition: 1024, AutoIncrement: { Field: "slaveID" }})
+    localhost:11810.foo.slaveCL
+    Takes 0.263536s.
     ```
-    
-    * 也可以指定大对象ID的时间属性
+将子分区集合附加到主分区集合中。
 
     ```lang-javascript
-    > db.foo.maincl.createLobID(Timestamp("2019-07-23-18.04.07.539050"))
-    00005d36db97360002de8081
-    Takes 0.108365s.
-    > db.foo.maincl.putLob('/opt/data/test.dat', '00005d36db97360002de8081')
-    00005d36db97360002de8081
-    Takes 0.002216s.
+    > db.foo.masterCL.attachCL( "foo.slaveCL", { LowBound: { a: 0 },     UpBound: { a: 100 } } )
+    Takes 0.002743s.
     ```
-    
-    
+从主分区集合 masterCL 中插入数据 {"a":1} 时，AutoIncrement 会沿用主分区集合对应的属性,所以数据会带有 masterID 信息 。从子分区集合 slaveCL 中插入数据 {"a":2} 时，AutoIncrement 会沿用子分区集合的属性，所以数据会带有 slaveID 信息。
 
+    ```lang-javascript
+    > db.foo.masterCL.insert({"a":1}) //主分区集合插入数据
+    Takes 0.001877s.
+    > db.foo.slaveCL.insert({"a":2}) //子分区集合插入数据
+    Takes 0.001238s.
+    > db.foo.masterCL.find() //查看结果
+    {
+      "_id": {
+        "$oid": "5d42b40d2d7dfa6391e3cbd9"
+      },
+      "a": 1,
+      "masterID": 1
+    }
+    {
+      "_id": {
+        "$oid": "5d42b4342d7dfa6391e3cbda"
+      },
+      "a": 2,
+      "slaveID": 1
+    }
+    Return 2 row(s).
+    Takes 0.001234s.
+    > 
+    ```
+ 
+集合的其他属性，如 ShardingKey、Compressed、AutoIndexId 等，子分区集合会使用自己的属性而不是沿用主分区集合的对应属性。
