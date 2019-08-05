@@ -184,11 +184,11 @@ namespace engine
          }
          else if ( String == ele.type() )
          {
-            string tempStr = ele.String() ;
+            const CHAR* tempStr = ele.valuestr() ;
 
-            if( _isDigitalStr( tempStr.c_str() ) )
+            if( utilStrIsDigit( tempStr ) )
             {
-               readValue = (INT32)ossAtoi( tempStr.c_str() ) ;
+               utilStr2Num( tempStr, readValue ) ;
             }
             else
             {
@@ -247,24 +247,6 @@ namespace engine
       return rc ;
    }
 
-   BOOLEAN _pmdCfgExchange::_isDigitalStr( const CHAR* pStr )
-   {
-      BOOLEAN isFirstChar = TRUE ;
-      if ( NULL == pStr ) return FALSE ;
-      while ( *pStr )
-      {
-         CHAR c = *pStr++ ;
-         if ( ( '-' == c || '+' == c ) && isFirstChar )
-         {
-            isFirstChar = FALSE ;
-            continue ;
-         }
-         if ( c < '0' || c > '9' )
-            return FALSE ;
-      }
-      return TRUE ;
-   }
-
    INT32 _pmdCfgExchange::readString( const CHAR *pFieldName, CHAR *pValue,
                                       UINT32 len, PMD_CFG_CHANGE changeLevel )
    {
@@ -282,9 +264,11 @@ namespace engine
          {
             string tempStr = ele.String() ;
 
-            if( _isDigitalStr( tempStr.c_str() ) )
+            if( utilStrIsDigit( tempStr ) )
             {
-               readValue = (INT32)ossAtoi( tempStr.c_str() ) ? "TRUE" : "FALSE" ;
+               INT32 tempNum = 0 ;
+               utilStr2Num( tempStr.c_str(), tempNum ) ;
+               readValue = tempNum ? "TRUE" : "FALSE" ;
             }
             else
             {

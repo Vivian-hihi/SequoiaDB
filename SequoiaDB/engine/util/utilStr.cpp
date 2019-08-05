@@ -206,8 +206,16 @@ namespace engine
 
    BOOLEAN utilStrIsDigit( const string& str )
    {
+      if ( 0 == str.size() )
+      {
+         return FALSE ;
+      }
       for ( UINT32 i = 0 ; i < str.size() ; i++ )
       {
+         if ( ( '-' == str.at( i ) || '+' == str.at( i ) ) && 0 == i )
+         {
+            continue ;
+         }
          if ( !isdigit( str.at( i ) ) )
          {
             return FALSE ;
@@ -219,10 +227,17 @@ namespace engine
 
    BOOLEAN utilStrIsDigit( const char *str )
    {
-
+      if ( NULL == str )
+      {
+         return FALSE ;
+      }
       UINT32 len = ossStrlen( str ) ;
       for ( UINT32 i = 0 ; i < len ; i++ )
       {
+         if ( ( '-' == str[ i ] || '+' == str[ i ] ) && 0 == i )
+         {
+            continue ;
+         }
          if ( !isdigit( str[ i ] ) )
          {
             return FALSE ;
@@ -234,7 +249,6 @@ namespace engine
 
    BOOLEAN utilStrIsODigit( const char *str )
    {
-
       UINT32 len = ossStrlen( str ) ;
       for ( UINT32 i = 0 ; i < len ; i++ )
       {
