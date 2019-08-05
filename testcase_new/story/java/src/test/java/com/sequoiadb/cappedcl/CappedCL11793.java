@@ -129,8 +129,12 @@ public class CappedCL11793 extends SdbTestBase {
                 cursor.close();
 
                 // 获取pop的logicalID
-                int pos = new Random().nextInt(lids.size());
-                long logicalID = lids.get(pos);
+                int pos = 0;
+                long logicalID = 0;
+                if (lids.size() > 0) {
+                    pos = new Random().nextInt(lids.size());
+                    logicalID = lids.get(pos);
+                }
                 System.out.println("random logicalID: " + logicalID);
                 // pop记录
                 BSONObject popObj = new BasicBSONObject();

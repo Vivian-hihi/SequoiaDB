@@ -9,19 +9,19 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.testcommon.CommLib;
 
 /**
  * FileName: seqDB-11808:查询时做pop操作
@@ -45,11 +45,11 @@ public class CappedCL11808 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        
+
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
-        
+
         cappedCS = sdb.getCollectionSpace(cappedCSName);
         cappedCL = cappedCS.createCollection(cappedCLName, (BSONObject) JSON.parse("{Capped:true, Size:10240}"));
 
@@ -129,8 +129,12 @@ public class CappedCL11808 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
 
                 // 获取pop的logicalID
-                int pos = new Random().nextInt(lids.size());
-                long logicalID = lids.get(pos);
+                int pos = 0;
+                long logicalID = 0;
+                if (lids.size() > 0) {
+                    pos = new Random().nextInt(lids.size());
+                    logicalID = lids.get(pos);
+                }
                 System.out.println("random logicalID: " + logicalID);
                 // pop记录
                 BSONObject popObj = new BasicBSONObject();
