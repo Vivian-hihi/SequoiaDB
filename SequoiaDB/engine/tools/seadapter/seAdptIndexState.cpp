@@ -39,6 +39,7 @@
 #include "seAdptIndexState.hpp"
 #include "seAdptIndexSession.hpp"
 #include "utilESUtil.hpp"
+#include "seAdptMgr.hpp"
 
 namespace seadapter
 {
@@ -1022,6 +1023,17 @@ namespace seadapter
       const seIndexMeta *indexMeta = imContext->meta() ;
       const CHAR *idxName = _session->getESIdxName() ;
       const CHAR *typeName = _session->getESTypeName() ;
+      UINT16 strMapType = sdbGetSeAdptOptions()->getStrMapType() ;
+      ES_DATA_TYPE type = ES_TEXT ;
+
+      if ( 2 == strMapType )
+      {
+         type = ES_KEYWORD ;
+      }
+      else if ( 3 == strMapType )
+      {
+         type = ES_MULTI_FIELDS ;
+      }
 
       try
       {
@@ -1037,7 +1049,7 @@ namespace seadapter
          while ( itr.more() )
          {
             BSONElement ele = itr.next() ;
-            mapping.addProperty( ele.fieldName(), ES_TEXT ) ;
+            mapping.addProperty( ele.fieldName(), type ) ;
          }
 
          imContext->metaUnlock() ;

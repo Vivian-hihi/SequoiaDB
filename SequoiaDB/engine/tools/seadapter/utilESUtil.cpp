@@ -140,7 +140,31 @@ namespace seadapter
             BSONObjBuilder fieldBuilder(
                propBuilder.subobjStart( itr->getName().c_str() ) ) ;
 
-            fieldBuilder.append( "type", getTypeStr( itr->getType() ) ) ;
+            /* If the string mapping option is multifields, we'll map it as:
+               {
+                  "field_name" : {
+                     "type" : "text",
+                     "fields" : {
+                        "raw" : {
+                           "type" : "keyword"
+                        }
+                     }
+                  }
+
+               }
+            */
+            if ( ES_MULTI_FIELDS == itr->getType() )
+            {
+               fieldBuilder.append( "type", getTypeStr( ES_TEXT ) ) ;
+               BSONObj fieldsObj =
+                  BSON( "fields" << BSON ( "raw" <<
+                        BSON( "type" << getTypeStr( ES_KEYWORD ) ) ) ) ;
+               fieldBuilder.appendElements( fieldsObj ) ;
+            }
+            else
+            {
+               fieldBuilder.append( "type", getTypeStr( itr->getType() ) ) ;
+            }
             fieldBuilder.done() ;
          }
 

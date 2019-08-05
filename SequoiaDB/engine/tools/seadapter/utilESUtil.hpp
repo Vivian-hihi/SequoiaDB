@@ -54,6 +54,7 @@ namespace seadapter
    {
       ES_TEXT,
       ES_KEYWORD,
+      ES_MULTI_FIELDS,
       ES_DATE,
       ES_LONG,
       ES_DOUBLE,

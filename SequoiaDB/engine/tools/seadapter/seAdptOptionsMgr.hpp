@@ -64,6 +64,7 @@ namespace seadapter
       PDLEVEL     getDiagLevel() const ;
       INT32       getTimeout() const ;
       UINT32      getBulkBuffSize() const ;
+      UINT16      getStrMapType() const ;
 
    protected:
       virtual INT32 doDataExchange( engine::pmdCfgExchange *pEX ) ;
@@ -81,6 +82,7 @@ namespace seadapter
       UINT16   _diagLevel ;
       INT32    _timeout ;
       UINT32   _bulkBuffSize ;
+      UINT16   _strMapType ;
    } ;
    typedef _seAdptOptionsMgr seAdptOptionsMgr ;
 }

@@ -53,7 +53,8 @@ using namespace engine ;
    ( SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" ) \
    ( PMD_COMMANDS_STRING (SEADPT_SE_IDXPREFIX, ",p"), boost::program_options::value<string>(), "Prefix of index names on search engine,default:none, valid value length:[1-16]") \
    ( SEADPT_BULK_BUFF_SIZE, boost::program_options::value<int>(), "Bulk operation buffer size,unit:MB,default:10,value range:[1-32]" ) \
-   ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[3000-3600000]" )
+   ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[3000-3600000]" ) \
+   ( PMD_COMMANDS_STRING (SEADPT_STR_MAP_TYPE, ",s"), boost::program_options::value<int>(), "String map type,default 1, value range[1-3]" )
 
 namespace seadapter
 {
@@ -69,6 +70,7 @@ namespace seadapter
       _diagLevel = PDWARNING ;
       _timeout = SEADPT_DFT_TIMEOUT ;
       _bulkBuffSize = SEADPT_DFT_BULKBUFF_SZ ;
+      _strMapType = SEADPT_DFT_STR_MAP_TYPE ;
    }
 
    INT32 _seAdptOptionsMgr::init( INT32 argc, CHAR **argv,
@@ -217,6 +219,9 @@ namespace seadapter
       rdxString( pEX, SEADPT_SE_IDXPREFIX, _seIdxPrefix, sizeof( _seIdxPrefix ),
                  FALSE, PMD_CFG_CHANGE_FORBIDDEN, "" ) ;
 
+      rdxUShort( pEX, SEADPT_STR_MAP_TYPE, _strMapType,
+                 FALSE, PMD_CFG_CHANGE_REBOOT, SEADPT_DFT_STR_MAP_TYPE ) ;
+
       return getResult() ;
    }
 
@@ -254,6 +259,11 @@ namespace seadapter
    UINT32 _seAdptOptionsMgr::getBulkBuffSize() const
    {
       return _bulkBuffSize ;
+   }
+
+   UINT16 _seAdptOptionsMgr::getStrMapType() const
+   {
+      return _strMapType ;
    }
 
    // Index prefix can only contains english characters, numbers, and '_', and
