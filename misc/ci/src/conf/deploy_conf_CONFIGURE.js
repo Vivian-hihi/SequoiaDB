@@ -49,7 +49,6 @@ var dataConf  = { diaglevel:diagLevel,
                   diagnum:60,
                   logfilenum:40,
                   dmschkinterval:1,
-                  plancachelevel:3,
                   fap:fapValue,
                   transactionon:true,
                   transisolation:1
