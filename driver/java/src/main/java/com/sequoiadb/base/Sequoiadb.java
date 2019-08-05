@@ -1288,6 +1288,9 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void updateConfig(BSONObject configs, BSONObject options) throws BaseException {
+        if (options == null){
+            options = new BasicBSONObject();
+        }
         BSONObject newObj = new BasicBSONObject();
         newObj.putAll(options);
         newObj.put("Configs", configs);
@@ -1295,6 +1298,18 @@ public class Sequoiadb implements Closeable {
         AdminRequest request = new AdminRequest(AdminCommand.UPDATE_CONFIG, newObj);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
+    }
+
+    /**
+     * Force the node to update configs online.
+     *
+     * @param configs
+     *            The specific configuration parameters to update
+     * @throws BaseException
+     *             If error happens.
+     */
+    public void updateConfig(BSONObject configs) throws BaseException {
+        updateConfig(configs, new BasicBSONObject());
     }
 
     /**
