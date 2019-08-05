@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +97,9 @@ public class SQLController {
         try {
             content = ssqlo.query(node.getHostName(), node.getSvcName(),
                     auth.getUser(), auth.getPasswd(), DbName, Sql, isAll);
+        } catch (SQLException e) {
+            return outputResult(e.getErrorCode(), e.getMessage() == null ? e.toString() : e.getMessage(),
+                    "", content);
         } catch (Exception e) {
             /*
             StackTraceElement elements[] = e.getStackTrace();
