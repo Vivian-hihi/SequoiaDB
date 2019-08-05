@@ -6,6 +6,8 @@ SecureSdb - Create a SecureSdb object.
 
 ***new SecureSdb( [hostname], [svcname] )***
 
+***var securesdb = new SecureSdb( [hostname], [svcname], [username], [password] )***
+
 ##CATEGORY##
 
 SecureSdb
@@ -26,10 +28,12 @@ Create a SecureSdb object.
 | -------- | ------ | ------------------ | ------------ | --------------- |
 | hostname | string | localhost          | IP address   | not             |
 | svcname  | int    | local sdbcm's port | sdbcm's port | not             |
+| username | string | empty   | username of sequoiadb   | not             |
+| password | string | empty   | password of sequoiadb   | not             |
 
 ##RETURN VALUE##
 
-On success, return void.
+On success, return a SecureSdb.
 
 On error, exception will be thrown.
 
@@ -41,6 +45,14 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Create a SecureSdb object.
 
-```lang-javascript
-> var securesdb = new SecureSdb( "192.168.20.71", 11790 )
-```
+   ```lang-javascript
+   > var securesdb = new SecureSdb( "192.168.20.71", 11790 )
+   ```
+
+* Create a SecureSdb object with a username and password.
+
+
+
+	```lang-javascript
+ 	> var securesdb = new SecureSdb("sdbserver1",11810,"sdbadmin","123")
+	```

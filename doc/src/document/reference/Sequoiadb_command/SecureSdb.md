@@ -2,6 +2,8 @@
 
 ***var securesdb = new SecureSdb( [hostname], [svcname] )***
 
+***var securesdb = new SecureSdb( [hostname], [svcname], [username], [password] )***
+
 ##类别##
 
 SecureSdb
@@ -20,12 +22,17 @@ SecureSdb
 
 | 参数名   | 参数类型 | 默认值            | 描述         | 是否必填 |
 | -------- | -------- | ----------------- | ------------ | -------- |
-| hostname | string   | localhost         | 主机 IP 地址 | 否       |
-| svcname  | int      | 本地 sdbcm 的端口 | sdbcm 的端口 | 否       |
+| hostname | string   | localhost         | 主机 IP 地址 | 否     |
+| svcname  | int      | 本地 sdbcm 的端口 | sdbcm 的端口 | 否     |
+| username  | string      | 默认为空（''） | 用户名 | 否     |
+| password  | string      | 默认为空（''）| 密码 | 否     |
 
 ##返回值##
 
-无返回值。
+成功：返回 SecureSdb 对象。 
+
+失败：抛出异常。
+
 
 ##错误##
 
