@@ -2443,15 +2443,9 @@ error:
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
-            if ( String == ele.type() )
+            if ( ele.isNumber() || String == ele.type() )
             {
                newObjBuilder.append( ele ) ;
-            }
-            else if( ele.isNumber() )
-            {
-               stringstream ss ;
-               ss << (INT32)ele.numberInt() ;
-               newObjBuilder.append( ele.fieldName(), ss.str() ) ;
             }
             else if ( Bool == ele.type() )
             {

@@ -217,6 +217,7 @@ namespace engine
                                        const string &newValue,
                                        PMD_CFG_CHANGE changeLevel,
                                        BOOLEAN useDefault ) ;
+
       private:
          MAP_K2V*                _pMapKeyField ;
          MAP_K2V*                _pMapColdKeyField ;

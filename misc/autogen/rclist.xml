@@ -2737,14 +2737,6 @@
             <cn>存在未完成的自动提交事务</cn>
          </description>
       </code>
-      
-      <code>
-         <name>SDB_FMP_FUNC_EXIST</name>
-         <description>
-            <en>Stored procedure exists</en>
-            <cn>存储过程已存在</cn>
-         </description>
-      </code>      
 
    </codelist>
 </rclist>

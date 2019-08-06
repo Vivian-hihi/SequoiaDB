@@ -178,30 +178,15 @@ namespace engine
          {
             rc = SDB_FIELD_NOT_EXIST ;
          }
-         else if ( ele.isNumber() )
+         else if ( !ele.isNumber() )
          {
-            readValue = (INT32)ele.numberInt() ;
-         }
-         else if ( String == ele.type() )
-         {
-            const CHAR* tempStr = ele.valuestr() ;
-
-            if( utilStrIsDigit( tempStr ) )
-            {
-               utilStr2Num( tempStr, readValue ) ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Field[%s] type[%d] is not number",
-                       pFieldName, ele.type() ) ;
-            }
+            PD_LOG( PDERROR, "Field[%s] type[%d] is not number", pFieldName,
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
          }
          else
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Field[%s] type[%d] is not number",
-                    pFieldName, ele.type() ) ;
+            readValue = (INT32)ele.numberInt() ;
          }
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
@@ -260,26 +245,15 @@ namespace engine
          {
             rc = SDB_FIELD_NOT_EXIST ;
          }
-         else if ( String == ele.type() )
+         else if ( String != ele.type() )
          {
-            string tempStr = ele.String() ;
-
-            if( utilStrIsDigit( tempStr ) )
-            {
-               INT32 tempNum = 0 ;
-               utilStr2Num( tempStr.c_str(), tempNum ) ;
-               readValue = tempNum ? "TRUE" : "FALSE" ;
-            }
-            else
-            {
-               readValue = tempStr ;
-            }
+            PD_LOG( PDERROR, "Field[%s] type[%d] is not string", pFieldName,
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
          }
          else
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "The type[%d] of field[%s] is invalid",
-                    ele.type(), pFieldName ) ;
+            readValue = ele.String() ;
          }
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
