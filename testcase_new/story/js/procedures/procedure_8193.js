@@ -44,9 +44,9 @@ function createExistPcd()
    }
    catch(e)
    {
-      if( e !== -38 )
+      if( e !== -342 )
       {
-         throw buildException( "testExistPcd()", "", cmd, "throw -38", e );  
+         throw buildException( "testExistPcd()", "", cmd, "throw -342", e );  
       }
    }
    
@@ -60,9 +60,9 @@ function createExistPcd()
    }
    catch(e)
    {
-      if( e !== -38 )
+      if( e !== -342 )
       {
-         throw buildException( "testExistPcd()", "", cmd, "throw -38", e );  
+         throw buildException( "testExistPcd()", "", cmd, "throw -342", e );  
       }
    }
 }
