@@ -172,14 +172,14 @@ namespace engine
       {
          _mtx.release_shared() ;
 
-         _createEH( eh ) ;
+         BOOLEAN created = _createEH( eh ) ;
 
          if ( !eh.get() )
          {
             retries++ ;
             goto retry ;
          }
-         else
+         else if ( created )
          {
             // add to opposite map
             _pFrame->_addOpposite( eh ) ;
