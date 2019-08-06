@@ -21,13 +21,14 @@ function main()
    dbcl.createIndex(textIndexName, {"a" : "text", "b" : "text", "c" : "text"});
 
    // check sync to es
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
    
    // check result
    var dbOpr = new DBOperator();
    var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
    var actResult = dbOpr.findFromCL(dbcl, findCond);
-   checkResult([], actResult);
+   var expResult = dbOpr.findFromCL(dbcl);
+   checkResult(expResult, actResult);
    
    // insert more than one array after create text index, should fail
    try
@@ -45,7 +46,7 @@ function main()
 
    //check result
    var actResult = dbOpr.findFromCL(dbcl, findCond);
-   checkResult([], actResult);
+   checkResult(expResult, actResult);
 
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);

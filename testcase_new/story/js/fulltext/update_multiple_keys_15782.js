@@ -28,7 +28,7 @@ function main()
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    var esOpr = new ESOperator();
    var searchCond = '{"query":{"match_all":{}}}';
-   var expectResult = [{a: "arr1", b: "string1"}];
+   var expectResult = [{a: ["arr1"], b: "string1", c: ["arr1", "arr2"]}];
    var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
    

@@ -15,38 +15,36 @@ function main()
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    // insert before create text index
-   var objs = new Array({a: ["arr1"]},
-                        {a: [1]},
-                        {a: ["arr1", "arr2"]},
-                        {a: ["arr1", 1]});
+   var objs = new Array({id:1, a: ["arr1"]},
+                        {id:2, a: [1]},
+                        {id:3, a: ["arr2", "arr3"]},
+                        {id:4, a: ["arr4", 2]},
+                        {id:5, a: ["arr5", "arr6", 3]});
    dbcl.insert(objs);
 
    var textIndexName = "textIndex_15537";
    dbcl.createIndex(textIndexName, {"a" : "text"});
-
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
    
    // check result
-   var dbOpr = new DBOperator();
-   var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var expectResult = [{a: ["arr1"]}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"a":{"$include":1}});
-   checkResult(expectResult, actResult);
+   var dbOperator = new DBOperator();
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 4);
+   var expectRecords = [{id:1, a: ["arr1"]},
+                        {id:3, a: ["arr2", "arr3"]},
+                        {id:4, a: ["arr4", 2]},
+                        {id:5, a: ["arr5", "arr6", 3]}];
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {id:"",a:""}, {id:1});
+   checkResult(expectRecords, actRecords);
 
-   // insert after create text index
-   var objs = new Array({a: ["arr2"]},
-                        {a: ["arr11", "arr12"]},
-                        {a: ["arr11", 1]});
    dbcl.insert(objs);
    
-   // check sync to es
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2); 
-
    // check result
-   var expectResult = [{a: ["arr1"]}, {a: ["arr2"]}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"a":{"$include":1}});
-   actResult.sort(compare("a"));
-   checkResult(expectResult, actResult);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8);
+   var expectRecords = [{id:1, a: ["arr1"]}, {id:1, a: ["arr1"]},
+                        {id:3, a: ["arr2", "arr3"]}, {id:3, a: ["arr2", "arr3"]},
+                        {id:4, a: ["arr4", 2]}, {id:4, a: ["arr4", 2]},
+                        {id:5, a: ["arr5", "arr6", 3]}, {id:5, a: ["arr5", "arr6", 3]}];
+   var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {id:"",a:""}, {id:1});
+   checkResult(expectRecords, actRecords);
 
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);

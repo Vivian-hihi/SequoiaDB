@@ -21,8 +21,8 @@ function main()
                         {a: true},
                         {a: {b : "ab"}},
                         {a: {$date: "2018-10-10"}},
-                        {a: ["arr1", "arr2"]},
-                        {a: ["arr1", 1]});
+                        {a: ["arr2", "arr3"]},
+                        {a: ["arr4", 1]});
    dbcl.insert(objs);
 
    var textIndexName = "textIndex_15774";
@@ -31,12 +31,12 @@ function main()
    var dbOpr = new DBOperator();
    
    // check sync to es
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 4);
    
    // check result
    var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var expResult = [{a: ["arr1"]}, {a: "string1"}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"a":{"$include":1}});
+   var expResult = [{a: ["arr1"]},{a: ["arr2", "arr3"]},{a: ["arr4", 1]},{a: "string1"}];
+   var actResult = dbOpr.findFromCL(dbcl, findCond, {"a":{"$include":1}}, {a:1});
    actResult.sort(compare("a")); 
    checkResult(expResult, actResult);
 

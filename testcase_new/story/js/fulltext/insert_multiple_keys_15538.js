@@ -29,7 +29,7 @@ function main()
    var dbOpr = new DBOperator();
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    var searchCond = '{"query":{"match_all":{}}}';
-   var expectResult = [{a: "arr1", c: "string1"}];
+   var expectResult = [{a: ["arr1"], b: ["arr1", "arr2"], c: "string1"}];
    var actResult = esOpr.findFromES(esIndexNames[0], searchCond);
    checkResult(expectResult, actResult);
    
