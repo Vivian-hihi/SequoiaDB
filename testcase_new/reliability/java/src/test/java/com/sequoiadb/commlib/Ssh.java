@@ -271,7 +271,7 @@ public class Ssh {
                 }
                 stdoutBf.append(new String(tmp, 0, i));
 
-                if (System.currentTimeMillis() - timer > timeOut * 1000) {
+                if (System.currentTimeMillis() - timer > timeOut) {
                     break;
                 }
             }
@@ -280,7 +280,7 @@ public class Ssh {
                 if (i < 0)
                     break;
                 stderrBf.append(new String(tmp, 0, i));
-                if (System.currentTimeMillis() - timer > timeOut * 1000) {
+                if (System.currentTimeMillis() - timer > timeOut) {
                     break;
                 }
             }
@@ -298,7 +298,7 @@ public class Ssh {
                 // ignore
             }
 
-            if (System.currentTimeMillis() - timer > timeOut * 1000) {
+            if (System.currentTimeMillis() - timer > timeOut) {
                 break;
             }
         }
