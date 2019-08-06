@@ -330,7 +330,8 @@ namespace engine
             replCB * replCB = sdbGetClsCB()->getReplCB() ;
             UINT32 timeout = 0 ;
 
-            _pEDUCB->resetDisconnect() ;
+            // start rollback to avoid interrupt during wait-sync
+            _pEDUCB->startRollback() ;
             while ( replCB->groupSize() > 1 &&
                     pmdIsPrimary() &&
                     timeout < 5 * 60 * OSS_ONE_SEC )
@@ -357,6 +358,7 @@ namespace engine
                   break ;
                }
             }
+            _pEDUCB->stopRollback() ;
          }
 
          INT32 rcTmp = _rollbackTrans( NULL, 0 ) ;
