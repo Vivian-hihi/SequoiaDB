@@ -53,6 +53,7 @@
 using namespace bson ;
 
 #define DMS_MAX_TEXT_IDX_NUM        1
+#define DMS_PROCEDURES_COLLECTION_INDEX_NAME   "PROCEDUREIDX1"
 
 namespace engine
 {
@@ -1796,6 +1797,15 @@ namespace engine
          {
             rc = _indexInsert ( context, &indexCB, inputObj, rid, cb, !unique,
                                 dropDups, pOprHandle, insertResult ) ;
+
+            BSONElement indexNameEle = indexCB.getDef().getField( "name" ) ;
+            if ( 0 == ossStrcmp( indexNameEle.valuestr(),
+                                 DMS_PROCEDURES_COLLECTION_INDEX_NAME ) &&
+                 SDB_IXM_DUP_KEY == rc )
+            {
+               rc = SDB_FMP_FUNC_EXIST ;
+            }
+
             PD_RC_CHECK ( rc, PDERROR, "Failed to insert object(%s) index(%s), "
                           "rc: %d", inputObj.toString().c_str(),
                           indexCB.getDef().toString().c_str(), rc ) ;
