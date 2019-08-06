@@ -1401,18 +1401,26 @@ namespace seadapter
             }
             else if ( Array == ele.type() )
             {
+               // As ES dose not support mixed type of array, so check if the
+               // array only contains strings. If yes, index it on ES.
+               // Otherwise, ignore the field.
+               BOOLEAN onlyString = TRUE ;
                BSONObjIterator itr( ele.embeddedObject() ) ;
                while ( itr.more() )
                {
-                  // If the array contains string, index it on ES.
-                  if ( String == itr.next().type() )
+                  if ( String != itr.next().type() )
                   {
-                     builder.append( ele ) ;
-                     if ( !hasStrField )
-                     {
-                        hasStrField = TRUE ;
-                     }
+                     onlyString = FALSE ;
                      break ;
+                  }
+               }
+
+               if ( onlyString )
+               {
+                  builder.append( ele ) ;
+                  if ( !hasStrField )
+                  {
+                     hasStrField = TRUE ;
                   }
                }
             }
@@ -2057,15 +2065,23 @@ namespace seadapter
                }
                else if ( Array == ele.type() )
                {
+                  // As ES dose not support mixed type of array, so check if the
+                  // array only contains strings. If yes, index it on ES.
+                  // Otherwise, ignore the field.
+                  BOOLEAN onlyString = TRUE ;
                   BSONObjIterator itr( ele.embeddedObject() ) ;
                   while ( itr.more() )
                   {
-                     // If the array contains string, index it on ES.
-                     if ( String == itr.next().type() )
+                     if ( String != itr.next().type() )
                      {
-                        builder.append( ele ) ;
+                        onlyString = FALSE ;
                         break ;
                      }
+                  }
+
+                  if ( onlyString )
+                  {
+                     builder.append( ele ) ;
                   }
                }
             }

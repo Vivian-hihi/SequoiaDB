@@ -276,13 +276,6 @@ namespace engine
                   _needOprRec = TRUE ;
                }
             }
-
-            // New record contains array. It will not be inserted. If there is
-            // old record, it will be deleted on ES.
-            if ( _keySetNew.size() > 1 )
-            {
-               _keySetNew.clear() ;
-            }
          }
       }
       catch ( std::exception &e )
@@ -673,10 +666,8 @@ namespace engine
             // they are not the same, that's the array field.
             BSONObjBuilder builder ;
             BOOLEAN found = FALSE ;
-            // BSONObj objFirst = *(_keySet.begin()) ;
-            // BSONObj objSecond = *(++_keySet.begin()) ;
-            BSONObjIterator itrFirst( *(_keySet.begin()) ) ;
-            BSONObjIterator itrSecond( *(++_keySet.begin()) ) ;
+            BSONObjIterator itrFirst( *(keySet.begin()) ) ;
+            BSONObjIterator itrSecond( *(++keySet.begin()) ) ;
 
             while ( itrFirst.more() )
             {
@@ -692,13 +683,13 @@ namespace engine
                   // Found the array field.
                   const CHAR *arrField = lNextEle.fieldName() ;
                   BSONArrayBuilder arrBuilder( builder.subarrayStart( arrField ) ) ;
-                  arrBuilder.append( lNextEle.valuestrsafe() ) ;
-                  arrBuilder.append( rNextEle.valuestrsafe() ) ;
+                  arrBuilder.append( lNextEle ) ;
+                  arrBuilder.append( rNextEle ) ;
                   // Get the array field from all key record.
-                  BSONObjSet::iterator itr = _keySet.begin() ;
+                  BSONObjSet::iterator itr = keySet.begin() ;
                   // Skip the first and second key.
                   std::advance( itr, 2 ) ;
-                  while ( itr != _keySet.end() )
+                  while ( itr != keySet.end() )
                   {
                      arrBuilder.append( itr->getStringField( arrField ) ) ;
                      ++itr ;
