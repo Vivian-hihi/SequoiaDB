@@ -2,7 +2,6 @@ package com.sequoias3.partupload;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.testng.Assert;
@@ -33,7 +32,6 @@ public class ListParts18732 extends S3TestBase {
     private long fileSize = 5 * 1024 * 1024;
     private int maxPartNumber = 5;
     private String key = "/aa/bb/obj18732";
-    private List<PartETag> partETags = new ArrayList<>();
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -44,11 +42,11 @@ public class ListParts18732 extends S3TestBase {
     @Test
     private void test() throws Exception {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
-        List<PartETag> partEtags = PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId, 
+        List<PartETag> partETags = PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId, 
                 file, fileSize / maxPartNumber);
 
         // check results
-        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, bucketName, key, partEtags, uploadId);
+        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, bucketName, key, partETags, uploadId);
         
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, uploadId, partETags);
         File downloadPath = new File(localPath + File.separator + "downloadFile_" + fileSize);
