@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -15,6 +16,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
@@ -29,20 +31,20 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description seqDB-14406:异常启动DB备节点不影响全文索引功能
+ * @Description seqDB-14406:异常启动DB主节点不影响全文索引功能
  * @author yinzhen
  * @date 2018/11/23
  */
 
-public class KillSlaveNode14408 extends SdbTestBase {
-    private String clName = "killSlaveNode14408";
+public class Fulltext14406 extends SdbTestBase {
+    private String clName = "killMasterNode14406";
     private CollectionSpace cs;
     private DBCollection cl;
     private GroupMgr groupMgr = null;
     private Sequoiadb sdb;
     private boolean clearFlag = false;
     private String groupName;
-    private String fullIndexName = "fullIndex14408";
+    private String fullIndexName = "fullIndex14406";
 
     @BeforeClass()
     public void setUp() {
@@ -61,7 +63,6 @@ public class KillSlaveNode14408 extends SdbTestBase {
                 throw new SkipException("checkBusiness return false");
             }
             groupName = groupMgr.getAllDataGroupName().get(0);
-
             cs = sdb.getCollectionSpace(csName);
             cl = cs.createCollection(clName, (BSONObject) JSON.parse("{Group:'" + this.groupName + "'}"));
 
@@ -87,17 +88,22 @@ public class KillSlaveNode14408 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
+        Sequoiadb preMasterNodeDB = null;
+        Sequoiadb currentMasterNodeDB = null;
         try {
             this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
             this.insertData();
             Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 500000));
             GroupWrapper subCLGroup = groupMgr.getGroupByName(groupName);
-            NodeWrapper subCLGroupMaster = subCLGroup.getSlave();
-            System.out.println("Kill node:" + subCLGroupMaster.hostName() + ":" + subCLGroupMaster.svcName());
+            NodeWrapper subCLGroupMaster = subCLGroup.getMaster();
+
+            // get masterNode
+            String preMasterHostName = subCLGroupMaster.hostName();
+            String preMasterSvcName = subCLGroupMaster.svcName();
+            System.out.println("Kill node:" + preMasterHostName + ":" + preMasterSvcName);
 
             // 建立并行任务
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(subCLGroupMaster.hostName(), subCLGroupMaster.svcName(),
-                    0);
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(preMasterHostName, preMasterSvcName, 0);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.execute();
             Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
@@ -117,9 +123,33 @@ public class KillSlaveNode14408 extends SdbTestBase {
             this.cl.delete("{a:'a11'}");
             Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 999998));
 
-            // query
-            this.cl.query();
-            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 999998));
+            // get old and new masterNode
+            preMasterNodeDB = new Sequoiadb(preMasterHostName, Integer.valueOf(preMasterSvcName), "", "");
+            currentMasterNodeDB = sdb.getReplicaGroup(groupName).getMaster().connect();
+
+            // query previous masterNode
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put("a", "a22");
+            DBCursor cursor = preMasterNodeDB.getCollectionSpace(SdbTestBase.csName).getCollection(this.clName)
+                    .query(matcher, null, null, null);
+            int count = 0;
+            while (cursor.hasNext()) {
+                cursor.getNext();
+                count++;
+            }
+            cursor.close();
+            Assert.assertEquals(2, count);
+
+            // query current masterNode
+            cursor = currentMasterNodeDB.getCollectionSpace(SdbTestBase.csName).getCollection(this.clName)
+                    .query(matcher, null, null, null);
+            count = 0;
+            while (cursor.hasNext()) {
+                cursor.getNext();
+                count++;
+            }
+            cursor.close();
+            Assert.assertEquals(2, count);
 
             clearFlag = true;
         } catch (ReliabilityException e) {
@@ -127,6 +157,8 @@ public class KillSlaveNode14408 extends SdbTestBase {
             Assert.fail(e.getMessage());
         } finally {
             sdb.closeAllCursors();
+            preMasterNodeDB.close();
+            currentMasterNodeDB.close();
         }
 
     }

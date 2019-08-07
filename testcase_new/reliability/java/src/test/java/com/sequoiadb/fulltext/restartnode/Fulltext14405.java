@@ -27,7 +27,7 @@ import com.sequoiadb.fulltext.FullTextUtils;
  * @author yinzhen
  * @date 2018/11/15
  */
-public class RestartMasterNode14405 extends SdbTestBase {
+public class Fulltext14405 extends SdbTestBase {
     private Sequoiadb sdb;
     private DBCollection cl;
     private String clName = "restartMasterNode14405";
@@ -47,63 +47,70 @@ public class RestartMasterNode14405 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        // 创建全文索引，插入记录
-        this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
-        this.insertData();
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 500000));
+        Sequoiadb preMasterNodeDB = null;
+        Sequoiadb currentMasterNodeDB = null;
+        try {// 创建全文索引，插入记录
+            this.cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
+            this.insertData();
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 500000));
 
-        // get masterNode
-        Node preMasterNode = this.sdb.getReplicaGroup(this.groupNames.get(0)).getMaster();
-        String preMasterHostName = preMasterNode.getHostName();
-        int preMasterSvcName = preMasterNode.getPort();
+            // get masterNode
+            Node preMasterNode = this.sdb.getReplicaGroup(this.groupNames.get(0)).getMaster();
+            String preMasterHostName = preMasterNode.getHostName();
+            int preMasterSvcName = preMasterNode.getPort();
 
-        // restart masterNode
-        preMasterNode.stop();
-        preMasterNode.start();
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 500000));
+            // restart masterNode
+            preMasterNode.stop();
+            preMasterNode.start();
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 500000));
 
-        // get old and new masterNode
-        Sequoiadb preMasterNodeDB = new Sequoiadb(preMasterHostName, preMasterSvcName, "", "");
-        Sequoiadb currentMasterNodeDB = this.sdb.getReplicaGroup(this.groupNames.get(0)).getMaster().connect();
+            // get old and new masterNode
+            preMasterNodeDB = new Sequoiadb(preMasterHostName, preMasterSvcName, "", "");
+            currentMasterNodeDB = this.sdb.getReplicaGroup(this.groupNames.get(0)).getMaster().connect();
 
-        // insert
-        this.insertData();
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1000000));
+            // insert
+            this.insertData();
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1000000));
 
-        // update
-        this.cl.update("{a:'a01'}", "{'$set':{a:'helloworld'}}", "{'':null}");
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1000000));
+            // update
+            this.cl.update("{a:'a01'}", "{'$set':{a:'helloworld'}}", "{'':null}");
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1000000));
 
-        // delete
-        this.cl.delete("{a:'a11'}");
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 999998));
+            // delete
+            this.cl.delete("{a:'a11'}");
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 999998));
 
-        // query previous masterNode
-        BSONObject matcher = new BasicBSONObject();
-        matcher.put("a", "a22");
-        DBCursor cursor = preMasterNodeDB.getCollectionSpace(SdbTestBase.csName).getCollection(this.clName)
-                .query(matcher, null, null, null);
-        int count = 0;
-        while (cursor.hasNext()) {
-            cursor.getNext();
-            count++;
+            // query previous masterNode
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put("a", "a22");
+            DBCursor cursor = preMasterNodeDB.getCollectionSpace(SdbTestBase.csName).getCollection(this.clName)
+                    .query(matcher, null, null, null);
+            int count = 0;
+            while (cursor.hasNext()) {
+                cursor.getNext();
+                count++;
+            }
+            cursor.close();
+            Assert.assertEquals(2, count);
+
+            // query current masterNode
+            cursor = currentMasterNodeDB.getCollectionSpace(SdbTestBase.csName).getCollection(this.clName)
+                    .query(matcher, null, null, null);
+            count = 0;
+            while (cursor.hasNext()) {
+                cursor.getNext();
+                count++;
+            }
+            cursor.close();
+            Assert.assertEquals(2, count);
+
+            // check full sync to ES
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 999998));
+        } finally {
+            preMasterNodeDB.close();
+            currentMasterNodeDB.close();
         }
-        cursor.close();
-        Assert.assertEquals(2, count);
 
-        // query current masterNode
-        cursor = currentMasterNodeDB.getCollectionSpace(SdbTestBase.csName).getCollection(this.clName).query(matcher,
-                null, null, null);
-        count = 0;
-        while (cursor.hasNext()) {
-            cursor.getNext();
-            count++;
-        }
-        cursor.close();
-        Assert.assertEquals(2, count);
-
-        // check full sync to ES
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 999998));
     }
 
     @AfterClass

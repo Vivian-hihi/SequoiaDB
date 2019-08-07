@@ -1,5 +1,9 @@
 package com.sequoiadb.fulltext;
 
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -138,4 +142,128 @@ public class FullTextRest {
         return response;
     }
 
+    /**
+     * 获取elasticsearch端全文索引的总记录数
+     * 
+     * @param esIndexName
+     * @return
+     * @throws Exception
+     */
+    public int getCount(String esIndexName) throws Exception {
+        ResponseEntity<?> response = null;
+        try {
+            response = this.setApi("/" + esIndexName + "/_count").setRequestMethod(HttpMethod.GET)
+                    .setResponseType(String.class).exec();
+        } catch (Exception e) {
+            // 404是索引不存在的错误，转化该错误用于上层调用判断是否需要重试
+            if (e.getMessage().equals("404 Not Found")) {
+                throw new Exception("no such index");
+            } else {
+                throw e;
+            }
+        }
+        String body = response.getBody().toString();
+        BSONObject bodyObj = (BSONObject) JSON.parse(body);
+
+        // 减去SDBCOMMITID记录
+        return (int) bodyObj.get("count") - 1;
+    }
+
+    /**
+     * 获取elasticsearch端的SDBCOMMIT记录下的逻辑ID值
+     * 
+     * @param esIndexName
+     * @return
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public int getCommitID(String esIndexName) throws Exception {
+
+        int commitID = -1;
+
+        ResponseEntity<?> response = null;
+        try {
+            response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT").setRequestMethod(HttpMethod.GET)
+                    .setResponseType(String.class).exec();
+        } catch (Exception e) {
+            if (e.getMessage().equals("404 Not Found")) {
+                throw new Exception("no such index");
+            } else {
+                throw e;
+            }
+        }
+        String body = response.getBody().toString();
+        BSONObject bodyObj = (BSONObject) JSON.parse(body);
+
+        BSONObject hitss = (BSONObject) bodyObj.get("hits");
+        if ((int) hitss.get("total") == 0) {
+            throw new Exception("no such _id=SDBCOMMIT record");
+        }
+        BSONObject hits = ((List<BSONObject>) hitss.get("hits")).get(0);
+        BSONObject source = (BSONObject) hits.get("_source");
+        commitID = (int) source.get("_lid");
+
+        return commitID;
+    }
+
+    /**
+     * 获取elasticsearch端的SDBCOMMIT记录下的原始集合逻辑ID值
+     * 
+     * @param esIndexName
+     * @return
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public int getCommitCLLID(String esIndexName) throws Exception {
+        int commitCLLID = -1;
+
+        ResponseEntity<?> response = null;
+        try {
+            response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT").setRequestMethod(HttpMethod.GET)
+                    .setResponseType(String.class).exec();
+        } catch (Exception e) {
+            if (e.getMessage().equals("404 Not Found")) {
+                throw new Exception("no such index");
+            } else {
+                throw e;
+            }
+        }
+        String body = response.getBody().toString();
+        BSONObject bodyObj = (BSONObject) JSON.parse(body);
+        BSONObject hitss = (BSONObject) bodyObj.get("hits");
+        if ((int) hitss.get("total") == 0) {
+            throw new Exception("no such index");
+        }
+        BSONObject hits = ((List<BSONObject>) hitss.get("hits")).get(0);
+        BSONObject source = (BSONObject) hits.get("_source");
+        commitCLLID = (int) source.get("_cllid");
+
+        return commitCLLID;
+    }
+
+    /**
+     * 判断elasticsearch端的全文索引名是否存在，用于检查在创建阶段索引名是否映射到elasticsearch端
+     * 
+     * @param esIndexName
+     * @return
+     */
+    public boolean isExist(String esIndexName) {
+        boolean indexExist = false;
+        ResponseEntity<?> response = null;
+        try {
+            response = this.setApi("/" + esIndexName).setRequestMethod(HttpMethod.GET).setResponseType(String.class)
+                    .exec();
+        } catch (Exception e) {
+            if (e.getMessage().equals("404 Not Found")) {
+                indexExist = false;
+            } else {
+                throw e;
+            }
+        }
+        if (response != null && response.getStatusCodeValue() == 200) {
+            indexExist = true;
+        }
+
+        return indexExist;
+    }
 }
