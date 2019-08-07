@@ -123,11 +123,29 @@ namespace engine
       {
          BSONObj func( (const CHAR *)pMsg ) ;
          BSONObj parsed ;
+         BSONObjBuilder builder ;
+         BSONObj dummy ;
+         BSONObj matcher ;
+         BSONObj record ; // the same procedure if it exists
+
          rc = catPraseFunc( func, parsed ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to parse store procedures:%s",
                     func.toString().c_str() ) ;
+            goto error ;
+         }
+
+         builder.appendAs( parsed.getField( FMP_FUNC_NAME ), FMP_FUNC_NAME ) ;
+         matcher = builder.obj() ;
+         rc = catGetOneObj( CAT_PROCEDURES_COLLECTION,
+                            dummy, matcher, dummy,
+                            _pEduCB, record ) ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            rc = SDB_FMP_FUNC_EXIST ;
+            PD_LOG( PDERROR, "The procedure with same name exists: %s, rc: %d",
+                    record.toString().c_str(), rc ) ;
             goto error ;
          }
 
@@ -182,6 +200,7 @@ namespace engine
          rc = catGetOneObj( CAT_PROCEDURES_COLLECTION,
                             dummy, deletor, dummy,
                             _pEduCB, func ) ;
+
          if ( SDB_DMS_EOC == rc )
          {
             PD_LOG( PDERROR, "func %s is not exist",
