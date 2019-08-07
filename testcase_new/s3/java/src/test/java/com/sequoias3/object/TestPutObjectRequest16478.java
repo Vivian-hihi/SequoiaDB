@@ -91,7 +91,7 @@ public class TestPutObjectRequest16478 extends S3TestBase {
 			s3Client.putObject(new PutObjectRequest(bucketName, "", new File(filePath)));
 			Assert.fail("when key name is '',it should fail");
 		}catch(AmazonS3Exception e){
-			Assert.assertEquals(e.getErrorCode(), "InvalidLocation");
+			Assert.assertEquals(e.getErrorCode(), "MalformedXML");
 		}
 		
 		try{
