@@ -1155,7 +1155,6 @@ public class ObjectServiceImpl implements ObjectService {
                         }
                     }
 
-
                     eTag = dataAttr.geteTag();
                 }else {
                     MessageDigest MD5 = MessageDigest.getInstance("MD5");

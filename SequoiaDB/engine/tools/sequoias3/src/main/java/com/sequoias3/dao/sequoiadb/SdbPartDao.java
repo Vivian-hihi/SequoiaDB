@@ -145,8 +145,9 @@ public class SdbPartDao implements PartDao {
             matcher.put(Part.UPLOADID, uploadId);
             matcher.put(Part.SIZE, size);
 
+            //0,-1两个分块都是预先准备的lob，size相同的话就可以使用
             BSONObject partnumberMatcher = new BasicBSONObject();
-            partnumberMatcher.put(DBParamDefine.NOT_SMALL, 0);
+            partnumberMatcher.put(DBParamDefine.NOT_SMALL, -1);
             matcher.put(Part.PARTNUMBER, partnumberMatcher);
 
             BSONObject order = new BasicBSONObject();
