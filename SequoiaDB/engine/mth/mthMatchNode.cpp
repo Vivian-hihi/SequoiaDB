@@ -561,7 +561,7 @@ namespace engine
 
          if ( NULL == p )
          {
-            p = SDB_OSS_MALLOC( reserveSize ) ;
+            p = utilThreadAlloc( reserveSize ) ;
             if ( NULL == p )
             {
                goto error ;
@@ -587,13 +587,13 @@ namespace engine
       if ( p )
       {
          void *beginAddr = (void *)( (CHAR *)p - MTH_MEM_TYPE_SIZE ) ;
-         // Only release memory allocted by SDB_OSS_MALLOC().
+         // Only release memory allocted by utilThreadRelease().
          // Objects allocated by instances of _utilAllocator(allocator is not
          // NULL in new) will not be released seperately, as they are allocated
          // in a stack. They space is released when the allocator is destroyed.
          if ( MTH_MEM_BY_DFT_ALLOCATOR == *(INT32 *)beginAddr )
          {
-            SDB_OSS_FREE( beginAddr ) ;
+            utilThreadRelease( beginAddr ) ;
          }
       }
    }

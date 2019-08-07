@@ -41,6 +41,7 @@
 
 #include "ixm_common.hpp"
 #include "oss.hpp"
+#include "utilPooledObject.hpp"
 #include "dms.hpp"
 #include "dmsExtent.hpp"
 #include "pd.hpp"
@@ -180,7 +181,7 @@ namespace engine
    /*
       _ixmIndexCB define
    */
-   class _ixmIndexCB : public SDBObject
+   class _ixmIndexCB : public utilPooledObject
    {
    private:
 #pragma pack(1)

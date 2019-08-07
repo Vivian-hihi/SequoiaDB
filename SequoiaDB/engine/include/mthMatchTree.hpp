@@ -44,12 +44,12 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "../bson/bson.hpp"
+#include "utilPooledObject.hpp"
 #include "mthMatchNode.hpp"
 #include "mthMatchLogicNode.hpp"
 #include "mthMatchOpNode.hpp"
 #include "mthMatchNormalizer.hpp"
 #include "rtnPredicate.hpp"
-#include <vector>
 #include <map>
 
 using namespace bson ;
@@ -94,7 +94,7 @@ namespace engine
 
    _mthMatchNodeFactory *mthGetMatchNodeFactory() ;
 
-   class _mthMatchTree : public SDBObject,
+   class _mthMatchTree : public utilPooledObject,
                          public _mthMatchConfigHolder
    {
       public:
@@ -208,7 +208,7 @@ namespace engine
                                           BOOLEAN &isTotallyConverted ) ;
 
          INT32    _createBuilder( BSONObjBuilder **builder ) ;
-         void     _releaseBuilderVec( vector< BSONObjBuilder* > &builderVec ) ;
+         void     _releaseBuilderVec( ossPoolVector< BSONObjBuilder* > &builderVec ) ;
 
          INT32    _adjustReturnMatchIndex( _mthMatchTreeContext &context ) ;
 
@@ -233,7 +233,7 @@ namespace engine
          _mthMatchOpNode*  _returnMatchNode ;
 
          _mthNodeAllocator _allocator ;
-         vector< BSONObjBuilder* > _builderVec ;
+         ossPoolVector< BSONObjBuilder* > _builderVec ;
    } ;
 
    typedef class _mthMatchTree mthMatchTree ;

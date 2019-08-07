@@ -41,6 +41,7 @@
 #define MTH_MATCHNODE_HPP_
 #include "core.hpp"
 #include "oss.hpp"
+#include "utilMemListPool.hpp"
 #include "ossUtil.hpp"
 #include "mthCommon.hpp"
 #include "../bson/bson.hpp"
@@ -220,7 +221,7 @@ namespace engine
             }
             else
             {
-               CHAR *tmp = (CHAR *)SDB_OSS_MALLOC( len + 1 ) ;
+               CHAR *tmp = (CHAR *)utilThreadAlloc( len + 1 ) ;
                if ( NULL == tmp )
                {
                   rc = SDB_OOM ;
@@ -228,7 +229,11 @@ namespace engine
                }
 
                ossStrcpy( tmp, name ) ;
-               SAFE_OSS_FREE( _allocateName ) ;
+
+               if ( _allocateName )
+               {
+                  utilThreadRelease( (void *&)_allocateName ) ;
+               }
 
                _allocateName = tmp ;
                _name         = _allocateName ;
@@ -247,7 +252,11 @@ namespace engine
 
          void clear()
          {
-            SAFE_OSS_FREE( _allocateName ) ;
+            if ( _allocateName )
+            {
+               utilThreadRelease( (void *&)_allocateName ) ;
+            }
+
             _name = NULL ;
          }
 

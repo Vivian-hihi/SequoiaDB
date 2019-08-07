@@ -2414,9 +2414,9 @@ namespace engine
    }
 
    void _mthMatchTree::_releaseBuilderVec(
-                                    vector< BSONObjBuilder* > &builderVec )
+                                    ossPoolVector< BSONObjBuilder* > &builderVec )
    {
-      vector<BSONObjBuilder*>::iterator it ;
+      ossPoolVector<BSONObjBuilder*>::iterator it ;
       for ( it = builderVec.begin(); it < builderVec.end(); it++ )
       {
          SDB_OSS_DEL (*it) ;

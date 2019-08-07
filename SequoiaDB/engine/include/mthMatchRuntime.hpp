@@ -41,6 +41,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "utilPooledObject.hpp"
 #include "ossUtil.hpp"
 #include "mthMatchTree.hpp"
 
@@ -177,7 +178,7 @@ namespace engine
    /*
       _mthMatchRuntime define
     */
-   class _mthMatchRuntime : public SDBObject,
+   class _mthMatchRuntime : public utilPooledObject,
                             public _mthMatchTreeHolder,
                             public _mthParamPredListHolder
    {
