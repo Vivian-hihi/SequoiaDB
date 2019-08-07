@@ -35,7 +35,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class ListVersionsByPrefixDelimiter18960 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String bucketName = "bucket16402";
+	private String bucketName = "bucket18960";
 	private String[] objectNames = { "dir1/test1/1.txt", "dir1/test2/2.txt", "dir1/test3/3.txt", "dir1/test4",
 			"dir1/test5", "test6" };
 	private AmazonS3 s3Client = null;
