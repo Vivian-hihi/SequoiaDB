@@ -7,7 +7,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -22,7 +27,6 @@ import com.amazonaws.services.s3.model.PartListing;
 import com.amazonaws.services.s3.model.PartSummary;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
-import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoias3.testcommon.CommLib;
@@ -39,7 +43,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 public class UploadPart18681 extends S3TestBase {
     private int runSuccessNum = 0;
-    private int expRunSuccessNum = 4;
+    private int expRunSuccessNum = 4;    
     private File localPath;
     private String filePath1;
     private String filePath2;
@@ -51,8 +55,7 @@ public class UploadPart18681 extends S3TestBase {
     private AmazonS3 s3Client;
     private String keyBase = "/aa/bb/obj18681";
     private List<String> keys = new ArrayList<>();
-    private PartETag firstPartETag1;
-    private PartETag firstPartETag2;
+    private Map<String, PartETag> firstPartETags = new HashMap<String, PartETag>();
 
     @DataProvider(name = "firstPartSize")
     private Object[][] generateFirstPartSize(){
@@ -78,46 +81,60 @@ public class UploadPart18681 extends S3TestBase {
     @Test(dataProvider = "firstPartSize")
     private void test(int firstPartNumber1, int firstPartNumber2, 
             int firstPartSize1, int firstPartSize2, String key ) throws Exception {
-        // init file
         String filePath3 = this.createFile(0);
+        keys.add(key);
+        List<PartETag> partETags = new ArrayList<>();
         
         // init part upload
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
-        keys.add(key);
+        String uploadId = 
+                PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
         
         // upload first part
         ThreadExecutor threadExec = new ThreadExecutor();
-        threadExec.addWorker(new ThreadUploadFirstPart1(file1, key, uploadId, 
-                firstPartNumber1, firstPartSize1));
-        threadExec.addWorker(new ThreadUploadFirstPart2(file2, key, uploadId, 
-                firstPartNumber2, firstPartSize2));
+        threadExec.addWorker(new ThreadUploadFirstPart(file1, key, uploadId, 
+                firstPartNumber1, firstPartSize1, "thread1"));
+        threadExec.addWorker(new ThreadUploadFirstPart(file2, key, uploadId, 
+                firstPartNumber2, firstPartSize2, "thread2"));
         threadExec.run();
-        // get the partETag of firstPart
+        
+        // get the firstPartETagStr
         ListPartsRequest request = new ListPartsRequest(bucketName, key, uploadId);
         PartListing parts = s3Client.listParts(request);
         PartSummary partSummary = parts.getParts().get(0);
         String firstPartETagStr =  partSummary.getETag();
         long firstPartSize = partSummary.getSize();
-        // upload others part
-        PartETag otherPartETag = this.uploadOthersPart(key, uploadId, firstPartNumber2, firstPartSize);
-        // upload
-        PartETag firstPartETag;
-        if (firstPartETagStr.equals(firstPartETag1.getETag())) {
-            firstPartETag = firstPartETag1;
-        } else {
-            firstPartETag = firstPartETag2;
+        
+        // get the firstPartETag
+        String threadMarker = "";
+        PartETag firstPartETag = null;
+        Set<Entry<String, PartETag>> entrySet = firstPartETags.entrySet();
+        Iterator<Map.Entry<String, PartETag>> it = entrySet.iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, PartETag> entry = it.next();
+            threadMarker = entry.getKey();
+            firstPartETag = entry.getValue();
+            if (firstPartETag.getETag().equals(firstPartETagStr)) {
+                break;
+            }
         }
-        List<PartETag> partETags = new ArrayList<>();
         partETags.add(firstPartETag);
+        
+        // upload others part
+        PartETag otherPartETag = 
+                this.uploadOthersPart(key, uploadId, firstPartNumber2, firstPartSize);
         partETags.add(otherPartETag);
-        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, uploadId, partETags);
+        
+        // upload
+        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, 
+                uploadId, partETags);
 
         // check results
         File downloadPath = new File(localPath + File.separator 
                 + "downloadFile_" + fileSize + "_" + fileId);
-        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, downloadPath, bucketName, key);
+        String downfileMd5 = 
+                ObjectUtils.getMd5OfObject(s3Client, downloadPath, bucketName, key);
         String expFilePath = filePath1;
-        if (firstPartETagStr.equals(firstPartETag2.getETag())) {
+        if (threadMarker.equals("thread2")) {
             expFilePath = filePath3;
             int remainPartSize = fileSize - firstPartSize2;
             this.readFile(filePath2, 0, firstPartSize2, filePath3);
@@ -145,20 +162,22 @@ public class UploadPart18681 extends S3TestBase {
         }
     }
 
-    private class ThreadUploadFirstPart1 {
+    private class ThreadUploadFirstPart {
         private File file;
         private String key;
         private String uploadId;
         private int partNumer;
         private long partSize;
+        private String threadMarker;
         
-        public ThreadUploadFirstPart1(File file, String key, String uploadId, 
-                int partNumer, long partSize) {
+        public ThreadUploadFirstPart(File file, String key, String uploadId, 
+                int partNumer, long partSize, String threadMarker) {
             this.file = file;
             this.key = key;
             this.uploadId = uploadId;
             this.partNumer = partNumer;
             this.partSize = partSize;
+            this.threadMarker = threadMarker;
         }
         
         @ExecuteOrder(step = 1)
@@ -170,41 +189,7 @@ public class UploadPart18681 extends S3TestBase {
                         .withFileOffset(0).withPartNumber(partNumer).withPartSize(partSize)
                         .withBucketName(bucketName).withKey(key).withUploadId(uploadId);
                 UploadPartResult partResult = s3.uploadPart(partRequest);
-                firstPartETag1 = partResult.getPartETag();
-            } finally {
-                if (s3 != null) {
-                    s3.shutdown();
-                }
-            }
-        }
-    }
-
-    private class ThreadUploadFirstPart2 extends ResultStore {
-        private File file;
-        private String key;
-        private String uploadId;
-        private int partNumer;
-        private long partSize;
-        
-        public ThreadUploadFirstPart2(File file, String key, String uploadId, 
-                int partNumer, long partSize) {
-            this.file = file;
-            this.key = key;
-            this.uploadId = uploadId;
-            this.partNumer = partNumer;
-            this.partSize = partSize;
-        }
-        
-        @ExecuteOrder(step = 1)
-        private void uploadPart() {
-            AmazonS3 s3 = null;
-            try {
-                s3 = CommLib.buildS3Client();
-                UploadPartRequest partRequest = new UploadPartRequest().withFile(file)
-                        .withFileOffset(0).withPartNumber(partNumer).withPartSize(partSize)
-                        .withBucketName(bucketName).withKey(key).withUploadId(uploadId);
-                UploadPartResult partResult = s3.uploadPart(partRequest);
-                firstPartETag2 = partResult.getPartETag();
+                firstPartETags.put(threadMarker, partResult.getPartETag());
             } finally {
                 if (s3 != null) {
                     s3.shutdown();
