@@ -111,34 +111,46 @@ public class FullTextRest {
         return url;
     }
 
-    public ResponseEntity<?> exec() {
+    public ResponseEntity<?> exec() throws InterruptedException {
         ResponseEntity<?> response = null;
-        try {
-            if (null != this.resource) {
-                requestEntity = new HttpEntity<>(this.resource, this.getRequestHeaders());
-            } else {
-                if (resquestBody != null) {
-                    requestEntity = new HttpEntity<>(this.getRequestBody(), this.getRequestHeaders());
+        boolean runFlag = false;
+        int avoid503 = 0;
+        do {
+            runFlag = false;
+            try {
+                if (null != this.resource) {
+                    requestEntity = new HttpEntity<>(this.resource, this.getRequestHeaders());
                 } else {
-                    requestEntity = new HttpEntity<>(this.param, this.getRequestHeaders());
+                    if (resquestBody != null) {
+                        requestEntity = new HttpEntity<>(this.getRequestBody(), this.getRequestHeaders());
+                    } else {
+                        requestEntity = new HttpEntity<>(this.param, this.getRequestHeaders());
+                    }
                 }
+                if (this.uriVariables != null) {
+                    response = rest.exchange(this.getUrl(this.api), this.requestMethod, this.requestEntity,
+                            this.responseType, this.uriVariables);
+                } else {
+                    response = rest.exchange(this.getUrl(this.api), this.requestMethod, this.requestEntity,
+                            this.responseType);
+                }
+            } catch (HttpClientErrorException e) {
+                throw e;
+            } catch (HttpServerErrorException e) {
+                if (503 != e.getStatusCode().value()) {
+                    throw e;
+                }
+                runFlag = true;
+                if (avoid503++ >= 120) {
+                    throw e;
+                }
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                throw e;
+            } finally {
+                this.reset();
             }
-            if (this.uriVariables != null) {
-                response = rest.exchange(this.getUrl(this.api), this.requestMethod, this.requestEntity,
-                        this.responseType, this.uriVariables);
-            } else {
-                response = rest.exchange(this.getUrl(this.api), this.requestMethod, this.requestEntity,
-                        this.responseType);
-            }
-        } catch (HttpClientErrorException e) {
-            throw e;
-        } catch (HttpServerErrorException e) {
-            throw e;
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            this.reset();
-        }
+        } while (runFlag);
         return response;
     }
 
@@ -246,8 +258,9 @@ public class FullTextRest {
      * 
      * @param esIndexName
      * @return
+     * @throws Exception
      */
-    public boolean isExist(String esIndexName) {
+    public boolean isExist(String esIndexName) throws Exception {
         boolean indexExist = false;
         ResponseEntity<?> response = null;
         try {
