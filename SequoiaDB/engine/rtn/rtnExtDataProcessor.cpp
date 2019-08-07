@@ -996,22 +996,16 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Prepare for delete failed[ %d ]", rc ) ;
             goto done ;
          }
-         SDB_ASSERT( 1 == _keySetNew.size(), "Key set size should be 1" ) ;
-
+         if ( idModified )
          {
-            BSONObjSet::iterator it = _keySetNew.begin() ;
-            BSONObj object( *it ) ;
-            if ( idModified )
-            {
-               rc = _prepareRecord( RTN_EXT_UPDATE_WITH_ID, idEle, recordObj,
-                                    &idEleNew ) ;
-            }
-            else
-            {
-               rc = _prepareRecord( RTN_EXT_UPDATE, idEleNew, recordObj ) ;
-            }
-            PD_RC_CHECK( rc, PDERROR, "Add operation record failed[%d]", rc ) ;
+            rc = _prepareRecord( RTN_EXT_UPDATE_WITH_ID, idEle, recordObj,
+                                 &idEleNew ) ;
          }
+         else
+         {
+            rc = _prepareRecord( RTN_EXT_UPDATE, idEleNew, recordObj ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Add operation record failed[%d]", rc ) ;
       }
       catch ( std::exception &e )
       {
