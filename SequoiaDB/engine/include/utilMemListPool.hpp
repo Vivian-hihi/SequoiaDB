@@ -206,6 +206,13 @@ namespace engine
    void*       utilThreadRealloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
    void        utilThreadRelease( void*& ptr ) ;
 
+   extern "C"
+   {
+      void*    utilTCAlloc( UINT32 size ) ;
+      void*    utilTCRealloc( void* ptr, UINT32 size ) ;
+      void     utilTCRelease( void* ptr ) ;
+   }
+
 }
 
 #endif //UTIL_MEM_LIST_POOL_HPP__

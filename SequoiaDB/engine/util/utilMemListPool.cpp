@@ -733,5 +733,23 @@ namespace engine
       }
    }
 
+   extern "C"
+   {
+      void* utilTCAlloc( UINT32 size )
+      {
+         return utilThreadAlloc( size ) ;
+      }
+
+      void* utilTCRealloc( void * ptr, UINT32 size )
+      {
+         return utilThreadRealloc( ptr, size ) ;
+      }
+
+      void utilTCRelease( void * ptr )
+      {
+         utilThreadRelease( (void*&)ptr ) ;
+      }
+   }
+
 }
 

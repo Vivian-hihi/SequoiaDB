@@ -43,9 +43,25 @@ const int initialBufferSize = 0;
 static const int zero = 0;
 
 /* Custom standard function pointers. */
-void *( *bson_malloc_func )( size_t ) = malloc;
-void *( *bson_realloc_func )( void *, size_t ) = realloc;
-void  ( *bson_free_func )( void * ) = free;
+bson_malloc_func_p bson_malloc_func = malloc ;
+bson_realloc_func_p bson_realloc_func = realloc ;
+bson_free_func_p bson_free_func = free ;
+
+void bson_set_malloc_func( bson_malloc_func_p func )
+{
+   bson_malloc_func = func ;
+}
+
+void bson_set_realloc_func( bson_realloc_func_p func )
+{
+   bson_realloc_func = func ;
+}
+
+void bson_set_free_func( bson_free_func_p func )
+{
+   bson_free_func = func ;
+}
+
 #ifdef R_SAFETY_NET
 bson_printf_func bson_printf;
 #else
@@ -537,7 +553,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          if( bin_size > 0 )
          {
             base64_size = getEnBase64Size( bin_size ) ;
-            pBase64Buf = (char *)bson_malloc_func( base64_size + 1 ) ;
+            pBase64Buf = (char *)bson_malloc( base64_size + 1 ) ;
             if ( !pBase64Buf )
             {
                return 0 ;
@@ -546,12 +562,12 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
             pBin_data = (char *)bson_iterator_bin_data ( i ) ;
             if ( base64Encode( pBin_data, bin_size, pBase64Buf, base64_size ) < 0 )
             {
-               bson_free_func( pBase64Buf ) ;
+               bson_free( pBase64Buf ) ;
                pBase64Buf = NULL ;
                return 0 ;
             }
             bson_sprint_raw_concat ( pbuf, left, pBase64Buf, 0 ) ;
-            bson_free_func( pBase64Buf ) ;
+            bson_free( pBase64Buf ) ;
             CHECK_LEFT ( left )
          }
          bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
@@ -659,7 +675,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
                                      decimal.dscale,
                                      decimal.typemod, &tmpSize ) ;
 
-         temp = (char *)bson_malloc_func( tmpSize ) ;
+         temp = (char *)bson_malloc( tmpSize ) ;
          if ( !temp )
          {
             sdb_decimal_free( &decimal ) ;
@@ -671,13 +687,13 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          if ( 0 != tmpRC )
          {
             sdb_decimal_free( &decimal ) ;
-            bson_free_func( temp ) ;
+            bson_free( temp ) ;
             return 0 ;
          }
 
          bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          sdb_decimal_free( &decimal ) ;
-         bson_free_func( temp ) ;
+         bson_free( temp ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -968,14 +984,14 @@ SDB_EXPORT void bson_print( const bson *b )
 {
    char *p = NULL ;
    int bufferSize = bson_sprint_length ( b ) ;
-   p = (char*)bson_malloc_func(bufferSize) ;
+   p = (char*)bson_malloc(bufferSize) ;
    if ( !p )
       return ;
    if ( bson_sprint ( p, bufferSize, b ) )
    {
       printf ( "%s\n", p ) ;
    }
-   bson_free_func ( p ) ;
+   bson_free ( p ) ;
 }
 
 /*SDB_EXPORT void bson_print( const bson *b ) {
@@ -1068,11 +1084,11 @@ SDB_EXPORT void bson_print_raw( const char *data , int depth ) {
    ------------------------------ */
 
 SDB_EXPORT bson_iterator* bson_iterator_create( void ) {
-    return ( bson_iterator* )bson_malloc_func( sizeof( bson_iterator ) );
+    return ( bson_iterator* )bson_malloc( sizeof( bson_iterator ) );
 }
 
 SDB_EXPORT void bson_iterator_dispose(bson_iterator* i) {
-    bson_free_func(i);
+    bson_free(i);
 }
 
 SDB_EXPORT void bson_iterator_init( bson_iterator *i, const bson *b ) {

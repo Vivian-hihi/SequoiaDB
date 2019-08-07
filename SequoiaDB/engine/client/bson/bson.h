@@ -1228,9 +1228,13 @@ typedef int (*bson_printf_func)( const char *, ... );
 typedef int (*bson_fprintf_func)( FILE *, const char *, ... );
 typedef int (*bson_sprintf_func)( char *, const char *, ... );
 
-extern void *( *bson_malloc_func )( size_t );
-extern void *( *bson_realloc_func )( void *, size_t );
-extern void ( *bson_free_func )( void * );
+typedef void* (*bson_malloc_func_p)( size_t ) ;
+typedef void* (*bson_realloc_func_p)( void*, size_t ) ;
+typedef void  (*bson_free_func_p)( void* ) ;
+
+void bson_set_malloc_func( bson_malloc_func_p func ) ;
+void bson_set_realloc_func( bson_realloc_func_p func ) ;
+void bson_set_free_func( bson_free_func_p func ) ;
 
 extern bson_printf_func bson_printf;
 extern bson_fprintf_func bson_fprintf;

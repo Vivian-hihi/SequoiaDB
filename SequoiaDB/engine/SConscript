@@ -158,6 +158,7 @@ utilFiles = [
       "client/timestampParse.c",
       "client/timestampTm.c",
       "client/timestampValid.c",
+      "util/utilCBsonMemAssit.cpp",
       "util/csv2rawbson.cpp",
       "util/utilCommon.cpp",
       "util/utilMemBlockPool.cpp",
