@@ -31,6 +31,7 @@ import sun.misc.BASE64Decoder;
 
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.*;
 
 import static com.sequoias3.utils.DataFormatUtils.parseDate;
@@ -999,26 +1000,34 @@ public class ObjectServiceImpl implements ObjectService {
                     }
                 }
 
-                DataAttr dataAttr = dataDao.insertObjectData(nPart.getCsName(), nPart.getClName(),
-                        inputStream, region, nPart.getLobId(),
-                        (partnumber - 1) * contentLength, contentLength);
-                if (contentLength != dataAttr.getSize()){
-                    throw new S3ServerException(S3Error.OBJECT_INCOMPLETE_BODY,
-                            "content length is " + contentLength +
-                                    " and receive " + dataAttr.getSize() + " bytes");
-                }
-                if (null != contentMD5) {
-                    if (!isMd5EqualWithETag(contentMD5, dataAttr.geteTag())) {
-                        throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
-                                "The Content-MD5 you specified does not match what we received." +
-                                        " contentMD5:" +contentMD5
-                                        + ", etag:" + dataAttr.geteTag()
-                                        + ", contentlength:" + contentLength
-                                        + ", receivesize:" + dataAttr.getSize());
+                String eTag = null;
+                if (contentLength > 0) {
+                    DataAttr dataAttr = dataDao.insertObjectData(nPart.getCsName(), nPart.getClName(),
+                            inputStream, region, nPart.getLobId(),
+                            (partnumber - 1) * contentLength, contentLength);
+                    if (contentLength != dataAttr.getSize()) {
+                        throw new S3ServerException(S3Error.OBJECT_INCOMPLETE_BODY,
+                                "content length is " + contentLength +
+                                        " and receive " + dataAttr.getSize() + " bytes");
                     }
-                }
+                    if (null != contentMD5) {
+                        if (!isMd5EqualWithETag(contentMD5, dataAttr.geteTag())) {
+                            throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
+                                    "The Content-MD5 you specified does not match what we received." +
+                                            " contentMD5:" + contentMD5
+                                            + ", etag:" + dataAttr.geteTag()
+                                            + ", contentlength:" + contentLength
+                                            + ", receivesize:" + dataAttr.getSize());
+                        }
+                    }
 
-                nPart.setEtag(dataAttr.geteTag());
+
+                    eTag = dataAttr.geteTag();
+                }else {
+                    MessageDigest MD5 = MessageDigest.getInstance("MD5");
+                    eTag = new String(Hex.encodeHex(MD5.digest()));
+                }
+                nPart.setEtag(eTag);
                 nPart.setSize(contentLength);
                 partDao.updatePart(connectionA, uploadId, partnumber, nPart);
 
@@ -1051,7 +1060,7 @@ public class ObjectServiceImpl implements ObjectService {
                 }
 
                 transaction.commit(connectionA);
-                return dataAttr.geteTag();
+                return eTag;
             } catch (S3ServerException e) {
                 transaction.rollback(connectionA);
                 if (newDataLob != null) {
@@ -1156,9 +1165,10 @@ public class ObjectServiceImpl implements ObjectService {
                 int partNumber = completeList.get(i).getPartNumber();
                 Part part = partArray.get(partNumber - 1);
                 eTag = completeList.get(i).getEtag();
-                if (!part.getCsName().equals(destCSName)
+                if ((!part.getCsName().equals(destCSName)
                         || !part.getClName().equals(destCLName)
-                        || !part.getLobId().equals(destLobId)) {
+                        || !part.getLobId().equals(destLobId))
+                        && part.getSize() > 0) {
                     dataDao.copyObjectData(destCSName, destCLName, destLobId, writeOffset,
                             part.getCsName(), part.getClName(), part.getLobId(),
                             part.getSize() * (part.getPartNumber() - 1),
@@ -1175,9 +1185,13 @@ public class ObjectServiceImpl implements ObjectService {
             uploadDao.updateUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, upload);
             logger.info("complete end");
 
-            logger.info("write cur meta begin");
             //写元数据
-            String completeEtag = eTag+"-f";
+            String completeEtag;
+            if (completeList.size() == 1){
+                completeEtag = eTag;
+            }else {
+                completeEtag = eTag+"-f";
+            }
             VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
             ObjectMeta objectMeta = buildObjectMetaFromUpload(upload, false,
                     generateNoVersionFlag(versioningStatusType));
@@ -1232,7 +1246,6 @@ public class ObjectServiceImpl implements ObjectService {
         } finally {
             daoMgr.releaseConnectionDao(connection);
         }
-
     }
 
     @Override
@@ -1469,7 +1482,7 @@ public class ObjectServiceImpl implements ObjectService {
 
     private Boolean IsNeedRebuild(List<Part> completeList, List<Part> locPartArray, List<Part> baseArray){
         Boolean reBuildLob = false;
-        if (baseArray.get(0) == null){
+        if (baseArray.get(0) == null || baseArray.get(0).getSize() == 0){
             reBuildLob = true;
         }else {
             long newOffset  = 0;
