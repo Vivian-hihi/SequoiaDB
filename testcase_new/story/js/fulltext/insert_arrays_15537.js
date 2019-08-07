@@ -27,22 +27,18 @@ function main()
    
    // check result
    var dbOperator = new DBOperator();
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 4);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
    var expectRecords = [{id:1, a: ["arr1"]},
-                        {id:3, a: ["arr2", "arr3"]},
-                        {id:4, a: ["arr4", 2]},
-                        {id:5, a: ["arr5", "arr6", 3]}];
+                        {id:3, a: ["arr2", "arr3"]}];
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {id:"",a:""}, {id:1});
    checkResult(expectRecords, actRecords);
 
    dbcl.insert(objs);
    
    // check result
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 4);
    var expectRecords = [{id:1, a: ["arr1"]}, {id:1, a: ["arr1"]},
-                        {id:3, a: ["arr2", "arr3"]}, {id:3, a: ["arr2", "arr3"]},
-                        {id:4, a: ["arr4", 2]}, {id:4, a: ["arr4", 2]},
-                        {id:5, a: ["arr5", "arr6", 3]}, {id:5, a: ["arr5", "arr6", 3]}];
+                        {id:3, a: ["arr2", "arr3"]}, {id:3, a: ["arr2", "arr3"]}];
    var actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {id:"",a:""}, {id:1});
    checkResult(expectRecords, actRecords);
 

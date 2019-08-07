@@ -22,12 +22,12 @@ function main()
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    // check sync to es
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 3);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
   
    // check result
    var dbOpr = new DBOperator();
-   var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}});
-   var expectResult = dbOpr.findFromCL(dbcl);
+   var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}},{a:""});
+   var expectResult = [{a: ["arr1"]}, {a: ["arr1", "arr2"]}];
    checkResult(expectResult, actResult);
 
    // delete
