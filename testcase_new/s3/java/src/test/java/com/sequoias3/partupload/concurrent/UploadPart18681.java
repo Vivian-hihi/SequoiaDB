@@ -45,7 +45,7 @@ public class UploadPart18681 extends S3TestBase {
     private String filePath2;
     private File file1;
     private File file2;
-    private int fileSize = 10 * 1024 * 1024;
+    private int fileSize = 20 * 1024 * 1024;
     private int fileId = 0;
 
     private AmazonS3 s3Client;
@@ -59,13 +59,13 @@ public class UploadPart18681 extends S3TestBase {
         // parameter : firstPartNumber1, firstPartNumber2, firstPartSize1, firstPartSize2, key
         return new Object[][]{
             // test point a: the same partNumber and firstPartSize
-            new Object[]{ 1, 1, 1 * 1024 * 1024, 1 * 1024 * 1024, keyBase + "_1" }, 
+            new Object[]{ 1, 1, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_1" }, 
             // test point b: the same partNumber, and the different firstPartSize
-            new Object[]{ 1, 1, 1 * 1024 * 1024, 2 * 1024 * 1024, keyBase + "_2" }, 
+            new Object[]{ 1, 1, 5 * 1024 * 1024, 6 * 1024 * 1024, keyBase + "_2" }, 
             // test point c: partNumber != 1, and the same firstPartSize
-            new Object[]{ 2, 2, 1 * 1024 * 1024, 1 * 1024 * 1024, keyBase + "_3" }, 
+            new Object[]{ 2, 2, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_3" }, 
             // test point d: partNumber != 1, and the different firstPartSize
-            new Object[]{ 2, 2, 1 * 1024 * 1024, 2 * 1024 * 1024, keyBase + "_4" } 
+            new Object[]{ 2, 2, 5 * 1024 * 1024, 6 * 1024 * 1024, keyBase + "_4" } 
         };
     }
 
@@ -80,6 +80,8 @@ public class UploadPart18681 extends S3TestBase {
             int firstPartSize1, int firstPartSize2, String key ) throws Exception {
         // init file
         String filePath3 = this.createFile(0);
+        
+        // init part upload
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
         keys.add(key);
         

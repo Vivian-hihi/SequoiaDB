@@ -39,26 +39,26 @@ public class UploadPart18679 extends S3TestBase {
         // parameter : partSize1, partSize2, ......
         return new Object[][]{
             // test point a: partSize increasing
-            new Object[]{ 1 * 1024 * 1024, 
-                          1 * 1024 * 1024, 
-                          8 * 1024 * 1024, 
+            new Object[]{ 5 * 1024 * 1024, 
                           5 * 1024 * 1024, 
+                          8 * 1024 * 1024, 
+                          7 * 1024 * 1024, 
                          10 * 1024 * 1024, 
-                          7 * 1024 * 1024 }, 
+                          9 * 1024 * 1024 }, 
             // test point b: partSize decreasing
-            new Object[]{ 1 * 1024 * 1024, 
-                          1 * 1024 * 1024, 
+            new Object[]{ 5 * 1024 * 1024, 
                           5 * 1024 * 1024, 
                           6 * 1024 * 1024, 
-                         10 * 1024 * 1024, 
-                         11 * 1024 * 1024 }, 
-            // test point c: partSize is irregular
-            new Object[]{ 1 * 1024 * 1024, 
-                          1 * 1024 * 1024, 
-                         10 * 1024 * 1024, 
-                          9 * 1024 * 1024, 
                           8 * 1024 * 1024, 
-                          7 * 1024 * 1024 } 
+                         11 * 1024 * 1024, 
+                         17 * 1024 * 1024 }, 
+            // test point c: partSize is irregular
+            new Object[]{ 5 * 1024 * 1024, 
+                          5 * 1024 * 1024, 
+                         15 * 1024 * 1024, 
+                          7 * 1024 * 1024, 
+                         11 * 1024 * 1024, 
+                          6 * 1024 * 1024 } 
         };
     }
 

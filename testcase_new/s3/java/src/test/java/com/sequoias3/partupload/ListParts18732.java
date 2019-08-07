@@ -29,7 +29,7 @@ public class ListParts18732 extends S3TestBase {
     private File localPath;
     private String filePath;
     private File file;
-    private long fileSize = 5 * 1024 * 1024;
+    private long fileSize = 25 * 1024 * 1024;
     private int maxPartNumber = 5;
     private String key = "/aa/bb/obj18732";
 

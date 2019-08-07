@@ -35,6 +35,7 @@ public class UploadPart18709 extends S3TestBase {
     private File file1;
     private File file2;
     private int fileSize = 30 * 1024 * 1024;
+    private int maxPartNumber = 5;
     private String key = "/aa/bb/obj18706";
     List<PartETag> partETags = new ArrayList<>();
 
@@ -48,10 +49,12 @@ public class UploadPart18709 extends S3TestBase {
     private void test() throws Exception {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
         this.partUpload(uploadId);
-        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, uploadId, partETags);
+        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, 
+                uploadId, partETags);
 
         // check results
-        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
+        String downfileMd5 = 
+                ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath2), partETags.toString());
         
         runSuccess = true;
@@ -76,10 +79,9 @@ public class UploadPart18709 extends S3TestBase {
                 file = file2;
             }
             // part upload
-            int uploadPartTimes = 10;
             long fileOffset = 0;
-            long partSize = fileSize / uploadPartTimes;
-            for (int j = 0; j < uploadPartTimes; j++) {
+            long partSize = fileSize / maxPartNumber;
+            for (int j = 0; j < maxPartNumber; j++) {
                 UploadPartRequest partRequest = new UploadPartRequest().withFile(file)
                         .withFileOffset(fileOffset).withPartNumber(j + 1).withPartSize(partSize)
                         .withBucketName(bucketName).withKey(key).withUploadId(uploadId);

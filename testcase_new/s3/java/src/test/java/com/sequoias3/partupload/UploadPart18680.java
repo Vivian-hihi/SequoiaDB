@@ -39,8 +39,8 @@ public class UploadPart18680 extends S3TestBase {
     private String filePath3;
     private File file1;
     private File file2;
-    private int fileSize = 7 * 1024 * 1024;
-    private int firstPartSize = 1 * 1024 * 1024;
+    private int fileSize = 11 * 1024 * 1024;
+    private int firstPartSize = 5 * 1024 * 1024;
     private int remainPartSize = fileSize - firstPartSize;
     private String key = "/aa/bb/obj18680";
     List<PartETag> partETags = new ArrayList<>();
