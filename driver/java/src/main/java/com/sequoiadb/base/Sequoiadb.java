@@ -1288,7 +1288,7 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void updateConfig(BSONObject configs, BSONObject options) throws BaseException {
-        if (options == null){
+        if (options == null) {
             options = new BasicBSONObject();
         }
         BSONObject newObj = new BasicBSONObject();

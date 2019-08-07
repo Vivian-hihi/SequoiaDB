@@ -156,6 +156,7 @@ class DBLobImpl implements DBLob {
         }
 
         try {
+            _isOldVersionLobServer = false;
             _open();
             _isOpened = true;
             return;
@@ -167,9 +168,7 @@ class DBLobImpl implements DBLob {
         }
 
         // deal with old version server. oid is generated in client
-        if (null == _id) {
-            _id = ObjectId.get();
-        }
+        _id = ObjectId.get();
 
         _open();
         _sdb.setIsOldVersionLobServer(true);

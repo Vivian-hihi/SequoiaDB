@@ -14,6 +14,7 @@
 
 package com.sequoiadb.base;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -23,7 +24,6 @@ import java.util.Set;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
@@ -54,7 +54,7 @@ public class DBCollection {
     private Set<String> mainKeys;
     private boolean ensureOID;
 
-    private boolean isRemoteOld = false;
+    private boolean isOldLobServer = true;
 
     /**
      * The flag represent whether insert continue(no errors were reported) when hitting index key
@@ -2459,13 +2459,13 @@ public class DBCollection {
 
         if (!sequoiadb.getIsOldVersionLobServer()) {
             try {
-                isRemoteOld = false;
+                isOldLobServer = false;
                 DBCursor cursor = _listLobs(matcher, selector, orderBy, newHint, skipRows,
                         returnRows);
                 return cursor;
             }
             catch (BaseException e) {
-                if (!isRemoteOld) {
+                if (!isOldLobServer) {
                     throw e;
                 }
             }
@@ -2487,7 +2487,7 @@ public class DBCollection {
         SdbReply response = sequoiadb.requestAndResponse(request);
         int flag = response.getFlag();
         if (flag == SDBError.SDB_INVALIDARG.getErrorCode()) {
-            isRemoteOld = true;
+            isOldLobServer = true;
         }
 
         sequoiadb.throwIfError(response);
@@ -2520,8 +2520,8 @@ public class DBCollection {
     public ObjectId createLobID(Date d) throws BaseException {
         BSONObject createLobID = null;
         if (null != d) {
-            createLobID = new BasicBSONObject(DBLobImpl.FIELD_NAME_LOB_CREATE_TIME,
-                    new BSONTimestamp(d));
+            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd-HH.mm.ss");
+            createLobID = new BasicBSONObject(DBLobImpl.FIELD_NAME_LOB_CREATE_TIME, sdf.format(d));
         }
 
         LobCreateIDRequest request = new LobCreateIDRequest(createLobID);
