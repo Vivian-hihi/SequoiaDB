@@ -37,6 +37,7 @@
 
 #include "mthSAction.hpp"
 #include "ossLatch.hpp"
+#include "ossMemPool.hpp"
 #include <map>
 
 namespace engine
@@ -72,17 +73,17 @@ namespace engine
          virtual INT32 parse( const bson::BSONElement &e,
                               _mthSAction &action ) const = 0 ;
 
-         OSS_INLINE const std::string &getActionName() const
+         OSS_INLINE const ossPoolString &getActionName() const
          {
             return _name ;
          }
 
       protected:
-         std::string _name ;
+         ossPoolString _name ;
       } ;
 
    private:
-      typedef std::map<std::string, parser *> PARSERS ;
+      typedef std::map<ossPoolString, parser *> PARSERS ;
 
    private:
       INT32 _registerParsers() ;
