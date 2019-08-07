@@ -38,7 +38,9 @@ public class ListMultipartUploads18747 extends S3TestBase {
     private int maxPartNumber = 2;
     private String[] keys = {"/aa/bb/test1", "/aa/bb/test2", "test3", "test4"};
     private List<String> uploadIds = new ArrayList<>();
-    private MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
+    
+    private MultiValueMap<String, String> expUploads = 
+            new LinkedMultiValueMap<String, String>();
     private List<String> expCommonPrefixes = new ArrayList<>();
 
     @BeforeClass

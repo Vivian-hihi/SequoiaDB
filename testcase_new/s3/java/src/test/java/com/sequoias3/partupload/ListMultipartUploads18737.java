@@ -35,8 +35,8 @@ public class ListMultipartUploads18737 extends S3TestBase {
     private File file;
     private long fileSize = 9 * 1024 * 1024;
     private int maxPartNumber = 2;
-    private String keyBase = "/aa/bb/obj";
-    private String[] keys = {keyBase + "_1", keyBase + "_2", keyBase + "_3", keyBase + "_4"};
+    private String keyBase = "/aa/bb/test";
+    private String[] keys = {keyBase + "1", keyBase + "2", keyBase + "3", keyBase + "4"};
 
     @BeforeClass
     private void setUp() throws IOException {

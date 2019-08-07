@@ -22,7 +22,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
 import com.sequoias3.user.UserCommDefind;
 
 /**
- * @Description seqDB-18712:非桶管理用户终止分段上传
+ * @Description seqDB-18726:非桶管理用户终止分段上传
  * @Author huangxiaoni
  * @Date 2019.07.26
  */
