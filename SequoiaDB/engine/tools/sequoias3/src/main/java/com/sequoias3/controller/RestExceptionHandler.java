@@ -38,7 +38,6 @@ public class RestExceptionHandler {
             case BUCKET_INVALID_BUCKETNAME:
             case BUCKET_TOO_MANY_BUCKETS:
             case BUCKET_INVALID_VERSIONING_STATUS:
-            case BUCKET_INVALID_LOCATION:
             case OBJECT_KEY_TOO_LONG:
             case OBJECT_METADATA_TOO_LARGE:
             case OBJECT_INVALID_TOKEN:
@@ -60,6 +59,15 @@ public class RestExceptionHandler {
             case PART_INVALID_PART:
             case PART_INVALID_PARTORDER:
             case PART_INVALID_PARTNUMBER:
+            case OBJECT_COPY_WITHOUT_CHANGE:
+            case OBJECT_COPY_INVALID_DIRECTIVE:
+            case OBJECT_COPY_DELETE_MARKER:
+            case OBJECT_COPY_INVALID_SOURCE:
+            case OBJECT_INCOMPLETE_BODY:
+            case ACL_CONFLICT:
+            case ACL_INVALID_ID:
+            case ACL_INVALID_EMAIL:
+            case MALFORMED_XML:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:

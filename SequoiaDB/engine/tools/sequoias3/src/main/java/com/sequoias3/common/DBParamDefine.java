@@ -18,6 +18,7 @@ public class DBParamDefine {
     public static final String IN           = "$in";
     public static final String OR           = "$or";
     public static final String NOT_EQUAL    = "$ne";
+    public static final String IS_NULL      = "$isnull";
 
     public static final int    CREATE_OK     = 1;
     public static final int    CREATE_EXIST  = 2;

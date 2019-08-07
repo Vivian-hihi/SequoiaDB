@@ -3,6 +3,17 @@ package com.sequoias3.exception;
 public enum S3Error {
     UNKNOWN_ERROR(-1, "InternalError", "We encountered an internal error. Please try again."),
 
+    //Acl error
+    ACL_CONFLICT(-101, "InvalidRequest", "The x-amz-acl header and x-amz-grant-* and the request body in request body are conflict."),
+    ACL_INVALID_ID(-102, "InvalidArgument", "Invalid id."),
+    ACL_INVALID_EMAIL(-103, "UnresolvableGrantByEmailAddress", "The e-mail address you provided does not match any account on record."),
+    ACL_INVALID_XML(-104, "InvalidXML", "Failed to parse the acl body."),
+
+    ACL_PUT_BUCKET_ACL_FAIL(-110, "PutBucketAclFailed", "Put bucket acl failed."),
+    ACL_GET_BUCKET_ACL_FAIL(-111, "GetBucketAclFailed", "Get bucket acl failed."),
+    ACL_PUT_OBJECT_ACL_FAIL(-112, "PutObjectAclFailed", "Put object acl failed."),
+    ACL_GET_OBJECT_ACL_FAIL(-113, "GetObjectAclFailed", "Get object acl failed."),
+
     //region error
     REGION_INVALID_REGIONNAME(-300, "InvalidRegionName", "Region name length must between 3 and 20, and cannot contain characters other than 'a-zA-Z0-9' and '-'."),
     REGION_INVALID_LOBPAGESIZE(-301, "InvalidLobPageSize", "LobPageSize is invalid"),
@@ -70,6 +81,7 @@ public enum S3Error {
     OBJECT_LIST_FAILED(-604, "ListObjectsFailed", "List objects failed."),
     OBJECT_LIST_VERSIONS_FAILED(-605, "ListVersionsFailed", "List versions failed."),
     OBJECT_LIST_V1_FAILED(-606, "ListObjectsV1Failed", "List objects V1 failed."),
+    OBJECT_COPY_FAILED(-607, "CopyObjectFailed", "Copy object failed"),
 
     OBJECT_INVALID_KEY(-611, "InvalidKey", "Invalid Key."),
     OBJECT_KEY_TOO_LONG(-612, "KeyTooLongError", "Your key is too long."),
@@ -87,7 +99,7 @@ public enum S3Error {
     OBJECT_INCOMPLETE_BODY(-624, "IncompleteBody", "You did not provide the number bytes specified by the Content-Length HTTP header."),
 
     OBJECT_IF_MODIFIED_SINCE_FAILED(-631, "NotModified", "If-Modified-Since not match"),
-    OBJECT_IF_UNMODIFIED_SINCE_FAILED(-632, "PreconditionFailed ", "If-Unmodified-Since not match"),
+    OBJECT_IF_UNMODIFIED_SINCE_FAILED(-632, "PreconditionFailed", "If-Unmodified-Since not match"),
     OBJECT_IF_MATCH_FAILED(-633, "PreconditionFailed", "If-Match not match"),
     OBJECT_IF_NONE_MATCH_FAILED(-634, "NotModified", "If-None-Match not match"),
     OBJECT_INVALID_TIME(-635, "InvalidArgument", "Time is invalid"),
@@ -100,11 +112,16 @@ public enum S3Error {
     PART_LIST_MULTIPART_UPLOADS_FAILED(-646, "ListMultipartUploadsFailed", "List multipart uploads failed."),
 
     PART_NO_SUCH_UPLOAD(-651, "NoSuchUpload", "The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed."),
-    PART_ENTITY_TOO_SMALL(-652, "EntityTooSmall ", "Your proposed upload is smaller than the minimum allowed object size. Each part must be at least 5 MB in size, except the last part."),
+    PART_ENTITY_TOO_SMALL(-652, "EntityTooSmall", "Your proposed upload is smaller than the minimum allowed object size. Each part must be at least 5 MB in size, except the last part."),
     PART_INVALID_PART(-653, "InvalidPart", "One or more of the specified parts could not be found. The part might not have been uploaded, or the specified entity tag might not have matched the part's entity tag."),
-    PART_INVALID_PARTORDER(-654, "InvalidPartOrder ", "The list of parts was not in ascending order. Parts list must be specified in order by part number."),
+    PART_INVALID_PARTORDER(-654, "InvalidPartOrder", "The list of parts was not in ascending order. Parts list must be specified in order by part number."),
     PART_INVALID_PARTNUMBER(-655, "InvalidPartNumber", "Part number must be an integer between 1 and 10000, inclusive."),
     PART_COMPLETING_CONFLICT(-656, "UploadConflict", "The uploadId is completing, upload part is forbidden."),
+
+    OBJECT_COPY_INVALID_DIRECTIVE(-661, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),
+    OBJECT_COPY_WITHOUT_CHANGE(-662, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),
+    OBJECT_COPY_DELETE_MARKER(-663, "InvalidRequest", "The source of a copy request may not specifically refer to a delete marker by version id."),
+    OBJECT_COPY_INVALID_SOURCE(-664, "InvalidArgument", "Copy source must mention the source bucket and key: sourcebucket/sourcekey ."),
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Non-admin users cannot do this operator."),
@@ -128,7 +145,8 @@ public enum S3Error {
     USER_GET_FAILED(-830, "GetUserFailed", "Get user failed."),
 
     INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument."),
-    METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The specified method is not allowed against this resource.");
+    METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The specified method is not allowed against this resource."),
+    MALFORMED_XML(-902, "MalformedXML", "The XML you provided was not well-formed or did not validate against our published schema.");
 
     private int errIndex;
     private String code;

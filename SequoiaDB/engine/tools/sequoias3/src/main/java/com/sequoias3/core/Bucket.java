@@ -12,15 +12,17 @@ public class Bucket {
     public static final String BUCKET_VERSIONINGSTATUS     = "VersioningStatus";
     public static final String BUCKET_REGION               = "Region";
     public static final String BUCKET_DELIMITER            = "Delimiter";
-    public static final String BUCKET_DELIMITER1           = "Delimiter1";// /
+    public static final String BUCKET_DELIMITER1           = "Delimiter1";
     public static final String BUCKET_DELIMITER1STATUS     = "Delimiter1Status";
     public static final String BUCKET_DELIMITER1CREATETIME = "Delimiter1CreateTime";
     public static final String BUCKET_DELIMITER1MODTIME    = "Delimiter1ModTime";
-    public static final String BUCKET_DELIMITER2           = "Delimiter2"; // %
+    public static final String BUCKET_DELIMITER2           = "Delimiter2";
     public static final String BUCKET_DELIMITER2STATUS     = "Delimiter2Status";
     public static final String BUCKET_DELIMITER2CREATETIME = "Delimiter2CreateTime";
     public static final String BUCKET_DELIMITER2MODTIME    = "Delimiter2ModTime";
     public static final String BUCKET_TASKID               = "TaskID";
+    public static final String BUCKET_ACLID                = "AclID";
+    public static final String BUCKET_PRIVATE              = "IsPrivate";
 
     public static final String NAME_INDEX = "nameIndex";
     public static final String ID_INDEX   = "idIndex";
@@ -66,6 +68,10 @@ public class Bucket {
     private Long delimiter2ModTime;
     @JsonIgnore
     private Long taskID;
+    @JsonIgnore
+    private Boolean isPrivate;
+    @JsonIgnore
+    private Long aclId;
 
     public void setBucketId(long bucketId){
         this.bucketId = bucketId;
@@ -201,5 +207,21 @@ public class Bucket {
 
     public Long getTaskID() {
         return taskID;
+    }
+
+    public void setAclId(Long aclId) {
+        this.aclId = aclId;
+    }
+
+    public Long getAclId() {
+        return aclId;
+    }
+
+    public void setPrivate(boolean aPrivate) {
+        isPrivate = aPrivate;
+    }
+
+    public Boolean isPrivate() {
+        return isPrivate;
     }
 }

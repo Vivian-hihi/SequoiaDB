@@ -60,6 +60,9 @@ public class BucketServiceImpl implements BucketService {
     @Autowired
     MetaDao metaDao;
 
+    @Autowired
+    AclDao aclDao;
+
     @Override
     public void createBucket(long ownerID, String bucketName, String region) throws S3ServerException {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
@@ -121,6 +124,7 @@ public class BucketServiceImpl implements BucketService {
                 bucket.setDelimiter1ModTime(System.currentTimeMillis());
                 bucket.setDelimiter1Status(DelimiterStatus.NORMAL.getName());
                 bucket.setRegion(region);
+                bucket.setPrivate(true);
                 bucketDao.insertBucket(bucket);
                 logger.info("create bucket success. bucket name={}, bucketId={}",
                         bucketName, bucket.getBucketId());
@@ -176,6 +180,11 @@ public class BucketServiceImpl implements BucketService {
                 throw e;
             } finally {
                 daoMgr.releaseConnectionDao(connectionA);
+            }
+
+            //delete acl
+            if (bucket.getAclId() != null) {
+                aclDao.deleteAcl(null, bucket.getAclId());
             }
 
             //delete dir
@@ -250,9 +259,9 @@ public class BucketServiceImpl implements BucketService {
             throw new S3ServerException(S3Error.BUCKET_NOT_EXIST,
                     "The specified bucket does not exist. bucket name = "+bucketName);
         }
-        if (bucket.getOwnerId() != ownerID){
+        if (bucket.getOwnerId() != ownerID && bucket.isPrivate()){
             throw new S3ServerException(S3Error.ACCESS_DENIED,
-                    "You are not owned the specified bucket. bucket name = "+bucketName+", ownerID = "+ownerID);
+                    "You can not access the specified bucket. bucket name = "+bucketName+", ownerID = "+ownerID);
         }
 
         return bucket;
@@ -280,6 +289,12 @@ public class BucketServiceImpl implements BucketService {
             if (bucket.getTaskID() != null){
                 taskDao.deleteTaskId(null, bucket.getTaskID());
             }
+
+            //delete acl
+            if (bucket.getAclId() != null) {
+                aclDao.deleteAcl(null, bucket.getAclId());
+            }
+
         }catch (S3ServerException e) {
             throw e;
         }catch (Exception e){

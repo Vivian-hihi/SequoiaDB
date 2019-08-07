@@ -10,6 +10,7 @@ import javax.servlet.ServletOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,23 +20,29 @@ public class OutStreamFlushQueue {
     private static final Logger logger = LoggerFactory.getLogger(OutStreamFlushQueue.class);
     public final static long TWENTY_SECONDS = 20 * 1000;
     private static Lock lock = new ReentrantLock();
+    private AtomicLong index = new AtomicLong(0);
     private static Map<Long, ServletOutputStream> outputStreamHashMap = new HashMap<>();
 
-    public static void add(Long uploadId, ServletOutputStream outputStream){
+    public long add(ServletOutputStream outputStream){
         lock.lock();
         try{
-            outputStreamHashMap.put(uploadId, outputStream);
+            long newIndex = this.index.getAndIncrement();
+            outputStreamHashMap.put(newIndex, outputStream);
+            return newIndex;
         }finally {
             lock.unlock();
         }
     }
 
-    public static void remove(Long uploadId, ServletOutputStream outputStream){
+    public void remove(Long flushIndex, ServletOutputStream outputStream){
+        if (flushIndex == null){
+            return;
+        }
         lock.lock();
         try{
-            if (outputStreamHashMap.get(uploadId) != null
-                    && outputStreamHashMap.get(uploadId) == outputStream){
-                outputStreamHashMap.remove(uploadId);
+            ServletOutputStream mapOutputStream = outputStreamHashMap.get(flushIndex);
+            if (mapOutputStream != null && mapOutputStream == outputStream){
+                outputStreamHashMap.remove(flushIndex);
             }
         }finally {
             lock.unlock();
@@ -53,9 +60,11 @@ public class OutStreamFlushQueue {
             while (it.hasNext()) {
                 Map.Entry<Long, ServletOutputStream> entry = it.next();
                 try {
+                    entry.getValue().flush();
                     entry.getValue().write(whitebyte);
                     entry.getValue().flush();
                 }catch (Exception e){
+                    logger.error("the outputstream is invalid.", e);
                     it.remove();
                 }
             }

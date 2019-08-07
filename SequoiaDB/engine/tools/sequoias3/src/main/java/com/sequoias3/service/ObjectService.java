@@ -23,6 +23,16 @@ public interface ObjectService {
                         Range range)
             throws S3ServerException;
 
+    CopyObjectResult copyObject(long ownerID, String destBucket, String destObject,
+                                Map<String, String> requestHeaders, Map<String, String> xMeta,
+                                ObjectUri sourceUri, boolean directiveCopy,
+                                ServletOutputStream outputStream)
+            throws S3ServerException;
+
+    ObjectMeta getSourceObjectMeta(long ownerID, Map<String, String> requestHeaders,
+                                   ObjectUri sourceUri)
+            throws S3ServerException;
+
     void releaseGetResult(GetResult result);
 
     void readObjectData(DataLob data, ServletOutputStream outputStream, Range range)

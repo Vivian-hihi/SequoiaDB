@@ -25,6 +25,7 @@ public class ObjectMeta {
     public static final String META_LIST                = "MetaList";
     public static final String META_PARENTID1           = "ParentId1";
     public static final String META_PARENTID2           = "ParentId2";
+    public static final String META_ACLID               = "AclID";
 
     public static final String NULL_VERSION_ID          = "null";
 
@@ -53,6 +54,7 @@ public class ObjectMeta {
     private Map<String, String> metaList;
     private Long parentId1;
     private Long parentId2;
+    private Long aclId;
 
     public long getBucketId() {
         return bucketId;
@@ -212,5 +214,13 @@ public class ObjectMeta {
 
     public Long getParentId2() {
         return parentId2;
+    }
+
+    public void setAclId(Long aclId) {
+        this.aclId = aclId;
+    }
+
+    public Long getAclId() {
+        return aclId;
     }
 }

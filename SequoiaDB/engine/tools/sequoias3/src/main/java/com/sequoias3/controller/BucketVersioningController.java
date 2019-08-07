@@ -37,15 +37,20 @@ public class BucketVersioningController {
                                       @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                       HttpServletRequest httpServletRequest)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String status = getVersioningStatus(httpServletRequest);
+            String status = getVersioningStatus(httpServletRequest);
 
-        logger.debug("put bucket versioning. bucket={}, status={}", bucketName, status);
+            logger.debug("put bucket versioning. bucket={}, status={}", bucketName, status);
 
-        versioningService.putBucketVersioning(operator.getUserId(), bucketName, status);
-        return ResponseEntity.ok()
-                .build();
+            versioningService.putBucketVersioning(operator.getUserId(), bucketName, status);
+            return ResponseEntity.ok()
+                    .build();
+        }catch (Exception e){
+            logger.error("put bucket versioning failed. bucket={}", bucketName);
+            throw e;
+        }
     }
 
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING,
@@ -53,12 +58,17 @@ public class BucketVersioningController {
     public ResponseEntity getBucketVersioning(@PathVariable("bucketname") String bucketName,
                                               @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.debug("get bucket versioning. bucket={}", bucketName);
+            logger.debug("get bucket versioning. bucket={}", bucketName);
 
-        return ResponseEntity.ok()
-                .body(versioningService.getBucketVersioning(operator.getUserId(),bucketName));
+            return ResponseEntity.ok()
+                    .body(versioningService.getBucketVersioning(operator.getUserId(), bucketName));
+        }catch (Exception e){
+            logger.error("get bucket versioning failed. bucket={}", bucketName);
+            throw e;
+        }
     }
 
     private String getVersioningStatus(HttpServletRequest httpServletRequest)
@@ -76,7 +86,7 @@ public class BucketVersioningController {
 
             String content = stringBuilder.toString();
             if (0 == content.length()){
-                throw new S3ServerException(S3Error.BUCKET_INVALID_VERSIONING_STATUS,
+                throw new S3ServerException(S3Error.MALFORMED_XML,
                         "no body");
             }
 
@@ -94,10 +104,10 @@ public class BucketVersioningController {
         }catch (S3ServerException e){
             throw e;
         } catch (IOException e){
-            throw new S3ServerException(S3Error.BUCKET_INVALID_VERSIONING_STATUS,
+            throw new S3ServerException(S3Error.MALFORMED_XML,
                     "parse versioning status failed", e);
         }catch (Exception e){
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
+            throw new S3ServerException(S3Error.MALFORMED_XML,
                     "get versioning status failed", e);
         }
     }

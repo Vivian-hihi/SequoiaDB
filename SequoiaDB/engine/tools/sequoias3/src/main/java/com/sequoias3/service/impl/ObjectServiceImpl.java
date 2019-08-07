@@ -19,6 +19,7 @@ import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
 import com.sequoias3.taskmanager.OutStreamFlushQueue;
+import com.sequoias3.utils.DataFormatUtils;
 import com.sequoias3.utils.DirUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
@@ -57,6 +58,9 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Autowired
     ContextManager contextManager;
+
+    @Autowired
+    OutStreamFlushQueue outStreamFlushQueue;
 
     @Autowired
     DaoMgr daoMgr;
@@ -164,8 +168,7 @@ public class ObjectServiceImpl implements ObjectService {
             }
             return response;
         }catch (S3ServerException e){
-            dataDao.deleteObjectDataByLobId(null, dataCsName,
-                    dataClName, insertResult.getLobId());
+            cleanRedundencyLob(dataCsName, dataClName, insertResult.getLobId());
             if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
                 throw new S3ServerException(S3Error.OBJECT_PUT_fAILED,
                         "bucket+key duplicate too times. bucket:"+bucketName+" key:"+objectName, e);
@@ -173,8 +176,7 @@ public class ObjectServiceImpl implements ObjectService {
                 throw e;
             }
         }catch (Exception e){
-            dataDao.deleteObjectDataByLobId(null, dataCsName,
-                    dataClName, insertResult.getLobId());
+            cleanRedundencyLob(dataCsName, dataClName, insertResult.getLobId());
             throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "put object failed.", e);
         }
     }
@@ -201,45 +203,9 @@ public class ObjectServiceImpl implements ObjectService {
             while (tryTime > 0) {
                 tryTime--;
                 try {
-                    ObjectMeta versionIdMeta;
-                    ObjectMeta objectMeta = metaDao.queryMetaByObjectName(metaCsName, metaClName,
-                            bucket.getBucketId(), objectName, null, null);
-                    if (null == objectMeta) {
-                        if (versionId != null || isNoVersion != null){
-                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
-                                    "no such version. object:" + objectName + ",version:" + versionId);
-                        }else {
-                            throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
-                        }
-                    }
-
-                    if (versionId != null) {
-                        if (versionId == objectMeta.getVersionId() && !objectMeta.getNoVersionFlag()){
-                            versionIdMeta = objectMeta;
-                        }else {
-                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaHisCsName,
-                                    metaHisClName, bucket.getBucketId(), objectName, versionId, false);
-                            if (null == objectMetaHis) {
-                                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
-                                        "no such version. object:" + objectName + ",version:" + versionId);
-                            }
-                            versionIdMeta = objectMetaHis;
-                        }
-                    }else if(isNoVersion != null) {
-                        if (objectMeta.getNoVersionFlag()) {
-                            versionIdMeta = objectMeta;
-                        } else {
-                            ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaHisCsName,
-                                    metaHisClName, bucket.getBucketId(), objectName, null, true);
-                            if (null == objectMetaHis) {
-                                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
-                                        "no such version. object:" + objectName + ",version:" + versionId);
-                            }
-                            versionIdMeta = objectMetaHis;
-                        }
-                    }else{
-                        versionIdMeta = objectMeta;
-                    }
+                    ObjectMeta versionIdMeta = getObjectMeta(metaCsName, metaClName,
+                            metaHisCsName, metaHisClName, bucket.getBucketId(),
+                            objectName, versionId, isNoVersion);
 
                     DataLob dataLob = null;
                     if (!versionIdMeta.getDeleteMarker()){
@@ -272,6 +238,178 @@ public class ObjectServiceImpl implements ObjectService {
             throw new S3ServerException(S3Error.OBJECT_GET_FAILED,
                     "get object failed. bucket:" + bucketName + ", object=" + objectName, e);
         }
+    }
+
+    @Override
+    public CopyObjectResult copyObject(long ownerID, String destBucket, String destObject,
+                           Map<String, String> requestHeaders,
+                           Map<String, String> xMeta, ObjectUri sourceUri,
+                           boolean directiveCopy, ServletOutputStream outputStream)
+            throws S3ServerException {
+        try {
+            Bucket bucket = bucketService.getBucket(ownerID, destBucket);
+            CopyObjectResult copyObjectResult = new CopyObjectResult();
+
+            //get source object meta
+            ObjectMeta sourceMeta = getSourceObjectMeta(ownerID, requestHeaders, sourceUri);
+            if (sourceMeta.getDeleteMarker()) {
+                if (sourceUri.isWithVersionId()) {
+                    throw new S3ServerException(S3Error.OBJECT_COPY_DELETE_MARKER, "source object with versionId is a deleteMarker");
+                } else {
+                    throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "source object is a deleteMarker");
+                }
+            }
+            //check if itself change, 参照s3顺序，先判断对象合法存在
+            if (destBucket.equals(sourceUri.getBucketName())
+                    && destObject.equals(sourceUri.getObjectName())
+                    && !sourceUri.isWithVersionId()) {
+                if (directiveCopy) {
+                    throw new S3ServerException(S3Error.OBJECT_COPY_WITHOUT_CHANGE, "copy without change");
+                }
+            }
+
+            //create a new lob
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+            Date createDate = new Date();
+            String dataCsName = regionDao.getDataCSName(region, createDate);
+            String dataClName = regionDao.getDataClName(region, createDate);
+
+            copyObjectResult.seteTag(sourceMeta.geteTag());
+
+            VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
+            ObjectMeta deleteObject = null;
+            Long flushIndex = null;
+            DataAttr newLobData = dataDao.createNewData(dataCsName, dataClName, region);
+            try {
+                flushIndex = outStreamFlushQueue.add(outputStream);
+                dataDao.copyObjectData(dataCsName, dataClName, newLobData.getLobId(), 0,
+                        sourceMeta.getCsName(), sourceMeta.getClName(), sourceMeta.getLobId(), 0, sourceMeta.getSize());
+                ObjectMeta objectMeta;
+                if (directiveCopy) {
+                    objectMeta = sourceMeta;
+                    objectMeta.setLastModified(System.currentTimeMillis());
+                    objectMeta.setBucketId(bucket.getBucketId());
+                    objectMeta.setKey(destObject);
+                    objectMeta.setCsName(dataCsName);
+                    objectMeta.setClName(dataClName);
+                    objectMeta.setLobId(newLobData.getLobId());
+                } else {
+                    objectMeta = buildObjectMeta(destObject, bucket.getBucketId(),
+                            requestHeaders, xMeta, dataCsName, dataClName, false,
+                            generateNoVersionFlag(versioningStatusType));
+                    objectMeta.seteTag(sourceMeta.geteTag());
+                    objectMeta.setSize(sourceMeta.getSize());
+                    objectMeta.setLobId(newLobData.getLobId());
+                }
+
+                deleteObject = writeObjectMeta(objectMeta, destObject,
+                        bucket.getBucketId(), versioningStatusType, region);
+
+                deleteObjectLob(deleteObject);
+                copyObjectResult.setLastModifed(DataFormatUtils.formatDate(objectMeta.getLastModified()));
+                if (!sourceMeta.getNoVersionFlag()){
+                    copyObjectResult.setSourceVersionId(sourceMeta.getVersionId());
+                }
+                if (!objectMeta.getNoVersionFlag()){
+                    copyObjectResult.setVersionId(objectMeta.getVersionId());
+                }
+            } catch (S3ServerException e) {
+                cleanRedundencyLob(dataCsName, dataClName, newLobData.getLobId());
+                throw e;
+            } catch (Exception e) {
+                cleanRedundencyLob(dataCsName, dataClName, newLobData.getLobId());
+                throw new S3ServerException(S3Error.OBJECT_COPY_FAILED,
+                        "copy object failed. bucket:" + destBucket + ", object=" + destObject, e);
+            } finally {
+                outStreamFlushQueue.remove(flushIndex, outputStream);
+            }
+            return copyObjectResult;
+        } catch (S3ServerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new S3ServerException(S3Error.OBJECT_COPY_FAILED,
+                    "copy object failed. bucket:" + destBucket + ", object=" + destObject, e);
+        }
+    }
+
+    public ObjectMeta getSourceObjectMeta(long ownerID, Map<String, String> requestHeaders,
+                                          ObjectUri sourceUri)
+            throws S3ServerException{
+        Bucket bucket = bucketService.getBucket(ownerID, sourceUri.getBucketName());
+
+        Region region = null;
+        if (bucket.getRegion() != null) {
+            region = regionDao.queryRegion(bucket.getRegion());
+        }
+
+        String metaCsName    = regionDao.getMetaCurCSName(region);
+        String metaClName    = regionDao.getMetaCurCLName(region);
+        String metaHisCsName = regionDao.getMetaHisCSName(region);
+        String metaHisClName = regionDao.getMetaHisCLName(region);
+
+        ObjectMeta sourceMeta = getObjectMeta(metaCsName, metaClName, metaHisCsName, metaHisClName,
+                bucket.getBucketId(), sourceUri.getObjectName(), sourceUri.getVersionId(), sourceUri.getNullVersionFlag());
+
+        if (!sourceMeta.getDeleteMarker() && requestHeaders != null) {
+            Map<String, String> matchHeaders = new HashMap<>();
+            matchHeaders.put(RestParamDefine.GetObjectReqHeader.REQ_IF_MATCH, requestHeaders.get(RestParamDefine.CopyObjectHeader.IF_MATCH));
+            matchHeaders.put(RestParamDefine.GetObjectReqHeader.REQ_IF_NONE_MATCH, requestHeaders.get(RestParamDefine.CopyObjectHeader.IF_NONE_MATCH));
+            matchHeaders.put(RestParamDefine.GetObjectReqHeader.REQ_IF_MODIFIED_SINCE, requestHeaders.get(RestParamDefine.CopyObjectHeader.IF_MODIFIED_SINCE));
+            matchHeaders.put(RestParamDefine.GetObjectReqHeader.REQ_IF_UNMODIFIED_SINCE, requestHeaders.get(RestParamDefine.CopyObjectHeader.IF_UNMODIFIED_SINCE));
+            checkMatchModify(matchHeaders, sourceMeta);
+        }
+
+        return sourceMeta;
+    }
+
+    private ObjectMeta getObjectMeta(String metaCsName, String metaClName,
+                                     String metaHisCsName, String metaHisClName,
+                                     long bucketId, String objectName,
+                                     Long versionId, Boolean isNoVersion)
+            throws  S3ServerException{
+        ObjectMeta versionIdMeta;
+        ObjectMeta objectMeta = metaDao.queryMetaByObjectName(metaCsName, metaClName,
+                bucketId, objectName, null, null);
+        if (null == objectMeta) {
+            if (versionId != null || isNoVersion != null){
+                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
+                        "no such version. object:" + objectName + ",version:" + versionId);
+            }else {
+                throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
+            }
+        }
+
+        if (versionId != null) {
+            if (versionId == objectMeta.getVersionId() && !objectMeta.getNoVersionFlag()){
+                versionIdMeta = objectMeta;
+            }else {
+                ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaHisCsName,
+                        metaHisClName, bucketId, objectName, versionId, false);
+                if (null == objectMetaHis) {
+                    throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
+                            "no such version. object:" + objectName + ",version:" + versionId);
+                }
+                versionIdMeta = objectMetaHis;
+            }
+        }else if(isNoVersion != null) {
+            if (objectMeta.getNoVersionFlag()) {
+                versionIdMeta = objectMeta;
+            } else {
+                ObjectMeta objectMetaHis = metaDao.queryMetaByObjectName(metaHisCsName,
+                        metaHisClName, bucketId, objectName, null, true);
+                if (null == objectMetaHis) {
+                    throw new S3ServerException(S3Error.OBJECT_NO_SUCH_VERSION,
+                            "no such version. object:" + objectName + ",version:" + versionId);
+                }
+                versionIdMeta = objectMetaHis;
+            }
+        }else{
+            versionIdMeta = objectMeta;
+        }
+        return versionIdMeta;
     }
 
     @Override
@@ -655,7 +793,7 @@ public class ObjectServiceImpl implements ObjectService {
         } catch (S3ServerException e){
             throw e;
         } catch (Exception e){
-            throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage(), e);
+            throw new S3ServerException(S3Error.OBJECT_LIST_V1_FAILED, "error message:"+e.getMessage(), e);
         }finally {
             metaDao.releaseQueryDbCursor(dbCursorDir);
             metaDao.releaseQueryDbCursor(dbCursorKeys);
@@ -895,12 +1033,10 @@ public class ObjectServiceImpl implements ObjectService {
                     new InitiateMultipartUploadResult(bucketName, objectName, uploadId);
             return result;
         } catch (S3ServerException e){
-            dataDao.deleteObjectDataByLobId(null, dataCsName,
-                    dataClName, dataAttr.getLobId());
+            cleanRedundencyLob(dataCsName, dataClName, dataAttr.getLobId());
             throw e;
         } catch (Exception e){
-            dataDao.deleteObjectDataByLobId(null, dataCsName,
-                    dataClName, dataAttr.getLobId());
+            cleanRedundencyLob(dataCsName, dataClName, dataAttr.getLobId());
             throw new S3ServerException(S3Error.PART_INIT_MULTIPART_UPLOAD_FAILED, "init upload failed", e);
         }
     }
@@ -934,7 +1070,7 @@ public class ObjectServiceImpl implements ObjectService {
             UploadMeta upload = uploadDao.queryUploadByUploadId(connection, bucket.getBucketId(),
                     objectName, uploadId, false);
             if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
-                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD, "no such upload:" + uploadId);
+                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD, "no such upload. uploadId:" + uploadId);
             }
             Part partZero = partDao.queryPartByPartnumber(connection, uploadId, 0);
             if (partZero != null && partZero.getSize() == 0){
@@ -953,8 +1089,7 @@ public class ObjectServiceImpl implements ObjectService {
         } catch (S3ServerException e) {
             transaction.rollback(connection);
             if (dataMinus != null){
-                dataDao.deleteObjectDataByLobId(null, dataCsName,
-                        dataClName, dataMinus.getLobId());
+                cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
             }
             if (e.getError().getErrIndex() != S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
                 throw e;
@@ -962,8 +1097,7 @@ public class ObjectServiceImpl implements ObjectService {
         } catch (Exception e) {
             transaction.rollback(connection);
             if (dataMinus != null){
-                dataDao.deleteObjectDataByLobId(null, dataCsName,
-                        dataClName, dataMinus.getLobId());
+                cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
             }
             throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectname=" + objectName + ", uploadId=" + uploadId + ", partnumer=" + partnumber, e);
         } finally {
@@ -1064,8 +1198,7 @@ public class ObjectServiceImpl implements ObjectService {
             } catch (S3ServerException e) {
                 transaction.rollback(connectionA);
                 if (newDataLob != null) {
-                    dataDao.deleteObjectDataByLobId(null, dataCsName,
-                            dataClName, newDataLob.getLobId());
+                    cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
                 }
                 if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTimeA > 0) {
                     continue;
@@ -1075,8 +1208,7 @@ public class ObjectServiceImpl implements ObjectService {
             } catch (Exception e) {
                 transaction.rollback(connectionA);
                 if (newDataLob != null) {
-                    dataDao.deleteObjectDataByLobId(null, dataCsName,
-                            dataClName, newDataLob.getLobId());
+                    cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
                 }
                 throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectname=" + objectName + ", uploadId=" + uploadId + ", partnumer=" + partnumber, e);
             } finally {
@@ -1104,8 +1236,8 @@ public class ObjectServiceImpl implements ObjectService {
 
         ObjectMeta oldObjectMeta = null;
         DataAttr newDataLob = null;
-        boolean mutexLock   = false;
-        Boolean startFlush = false;
+        boolean mutexLock   = false;  //uploadId的互斥锁
+        Long flushIndex = null;
         ConnectionDao connection = daoMgr.getConnectionDao();
         transaction.begin(connection);
         try {
@@ -1113,7 +1245,7 @@ public class ObjectServiceImpl implements ObjectService {
                     objectName, uploadId, true);
             if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
                 throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
-                        "no such upload:" + uploadId);
+                        "no such upload. uploadId:" + uploadId);
             }
             // 只upload表中的记录加U锁，可能会被其他并发任务读取upload写新的part(Uploadpart)，
             // 如果该part查找到size一致的part并写入对应lob，如果该lob就是最终合并的lob，就会把已经合并完成的lob内容破坏
@@ -1152,9 +1284,8 @@ public class ObjectServiceImpl implements ObjectService {
 
             logger.info("complete begin");
             //合并
-            //TODO:在刷空白字符前应判断是否需要返回versionId，否则后面刷过之后再写header也接收不到了
-            OutStreamFlushQueue.add(uploadId, outputStream);
-            startFlush = true;
+            //TODO:在刷空白字符前应判断是否需要返回versionId，否则后面刷过之后再写header，客户端也接收不到了
+            flushIndex = outStreamFlushQueue.add(outputStream);
             String eTag = null;
             long writeOffset = 0;
             for (int i = 0; i < completeList.size(); i++){
@@ -1204,8 +1335,6 @@ public class ObjectServiceImpl implements ObjectService {
 
             transaction.commit(connection);
             deleteObjectLob(oldObjectMeta);
-            OutStreamFlushQueue.remove(uploadId, outputStream);
-            startFlush = false;
             uploadStatusDao.deleteUploadId(uploadId);
 
             //build response
@@ -1217,12 +1346,8 @@ public class ObjectServiceImpl implements ObjectService {
             return response;
         } catch (S3ServerException e) {
             transaction.rollback(connection);
-            if (startFlush){
-                OutStreamFlushQueue.remove(uploadId, outputStream);
-            }
             if (newDataLob != null){
-                dataDao.deleteObjectDataByLobId(null, dataCsName,
-                        dataClName, newDataLob.getLobId());
+                cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
             }
             if (mutexLock){
                 uploadStatusDao.deleteUploadId(uploadId);
@@ -1231,19 +1356,16 @@ public class ObjectServiceImpl implements ObjectService {
         }
         catch (Exception e) {
             transaction.rollback(connection);
-            if (startFlush){
-                OutStreamFlushQueue.remove(uploadId, outputStream);
-            }
             if (newDataLob != null){
-                dataDao.deleteObjectDataByLobId(null, dataCsName,
-                        dataClName, newDataLob.getLobId());
+                cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
             }
             if (mutexLock){
                 uploadStatusDao.deleteUploadId(uploadId);
             }
             throw new S3ServerException(S3Error.PART_COMPLETE_MULTIPART_UPLOAD_FAILED,
-                    "complete upload failed.", e);
+                    "complete upload failed. bucket:"+bucketName+", uploadId:"+uploadId, e);
         } finally {
+            outStreamFlushQueue.remove(flushIndex, outputStream);
             daoMgr.releaseConnectionDao(connection);
         }
     }
@@ -1260,7 +1382,7 @@ public class ObjectServiceImpl implements ObjectService {
                     objectName, uploadId, true);
             if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
                 throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
-                        "no such upload:" + uploadId);
+                        "no such upload. uploadId:" + uploadId);
             }
 
             upload.setUploadStatus(UploadMeta.UPLOAD_ABORT);
@@ -1272,7 +1394,7 @@ public class ObjectServiceImpl implements ObjectService {
         } catch (Exception e) {
             transaction.rollback(connection);
             throw new S3ServerException(S3Error.PART_ABORT_MULTIPART_UPLOAD_FAILED,
-                    "abort upload failed.", e);
+                    "abort upload failed. bucket:"+bucketName+", uploadId:"+uploadId, e);
         } finally {
             daoMgr.releaseConnectionDao(connection);
         }
@@ -1290,7 +1412,7 @@ public class ObjectServiceImpl implements ObjectService {
                     objectName, uploadId, false);
             if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
                 throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
-                        "no such upload:" + uploadId);
+                        "no such upload. uploadId:" + uploadId);
             }
 
             int maxNumber = Math.min(maxParts, RestParamDefine.MAX_KEYS_DEFAULT);
@@ -1317,7 +1439,7 @@ public class ObjectServiceImpl implements ObjectService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.PART_LIST_PARTS_FAILED,
-                    "List Parts failed. bucket:"+bucketName, e);
+                    "List Parts failed. bucket:"+bucketName+", uploadId:"+uploadId, e);
         }finally {
             metaDao.releaseQueryDbCursor(partsCursor);
         }
@@ -1818,7 +1940,7 @@ public class ObjectServiceImpl implements ObjectService {
             if (!(queryContext.getPrefix().equals(prefix))) {
                 return false;
             }
-        }else if (prefix != null){
+        } else if (prefix != null){
             return false;
         }
 
@@ -1845,7 +1967,7 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
-    private void deleteObjectLob(ObjectMeta deleteObject) throws S3ServerException{
+    private void deleteObjectLob(ObjectMeta deleteObject){
         if (deleteObject != null && !deleteObject.getDeleteMarker()) {
             int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
             while (tryTime > 0) {
@@ -1857,14 +1979,30 @@ public class ObjectServiceImpl implements ObjectService {
                 }catch (S3ServerException e){
                     if (e.getError() == S3Error.OBJECT_IS_IN_USE && tryTime > 0){
                         if (tryTime == DBParamDefine.DB_DUPLICATE_MAX_TIME-1){
-                            logger.error("lob is in use.lob is:{}",deleteObject);
+                            logger.error("lob is in use.csName:{}, clName:{}, lobId:{}",
+                                    deleteObject.getCsName(), deleteObject.getClName(),
+                                    deleteObject.getLobId());
                         }
                         continue;
                     }else {
-                        throw e;
+                        logger.error("delete lob fail. csName:{}, clName:{}, lobId:{}",
+                                deleteObject.getCsName(), deleteObject.getClName(),
+                                deleteObject.getLobId());
+                        break;
                     }
                 }
             }
+        }
+    }
+
+    private void cleanRedundencyLob(String csName, String clName, ObjectId lobId){
+        try {
+            dataDao.deleteObjectDataByLobId(null, csName,
+                    clName, lobId);
+        }catch (Exception e){
+            logger.error("cleanRedundencyLob failed. csName:" + csName +
+                    ", clName:" + clName +
+                    ", lobId:" + lobId.toString());
         }
     }
 

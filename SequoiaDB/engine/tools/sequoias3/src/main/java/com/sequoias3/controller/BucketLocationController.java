@@ -26,11 +26,16 @@ public class BucketLocationController {
     public ResponseEntity getBucketLocation(@PathVariable("bucketname") String bucketName,
                                             @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("get bucket location. operator={}", operator.getUserName());
+            logger.debug("get bucket location. bucket={}, operator={}", bucketName, operator.getUserName());
 
-        return ResponseEntity.ok()
-                .body(bucketService.getBucketLocation(operator.getUserId(), bucketName));
+            return ResponseEntity.ok()
+                    .body(bucketService.getBucketLocation(operator.getUserId(), bucketName));
+        }catch (Exception e){
+            logger.error("get bucket location failed. bucketName={}", bucketName);
+            throw e;
+        }
     }
 }

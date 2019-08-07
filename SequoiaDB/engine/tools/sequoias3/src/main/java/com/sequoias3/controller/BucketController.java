@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.core.Bucket;
+import com.sequoias3.core.Region;
 import com.sequoias3.model.*;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3Error;
@@ -13,6 +14,7 @@ import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class BucketController {
@@ -37,52 +41,75 @@ public class BucketController {
                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                     HttpServletRequest httpServletRequest)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String location = getLocation(httpServletRequest);
-        logger.info("Create bucket. bucketName ={}, operator={}, location={} ",
-                bucketName, operator.getUserName(), location);
-        bucketService.createBucket(operator.getUserId(),bucketName, location);
-        return ResponseEntity.ok()
-                .header(RestParamDefine.LOCATION, RestParamDefine.REST_DELIMITER+bucketName)
-                .build();
+            String location = getLocation(httpServletRequest);
+            logger.debug("Create bucket. bucketName ={}, operator={}, location={} ",
+                    bucketName, operator.getUserName(), location);
+            bucketService.createBucket(operator.getUserId(), bucketName, location);
+            return ResponseEntity.ok()
+                    .header(RestParamDefine.LOCATION, RestParamDefine.REST_DELIMITER + bucketName)
+                    .build();
+        }catch (Exception e){
+            logger.error("Create bucket failed. bucketName ={}, authorization={}",
+                    bucketName, authorization);
+            throw e;
+        }
     }
 
     @GetMapping(value="", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listBuckets( @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("list buckets. operator={}", operator.getUserName());
-        return ResponseEntity.ok()
-                .body(bucketService.getService(operator));
+            logger.debug("list buckets. operator={}", operator.getUserName());
+            return ResponseEntity.ok()
+                    .body(bucketService.getService(operator));
+        }catch (Exception e){
+            logger.error("list buckets failed. authorization={}", authorization);
+            throw e;
+        }
     }
 
     @DeleteMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteBucket(@PathVariable("bucketname") String bucketName,
                                @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("delete bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
-        bucketService.deleteBucket(operator.getUserId(), bucketName);
-        return ResponseEntity.noContent().build();
+            logger.debug("delete bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
+            bucketService.deleteBucket(operator.getUserId(), bucketName);
+            return ResponseEntity.noContent().build();
+        }catch (Exception e){
+            logger.error("delete bucket failed. bucketName ={}, authorization={}",
+                    bucketName, authorization);
+            throw e;
+        }
     }
 
     @RequestMapping(method = RequestMethod.HEAD, value = "/{bucketName:.+}")
     public ResponseEntity headBucket(@PathVariable("bucketName") String bucketName,
                                @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.info("head bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
-        Bucket bucket = bucketService.getBucket(operator.getUserId(), bucketName);
-        HttpHeaders headers = new HttpHeaders();
-        if (bucket.getRegion() != null){
-            headers.add(RestParamDefine.HeadBucketResultHeader.REGION, bucket.getRegion());
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
+            logger.debug("head bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
+            Bucket bucket = bucketService.getBucket(operator.getUserId(), bucketName);
+            HttpHeaders headers = new HttpHeaders();
+            if (bucket.getRegion() != null) {
+                headers.add(RestParamDefine.HeadBucketResultHeader.REGION, bucket.getRegion());
+            }
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .build();
+        }catch (Exception e){
+            logger.error("head bucket failed. bucketName ={}, authorization={}",
+                    bucketName, authorization);
+            throw e;
         }
-        return ResponseEntity.ok()
-                .headers(headers)
-                .build();
     }
 
     @RequestMapping(method = RequestMethod.HEAD, value = "")
@@ -115,7 +142,9 @@ public class BucketController {
                 return null;
             }
         }catch (Exception e){
-            throw new S3ServerException(S3Error.BUCKET_INVALID_LOCATION, "get location failed", e);
+            throw new S3ServerException(S3Error.MALFORMED_XML, "get location failed", e);
         }
     }
+
+
 }

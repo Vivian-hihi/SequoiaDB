@@ -9,6 +9,7 @@ public class IDGenerator {
     public static final int TYPE_PARENTID  = 3;
     public static final int TYPE_TASK      = 4;
     public static final int TYPE_UPLOAD    = 5;
+    public static final int TYPE_ACLID     = 6;
 
     private int type;
     private long id;

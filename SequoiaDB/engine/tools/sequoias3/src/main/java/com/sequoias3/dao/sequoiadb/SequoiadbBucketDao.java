@@ -61,6 +61,7 @@ public class SequoiadbBucketDao implements BucketDao {
             newBucket.put(Bucket.BUCKET_DELIMITER2MODTIME, bucket.getDelimiter2ModTime());
             newBucket.put(Bucket.BUCKET_DELIMITER2STATUS, bucket.getDelimiter2Status());
             newBucket.put(Bucket.BUCKET_TASKID, bucket.getTaskID());
+            newBucket.put(Bucket.BUCKET_PRIVATE, bucket.isPrivate());
 
             cl.insert(newBucket);
         }catch (BaseException e){
@@ -385,7 +386,54 @@ public class SequoiadbBucketDao implements BucketDao {
                 sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }
         }
+    }
 
+    @Override
+    public void updateBucketAcl(ConnectionDao connection, String bucketName, Long aclId, Boolean isPrivate) throws S3ServerException {
+        Sequoiadb sdb = null;
+        try{
+            if (connection != null) {
+                sdb = ((SdbConnectionDao) connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_NAME, bucketName);
+            //如果 aclId is null，则将aclId为null作为条件
+            //如果 aclId is not null，则将aclId作为修改的字段
+            if (aclId == null){
+                BSONObject isNull = new BasicBSONObject();
+                isNull.put(DBParamDefine.IS_NULL, 0);
+                matcher.put(Bucket.BUCKET_ACLID, isNull);
+            }
+
+            BSONObject modifier = new BasicBSONObject();
+            if (aclId != null){
+                modifier.put(Bucket.BUCKET_ACLID, aclId);
+            }
+            if (isPrivate != null) {
+                modifier.put(Bucket.BUCKET_PRIVATE, isPrivate);
+            }
+
+            BSONObject setModifier = new BasicBSONObject();
+            setModifier.put(DBParamDefine.MODIFY_SET, modifier);
+
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            cl.update(matcher, setModifier, hint);
+            return;
+        }catch (Exception e) {
+            logger.error("update bucket acl failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        }  finally {
+            if (connection == null){
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
+        }
     }
 
     @Override
@@ -488,6 +536,14 @@ public class SequoiadbBucketDao implements BucketDao {
         }
         if (bsonObject.get(Bucket.BUCKET_TASKID) != null){
             bucket.setTaskID((long)bsonObject.get(Bucket.BUCKET_TASKID));
+        }
+        if (bsonObject.get(Bucket.BUCKET_ACLID) != null){
+            bucket.setAclId((long) bsonObject.get(Bucket.BUCKET_ACLID));
+        }
+        if (bsonObject.get(Bucket.BUCKET_PRIVATE) != null){
+            bucket.setPrivate((boolean) bsonObject.get(Bucket.BUCKET_PRIVATE));
+        }else {
+            bucket.setPrivate(true);
         }
         return bucket;
     }

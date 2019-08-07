@@ -44,6 +44,7 @@ public class BucketDelimiterController {
                                              @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
+        logger.debug("get delimiter. bucket={}", bucketName);
 
         return ResponseEntity.ok(bucketDelimiterService.getBucketDelimiter(operator.getUserId(), bucketName));
     }

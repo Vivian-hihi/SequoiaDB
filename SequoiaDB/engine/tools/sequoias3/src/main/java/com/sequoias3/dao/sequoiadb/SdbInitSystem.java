@@ -213,6 +213,7 @@ public class SdbInitSystem {
             idGeneratorDao.insertId(IDGenerator.TYPE_PARENTID);
             idGeneratorDao.insertId(IDGenerator.TYPE_TASK);
             idGeneratorDao.insertId(IDGenerator.TYPE_UPLOAD);
+            idGeneratorDao.insertId(IDGenerator.TYPE_ACLID);
         }catch (Exception e) {
             logger.error("create IDTable failed.", e);
             throw e;
@@ -296,6 +297,33 @@ public class SdbInitSystem {
                 sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.PART_LIST, Part.PART_INDEX,
                         indexKey, true, true);
+            }
+
+        }catch (Exception e) {
+            logger.error("create upload failed.", e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    public void createACLTable() throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            if (!cs.isCollectionExist(DaoCollectionDefine.ACL_LIST)){
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.ACL_LIST, null);
+            }
+
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.ACL_LIST);
+            if ( !cl.isIndexExist(AclTable.ID_INDEX)){
+                BSONObject indexKey = new BasicBSONObject();
+                indexKey.put(AclTable.ACL_ID, 1);
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.ACL_LIST, AclTable.ID_INDEX,
+                        indexKey, false, false);
             }
 
         }catch (Exception e) {

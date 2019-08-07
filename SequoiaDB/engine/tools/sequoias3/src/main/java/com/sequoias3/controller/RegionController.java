@@ -56,7 +56,7 @@ public class RegionController {
             throws S3ServerException{
         restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("list regions.");
+        logger.debug("list regions.");
 
         return ResponseEntity.ok()
                 .body(regionService.ListRegions());

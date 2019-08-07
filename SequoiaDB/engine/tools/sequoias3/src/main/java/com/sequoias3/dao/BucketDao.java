@@ -30,8 +30,12 @@ public interface BucketDao {
     void updateBucketDelimiter(ConnectionDao connection, String bucketName, Bucket bucket)
             throws S3ServerException;
 
+    void updateBucketAcl(ConnectionDao connection, String bucketName, Long aclId, Boolean isPrivate)
+            throws S3ServerException;
+
     void cleanBucketDelimiter(ConnectionDao connection, String bucketName, int delimiter)
             throws S3ServerException;
 
-    Bucket queryBucketForUpdate(ConnectionDao connection, String bucketName) throws S3ServerException;
+    Bucket queryBucketForUpdate(ConnectionDao connection, String bucketName)
+            throws S3ServerException;
 }

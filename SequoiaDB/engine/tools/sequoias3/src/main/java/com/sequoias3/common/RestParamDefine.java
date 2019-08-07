@@ -3,6 +3,7 @@ package com.sequoias3.common;
 public class RestParamDefine {
     public static final String AUTHORIZATION           = "authorization";
 
+    public static final String ACL                     = "acl";
     public static final String VERSIONS                = "versions";
     public static final String VERSION_ID              = "versionId";
     public static final String VERSIONING              = "versioning";
@@ -81,6 +82,20 @@ public class RestParamDefine {
         public static final String VERSION_ID   = "x-amz-version-id";
     }
 
+    public static class CopyObjectHeader {
+        public static final String X_AMZ_COPY_SOURCE    = "x-amz-copy-source";
+        public static final String METADATA_DIRECTIVE   = "x-amz-metadata-directive";
+        public static final String IF_MODIFIED_SINCE    = "x-amz-copy-if-modified-since";
+        public static final String IF_UNMODIFIED_SINCE  = "x-amz-copy-if-unmodified-since";
+        public static final String IF_MATCH             = "x-amz-copy-if-match";
+        public static final String IF_NONE_MATCH        = "x-amz-copy-if-none-match";
+    }
+
+    public static class CopyObjectResultHeader {
+        public static final String VERSION_ID          = "x-amz-version-id";
+        public static final String SOURCE_VERSION_ID   = "x-amz-copy-source-version-id";
+    }
+
     public static class GetObjectReqPara{
         public static final String RES_CONTENT_TYPE         = "response-content-type";
         public static final String RES_CONTENT_LANGUAGE     = "response-content-language";
@@ -138,6 +153,40 @@ public class RestParamDefine {
         public static final String ENCODING_TYPE           = "encoding-type";
     }
 
+    public static class Acl{
+        public static final String X_AMZ_ACL               = "x-amz-acl";
+
+        public static final String X_AMZ_GRANT_READ        = "x-amz-grant-read";
+        public static final String X_AMZ_GRANT_WRITE       = "x-amz-grant-write";
+        public static final String X_AMZ_GRANT_READ_ACP    = "x-amz-grant-read-acp";
+        public static final String X_AMZ_GRANT_WRITE_ACP   = "x-amz-grant-write-acp";
+        public static final String X_AMZ_GRANT_FULL_CONTROL= "x-amz-grant-full-control";
+
+        public static final String ACL_FULLCONTROL         = "FULL_CONTROL";
+        public static final String ACL_READ                = "READ";
+        public static final String ACL_WRITE               = "WRITE";
+        public static final String ACL_READ_ACP            = "READ_ACP";
+        public static final String ACL_WRITE_ACP           = "WRITE_ACP";
+
+        public static final String TYPE_GROUP              = "Group";
+        public static final String TYPE_USER               = "CanonicalUser";
+        public static final String TYPE_EMAIL              = "AmazonCustomerByEmail";
+
+        public static final String ALLUSERS                = "http://acs.amazonaws.com/groups/global/AllUsers";
+        public static final String AUTHENTICATEDUSERS      = "http://acs.amazonaws.com/groups/global/AuthenticatedUsers";
+        public static final String LOGDELIVERY             = "http://acs.amazonaws.com/groups/s3/LogDelivery";
+
+        public static final String CANNED_PRIVATE                = "private";
+        public static final String CANNED_PUBLICREAD             = "public-read";
+        public static final String CANNED_PUBLICREADWRITE        = "public-read-write";
+        public static final String CANNED_AUTHENTICATEDREAD      = "authenticated-read";
+        public static final String CANNED_LOGDELIVERYWRITE       = "log-delivery-write";
+        public static final String CANNED_BUCKETOWNERREAD        = "bucket-owner-read";
+        public static final String CANNED_BUCKETOWNERFULLCONTROL = "bucket-owner-full-control";
+
+        public static final String VERSION_ID                    = "x-amz-version-id";
+    }
+
     public static final int PART_NUMBER_MIN         = 1;
     public static final int PART_NUMBER_MAX         = 10000;
 
@@ -146,6 +195,7 @@ public class RestParamDefine {
 
     public static final String REST_CREDENTIAL      = "Credential=";
     public static final String REST_AWS             = "AWS";
+    public static final String REST_SOURCE_VERSIONID= "?versionId=";
 
     public static final String REST_DELIMITER       = "/";
     public static final String REST_S3              = "/s3";
@@ -156,4 +206,7 @@ public class RestParamDefine {
     public static final String REST_HYPHEN          = "-";
 
     public static final String ENCODING_TYPE_URL    = "url";
+
+    public static final String REST_DIRECTIVE_COPY     = "COPY";
+    public static final String REST_DIRECTIVE_REPLACE  = "REPLACE";
 }

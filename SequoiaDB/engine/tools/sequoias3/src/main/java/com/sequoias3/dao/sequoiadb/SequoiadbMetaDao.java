@@ -686,6 +686,9 @@ public class SequoiadbMetaDao implements MetaDao {
         if (bsonObject.get(ObjectMeta.META_PARENTID2) != null){
             object.setParentId2((long)bsonObject.get(ObjectMeta.META_PARENTID2));
         }
+        if (bsonObject.get(ObjectMeta.META_ACLID) != null){
+            object.setAclId((long) bsonObject.get(ObjectMeta.META_ACLID));
+        }
         return object;
     }
 
@@ -720,6 +723,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
         objectMeta.put(ObjectMeta.META_PARENTID1, meta.getParentId1());
         objectMeta.put(ObjectMeta.META_PARENTID2, meta.getParentId2());
+        objectMeta.put(ObjectMeta.META_ACLID, meta.getAclId());
 
         return objectMeta;
     }

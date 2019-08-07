@@ -9,6 +9,7 @@ public class DaoCollectionDefine {
     public static final String TASK_COLLECTION           = "S3_Task";
     public static final String UPLOAD_LIST               = "S3_UploadMeta";
     public static final String PART_LIST                 = "S3_Part";
+    public static final String ACL_LIST                  = "S3_ACL";
 
     public static final String OBJECT_META_LIST          = "S3_ObjectMeta";
     public static final String OBJECT_META_LIST_HISTORY  = "S3_ObjectMetaHistory";

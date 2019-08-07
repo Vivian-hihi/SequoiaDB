@@ -42,24 +42,30 @@ public class MultiPartUploadController {
                                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                                     HttpServletRequest httpServletRequest)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.info("initMultiPartUploadObject. bucketName={}, objectName={}", bucketName, objectName);
+            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            logger.debug("initMultiPartUploadObject. bucketName={}, objectName={}", bucketName, objectName);
 
-        Map<String, String> requestHeaders = new HashMap<>();
-        Map<String, String> xMeta          = new HashMap<>();
-        restUtils.getHeaders(httpServletRequest, requestHeaders, xMeta);
+            Map<String, String> requestHeaders = new HashMap<>();
+            Map<String, String> xMeta = new HashMap<>();
+            restUtils.getHeaders(httpServletRequest, requestHeaders, xMeta);
 
-        InitiateMultipartUploadResult result = objectService.initMultipartUpload(operator.getUserId(),
-                bucketName,
-                objectName,
-                requestHeaders,
-                xMeta);
+            InitiateMultipartUploadResult result = objectService.initMultipartUpload(operator.getUserId(),
+                    bucketName,
+                    objectName,
+                    requestHeaders,
+                    xMeta);
 
-        logger.info("initMultiPartUploadObject success. bucketName={}, objectName={}", bucketName, objectName);
-        return ResponseEntity.ok()
-                .body(result);
+            logger.debug("initMultiPartUploadObject success. bucketName={}, objectName={}", bucketName, objectName);
+            return ResponseEntity.ok()
+                    .body(result);
+        }catch (Exception e){
+            logger.error("initMultiPartUploadObject failed. bucketName={}, bucketName/objectName={}",
+                    bucketName, httpServletRequest.getRequestURI());
+            throw e;
+        }
     }
 
     @PutMapping(value="/{bucketname:.+}/**", params = RestParamDefine.PARTNUMBER, produces = MediaType.APPLICATION_XML_VALUE)
@@ -70,42 +76,49 @@ public class MultiPartUploadController {
                                      @RequestParam(RestParamDefine.UPLOADID) long uploadId,
                                      HttpServletRequest httpServletRequest)
             throws S3ServerException, IOException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.info("uploadpart. bucketName={}, objectName={}, uploadId={}, partNumber={}", bucketName, objectName, uploadId, partNumber);
+            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            logger.debug("upload part. bucketName={}, objectName={}, uploadId={}, partNumber={}", bucketName, objectName, uploadId, partNumber);
 
-        InputStream body =  httpServletRequest.getInputStream();
-        Long realContenLength = null;
-        if (httpServletRequest.getHeader("x-amz-decoded-content-length") != null){
-            body = new S3InputStreamReaderChunk(httpServletRequest.getInputStream());
-            realContenLength = Long.parseLong(httpServletRequest.getHeader("x-amz-decoded-content-length"));
-        }else {
-            if (httpServletRequest.getHeader("content-length") != null) {
-                realContenLength = Long.parseLong(httpServletRequest.getHeader("content-length"));
+            InputStream body = httpServletRequest.getInputStream();
+            Long realContenLength = null;
+            if (httpServletRequest.getHeader("x-amz-decoded-content-length") != null) {
+                body = new S3InputStreamReaderChunk(httpServletRequest.getInputStream());
+                realContenLength = Long.parseLong(httpServletRequest.getHeader("x-amz-decoded-content-length"));
+            } else {
+                if (httpServletRequest.getHeader("content-length") != null) {
+                    realContenLength = Long.parseLong(httpServletRequest.getHeader("content-length"));
+                }
             }
-        }
-        String eTag = objectService.uploadPart(operator.getUserId(),
-                bucketName,
-                objectName,
-                uploadId,
-                partNumber,
-                contentMD5,
-                body,
-                realContenLength);
+            String eTag = objectService.uploadPart(operator.getUserId(),
+                    bucketName,
+                    objectName,
+                    uploadId,
+                    partNumber,
+                    contentMD5,
+                    body,
+                    realContenLength);
 
-        HttpHeaders headers = new HttpHeaders();
-        if (eTag != null){
-            headers.add(RestParamDefine.PutObjectResultHeader.ETAG,
-                    "\""+eTag+"\"");
-        }
+            HttpHeaders headers = new HttpHeaders();
+            if (eTag != null) {
+                headers.add(RestParamDefine.PutObjectResultHeader.ETAG,
+                        "\"" + eTag + "\"");
+            }
 
-        logger.info("uploadpart success. bucketName={}, objectName={}, uploadId={}, " +
-                        "partNumber={}, eTag={}, realContenLength={}",
-                bucketName, objectName, uploadId, partNumber, eTag, realContenLength);
-        return ResponseEntity.ok()
-                .headers(headers)
-                .build();
+            logger.debug("upload part success. bucketName={}, objectName={}, uploadId={}, " +
+                            "partNumber={}, eTag={}, realContenLength={}",
+                    bucketName, objectName, uploadId, partNumber, eTag, realContenLength);
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .build();
+        }catch (Exception e){
+            logger.error("upload part failed. bucketName={}, bucketName/objectName={}," +
+                    " uploadId={}, partNumber={}", bucketName,
+                    httpServletRequest.getRequestURI(), uploadId, partNumber);
+            throw e;
+        }
     }
 
     @PostMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
@@ -115,36 +128,42 @@ public class MultiPartUploadController {
                                             HttpServletRequest httpServletRequest,
                                             HttpServletResponse httpServletResponse)
             throws S3ServerException, IOException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.info("completeMultiPart. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
+            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            logger.debug("completeMultiPart. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
 
-        ServletOutputStream outputStream = httpServletResponse.getOutputStream();
+            ServletOutputStream outputStream = httpServletResponse.getOutputStream();
 
-        CompleteMultipartUpload completeMultipartUpload = getCompleteMap(httpServletRequest);
+            CompleteMultipartUpload completeMultipartUpload = getCompleteMap(httpServletRequest);
 
-        CompleteMultipartUploadResult result = objectService.completeUpload(operator.getUserId(),
-                bucketName,
-                objectName,
-                uploadId,
-                completeMultipartUpload.getPart(),
-                outputStream);
+            CompleteMultipartUploadResult result = objectService.completeUpload(operator.getUserId(),
+                    bucketName,
+                    objectName,
+                    uploadId,
+                    completeMultipartUpload.getPart(),
+                    outputStream);
 
-        result.setLocation(httpServletRequest.getRequestURI());
+            result.setLocation(httpServletRequest.getRequestURI());
 
-        logger.info("completeMultiPart success. bucketName={}, objectName={}, uploadId={}",
-                bucketName, objectName, uploadId);
+            logger.debug("completeMultiPart success. bucketName={}, objectName={}, uploadId={}",
+                    bucketName, objectName, uploadId);
 
-        HttpHeaders headers = new HttpHeaders();
-        if (result.getVersionId() != null){
-            headers.add(RestParamDefine.PutObjectResultHeader.VERSION_ID,
-                    result.getVersionId().toString());
+            HttpHeaders headers = new HttpHeaders();
+            if (result.getVersionId() != null) {
+                headers.add(RestParamDefine.PutObjectResultHeader.VERSION_ID,
+                        result.getVersionId().toString());
+            }
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(result);
+        }catch (Exception e){
+            logger.error("completeMultiPart failed. bucketName={}, bucketName/objectName={}, uploadId:{}",
+                    bucketName, httpServletRequest.getRequestURI(), uploadId);
+            throw e;
         }
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(result);
     }
 
     @GetMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
@@ -156,40 +175,53 @@ public class MultiPartUploadController {
                                     @RequestParam(value = RestParamDefine.ListPartsPara.ENCODING_TYPE, required = false) String encodingType,
                                     HttpServletRequest httpServletRequest)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.info("listParts. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
+            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            logger.debug("listParts. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
 
-        ListPartsResult result = objectService.listParts(operator.getUserId(),
-                bucketName,
-                objectName,
-                uploadId,
-                partNumberMarker,
-                maxParts,
-                encodingType);
+            ListPartsResult result = objectService.listParts(operator.getUserId(),
+                    bucketName,
+                    objectName,
+                    uploadId,
+                    partNumberMarker,
+                    maxParts,
+                    encodingType);
 
-        logger.info("listParts success. bucketName={}, objectName={}, uploadId={}, part.size={}",
-                bucketName, objectName, uploadId, result.getPartList().size());
-        return ResponseEntity.ok()
-                .body(result);
+            logger.debug("listParts success. bucketName={}, objectName={}, uploadId={}, part.size={}",
+                    bucketName, objectName, uploadId, result.getPartList().size());
+            return ResponseEntity.ok()
+                    .body(result);
+        }catch (Exception e){
+            logger.error("list Parts failed. bucketName={}, bucketName/objectName={}, uploadId:{}",
+                    bucketName, httpServletRequest.getRequestURI(), uploadId);
+            throw e;
+        }
     }
 
     @DeleteMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity abortUpload(@PathVariable("bucketname") String bucketName,
                                       @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                       @RequestParam(RestParamDefine.UPLOADID) long uploadId,
-                                      HttpServletRequest httpServletRequest) throws S3ServerException{
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+                                      HttpServletRequest httpServletRequest)
+            throws S3ServerException{
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.info("abortUpload. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
+            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            logger.debug("abortUpload. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
 
-        objectService.abortUpload(operator.getUserId(), bucketName, objectName, uploadId);
+            objectService.abortUpload(operator.getUserId(), bucketName, objectName, uploadId);
 
-        logger.info("abortUpload success. bucketName={}, objectName={}, uploadId={}", bucketName, objectName, uploadId);
-        return ResponseEntity.ok()
-                .build();
+            logger.debug("abortUpload success. bucketName={}, objectName={}, uploadId={}", bucketName, objectName, uploadId);
+            return ResponseEntity.ok()
+                    .build();
+        }catch (Exception e){
+            logger.error("abortUpload failed. bucketName={}, bucketName/objectName={}, uploadId:{}",
+                    bucketName, httpServletRequest.getRequestURI(), uploadId);
+            throw e;
+        }
     }
 
     @GetMapping(value="/{bucketname:.+}", params = RestParamDefine.UPLOADS, produces = MediaType.APPLICATION_XML_VALUE)
@@ -202,24 +234,30 @@ public class MultiPartUploadController {
                                       @RequestParam(value = RestParamDefine.ListUploadsPara.ENCODING_TYPE, required = false) String encodingType,
                                       @RequestParam(value = RestParamDefine.ListUploadsPara.MAX_UPLOADS, required = false, defaultValue = "1000") Integer maxUploads)
             throws S3ServerException {
-        User operator = restUtils.getOperatorByAuthorization(authorization);
+        try {
+            User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("listUploads. bucketName={}, prefix={}, delimiter={}, keymarker={}, uploadidmarker={}",
-                bucketName, prefix, delimiter, keyMarker, uploadIdMarker);
+            logger.debug("listUploads. bucketName={}, prefix={}, delimiter={}, keyMarker={}, uploadIdMarker={}",
+                    bucketName, prefix, delimiter, keyMarker, uploadIdMarker);
 
-        ListMultipartUploadsResult result = objectService.listUploadLists(operator.getUserId(),
-                bucketName,
-                prefix,
-                delimiter,
-                keyMarker,
-                uploadIdMarker,
-                maxUploads,
-                encodingType);
+            ListMultipartUploadsResult result = objectService.listUploadLists(operator.getUserId(),
+                    bucketName,
+                    prefix,
+                    delimiter,
+                    keyMarker,
+                    uploadIdMarker,
+                    maxUploads,
+                    encodingType);
 
-        logger.info("listUploads success. bucketName={}, upload.size={}, commonPrefix.size={}",
-                bucketName, result.getUploadList().size(), result.getCommonPrefixList().size());
-        return ResponseEntity.ok()
-                .body(result);
+            logger.debug("listUploads success. bucketName={}, upload.size={}, commonPrefix.size={}",
+                    bucketName, result.getUploadList().size(), result.getCommonPrefixList().size());
+            return ResponseEntity.ok()
+                    .body(result);
+        }catch (Exception e){
+            logger.info("listUploads failed. bucketName={}, prefix={}, delimiter={}, keyMarker={}, uploadIdMarker={}",
+                    bucketName, prefix, delimiter, keyMarker, uploadIdMarker);
+            throw e;
+        }
     }
 
     private CompleteMultipartUpload getCompleteMap(HttpServletRequest httpServletRequest)
@@ -237,12 +275,18 @@ public class MultiPartUploadController {
             String content = stringBuilder.toString();
             if (content.length() > 0) {
                 ObjectMapper objectMapper = new XmlMapper();
-                return objectMapper.readValue(content, CompleteMultipartUpload.class);
+                CompleteMultipartUpload completeMultipartUpload = objectMapper.readValue(content, CompleteMultipartUpload.class);
+                if (completeMultipartUpload == null
+                        || completeMultipartUpload.getPart() == null){
+                    throw new S3ServerException(S3Error.MALFORMED_XML,
+                            "completeMultipartUpload is empty. not found part list.");
+                }
+                return completeMultipartUpload;
             }else {
                 return null;
             }
         }catch (Exception e){
-            throw new S3ServerException(S3Error.OBJECT_PUT_fAILED, "get completeMultipartUpload failed", e);
+            throw new S3ServerException(S3Error.MALFORMED_XML, "get completeMultipartUpload failed", e);
         }
     }
 }
