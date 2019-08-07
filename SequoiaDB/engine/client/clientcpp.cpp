@@ -2753,7 +2753,6 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       OID oidObj ;
-      BOOLEAN isRemoteOld = FALSE ;
 
       // check
       if ( '\0' == _collectionFullName[0] || NULL == _connection )
@@ -2769,12 +2768,13 @@ do                                                            \
 
       if ( !_connection->_getIsOldVersionLobServer() )
       {
-         rc = _createLob( lob, &oidObj, isRemoteOld ) ;
-         if ( isRemoteOld )
+         BOOLEAN isOldVersionLobServer = FALSE ;
+         rc = _createLob( lob, &oidObj, &isOldVersionLobServer ) ;
+         if ( isOldVersionLobServer )
          {
             // deal with old version server. oid should be generate in client side
             oidObj = OID::gen() ;
-            rc = _createLob( lob, &oidObj, isRemoteOld ) ;
+            rc = _createLob( lob, &oidObj ) ;
             if ( SDB_OK == rc )
             {
                _connection->_setIsOldVersionLobServer( TRUE ) ;
@@ -2784,8 +2784,12 @@ do                                                            \
       else
       {
          // deal with old version server. oid should be generate in client side
+         if ( !oidObj.isSet() )
+         {
             oidObj = OID::gen() ;
-            rc = _createLob( lob, &oidObj, isRemoteOld ) ;
+         }
+
+         rc = _createLob( lob, &oidObj ) ;
       }
 
       if ( SDB_OK != rc )
@@ -2800,13 +2804,12 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::_createLob( _sdbLob **lob, const bson::OID *oid,
-                                         BOOLEAN &isRemoteOld )
+                                         BOOLEAN *isOldVersionLobServer )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
       SINT64 contextID = -1 ;
       BOOLEAN locked = FALSE ;
-      isRemoteOld = FALSE ;
 
       // append info
       try
@@ -2850,11 +2853,11 @@ do                                                            \
       _connection->unlock() ;
       locked = FALSE ;
 
-      if ( SDB_INVALIDARG == rc )
+      if ( SDB_INVALIDARG == rc && (NULL == oid || !oid->isSet()) )
       {
-         if ( NULL == oid || !oid->isSet() )
+         if ( NULL != isOldVersionLobServer )
          {
-            isRemoteOld = TRUE ;
+            *isOldVersionLobServer = TRUE ;
          }
       }
 
@@ -3166,17 +3169,24 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::listLobPieces( _sdbCursor **cursor )
+   INT32 _sdbCollectionImpl::listLobPieces( _sdbCursor **cursor,
+                                            const bson::BSONObj &condition,
+                                            const bson::BSONObj &selected,
+                                            const bson::BSONObj &orderBy,
+                                            const bson::BSONObj &hint,
+                                            INT64 numToSkip,
+                                            INT64 numToReturn )
    {
       INT32 rc = SDB_OK ;
-      BSONObj obj ;
+      BSONObj newHint ;
 
       try
       {
          BSONObjBuilder queryBuilder ;
+         queryBuilder.appendElements( hint ) ;
          queryBuilder.append( FIELD_NAME_COLLECTION, this->getFullName() ) ;
          queryBuilder.appendBool( FIELD_NAME_LOB_LIST_PIECES_MODE, TRUE ) ;
-         obj = queryBuilder.obj() ;
+         newHint = queryBuilder.obj() ;
       }
       catch( std::exception )
       {
@@ -3187,13 +3197,14 @@ do                                                            \
       // run command
       if ( !_connection->_getIsOldVersionLobServer() )
       {
-         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, NULL, NULL,
-                            NULL, &obj, 0, -1, cursor ) ;
+         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &condition,
+                            &selected, &orderBy, &newHint, numToSkip,
+                            numToReturn, cursor ) ;
          if ( SDB_INVALIDARG == rc )
          {
             // deal with old version server. clName is in the query field
-            rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &obj, NULL,
-                               NULL, NULL, 0, -1, cursor ) ;
+            rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &newHint,
+                               NULL, NULL, NULL, 0, -1, cursor ) ;
             if ( SDB_OK == rc )
             {
                _connection->_setIsOldVersionLobServer( TRUE ) ;
@@ -3203,7 +3214,7 @@ do                                                            \
       else
       {
          // deal with old version server. clName is in the query field
-         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &obj, NULL,
+         rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &newHint, NULL,
                             NULL, NULL, 0, -1, cursor ) ;
       }
 
@@ -3218,7 +3229,8 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::createLobID( bson::OID &oid, INT64 *pSeconds )
+   INT32 _sdbCollectionImpl::createLobID( bson::OID &oid,
+                                          const CHAR *pTimeStamp )
    {
       INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
@@ -3233,14 +3245,11 @@ do                                                            \
          goto error ;
       }
 
-      if ( NULL != pSeconds )
+      if ( NULL != pTimeStamp )
       {
          try
          {
-            BSONObjBuilder builder ;
-            builder.appendTimestamp( FIELD_NAME_LOB_CREATETIME,
-                                     *pSeconds * 1000, 0 ) ;
-            dateInfo = builder.obj() ;
+            dateInfo = BSON( FIELD_NAME_LOB_CREATETIME << pTimeStamp ) ;
          }
          catch ( std::exception )
          {
@@ -8738,9 +8747,9 @@ do                                                            \
       return _isOldVersionLobServer ;
    }
 
-   void _sdbImpl::_setIsOldVersionLobServer( BOOLEAN isOldVersionServer )
+   void _sdbImpl::_setIsOldVersionLobServer( BOOLEAN isOldVersionLobServer )
    {
-      _isOldVersionLobServer = isOldVersionServer ;
+      _isOldVersionLobServer = isOldVersionLobServer ;
    }
 
    void _sdbImpl::_clearSessionAttrCache ( BOOLEAN needLock )

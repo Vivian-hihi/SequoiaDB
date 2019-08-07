@@ -57,50 +57,6 @@ namespace engine
    {
    }
 
-   INT32 _coordOpenLob::_appendOID( BSONObj &obj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
-      OID oid ;
-      _utilLobID lobId ;
-      string newIDStr ;
-      _MsgRouteID routeId = sdbGetCoordCB()->getRouteID() ;
-
-      if ( MSG_INVALID_ROUTEID == routeId.value )
-      {
-         rc = SDB_INVALID_ROUTEID ;
-         PD_LOG( PDERROR, "Coord's route id must be exist "
-                 "when generate lob ID:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = lobId.init( ossGetCurrentMilliseconds() / 1000,
-                       routeId.columns.nodeID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create lob id:rc=%d", rc ) ;
-
-      newIDStr = lobId.toString() ;
-
-      try
-      {
-         oid.init( newIDStr ) ;
-         builder.appendElements( obj ) ;
-         builder.appendOID( FIELD_NAME_LOB_OID, &oid ) ;
-         obj = builder.obj() ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to init Object id:exception=%s,rc=%d",
-                 e.what(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( COORD_OPENLOB_EXE, "_coordOpenLob::execute" )
    INT32 _coordOpenLob::execute( MsgHeader *pMsg,
                                  pmdEDUCB *cb,
@@ -121,12 +77,6 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to extract open msg:%d", rc ) ;
          goto error ;
-      }
-
-      if ( !obj.hasElement( FIELD_NAME_LOB_OID ) )
-      {
-         rc = _appendOID( obj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to append lob id:rc=%d", rc ) ;
       }
 
       // add last op info
@@ -616,19 +566,8 @@ namespace engine
 
       const MsgOpLob *header = NULL ;
       BSONObj obj ;
-      BSONElement ele ;
+      bson::OID oid ;
       contextID = -1 ;
-      INT64 seconds = 0 ;
-      _utilLobID lobID ;
-      _MsgRouteID routeId = sdbGetCoordCB()->getRouteID() ;
-
-      if ( MSG_INVALID_ROUTEID == routeId.value )
-      {
-         rc = SDB_INVALID_ROUTEID ;
-         PD_LOG( PDERROR, "Coord's route id must be exist "
-                 "when generate lob ID:rc=%d", rc ) ;
-         goto error ;
-      }
 
       rc = msgExtractCreateLobIDRequest( (const CHAR*)pMsg, &header,
                                          obj ) ;
@@ -638,51 +577,32 @@ namespace engine
          goto error ;
       }
 
-      if ( obj.isEmpty() )
-      {
-         seconds = ossGetCurrentMilliseconds() / 1000 ;
-      }
-      else
-      {
-         ele = obj.getField( FIELD_NAME_LOB_CREATETIME ) ;
-         if ( Timestamp != ele.type() )
-         {
-            PD_LOG( PDERROR, "Invalid type of field[%s]:obj=%s",
-                    FIELD_NAME_LOB_CREATETIME,
-                    obj.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "Option:%s", obj.toString().c_str() ) ;
 
-         seconds = ele.timestampTime().millis / 1000 ;
-      }
-
-      rc = lobID.init( seconds, routeId.columns.nodeID ) ;
+      rc = rtnCreateLobID( obj, oid ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to ini lobID:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to create lobID:rc=%d", rc ) ;
          goto error ;
       }
 
-      try
+      if ( NULL != buf )
       {
-         BSONObjBuilder builder ;
-         OID oid ;
-         oid.init( lobID.toString() ) ;
-         builder.appendOID( FIELD_NAME_LOB_OID, &oid ) ;
-         obj = builder.obj() ;
-
-         if ( NULL != buf )
+         try
          {
-            *buf = obj ;
+            BSONObjBuilder builder ;
+            builder.appendOID( FIELD_NAME_LOB_OID, &oid ) ;
+            *buf = builder.obj() ;
          }
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to init Object id:exception=%s,rc=%d",
-                 e.what(), rc ) ;
-         goto error ;
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to init Object id:exception=%s,rc=%d",
+                  e.what(), rc ) ;
+            goto error ;
+         }
       }
 
    done:

@@ -157,7 +157,7 @@ namespace sdbclient
                             _sdbLob **lob ) ;
 
       INT32 _createLob( _sdbLob **lob, const bson::OID *oid,
-                        BOOLEAN &isRemoteOld ) ;
+                        BOOLEAN *isOldVersionLobServer = NULL ) ;
 
 #if defined CLIENT_THREAD_SAFE
       void lock ()
@@ -483,28 +483,43 @@ namespace sdbclient
                       const bson::BSONObj &selected  = _sdbStaticObject,
                       const bson::BSONObj &orderBy   = _sdbStaticObject,
                       const bson::BSONObj &hint      = _sdbStaticObject,
-                      INT64 numToSkip    = 0, INT64 numToReturn  = -1 ) ;
+                      INT64 numToSkip = 0, INT64 numToReturn = -1 ) ;
 
       virtual INT32 listLobs( sdbCursor &cursor,
                               const bson::BSONObj &condition = _sdbStaticObject,
                               const bson::BSONObj &selected  = _sdbStaticObject,
                               const bson::BSONObj &orderBy   = _sdbStaticObject,
                               const bson::BSONObj &hint      = _sdbStaticObject,
-                              INT64 numToSkip    = 0, INT64 numToReturn  = -1)
+                              INT64 numToSkip = 0, INT64 numToReturn = -1)
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return listLobs( &cursor.pCursor, condition, selected, orderBy, hint,
                           numToSkip, numToReturn ) ;
       }
 
-      virtual INT32 createLobID( bson::OID &oid, INT64 *pSeconds = NULL ) ;
+      virtual INT32 createLobID( bson::OID &oid, const CHAR *pTimestamp = NULL ) ;
 
-      virtual INT32 listLobPieces( _sdbCursor **cursor ) ;
+      virtual INT32 listLobPieces(
+                              _sdbCursor **cursor,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &selected  = _sdbStaticObject,
+                              const bson::BSONObj &orderBy   = _sdbStaticObject,
+                              const bson::BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip = 0,
+                              INT64 numToReturn = -1 ) ;
 
-      virtual INT32 listLobPieces( sdbCursor &cursor )
+      virtual INT32 listLobPieces(
+                              sdbCursor &cursor,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &selected  = _sdbStaticObject,
+                              const bson::BSONObj &orderBy   = _sdbStaticObject,
+                              const bson::BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip = 0,
+                              INT64 numToReturn = -1 )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
-         return listLobPieces( &cursor.pCursor ) ;
+         return listLobPieces( &cursor.pCursor, condition, selected, orderBy,
+                               hint, numToSkip, numToReturn ) ;
       }
       /// truncate
       INT32 truncate() ;
@@ -1192,7 +1207,7 @@ namespace sdbclient
       void _getSessionAttrCache ( bson::BSONObj & attribute ) ;
 
       BOOLEAN _getIsOldVersionLobServer() ;
-      void _setIsOldVersionLobServer( BOOLEAN isOldVersionServer ) ;
+      void _setIsOldVersionLobServer( BOOLEAN isOldVersionLobServer ) ;
 
       friend class _sdbCollectionSpaceImpl ;
       friend class _sdbCollectionImpl ;

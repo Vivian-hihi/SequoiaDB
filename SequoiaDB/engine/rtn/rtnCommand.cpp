@@ -505,7 +505,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollection) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollection)
    _rtnCreateCollection::_rtnCreateCollection ()
    :_collectionName ( NULL ),
     _attributes( 0 ),
@@ -861,7 +861,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNCREATECL__CLEAN ) ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace)
    _rtnCreateCollectionspace::_rtnCreateCollectionspace ()
    :_spaceName( NULL ),
     _csUniqueID( UTIL_CSUNIQUEID_LOCAL ),
@@ -952,7 +952,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateIndex) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateIndex)
 
    _rtnCreateIndex::_rtnCreateIndex ()
    : _collectionName ( NULL ),
@@ -1150,7 +1150,7 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollection) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollection)
 
    _rtnDropCollection::_rtnDropCollection ()
    :_collectionName ( NULL )
@@ -1234,7 +1234,7 @@ namespace engine
       goto done;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollectionspace) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollectionspace)
 
    _rtnDropCollectionspace::_rtnDropCollectionspace ()
    :_spaceName ( NULL )
@@ -1319,7 +1319,7 @@ namespace engine
       goto done;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropIndex) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropIndex)
 
    _rtnDropIndex::_rtnDropIndex ()
    :_collectionName ( NULL )
@@ -1485,7 +1485,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetCount) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetCount)
    _rtnGetCount::_rtnGetCount ()
    {
    }
@@ -1504,7 +1504,7 @@ namespace engine
       return CMD_GET_COUNT ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetIndexes) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetIndexes)
    _rtnGetIndexes::_rtnGetIndexes ()
    {
    }
@@ -1523,7 +1523,7 @@ namespace engine
       return CMD_GET_INDEXES ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetDatablocks) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetDatablocks)
    _rtnGetDatablocks::_rtnGetDatablocks ()
    {
    }
@@ -1542,7 +1542,7 @@ namespace engine
       return CMD_GET_DATABLOCKS ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetQueryMeta) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetQueryMeta)
    _rtnGetQueryMeta::_rtnGetQueryMeta ()
    {
    }
@@ -1609,7 +1609,7 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection)
    _rtnRenameCollection::_rtnRenameCollection ()
       :_clShortName ( NULL ), _newCLShortName ( NULL ), _csName( NULL )
    {
@@ -1759,7 +1759,7 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollectionSpace) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollectionSpace)
    _rtnRenameCollectionSpace::_rtnRenameCollectionSpace()
    {
       _oldName = NULL ;
@@ -1956,7 +1956,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOffline) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOffline)
    _rtnReorgOffline::_rtnReorgOffline ()
    {
    }
@@ -1975,7 +1975,7 @@ namespace engine
       return CMD_REORG_OFFLINE ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOnline) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgOnline)
    _rtnReorgOnline::_rtnReorgOnline ()
    {
    }
@@ -1994,7 +1994,7 @@ namespace engine
       return CMD_REORG_ONLINE ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgRecover) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReorgRecover)
    _rtnReorgRecover::_rtnReorgRecover ()
    {
    }
@@ -2013,7 +2013,7 @@ namespace engine
       return CMD_REORG_RECOVER ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnShutdown) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnShutdown)
    _rtnShutdown::_rtnShutdown ()
    {
    }
@@ -2103,7 +2103,7 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollection) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollection)
    _rtnTestCollection::_rtnTestCollection ()
    {
    }
@@ -2127,7 +2127,7 @@ namespace engine
       return _collectionName ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollectionspace) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTestCollectionspace)
    _rtnTestCollectionspace::_rtnTestCollectionspace ()
    {
    }
@@ -2146,7 +2146,7 @@ namespace engine
       return CMD_TEST_COLLECTIONSPACE ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSetPDLevel) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSetPDLevel)
    _rtnSetPDLevel::_rtnSetPDLevel()
    {
       _pdLevel = PDEVENT ;
@@ -2211,7 +2211,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReloadConfig) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReloadConfig)
 
    _rtnReloadConfig::_rtnReloadConfig()
    {
@@ -2404,7 +2404,7 @@ error:
    goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnUpdateConfig) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnUpdateConfig)
 
    _rtnUpdateConfig::_rtnUpdateConfig()
    {
@@ -2530,7 +2530,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDeleteConfig) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDeleteConfig)
 
    _rtnDeleteConfig::_rtnDeleteConfig()
    {
@@ -2626,7 +2626,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStart) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStart)
    _rtnTraceStart::_rtnTraceStart ()
    {
       _mask = 0xFFFFFFFF ;
@@ -2858,7 +2858,7 @@ error:
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceResume) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceResume)
    _rtnTraceResume::_rtnTraceResume ()
    {
    }
@@ -2906,7 +2906,7 @@ error:
       return rc ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStop) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStop)
    _rtnTraceStop::_rtnTraceStop ()
    {
       _pDumpFileName = FALSE ;
@@ -3036,7 +3036,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStatus) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStatus)
    _rtnTraceStatus::_rtnTraceStatus ()
    {
    }
@@ -3431,7 +3431,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnExportConf) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnExportConf)
 
    _rtnExportConf::_rtnExportConf()
    {
@@ -3519,7 +3519,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveBackup) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveBackup)
    _rtnRemoveBackup::_rtnRemoveBackup()
    {
       _path          = NULL ;
@@ -3596,7 +3596,7 @@ error:
 
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnForceSession ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnForceSession )
    INT32 _rtnForceSession::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                   const CHAR *pMatcherBuff,
                                   const CHAR *pSelectBuff,
@@ -3661,7 +3661,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListLob) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListLob)
    _rtnListLob::_rtnListLob()
    :_contextID( -1 ), _skip( 0 ), _returnNum( -1 ),
     _fullName( NULL )
@@ -3767,7 +3767,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSetSessionAttr ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSetSessionAttr )
 
    /*
       _rtnLocalSessionProp implement
@@ -3888,7 +3888,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnGetSessionAttr ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnGetSessionAttr )
 
    _rtnGetSessionAttr::_rtnGetSessionAttr ()
    {
@@ -3921,7 +3921,7 @@ error:
       return SDB_OK ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTruncate) ;
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnTruncate)
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNTRUNCATE_INIT, "_rtnTruncate::init" )
    INT32 _rtnTruncate::init( INT32 flags, INT64 numToSkip,
                              INT64 numToReturn,
@@ -3983,7 +3983,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnPop ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnPop )
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNPOP_INIT, "_rtnPop::init" )
    INT32 _rtnPop::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                          const CHAR *pMatcherBuff,
@@ -4082,7 +4082,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSyncDB )
    _rtnSyncDB::_rtnSyncDB()
    {
       _syncType = 1 ;
@@ -4189,7 +4189,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnLoadCollectionSpace ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnLoadCollectionSpace )
    _rtnLoadCollectionSpace::_rtnLoadCollectionSpace()
    : _csName( NULL ),
      _needChangeID( FALSE ),
@@ -4289,7 +4289,7 @@ error:
       _clInfoObj = clInfoObj.getOwned() ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace )
    _rtnUnloadCollectionSpace::_rtnUnloadCollectionSpace()
    {
    }
@@ -4319,7 +4319,7 @@ error:
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAnalyze ) ;
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAnalyze )
    _rtnAnalyze::_rtnAnalyze()
    {
       _csname = NULL ;

@@ -132,7 +132,7 @@ namespace engine
       BSONObj obj ;
       INT32 returnObjNum = 0 ;
 
-      while ( returnObjNum < 100 && 0 != _returnNum )
+      while ( returnObjNum < 1000 && 0 != _returnNum )
       {
          BOOLEAN isMatch = FALSE ;
          rc = _fetchLobHead ?_getMetaInfo( cb, obj ) :

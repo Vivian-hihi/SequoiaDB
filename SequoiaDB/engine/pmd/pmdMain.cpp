@@ -191,49 +191,6 @@ namespace engine
       UINT32 startTimerCount               = 0 ;
       CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-//      map<INT32, INT32> mapTest;
-//      mapTest[1] = 1;
-//      mapTest[2] = 2;
-//
-//      map<INT32, INT32>::iterator iter = mapTest.end();
-//      ossPrintf( "1key[%d], value[%d]"OSS_NEWLINE, iter->first, iter->second ) ;
-//
-//      mapTest.erase(mapTest.find(2));
-//      mapTest[3] = 3;
-//      mapTest[4] = 4;
-//
-//      mapTest.erase(mapTest.find(4));
-//      mapTest[5] = 5;
-//      mapTest[6] = 6;
-//      mapTest.erase(mapTest.find(6));
-//
-//      map<INT32, INT32>::iterator iterNew = mapTest.end();
-//      ossPrintf( "2key[%d], value[%d]"OSS_NEWLINE, iter->first, iter->second ) ;
-//      ossPrintf( "2key[%d], value[%d], isEqual[%d]"OSS_NEWLINE, iterNew->first,
-//                 iterNew->second, iter == iterNew ) ;
-//
-//      ossPoolMap<INT32, INT32> mapTest2;
-//      mapTest2[1] = 1;
-//      mapTest2[2] = 2;
-//
-//      ossPoolMap<INT32, INT32>::iterator iter2 = mapTest2.end();
-//      ossPrintf( "3key[%d], value[%d]"OSS_NEWLINE, iter2->first, iter2->second ) ;
-//
-//      mapTest2.erase(mapTest2.find(2));
-//      mapTest2[3] = 3;
-//      mapTest2[4] = 4;
-//      mapTest2.erase(mapTest2.find(4));
-//      mapTest2[5] = 5;
-//      mapTest2[6] = 6;
-//      mapTest2.erase(mapTest2.find(6));
-//
-//      ossPoolMap<INT32, INT32>::iterator iter2New = mapTest2.end();
-//      ossPrintf( "4key[%d], value[%d]"OSS_NEWLINE, iter2->first, iter2->second ) ;
-//      ossPrintf( "4key[%d], value[%d], isEqual[%d]"OSS_NEWLINE,
-//                 iter2New->first, iter2New->second, iter2 == iter2New ) ;
-//      rc = SDB_INVALIDARG ;
-//      goto error ;
-
       // 1. read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
       if ( rc )

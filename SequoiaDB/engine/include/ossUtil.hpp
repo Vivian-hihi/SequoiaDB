@@ -188,11 +188,31 @@ typedef class ossTimestamp ossTimestamp ;
 // timestamp format: yyyy-mm-dd-hh.mm.ss.uuuuuu
 #define OSS_TIMESTAMP_STRING_LEN 26
 
-// convert ossTimestamp into string
+// convert ossTimestamp into local calendar time string
 void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr ) ;
+
+// convert ossTimestamp into UTC calendar time string
+void ossTimestampToUTCString( ossTimestamp &Tm, CHAR * pStr ) ;
+
+// convert time_t from local to UTC in the same DateString
+// for example:
+//   [in] local timezone:CST, date:"2019-08-06 20:13:54", local:1565093634
+//   [out] utc  timezone:UTC, date:"2019-08-06 20:13:54", utc:  1565122434
+// quick check:
+// 1. echo "Asia/Shanghai" > /etc/timezone && cat /usr/share/zoneinfo/Asia/Shanghai > /etc/localtime
+// 2. date -d@1565093634  ==> Tue Aug  6 20:13:54 CST 2019
+// 3. echo "UTC" > /etc/timezone && cat /usr/share/zoneinfo/UTC > /etc/localtime
+// 4. date -d@1565122434  ==> Tue Aug  6 20:13:54 UTC 2019
+void ossTimeLocalToUTCInSameDate( const time_t &local, time_t &utc ) ;
+
+time_t ossTimeDiffWithUTC() ;
 
 // convert string into ossTimestamp
 void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm ) ;
+
+// convert string into ossTimestamp with parse number
+void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm,
+                           INT32 &parseNum ) ;
 
 // Wrapper of localtime, convert a time value and correct for the local time
 // zone. The input pTime represents the seconds elapsed since the Epoch,

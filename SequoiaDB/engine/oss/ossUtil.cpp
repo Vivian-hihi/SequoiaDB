@@ -152,6 +152,77 @@ void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr )
    PD_TRACE_EXIT ( SDB_OSSTS2STR );
 }
 
+void ossTimestampToUTCString( ossTimestamp &Tm, CHAR * pStr )
+{
+   CHAR szFormat[] = "%04d-%02d-%02d-%02d.%02d.%02d.%06d" ;
+   CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+   struct tm tmpTm ;
+
+   if ( pStr )
+   {
+      ossGmtime( Tm.time, tmpTm ) ;
+
+      if ( Tm.microtm >= OSS_ONE_MILLION )
+      {
+         tmpTm.tm_sec ++ ;
+         Tm.microtm %= OSS_ONE_MILLION ;
+      }
+
+      ossSnprintf ( szTimestmpStr, sizeof( szTimestmpStr ),
+                    szFormat,
+                    tmpTm.tm_year + 1900,
+                    tmpTm.tm_mon + 1,
+                    tmpTm.tm_mday,
+                    tmpTm.tm_hour,
+                    tmpTm.tm_min,
+                    tmpTm.tm_sec,
+                    Tm.microtm ) ;
+      ossStrncpy( pStr, szTimestmpStr, ossStrlen( szTimestmpStr ) + 1 ) ;
+   }
+}
+
+// convert time_t from local to UTC in the same DateString
+// for example:
+//   [in] local timezone:CST, date:"2019-08-06 20:13:54", local:1565093634
+//   [out] utc  timezone:UTC, date:"2019-08-06 20:13:54", utc:  1565122434
+// quick check:
+// 1. echo "Asia/Shanghai" > /etc/timezone && cat /usr/share/zoneinfo/Asia/Shanghai > /etc/localtime
+// 2. date -d@1565093634  ==> Tue Aug  6 20:13:54 CST 2019
+// 3. echo "UTC" > /etc/timezone && cat /usr/share/zoneinfo/UTC > /etc/localtime
+// 4. date -d@1565122434  ==> Tue Aug  6 20:13:54 UTC 2019
+void ossTimeLocalToUTCInSameDate( const time_t &local, time_t &utc )
+{
+   utc = local + ossTimeDiffWithUTC() ;
+}
+
+time_t ossTimeDiffWithUTC()
+{
+   static time_t time = 1565084755 ;
+   struct tm local ;
+   struct tm utc ;
+   ossLocalTime( time, local ) ;
+   ossGmtime( time, utc ) ;
+   return mktime( &local ) - mktime( &utc ) ;
+}
+
+void ossStructTMToString( struct tm &tm, CHAR *pStr )
+{
+   if ( pStr )
+   {
+      CHAR szFormat[] = "%04d-%02d-%02d-%02d.%02d.%02d" ;
+      CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+      ossSnprintf ( szTimestmpStr, sizeof( szTimestmpStr ),
+                    szFormat,
+                    tm.tm_year + 1900,
+                    tm.tm_mon + 1,
+                    tm.tm_mday,
+                    tm.tm_hour,
+                    tm.tm_min,
+                    tm.tm_sec ) ;
+      ossStrncpy( pStr, szTimestmpStr, ossStrlen( szTimestmpStr ) + 1 ) ;
+   }
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_STR2OSSTS, "ossStringToTimestamp" )
 void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm )
 {
@@ -159,6 +230,7 @@ void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm )
    struct tm tmp = { 0 } ;
    CHAR format[] = "%04d-%02d-%02d-%02d.%02d.%02d.%06d" ;
 
+   Tm.microtm = 0 ;
    ossSscanf( pStr, format, &tmp.tm_year, &tmp.tm_mon, &tmp.tm_mday,
               &tmp.tm_hour, &tmp.tm_min, &tmp.tm_sec, &Tm.microtm ) ;
    tmp.tm_year -= 1900 ;
@@ -168,6 +240,23 @@ void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm )
 
    PD_TRACE_EXIT ( SDB_STR2OSSTS );
 }
+
+void ossStringToTimestamp( const CHAR *pStr, ossTimestamp &Tm,
+                           INT32 &parseNum )
+{
+   struct tm tmp = { 0 } ;
+   CHAR format[] = "%04d-%02d-%02d-%02d.%02d.%02d.%06d" ;
+
+   parseNum = 0 ;
+   Tm.microtm = 0 ;
+   parseNum = ossSscanf( pStr, format, &tmp.tm_year, &tmp.tm_mon, &tmp.tm_mday,
+                         &tmp.tm_hour, &tmp.tm_min, &tmp.tm_sec, &Tm.microtm ) ;
+   tmp.tm_year -= 1900 ;
+   tmp.tm_mon  -= 1 ;
+
+   Tm.time = mktime( &tmp ) ;
+}
+
 
 void ossGetCurrentTime( ossTimestamp &TM )
 {

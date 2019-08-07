@@ -44,7 +44,7 @@ using namespace std ;
 
 namespace engine
 {
-   // 1's number is Odd or not in one byte
+   // number is Odd or not in one byte
    INT32 _utilLobID::_isOddArray[256] = {
       0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
       1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -77,18 +77,18 @@ namespace engine
    {
    }
 
-   INT32 _utilLobID::_toSerialValue( const CHAR *hexValue, UINT8 *serialValue ) const
+   INT32 _utilLobID::_parseHexValue( const CHAR *hexValue, UINT8 *serialValue ) const
    {
       INT32 rc = SDB_OK ;
       INT32 index = 0 ;
 
-      if ( ossStrlen( hexValue ) != 24 )
+      if ( ossStrlen( hexValue ) != UTIL_LOBID_HEX_FORMAT_LEN )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      for ( index = 0 ; index < 12 ; ++index )
+      for ( index = 0 ; index < UTIL_LOBID_ARRAY_LEN ; ++index )
       {
          INT32 hi ;
          INT32 lo ;
@@ -114,32 +114,24 @@ namespace engine
       goto done ;
    }
 
-   INT32 _utilLobID::init( const CHAR *hexValue )
+   INT32 _utilLobID::initFromByteArray( const BYTE *array, INT32 arrayLen )
    {
       INT32 rc = SDB_OK ;
-      UINT8 serialValue[13] = { 0 } ;
-      INT32 index = 0 ;
       INT32 i = 0 ;
-
-      if ( NULL == hexValue )
+      INT32 index = 0 ;
+      if ( NULL == array || arrayLen < UTIL_LOBID_ARRAY_LEN )
       {
          rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      rc = _toSerialValue( hexValue, serialValue ) ;
-      if ( SDB_OK != rc )
-      {
          goto error ;
       }
 
       _seconds = 0 ;
       for ( i = 5; i >= 0; --i )
       {
-         _seconds = _seconds | ((UINT64)serialValue[index++] << (i * 8)) ;
+         _seconds = _seconds | ((UINT64)array[index++] << (i * 8)) ;
       }
 
-      _oddCheck = serialValue[index++] ;
+      _oddCheck = array[index++] ;
 
       rc = _checkOddBit() ;
       if ( SDB_OK != rc )
@@ -150,13 +142,42 @@ namespace engine
       _id = 0 ;
       for ( i = 1; i >= 0; --i )
       {
-         _id = _id | ((UINT16)serialValue[index++] << (i * 8)) ;
+         _id = _id | ((UINT16)array[index++] << (i * 8)) ;
       }
 
       _serial = 0 ;
       for ( i = 2; i >= 0; --i )
       {
-         _serial = _serial | ((UINT32)serialValue[index++] << (i * 8)) ;
+         _serial = _serial | ((UINT32)array[index++] << (i * 8)) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilLobID::init( const CHAR *hexValue )
+   {
+      INT32 rc = SDB_OK ;
+      UINT8 serialValue[UTIL_LOBID_ARRAY_LEN + 1] = { 0 } ;
+
+      if ( NULL == hexValue )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = _parseHexValue( hexValue, serialValue ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = initFromByteArray( serialValue, UTIL_LOBID_ARRAY_LEN ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
       }
 
    done:
@@ -278,16 +299,33 @@ namespace engine
       return _seconds ;
    }
 
+   INT32 _utilLobID::toByteArray( BYTE *result, INT32 resultLen ) const
+   {
+      INT32 rc = SDB_OK ;
+      if ( NULL == result || resultLen < UTIL_LOBID_ARRAY_LEN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      _toSerialValue( result ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    string _utilLobID::toString() const
    {
       static const char hexchars[] = "0123456789abcdef" ;
 
       stringstream ss ;
-      UINT8 serialValue[12] = {0} ;
+      UINT8 serialValue[UTIL_LOBID_ARRAY_LEN] = {0} ;
 
       _toSerialValue( serialValue ) ;
 
-      for ( INT32 i = 0; i < 12; ++i )
+      for ( INT32 i = 0; i < UTIL_LOBID_ARRAY_LEN; ++i )
       {
          CHAR c = serialValue[i] ;
          CHAR high = hexchars[(c & 0xF0) >> 4] ;

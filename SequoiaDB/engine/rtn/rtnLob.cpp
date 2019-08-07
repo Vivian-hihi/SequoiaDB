@@ -680,7 +680,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBMETADATA, "rtnGetLobMetaData" )
    INT32 rtnGetLobMetaData( SINT64 contextID,
-                            pmdEDUCB *cb, 
+                            pmdEDUCB *cb,
                             BSONObj &meta )
    {
       INT32 rc = SDB_OK ;
@@ -713,7 +713,7 @@ namespace engine
          }
 
          goto error ;
-      }      
+      }
    done:
       PD_TRACE_EXITRC( SDB_RTNGETLOBMETADATA, rc ) ;
       return rc ;
@@ -795,7 +795,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITELOB2, "rtnWriteLob" ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITELOB2, "rtnWriteLob" )
    INT32 rtnWriteLob( const CHAR *fullName,
                       const bson::OID &oid,
                       UINT32 sequence,
@@ -843,7 +843,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITEORUPDATELOB, "rtnWriteOrUpdateLob" ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITEORUPDATELOB, "rtnWriteOrUpdateLob" )
    INT32 rtnWriteOrUpdateLob( const CHAR *fullName,
                               const bson::OID &oid,
                               UINT32 sequence,
@@ -1135,7 +1135,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATELOB, "rtnUpdateLob" ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATELOB, "rtnUpdateLob" )
    INT32 rtnUpdateLob( const CHAR *fullName,
                        const bson::OID &oid,
                        UINT32 sequence,
@@ -1180,6 +1180,82 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_RTNUPDATELOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 rtnCreateLobID( const BSONObj &createLobIDObj, bson::OID &oid )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObj obj ;
+      BSONElement ele ;
+      time_t seconds = 0 ;
+      time_t utcTime ;
+      _utilLobID lobID ;
+      BYTE oidArray[UTIL_LOBID_ARRAY_LEN] ;
+      _MsgRouteID routeId = pmdGetNodeID() ;
+
+      if ( MSG_INVALID_ROUTEID == routeId.value )
+      {
+         rc = SDB_INVALID_ROUTEID ;
+         PD_LOG( PDERROR, "Route id must be exist when create lob ID:rc=%d",
+                 rc ) ;
+         goto error ;
+      }
+
+      if ( createLobIDObj.isEmpty() )
+      {
+         seconds = ossGetCurrentMilliseconds() / 1000 ;
+      }
+      else
+      {
+         ossTimestamp timestamp ;
+         INT32 parseNum = 0 ;
+         ele = createLobIDObj.getField( FIELD_NAME_LOB_CREATETIME ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "Invalid type of field[%s]:obj=%s",
+                    FIELD_NAME_LOB_CREATETIME,
+                    createLobIDObj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         //timestamp format:YYYY-MM-DD-HH.mm.ss  6 numbers
+         ossStringToTimestamp( ele.valuestr(), timestamp, parseNum ) ;
+         if ( parseNum < 6 )
+         {
+            PD_LOG( PDERROR, "Invalid field[%s]:obj=%s,parseNum=%d",
+                    FIELD_NAME_LOB_CREATETIME,
+                    createLobIDObj.toString( FALSE, TRUE ).c_str(), parseNum ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         seconds = timestamp.time ;
+      }
+
+      ossTimeLocalToUTCInSameDate( seconds, utcTime ) ;
+      rc = lobID.init( (INT64)utcTime, routeId.columns.nodeID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init lobID:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = lobID.toByteArray( oidArray, UTIL_LOBID_ARRAY_LEN ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get byteArray from lobID[%s]:rc=%d",
+                 lobID.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      oid.init( oidArray, UTIL_LOBID_ARRAY_LEN ) ;
+
+   done:
       return rc ;
    error:
       goto done ;

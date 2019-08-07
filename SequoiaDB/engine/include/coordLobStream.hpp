@@ -312,10 +312,6 @@ namespace engine
 
          CHAR*                _emptyPageBuf ;
          BOOLEAN              _mainStreamOpened ;
-
-         // is need check lobId in MainCL
-         // it's not need to check when cl is not MainCL anyway
-         BOOLEAN              _isNeedCheckLobID ;
    } ;
    typedef _coordLobStream coordLobStream ;
 

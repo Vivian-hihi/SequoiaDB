@@ -156,6 +156,20 @@ namespace bson {
         }
     }
 
+    void OID::init( const unsigned char *array, int arrayLen ) {
+        assert( arrayLen >= 12 );
+        memcpy( data, array, 12 );
+    }
+
+    void OID::toByteArray( unsigned char *array, int arrayLen ) const {
+        int len = arrayLen >= 12 ? 12 : arrayLen;
+        if ( NULL == array ) {
+            return;
+        }
+
+        memcpy( array, data, len ) ;
+    }
+
     void OID::init(Date_t date, bool max) {
         int time = (int) (date / 1000);
         char* T = (char *) &time;

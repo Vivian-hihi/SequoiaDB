@@ -70,7 +70,7 @@ namespace engine
 
       protected:
          INT32                   _onMsgReqMsg( MsgHeader * msg ) ;
-         INT32                   _onUpdateReqMsg( MsgHeader * msg, 
+         INT32                   _onUpdateReqMsg( MsgHeader * msg,
                                                   SDB_DPSCB *dpsCB ) ;
          INT32                   _onInsertReqMsg( MsgHeader * msg ) ;
          INT32                   _onQueryReqMsg( MsgHeader * msg,
@@ -78,7 +78,7 @@ namespace engine
                                                  _rtnContextBuf &buffObj,
                                                  INT64 &contextID,
                                                  BOOLEAN &needRollback ) ;
-         INT32                   _onDelReqMsg( MsgHeader * msg, 
+         INT32                   _onDelReqMsg( MsgHeader * msg,
                                                SDB_DPSCB *dpsCB ) ;
          INT32                   _onGetMoreReqMsg( MsgHeader * msg,
                                                    rtnContextBuf &buffObj,
@@ -108,6 +108,8 @@ namespace engine
                                                   SDB_DPSCB *dpsCB ) ;
          INT32                   _onTruncateLobMsg( MsgHeader *msg,
                                                     SDB_DPSCB *dpsCB ) ;
+         INT32                   _onCreateLobIDMsg( MsgHeader *msg,
+                                                    rtnContextBuf &buffObj ) ;
          INT32                   _onInterruptMsg( MsgHeader *msg,
                                                   SDB_DPSCB *dpsCB ) ;
          INT32                   _onInterruptSelfMsg() ;

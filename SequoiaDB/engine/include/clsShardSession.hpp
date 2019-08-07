@@ -322,8 +322,6 @@ namespace engine
          INT32 _rollbackTrans( BOOLEAN *pHasRollback = NULL,
                                UINT32 timeout = OSS_ONE_SEC * 60 ) ;
 
-         INT32 _replaceToSubCLName( BSONObj &matcher, const CHAR *subCLName ) ;
-
       protected:
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;

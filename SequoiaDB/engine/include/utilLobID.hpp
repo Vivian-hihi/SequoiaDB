@@ -42,6 +42,9 @@
 
 using namespace std ;
 
+#define UTIL_LOBID_ARRAY_LEN        12
+#define UTIL_LOBID_HEX_FORMAT_LEN   (2 * UTIL_LOBID_ARRAY_LEN)
+
 namespace engine
 {
    /*
@@ -69,9 +72,10 @@ namespace engine
 
    public:
       INT32 init( const CHAR *hexValue ) ;
+      INT32 initFromByteArray( const BYTE *array, INT32 arrayLen ) ;
       INT32 init( INT64 seconds, UINT16 id ) ;
-
       string toString() const ;
+      INT32 toByteArray( BYTE *result, INT32 resultLen ) const ;
 
       INT64 getSeconds() const ;
 
@@ -79,7 +83,7 @@ namespace engine
       void _setOddCheckBit() ;
       INT32 _checkOddBit() ;
       void _toSerialValue( UINT8 *serialValue ) const ;
-      INT32 _toSerialValue( const CHAR *hexValue, UINT8 *serialValue ) const ;
+      INT32 _parseHexValue( const CHAR *hexValue, UINT8 *serialValue ) const ;
       INT32 _fromHex( const CHAR c, INT32 &reslut ) const ;
       BOOLEAN _bitIsOne( UINT8 value, INT32 pos ) ;
 
@@ -90,7 +94,7 @@ namespace engine
       UINT32 _serial ;   // serial number
 
    private:
-      // 1's number is Odd or not in one byte
+      // number is Odd or not in one byte
       static INT32 _isOddArray[256] ;
       static _utilSerialAllocator _serialAllocator ;
    } ;

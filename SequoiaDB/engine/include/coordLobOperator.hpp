@@ -52,8 +52,6 @@ namespace engine
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
 
-      private:
-         INT32 _appendOID( BSONObj &obj ) ;
    } ;
    typedef _coordOpenLob coordOpenLob ;
 

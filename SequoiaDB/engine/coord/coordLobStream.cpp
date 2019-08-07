@@ -194,7 +194,8 @@ namespace engine
 
       if ( _cataInfo->isMainCL() )
       {
-         string oidStr = getOID().str() ;
+         BYTE oidArray[UTIL_LOBID_ARRAY_LEN] = { 0 } ;
+         const bson::OID oid = getOID() ;
          _utilLobID lobId ;
          INT32 lobShardingKeyFormat = _cataInfo->getLobShardingKeyFormat() ;
          if ( SDB_TIME_INVALID == lobShardingKeyFormat )
@@ -205,11 +206,13 @@ namespace engine
             goto error ;
          }
 
-         rc = lobId.init( oidStr.c_str() ) ;
+         oid.toByteArray( oidArray, UTIL_LOBID_ARRAY_LEN ) ;
+
+         rc = lobId.initFromByteArray( oidArray, UTIL_LOBID_ARRAY_LEN ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Invalid Oid in lob's MainCL:Oid=%s,rc=%d",
-                    oidStr.c_str(), rc ) ;
+                    oid.str().c_str(), rc ) ;
             goto error ;
          }
 
@@ -217,7 +220,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Invalid Oid in lob's MainCL:id=%s,rc=%d",
-                    oidStr.c_str(), rc ) ;
+                    oid.str().c_str(), rc ) ;
             goto error ;
          }
       }

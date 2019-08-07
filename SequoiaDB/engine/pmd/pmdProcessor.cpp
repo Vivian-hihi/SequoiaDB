@@ -184,6 +184,9 @@ namespace engine
             case MSG_BS_LOB_TRUNCATE_REQ:
                rc = _onTruncateLobMsg( msg, getDPSCB() ) ;
                break ;
+            case MSG_BS_LOB_CREATELOBID_REQ:
+               rc = _onCreateLobIDMsg( msg, contextBuff ) ;
+               break ;
             case MSG_AUTH_CRTUSR_REQ:
             case MSG_AUTH_DELUSR_REQ:
                rc = SDB_RTN_COORD_ONLY ;
@@ -1368,6 +1371,52 @@ namespace engine
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdDataProcessor::_onCreateLobIDMsg( MsgHeader *msg,
+                                               rtnContextBuf &buffObj )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj ;
+      bson::OID oid ;
+      rc = msgExtractCreateLobIDRequest( (const CHAR*)msg, &header,
+                                         obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to extract create LobID msg:%d", rc ) ;
+         goto error ;
+      }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld", header->contextID ) ;
+
+      rc = rtnCreateLobID( obj, oid ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to create lobID:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder builder ;
+         builder.appendOID( FIELD_NAME_LOB_OID, &oid ) ;
+         buffObj = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to init Object id:exception=%s,rc=%d",
+               e.what(), rc ) ;
          goto error ;
       }
 

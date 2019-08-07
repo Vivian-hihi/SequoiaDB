@@ -614,8 +614,9 @@ namespace engine
 
    BOOLEAN clsCheckAndParseLobKeyFormat( const CHAR *keyFormat,
                                          INT32 *result = NULL ) ;
-   INT32 clsGetTimeStr( INT32 seconds, SDB_LOBKEY_FORMAT format,
-                        std::string &result ) ;
+
+   INT32 clsGetLobTimeStr( INT64 seconds, INT32 format,
+                           CHAR *timeStr, INT32 timeStrLen ) ;
 
    /// global function
    clsShardingKeySite* clsGetShardingKeySite() ;

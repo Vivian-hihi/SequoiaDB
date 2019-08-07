@@ -2414,11 +2414,9 @@ namespace engine
                                            string &subCLName )
    {
       INT32 rc = SDB_OK ;
-      time_t t = 0 ;
       BSONObjBuilder builder ;
       BSONObj obj ;
       CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
-      struct tm tmpTm ;
 
       if ( SDB_TIME_INVALID == _lobShardingKeyFormat )
       {
@@ -2428,28 +2426,12 @@ namespace engine
          goto error ;
       }
 
-      t = (time_t) lobID.getSeconds() ;
-      ossLocalTime( t, tmpTm ) ;
-      if ( SDB_TIME_DAY == _lobShardingKeyFormat )
+      rc = clsGetLobTimeStr( lobID.getSeconds(), _lobShardingKeyFormat,
+                             szTimestmpStr, OSS_TIMESTAMP_STRING_LEN ) ;
+      if ( SDB_OK != rc )
       {
-         ossSnprintf( szTimestmpStr, sizeof( szTimestmpStr ), "%04d%02d%02d",
-                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1, tmpTm.tm_mday ) ;
-      }
-      else if ( SDB_TIME_MONTH == _lobShardingKeyFormat )
-      {
-         ossSnprintf( szTimestmpStr, sizeof( szTimestmpStr ), "%04d%02d",
-                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1 ) ;
-      }
-      else if ( SDB_TIME_YEAR == _lobShardingKeyFormat )
-      {
-         ossSnprintf( szTimestmpStr, sizeof( szTimestmpStr ), "%04d",
-                      tmpTm.tm_year + 1900 ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unregconized lobShardingKeyFormat(%d):cl=%s,cata=%s",
-                 _lobShardingKeyFormat, name(),
+         PD_LOG( PDERROR, "Failed to get lobTimeStr:lobShardingKeyFormat=%d,"
+                 "cl=%s,cata=%s", _lobShardingKeyFormat, name(),
                  toCataInfoBson().toString().c_str() ) ;
          goto error ;
       }
@@ -4051,5 +4033,48 @@ namespace engine
       }
 
       return isValid ;
+   }
+
+   INT32 clsGetLobTimeStr( INT64 seconds, INT32 format,
+                           CHAR *timeStr, INT32 timeStrLen )
+   {
+      INT32 rc = SDB_OK ;
+      struct tm tmpTm ;
+      time_t t ;
+
+      if ( NULL == timeStr || timeStrLen < 9 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid timeStr or timeStrLen[%d]", timeStrLen ) ;
+         goto error ;
+      }
+
+      t = ( time_t )seconds ;
+      ossGmtime( t, tmpTm ) ;
+      if ( SDB_TIME_DAY == format )
+      {
+         ossSnprintf( timeStr, timeStrLen, "%04d%02d%02d",
+                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1, tmpTm.tm_mday ) ;
+      }
+      else if ( SDB_TIME_MONTH == format )
+      {
+         ossSnprintf( timeStr, timeStrLen, "%04d%02d",
+                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1 ) ;
+      }
+      else if ( SDB_TIME_YEAR == format )
+      {
+         ossSnprintf( timeStr, timeStrLen, "%04d", tmpTm.tm_year + 1900 ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Unregconized lobShardingKeyFormat(%d)", format ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }

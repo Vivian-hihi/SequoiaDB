@@ -164,7 +164,7 @@ namespace engine
                      UINT32 &read,
                      dmsStorageUnit *su = NULL,
                      dmsMBContext *mbContext = NULL ) ;
-                      
+
 
    INT32 rtnCloseLob( const CHAR *fullName,
                       const bson::OID &oid,
@@ -194,6 +194,7 @@ namespace engine
                                    dmsMBContext *mbContext = NULL,
                                    BOOLEAN allowUncompleted = FALSE ) ;
 
+   INT32 rtnCreateLobID( const BSONObj &createLobIDObj, bson::OID &oid ) ;
 
 }
 

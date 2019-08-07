@@ -64,6 +64,7 @@ namespace bson {
         /** @return the object ID output as 24 hex digits */
         string str() const { return toHexLower(data, 12); }
         string toString() const { return str(); }
+        void toByteArray( unsigned char *array, int arrayLen ) const;
 
         static OID gen() { OID o; o.init(); return o; }
 
@@ -72,6 +73,9 @@ namespace bson {
 
         /** init from a 24 char hex string */
         void init( string s );
+
+        /** init from a 12 unsigned char array */
+        void init( const unsigned char *array, int arrayLen );
 
         /** Set to the min/max OID that could be generated at given timestamp.*/
         void init( Date_t date, bool max=false );
