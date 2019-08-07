@@ -406,7 +406,7 @@ public class SequoiadbBucketDao implements BucketDao {
             //如果 aclId is not null，则将aclId作为修改的字段
             if (aclId == null){
                 BSONObject isNull = new BasicBSONObject();
-                isNull.put(DBParamDefine.IS_NULL, 0);
+                isNull.put(DBParamDefine.IS_NULL, 1);
                 matcher.put(Bucket.BUCKET_ACLID, isNull);
             }
 
