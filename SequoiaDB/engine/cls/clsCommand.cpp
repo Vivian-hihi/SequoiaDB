@@ -924,51 +924,11 @@ namespace engine
       SDB_ASSERT( NULL != collectionSpace, "collection space is invalid" ) ;
       SDB_ASSERT( NULL != task, "task is invalid" ) ;
 
-      switch ( task->getActionType() )
-      {
-         case RTN_ALTER_CS_SET_ATTRIBUTES :
-         {
-            PD_CHECK( !task->testArgumentMask( UTIL_CS_CAPPED_FIELD |
-                                               UTIL_CS_PAGESIZE_FIELD ),
-                      SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
-                      "Failed to check collection space, the collection space "
-                      "is not empty" ) ;
-            PD_CHECK( !task->testArgumentMask( UTIL_CS_DOMAIN_FIELD ),
-                      SDB_RTN_CMD_NO_SERVICE_AUTH, error, PDERROR,
-                      "Failed to check collection space, should execute the "
-                      "command from SHARD port" ) ;
-            rc = rtnAlterCSSetAttributes( collectionSpace, task, options,
-                                          cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CS_SET_DOMAIN :
-         case RTN_ALTER_CS_REMOVE_DOMAIN :
-         {
-            rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
-            PD_LOG( PDERROR, "Failed to check collection space, should "
-                    "execute the command from SHARD port" ) ;
-            break ;
-         }
-         case RTN_ALTER_CS_ENABLE_CAPPED :
-         case RTN_ALTER_CS_DISABLE_CAPPED :
-         {
-            rc = SDB_DMS_CS_NOT_EMPTY ;
-            PD_LOG( PDERROR, "Failed to check collection space, the collection "
-                    "space is not empty" ) ;
-            break ;
-         }
-         default :
-         {
-            rc = SDB_INVALIDARG ;
-            break ;
-         }
-      }
-
-      PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection space [%s], "
-                   "rc: %d", task->getActionName(), collectionSpace, rc ) ;
-
-      rc = rtnAlter2DPSLog( collectionSpace, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+      rc = rtnAlterCollectionSpace( collectionSpace, task, options, cb,
+                                    dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection "
+                   "space [%s], rc: %d", task->getActionName(),
+                   collectionSpace, rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB__CLSALTERCOLLECTIONSPACE__EXECTASK, rc ) ;
@@ -1043,61 +1003,9 @@ namespace engine
       SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
       SDB_ASSERT( NULL != task, "task is invalid" ) ;
 
-      switch ( task->getActionType() )
-      {
-         case RTN_ALTER_CL_CREATE_ID_INDEX :
-         {
-            rc = rtnCreateIDIndex( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DROP_ID_INDEX :
-         {
-            rc = rtnDropIDIndex( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_ENABLE_SHARDING :
-         {
-            rc = rtnEnableSharding( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DISABLE_SHARDING :
-         {
-            rc = rtnDisableSharding( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_ENABLE_COMPRESS :
-         {
-            rc = rtnEnableCompress( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DISABLE_COMPRESS :
-         {
-            rc = rtnDisableCompress( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_SET_ATTRIBUTES :
-         {
-            rc = rtnAlterCLSetAttributes( collection, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
-         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
-         {
-            // do nothing
-            goto done;
-         }
-         default :
-         {
-            rc = SDB_INVALIDARG ;
-            break ;
-         }
-      }
-
-      PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection [%s], "
-                   "rc: %d", task->getActionName(), collection, rc ) ;
-
-      rc = rtnAlter2DPSLog( collection, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+      rc = rtnAlterCollection( collection, task, options, cb, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection "
+                   "[%s], rc: %d", task->getActionName(), collection, rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB__CLSALTERCOLLECTION__EXECTASK, rc ) ;
