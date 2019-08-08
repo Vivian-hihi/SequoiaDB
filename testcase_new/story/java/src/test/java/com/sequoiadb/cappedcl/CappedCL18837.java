@@ -84,6 +84,7 @@ public class CappedCL18837 extends SdbTestBase {
             for (int i = 0; i < clNum; i++) {
                 cappedCS.dropCollection(cappedCLName + "_" + i);
             }
+            cappedCS.dropCollection(cappedCLName);
         } finally {
             sdb.close();
         }
