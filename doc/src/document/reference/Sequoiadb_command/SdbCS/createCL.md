@@ -205,7 +205,7 @@ v1.0及以上版本。
     * 也可以指定大对象ID的时间属性
 
     ```lang-javascript
-    > db.foo.maincl.createLobID(Timestamp("2019-07-23-18.04.07.539050"))
+    > db.foo.maincl.createLobID("2019-07-23-18.04.07")
     00005d36db97360002de8081
     Takes 0.108365s.
     > db.foo.maincl.putLob('/opt/data/test.dat', '00005d36db97360002de8081')

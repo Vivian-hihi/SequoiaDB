@@ -370,7 +370,7 @@ Time can be specified to a particular time.
 .IP
 .nf
 \f[C]
->\ db.foo.maincl.createLobID(Timestamp("2019\-07\-23\-18.04.07.539050"))
+>\ db.foo.maincl.createLobID("2019\-07\-23\-18.04.07.539050")
 00005d36db97360002de8081
 Takes\ 0.108365s.
 >\ db.foo.maincl.putLob(\[aq]/opt/data/test.dat\[aq],\ \[aq]00005d36db97360002de8081\[aq])
