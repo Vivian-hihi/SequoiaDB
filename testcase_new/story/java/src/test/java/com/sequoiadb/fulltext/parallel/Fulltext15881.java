@@ -120,11 +120,11 @@ public class Fulltext15881 extends FullTestBase {
 
     private void checkAlterCLResults(boolean alterCLSucc) {
         DBCursor cursor = sdb.getSnapshot(8, new BasicBSONObject("Name", cl.getFullName()), null, null);
-        BSONObject clInfo = cursor.getCurrent();
+        BasicBSONObject clInfo = (BasicBSONObject)cursor.getCurrent();
         if (alterCLSucc) {
             Assert.assertEquals(clInfo.get("ShardingType").toString(), "hash");
         } else {
-            Assert.assertNull(clInfo.get("ShardingType"));
+            Assert.assertFalse(clInfo.containsField( "ShardingType" ));
         }
     }
 }
