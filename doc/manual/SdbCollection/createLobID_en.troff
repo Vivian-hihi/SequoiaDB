@@ -7,7 +7,7 @@
 createLobID \- Create a lob ID, not a lob
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.createLobID([Timestamp])\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.createLobID([Time])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
@@ -16,11 +16,12 @@ Collection
 Create a lob ID from Server
 .SH PARAMETERS
 .IP \[bu] 2
-\f[C]Timestamp\f[]( \f[I]Object\f[]， \f[I]Optional\f[] )
+\f[C]Time\f[]( \f[I]String\f[]， \f[I]Optional\f[] )
 .RS 2
 .PP
-Create a lob ID by Timestamp, the minimum precision is second.
-See Timestamp for more detail.
+Create a lob ID by Time, the minimum precision is second.
+The valid format of Time is:"YYYY\-MM\-DD\-HH.mm.ss",
+example:"2019\-08\-01\-12.00.00".
 .RE
 .IP \[bu] 2
 When no parameter is specified, Lob ID will be created by the Timestamp in
@@ -54,8 +55,8 @@ Create a lob ID by TimeStamp.
 .IP
 .nf
 \f[C]
->\ db.foo.bar.createLobID(\ Timestamp(\ "2015\-06\-05\-16.10.33.000000"\ )\ )
-0000557159793e0002de7f6e
+>\ db.foo.bar.createLobID(\ "2015\-06\-05\-16.10.33.000000"\ )
+00005571c9f93f03e8d8dd57
 Takes\ 0.108214s.
 \f[]
 .fi

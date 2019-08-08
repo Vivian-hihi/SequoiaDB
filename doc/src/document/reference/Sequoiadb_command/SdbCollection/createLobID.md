@@ -3,7 +3,7 @@
 createLobID - 创建大对象ID。
 
 ##语法##
-***db.collectionspace.collection.createLobID([Timestamp])***
+***db.collectionspace.collection.createLobID([Time])***
 
 ##类别##
 
@@ -15,9 +15,9 @@ Collection
 
 ##参数##
 
-* `Timestamp`( *Object*， *选填* )
+* `Time`( *String*， *选填* )
     
-    根据Timestamp生成大对象ID，目前最小单位只获取到秒级。使用方法可参考[Timestamp](reference/Sequoiadb_command/SpecialObjects/Timestamp.md)。
+    根据Time生成大对象ID，目前最小单位只获取到秒级。Time的格式为："YYYY-MM-DD-HH.mm.ss"，如："2019-08-01-12.00.00"。
     
 * 无参时，将根据服务器上的时间来生成大对象ID。
 
@@ -54,7 +54,7 @@ Collection
 * 根据传入的TimeStamp，在 foo.bar 中创建大对象ID
 
     ```lang-javascript
-    > db.foo.bar.createLobID( Timestamp( "2015-06-05-16.10.33.000000" ) )
-    0000557159793e0002de7f6e
+    > db.foo.bar.createLobID( "2015-06-05-16.10.33" )
+    00005571c9f93f03e8d8dd57
     Takes 0.108214s.
     ```

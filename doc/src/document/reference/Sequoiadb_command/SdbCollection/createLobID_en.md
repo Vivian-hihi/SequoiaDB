@@ -3,7 +3,7 @@
 createLobID - Create a lob ID, not a lob
 
 ##SYNOPSIS##
-***db.collectionspace.collection.createLobID([Timestamp])***
+***db.collectionspace.collection.createLobID([Time])***
 
 ##CATEGORY##
 
@@ -15,9 +15,9 @@ Create a lob ID from Server
 
 ##PARAMETERS##
 
-* `Timestamp`( *Object*， *Optional* )
+* `Time`( *String*， *Optional* )
     
-    Create a lob ID by Timestamp, the minimum precision is second. See [Timestamp](reference/Sequoiadb_command/SpecialObjects/Timestamp.md) for more detail.
+    Create a lob ID by Time, the minimum precision is second. The valid format of Time is:"YYYY-MM-DD-HH.mm.ss", example:"2019-08-01-12.00.00".
 
 * When no parameter is specified, Lob ID will be created by the Timestamp in server side.
 
@@ -47,7 +47,7 @@ more detail.
 * Create a lob ID by TimeStamp.
 
     ```lang-javascript
-    > db.foo.bar.createLobID( Timestamp( "2015-06-05-16.10.33.000000" ) )
-    0000557159793e0002de7f6e
+    > db.foo.bar.createLobID( "2015-06-05-16.10.33.000000" )
+    00005571c9f93f03e8d8dd57
     Takes 0.108214s.
     ```
