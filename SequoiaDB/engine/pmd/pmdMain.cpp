@@ -174,6 +174,15 @@ namespace engine
             pmdGetKRCB()->callPrimaryChangeHandler( TRUE,
                                                     SDB_EVT_OCCUR_AFTER ) ;
          }
+
+         if ( SDB_ROLE_STANDALONE == pmdGetDBRole() )
+         {
+            MsgRouteID standAloneID ;
+            standAloneID.value             = MSG_INVALID_ROUTEID ;
+            standAloneID.columns.groupID   = INVALID_GROUPID ;
+            standAloneID.columns.nodeID    = DATA_NODE_ID_BEGIN ;
+            pmdSetNodeID( standAloneID ) ;
+         }
       }
 
       return SDB_OK ;
