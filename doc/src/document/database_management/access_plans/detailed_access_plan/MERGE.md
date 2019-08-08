@@ -47,13 +47,13 @@
         "Name": "subcs.subcl1",
         "EstTotalCost": 0.8277414999999999,
         "QueryTimeSpent": 1.080046,
-        "WaitTimeSpant": 0.000234
+        "WaitTimeSpent": 0.000234
       },
       {
         "Name": "subcs.subcl2",
         "EstTotalCost": 0.8277414999999999,
         "QueryTimeSpent": 0.946832,
-        "WaitTimeSpant": 0.000182
+        "WaitTimeSpent": 0.000182
       }
     ],
     "Selector": {},

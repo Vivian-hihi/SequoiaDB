@@ -14,7 +14,7 @@ SDB_SNAP_HEALTH
 | -------------------- | ------ | ---------------------------------------------- |
 | NodeName             | 字符串 | 节点名，为“< HostName > : < ServiceName >” |
 | IsPrimary            | 布尔   | 是否为主节点 |
-| ServiceStatus        | 布尔   | 是否为可提供服务状态<br>一些特殊状态，例如[全量同步](infrastructure/replication/replicate.md#全量同步)会使该状态为 false |              
+| ServiceStatus        | 布尔   | 是否为可提供服务状态<br>一些特殊状态，例如[全量同步](infrastructure/replication/replicate.md#全量同步)会使该状态为 false |
 | Status               | 字符串 | 节点状态，为 “Normal” / “Rebuilding” / “FullSync” / “OfflineBackup”  |
 | BeginLSN.Offset      | 长整型 | 起始 LSN 的偏移 |
 | BeginLSN.Version     | 整型   | 起始 LSN 的版本号 |
