@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-unloadCS \- Unload the specific collection space.
+unloadCS \- Unload the specific collection space from memory.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.unloadCS( <csName>, [options] )\f[]\f[]
@@ -14,7 +14,7 @@ unloadCS \- Unload the specific collection space.
 Sdb
 .SH DESCRIPTION
 .PP
-Unload the specific collection space.
+Unload the specific collection space from memory.
 .SH PARAMETERS
 .PP
 .TS
@@ -52,11 +52,11 @@ T{
 T}@T{
 options
 T}@T{
-string
+JSON
 T}@T{
 NULL
 T}@T{
-specify collection
+command position
 T}@T{
 not
 T}
@@ -65,82 +65,8 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-space information
+parameter
 T}@T{
-T}
-.TE
-.PP
-The detail description of \[aq]options\[aq] parameter is as follow:
-.PP
-.TS
-tab(@);
-l l l l l.
-T{
-0
-T}@T{
-Attributes
-T}@T{
-Type
-T}@T{
-Description
-T}@T{
-Required or not
-T}
-_
-T{
-1
-T}@T{
-GroupID
-T}@T{
-int
-T}@T{
-replication group ID
-T}@T{
-not
-T}
-T{
-2
-T}@T{
-GroupName
-T}@T{
-string
-T}@T{
-replication group name
-T}@T{
-not
-T}
-T{
-3
-T}@T{
-NodeID
-T}@T{
-int
-T}@T{
-node ID
-T}@T{
-not
-T}
-T{
-4
-T}@T{
-HostName
-T}@T{
-string
-T}@T{
-hostname
-T}@T{
-not
-T}
-T{
-5
-T}@T{
-svcname
-T}@T{
-string
-T}@T{
-the port of the node
-T}@T{
-not
 T}
 .TE
 
@@ -162,11 +88,60 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Unload the specific collection space named "foo".(Suppose the specific
-collection space named "foo" existes)
+Query data.
+( Suppose the specific collection space named "foo" existes and the current
+sequoiadb is started in standalone mode )
+.IP
+.nf
+\f[C]
+>\ db.foo.bar.find()
+{
+\ \ \ "_id":\ {
+\ \ \ \ \ "$oid":\ "5d36c9d5c6b1cee56abefc7e"
+\ \ \ },
+\ \ \ "name":\ "fang",
+\ \ \ "age":\ 18
+}
+\f[]
+.fi
+.IP \[bu] 2
+Unload the collection space named foo from memory.
 .IP
 .nf
 \f[C]
 >\ db.unloadCS(\ "foo"\ )
+\f[]
+.fi
+.IP \[bu] 2
+Query data.
+.IP
+.nf
+\f[C]
+>\ db.foo.bar.find()
+uncaught\ exception:\ \-34
+Collection\ space\ does\ not\ exist
+\f[]
+.fi
+.IP \[bu] 2
+Load the collection space named into memory.
+.IP
+.nf
+\f[C]
+>\ db.loadCS(\ "foo"\ )
+\f[]
+.fi
+.IP \[bu] 2
+Query data again.
+.IP
+.nf
+\f[C]
+>\ db.foo.bar.find()
+{
+\ \ \ "_id":\ {
+\ \ \ \ \ "$oid":\ "5d36c9d5c6b1cee56abefc7e"
+\ \ \ },
+\ \ \ "name":\ "fang",
+\ \ \ "age":\ 18
+}
 \f[]
 .fi

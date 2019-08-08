@@ -19,7 +19,7 @@ Load the specific collection space into memory.
 | Name    | Type   | Default | Description                          | Required or not |
 | ------- | ------ | ------- | ------------------------------------ | --------------- |
 | csName  | string | ---     | collection space name                | yes             |
-| options | string | NULL    | [command position parameter](reference/Sequoiadb_command/Overview/location.md) | not             |
+| options | JSON   | NULL    | [command position parameter](reference/Sequoiadb_command/Overview/location.md) | not             |
 
 >**Note:**
 
@@ -37,7 +37,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Query data. (Suppose the specific collection space named "foo" existes and the current sequoiadb is started in standalone mode)
+* Query data. ( Suppose the specific collection space named "foo" existes and the current sequoiadb is started in standalone mode )
 
 ```lang-javascript
 > db.foo.bar.find()

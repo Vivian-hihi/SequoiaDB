@@ -39,7 +39,7 @@ T{
 T}@T{
 flag
 T}@T{
-int
+list
 T}@T{
 \-\-\-
 T}@T{
@@ -65,120 +65,213 @@ _
 T{
 1
 T}@T{
-128
+SDB_FLG_QUERY_FORCE_
 T}@T{
-Force to use specified
+When add this flag, it
+T}
+T{
+T}@T{
+HINT
+T}@T{
+will force to use
 T}
 T{
 T}@T{
 T}@T{
-hint to query, if
+specified hint to query,
 T}
 T{
 T}@T{
 T}@T{
-database have no index
+if database don\[aq]t have
 T}
 T{
 T}@T{
 T}@T{
-assigned by the hint,
+the specified index,
 T}
 T{
 T}@T{
 T}@T{
-fail to query
+fail to query and
+T}
+T{
+T}@T{
+T}@T{
+return an error
 T}
 T{
 2
 T}@T{
-256
+SDB_FLG_QUERY_PARALLED
 T}@T{
-Enable parallel sub
+When add this flag, it
 T}
 T{
 T}@T{
 T}@T{
-query, each sub query
+will enable parallel
 T}
 T{
 T}@T{
 T}@T{
-will finish scanning
+sub query, each sub
 T}
 T{
 T}@T{
 T}@T{
-different part of the
+query will finish
 T}
 T{
 T}@T{
 T}@T{
-data
+scanning different part
+T}
+T{
+T}@T{
+T}@T{
+of the data
 T}
 T{
 3
 T}@T{
-512
+SDB_FLG_QUERY_WITH_
 T}@T{
 In general, query won\[aq]t
 T}
 T{
 T}@T{
+RETURNDATA
 T}@T{
-return data until
+return data but a
 T}
 T{
 T}@T{
 T}@T{
-cursor gets from
+cursor.
+And the cursor
 T}
 T{
 T}@T{
 T}@T{
-database, when add this
+is used to get data.
 T}
 T{
 T}@T{
 T}@T{
-flag, return data in
+When add this flag, it
 T}
 T{
 T}@T{
 T}@T{
-query response, it will
+will return data in
 T}
 T{
 T}@T{
 T}@T{
-be more high\-
+query response.
+This
 T}
 T{
 T}@T{
 T}@T{
-performance
+flag is enabled by
+T}
+T{
+T}@T{
+T}@T{
+default
 T}
 T{
 4
 T}@T{
-16384
+SDB_FLG_QUERY_PREPARE_
 T}@T{
-Enable prepare more
+During the query, the
+T}
+T{
+T}@T{
+MORE
+T}@T{
+server will perform
 T}
 T{
 T}@T{
 T}@T{
-data when query
+multiple transmissions
+T}
+T{
+T}@T{
+T}@T{
+with the client to
+T}
+T{
+T}@T{
+T}@T{
+return the query result
+T}
+T{
+T}@T{
+T}@T{
+to client.
+When add
+T}
+T{
+T}@T{
+T}@T{
+this flag, the server
+T}
+T{
+T}@T{
+T}@T{
+will transmit more data
+T}
+T{
+T}@T{
+T}@T{
+to the client each
+T}
+T{
+T}@T{
+T}@T{
+time.
+It will reduce
+T}
+T{
+T}@T{
+T}@T{
+the number of
+T}
+T{
+T}@T{
+T}@T{
+transmissions between
+T}
+T{
+T}@T{
+T}@T{
+the server and the
+T}
+T{
+T}@T{
+T}@T{
+client and reduce
+T}
+T{
+T}@T{
+T}@T{
+network overhead.
 T}
 T{
 5
 T}@T{
-65536
+SDB_FLG_QUERY_FOR_
 T}@T{
 When the transaction is
 T}
 T{
 T}@T{
+UPDATE
 T}@T{
 turned on and the
 T}
@@ -264,6 +357,16 @@ T}@T{
 does not work
 T}
 .TE
+
+\f[B]Note:\f[]
+.RE
+.PP
+Suppose the user specifies an index that is not in the collection to query data,
+the database will perform a full table query instead of an index query.
+However, if the user specifies an index that is not in the collection and
+specifies SDB_FLG_QUERY_FORCE_HINT flag to query data, it will fail too query
+and return an error.
+.RE
 .SH RETURN VALUE
 .PP
 On success, returns the cursor of the query result set.
@@ -276,38 +379,36 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Specify flag bit to traverse the result set.
+Force to use specified hint to query.
 .IP
 .nf
 \f[C]
->\ db.foo.bar.find().flags(256)
+>\ db.foo.bar.find().hint(\ {\ "":\ "ageIndex"\ }\ ).flags(\ SDB_FLG_QUERY_FORCE_HINT\ )
 {
-\ \ "_id":\ {
-\ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41d"
-\ \ },
-\ \ "name":\ "fang",
-\ \ "age":\ 18
+\ \ \ "_id":\ {
+\ \ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41d"
+\ \ \ },
+\ \ \ "name":\ "fang",
+\ \ \ "age":\ 18
 }
 {
-\ \ "_id":\ {
-\ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41c"
-\ \ },
-\ \ "name":\ "alice",
-\ \ "age":\ 19
+\ \ \ "_id":\ {
+\ \ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41c"
+\ \ \ },
+\ \ \ "name":\ "alice",
+\ \ \ "age":\ 19
 }
 {
-\ \ "_id":\ {
-\ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41b"
-\ \ },
-\ \ "name":\ "ben",
-\ \ "age":\ 21
+\ \ \ "_id":\ {
+\ \ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41b"
+\ \ \ },
+\ \ \ "name":\ "ben",
+\ \ \ "age":\ 21
 }
-{
-\ \ "_id":\ {
-\ \ \ \ "$oid":\ "5d412cfa614afb5557b2b41a"
-\ \ },
-\ \ "name":\ "tom",
-\ \ "age":\ 20
-}
+
+>\ db.foo.bar.find().hint(\ {\ "":\ "notExistIndex"\ }\ ).flags(\ SDB_FLG_QUERY_FORCE_HINT\ )
+uncaught\ exception:\ \-53
+Invalid\ hint
+Takes\ 0.003438s.
 \f[]
 .fi

@@ -69,6 +69,14 @@ const SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
 const SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
 const SDB_JSON_PARSE               = JSON.parse ;
+
+// SdbQuery flags
+const SDB_FLG_QUERY_FORCE_HINT        = 0x00000080 ;
+const SDB_FLG_QUERY_PARALLED          = 0x00000100 ;
+const SDB_FLG_QUERY_WITH_RETURNDATA   = 0x00000200 ;
+const SDB_FLG_QUERY_PREPARE_MORE      = 0x00004000 ;
+const SDB_FLG_QUERY_FOR_UPDATE        = 0x00010000 ;
+
 // end Global Constants
 
 // Global functions
