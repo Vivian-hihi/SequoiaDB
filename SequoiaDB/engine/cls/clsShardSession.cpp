@@ -2339,11 +2339,28 @@ namespace engine
 
    INT32 _clsShdSession::_onTransStopEvnt( pmdEDUEvent *event )
    {
+      // rollback transaction
       INT32 rcTmp = _rollbackTrans() ;
       if ( rcTmp )
       {
          PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
       }
+
+      // disconnect remote
+      MsgHeader msg ;
+      msg.messageLength = sizeof( MsgHeader ) ;
+      msg.opCode = MSG_BS_DISCONNECT ;
+      msg.TID = CLS_TID( _sessionID ) ;
+      msg.routeID.value = MSG_INVALID_ROUTEID ;
+      msg.requestID = 0L ;
+      routeAgent()->syncSend( _netHandle, &msg ) ;
+
+      // close handle
+      routeAgent()->close( _netHandle ) ;
+
+      PD_LOG( PDEVENT, "On transaction stop event: close handle %d",
+              _netHandle ) ;
+
       return SDB_OK ;
    }
 
