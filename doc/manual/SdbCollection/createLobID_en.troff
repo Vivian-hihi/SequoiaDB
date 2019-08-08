@@ -24,8 +24,8 @@ The valid format of Time is:"YYYY\-MM\-DD\-HH.mm.ss",
 example:"2019\-08\-01\-12.00.00".
 .RE
 .IP \[bu] 2
-When no parameter is specified, Lob ID will be created by the Timestamp in
-server side.
+When no parameter is specified, Lob ID will be created by the Time in server
+side.
 .SH RETURN VALUE
 .PP
 On success, return a lob ID.
@@ -38,7 +38,7 @@ getLastError() to get the error code.
 See troubleshooting for more detail.
 .SH EXAMPLES
 .IP \[bu] 2
-Create a lob ID by the Timestamp in server side.
+Create a lob ID by the Time in server side.
 .RS 2
 .IP
 .nf
@@ -50,7 +50,7 @@ Takes\ 0.329455s.
 .fi
 .RE
 .IP \[bu] 2
-Create a lob ID by TimeStamp.
+Create a lob ID by the specified Time.
 .RS 2
 .IP
 .nf

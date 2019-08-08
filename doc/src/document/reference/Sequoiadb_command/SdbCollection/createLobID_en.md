@@ -19,7 +19,7 @@ Create a lob ID from Server
     
     Create a lob ID by Time, the minimum precision is second. The valid format of Time is:"YYYY-MM-DD-HH.mm.ss", example:"2019-08-01-12.00.00".
 
-* When no parameter is specified, Lob ID will be created by the Timestamp in server side.
+* When no parameter is specified, Lob ID will be created by the Time in server side.
 
 ##RETURN VALUE##
 
@@ -36,7 +36,7 @@ more detail.
 
 ##EXAMPLES##
 
-* Create a lob ID by the Timestamp in server side.
+* Create a lob ID by the Time in server side.
 
     ```lang-javascript
     > db.foo.bar.createLobID()
@@ -44,7 +44,7 @@ more detail.
     Takes 0.329455s.
     ```
 
-* Create a lob ID by TimeStamp.
+* Create a lob ID by the specified Time.
 
     ```lang-javascript
     > db.foo.bar.createLobID( "2015-06-05-16.10.33.000000" )

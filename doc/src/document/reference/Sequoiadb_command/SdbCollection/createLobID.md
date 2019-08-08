@@ -51,7 +51,7 @@ Collection
     Takes 0.329455s.
     ```
 
-* 根据传入的TimeStamp，在 foo.bar 中创建大对象ID
+* 根据传入的Time，在 foo.bar 中创建大对象ID
 
     ```lang-javascript
     > db.foo.bar.createLobID( "2015-06-05-16.10.33" )
