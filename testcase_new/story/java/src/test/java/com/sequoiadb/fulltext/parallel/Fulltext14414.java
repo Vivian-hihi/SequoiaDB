@@ -49,6 +49,7 @@ public class Fulltext14414 extends FullTestBase {
 
         // 主备节点上索引信息一致，固定集合、索引信息、ES端数据一致
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
+        Assert.assertTrue(FullTextUtils.isCLConsistency(cl));
         Assert.assertTrue(FullTextUtils.isIndexConsistency(cl, fullIdxName));
     }
 
