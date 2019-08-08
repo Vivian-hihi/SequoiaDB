@@ -38,6 +38,7 @@ public class SdbTestBase {
     public static String scriptDir;
     public static String esHostName;
     public static String esServiceName;
+    public static String sdbseadapterDir;
 
     private static final String TRANSAUTOCOMMIT = "transautocommit";
     private static final String TRANSAUTOROLLBACK = "transautorollback";
@@ -74,12 +75,13 @@ public class SdbTestBase {
     }
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR",
-            "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME", "FULLTEXTPREFIX" })
+            "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME", "FULLTEXTPREFIX",
+            "SDBSEADAPTERDIR" })
     @BeforeSuite(alwaysRun = true)
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR, String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD,
             String SCRIPTDIR, @Optional("localhost") String ESHOSTNAME, @Optional("9200") String ESSVCNAME,
-            @Optional("") String FULLTEXTPREFIX) {
+            @Optional("") String FULLTEXTPREFIX, String SDBSEADAPTERDIR) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
@@ -96,6 +98,7 @@ public class SdbTestBase {
         esHostName = ESHOSTNAME;
         esServiceName = ESSVCNAME;
         FullTextUtils.setFulltextPrefix(FULLTEXTPREFIX);
+        sdbseadapterDir = SDBSEADAPTERDIR;
 
         getAllNodeConf(confObj);
         Sequoiadb db = null;

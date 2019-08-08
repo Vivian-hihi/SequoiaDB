@@ -18,6 +18,8 @@
    <parameter name="REMOTEUSER" value="sdbadmin" />
    <parameter name="REMOTEPASSWD" value="sdbadmin" />
    <parameter name="SCRIPTDIR" value="${SCRIPTDIR}" />
+   <parameter name="SDBSEADAPTERDIR"
+      value="${SDBSEADAPTERDIR}" />
 
    <listeners>
       <listener
