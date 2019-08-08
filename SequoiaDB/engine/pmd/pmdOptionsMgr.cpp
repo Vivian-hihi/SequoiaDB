@@ -245,15 +245,21 @@ namespace engine
          {
             rc = SDB_FIELD_NOT_EXIST ;
          }
-         else if ( String != ele.type() )
+         else if ( NumberInt == ele.type() )
          {
-            PD_LOG( PDERROR, "Field[%s] type[%d] is not string", pFieldName,
-                    ele.type() ) ;
-            rc = SDB_INVALIDARG ;
+            stringstream ss ;
+            ss << (INT32)ele.numberInt() ;
+            readValue =  ss.str() ;
+         }
+         else if ( String == ele.type() )
+         {
+            readValue = ele.String() ;
          }
          else
          {
-            readValue = ele.String() ;
+            PD_LOG( PDERROR, "Field[%s] type[%d] is not string or int",
+                    pFieldName, ele.type() ) ;
+            rc = SDB_INVALIDARG ;
          }
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
