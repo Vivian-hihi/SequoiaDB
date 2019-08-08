@@ -14,7 +14,6 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
-import com.sequoiadb.fulltext.utils.StringUtils;
 import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
