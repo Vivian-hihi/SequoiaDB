@@ -53,7 +53,7 @@ public class Fulltext15856 extends FullTestBase {
 
     @Test
     private void test() throws Exception {
-        String modVal = StringUtils.getRandomString(16);
+        String modVal = "abcdefghijklmnopq";
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
         for (int i = 0; i < THREAD_NUM; i++) {
             // modifier
