@@ -134,9 +134,9 @@ void* create_pcd( void* arg )
    for( INT32 i = 0;i < 20;i++ )
    {
       rc = sdbCrtJSProcedure( db, "function c_driver_procedure_sum(x, y){return x+y;}" ) ;
-      if( rc == SDB_OK || rc == SDB_IXM_DUP_KEY )
+      if( rc == SDB_OK || rc == SDB_FMP_FUNC_EXIST )
       {
-         // ok, expect 0 or -38           
+         // ok, expect 0 or -342           
       }
       else
       {
