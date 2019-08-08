@@ -3689,6 +3689,8 @@ error:
          _selector = BSONObj( pSelectBuff ) ;
          _orderBy = BSONObj( pOrderByBuff ) ;
          _hint = BSONObj( pHintBuff ) ;
+         _skip = numToSkip ;
+         _returnNum = numToReturn ;
 
          BSONElement ele = _hint.getField( FIELD_NAME_COLLECTION ) ;
          if ( String != ele.type() )
