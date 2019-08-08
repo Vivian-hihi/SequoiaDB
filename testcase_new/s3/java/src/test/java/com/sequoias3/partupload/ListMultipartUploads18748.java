@@ -27,8 +27,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  */
 
 public class ListMultipartUploads18748 extends S3TestBase {
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 3;
+    private boolean runSuccess = false;
     private AmazonS3 s3Client;
     private String bucketName = "bucket18748";
     private File localPath;
@@ -49,7 +48,7 @@ public class ListMultipartUploads18748 extends S3TestBase {
     }
 
     @Test
-    private void test_NotSatisfyPrefix() throws Exception {
+    private void test() throws Exception {
         // initPartUpload
         for (String key : keys) {
             String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
@@ -89,13 +88,13 @@ public class ListMultipartUploads18748 extends S3TestBase {
         expUploads.add(keys[3], uploadIdsNew.get(3));
         PartUploadUtils.checkListMultipartUploadsResults(result, expCommonPrefixes, expUploads);
         
-        runSuccessNum++;
+        runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (runSuccess) {
                 s3Client.deleteBucket(bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
