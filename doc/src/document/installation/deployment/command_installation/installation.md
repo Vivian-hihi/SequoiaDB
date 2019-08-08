@@ -4,7 +4,7 @@
 
 请到 SequoiaDB 巨杉数据库的官方网站下载相应版本的安装包。
 
-下载地址：[SequoiaDB 巨杉数据库][http://download.sequoiadb.com/cn/]
+下载地址：[SequoiaDB 巨杉数据库](http://download.sequoiadb.com/cn/)
 
 ### 安装 SequoiaDB 巨杉数据库步骤
 
