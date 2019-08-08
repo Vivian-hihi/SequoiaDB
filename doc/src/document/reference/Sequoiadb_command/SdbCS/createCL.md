@@ -225,27 +225,31 @@ v1.0及以上版本。
 
 创建主分区集合 masterCL，自增字段为：masterID。
 
-    ```lang-javascript
-    > db.foo.createCL("masterCL",{ IsMainCL: true, ShardingKey: { a: 1 },     ShardingType: "range", AutoIncrement: { Field: "masterID" } })
+   ```lang-javascript
+    > db.foo.createCL("masterCL",{ IsMainCL: true, ShardingKey: { a: 1 }, ShardingType: "range", AutoIncrement: { Field: "masterID" } })
     localhost:11810.foo.masterCL
     Takes 0.002450s.
-    ```
+   ```
 创建子分区集合 slaveCL，自增字段为：slaveID。
 
-    ```lang-javascript
-    > db.foo.createCL("slaveCL",{ ShardingKey: { b: 1 }, ShardingType:     "hash", Partition: 1024, AutoIncrement: { Field: "slaveID" }})
+
+   ```lang-javascript
+    > db.foo.createCL("slaveCL",{ ShardingKey: { b: 1 }, ShardingType: "hash", Partition: 1024, AutoIncrement: { Field: "slaveID" }})
     localhost:11810.foo.slaveCL
     Takes 0.263536s.
-    ```
+   ```
+
 将子分区集合附加到主分区集合中。
 
-    ```lang-javascript
-    > db.foo.masterCL.attachCL( "foo.slaveCL", { LowBound: { a: 0 },     UpBound: { a: 100 } } )
+
+   ```lang-javascript
+    > db.foo.masterCL.attachCL( "foo.slaveCL", { LowBound: { a: 0 }, UpBound: { a: 100 } } )
     Takes 0.002743s.
-    ```
+   ```
+
 从主分区集合 masterCL 中插入数据 {"a":1} 时，AutoIncrement 会沿用主分区集合对应的属性,所以数据会带有 masterID 信息 。从子分区集合 slaveCL 中插入数据 {"a":2} 时，AutoIncrement 会沿用子分区集合的属性，所以数据会带有 slaveID 信息。
 
-    ```lang-javascript
+   ```lang-javascript
     > db.foo.masterCL.insert({"a":1}) //主分区集合插入数据
     Takes 0.001877s.
     > db.foo.slaveCL.insert({"a":2}) //子分区集合插入数据
@@ -268,7 +272,7 @@ v1.0及以上版本。
     Return 2 row(s).
     Takes 0.001234s.
     > 
-    ```
+   ```
  
 集合的其他属性，如 ShardingKey、Compressed、AutoIndexId 等，子分区集合会使用自己的属性而不是沿用主分区集合的对应属性。
     

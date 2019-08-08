@@ -168,11 +168,12 @@ Since v1.0.
 ##EXAMPLES##
 1. Create collection "bar" in collection space "foo" without sharding key.
 
-    ```lang-javascript
+
+	```lang-javascript
     > db.foo.createCL( "bar" )
     localhost:11810.foo.bar
     Takes 0.1250s.
-    ```
+	```
 
 2. Create collection "bar" in collection space "foo". If the collection splits data into other replication groups, it will use the age field for hash segmentation. It has data compression enabled by default, using the default lzw algorithm.When a write operation is applied to the collection, it only needs to be written to the primary node to be returned.
 
@@ -245,30 +246,30 @@ Validates the use of AutoIncrement when writing from the primary partition colle
 
 Create primary partition collection "masterCL", and AutoIncrement set to "masterID" 
 
-    ```lang-javascript
-    > db.foo.createCL("masterCL",{ IsMainCL: true, ShardingKey: { a: 1 },     ShardingType: "range", AutoIncrement: { Field: "masterID" } })
+   ```lang-javascript
+    > db.foo.createCL("masterCL",{ IsMainCL: true, ShardingKey: { a: 1 }, ShardingType: "range", AutoIncrement: { Field: "masterID" } })
     localhost:11810.foo.masterCL
     Takes 0.002450s.
-    ```
+   ```
 Create subpartition collection "slaveCL", and AutoIncrement set to "slaveID"
 
-    ```lang-javascript
-    > db.foo.createCL("slaveCL",{ ShardingKey: { b: 1 }, ShardingType:     "hash", Partition: 1024, AutoIncrement: { Field: "slaveID" }})
+   ```lang-javascript
+    > db.foo.createCL("slaveCL",{ ShardingKey: { b: 1 }, ShardingType: "hash", Partition: 1024, AutoIncrement: { Field: "slaveID" }})
     localhost:11810.foo.slaveCL
     Takes 0.263536s.
-    ```
+   ```
 Subpartition collection "slaveCL" attach to primary partition collection "masterCL".
 
-    ```lang-javascript
-    > db.foo.masterCL.attachCL( "foo.slaveCL", { LowBound: { a: 0 },     UpBound: { a: 100 } } )
+   ```lang-javascript
+    > db.foo.masterCL.attachCL( "foo.slaveCL", { LowBound: { a: 0 }, UpBound: { a: 100 } } )
     Takes 0.002743s.
-    ```
+   ```
 
 When inserting data from the primary partition: masterCL, AutoIncrement will use the corresponding property of the primary partition collection, so the data {"a":1} will have "masterID".
  When inserting data from the subpartition collection: slaveCL, AutoIncrement will use the corresponding property of the subpartition collection, so the data {"a":2} will have "slaveID".
 
 
-    ```lang-javascript
+   ```lang-javascript
     > db.foo.masterCL.insert({"a":1}) //inserting data from masterCL
     Takes 0.001877s. 
     > db.foo.slaveCL.insert({"a":2}) //inserting data from slaveCL
@@ -291,7 +292,7 @@ When inserting data from the primary partition: masterCL, AutoIncrement will use
     Return 2 row(s).
     Takes 0.001234s.
     > 
-    ```
+   ```
  
 For other properties of the collection, such as ShardingKey, Compressed, AutoIndexId and so on, the subpartition collection uses its own properties instead of the properties of the primary partition collection
 .
