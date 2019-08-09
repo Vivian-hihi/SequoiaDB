@@ -829,6 +829,9 @@ namespace engine
          }
          else
          {
+            // make sure the handle is erased
+            _erase( eh->handle() ) ;
+
             rc = SDB_NETWORK ;
          }
       }
