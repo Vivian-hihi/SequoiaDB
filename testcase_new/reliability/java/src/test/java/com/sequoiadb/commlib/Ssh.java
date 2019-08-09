@@ -26,7 +26,8 @@ import com.sequoiadb.exception.ReliabilityException;
 public class Ssh {
     private final static Logger log = Logger.getLogger(Ssh.class.getName());
 
-    private static final int CHANNEL_CONNECT_TIMEOUT = 600 * 1000;
+    private static final int CHANNEL_CONNECT_TIMEOUT = 60 * 1000;
+    private static final int GETRESULT_TIMEOUT = 600 * 1000;
     private String host;
     private String username;
     private String password;
@@ -144,7 +145,7 @@ public class Ssh {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
             channel.setInputStream(null);
-            getResult(channel, CHANNEL_CONNECT_TIMEOUT);
+            getResult(channel, GETRESULT_TIMEOUT);
             if (exitStatus != 0) {
                 throw new ReliabilityException("ssh failed to execute commond '" + command + "',stderr:" + stderr
                         + " ,stdout:" + stdout + ",errcode: " + exitStatus);
@@ -193,7 +194,7 @@ public class Ssh {
      * @throws ReliabilityException
      */
     public void waitBackgroudCMDDown(int channelId) throws ReliabilityException {
-        waitBackgroudCMDDown(channelId, CHANNEL_CONNECT_TIMEOUT);
+        waitBackgroudCMDDown(channelId, GETRESULT_TIMEOUT);
     }
 
     /**
