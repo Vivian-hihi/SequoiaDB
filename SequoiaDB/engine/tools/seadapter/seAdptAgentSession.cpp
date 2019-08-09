@@ -39,6 +39,7 @@
 #include "seAdptAgentSession.hpp"
 #include "rtnContextBuff.hpp"
 #include "utilCommon.hpp"
+#include "seAdptCommand.hpp"
 
 using engine::_pmdEDUCB ;
 
@@ -198,6 +199,7 @@ namespace seadapter
       CHAR *pOrderBy = NULL ;
       CHAR *pHint = NULL ;
       seAdptContextQuery *context = NULL ;
+      seAdptCommand *command = NULL ;
 
       rc = msgExtractQuery( (CHAR *)msg, &flag, &pCollectionName,
                             &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
@@ -215,51 +217,72 @@ namespace seadapter
          }
       }
 
-      try
+      if ( !seAdptIsCommand( pCollectionName ) )
       {
-         BSONObj matcher( pQuery ) ;
-         BSONObj selector ( pFieldSelector ) ;
-         BSONObj orderBy ( pOrderBy ) ;
-         BSONObj hint ( pHint ) ;
-         BSONObj newHint ;
-         UINT16 indexID = SEADPT_INVALID_IMID ;
+         try
+         {
+            BSONObj matcher( pQuery ) ;
+            BSONObj selector ( pFieldSelector ) ;
+            BSONObj orderBy ( pOrderBy ) ;
+            BSONObj hint ( pHint ) ;
+            BSONObj newHint ;
+            UINT16 indexID = SEADPT_INVALID_IMID ;
 
-         rc = _selectIndex( pCollectionName, hint, newHint, indexID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Select index for collection[%s] failed[%d]",
+            rc = _selectIndex( pCollectionName, hint, newHint, indexID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Select index for collection[%s] failed[%d]",
+                        pCollectionName, rc ) ;
+
+            context = SDB_OSS_NEW seAdptContextQuery() ;
+            if ( !context )
+            {
+               rc = SDB_OOM ;
+               PD_LOG_MSG( PDERROR, "Allocate memory for query context failed, "
+                           "size[ %d ]", sizeof( seAdptContextQuery ) ) ;
+               goto error ;
+            }
+
+            rc = context->open( pCollectionName, indexID, _esClt, matcher,
+                              selector, orderBy, newHint, objBuff, eduCB ) ;
+            if ( rc )
+            {
+               if ( SDB_DMS_EOC != rc )
+               {
+                  PD_LOG_MSG( PDERROR, "Open context for rewrite query failed[ %d ]",
+                              rc ) ;
+               }
+               goto error ;
+            }
+            contextID = _contextIDHWM++ ;
+            _ctxMap[ contextID ] = context ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG_MSG( PDERROR, "Session[ %s ] create BSON objects for query "
+                        "items failed: %s", sessionName(), e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = seAdptGetCommand( pCollectionName, command ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get command instance for[%s] failed[%d]",
+                      pCollectionName, rc ) ;
+         rc = command->init( flag, numToSkip, numToReturn, pQuery,
+                             pFieldSelector, pOrderBy, pHint, _esClt ) ;
+         PD_RC_CHECK( rc, PDERROR, "Init command[%s] failed[%d]",
                       pCollectionName, rc ) ;
 
-         context = SDB_OSS_NEW seAdptContextQuery() ;
-         if ( !context )
-         {
-            rc = SDB_OOM ;
-            PD_LOG_MSG( PDERROR, "Allocate memory for query context failed, "
-                        "size[ %d ]", sizeof( seAdptContextQuery ) ) ;
-            goto error ;
-         }
-
-         rc = context->open( pCollectionName, indexID, _esClt, matcher,
-                             selector, orderBy, newHint, objBuff, eduCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC != rc )
-            {
-               PD_LOG_MSG( PDERROR, "Open context for rewrite query failed[ %d ]",
-                           rc ) ;
-            }
-            goto error ;
-         }
-         contextID = _contextIDHWM++ ;
-         _ctxMap[ contextID ] = context ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG_MSG( PDERROR, "Session[ %s ] create BSON objects for query "
-                     "items failed: %s", sessionName(), e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         rc = command->doit( eduCB, objBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Execute command[%s] failed[%d]",
+                      pCollectionName, rc ) ;
       }
 
    done:
+      if ( command )
+      {
+         seAdptReleaseCommand( command ) ;
+      }
       return rc ;
    error:
       if ( context )

@@ -369,14 +369,14 @@ clientCppFiles = [
       "client/sdbDataSource.cpp",
       "client/sdbDataSourceComm.cpp",
       "client/sdbDataSourceStrategy.cpp",
-      "client/sdbDataSourceWorker.cpp",	  
+      "client/sdbDataSourceWorker.cpp",
       "bson/bsonobj.cpp",
       "bson/oid.cpp",
       "bson/base64.cpp",
       "bson/md5.c",
       "bson/nonce.cpp",
       ]
-      
+
 ncursesFiles = [
       "ncurses/./tty/hardscroll.c",
       "ncurses/./tty/hashmap.c",
@@ -643,15 +643,16 @@ sdbSEAdptFiles = [
       "tools/seadapter/rtnSimpleCondNode.cpp",
       "tools/seadapter/rtnSimpleCondParser.cpp",
       "tools/seadapter/utilESFetcher.cpp",
-      "tools/seadapter/utilProcessLock.cpp"
+      "tools/seadapter/utilProcessLock.cpp",
+      "tools/seadapter/seAdptCommand.cpp"
       ]
-	  
+
 sequoiaFSFiles = [
       "tools/sequoiafs/sequoiaFS.cpp",
       "tools/sequoiafs/sequoiaFSLruCache.cpp",
       "tools/sequoiafs/sequoiaFSMain.cpp",
       "tools/sequoiafs/sequoiaFSOptionMgr.cpp",
-    ]	  
+    ]
 sdbPasswdFiles = [
       "tools/passwd/passwdOptions.cpp",
       "tools/passwd/sdbPasswd.cpp"
@@ -783,13 +784,13 @@ sdbseadapter = toolEnv.Program("sdbseadapter",
 		 sdbSEAdptFiles,
 		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob","rtn","ixm","cls"],
 		 _LIBDEPS='$_LIBDEPS_OBJS' )
-		 
+
 if linux64:
-    Import("fuse_lib")	  
+    Import("fuse_lib")
     sequoiafs = toolEnv.Program("sequoiafs",
         sequoiaFSFiles,
         LIBDEPS=["bson", "oss", "pd", "util", "pmd", "client", "clientcpp", fuse_lib],
-        _LIBDEPS='$_LIBDEPS_OBJS' )	
+        _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbimprt )
 toolEnv.Install( '#/bin', sdbexprt )

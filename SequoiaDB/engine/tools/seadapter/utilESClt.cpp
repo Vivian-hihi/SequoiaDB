@@ -470,7 +470,7 @@ namespace seadapter
    }
 
    INT32 _utilESClt::getDocCount( const CHAR *index, const CHAR *type,
-                                  UINT64 &count )
+                                  const CHAR *query, UINT64 &count )
    {
       INT32 rc = SDB_OK ;
       std::ostringstream oss ;
@@ -483,11 +483,21 @@ namespace seadapter
 
       oss << index << "/" << type << "/_count" ;
 
-      rc = _http.get( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
+      rc = _http.get( oss.str().c_str(), query, &status, &reply, &replyLen ) ;
       rc = _processReply( rc, reply, replyLen, bsonObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
 
-      count = bsonObj.getIntField( "count" ) ;
+      try
+      {
+         BSONElement countEle = bsonObj.getField( "count" ) ;
+         count = (UINT64)countEle.number() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
 
    done:
       return rc ;

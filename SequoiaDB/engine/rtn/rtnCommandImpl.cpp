@@ -53,6 +53,7 @@
 #include "rtnExtDataHandler.hpp"
 #include "rtnContextDel.hpp"
 #include "ossMemPool.hpp"
+#include "rtnTSClt.hpp"
 
 using namespace bson ;
 
@@ -84,6 +85,45 @@ namespace engine
     *    in "$rename collection" command, matcher has 3 elements:
     *    collectionspace + oldname + newname
     ***********************************************/
+
+   static BOOLEAN _isSimpleTextSearch( BSONObj condition )
+   {
+      BOOLEAN result = FALSE ;
+
+      if ( !condition.isEmpty() )
+      {
+         BSONObjIterator itr( condition ) ;
+         BSONElement firstEle = itr.next() ;
+         if ( itr.more() )
+         {
+            goto done ;
+         }
+
+         if ( 0 != ossStrlen( firstEle.fieldName() ) ||
+              Object != firstEle.type() )
+         {
+            goto done ;
+         }
+
+         {
+            BSONObjIterator subItr( firstEle.Obj() ) ;
+            BSONElement subFirstEle = subItr.next() ;
+            if ( itr.more() )
+            {
+               goto done ;
+            }
+
+            if ( 0 != ossStrcmp( subFirstEle.fieldName(), FIELD_NAME_TEXT ) )
+            {
+               goto done ;
+            }
+            result = TRUE ;
+         }
+      }
+
+   done:
+      return result ;
+   }
 
    // get total number of records for a given query.
    // there are two scenarios
@@ -126,59 +166,77 @@ namespace engine
          rtnContextBase *pContextBase = NULL ;
          SINT64 queryContextID = -1 ;
 
-         BSONObj dummy ;
-         rtnQueryOptions copiedOptions( options ) ;
-         copiedOptions.setSelector( dummy ) ;
-         copiedOptions.setOrderBy( dummy ) ;
-         copiedOptions.setSkip( 0 ) ;
-         copiedOptions.setLimit( -1 ) ;
-
-         rc = rtnQuery ( copiedOptions, cb, dmsCB, rtnCB, queryContextID,
-                         &pContextBase ) ;
-         if ( rc )
+         if ( _isSimpleTextSearch( options.getQuery() ) )
          {
-            // any error will clean up queryContext
-            if ( SDB_DMS_EOC == rc )
+            rtnRemoteMessenger* messenger = rtnCB->getRemoteMessenger() ;
+            if ( !messenger || !messenger->isReady() )
             {
-               // if we hit end of collection, let's clear the rc
-               // in this case, totalCount = 0
-               rc = SDB_OK ;
-            }
-            else
-            {
-               PD_LOG ( PDERROR,"Failed to query for count for collection %s, "
-                        "rc: %d", pCollection, rc ) ;
+               rc = SDB_NET_NOT_CONNECT ;
+               PD_LOG( PDERROR, "Remote messenger is not ready. Maybe the "
+                       "adapter is offline" ) ;
                goto error ;
             }
+
+            rc = rtnTSGetCount( options, cb, totalCount ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get count by text search failed[%d]",
+                         rc ) ;
          }
          else
          {
-            pContextBase->enableCountMode() ;
-            rtnContextBuf buffObj ;
+            BSONObj dummy ;
+            rtnQueryOptions copiedOptions( options ) ;
+            copiedOptions.setSelector( dummy ) ;
+            copiedOptions.setOrderBy( dummy ) ;
+            copiedOptions.setSkip( 0 ) ;
+            copiedOptions.setLimit( -1 ) ;
 
-            while ( TRUE )
+            rc = rtnQuery ( copiedOptions, cb, dmsCB, rtnCB, queryContextID,
+                            &pContextBase ) ;
+            if ( rc )
             {
-               rc = rtnGetMore ( queryContextID, -1, buffObj, cb, rtnCB ) ;
-               if ( rc )
+               // any error will clean up queryContext
+               if ( SDB_DMS_EOC == rc )
                {
-                  // any error will clean up query context
-                  if ( SDB_DMS_EOC == rc )
-                  {
-                     rc = SDB_OK ;
-                     break ;
-                  }
-                  else
-                  {
-                     PD_LOG ( PDERROR, "Failed to fetch for count for "
-                              "collecion %s, rc: %d", pCollection, rc ) ;
-                     goto error ;
-                  }
+                  // if we hit end of collection, let's clear the rc
+                  // in this case, totalCount = 0
+                  rc = SDB_OK ;
                }
                else
                {
-                  // since rtnGetMore only takes 32 bit count, so let's pass
-                  // count and add into totalCount every round
-                  totalCount += buffObj.recordNum() ;
+                  PD_LOG ( PDERROR,"Failed to query for count for collection %s, "
+                           "rc: %d", pCollection, rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               pContextBase->enableCountMode() ;
+               rtnContextBuf buffObj ;
+
+               while ( TRUE )
+               {
+                  rc = rtnGetMore ( queryContextID, -1, buffObj, cb, rtnCB ) ;
+                  if ( rc )
+                  {
+                     // any error will clean up query context
+                     if ( SDB_DMS_EOC == rc )
+                     {
+                        rc = SDB_OK ;
+                        break ;
+                     }
+                     else
+                     {
+                        PD_LOG ( PDERROR, "Failed to fetch for count for "
+                                 "collecion %s, rc: %d", pCollection, rc ) ;
+                        goto error ;
+                     }
+                  }
+                  else
+                  {
+                     // since rtnGetMore only takes 32 bit count, so let's pass
+                     // count and add into totalCount every round
+                     totalCount += buffObj.recordNum() ;
+                  }
                }
             }
          }

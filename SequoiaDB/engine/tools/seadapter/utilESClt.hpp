@@ -107,7 +107,7 @@ namespace seadapter
                               BOOLEAN &exist ) ;
          INT32 deleteAllByType( const CHAR *index, const CHAR *type ) ;
          INT32 getDocCount( const CHAR *index, const CHAR *type,
-                            UINT64 &count ) ;
+                            const CHAR *query, UINT64 &count ) ;
          // To make all documents searchable now. Normally they are searchable 1s
          // after insertion.
          INT32 refresh( const CHAR *index ) ;
