@@ -50,7 +50,7 @@ public class Fulltext15825 extends FullTestBase {
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor(600000);
+        ThreadExecutor thExecutor = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         for (int i = 0; i < 10; i++) {
             thExecutor.addWorker(new DropFullIdx());
         }

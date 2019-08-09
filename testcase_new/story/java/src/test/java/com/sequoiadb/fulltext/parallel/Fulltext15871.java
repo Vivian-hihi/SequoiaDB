@@ -35,7 +35,7 @@ public class Fulltext15871 extends FullTestBase {
     private int clNum = 2;
     private String indexName = "fulltext15871";
     private int insertNum = 50000;
-    private ThreadExecutor te = new ThreadExecutor(3600000);
+    private ThreadExecutor te = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
     private List<String> esIndexNames = new ArrayList<String>();
     private List<String> cappedCLNames = new ArrayList<String>();
 

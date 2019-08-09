@@ -52,7 +52,7 @@ public class Fulltext15875 extends FullTestBase {
 
     @Test(enabled = false)
     private void test() throws Exception {
-        ThreadExecutor es = new ThreadExecutor();
+        ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         ThreadTruncate threadTruncate = new ThreadTruncate();
         ThreadDropCL threadDropCL = new ThreadDropCL();
         es.addWorker(threadTruncate);

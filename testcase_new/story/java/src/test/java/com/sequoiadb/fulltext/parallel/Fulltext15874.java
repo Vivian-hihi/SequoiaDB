@@ -28,7 +28,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  */
 
 public class Fulltext15874 extends FullTestBase {
-    private final int TIME_OUT = 600000;
     private Random random = new Random();
     private final String CL_NAME = "cl_es_15874";
     private final String IDX_NAME = "idx_es_15874";
@@ -60,7 +59,7 @@ public class Fulltext15874 extends FullTestBase {
 
     @Test
     private void test() throws Exception {
-        ThreadExecutor es = new ThreadExecutor(TIME_OUT);
+        ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         ThreadTruncate threadTruncate = new ThreadTruncate();
         es.addWorker(threadTruncate);
         es.addWorker(new ThreadInsert());

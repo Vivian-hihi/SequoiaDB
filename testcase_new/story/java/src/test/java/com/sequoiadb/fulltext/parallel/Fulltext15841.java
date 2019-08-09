@@ -53,7 +53,7 @@ public class Fulltext15841 extends FullTestBase {
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         CreateIndexThread createIndexThread = new CreateIndexThread();
         TruncateThread truncateThread = new TruncateThread();
         thread.addWorker(createIndexThread);

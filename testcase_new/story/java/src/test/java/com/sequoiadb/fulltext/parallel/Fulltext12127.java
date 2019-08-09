@@ -30,12 +30,11 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date liuxiaoxuan 2019.5.10
  */
 public class Fulltext12127 extends FullTestBase {
-    private final int TIMEOUT = 600000;
     private List<DBCollection> cls = new ArrayList<>();
     private String textIndexName = "fulltext12127";
     private List<String> cappedNames = new ArrayList<>();
     private List<String> esIndexNames = new ArrayList<>();
-    ThreadExecutor te = new ThreadExecutor(TIMEOUT);
+    ThreadExecutor te = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
 
     @Override
     protected void initTestProp() {

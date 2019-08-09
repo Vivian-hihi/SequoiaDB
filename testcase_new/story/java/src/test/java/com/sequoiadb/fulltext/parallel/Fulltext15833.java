@@ -45,7 +45,7 @@ public class Fulltext15833 extends FullTestBase {
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor(600000);
+        ThreadExecutor thExecutor = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         thExecutor.addWorker(new DropFullIdx());
         thExecutor.addWorker(new DropCS());
 

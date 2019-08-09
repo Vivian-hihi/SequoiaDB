@@ -35,7 +35,7 @@ public class Fulltext12125 extends FullTestBase {
     private int clNum = 2;
     private String indexName = "fulltext12125";
     private int insertNum = 50000;
-    private ThreadExecutor te = new ThreadExecutor(3600000);
+    private ThreadExecutor te = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
 
     @Override
     protected void initTestProp() {

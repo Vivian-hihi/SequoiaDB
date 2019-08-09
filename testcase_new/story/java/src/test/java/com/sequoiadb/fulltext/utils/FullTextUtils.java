@@ -22,6 +22,9 @@ public class FullTextUtils {
 
     // 插入记录数，所有用例公用此变量
     public static final int INSERT_NUMS = 200000; // insert 20w datas
+    // 线程超时时间，所有用例公用此变量
+    public static final int THREAD_TIMEOUT = 600000; // timeout 10 mins
+    // 全文索引前缀
     private static String FULLTEXTPREFIX;
 
     // 初始化全文索引的前缀名作为全局变量

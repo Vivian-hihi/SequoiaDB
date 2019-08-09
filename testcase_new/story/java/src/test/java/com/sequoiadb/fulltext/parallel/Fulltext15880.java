@@ -55,7 +55,7 @@ public class Fulltext15880 extends FullTestBase {
     @Test
     private void test() throws Exception {
 
-        ThreadExecutor es = new ThreadExecutor();
+        ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         ThreadTruncate threadTruncate = new ThreadTruncate();
         ThreadDBSync threadDBSync = new ThreadDBSync();
         es.addWorker(threadTruncate);

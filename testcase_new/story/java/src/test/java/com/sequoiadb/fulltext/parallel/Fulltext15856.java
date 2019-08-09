@@ -27,7 +27,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 public class Fulltext15856 extends FullTestBase {
     private final int THREAD_NUM = 10;
-    private final int TIMEOUT = 600000;
     private final String CL_NAME = "cl_es_15856";
     private final String IDX_NAME = "idx_es_15856";
     private final BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
@@ -53,7 +52,7 @@ public class Fulltext15856 extends FullTestBase {
     @Test
     private void test() throws Exception {
         String modVal = "abcdefghijklmnopq";
-        ThreadExecutor es = new ThreadExecutor(TIMEOUT);
+        ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         for (int i = 0; i < THREAD_NUM; i++) {
             // modifier
             BSONObject modifier = new BasicBSONObject("$set", new BasicBSONObject("b", modVal + i));

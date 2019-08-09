@@ -71,7 +71,7 @@ public class Fulltext15839 extends FullTestBase {
     @Test
     public void test() throws Exception {
 
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         thread.addWorker(new DropIndexThread());
         thread.addWorker(new SplitThread());
         thread.run();

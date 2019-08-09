@@ -42,7 +42,7 @@ public class Fulltext12116 extends FullTestBase {
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor(600000);
+        ThreadExecutor thExecutor = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         // 并发10个线程，只有一个线程使count+1
         for (int i = 0; i < 10; i++) {
             thExecutor.addWorker(new CreateFullIdx());

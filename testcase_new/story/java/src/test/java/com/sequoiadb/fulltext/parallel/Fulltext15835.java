@@ -60,7 +60,7 @@ public class Fulltext15835 extends FullTestBase {
         cappedNames.add(cappedName);
         esIndexNames = FullTextDBUtils.getESIndexNames(cl, indexName);
 
-        ThreadExecutor thread = new ThreadExecutor(600000);
+        ThreadExecutor thread = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         thread.addWorker(new DropIndexThread());
         thread.addWorker(new AlterTableThread());
         thread.run();

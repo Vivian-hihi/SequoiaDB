@@ -31,8 +31,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019年5月10日
  */
 public class Fulltext15846 extends FullTestBase {
-
-    private int timeout = 600000;
     private String clName = "es_15846";
     private String indexName = "fulltextIndex15846";
     private String cappedName = null;
@@ -76,7 +74,7 @@ public class Fulltext15846 extends FullTestBase {
     public void test() throws Exception {
 
         DropIndexThread dropIndex = new DropIndexThread();
-        ThreadExecutor thread = new ThreadExecutor(timeout);
+        ThreadExecutor thread = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         thread.addWorker(dropIndex);
         thread.addWorker(new TruncateLobThread());
         thread.addWorker(new PutLobThread());

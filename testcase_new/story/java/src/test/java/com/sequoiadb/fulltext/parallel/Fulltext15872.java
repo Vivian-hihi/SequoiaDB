@@ -41,7 +41,7 @@ public class Fulltext15872 extends FullTestBase {
     private int clNum = 4;
     private String indexName = "fulltext15872";
     private int insertNum = 20000;
-    private ThreadExecutor te = new ThreadExecutor(3600000);
+    private ThreadExecutor te = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
     // 统计各集合中的记录数，map的key为集合名、value为集合中的记录数
     private Map<String, AtomicInteger> insertNumInCLMap = new HashMap<String, AtomicInteger>();
     private List<String> esIndexNames = new ArrayList<String>();

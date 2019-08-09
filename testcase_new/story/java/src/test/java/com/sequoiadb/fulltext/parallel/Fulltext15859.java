@@ -54,7 +54,7 @@ public class Fulltext15859 extends FullTestBase {
 
     @Test
     private void test() throws Exception {
-        ThreadExecutor es = new ThreadExecutor();
+        ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         for (int i = 0; i < THREAD_NUM; i++) {
             es.addWorker(new ThreadFullTextSearch());
             es.addWorker(new ThreadQuery());

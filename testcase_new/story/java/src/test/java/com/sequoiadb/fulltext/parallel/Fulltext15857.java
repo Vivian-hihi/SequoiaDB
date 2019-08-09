@@ -55,7 +55,7 @@ public class Fulltext15857 extends FullTestBase {
 
     @Test
     private void test() throws Exception {
-        ThreadExecutor es = new ThreadExecutor();
+        ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         for (int i = 0; i < THREAD_NUM; i++) {
             int batchRecsNum = RECS_NUM / THREAD_NUM;
             BSONObject obj1 = new BasicBSONObject("recordId", new BasicBSONObject("$gte", batchRecsNum * i));

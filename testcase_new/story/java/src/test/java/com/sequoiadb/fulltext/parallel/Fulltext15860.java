@@ -71,7 +71,7 @@ public class Fulltext15860 extends FullTestBase {
 
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));
 
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         thread.addWorker(new QueryByTextIndexThread());
         thread.addWorker(new InsertThread());
         thread.addWorker(new UpdateThread());
