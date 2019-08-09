@@ -68,6 +68,7 @@ public class RestExceptionHandler {
             case ACL_INVALID_ID:
             case ACL_INVALID_EMAIL:
             case MALFORMED_XML:
+            case NEED_A_KEY:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:

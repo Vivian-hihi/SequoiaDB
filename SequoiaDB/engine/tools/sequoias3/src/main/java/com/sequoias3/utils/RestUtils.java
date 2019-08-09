@@ -77,20 +77,24 @@ public class RestUtils {
         return user;
     }
 
-    public String getObjectNameByURI(String url) throws S3ServerException {
+    public String getObjectNameByURI(String uri) throws S3ServerException {
         String decodeUrl;
         try {
-            decodeUrl = URLDecoder.decode(url, "UTF-8");
+            decodeUrl = URLDecoder.decode(uri, "UTF-8");
         }catch (UnsupportedEncodingException e){
-            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. uri = " + uri);
         }
 
         int beginObject = decodeUrl.indexOf(RestParamDefine.REST_DELIMITER, 1);
         if (beginObject == -1) {
-            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
+            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. uri = " + uri);
         }
 
-        return decodeUrl.substring(beginObject+1);
+        String objectName = decodeUrl.substring(beginObject+1);
+        if (objectName.length() == 0){
+            throw new S3ServerException(S3Error.NEED_A_KEY, "Invalid key.uri = " + uri);
+        }
+        return objectName;
     }
 
     public Range getRange(String rangeHeader){

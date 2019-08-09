@@ -146,7 +146,8 @@ public enum S3Error {
 
     INVALID_ARGUMENT(-900, "InvalidArgument", "Invalid argument."),
     METHOD_NOT_ALLOWED(-901, "MethodNotAllowed", "The specified method is not allowed against this resource."),
-    MALFORMED_XML(-902, "MalformedXML", "The XML you provided was not well-formed or did not validate against our published schema.");
+    MALFORMED_XML(-902, "MalformedXML", "The XML you provided was not well-formed or did not validate against our published schema."),
+    NEED_A_KEY(-903, "InvalidRequest", "A key must be specified."),;
 
     private int errIndex;
     private String code;

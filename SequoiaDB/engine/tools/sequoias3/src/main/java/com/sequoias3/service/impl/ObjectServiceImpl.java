@@ -1281,7 +1281,7 @@ public class ObjectServiceImpl implements ObjectService {
                 destLobId  = baseArray.get(0).getLobId();
             }
 
-            logger.info("complete begin");
+            logger.debug("complete begin");
             //合并
             //TODO:在刷空白字符前应判断是否需要返回versionId，否则后面刷过之后再写header，客户端也接收不到了
             flushIndex = outStreamFlushQueue.add(outputStream);
@@ -1313,7 +1313,7 @@ public class ObjectServiceImpl implements ObjectService {
             upload.setLobId(destLobId);
             upload.setUploadStatus(UploadMeta.UPLOAD_COMPLETE);
             uploadDao.updateUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, upload);
-            logger.info("complete end");
+            logger.debug("complete end");
 
             //写元数据
             String completeEtag;
@@ -1330,7 +1330,7 @@ public class ObjectServiceImpl implements ObjectService {
 
             oldObjectMeta = writeObjectMeta(objectMeta, objectName, bucket.getBucketId(),
                     versioningStatusType, region);
-            logger.info("write cur meta end");
+            logger.debug("write cur meta end");
 
             transaction.commit(connection);
             deleteObjectLob(oldObjectMeta);
