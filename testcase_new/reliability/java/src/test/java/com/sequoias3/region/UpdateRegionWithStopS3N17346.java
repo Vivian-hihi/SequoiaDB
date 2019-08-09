@@ -35,7 +35,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @Date 2019.01.29
  */
 
-
 public class UpdateRegionWithStopS3N17346 extends S3TestBase {
     private boolean runSuccess = false;
     private int regionNum = 50;

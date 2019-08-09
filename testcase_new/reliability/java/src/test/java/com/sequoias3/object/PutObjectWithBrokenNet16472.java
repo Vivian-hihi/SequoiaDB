@@ -36,6 +36,7 @@ public class PutObjectWithBrokenNet16472 extends S3TestBase {
     private int objectNums = 10;
     private int versionNums = 2;
     private String filePath = null;
+    private String bucketName = "bucket16472";
     private String objectNameBase = "PutObject16472";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();

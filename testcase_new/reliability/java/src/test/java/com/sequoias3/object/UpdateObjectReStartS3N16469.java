@@ -38,6 +38,7 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
     private int versionNums = 2;
     private String filePath = null;
     private String updatePath = null;
+    private String bucketName = "bucket16469";
     private String objectNameBase = "object16469";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();

@@ -36,6 +36,7 @@ public class PutObjectWithReStartS3N16468 extends S3TestBase {
     private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 100;
     private String filePath = null;
+    private String bucketName = "bucket16468";
     private String objectNameBase = "PutObject16468";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();

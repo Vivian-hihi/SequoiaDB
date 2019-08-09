@@ -37,6 +37,7 @@ public class DeleteObjectWithBrokenNet16474 extends S3TestBase {
     private int versionNums = 3;
     private String filePath = null;
     private String updatePath = null;
+    private String bucketName = "bucket16474";
     private String objectNameBase = "object16474";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
