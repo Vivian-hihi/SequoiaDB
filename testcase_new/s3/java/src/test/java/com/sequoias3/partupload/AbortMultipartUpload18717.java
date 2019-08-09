@@ -40,7 +40,7 @@ public class AbortMultipartUpload18717 extends S3TestBase {
     private void test() throws Exception {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
         PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId, 
-                file, fileSize / maxPartNumber);        
+                file, fileSize / maxPartNumber);
         s3Client.abortMultipartUpload(
                 new AbortMultipartUploadRequest(bucketName, key, uploadId));
         PartUploadUtils.checkAbortMultipartUploadResult(s3Client, bucketName, key, uploadId);

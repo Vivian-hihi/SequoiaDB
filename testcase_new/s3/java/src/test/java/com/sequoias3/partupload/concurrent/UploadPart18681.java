@@ -54,8 +54,8 @@ public class UploadPart18681 extends S3TestBase {
     private int fileId = 0;
 
     private AmazonS3 s3Client;
-    private List<String> keys = new ArrayList<>();
     private String keyBase = "/aa/bb/obj18681";
+    private List<String> keys = new ArrayList<>();
     private String uploadId;
     private Map<File, PartETag> firstPartETags = new HashMap<File, PartETag>();
 

@@ -53,7 +53,7 @@ public class ListMultipartUploads18748 extends S3TestBase {
         for (String key : keys) {
             String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
             uploadIdsOld.add(uploadId);
-        }        
+        }
         // initPartUpload again
         for (String key : keys) {
             String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
@@ -78,6 +78,7 @@ public class ListMultipartUploads18748 extends S3TestBase {
                 .withUploadIdMarker(uploadIdsOld.get(2));
         MultipartUploadListing result = s3Client.listMultipartUploads(request);
 
+        // check results
         List<String> expCommonPrefixes = new ArrayList<>();
         MultiValueMap<String, String> expUploads = 
                 new LinkedMultiValueMap<String, String>();

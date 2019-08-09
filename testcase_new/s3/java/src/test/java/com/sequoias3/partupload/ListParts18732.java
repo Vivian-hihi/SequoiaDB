@@ -46,12 +46,13 @@ public class ListParts18732 extends S3TestBase {
                 file, fileSize / maxPartNumber);
 
         // check results
-        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, bucketName, key, partETags, uploadId);
+        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, bucketName, key, 
+                partETags, uploadId);
         
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, uploadId, partETags);
         File downloadPath = new File(localPath + File.separator + "downloadFile_" + fileSize);
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, downloadPath, bucketName, key);
-        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath), partETags.toString());
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
         runSuccess = true;
     }

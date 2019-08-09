@@ -59,7 +59,7 @@ public class UploadPart18680 extends S3TestBase {
 
         // check results
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
-        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath3), partETags.toString());
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath3));
         
         runSuccess = true;
     }

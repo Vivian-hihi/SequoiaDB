@@ -21,7 +21,7 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18746:带maxkeys查询桶分段上传列表
+ * @Description seqDB-18746:带MaxUploads查询桶分段上传列表
  * @Author huangxiaoni
  * @Date 2019.07.26
  */

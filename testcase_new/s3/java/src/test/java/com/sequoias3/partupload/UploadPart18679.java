@@ -87,7 +87,7 @@ public class UploadPart18679 extends S3TestBase {
         // check results
         File downloadPath = new File(localPath + File.separator + "downloadFile_" + fileSize);
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, downloadPath, bucketName, key);
-        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath), partETags.toString());
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
         runSuccessNum++;
         // remove the file when the param success
