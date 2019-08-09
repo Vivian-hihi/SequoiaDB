@@ -108,7 +108,7 @@ public class GetObjectWithReStartS3N16471 extends S3TestBase {
 
         @Override
         public void exec() throws Exception {
-            getObjectAndCheck(this.key);
+            s3Client.getObject(bucketName, key);
             objectNameList.add(key);
         }
     }
@@ -116,9 +116,14 @@ public class GetObjectWithReStartS3N16471 extends S3TestBase {
     private void getObjectAndCheck(String objectName) throws Exception {
         S3Object obj = s3Client.getObject(bucketName, objectName);
         Assert.assertEquals(obj.getKey(), objectName);
-        String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
-                Thread.currentThread().getId());
-        ObjectUtils.inputStream2File(obj.getObjectContent(), downloadPath);
-        Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
+        String downloadPath = null;
+        try {
+            downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+                    Thread.currentThread().getId());
+            ObjectUtils.inputStream2File(obj.getObjectContent(), downloadPath);
+            Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
+        } catch (Exception e) {
+           throw new Exception(objectName,e);
+        }
     }
 }
