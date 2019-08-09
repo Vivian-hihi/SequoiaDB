@@ -407,7 +407,7 @@ public class FullTextUtils {
      * @return
      * @throws Exception
      */
-    private static boolean isIndexConsistency(DBCollection cl, String indexName) throws Exception {
+    public static boolean isIndexConsistency(DBCollection cl, String indexName) throws Exception {
 
         Sequoiadb db = cl.getSequoiadb();
         String csName = cl.getCSName();
@@ -422,23 +422,40 @@ public class FullTextUtils {
             Sequoiadb masterNode = rg.getMaster().connect();
             DBCollection masterCL = masterNode.getCollectionSpace(csName).getCollection(clName);
             if (!masterCL.isIndexExist(indexName)) {
-                throw new Exception(
-                        cl.getFullName() + " " + masterNode.getNodeName() + " index: " + indexName + " is not exist");
+                for (String nodeName : nodeNames) {
+                    if (masterNode.getNodeName().equals(nodeName)) {
+                        continue;
+                    }
+                    Sequoiadb nodeConn = rg.getNode(nodeName).connect();
+                    DBCollection nodeCL = nodeConn.getCollectionSpace(csName).getCollection(clName);
+                    if (nodeCL.isIndexExist(indexName)) {
+                        throw new Exception(cl.getFullName() + " the index info is different, masterNode: "
+                                + masterNode.getNodeName() + " not exists indexName: " + indexName + ", but slaveNode: "
+                                + nodeName + " exists indexName: " + indexName);
+                    }
+                }
+            } else {
+                BSONObject indexInfo = masterCL.getIndexInfo(indexName);
+                for (String nodeName : nodeNames) {
+                    if (masterNode.getNodeName().equals(nodeName)) {
+                        continue;
+                    }
+                    Sequoiadb nodeConn = rg.getNode(nodeName).connect();
+                    DBCollection nodeCL = nodeConn.getCollectionSpace(csName).getCollection(clName);
+                    if (!nodeCL.isIndexExist(indexName)) {
+                        throw new Exception(cl.getFullName() + " the index info is different, masterNode: "
+                                + masterNode.getNodeName() + " exists indexName: " + indexName + ", but slaveNode: "
+                                + nodeName + " not exists indexName: " + indexName);
+                    }
+                    BSONObject checkIndexInfo = nodeCL.getIndexInfo(indexName);
+                    if (!indexInfo.equals(checkIndexInfo)) {
+                        throw new Exception(cl.getFullName() + " the index info is different, masterNode "
+                                + masterNode.getNodeName() + ": " + indexInfo + ", " + nodeName + ": "
+                                + checkIndexInfo);
+                    }
+                }
             }
-            BSONObject indexInfo = masterCL.getIndexInfo(indexName);
 
-            for (String nodeName : nodeNames) {
-                Sequoiadb nodeConn = rg.getNode(nodeName).connect();
-                DBCollection nodeCL = nodeConn.getCollectionSpace(csName).getCollection(clName);
-                if (!nodeCL.isIndexExist(indexName)) {
-                    throw new Exception(cl.getFullName() + " " + nodeName + " index: " + indexName + " is not exist");
-                }
-                BSONObject checkIndexInfo = nodeCL.getIndexInfo(indexName);
-                if (!indexInfo.equals(checkIndexInfo)) {
-                    throw new Exception(cl.getFullName() + " the index info is different, masterNode "
-                            + masterNode.getNodeName() + ": " + indexInfo + ", " + nodeName + ": " + checkIndexInfo);
-                }
-            }
             isConsistency = true;
         }
 
@@ -506,7 +523,7 @@ public class FullTextUtils {
      * @throws Exception
      * @author luweikang
      */
-    private static boolean isCLConsistency(DBCollection cl) throws Exception {
+    public static boolean isCLConsistency(DBCollection cl) throws Exception {
 
         Sequoiadb db = cl.getSequoiadb();
         boolean isConsistency = false;
@@ -720,7 +737,7 @@ public class FullTextUtils {
      */
     public static boolean isIndexCreated(DBCollection cl, String indexName, int expectCount) throws Exception {
 
-        if (isFullSyncToES(cl, indexName, expectCount) && isDataConsistency(cl, indexName)
+        if (cl.isIndexExist(indexName) && isFullSyncToES(cl, indexName, expectCount) && isDataConsistency(cl, indexName)
                 && isRecordEqualsByMulQueryMode(cl)) {
             return true;
         } else {

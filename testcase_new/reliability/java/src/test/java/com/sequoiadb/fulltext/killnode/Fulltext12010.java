@@ -65,13 +65,16 @@ public class Fulltext12010 extends SdbTestBase {
     @Test()
     public void test() throws Exception {
         cl.createIndex(fullIndexName, "{'a':'text'}", false, false);
-        cl.insert("{a:'text'}");
+        cl.insert("{a:'insertBeforeNodeStop'}");
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1));
         NodeWrapper node = groupMgr.getGroupByName(groupName).getSlave();
         try {
             node.stop();
+            while (!node.checkStop()) {
+                Thread.sleep(1000);
+            }
             try {
-                cl.insert("{a:'insert'}");
+                cl.insert("{a:'insertAfterNodeStop'}");
                 throw new BaseException(1000, "INSERT_NEED_ERR");
             } catch (BaseException e) {
                 if (e.getErrorCode() != -105 && e.getErrorCode() != -252) {
@@ -80,7 +83,7 @@ public class Fulltext12010 extends SdbTestBase {
             }
 
             try {
-                cl.update(null, "{$set:{a:'update'}}", null, 0);
+                cl.update(null, "{$set:{a:'updateAfterNodeStop'}}", null, 0);
                 throw new BaseException(1001, "UPDATE_NEED_ERR");
             } catch (BaseException e) {
                 if (e.getErrorCode() != -105 && e.getErrorCode() != -252) {
@@ -97,6 +100,11 @@ public class Fulltext12010 extends SdbTestBase {
                 }
             }
             node.start();
+            while (!node.checkStart()) {
+                Thread.sleep(1000);
+            }
+            cl.insert("{a:'insertAfterNodeStart'}");
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1));
         } finally {
             node.start();
         }
