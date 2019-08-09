@@ -1,25 +1,24 @@
 package com.sequoiadb.commlib;
 
-import com.jcraft.jsch.*;
-import com.sequoiadb.exception.FaultException;
-import com.sequoiadb.exception.ReliabilityException;
-
-import java.io.FileNotFoundException ;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream ;
-
-import java.text.SimpleDateFormat ;
-import java.util.Date ;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger ;
-import java.util.logging.ConsoleHandler ;
-import java.util.logging.FileHandler ;
-import java.util.logging.Level ;
-import java.util.logging.LogRecord ;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.sequoiadb.exception.FaultException;
+import com.sequoiadb.exception.ReliabilityException;
 
 /**
  * @author huangqiaohui
@@ -27,7 +26,7 @@ import java.util.logging.Logger;
 public class Ssh {
     private final static Logger log = Logger.getLogger(Ssh.class.getName());
 
-    private static final int CHANNEL_CONNECT_TIMEOUT = 60 * 1000;
+    private static final int CHANNEL_CONNECT_TIMEOUT = 600 * 1000;
     private String host;
     private String username;
     private String password;
@@ -60,28 +59,27 @@ public class Ssh {
      * @param port
      * @throws ReliabilityException
      */
-    public Ssh(String host, String username, String password, int port)
-            throws ReliabilityException {
+    public Ssh(String host, String username, String password, int port) throws ReliabilityException {
         super();
         this.host = host;
         this.username = username;
         this.password = password;
         this.port = port;
         JSch jsch = new JSch();
-        TestLogger logger = new TestLogger() ;
-        logger.setFileHandler() ;
-        JSch.setLogger( logger ) ;
+        TestLogger logger = new TestLogger();
+        logger.setFileHandler();
+        JSch.setLogger(logger);
         try {
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect(CHANNEL_CONNECT_TIMEOUT);
-            
+
         } catch (JSchException e) {
             if (session != null) {
                 session.disconnect();
             }
-            e.printStackTrace() ;
+            e.printStackTrace();
             throw new FaultException(e);
         }
     }
@@ -100,7 +98,7 @@ public class Ssh {
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.put(localPath, remotePath);
         } catch (Exception e) {
-            e.printStackTrace() ;
+            e.printStackTrace();
             throw new FaultException(e);
         } finally {
             if (channel != null) {
@@ -123,7 +121,7 @@ public class Ssh {
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.get(remotePath, localPath);
         } catch (Exception e) {
-            e.printStackTrace() ;
+            e.printStackTrace();
             throw new FaultException(e);
         } finally {
             if (channel != null) {
@@ -145,14 +143,14 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            channel.setInputStream( null ) ;
+            channel.setInputStream(null);
             getResult(channel, CHANNEL_CONNECT_TIMEOUT);
             if (exitStatus != 0) {
-                throw new ReliabilityException("ssh failed to execute commond '" + command
-                        + "',stderr:" + stderr + " ,stdout:" + stdout + ",errcode: " + exitStatus);
+                throw new ReliabilityException("ssh failed to execute commond '" + command + "',stderr:" + stderr
+                        + " ,stdout:" + stdout + ",errcode: " + exitStatus);
             }
         } catch (IOException | JSchException e) {
-            e.printStackTrace() ;
+            e.printStackTrace();
             throw new FaultException(e);
         } finally {
             if (channel != null) {
@@ -174,7 +172,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            channel.setInputStream( null ) ;
+            channel.setInputStream(null);
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             backgroundCMD.put(channel.getId(), channel);
             return channel.getId();
@@ -182,7 +180,7 @@ public class Ssh {
             if (channel != null) {
                 channel.disconnect();
             }
-            e.printStackTrace() ;
+            e.printStackTrace();
             throw new FaultException(e);
         }
     }
@@ -209,8 +207,7 @@ public class Ssh {
     public void waitBackgroudCMDDown(int channelId, int timeOutSecond) throws ReliabilityException {
         Channel channel = backgroundCMD.get(channelId);
         if (channel == null) {
-            throw new ReliabilityException(
-                    "ssh can not find this channel id(can not check channel id twice)");
+            throw new ReliabilityException("ssh can not find this channel id(can not check channel id twice)");
         }
         backgroundCMD.remove(channelId);
         try {
@@ -218,7 +215,7 @@ public class Ssh {
         } catch (IOException e) {
             throw new FaultException(e);
         } catch (JSchException e) {
-            e.printStackTrace() ;
+            e.printStackTrace();
             throw new FaultException(e);
         } finally {
             channel.disconnect();
@@ -339,48 +336,50 @@ public class Ssh {
     public Session getSession() {
         return session;
     }
-    private static final AtomicInteger sync = new AtomicInteger(0) ;
+
+    private static final AtomicInteger sync = new AtomicInteger(0);
     private static PrintStream logger = null;
-    class TestLogger implements com.jcraft.jsch.Logger{
-        public void setFileHandler(){
-            if ( sync.compareAndSet( 0, 1 )){
+
+    class TestLogger implements com.jcraft.jsch.Logger {
+        public void setFileHandler() {
+            if (sync.compareAndSet(0, 1)) {
                 try {
-                    Date date = new Date() ;
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss") ;
-                    String strTime = format.format( date.getTime() ) ;
-                    logger = new PrintStream(SdbTestBase.workDir + "/jsch" + strTime +  ".log") ;
-                } catch ( FileNotFoundException e ) {
+                    Date date = new Date();
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
+                    String strTime = format.format(date.getTime());
+                    logger = new PrintStream("E:/svn/jsch" + strTime + ".log");
+                } catch (FileNotFoundException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
         }
-        
+
         @Override
-        public boolean isEnabled( int level ) {
+        public boolean isEnabled(int level) {
             // TODO Auto-generated method stub
-            return true ;
+            return true;
         }
 
         @Override
-        public void log( int level, String msg ) {
-            Date date = new Date() ;
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss") ;
-            if ( level == 0 ){
-                logger.append( "debug:" ) ;
-            }else if ( level == 1 ){
-                logger.append( "info:" ) ;
-            }else if ( level == 2 ){
-                logger.append( "warn:" ) ;
-            }else if( level == 3 ){
-                logger.append( "error:" ) ;
-            }else{
-                logger.append( "fatal:" ) ;
+        public void log(int level, String msg) {
+            Date date = new Date();
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
+            if (level == 0) {
+                logger.append("debug:");
+            } else if (level == 1) {
+                logger.append("info:");
+            } else if (level == 2) {
+                logger.append("warn:");
+            } else if (level == 3) {
+                logger.append("error:");
+            } else {
+                logger.append("fatal:");
             }
-            logger.append( format.format( date.getTime() ) ) ;
-            logger.append( " " + msg ) ;
-            logger.append( "\n" ) ;
-            logger.flush() ;
+            logger.append(format.format(date.getTime()));
+            logger.append(" " + msg);
+            logger.append("\n");
+            logger.flush();
         }
     }
 }
