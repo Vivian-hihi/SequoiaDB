@@ -67,6 +67,8 @@ namespace engine
          virtual void    _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) = 0 ;
          virtual UINT32  _getControlMask() const = 0 ;
 
+      protected:
+
          virtual INT32   _preExcute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
                                      coordCtrlParam &ctrlParam,
@@ -75,6 +77,19 @@ namespace engine
                                      pmdEDUCB *cb,
                                      ROUTE_RC_MAP &faileds ) ;
 
+         virtual INT32 _handleHints ( BSONObj &hint, UINT32 mask ) ;
+         virtual COORD_SHOWERROR_TYPE _getShowErrorType ()
+         {
+            return _showError ;
+         }
+         virtual COORD_SHOWERRORMODE_TYPE _getShowErrorModeType ()
+         {
+            return _showErrorMode ; 
+         }
+
+      protected:
+         COORD_SHOWERROR_TYPE _showError ;
+         COORD_SHOWERRORMODE_TYPE _showErrorMode ;
    } ;
    typedef _coordCmdWithLocation coordCmdWithLocation ;
 
@@ -137,6 +152,22 @@ namespace engine
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
+
+      protected:
+         virtual INT32 _handleHints ( BSONObj &hint, UINT32 mask ) ;
+         virtual COORD_SHOWERROR_TYPE _getShowErrorType ()
+         {
+            return _showError ;
+         }
+         virtual COORD_SHOWERRORMODE_TYPE _getShowErrorModeType ()
+         {
+            return _showErrorMode ; 
+         }
+
+      protected:
+         COORD_SHOWERROR_TYPE _showError ;
+         COORD_SHOWERRORMODE_TYPE _showErrorMode ;
+
       private:
          virtual const CHAR *getIntrCMDName() = 0 ;
          virtual const CHAR *getInnerAggrContent() = 0 ;
