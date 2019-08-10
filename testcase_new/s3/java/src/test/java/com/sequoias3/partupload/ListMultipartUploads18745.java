@@ -35,7 +35,8 @@ public class ListMultipartUploads18745 extends S3TestBase {
     private File file;
     private long fileSize = 11 * 1024 * 1024;
     private int maxPartNumber = 2;
-    private String[] keys = {"/aa/bb/test1", "/aa/bb/test2", "test3", "test4"};
+    private String[] keys = {"/aa/bb/test18745_1", "/aa/bb/test18745_2", 
+            "test18745_3", "test18745_4"};
     private List<String> uploadIds = new ArrayList<>();
 
     @BeforeClass

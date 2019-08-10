@@ -44,7 +44,7 @@ public class UploadPart18776 extends S3TestBase {
 
     private AmazonS3 s3Client;
     private String bucketName = "bucket18776";
-    private String key = "test";
+    private String key = "obj18776";
     private int partsNum = 10;
     private List<PartETag> partETags = new ArrayList<>();
 

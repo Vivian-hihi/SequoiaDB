@@ -38,8 +38,8 @@ public class UploadPart18770B extends S3TestBase {
     private File file;
     private long fileSize = 5 * 1024 * 1024;
     private int maxPartNumber = 10;
-    private String[] keys = {"atest0", "/dir1/test1", "/dir1/dir2/test2", 
-            "/dira/test3", "test4"};
+    private String[] keys = {"atest18770b_0", "/dir1/test18770b_1", "/dir1/dir2/test18770b_2", 
+            "/dira/test18770b_3", "test18770b_4"};
     private List<String> uploadIdsOld = new ArrayList<>();
     private List<String> uploadIdsNew = new ArrayList<>();
 
