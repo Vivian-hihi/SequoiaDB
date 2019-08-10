@@ -290,6 +290,10 @@ public class Ssh {
                 break;
             }
 
+            if (!channel.isClosed() && channel.getExitStatus() == 0) {
+                break;
+            }
+
             try {
                 Thread.sleep(200);
             } catch (Exception e) {
@@ -348,9 +352,8 @@ public class Ssh {
                     Date date = new Date();
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
                     String strTime = format.format(date.getTime());
-                    logger = new PrintStream(SdbTestBase.workDir + "/jsch" + strTime +  ".log") ;
-               } catch (FileNotFoundException e) {
-                    // TODO Auto-generated catch block
+                    logger = new PrintStream(SdbTestBase.workDir + "/jsch" + strTime + ".log");
+                } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
             }
@@ -358,7 +361,6 @@ public class Ssh {
 
         @Override
         public boolean isEnabled(int level) {
-            // TODO Auto-generated method stub
             return true;
         }
 
