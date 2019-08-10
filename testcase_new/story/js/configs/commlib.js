@@ -49,11 +49,11 @@ var Configs = ( function() {
       this.runConfigs.push( new ConfDesp( "startshifttime", "int", 600, 1200, "some" ) ) ;
       this.runConfigs.push( new ConfDesp( "preferedinstance", "string", "M", "S", 123 ) ) ;
       this.runConfigs.push( new ConfDesp( "preferedinstancemode", "string", "random", "ordered", 123 ) ) ;
-      this.runConfigs.push( new ConfDesp( "directioinlob", "bool", "FALSE", "TRUE", 1234 ) ) ;
+      this.runConfigs.push( new ConfDesp( "directioinlob", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.runConfigs.push( new ConfDesp( "sparsefile", "bool", "FALSE", "TRUE", null ) ) ;
       this.runConfigs.push( new ConfDesp( "weight", "int", 10, 20, "asdafd" ) ) ;
-      this.runConfigs.push( new ConfDesp( "usessl", "bool", "FALSE", "TRUE", 1234 ) ) ;
-      this.runConfigs.push( new ConfDesp( "auth", "bool", "TRUE", "FALSE", 1234 ) ) ;
+      this.runConfigs.push( new ConfDesp( "usessl", "bool", "FALSE", "TRUE", "1234" ) ) ;
+      this.runConfigs.push( new ConfDesp( "auth", "bool", "TRUE", "FALSE", "1234" ) ) ;
       this.runConfigs.push( new ConfDesp( "planbuckets", "int", 500, 200, "125" ) ) ;
       this.runConfigs.push( new ConfDesp( "optimeout", "int", 60000, 100000, "20" ) ) ;
       this.runConfigs.push( new ConfDesp( "overflowratio", "int", 12, 22, "11" ) ) ;
@@ -66,31 +66,31 @@ var Configs = ( function() {
       this.runConfigs.push( new ConfDesp( "maxsyncjob", "int", 10, 20, "gghttr" ) ) ;
       this.runConfigs.push( new ConfDesp( "syncinterval", "int", 10000, 20000, "sadafe" ) ) ;
       this.runConfigs.push( new ConfDesp( "syncrecordnum", "int", 0, 1000, "ssss" ) ) ;
-      this.runConfigs.push( new ConfDesp( "syncdeep", "bool", "FALSE", "TRUE", 1234 ) ) ;
-      this.runConfigs.push( new ConfDesp( "archivecompresson", "bool", "TRUE", "FALSE", 1234 ) ) ;
+      this.runConfigs.push( new ConfDesp( "syncdeep", "bool", "FALSE", "TRUE", "1234" ) ) ;
+      this.runConfigs.push( new ConfDesp( "archivecompresson", "bool", "TRUE", "FALSE", "1234" ) ) ;
       this.runConfigs.push( new ConfDesp( "archivetimeout", "int", 600, 300, "1213" ) ) ;
       this.runConfigs.push( new ConfDesp( "archiveexpired", "int", 240, 120, "no" ) ) ;
       this.runConfigs.push( new ConfDesp( "archivequota", "int", 10, 20, "why" ) ) ;
       this.runConfigs.push( new ConfDesp( "dataerrorop", "int", 1, 2, "I" ) ) ;
       this.runConfigs.push( new ConfDesp( "dmschkinterval", "int", 0, 120, "O" ) ) ;
-      this.runConfigs.push( new ConfDesp( "perfstat", "bool", "FALSE", "TRUE", 1234 ) ) ;
+      this.runConfigs.push( new ConfDesp( "perfstat", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.runConfigs.push( new ConfDesp( "optcostthreshold", "int", 20, 10, "M" ) ) ;
       this.runConfigs.push( new ConfDesp( "maxconn", "int", 0, 3000, "12345" ) ) ;
-      this.runConfigs.push( new ConfDesp( "enablemixcmp", "bool", "FALSE", "TRUE", 1234 ) ) ;
+      this.runConfigs.push( new ConfDesp( "enablemixcmp", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.runConfigs.push( new ConfDesp( "plancachelevel", "int", 3, 4, "88" ) ) ;
 
       // register reboot configs
       // this.rebootConfigs.push( new ConfDesp( "diagpath", "path", "", "", null ) ) ; TODO: path can't specific
       // this.rebootConfigs.push( new ConfDesp( "auditpath", "path", "", "", null ) ) ;
-      this.rebootConfigs.push( new ConfDesp( "transactionon", "bool", "TRUE", "FALSE", 1234 ) ) ;
+      this.rebootConfigs.push( new ConfDesp( "transactionon", "bool", "TRUE", "FALSE", "1234" ) ) ;
       this.rebootConfigs.push( new ConfDesp( "numpreload", "int", 0, 10, "and" ) ) ;
       // this.rebootConfigs.push( new ConfDesp( "maxprefpool", "int", 0, 10, "or" ) ) ; TODO: affect maxsubquery
       this.rebootConfigs.push( new ConfDesp( "logbuffsize", "int", 1024, 2048, "Q" ) ) ;
       // this.rebootConfigs.push( new ConfDesp( "tmppath", "path", "", "", null ) ) ;
       this.rebootConfigs.push( new ConfDesp( "replbucketsize", "int", 32, 64, "test" ) ) ;
-      this.rebootConfigs.push( new ConfDesp( "memdebug", "bool", "FALSE", "TRUE", 1234 ) ) ;
+      this.rebootConfigs.push( new ConfDesp( "memdebug", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.rebootConfigs.push( new ConfDesp( "memdebugsize", "int", 0, 256, "WEYEH" ) ) ;
-      this.rebootConfigs.push( new ConfDesp( "dpslocal", "bool", "FALSE", "TRUE", 1234 ) ) ;
+      this.rebootConfigs.push( new ConfDesp( "dpslocal", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.rebootConfigs.push( new ConfDesp( "traceon", "bool", "FALSE", "TRUE", 12345 ) ) ;
       this.rebootConfigs.push( new ConfDesp( "tracebufsz", "int", 256, 512, "lxw" ) ) ;
       this.rebootConfigs.push( new ConfDesp( "archiveon", "bool", "FALSE", "TRUE", 54321 ) ) ;
