@@ -132,6 +132,11 @@
   obj.put("date", now);
   ```
 
+  >**Note:**
+  >
+  >sequoiadb 对应的日期只精确到年月日，而在 java 中日期类型 java.util.Date
+的精度包含了时分秒，所以 java 驱动在处理 java.util.Date 类型时只会截取其年月日对应的数据传给引擎端。
+
 * 二进制
 
   Java BSON 使用 org.bson.types.Binary 来构造二进制类型。
