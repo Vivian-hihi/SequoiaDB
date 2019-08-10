@@ -236,7 +236,8 @@ public class ObjectController {
             throws S3ServerException{
         try {
             User operator = restUtils.getOperatorByAuthorization(authorization);
-            logger.debug("list objectsV2. bucketName={}, delimiter={}, prefix={}, startAfter={}", bucketName, delimiter, prefix, startAfter);
+            logger.debug("list objectsV2. bucketName={}, delimiter={}, prefix={}, startAfter={}",
+                    bucketName, delimiter, prefix, startAfter);
 
             if (null != encodingType) {
                 if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
@@ -246,6 +247,10 @@ public class ObjectController {
 
             if (delimiter != null && delimiter.length() == 0) {
                 delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
             }
 
             ListObjectsResult result = objectService.listObjects(operator.getUserId(),
@@ -269,7 +274,8 @@ public class ObjectController {
 
     @GetMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listObjectsV1(@PathVariable("bucketname") String bucketName,
-                                        @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,@RequestParam(value = RestParamDefine.ListObjectsPara.PREFIX, required = false) String prefix,
+                                        @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
+                                        @RequestParam(value = RestParamDefine.ListObjectsPara.PREFIX, required = false) String prefix,
                                         @RequestParam(value = RestParamDefine.ListObjectsV1Para.DELIMITER, required = false) String delimiter,
                                         @RequestParam(value = RestParamDefine.ListObjectsV1Para.MARKER, required = false) String startAfter,
                                         @RequestParam(value = RestParamDefine.ListObjectsV1Para.MAX_KEYS, required = false, defaultValue = "1000") Integer maxKeys,
@@ -287,6 +293,10 @@ public class ObjectController {
 
             if (delimiter != null && delimiter.length() == 0) {
                 delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
             }
 
             ListObjectsResultV1 result = objectService.listObjectsV1(operator.getUserId(),
@@ -330,6 +340,10 @@ public class ObjectController {
 
             if (delimiter != null && delimiter.length() == 0) {
                 delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
             }
 
             ListVersionsResult result = objectService.listVersions(operator.getUserId(),

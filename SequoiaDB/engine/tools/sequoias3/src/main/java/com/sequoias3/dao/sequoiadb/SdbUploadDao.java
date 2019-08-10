@@ -251,7 +251,7 @@ public class SdbUploadDao implements UploadDao {
             matcher.put(UploadMeta.META_BUCKET_ID, bucketId);
             matcher.put(UploadMeta.META_STATUS, status);
             BSONObject keyMatcher = new BasicBSONObject();
-            if (prefix != null){
+            if (prefix != null && prefix.length() > 0){
                 keyMatcher.put(DBParamDefine.NOT_SMALL, prefix);
                 String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
                 keyMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);

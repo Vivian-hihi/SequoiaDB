@@ -103,7 +103,7 @@ public class SequoiadbMetaDao implements MetaDao {
                 matcher.put(ObjectMeta.META_DELETE_MARKER, false);
             }
             BSONObject keyMatcher = new BasicBSONObject();
-            if (prefix != null){
+            if (prefix != null && prefix.length() > 0){
                 keyMatcher.put(DBParamDefine.NOT_SMALL, prefix);
                 String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
                 keyMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);
@@ -247,7 +247,7 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
             BSONObject keyMatcher = new BasicBSONObject();
-            if (prefix != null){
+            if (prefix != null && prefix.length() > 0){
                 keyMatcher.put(DBParamDefine.NOT_SMALL, prefix);
                 String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
                 keyMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);
@@ -361,7 +361,7 @@ public class SequoiadbMetaDao implements MetaDao {
             }
             matcher.put(parentIdName, parentId);
             BSONObject nameMatcher = new BasicBSONObject();
-            if (prefix != null){
+            if (prefix != null && prefix.length() > 0){
                 nameMatcher.put(DBParamDefine.NOT_SMALL, prefix);
                 String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
                 nameMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);

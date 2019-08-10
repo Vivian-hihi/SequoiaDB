@@ -1508,7 +1508,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
-            throw new S3ServerException(S3Error.OBJECT_LIST_VERSIONS_FAILED,
+            throw new S3ServerException(S3Error.PART_LIST_MULTIPART_UPLOADS_FAILED,
                     "List Uploads failed. bucket:"+bucketName, e);
         }finally {
             metaDao.releaseQueryDbCursor(dbCursorUploads);

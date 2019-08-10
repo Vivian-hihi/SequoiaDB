@@ -146,7 +146,7 @@ public class SdbDirDao implements DirDao {
             matcher.put(Dir.DIR_BUCKETID, bucketId);
             matcher.put(Dir.DIR_DELIMITER, delimiter);
             BSONObject nameMatcher = new BasicBSONObject();
-            if (dirPrefix != null){
+            if (dirPrefix != null && dirPrefix.length() > 0){
                 nameMatcher.put(DBParamDefine.GREATER, dirPrefix);
                 String prefixEnd = dirPrefix.substring(0,dirPrefix.length()-1) + (char)(dirPrefix.charAt(dirPrefix.length()-1)+1);
                 nameMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);

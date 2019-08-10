@@ -240,6 +240,14 @@ public class MultiPartUploadController {
             logger.debug("listUploads. bucketName={}, prefix={}, delimiter={}, keyMarker={}, uploadIdMarker={}",
                     bucketName, prefix, delimiter, keyMarker, uploadIdMarker);
 
+            if (delimiter != null && delimiter.length() == 0) {
+                delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
+            }
+
             ListMultipartUploadsResult result = objectService.listUploadLists(operator.getUserId(),
                     bucketName,
                     prefix,
