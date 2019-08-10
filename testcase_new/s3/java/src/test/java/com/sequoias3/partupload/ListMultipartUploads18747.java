@@ -79,7 +79,8 @@ public class ListMultipartUploads18747 extends S3TestBase {
     @Test
     private void test_NotSatisfyUploadIdMarker() throws Exception {
         ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName)
-                .withPrefix("test").withKeyMarker(keys[2]).withUploadIdMarker("99999");
+                .withPrefix("test").withKeyMarker(keys[2])
+                .withUploadIdMarker("9999999999999");
         MultipartUploadListing result = s3Client.listMultipartUploads(request);
         expUploads.clear();
         expUploads.add(keys[3], uploadIds.get(3));
