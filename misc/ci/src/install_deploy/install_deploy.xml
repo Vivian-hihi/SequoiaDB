@@ -231,7 +231,7 @@
             <var name="IDXPREFIX" value="${TEST_TYPE}${DEPLOY_MODE}"/>
          </then>
       </if>
-      <var name="cmd" value="curl -XDELETE 'http://${ES_IP}:${ES_PORT}/${IDXPREFIX}*'"/>
+      <var name="cmd" value="echo 'http://${ES_IP}:${ES_PORT}/${IDXPREFIX}*' | tr A-Z a-z | xargs curl -XDELETE"/>
       
       <staf location="${ES_IP}" service="PROCESS"
             request="START SHELL COMMAND ${cmd} WAIT 10m RETURNSTDERR"
