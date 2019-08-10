@@ -23,7 +23,7 @@ public class FaultFulltextBase extends Fault {
     protected String pid = "-1";
     protected String cmdDir;
     protected String cmdArgs;
-    protected final static Logger log = Logger.getLogger(FaultElasticSearch.class.getName());
+    protected final static Logger log = Logger.getLogger(FaultFulltextBase.class.getName());
 
     public FaultFulltextBase(String name) {
         super(name);
