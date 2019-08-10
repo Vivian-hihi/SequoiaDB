@@ -1,11 +1,37 @@
 package com.sequoiadb.fault;
 
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.task.FaultMakeTask;
 
-public class KillSdbseadapter extends FaultSdbseadapterBase {
+public class KillSdbseadapter extends FaultFulltextBase {
+    private String sdbseadapterDir;
 
     protected KillSdbseadapter(String hostName, String svcName) {
-        super(hostName, svcName, "KillSdbseadapter", "-9");
+        super("KillSdbseadapter");
+        this.hostName = hostName;
+        this.svcName = svcName.substring(0, svcName.length() - 1);
+        user = "root";
+        password = SdbTestBase.rootPwd;
+        port = 22;
+        localPath = SdbTestBase.scriptDir;
+        remotePath = SdbTestBase.workDir;
+        progName = "sdbseadapter";
+        killRestart = "-9";
+        sdbseadapterDir = SdbTestBase.sdbseadapterDir;
+    }
+
+    @Override
+    protected void getMakeStdout() {
+        super.getMakeStdout();
+        String stdout = ssh.getStdout().trim();
+        pid = stdout.split(":")[0];
+        cmdDir = stdout.split(":")[1];
+    }
+
+    @Override
+    protected void beforeRestore() {
+        super.beforeRestore();
+        cmdArgs = setRestoreArgs(progName, cmdDir, sdbseadapterDir, svcName + "0");
     }
 
     /**

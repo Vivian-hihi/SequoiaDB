@@ -1,11 +1,34 @@
 package com.sequoiadb.fault;
 
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.task.FaultMakeTask;
 
-public class KillElasticSearch extends FaultElasticSearch {
+public class KillElasticSearch extends FaultFulltextBase {
 
     protected KillElasticSearch(String hostName) {
-        super(hostName, "KillElasticSearch", "-9");
+        super("KillElasticSearch");
+        this.hostName = hostName;
+        user = SdbTestBase.remoteUser;
+        password = SdbTestBase.remotePwd;
+        port = 22;
+        localPath = SdbTestBase.scriptDir;
+        remotePath = SdbTestBase.workDir;
+        progName = "org.elasticsearch.bootstrap.Elasticsearch";
+        killRestart = "-9";
+    }
+
+    @Override
+    protected void getMakeStdout() {
+        super.getMakeStdout();
+        String stdout = ssh.getStdout().trim();
+        pid = stdout.split(":")[0];
+        cmdDir = stdout.split(":")[1] + "/bin/elasticsearch";
+    }
+
+    @Override
+    protected void beforeRestore() {
+        super.beforeRestore();
+        cmdArgs = setRestoreArgs(progName, cmdDir);
     }
 
     /**
@@ -18,8 +41,8 @@ public class KillElasticSearch extends FaultElasticSearch {
      */
     public static FaultMakeTask geFaultMakeTask(String hostName, int maxDlay, int checkTimes) {
         FaultMakeTask task = null;
-        KillElasticSearch ke = new KillElasticSearch(hostName);
-        task = new FaultMakeTask(ke, maxDlay, 3, checkTimes);
+        KillElasticSearch re = new KillElasticSearch(hostName);
+        task = new FaultMakeTask(re, maxDlay, 3, checkTimes);
         return task;
     }
 

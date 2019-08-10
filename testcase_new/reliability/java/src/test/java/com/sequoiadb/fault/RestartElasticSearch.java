@@ -1,11 +1,34 @@
 package com.sequoiadb.fault;
 
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.task.FaultMakeTask;
 
-public class RestartElasticSearch extends FaultElasticSearch {
+public class RestartElasticSearch extends FaultFulltextBase {
 
     protected RestartElasticSearch(String hostName) {
-        super(hostName, "KillElasticSearch", "-15");
+        super("RestartElasticSearch");
+        this.hostName = hostName;
+        user = SdbTestBase.remoteUser;
+        password = SdbTestBase.remotePwd;
+        port = 22;
+        localPath = SdbTestBase.scriptDir;
+        remotePath = SdbTestBase.workDir;
+        progName = "org.elasticsearch.bootstrap.Elasticsearch";
+        killRestart = "-15";
+    }
+
+    @Override
+    protected void getMakeStdout() {
+        super.getMakeStdout();
+        String stdout = ssh.getStdout().trim();
+        pid = stdout.split(":")[0];
+        cmdDir = stdout.split(":")[1] + "/bin/elasticsearch";
+    }
+
+    @Override
+    protected void beforeRestore() {
+        super.beforeRestore();
+        cmdArgs = setRestoreArgs(progName, cmdDir);
     }
 
     /**

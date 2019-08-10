@@ -1,10 +1,37 @@
 package com.sequoiadb.fault;
 
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.task.FaultMakeTask;
 
-public class RestartSdbseadapter extends FaultSdbseadapterBase {
-    protected RestartSdbseadapter(String hostName, String svcName) {
-        super(hostName, svcName, "RestartSdbseadapter", "-15");
+public class RestartSdbseadapter extends FaultFulltextBase {
+    private String sdbseadapterDir;
+
+    public RestartSdbseadapter(String hostName, String svcName) {
+        super("RestartSdbseadapter");
+        this.hostName = hostName;
+        this.svcName = svcName.substring(0, svcName.length() - 1);
+        user = "root";
+        password = SdbTestBase.rootPwd;
+        port = 22;
+        localPath = SdbTestBase.scriptDir;
+        remotePath = SdbTestBase.workDir;
+        progName = "sdbseadapter";
+        killRestart = "-15";
+        sdbseadapterDir = SdbTestBase.sdbseadapterDir;
+    }
+
+    @Override
+    protected void getMakeStdout() {
+        super.getMakeStdout();
+        String stdout = ssh.getStdout().trim();
+        pid = stdout.split(":")[0];
+        cmdDir = stdout.split(":")[1];
+    }
+
+    @Override
+    protected void beforeRestore() {
+        super.beforeRestore();
+        cmdArgs = setRestoreArgs(progName, cmdDir, sdbseadapterDir, svcName + "0");
     }
 
     /**
@@ -24,7 +51,7 @@ public class RestartSdbseadapter extends FaultSdbseadapterBase {
     }
 
     /**
-     * 默认检查次数 300 次，持续时间 3s
+     * 默认检查次数 120 次，持续时间 3s
      * 
      * @param hostName 主机名
      * @param svcName  适配器对应的节点的 svcname
@@ -32,6 +59,6 @@ public class RestartSdbseadapter extends FaultSdbseadapterBase {
      * @return
      */
     public static FaultMakeTask geFaultMakeTask(String hostName, String svcName, int maxDelay) {
-        return geFaultMakeTask(hostName, svcName, maxDelay, 300);
+        return geFaultMakeTask(hostName, svcName, maxDelay, 120);
     }
 }
