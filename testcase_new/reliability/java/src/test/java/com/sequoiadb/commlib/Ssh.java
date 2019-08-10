@@ -348,8 +348,8 @@ public class Ssh {
                     Date date = new Date();
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
                     String strTime = format.format(date.getTime());
-                    logger = new PrintStream("E:/svn/jsch" + strTime + ".log");
-                } catch (FileNotFoundException e) {
+                    logger = new PrintStream(SdbTestBase.workDir + "/jsch" + strTime +  ".log") ;
+               } catch (FileNotFoundException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
