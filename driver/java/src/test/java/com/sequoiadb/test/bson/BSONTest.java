@@ -10,13 +10,13 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;
 import org.bson.types.BSONTimestamp;
+import org.bson.util.DateInterceptUtil;
 import org.junit.*;
 
 import java.sql.Timestamp;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertThat;
 
 /**
  * Created by tanzhaobo on 2017/11/21.
@@ -172,6 +172,21 @@ public class BSONTest {
         BSONObject obj = new BasicBSONObject();
         obj.put("arr", list);
         cl.insert(obj);
+    }
+
+    @Test
+    public void BSONDateTest() {
+        BSONObject options = new BasicBSONObject();
+        Date date = DateInterceptUtil.interceptDate(new Date(),"yyyy-MM-dd");
+        options.put("a",date);
+        cl.insert(options);
+        DBCursor cursor ;
+        cursor = cl.query(options,null,null,null);
+        while (cursor.hasNext()){
+            BSONObject b = cursor.getNext();
+            Date d = (Date) b.get("a");
+            assertEquals(date,d);
+        }
     }
 
 }

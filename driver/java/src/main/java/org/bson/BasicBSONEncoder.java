@@ -69,6 +69,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.Symbol;
+import org.bson.util.DateInterceptUtil;
 
 /**
  * this is meant to be pooled or cached there is some per instance memory for
@@ -359,7 +360,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
 	protected void putDate(String name, Date d) {
 		_put(DATE, name);
-		_buf.writeLong(d.getTime());
+		_buf.writeLong(DateInterceptUtil.getYMDTime(d));
 	}
 
 	protected void putNumber(String name, Number n) {
