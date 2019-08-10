@@ -2,9 +2,13 @@
 
 假如升级前 MySQL 实例组件中已添加端口号为 3306，数据库实例路径为 /opt/sequoiasql/mysql/database/3306，那么升级的步骤如下：
 
-1. 如果是从 3.2 版本升级到更高版本的 MySQL，直接安装新版本的 MySQL 即可。执行安装命令需要指定 installmode 参数。详细的参数介绍见命令的 help 信息；
+1. 如果是从 3.2 版本升级到更高版本的 MySQL，直接安装新版本的 MySQL 即可。执行安装命令需要指定 installmode 参数，详细的参数介绍见命令的 help 信息；
 
-2. 如果是从 3.2 版本以下的版本升级到 3.2 版本的 MySQL，则按照以下的步骤执行；
+  ```lang-bash
+  # ./sequoiadb-x.x.x-linux_x86_64-installer.run --installmode upgrade
+  ```
+
+2. 如果是从 3.2 版本以下的版本升级到 3.2 版本以及更高版本的 MySQL，则按照以下的步骤执行；
 
 3. 卸载之前版本的 MySQL，保留数据目录；
 
