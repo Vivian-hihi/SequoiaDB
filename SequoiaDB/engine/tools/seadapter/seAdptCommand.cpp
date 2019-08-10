@@ -50,7 +50,7 @@ namespace seadapter
                                                                idxNameMap ) ;
          if ( 0 == idxNameMap.size() )
          {
-            rc = SDB_INVALIDARG ;
+            rc = SDB_RTN_INDEX_NOTEXIST ;
             PD_LOG( PDERROR, "No text index found for collection[%s]",
                   _clFullName ) ;
             goto error ;

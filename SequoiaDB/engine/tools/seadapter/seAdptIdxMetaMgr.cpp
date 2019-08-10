@@ -415,7 +415,7 @@ namespace seadapter
          while ( SEADPT_INVALID_IMID != imID )
          {
             meta = &_metas[ imID ] ;
-            if ( SEADPT_IM_STAT_NORMAL == meta->getStat() )
+            if ( SEADPT_IM_STAT_INVALID != meta->getStat() )
             {
                idxNameMap[ meta->getOrigIdxName() ] = imID ;
             }
