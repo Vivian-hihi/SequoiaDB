@@ -323,13 +323,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONDROPTEXTIDX ) ;
-      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtDropIdxCtx *context = NULL ;
-
-      if ( SDB_DB_FULLSYNC == dbStatus )
-      {
-         goto done ;
-      }
 
       context = (rtnExtDropIdxCtx *)_contextMgr.findContext( cb->getTID() ) ;
       if ( !context )
@@ -557,6 +551,7 @@ namespace engine
    INT32 _rtnExtDataHandler::onTruncateCL( const CHAR *csName,
                                            const CHAR *clName,
                                            pmdEDUCB *cb,
+                                           BOOLEAN needChangeCLID,
                                            SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -574,7 +569,7 @@ namespace engine
                       rc ) ;
       }
 
-      rc = context->open( _edpMgr, csName, clName, cb, dpscb ) ;
+      rc = context->open( _edpMgr, csName, clName, cb, needChangeCLID, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for truncate failed[ %d ]", rc ) ;
 
    done:

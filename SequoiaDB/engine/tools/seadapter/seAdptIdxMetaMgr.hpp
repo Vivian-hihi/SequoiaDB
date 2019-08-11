@@ -122,7 +122,7 @@ namespace seadapter
             _stat = stat ;
          }
 
-         INT32 getStat() const
+         seIdxMetaStat getStat() const
          {
             return _stat ;
          }

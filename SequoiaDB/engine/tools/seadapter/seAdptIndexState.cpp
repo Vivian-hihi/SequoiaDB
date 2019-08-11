@@ -75,7 +75,8 @@ namespace seadapter
    : _session( session ),
      _begin( TRUE ),
      _timeout( 0 ),
-     _retryTimes( 0 )
+     _retryTimes( 0 ),
+     _rebuild( FALSE )
    {
    }
 
@@ -263,6 +264,17 @@ namespace seadapter
       rc = _processGetmoreRes( flag, contextID, startFrom,
                                numReturned, resultSet ) ;
       PD_RC_CHECK( rc, PDERROR, "Process getmore reply failed[%d]", rc ) ;
+
+      if ( _rebuild )
+      {
+         // Ready to recreate the index, kill the current context.
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean the current contex failed[%d]", rc ) ;
+         rc = _cleanSearchEngine() ;
+         PD_RC_CHECK( rc, PDERROR, "Clean index on search engine failed[%d]",
+                      rc ) ;
+         _session->triggerStateTransition( FULL_INDEX ) ;
+      }
 
    done:
       return rc ;
@@ -500,7 +512,8 @@ namespace seadapter
       INT64 contextID = ((MsgOpReply *)msg)->contextID ;
       seAdptDBAssist *dbAssist = _session->dbAssist() ;
 
-      rc = msgBuildKillContextsMsg( &killCtxMsg, &buffSize, 0,
+      rc = msgBuildKillContextsMsg( &killCtxMsg, &buffSize,
+                                    _session->nextRequestID(),
                                     1, &contextID, _session->eduCB() ) ;
       PD_RC_CHECK( rc, PDERROR, "Build kill context[%lld] message failed[%d]",
                    rc ) ;
@@ -1580,6 +1593,10 @@ namespace seadapter
          rc = _processDocuments( resultSet ) ;
          PD_RC_CHECK( rc, PDERROR, "Index documents on search engine "
                                    "failed[%d]", rc ) ;
+         if ( _rebuild )
+         {
+            goto done ;
+         }
 
          if ( _hasNewData &&
               _session->getLastExpectLID() != SEADPT_INVALID_LID &&
@@ -1817,10 +1834,16 @@ namespace seadapter
                       rc ) ;
          for ( ; itr != docs.end(); ++itr )
          {
-            rc = _processDocument( *itr, logicalID ) ;
+            BOOLEAN isRebuildRecord = FALSE ;
+            rc = _processDocument( *itr, logicalID, isRebuildRecord ) ;
             PD_RC_CHECK( rc, PDERROR, "Process document failed[%d]. "
                                       "Document: %s",
                          rc, itr->toString(false, true).c_str() ) ;
+            if ( isRebuildRecord )
+            {
+               _rebuild = TRUE ;
+               goto done ;
+            }
          }
 
          rc = seAssist->bulkFinish() ;
@@ -1851,7 +1874,8 @@ namespace seadapter
    }
 
    INT32 _seAdptIncIndexState::_processDocument( const BSONObj &document,
-                                                 INT64 &logicalID )
+                                                 INT64 &logicalID,
+                                                 BOOLEAN &isRebuildRecord )
    {
       INT32 rc = SDB_OK ;
 
@@ -1876,6 +1900,12 @@ namespace seadapter
       {
          PD_LOG( PDERROR, "Get id string and source object failed[%d]", rc ) ;
          goto error ;
+      }
+
+      if ( RTN_EXT_DUMMY == oprType )
+      {
+         isRebuildRecord = TRUE ;
+         goto done ;
       }
 
       if ( finalID.size() > SEADPT_MAX_ID_SZ )
@@ -1983,15 +2013,6 @@ namespace seadapter
          BSONElement lidField = origObj.getField( SEADPT_FIELD_NAME_ID ) ;
          BSONElement ridEle = origObj.getField( SEADPT_FIELD_NAME_RID ) ;
          type = origObj.getIntField( FIELD_NAME_TYPE ) ;
-
-         if ( lidField.eoo() || ridEle.eoo() )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "_id or _rid not found in record: %s",
-                    origObj.toString().c_str() ) ;
-            goto error ;
-         }
-
          if ( !_typeSupport( type ) )
          {
             PD_LOG( PDERROR, "Operation type[%d] is not supported in "
@@ -2002,8 +2023,20 @@ namespace seadapter
          }
 
          oprType = ( _rtnExtOprType )type ;
-         logicalID = lidField.Long() ;
+         if ( RTN_EXT_DUMMY == oprType )
+         {
+            goto done ;
+         }
 
+         if ( lidField.eoo() || ridEle.eoo() )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "_id or _rid not found in record: %s",
+                    origObj.toString().c_str() ) ;
+            goto error ;
+         }
+
+         logicalID = lidField.Long() ;
          encodeID( ridEle, finalID ) ;
 
          // When updating the _id field, it's a little complicated, as some data

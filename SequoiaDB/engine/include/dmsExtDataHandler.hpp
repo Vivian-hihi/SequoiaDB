@@ -106,7 +106,8 @@ namespace engine
                               SDB_DPSCB *dpscb = NULL ) = 0 ;
 
       virtual INT32 onTruncateCL( const CHAR *csName, const CHAR *clName,
-                                  _pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) = 0 ;
+                                  _pmdEDUCB *cb, BOOLEAN needChangeCLID = TRUE,
+                                  SDB_DPSCB *dpsCB = NULL ) = 0 ;
 
       virtual INT32 onRenameCS( const CHAR *oldCSName, const CHAR *newCSName,
                                 _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) = 0 ;

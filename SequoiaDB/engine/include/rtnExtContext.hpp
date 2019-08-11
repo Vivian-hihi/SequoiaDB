@@ -293,7 +293,8 @@ namespace engine
 
       virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
                           const CHAR *csName, const CHAR *clName,
-                          _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
+                          _pmdEDUCB *cb, BOOLEAN needChangeCLID,
+                          SDB_DPSCB *dpscb = NULL ) ;
 
    private:
       virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;

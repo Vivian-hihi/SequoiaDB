@@ -2589,7 +2589,8 @@ namespace engine
          if ( handler )
          {
             rc = handler->onTruncateCL( getSuName(),
-                                        context->mb()->_collectionName, cb ) ;
+                                        context->mb()->_collectionName,
+                                        cb, needChangeCLID ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
                          "collection failed, rc: %d", rc ) ;
          }

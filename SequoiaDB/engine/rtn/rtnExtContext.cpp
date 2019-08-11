@@ -713,6 +713,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPIDXCTX_OPEN ) ;
       rtnExtDataProcessor *processor = NULL ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
       _processorMgr = processorMgr ;
       rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
@@ -723,6 +724,13 @@ namespace engine
          goto done ;
       }
       _lockType = EXCLUSIVE ;
+
+      // If it's full sync, just remove the processors, but not remove the
+      // capped CS.
+      if ( SDB_DB_FULLSYNC == dbStatus )
+      {
+         goto done ;
+      }
 
       rc = processor->doDropP1( cb, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]", rc ) ;
@@ -750,22 +758,27 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 ret = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDROPIDXCTX__ONDONE ) ;
+      SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
 
-      // For drop operation, the processors need to be removed.
-      for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
-            ++itr )
+      if ( SDB_DB_FULLSYNC != dbStatus )
       {
-         ret = (*itr)->doDropP2( cb, dpscb ) ;
-         if ( ret )
+         // For drop operation, the processors need to be removed.
+         for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
+               ++itr )
          {
-            PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
-            if ( SDB_OK == rc )
+            ret = (*itr)->doDropP2( cb, dpscb ) ;
+            if ( ret )
             {
-               rc = ret ;
+               PD_LOG( PDERROR, "Do drop phase 2 failed[ %d ]", rc ) ;
+               if ( SDB_OK == rc )
+               {
+                  rc = ret ;
+               }
             }
          }
-         // Unlock and delete all processors.
       }
+
+      // Unlock and delete all processors.
       _processorMgr->destroyProcessors( _processors, _lockType ) ;
       _processors.clear() ;
       _lockType = -1 ;
@@ -806,7 +819,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_OPEN, "_rtnExtTruncateCtx::open" )
    INT32 _rtnExtTruncateCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                    const CHAR *csName, const CHAR *clName,
-                                   pmdEDUCB *cb, SDB_DPSCB *dpscb )
+                                   pmdEDUCB *cb, BOOLEAN needChangeCLID,
+                                   SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_OPEN ) ;
@@ -825,7 +839,7 @@ namespace engine
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
       {
-         rc = (*itr)->processTruncate( cb, dpscb ) ;
+         rc = (*itr)->processTruncate( cb, needChangeCLID, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Process truncate collection failed[%d]",
                       rc ) ;
       }

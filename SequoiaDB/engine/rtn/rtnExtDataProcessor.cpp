@@ -317,7 +317,7 @@ namespace engine
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
                       cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record insert collection[ %s ] "
+      PD_RC_CHECK( rc, PDERROR, "Insert record into collection[ %s ] "
                    "failed[ %d ]", _cappedCLName, rc ) ;
 
       _needUpdateLSN = TRUE ;
@@ -406,7 +406,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSTRUNCATE, "_rtnExtDataProcessor::processTruncate" )
-   INT32 _rtnExtDataProcessor::processTruncate( pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _rtnExtDataProcessor::processTruncate( pmdEDUCB *cb,
+                                                BOOLEAN needChangeCLID,
+                                                SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSTRUNCATE ) ;
@@ -415,6 +417,15 @@ namespace engine
       rc = rtnTruncCollectionCommand( _cappedCLName, cb, dmsCB, dpsCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate capped collection[%s] failed[%d]",
                    _cappedCLName,  rc ) ;
+
+      // If the logical id of the original collection dose not change, insert a
+      // reset record into the capped collection, for the adapter need
+      // information to know the change of the collection and index.
+      if ( !needChangeCLID )
+      {
+         rc = _addRebuildRecord( cb, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Add rebuild record failed[%d]", rc ) ;
+      }
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PROCESSTRUNCATE, rc ) ;
@@ -729,12 +740,6 @@ namespace engine
          BSONObjSet keySet ;
          BSONObjBuilder objBuilder ;
          BOOLEAN needData = FALSE ;
-
-         // 1. Append operation type.
-         objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
-         // 2. Append the _id as _rid.
-         objBuilder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
-         // 3. Insert new _id if the _id field has been modified.
          switch ( oprType )
          {
          case RTN_EXT_INSERT:
@@ -754,6 +759,7 @@ namespace engine
                PD_LOG( PDERROR, "New _id is invalid" ) ;
                goto error ;
             }
+            // Insert new _id if the _id field has been modified.
             objBuilder.appendAs( *newIdEle, RTN_FIELD_NAME_RID_NEW ) ;
             break ;
          case RTN_EXT_INVALID:
@@ -762,6 +768,14 @@ namespace engine
             goto error ;
          default:
             break ;
+         }
+
+         // Append operation type.
+         objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
+         // Append the _id as _rid.
+         if ( !idEle.eoo() )
+         {
+            objBuilder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
          }
 
          // 4. Append data if necessarry.
@@ -1125,6 +1139,29 @@ namespace engine
          _su->data()->releaseMBContext( context ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__UPDATESPACEINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnExtDataProcessor::_addRebuildRecord( pmdEDUCB *cb,
+                                                  SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj record ;
+      INT32 insertNum = 0 ;
+      INT32 ignoreNum = 0 ;
+      BSONElement dummyEle = BSONElement() ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
+      rc = _prepareRecord( RTN_EXT_DUMMY, dummyEle, record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Prepare rebuild record failed[%d]", rc ) ;
+
+      rc = rtnInsert( _cappedCLName, record, 1, 0, cb, dmsCB,
+                      dpsCB, 1, &insertNum, &ignoreNum ) ;
+      PD_RC_CHECK( rc, PDERROR, "Insert rebuild record into collection[%s] "
+                   "failed[%d]", _cappedCLName, rc ) ;
+   done:
       return rc ;
    error:
       goto done ;

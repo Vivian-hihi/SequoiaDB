@@ -118,6 +118,7 @@ namespace seadapter
       BOOLEAN _begin ;
       UINT32 _timeout ;
       UINT16 _retryTimes ;
+      BOOLEAN _rebuild ;
    } ;
    typedef _seAdptIndexerState seAdptIndexerState ;
 
@@ -277,7 +278,8 @@ namespace seadapter
        * @brief Process one document.
        * @param logicalID Logical ID of the record.
        */
-      INT32 _processDocument( const BSONObj &document, INT64 &logicalID ) ;
+      INT32 _processDocument( const BSONObj &document, INT64 &logicalID,
+                              BOOLEAN &isRebuildRecord ) ;
 
       /**
        * @brief Check if the first record is the one we expected. If not, it
@@ -296,7 +298,7 @@ namespace seadapter
       BOOLEAN _typeSupport( INT32 type )
       {
          return ( type > engine::RTN_EXT_INVALID && type
-                  < engine::RTN_EXT_DUMMY ) ;
+                  <= engine::RTN_EXT_DUMMY ) ;
       }
 
    private:

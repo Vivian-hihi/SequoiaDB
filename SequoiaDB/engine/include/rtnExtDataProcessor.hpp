@@ -149,7 +149,8 @@ namespace engine
       INT32 processUpdate( const BSONObj &originalObj, const BSONObj &newObj,
                            pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
 
-      INT32 processTruncate( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
+      INT32 processTruncate( pmdEDUCB *cb, BOOLEAN needChangeCLID,
+                             SDB_DPSCB *dpsCB = NULL ) ;
 
       INT32 doDropP1( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP1Cancel( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
@@ -192,6 +193,8 @@ namespace engine
       INT32 _spaceCheck( UINT32 size ) ;
 
       INT32 _updateSpaceInfo( UINT64 &freeSpace ) ;
+
+      INT32 _addRebuildRecord( pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
 
    private:
       rtnExtProcessorStat  _stat ;
