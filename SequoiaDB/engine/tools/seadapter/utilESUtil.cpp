@@ -145,7 +145,7 @@ namespace seadapter
                   "field_name" : {
                      "type" : "text",
                      "fields" : {
-                        "raw" : {
+                        "keyword" : {
                            "type" : "keyword"
                         }
                      }
@@ -157,7 +157,7 @@ namespace seadapter
             {
                fieldBuilder.append( "type", getTypeStr( ES_TEXT ) ) ;
                BSONObj fieldsObj =
-                  BSON( "fields" << BSON ( "raw" <<
+                  BSON( "fields" << BSON ( "keyword" <<
                         BSON( "type" << getTypeStr( ES_KEYWORD ) ) ) ) ;
                fieldBuilder.appendElements( fieldsObj ) ;
             }
