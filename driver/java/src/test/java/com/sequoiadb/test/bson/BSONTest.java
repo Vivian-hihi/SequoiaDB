@@ -176,16 +176,38 @@ public class BSONTest {
 
     @Test
     public void BSONDateTest() {
-        BSONObject options = new BasicBSONObject();
-        Date date = DateInterceptUtil.interceptDate(new Date(),"yyyy-MM-dd");
-        options.put("a",date);
-        cl.insert(options);
-        DBCursor cursor ;
-        cursor = cl.query(options,null,null,null);
+        // 带有年月日时分秒的 date 用例
+        Date dateCase1 = new Date();
+        DateTest("a", dateCase1 );
+
+        // 只带有年月日的 date 用例
+        Date dateCase2 = DateInterceptUtil.interceptDate(new Date(),"yyyy-MM-dd");
+        DateTest("a", dateCase2);
+
+        // 只带有年月的 date 用例
+        Date dateCase3 = DateInterceptUtil.interceptDate(new Date(),"yyyy-MM");
+        DateTest("a", dateCase3);
+
+        // 只带有年的 date 用例
+        Date dateCase4 = DateInterceptUtil.interceptDate(new Date(),"yyyy");
+        DateTest("a", dateCase4);
+
+        // 只带有月的 date 用例
+        Date dateCase5 = DateInterceptUtil.interceptDate(new Date(),"MM");
+        DateTest("a", dateCase5);
+
+    }
+    private void DateTest(String key,Date value){
+        BSONObject bsonObject = new BasicBSONObject();
+        Date expectDate = DateInterceptUtil.interceptDate(value, "yyyy-MM-dd");
+        bsonObject.put(key,value);
+        cl.insert(bsonObject);
+        DBCursor cursor  = cl.query(bsonObject,null,null,null);
         while (cursor.hasNext()){
             BSONObject b = cursor.getNext();
-            Date d = (Date) b.get("a");
-            assertEquals(date,d);
+            Date d = (Date) b.get(key);
+            System.out.println(d);
+            assertEquals(d, expectDate);
         }
     }
 
