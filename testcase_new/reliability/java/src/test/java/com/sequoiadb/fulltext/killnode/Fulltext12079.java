@@ -90,7 +90,7 @@ public class Fulltext12079 extends SdbTestBase {
 
         // 节点停止的时候，插入记录未校验则报-252，可能存在记录插入成功的情况，因此预期结果可能为2
         if (clCount != insertNum && clCount != insertNum + 1) {
-            Assert.fail("expect cl count: 1 or 2, but actual cl count:" + clCount);
+            Assert.fail("expect cl count: " + insertNum + " or " + insertNum + 1 + ", but actual cl count:" + clCount);
         }
         Assert.assertTrue(FullTextUtils.isCLConsistency(cl));
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
