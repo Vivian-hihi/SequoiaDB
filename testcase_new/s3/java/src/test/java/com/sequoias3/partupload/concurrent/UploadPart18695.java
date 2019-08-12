@@ -24,21 +24,20 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18698: upload multiple parts concurrently,the partNums
- *              discontinuity, the length of the parts is the same and there is
- *              partNum of 1.
+ * @Description seqDB-18695: upload multiple parts concurrently,there are
+ *              conitnuous and discontiguous partNumber,the length of the parts
+ *              is different and there is no partNum of 1.
  * @author wuyan
  * @Date 2019.07.29
  * @version 1.00
  */
-public class UploadPart18698 extends S3TestBase {
+public class UploadPart18695 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String keyName = "/aa/object18698";
+	private String keyName = "/aa/object18695";
 	private AmazonS3 s3Client = null;
 	private File localPath = null;
 	private String filePath = null;
-	private int fileSize = 1024 * 1024 * 50;
-	private int partSize = 1024 * 1024 * 10;
+	private int fileSize = 1024 * 580;
 	private List<PartETag> partEtags = Collections.synchronizedList(new ArrayList<PartETag>());
 
 	@BeforeClass
@@ -51,25 +50,28 @@ public class UploadPart18698 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 	}
 
-	@Test
+	// 待增加配置组后再运行该用例
+	@Test(enabled = false)
 	public void uploadParts() throws Exception {
 		File file = new File(filePath);
 		String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);
 
 		ThreadExecutor threadExec = new ThreadExecutor();
-		int partNum = fileSize / partSize;
-		int[] partNumbers = { 1, 3000, 5000, 6999, 10000 };
-		for (int i = 0; i < partNum; i++) {
+		int[] partNumbers = { 2, 3, 5, 50, 51, 100 };
+		int[] partSizes = { 1024 * 100, 1024 * 200, 1024 * 150, 1024 * 10, 1024 * 20, 1024 * 100 };
+		int[] offSets = { 0, 1024 * 100, 1024 * 300, 1024 * 450, 1024 * 460, 1024 * 480 };
+		for (int i = 0; i < partNumbers.length; i++) {
 			int partNumber = partNumbers[i];
-			int offSet = i * partSize;
-			threadExec.addWorker(new PartUpload(partNumber, offSet, file, uploadId));
+			int partSize = partSizes[i];
+			int offSet = offSets[i];
+			threadExec.addWorker(new PartUpload(partNumber, partSize, offSet, file, uploadId));
 		}
 		threadExec.run();
 
-		PartUploadUtils.completeMultipartUpload(s3Client, S3TestBase.bucketName, keyName, uploadId, partEtags);
+		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 
 		// check the upload file
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, S3TestBase.bucketName, keyName);
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 		runSuccess = true;
 	}
@@ -87,14 +89,16 @@ public class UploadPart18698 extends S3TestBase {
 	}
 
 	private class PartUpload {
-		private int partNumber;
+		private int partNum;
+		private int partSize;
 		private int filePosition;
 		private File file;
 		private String uploadId;
 		private AmazonS3 s3Client1 = CommLib.buildS3Client();
 
-		private PartUpload(int partNumber, int filePosition, File file, String uploadId) {
-			this.partNumber = partNumber;
+		private PartUpload(int partNum, int partSize, int filePosition, File file, String uploadId) {
+			this.partNum = partNum;
+			this.partSize = partSize;
 			this.filePosition = filePosition;
 			this.file = file;
 			this.uploadId = uploadId;
@@ -104,8 +108,8 @@ public class UploadPart18698 extends S3TestBase {
 		private void partUpload() {
 			try {
 				UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
-						.withPartNumber(partNumber).withPartSize(partSize).withBucketName(S3TestBase.bucketName)
-						.withKey(keyName).withUploadId(uploadId);
+						.withPartNumber(partNum).withPartSize(partSize).withBucketName(bucketName).withKey(keyName)
+						.withUploadId(uploadId);
 				UploadPartResult uploadPartResult = s3Client1.uploadPart(partRequest);
 				partEtags.add(uploadPartResult.getPartETag());
 			} finally {
