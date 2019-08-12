@@ -1,11 +1,11 @@
 package com.sequoiadb.bsontypes;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONTimestamp;
+import org.bson.util.DateInterceptUtil;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -29,24 +29,14 @@ import com.sequoiadb.testcommon.SdbTestBase;
 * @version 1.00
 */
 public class TimestampTestGetDate10344 extends SdbTestBase{
-	
 	private String clName = "cl_10344";
 	private static Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private DBCollection cl ;
-	private SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS");
-	
 	
 	@BeforeClass
 	public void setUp(){
-		
-		System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
-		try{
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}	
-		
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		createCL();
 	}
 	
@@ -61,13 +51,8 @@ public class TimestampTestGetDate10344 extends SdbTestBase{
 		}
 		String test = "{ReplSize:0,Compressed:true}";
 		BSONObject options =(BSONObject) JSON.parse(test);
-		try
-		{
-			cs = sdb.getCollectionSpace(SdbTestBase.csName);			
-			cl = cs.createCollection(clName,options);
-		}catch(BaseException e){
-			Assert.assertTrue(false,"create cl fail "+e.getErrorType()+":"+e.getMessage());
-		}
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);			
+		cl = cs.createCollection(clName,options);
 	}	
     
 	@Test
@@ -84,7 +69,8 @@ public class TimestampTestGetDate10344 extends SdbTestBase{
 			Assert.assertEquals(timeString,expectTime,"check not string data");
 			//test the getDate()
 			Date date = timestamp.getDate();	
-			obj.put("date", date);
+			Date expdate = DateInterceptUtil.interceptDate(date, "yyyy-MM-dd");
+			obj.put("date", expdate);
 			obj.put("timestamp",timestamp);
 			cl.insert(obj);
 			//check the insert result		
@@ -104,16 +90,10 @@ public class TimestampTestGetDate10344 extends SdbTestBase{
 	
 	@AfterClass
 	public void tearDown(){
-		try{			
-			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
-			}		
-			sdb.disconnect();
-			System.out.println("---"+this.getClass().getName()+" end at "+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}
+		if(cs.isCollectionExist(clName)){
+			cs.dropCollection(clName);
+		}		
+		sdb.disconnect();
 	}
-	
 }
 

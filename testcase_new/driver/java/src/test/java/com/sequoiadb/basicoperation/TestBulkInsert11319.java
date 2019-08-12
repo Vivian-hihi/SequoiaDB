@@ -10,6 +10,7 @@ import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
+import org.bson.util.DateInterceptUtil;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -306,7 +307,8 @@ public class TestBulkInsert11319 extends SdbTestBase {
 			obj.put("boolf", false);
 			// the data type
 			Date now = new Date();
-			obj.put("date", now);
+			Date expdate = DateInterceptUtil.interceptDate(now, "yyyy-MM-dd");
+			obj.put("date", expdate);
 			// the regex type
 			Pattern regex = Pattern.compile("^2001", Pattern.CASE_INSENSITIVE);
 			obj.put("binary", regex);
