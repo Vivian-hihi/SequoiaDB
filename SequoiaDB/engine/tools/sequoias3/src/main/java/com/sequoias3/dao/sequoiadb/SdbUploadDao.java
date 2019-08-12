@@ -286,6 +286,37 @@ public class SdbUploadDao implements UploadDao {
         }
     }
 
+    @Override
+    public void setUploadsStatus(long bucketId, Long uploadId, int status) throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.UPLOAD_LIST);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(UploadMeta.META_BUCKET_ID, bucketId);
+            if (uploadId != null) {
+                matcher.put(UploadMeta.META_UPLOAD_ID, uploadId);
+            }
+
+            BSONObject modifyStatus = new BasicBSONObject();
+            modifyStatus.put(UploadMeta.META_STATUS, status);
+            BSONObject setUpdate = new BasicBSONObject();
+            setUpdate.put(DBParamDefine.MODIFY_SET, modifyStatus);
+
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.update(matcher, setUpdate, hint);
+        } catch (Exception e){
+            logger.error("update upload status failed. status:{}", status);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
     private BSONObject convertMetaToBson(UploadMeta meta){
         BSONObject uploadMeta = new BasicBSONObject();
         uploadMeta.put(UploadMeta.META_BUCKET_ID, meta.getBucketId());

@@ -182,44 +182,25 @@ public class BucketServiceImpl implements BucketService {
                 daoMgr.releaseConnectionDao(connectionA);
             }
 
-            //delete acl
-            if (bucket.getAclId() != null) {
-                aclDao.deleteAcl(null, bucket.getAclId());
-            }
-
-            //delete dir
-            String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
-            dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
-
-            if (bucket.getTaskID() != null){
-                taskDao.deleteTaskId(null, bucket.getTaskID());
-            }
-
-            QueryDbCursor uploadsCursor = null;
-            ConnectionDao connectionB = daoMgr.getConnectionDao();
-            transaction.begin(connectionB);
             try {
-                uploadsCursor = uploadDao.queryUploadsByBucket(bucket.getBucketId(),
-                        null, null, null, UploadMeta.UPLOAD_INIT);
-                if (uploadsCursor != null){
-                    while (uploadsCursor.hasNext()){
-                        BSONObject record = uploadsCursor.getNext();
-                        long uploadId     = (long) record.get(UploadMeta.META_UPLOAD_ID);
-                        UploadMeta uploadMeta = uploadDao.queryUploadByUploadId(connectionB,
-                                    null, null, uploadId, true);
-                        if (uploadMeta != null){
-                            uploadMeta.setUploadStatus(UploadMeta.UPLOAD_ABORT);
-                            uploadDao.updateUploadMeta(connectionB, bucket.getBucketId(), uploadMeta.getKey(),
-                                    uploadId, uploadMeta);
-                        }
-                    }
-                    transaction.commit(connectionB);
+                //delete acl
+                if (bucket.getAclId() != null) {
+                    aclDao.deleteAcl(null, bucket.getAclId());
                 }
-            } catch (Exception e){
-                transaction.rollback(connectionB);
-                logger.error("clean uploads failed. e:", e);
-            } finally {
-                metaDao.releaseQueryDbCursor(uploadsCursor);
+
+                //delete dir
+                String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
+                dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
+
+                //task
+                if (bucket.getTaskID() != null) {
+                    taskDao.deleteTaskId(null, bucket.getTaskID());
+                }
+
+                //multi part upload
+                uploadDao.setUploadsStatus(bucket.getBucketId(), null, UploadMeta.UPLOAD_ABORT);
+            }catch (Exception e){
+                logger.error("clean bucket failed, might something is left.", e);
             }
         }catch (S3ServerException e) {
             throw e;
@@ -278,28 +259,36 @@ public class BucketServiceImpl implements BucketService {
             //delete bucket
             bucketDao.deleteBucket(null, bucket.getBucketName());
 
-            while (!objectService.isEmptyBucket(null, bucket)) {
-                objectService.deleteObjectByBucket(bucket);
+            try {
+                while (!objectService.isEmptyBucket(null, bucket)) {
+                    objectService.deleteObjectByBucket(bucket);
+                }
+
+                //delete dir
+                String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
+                dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
+
+                //task
+                if (bucket.getTaskID() != null) {
+                    taskDao.deleteTaskId(null, bucket.getTaskID());
+                }
+
+                //delete acl
+                if (bucket.getAclId() != null) {
+                    aclDao.deleteAcl(null, bucket.getAclId());
+                }
+
+                //uploadId
+                uploadDao.setUploadsStatus(bucket.getBucketId(), null, UploadMeta.UPLOAD_ABORT);
+            } catch (Exception e){
+                logger.error("delete bucket force. clean failed, might something is left. " +
+                        "bucketName=" + bucket.getBucketName() + ", bucketId={}" + bucket.getBucketId(), e);
             }
-
-            //delete dir
-            String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
-            dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
-
-            if (bucket.getTaskID() != null){
-                taskDao.deleteTaskId(null, bucket.getTaskID());
-            }
-
-            //delete acl
-            if (bucket.getAclId() != null) {
-                aclDao.deleteAcl(null, bucket.getAclId());
-            }
-
         }catch (S3ServerException e) {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_DELETE_FAILED,
-                    "delete bucket error. bucket name = "+bucket.getBucketName());
+                    "delete bucket force failed. bucket name = "+bucket.getBucketName());
         }
     }
 

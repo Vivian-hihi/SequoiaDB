@@ -16,7 +16,7 @@ public interface UploadDao {
             throws S3ServerException;
 
     void deleteUploadByUploadId(ConnectionDao connection, long bucketId,
-                                String objectName, long uploaId)
+                                String objectName, long uploadId)
             throws S3ServerException;
 
     QueryDbCursor queryInvalidUploads() throws S3ServerException;
@@ -25,4 +25,6 @@ public interface UploadDao {
 
     QueryDbCursor queryUploadsByBucket(long bucketId, String prefix, String keyMarker,
                                        Long uploadMarker, Integer status) throws S3ServerException;
+
+    void setUploadsStatus(long bucketId, Long uploadId, int status) throws S3ServerException;
 }
