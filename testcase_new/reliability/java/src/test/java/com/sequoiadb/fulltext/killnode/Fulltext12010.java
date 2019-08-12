@@ -99,7 +99,6 @@ public class Fulltext12010 extends SdbTestBase {
             node.start();
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             cl.insert("{a:'insertAfterNodeStart'}");
-            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, 1));
         } finally {
             node.start();
         }
@@ -107,8 +106,8 @@ public class Fulltext12010 extends SdbTestBase {
         long clCount = cl.getCount("{'':{'$Text':{query:{match_all:{}}}}}");
 
         // 节点停止的时候，插入记录未校验则报-252，可能存在记录插入成功的情况，因此预期结果可能为2
-        if (clCount != 1 && clCount != 2) {
-            Assert.fail("expect cl count: 1 or 2, but actual cl count:" + clCount);
+        if (clCount != 2 && clCount != 3) {
+            Assert.fail("expect cl count: 2 or 3, but actual cl count:" + clCount);
         }
         Assert.assertTrue(FullTextUtils.isCLConsistency(cl));
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
