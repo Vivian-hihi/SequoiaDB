@@ -1,4 +1,3 @@
-##Sdb()##
 ##NAME##
 
 Sdb - connection sequoiadb

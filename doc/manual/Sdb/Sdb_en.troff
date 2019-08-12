@@ -3,7 +3,6 @@
 .\"
 .TH "Sdb" "1" "" "SequoiaDB User Manuals" ""
 .hy
-.SH Sdb()
 .SH NAME
 .PP
 Sdb \- connection sequoiadb
