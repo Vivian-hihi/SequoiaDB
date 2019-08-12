@@ -68,20 +68,20 @@ public interface ObjectService {
                                                       Map<String, String> requestHeaders,
                                                       Map<String, String> xMeta) throws S3ServerException;
 
-    String uploadPart(long ownerID, String bucketName, String objectName,Long uploadId,
+    String uploadPart(long ownerID, String bucketName, String objectName,String uploadId,
                       int partnumber, String contentMD5, InputStream inputStream,
                       long contentLength) throws S3ServerException;
 
     CompleteMultipartUploadResult completeUpload(long ownerID, String bucketName, String objectName,
-                                                 Long uploadId, List<Part> reqPartList,
+                                                 String uploadId, List<Part> reqPartList,
                                                  ServletOutputStream outputStream)
             throws S3ServerException;
 
     void abortUpload(long ownerID, String bucketName, String objectName,
-                     Long uploadId) throws S3ServerException;
+                     String uploadId) throws S3ServerException;
 
     ListPartsResult listParts(long ownerID, String bucketName, String objectName,
-                              Long uploadId, Integer partNumberMarker,
+                              String uploadId, Integer partNumberMarker,
                               Integer maxParts, String encodingType)
             throws S3ServerException;
 

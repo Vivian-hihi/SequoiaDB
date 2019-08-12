@@ -73,7 +73,7 @@ public class MultiPartUploadController {
                                      @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                      @RequestHeader(name = RestParamDefine.PutObjectHeader.CONTENT_MD5, required = false) String contentMD5,
                                      @RequestParam(RestParamDefine.PARTNUMBER) int partNumber,
-                                     @RequestParam(RestParamDefine.UPLOADID) long uploadId,
+                                     @RequestParam(RestParamDefine.UPLOADID) String uploadId,
                                      HttpServletRequest httpServletRequest)
             throws S3ServerException, IOException {
         try {
@@ -124,7 +124,7 @@ public class MultiPartUploadController {
     @PostMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity completeMultiPart(@PathVariable("bucketname") String bucketName,
                                             @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
-                                            @RequestParam(RestParamDefine.UPLOADID) long uploadId,
+                                            @RequestParam(RestParamDefine.UPLOADID) String uploadId,
                                             HttpServletRequest httpServletRequest,
                                             HttpServletResponse httpServletResponse)
             throws S3ServerException, IOException {
@@ -169,7 +169,7 @@ public class MultiPartUploadController {
     @GetMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listParts(@PathVariable("bucketname") String bucketName,
                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
-                                    @RequestParam(RestParamDefine.UPLOADID) long uploadId,
+                                    @RequestParam(RestParamDefine.UPLOADID) String uploadId,
                                     @RequestParam(value = RestParamDefine.ListPartsPara.PART_NUMBER_MARKER, required = false) Integer partNumberMarker,
                                     @RequestParam(value = RestParamDefine.ListPartsPara.MAX_PARTS, required = false, defaultValue = "1000") Integer maxParts,
                                     @RequestParam(value = RestParamDefine.ListPartsPara.ENCODING_TYPE, required = false) String encodingType,
@@ -203,7 +203,7 @@ public class MultiPartUploadController {
     @DeleteMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity abortUpload(@PathVariable("bucketname") String bucketName,
                                       @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
-                                      @RequestParam(RestParamDefine.UPLOADID) long uploadId,
+                                      @RequestParam(RestParamDefine.UPLOADID) String uploadId,
                                       HttpServletRequest httpServletRequest)
             throws S3ServerException{
         try {

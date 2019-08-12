@@ -1043,7 +1043,7 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     public String uploadPart(long ownerID, String bucketName, String objectName,
-                             Long uploadId, int partnumber, String contentMD5,
+                             String uploadIdStr, int partnumber, String contentMD5,
                              InputStream inputStream, long contentLength)
             throws S3ServerException {
         if (partnumber < RestParamDefine.PART_NUMBER_MIN
@@ -1053,6 +1053,7 @@ public class ObjectServiceImpl implements ObjectService {
         }
 
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+        long uploadId = convertUploadId(uploadIdStr);
 
         Region region = null;
         if (bucket.getRegion() != null) {
@@ -1219,11 +1220,12 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     public CompleteMultipartUploadResult completeUpload(long ownerID, String bucketName,
-                                                        String objectName, Long uploadId,
+                                                        String objectName, String uploadIdStr,
                                                         List<Part> reqPartList,
                                                         ServletOutputStream outputStream)
             throws S3ServerException {
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+        long uploadId = convertUploadId(uploadIdStr);
 
         Region region = null;
         if (bucket.getRegion() != null) {
@@ -1370,9 +1372,11 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public void abortUpload(long ownerID, String bucketName, String objectName, Long uploadId)
+    public void abortUpload(long ownerID, String bucketName, String objectName,
+                            String uploadIdStr)
             throws S3ServerException {
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+        long uploadId = convertUploadId(uploadIdStr);
 
         ConnectionDao connection = daoMgr.getConnectionDao();
         transaction.begin(connection);
@@ -1401,12 +1405,13 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     public ListPartsResult listParts(long ownerID, String bucketName, String objectName,
-                                     Long uploadId, Integer partNumberMarker,
+                                     String uploadIdStr, Integer partNumberMarker,
                                      Integer maxParts, String encodingType)
             throws S3ServerException {
         QueryDbCursor partsCursor = null;
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            long uploadId = convertUploadId(uploadIdStr);
             UploadMeta upload = uploadDao.queryUploadByUploadId(null, bucket.getBucketId(),
                     objectName, uploadId, false);
             if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
@@ -1438,7 +1443,7 @@ public class ObjectServiceImpl implements ObjectService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.PART_LIST_PARTS_FAILED,
-                    "List Parts failed. bucket:"+bucketName+", uploadId:"+uploadId, e);
+                    "List Parts failed. bucket:"+bucketName+", uploadId:"+uploadIdStr, e);
         }finally {
             metaDao.releaseQueryDbCursor(partsCursor);
         }
@@ -1648,6 +1653,15 @@ public class ObjectServiceImpl implements ObjectService {
             }
         }
         return reBuildLob;
+    }
+
+    long convertUploadId(String uploadId) throws S3ServerException{
+        try{
+            return Long.parseLong(uploadId);
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
+                    "uploadId is invalid, uploadId:"+ uploadId, e);
+        }
     }
 
     private String getParentName(String delimiter, Bucket bucket){
