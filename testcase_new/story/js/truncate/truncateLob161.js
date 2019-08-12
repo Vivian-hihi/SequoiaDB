@@ -54,11 +54,8 @@ function createCLAndPutLob( srcGroup, csName, clName, pageSize)
    var lobNum = 4;
    var lobSize = pageSize * 4;
       
-   // putLob And check LobPages, the TotalLobPages is 20
-   truncatePutLob( cl, lobSize, lobNum );   
-   var verJsonObj = { "TotalLobPages": 20};
-   truncateVerify( db, csName + "." + clName, verJsonObj ); 
-     
+   // putLob And check LobPages
+   truncatePutLob( cl, lobSize, lobNum );    
    return cl;
 }
 

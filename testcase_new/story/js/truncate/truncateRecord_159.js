@@ -54,10 +54,7 @@ function createCLAndInsertData( srcGroup, csName, clName, pageSize)
    var recordSize = pageSize * 4;
       
    // insert record And check DataPages, the TotalDataPages is 72
-   truncateInsertRecord( cl, recordNum, recordSize );
-   var verJsonObj = { "TotalDataPages": 72};
-   truncateVerify( db, csName + "." + clName, verJsonObj ); 
-     
+   truncateInsertRecord( cl, recordNum, recordSize );     
    return cl;
 }
 

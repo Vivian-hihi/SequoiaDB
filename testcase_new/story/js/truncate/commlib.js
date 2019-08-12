@@ -89,8 +89,7 @@ function truncateVerify( db, tableName, obj )
     {
        var obj = {TotalRecords:0, TotalDataPages:0, TotalLobPages:0};
     }
-    var snapShotInfoSet = getCLSnapShotInfo( db, tableName );
-    //println( JSON.stringify(snapShotInfoSet));
+    var snapShotInfoSet = getCLSnapShotInfo( db, tableName );   
     for (var i = 0; i < snapShotInfoSet.length; ++i)
     {  
        var snapshotOfCLPerNode = snapShotInfoSet[i];
@@ -173,8 +172,7 @@ function truncateInsertRecord( cl, recordNumber, recordSize, recordPass )
             recs.push( record );
          }
       }
-      cl.insert( recs );
-      db.setSessionAttr({ "PreferedInstance": "M" });
+      cl.insert( recs );      
       if( recordNumber != cl.count() && undefined == recordPass )
       {
          throw "insert error number record";
@@ -238,65 +236,4 @@ function truncatePutLob( cl, lobSize, lobNumber )
    }
 }
 
-/*******************************************************************************
-*@Description: 创建混合分区表
-*@Parameters:
-*   cl: collection连接句柄
-*   lobSize: 写入的LOB大小
-*   lobNumber: 写入的LOB记录的数量
-*@Return: 返回记录OID的数组.
-********************************************************************************/
-/*
-function truncateMixtureTable( db, mainCLName, subCSNamePre,  subCLNum, recordNum )
-{
-   if( undefined == mainCLName ){ mainCLName = "truncate_mixture_table"; }
-   if( undefined == subCSNamePre ){ subCSName = "truncate_mixture_sub_CS"; }
-   if( undefined == subCLNum ){ subCLNum = 3; }
-   var subCSName = new Array();
-   for( var i = 0; i < subCLNum; ++i )
-   {
-      subCSName[i] = subCSNamePre + "_" + i;
-   }
-   var domainName = "truncate_Mixtrue_Domain";
-   try
-   {
-      if( undefined == db ){ db = new Sdb( COMMHOSTNAME, COMMSVCNAME ); }
-      commDropCL( db, COMMCSNAME, mainCLName, true, true, "drop main cl begin" );
-      for( var i = 0; i < subCLNum; ++i )
-      {
-         commDropCS( db, subCSName[i], true, "drop sub cs begin" );
-      }
-      db.dropDomain( domainName );
 
-      var groups = commGetGroups( db );
-      var rgs = new Array();
-      for( var i = 0; i < groups.length; ++i )
-      {
-         rgs[i] = groups[i][0]["GroupName"];
-      }
-      db.createDomain( domainName, rgs, { "AutoSplit": true } );
-      var mainOptionObj = { "ShardingKey": {"ID_Default": 1}, "IsMainCL": true };
-      var subOptionObj = { "ShardingKey": {"id": -1}, "ShardingType": "hash" };
-      var mainCL = commCreateCLByOption( db, COMMCSNAME, mainCLName, optionObj, true,
-                                         false, "create main cl begin" );
-      var lowbound = 0 ;
-      var upbound = Math.round(recordNum/subCLNum);
-      for( var i = 0; i < subCLNum; ++i )
-      {
-         commCreateCS( db, subCLName[i], false, "create sub cs begin",
-                       { "Domain": domainName } );
-         commCreateCLByOption( db, subCLName[i], COMMCLNAME, subOptionObj, true,
-                               "false", "create sub cl " + i );
-         mainCL.attachCL( subCLName[i] + "." + COMMCLNAME,
-                          {"LowBound":{"id": lowbound)}, "UpBound":{"id":upbound}} );
-         lowbound = upbound;
-         upbound = upbound*(i+1);
-      }
-      return mainCL;
-   }
-   catch( e )
-   {
-      throw buildException( funcName, e );
-   }
-}
-*/
