@@ -18,6 +18,7 @@
    <parameter name="REMOTEUSER" value="sdbadmin" />
    <parameter name="REMOTEPASSWD" value="sdbadmin" />
    <parameter name="SCRIPTDIR" value="${SCRIPTDIR}" />
+   <!-- 适配器配置文件的爷目录，默认是/opt/sequoiadb/conf/sdbseadapter -->
    <parameter name="SDBSEADAPTERDIR"
       value="${SDBSEADAPTERDIR}" />
 
