@@ -84,7 +84,6 @@ public class PartUploadUtils extends S3TestBase {
 			UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
 			partEtags.add(uploadPartResult.getPartETag());
 			filePosition += partSize;
-			System.out.println("---partNum=" + i + "--offset=" + filePosition + "--partsize=" + eachPartSize);
 		}
 		return partEtags;
 	}
@@ -157,6 +156,7 @@ public class PartUploadUtils extends S3TestBase {
 			int partNumber = expPartNumbers.getPartNumber();
 			expPartNumbersList.add(partNumber);
 		}
+		Collections.sort(expPartNumbersList);
 
 		ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
 		PartListing listResult = s3Client.listParts(request);
@@ -168,7 +168,8 @@ public class PartUploadUtils extends S3TestBase {
 		}
 
 		// check the keyName
-		Assert.assertEquals(actPartNumbersList, expPartNumbersList, "actPartNumbersList:" + actPartNumbersList);
+		Assert.assertEquals(actPartNumbersList, expPartNumbersList,
+				"actPartNumbersList:" + actPartNumbersList + "  expPartNumbersList:" + expPartNumbersList.toString());
 	}
 
 	/**
@@ -195,6 +196,7 @@ public class PartUploadUtils extends S3TestBase {
 			String uploadId = multipartUpload.getUploadId();
 			actUploads.add(keyName, uploadId);
 		}
+
 		Assert.assertEquals(actUploads.size(), expUploads.size(),
 				"actMap = " + actUploads.toString() + ",expUpload = " + expUploads.toString());
 		for (Map.Entry<String, List<String>> entry : expUploads.entrySet()) {
