@@ -76,8 +76,10 @@ public class UploadScanClean {
                                 }else {
                                     while (partList.hasNext()) {
                                         Part part = new Part(partList.getNext());
-                                        dataDao.deleteObjectDataByLobId(null,
-                                                part.getCsName(), part.getClName(), part.getLobId());
+                                        if (part.getLobId() != null) {
+                                            dataDao.deleteObjectDataByLobId(null,
+                                                    part.getCsName(), part.getClName(), part.getLobId());
+                                        }
                                     }
                                 }
                             }finally {
