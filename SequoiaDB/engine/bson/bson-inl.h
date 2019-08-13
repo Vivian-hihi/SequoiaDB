@@ -397,6 +397,45 @@ namespace bson {
         toString(s, isArray, full);
         return s.str();
     }
+
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+    inline ossPoolString BSONObj::toPoolString( bool isArray, bool full ) const {
+        if ( isEmpty() )
+        {
+           if ( isArray )
+           {
+              return "[]" ;
+           }
+           else
+           {
+              return "{}";
+           }
+        }
+        StringBuilder s;
+        toString(s, isArray, full);
+        return s.poolStr();
+    }
+
+    inline ossPoolString BSONElement::_numberDecimalPoolStr() const
+    {
+        int rc = 0 ;
+        bsonDecimal decimal ;
+        ossPoolString decStr ;
+        if ( type() != NumberDecimal )
+        {
+            return "" ;
+        }
+
+        rc = decimal.fromBsonValue( value() ) ;
+        uassert(rc, "Failed to parse decimal from bson value", SDB_OK == rc);
+
+        rc = decimal.toJsonStringChecked( decStr ) ;
+        uassert(rc, "Failed to parse decimal to json string", SDB_OK == rc);
+
+        return decStr ;
+    }
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
+
     inline void BSONObj::toString(StringBuilder& s,  bool isArray, bool full )
       const {
         if ( isEmpty() )
@@ -669,6 +708,16 @@ namespace bson {
         return s.str();
     }
 
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+    inline ossPoolString BSONElement::toPoolString( bool includeFieldName, bool full )
+      const {
+        StringBuilder s;
+        toString(s, includeFieldName, full);
+        return s.poolStr();
+    }
+
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
+
     inline void escapeString( StringBuilder& s, const char *pStr, int len )
     {
         for ( int i = 0; i < len; ++i )
@@ -831,7 +880,11 @@ namespace bson {
             break;
         }
         case NumberDecimal:
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+            s << _numberDecimalPoolStr() ;
+#else
             s << _numberDecimalStr();
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
             break;
         case NumberInt:
             s << _numberInt();
@@ -969,7 +1022,11 @@ namespace bson {
         if ( e.eoo() ) {
             const char *p = strchr(name, '.');
             if ( p ) {
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+                ossPoolString left(name, p-name) ;
+#else
                 string left(name, p-name);
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
                 BSONObj sub = getObjectField(left.c_str());
                 return sub.isEmpty() ? BSONElement() : sub.getFieldDotted(p+1);
             }

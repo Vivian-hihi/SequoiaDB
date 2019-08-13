@@ -471,9 +471,9 @@ namespace engine
                              "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             selector.toString().c_str(),
-                             updator.toString().c_str(),
-                             hint.toString().c_str(),
+                             selector.toPoolString().c_str(),
+                             updator.toPoolString().c_str(),
+                             hint.toPoolString().c_str(),
                              flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Update:\nMatcher: %s\nUpdator: %s\n"
@@ -569,7 +569,7 @@ namespace engine
                              "Collection:%s, Insertors:%s, ObjNum:%d, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             insertor.toString().c_str(),
+                             insertor.toPoolString().c_str(),
                              count, flag, flag ) ;
 
          /*
@@ -653,10 +653,10 @@ namespace engine
                                 "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
                                 "Flag:0x%08x(%u)",
                                 pCollectionName,
-                                matcher.toString().c_str(),
-                                selector.toString().c_str(),
-                                orderBy.toString().c_str(),
-                                hint.toString().c_str(),
+                                matcher.toPoolString().c_str(),
+                                selector.toPoolString().c_str(),
+                                orderBy.toPoolString().c_str(),
+                                hint.toPoolString().c_str(),
                                 numToSkip, numToReturn,
                                 flags, flags ) ;
 
@@ -849,8 +849,8 @@ namespace engine
                              "Collection:%s, Deletor:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             deletor.toString().c_str(),
-                             hint.toString().c_str(),
+                             deletor.toPoolString().c_str(),
+                             hint.toPoolString().c_str(),
                              flags, flags ) ;
 
          /*
@@ -1081,7 +1081,7 @@ namespace engine
          {
             BSONObj tmpObj( pObjData ) ;
             len += ossSnprintf( szTmp, MON_APP_LASTOP_DESC_LEN - len,
-                                "%s", tmpObj.toString().c_str() ) ;
+                                "%s", tmpObj.toPoolString().c_str() ) ;
             pObjData += ossAlignX( (UINT32)tmpObj.objsize(), 4 ) ;
             if ( len >= MON_APP_LASTOP_DESC_LEN )
             {
@@ -1138,7 +1138,7 @@ namespace engine
       {
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "Option:%s", lob.toString().c_str() ) ;
+                             "Option:%s", lob.toPoolString().c_str() ) ;
 
          /// pStream will delete in context
          pStream = SDB_OSS_NEW _rtnLocalLobStream() ;
@@ -1318,7 +1318,7 @@ namespace engine
       {
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "Option:%s", meta.toString().c_str() ) ;
+                             "Option:%s", meta.toPoolString().c_str() ) ;
 
          rc = rtnRemoveLob( meta, header->flags, header->w, eduCB(), dpsCB ) ;
          if ( SDB_OK != rc )

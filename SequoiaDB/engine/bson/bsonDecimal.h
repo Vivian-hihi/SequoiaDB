@@ -25,6 +25,10 @@
 #include <cstring>
 #include "common_decimal_type.h"
 
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+   #include "ossMemPool.hpp"
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
+
 using namespace std;
 /** \namespace bson
     \brief Include files for C++ BSON module
@@ -68,15 +72,22 @@ namespace bson {
 
       INT32          fromString( const CHAR *value ) ;
       INT32          toStringChecked( string &result ) const ;
-      INT32          toJsonStringChecked( string &result ) ;
+      INT32          toJsonStringChecked( string &result ) const ;
 
       string         toString() const ;
-      string         toJsonString() ;
+      string         toJsonString() const ;
 
       INT32          fromBsonValue( const CHAR *bsonValue ) ;
 
       INT32          compare( const bsonDecimal &right ) const ;
       INT32          compare( int right ) const ;
+
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+      ossPoolString  toPoolString() const ;
+      ossPoolString  toJsonPoolString() const ;
+      INT32          toStringChecked( ossPoolString &result ) const ;
+      INT32          toJsonStringChecked( ossPoolString &result ) const ;
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
    public:
       INT32          add( const bsonDecimal &right, bsonDecimal &result ) ;

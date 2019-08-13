@@ -1238,9 +1238,9 @@ namespace engine
                              "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             matcher.toString().c_str(),
-                             updator.toString().c_str(),
-                             hint.toString().c_str(),
+                             matcher.toPoolString().c_str(),
+                             updator.toPoolString().c_str(),
+                             hint.toPoolString().c_str(),
                              flags, flags ) ;
 
          // Construct query options
@@ -1359,7 +1359,7 @@ namespace engine
                              "Collection:%s, Insertors:%s, ObjNum:%d, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             insertor.toString().c_str(),
+                             insertor.toPoolString().c_str(),
                              recordNum, flags, flags ) ;
          /*
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
@@ -1454,8 +1454,8 @@ namespace engine
                              "Collection:%s, Deletor:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             matcher.toString().c_str(),
-                             hint.toString().c_str(),
+                             matcher.toPoolString().c_str(),
+                             hint.toPoolString().c_str(),
                              flags, flags ) ;
 
          /*
@@ -1590,10 +1590,10 @@ namespace engine
                                 "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
                                 "Flag:0x%08x(%u)",
                                 pCollectionName,
-                                matcher.toString().c_str(),
-                                selector.toString().c_str(),
-                                orderBy.toString().c_str(),
-                                hint.toString().c_str(),
+                                matcher.toPoolString().c_str(),
+                                selector.toPoolString().c_str(),
+                                orderBy.toPoolString().c_str(),
+                                hint.toPoolString().c_str(),
                                 numToSkip, numToReturn,
                                 flags, flags ) ;
 
@@ -3631,7 +3631,7 @@ namespace engine
 
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                          "Option:%s", lob.toString().c_str() ) ;
+                          "Option:%s", lob.toPoolString().c_str() ) ;
 
       if ( SDB_LOB_MODE_READ != mode.Int() )
       {

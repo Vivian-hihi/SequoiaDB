@@ -205,6 +205,10 @@ namespace bson {
             for logging.
         */
         string toString( bool isArray = false, bool full=false ) const;
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+        ossPoolString toPoolString( bool isArray = false, bool full=false ) const ;
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
+
         void toString(StringBuilder& s, bool isArray = false, bool full=false )
           const;
 

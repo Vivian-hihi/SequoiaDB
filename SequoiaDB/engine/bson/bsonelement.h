@@ -142,7 +142,7 @@ namespace bson {
         void Val(long long& v)      const { v = Long(); }
         void Val(bool& v)           const { v = Bool(); }
         void Val(BSONObj& v)        const;
-        void Val(bson::OID& v)     const { v = OID(); }
+        void Val(bson::OID& v)      const { v = OID(); }
         void Val(int& v)            const { v = Int(); }
         void Val(double& v)         const { v = Double(); }
         void Val(string& v)         const { v = String(); }
@@ -153,12 +153,30 @@ namespace bson {
         */
         bool ok() const { return !eoo(); }
 
-        string toString( bool includeFieldName = true, bool full=false) const;
-        void toString(StringBuilder& s, bool includeFieldName = true,
-          bool full=false) const;
+        string toString( bool includeFieldName = true,
+                         bool full=false) const;
+        void   toString( StringBuilder& s, bool
+                         includeFieldName = true,
+                         bool full=false) const;
         string jsonString( JsonStringFormat format,
-          bool includeFieldNames = true, int pretty = 0 ) const;
+                           bool includeFieldNames = true,
+                           int pretty = 0 ) const;
         operator string() const { return toString(); }
+
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+        ossPoolString poolString() const { return chk(bson::String).valuestr(); }
+        void Val(ossPoolString& v) const { v = poolString(); }
+
+        ossPoolString toPoolString( bool includeFieldName = true,
+                                    bool full=false) const;
+        operator ossPoolString() const { return toPoolString() ; }
+
+        /** Get the string value of the element.  If not a string returns "". */
+        ossPoolString poolStr() const {
+            return type() == bson::String ?
+              ossPoolString(valuestr(), valuestrsize()-1) : ossPoolString();
+        }
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
         /** Returns the type of the element */
         BSONType type() const { return (BSONType) (signed char)*data; }
@@ -523,6 +541,10 @@ namespace bson {
         }
 
         inline string   _numberDecimalStr() const ;
+
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+        inline ossPoolString     _numberDecimalPoolStr() const ;
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
     };
 
 

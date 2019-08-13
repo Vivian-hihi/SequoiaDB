@@ -20,6 +20,10 @@
 #include <string>
 #include <cstring>
 
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+   #include "ossMemPool.hpp"
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
+
 namespace bson {
 
     using std::string;
@@ -52,6 +56,12 @@ namespace bson {
         /** Construct a StringData, for the case of a std::string. */
         StringData( const string& s )
             : _data(s.c_str()), _size((unsigned) s.size()) {}
+
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+        /** Construct a StringData, for the case of a std::string. */
+        StringData( const ossPoolString& s )
+            : _data(s.c_str()), _size((unsigned) s.size()) {}
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
         // Construct a StringData explicitly, for the case of a literal whose
         // size is known at compile time.

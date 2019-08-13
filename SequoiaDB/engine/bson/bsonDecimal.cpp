@@ -202,32 +202,23 @@ namespace bson {
          goto error ;
       }
 
-      temp = (CHAR *)SDB_OSS_MALLOC( size ) ;
-      if ( NULL == temp )
-      {
-         goto error ;
-      }
+      result.resize( size ) ;
+      temp = (CHAR *)result.data() ;
 
       rc = sdb_decimal_to_str( &_decimal, temp, size ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
-
-      result = temp ;
+      result.resize( strlen( result.c_str() ) ) ;
 
    done:
-      if ( NULL != temp )
-      {
-         SDB_OSS_FREE( temp ) ;
-      }
       return rc ;
-
    error:
       goto done ;
    }
 
-   INT32 bsonDecimal::toJsonStringChecked( string &result )
+   INT32 bsonDecimal::toJsonStringChecked( string &result ) const
    {
       INT32 rc       = SDB_OK ;
       CHAR *temp     = NULL ;
@@ -241,27 +232,18 @@ namespace bson {
          goto error ;
       }
 
-      temp = (CHAR *)SDB_OSS_MALLOC( size ) ;
-      if ( NULL == temp )
-      {
-         goto error ;
-      }
+      result.resize( size ) ;
+      temp = (CHAR *)result.data() ;
 
       rc = sdb_decimal_to_jsonstr( &_decimal, temp, size ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
-
-      result = temp ;
+      result.resize( strlen( result.c_str() ) ) ;
 
    done:
-      if ( NULL != temp )
-      {
-         SDB_OSS_FREE( temp ) ;
-      }
       return rc ;
-
    error:
       goto done ;
    }
@@ -273,12 +255,88 @@ namespace bson {
       return result ;
    }
 
-   string bsonDecimal::toJsonString()
+   string bsonDecimal::toJsonString() const
    {
       string result ;
       toJsonStringChecked( result ) ;
       return result ;
    }
+
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+
+   INT32 bsonDecimal::toStringChecked( ossPoolString &result ) const
+   {
+      INT32 rc       = SDB_OK ;
+      CHAR *temp     = NULL ;
+      INT32 size     = 0 ;
+
+      rc = sdb_decimal_to_str_get_len( &_decimal, &size ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      result.resize( size ) ;
+      temp = ( CHAR* )result.data() ;
+
+      rc = sdb_decimal_to_str( &_decimal, temp, size ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      result.resize( strlen( result.c_str() ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 bsonDecimal::toJsonStringChecked( ossPoolString &result ) const
+   {
+      INT32 rc       = SDB_OK ;
+      CHAR *temp     = NULL ;
+      INT32 size     = 0 ;
+
+      rc = sdb_decimal_to_jsonstr_len( _decimal.sign, _decimal.weight,
+                                       _decimal.dscale, _decimal.typemod,
+                                       &size ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      result.resize( size ) ;
+      temp = ( CHAR* )result.data() ;
+
+      rc = sdb_decimal_to_jsonstr( &_decimal, temp, size ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      result.resize( strlen( result.c_str() ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ossPoolString bsonDecimal::toPoolString() const
+   {
+      ossPoolString result ;
+      toStringChecked( result ) ;
+      return result ;
+   }
+
+   ossPoolString bsonDecimal::toJsonPoolString() const
+   {
+      ossPoolString result ;
+      toJsonStringChecked( result ) ;
+      return result ;
+   }
+
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
    INT32 bsonDecimal::fromBsonValue( const CHAR *bsonValue )
    {

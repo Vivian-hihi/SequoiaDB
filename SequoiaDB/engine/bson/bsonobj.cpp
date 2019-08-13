@@ -1006,7 +1006,11 @@ namespace bson {
         if ( e.eoo() ) {
             const char *p = strchr(name.data(), '.');
             if ( p ) {
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+                ossPoolString left(name.data(), p-name.data());
+#else
                 string left(name.data(), p-name.data());
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
                 const char* next = p+1;
                 BSONElement e = getField( left.c_str() );
 
@@ -1056,7 +1060,11 @@ namespace bson {
         BSONElement sub;
 
         if ( p ) {
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
+            sub = getField( ossPoolString(name, p-name) );
+#else
             sub = getField( string(name, p-name) );
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
             name = p + 1;
         }
         else {
