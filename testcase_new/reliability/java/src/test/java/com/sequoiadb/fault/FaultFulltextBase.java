@@ -1,10 +1,22 @@
 package com.sequoiadb.fault;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fulltext.FullTextDBUtils;
+import com.sequoiadb.fulltext.FullTextUtils;
 
 public class FaultFulltextBase extends Fault {
 
@@ -111,6 +123,7 @@ public class FaultFulltextBase extends Fault {
             if (ssh.getStdout().trim().length() <= 0) {
                 return false;
             } else {
+                queryAndCheck();
                 return true;
             }
         } catch (ReliabilityException e) {
@@ -140,6 +153,48 @@ public class FaultFulltextBase extends Fault {
             }
         } catch (ReliabilityException e) {
             throw new FaultException(e);
+        }
+    }
+
+    protected void queryAndCheck() throws FaultException {
+        Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        String csName = "reliabilityFaultFulltextCSName";
+        String clName = "reliabilityFaultFulltextCSName";
+        String idxName = "reliabilityFaultFulltextIdxName";
+        try {
+            DBCollection cl = db1.createCollectionSpace(csName).createCollection(clName,
+                    (BSONObject) JSON.parse("{ShardingKey:{'_id':1}, ShardingType:'hash', AutoSplit:true}"));
+            cl.createIndex(idxName, "{'a':'text'}", false, false);
+            List<BSONObject> list = new ArrayList<>();
+            for (int i = 0; i < 1000; i++) {
+                BSONObject obj = (BSONObject) JSON.parse("{a:'a" + i + "'}");
+                list.add(obj);
+            }
+            cl.insert(list);
+            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
+            while (true) {
+                try {
+                    DBCursor cursor1 = cl.query("", "", "{_id:1}", "");
+                    DBCursor cursor2 = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "", "{_id:1}", "");
+                    if (FullTextUtils.isCLRecordsConsistency(cursor1, cursor2)) {
+                        break;
+                    }
+                } catch (BaseException e) {
+                    // SEQUOIADBMAINSTREAM-4813 暂时规避 -6
+                    // SEQUOIADBMAINSTREAM-4811 暂时规避 -10
+                    if (-79 != e.getErrorCode() && -52 != e.getErrorCode() && -13 != e.getErrorCode()
+                            && -6 != e.getErrorCode() && -10 != e.getErrorCode()) {
+                        throw e;
+                    }
+                }
+            }
+        } catch (BaseException e) {
+            throw new FaultException(e);
+        } finally {
+            FullTextDBUtils.dropCollectionSpace(db1, csName);
+            db1.close();
+            db2.close();
         }
     }
 }
