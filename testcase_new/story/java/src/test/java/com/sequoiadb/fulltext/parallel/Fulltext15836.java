@@ -13,6 +13,7 @@ import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
@@ -99,6 +100,10 @@ public class Fulltext15836 extends FullTestBase {
                 options.put("Block", true);
                 options.put("CollectionSpace", csName);
                 db.sync(options);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -264) {
+                    throw e;
+                }
             }
         }
     }

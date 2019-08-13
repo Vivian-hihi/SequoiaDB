@@ -97,7 +97,7 @@ public class Fulltext15880 extends FullTestBase {
                 }
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
-                if (e.getErrorCode() != -321) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -264) {
                     throw e;
                 }
             }
