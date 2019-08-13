@@ -83,7 +83,7 @@ public class MultiPartUploadController {
             logger.debug("upload part. bucketName={}, objectName={}, uploadId={}, partNumber={}", bucketName, objectName, uploadId, partNumber);
 
             InputStream body = httpServletRequest.getInputStream();
-            Long realContenLength = null;
+            Long realContenLength = 0L;
             if (httpServletRequest.getHeader("x-amz-decoded-content-length") != null) {
                 body = new S3InputStreamReaderChunk(httpServletRequest.getInputStream());
                 realContenLength = Long.parseLong(httpServletRequest.getHeader("x-amz-decoded-content-length"));
