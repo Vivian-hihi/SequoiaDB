@@ -43,6 +43,10 @@ QUERY_FLG_FOR_UPDATE = 0x00010000
 
 UPDATE_FLG_KEEP_SHARDINGKEY = QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE
 
+INSERT_FLG_DEFAULT = 0x00000000
+INSERT_FLG_CONTONDUP = 0x00000001
+INSERT_FLG_RETURN_OID = 0x00000002
+INSERT_FLG_REPLACEONDUP = 0x00000004
 
 class collection(object):
     """Collection for SequoiaDB
@@ -278,7 +282,7 @@ class collection(object):
 
         return task_id
 
-    def bulk_insert(self, flags, records):
+    def bulk_insert(self, flags , records):
         """Insert a bulk of record into current collection.
 
         Parameters:
@@ -286,19 +290,19 @@ class collection(object):
            flags       int        See Info as below.
            records     list/tuple The list of inserted records.
         Return values:
-           If flags equal 2 and record inserted successfully. will return a dict which contains the "_id"
-           of the successfully inserted records. eg: { '_id': [{ '$oid': '5d3ff650e87b5f4c7ee7d37c'},
-           { '$oid': '5d3ff650e87b5f4c7ee7d37d'}]}. else return a empty dict. eg: {}.
+           Empty dict: when flags is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
+           Dict which contains the field "_id": when flags "INSERT_FLG_RETURN_OID" is set, return all the values of "_id"
+           field in a dict. eg: { '_id': [ObjectId('5d514a25c764c60acb58de38'), ObjectId('5d514a25c764c60acb58de39')]}.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         Info:
            flags :
-           0 : While 0 is set(default to be 0), database will stop inserting when some records hit index
+           INSERT_FLG_DEFAULT : While INSERT_FLG_DEFAULT is set, database will stop inserting when some records hit index
                key duplicate error.
-           1 : If some records hit index key duplicate error, database will skip them and go on inserting.
-           2 : Return the value of "_id" field in the record.
-           4 : If the record hit index key duplicate error, database will replace the existing record by
-               the inserting new record and then go on inserting.
+           INSERT_FLG_CONTONDUP : If some records hit index key duplicate error, database will skip them and go on inserting.
+           INSERT_FLG_RETURN_OID : Return the value of "_id" field in the records.
+           INSERT_FLG_REPLACEONDUP : If the records hit index key duplicate error, database will replace the existing records by
+               the inserting new records.
         """
         if not isinstance(flags, int):
             raise SDBTypeError("flags must be an instance of int")
@@ -336,7 +340,7 @@ class collection(object):
         oid = bson.ObjectId(id_str)
         return oid
 
-    def insert_with_flags(self, record, flags=0):
+    def insert_with_flags(self, record, flags=INSERT_FLG_DEFAULT):
         """Insert a record into current collection.
 
          Parameters:
@@ -344,18 +348,18 @@ class collection(object):
             records   dict    The inserted record.
             flags     int     See Info as below.
          Return values:
-            If flags equal 2 and record inserted successfully. will return a dict which contains the "_id"
-            of the successfully inserted record. eg: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }.
-            else return a empty dict. eg: {}
+           Empty dict: when flags is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
+           Dict which contains the field "_id": when flags "INSERT_FLG_RETURN_OID" is set,return all the values of "_id"
+           field in a dict. eg:{ '_id': ObjectId('5d5149ade3071dce3692e93b') }.
          Exceptions:
             pysequoiadb.error.SDBBaseError
          Info:
            flags :
-           0 : While 0 is set(default to be 0), database will stop inserting when some records hit index
+           INSERT_FLG_DEFAULT : While INSERT_FLG_DEFAULT is set, database will stop inserting when the record hit index
                key duplicate error.
-           1 : If some records hit index key duplicate error, database will skip them and go on inserting.
-           2 : Return the value of "_id" field in the record.
-           4 : If the record hit index key duplicate error, database will replace the existing record by
+           INSERT_FLG_CONTONDUP : If the record hit index key duplicate error, database will skip it.
+           INSERT_FLG_RETURN_OID : Return the value of "_id" field in the record.
+           INSERT_FLG_REPLACEONDUP : If the record hit index key duplicate error, database will replace the existing record by
                the inserting new record and then go on inserting.
          """
         if not isinstance(record, dict):
