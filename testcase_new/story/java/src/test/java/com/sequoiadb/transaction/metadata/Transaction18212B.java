@@ -70,7 +70,7 @@ public class Transaction18212B extends SdbTestBase {
         OperatorTh operatorTh3 = new OperatorTh("cl18212C_B");
         operatorTh3.start();
 
-        DropCLTh dropCLTh = new DropCLTh();
+        DropCSTh dropCLTh = new DropCSTh();
         dropCLTh.start();
 
         Assert.assertTrue(operatorTh1.isSuccess(), operatorTh1.getErrorMsg());
@@ -104,6 +104,8 @@ public class Transaction18212B extends SdbTestBase {
                 insertDatas(cl, 10000, 20000);
                 cl.delete("{$and:[{a:{$gte:0}},{a:{$lt:5000}}]}", "{'':'idx18212'}");
                 cl.update("{$and:[{a:{$gte:5000}},{a:{$lt:15000}}]}", "{$inc:{a:10}}", "{}'':'idx18212'");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -190);
             } finally {
                 db.commit();
                 db.close();
@@ -112,10 +114,10 @@ public class Transaction18212B extends SdbTestBase {
     }
 
     // 在非事务内删除集合空间
-    private class DropCLTh extends SdbThreadBase {
+    private class DropCSTh extends SdbThreadBase {
         private Sequoiadb db;
 
-        private DropCLTh() {
+        private DropCSTh() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         }
 
