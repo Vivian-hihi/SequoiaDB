@@ -61,11 +61,9 @@ public class Transaction18645 extends SdbTestBase {
     @AfterClass
     public void tearDown() throws InterruptedException {
         if (db1 != null) {
-            db1.commit();
             db1.close();
         }
         if (db2 != null) {
-            db2.commit();
             db2.close();
         }
         if (sdb != null) {
