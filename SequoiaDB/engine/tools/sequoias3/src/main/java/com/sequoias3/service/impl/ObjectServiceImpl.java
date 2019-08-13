@@ -1049,7 +1049,7 @@ public class ObjectServiceImpl implements ObjectService {
         if (partnumber < RestParamDefine.PART_NUMBER_MIN
                 || partnumber > RestParamDefine.PART_NUMBER_MAX){
             throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
-                    "invalid partnumber:"+partnumber);
+                    "invalid partNumber:"+partnumber);
         }
 
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
@@ -1150,9 +1150,9 @@ public class ObjectServiceImpl implements ObjectService {
                             throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
                                     "The Content-MD5 you specified does not match what we received." +
                                             " contentMD5:" + contentMD5
-                                            + ", etag:" + dataAttr.geteTag()
-                                            + ", contentlength:" + contentLength
-                                            + ", receivesize:" + dataAttr.getSize());
+                                            + ", eTag:" + dataAttr.geteTag()
+                                            + ", contentLength:" + contentLength
+                                            + ", receiveSize:" + dataAttr.getSize());
                         }
                     }
 
@@ -1210,7 +1210,7 @@ public class ObjectServiceImpl implements ObjectService {
                 if (newDataLob != null) {
                     cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
                 }
-                throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectname=" + objectName + ", uploadId=" + uploadId + ", partnumer=" + partnumber, e);
+                throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectName=" + objectName + ", uploadId=" + uploadId + ", partNumber=" + partnumber, e);
             } finally {
                 daoMgr.releaseConnectionDao(connectionA);
             }
@@ -1556,8 +1556,8 @@ public class ObjectServiceImpl implements ObjectService {
             }
 
             if (multiPartUploadConfig.isPartSizeLimit()) {
-                if (locPartArray.get(partNumber - 1).getSize() < 5 * 1024 * 1024
-                        || locPartArray.get(partNumber - 1).getSize() > 5 * 1024 * 1024 * 1024) {
+                if (locPartArray.get(partNumber - 1).getSize() < 5 * 1024 * 1024L
+                        || locPartArray.get(partNumber - 1).getSize() > 5 * 1024 * 1024 * 1024L) {
                     if (i != reqPartList.size() - 1) {
                         throw new S3ServerException(S3Error.PART_ENTITY_TOO_SMALL,
                                 "part size is invalid. size:" + locPartArray.get(partNumber - 1).getSize());
@@ -1579,8 +1579,8 @@ public class ObjectServiceImpl implements ObjectService {
         partCursor.getNext();
         while (true){
             BSONObject record = partCursor.getCurrent();
-            int partnumber = (int) record.get(Part.PARTNUMBER);
-            if (partnumber-1 == index){
+            int partNumber = (int) record.get(Part.PARTNUMBER);
+            if (partNumber-1 == index){
                 Part part = new Part(record);
                 partArray.add(part);
                 if (index == 0){
