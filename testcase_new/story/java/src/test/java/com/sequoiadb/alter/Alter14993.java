@@ -148,23 +148,21 @@ public class Alter14993 extends SdbTestBase {
         }
 
         if (setAttrResult) {
-            Assert.assertEquals(compressionType, 1, "check CompressionType");
             Assert.assertEquals(replsize, -1, "check ReplSize");
-            Assert.assertEquals(compressionTypeDesc, "lzw", "check CompressionTypeDesc");
+            Assert.assertEquals(strictDataMode, "Compressed | StrictDataMode", "check StrictDataMode");
         } else {
-            Assert.assertEquals(compressionType, 0, "check CompressionType");
             Assert.assertEquals(replsize, 1, "check ReplSize");
+            Assert.assertEquals(strictDataMode, "Compressed", "check StrictDataMode");
+        }
+
+        if(enableResult){
+            Assert.assertEquals(compressionType, 1, "check CompressionType");
+            Assert.assertEquals(compressionTypeDesc, "lzw", "check CompressionTypeDesc");
+        }else{
+            Assert.assertEquals(compressionType, 0, "check CompressionType");
             Assert.assertEquals(compressionTypeDesc, "snappy", "check CompressionTypeDesc");
         }
-
-        if (enableResult && setAttrResult) {
-            Assert.assertEquals(strictDataMode, "Compressed | StrictDataMode", "check StrictDataMode");
-        } else if (enableResult && !setAttrResult) {
-            Assert.assertEquals(strictDataMode, "StrictDataMode", "check StrictDataMode");
-        } else {
-            Assert.assertEquals(strictDataMode, "", "check StrictDataMode");
-        }
-
+        
     }
 
 }
