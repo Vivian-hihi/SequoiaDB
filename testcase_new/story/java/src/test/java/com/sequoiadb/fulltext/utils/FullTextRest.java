@@ -170,6 +170,7 @@ public class FullTextRest {
         	    	   .exec();
         } catch (Exception e) {
             //404是索引不存在的错误，转化该错误用于上层调用判断是否需要重试
+            System.err.println(addr + "/" + esIndexName + "/_count");
             if (e.getMessage().equals("404 Not Found")) {
                 throw new Exception("no such index");
             } else {
@@ -200,6 +201,7 @@ public class FullTextRest {
            response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT").setRequestMethod(HttpMethod.GET)
                    .setResponseType(String.class).exec();
        } catch (Exception e) {
+	   System.err.println(addr + "/" + esIndexName + "/_search?q=_id:SDBCOMMIT");
            if (e.getMessage().equals("404 Not Found")) {
                throw new Exception("no such index");
            } else {
@@ -238,6 +240,7 @@ public class FullTextRest {
         	    	   .setResponseType(String.class)
         	    	   .exec();
         } catch (Exception e) {
+            System.err.println(addr + "/" + esIndexName + "/_search?q=_id:SDBCOMMIT");
             if (e.getMessage().equals("404 Not Found")) {
                 throw new Exception("no such index");
             } else {
@@ -273,6 +276,7 @@ public class FullTextRest {
         	    	   .setResponseType(String.class)
         	    	   .exec();
         } catch (Exception e) {
+            System.err.println(addr + "/" + esIndexName);
             if (e.getMessage().equals("404 Not Found")) {
                 indexExist = false;
             } else {

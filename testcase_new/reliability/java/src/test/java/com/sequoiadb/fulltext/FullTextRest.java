@@ -153,7 +153,7 @@ public class FullTextRest {
         } while (runFlag);
         return response;
     }
-
+    
     /**
      * 获取elasticsearch端全文索引的总记录数
      * 
@@ -161,13 +161,16 @@ public class FullTextRest {
      * @return
      * @throws Exception
      */
-    public int getCount(String esIndexName) throws Exception {
+    public int getCount(String esIndexName) throws Exception{
         ResponseEntity<?> response = null;
         try {
-            response = this.setApi("/" + esIndexName + "/_count").setRequestMethod(HttpMethod.GET)
-                    .setResponseType(String.class).exec();
+            response = this.setApi("/" + esIndexName + "/_count")
+        	    	   .setRequestMethod(HttpMethod.GET)
+        	    	   .setResponseType(String.class)
+        	    	   .exec();
         } catch (Exception e) {
-            // 404是索引不存在的错误，转化该错误用于上层调用判断是否需要重试
+            //404是索引不存在的错误，转化该错误用于上层调用判断是否需要重试
+            System.err.println(addr + "/" + esIndexName + "/_count");
             if (e.getMessage().equals("404 Not Found")) {
                 throw new Exception("no such index");
             } else {
@@ -190,32 +193,33 @@ public class FullTextRest {
      */
     @SuppressWarnings("unchecked")
     public int getCommitID(String esIndexName) throws Exception {
-
-        int commitID = -1;
+	
+	int commitID = -1;
 
         ResponseEntity<?> response = null;
         try {
-            response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT").setRequestMethod(HttpMethod.GET)
-                    .setResponseType(String.class).exec();
-        } catch (Exception e) {
-            if (e.getMessage().equals("404 Not Found")) {
-                throw new Exception("no such index");
-            } else {
-                throw e;
-            }
-        }
-        String body = response.getBody().toString();
-        BSONObject bodyObj = (BSONObject) JSON.parse(body);
+           response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT").setRequestMethod(HttpMethod.GET)
+                   .setResponseType(String.class).exec();
+       } catch (Exception e) {
+	   System.err.println(addr + "/" + esIndexName + "/_search?q=_id:SDBCOMMIT");
+           if (e.getMessage().equals("404 Not Found")) {
+               throw new Exception("no such index");
+           } else {
+               throw e;
+           }
+       }
+       String body = response.getBody().toString();
+       BSONObject bodyObj = (BSONObject) JSON.parse(body);
+       
+       BSONObject hitss = (BSONObject) bodyObj.get("hits");
+       if ((int) hitss.get("total") == 0) {
+           throw new Exception("no such _id=SDBCOMMIT record");
+       }
+       BSONObject hits = ( (List<BSONObject>) hitss.get("hits") ).get(0);
+       BSONObject source = (BSONObject) hits.get("_source");
+       commitID = (int) source.get("_lid");
 
-        BSONObject hitss = (BSONObject) bodyObj.get("hits");
-        if ((int) hitss.get("total") == 0) {
-            throw new Exception("no such _id=SDBCOMMIT record");
-        }
-        BSONObject hits = ((List<BSONObject>) hitss.get("hits")).get(0);
-        BSONObject source = (BSONObject) hits.get("_source");
-        commitID = (int) source.get("_lid");
-
-        return commitID;
+       return commitID;
     }
 
     /**
@@ -226,14 +230,17 @@ public class FullTextRest {
      * @throws Exception
      */
     @SuppressWarnings("unchecked")
-    public int getCommitCLLID(String esIndexName) throws Exception {
-        int commitCLLID = -1;
+    public int getCommitCLLID(String esIndexName) throws Exception{
+	int commitCLLID = -1;
 
         ResponseEntity<?> response = null;
         try {
-            response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT").setRequestMethod(HttpMethod.GET)
-                    .setResponseType(String.class).exec();
+            response = this.setApi("/" + esIndexName + "/_search?q=_id:SDBCOMMIT")
+        	    	   .setRequestMethod(HttpMethod.GET)
+        	    	   .setResponseType(String.class)
+        	    	   .exec();
         } catch (Exception e) {
+            System.err.println(addr + "/" + esIndexName + "/_search?q=_id:SDBCOMMIT");
             if (e.getMessage().equals("404 Not Found")) {
                 throw new Exception("no such index");
             } else {
@@ -246,27 +253,30 @@ public class FullTextRest {
         if ((int) hitss.get("total") == 0) {
             throw new Exception("no such index");
         }
-        BSONObject hits = ((List<BSONObject>) hitss.get("hits")).get(0);
+        BSONObject hits = ( (List<BSONObject>) hitss.get("hits") ).get(0);
         BSONObject source = (BSONObject) hits.get("_source");
         commitCLLID = (int) source.get("_cllid");
 
         return commitCLLID;
     }
-
+    
     /**
      * 判断elasticsearch端的全文索引名是否存在，用于检查在创建阶段索引名是否映射到elasticsearch端
      * 
      * @param esIndexName
      * @return
-     * @throws Exception
+     * @throws Exception 
      */
-    public boolean isExist(String esIndexName) throws Exception {
-        boolean indexExist = false;
-        ResponseEntity<?> response = null;
+    public boolean isExist(String esIndexName) throws Exception{
+	boolean indexExist = false;
+	ResponseEntity<?> response = null;
         try {
-            response = this.setApi("/" + esIndexName).setRequestMethod(HttpMethod.GET).setResponseType(String.class)
-                    .exec();
+            response = this.setApi("/" + esIndexName)
+        	    	   .setRequestMethod(HttpMethod.GET)
+        	    	   .setResponseType(String.class)
+        	    	   .exec();
         } catch (Exception e) {
+            System.err.println(addr + "/" + esIndexName);
             if (e.getMessage().equals("404 Not Found")) {
                 indexExist = false;
             } else {
@@ -276,7 +286,7 @@ public class FullTextRest {
         if (response != null && response.getStatusCodeValue() == 200) {
             indexExist = true;
         }
-
+        
         return indexExist;
     }
 }
