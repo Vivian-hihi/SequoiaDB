@@ -43,6 +43,7 @@
 #include "oss.hpp"
 #include "dmsExtDataHandler.hpp"
 #include "rtnExtDataProcessor.hpp"
+#include "utilConcurrentMap.hpp"
 
 namespace engine
 {
@@ -91,6 +92,13 @@ namespace engine
       {
          return _stat ;
       }
+
+      virtual BOOLEAN canCache() const
+      {
+         return FALSE ;
+      }
+
+      virtual void reset( DMS_EXTOPR_TYPE type ) ;
 
       virtual INT32 done( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
       virtual INT32 abort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
@@ -171,47 +179,20 @@ namespace engine
       _rtnExtDataOprCtx( DMS_EXTOPR_TYPE type ) ;
       virtual ~_rtnExtDataOprCtx() ;
 
+      BOOLEAN canCache() const
+      {
+         return TRUE ;
+      }
+
+      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
+                          const CHAR *extName, const BSONObj &object,
+                          pmdEDUCB *cb, const BSONObj *newObj = NULL,
+                          SDB_DPSCB *dpscb = NULL ) ;
+
    private:
       virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    } ;
-   typedef _rtnExtDataOprCtx rtnExtDataOprCt ;
-
-   class _rtnExtInsertCtx : public _rtnExtDataOprCtx
-   {
-   public:
-      _rtnExtInsertCtx() ;
-      ~_rtnExtInsertCtx() ;
-
-      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *extName, const BSONObj &object,
-                          _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
-   } ;
-   typedef _rtnExtInsertCtx rtnExtInsertCtx ;
-
-   class _rtnExtDeleteCtx : public _rtnExtDataOprCtx
-   {
-   public:
-      _rtnExtDeleteCtx() ;
-      ~_rtnExtDeleteCtx() ;
-
-      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *extName, const BSONObj &object,
-                          _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
-   } ;
-   typedef _rtnExtDeleteCtx rtnExtDeleteCtx ;
-
-   class _rtnExtUpdateCtx : public _rtnExtDataOprCtx
-   {
-   public:
-      _rtnExtUpdateCtx() ;
-      ~_rtnExtUpdateCtx() ;
-
-      virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *extName, const BSONObj &oldObj,
-                          const BSONObj &newObj, pmdEDUCB *cb,
-                          SDB_DPSCB *dpscb = NULL ) ;
-   } ;
-   typedef _rtnExtUpdateCtx rtnExtUpdateCtx ;
+   typedef _rtnExtDataOprCtx rtnExtDataOprCtx ;
 
    class _rtnExtDropCSCtx : public _rtnExtContextBase
    {
@@ -314,8 +295,8 @@ namespace engine
       INT32 delContext( UINT32 contextID, _pmdEDUCB *cb ) ;
 
    private:
-      ossRWMutex        _mutex ;
       RTN_CTX_MAP       _contextMap ;
+      ossQueue<rtnExtContextBase *> _dataOprCtxQue ;
    } ;
    typedef _rtnExtContextMgr rtnExtContextMgr ;
 }

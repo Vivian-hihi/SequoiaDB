@@ -424,8 +424,9 @@ namespace engine
       SDB_ASSERT( DMS_EXTOPR_TYPE_INSERT == context->getType(),
                   "Type not match") ;
 
-      rc = static_cast<rtnExtInsertCtx*>(context)->open( _edpMgr, extName,
-                                                         object, cb, dpscb ) ;
+      rc = static_cast<rtnExtDataOprCtx*>(context)->open( _edpMgr, extName,
+                                                          object, cb,
+                                                          NULL, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
 
    done:
@@ -471,8 +472,9 @@ namespace engine
       SDB_ASSERT( DMS_EXTOPR_TYPE_DELETE == context->getType(),
                   "Type not match") ;
 
-      rc = static_cast<rtnExtDeleteCtx *>(context)->open( _edpMgr, extName,
-                                                          object, cb, dpscb ) ;
+      rc = static_cast<rtnExtDataOprCtx*>(context)->open( _edpMgr, extName,
+                                                          object, cb,
+                                                          NULL, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for delete failed[ %d ]", rc ) ;
 
    done:
@@ -531,9 +533,9 @@ namespace engine
       SDB_ASSERT( DMS_EXTOPR_TYPE_UPDATE == context->getType(),
                   "Type not match") ;
 
-      rc = static_cast<rtnExtUpdateCtx*>(context)->open( _edpMgr, extName,
-                                                         orignalObj, newObj,
-                                                         cb, dpscb ) ;
+      rc = static_cast<rtnExtDataOprCtx*>(context)->open( _edpMgr, extName,
+                                                          orignalObj, cb,
+                                                          &newObj, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context for update failed[ %d ]", rc ) ;
 
    done:

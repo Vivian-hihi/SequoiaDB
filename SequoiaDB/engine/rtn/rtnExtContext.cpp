@@ -40,6 +40,9 @@
 #include "rtnExtContext.hpp"
 #include "rtnTrace.hpp"
 #include "rtnCB.hpp"
+#include "ossMem.hpp"
+
+#define RTN_EXT_CACHE_CTX_MAX                (1000)
 
 namespace engine
 {
@@ -58,6 +61,19 @@ namespace engine
    _rtnExtContextBase::~_rtnExtContextBase()
    {
       _cleanup() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_RESET, "_rtnExtContextBase::reset" )
+   void _rtnExtContextBase::reset( DMS_EXTOPR_TYPE type )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTBASE_RESET ) ;
+      _type = type ;
+      _id = 0 ;
+      _stat = EXT_CTX_STAT_NORMAL ;
+      _processorMgr = NULL ;
+      _lockType = -1 ;
+      _cleanup() ;
+      PD_TRACE_EXIT( SDB__RTNEXTCONTEXTBASE_RESET ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTBASE_DONE, "_rtnExtContextBase::done" )
@@ -332,6 +348,67 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_OPEN, "_rtnExtDataOprCtx::open" )
+   INT32 _rtnExtDataOprCtx::open( rtnExtDataProcessorMgr *processorMgr,
+                                  const CHAR *extName, const BSONObj &object,
+                                  pmdEDUCB *cb, const BSONObj *newObj,
+                                  SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_OPEN ) ;
+      rtnExtDataProcessor *processor = NULL ;
+      SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
+      if ( DMS_EXTOPR_TYPE_UPDATE == _type && !newObj )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "New object is invalid for update" ) ;
+         goto error ;
+      }
+
+      _processorMgr = processorMgr ;
+
+      // Why add EXCLUSIVE lock here? To make sure of the right order of records
+      // insertted into capped collection.
+      // This lock cooperates with mb lock of original collection. It's taken
+      // inside the protection of the mb lock, and released after the mb lock
+      // released(after writting dps log). So we need this lock to ensure the
+      // write order.
+      rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
+                                                processor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[%d]", rc ) ;
+      _lockType = EXCLUSIVE ;
+      if ( !processor )
+      {
+         PD_LOG( PDERROR, "YSD: no processor find for %s", extName ) ;
+         goto done ;
+      }
+
+      _appendProcessor( processor ) ;
+      PD_LOG( PDERROR, "YSD: object: %s", object.toString(false, true).c_str() ) ;
+      switch ( _type )
+      {
+      case DMS_EXTOPR_TYPE_INSERT:
+         rc = processor->processInsert( object, cb, dpscb ) ;
+         break ;
+      case DMS_EXTOPR_TYPE_DELETE:
+         rc = processor->processDelete( object, cb, dpscb ) ;
+         break ;
+      case DMS_EXTOPR_TYPE_UPDATE:
+         rc = processor->processUpdate( object, *newObj, cb, dpscb ) ;
+         break ;
+      default:
+         rc = SDB_SYS ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Process data operation failed[%d]. Type: %d",
+                   rc, _type ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX_OPEN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_DONE, "_rtnExtDataOprCtx::_onDone" )
    INT32 _rtnExtDataOprCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
@@ -346,140 +423,6 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX_DONE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   _rtnExtInsertCtx::_rtnExtInsertCtx()
-   : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_INSERT )
-   {
-   }
-
-   _rtnExtInsertCtx::~_rtnExtInsertCtx()
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTINSERTCTX_OPEN, "_rtnExtInsertCtx::open" )
-   INT32 _rtnExtInsertCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const CHAR *extName, const BSONObj &object,
-                                 pmdEDUCB *cb, SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTINSERTCTX_OPEN ) ;
-      rtnExtDataProcessor *processor = NULL ;
-
-      SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
-
-      _processorMgr = processorMgr ;
-
-      // Why add EXCLUSIVE lock here? To make sure of the right order of records
-      // insertted into capped collection.
-      // This lock cooperates with mb lock of original collection. It's taken
-      // inside the protection of the mb lock, and released after the mb lock
-      // released(after writting dps log). So we need this lock to ensure the
-      // write order.
-      rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
-                                                processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
-      _lockType = EXCLUSIVE ;
-      if ( !processor )
-      {
-         goto done ;
-      }
-
-      _appendProcessor( processor ) ;
-
-      rc = processor->processInsert( object, cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Process insert failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTINSERTCTX_OPEN, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   _rtnExtDeleteCtx::_rtnExtDeleteCtx()
-   : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_DELETE )
-   {
-   }
-
-   _rtnExtDeleteCtx::~_rtnExtDeleteCtx()
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDELETECTX_OPEN, "_rtnExtDeleteCtx::open" )
-   INT32 _rtnExtDeleteCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const CHAR *extName, const BSONObj &object,
-                                 pmdEDUCB *cb, SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDELETECTX_OPEN ) ;
-      rtnExtDataProcessor *processor = NULL ;
-
-      SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
-
-      _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
-                                                processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
-      _lockType = EXCLUSIVE ;
-      if ( !processor )
-      {
-         goto done ;
-      }
-
-      _appendProcessor( processor ) ;
-
-      rc = processor->processDelete( object, cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Process delete failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDELETECTX_OPEN, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   _rtnExtUpdateCtx::_rtnExtUpdateCtx()
-   : _rtnExtDataOprCtx( DMS_EXTOPR_TYPE_UPDATE )
-   {
-   }
-
-   _rtnExtUpdateCtx::~_rtnExtUpdateCtx()
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTUPDATECTX_OPEN, "_rtnExtUpdateCtx::open" )
-   INT32 _rtnExtUpdateCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                 const CHAR *extName, const BSONObj &oldObj,
-                                 const BSONObj &newObj, pmdEDUCB *cb,
-                                 SDB_DPSCB *dpscb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTUPDATECTX_OPEN ) ;
-      rtnExtDataProcessor *processor = NULL ;
-
-      SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
-
-      _processorMgr = processorMgr ;
-      rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
-                                                processor ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get external processor failed[ %d ]", rc ) ;
-      _lockType = EXCLUSIVE ;
-      if ( !processor )
-      {
-         goto done ;
-      }
-
-      _appendProcessor( processor ) ;
-
-      rc = processor->processUpdate( oldObj, newObj, cb, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Process update failed[ %d ]", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTUPDATECTX_OPEN, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -873,6 +816,28 @@ namespace engine
 
    _rtnExtContextMgr::~_rtnExtContextMgr()
    {
+      RTN_CTX_MAP::bucket_iterator itr = _contextMap.begin() ;
+      // Release all contexts in the context map, if any.
+      while ( itr != _contextMap.end() )
+      {
+         RTN_CTX_MAP::map_iterator subItr = (*itr).begin() ;
+         while ( subItr != (*itr).end() )
+         {
+            SAFE_OSS_DELETE( subItr->second ) ;
+            ++subItr ;
+         }
+         itr++ ;
+      }
+
+      // Release all cached contexts, if any.
+      if ( _dataOprCtxQue.size() > 0 )
+      {
+         rtnExtContextBase *ctx = NULL ;
+         while ( _dataOprCtxQue.try_pop( ctx ) )
+         {
+            SAFE_OSS_DELETE( ctx ) ;
+         }
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT, "_rtnExtContextMgr::findContext" )
@@ -880,11 +845,12 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT ) ;
       rtnExtContextBase *context = NULL ;
-      ossScopedRWLock lock( &_mutex, SHARED ) ;
-      std::pair< rtnExtContextBase*, bool > ret = _contextMap.find( contextID ) ;
-      if ( ret.second )
+      RTN_CTX_MAP::Bucket& bucket = _contextMap.getBucket( contextID ) ;
+      BUCKET_SLOCK( bucket ) ;
+      RTN_CTX_MAP::map_const_iterator itr = bucket.find( contextID ) ;
+      if ( itr != bucket.end() )
       {
-         context = ret.first ;
+         context = itr->second ;
       }
       PD_TRACE_EXIT( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT ) ;
       return context ;
@@ -903,13 +869,19 @@ namespace engine
       switch ( type )
       {
          case DMS_EXTOPR_TYPE_INSERT:
-            newCtx = SDB_OSS_NEW rtnExtInsertCtx ;
-            break ;
          case DMS_EXTOPR_TYPE_DELETE:
-            newCtx = SDB_OSS_NEW rtnExtDeleteCtx ;
-            break ;
          case DMS_EXTOPR_TYPE_UPDATE:
-            newCtx = SDB_OSS_NEW rtnExtUpdateCtx ;
+            // First try to get a cached context from the queue. If there is not
+            // any, allocate a new one.
+            if ( !_dataOprCtxQue.try_pop( newCtx ) )
+            {
+               newCtx = SDB_OSS_NEW rtnExtDataOprCtx( type ) ;
+            }
+            else
+            {
+               SDB_ASSERT( newCtx, "Context from cache is NULL" ) ;
+               ((rtnExtDataOprCtx *)newCtx)->reset( type ) ;
+            }
             break ;
          case DMS_EXTOPR_TYPE_DROPCS:
             newCtx = SDB_OSS_NEW rtnExtDropCSCtx ;
@@ -944,10 +916,10 @@ namespace engine
 
       ctxID = cb->getTID() ;
       newCtx->setID( ctxID ) ;
-
       {
-         ossScopedRWLock lock( &_mutex, EXCLUSIVE ) ;
-         _contextMap.insert( ctxID, newCtx ) ;
+         RTN_CTX_MAP::Bucket& bucket = _contextMap.getBucket( ctxID ) ;
+         BUCKET_XLOCK( bucket ) ;
+         bucket.insert( RTN_CTX_MAP::value_type( ctxID, newCtx ) ) ;
          if ( context )
          {
             *context = newCtx ;
@@ -967,23 +939,35 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTCONTEXTMGR_DELCONTEXT ) ;
       rtnExtContextBase *context = NULL ;
-      std::pair< rtnExtContextBase*, bool > ret ;
 
       {
-         ossScopedRWLock lock( &_mutex, SHARED ) ;
-         ret = _contextMap.find( contextID ) ;
+         RTN_CTX_MAP::Bucket& bucket = _contextMap.getBucket( contextID ) ;
+         BUCKET_XLOCK( bucket ) ;
+         RTN_CTX_MAP::map_const_iterator itr = bucket.find( contextID ) ;
+         if ( itr != bucket.end() )
+         {
+            context = itr->second ;
+            bucket.erase( contextID ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Context of id[%u] not found", contextID ) ;
+            goto error ;
+         }
       }
-      if ( ret.second )
+
+      if ( context )
       {
-         context = ret.first ;
-         ossScopedRWLock wLock( &_mutex, EXCLUSIVE ) ;
-         _contextMap.erase( contextID ) ;
-         SDB_OSS_DEL context ;
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         if ( context->canCache() &&
+              ( _dataOprCtxQue.size() < RTN_EXT_CACHE_CTX_MAX ) )
+         {
+            _dataOprCtxQue.push( context ) ;
+         }
+         else
+         {
+            SDB_OSS_DEL context ;
+         }
       }
 
    done:
