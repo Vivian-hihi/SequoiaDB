@@ -379,12 +379,10 @@ namespace engine
       _lockType = EXCLUSIVE ;
       if ( !processor )
       {
-         PD_LOG( PDERROR, "YSD: no processor find for %s", extName ) ;
          goto done ;
       }
 
       _appendProcessor( processor ) ;
-      PD_LOG( PDERROR, "YSD: object: %s", object.toString(false, true).c_str() ) ;
       switch ( _type )
       {
       case DMS_EXTOPR_TYPE_INSERT:
