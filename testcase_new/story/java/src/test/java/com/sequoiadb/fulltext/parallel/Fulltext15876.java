@@ -52,7 +52,7 @@ public class Fulltext15876 extends FullTestBase {
         FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
-    @Test(enabled = false)
+    @Test(enabled = false) //jira-4558
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
         ThreadTruncate threadTruncate = new ThreadTruncate();
