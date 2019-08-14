@@ -211,7 +211,7 @@ function turnLocaltime( time, format )
 
 function importData( csName, clName, importFile, type, fields, cast )
 {
-   println("---Begin to import data.");    
+   println("\n---Begin to import data.");    
    var imprtOption = installDir +'bin/sdbimprt -s '+ COORDHOSTNAME +' -p '+ COORDSVCNAME 
                   +' -c '+ csName +' -l '+ clName 
                   +' --type '+ type
@@ -220,6 +220,11 @@ function importData( csName, clName, importFile, type, fields, cast )
    {
       imprtOption = imprtOption +' --fields "' + fields +'"';
    }
+   println( imprtOption );
+   var command = "cat "+ importFile;
+   var fileInfo = cmd.run( command );
+   println( "\n" + command +"\n" + fileInfo );
+   
    if ( cast == true )
    {
       imprtOption = imprtOption + ' --cast ' + cast;
@@ -297,7 +302,7 @@ function checkCLData( cl, expRecsNum, expRecs )
                         "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
                         "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
    }  
-   println("cl records: \n" + actRecs );
+   //println("cl records: \n" + actRecs );
 }
 
 function checkExportData( exportFile, expData )
@@ -318,7 +323,7 @@ function checkExportData( exportFile, expData )
 function checkResult( cl, dataType, expResult )
 {
    println( "---Begin to check "+ dataType +" results." );
-   var rc = cl.find({ a: { "$type": 2, "$et": dataType }}).sort( { _id: 1 } );
+   var rc = cl.find({a:{"$type":2,"$et": dataType }}, {_id:{$include:0}}).sort({_id:1});
    var actResult = [];
    while( rc.next() )
    {
