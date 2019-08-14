@@ -2,7 +2,11 @@
    <div class="underlineTab" ng-container="{height:50}">
       <ul class="right">
          <li class="text Ellipsis" style="width:350px;">
-            <b><a class="linkButton" href="#/Data/SDB-Database/Index">{{autoLanguage("数据库")}}</a> <span style="font-size:80%; color:#666;">></span> <span style="color:#666;">{{fullName}}</span></b>
+            <b>
+               <a class="linkButton" href="#/Data/SDB-Database/Index">{{autoLanguage("数据库")}}</a>
+               <span style="font-size:80%; color:#666;">&gt;</span>
+               <a class="linkButton" ng-click="GoToCL()">{{fullName}}</a>
+            </b>
          </li>
          <li class="active">
             <a href="#/Data/SDB-Operate/Lobs">{{autoLanguage("大对象操作")}}</a>

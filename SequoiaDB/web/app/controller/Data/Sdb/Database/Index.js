@@ -440,6 +440,9 @@
          $scope.selectGroup = null ;
          $scope.attr = $.extend( true, {}, $scope.clList[clIndex] ) ;
       }
+      
+      $scope.fullName = SdbFunction.LocalData( 'SdbFullName' ) ;
+      SdbFunction.LocalData( 'SdbFullName', null ) ;
 
       //打开 创建集合空间 的窗口
       $scope.showCreateCS = function(){

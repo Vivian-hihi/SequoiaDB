@@ -112,5 +112,10 @@
       }
 
       $scope.queryAll();
+
+      $scope.GoToCL = function(){
+         SdbFunction.LocalData( 'SdbFullName', $scope.fullName ) ;
+         $location.path( 'Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ;
+      }
    } ) ;
 }()) ;

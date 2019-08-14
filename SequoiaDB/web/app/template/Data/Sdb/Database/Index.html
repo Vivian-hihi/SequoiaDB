@@ -1,6 +1,6 @@
 <div ng-controller="Data.Database.Index.Ctrl" style="padding:10px 0;" ng-container="{}">
    <div class="underlineTab" style="padding:0 15px;height:50px;">
-      <ul class="left" ng-init="browseMode='cslist'">
+      <ul class="left" ng-init="browseMode=fullName.length>0?'cllist':'cslist'">
          <li ng-class="{'cslist':'active'}[browseMode]">
             <a ng-click="browseMode='cslist';">{{autoLanguage("集合空间")}}</a>
          </li>

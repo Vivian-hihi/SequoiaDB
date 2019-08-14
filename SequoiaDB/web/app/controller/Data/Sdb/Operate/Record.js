@@ -676,11 +676,14 @@
    } ) ;
 
    //分页栏
-   sacApp.controllerProvider.register( 'Data.Operate.Record.Tab.Ctrl', function( $scope, SdbSwap ){
+   sacApp.controllerProvider.register( 'Data.Operate.Record.Tab.Ctrl', function( $scope, $location, SdbSwap, SdbFunction  ){
    
       $scope.FullName = SdbSwap.fullName ;
       $scope.CLType   = SdbSwap.clType ;
-
+      $scope.GoToCL = function(){
+         SdbFunction.LocalData( 'SdbFullName', $scope.FullName ) ;
+         $location.path( 'Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ;
+      }
    } ) ;
 
    //操作栏

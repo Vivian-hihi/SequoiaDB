@@ -167,6 +167,10 @@ _DataDatabaseIndex.buildClList = function( $scope, clList ){
    $scope.ClTable['body'] = $scope.clList ;
    $.each( $scope.ClTable['body'], function( index ){
       $scope.ClTable['body'][index]['i'] = index ;
+      if( $scope.fullName != null && $scope.fullName.length > 0 && $scope.fullName == $scope.ClTable['body'][index]['fullName'] )
+      {
+         $scope.showCLInfo( $scope.ClTable['body'][index]['csId'], $scope.ClTable['body'][index]['i'] ) ;
+      }
    } ) ;
 }
 
