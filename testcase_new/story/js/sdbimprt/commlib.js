@@ -329,17 +329,27 @@ function checkResult( cl, dataType, expResult )
    {
       actResult.push( rc.current().toObj() );
    }
-   for(var i=0;i<actResult.length;i++){println("actResult==="+JSON.stringify(actResult[i]))};
-   for(var i=0;i<expResult.length;i++){println("expResult==="+JSON.stringify(expResult[i]))};
-   if( actResult.length != expResult.length )
+   /*
+   println("actResult: ");
+   for(var i=0;i<actResult.length;i++){println(JSON.stringify(actResult[i]))};
+   println("expResult: ");
+   for(var i=0;i<expResult.length;i++){println(JSON.stringify(expResult[i]))};
+   */
+   
+   if( actResult.length !== expResult.length )
    {
-      throw "actResult.length:" + actResult.length + " is not equals to expResult.length:" + expResult.length;
+      throw buildException( "checkCLdata", null, "[export]", 
+                        "["+ actResult.length +"]", 
+                        "["+ expResult.length +"]" );
    }
+   
    for( var i in actResult )
    {
-      if( JSON.stringify( actResult[i]["a"] ) != JSON.stringify( expResult[i]["a"] ) )
+      if( JSON.stringify( actResult[i]["a"] ) !== JSON.stringify( expResult[i]["a"] ) )
       {
-         throw "expResult is " + JSON.stringify( expResult[i]["a"] ) + " but actResult is " + JSON.stringify( actResult[i]["a"] );
+      throw buildException( "checkCLdata", null, "[export]", 
+                        "["+ JSON.stringify( actResult[i]["a"] ) +"]", 
+                        "["+ JSON.stringify( expResult[i]["a"] ) +"]" );
       }
    }
 }
