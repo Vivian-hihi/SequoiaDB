@@ -157,3 +157,22 @@
     ```
 
 当所有的主机都安装了 SequoiaDB 后，用户可以根据自身的情况(可参考[规划数据库部署](installation/deployment/command_installation/planning_database_deployment.md))，选择部署[单机模式](installation/deployment/command_installation/standalone.md)或者[集群模式](installation/deployment/command_installation/cluster.md)的环境。只有成功部署了环境，用户才能使用 SequoiaDB 进行数据操作。
+
+### 安装包参数描述
+
+| 参数         | 描述                                                       | 默认值   |
+| -------------- | ---------------------------------------------------------- | ------------------- |
+| version | 安装包版本 | 无                   |
+| unattendedmodeui | 显示不同级别的用户交互，none 表示不交互，minimal 表示不需要用户交互只显示安装进度，minimalWithDialogs 表示除了显示安装进度外，还会根据安装程序逻辑弹出窗口与用户交互 | 默认是不交互                  |
+| optionfile | 配置文件，run 包可以通过指定配置文件给安装包进行传参 | 无                   |
+| debuglevel | 安装包程序调试级别 | 默认为2                   |
+| installer-language | 安装过程中的提示语言类型，支持英文和中文                               | en| 
+| mode      | 安装模式，包含静默安装、文本模式安装以及图形界面安装                                 | 图形界面安装 |
+| perfix | 安装路径                       | /opt/sequoiadb |
+| force     | 是否强制安装                                 | false              |
+| username     | 安装目录用户                                 | sdbadmin              |
+| groupname     | 安装目录用户组                                 | sdbadmin_group              |
+| userpasswd     | 安装用户密码                                 | sdbadmin              |
+| port     | SequoiaDB 集群管理端口                                 | 11790              |
+| processAutoStart     | 机器重启时是否自动重启 SequoiaDB 相关进程                                 | true              |
+| SMS     | 是否安装 OM 服务                                 | false              |
