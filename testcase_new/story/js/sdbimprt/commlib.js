@@ -332,24 +332,24 @@ function checkResult( cl, dataType, expResult )
    /*
    println("actResult: ");
    for(var i=0;i<actResult.length;i++){println(JSON.stringify(actResult[i]))};
-   println("expResult: ");
+   println("\nexpResult: ");
    for(var i=0;i<expResult.length;i++){println(JSON.stringify(expResult[i]))};
    */
    
    if( actResult.length !== expResult.length )
    {
-      throw buildException( "checkCLdata", null, "[export]", 
-                        "["+ actResult.length +"]", 
-                        "["+ expResult.length +"]" );
+      throw buildException( "checkCLdata", null, "[check length]", 
+                        "["+ expResult.length +"]", 
+                        "["+ actResult.length +"]" );
    }
    
    for( var i in actResult )
    {
-      if( JSON.stringify( actResult[i]["a"] ) !== JSON.stringify( expResult[i]["a"] ) )
+      if( JSON.stringify( actResult[i] ) !== JSON.stringify( expResult[i] ) )
       {
-      throw buildException( "checkCLdata", null, "[export]", 
-                        "["+ JSON.stringify( actResult[i]["a"] ) +"]", 
-                        "["+ JSON.stringify( expResult[i]["a"] ) +"]" );
+      throw buildException( "checkCLdata", null, "[check records, i = " + i + "]", 
+                        "["+ JSON.stringify( expResult[i] ) +"]", 
+                        "["+ JSON.stringify( actResult[i] ) +"]" );
       }
    }
 }
