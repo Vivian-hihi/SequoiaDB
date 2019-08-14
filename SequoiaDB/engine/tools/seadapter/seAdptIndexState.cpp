@@ -1452,7 +1452,6 @@ namespace seadapter
             PD_RC_CHECK( rc, PDERROR, "Generate record by keyset failed[%d]",
             rc ) ;
          }
-
       }
       catch ( std::exception &e )
       {
@@ -1473,20 +1472,32 @@ namespace seadapter
       INT32 rc = SDB_OK ;
       SDB_ASSERT( !keySet.empty(), "Key set is empty") ;
 
+      BSONObjBuilder builder ;
+      BOOLEAN found = FALSE ;
       try
       {
          if ( 1 == keySet.size() )
          {
-            // Key set size is 1, so no array.
-            record = *( keySet.begin() ) ;
+            BSONObjIterator itr( *( keySet.begin() ) ) ;
+            // Loop and check if the record contains only strings.
+            while ( itr.more() )
+            {
+               BSONElement ele = itr.next() ;
+               if ( String == ele.type() )
+               {
+                  builder.append( ele ) ;
+                  if ( !found )
+                  {
+                     found = TRUE ;
+                  }
+               }
+            }
          }
          else
          {
             // One of the index field is of type array. Resume the array from
             // the keys. Compare the elements of the first and second key. If
             // they are not the same, that's the array field.
-            BSONObjBuilder builder ;
-            BOOLEAN found = FALSE ;
             BSONObjIterator itrFirst( *(keySet.begin()) ) ;
             BSONObjIterator itrSecond( *(++keySet.begin()) ) ;
 
@@ -1494,6 +1505,10 @@ namespace seadapter
             {
                BSONElement lNextEle = itrFirst.next() ;
                BSONElement rNextEle = itrSecond.next() ;
+               if ( String != lNextEle.type() || String != rNextEle.type() )
+               {
+                  goto done ;
+               }
                if ( found || 0 == lNextEle.woCompare( rNextEle, true) )
                {
                   // Same, it's not the array field.
@@ -1512,6 +1527,12 @@ namespace seadapter
                   std::advance( itr, 2 ) ;
                   while ( itr != keySet.end() )
                   {
+                     BSONElement ele = itr->getField( arrField ) ;
+                     if ( String != ele.type() )
+                     {
+                        goto done ;
+                     }
+
                      arrBuilder.append( itr->getStringField( arrField ) ) ;
                      ++itr ;
                   }
@@ -1519,6 +1540,9 @@ namespace seadapter
                   found = TRUE ;
                }
             }
+         }
+         if ( found )
+         {
             record = builder.obj() ;
          }
       }

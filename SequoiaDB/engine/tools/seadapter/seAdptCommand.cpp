@@ -89,7 +89,7 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Get document count failed[%d]", rc ) ;
 
       // If it's match_all, we need to filter out the SDBCOMMIT record.
-      if ( _isMatchAll() )
+      if ( _isMatchAll() && totalCount > 0 )
       {
          --totalCount ;
       }
