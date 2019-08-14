@@ -1557,6 +1557,99 @@ public class DBCollection {
      * Create a index with name and key.
      *
      * @param name
+     *            The index name.
+     * @param key
+     *            The index keys in JSON format, like: "{\"a\":1, \"b\":-1}".
+     * @param options
+     *            Optional configuration, type is BSONObject. Please reference
+     *            {@see <a href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-302>here</a>}
+     *            for more detail, like: { "Unique" : false , "Enforced" : false , "NotNull" : false , "SortBufferSize" : 64 }
+     * @throws BaseException
+     */
+    public void createIndex(String name, BSONObject key, BSONObject options) throws BaseException {
+
+        BSONObject matcher = new BasicBSONObject();
+        BSONObject hint = new BasicBSONObject();
+
+        // 校验 options, 设置 matcher 和 hint
+        checkOptions(options, matcher, hint);
+
+        matcher.put(SdbConstants.IXM_KEY, key);
+        matcher.put(SdbConstants.IXM_NAME, name);
+
+        BSONObject createObj = new BasicBSONObject();
+        createObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+        createObj.put(SdbConstants.FIELD_INDEX, matcher);
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_INDEX, createObj, hint);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+
+        boolean isUnique = (boolean) matcher.get(SdbConstants.IXM_UNIQUE);
+
+        if (response.getFlag() != 0) {
+            String msg = "name = " + name + ", key = " + key + ", isUnique = " + isUnique;
+            sequoiadb.throwIfError(response, msg);
+        }
+        sequoiadb.upsertCache(collectionFullName);
+    }
+
+    private void checkOptions(BSONObject options, BSONObject matcher, BSONObject hint){
+        // 设置默认值
+        matcher.put(SdbConstants.IXM_UNIQUE, SdbConstants.IXM_UNIQUE_DEFAULT);
+        matcher.put(SdbConstants.IXM_ENFORCED, SdbConstants.IXM_ENFORCED_DEFAULT);
+        matcher.put(SdbConstants.IXM_NOTNULL, SdbConstants.IXM_NOTNULL_DEFAULT);
+        hint.put(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE, SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
+
+        // 设置输入参数
+        if (options != null){
+            Object isUnique = options.get(SdbConstants.IXM_UNIQUE);
+            if (isUnique instanceof Boolean){
+                matcher.put(SdbConstants.IXM_UNIQUE, isUnique);
+            }
+            Object enforced = options.get(SdbConstants.IXM_ENFORCED);
+            if (enforced instanceof Boolean){
+                matcher.put(SdbConstants.IXM_ENFORCED, enforced);
+            }
+            Object notNull = options.get(SdbConstants.IXM_NOTNULL);
+            if (notNull instanceof Boolean){
+                matcher.put(SdbConstants.IXM_NOTNULL, notNull);
+            }
+            Object sortBufferSize = options.get(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE);
+            if (sortBufferSize instanceof Number){
+                int value = ((Number) sortBufferSize).intValue();
+                if (value < 0){
+                    throw new BaseException(SDBError.SDB_INVALIDARG, "sortBufferSize less than 0");
+                }
+                hint.put(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE, value);
+            }
+        }
+    }
+
+    /**
+     * Create a index with name and key.
+     *
+     * @param name
+     *            The index name.
+     * @param key
+     *            The index keys in JSON format, like: "{\"a\":1, \"b\":-1}".
+     * @param options
+     *            Optional configuration, type is BSONObject. Please reference
+     *            {@see <a href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-302>here</a>}
+     *            for more detail.
+     * @throws BaseException
+     */
+    public void createIndex(String name, String key, BSONObject options) throws BaseException {
+        BSONObject k = null;
+        if (key != null) {
+            k = (BSONObject) JSON.parse(key);
+        }
+        createIndex(name, k, options);
+    }
+
+    /**
+     * Create a index with name and key.
+     *
+     * @param name
      *            The index name
      * @param key
      *            The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
@@ -1573,32 +1666,15 @@ public class DBCollection {
      */
     public void createIndex(String name, BSONObject key, boolean isUnique, boolean enforced,
             int sortBufferSize) throws BaseException {
-        if (sortBufferSize < 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "sortBufferSize less than 0");
-        }
 
-        BSONObject obj = new BasicBSONObject();
-        obj.put(SdbConstants.IXM_KEY, key);
-        obj.put(SdbConstants.IXM_NAME, name);
-        obj.put(SdbConstants.IXM_UNIQUE, isUnique);
-        obj.put(SdbConstants.IXM_ENFORCED, enforced);
+        BSONObject options = new BasicBSONObject();
+        options.put(SdbConstants.IXM_KEY, key);
+        options.put(SdbConstants.IXM_NAME, name);
+        options.put(SdbConstants.IXM_UNIQUE, isUnique);
+        options.put(SdbConstants.IXM_ENFORCED, enforced);
+        options.put(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE, sortBufferSize);
 
-        BSONObject createObj = new BasicBSONObject();
-        createObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
-        createObj.put(SdbConstants.FIELD_INDEX, obj);
-
-        BSONObject hint = new BasicBSONObject();
-        hint.put(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE, sortBufferSize);
-
-        AdminRequest request = new AdminRequest(AdminCommand.CREATE_INDEX, createObj, hint);
-        SdbReply response = sequoiadb.requestAndResponse(request);
-
-        if (response.getFlag() != 0) {
-            String msg = "name = " + name + ", key = " + key + ", isUnique = " + isUnique;
-            sequoiadb.throwIfError(response, msg);
-        }
-
-        sequoiadb.upsertCache(collectionFullName);
+        createIndex(name, key ,options);
     }
 
     /**

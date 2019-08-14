@@ -62,6 +62,7 @@ public class TestIndex {
 
         DBCursor cursor = cl.getIndex(idxName);
         assertTrue(cursor.hasNext());
+        cl.dropIndex(idxName);
     }
 
     @Test
@@ -92,5 +93,50 @@ public class TestIndex {
         Assert.assertNotNull(indexObj);
         System.out.println("id index is: " + indexObj.toString());
 
+    }
+
+
+    @Test
+    public void testCreateIndexWithOptions(){
+        BasicBSONObject key = new BasicBSONObject();
+        String name = "name";
+        key.put(name,1);
+        BSONObject indexObj;
+
+        BasicBSONObject optionsCase1 = new BasicBSONObject();
+        cl.createIndex(name,key,optionsCase1);
+        indexObj = cl.getIndexInfo(name);
+        Assert.assertNotNull(indexObj);
+        System.out.println("Case1 index is: " + indexObj.toString());
+        cl.dropIndex(name);
+
+        BasicBSONObject optionsCase2 = null;
+        cl.createIndex(name,key,optionsCase2);
+        indexObj = cl.getIndexInfo(name);
+        Assert.assertNotNull(indexObj);
+        System.out.println("Case2 index is: " + indexObj.toString());
+        cl.dropIndex(name);
+
+        BasicBSONObject optionsCase3 = new BasicBSONObject();
+        optionsCase3.put("Unique",1);
+        optionsCase3.put("Enforced","1");
+        optionsCase3.put("NotNull",new Object());
+        optionsCase3.put("SortBufferSize", 1.1);
+        cl.createIndex(name,key,optionsCase3);
+        indexObj = cl.getIndexInfo(name);
+        Assert.assertNotNull(indexObj);
+        System.out.println("Case3 index is: " + indexObj.toString());
+        cl.dropIndex(name);
+
+        BasicBSONObject optionsCase4 = new BasicBSONObject();
+        optionsCase4.put("Unique",true);
+        optionsCase4.put("Enforced",false);
+        optionsCase4.put("NotNull",false);
+        optionsCase4.put("SortBufferSize", 64);
+        cl.createIndex(name,key,optionsCase4);
+        indexObj = cl.getIndexInfo(name);
+        Assert.assertNotNull(indexObj);
+        System.out.println("Case4 index is: " + indexObj.toString());
+        cl.dropIndex(name);
     }
 }

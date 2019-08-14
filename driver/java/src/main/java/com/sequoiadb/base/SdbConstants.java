@@ -101,11 +101,16 @@ final class SdbConstants {
 
     final static String IXM_NAME = "name";
     final static String IXM_KEY = "key";
-    final static String IXM_UNIQUE = "unique";
-    final static String IXM_ENFORCED = "enforced";
+    final static String IXM_UNIQUE = "Unique";
+    final static String IXM_ENFORCED = "Enforced";
+    final static String IXM_NOTNULL = "NotNull";
     final static String IXM_INDEXDEF = "IndexDef";
     final static String IXM_FIELD_NAME_SORT_BUFFER_SIZE = "SortBufferSize";
     final static int IXM_SORT_BUFFER_DEFAULT_SIZE = 64;
+    final static boolean IXM_UNIQUE_DEFAULT = false;
+    final static boolean IXM_ENFORCED_DEFAULT = false;
+    final static boolean IXM_NOTNULL_DEFAULT = false;
+
 
     final static String PMD_OPTION_SVCNAME = "svcname";
     final static String PMD_OPTION_DBPATH = "dbpath";
