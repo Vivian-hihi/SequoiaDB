@@ -36,6 +36,7 @@ public class Fulltext15847 extends FullTestBase {
     private int updateNum = insertNum / 2;
     private int deleteNum = insertNum / 2;
     private boolean indexExist = true;
+    private int expectIdxLid = 1;
 
     @Override
     protected void initTestProp() {
@@ -70,6 +71,8 @@ public class Fulltext15847 extends FullTestBase {
         thread.run();
 
         if (indexExist) {
+            // 先校验索引的逻辑ID是否正常，再校验索引数据、主备节点数据的一致性
+            Assert.assertTrue(FullTextUtils.isIdxLidSyncInES(esIndexName, expectIdxLid));
             Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum - deleteNum + testInsertNum));
             int recordNum = 0;
             DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
@@ -124,6 +127,9 @@ public class Fulltext15847 extends FullTestBase {
                     indexExist = false;
                     cl.createIndex(indexName, indexObj, false, false);
                     indexExist = true;
+                    // 当成功创建一次全文索引，次数加1
+                    expectIdxLid++;
+                    
                 }
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
