@@ -47,6 +47,7 @@
 
 using namespace engine ;
 using bson::BSONObj ;
+using bson::BSONObjSet ;
 
 namespace seadapter
 {
@@ -119,6 +120,7 @@ namespace seadapter
       UINT32 _timeout ;
       UINT16 _retryTimes ;
       BOOLEAN _rebuild ;
+      BSONObj _idxDef ;
    } ;
    typedef _seAdptIndexerState seAdptIndexerState ;
 
@@ -227,6 +229,7 @@ namespace seadapter
       INT32 _parseRecord( const BSONObj &origRecord, string &finalID,
                           BSONObj &finalRecord ) ;
 
+      INT32 _genRecordByKeySet( BSONObjSet keySet, BSONObj &record ) ;
    private:
       _STEP _step ;
       INT32 _clVersion ;

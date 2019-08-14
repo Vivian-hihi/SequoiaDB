@@ -40,6 +40,7 @@
 #include "seAdptIndexSession.hpp"
 #include "utilESUtil.hpp"
 #include "seAdptMgr.hpp"
+#include "ixmIndexKey.hpp"
 
 namespace seadapter
 {
@@ -83,6 +84,29 @@ namespace seadapter
    INT32 _seAdptIndexerState::onTimer( UINT32 interval )
    {
       INT32 rc = SDB_OK ;
+
+      if ( _idxDef.isEmpty() )
+      {
+         // Let's check if the index exists or not.
+         seIdxMetaContext *imContext = _session->idxMetaContext() ;
+         INT32 rcTmp = imContext->metaLock( SHARED ) ;
+         if ( SDB_RTN_INDEX_NOTEXIST == rcTmp )
+         {
+            rc = rcTmp ;
+            goto error ;
+         }
+         else if ( SDB_OK == rcTmp )
+         {
+            _idxDef = imContext->meta()->getIdxDef().copy() ;
+            imContext->metaUnlock() ;
+            if ( _idxDef.isEmpty() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "No index definition found in the meta" ) ;
+               goto error ;
+            }
+         }
+      }
 
       // No wait for the first round of all states.
       if ( !_begin )
@@ -1386,82 +1410,117 @@ namespace seadapter
                                               BSONObj &finalRecord )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
-      BOOLEAN hasOID = FALSE ;
-      BSONElement idEle ;
-      BOOLEAN hasStrField = FALSE ;
 
       try
       {
-         // Only keep the string fields. Fields of other type(include oid)
-         // will be ignored.
-         for ( BSONObj::iterator eleItr = origRecord.begin(); eleItr.more(); )
+         BSONElement idEle ;
+         BSONElement arrayEle ;
+         BSONObjSet keySet ;
+         SDB_ASSERT( !_idxDef.isEmpty(), "Index definition is empty" ) ;
+         ixmIndexKeyGen keygen( _idxDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         rc = keygen.getKeys( origRecord, keySet, &arrayEle, TRUE, TRUE ) ;
+         if ( SDB_IXM_MULTIPLE_ARRAY == rc )
          {
-            BSONElement ele = eleItr.next() ;
-            // Only keep the _id field and other fields of type String.
-            if ( 0 == ossStrcmp( ele.fieldName(), SEADPT_FIELD_NAME_ID ) )
+            // Ignore the record if there are more than one array in it's index
+            // fields.
+            PD_LOG( PDWARNING, "Record ignored as there are multiple arrays in "
+                    "it's index fields. Record: %s",
+                    origRecord.toString().c_str() ) ;
+            rc = SDB_OK ;
+            goto done ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Get index keys from record[%s] failed[%d]",
+                      origRecord.toString().c_str(), rc ) ;
+         if ( 0 == keySet.size() )
+         {
+            // No index key in the record.
+            goto done ;
+         }
+
+         idEle = origRecord.getField( DMS_ID_KEY_NAME ) ;
+         if ( idEle.eoo() )
+         {
+            PD_LOG( PDWARNING, "Record with no _id field will be ignored. "
+                    "Record: %s", origRecord.toString().c_str() ) ;
+            goto done ;
+         }
+
+         encodeID( idEle, finalID ) ;
+         if ( !finalID.empty() )
+         {
+            rc = _genRecordByKeySet( keySet, finalRecord ) ;
+            PD_RC_CHECK( rc, PDERROR, "Generate record by keyset failed[%d]",
+            rc ) ;
+         }
+
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred[%s]", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptFullIndexState::_genRecordByKeySet( BSONObjSet keySet,
+                                                    BSONObj &record )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( !keySet.empty(), "Key set is empty") ;
+
+      try
+      {
+         if ( 1 == keySet.size() )
+         {
+            // Key set size is 1, so no array.
+            record = *( keySet.begin() ) ;
+         }
+         else
+         {
+            // One of the index field is of type array. Resume the array from
+            // the keys. Compare the elements of the first and second key. If
+            // they are not the same, that's the array field.
+            BSONObjBuilder builder ;
+            BOOLEAN found = FALSE ;
+            BSONObjIterator itrFirst( *(keySet.begin()) ) ;
+            BSONObjIterator itrSecond( *(++keySet.begin()) ) ;
+
+            while ( itrFirst.more() )
             {
-               hasOID = TRUE ;
-               idEle = ele ;
-            }
-            else if ( String == ele.type() )
-            {
-               builder.append( ele ) ;
-               if ( !hasStrField )
+               BSONElement lNextEle = itrFirst.next() ;
+               BSONElement rNextEle = itrSecond.next() ;
+               if ( found || 0 == lNextEle.woCompare( rNextEle, true) )
                {
-                  hasStrField = TRUE ;
+                  // Same, it's not the array field.
+                  builder.append( lNextEle ) ;
                }
-            }
-            else if ( Array == ele.type() )
-            {
-               // As ES dose not support mixed type of array, so check if the
-               // array only contains strings. If yes, index it on ES.
-               // Otherwise, ignore the field.
-               BOOLEAN onlyString = TRUE ;
-               BSONObjIterator itr( ele.embeddedObject() ) ;
-               while ( itr.more() )
+               else
                {
-                  if ( String != itr.next().type() )
+                  // Found the array field.
+                  const CHAR *arrField = lNextEle.fieldName() ;
+                  BSONArrayBuilder arrBuilder( builder.subarrayStart( arrField ) ) ;
+                  arrBuilder.append( lNextEle ) ;
+                  arrBuilder.append( rNextEle ) ;
+                  // Get the array field from all key record.
+                  BSONObjSet::iterator itr = keySet.begin() ;
+                  // Skip the first and second key.
+                  std::advance( itr, 2 ) ;
+                  while ( itr != keySet.end() )
                   {
-                     onlyString = FALSE ;
-                     break ;
+                     arrBuilder.append( itr->getStringField( arrField ) ) ;
+                     ++itr ;
                   }
-               }
-
-               if ( onlyString )
-               {
-                  builder.append( ele ) ;
-                  if ( !hasStrField )
-                  {
-                     hasStrField = TRUE ;
-                  }
+                  arrBuilder.done() ;
+                  found = TRUE ;
                }
             }
+            record = builder.obj() ;
          }
-
-         if ( !hasOID )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "No _id field in record: %s",
-                    origRecord.toString( false, true ).c_str() ) ;
-            goto error ;
-         }
-
-         // Only when there are index field of string type that we add the _rid
-         // field. Otherwise, the final object should be empty.
-         if ( hasStrField )
-         {
-            encodeID( idEle, finalID ) ;
-            if ( finalID.empty() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDWARNING, "Encode id[ %s ] failed[%d]",
-                       idEle.toString( false, true ).c_str(), rc ) ;
-               goto error ;
-            }
-         }
-
-         finalRecord = builder.obj() ;
       }
       catch ( std::exception &e )
       {
