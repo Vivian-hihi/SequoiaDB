@@ -81,7 +81,7 @@ public class SdbTestBase {
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR, String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD,
             String SCRIPTDIR, @Optional("localhost") String ESHOSTNAME, @Optional("9200") String ESSVCNAME,
-            @Optional("") String FULLTEXTPREFIX, String SDBSEADAPTERDIR) {
+            @Optional("") String FULLTEXTPREFIX, @Optional("/opt/sequoiadb/conf/sdbseadapter") String SDBSEADAPTERDIR) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
