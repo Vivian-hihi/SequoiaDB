@@ -15,7 +15,7 @@ import java.util.Random;
 import org.apache.commons.codec.binary.Hex;
 import org.testng.Assert;
 
-public class TestTools {	
+public class TestTools {
 
 	public static class LocalFile {
 
@@ -159,13 +159,13 @@ public class TestTools {
 				createFile(filePath);
 				File file = new File(filePath);
 				fos = new FileOutputStream(file);
-				int written = 0;
+				long written = 0;
 				byte[] fileBlock = new byte[1024];
 				while (written < size) {
 					new Random().nextBytes(fileBlock);
 					long toWrite = size - written;
 					long len = fileBlock.length < toWrite ? fileBlock.length : toWrite;
-					fos.write(fileBlock, 0, (int)len);
+					fos.write(fileBlock, 0, (int) len);
 					written += len;
 				}
 			} catch (IOException e) {
@@ -220,11 +220,11 @@ public class TestTools {
 				downloadPath = downLoadDir + File.separator + "thread-" + threadId + "_" + System.currentTimeMillis()
 						+ "_" + randomId + ".lob";
 			} catch (Exception e) {
-				Assert.fail("downloadPath\n" + downloadPath);				
+				Assert.fail("downloadPath\n" + downloadPath);
 			}
 			return downloadPath;
 		}
-		
+
 		/**
 		 * create download path and file, by methodName and key
 		 */
@@ -233,17 +233,15 @@ public class TestTools {
 			try {
 				int randomId = new Random().nextInt(10000);
 				String downLoadDir = localPath + File.separator + methodName;
-				createDir(downLoadDir);	
-				downloadPath = downLoadDir + File.separator + "key-" + key + "_" + System.currentTimeMillis()
-						+ "_" + randomId + ".lob";
+				createDir(downLoadDir);
+				downloadPath = downLoadDir + File.separator + "key-" + key + "_" + System.currentTimeMillis() + "_"
+						+ randomId + ".lob";
 			} catch (Exception e) {
-				Assert.fail("downloadPath\n" + downloadPath);				
+				Assert.fail("downloadPath\n" + downloadPath);
 			}
 			return downloadPath;
 		}
 	}
-	
-	
 
 	/**
 	 * get file's md5
@@ -251,27 +249,27 @@ public class TestTools {
 	 * @param pathName
 	 * @return
 	 * @throws IOException
-	 */	
-	public static String getMD5(String pathName) throws IOException{
+	 */
+	public static String getMD5(String pathName) throws IOException {
 		FileInputStream fileInputStream = null;
 		File file = new File(pathName);
-		try{
+		try {
 			MessageDigest md5 = MessageDigest.getInstance("MD5");
 			fileInputStream = new FileInputStream(file);
 			byte[] buffer = new byte[8192];
 			int length;
-			while( (length = fileInputStream.read(buffer)) != -1){
+			while ((length = fileInputStream.read(buffer)) != -1) {
 				md5.update(buffer, 0, length);
 			}
 			return new String(Hex.encodeHex(md5.digest()));
-		}catch(Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
-		}finally {
-			if( fileInputStream != null ){
+		} finally {
+			if (fileInputStream != null) {
 				fileInputStream.close();
 			}
-		}		
+		}
 	}
 
 	public static String getMD5(Object buffer) {
@@ -286,16 +284,18 @@ public class TestTools {
 				throw new IllegalArgumentException("invalid type of buffer");
 			}
 			byte[] md5sum = md5.digest();
-			for(int i = 0; i < md5sum.length;i++){
-				String hex = Integer.toHexString(md5sum[i]&0xFF);
-				if(hex.length() == 1){
+			for (int i = 0; i < md5sum.length; i++) {
+				String hex = Integer.toHexString(md5sum[i] & 0xFF);
+				if (hex.length() == 1) {
 					hex = '0' + hex;
 				}
 				value += hex;
 			}
-			//have bug,it will get rid of the 0 in front
-			/*BigInteger bi = new BigInteger(1, md5.digest());
-			value = bi.toString(16);*/
+			// have bug,it will get rid of the 0 in front
+			/*
+			 * BigInteger bi = new BigInteger(1, md5.digest()); value =
+			 * bi.toString(16);
+			 */
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			throw new RuntimeException("fail to get md5!" + e.getMessage());
@@ -365,15 +365,16 @@ public class TestTools {
 		int index = fullClassName.lastIndexOf(".");
 		return fullClassName.substring(index + 1);
 	}
-	
+
 	/**
-	 * read the entire file length after the seek, to compare the read result 
+	 * read the entire file length after the seek, to compare the read result
+	 * 
 	 * @author wuyan
 	 * @param sourceFile
 	 * @param size
-	 *           seek size.
+	 *            seek size.
 	 * @param outputFile
-	 *           seek read than write file
+	 *            seek read than write file
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
