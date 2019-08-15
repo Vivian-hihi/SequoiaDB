@@ -146,6 +146,59 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _coordCmdWithLocation::_handleHints( BSONObj &hint, UINT32 mask )
+   {
+      INT32 rc = SDB_OK ;
+
+      // defalut value
+      _showError = COORD_SHOWERROR_SHOW ;
+      _showErrorMode = COORD_SHOWERRORMODE_AGGR ;
+
+      try
+      {
+         BSONObjIterator itr ( hint.getObjectField( "$Options" ) ) ;
+         BSONElement elem ;
+         while ( itr.more() )
+         {
+            elem = itr.next() ;
+            if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERROR ) )
+            {
+               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is not string", COORD_SHOWERROR ) ;
+               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_IGNORE ) )
+               {
+                  _showError = COORD_SHOWERROR_IGNORE ;
+               }
+               else if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_ONLY ) )
+               {
+                  _showError = COORD_SHOWERROR_ONLY ;
+               }
+            }
+            else if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERRORMODE ) )
+            {
+               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is not string", COORD_SHOWERRORMODE ) ;
+               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERRORMODE_VALUE_FLAT ) )
+               {
+                  _showErrorMode = COORD_SHOWERRORMODE_FLAT ;
+               }
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to handle hints, received unexpected "
+                 "error:%s", e.what() ) ;
+         goto error ;
+      }
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
+
    /*
       _coordCMDMonIntrBase implement
    */
@@ -301,6 +354,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
                    queryOption.getHint().toString().c_str(), rc ) ;
 
+      rc = _handleHints( newHint, _getShowErrorMask() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Handle hints failed, rc: %d", rc ) ;
+
       if ( ( !ctrlParam._rawData && getInnerAggrContent() ) ||
            vecUserAggr.size() > 0 )
       {
@@ -431,6 +487,107 @@ namespace engine
          contextID = -1 ;
       }
       goto done;
+   }
+
+   INT32 _coordCMDMonBase::_handleHints( BSONObj &hint, UINT32 mask )
+   {
+      INT32 rc = SDB_OK ;
+
+      // defalut value
+      _showError = COORD_SHOWERROR_SHOW ;
+      _showErrorMode = COORD_SHOWERRORMODE_AGGR ;
+
+      try
+      {
+         BSONObjIterator itr ( hint.getObjectField( "$Options" ) ) ;
+         BSONElement elem ;
+         while ( itr.more() )
+         {
+            elem = itr.next() ;
+            if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERROR ) )
+            {
+               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is not string", COORD_SHOWERROR ) ;
+               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_IGNORE ) )
+               {
+                  _showError = COORD_SHOWERROR_IGNORE ;
+               }
+               else if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_ONLY ) )
+               {
+                  _showError = COORD_SHOWERROR_ONLY ;
+               }
+            }
+            else if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERRORMODE ) )
+            {
+               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is not string", COORD_SHOWERRORMODE ) ;
+               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERRORMODE_VALUE_FLAT ) )
+               {
+                  _showErrorMode = COORD_SHOWERRORMODE_FLAT ;
+               }
+            }
+         }
+
+         // rebuild hint according to the mask
+         BSONObjBuilder builder ;
+         BSONObjIterator itr2 ( hint ) ;
+         while ( itr2.more() )
+         {
+            elem = itr2.next() ;
+            if ( 0 == ossStrcasecmp( elem.fieldName(), "$Options" ) )
+            {
+               BSONObjBuilder sub( builder.subobjStart( "$Options" ) ) ;
+               switch ( _getShowErrorType() )
+               {
+                  case COORD_SHOWERROR_ONLY :
+                     if ( COORD_MASK_SHOWERROR_ONLY & mask )
+                     {
+                        sub.append( COORD_SHOWERROR, COORD_SHOWERROR_VALUE_ONLY ) ;
+                     }
+                     break ;
+                  case COORD_SHOWERROR_IGNORE :
+                     if ( COORD_MASK_SHOWERROR_IGNORE & mask )
+                     {
+                        sub.append( COORD_SHOWERROR, COORD_SHOWERROR_VALUE_IGNORE ) ;
+                     }
+                     break ;
+                  default :
+                     break ;
+               }
+
+               switch ( _getShowErrorModeType() )
+               {
+                  case COORD_SHOWERRORMODE_FLAT :
+                     if ( COORD_MASK_SHOWERRORMODE_FLAT & mask )
+                     {
+                        sub.append( COORD_SHOWERRORMODE, COORD_SHOWERRORMODE_FLAT ) ;
+                     }
+                     break ;
+                  default :
+                     break ;
+               }
+               sub.done() ;
+            }
+            else
+            {
+               builder.append( elem ) ;
+            }
+         }
+
+         hint = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to change hint, received unexpected "
+                 "error:%s", e.what() ) ;
+         goto error ;
+      }
+
+      done:
+         return rc ;
+      error:
+         goto done ;
    }
 
    /*

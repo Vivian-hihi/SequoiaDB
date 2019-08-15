@@ -201,8 +201,22 @@ namespace engine
          BSONObjBuilder builder ;
          coordBuildFailedNodeReply( _pResource, failedNodes, builder ) ;
 
-         rc = pContext->append( builder.obj() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+         if ( COORD_SHOWERRORMODE_FLAT == _getShowErrorModeType() )
+         {
+            BSONObjIterator itr ( builder.obj().getObjectField( "ErrNodes" ) ) ;
+            BSONElement elem ;
+            while ( itr.more() )
+            {
+               elem = itr.next() ;
+               rc = pContext->append( elem.Obj() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+            }
+         }
+         else
+         {
+            rc = pContext->append( builder.obj() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+         }
       }
 
    done:
@@ -1050,12 +1064,23 @@ namespace engine
                            pTmpContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
 
+      rc = _handleHints( queryOption._hint, _getShowErrorMask() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Handle hints failed, rc: %d", rc ) ;
+
       /// 9. build failed result
       if ( pTmpContext )
       {
-         rc = _buildFailedNodeReply( faileds, pTmpContext ) ;
-         PD_RC_CHECK( rc, PDERROR, "Build failed node reply failed, rc: %d",
-                      rc ) ;
+         if ( COORD_SHOWERROR_ONLY == _getShowErrorType() )
+         {
+            pTmpContext->killSubContexts( cb ) ;
+         }
+
+         if ( COORD_SHOWERROR_IGNORE != _getShowErrorType() )
+         {
+            rc = _buildFailedNodeReply( faileds, pTmpContext ) ;
+            PD_RC_CHECK( rc, PDERROR, "Build failed node reply failed, rc: %d",
+                        rc ) ;
+         }
       }
 
    done:
