@@ -448,6 +448,144 @@ error :
 }
 
 /*
+ * Changes the mode of the file or directory specified in pathname
+ * Input
+ * dir (string)
+ * permission (integer)
+ * Output
+ * N/A
+ * Return
+ * SDB_OK
+ * SDB_PERM
+ * SDB_IO
+ */
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCHMOD, "ossChmod" )
+INT32 ossChmod ( const CHAR* pPathName, UINT32 iPermission )
+{
+   INT32   rc  = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSSCHMOD );
+   // sanity check, only take effect in debug build
+   SDB_ASSERT ( pPathName , "pPathName is NULL" ) ;
+   try
+   {
+      fs::path dirpath ( pPathName ) ;
+      fs::perms permission = fs::no_perms ;
+
+      if ( !(iPermission & OSS_PERMALL) )
+      {
+         /// default
+         permission = fs::owner_all |
+                      fs::group_read | fs::group_exe |
+                      fs::others_read | fs::others_exe ;
+      }
+      else
+      {
+         if ( OSS_RU & iPermission )
+         {
+            permission |= fs::owner_read ;
+         }
+         if ( OSS_WU & iPermission )
+         {
+            permission |= fs::owner_write ;
+         }
+         if ( OSS_XU & iPermission )
+         {
+            permission |= fs::owner_exe ;
+         }
+         if ( OSS_RG & iPermission )
+         {
+            permission |= fs::group_read ;
+         }
+         if ( OSS_WG & iPermission )
+         {
+            permission |= fs::group_write ;
+         }
+         if ( OSS_XG & iPermission )
+         {
+            permission |= fs::group_exe ;
+         }
+         if ( OSS_RO & iPermission )
+         {
+            permission |= fs::others_read ;
+         }
+         if ( OSS_WO & iPermission )
+         {
+            permission |= fs::others_write ;
+         }
+         if ( OSS_XO & iPermission )
+         {
+            permission |= fs::others_exe ;
+         }
+      }
+
+      if ( !exists( dirpath ) )
+      {
+         rc = SDB_FNE ;
+         goto error ;
+      }
+
+      /// set permission
+      fs::permissions( dirpath, permission ) ;
+   }
+   catch ( fs::filesystem_error& e )
+   {
+      if ( e.code() == boost::system::errc::permission_denied ||
+           e.code() == boost::system::errc::operation_not_permitted )
+      {
+         rc = SDB_PERM ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Changes the mode of the file or directory[%s] failed"
+                          ", errno: %d",
+                 pPathName, e.code().value() ) ;
+         rc = SDB_IO ;
+      }
+      goto error ;
+   }
+   catch ( std::exception &e )
+   {
+      PD_LOG ( PDERROR, "Failed to chmod: %s", e.what() ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done :
+   PD_TRACE_EXITRC ( SDB_OSSCHMOD, rc );
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 ossChown( const CHAR* pPathName, OSSUID uid, OSSGID gid )
+{
+   INT32 rc = SDB_OK ;
+   SDB_ASSERT ( pPathName , "pPathName is NULL" ) ;
+#if defined (_LINUX)
+   rc = chown( pPathName, uid, gid ) ;
+   if ( -1 == rc )
+   {
+      INT32 err = ossGetLastError() ;
+      // handle errors
+      PD_LOG( PDERROR, "Failed to chown() : %s, Error: %d", pPathName, err ) ;
+      switch(err)
+      {
+      case EACCES:
+         rc = SDB_PERM ;
+         break ;
+      case ENOENT:
+         rc = SDB_FNE ;
+         break ;
+      default:
+         rc = SDB_IO ;
+         break ;
+      }
+   }
+#endif
+   return rc ;
+}
+
+/*
  * Create a directory
  * Input
  * dir (string)
@@ -565,6 +703,77 @@ done :
    return rc ;
 error :
    // if anything need to be performed in error condition, do it here
+   goto done ;
+}
+
+INT32 ossPermissions( const CHAR* pPathName, UINT32 &iPermission )
+{
+   INT32 rc = SDB_OK ;
+   struct stat st ;
+
+   rc = stat( pPathName, &st ) ;
+   if( -1 == rc )
+   {
+      rc = ossGetLastError() ;
+      switch( rc )
+      {
+      case EACCES:
+         rc = SDB_PERM ;
+         break ;
+      case ENOENT:
+         rc = SDB_FNE ;
+         break ;
+      default:
+         rc = SDB_IO ;
+         break ;
+      }
+      goto error ;
+   }
+
+   iPermission = 0 ;
+
+   if ( S_IRUSR & st.st_mode )
+   {
+      iPermission |= OSS_RU ;
+   }
+   if ( S_IWUSR & st.st_mode )
+   {
+      iPermission |= OSS_WU ;
+   }
+   if ( S_IXUSR & st.st_mode )
+   {
+      iPermission |= OSS_XU ;
+   }
+
+   if ( S_IRGRP & st.st_mode )
+   {
+      iPermission |= OSS_RG ;
+   }
+   if ( S_IWGRP & st.st_mode )
+   {
+      iPermission |= OSS_WG ;
+   }
+   if ( S_IXGRP & st.st_mode )
+   {
+      iPermission |= OSS_XG ;
+   }
+
+   if ( S_IROTH & st.st_mode )
+   {
+      iPermission |= OSS_RO ;
+   }
+   if ( S_IWOTH & st.st_mode )
+   {
+      iPermission |= OSS_WO ;
+   }
+   if ( S_IXOTH & st.st_mode )
+   {
+      iPermission |= OSS_XO ;
+   }
+
+done:
+   return rc ;
+error:
    goto done ;
 }
 

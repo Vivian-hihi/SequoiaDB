@@ -566,8 +566,12 @@ sdbdpsdumpFiles = [
       "tools/sdbDpsDump.cpp"
       ]
 
-sdbOmToolMain = [
-      "tools/sdbOmTool.cpp"
+sdbOmToolFiles = [
+      "tools/omtool/sdbOmTool.cpp",
+      "tools/omtool/omToolOptions.cpp",
+      "tools/omtool/omToolCmdBase.cpp",
+      "tools/omtool/omToolCmdDir.cpp",
+      "tools/omtool/omToolCmdHost.cpp"
       ]
 
 sdbRepairMain = [
@@ -776,7 +780,7 @@ sdbinspect = toolEnv.Program("sdbinspect",
 
 if linux:
    sdbomtool = toolEnv.Program("sdbomtool",
-               sdbOmToolMain,
+               sdbOmToolFiles,
                LIBDEPS=["pd", "oss","bson", "util"],
                _LIBDEPS='$_LIBDEPS_OBJS' )
 

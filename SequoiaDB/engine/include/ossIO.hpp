@@ -218,6 +218,33 @@ INT32 ossOpen ( const CHAR  *pFileName,
 INT32 ossClose ( OSSFILE& pFile ) ;
 
 /*
+ * Changes the mode of the file or directory specified in pathname
+ * Input
+ * file or dir (string)
+ * permission (integer)
+ * Output
+ * N/A
+ * Return
+ * SDB_OK (success)
+ * SDB_PERM (permission denied)
+ * SDB_FNE (file or dir not exist)
+ */
+INT32 ossChmod( const CHAR* pPathName, UINT32 iPermission ) ;
+
+/*
+ * Changes the mode of the file or directory specified in pathname
+ * Input
+ * file or dir (string)
+ * Output
+ * N/A
+ * Return
+ * SDB_OK (success)
+ * SDB_PERM (permission denied)
+ * SDB_FNE (path not exist)
+ */
+INT32 ossChown( const CHAR* pPathName, OSSUID uid, OSSGID gid ) ;
+
+/*
  * Create a directory
  * Input
  * dir (string)
@@ -231,6 +258,19 @@ INT32 ossClose ( OSSFILE& pFile ) ;
  */
 INT32 ossMkdir( const CHAR   *pPathName,
                 UINT32 iPermission = OSS_DEFAULTDIR ) ;
+
+/*
+ * get permissions
+ * Input
+ * path (string)
+ * Output
+ * permission (integer)
+ * Return
+ * SDB_OK (success)
+ * SDB_PERM (permission denied)
+ * SDB_FNE (path not exist)
+ */
+INT32 ossPermissions( const CHAR* pPathName, UINT32 &iPermission ) ;
 
 /*
    * Get current working directory
