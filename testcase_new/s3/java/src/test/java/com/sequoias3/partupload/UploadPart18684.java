@@ -55,8 +55,7 @@ public class UploadPart18684 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 	}
 
-	// SEQUOIADBMAINSTREAM-4765 【BUG】【new】【story】【S3对象管理】分段上传对象，分段为空上传失败
-	@Test(enabled = false)
+	@Test
 	private void testUpload() throws Exception {
 		uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 		// upload part 1
@@ -64,9 +63,13 @@ public class UploadPart18684 extends S3TestBase {
 		// upload part 2
 		uploadPart(0, 100 * 1024, 2);
 		// upload part 3
-		uploadPart(100 * 1024, 200 * 1024, 3);
+		uploadPart(100 * 1024, 0, 3);
 		// upload part 4
-		uploadPart(300 * 1024, 100 * 1024, 4);
+		uploadPart(100 * 1024, 200 * 1024, 4);
+		// upload part 5
+		uploadPart(300 * 1024, 200 * 1024, 5);
+		// upload part 6
+		uploadPart(500 * 1024, 0, 6);
 		// 完成分段上传
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 		String expMd5 = TestTools.getMD5(filePath);
