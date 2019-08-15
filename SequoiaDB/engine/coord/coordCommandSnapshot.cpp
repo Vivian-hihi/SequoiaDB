@@ -203,16 +203,7 @@ namespace engine
 
    const CHAR* _coordCMDSnapshotDataBase::getInnerAggrContent()
    {
-      if ( COORD_SHOWERROR_IGNORE == _getShowErrorType() )
-      {
-         return COORD_SNAPSHOTDB_INPUT_IGNORE_ERR ;
-      }
-      else if ( COORD_SHOWERROR_SHOW == _getShowErrorType() )
-      {
-         return COORD_SNAPSHOTDB_INPUT_SHOW_ERR ;
-      }
-
-      return NULL ;
+      return COORD_SNAPSHOTDB_INPUT ;
    }
 
    /*
@@ -257,16 +248,7 @@ namespace engine
 
    const CHAR* _coordCMDSnapshotSystem::getInnerAggrContent()
    {
-      if ( COORD_SHOWERROR_IGNORE == _getShowErrorType() )
-      {
-         return COORD_SNAPSHOTSYS_INPUT_IGNORE_ERR ;
-      }
-      else if ( COORD_SHOWERROR_SHOW == _getShowErrorType() )
-      {
-         return COORD_SNAPSHOTSYS_INPUT_SHOW_ERR ;
-      }
-
-      return NULL ;
+      return COORD_SNAPSHOTSYS_INPUT ;
    }
 
    /*

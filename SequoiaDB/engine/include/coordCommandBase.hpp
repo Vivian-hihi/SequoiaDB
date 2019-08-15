@@ -47,40 +47,6 @@ using namespace bson ;
 
 namespace engine
 {
-   #define COORD_SHOWERROR                "ShowError"
-   #define COORD_SHOWERROR_VALUE_SHOW     "show"
-   #define COORD_SHOWERROR_VALUE_ONLY     "only"
-   #define COORD_SHOWERROR_VALUE_IGNORE   "ignore"
-   #define COORD_SHOWERRORMODE            "ShowErrorMode"
-   #define COORD_SHOWERRORMODE_VALUE_AGGR "aggr"
-   #define COORD_SHOWERRORMODE_VALUE_FLAT "flat"
-
-   #define COORD_MASK_SHOWERROR_SHOW         0x00000001
-   #define COORD_MASK_SHOWERROR_ONLY         0x00000002
-   #define COORD_MASK_SHOWERROR_IGNORE       0x00000004
-   #define COORD_MASK_SHOWERRORMODE_AGGR     0x00000008
-   #define COORD_MASK_SHOWERRORMODE_FLAT     0x00000010
-   #define COORD_MASK_SHOWERROR_ALL          0xFFFFFFFF
-
-   #define COORD_MASK_SHOWERROR      ( COORD_MASK_SHOWERROR_SHOW |\
-                                         COORD_MASK_SHOWERROR_ONLY |\
-                                         COORD_MASK_SHOWERROR_IGNORE )
-
-   #define COORD_MASK_SHOWERRORMODE  ( COORD_MASK_SHOWERRORMODE_AGGR |\
-                                         COORD_MASK_SHOWERRORMODE_FLAT )
-
-   enum COORD_SHOWERROR_TYPE
-   {
-      COORD_SHOWERROR_SHOW ,
-      COORD_SHOWERROR_IGNORE ,
-      COORD_SHOWERROR_ONLY
-   } ;
-
-   enum COORD_SHOWERRORMODE_TYPE
-   {
-      COORD_SHOWERRORMODE_AGGR ,
-      COORD_SHOWERRORMODE_FLAT
-   } ;
 
    /*
       _coordCommandBase define
@@ -207,18 +173,6 @@ namespace engine
                                   rtnContextCoord **ppContext = NULL,
                                   rtnContextBuf *buf = NULL ) ;
 
-         virtual INT32 _handleHints ( BSONObj &hint, UINT32 mask ) { return SDB_OK ; }
-
-         virtual UINT32 _getShowErrorMask () { return COORD_MASK_SHOWERROR_ALL ; }
-
-         virtual COORD_SHOWERROR_TYPE _getShowErrorType ()
-         {
-            return COORD_SHOWERROR_SHOW ;
-         }
-         virtual COORD_SHOWERRORMODE_TYPE _getShowErrorModeType ()
-         {
-            return COORD_SHOWERRORMODE_AGGR ; 
-         }
    } ;
    typedef _coordCommandBase coordCommandBase ;
 

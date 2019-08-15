@@ -37,7 +37,7 @@
 #ifndef COORD_SNAPSHOT_DEF_HPP__
 #define COORD_SNAPSHOT_DEF_HPP__
 
-#define COORD_SNAPSHOTDB_INPUT_BASE    "{$group:{\
+#define COORD_SNAPSHOTDB_INPUT         "{$group:{\
                                                 TotalNumConnects:{$sum:\"$TotalNumConnects\"},\
                                                 TotalDataRead:{$sum:\"$TotalDataRead\"},\
                                                 TotalIndexRead:{$sum:\"$TotalIndexRead\"},\
@@ -63,18 +63,12 @@
                                                 shardNetIn:{$sum:\"$shardNetIn\"},\
                                                 shardNetOut:{$sum:\"$shardNetOut\"},\
                                                 replNetIn:{$sum:\"$replNetIn\"},\
-                                                replNetOut:{$sum:\"$replNetOut\"}"
-
-#define COORD_SNAPSHOTDB_INPUT_SHOW_ERR    COORD_SNAPSHOTDB_INPUT_BASE",\
+                                                replNetOut:{$sum:\"$replNetOut\"},\
                                                 ErrNodes:{$mergearrayset:\"$ErrNodes\"}\
                                                 }\
-                                        }"
+                                       }"
 
-#define COORD_SNAPSHOTDB_INPUT_IGNORE_ERR  COORD_SNAPSHOTDB_INPUT_BASE"\
-                                                }\
-                                        }"
-
-#define COORD_SNAPSHOTSYS_INPUT_BASE   "{$group:{\
+#define COORD_SNAPSHOTSYS_INPUT       "{$group:{\
                                                 _id:{HostName:\"$HostName\",\
                                                      \"Disk.Name\":\"$Disk.Name\"},\
                                                 HostName:\"$HostName\",\
@@ -132,15 +126,9 @@
                                                 Memory:{TotalRAM:1,FreeRAM:1,TotalSwap:1,\
                                                         FreeSwap:1,TotalVirtual:1,FreeVirtual:1},\
                                                 Disk:{TotalSpace:1,FreeSpace:1},\
-                                                ErrNodes:"
-                                
-#define COORD_SNAPSHOTSYS_INPUT_SHOW_ERR   COORD_SNAPSHOTSYS_INPUT_BASE"1\
+                                                ErrNodes:1\
                                                  }\
-                                        }"
-
-#define COORD_SNAPSHOTSYS_INPUT_IGNORE_ERR COORD_SNAPSHOTSYS_INPUT_BASE"0\
-                                                 }\
-                                        }"
+                                       }"
 
 #define COORD_SNAPSHOTCL_INPUT         "{$project:{\
                                                 Name:1,\
