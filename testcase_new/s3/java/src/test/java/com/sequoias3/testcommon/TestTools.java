@@ -405,4 +405,78 @@ public class TestTools {
 		}
 	}
 
+	/**
+	 * get the file part MD5 value
+	 * 
+	 * @author wangkexin
+	 * @param File
+	 * @param offset
+	 *            offset value.
+	 * @param partsize
+	 *            file part size.
+	 * @throws IOException
+	 * @return md5 value
+	 */
+	public static String getFilePartMD5(File file, long offset, long partsize) throws IOException {
+		FileInputStream fileInputStream = null;
+		int length = (int) file.length();
+		try {
+			MessageDigest md5 = MessageDigest.getInstance("MD5");
+			fileInputStream = new FileInputStream(file);
+			byte[] buffer = new byte[length];
+			if (fileInputStream.read(buffer) != -1) {
+				md5.update(buffer, (int) offset, (int) partsize);
+			}
+			// 文件指定部分的md5值
+			return new String(Hex.encodeHex(md5.digest()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (fileInputStream != null) {
+				fileInputStream.close();
+			}
+		}
+	}
+
+	/**
+	 * get part of the MD5 value for large files(file size more than 50M)
+	 * 
+	 * @author wangkexin
+	 * @param File
+	 * @param offset
+	 *            offset value.
+	 * @param partsize
+	 *            file part size.
+	 * @throws IOException
+	 * @return md5 value
+	 */
+	public static String getLargeFilePartMD5(File file, long offset, long partsize) throws IOException {
+		FileInputStream fileInputStream = null;
+		try {
+			MessageDigest md5 = MessageDigest.getInstance("MD5");
+			fileInputStream = new FileInputStream(file);
+			fileInputStream.skip(offset);
+			int length = 0;
+			long readCount = 0;
+			int maxLength = 50 * 1024 * 1024;
+			byte[] buffer = new byte[maxLength];
+			while (readCount < partsize) {
+				int eachReadLength = (int) Math.min((partsize - readCount), maxLength);
+				length = fileInputStream.read(buffer, 0, eachReadLength);
+				readCount += length;
+				if (length != -1) {
+					md5.update(buffer, 0, length);
+				}
+			}
+			return new String(Hex.encodeHex(md5.digest()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (fileInputStream != null) {
+				fileInputStream.close();
+			}
+		}
+	}
 }
