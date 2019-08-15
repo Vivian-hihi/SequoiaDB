@@ -9,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.PartETag;
@@ -58,14 +59,12 @@ public class CompleteMultipartUploadRequest18811 extends S3TestBase {
 		// b.接口参数取值非法---对象名为空串""，null
 		CompleteMultipartUploadRequest request = new CompleteMultipartUploadRequest(bucketName, "", uploadId,
 				partEtags);
-		// SEQUOIADBMAINSTREAM-4791
-		// 【BUG】【new】【story】【S3分段上传对象】初始化分段上传对象，指定对象名为空串不报错
-		/*
-		 * try { s3Client.completeMultipartUpload(request); Assert.fail(
-		 * "when keyName is '', it should fail."); } catch (AmazonS3Exception e)
-		 * { // Assert.assertEquals(e.getErrorCode(), "InvalidRequest");
-		 * Assert.assertEquals(e.getErrorCode(), "NoSuchUpload"); }
-		 */
+		try {
+			s3Client.completeMultipartUpload(request);
+			Assert.fail("when keyName is '', it should fail.");
+		} catch (AmazonS3Exception e) {
+			Assert.assertEquals(e.getErrorCode(), "InvalidRequest");
+		}
 
 		request = new CompleteMultipartUploadRequest(bucketName, null, uploadId, partEtags);
 		try {

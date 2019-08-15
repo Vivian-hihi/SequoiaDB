@@ -65,13 +65,12 @@ public class InitiateMultipartUploadRequest18806 extends S3TestBase {
 	public void testIllegalKeyName() throws Exception {
 		// test a : 对象名为空串，null，901个字节
 		InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucketName, "");
-		// SEQUOIADBMAINSTREAM-4791
-		// 【BUG】【new】【story】【S3分段上传对象】初始化分段上传对象，指定对象名为空串不报错
-		/*
-		 * try { s3Client.initiateMultipartUpload(initRequest); Assert.fail(
-		 * "when key name is '',it should fail"); } catch (AmazonS3Exception e)
-		 * { Assert.assertEquals(e.getErrorCode(), "InvalidLocation"); }
-		 */
+		try {
+			s3Client.initiateMultipartUpload(initRequest);
+			Assert.fail("when key name is '',it should fail");
+		} catch (AmazonS3Exception e) {
+			Assert.assertEquals(e.getErrorCode(), "InvalidRequest");
+		}
 
 		initRequest = new InitiateMultipartUploadRequest(bucketName, null);
 		try {
