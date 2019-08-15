@@ -13,6 +13,9 @@
 | [SDB_LIST_TRANSACTIONS](database_management/monitoring/list/SDB_LIST_TRANSACTIONS.md) | 事务列表 | 事务列表列出数据库中正在进行的事务信息 |
 | [SDB_LIST_TRANSACTIONS_CURRENT](database_management/monitoring/list/SDB_LIST_TRANSACTIONS_CURRENT.md) | 当前事务列表 | 当前事务列表列出当前会话正在进行的事务信息 |
 | [SDB_LIST_SEQUENCES](database_management/monitoring/list/SDB_LIST_SEQUENCES.md) | 序列列表 | 序列列表列出当前数据库中所有的序列信息 |
+| [SDB_LIST_BACKUPS](database_management/monitoring/list/SDB_LIST_BACKUPS.md) | 备份列表 | 备份列表列出当前数据库的备份信息 |
+| [SDB_LIST_SVCTASKS](database_management/monitoring/list/SDB_LIST_SVCTASKS.md) | 服务任务列表 | 服务任务列表列出当前数据库节点中所有的服务任务 |
+| [SDB_LIST_USERS](database_management/monitoring/list/SDB_LIST_USERS.md) | 用户列表 | 用户列表列出当前集群中的所有用户信息 |
 
 >   **Note:**
 >

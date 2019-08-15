@@ -1017,6 +1017,12 @@
                            "file": "SDB_SNAP_SEQUENCES",
                            "cn": "序列快照",
                            "en": "SDB_SNAP_SEQUENCES"
+                        },
+                        {
+                           "id": 1565839362,
+                           "file": "SDB_SNAP_SVCTASKS",
+                           "cn": "服务任务快照",
+                           "en": "SDB_SNAP_SVCTASKS"
                         }
                      ]
                   },
@@ -1097,6 +1103,24 @@
                            "file": "SDB_LIST_SEQUENCES",
                            "cn": "序列列表",
                            "en": "SDB_LIST_SEQUENCES"
+                        },
+                        {
+                           "id": 1565839436,
+                           "file": "SDB_LIST_BACKUPS",
+                           "cn": "备份列表",
+                           "en": "SDB_LIST_BACKUPS"
+                        },
+                        {
+                           "id": 1565839437,
+                           "file": "SDB_LIST_SVCTASKS",
+                           "cn": "服务任务列表",
+                           "en": "SDB_LIST_SVCTASKS"
+                        },
+                        {
+                           "id": 1565839438,
+                           "file": "SDB_LIST_USERS",
+                           "cn": "用户列表",
+                           "en": "SDB_LIST_USERS"
                         }
                      ]
                   },
@@ -4449,6 +4473,12 @@
                            "en": "$SNAPSHOT_SEQUENCES"
                         },
                         {
+                           "id": 1565839923,
+                           "file": "SNAPSHOT_SVCTASKS",
+                           "cn": "$SNAPSHOT_SVCTASKS",
+                           "en": "$SNAPSHOT_SVCTASKS"
+                        },
+                        {
                            "id": 1559282949,
                            "file": "LIST_CONTEXT",
                            "cn": "$LIST_CONTEXT",
@@ -4513,6 +4543,24 @@
                            "file": "LIST_SEQUENCES",
                            "cn": "$LIST_SEQUENCES",
                            "en": "$LIST_SEQUENCES"
+                        },
+                        {
+                           "id": 1565839754,
+                           "file": "LIST_BACKUP",
+                           "cn": "$LIST_BACKUP",
+                           "en": "$LIST_BACKUP"
+                        },
+                        {
+                           "id": 1565839755,
+                           "file": "LIST_SVCTASKS",
+                           "cn": "$LIST_SVCTASKS",
+                           "en": "$LIST_SVCTASKS"
+                        },
+                        {
+                           "id": 1565839756,
+                           "file": "LIST_USER",
+                           "cn": "$LIST_USER",
+                           "en": "$LIST_USER"
                         }
                      ]
                   },

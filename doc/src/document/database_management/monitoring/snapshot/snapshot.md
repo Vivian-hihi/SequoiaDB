@@ -17,6 +17,7 @@
 | [SDB_SNAP_HEALTH](database_management/monitoring/snapshot/SDB_SNAP_HEALTH.md) | 节点健康检测快照 | 节点健康检测快照列出数据库中所有节点的健康信息 |
 | [SDB_SNAP_CONFIGS](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md) | 配置快照 | 配置快照列出数据库中指定节点的配置信息 |
 | [SDB_SNAP_SEQUENCES](database_management/monitoring/snapshot/SDB_SNAP_SEQUENCES.md) | 序列快照 | 序列快照列出当前数据库的全部序列信息 |
+| [SDB_SNAP_SVCTASKS](database_management/monitoring/snapshot/SDB_SNAP_SVCTASKS.md) | 服务任务快照 | 服务任务快照列出当前数据库节点中服务任务的统计信息 |
 
 
 >   **Note:**

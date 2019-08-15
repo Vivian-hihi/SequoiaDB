@@ -40,6 +40,8 @@
 *   [访问计划缓存快照](database_management/monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md)
 *   [节点健康检测快照](database_management/monitoring/snapshot/SDB_SNAP_HEALTH.md)
 *   [配置快照](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md)
+*   [序列快照](database_management/monitoring/snapshot/SDB_SNAP_SEQUENCES.md)
+*   [服务任务快照](database_management/monitoring/snapshot/SDB_SNAP_SVCTASKS.md)
 
 
 ##列表##
@@ -54,6 +56,12 @@
 *   [集合空间列表](database_management/monitoring/list/SDB_LIST_COLLECTIONSPACES.md)
 *   [存储单元列表](database_management/monitoring/list/SDB_LIST_STORAGEUNITS.md)
 *   [分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)
+*   [事务列表](database_management/monitoring/list/SDB_LIST_TRANSACTIONS.md)
+*   [当前事务列表](database_management/monitoring/list/SDB_LIST_TRANSACTIONS_CURRENT.md)
+*   [序列列表](database_management/monitoring/list/SDB_LIST_SEQUENCES.md)
+*   [备份列表](database_management/monitoring/list/SDB_LIST_BACKUPS.md)
+*   [服务任务列表](database_management/monitoring/list/SDB_LIST_SVCTASKS.md)
+*   [用户列表](database_management/monitoring/list/SDB_LIST_USERS.md)
 
 > **Note:**
 >
