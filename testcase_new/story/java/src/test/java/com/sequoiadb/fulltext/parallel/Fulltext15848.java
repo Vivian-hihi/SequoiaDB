@@ -29,6 +29,7 @@ public class Fulltext15848 extends FullTestBase {
     private String cappedName = null;
     private String esIndexName = null;
     private int insertNum = 20000;
+    private int expectIdxLid = 1;
 
     @Override
     protected void initTestProp() {
@@ -58,11 +59,12 @@ public class Fulltext15848 extends FullTestBase {
         thread.addWorker(new TextIndexThread());
         thread.addWorker(new QueryByTextIndexThread());
         thread.run();
-
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));
-
+        
         cappedName = FullTextDBUtils.getCappedName(cl, indexName);
         esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+        
+        Assert.assertTrue(FullTextUtils.isIdxLidSyncInES(esIndexName, expectIdxLid));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));   
     }
 
     @Override
@@ -84,6 +86,7 @@ public class Fulltext15848 extends FullTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(indexName);
                 cl.createIndex(indexName, indexObj, false, false);
+                expectIdxLid++;
             }
         }
     }
