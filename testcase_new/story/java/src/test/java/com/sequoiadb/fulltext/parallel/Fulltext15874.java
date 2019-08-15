@@ -167,7 +167,7 @@ public class Fulltext15874 extends FullTestBase {
                             cursor.getNext();
                         }
                     } catch (BaseException e) {
-                        if (e.getErrorCode() != -321 && e.getErrorCode() != -52 && e.getErrorCode() != -6) {
+                        if (e.getErrorCode() != -321 && e.getErrorCode() != -52 && e.getErrorCode() != -6 && e.getErrorCode() != -10) {
                             throw e;
                         }
                         Thread.sleep(random.nextInt(50));
