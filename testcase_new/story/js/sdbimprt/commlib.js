@@ -323,18 +323,15 @@ function checkExportData( exportFile, expData )
 function checkResult( cl, dataType, expResult )
 {
    println( "---Begin to check "+ dataType +" results." );
-   var rc = cl.find({a:{"$type":2,"$et": dataType }}, {_id:{$include:0}}).sort({_id:1});
+   var rc = cl.find({a:{"$type":2,"$et": dataType }}).sort({_id:1});
    var actResult = [];
    while( rc.next() )
    {
       actResult.push( rc.current().toObj() );
    }
-   /*
-   println("actResult: ");
-   for(var i=0;i<actResult.length;i++){println(JSON.stringify(actResult[i]))};
-   println("\nexpResult: ");
-   for(var i=0;i<expResult.length;i++){println(JSON.stringify(expResult[i]))};
-   */
+   
+   /*for(var i=0;i<10;i++){println("actResult: "+ JSON.stringify(actResult[i]))};
+   for(var i=0;i<10;i++){println("expResult:" + JSON.stringify(expResult[i]))};*/
    
    if( actResult.length !== expResult.length )
    {
@@ -345,11 +342,11 @@ function checkResult( cl, dataType, expResult )
    
    for( var i in actResult )
    {
-      if( JSON.stringify( actResult[i] ) !== JSON.stringify( expResult[i] ) )
+      if( JSON.stringify( actResult[i]['a'] ) !== JSON.stringify( expResult[i]['a'] ) )
       {
-      throw buildException( "checkCLdata", null, "[check records, i = " + i + "]", 
-                        "["+ JSON.stringify( expResult[i] ) +"]", 
-                        "["+ JSON.stringify( actResult[i] ) +"]" );
+         throw buildException( "checkCLdata", null, "[check records, _id = " + JSON.stringify( actResult[i]['_id'] ) + "]", 
+                           "["+ JSON.stringify( expResult[i]['a'] ) +"]", 
+                           "["+ JSON.stringify( actResult[i]['a'] ) +"]" );
       }
    }
 }
