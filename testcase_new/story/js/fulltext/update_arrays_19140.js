@@ -1,21 +1,20 @@
 /************************************
-*@Description: 更新全文索引字段为多个数组元素的记录 
+*@Description: 单键全文索引，更新数组为数组元素均为string的数组 
 *@author:      liuxiaoxuan
-*@createdate:  2018.10.10
-*@testlinkCase: seqDB-15775
+*@createdate:  2019.08.15
+*@testlinkCase: seqDB-19140
 **************************************/
 function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var clName = COMMCLNAME + "_ES_15775";
+   var clName = COMMCLNAME + "_ES_19140";
    commDropCL(db, COMMCSNAME, clName, true, true);
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    // 创建全文索引前插入数据
    var doc = [{a: ["arr1"]},  
-              {a: "arr1"},
               {a: ["arr1", "arr2", "arr3"]},
               {a: [{ "subobj" : "value" }, {"k" : "v"}, {"a" : "b"}]},
               {a: [1, 1.001, 3000000000, { $decimal:"123.456" }]},
@@ -29,26 +28,25 @@ function main()
              ];
    dbcl.insert(doc);
 
-   var textIndexName = "textIndex_15775";
+   var textIndexName = "textIndex_19140";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
    // 检查ES同步
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 3);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
    
    // 检查全文检索结果
    var dbOpr = new DBOperator();
-   var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var expResult = [{a: ["arr1"]},{a: "arr1"},{a: ["arr1", "arr2", "arr3"]}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"_id": {"$include": 0}}, {_id:1});
+   var expResult = [{a: ["arr1"]},{a: ["arr1", "arr2", "arr3"]}];
+   var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
    checkResult(expResult, actResult);
 
-   // 更新至多个数组元素(均为string)的记录
+   // 更新全文索引字段为数组类型的记录，数组元素均为string
    dbcl.update({"$set" : {a : ["updated 1", "udpated 2"]}}, {a : {"$exists" : 1}});
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 12);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 11);
    
    // 检查全文检索结果
-   expResult = dbOpr.findFromCL(dbcl, null, {"_id": {"$include": 0}}, {_id:1});
-   actResult = dbOpr.findFromCL(dbcl, findCond, {"_id": {"$include": 0}}, {_id:1});
+   expResult = dbOpr.findFromCL(dbcl, null, {_id:{"$include":0}}, {_id:1});
+   actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
    checkResult(expResult, actResult);
 
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);

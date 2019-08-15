@@ -8,44 +8,47 @@ function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   // create CL
    var clName = COMMCLNAME + "_ES_15777";
    commDropCL(db, COMMCSNAME, clName, true, true);
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
-   // insert before create text index
-   var objs = new Array({a: "string1"},
-                        {a: ["arr1"]},
-                        {a: 0},
-                        {a: true},
-                        {a: {b : "ab"}},
-                        {a: {$date: "2018-10-10"}},
-                        {a: ["arr2", "arr3"]},
-                        {a: ["arr4", 1]});
-   dbcl.insert(objs);
+   // 创建全文索引前插入数据
+   var doc = [{a: ["arr1"]},  
+              {a: "arr1"},
+              {a: ["arr1", "arr2", "arr3"]},
+              {a: [{ "subobj" : "value" }, {"k" : "v"}, {"a" : "b"}]},
+              {a: [1, 1.001, 3000000000, { $decimal:"123.456" }]},
+              {a: ["abc", {"o" : "m"}, {"p" : "q"}, "def"]},
+              {a: ["hjk", {"o" : 1}, {"p" : 3.2}, {"q" : 3000000000}, {"r": { $decimal:"123.456" }}, {"s" : null}, "def"]},
+              {a: ["brr1", "123", {"a" : "a"}, 1, 3.22]},
+              {a: ["crr1", null, true]},
+              {a: ["drr1", {"$oid" : "123abcd00ef1235890233456" }, {"$regex":"^opq","$options":"i"}, { $decimal:"567.089" }]},
+              {a: ["err1", {"$date" : "2019-10-01" }, { "$timestamp" : "2019-10-01-13.14.26.124233"}]},
+              {a: ["frr1", {"$minKey": 1 }, {"$maxKey": 1 }, { "$binary" : "re81", "$type" : "1" }]}
+             ];
+   dbcl.insert(doc);
 
    var textIndexName = "textIndex_15777";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
-   // check sync to es
+   // 检查ES同步
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 3);
    
-   // check result
+   // 检查全文检索结果
    var dbOpr = new DBOperator();
    var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var expResult = [{a: ["arr1"]},{a: ["arr2", "arr3"]},{a: "string1"}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"a": {"$include": 1}});
-   actResult.sort(compare("a"));
+   var expResult = [{a: ["arr1"]},{a: "arr1"},{a: ["arr1", "arr2", "arr3"]}];
+   var actResult = dbOpr.findFromCL(dbcl, findCond, {"_id": {"$include": 0}}, {_id:1});
    checkResult(expResult, actResult);
 
-   // update to non string
+   // 更新至非string类型的记录
    dbcl.update({"$set" : {a : -1}}, {a : {"$isnull" : 0}});
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
    
-   // check result
-   var expResult = [];
-   var actResult = dbOpr.findFromCL(dbcl, findCond);
+   // 检查全文检索结果
+   expResult = [];
+   actResult = dbOpr.findFromCL(dbcl, findCond, {"_id": {"$include": 0}}, {_id:1});
    checkResult(expResult, actResult);
 
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);

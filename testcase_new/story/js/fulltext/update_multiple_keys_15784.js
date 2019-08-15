@@ -1,18 +1,18 @@
 /************************************
-*@Description: 多键全文索引，更新为全部字段为数组，且数组元素均为非string 
+*@Description: 多键全文索引，更新部分字段为数组，且数组元素部分为string 
 *@author:      liuxiaoxuan
-*@createdate:  2018.10.10
-*@testlinkCase: seqDB-15779
+*@createdate:  2018.11.6
+*@testlinkCase: seqDB-15784
 **************************************/
 function main()
 {
    if(commIsStandalone(db))  {   return ;   }
 
-   var clName = COMMCLNAME + "_ES_15779";
+   var clName = COMMCLNAME + "_ES_15784";
    commDropCL(db, COMMCSNAME, clName, true, true);
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
-   
+
    // 创建全文索引前插入数据
    var doc = [{a:"aaa", b:"bbb", c:"ccc"},
               {a: ["brr1"], b: "abc", c:"def"},
@@ -25,9 +25,9 @@ function main()
              ];
    dbcl.insert(doc);
 
-   var textIndexName = "textIndex_15779";
+   var textIndexName = "textIndex_15784";
    dbcl.createIndex(textIndexName, {"a" : "text", "b" : "text", "c" : "text", "d" : "text"});
-
+   
    // 检查ES数组是否同步
    // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
    //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 5);
@@ -44,28 +44,15 @@ function main()
    // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
    //checkResult(expectResult, actResult);
    
-   // 全部记录更新为数组，且数组元素均为非string，更新报错
-   try
-   {
-      dbcl.update({"$set":{a:[1, 1.001],b:[true, null], c:[{"o":"m"}], d:[{"$regex" : "^update", "$options" : "i"}]}}, {a : {"$exists" : 1}});
-      throw buildException("update()", "update", "update many arrays of keys", "fail","success");
-   }
-   catch(e)
-   {
-      if(-37 != e)
-      {
-         throw buildException("update()", "update", "update other exception", e, e);
-      }
-   }
-   
-   // 更新后，检查ES数组是否同步 
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 5);
-      
-   // 全文检索，检查结果
-   //var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
-   //checkResult(expectResult, actResult);
-
+   // 更新后的记录字段部分为string类型
+   dbcl.update({$set:{a: ["update 1", 1], b: true, c: 0.1111, d: 9000000000}});
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
+  
+   // 检查全文检索结果
+   expResult = [];
+   actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
+   checkResult(expResult, actResult);
+  
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
    //SEQUOIADBMAINSTREAM-3983
