@@ -1,4 +1,4 @@
-package com.sequoias3.delimiter.serial;
+package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
 import java.util.Collections;
