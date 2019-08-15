@@ -43,7 +43,7 @@ public class Fulltext15835 extends FullTestBase {
         FullTextDBUtils.insertData(cl, insertNum);
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() throws Exception {
 
         BSONObject indexObj = new BasicBSONObject();
