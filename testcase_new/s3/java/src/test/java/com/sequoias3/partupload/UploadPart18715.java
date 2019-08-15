@@ -55,9 +55,7 @@ public class UploadPart18715 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 	}
 
-	// SEQUOIADBMAINSTREAM-4778
-	// 【BUG】【new】【story】【S3分段上传对象】完成分段上传指定的uploadId字符串中包含非数字的字符返回结果有误
-	@Test(enabled = false)
+	@Test
 	private void testUpload() throws Exception {
 		// 对象A正在上传
 		String uploadIdA = uploadObjectA();
