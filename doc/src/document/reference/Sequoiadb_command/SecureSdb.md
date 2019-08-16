@@ -1,3 +1,7 @@
+##名称##
+
+SecureSdb - SecureSdb 对象。
+
 ##语法##
 
 ***var securesdb = new SecureSdb( [hostname], [svcname] )***

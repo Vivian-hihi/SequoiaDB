@@ -1,6 +1,6 @@
 ##名称##
 
-Sdb - 连接 sequoiadb 
+Sdb - SequoiaDB 连接对象。 
 
 ##语法##
 
@@ -14,25 +14,24 @@ Sdb
 
 ##描述##
 
-新建一个 Sdb 对象，用于连接 sequoiadb
+新建一个 Sdb 对象，用于连接 SequoiaDB。
 
 ##参数##
 
-* `hostname` ( *String*， *非必填* )
+| 参数名   | 参数类型 | 默认值            | 描述         | 是否必填 |
+| -------- | -------- | ----------------- | ------------ | -------- |
+| hostname | string   | localhost         | 主机名 | 否     |
+| svcname  | int      | 11810 | 节点端口号 | 否     |
+| username  | string      | 默认为空（''） | 用户名 | 否     |
+| password  | string      | 默认为空（''）| 密码 | 否     |
 
-   主机名，默认为： "localhost"
-   
-* `svcname` ( *int*， *非必填* )
 
-   端口号， 默认端口号为：11810。
+> **Note:**
 
-* `username` ( *String*)
+> 1. 可以通过 [createUsr()](reference/Sequoiadb_command/Sdb/createUsr.md) 创建 SequoiaDB 的用户，并设置对应的密码。
 
-   sequoiadb 对应的用户名，如果安装时有设置用户名则为必填，未设置则为空。
+> 2. 当 SequoiaDB 没有用户时，创建 Sdb 对象可以不使用 username 和 password，否则必须使用相应的 username 和 password 去创建 Sdb 对象。
 
-* `password` ( *String* )
-
-   sequoiadb 用户名对应的密码，如果安装时有设置密码则为必填，未设置则为空。
 
 ##返回值##
 
@@ -42,15 +41,10 @@ Sdb
 
 ##错误##
 
-`Sdb()`函数常见异常如下：
+如果出错则抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
+关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
 
-| 错误码 | 错误类型 | 描述 | 解决方法 |
-| ------ | --- | ------------ | ----------- |
-| -79 | SDB_NET_CANNOT_CONNECT | 无法连接指定的地址 | 检查地址、端口以及节点的配置信息是否正确。|
-
-当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
-或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
-可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
+常见错误可参考[错误码](reference/Sequoiadb_error_code.md)。
 
 ##版本##
 
@@ -58,26 +52,26 @@ v1.12及以上版本。
 
 ##示例##
 
-1. 连接默认主机上的 sequoiadb，hostname 默认为：localhost，svcname 默认为 11810。
+1. 连接默认主机上的 SequoiaDB，hostname 默认为：localhost，svcname 默认为 11810。
 
 	```lang-javascript
  	> var db = new Sdb()
  	```
 
-2. 连接指定机器上的 sequoiadb，目标主机："sdbserver1"。
+2. 连接指定机器上的 SequoiaDB，目标机器："sdbserver1"。
 
 	```lang-javascript
  	> var db = new Sdb("sdbserver1",11810)
 	```
 
-3. 连接指定机器上的 sequoiadb，如果安装 sequoiadb 时没有设置用户名和密码，则用户名和密码可以为空。
+3. 连接指定机器上的 SequoiaDB，如果没有设置用户名和密码，则用户名和密码可以为空。
 
 	```lang-javascript
  	> var db = new Sdb("sdbserver1",11810,"","")
 	```
 
-4. 连接指定机器上的 sequoiadb，安装 sequoiadb 时设置了用户名和密码则需要填写对应的用户名和密码。
+4. 使用用户名和密码连接指定机器上的 SequoiaDB。
 
 	```lang-javascript
- 	> var db = new Sdb("sdbserver1",11810,"sdbadmin","123")
+ 	> var db = new Sdb("sdbserver1",11810,"admin","123")
 	```
