@@ -45,7 +45,7 @@ function _getErrorResult( msg )
                         sprintf( msg, result[FIELD_DETAIL] ) ) ;
 }
 
-function _getInstallPath( oma )
+function _getInstallPath( PD_LOGGER, oma )
 {
    var defaultFilePath = '/etc/default/sequoiasql-mysql' ;
    var installPath = '' ;
@@ -237,7 +237,7 @@ function _syncConfig( PD_LOGGER )
 
    if ( typeof( installPath ) != 'string' || installPath.length == 0 )
    {
-      installPath = _getInstallPath( oma ) ;
+      installPath = _getInstallPath( PD_LOGGER, oma ) ;
    }
 
    var config = _findInstanceConfig( PD_LOGGER, oma, businessName, 

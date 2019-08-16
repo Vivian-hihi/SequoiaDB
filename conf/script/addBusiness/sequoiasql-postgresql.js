@@ -119,6 +119,30 @@ function _getErrorMsg( rc, e, message )
    return error ;
 }
 
+function _getInstallUser( oma, installPath )
+{
+   var defaultFilePath = '/etc/default/sequoiasql-postgresql' ;
+   var user = '' ;
+
+   for( var i = 0; i <= 10; ++i )
+   {
+      try
+      {
+         var config = oma.getIniConfigs( i == 0 ? defaultFilePath : defaultFilePath + i ).toObj() ;
+         if( adaptPath( installPath ) == adaptPath( config[FIELD_INSTALL_DIR] ) )
+         {
+            user = config[FIELD_USER2] ;
+         }
+         break ;
+      }
+      catch( e )
+      {
+      }
+   }
+
+   return user ;
+}
+
 function _runRemoteCmd( cmd, command, arg, timeout )
 {
    var error = null ;
@@ -150,6 +174,26 @@ function _runRemoteCmd( cmd, command, arg, timeout )
    }
 
    return error ;
+}
+
+function _createDBPath( oma, system, cmd, installPath, dbpath, timeout )
+{
+   var omtool = adaptPath( system.getEWD() ) + 'sdbomtool' ;
+   var user   = _getInstallUser( oma, installPath ) ;
+   var args = '' ;
+
+   if ( user.length == 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      var error = new SdbError( rc, "PostgreSQL Install path not found: " + installPath ) ;
+      return error ;
+   }
+
+   args += ' -m createdir' ;
+   args += ' --path ' + dbpath ;
+   args += ' --user ' + user ;
+
+   return _runRemoteCmd( cmd, omtool, args, timeout ) ;
 }
 
 //'/opt/sequoiasql-postgresql/database/5432/postgresql.conf'
@@ -214,7 +258,9 @@ function CreateInst( PD_LOGGER )
 
    var error   = null ;
    var remote  = null ;
+   var system  = null ;
    var cmd     = null ;
+   var oma     = null ;
    var exec    = ctlFile ;
    var args    = '' ;
    var timeout = 600000 ;
@@ -226,13 +272,15 @@ function CreateInst( PD_LOGGER )
 
    try
    {
+      oma    = new Oma( hostName, agentPort ) ;
       remote = new Remote( hostName, agentPort ) ;
       cmd    = remote.getCmd() ;
+      system = remote.getSystem() ;
    }
    catch( e )
    {
       error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed to get remote file obj: " +
+                            sprintf( "Failed to connect remote: " +
                                      "host [?:?]",
                                      hostName, agentPort ) ) ;
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
@@ -254,6 +302,19 @@ function CreateInst( PD_LOGGER )
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to add instance [?]",
                                          hostName ) ) ;
+
+   //create dbpath
+   error = _createDBPath( oma, system, cmd, installPath, dbpath, timeout ) ;
+   if ( error !== null )
+   {
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return resultInfo ;
+   }
 
    //add inst
    args = '' ;

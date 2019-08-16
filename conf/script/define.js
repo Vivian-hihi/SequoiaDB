@@ -384,6 +384,8 @@ var FIELD_INSTALL_DIR                      = INSTALL_DIR ;
 var FIELD_INSTNAME                         = "INSTNAME" ;
 var FIELD_SQLDATA                          = "SQLDATA" ;
 var FIELD_PGDATA                           = "PGDATA" ;
+var FIELD_USER2                            = "USER" ;
+var FIELD_SDBADMIN_USER                    = SDBADMIN_USER ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;

@@ -498,6 +498,111 @@ function Rollback( taskID )
    return newResultInfo ;
 }
 
+function _runRemoteCmd( cmd, command, arg, timeout )
+{
+   var error = null ;
+
+   try
+   {
+      cmd.run( command, arg, timeout ) ;
+   }
+   catch( e )
+   {
+      var rc = cmd.getLastRet() ;
+      var out = cmd.getLastOut() ;
+
+      if( rc )
+      {
+         error = new SdbError( rc, out ) ;
+      }
+      else
+      {
+         if( typeof( e ) == "number" )
+         {
+            error = new SdbError( e, "failed to exec cmd" ) ;
+         }
+         else
+         {
+            error = new SdbError( SDB_SYS, "failed to exec cmd." ) ;
+         }
+      }
+   }
+
+   return error ;
+}
+
+function _getInstallUser( oma )
+{
+   var user = '' ;
+   var config = oma.getIniConfigs( '/etc/default/sequoiadb' ).toObj() ;
+
+   if ( typeof( config[FIELD_SDBADMIN_USER] ) == 'string' )
+   {
+      user = config[FIELD_SDBADMIN_USER] ;
+   }
+
+   return user ;
+}
+
+function _getErrorMsg( rc, e, message )
+{
+   var error = null ;
+
+   if( rc == SDB_OK )
+   {
+      rc = SDB_SYS ;
+      error = new SdbError( rc, e.message ) ;
+   }
+   else if( rc )
+   {
+      error = new SdbError( rc, message ) ;
+   }
+
+   return error ;
+}
+
+function _createDBPath( hostName, dbpath )
+{
+   var oma    = null ;
+   var remote = null ;
+   var cmd    = null ;
+   var system = null ;
+   var agentPort = Oma.getAOmaSvcName( hostName ) ;
+
+   try
+   {
+      oma    = new Oma( hostName, agentPort ) ;
+      remote = new Remote( hostName, agentPort ) ;
+      cmd    = remote.getCmd() ;
+      system = remote.getSystem() ;
+   }
+   catch( e )
+   {
+      var error = _getErrorMsg( getLastError(), e,
+                                sprintf( "Failed to connect remote: host [?:?]",
+                                         hostName, agentPort ) ) ;
+      return error ;
+   }
+
+
+   var omtool = adaptPath( system.getEWD() ) + 'sdbomtool' ;
+   var user   = _getInstallUser( oma ) ;
+   var args = '' ;
+
+   if ( user.length == 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      var error = new SdbError( rc, "SequoiaDB Install path not found" ) ;
+      return error ;
+   }
+
+   args += ' -m createdir' ;
+   args += ' --path ' + dbpath ;
+   args += ' --user ' + user ;
+
+   return _runRemoteCmd( cmd, omtool, args, 600000 ) ;
+}
+
 function _createNode( coordList, user, passwd, hostName, svcname, dbpath,
                       role, nodeConfig, resultInfo )
 {
@@ -514,6 +619,14 @@ function _createNode( coordList, user, passwd, hostName, svcname, dbpath,
 
    db = _connectCoord( coordList, user, passwd ) ;
    rg = _getGroup( db, role, groupName, true ) ;
+
+   //create dbpath
+   error = _createDBPath( hostName, dbpath ) ;
+   if ( error !== null )
+   {
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      throw error ;
+   }
 
    try
    {
