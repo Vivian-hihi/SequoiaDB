@@ -3,6 +3,8 @@ package com.sequoiadb.test.cs;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -101,6 +103,19 @@ public class CollectionSpaceTest {
         alterCS.setAttributes(options);
 
         sdb.dropCollectionSpace("TestAlterCS");
+    }
+
+    @Test
+    public void testNullCollection(){
+        String collectionName = null;
+        try {
+            DBCollection collection = cs.createCollection(collectionName);
+            System.out.println(collection.getFullName());
+            System.out.println(cs.getCollection(collectionName).getFullName());
+            cs.dropCollection(collectionName);
+        }catch (BaseException e){
+            Assert.assertEquals(e.getErrorCode(),SDBError.SDB_INVALIDARG.getErrorCode());
+        }
     }
 
 }
