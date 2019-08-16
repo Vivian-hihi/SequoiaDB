@@ -282,7 +282,7 @@ public class S3TestBase {
 			CharArrayWriter caw = new CharArrayWriter();
 			String line = null;
 			while ((line = br.readLine()) != null) {
-				line = line.replaceAll("INFO", "INFO");
+				line = line.replaceAll("INFO", "DEBUG");
 				caw.write(line);
 				caw.append(System.getProperty("line.separator"));
 			}
