@@ -83,6 +83,7 @@ public class Fulltext15860 extends FullTestBase {
         thread.addWorker(new GetLoBThread());
         thread.run();
 
+        Assert.assertTrue(FullTextUtils.isCLConsistency(cl));
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
         Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));
         checkLobOpr();
