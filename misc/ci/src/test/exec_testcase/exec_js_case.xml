@@ -93,7 +93,7 @@
          </if>          
                  
          <var name="cmd1" value="-f &quot;${func_option}@{detectfile}&quot;" />
-         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='@{prefix}';var COORDSVCNAME='${SVCNAME}';var ESHOSTNAME='${ES_IP}';var COORDHOSTNAME='localhost'&quot;" />
+         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='@{prefix}';var COORDSVCNAME='${SVCNAME}';var ESHOSTNAME='${ES_IP}';var ESSVCNAME='${ES_PORT}';var COORDHOSTNAME='localhost'&quot;" />
          <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
          <var name="@{output}" unset="true"/>
          <var name="@{envisok}" unset="true"/>
@@ -270,7 +270,7 @@
          </if>
          
          <var name="cmd1" value="-f &quot;${func_option}${commlib_option}@{jsfile}&quot;" />
-         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var ESHOSTNAME='${ES_IP}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';var FULLTEXTPREFIX='${IDXPREFIX}';&quot;" />
+         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var ESHOSTNAME='${ES_IP}';var ESSVCNAME='${ES_PORT}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';var FULLTEXTPREFIX='${IDXPREFIX}';&quot;" />
          <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
          
          <var name="screen_output" unset="true"/>

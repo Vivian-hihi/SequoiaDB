@@ -16,23 +16,11 @@
       
       <delete dir="${report_dir}" failonerror="false"/> 
       <mkdir dir="${report_dir}"/>
-      <!--SYNCTEST do not detect sequoiadb start-->
-      <if>
-         <and>
-            <not>
-               <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
-            </not>
-            <not>
-               <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
-            </not>
-         </and>
-         <then>
-            <antcall target="detect_remote_env">
-               <param name="detect_target_name" value="dectect_node_status"/>
-               <param name="collect_remote_log_target_name" value="collect_remote_node_status_log"/>
-            </antcall>
-         </then>
-      </if>
+
+      <antcall target="detect_remote_env">
+         <param name="detect_target_name" value="dectect_node_status"/>
+         <param name="collect_remote_log_target_name" value="collect_remote_node_status_log"/>
+      </antcall>
 
       <antcall target="detect_remote_env">
          <param name="detect_target_name" value="dectect_testcase_core"/>
@@ -41,7 +29,7 @@
       <!-- testcase core dump report xml -->
       <antcall target="generate_testcase_core_report"/>
       <!-- node exception report xml -->
-      <if>
+      <!--if>
          <and>
             <not>
                <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
@@ -50,10 +38,10 @@
                <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
             </not>
          </and>
-         <then>
+         <then-->
             <antcall target="generate_node_start_report"/>
-         </then>
-      </if>
+         <!--/then>
+      </if-->
       <!-- detect node lsn and group has primary node -->
       <if>
          <not>
@@ -157,47 +145,60 @@
          </sequential>
       </for>
       
-      <!--detect node count node start-->
-      <for param="dirname">
-         <dirset dir="${INSTALL_DIR}/database/">
-            <include name="**/diaglog"/>
-         </dirset>
-         <sequential>
-            <fileset id="existing" dir="@{dirname}">
-               <patternset id="files">
-                  <include name="**/sdbdiag.log*"/>
-               </patternset>
-            </fileset>
-            <fileset id="matches" dir="@{dirname}">
-               <patternset refid="files"/>
-               <contains text="Start sequoiadb"/>
-            </fileset>
-            <echo message="${host.NAME}   ${host.ADDR4}   @{dirname}   " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
-           
-            <countstr str="Start sequoiadb" resultproperty="str_count">
-                <path-elements>
-                  <fileset refid="matches"/>
-                </path-elements>
-            </countstr>
-            <countstr str="restart by tool" resultproperty="start_cnt_by_tool">
-               <path-elements>
-                  <fileset dir="@{dirname}" includes=".RESTART_BY_CHANGECONF"/>
-               </path-elements>
-            </countstr>
-            <math result="expect_cnt" operand1="${start_cnt_by_tool}" operation="+" operand2="2" datatype="int"/>
-            <if>
-               <isgreaterthan arg1="${str_count}" arg2="${expect_cnt}"/>
-               <then>
-                  <echo message="${str_count} times, node start exception" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
-               </then>
-               <else>
-                  <echo message="${str_count} " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
-               </else>
-            </if>
-            <echo message="&#10;" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
-            <var name="str_count" unset="true"/>
-         </sequential>
-      </for>
+      <!--SYNCTEST and RELIABILITYTEST do not detect sequoiadb start-->
+      <if>
+         <and>
+            <not>
+               <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+            </not>
+            <not>
+               <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+            </not>
+         </and>
+         <then>
+            <!--detect node count node start-->
+            <for param="dirname">
+               <dirset dir="${INSTALL_DIR}/database/">
+                  <include name="**/diaglog"/>
+               </dirset>
+               <sequential>
+                  <fileset id="existing" dir="@{dirname}">
+                     <patternset id="files">
+                        <include name="**/sdbdiag.log*"/>
+                     </patternset>
+                  </fileset>
+                  <fileset id="matches" dir="@{dirname}">
+                     <patternset refid="files"/>
+                     <contains text="Start sequoiadb"/>
+                  </fileset>
+                  <echo message="${host.NAME}   ${host.ADDR4}   @{dirname}   " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+                 
+                  <countstr str="Start sequoiadb" resultproperty="str_count">
+                      <path-elements>
+                        <fileset refid="matches"/>
+                      </path-elements>
+                  </countstr>
+                  <countstr str="restart by tool" resultproperty="start_cnt_by_tool">
+                     <path-elements>
+                        <fileset dir="@{dirname}" includes=".RESTART_BY_CHANGECONF"/>
+                     </path-elements>
+                  </countstr>
+                  <math result="expect_cnt" operand1="${start_cnt_by_tool}" operation="+" operand2="2" datatype="int"/>
+                  <if>
+                     <isgreaterthan arg1="${str_count}" arg2="${expect_cnt}"/>
+                     <then>
+                        <echo message="${str_count} times, node start exception" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+                     </then>
+                     <else>
+                        <echo message="${str_count} " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+                     </else>
+                  </if>
+                  <echo message="&#10;" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+                  <var name="str_count" unset="true"/>
+               </sequential>
+            </for>
+         </then>
+      </if>
    </target>
    
    <macrodef name="countstr">
