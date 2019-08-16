@@ -31,7 +31,7 @@ public class Fulltext15923 extends SdbTestBase {
     private String clName = "cl_15923";
     private String indexName = "fullTextIndex_15923";
     
-    @BeforeClass
+    @BeforeClass(enabled=true)
     public void setUp() throws ReliabilityException{
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         groupMgr = GroupMgr.getInstance();
@@ -47,7 +47,7 @@ public class Fulltext15923 extends SdbTestBase {
         cl.createIndex(indexName, "{a:'text'}", false, false);
     }
     
-    @Test
+    @Test(enabled=true)
     public void Test() throws Exception{
         Node slave = sdb.getReplicaGroup(groupName).getSlave();
         String remoteHostName = slave.getHostName();
@@ -84,7 +84,7 @@ public class Fulltext15923 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 1));
     }
     
-    @AfterClass
+    @AfterClass(enabled=true)
     public void tearDown(){
         FullTextDBUtils.dropCollectionSpace(sdb, csName);
         sdb.close();

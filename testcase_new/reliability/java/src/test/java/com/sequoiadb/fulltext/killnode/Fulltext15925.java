@@ -32,7 +32,7 @@ public class Fulltext15925 extends SdbTestBase {
     private List<String> indexNames = new ArrayList<String>();
     private List<DBCollection> collections = new ArrayList<DBCollection>();
     
-    @BeforeClass
+    @BeforeClass(enabled=true)
     public void setUp() throws ReliabilityException{
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         groupMgr = GroupMgr.getInstance();
@@ -54,7 +54,7 @@ public class Fulltext15925 extends SdbTestBase {
         }
     }
     
-    @Test
+    @Test(enabled=true)
     public void Test() throws Exception{
         Node slave = sdb.getReplicaGroup(groupName).getSlave();
         String remoteHostName = slave.getHostName();
@@ -103,7 +103,7 @@ public class Fulltext15925 extends SdbTestBase {
         } 
     }
     
-    @AfterClass
+    @AfterClass(enabled=true)
     public void tearDown(){
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         for(int i = 0; i < 10; i++){
