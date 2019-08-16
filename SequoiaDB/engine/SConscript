@@ -553,6 +553,7 @@ coordFiles = [
       "coord/coordDeleteOperator.cpp",
       "coord/coordUpdateOperator.cpp",
       "coord/coordQueryOperator.cpp",
+      "coord/coordQueryLobOperator.cpp",
       "coord/coordMsgOperator.cpp",
       "coord/coordAuthBase.cpp",
       "coord/coordAuthOperator.cpp",

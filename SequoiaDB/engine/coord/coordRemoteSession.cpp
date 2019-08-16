@@ -1200,6 +1200,111 @@ namespace engine
       return _mapGrp2subs ;
    }
 
+   INT32 _coordCataSel::getLobGroupLst( _pmdEDUCB *cb,
+                                        const CoordGroupList &exceptGrpLst,
+                                        CoordGroupList &groupLst,
+                                        const BSONObj *pQuery )
+   {
+      INT32 rc = SDB_OK ;
+
+      _mapGrp2subs.clear() ;
+
+      if ( !_cataPtr->isMainCL() )
+      {
+         _cataPtr->getGroupLst( groupLst ) ;
+         if ( groupLst.size() <= 0 )
+         {
+            if ( pQuery )
+            {
+               PD_LOG( PDWARNING, "Failed to get groups for obj[%s] from "
+                       "catalog info[%s]", pQuery->toString().c_str(),
+                       _cataPtr->getCatalogSet()->toCataInfoBson(
+                       ).toString().c_str() ) ;
+            }
+         }
+         else
+         {
+            //don't resend to the node which reply ok
+            CoordGroupList::const_iterator iter = exceptGrpLst.begin();
+            while( iter != exceptGrpLst.end() )
+            {
+               groupLst.erase( iter->first ) ;
+               ++iter ;
+            }
+         }
+      }
+      else
+      {
+         // main-collection
+         vector< string > subCLLst ;
+         vector< string >::iterator iterCL ;
+
+      retry:
+         rc = _cataPtr->findLobSubCLNamesByMatcher( pQuery, subCLLst ) ;
+         if ( SDB_CAT_NO_MATCH_CATALOG == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Get matched sub collections failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         if ( 0 == subCLLst.size() && !hasUpdated() )
+         {
+            if ( SDB_OK == updateCataInfo( NULL, cb ) )
+            {
+               goto retry ;
+            }
+         }
+
+         iterCL = subCLLst.begin() ;
+         while( iterCL != subCLLst.end() )
+         {
+            static const CoordGroupList s_emptyGrpLst ;
+            CoordGroupList subGrpLst ;
+            CoordGroupList::iterator subGrpItr ;
+            _coordCataSel subSel ;
+
+            rc = subSel.bind( _pResource, (*iterCL).c_str(), cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get collectoin[%s]'s catalog failed, rc: %d",
+                       (*iterCL).c_str(), rc ) ;
+               goto error ;
+            }
+
+            rc = subSel.getLobGroupLst( cb, s_emptyGrpLst, subGrpLst, pQuery ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get sub-collection[%s]'s group list failed, "
+                       "rc: %d", (*iterCL).c_str(), rc ) ;
+               goto error ;
+            }
+
+            subGrpItr = subGrpLst.begin() ;
+            while ( subGrpItr != subGrpLst.end() )
+            {
+               if ( exceptGrpLst.end() ==
+                    exceptGrpLst.find( subGrpItr->first ) )
+               {
+                  _mapGrp2subs[ subGrpItr->first ].push_back( *iterCL ) ;
+                  groupLst[ subGrpItr->first ] = subGrpItr->second ;
+               }
+               ++subGrpItr ;
+            }
+            ++iterCL ;
+         } /// end while
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _coordCataSel::getGroupLst( _pmdEDUCB *cb,
                                      const CoordGroupList &exceptGrpLst,
                                      CoordGroupList &groupLst,

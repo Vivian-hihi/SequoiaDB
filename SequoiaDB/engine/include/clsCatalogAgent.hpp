@@ -282,6 +282,8 @@ namespace engine
 
          INT32 getLobShardingKeyFormat() ;
 
+         INT32 findLobSubCLNamesByMatcher( const BSONObj *matcher,
+                                           vector<string> &subCLList ) ;
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -316,7 +318,11 @@ namespace engine
          INT32             _addItem( clsCatalogItem *item ) ;
          void              _remakeGroupIDs() ;
          INT32             _parseLobKeyFormat( const CHAR *formatStr ) ;
-         BOOLEAN           _checkLobBound( const BSONObj &boundObj ) ;
+         BOOLEAN           _checkLobBound( const BSONObj &boundObj,
+                                           BSONObj &lobBoundObj ) ;
+         INT32             _findLobSubCLNamesByMatcher(
+                                                  const BSONObj &matcher,
+                                                  vector<string> &subCLList ) ;
 
       private:
          INT32             _version ;
@@ -615,8 +621,16 @@ namespace engine
    BOOLEAN clsCheckAndParseLobKeyFormat( const CHAR *keyFormat,
                                          INT32 *result = NULL ) ;
 
-   INT32 clsGetLobTimeStr( INT64 seconds, INT32 format,
+   INT32 clsGetLobTimeStr( INT64 seconds, INT32 lobShardingKeyFormat,
                            CHAR *timeStr, INT32 timeStrLen ) ;
+
+   void clsNormalizeTM( struct tm &tmTime ) ;
+
+   INT32 clsGetLobBound( INT32 lobKeyFormat, const BSONObj &originalBound,
+                         BSONObj &lobBound ) ;
+
+   INT32 clsGetLobSecondsByTimeStr( const CHAR *timeStr, INT32 lobKeyFormat,
+                                    time_t &seconds ) ;
 
    /// global function
    clsShardingKeySite* clsGetShardingKeySite() ;

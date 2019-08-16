@@ -205,6 +205,29 @@ time_t ossTimeDiffWithUTC()
    return mktime( &local ) - mktime( &utc ) ;
 }
 
+INT32 ossTimeGetMaxDay( INT32 year, INT32 month )
+{
+   static INT32 day[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31} ;
+   if ( 2 == month )
+   {
+      if ( (0 == year%4 && 0 != year%100) || 0 == year%400 )
+      {
+         return 29 ;
+      }
+      else
+      {
+         return 28 ;
+      }
+   }
+
+   if ( month > 12 )
+   {
+      month = 12 ;
+   }
+
+   return day[month -1] ;
+}
+
 void ossStructTMToString( struct tm &tm, CHAR *pStr )
 {
    if ( pStr )

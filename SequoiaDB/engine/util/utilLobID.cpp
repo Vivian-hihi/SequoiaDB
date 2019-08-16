@@ -197,6 +197,12 @@ namespace engine
       return SDB_OK ;
    }
 
+   // used for matcher bound
+   void _utilLobID::initOnlySeconds( INT64 seconds )
+   {
+      _seconds = seconds ;
+   }
+
    // _seconds(8bytes) 7 6 5 4 3 2 1 0
    //                      | | | | | |
    // _oddCheck(8bits) 7 6 5 4 3 2 1 0

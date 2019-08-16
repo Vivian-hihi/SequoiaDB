@@ -388,6 +388,61 @@ namespace engine
       goto done ;
    }
 
+   INT32 clsCatalogPredicateTree::matches( const BSONObj &lowBound,
+                                           const BSONObj &upBound,
+                                           BOOLEAN isLast,
+                                           BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN rsTmp = TRUE ;
+
+      if ( isUniverse() )
+      {
+         goto done ;
+      }
+
+      try
+      {
+         BSONObjIterator itrSK( _shardingKey ) ;
+         BSONObjIterator itrLB( lowBound ) ;
+         BSONObjIterator itrUB( upBound ) ;
+
+         rc = _matches( itrSK, itrLB, itrUB, rsTmp, isLast, 0 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to match catalog item, rc: %d",
+                      rc ) ;
+
+         if ( ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ) ||
+              ( !rsTmp && CLS_CATA_LOGIC_AND == _logicType ) )
+         {
+            goto done ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception on match catalog item: %s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0 ; i < _children.size(); i++ )
+      {
+         rc = _children[i]->matches( lowBound, upBound, isLast, rsTmp ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to match the catalog item(rc=%d)",
+                      rc );
+         if ( ( !rsTmp && CLS_CATA_LOGIC_AND == _logicType ) ||
+              ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ) )
+         {
+            break ;
+         }
+      }
+   done:
+      result = rsTmp ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
 /*
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_MATCHES, "clsCatalogPredicateTree::matches" )
    INT32 clsCatalogPredicateTree::matches( _clsCatalogItem * pCatalogItem,

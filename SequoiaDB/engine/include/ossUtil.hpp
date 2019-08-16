@@ -207,6 +207,8 @@ void ossTimeLocalToUTCInSameDate( const time_t &local, time_t &utc ) ;
 
 time_t ossTimeDiffWithUTC() ;
 
+INT32 ossTimeGetMaxDay( INT32 year, INT32 month ) ;
+
 // convert string into ossTimestamp
 void ossStringToTimestamp( const CHAR * pStr, ossTimestamp &Tm ) ;
 

@@ -134,11 +134,19 @@ namespace engine
          goto error ;
       }
 
-
       rc = _pResource->getOrUpdateCataInfo( subCLName.c_str(),
                                             subCLcataPtr, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Get sub-collection[%s]'s catalog info "
                    "failed, rc: %d", subCLName.c_str(), rc ) ;
+
+      if ( subCLcataPtr->isRangeSharded() )
+      {
+         PD_LOG( PDERROR, "Can not open a lob in range sharded cl[%s]",
+                 subCLName.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -219,14 +227,14 @@ namespace engine
          rc  = _getSubCLInfo( _cataInfo, lobId, cb, _subCLInfo ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Invalid Oid in lob's MainCL:id=%s,rc=%d",
-                    oid.str().c_str(), rc ) ;
+            PD_LOG( PDERROR, "Failed to get subcl info:MainCL=%s,id=%s,rc=%d",
+                    getFullName(), oid.str().c_str(), rc ) ;
             goto error ;
          }
       }
       else if ( _cataInfo->isRangeSharded() )
       {
-         PD_LOG( PDERROR, "can not open a lob in range sharded cl" ) ;
+         PD_LOG( PDERROR, "Can not open a lob in range sharded cl" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

@@ -78,6 +78,8 @@ namespace engine
       void adjustByShardingKey() ;
       void clear() ;
       INT32 matches( _clsCatalogItem * pCatalogItem, BOOLEAN & result ) ;
+      INT32 matches( const BSONObj &lowBound, const BSONObj &upBound,
+                     BOOLEAN isLast, BOOLEAN &result ) ;
 
       string toString() const ;
 

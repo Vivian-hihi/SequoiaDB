@@ -3799,6 +3799,27 @@ namespace engine
       SDB_ASSERT( mainCLSet.isRangeSharding(),
                   "main-collection must be range-sharding!" ) ;
 
+      if ( SDB_TIME_INVALID != mainCLSet.getLobShardingKeyFormat() )
+      {
+         BSONObj subCLObj ;
+         clsCatalogSet subCLSet( subCLName.c_str() ) ;
+         rc = catGetCollection( subCLName, subCLObj, cb ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get catalog-info of "
+                      "sub-collection [%s], rc: %d", subCLName.c_str(), rc ) ;
+
+         rc = subCLSet.updateCatSet( subCLObj ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to parse catalog-info of "
+                      "sub-collection [%s], rc: %d", subCLName.c_str(), rc ) ;
+
+         if ( subCLSet.isRangeSharding() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "SubCL[%s] can't be range sharding in lob's "
+                    "MainCL[%s]", subCLName.c_str(), mainCLName.c_str() ) ;
+            goto error ;
+         }
+      }
+
       rc = mainCLSet.addSubCL( subCLName.c_str(), lowBound, upBound, &pItem ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to add sub-collection [%s] into main-collection [%s], "

@@ -312,6 +312,12 @@ namespace engine
          return _catlogSet.getLobShardingKeyFormat() ;
       }
 
+      INT32 findLobSubCLNamesByMatcher( const BSONObj *matcher,
+                                        vector<string> &subCLList )
+      {
+         return _catlogSet.findLobSubCLNamesByMatcher( matcher, subCLList ) ;
+      }
+
    private:
       // if the catalogue-info is update, build a new one, don't modify the old
       _CoordCataInfo()

@@ -301,6 +301,11 @@ namespace engine
                                CoordGroupList &groupLst,
                                const BSONObj *pQuery = NULL ) ;
 
+         INT32    getLobGroupLst( _pmdEDUCB *cb,
+                                  const CoordGroupList &exceptGrpLst,
+                                  CoordGroupList &groupLst,
+                                  const BSONObj *pQuery = NULL ) ;
+
          /*
             This function only used when the collection is table-partitioned,
             and valid when called after getGroupLst

@@ -1045,8 +1045,7 @@ namespace engine
          }
          pQueryMsg->version = cataSel.getCataPtr()->getVersion() ;
 
-         rcTmp = coordOperator::doOpOnCL( cataSel, objQuery, inMsg,
-                                          sendOpt, cb, result ) ;
+         rcTmp = doOpOnCL( cataSel, objQuery, inMsg, sendOpt, cb, result ) ;
       }while( FALSE ) ;
 
       if ( SDB_OK != _processRet )

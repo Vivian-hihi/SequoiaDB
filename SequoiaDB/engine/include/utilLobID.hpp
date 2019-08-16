@@ -74,6 +74,8 @@ namespace engine
       INT32 init( const CHAR *hexValue ) ;
       INT32 initFromByteArray( const BYTE *array, INT32 arrayLen ) ;
       INT32 init( INT64 seconds, UINT16 id ) ;
+
+      void initOnlySeconds( INT64 seconds ) ;
       string toString() const ;
       INT32 toByteArray( BYTE *result, INT32 resultLen ) const ;
 

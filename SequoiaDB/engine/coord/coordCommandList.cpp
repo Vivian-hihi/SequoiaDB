@@ -42,6 +42,7 @@
 #include "catDef.hpp"
 #include "authDef.hpp"
 #include "coordQueryOperator.hpp"
+#include "coordQueryLobOperator.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "catGTSDef.hpp"
@@ -912,7 +913,7 @@ namespace engine
       INT32 bufferSize = 0 ;
 
       rtnContextCoord *context = NULL ;
-      coordQueryOperator queryOpr( TRUE ) ;
+      coordQueryLobOperator queryOpr ;
       coordQueryConf queryConf ;
       coordSendOptions sendOpt ;
 
@@ -955,6 +956,8 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to build new message:rc=%d",
                          rc ) ;
             pMsg = (MsgHeader *)pNewMsg ;
+            queryConf._allCataGroups = TRUE ;
+            queryConf._openEmptyContext = TRUE ;
          }
 
       }
@@ -972,7 +975,6 @@ namespace engine
          goto error ;
       }
 
-      queryConf._allCataGroups = TRUE;
       rc = queryOpr.queryOrDoOnCL( pMsg, cb, &context,
                                    sendOpt, &queryConf, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "List lobs[%s] on groups failed, rc: %d",

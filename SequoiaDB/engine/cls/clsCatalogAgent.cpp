@@ -2170,7 +2170,8 @@ namespace engine
       return _mainCLName ;
    }
 
-   BOOLEAN _clsCatalogSet::_checkLobBound( const BSONObj &boundObj )
+   BOOLEAN _clsCatalogSet::_checkLobBound( const BSONObj &boundObj,
+                                           BSONObj &lobBoundObj )
    {
       if ( boundObj.nFields() != 1 )
       {
@@ -2178,12 +2179,34 @@ namespace engine
       }
 
       BSONType type = boundObj.firstElement().type() ;
-      if ( type != String && type != MinKey && type != MaxKey )
+      if ( String == type )
       {
-         return FALSE ;
+         if ( SDB_OK != clsGetLobBound( _lobShardingKeyFormat, boundObj,
+                                        lobBoundObj ) )
+         {
+            return FALSE ;
+         }
+
+         return TRUE ;
       }
 
-      return TRUE ;
+      if ( type == MinKey )
+      {
+         BSONObjBuilder builder ;
+         builder.appendMinKey( FIELD_NAME_LOB_OID ) ;
+         lobBoundObj = builder.obj() ;
+         return TRUE ;
+      }
+
+      if ( type == MaxKey )
+      {
+         BSONObjBuilder builder ;
+         builder.appendMaxKey( FIELD_NAME_LOB_OID ) ;
+         lobBoundObj = builder.obj() ;
+         return TRUE ;
+      }
+
+      return FALSE ;
    }
 
    INT32 _clsCatalogSet::addSubCL ( const CHAR *subCLName,
@@ -2207,9 +2230,21 @@ namespace engine
       rc = genKeyObj( upBound, upBoundObj );
       PD_RC_CHECK( rc, PDERROR, "failed to get up-bound(rc=%d)", rc );
 
+      // build new item
+      pNewItem = SDB_OSS_NEW clsCatalogItem( FALSE, TRUE );
+      PD_CHECK( pNewItem, SDB_OOM, error, PDERROR, "malloc failed!" );
+      pNewItem->_lowBound = lowBoundObj;
+      pNewItem->_upBound = upBoundObj;
+      pNewItem->_subCLName = subCLName;
+      pNewItem->_ID = ++_maxID ;
+
       if ( _lobShardingKeyFormat != SDB_TIME_INVALID )
       {
-         if ( !_checkLobBound(lowBoundObj) || !_checkLobBound(upBoundObj) )
+         BSONObj lobLowBound ;
+         BSONObj lobUpBound ;
+
+         if ( !_checkLobBound(lowBoundObj, lobLowBound)
+              || !_checkLobBound(upBoundObj, lobUpBound) )
          {
             rc = SDB_BOUND_INVALID ;
             PD_LOG( PDERROR, "LowBound or upBound in invalid in lob MainCL:"
@@ -2218,15 +2253,6 @@ namespace engine
             goto error ;
          }
       }
-
-      // build new item
-      pNewItem = SDB_OSS_NEW clsCatalogItem( FALSE, TRUE );
-      PD_CHECK( pNewItem, SDB_OOM, error, PDERROR,
-               "malloc failed!" );
-      pNewItem->_lowBound = lowBoundObj;
-      pNewItem->_upBound = upBoundObj;
-      pNewItem->_subCLName = subCLName;
-      pNewItem->_ID = ++_maxID ;
 
       // check if the new boundary is conflict with existing boundary
       {
@@ -2241,7 +2267,7 @@ namespace engine
       {
          rc = _addItem( pNewItem );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to add the new item(rc=%d)",
+                     "Failed to add the new item(rc=%d)",
                      rc );
          goto done;
       }
@@ -2472,14 +2498,115 @@ namespace engine
       goto done;
    }
 
+   INT32 _clsCatalogSet::_findLobSubCLNamesByMatcher(
+                                                     const BSONObj &matcher,
+                                                     vector<string> &subCLList )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      BSONObj lobShardingKey ;
+      MAP_CAT_ITEM::iterator iter ;
+      lobShardingKey = BSON( FIELD_NAME_LOB_OID
+                             << _shardingKey.firstElement().numberInt() ) ;
+      clsCatalogMatcher clsMatcher( lobShardingKey ) ;
+
+      rc = clsMatcher.loadPattern( matcher ) ;
+      PD_RC_CHECK( rc, PDERROR, "Load matcher failed, rc: %d", rc ) ;
+
+      if ( clsMatcher.isUniverse() )
+      {
+         rc = getSubCLList( subCLList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get subcl list, rc: %d", rc ) ;
+         goto done ;
+      }
+
+      subCLList.clear() ;
+      iter = _mapItems.begin() ;
+      while( iter != _mapItems.end() )
+      {
+         INT32 rcTmp1 = SDB_OK ;
+         INT32 rcTmp2 = SDB_OK ;
+         BSONObj lowBound ;
+         BSONObj upBound ;
+         clsCatalogItem *item = iter->second ;
+
+         rcTmp1 = clsGetLobBound( getLobShardingKeyFormat(),
+                                  item->getLowBound(), lowBound );
+         rcTmp2 = clsGetLobBound( getLobShardingKeyFormat(),
+                                  item->getUpBound(), upBound );
+         if ( SDB_OK != rcTmp1 || SDB_OK != rcTmp2 )
+         {
+            //couldn't generate the lob's bound. we should check this cl
+            PD_LOG( PDERROR, "Failed to get lob bound:lowBound[%s],rc1=%d;"
+                    "upBound[%s],rc2=%d",
+                    item->getLowBound().toString().c_str(), rcTmp1,
+                    item->getUpBound().toString().c_str(), rcTmp2 ) ;
+            goto error ;
+         }
+
+         rc = clsMatcher.matches( lowBound, upBound, item->isLast(), result ) ;
+         PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d",
+                      rc ) ;
+         if ( result )
+         {
+            PD_LOG( PDDEBUG, "Find Lob subcl[%s]",
+                    item->getSubClName().c_str() ) ;
+            subCLList.push_back( item->getSubClName() ) ;
+         }
+
+         ++iter ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsCatalogSet::findLobSubCLNamesByMatcher( const BSONObj *matcher,
+                                                     vector<string> &subCLList )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( SDB_TIME_INVALID == getLobShardingKeyFormat() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "The collection[%s] is not lob maincl",
+                 name() ) ;
+         goto error ;
+      }
+
+      if ( _mapItems.empty() )
+      {
+         PD_LOG( PDERROR, "The collection[%s]'s cataItem is empty", name() ) ;
+         rc = SDB_CAT_NO_MATCH_CATALOG ;
+         goto error ;
+      }
+
+      if ( NULL == matcher || matcher->isEmpty() )
+      {
+         rc = getSubCLList( subCLList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get subcl list, rc: %d", rc ) ;
+         goto done ;
+      }
+
+      rc = _findLobSubCLNamesByMatcher( *matcher, subCLList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsCatalogSet::findSubCLNames( const BSONObj &matcher,
                                          vector< string > &subCLList,
                                          CLS_SUBCL_SORT_TYPE sortType )
    {
-      INT32 rc = SDB_OK;
-      BOOLEAN result = FALSE;
+      INT32 rc = SDB_OK ;
+      BOOLEAN result = FALSE ;
       std::multimap<UINT32, clsCatalogItem* > mapSubItem ;
-      MAP_CAT_ITEM::iterator iter;
+      MAP_CAT_ITEM::iterator iter ;
 
       if ( !isMainCL() )
       {
@@ -2499,7 +2626,7 @@ namespace engine
 
       if ( isHashSharding() )
       {
-         iter = _mapItems.begin();
+         iter = _mapItems.begin() ;
          while( iter != _mapItems.end() )
          {
             if ( SUBCL_SORT_BY_ID == sortType )
@@ -2518,13 +2645,13 @@ namespace engine
       else
       {
          clsCatalogMatcher clsMatcher( _shardingKey ) ;
-         rc = clsMatcher.loadPattern( matcher );
+         rc = clsMatcher.loadPattern( matcher ) ;
          PD_RC_CHECK( rc, PDERROR, "Load matcher failed, rc: %d", rc ) ;
 
          iter = _mapItems.begin() ;
          while( iter != _mapItems.end() )
          {
-            rc = clsMatcher.matches( iter->second, result );
+            rc = clsMatcher.matches( iter->second, result ) ;
             PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d",
                          rc ) ;
             if ( result )
@@ -2539,7 +2666,7 @@ namespace engine
                   subCLList.push_back( iter->second->getSubClName() ) ;
                }
             }
-            ++iter;
+            ++iter ;
          }
 
          if ( SUBCL_SORT_BY_ID == sortType )
@@ -4002,6 +4129,48 @@ namespace engine
       return &s_skSite ;
    }
 
+   INT32 clsGetLobBound( INT32 lobKeyFormat, const BSONObj &originalBound,
+                         BSONObj &lobBound )
+   {
+      INT32 rc = SDB_OK ;
+      time_t seconds ;
+      _utilLobID lobID ;
+      bson::OID oid ;
+      BYTE idArray[ UTIL_LOBID_ARRAY_LEN + 1] = {0} ;
+      BSONElement ele = originalBound.firstElement() ;
+      if ( ele.type() != String )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Bound must be String format:bound=%s,rc=%d",
+                 originalBound.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = clsGetLobSecondsByTimeStr( ele.valuestr(), lobKeyFormat, seconds ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get lob second:bound=%s,format=%d,rc=%d",
+                 originalBound.toString().c_str(), lobKeyFormat, rc ) ;
+         goto error ;
+      }
+
+      lobID.initOnlySeconds( seconds ) ;
+      rc = lobID.toByteArray( idArray, UTIL_LOBID_ARRAY_LEN ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get byteArray from LobID[%s]:rc=%d",
+                 lobID.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      oid.init( idArray, UTIL_LOBID_ARRAY_LEN ) ;
+      lobBound = BSON( FIELD_NAME_LOB_OID << oid ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BOOLEAN clsCheckAndParseLobKeyFormat( const CHAR *keyFormat, INT32 *result )
    {
       BOOLEAN isValid = FALSE ;
@@ -4035,7 +4204,100 @@ namespace engine
       return isValid ;
    }
 
-   INT32 clsGetLobTimeStr( INT64 seconds, INT32 format,
+   INT32 clsGetLobSecondsByTimeStr( const CHAR *timeStr,
+                                    INT32 lobKeyFormat,
+                                    time_t &seconds )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 parseNum = 0 ;
+      struct tm tmTime = { 0 } ;
+      struct tm tmpTM ;
+      time_t localSeconds ;
+      if ( SDB_TIME_DAY == lobKeyFormat )
+      {
+         PD_CHECK( ossStrlen( timeStr ) == 8, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStr[%s]'s length must be 8", timeStr ) ;
+
+         CHAR format[] = "%04d%02d%02d" ;
+         parseNum = ossSscanf( timeStr, format, &tmTime.tm_year, &tmTime.tm_mon,
+                               &tmTime.tm_mday ) ;
+         PD_CHECK( 3 == parseNum, SDB_INVALIDARG, error, PDERROR, "ParseNum[%d]"
+                   " must be 3", parseNum ) ;
+         tmTime.tm_mon -= 1 ;
+      }
+      else if ( SDB_TIME_MONTH == lobKeyFormat )
+      {
+         PD_CHECK( ossStrlen( timeStr ) == 6, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStr[%s]'s length must be 6", timeStr ) ;
+
+         CHAR format[] = "%04d%02d" ;
+         parseNum = ossSscanf( timeStr, format, &tmTime.tm_year, &tmTime.tm_mon ) ;
+         PD_CHECK( 2 == parseNum, SDB_INVALIDARG, error, PDERROR, "ParseNum[%d]"
+                   " must be 2", parseNum ) ;
+         tmTime.tm_mon -= 1 ;
+         tmTime.tm_mday = 1 ;
+      }
+      else if ( SDB_TIME_YEAR == lobKeyFormat )
+      {
+         PD_CHECK( ossStrlen( timeStr ) == 4, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStr[%s]'s length must be 4", timeStr ) ;
+
+         CHAR format[] = "%04d" ;
+         parseNum = ossSscanf( timeStr, format, &tmTime.tm_year ) ;
+         PD_CHECK( 1 == parseNum, SDB_INVALIDARG, error, PDERROR, "ParseNum[%d]"
+                   " must be 1", parseNum ) ;
+         tmTime.tm_mon = 0 ;
+         tmTime.tm_mday = 1 ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid lobKeyFormat[%d]", lobKeyFormat ) ;
+         goto error ;
+      }
+
+      PD_CHECK( (tmTime.tm_mday <=31 && tmTime.tm_mday >= 1), SDB_INVALIDARG,
+                error, PDERROR, "Invalid time format[%s]", timeStr ) ;
+      PD_CHECK( (tmTime.tm_mon <=11 && tmTime.tm_mon >= 0), SDB_INVALIDARG,
+                error, PDERROR, "Invalid time format[%s]", timeStr ) ;
+
+      tmTime.tm_year -= 1900 ;
+
+      clsNormalizeTM( tmTime ) ;
+      tmpTM = tmTime ;
+
+      localSeconds = mktime( &tmTime ) ;
+      if ( tmpTM.tm_mday != tmTime.tm_mday || tmpTM.tm_mon != tmTime.tm_mon )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid time format[%s]", timeStr ) ;
+         goto error ;
+      }
+
+      ossTimeLocalToUTCInSameDate( localSeconds, seconds ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // adjust tm to a valid time.
+   // 20190231 => 20190228
+   // 20200231 => 20200229
+   void clsNormalizeTM( struct tm &tmTime )
+   {
+      if ( tmTime.tm_mday > 28 )
+      {
+         INT32 maxDay = ossTimeGetMaxDay( tmTime.tm_year + 1900,
+                                          tmTime.tm_mon +1 ) ;
+         if ( tmTime.tm_mday > maxDay )
+         {
+            tmTime.tm_mday = maxDay ;
+         }
+      }
+   }
+
+   INT32 clsGetLobTimeStr( INT64 seconds, INT32 lobShardingKeyFormat,
                            CHAR *timeStr, INT32 timeStrLen )
    {
       INT32 rc = SDB_OK ;
@@ -4051,24 +4313,25 @@ namespace engine
 
       t = ( time_t )seconds ;
       ossGmtime( t, tmpTm ) ;
-      if ( SDB_TIME_DAY == format )
+      if ( SDB_TIME_DAY == lobShardingKeyFormat )
       {
          ossSnprintf( timeStr, timeStrLen, "%04d%02d%02d",
                       tmpTm.tm_year + 1900, tmpTm.tm_mon + 1, tmpTm.tm_mday ) ;
       }
-      else if ( SDB_TIME_MONTH == format )
+      else if ( SDB_TIME_MONTH == lobShardingKeyFormat )
       {
          ossSnprintf( timeStr, timeStrLen, "%04d%02d",
                       tmpTm.tm_year + 1900, tmpTm.tm_mon + 1 ) ;
       }
-      else if ( SDB_TIME_YEAR == format )
+      else if ( SDB_TIME_YEAR == lobShardingKeyFormat )
       {
          ossSnprintf( timeStr, timeStrLen, "%04d", tmpTm.tm_year + 1900 ) ;
       }
       else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Unregconized lobShardingKeyFormat(%d)", format ) ;
+         PD_LOG( PDERROR, "Unregconized lobShardingKeyFormat(%d)",
+                 lobShardingKeyFormat ) ;
          goto error ;
       }
 
