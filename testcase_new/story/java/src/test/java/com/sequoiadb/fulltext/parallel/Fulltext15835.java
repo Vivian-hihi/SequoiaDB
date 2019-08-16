@@ -88,8 +88,6 @@ public class Fulltext15835 extends FullTestBase {
             }
         }
 
-        Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));
-
     }
 
     @Override
@@ -100,7 +98,7 @@ public class Fulltext15835 extends FullTestBase {
     private class DropIndexThread {
 
         @ExecuteOrder(step = 1)
-        private void createIndex() {
+        private void dropIndex() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(indexName);
@@ -116,7 +114,7 @@ public class Fulltext15835 extends FullTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 BSONObject options = new BasicBSONObject();
                 options.put("ShardingType", "hash");
-                options.put("ShardingKey", new BasicBSONObject("recordId", 1));
+                options.put("ShardingKey", new BasicBSONObject("a", 1));
                 options.put("AutoSplit", true);
                 cl.alterCollection(options);
             }
