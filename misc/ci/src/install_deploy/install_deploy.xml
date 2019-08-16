@@ -231,7 +231,14 @@
             <var name="IDXPREFIX" value="${TEST_TYPE}${DEPLOY_MODE}"/>
          </then>
       </if>
-      <var name="cmd" value="echo 'http://${ES_IP}:${ES_PORT}/${IDXPREFIX}*' | tr A-Z a-z | xargs curl -XDELETE"/>
+      <var name="esport" value="${ES_PORT}"/>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         <then>
+            <var name="esport" value="${ES_PORT_RELIABILITY}"/>
+         </then>
+      </if>
+      <var name="cmd" value="echo 'http://${ES_IP}:${esport}/${IDXPREFIX}*' | tr A-Z a-z | xargs curl -XDELETE"/>
       
       <staf location="${ES_IP}" service="PROCESS"
             request="START SHELL COMMAND ${cmd} WAIT 10m RETURNSTDERR"
@@ -281,7 +288,7 @@
                   <copy file="${INSTALL_DIR}/conf/samples/sdbseadapter.conf" todir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
                   
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=localhost" value="searchenginehost=${ES_IP}"/>
-                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=9200" value="searchengineport=${ES_PORT}"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=9200" value="searchengineport=${esport}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=5"/>
                   <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)idxprefix=" replace="idxprefix=${IDXPREFIX}" byline="true"/>
                   <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)datasvcname=" replace="datasvcname=${svcname}" byline="true"/>
