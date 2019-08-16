@@ -70,7 +70,6 @@
       </groups>
       <packages>
          <package name="com.sequoiadb.transaction.brokennetwork" />
-         <package name="com.sequoiadb.transaction.diskfull" />
          <package name="com.sequoiadb.transaction.killnode" />
          <package name="com.sequoiadb.transaction.restartnode" />
       </packages>
@@ -92,7 +91,6 @@
       preserve-order="true">
       <packages>
          <package name="com.sequoiadb.transaction.brokennetwork" />
-         <package name="com.sequoiadb.transaction.diskfull" />
          <package name="com.sequoiadb.transaction.killnode" />
          <package name="com.sequoiadb.transaction.restartnode" />
       </packages>
