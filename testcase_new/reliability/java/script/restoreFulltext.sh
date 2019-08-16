@@ -17,8 +17,7 @@ case $progname in
                          nohup $cmddir -c $seadaptDir/$svcName  2>&1 &
                      fi
                      ;;
-    org.elasticsearch.bootstrap.Elasticsearch)   
-                     if [ $# -ne 2 ];then
+    elasticsearch)   if [ $# -ne 2 ];then
                          echo "$progname requires at least 1 parameters" >&2
                          exit 1
                      else

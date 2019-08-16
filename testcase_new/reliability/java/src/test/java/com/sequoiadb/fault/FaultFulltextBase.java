@@ -67,13 +67,21 @@ public class FaultFulltextBase extends Fault {
     protected void getMakeStdout() {
     }
 
+    protected String beforeCheckMakeResult() {
+        return null;
+    }
+
     @Override
     public boolean checkMakeResult() throws FaultException {
         if (pid.equals("-1")) {
             return false;
         }
         try {
-            ssh.exec("ps -ef | grep " + progName + " | grep -v grep | grep '" + svcName + "' | awk '{print $2}'");
+            String sshStr = beforeCheckMakeResult();
+            if (sshStr == null) {
+                sshStr = "ps -ef | grep " + progName + " | grep -v grep | grep '" + svcName + "' | awk '{print $2}'";
+            }
+            ssh.exec(sshStr);
             if (ssh.getStdout().trim().length() <= 0) {
                 return true;
             } else {
@@ -116,10 +124,29 @@ public class FaultFulltextBase extends Fault {
         return ret;
     }
 
+    protected String beforeCheckRestoreResult() {
+        return null;
+    }
+
     @Override
     public boolean checkRestoreResult() throws FaultException {
         try {
-            ssh.exec("ps -ef | grep " + progName + " | grep -v grep | grep '" + svcName + "' | awk '{print $2}'");
+            String sshStr = beforeCheckRestoreResult();
+            if (sshStr == null) {
+                sshStr = "ps -ef | grep " + progName + " | grep -v grep | grep '" + svcName + "' | awk '{print $2}'";
+            }
+            int checkFlag = 0;
+            while (checkFlag++ < 120) {
+                ssh.exec(sshStr);
+                if (ssh.getStdout().trim().length() > 0) {
+                    break;
+                }
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             if (ssh.getStdout().trim().length() <= 0) {
                 return false;
             } else {

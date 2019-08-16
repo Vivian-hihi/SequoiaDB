@@ -8,12 +8,13 @@ public class RestartElasticSearch extends FaultFulltextBase {
     protected RestartElasticSearch(String hostName) {
         super("RestartElasticSearch");
         this.hostName = hostName;
+        this.svcName = SdbTestBase.esServiceName;
         user = SdbTestBase.remoteUser;
         password = SdbTestBase.remotePwd;
         port = 22;
         localPath = SdbTestBase.scriptDir;
         remotePath = SdbTestBase.workDir;
-        progName = "org.elasticsearch.bootstrap.Elasticsearch";
+        progName = "elasticsearch";
         killRestart = "-15";
     }
 
@@ -26,9 +27,19 @@ public class RestartElasticSearch extends FaultFulltextBase {
     }
 
     @Override
+    protected String beforeCheckMakeResult() {
+        return "lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'";
+    }
+
+    @Override
     protected void beforeRestore() {
         super.beforeRestore();
         cmdArgs = setRestoreArgs(progName, cmdDir);
+    }
+
+    @Override
+    protected String beforeCheckRestoreResult() {
+        return "lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'";
     }
 
     /**
