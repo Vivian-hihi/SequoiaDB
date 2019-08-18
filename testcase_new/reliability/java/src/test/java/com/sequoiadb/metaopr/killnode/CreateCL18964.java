@@ -31,7 +31,7 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-2278:  seqDB-18964:创建CL时coord节点异常重启
+ * @FileName seqDB-18964:创建CL时coord节点异常重启
  * @Author luweikang
  * @Date 2019-08-12
  * @Version 1.00
