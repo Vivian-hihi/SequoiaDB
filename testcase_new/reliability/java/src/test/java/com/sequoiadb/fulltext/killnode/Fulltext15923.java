@@ -31,7 +31,7 @@ public class Fulltext15923 extends SdbTestBase {
     private String clName = "cl_15923";
     private String indexName = "fullTextIndex_15923";
     
-    @BeforeClass(enabled=true)
+    @BeforeClass()
     public void setUp() throws ReliabilityException{
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         groupMgr = GroupMgr.getInstance();
@@ -47,13 +47,13 @@ public class Fulltext15923 extends SdbTestBase {
         cl.createIndex(indexName, "{a:'text'}", false, false);
     }
     
-    @Test(enabled=true)
+    @Test()
     public void Test() throws Exception{
         Node slave = sdb.getReplicaGroup(groupName).getSlave();
-        String remoteHostName = slave.getHostName();
-        Ssh ssh = new Ssh(remoteHostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
-        String command = "lsof -iTCP:11790 | sed '1d' | awk '{print $2}'";
+        String remoteHostName = slave.getHostName();Ssh ssh = new Ssh(remoteHostName, "root", SdbTestBase.rootPwd);
+        String command = "lsof -iTCP:11790 -sTCP:LISTEN| sed '1d' | awk '{print $2}'";
         ssh.exec(command);  
+        System.out.println("ssh.getStdout():"+ssh.getStdout());
         String pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
         command = "ls -l /proc/" + pid + "/exe | awk '{print $11}'" ;
         ssh.exec(command);
@@ -84,7 +84,7 @@ public class Fulltext15923 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 1));
     }
     
-    @AfterClass(enabled=true)
+    @AfterClass()
     public void tearDown(){
         FullTextDBUtils.dropCollectionSpace(sdb, csName);
         sdb.close();
