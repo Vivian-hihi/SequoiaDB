@@ -374,8 +374,8 @@ function CreateInst( PD_LOGGER )
    error = _createDBPath( oma, system, cmd, installPath, dbpath, timeout ) ;
    if ( error !== null )
    {
-      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
-      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_ERRNO]  = 5 ;
+      resultInfo[FIELD_DETAIL] = getErr( 5 ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
       resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
       resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
