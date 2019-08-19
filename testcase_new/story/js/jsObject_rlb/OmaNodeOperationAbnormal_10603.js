@@ -201,6 +201,7 @@ OmaTest.prototype.testCreateCoordWithNoPermit = function( svcname )
    var dirName = "/tmp/noPerDir/" ;
    file.mkdir( dirName ) ;
    file.chmod( dirName, 0000 ) ;
+   println( "user :" + user + " created directory " + dirName + " successfully." )
    
    try
    {
@@ -272,30 +273,40 @@ function main()
    for( i = 0;i < omas.length;i++ )
    {
       // 测试创建已存在的节点
+      println( "omas[" + i + "]:" + omas[i] + " svcnames[" + i + "]:" + svcnames[i] );
+      println("testCreateExistCoord begin...");
       omas[i].testCreateExistCoord() ;
       
       // 测试删除不存在的节点
+      println( "testRemoveNotExistCoord begin..." );
       omas[i].testRemoveNotExistCoord( svcnames[i] ) ;
       
       // 测试删除节点时端口号不匹配
+      println( "testRemoveCoordWithWrongSvc begin..." );
       omas[i].testRemoveCoordWithWrongSvc() ;
       
       // 测试删除节点时配置项非法
+      println( "testRemoveCoordWithWrongConf begin..." );
       omas[i].testRemoveCoordWithWrongConf() ;
       
       // 测试启动不存在的节点
+      println( "testStartNotExistNode begin...");
       omas[i].testStartNotExistNode( svcnames[i] ) ;
       
       // 测试停止不存在的节点
+      println( "testStopNotExistNode begin..." );
       omas[i].testStopNotExistNode( svcnames[i] ) ;
       
       // 测试创建节点时配置项非法
+      println( "testCreateCoordWithWrongConf begin..." );
       omas[i].testCreateCoordWithWrongConf( svcnames[i] ) ;
       
       // 测试创建节点时路径无权限
+      println( "testCreateCoordWithNoPermit begin..." );
       omas[i].testCreateCoordWithNoPermit( svcnames[i] ) ;
       
       // 测试oma关闭后执行操作
+      println( "testOmaClose begin..." );
       omas[i].testOmaClose() ;
    }
 }
