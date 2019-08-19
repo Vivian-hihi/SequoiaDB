@@ -216,14 +216,12 @@ function importData( csName, clName, importFile, type, fields, cast )
                   +' -c '+ csName +' -l '+ clName 
                   +' --type '+ type
                   +' --file '+ importFile;
+                  +' --insertnum '+ 10000;
    if ( type == 'csv' ) 
    {
       imprtOption = imprtOption +' --fields "' + fields +'"';
    }
    println( imprtOption );
-   var command = "cat "+ importFile;
-   var fileInfo = cmd.run( command );
-   println( "\n" + command +"\n" + fileInfo );
    
    if ( cast == true )
    {
