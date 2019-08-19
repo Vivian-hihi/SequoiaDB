@@ -98,7 +98,11 @@ public class SQLController {
             content = ssqlo.query(node.getHostName(), node.getSvcName(),
                     auth.getUser(), auth.getPasswd(), DbName, Sql, isAll);
         } catch (SQLException e) {
-            return outputResult(e.getErrorCode(), e.getMessage() == null ? e.toString() : e.getMessage(),
+            int rc = e.getErrorCode();
+            if (rc == 0) {
+                rc = -1;
+            }
+            return outputResult(rc, e.getMessage() == null ? e.toString() : e.getMessage(),
                     "", content);
         } catch (Exception e) {
             /*
