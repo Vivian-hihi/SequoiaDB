@@ -118,6 +118,9 @@ namespace engine
                                  const MsgHeader *pReply,
                                  BOOLEAN isPending ) ;
 
+         virtual INT32  onExpiredReply ( _pmdRemoteSessionSite *pSite,
+                                         const MsgHeader *pReply ) ;
+
          /*
             if return SDB_OK, will continue
             else, send failed
@@ -220,9 +223,6 @@ namespace engine
                                  _pmdSubSession **ppSub,
                                  const MsgHeader *pReply,
                                  BOOLEAN isPending ) ;
-
-         virtual INT32  onExpiredReply ( pmdRemoteSessionSite *pSite,
-                                         const MsgHeader *pReply ) ;
 
       protected:
          BOOLEAN        _interruptWhenFailed ;

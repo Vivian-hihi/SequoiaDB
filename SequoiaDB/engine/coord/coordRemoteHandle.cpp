@@ -308,6 +308,58 @@ namespace engine
       }
    }
 
+   INT32 _coordRemoteHandlerBase::onExpiredReply ( pmdRemoteSessionSite *pSite,
+                                                   const MsgHeader *pReply )
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpReply *pOpReply = NULL ;
+      pmdRemoteSession *pSession = NULL ;
+      MsgOpKillContexts msgKillContext ;
+
+      if ( NULL == pReply || !IS_REPLY_TYPE( pReply->opCode ) )
+      {
+         goto done ;
+      }
+
+      pOpReply = (MsgOpReply *)pReply ;
+      if ( -1 == pOpReply->contextID )
+      {
+         goto done ;
+      }
+
+      PD_LOG( PDWARNING, "Received expired context[%lld] from node[%s]",
+              pOpReply->contextID,
+              routeID2String( pReply->routeID ).c_str() ) ;
+
+      pSession = pSite->addSession( COORD_EXPIRED_KILLCONTEXT_TIMEOUT ) ;
+      pSession->addSubSession( pReply->routeID.value ) ;
+
+      /// send kill context
+      msgKillContext.contextIDs[ 0 ] = pOpReply->contextID ;
+      msgKillContext.numContexts = 1 ;
+      msgKillContext.ZERO = 0 ;
+      msgKillContext.header.messageLength = sizeof( MsgOpKillContexts ) ;
+      msgKillContext.header.opCode = MSG_BS_KILL_CONTEXT_REQ ;
+      msgKillContext.header.requestID = 0 ;
+      msgKillContext.header.routeID.value = 0 ;
+      msgKillContext.header.TID = 0 ;
+
+      /// Ignore sendMsg failed and waitReply failed
+      rc = pSession->sendMsg( (MsgHeader*)&msgKillContext,
+                              PMD_EDU_MEM_NONE ) ;
+      if ( SDB_OK == rc )
+      {
+         pSession->waitReply1() ;
+      }
+
+   done:
+      if ( pSession )
+      {
+         pSite->removeSession( pSession ) ;
+      }
+      return rc ;
+   }
+
    INT32 _coordRemoteHandlerBase::_onSendConnectOld( _pmdSubSession *pSub )
    {
       INT32 rc = SDB_OK ;
@@ -946,58 +998,6 @@ namespace engine
             pSession->stopSubSession() ;
          }
       }
-   }
-
-   INT32 _coordRemoteHandler::onExpiredReply ( pmdRemoteSessionSite *pSite,
-                                               const MsgHeader *pReply )
-   {
-      INT32 rc = SDB_OK ;
-      MsgOpReply *pOpReply = NULL ;
-      pmdRemoteSession *pSession = NULL ;
-      MsgOpKillContexts msgKillContext ;
-
-      if ( NULL == pReply || !IS_REPLY_TYPE( pReply->opCode ) )
-      {
-         goto done ;
-      }
-
-      pOpReply = (MsgOpReply *)pReply ;
-      if ( -1 == pOpReply->contextID )
-      {
-         goto done ;
-      }
-
-      PD_LOG( PDWARNING, "Received expired context[%lld] from node[%s]",
-              pOpReply->contextID,
-              routeID2String( pReply->routeID ).c_str() ) ;
-
-      pSession = pSite->addSession( COORD_EXPIRED_KILLCONTEXT_TIMEOUT ) ;
-      pSession->addSubSession( pReply->routeID.value ) ;
-
-      /// send kill context
-      msgKillContext.contextIDs[ 0 ] = pOpReply->contextID ;
-      msgKillContext.numContexts = 1 ;
-      msgKillContext.ZERO = 0 ;
-      msgKillContext.header.messageLength = sizeof( MsgOpKillContexts ) ;
-      msgKillContext.header.opCode = MSG_BS_KILL_CONTEXT_REQ ;
-      msgKillContext.header.requestID = 0 ;
-      msgKillContext.header.routeID.value = 0 ;
-      msgKillContext.header.TID = 0 ;
-
-      /// Ignore sendMsg failed and waitReply failed
-      rc = pSession->sendMsg( (MsgHeader*)&msgKillContext,
-                              PMD_EDU_MEM_NONE ) ;
-      if ( SDB_OK == rc )
-      {
-         pSession->waitReply1() ;
-      }
-
-   done:
-      if ( pSession )
-      {
-         pSite->removeSession( pSession ) ;
-      }
-      return rc ;
    }
 
 }
