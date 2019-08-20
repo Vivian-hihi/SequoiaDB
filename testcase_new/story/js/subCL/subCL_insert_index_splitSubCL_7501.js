@@ -36,12 +36,9 @@ function main()
    var mOpt = { ShardingKey:{a:1,b:-1}, IsMainCL:true };
    var mainCL = commCreateCLByOption( db, COMMCSNAME, mclName, mOpt, true, true );
    // create sub cl
-   var subCLs = [];
    var sOpt = { ShardingKey:{ a:1 }, ShardingType: "hash", ReplSize:0, Compressed:true, Group: srcRG };
    var subCL1 = commCreateCLByOption( db, COMMCSNAME, sclName1, sOpt, true, true );
-   var subCL2 = commCreateCLByOption( db, COMMCSNAME, sclName2, sOpt, true, true );
-   subCLs.push( subCL1 ) ;
-   subCLs.push( subCL2 ) ;   
+   var subCL2 = commCreateCLByOption( db, COMMCSNAME, sclName2, sOpt, true, true ); 
    // attach cl
    println("\n---Begin to attach cl.");
    mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0},   UpBound:{a:1000} } ) ;

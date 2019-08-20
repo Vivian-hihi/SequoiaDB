@@ -1,5 +1,5 @@
 /******************************************************************************
-@Description: seqDB-7490:seqDB-7490:range表执行范围切分（splitAsync）
+@Description: seqDB-7496:插入数据后对多个hash子表做范围切分
 @modify list:
    2014-7-30   pusheng Ding  Init
    2019-4-15   xiaoni huang  modify
@@ -36,13 +36,10 @@ function main()
    var mOpt = { ShardingKey:{a:1,b:-1}, IsMainCL:true };
    var mainCL = commCreateCLByOption( db, COMMCSNAME, mclName, mOpt, true, true );
    // create sub cl
-   var subCLs = [];
    var sOpt = { ShardingKey:{ a:1 }, ShardingType: "hash", ReplSize:0, Compressed:true, Group: srcRG };
    var subCL1 = commCreateCLByOption( db, COMMCSNAME, sclName1, sOpt, true, true );
-   var sOpt = { ShardingKey:{ a:1 }, ShardingType: "range", ReplSize:0, Compressed:true, Group: srcRG };
+   var sOpt = { ShardingKey:{ a:1 }, ShardingType: "hash", ReplSize:0, Compressed:true, Group: srcRG };
    var subCL2 = commCreateCLByOption( db, COMMCSNAME, sclName2, sOpt, true, true );
-   subCLs.push( subCL1 ) ;
-   subCLs.push( subCL2 ) ;   
    // attach cl
    println("\n---Begin to attach cl.");
    mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0},   UpBound:{a:1000} } ) ;

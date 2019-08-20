@@ -28,7 +28,7 @@ function main()
    
    // clear env
    commDropCL( db, COMMCSNAME, mclName, true, true, "drop mcl in the begin" );
-   commDropCL( db, COMMCSNAME, sclName, true, true, "drop mcl in the begin" );
+   commDropCL( db, COMMCSNAME, sclName, true, true, "drop scl in the begin" );
    
    // create cs and cl, attach cl
    println("\n---Begin to create cl, and attach cl.");

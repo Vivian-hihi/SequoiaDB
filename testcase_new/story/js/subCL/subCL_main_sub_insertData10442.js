@@ -35,13 +35,10 @@ function main()
    var mOpt = { ShardingKey:{a:1}, IsMainCL:true };
    var mainCL = commCreateCLByOption( db, COMMCSNAME, mclName, mOpt, true, true );
    // create sub cl
-   var subCLs = [];
    var sOpt = { ShardingKey:{ a:1 }, ShardingType: "hash", ReplSize:0, Compressed:true, Group: rgName };
-   var subCL1 = commCreateCLByOption( db, COMMCSNAME, sclName1, { Group: rgName }, true, true );
+   commCreateCLByOption( db, COMMCSNAME, sclName1, sOpt, true, true );
    var sOpt = { ShardingKey:{ a:1 }, ShardingType: "range", ReplSize:0, Compressed:true, Group: rgName };
-   var subCL2 = commCreateCLByOption( db, COMMCSNAME, sclName2, sOpt, true, true ); 
-   subCLs.push( subCL1 ) ;
-   subCLs.push( subCL2 ) ;   
+   commCreateCLByOption( db, COMMCSNAME, sclName2, sOpt, true, true );
    // attach cl
    println("\n---Begin to attach cl.");
    mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0},   UpBound:{a:1000} } ) ;
@@ -66,35 +63,27 @@ function main()
    }
    
    // check rg count
-   println("\n---Begin to check subCL1 in rg.");
-   var sclFullName = COMMCSNAME + "." + sclName1;
+   checkResults( rgName, sclName1, recordsNum );
+   checkResults( rgName, sclName2, recordsNum );
+   
+   
+   commDropCL( db, COMMCSNAME, mclName, true, true, "clean main cl in the end" );
+}
+
+function checkResults( rgName, sclName, recordsNum )
+{   
+   var sclFullName = COMMCSNAME + "." + sclName;
+   println("\n---Begin to check " + sclFullName + " in rg.");
    var clRGs = db.snapshot(8, { Name: sclFullName }).current().toObj().CataInfo;
    if( clRGs.length !== 1 ) 
    {
       throw buildException( "main", null, "check subCL1 rgNum", 1, clRGs.length );
    }   
    var rg = db.getRG( rgName ).getMaster().connect();
-   var cnt = rg.getCS( COMMCSNAME ).getCL( sclName1 ).count();
+   var cnt = rg.getCS( COMMCSNAME ).getCL( sclName ).count();
    var expCnt = recordsNum / 2;
    if( Number( cnt ) !== expCnt ) 
    {
-      throw buildException( "main()", null, "check subCL1 count in rg", expCnt, cnt );
+      throw buildException( "main()", null, "check cl count in rg", expCnt, cnt );
    }
-   
-   println("\n---Begin to check subCL2 in rg.");
-   var sclFullName = COMMCSNAME + "." + sclName2;
-   var clRGs = db.snapshot(8,{ Name: sclFullName }).current().toObj().CataInfo;
-   if( clRGs.length !== 1 ) 
-   {
-      throw buildException( "main", null, "check subCL2 rgNum", 1, clRGs.length );
-   }   
-   var rg = db.getRG( rgName ).getMaster().connect();
-   var cnt = rg.getCS( COMMCSNAME ).getCL( sclName2 ).count();
-   if( Number( cnt ) !== expCnt ) 
-   {
-      throw buildException( "main()", null, "check subCL1 count in rg", expCnt, cnt );
-   }
-   
-   
-   commDropCL( db, COMMCSNAME, mclName, true, true, "clean main cl in the end" );
 }

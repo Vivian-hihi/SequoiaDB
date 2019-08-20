@@ -23,7 +23,7 @@ function main()
    var sclName2 = "scl_2";
    
    // clear env
-   commDropCL( db, COMMCSNAME, mclName, true, true, "drop mcl in the begin" );
+   commDropCL( db, mcsName, mclName, true, true, "drop mcl in the begin" );
    commDropCS( db, scsName1, true, "drop main cs in the begin." );
    commDropCS( db, scsName2, true, "drop sub cs in the begin." );
    
@@ -56,7 +56,8 @@ function main()
    // insert
    try 
    {
-      mainCL.insert( {a:1} );      
+      mainCL.insert( {a:1} );
+      throw "expect insert fail, but insert success.";
    } 
    catch ( e )
    {
@@ -67,16 +68,11 @@ function main()
    }
    
    // update
-   try 
+   mainCL.update( {$set:{a:1}} ); 
+   var cnt = mainCL.count();
+   if( Number( cnt ) !== 0 )
    {
-      mainCL.update( {$set:{a:1}} );      
-   } 
-   catch ( e )
-   {
-      if ( -135 !== e)
-      {
-         throw buildException( "main", null, "check update", -135, e );
-      }
+      throw buildException("", null, "[check update]", 0, cnt );
    }
    
    // find   
@@ -87,17 +83,7 @@ function main()
    }
    
    // remove
-   try 
-   {
-      mainCL.remove( {a:1} );    
-   } 
-   catch (e)
-   {
-      if ( -135 !== e)
-      {
-         throw buildException( "main", null, "check remove", -135, e );
-      }
-   }
+   mainCL.remove( {a:1} );
    
    // clear env
    commDropCL( db, COMMCSNAME, mclName, false, false, "drop mcl in the end" );
