@@ -879,8 +879,10 @@ namespace engine
          coordSessionPropSite * propSite = (coordSessionPropSite *)
                                                          site->getUserData() ;
          UINT32 groupID = subSession->getNodeID().columns.groupID ;
+         coordRemoteHandleStatus * status =
+                           (coordRemoteHandleStatus *)subSession->getUDFData() ;
          // could not reconnect transaction node during transaction
-         if ( propSite->hasTransNode( groupID ) )
+         if ( propSite->hasTransNode( groupID ) && !status->_initTrans )
          {
             return FALSE ;
          }
