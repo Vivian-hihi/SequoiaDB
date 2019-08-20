@@ -65,6 +65,7 @@ public class WithObjectMetaData18807 extends S3TestBase {
 		initRequest.withObjectMetadata(metadata);
 		InitiateMultipartUploadResult result = s3Client.initiateMultipartUpload(initRequest);
 		String uploadId = result.getUploadId();
+		// TODO:1、携带自定义元数据，还需要校验设置自定义元数据是否正确
 		Assert.assertNotEquals(uploadId, null);
 		runSuccess = true;
 	}

@@ -40,6 +40,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class UploadPart18674 extends S3TestBase {
+	// TODO:1.AWS_ACCESS_KEY和AWS_SECRET_KEY可以直接用公共方法中定义的变量，不需要重新申明，如果有变动只需要改公共方法中的变量
 	private String AWS_ACCESS_KEY = "ABCDEFGHIJKLMNOPQRST";
 	private String AWS_SECRET_KEY = "abcdefghijklmnopqrstuvwxyz0123456789ABCD";
 	private String clientRegion = "us-east-1";
@@ -105,6 +106,7 @@ public class UploadPart18674 extends S3TestBase {
 		String actPartMd5 = "";
 		String md5[] = null;
 		List<PartETag> partEtags = new ArrayList<>();
+		// TODO:1、只有一个分段，且分段长度等于对象长度，没有必要写个for循环，直接上传一个分段就可以了
 		for (int i = 1; filepositon < fileSize; i++) {
 			long partsize = Math.min(setPartSize, (fileSize - filepositon));
 			md5 = getMD5s(file, filepositon, partsize);
@@ -132,6 +134,7 @@ public class UploadPart18674 extends S3TestBase {
 
 		int filepositon = 0;
 		String contentMd5 = "";
+		// TODO:2、这个测试点不需要考虑带md5值
 		String md5[] = null;
 		md5 = getMD5s(file, filepositon, fileSize);
 		contentMd5 = md5[0];

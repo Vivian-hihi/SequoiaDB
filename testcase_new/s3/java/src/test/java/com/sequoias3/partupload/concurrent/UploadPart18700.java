@@ -75,6 +75,7 @@ public class UploadPart18700 extends S3TestBase {
 
 		// 完成分段上传
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
+		// TODO:1、获取完整文件的md5，建议用 TestTools.getMD5(String pathName)方法
 		String expMd5 = TestTools.getFilePartMD5(file, 0, 35 * m);
 		String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 		Assert.assertEquals(actMd5, expMd5);

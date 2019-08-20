@@ -20,6 +20,7 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
+//TODO:1、用例测试点描述不正确，应该是上传分段过程中终止分段上传
 /**
  * test content: 版本: 1 :: 并发查询分段列表 testlink-case: seqDB-18774
  * 

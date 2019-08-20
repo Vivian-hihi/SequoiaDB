@@ -65,7 +65,7 @@ public class CompleteMultipartUploadRequest18811 extends S3TestBase {
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "InvalidRequest");
 		}
-
+		// TODO: 1、对象名长度超过边界值901个字节没有验证，同时要补充对象名长度为1-900字节的正常值校验
 		request = new CompleteMultipartUploadRequest(bucketName, null, uploadId, partEtags);
 		try {
 			s3Client.completeMultipartUpload(request);

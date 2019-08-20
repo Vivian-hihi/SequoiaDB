@@ -29,6 +29,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @Date 2019.8.6
  * @version 1.00
  */
+// TODO:1、参考文本用例需要补充其它参数的验证
 public class UploadPartRequest18808 extends S3TestBase {
 	@DataProvider(name = "legalKeyNameProvider")
 	public Object[][] generateKeyName() {

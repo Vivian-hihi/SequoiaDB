@@ -23,155 +23,149 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18770:并发查询分段上传列表
- *              test point b: the different condition
+ * @Description seqDB-18770:并发查询分段上传列表 test point b: the different condition
  * @Author huangxiaoni
  * @Date 2019.07.26
  */
 
 public class UploadPart18770B extends S3TestBase {
-    private boolean runSuccess = false;
-    private AmazonS3 s3Client;
-    private String bucketName = "bucket18770b";
-    private File localPath;
-    private String filePath;
-    private File file;
-    private long fileSize = 5 * 1024 * 1024;
-    private int maxPartNumber = 10;
-    private String[] keys = {"atest18770b_0", "/dir1/test18770b_1", "/dir1/dir2/test18770b_2", 
-            "/dira/test18770b_3", "test18770b_4"};
-    private List<String> uploadIdsOld = new ArrayList<>();
-    private List<String> uploadIdsNew = new ArrayList<>();
+	private boolean runSuccess = false;
+	private AmazonS3 s3Client;
+	private String bucketName = "bucket18770b";
+	private File localPath;
+	private String filePath;
+	private File file;
+	private long fileSize = 5 * 1024 * 1024;
+	private int maxPartNumber = 10;
+	private String[] keys = { "atest18770b_0", "/dir1/test18770b_1", "/dir1/dir2/test18770b_2", "/dira/test18770b_3",
+			"test18770b_4" };
+	private List<String> uploadIdsOld = new ArrayList<>();
+	private List<String> uploadIdsNew = new ArrayList<>();
 
-    @BeforeClass
-    private void setUp() throws IOException {
-        this.initFile();
-        s3Client = CommLib.buildS3Client();
-        s3Client.createBucket(new CreateBucketRequest(bucketName));
-        this.initAndUploadPart();
-    }
+	@BeforeClass
+	private void setUp() throws IOException {
+		this.initFile();
+		s3Client = CommLib.buildS3Client();
+		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		this.initAndUploadPart();
+	}
 
-    @Test
-    private void test() throws Exception {
-        // list and check results
-        ThreadExecutor threadExec = new ThreadExecutor();
-        threadExec.addWorker(new ThreadListCondA());
-        threadExec.addWorker(new ThreadListCondB());
-        threadExec.run();
+	@Test
+	private void test() throws Exception {
+		// list and check results
+		ThreadExecutor threadExec = new ThreadExecutor();
+		threadExec.addWorker(new ThreadListCondA());
+		threadExec.addWorker(new ThreadListCondB());
+		threadExec.run();
 
-        runSuccess = true;
-    }
+		runSuccess = true;
+	}
 
-    @AfterClass
-    private void tearDown() {
-        try {
-            if (runSuccess) {
-                s3Client.deleteBucket(bucketName);
-                TestTools.LocalFile.removeFile(localPath);
-            }
-        } finally {
-            s3Client.shutdown();
-        }
-    }
+	@AfterClass
+	private void tearDown() {
+		try {
+			if (runSuccess) {
+				s3Client.deleteBucket(bucketName);
+				TestTools.LocalFile.removeFile(localPath);
+			}
+		} finally {
+			s3Client.shutdown();
+		}
+	}
 
-    private class ThreadListCondA {
-        private AmazonS3 s3;
-        private MultipartUploadListing result;
-        
-        @BeforeClass
-        private void setUp() {
-            s3 = CommLib.buildS3Client();
-        }
-        
-        @ExecuteOrder(step = 1, desc = "list")
-        private void list() {
-            ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName)
-                    .withPrefix("/dir")
-                    .withKeyMarker(keys[2])
-                    .withUploadIdMarker(uploadIdsOld.get(2));
-            result = s3Client.listMultipartUploads(request);
-        }
+	private class ThreadListCondA {
+		private AmazonS3 s3;
+		private MultipartUploadListing result;
 
-        @ExecuteOrder(step = 2, desc = "check results")
-        private void checkResults() {
-            List<String> expCommonPrefixes = new ArrayList<>();
-            MultiValueMap<String, String> expUploads = 
-                    new LinkedMultiValueMap<String, String>();
-            expUploads.add(keys[2], uploadIdsNew.get(2));
-            expUploads.add(keys[1], uploadIdsOld.get(1));
-            expUploads.add(keys[1], uploadIdsNew.get(1));
-            expUploads.add(keys[3], uploadIdsOld.get(3));
-            expUploads.add(keys[3], uploadIdsNew.get(3));
-            PartUploadUtils.checkListMultipartUploadsResults(result, 
-                    expCommonPrefixes, expUploads);
-        }
+		@BeforeClass
+		private void setUp() {
+			s3 = CommLib.buildS3Client();
+		}
 
-        @AfterClass
-        private void teardown() {
-            s3.shutdown();
-        }
-    }
+		@ExecuteOrder(step = 1, desc = "list")
+		private void list() {
+			ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName).withPrefix("/dir")
+					.withKeyMarker(keys[2]).withUploadIdMarker(uploadIdsOld.get(2));
+			result = s3Client.listMultipartUploads(request);
+		}
 
-    private class ThreadListCondB {
-        private AmazonS3 s3;
-        private MultipartUploadListing result;
-        
-        @BeforeClass
-        private void setUp() {
-            s3 = CommLib.buildS3Client();
-        }
-        
-        @ExecuteOrder(step = 1, desc = "list")
-        private void list() {
-            ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName)
-                    .withPrefix("/dir")
-                    .withMaxUploads(3);
-            result = s3Client.listMultipartUploads(request);
-        }
+		@ExecuteOrder(step = 2, desc = "check results")
+		private void checkResults() {
+			List<String> expCommonPrefixes = new ArrayList<>();
+			MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
+			expUploads.add(keys[2], uploadIdsNew.get(2));
+			expUploads.add(keys[1], uploadIdsOld.get(1));
+			expUploads.add(keys[1], uploadIdsNew.get(1));
+			expUploads.add(keys[3], uploadIdsOld.get(3));
+			expUploads.add(keys[3], uploadIdsNew.get(3));
+			PartUploadUtils.checkListMultipartUploadsResults(result, expCommonPrefixes, expUploads);
+		}
 
-        @ExecuteOrder(step = 2, desc = "check results")
-        private void checkResults() {
-            List<String> expCommonPrefixes = new ArrayList<>();
-            MultiValueMap<String, String> expUploads = 
-                    new LinkedMultiValueMap<String, String>();
-            expUploads.add(keys[2], uploadIdsOld.get(2));
-            expUploads.add(keys[2], uploadIdsNew.get(2));
-            expUploads.add(keys[1], uploadIdsOld.get(1));
-            PartUploadUtils.checkListMultipartUploadsResults(result, 
-                    expCommonPrefixes, expUploads);
-        }
+		@AfterClass
+		private void teardown() {
+			s3.shutdown();
+		}
+	}
 
-        @AfterClass
-        private void teardown() {
-            s3.shutdown();
-        }
-    }
-    
-    private void initAndUploadPart() {
-        // initPartUpload
-        for (String key : keys) {
-            String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
-            uploadIdsOld.add(uploadId);
-        }
-        // initPartUpload again
-        for (String key : keys) {
-            String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
-            uploadIdsNew.add(uploadId);
-        }
-        
-        // uploadPart, multi part
-        for (int i = 0; i < keys.length; i++) {
-            PartUploadUtils.partUpload(s3Client, bucketName, keys[i], uploadIdsNew.get(i), 
-                    file, fileSize / maxPartNumber);
-        }
-    }
-    
-    private void initFile() throws IOException {
-        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-        TestTools.LocalFile.removeFile(localPath);
-        TestTools.LocalFile.createDir(localPath.toString());
-        TestTools.LocalFile.createFile(filePath, fileSize);
-        file = new File(filePath);
-    }
+	private class ThreadListCondB {
+		private AmazonS3 s3;
+		private MultipartUploadListing result;
+
+		// TODO:1、这个类里面没有@Test，设置@BeforeClass和@AfertClass的方法不会运行吧
+		@BeforeClass
+		private void setUp() {
+			s3 = CommLib.buildS3Client();
+		}
+
+		@ExecuteOrder(step = 1, desc = "list")
+		private void list() {
+			ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName).withPrefix("/dir")
+					.withMaxUploads(3);
+			// TODO:2、这里的s3Client不是并发线程自己建的连接
+			result = s3Client.listMultipartUploads(request);
+		}
+
+		@ExecuteOrder(step = 2, desc = "check results")
+		private void checkResults() {
+			List<String> expCommonPrefixes = new ArrayList<>();
+			MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
+			expUploads.add(keys[2], uploadIdsOld.get(2));
+			expUploads.add(keys[2], uploadIdsNew.get(2));
+			expUploads.add(keys[1], uploadIdsOld.get(1));
+			PartUploadUtils.checkListMultipartUploadsResults(result, expCommonPrefixes, expUploads);
+		}
+
+		@AfterClass
+		private void teardown() {
+			s3.shutdown();
+		}
+	}
+
+	private void initAndUploadPart() {
+		// initPartUpload
+		for (String key : keys) {
+			String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
+			uploadIdsOld.add(uploadId);
+		}
+		// initPartUpload again
+		for (String key : keys) {
+			String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
+			uploadIdsNew.add(uploadId);
+		}
+
+		// uploadPart, multi part
+		for (int i = 0; i < keys.length; i++) {
+			PartUploadUtils.partUpload(s3Client, bucketName, keys[i], uploadIdsNew.get(i), file,
+					fileSize / maxPartNumber);
+		}
+	}
+
+	private void initFile() throws IOException {
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+		TestTools.LocalFile.removeFile(localPath);
+		TestTools.LocalFile.createDir(localPath.toString());
+		TestTools.LocalFile.createFile(filePath, fileSize);
+		file = new File(filePath);
+	}
 }

@@ -63,6 +63,7 @@ public class UploadPart18701 extends S3TestBase {
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 
+		// TODO:1、parts变量名不能明确表达常量值的含义，建议数组里面的常量给出描述信息
 		long[] parts = new long[] { 0, 10 * m, 1 };
 		partList.add(parts);
 		parts = new long[] { 10 * m, 5 * m, 3 };
@@ -128,6 +129,7 @@ public class UploadPart18701 extends S3TestBase {
 		}
 	}
 
+	// TODO：2、结合使用场景，上传源文件前应该就算好要传的分段大小和分段数，按这种方式只需要取源文件的md5值进行对比，没有必要截取源文件部分内容去分段上传。
 	private void checkResult() throws Exception {
 		FileInputStream fileInputStream = null;
 		int length = (int) file.length();

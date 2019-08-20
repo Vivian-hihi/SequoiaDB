@@ -108,6 +108,7 @@ public class UploadPart18713 extends S3TestBase {
 			UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
 					.withPartNumber(i).withPartSize(partSizes[i - 1]).withBucketName(bucketName).withKey(keyName)
 					.withUploadId(uploadId);
+			// TODO:1.正常运行时的打屏信息建议去掉
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			System.out.println(df.format(new Date()));
 			UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
