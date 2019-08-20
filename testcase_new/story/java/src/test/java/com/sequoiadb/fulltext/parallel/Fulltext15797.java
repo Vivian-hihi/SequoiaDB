@@ -217,11 +217,10 @@ public class Fulltext15797 extends FullTestBase {
         @ExecuteOrder(step = 2, desc = "结果校验")
         public void checkResult() {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-
-            try {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+            try {         
                 // 如果集合未删除成功，那么校验集合中主备节点一致性,否则固定集合空间删除成功，ES端索引删除成功
                 if (getRetCode() != 0) {
+                    DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                     cl.insert("{a:'insert',b:'insert'}");
                     Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, atomic.incrementAndGet()));
                 } else {

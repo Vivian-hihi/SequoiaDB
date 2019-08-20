@@ -47,10 +47,12 @@ public class Fulltext14885 extends FullTestBase {
         cursor.getNext();
 
         // 多次执行删除全文索引的操作，检查结果
+        // 固定集合新增数据的同时有可能适配器会对其进行pop，导致固定集合数据量减少至一个数据块内，
+        // 此时查询固定集合一次getMore查完就会释放context，因此当时删除全文索引就能返回成功。此处去掉预期dropIndex失败的断言
         for (int i = 0; i < 10; i++) {
             try {
                 cl.dropIndex(fullIndexName);
-                Assert.fail("drop textIndex need to return -147!");
+                //Assert.fail("drop textIndex need to return -147!");
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     throw e;

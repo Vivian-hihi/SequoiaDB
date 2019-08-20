@@ -58,14 +58,8 @@ public class Fulltext15798 extends FullTestBase {
 
         thExecutor.run();
 
-        // 原始集合及固定集合中记录均被清空，主备节点数据一致
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIdxName, 0));
-        List<BSONObject> actRecords = FullTextDBUtils.getReadList(cl.query());
-        Assert.assertEquals(actRecords.size(), 0);
-        DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
-        actRecords = FullTextDBUtils.getReadList(cappedCL.query());
-        Assert.assertEquals(actRecords.size(), 0);
-
+        // 主备节点数据一致
+        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIdxName, (int)cl.getCount()));
         // 全文检索校验
         FullTextUtils.isRecordEqualsByMulQueryMode(cl);
     }
