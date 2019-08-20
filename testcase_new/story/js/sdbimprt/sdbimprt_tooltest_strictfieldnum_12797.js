@@ -169,6 +169,6 @@ function checkCLData( cl, expRecs, expCnt )
                     "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
                     "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
     }
-    println( "cl records: "+ actRecs );
+    //println( "cl records: "+ actRecs );
     cl.truncate();
 }
