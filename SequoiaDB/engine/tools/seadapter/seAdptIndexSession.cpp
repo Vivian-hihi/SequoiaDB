@@ -65,7 +65,23 @@ namespace seadapter
 
    _seAdptIndexSession::~_seAdptIndexSession()
    {
+      seIdxMetaMgr* idxMetaMgr = sdbGetSeAdapterCB()->getIdxMetaMgr() ;
+
       _cleanup() ;
+
+      // If we can still lock the index meta, the index still exists. In that
+      // case, just reset the status of the index meta to pending.
+      if ( SDB_OK == _imContext->metaLock( EXCLUSIVE ) )
+      {
+         seIndexMeta *meta = _imContext->meta() ;
+         if ( SEADPT_IM_STAT_NORMAL == meta->getStat() )
+         {
+            meta->setStat( SEADPT_IM_STAT_PENDING ) ;
+         }
+         _imContext->metaUnlock() ;
+      }
+
+      idxMetaMgr->releaseIMContext( _imContext ) ;
    }
 
    SDB_SESSION_TYPE _seAdptIndexSession::sessionType() const

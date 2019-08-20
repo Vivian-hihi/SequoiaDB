@@ -230,44 +230,14 @@ namespace seadapter
 
    void _seIndexSessionMgr::onSessionDestoryed( pmdAsyncSession *pSession )
    {
-      INT32 rc = SDB_OK ;
-      seIdxMetaMgr* idxMetaMgr = _pAdptCB->getIdxMetaMgr() ;
       seIdxMetaContext *imContext =
             ((seAdptIndexSession *)pSession)->idxMetaContext() ;
       SDB_ASSERT( imContext , "Index meta context is NULL" ) ;
       seIndexMeta *meta = imContext->meta() ;
-
-      // If still able to lock the meta, the indexer quits because of some
-      // error, but not because of the index not exists any more. So change the
-      // flag to pending. A new task will be started again later.
-      rc = imContext->metaLock( EXCLUSIVE ) ;
-      if ( rc )
-      {
-         if ( SDB_RTN_INDEX_NOTEXIST != rc )
-         {
-            PD_LOG( PDERROR, "Lock index meta in EXCLUSIVE mode failed[%d]",
-                    rc ) ;
-         }
-         goto error ;
-      }
-      if ( SEADPT_IM_STAT_NORMAL == meta->getStat() )
-      {
-         imContext->meta()->setStat( SEADPT_IM_STAT_PENDING ) ;
-      }
-
-   done:
-      // The index meta context is created before the session starts, and
-      // released when session destroyed.
-      idxMetaMgr->releaseIMContext( imContext ) ;
-      {
-         _activeWorkerLatch.get() ;
-         _activeWorkers.erase( meta->getID() ) ;
-         _activeWorkerLatch.release() ;
-      }
+      _activeWorkerLatch.get() ;
+      _activeWorkers.erase( meta->getID() ) ;
+      _activeWorkerLatch.release() ;
       _pAdptCB->resetIdxVersion() ;
-      return ;
-   error:
-      goto done ;
    }
 
    pmdAsyncSession*
