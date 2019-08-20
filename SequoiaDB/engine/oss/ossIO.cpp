@@ -730,46 +730,7 @@ INT32 ossPermissions( const CHAR* pPathName, UINT32 &iPermission )
       goto error ;
    }
 
-   iPermission = 0 ;
-
-   if ( S_IRUSR & st.st_mode )
-   {
-      iPermission |= OSS_RU ;
-   }
-   if ( S_IWUSR & st.st_mode )
-   {
-      iPermission |= OSS_WU ;
-   }
-   if ( S_IXUSR & st.st_mode )
-   {
-      iPermission |= OSS_XU ;
-   }
-
-   if ( S_IRGRP & st.st_mode )
-   {
-      iPermission |= OSS_RG ;
-   }
-   if ( S_IWGRP & st.st_mode )
-   {
-      iPermission |= OSS_WG ;
-   }
-   if ( S_IXGRP & st.st_mode )
-   {
-      iPermission |= OSS_XG ;
-   }
-
-   if ( S_IROTH & st.st_mode )
-   {
-      iPermission |= OSS_RO ;
-   }
-   if ( S_IWOTH & st.st_mode )
-   {
-      iPermission |= OSS_WO ;
-   }
-   if ( S_IXOTH & st.st_mode )
-   {
-      iPermission |= OSS_XO ;
-   }
+   iPermission = (UINT32)st.st_mode ;
 
 done:
    return rc ;
