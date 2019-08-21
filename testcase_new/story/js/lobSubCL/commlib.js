@@ -3,7 +3,7 @@
 *@author:      luweikang
 *@createDate:  2019.8.7
 **************************************/
-function createMainTable(db, csName, mainCLName, clName, shardingFormat, subCLNum, beginBound, scope)
+function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat, subCLNum, beginBound, scope)
 {
     if ( shardingFormat == undefined ) { shardingFormat = "YYYYMMDD" ; }
     if ( subCLNum == undefined ) { subCLNum = 2 ; }
@@ -46,28 +46,15 @@ function createMainTable(db, csName, mainCLName, clName, shardingFormat, subCLNu
 *@author:      luweikang
 *@createDate:  2019.8.7
 **************************************/
-function makeTmpFile( filePath, fileSize)
+function makeTmpFile( filePath, fileName, fileSize)
 {
     println("---create tmp file---");
-    if( fileSize == undefined){ fileSize = 1024 * 100; }
-    //var filePath = WORKDIR + "/" + fileName;
-    
-    var cmd = new Cmd();
-    var isExist = false;
-	var fileName = filePath + "/" + fileSize;
-    try
-    {
-        cmd.run( "ls " + fileName );
-        isExist = true;
-    }
-    catch(e)
-    {
-        if( 2 == e ){ isExist = false; }
-    }
-    
-    if(isExist){ File.remove( fileName ); }
-    cmd.run( "dd if=/dev/zero of=" + fileName + " bs=1c count=" + fileSize );
-    var md5Arr = cmd.run( "md5sum " + fileName ).split(" ");
+    if( fileSize == undefined){ fileSize = 1024 * 100; }    
+    var fileFullPath = filePath + "/" + fileName;        
+	File.mkdir(filePath);
+	
+    cmd.run( "dd if=/dev/zero of=" + fileFullPath  + " bs=1c count=" + fileSize );
+    var md5Arr = cmd.run( "md5sum " + fileFullPath ).split(" ");
     var md5 = md5Arr[0];
     return md5
 }
