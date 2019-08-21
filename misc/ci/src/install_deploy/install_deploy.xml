@@ -290,6 +290,7 @@
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=localhost" value="searchenginehost=${ES_IP}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=9200" value="searchengineport=${esport}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=5"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="optimeout=10000" value="optimeout=60000"/>
                   <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)idxprefix=" replace="idxprefix=${IDXPREFIX}" byline="true"/>
                   <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)datasvcname=" replace="datasvcname=${svcname}" byline="true"/>
                </sequential>
