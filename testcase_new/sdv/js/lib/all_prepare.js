@@ -60,6 +60,8 @@ function main( db )
 
    // 3. create dummy collection and split to all group
    createDummyCollection( db ) ;
+   
+   commMakeDir(COORDHOSTNAME, WORKDIR);
 }
 
 try
