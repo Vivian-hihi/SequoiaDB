@@ -63,6 +63,7 @@ public class UploadPartAndCompleteMultipartUpload18772 extends S3TestBase {
 			threadExec.addWorker(new PartUpload(partNum, partSize, file, uploadId));
 		}
 
+		// TODO :需要补充完成分段上传成功的结果判断
 		threadExec.addWorker(new CompletePartUpload(uploadId));
 		threadExec.run();
 

@@ -56,6 +56,7 @@ public class CompleteMultipartUploadBySameUploadId18765 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
+		// TODO ：文本用例中未提及需开启桶版本控制状态，请确认此测试点
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}
 
@@ -67,6 +68,7 @@ public class CompleteMultipartUploadBySameUploadId18765 extends S3TestBase {
 		for (int i = 0; i < filePaths.length; i++) {
 			String filePath = filePaths[i];
 			int partSize = partSizes[i];
+			// TODO ：文本用例中为“并发上传多个分段”，而不是“并发上传所有分段，其中对象内容数据不同”，请确认此测试点
 			threadExec.addWorker(new PartUpload(uploadId, filePath, partSize));
 		}
 		threadExec.run();

@@ -44,6 +44,7 @@ public class ListMultipartUploadsWithDelimiter18743 extends S3TestBase {
 			String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 			uploadIds.add(keyName, uploadId);
 		}
+		// TODO: 文本用例第2步没有实现
 
 		// test a: matching prefix
 		String prefixA = "dir";

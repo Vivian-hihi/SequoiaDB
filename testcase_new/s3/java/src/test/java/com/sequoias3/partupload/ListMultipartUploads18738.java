@@ -30,6 +30,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  */
 public class ListMultipartUploads18738 extends S3TestBase {
 	private boolean runSuccess = false;
+	// TODO :桶名对应用例编号有误
 	private String bucketName = "bucket18378";
 	private String keyNameA = "/aa/object18738A";
 	private String keyNameB = "/aa/object18738B";
@@ -64,6 +65,7 @@ public class ListMultipartUploads18738 extends S3TestBase {
 		String uploadIdB = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameB);
 		// test c: upload partial uploads
 		String uploadIdC = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameC);
+		// TODO :这里请求并没有发到s3服务端，没有上传分段，和test b属于一种情况
 		new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1).withPartSize(1024 * 1024 * 5)
 				.withBucketName(bucketName).withKey(keyNameC).withUploadId(uploadIdC);
 		// test d: completeMultipartUpload

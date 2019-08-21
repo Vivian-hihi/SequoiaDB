@@ -25,6 +25,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 public class ListParts18727 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client;
+    //TODO : key名中用例编号不正确
     private String key = "/aa/bb/obj18706";
 
     @BeforeClass
@@ -46,6 +47,7 @@ public class ListParts18727 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+            	// TODO： 对象未上传成功，这里不需要删除对象
                 s3Client.deleteObject(S3TestBase.bucketName, key);
             }
         } finally {

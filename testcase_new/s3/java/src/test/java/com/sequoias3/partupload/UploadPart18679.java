@@ -38,6 +38,7 @@ public class UploadPart18679 extends S3TestBase {
     private Object[][] generateFileSize(){
         // parameter : partSize1, partSize2, ......
         return new Object[][]{
+        	//TODO：后面分段长度并不是从小到大
             // test point a: partSize increasing
             new Object[]{ 5 * 1024 * 1024, 
                           5 * 1024 * 1024, 
@@ -45,6 +46,7 @@ public class UploadPart18679 extends S3TestBase {
                           7 * 1024 * 1024, 
                          10 * 1024 * 1024, 
                           9 * 1024 * 1024 }, 
+            //TODO：注释中为降序，实际数据为升序
             // test point b: partSize decreasing
             new Object[]{ 5 * 1024 * 1024, 
                           5 * 1024 * 1024, 

@@ -45,6 +45,7 @@ public class ListParts18732 extends S3TestBase {
         List<PartETag> partETags = PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId, 
                 file, fileSize / maxPartNumber);
 
+        // TODO ：没有指定maxparts查询分段列表，与文本用例不符
         // check results
         PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, bucketName, key, 
                 partETags, uploadId);

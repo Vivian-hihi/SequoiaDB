@@ -142,6 +142,7 @@ public class UploadPartBySameKey18764 extends S3TestBase {
 					"the object version is :" + versionId + "  object Size is:" + size);
 			count++;
 		}
+		// TODO :建议增加检测返回的versions中的版本信息都是不相同的，如果版本列表中存在重复的版本信息是检测不出来的
 		// the object has 5 versions.
 		Assert.assertEquals(count, filePaths.length);
 	}

@@ -98,6 +98,7 @@ public class UploadPart18680 extends S3TestBase {
                 partETags.add(partResult.getPartETag());
             }
         }
+        //TODO：因partETags为全局变量，故此处不需要返回
         return partETags;
     }
     

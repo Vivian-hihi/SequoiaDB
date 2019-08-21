@@ -47,6 +47,7 @@ public class UploadPart18709 extends S3TestBase {
 
     @Test
     private void test() throws Exception {
+    	//TODO ：文本用例中测试步骤为使用不同uploadId多次上传分段，但这里使用的是同一个uploadId，请确认后更改
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
         this.partUpload(uploadId);
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, 
@@ -93,6 +94,7 @@ public class UploadPart18709 extends S3TestBase {
                 fileOffset = partSize * (j + 1);
             }
         }
+        //TODO: partETags为全局变量，这里不需要将它返回
         return partETags;
     }
     

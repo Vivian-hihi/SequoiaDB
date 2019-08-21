@@ -63,6 +63,7 @@ public class UploadPart18681 extends S3TestBase {
     private Object[][] generateFirstPartSize(){
         // parameter : firstPartNumber1, firstPartNumber2, firstPartSize1, firstPartSize2, key
         return new Object[][]{
+        	//TODO: firstPartNumber同组数据都是相同的，指定为一个参数传递就可以了吧
             // test point a: the same partNumber and firstPartSize
             new Object[]{ 1, 1, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_1" }, 
             // test point b: the same partNumber, and the different firstPartSize
@@ -98,9 +99,11 @@ public class UploadPart18681 extends S3TestBase {
                 new ThreadUploadFirstPart(file2, key, firstPartNumber2, firstPartSize2));
         threadExec.run();
         
+        //TODO:下方注释successful拼写有误
         // get first part info, make sure the successfull part
         // get the firstPartETagStr
         ListPartsRequest request = new ListPartsRequest(bucketName, key, uploadId);
+        //TODO: 此处通过查询分段列表获取实际上传内容的etag来确定最终上传成功的分段是哪个，但是不能保证初次上传的分段是被覆盖的
         PartListing parts = s3Client.listParts(request);
         PartSummary partSummary = parts.getParts().get(0);
         // get the firstPartETag

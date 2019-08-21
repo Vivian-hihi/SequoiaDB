@@ -52,6 +52,7 @@ public class AbortMultipartUpload18717 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+            	//TODO：因为用例中的对象未上传成功，所以删除对象的步骤可以去掉
                 s3Client.deleteObject(S3TestBase.bucketName, key);
                 TestTools.LocalFile.removeFile(localPath);
             }
