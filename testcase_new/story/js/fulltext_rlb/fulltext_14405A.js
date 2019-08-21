@@ -1,39 +1,39 @@
 /************************************
-*@Description: 异常启动DB主节点不影响全文索引功能，且重启后新主为原主节点
+*@Description: 正常启动DB主节点不影响全文索引功能，且重启后新主为原主节点
 *@author:      liuxiaoxuan
 *@createdate:  2019.07.03
-*@testlinkCase: seqDB-14406
+*@testlinkCase: seqDB-14405
 **************************************/
 
 function main()
 {
    if( commIsStandalone( db ) )  {   return ;   }  
 
-   var clName = COMMCLNAME + "_ES_14406";
+   var clName = COMMCLNAME + "_ES_14405A";
    commDropCL( db, COMMCSNAME, clName, true, true );
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
-   // 插入数据，并检查集合所在数据组的lsn一致
+   // 创建全文索引，插入数据
+   var textIndexName = "textIndex_14405A";   
+   dbcl.createIndex( textIndexName, {"a" : "text"} );
    var objs = new Array();
    for( var i = 0; i < 20000; i++ )
    {
-      objs.push( {a: "test_14406 " + i, b :  i } );
+      objs.push( {a: "test_14405A " + i, b :  i } );
    }
    dbcl.insert( objs );
-   checkConsistency( COMMCSNAME, clName );
    
-   // 异常停止数据主节点
+   // 正常停止数据主节点
    var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
    var preMaster = db.getRG( groups[0] ).getMaster();
-   var preMasterNodeName = preMaster.getHostName() + ":" + preMaster.getServiceName();
+   var preMasterNodeName = preMaster.getHostName() + ":" + preMaster.getServiceName(); 
    try
    {
        // 加大原主节点的权重，使的后面重新选举尽可能选回自己
        db.updateConf( { "weight" : 100 }, { "NodeName" : preMasterNodeName } );
-       var remote = new Remote( preMaster.getHostName(), CMSVCNAME ) ;
-       var cmd = remote.getCmd() ;
-       cmd.run( "ps -ef | grep sequoiadb | grep -v grep | grep " + preMaster.getServiceName() + " | awk '{print $2}' | xargs kill -9" );
+       preMaster.stop(); 
+       preMaster.start();       
        
        // 等待2min，检查数据组所有节点LSN是否一致
        checkGroupBusiness( 120, COMMCSNAME, clName );
@@ -62,14 +62,17 @@ function main()
            throw buildException( "changePrimary", null, "reelect and change primary", preMasterNodeName, curMasterNodeName );
        }
 
-       // 创建全文索引，检查数据同步
-       var textIndexName = "textIndex_14406";   
-       dbcl.createIndex( textIndexName, {"a" : "text"} );
-       checkFullSyncToES( COMMCSNAME, clName, textIndexName, 20000 );
+       // 执行增删改
+       dbcl.insert( [{ a : 'test_14405A 20001', b : 20001}, { a : 'test_14405A 20002', b : 20002}, { a : 'test_14405A 20003', b : 20003}] );
+       dbcl.update( { $set : { a : "test_14405A update" } } , {a : "test_14405A 10001"} );
+       dbcl.remove( {a : "test_14405A 10002"} );
+       
+       // 检查数据同步
+       checkFullSyncToES( COMMCSNAME, clName, textIndexName, dbcl.count() );
        checkConsistency( COMMCSNAME, clName );
    
        // 全文检索
-       var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14406"}}}}}]};
+       var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14405A"}}}}}]};
        var actResult = dbOpr.findFromCL( dbcl, findConf, {'a' : ''} );
        var expResult = dbOpr.findFromCL( dbcl, {"b": {"$lt" : 10000}}, {'a' : ''} );
        actResult.sort( compare("a") );
@@ -80,13 +83,14 @@ function main()
        var esIndexNames = dbOpr.getESIndexNames( COMMCSNAME, clName, textIndexName );
        commDropCL( db, COMMCSNAME, clName, true, true ); 
        //SEQUOIADBMAINSTREAM-3983
-       checkIndexNotExistInES( esIndexNames );  
+       checkIndexNotExistInES( esIndexNames );      
    }
    finally
-   {
-       // 等待环境恢复后再重置配置
-       checkGroupBusiness( 120, COMMCSNAME, clName );
+   { 
+       // 重置配置
        db.updateConf( { "weight" : 10 }, { "NodeName" : preMasterNodeName } );
-   } 
+       preMaster.start();
+   }
+
 }
 main();

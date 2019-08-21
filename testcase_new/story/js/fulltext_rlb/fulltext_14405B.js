@@ -1,7 +1,7 @@
 /************************************
-*@Description: 正常启动DB主节点不影响全文索引功能，且重启后新主为原主节点
+*@Description: 正常启动DB主节点不影响全文索引功能，且重启后新主为新主节点
 *@author:      liuxiaoxuan
-*@createdate:  2019.07.03
+*@createdate:  2019.08.21
 *@testlinkCase: seqDB-14405
 **************************************/
 
@@ -9,28 +9,30 @@ function main()
 {
    if( commIsStandalone( db ) )  {   return ;   }  
 
-   var clName = COMMCLNAME + "_ES_14405";
+   var clName = COMMCLNAME + "_ES_14405B";
    commDropCL( db, COMMCSNAME, clName, true, true );
 
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
-   // 插入数据，并检查集合所在数据组的lsn一致
+   // 创建全文索引，插入数据
+   var textIndexName = "textIndex_14405B";   
+   dbcl.createIndex( textIndexName, {"a" : "text"} );
    var objs = new Array();
    for( var i = 0; i < 20000; i++ )
    {
-      objs.push( {a: "test_14405 " + i, b :  i } );
+      objs.push( {a: "test_14405B " + i, b :  i } );
    }
    dbcl.insert( objs );
-   checkConsistency( COMMCSNAME, clName );
    
    // 正常停止数据主节点
    var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
    var preMaster = db.getRG( groups[0] ).getMaster();
-   var preMasterNodeName = preMaster.getHostName() + ":" + preMaster.getServiceName(); 
+   var preSlave = db.getRG( groups[0] ).getSlave();
+   var preSlaveNodeName = preSlave.getHostName() + ":" + preSlave.getServiceName(); 
    try
    {
-       // 加大原主节点的权重，使的后面重新选举尽可能选回自己
-       db.updateConf( { "weight" : 100 }, { "NodeName" : preMasterNodeName } );
+       // 加大备节点的权重，使的后面重新选举尽可能选到该节点
+       db.updateConf( { "weight" : 100 }, { "NodeName" : preSlaveNodeName } );
        preMaster.stop(); 
        preMaster.start();       
        
@@ -46,9 +48,9 @@ function main()
            isMasterNodeExist( groups[0] );
            var curMaster = db.getRG( groups[0] ).getMaster();
            var curMasterNodeName = curMaster.getHostName() + ":" + curMaster.getServiceName();
-           println( "reelect times: " + doTimes + "\ncurMasterNodeName: " + curMasterNodeName + "\npreMasterNodeName: " + preMasterNodeName );
-           // 当新主和原主为同一个节点，则退出
-           if( preMasterNodeName == curMasterNodeName ) 
+           println( "reelect times: " + doTimes + "\ncurMasterNodeName: " + curMasterNodeName + "\npreSlaveNodeName: " + preSlaveNodeName );
+           // 当新主为原备节点，则退出
+           if( preSlaveNodeName == curMasterNodeName ) 
            {
                break;
            }
@@ -58,17 +60,20 @@ function main()
        // 选举后没有切回原主，则抛异常
        if ( doTimes > 50 )
        {
-           throw buildException( "changePrimary", null, "reelect and change primary", preMasterNodeName, curMasterNodeName );
+           throw buildException( "changePrimary", null, "reelect and change primary", preSlaveNodeName, curMasterNodeName );
        }
+       
+       // 执行增删改
+       dbcl.insert( [{ a : 'test_14405B 20001', b : 20001}, { a : 'test_14405B 20002', b : 20002}, { a : 'test_14405B 20003', b : 20003}] );
+       dbcl.update( { $set : { a : "test_14405B update" } } , {a : "test_14405B 10001"} );
+       dbcl.remove( {a : "test_14405B 10002"} );
 
-       // 创建全文索引，检查数据同步
-       var textIndexName = "textIndex_14405";   
-       dbcl.createIndex( textIndexName, {"a" : "text"} );
-       checkFullSyncToES( COMMCSNAME, clName, textIndexName, 20000 );
+       // 检查数据同步
+       checkFullSyncToES( COMMCSNAME, clName, textIndexName, dbcl.count() );
        checkConsistency( COMMCSNAME, clName );
    
        // 全文检索
-       var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14405"}}}}}]};
+       var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14405B"}}}}}]};
        var actResult = dbOpr.findFromCL( dbcl, findConf, {'a' : ''} );
        var expResult = dbOpr.findFromCL( dbcl, {"b": {"$lt" : 10000}}, {'a' : ''} );
        actResult.sort( compare("a") );
@@ -84,7 +89,7 @@ function main()
    finally
    { 
        // 重置配置
-       db.updateConf( { "weight" : 10 }, { "NodeName" : preMasterNodeName } );
+       db.updateConf( { "weight" : 10 }, { "NodeName" : preSlaveNodeName } );
        preMaster.start();
    }
 
