@@ -1728,6 +1728,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare key of access plan, rc: %d",
                    rc ) ;
 
+      // recheck cache level
+      needCache = ( planKey.getCacheLevel() > OPT_PLAN_NOCACHE ) ?
+                  needCache : FALSE ;
+
       // If cache is initialized, try to get plan from cache first
       if ( needCache )
       {
@@ -1871,54 +1875,74 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to prepare key of access plan, "
                       "rc: %d", rc ) ;
 
-         // Try to get the main-collection plan from cache first
-         rc = _getCachedAccessPlan( planKey, &pPlan ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
-
-         // if plan is main-collection validated, check whether statistics
-         // for this sub-collection is expired
-         if ( NULL != pPlan &&
-              pPlan->isMainCLValid() &&
-              pPlan->isEstimatedFromStat() &&
-              !pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) &&
-              optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
-                                   pPlan->getInputPages(),
-                                   planHelper.getOptCostThreshold(),
-                                   su->getPageSizeLog2() ) )
+         if ( planKey.getCacheLevel() > OPT_PLAN_NOCACHE )
          {
-            // plan is expired
-            PD_LOG( PDDEBUG, "Plan [%s] is expired, current pages [%d], "
-                    "statistics pages [%d], cost threshold [%d]",
-                    pPlan->toString().c_str(),
-                    mbContext->mbStat()->_totalDataPages,
-                    pPlan->getInputPages(),
-                    planHelper.getOptCostThreshold() ) ;
+            // Try to get the main-collection plan from cache first
+            rc = _getCachedAccessPlan( planKey, &pPlan ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
 
-            // clear expired plan and flags
-            _planCache.removeCachedPlan( pPlan, SHARED ) ;
-            pCachedPlanMgr->clearMainCLInvalidBit( subCLMBID ) ;
+            // if plan is main-collection validated, check whether statistics
+            // for this sub-collection is expired
+            if ( NULL != pPlan &&
+                 pPlan->isMainCLValid() &&
+                 pPlan->isEstimatedFromStat() &&
+                 !pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) &&
+                 optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
+                                      pPlan->getInputPages(),
+                                      planHelper.getOptCostThreshold(),
+                                      su->getPageSizeLog2() ) )
+            {
+               // plan is expired
+               PD_LOG( PDDEBUG, "Plan [%s] is expired, current pages [%d], "
+                       "statistics pages [%d], cost threshold [%d]",
+                       pPlan->toString().c_str(),
+                       mbContext->mbStat()->_totalDataPages,
+                       pPlan->getInputPages(),
+                       planHelper.getOptCostThreshold() ) ;
 
-            // release plan
-            pPlan->release() ;
-            pPlan = NULL ;
+               // clear expired plan and flags
+               _planCache.removeCachedPlan( pPlan, SHARED ) ;
+               pCachedPlanMgr->clearMainCLInvalidBit( subCLMBID ) ;
+
+               // release plan
+               pPlan->release() ;
+               pPlan = NULL ;
+            }
          }
 
          if ( NULL == pPlan )
          {
-            optMainCLAccessPlan * mainPlan = NULL ;
+            if ( planKey.getCacheLevel() > OPT_PLAN_NOCACHE )
+            {
+               optMainCLAccessPlan * mainPlan = NULL ;
 
-            // Could not find the main-collection plan from cache, so create
-            // the plan for sub-collection and bind it to the main-collection
-            // plan
-            rc = _createMainCLPlan( planKey, options, su, mbContext,
-                                    planRuntime, planHelper, &mainPlan ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to create main-collection "
-                         "query, rc: %d", rc ) ;
+               // Could not find the main-collection plan from cache, so create
+               // the plan for sub-collection and bind it to the main-collection
+               // plan
+               rc = _createMainCLPlan( planKey, options, su, mbContext,
+                                       planRuntime, planHelper, &mainPlan ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create main-collection "
+                            "query, rc: %d", rc ) ;
 
-            _cacheAccessPlan( mainPlan ) ;
+               _cacheAccessPlan( mainPlan ) ;
 
-            // Use the sub-collection plan for the this time
-            mainPlan->release() ;
+               // Use the sub-collection plan for the this time
+               mainPlan->release() ;
+            }
+            else
+            {
+               // no cache, create a generate plan
+               optGeneralAccessPlan * generalPlan = NULL ;
+
+               planKey.setCollectionInfo( su, mbContext ) ;
+               rc = _createAccessPlan( su, mbContext, planKey, planRuntime,
+                                       planHelper, &generalPlan, FALSE ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create access plan, rc: %d",
+                            rc ) ;
+
+               planRuntime.setPlan( generalPlan, this, TRUE ) ;
+               generalPlan = NULL ;
+            }
          }
          else
          {
@@ -2012,7 +2036,7 @@ namespace engine
          }
       }
 
-      planKey.generateKeyCode( su, mbContext ) ;
+      planKey.setCollectionInfo( su, mbContext ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_OPTAPM__PREPAREAPKEY, rc ) ;

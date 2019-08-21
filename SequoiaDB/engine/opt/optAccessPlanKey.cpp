@@ -230,8 +230,10 @@ namespace engine
               "the cache level to OPT_PLAN_ORIGINAL, rc: %d",
               getQuery().toString( FALSE, TRUE ).c_str(), rc ) ;
 
-      // Ignore errors, goto full generation for original cache level
-      _cacheLevel = OPT_PLAN_ORIGINAL ;
+      // Ignore errors, goto full generation for no cache level
+      // NOTE: we don't cache plans which could not be normalized in
+      // >= NORMALIZED levels
+      _cacheLevel = OPT_PLAN_NOCACHE ;
       rc = SDB_OK ;
 
    done :

@@ -193,8 +193,8 @@ namespace engine
                                FLG_QUERY_FORCE_IDX_BY_SORT ) ) ;
          }
 
-         OSS_INLINE void generateKeyCode ( dmsStorageUnit *su,
-                                           dmsMBContext *mbContext )
+         OSS_INLINE void setCollectionInfo ( dmsStorageUnit *su,
+                                             dmsMBContext *mbContext )
          {
             setCSInfo( su ) ;
             setCLInfo( mbContext ) ;
