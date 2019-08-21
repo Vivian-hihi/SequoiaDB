@@ -29,6 +29,7 @@ public class SdbDataSourceWrapper {
 
         nwOpt.setConnectTimeout(500);
         nwOpt.setMaxAutoConnectRetryTime(0);
+		nwOpt.setSocketKeepAlive(true);
 
         dsOpt.setMaxCount(config.getMaxConnectionNum());
         dsOpt.setDeltaIncCount(config.getDeltaIncCount());
