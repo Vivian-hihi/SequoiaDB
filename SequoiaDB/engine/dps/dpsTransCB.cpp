@@ -832,12 +832,12 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DPSTRANSCB_TERMALLTRANS ) ;
 
       ossScopedLock _lock( &_CBMapMutex );
-      TRANS_CB_MAP::iterator iterMap = _cbMap.begin();
-      while( iterMap != _cbMap.end() )
+      for ( TRANS_CB_MAP::iterator iterMap = _cbMap.begin() ;
+            iterMap != _cbMap.end() ;
+            ++ iterMap )
       {
          iterMap->second->postEvent( pmdEDUEvent(
                                      PMD_EDU_EVENT_TRANS_STOP ) ) ;
-         _cbMap.erase( iterMap++ );
       }
 
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_TERMALLTRANS );

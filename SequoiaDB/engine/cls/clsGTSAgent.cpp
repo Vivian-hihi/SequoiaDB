@@ -80,6 +80,23 @@ namespace engine
       TRANS_MAP::iterator it ;
       BOOLEAN isStoped = FALSE ;
 
+      while ( TRUE )
+      {
+         UINT32 transCBSize = pTransCB->getTransCBSize() ;
+         if ( transCBSize == 0 )
+         {
+            break ;
+         }
+         if ( !pTransCB->isDoRollback() )
+         {
+            isStoped = TRUE ;
+            goto done ;
+         }
+         PD_LOG( PDDEBUG, "There are still %u EDUs under rollback or commit",
+                 transCBSize ) ;
+         ossSleep( OSS_ONE_SEC ) ;
+      }
+
       // to avoid erase iterator and insert in the same map
       pTransCB->cloneTransMap( tmpTransMap ) ;
 
@@ -117,6 +134,7 @@ namespace engine
          ++it ;
       }
 
+   done :
       return isStoped ? SDB_CLS_NOT_PRIMARY : SDB_OK;
    }
 
