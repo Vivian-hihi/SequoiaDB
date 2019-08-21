@@ -54,9 +54,10 @@ function makeTmpFile( filePath, fileSize)
     
     var cmd = new Cmd();
     var isExist = false;
+	var fileName = filePath + "/" + fileSize;
     try
     {
-        cmd.run( "ls " + filePath );
+        cmd.run( "ls " + fileName );
         isExist = true;
     }
     catch(e)
@@ -64,9 +65,9 @@ function makeTmpFile( filePath, fileSize)
         if( 2 == e ){ isExist = false; }
     }
     
-    if(isExist){ File.remove( filePath ); }
-    cmd.run( "dd if=/dev/zero of=" + filePath + " bs=1c count=" + fileSize );
-    var md5Arr = cmd.run( "md5sum " + filePath ).split(" ");
+    if(isExist){ File.remove( fileName ); }
+    cmd.run( "dd if=/dev/zero of=" + fileName + " bs=1c count=" + fileSize );
+    var md5Arr = cmd.run( "md5sum " + fileName ).split(" ");
     var md5 = md5Arr[0];
     return md5
 }
