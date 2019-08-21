@@ -37,6 +37,7 @@ import com.sequoias3.commlibs3.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class UploadPartAndKillData18781 extends S3TestBase {
+	//TODO :建议去掉用例中无用的输出语句
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket18781";
@@ -48,6 +49,7 @@ public class UploadPartAndKillData18781 extends S3TestBase {
     private File file1 = null;
     private File file2 = null;
     private List<PartETag> partEtags = Collections.synchronizedList(new ArrayList<PartETag>());
+    //TODO :下面两个参数并无实际用处，可删除
     private List<Integer> uploadSuccessPartNums = Collections.synchronizedList(new ArrayList<Integer>());
     private List<Integer> expPartNums = new ArrayList<>();
 
@@ -74,6 +76,7 @@ public class UploadPartAndKillData18781 extends S3TestBase {
         int partNums = fileSize / partSize;
         for (int i = 0; i < partNums; i++) {
             int partNum = i + 1;
+            //TODO ：再次上传分段数据内容和第一次上传是相同的，与文本用例描述不符
             mgr.addTask(new PartUpload(partNum, partSize, file2, uploadId));
             expPartNums.add(partNum);
         }

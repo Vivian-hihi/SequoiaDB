@@ -143,6 +143,7 @@ public class CompleteMultipartUploadAndS3ReStart18787 extends S3TestBase {
     }
 
     private void checkResult(String uploadId, List<PartETag> partEtags) throws Exception {
+    	//TODO :如果未撞到测试点完成分段上传的线程成功的话这里再重新完成分段上传会失败
         // 重新完成分段上传
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 

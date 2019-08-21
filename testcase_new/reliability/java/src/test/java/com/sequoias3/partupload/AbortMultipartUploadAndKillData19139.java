@@ -40,6 +40,7 @@ import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
  * @version 1.00
  */
 public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
+	//TODO :建议删除用例中不必要的输出语句
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket19139";
@@ -90,6 +91,7 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
 
+        //TODO ：建议增加集群是否已经恢复的检测
         checkResult();
         runSuccess = true;
     }
