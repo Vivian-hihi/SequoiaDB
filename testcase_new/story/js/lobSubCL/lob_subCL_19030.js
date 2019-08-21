@@ -54,7 +54,7 @@ function main()
             throw buildException( "put lob", e, "to range subCL should be fail: " + subCLName2, -6, e );
         }
     }
-    var lobOids = insertLob(mainCL, filePath, "YYYYMMDD", 5, 10, 1, "20190801");
+    var lobOids = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 1, "20190801");
     checkLobMD5(mainCL, lobOids, fileMD5);
     
     deleteTmpFile( filePath );
