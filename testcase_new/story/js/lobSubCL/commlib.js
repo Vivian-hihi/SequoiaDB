@@ -33,8 +33,8 @@ function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat,
     {
         var subCLName = clName + "_" + i;
         commCreateCL(db, csName, subCLName);
-        var lowBound = {"date": ( beginBound + i * scope ) + ''};
-        var upBound = {"date": ( beginBound + (i + 1) * scope ) + ''};
+        var lowBound = {"date": ( parseInt(beginBound) + i * scope ) + ''};
+        var upBound = {"date": ( parseInt(beginBound) + (i + 1) * scope ) + ''};
         mainCL.attachCL( csName + "." + subCLName, {"LowBound": lowBound, "UpBound": upBound});
     }
     
@@ -52,7 +52,8 @@ function makeTmpFile( filePath, fileName, fileSize)
     if( fileSize == undefined){ fileSize = 1024 * 100; }    
     var fileFullPath = filePath + "/" + fileName;        
 	File.mkdir(filePath);
-	
+    
+	var cmd = new Cmd();
     cmd.run( "dd if=/dev/zero of=" + fileFullPath  + " bs=1c count=" + fileSize );
     var md5Arr = cmd.run( "md5sum " + fileFullPath ).split(" ");
     var md5 = md5Arr[0];

@@ -17,8 +17,10 @@ function main()
     var mainCLName2 = "mainCL_19034_2";
     
     var subCLName = "subCL_19034";
-    var filePath = WORKDIR + "/testfile19034";
-    var fileMD5 = makeTmpFile( filePath );
+    var filePath = WORKDIR + "/lob19034/";
+    var fileName = "file19034"
+    var fileFullPath = filePath + fileName;
+    var fileMD5 = makeTmpFile( filePath, fileName );
     
     commDropCL(db, csName, mainCLName1);
     commDropCL(db, csName, mainCLName2);
@@ -31,8 +33,8 @@ function main()
     var subCL = commCreateCL( db, csName, subCLName );
     mainCL1.attachCL( csName + "." + subCLName, {"LowBound": {"date": "201908"}, "UpBound": {"date": "201910"}});
     
-    var lobOids1 = insertLob(subCL, filePath, "YYYYMM", 1, 10, 1, "20190801");
-    var lobOids2 = insertLob(subCL, filePath, "YYYYMM", 1, 10, 1, "20190901");
+    var lobOids1 = insertLob(subCL, fileFullPath, "YYYYMM", 1, 10, 1, "20190801");
+    var lobOids2 = insertLob(subCL, fileFullPath, "YYYYMM", 1, 10, 1, "20190901");
     
     mainCL1.detachCL( csName + "." + subCLName );
     mainCL2.attachCL( csName + "." + subCLName, {"LowBound": {"date": "201909"}, "UpBound": {"date": "201911"}});

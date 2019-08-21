@@ -14,8 +14,10 @@ function main()
     var csName = COMMCSNAME;
     var mainCLName = "mainCL_19032";
     var subCLName = "subCL_19032";
-    var filePath = WORKDIR + "/testfile19032";
-    var fileMD5 = makeTmpFile( filePath );
+    var filePath = WORKDIR + "/lob19032/";
+    var fileName = "file19032"
+    var fileFullPath = filePath + fileName;
+    var fileMD5 = makeTmpFile( filePath, fileName );
     
     commDropCL(db, csName, mainCLName);
     commDropCL(db, csName, subCLName);
@@ -24,7 +26,7 @@ function main()
     var mainCL = commCreateCLByOption(db, csName, mainCLName, options, true, false, "create main cl");
     commCreateCL( db, csName, subCLName );
     mainCL.attachCL( csName + "." + subCLName, {"LowBound": {"date": {"$minKey": 1}}, "UpBound": {"date": {"$maxKey": 1}}});
-    var lobOids = insertLob(mainCL, filePath);
+    var lobOids = insertLob(mainCL, fileFullPath);
     checkLobMD5(mainCL, lobOids, fileMD5);
     
     deleteTmpFile( filePath );

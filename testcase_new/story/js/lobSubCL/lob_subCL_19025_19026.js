@@ -14,28 +14,33 @@ function main()
     var csName = COMMCSNAME;
     var mainCLName = "cl19025_main";
     var subCLName = "cl19025_sub";
-    var filePath = WORKDIR + "/testfile19025";
-    var fileMD5 = makeTmpFile( filePath );
+    var filePath = WORKDIR + "/lob19025/";
+    var fileName = "file19025";
+    var fileFullPath = filePath + fileName;
+    var fileMD5 = makeTmpFile( filePath, fileName );
+    
+    commDropCL(db, csName, mainCLName);
+    commDropCL(db, csName, subCLName);
     
     //测试创建LobShardingKeyFormat为YYYYMMDD主表
-    var mainCL = createMainTable( db, csName, mainCLName, subCLName, "YYYYMMDD");
+    var mainCL = createMainCLAndAttachCL( db, csName, mainCLName, subCLName, "YYYYMMDD");
     var nameArr = mainCL.toString().split(".");
     var mainCLFullName = nameArr[1] + "." + nameArr[2] ;
-    var lobOid1s = insertLob( mainCL, filePath, "YYYYMMDD" );
+    var lobOid1s = insertLob( mainCL, fileFullPath, "YYYYMMDD" );
     checkLobMD5( mainCL, lobOid1s, fileMD5 );
     checkSubCLLob( db, mainCLFullName, lobOid1s);
     cleanMainCL(db, csName, mainCLName);
     
     //测试创建LobShardingKeyFormat为YYYYMM主表
-    createMainTable( db, csName, mainCLName, subCLName, "YYYYMM");
-    var lobOid2s = insertLob( mainCL, filePath, "YYYYMM" );
+    createMainCLAndAttachCL( db, csName, mainCLName, subCLName, "YYYYMM");
+    var lobOid2s = insertLob( mainCL, fileFullPath, "YYYYMM" );
     checkLobMD5( mainCL, lobOid2s, fileMD5 );
     checkSubCLLob( db, mainCLFullName, lobOid2s);
     cleanMainCL(db, csName, mainCLName);
     
     //测试创建LobShardingKeyFormat为YYYY主表
-    createMainTable( db, csName, mainCLName, subCLName, "YYYY");
-    var lobOid3s = insertLob( mainCL, filePath, "YYYY" );
+    createMainCLAndAttachCL( db, csName, mainCLName, subCLName, "YYYY");
+    var lobOid3s = insertLob( mainCL, fileFullPath, "YYYY" );
     checkLobMD5( mainCL, lobOid3s, fileMD5 );
     checkSubCLLob( db, mainCLFullName, lobOid3s);
     cleanMainCL(db, csName, mainCLName);

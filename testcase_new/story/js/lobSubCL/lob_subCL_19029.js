@@ -23,8 +23,10 @@ function main()
     var subCLName2 = "subCL_19029_2";
     var targetGroup = groups[0][0].GroupName;
     var sourceGroup = groups[1][0].GroupName;
-    var filePath = WORKDIR + "/testfile19029";
-    var fileMD5 = makeTmpFile( filePath );
+    var filePath = WORKDIR + "/lob19029/";
+    var fileName = "file19029";
+    var fileFullPath = filePath + fileName;
+    var fileMD5 = makeTmpFile( filePath, fileName );
     
     commDropCL(db, csName, mainCLName);
     commDropCL(db, csName, subCLName1);
@@ -39,7 +41,7 @@ function main()
     
     mainCL.attachCL( csName + "." + subCLName1, {"LowBound": {"date": "20190801"}, "UpBound": {"date": "20190805"}});
     mainCL.attachCL( csName + "." + subCLName2, {"LowBound": {"date": "20190805"}, "UpBound": {"date": "20190810"}});
-    var lobOids = insertLob(mainCL, filePath, "YYYYMMDD", 5, 10, 2, "20190801");
+    var lobOids = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801");
     checkLobMD5(mainCL, lobOids, fileMD5);
     
     deleteTmpFile( filePath );

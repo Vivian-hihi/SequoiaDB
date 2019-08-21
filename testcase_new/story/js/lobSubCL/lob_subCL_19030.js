@@ -23,8 +23,10 @@ function main()
     var subCLName2 = "subCL_19030_2";
     var targetGroup = groups[0][0].GroupName;
     var sourceGroup = groups[1][0].GroupName;
-    var filePath = WORKDIR + "/testfile19030";
-    var fileMD5 = makeTmpFile( filePath );
+    var filePath = WORKDIR + "/lob19030/";
+    var fileName = "file19030";
+    var fileFullPath = filePath + fileName;
+    var fileMD5 = makeTmpFile( filePath, fileName );
     
     commDropCL(db, csName, mainCLName);
     commDropCL(db, csName, subCLName1);
@@ -40,12 +42,9 @@ function main()
     subcl2.split(targetGroup, sourceGroup, 50);
     
     mainCL.attachCL( csName + "." + subCLName1, {"LowBound": {"date": "20190801"}, "UpBound": {"date": "20190805"}});
-    mainCL.attachCL( csName + "." + subCLName2, {"LowBound": {"date": "20190805"}, "UpBound": {"date": "20190810"}});
-    var lobOids = insertLob(mainCL, filePath, "YYYYMMDD", 5, 10, 1, "20190801");
-    
     try
     {
-        insertLob(mainCL, filePath, "YYYYMMDD", 5, 10, 1, "20190806");
+        mainCL.attachCL( csName + "." + subCLName2, {"LowBound": {"date": "20190805"}, "UpBound": {"date": "20190810"}});
         throw 0;
     }
     catch( e )
@@ -55,10 +54,13 @@ function main()
             throw buildException( "put lob", e, "to range subCL should be fail: " + subCLName2, -6, e );
         }
     }
+    var lobOids = insertLob(mainCL, filePath, "YYYYMMDD", 5, 10, 1, "20190801");
     checkLobMD5(mainCL, lobOids, fileMD5);
     
     deleteTmpFile( filePath );
-    cleanMainCL(db, csName, mainCLName);
+    commDropCL(db, csName, mainCLName);
+    commDropCL(db, csName, subCLName1);
+    commDropCL(db, csName, subCLName2);
 }
 
 main();
