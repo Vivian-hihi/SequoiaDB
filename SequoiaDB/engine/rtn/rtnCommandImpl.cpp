@@ -1452,8 +1452,9 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCREATECLCOMMAND, rc ) ;
       return rc ;
    error_rollback :
-      rcTmp = rtnDropCollectionCommand ( pCollection, cb, dmsCB, dpsCB ) ;
-      if ( rcTmp )
+      rcTmp = rtnDropCollectionCommand ( pCollection, cb, dmsCB, dpsCB,
+                                         clUniqueID ) ;
+      if ( SDB_OK != rcTmp && SDB_DMS_NOTEXIST != rcTmp )
       {
          PD_LOG ( PDERROR, "Failed to rollback creating collection %s, rc = %d",
                   pCollection, rcTmp ) ;
@@ -1814,7 +1815,8 @@ namespace engine
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
                                     SDB_DMSCB *dmsCB,
-                                    SDB_DPSCB *dpsCB )
+                                    SDB_DPSCB *dpsCB,
+                                    utilCLUniqueID clUniqueID )
    {
       INT32 rc                            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPCLCOMMAND ) ;
@@ -1824,6 +1826,7 @@ namespace engine
       dmsStorageUnit *su                  = NULL ;
       const CHAR *pCollectionShortName    = NULL ;
       BOOLEAN writable                    = FALSE ;
+      dmsMBContext * mbContext            = NULL ;
 
       // Check writable before su lock
       rc = dmsCB->writable( cb ) ;
@@ -1839,6 +1842,19 @@ namespace engine
          goto error ;
       }
 
+      if ( UTIL_UNIQUEID_NULL != clUniqueID )
+      {
+         rc = su->data()->getMBContext( &mbContext, pCollectionShortName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get mbContext for collection "
+                      "%s, rc: %d", pCollection, rc ) ;
+
+         PD_CHECK( mbContext->mb()->_clUniqueID == clUniqueID,
+                   SDB_DMS_NOTEXIST, error, PDWARNING,
+                   "Collection %s with unique ID %llu had been dropped, "
+                   "current unique ID is %llu", pCollection,
+                   clUniqueID, mbContext->mb()->_clUniqueID ) ;
+      }
+
       rc = su->data()->dropCollection ( pCollectionShortName, cb, dpsCB ) ;
       if ( rc )
       {
@@ -1850,6 +1866,10 @@ namespace engine
       PD_LOG( PDEVENT, "Drop collection[%s] succeed", pCollection ) ;
 
    done :
+      if ( NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -2120,7 +2140,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTESTCLCOMMAND, "rtnTestCollectionCommand" )
    INT32 rtnTestCollectionCommand ( const CHAR *pCollection,
                                     SDB_DMSCB *dmsCB,
-                                    utilCLUniqueID *pClUniqueID )
+                                    utilCLUniqueID *pClUniqueID,
+                                    utilCLUniqueID *pCurClUniqueID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTESTCLCOMMAND ) ;
@@ -2202,6 +2223,10 @@ namespace engine
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
+      }
+      if ( NULL != pCurClUniqueID )
+      {
+         *pCurClUniqueID = curClUniqueID ;
       }
       PD_TRACE_EXITRC ( SDB_RTNTESTCLCOMMAND, rc ) ;
       return rc ;

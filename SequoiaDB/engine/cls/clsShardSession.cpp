@@ -5153,7 +5153,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = rtnTestCollectionCommand( clName, _pDmsCB, &clUniqueID ) ;
+      utilCLUniqueID curClUniqueID = UTIL_UNIQUEID_NULL ;
+      rc = rtnTestCollectionCommand( clName, _pDmsCB, &clUniqueID, &curClUniqueID ) ;
 
       if ( SDB_DMS_CS_REMAIN == rc )
       {
@@ -5179,7 +5180,8 @@ namespace engine
 
       if ( SDB_DMS_REMAIN == rc )
       {
-         rc = rtnDropCollectionCommand( clName, _pEDUCB, _pDmsCB, _pDpsCB ) ;
+         rc = rtnDropCollectionCommand( clName, _pEDUCB, _pDmsCB, _pDpsCB,
+                                        curClUniqueID ) ;
          if ( SDB_OK == rc )
          {
             _pCatAgent->lock_w () ;

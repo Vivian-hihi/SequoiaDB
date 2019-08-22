@@ -409,7 +409,8 @@ namespace engine
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
                                     SDB_DMSCB *dmsCB,
-                                    SDB_DPSCB *dpsCB ) ;
+                                    SDB_DPSCB *dpsCB,
+                                    utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ) ;
 
    INT32 rtnRenameCollectionCommand ( const CHAR *csName,
                                       const CHAR *clShortName,
@@ -486,7 +487,8 @@ namespace engine
 
    INT32 rtnTestCollectionCommand ( const CHAR *pCollection,
                                     SDB_DMSCB *dmsCB,
-                                    utilCLUniqueID *pClUniqueID = NULL ) ;
+                                    utilCLUniqueID *pClUniqueID = NULL,
+                                    utilCLUniqueID *pCurClUniqueID = NULL ) ;
 
    INT32 rtnTestCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                          SDB_DMSCB *dmsCB,
