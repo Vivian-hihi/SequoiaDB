@@ -69,13 +69,12 @@ public class UpdateObjectWithReStartS3N18208 extends S3TestBase {
             mgr.addTask(new PutObject(updatePath));
         }
         mgr.execute();
-        mgr.isAllSuccess();
-        List<Exception> eList = mgr.getExceptions();
-        for (Exception e : eList) {
-            if (!e.getMessage().contains("Unable to execute HTTP request")) {
-                throw e;
-            }
-        }
+       if( !mgr.isAllSuccess()){
+           List<Exception> eList = mgr.getExceptions();
+           for (Exception e : eList) {
+               throw e;
+           }
+       }
         s3Client = CommLibS3.buildS3Client();
         //put again
         for (int i = count.get(); i < versionNums; i++) {
@@ -107,8 +106,18 @@ public class UpdateObjectWithReStartS3N18208 extends S3TestBase {
 
         @Override
         public void exec() throws Exception {
-            s3Client.putObject(bucketName,objectName, new File(filePath));
-            count.incrementAndGet();
+            try {
+                s3Client.putObject(bucketName, objectName, new File(filePath));
+                count.incrementAndGet();
+            }catch (AmazonS3Exception e){
+                if(e.getStatusCode() != 500){
+                    throw e;
+                }
+            }catch (Exception e){
+                if(!e.getMessage().contains("Unable to execute HTTP request")){
+                    throw e;
+                }
+            }
         }
     }
 
