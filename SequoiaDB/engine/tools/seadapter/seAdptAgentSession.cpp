@@ -132,6 +132,9 @@ namespace seadapter
             case MSG_BS_GETMORE_REQ:
                rc = _onGetmoreReq( msg, objBuff, contextID ) ;
                break ;
+            case MSG_BS_KILL_CONTEXT_REQ:
+               rc = _onKillCtxReq( msg ) ;
+               break ;
             default:
                rc = SDB_UNKNOWN_MESSAGE ;
                break ;
@@ -162,14 +165,13 @@ namespace seadapter
             msgBody = objBuff.data() ;
             bodySize = objBuff.dataSize() ;
             reply.numReturned = objBuff.getObjNum() ;
-            reply.contextID = contextID ;
          }
       }
       else
       {
          reply.numReturned = 0 ;
       }
-
+      reply.contextID = contextID ;
       reply.flags = rc ;
       reply.header.messageLength += bodySize ;
       rc = _reply( &reply, handle, msgBody, bodySize ) ;
@@ -330,6 +332,31 @@ namespace seadapter
          SDB_OSS_DEL itr->second ;
          _ctxMap.erase( itr ) ;
       }
+      goto done ;
+   }
+
+   INT32 _seAdptAgentSession::_onKillCtxReq( MsgHeader *msg, pmdEDUCB *eduCB )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 contextNum = 0 ;
+      INT64 *contextIDs = NULL ;
+
+      rc = msgExtractKillContexts( (CHAR *)msg, &contextNum, &contextIDs )  ;
+      PD_RC_CHECK( rc, PDERROR, "Parse kill context message failed[%d]", rc ) ;
+
+      for ( INT32 i = 0; i < contextNum; ++i )
+      {
+         CTX_MAP_ITR itr = _ctxMap.find( contextIDs[i] ) ;
+         if ( itr != _ctxMap.end() )
+         {
+            SDB_OSS_DEL itr->second ;
+            _ctxMap.erase( itr ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

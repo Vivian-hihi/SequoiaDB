@@ -56,6 +56,31 @@ namespace engine
 
    _rtnContextTS::~_rtnContextTS()
    {
+      // When delete the context, need to kill the context on the adapter also.
+      rtnRemoteMessenger *messenger =
+         pmdGetKRCB()->getRTNCB()->getRemoteMessenger() ;
+      if ( messenger && ( -1 != _remoteCtxID ) && ( 0 != _remoteSessionID ) )
+      {
+         CHAR *msg = NULL ;
+         INT32 bufSize = 0 ;
+         INT32 rc = msgBuildKillContextsMsg( &msg, &bufSize, 0, 1,
+                                             &_remoteCtxID, _eduCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Build kill context message failed[%d]", rc ) ;
+         }
+         else
+         {
+            rc = messenger->send( _remoteSessionID, (const MsgHeader *)msg,
+                                  _eduCB ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Send kill context message to remote "
+                       "failed[%d]", rc ) ;
+            }
+         }
+      }
+
       if ( _subContext )
       {
          if ( _subContext->contextID() )

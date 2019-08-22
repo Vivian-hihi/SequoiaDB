@@ -83,6 +83,8 @@ namespace seadapter
                            INT64 &contextID,
                            pmdEDUCB *eduCB = NULL ) ;
 
+      INT32 _onKillCtxReq( MsgHeader *msg, pmdEDUCB *eduCB = NULL ) ;
+
       INT32 _reply( MsgOpReply *header, NET_HANDLE handle,
                     const CHAR *buff, UINT32 size ) ;
       INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader *msg ) ;
