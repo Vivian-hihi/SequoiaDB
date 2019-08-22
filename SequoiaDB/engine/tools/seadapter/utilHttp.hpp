@@ -57,7 +57,6 @@ namespace seadapter
       HTTP_BAD_REQ    = 400,
       HTTP_FORBID     = 403,
       HTTP_NOT_FOUND  = 404,
-      HTTP_TOO_MANY_REQ = 429,
       HTTP_SVC_UNAVAL = 503
    } ;
 
@@ -183,8 +182,6 @@ namespace seadapter
          INT32 _extendRecvBuff() ;
          const CHAR* _getHeaderItemVal( const CHAR *key ) ;
          void _cleanup() ;
-
-         BOOLEAN _isDigitStr( const CHAR *ptr ) ;
 
    private:
       BOOLEAN        _init ;

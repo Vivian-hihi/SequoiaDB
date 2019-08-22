@@ -644,11 +644,6 @@ namespace seadapter
                     "the server status" ) ;
             rc = SDB_SYS ;
             goto error ;
-         case HTTP_TOO_MANY_REQ:
-            PD_LOG( PDERROR, "Status: 429 Too many requests. Please wait for "
-                    "a moment and retry" ) ;
-            rc = SDB_SYS ;
-            goto error ;
          default:
             PD_LOG( PDERROR, "Weired status code: %u", statusCode ) ;
             rc = SDB_SYS ;
@@ -708,7 +703,6 @@ namespace seadapter
          goto error ;
       }
 
-   retry:
       // 2. Parse the header, to check the status code.
       rc = _parseHeader( _recvBuf, headerSize ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse http header failed[ %d ], header: %s",
@@ -727,16 +721,6 @@ namespace seadapter
                  (HTTP_STATUS_CODE)parser->status_code, rc ) ;
          // Do not go to error here. Need to check if any error information is
          // sent back by application.
-      }
-      if ( HTTP_TOO_MANY_REQ == (HTTP_STATUS_CODE)parser->status_code )
-      {
-         itemPtr = _getHeaderItemVal( REST_STRING_RETRY_AFTER ) ;
-         UINT32 sleepTime =  ( itemPtr && _isDigitStr( itemPtr ) ) ?
-                             ossAtoi( itemPtr ) : 3 ;
-         PD_LOG( PDWARNING, "Too many requests for the server. Sleep for[%u] "
-                 "seconds and retry", sleepTime ) ;
-         ossSleepsecs( sleepTime ) ;
-         goto retry ;
       }
 
       // If we only want the head, just leave the remainning data.
@@ -1058,17 +1042,6 @@ namespace seadapter
          SDB_OSS_FREE( _parserSetting ) ;
          _parserSetting = NULL ;
       }
-   }
-
-   BOOLEAN _utilHttp::_isDigitStr( const CHAR *pStr )
-   {
-      if ( NULL == pStr ) return FALSE ;
-      while ( *pStr )
-      {
-         CHAR c = *pStr++ ;
-         if ( c < '0' || c > '9' ) return FALSE ;
-      }
-      return TRUE ;
    }
 }
 
