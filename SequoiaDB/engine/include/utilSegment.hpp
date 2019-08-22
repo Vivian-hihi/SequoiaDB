@@ -905,7 +905,7 @@ namespace engine
             {
                // exceed limitation
                rc = SDB_OSS_UP_TO_LIMIT ;
-               PD_LOG( PDWARNING,
+               PD_LOG( PDINFO,
                        "Exceed resource limitation "
                        "when attempt to expand: %d"OSS_NEWLINE
                        "  _pool         : %u"OSS_NEWLINE
@@ -926,7 +926,7 @@ namespace engine
                                                    sizeof( _objX ) ) )
             {
                rc = SDB_OSS_UP_TO_LIMIT ;
-               PD_LOG( PDWARNING, "Can't alloc segment[%d * %d] by handler",
+               PD_LOG( PDINFO, "Can't alloc segment[%d * %d] by handler",
                        _delta, sizeof( _objX ) ) ;
                goto error ;
             }
