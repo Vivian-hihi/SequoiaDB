@@ -238,3 +238,21 @@ function getGroupName(db, mustBePrimary)
    }
    return arrGroupName;
 }
+
+/************************************
+*@Description: create index
+*@author:      liuxiaoxuan
+*@createDate:  2017.09.18
+**************************************/
+function createIndex( dbcl, indexName, key )
+{
+  try
+  {
+     dbcl.createIndex(indexName , key);
+     println("--create index success");
+   }
+  catch(e)
+   {
+     throw buildException("createIndex()",e,"create index", "create success","create fail");
+   }
+}
