@@ -774,6 +774,9 @@ namespace replay
          {
             rc = _monitorStore->flushAndSave() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
+
+            rc = _checkSubmit() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to check submit, rc = %d", rc ) ;
          }
       }
 
@@ -2234,6 +2237,9 @@ namespace replay
          {
             rc = _monitorStore->flushAndSave() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
+
+            rc = _checkSubmit() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to check submit, rc = %d", rc ) ;
          }
       }
 

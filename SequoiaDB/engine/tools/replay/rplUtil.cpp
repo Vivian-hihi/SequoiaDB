@@ -69,7 +69,7 @@ namespace replay
    void getCurrentDate( string &dateStr )
    {
       ossTimestamp Tm ;
-      CHAR szFormat[] = "%04d%02d%02d" ;
+      CHAR szFormat[] = "%04d%02d%02d%02d%02d" ;
       CHAR szDatetmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
       struct tm tmpTm ;
 
@@ -86,7 +86,9 @@ namespace replay
                     szFormat,
                     tmpTm.tm_year + 1900,
                     tmpTm.tm_mon + 1,
-                    tmpTm.tm_mday ) ;
+                    tmpTm.tm_mday,
+                    tmpTm.tm_hour,
+                    tmpTm.tm_min) ;
 
       dateStr = szDatetmpStr ;
    }

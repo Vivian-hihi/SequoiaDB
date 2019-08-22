@@ -42,6 +42,7 @@ namespace replay
    #define RPL_CONF_NAME_PREFIX             "filePrefix"
    #define RPL_CONF_NAME_SUFFIX             "fileSuffix"
    #define RPL_CONF_SUBMIT_TIME             "submitTime"
+   #define RPL_CONF_SUBMIT_INTERVAL         "submitInterval"
    #define RPL_CONF_NAME_DELIMITER          "delimiter"
    #define RPL_CONF_NAME_TABLES             "tables"
 

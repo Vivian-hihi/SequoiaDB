@@ -65,6 +65,7 @@ namespace replay
       _recordWriter = NULL ;
       _outputHour = 21 ;
       _outputMinute = 0 ;
+      _submitInterval = -1 ;
       _delimiter = RPL_CONF_DEFAULT_DELIMITER ;
    }
 
@@ -117,6 +118,7 @@ namespace replay
    {
       INT32 rc = SDB_OK ;
       string submitTime ;
+      BSONElement submitIntervalEle ;
       BSONObj conf ;
       rplConfParser confParser ;
 
@@ -157,16 +159,35 @@ namespace replay
       }
 
       submitTime = conf.getStringField( RPL_CONF_SUBMIT_TIME ) ;
-      if ( submitTime.empty() )
+      submitIntervalEle = conf.getField( RPL_CONF_SUBMIT_INTERVAL ) ;
+      if ( !submitIntervalEle.eoo() )
+      {
+         PD_CHECK( submitIntervalEle.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                   "%s must be number format", RPL_CONF_SUBMIT_INTERVAL ) ;
+
+         _submitInterval = submitIntervalEle.numberLong() ;
+         PD_CHECK( _submitInterval > 0, SDB_INVALIDARG, error, PDERROR,
+                   "%s must be greater 0", RPL_CONF_SUBMIT_INTERVAL ) ;
+         PD_LOG( PDEVENT, "Output File every %lld munites", _submitInterval ) ;
+
+         _submitInterval = _submitInterval * 60 * 1000000L ;
+      }
+      else if ( !submitTime.empty() )
+      {
+
+         rc = _parseSubmitTime( submitTime.c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse submitTime(%s), rc = %d",
+                      submitTime.c_str(), rc ) ;
+
+         PD_LOG( PDEVENT, "Output File every %d:%d per day", _outputHour,
+                 _outputMinute ) ;
+      }
+      else
       {
          rc = SDB_INVALIDARG ;
-         PD_RC_CHECK( rc, PDERROR, "%s is empty, rc = %d",
-                      RPL_CONF_SUBMIT_TIME, rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "%s or %s must be specified, rc = %d",
+                      RPL_CONF_SUBMIT_TIME, RPL_CONF_SUBMIT_INTERVAL, rc ) ;
       }
-
-      rc = _parseSubmitTime( submitTime.c_str() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse submitTime(%s), rc = %d",
-                   submitTime.c_str(), rc ) ;
 
       rc = _tableMapping.init( conf ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse conf, rc = %d", rc ) ;
@@ -442,7 +463,7 @@ namespace replay
       return _recordWriter->getStatus( status ) ;
    }
 
-   BOOLEAN rplDB2LoadOutputter::isNeedSubmit()
+   BOOLEAN rplDB2LoadOutputter::_isNeedSumitPerDay()
    {
       UINT64 currentTime = ossGetCurrentMicroseconds() ;
       UINT64 lastSubmitTime = _monitor->getSubmitTime() ;
@@ -461,6 +482,25 @@ namespace replay
       }
 
       return FALSE ;
+   }
+
+   BOOLEAN rplDB2LoadOutputter::isNeedSubmit()
+   {
+      if ( _submitInterval <= 0 )
+      {
+         return _isNeedSumitPerDay() ;
+      }
+      else
+      {
+         UINT64 lastSubmitTime = _monitor->getSubmitTime() ;
+         UINT64 currentTime = ossGetCurrentMicroseconds() ;
+         if ( currentTime - lastSubmitTime > _submitInterval )
+         {
+            return TRUE ;
+         }
+
+         return FALSE ;
+      }
    }
 
    INT32 rplDB2LoadOutputter::submit()

@@ -95,6 +95,7 @@ namespace replay
                              const BSONObj &objIn, const CHAR **outDBName,
                              const CHAR **outTableName, string &strOut ) ;
       INT32 _parseSubmitTime( const CHAR *submitTime ) ;
+      BOOLEAN _isNeedSumitPerDay() ;
 
    private:
       Monitor *_monitor ;
@@ -105,8 +106,14 @@ namespace replay
       string _suffix ;
       string _outputDir ;
       string _delimiter ;
+
+      // two submit mode:
+      // 1. submit file at HH:MM per day
       INT32 _outputHour ;
       INT32 _outputMinute ;
+
+      // 2. submit file per interval
+      INT64 _submitInterval ; // microseconds
    } ;
 }
 
