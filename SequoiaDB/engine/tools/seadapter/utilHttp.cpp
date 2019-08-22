@@ -341,6 +341,9 @@ namespace seadapter
          goto error ;
       }
 
+      rc = _socket->setSocketLi( 1, 0 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Set socket linger failed[%d]", rc ) ;
+
       rc = _socket->connect() ;
       if ( rc )
       {

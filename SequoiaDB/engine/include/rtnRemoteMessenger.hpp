@@ -127,7 +127,7 @@ namespace engine
       INT32 setLocalID( const MsgRouteID &id ) ;
 
       INT32 prepareSession( pmdEDUCB *cb, UINT64 &sessionID ) ;
-      INT32 removeSession( UINT64 sessionID, pmdEDUCB *cb ) ;
+      INT32 removeSession( pmdEDUCB *cb, UINT64 *sessionID = NULL ) ;
       INT32 send( UINT64 sessionID, const MsgHeader *msg, pmdEDUCB *cb ) ;
       INT32 receive( UINT64 sessionID, pmdEDUCB *cb, MsgOpReply *&reply ) ;
 

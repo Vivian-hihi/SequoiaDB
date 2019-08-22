@@ -73,10 +73,6 @@ namespace engine
       }
 
    done:
-      if ( 0 != sessionID )
-      {
-         messenger->removeSession( sessionID, cb ) ;
-      }
       if ( msg )
       {
          msgReleaseBuffer( msg, cb ) ;

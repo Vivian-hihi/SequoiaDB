@@ -366,6 +366,13 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
          }
+
+         rtnRemoteMessenger *messenger =
+            pmdGetKRCB()->getRTNCB()->getRemoteMessenger() ;
+         if ( messenger )
+         {
+            messenger->removeSession( _pEDUCB ) ;
+         }
       }
 
       /// has session init

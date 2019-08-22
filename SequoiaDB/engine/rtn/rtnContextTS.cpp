@@ -56,10 +56,6 @@ namespace engine
 
    _rtnContextTS::~_rtnContextTS()
    {
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      rtnRemoteMessenger *messenger = rtnCB->getRemoteMessenger() ;
-
-      messenger->removeSession( _remoteSessionID, pmdGetThreadEDUCB() ) ;
       if ( _subContext )
       {
          if ( _subContext->contextID() )

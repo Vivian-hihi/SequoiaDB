@@ -302,9 +302,15 @@ namespace engine
       pmdRemoteSessionSite* site = NULL ;
       pmdRemoteSession* session = NULL ;
 
-      // Register the current edu in remote session manager.
+      // If we can find the site by educb, it has registered already. Return its
+      // user data as the session ID.
       site = _rsMgr.getSite( cb ) ;
-      if ( !site )
+      if ( site )
+      {
+         sessionID = site->getUserData() ;
+         goto done ;
+      }
+      else
       {
          site = _rsMgr.registerEDU( cb ) ;
       }
@@ -319,6 +325,8 @@ namespace engine
 
       (void)session->addSubSession( _targetNodeID ) ;
       sessionID = session->sessionID() ;
+      // Use the sessionID as session data.
+      site->setUserData( sessionID ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNREMOTEMESSENGER_PREPARESESSION, rc ) ;
@@ -332,27 +340,25 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREMOTEMESSENGER_REMOVESESSION, "_rtnRemoteMessenger::removeSession" )
-   INT32 _rtnRemoteMessenger::removeSession( UINT64 sessionID, pmdEDUCB *cb )
+   INT32 _rtnRemoteMessenger::removeSession( pmdEDUCB *cb, UINT64 *sessionID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNREMOTEMESSENGER_REMOVESESSION ) ;
       pmdRemoteSessionSite* site = _rsMgr.getSite( cb ) ;
-
       if ( !site )
       {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Remote session site is NULL" ) ;
-         goto error ;
+         goto done ;
       }
 
       if ( site->sessionCount() > 0 )
       {
-         pmdRemoteSession* session = site->getSession( sessionID ) ;
+         UINT64 sessionIDLocal = sessionID ? *sessionID : site->getUserData() ;
+         pmdRemoteSession* session = site->getSession( sessionIDLocal ) ;
          if ( !session )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Session with id[ %llu ] dose not exist",
-                    sessionID ) ;
+                    site->getUserData() ) ;
             goto error ;
          }
          site->removeSession( session ) ;
