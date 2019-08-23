@@ -145,7 +145,7 @@ function Start()
   pid=$(jobs -l|awk '{print $2}')
   echo "pid:"$pid
 
-  sleep 5 
+  sleep 15 
 
   listenport=""
   
