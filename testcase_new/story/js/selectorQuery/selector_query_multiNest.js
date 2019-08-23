@@ -81,8 +81,9 @@ function main( db )
       var addRecord2 = JSON.parse( nestRecord2 ) ;
       var addRecord3 = JSON.parse( nestRecord3 ) ;
       var addRecord4 = JSON.parse( nestRecord4 ) ;
-      println( "nest record: " + nestRecord1 ) ;
-      println( "nest record: " + nestRecord2 ) ;
+      //println( "nest record: " + nestRecord1 ) ;
+      //println( "nest record: " + nestRecord2 ) ;
+      
       // auto generate data
       selAutoGenData( cl, recordNum, addRecord1,
                       addRecord2, addRecord3, addRecord4 ) ;
