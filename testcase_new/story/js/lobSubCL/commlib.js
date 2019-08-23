@@ -23,7 +23,26 @@ function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat,
             default:
                 beginBound = new Date().getFullYear() * 10000 + 101;
         }
-    } 
+    }
+    else
+    {
+        var dateArr = beginDate.toString().split('');
+        switch( shardingFormat )
+        {
+            case "YYYYMMDD": 
+                beginBound = parseInt(beginDate.toString(), 10);
+                break;
+            case "YYYYMM":
+                beginBound = parseInt(dateArr[0] + dateArr[1] + dateArr[2] + dateArr[3] + dateArr[4] + dateArr[5], 10);
+                break;
+            case "YYYY":
+                beginBound = parseInt(dateArr[0] + dateArr[1] + dateArr[2] + dateArr[3], 10);
+                break;
+            default:
+                beginBound = new Date().getFullYear() * 10000 + 101;
+        }
+    }
+    
     if ( scope == undefined ) { scope = 5 ; }
     
     var options = {"IsMainCL": true, "ShardingKey": {"date": 1}, "LobShardingKeyFormat": shardingFormat, "ShardingType": "range"};
@@ -32,7 +51,7 @@ function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat,
     for(var i = 0; i < subCLNum; i++)
     {
         var subCLName = clName + "_" + i;
-        commCreateCL(db, csName, subCLName);
+        commCreateCLByOption(db, csName, subCLName, {"ShardingKey": {"date": 1}, "ShardingType":"hash", "AutoSplit": true});
         var lowBound = {"date": ( parseInt(beginBound) + i * scope ) + ''};
         var upBound = {"date": ( parseInt(beginBound) + (i + 1) * scope ) + ''};
         mainCL.attachCL( csName + "." + subCLName, {"LowBound": lowBound, "UpBound": upBound});
@@ -49,6 +68,7 @@ function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat,
 function makeTmpFile( filePath, fileName, fileSize)
 {
     println("---create tmp file---");
+    if( fileName == undefined){ println( "---error msg: fileName is null." );}
     if( fileSize == undefined){ fileSize = 1024 * 100; }    
     var fileFullPath = filePath + "/" + fileName;        
 	File.mkdir(filePath);
@@ -128,7 +148,16 @@ function insertLob(mainCL, filePath, format, scope, lobNum, subCLNum, beginDate)
                     timestamp = year + "-" + month + "-" + (day + i * scope) + "-00.00.00.000000";
             }
             var lobOid = mainCL.createLobID( timestamp );
-            lobOids[i * lobNum + j] = mainCL.putLob( filePath, lobOid );
+            try
+            {
+                lobOids[i * lobNum + j] = mainCL.putLob( filePath, lobOid );
+            }
+            catch( e )
+            {
+                println("---error msg: filePath: " + filePath + ", timestamp: " + timestamp);
+                throw e;
+            }
+            
         }
         
     }

@@ -1,6 +1,7 @@
 /************************************
 *@Description:  seqDB-19025 创建主表，指定不同格式LobShardingKeyFirmat
                 seqDB-19026 删除主表集合，主表已挂载子表 
+                seqDB-19041 主子表创建、读取、删除lob
 *@author:      luweikang
 *@createDate:  2019.8.12
 **************************************/
@@ -29,6 +30,7 @@ function main()
     var lobOid1s = insertLob( mainCL, fileFullPath, "YYYYMMDD" );
     checkLobMD5( mainCL, lobOid1s, fileMD5 );
     checkSubCLLob( db, mainCLFullName, lobOid1s);
+    checkDeleteLob( mainCL, lobOid1s );
     cleanMainCL(db, csName, mainCLName);
     
     //测试创建LobShardingKeyFormat为YYYYMM主表
@@ -36,6 +38,7 @@ function main()
     var lobOid2s = insertLob( mainCL, fileFullPath, "YYYYMM" );
     checkLobMD5( mainCL, lobOid2s, fileMD5 );
     checkSubCLLob( db, mainCLFullName, lobOid2s);
+    checkDeleteLob( mainCL, lobOid2s );
     cleanMainCL(db, csName, mainCLName);
     
     //测试创建LobShardingKeyFormat为YYYY主表
@@ -43,9 +46,31 @@ function main()
     var lobOid3s = insertLob( mainCL, fileFullPath, "YYYY" );
     checkLobMD5( mainCL, lobOid3s, fileMD5 );
     checkSubCLLob( db, mainCLFullName, lobOid3s);
+    checkDeleteLob( mainCL, lobOid3s );
     cleanMainCL(db, csName, mainCLName);
     
     deleteTmpFile( filePath );
+}
+
+function checkDeleteLob(mainCL, lobOids)
+{
+    println("---check delete lob---");
+    for(i in lobOids)
+    {
+        mainCL.deleteLob(lobOids[i]);
+        try
+        {
+            mainCL.getLob(lobOids[i], WORKDIR + "/checkLob19038_" + i );
+            throw 0;
+        }
+        catch( e )
+        {
+            if( e !== -4 )
+            {
+                throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids[i], -4, e ); 
+            }
+        }
+    }
 }
 
 main();
