@@ -27,8 +27,7 @@ function main(db)
       var taskId = splitCL( COMMCSNAME, clName, groupsInfo);      
       
       println("---Begin to check result ");
-	  checkTaskId( taskId );
-      checkSplitResult( COMMCSNAME, clName, recordNums, groupsInfo);     
+      checkTaskId( taskId );
       
       commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the ending" ) ;      
    }
@@ -72,62 +71,4 @@ function checkTaskId( taskId )
    {
       throw buildException("check task id", e)
    } 
-}
-
-function checkSplitResult( csName, clName, expRecordNums, groupsInfo )
-{   
-   try
-   {  println("---Begin to check the split result");
-	  //waiting for split 
-      var sleepInteval=10;
-      var sleepDuration=0;
-      var maxSleepDuration=120000;
-	  
-      while( (db.listTasks({ "Name": csName + "."+ clName }).next() !== undefined ) && sleepDuration < maxSleepDuration )
-      {        
-         sleep( sleepInteval );
-         sleepDuration += sleepInteval;                       
-      }
-      
-	  //check the record nums      
-      var dbcl = db.getCS( csName ).getCL( clName );
-      var count = dbcl.count();      
-      if( count != expRecordNums )
-      {
-         throw buildException("check datas", null, "check the new cl record nums, sleepDuration : " + sleepDuration,
-									expRecordNums, count);
-      }   
-       
-      //test record nums of split groups
-      for( var i = 0; i < 2; i++ )
-      {         
-         try
-         {
-            var sdb = new Sdb(groupsInfo[i].HostName,groupsInfo[i].svcname);            
-            var cl = sdb.getCS( csName ).getCL( clName );
-            var num = cl.count();  
-            println(num)       
-			
-            if( i == 1 && Number(num) !== expRecordNums*0.9 )			
-	         {  
-               throw buildException("checkClSplitRecordNums", "count wrong", "count()",expRecordNums*0.9, num)
-	         }	      
-         }
-         catch(e)
-         {
-            throw buildException("checkClSplitResult()", e);
-         }
-         finally
-         {
-            if (sdb !== undefined)
-      	   {
-               sdb.close();      	      
-      	   } 
-         }	           
-      }    
-   }
-   catch(e)
-   {
-      throw buildException("check split", e)
-   }  
 }
