@@ -200,10 +200,11 @@ namespace engine
 
          if ( _sorter->usedBufferSize() > _bufSize )
          {
-            // the sorter's buffer is logical overflow (actually not overflow in sorter),
-            // so stop fetching records from next extent
-            PD_LOG( PDDEBUG, "sorter is full, bufSize=%lld, usedBufSize=%lld, total=%lld",
-                    _bufSize, _sorter->usedBufferSize(), _sorter->bufferSize() ) ;
+            // the sorter's buffer is logical overflow (actually not overflow
+            // in sorter), so stop fetching records from next extent
+            PD_LOG( PDDEBUG, "sorter is full, "
+                    "bufSize=%lld, usedBufSize=%lld, total=%lld", _bufSize,
+                    _sorter->usedBufferSize(), _sorter->bufferSize() ) ;
             goto done ;
          }
 
