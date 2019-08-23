@@ -52,7 +52,8 @@ public class Fulltext14885 extends FullTestBase {
         for (int i = 0; i < 10; i++) {
             try {
                 cl.dropIndex(fullIndexName);
-                //Assert.fail("drop textIndex need to return -147!");
+                break;
+                // Assert.fail("drop textIndex need to return -147!");
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     throw e;
