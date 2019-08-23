@@ -132,6 +132,13 @@ typedef ossPoolSet<UINT32>             SET_UINT32 ;
  */
 template < typename K >
 class ossPoolList : public std::list<K, typename ossPoolAllocator<K>::Type > {
+   typedef typename std::list<K,typename ossPoolAllocator<K>::Type>::size_type    size_type ;
+
+   public:
+      ossPoolList() {}
+      ossPoolList( size_type n, const K& val = K() )
+      : std::list< K, typename ossPoolAllocator<K>::Type>( n, val )
+      {}
   /**
    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
    * DO NOT USE THIS CLASS IN POLYMORPHISM
@@ -148,19 +155,19 @@ typedef std::basic_string< char, std::char_traits<char>,
  * Vector
  */
 template< typename T >
-class ossPoolVector : public std::vector< T, typename ossPoolAllocator<char>::Type > {
-   typedef typename std::vector<T,typename ossPoolAllocator<char>::Type>::size_type    size_type ;
+class ossPoolVector : public std::vector< T, typename ossPoolAllocator<T>::Type > {
+   typedef typename std::vector<T,typename ossPoolAllocator<T>::Type>::size_type    size_type ;
 
    public:
       ossPoolVector() {}
 
       ossPoolVector( size_type count, const T& value = T() )
-      : std::vector<T,typename ossPoolAllocator<char>::Type>( count, value )
+      : std::vector<T,typename ossPoolAllocator<T>::Type>( count, value )
       {}
 
       template< typename InputIt >
       ossPoolVector( InputIt first, InputIt last )
-      : std::vector<T,typename ossPoolAllocator<char>::Type>( first, last )
+      : std::vector<T,typename ossPoolAllocator<T>::Type>( first, last )
       {}
    /**
     * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
