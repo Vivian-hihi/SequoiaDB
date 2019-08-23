@@ -101,7 +101,7 @@ function main( db )
                      selObjArr + '": { "$include": 1 } }' ;
       var selObj = JSON.parse( selStr ) ;
       var ret = selMainQuery( cl, condObj, selObj ) ;
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
       /*Test Point 1 $include:1/0 */
       var condObj = {} ;
       var selStr = '{"' + selobj + '": {"$include": 0}, "' +
@@ -110,7 +110,7 @@ function main( db )
                      selObjArr + '": { "$include": 0 } }' ;
       var selObj = JSON.parse( selStr ) ;
       var ret = selMainQuery( cl, condObj, selObj ) ;
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
       /*Test Point 2 $default*/
       var selobj = autoGenSelector( "ExtraField1", 31 ) ;
@@ -124,7 +124,7 @@ function main( db )
                      selObjArr + '": { "$default": "object_array" } }' ;
       var selObj = JSON.parse( selStr ) ;
       var ret = selMainQuery( cl, condObj, selObj ) ;
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
       /*Test Point 3 $slice*/
       var selobj = autoGenSelector( "ExtraField1", 31 ) ;
@@ -138,7 +138,7 @@ function main( db )
                      selObjArr + '": { "$slice": [2,9] } }' ;
       var selObj = JSON.parse( selStr ) ;
       var ret = selMainQuery( cl, condObj, selObj ) ;
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
       /*Test Point 4 $elemMatch*/
       var selobj = autoGenSelector( "ExtraField1", 31 ) ;
@@ -152,7 +152,7 @@ function main( db )
                      selObjArr + '": { "$elemMatch": {"age":19} } }' ;
       var selObj = JSON.parse( selStr ) ;
       var ret = selMainQuery( cl, condObj, selObj ) ;
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
       /*Test Point 5 $elemMatchOne*/
       var selobj = autoGenSelector( "ExtraField1", 31 ) ;
@@ -166,7 +166,7 @@ function main( db )
                      selObjArr + '": { "$elemMatchOne": {"age":19} } }' ;
       var selObj = JSON.parse( selStr ) ;
       var ret = selMainQuery( cl, condObj, selObj ) ;
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
    }
    catch( e )

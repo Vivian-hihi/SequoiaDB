@@ -49,7 +49,7 @@ function main( db )
          println( "return record: " + ret ) ;
          throw "ErrReturnRecord$include/1" ;
       }
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
       /*【Test Point 1.2】 {$include:0}*/
       var condObj = {} ;
       var selObj = { "ExtraField1.nest1.nest2.nest3": {"$include":0},
@@ -75,7 +75,7 @@ function main( db )
          println( "return record: " + ret ) ;
          throw "ErrReturnRecord$include/0" ;
       }
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
       /*Test Point 2 $default*/
       var condObj = {} ;
@@ -108,7 +108,7 @@ function main( db )
          println( "return record: " + ret ) ;
          throw "ErrReturnRecord$defult" ;
       }
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
 
       /*Test Point 3 $slice*/
       var condObj = {} ;
@@ -140,7 +140,7 @@ function main( db )
          println( "return record : " + ret ) ;
          throw "ErrReturnRecord$slice" ;
       }
-      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      //println( "query selector: " + JSON.stringify( selObj ) ) ;
    }
    catch( e )
    {
