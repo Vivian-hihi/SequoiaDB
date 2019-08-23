@@ -380,6 +380,63 @@ function listLobsAndCheckResult(mainCL, condition, attrName, attrValue, matchSym
 }
 
 /************************************
+*@Description: listLobs指定选择符，默认指定字段为“Size”，然后比较listLobs结果
+*@author:      wuyan
+*@createDate:  2019.8.23
+**************************************/
+function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, condition, modifyValue)
+{
+    if( condition == undefined ){ condition = {}; }
+    if( modifyValue == undefined ){ modifyValue = 0; }
+    println("---begin to listLob use " + selSymbol);
+    var listResult = mainCL.listLobs(SdbQueryOption().cond(condition));
+    var expListResult = [];
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();
+        var objValue = listObj["Size"];
+        switch(selSymbol)
+        {
+            case "$include":  
+                expListResult.push({"Size" : objValue});               
+                break;
+            case "$add":  
+                listObj.Size = objValue + modifyValue;
+                expListResult.push(listObj);               
+                break;  
+            case "$subtract":  
+                listObj.Size = objValue - modifyValue;
+                expListResult.push(listObj);               
+                break;
+            case "$multiply":  
+                listObj.Size = objValue * modifyValue;
+                expListResult.push(listObj);               
+                break;
+            case "$divide":  
+                listObj.Size = objValue / modifyValue;
+                expListResult.push(listObj);               
+                break;
+            default:
+                break;
+        }    
+    }
+   
+    var actRecs = [];
+    var rc = mainCL.listLobs(SdbQueryOption().cond( condition ).sel(selCondition));   
+    while( rc.next() )
+    {
+		actRecs.push( rc.current().toObj() );
+    } 
+    println("---actRecs="+JSON.stringify(actRecs) )
+    println("---begin to check result.");
+    if( JSON.stringify(actRecs) !== JSON.stringify(expListResult))
+    {
+        println("\nactual value= "+JSON.stringify(actRecs)+"\nexpect value= "+JSON.stringify(expListResult)); 
+        throw buildException("checkRec()", "rec ERROR,the list condition=" + JSON.stringify(condition));
+    }
+}
+
+/************************************
 *@Description: 获取cl切分的目标组名
 *@author:      wuyan
 *@createDate:  2019.8.21
