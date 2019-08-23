@@ -68,7 +68,7 @@ namespace engine
       const CHAR * collectionShortName = mb->_collectionName ;
 
       rc = su->createIndex( collectionShortName, ixmGetIDIndexDefine(), cb,
-                            dpsCB, TRUE, mbContext, sortBufferSize ) ;
+                            NULL, TRUE, mbContext, sortBufferSize ) ;
       if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
       {
          /// already exists
@@ -104,7 +104,7 @@ namespace engine
 
       const CHAR * collectionShortName = mb->_collectionName ;
 
-      rc = su->dropIndex( collectionShortName, IXM_ID_KEY_NAME, cb, dpsCB,
+      rc = su->dropIndex( collectionShortName, IXM_ID_KEY_NAME, cb, NULL,
                           TRUE, mbContext ) ;
       if ( SDB_IXM_NOTEXIST == rc )
       {
@@ -174,7 +174,7 @@ namespace engine
 
       if ( dropIndex )
       {
-         rc = su->dropIndex( collectionShortName, IXM_SHARD_KEY_NAME, cb, dpsCB,
+         rc = su->dropIndex( collectionShortName, IXM_SHARD_KEY_NAME, cb, NULL,
                              TRUE, mbContext ) ;
          if ( SDB_IXM_NOTEXIST == rc )
          {
@@ -190,7 +190,7 @@ namespace engine
                                   IXM_FIELD_NAME_NAME << IXM_SHARD_KEY_NAME <<
                                   IXM_V_FIELD << 0 ) ;
 
-         rc = su->createIndex( collectionShortName, indexDef, cb, dpsCB, TRUE,
+         rc = su->createIndex( collectionShortName, indexDef, cb, NULL, TRUE,
                                mbContext, 0 ) ;
          if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
          {
@@ -480,7 +480,7 @@ namespace engine
                                     _dmsMBContext * mbContext,
                                     _dmsStorageUnit * su,
                                     _SDB_DMSCB * dmsCB,
-                                    BOOLEAN & needAlterLog )
+                                    DMS_FILE_TYPE & dpsType )
    {
       INT32 rc = SDB_OK ;
 
@@ -503,8 +503,9 @@ namespace engine
       // $sharding index
       if ( localTask->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
       {
-         const rtnCLShardingArgument & argument = localTask->getShardingArgument() ;
-
+         OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
+         const rtnCLShardingArgument & argument =
+                                             localTask->getShardingArgument() ;
          rc = _rtnCollectionSetSharding( collection, argument, cb, dpsCB,
                                          mbContext, su ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set sharding on collection [%s], "
@@ -514,7 +515,6 @@ namespace engine
       // Compress
       if ( localTask->containCompressArgument() )
       {
-         needAlterLog = TRUE ;
          const rtnCLCompressArgument & compressArgument =
                                              localTask->getCompressArgument() ;
          rc = _rtnCollectionSetCompress( collectionShortName, compressArgument,
@@ -526,7 +526,6 @@ namespace engine
       // Ext options
       if ( localTask->containExtOptionArgument() )
       {
-         needAlterLog = TRUE ;
          rc = _rtnCollectionSetExtOptions( collectionShortName,
                                            localTask->getExtOptionArgument(),
                                            cb, mbContext, su ) ;
@@ -544,7 +543,6 @@ namespace engine
       // Strict data mode
       if ( localTask->testArgumentMask( UTIL_CL_STRICTDATAMODE_FIELD ) )
       {
-         needAlterLog = TRUE ;
          rc = su->setCollectionStrictDataMode( collectionShortName,
                                                localTask->isStrictDataMode(),
                                                mbContext ) ;
@@ -555,6 +553,7 @@ namespace engine
       // $id index
       if ( localTask->testArgumentMask( UTIL_CL_AUTOIDXID_FIELD ) )
       {
+         OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
          if ( localTask->isAutoIndexID() )
          {
             rc = _rtnCreateIDIndex( collection, 0, cb, dpsCB, mbContext, su ) ;
@@ -626,7 +625,8 @@ namespace engine
                             _pmdEDUCB * cb,
                             _dpsLogWrapper * dpsCB,
                             _dmsMBContext * mbContext,
-                            _dmsStorageUnit * su )
+                            _dmsStorageUnit * su,
+                            DMS_FILE_TYPE dpsType )
    {
       INT32 rc = SDB_OK ;
 
@@ -641,7 +641,7 @@ namespace engine
          UINT32 clLID = NULL != mbContext ? mbContext->clLID() : ~0 ;
 
          dpsMergeInfo info ;
-         info.setInfoEx( csLID, clLID, DMS_INVALID_EXTENT, NULL ) ;
+         info.setInfoEx( csLID, clLID, DMS_INVALID_EXTENT, cb ) ;
 
          dpsLogRecord & record = info.getMergeBlock().record() ;
 
@@ -662,6 +662,12 @@ namespace engine
                       "rc: %d", rc ) ;
 
          dpsCB->writeData( info ) ;
+
+         if ( NULL != mbContext && DMS_FILE_EMPTY != dpsType )
+         {
+            mbContext->mbStat()->updateLastLSNWithComp(
+                        cb->getEndLsn(), dpsType, cb->isDoRollback() ) ;
+         }
       }
 
    done :
@@ -933,12 +939,13 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_RTNALTERCOLLECTION_MB ) ;
 
-      BOOLEAN needAlterLog = FALSE ;
+      DMS_FILE_TYPE dpsType = DMS_FILE_EMPTY ;
 
       switch ( task->getActionType() )
       {
          case RTN_ALTER_CL_CREATE_ID_INDEX :
          {
+            OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
             const rtnCLCreateIDIndexTask * localTask =
                         dynamic_cast<const rtnCLCreateIDIndexTask *>( task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
@@ -949,11 +956,13 @@ namespace engine
          }
          case RTN_ALTER_CL_DROP_ID_INDEX :
          {
+            OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
             rc = _rtnDropIDIndex( collection, cb, dpsCB, mbContext, su ) ;
             break ;
          }
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
+            OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
             const rtnCLEnableShardingTask * localTask =
                   dynamic_cast<const rtnCLEnableShardingTask *>( task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
@@ -965,6 +974,7 @@ namespace engine
          }
          case RTN_ALTER_CL_DISABLE_SHARDING :
          {
+            OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
             rtnCLShardingArgument argument ;
             argument.setEnsureShardingIndex( FALSE ) ;
             rc = _rtnCollectionSetSharding( collection, argument, cb, dpsCB,
@@ -973,7 +983,6 @@ namespace engine
          }
          case RTN_ALTER_CL_ENABLE_COMPRESS :
          {
-            needAlterLog = TRUE ;
             const rtnCLEnableCompressTask * localTask =
                   dynamic_cast<const rtnCLEnableCompressTask *>( task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
@@ -985,7 +994,6 @@ namespace engine
          }
          case RTN_ALTER_CL_DISABLE_COMPRESS :
          {
-            needAlterLog = TRUE ;
             rc = _rtnCollectionSetCompress( collection, UTIL_COMPRESSOR_INVALID,
                                             cb, mbContext, su, dmsCB ) ;
             break ;
@@ -993,8 +1001,7 @@ namespace engine
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          {
             rc = _rtnAlterCLSetAttributes( collection, task, cb, dpsCB,
-                                           mbContext, su, dmsCB,
-                                           needAlterLog ) ;
+                                           mbContext, su, dmsCB, dpsType ) ;
             break ;
          }
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
@@ -1014,10 +1021,10 @@ namespace engine
               "rc: %d", task->getActionName(), collection, rc ) ;
 
    done :
-      if ( SDB_OK == rc && needAlterLog )
+      if ( SDB_OK == rc )
       {
          rc = _rtnAlter2DPSLog( collection, task, options, cb, dpsCB,
-                                mbContext, su ) ;
+                                mbContext, su, dpsType ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
@@ -1147,7 +1154,7 @@ namespace engine
       if ( SDB_OK == rc )
       {
          rc = _rtnAlter2DPSLog( collectionSpace, task, options, cb, dpsCB,
-                                NULL, su ) ;
+                                NULL, su, DMS_FILE_EMPTY ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
