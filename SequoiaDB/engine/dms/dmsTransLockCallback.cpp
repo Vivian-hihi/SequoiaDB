@@ -639,7 +639,11 @@ namespace engine
                /// ------------------------------------Job::doit
                /// when the releaseLockJob::doit will occur
                /// _oldVer->isOnChain(), but _mbStat is NULL
-               if( _oldVer->isOnChain() && _mbStat )
+               /// Another case: old version is not empty means lock
+               /// re-acquired by myself, should not remove in this
+               /// case
+               if( _oldVer->isOnChain() && _mbStat &&
+                   _oldVer->isRecordEmpty() )
                {
                   _mbStat->removeFromChain( _oldVer ) ;
                }
