@@ -26,11 +26,11 @@ function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat,
     }
     else
     {
-        var dateArr = beginDate.toString().split('');
+        var dateArr = beginBound.toString().split('');
         switch( shardingFormat )
         {
             case "YYYYMMDD": 
-                beginBound = parseInt(beginDate.toString(), 10);
+                beginBound = parseInt(beginBound.toString(), 10);
                 break;
             case "YYYYMM":
                 beginBound = parseInt(dateArr[0] + dateArr[1] + dateArr[2] + dateArr[3] + dateArr[4] + dateArr[5], 10);
@@ -307,6 +307,104 @@ function cleanMainCL(db, mainCSName, mainCLName)
     }
 }
 
+/************************************
+*@Description: 带匹配条件listLobs，然后比较listLobs结果
+*@author:      wuyan
+*@createDate:  2019.8.21
+**************************************/
+function listLobsAndCheckResult(mainCL, condition, attrName, attrValue, matchSymbol)
+{
+    println("---begin to listLob use " + matchSymbol);
+    var listResult = mainCL.listLobs(SdbQueryOption().sort({"Oid":1}));
+    var expListResult = [];
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();
+        var objValue = listObj[attrName];
+        switch(matchSymbol)
+        {
+            case "$lt":                 
+                if ( objValue < attrValue )
+                {
+                    expListResult.push(listObj);
+                }
+                break;
+            case "$lte":
+                if ( objValue <= attrValue )
+                {
+                    expListResult.push(listObj);
+                }
+                break;
+             case "$gt":
+                if ( objValue > attrValue )
+                {
+                    expListResult.push(listObj);
+                }
+                break;
+            case "$gte":
+                if ( objValue >= attrValue )
+                {
+                    expListResult.push(listObj);
+                }
+                break;
+            case "$ne":
+                if ( objValue != attrValue )
+                {
+                    expListResult.push(listObj);
+                }
+                break;
+            case "$et":            
+                if ( objValue == attrValue )
+                {                   
+                    expListResult.push(listObj);
+                }
+                break;            
+            default:
+                break;
+        }    
+    }
+   
+    var actRecs = [];
+    var rc = mainCL.listLobs(SdbQueryOption().cond( condition ).sort({"Oid":1}));   
+    while( rc.next() )
+    {
+		actRecs.push( rc.current().toObj() );
+    } 
+    
+    println("---begin to check result.");
+    if( JSON.stringify(actRecs) !== JSON.stringify(expListResult))
+    {
+        println("\nactual value= "+JSON.stringify(actRecs)+"\nexpect value= "+JSON.stringify(expListResult)); 
+        throw buildException("checkRec()", "rec ERROR,the list condition=" + JSON.stringify(condition));
+    }
+}
+
+/************************************
+*@Description: 获取cl切分的目标组名
+*@author:      wuyan
+*@createDate:  2019.8.21
+**************************************/
+function getTargetGroup( csName, clName, srcGroupName )
+{
+    if( undefined == csName || undefined == clName )
+    {
+        println( "cs name: " + csName + ", clName: " + clName ) ;
+        throw "cs or cl name is undefined" ;
+    }
+    var tableName = csName + "." + clName ;
+    var allGroupInfo = commGetGroups(db);  
+    var targetGroupName;
+    for( var i = 0 ; i < allGroupInfo.length ; ++i ) 
+    {
+        var groupName = allGroupInfo[i][0].GroupName;
+        if( srcGroupName != groupName )
+        {            
+            targetGroupName = groupName;           
+            break;				
+        }
+    }    
+    return targetGroupName;   
+}
 
 
 
