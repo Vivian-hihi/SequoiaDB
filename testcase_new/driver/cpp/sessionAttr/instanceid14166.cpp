@@ -78,8 +78,8 @@ protected:
          testBase::TearDown() ;
          return ;
       }
-      testBase::TearDown() ;
       fini();
+      testBase::TearDown() ;
    }
 
    INT32 init()
