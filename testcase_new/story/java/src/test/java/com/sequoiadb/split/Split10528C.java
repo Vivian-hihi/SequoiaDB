@@ -62,7 +62,7 @@ public class Split10528C extends SdbTestBase {
     }
 
     @Test(timeOut = 30 * 60 * 1000)
-    public void dropCL() {
+    public void splitAndDropCL() {
         int condition = 0;
         int endCondition = 5000;
         List<SplitTask> splitTasks = new ArrayList<>(5);
@@ -128,7 +128,7 @@ public class Split10528C extends SdbTestBase {
                 cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:" + beginNo + "}"),
                         (BSONObject) JSON.parse("{sk:" + endNo + "}"));
             } catch (BaseException e) {
-                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                if (e.getErrorCode() != -23) {
                     throw e;
                 }
             } finally {
