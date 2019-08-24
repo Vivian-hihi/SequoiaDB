@@ -99,7 +99,7 @@ int fileListGenerator::_genFileNameHPP( fileOutStream &fout,
            "\n"
            "using namespace std ; \n"
            "\n"
-           "const static pair<UINT32, string> filenamesArray[] =\n"
+           "const static pair<UINT32, string> autoFilenamesArray[] =\n"
            "{\n" ;
 
    for( i = 0; i < size; ++i )
@@ -118,9 +118,27 @@ int fileListGenerator::_genFileNameHPP( fileOutStream &fout,
    fout << "\n"
            "} ;\n"
            "\n"
-           "const UINT32 filenameSize = sizeof(filenamesArray) / sizeof(filenamesArray[0]) ;\n"
+           "const UINT32 autoFilenameSize = sizeof(autoFilenamesArray) /\n"
+           "                                sizeof(autoFilenamesArray[0]) ;\n"
            "\n"
-           "const static map<UINT32, string> filenamesMap( filenamesArray, filenamesArray + filenameSize ) ;\n" ;
+           "const static map<UINT32, string> autoFilenamesMap( autoFilenamesArray, \n"
+           "                                                   autoFilenamesArray +\n"
+           "                                                   autoFilenameSize ) ;\n"
+           "\n"
+           "string autoGetFileName( UINT32 fileCode )\n"
+           "{\n"
+           "   map<UINT32, string>::const_iterator cit ;\n"
+           "   cit = autoFilenamesMap.find( fileCode ) ;\n"
+           "   if ( cit != autoFilenamesMap.end() )\n"
+           "   {\n"
+           "      return cit->second ;\n"
+           "   }\n"
+           "   else\n"
+           "   {\n"
+           "      return \"\" ;\n"
+           "   }\n"
+           "}\n"
+           "\n";
 
    return rc ;
 }

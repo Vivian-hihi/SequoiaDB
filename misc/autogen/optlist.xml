@@ -777,8 +777,22 @@
          <cn>打开内存调试,默认为false</cn>
       </description>
       <reloadable>
-         <en>Take effect after restart</en>
-         <cn>重启生效</cn>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <hidden>true</hidden>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_MEMDEBUGVERIFY</name>
+      <long>memdebugverify</long>
+      <description>
+         <en>Enable memory debug verify when dump memory, default:false</en>
+         <cn>打开内存调试校验,默认为false</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
       </reloadable>
       <hidden>true</hidden>
    </opt>
@@ -787,12 +801,12 @@
       <name>PMD_OPTION_MEMDEBUGSIZE</name>
       <long>memdebugsize</long>
       <description>
-         <en>Memory debug segment size,default:0, if not zero, the value range:[256,4194304]</en>
-         <cn>内存调试段大小,默认为0,当为不0时,取值范围:[256,4194304]</cn>
+         <en>Memory debug segment size,default:0, if not zero, the value range:[8,4194304]</en>
+         <cn>内存调试段大小,默认为0,当为不0时,取值范围:[8,4194304]</cn>
       </description>
       <reloadable>
-         <en>Take effect after restart</en>
-         <cn>重启生效</cn>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
       </reloadable>
       <type>int</type>
       <hidden>true</hidden>
