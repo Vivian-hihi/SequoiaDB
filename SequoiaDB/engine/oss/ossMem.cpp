@@ -42,6 +42,7 @@
 #include "ossLatch.hpp"
 #include "ossPrimitiveFileOp.hpp"
 #include "filenames.hpp"
+#include "ossVer.h"
 #include <set>
 #include <map>
 
