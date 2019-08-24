@@ -191,7 +191,7 @@ class _ossMemTrackCB
       UINT64                     _lastDumpTime ;
       UINT64                     _lastTrackNum ;
       UINT64                     _lastTrackSize ;
-      UINT64                     _lastStatNum ;
+      UINT64                     _lastStatTimes ;
       UINT64                     _lastStatSize ;
 
    protected:
@@ -392,7 +392,8 @@ class _ossMemTrackCB
       void memStatTrace( ossPrimitiveFileOp &trapFile,
                          const OSS_MEM_SORTMAP &mapSort,
                          const CHAR *prefix,
-                         UINT64 *pTotalSize = NULL )
+                         UINT64 *pTotalSize = NULL,
+                         UINT64 *pTotalTimes = NULL )
       {
          OSS_MEM_SORTMAP_CIT cit ;
          UINT64 totalSize = 0 ;
@@ -439,6 +440,10 @@ class _ossMemTrackCB
          {
             *pTotalSize = totalSize ;
          }
+         if ( pTotalTimes )
+         {
+            *pTotalTimes = totalTimes ;
+         }
       }
 
    public:
@@ -454,7 +459,7 @@ class _ossMemTrackCB
          _lastDumpTime = _resetTime ;
          _lastTrackNum = 0 ;
          _lastTrackSize = 0 ;
-         _lastStatNum = 0 ;
+         _lastStatTimes = 0 ;
          _lastStatSize = 0 ;
       }
       ~_ossMemTrackCB ()
@@ -472,7 +477,7 @@ class _ossMemTrackCB
          _lastDumpTime = _resetTime ;
          _lastTrackNum = 0 ;
          _lastTrackSize = 0 ;
-         _lastStatNum = 0 ;
+         _lastStatTimes = 0 ;
          _lastStatSize = 0 ;
 
          _memTrackMutex.release() ;
@@ -528,7 +533,7 @@ class _ossMemTrackCB
 
          UINT64 trackNum = 0 ;
          UINT64 trackSize = 0 ;
-         UINT64 statNum = 0 ;
+         UINT64 statTimes = 0 ;
          UINT64 statSize = 0 ;
 
          beginTime = ossGetCurrentMicroseconds() ;
@@ -553,13 +558,12 @@ class _ossMemTrackCB
 
             /// dump global stat info
             memStatMap2SortMap( _memStatMap, mapSort ) ;
-            memStatTrace( trapFile, mapSort, "Global", &statSize ) ;
+            memStatTrace( trapFile, mapSort, "Global", &statSize, &statTimes ) ;
             mapSort.clear() ;
 
             /// dump item info
             memTrace( trapFile, _memTrackMap, mapLocalStat, &trackSize ) ;
 
-            statNum = ( UINT64 )_memStatMap.size() ;
             trackNum = ( UINT64 )_memTrackMap.size() ;
          }
 
@@ -577,7 +581,7 @@ class _ossMemTrackCB
                             " Dump Time          : %s\n"
                             " Dump Interval      : %lld (secs)\n"
                             " Dump Cost Time     : %lld (secs)\n"
-                            " Global Num Inc     : %lld\n"
+                            " Global Times Inc   : %lld\n"
                             " Global Size Inc    : %lld\n"
                             " Run Time Num Inc   : %lld\n"
                             " Run Time Size Inc  : %lld\n",
@@ -585,7 +589,7 @@ class _ossMemTrackCB
                             beginTimebuff,
                             ( beginTime - _lastDumpTime ) / 1000000L,
                             ( endTime - beginTime ) / 1000000L,
-                            ( statNum - _lastStatNum ),
+                            ( statTimes - _lastStatTimes ),
                             ( statSize - _lastStatSize ),
                             ( trackNum - _lastTrackNum ),
                             ( trackSize - _lastTrackSize ) ) ;
@@ -599,7 +603,7 @@ class _ossMemTrackCB
 
          /// set last info
          _lastDumpTime = beginTime ;
-         _lastStatNum = statNum ;
+         _lastStatTimes = statTimes ;
          _lastStatSize = statSize ;
          _lastTrackNum = trackNum ;
          _lastTrackSize = trackSize ;
