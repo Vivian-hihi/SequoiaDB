@@ -543,6 +543,11 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
+      // enable memory debug option
+      ossOnMemConfigChange( _optioncb.memDebugEnabled(),
+                            _optioncb.memDebugSize(),
+                            _optioncb.memDebugVerify() ) ;
+
       // Reconfig all registered cbs
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
       {
@@ -586,7 +591,8 @@ namespace engine
 
       // enable memory debug option
       ossEnableMemDebug( _optioncb.memDebugEnabled(),
-                         _optioncb.memDebugSize() ) ;
+                         _optioncb.memDebugSize(),
+                         _optioncb.memDebugVerify() ) ;
 
       return _optioncb.makeAllDir() ;
    }

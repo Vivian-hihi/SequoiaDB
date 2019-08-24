@@ -43,7 +43,7 @@
 /*
  * [x bytes start][8 bytes data size][4 bytes guard size][4 bytes file hash][4
  * bytes line num][data][1 byte end][x-1 bytes stop]*/
-#define SDB_MEMDEBUG_MINGUARDSIZE 256
+#define SDB_MEMDEBUG_MINGUARDSIZE 8
 #define SDB_MEMDEBUG_MAXGUARDSIZE 4194304
 #define SDB_MEMDEBUG_GUARDSTART ((CHAR)0xBE)
 #define SDB_MEMDEBUG_GUARDSTOP  ((CHAR)0xBF)
@@ -68,22 +68,28 @@
 
 SDB_EXTERN_C_START
 
-void  ossEnableMemDebug( BOOLEAN debugEnable, UINT32 memDebugSize ) ;
+void  ossEnableMemDebug( BOOLEAN debugEnable,
+                         UINT32  memDebugSize,
+                         BOOLEAN memDebugVerify ) ;
 
 void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line ) ;
 
 void* ossMemRealloc ( void* pOld, size_t size,
                       const CHAR* file, UINT32 line ) ;
 
-void ossMemFree ( void *p ) ;
+void* ossAlignedAlloc( UINT32 alignment, UINT32 size ) ;
 
-void ossMemTrack ( void *p ) ;
+void  ossMemFree ( void *p ) ;
 
-void ossMemUnTrack ( void *p ) ;
-
-void ossMemTrace ( const CHAR *pPath ) ;
-
-void *ossAlignedAlloc( UINT32 alignment, UINT32 size ) ;
+/*
+   Mem tools
+*/
+void    ossMemTrack ( void *p ) ;
+void    ossMemUnTrack ( void *p ) ;
+INT32   ossMemTrace ( const CHAR *pPath ) ;
+void    ossOnMemConfigChange( BOOLEAN debugEnable,
+                              UINT32  memDebugSize,
+                              BOOLEAN memDebugVerify ) ;
 
 SDB_EXTERN_C_END
 #endif

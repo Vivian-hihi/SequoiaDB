@@ -41,7 +41,7 @@
 #include "ossMem.h"
 #include <new>
 
-#define SDB_OSS_MEMDUMPNAME      "memdump.info"
+#define SDB_OSS_MEMDUMPNAME      ".memdump"
 #define SDB_OSS_NEW              new(__FILE__,__LINE__,std::nothrow)
 #define SDB_OSS_DEL              delete
 

@@ -57,17 +57,18 @@
 #endif
 
 BOOLEAN ossMemDebugEnabled = FALSE ;
-UINT32 ossMemDebugSize = 0 ;
+BOOLEAN ossMemDebugVerify  = TRUE ;
+UINT32  ossMemDebugSize = 0 ;
 
 #define OSS_MEM_HEADSZ 32
 
-#define OSS_MEM_HEAD_EYECATCHER1SIZE  sizeof(UINT32)
-#define OSS_MEM_HEAD_FREEDSIZE sizeof(UINT32)
-#define OSS_MEM_HEAD_SIZESIZE    sizeof(UINT64)
-#define OSS_MEM_HEAD_DEBUGSIZE   sizeof(UINT32)
-#define OSS_MEM_HEAD_FILESIZE    sizeof(UINT32)
-#define OSS_MEM_HEAD_LINESIZE    sizeof(UINT32)
-#define OSS_MEM_HEAD_KEYECATCHER2SIZE sizeof(UINT32)
+#define OSS_MEM_HEAD_EYECATCHER1SIZE   sizeof(UINT32)
+#define OSS_MEM_HEAD_FREEDSIZE         sizeof(UINT32)
+#define OSS_MEM_HEAD_SIZESIZE          sizeof(UINT64)
+#define OSS_MEM_HEAD_DEBUGSIZE         sizeof(UINT32)
+#define OSS_MEM_HEAD_FILESIZE          sizeof(UINT32)
+#define OSS_MEM_HEAD_LINESIZE          sizeof(UINT32)
+#define OSS_MEM_HEAD_KEYECATCHER2SIZE  sizeof(UINT32)
 
 #define OSS_MEM_HEAD_EYECATCHER1OFFSET 0
 #define OSS_MEM_HEAD_FREEDOFFSET \
@@ -96,7 +97,11 @@ UINT32 ossMemDebugSize = 0 ;
 #if !defined (__cplusplus) || !defined (SDB_ENGINE)
 void ossMemTrack ( void *p ) {}
 void ossMemUnTrack ( void *p ) {}
-void ossMemTrace ( const CHAR *pPath ) {}
+INT32 ossMemTrace ( const CHAR *pPath ) { return 0 ; }
+void  ossOnMemConfigChange( BOOLEAN debugEnable,
+                            UINT32  memDebugSize,
+                            BOOLEAN memDebugVerify )
+{}
 #endif
 
 static BOOLEAN ossMemSanityCheck ( void *p )
@@ -108,7 +113,8 @@ static BOOLEAN ossMemSanityCheck ( void *p )
    return ( *(UINT32*)(headerMem+OSS_MEM_HEAD_EYECATCHER1OFFSET) ==
             SDB_MEMHEAD_EYECATCHER1 ) &&
           ( *(UINT32*)(headerMem+OSS_MEM_HEAD_EYECATCHER2OFFSET) ==
-            SDB_MEMHEAD_EYECATCHER2 ) ;
+            SDB_MEMHEAD_EYECATCHER2 ) &&
+          ( *(UINT32*)(headerMem+OSS_MEM_HEAD_FREEDOFFSET) == 0 ) ;
 }
 // this function verify whether a given pointer is at starting of a memory block
 // and not overflowed
@@ -165,8 +171,7 @@ static BOOLEAN ossMemVerify ( void *p )
       return TRUE ;
    // debug size sanity check
    if ( debugSize > SDB_MEMDEBUG_MAXGUARDSIZE ||
-        debugSize < SDB_MEMDEBUG_MINGUARDSIZE ||
-        debugSize > ossMemDebugSize )
+        debugSize < SDB_MEMDEBUG_MINGUARDSIZE )
    {
 #if defined (SDB_ENGINE)
          PD_LOG ( PDSEVERE, "debug size is not valid: %d", debugSize ) ;
@@ -228,7 +233,9 @@ static void ossMemFixHead ( CHAR *p,
    *(UINT32*)(p+OSS_MEM_HEAD_FREEDOFFSET)   = 0 ;
    // if memory debug is enabled, let's keep track of all memory allocations
    if ( ossMemDebugEnabled )
+   {
       ossMemTrack ( p ) ;
+   }
 }
 
 // allocate extra header only, do not allocate memory debug section
@@ -286,10 +293,13 @@ static void *ossMemAlloc2 ( size_t size, const CHAR* file, UINT32 line )
    return expMem ;
 }
 
-void ossEnableMemDebug( BOOLEAN debugEnable, UINT32 memDebugSize )
+void ossEnableMemDebug( BOOLEAN debugEnable,
+                        UINT32 memDebugSize,
+                        BOOLEAN memDebugVerify )
 {
    ossMemDebugEnabled   = debugEnable ;
    ossMemDebugSize      = memDebugSize ;
+   ossMemDebugVerify    = memDebugVerify ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMALLOC, "ossMemAlloc" )
@@ -343,6 +353,12 @@ static void *ossMemRealloc2 ( void* pOld, size_t size,
       debugSize = *(UINT32*)(headerMem+OSS_MEM_HEAD_DEBUGOFFSET) ;
       // get the original memory buffer size
       oldSize = *(UINT64*)(headerMem+OSS_MEM_HEAD_SIZEOFFSET) ;
+
+      if ( ossMemDebugEnabled )
+      {
+         ossMemUnTrack( headerMem ) ;
+      }
+
       // set the old-buffer as free
       *(UINT32*)(headerMem+OSS_MEM_HEAD_FREEDOFFSET) = 1 ;
       p = headerMem - debugSize ;
@@ -358,7 +374,18 @@ static void *ossMemRealloc2 ( void* pOld, size_t size,
    // start reallocate memory
    p = (CHAR*)realloc ( p, totalSize ) ;
    if ( !p )
+   {
+      /// when here, the old memory is not freed
+      if ( headerMem )
+      {
+         /// restore free
+         *(UINT32*)(headerMem+OSS_MEM_HEAD_FREEDOFFSET) = 0 ;
+
+         if ( ossMemDebugEnabled )
+            ossMemTrack( headerMem ) ;
+      }
       return NULL ;
+   }
 
    // initialize header
    ossMemFixHead ( p + debugSize, size, debugSize, file, line ) ;
@@ -389,6 +416,7 @@ static void *ossMemRealloc1 ( void* pOld, size_t size,
                               const CHAR* file, UINT32 line )
 {
    CHAR *p = NULL ;
+   CHAR *pOldHeader = NULL ;
    UINT64 totalSize = size + OSS_MEM_HEADSZ ;
    if ( pOld )
    {
@@ -401,13 +429,38 @@ static void *ossMemRealloc1 ( void* pOld, size_t size,
          ossPanic () ;
       }
       p = ((CHAR*)pOld - OSS_MEM_HEADSZ ) ;
+      pOldHeader = p ;
+
       if ( *(UINT32*)( p + OSS_MEM_HEAD_DEBUGOFFSET ) != 0 )
+      {
          return ossMemRealloc2 ( pOld, size, file, line ) ;
+      }
+
+      if ( ossMemDebugEnabled )
+      {
+         ossMemUnTrack( p ) ;
+      }
+
+      /// set free
       *(UINT32*)(p+OSS_MEM_HEAD_FREEDOFFSET) = 1 ;
    }
+
    p = (CHAR*)realloc ( p, totalSize ) ;
    if ( !p )
+   {
+      /// when here, the old memory is not freed
+      if ( pOldHeader )
+      {
+         /// restore free
+         *(UINT32*)(p+OSS_MEM_HEAD_FREEDOFFSET) = 0 ;
+
+         if ( ossMemDebugEnabled )
+         {
+            ossMemTrack( pOldHeader ) ;
+         }
+      }
       return NULL ;
+   }
    ossMemFixHead ( p, size, 0, file, line ) ;
    return ((CHAR*)p)+OSS_MEM_HEADSZ ;
 }
@@ -445,13 +498,17 @@ void ossMemFree2 ( void *p )
       }
       headerMem = ((CHAR*)p) - OSS_MEM_HEADSZ ;
       debugSize = *(UINT32*)(headerMem+OSS_MEM_HEAD_DEBUGOFFSET) ;
+
+      // remove memory if we enable memory debug
+      if ( ossMemDebugEnabled )
+      {
+         ossMemUnTrack ( headerMem ) ;
+      }
+
       // mark the memory is freed
       *(UINT32*)(headerMem+OSS_MEM_HEAD_FREEDOFFSET)   = 1 ;
       pStart = headerMem - debugSize ;
       free ( pStart ) ;
-      // remove memory if we enable memory debug
-      if ( ossMemDebugEnabled )
-         ossMemUnTrack ( pStart ) ;
    }
 }
 
@@ -473,11 +530,14 @@ void ossMemFree1 ( void *p )
          ossMemFree2 ( p ) ;
       else
       {
-         *(UINT32*)((CHAR*)pStart+OSS_MEM_HEAD_FREEDOFFSET)   = 1 ;
-         free ( pStart ) ;
          // remove memory if we enable memory debug
          if ( ossMemDebugEnabled )
+         {
             ossMemUnTrack ( pStart ) ;
+         }
+
+         *(UINT32*)((CHAR*)pStart+OSS_MEM_HEAD_FREEDOFFSET)   = 1 ;
+         free ( pStart ) ;
       }
    }
 }
