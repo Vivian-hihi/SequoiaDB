@@ -151,10 +151,14 @@ namespace seadapter
 
    void _utilESCltMgr::releaseClient( utilESClt *&client )
    {
+      utilESCltStat *stat = NULL ;
       if ( !client )
       {
          goto done ;
       }
+
+      stat = client->getStat() ;
+      ossGetCurrentTime( stat->idleTime ) ;
 
       _latch.get() ;
       _cltList.push_back( client ) ;
