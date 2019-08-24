@@ -861,7 +861,7 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
    //校验计划个数
    if( expAccessPlans.length !==  actAccessPlans.length )
    {
-       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + ", actAccessPlans: " + JSON.stringify(actAccessPlans));
+       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + "\nactAccessPlans: " + JSON.stringify(actAccessPlans));
        throw buildException("check length", "accessPlan length", "check failed!",
 								expAccessPlans.length, actAccessPlans.length);
    }
@@ -933,7 +933,7 @@ function checkMainclAccessPlans( expAccessPlans, actAccessPlans )
    //校验计划个数
    if( expAccessPlans.length !==  actAccessPlans.length )
    {
-       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + ", actAccessPlans: " + JSON.stringify(actAccessPlans));
+       println('expAccessPlans: ' + JSON.stringify(expAccessPlans) + "\nactAccessPlans: " + JSON.stringify(actAccessPlans));
        throw buildException("check length", "accessPlan length", "check failed!",
 								expAccessPlans.length, actAccessPlans.length);
    }
