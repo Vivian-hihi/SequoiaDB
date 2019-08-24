@@ -232,7 +232,7 @@ namespace seadapter
       rdvMinMax( pEX, _seConnLimit, 1, 65535, TRUE ) ;
 
       rdxUInt( pEX, SEADPT_CONN_TIMEOUT, _seConnTimeout, FALSE,
-               PMD_CFG_CHANGE_REBOOT, SEADPT_DFT_CONN_IDLE_TIME ) ;
+               PMD_CFG_CHANGE_REBOOT, SEADPT_DFT_CONN_TIMEOUT ) ;
       rdvMinMax( pEX, _seConnTimeout, 60, 86400, TRUE ) ;
 
       return getResult() ;
@@ -284,9 +284,9 @@ namespace seadapter
       return _seConnLimit ;
    }
 
-   UINT32 _seAdptOptionsMgr::getSEConnIdleTime() const
+   UINT32 _seAdptOptionsMgr::getSEConnTimeout() const
    {
-      return _seConnIdleTime ;
+      return _seConnTimeout;
    }
 
    // Index prefix can only contains english characters, numbers, and '_', and

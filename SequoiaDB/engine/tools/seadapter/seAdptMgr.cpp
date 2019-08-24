@@ -1222,7 +1222,7 @@ namespace seadapter
 
       rc = _dbAssist.routeAgent()->addTimer( OSS_ONE_SEC * 60,
                                              &_indexTimerHandler,
-                                             _refreshConnnTimerID ) ;
+                                             _cleanupConnnTimerID ) ;
       PD_RC_CHECK( rc, PDERROR, "Register connection cleanup timer failed[%d]",
                    rc ) ;
 
