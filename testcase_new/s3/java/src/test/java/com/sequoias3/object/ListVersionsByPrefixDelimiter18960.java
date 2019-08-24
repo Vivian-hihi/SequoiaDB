@@ -36,8 +36,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 public class ListVersionsByPrefixDelimiter18960 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18960";
-	private String[] objectNames = { "dir1/test1/1.txt", "dir1/test2/2.txt", "dir1/test3/3.txt", "dir1/test4",
-			"dir1/test5", "test6" };
+	private String[] objectNames = { "dir18960/test1/1.txt", "dir18960/test2/2.txt", "dir18960/test3/3.txt",
+			"dir18960/test4", "dir18960/test5", "18960test6" };
 	private AmazonS3 s3Client = null;
 	private int fileSize = 3;
 	private int versionNum = 2;
@@ -64,13 +64,13 @@ public class ListVersionsByPrefixDelimiter18960 extends S3TestBase {
 			}
 		}
 
-		// delete object "dir1/test5"
+		// delete object "dir18960/test5"
 		s3Client.deleteObject(bucketName, objectNames[4]);
 	}
 
 	@Test
 	private void test() throws Exception {
-		String prefix = "dir1/";
+		String prefix = "dir18960/";
 		String delimiter = "/";
 		VersionListing vsList = s3Client.listVersions(
 				new ListVersionsRequest().withBucketName(bucketName).withPrefix(prefix).withDelimiter(delimiter));
