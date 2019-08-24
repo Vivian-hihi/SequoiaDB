@@ -182,6 +182,7 @@ namespace seadapter
          if ( currentTime.time - stat->idleTime.time >= _cleanInterval )
          {
             _cltList.pop_front() ;
+            --_number ;
             _latch.release() ;
             SDB_OSS_DEL( client ) ;
             _latch.get() ;
