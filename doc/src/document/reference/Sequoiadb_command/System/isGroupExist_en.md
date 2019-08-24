@@ -22,7 +22,7 @@ Determine if a user group exists
 
 ##RETURN VALUE##
 
-On success, return true if the user gruop exists, otherwise return false.
+On success, return true if the user group exists, otherwise return false.
 
 On error, exception will be thrown.
 

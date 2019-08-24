@@ -50,7 +50,7 @@ T}
 .TE
 .SH RETURN VALUE
 .PP
-On success, return true if the user gruop exists, otherwise return false.
+On success, return true if the user group exists, otherwise return false.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
