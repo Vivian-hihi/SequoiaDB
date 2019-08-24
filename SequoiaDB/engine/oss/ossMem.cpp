@@ -530,6 +530,7 @@ class _ossMemTrackCB
          UINT64 endTime = 0 ;
          ossTimestamp tm ;
          CHAR beginTimebuff[ OSS_MEM_TRACEDUMP_TM_BUF ] = { 0 } ;
+         CHAR versionTxt[ 100 ] = { 0 } ;
 
          UINT64 trackNum = 0 ;
          UINT64 trackSize = 0 ;
@@ -574,9 +575,12 @@ class _ossMemTrackCB
 
          endTime = ossGetCurrentMicroseconds() ;
 
+         ossSprintVersion( "", versionTxt, sizeof( versionTxt ), FALSE ) ;
+
          /// dump reset time
          len = ossSnprintf( _linebuff, sizeof( _linebuff ),
                             "\n"
+                            " Version            : %s\n"
                             " Reset Time         : %s\n"
                             " Dump Time          : %s\n"
                             " Dump Interval      : %lld (secs)\n"
@@ -585,6 +589,7 @@ class _ossMemTrackCB
                             " Global Size Inc    : %lld\n"
                             " Run Time Count Inc : %lld\n"
                             " Run Time Size Inc  : %lld\n",
+                            versionTxt,
                             _timebuff,
                             beginTimebuff,
                             ( beginTime - _lastDumpTime ) / 1000000L,
