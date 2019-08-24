@@ -37,7 +37,6 @@ import com.sequoias3.commlibs3.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class UploadPartAndKillData18780 extends S3TestBase {
-	//TODO :建议去掉用例中多余的输出语句
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket18780";
@@ -129,18 +128,14 @@ public class UploadPartAndKillData18780 extends S3TestBase {
                 UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
                         .withPartNumber(partNum).withPartSize(partSize).withBucketName(bucketName).withKey(keyName)
                         .withUploadId(uploadId);
-                System.out.println("---begin to upload:" + partNum);
                 UploadPartResult uploadPartResult = s3Client1.uploadPart(partRequest);
-                System.out.println("---end to upload:" + partNum);
                 partEtags.add(uploadPartResult.getPartETag());
                 uploadSuccessPartNums.add(partNum);
             } catch (AmazonS3Exception e) {
-                System.out.println("---e=" + e.getStatusCode() + e.getErrorMessage());
                 if (e.getStatusCode() != 500) {
                     throw new Exception(keyName + ":" + partNum, e);
                 }
             } catch (Exception e) {
-                System.out.println("---e2=" + e.getMessage());
                 if (!e.getMessage().contains("Unable to execute HTTP request")) {
                     throw new Exception(keyName + ":" + partNum, e);
                 }
@@ -162,7 +157,6 @@ public class UploadPartAndKillData18780 extends S3TestBase {
                     .withUploadId(uploadId);
             UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
             partEtags.add(uploadPartResult.getPartETag());
-            System.out.println("---repartNums=" + partNum);
         }
         // 完成分段上传
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);

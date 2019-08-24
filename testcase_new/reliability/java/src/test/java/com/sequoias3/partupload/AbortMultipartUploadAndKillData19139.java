@@ -40,7 +40,6 @@ import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
  * @version 1.00
  */
 public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
-	//TODO :建议删除用例中不必要的输出语句
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket19139";
@@ -90,8 +89,8 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
         mgr.addTask(new AbortMultipartUpload(keyAndUploadIds));
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "node start fail!");
 
-        //TODO ：建议增加集群是否已经恢复的检测
         checkResult();
         runSuccess = true;
     }
@@ -122,25 +121,20 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
         @Override
         public void exec() throws Exception {
             try {
-                System.out.println("---begin to abort:");
                 for (int i = 0; i < keyAndUploadIds.size(); i++) {
                     String keyName = keyAndUploadIds.keySet().toArray()[i].toString();
                     String uploadId = keyAndUploadIds.get(keyName).get(0);
                     AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName,
                             uploadId);
                     s3Client1.abortMultipartUpload(request);
-                    System.out.println("--key=" + keyName + "   uploadId=" + uploadId);
                     successKeyAndUploadIds.add(keyName, uploadId);
                 }
-                System.out.println("---end to abort:");
             } catch (AmazonS3Exception e) {
-                System.out.println("---e=" + e.getStatusCode() + e.getErrorMessage());
                 // e:0 Get connection failed.
                 if (e.getStatusCode() != 0) {
                     throw new Exception(keyName, e);
                 }
             } catch (Exception e) {
-                System.out.println("---e2=" + e.getMessage());
                 if (!e.getMessage().contains("Unable to execute HTTP request")) {
                     throw new Exception(keyName, e);
                 }
@@ -176,12 +170,22 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
             String keyName = successKeyAndUploadIds.keySet().toArray()[i].toString();
             keyAndUploadIds.remove(keyName);
         }
-        System.out.println("---keyuploads=" + keyAndUploadIds.size());
+
         for (int i = 0; i < keyAndUploadIds.size(); i++) {
             String keyName = keyAndUploadIds.keySet().toArray()[i].toString();
             String uploadId = keyAndUploadIds.get(keyName).get(0);
-            AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName, uploadId);
-            s3Client.abortMultipartUpload(request);
+            if (i == 0) {
+                try {
+                    AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName,
+                            uploadId);
+                    s3Client.abortMultipartUpload(request);
+                } catch (AmazonS3Exception e) {
+                    // e:404 NoSuchUpload.
+                    if (e.getStatusCode() != 404 && e.getErrorCode() != "NoSuchUpload") {
+                        throw e;
+                    }
+                }
+            }
         }
 
         // 查询分段上传列表显示不存在分段信息

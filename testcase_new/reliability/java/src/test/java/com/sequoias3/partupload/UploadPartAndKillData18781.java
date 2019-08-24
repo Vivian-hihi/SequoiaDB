@@ -37,21 +37,19 @@ import com.sequoias3.commlibs3.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class UploadPartAndKillData18781 extends S3TestBase {
-	//TODO :建议去掉用例中无用的输出语句
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket18781";
     private String keyName = "/dir/test18781.tar";
     private int fileSize = 1024 * 1024 * 100;
     private int partSize = 1024 * 1024 * 10;
-    private String filePath1 = null;
     private File localPath = null;
+    private String filePath1 = null;
+    private String filePath2 = null;
+
     private File file1 = null;
     private File file2 = null;
     private List<PartETag> partEtags = Collections.synchronizedList(new ArrayList<PartETag>());
-    //TODO :下面两个参数并无实际用处，可删除
-    private List<Integer> uploadSuccessPartNums = Collections.synchronizedList(new ArrayList<Integer>());
-    private List<Integer> expPartNums = new ArrayList<>();
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -59,9 +57,10 @@ public class UploadPartAndKillData18781 extends S3TestBase {
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
         filePath1 = localPath + File.separator + "localFile_" + fileSize + ".txt";
+        filePath2 = localPath + File.separator + "localFile_" + fileSize + ".txt";
         TestTools.LocalFile.createFile(filePath1, fileSize);
         file1 = new File(filePath1);
-        file2 = new File(filePath1);
+        file2 = new File(filePath2);
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
@@ -76,9 +75,7 @@ public class UploadPartAndKillData18781 extends S3TestBase {
         int partNums = fileSize / partSize;
         for (int i = 0; i < partNums; i++) {
             int partNum = i + 1;
-            //TODO ：再次上传分段数据内容和第一次上传是相同的，与文本用例描述不符
             mgr.addTask(new PartUpload(partNum, partSize, file2, uploadId));
-            expPartNums.add(partNum);
         }
 
         GroupMgr groupMgr = GroupMgr.getInstance();
@@ -135,18 +132,13 @@ public class UploadPartAndKillData18781 extends S3TestBase {
                 UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
                         .withPartNumber(partNum).withPartSize(partSize).withBucketName(bucketName).withKey(keyName)
                         .withUploadId(uploadId);
-                System.out.println("---begin to upload:" + partNum);
                 UploadPartResult uploadPartResult = s3Client1.uploadPart(partRequest);
-                System.out.println("---end to upload:" + partNum);
                 partEtags.add(uploadPartResult.getPartETag());
-                uploadSuccessPartNums.add(partNum);
             } catch (AmazonS3Exception e) {
-                System.out.println("---e=" + e.getStatusCode() + e.getErrorMessage());
                 if (e.getStatusCode() != 500) {
                     throw new Exception(keyName + ":" + partNum, e);
                 }
             } catch (Exception e) {
-                System.out.println("---e2=" + e.getMessage());
                 if (!e.getMessage().contains("Unable to execute HTTP request")) {
                     throw new Exception(keyName + ":" + partNum, e);
                 }

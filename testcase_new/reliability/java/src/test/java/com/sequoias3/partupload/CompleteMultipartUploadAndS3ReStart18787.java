@@ -99,17 +99,13 @@ public class CompleteMultipartUploadAndS3ReStart18787 extends S3TestBase {
         @Override
         public void exec() throws Exception {
             try {
-                System.out.println("---begin to upload:");
                 PartUploadUtils.completeMultipartUpload(s3Client1, bucketName, keyName, uploadId, partEtags);
-                System.out.println("---end to upload:");
             } catch (AmazonS3Exception e) {
-                System.out.println("---e=" + e.getStatusCode() + e.getErrorMessage());
                 // e:0 Get connection failed.
                 if (e.getStatusCode() != 0) {
                     throw new Exception(keyName, e);
                 }
             } catch (Exception e) {
-                System.out.println("---e2=" + e.getMessage());
                 if (!e.getMessage().contains("Unable to execute HTTP request")) {
                     throw new Exception(keyName, e);
                 }
@@ -143,9 +139,12 @@ public class CompleteMultipartUploadAndS3ReStart18787 extends S3TestBase {
     }
 
     private void checkResult(String uploadId, List<PartETag> partEtags) throws Exception {
-    	//TODO :如果未撞到测试点完成分段上传的线程成功的话这里再重新完成分段上传会失败
-        // 重新完成分段上传
-        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
+        // 重新完成分段上传，如果故障时完成分段上传已成功，则再次完成分段上传会报错NoSuchUpload
+        try {
+            PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "NoSuchUpload", "the error is " + e.getErrorMessage());
+        }
 
         // 检查上传对象内容
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);

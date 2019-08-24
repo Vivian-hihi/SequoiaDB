@@ -36,7 +36,6 @@ import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
  * @version 1.00
  */
 public class AbortMultipartUploadAndS3ReStart19138 extends S3TestBase {
-	//TODO :建议删除用例中多余的输出语句
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket19138";
@@ -106,25 +105,20 @@ public class AbortMultipartUploadAndS3ReStart19138 extends S3TestBase {
         @Override
         public void exec() throws Exception {
             try {
-                System.out.println("---begin to abort:");
                 for (int i = 0; i < keyAndUploadIds.size(); i++) {
                     String keyName = keyAndUploadIds.keySet().toArray()[i].toString();
                     String uploadId = keyAndUploadIds.get(keyName).get(0);
                     AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName,
                             uploadId);
                     s3Client1.abortMultipartUpload(request);
-                    System.out.println("--key=" + keyName + "   uploadId=" + uploadId);
                     successKeyAndUploadIds.add(keyName, uploadId);
                 }
-                System.out.println("---end to abort:");
             } catch (AmazonS3Exception e) {
-                System.out.println("---e=" + e.getStatusCode() + e.getErrorMessage());
                 // e:0 Get connection failed.
                 if (e.getStatusCode() != 0) {
                     throw new Exception(keyName, e);
                 }
             } catch (Exception e) {
-                System.out.println("---e2=" + e.getMessage());
                 if (!e.getMessage().contains("Unable to execute HTTP request")) {
                     throw new Exception(keyName, e);
                 }
@@ -160,7 +154,7 @@ public class AbortMultipartUploadAndS3ReStart19138 extends S3TestBase {
             String keyName = successKeyAndUploadIds.keySet().toArray()[i].toString();
             keyAndUploadIds.remove(keyName);
         }
-        System.out.println("---keyuploads=" + keyAndUploadIds.size());
+
         for (int i = 0; i < keyAndUploadIds.size(); i++) {
             try {
                 String keyName = keyAndUploadIds.keySet().toArray()[i].toString();
