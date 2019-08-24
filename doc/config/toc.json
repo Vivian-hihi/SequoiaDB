@@ -477,6 +477,12 @@
                      "en": "Connect"
                   },
                   {
+                     "id": 1566551297,
+                     "file": "config",
+                     "cn": "配置",
+                     "en": "Configuration"
+                  },
+                  {
                      "id": 1555382544,
                      "file": "error_code",
                      "cn": "错误码",

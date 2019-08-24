@@ -16,12 +16,12 @@
 
 - 支持多连接多线程通信模型；
 - 完善全局事务一致性；
-- SAC支持“发现数据库实例”和”数据库实例同步“功能；
+- SAC支持“发现数据库实例”和“数据库实例同步”功能；
 
 **性能优化：**
 
-- 提供基于线程的内存管理机制，内存性能提升10以上%；
-- MySQL支持 选择符 下推，查询性能提升10%以上；
+- 提供基于线程的内存管理机制，内存性能提升10%以上；
+- MySQL支持选择符下推，查询性能提升10%以上；
 - MySQL支持 Auto-Commit 下推，精准查询性能提升40%以上；
 
 **工具优化：**
@@ -38,7 +38,7 @@ NA
 **接口变更：**
 
 - 变更：事务快照支持查看锁的等待或持有时间。
-- 新增：新增配置参数"translockwait"、“transautocommit”、“transautorollback”、“transuserbs”、“preferedstrict”。
+- 新增：新增配置参数“translockwait”、“transautocommit”、“transautorollback”、“transuserbs”、“preferedstrict”。
 - 新增：新加配置更新、删除接口。
 
 **主要特性：**
