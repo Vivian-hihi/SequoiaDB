@@ -272,6 +272,8 @@ namespace engine
       pmdEDUCB *cb = NULL ;
       monEDUFull full ;
 
+      ossScopedLock lock( &_latch, SHARED ) ;
+
       for ( it = _mapRuns.begin () ; it != _mapRuns.end () ; ++it )
       {
          cb = it->second ;
