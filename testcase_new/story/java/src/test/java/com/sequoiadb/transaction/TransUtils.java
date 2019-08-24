@@ -254,8 +254,8 @@ public class TransUtils {
     }
 
     /**
-     * 构造复合索引所需要的数据 如：a:0, b:0 a:1, b:0 a:1, b:1 a:1, b:2 ... a:2, b:2 a:3, b:0 a:3,
-     * b:1 ... a 为偶数时，a 和 b 一致 a 为奇数时，有多条记录 a 相等，b 不相等 aStart a 的起始值，aEnd a
+     * 构造复合索引所需要的数据 如：a:0, b:0 a:1, b:0 a:1, b:1 a:1, b:2 ... a:2, b:2 a:3, b:0
+     * a:3, b:1 ... a 为偶数时，a 和 b 一致 a 为奇数时，有多条记录 a 相等，b 不相等 aStart a 的起始值，aEnd a
      * 的结束值，bStart a 为奇数时 b 的起始值，bEnd a 为奇数时 b 的结束值 返回 list 长度 为 11*(aEnd -
      * aStart)/2
      * 
@@ -315,9 +315,12 @@ public class TransUtils {
      * @param csName
      * @param hashCLName
      * @param mainCLName
-     * @param subCLName1 子表名1
-     * @param subCLName2 子表名2
-     * @param sep        主表的切分范围为 (min - sep)(sep - max)
+     * @param subCLName1
+     *            子表名1
+     * @param subCLName2
+     *            子表名2
+     * @param sep
+     *            主表的切分范围为 (min - sep)(sep - max)
      */
     public static void createCLs(Sequoiadb sdb, String csName, String hashCLName, String mainCLName, String subCLName1,
             String subCLName2, int sep) {
@@ -343,9 +346,12 @@ public class TransUtils {
      * @param sdb
      * @param csName
      * @param mainCLName
-     * @param subCLName1 子表名1
-     * @param subCLName2 子表名2
-     * @param sep        主表的切分范围为(min - sep)(sep - max)
+     * @param subCLName1
+     *            子表名1
+     * @param subCLName2
+     *            子表名2
+     * @param sep
+     *            主表的切分范围为(min - sep)(sep - max)
      */
     public static void createMainCL(Sequoiadb sdb, String csName, String mainCLName, String subCLName1,
             String subCLName2, int sep) {
@@ -363,9 +369,12 @@ public class TransUtils {
     /**
      * 查询记录
      * 
-     * @param cl      集合对象
-     * @param orderBy 排序规则
-     * @param hint    排序规则
+     * @param cl
+     *            集合对象
+     * @param orderBy
+     *            排序规则
+     * @param hint
+     *            排序规则
      * @return 返回记录 BSONObject 的 List
      */
     public static List<BSONObject> queryToBSONList(DBCollection cl, String orderBy, String hint) {
@@ -375,11 +384,16 @@ public class TransUtils {
     /**
      * 查询记录
      * 
-     * @param cl       集合对象
-     * @param matcher  匹配规则
-     * @param selector 选择规则
-     * @param orderBy  排序规则
-     * @param hint     索引条件
+     * @param cl
+     *            集合对象
+     * @param matcher
+     *            匹配规则
+     * @param selector
+     *            选择规则
+     * @param orderBy
+     *            排序规则
+     * @param hint
+     *            索引条件
      * @return 返回记录 BSONObject 的 List
      */
     public static List<BSONObject> queryToBSONList(DBCollection cl, String matcher, String selector, String orderBy,
@@ -395,7 +409,8 @@ public class TransUtils {
      * 
      * @param cl
      * @param hint
-     * @param expList 预期结果，记录 BSONObject 的 List
+     * @param expList
+     *            预期结果，记录 BSONObject 的 List
      */
     public static void queryAndCheck(DBCollection cl, String hint, List<BSONObject> expList) {
         queryAndCheck(cl, null, null, null, hint, expList);
@@ -407,7 +422,8 @@ public class TransUtils {
      * @param cl
      * @param orderBy
      * @param hint
-     * @param expList 预期结果，记录 BSONObject 的 List
+     * @param expList
+     *            预期结果，记录 BSONObject 的 List
      */
     public static void queryAndCheck(DBCollection cl, String orderBy, String hint, List<BSONObject> expList) {
         queryAndCheck(cl, null, null, orderBy, hint, expList);
@@ -421,18 +437,19 @@ public class TransUtils {
      * @param selector
      * @param orderBy
      * @param hint
-     * @param expList  预期结果，记录 BSONObject 的 List
+     * @param expList
+     *            预期结果，记录 BSONObject 的 List
      */
     public static void queryAndCheck(DBCollection cl, String matcher, String selector, String orderBy, String hint,
             List<BSONObject> expList) {
-        List<BSONObject> actList = queryToBSONList(cl, matcher, selector, orderBy, hint);
-        Assert.assertEquals(actList, expList);
-
         BSONObject matcherBSON = (BSONObject) JSON.parse(matcher);
         BSONObject hintBSON = (BSONObject) JSON.parse(hint);
         long actCount = cl.getCount(matcherBSON, hintBSON);
         long expCount = expList.size();
         Assert.assertEquals(actCount, expCount);
+
+        List<BSONObject> actList = queryToBSONList(cl, matcher, selector, orderBy, hint);
+        Assert.assertEquals(actList, expList);
     }
 
     /**
