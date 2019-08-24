@@ -42,6 +42,7 @@
 #include "utilESBulkBuilder.hpp"
 #include "utilESClt.hpp"
 #include "seAdptOprMon.hpp"
+#include "utilESCltMgr.hpp"
 
 namespace seadapter
 {
@@ -55,15 +56,10 @@ namespace seadapter
       _seAdptSEAssist() ;
       ~_seAdptSEAssist() ;
 
-      INT32 init( utilESClt *esClient,
-                  UINT32 bulkBuffSz = SEADPT_DFT_BULKBUFF_SZ ) ;
+      INT32 init( UINT32 bulkBuffSz = SEADPT_DFT_BULKBUFF_SZ ) ;
       INT32 createIndex( const CHAR *name, const CHAR *mapping = NULL ) ;
       INT32 dropIndex( const CHAR *name ) ;
-      OSS_INLINE BOOLEAN indexExist( const CHAR *name, BOOLEAN &exist )
-      {
-         return _esClient->indexExist( name, exist ) ;
-      }
-
+      INT32 indexExist( const CHAR *name, BOOLEAN &exist ) ;
       INT32 getDocument( const CHAR *index, const CHAR *type, const CHAR *id,
                          BSONObj &result ) ;
 
@@ -85,7 +81,7 @@ namespace seadapter
       }
 
    private:
-      utilESClt *_esClient ;
+      utilESCltMgr *_esCltMgr ;
       UINT32 _bulkBuffSz ;
       utilESBulkBuilder _bulkBuilder ;
       CHAR _index[ SEADPT_MAX_IDXNAME_SZ + 1 ] ;

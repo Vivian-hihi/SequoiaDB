@@ -92,8 +92,6 @@ namespace seadapter
                           BSONObj &newHint, UINT16 &indexID ) ;
 
    private:
-      utilESCltFactory  *_seCltFactory ;
-      utilESClt         *_esClt ;
       CTX_MAP           _ctxMap ;
       BSONObj           _errorInfo ;
       INT64             _contextIDHWM ;

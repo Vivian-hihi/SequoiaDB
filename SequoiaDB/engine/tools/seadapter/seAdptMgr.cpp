@@ -40,6 +40,7 @@
 #include "seAdptMgr.hpp"
 #include "seAdptAgentSession.hpp"
 #include "seAdptIndexSession.hpp"
+#include "utilESCltMgr.hpp"
 
 #define DATA_NODE_GRP_ID                        10000
 #define DATA_NODE_ID                            10000
@@ -287,9 +288,9 @@ namespace seadapter
       _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
       _oneSecTimerID = NET_INVALID_TIMER_ID ;
       _esDetectTimerID = NET_INVALID_TIMER_ID ;
+      _cleanupConnnTimerID = NET_INVALID_TIMER_ID ;
       _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
       _regMsgBuff = NULL ;
-      _esClt = NULL ;
       _indexerOn = FALSE ;
    }
 
@@ -298,10 +299,6 @@ namespace seadapter
       if ( _regMsgBuff )
       {
          SDB_OSS_FREE( _regMsgBuff ) ;
-      }
-      if ( _esClt )
-      {
-         SDB_OSS_DEL _esClt ;
       }
    }
 
@@ -318,6 +315,7 @@ namespace seadapter
    INT32 _seAdptCB::init()
    {
       INT32 rc = SDB_OK ;
+      utilESCltMgr *esCltMgr = utilGetESCltMgr() ;
       CHAR seSvcAddr[ SEADPT_SE_SVCADDR_MAX_SZ + 1 ] = { 0 } ;
 
       // register config handler to se adapter options.
@@ -354,13 +352,12 @@ namespace seadapter
 
       // TODO: In future, if we can connect to adapter and change the
       // configuration value, just set the option manager in the factory.
-      rc = _seCltFactory.init( seSvcAddr, _options.getTimeout() ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Init search engine client manager failed[ %d ]",
-                 rc ) ;
-         goto error ;
-      }
+
+      rc = esCltMgr->init( seSvcAddr, _options.getSEConnLimit(),
+                           _options.getSEConnTimeout(),
+                           _options.getTimeout() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Initialize search engine client manager "
+                   "failed[%d]", rc ) ;
       PD_LOG( PDEVENT, "Search engine client manager init successfully" ) ;
 
       // Set the business status to not OK. Change to OK after successfully
@@ -490,18 +487,16 @@ namespace seadapter
             }
          }
       }
-
+      else if ( timerID == _cleanupConnnTimerID )
+      {
+         _cleanupESClts() ;
+      }
       return ;
    }
 
    seAdptOptionsMgr* _seAdptCB::getOptions()
    {
       return &_options ;
-   }
-
-   utilESCltFactory* _seAdptCB::getSeCltFactory()
-   {
-      return &_seCltFactory ;
    }
 
    seSvcSessionMgr* _seAdptCB::getSeAgentMgr()
@@ -829,19 +824,6 @@ namespace seadapter
 
    INT32 _seAdptCB::_detectES()
    {
-      INT32 rc = SDB_OK ;
-      utilESClt *clt = NULL ;
-
-      if ( _esClt )
-      {
-         goto done ;
-      }
-
-      rc = _seCltFactory.create( &clt ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create search engine client failed[ %d ]",
-                   rc ) ;
-
-      _esClt = clt ;
       _killTimer( _esDetectTimerID ) ;
       _esDetectTimerID = NET_INVALID_TIMER_ID ;
 
@@ -849,11 +831,7 @@ namespace seadapter
       {
          pmdGetKRCB()->setBusinessOK( TRUE ) ;
       }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    INT32 _seAdptCB::_resumeRegister()
@@ -1242,6 +1220,12 @@ namespace seadapter
                                              _oneSecTimerID ) ;
       PD_RC_CHECK( rc, PDERROR, "Register one second timer failed[ %d ]", rc ) ;
 
+      rc = _dbAssist.routeAgent()->addTimer( OSS_ONE_SEC * 60,
+                                             &_indexTimerHandler,
+                                             _refreshConnnTimerID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Register connection cleanup timer failed[%d]",
+                   rc ) ;
+
    done:
       return rc ;
    error:
@@ -1255,7 +1239,23 @@ namespace seadapter
 
    BOOLEAN _seAdptCB::_isESOnline()
    {
-      return ( _esClt && _esClt->isActive() ) ;
+      BOOLEAN active = FALSE ;
+      utilESClt *client = NULL ;
+      utilESCltMgr *esCltMgr = utilGetESCltMgr() ;
+      if ( SDB_OK ==  esCltMgr->getClient( client ) )
+      {
+         active = client->isActive() ;
+         esCltMgr->releaseClient( client ) ;
+      }
+
+      return active ;
+   }
+
+   INT32 _seAdptCB::_cleanupESClts()
+   {
+      utilESCltMgr *esCltMgr = utilGetESCltMgr() ;
+      esCltMgr->cleanup() ;
+      return SDB_OK ;
    }
 
    seAdptCB* sdbGetSeAdapterCB()
@@ -1267,11 +1267,6 @@ namespace seadapter
    seAdptOptionsMgr* sdbGetSeAdptOptions()
    {
       return sdbGetSeAdapterCB()->getOptions() ;
-   }
-
-   utilESCltFactory* sdbGetSeCltFactory()
-   {
-      return sdbGetSeAdapterCB()->getSeCltFactory() ;
    }
 }
 

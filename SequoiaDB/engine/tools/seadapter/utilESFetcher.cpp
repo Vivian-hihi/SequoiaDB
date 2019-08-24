@@ -39,6 +39,7 @@
 #include "utilESFetcher.hpp"
 #include "pd.hpp"
 #include "pmdEDU.hpp"
+#include "utilESCltMgr.hpp"
 
 using namespace engine ;
 
@@ -54,28 +55,15 @@ namespace seadapter
       _index = std::string( index ) ;
       _type = std::string( type ) ;
       _size = 0 ;
+      _esCltMgr = utilGetESCltMgr() ;
    }
 
    _utilESFetcher::~_utilESFetcher()
    {
-   }
-
-   INT32 _utilESFetcher::setClt( utilESClt *esClt )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( !esClt )
+      if ( _clt )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "esClt is NULL" ) ;
-         goto error ;
+         _esCltMgr->releaseClient( _clt ) ;
       }
-      _clt = esClt ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _utilESFetcher::setCondition( const BSONObj &condObj )
@@ -129,15 +117,18 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       UINT32 origNum = result.getObjNum() ;
+      utilESClt *client = NULL ;
+      rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
 
       if ( !_fetchDone )
       {
-         rc = _clt->getDocument( _index.c_str(), _type.c_str(),
-                                 _query.toString( FALSE, TRUE ).c_str(),
-                                 result, FALSE ) ;
+         rc = client->getDocument( _index.c_str(), _type.c_str(),
+                                   _query.toString( FALSE, TRUE ).c_str(),
+                                   result, FALSE ) ;
          if ( rc )
          {
-            const CHAR *errMsg = _clt->getLastErrMsg() ;
+            const CHAR *errMsg = client->getLastErrMsg() ;
             if ( errMsg )
             {
                PD_LOG_MSG( PDERROR, "Get document of index[ %s ] and "
@@ -145,7 +136,7 @@ namespace seadapter
                            "Error message: %s",
                            _index.c_str(), _type.c_str(), rc,
                            _query.toString( FALSE, TRUE ).c_str(),
-                           _clt->getLastErrMsg() ) ;
+                           client->getLastErrMsg() ) ;
             }
             else
             {
@@ -163,6 +154,11 @@ namespace seadapter
             rc = SDB_DMS_EOC ;
             goto error ;
          }
+
+         // Only release the client immediately when succeed. If any error
+         // happened, the fetcher will be destroyed, so we keep the current
+         // client for destroy action, avoid getting it again.
+         _esCltMgr->releaseClient( client ) ;
       }
       else
       {
@@ -173,6 +169,7 @@ namespace seadapter
    done:
       return rc ;
    error:
+      _clt = client ;
       goto done ;
    }
 
@@ -187,7 +184,15 @@ namespace seadapter
       // Clean the scroll on es to free resource.
       if ( !_scrollID.empty() )
       {
-         _clt->clearScroll( _scrollID ) ;
+         INT32 rc = SDB_OK ;
+         if ( !_clt )
+         {
+            rc = _esCltMgr->getClient( _clt ) ;
+         }
+         if ( SDB_OK == rc )
+         {
+            _clt->clearScroll( _scrollID ) ;
+         }
       }
    }
 
@@ -195,16 +200,19 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       UINT32 origNum = result.getObjNum() ;
+      utilESClt *client = NULL ;
+      rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
 
       if ( _scrollID.empty() )
       {
          // We just want the scroll id and document id. So use the filter path.
-         rc = _clt->initScroll( _scrollID, _index.c_str(), _type.c_str(),
-                                _query.toString( FALSE, TRUE ), result,
-                                ES_SCROLL_FIX_SIZE, _filterPath.c_str() ) ;
+         rc = client->initScroll( _scrollID, _index.c_str(), _type.c_str(),
+                                  _query.toString( FALSE, TRUE ), result,
+                                  ES_SCROLL_FIX_SIZE, _filterPath.c_str() ) ;
          if ( rc )
          {
-            const CHAR *errMsg = _clt->getLastErrMsg() ;
+            const CHAR *errMsg = client->getLastErrMsg() ;
             if ( errMsg )
             {
                PD_LOG_MSG( PDERROR, "Initialize scroll for index[ %s ] and "
@@ -212,7 +220,7 @@ namespace seadapter
                            "Error message: %s",
                            _index.c_str(), _type.c_str(), rc,
                            _query.toString( FALSE, TRUE ).c_str(),
-                           _clt->getLastErrMsg() ) ;
+                           client->getLastErrMsg() ) ;
             }
             else
             {
@@ -226,16 +234,16 @@ namespace seadapter
       }
       else
       {
-         rc = _clt->scrollNext( _scrollID, result, _filterPath.c_str() ) ;
+         rc = client->scrollNext( _scrollID, result, _filterPath.c_str() ) ;
          if ( rc )
          {
-            const CHAR *errMsg = _clt->getLastErrMsg() ;
+            const CHAR *errMsg = client->getLastErrMsg() ;
             if ( errMsg )
             {
                PD_LOG_MSG( PDERROR, "Scroll with id[ %s ] for index[ %s ] and "
                            "type[ %s ] failed[ %d ]. Error message: %s",
                            _scrollID.c_str(), _index.c_str(), _type.c_str(),
-                           rc, _clt->getLastErrMsg() ) ;
+                           rc, client->getLastErrMsg() ) ;
             }
             else
             {
@@ -254,9 +262,15 @@ namespace seadapter
          goto error ;
       }
 
+      // Only release the client immediately when succeed. If any error
+      // happened, the fetcher will be destroyed, so we keep the current
+      // client for destroy action, avoid getting it again.
+      _esCltMgr->releaseClient( client ) ;
+
    done:
       return rc ;
    error:
+      _clt = client ;
       goto done ;
    }
 }

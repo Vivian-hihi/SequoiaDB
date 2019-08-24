@@ -131,7 +131,6 @@ namespace seadapter
 
    _seAdptContextQuery::_seAdptContextQuery()
    : _imContext( NULL ),
-     _esClt( NULL ),
      _esFetcher( NULL )
    {
    }
@@ -150,7 +149,6 @@ namespace seadapter
 
    INT32 _seAdptContextQuery::open( const CHAR *clName,
                                     UINT16 indexID,
-                                    utilESClt *esClt,
                                     const BSONObj &matcher,
                                     const BSONObj &selector,
                                     const BSONObj &orderBy,
@@ -185,7 +183,6 @@ namespace seadapter
          goto error ;
       }
 
-      _esClt = esClt ;
       _condTree.parse( matcher ) ;
       textNode = _condTree.getTextNode() ;
       if ( !textNode )
@@ -429,8 +426,6 @@ namespace seadapter
          _esFetcher->setFilterPath( SEADPT_ES_ID_FILTER_PATH ) ;
          rc = _esFetcher->setCondition( queryCond ) ;
          PD_RC_CHECK( rc, PDERROR, "Set ES query condition failed[ %d ]", rc ) ;
-         rc = _esFetcher->setClt( _esClt ) ;
-         PD_RC_CHECK( rc, PDERROR, "Set ES client failed[ %d ]", rc ) ;
       }
       catch ( std::exception &e )
       {

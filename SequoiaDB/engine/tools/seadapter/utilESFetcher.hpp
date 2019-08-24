@@ -44,6 +44,7 @@
 #include "utilCommObjBuff.hpp"
 #include "utilESClt.hpp"
 #include <string>
+#include "utilESCltMgr.hpp"
 
 using bson::BSONObj ;
 
@@ -60,7 +61,6 @@ namespace seadapter
          _utilESFetcher( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESFetcher() ;
 
-         INT32 setClt( utilESClt *esClt ) ;
          INT32 setCondition( const BSONObj &condObj ) ;
          void setSize( INT64 size ) ;
          void setFilterPath( const CHAR *filterPath ) ;
@@ -74,6 +74,7 @@ namespace seadapter
          BSONObj        _query ;
          INT64          _size ;
          std::string    _filterPath ;
+         utilESCltMgr  *_esCltMgr ;
    } ;
    typedef _utilESFetcher utilESFetcher ;
 

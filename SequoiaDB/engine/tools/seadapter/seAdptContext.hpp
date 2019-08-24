@@ -41,7 +41,6 @@
 
 #include "pmdEDU.hpp"
 #include "utilCommObjBuff.hpp"
-#include "utilESClt.hpp"
 #include "utilESFetcher.hpp"
 #include "rtnSimpleCondParser.hpp"
 #include "seAdptIdxMetaMgr.hpp"
@@ -95,7 +94,6 @@ namespace seadapter
 
       virtual INT32 open( const CHAR *clName,
                           UINT16 indexID,
-                          utilESClt *esClt,
                           const BSONObj &matcher,
                           const BSONObj &selector,
                           const BSONObj &orderBy,
@@ -116,7 +114,6 @@ namespace seadapter
 
       INT32 open( const CHAR *clName,
                   UINT16 indexID,
-                  utilESClt *esClt,
                   const BSONObj &matcher,
                   const BSONObj &selector,
                   const BSONObj &orderBy,
@@ -137,7 +134,6 @@ namespace seadapter
                           BSONObj &condition ) ;
    private:
       seIdxMetaContext       *_imContext ;
-      utilESClt              *_esClt ;
       seAdptQueryRebuilder    _queryRebuilder ;
       rtnSimpleCondParseTree  _condTree ;
       utilESFetcher          *_esFetcher ;

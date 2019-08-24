@@ -65,6 +65,8 @@ namespace seadapter
       INT32       getTimeout() const ;
       UINT32      getBulkBuffSize() const ;
       UINT16      getStrMapType() const ;
+      UINT32      getSEConnLimit() const ;
+      UINT32      getSEConnTimeout() const ;
 
    protected:
       virtual INT32 doDataExchange( engine::pmdCfgExchange *pEX ) ;
@@ -83,6 +85,8 @@ namespace seadapter
       INT32    _timeout ;
       UINT32   _bulkBuffSize ;
       UINT16   _strMapType ;
+      UINT32   _seConnLimit ;
+      UINT32   _seConnTimeout ;
    } ;
    typedef _seAdptOptionsMgr seAdptOptionsMgr ;
 }

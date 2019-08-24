@@ -52,12 +52,16 @@ namespace seadapter
    #define SEADPT_SE_IDXPREFIX            "idxprefix"
    #define SEADPT_BULK_BUFF_SIZE          "bulkbuffsize"
    #define SEADPT_STR_MAP_TYPE            "stringmaptype"
+   #define SEADPT_CONN_LIMIT              "connlimit"
+   #define SEADPT_CONN_TIMEOUT            "conntimeout"
 
    #define SEADPT_DFT_TIMEOUT             10000
    #define SEADPT_DFT_BULKBUFF_SZ         10
    #define SEADPT_DFT_STR_MAP_TYPE        1
    #define SEADPT_SE_DFT_SERVICE          "9200"
    #define SEADPT_SE_SVCADDR_MAX_SZ       32
+   #define SEADPT_DFT_CONN_LIMIT          50
+   #define SEADPT_DFT_CONN_TIMEOUT        1800
 
    // Route id for the adapter, just use one that will not conflict with sdb
    // nodes.

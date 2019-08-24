@@ -17,8 +17,7 @@ namespace seadapter
 
          virtual INT32 init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                              const CHAR *matcherBuff, const CHAR *selectorBuff,
-                             const CHAR *orderByBuff, const CHAR *hintBuff,
-                             utilESClt *esClt ) = 0 ;
+                             const CHAR *orderByBuff, const CHAR *hintBuff ) = 0 ;
          virtual INT32 doit( pmdEDUCB *cb, utilCommObjBuff &objBuff ) = 0 ;
    } ;
    typedef _seAdptCommand seAdptCommand ;
@@ -31,8 +30,7 @@ namespace seadapter
 
          INT32 init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                      const CHAR *matcherBuff, const CHAR *selectorBuff,
-                     const CHAR *orderByBuff, const CHAR *hintBuff,
-                     utilESClt *esClt ) ;
+                     const CHAR *orderByBuff, const CHAR *hintBuff ) ;
          INT32 doit( _pmdEDUCB *cb, utilCommObjBuff &objBuff ) ;
       private:
          BOOLEAN _isMatchAll() ;
@@ -41,7 +39,6 @@ namespace seadapter
          const CHAR *_clFullName ;
          UINT16 _indexID ;
          BSONObj _condition ;
-         utilESClt *_esClt ;
    } ;
 
    typedef _seAdptGetCount seAdptGetCount ;

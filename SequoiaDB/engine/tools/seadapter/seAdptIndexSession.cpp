@@ -252,11 +252,7 @@ namespace seadapter
          goto done ;
       }
 
-      rc = sdbGetSeAdapterCB()->getSeCltFactory()->create( &_searchEngine ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create search engine client failed[%d]", rc ) ;
-
-      rc = _seAssist.init( _searchEngine,
-                           sdbGetSeAdptOptions()->getBulkBuffSize() ) ;
+      rc = _seAssist.init( sdbGetSeAdptOptions()->getBulkBuffSize() ) ;
       PD_RC_CHECK( rc, PDERROR, "Initialize search engine assistant failed[%d]",
                    rc ) ;
 

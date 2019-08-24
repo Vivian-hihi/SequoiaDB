@@ -3,13 +3,13 @@
 #include "ossUtil.hpp"
 #include "seAdptMgr.hpp"
 #include "seAdptKeyword.hpp"
+#include "utilESCltMgr.hpp"
 
 namespace seadapter
 {
    _seAdptGetCount::_seAdptGetCount()
    : _clFullName( NULL ),
-     _indexID( SEADPT_INVALID_IMID ),
-     _esClt( NULL )
+     _indexID( SEADPT_INVALID_IMID )
    {
    }
 
@@ -19,19 +19,9 @@ namespace seadapter
                                 const CHAR *matcherBuff,
                                 const CHAR *selectorBuff,
                                 const CHAR *orderByBuff,
-                                const CHAR *hintBuff,
-                                utilESClt *esClt )
+                                const CHAR *hintBuff )
    {
       INT32 rc = SDB_OK ;
-      if ( !esClt )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Search engine client is invalid" ) ;
-         goto error ;
-      }
-
-      _esClt = esClt ;
-
       try
       {
          map<string, UINT16> idxNameMap ;
@@ -77,15 +67,22 @@ namespace seadapter
       INT32 rc = SDB_OK ;
       UINT64 totalCount = 0 ;
       seIdxMetaContext *imContext = NULL ;
+      utilESClt *client = NULL ;
+      utilESCltMgr *esCltMgr = utilGetESCltMgr() ;
       seIdxMetaMgr *idxMetaMgr = sdbGetSeAdapterCB()->getIdxMetaMgr() ;
+
+      rc = esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
 
       rc = idxMetaMgr->getIMContext( &imContext, _indexID, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Get index meta context failed[%d]", rc ) ;
 
-      rc = _esClt->getDocCount( imContext->meta()->getESIdxName(),
+      rc = client->getDocCount( imContext->meta()->getESIdxName(),
                                 imContext->meta()->getESTypeName(),
                                 _condition.toString(false, true).c_str(),
                                 totalCount ) ;
+      esCltMgr->releaseClient( client ) ;
+	  client = NULL ;
       PD_RC_CHECK( rc, PDERROR, "Get document count failed[%d]", rc ) ;
 
       // If it's match_all, we need to filter out the SDBCOMMIT record.
@@ -97,6 +94,10 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Append result to buffer failed[%d]", rc ) ;
 
    done:
+      if ( client )
+      {
+         esCltMgr->releaseClient( client ) ;
+      }
       idxMetaMgr->releaseIMContext( imContext ) ;
       return rc ;
    error:

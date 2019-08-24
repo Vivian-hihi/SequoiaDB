@@ -43,9 +43,9 @@
 namespace seadapter
 {
    _seAdptSEAssist::_seAdptSEAssist()
-   : _esClient( NULL ),
-     _bulkBuffSz( 0 )
+   : _bulkBuffSz( 0 )
    {
+      _esCltMgr = utilGetESCltMgr() ;
       ossMemset( _index, 0, SEADPT_MAX_IDXNAME_SZ + 1 ) ;
       ossMemset( _type, 0, SEADPT_MAX_TYPE_SZ + 1 ) ;
    }
@@ -54,45 +54,109 @@ namespace seadapter
    {
    }
 
-   INT32 _seAdptSEAssist::init( utilESClt *esClient, UINT32 bulkBuffSz )
+   INT32 _seAdptSEAssist::init( UINT32 bulkBuffSz )
    {
-      INT32 rc = SDB_OK ;
-
-      if ( !esClient )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Client is invalid" ) ;
-         goto error ;
-      }
-      _esClient = esClient ;
       _bulkBuffSz = bulkBuffSz ;
+      return SDB_OK ;
+   }
+
+   INT32 _seAdptSEAssist::createIndex( const CHAR *name, const CHAR *mapping )
+   {
+      utilESClt *client = NULL ;
+      INT32 rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
+
+      rc = client->createIndex( name, mapping ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create index[%s] on search engine failed[%d]",
+                   name, rc ) ;
 
    done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptSEAssist::createIndex( const CHAR *name, const CHAR *mapping )
-   {
-      return _esClient->createIndex( name, mapping ) ;
-   }
-
    INT32 _seAdptSEAssist::dropIndex( const CHAR *name )
    {
-      return _esClient->dropIndex( name ) ;
+      utilESClt *client = NULL ;
+      INT32 rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
+
+      rc = client->dropIndex( name ) ;
+      PD_RC_CHECK( rc, PDERROR, "Drop index[%s] on search engine failed[%d]",
+                   name, rc ) ;
+
+   done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptSEAssist::indexExist( const CHAR *name, BOOLEAN &exist )
+   {
+      utilESClt *client = NULL ;
+      INT32 rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
+
+      rc = client->indexExist( name, exist ) ;
+      PD_RC_CHECK( rc, PDERROR, "Check index existance on search engine "
+                   "failed[%d]", rc ) ;
+   done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _seAdptSEAssist::getDocument( const CHAR *index, const CHAR *type,
                                        const CHAR *id, BSONObj &result )
    {
-      return _esClient->getDocument( index, type, id, result, FALSE ) ;
+      utilESClt *client = NULL ;
+      INT32 rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
+
+      rc = client->getDocument( index, type, id, result, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get document from search engine failed[%d]",
+                   rc ) ;
+
+   done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _seAdptSEAssist::indexDocument( const CHAR *index, const CHAR *type,
                                          const CHAR *id, const CHAR *jsonData )
    {
-      return _esClient->indexDocument( index, type, id, jsonData ) ;
+      utilESClt *client = NULL ;
+      INT32 rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
+      rc = client->indexDocument( index, type, id, jsonData ) ;
+      PD_RC_CHECK( rc, PDERROR, "Index document on search engine failed[%d]",
+                   rc ) ;
+   done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _seAdptSEAssist::bulkPrepare( const CHAR *index, const CHAR *type )
@@ -122,6 +186,9 @@ namespace seadapter
    INT32 _seAdptSEAssist::bulkProcess( const utilESBulkActionBase &actionItem )
    {
       INT32 rc = SDB_OK ;
+      utilESClt *client = NULL ;
+      rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
 
       // If reaching the size limit of the bulk builder, fire the operation and
       // go on with the next batch of data.
@@ -129,7 +196,7 @@ namespace seadapter
       {
          if ( _bulkBuilder.getItemNum() > 0 )
          {
-            rc = _esClient->bulk( _index, _type, _bulkBuilder.getData() ) ;
+            rc = client->bulk( _index, _type, _bulkBuilder.getData() ) ;
             PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
 
             PD_LOG( PDDEBUG, "Index documents in bulk mode successfully. "
@@ -160,6 +227,10 @@ namespace seadapter
                    rc ) ;
 
    done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -169,20 +240,27 @@ namespace seadapter
    _seAdptSEAssist::processBigItem( const utilESBulkActionBase &actionItem )
    {
       INT32 rc = SDB_OK ;
+      utilESClt *client = NULL ;
+      rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
 
       // Currently only index and update may exceed bulk buffer. They both use
       // the indexDocument interface.
       SDB_ASSERT( UTIL_ES_ACTION_INDEX == actionItem.getActionType(),
                   "Type is not index" ) ;
 
-      rc = _esClient->
-            indexDocument( actionItem.getIndexName(),
+      rc = client->
+           indexDocument( actionItem.getIndexName(),
                            actionItem.getTypeName(),
                            actionItem.getID(),
                            actionItem.getSrcData().toString(false, true).c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Index document failed[ %d ]", rc ) ;
 
    done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -191,10 +269,13 @@ namespace seadapter
    INT32 _seAdptSEAssist::bulkFinish()
    {
       INT32 rc = SDB_OK ;
+      utilESClt *client = NULL ;
+      rc = _esCltMgr->getClient( client ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get search engine client failed[%d]", rc ) ;
 
       if ( _bulkBuilder.getDataLen() > 0 )
       {
-         rc = _esClient->bulk( _index, _type, _bulkBuilder.getData() ) ;
+         rc = client->bulk( _index, _type, _bulkBuilder.getData() ) ;
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[%d]", rc ) ;
          PD_LOG( PDDEBUG, "Index documents in bulk mode successfully. "
                           "Document number[%u], size[%u]. Detail: insert[%u], "
@@ -210,6 +291,10 @@ namespace seadapter
       }
 
    done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
       return rc ;
    error:
       goto done ;

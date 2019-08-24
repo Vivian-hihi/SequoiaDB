@@ -43,7 +43,6 @@
 #include "seAdptOptionsMgr.hpp"
 #include "pmdAsyncSession.hpp"
 #include "pmdAsyncHandler.hpp"
-#include "utilESCltFactory.hpp"
 #include "seAdptMsgHandler.hpp"
 #include "seAdptIdxMetaMgr.hpp"
 #include "seAdptDBAssist.hpp"
@@ -205,7 +204,6 @@ namespace seadapter
       virtual void onTimer( UINT64 timerID, UINT32 interval ) ;
 
       seAdptOptionsMgr*    getOptions() ;
-      utilESCltFactory*    getSeCltFactory() ;
       seSvcSessionMgr*     getSeAgentMgr() ;
       seIndexSessionMgr*   getIdxSessionMgr() ;
       seIdxMetaMgr*        getIdxMetaMgr() { return &_idxMetaMgr ; }
@@ -247,6 +245,8 @@ namespace seadapter
 
       BOOLEAN _isESOnline() ;
 
+      INT32 _cleanupESClts() ;
+
    private:
       indexMsgHandler         _indexMsgHandler ;
       pmdAsyncMsgHandler      _svcMsgHandler ;
@@ -268,7 +268,6 @@ namespace seadapter
                                                 // accorrdingly.
       CHAR                    _peerGroupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
 
-      utilESCltFactory        _seCltFactory ;
       MsgRouteID              _selfRouteID ;
       ossSpinSLatch           _seLatch ;
       VECINNERPARAM           _vecInnerSessionParam ;
@@ -276,19 +275,18 @@ namespace seadapter
       UINT32                  _idxUpdateTimerID ;  // For text index information update.
       UINT32                  _oneSecTimerID ;     // For session check by session managers.
       UINT32                  _esDetectTimerID ;
+      UINT32                  _cleanupConnnTimerID ;
       ossEvent                _registerEvent ;
 
       INT64                   _localIdxVer ;
       seIdxMetaMgr            _idxMetaMgr ;
       MsgHeader              *_regMsgBuff ;
-      utilESClt              *_esClt ;          // Used to check ES status.
       BOOLEAN                 _indexerOn ;
    } ;
    typedef _seAdptCB seAdptCB ;
 
    seAdptCB* sdbGetSeAdapterCB() ;
    seAdptOptionsMgr* sdbGetSeAdptOptions() ;
-   utilESCltFactory* sdbGetSeCltFactory() ;
 }
 
 #endif /* SE_ADPTMGR_HPP_ */

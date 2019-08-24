@@ -61,6 +61,13 @@ using std::string ;
 
 namespace seadapter
 {
+   struct _utilESCltStat
+   {
+      ossTimestamp createTime ;
+      ossTimestamp idleTime ;
+   } ;
+   typedef _utilESCltStat utilESCltStat ;
+
    // Client class for ElasticSearch.
    class _utilESClt : public SDBObject
    {
@@ -69,8 +76,8 @@ namespace seadapter
          ~_utilESClt();
 
          // Init connection with specified uri.
-         INT32 init( const string &uri, BOOLEAN readOnly = FALSE,
-                     INT32 timeout = UTIL_SE_DFT_TIMEOUT ) ;
+         INT32 init( const string &uri, INT32 timeout = UTIL_SE_DFT_TIMEOUT ) ;
+         void reset( BOOLEAN disconnect = FALSE ) ;
          BOOLEAN isActive() ;
          INT32 getSEInfo( BSONObj &infoObj ) ;
          INT32 indexExist( const CHAR *index, BOOLEAN &exist ) ;
@@ -128,6 +135,8 @@ namespace seadapter
 
          const CHAR* getLastErrMsg() const ;
 
+         utilESCltStat* getStat() ;
+
       private:
          OSS_INLINE INT32 _processReply( INT32 returnCode, const CHAR *reply,
                                          INT32 replyLen, BSONObj &resultObj,
@@ -146,8 +155,8 @@ namespace seadapter
 
       private:
          utilHttp    _http;
-         BOOLEAN     _readOnly;
          const CHAR *_errMsg ;
+         utilESCltStat _stat ;
    };
    typedef _utilESClt utilESClt ;
 

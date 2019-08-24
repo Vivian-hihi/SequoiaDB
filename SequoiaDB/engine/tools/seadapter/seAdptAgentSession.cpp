@@ -53,8 +53,6 @@ namespace seadapter
    _seAdptAgentSession::_seAdptAgentSession( UINT64 sessionID )
    : _pmdAsyncSession( sessionID )
    {
-      _seCltFactory = sdbGetSeCltFactory() ;
-      _esClt = NULL ;
       _contextIDHWM = 0 ;
    }
 
@@ -64,13 +62,6 @@ namespace seadapter
       {
          SDB_OSS_DEL itr->second ;
          _ctxMap.erase( itr++ ) ;
-      }
-
-      // Be sure to release the client at last, because the context needs it to
-      // release scroll.
-      if ( _esClt )
-      {
-         SDB_OSS_DEL _esClt ;
       }
    }
 
@@ -209,16 +200,6 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Session[ %s ] extract query message "
                    "failed[ %d ]", sessionName(), rc ) ;
 
-      if ( !_esClt )
-      {
-         rc = _seCltFactory->create( &_esClt ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "Connect to search engine failed[ %d ]", rc ) ;
-            goto error ;
-         }
-      }
-
       if ( !seAdptIsCommand( pCollectionName ) )
       {
          try
@@ -243,8 +224,8 @@ namespace seadapter
                goto error ;
             }
 
-            rc = context->open( pCollectionName, indexID, _esClt, matcher,
-                              selector, orderBy, newHint, objBuff, eduCB ) ;
+            rc = context->open( pCollectionName, indexID, matcher, selector,
+                                orderBy, newHint, objBuff, eduCB ) ;
             if ( rc )
             {
                if ( SDB_DMS_EOC != rc )
@@ -271,7 +252,7 @@ namespace seadapter
          PD_RC_CHECK( rc, PDERROR, "Get command instance for[%s] failed[%d]",
                       pCollectionName, rc ) ;
          rc = command->init( flag, numToSkip, numToReturn, pQuery,
-                             pFieldSelector, pOrderBy, pHint, _esClt ) ;
+                             pFieldSelector, pOrderBy, pHint ) ;
          PD_RC_CHECK( rc, PDERROR, "Init command[%s] failed[%d]",
                       pCollectionName, rc ) ;
 

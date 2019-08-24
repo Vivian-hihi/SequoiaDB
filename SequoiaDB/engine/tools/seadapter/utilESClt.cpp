@@ -110,16 +110,16 @@ while ( 0 ) ;
 namespace seadapter
 {
    _utilESClt::_utilESClt()
-   : _readOnly( FALSE ),
-     _errMsg( NULL )
+   : _errMsg( NULL )
    {
+      ossGetCurrentTime( _stat.createTime ) ;
    }
 
    _utilESClt::~_utilESClt()
    {
    }
 
-   INT32 _utilESClt::init( const string &uri, BOOLEAN readOnly, INT32 timeout )
+   INT32 _utilESClt::init( const string &uri, INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       if ( 0 == uri.size() )
@@ -137,12 +137,20 @@ namespace seadapter
                  "rc: %d", uri.c_str(), rc ) ;
          goto error ;
       }
-      _readOnly = readOnly ;
 
    done:
       return rc  ;
    error:
       goto done ;
+   }
+
+   void _utilESClt::reset( BOOLEAN resetConn )
+   {
+      _errMsg = NULL ;
+      if ( resetConn )
+      {
+         _http.reset() ;
+      }
    }
 
    BOOLEAN _utilESClt::isActive()
@@ -776,6 +784,11 @@ namespace seadapter
    const CHAR* _utilESClt::getLastErrMsg() const
    {
       return _errMsg ;
+   }
+
+   utilESCltStat* _utilESClt::getStat()
+   {
+      return &_stat ;
    }
 
    INT32 _utilESClt::_getResultObjs( const BSONObj &replyObj,

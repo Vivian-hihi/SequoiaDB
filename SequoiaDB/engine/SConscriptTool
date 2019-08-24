@@ -637,7 +637,6 @@ sdbSEAdptFiles = [
       "tools/seadapter/utilESClt.cpp",
       "tools/seadapter/utilESBulkBuilder.cpp",
       "tools/seadapter/seAdptMsgHandler.cpp",
-      "tools/seadapter/utilESCltFactory.cpp",
       "tools/seadapter/seAdptIdxMetaMgr.cpp",
       "tools/seadapter/seAdptIndexState.cpp",
       "tools/seadapter/seAdptDBAssist.cpp",
@@ -648,6 +647,7 @@ sdbSEAdptFiles = [
       "tools/seadapter/rtnSimpleCondParser.cpp",
       "tools/seadapter/utilESFetcher.cpp",
       "tools/seadapter/utilProcessLock.cpp",
+      "tools/seadapter/utilESCltMgr.cpp",
       "tools/seadapter/seAdptCommand.cpp"
       ]
 
