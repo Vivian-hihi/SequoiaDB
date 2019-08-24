@@ -37,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateRegionWithStopS3N17346 extends S3TestBase {
     private boolean runSuccess = false;
-    private int regionNum = 50;
+    private int regionNum = 20;
     private String regionNameBase = "region17346";
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "year";
@@ -140,6 +140,10 @@ public class UpdateRegionWithStopS3N17346 extends S3TestBase {
                 regionNameList.add(this.regionName);
             } catch (AmazonS3Exception e) {
                 if (e.getStatusCode() != 500) {
+                    throw e;
+                }
+            }catch (Exception e){
+                if(!e.getMessage().contains("I/O error on POST request")){
                     throw e;
                 }
             }
