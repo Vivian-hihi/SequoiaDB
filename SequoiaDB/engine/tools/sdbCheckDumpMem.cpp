@@ -349,20 +349,6 @@ namespace memcheck
       }
    }
 
-   string getFileName( UINT32 fileCode )
-   {
-      map<UINT32, string>::const_iterator it ;
-      it = filenamesMap.find( fileCode ) ;
-      if (it != filenamesMap.end() )
-      {
-         return it->second ;
-      }
-      else
-      {
-         return "" ;
-      }
-   }
-
    void printMemInfo( CHAR *pointer, BOOLEAN isError )
    {
       memHeader *pHeader = (memHeader*)pointer ;
@@ -371,7 +357,8 @@ namespace memcheck
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
                       "%p    %10ld    %25s(%10u)    %6u\n",
                       pointer, pHeader->_size,
-                      getFileName(pHeader->_file).c_str(), pHeader->_file,
+                      autoGetFileName(pHeader->_file).c_str(),
+                      pHeader->_file,
                       pHeader->_line ) ;
       }
       else
@@ -379,7 +366,8 @@ namespace memcheck
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
                       "%p    %10ld    %25s(%10u)    %6u    ****(has error)\n",
                       pointer, pHeader->_size,
-                      getFileName(pHeader->_file).c_str(), pHeader->_file,
+                      autoGetFileName(pHeader->_file).c_str(),
+                      pHeader->_file,
                       pHeader->_line ) ;
       }
 
@@ -486,7 +474,7 @@ namespace memcheck
          ossUnpack32From64( it->second, file, line ) ;
 
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1, "%25s(%10u): %6u ---- %10u\n",
-                      getFileName(file).c_str(), file, line, it->first ) ;
+                      autoGetFileName(file).c_str(), file, line, it->first ) ;
          
          if ( g_openOutFile )
          {

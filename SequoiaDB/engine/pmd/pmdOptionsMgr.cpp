@@ -1865,6 +1865,7 @@ done:
       _dataErrorOp         = PMD_OPT_VALUE_FULLSYNC ;
       _replBucketSize      = PMD_DFT_REPL_BUCKET_SIZE ;
       _memDebugEnabled     = FALSE ;
+      _memDebugVerify      = FALSE ;
       _memDebugSize        = 0 ;
       _indexScanStep       = PMD_DFT_INDEX_SCAN_STEP ;
       _dpslocal            = FALSE ;
@@ -2102,10 +2103,13 @@ done:
                  PMD_OPT_VALUE_SHUTDOWN, TRUE ) ;
       // --memdebug
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE,
-                   PMD_CFG_CHANGE_REBOOT, FALSE, TRUE ) ;
+                   PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
+      // --memdebugverify
+      rdxBooleanS( pEX, PMD_OPTION_MEMDEBUGVERIFY, _memDebugVerify, FALSE,
+                   PMD_CFG_CHANGE_RUN, TRUE ) ;
       // --memdebugsize
       rdxUInt( pEX, PMD_OPTION_MEMDEBUGSIZE, _memDebugSize, FALSE,
-               PMD_CFG_CHANGE_REBOOT, 0, TRUE ) ;
+               PMD_CFG_CHANGE_RUN, 0, TRUE ) ;
       // --indexscanstep
       rdxUInt( pEX, PMD_OPTION_INDEX_SCAN_STEP, _indexScanStep, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_DFT_INDEX_SCAN_STEP, TRUE ) ;

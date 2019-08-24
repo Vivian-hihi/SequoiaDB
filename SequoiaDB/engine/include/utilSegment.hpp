@@ -582,12 +582,16 @@ namespace engine
 #ifdef _DEBUG
             PD_LOG( PDERROR,
                     "Out of memory when expand : %d"OSS_NEWLINE
-                    "_delta        : %u"OSS_NEWLINE
-                    "_maxNumOfObjs : %u"OSS_NEWLINE
-                    "newSize       : %u"OSS_NEWLINE,
+                    " Delta         : %u"OSS_NEWLINE
+                    " MaxNumOfObjs  : %u"OSS_NEWLINE
+                    " NewSize       : %u"OSS_NEWLINE
+                    " ObjT Size     : %u"OSS_NEWLINE
+                    " ObjX Size     : %u"OSS_NEWLINE,
                     rc,
                     _maxNumOfObjs,
-                    newSize ) ;
+                    newSize,
+                    sizeof( T ),
+                    sizeof( _objX ) ) ;
 #endif
          }
       }
@@ -842,13 +846,17 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR,
                  "Failed initialize due to invalid arguments, rc:%d"OSS_NEWLINE
-                 "   pool            : %u"OSS_NEWLINE
-                 "   numberOfObjs    : %u"OSS_NEWLINE
-                 "   maxNumberOfObjs : %u"OSS_NEWLINE,
+                 "   PoolID          : %d"OSS_NEWLINE
+                 "   NumberOfObjs    : %u"OSS_NEWLINE
+                 "   MaxNumberOfObjs : %u"OSS_NEWLINE
+                 "   ObjT Size       : %u"OSS_NEWLINE
+                 "   ObjX Size       : %u"OSS_NEWLINE,
                  rc,
                  poolId,
                  numberOfObjs,
-                 maxNumberOfObjs ) ;
+                 maxNumberOfObjs,
+                 sizeof( T ),
+                 sizeof( _objX ) ) ;
          SDB_ASSERT( ( SDB_OK == rc ), "Invalid arguments" ) ;
          goto error ;
       }
@@ -908,17 +916,21 @@ namespace engine
                PD_LOG( PDINFO,
                        "Exceed resource limitation "
                        "when attempt to expand: %d"OSS_NEWLINE
-                       "  _pool         : %u"OSS_NEWLINE
-                       "  _delta        : %u"OSS_NEWLINE
-                       "  _maxNumOfObjs : %u"OSS_NEWLINE
-                       "  _numOfObjs    : %u"OSS_NEWLINE
-                       "  _begin        : %u"OSS_NEWLINE,
+                       "  PoolID        : %u"OSS_NEWLINE
+                       "  Delta         : %u"OSS_NEWLINE
+                       "  MaxNumOfObjs  : %u"OSS_NEWLINE
+                       "  NumOfObjs     : %u"OSS_NEWLINE
+                       "  BeginPos      : %u"OSS_NEWLINE
+                       "  ObjT Size     : %u"OSS_NEWLINE
+                       "  ObjX Size     : %u"OSS_NEWLINE,
                        rc,
                        _poolId,
                        _delta,
                        _maxNumOfObjs,
                        _numOfObjs.peek(),
-                       _begin ) ;
+                       _begin,
+                       sizeof( T ),
+                       sizeof( _objX ) ) ;
                goto error ;
             }
             else if ( _pHandler &&
@@ -926,8 +938,8 @@ namespace engine
                                                    sizeof( _objX ) ) )
             {
                rc = SDB_OSS_UP_TO_LIMIT ;
-               PD_LOG( PDINFO, "Can't alloc segment[%d * %d] by handler",
-                       _delta, sizeof( _objX ) ) ;
+               PD_LOG( PDINFO, "Can't alloc segment[%u * %u(ObjT Size: %u)] "
+                       "by handler", _delta, sizeof( _objX ), sizeof( T ) ) ;
                goto error ;
             }
 
@@ -935,18 +947,22 @@ namespace engine
             if ( rc )
             {
                PD_LOG( PDWARNING,
-                       "Failed to expand : %u"OSS_NEWLINE
-                       "  _pool          : %u"OSS_NEWLINE
-                       "  _delta         : %u"OSS_NEWLINE
-                       "  _maxNumOfObjs  : %u"OSS_NEWLINE
-                       "  _numOfObjs     : %u"OSS_NEWLINE
-                       "  _begin         : %u"OSS_NEWLINE,
+                       "Failed to expand : %d"OSS_NEWLINE
+                       "  PoolID         : %u"OSS_NEWLINE
+                       "  Delta          : %u"OSS_NEWLINE
+                       "  MaxNumOfObjs   : %u"OSS_NEWLINE
+                       "  NumOfObjs      : %u"OSS_NEWLINE
+                       "  BeginPos       : %u"OSS_NEWLINE
+                       "  ObjT Size      : %u"OSS_NEWLINE
+                       "  ObjX Size      : %u"OSS_NEWLINE,
                        rc,
                        _poolId,
                        _delta,
                        _maxNumOfObjs,
                        _numOfObjs.peek(),
-                       _begin ) ;
+                       _begin,
+                       sizeof( T ),
+                       sizeof( _objX ) ) ;
                goto error ;
             }
 
@@ -977,29 +993,37 @@ namespace engine
             {
                PD_LOG( PDSEVERE,
                        "Sanity check failed: "OSS_NEWLINE
-                       "  _pool     : %u"OSS_NEWLINE
-                       "  idx       : %u"OSS_NEWLINE
-                       "  eyeCatcher: %x"OSS_NEWLINE
-                       "  flag      : %x"OSS_NEWLINE
-                       "  _objX addr: %p"OSS_NEWLINE
-                       "  obj addr  : %p"OSS_NEWLINE,
+                       "  PoolID    : %u"OSS_NEWLINE
+                       "  Obj Idx   : %u"OSS_NEWLINE
+                       "  EyeCatcher: %x"OSS_NEWLINE
+                       "  Flag      : %x"OSS_NEWLINE
+                       "  ObjX addr : %p"OSS_NEWLINE
+                       "  ObjT addr : %p"OSS_NEWLINE
+                       "  ObjT Size : %u"OSS_NEWLINE
+                       "  ObjX Size : %u"OSS_NEWLINE,
                        _poolId,
                        _list[ _begin ],
                        pObjX->_eyeCatcher,
                        pObjX->_flag,
                        pObjX,
-                       &( pObjX->_obj )  ) ;
+                       &( pObjX->_obj ),
+                       sizeof( T ),
+                       sizeof( _objX ) ) ;
             }
             else
             {
                PD_LOG( PDSEVERE,
                        "Sanity check failed: "OSS_NEWLINE
-                       "  _pool     : %u"OSS_NEWLINE
-                       "  idx       : %u"OSS_NEWLINE
-                       "  _objX addr: %p"OSS_NEWLINE,
+                       "  PoolID    : %u"OSS_NEWLINE
+                       "  Obj Idx   : %u"OSS_NEWLINE
+                       "  ObjX addr : %p"OSS_NEWLINE
+                       "  ObjT Size : %u"OSS_NEWLINE
+                       "  ObjX Size : %u"OSS_NEWLINE,
                        _poolId,
                        _list[ _begin ],
-                       pObjX ) ;
+                       pObjX,
+                       sizeof( T ),
+                       sizeof( _objX ) ) ;
 
             }
 #ifdef _DEBUG
@@ -1111,29 +1135,37 @@ namespace engine
                {
                   PD_LOG( PDSEVERE,
                           "Sanity check failed: "OSS_NEWLINE
-                          "  _pool     : %u"OSS_NEWLINE
-                          "  idx       : %u"OSS_NEWLINE
-                          "  eyeCatcher: %x"OSS_NEWLINE
-                          "  flag      : %x"OSS_NEWLINE
-                          "  _objX addr: %p"OSS_NEWLINE
-                          "  obj addr  : %p"OSS_NEWLINE,
+                          "  PoolID    : %u"OSS_NEWLINE
+                          "  Obj Idx   : %u"OSS_NEWLINE
+                          "  EyeCatcher: %x"OSS_NEWLINE
+                          "  Flag      : %x"OSS_NEWLINE
+                          "  ObjX addr : %p"OSS_NEWLINE
+                          "  ObjT addr : %p"OSS_NEWLINE
+                          "  ObjT Size : %u"OSS_NEWLINE
+                          "  ObjX Size : %u"OSS_NEWLINE,
                           _poolId,
                           idx,
                           pObjX->_eyeCatcher,
                           pObjX->_flag,
                           pObjX,
-                          &( pObjX->_obj )  ) ;
+                          &( pObjX->_obj ),
+                          sizeof( T ),
+                          sizeof( _objX ) ) ;
                } 
                else
                {
                   PD_LOG( PDSEVERE,
                           "Sanity check failed: "OSS_NEWLINE
-                          "  _pool     : %u"OSS_NEWLINE
-                          "  idx       : %u"OSS_NEWLINE
-                          "  _objX addr: %p"OSS_NEWLINE,
+                          "  PoolID    : %u"OSS_NEWLINE
+                          "  Obj Idx   : %u"OSS_NEWLINE
+                          "  ObjX addr : %p"OSS_NEWLINE
+                          "  ObjT Size : %u"OSS_NEWLINE
+                          "  ObjX Size : %u"OSS_NEWLINE,
                           _poolId,
                           idx,
-                          pObjX ) ;
+                          pObjX,
+                          sizeof( T ),
+                          sizeof( _objX ) ) ;
                } 
 #ifdef _DEBUG
                SDB_ASSERT ( ( SDB_OK == rc ), "Sanity check failed !");

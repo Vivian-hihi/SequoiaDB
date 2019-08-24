@@ -583,6 +583,7 @@ namespace engine
          OSS_INLINE BOOLEAN transAutoRollback() const { return _transAutoRollback ; }
          OSS_INLINE BOOLEAN transUseRBS() const { return _transUseRBS ; }
          OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
+         OSS_INLINE BOOLEAN memDebugVerify() const { return _memDebugVerify ; }
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
          OSS_INLINE UINT32 getReplLogBuffSize () const { return _logBuffSize ; }
@@ -688,6 +689,7 @@ namespace engine
          INT32       _syncStrategy ;
          UINT32      _dataErrorOp ;
          BOOLEAN     _memDebugEnabled ;
+         BOOLEAN     _memDebugVerify ;
          UINT32      _memDebugSize ;
          UINT32      _indexScanStep ;
          BOOLEAN     _dpslocal ;
