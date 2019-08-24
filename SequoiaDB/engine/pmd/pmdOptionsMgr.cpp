@@ -2106,7 +2106,7 @@ done:
                    PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
       // --memdebugverify
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUGVERIFY, _memDebugVerify, FALSE,
-                   PMD_CFG_CHANGE_RUN, TRUE ) ;
+                   PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
       // --memdebugsize
       rdxUInt( pEX, PMD_OPTION_MEMDEBUGSIZE, _memDebugSize, FALSE,
                PMD_CFG_CHANGE_RUN, 0, TRUE ) ;
