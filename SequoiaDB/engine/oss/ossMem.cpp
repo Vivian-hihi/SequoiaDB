@@ -581,9 +581,9 @@ class _ossMemTrackCB
                             " Dump Time          : %s\n"
                             " Dump Interval      : %lld (secs)\n"
                             " Dump Cost Time     : %lld (secs)\n"
-                            " Global Times Inc   : %lld\n"
+                            " Global Count Inc   : %lld\n"
                             " Global Size Inc    : %lld\n"
-                            " Run Time Num Inc   : %lld\n"
+                            " Run Time Count Inc : %lld\n"
                             " Run Time Size Inc  : %lld\n",
                             _timebuff,
                             beginTimebuff,
