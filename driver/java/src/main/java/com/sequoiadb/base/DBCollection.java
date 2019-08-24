@@ -2504,6 +2504,14 @@ public class DBCollection {
         return listLobs(null, null, null, null, 0, -1);
     }
 
+    private boolean isEmptyObj(BSONObject o) {
+        if (null == o) {
+            return true;
+        }
+
+        return o.isEmpty();
+    }
+
     /**
      * Get the lobs in current collection.
      *
@@ -2534,6 +2542,7 @@ public class DBCollection {
         newHint.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
 
         if (!sequoiadb.getIsOldVersionLobServer()) {
+            BaseException savedError = null;
             try {
                 isOldLobServer = false;
                 DBCursor cursor = _listLobs(matcher, selector, orderBy, newHint, skipRows,
@@ -2543,6 +2552,24 @@ public class DBCollection {
             catch (BaseException e) {
                 if (!isOldLobServer) {
                     throw e;
+                }
+
+                savedError = e;
+            }
+
+            if (!isEmptyObj(matcher) || !isEmptyObj(selector) || !isEmptyObj(orderBy)
+                    || 0 != skipRows || -1 != returnRows) {
+                // re-check remote server is old or not
+                try {
+                    isOldLobServer = false;
+                    DBCursor tmpCursor = _listLobs(null, null, null, newHint, 0, -1);
+                    tmpCursor.close();
+                    throw savedError;
+                }
+                catch (BaseException e) {
+                    if (!isOldLobServer) {
+                        throw e;
+                    }
                 }
             }
 
