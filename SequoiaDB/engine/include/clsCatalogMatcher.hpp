@@ -61,9 +61,6 @@ namespace engine
       INT32 matches( _clsCatalogItem* pCatalogItem,
                      BOOLEAN &result );
 
-      INT32 matches( const BSONObj &lowBound, const BSONObj &upBound,
-                     BOOLEAN isLast, BOOLEAN &result ) ;
-
       BOOLEAN isUniverse() ;
 
    private:

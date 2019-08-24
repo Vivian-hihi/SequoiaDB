@@ -44,6 +44,7 @@
 #include "utilCommon.hpp"
 #include "ossMemPool.hpp"
 #include "utilLobID.hpp"
+#include "mthCommon.hpp"
 
 #include "../bson/lib/md5.hpp"
 #include "../bson/lib/md5.h"
@@ -2498,6 +2499,234 @@ namespace engine
       goto done;
    }
 
+   INT32 _clsCatalogSet::_rewriteOidField( const BSONElement &oidEle,
+                                           BSONArrayBuilder &arrayBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 seconds ;
+      BYTE oidArray[ UTIL_LOBID_ARRAY_LEN ] ;
+      CHAR timeStr[ OSS_TIMESTAMP_STRING_LEN ] ;
+      bson::OID oid = oidEle.OID() ;
+
+      oid.toByteArray( oidArray, UTIL_LOBID_ARRAY_LEN ) ;
+
+      rc = _utilLobID::parseSeconds( oidArray, UTIL_LOBID_ARRAY_LEN, seconds ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to parse seconds from oid[%s]",
+                   oid.toString().c_str() ) ;
+
+      // SDB_TIME_INVALID for the seconds 1569888000 => "20191001000000"
+      rc = clsGetLobTimeStr( seconds, SDB_TIME_INVALID, timeStr,
+                             OSS_TIMESTAMP_STRING_LEN ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get lob timeStr:seconds=%lld,"
+                   "_lobShardingKeyFormat=%d", seconds, _lobShardingKeyFormat ) ;
+
+      arrayBuilder.append( timeStr ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsCatalogSet::_rewriteOidField( const BSONElement &oidEle,
+                                           BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 seconds ;
+      BYTE oidArray[ UTIL_LOBID_ARRAY_LEN ] ;
+      CHAR timeStr[ OSS_TIMESTAMP_STRING_LEN ] ;
+      bson::OID oid = oidEle.OID() ;
+
+      oid.toByteArray( oidArray, UTIL_LOBID_ARRAY_LEN ) ;
+
+      rc = _utilLobID::parseSeconds( oidArray, UTIL_LOBID_ARRAY_LEN, seconds ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to parse seconds from oid[%s]",
+                   oid.toString().c_str() ) ;
+
+      // SDB_TIME_INVALID for the seconds 1569888000 => "20191001000000"
+      rc = clsGetLobTimeStr( seconds, SDB_TIME_INVALID, timeStr,
+                             OSS_TIMESTAMP_STRING_LEN ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get lob timeStr:seconds=%lld,"
+                   "_lobShardingKeyFormat=%d", seconds, _lobShardingKeyFormat ) ;
+
+      builder.append( oidEle.fieldName(), timeStr ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsCatalogSet::_rewriteMatcherForLob( const BSONObj &matcher,
+                                                BSONArrayBuilder &arrayBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObjIterator iter( matcher ) ;
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         if ( Object == ele.type() )
+         {
+            BSONObjBuilder builder ;
+            rc = _rewriteMatcherForLob( ele.embeddedObject(), builder ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to _rewriteMatcherForLob(%s)",
+                         ele.toString().c_str(), rc ) ;
+            arrayBuilder.append( builder.obj() ) ;
+         }
+         else if ( Array == ele.type() )
+         {
+            //TODO: linyoubin check
+            BSONArrayBuilder subArrayBuilder ;
+            rc = _rewriteMatcherForLob( ele.embeddedObject(), subArrayBuilder ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to _rewriteMatcherForLob(%s)",
+                         ele.toString().c_str(), rc ) ;
+            arrayBuilder.append( subArrayBuilder.arr() ) ;
+         }
+         else
+         {
+            arrayBuilder.append( ele ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsCatalogSet::_rewriteMatcherForLob( const BSONObj &matcher,
+                                                BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObjIterator iter( matcher ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( 0 != ossStrcmp( ele.fieldName(), FIELD_NAME_LOB_OID ) )
+            {
+               if ( Array == ele.type() )
+               {
+                  BSONArrayBuilder subArrayBuilder(
+                                    builder.subarrayStart( ele.fieldName() ) ) ;
+                  rc = _rewriteMatcherForLob( ele.embeddedObject(),
+                                              subArrayBuilder ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+
+                  subArrayBuilder.done() ;
+               }
+               else if ( Object == ele.type() )
+               {
+                  BSONObjBuilder subObjBuidler(
+                                    builder.subobjStart( ele.fieldName() ) ) ;
+                  rc = _rewriteMatcherForLob( ele.embeddedObject(),
+                                              subObjBuidler ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+
+                  subObjBuidler.done() ;
+               }
+               else
+               {
+                  builder.append( ele ) ;
+               }
+
+               continue ;
+            }
+
+            // ele.fieldName() == FIELD_NAME_LOB_OID
+            if ( jstOID == ele.type() )
+            {
+               rc = _rewriteOidField( ele, builder ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+            }
+            else if ( Object == ele.type() )
+            {
+               // { Oid: { $lt :{ $id:"xxx" } } }
+               BSONObjBuilder subObjBuidler(
+                                    builder.subobjStart( ele.fieldName() ) ) ;
+               BSONObj subObj = ele.embeddedObject() ;
+               BSONObjIterator subIter( subObj ) ;
+               while ( subIter.more() )
+               {
+                  BSONElement subEle = subIter.next() ;
+                  const CHAR* subFieldName = subEle.fieldName() ;
+                  // should be $lt or other $xx
+                  if ( MTH_OPERATOR_EYECATCHER != subFieldName[0] )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+
+                  if ( jstOID == subEle.type() )
+                  {
+                     // { Oid: { $lt :{ $id:"xxx" } } }
+                     rc = _rewriteOidField( subEle, subObjBuidler ) ;
+                     if ( SDB_OK != rc )
+                     {
+                        goto error ;
+                     }
+                  }
+                  else if ( Array == subEle.type() )
+                  {
+                     // { Oid: { $in :[ { $id:"xxx" }... ] } }
+                     BSONArrayBuilder opArrayBuidler(
+                           subObjBuidler.subarrayStart( subEle.fieldName() ) ) ;
+                     BSONObjIterator opArrayIter( subEle.embeddedObject() ) ;
+                     while ( opArrayIter.more() )
+                     {
+                        BSONElement arrayItemEle = opArrayIter.next() ;
+                        if ( jstOID == arrayItemEle.type() )
+                        {
+                           // { $id:"xxx" }
+                           rc = _rewriteOidField( arrayItemEle, opArrayBuidler ) ;
+                           if ( SDB_OK != rc )
+                           {
+                              goto error ;
+                           }
+                        }
+                        else
+                        {
+                           // other format is unreconigzed
+                           rc = SDB_INVALIDARG ;
+                           goto error ;
+                        }
+                     }
+
+                     opArrayBuidler.done() ;
+                  }
+               }
+
+               subObjBuidler.done() ;
+            }
+            else
+            {
+               //unreconigzed matcher: { Oid:[ xx, xx ] }
+               rc = SDB_INVALIDARG ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to rewrite matcher: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsCatalogSet::_findLobSubCLNamesByMatcher(
                                                      const BSONObj &matcher,
                                                      vector<string> &subCLList )
@@ -2524,29 +2753,9 @@ namespace engine
       iter = _mapItems.begin() ;
       while( iter != _mapItems.end() )
       {
-         INT32 rcTmp1 = SDB_OK ;
-         INT32 rcTmp2 = SDB_OK ;
-         BSONObj lowBound ;
-         BSONObj upBound ;
          clsCatalogItem *item = iter->second ;
-
-         rcTmp1 = clsGetLobBound( getLobShardingKeyFormat(),
-                                  item->getLowBound(), lowBound );
-         rcTmp2 = clsGetLobBound( getLobShardingKeyFormat(),
-                                  item->getUpBound(), upBound );
-         if ( SDB_OK != rcTmp1 || SDB_OK != rcTmp2 )
-         {
-            //couldn't generate the lob's bound. we should check this cl
-            PD_LOG( PDERROR, "Failed to get lob bound:lowBound[%s],rc1=%d;"
-                    "upBound[%s],rc2=%d",
-                    item->getLowBound().toString().c_str(), rcTmp1,
-                    item->getUpBound().toString().c_str(), rcTmp2 ) ;
-            goto error ;
-         }
-
-         rc = clsMatcher.matches( lowBound, upBound, item->isLast(), result ) ;
-         PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d",
-                      rc ) ;
+         rc = clsMatcher.matches( item, result ) ;
+         PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d", rc ) ;
          if ( result )
          {
             PD_LOG( PDDEBUG, "Find Lob subcl[%s]",
@@ -2567,6 +2776,8 @@ namespace engine
                                                      vector<string> &subCLList )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONObj newMatcher ;
 
       if ( SDB_TIME_INVALID == getLobShardingKeyFormat() )
       {
@@ -2590,7 +2801,23 @@ namespace engine
          goto done ;
       }
 
-      rc = _findLobSubCLNamesByMatcher( *matcher, subCLList ) ;
+      rc = _rewriteMatcherForLob( *matcher, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = getSubCLList( subCLList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get subcl list, rc: %d", rc ) ;
+         goto done ;
+      }
+
+      newMatcher = builder.obj() ;
+      if ( newMatcher.isEmpty() )
+      {
+         rc = getSubCLList( subCLList ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get subcl list, rc: %d", rc ) ;
+         goto done ;
+      }
+
+      rc = _findLobSubCLNamesByMatcher( newMatcher, subCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d", rc ) ;
 
    done:
@@ -4304,35 +4531,42 @@ namespace engine
       struct tm tmpTm ;
       time_t t ;
 
-      if ( NULL == timeStr || timeStrLen < 9 )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid timeStr or timeStrLen[%d]", timeStrLen ) ;
-         goto error ;
-      }
+      PD_CHECK( NULL != timeStr, SDB_INVALIDARG, error, PDERROR,
+                "TimeStr is NULL") ;
 
       t = ( time_t )seconds ;
       ossGmtime( t, tmpTm ) ;
       if ( SDB_TIME_DAY == lobShardingKeyFormat )
       {
+         PD_CHECK( timeStrLen >= 9, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStrLen[%d] is too small", timeStrLen ) ;
+
          ossSnprintf( timeStr, timeStrLen, "%04d%02d%02d",
                       tmpTm.tm_year + 1900, tmpTm.tm_mon + 1, tmpTm.tm_mday ) ;
       }
       else if ( SDB_TIME_MONTH == lobShardingKeyFormat )
       {
+         PD_CHECK( timeStrLen >= 7, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStrLen[%d] is too small", timeStrLen ) ;
+
          ossSnprintf( timeStr, timeStrLen, "%04d%02d",
                       tmpTm.tm_year + 1900, tmpTm.tm_mon + 1 ) ;
       }
       else if ( SDB_TIME_YEAR == lobShardingKeyFormat )
       {
+         PD_CHECK( timeStrLen >= 5, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStrLen[%d] is too small", timeStrLen ) ;
+
          ossSnprintf( timeStr, timeStrLen, "%04d", tmpTm.tm_year + 1900 ) ;
       }
       else
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Unregconized lobShardingKeyFormat(%d)",
-                 lobShardingKeyFormat ) ;
-         goto error ;
+         PD_CHECK( timeStrLen >= 15, SDB_INVALIDARG, error, PDERROR,
+                   "TimeStrLen[%d] is too small", timeStrLen ) ;
+
+         ossSnprintf( timeStr, timeStrLen, "%04d%02d%02d%02d%02d%02d",
+                      tmpTm.tm_year + 1900, tmpTm.tm_mon + 1, tmpTm.tm_mday,
+                      tmpTm.tm_hour, tmpTm.tm_min, tmpTm.tm_sec ) ;
       }
 
    done:

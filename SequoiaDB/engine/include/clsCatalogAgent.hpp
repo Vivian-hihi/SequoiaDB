@@ -323,6 +323,14 @@ namespace engine
          INT32             _findLobSubCLNamesByMatcher(
                                                   const BSONObj &matcher,
                                                   vector<string> &subCLList ) ;
+         INT32             _rewriteMatcherForLob( const BSONObj &matcher,
+                                             BSONArrayBuilder &arrayBuilder ) ;
+         INT32             _rewriteMatcherForLob( const BSONObj &matcher,
+                                                  BSONObjBuilder &builder ) ;
+         INT32             _rewriteOidField( const BSONElement &oidEle,
+                                             BSONArrayBuilder &arrayBuilder ) ;
+         INT32             _rewriteOidField( const BSONElement &oidEle,
+                                             BSONObjBuilder &builder ) ;
 
       private:
          INT32             _version ;

@@ -203,6 +203,30 @@ namespace engine
       _seconds = seconds ;
    }
 
+   INT32 _utilLobID::parseSeconds( const BYTE *array, INT32 arrayLen,
+                                   INT64 &seconds )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 i = 0 ;
+      INT32 index = 0 ;
+      if ( NULL == array || arrayLen < UTIL_LOBID_ARRAY_LEN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      seconds = 0 ;
+      for ( i = 5; i >= 0; --i )
+      {
+         seconds = seconds | ((UINT64)array[index++] << (i * 8)) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // _seconds(8bytes) 7 6 5 4 3 2 1 0
    //                      | | | | | |
    // _oddCheck(8bits) 7 6 5 4 3 2 1 0

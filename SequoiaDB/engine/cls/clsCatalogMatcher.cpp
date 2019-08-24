@@ -509,13 +509,6 @@ namespace engine
       return _predicateSet.matches( pCatalogItem, result ) ;
    }
 
-   INT32 clsCatalogMatcher::matches( const BSONObj &lowBound,
-                                     const BSONObj &upBound,
-                                     BOOLEAN isLast, BOOLEAN &result )
-   {
-      return _predicateSet.matches( lowBound, upBound, isLast, result ) ;
-   }
-
    BOOLEAN clsCatalogMatcher::isUniverse()
    {
       return _predicateSet.isUniverse() ;

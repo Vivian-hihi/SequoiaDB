@@ -81,6 +81,9 @@ namespace engine
 
       INT64 getSeconds() const ;
 
+      static INT32 parseSeconds( const BYTE *array, INT32 arrayLen,
+                                 INT64 &seconds ) ;
+
    private:
       void _setOddCheckBit() ;
       INT32 _checkOddBit() ;

@@ -3136,18 +3136,41 @@ do                                                            \
 
       if ( !_connection->_getIsOldVersionLobServer() )
       {
-         // run command
+         // run command with new version format
          rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &condition,
                             &selected, &orderBy, &newHint, numToSkip,
                             numToReturn, cursor ) ;
          if ( SDB_INVALIDARG == rc )
          {
-            // deal with old version server. clName is in the query field
-            rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, &newHint,
-                               NULL, NULL, NULL, 0, -1, cursor ) ;
-            if ( SDB_OK == rc )
+            if ( !condition.isEmpty() || !selected.isEmpty()
+                 || !orderBy.isEmpty() || 0 != numToSkip || -1 != numToReturn )
             {
-               _connection->_setIsOldVersionLobServer( TRUE ) ;
+               // recheck remote server is old or not
+               _sdbCursor *tmpCursor = NULL ;
+               // run command with new version format(But without condition etc.)
+               rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, NULL,
+                                  NULL, NULL, &newHint, 0, -1, &tmpCursor ) ;
+               if ( SDB_OK == rc )
+               {
+                  //Now we are sure that remote server is new version.
+                  tmpCursor->close() ;
+                  RELEASE_INNER_HANDLE( tmpCursor ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+
+            //otherwise remote server may be old version
+            if ( SDB_INVALIDARG == rc )
+            {
+               // deal with old version server. clName is in the query field
+               rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
+                                  &newHint, NULL, NULL, NULL, 0, -1,
+                                  cursor ) ;
+               if ( SDB_OK == rc )
+               {
+                  _connection->_setIsOldVersionLobServer( TRUE ) ;
+               }
             }
          }
       }
