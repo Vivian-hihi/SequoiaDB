@@ -40,6 +40,8 @@ public class Fulltext14885 extends FullTestBase {
                 false);
         FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fullIndexName, FullTextUtils.INSERT_NUMS));
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIndexName);
 
         // 使用游标的方式获取对应的固定集合中的一条记录
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIndexName).get(0);
@@ -49,11 +51,10 @@ public class Fulltext14885 extends FullTestBase {
         // 多次执行删除全文索引的操作，检查结果
         // 固定集合新增数据的同时有可能适配器会对其进行pop，导致固定集合数据量减少至一个数据块内，
         // 此时查询固定集合一次getMore查完就会释放context，因此当时删除全文索引就能返回成功。此处去掉预期dropIndex失败的断言
-        for (int i = 0; i < 10; i++) {
+        if (isContextExist()) {
             try {
                 cl.dropIndex(fullIndexName);
-                break;
-                // Assert.fail("drop textIndex need to return -147!");
+                Assert.fail("drop textIndex need to return -147!");
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     throw e;
@@ -67,15 +68,18 @@ public class Fulltext14885 extends FullTestBase {
         }
 
         // 关闭步骤2中的游标，再次删除全文索引
-        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
-        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIndexName);
-        System.out.println("cappedCSName : " + cappedCLName + " esIndexNames " + esIndexName);
-
         FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
 
         // 校验是否有 context 残留
-        checkContext();
+        int count = 0;
+        while (isContextExist()) {
+            Thread.sleep(100);
+            if (count++ == 120) {
+                break;
+            }
+        }
+        Assert.assertFalse(isContextExist());
     }
 
     @Override
@@ -83,24 +87,19 @@ public class Fulltext14885 extends FullTestBase {
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedCLName));
     }
 
-    private void checkContext() throws InterruptedException {
-        int count = 0;
-        out: while (count++ < 500) {
-            Thread.sleep(100);
-            DBCursor cursor2 = sdb.getSnapshot(0, "{}", "{}", "{}");
-            while (cursor2.hasNext()) {
-                BSONObject object = cursor2.getNext();
-                BasicBSONList list = (BasicBSONList) object.get("Contexts");
-                for (int i = 0; i < list.size(); i++) {
-                    BSONObject object2 = (BSONObject) list.get(i);
-                    String desc = (String) object2.get("Description");
-                    if (desc.indexOf(cappedCLName) != -1) {
-                        Assert.assertNotEquals(count, 500);
-                        continue out;
-                    }
+    private boolean isContextExist() throws InterruptedException {
+        DBCursor cursor2 = sdb.getSnapshot(0, "", "", "");
+        while (cursor2.hasNext()) {
+            BSONObject object = cursor2.getNext();
+            BasicBSONList list = (BasicBSONList) object.get("Contexts");
+            for (int i = 0; i < list.size(); i++) {
+                BSONObject object2 = (BSONObject) list.get(i);
+                String desc = (String) object2.get("Description");
+                if (desc.indexOf(cappedCLName) != -1) {
+                    return true;
                 }
             }
-            break;
         }
+        return false;
     }
 }
