@@ -342,7 +342,7 @@ function main()
    db1.close();
    //db2.close();
  }
- main()
+ //main()
  
 function checkExplainBeforeAnalyze()
 {
