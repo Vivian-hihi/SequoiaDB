@@ -11,7 +11,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, use_partition:<true|fal
 | 参数名 | 类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
 | string | string |用户自定义注释字符串 | 否 |
-| table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](cl_options)。| 否 |
+| table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否 |
 | use_partition | bool | 是否创建分区表。取值 false 则显式创建非分区表。| 否 |
 
 示例1：在 SequoiaDB 上创建根据时间进行范围切分的表。
@@ -22,7 +22,7 @@ mysql> CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY 
     -> COMMENT="Sharding table for example,
     "> sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
 ```
-示例2：在[引擎配置项](engine_config)`sequoiadb_use_partition`为 ON 时，指定`use_partition`为 false 显式创建普通表。
+示例2：在[引擎配置项](sql_engine/sequoiasql_mysql/config.md#引擎配置)`sequoiadb_use_partition`为 ON 时，指定`use_partition`为 false 显式创建普通表。
 
 ```lang-sql
 mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE KEY(name))
@@ -34,7 +34,7 @@ mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE 
 ## 引擎配置
 + **配置项列表**
 
-   以下表格列出了所有的 SequoiaDB 存储引擎配置项，及它们的简要描述。详细信息参考后文[引擎配置使用说明](config_usage)。
+   以下表格列出了所有的 SequoiaDB 存储引擎配置项，及它们的简要描述。详细信息参考后文[引擎配置使用说明](sql_engine/sequoiasql_mysql/config.md#引擎配置使用说明)。
 
    |参数名|类型|默认值|动态生效|作用范围|说明|
    |---|---|---|---|---|---|
@@ -90,13 +90,13 @@ mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE 
 
    `sequoiadb_use_partition`配置项决定 MySQL 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MySQL 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
    
-   如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](table_options)中指定`use_partition`为 false。
+   如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mysql/config.md#自定义表配置)中指定`use_partition`为 false。
 
    > **Note:** 自动分区时，主键或唯一索引只在建表时对应分区键。建表后添加删除主键或唯一索引都不会更改分区键。
 
 + **配置默认副本数**
 
-   `sequoiadb_replica_size`配置项可以设置表默认的写操作需同步的副本数。副本数多时，数据一致性强度高，但性能会有所下降。副本数少时，则反之。具体可参考 SequoiaDB 的[创建集合的ReplSize参数](cl_param)。
+   `sequoiadb_replica_size`配置项可以设置表默认的写操作需同步的副本数。副本数多时，数据一致性强度高，但性能会有所下降。副本数少时，则反之。具体可参考 SequoiaDB 的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。
 
 + **配置批量插入**
 
@@ -108,7 +108,7 @@ mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE 
 
    `sequoiadb_selector_pushdown_threshold`可以配置查询字段下压的触发阈值。查询字段不下压时，SequoiaDB 集群总是返回完整记录给 MySQL，由 MySQL 过滤有用字段。而在查询字段下压时，SequoiaDB 集群只返回 MySQL 所需字段。在查询字段个数/表总字段个数的百分比小于等于该阈值时，查询字段下压，否则不下压。下压查询字段可以节省了网络传输，但它也会增加 SequoiaDB 工作。可以根据实际适当调整。
 
-   `sequoiadb_optimizer_select_count`决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](cl_count)方法，由 SequoiaDB 进行计数。
+   `sequoiadb_optimizer_select_count`决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。
 
 + **其它配置**
     
@@ -118,8 +118,3 @@ mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE 
    
    `sequoiadb_use_autocommit`配置项已弃用。请直接使用 MySQL 的`autocommit`配置项。
 
-[table_options]: sql_engine/sequoiasql_mysql/config.md#自定义表配置
-[cl_options]: reference/Sequoiadb_command/SdbCS/createCL.md
-[cl_param]: reference/Sequoiadb_command/SdbCS/createCL.md#参数
-[engine_config]: sql_engine/sequoiasql_mysql/config.md#引擎配置
-[config_usage]: sql_engine/sequoiasql_mysql/config.md#引擎配置使用说明

@@ -9,11 +9,11 @@
 
 ##错误##
 
-[错误码](error_code)
+[错误码](reference/Sequoiadb_error_code.md)
 
 ##示例##
 
-获取 group1 分区组的详细信息，该分区组存在3个节点。字段信息解释可参考[分区组列表](list_groups)章节。
+获取 group1 分区组的详细信息，该分区组存在3个节点。字段信息解释可参考[分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)章节。
 
 ```lang-javascript
 > var rg = db.getRG("group1")
@@ -92,6 +92,3 @@
   }
 }
 ```
-
-[error_code]: reference/Sequoiadb_error_code.md
-[list_groups]: database_management/monitoring/list/SDB_LIST_GROUPS.md
