@@ -41,6 +41,17 @@ Sdb
 
 ##错误##
 
+
+`Sdb()`函数常见异常如下：
+
+| 错误码 | 错误类型 | 描述 | 解决方法 |
+| ------ | --- | ------------ | ----------- |
+| -15 | SDB_NETWORK | 网络错误 | 检查填写的地址或者端口是否可达。|
+| -79 | SDB_NET_CANNOT_CONNECT| 无法连接指定的地址 | 检查地址、端口以及节点的配置信息是否正确。|
+| -104 | SDB_CLS_NOT_PRIMARY| 分区组不存在主节点 | 检查当前分区组是否存在 "IsPrimary" 为 "true" 的节点。若当前分区组存在节点未启，请启动节点。|
+| -250 | SDB_CLS_NODE_BSFAULT | 节点状态不正确  | 检查节点状态，如检查 catalog 节点是否启动。|
+
+
 如果出错则抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
 关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
 

@@ -49,6 +49,16 @@ On error, exception will be thrown.
 
 ##ERRORS##
 
+the exceptions of `Sdb()` are as below:
+
+| Error Code | Error Type | Description | Solution |
+| ------ | --- | ------------ | ----------- |
+| -15 | SDB_NETWORK | Network error. | Check the hostname and the port fo sdbcm is reachable. |
+| -79 | SDB_NET_CANNOT_CONNECT| Unable to connect to the address | Check that the address, port and node configuration are correct. |
+| -104 | SDB_CLS_NOT_PRIMARY| Primary node does not exit | Checks if there is a true node of "isPrimary" in current replicaGroup. Start the node if there is a node that is not started in the current replicaGroup. |
+| -250 | SDB_CLS_NODE_BSFAULT | The node is not in normal status | ChecKs the node statusf of the current replicaGroup. like chesks that  check that catalog node is started. |
+
+
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
 ##HISTORY##

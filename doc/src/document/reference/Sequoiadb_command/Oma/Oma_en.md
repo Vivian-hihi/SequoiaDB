@@ -31,7 +31,7 @@ On error, exception will be thrown.
 
 ##ERRORS##
 
-the exceptions of `createCL()` are as below:
+the exceptions of `Oma()` are as below:
 
 | Error Code | Error Type | Description | Solution |
 | ------ | --- | ------------ | ----------- |

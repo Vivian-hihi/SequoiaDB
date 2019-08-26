@@ -35,7 +35,7 @@ On success, return an object of Oma.
 On error, exception will be thrown.
 .SH ERRORS
 .PP
-the exceptions of \f[C]createCL()\f[] are as below:
+the exceptions of \f[C]Oma()\f[] are as below:
 .PP
 .TS
 tab(@);
