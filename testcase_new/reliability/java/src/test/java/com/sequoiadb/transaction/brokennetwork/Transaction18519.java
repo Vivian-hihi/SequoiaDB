@@ -110,12 +110,12 @@ public class Transaction18519 extends SdbTestBase {
 
         // 待集群正常后，查询所有账户的金额总和
         int count = 0;
-        while (count++ < 120) {
+        while (count++ < 240) {
             DBCursor cursor = sdb.exec("select sum(balance) as balance from " + csName + "." + clName);
             double balance = (double) cursor.getNext().get("balance");
             cursor.close();
             if (100000000 != (int) balance) {
-                Assert.assertNotEquals(count, 120, "TAKE 2 MIN TO ROLLBACK");
+                Assert.assertNotEquals(count, 240, "TAKE 4 MIN TO ROLLBACK");
                 Thread.sleep(1000);
                 continue;
             }
