@@ -185,6 +185,7 @@ testFiles = [
    [ "./uninited/sdbDomain14038.cpp" ],
    [ "./uninited/sdbLob14039.cpp" ],
    [ "./sessionAttr/instanceid14166.cpp" ], # sync
+   [ "./sessionAttr/sessionattr_cache1920.cpp" ], # sync
    [ "./alter/alterdomain_15163.cpp" ],
    [ "./alter/altercs_15166.cpp" ],
    [ "./alter/altercl_15168.cpp" ],

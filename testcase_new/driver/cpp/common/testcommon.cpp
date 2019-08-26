@@ -83,6 +83,7 @@ INT32 getClGroups( sdb& db,
    vec = obj.getField( "Details" ).Array() ;
    for( INT32 i = 0;i < vec.size();i++ )
    {
+      std::cout << vec[i].Obj().toString() << std::endl;
       string rgName = vec[i].Obj().getField( "GroupName" ).String() ;
       clGroups.push_back( rgName ) ;
    }
