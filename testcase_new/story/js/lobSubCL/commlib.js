@@ -389,7 +389,7 @@ function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, cond
     if( condition == undefined ){ condition = {}; }
     if( modifyValue == undefined ){ modifyValue = 0; }
     println("---begin to listLob use " + selSymbol);
-    var listResult = mainCL.listLobs(SdbQueryOption().cond(condition));
+    var listResult = mainCL.listLobs(SdbQueryOption().cond(condition).sort({"Oid":1}));
     var expListResult = [];
     while( listResult.next() )
     {
@@ -422,13 +422,13 @@ function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, cond
     }
    
     var actRecs = [];
-    var rc = mainCL.listLobs(SdbQueryOption().cond( condition ).sel(selCondition));   
+    var rc = mainCL.listLobs(SdbQueryOption().cond( condition ).sel(selCondition).sort({"Oid":1}));   
     while( rc.next() )
     {
 		actRecs.push( rc.current().toObj() );
     } 
-    println("---actRecs="+JSON.stringify(actRecs) )
-    println("---begin to check result.");
+
+    println("---begin to check result.");    
     if( JSON.stringify(actRecs) !== JSON.stringify(expListResult))
     {
         println("\nactual value= "+JSON.stringify(actRecs)+"\nexpect value= "+JSON.stringify(expListResult)); 
