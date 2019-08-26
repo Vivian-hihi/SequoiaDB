@@ -442,14 +442,15 @@ public class TransUtils {
      */
     public static void queryAndCheck(DBCollection cl, String matcher, String selector, String orderBy, String hint,
             List<BSONObject> expList) {
+        // 由于matchBlockingMethod只能判断一个接口，大量的用例均调用了该接口，因此先query再count！！！！
+        List<BSONObject> actList = queryToBSONList(cl, matcher, selector, orderBy, hint);
+        Assert.assertEquals(actList, expList);
+
         BSONObject matcherBSON = (BSONObject) JSON.parse(matcher);
         BSONObject hintBSON = (BSONObject) JSON.parse(hint);
         long actCount = cl.getCount(matcherBSON, hintBSON);
         long expCount = expList.size();
         Assert.assertEquals(actCount, expCount);
-
-        List<BSONObject> actList = queryToBSONList(cl, matcher, selector, orderBy, hint);
-        Assert.assertEquals(actList, expList);
     }
 
     /**
