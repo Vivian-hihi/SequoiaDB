@@ -446,6 +446,7 @@ public class TransUtils {
         List<BSONObject> actList = queryToBSONList(cl, matcher, selector, orderBy, hint);
         Assert.assertEquals(actList, expList);
 
+        // 该测试点是校验count接口的，不能够删除
         BSONObject matcherBSON = (BSONObject) JSON.parse(matcher);
         BSONObject hintBSON = (BSONObject) JSON.parse(hint);
         long actCount = cl.getCount(matcherBSON, hintBSON);
