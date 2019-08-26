@@ -165,14 +165,14 @@
 | version | 安装包版本 | 无                   |
 | unattendedmodeui | 显示不同级别的用户交互，none 表示不交互，minimal 表示不需要用户交互只显示安装进度，minimalWithDialogs 表示除了显示安装进度外，还会根据安装程序逻辑弹出窗口与用户交互 | 不交互                  |
 | optionfile | 配置文件，run 包可以通过指定配置文件给安装包进行传参 | 无                   |
-| debuglevel | 安装包程序调试级别 | 2                   |
-| installer-language | 安装过程中的提示语言类型，支持英文和中文                               | en| 
-| mode      | 安装模式，包含静默安装、文本模式安装以及图形界面安装                                 | 图形界面安装 |
-| perfix | 安装路径                       | /opt/sequoiadb |
+| debuglevel | 安装包程序调试级别，支持 0、1、2、3、4 | 2                   |
+| installer-language | 安装过程中的提示语言类型，支持英文和中文， en 表示英文， zh_CN 表示中文                               | en| 
+| mode      | 安装模式，包含静默安装、文本模式安装以及图形界面安装，text 表示文本模式安装， unattended 表示静默安装，gtk 表示 Linux 和 Linux x64上的常规IB默认执行模式，要求Gtk库在系统中存在，安装程序呈现Gtk外观，xwindow 表示 Linux/Uniux系统上的轻量级图形执行模式                                  | 图形界面安装 |
+| prefix | 安装路径                       | /opt/sequoiadb |
 | force     | 是否强制安装                                 | false              |
 | username     | 安装目录用户                                 | sdbadmin              |
 | groupname     | 安装目录用户组                                 | sdbadmin_group              |
 | userpasswd     | 安装用户密码                                 | sdbadmin              |
 | port     | SequoiaDB 集群管理端口                                 | 11790              |
-| processAutoStart     | 机器重启时是否自动重启 SequoiaDB 相关进程                                 | true              |
-| SMS     | 是否安装 OM 服务                                 | false              |
+| processAutoStart     | 机器重启时是否自动重启 SequoiaDB 相关进程，true 表示是，false 表示否                                 | true              |
+| SMS     | 是否安装 OM 服务，true 表示是，false 表示否                                 | false              |
