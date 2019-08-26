@@ -257,14 +257,16 @@ function main()
    var insertNum = 500;
    var sameValues1 = {"$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1"};
    var sameValues2 = {"$regex" : "^a", "$options" : "i"};
-   var sameValues3 = {"$minKey" :1};
-   var sameValues4 = {"$maxKey" :1};
+   var sameValues3 = {"subobj" : "value"};
+   var sameValues4 = {"$minKey" :1};
+   var sameValues5 = {"$maxKey" :1};
    
    //插入记录
 	insertSameDatas( dbcl, insertNum, sameValues1 );
 	insertSameDatas( dbcl, insertNum, sameValues2 );
 	insertSameDatas( dbcl, insertNum, sameValues3 );
 	insertSameDatas( dbcl, insertNum, sameValues4 );
+	insertSameDatas( dbcl, insertNum, sameValues5 );
 	
 	//执行统计
    analyze( db, {Collection: COMMCSNAME + "." + clName, Index: "a"} );
@@ -291,6 +293,10 @@ function main()
    //query( dbclSlave, findConf, null, null, insertNum  );
    
    var findConf = {a:sameValues4};
+   query( dbclPrimary, findConf, null, null, insertNum );
+   //query( dbclSlave, findConf, null, null, insertNum  );
+   
+   var findConf = {a:sameValues5};
    query( dbclPrimary, findConf, null, null, insertNum );
    //query( dbclSlave, findConf, null, null, insertNum  );
    
