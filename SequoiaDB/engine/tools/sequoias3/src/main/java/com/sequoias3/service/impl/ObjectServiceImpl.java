@@ -285,8 +285,11 @@ public class ObjectServiceImpl implements ObjectService {
             DataAttr newLobData = dataDao.createNewData(dataCsName, dataClName, region);
             try {
                 flushIndex = outStreamFlushQueue.add(outputStream);
-                dataDao.copyObjectData(dataCsName, dataClName, newLobData.getLobId(), 0,
-                        sourceMeta.getCsName(), sourceMeta.getClName(), sourceMeta.getLobId(), 0, sourceMeta.getSize());
+                if (sourceMeta.getSize() > 0) {
+                    dataDao.copyObjectData(dataCsName, dataClName, newLobData.getLobId(),
+                            0, sourceMeta.getCsName(), sourceMeta.getClName(),
+                            sourceMeta.getLobId(), 0, sourceMeta.getSize());
+                }
                 ObjectMeta objectMeta;
                 if (directiveCopy) {
                     objectMeta = sourceMeta;
@@ -579,7 +582,12 @@ public class ObjectServiceImpl implements ObjectService {
             }
 
             deleteObjectLob(deleteObject);
-            return null;
+            PutDeleteResult response = null;
+            if (deleteObject != null && deleteObject.getDeleteMarker()){
+                response = new PutDeleteResult();
+                response.setDeleteMarker(true);
+            }
+            return response;
         }catch (S3ServerException e) {
             throw e;
         } catch (Exception e) {
@@ -1043,84 +1051,52 @@ public class ObjectServiceImpl implements ObjectService {
 
     @Override
     public String uploadPart(long ownerID, String bucketName, String objectName,
-                             String uploadIdStr, int partnumber, String contentMD5,
+                             String uploadIdStr, int partNumber, String contentMD5,
                              InputStream inputStream, long contentLength)
             throws S3ServerException {
-        if (partnumber < RestParamDefine.PART_NUMBER_MIN
-                || partnumber > RestParamDefine.PART_NUMBER_MAX){
-            throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
-                    "invalid partNumber:"+partnumber);
-        }
-
-        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-        long uploadId = convertUploadId(uploadIdStr);
-
-        Region region = null;
-        if (bucket.getRegion() != null) {
-            region = regionDao.queryRegion(bucket.getRegion());
-        }
-        Date createDate      = new Date();
-        String dataCsName    = regionDao.getDataCSName(region, createDate);
-        String dataClName    = regionDao.getDataClName(region, createDate);
-
-        DataAttr dataMinus = null;
-        ConnectionDao connection = daoMgr.getConnectionDao();
-        transaction.begin(connection);
         try {
-            //query uploadId
-            UploadMeta upload = uploadDao.queryUploadByUploadId(connection, bucket.getBucketId(),
-                    objectName, uploadId, false);
-            if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
-                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD, "no such upload. uploadId:" + uploadId);
+            if (partNumber < RestParamDefine.PART_NUMBER_MIN
+                    || partNumber > RestParamDefine.PART_NUMBER_MAX) {
+                throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
+                        "invalid partNumber:" + partNumber);
             }
-            Part partZero = partDao.queryPartByPartnumber(connection, uploadId, 0);
-            if (partZero != null && partZero.getSize() == 0){
-                partZero.setSize(contentLength);
-                partDao.updatePart(connection, uploadId, 0, partZero);
-            }
-            if (partDao.queryPartBySize(null, uploadId, contentLength) == null){
-                Part partMinus = partDao.queryPartByPartnumber(connection, uploadId, -1);
-                if (partMinus == null){
-                    dataMinus = dataDao.createNewData(dataCsName, dataClName, region);
-                    Part nPart = new Part(uploadId, -1, dataCsName, dataClName, dataMinus.getLobId(), contentLength, null);
-                    partDao.insertPart(connection, uploadId,-1, nPart);
-                }
-            }
-            transaction.commit(connection);
-        } catch (S3ServerException e) {
-            transaction.rollback(connection);
-            if (dataMinus != null){
-                cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
-            }
-            if (e.getError().getErrIndex() != S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
-                throw e;
-            }
-        } catch (Exception e) {
-            transaction.rollback(connection);
-            if (dataMinus != null){
-                cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
-            }
-            throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectname=" + objectName + ", uploadId=" + uploadId + ", partnumer=" + partnumber, e);
-        } finally {
-            daoMgr.releaseConnectionDao(connection);
-        }
 
-        int tryTimeA = DBParamDefine.DB_DUPLICATE_MAX_TIME;
-        while (tryTimeA > 0) {
-            tryTimeA--;
+            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            long uploadId = convertUploadId(uploadIdStr);
+
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+            Date createDate = new Date();
+            String dataCsName = regionDao.getDataCSName(region, createDate);
+            String dataClName = regionDao.getDataClName(region, createDate);
+
+            initZeroPartSize(bucket, uploadId, objectName, contentLength, dataCsName, dataClName, region);
+
+            insertNewPartIfNull(uploadId, partNumber, dataCsName, dataClName);
+
             DataAttr newDataLob = null;
-            ConnectionDao connectionA = daoMgr.getConnectionDao();
-            transaction.begin(connectionA);
+            ConnectionDao connectionB = daoMgr.getConnectionDao();
+            transaction.begin(connectionB);
             try {
-                Part nPart = new Part(uploadId, partnumber, dataCsName, dataClName, null, 0, null);
-                Part oldPart = partDao.queryPartByPartnumber(connectionA, uploadId, partnumber);
-                if (oldPart == null) {
-                    partDao.insertPart(connectionA, uploadId, partnumber, nPart);
+                Part nPart = new Part(uploadId, partNumber, dataCsName, dataClName, null, 0, null);
+                Part oldPart = partDao.queryPartByPartnumber(connectionB, uploadId, partNumber);
+                if (oldPart == null){
+                    partDao.insertPart(connectionB, uploadId, partNumber, nPart);
                 }
-                if (uploadStatusDao.queryUploadId(uploadId)){
+
+                UploadMeta upload = uploadDao.queryUploadByUploadId(connectionB, bucket.getBucketId(),
+                        objectName, uploadId, false);
+                if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
+                    throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD, "no such upload. uploadId:" + uploadId);
+                }
+
+                if (uploadStatusDao.queryUploadId(uploadId)) {
                     throw new S3ServerException(S3Error.PART_COMPLETING_CONFLICT, "The uploadId is completing");
                 }
-                if (oldPart != null && contentLength == oldPart.getSize()) {
+
+                if (oldPart != null && contentLength == oldPart.getSize() && contentLength != 0) {
                     newDataLob = dataDao.createNewData(dataCsName, dataClName, region);
                     nPart.setLobId(newDataLob.getLobId());
                 } else {
@@ -1137,9 +1113,19 @@ public class ObjectServiceImpl implements ObjectService {
 
                 String eTag = null;
                 if (contentLength > 0) {
-                    DataAttr dataAttr = dataDao.insertObjectData(nPart.getCsName(), nPart.getClName(),
-                            inputStream, region, nPart.getLobId(),
-                            (partnumber - 1) * contentLength, contentLength);
+                    DataAttr dataAttr;
+                    try {
+                        dataAttr = dataDao.insertObjectData(nPart.getCsName(), nPart.getClName(),
+                                inputStream, region, nPart.getLobId(),
+                                (partNumber - 1) * contentLength, contentLength);
+                    } catch (S3ServerException e) {
+                        if (e.getError().getErrIndex() == S3Error.DAO_LOB_PIECES_INFO_OVERFLOW.getErrIndex()) {
+                            createNewMinusPart(uploadId, dataCsName, dataClName, region, contentLength);
+                        }
+                        throw e;
+                    } catch (Exception e) {
+                        throw e;
+                    }
                     if (contentLength != dataAttr.getSize()) {
                         throw new S3ServerException(S3Error.OBJECT_INCOMPLETE_BODY,
                                 "content length is " + contentLength +
@@ -1157,65 +1143,62 @@ public class ObjectServiceImpl implements ObjectService {
                     }
 
                     eTag = dataAttr.geteTag();
-                }else {
+                } else {
                     MessageDigest MD5 = MessageDigest.getInstance("MD5");
                     eTag = new String(Hex.encodeHex(MD5.digest()));
                 }
                 nPart.setEtag(eTag);
                 nPart.setSize(contentLength);
-                partDao.updatePart(connectionA, uploadId, partnumber, nPart);
+                partDao.updatePart(connectionB, uploadId, partNumber, nPart);
 
-                if (oldPart != null) {
+                if (oldPart != null && oldPart.getLobId() != null) {
                     int tryTimeB = DBParamDefine.DB_DUPLICATE_MAX_TIME;
                     oldPart.setPartNumber(oldPart.getPartNumber() - RestParamDefine.PART_NUMBER_MAX);
                     while (tryTimeB > 0) {
                         tryTimeB--;
-                        ConnectionDao connectionB = daoMgr.getConnectionDao();
-                        transaction.begin(connectionB);
+                        ConnectionDao connectionC = daoMgr.getConnectionDao();
+                        transaction.begin(connectionC);
                         try {
                             oldPart.setPartNumber(oldPart.getPartNumber() - 10000);
-                            partDao.insertPart(connectionB, uploadId, oldPart.getPartNumber(), oldPart);
-                            transaction.commit(connectionB);
+                            partDao.insertPart(connectionC, uploadId, oldPart.getPartNumber(), oldPart);
+                            transaction.commit(connectionC);
                             break;
                         } catch (S3ServerException e) {
-                            transaction.rollback(connectionB);
+                            transaction.rollback(connectionC);
                             if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
                                 continue;
                             } else {
                                 throw e;
                             }
                         } catch (Exception e) {
-                            transaction.rollback(connectionB);
+                            transaction.rollback(connectionC);
                             throw e;
                         } finally {
-                            daoMgr.releaseConnectionDao(connectionB);
+                            daoMgr.releaseConnectionDao(connectionC);
                         }
                     }
                 }
 
-                transaction.commit(connectionA);
+                transaction.commit(connectionB);
                 return eTag;
-            } catch (S3ServerException e) {
-                transaction.rollback(connectionA);
-                if (newDataLob != null) {
-                    cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
-                }
-                if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTimeA > 0) {
-                    continue;
-                }else {
-                    throw e;
-                }
             } catch (Exception e) {
-                transaction.rollback(connectionA);
+                transaction.rollback(connectionB);
                 if (newDataLob != null) {
                     cleanRedundencyLob(dataCsName, dataClName, newDataLob.getLobId());
                 }
-                throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectName=" + objectName + ", uploadId=" + uploadId + ", partNumber=" + partnumber, e);
+                throw e;
             } finally {
-                daoMgr.releaseConnectionDao(connectionA);
+                daoMgr.releaseConnectionDao(connectionB);
             }
+
+        } catch (S3ServerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED,
+                    "upload part failed. objectName=" + objectName +
+                            ", uploadId=" + uploadIdStr +
+                            ", partNumber=" + partNumber, e);
         }
-        return null;
     }
 
     @Override
@@ -1520,18 +1503,98 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
+    private void initZeroPartSize(Bucket bucket, long uploadId, String objectName,
+                              long contentLength, String dataCsName,
+                              String dataClName, Region region)
+            throws S3ServerException{
+        DataAttr dataMinus = null;
+        ConnectionDao connection = daoMgr.getConnectionDao();
+        transaction.begin(connection);
+        try {
+            //query uploadId
+            UploadMeta upload = uploadDao.queryUploadByUploadId(connection, bucket.getBucketId(),
+                    objectName, uploadId, false);
+            if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
+                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD, "no such upload. uploadId:" + uploadId);
+            }
+            Part partZero = partDao.queryPartByPartnumber(connection, uploadId, 0);
+            if (partZero != null && partZero.getSize() == 0){
+                partZero.setSize(contentLength);
+                partDao.updatePart(connection, uploadId, 0, partZero);
+            }
+            if (contentLength != partZero.getSize()){
+                Part partMinus = partDao.queryPartByPartnumber(connection, uploadId, -1);
+                if (partMinus == null){
+                    dataMinus = dataDao.createNewData(dataCsName, dataClName, region);
+                    Part nPart = new Part(uploadId, -1, dataCsName, dataClName, dataMinus.getLobId(), contentLength, null);
+                    partDao.insertPart(connection, uploadId,-1, nPart);
+                }
+            }
+            transaction.commit(connection);
+        } catch (S3ServerException e) {
+            transaction.rollback(connection);
+            if (dataMinus != null){
+                cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
+            }
+            if (e.getError().getErrIndex() != S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
+                throw e;
+            }
+        } catch (Exception e) {
+            transaction.rollback(connection);
+            if (dataMinus != null){
+                cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
+            }
+            throw e;
+        } finally {
+            daoMgr.releaseConnectionDao(connection);
+        }
+    }
+
+    private void insertNewPartIfNull(long uploadId, int partNumber,
+                                     String dataCsName, String dataClName)
+            throws S3ServerException{
+        int tryTimeA = DBParamDefine.DB_DUPLICATE_MAX_TIME;
+        while (tryTimeA > 0){
+            tryTimeA--;
+            ConnectionDao connectionA = daoMgr.getConnectionDao();
+            transaction.begin(connectionA);
+            try {
+                Part nPart = new Part(uploadId, partNumber, dataCsName, dataClName,
+                        null, 0, null);
+                Part oldPart = partDao.queryPartByPartnumber(connectionA, uploadId, partNumber);
+                if (oldPart == null) {
+                    partDao.insertPart(connectionA, uploadId, partNumber, nPart);
+                }
+                transaction.commit(connectionA);
+                break;
+            }  catch (S3ServerException e) {
+                transaction.rollback(connectionA);
+                if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTimeA > 0) {
+                    continue;
+                }else {
+                    throw e;
+                }
+            } catch (Exception e) {
+                transaction.rollback(connectionA);
+                throw e;
+            } finally {
+                daoMgr.releaseConnectionDao(connectionA);
+            }
+        }
+    }
+
     private void checkRequsetPartlist(List<Part> reqPartList, List<Part> locPartArray)
             throws S3ServerException{
         int lastPartNumber = 0;
         for (int i = 0; i < reqPartList.size(); i++){
             Part part = reqPartList.get(i);
-            if (part.getPartNumber() < RestParamDefine.PART_NUMBER_MIN
-                    || part.getPartNumber() > RestParamDefine.PART_NUMBER_MAX){
+            int partNumber = part.getPartNumber();
+            if (partNumber < RestParamDefine.PART_NUMBER_MIN
+                    || partNumber > RestParamDefine.PART_NUMBER_MAX){
                 throw new S3ServerException(S3Error.PART_INVALID_PART,
-                        "partNumber " + part.getPartNumber() + " is not exist.");
+                        "partNumber " + partNumber + " is not exist.");
             }
 
-            int partNumber = part.getPartNumber();
             if (partNumber <= lastPartNumber){
                 throw new S3ServerException(S3Error.PART_INVALID_PARTORDER,
                         "The partNumber is " + partNumber +
@@ -1556,10 +1619,14 @@ public class ObjectServiceImpl implements ObjectService {
             }
 
             if (multiPartUploadConfig.isPartSizeLimit()) {
-                if (locPartArray.get(partNumber - 1).getSize() < 5 * 1024 * 1024L
-                        || locPartArray.get(partNumber - 1).getSize() > 5 * 1024 * 1024 * 1024L) {
-                    if (i != reqPartList.size() - 1) {
+                if (i != reqPartList.size() - 1){
+                    if (locPartArray.get(partNumber - 1).getSize() < 5 * 1024 * 1024L) {
                         throw new S3ServerException(S3Error.PART_ENTITY_TOO_SMALL,
+                                "part size is invalid. size:" + locPartArray.get(partNumber - 1).getSize());
+                    }
+
+                    if (locPartArray.get(partNumber - 1).getSize() > 5 * 1024 * 1024 * 1024L){
+                        throw new S3ServerException(S3Error.PART_ENTITY_TOO_LARGE,
                                 "part size is invalid. size:" + locPartArray.get(partNumber - 1).getSize());
                     }
                 }
@@ -1619,7 +1686,7 @@ public class ObjectServiceImpl implements ObjectService {
                 }
 
                 int partnumber = completeList.get(i).getPartNumber();
-                if (locPartArray.get(partnumber-1).getLobId().equals(baseArray.get(0).getLobId())){
+                if (baseArray.get(0).getLobId().equals(locPartArray.get(partnumber-1).getLobId())){
                     if (newOffset != baseSize * (partnumber - 1)){
                         reBuildLob = true;
                         break;
@@ -1655,12 +1722,29 @@ public class ObjectServiceImpl implements ObjectService {
         return reBuildLob;
     }
 
-    long convertUploadId(String uploadId) throws S3ServerException{
+    private long convertUploadId(String uploadId) throws S3ServerException{
         try{
             return Long.parseLong(uploadId);
         }catch (Exception e){
             throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
                     "uploadId is invalid, uploadId:"+ uploadId, e);
+        }
+    }
+
+    private void createNewMinusPart(long uploadId, String dataCsName, String dataClName,
+                            Region region, long size) throws S3ServerException{
+        DataAttr dataMinus = dataDao.createNewData(dataCsName, dataClName, region);
+        try {
+            Part partMinus = partDao.queryPartBySize(null, uploadId, null);
+            int partNumber = -2;
+            if (partMinus.getPartNumber() < -1){
+                partNumber = partMinus.getPartNumber() - 1;
+            }
+            Part nPart = new Part(uploadId, partNumber, dataCsName, dataClName, dataMinus.getLobId(), size, null);
+            partDao.insertPart(null, uploadId, partNumber, nPart);
+        }catch (Exception e){
+            logger.error("create new minus part fail. uploadId:" + uploadId, e);
+            cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
         }
     }
 

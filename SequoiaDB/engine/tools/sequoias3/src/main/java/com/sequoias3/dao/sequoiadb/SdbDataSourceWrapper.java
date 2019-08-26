@@ -27,7 +27,7 @@ public class SdbDataSourceWrapper {
         ConfigOptions nwOpt = new ConfigOptions();
         DatasourceOptions dsOpt = new DatasourceOptions();
 
-        nwOpt.setConnectTimeout(500);
+        nwOpt.setConnectTimeout(1000);
         nwOpt.setMaxAutoConnectRetryTime(0);
 		nwOpt.setSocketKeepAlive(true);
 

@@ -128,7 +128,7 @@ public class SdbPartDao implements PartDao {
     }
 
     @Override
-    public Part queryPartBySize(ConnectionDao connection, long uploadId, long size)
+    public Part queryPartBySize(ConnectionDao connection, long uploadId, Long size)
             throws S3ServerException {
         Sequoiadb sdb = null;
         try {
@@ -143,11 +143,14 @@ public class SdbPartDao implements PartDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Part.UPLOADID, uploadId);
-            matcher.put(Part.SIZE, size);
+            if (size != null) {
+                matcher.put(Part.SIZE, size);
+            }
 
             //0,-1两个分块都是预先准备的lob，size相同的话就可以使用
+            //其他负数的partnumber也是
             BSONObject partnumberMatcher = new BasicBSONObject();
-            partnumberMatcher.put(DBParamDefine.NOT_SMALL, -1);
+            partnumberMatcher.put(DBParamDefine.NOT_SMALL, -1000);
             matcher.put(Part.PARTNUMBER, partnumberMatcher);
 
             BSONObject order = new BasicBSONObject();
@@ -219,16 +222,19 @@ public class SdbPartDao implements PartDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Part.UPLOADID, uploadId);
-            BSONObject partnumberMatcher = new BasicBSONObject();
+            BSONObject partNumberMatcher = new BasicBSONObject();
             if (onlyPositiveNo) {
-                partnumberMatcher.put(DBParamDefine.GREATER, 0);
+                partNumberMatcher.put(DBParamDefine.GREATER, 0);
             }
             if (marker != null){
-                partnumberMatcher.put(DBParamDefine.GREATER, marker);
+                partNumberMatcher.put(DBParamDefine.GREATER, marker);
             }
-            if (!partnumberMatcher.isEmpty()) {
-                matcher.put(Part.PARTNUMBER, partnumberMatcher);
+            if (!partNumberMatcher.isEmpty()) {
+                matcher.put(Part.PARTNUMBER, partNumberMatcher);
             }
+            BSONObject isNull = new BasicBSONObject();
+            isNull.put(DBParamDefine.IS_NULL, 0);
+            matcher.put(Part.LOBID, isNull);
 
             BSONObject order = new BasicBSONObject();
             order.put(Part.PARTNUMBER, 1);
@@ -263,9 +269,7 @@ public class SdbPartDao implements PartDao {
             matcher.put(Part.UPLOADID, uploadId);
             BSONObject partnumberMatcher = new BasicBSONObject();
             partnumberMatcher.put(DBParamDefine.GREATER, 0);
-            if (!partnumberMatcher.isEmpty()) {
-                matcher.put(Part.PARTNUMBER, partnumberMatcher);
-            }
+            matcher.put(Part.PARTNUMBER, partnumberMatcher);
 
             BSONObject order = new BasicBSONObject();
             order.put(Part.PARTNUMBER, 1);

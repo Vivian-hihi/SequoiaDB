@@ -56,6 +56,7 @@ public class RestExceptionHandler {
             case REGION_INVALID_DOMAIN:
             case REGION_INVALID_REGIONNAME:
             case PART_ENTITY_TOO_SMALL:
+            case PART_ENTITY_TOO_LARGE:
             case PART_INVALID_PART:
             case PART_INVALID_PARTORDER:
             case PART_INVALID_PARTNUMBER:

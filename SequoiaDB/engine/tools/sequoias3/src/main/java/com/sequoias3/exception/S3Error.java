@@ -52,6 +52,8 @@ public enum S3Error {
     DAO_DB_ERROR(-406, "DBError", "DB error."),
     DAO_LOB_FNE(407, "LobIsNotFound", "Lob is not found."),
     DAO_TRANSACTION_BEGIN_ERROR(-408, "BeginTransactionFailed", "Begin transaction failed."),
+    DAO_TRANSACTION_COMMIT_FAILED(-409, "CommitTransactionFailed", "Commit transaction failed."),
+    DAO_LOB_PIECES_INFO_OVERFLOW(-410, "WriteLobFailed", "Write lob failed, please try again."),
 
     //bucket error
     BUCKET_CREATE_FAILED(-500, "CreateBucketFailed", "Create bucket failed."),
@@ -117,6 +119,7 @@ public enum S3Error {
     PART_INVALID_PARTORDER(-654, "InvalidPartOrder", "The list of parts was not in ascending order. Parts list must be specified in order by part number."),
     PART_INVALID_PARTNUMBER(-655, "InvalidPartNumber", "Part number must be an integer between 1 and 10000, inclusive."),
     PART_COMPLETING_CONFLICT(-656, "UploadConflict", "The uploadId is completing, upload part is forbidden."),
+    PART_ENTITY_TOO_LARGE(-657, "EntityTooLarge", "Your proposed upload is larger than the maximum allowed object size. Each part must be not more 5 GB in size, except the last part."),
 
     OBJECT_COPY_INVALID_DIRECTIVE(-661, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),
     OBJECT_COPY_WITHOUT_CHANGE(-662, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),

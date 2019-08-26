@@ -47,7 +47,7 @@ public class UploadScanClean {
 
     @Scheduled(initialDelay = 1000 * 60, fixedDelay = MINUTE)
     public void uploadScanClean(){
-        logger.debug("upload clean scan begin.");
+//        logger.debug("upload clean scan begin.");
         QueryDbCursor invalidUploads = null;
         try {
             invalidUploads = uploadDao.queryInvalidUploads();
@@ -69,8 +69,10 @@ public class UploadScanClean {
                                         if (!uploadMeta.getCsName().equals(part.getCsName())
                                                 || !uploadMeta.getClName().equals(part.getClName())
                                                 || !uploadMeta.getLobId().equals(part.getLobId())) {
-                                            dataDao.deleteObjectDataByLobId(null,
-                                                    part.getCsName(), part.getClName(), part.getLobId());
+                                            if (part.getLobId() != null) {
+                                                dataDao.deleteObjectDataByLobId(null,
+                                                        part.getCsName(), part.getClName(), part.getLobId());
+                                            }
                                         }
                                     }
                                 }else {
@@ -160,7 +162,7 @@ public class UploadScanClean {
                         }
                     }catch (Exception e){
                         transaction.rollback(connectionC);
-                        logger.error("clean invalid complete status failed.. uploadId:"+uploadId, e);
+                        logger.error("clean invalid complete status failed. uploadId:"+uploadId, e);
                     }finally {
                         daoMgr.releaseConnectionDao(connectionC);
                     }
@@ -171,5 +173,6 @@ public class UploadScanClean {
         } finally {
             metaDao.releaseQueryDbCursor(completeStatusCursor);
         }
+//        logger.debug("upload clean scan end.");
     }
 }

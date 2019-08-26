@@ -103,26 +103,49 @@ public class SequoiadbDataDao implements DataDao {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace destCS = sdb.getCollectionSpace(csName);
             DBCollection destCL = destCS.getCollection(clName);
-            DBLob dbLob = destCL.openLob(lobId, DBLob.SDB_LOB_WRITE);
-            dbLob.lockAndSeek(offset, length);
 
             MessageDigest MD5 = MessageDigest.getInstance("MD5");
 
             byte[] buffer    = new byte[ONCE_WRITE_BYTES];
 
             long count = 0;
-            int size = 0;
-            while (true){
-                if ((size = readAsMuchAsPossible(data, buffer, 0, (int) Math.min((length - count), buffer.length))) > 0) {
-                    //md5
-                    MD5.update(buffer, 0, size);
+            boolean firstPiece = true;
+            int leftTryTime = 100;
+            DBLob dbLob = null;
+            int size = readAsMuchAsPossible(data, buffer, 0, (int) Math.min((length - count), buffer.length));
+            while (leftTryTime > 0) {
+                leftTryTime--;
+                dbLob = destCL.openLob(lobId, DBLob.SDB_LOB_WRITE);
+                dbLob.lockAndSeek(offset, length);
+                try {
+                    while (size > 0) {
+                        //write lob
+                        dbLob.write(buffer, 0, size);
+                        //md5
+                        MD5.update(buffer, 0, size);
+                        count += size;
 
-                    //write lob
-                    dbLob.write(buffer, 0, size);
-
-                    count += size;
-                }else {
+                        firstPiece = false;
+                        size = readAsMuchAsPossible(data, buffer, 0, (int) Math.min((length - count), buffer.length));
+                    }
+                    dbLob.close();
                     break;
+                } catch (BaseException e) {
+                    logger.error("write lob with offset:" +offset + ", leftTryTime:" + leftTryTime + ", firstPiece:" + firstPiece + " error, e.getMessage" + e.getMessage(), e);
+                    closeLob(dbLob);
+                    if (e.getErrorCode() == SDBError.SDB_LOB_PIECESINFO_OVERFLOW.getErrorCode()){
+                        if (leftTryTime > 0 && firstPiece){
+                            continue;
+                        } else {
+                            throw new S3ServerException(S3Error.DAO_LOB_PIECES_INFO_OVERFLOW, "receive -319");
+                        }
+                    } else {
+                        throw e;
+                    }
+                } catch (Exception e) {
+                    logger.error("write lob fail. e" + e.getMessage());
+                    closeLob(dbLob);
+                    throw e;
                 }
             }
 
@@ -132,8 +155,6 @@ public class SequoiadbDataDao implements DataDao {
             result.setSize(count);
             result.setLobId(dbLob.getID());
 
-            //close lob
-            dbLob.close();
             return result;
         } catch (S3ServerException e) {
             throw e;
@@ -144,7 +165,7 @@ public class SequoiadbDataDao implements DataDao {
         } catch (BaseException e){
             throw e;
         }catch (Exception e) {
-            logger.error("create lob failed");
+            logger.error("insert lob failed");
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -454,7 +475,7 @@ public class SequoiadbDataDao implements DataDao {
         try {
             lob.close();
         }catch (Exception e){
-            logger.error("lob close failed.", e);
+            logger.error("lob close failed. error message:"+ e.getMessage());
         }
     }
 

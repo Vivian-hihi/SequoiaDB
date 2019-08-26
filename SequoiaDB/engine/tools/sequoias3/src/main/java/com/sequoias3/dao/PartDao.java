@@ -10,7 +10,7 @@ public interface PartDao {
 
     Part queryPartByPartnumber(ConnectionDao connection, long uploadId, long partNumber) throws S3ServerException;
 
-    Part queryPartBySize(ConnectionDao connection, long uploadId, long size) throws S3ServerException;
+    Part queryPartBySize(ConnectionDao connection, long uploadId, Long size) throws S3ServerException;
 
     void deletePart(ConnectionDao connection, long uploadId, Long partNumber) throws S3ServerException;
 
