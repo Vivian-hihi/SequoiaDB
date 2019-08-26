@@ -154,7 +154,7 @@ public class CollectionSpace {
      */
     public DBCollection createCollection(String collectionName, BSONObject options) {
         if(collectionName == null){
-            throw new BaseException(SDBError.SDB_INVALIDARG.getErrorCode(), "collectionName can't be null");
+            throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null");
         }
         String collectionFullName = name + "." + collectionName;
         BSONObject obj = new BasicBSONObject();
