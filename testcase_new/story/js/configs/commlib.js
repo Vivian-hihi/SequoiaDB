@@ -78,7 +78,10 @@ var Configs = ( function() {
       this.runConfigs.push( new ConfDesp( "maxconn", "int", 0, 3000, "12345" ) ) ;
       //this.runConfigs.push( new ConfDesp( "enablemixcmp", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.runConfigs.push( new ConfDesp( "plancachelevel", "int", 3, 4, "88" ) ) ;
-
+      this.runConfigs.push( new ConfDesp( "memdebug", "bool", "FALSE", "TRUE", "1234" ) ) ;
+      this.runConfigs.push( new ConfDesp( "memdebugsize", "int", 0, 256, "WEYEH" ) ) ;
+      this.runConfigs.push( new ConfDesp( "memdebugverify", "bool", "FALSE", "TRUE", "1234" ) ) ;
+      
       // register reboot configs
       // this.rebootConfigs.push( new ConfDesp( "diagpath", "path", "", "", null ) ) ; TODO: path can't specific
       // this.rebootConfigs.push( new ConfDesp( "auditpath", "path", "", "", null ) ) ;
@@ -88,8 +91,6 @@ var Configs = ( function() {
       this.rebootConfigs.push( new ConfDesp( "logbuffsize", "int", 1024, 2048, "Q" ) ) ;
       // this.rebootConfigs.push( new ConfDesp( "tmppath", "path", "", "", null ) ) ;
       this.rebootConfigs.push( new ConfDesp( "replbucketsize", "int", 32, 64, "test" ) ) ;
-      this.rebootConfigs.push( new ConfDesp( "memdebug", "bool", "FALSE", "TRUE", "1234" ) ) ;
-      this.rebootConfigs.push( new ConfDesp( "memdebugsize", "int", 0, 256, "WEYEH" ) ) ;
       this.rebootConfigs.push( new ConfDesp( "dpslocal", "bool", "FALSE", "TRUE", "1234" ) ) ;
       this.rebootConfigs.push( new ConfDesp( "traceon", "bool", "FALSE", "TRUE", 12345 ) ) ;
       this.rebootConfigs.push( new ConfDesp( "tracebufsz", "int", 256, 512, "lxw" ) ) ;
