@@ -38,6 +38,7 @@ import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
 public class ListMultipartUploadsWithReStartS3N18790 extends S3TestBase {
 	private String bucketName = "bucket18790";
 	private String keyName = "key18790";
+	private int keyNum = 20;
 	private AmazonS3 s3Client = null;
 	private long fileSize = 100 * 1024 * 1024;
 	MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
@@ -62,7 +63,7 @@ public class ListMultipartUploadsWithReStartS3N18790 extends S3TestBase {
 	@Test
 	public void ListMultipartUploads() throws Exception {
 		ThreadExecutor threadExec = new ThreadExecutor();
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < keyNum; i++) {
 			threadExec.addWorker(new InitPartUpload(keyName + "_" + i));
 		}
 		threadExec.run();
@@ -117,7 +118,9 @@ public class ListMultipartUploadsWithReStartS3N18790 extends S3TestBase {
 		ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
 		MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
 		List<String> expCommonPrefixes = new ArrayList<>();
-		PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
+		if (expUploads.size() >= keyNum) {
+			PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
+		}
 	}
 
 	private class InitPartUpload {
