@@ -36,7 +36,7 @@ public class UploadPart18699 extends S3TestBase {
 	private String bucketName = "bucket18699";
 	private String keyName = "key18699";
 	private AmazonS3 s3Client = null;
-	private long fileSize = 30 * 1024 * 1024;
+	private long fileSize = 24 * 1024 * 1024;
 	private long partSize = 6 * 1024 * 1024;
 	private File localPath = null;
 	private File file = null;
@@ -63,8 +63,7 @@ public class UploadPart18699 extends S3TestBase {
 	private void testUpload() throws Exception {
 		uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 		ThreadExecutor es = new ThreadExecutor();
-		// TODO:1、用例中需要上传完成的文件进行分段上传，这里没有必要截取前面的一段内容
-		long filepositon = partSize;
+		long filepositon = 0;
 		for (int i = 2; i < 6; i++) {
 			es.addWorker(new ThreadUploadPart18699(filepositon, i));
 			filepositon += partSize;
@@ -73,8 +72,7 @@ public class UploadPart18699 extends S3TestBase {
 
 		// 完成分段上传
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
-		// TODO:2、获取预期md5值可以直接使用如下公共方法更简洁：TestTools.getMD5(filePath)
-		String expMd5 = TestTools.getFilePartMD5(file, partSize, 4 * partSize);
+		String expMd5 = TestTools.getMD5(filePath);
 		String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 		Assert.assertEquals(actMd5, expMd5);
 		runSuccess = true;

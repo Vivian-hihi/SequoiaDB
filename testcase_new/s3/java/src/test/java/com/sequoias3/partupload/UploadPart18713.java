@@ -1,9 +1,7 @@
 package com.sequoias3.partupload;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.testng.Assert;
@@ -103,14 +101,9 @@ public class UploadPart18713 extends S3TestBase {
 		List<PartETag> partEtags = new ArrayList<>();
 		long filePosition = 0;
 		for (int i = 1; i < partSizes.length + 1; i++) {
-			System.out.println("put part " + i + " success partsize = " + partSizes[i - 1] / M + " filePosition : "
-					+ filePosition);
 			UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
 					.withPartNumber(i).withPartSize(partSizes[i - 1]).withBucketName(bucketName).withKey(keyName)
 					.withUploadId(uploadId);
-			// TODO:1.正常运行时的打屏信息建议去掉
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			System.out.println(df.format(new Date()));
 			UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
 			partEtags.add(uploadPartResult.getPartETag());
 			filePosition += partSizes[i - 1];

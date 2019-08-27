@@ -1,14 +1,11 @@
 package com.sequoias3.partupload.concurrent;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.commons.codec.binary.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -41,7 +38,7 @@ public class UploadPart18701 extends S3TestBase {
 	private String keyName = "key18701";
 	private AmazonS3 s3Client = null;
 	private long m = 1024 * 1024;
-	private long fileSize = 70 * m;
+	private long fileSize = 45 * m;
 	private File localPath = null;
 	private File file = null;
 	private String filePath = null;
@@ -63,14 +60,15 @@ public class UploadPart18701 extends S3TestBase {
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-		// TODO:1、parts变量名不能明确表达常量值的含义，建议数组里面的常量给出描述信息
+		// partList{part1[filepositon, partSize, partNumber],part2[filepositon,
+		// partSize, partNumber],...,partN[filepositon, partSize, partNumber]}
 		long[] parts = new long[] { 0, 10 * m, 1 };
 		partList.add(parts);
 		parts = new long[] { 10 * m, 5 * m, 3 };
 		partList.add(parts);
-		parts = new long[] { 20 * m, 10 * m, 5 };
+		parts = new long[] { 15 * m, 10 * m, 5 };
 		partList.add(parts);
-		parts = new long[] { 50 * m, 20 * m, 60 };
+		parts = new long[] { 25 * m, 20 * m, 60 };
 		partList.add(parts);
 	}
 
@@ -85,7 +83,9 @@ public class UploadPart18701 extends S3TestBase {
 
 		// 完成分段上传
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
-		checkResult();
+		String expMd5 = TestTools.getMD5(filePath);
+		String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+		Assert.assertEquals(actMd5, expMd5);
 		runSuccess = true;
 	}
 
@@ -125,31 +125,6 @@ public class UploadPart18701 extends S3TestBase {
 				if (s3Client != null) {
 					s3Client.shutdown();
 				}
-			}
-		}
-	}
-
-	// TODO：2、结合使用场景，上传源文件前应该就算好要传的分段大小和分段数，按这种方式只需要取源文件的md5值进行对比，没有必要截取源文件部分内容去分段上传。
-	private void checkResult() throws Exception {
-		FileInputStream fileInputStream = null;
-		int length = (int) file.length();
-		try {
-			MessageDigest md5 = MessageDigest.getInstance("MD5");
-			fileInputStream = new FileInputStream(file);
-			byte[] buffer = new byte[length];
-			if (fileInputStream.read(buffer) != -1) {
-				for (int i = 0; i < partList.size(); i++) {
-					md5.update(buffer, (int) partList.get(i)[0], (int) partList.get(i)[1]);
-				}
-			}
-			String expMd5 = new String(Hex.encodeHex(md5.digest()));
-			String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-			Assert.assertEquals(actMd5, expMd5);
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (fileInputStream != null) {
-				fileInputStream.close();
 			}
 		}
 	}

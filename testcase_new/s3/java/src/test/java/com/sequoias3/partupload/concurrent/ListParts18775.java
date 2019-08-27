@@ -25,9 +25,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
-//TODO:1、测试点描述错误
 /**
- * test content: 版本: 1 :: 并发查询分段列表 testlink-case: seqDB-18775
+ * test content: 版本: 1 :: 并发上传分段和查询分段列表 testlink-case: seqDB-18775
  * 
  * @author wangkexin
  * @Date 2019.8.8
@@ -141,15 +140,12 @@ public class ListParts18775 extends S3TestBase {
 			PartListing listResult = s3Client.listParts(request);
 			List<PartSummary> listParts = listResult.getParts();
 			List<Integer> actPartNumbersList = new ArrayList<>();
-			List<String> actEtagList = new ArrayList<>();
 			for (PartSummary partNumbers : listParts) {
 				int partNumber = partNumbers.getPartNumber();
-				String etag = partNumbers.getETag();
 				actPartNumbersList.add(partNumber);
-				// TODO：1、actEtagList没有用到
-				actEtagList.add(etag);
-			} // TODO:2、这个校验结果可能会随机失败，如果list的时候只有部分分段上传，这里的partNumbers数会小于总分段数
+			}
 			if (actPartNumbersList.size() > fileSize / partSize) {
+				// 如果list时只有部分part上传actPartNumbersList的大小应该小于总分段数
 				Assert.fail("actPartNumbersList=" + actPartNumbersList);
 			}
 		}

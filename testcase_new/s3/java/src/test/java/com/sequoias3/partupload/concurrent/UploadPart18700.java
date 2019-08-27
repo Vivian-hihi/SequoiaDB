@@ -37,7 +37,7 @@ public class UploadPart18700 extends S3TestBase {
 	private String keyName = "key18700";
 	private AmazonS3 s3Client = null;
 	private long m = 1 * 1024 * 1024;
-	private long fileSize = 40 * m;
+	private long fileSize = 35 * m;
 	private File localPath = null;
 	private File file = null;
 	private String filePath = null;
@@ -75,8 +75,7 @@ public class UploadPart18700 extends S3TestBase {
 
 		// 完成分段上传
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
-		// TODO:1、获取完整文件的md5，建议用 TestTools.getMD5(String pathName)方法
-		String expMd5 = TestTools.getFilePartMD5(file, 0, 35 * m);
+		String expMd5 = TestTools.getMD5(filePath);
 		String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 		Assert.assertEquals(actMd5, expMd5);
 		runSuccess = true;

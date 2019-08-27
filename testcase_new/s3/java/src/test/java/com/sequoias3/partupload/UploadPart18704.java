@@ -62,7 +62,7 @@ public class UploadPart18704 extends S3TestBase {
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "InvalidPart");
 		}
-		// TODO:1、需要补充对象不存在检测点
+		Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyName));
 		runSuccess = true;
 	}
 

@@ -40,7 +40,6 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class UploadPart18674 extends S3TestBase {
-	// TODO:1.AWS_ACCESS_KEY和AWS_SECRET_KEY可以直接用公共方法中定义的变量，不需要重新申明，如果有变动只需要改公共方法中的变量
 	private String AWS_ACCESS_KEY = "ABCDEFGHIJKLMNOPQRST";
 	private String AWS_SECRET_KEY = "abcdefghijklmnopqrstuvwxyz0123456789ABCD";
 	private String clientRegion = "us-east-1";
@@ -75,11 +74,11 @@ public class UploadPart18674 extends S3TestBase {
 		long partSize = 6 * 1024 * 1024;
 		testUpload1(keyName + "a", partSize);
 
-		// 指定content-Md5分段长度大于对象长度
+		// 分段长度大于对象长度
 		partSize = 7 * 1024 * 1024;
 		testUpload2(keyName + "b", partSize);
 
-		// 指定content-Md5分段长度小于对象长度
+		// 分段长度小于对象长度
 		partSize = 5 * 1024 * 1024;
 		testUpload3(keyName + "c", partSize);
 		runSuccess = true;
@@ -100,28 +99,20 @@ public class UploadPart18674 extends S3TestBase {
 	private void testUpload1(String keyName, long setPartSize) throws Exception {
 		String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 
-		int filepositon = 0;
-		String contentMd5 = "";
-		String expPartMd5 = "";
-		String actPartMd5 = "";
 		String md5[] = null;
 		List<PartETag> partEtags = new ArrayList<>();
-		// TODO:1、只有一个分段，且分段长度等于对象长度，没有必要写个for循环，直接上传一个分段就可以了
-		for (int i = 1; filepositon < fileSize; i++) {
-			long partsize = Math.min(setPartSize, (fileSize - filepositon));
-			md5 = getMD5s(file, filepositon, partsize);
-			contentMd5 = md5[0];
-			UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filepositon)
-					.withPartNumber(i).withPartSize(setPartSize).withBucketName(bucketName).withKey(keyName)
-					.withUploadId(uploadId).withMD5Digest(contentMd5);
-			UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
-			partEtags.add(uploadPartResult.getPartETag());
-			expPartMd5 = md5[1];
-			actPartMd5 = uploadPartResult.getPartETag().getETag();
-			Assert.assertEquals(actPartMd5, expPartMd5,
-					"part number = " + uploadPartResult.getPartETag().getPartNumber());
-			filepositon += partsize;
-		}
+		md5 = getMD5s(file, 0, setPartSize);
+		String contentMd5 = md5[0];
+
+		// 指定content-Md5上传一个分段
+		UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1)
+				.withPartSize(setPartSize).withBucketName(bucketName).withKey(keyName).withUploadId(uploadId)
+				.withMD5Digest(contentMd5);
+		UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
+		partEtags.add(uploadPartResult.getPartETag());
+		String expPartMd5 = md5[1];
+		String actPartMd5 = uploadPartResult.getPartETag().getETag();
+		Assert.assertEquals(actPartMd5, expPartMd5, "part number = 1");
 
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 		String expMd5 = TestTools.getMD5(filePath);
@@ -132,15 +123,8 @@ public class UploadPart18674 extends S3TestBase {
 	private void testUpload2(String keyName, long setPartSize) throws IOException {
 		String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 
-		int filepositon = 0;
-		String contentMd5 = "";
-		// TODO:2、这个测试点不需要考虑带md5值
-		String md5[] = null;
-		md5 = getMD5s(file, filepositon, fileSize);
-		contentMd5 = md5[0];
-		UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filepositon)
-				.withPartNumber(1).withPartSize(setPartSize).withBucketName(bucketName).withKey(keyName)
-				.withUploadId(uploadId).withMD5Digest(contentMd5);
+		UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1)
+				.withPartSize(setPartSize).withBucketName(bucketName).withKey(keyName).withUploadId(uploadId);
 		try {
 			s3Client.uploadPart(partRequest);
 			Assert.fail("upload should fail.");
@@ -156,10 +140,8 @@ public class UploadPart18674 extends S3TestBase {
 
 		List<PartETag> partEtags = new ArrayList<>();
 		String[] md5 = getMD5s(file, 0, setPartSize);
-		String contentMd5 = md5[0];
 		UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1)
-				.withPartSize(setPartSize).withBucketName(bucketName).withKey(keyName).withUploadId(uploadId)
-				.withMD5Digest(contentMd5);
+				.withPartSize(setPartSize).withBucketName(bucketName).withKey(keyName).withUploadId(uploadId);
 		UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
 		partEtags.add(uploadPartResult.getPartETag());
 		String expPartMd5 = md5[1];
