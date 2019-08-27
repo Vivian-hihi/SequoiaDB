@@ -655,11 +655,17 @@ namespace engine
                                  INT32 status,
                                  DPS_LSN_OFFSET lsn )
    {
-      transID = DPS_TRANS_GET_ID( transID ) ;
+      /// when status is DPS_TRANS_COMMIT and
+      /// auto transaction don't need add to history list
+      if ( DPS_TRANS_COMMIT != status &&
+           !DPS_TRANS_IS_AUTOCOMMIT( transID ) )
+      {
+         transID = DPS_TRANS_GET_ID( transID ) ;
 
-      ossScopedLock lock( &_hisMutex ) ;
-      _hisTransStatus[ transID ] = dpsHisTransStatus( status, lsn ) ;
-      _hisLsnTrans[ lsn ] = transID ;
+         ossScopedLock lock( &_hisMutex ) ;
+         _hisTransStatus[ transID ] = dpsHisTransStatus( status, lsn ) ;
+         _hisLsnTrans[ lsn ] = transID ;
+      }
    }
 
    void dpsTransCB::delHisTrans( DPS_TRANS_ID transID )
