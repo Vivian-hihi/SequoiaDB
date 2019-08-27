@@ -517,6 +517,9 @@ namespace engine
       utilGetGlobalMemPool()->setMaxSize( 0 ) ;
       utilGetGlobalMemPool()->shrink() ;
 
+      /// stop memdebug
+      ossEnableMemDebug( FALSE, 0, FALSE ) ;
+
       if ( !normalStop && _eduMgr.dumpAbnormalEDU() > 0 )
       {
          PD_LOG( PDSEVERE, "Stop all EDUs timeout, crashed." ) ;

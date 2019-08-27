@@ -41,6 +41,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "utilPooledObject.hpp"
 #include "ossMmap.hpp"
 #include "dms.hpp"
 #include "ossUtil.hpp"
@@ -337,7 +338,7 @@ namespace engine
    /*
       _dmsContext define
    */
-   class _dmsContext : public _IContext
+   class _dmsContext : public _IContext, public _utilPooledObject
    {
       public:
          _dmsContext () {}

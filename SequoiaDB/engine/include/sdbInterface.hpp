@@ -495,7 +495,7 @@ namespace engine
    /*
       _IContext define
    */
-   class _IContext : public SDBObject
+   class _IContext
    {
       public:
          _IContext() {}
