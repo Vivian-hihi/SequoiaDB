@@ -727,6 +727,7 @@
       <copy file="${srccode_dir}/script/sequoiadb"                todir="${release_db_dir}/" />  
       <copy file="${srccode_dir}/script/install_om.sh"            todir="${release_db_dir}/" />
       <copy file="${srccode_dir}/misc/ci/mkrelease/compatible.sh" todir="${release_db_dir}" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/preUninstall.sh" todir="${release_db_dir}" />
       <copy file="${srccode_dir}/misc/ci/mkrelease/om_ver.conf"   todir="${release_db_dir}" />
       <copy file="${srccode_dir}/misc/ci/mkrelease/version.conf"  todir="${release_db_dir}" />
       <copy file="${srccode_dir}/misc/ci/mkrelease/sdbcm.service" todir="${release_db_dir}" />
