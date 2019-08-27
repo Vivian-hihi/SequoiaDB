@@ -33,7 +33,7 @@ function main()
    }
    db2.transBegin();
    var cl2 = db2.getCS(COMMCSNAME).getCL(clName);
-   insertRecordErr( cl2 );
+   insertRecordErr( cl2, record1 );
    
    cl2.insert(record2);
    db2.transRollback();
@@ -41,7 +41,7 @@ function main()
    checkRec( cursor, [record1] );
    
    db1.transBegin();
-   insertRecordErr( cl1 );
+   insertRecordErr( cl1, record1 );
    cl1.insert(record2);
    db1.transRollback();
    var cursor = cl1.find();
@@ -50,7 +50,7 @@ function main()
    var db3 = new Sdb(COORDHOSTNAME, COORDSVCNAME);
    var cl3 = db3.getCS(COMMCSNAME).getCL(clName);
    db3.transBegin();
-   insertRecordErr( cl3 );
+   insertRecordErr( cl3, record1 );
    cl3.insert(record3);
    db3.transRollback();
    var cursor = cl3.find();
@@ -64,11 +64,11 @@ function main()
 }
 main();
 
-function insertRecordErr( cl )
+function insertRecordErr( cl, record )
 {
    try
    {
-      cl.insert(record1);
+      cl.insert(record);
       throw "need_err";
    }catch(e)
    {
