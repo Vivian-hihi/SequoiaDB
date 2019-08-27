@@ -1934,6 +1934,8 @@ namespace engine
                // no cache, create a generate plan
                optGeneralAccessPlan * generalPlan = NULL ;
 
+               // use the sub-collection to create plan
+               planKey.setCLFullName( options.getCLFullName() ) ;
                planKey.setCollectionInfo( su, mbContext ) ;
                rc = _createAccessPlan( su, mbContext, planKey, planRuntime,
                                        planHelper, &generalPlan, FALSE ) ;
