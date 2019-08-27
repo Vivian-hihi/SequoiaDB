@@ -27,6 +27,10 @@
 #ifdef SDB_ENGINE
 #include "pd.hpp"
 #else
+   #ifdef SDB_ASSERT
+      #undef SDB_ASSERT
+   #endif // SDB_ASSERT
+
    #ifdef _DEBUG
       #include <assert.h>
       #define SDB_ASSERT(cond,str)  assert(cond)
