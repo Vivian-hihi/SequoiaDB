@@ -113,7 +113,8 @@ namespace engine
       return TRUE ;
    }
 
-   void* _utilMemListItem::alloc( UINT32 size, UINT32 *pRealSize )
+   void* _utilMemListItem::alloc( UINT32 size, const CHAR *pFile, UINT32 line,
+                                  UINT32 *pRealSize )
    {
       if ( 0 == size )
       {
@@ -162,6 +163,7 @@ namespace engine
          ptr = utilPoolAlloc( _canAllocBlockSize( size ) ?
                               ( _blockSize - UTIL_MEM_TOTAL_FILL_LEN ) :
                               size,
+                              pFile, line,
                               pRealSize ) ;
       }
 
@@ -483,16 +485,16 @@ namespace engine
       {
          if ( _arrayList[ index ]->getCacheSize() >= size )
          {
-            ptr = _arrayList[ index ]->alloc( size, pRealSize ) ;
+            ptr = _arrayList[ index ]->alloc( size, pFile, line, pRealSize ) ;
          }
          else if ( _arrayList[ index + 1 ] &&
                    _arrayList[ index + 1 ]->getCacheSize() >= size )
          {
-            ptr = _arrayList[ index + 1 ]->alloc( size, pRealSize ) ;
+            ptr = _arrayList[ index + 1 ]->alloc( size, pFile, line, pRealSize ) ;
          }
          else
          {
-            ptr = _arrayList[ index ]->alloc( size, pRealSize ) ;
+            ptr = _arrayList[ index ]->alloc( size, pFile, line, pRealSize ) ;
          }
       }
       else

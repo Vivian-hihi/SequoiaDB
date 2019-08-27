@@ -100,7 +100,8 @@ namespace engine
 
          ~_utilMemListItem() ;
 
-         void*    alloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
+         void*    alloc( UINT32 size, const CHAR *pFile, UINT32 line,
+                         UINT32 *pRealSize = NULL ) ;
          void     dealloc( void *p ) ;
 
          void     clear() ;
