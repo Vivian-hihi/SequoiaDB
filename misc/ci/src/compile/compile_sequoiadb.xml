@@ -733,6 +733,7 @@
       <copy file="${srccode_dir}/misc/ci/mkrelease/sdbcm.service" todir="${release_db_dir}" />
       <replaceregexp file="${release_db_dir}/sequoiadb" match="&#13;&#10;" replace="&#10;" flags="g" />
           
+      <chmod file="${release_db_dir}/preUninstall.sh"     perm="a+x" />
       <!--exclude .svn-->
       <delete includeemptydirs="true">
          <fileset dir="${release_db_dir}" includes="**/.svn" />
