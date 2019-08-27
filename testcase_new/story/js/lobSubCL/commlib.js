@@ -66,14 +66,13 @@ function createMainCLAndAttachCL(db, csName, mainCLName, clName, shardingFormat,
 *@createDate:  2019.8.7
 **************************************/
 function makeTmpFile( filePath, fileName, fileSize)
-{
-    println("---create tmp file---");
+{ 
     if( fileName == undefined){ println( "---error msg: fileName is null." );}
     if( fileSize == undefined){ fileSize = 1024 * 100; }    
     var fileFullPath = filePath + "/" + fileName;        
-	File.mkdir(filePath);
+    File.mkdir(filePath);
     
-	var cmd = new Cmd();
+    var cmd = new Cmd();
     cmd.run( "dd if=/dev/zero of=" + fileFullPath  + " bs=1c count=" + fileSize );
     var md5Arr = cmd.run( "md5sum " + fileFullPath ).split(" ");
     var md5 = md5Arr[0];
@@ -106,7 +105,7 @@ function deleteTmpFile( filePath )
 *@createDate:  2019.8.7
 **************************************/
 function insertLob(mainCL, filePath, format, scope, lobNum, subCLNum, beginDate)
-{
+{    
     println("---put lob---");
     if( lobNum == undefined ){ lobNum = 10; }
     if( subCLNum == undefined ){ subCLNum = 2; }
@@ -368,7 +367,7 @@ function listLobsAndCheckResult(mainCL, condition, attrName, attrValue, matchSym
     var rc = mainCL.listLobs(SdbQueryOption().cond( condition ).sort({"Oid":1}));   
     while( rc.next() )
     {
-		actRecs.push( rc.current().toObj() );
+        actRecs.push( rc.current().toObj() );
     } 
     
     println("---begin to check result.");
@@ -418,6 +417,7 @@ function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, cond
                 break;
             default:
                 break;
+                                    
         }    
     }
    
@@ -425,7 +425,7 @@ function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, cond
     var rc = mainCL.listLobs(SdbQueryOption().cond( condition ).sel(selCondition).sort({"Oid":1}));   
     while( rc.next() )
     {
-		actRecs.push( rc.current().toObj() );
+        actRecs.push( rc.current().toObj() );
     } 
 
     println("---begin to check result.");    
@@ -434,6 +434,342 @@ function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, cond
         println("\nactual value= "+JSON.stringify(actRecs)+"\nexpect value= "+JSON.stringify(expListResult)); 
         throw buildException("checkRec()", "rec ERROR,the list condition=" + JSON.stringify(condition));
     }
+}
+
+/************************************
+*@Description: 比较结果不一致时，将预期结果集和实际结果集数据存到对应文件中
+*@author:      wuyan
+*@createDate:  2019.8.26
+**************************************/
+function saveResultToFile(expResult, actResult, filePath)
+{
+    var cmd = new Cmd() ;
+    var actResultFileName = filePath + "actResult";
+    var expResultFileName = filePath + "expResult";
+    var file = new File( actResultFileName ) ;
+    file.write( JSON.stringify(actResult) ) ;
+    var file = new File( expResultFileName ) ;
+    file.write( JSON.stringify(expResult) ) ;    
+}
+
+/************************************
+*@Description: listLobs指定query[index],以下标的方式查询结果
+*@author:      wuyan
+*@createDate:  2019.8.26
+**************************************/
+function listLobsWithQueryAndCheckResult(mainCL, queryIndex)
+{   
+    println("---begin to listLob with query[]. queryIndex = " + queryIndex );
+    var listResult = mainCL.listLobs(SdbQueryOption().sort({"Oid":1}));
+    var expListResult = [];
+    var count = 0;
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();         
+        if ( count == queryIndex)
+        {
+            expListResult.push(listObj);
+            break;
+        }
+        count++;
+    }
+        
+    var actRecs = [];  
+    var query = mainCL.listLobs(SdbQueryOption().sort({"Oid":1}));
+    actRecs.push( JSON.parse(query[queryIndex]));   
+
+    println("---begin to check result.");    
+    if( JSON.stringify(actRecs) !== JSON.stringify(expListResult))
+    {       
+        throw buildException("listLobsWithQueryAndCheckResult()", "\nactual value= " + JSON.stringify(actRecs) + "\nexpect value= "
+                                + JSON.stringify(expListResult) + "\n query index = " + queryIndex);
+    }
+}
+
+/************************************
+*@Description: listLobs指定limit返回指定记录条数，检查返回结果集
+*@author:      wuyan
+*@createDate:  2019.8.26
+**************************************/
+function listLobsWithLimitAndCheckResult(mainCL, filePath, limitNum)
+{   
+    println("---begin to listLob with limit().limitNum = " + limitNum );
+    var listResult = mainCL.listLobs(SdbQueryOption().sort({"Oid":1}));
+    var expListResult = [];
+    var count = 0;
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();  
+        if ( count < limitNum)
+        {
+            expListResult.push(listObj);
+            break;
+        }
+        count++;
+    }
+        
+    var actRecs = [];
+    var rc = mainCL.listLobs(SdbQueryOption().limit(limitNum).sort({"Oid":1}));;   
+    while( rc.next() )
+    {
+        actRecs.push( rc.current().toObj() );
+    }  
+
+    println("---begin to check result.");  
+    for( var i in expListResult )
+    {
+        var actRec = actRecs[i];
+        var expRec = expListResult[i];
+   	
+        for ( var f in expRec )
+        {
+            if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+            {                
+                println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec));
+                saveResultToFile(expListResult, actRecs, filePath);		
+                throw buildException("listLobsWithLimitAndCheckResult()", "rec ERROR,the limitNum=" + limitNum);
+            }
+        }
+   	}    
+}
+
+/************************************
+*@Description: listLobs指定skip返回指定记录条数，检查返回结果集
+*@author:      wuyan
+*@createDate:  2019.8.26
+**************************************/
+function listLobsWithSkipAndCheckResult(mainCL, filePath, skipNum)
+{   
+    println("---begin to listLob with skip().skipNum = " + skipNum );
+    var listResult = mainCL.listLobs(SdbQueryOption().sort({"Oid":1}));
+    var expListResult = [];
+    var count = 0;
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();  
+        if ( count >= skipNum)
+        {
+            expListResult.push(listObj);            
+        }
+        count++;
+    }
+        
+    var actRecs = [];
+    var rc = mainCL.listLobs(SdbQueryOption().skip(skipNum).sort({"Oid":1}));;   
+    while( rc.next() )
+    {
+        actRecs.push( rc.current().toObj() );
+    }  
+
+    println("---begin to check result.");  
+    for( var i in expListResult )
+    {
+        var actRec = actRecs[i];
+        var expRec = expListResult[i];
+   	
+        for ( var f in expRec )
+        {
+            if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+            {                
+                println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec));
+                saveResultToFile(expListResult, actRecs, filePath);		
+                throw buildException("listLobsWithLimitAndCheckResult()", "rec ERROR,the limitNum=" + limitNum);
+            }
+        }
+   	}    
+}
+
+/************************************
+*@Description: listLobs指定sort正序/逆序排序,指定排序字段为size或者createTime
+*@author:      wuyan
+*@createDate:  2019.8.26
+**************************************/
+function listLobsWithSortAndCheckResult(mainCL, filePath,sortCond, sortKey, sortOrder)
+{     
+    if( sortOrder == undefined ){ sortOrder = 1; }
+    
+    println("---begin to listLob with sort(). sortCond=" + JSON.stringify(sortCond) );
+    var listResult = mainCL.listLobs();   
+    var expListResult = [];
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();        
+        expListResult.push(listObj);        
+    }
+        
+    var actRecs = [];
+    var rc = mainCL.listLobs(SdbQueryOption().sort(sortCond));   
+    while( rc.next() )
+    {
+        actRecs.push( rc.current().toObj() );
+    }  
+
+    println("---begin to check result.");  
+    var compare = function( keyName, sort )
+    {
+        if( keyName == "Size" && sort == 1 )
+        {
+            //in ascending order of size
+            return function(a,b)
+            { 
+                //if size is equal, in acending order of createTime
+                if ( a.Size == b.Size )
+                {
+                    if(a.CreateTime['$timestamp'] > b.CreateTime['$timestamp'])
+                    {
+                        return 1;
+                    } 
+                    else
+                    { 
+                        return -1;
+                    }
+                }
+                else 
+                {
+                    return a.Size - b.Size;
+                }
+            }
+        }
+        else if ( keyName == "Size" && sort == -1 )
+        {
+            //in descending order of size  
+            return function(a,b)
+            {
+                //if size is equal, in descending order of createTime
+                if ( a.Size == b.Size )
+                {
+                    if(a.CreateTime['$timestamp'] > b.CreateTime['$timestamp'])
+                    {
+                        return -1;
+                    } 
+                    else
+                    { 
+                        return 1;
+                    }
+                }
+                else 
+                {
+                    return b.Size - a.Size;
+                }                
+            }
+        }     
+        else if ( keyName == "CreateTime" && sort == 1)
+        {
+            return function(a,b)
+            {
+                if(a.CreateTime['$timestamp'] > b.CreateTime['$timestamp'])
+                {
+                    return 1;
+                } 
+                else
+                { 
+                    return -1;
+                }
+            }
+        }    
+        else if ( keyName == "CreateTime" && sort == -1)
+        {
+            return function(a,b)
+            {
+                if(a.CreateTime['$timestamp'] > b.CreateTime['$timestamp'])
+                {
+                    return -1;
+                } 
+                else
+                { 
+                    return 1;
+                }
+            }
+        }    
+        else
+        {
+            return 0;
+        }    
+    }
+    expListResult.sort(compare(sortKey, sortOrder));   
+    for( var i in expListResult )
+    {
+        var actRec = actRecs[i];
+        var expRec = expListResult[i];
+   	
+        for ( var f in expRec )
+        {
+            if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+            {                
+                println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec));
+                saveResultToFile(expListResult, actRecs, filePath);		
+                throw buildException("listLobsWithSortAndCheckResult()", "the cond=" + JSON.stringify(sortCond));
+            }
+        }
+   	}    
+}
+
+/************************************
+*@Description: listLobs指定sort/skip/limit条件查询,指定排序字段为size和createTime，正序排序
+*@author:      wuyan
+*@createDate:  2019.8.26
+**************************************/
+function listLobsWithQueryOptionAndCheckResult(mainCL, filePath, skipNum,limitNum)
+{   
+    println("---begin to listLob with skip/limit/sort." );
+    var listResult = mainCL.listLobs();    
+    var listResults = [];
+    while( listResult.next() )
+    {
+        var listObj = listResult.current().toObj();         
+        listResults.push(listObj);         
+    }
+    var compare = function()
+    {
+        //in ascending order of size
+        return function(a,b)
+        { 
+            //if size is equal, in acending order of createTime
+            if ( a.Size == b.Size )
+            {
+                if(a.CreateTime['$timestamp'] > b.CreateTime['$timestamp'])
+                {
+                    return 1;
+                } 
+                else
+                { 
+                    return -1;
+                }
+            }
+            else 
+            {
+                return a.Size - b.Size;
+            }
+        }
+    }
+    //in ascending order of size, then slice the listResults.
+    listResults.sort(compare()); 
+    var expListResult = listResults.slice(skipNum, limitNum);
+        
+    var actRecs = [];
+    var rc = mainCL.listLobs(SdbQueryOption().skip(skipNum).limit(limitNum).sort({"Size":1,"CreateTime":1}));   
+    while( rc.next() )
+    {
+        actRecs.push( rc.current().toObj() );
+    }  
+
+    println("---begin to check result.");  
+    for( var i in expListResult )
+    {
+        var actRec = actRecs[i];
+        var expRec = expListResult[i];
+   	
+        for ( var f in expRec )
+        {
+            if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+            {                
+                println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec));
+                saveResultToFile(expListResult, actRecs, filePath);		
+                throw buildException("listLobsWithQueryOptionAndCheckResult", "the limitNum=" + limitNum 
+                                        + "\nthe skipNum=" + skipNum);
+            }
+        }
+   	}    
 }
 
 /************************************
@@ -457,7 +793,7 @@ function getTargetGroup( csName, clName, srcGroupName )
         if( srcGroupName != groupName )
         {            
             targetGroupName = groupName;           
-            break;				
+            break;            
         }
     }    
     return targetGroupName;   
