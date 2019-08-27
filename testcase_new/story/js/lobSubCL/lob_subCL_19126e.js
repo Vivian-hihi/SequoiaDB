@@ -80,10 +80,15 @@ function listLobsWithHintAndCheckResult(mainCL, lobSize, lobPageSize)
     if ( lobSize%lobPageSize == 0 ){
         piecesNum = lobSize/lobPageSize + 1;
     }
-    else 
+    //lobmeta size is 1k = 1024
+    else if ( lobSize%lobPageSize <= lobPageSize - 1024 )
     {
         piecesNum = Math.ceil(lobSize/lobPageSize);
     }
+    else
+    {
+        piecesNum = Math.ceil(lobSize/lobPageSize) + 1;
+    }    
     
     if( piecesNum !== actRecs.length )
     {       
