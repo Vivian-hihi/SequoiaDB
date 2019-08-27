@@ -1224,7 +1224,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( buffer, "buffer can't be NULL" ) ;
 
-      *buffer = ( CHAR* )utilThreadAlloc( size ) ;
+      *buffer = ( CHAR* )SDB_THREAD_ALLOC( size ) ;
       if ( !(*buffer) )
       {
          rc = SDB_OOM ;
@@ -1241,7 +1241,7 @@ namespace engine
    {
       SDB_ASSERT( buffer, "buffer can't be NULL" ) ;
 
-      utilThreadRelease( (void *&)buffer ) ;
+      SDB_THREAD_FREE( buffer ) ;
    }
 
    INT32 restBase::on_message_begin( void *pData )

@@ -61,7 +61,9 @@ namespace engine
          operator BOOLEAN () { return get() ? TRUE : FALSE ; }
          operator const CHAR* () { return get() ; }
 
-         static _utilPooledAutoPtr alloc( UINT32 size ) ;
+         static _utilPooledAutoPtr alloc( UINT32 size,
+                                          const CHAR *pFile,
+                                          UINT32 line ) ;
 
       public:
          CHAR*       get() ;

@@ -112,7 +112,7 @@ namespace engine
 
          if ( NULL == p )
          {
-            p = utilThreadAlloc( reserveSize ) ;
+            p = SDB_THREAD_ALLOC( reserveSize ) ;
             if ( NULL == p )
             {
                goto error ;
@@ -138,13 +138,13 @@ namespace engine
       if ( p )
       {
          void *beginAddr = (void *)( (CHAR *)p - MTH_MEM_TYPE_SIZE ) ;
-         // Only release memory allocted by utilThreadAlloc().
+         // Only release memory allocted by SDB_THREAD_ALLOC().
          // Objects allocated by instances of _utilAllocator(allocator is not
          // NULL in new) will not be released seperately, as they are allocated
          // in a stack. They space is released when the allocator is destroyed.
          if ( MTH_MEM_BY_DFT_ALLOCATOR == *(INT32 *)beginAddr )
          {
-            utilThreadRelease( beginAddr ) ;
+            SDB_THREAD_FREE( beginAddr ) ;
          }
       }
    }
@@ -1733,7 +1733,7 @@ namespace engine
             if ( bufLen == pos && buf == staticBuf )
             {
                UINT32 allocLen = ossStrlen( fieldName ) + 1 ;
-               buf = ( CHAR * )utilThreadAlloc( allocLen ) ;
+               buf = ( CHAR * )SDB_THREAD_ALLOC( allocLen ) ;
                if ( NULL == buf )
                {
                   PD_LOG( PDERROR, "failed to allocate mem." ) ;
@@ -1761,7 +1761,7 @@ namespace engine
    done:
       if ( buf != staticBuf && NULL != buf )
       {
-         utilThreadRelease( (void*&)buf ) ;
+         SDB_THREAD_FREE( buf ) ;
       }
       return rc ;
    error:

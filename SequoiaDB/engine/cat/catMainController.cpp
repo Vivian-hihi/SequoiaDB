@@ -386,7 +386,7 @@ namespace engine
       // memory will be freed in the event consumer thread
       // PMD_EDU_MEM_ALLOC will be passed into pmdEDUEvent, so that the
       // consumer knows whether to free the memory
-      eventMsg = ( PMD_EVENT_MESSAGES * )utilThreadAlloc(
+      eventMsg = ( PMD_EVENT_MESSAGES * )SDB_THREAD_ALLOC(
                  sizeof (PMD_EVENT_MESSAGES ) ) ;
 
       if ( NULL == eventMsg )
@@ -794,7 +794,7 @@ namespace engine
       CHAR *pEventData = NULL ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_BUILDMSGEVENT ) ;
 
-      pEventData = (CHAR *)utilThreadAlloc( pMsg->messageLength ) ;
+      pEventData = (CHAR *)SDB_THREAD_ALLOC( pMsg->messageLength ) ;
       if ( NULL == pEventData )
       {
          rc = SDB_OOM ;
@@ -836,7 +836,7 @@ namespace engine
       }
       msgLen =  sizeof(MsgOpReply) + buffObj.size() ;
       // free by end of function
-      pReply = (MsgOpReply *)utilThreadAlloc( msgLen );
+      pReply = (MsgOpReply *)SDB_THREAD_ALLOC( msgLen );
       if ( NULL == pReply )
       {
          PD_LOG ( PDERROR, "Malloc error ( size = %d )", msgLen ) ;
@@ -869,7 +869,7 @@ namespace engine
    done :
       if ( pReply )
       {
-         utilThreadRelease( (void *&)pReply ) ;
+         SDB_THREAD_FREE( pReply ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_GETMOREMSG, rc ) ;
       return rc ;

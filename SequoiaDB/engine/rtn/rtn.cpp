@@ -409,7 +409,7 @@ namespace engine
       /// 2. correct name field in header
 
       //  allocate buffer
-      pBuff = ( CHAR* )utilThreadAlloc( sizeof( dmsStorageUnitHeader ) ) ;
+      pBuff = ( CHAR* )SDB_THREAD_ALLOC( sizeof( dmsStorageUnitHeader ) ) ;
       if ( !pBuff )
       {
          rc = SDB_OOM ;
@@ -505,7 +505,7 @@ namespace engine
       }
       if ( pBuff )
       {
-         utilThreadRelease( (void *&)pBuff ) ;
+         SDB_THREAD_FREE( pBuff ) ;
       }
       PD_TRACE_EXITRC( SDB_RTNCORRECTCS2, rc ) ;
       return rc ;

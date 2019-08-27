@@ -101,7 +101,7 @@ namespace engine
          }
          else if ( PMD_EDU_MEM_THREAD == _memType )
          {
-            utilThreadRelease( (void *&)_pReqMsg ) ;
+            SDB_THREAD_FREE( _pReqMsg ) ;
          }
          _pReqMsg = NULL ;
       }
@@ -195,7 +195,7 @@ namespace engine
       _event = event ;
       if ( PMD_EDU_MEM_NONE == event._dataMemType )
       {
-         _event._Data = ( CHAR* )utilThreadAlloc( pRsp->messageLength ) ;
+         _event._Data = ( CHAR* )SDB_THREAD_ALLOC( pRsp->messageLength ) ;
          if ( _event._Data )
          {
             ossMemcpy( _event._Data, pRsp, pRsp->messageLength ) ;
@@ -1425,7 +1425,7 @@ namespace engine
       else
       {
          MsgOpReply *pMsg = NULL ;
-         pMsg = ( MsgOpReply* )utilThreadAlloc( sizeof( MsgOpReply ) ) ;
+         pMsg = ( MsgOpReply* )SDB_THREAD_ALLOC( sizeof( MsgOpReply ) ) ;
          if ( pMsg )
          {
             pMsg->header.messageLength = sizeof( MsgOpReply ) ;
@@ -1898,7 +1898,7 @@ namespace engine
          pSiteHandle = it->second.getHandle() ;
 
          // assign memory
-         pNewBuff = ( CHAR* )utilThreadAlloc( pMsg->messageLength + 1 ) ;
+         pNewBuff = ( CHAR* )SDB_THREAD_ALLOC( pMsg->messageLength + 1 ) ;
          if ( pNewBuff )
          {
             // copy data

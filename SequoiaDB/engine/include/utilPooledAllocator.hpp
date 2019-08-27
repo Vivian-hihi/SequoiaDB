@@ -80,12 +80,12 @@ namespace engine
 
          pointer allocate( size_type count, const void* pHint = NULL )
          {
-            return (pointer)utilThreadAlloc( count * sizeof( value_type ) ) ;
+            return (pointer)SDB_THREAD_ALLOC( count * sizeof( value_type ) ) ;
          }
 
          void deallocate( pointer ptr, size_type count )
          {
-            utilThreadRelease( (void*&)ptr ) ;
+            SDB_THREAD_FREE( ptr ) ;
          }
 
          template < typename _Other >

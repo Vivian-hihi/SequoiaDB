@@ -491,7 +491,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__PMDMEMPOL_ALLOC );
 
-      CHAR *pBuffer = (CHAR*)utilPoolAlloc( size, &assignSize ) ;
+      CHAR *pBuffer = (CHAR*)SDB_POOL_ALLOC2( size, &assignSize ) ;
       if ( pBuffer )
       {
          _totalMemSize.add( assignSize ) ;
@@ -512,7 +512,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDMEMPOL_RELEASE );
       if ( pBuff && size > 0 )
       {
-         utilPoolRelease( (void *&)pBuff ) ;
+         SDB_POOL_FREE( pBuff ) ;
          _totalMemSize.sub( size ) ;
       }
       PD_TRACE_EXIT ( SDB__PMDMEMPOL_RELEASE );

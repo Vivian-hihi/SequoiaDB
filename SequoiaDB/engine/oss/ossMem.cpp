@@ -122,7 +122,7 @@ typedef _ossMemTrackItem ossMemTrackItem ;
 */
 struct _ossMemStatItem
 {
-   UINT32      _times ;
+   UINT64      _times ;
    UINT64      _totalSize ;
 
    _ossMemStatItem()
@@ -154,10 +154,10 @@ typedef _ossMemStatItem ossMemStatItem ;
 /// Stat title and format
 
 #define OSS_MEM_DUMP_STAT_TITLE \
-   "        ID                            File              :   Line ----      Count           TotalSize"
+   "        ID                            File              :   Line ----            Count           TotalSize"
 
 #define OSS_MEM_DUMP_STAT_FORMAT \
-   "%10ld    %30s(%10u): %6u ---- %10u    %16ld"
+   "%10ld    %30s(%10u): %6u ---- %16lu    %16ld"
 
 typedef std::set<ossMemTrackItem>               OSS_MEM_TRACKMAP ;
 typedef OSS_MEM_TRACKMAP::iterator              OSS_MEM_TRACKMAP_IT ;
@@ -196,7 +196,7 @@ class _ossMemTrackCB
       UINT64                     _lastStatSize ;
 
    protected:
-      BOOLEAN   verifyItem( const ossMemTrackItem &item ) const
+      virtual BOOLEAN   verifyItem( const ossMemTrackItem &item ) const
       {
          if ( !ossMemVerify( ( void* )( item._p + OSS_MEM_HEADSZ ) ) )
          {
@@ -229,10 +229,16 @@ class _ossMemTrackCB
          return TRUE ;
       }
 
-      UINT64    getFillSize( const ossMemTrackItem &item ) const
+      virtual UINT64    getFillSize( const ossMemTrackItem &item ) const
       {
          ossMemInfoAssit assit( (const void*)item._p ) ;
          return OSS_MEM_HEADSZ + ( assit._debugSize << 1 ) ;
+      }
+
+      virtual UINT32    traceItemExpand( const ossMemTrackItem &item,
+                                         CHAR *pBuff, UINT32 buffSize ) const
+      {
+         return 0 ;
       }
 
    protected:
@@ -271,6 +277,9 @@ class _ossMemTrackCB
                                 OSS_MEM_DUMP_ITEM_FORMAT_TID_TIME,
                                 item._tid, _timebuff ) ;
          }
+
+         len += traceItemExpand( item, _linebuff + len,
+                                 sizeof( _linebuff ) - len ) ;
 
          if ( isError )
          {
@@ -463,7 +472,7 @@ class _ossMemTrackCB
          _lastStatTimes = 0 ;
          _lastStatSize = 0 ;
       }
-      ~_ossMemTrackCB ()
+      virtual ~_ossMemTrackCB ()
       {
       }
 
@@ -507,9 +516,9 @@ class _ossMemTrackCB
          _memTrackMutex.release() ;
       }
 
-      void memUnTrack ( void *p, UINT32 file, UINT32 line, UINT64 size )
+      void memUnTrack ( void *p )
       {
-         ossMemTrackItem item( p, file, line, size ) ;
+         ossMemTrackItem item( p ) ;
 
          _memTrackMutex.get() ;
          try
@@ -576,7 +585,7 @@ class _ossMemTrackCB
 
          endTime = ossGetCurrentMicroseconds() ;
 
-         ossSprintVersion( "", versionTxt, sizeof( versionTxt ), FALSE ) ;
+         ossSprintVersion( "V", versionTxt, sizeof( versionTxt ), FALSE ) ;
 
          /// dump reset time
          len = ossSnprintf( _linebuff, sizeof( _linebuff ),
@@ -628,23 +637,129 @@ void ossMemTrack ( void *p )
 
 void ossMemUnTrack ( void *p )
 {
-   ossMemInfoAssit assit( p ) ;
-   gMemTrackCB.memUnTrack( p, assit._file, assit._line, assit._size ) ;
+   gMemTrackCB.memUnTrack( p ) ;
 }
 
-// dump memory trace info into memtrace file
-INT32 ossMemTrace ( const CHAR *pPath )
+OSS_POOL_MEMCHECK_FUNC ossPoolMemCheckFunc = NULL ;
+OSS_POOL_MEMINFO_FUNC  ossPoolMemInfoFunc = NULL ;
+
+void ossSetPoolMemcheckFunc( OSS_POOL_MEMCHECK_FUNC pFunc )
+{
+   ossPoolMemCheckFunc = pFunc ;
+}
+
+void ossSetPoolMemInfoFunc( OSS_POOL_MEMINFO_FUNC pFunc )
+{
+   ossPoolMemInfoFunc = pFunc ;
+}
+
+/*
+   _ossPoolMemTrackCB define
+*/
+class _ossPoolMemTrackCB : public _ossMemTrackCB
+{
+   public:
+      _ossPoolMemTrackCB( const CHAR *name ) : _ossMemTrackCB( name ) {}
+      virtual ~_ossPoolMemTrackCB() {}
+
+   protected:
+      virtual BOOLEAN   verifyItem( const ossMemTrackItem &item ) const
+      {
+         if ( ossPoolMemCheckFunc )
+         {
+            if ( !ossPoolMemCheckFunc( (void*)item._p ) )
+            {
+               return FALSE ;
+            }
+         }
+
+         if ( ossPoolMemInfoFunc )
+         {
+            UINT64 realSize = 0 ;
+            INT32 pool = 0 ;
+            INT32 index = 0 ;
+
+            ossPoolMemInfoFunc( (void*)item._p, realSize, pool, index ) ;
+
+            if ( item._size >= realSize )
+            {
+#if defined (SDB_ENGINE)
+               PD_LOG ( PDSEVERE, "memory real size(%lld) is less than item's "
+                        "size(%lld)",
+                        realSize, item._size ) ;
+#endif
+               return FALSE ;
+            }
+         }
+
+         return TRUE ;
+      }
+
+      virtual UINT64    getFillSize( const ossMemTrackItem &item ) const
+      {
+         if ( ossPoolMemInfoFunc )
+         {
+            UINT64 realSize = 0 ;
+            INT32 pool = 0 ;
+            INT32 index = 0 ;
+
+            ossPoolMemInfoFunc( (void*)item._p, realSize, pool, index ) ;
+
+            return realSize - item._size ;
+         }
+         return 0 ;
+      }
+
+      virtual UINT32    traceItemExpand( const ossMemTrackItem &item,
+                                         CHAR *pBuff, UINT32 buffSize ) const
+      {
+         UINT32 len = 0 ;
+
+         if ( ossPoolMemInfoFunc )
+         {
+            UINT64 realSize = 0 ;
+            INT32 pool = 0 ;
+            INT32 index = 0 ;
+
+            ossPoolMemInfoFunc( (void*)item._p, realSize, pool, index ) ;
+
+            len = ossSnprintf( pBuff, buffSize, " (Pool:%d, Idx:%d) ",
+                               pool, index ) ;
+         }
+
+         return len ;
+      }
+
+} ;
+typedef _ossPoolMemTrackCB ossPoolMemTrackCB ;
+
+static ossPoolMemTrackCB gPoolMemTrackCB( "UTIL_POOL_ALLOC" ) ;
+
+void ossPoolMemTrack( void *p, UINT64 userSize, UINT32 file,UINT32 line )
+{
+   gPoolMemTrackCB.memTrack( p, file, line, userSize ) ;
+}
+
+void ossPoolMemUnTrack( void *p )
+{
+   gPoolMemTrackCB.memUnTrack( p ) ;
+}
+
+// dump memory info into file
+INT32 ossMemTraceAFile ( ossMemTrackCB *pTrackCB,
+                         const CHAR *pPath,
+                         const CHAR *pFileName )
 {
    ossPrimitiveFileOp trapFile ;
    CHAR fileName [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    UINT32 len = 0 ;
    INT32 rc = SDB_OK ;
 
-   // build mem trace file name
+   // build trace file name
    len = ossSnprintf ( fileName, sizeof(fileName), "%s%s%u%s",
                        pPath, OSS_PRIMITIVE_FILE_SEP,
                        ossGetCurrentProcessID(),
-                       SDB_OSS_MEMDUMPNAME ) ;
+                       pFileName ) ;
    if ( len >= sizeof( fileName ) )
    {
       rc = SDB_INVALIDPATH ;
@@ -652,20 +767,44 @@ INT32 ossMemTrace ( const CHAR *pPath )
       goto error ;
    }
 
-   // open memtrace file
+   // open file
    rc = trapFile.Open ( fileName ) ;
 
    // dump into trap file
    if ( trapFile.isValid () )
    {
       trapFile.seekToEnd () ;
-      gMemTrackCB.memTrace( trapFile ) ;
+      pTrackCB->memTrace( trapFile ) ;
    }
 
 done :
    trapFile.Close () ;
    return rc ;
 error :
+   goto done ;
+}
+
+INT32 ossMemTrace ( const CHAR *pPath )
+{
+   INT32 rc = SDB_OK ;
+
+   /// trace memdump file
+   rc = ossMemTraceAFile( &gMemTrackCB, pPath, SDB_OSS_MEMDUMPNAME ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
+   /// trace pooldump file
+   rc = ossMemTraceAFile( &gPoolMemTrackCB, pPath, SDB_POOL_MEMDUMPNAME ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
    goto done ;
 }
 
@@ -676,9 +815,27 @@ void ossOnMemConfigChange( BOOLEAN debugEnable,
    if ( debugEnable != ossMemDebugEnabled )
    {
       gMemTrackCB.reset() ;
+      gPoolMemTrackCB.reset() ;
    }
 
    ossEnableMemDebug( debugEnable, memDebugSize, memDebugVerify ) ;
+}
+
+#else
+
+void ossSetPoolMemcheckFunc( OSS_POOL_MEMCHECK_FUNC pFunc )
+{
+}
+
+void ossSetPoolMemInfoFunc( OSS_POOL_MEMINFO_FUNC pFunc )
+{
+}
+
+void ossPoolMemTrack( void *p, UINT64 userSize, UINT32 file, UINT32 line )
+{
+}
+void ossPoolMemUnTrack( void *p )
+{
 }
 
 #endif // (__cplusplus) && defined (SDB_ENGINE)

@@ -128,6 +128,7 @@ namespace engine
       typedef  CHAR    element4K[UTIL_MEM_ELEMENT_4096] ;
       typedef  CHAR    element8K[UTIL_MEM_ELEMENT_8192] ;
 
+   public:
       enum MEMBLOCKPOOL_TYPE
       {
          MEMBLOCKPOOL_TYPE_DYN = 1,  // dynamically allocate space
@@ -143,8 +144,11 @@ namespace engine
          MEMBLOCKPOOL_TYPE_MAX
       } ;
 
+      static MEMBLOCKPOOL_TYPE      size2MemType( UINT32 size ) ;
+      static UINT32                 type2Size( MEMBLOCKPOOL_TYPE type ) ;
+
    public: 
-      _utilMemBlockPool() ;
+      _utilMemBlockPool( BOOLEAN isGlobal = FALSE ) ;
       ~_utilMemBlockPool() ;
 
       INT32       init( UINT64 maxSize = UTIL_MEM_BLOCK_POOL_DFT_MAX_SZ ) ;
@@ -155,8 +159,15 @@ namespace engine
 
       UINT64      getTotalSize() ;
 
-      void*       alloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
-      void*       realloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
+      void*       alloc( UINT32 size,
+                         const CHAR *pFile,
+                         UINT32 line,
+                         UINT32 *pRealSize = NULL ) ;
+      void*       realloc( void* ptr,
+                           UINT32 size,
+                           const CHAR *pFile,
+                           UINT32 line,
+                           UINT32 *pRealSize = NULL ) ;
       void        release( void*& ptr ) ;
 
    public:
@@ -168,11 +179,6 @@ namespace engine
                                    UINT64 usedSize ) ;
 
    protected:
-      MEMBLOCKPOOL_TYPE       _size2MemType( UINT32 size,
-                                             ossAtomic64 **ppCount ) ;
-
-      static UINT32           _type2Size( MEMBLOCKPOOL_TYPE type ) ;
-
       void                    _fillPtr( CHAR *ptr, UINT16 type, UINT32 size ) ;
 
       static BOOLEAN          _checkAndExtract( const CHAR *ptr,
@@ -181,6 +187,8 @@ namespace engine
 
    // private attributes:
    private:
+      BOOLEAN        _isGlobal ;
+
       _utilSegmentManager<element32B>  *_32BSeg; // mem segs with 32B  element
       _utilSegmentManager<element64B>  *_64BSeg; // mem segs with 64B  element
       _utilSegmentManager<element128B> *_128BSeg;// mem segs with 128B element
@@ -191,23 +199,8 @@ namespace engine
       _utilSegmentManager<element4K>   *_4KSeg;  // mem segs with 4 KB element
       _utilSegmentManager<element8K>   *_8KSeg;  // mem segs with 8 KB element
 
-      // counters for monitor
-
-      // how many times we dynamic alloc because we failed in each segment
-      ossAtomic64    _numDynamicAlloc32B ;
-      ossAtomic64    _numDynamicAlloc64B ;
-      ossAtomic64    _numDynamicAlloc128B ;
-      ossAtomic64    _numDynamicAlloc256B ;
-      ossAtomic64    _numDynamicAlloc512B ;
-      ossAtomic64    _numDynamicAlloc1K ;
-      ossAtomic64    _numDynamicAlloc2K ;
-      ossAtomic64    _numDynamicAlloc4K ;
-      ossAtomic64    _numDynamicAlloc8K ;
-
       UINT64         _maxSize ;
       ossAtomic64    _totalSize ;
-
-      ossSpinXLatch  _latch ;
    } ;
    typedef _utilMemBlockPool utilMemBlockPool ;
 
@@ -216,13 +209,31 @@ namespace engine
    */
    utilMemBlockPool* utilGetGlobalMemPool() ;
 
-   void*       utilPoolAlloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
-   void*       utilPoolRealloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
+   void*       utilPoolAlloc( UINT32 size,
+                              const CHAR *pFile,
+                              UINT32 line,
+                              UINT32 *pRealSize = NULL ) ;
+   void*       utilPoolRealloc( void* ptr,
+                                UINT32 size,
+                                const CHAR *pFile,
+                                UINT32 line,
+                                UINT32 *pRealSize = NULL ) ;
    void        utilPoolRelease( void*& ptr ) ;
    BOOLEAN     utilPoolPtrCheck( void *ptr, UINT32 *pUserSize = NULL ) ;
    UINT32      utilPoolGetPtrSize( void *ptr ) ;
 
 }
+
+#define SDB_POOL_ALLOC(size)     engine::utilPoolAlloc(size,__FILE__,__LINE__,NULL)
+#define SDB_POOL_REALLOC(p,size) engine::utilPoolRealloc(p,size,__FILE__,__LINE__,NULL)
+#define SDB_POOL_FREE(p)         engine::utilPoolRelease((void*&)p)
+
+#define SDB_POOL_ALLOC2(size,pRealSize) \
+   engine::utilPoolAlloc(size,__FILE__,__LINE__,pRealSize)
+
+#define SDB_POOL_REALLOC2(p,size,pRealSize) \
+   engine::utilPoolRealloc(p,size,__FILE__,__LINE__,pRealSize)
+
 
 #endif //UTIL_MEM_BLOCK_POOL_HPP__
 

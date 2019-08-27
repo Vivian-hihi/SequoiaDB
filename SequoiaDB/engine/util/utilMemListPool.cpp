@@ -451,7 +451,10 @@ namespace engine
       return FALSE ;
    }
 
-   void* _utilMemListPool::alloc( UINT32 size, UINT32 *pRealSize )
+   void* _utilMemListPool::alloc( UINT32 size,
+                                  const CHAR *pFile,
+                                  UINT32 line,
+                                  UINT32 *pRealSize )
    {
       void *ptr = NULL ;
       UINT32 square = 0 ;
@@ -495,14 +498,17 @@ namespace engine
       else
       {
          ++_outrangeAlloc ;
-         ptr = utilPoolAlloc( size, pRealSize ) ;
+         ptr = utilPoolAlloc( size, pFile, line, pRealSize ) ;
       }
 
    done:
       return ptr ;
    }
 
-   void* _utilMemListPool::realloc( void *ptr, UINT32 size, UINT32 *pRealSize )
+   void* _utilMemListPool::realloc( void *ptr, UINT32 size,
+                                    const CHAR *pFile,
+                                    UINT32 line,
+                                    UINT32 *pRealSize )
    {
       void *pNewPtr = NULL ;
       UINT32 oldSize = 0 ;
@@ -527,7 +533,7 @@ namespace engine
             goto done ;
          }
 
-         pNewPtr = alloc( size, pRealSize ) ;
+         pNewPtr = alloc( size, pFile, line, pRealSize ) ;
          if ( pNewPtr )
          {
             ++_copyCount ;
@@ -539,7 +545,7 @@ namespace engine
       }
       else
       {
-         pNewPtr = utilPoolRealloc( ptr, size, pRealSize ) ;
+         pNewPtr = utilPoolRealloc( ptr, size, pFile, line, pRealSize ) ;
       }
 
    done:
@@ -703,22 +709,27 @@ namespace engine
       return 0 ;
    }
 
-   void* utilThreadAlloc( UINT32 size, UINT32 *pRealSize )
+   void* utilThreadAlloc( UINT32 size,
+                          const CHAR *pFile,
+                          UINT32 line,
+                          UINT32 *pRealSize )
    {
       if ( g_thdMemPool )
       {
-         return g_thdMemPool->alloc( size, pRealSize ) ;
+         return g_thdMemPool->alloc( size, pFile, line, pRealSize ) ;
       }
-      return utilPoolAlloc( size, pRealSize ) ;
+      return utilPoolAlloc( size, pFile, line, pRealSize ) ;
    }
 
-   void* utilThreadRealloc( void* ptr, UINT32 size, UINT32 *pRealSize )
+   void* utilThreadRealloc( void* ptr, UINT32 size,
+                            const CHAR *pFile, UINT32 line,
+                            UINT32 *pRealSize )
    {
       if ( g_thdMemPool )
       {
-         return g_thdMemPool->realloc( ptr, size, pRealSize ) ;
+         return g_thdMemPool->realloc( ptr, size, pFile, line, pRealSize ) ;
       }
-      return utilPoolRealloc( ptr, size, pRealSize ) ;
+      return utilPoolRealloc( ptr, size, pFile, line, pRealSize ) ;
    }
 
    void utilThreadRelease( void*& ptr )
@@ -737,12 +748,12 @@ namespace engine
    {
       void* utilTCAlloc( UINT32 size )
       {
-         return utilThreadAlloc( size ) ;
+         return utilThreadAlloc( size, __FILE__, __LINE__ ) ;
       }
 
       void* utilTCRealloc( void * ptr, UINT32 size )
       {
-         return utilThreadRealloc( ptr, size ) ;
+         return utilThreadRealloc( ptr, size, __FILE__, __LINE__ ) ;
       }
 
       void utilTCRelease( void * ptr )

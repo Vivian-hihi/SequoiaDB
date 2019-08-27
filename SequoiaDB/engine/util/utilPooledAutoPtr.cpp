@@ -92,7 +92,9 @@ namespace engine
       return *this ;
    }
 
-   _utilPooledAutoPtr _utilPooledAutoPtr::alloc( UINT32 size )
+   _utilPooledAutoPtr _utilPooledAutoPtr::alloc( UINT32 size,
+                                                 const CHAR *pFile,
+                                                 UINT32 line )
    {
       _utilPooledAutoPtr recordPtr ;
       if ( size > 0 )
@@ -100,7 +102,7 @@ namespace engine
          UINT32 realSZ = size + sizeof( INT32 ) ;
          CHAR *ptr = NULL ;
 
-         ptr = ( CHAR* )utilPoolAlloc( realSZ ) ;
+         ptr = ( CHAR* )utilPoolAlloc( realSZ, pFile, line ) ;
          if ( ptr )
          {
             *(INT32*)ptr = 1 ;
@@ -138,7 +140,7 @@ namespace engine
          SDB_ASSERT( orgRef >= 1, "Ref is invlaid" ) ;
          if ( 1 == orgRef )
          {
-            utilPoolRelease( (void*&)_ptr ) ;
+            SDB_POOL_FREE( _ptr ) ;
             _ptr = NULL ;
          }
       }

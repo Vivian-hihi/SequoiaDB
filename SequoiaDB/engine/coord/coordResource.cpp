@@ -729,7 +729,7 @@ namespace engine
          UINT32 msgLen = nameLen +  sizeof(MsgCatGroupReq) ;
          MsgCatGroupReq *msg = NULL ;
 
-         pBuf = ( CHAR* )utilThreadAlloc( msgLen ) ;
+         pBuf = ( CHAR* )SDB_THREAD_ALLOC( msgLen ) ;
          if ( !pBuf )
          {
             rc = SDB_OOM ;
@@ -762,7 +762,7 @@ namespace engine
    done:
       if ( pBuf )
       {
-         utilThreadRelease( (void *&)pBuf ) ;
+         SDB_THREAD_FREE( pBuf ) ;
       }
       return rc ;
    error:

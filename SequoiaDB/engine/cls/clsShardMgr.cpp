@@ -3095,7 +3095,7 @@ namespace engine
       {
          replySize += replyObject.objsize() ;
       }
-      replyMessage = (MsgOpReply *)utilThreadAlloc( replySize ) ;
+      replyMessage = (MsgOpReply *)SDB_THREAD_ALLOC( replySize ) ;
       PD_CHECK( NULL != replyMessage, SDB_OOM, error, PDERROR,
                 "Failed to allocate memory for reply message, size: %d",
                 replySize ) ;
@@ -3129,7 +3129,7 @@ namespace engine
    done :
       if ( NULL != replyMessage )
       {
-         utilThreadRelease( (void *&)replyMessage ) ;
+         SDB_THREAD_FREE( replyMessage ) ;
       }
       PD_TRACE_EXITRC( SDB__CLSSHDMGR_REPLYTOREMOTEENDPOINT, rc ) ;
       return rc ;

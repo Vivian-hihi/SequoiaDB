@@ -1183,7 +1183,7 @@ namespace engine
       }
 
       recSize = DMS_RECORD_METADATA_SZ + obj.objsize() ;
-      _recordPtr = dpsOldRecordPtr::alloc( recSize ) ;
+      _recordPtr = dpsOldRecordPtr::alloc( recSize, __FILE__, __LINE__ ) ;
       if ( !_recordPtr.get() )
       {
          PD_LOG( PDERROR, "Alloc memory(%u) failed, rc: %d",

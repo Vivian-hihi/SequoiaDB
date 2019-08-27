@@ -221,7 +221,7 @@ namespace engine
             }
             else
             {
-               CHAR *tmp = (CHAR *)utilThreadAlloc( len + 1 ) ;
+               CHAR *tmp = (CHAR *)SDB_THREAD_ALLOC( len + 1 ) ;
                if ( NULL == tmp )
                {
                   rc = SDB_OOM ;
@@ -232,7 +232,7 @@ namespace engine
 
                if ( _allocateName )
                {
-                  utilThreadRelease( (void *&)_allocateName ) ;
+                  SDB_THREAD_FREE( _allocateName ) ;
                }
 
                _allocateName = tmp ;
@@ -254,7 +254,7 @@ namespace engine
          {
             if ( _allocateName )
             {
-               utilThreadRelease( (void *&)_allocateName ) ;
+               SDB_THREAD_FREE( _allocateName ) ;
             }
 
             _name = NULL ;

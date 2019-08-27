@@ -1041,7 +1041,7 @@ namespace engine
             }
             else //release memory to pool
             {
-               utilThreadRelease( (void *&)pBuffInfo->pBuffer ) ;
+               SDB_THREAD_FREE( pBuffInfo->pBuffer ) ;
             }
             pSession->popBuffer () ;
             pBuffInfo = pSession->frontBuffer () ;
@@ -1050,8 +1050,8 @@ namespace engine
          if ( !pNewBuff && !pSession->isBufferFull() )
          {
             // let's allocate memory from pool
-            pNewBuff = ( CHAR* )utilThreadAlloc( header->messageLength,
-                                                 &buffSize ) ;
+            pNewBuff = ( CHAR* )SDB_THREAD_ALLOC2( header->messageLength,
+                                                   &buffSize ) ;
             // if unable to allocate from thread pool, let's dump warning message and
             // and keep calling oss malloc to get memory
             if ( !pNewBuff )
@@ -1068,7 +1068,7 @@ namespace engine
             {
                PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
                         pSession->sessionName(), rc ) ;
-               utilThreadRelease( (void *&)pNewBuff ) ;
+               SDB_THREAD_FREE( pNewBuff ) ;
                SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
                goto error ;
             }
@@ -1086,7 +1086,7 @@ namespace engine
          }
          else
          {
-            pNewBuff = ( CHAR* )utilThreadAlloc( header->messageLength ) ;
+            pNewBuff = ( CHAR* )SDB_THREAD_ALLOC( header->messageLength ) ;
             if ( !pNewBuff )
             {
                PD_LOG( PDERROR, "Failed to alloc msg[size: %d] in session[%s]",
@@ -1531,7 +1531,7 @@ namespace engine
       pBuffInfo = pSession->frontBuffer() ;
       while ( pBuffInfo )
       {
-         utilThreadRelease( (void *&)pBuffInfo->pBuffer ) ;
+         SDB_THREAD_FREE( pBuffInfo->pBuffer ) ;
          pSession->popBuffer () ;
          pBuffInfo = pSession->frontBuffer() ;
       }

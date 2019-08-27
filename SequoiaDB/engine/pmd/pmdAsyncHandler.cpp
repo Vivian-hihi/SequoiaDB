@@ -86,7 +86,7 @@ namespace engine
          // PMD_EDU_MEM_ALLOC will be passed into pmdEDUEvent, so that the
          // consumer knows whether to free the memory
          PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
-               utilThreadAlloc( sizeof (PMD_EVENT_MESSAGES ) ) ;
+               SDB_THREAD_ALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
 
          if ( NULL == eventMsg )
          {
@@ -144,7 +144,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_CPMSG );
       // memory will be freed by the caller
-      CHAR *pBuffer = (CHAR * )utilThreadAlloc ( length ) ;
+      CHAR *pBuffer = (CHAR * )SDB_THREAD_ALLOC ( length ) ;
       if ( pBuffer )
       {
          memType = PMD_EDU_MEM_THREAD ;

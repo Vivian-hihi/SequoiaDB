@@ -191,8 +191,8 @@ namespace engine
          goto error ;
       }
 
-      gtsMsg = (_catGTSMsg*)utilThreadAlloc( sizeof( NET_HANDLE ) +
-                                             msg->messageLength ) ;
+      gtsMsg = (_catGTSMsg*)SDB_THREAD_ALLOC( sizeof( NET_HANDLE ) +
+                                              msg->messageLength ) ;
       if ( NULL == gtsMsg )
       {
          rc = SDB_OOM ;
@@ -219,7 +219,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_GTS_MSG_HANDLER_HANDLE_MSG, rc ) ;
       return rc ;
    error :
-      utilThreadRelease( (void *&)gtsMsg ) ;
+      SDB_THREAD_FREE( gtsMsg ) ;
       goto done ;
    }
 

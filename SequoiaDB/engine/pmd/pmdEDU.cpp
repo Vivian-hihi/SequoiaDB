@@ -501,7 +501,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      *ppBuff = (CHAR*)utilThreadAlloc( len, pRealSize ) ;
+      *ppBuff = (CHAR*)SDB_THREAD_ALLOC2( len, pRealSize ) ;
       if ( !(*ppBuff) )
       {
          PD_LOG( PDERROR, "Edu[%s] malloc memory[size: %u] failed",
@@ -522,7 +522,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      *ppBuff = (CHAR*)utilThreadRealloc( (void*)(*ppBuff), len, pRealSize ) ;
+      *ppBuff = (CHAR*)SDB_THREAD_REALLOC2( (void*)(*ppBuff), len, pRealSize ) ;
       if ( !(*ppBuff) )
       {
          rc = SDB_OOM ;
@@ -538,7 +538,7 @@ namespace engine
 
    void _pmdEDUCB::releaseBuff( CHAR *pBuff )
    {
-      utilThreadRelease( (void *&)pBuff ) ;
+      SDB_THREAD_FREE( pBuff ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISINT, "_pmdEDUCB::isInterrupted" )
@@ -1132,7 +1132,7 @@ namespace engine
       }
 
       // alloc memory
-      pRecvBuf = ( CHAR* )utilThreadAlloc( msgLen ) ;
+      pRecvBuf = ( CHAR* )SDB_THREAD_ALLOC( msgLen ) ;
       if ( !pRecvBuf )
       {
          PD_LOG( PDERROR, "Alloc memory failed, size: %u", msgLen ) ;
@@ -1159,7 +1159,7 @@ namespace engine
    error:
       if ( pRecvBuf )
       {
-         utilThreadRelease( (void *&)pRecvBuf ) ;
+         SDB_THREAD_FREE( pRecvBuf ) ;
       }
       goto done ;
    }
@@ -1201,7 +1201,7 @@ namespace engine
          }
          else if ( PMD_EDU_MEM_THREAD == event._dataMemType )
          {
-            utilThreadRelease( (void *&)event._Data ) ;
+            SDB_THREAD_FREE( event._Data ) ;
          }
          event._Data = NULL ;
       }

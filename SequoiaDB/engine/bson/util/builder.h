@@ -75,9 +75,9 @@ accesses) is the same as if
 #if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
    class TrivialAllocator {
    public:
-       void* Malloc(size_t sz) { return engine::utilThreadAlloc( sz ) ; }
-       void* Realloc(void *p, size_t sz) { return engine::utilThreadRealloc( p, sz ) ; }
-       void Free(void *p) { engine::utilThreadRelease( p ) ; }
+       void* Malloc(size_t sz) { return SDB_THREAD_ALLOC( sz ) ; }
+       void* Realloc(void *p, size_t sz) { return SDB_THREAD_REALLOC( p, sz ) ; }
+       void Free(void *p) { SDB_THREAD_FREE( p ) ; }
    } ;
 #else
    typedef HeapAllocator TrivialAllocator ;

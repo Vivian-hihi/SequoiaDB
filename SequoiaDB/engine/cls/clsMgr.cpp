@@ -1705,7 +1705,7 @@ namespace engine
       length = regObj.objsize () + sizeof ( MsgCatRegisterReq ) ;
 
       // free by end of the function
-      buff = (CHAR *)utilThreadAlloc( length ) ;
+      buff = (CHAR *)SDB_THREAD_ALLOC( length ) ;
       if ( buff == NULL )
       {
          PD_LOG ( PDERROR, "Failed to allocate memroy for register req" ) ;
@@ -1727,7 +1727,7 @@ namespace engine
    done:
       if ( buff )
       {
-         utilThreadRelease ( (void *&)buff ) ;
+         SDB_THREAD_FREE ( buff ) ;
          buff = NULL ;
       }
       PD_TRACE_EXITRC ( SDB__CLSMGR__SNDREGMSG, rc );

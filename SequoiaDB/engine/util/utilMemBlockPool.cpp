@@ -40,6 +40,8 @@
 #include "utilMemBlockPool.hpp"
 #include "pd.hpp"
 
+extern BOOLEAN ossMemDebugEnabled ;
+
 namespace engine
 {
 
@@ -48,16 +50,8 @@ namespace engine
    /*
       _utilMemBlockPool implement
    */
-   _utilMemBlockPool::_utilMemBlockPool()
-   :_numDynamicAlloc32B( 0 ),
-    _numDynamicAlloc64B( 0 ),
-    _numDynamicAlloc128B( 0 ),
-    _numDynamicAlloc256B( 0 ),
-    _numDynamicAlloc512B( 0 ),
-    _numDynamicAlloc1K( 0 ),
-    _numDynamicAlloc2K( 0 ),
-    _numDynamicAlloc4K( 0 ),
-    _numDynamicAlloc8K( 0 ),
+   _utilMemBlockPool::_utilMemBlockPool( BOOLEAN isGlobal )
+   :_isGlobal( isGlobal ),
     _maxSize( 0 ),
     _totalSize( 0 )
    {
@@ -84,55 +78,55 @@ namespace engine
 
       if ( _32BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_32 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_32 ) ;
          _32BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _64BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_64 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_64 ) ;
          _64BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _128BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
          _128BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
    
       if ( _256BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_256 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_256 ) ;
          _256BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _512BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_512 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_512 ) ;
          _512BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _1KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
          _1KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _2KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_2048 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_2048 ) ;
          _2KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _4KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_4096 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_4096 ) ;
          _4KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
 
       if ( _8KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
          _8KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
       }
    }
@@ -156,7 +150,7 @@ namespace engine
       _32BSeg = SDB_OSS_NEW _utilSegmentManager<element32B>() ;
       if ( _32BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_32 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_32 ) ;
          rc = _32BSeg->init( smallBlockSize / typeSize,
                              aBlockMaxSize / typeSize,
                              UTIL_MEM_A_SMALL_BLOCK_SUBPOOL_NUM,
@@ -172,7 +166,7 @@ namespace engine
       _64BSeg = SDB_OSS_NEW _utilSegmentManager<element64B>() ;
       if ( _64BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_64 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_64 ) ;
          rc = _64BSeg->init( smallBlockSize / typeSize,
                              aBlockMaxSize / typeSize,
                              UTIL_MEM_A_SMALL_BLOCK_SUBPOOL_NUM,
@@ -188,7 +182,7 @@ namespace engine
       _128BSeg = SDB_OSS_NEW _utilSegmentManager<element128B>() ;
       if ( _128BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
          rc = _128BSeg->init( smallBlockSize / typeSize,
                               aBlockMaxSize / typeSize,
                               UTIL_MEM_A_SMALL_BLOCK_SUBPOOL_NUM,
@@ -204,7 +198,7 @@ namespace engine
       _256BSeg = SDB_OSS_NEW _utilSegmentManager<element256B>() ;
       if ( _256BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_256 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_256 ) ;
          rc = _256BSeg->init( midBlockSize / typeSize,
                               aBlockMaxSize / typeSize,
                               UTIL_MEM_A_MID_BLOCK_SUBPOOL_NUM,
@@ -220,7 +214,7 @@ namespace engine
       _512BSeg = SDB_OSS_NEW _utilSegmentManager<element512B>() ;
       if ( _512BSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_512 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_512 ) ;
          rc = _512BSeg->init( midBlockSize / typeSize,
                               aBlockMaxSize / typeSize,
                               UTIL_MEM_A_MID_BLOCK_SUBPOOL_NUM,
@@ -236,7 +230,7 @@ namespace engine
       _1KSeg = SDB_OSS_NEW _utilSegmentManager<element1K>() ;
       if ( _1KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
          rc = _1KSeg->init( midBlockSize / typeSize,
                             aBlockMaxSize / typeSize,
                             UTIL_MEM_A_MID_BLOCK_SUBPOOL_NUM,
@@ -252,7 +246,7 @@ namespace engine
       _2KSeg = SDB_OSS_NEW _utilSegmentManager<element2K>() ;
       if ( _2KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_2048 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_2048 ) ;
          rc = _2KSeg->init( bigBlockSize / typeSize,
                             aBlockMaxSize / typeSize,
                             UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM,
@@ -268,7 +262,7 @@ namespace engine
       _4KSeg = SDB_OSS_NEW _utilSegmentManager<element4K>() ;
       if ( _4KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_4096 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_4096 ) ;
          rc = _4KSeg->init( bigBlockSize / typeSize,
                             aBlockMaxSize / typeSize,
                             UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM,
@@ -284,7 +278,7 @@ namespace engine
       _8KSeg = SDB_OSS_NEW _utilSegmentManager<element8K>() ;
       if ( _8KSeg )
       {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
+         UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
          rc = _8KSeg->init( bigBlockSize / typeSize,
                             aBlockMaxSize / typeSize,
                             UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM,
@@ -419,58 +413,49 @@ namespace engine
    }
 
    _utilMemBlockPool::MEMBLOCKPOOL_TYPE
-      _utilMemBlockPool::_size2MemType( UINT32 size, ossAtomic64 **ppCount )
+      _utilMemBlockPool::size2MemType( UINT32 size )
    {
       if ( size <= UTIL_MEM_ELEMENT_32 )
       {
-         *ppCount = &_numDynamicAlloc32B ;
          return MEMBLOCKPOOL_TYPE_32 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_64 )
       {
-         *ppCount = &_numDynamicAlloc64B ;
          return MEMBLOCKPOOL_TYPE_64 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_128 )
       {
-         *ppCount = &_numDynamicAlloc128B ;
          return MEMBLOCKPOOL_TYPE_128 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_256 )
       {
-         *ppCount = &_numDynamicAlloc256B ;
          return MEMBLOCKPOOL_TYPE_256 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_512 )
       {
-         *ppCount = &_numDynamicAlloc512B ;
          return MEMBLOCKPOOL_TYPE_512 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_1024 )
       {
-         *ppCount = &_numDynamicAlloc1K ;
          return MEMBLOCKPOOL_TYPE_1024 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_2048 )
       {
-         *ppCount = &_numDynamicAlloc2K ;
          return MEMBLOCKPOOL_TYPE_2048 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_4096 )
       {
-         *ppCount = &_numDynamicAlloc4K ;
          return MEMBLOCKPOOL_TYPE_4096 ;
       }
       else if ( size <= UTIL_MEM_ELEMENT_8192 )
       {
-         *ppCount = &_numDynamicAlloc8K ;
          return MEMBLOCKPOOL_TYPE_8192 ;
       }
 
       return MEMBLOCKPOOL_TYPE_DYN ;
    }
 
-   UINT32 _utilMemBlockPool::_type2Size( MEMBLOCKPOOL_TYPE type )
+   UINT32 _utilMemBlockPool::type2Size( MEMBLOCKPOOL_TYPE type )
    {
       UINT32 size = 0 ;
 
@@ -509,7 +494,10 @@ namespace engine
       return size ;
    }
 
-   void* _utilMemBlockPool::alloc( UINT32 size, UINT32 *pRealSize )
+   void* _utilMemBlockPool::alloc( UINT32 size,
+                                   const CHAR *pFile,
+                                   UINT32 line,
+                                   UINT32 *pRealSize )
    {
       MEMBLOCKPOOL_TYPE type  = MEMBLOCKPOOL_TYPE_MAX ;
       UINT32 realSize   = 0 ;
@@ -517,7 +505,6 @@ namespace engine
       CHAR * ptr        = NULL ;
       void * userPtr    = NULL ;
       UINT32 tryLevel   = 0 ;
-      ossAtomic64 *pNum = NULL ;
 
       if ( 0 == size )
       {
@@ -529,7 +516,7 @@ namespace engine
       }
 
       realSize = UTIL_MEM_SIZE_2_REALSIZE( size ) ;
-      type = _size2MemType( realSize, &pNum ) ;
+      type = size2MemType( realSize ) ;
 
       if ( _maxSize > 0 )
       {
@@ -641,20 +628,16 @@ namespace engine
 
       if ( !ptr )
       {
-         ptr = (CHAR*)SDB_OSS_MALLOC( realSize ) ;
+         ptr = (CHAR*)ossMemAlloc( realSize, pFile, line ) ;
          if ( !ptr )
          {
             goto done ;
          }
          realType = MEMBLOCKPOOL_TYPE_DYN ;
-         if ( pNum )
-         {
-            pNum->inc() ;
-         }
       }
       else
       {
-         realSize = _type2Size( realType ) ;
+         realSize = type2Size( realType ) ;
          SDB_ASSERT( realSize > 0, "Real size is invalid" ) ;
       }
 
@@ -665,6 +648,11 @@ namespace engine
       if ( pRealSize )
       {
          *pRealSize = realSize - UTIL_MEM_TOTAL_FILL_LEN ;
+      }
+
+      if ( _isGlobal && ossMemDebugEnabled )
+      {
+         ossPoolMemTrack( (void*)ptr, size, ossHashFileName( pFile ), line ) ;
       }
 
    done :
@@ -710,7 +698,7 @@ namespace engine
             valid = FALSE ;
          }
          else if ( MEMBLOCKPOOL_TYPE_DYN != type &&
-                   size != _type2Size( (MEMBLOCKPOOL_TYPE)type ) )
+                   size != type2Size( (MEMBLOCKPOOL_TYPE)type ) )
          {
             SDB_ASSERT( FALSE, "Invalid size" ) ;
             valid = FALSE ;
@@ -736,7 +724,11 @@ namespace engine
       return valid ;
    }
 
-   void* _utilMemBlockPool::realloc( void *ptr, UINT32 size, UINT32 *pRealSize )
+   void* _utilMemBlockPool::realloc( void *ptr,
+                                     UINT32 size,
+                                     const CHAR *pFile,
+                                     UINT32 line,
+                                     UINT32 *pRealSize )
    {
       void  *newUserPtr = NULL ;
       UINT32 oldUserSize = 0 ;
@@ -773,6 +765,12 @@ namespace engine
          {
             CHAR *newPtr = NULL ;
             UINT32 newRealSize = UTIL_MEM_SIZE_2_REALSIZE( size ) ;
+
+            if ( _isGlobal && ossMemDebugEnabled )
+            {
+               ossPoolMemUnTrack( (void*)oldRealPtr ) ;
+            }
+
             newPtr = (CHAR*)SDB_OSS_REALLOC( oldRealPtr, newRealSize ) ;
             if ( newPtr )
             {
@@ -783,12 +781,18 @@ namespace engine
                {
                   *pRealSize = newRealSize - UTIL_MEM_TOTAL_FILL_LEN ;
                }
+
+               if ( _isGlobal && ossMemDebugEnabled )
+               {
+                  ossPoolMemTrack( (void*)newPtr, size,
+                                   ossHashFileName( pFile ), line ) ;
+               }
             }
             goto done ;
          }
       }
 
-      newUserPtr = alloc( size, pRealSize ) ;
+      newUserPtr = alloc( size, pFile, line, pRealSize ) ;
       if ( !newUserPtr )
       {
          goto done ;
@@ -822,7 +826,12 @@ namespace engine
          goto done ;
       }
 
-      switch (type) 
+      if ( _isGlobal && ossMemDebugEnabled )
+      {
+         ossPoolMemUnTrack( (void*)realPtr ) ;
+      }
+
+      switch ( type ) 
       {
          case MEMBLOCKPOOL_TYPE_32 :
             rc = _32BSeg->release( (element32B *)realPtr ) ;
@@ -911,9 +920,53 @@ namespace engine
    }
 
    /*
+      Callback Funcs
+   */
+   BOOLEAN utilPoolMemCheck( void *p )
+   {
+      if ( p )
+      {
+         return utilPoolPtrCheck( UTIL_MEM_PTR_2_USERPTR( p ), NULL ) ;
+      }
+      return TRUE ;
+   }
+
+   void utilGetPoolMemInfo( void *p, UINT64 &size, INT32 &pool, INT32 &index )
+   {
+      size = 0 ;
+      pool = -1 ;
+      index = -1 ;
+
+      if ( p )
+      {
+         size = (UINT64)*UTIL_MEM_PTR_SIZE_PTR( p ) ;
+
+         UINT16 type = *UTIL_MEM_PTR_TYPE_PTR( p ) ;
+         if ( _utilMemBlockPool::MEMBLOCKPOOL_TYPE_DYN != type )
+         {
+            _utilSegmentPool<UINT64>::_objX *pObjX =
+               ( _utilSegmentPool<UINT64>::_objX* )_GET_OBJX_ADDRESS( p ) ;
+            pool = _GET_UNPACKED_POOLID( pObjX->_index ) ;
+            index = pObjX->_index & _SEGMENT_OBJ_INDEX_MASK ;
+         }
+      }
+   }
+
+   class _utilPoolCallbackAssit
+   {
+      public:
+         _utilPoolCallbackAssit()
+         {
+            ossSetPoolMemcheckFunc( (OSS_POOL_MEMCHECK_FUNC)utilPoolMemCheck ) ;
+            ossSetPoolMemInfoFunc( (OSS_POOL_MEMINFO_FUNC)utilGetPoolMemInfo ) ;
+         }
+   } ;
+   _utilPoolCallbackAssit s_assitPoolCallbak ;
+
+   /*
       Global var
    */
-   static _utilMemBlockPool  g_memPool ;
+   static _utilMemBlockPool  g_memPool( TRUE ) ;
 
    utilMemBlockPool* utilGetGlobalMemPool()
    {
@@ -939,14 +992,21 @@ namespace engine
       return size ;
    }
 
-   void* utilPoolAlloc( UINT32 size, UINT32 *pRealSize )
+   void* utilPoolAlloc( UINT32 size,
+                        const CHAR *pFile,
+                        UINT32 line,
+                        UINT32 *pRealSize )
    {
-      return g_memPool.alloc( size, pRealSize ) ;
+      return g_memPool.alloc( size, pFile, line, pRealSize ) ;
    }
 
-   void* utilPoolRealloc( void* ptr, UINT32 size, UINT32 *pRealSize )
+   void* utilPoolRealloc( void* ptr,
+                          UINT32 size,
+                          const CHAR *pFile,
+                          UINT32 line,
+                          UINT32 *pRealSize )
    {
-      return g_memPool.realloc( ptr, size, pRealSize ) ;
+      return g_memPool.realloc( ptr, size, pFile, line, pRealSize ) ;
    }
 
    void utilPoolRelease( void*& ptr )

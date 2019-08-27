@@ -58,14 +58,14 @@ namespace engine
       // regular new
       void * operator new ( size_t size ) throw ( const char * )
       {
-         void *p = utilThreadAlloc( size ) ;
+         void *p = SDB_THREAD_ALLOC( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
 
       void * operator new[] ( size_t size ) throw ( const char * )
       {
-         void *p = utilThreadAlloc( size ) ;
+         void *p = SDB_THREAD_ALLOC( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
@@ -85,12 +85,12 @@ namespace engine
 
       void operator delete ( void *p )
       {
-         utilThreadRelease( p ) ;
+         SDB_THREAD_FREE( p ) ;
       }
 
       void operator delete[] ( void *p )
       {
-         utilThreadRelease( p ) ;
+         SDB_THREAD_FREE( p ) ;
       }
 
       // placement delete (no-op)
@@ -106,7 +106,7 @@ namespace engine
       void * operator new ( size_t size, const CHAR *pFile, UINT32 line )
             throw ( const char * )
       {
-         void *p = utilThreadAlloc( size ) ;
+         void *p = utilThreadAlloc( size, pFile, line ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
@@ -114,65 +114,65 @@ namespace engine
       void * operator new[] ( size_t size, const CHAR *pFile, UINT32 line )
             throw ( const char * )
       {
-         void *p = utilThreadAlloc( size ) ;
+         void *p = utilThreadAlloc( size, pFile, line ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
 
       void operator delete ( void *p, const CHAR *pFile, UINT32 line )
       {
-         utilThreadRelease( p ) ;
+         SDB_THREAD_FREE( p ) ;
       }
 
       void operator delete[] ( void *p, const CHAR *pFile, UINT32 line )
       {
-         utilThreadRelease( p ) ;
+         SDB_THREAD_FREE( p ) ;
       }
 
       // no throw
       void * operator new ( size_t size, const std::nothrow_t & )
       {
-         return utilThreadAlloc(size) ;
+         return SDB_THREAD_ALLOC( size ) ;
       }
 
       void * operator new[] ( size_t size, const std::nothrow_t & )
       {
-         return utilThreadAlloc(size) ;
+         return SDB_THREAD_ALLOC( size ) ;
       }
 
       void operator delete ( void *p, const std::nothrow_t & )
       {
-         utilThreadRelease(p) ;
+         SDB_THREAD_FREE(p) ;
       }
 
       void operator delete[] ( void *p, const std::nothrow_t & )
       {
-         utilThreadRelease(p) ;
+         SDB_THREAD_FREE(p) ;
       }
 
       // no throw with line number
       void * operator new ( size_t size, const CHAR *pFile,
                             UINT32 line, const std::nothrow_t & )
       {
-         return utilThreadAlloc( size ) ;
+         return utilThreadAlloc( size, pFile, line ) ;
       }
 
       void * operator new[] ( size_t size, const CHAR *pFile,
                               UINT32 line, const std::nothrow_t & )
       {
-         return utilThreadAlloc( size ) ;
+         return utilThreadAlloc( size, pFile, line ) ;
       }
 
       void operator delete ( void *p, const CHAR *pFile,
                              UINT32 line, const std::nothrow_t & )
       {
-         utilThreadRelease(p) ;
+         SDB_THREAD_FREE(p) ;
       }
 
       void operator delete[] ( void *p, const CHAR *pFile,
                                UINT32 line, const std::nothrow_t & )
       {
-         utilThreadRelease(p) ;
+         SDB_THREAD_FREE(p) ;
       }
    } ;
    typedef class _utilPooledObject utilPooledObject ;

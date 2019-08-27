@@ -687,7 +687,7 @@ namespace engine
       msgLen = sizeof( MsgOpTransCommitPre ) +
                writeTransNodes * sizeof( UINT64 ) ;
 
-      pCommitPreMsg = ( MsgOpTransCommitPre* )utilThreadAlloc( msgLen ) ;
+      pCommitPreMsg = ( MsgOpTransCommitPre* )SDB_THREAD_ALLOC( msgLen ) ;
       if ( !pCommitPreMsg )
       {
          PD_LOG( PDERROR, "Alloc memory failed(Size:%u)", msgLen ) ;
@@ -729,7 +729,7 @@ namespace engine
                                              INT32 msgSize,
                                              pmdEDUCB *cb )
    {
-      utilThreadRelease( (void*&)pMsg ) ;
+      SDB_THREAD_FREE( pMsg ) ;
    }
 
    INT32 _coordTransCommit::buildPhase2Msg( const CHAR *pReceiveBuffer,

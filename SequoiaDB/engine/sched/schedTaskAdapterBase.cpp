@@ -109,7 +109,7 @@ namespace engine
       UINT64 lastCacheNum = 0 ;
       UINT64 lastEventNum = 0 ;
 
-      pBuff = ( CHAR* )utilThreadAlloc( header->messageLength ) ;
+      pBuff = ( CHAR* )SDB_THREAD_ALLOC( header->messageLength ) ;
       if ( !pBuff )
       {
          PD_LOG( PDERROR, "Alloc memory failed, size: %d",

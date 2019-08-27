@@ -165,8 +165,14 @@ namespace engine
          virtual BOOLEAN   canCacheBlock( UINT32 blockSize ) ;
 
       public:
-         void*       alloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
-         void*       realloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
+         void*       alloc( UINT32 size,
+                            const CHAR *pFile,
+                            UINT32 line,
+                            UINT32 *pRealSize = NULL ) ;
+         void*       realloc( void* ptr, UINT32 size,
+                              const CHAR *pFile,
+                              UINT32 line,
+                              UINT32 *pRealSize = NULL ) ;
          void        release( void*& ptr ) ;
 
          void        clear() ;
@@ -202,8 +208,13 @@ namespace engine
    void        utilClearThreadMemPool() ;
    UINT32      utilThreadMemPoolSize() ;
 
-   void*       utilThreadAlloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
-   void*       utilThreadRealloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
+   void*       utilThreadAlloc( UINT32 size,
+                                const CHAR *pFile,
+                                UINT32 line,
+                                UINT32 *pRealSize = NULL ) ;
+   void*       utilThreadRealloc( void* ptr, UINT32 size,
+                                  const CHAR *pFile, UINT32 line,
+                                  UINT32 *pRealSize = NULL ) ;
    void        utilThreadRelease( void*& ptr ) ;
 
    extern "C"
@@ -214,6 +225,17 @@ namespace engine
    }
 
 }
+
+#define SDB_THREAD_ALLOC(size)      engine::utilThreadAlloc(size,__FILE__,__LINE__,NULL)
+#define SDB_THREAD_REALLOC(p,size)  engine::utilThreadRealloc(p,size,__FILE__,__LINE__,NULL)
+#define SDB_THREAD_FREE(p)          engine::utilThreadRelease((void*&)p)
+
+#define SDB_THREAD_ALLOC2(size,pRealSize) \
+   engine::utilThreadAlloc(size,__FILE__,__LINE__,pRealSize)
+
+#define SDB_THREAD_REALLOC2(p,size,pRealSize) \
+   engine::utilThreadRealloc(p,size,__FILE__,__LINE__,pRealSize)
+
 
 #endif //UTIL_MEM_LIST_POOL_HPP__
 

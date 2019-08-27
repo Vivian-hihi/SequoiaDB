@@ -635,7 +635,7 @@ namespace engine
          dataLen = ossAlign4( dataLen ) ;
          dataLen += boDCInfo.objsize() ;
 
-         pData = ( CHAR* )utilThreadAlloc( dataLen ) ;
+         pData = ( CHAR* )SDB_THREAD_ALLOC( dataLen ) ;
          if ( !pData )
          {
             PD_LOG( PDERROR, "Alloc memory[%u] failed, rc: %d",
@@ -666,7 +666,7 @@ namespace engine
       }
       if ( ownedData && pData )
       {
-         utilThreadRelease( ( void *& )pData ) ;
+         SDB_THREAD_FREE( pData ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_REGREQ, rc ) ;
       return rc;

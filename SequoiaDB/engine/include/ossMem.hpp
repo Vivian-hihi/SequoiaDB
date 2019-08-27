@@ -41,7 +41,8 @@
 #include "ossMem.h"
 #include <new>
 
-#define SDB_OSS_MEMDUMPNAME      ".memdump"
+#define SDB_OSS_MEMDUMPNAME      ".memossdump"
+#define SDB_POOL_MEMDUMPNAME     ".mempooldump"
 #define SDB_OSS_NEW              new(__FILE__,__LINE__,std::nothrow)
 #define SDB_OSS_DEL              delete
 
@@ -57,5 +58,16 @@
 void* operator new (size_t size, const CHAR *file, UINT32 line ) ;
 
 void operator delete ( void *p, const CHAR *file, UINT32 line ) ;*/
+
+void ossPoolMemTrack( void *p, UINT64 userSize, UINT32 file, UINT32 line ) ;
+void ossPoolMemUnTrack( void *p ) ;
+
+typedef BOOLEAN (*OSS_POOL_MEMCHECK_FUNC)( void* p ) ;
+typedef void    (*OSS_POOL_MEMINFO_FUNC)( void* p, UINT64 &size,
+                                          INT32 &pool, INT32 &index ) ;
+
+void ossSetPoolMemcheckFunc( OSS_POOL_MEMCHECK_FUNC pFunc ) ;
+void ossSetPoolMemInfoFunc( OSS_POOL_MEMINFO_FUNC pFunc ) ;
+
 #endif
 

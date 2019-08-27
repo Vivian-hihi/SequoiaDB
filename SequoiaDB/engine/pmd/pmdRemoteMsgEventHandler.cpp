@@ -169,7 +169,7 @@ namespace engine
          goto error ;
       }
 
-      pNewMsg = (CHAR*)utilThreadAlloc( header->messageLength + 1 ) ;
+      pNewMsg = (CHAR*)SDB_THREAD_ALLOC( header->messageLength + 1 ) ;
       if ( !pNewMsg )
       {
          rc = SDB_OOM ;
@@ -232,7 +232,7 @@ namespace engine
          return ;
       }
       PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
-         utilThreadAlloc( sizeof (PMD_EVENT_MESSAGES ) ) ;
+         SDB_THREAD_ALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
 
       if ( NULL == eventMsg )
       {

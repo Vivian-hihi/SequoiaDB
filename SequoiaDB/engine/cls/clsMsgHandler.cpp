@@ -86,7 +86,7 @@ namespace engine
       if ( _pShardCB )
       {
          MsgOpReply *pMsg = NULL ;
-         pMsg = ( MsgOpReply* )utilThreadAlloc( sizeof( MsgOpReply ) ) ;
+         pMsg = ( MsgOpReply* )SDB_THREAD_ALLOC( sizeof( MsgOpReply ) ) ;
          if ( !pMsg )
          {
             PD_LOG( PDERROR, "Alloc memory[size: %d] failed",
