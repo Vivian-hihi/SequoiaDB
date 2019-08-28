@@ -16,15 +16,15 @@ import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
-import com.sequoiadb.fault.BrokenNetwork;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.PartUploadUtils;
+import com.sequoias3.fault.BrokenNetwork;
+import com.sequoias3.task.FaultMakeTask;
+import com.sequoias3.task.OperateTask;
+import com.sequoias3.task.TaskMgr;
 
 /**
  * @Description seqDB-18783 :上传分段过程中sequoiaS3和db端网络故障，其中分段长度不同

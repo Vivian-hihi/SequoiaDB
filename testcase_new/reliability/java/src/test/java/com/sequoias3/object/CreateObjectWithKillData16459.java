@@ -1,25 +1,5 @@
 package com.sequoias3.object;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
-import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
-import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.fault.KillNode;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
-import com.sequoias3.commlibs3.CommLibS3;
-import com.sequoias3.commlibs3.S3TestBase;
-import com.sequoias3.commlibs3.TestTools;
-import com.sequoias3.commlibs3.s3utils.ObjectUtils;
-import com.sequoias3.commlibs3.s3utils.UserUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +7,33 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.GroupMgr;
+import com.sequoias3.commlibs3.GroupWrapper;
+import com.sequoias3.commlibs3.NodeWrapper;
+import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.TestTools;
+import com.sequoias3.commlibs3.s3utils.ObjectUtils;
+import com.sequoias3.commlibs3.s3utils.UserUtils;
+import com.sequoias3.fault.KillNode;
+import com.sequoias3.task.FaultMakeTask;
+import com.sequoias3.task.OperateTask;
+import com.sequoias3.task.TaskMgr;
+
 /**
- * test content: 开启版本控制，创建对象过程中db端节点异常
- * testlink-case: seqDB-16459
+ * test content: 开启版本控制，创建对象过程中db端节点异常 testlink-case: seqDB-16459
+ * 
  * @author wangkexin
  * @Date 2019.01.09
  * @version 1.00
@@ -55,8 +59,8 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
 		CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-		
-		for(int i = 0 ; i < objectNum; i++ ){
+
+		for (int i = 0; i < objectNum; i++) {
 			keyNames.add(keyName + "_" + i);
 		}
 	}
@@ -64,29 +68,29 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 	@Test
 	public void testCreateObject() throws Exception {
 		TaskMgr mgr = new TaskMgr();
-		
+
 		GroupMgr groupMgr = GroupMgr.getInstance();
 		List<GroupWrapper> dataGroups = groupMgr.getAllDataGroup();
-			       
-		for(int i = 0; i< dataGroups.size(); i++){
+
+		for (int i = 0; i < dataGroups.size(); i++) {
 			String groupName = dataGroups.get(i).getGroupName();
 			GroupWrapper group = groupMgr.getGroupByName(groupName);
-	        NodeWrapper node = group.getMaster();	
-	        FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
-            mgr.addTask(faultTask);
+			NodeWrapper node = group.getMaster();
+			FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
+			mgr.addTask(faultTask);
 		}
-		
-        for(int i = 0; i < keyNames.size(); i++){
-        	CreateObjectTask cTask = new CreateObjectTask(keyNames.get(i));
-    		mgr.addTask(cTask);
-        }
+
+		for (int i = 0; i < keyNames.size(); i++) {
+			CreateObjectTask cTask = new CreateObjectTask(keyNames.get(i));
+			mgr.addTask(cTask);
+		}
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
 		// check whether the cluster is normal and lsn consistency ,the
 		// longest waiting time is 600S
 		Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
-		
+
 		putObjectAndCheck();
 		runSuccess = true;
 	}
@@ -97,7 +101,7 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
 			}
-		}finally {
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}
@@ -106,11 +110,13 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 
 	private class CreateObjectTask extends OperateTask {
 		private String keyName = "";
+
 		public CreateObjectTask(String keyName) {
 			this.keyName = keyName;
 		}
+
 		@Override
-		public void exec(){
+		public void exec() {
 			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
 				int writeSize = random.nextInt(1024);
@@ -119,11 +125,11 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 				s3Client.putObject(bucketName, keyName, currContent);
 				keyAndMd5Map.put(keyName, currmd5);
 				putObjectList.add(keyName);
-			} catch(AmazonServiceException e){
-				if(e.getStatusCode() != 500){
+			} catch (AmazonServiceException e) {
+				if (e.getStatusCode() != 500) {
 					throw e;
 				}
-			}finally {
+			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();
 				}
@@ -138,28 +144,29 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 		for (String keyName : remainObjects) {
 			int writeSize = random.nextInt(1024);
 			String currContent = ObjectUtils.getRandomString(writeSize);
-			
+
 			s3Client.putObject(bucketName, keyName, currContent);
 			keyAndMd5Map.put(keyName, TestTools.getMD5(currContent.getBytes()));
 		}
-		
-		 VersionListing versions = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
-		 List<S3VersionSummary> objects = versions.getVersionSummaries();
-		 Assert.assertEquals(objects.size(), keyNames.size(), "putObjectList : " + putObjectList.toString() + "  ,objects=" + printVersionKeys(objects));
-		 for(S3VersionSummary obj : objects){
-			 String key = obj.getKey();
-			 String expEtag = keyAndMd5Map.get(key);
-			 String actEtag = obj.getETag();
-			 Assert.assertEquals(obj.getVersionId(), "0", "objectName is : " + key);
-			 Assert.assertEquals(actEtag, expEtag, "objectName is : " + key);
-		 }
+
+		VersionListing versions = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+		List<S3VersionSummary> objects = versions.getVersionSummaries();
+		Assert.assertEquals(objects.size(), keyNames.size(),
+				"putObjectList : " + putObjectList.toString() + "  ,objects=" + printVersionKeys(objects));
+		for (S3VersionSummary obj : objects) {
+			String key = obj.getKey();
+			String expEtag = keyAndMd5Map.get(key);
+			String actEtag = obj.getETag();
+			Assert.assertEquals(obj.getVersionId(), "0", "objectName is : " + key);
+			Assert.assertEquals(actEtag, expEtag, "objectName is : " + key);
+		}
 	}
-	
-	private String printVersionKeys(List<S3VersionSummary> objects){
-		String str= "";
-		for(S3VersionSummary obj : objects){
-			 str += obj.getKey();
-			 str += " ";
+
+	private String printVersionKeys(List<S3VersionSummary> objects) {
+		String str = "";
+		for (S3VersionSummary obj : objects) {
+			str += obj.getKey();
+			str += " ";
 		}
 		return str;
 	}

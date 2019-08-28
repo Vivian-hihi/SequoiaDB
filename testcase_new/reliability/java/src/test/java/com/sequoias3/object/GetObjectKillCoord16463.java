@@ -1,33 +1,33 @@
 package com.sequoias3.object;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
-import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.fault.KillNode;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
-import com.sequoias3.commlibs3.CommLibS3;
-import com.sequoias3.commlibs3.S3TestBase;
-import com.sequoias3.commlibs3.TestTools;
-import com.sequoias3.commlibs3.s3utils.ObjectUtils;
-import com.sequoias3.commlibs3.s3utils.UserUtils;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.GroupMgr;
+import com.sequoias3.commlibs3.GroupWrapper;
+import com.sequoias3.commlibs3.NodeWrapper;
+import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.TestTools;
+import com.sequoias3.commlibs3.s3utils.ObjectUtils;
+import com.sequoias3.commlibs3.s3utils.UserUtils;
+import com.sequoias3.fault.KillNode;
+import com.sequoias3.task.FaultMakeTask;
+import com.sequoias3.task.OperateTask;
+import com.sequoias3.task.TaskMgr;
 
 /**
- * test content: 获取对象过程中db端节点异常
- * testlink-case: seqDB-16463
+ * test content: 获取对象过程中db端节点异常 testlink-case: seqDB-16463
+ * 
  * @author wangkexin
  * @Date 2019.01.14
  * @version 1.00
@@ -45,7 +45,7 @@ public class GetObjectKillCoord16463 extends S3TestBase {
 	private AmazonS3 s3Client = null;
 	private File localPath = null;
 	private GroupWrapper coordGroup = null;
-	
+
 	private boolean runSuccess = false;
 
 	@BeforeClass
@@ -53,13 +53,13 @@ public class GetObjectKillCoord16463 extends S3TestBase {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		groupMgr = GroupMgr.getInstance();
 		coordGroup = groupMgr.getGroupByName("SYSCoord");
-		
+
 		CommLibS3.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
-		
-		for(int i = 0 ; i < objectNum; i++ ){
+
+		for (int i = 0; i < objectNum; i++) {
 			String currentKey = keyName + "_" + i;
 			s3Client.putObject(bucketName, currentKey, currentKey);
 			keyNames.add(currentKey);
@@ -69,15 +69,15 @@ public class GetObjectKillCoord16463 extends S3TestBase {
 	@Test
 	public void testGetObject() throws Exception {
 		TaskMgr mgr = new TaskMgr();
-        for(NodeWrapper node : coordGroup.getNodes()) {
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
-            mgr.addTask(faultTask);
-        }
-		
-        for(int i = 0; i < keyNames.size(); i++){
-        	GetObjectTask cTask = new GetObjectTask(keyNames.get(i));
-    		mgr.addTask(cTask);
-        }
+		for (NodeWrapper node : coordGroup.getNodes()) {
+			FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+			mgr.addTask(faultTask);
+		}
+
+		for (int i = 0; i < keyNames.size(); i++) {
+			GetObjectTask cTask = new GetObjectTask(keyNames.get(i));
+			mgr.addTask(cTask);
+		}
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
@@ -92,7 +92,7 @@ public class GetObjectKillCoord16463 extends S3TestBase {
 				UserUtils.deleteUser(userName);
 				TestTools.LocalFile.removeFile(localPath);
 			}
-		}finally {
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}
@@ -101,22 +101,24 @@ public class GetObjectKillCoord16463 extends S3TestBase {
 
 	private class GetObjectTask extends OperateTask {
 		private String keyName = "";
+
 		public GetObjectTask(String keyName) {
 			this.keyName = keyName;
 		}
+
 		@Override
-		public void exec() throws Exception{
+		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
 				String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 				String expEtag = TestTools.getMD5(keyName.getBytes());
 				Assert.assertEquals(downfileMd5, expEtag, "key : " + keyName);
 				getObjectList.add(keyName);
-			} catch(AmazonServiceException e){
-				if(!e.getErrorCode().equals("GetDBConnectFail")){
+			} catch (AmazonServiceException e) {
+				if (!e.getErrorCode().equals("GetDBConnectFail")) {
 					throw e;
 				}
-			}finally {
+			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();
 				}

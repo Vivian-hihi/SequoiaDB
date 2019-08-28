@@ -1,13 +1,23 @@
 package com.sequoias3.delimiter;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
-import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
@@ -16,16 +26,9 @@ import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import com.sequoias3.task.FaultMakeTask;
+import com.sequoias3.task.OperateTask;
+import com.sequoias3.task.TaskMgr;
 
 /**
  * test content: 开启版本控制，创建对象过程中s3节点异常 testlink-case: seqDB-18205
@@ -89,7 +92,7 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
-				
+
 			}
 		} finally {
 			if (s3Client != null) {
@@ -135,16 +138,16 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 
 	private void checkRandomObjMd5() throws Exception {
 		File localPath = null;
-		//检查当前版本对象内容
+		// 检查当前版本对象内容
 		ObjectMetadata metadata = s3Client.getObject(bucketName, objectName).getObjectMetadata();
 		String versionId = metadata.getVersionId();
 		String actMd5 = metadata.getETag();
 		String expEtag = versionAndMd5Map.get(versionId);
 		Assert.assertEquals(actMd5, expEtag, "keyName = " + objectName + ", versionid = " + versionId);
-		
-		//随机检查历史版本
+
+		// 随机检查历史版本
 		int version = new Random().nextInt(objectVersionNums);
-		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, objectName,
 				String.valueOf(version));
 		String expEtag2 = versionAndMd5Map.get(String.valueOf(version));

@@ -1,19 +1,5 @@
 package com.sequoias3.object;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
-import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
-import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.fault.KillNode;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
-import com.sequoias3.commlibs3.CommLibS3;
-import com.sequoias3.commlibs3.S3TestBase;
-import com.sequoias3.commlibs3.s3utils.UserUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -22,6 +8,20 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.GroupMgr;
+import com.sequoias3.commlibs3.GroupWrapper;
+import com.sequoias3.commlibs3.NodeWrapper;
+import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.s3utils.UserUtils;
+import com.sequoias3.fault.KillNode;
+import com.sequoias3.task.FaultMakeTask;
+import com.sequoias3.task.OperateTask;
+import com.sequoias3.task.TaskMgr;
 
 /**
  * test content: 开启版本控制，删除对象过程中db端节点异常 testlink-case: seqDB-16464
@@ -49,8 +49,8 @@ public class DeleteObjectKillData16464 extends S3TestBase {
 		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
 		CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-		
-		for(int i = 0 ; i < objectNum; i++ ){
+
+		for (int i = 0; i < objectNum; i++) {
 			String currentKey = keyName + "_" + i;
 			s3Client.putObject(bucketName, currentKey, currentKey + "_content");
 			keyNames.add(currentKey);
@@ -62,25 +62,26 @@ public class DeleteObjectKillData16464 extends S3TestBase {
 		TaskMgr mgr = new TaskMgr();
 		GroupMgr groupMgr = GroupMgr.getInstance();
 		List<GroupWrapper> dataGroups = groupMgr.getAllDataGroup();
-			       
-		for(int i = 0; i< dataGroups.size(); i++){
+
+		for (int i = 0; i < dataGroups.size(); i++) {
 			String groupName = dataGroups.get(i).getGroupName();
 			GroupWrapper group = groupMgr.getGroupByName(groupName);
-	        NodeWrapper node = group.getMaster();	
-	        FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
-            mgr.addTask(faultTask);
+			NodeWrapper node = group.getMaster();
+			FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
+			mgr.addTask(faultTask);
 		}
-		
-        for(int i = 0; i < keyNames.size(); i++){
-        	DeleteObjectTask cTask = new DeleteObjectTask(keyNames.get(i));
-    		mgr.addTask(cTask);
-        }
+
+		for (int i = 0; i < keyNames.size(); i++) {
+			DeleteObjectTask cTask = new DeleteObjectTask(keyNames.get(i));
+			mgr.addTask(cTask);
+		}
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-		// check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
+		// check whether the cluster is normal and lsn consistency ,the longest
+		// waiting time is 600S
 		Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
-		
+
 		deleteObjectAgainAndCheck();
 		runSuccess = true;
 	}
@@ -91,7 +92,7 @@ public class DeleteObjectKillData16464 extends S3TestBase {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
 			}
-		}finally {
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}
@@ -100,20 +101,22 @@ public class DeleteObjectKillData16464 extends S3TestBase {
 
 	private class DeleteObjectTask extends OperateTask {
 		private String keyName = "";
+
 		public DeleteObjectTask(String keyName) {
 			this.keyName = keyName;
 		}
+
 		@Override
-		public void exec(){
+		public void exec() {
 			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
 				s3Client.deleteVersion(bucketName, keyName, "0");
 				deletedObjectList.add(keyName);
-			} catch(AmazonServiceException e){
-				if(e.getStatusCode() != 500){
+			} catch (AmazonServiceException e) {
+				if (e.getStatusCode() != 500) {
 					throw e;
 				}
-			}finally {
+			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();
 				}
@@ -128,7 +131,7 @@ public class DeleteObjectKillData16464 extends S3TestBase {
 		for (String keyName : remainObjects) {
 			s3Client.deleteVersion(bucketName, keyName, "0");
 		}
-		for(int i = 0; i < keyNames.size(); i++){
+		for (int i = 0; i < keyNames.size(); i++) {
 			Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyNames.get(i)));
 		}
 	}

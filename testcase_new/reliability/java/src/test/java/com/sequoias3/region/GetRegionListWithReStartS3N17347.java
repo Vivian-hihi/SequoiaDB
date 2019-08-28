@@ -1,24 +1,25 @@
 package com.sequoias3.region;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.bean.Region;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.sequoias3.task.FaultMakeTask;
+import com.sequoias3.task.OperateTask;
+import com.sequoias3.task.TaskMgr;
 
 /**
  * test content: 获取区域列表过程中sequoiaS3端节点异常 testlink-case: seqDB-17347
@@ -33,8 +34,8 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 	private String bucketName = "bucket17347";
 	private String metaCSName = "metaCS17347";
 	private String dataCSName = "dataCS17347";
-	private String[] metaClNames = {"metaCL17347", "metaHistoryCL17347"};
-	private String[] dataClName = {"dataCL17347"};
+	private String[] metaClNames = { "metaCL17347", "metaHistoryCL17347" };
+	private String[] dataClName = { "dataCL17347" };
 	private List<String> regionNames = new ArrayList<>();
 	private int regionNum = 10000;
 	private int bucketNum = 80;
@@ -52,7 +53,7 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 			String currRegionName = regionName + "-" + i;
 			regionNames.add(currRegionName.toLowerCase());
 			RegionUtils.clearRegion(currRegionName);
-			
+
 			Region region = new Region();
 			region.withName(regionNames.get(i)).withMetaLocation(metaCSName + "." + metaClNames[0])
 					.withMetaHisLocation(metaCSName + "." + metaClNames[1])
@@ -98,7 +99,6 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 			}
 		}
 	}
-
 
 	private class GetRegionList extends OperateTask {
 		@Override

@@ -6,7 +6,7 @@
     <parameter name="SVCNAME" value="${SVCNAME}"/>
     <parameter name="S3HOSTNAME" value="${S3HOSTNAME}"/>
     <parameter name="S3PORT" value="${S3PORT}"/>
-    <parameter name="CHANGEDPREFIX" value="newstory_java_test"/>
+    <parameter name="CHANGEDPREFIX" value="newstory_java_s3test"/>
     <parameter name="RSRVPORTBEGIN" value="26000"/>
     <parameter name="RSRVPORTEND" value="27000"/>
     <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/"/>
@@ -20,8 +20,15 @@
     <parameter name="SCRIPTDIR" value="${SCRIPTDIR}"/>
 
     <listeners>
+    	<listener class-name="com.sequoias3.commlibs3.TimePrinterListener"/>
     </listeners>
 
-    <test name="exception_killnode">
+    <test name = "reliability_s3" preserve-order="true">
+    	<packages>
+            <package name="com.sequoias3.delimiter" />
+            <package name="com.sequoias3.object" />
+            <package name="com.sequoias3.region" /> 
+            <package name="com.sequoias3.partupload" />
+        </packages>
     </test>
 </suite>
