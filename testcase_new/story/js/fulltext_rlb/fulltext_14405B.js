@@ -43,18 +43,28 @@ function main()
        var doTimes = 1;
        for( ; doTimes <= 50; doTimes++ )
        {
-           db.getRG( groups[0] ).reelect();
-           // 等待选主
-           isMasterNodeExist( groups[0] );
-           var curMaster = db.getRG( groups[0] ).getMaster();
-           var curMasterNodeName = curMaster.getHostName() + ":" + curMaster.getServiceName();
-           println( "reelect times: " + doTimes + "\ncurMasterNodeName: " + curMasterNodeName + "\npreSlaveNodeName: " + preSlaveNodeName );
-           // 当新主为原备节点，则退出
-           if( preSlaveNodeName == curMasterNodeName ) 
+           try
            {
-               break;
-           }
-           sleep( 1000 );
+               db.getRG( groups[0] ).reelect();
+               // 等待选主
+               isMasterNodeExist( groups[0] );
+               var curMaster = db.getRG( groups[0] ).getMaster();
+               var curMasterNodeName = curMaster.getHostName() + ":" + curMaster.getServiceName();
+               println( "reelect times: " + doTimes + "\ncurMasterNodeName: " + curMasterNodeName + "\npreSlaveNodeName: " + preSlaveNodeName );
+               // 当新主为原备节点，则退出
+               if( preSlaveNodeName == curMasterNodeName ) 
+               {
+                   break;
+               }
+               sleep( 1000 );
+           } 
+           catch ( e ) 
+           {
+               if ( -13 != e )
+               {
+                   throw buildException( "reelect", null, "reelect", "-13", e );
+               }
+           } 
        }
    
        // 选举后没有切回原主，则抛异常
