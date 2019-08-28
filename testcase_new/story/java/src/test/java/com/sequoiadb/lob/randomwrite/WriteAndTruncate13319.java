@@ -2,6 +2,7 @@ package com.sequoiadb.lob.randomwrite;
 
 import com.sequoiadb.base.*;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import org.bson.BSONObject;

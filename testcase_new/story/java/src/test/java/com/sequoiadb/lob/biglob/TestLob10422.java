@@ -18,6 +18,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.lob.utils.BigLobUtils;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -64,6 +65,7 @@ public class TestLob10422 extends SdbTestBase {
     public void tearDown(){
         try{
             if(cs.isCollectionExist(clName)){
+        	sdb.isCollectionSpaceExist(clName);
                 cs.dropCollection(clName);
             }
         }catch(BaseException e){            

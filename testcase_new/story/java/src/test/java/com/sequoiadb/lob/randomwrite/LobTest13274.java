@@ -4,6 +4,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -14,11 +15,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static com.sequoiadb.lob.utils.RandomWriteLobUtil.assertByteArrayEqual;
+import static com.sequoiadb.lob.utils.RandomWriteLobUtil.getRandomBytes;
+
 import java.util.*;
 import java.util.logging.Logger;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.assertByteArrayEqual;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.getRandomBytes;
 
 /**
  * Created by laojingtang on 17-11-22.

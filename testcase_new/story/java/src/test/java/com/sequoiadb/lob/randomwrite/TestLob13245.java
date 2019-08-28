@@ -6,6 +6,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -14,8 +15,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
 /**
 * @Description seqDB-13245 : 写lob超过锁定范围

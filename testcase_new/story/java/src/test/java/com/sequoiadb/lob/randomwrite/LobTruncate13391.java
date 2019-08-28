@@ -3,6 +3,7 @@ package com.sequoiadb.lob.randomwrite;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;

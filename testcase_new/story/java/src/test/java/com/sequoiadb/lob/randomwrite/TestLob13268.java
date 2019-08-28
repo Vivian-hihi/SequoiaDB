@@ -3,6 +3,7 @@ package com.sequoiadb.lob.randomwrite;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -11,12 +12,12 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+import static com.sequoiadb.lob.utils.RandomWriteLobUtil.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.*;
 
 /**
  * Created by laojingtang on 17-12-1.

@@ -5,6 +5,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;

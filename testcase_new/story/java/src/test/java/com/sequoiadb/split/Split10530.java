@@ -27,7 +27,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.lob.basicoperation.LobOprUtils;
+import com.sequoiadb.lob.utils.LobOprUtils;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;

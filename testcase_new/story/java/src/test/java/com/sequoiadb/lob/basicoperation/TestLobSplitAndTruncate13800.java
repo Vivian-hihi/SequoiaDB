@@ -11,6 +11,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.lob.utils.LobOprUtils;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;

@@ -1,4 +1,4 @@
-package com.sequoiadb.lob.biglob;
+package com.sequoiadb.lob.utils;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

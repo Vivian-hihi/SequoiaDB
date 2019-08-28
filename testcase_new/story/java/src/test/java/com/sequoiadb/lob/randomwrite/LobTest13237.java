@@ -1,6 +1,7 @@
 package com.sequoiadb.lob.randomwrite;
 
 import com.sequoiadb.base.*;
+import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -10,7 +11,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.*;
-import com.sequoiadb.lob.randomwrite.RandomWriteLobUtil;
 
 
 /**
