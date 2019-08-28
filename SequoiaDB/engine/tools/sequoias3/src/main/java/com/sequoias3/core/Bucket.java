@@ -217,10 +217,12 @@ public class Bucket {
         return aclId;
     }
 
+    @JsonIgnore
     public void setPrivate(boolean aPrivate) {
         isPrivate = aPrivate;
     }
 
+    @JsonIgnore
     public Boolean isPrivate() {
         return isPrivate;
     }

@@ -264,6 +264,7 @@ public class BucketDelimiterServiceImpl implements BucketDelimiterService {
 
             transaction.commit(connectionD);
         }catch (S3ServerException e){
+            transaction.rollback(connectionD);
             throw e;
         }catch (Exception e){
             transaction.rollback(connectionD);
