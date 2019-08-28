@@ -41,8 +41,7 @@ function getCLSnapShotInfo( db, tableName )
       var snpDtl = db.snapshot(4,{Name:tableName}).current().toObj().Details ;
       for( var i in snpDtl )
       {
-         var dtlOneRg = snpDtl[i];
-         println(JSON.stringify(dtlOneRg)) 
+         var dtlOneRg = snpDtl[i];         
          if ( "" === dtlOneRg.GroupName )
          {
             snapShotInfoSet.push( dtlOneRg ) ;

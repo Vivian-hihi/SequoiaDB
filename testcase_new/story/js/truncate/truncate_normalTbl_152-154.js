@@ -4,6 +4,27 @@
 *              2015-5-8  xiaojun Hu   Init
 ******************************************************************************/
 
+main();
+function main()
+{
+    var clName = "truncate152";
+    commDropCL( db, COMMCSNAME, clName, true, true, "drop collection begin" );
+    var cl = commCreateCL( db, COMMCSNAME, clName, 0, true, true, false,
+                        "create collection begin" );
+    var tableName = COMMCSNAME + "." + clName;
+    
+    println( "\n---begin to test <testTruncateNormalTblRecord>" );
+    testTruncateNormalTblRecord( db, cl, tableName );
+    
+    println( "\n---begin to test <testTruncateNormalTblLob>" );
+    testTruncateNormalTblLob( db, cl, tableName );
+    
+    println( "\n---begin to test <testTruncateNormalTable>" );
+    testTruncateNormalTable( db, cl, tableName );  
+    
+    commDropCL( db, COMMCSNAME, clName, false, false, "drop collection end" );   
+}
+
 /*******************************************************************************
 *@Description: 测试truncate()对普通表内的普通记录数据的操作
 *@Input: collection.truncate()
@@ -123,32 +144,4 @@ function testTruncateNormalTable( db, cl, tableName )
 }
 
 
-function main()
-{
-   try
-   {
-      commDropCL( db, COMMCSNAME, COMMCLNAME, true, true, "drop collection begin" );
-      var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false,
-                             "create collection begin" );
-      var tableName = COMMCSNAME + "." + COMMCLNAME;
-      
-      println( "\n---begin to test <testTruncateNormalTblRecord>" );
-      testTruncateNormalTblRecord( db, cl, tableName );
-      
-      println( "\n---begin to test <testTruncateNormalTblLob>" );
-      testTruncateNormalTblLob( db, cl, tableName );
-      
-      println( "\n---begin to test <testTruncateNormalTable>" );
-      testTruncateNormalTable( db, cl, tableName );   
-   }
-   catch( e )
-   {
-      throw e;
-   }
-   finally
-   {
-      commDropCL( db, COMMCSNAME, COMMCLNAME, false, false, "drop collection end" );
-   }
-}
 
-main();
