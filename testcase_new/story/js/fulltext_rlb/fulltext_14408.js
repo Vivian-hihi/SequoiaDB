@@ -4,6 +4,7 @@
 *@createdate:  2019.08.21
 *@testlinkCase: seqDB-14408
 **************************************/
+//TODO:检视意见同14407
 
 function main()
 {

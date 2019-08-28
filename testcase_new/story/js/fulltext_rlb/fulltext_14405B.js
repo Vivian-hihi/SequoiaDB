@@ -29,6 +29,7 @@ function main()
    var preMaster = db.getRG( groups[0] ).getMaster();
    var preSlave = db.getRG( groups[0] ).getSlave();
    var preSlaveNodeName = preSlave.getHostName() + ":" + preSlave.getServiceName(); 
+   //TODO:选新主不需要设置权重，停节点后起来后判断不是原主节点即可，减少代码复杂度
    try
    {
        // 加大备节点的权重，使的后面重新选举尽可能选到该节点

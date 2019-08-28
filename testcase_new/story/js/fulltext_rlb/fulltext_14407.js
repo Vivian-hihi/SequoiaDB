@@ -26,6 +26,7 @@ function main()
    
    // 正常停止数据备节点
    var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
+   //TODO : 主节点的变量获取没用到，去掉
    var preMaster = db.getRG( groups[0] ).getMaster();
    var preMasterNodeName = preMaster.getHostName() + ":" + preMaster.getServiceName(); 
    var preSlave = db.getRG( groups[0] ).getSlave();
@@ -38,6 +39,7 @@ function main()
        // 等待2min，检查数据组所有节点LSN是否一致
        checkGroupBusiness( 120, COMMCSNAME, clName );
    
+       //TODO：上面都取主节点的lsn了，还需要判断主节点是否存在吗？
        // 当前主节点存在
        isMasterNodeExist( groups[0] );
        
@@ -56,6 +58,7 @@ function main()
        var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14407"}}}}}]};
        var actResult = dbOpr.findFromCL( masterCL, findConf, {'a' : ''} );
        var expResult = dbOpr.findFromCL( masterCL, {"b": {"$lt" : 10000}}, {'a' : ''} );
+       //TODO:这里为啥不直接使用db本身的sort功能对记录进行排序？其他地方也请一并修改
        actResult.sort( compare("a") );
        expResult.sort( compare("a") );
        checkResult( expResult, actResult );
