@@ -76,7 +76,7 @@ function main()
    }
    
    // remove in main cl
-   println("\n---Begin to insert for main cl.");
+   println("\n---Begin to remove for main cl.");
    mainCL.remove( {a:{$lt: recordsNum }} );
    // check results
    var mclCnt  = mainCL.count();
