@@ -33,7 +33,5 @@ else
 var nodeConf  = { diaglevel:diagLevel,
                   diagnum:60,
                   logfilenum:40,
-                  fap:fapValue,
-                  transactionon:true,
-                  transisolation:1
+                  fap:fapValue
                 };

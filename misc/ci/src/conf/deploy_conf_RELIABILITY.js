@@ -25,22 +25,17 @@ var cataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
                   diagnum:60,
                   logfilenum:40,
-                  diagpath:'/opt/sequoiadb/database/cata/[svcname]/diaglog',
-                  transactionon:true
+                  diagpath:'/opt/sequoiadb/database/cata/[svcname]/diaglog'
                 };
 var coordConf = { diaglevel:diagLevel,
                   diagnum:60,
                   logfilenum:40,
-                  diagpath:'/opt/sequoiadb/database/coord/[svcname]/diaglog',
-                  transactionon:true,
-                  transisolation:1
+                  diagpath:'/opt/sequoiadb/database/coord/[svcname]/diaglog'
                 };
 var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
                   diagnum:60,
                   logfilenum:40,
-                  diagpath:'/opt/sequoiadb/database/data/[svcname]/diaglog',
-                  transactionon:true,
-                  transisolation:1
+                  diagpath:'/opt/sequoiadb/database/data/[svcname]/diaglog'
                 };
                 
