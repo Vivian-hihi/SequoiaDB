@@ -75,12 +75,14 @@ public class DeleteObjectWithKillCoord18200 extends S3TestBase {
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
 		//delete again
-		S3Object obj = s3Client.getObject(bucketName, keyName);
-		int versionid = Integer.valueOf(obj.getObjectMetadata().getVersionId());
-		for(int i = versionid ; i >= 0; i--){
-			s3Client.deleteVersion(bucketName, keyName, String.valueOf(i));
+		if(s3Client.doesObjectExist(bucketName, keyName)){
+			S3Object obj = s3Client.getObject(bucketName, keyName);
+			int versionid = Integer.valueOf(obj.getObjectMetadata().getVersionId());
+			for(int i = versionid ; i >= 0; i--){
+				s3Client.deleteVersion(bucketName, keyName, String.valueOf(i));
+			}
+			Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyName));
 		}
-		Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyName));
 
 		runSuccess = true;
 	}

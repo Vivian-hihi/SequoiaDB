@@ -1,5 +1,14 @@
 package com.sequoias3.object;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
@@ -17,15 +26,6 @@ import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * test content: 开启版本控制，更新对象过程中db端节点异常
@@ -133,7 +133,7 @@ public class UpdateObjectWithKillCoord16461 extends S3TestBase {
 		
 		 VersionListing versions = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
 		 List<S3VersionSummary> objects = versions.getVersionSummaries();
-		 Assert.assertEquals(objects.size(), keyNames.size()*2, "updatedObjectList : " + updatedObjectList.toString());
+		 Assert.assertEquals(objects.size(), keyNames.size()*2, "updatedObjectList : " + updatedObjectList.toString() + "  ,objects=" + printVersionKeys(objects));
 		 for(int i = 0; i < objects.size(); i+=2){
 			 String key = objects.get(i).getKey();
 			 String expContent = key + "new";
@@ -148,5 +148,14 @@ public class UpdateObjectWithKillCoord16461 extends S3TestBase {
 			 Assert.assertEquals(objects.get(i+1).getVersionId(), "0", "objectName is : " + key);
 			 Assert.assertEquals(actEtag, expEtag, "objectName is : " + key);
 		 }
+	}
+	
+	private String printVersionKeys(List<S3VersionSummary> objects){
+		String str= "";
+		for(S3VersionSummary obj : objects){
+			 str += obj.getKey();
+			 str += " ";
+		}
+		return str;
 	}
 }

@@ -145,7 +145,7 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 		
 		 VersionListing versions = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
 		 List<S3VersionSummary> objects = versions.getVersionSummaries();
-		 Assert.assertEquals(objects.size(), keyNames.size(), "putObjectList : " + putObjectList.toString());
+		 Assert.assertEquals(objects.size(), keyNames.size(), "putObjectList : " + putObjectList.toString() + "  ,objects=" + printVersionKeys(objects));
 		 for(S3VersionSummary obj : objects){
 			 String key = obj.getKey();
 			 String expEtag = keyAndMd5Map.get(key);
@@ -153,5 +153,14 @@ public class CreateObjectWithKillData16459 extends S3TestBase {
 			 Assert.assertEquals(obj.getVersionId(), "0", "objectName is : " + key);
 			 Assert.assertEquals(actEtag, expEtag, "objectName is : " + key);
 		 }
+	}
+	
+	private String printVersionKeys(List<S3VersionSummary> objects){
+		String str= "";
+		for(S3VersionSummary obj : objects){
+			 str += obj.getKey();
+			 str += " ";
+		}
+		return str;
 	}
 }

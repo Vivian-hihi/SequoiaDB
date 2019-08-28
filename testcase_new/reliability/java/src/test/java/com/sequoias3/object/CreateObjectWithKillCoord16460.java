@@ -140,12 +140,21 @@ public class CreateObjectWithKillCoord16460 extends S3TestBase {
 		
 		 ListObjectsV2Result objectList = s3Client.listObjectsV2(bucketName);
 		 List<S3ObjectSummary> objects = objectList.getObjectSummaries();
-		 Assert.assertEquals(objects.size(), keyNames.size(), "putObjectList : " + putObjectList.toString());
+		 Assert.assertEquals(objects.size(), keyNames.size(), "putObjectList : " + putObjectList.toString() + "  ,objects=" + printContentKeys(objects));
 		 for(S3ObjectSummary obj : objects){
 			 String key = obj.getKey();
 			 String expEtag = keyAndMd5Map.get(key);
 			 String actEtag = obj.getETag();
 			 Assert.assertEquals(actEtag, expEtag, "objectName is : " + key);
 		 }
+	}
+	
+	private String printContentKeys(List<S3ObjectSummary> objects){
+		String str= "";
+		for(S3ObjectSummary obj : objects){
+			 str += obj.getKey();
+			 str += " ";
+		}
+		return str;
 	}
 }
