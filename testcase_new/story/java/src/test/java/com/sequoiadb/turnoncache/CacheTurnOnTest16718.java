@@ -208,10 +208,13 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
         try {
             getCL(db_check);
             first = db_check.getLastUseTime();
-            dropCLWithSpendTime(cs);
+            System.out.println("enable: " + enable + "-------first get cs time: " + first);
+            long dropSpandTime = dropCLWithSpendTime(cs);
+            System.out.println("-------dropSpandTime: " + dropSpandTime);
             getCL(db_check);
         } catch (BaseException e) {
             long seconde = db_check.getLastUseTime();
+            System.out.println("-------seconde get cs time: " + seconde);
             spendTime = seconde - first;
             if (enable && spendTime < inteval) {
                 throw e;
@@ -233,10 +236,13 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
         try {
             getCL(db_check);
             first = db_check.getLastUseTime();
-            dropCLWithSpendTime(cs);
+            System.out.println("enable: " + enable + "-------first get cs time: " + first);
+            long dropSpandTime = dropCLWithSpendTime(cs);
+            System.out.println("-------dropSpandTime: " + dropSpandTime);
             getCL(db_check);
         } catch (BaseException e) {
             long seconde = db_check.getLastUseTime();
+            System.out.println("-------seconde get cs time: " + seconde);
             spendTime = seconde - first;
             if (enable && spendTime < inteval) {
                 throw e;
