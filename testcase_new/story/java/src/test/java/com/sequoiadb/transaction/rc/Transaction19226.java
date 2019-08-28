@@ -67,8 +67,6 @@ public class Transaction19226 extends SdbTestBase {
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
         }
-        if (!sdb.isClosed()) {
-            sdb.close();
-        }
+        sdb.close();
     }
 }
