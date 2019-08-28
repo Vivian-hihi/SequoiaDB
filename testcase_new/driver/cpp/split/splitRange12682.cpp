@@ -78,26 +78,12 @@ TEST_F( splitRangeTest12682, splitRangeSync12682 )
    rc = cs.createCollection( clName, option, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
 
-   // check cl groups before split
-   vector<string> clGroups ;
-   rc = getClGroups( db, clFullName, clGroups ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to get cl data groups" ;
-   ASSERT_EQ( 1, clGroups.size() ) << "fail to check cl data groups num" ;
-   ASSERT_STREQ( srcGroup, clGroups[0].c_str() ) << "fail to check cl data groups" ;
 
    // split cl
    BSONObj begin = BSON( "a" << 10 ) ;
    BSONObj end = BSON( "a" << 100 ) ;
    rc = cl.split( srcGroup, dstGroup, begin, end ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to split cl " << clName ;
-
-   // check cl groups after split
-   clGroups.clear() ;
-   rc = getClGroups( db, clFullName, clGroups ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to get cl data groups" ;
-   ASSERT_EQ( 2, clGroups.size() ) << "fail to check cl data groups num" ;
-   ASSERT_TRUE( ( clGroups[0] == srcGroup && clGroups[1] == dstGroup ) || 
-                ( clGroups[0] == dstGroup && clGroups[1] == srcGroup ) ) << "fail to check cl data groups" ;
 
    // check cl split condition
    sdbCursor cursor ;
