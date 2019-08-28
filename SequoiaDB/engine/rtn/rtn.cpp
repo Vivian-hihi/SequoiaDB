@@ -1765,6 +1765,28 @@ namespace engine
       goto done ;
    }
 
+   static BOOLEAN _rtnCheckExcludeSelector ( const BSONElement & original )
+   {
+      BOOLEAN hasExclude = FALSE ;
+      if ( Object == original.type() )
+      {
+         BSONObj subObject = original.embeddedObject() ;
+         BSONObjIterator itr( subObject ) ;
+         while ( itr.more() )
+         {
+            BSONElement ele = itr.next() ;
+            if ( 0 == ossStrcmp( ele.fieldName(), MTH_S_INCLUDE ) &&
+                 ele.isNumber() &&
+                 0 == ele.numberLong() )
+            {
+               hasExclude = TRUE ;
+               break ;
+            }
+         }
+      }
+      return hasExclude ;
+   }
+
    void rtnNeedResetSelector( const BSONObj &original,
                               const BSONObj &orderBy,
                               BOOLEAN &needReset )
@@ -1781,23 +1803,41 @@ namespace engine
             /// query is like above. --yunwu
             BSONElement ele = itr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
-            if ( !original.hasElement( fieldName ) )
+            BSONElement select = original.getField( fieldName ) ;
+            if ( EOO == select.type() )
             {
-               CHAR *c = ( CHAR * )ossStrchr( fieldName, '.' ) ;
-               if ( NULL == c )
+               const CHAR * subField = fieldName ;
+               while ( TRUE )
                {
-                  needReset = TRUE ;
-                  break ;
-               }
+                  CHAR * c = (CHAR *)ossStrchr( subField, '.' ) ;
+                  if ( NULL == c )
+                  {
+                     needReset = TRUE ;
+                     break ;
+                  }
 
-               *c = '\0' ;
-               BOOLEAN has = original.hasElement( fieldName ) ;
-               *c = '.' ;
-               if ( !has )
+                  *c = '\0' ;
+                  BSONElement select = original.getField( fieldName ) ;
+                  *c = '.' ;
+                  if ( EOO != select.type() )
+                  {
+                     if ( _rtnCheckExcludeSelector( select ) )
+                     {
+                        needReset = TRUE ;
+                     }
+                     break ;
+                  }
+                  subField = (const CHAR *)( c + 1 ) ;
+               }
+               if ( needReset )
                {
-                  needReset = TRUE ;
                   break ;
                }
+            }
+            else if ( _rtnCheckExcludeSelector( select ) )
+            {
+               needReset = TRUE ;
+               break ;
             }
          }
       }
