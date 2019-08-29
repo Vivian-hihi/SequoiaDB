@@ -75,7 +75,7 @@ void operator delete ( void *p, const CHAR *file, UINT32 line ) ;*/
 #define OSS_MEMDEBUG_MASK_ALL_STR         "ALL"
 #define OSS_MEMDEBUG_MASK_DFT_STR         "OSS_MALLOC|POOL_ALLOC"
 
-UINT32 ossString2MemDebugMask( const CHAR *pStr ) ;
+BOOLEAN ossString2MemDebugMask( const CHAR *pStr, UINT32 &mask ) ;
 
 void ossPoolMemTrack( void *p, UINT64 userSize, UINT32 file, UINT32 line ) ;
 void ossPoolMemUnTrack( void *p ) ;

@@ -1868,7 +1868,7 @@ done:
       _memDebugEnabled     = FALSE ;
       _memDebugDetail      = FALSE ;
       _memDebugVerify      = FALSE ;
-      _memDebugMask        = OSS_MEMDEBUG_MASK_DFT ;
+      _memDebugMask        = 0 ;
       _memDebugSize        = 0 ;
       _indexScanStep       = PMD_DFT_INDEX_SCAN_STEP ;
       _dpslocal            = FALSE ;
@@ -2708,7 +2708,13 @@ done:
          _memDebugSize = OSS_MAX ( _memDebugSize, SDB_MEMDEBUG_MINGUARDSIZE ) ;
       }
 
-      _memDebugMask = ossString2MemDebugMask( _memDebugMaskStr ) ;
+      _memDebugMask = 0 ;
+      if ( !ossString2MemDebugMask( _memDebugMaskStr, _memDebugMask ) )
+      {
+         _memDebugMask = OSS_MEMDEBUG_MASK_DFT ;
+         ossStrncpy( _memDebugMaskStr, OSS_MEMDEBUG_MASK_DFT_STR,
+                     PMD_MAX_LONG_STR_LEN ) ;
+      }
 
       if ( 0 == _vecCat.size() )
       {

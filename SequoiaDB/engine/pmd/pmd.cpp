@@ -517,6 +517,11 @@ namespace engine
       utilGetGlobalMemPool()->setMaxSize( 0 ) ;
       utilGetGlobalMemPool()->shrink() ;
 
+      if ( ossGetTrapExceptionPath() )
+      {
+         ossMemTrace( ossGetTrapExceptionPath() ) ;
+      }
+
       /// stop memdebug
       ossEnableMemDebug( FALSE, 0, FALSE, FALSE, 0 ) ;
 

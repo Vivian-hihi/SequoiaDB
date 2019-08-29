@@ -864,25 +864,37 @@ INT32 ossMemTrace ( const CHAR *pPath )
 {
    INT32 rc = SDB_OK ;
 
-   /// trace memdump file
-   rc = ossMemTraceAFile( &gMemTrackCB, pPath, SDB_OSS_MEMDUMPNAME ) ;
-   if ( rc )
+   if ( ossMemDebugEnabled )
    {
-      goto error ;
-   }
+      /// trace memdump file
+      if ( ossMemDebugMask & OSS_MEMDEBUG_MASK_OSSMALLOC )
+      {
+         rc = ossMemTraceAFile( &gMemTrackCB, pPath, SDB_OSS_MEMDUMPNAME ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
 
-   /// trace pooldump file
-   rc = ossMemTraceAFile( &gPoolMemTrackCB, pPath, SDB_POOL_MEMDUMPNAME ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
+      /// trace pooldump file
+      if ( ossMemDebugMask & OSS_MEMDEBUG_MASK_POOLALLOC )
+      {
+         rc = ossMemTraceAFile( &gPoolMemTrackCB, pPath, SDB_POOL_MEMDUMPNAME ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
 
-   /// trace threaddump file
-   rc = ossMemTraceAFile( &gThreadMemTrackCB, pPath, SDB_TC_MEMDUMPNAME ) ;
-   if ( rc )
-   {
-      goto error ;
+      /// trace threaddump file
+      if ( ossMemDebugMask & OSS_MEMDEBUG_MASK_THREADALLOC )
+      {
+         rc = ossMemTraceAFile( &gThreadMemTrackCB, pPath, SDB_TC_MEMDUMPNAME ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
    }
 
 done:
@@ -927,8 +939,10 @@ void ossOnMemConfigChange( BOOLEAN debugEnable,
                       memDebugDetail, memDebugMask ) ;
 }
 
-UINT32 _ossString2MemDebugMask( const CHAR *pStr )
+BOOLEAN _ossString2MemDebugMask( const CHAR *pStr, UINT32 &mask )
 {
+   BOOLEAN result = TRUE ;
+
    while ( pStr && ' ' == *pStr )
    {
       ++pStr ;
@@ -936,37 +950,42 @@ UINT32 _ossString2MemDebugMask( const CHAR *pStr )
 
    if ( 0 == ossStrcasecmp( pStr, OSS_MEMDEBUG_MASK_OSSMALLOC_STR ) )
    {
-      return OSS_MEMDEBUG_MASK_OSSMALLOC ;
+      mask |= OSS_MEMDEBUG_MASK_OSSMALLOC ;
    }
    else if ( 0 == ossStrcasecmp( pStr, OSS_MEMDEBUG_MASK_POOLALLOC_STR ) )
    {
-      return OSS_MEMDEBUG_MASK_POOLALLOC ;
+      mask |= OSS_MEMDEBUG_MASK_POOLALLOC ;
    }
    else if ( 0 == ossStrcasecmp( pStr, OSS_MEMDEBUG_MASK_THREADALLOC_STR ) )
    {
-      return OSS_MEMDEBUG_MASK_THREADALLOC ;
+      mask |= OSS_MEMDEBUG_MASK_THREADALLOC ;
    }
    else if ( 0 == ossStrcasecmp( pStr, OSS_MEMDEBUG_MASK_ALL_STR ) )
    {
-      return OSS_MEMDEBUG_MASK_ALL ;
+      mask |= OSS_MEMDEBUG_MASK_ALL ;
    }
-   return 0 ;
+   else
+   {
+      result = FALSE ;
+   }
+
+   return result ;
 }
 
-UINT32 ossString2MemDebugMask( const CHAR * pStr )
+BOOLEAN ossString2MemDebugMask( const CHAR * pStr, UINT32 &mask )
 {
-   UINT32 mask = 0 ;
+   BOOLEAN result = TRUE ;
    const CHAR *p = pStr ;
    CHAR *p1 = NULL ;
 
-   while( p && *p )
+   while( result && p && *p )
    {
       p1 = (CHAR*)ossStrchr( p, '|' ) ;
       if ( p1 )
       {
          *p1 = 0 ;
       }
-      mask |= _ossString2MemDebugMask( p ) ;
+      result = _ossString2MemDebugMask( p, mask ) ;
       if ( p1 )
       {
          *p1 = '|' ;
@@ -974,6 +993,6 @@ UINT32 ossString2MemDebugMask( const CHAR * pStr )
       p = p1 ? p1 + 1 : NULL ;
    }
 
-   return mask ;
+   return result ;
 }
 
