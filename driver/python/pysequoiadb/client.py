@@ -1522,15 +1522,22 @@ class client(object):
         rc = sdb.sdb_set_session_attri(self._client, bson_options)
         raise_if_error(rc, "Failed to set session attribute")
 
-    def get_session_attri(self):
+    def get_session_attri(self, useCache=True):
         """Get the attributes of the session.
+
+        Parameters:
+           Name         Type     Info:
+           useCache     bool     Whether to use cache in local, default to be TRUE.
 
         Return values:
            a dict object of attributes
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        rc, result = sdb.sdb_get_session_attri(self._client)
+        if not isinstance(useCache, bool):
+            raise SDBTypeError("useCache must be an instance of bool")
+        
+        rc, result = sdb.sdb_get_session_attri(self._client, useCache)
         raise_if_error(rc, "Failed to get session attributes")
         record, size = bson._bson_to_dict(result, dict, False,
                                           bson.OLD_UUID_SUBTYPE, True)

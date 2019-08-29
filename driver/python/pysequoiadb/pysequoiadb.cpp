@@ -1226,15 +1226,16 @@ __METHOD_IMP(sdb_get_session_attri)
    PYOBJECT *obj = NULL ;
    sdb *client = NULL ;
    bson::BSONObj retObj ;
+   BOOLEAN useCache = 0 ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "Oi", &obj, &useCache ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-   rc = client->getSessionAttr( retObj ) ;
+   rc = client->getSessionAttr( retObj, useCache ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
