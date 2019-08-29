@@ -46,6 +46,8 @@ function main()
        {
            try
            {
+               // 如果选举超时则需重新选举，这里在选举之前要先判断主节点是否存在
+               isMasterNodeExist( groups[0] );
                db.getRG( groups[0] ).reelect();
                // 等待选主
                isMasterNodeExist( groups[0] );
