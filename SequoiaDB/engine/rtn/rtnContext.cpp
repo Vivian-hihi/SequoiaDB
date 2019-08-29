@@ -295,7 +295,8 @@ namespace engine
 
          if ( *RTN_GET_REFERENCE( _buffer ) == 0 )
          {
-            SDB_THREAD_FREE( RTN_BUFF_TO_REAL_PTR( _buffer ) ) ;
+            CHAR *pRealPtr = RTN_BUFF_TO_REAL_PTR( _buffer ) ;
+            SDB_THREAD_FREE( pRealPtr ) ;
             _buffer = NULL ;
          }
       }
