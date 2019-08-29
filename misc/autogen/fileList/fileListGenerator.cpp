@@ -125,7 +125,7 @@ int fileListGenerator::_genFileNameHPP( fileOutStream &fout,
            "                                                   autoFilenamesArray +\n"
            "                                                   autoFilenameSize ) ;\n"
            "\n"
-           "string autoGetFileName( UINT32 fileCode )\n"
+           "inline string autoGetFileName( UINT32 fileCode )\n"
            "{\n"
            "   map<UINT32, string>::const_iterator cit ;\n"
            "   cit = autoFilenamesMap.find( fileCode ) ;\n"
