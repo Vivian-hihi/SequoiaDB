@@ -63,7 +63,8 @@ namespace engine
    {
       if ( _pBuff && _owned )
       {
-         SDB_THREAD_FREE( (CHAR*)_pBuff ) ;
+         CHAR *pTmp = ( CHAR* )_pBuff ;
+         SDB_THREAD_FREE( pTmp ) ;
       }
       _owned = FALSE ;
       _pBuff = right._pBuff ;
