@@ -18,11 +18,6 @@
       <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
    </listeners>
 
-   <test name="normaltest">
-      <packages>
-         <package name="com.sequoiadb.lob.biglob" />
-      </packages>      
-   </test>
    <!--SEQUOIADBMAINSTREAM-3978-->
    <test name="fulltext" parallel="classes" thread-count="5">
       <packages>
