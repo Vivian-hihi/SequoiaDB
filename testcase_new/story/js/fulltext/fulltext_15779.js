@@ -27,22 +27,6 @@ function main()
 
    var textIndexName = "textIndex_15779";
    dbcl.createIndex(textIndexName, {"a" : "text", "b" : "text", "c" : "text", "d" : "text"});
-
-   // 检查ES数组是否同步
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 5);
-   
-   // 全文检索，检查结果
-   var dbOpr = new DBOperator();
-   //var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
-   var expectResult = [{a:"aaa", b:"bbb", c:"ccc"},
-                       {a: ["brr1"], b: "abc", c:"def"},
-                       {a: ["brr1","brr2","brr3"], b: "bac", c:"fed"},
-                       {a:["arr1",{"$oid":"123abcd00ef12358902300ef"}],b:"lmn", c:"opt"},
-                       {a: [{0 : 1},{1 : 2},{3 : 4},2,2.222,-3000000000,{ $decimal:"123.456" }], b: "rsv", c:"unw"}
-                      ];
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkResult(expectResult, actResult);
    
    // 全部记录更新为数组，且数组元素均为非string，更新报错
    try
@@ -63,9 +47,16 @@ function main()
    //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 5);
       
    // 全文检索，检查结果
+   var dbOpr = new DBOperator();
+   var expectResult = [{a:"aaa", b:"bbb", c:"ccc"},
+                       {a: ["brr1"], b: "abc", c:"def"},
+                       {a: ["brr1","brr2","brr3"], b: "bac", c:"fed"},
+                       {a:["arr1",{"$oid":"123abcd00ef12358902300ef"}],b:"lmn", c:"opt"},
+                       {a: [{0 : 1},{1 : 2},{3 : 4},2,2.222,-3000000000,{ $decimal:"123.456" }], b: "rsv", c:"unw"}
+                      ];
    //var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
    //checkResult(expectResult, actResult);
-
+   
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
    //SEQUOIADBMAINSTREAM-3983

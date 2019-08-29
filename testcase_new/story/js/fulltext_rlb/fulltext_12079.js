@@ -55,10 +55,10 @@ function main()
    checkConsistency( COMMCSNAME, clName );
    
    // 节点停止的时候，插入记录未校验则报-252，可能存在记录插入成功的情况，因此预期结果可能有可能为原数+1
-   //TODO: 预期结果使用dbcl.count()获取更好，e没有定义,这里是不是用println+throw比较好？
-   var count = dbcl.find( {"":{"$Text":{"query":{"match_all":{}}}}} ).count();
-   if (count != 10000 && count != 10001) {
-       throw buildException("check count", e, "check", "10000 or 10001", count);
+   var count = dbcl.count();
+   if ( count != 10000 && count != 10001 ) {
+       println( "expect count: 10000 or 10001, actual count: " + count );
+       throw "check count fail";
    }
    
     var esIndexNames = dbOpr.getESIndexNames( COMMCSNAME, clName, textIndexName );

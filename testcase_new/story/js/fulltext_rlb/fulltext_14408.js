@@ -4,7 +4,6 @@
 *@createdate:  2019.08.21
 *@testlinkCase: seqDB-14408
 **************************************/
-//TODO:检视意见同14407
 
 function main()
 {
@@ -38,9 +37,6 @@ function main()
        
    // 等待2min，检查数据组所有节点LSN是否一致
    checkGroupBusiness( 120, COMMCSNAME, clName );
-    
-   // 当前主节点存在
-   isMasterNodeExist( groups[0] );
    
    // 执行增删改
    dbcl.insert( [{ a : 'test_14408 20001', b : 20001}, { a : 'test_14408 20002', b : 20002}, { a : 'test_14408 20003', b : 20003}] );
@@ -55,10 +51,8 @@ function main()
    var dbMaster = new Sdb( preMasterNodeName );
    var masterCL = dbMaster.getCS( COMMCSNAME ).getCL( clName );
    var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14408"}}}}}]};
-   var actResult = dbOpr.findFromCL( masterCL, findConf, {'a' : ''} );
-   var expResult = dbOpr.findFromCL( masterCL, {"b": {"$lt" : 10000}}, {'a' : ''} );
-   actResult.sort( compare("a") );
-   expResult.sort( compare("a") );
+   var actResult = dbOpr.findFromCL( masterCL, findConf, {'a' : ''}, { a : 1 } );
+   var expResult = dbOpr.findFromCL( masterCL, {"b": {"$lt" : 10000}}, {'a' : ''}, { a : 1 } );
    checkResult( expResult, actResult );
    println( "---check result success from master---" );
    dbMaster.close();
@@ -66,10 +60,8 @@ function main()
    // 走原备节点执行全文检索
    var dbSlave = new Sdb( preSlaveNodeName );
    var slaveCL = dbSlave.getCS( COMMCSNAME ).getCL( clName );
-   var actResult = dbOpr.findFromCL( slaveCL, findConf, {'a' : ''} );
-   var expResult = dbOpr.findFromCL( slaveCL, {"b": {"$lt" : 10000}}, {'a' : ''} );
-   actResult.sort( compare("a") );
-   expResult.sort( compare("a") );
+   var actResult = dbOpr.findFromCL( slaveCL, findConf, {'a' : ''}, { a : 1 } );
+   var expResult = dbOpr.findFromCL( slaveCL, {"b": {"$lt" : 10000}}, {'a' : ''}, { a : 1 } );
    checkResult( expResult, actResult );
    println( "---check result success from Slave---" );
    dbSlave.close();

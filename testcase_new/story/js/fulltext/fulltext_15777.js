@@ -32,23 +32,13 @@ function main()
    var textIndexName = "textIndex_15777";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
-   // 检查ES同步
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 3);
-   
-   // 检查全文检索结果
-   var dbOpr = new DBOperator();
-   var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var expResult = [{a: ["arr1"]},{a: "arr1"},{a: ["arr1", "arr2", "arr3"]}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"_id": {"$include": 0}}, {_id:1});
-   checkResult(expResult, actResult);
-
    // 更新至非string类型的记录
    dbcl.update({"$set" : {a : -1}}, {a : {"$isnull" : 0}});
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
    
    // 检查全文检索结果
    expResult = [];
-   actResult = dbOpr.findFromCL(dbcl, findCond, {"_id": {"$include": 0}}, {_id:1});
+   actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {"_id": {"$include": 0}}, {_id:1});
    checkResult(expResult, actResult);
 
    var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);

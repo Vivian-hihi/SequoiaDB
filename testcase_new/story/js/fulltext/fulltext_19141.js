@@ -31,15 +31,6 @@ function main()
    var textIndexName = "textIndex_19141";
    dbcl.createIndex(textIndexName, {"a" : "text"});
 
-   // 检查ES同步
-   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
-   
-   // 检查全文检索结果
-   var dbOpr = new DBOperator();
-   var expResult = [{a: ["arr1"]},{a: ["arr1", "arr2", "arr3"]}];
-   var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{"query":{"match_all":{}}}}}, {_id:{"$include":0}}, {_id:1});
-   checkResult(expResult, actResult);
-
    // 更新全文索引字段为多个数组元素(部分为string)的记录
    dbcl.update({"$set" : {a : ["updated 1", 1.11]}}, {a : {"$exists" : 1}});
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
