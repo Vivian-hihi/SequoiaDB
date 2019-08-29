@@ -43,6 +43,7 @@
 
 #define SDB_OSS_MEMDUMPNAME      ".memossdump"
 #define SDB_POOL_MEMDUMPNAME     ".mempooldump"
+#define SDB_TC_MEMDUMPNAME       ".memtcdump"
 #define SDB_OSS_NEW              new(__FILE__,__LINE__,std::nothrow)
 #define SDB_OSS_DEL              delete
 
@@ -59,6 +60,23 @@ void* operator new (size_t size, const CHAR *file, UINT32 line ) ;
 
 void operator delete ( void *p, const CHAR *file, UINT32 line ) ;*/
 
+#define OSS_MEMDEBUG_MASK_OSSMALLOC       0x00000001
+#define OSS_MEMDEBUG_MASK_POOLALLOC       0x00000002
+#define OSS_MEMDEBUG_MASK_THREADALLOC     0x00000004
+
+#define OSS_MEMDEBUG_MASK_DFT             OSS_MEMDEBUG_MASK_OSSMALLOC|\
+                                          OSS_MEMDEBUG_MASK_POOLALLOC
+
+#define OSS_MEMDEBUG_MASK_ALL             0xFFFFFFFF
+
+#define OSS_MEMDEBUG_MASK_OSSMALLOC_STR   "OSS_MALLOC"
+#define OSS_MEMDEBUG_MASK_POOLALLOC_STR   "POOL_ALLOC"
+#define OSS_MEMDEBUG_MASK_THREADALLOC_STR "THREAD_ALLOC"
+#define OSS_MEMDEBUG_MASK_ALL_STR         "ALL"
+#define OSS_MEMDEBUG_MASK_DFT_STR         "OSS_MALLOC|POOL_ALLOC"
+
+UINT32 ossString2MemDebugMask( const CHAR *pStr ) ;
+
 void ossPoolMemTrack( void *p, UINT64 userSize, UINT32 file, UINT32 line ) ;
 void ossPoolMemUnTrack( void *p ) ;
 
@@ -68,6 +86,13 @@ typedef void    (*OSS_POOL_MEMINFO_FUNC)( void* p, UINT64 &size,
 
 void ossSetPoolMemcheckFunc( OSS_POOL_MEMCHECK_FUNC pFunc ) ;
 void ossSetPoolMemInfoFunc( OSS_POOL_MEMINFO_FUNC pFunc ) ;
+
+void ossThreadMemTrack( void *p, UINT64 userSize, UINT32 file, UINT32 line ) ;
+void ossThreadMemUnTrack( void *p ) ;
+
+typedef void*   (*OSS_TC_MEMREALPTR_FUNC)( void* p ) ;
+
+void ossSetTCMemRealPtrFunc( OSS_TC_MEMREALPTR_FUNC pFunc ) ;
 
 #endif
 

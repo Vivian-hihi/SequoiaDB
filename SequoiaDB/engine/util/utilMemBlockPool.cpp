@@ -650,7 +650,9 @@ namespace engine
          *pRealSize = realSize - UTIL_MEM_TOTAL_FILL_LEN ;
       }
 
-      if ( _isGlobal && ossMemDebugEnabled )
+      if ( MEMBLOCKPOOL_TYPE_DYN != realType &&
+           _isGlobal &&
+           ossMemDebugEnabled )
       {
          ossPoolMemTrack( (void*)ptr, size, ossHashFileName( pFile ), line ) ;
       }
@@ -766,11 +768,6 @@ namespace engine
             CHAR *newPtr = NULL ;
             UINT32 newRealSize = UTIL_MEM_SIZE_2_REALSIZE( size ) ;
 
-            if ( _isGlobal && ossMemDebugEnabled )
-            {
-               ossPoolMemUnTrack( (void*)oldRealPtr ) ;
-            }
-
             newPtr = (CHAR*)SDB_OSS_REALLOC( oldRealPtr, newRealSize ) ;
             if ( newPtr )
             {
@@ -780,12 +777,6 @@ namespace engine
                if ( pRealSize )
                {
                   *pRealSize = newRealSize - UTIL_MEM_TOTAL_FILL_LEN ;
-               }
-
-               if ( _isGlobal && ossMemDebugEnabled )
-               {
-                  ossPoolMemTrack( (void*)newPtr, size,
-                                   ossHashFileName( pFile ), line ) ;
                }
             }
             goto done ;
@@ -826,7 +817,9 @@ namespace engine
          goto done ;
       }
 
-      if ( _isGlobal && ossMemDebugEnabled )
+      if ( MEMBLOCKPOOL_TYPE_DYN != type &&
+           _isGlobal &&
+           ossMemDebugEnabled )
       {
          ossPoolMemUnTrack( (void*)realPtr ) ;
       }

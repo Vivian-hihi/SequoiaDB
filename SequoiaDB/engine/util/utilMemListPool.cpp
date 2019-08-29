@@ -45,6 +45,8 @@
    #error "Invalid UTIL_MEM_LIST_BASE_EXPONENT define"
 #endif
 
+extern BOOLEAN ossMemDebugEnabled ;
+
 namespace engine
 {
 
@@ -153,6 +155,11 @@ namespace engine
          {
             *pRealSize = _blockSize - UTIL_MEM_TOTAL_FILL_LEN ;
          }
+
+         if ( ossMemDebugEnabled )
+         {
+            ossThreadMemTrack( ptr, size, ossHashFileName( pFile ), line ) ;
+         }
       }
       else
       {
@@ -160,11 +167,22 @@ namespace engine
          {
             _pEvent->onOutOfCache( _blockSize, _cachedSize ) ;
          }
-         ptr = utilPoolAlloc( _canAllocBlockSize( size ) ?
+         BOOLEAN canAllocBlockSize = _canAllocBlockSize( size ) ;
+
+         ptr = utilPoolAlloc( canAllocBlockSize ?
                               ( _blockSize - UTIL_MEM_TOTAL_FILL_LEN ) :
                               size,
                               pFile, line,
                               pRealSize ) ;
+
+         if ( ptr )
+         {
+            if ( pRealSize )
+            {
+               *pRealSize = canAllocBlockSize ?
+                            ( _blockSize - UTIL_MEM_TOTAL_FILL_LEN ) : size ;
+            }
+         }
       }
 
       return ptr ;
@@ -180,6 +198,11 @@ namespace engine
 #endif //_DEBUG
 
       ++_deallocCount ;
+
+      if ( ossMemDebugEnabled )
+      {
+         ossThreadMemUnTrack( p ) ;
+      }
 
       if ( _canCacheBlock() )
       {
@@ -647,6 +670,24 @@ namespace engine
    done:
       return len ;
    }
+
+   /*
+      Callback Funcs
+   */
+   void* utilTCMemRealPtr( void *p )
+   {
+      return (void*)UTIL_MEM_USERPTR_2_PTR( p ) ;
+   }
+
+   class _utilTCCallbackAssit
+   {
+      public:
+         _utilTCCallbackAssit()
+         {
+            ossSetTCMemRealPtrFunc( (OSS_TC_MEMREALPTR_FUNC)utilTCMemRealPtr ) ;
+         }
+   } ;
+   _utilTCCallbackAssit s_assitTCCallbak ;
 
    /*
       Global implement

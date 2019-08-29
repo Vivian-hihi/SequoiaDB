@@ -1852,6 +1852,7 @@ done:
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobMetaPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _auditMaskStr, 0, sizeof( _auditMaskStr ) ) ;
+      ossMemset( _memDebugMaskStr, 0, sizeof( _memDebugMaskStr ) ) ;
 
       _krcbMaxPool         = 0 ;
       _krcbDiagLvl         = (UINT16)PDWARNING ;
@@ -1865,7 +1866,9 @@ done:
       _dataErrorOp         = PMD_OPT_VALUE_FULLSYNC ;
       _replBucketSize      = PMD_DFT_REPL_BUCKET_SIZE ;
       _memDebugEnabled     = FALSE ;
+      _memDebugDetail      = FALSE ;
       _memDebugVerify      = FALSE ;
+      _memDebugMask        = OSS_MEMDEBUG_MASK_DFT ;
       _memDebugSize        = 0 ;
       _indexScanStep       = PMD_DFT_INDEX_SCAN_STEP ;
       _dpslocal            = FALSE ;
@@ -2104,9 +2107,16 @@ done:
       // --memdebug
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE,
                    PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
+      // --memdebugdetail
+      rdxBooleanS( pEX, PMD_OPTION_MEMDEBUGDETAIL, _memDebugDetail, FALSE,
+                   PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
       // --memdebugverify
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUGVERIFY, _memDebugVerify, FALSE,
                    PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
+      // --memdebugmask
+      rdxString( pEX, PMD_OPTION_MEMDEBUGMASK, _memDebugMaskStr,
+                 sizeof( _memDebugMaskStr ), FALSE, PMD_CFG_CHANGE_RUN,
+                 OSS_MEMDEBUG_MASK_DFT_STR, FALSE ) ;
       // --memdebugsize
       rdxUInt( pEX, PMD_OPTION_MEMDEBUGSIZE, _memDebugSize, FALSE,
                PMD_CFG_CHANGE_RUN, 0, TRUE ) ;
@@ -2697,6 +2707,8 @@ done:
          _memDebugSize = OSS_MIN ( _memDebugSize, SDB_MEMDEBUG_MAXGUARDSIZE ) ;
          _memDebugSize = OSS_MAX ( _memDebugSize, SDB_MEMDEBUG_MINGUARDSIZE ) ;
       }
+
+      _memDebugMask = ossString2MemDebugMask( _memDebugMaskStr ) ;
 
       if ( 0 == _vecCat.size() )
       {

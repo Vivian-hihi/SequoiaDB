@@ -70,7 +70,9 @@ SDB_EXTERN_C_START
 
 void  ossEnableMemDebug( BOOLEAN debugEnable,
                          UINT32  memDebugSize,
-                         BOOLEAN memDebugVerify ) ;
+                         BOOLEAN memDebugVerify,
+                         BOOLEAN memDebugDetail,
+                         UINT32  memDebugMask ) ;
 
 void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line ) ;
 
@@ -89,7 +91,9 @@ void    ossMemUnTrack ( void *p ) ;
 INT32   ossMemTrace ( const CHAR *pPath ) ;
 void    ossOnMemConfigChange( BOOLEAN debugEnable,
                               UINT32  memDebugSize,
-                              BOOLEAN memDebugVerify ) ;
+                              BOOLEAN memDebugVerify,
+                              BOOLEAN memDebugDetail,
+                              UINT32  memDebugMask ) ;
 
 SDB_EXTERN_C_END
 #endif

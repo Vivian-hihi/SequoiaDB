@@ -518,7 +518,7 @@ namespace engine
       utilGetGlobalMemPool()->shrink() ;
 
       /// stop memdebug
-      ossEnableMemDebug( FALSE, 0, FALSE ) ;
+      ossEnableMemDebug( FALSE, 0, FALSE, FALSE, 0 ) ;
 
       if ( !normalStop && _eduMgr.dumpAbnormalEDU() > 0 )
       {
@@ -549,7 +549,9 @@ namespace engine
       // enable memory debug option
       ossOnMemConfigChange( _optioncb.memDebugEnabled(),
                             _optioncb.memDebugSize(),
-                            _optioncb.memDebugVerify() ) ;
+                            _optioncb.memDebugVerify(),
+                            _optioncb.memDebugDetail(),
+                            _optioncb.memDebugMask() ) ;
 
       // Reconfig all registered cbs
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
@@ -595,7 +597,9 @@ namespace engine
       // enable memory debug option
       ossEnableMemDebug( _optioncb.memDebugEnabled(),
                          _optioncb.memDebugSize(),
-                         _optioncb.memDebugVerify() ) ;
+                         _optioncb.memDebugVerify(),
+                         _optioncb.memDebugDetail(),
+                         _optioncb.memDebugMask() ) ;
 
       return _optioncb.makeAllDir() ;
    }

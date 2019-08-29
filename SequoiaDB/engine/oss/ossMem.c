@@ -57,8 +57,10 @@
 #endif
 
 BOOLEAN ossMemDebugEnabled = FALSE ;
-BOOLEAN ossMemDebugVerify  = TRUE ;
-UINT32  ossMemDebugSize = 0 ;
+BOOLEAN ossMemDebugVerify  = FALSE ;
+BOOLEAN ossMemDebugDetail  = FALSE ;
+UINT32  ossMemDebugMask    = 0 ;
+UINT32  ossMemDebugSize    = 0 ;
 
 #define OSS_MEM_HEADSZ 32
 
@@ -94,13 +96,15 @@ UINT32  ossMemDebugSize = 0 ;
 
 // in C version, we don't do anything
 // in C++, we keep track of all memory allocations from ossMemAlloc
-#if !defined (__cplusplus) || !defined (SDB_ENGINE)
+#if !defined (__cplusplus)
 void ossMemTrack ( void *p ) {}
 void ossMemUnTrack ( void *p ) {}
 INT32 ossMemTrace ( const CHAR *pPath ) { return 0 ; }
 void  ossOnMemConfigChange( BOOLEAN debugEnable,
                             UINT32  memDebugSize,
-                            BOOLEAN memDebugVerify )
+                            BOOLEAN memDebugVerify,
+                            BOOLEAN memDebugDetail,
+                            UINT32  memDebugMask )
 {}
 #endif
 
@@ -295,11 +299,15 @@ static void *ossMemAlloc2 ( size_t size, const CHAR* file, UINT32 line )
 
 void ossEnableMemDebug( BOOLEAN debugEnable,
                         UINT32 memDebugSize,
-                        BOOLEAN memDebugVerify )
+                        BOOLEAN memDebugVerify,
+                        BOOLEAN memDebugDetail,
+                        UINT32  memDebugMask )
 {
    ossMemDebugEnabled   = debugEnable ;
    ossMemDebugSize      = memDebugSize ;
    ossMemDebugVerify    = memDebugVerify ;
+   ossMemDebugDetail    = memDebugDetail ;
+   ossMemDebugMask      = memDebugMask ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMALLOC, "ossMemAlloc" )

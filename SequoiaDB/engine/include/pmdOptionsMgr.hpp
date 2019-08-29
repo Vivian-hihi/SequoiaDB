@@ -583,7 +583,9 @@ namespace engine
          OSS_INLINE BOOLEAN transAutoRollback() const { return _transAutoRollback ; }
          OSS_INLINE BOOLEAN transUseRBS() const { return _transUseRBS ; }
          OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
+         OSS_INLINE BOOLEAN memDebugDetail() const { return _memDebugDetail ; }
          OSS_INLINE BOOLEAN memDebugVerify() const { return _memDebugVerify ; }
+         OSS_INLINE UINT32 memDebugMask() const { return _memDebugMask ; }
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
          OSS_INLINE UINT32 getReplLogBuffSize () const { return _logBuffSize ; }
@@ -679,6 +681,7 @@ namespace engine
          CHAR        _prefInstStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _prefInstModeStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
          CHAR        _auditMaskStr[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _memDebugMaskStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          UINT32      _logFileSz ;
          UINT32      _logFileNum ;
          UINT32      _numPreLoaders ;
@@ -690,6 +693,8 @@ namespace engine
          UINT32      _dataErrorOp ;
          BOOLEAN     _memDebugEnabled ;
          BOOLEAN     _memDebugVerify ;
+         BOOLEAN     _memDebugDetail ;
+         UINT32      _memDebugMask ;
          UINT32      _memDebugSize ;
          UINT32      _indexScanStep ;
          BOOLEAN     _dpslocal ;
