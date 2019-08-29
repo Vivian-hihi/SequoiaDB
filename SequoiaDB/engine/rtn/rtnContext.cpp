@@ -102,13 +102,13 @@ namespace engine
 
       if ( NULL == _buffer )
       {
-         _buffer = ( CHAR* )SDB_OSS_MALLOC(
+         _buffer = ( CHAR* )SDB_THREAD_ALLOC(
                                  RTN_BUFF_TO_PTR_SIZE( newSize ) ) ;
       }
       else
       {
          // reallocate memory
-         _buffer = (CHAR*)SDB_OSS_REALLOC(
+         _buffer = (CHAR*)SDB_THREAD_REALLOC(
                                  RTN_BUFF_TO_REAL_PTR( _buffer ),
                                  RTN_BUFF_TO_PTR_SIZE( newSize ) ) ;
       }
@@ -295,7 +295,7 @@ namespace engine
 
          if ( *RTN_GET_REFERENCE( _buffer ) == 0 )
          {
-            SDB_OSS_FREE( RTN_BUFF_TO_REAL_PTR( _buffer ) ) ;
+            SDB_THREAD_FREE( RTN_BUFF_TO_REAL_PTR( _buffer ) ) ;
             _buffer = NULL ;
          }
       }

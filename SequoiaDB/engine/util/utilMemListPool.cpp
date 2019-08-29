@@ -56,6 +56,8 @@ namespace engine
    static UINT32 g_maxTCCacheSize = UTIL_MEM_POOL_MAXCACHE_SIZE_DFT ;
 
    #define UTIL_DUMP_BUFFSIZE             ( 2800 )
+   #define UTIL_MIN_SPEC_BLOCK_SIZE       ( 2048 )    /// 2K
+   #define UTIL_MAX_SPEC_BLOCK_SIZE       ( 131072 )  /// 128K
 
    void utilSetMaxTCSize( UINT32 maxCacheSize )
    {
@@ -320,6 +322,10 @@ namespace engine
                   "Invalid arrayList size" ) ;
       ossMemset( _arrayList, 0, sizeof( _arrayList ) ) ;
 
+      _pSpecBlock = NULL ;
+      _specBlockSize = 0 ;
+      _allocSpecCount = 0 ;
+
       _allocCount = 0 ;
       _reallocCount = 0 ;
       _deallocCount = 0 ;
@@ -385,6 +391,18 @@ namespace engine
       goto done ;
    }
 
+   void _utilMemListPool::clearSpecBlock()
+   {
+      if ( _pSpecBlock )
+      {
+         onReleaseCache( _specBlockSize ) ;
+
+         SDB_POOL_FREE( _pSpecBlock ) ;
+         _pSpecBlock = NULL ;
+         _specBlockSize = 0 ;
+      }
+   }
+
    void _utilMemListPool::clear()
    {
       for ( UINT32 i = 0 ; i < UTIL_MEM_POOL_LIST_NUM ; ++i )
@@ -394,6 +412,9 @@ namespace engine
             _arrayList[ i ]->clear() ;
          }
       }
+
+      clearSpecBlock() ;
+      _allocSpecCount = 0 ;
 
       _allocCount = 0 ;
       _reallocCount = 0 ;
@@ -427,6 +448,15 @@ namespace engine
          UINT64 freeSize = pMemList->shrink( pMemList->getCacheSize() / 2 ) ;
          PD_LOG( PDINFO, "MemList[BlockSize:%u] freed %llu space",
                  pMemList->getBlockSize(), freeSize ) ;
+      }
+
+      if ( _allocSpecCount > 0 )
+      {
+         _allocSpecCount = 0 ;
+      }
+      else if ( 0 == _allocSpecCount )
+      {
+         clearSpecBlock() ;
       }
    }
 
@@ -476,6 +506,37 @@ namespace engine
       return FALSE ;
    }
 
+   void* _utilMemListPool::allocFromSpecBlock( UINT32 size,
+                                               const CHAR *pFile,
+                                               UINT32 line,
+                                               UINT32 *pRealSize )
+   {
+      void *p = NULL ;
+
+      if ( _specBlockSize >= size )
+      {
+         p = ( void* )_pSpecBlock ;
+
+         if ( pRealSize )
+         {
+            *pRealSize = _specBlockSize ;
+         }
+
+         onAllocCache( _specBlockSize ) ;
+
+         if ( ossMemDebugEnabled )
+         {
+            ossThreadMemTrack( p, size, ossHashFileName( pFile ), line ) ;
+         }
+
+         ++_allocSpecCount ;
+         _specBlockSize = 0 ;
+         _pSpecBlock = NULL ;
+      }
+
+      return p ;
+   }
+
    void* _utilMemListPool::alloc( UINT32 size,
                                   const CHAR *pFile,
                                   UINT32 line,
@@ -520,6 +581,13 @@ namespace engine
             ptr = _arrayList[ index ]->alloc( size, pFile, line, pRealSize ) ;
          }
       }
+      else if ( size >= UTIL_MIN_SPEC_BLOCK_SIZE &&
+                size <= UTIL_MAX_SPEC_BLOCK_SIZE &&
+                ( NULL != ( ptr = allocFromSpecBlock( size, pFile,
+                                                      line, pRealSize ) ) ) )
+      {
+         /// do nothing
+      }
       else
       {
          ++_outrangeAlloc ;
@@ -537,6 +605,7 @@ namespace engine
    {
       void *pNewPtr = NULL ;
       UINT32 oldSize = 0 ;
+      UINT16 type = _utilMemBlockPool::MEMBLOCKPOOL_TYPE_MAX ;
 
       if ( 0 == size )
       {
@@ -546,7 +615,7 @@ namespace engine
 
       ++_reallocCount ;
 
-      if ( utilPoolPtrCheck( ptr, &oldSize ) )
+      if ( utilPoolPtrCheck( ptr, &oldSize, &type ) )
       {
          if ( oldSize >= size )
          {
@@ -558,23 +627,58 @@ namespace engine
             goto done ;
          }
 
-         pNewPtr = alloc( size, pFile, line, pRealSize ) ;
-         if ( pNewPtr )
+         if ( _utilMemBlockPool::MEMBLOCKPOOL_TYPE_DYN != type )
          {
-            ++_copyCount ;
-            /// copy
-            ossMemcpy( pNewPtr, ptr, oldSize ) ;
-            /// release old
-            release( ptr ) ;
+            pNewPtr = alloc( size, pFile, line, pRealSize ) ;
+            if ( pNewPtr )
+            {
+               ++_copyCount ;
+               /// copy
+               ossMemcpy( pNewPtr, ptr, oldSize ) ;
+               /// release old
+               release( ptr ) ;
+            }
+            goto done ;
          }
       }
-      else
+
+      if ( ossMemDebugEnabled )
       {
-         pNewPtr = utilPoolRealloc( ptr, size, pFile, line, pRealSize ) ;
+         ossThreadMemUnTrack( ptr ) ;
       }
+
+      pNewPtr = utilPoolRealloc( ptr, size, pFile, line, pRealSize ) ;
 
    done:
       return pNewPtr ;
+   }
+
+   void _utilMemListPool::release2SpecBlock( void *&p, UINT32 size )
+   {
+      if ( size >= UTIL_MIN_SPEC_BLOCK_SIZE &&
+           size <= UTIL_MAX_SPEC_BLOCK_SIZE &&
+           size > _specBlockSize &&
+           canCacheBlock( size - _specBlockSize ) )
+      {
+         clearSpecBlock() ;
+
+         if ( ossMemDebugEnabled )
+         {
+            ossThreadMemUnTrack( p ) ;
+         }
+
+         _pSpecBlock = p ;
+         _specBlockSize = size ;
+
+         onPushedCache( _specBlockSize ) ;
+
+         p = NULL ;
+      }
+      else
+      {
+         ++_outrangeDealloc ;
+         SDB_POOL_FREE( p ) ;
+      }
    }
 
    void _utilMemListPool::release( void *& ptr )
@@ -599,8 +703,7 @@ namespace engine
          }
          else
          {
-            ++_outrangeDealloc ;
-            utilPoolRelease( ptr ) ;
+            release2SpecBlock( ptr, oldSize - UTIL_MEM_TOTAL_FILL_LEN ) ;
          }
       }
       else
@@ -634,8 +737,10 @@ namespace engine
       /// dump self
       len = ossSnprintf( pBuff, buffSize,
                          "   CacheSize : %llu"OSS_NEWLINE
+                         "    SpecSize : %u"OSS_NEWLINE
                          "  AllocCount : %llu"OSS_NEWLINE
                          "   OOR Alloc : %llu"OSS_NEWLINE
+                         "  Spec Alloc : %llu"OSS_NEWLINE
                          "ReallocCount : %llu"OSS_NEWLINE
                          "DeallocCount : %llu"OSS_NEWLINE
                          " OOR Dealloc : %llu"OSS_NEWLINE
@@ -643,8 +748,9 @@ namespace engine
                          "   PushCount : %llu (%.2f%%)"OSS_NEWLINE
                          "   CopyCount : %llu (%.2f%%)"OSS_NEWLINE,
                          _cachedSize,
-                         _allocCount, _outrangeAlloc, _reallocCount,
-                         _deallocCount, _outrangeDealloc,
+                         _specBlockSize,
+                         _allocCount, _outrangeAlloc, _allocSpecCount,
+                         _reallocCount, _deallocCount, _outrangeDealloc,
                          _hitCount, hitRatio,
                          _pushCount, pushRatio,
                          _copyCount, copyRatio ) ;

@@ -966,14 +966,14 @@ namespace engine
       return &g_memPool ;
    }
 
-   BOOLEAN utilPoolPtrCheck( void *ptr, UINT32 *pUserSize )
+   BOOLEAN utilPoolPtrCheck( void *ptr, UINT32 *pUserSize, UINT16 *pType )
    {
       if ( ptr )
       {
          void *pRealPtr = UTIL_MEM_USERPTR_2_PTR( ptr ) ;
          return _utilMemBlockPool::_checkAndExtract( ( const CHAR* )pRealPtr,
                                                      pUserSize,
-                                                     NULL ) ;
+                                                     pType ) ;
       }
       return FALSE ;
    }

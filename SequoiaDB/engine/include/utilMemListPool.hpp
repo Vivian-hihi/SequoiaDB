@@ -182,10 +182,22 @@ namespace engine
 
          UINT32      dump( CHAR *pBuff, UINT32 buffSize ) ;
 
+      protected:
+         void        clearSpecBlock() ;
+         void*       allocFromSpecBlock( UINT32 size,
+                                         const CHAR *pFile,
+                                         UINT32 line,
+                                         UINT32 *pRealSize = NULL ) ;
+         void        release2SpecBlock( void *&p, UINT32 size ) ;
+
       private:
          UINT64            _cachedSize ;
          BOOLEAN           _hasInit ;
          utilMemListItem*  _arrayList[ UTIL_MEM_POOL_LIST_NUM + 1 ] ;
+
+         CHAR              *_pSpecBlock ;
+         UINT32            _specBlockSize ;
+         UINT64            _allocSpecCount ;
 
          /// stat info
          UINT64            _allocCount ;

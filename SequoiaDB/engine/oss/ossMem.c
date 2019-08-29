@@ -96,7 +96,7 @@ UINT32  ossMemDebugSize    = 0 ;
 
 // in C version, we don't do anything
 // in C++, we keep track of all memory allocations from ossMemAlloc
-#if !defined (__cplusplus)
+#if !defined (__cplusplus)  || ! ( defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL ) || defined ( SDB_SHELL ) )
 void ossMemTrack ( void *p ) {}
 void ossMemUnTrack ( void *p ) {}
 INT32 ossMemTrace ( const CHAR *pPath ) { return 0 ; }
