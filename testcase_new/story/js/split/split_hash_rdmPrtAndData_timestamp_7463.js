@@ -178,16 +178,16 @@ function getRandomStdTime()
       return date;
 }
 
+function getRandomInt( min, max )
+{
+   var rdmVal = min + Math.round( Math.random() * (max - min), max );
+   return rdmVal;
+}
+
 function getRandomPartition()
 {
    var baseNum = 2;
    var powNum = getRandomInt( 3, 20 ); // [2^3, 2^20]
    var rdmPow = Math.pow( baseNum, powNum );
    return rdmPow;
-}
-
-function getRandomInt( min, max )
-{
-   var rdmVal = min + Math.round( Math.random() * (max - min), max );
-   return rdmVal;
 }
