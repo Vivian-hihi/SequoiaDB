@@ -60,6 +60,8 @@ void* operator new (size_t size, const CHAR *file, UINT32 line ) ;
 
 void operator delete ( void *p, const CHAR *file, UINT32 line ) ;*/
 
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL ) || defined ( SDB_SHELL )
+
 #define OSS_MEMDEBUG_MASK_OSSMALLOC       0x00000001
 #define OSS_MEMDEBUG_MASK_POOLALLOC       0x00000002
 #define OSS_MEMDEBUG_MASK_THREADALLOC     0x00000004
@@ -95,4 +97,6 @@ typedef void*   (*OSS_TC_MEMREALPTR_FUNC)( void* p ) ;
 void ossSetTCMemRealPtrFunc( OSS_TC_MEMREALPTR_FUNC pFunc ) ;
 
 #endif
+
+#endif // OSSMEM_HPP_
 

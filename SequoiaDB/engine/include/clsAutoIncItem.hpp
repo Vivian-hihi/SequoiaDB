@@ -37,7 +37,7 @@
 #ifndef CLS_AUTOINC_ITEM_HPP__
 #define CLS_AUTOINC_ITEM_HPP__
 
-#include "oss.hpp"
+#include "utilPooledObject.hpp"
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
 #include "clsBase.hpp"
@@ -89,7 +89,7 @@ namespace engine
       define _clsAutoIncItem
    */
    class _clsAutoIncSet ;
-   class _clsAutoIncItem : public SDBObject
+   class _clsAutoIncItem : public _utilPooledObject
    {
    friend class _clsAutoIncSet ;
    friend class _clsAutoIncIterator ;
@@ -141,7 +141,7 @@ namespace engine
 
       AUTOINC_ITEM_MAP* _pSubFieldMap ;
       _clsAutoIncItem*  _pParent ;
-      string            _fieldStr ;
+      ossPoolString     _fieldStr ;
 
    } ;
    typedef _clsAutoIncItem clsAutoIncItem ;
@@ -149,7 +149,7 @@ namespace engine
    /*
       _clsAutoIncSet define
    */
-   class _clsAutoIncSet : public SDBObject
+   class _clsAutoIncSet : public _utilPooledObject
    {
    friend class _clsAutoIncItem ;
    friend class _clsAutoIncIterator ;
@@ -173,7 +173,7 @@ namespace engine
 
       const clsAutoIncIDSet&     getIDs() const { return _idSet ; }
       const clsAutoIncItem*      findItem( const CHAR *pName ) const ;
-      const vector<BSONObj>&     getFields() const { return _vecFields ; }
+      const ossPoolVector<BSONObj>&    getFields() const { return _vecFields ; }
       const BSONObj              toBson() const ;
       const clsAutoIncItem*      find( const CHAR *pName ) const ;
       void                       erase( const CHAR *pName ) ;
@@ -189,9 +189,9 @@ namespace engine
       AUTOINC_ITEM_MAP     _mapItem ;
       UINT32               _fieldCount ;
 
-      vector<BSONObj>      _vecFields ;
-      clsAutoIncIDSet      _idSet ;
-      UINT32               _eleSize ;
+      ossPoolVector<BSONObj>  _vecFields ;
+      clsAutoIncIDSet         _idSet ;
+      UINT32                  _eleSize ;
 
    } ;
    typedef _clsAutoIncSet clsAutoIncSet ;
@@ -199,7 +199,7 @@ namespace engine
    /*
       define iterator of clsAutoIncItem
    */
-   class _clsAutoIncIterator : public SDBObject
+   class _clsAutoIncIterator : public _utilPooledObject
    {
    typedef clsAutoIncSet::AUTOINC_ITEM_MAP           AUTOINC_ITEM_MAP ;
    typedef clsAutoIncSet::AUTOINC_ITEM_MAP_CONST_IT  AUTOINC_ITEM_MAP_CONST_IT ;

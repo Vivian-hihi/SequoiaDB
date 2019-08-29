@@ -36,6 +36,8 @@
 #include "ossMem.hpp"
 #include "ossMem.c"
 
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL ) || defined ( SDB_SHELL )
+
 #include "ossUtil.hpp"
 #include "ossLatch.hpp"
 #include "ossPrimitiveFileOp.hpp"
@@ -556,8 +558,8 @@ class _ossMemTrackCB
 
          /// header info
          len = ossSnprintf( _linebuff, sizeof( _linebuff ),
-                            "====> Memory( %s ) dump begin ====>\n",
-                            getName() ) ;
+                            "====> Memory( %s ) dump begin( %s ) ====>\n",
+                            getName(), beginTimebuff ) ;
          trapFile.Write( _linebuff, len ) ;
 
          /// guard
@@ -995,4 +997,6 @@ BOOLEAN ossString2MemDebugMask( const CHAR * pStr, UINT32 &mask )
 
    return result ;
 }
+
+#endif
 

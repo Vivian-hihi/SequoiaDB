@@ -297,7 +297,7 @@ namespace engine
          return _catlogSet.getAutoIncSet()->fieldCount() > 0 ? TRUE : FALSE ;
       }
 
-      const vector<BSONObj>& getAutoIncFields() const
+      const ossPoolVector<BSONObj>& getAutoIncFields() const
       {
          return _catlogSet.getAutoIncSet()->getFields() ;
       }
