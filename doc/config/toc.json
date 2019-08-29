@@ -465,6 +465,12 @@
                      "en": "Install and Deploy"
                   },
                   {
+                     "id": 1567070020,
+                     "file": "sequoiasql_mysql",
+                     "cn": "sequoiasql-mysql服务",
+                     "en": "service sequoiasql-mysql"
+                  },
+                  {
                      "id": 1556198260,
                      "file": "upgrade",
                      "cn": "手工升级指导",
