@@ -62,7 +62,7 @@ public class UpdateObjectWithBrokenNet16473 extends S3TestBase {
         }
     }
 
-    @Test
+    @Test(enabled=false)
     public void test() throws Exception {
         //kill coord when put objects
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(S3TestBase.s3HostName, 10,10);

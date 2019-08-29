@@ -62,7 +62,7 @@ public class UploadPartWithBrokenNet18783 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 	}
 
-	@Test
+	@Test(enabled = false)
 	public void test() throws Exception {
 		FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(S3TestBase.s3HostName, 0, 30);
 		TaskMgr mgr = new TaskMgr(faultTask);

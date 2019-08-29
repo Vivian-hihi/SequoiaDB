@@ -46,7 +46,7 @@ public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 		}
 	}
 
-	@Test
+	@Test(enabled = false)
 	public void testDeleteRegion() throws Exception {
 		try {
 			//delete region when network broken

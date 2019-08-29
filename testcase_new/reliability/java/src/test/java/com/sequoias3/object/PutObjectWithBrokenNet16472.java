@@ -58,7 +58,7 @@ public class PutObjectWithBrokenNet16472 extends S3TestBase {
         }
     }
 
-    @Test
+    @Test(enabled=false)
     public void test() throws Exception {
         //brokenNetwork
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(S3TestBase.s3HostName, 10,10);
