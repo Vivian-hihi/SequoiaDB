@@ -8,12 +8,12 @@
 
 ##自动升级##
 
-自动升级适用于从 3.2 版本或者是 3.2 以上的版本升级到更高版本的 MySQL 实例组件，使用 installmode 参数指定 upgrade 升级模式进行自动升级，以 sequoiadb-3.2.3-linux_x86_64-installer.run 为例，升级步骤如下：
+自动升级适用于从 3.2 版本或者是 3.2 以上的版本升级到更高版本的 MySQL 实例组件，使用 installmode 参数指定 upgrade 升级模式进行自动升级，以 sequoiasql-mysql-3.2.3-linux_x86_64-enterprise-installer.run 为例，升级步骤如下：
 
 - 使用文本模式指定升级参数进行升级
 
   ```lang-bash
-  # ./sequoiadb-3.2.3-linux_x86_64-installer.run --mode text --installmode upgrade
+  # ./sequoiasql-mysql-3.2-linux_x86_64-installer.run --mode text --installmode upgrade
   ```
 
 - 程序提示选择向导语言，输入2，选择中文
