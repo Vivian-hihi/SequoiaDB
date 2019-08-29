@@ -88,7 +88,7 @@ public class ListParts18735 extends S3TestBase {
 			actPartNumbersList.add(partNumber);
 		}
 		// check the keyName
-		partNumbers.remove(0);
+		partNumbers.remove(0);//TODO 建议另外定义一个变量赋值，不要在原始值上面改，出问题时可能会影响定位
 		Assert.assertEquals(actPartNumbersList, partNumbers);
 		runSuccess = true;
 	}

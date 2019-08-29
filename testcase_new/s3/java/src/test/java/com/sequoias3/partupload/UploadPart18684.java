@@ -59,7 +59,7 @@ public class UploadPart18684 extends S3TestBase {
 	private void testUpload() throws Exception {
 		uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 		// upload part 1
-		uploadPart(0, 0, 1);
+		uploadPart(0, 0, 1);//TODO 建议数字通过传参的方式，不然就看这一行代码不指定每个值的含义
 		// upload part 2
 		uploadPart(0, 100 * 1024, 2);
 		// upload part 3

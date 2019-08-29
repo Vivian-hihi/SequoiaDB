@@ -96,7 +96,7 @@ public class UploadPart18694 extends S3TestBase {
 
 	private String putObject(int[] partNums) throws Exception {
 		String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-		ThreadExecutor es = new ThreadExecutor();
+		ThreadExecutor es = new ThreadExecutor();//TODO 并发建议直接写在test里面
 		for (int i : partNums) {
 			es.addWorker(new ThreadUploadPart18694(i, uploadId));
 		}
@@ -141,7 +141,7 @@ public class UploadPart18694 extends S3TestBase {
 		Assert.assertEquals(actMd5List, expMd5List, "version id = 0");
 	}
 
-	private String getMd5(int[] partNums) throws IOException {
+	private String getMd5(int[] partNums) throws IOException {//TODO 不能直接用公共方法？
 		FileInputStream fileInputStream = null;
 		int length = (int) file.length();
 		try {
@@ -156,7 +156,7 @@ public class UploadPart18694 extends S3TestBase {
 			return new String(Hex.encodeHex(md5.digest()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
+			return null;//TODO ??为什么需要返回null？这里可以不用catch
 		} finally {
 			if (fileInputStream != null) {
 				fileInputStream.close();

@@ -117,7 +117,7 @@ public class UploadPart18762 extends S3TestBase {
 			try {
 				PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 			} finally {
-				s3Client.shutdown();
+				s3Client.shutdown();//TODO step3之前失败了client残留。建议在当前类里面使用@AfterClass关闭client
 			}
 		}
 	}

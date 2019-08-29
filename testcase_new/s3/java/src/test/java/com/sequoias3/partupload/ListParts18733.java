@@ -88,7 +88,7 @@ public class ListParts18733 extends S3TestBase {
 		// check the keyName
 		Assert.assertEquals(actPartNumbersList, expPartNumbersList);
 
-		runSuccess = true;
+		runSuccess = true;//TODO 赋值不准确，同18682（公共问题）
 	}
 
 	@AfterClass

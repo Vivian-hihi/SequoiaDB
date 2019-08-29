@@ -76,7 +76,7 @@ public class UploadPart18683 extends S3TestBase {
 		uploadPart(partSize * 2, 3);
 		// 完成分段上传
 		try {
-			completeMultipartUpload();
+			completeMultipartUpload();//TODO 用公共方法PartUploadUtils.completeMultipartUpload
 			Assert.fail("the list of parts was not in ascending order should fail.");
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "InvalidPartOrder ");
@@ -106,7 +106,7 @@ public class UploadPart18683 extends S3TestBase {
 		String actPartMd5 = uploadPartResult.getPartETag().getETag();
 		Assert.assertEquals(actPartMd5, expPartMd5, "part number = " + uploadPartResult.getPartETag().getPartNumber());
 	}
-
+//TODO 删除用公共方法
 	private void completeMultipartUpload() throws Exception {
 		HttpPost request = new HttpPost(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
 				+ URLEncoder.encode(keyName, "UTF-8") + "?uploadId=" + uploadId);
@@ -130,14 +130,14 @@ public class UploadPart18683 extends S3TestBase {
 			throw httpToAmazon(e);
 		}
 	}
-
+//TODO 删除如下方法
 	private AmazonS3Exception httpToAmazon(Exception e) {
 		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
 		amazonS3Exception.setErrorCode(getString(e.getMessage(), "Code"));
 		amazonS3Exception.setErrorMessage(getString(e.getMessage(), "Message"));
 		return amazonS3Exception;
 	}
-
+//TODO 删除删除如下方法
 	private String getString(String s, String flag) {
 		int length = flag.length();
 		String parttern = "<" + flag + ">.*</" + flag + ">";

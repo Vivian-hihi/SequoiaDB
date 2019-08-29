@@ -56,7 +56,7 @@ public class ListMultipartUploads18754 extends S3TestBase {
 			uploadIds2.add(uploadId);
 		}
 
-		// 指定maxkeys为3
+		// 指定maxkeys为3 //TODO 注释按测试点说明更详细一点，这个注释看不出什么内容
 		ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
 		request.setDelimiter("/");
 		request.setMaxUploads(3);
@@ -69,7 +69,7 @@ public class ListMultipartUploads18754 extends S3TestBase {
 		MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
 		PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
 
-		// 指定maxkeys为1
+		// 指定maxkeys为1  //TODO 代码能不能简化？或者分类抽取私有方法，这样看着一大段代码然后各种变量好累的。另外list有公共方法，有些可以直接用公共方法
 		ListMultipartUploadsRequest request2 = new ListMultipartUploadsRequest(bucketName);
 		request2.setDelimiter("/");
 		request2.setMaxUploads(1);

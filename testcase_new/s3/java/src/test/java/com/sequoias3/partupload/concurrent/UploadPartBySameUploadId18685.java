@@ -22,7 +22,7 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
-
+//TODO 所有的缩进都是用的Tab键，要改成4个空格（公共问题）
 /**
  * @Description seqDB-18685: upload multiple parts concurrently,the length of
  *              the parts is the same and there is partNum of 1.

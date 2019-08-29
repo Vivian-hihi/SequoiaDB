@@ -80,7 +80,7 @@ public class UploadPart18763 extends S3TestBase {
 			es.addWorker(new ThreadUploadDiffPart18763(diffPartNumberList.get(i)));
 		}
 		es.run();
-
+//TODO 后面的代码有些乱，建议优化。测试点和检查结果最好能直接跟文本用例对应上
 		// 查询分段上传列表
 		String actSamePartNumberEtag = "";
 		PartETag samePartEtag = null;
@@ -94,10 +94,10 @@ public class UploadPart18763 extends S3TestBase {
 		// 查看相同分段（分段1）的etag值是否正确
 		Assert.assertTrue(expSamePartNumberEtags.contains(actSamePartNumberEtag),
 				"actSamePartNumberEtag : " + actSamePartNumberEtag + ", expSamePartNumberEtags :"
-						+ expSamePartNumberEtags.toString() + ", diffPartNumberEtags : "
+						+ expSamePartNumberEtags.toString() + ", diffPartNumberEtags : "  //TODO 上下首字符对齐
 						+ diffPartNumberEtags.toString());
 
-		// 将分段1的PartETag值与其他分段PartETag值放在一起，完成分段上传
+		// 将分段1的PartETag值与其他分段PartETag值放在一起，完成分段上传   //TODO 注释按测试点写，这个看不出来测的啥（其他注释也是一样的）
 		diffPartNumberEtags.add(samePartEtag);
 		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, diffPartNumberEtags);
 
@@ -175,9 +175,9 @@ public class UploadPart18763 extends S3TestBase {
 			}
 		}
 	}
-
+	//TODO samePartNumberList、expSamePartNumberEtags、diffPartNumberList分3个方法写
 	private void preparePartNumberList() throws IOException {
-		int[] parts = { 0, 2 * 1024 * 1024, 1 };
+		int[] parts = { 0, 2 * 1024 * 1024, 1 };//TODO 加注释说明下每个值的含义
 		samePartNumberList.add(parts);
 		expSamePartNumberEtags.add(TestTools.getFilePartMD5(file, parts[0], parts[1]));
 		parts = new int[] { 0, 3 * 1024 * 1024, 1 };

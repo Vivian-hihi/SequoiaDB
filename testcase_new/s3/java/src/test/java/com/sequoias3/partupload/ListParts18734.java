@@ -74,7 +74,7 @@ public class ListParts18734 extends S3TestBase {
 		// check the keyName
 		Assert.assertEquals(actPartNumbersList, expPartNumbersList);
 		Assert.assertEquals((int) listResult.getNextPartNumberMarker(), maxParts);
-
+//TODO 再次查询，添加注释。容易看成预期结果。
 		request.setPartNumberMarker(partNumber);
 		listResult = s3Client.listParts(request);
 		int actListSize = listResult.getParts().size();

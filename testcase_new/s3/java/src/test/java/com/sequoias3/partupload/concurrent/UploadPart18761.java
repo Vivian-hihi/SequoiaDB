@@ -64,7 +64,7 @@ public class UploadPart18761 extends S3TestBase {
 		es.addWorker(new ThreadUploadPart18761(6 * 1024 * 1024, file2));
 		es.addWorker(new ThreadUploadPart18761(5 * 1024 * 1024, file));
 		es.run();
-
+//TODO 并发上传了3个，检查结果只检查了一次，检查结果不完整
 		String expMd5 = TestTools.getMD5(filePath);
 		String expMd5_2 = TestTools.getMD5(filePath2);
 		String downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
@@ -113,7 +113,7 @@ public class UploadPart18761 extends S3TestBase {
 			try {
 				PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 			} finally {
-				s3Client.shutdown();
+				s3Client.shutdown();//TODO step3之前失败了client残留。建议在当前类里面使用@AfterClass关闭client
 			}
 		}
 	}

@@ -67,7 +67,7 @@ public class ListMultipartUploads18752 extends S3TestBase {
 		List<String> expCommonPrefixes = new ArrayList<>();
 		expCommonPrefixes.add("dir1a/");
 		expCommonPrefixes.add("dir1b/");
-
+//TODO 文本用例预期结果：...upload项中显示为空，这个貌似没校验
 		MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
 		expUploads.add(keyNames[4], uploadIds1.get(4));
 		expUploads.add(keyNames[4], uploadIds2.get(4));

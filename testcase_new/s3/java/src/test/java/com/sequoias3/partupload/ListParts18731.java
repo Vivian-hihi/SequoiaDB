@@ -83,7 +83,7 @@ public class ListParts18731 extends S3TestBase {
 		}
 
 		PartUploadUtils.completeMultipartUpload(s3ClientA, bucketName, keyName, uploadId, partEtags);
-		// check
+		// check  //TODO 注释要不就都英文，要不都中文，风格保持一致
 		String expMd5 = TestTools.getMD5(filePath);
 		String downloadMd5 = ObjectUtils.getMd5OfObject(s3ClientA, localPath, bucketName, keyName);
 		Assert.assertEquals(downloadMd5, expMd5);

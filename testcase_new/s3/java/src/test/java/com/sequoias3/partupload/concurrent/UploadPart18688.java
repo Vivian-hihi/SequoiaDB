@@ -62,7 +62,7 @@ public class UploadPart18688 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
-
+//TODO parts建议加注释说明每个值的含义，如：parts = {offset, partsize, partNumber}
 		int[] parts = new int[] { 0, 10 * 1024, 1 };
 		partList.add(parts);
 		parts = new int[] { 15 * 1024, 5 * 1024, 3 };
@@ -143,7 +143,7 @@ public class UploadPart18688 extends S3TestBase {
 			String expMd5 = new String(Hex.encodeHex(md5.digest()));
 			String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 			Assert.assertEquals(actMd5, expMd5);
-		} catch (Exception e) {
+		} catch (Exception e) {//TODO 没有捕获异常码不需要catch（公共问题）
 			e.printStackTrace();
 		} finally {
 			if (fileInputStream != null) {

@@ -79,7 +79,7 @@ public class ListMultipartUploads18755 extends S3TestBase {
 			}
 		}
 	}
-
+//TODO 代码能不能简化？太复杂了。建议分类抽取私有方法，或者能用公共方法的尽量用公共方法，这样看着一大段代码然后各种变量好累的，不好维护
 	private void listAndCheckResult(String delimiter, int maxUploads, int expReturnedUploadNum,
 			List<String> expCommonPrefixes, MultiValueMap<String, String> expUploads) {
 		ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
