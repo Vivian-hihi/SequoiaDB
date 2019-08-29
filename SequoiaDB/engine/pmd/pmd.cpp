@@ -38,6 +38,7 @@
 #include <string.h>
 #include "core.hpp"
 #include "pmd.hpp"
+#include "ossEDU.hpp"
 #include "ossVer.h"
 #include "pdTrace.hpp"
 #include "netFrame.hpp"
