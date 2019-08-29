@@ -13,17 +13,17 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
-import com.sequoias3.commlibs3.GroupMgr;
-import com.sequoias3.commlibs3.GroupWrapper;
-import com.sequoias3.commlibs3.NodeWrapper;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
-import com.sequoias3.fault.KillNode;
-import com.sequoias3.task.FaultMakeTask;
-import com.sequoias3.task.OperateTask;
-import com.sequoias3.task.TaskMgr;
 
 /**
  * test content: 更新对象过程中db端节点异常 testlink-case: seqDB-16462

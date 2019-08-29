@@ -1,25 +1,25 @@
 package com.sequoias3.delimiter;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.S3Object;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
-import com.sequoias3.commlibs3.GroupMgr;
-import com.sequoias3.commlibs3.GroupWrapper;
-import com.sequoias3.commlibs3.NodeWrapper;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.s3utils.DelimiterUtils;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
-import com.sequoias3.fault.KillNode;
-import com.sequoias3.task.FaultMakeTask;
-import com.sequoias3.task.OperateTask;
-import com.sequoias3.task.TaskMgr;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * test content: 开启版本控制，删除对象过程中db端节点异常 testlink-case: seqDB-18200
@@ -46,16 +46,16 @@ public class DeleteObjectWithKillCoord18200 extends S3TestBase {
 	private void setUp() throws Exception {
 		groupMgr = GroupMgr.getInstance();
 		coordGroup = groupMgr.getGroupByName("SYSCoord");
-
+		
 		CommLibS3.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		CommLibS3.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
-		CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+		CommLibS3.setBucketVersioning(s3Client, bucketName,  BucketVersioningConfiguration.ENABLED);
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, accessKeys[0]);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter, accessKeys[0]);
-		for (int i = 0; i < versionNum; i++) {
+		for(int i = 0 ; i < versionNum ; i++){
 			s3Client.putObject(bucketName, keyName, context);
 		}
 	}
@@ -64,21 +64,21 @@ public class DeleteObjectWithKillCoord18200 extends S3TestBase {
 	public void testDeleteObject() throws Exception {
 		// kill coord node
 		TaskMgr mgr = new TaskMgr();
-		for (NodeWrapper node : coordGroup.getNodes()) {
-			FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
-			mgr.addTask(faultTask);
-		}
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+            mgr.addTask(faultTask);
+        }
 
 		DeleteObjectTask dTask = new DeleteObjectTask();
 		mgr.addTask(dTask);
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-		// delete again
-		if (s3Client.doesObjectExist(bucketName, keyName)) {
+		//delete again
+		if(s3Client.doesObjectExist(bucketName, keyName)){
 			S3Object obj = s3Client.getObject(bucketName, keyName);
 			int versionid = Integer.valueOf(obj.getObjectMetadata().getVersionId());
-			for (int i = versionid; i >= 0; i--) {
+			for(int i = versionid ; i >= 0; i--){
 				s3Client.deleteVersion(bucketName, keyName, String.valueOf(i));
 			}
 			Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyName));
@@ -105,11 +105,11 @@ public class DeleteObjectWithKillCoord18200 extends S3TestBase {
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
-				for (int i = versionNum - 1; i >= 0; i--) {
+				for(int i = versionNum-1 ; i >= 0; i--){
 					s3Client.deleteVersion(bucketName, keyName, String.valueOf(i));
 				}
 			} catch (AmazonServiceException e) {
-				if (!e.getErrorCode().equals("GetDBConnectFail")) {
+				if(!e.getErrorCode().equals("GetDBConnectFail")){
 					throw e;
 				}
 			} finally {

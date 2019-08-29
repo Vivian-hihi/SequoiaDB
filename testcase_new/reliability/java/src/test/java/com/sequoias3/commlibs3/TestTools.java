@@ -1,23 +1,17 @@
 package com.sequoias3.commlibs3;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.Ssh;
+import org.testng.Assert;
+
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Random;
 
-import org.testng.Assert;
-
-import com.sequoiadb.commlib.Ssh;
-
-public class TestTools {
+public class TestTools {	
 
 	public static class LocalFile {
 
@@ -167,7 +161,7 @@ public class TestTools {
 					new Random().nextBytes(fileBlock);
 					long toWrite = size - written;
 					long len = fileBlock.length < toWrite ? fileBlock.length : toWrite;
-					fos.write(fileBlock, 0, (int) len);
+					fos.write(fileBlock, 0, (int)len);
 					written += len;
 				}
 			} catch (IOException e) {
@@ -222,7 +216,7 @@ public class TestTools {
 				downloadPath = downLoadDir + File.separator + "thread-" + threadId + "_" + System.currentTimeMillis()
 						+ "_" + randomId + ".lob";
 			} catch (Exception e) {
-				Assert.fail("downloadPath\n" + downloadPath);
+				Assert.fail("downloadPath\n" + downloadPath);				
 			}
 			return downloadPath;
 		}
@@ -256,18 +250,16 @@ public class TestTools {
 				throw new IllegalArgumentException("invalid type of buffer");
 			}
 			byte[] md5sum = md5.digest();
-			for (int i = 0; i < md5sum.length; i++) {
-				String hex = Integer.toHexString(md5sum[i] & 0xFF);
-				if (hex.length() == 1) {
+			for(int i = 0; i < md5sum.length;i++){
+				String hex = Integer.toHexString(md5sum[i]&0xFF);
+				if(hex.length() == 1){
 					hex = '0' + hex;
 				}
 				value += hex;
 			}
-			// have bug,it will get rid of the 0 in front
-			/*
-			 * BigInteger bi = new BigInteger(1, md5.digest()); value =
-			 * bi.toString(16);
-			 */
+			//have bug,it will get rid of the 0 in front
+			/*BigInteger bi = new BigInteger(1, md5.digest());
+			value = bi.toString(16);*/
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			throw new RuntimeException("fail to get md5!" + e.getMessage());
@@ -337,7 +329,6 @@ public class TestTools {
 		int index = fullClassName.lastIndexOf(".");
 		return fullClassName.substring(index + 1);
 	}
-
 	public static void setSystemTime(String host, Long date) throws Exception {
 		String time = new SimpleDateFormat("\"yyyy-MM-dd HH:mm:ss\"").format(date);
 		setSystemTime(host, time);
@@ -354,7 +345,7 @@ public class TestTools {
 	public static void setSystemTime(String host, String dateStr) throws Exception {
 		Ssh ssh = null;
 		try {
-			ssh = new Ssh(host, S3TestBase.remoteUser, S3TestBase.remotePwd);
+			ssh = new Ssh(host, SdbTestBase.remoteUser,SdbTestBase.remotePwd);
 
 			// set date
 			String cmd = "date -s " + dateStr;
@@ -380,7 +371,7 @@ public class TestTools {
 	public static void restoreSystemTime(String host) throws Exception {
 		Ssh ssh = null;
 		try {
-			ssh = new Ssh(host, S3TestBase.remoteUser, S3TestBase.remotePwd);
+			ssh = new Ssh(host,SdbTestBase.remoteUser,SdbTestBase.remotePwd);
 			String cmd = "ntpdate " + "192.168.20.11";
 
 			// in case of time server not usable, retry in 1 min

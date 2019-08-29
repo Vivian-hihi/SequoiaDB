@@ -10,17 +10,17 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoias3.commlibs3.GroupMgr;
-import com.sequoias3.commlibs3.GroupWrapper;
-import com.sequoias3.commlibs3.NodeWrapper;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
 import com.sequoias3.commlibs3.s3utils.bean.Region;
-import com.sequoias3.fault.KillNode;
-import com.sequoias3.task.FaultMakeTask;
-import com.sequoias3.task.OperateTask;
-import com.sequoias3.task.TaskMgr;
 
 /**
  * @Description seqDB-17341:创建区域过程中db端节点异常

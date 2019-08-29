@@ -1,18 +1,10 @@
 package com.sequoias3.delimiter;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
+import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
@@ -21,13 +13,20 @@ import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
-import com.sequoias3.task.FaultMakeTask;
-import com.sequoias3.task.OperateTask;
-import com.sequoias3.task.TaskMgr;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * test content: 创建对象过程中s3节点异常 testlink-case: seqDB-18206
- * 
  * @author wangkexin
  * @Date 2019.05.23
  * @version 1.00
@@ -130,7 +129,7 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 		File localPath = null;
 		int index = new Random().nextInt(objectNames.size());
 		String keyName = objectNames.get(index);
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 		String expContent = content + index;
 		String expEtag = TestTools.getMD5(expContent.getBytes());

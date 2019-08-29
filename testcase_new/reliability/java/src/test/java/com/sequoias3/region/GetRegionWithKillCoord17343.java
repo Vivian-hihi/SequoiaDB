@@ -1,29 +1,28 @@
 package com.sequoias3.region;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
+import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
+import com.sequoias3.commlibs3.s3utils.bean.Region;
+import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoias3.commlibs3.CommLibS3;
-import com.sequoias3.commlibs3.GroupMgr;
-import com.sequoias3.commlibs3.GroupWrapper;
-import com.sequoias3.commlibs3.NodeWrapper;
-import com.sequoias3.commlibs3.S3TestBase;
-import com.sequoias3.commlibs3.s3utils.RegionUtils;
-import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
-import com.sequoias3.commlibs3.s3utils.bean.Region;
-import com.sequoias3.fault.KillNode;
-import com.sequoias3.task.FaultMakeTask;
-import com.sequoias3.task.OperateTask;
-import com.sequoias3.task.TaskMgr;
-
 /**
- * test content: 获取区域过程中db端节点异常 testlink-case: seqDB-17343
- * 
+ * test content: 获取区域过程中db端节点异常 
+ * testlink-case: seqDB-17343
  * @author wangkexin
  * @Date 2019.01.29
  * @version 1.00
@@ -45,35 +44,38 @@ public class GetRegionWithKillCoord17343 extends S3TestBase {
 	private void setUp() throws Exception {
 		groupMgr = GroupMgr.getInstance();
 		coordGroup = groupMgr.getGroupByName("SYSCoord");
-
+		
 		s3Client = CommLibS3.buildS3Client();
-
+		
 		CommLibS3.clearBucket(s3Client, bucketName);
 		RegionUtils.clearRegion(regionName);
 		RegionUtils.dropDomain(metaDomain);
 		RegionUtils.dropDomain(dataDomain);
-
+		
 		RegionUtils.createDomain(dataDomain);
 		RegionUtils.createDomain(metaDomain);
-
+		
 		Region region = new Region();
-		region.withName(regionName).withDataDomain(dataDomain).withMetaDomain(metaDomain)
-				.withDataCSShardingType(dataCSShardingType).withDataCLShardingType(dataCLShardingType);
-		RegionUtils.putRegion(region);
+        region.withName(regionName)
+        .withDataDomain(dataDomain)
+        .withMetaDomain(metaDomain)
+        .withDataCSShardingType(dataCSShardingType)
+        .withDataCLShardingType(dataCLShardingType);
+        RegionUtils.putRegion(region);
 		s3Client.createBucket(new CreateBucketRequest(bucketName, regionName.toLowerCase()));
 	}
 
 	@Test
 	public void testGetRegion() throws Exception {
 		TaskMgr mgr = new TaskMgr();
-		for (NodeWrapper node : coordGroup.getNodes()) {
-			FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
-			mgr.addTask(faultTask);
-		}
-		for (int i = 0; i < threadNum; i++) {
-			GetRegionTask gTask = new GetRegionTask();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+            mgr.addTask(faultTask);
+        }
+        for(int i = 0 ; i < threadNum ; i++){
+        	GetRegionTask gTask = new GetRegionTask();
 			mgr.addTask(gTask);
-		}
+        }
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
@@ -104,15 +106,15 @@ public class GetRegionWithKillCoord17343 extends S3TestBase {
 			try {
 				GetRegionResult result = RegionUtils.getRegion(regionName);
 				checkRegion(result);
-			} catch (AmazonServiceException e) {
-				if (e.getStatusCode() != 500 && !e.getErrorCode().equals("GetDBConnectFail")) {
+			}catch(AmazonServiceException e){
+				if(e.getStatusCode() != 500 && !e.getErrorCode().equals("GetDBConnectFail")){
 					throw e;
 				}
-			}
+			} 
 		}
 	}
-
-	private void checkRegion(GetRegionResult result) {
+	
+	private void checkRegion(GetRegionResult result){
 		Region region = result.getRegion();
 		String actBucket = result.getBuckets().get(0).getName();
 		Assert.assertEquals(actBucket, bucketName);

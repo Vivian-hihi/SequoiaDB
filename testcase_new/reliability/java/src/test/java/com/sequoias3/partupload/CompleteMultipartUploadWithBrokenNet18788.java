@@ -16,15 +16,15 @@ import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
+import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.PartUploadUtils;
-import com.sequoias3.fault.BrokenNetwork;
-import com.sequoias3.task.FaultMakeTask;
-import com.sequoias3.task.OperateTask;
-import com.sequoias3.task.TaskMgr;
 
 /**
  * @Description seqDB-18788 : 存在为1的分段号，完成分段上传过程中SequoiaS3和db端网络异常
@@ -61,7 +61,7 @@ public class CompleteMultipartUploadWithBrokenNet18788 extends S3TestBase {
 	}
 
 	// SEQUOIADBMAINSTREAM-4845
-	@Test(enabled = false)
+	@Test(enabled=false)
 	public void test() throws Exception {
 		uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
 		uploadParts();
