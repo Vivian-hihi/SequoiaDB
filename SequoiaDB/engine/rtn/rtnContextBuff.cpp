@@ -63,7 +63,7 @@ namespace engine
    {
       if ( _pBuff && _owned )
       {
-         SDB_OSS_FREE( (CHAR*)_pBuff ) ;
+         SDB_THREAD_FREE( (CHAR*)_pBuff ) ;
       }
       _owned = FALSE ;
       _pBuff = right._pBuff ;
@@ -130,7 +130,7 @@ namespace engine
 
       if ( !_owned && _pBuff )
       {
-         CHAR *pBuff = ( CHAR* )SDB_OSS_MALLOC( _buffSize ) ;
+         CHAR *pBuff = ( CHAR* )SDB_THREAD_ALLOC( _buffSize ) ;
          if ( pBuff )
          {
             // copy buf data to own
@@ -150,7 +150,7 @@ namespace engine
    {
       if ( _pBuff && _owned )
       {
-         SDB_OSS_FREE( (CHAR*)_pBuff ) ;
+         SDB_THREAD_FREE( _pBuff ) ;
       }
       _owned = FALSE ;
       _pBuff = NULL ;
@@ -266,7 +266,8 @@ namespace engine
          {
             if ( *RTN_GET_CONTEXT_FLAG( _pOrgBuff ) == 0 )
             {
-               SDB_OSS_FREE( RTN_BUFF_TO_REAL_PTR( _pOrgBuff ) ) ;
+               CHAR *pRealPtr = RTN_BUFF_TO_REAL_PTR( _pOrgBuff ) ;
+               SDB_THREAD_FREE( pRealPtr ) ;
             }
             else
             {
