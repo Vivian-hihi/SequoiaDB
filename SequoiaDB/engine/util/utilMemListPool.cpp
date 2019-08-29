@@ -667,7 +667,7 @@ namespace engine
             ossThreadMemUnTrack( p ) ;
          }
 
-         _pSpecBlock = p ;
+         _pSpecBlock = (CHAR*)p ;
          _specBlockSize = size ;
 
          onPushedCache( _specBlockSize ) ;

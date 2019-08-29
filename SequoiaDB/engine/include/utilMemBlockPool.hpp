@@ -112,8 +112,7 @@ namespace engine
     **/
    class _utilMemBlockPool : public SDBObject, public _utilSegmentHandler
    {
-      friend BOOLEAN utilPoolPtrCheck( void *ptr, UINT32 *pUserSize,
-                                       UINT32 *pType ) ;
+      friend BOOLEAN utilPoolPtrCheck( void *ptr, UINT32 *pUserSize, UINT16 *pType ) ;
       /*
          Small: 32,   64,   128
          Mid  : 256,  512,  1024
