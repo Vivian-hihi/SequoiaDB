@@ -798,6 +798,34 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_MEMDEBUGMASK</name>
+      <long>memdebugmask</long>
+      <description>
+         <en>Memory debug mask,value list:OSS_MALLOC,POOL_ALLOC,THREAD_ALLOC or ALL. Use '|' join multiple values, ALL enable all mask. Default:OSS_MALLOC|POOL_ALLOC</en>
+         <cn>内存调试掩码，取值 OSS_MALLOC,POOL_ALLOC,THREAD_ALLOC 或 ALL, 可以使用'|'连接多个值，ALL表示开启所有，默认:OSS_MALLOC|POOL_ALLOC</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <hidden>true</hidden>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_MEMDEBUGDETAIL</name>
+      <long>memdebugdetail</long>
+      <description>
+         <en>Enable memory debugging details, default:false</en>
+         <cn>打开内存详细项的调试校验，默认为false</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <hidden>true</hidden>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_MEMDEBUGSIZE</name>
       <long>memdebugsize</long>
       <description>
