@@ -6,6 +6,7 @@ import java.util.Random;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -17,6 +18,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -42,6 +44,9 @@ public class LobSubCL19071B extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("is standalone skip testcase");
+        }
         mainCL = LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
         lobBuff = RandomWriteLobUtil.getRandomBytes(writeLobSize);
         lobIds1 = LobSubUtils.createAndWriteLob(mainCL, lobBuff);

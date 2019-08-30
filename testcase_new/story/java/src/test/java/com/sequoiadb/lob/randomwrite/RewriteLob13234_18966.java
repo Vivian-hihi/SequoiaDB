@@ -1,6 +1,7 @@
 package com.sequoiadb.lob.randomwrite;
 
 import org.bson.types.ObjectId;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -12,6 +13,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -54,12 +56,17 @@ public class RewriteLob13234_18966 extends SdbTestBase {
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024," + "ReplSize:0}";
         RandomWriteLobUtil.createCL(cs, clName, clOptions);
-        LobSubUtils.createMainCLAndAttachCL(sdb, SdbTestBase.csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(sdb)) {
+            LobSubUtils.createMainCLAndAttachCL(sdb, SdbTestBase.csName, mainCLName, subCLName);
+        }
     }
 
     @Test(dataProvider = "lobsizeProvider")
     public void testLob(String csName, String clName, int writeLobSize, int rewriteLobSize) {
         try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+                throw new SkipException("is standalone skip testcase!");
+            }
             DBCollection dbcl = sdb.getCollectionSpace(csName).getCollection(clName);
             byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeLobSize);
             ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);
@@ -73,8 +80,12 @@ public class RewriteLob13234_18966 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            cs.dropCollection(clName);
-            cs.dropCollection(mainCLName);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+            if (cs.isCollectionExist(mainCLName)) {
+                cs.dropCollection(mainCLName);
+            }
         } finally {
             if (sdb != null)
                 sdb.close();

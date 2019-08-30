@@ -3,6 +3,7 @@ package com.sequoiadb.lob.randomwrite;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -14,6 +15,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -49,13 +51,18 @@ public class ConcurrentRewriteLob13262_18994 extends SdbTestBase {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = db.getCollectionSpace(SdbTestBase.csName);
         cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-        LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(db)) {
+            LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        }
         lobBuff = RandomWriteLobUtil.getRandomBytes(lobSize);
-
     }
 
     @Test(dataProvider = "testLobDataProvider")
     public void testLob(String clName) throws Exception {
+        if (CommLib.isStandAlone(db) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
+
         DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
         ObjectId lobOid = RandomWriteLobUtil.createAndWriteLob(cl, lobBuff);
         int offset1 = 1024 * 10;
@@ -83,8 +90,12 @@ public class ConcurrentRewriteLob13262_18994 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            cs.dropCollection(clName);
-            cs.dropCollection(mainCLName);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+            if (cs.isCollectionExist(mainCLName)) {
+                cs.dropCollection(mainCLName);
+            }
         } finally {
             if (db != null) {
                 db.close();

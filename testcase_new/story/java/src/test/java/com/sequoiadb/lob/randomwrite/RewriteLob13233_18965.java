@@ -3,6 +3,7 @@ package com.sequoiadb.lob.randomwrite;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -14,6 +15,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -30,22 +32,20 @@ public class RewriteLob13233_18965 extends SdbTestBase {
         return new Object[][] {
                 // dbcl, oldLobSize, newLobSize, offset
                 // test a: newLobSize < oldLobSize
-                { dbcl, 1024 * 20, 1024, 500 },
+                { clName, 1024 * 20, 1024, 500 },
                 // test b: newLobSize = oldLobSize
-                { dbcl, 1024 * 10, 1024 * 9, 1024 },
+                { clName, 1024 * 10, 1024 * 9, 1024 },
                 // test c: newLobSize > oldLobSize
-                { dbcl, 1024 * 5, 1024 * 20, 500 },
+                { clName, 1024 * 5, 1024 * 20, 500 },
                 // test a: newLobSize < oldLobSize
-                { maincl, 1024 * 20, 1024 * 10, 500 },
+                { mainCLName, 1024 * 20, 1024 * 10, 500 },
                 // test b: newLobSize = oldLobSize
-                { maincl, 1024 * 30, 1024 * 30 - 1, 1 },
+                { mainCLName, 1024 * 30, 1024 * 30 - 1, 1 },
                 // test c: newLobSize > oldLobSize
-                { maincl, 1024 * 10, 1024 * 30, 1024 * 9 } };
+                { mainCLName, 1024 * 10, 1024 * 30, 1024 * 9 } };
     }
 
     private Sequoiadb db = null;
-    private DBCollection dbcl = null;
-    private DBCollection maincl = null;
     private CollectionSpace cs = null;
     private String clName = "lobcl_13233";
     private String mainCLName = "lobMainCL_18965";
@@ -55,12 +55,18 @@ public class RewriteLob13233_18965 extends SdbTestBase {
     public void setUp() {
         db = new Sequoiadb(coordUrl, "", "");
         cs = db.getCollectionSpace(SdbTestBase.csName);
-        dbcl = cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-        maincl = LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
+        if (!CommLib.isStandAlone(db)) {
+            LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        }
     }
 
     @Test(dataProvider = "testLobDataProvider")
-    public void testLob13233(DBCollection dbcl, int lobSize, int newDataSize, int offset) {
+    public void testLob13233(String clName, int lobSize, int newDataSize, int offset) {
+        if (CommLib.isStandAlone(db) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
+        DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
         byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(lobSize);
         ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);
 
@@ -83,8 +89,12 @@ public class RewriteLob13233_18965 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            cs.dropCollection(clName);
-            cs.dropCollection(mainCLName);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+            if (cs.isCollectionExist(mainCLName)) {
+                cs.dropCollection(mainCLName);
+            }
         } finally {
             if (db != null) {
                 db.close();
