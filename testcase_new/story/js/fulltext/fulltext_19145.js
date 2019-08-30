@@ -20,7 +20,9 @@ function main()
                         {id:4, a:[1, 2, 3], b:[1, 2, 3]},
                         {id:5, a:[{0:"obj1"}, {1:"obj2"}, {2:"obj3"}], b:[{0:"obj1"}, {1:"obj2"}, {2:"obj3"}]},
                         {id:6, a:[{0:1}, {1:2}, {2:3}], b:[{0:1}, {1:2}, {2:3}]},
-                        {id:7, a:{0:"obj3", 1:"obj4", 2:"obj5"}, b:{0:"obj3", 1:1, 2:"obj5"}});
+                        {id:7, a:{0:"obj3", 1:"obj4", 2:"obj5"}, b:{0:"obj3", 1:1, 2:"obj5"}},
+                        {id:8, a:[["string4","string5","string6"],["string7","string8","string9"],["string10","string11","string12"]]},
+                        {id:9, a:[[4,5,6],[7,8,9],[10,11,12]]});
    dbcl.insert(objs);
    dbcl.createIndex(textIndexName, {"a.1" : "text", "b.2":"text"});
    
