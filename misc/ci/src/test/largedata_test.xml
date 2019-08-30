@@ -400,16 +400,31 @@
                  
                   </switch>
                   
-                  <ant antfile="${exec_file}" inheritAll="false">
-                     <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-                     <property name="testcase_type" value="${testcase_type}"/>
-                     <property name="testcase_dir" value="@{casesubtype}"/>
-                     <property name="report_dir" value="${report_basedir}/${testcase_type}" />
-                     <property name="plat_form" value="${plat_form}"/>
-                     <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
-                     <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
-                     <property name="BREAK_ON_FAILURE" value="${BREAK_ON_FAILURE}"/>
-                  </ant>
+                  <if>
+                     <not>
+                        <equals arg1="${is_break}" arg2="true"/>
+                     </not>
+                     <then>
+                        <ant antfile="${exec_file}" inheritAll="false">
+                           <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                           <property name="testcase_type" value="${testcase_type}"/>
+                           <property name="testcase_dir" value="@{casesubtype}"/>
+                           <property name="report_dir" value="${report_basedir}/${testcase_type}" />
+                           <property name="plat_form" value="${plat_form}"/>
+                           <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                           <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
+                           <property name="BREAK_ON_FAILURE" value="${BREAK_ON_FAILURE}"/>
+                        </ant>
+                        <available property="is_exist" file="${report_basedir}/${testcase_type}/.TESTCASE_FAIL" type="file"/>
+                        <condition property="is_break">
+                           <and>
+                              <equals arg1="${is_exist}" arg2="true"/>
+                              <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                           </and>
+                        </condition>
+                     </then>
+                  </if>
+                  
                </sequential>
             </for>           
          </sequential>

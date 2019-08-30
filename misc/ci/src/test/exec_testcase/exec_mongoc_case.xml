@@ -17,7 +17,7 @@
    
    <target name="exec_mongoc_testcase">
       <property file="${basedir}/src/conf/test.conf" />
-      
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <mkdir dir="${report_dir}"/>
       <chmod dir="${testcase_dir}" perm="u+x" includes="*" />
       <var name="testcase_name" value="test-mongo"/>
@@ -96,6 +96,19 @@
                      </and>
                   </or>
                </condition>
+               
+               <available property="is_exist" file="${CI_WORK_DIR}/report/.TESTCASE_FAIL" type="file"/>
+               <if>
+                  <and>
+                     <equals arg1="${is_exist}" arg2="true"/>
+                     <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                  </and>
+                  <then>
+                     <var name="is_continue_exec" unset="true"/>
+                     <var name="is_continue_exec" value="false"/>
+                  </then>
+               </if>
+               
                <if>
                   <equals arg1="${is_continue_exec}" arg2="true"/>
                   <then>
@@ -113,6 +126,13 @@
             <equals arg1="${is_continue_exec}" arg2="false"/>
             <then>
                <touch file="@{reportdir}/.TESTCASE_FAIL"/>
+               <for list="${testhost_list}" param="testhost" parallel="true">
+                  <sequential>  
+                     <staf location="local" service="FS"
+                           request="COPY FILE ${report_dir}/.TESTCASE_FAIL TODIRECTORY ${CI_WORK_DIR}/report TOMACHINE @{testhost}"
+                           throwBuildException="1"/>
+                  </sequential>
+               </for>
             </then>
          </if>
       </sequential>
@@ -171,7 +191,6 @@
       <attribute name="layer" />
       <sequential>  
       
-         <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
          <var name="cluster_host_info" value=""/>
          <for list="${testhost_list}" param="testhost">
             <sequential>

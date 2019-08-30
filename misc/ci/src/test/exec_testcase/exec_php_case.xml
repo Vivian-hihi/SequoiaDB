@@ -17,7 +17,7 @@
    
    <target name="exec_php_testcase">
       <property file="${basedir}/src/conf/test.conf" />
-      
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <!--init-->
       <if>
          <available file="${testcase_dir}/phpunit.xml"/>
@@ -94,6 +94,18 @@
                </or>
             </condition>
             
+            <available property="is_exist" file="${CI_WORK_DIR}/report/.TESTCASE_FAIL" type="file"/>
+            <if>
+               <and>
+                  <equals arg1="${is_exist}" arg2="true"/>
+                  <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+               </and>
+               <then>
+                  <var name="is_continue_exec" unset="true"/>
+                  <var name="is_continue_exec" value="false"/>
+               </then>
+            </if>
+            
             <if>
                <equals arg1="${is_continue_exec}" arg2="true"/>
                <then>
@@ -108,6 +120,13 @@
                <equals arg1="${is_continue_exec}" arg2="false"/>
                <then>
                   <touch file="@{reportdir}/.TESTCASE_FAIL"/>
+                  <for list="${testhost_list}" param="testhost" parallel="true">
+                     <sequential>  
+                        <staf location="local" service="FS"
+                              request="COPY FILE ${report_dir}/.TESTCASE_FAIL TODIRECTORY ${CI_WORK_DIR}/report TOMACHINE @{testhost}"
+                              throwBuildException="1"/>
+                     </sequential>
+                  </for>
                </then>
             </if>
          </sequential>
@@ -267,7 +286,6 @@
          </tstamp>
          <echo message="begin at ${begin_time}, end at ${end_time}" />
          
-         <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
          <var name="cluster_host_info" value=""/>
          <for list="${testhost_list}" param="testhost">
             <sequential>

@@ -17,6 +17,7 @@
    
    <target name="exec_java_testcase">
       <property file="${basedir}/src/conf/test.conf" />
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <mkdir dir="${report_dir}"/>
       <for param="fullfilename">
          <path>
@@ -101,6 +102,13 @@
          </and>
          <then>
             <touch file="${report_dir}/.TESTCASE_FAIL"/>
+            <for list="${testhost_list}" param="testhost" parallel="true">
+               <sequential>  
+                  <staf location="local" service="FS"
+                        request="COPY FILE ${report_dir}/.TESTCASE_FAIL TODIRECTORY ${CI_WORK_DIR}/report TOMACHINE @{testhost}"
+                        throwBuildException="1"/>
+               </sequential>
+            </for>
          </then>
       </if>   
    </target>
@@ -111,7 +119,6 @@
       <sequential>
          <property file="${basedir}/src/conf/test.conf" />
          
-         <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
          <var name="cluster_host_info" value=""/>
          <for list="${testhost_list}" param="testhost">
             <sequential>
