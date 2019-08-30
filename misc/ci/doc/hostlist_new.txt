@@ -129,13 +129,9 @@
 192.168.28.140 scm-test-ci-cent2（网关）
 192.168.28.141 scm-test-ci-rhel3（网关）
 
-#scm zookeeper环境 
-192.168.30.188 scm-ci-test-suse2
-
-#mysql compile
+#scm zookeeper环境
 192.168.28.136 scm-test-ci-suse2
 
-192.168.30.190 scm-ci-test-suse3(暂时没用)
 新做一台suse12 sp2
 
 #DB ES环境
