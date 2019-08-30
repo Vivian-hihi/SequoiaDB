@@ -37,18 +37,18 @@ public class Split10527C extends SdbTestBase {
     private String customCSName = "testcaseCS_10527C";
     private String srcGroupName;
     private String destGroupName;
-    private Sequoiadb commSdb = null;
+    private Sequoiadb sdb = null;
 
     @BeforeClass()
     public void setUp() {
-        commSdb = new Sequoiadb(coordUrl, "", "");
+        sdb = new Sequoiadb(coordUrl, "", "");
 
         // 跳过 standAlone 和数据组不足的环境
         CommLib commlib = new CommLib();
-        if (CommLib.isStandAlone(commSdb)) {
+        if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
-        List<String> groupsName = commlib.getDataGroupNames(commSdb);
+        List<String> groupsName = commlib.getDataGroupNames(sdb);
         if (groupsName.size() < 2) {
             throw new SkipException("current environment less than tow groups ");
         }
@@ -60,7 +60,7 @@ public class Split10527C extends SdbTestBase {
     }
 
     @Test(timeOut = 30 * 60 * 1000)
-    public void splitAnddropCS() {
+    public void splitAnddropCS() throws InterruptedException {
         int condition = 0;
         int endCondition = 1024;
         List<SplitTask> splitTasks = new ArrayList<>(5);
@@ -75,22 +75,9 @@ public class Split10527C extends SdbTestBase {
             splitTask.start();
         }
 
-        // 删除CS,sleeptime是为了随机覆盖：1、数据迁移完成，编目未更新；2、数据迁移完成，编目已更新
-        try {
-            int sleeptime = random.nextInt(1000);
-            try {
-                Thread.sleep(sleeptime);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            commSdb.dropCollectionSpace(customCSName);
-            Assert.assertEquals(commSdb.isCollectionSpaceExist(customCSName), false);
-        } catch (BaseException e) {
-            if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
-                Assert.fail(e.getMessage());
-            }
-        }
+        Thread.sleep(random.nextInt(1000));
+        sdb.dropCollectionSpace(customCSName);
+        Assert.assertFalse(sdb.isCollectionSpaceExist(customCSName));
 
         // 检测切分线程
         for (SplitTask splitTask : splitTasks) {
@@ -101,15 +88,14 @@ public class Split10527C extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            // 如果split过程中删除cs失败（-147），split完成后删除cs成功
-            if (commSdb.isCollectionSpaceExist(customCSName)) {
-                commSdb.dropCollectionSpace(customCSName);
+            if (sdb.isCollectionSpaceExist(customCSName)) {
+                sdb.dropCollectionSpace(customCSName);
             }
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
         } finally {
-            if (commSdb != null) {
-                commSdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
             }
         }
     }
@@ -124,19 +110,19 @@ public class Split10527C extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            Sequoiadb sdb = null;
+            Sequoiadb db = null;
             try {
-                sdb = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(customCSName).getCollection(clName);
                 cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:" + beginNo + "}"),
                         (BSONObject) JSON.parse("{sk:" + endNo + "}"));
             } catch (BaseException e) {
-                if (e.getErrorCode() != -147 && e.getErrorCode() != -23 && e.getErrorCode() != -190) {
+                if (e.getErrorCode() != -34 && e.getErrorCode() != -23) {
                     throw e;
                 }
             } finally {
-                if (sdb != null) {
-                    sdb.disconnect();
+                if (db != null) {
+                    db.disconnect();
                 }
             }
         }
@@ -144,10 +130,10 @@ public class Split10527C extends SdbTestBase {
     }
 
     private DBCollection createCSAndCL() {
-        if (commSdb.isCollectionSpaceExist(customCSName)) {
-            commSdb.dropCollectionSpace(customCSName);
+        if (sdb.isCollectionSpaceExist(customCSName)) {
+            sdb.dropCollectionSpace(customCSName);
         }
-        CollectionSpace customCS = commSdb.createCollectionSpace(customCSName);
+        CollectionSpace customCS = sdb.createCollectionSpace(customCSName);
         DBCollection cl = customCS.createCollection(clName, (BSONObject) JSON
                 .parse("{ShardingKey:{'sk':1},Partition:16384,ShardingType:'hash',Group:'" + srcGroupName + "'}"));
         return cl;

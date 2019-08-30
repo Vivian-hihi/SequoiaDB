@@ -62,7 +62,7 @@ public class Split10528C extends SdbTestBase {
     }
 
     @Test(timeOut = 30 * 60 * 1000)
-    public void splitAndDropCL() {
+    public void splitAndDropCL() throws InterruptedException {
         int condition = 0;
         int endCondition = 5000;
         List<SplitTask> splitTasks = new ArrayList<>(5);
@@ -78,13 +78,7 @@ public class Split10528C extends SdbTestBase {
         }
 
         // 删除CL,随机覆盖：1、数据迁移完成，编目未更新；2、数据迁移完成，编目已更新
-        int sleeptime = random.nextInt(2000);
-        try {
-            Thread.sleep(sleeptime);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        Thread.sleep(random.nextInt(2000));
 
         cs.dropCollection(clName);
         Assert.assertEquals(cs.isCollectionExist(clName), false);
@@ -121,19 +115,20 @@ public class Split10528C extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            Sequoiadb sdb = null;
+            Sequoiadb db = null;
             try {
-                sdb = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
                 cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:" + beginNo + "}"),
                         (BSONObject) JSON.parse("{sk:" + endNo + "}"));
             } catch (BaseException e) {
-                if (e.getErrorCode() != -23) {
+                if (e.getErrorCode() != -23 && e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                    e.printStackTrace();
                     throw e;
                 }
             } finally {
-                if (sdb != null) {
-                    sdb.disconnect();
+                if (db != null) {
+                    db.disconnect();
                 }
             }
         }

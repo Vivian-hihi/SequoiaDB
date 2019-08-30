@@ -35,47 +35,36 @@ public class Split10527A extends SdbTestBase {
     private String customCSName = "testcaseCS_10527A";
     private String srcGroupName;
     private String destGroupName;
-    private Sequoiadb commSdb = null;
+    private Sequoiadb sdb = null;
 
     @BeforeClass()
     public void setUp() {
 
         try {
-            commSdb = new Sequoiadb(coordUrl, "", "");
+            sdb = new Sequoiadb(coordUrl, "", "");
 
             // 跳过 standAlone 和数据组不足的环境
             CommLib commlib = new CommLib();
-            if (commlib.isStandAlone(commSdb)) {
+            if (commlib.isStandAlone(sdb)) {
                 throw new SkipException("skip StandAlone");
             }
-            List<String> groupsName = commlib.getDataGroupNames(commSdb);
+            List<String> groupsName = commlib.getDataGroupNames(sdb);
             if (groupsName.size() < 2) {
                 throw new SkipException("current environment less than tow groups ");
             }
             srcGroupName = groupsName.get(0);
             destGroupName = groupsName.get(1);
 
-            CollectionSpace customCS = commSdb.createCollectionSpace(customCSName);
+            CollectionSpace customCS = sdb.createCollectionSpace(customCSName);
             DBCollection cl = customCS.createCollection(clName, (BSONObject) JSON
                     .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'" + srcGroupName + "'}"));
             insertData(cl);// 写入待切分的记录（10000）
         } catch (BaseException e) {
-            if (commSdb != null) {
-                commSdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
             }
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + SplitUtils.getKeyStack(e, this));
-        }
-    }
-
-    public void insertData(DBCollection cl) {
-        try {
-            for (int i = 0; i < 10000; i++) {
-                BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
-                cl.insert(obj);
-            }
-        } catch (BaseException e) {
-            throw e;
         }
     }
 
@@ -95,11 +84,6 @@ public class Split10527A extends SdbTestBase {
 
             // 检测切分线程
             Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
-        } catch (BaseException e) {
-            if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
-                Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this) + " \r\nSplitThread:["
-                        + splitThread.getErrorMsg() + "]  ");
-            }
         } finally {
             if (db != null) {
                 db.disconnect();
@@ -113,40 +97,49 @@ public class Split10527A extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            if (commSdb.isCollectionSpaceExist(customCSName)) {
-                commSdb.dropCollectionSpace(customCSName);
+            if (sdb.isCollectionSpaceExist(customCSName)) {
+                sdb.dropCollectionSpace(customCSName);
             }
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
         } finally {
-            if (commSdb != null) {
-                commSdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
             }
         }
     }
 
     class Split extends SdbThreadBase {
-
         @Override
         public void exec() throws Exception {
-            Sequoiadb sdb = null;
+            Sequoiadb db = null;
             try {
-                sdb = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(customCSName).getCollection(clName);
                 if (cl == null) {// 若cl不存在，cl为空，未碰撞到测试点
                     return;
                 }
                 cl.split(srcGroupName, destGroupName, 90);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -23 && e.getErrorCode() != -147 && e.getErrorCode() != -34
-                        && e.getErrorCode() != -190) {
+                if (e.getErrorCode() != -34 && e.getErrorCode() != -23) {
                     throw e;
                 }
             } finally {
-                if (sdb != null) {
-                    sdb.disconnect();
+                if (db != null) {
+                    db.disconnect();
                 }
             }
+        }
+    }
+
+    public void insertData(DBCollection cl) {
+        try {
+            for (int i = 0; i < 10000; i++) {
+                BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
+                cl.insert(obj);
+            }
+        } catch (BaseException e) {
+            throw e;
         }
     }
 

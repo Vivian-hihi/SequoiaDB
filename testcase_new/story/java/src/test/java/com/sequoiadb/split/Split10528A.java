@@ -35,25 +35,25 @@ public class Split10528A extends SdbTestBase {
     private String clName = "testcaseCL_10528A";
     private String srcGroupName;
     private String destGroupName;
-    private Sequoiadb commSdb = null;
+    private Sequoiadb sdb = null;
 
     @BeforeClass()
     public void setUp() {
-        commSdb = new Sequoiadb(coordUrl, "", "");
+        sdb = new Sequoiadb(coordUrl, "", "");
 
         // 跳过 standAlone 和数据组不足的环境
         CommLib commlib = new CommLib();
-        if (commlib.isStandAlone(commSdb)) {
+        if (commlib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
-        List<String> groupsName = commlib.getDataGroupNames(commSdb);
+        List<String> groupsName = commlib.getDataGroupNames(sdb);
         if (groupsName.size() < 2) {
             throw new SkipException("current environment less than tow groups ");
         }
         srcGroupName = groupsName.get(0);
         destGroupName = groupsName.get(1);
 
-        CollectionSpace customCS = commSdb.getCollectionSpace(SdbTestBase.csName);
+        CollectionSpace customCS = sdb.getCollectionSpace(SdbTestBase.csName);
         DBCollection cl = customCS.createCollection(clName, (BSONObject) JSON
                 .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'" + srcGroupName + "'}"));
 
@@ -79,14 +79,14 @@ public class Split10528A extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            if (commSdb.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName)) {
-                commSdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
+            if (sdb.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName)) {
+                sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
             }
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + SplitUtils.getKeyStack(e, this));
         } finally {
-            if (commSdb != null) {
-                commSdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
             }
         }
     }
@@ -94,10 +94,10 @@ public class Split10528A extends SdbTestBase {
     class Split extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
-            Sequoiadb sdb = null;
+            Sequoiadb db = null;
             try {
-                sdb = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
                 if (cl == null) {// 若cl已被删除，此时cl为空，
                     return;
                 }
@@ -108,12 +108,9 @@ public class Split10528A extends SdbTestBase {
                     e.printStackTrace();
                     throw e;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
             } finally {
-                if (sdb != null) {
-                    sdb.disconnect();
+                if (db != null) {
+                    db.disconnect();
                 }
             }
         }
@@ -123,17 +120,17 @@ public class Split10528A extends SdbTestBase {
         @SuppressWarnings("resource")
         @Override
         public void exec() throws Exception {
-            Sequoiadb sdb = null;
+            Sequoiadb db = null;
             try {
-                sdb = new Sequoiadb(coordUrl, "", "");
+                db = new Sequoiadb(coordUrl, "", "");
                 // 删除CL
-                sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-                CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
+                db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
                 cs.dropCollection(clName);
-                Assert.assertEquals(sdb.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName), false);
+                Assert.assertEquals(db.getCollectionSpace(SdbTestBase.csName).isCollectionExist(clName), false);
             } finally {
-                if (sdb != null) {
-                    sdb.disconnect();
+                if (db != null) {
+                    db.disconnect();
                 }
             }
         }
