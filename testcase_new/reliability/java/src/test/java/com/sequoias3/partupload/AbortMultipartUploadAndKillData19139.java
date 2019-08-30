@@ -30,8 +30,6 @@ import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.PartUploadUtils;
-import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
-import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
 
 /**
  * @Description seqDB-19139 :取消分段上传过程中db端节点异常
@@ -74,8 +72,7 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
             keyAndUploadIds.add(keyName, uploadId);
         }
 
-        FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 0, 15);
-        TaskMgr mgr = new TaskMgr(faultMakeTask);
+        TaskMgr mgr = new TaskMgr();
         GroupMgr groupMgr = GroupMgr.getInstance();
         List<GroupWrapper> glist = groupMgr.getAllDataGroup();
         for (int i = 0; i < glist.size(); i++) {
