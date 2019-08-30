@@ -65,7 +65,7 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
         s3Client.createBucket(bucketName);
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() throws Exception {
         for (int i = 0; i < keyNum; i++) {
             String keyName = "/dir/" + i + baseKeyName;
