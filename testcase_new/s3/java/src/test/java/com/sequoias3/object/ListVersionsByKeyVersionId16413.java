@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 /**
- * @Description:  seqDB-16413 ::带keyMarker、versionIdMarker查询对象版本列表，不匹配
+ * @Description: seqDB-16413 ::带keyMarker、versionIdMarker查询对象版本列表，不匹配
  * @author fanyu
  * @Date:2018年11月23日
  * @version:1.0
@@ -28,7 +28,7 @@ import java.util.UUID;
 public class ListVersionsByKeyVersionId16413 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16413";
-    private String[] objectNames = {"16413%abc", "16413%bcd", "16413%cde", "16413%def","16413%efg"};
+    private String[] objectNames = { "16413%abc", "16413%bcd", "16413%cde", "16413%def", "16413%efg" };
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
@@ -40,28 +40,26 @@ public class ListVersionsByKeyVersionId16413 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
             for (int j = 0; j < versionNum; j++) {
-              s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+                s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
             }
         }
     }
 
     @Test
     private void test() throws Exception {
-        int index = objectNames.length-1;
+        int index = objectNames.length - 1;
         String keyMarker = objectNames[index];
-        int versionIdMarker = versionNum+1;
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(keyMarker)
-                .withVersionIdMarker(String.valueOf(versionIdMarker)));
-        //expected results
+        int versionIdMarker = versionNum + 1;
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(keyMarker).withVersionIdMarker(String.valueOf(versionIdMarker)));
+        // expected results
         MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
         for (int i = versionNum - 1; i >= 0; i--) {
             expMap.add(objectNames[index], String.valueOf(i));
         }
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), expMap);
         runSuccess = true;
     }
 

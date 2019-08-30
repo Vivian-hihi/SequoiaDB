@@ -28,59 +28,59 @@ import com.sequoias3.testcommon.TestTools;
  * @version 1.00
  */
 public class ListObjectsWithPrefix16421_18561 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket16421";
-	private String key = "/aa/bb/object16421";
-	private AmazonS3 s3Client = null;
-	private int matchObjectNums = 0;
-	private String prefix = "/dir_1/prefix/test16421";;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket16421";
+    private String key = "/aa/bb/object16421";
+    private AmazonS3 s3Client = null;
+    private int matchObjectNums = 0;
+    private String prefix = "/dir_1/prefix/test16421";;
 
-	@BeforeClass
-	private void setUp() {
-		s3Client = CommLib.buildS3Client();
-		s3Client.createBucket(bucketName);
-	}
+    @BeforeClass
+    private void setUp() {
+        s3Client = CommLib.buildS3Client();
+        s3Client.createBucket(bucketName);
+    }
 
-	@Test
-	public void testCreateObject() throws Exception {
-		putObjects();
-		listObjectsAndCheckResult();
-		listObjectV1AndCheckResult();
-		runSuccess = true;
-	}
+    @Test
+    public void testCreateObject() throws Exception {
+        putObjects();
+        listObjectsAndCheckResult();
+        listObjectV1AndCheckResult();
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 
-	private void listObjectsAndCheckResult() throws IOException {
-		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
-		request.withPrefix(prefix);
-		ListObjectsV2Result result = s3Client.listObjectsV2(request);
-		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		Assert.assertEquals(objects.size(), matchObjectNums);
-	}
+    private void listObjectsAndCheckResult() throws IOException {
+        ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
+        request.withPrefix(prefix);
+        ListObjectsV2Result result = s3Client.listObjectsV2(request);
+        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        Assert.assertEquals(objects.size(), matchObjectNums);
+    }
 
-	private void listObjectV1AndCheckResult() throws IOException {
-		ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName);
-		request.withPrefix(prefix);
-		ObjectListing result = s3Client.listObjects(request);
-		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		Assert.assertEquals(objects.size(), matchObjectNums);
-	}
+    private void listObjectV1AndCheckResult() throws IOException {
+        ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName);
+        request.withPrefix(prefix);
+        ObjectListing result = s3Client.listObjects(request);
+        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        Assert.assertEquals(objects.size(), matchObjectNums);
+    }
 
-	private void putObjects() {
-		int objectNums = 10;
-		for (int i = 0; i < objectNums; i++) {
-			String keyName = key + "_" + i + TestTools.getRandomString(i);
-			s3Client.putObject(bucketName, keyName, "testContext");
-		}
-	}
+    private void putObjects() {
+        int objectNums = 10;
+        for (int i = 0; i < objectNums; i++) {
+            String keyName = key + "_" + i + TestTools.getRandomString(i);
+            s3Client.putObject(bucketName, keyName, "testContext");
+        }
+    }
 }

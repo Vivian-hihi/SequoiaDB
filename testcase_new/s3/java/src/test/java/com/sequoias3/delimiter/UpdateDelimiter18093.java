@@ -20,39 +20,39 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
  * @version 1.00
  */
 public class UpdateDelimiter18093 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18093";
-	private String keyName = "/test/aa/object18093";
-	private String delimiter = "/";
-	private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18093";
+    private String keyName = "/test/aa/object18093";
+    private String delimiter = "/";
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
 
-		s3Client.createBucket(bucketName);
-		s3Client.putObject(bucketName, keyName, "context18093");
-	}
+        s3Client.createBucket(bucketName);
+        s3Client.putObject(bucketName, keyName, "context18093");
+    }
 
-	@Test
-	public void testUpdateDelimiter() throws Exception {
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		List<String> expCommprefixList = new ArrayList<>();
-		expCommprefixList.add("/");
-		List<String> expContentList = new ArrayList<>();
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
-		runSuccess = true;
-	}
+    @Test
+    public void testUpdateDelimiter() throws Exception {
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+        List<String> expCommprefixList = new ArrayList<>();
+        expCommprefixList.add("/");
+        List<String> expContentList = new ArrayList<>();
+        DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 }

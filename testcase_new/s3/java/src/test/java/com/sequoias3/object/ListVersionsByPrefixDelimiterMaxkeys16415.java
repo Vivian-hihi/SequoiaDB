@@ -29,8 +29,8 @@ import java.util.UUID;
 public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16415";
-    private String[] objectNames = {"/aa/bb/test1","/aa/bb/test2","/bb/cc/test1",
-            "/bb/cc/test2","/cc/dd/test1","/cc/dd/test2"};
+    private String[] objectNames = { "/aa/bb/test1", "/aa/bb/test2", "/bb/cc/test1", "/bb/cc/test2", "/cc/dd/test1",
+            "/cc/dd/test2" };
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
@@ -47,71 +47,59 @@ public class ListVersionsByPrefixDelimiterMaxkeys16415 extends S3TestBase {
         }
     }
 
-    @Test//SEQUOIADBMAINSTREAM-3987
+    @Test // SEQUOIADBMAINSTREAM-3987
     private void test1() throws Exception {
         String prefix = "/";
         String delimiter = "/";
         Integer maxResults = 1;
 
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withPrefix(prefix)
-                .withDelimiter(delimiter)
-                .withMaxResults(maxResults));
-        //expected results
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withPrefix(prefix).withDelimiter(delimiter).withMaxResults(maxResults));
+        // expected results
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add("/aa/");
 
-        //chceck
-        Assert.assertEquals(vsList.isTruncated(),true,"vsList.isTruncated() must be true");
-        ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,new LinkedMultiValueMap<String, String>());
+        // chceck
+        Assert.assertEquals(vsList.isTruncated(), true, "vsList.isTruncated() must be true");
+        ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, new LinkedMultiValueMap<String, String>());
 
-        //test isTruncated
+        // test isTruncated
         String nextKeyMarker = vsList.getNextKeyMarker();
         String nextVersionIdMarker = vsList.getNextVersionIdMarker();
         Integer maxResults2 = 2;
-        VersionListing vsList2 = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(nextKeyMarker)
-                .withVersionIdMarker(nextVersionIdMarker)
-                .withPrefix(prefix)
-                .withDelimiter(delimiter)
-                .withMaxResults(maxResults2));
+        VersionListing vsList2 = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker).withVersionIdMarker(nextVersionIdMarker).withPrefix(prefix)
+                .withDelimiter(delimiter).withMaxResults(maxResults2));
 
-        //expected results
+        // expected results
         List<String> expCommonPrefixes2 = new ArrayList<String>();
         expCommonPrefixes2.add("/bb/");
         expCommonPrefixes2.add("/cc/");
-        Assert.assertEquals(vsList2.isTruncated(),false,"vsList3.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList2,expCommonPrefixes2,new LinkedMultiValueMap<String, String>());
+        Assert.assertEquals(vsList2.isTruncated(), false, "vsList3.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList2, expCommonPrefixes2, new LinkedMultiValueMap<String, String>());
 
-
-        //add new object
+        // add new object
         String newObjectName = "/dd";
         for (int j = 0; j < versionNum; j++) {
             s3Client.putObject(bucketName, newObjectName, "" + UUID.randomUUID());
         }
 
-        //test isTruncated
+        // test isTruncated
         Integer maxResults3 = 100;
-        VersionListing vsList3 = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(nextKeyMarker)
-                .withVersionIdMarker(nextVersionIdMarker)
-                .withPrefix(prefix)
-                .withDelimiter(delimiter)
-                .withMaxResults(maxResults3));
+        VersionListing vsList3 = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker).withVersionIdMarker(nextVersionIdMarker).withPrefix(prefix)
+                .withDelimiter(delimiter).withMaxResults(maxResults3));
 
-        //expected results
+        // expected results
         List<String> expCommonPrefixes3 = new ArrayList<String>();
         expCommonPrefixes3.add("/bb/");
         expCommonPrefixes3.add("/cc/");
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for(int k = versionNum-1;k >= 0; k--){
-            expMap.add(newObjectName,String.valueOf(k));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (int k = versionNum - 1; k >= 0; k--) {
+            expMap.add(newObjectName, String.valueOf(k));
         }
-        Assert.assertEquals(vsList3.isTruncated(),false,"vsList3.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList3,expCommonPrefixes3,expMap);
+        Assert.assertEquals(vsList3.isTruncated(), false, "vsList3.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList3, expCommonPrefixes3, expMap);
         runSuccess = true;
     }
 

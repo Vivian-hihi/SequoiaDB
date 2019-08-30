@@ -46,7 +46,7 @@ public class Param_CreateUser16278 extends S3TestBase {
 
     @Test
     private void testNameIsSepcial() {
-        //+ means backspace
+        // + means backspace
         String name = ".B=,ABCDEMN@_-adcdefghijklmnopqrstuvwxyzOPQRSTUVWXYZ012345789";
         JSONObject actUser = null;
         try {

@@ -20,69 +20,70 @@ import com.sequoias3.testcommon.s3utils.HeadUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
- * test content: 带versionId查询对象，匹配ifUnModifiedSince条件
- * testlink-case: seqDB-16686 
+ * test content: 带versionId查询对象，匹配ifUnModifiedSince条件 testlink-case: seqDB-16686
+ * 
  * @author wangkexin
  * @Date 2018.12.10
  * @version 1.00
  */
 
-public class TestGetObjectMetadata16686  extends S3TestBase{
-	private boolean runSuccess = false;
-	private String bucketName = "bucket16686";
-	private String userName = "user16686";
-	private String roleName = "normal";
-	private String keyName = "key16686";
-	private String content = "content16686";
-	private static CloseableHttpClient client;
-	private String[] accessKeys = null;
-	private AmazonS3 s3Client = null;
+public class TestGetObjectMetadata16686 extends S3TestBase {
+    private boolean runSuccess = false;
+    private String bucketName = "bucket16686";
+    private String userName = "user16686";
+    private String roleName = "normal";
+    private String keyName = "key16686";
+    private String content = "content16686";
+    private static CloseableHttpClient client;
+    private String[] accessKeys = null;
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-	}
+    @BeforeClass
+    private void setUp() throws Exception {
+        CommLib.clearUser(userName);
+        accessKeys = UserUtils.createUser(userName, roleName);
+        s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+    }
 
-	@Test
-	private void testGetObjectMetadata() throws Exception {
-		s3Client.createBucket(bucketName);
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-		PutObjectResult result =  s3Client.putObject(bucketName, keyName, content+"v1");
-		String versionId = result.getVersionId();
-		String expEtag = result.getETag();
-		
-		Date date = new Date();
-		
-		s3Client.putObject(bucketName, keyName, content+"v2");
-		s3Client.putObject(bucketName, keyName, content+"v3");
-		
-		//指定ifUnModifiedSince匹配条件，匹配在指定时间后尚未修改的对象(即v1版本)
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName+"?versionId="+versionId);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
-	    request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(date ,1));
-	    
-	    client = RestClient.createHttpClient();
-		CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+expEtag+"\"");
-		Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionId);
-		
-		runSuccess = true;
-	}
+    @Test
+    private void testGetObjectMetadata() throws Exception {
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+        PutObjectResult result = s3Client.putObject(bucketName, keyName, content + "v1");
+        String versionId = result.getVersionId();
+        String expEtag = result.getETag();
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				UserUtils.deleteUser(userName);
-			}
-		} catch (BaseException e) {
-			Assert.fail("clean up failed:" + e.getMessage());
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+        Date date = new Date();
+
+        s3Client.putObject(bucketName, keyName, content + "v2");
+        s3Client.putObject(bucketName, keyName, content + "v3");
+
+        // 指定ifUnModifiedSince匹配条件，匹配在指定时间后尚未修改的对象(即v1版本)
+        HttpHead request = new HttpHead(
+                S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName + "?versionId=" + versionId);
+        request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
+        request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(date, 1));
+
+        client = RestClient.createHttpClient();
+        CloseableHttpResponse resp = RestClient.sendRequest(client, request);
+        Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\"" + expEtag + "\"");
+        Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionId);
+
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                UserUtils.deleteUser(userName);
+            }
+        } catch (BaseException e) {
+            Assert.fail("clean up failed:" + e.getMessage());
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 }

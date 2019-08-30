@@ -22,53 +22,53 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  * @version 1.00
  */
 public class UpdateDelimiter18096 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String userNameA = "UserA18096";
-	private String userNameB = "UserB18096";
-	private String roleName = "normal";
-	private String bucketName = "bucket18096";
-	private AmazonS3 s3ClientA = null;
-	private AmazonS3 s3ClientB = null;
+    private boolean runSuccess = false;
+    private String userNameA = "UserA18096";
+    private String userNameB = "UserB18096";
+    private String roleName = "normal";
+    private String bucketName = "bucket18096";
+    private AmazonS3 s3ClientA = null;
+    private AmazonS3 s3ClientB = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		// create user A
-		String[] acessKeys = UserUtils.createUser(userNameA, roleName);
-		s3ClientA = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
+    @BeforeClass
+    private void setUp() throws IOException {
+        // create user A
+        String[] acessKeys = UserUtils.createUser(userNameA, roleName);
+        s3ClientA = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 
-		// create bucket
-		s3ClientA.createBucket(new CreateBucketRequest(bucketName));
-	}
+        // create bucket
+        s3ClientA.createBucket(new CreateBucketRequest(bucketName));
+    }
 
-	@Test
-	public void testUpdateDelimiter() throws Exception {
-		// create user B
-		String[] acessKeys = UserUtils.createUser(userNameB, roleName);
-		s3ClientB = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
+    @Test
+    public void testUpdateDelimiter() throws Exception {
+        // create user B
+        String[] acessKeys = UserUtils.createUser(userNameB, roleName);
+        s3ClientB = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 
-		try {
-			DelimiterUtils.getDelimiter(bucketName, acessKeys[0]);
-			Assert.fail("exp fail but found success");
-		} catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "AccessDenied",
-					"errorCode is " + e.getErrorCode() + "  statusCode:" + e.getStatusCode());
-		} finally {
-			if (s3ClientB != null) {
-				s3ClientB.shutdown();
-			}
-		}
-		runSuccess = true;
-	}
+        try {
+            DelimiterUtils.getDelimiter(bucketName, acessKeys[0]);
+            Assert.fail("exp fail but found success");
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "AccessDenied",
+                    "errorCode is " + e.getErrorCode() + "  statusCode:" + e.getStatusCode());
+        } finally {
+            if (s3ClientB != null) {
+                s3ClientB.shutdown();
+            }
+        }
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				UserUtils.deleteUser(userNameA);
-				UserUtils.deleteUser(userNameB);
-			}
-		} finally {
-			s3ClientA.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                UserUtils.deleteUser(userNameA);
+                UserUtils.deleteUser(userNameB);
+            }
+        } finally {
+            s3ClientA.shutdown();
+        }
+    }
 }

@@ -1,6 +1,5 @@
 package com.sequoias3.user;
 
-
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.json.JSONObject;

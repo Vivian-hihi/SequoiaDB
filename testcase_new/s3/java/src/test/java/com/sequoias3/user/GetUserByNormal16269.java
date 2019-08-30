@@ -48,7 +48,7 @@ public class GetUserByNormal16269 extends S3TestBase {
             JSONObject json1 = XML.toJSONObject(errorMsg);
             if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
                     .contains("AccessDenied")) {
-               throw e;
+                throw e;
             }
         }
         runSuccess = true;

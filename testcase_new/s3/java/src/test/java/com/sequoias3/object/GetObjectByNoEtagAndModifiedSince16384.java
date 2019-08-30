@@ -17,7 +17,8 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * @Description: seqDB-16384 :: 指定ifNoneMatch和ifModifiedSince条件获取对象，不匹配ifNoneMatch
+ * @Description: seqDB-16384 ::
+ *               指定ifNoneMatch和ifModifiedSince条件获取对象，不匹配ifNoneMatch
  * @author fanyu
  * @Date:2018年11月14日
  * @version:1.0
@@ -47,28 +48,28 @@ public class GetObjectByNoEtagAndModifiedSince16384 extends S3TestBase {
             filePathList.add(filePath);
         }
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
-        //get current eTag
+        // get current eTag
         int currIndex = fileNum - 1;
         String currETag = objectVSList.get(currIndex).getETag();
 
-        //get object by NonMatchingETag and modified
-        //the object has been modified since now-one_month
-        cal.set(Calendar.DAY_OF_MONTH,cal.get(Calendar.DAY_OF_MONTH)-1);
+        // get object by NonMatchingETag and modified
+        // the object has been modified since now-one_month
+        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH) - 1);
         S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
-                .withNonmatchingETagConstraint(currETag)
-                .withModifiedSinceConstraint(cal.getTime()));
+                .withNonmatchingETagConstraint(currETag).withModifiedSinceConstraint(cal.getTime()));
         Assert.assertNull(currObject);
         runSuccess = true;
     }
@@ -77,7 +78,7 @@ public class GetObjectByNoEtagAndModifiedSince16384 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+                CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

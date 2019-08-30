@@ -53,25 +53,27 @@ public class GetObjectByDeleteMarked16360 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
-        //get the id of current version
-        String versionId = objectVSList.get(fileNum-1).getVersionId();
-        //delete object
+        // get the id of current version
+        String versionId = objectVSList.get(fileNum - 1).getVersionId();
+        // delete object
         s3Client.deleteObject(bucketName, objectName);
-        //get the deleted version
+        // get the deleted version
         S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId));
         chectResult(object, filePathList.get(fileNum - 1));
 
         // put new version in object
-        objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(0)))));
-        //get the deleted version
+        objectVSList
+                .add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(0)))));
+        // get the deleted version
         S3Object object1 = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId));
         chectResult(object1, filePathList.get(fileNum - 1));
 
-        //get the id of current version
+        // get the id of current version
         String currVersionId = objectVSList.get(fileNum).getVersionId();
-        //get current version object
+        // get current version object
         S3Object object2 = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId));
         chectResult(object2, filePathList.get(0));
         runSuccess = true;
@@ -81,7 +83,7 @@ public class GetObjectByDeleteMarked16360 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -91,17 +93,17 @@ public class GetObjectByDeleteMarked16360 extends S3TestBase {
         }
     }
 
-    private void chectResult(S3Object object,String filePath)throws  Exception{
+    private void chectResult(S3Object object, String filePath) throws Exception {
         Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
-            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            ObjectUtils.inputStream2File(s3InputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally {
-            if(s3InputStream != null){
+        } finally {
+            if (s3InputStream != null) {
                 s3InputStream.close();
             }
         }

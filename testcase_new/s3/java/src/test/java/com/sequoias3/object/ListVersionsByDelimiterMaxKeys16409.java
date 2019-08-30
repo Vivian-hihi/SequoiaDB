@@ -27,7 +27,7 @@ import java.util.UUID;
 public class ListVersionsByDelimiterMaxKeys16409 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16409";
-    private String[] objectNames = {"abc%16409", "cde%16409", "fgh%16409", "ijk%16409","lmn%16409"};
+    private String[] objectNames = { "abc%16409", "cde%16409", "fgh%16409", "ijk%16409", "lmn%16409" };
     private AmazonS3 s3Client = null;
     private int versionNum = 2;
 
@@ -47,17 +47,15 @@ public class ListVersionsByDelimiterMaxKeys16409 extends S3TestBase {
     @Test
     private void test() throws Exception {
         String delimiter = "%";
-        Integer maxResults = versionNum*objectNames.length + 1;
-        //maxResults > versionNum*objectNames.length
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withMaxResults(maxResults));
-        //expected results
-        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames,"",delimiter);
-        //check results
+        Integer maxResults = versionNum * objectNames.length + 1;
+        // maxResults > versionNum*objectNames.length
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withDelimiter(delimiter).withMaxResults(maxResults));
+        // expected results
+        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+        // check results
         if (!vsList.isTruncated()) {
-           ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, new LinkedMultiValueMap<String, String>());
+            ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, new LinkedMultiValueMap<String, String>());
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * @Description:  seqDB-16373 :: 指定ifMatch和ifNoneMatch条件获取对象
+ * @Description: seqDB-16373 :: 指定ifMatch和ifNoneMatch条件获取对象
  * @author fanyu
  * @Date:2018年11月10日
  * @version:1.0
@@ -54,7 +54,8 @@ public class GetObjectByEtag16373 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         // get history version eTag
@@ -62,17 +63,16 @@ public class GetObjectByEtag16373 extends S3TestBase {
         int histIndex = random.nextInt(fileNum - 1);
         String histETag = objectVSList.get(histIndex).getETag();
 
-        //get current version eTag
+        // get current version eTag
         String currVersionId = objectVSList.get(fileNum - 1).getVersionId();
-        String currETag = objectVSList.get(fileNum-1).getETag();
+        String currETag = objectVSList.get(fileNum - 1).getETag();
 
-        //get object by eTag
+        // get object by eTag
         S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId)
-                .withMatchingETagConstraint(currETag)
-                .withNonmatchingETagConstraint(histETag));
+                .withMatchingETagConstraint(currETag).withNonmatchingETagConstraint(histETag));
 
-       //check the eTag and the content of object
-        String currPath = filePathList.get(fileNum-1);
+        // check the eTag and the content of object
+        String currPath = filePathList.get(fileNum - 1);
         checkResult(currObject, currPath);
         runSuccess = true;
     }
@@ -80,8 +80,8 @@ public class GetObjectByEtag16373 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -91,8 +91,8 @@ public class GetObjectByEtag16373 extends S3TestBase {
         }
     }
 
-    private void checkResult(S3Object object, String filePath)throws  Exception{
-        Assert.assertEquals(object.getObjectMetadata().getETag(),TestTools.getMD5(filePath));
+    private void checkResult(S3Object object, String filePath) throws Exception {
+        Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3ObjectInputStream = null;
         try {
             s3ObjectInputStream = object.getObjectContent();
@@ -100,8 +100,8 @@ public class GetObjectByEtag16373 extends S3TestBase {
                     Thread.currentThread().getId());
             ObjectUtils.inputStream2File(s3ObjectInputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally{
-            if(s3ObjectInputStream != null){
+        } finally {
+            if (s3ObjectInputStream != null) {
                 s3ObjectInputStream.close();
             }
         }

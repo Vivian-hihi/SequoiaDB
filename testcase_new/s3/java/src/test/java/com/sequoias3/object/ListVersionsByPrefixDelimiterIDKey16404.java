@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Description:   seqDB-16404 :: 带prefix、keyMarker、versionIdMarker和delimiter查询对象版本列表，不匹配delimiter
+ * @Description: seqDB-16404 ::
+ *               带prefix、keyMarker、versionIdMarker和delimiter查询对象版本列表，
+ *               不匹配delimiter
  * @author fanyu
  * @Date:2018年11月20日
  * @version:1.0
@@ -31,8 +33,8 @@ import java.util.List;
 public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16404";
-    //please sort  in an ascending order by objectName
-    private String[] objectNames = {"air116404", "dir2/16404A.png", "test16404.doc"};
+    // please sort in an ascending order by objectName
+    private String[] objectNames = { "air116404", "dir2/16404A.png", "test16404.doc" };
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
     private int versionNum = 5;
@@ -60,48 +62,43 @@ public class ListVersionsByPrefixDelimiterIDKey16404 extends S3TestBase {
         }
     }
 
-    //指定keyMarker+versionIdMarker的key匹配prefix
-    @Test//SEQUOIADBMAINSTREAM-3974
+    // 指定keyMarker+versionIdMarker的key匹配prefix
+    @Test // SEQUOIADBMAINSTREAM-3974
     private void test1() throws Exception {
         String prefix = "dir";
         String delimiter = "%";
         String keyMarker = objectNames[0];
         String versionIdMarker = "4";
-        //list versions by prefix/delimiter/currentversionId/key
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withPrefix(prefix)
-                .withKeyMarker(keyMarker)
-                .withVersionIdMarker(versionIdMarker));
-        //expected results
+        // list versions by prefix/delimiter/currentversionId/key
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter)
+                        .withPrefix(prefix).withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker));
+        // expected results
         MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
         for (int i = versionNum - 1; i >= 0; i--) {
             expMap.add(objectNames[1], String.valueOf(i));
         }
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,ObjectUtils.getCommPrefixes(objectNames,prefix,delimiter),expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, ObjectUtils.getCommPrefixes(objectNames, prefix, delimiter), expMap);
         runSuccess = true;
     }
 
-    //指定keyMarker+versionIdMarker的key不匹配prefix
+    // 指定keyMarker+versionIdMarker的key不匹配prefix
     @Test
     private void test2() throws Exception {
         String prefix = "abc";
         String delimiter = "%";
         String keyMarker = objectNames[0];
         String versionIdMarker = "4";
-        //list versions by prefix/delimiter/currentversionId/key
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withPrefix(prefix)
-                .withKeyMarker(keyMarker)
-                .withVersionIdMarker(versionIdMarker));
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,ObjectUtils.getCommPrefixes(objectNames,prefix,delimiter),new LinkedMultiValueMap<String, String>());
+        // list versions by prefix/delimiter/currentversionId/key
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter)
+                        .withPrefix(prefix).withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker));
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, ObjectUtils.getCommPrefixes(objectNames, prefix, delimiter),
+                new LinkedMultiValueMap<String, String>());
         runSuccess = true;
     }
 

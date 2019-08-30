@@ -44,176 +44,176 @@ import com.sequoias3.user.UserCommDefind;
  * @version 1.00
  */
 public class CreateObject18585 extends S3TestBase {
-	@DataProvider(name = "authorizationProvider")
-	public Object[][] generateAuthorization() {
-		return new Object[][] {
-				// test a : authorization 为空
-				new Object[] { "bucket18585", "" },
-				// test b : authorization 为version2版本
-				new Object[] { "bucket18585v2", "AWS " + accessKeys[0] + ":signature" },
-				// test c : authorization 为version4版本
-				new Object[] { "bucket18585v4", UserCommDefind.authValPre + accessKeys[0] + "/" } };
-	}
+    @DataProvider(name = "authorizationProvider")
+    public Object[][] generateAuthorization() {
+        return new Object[][] {
+                // test a : authorization 为空
+                new Object[] { "bucket18585", "" },
+                // test b : authorization 为version2版本
+                new Object[] { "bucket18585v2", "AWS " + accessKeys[0] + ":signature" },
+                // test c : authorization 为version4版本
+                new Object[] { "bucket18585v4", UserCommDefind.authValPre + accessKeys[0] + "/" } };
+    }
 
-	private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
-	private boolean runSuccess = false;
-	private String userName = "user18585";
-	private String roleName = "normal";
-	private String keyName = "key18585";
-	private AmazonS3 s3Client = null;
-	private AmazonS3 s3ClientNorMal = null;
-	private String[] accessKeys = null;
+    private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
+    private boolean runSuccess = false;
+    private String userName = "user18585";
+    private String roleName = "normal";
+    private String keyName = "key18585";
+    private AmazonS3 s3Client = null;
+    private AmazonS3 s3ClientNorMal = null;
+    private String[] accessKeys = null;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, roleName);
-		s3ClientNorMal = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		s3Client = CommLib.buildS3Client();
-	}
+    @BeforeClass
+    private void setUp() throws Exception {
+        CommLib.clearUser(userName);
+        accessKeys = UserUtils.createUser(userName, roleName);
+        s3ClientNorMal = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+        s3Client = CommLib.buildS3Client();
+    }
 
-	// 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
-	@SuppressWarnings("deprecation")
-	@Test(enabled = false) // (dataProvider = "authorizationProvider")
-	private void testCreateObject(String bucketName, String authorization) throws Exception {
-		String tmpContent = "content18585" + authorization;
+    // 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
+    @SuppressWarnings("deprecation")
+    @Test(enabled = false) // (dataProvider = "authorizationProvider")
+    private void testCreateObject(String bucketName, String authorization) throws Exception {
+        String tmpContent = "content18585" + authorization;
 
-		// 鉴权关闭，直接使用默认用户，携带鉴权消息被忽略
-		// create bucket
-		createBucket(bucketName, authorization);
+        // 鉴权关闭，直接使用默认用户，携带鉴权消息被忽略
+        // create bucket
+        createBucket(bucketName, authorization);
 
-		// check head bucket
-		headBucket(bucketName, authorization);
-		s3Client.headBucket(new HeadBucketRequest(bucketName));
+        // check head bucket
+        headBucket(bucketName, authorization);
+        s3Client.headBucket(new HeadBucketRequest(bucketName));
 
-		checkCreateBucketResult(s3ClientNorMal, bucketName, S3TestBase.s3UserName);
+        checkCreateBucketResult(s3ClientNorMal, bucketName, S3TestBase.s3UserName);
 
-		putObject(bucketName, keyName, tmpContent, authorization);
+        putObject(bucketName, keyName, tmpContent, authorization);
 
-		// check head object
-		headObject(bucketName, keyName, authorization);
+        // check head object
+        headObject(bucketName, keyName, authorization);
 
-		String actEtg = getObject(bucketName, keyName, authorization);
-		Assert.assertEquals(actEtg, TestTools.getMD5(tmpContent.getBytes()));
+        String actEtg = getObject(bucketName, keyName, authorization);
+        Assert.assertEquals(actEtg, TestTools.getMD5(tmpContent.getBytes()));
 
-		deleteObjet(bucketName, keyName, authorization);
-		deleteBucket(bucketName, authorization);
-		Assert.assertFalse(s3Client.doesBucketExist(bucketName));
+        deleteObjet(bucketName, keyName, authorization);
+        deleteBucket(bucketName, authorization);
+        Assert.assertFalse(s3Client.doesBucketExist(bucketName));
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				UserUtils.deleteUser(userName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-			if (s3ClientNorMal != null) {
-				s3ClientNorMal.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                UserUtils.deleteUser(userName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+            if (s3ClientNorMal != null) {
+                s3ClientNorMal.shutdown();
+            }
+        }
+    }
 
-	public void createBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
-		TestRest rest = new TestRest(type);
-		try {
-			rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.PUT)
-					.setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
-					.exec();
-		} catch (HttpStatusCodeException e) {
-			throw DelimiterUtils.httpToAmazon(e);
-		}
-	}
+    public void createBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+        TestRest rest = new TestRest(type);
+        try {
+            rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.PUT)
+                    .setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
+                    .exec();
+        } catch (HttpStatusCodeException e) {
+            throw DelimiterUtils.httpToAmazon(e);
+        }
+    }
 
-	public void headBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
-		TestRest rest = new TestRest(type);
-		try {
-			rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.HEAD)
-					.setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
-					.exec();
-		} catch (HttpClientErrorException e) {
-			throw httpToAmazonHead(e);
-		}
-	}
+    public void headBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+        TestRest rest = new TestRest(type);
+        try {
+            rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.HEAD)
+                    .setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
+                    .exec();
+        } catch (HttpClientErrorException e) {
+            throw httpToAmazonHead(e);
+        }
+    }
 
-	public void deleteBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
-		TestRest rest = new TestRest(type);
-		try {
-			rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.DELETE)
-					.setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
-					.exec();
-		} catch (HttpStatusCodeException e) {
-			throw DelimiterUtils.httpToAmazon(e);
-		}
-	}
+    public void deleteBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+        TestRest rest = new TestRest(type);
+        try {
+            rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.DELETE)
+                    .setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
+                    .exec();
+        } catch (HttpStatusCodeException e) {
+            throw DelimiterUtils.httpToAmazon(e);
+        }
+    }
 
-	private void checkCreateBucketResult(AmazonS3 s3Client, String bucketName, String userName) {
-		// create one bucket,check the bucket name and owner name
-		List<Bucket> buckets = s3Client.listBuckets();
-		boolean findBucketFlag = false;
-		for (int i = 0; i < buckets.size(); i++) {
-			String actBucketName = buckets.get(i).getName();
-			// get the create bucket,then check the bucket name and owner
-			if (actBucketName.equals(bucketName)) {
-				Owner actOwner = buckets.get(i).getOwner();
-				Assert.assertEquals(actOwner.getDisplayName(), userName);
-				findBucketFlag = true;
-				break;
-			}
-		}
-		Assert.assertTrue(findBucketFlag, " the bucket must be exist!");
-	}
+    private void checkCreateBucketResult(AmazonS3 s3Client, String bucketName, String userName) {
+        // create one bucket,check the bucket name and owner name
+        List<Bucket> buckets = s3Client.listBuckets();
+        boolean findBucketFlag = false;
+        for (int i = 0; i < buckets.size(); i++) {
+            String actBucketName = buckets.get(i).getName();
+            // get the create bucket,then check the bucket name and owner
+            if (actBucketName.equals(bucketName)) {
+                Owner actOwner = buckets.get(i).getOwner();
+                Assert.assertEquals(actOwner.getDisplayName(), userName);
+                findBucketFlag = true;
+                break;
+            }
+        }
+        Assert.assertTrue(findBucketFlag, " the bucket must be exist!");
+    }
 
-	private void putObject(String bucketName, String objectName, String content, String authorization)
-			throws Exception {
-		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
-				+ URLEncoder.encode(objectName, "UTF-8"));
-		// RequestHeaders:
-		request.setHeader("Authorization", authorization);
+    private void putObject(String bucketName, String objectName, String content, String authorization)
+            throws Exception {
+        HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
+                + URLEncoder.encode(objectName, "UTF-8"));
+        // RequestHeaders:
+        request.setHeader("Authorization", authorization);
 
-		// Requeatbody:
-		StringEntity testString = new StringEntity(content, StandardCharsets.UTF_8);
-		request.setEntity(testString);
-		CloseableHttpClient client = RestClient.createHttpClient();
-		RestClient.sendRequest(client, request);
-	}
+        // Requeatbody:
+        StringEntity testString = new StringEntity(content, StandardCharsets.UTF_8);
+        request.setEntity(testString);
+        CloseableHttpClient client = RestClient.createHttpClient();
+        RestClient.sendRequest(client, request);
+    }
 
-	private String getObject(String bucketName, String objectName, String authorization) throws Exception {
-		String etag = "";
-		HttpGet request = new HttpGet(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
-				+ URLEncoder.encode(objectName, "UTF-8"));
-		request.setHeader("Authorization", authorization);
-		CloseableHttpClient client = RestClient.createHttpClient();
-		CloseableHttpResponse response = RestClient.sendRequest(client, request);
-		etag = response.getFirstHeader("ETag").getValue().replace("\"", "");
+    private String getObject(String bucketName, String objectName, String authorization) throws Exception {
+        String etag = "";
+        HttpGet request = new HttpGet(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
+                + URLEncoder.encode(objectName, "UTF-8"));
+        request.setHeader("Authorization", authorization);
+        CloseableHttpClient client = RestClient.createHttpClient();
+        CloseableHttpResponse response = RestClient.sendRequest(client, request);
+        etag = response.getFirstHeader("ETag").getValue().replace("\"", "");
 
-		return etag;
-	}
+        return etag;
+    }
 
-	private void headObject(String bucketName, String objectName, String authorization) throws Exception {
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
-				+ URLEncoder.encode(objectName, "UTF-8"));
-		request.setHeader("Authorization", authorization);
-		CloseableHttpClient client = RestClient.createHttpClient();
-		RestClient.sendRequest(client, request);
-	}
+    private void headObject(String bucketName, String objectName, String authorization) throws Exception {
+        HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
+                + URLEncoder.encode(objectName, "UTF-8"));
+        request.setHeader("Authorization", authorization);
+        CloseableHttpClient client = RestClient.createHttpClient();
+        RestClient.sendRequest(client, request);
+    }
 
-	private void deleteObjet(String bucketName, String objectName, String authorization) throws Exception {
-		HttpDelete request = new HttpDelete(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
-				+ URLEncoder.encode(objectName, "UTF-8"));
-		request.setHeader("Authorization", authorization);
-		CloseableHttpClient client = RestClient.createHttpClient();
-		RestClient.sendRequest(client, request);
-	}
+    private void deleteObjet(String bucketName, String objectName, String authorization) throws Exception {
+        HttpDelete request = new HttpDelete(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
+                + URLEncoder.encode(objectName, "UTF-8"));
+        request.setHeader("Authorization", authorization);
+        CloseableHttpClient client = RestClient.createHttpClient();
+        RestClient.sendRequest(client, request);
+    }
 
-	private AmazonS3Exception httpToAmazonHead(HttpClientErrorException e) {
-		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
-		amazonS3Exception.setStatusCode(e.getStatusCode().value());
-		return amazonS3Exception;
-	}
+    private AmazonS3Exception httpToAmazonHead(HttpClientErrorException e) {
+        AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
+        amazonS3Exception.setStatusCode(e.getStatusCode().value());
+        return amazonS3Exception;
+    }
 }

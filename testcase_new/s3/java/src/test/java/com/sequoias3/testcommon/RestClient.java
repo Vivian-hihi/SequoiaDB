@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URLDecoder;
 import java.util.List;
 
-public final class RestClient {   
+public final class RestClient {
 
     private static final Logger logger = LoggerFactory.getLogger(RestClient.class);
     private static final String AUTHORIZATION = "x-auth-token";
@@ -32,76 +32,67 @@ public final class RestClient {
     private static CloseableHttpClient client;
 
     private RestClient() {
-    	
+
     }
-    
-    public static void sendRequest(CloseableHttpClient client, String sessionId,
+
+    public static void sendRequest(CloseableHttpClient client, String sessionId, HttpRequestBase request)
+            throws Exception {
+        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request);
+        closeResp(response);
+    }
+
+    public static void sendRequest(CloseableHttpClient client, String sessionId, HttpEntityEnclosingRequestBase request,
+            List<NameValuePair> params) throws Exception {
+        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request, params);
+        closeResp(response);
+    }
+
+    public static String sendRequestWithHeaderResponse(CloseableHttpClient client, String sessionId,
+            HttpRequestBase request, String keyName) throws Exception {
+        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request);
+        try {
+            String value = response.getFirstHeader(keyName).getValue();
+            return URLDecoder.decode(value, CHARSET_UTF8);
+        } finally {
+            closeResp(response);
+        }
+    }
+
+    public static String sendRequestWithHeaderResponse(CloseableHttpClient client, String sessionId,
+            HttpEntityEnclosingRequestBase request, List<NameValuePair> params, String keyName) throws Exception {
+        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request, params);
+        try {
+            String value = response.getFirstHeader(keyName).getValue();
+            return URLDecoder.decode(value, CHARSET_UTF8);
+        } finally {
+            closeResp(response);
+        }
+    }
+
+    public static BSONObject sendRequestWithJsonResponse(CloseableHttpClient client, String sessionId,
             HttpRequestBase request) throws Exception {
         CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request);
-        closeResp(response);
+        try {
+            String resp = EntityUtils.toString(response.getEntity(), CHARSET_UTF8);
+            return (BSONObject) JSON.parse(resp);
+        } finally {
+            closeResp(response);
+        }
     }
 
-    public static void sendRequest(CloseableHttpClient client, String sessionId,
+    public static BSONObject sendRequestWithJsonResponse(CloseableHttpClient client, String sessionId,
             HttpEntityEnclosingRequestBase request, List<NameValuePair> params) throws Exception {
-        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request,
-                params);
-        closeResp(response);
-    }
-
-    public static String sendRequestWithHeaderResponse(CloseableHttpClient client,
-            String sessionId, HttpRequestBase request, String keyName) throws Exception {
-        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request);
-        try {
-            String value = response.getFirstHeader(keyName).getValue();
-            return URLDecoder.decode(value, CHARSET_UTF8);
-        }
-        finally {
-            closeResp(response);
-        }
-    }
-
-    public static String sendRequestWithHeaderResponse(CloseableHttpClient client,
-            String sessionId, HttpEntityEnclosingRequestBase request, List<NameValuePair> params,
-            String keyName) throws Exception {
-        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request,
-                params);
-        try {
-            String value = response.getFirstHeader(keyName).getValue();
-            return URLDecoder.decode(value, CHARSET_UTF8);
-        }
-        finally {
-            closeResp(response);
-        }
-    }
-
-    public static BSONObject sendRequestWithJsonResponse(CloseableHttpClient client,
-            String sessionId, HttpRequestBase request) throws Exception {
-        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request);
+        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request, params);
         try {
             String resp = EntityUtils.toString(response.getEntity(), CHARSET_UTF8);
             return (BSONObject) JSON.parse(resp);
-        }
-        finally {
+        } finally {
             closeResp(response);
         }
     }
 
-    public static BSONObject sendRequestWithJsonResponse(CloseableHttpClient client,
-            String sessionId, HttpEntityEnclosingRequestBase request, List<NameValuePair> params)
-                    throws Exception {
-        CloseableHttpResponse response = sendRequestWithHttpResponse(client, sessionId, request,
-                params);
-        try {
-            String resp = EntityUtils.toString(response.getEntity(), CHARSET_UTF8);
-            return (BSONObject) JSON.parse(resp);
-        }
-        finally {
-            closeResp(response);
-        }
-    }
-
-    public static CloseableHttpResponse sendRequestWithHttpResponse(CloseableHttpClient client,
-            String sessionId, HttpRequestBase request) throws Exception {
+    public static CloseableHttpResponse sendRequestWithHttpResponse(CloseableHttpClient client, String sessionId,
+            HttpRequestBase request) throws Exception {
         if (!NO_AUTH_SESSION_ID.equals(sessionId)) {
             request.setHeader(AUTHORIZATION, sessionId);
         }
@@ -109,9 +100,8 @@ public final class RestClient {
         return sendRequest(client, request);
     }
 
-    public static CloseableHttpResponse sendRequestWithHttpResponse(CloseableHttpClient client,
-            String sessionId, HttpEntityEnclosingRequestBase request, List<NameValuePair> params)
-                    throws Exception {
+    public static CloseableHttpResponse sendRequestWithHttpResponse(CloseableHttpClient client, String sessionId,
+            HttpEntityEnclosingRequestBase request, List<NameValuePair> params) throws Exception {
         if (!NO_AUTH_SESSION_ID.equals(sessionId)) {
             request.setHeader(AUTHORIZATION, sessionId);
         }
@@ -125,16 +115,14 @@ public final class RestClient {
         return sendRequest(client, request);
     }
 
-    public static CloseableHttpResponse sendRequest(CloseableHttpClient client,
-            HttpRequestBase request) throws Exception {
+    public static CloseableHttpResponse sendRequest(CloseableHttpClient client, HttpRequestBase request)
+            throws Exception {
         try {
             CloseableHttpResponse response = client.execute(request);
             handleException(response);
             return response;
-        }
-        catch (ConnectionPoolTimeoutException e) {
-            logger.warn("lease connection timeout, create a temp http client to send this request",
-                    e);
+        } catch (ConnectionPoolTimeoutException e) {
+            logger.warn("lease connection timeout, create a temp http client to send this request", e);
             return resendRequest(request);
         }
     }
@@ -161,8 +149,7 @@ public final class RestClient {
             String resp = getErrorResponse(response);
 
             throw new Exception("errcode=" + errcode + ",resp=" + resp);
-        }
-        finally {
+        } finally {
             closeResp(response);
         }
     }
@@ -173,8 +160,7 @@ public final class RestClient {
         HttpEntity entity = response.getEntity();
         if (null != entity) {
             error = EntityUtils.toString(entity);
-        }
-        else {
+        } else {
             Header header = response.getFirstHeader(ERROR_ATTRIBUTE);
             if (header != null) {
                 error = header.getValue();
@@ -188,32 +174,30 @@ public final class RestClient {
         if (response != null) {
             try {
                 response.close();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.warn("close HttpResponse failed:resp={}", response, e);
             }
         }
-    }  
-    
-    public static  CloseableHttpClient createHttpClient() {
+    }
+
+    public static CloseableHttpClient createHttpClient() {
         PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager();
         connMgr.setMaxTotal(2);
         connMgr.setDefaultMaxPerRoute(2);
 
         RequestConfig reqConf = RequestConfig.custom().setConnectionRequestTimeout(1).build();
 
-        CloseableHttpClient client = HttpClients.custom().setConnectionManager(connMgr)
-        		.setDefaultRequestConfig(reqConf)
+        CloseableHttpClient client = HttpClients.custom().setConnectionManager(connMgr).setDefaultRequestConfig(reqConf)
                 .build();
         return client;
     }
 
-    public static void createBucket() throws Exception{
+    public static void createBucket() throws Exception {
         HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/testbucket_.1001");
         request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST" + "/");
         client = createHttpClient();
         CloseableHttpResponse resp = RestClient.sendRequest(client, request);
         String respStr = EntityUtils.toString(resp.getEntity(), "utf-8");
-        System.out.println("----getuser="+respStr);       
+        System.out.println("----getuser=" + respStr);
     }
 }

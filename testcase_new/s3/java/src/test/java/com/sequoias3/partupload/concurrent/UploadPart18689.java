@@ -37,129 +37,129 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  */
 @Test(groups = "partsizelimitoff")
 public class UploadPart18689 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18689";
-	private String keyName = "key18689";
-	private AmazonS3 s3Client = null;
-	private long fileSize = 1000 * 1024;
-	private File localPath = null;
-	private File file = null;
-	private String filePath = null;
-	private String uploadId = "";
-	private List<PartETag> partEtags = new CopyOnWriteArrayList<>();
-	private List<int[]> partList = new ArrayList<>();
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18689";
+    private String keyName = "key18689";
+    private AmazonS3 s3Client = null;
+    private long fileSize = 1000 * 1024;
+    private File localPath = null;
+    private File file = null;
+    private String filePath = null;
+    private String uploadId = "";
+    private List<PartETag> partEtags = new CopyOnWriteArrayList<>();
+    private List<int[]> partList = new ArrayList<>();
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
-		file = new File(filePath);
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        file = new File(filePath);
 
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-		preparePartList();
-	}
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+        preparePartList();
+    }
 
-	@Test
-	private void testUpload() throws Exception {
-		uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-		ThreadExecutor es = new ThreadExecutor();
-		for (int i = 0; i < partList.size(); i++) {
-			es.addWorker(new ThreadUploadPart18689(partList.get(i)));
-		}
-		es.run();
+    @Test
+    private void testUpload() throws Exception {
+        uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        ThreadExecutor es = new ThreadExecutor();
+        for (int i = 0; i < partList.size(); i++) {
+            es.addWorker(new ThreadUploadPart18689(partList.get(i)));
+        }
+        es.run();
 
-		// 完成分段上传
-		PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
-		checkResult();
-		runSuccess = true;
-	}
+        // 完成分段上传
+        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
+        checkResult();
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 
-	class ThreadUploadPart18689 {
-		private AmazonS3 s3Client = CommLib.buildS3Client();
-		private long filepositon;
-		private long partSize;
-		private int partNumber;
+    class ThreadUploadPart18689 {
+        private AmazonS3 s3Client = CommLib.buildS3Client();
+        private long filepositon;
+        private long partSize;
+        private int partNumber;
 
-		public ThreadUploadPart18689(int[] parts) {
-			this.filepositon = parts[0];
-			this.partSize = parts[1];
-			this.partNumber = parts[2];
-		}
+        public ThreadUploadPart18689(int[] parts) {
+            this.filepositon = parts[0];
+            this.partSize = parts[1];
+            this.partNumber = parts[2];
+        }
 
-		@ExecuteOrder(step = 1, desc = "分段上传对象")
-		public void putObject() {
-			try {
-				UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filepositon)
-						.withPartNumber(partNumber).withPartSize(partSize).withBucketName(bucketName).withKey(keyName)
-						.withUploadId(uploadId);
-				UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
-				partEtags.add(uploadPartResult.getPartETag());
-			} finally {
-				if (s3Client != null) {
-					s3Client.shutdown();
-				}
-			}
-		}
-	}
+        @ExecuteOrder(step = 1, desc = "分段上传对象")
+        public void putObject() {
+            try {
+                UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filepositon)
+                        .withPartNumber(partNumber).withPartSize(partSize).withBucketName(bucketName).withKey(keyName)
+                        .withUploadId(uploadId);
+                UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
+                partEtags.add(uploadPartResult.getPartETag());
+            } finally {
+                if (s3Client != null) {
+                    s3Client.shutdown();
+                }
+            }
+        }
+    }
 
-	private void preparePartList() {
-		// part 1: 10k , part 2: 5k , part 3: 5k , part 5: 10k , part 50: 20k ,
-		// part 51: 15k ,part 100: 10k
-		int[] parts = new int[] { 0, 10 * 1024, 1 };
-		partList.add(parts);
-		parts = new int[] { 10 * 1024, 5 * 1024, 2 };
-		partList.add(parts);
-		parts = new int[] { 15 * 1024, 5 * 1024, 3 };
-		partList.add(parts);
-		parts = new int[] { 30 * 1024, 10 * 1024, 5 };
-		partList.add(parts);
-		parts = new int[] { 100 * 1024, 20 * 1024, 50 };
-		partList.add(parts);
-		parts = new int[] { 120 * 1024, 15 * 1024, 51 };
-		partList.add(parts);
-		parts = new int[] { 500 * 1024, 10 * 1024, 100 };
-		partList.add(parts);
-	}
+    private void preparePartList() {
+        // part 1: 10k , part 2: 5k , part 3: 5k , part 5: 10k , part 50: 20k ,
+        // part 51: 15k ,part 100: 10k
+        int[] parts = new int[] { 0, 10 * 1024, 1 };
+        partList.add(parts);
+        parts = new int[] { 10 * 1024, 5 * 1024, 2 };
+        partList.add(parts);
+        parts = new int[] { 15 * 1024, 5 * 1024, 3 };
+        partList.add(parts);
+        parts = new int[] { 30 * 1024, 10 * 1024, 5 };
+        partList.add(parts);
+        parts = new int[] { 100 * 1024, 20 * 1024, 50 };
+        partList.add(parts);
+        parts = new int[] { 120 * 1024, 15 * 1024, 51 };
+        partList.add(parts);
+        parts = new int[] { 500 * 1024, 10 * 1024, 100 };
+        partList.add(parts);
+    }
 
-	private void checkResult() throws Exception {
-		FileInputStream fileInputStream = null;
-		int length = (int) file.length();
-		try {
-			MessageDigest md5 = MessageDigest.getInstance("MD5");
-			fileInputStream = new FileInputStream(file);
-			byte[] buffer = new byte[length];
-			if (fileInputStream.read(buffer) != -1) {
-				for (int i = 0; i < partList.size(); i++) {
-					md5.update(buffer, partList.get(i)[0], partList.get(i)[1]);
-				}
-			}
-			String expMd5 = new String(Hex.encodeHex(md5.digest()));
-			String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-			Assert.assertEquals(actMd5, expMd5);
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (fileInputStream != null) {
-				fileInputStream.close();
-			}
-		}
-	}
+    private void checkResult() throws Exception {
+        FileInputStream fileInputStream = null;
+        int length = (int) file.length();
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            fileInputStream = new FileInputStream(file);
+            byte[] buffer = new byte[length];
+            if (fileInputStream.read(buffer) != -1) {
+                for (int i = 0; i < partList.size(); i++) {
+                    md5.update(buffer, partList.get(i)[0], partList.get(i)[1]);
+                }
+            }
+            String expMd5 = new String(Hex.encodeHex(md5.digest()));
+            String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+            Assert.assertEquals(actMd5, expMd5);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (fileInputStream != null) {
+                fileInputStream.close();
+            }
+        }
+    }
 }

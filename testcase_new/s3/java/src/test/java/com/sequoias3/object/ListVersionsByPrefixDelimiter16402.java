@@ -31,7 +31,7 @@ import java.util.List;
 public class ListVersionsByPrefixDelimiter16402 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16402";
-    private String[] objectNames = {"dir-16402", "dir16401B.png/", "16401.xml", "16401A.txt", "dirsub/16401B.doc"};
+    private String[] objectNames = { "dir-16402", "dir16401B.png/", "16401.xml", "16401A.txt", "dirsub/16401B.doc" };
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
     private int versionNum = 2;
@@ -63,22 +63,20 @@ public class ListVersionsByPrefixDelimiter16402 extends S3TestBase {
     private void test() throws Exception {
         String prefix = "dir";
         String delimiter = "//";
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withPrefix(prefix));
-        //expected results
-        List<String> expCommPrefixes = ObjectUtils.getCommPrefixes(objectNames,prefix,delimiter);
-        List<String> versionKeys = ObjectUtils.getKeys(objectNames,prefix,delimiter);
+        VersionListing vsList = s3Client.listVersions(
+                new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
+        // expected results
+        List<String> expCommPrefixes = ObjectUtils.getCommPrefixes(objectNames, prefix, delimiter);
+        List<String> versionKeys = ObjectUtils.getKeys(objectNames, prefix, delimiter);
         MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
-        for(String key:versionKeys) {
+        for (String key : versionKeys) {
             for (int i = versionNum - 1; i >= 0; i--) {
                 expMap.add(key, String.valueOf(i));
             }
         }
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,expCommPrefixes,expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, expCommPrefixes, expMap);
         runSuccess = true;
     }
 

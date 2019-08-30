@@ -27,112 +27,112 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class AbortMultipartUploadBySameUploadId18766 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String keyName = "/aa/object18766";
-	private String bucketName = "bucket18766";
-	private AmazonS3 s3Client = null;
-	private File localPath = null;
-	private String[] filePaths = new String[5];
-	private int[] fileSizes = { 1024 * 1024 * 50, 1024 * 1024 * 29, 1024 * 1024 * 30, 1024 * 1024 * 10,
-			1024 * 1024 * 40 };
-	private int successNum = 0;
+    private boolean runSuccess = false;
+    private String keyName = "/aa/object18766";
+    private String bucketName = "bucket18766";
+    private AmazonS3 s3Client = null;
+    private File localPath = null;
+    private String[] filePaths = new String[5];
+    private int[] fileSizes = { 1024 * 1024 * 50, 1024 * 1024 * 29, 1024 * 1024 * 30, 1024 * 1024 * 10,
+            1024 * 1024 * 40 };
+    private int successNum = 0;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		for (int i = 0; i < fileSizes.length; i++) {
-			String filePath = localPath + File.separator + "localFile_" + fileSizes[i] + ".txt";
-			TestTools.LocalFile.createFile(filePath, fileSizes[i]);
-			filePaths[i] = filePath;
-		}
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        for (int i = 0; i < fileSizes.length; i++) {
+            String filePath = localPath + File.separator + "localFile_" + fileSizes[i] + ".txt";
+            TestTools.LocalFile.createFile(filePath, fileSizes[i]);
+            filePaths[i] = filePath;
+        }
 
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName);
-		// TODO ：文本用例中未提及需开启桶版本控制状态，请确认此测试点
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-	}
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        // TODO ：文本用例中未提及需开启桶版本控制状态，请确认此测试点
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+    }
 
-	@Test
-	public void abortMultipartUpload() throws Exception {
-		String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-		ThreadExecutor threadExec = new ThreadExecutor();
-		int[] partSizes = { 1024 * 1024 * 5, 1024 * 1024 * 6, 1024 * 1024 * 6, 1024 * 1024 * 5, 1024 * 1024 * 10 };
-		for (int i = 0; i < filePaths.length; i++) {
-			String filePath = filePaths[i];
-			int partSize = partSizes[i];
-			threadExec.addWorker(new AbortMultipartUpload(uploadId, filePath, partSize));
-		}
-		threadExec.run();
+    @Test
+    public void abortMultipartUpload() throws Exception {
+        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        ThreadExecutor threadExec = new ThreadExecutor();
+        int[] partSizes = { 1024 * 1024 * 5, 1024 * 1024 * 6, 1024 * 1024 * 6, 1024 * 1024 * 5, 1024 * 1024 * 10 };
+        for (int i = 0; i < filePaths.length; i++) {
+            String filePath = filePaths[i];
+            int partSize = partSizes[i];
+            threadExec.addWorker(new AbortMultipartUpload(uploadId, filePath, partSize));
+        }
+        threadExec.run();
 
-		// check the upload file
-		checkResult();
-		runSuccess = true;
-	}
+        // check the upload file
+        checkResult();
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 
-	private class AbortMultipartUpload extends ResultStore {
-		private String filePath;
-		private String uploadId;
-		private int partSize;
-		private File file = null;
-		private AmazonS3 s3Client1 = CommLib.buildS3Client();
+    private class AbortMultipartUpload extends ResultStore {
+        private String filePath;
+        private String uploadId;
+        private int partSize;
+        private File file = null;
+        private AmazonS3 s3Client1 = CommLib.buildS3Client();
 
-		private AbortMultipartUpload(String uploadId, String filePath, int partSize) {
-			this.uploadId = uploadId;
-			this.filePath = filePath;
-			this.partSize = partSize;
-		}
+        private AbortMultipartUpload(String uploadId, String filePath, int partSize) {
+            this.uploadId = uploadId;
+            this.filePath = filePath;
+            this.partSize = partSize;
+        }
 
-		@ExecuteOrder(step = 1)
-		private void partUpload() {
-			file = new File(filePath);
-			PartUploadUtils.partUpload(s3Client1, bucketName, keyName, uploadId, file, partSize);
-		}
+        @ExecuteOrder(step = 1)
+        private void partUpload() {
+            file = new File(filePath);
+            PartUploadUtils.partUpload(s3Client1, bucketName, keyName, uploadId, file, partSize);
+        }
 
-		@ExecuteOrder(step = 2)
-		private void completeMultipartUpload() throws IOException {
-			try {
-				AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName, uploadId);
-				s3Client.abortMultipartUpload(request);
-				successNum++;
-			} catch (AmazonS3Exception e) {
-				int errCode = e.getStatusCode();
-				// 404:NoSuchUpload
-				if (errCode != 404) {
-					throw e;
-				}
-			} finally {
-				if (s3Client1 != null) {
-					s3Client1.shutdown();
-				}
-			}
-		}
-	}
+        @ExecuteOrder(step = 2)
+        private void completeMultipartUpload() throws IOException {
+            try {
+                AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName, uploadId);
+                s3Client.abortMultipartUpload(request);
+                successNum++;
+            } catch (AmazonS3Exception e) {
+                int errCode = e.getStatusCode();
+                // 404:NoSuchUpload
+                if (errCode != 404) {
+                    throw e;
+                }
+            } finally {
+                if (s3Client1 != null) {
+                    s3Client1.shutdown();
+                }
+            }
+        }
+    }
 
-	private void checkResult() throws Exception {
-		// only one AbortMultipartUpload success
-		int expSuccessNum = 1;
-		Assert.assertEquals(successNum, expSuccessNum);
-		// get key is not exist.
-		try {
-			s3Client.getObject(bucketName, keyName);
-			Assert.fail("get not exist key must be fail !");
-		} catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
-		}
-	}
+    private void checkResult() throws Exception {
+        // only one AbortMultipartUpload success
+        int expSuccessNum = 1;
+        Assert.assertEquals(successNum, expSuccessNum);
+        // get key is not exist.
+        try {
+            s3Client.getObject(bucketName, keyName);
+            Assert.fail("get not exist key must be fail !");
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
+        }
+    }
 }

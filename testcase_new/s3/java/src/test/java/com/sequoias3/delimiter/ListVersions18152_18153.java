@@ -27,61 +27,61 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 
 public class ListVersions18152_18153 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18152";
-	private String[] keyNames = { "dir1/a/test1_18152.png", "dir1/dir2/a/test2_18152.png", "/a/test3_18152.png",
-			"test4_18152.png" };
-	private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18152";
+    private String[] keyNames = { "dir1/a/test1_18152.png", "dir1/dir2/a/test2_18152.png", "/a/test3_18152.png",
+            "test4_18152.png" };
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName);
-		CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-		for (String keyName : keyNames) {
-			s3Client.putObject(bucketName, keyName, "oldVersionContent_" + keyName);
-			s3Client.putObject(bucketName, keyName, "newVersionContent_" + keyName);
-		}
-	}
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+        for (String keyName : keyNames) {
+            s3Client.putObject(bucketName, keyName, "oldVersionContent_" + keyName);
+            s3Client.putObject(bucketName, keyName, "newVersionContent_" + keyName);
+        }
+    }
 
-	@Test
-	private void test() throws Exception {
-		// keyMarker does not exist
-		String keyMarker = "test18152";
-		String versionIdMarker = "1";
-		String prefix = "dir";
-		String delimiter = "/";
-		// list by prefix/keyMarker/versionIdMarker/delimiter
-		VersionListing vsList = s3Client
-				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withPrefix(prefix)
-						.withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker).withDelimiter(delimiter));
+    @Test
+    private void test() throws Exception {
+        // keyMarker does not exist
+        String keyMarker = "test18152";
+        String versionIdMarker = "1";
+        String prefix = "dir";
+        String delimiter = "/";
+        // list by prefix/keyMarker/versionIdMarker/delimiter
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withPrefix(prefix)
+                        .withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker).withDelimiter(delimiter));
 
-		ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), new LinkedMultiValueMap<String, String>());
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), new LinkedMultiValueMap<String, String>());
 
-		// versionIdMarker does not exist
-		String keyMarker1 = "test18153";
-		String versionIdMarker1 = "3";
-		// list by prefix/keyMarker/versionIdMarker/delimiter
-		VersionListing vsList1 = s3Client
-				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withPrefix(prefix)
-						.withKeyMarker(keyMarker1).withVersionIdMarker(versionIdMarker1).withDelimiter(delimiter));
+        // versionIdMarker does not exist
+        String keyMarker1 = "test18153";
+        String versionIdMarker1 = "3";
+        // list by prefix/keyMarker/versionIdMarker/delimiter
+        VersionListing vsList1 = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withPrefix(prefix)
+                        .withKeyMarker(keyMarker1).withVersionIdMarker(versionIdMarker1).withDelimiter(delimiter));
 
-		ObjectUtils.checkListVSResults(vsList1, new ArrayList<String>(), new LinkedMultiValueMap<String, String>());
+        ObjectUtils.checkListVSResults(vsList1, new ArrayList<String>(), new LinkedMultiValueMap<String, String>());
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 }

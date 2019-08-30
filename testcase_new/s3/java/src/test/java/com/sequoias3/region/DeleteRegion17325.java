@@ -15,7 +15,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-
 /**
  * @Description: seqDB-17325 :: 区域中存在桶，删除区域
  * @author fanyu
@@ -32,44 +31,41 @@ public class DeleteRegion17325 extends S3TestBase {
     @BeforeClass
     private void setUp() throws Exception {
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         RegionUtils.clearRegion(regionName);
     }
 
     @Test
     private void test() throws Exception {
-        //create region
+        // create region
         Region region = new Region();
-        region.withDataCSShardingType("month")
-                .withDataCLShardingType("month")
-                .withName(regionName);
+        region.withDataCSShardingType("month").withDataCLShardingType("month").withName(regionName);
         RegionUtils.putRegion(region);
 
-        //create bucket and object
-        s3Client.createBucket(new CreateBucketRequest(bucketName,regionName));
-        s3Client.putObject(bucketName,objectName,String.valueOf(UUID.randomUUID()));
+        // create bucket and object
+        s3Client.createBucket(new CreateBucketRequest(bucketName, regionName));
+        s3Client.putObject(bucketName, objectName, String.valueOf(UUID.randomUUID()));
 
-        //delete region
+        // delete region
         try {
             RegionUtils.deleteRegion(regionName);
             Assert.fail("exp delete region failed,regionName = " + regionName);
-        }catch(AmazonS3Exception e){
-            if(e.getStatusCode() != 409 && !e.getErrorCode().contains("RegionNotEmpty")){
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 409 && !e.getErrorCode().contains("RegionNotEmpty")) {
                 throw e;
             }
         }
 
-        //head region to make sure the region:regionName has not been deleted
+        // head region to make sure the region:regionName has not been deleted
         Assert.assertTrue(RegionUtils.headRegion(regionName), region.toString());
 
-        //check cs.cl has not been deleted
+        // check cs.cl has not been deleted
         Date date = Calendar.getInstance().getTime();
-        String csName = RegionUtils.getDataCSName(regionName,"month",date);
-        String clName = RegionUtils.getDataCLName("month",date);
-        Assert.assertTrue(RegionUtils.clInCS(csName,clName),"csName = " + csName
-        + ",clName = " + clName);
-        //DataCL must have a lob
-        Assert.assertEquals(RegionUtils.getRecordNum(csName,clName),1,
+        String csName = RegionUtils.getDataCSName(regionName, "month", date);
+        String clName = RegionUtils.getDataCLName("month", date);
+        Assert.assertTrue(RegionUtils.clInCS(csName, clName), "csName = " + csName + ",clName = " + clName);
+        // DataCL must have a lob
+        Assert.assertEquals(RegionUtils.getRecordNum(csName, clName), 1,
                 "csNmae = " + csName + "clName = " + clName + ",objectName = " + objectName);
         runSuccess = true;
     }
@@ -81,8 +77,8 @@ public class DeleteRegion17325 extends S3TestBase {
                 CommLib.clearBucket(s3Client, bucketName);
                 RegionUtils.deleteRegion(regionName);
             }
-        }finally {
-            if(s3Client != null){
+        } finally {
+            if (s3Client != null) {
                 s3Client.shutdown();
             }
         }

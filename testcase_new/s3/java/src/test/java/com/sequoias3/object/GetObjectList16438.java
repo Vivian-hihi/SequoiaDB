@@ -27,65 +27,65 @@ import com.sequoias3.testcommon.S3TestBase;
  * @version 1.00
  */
 public class GetObjectList16438 extends S3TestBase {
-	private String bucketName = "bucket16438";
-	private String keyName = "/dir/dir";
-	private List<String> expresultList = new ArrayList<String>(10);
-	private int objectTotalNum = 10;
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket16438";
+    private String keyName = "/dir/dir";
+    private List<String> expresultList = new ArrayList<String>(10);
+    private int objectTotalNum = 10;
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-		// create bucket
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        // create bucket
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-		// put multiple objects
-		for (int i = 0; i < objectTotalNum; i++) {
-			String currentKeyName = keyName + i + "/16438";
-			s3Client.putObject(bucketName, currentKeyName, "object_file16438");
-			expresultList.add(currentKeyName);
-		}
-	}
+        // put multiple objects
+        for (int i = 0; i < objectTotalNum; i++) {
+            String currentKeyName = keyName + i + "/16438";
+            s3Client.putObject(bucketName, currentKeyName, "object_file16438");
+            expresultList.add(currentKeyName);
+        }
+    }
 
-	// 暂时未解决修改配置文件 调整上下文生命周期
-	@Test(enabled = false)
-	public void testGetObjectList() throws Exception {
-		int keyCount = 5;
-		// first query
-		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withMaxKeys(keyCount);
-		ListObjectsV2Result result = s3Client.listObjectsV2(req);
-		List<S3ObjectSummary> objectSummaries = result.getObjectSummaries();
-		checkListObjectsV2Result(objectSummaries, keyCount);
-		String NextContinuationToken = result.getNextContinuationToken();
+    // 暂时未解决修改配置文件 调整上下文生命周期
+    @Test(enabled = false)
+    public void testGetObjectList() throws Exception {
+        int keyCount = 5;
+        // first query
+        ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withMaxKeys(keyCount);
+        ListObjectsV2Result result = s3Client.listObjectsV2(req);
+        List<S3ObjectSummary> objectSummaries = result.getObjectSummaries();
+        checkListObjectsV2Result(objectSummaries, keyCount);
+        String NextContinuationToken = result.getNextContinuationToken();
 
-		Thread.sleep(2 * 60 * 1000);
-		// second query
-		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName)
-				.withContinuationToken(NextContinuationToken);
-		try {
-			s3Client.listObjectsV2(req2);
-			Assert.fail("exp fail but found success");
-		} catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "ListObjectsFailed");
-		}
+        Thread.sleep(2 * 60 * 1000);
+        // second query
+        ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName)
+                .withContinuationToken(NextContinuationToken);
+        try {
+            s3Client.listObjectsV2(req2);
+            Assert.fail("exp fail but found success");
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "ListObjectsFailed");
+        }
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		if (runSuccess) {
-			CommLib.deleteAllObjectVersions(s3Client, bucketName);
-			s3Client.deleteBucket(bucketName);
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        if (runSuccess) {
+            CommLib.deleteAllObjectVersions(s3Client, bucketName);
+            s3Client.deleteBucket(bucketName);
+        }
+    }
 
-	private void checkListObjectsV2Result(List<S3ObjectSummary> objectSummaries, int expCount) {
-		Assert.assertEquals(objectSummaries.size(), expCount, "The number of returned results is wrong");
-		Collections.sort(expresultList);
-		for (int i = 0; i < objectSummaries.size(); i++) {
-			Assert.assertEquals(objectSummaries.get(i).getKey(), expresultList.get(i), "commonPrefixes is wrong");
-		}
-	}
+    private void checkListObjectsV2Result(List<S3ObjectSummary> objectSummaries, int expCount) {
+        Assert.assertEquals(objectSummaries.size(), expCount, "The number of returned results is wrong");
+        Collections.sort(expresultList);
+        for (int i = 0; i < objectSummaries.size(); i++) {
+            Assert.assertEquals(objectSummaries.get(i).getKey(), expresultList.get(i), "commonPrefixes is wrong");
+        }
+    }
 }

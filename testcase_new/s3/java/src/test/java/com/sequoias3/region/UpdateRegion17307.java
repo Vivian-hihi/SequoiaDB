@@ -9,7 +9,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-
 /**
  * @Description: seqDB-17307 :: 更新区域配置domain，指定domain不存在
  * @author fanyu
@@ -17,7 +16,7 @@ import org.testng.annotations.Test;
  * @version:1.0
  */
 public class UpdateRegion17307 extends S3TestBase {
-    private String[] regionNames = new String[]{"region17307a", "region17307b"};
+    private String[] regionNames = new String[] { "region17307a", "region17307b" };
     private String existDomain = "domain17307";
     private String updateDomain = "doesNotExistdomain17307";
     private boolean runSuccess = false;
@@ -32,27 +31,23 @@ public class UpdateRegion17307 extends S3TestBase {
     @DataProvider(name = "range-provider")
     private Object[][] rangeData() {
         RegionUtils.createDomain(existDomain);
-        return new Object[][]{
-                //regionName  dataDomain  metaDomain  upDataDomain  upMeatDomain
-                {regionNames[0],existDomain,existDomain,updateDomain,existDomain},
-                {regionNames[1],existDomain, existDomain,existDomain, updateDomain},
-        };
+        return new Object[][] {
+                // regionName dataDomain metaDomain upDataDomain upMeatDomain
+                { regionNames[0], existDomain, existDomain, updateDomain, existDomain },
+                { regionNames[1], existDomain, existDomain, existDomain, updateDomain }, };
     }
 
     @Test(dataProvider = "range-provider")
-    private void test(String regionName, String dataDomain, String metaDomain, String upDataDomain, String upMeatDomain) throws Exception {
-        //create region
+    private void test(String regionName, String dataDomain, String metaDomain, String upDataDomain, String upMeatDomain)
+            throws Exception {
+        // create region
         Region region = new Region();
-        region.withDataCSShardingType("year").withDataCLShardingType("year")
-                .withDataDomain(dataDomain)
-                .withMetaDomain(metaDomain)
-                .withName(regionName);
+        region.withDataCSShardingType("year").withDataCLShardingType("year").withDataDomain(dataDomain)
+                .withMetaDomain(metaDomain).withName(regionName);
         RegionUtils.putRegion(region);
 
-        region.withDataCSShardingType("year").withDataCLShardingType("year")
-                .withDataDomain(upDataDomain)
-                .withMetaDomain(upMeatDomain)
-                .withName(regionName);
+        region.withDataCSShardingType("year").withDataCLShardingType("year").withDataDomain(upDataDomain)
+                .withMetaDomain(upMeatDomain).withName(regionName);
         try {
             RegionUtils.putRegion(region);
             Assert.fail("exp failed but act success,region = " + region.toString());
@@ -77,4 +72,3 @@ public class UpdateRegion17307 extends S3TestBase {
         }
     }
 }
-

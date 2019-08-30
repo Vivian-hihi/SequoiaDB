@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 
 /**
  * @Description: seqDB-16265 :: 管理员删除不存在的用户
- *  @author fanyu
+ * @author fanyu
  * @Date:2018年10月29日
  * @version:1.0
  */

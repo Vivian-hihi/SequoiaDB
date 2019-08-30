@@ -20,7 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Description:  seqDB-16405 ::带prefix、keyMarker、versionIdMarker和delimiter查询对象版本列表，不匹配prefix
+ * @Description: seqDB-16405
+ *               ::带prefix、keyMarker、versionIdMarker和delimiter查询对象版本列表，不匹配prefix
  * @author fanyu
  * @Date:2018年11月20日
  * @version:1.0
@@ -29,8 +30,8 @@ import java.util.List;
 public class ListVersionsByPrefixDelimiterIDKey16405 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16405";
-    //please sort  in an ascending order by objectName
-    private String[] objectNames = {"air116405", "b16405/A.png", "test16405.doc"};
+    // please sort in an ascending order by objectName
+    private String[] objectNames = { "air116405", "b16405/A.png", "test16405.doc" };
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
     private int versionNum = 3;
@@ -65,15 +66,12 @@ public class ListVersionsByPrefixDelimiterIDKey16405 extends S3TestBase {
         String keyMarker = objectNames[0];
         String versionIdMarker = "3";
 
-        //list versions by prefix/delimiter/currentversionId/key
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withPrefix(prefix)
-                .withKeyMarker(keyMarker)
-                .withVersionIdMarker(versionIdMarker));
-       //check results
-        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),new LinkedMultiValueMap<String, String>());
+        // list versions by prefix/delimiter/currentversionId/key
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter)
+                        .withPrefix(prefix).withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker));
+        // check results
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), new LinkedMultiValueMap<String, String>());
         runSuccess = true;
     }
 

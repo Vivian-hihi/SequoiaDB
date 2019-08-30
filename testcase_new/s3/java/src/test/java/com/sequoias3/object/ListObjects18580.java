@@ -23,56 +23,56 @@ import com.sequoias3.testcommon.S3TestBase;
  * @version 1.00
  */
 public class ListObjects18580 extends S3TestBase {
-	private String bucketName = "bucket18580";
-	private String[] objectNames = { "test!！_ST_18580", "test!.-(test18580.txt", "test%&/18580" };
-	private String prefix = "test!";
-	private String delimiter = ".-(test";
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket18580";
+    private String[] objectNames = { "test!！_ST_18580", "test!.-(test18580.txt", "test%&/18580" };
+    private String prefix = "test!";
+    private String delimiter = ".-(test";
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName);
+    @BeforeClass
+    private void setUp() throws Exception {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
 
-		for (int i = 0; i < objectNames.length; i++) {
-			String keyName = objectNames[i];
-			s3Client.putObject(bucketName, keyName, "testcontent_" + keyName);
-		}
-	}
+        for (int i = 0; i < objectNames.length; i++) {
+            String keyName = objectNames[i];
+            s3Client.putObject(bucketName, keyName, "testcontent_" + keyName);
+        }
+    }
 
-	@Test
-	public void testListObject() {
-		ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix)
-				.withDelimiter(delimiter).withEncodingType("url");
-		ObjectListing result = s3Client.listObjects(request);
-		List<String> commprefixes = result.getCommonPrefixes();
-		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		List<String> queryKeyList = new ArrayList<>();
-		for (S3ObjectSummary os : objects) {
-			String key = os.getKey();
-			queryKeyList.add(key);
-		}
+    @Test
+    public void testListObject() {
+        ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix)
+                .withDelimiter(delimiter).withEncodingType("url");
+        ObjectListing result = s3Client.listObjects(request);
+        List<String> commprefixes = result.getCommonPrefixes();
+        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        List<String> queryKeyList = new ArrayList<>();
+        for (S3ObjectSummary os : objects) {
+            String key = os.getKey();
+            queryKeyList.add(key);
+        }
 
-		Assert.assertFalse(result.isTruncated());
-		List<String> expCommomPrefixs = new ArrayList<>();
-		// !--%21, (--%28, the v1 list "test!.-(test" is "test%21.-%28test"
-		expCommomPrefixs.add("test%21.-%28test");
-		List<String> expQueryKeyList = new ArrayList<>();
-		// the listObjectv1 list key: "test!！_ST_18580" is
-		// "test%21%EF%BC%81_ST_18580"
-		expQueryKeyList.add("test%21%EF%BC%81_ST_18580");
-		Assert.assertEquals(commprefixes, expCommomPrefixs, "query commprefixs:" + commprefixes.toString());
-		Assert.assertEquals(queryKeyList, expQueryKeyList, "query contents:" + queryKeyList.toString());
+        Assert.assertFalse(result.isTruncated());
+        List<String> expCommomPrefixs = new ArrayList<>();
+        // !--%21, (--%28, the v1 list "test!.-(test" is "test%21.-%28test"
+        expCommomPrefixs.add("test%21.-%28test");
+        List<String> expQueryKeyList = new ArrayList<>();
+        // the listObjectv1 list key: "test!！_ST_18580" is
+        // "test%21%EF%BC%81_ST_18580"
+        expQueryKeyList.add("test%21%EF%BC%81_ST_18580");
+        Assert.assertEquals(commprefixes, expCommomPrefixs, "query commprefixs:" + commprefixes.toString());
+        Assert.assertEquals(queryKeyList, expQueryKeyList, "query contents:" + queryKeyList.toString());
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		if (runSuccess) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        if (runSuccess) {
+            CommLib.clearBucket(s3Client, bucketName);
+        }
+    }
 }

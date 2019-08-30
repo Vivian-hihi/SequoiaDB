@@ -9,7 +9,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-
 /**
  * @author fanyu
  * @Description: seqDB-17306 :: 更新区域配置domain
@@ -17,8 +16,8 @@ import org.testng.annotations.Test;
  * @version:1.0
  */
 public class UpdateRegion17306 extends S3TestBase {
-    private String[] domainNames = {"domain17306A", "domain17306B"};
-    private String[] regionNames = {"region17306a", "region17306b", "region17306c"};
+    private String[] domainNames = { "domain17306A", "domain17306B" };
+    private String[] regionNames = { "region17306a", "region17306b", "region17306c" };
     private boolean runSuccess = false;
 
     @BeforeClass
@@ -33,32 +32,30 @@ public class UpdateRegion17306 extends S3TestBase {
         for (String domainName : domainNames) {
             RegionUtils.createDomain(domainName);
         }
-        return new Object[][]{
-                //regionName  dataDomain  metaDomain  updateDataDomain updateMeatDomain
-                {regionNames[0], domainNames[0], domainNames[1], domainNames[1], domainNames[1]},
-                {regionNames[1], domainNames[0], domainNames[1], domainNames[0], domainNames[0]},
-                {regionNames[2], domainNames[0], domainNames[1], domainNames[0], domainNames[1]},
-        };
+        return new Object[][] {
+                // regionName dataDomain metaDomain updateDataDomain
+                // updateMeatDomain
+                { regionNames[0], domainNames[0], domainNames[1], domainNames[1], domainNames[1] },
+                { regionNames[1], domainNames[0], domainNames[1], domainNames[0], domainNames[0] },
+                { regionNames[2], domainNames[0], domainNames[1], domainNames[0], domainNames[1] }, };
     }
 
     @Test(dataProvider = "range-provider")
-    private void test(String regionName, String dataDomain, String metaDomain, String upDataDomain, String upMeatDomain) throws Exception {
-        //create region
+    private void test(String regionName, String dataDomain, String metaDomain, String upDataDomain, String upMeatDomain)
+            throws Exception {
+        // create region
         Region region = new Region();
-        region.withDataCSShardingType("year").withDataCLShardingType("year")
-                .withDataDomain(dataDomain)
-                .withMetaDomain(metaDomain)
-                .withName(regionName);
+        region.withDataCSShardingType("year").withDataCLShardingType("year").withDataDomain(dataDomain)
+                .withMetaDomain(metaDomain).withName(regionName);
         RegionUtils.putRegion(region);
 
-        region.withDataCSShardingType("year").withDataCLShardingType("year")
-                .withDataDomain(upDataDomain)
-                .withMetaDomain(upMeatDomain)
-                .withName(regionName);
-        // Updated domain is not same as before when the index of regionName is not equal to 2
+        region.withDataCSShardingType("year").withDataCLShardingType("year").withDataDomain(upDataDomain)
+                .withMetaDomain(upMeatDomain).withName(regionName);
+        // Updated domain is not same as before when the index of regionName is
+        // not equal to 2
         if (!regionName.equals(regionNames[2])) {
             try {
-                //update region
+                // update region
                 RegionUtils.putRegion(region);
                 Assert.fail("exp failed but act success,region = " + region.toString());
             } catch (AmazonS3Exception e) {
@@ -67,7 +64,7 @@ public class UpdateRegion17306 extends S3TestBase {
                 }
             }
         } else {
-            //update region
+            // update region
             RegionUtils.putRegion(region);
             GetRegionResult result = RegionUtils.getRegion(regionName);
             Assert.assertEquals(result.getRegion().getDataDomain(), upDataDomain);
@@ -88,4 +85,3 @@ public class UpdateRegion17306 extends S3TestBase {
         }
     }
 }
-

@@ -25,61 +25,61 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 
 public class ListObjectsWithPrefixAndDelimiter18602 extends S3TestBase {
-	private String bucketName = "bucket18602";
-	private String[] keyList = { "dir/atest?_18602.png", "dir/test/test?_18602.png", "dir1/dir2?%test_18602.png",
-			"dir1/dir2?test_18602", "dir1_18602" };
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket18602";
+    private String[] keyList = { "dir/atest?_18602.png", "dir/test/test?_18602.png", "dir1/dir2?%test_18602.png",
+            "dir1/dir2?test_18602", "dir1_18602" };
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
+    @BeforeClass
+    private void setUp() {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-		for (int i = 0; i < keyList.length; i++) {
-			String subKeyName = keyList[i];
-			s3Client.putObject(bucketName, subKeyName, "testcontext18575_" + i);
-		}
-	}
+        for (int i = 0; i < keyList.length; i++) {
+            String subKeyName = keyList[i];
+            s3Client.putObject(bucketName, subKeyName, "testcontext18575_" + i);
+        }
+    }
 
-	@Test
-	private void testListObjects() {
-		List<String> matchPrefixList = new ArrayList<>();
-		List<String> matchContentsList = new ArrayList<>();
+    @Test
+    private void testListObjects() {
+        List<String> matchPrefixList = new ArrayList<>();
+        List<String> matchContentsList = new ArrayList<>();
 
-		String delimiter1 = "?";
-		String prefix = "dir1?";
-		ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName);
-		request.withDelimiter(delimiter1).withPrefix(prefix);
-		ObjectListing result = s3Client.listObjects(request);
-		List<String> commonPrefixes = result.getCommonPrefixes();
-		Assert.assertEquals(commonPrefixes, matchPrefixList,
-				"actPrefixes:" + commonPrefixes.toString() + "\n expPrefixes:" + matchPrefixList.toString());
+        String delimiter1 = "?";
+        String prefix = "dir1?";
+        ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName);
+        request.withDelimiter(delimiter1).withPrefix(prefix);
+        ObjectListing result = s3Client.listObjects(request);
+        List<String> commonPrefixes = result.getCommonPrefixes();
+        Assert.assertEquals(commonPrefixes, matchPrefixList,
+                "actPrefixes:" + commonPrefixes.toString() + "\n expPrefixes:" + matchPrefixList.toString());
 
-		List<String> actContentsList = new ArrayList<>();
-		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		for (S3ObjectSummary os : objects) {
-			String key = os.getKey();
-			actContentsList.add(key);
-		}
-		Assert.assertEquals(actContentsList, matchContentsList,
-				"actContents:" + actContentsList.toString() + "\n expContents:" + matchContentsList.toString());
-		runSuccess = true;
-	}
+        List<String> actContentsList = new ArrayList<>();
+        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        for (S3ObjectSummary os : objects) {
+            String key = os.getKey();
+            actContentsList.add(key);
+        }
+        Assert.assertEquals(actContentsList, matchContentsList,
+                "actContents:" + actContentsList.toString() + "\n expContents:" + matchContentsList.toString());
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				for (int i = 0; i < keyList.length; i++) {
-					String keyName = keyList[i];
-					s3Client.deleteObject(bucketName, keyName);
-				}
-				s3Client.deleteBucket(bucketName);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                for (int i = 0; i < keyList.length; i++) {
+                    String keyName = keyList[i];
+                    s3Client.deleteObject(bucketName, keyName);
+                }
+                s3Client.deleteBucket(bucketName);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 }

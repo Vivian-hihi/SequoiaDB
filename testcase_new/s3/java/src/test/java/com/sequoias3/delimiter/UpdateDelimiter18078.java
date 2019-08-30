@@ -24,65 +24,65 @@ import java.util.List;
  * @version 1.00
  */
 public class UpdateDelimiter18078 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18078";
-	private String regionName = "region18078";
-	private String keyName = "aa%test/maa%/bb%/object18078";
-	private String deleteTagkeyName = "aa%delete/aa%/test%/object18078";
-	private String delimiter = "test";
-	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 2;
-	private File localPath = null;
-	private String filePath = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18078";
+    private String regionName = "region18078";
+    private String keyName = "aa%test/maa%/bb%/object18078";
+    private String deleteTagkeyName = "aa%delete/aa%/test%/object18078";
+    private String delimiter = "test";
+    private AmazonS3 s3Client = null;
+    private int fileSize = 1024 * 2;
+    private File localPath = null;
+    private String filePath = null;
 
-	@SuppressWarnings("deprecation")
-	@BeforeClass
-	private void setUp() throws Exception {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
+    @SuppressWarnings("deprecation")
+    @BeforeClass
+    private void setUp() throws Exception {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
 
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		RegionUtils.clearRegion(regionName);
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        RegionUtils.clearRegion(regionName);
 
-		Region region = new Region();
-		region.withName(regionName);
-		RegionUtils.putRegion(region);
-		s3Client.createBucket(bucketName, regionName);
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+        Region region = new Region();
+        region.withName(regionName);
+        RegionUtils.putRegion(region);
+        s3Client.createBucket(bucketName, regionName);
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 
-		// add a deleteTag key
-		s3Client.deleteObject(bucketName, deleteTagkeyName);
-		s3Client.putObject(bucketName, keyName, new File(filePath));
-	}
+        // add a deleteTag key
+        s3Client.deleteObject(bucketName, deleteTagkeyName);
+        s3Client.putObject(bucketName, keyName, new File(filePath));
+    }
 
-	@Test
-	public void testUpdateDelimiter() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+    @Test
+    public void testUpdateDelimiter() throws Exception {
+        DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		List<String> expCommprefixList = new ArrayList<>();
-		expCommprefixList.add("aa%test");
-		expCommprefixList.add("aa%delete/aa%/test");
-		List<String> expContentList = new ArrayList<>();
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+        List<String> expCommprefixList = new ArrayList<>();
+        expCommprefixList.add("aa%test");
+        expCommprefixList.add("aa%delete/aa%/test");
+        List<String> expContentList = new ArrayList<>();
+        DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-				RegionUtils.deleteRegion(regionName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+                RegionUtils.deleteRegion(regionName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 }

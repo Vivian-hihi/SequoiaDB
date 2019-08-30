@@ -22,7 +22,7 @@ import java.util.Random;
 
 /**
  * @author fanyu
- * @Description:  seqDB-16358:带versionId获取对象，不匹配ifMatch条件
+ * @Description: seqDB-16358:带versionId获取对象，不匹配ifMatch条件
  * @Date:2018年11月10日
  * @version:1.0
  */
@@ -57,7 +57,8 @@ public class GetObjectByErrorEtag16358 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         // get random history version
@@ -65,11 +66,12 @@ public class GetObjectByErrorEtag16358 extends S3TestBase {
         int histIndex = random.nextInt(fileNum - 2);
         String eTag = objectVSList.get(histIndex).getETag();
 
-        //get the id of current version
+        // get the id of current version
         String currVersionId = objectVSList.get(fileNum - 1).getVersionId();
-        //get object through the version id and the eTag inconsistent
-        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId).withMatchingETagConstraint(eTag));
-        //AmazonS3  Java driver handles error,so it returns null
+        // get object through the version id and the eTag inconsistent
+        S3Object object = s3Client.getObject(
+                new GetObjectRequest(bucketName, objectName, currVersionId).withMatchingETagConstraint(eTag));
+        // AmazonS3 Java driver handles error,so it returns null
         Assert.assertNull(object);
         runSuccess = true;
     }
@@ -77,8 +79,8 @@ public class GetObjectByErrorEtag16358 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

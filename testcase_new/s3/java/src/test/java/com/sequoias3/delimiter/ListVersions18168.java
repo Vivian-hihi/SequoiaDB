@@ -32,127 +32,127 @@ import java.util.Map;
  */
 
 public class ListVersions18168 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18168";
-	private String keyName = "object18168";
-	private String prefix = "dir1";
-	private String delimiter = "%";
-	private int maxKeys = 100;
-	private List<String> matchPrefixList = new ArrayList<>();
-	private MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
-	private AmazonS3 s3Client = null;
-	private int versionNum = 5;
-	private int objectsNum = 200;
-	private int deleteTagObjectsNum = 5;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18168";
+    private String keyName = "object18168";
+    private String prefix = "dir1";
+    private String delimiter = "%";
+    private int maxKeys = 100;
+    private List<String> matchPrefixList = new ArrayList<>();
+    private MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
+    private AmazonS3 s3Client = null;
+    private int versionNum = 5;
+    private int objectsNum = 200;
+    private int deleteTagObjectsNum = 5;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName);
-		CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-		putObjects();
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-	}
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+        putObjects();
+        DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+    }
 
-	@Test
-	private void testListVersions() throws Exception {
-		// list versions by prefix/delimiter/maxKes, for first query
-		VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
-				.withDelimiter(delimiter).withPrefix(prefix).withMaxResults(maxKeys));
-		List<String> actCommonPrefixes = vsList.getCommonPrefixes();
-		List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
-		MultiValueMap<String, String> actVersionMap = new LinkedMultiValueMap<String, String>();
-		for (S3VersionSummary versionSummary : vsSummaryList) {
-			actVersionMap.add(versionSummary.getKey(), versionSummary.getVersionId());
-		}
+    @Test
+    private void testListVersions() throws Exception {
+        // list versions by prefix/delimiter/maxKes, for first query
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withDelimiter(delimiter).withPrefix(prefix).withMaxResults(maxKeys));
+        List<String> actCommonPrefixes = vsList.getCommonPrefixes();
+        List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
+        MultiValueMap<String, String> actVersionMap = new LinkedMultiValueMap<String, String>();
+        for (S3VersionSummary versionSummary : vsSummaryList) {
+            actVersionMap.add(versionSummary.getKey(), versionSummary.getVersionId());
+        }
 
-		// check matchNums for first query
-		Assert.assertTrue(vsList.isTruncated(), "vsList.isTruncated() must be true");
-		int matchPrefixNums = 60;
-		int matchVersionMapNums = 8;
-		Assert.assertEquals(actCommonPrefixes.size(), matchPrefixNums);
-		Assert.assertEquals(actVersionMap.size(), matchVersionMapNums);
+        // check matchNums for first query
+        Assert.assertTrue(vsList.isTruncated(), "vsList.isTruncated() must be true");
+        int matchPrefixNums = 60;
+        int matchVersionMapNums = 8;
+        Assert.assertEquals(actCommonPrefixes.size(), matchPrefixNums);
+        Assert.assertEquals(actVersionMap.size(), matchVersionMapNums);
 
-		// second query
-		String nextKeyMarker = vsList.getNextKeyMarker();
-		String nextVersionIdMarker = vsList.getNextVersionIdMarker();
-		VersionListing vsList1 = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
-				.withKeyMarker(nextKeyMarker).withVersionIdMarker(nextVersionIdMarker).withDelimiter(delimiter));
+        // second query
+        String nextKeyMarker = vsList.getNextKeyMarker();
+        String nextVersionIdMarker = vsList.getNextVersionIdMarker();
+        VersionListing vsList1 = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker).withVersionIdMarker(nextVersionIdMarker).withDelimiter(delimiter));
 
-		List<String> actCommonPrefixes1 = vsList1.getCommonPrefixes();
-		List<S3VersionSummary> vsSummaryList1 = vsList1.getVersionSummaries();
-		MultiValueMap<String, String> actVersionMap1 = new LinkedMultiValueMap<String, String>();
-		for (S3VersionSummary versionSummary : vsSummaryList1) {
-			actVersionMap1.add(versionSummary.getKey(), versionSummary.getVersionId());
-		}
+        List<String> actCommonPrefixes1 = vsList1.getCommonPrefixes();
+        List<S3VersionSummary> vsSummaryList1 = vsList1.getVersionSummaries();
+        MultiValueMap<String, String> actVersionMap1 = new LinkedMultiValueMap<String, String>();
+        for (S3VersionSummary versionSummary : vsSummaryList1) {
+            actVersionMap1.add(versionSummary.getKey(), versionSummary.getVersionId());
+        }
 
-		// check the matchPrefix And Versions Result
-		Assert.assertFalse(vsList1.isTruncated(), "vsList1.isTruncated() must be false");
-		actCommonPrefixes1.addAll(actCommonPrefixes);
-		//actVersionMap1.addAll(actVersionMap);
-		for (Map.Entry<String, List<String>> entry : actVersionMap.entrySet()) {
-			List<String> versions = entry.getValue();
-			for(String version:versions){
-				actVersionMap1.add(entry.getKey(),version);
-			}
-		}
-		checkMatchResult(actCommonPrefixes1, actVersionMap1);
-		runSuccess = true;
-	}
+        // check the matchPrefix And Versions Result
+        Assert.assertFalse(vsList1.isTruncated(), "vsList1.isTruncated() must be false");
+        actCommonPrefixes1.addAll(actCommonPrefixes);
+        // actVersionMap1.addAll(actVersionMap);
+        for (Map.Entry<String, List<String>> entry : actVersionMap.entrySet()) {
+            List<String> versions = entry.getValue();
+            for (String version : versions) {
+                actVersionMap1.add(entry.getKey(), version);
+            }
+        }
+        checkMatchResult(actCommonPrefixes1, actVersionMap1);
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	private void putObjects() {
-		for (int i = 0; i < objectsNum; i++) {
-			if (i % 10 == 0) {
-				// keyName match prefix,no match delimiter
-				String subKeyName = prefix + "_" + i + "_" + keyName;
-				for (int j = versionNum - 1; j >= 0; j--) {
-					s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
-					expVersions.add(subKeyName, String.valueOf(j));
-				}
+    private void putObjects() {
+        for (int i = 0; i < objectsNum; i++) {
+            if (i % 10 == 0) {
+                // keyName match prefix,no match delimiter
+                String subKeyName = prefix + "_" + i + "_" + keyName;
+                for (int j = versionNum - 1; j >= 0; j--) {
+                    s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
+                    expVersions.add(subKeyName, String.valueOf(j));
+                }
 
-			} else {
-				// keyName match prefix and delimter
-				String subKeyName = prefix + "_" + i + delimiter + "_" + keyName;
-				for (int j = versionNum - 1; j >= 0; j--) {
-					s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
-				}
-				matchPrefixList.add(prefix + "_" + i + delimiter);
-			}
-		}
+            } else {
+                // keyName match prefix and delimter
+                String subKeyName = prefix + "_" + i + delimiter + "_" + keyName;
+                for (int j = versionNum - 1; j >= 0; j--) {
+                    s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
+                }
+                matchPrefixList.add(prefix + "_" + i + delimiter);
+            }
+        }
 
-		// put delete tag object
-		for (int i = 0; i < deleteTagObjectsNum; i++) {
-			String subKeyName = prefix + "_deleteTag_" + i + delimiter + "_" + keyName;
-			s3Client.deleteObject(bucketName, subKeyName);
-			matchPrefixList.add(prefix + "_deleteTag_" + i + delimiter);
-		}
-	}
+        // put delete tag object
+        for (int i = 0; i < deleteTagObjectsNum; i++) {
+            String subKeyName = prefix + "_deleteTag_" + i + delimiter + "_" + keyName;
+            s3Client.deleteObject(bucketName, subKeyName);
+            matchPrefixList.add(prefix + "_deleteTag_" + i + delimiter);
+        }
+    }
 
-	private void checkMatchResult(List<String> actCommonPrefixes, MultiValueMap<String, String> actVersionMap) {
-		Collections.sort(actCommonPrefixes);
-		Collections.sort(matchPrefixList);
-		Assert.assertEquals(actCommonPrefixes, matchPrefixList, "actCommonPrefixes = " + actCommonPrefixes.toString()
-				+ ",expCommonPrefixes = " + matchPrefixList.toString());
-		Assert.assertEquals(actVersionMap.size(), expVersions.size(),
-				"actMap = " + actVersionMap.toString() + ",expMap = " + expVersions.toString());
-		for (Map.Entry<String, List<String>> entry : expVersions.entrySet()) {
-			Assert.assertEquals(actVersionMap.get(entry.getKey()), expVersions.get(entry.getKey()),
-					"actMap = " + actVersionMap.toString() + ",expMap = " + expVersions.toString());
-		}
+    private void checkMatchResult(List<String> actCommonPrefixes, MultiValueMap<String, String> actVersionMap) {
+        Collections.sort(actCommonPrefixes);
+        Collections.sort(matchPrefixList);
+        Assert.assertEquals(actCommonPrefixes, matchPrefixList, "actCommonPrefixes = " + actCommonPrefixes.toString()
+                + ",expCommonPrefixes = " + matchPrefixList.toString());
+        Assert.assertEquals(actVersionMap.size(), expVersions.size(),
+                "actMap = " + actVersionMap.toString() + ",expMap = " + expVersions.toString());
+        for (Map.Entry<String, List<String>> entry : expVersions.entrySet()) {
+            Assert.assertEquals(actVersionMap.get(entry.getKey()), expVersions.get(entry.getKey()),
+                    "actMap = " + actVersionMap.toString() + ",expMap = " + expVersions.toString());
+        }
 
-	}
+    }
 }

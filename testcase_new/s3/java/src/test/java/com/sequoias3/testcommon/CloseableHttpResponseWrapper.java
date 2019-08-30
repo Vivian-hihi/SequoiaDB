@@ -16,8 +16,7 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("deprecation")
 public class CloseableHttpResponseWrapper implements CloseableHttpResponse {
-    private static final Logger logger = LoggerFactory
-            .getLogger(CloseableHttpResponseWrapper.class);
+    private static final Logger logger = LoggerFactory.getLogger(CloseableHttpResponseWrapper.class);
     private CloseableHttpResponse resp;
     private CloseableHttpClient tmpHttpClient;
 
@@ -166,8 +165,7 @@ public class CloseableHttpResponseWrapper implements CloseableHttpResponse {
     public void close() throws IOException {
         try {
             resp.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.warn("close response failed", e);
         }
 

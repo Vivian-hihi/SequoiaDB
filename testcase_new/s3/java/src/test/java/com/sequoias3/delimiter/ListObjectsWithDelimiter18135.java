@@ -26,59 +26,59 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 
 public class ListObjectsWithDelimiter18135 extends S3TestBase {
-	private String bucketName = "bucket18135";
-	private String[] objectNames = { "dir1?test/18135_1", "dir1?dir2??/dir3/test18135_2", "dir1?test/18135_3",
-			"dir1?dir2?aa?//test18135_4", "dir1?dir2?aa?cc?test/18135_5", "dir1?dir2/?aa?dd?test18135_6",
-			"testdir1.txt" };
-	private String oldDelimiter = "/";
-	private String newDelimiter = "?";
-	private List<String> expCommonprefixes = new ArrayList<String>();
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket18135";
+    private String[] objectNames = { "dir1?test/18135_1", "dir1?dir2??/dir3/test18135_2", "dir1?test/18135_3",
+            "dir1?dir2?aa?//test18135_4", "dir1?dir2?aa?cc?test/18135_5", "dir1?dir2/?aa?dd?test18135_6",
+            "testdir1.txt" };
+    private String oldDelimiter = "/";
+    private String newDelimiter = "?";
+    private List<String> expCommonprefixes = new ArrayList<String>();
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		s3Client = CommLib.buildS3Client();
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
+    @BeforeClass
+    private void setUp() throws Exception {
+        s3Client = CommLib.buildS3Client();
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-		for (int i = 0; i < objectNames.length; i++) {
-			s3Client.putObject(bucketName, objectNames[i], "object_file18135");
-		}
-	}
+        for (int i = 0; i < objectNames.length; i++) {
+            s3Client.putObject(bucketName, objectNames[i], "object_file18135");
+        }
+    }
 
-	@Test
-	public void testGetObjectList() throws Exception {
-		// 将分隔符设置为?（默认为'/'）
-		DelimiterUtils.putBucketDelimiter(bucketName, newDelimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter);
+    @Test
+    public void testGetObjectList() throws Exception {
+        // 将分隔符设置为?（默认为'/'）
+        DelimiterUtils.putBucketDelimiter(bucketName, newDelimiter);
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter);
 
-		// 手工校验查询方式为元数据扫描方式
-		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(oldDelimiter);
-		ListObjectsV2Result result = s3Client.listObjectsV2(req);
-		List<String> commprefixesResult = result.getCommonPrefixes();
+        // 手工校验查询方式为元数据扫描方式
+        ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(oldDelimiter);
+        ListObjectsV2Result result = s3Client.listObjectsV2(req);
+        List<String> commprefixesResult = result.getCommonPrefixes();
 
-		// check result
-		expCommonprefixes = ObjectUtils.getCommPrefixes(objectNames, "", oldDelimiter);
-		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommonprefixes);
+        // check result
+        expCommonprefixes = ObjectUtils.getCommPrefixes(objectNames, "", oldDelimiter);
+        ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommonprefixes);
 
-		List<String> contents = ObjectUtils.getKeys(objectNames, "", oldDelimiter);
-		List<S3ObjectSummary> objectSummaries = result.getObjectSummaries();
-		ObjectUtils.checkListObjectsV2KeyName(objectSummaries, contents);
+        List<String> contents = ObjectUtils.getKeys(objectNames, "", oldDelimiter);
+        List<S3ObjectSummary> objectSummaries = result.getObjectSummaries();
+        ObjectUtils.checkListObjectsV2KeyName(objectSummaries, contents);
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.deleteAllObjectVersions(s3Client, bucketName);
-				s3Client.deleteBucket(bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.deleteAllObjectVersions(s3Client, bucketName);
+                s3Client.deleteBucket(bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 }

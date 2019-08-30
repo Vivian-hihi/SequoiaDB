@@ -32,7 +32,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
     private boolean runSuccess3 = false;
     private boolean runSuccess4 = false;
     private String bucketName = "bucket16394";
-    private String[] objectNames = { "!-_.*',()", "&@: $=+?",  "^`><{}[]#%\"~|" , "a1b2C3D4","thisis\010atest","abc"};
+    private String[] objectNames = { "!-_.*',()", "&@: $=+?", "^`><{}[]#%\"~|", "a1b2C3D4", "thisis\010atest", "abc" };
     private AmazonS3 s3Client = null;
 
     @BeforeClass
@@ -42,98 +42,94 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            s3Client.putObject(bucketName, objectName,""+ UUID.randomUUID());
+            s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
         }
     }
 
-    //a、字母数字字符[0-9a-zA-Z]
+    // a、字母数字字符[0-9a-zA-Z]
     @Test
     private void testNormal() throws Exception {
         String delimiter = objectNames[5];
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter));
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter));
 
-        //expected results
+        // expected results
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add(objectNames[5]);
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        expMap.add(objectNames[0],"0");
-        expMap.add(objectNames[1],"0");
-        expMap.add(objectNames[2],"0");
-        expMap.add(objectNames[3],"0");
-        expMap.add(objectNames[4],"0");
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[0], "0");
+        expMap.add(objectNames[1], "0");
+        expMap.add(objectNames[2], "0");
+        expMap.add(objectNames[3], "0");
+        expMap.add(objectNames[4], "0");
 
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, expMap);
         runSuccess1 = true;
     }
 
-    //b、""
+    // b、""
     @Test
     private void testEmptyStr() throws Exception {
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(""));
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(""));
 
-        //expected results
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        expMap.add(objectNames[0],"0");
-        expMap.add(objectNames[1],"0");
-        expMap.add(objectNames[2],"0");
-        expMap.add(objectNames[3],"0");
-        expMap.add(objectNames[4],"0");
-        expMap.add(objectNames[5],"0");
+        // expected results
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[0], "0");
+        expMap.add(objectNames[1], "0");
+        expMap.add(objectNames[2], "0");
+        expMap.add(objectNames[3], "0");
+        expMap.add(objectNames[4], "0");
+        expMap.add(objectNames[5], "0");
 
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(),expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), expMap);
         runSuccess1 = true;
     }
 
-    //特殊字符：“!”，“-”，“_”，“.”，“*”，“'”，“(”，“)”
+    // 特殊字符：“!”，“-”，“_”，“.”，“*”，“'”，“(”，“)”
     @Test
     private void testSpecial() throws Exception {
         String str = objectNames[0];
         char[] delimiters = str.toCharArray();
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        expMap.add(objectNames[1],"0");
-        expMap.add(objectNames[2],"0");
-        expMap.add(objectNames[3],"0");
-        expMap.add(objectNames[4],"0");
-        expMap.add(objectNames[5],"0");
-        for(int i = 0; i < delimiters.length; i++) {
-            VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
-                    .withBucketName(bucketName)
-                    .withDelimiter(String.valueOf(delimiters[i])));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[1], "0");
+        expMap.add(objectNames[2], "0");
+        expMap.add(objectNames[3], "0");
+        expMap.add(objectNames[4], "0");
+        expMap.add(objectNames[5], "0");
+        for (int i = 0; i < delimiters.length; i++) {
+            VersionListing vsList = s3Client.listVersions(
+                    new ListVersionsRequest().withBucketName(bucketName).withDelimiter(String.valueOf(delimiters[i])));
             List<String> expCommonPrefixes = new ArrayList<String>();
-            expCommonPrefixes.add(str.substring(0,i+1));
-            Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
+            expCommonPrefixes.add(str.substring(0, i + 1));
+            Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+            ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, expMap);
         }
         runSuccess2 = true;
     }
 
-    //要特殊处理的字符：&@:,$=+?;
+    // 要特殊处理的字符：&@:,$=+?;
     @Test
     private void testSpecial1() throws Exception {
         String str = objectNames[1];
         char[] delimiters = str.toCharArray();
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        expMap.add(objectNames[0],"0");
-        expMap.add(objectNames[2],"0");
-        expMap.add(objectNames[3],"0");
-        expMap.add(objectNames[4],"0");
-        expMap.add(objectNames[5],"0");
-        for(int i = 0; i < delimiters.length; i++) {
-            VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                    .withBucketName(bucketName)
-                    .withDelimiter(String.valueOf(delimiters[i])));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[0], "0");
+        expMap.add(objectNames[2], "0");
+        expMap.add(objectNames[3], "0");
+        expMap.add(objectNames[4], "0");
+        expMap.add(objectNames[5], "0");
+        for (int i = 0; i < delimiters.length; i++) {
+            VersionListing vsList = s3Client.listVersions(
+                    new ListVersionsRequest().withBucketName(bucketName).withDelimiter(String.valueOf(delimiters[i])));
             List<String> expCommonPrefixes = new ArrayList<String>();
-            expCommonPrefixes.add(str.substring(0,i+1));
-            Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
+            expCommonPrefixes.add(str.substring(0, i + 1));
+            Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+            ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, expMap);
         }
         runSuccess3 = true;
     }
@@ -143,43 +139,41 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
     private void testSpecial3() throws Exception {
         String str = objectNames[2];
         char[] delimiters = str.toCharArray();
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        expMap.add(objectNames[0],"0");
-        expMap.add(objectNames[1],"0");
-        expMap.add(objectNames[3],"0");
-        expMap.add(objectNames[4],"0");
-        expMap.add(objectNames[5],"0");
-        for(int i = 0; i < delimiters.length; i++) {
-            VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                    .withBucketName(bucketName)
-                    .withDelimiter(String.valueOf(delimiters[i])));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[0], "0");
+        expMap.add(objectNames[1], "0");
+        expMap.add(objectNames[3], "0");
+        expMap.add(objectNames[4], "0");
+        expMap.add(objectNames[5], "0");
+        for (int i = 0; i < delimiters.length; i++) {
+            VersionListing vsList = s3Client.listVersions(
+                    new ListVersionsRequest().withBucketName(bucketName).withDelimiter(String.valueOf(delimiters[i])));
             List<String> expCommonPrefixes = new ArrayList<String>();
-            expCommonPrefixes.add(str.substring(0,i+1));
-            Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
+            expCommonPrefixes.add(str.substring(0, i + 1));
+            Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+            ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, expMap);
         }
         runSuccess4 = true;
     }
 
-    //""this is\012atest!!!"
+    // ""this is\012atest!!!"
     @Test
     private void testSpecial5() throws Exception {
         String str = objectNames[4];
         String delimiter = "\010";
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        expMap.add(objectNames[0],"0");
-        expMap.add(objectNames[1],"0");
-        expMap.add(objectNames[2],"0");
-        expMap.add(objectNames[3],"0");
-        expMap.add(objectNames[5],"0");
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        expMap.add(objectNames[0], "0");
+        expMap.add(objectNames[1], "0");
+        expMap.add(objectNames[2], "0");
+        expMap.add(objectNames[3], "0");
+        expMap.add(objectNames[5], "0");
 
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter));
+        VersionListing vsList = s3Client
+                .listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter));
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add("thisis\010");
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, expMap);
         runSuccess4 = true;
     }
 

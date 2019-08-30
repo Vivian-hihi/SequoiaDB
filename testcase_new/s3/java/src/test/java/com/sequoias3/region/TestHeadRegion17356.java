@@ -18,49 +18,49 @@ import com.sequoias3.testcommon.s3utils.RegionUtils;
  */
 
 public class TestHeadRegion17356 extends S3TestBase {
-	private String regionName = "Beijing17356";
-	private String metaCSName = "metaCS17356";
-	private String dataCSName = "dataCS17356";
-	private String[] metaClNames = { "metaCL17356", "metaHistoryCL17356" };
-	private String[] dataClName = { "dataCL17356" };
-	private boolean runSuccess = false;
+    private String regionName = "Beijing17356";
+    private String metaCSName = "metaCS17356";
+    private String dataCSName = "dataCS17356";
+    private String[] metaClNames = { "metaCL17356", "metaHistoryCL17356" };
+    private String[] dataClName = { "dataCL17356" };
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		RegionUtils.createCSAndCL(metaCSName, metaClNames);
-		RegionUtils.createCSAndCL(dataCSName, dataClName);
+    @BeforeClass
+    private void setUp() throws Exception {
+        RegionUtils.createCSAndCL(metaCSName, metaClNames);
+        RegionUtils.createCSAndCL(dataCSName, dataClName);
 
-		RegionUtils.clearRegion(regionName);
-		Region region = new Region();
-		region.withName(regionName).withMetaLocation(metaCSName + "." + metaClNames[0])
-				.withMetaHisLocation(metaCSName + "." + metaClNames[1])
-				.withDataLocation(dataCSName + "." + dataClName[0]);
-		RegionUtils.putRegion(region);
-	}
+        RegionUtils.clearRegion(regionName);
+        Region region = new Region();
+        region.withName(regionName).withMetaLocation(metaCSName + "." + metaClNames[0])
+                .withMetaHisLocation(metaCSName + "." + metaClNames[1])
+                .withDataLocation(dataCSName + "." + dataClName[0]);
+        RegionUtils.putRegion(region);
+    }
 
-	@Test
-	public void testCreateRegion() throws Exception {
-		// 合法值
-		Assert.assertTrue(RegionUtils.headRegion(regionName));
+    @Test
+    public void testCreateRegion() throws Exception {
+        // 合法值
+        Assert.assertTrue(RegionUtils.headRegion(regionName));
 
-		// 非法值
-		Boolean flag1 = RegionUtils.headRegion("");
-		Assert.assertFalse(flag1, " headRegin region with '' fail,return false(404) ");
+        // 非法值
+        Boolean flag1 = RegionUtils.headRegion("");
+        Assert.assertFalse(flag1, " headRegin region with '' fail,return false(404) ");
 
-		Boolean flag2 = RegionUtils.headRegion(new String());
-		Assert.assertFalse(flag2, " headRegin region with null fail,return false(404) ");
+        Boolean flag2 = RegionUtils.headRegion(new String());
+        Assert.assertFalse(flag2, " headRegin region with null fail,return false(404) ");
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		if (runSuccess) {
-			try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
-				RegionUtils.deleteRegion(regionName);
-				sdb.dropCollectionSpace(dataCSName);
-				sdb.dropCollectionSpace(metaCSName);
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        if (runSuccess) {
+            try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
+                RegionUtils.deleteRegion(regionName);
+                sdb.dropCollectionSpace(dataCSName);
+                sdb.dropCollectionSpace(metaCSName);
+            }
+        }
+    }
 }

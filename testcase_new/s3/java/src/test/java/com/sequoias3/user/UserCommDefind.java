@@ -4,10 +4,11 @@ public class UserCommDefind {
     // request headers
     public final static String authorization = "Authorization";
     public final static String authValPre = "Credential=";
- /*   public final static String content_length = "Content-Length";
-    public final static String content_Type = "Content-Type";
-    public final static String host = "Host";
-    public final static String expect = "Expect";*/
+    /*
+     * public final static String content_length = "Content-Length"; public
+     * final static String content_Type = "Content-Type"; public final static
+     * String host = "Host"; public final static String expect = "Expect";
+     */
 
     // request parameters: the type of role
     public final static String admin = "admin";

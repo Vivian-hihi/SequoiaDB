@@ -25,7 +25,7 @@ import java.util.Random;
  */
 
 public class GetObjectByHistVersion16357 extends S3TestBase {
-    private  boolean runSuccess = false;
+    private boolean runSuccess = false;
     private String bucketName = null;
     private String objectName = "object16357";
     private AmazonS3 s3Client = null;
@@ -48,33 +48,34 @@ public class GetObjectByHistVersion16357 extends S3TestBase {
         }
         bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+        ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
     }
 
     @Test
     private void test() throws Exception {
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         // random history version
         Random random = new Random();
         int histIndex = random.nextInt(fileNum - 2);
         String histVersionId = objectVSList.get(histIndex).getVersionId();
-        S3Object histObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName,histVersionId));
+        S3Object histObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName, histVersionId));
 
         // check
         String histPath = filePathList.get(histIndex);
-        chectResult(histObject,histPath);
+        chectResult(histObject, histPath);
         runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-               ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
-               TestTools.LocalFile.removeFile(localPath);
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {
@@ -83,17 +84,17 @@ public class GetObjectByHistVersion16357 extends S3TestBase {
         }
     }
 
-    private void chectResult(S3Object object,String filePath)throws  Exception{
+    private void chectResult(S3Object object, String filePath) throws Exception {
         Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
-            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            ObjectUtils.inputStream2File(s3InputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally {
-            if(s3InputStream != null){
+        } finally {
+            if (s3InputStream != null) {
                 s3InputStream.close();
             }
         }

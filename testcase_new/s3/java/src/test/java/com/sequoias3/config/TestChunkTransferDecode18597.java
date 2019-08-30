@@ -29,84 +29,84 @@ import com.sequoias3.user.UserCommDefind;
  * @version 1.00
  */
 public class TestChunkTransferDecode18597 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String clientRegion = "us-east-1";
-	private String bucketName = "bucket18597";
-	private String userName = "user18597";
-	private String keyName = "key18597";
-	private int fileSize = 1024 * 128;
-	private int updateSize = 1024 * 127;
-	private int updateSize2 = 1024 * 129;
-	private File localPath = null;
-	private String filePath = null;
-	private String updatePath = null;
-	private String updatePath2 = null;
-	private String[] accessKeys = null;
-	private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
+    private String clientRegion = "us-east-1";
+    private String bucketName = "bucket18597";
+    private String userName = "user18597";
+    private String keyName = "key18597";
+    private int fileSize = 1024 * 128;
+    private int updateSize = 1024 * 127;
+    private int updateSize2 = 1024 * 129;
+    private File localPath = null;
+    private String filePath = null;
+    private String updatePath = null;
+    private String updatePath2 = null;
+    private String[] accessKeys = null;
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-		updatePath = localPath + File.separator + "localFile_" + updateSize + ".txt";
-		updatePath2 = localPath + File.separator + "localFile_" + updateSize2 + ".txt";
+    @BeforeClass
+    private void setUp() throws Exception {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+        updatePath = localPath + File.separator + "localFile_" + updateSize + ".txt";
+        updatePath2 = localPath + File.separator + "localFile_" + updateSize2 + ".txt";
 
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
-		TestTools.LocalFile.createFile(updatePath, updateSize);
-		TestTools.LocalFile.createFile(updatePath2, updateSize2);
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        TestTools.LocalFile.createFile(updatePath, updateSize);
+        TestTools.LocalFile.createFile(updatePath2, updateSize2);
 
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, UserCommDefind.normal);
-		s3Client = buildS3Client(accessKeys[0], accessKeys[1]);
-	}
+        CommLib.clearUser(userName);
+        accessKeys = UserUtils.createUser(userName, UserCommDefind.normal);
+        s3Client = buildS3Client(accessKeys[0], accessKeys[1]);
+    }
 
-	@Test
-	private void testReputBacket() throws Exception {
-		s3Client.createBucket(bucketName);
-		s3Client.putObject(bucketName, keyName, new File(filePath));
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
+    @Test
+    private void testReputBacket() throws Exception {
+        s3Client.createBucket(bucketName);
+        s3Client.putObject(bucketName, keyName, new File(filePath));
+        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
-		// update object
-		s3Client.putObject(bucketName, keyName, new File(updatePath));
-		downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-		Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath));
+        // update object
+        s3Client.putObject(bucketName, keyName, new File(updatePath));
+        downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath));
 
-		// update object
-		s3Client.putObject(bucketName, keyName, new File(updatePath2));
-		downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-		Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath2));
+        // update object
+        s3Client.putObject(bucketName, keyName, new File(updatePath2));
+        downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(updatePath2));
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				CommLib.clearUser(userName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                CommLib.clearUser(userName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	public AmazonS3 buildS3Client(String ACCESS_KEY, String SECRET_KEY) {
-		AmazonS3 s3Client = null;
-		AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
-		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl, clientRegion);
-		ClientConfiguration config = new ClientConfiguration();
-		config.setUseExpectContinue(false);
-		config.setSocketTimeout(300000);
-		s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
-				.withClientConfiguration(config).withChunkedEncodingDisabled(false).withPathStyleAccessEnabled(true)
-				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
-		return s3Client;
-	}
+    public AmazonS3 buildS3Client(String ACCESS_KEY, String SECRET_KEY) {
+        AmazonS3 s3Client = null;
+        AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
+        AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
+                S3TestBase.s3ClientUrl, clientRegion);
+        ClientConfiguration config = new ClientConfiguration();
+        config.setUseExpectContinue(false);
+        config.setSocketTimeout(300000);
+        s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
+                .withClientConfiguration(config).withChunkedEncodingDisabled(false).withPathStyleAccessEnabled(true)
+                .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+        return s3Client;
+    }
 }

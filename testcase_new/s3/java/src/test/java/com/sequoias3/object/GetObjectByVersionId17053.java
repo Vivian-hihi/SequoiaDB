@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Description:  seqDB-17053:指定versionId等于null获取对象
+ * @Description: seqDB-17053:指定versionId等于null获取对象
  * @author fanyu
  * @Date:2019年01月04日
  * @version:1.0
@@ -30,7 +30,7 @@ public class GetObjectByVersionId17053 extends S3TestBase {
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
-    private int fileSize = 1024*200;
+    private int fileSize = 1024 * 200;
     private File localPath = null;
     private List<String> filePathList = new ArrayList<String>();
     private List<PutObjectResult> objectVSList = new ArrayList<PutObjectResult>();
@@ -50,7 +50,7 @@ public class GetObjectByVersionId17053 extends S3TestBase {
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-        objectVSList.add(s3Client.putObject(bucketName, objectName,new File(filePathList.get(0))));
+        objectVSList.add(s3Client.putObject(bucketName, objectName, new File(filePathList.get(0))));
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.SUSPENDED);
         objectVSList.add(s3Client.putObject(bucketName, objectName, new File(filePathList.get(1))));
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);

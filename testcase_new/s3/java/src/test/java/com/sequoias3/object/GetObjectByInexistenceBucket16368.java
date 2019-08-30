@@ -28,7 +28,7 @@ public class GetObjectByInexistenceBucket16368 extends S3TestBase {
     @BeforeClass
     private void setUp() throws IOException {
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
     }
 
     @Test
@@ -49,8 +49,8 @@ public class GetObjectByInexistenceBucket16368 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-               CommLib.clearBucket(s3Client,bucketName);
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
             }
         } finally {
             if (s3Client != null) {

@@ -39,7 +39,8 @@ public class CreateAdminUser16250 extends S3TestBase {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
                 Assert.fail(e.getMessage());
             }
-        }  try {
+        }
+        try {
             UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {

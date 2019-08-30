@@ -18,7 +18,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @Description: seqDB-16385 :: 指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件获取对象
+ * @Description: seqDB-16385 ::
+ *               指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件获取对象
  * @author fanyu
  * @Date:2018年11月14日
  * @version:1.0
@@ -54,32 +55,32 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
-        //get history eTag
-        String histETag1 = objectVSList.get(fileNum-3).getETag();
-        String histEtag2 = objectVSList.get(fileNum-2).getETag();
+        // get history eTag
+        String histETag1 = objectVSList.get(fileNum - 3).getETag();
+        String histEtag2 = objectVSList.get(fileNum - 2).getETag();
 
-        //get histroy version
-        String  versionId1 = objectVSList.get(fileNum-3).getVersionId();
-        String  versionId2 = objectVSList.get(fileNum-2).getVersionId();
-        String  versionid3 = objectVSList.get(fileNum-1).getVersionId();
+        // get histroy version
+        String versionId1 = objectVSList.get(fileNum - 3).getVersionId();
+        String versionId2 = objectVSList.get(fileNum - 2).getVersionId();
+        String versionid3 = objectVSList.get(fileNum - 1).getVersionId();
 
-        //get the lastModified of the version
-        Date modified = getLastModified(bucketName,objectName,versionId1);
-        Date unModified  = getLastModified(bucketName,objectName,versionid3);
+        // get the lastModified of the version
+        Date modified = getLastModified(bucketName, objectName, versionId1);
+        Date unModified = getLastModified(bucketName, objectName, versionid3);
 
-        //get object by matchingETag/nonMatchingETag/modifiedSince/unModifiedSince
+        // get object by
+        // matchingETag/nonMatchingETag/modifiedSince/unModifiedSince
         S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId2)
-                .withMatchingETagConstraint(histEtag2)
-                .withNonmatchingETagConstraint(histETag1)
-                .withModifiedSinceConstraint(modified)
-                .withUnmodifiedSinceConstraint(unModified));
+                .withMatchingETagConstraint(histEtag2).withNonmatchingETagConstraint(histETag1)
+                .withModifiedSinceConstraint(modified).withUnmodifiedSinceConstraint(unModified));
 
-        //check the eTag and the content of object
+        // check the eTag and the content of object
         String currPath = filePathList.get(fileNum - 2);
-        chectResult(currObject,currPath);
+        chectResult(currObject, currPath);
         runSuccess = true;
     }
 
@@ -87,7 +88,7 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -97,25 +98,25 @@ public class GetObjectByEtagAndModifiedSince16385 extends S3TestBase {
         }
     }
 
-    private void chectResult(S3Object object,String filePath)throws  Exception{
+    private void chectResult(S3Object object, String filePath) throws Exception {
         Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
-            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            ObjectUtils.inputStream2File(s3InputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally {
-            if(s3InputStream != null){
+        } finally {
+            if (s3InputStream != null) {
                 s3InputStream.close();
             }
         }
     }
 
-    private Date getLastModified(String bucketName,String objectName,String versionId){
-        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName,objectName,versionId);
+    private Date getLastModified(String bucketName, String objectName, String versionId) {
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, objectName, versionId);
         S3Object object = s3Client.getObject(getObjectRequest);
-        return  object.getObjectMetadata().getLastModified();
+        return object.getObjectMetadata().getLastModified();
     }
 }

@@ -29,73 +29,75 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  * @version 1.00
  */
 public class DeleteObject16448 extends S3TestBase {
-	private String bucketName = "bucket16448";
-	private String keyName = "testkey16448";
-	private List<S3VersionSummary> expVersionList = new ArrayList<>();
-	private int oneObjVersionNum = 3;
-	private String file = "object16448";
-	private File localPath = null;
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket16448";
+    private String keyName = "testkey16448";
+    private List<S3VersionSummary> expVersionList = new ArrayList<>();
+    private int oneObjVersionNum = 3;
+    private String file = "object16448";
+    private File localPath = null;
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		
-		s3Client = CommLib.buildS3Client();
-		// create bucket
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-		for (int i = 0; i < oneObjVersionNum; i++) {
-			s3Client.putObject(bucketName, keyName, file + "." + i);
-			S3VersionSummary version = new S3VersionSummary();
-			version.setKey(keyName);
-			//Objects in the version list are stored in reverse order by versionId , like 2,1,0
-			version.setVersionId(String.valueOf((oneObjVersionNum - 1) - i));
-			expVersionList.add(version);
-		}
-	}
+    @BeforeClass
+    private void setUp() throws Exception {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
 
-	@Test
-	public void testGetObjectList() throws Exception {
-		// delete object with latest version id
-		String latestVersionId = String.valueOf(oneObjVersionNum - 1);
-		s3Client.deleteVersion(bucketName, keyName, latestVersionId);
-		expVersionList.remove(0);
+        s3Client = CommLib.buildS3Client();
+        // create bucket
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+        for (int i = 0; i < oneObjVersionNum; i++) {
+            s3Client.putObject(bucketName, keyName, file + "." + i);
+            S3VersionSummary version = new S3VersionSummary();
+            version.setKey(keyName);
+            // Objects in the version list are stored in reverse order by
+            // versionId , like 2,1,0
+            version.setVersionId(String.valueOf((oneObjVersionNum - 1) - i));
+            expVersionList.add(version);
+        }
+    }
 
-		try {
-			s3Client.getObject(new GetObjectRequest(bucketName, keyName, latestVersionId));
-			Assert.fail("the object still exist!");
-		} catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "NoSuchVersion");
-		}
+    @Test
+    public void testGetObjectList() throws Exception {
+        // delete object with latest version id
+        String latestVersionId = String.valueOf(oneObjVersionNum - 1);
+        s3Client.deleteVersion(bucketName, keyName, latestVersionId);
+        expVersionList.remove(0);
 
-		// check the object version list
-		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
-		VersionListing versionList = s3Client.listVersions(req);
-		List<S3VersionSummary> verList = versionList.getVersionSummaries();
-		Assert.assertEquals(verList.size(), expVersionList.size());
-		for (int i = 0; i < verList.size(); i++) {
-			Assert.assertEquals(verList.get(i).getKey(), expVersionList.get(i).getKey());
-			Assert.assertEquals(verList.get(i).getVersionId(), expVersionList.get(i).getVersionId());
-		}
+        try {
+            s3Client.getObject(new GetObjectRequest(bucketName, keyName, latestVersionId));
+            Assert.fail("the object still exist!");
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "NoSuchVersion");
+        }
 
-		// check that the current latest version of the object is correct by the MD5 value
-		String currlatestVersionId = String.valueOf(oneObjVersionNum - 2);
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-		Assert.assertEquals(downfileMd5, TestTools.getMD5((file+"."+currlatestVersionId).getBytes()));
+        // check the object version list
+        ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName);
+        VersionListing versionList = s3Client.listVersions(req);
+        List<S3VersionSummary> verList = versionList.getVersionSummaries();
+        Assert.assertEquals(verList.size(), expVersionList.size());
+        for (int i = 0; i < verList.size(); i++) {
+            Assert.assertEquals(verList.get(i).getKey(), expVersionList.get(i).getKey());
+            Assert.assertEquals(verList.get(i).getVersionId(), expVersionList.get(i).getVersionId());
+        }
 
-		runSuccess = true;
-	}
+        // check that the current latest version of the object is correct by the
+        // MD5 value
+        String currlatestVersionId = String.valueOf(oneObjVersionNum - 2);
+        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+        Assert.assertEquals(downfileMd5, TestTools.getMD5((file + "." + currlatestVersionId).getBytes()));
 
-	@AfterClass
-	private void tearDown() {
-		if (runSuccess) {
-			CommLib.deleteAllObjectVersions(s3Client, bucketName);
-			s3Client.deleteBucket(bucketName);
-			TestTools.LocalFile.removeFile(localPath);
-		}
-	}
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() {
+        if (runSuccess) {
+            CommLib.deleteAllObjectVersions(s3Client, bucketName);
+            s3Client.deleteBucket(bucketName);
+            TestTools.LocalFile.removeFile(localPath);
+        }
+    }
 }

@@ -32,7 +32,7 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
     private AmazonS3 s3Client = null;
     private String accessKeyID = null;
     private String secretAccessKey = null;
-    private int fileSize = 1024*200;
+    private int fileSize = 1024 * 200;
     private File localPath = null;
     private String filePath = null;
 
@@ -44,9 +44,9 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
         filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
         TestTools.LocalFile.createFile(filePath, fileSize);
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
@@ -60,8 +60,8 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
                 UserUtils.deleteUser(username, UserUtils.accessKeyId, true);
                 TestTools.LocalFile.removeFile(localPath);
             }
@@ -73,7 +73,7 @@ public class GetObjectByNoOwner16367 extends S3TestBase {
     }
 
     private void getObjectByNoOwner() {
-        //get object by no owner
+        // get object by no owner
         AmazonS3 s3 = null;
         try {
             s3 = CommLib.buildS3Client(accessKeyID, secretAccessKey);

@@ -11,14 +11,14 @@ import java.util.List;
  * Created by fanyu on 2019/1/21.
  */
 @JacksonXmlRootElement(localName = "RegionConfiguration")
-public class GetRegionResult{
+public class GetRegionResult {
     private Region region;
     @JacksonXmlElementWrapper(localName = "Buckets")
     @JsonProperty("Bucket")
     private List<Bucket> buckets;
 
-    public GetRegionResult(Region region){
-       this.region = region;
+    public GetRegionResult(Region region) {
+        this.region = region;
     }
 
     public Region getRegion() {
@@ -29,7 +29,7 @@ public class GetRegionResult{
         this.region = region;
     }
 
-    public void setBuckets(List<Bucket> buckets){
+    public void setBuckets(List<Bucket> buckets) {
         this.buckets = buckets;
     }
 

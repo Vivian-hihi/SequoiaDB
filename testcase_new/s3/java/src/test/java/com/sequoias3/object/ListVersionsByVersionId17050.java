@@ -19,7 +19,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 /**
- * @Description: seqDB-17050:指定versionIdmarker == null查询对象版本列表，且版本列表中有versionId == null的记录
+ * @Description: seqDB-17050:指定versionIdmarker == null查询对象版本列表，且版本列表中有versionId
+ *               == null的记录
  * @author fanyu
  * @Date:2019年01月04日
  * @version:1.0
@@ -28,7 +29,7 @@ import java.util.UUID;
 public class ListVersionsByVersionId17050 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket17050";
-    private String[] objectNames = {"17050%%123", "17050%%345", "17050%%567", "17050%%9AB", "17050%%CDE"};
+    private String[] objectNames = { "17050%%123", "17050%%345", "17050%%567", "17050%%9AB", "17050%%CDE" };
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
@@ -40,9 +41,9 @@ public class ListVersionsByVersionId17050 extends S3TestBase {
         for (String objectName : objectNames) {
             s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
         }
-        CommLib.setBucketVersioning(s3Client, bucketName,  BucketVersioningConfiguration.ENABLED);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            for(int i = 0; i < versionNum -1; i++) {
+            for (int i = 0; i < versionNum - 1; i++) {
                 s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
             }
         }
@@ -52,26 +53,24 @@ public class ListVersionsByVersionId17050 extends S3TestBase {
     private void test() throws Exception {
         int index = 0;
         String keyMarker = objectNames[index];
-        String  versionIdMarker = "null";
+        String versionIdMarker = "null";
 
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(keyMarker)
-                .withVersionIdMarker(versionIdMarker));
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker));
 
-        //expected results
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for (int i = index+1; i < objectNames.length; i++) {
+        // expected results
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (int i = index + 1; i < objectNames.length; i++) {
             for (int j = versionNum - 1; j >= 0; j--) {
-                if(j != 0) {
+                if (j != 0) {
                     expMap.add(objectNames[i], String.valueOf(j));
-                }else{
+                } else {
                     expMap.add(objectNames[i], "null");
                 }
             }
         }
-        Assert.assertFalse(vsList.isTruncated(),"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
+        Assert.assertFalse(vsList.isTruncated(), "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), expMap);
         runSuccess = true;
     }
 

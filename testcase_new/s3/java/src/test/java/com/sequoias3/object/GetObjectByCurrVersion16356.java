@@ -28,7 +28,7 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
     private String bucketName = null;
     private String objectName = "object16356";
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024*200;
+    private int fileSize = 1024 * 200;
     private File localPath = null;
     private List<String> filePathList = new ArrayList<String>();
     private List<PutObjectResult> objectVSList = new ArrayList<PutObjectResult>();
@@ -51,26 +51,27 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
 
     @Test
     private void test() throws Exception {
-        //create multiple versions object in bucket
+        // create multiple versions object in bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
-        //get the current version object
+        // get the current version object
         String currVersionId = objectVSList.get(fileNum - 1).getVersionId();
         S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId));
 
         // check the Etag and the md5 of object content
         String currPath = filePathList.get(fileNum - 1);
-        checkResult(currObject,currPath);
+        checkResult(currObject, currPath);
         runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -80,17 +81,17 @@ public class GetObjectByCurrVersion16356 extends S3TestBase {
         }
     }
 
-    private void checkResult(S3Object object,String filePath) throws Exception{
+    private void checkResult(S3Object object, String filePath) throws Exception {
         Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
-            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            ObjectUtils.inputStream2File(s3InputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally {
-            if(s3InputStream != null){
+        } finally {
+            if (s3InputStream != null) {
                 s3InputStream.close();
             }
         }

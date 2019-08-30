@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 import java.util.UUID;
 
 /**
- * @Description:  seqDB-17334 :: 并发更新相同区域（配置不同）
+ * @Description: seqDB-17334 :: 并发更新相同区域（配置不同）
  * @author fanyu
  * @Date:2019年01月22日
  * @version:1.0
@@ -33,9 +33,7 @@ public class CreateSameRegionByDiffType17334 extends S3TestBase {
     private void setUp() throws Exception {
         s3Client = CommLib.buildS3Client();
         RegionUtils.clearRegion(regionName);
-        Region region = new Region()
-                .withDataCSShardingType("year")
-                .withDataCLShardingType("month")
+        Region region = new Region().withDataCSShardingType("year").withDataCLShardingType("month")
                 .withName(regionName);
         RegionUtils.putRegion(region);
     }
@@ -45,17 +43,17 @@ public class CreateSameRegionByDiffType17334 extends S3TestBase {
         CreateRegion cThread = new CreateRegion("month", "quarter");
         cThread.start(10);
         Assert.assertEquals(cThread.isSuccess(), true, cThread.getErrorMsg());
-        //get region
+        // get region
         GetRegionResult result = RegionUtils.getRegion(regionName);
-        //check region sharding type
+        // check region sharding type
         Region region = result.getRegion();
         Assert.assertEquals(region.getDataCSShardingType(), "month");
         Assert.assertEquals(region.getDataCLShardingType(), "quarter");
-        //craete bucket for check
+        // craete bucket for check
         s3Client.createBucket(new CreateBucketRequest(bucketName, regionName));
-        //create object for check
+        // create object for check
         s3Client.putObject(bucketName, objectName, String.valueOf(UUID.randomUUID()));
-        //get object for check
+        // get object for check
         S3Object s3Object = s3Client.getObject(bucketName, objectName);
         Assert.assertEquals(s3Object.getBucketName(), bucketName);
         Assert.assertEquals(s3Object.getKey(), objectName);
@@ -82,10 +80,8 @@ public class CreateSameRegionByDiffType17334 extends S3TestBase {
 
         @Override
         public void exec() throws Exception {
-            Region region = new Region()
-                    .withDataCSShardingType(this.dataCSShardingType)
-                    .withDataCLShardingType(this.dataCLShardingType)
-                    .withName(regionName);
+            Region region = new Region().withDataCSShardingType(this.dataCSShardingType)
+                    .withDataCLShardingType(this.dataCLShardingType).withName(regionName);
             RegionUtils.putRegion(region);
         }
     }

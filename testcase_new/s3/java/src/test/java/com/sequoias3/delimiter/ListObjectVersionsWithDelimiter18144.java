@@ -30,69 +30,69 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 
 public class ListObjectVersionsWithDelimiter18144 extends S3TestBase {
-	private String bucketName = "bucket18144";
-	private String[] keyName = { "dir1/test18144_1", "dir1/Dir2/dir3/test18144_2", "dir1/test18144_3",
-			"dir1/dir2/aa/test18144_4", "testdir18144.txt" };
-	private List<String> versionsKeys = new ArrayList<String>(Arrays.asList("dir1/test18144_1",
-			"dir1/Dir2/dir3/test18144_2", "dir1/test18144_3", "dir1/dir2/aa/test18144_4"));
-	private String delimiter = "?";
-	private String prefix = "dir1";
-	private int versionNum = 3;
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket18144";
+    private String[] keyName = { "dir1/test18144_1", "dir1/Dir2/dir3/test18144_2", "dir1/test18144_3",
+            "dir1/dir2/aa/test18144_4", "testdir18144.txt" };
+    private List<String> versionsKeys = new ArrayList<String>(Arrays.asList("dir1/test18144_1",
+            "dir1/Dir2/dir3/test18144_2", "dir1/test18144_3", "dir1/dir2/aa/test18144_4"));
+    private String delimiter = "?";
+    private String prefix = "dir1";
+    private int versionNum = 3;
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		s3Client = CommLib.buildS3Client();
-		// create bucket and set bucket version status
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+    @BeforeClass
+    private void setUp() throws Exception {
+        s3Client = CommLib.buildS3Client();
+        // create bucket and set bucket version status
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+        DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
-		// put multiple objects
-		for (String objectName : keyName) {
-			for (int j = 0; j < versionNum; j++) {
-				s3Client.putObject(bucketName, objectName, "object_file18144");
-			}
-		}
-	}
+        // put multiple objects
+        for (String objectName : keyName) {
+            for (int j = 0; j < versionNum; j++) {
+                s3Client.putObject(bucketName, objectName, "object_file18144");
+            }
+        }
+    }
 
-	@Test
-	public void testGetObjectList() throws Exception {
-		// 查看访问计划索引为目录索引
-		VersionListing versionList = s3Client.listVersions(
-				new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
-		List<String> expCommPrefixes = new ArrayList<>();
+    @Test
+    public void testGetObjectList() throws Exception {
+        // 查看访问计划索引为目录索引
+        VersionListing versionList = s3Client.listVersions(
+                new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
+        List<String> expCommPrefixes = new ArrayList<>();
 
-		MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
-		Collections.sort(versionsKeys);
-		for (int i = 0; i < versionsKeys.size(); i++) {
-			for (int j = versionNum - 1; j >= 0; j--) {
-				expVersionsMap.add(versionsKeys.get(i), String.valueOf(j));
-			}
-		}
+        MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
+        Collections.sort(versionsKeys);
+        for (int i = 0; i < versionsKeys.size(); i++) {
+            for (int j = versionNum - 1; j >= 0; j--) {
+                expVersionsMap.add(versionsKeys.get(i), String.valueOf(j));
+            }
+        }
 
-		if (!versionList.isTruncated()) {
-			ObjectUtils.checkListVSResults(versionList, expCommPrefixes, expVersionsMap);
-		} else {
-			Assert.fail("vsList.isTruncated() must be false");
-		}
-		runSuccess = true;
-	}
+        if (!versionList.isTruncated()) {
+            ObjectUtils.checkListVSResults(versionList, expCommPrefixes, expVersionsMap);
+        } else {
+            Assert.fail("vsList.isTruncated() must be false");
+        }
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.deleteAllObjectVersions(s3Client, bucketName);
-				s3Client.deleteBucket(bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.deleteAllObjectVersions(s3Client, bucketName);
+                s3Client.deleteBucket(bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 }

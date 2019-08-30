@@ -56,17 +56,17 @@ public class GetObjectByEtag16374 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         // get history version eTag
-        String histETag = objectVSList.get(fileNum -2).getETag();
-        String currETag = objectVSList.get(fileNum-1).getETag();
+        String histETag = objectVSList.get(fileNum - 2).getETag();
+        String currETag = objectVSList.get(fileNum - 1).getETag();
 
-        //get object by eTag
-        S3Object object =  s3Client.getObject(new GetObjectRequest(bucketName, objectName)
-                .withMatchingETagConstraint(histETag)
-                .withNonmatchingETagConstraint(currETag));
+        // get object by eTag
+        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
+                .withMatchingETagConstraint(histETag).withNonmatchingETagConstraint(currETag));
         Assert.assertNull(object);
         runSuccess = true;
     }
@@ -74,8 +74,8 @@ public class GetObjectByEtag16374 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

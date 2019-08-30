@@ -31,89 +31,89 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 
 public class ListVersions18166_18167 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18166";
-	private String keyName = "object18166";
-	private String prefix = "dir1/";
-	private String delimiter = "test";
-	private List<String> matchPrefixList = new ArrayList<>();
-	private MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
-	private AmazonS3 s3Client = null;
-	private int versionNum = 3;
-	private int objectsNum = 110;
-	private int deleteTagObjectsNum = 5;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18166";
+    private String keyName = "object18166";
+    private String prefix = "dir1/";
+    private String delimiter = "test";
+    private List<String> matchPrefixList = new ArrayList<>();
+    private MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
+    private AmazonS3 s3Client = null;
+    private int versionNum = 3;
+    private int objectsNum = 110;
+    private int deleteTagObjectsNum = 5;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName);
-		CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-		putObjects();
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-	}
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+        putObjects();
+        DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+    }
 
-	@Test
-	private void testListVersions() throws Exception {
-		// testcase 18166: matching objects of all versions less than maxkeys
-		int maxKeys1 = 200;
-		listVersionAndCheckResult(maxKeys1);
+    @Test
+    private void testListVersions() throws Exception {
+        // testcase 18166: matching objects of all versions less than maxkeys
+        int maxKeys1 = 200;
+        listVersionAndCheckResult(maxKeys1);
 
-		// testcase 18167: matching objects of all versions equals maxkeys
-		int maxKeys2 = 137;
-		listVersionAndCheckResult(maxKeys2);
+        // testcase 18167: matching objects of all versions equals maxkeys
+        int maxKeys2 = 137;
+        listVersionAndCheckResult(maxKeys2);
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	private void putObjects() {
-		for (int i = 0; i < objectsNum; i++) {
-			if (i % 10 == 0) {
-				// keyName match prefix,no match delimiter
-				String subKeyName = prefix + "_" + i + "_" + keyName;
-				for (int j = versionNum - 1; j >= 0; j--) {
-					s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
-					expVersions.add(subKeyName, String.valueOf(j));
-				}
+    private void putObjects() {
+        for (int i = 0; i < objectsNum; i++) {
+            if (i % 10 == 0) {
+                // keyName match prefix,no match delimiter
+                String subKeyName = prefix + "_" + i + "_" + keyName;
+                for (int j = versionNum - 1; j >= 0; j--) {
+                    s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
+                    expVersions.add(subKeyName, String.valueOf(j));
+                }
 
-			} else {
-				// keyName match prefix and delimter
-				String subKeyName = prefix + "_" + i + delimiter + "_" + keyName;
-				for (int j = versionNum - 1; j >= 0; j--) {
-					s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
-				}
-				matchPrefixList.add(prefix + "_" + i + delimiter);
-			}
-		}
+            } else {
+                // keyName match prefix and delimter
+                String subKeyName = prefix + "_" + i + delimiter + "_" + keyName;
+                for (int j = versionNum - 1; j >= 0; j--) {
+                    s3Client.putObject(bucketName, subKeyName, subKeyName + "_" + i + "_" + j);
+                }
+                matchPrefixList.add(prefix + "_" + i + delimiter);
+            }
+        }
 
-		// put delete tag object
-		for (int i = 0; i < deleteTagObjectsNum; i++) {
-			String subKeyName = prefix + "_deleteTag_" + i + delimiter + "_" + keyName;
-			s3Client.deleteObject(bucketName, subKeyName);
-			matchPrefixList.add(prefix + "_deleteTag_" + i + delimiter);
-		}
-	}
+        // put delete tag object
+        for (int i = 0; i < deleteTagObjectsNum; i++) {
+            String subKeyName = prefix + "_deleteTag_" + i + delimiter + "_" + keyName;
+            s3Client.deleteObject(bucketName, subKeyName);
+            matchPrefixList.add(prefix + "_deleteTag_" + i + delimiter);
+        }
+    }
 
-	private void listVersionAndCheckResult(int maxKeys) {
-		// list versions by prefix/delimiter
-		VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
-				.withDelimiter(delimiter).withPrefix(prefix).withMaxResults(maxKeys));
+    private void listVersionAndCheckResult(int maxKeys) {
+        // list versions by prefix/delimiter
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withDelimiter(delimiter).withPrefix(prefix).withMaxResults(maxKeys));
 
-		// check
-		Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
-		ObjectUtils.checkListVSResults(vsList, matchPrefixList, expVersions);
-	}
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, matchPrefixList, expVersions);
+    }
 }

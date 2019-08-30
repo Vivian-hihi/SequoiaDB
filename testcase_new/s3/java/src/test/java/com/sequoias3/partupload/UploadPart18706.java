@@ -27,61 +27,61 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class UploadPart18706 extends S3TestBase {
-	@DataProvider(name = "partSizeProvider")
-	public Object[][] generateObjectNumber() {
-		return new Object[][] {
-				// test a : 5M-1
-				new Object[] { 5 * 1024 * 1024 - 1 },
-				// test b : 4M
-				new Object[] { 4 * 1024 * 1024 }, };
-	}
+    @DataProvider(name = "partSizeProvider")
+    public Object[][] generateObjectNumber() {
+        return new Object[][] {
+                // test a : 5M-1
+                new Object[] { 5 * 1024 * 1024 - 1 },
+                // test b : 4M
+                new Object[] { 4 * 1024 * 1024 }, };
+    }
 
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18706";
-	private String keyName = "key18706";
-	private AmazonS3 s3Client = null;
-	private long fileSize = 15 * 1024 * 1024;
-	private File localPath = null;
-	private File file = null;
-	private String filePath = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18706";
+    private String keyName = "key18706";
+    private AmazonS3 s3Client = null;
+    private long fileSize = 15 * 1024 * 1024;
+    private File localPath = null;
+    private File file = null;
+    private String filePath = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
-		file = new File(filePath);
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        file = new File(filePath);
 
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-	}
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+    }
 
-	@Test(dataProvider = "partSizeProvider")
-	private void testUpload(long partSize) throws Exception {
-		String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-		List<PartETag> partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file, partSize);
-		try {
-			PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
-			Assert.fail("complete multipart upload should fail.");
-		} catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "EntityTooSmall");
-		}
-		runSuccess = true;
-	}
+    @Test(dataProvider = "partSizeProvider")
+    private void testUpload(long partSize) throws Exception {
+        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        List<PartETag> partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file, partSize);
+        try {
+            PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
+            Assert.fail("complete multipart upload should fail.");
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "EntityTooSmall");
+        }
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				s3Client.deleteBucket(bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                s3Client.deleteBucket(bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 }

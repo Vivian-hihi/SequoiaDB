@@ -23,60 +23,60 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
  * @version 1.00
  */
 public class UpdateDelimiter18077 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18077";
-	private String keyName = "aa?%bb?cc?%test1_18077.png";
-	private String deleteTagkeyName = "aa%delete?/aa%/test%?/object_18077.png";
-	private String newDelimiter = "?";
-	private String curDelimiter = "%";
-	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 10;
-	private File localPath = null;
-	private String filePath = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18077";
+    private String keyName = "aa?%bb?cc?%test1_18077.png";
+    private String deleteTagkeyName = "aa%delete?/aa%/test%?/object_18077.png";
+    private String newDelimiter = "?";
+    private String curDelimiter = "%";
+    private AmazonS3 s3Client = null;
+    private int fileSize = 1024 * 10;
+    private File localPath = null;
+    private String filePath = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
 
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(bucketName);
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 
-		// add a deleteTag key
-		s3Client.deleteObject(bucketName, deleteTagkeyName);
-		s3Client.putObject(bucketName, keyName, new File(filePath));
-	}
+        // add a deleteTag key
+        s3Client.deleteObject(bucketName, deleteTagkeyName);
+        s3Client.putObject(bucketName, keyName, new File(filePath));
+    }
 
-	@Test
-	public void testUpdateDelimiter() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, curDelimiter);
+    @Test
+    public void testUpdateDelimiter() throws Exception {
+        DelimiterUtils.putBucketDelimiter(bucketName, curDelimiter);
 
-		DelimiterUtils.updateDelimiterSuccessAgain(bucketName, newDelimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter);
+        DelimiterUtils.updateDelimiterSuccessAgain(bucketName, newDelimiter);
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter);
 
-		List<String> expCommprefixList = new ArrayList<>();
-		expCommprefixList.add("aa%delete?");
-		expCommprefixList.add("aa?");
-		List<String> expContentList = new ArrayList<>();
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, newDelimiter, expCommprefixList, expContentList);
+        List<String> expCommprefixList = new ArrayList<>();
+        expCommprefixList.add("aa%delete?");
+        expCommprefixList.add("aa?");
+        List<String> expContentList = new ArrayList<>();
+        DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, newDelimiter, expCommprefixList, expContentList);
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 }

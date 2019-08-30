@@ -19,63 +19,63 @@ import org.testng.annotations.Test;
  */
 
 public class DeleteUser16264 extends S3TestBase {
-	private String name = "DeleteUser16264";
-	private String deleteUserName = "ToDelete16264";
-	private boolean runSuccess = false;
+    private String name = "DeleteUser16264";
+    private String deleteUserName = "ToDelete16264";
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() {
-		try {
-			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
-		} catch (HttpClientErrorException e) {
-			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
-				e.printStackTrace();
-				Assert.fail(e.getMessage());
-			}
-		}
-		try {
-			UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
-		} catch (HttpClientErrorException e) {
-			if(e.getStatusCode()!= HttpStatus.NOT_FOUND){
-				e.printStackTrace();
-				Assert.fail(e.getMessage());
-			}
-		}
-	}
+    @BeforeClass
+    private void setUp() {
+        try {
+            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
+                e.printStackTrace();
+                Assert.fail(e.getMessage());
+            }
+        }
+        try {
+            UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
+                e.printStackTrace();
+                Assert.fail(e.getMessage());
+            }
+        }
+    }
 
-	@Test
-	private void test() {
-		// create user
-		JSONObject userJSON = UserUtils.createUser(name, UserCommDefind.normal, UserUtils.accessKeyId);
+    @Test
+    private void test() {
+        // create user
+        JSONObject userJSON = UserUtils.createUser(name, UserCommDefind.normal, UserUtils.accessKeyId);
 
-		// get the accessKeyID and secretAccessKey from userJSON
-		JSONObject json = userJSON.getJSONObject(UserCommDefind.accessKeys);
-		String accessKeyID = json.getString(UserCommDefind.accessKeyID);
+        // get the accessKeyID and secretAccessKey from userJSON
+        JSONObject json = userJSON.getJSONObject(UserCommDefind.accessKeys);
+        String accessKeyID = json.getString(UserCommDefind.accessKeyID);
 
-		// create user to be deleted
-		UserUtils.createUser(deleteUserName, UserCommDefind.normal, UserUtils.accessKeyId);
+        // create user to be deleted
+        UserUtils.createUser(deleteUserName, UserCommDefind.normal, UserUtils.accessKeyId);
 
-		// delete user
-		try {
-			UserUtils.deleteUser(deleteUserName, accessKeyID);
-			Assert.fail("exp fail but found success");
-		} catch (HttpClientErrorException e) {
-			String errorMsg = e.getResponseBodyAsString();
-			org.json.JSONObject json1 = XML.toJSONObject(errorMsg);
-			if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
-					.contains("AccessDenied")) {
-				e.printStackTrace();
-				Assert.fail(e.getMessage());
-			}
-		}
-		runSuccess = true;
-	}
+        // delete user
+        try {
+            UserUtils.deleteUser(deleteUserName, accessKeyID);
+            Assert.fail("exp fail but found success");
+        } catch (HttpClientErrorException e) {
+            String errorMsg = e.getResponseBodyAsString();
+            org.json.JSONObject json1 = XML.toJSONObject(errorMsg);
+            if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
+                    .contains("AccessDenied")) {
+                e.printStackTrace();
+                Assert.fail(e.getMessage());
+            }
+        }
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		if (runSuccess) {
-			UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
-			UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        if (runSuccess) {
+            UserUtils.deleteUser(name, UserUtils.accessKeyId, true);
+            UserUtils.deleteUser(deleteUserName, UserUtils.accessKeyId, true);
+        }
+    }
 }

@@ -11,7 +11,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * @Description:  seqDB-16266 :: 管理员删除超级管理员用户
+ * @Description: seqDB-16266 :: 管理员删除超级管理员用户
  * @author fanyu
  * @Date:2018年10月29日
  * @version:1.0

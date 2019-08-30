@@ -48,41 +48,42 @@ public class GetObjectByModifiedSince16371 extends S3TestBase {
             filePathList.add(filePath);
         }
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
-        //the object has not been modified since now+one_month
-        cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
-                .withModifiedSinceConstraint(cal.getTime()));
+        // the object has not been modified since now+one_month
+        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + 1);
+        S3Object object = s3Client
+                .getObject(new GetObjectRequest(bucketName, objectName).withModifiedSinceConstraint(cal.getTime()));
 
-        //AmazonS3  Java driver handles error,so it returns null
+        // AmazonS3 Java driver handles error,so it returns null
         Assert.assertNull(object);
 
-        //the object has  been modified since now-one_month
-        cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)-2);
-        S3Object object1 = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
-                .withModifiedSinceConstraint(cal.getTime()));
-       //check the content
-        String filePath = filePathList.get(fileNum-1);
-        chectResult(object1,filePath);
+        // the object has been modified since now-one_month
+        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) - 2);
+        S3Object object1 = s3Client
+                .getObject(new GetObjectRequest(bucketName, objectName).withModifiedSinceConstraint(cal.getTime()));
+        // check the content
+        String filePath = filePathList.get(fileNum - 1);
+        chectResult(object1, filePath);
         runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                CommLib.clearBucket(s3Client,bucketName);
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -92,17 +93,17 @@ public class GetObjectByModifiedSince16371 extends S3TestBase {
         }
     }
 
-    private void chectResult(S3Object object,String filePath)throws  Exception{
+    private void chectResult(S3Object object, String filePath) throws Exception {
         Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
-            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            ObjectUtils.inputStream2File(s3InputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally {
-            if(s3InputStream != null){
+        } finally {
+            if (s3InputStream != null) {
                 s3InputStream.close();
             }
         }

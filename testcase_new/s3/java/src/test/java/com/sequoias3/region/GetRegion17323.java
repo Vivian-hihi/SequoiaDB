@@ -12,9 +12,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-
 /**
- * @Description:  seqDB-17323 :: 非管理员用户获取区域信息
+ * @Description: seqDB-17323 :: 非管理员用户获取区域信息
  * @author fanyu
  * @Date:2019年01月22日
  * @version:1.0
@@ -35,20 +34,17 @@ public class GetRegion17323 extends S3TestBase {
 
     @Test
     private void test() throws Exception {
-        //create region
+        // create region
         Region region = new Region();
-        region.withDataCSShardingType("month")
-                .withDataCLShardingType("month")
-                .withName(regionName);
+        region.withDataCSShardingType("month").withDataCLShardingType("month").withName(regionName);
         RegionUtils.putRegion(region);
 
-        //get region by normal user
+        // get region by normal user
         try {
             RegionUtils.getRegion(regionName, accessKeyID);
-            Assert.fail("exp fail but act success," +
-                    "regionName = " + regionName + ",username = " + username);
-        }catch(AmazonS3Exception e){
-            if(e.getStatusCode() != 403 && !e.getErrorCode().contains("AccessDenied")){
+            Assert.fail("exp fail but act success," + "regionName = " + regionName + ",username = " + username);
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 403 && !e.getErrorCode().contains("AccessDenied")) {
                 throw e;
             }
         }

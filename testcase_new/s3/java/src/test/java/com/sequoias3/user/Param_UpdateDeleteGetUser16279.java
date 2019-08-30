@@ -11,7 +11,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * @Description:  seqDB-16279 :: PUT|DELETE|GET USER参数校验
+ * @Description: seqDB-16279 :: PUT|DELETE|GET USER参数校验
  * @Date:2018年10月29日
  * @author fanyu
  * @version:1.0

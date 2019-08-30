@@ -24,89 +24,89 @@ import com.sequoias3.user.UserCommDefind;
  * @version 1.00
  */
 public class CreateSameBucket18614 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18614";
-	private String userName = "user18614";
-	private String[] accessKeys = null;
-	private String keyName = "key18614";
-	private String content = "content18614";
-	private String regionName = "region18614a";
-	private String regionName2 = "region18614b";
-	private int threadNum = 100;
-	private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18614";
+    private String userName = "user18614";
+    private String[] accessKeys = null;
+    private String keyName = "key18614";
+    private String content = "content18614";
+    private String regionName = "region18614a";
+    private String regionName2 = "region18614b";
+    private int threadNum = 100;
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		CommLib.clearUser(userName);
-		RegionUtils.clearRegion(regionName);
-		RegionUtils.clearRegion(regionName2);
-		accessKeys = UserUtils.createUser(userName, UserCommDefind.normal);
-		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+    @BeforeClass
+    private void setUp() throws Exception {
+        CommLib.clearUser(userName);
+        RegionUtils.clearRegion(regionName);
+        RegionUtils.clearRegion(regionName2);
+        accessKeys = UserUtils.createUser(userName, UserCommDefind.normal);
+        s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 
-		Region region = new Region();
-		region.withName(regionName);
-		RegionUtils.putRegion(region);
+        Region region = new Region();
+        region.withName(regionName);
+        RegionUtils.putRegion(region);
 
-		Region region2 = new Region();
-		region2.withName(regionName2);
-		RegionUtils.putRegion(region2);
-	}
+        Region region2 = new Region();
+        region2.withName(regionName2);
+        RegionUtils.putRegion(region2);
+    }
 
-	// 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
-	@SuppressWarnings("deprecation")
-	@Test(enabled = false)
-	private void testReputBacket() throws Exception {
-		s3Client.createBucket(bucketName, regionName);
+    // 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
+    @SuppressWarnings("deprecation")
+    @Test(enabled = false)
+    private void testReputBacket() throws Exception {
+        s3Client.createBucket(bucketName, regionName);
 
-		ThreadExecutor es = new ThreadExecutor();
-		for (int i = 0; i < threadNum; i++) {
-			es.addWorker(new ThreadCreateBucket18614());
-		}
-		es.run();
+        ThreadExecutor es = new ThreadExecutor();
+        for (int i = 0; i < threadNum; i++) {
+            es.addWorker(new ThreadCreateBucket18614());
+        }
+        es.run();
 
-		// check bucket list and bucket info
-		Assert.assertEquals(s3Client.listBuckets().size(), 1);
-		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
-		Assert.assertEquals(s3Client.getBucketLocation(bucketName), regionName);
+        // check bucket list and bucket info
+        Assert.assertEquals(s3Client.listBuckets().size(), 1);
+        Assert.assertTrue(s3Client.doesBucketExist(bucketName));
+        Assert.assertEquals(s3Client.getBucketLocation(bucketName), regionName);
 
-		checkBucket();
-		runSuccess = true;
-	}
+        checkBucket();
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				CommLib.clearUser(userName);
-				RegionUtils.deleteRegion(regionName);
-				RegionUtils.deleteRegion(regionName2);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                CommLib.clearUser(userName);
+                RegionUtils.deleteRegion(regionName);
+                RegionUtils.deleteRegion(regionName2);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	class ThreadCreateBucket18614 {
-		private AmazonS3 s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+    class ThreadCreateBucket18614 {
+        private AmazonS3 s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 
-		@SuppressWarnings("deprecation")
-		@ExecuteOrder(step = 1, desc = "上传对象")
-		public void putObject() {
-			try {
-				s3Client.createBucket(bucketName, regionName2);
-			} finally {
-				if (s3Client != null) {
-					s3Client.shutdown();
-				}
-			}
-		}
-	}
+        @SuppressWarnings("deprecation")
+        @ExecuteOrder(step = 1, desc = "上传对象")
+        public void putObject() {
+            try {
+                s3Client.createBucket(bucketName, regionName2);
+            } finally {
+                if (s3Client != null) {
+                    s3Client.shutdown();
+                }
+            }
+        }
+    }
 
-	public void checkBucket() {
-		s3Client.putObject(bucketName, keyName, content);
-		String actEtg = s3Client.getObject(bucketName, keyName).getObjectMetadata().getETag();
-		Assert.assertEquals(actEtg, TestTools.getMD5(content.getBytes()));
-	}
+    public void checkBucket() {
+        s3Client.putObject(bucketName, keyName, content);
+        String actEtg = s3Client.getObject(bucketName, keyName).getObjectMetadata().getETag();
+        Assert.assertEquals(actEtg, TestTools.getMD5(content.getBytes()));
+    }
 }

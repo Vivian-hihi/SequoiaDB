@@ -30,99 +30,100 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class ListMultipartUploads18754 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18754";
-	private String[] keyNames = { "dir1/a18754", "dir1/dir2/test18754", "dir1a/test18754", "dir1b/18754",
-			"dir1c_test18754", "test18754" };
-	private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18754";
+    private String[] keyNames = { "dir1/a18754", "dir1/dir2/test18754", "dir1a/test18754", "dir1b/18754",
+            "dir1c_test18754", "test18754" };
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-		CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-	}
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
+    }
 
-	@Test
-	private void testListMultipartUploads() throws Exception {
-		List<String> uploadIds1 = new ArrayList<>();
-		List<String> uploadIds2 = new ArrayList<>();
-		String uploadId = "";
-		for (String keyName : keyNames) {
-			uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-			uploadIds1.add(uploadId);
-			uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-			uploadIds2.add(uploadId);
-		}
+    @Test
+    private void testListMultipartUploads() throws Exception {
+        List<String> uploadIds1 = new ArrayList<>();
+        List<String> uploadIds2 = new ArrayList<>();
+        String uploadId = "";
+        for (String keyName : keyNames) {
+            uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+            uploadIds1.add(uploadId);
+            uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+            uploadIds2.add(uploadId);
+        }
 
-		// 指定maxkeys为3 //TODO 注释按测试点说明更详细一点，这个注释看不出什么内容
-		ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
-		request.setDelimiter("/");
-		request.setMaxUploads(3);
-		MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
-		List<String> expCommonPrefixes = new ArrayList<>();
-		expCommonPrefixes.add("dir1/");
-		expCommonPrefixes.add("dir1a/");
-		expCommonPrefixes.add("dir1b/");
+        // 指定maxkeys为3 //TODO 注释按测试点说明更详细一点，这个注释看不出什么内容
+        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
+        request.setDelimiter("/");
+        request.setMaxUploads(3);
+        MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
+        List<String> expCommonPrefixes = new ArrayList<>();
+        expCommonPrefixes.add("dir1/");
+        expCommonPrefixes.add("dir1a/");
+        expCommonPrefixes.add("dir1b/");
 
-		MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
-		PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
+        MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
+        PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
 
-		// 指定maxkeys为1  //TODO 代码能不能简化？或者分类抽取私有方法，这样看着一大段代码然后各种变量好累的。另外list有公共方法，有些可以直接用公共方法
-		ListMultipartUploadsRequest request2 = new ListMultipartUploadsRequest(bucketName);
-		request2.setDelimiter("/");
-		request2.setMaxUploads(1);
-		MultipartUploadListing partUploadList2;
-		List<String> actCommonPrefixes = new ArrayList<>();
-		MultiValueMap<String, String> actUploads = new LinkedMultiValueMap<String, String>();
-		do {
-			int returnedUploadNum = 0;
-			partUploadList2 = s3Client.listMultipartUploads(request2);
-			List<String> commonPrefixes = partUploadList2.getCommonPrefixes();
-			returnedUploadNum += commonPrefixes.size();
-			actCommonPrefixes.addAll(commonPrefixes);
-			List<MultipartUpload> multipartUploads = partUploadList2.getMultipartUploads();
-			for (MultipartUpload multipartUpload : multipartUploads) {
-				String temKeyName = multipartUpload.getKey();
-				String temUploadId = multipartUpload.getUploadId();
-				actUploads.add(temKeyName, temUploadId);
-			}
-			returnedUploadNum += multipartUploads.size();
+        // 指定maxkeys为1 //TODO
+        // 代码能不能简化？或者分类抽取私有方法，这样看着一大段代码然后各种变量好累的。另外list有公共方法，有些可以直接用公共方法
+        ListMultipartUploadsRequest request2 = new ListMultipartUploadsRequest(bucketName);
+        request2.setDelimiter("/");
+        request2.setMaxUploads(1);
+        MultipartUploadListing partUploadList2;
+        List<String> actCommonPrefixes = new ArrayList<>();
+        MultiValueMap<String, String> actUploads = new LinkedMultiValueMap<String, String>();
+        do {
+            int returnedUploadNum = 0;
+            partUploadList2 = s3Client.listMultipartUploads(request2);
+            List<String> commonPrefixes = partUploadList2.getCommonPrefixes();
+            returnedUploadNum += commonPrefixes.size();
+            actCommonPrefixes.addAll(commonPrefixes);
+            List<MultipartUpload> multipartUploads = partUploadList2.getMultipartUploads();
+            for (MultipartUpload multipartUpload : multipartUploads) {
+                String temKeyName = multipartUpload.getKey();
+                String temUploadId = multipartUpload.getUploadId();
+                actUploads.add(temKeyName, temUploadId);
+            }
+            returnedUploadNum += multipartUploads.size();
 
-			String nextKeyMarKer = partUploadList2.getNextKeyMarker();
-			request2.setKeyMarker(nextKeyMarKer);
-			String nextUploadIdMarker = partUploadList2.getNextUploadIdMarker();
-			request2.setUploadIdMarker(nextUploadIdMarker);
-			Assert.assertEquals(returnedUploadNum, 1,
-					"commonprefixes : " + actCommonPrefixes.toString() + " uploads:" + actUploads.toString());
-		} while (partUploadList2.isTruncated());
+            String nextKeyMarKer = partUploadList2.getNextKeyMarker();
+            request2.setKeyMarker(nextKeyMarKer);
+            String nextUploadIdMarker = partUploadList2.getNextUploadIdMarker();
+            request2.setUploadIdMarker(nextUploadIdMarker);
+            Assert.assertEquals(returnedUploadNum, 1,
+                    "commonprefixes : " + actCommonPrefixes.toString() + " uploads:" + actUploads.toString());
+        } while (partUploadList2.isTruncated());
 
-		expUploads.add(keyNames[4], uploadIds1.get(4));
-		expUploads.add(keyNames[4], uploadIds2.get(4));
-		expUploads.add(keyNames[5], uploadIds1.get(5));
-		expUploads.add(keyNames[5], uploadIds2.get(5));
-		Assert.assertEquals(actCommonPrefixes, expCommonPrefixes, "actCommonPrefixes = " + actCommonPrefixes.toString()
-				+ ",expCommonPrefixes = " + expCommonPrefixes.toString());
-		Assert.assertEquals(actUploads.size(), expUploads.size(),
-				"actMap = " + actUploads.toString() + ",expUpload = " + expUploads.toString());
-		for (Map.Entry<String, List<String>> entry : expUploads.entrySet()) {
-			Assert.assertEquals(actUploads.get(entry.getKey()), expUploads.get(entry.getKey()),
-					"actMap = " + actUploads.toString() + ",expMap = " + expUploads.toString());
-		}
-		runSuccess = true;
-	}
+        expUploads.add(keyNames[4], uploadIds1.get(4));
+        expUploads.add(keyNames[4], uploadIds2.get(4));
+        expUploads.add(keyNames[5], uploadIds1.get(5));
+        expUploads.add(keyNames[5], uploadIds2.get(5));
+        Assert.assertEquals(actCommonPrefixes, expCommonPrefixes, "actCommonPrefixes = " + actCommonPrefixes.toString()
+                + ",expCommonPrefixes = " + expCommonPrefixes.toString());
+        Assert.assertEquals(actUploads.size(), expUploads.size(),
+                "actMap = " + actUploads.toString() + ",expUpload = " + expUploads.toString());
+        for (Map.Entry<String, List<String>> entry : expUploads.entrySet()) {
+            Assert.assertEquals(actUploads.get(entry.getKey()), expUploads.get(entry.getKey()),
+                    "actMap = " + actUploads.toString() + ",expMap = " + expUploads.toString());
+        }
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 }

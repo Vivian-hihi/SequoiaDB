@@ -23,59 +23,59 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  * @version 1.00
  */
 public class UpdateDelimiter18084 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket18084";
-	private String userName = "user18084";
-	private String roleName = "normal";
-	private String delimiter1 = "/";
-	private String delimiter2 = "%";
-	private String[] keyList = null;
-	private AmazonS3 s3Client = null;
-	private String[] accessKeys = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket18084";
+    private String userName = "user18084";
+    private String roleName = "normal";
+    private String delimiter1 = "/";
+    private String delimiter2 = "%";
+    private String[] keyList = null;
+    private AmazonS3 s3Client = null;
+    private String[] accessKeys = null;
 
-	@DataProvider(name = "keyNumsProvider")
-	public Object[][] recordNumsProvider() {
-		// 对象记录数覆盖小于10条，10条，大于10条
-		return new Object[][] { { 5 }, { 10 }, { 15 }, };
-	}
+    @DataProvider(name = "keyNumsProvider")
+    public Object[][] recordNumsProvider() {
+        // 对象记录数覆盖小于10条，10条，大于10条
+        return new Object[][] { { 5 }, { 10 }, { 15 }, };
+    }
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		s3Client.createBucket(bucketName);
-	}
+    @BeforeClass
+    private void setUp() throws Exception {
+        CommLib.clearUser(userName);
+        accessKeys = UserUtils.createUser(userName, roleName);
+        s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+        s3Client.createBucket(bucketName);
+    }
 
-	@Test(dataProvider = "keyNumsProvider")
-	private void testUpdateDelimiter(int keyNum) throws Exception {
-		keyList = DelimiterUtils.getRandomKeyListWithDelimiter(delimiter1, delimiter2, keyNum, "18084");
-		for (int i = 0; i < keyList.length; i++) {
-			s3Client.putObject(bucketName, keyList[i], "test18084");
-		}
+    @Test(dataProvider = "keyNumsProvider")
+    private void testUpdateDelimiter(int keyNum) throws Exception {
+        keyList = DelimiterUtils.getRandomKeyListWithDelimiter(delimiter1, delimiter2, keyNum, "18084");
+        for (int i = 0; i < keyList.length; i++) {
+            s3Client.putObject(bucketName, keyList[i], "test18084");
+        }
 
-		// 更新分隔符为delimiter2并检查结果(这里通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验)
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter2, accessKeys[0]);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter2, accessKeys[0]);
+        // 更新分隔符为delimiter2并检查结果(这里通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验)
+        DelimiterUtils.putBucketDelimiter(bucketName, delimiter2, accessKeys[0]);
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter2, accessKeys[0]);
 
-		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(keyList, "", delimiter2);
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter2, expCommonPrefixes,
-				new ArrayList<String>());
+        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(keyList, "", delimiter2);
+        DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter2, expCommonPrefixes,
+                new ArrayList<String>());
 
-		CommLib.deleteAllObjects(s3Client, bucketName);
-		runSuccess = true;
-	}
+        CommLib.deleteAllObjects(s3Client, bucketName);
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				UserUtils.deleteUser(userName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                UserUtils.deleteUser(userName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 }

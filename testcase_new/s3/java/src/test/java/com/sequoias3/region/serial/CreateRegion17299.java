@@ -22,25 +22,25 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-
 /**
  * @Description: seqDB-17299 ::创建区域配置DataCSShardingType策略小于CLShardingType策略
- * 此用例时间跳变会影响到db日志，所以不上ci
+ *               此用例时间跳变会影响到db日志，所以不上ci
  * @author fanyu
  * @Date:2019年01月22日
  * @version:1.0
  */
-public class CreateRegion17299 extends S3TestBase{
+public class CreateRegion17299 extends S3TestBase {
     private String regionName = "region17299";
     private String bucketName = "bucket17299";
     private String objectName = "object17299";
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024*200;
+    private int fileSize = 1024 * 200;
     private File localPath = null;
     private List<String> filePathList = new ArrayList<String>();
-    private List<Date>  dateList = new ArrayList<Date>();
+    private List<Date> dateList = new ArrayList<Date>();
     private int fileNum = 3;
     private boolean runSuccess = false;
+
     @BeforeClass
     private void setUp() throws Exception {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
@@ -53,41 +53,41 @@ public class CreateRegion17299 extends S3TestBase{
             filePathList.add(filePath);
         }
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         RegionUtils.clearRegion(regionName);
     }
 
     @Test
     private void test() throws Exception {
-        //create region
+        // create region
         Region region = new Region();
         region.withDataCSShardingType("month").withDataCLShardingType("year").withName(regionName);
         RegionUtils.putRegion(region);
 
-        //create  bucket
-        s3Client.createBucket(new CreateBucketRequest(bucketName,regionName));
+        // create bucket
+        s3Client.createBucket(new CreateBucketRequest(bucketName, regionName));
         Calendar cal = Calendar.getInstance();
-        cal.set(cal.get(Calendar.YEAR)-1,0,10);
+        cal.set(cal.get(Calendar.YEAR) - 1, 0, 10);
 
-        //create object with time
-        for(int i = 0; i < fileNum; i++){
-            setSystemTime(S3TestBase.s3HostName,cal.getTime().toString());
+        // create object with time
+        for (int i = 0; i < fileNum; i++) {
+            setSystemTime(S3TestBase.s3HostName, cal.getTime().toString());
             dateList.add(cal.getTime());
-            s3Client.putObject(bucketName,objectName+"_"+i,new File(filePathList.get(i)));
-            cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-         }
-
-         //check cs and cl
-        for(int i = 0; i < dateList.size(); i++) {
-            String csName = RegionUtils.getDataCSName(regionName,"month",dateList.get(i));
-            String clName = RegionUtils.getDataCLName("year",dateList.get(i));
-            Assert.assertTrue(RegionUtils.clInCS(csName,clName),"csName = " + csName + ",clName = " + clName);
+            s3Client.putObject(bucketName, objectName + "_" + i, new File(filePathList.get(i)));
+            cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + 1);
         }
 
-        //get object for check
-        for(int i = 0; i < fileNum; i++){
-            S3Object s3Object = s3Client.getObject(bucketName,objectName+"_"+i);
-            checkObjectMetaAndData(s3Object,filePathList.get(i),dateList.get(i));
+        // check cs and cl
+        for (int i = 0; i < dateList.size(); i++) {
+            String csName = RegionUtils.getDataCSName(regionName, "month", dateList.get(i));
+            String clName = RegionUtils.getDataCLName("year", dateList.get(i));
+            Assert.assertTrue(RegionUtils.clInCS(csName, clName), "csName = " + csName + ",clName = " + clName);
+        }
+
+        // get object for check
+        for (int i = 0; i < fileNum; i++) {
+            S3Object s3Object = s3Client.getObject(bucketName, objectName + "_" + i);
+            checkObjectMetaAndData(s3Object, filePathList.get(i), dateList.get(i));
         }
         runSuccess = true;
     }
@@ -99,24 +99,24 @@ public class CreateRegion17299 extends S3TestBase{
                 CommLib.clearBucket(s3Client, bucketName);
                 RegionUtils.deleteRegion(regionName);
             }
-        }finally {
-               restoreSystemTime(S3TestBase.s3HostName);
-            if(s3Client != null){
+        } finally {
+            restoreSystemTime(S3TestBase.s3HostName);
+            if (s3Client != null) {
                 s3Client.shutdown();
             }
         }
     }
 
-    private void checkObjectMetaAndData(S3Object object,String filePath,Date date) throws Exception {
+    private void checkObjectMetaAndData(S3Object object, String filePath, Date date) throws Exception {
         ObjectMetadata metadata = object.getObjectMetadata();
-        Assert.assertEquals(metadata.getVersionId(),"null");
-        Assert.assertEquals(metadata.getETag(),TestTools.getMD5(filePath));
-        Assert.assertTrue(metadata.getLastModified().getTime()/1000 >= date.getTime()/1000,
+        Assert.assertEquals(metadata.getVersionId(), "null");
+        Assert.assertEquals(metadata.getETag(), TestTools.getMD5(filePath));
+        Assert.assertTrue(metadata.getLastModified().getTime() / 1000 >= date.getTime() / 1000,
                 "metadata.getLastModified = " + metadata.getLastModified().getTime() + ",expDate = " + date.getTime());
         String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                 Thread.currentThread().getId());
-        ObjectUtils.inputStream2File(object.getObjectContent(),downloadPath);
-        Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath),"filePath = " + filePath);
+        ObjectUtils.inputStream2File(object.getObjectContent(), downloadPath);
+        Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath), "filePath = " + filePath);
     }
 
     /**
@@ -130,7 +130,7 @@ public class CreateRegion17299 extends S3TestBase{
     private static void setSystemTime(String host, String dateStr) throws Exception {
         Ssh ssh = null;
         try {
-            ssh = new Ssh(host,"root","jenkins");
+            ssh = new Ssh(host, "root", "jenkins");
 
             // set date
             String cmd = "date -s \"" + dateStr + "\"";
@@ -156,8 +156,8 @@ public class CreateRegion17299 extends S3TestBase{
     private static void restoreSystemTime(String host) throws Exception {
         Ssh ssh = null;
         try {
-            //hostname sshuser sshpasswd
-            ssh = new Ssh(host,"root","jenkins");
+            // hostname sshuser sshpasswd
+            ssh = new Ssh(host, "root", "jenkins");
             String cmd = "ntpdate " + "\"192.168.20.11\"";
 
             // in case of time server not usable, retry in 1 min

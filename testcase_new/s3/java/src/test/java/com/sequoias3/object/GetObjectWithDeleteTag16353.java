@@ -20,36 +20,36 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  * @version 1.00
  */
 public class GetObjectWithDeleteTag16353 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String key = "object16353";
-	private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
+    private String key = "object16353";
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-	}
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+    }
 
-	@Test
-	public void testGetObject() throws Exception {
-		s3Client.deleteObject(S3TestBase.enableVerBucketName, key);
-		try {
-			s3Client.getObject(bucketName, key);
-			Assert.fail("get delete tag object must be fail!");
-		} catch (AmazonS3Exception e) {
-			Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
-		}
-		runSuccess = true;
-	}
+    @Test
+    public void testGetObject() throws Exception {
+        s3Client.deleteObject(S3TestBase.enableVerBucketName, key);
+        try {
+            s3Client.getObject(bucketName, key);
+            Assert.fail("get delete tag object must be fail!");
+        } catch (AmazonS3Exception e) {
+            Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
+        }
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, key);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, S3TestBase.enableVerBucketName, key);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 
 }

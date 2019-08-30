@@ -25,75 +25,75 @@ import com.sequoias3.testcommon.TestTools;
  * @version 1.00
  */
 public class ListObjectsWithStartAfterAndPrefix16427 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String bucketName = "bucket16427";
-	private String key = "*aa**bb*object16427.png";
-	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 20;
-	private int objectNums = 10;
-	private File localPath = null;
-	private String filePath = null;
+    private boolean runSuccess = false;
+    private String bucketName = "bucket16427";
+    private String key = "*aa**bb*object16427.png";
+    private AmazonS3 s3Client = null;
+    private int fileSize = 1024 * 20;
+    private int objectNums = 10;
+    private File localPath = null;
+    private String filePath = null;
 
-	@SuppressWarnings("deprecation")
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+    @SuppressWarnings("deprecation")
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
-		s3Client = CommLib.buildS3Client();
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        s3Client = CommLib.buildS3Client();
 
-		if (s3Client.doesBucketExist(bucketName)) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
+        if (s3Client.doesBucketExist(bucketName)) {
+            CommLib.clearBucket(s3Client, bucketName);
+        }
 
-		s3Client.createBucket(bucketName);
-		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-	}
+        s3Client.createBucket(bucketName);
+        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+    }
 
-	@Test
-	public void testListObjects() throws Exception {
-		List<String> keyList = putObjects();
+    @Test
+    public void testListObjects() throws Exception {
+        List<String> keyList = putObjects();
 
-		int startAfterNo = 0;
-		String prefix = "pre16427";
-		listObjectsAndCheckResult(keyList, startAfterNo, prefix);
-		runSuccess = true;
-	}
+        int startAfterNo = 0;
+        String prefix = "pre16427";
+        listObjectsAndCheckResult(keyList, startAfterNo, prefix);
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
 
-	private void listObjectsAndCheckResult(List<String> keyList, int startAfterNo, String prefix) {
-		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
-				.withStartAfter(keyList.get(startAfterNo)).withPrefix(prefix);
-		ListObjectsV2Result result = s3Client.listObjectsV2(request);
-		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		List<String> commonPrefixes = result.getCommonPrefixes();
-		// misMatchObject, the list size is 0
-		Assert.assertEquals(objects.size(), 0);
-		Assert.assertEquals(commonPrefixes.size(), 0);
-	}
+    private void listObjectsAndCheckResult(List<String> keyList, int startAfterNo, String prefix) {
+        ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
+                .withStartAfter(keyList.get(startAfterNo)).withPrefix(prefix);
+        ListObjectsV2Result result = s3Client.listObjectsV2(request);
+        List<S3ObjectSummary> objects = result.getObjectSummaries();
+        List<String> commonPrefixes = result.getCommonPrefixes();
+        // misMatchObject, the list size is 0
+        Assert.assertEquals(objects.size(), 0);
+        Assert.assertEquals(commonPrefixes.size(), 0);
+    }
 
-	private List<String> putObjects() {
-		List<String> keyList = new ArrayList<>();
-		for (int i = 0; i < objectNums; i++) {
-			String keyName = key + "_" + i;
-			keyList.add(keyName);
-			s3Client.putObject(bucketName, keyName, "test16427" + i);
-			s3Client.putObject(bucketName, keyName, new File(filePath));
-		}
-		return keyList;
-	}
+    private List<String> putObjects() {
+        List<String> keyList = new ArrayList<>();
+        for (int i = 0; i < objectNums; i++) {
+            String keyName = key + "_" + i;
+            keyList.add(keyName);
+            s3Client.putObject(bucketName, keyName, "test16427" + i);
+            s3Client.putObject(bucketName, keyName, new File(filePath));
+        }
+        return keyList;
+    }
 }

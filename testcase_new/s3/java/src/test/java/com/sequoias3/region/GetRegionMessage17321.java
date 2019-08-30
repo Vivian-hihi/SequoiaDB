@@ -11,40 +11,40 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 /**
- * test content: 获取空区域信息
- * testlink-case: seqDB-17321
+ * test content: 获取空区域信息 testlink-case: seqDB-17321
+ * 
  * @author wangkexin
  * @Date 2019.01.24
  * @version 1.00
  */
 
-public class GetRegionMessage17321 extends S3TestBase{
-	private String regionName = "beijing17321";
-	private boolean runSuccess = false;
+public class GetRegionMessage17321 extends S3TestBase {
+    private String regionName = "beijing17321";
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		RegionUtils.clearRegion(regionName);
-	}
-	
-	@Test
-	public void testGetRegionMessage() throws Exception {
-		// create region
-		Region region = new Region();
-		region.withName(regionName);
-		RegionUtils.putRegion(region);
+    @BeforeClass
+    private void setUp() throws Exception {
+        RegionUtils.clearRegion(regionName);
+    }
 
-		GetRegionResult result = RegionUtils.getRegion(regionName);
-		List<Bucket> bucketList = result.getBuckets();
-		Assert.assertEquals(bucketList.size(),0);
+    @Test
+    public void testGetRegionMessage() throws Exception {
+        // create region
+        Region region = new Region();
+        region.withName(regionName);
+        RegionUtils.putRegion(region);
 
-		runSuccess = true;
-	}
-	
-	@AfterClass
-	private void tearDown() throws Exception {
-		if (runSuccess) {
-			RegionUtils.deleteRegion(regionName);
-		}
-	}
+        GetRegionResult result = RegionUtils.getRegion(regionName);
+        List<Bucket> bucketList = result.getBuckets();
+        Assert.assertEquals(bucketList.size(), 0);
+
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() throws Exception {
+        if (runSuccess) {
+            RegionUtils.deleteRegion(regionName);
+        }
+    }
 }

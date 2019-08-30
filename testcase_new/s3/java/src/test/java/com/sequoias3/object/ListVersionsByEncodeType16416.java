@@ -30,7 +30,8 @@ import java.util.UUID;
 public class ListVersionsByEncodeType16416 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16416";
-    private String[] objectNames = {"BEL","16416!(16416 16416.txt).txt!","16416!-/_!","16416!.|*'!","16416!#1","16416!#2"};
+    private String[] objectNames = { "BEL", "16416!(16416 16416.txt).txt!", "16416!-/_!", "16416!.|*'!", "16416!#1",
+            "16416!#2" };
     private AmazonS3 s3Client = null;
     private int versionNum = 2;
 
@@ -52,27 +53,24 @@ public class ListVersionsByEncodeType16416 extends S3TestBase {
         String prefix = "16416!";
         String delimiter = "!";
         String encodingType = "url";
-        VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withPrefix(prefix)
-                .withDelimiter(delimiter)
-                .withEncodingType(encodingType));
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withPrefix(prefix).withDelimiter(delimiter).withEncodingType(encodingType));
 
-       //expected results
-        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames,prefix,delimiter);
+        // expected results
+        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, prefix, delimiter);
         List<String> expCommonPrefixesByEncode = new ArrayList<String>();
-        for(String expCommonPrefix : expCommonPrefixes){
-            expCommonPrefixesByEncode.add(URLEncoder.encode(expCommonPrefix,"utf-8"));
+        for (String expCommonPrefix : expCommonPrefixes) {
+            expCommonPrefixesByEncode.add(URLEncoder.encode(expCommonPrefix, "utf-8"));
         }
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for(int i = 4; i < objectNames.length;i++){
-            for(int j = versionNum-1; j >= 0; j-- ){
-                expMap.add(URLEncoder.encode(objectNames[i],"utf-8"),String.valueOf(j));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (int i = 4; i < objectNames.length; i++) {
+            for (int j = versionNum - 1; j >= 0; j--) {
+                expMap.add(URLEncoder.encode(objectNames[i], "utf-8"), String.valueOf(j));
             }
         }
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false);
-        ObjectUtils.checkListVSResults(vsList,expCommonPrefixesByEncode,expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false);
+        ObjectUtils.checkListVSResults(vsList, expCommonPrefixesByEncode, expMap);
         runSuccess = true;
     }
 

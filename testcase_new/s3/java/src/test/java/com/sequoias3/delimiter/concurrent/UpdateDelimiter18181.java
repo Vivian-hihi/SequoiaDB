@@ -27,84 +27,84 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 
 public class UpdateDelimiter18181 extends S3TestBase {
-	private String bucketName = "bucket18181";
-	private String[] objectNames = { "dir1/dir2/test18181_1?%aa.txt", "dir1/dir2/%test18181_2?bb.txt",
-			"dir1/dir2?test%18181_3.txt", "test18181_4.txt" };
-	private String delimiter1 = "?";
-	private String delimiter2 = "%";
-	private AmazonS3 s3Client = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket18181";
+    private String[] objectNames = { "dir1/dir2/test18181_1?%aa.txt", "dir1/dir2/%test18181_2?bb.txt",
+            "dir1/dir2?test%18181_3.txt", "test18181_4.txt" };
+    private String delimiter1 = "?";
+    private String delimiter2 = "%";
+    private AmazonS3 s3Client = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-		for (int i = 0; i < objectNames.length; i++) {
-			s3Client.putObject(bucketName, objectNames[i], "object_file18181");
-		}
-	}
+    @BeforeClass
+    private void setUp() throws Exception {
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+        for (int i = 0; i < objectNames.length; i++) {
+            s3Client.putObject(bucketName, objectNames[i], "object_file18181");
+        }
+    }
 
-	@Test
-	public void testGetObjectList() throws Exception {
-		ThreadExecutor es = new ThreadExecutor();
-		ThreadUpdateDelimiter18181 updateDelimiterThread1 = new ThreadUpdateDelimiter18181(delimiter1);
-		ThreadUpdateDelimiter18181 updateDelimiterThread2 = new ThreadUpdateDelimiter18181(delimiter2);
-		es.addWorker(updateDelimiterThread1);
-		es.addWorker(updateDelimiterThread2);
-		es.run();
+    @Test
+    public void testGetObjectList() throws Exception {
+        ThreadExecutor es = new ThreadExecutor();
+        ThreadUpdateDelimiter18181 updateDelimiterThread1 = new ThreadUpdateDelimiter18181(delimiter1);
+        ThreadUpdateDelimiter18181 updateDelimiterThread2 = new ThreadUpdateDelimiter18181(delimiter2);
+        es.addWorker(updateDelimiterThread1);
+        es.addWorker(updateDelimiterThread2);
+        es.run();
 
-		// 409 表示当前分隔符状态不稳定 "DelimiterNotStable"
-		if (updateDelimiterThread1.getRetCode() == 0 && updateDelimiterThread2.getRetCode() == 409) {
-			checkResult(delimiter1);
-		} else if (updateDelimiterThread1.getRetCode() == 409 && updateDelimiterThread2.getRetCode() == 0) {
-			checkResult(delimiter2);
-		} else {
-			Assert.fail("unexpect result , t1.getRetCode()=" + updateDelimiterThread1.getRetCode()
-					+ ", t2.getRetCode()=" + updateDelimiterThread2.getRetCode());
-		}
+        // 409 表示当前分隔符状态不稳定 "DelimiterNotStable"
+        if (updateDelimiterThread1.getRetCode() == 0 && updateDelimiterThread2.getRetCode() == 409) {
+            checkResult(delimiter1);
+        } else if (updateDelimiterThread1.getRetCode() == 409 && updateDelimiterThread2.getRetCode() == 0) {
+            checkResult(delimiter2);
+        } else {
+            Assert.fail("unexpect result , t1.getRetCode()=" + updateDelimiterThread1.getRetCode()
+                    + ", t2.getRetCode()=" + updateDelimiterThread2.getRetCode());
+        }
 
-		runSuccess = true;
-	}
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				for (String keyName : objectNames) {
-					s3Client.deleteObject(bucketName, keyName);
-				}
-				s3Client.deleteBucket(bucketName);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                for (String keyName : objectNames) {
+                    s3Client.deleteObject(bucketName, keyName);
+                }
+                s3Client.deleteBucket(bucketName);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	class ThreadUpdateDelimiter18181 extends ResultStore {
-		private String delimiter = "";
+    class ThreadUpdateDelimiter18181 extends ResultStore {
+        private String delimiter = "";
 
-		public ThreadUpdateDelimiter18181(String delimiter) {
-			this.delimiter = delimiter;
-		}
+        public ThreadUpdateDelimiter18181(String delimiter) {
+            this.delimiter = delimiter;
+        }
 
-		@ExecuteOrder(step = 1, desc = "更新分隔符")
-		public void updateDelimiter() {
-			try {
-				DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-			} catch (AmazonS3Exception e) {
-				saveResult(e.getStatusCode(), e);
-			}
-		}
-	}
+        @ExecuteOrder(step = 1, desc = "更新分隔符")
+        public void updateDelimiter() {
+            try {
+                DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+            } catch (AmazonS3Exception e) {
+                saveResult(e.getStatusCode(), e);
+            }
+        }
+    }
 
-	private void checkResult(String delimiter) throws Exception {
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+    private void checkResult(String delimiter) throws Exception {
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
-		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
-		List<String> matchContentsList = ObjectUtils.getKeys(objectNames, "", delimiter);
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommonPrefixes, matchContentsList);
-	}
+        List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+        List<String> matchContentsList = ObjectUtils.getKeys(objectNames, "", delimiter);
+        DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommonPrefixes, matchContentsList);
+    }
 }

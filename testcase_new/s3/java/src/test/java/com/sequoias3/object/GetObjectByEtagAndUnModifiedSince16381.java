@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @Description:  seqDB-16381 :: 指定ifMatch和ifUnModifiedSince条件获取对象，不匹配ifMatch
+ * @Description: seqDB-16381 :: 指定ifMatch和ifUnModifiedSince条件获取对象，不匹配ifMatch
  * @author fanyu
  * @Date:2018年11月14日
  * @version:1.0
@@ -47,27 +47,27 @@ public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
         }
         bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+        ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
-        //get history eTag
+        // get history eTag
         Random random = new Random();
         int histIndex = random.nextInt(fileNum - 1);
         String histETag = objectVSList.get(histIndex).getETag();
 
-        //get object by eTag and unmodified
-        //the object has not been modified since now+one_month
-        cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
+        // get object by eTag and unmodified
+        // the object has not been modified since now+one_month
+        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + 1);
         S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
-                .withMatchingETagConstraint(histETag)
-                .withUnmodifiedSinceConstraint(cal.getTime()));
+                .withMatchingETagConstraint(histETag).withUnmodifiedSinceConstraint(cal.getTime()));
         Assert.assertNull(currObject);
         runSuccess = true;
     }
@@ -76,7 +76,7 @@ public class GetObjectByEtagAndUnModifiedSince16381 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

@@ -33,93 +33,93 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @version 1.00
  */
 public class ListParts18735 extends S3TestBase {
-	private boolean runSuccess = false;
-	private int partNumber = 6;
-	private String bucketName = "bucket18735";
-	private String keyName = "key18735";
-	private AmazonS3 s3Client = null;
-	private long fileSize = partNumber * PartUploadUtils.partLimitMinSize;
-	private File localPath = null;
-	private File file = null;
-	private String filePath = null;
+    private boolean runSuccess = false;
+    private int partNumber = 6;
+    private String bucketName = "bucket18735";
+    private String keyName = "key18735";
+    private AmazonS3 s3Client = null;
+    private long fileSize = partNumber * PartUploadUtils.partLimitMinSize;
+    private File localPath = null;
+    private File file = null;
+    private String filePath = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
-		file = new File(filePath);
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        file = new File(filePath);
 
-		s3Client = CommLib.buildS3Client();
-		CommLib.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-	}
+    }
 
-	@Test
-	private void testListParts() throws Exception {
-		List<Integer> partNumbers = new ArrayList<>(Arrays.asList(1, 3, 5, 6, 7, 8));
-		String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-		partUpload(uploadId, partNumbers);
+    @Test
+    private void testListParts() throws Exception {
+        List<Integer> partNumbers = new ArrayList<>(Arrays.asList(1, 3, 5, 6, 7, 8));
+        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        partUpload(uploadId, partNumbers);
 
-		int maxParts = 3;
-		int partNumberMarker = 1;
-		List<Integer> actPartNumbersList = new ArrayList<>();
-		ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
-		request.setMaxParts(maxParts);
-		request.setPartNumberMarker(partNumberMarker);
-		PartListing listResult = s3Client.listParts(request);
-		List<PartSummary> listParts = listResult.getParts();
-		for (PartSummary parts : listParts) {
-			int partNumber = parts.getPartNumber();
-			actPartNumbersList.add(partNumber);
-		}
+        int maxParts = 3;
+        int partNumberMarker = 1;
+        List<Integer> actPartNumbersList = new ArrayList<>();
+        ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
+        request.setMaxParts(maxParts);
+        request.setPartNumberMarker(partNumberMarker);
+        PartListing listResult = s3Client.listParts(request);
+        List<PartSummary> listParts = listResult.getParts();
+        for (PartSummary parts : listParts) {
+            int partNumber = parts.getPartNumber();
+            actPartNumbersList.add(partNumber);
+        }
 
-		// 获取返回的nextPartNumberMarker，再次查询
-		int nextPartNumberMarker = listResult.getNextPartNumberMarker();
-		request.setPartNumberMarker(nextPartNumberMarker);
-		listResult = s3Client.listParts(request);
-		listParts = listResult.getParts();
-		for (PartSummary parts : listParts) {
-			int partNumber = parts.getPartNumber();
-			actPartNumbersList.add(partNumber);
-		}
-		// check the keyName
-		partNumbers.remove(0);//TODO 建议另外定义一个变量赋值，不要在原始值上面改，出问题时可能会影响定位
-		Assert.assertEquals(actPartNumbersList, partNumbers);
-		runSuccess = true;
-	}
+        // 获取返回的nextPartNumberMarker，再次查询
+        int nextPartNumberMarker = listResult.getNextPartNumberMarker();
+        request.setPartNumberMarker(nextPartNumberMarker);
+        listResult = s3Client.listParts(request);
+        listParts = listResult.getParts();
+        for (PartSummary parts : listParts) {
+            int partNumber = parts.getPartNumber();
+            actPartNumbersList.add(partNumber);
+        }
+        // check the keyName
+        partNumbers.remove(0);// TODO 建议另外定义一个变量赋值，不要在原始值上面改，出问题时可能会影响定位
+        Assert.assertEquals(actPartNumbersList, partNumbers);
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	private List<PartETag> partUpload(String uploadId, List<Integer> partNumbers) {
-		List<PartETag> partEtags = new ArrayList<>();
-		int filePosition = 0;
-		long partSize = PartUploadUtils.partLimitMinSize;
-		for (int i = 0; filePosition < fileSize; i++) {
-			long eachPartSize = Math.min(partSize, fileSize - filePosition);
-			UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
-					.withPartNumber(partNumbers.get(i)).withPartSize(eachPartSize).withBucketName(bucketName)
-					.withKey(keyName).withUploadId(uploadId);
-			UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
-			partEtags.add(uploadPartResult.getPartETag());
-			filePosition += partSize;
-		}
-		return partEtags;
-	}
+    private List<PartETag> partUpload(String uploadId, List<Integer> partNumbers) {
+        List<PartETag> partEtags = new ArrayList<>();
+        int filePosition = 0;
+        long partSize = PartUploadUtils.partLimitMinSize;
+        for (int i = 0; filePosition < fileSize; i++) {
+            long eachPartSize = Math.min(partSize, fileSize - filePosition);
+            UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filePosition)
+                    .withPartNumber(partNumbers.get(i)).withPartSize(eachPartSize).withBucketName(bucketName)
+                    .withKey(keyName).withUploadId(uploadId);
+            UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);
+            partEtags.add(uploadPartResult.getPartETag());
+            filePosition += partSize;
+        }
+        return partEtags;
+    }
 }

@@ -18,7 +18,8 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * @Description: seqDB-16380 ::  指定ifMatch和ifUnModifiedSince条件获取对象，不匹配ifUnModifiedSince
+ * @Description: seqDB-16380 ::
+ *               指定ifMatch和ifUnModifiedSince条件获取对象，不匹配ifUnModifiedSince
  * @author fanyu
  * @Date:2018年11月14日
  * @version:1.0
@@ -49,29 +50,29 @@ public class GetObjectByEtagAndUnModifiedSince16380 extends S3TestBase {
         }
         bucketName = S3TestBase.enableVerBucketName;
         s3Client = CommLib.buildS3Client();
-        ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+        ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
     }
 
     @Test
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
-        //get current eTag
+        // get current eTag
         String eTag = objectVSList.get(fileNum - 1).getETag();
 
-        //the object has been modified since now-one_month
-        cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)-1);
-        //get object by eTag and unmodified
+        // the object has been modified since now-one_month
+        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) - 1);
+        // get object by eTag and unmodified
         S3Object currObject = s3Client.getObject(new GetObjectRequest(bucketName, objectName)
-                .withMatchingETagConstraint(eTag)
-                .withUnmodifiedSinceConstraint(cal.getTime()));
+                .withMatchingETagConstraint(eTag).withUnmodifiedSinceConstraint(cal.getTime()));
 
-        //check the eTag and the content of object
+        // check the eTag and the content of object
         String currPath = filePathList.get(fileNum - 1);
-        chectResult(currObject,currPath);
+        chectResult(currObject, currPath);
         runSuccess = true;
     }
 
@@ -79,7 +80,7 @@ public class GetObjectByEtagAndUnModifiedSince16380 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -89,17 +90,17 @@ public class GetObjectByEtagAndUnModifiedSince16380 extends S3TestBase {
         }
     }
 
-    private void chectResult(S3Object object,String filePath)throws  Exception{
+    private void chectResult(S3Object object, String filePath) throws Exception {
         Assert.assertEquals(object.getObjectMetadata().getETag(), TestTools.getMD5(filePath));
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();
             String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                     Thread.currentThread().getId());
-            ObjectUtils.inputStream2File(s3InputStream,downloadPath);
+            ObjectUtils.inputStream2File(s3InputStream, downloadPath);
             Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
-        }finally {
-            if(s3InputStream != null){
+        } finally {
+            if (s3InputStream != null) {
                 s3InputStream.close();
             }
         }

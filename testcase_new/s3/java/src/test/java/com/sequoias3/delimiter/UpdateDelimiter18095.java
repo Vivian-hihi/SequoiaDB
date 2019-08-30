@@ -20,28 +20,28 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
  * @version 1.00
  */
 public class UpdateDelimiter18095 extends S3TestBase {
-	private String bucketName = "bucket18095";
-	private AmazonS3 s3Client = null;
+    private String bucketName = "bucket18095";
+    private AmazonS3 s3Client = null;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		s3Client = CommLib.buildS3Client();
-	}
+    @BeforeClass
+    private void setUp() throws IOException {
+        s3Client = CommLib.buildS3Client();
+    }
 
-	@Test
-	public void testUpdateDelimiter() throws Exception {
-		try {
-			DelimiterUtils.getDelimiter(bucketName);
-			Assert.fail("get delimiter should be fail!");
-		} catch (AmazonS3Exception e) {
-			if (e.getStatusCode() != 404 || !e.getErrorCode().contains("NoSuchBucket")) {
-				Assert.fail("get delimiter fail! e=" + e.getErrorCode() + e.getStatusCode());
-			}
-		}
-	}
+    @Test
+    public void testUpdateDelimiter() throws Exception {
+        try {
+            DelimiterUtils.getDelimiter(bucketName);
+            Assert.fail("get delimiter should be fail!");
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 404 || !e.getErrorCode().contains("NoSuchBucket")) {
+                Assert.fail("get delimiter fail! e=" + e.getErrorCode() + e.getStatusCode());
+            }
+        }
+    }
 
-	@AfterClass
-	private void tearDown() {
-		s3Client.shutdown();
-	}
+    @AfterClass
+    private void tearDown() {
+        s3Client.shutdown();
+    }
 }

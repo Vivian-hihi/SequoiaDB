@@ -17,43 +17,43 @@ import com.sequoias3.testcommon.s3utils.RegionUtils;
  * @version 1.00
  */
 public class CreateRegion17293 extends S3TestBase {
-	private boolean runSuccess = false;
-	private String regionName = "region17293";
-	private String[] csNames = { "metaCS17293", "dataCS17293" };
-	private String[] metaclNames = { "metaCL17293", "metaHistroyCL17293" };
-	private String[] dataclNames = { "dataCL17293" };
+    private boolean runSuccess = false;
+    private String regionName = "region17293";
+    private String[] csNames = { "metaCS17293", "dataCS17293" };
+    private String[] metaclNames = { "metaCL17293", "metaHistroyCL17293" };
+    private String[] dataclNames = { "dataCL17293" };
 
-	@BeforeClass
-	private void setUp() throws Exception {
-		RegionUtils.createCSAndCL(csNames[0], metaclNames);
-		RegionUtils.clearRegion(regionName);
-	}
+    @BeforeClass
+    private void setUp() throws Exception {
+        RegionUtils.createCSAndCL(csNames[0], metaclNames);
+        RegionUtils.clearRegion(regionName);
+    }
 
-	@Test
-	public void testRegion() throws Exception {
-		try {
-			Region region = new Region();
-			String metaLocation = csNames[0] + "." + metaclNames[0];
-			String metaHisLocation = csNames[0] + "." + metaclNames[1];
-			String dataLocation = csNames[1] + "." + dataclNames[0];
-			region.withMetaLocation(metaLocation).withMetaHisLocation(metaHisLocation).withDataLocation(dataLocation)
-					.withName(regionName);
-			RegionUtils.putRegion(region);
-			Assert.fail("put region must be fail!");
-		} catch (AmazonS3Exception e) {
-			// return 400:InvalidLocation
-			Assert.assertEquals(e.getStatusCode(), 400);
-			Assert.assertEquals(e.getErrorCode(), "InvalidLocation");
-		}
+    @Test
+    public void testRegion() throws Exception {
+        try {
+            Region region = new Region();
+            String metaLocation = csNames[0] + "." + metaclNames[0];
+            String metaHisLocation = csNames[0] + "." + metaclNames[1];
+            String dataLocation = csNames[1] + "." + dataclNames[0];
+            region.withMetaLocation(metaLocation).withMetaHisLocation(metaHisLocation).withDataLocation(dataLocation)
+                    .withName(regionName);
+            RegionUtils.putRegion(region);
+            Assert.fail("put region must be fail!");
+        } catch (AmazonS3Exception e) {
+            // return 400:InvalidLocation
+            Assert.assertEquals(e.getStatusCode(), 400);
+            Assert.assertEquals(e.getErrorCode(), "InvalidLocation");
+        }
 
-		Assert.assertFalse(RegionUtils.headRegion(regionName), "region should be not exist!");
-		runSuccess = true;
-	}
+        Assert.assertFalse(RegionUtils.headRegion(regionName), "region should be not exist!");
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() {
-		if (runSuccess) {
-			RegionUtils.dropCS(csNames);
-		}		
-	}
+    @AfterClass
+    private void tearDown() {
+        if (runSuccess) {
+            RegionUtils.dropCS(csNames);
+        }
+    }
 }

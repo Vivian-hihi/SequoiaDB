@@ -28,7 +28,7 @@ import java.util.UUID;
 public class ListVersionsByKeyVersionId16411 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16411";
-    private String[] objectNames = {"16411%abc", "16411%bcd", "16411%cde", "16411%def","16411%efg"};
+    private String[] objectNames = { "16411%abc", "16411%bcd", "16411%cde", "16411%def", "16411%efg" };
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 
@@ -40,7 +40,7 @@ public class ListVersionsByKeyVersionId16411 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
             for (int j = 0; j < versionNum; j++) {
-              s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+                s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
             }
         }
     }
@@ -49,25 +49,23 @@ public class ListVersionsByKeyVersionId16411 extends S3TestBase {
     private void test() throws Exception {
         int index = 3;
         String keyMarker = objectNames[index];
-        int versionIdMarker = versionNum-1;
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(keyMarker)
-                .withVersionIdMarker(String.valueOf(versionIdMarker)));
+        int versionIdMarker = versionNum - 1;
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(keyMarker).withVersionIdMarker(String.valueOf(versionIdMarker)));
 
-        //expected results
+        // expected results
         MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
         for (int i = versionNum - 2; i >= 0; i--) {
             expMap.add(objectNames[index], String.valueOf(i));
         }
-        for(int i = index + 1; i < objectNames.length;i++){
-            for (int j = versionNum -1; j >= 0; j--) {
+        for (int i = index + 1; i < objectNames.length; i++) {
+            for (int j = versionNum - 1; j >= 0; j--) {
                 expMap.add(objectNames[i], String.valueOf(j));
             }
         }
-        //check
-        Assert.assertEquals(vsList.isTruncated(),false);
-        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
+        // check
+        Assert.assertEquals(vsList.isTruncated(), false);
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), expMap);
         runSuccess = true;
     }
 

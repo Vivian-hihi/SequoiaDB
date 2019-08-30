@@ -30,16 +30,16 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
     private boolean runSuccess1 = false;
     private boolean runSuccess2 = false;
     private String bucketName = "bucket16407";
-    private String[] objectNames = {"air/16407", "dir/16407", "fire16407", "test16407"};
+    private String[] objectNames = { "air/16407", "dir/16407", "fire16407", "test16407" };
     private AmazonS3 s3Client = null;
     private int versionNum = 4;
 
     @BeforeClass
     private void setUp() throws IOException {
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
             for (int j = 0; j < versionNum; j++) {
                 s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
@@ -47,73 +47,66 @@ public class ListVersionsByDelimiterMaxKeys16407 extends S3TestBase {
         }
     }
 
-    //指定maxkeys一次返回所有匹配条件的对象
+    // 指定maxkeys一次返回所有匹配条件的对象
     @Test
     private void testGtMaxKeys() throws Exception {
         String delimiter = "/";
-        //maxResults > versionNum*objectNames.length
-        VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withMaxResults(versionNum*objectNames.length +1));
+        // maxResults > versionNum*objectNames.length
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withDelimiter(delimiter).withMaxResults(versionNum * objectNames.length + 1));
 
-        //expected results
+        // expected results
         List<String> expCommonPrefixes = new ArrayList<String>();
         expCommonPrefixes.add("air/");
         expCommonPrefixes.add("dir/");
 
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for(int i = 2; i < objectNames.length;i++){
-            for(int j = versionNum-1; j >= 0; j-- ){
-                expMap.add(objectNames[i],String.valueOf(j));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (int i = 2; i < objectNames.length; i++) {
+            for (int j = versionNum - 1; j >= 0; j--) {
+                expMap.add(objectNames[i], String.valueOf(j));
             }
         }
 
         if (!vsList.isTruncated()) {
-            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes,expMap);
+            ObjectUtils.checkListVSResults(vsList, expCommonPrefixes, expMap);
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }
         runSuccess1 = true;
     }
 
-    //指定maxkeys多次返回所有匹配条件的对象
+    // 指定maxkeys多次返回所有匹配条件的对象
     @Test
     private void testLtMaxKeys() throws Exception {
         String delimiter = "/";
-        //maxResults < versionNum*objectNames.length
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withDelimiter(delimiter)
-                .withMaxResults(1));
+        // maxResults < versionNum*objectNames.length
+        VersionListing vsList = s3Client.listVersions(
+                new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withMaxResults(1));
         List<String> expCommonPrefixes1 = new ArrayList<String>();
         expCommonPrefixes1.add("air/");
         if (vsList.isTruncated()) {
-            ObjectUtils.checkListVSResults(vsList,expCommonPrefixes1,new LinkedMultiValueMap<String,String>());
+            ObjectUtils.checkListVSResults(vsList, expCommonPrefixes1, new LinkedMultiValueMap<String, String>());
         } else {
             Assert.fail("vsList.isTruncated() must be true");
         }
 
-        //maxResults > versionNum*objectNames.length
+        // maxResults > versionNum*objectNames.length
         String nextKeyMarker = vsList.getNextKeyMarker();
         String nestVersionIdMarker = vsList.getNextVersionIdMarker();
-        VersionListing vsList1 = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
-                .withKeyMarker(nextKeyMarker)
-                .withVersionIdMarker(nestVersionIdMarker)
-                .withDelimiter(delimiter)
-                .withMaxResults(versionNum*objectNames.length));
-        //expected results
+        VersionListing vsList1 = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
+                .withKeyMarker(nextKeyMarker).withVersionIdMarker(nestVersionIdMarker).withDelimiter(delimiter)
+                .withMaxResults(versionNum * objectNames.length));
+        // expected results
         List<String> expCommonPrefixes2 = new ArrayList<String>();
         expCommonPrefixes2.add("dir/");
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for(int i = 2; i < objectNames.length;i++){
-            for(int j = versionNum-1; j >= 0; j-- ){
-                expMap.add(objectNames[i],String.valueOf(j));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (int i = 2; i < objectNames.length; i++) {
+            for (int j = versionNum - 1; j >= 0; j--) {
+                expMap.add(objectNames[i], String.valueOf(j));
             }
         }
         if (!vsList1.isTruncated()) {
-            ObjectUtils.checkListVSResults(vsList1,expCommonPrefixes2,expMap);
+            ObjectUtils.checkListVSResults(vsList1, expCommonPrefixes2, expMap);
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }

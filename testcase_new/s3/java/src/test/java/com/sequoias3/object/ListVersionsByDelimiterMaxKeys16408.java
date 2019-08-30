@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @Description:  seqDB-16408 :: 带delimiter和maxkeys查询对象版本列表，不匹配delimiter
+ * @Description: seqDB-16408 :: 带delimiter和maxkeys查询对象版本列表，不匹配delimiter
  * @author fanyu
  * @Date:2018年11月23日
  * @version:1.0
@@ -25,7 +25,7 @@ import java.util.*;
 public class ListVersionsByDelimiterMaxKeys16408 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16408";
-    private String[] objectNames = {"aaa/16408", "bbb/16408", "ccc16408", "ddd16408","eee16408"};
+    private String[] objectNames = { "aaa/16408", "bbb/16408", "ccc16408", "ddd16408", "eee16408" };
     private AmazonS3 s3Client = null;
     private int versionNum = 5;
 
@@ -37,7 +37,7 @@ public class ListVersionsByDelimiterMaxKeys16408 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
             for (int j = 0; j < versionNum; j++) {
-               s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
+                s3Client.putObject(bucketName, objectName, "" + UUID.randomUUID());
             }
         }
     }
@@ -45,18 +45,17 @@ public class ListVersionsByDelimiterMaxKeys16408 extends S3TestBase {
     @Test
     private void test() throws Exception {
         String delimiter = "#";
-        Integer maxResults = versionNum*objectNames.length;
-        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
-                .withBucketName(bucketName)
+        Integer maxResults = versionNum * objectNames.length;
+        VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
                 .withDelimiter(delimiter).withMaxResults(maxResults));
-        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-        for(String objectName : objectNames){
-            for(int i = versionNum-1; i >= 0; i-- ){
-                expMap.add(objectName,String.valueOf(i));
+        MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+        for (String objectName : objectNames) {
+            for (int i = versionNum - 1; i >= 0; i--) {
+                expMap.add(objectName, String.valueOf(i));
             }
         }
         if (!vsList.isTruncated()) {
-            ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
+            ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(), expMap);
         } else {
             Assert.fail("vsList.isTruncated() must be false");
         }

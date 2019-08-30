@@ -94,7 +94,7 @@ public class DeleteNormalUser16261 extends S3TestBase {
             // create bucket
             s3Client.createBucket(name.toLowerCase());
             // create object
-           s3Client.putObject(name, name + "_" + UUID.randomUUID(), UUID.randomUUID().toString());
+            s3Client.putObject(name, name + "_" + UUID.randomUUID(), UUID.randomUUID().toString());
         } finally {
             if (s3Client != null) {
                 s3Client.shutdown();

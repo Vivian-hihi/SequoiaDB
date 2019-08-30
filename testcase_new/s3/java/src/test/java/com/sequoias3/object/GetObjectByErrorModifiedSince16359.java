@@ -28,7 +28,7 @@ import java.util.List;
  */
 
 public class GetObjectByErrorModifiedSince16359 extends S3TestBase {
-    private boolean runSuccess= false;
+    private boolean runSuccess = false;
     private String bucketName = null;
     private String objectName = "object16359";
     private AmazonS3 s3Client = null;
@@ -58,14 +58,16 @@ public class GetObjectByErrorModifiedSince16359 extends S3TestBase {
     private void test() throws Exception {
         // create multiple versions object in the bucket
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
+            objectVSList.add(
+                    s3Client.putObject(new PutObjectRequest(bucketName, objectName, new File(filePathList.get(i)))));
         }
 
         // current version
         String currVersionId = objectVSList.get(fileNum - 1).getVersionId();
-        cal.set(Calendar.MONTH,cal.get(Calendar.MONTH)+1);
-        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, objectName, currVersionId).withModifiedSinceConstraint(cal.getTime()));
-        //AmazonS3  Java driver handles error,so it returns null
+        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + 1);
+        S3Object object = s3Client.getObject(
+                new GetObjectRequest(bucketName, objectName, currVersionId).withModifiedSinceConstraint(cal.getTime()));
+        // AmazonS3 Java driver handles error,so it returns null
         Assert.assertNull(object);
         runSuccess = true;
     }
@@ -73,8 +75,8 @@ public class GetObjectByErrorModifiedSince16359 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if(runSuccess) {
-                ObjectUtils.deleteObjectAllVersions(s3Client,bucketName,objectName);
+            if (runSuccess) {
+                ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, objectName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

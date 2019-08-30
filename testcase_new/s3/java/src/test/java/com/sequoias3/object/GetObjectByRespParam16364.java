@@ -45,34 +45,34 @@ public class GetObjectByRespParam16364 extends S3TestBase {
             filePathList.add(filePath);
         }
         s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client,bucketName);
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLib.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
     @Test
     private void test() throws Exception {
         for (int i = 0; i < fileNum; i++) {
-            objectVSList.add(putObject(bucketName,objectName,filePathList.get(i)));
+            objectVSList.add(putObject(bucketName, objectName, filePathList.get(i)));
         }
 
-        //random version
+        // random version
         Random random = new Random();
         int randomIndex = random.nextInt(fileNum);
         String randomVersionId = objectVSList.get(randomIndex).getMetadata().getVersionId();
 
         Date date = new Date();
         String dateStr = DateUtils.formatRFC822Date(date);
-        S3Object object = getObjectByVersion(bucketName,objectName,randomVersionId,dateStr);
+        S3Object object = getObjectByVersion(bucketName, objectName, randomVersionId, dateStr);
 
-        //check
-        checkResult(object,dateStr,randomIndex);
+        // check
+        checkResult(object, dateStr, randomIndex);
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            CommLib.clearBucket(s3Client,bucketName);
+            CommLib.clearBucket(s3Client, bucketName);
             TestTools.LocalFile.removeFile(localPath);
         } finally {
             if (s3Client != null) {
@@ -81,29 +81,29 @@ public class GetObjectByRespParam16364 extends S3TestBase {
         }
     }
 
-    private void checkResult(S3Object object,String dateStr,int randomIndex) throws Exception {
+    private void checkResult(S3Object object, String dateStr, int randomIndex) throws Exception {
         ObjectMetadata objectMetadata = object.getObjectMetadata();
-        Assert.assertEquals(objectMetadata.getCacheControl(),"CacheControl");
-        Assert.assertEquals(objectMetadata.getContentEncoding(),"UTF-8");
-        Assert.assertEquals(objectMetadata.getContentLanguage(),"English");
-        Assert.assertEquals(objectMetadata.getContentDisposition(),"Disposition");
-        Assert.assertEquals(objectMetadata.getContentType(),"text/plain");
-        Assert.assertEquals (DateUtils.formatRFC822Date(object.getObjectMetadata().getHttpExpiresDate()),dateStr);
+        Assert.assertEquals(objectMetadata.getCacheControl(), "CacheControl");
+        Assert.assertEquals(objectMetadata.getContentEncoding(), "UTF-8");
+        Assert.assertEquals(objectMetadata.getContentLanguage(), "English");
+        Assert.assertEquals(objectMetadata.getContentDisposition(), "Disposition");
+        Assert.assertEquals(objectMetadata.getContentType(), "text/plain");
+        Assert.assertEquals(DateUtils.formatRFC822Date(object.getObjectMetadata().getHttpExpiresDate()), dateStr);
         String tmpPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
                 Thread.currentThread().getId());
         S3ObjectInputStream s3ObjectInputStream = null;
         try {
             s3ObjectInputStream = object.getObjectContent();
             ObjectUtils.inputStream2File(object.getObjectContent(), tmpPath);
-        }finally{
-            if(s3ObjectInputStream != null){
+        } finally {
+            if (s3ObjectInputStream != null) {
                 s3ObjectInputStream.close();
             }
         }
         Assert.assertEquals(TestTools.getMD5(tmpPath), TestTools.getMD5(filePathList.get(randomIndex)));
     }
 
-    private S3Object getObjectByVersion(String bucketName, String key, String versionId,String date) {
+    private S3Object getObjectByVersion(String bucketName, String key, String versionId, String date) {
         GetObjectRequest request = new GetObjectRequest(bucketName, key);
         ResponseHeaderOverrides overrideHeaders = new ResponseHeaderOverrides();
         overrideHeaders.setCacheControl("CacheControl");
