@@ -12,8 +12,7 @@
    <parameter name="RSRVPORTBEGIN" value="26000" />
    <parameter name="RSRVPORTEND" value="27000" />
    <!--用例新建节点的存放路径-->
-   <parameter name="RSRVNODEDIR"
-      value="/data/sequoiadb/cidatabase" />
+   <parameter name="RSRVNODEDIR" value="/data/sequoiadb/cidatabase" />
    <!--用例临时文件存放路径-->
    <parameter name="WORKDIR" value="/tmp/ci_reliability" />
    <parameter name="ROOTPASSWD" value="jenkins" />
@@ -21,8 +20,7 @@
    <parameter name="REMOTEPASSWD" value="sdbadmin" />
    <parameter name="SCRIPTDIR" value="${SCRIPTDIR}" />
    <!-- 适配器配置文件的爷目录，默认是/opt/sequoiadb/conf/sdbseadapter -->
-   <parameter name="SDBSEADAPTERDIR"
-      value="${SDBSEADAPTERDIR}" />
+   <parameter name="SDBSEADAPTERDIR" value="${SDBSEADAPTERDIR}" />
 
    <listeners>
       <listener
@@ -41,15 +39,15 @@
          <package name="com.sequoiadb.metaopr.killnode" />
          <package name="com.sequoiadb.metaopr.networkfail.cl" />
          <package name="com.sequoiadb.metaopr.networkfail.cs" />
-         <package
-            name="com.sequoiadb.metaopr.networkfail.domain" />
+         <package name="com.sequoiadb.metaopr.networkfail.domain" />
          <package name="com.sequoiadb.metaopr.noderestart" />
          <package name="com.sequoiadb.autoincrement.killnode" />
          <package name="com.sequoiadb.cappedCL.killnode" />
          <package name="com.sequoiadb.cappedCL.restartnode" />
          <package name="com.sequoiadb.rename" />
-         <package name="com.sequoiadb.fulltext.killnode" />
-         <package name="com.sequoiadb.fulltext.restartnode" />
+         <!--全文索引用例暂时屏蔽，待问题单SEQUOIADBMAINSTREAM-4325修复后再统一放开-->
+<!--          <package name="com.sequoiadb.fulltext.killnode" />
+         <package name="com.sequoiadb.fulltext.restartnode" /> -->
       </packages>
    </test>
 
