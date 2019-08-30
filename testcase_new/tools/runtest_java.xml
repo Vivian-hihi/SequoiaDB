@@ -128,7 +128,7 @@
                      <equals arg1="@{onexml}" arg2="testng.xml"/>
                      <then>
                         <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml.xml"/>
-                        <var name="xmlfile" value="proxyxml.xml"/>
+                        <var name="xmlfile" value="proxyxml.xml,s3testng.xml"/>
                      </then>
                      <else>
                         <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml_release.xml"/>
@@ -237,7 +237,7 @@
                      <equals arg1="${error_num}" arg2="0"/>
                   </and>
                   <then>
-                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DthreadexecutorDir=${CI_WORK_DIR}/testcase/tools -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} -DFULLTEXTPREFIX=${IDXPREFIX}"/>
+                     <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DthreadexecutorDir=${CI_WORK_DIR}/testcase/tools -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DS3HOSTNAME=@{hostname} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} -DFULLTEXTPREFIX=${IDXPREFIX}"/>
                      <echo message="cmd : ${cmd} in dir ${casedir}"/>
                      <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
                         <arg line="${cmd}" />
