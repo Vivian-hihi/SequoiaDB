@@ -209,7 +209,8 @@ namespace seadapter
          // We just want the scroll id and document id. So use the filter path.
          rc = client->initScroll( _scrollID, _index.c_str(), _type.c_str(),
                                   _query.toString( FALSE, TRUE ), result,
-                                  ES_SCROLL_FIX_SIZE, _filterPath.c_str() ) ;
+                                  _esCltMgr->getScrollSize(),
+                                  _filterPath.c_str() ) ;
          if ( rc )
          {
             const CHAR *errMsg = client->getLastErrMsg() ;

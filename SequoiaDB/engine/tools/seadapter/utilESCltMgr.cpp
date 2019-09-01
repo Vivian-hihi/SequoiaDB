@@ -44,7 +44,8 @@ namespace seadapter
    : _limit( UTIL_ESCLT_DFT_MAX_NUM ),
      _cleanInterval( UTIL_ESCLT_DFT_CLEAN_INTERVAL ),
      _opTimeout( SEADPT_DFT_TIMEOUT ),
-     _number( 0 )
+     _number( 0 ),
+     _scrollSize( SEADPT_DFT_SCROLL_SIZE )
    {
       _url[0] = '\0' ;
    }
@@ -84,6 +85,11 @@ namespace seadapter
       return rc ;
    error:
       goto done ;
+   }
+
+   void _utilESCltMgr::setScrollSize( UINT16 size )
+   {
+      _scrollSize = size ;
    }
 
    INT32 _utilESCltMgr::getClient( utilESClt *& client )

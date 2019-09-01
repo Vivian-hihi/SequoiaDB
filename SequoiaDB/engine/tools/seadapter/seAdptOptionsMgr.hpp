@@ -67,6 +67,7 @@ namespace seadapter
       UINT16      getStrMapType() const ;
       UINT32      getSEConnLimit() const ;
       UINT32      getSEConnTimeout() const ;
+      UINT16      getSEScrollSize() const ;
 
    protected:
       virtual INT32 doDataExchange( engine::pmdCfgExchange *pEX ) ;
@@ -87,6 +88,7 @@ namespace seadapter
       UINT16   _strMapType ;
       UINT32   _seConnLimit ;
       UINT32   _seConnTimeout ;
+      UINT16   _seScrollSize ;
    } ;
    typedef _seAdptOptionsMgr seAdptOptionsMgr ;
 }

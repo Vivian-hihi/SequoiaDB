@@ -56,7 +56,8 @@ using namespace engine ;
    ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[3000-3600000]" ) \
    ( PMD_COMMANDS_STRING (SEADPT_STR_MAP_TYPE, ",s"), boost::program_options::value<int>(), "String map type,default 1, value range[1-3]" ) \
    ( PMD_COMMANDS_STRING (SEADPT_CONN_LIMIT, ",l"), boost::program_options::value<int>(), "Max connection number between adapter and search engine,default:50, value range[1-65535]") \
-   ( PMD_COMMANDS_STRING (SEADPT_CONN_TIMEOUT, ",o"), boost::program_options::value<int>(), "Max idle time of connection between adapter and search engine,unit:second, default:1800, value range[60-86400]")
+   ( PMD_COMMANDS_STRING (SEADPT_CONN_TIMEOUT, ",o"), boost::program_options::value<int>(), "Max idle time of connection between adapter and search engine,unit:second, default:1800, value range[60-86400]") \
+   ( SEADPT_SCROLL_SIZE, boost::program_options::value<int>(), "Scroll size when fetch data from search engine,default:1000,value range:[50-10000]")
 
 namespace seadapter
 {
@@ -73,8 +74,9 @@ namespace seadapter
       _timeout = SEADPT_DFT_TIMEOUT ;
       _bulkBuffSize = SEADPT_DFT_BULKBUFF_SZ ;
       _strMapType = SEADPT_DFT_STR_MAP_TYPE ;
-      _seConnLimit = 0 ;
-      _seConnTimeout = 0 ;
+      _seConnLimit = SEADPT_DFT_CONN_LIMIT ;
+      _seConnTimeout = SEADPT_DFT_CONN_TIMEOUT ;
+      _seScrollSize = SEADPT_DFT_SCROLL_SIZE ;
    }
 
    INT32 _seAdptOptionsMgr::init( INT32 argc, CHAR **argv,
@@ -235,6 +237,10 @@ namespace seadapter
                PMD_CFG_CHANGE_REBOOT, SEADPT_DFT_CONN_TIMEOUT ) ;
       rdvMinMax( pEX, _seConnTimeout, 60, 86400, TRUE ) ;
 
+      rdxUShort( pEX, SEADPT_SCROLL_SIZE, _seScrollSize, FALSE,
+                 PMD_CFG_CHANGE_REBOOT, SEADPT_DFT_SCROLL_SIZE ) ;
+      rdvMinMax( pEX, _seScrollSize, 50, 10000, TRUE ) ;
+
       return getResult() ;
    }
 
@@ -287,6 +293,11 @@ namespace seadapter
    UINT32 _seAdptOptionsMgr::getSEConnTimeout() const
    {
       return _seConnTimeout;
+   }
+
+   UINT16 _seAdptOptionsMgr::getSEScrollSize() const
+   {
+      return _seScrollSize ;
    }
 
    // Index prefix can only contains english characters, numbers, and '_', and

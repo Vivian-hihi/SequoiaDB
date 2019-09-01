@@ -54,6 +54,7 @@ namespace seadapter
    #define SEADPT_STR_MAP_TYPE            "stringmaptype"
    #define SEADPT_CONN_LIMIT              "connlimit"
    #define SEADPT_CONN_TIMEOUT            "conntimeout"
+   #define SEADPT_SCROLL_SIZE             "scrollsize"
 
    #define SEADPT_DFT_TIMEOUT             10000
    #define SEADPT_DFT_BULKBUFF_SZ         10
@@ -62,6 +63,7 @@ namespace seadapter
    #define SEADPT_SE_SVCADDR_MAX_SZ       32
    #define SEADPT_DFT_CONN_LIMIT          50
    #define SEADPT_DFT_CONN_TIMEOUT        1800
+   #define SEADPT_DFT_SCROLL_SIZE         1000
 
    // Route id for the adapter, just use one that will not conflict with sdb
    // nodes.

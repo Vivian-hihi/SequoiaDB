@@ -358,6 +358,7 @@ namespace seadapter
                            _options.getTimeout() ) ;
       PD_RC_CHECK( rc, PDERROR, "Initialize search engine client manager "
                    "failed[%d]", rc ) ;
+      esCltMgr->setScrollSize( _options.getSEScrollSize() ) ;
       PD_LOG( PDEVENT, "Search engine client manager init successfully" ) ;
 
       // Set the business status to not OK. Change to OK after successfully

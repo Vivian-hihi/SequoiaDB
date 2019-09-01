@@ -64,6 +64,9 @@ namespace seadapter
 
          INT32 init( const CHAR *url, UINT32 limit, UINT32 cleanInterval,
                      INT32 opTimeout ) ;
+         void setScrollSize( UINT16 size ) ;
+         OSS_INLINE UINT16 getScrollSize() const ;
+
          INT32 getClient( utilESClt *&client ) ;
          void releaseClient( utilESClt *&client ) ;
          void cleanup() ;
@@ -76,8 +79,14 @@ namespace seadapter
          UINT32 _number ;
          ossSpinXLatch _latch ;
          CLT_LIST _cltList ;
+         UINT16 _scrollSize ;
    } ;
    typedef _utilESCltMgr utilESCltMgr ;
+
+   OSS_INLINE UINT16 utilESCltMgr::getScrollSize() const
+   {
+      return _scrollSize ;
+   }
 
    extern utilESCltMgr es_clt_mgr ;
    OSS_INLINE utilESCltMgr* utilGetESCltMgr()
