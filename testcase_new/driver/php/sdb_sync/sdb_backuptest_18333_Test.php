@@ -38,15 +38,15 @@ class backuptest extends PHPUnit_Framework_TestCase
 
    public function testbackup()
    {
-      $options = array('Name' => 'backupName7701');
-      $ret = self::$backupTask->backupOffline($options);
+      $options = array('Name' => 'backupName18333');
+      $ret = self::$backupTask->backup($options);
       $this->assertEquals(0, $ret);
       $ret = self::$backupTask->listBackup($options);
       $this->assertEquals(true, $ret);
 
       self::$backupTask->removeBackup($options);
       self::$options = json_encode($options);
-      $ret = self::$backupTask->backupOffline(self::$options);
+      $ret = self::$backupTask->backup(self::$options);
       $this->assertEquals(0, $ret);
 
       $ret=self::$backupTask->listBackup(self::$options);

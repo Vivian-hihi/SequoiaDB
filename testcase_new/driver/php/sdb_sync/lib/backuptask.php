@@ -19,6 +19,12 @@ class BackupTask
       return $err['errno'] ;
    }
    
+   public function backup( $options )
+   {
+      $err = $this->db->backup( $options ) ;
+      return $err['errno'] ;
+   }
+   
    public function removeBackup( $options )
    {
       $err = $this->db->removeBackup( $options ) ;
