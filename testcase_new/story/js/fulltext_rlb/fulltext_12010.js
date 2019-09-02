@@ -82,10 +82,10 @@ function main()
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, dbcl.count() );
    checkConsistency( COMMCSNAME, clName );
     
-   // 节点停止的时候，插入记录未校验则报-252，可能存在记录插入成功的情况，因此预期结果可能有可能为3
-   var count = dbcl.count();
-   if ( count != 2 && count != 3 ) {
-       println( "expect count: 2 or 3, actual count: " + count );
+   var actCount = dbcl.find( {"":{"$Text":{"query":{"match_all":{}}}}} ).count();
+   var expectCount = dbcl.count();
+   if ( parseInt(actCount) != parseInt(expectCount) ) {
+       println( "expect count: " + parseInt(expectCount) + ", actual count: " + parseInt(actCount) );
        throw "check count fail";
    }
 
