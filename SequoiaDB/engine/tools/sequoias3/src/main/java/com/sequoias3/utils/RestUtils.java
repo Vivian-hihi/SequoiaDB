@@ -128,6 +128,15 @@ public class RestUtils {
         }
     }
 
+    public int convertPartNumber(String partNumber) throws S3ServerException{
+        try{
+            return Integer.parseInt(partNumber);
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
+                    "partNumber is invalid, partNumber:"+ partNumber, e);
+        }
+    }
+
     public HttpStatus convertStatus(S3ServerException e){
         HttpStatus status;
         switch (e.getError()) {
@@ -221,5 +230,24 @@ public class RestUtils {
         }
 
         return status;
+    }
+
+    public int getXMetaLength(Map<String, String> xMeta){
+        if (xMeta == null){
+            return 0;
+        }
+
+        int length = 0;
+        int prefixLength = RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX.length();
+        for (Map.Entry<String, String> entry : xMeta.entrySet()){
+            String headerName = entry.getKey();
+            String headerValue = entry.getValue();
+            if(headerName.startsWith(RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX)){
+                length += (headerName.length()-prefixLength);
+                length += headerValue.length();
+            }
+        }
+
+        return length;
     }
 }

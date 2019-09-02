@@ -2,8 +2,10 @@ package com.sequoias3.controller;
 
 import com.sequoias3.core.Error;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -18,6 +20,9 @@ public class RestExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
     private static final String ERROR_ATTRIBUTE = "X-S3-ERROR";
 
+    @Autowired
+    RestUtils restUtils;
+
     @ExceptionHandler(S3ServerException.class)
     @ResponseBody
     public ResponseEntity s3ExceptionHandler(S3ServerException e, HttpServletRequest request,
@@ -26,96 +31,7 @@ public class RestExceptionHandler {
                 .getCode(), e.getMessage());
         logger.error(msg, e);
 
-        HttpStatus status;
-        switch (e.getError()) {
-            case OBJECT_IF_NONE_MATCH_FAILED:
-            case OBJECT_IF_MODIFIED_SINCE_FAILED:
-                status = HttpStatus.NOT_MODIFIED;
-                break;
-            case INVALID_ARGUMENT:
-            case USER_CREATE_NAME_INVALID:
-            case USER_CREATE_ROLE_INVALID:
-            case BUCKET_INVALID_BUCKETNAME:
-            case BUCKET_TOO_MANY_BUCKETS:
-            case BUCKET_INVALID_VERSIONING_STATUS:
-            case OBJECT_KEY_TOO_LONG:
-            case OBJECT_METADATA_TOO_LARGE:
-            case OBJECT_INVALID_TOKEN:
-            case OBJECT_BAD_DIGEST:
-            case OBJECT_INVALID_KEY:
-            case OBJECT_INVALID_DIGEST:
-            case OBJECT_INVALID_VERSION:
-            case OBJECT_INVALID_RANGE:
-            case REGION_INVALID_SHARDINGTYPE:
-            case REGION_INVALID_LOBPAGESIZE:
-            case REGION_INVALID_REPLSIZE:
-            case REGION_LOCATION_NULL:
-            case REGION_LOCATION_SAME:
-            case REGION_LOCATION_SPLIT:
-            case REGION_LOCATION_EXIST:
-            case REGION_INVALID_DOMAIN:
-            case REGION_INVALID_REGIONNAME:
-            case PART_ENTITY_TOO_SMALL:
-            case PART_ENTITY_TOO_LARGE:
-            case PART_INVALID_PART:
-            case PART_INVALID_PARTORDER:
-            case PART_INVALID_PARTNUMBER:
-            case OBJECT_COPY_WITHOUT_CHANGE:
-            case OBJECT_COPY_INVALID_DIRECTIVE:
-            case OBJECT_COPY_DELETE_MARKER:
-            case OBJECT_COPY_INVALID_SOURCE:
-            case OBJECT_INCOMPLETE_BODY:
-            case ACL_CONFLICT:
-            case ACL_INVALID_ID:
-            case ACL_INVALID_EMAIL:
-            case MALFORMED_XML:
-            case NEED_A_KEY:
-                status = HttpStatus.BAD_REQUEST;
-                break;
-            case INVALID_ACCESSKEYID:
-            case INVALID_ADMINISTRATOR:
-            case USER_DELETE_INIT_ADMIN:
-            case SIGNATURE_NOT_MATCH:
-            case ACCESS_DENIED:
-            case NO_CREDENTIALS:
-            case INVALID_AUTHORIZATION:
-                status = HttpStatus.FORBIDDEN;
-                break;
-            case USER_NOT_EXIST:
-            case BUCKET_NOT_EXIST:
-            case OBJECT_NO_SUCH_KEY:
-            case OBJECT_NO_SUCH_VERSION:
-            case REGION_NO_SUCH_REGION:
-            case PART_NO_SUCH_UPLOAD:
-                status = HttpStatus.NOT_FOUND;
-                break;
-            case METHOD_NOT_ALLOWED:
-                status = HttpStatus.METHOD_NOT_ALLOWED;
-                break;
-            case USER_CREATE_EXIST:
-            case BUCKET_ALREADY_EXIST:
-            case BUCKET_ALREADY_OWNED_BY_YOU:
-            case BUCKET_NOT_EMPTY:
-            case OBJECT_IS_IN_USE:
-            case REGION_NOT_EMPTY:
-            case REGION_CONFLICT_TYPE:
-            case REGION_CONFLICT_DOMAIN:
-            case REGION_CONFLICT_LOCATION:
-            case REGION_CONFLICT_LOBPAGESIZE:
-            case REGION_CONFLICT_REPLSIZE:
-            case BUCKET_DELIMITER_NOT_STABLE:
-                status = HttpStatus.CONFLICT;
-                break;
-            case OBJECT_IF_MATCH_FAILED:
-            case OBJECT_IF_UNMODIFIED_SINCE_FAILED:
-                status = HttpStatus.PRECONDITION_FAILED;
-                break;
-            case OBJECT_RANGE_NOT_SATISFIABLE:
-                status = HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE;
-                break;
-            default:
-                status = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
+        HttpStatus status = restUtils.convertStatus(e);
 
         Error exceptionBody = new Error(e, request.getRequestURI());
         if ("HEAD".equalsIgnoreCase(request.getMethod())){

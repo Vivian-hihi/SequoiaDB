@@ -16,6 +16,15 @@ public class RestParamDefine {
 
     public static final int    MAX_KEYS_DEFAULT        = 1000;
 
+    public static class Attribute{
+        public static final String S3_OPERATOR         = "s3Operator";
+        public static final String S3_BUCKET           = "s3Bucket";
+        public static final String S3_OBJECTURI        = "s3ObjectUri";
+        public static final String S3_PARTNUMBER       = "s3PartNumber";
+        public static final String S3_UPLOADID         = "s3UploadId";
+        public static final String S3_HEADERS          = "s3Headers";
+        public static final String S3_XMETA            = "s3XMeta";
+    }
     public static class UserPara{
         public static final String CREATE_USER             = "Action=CreateUser";
         public static final String CREATE_ACCESSKEY        = "Action=CreateAccessKey";
@@ -186,6 +195,8 @@ public class RestParamDefine {
 
         public static final String VERSION_ID                    = "x-amz-version-id";
     }
+
+    public static final String EXPECT               = "Expect";
 
     public static final int PART_NUMBER_MIN         = 1;
     public static final int PART_NUMBER_MAX         = 10000;

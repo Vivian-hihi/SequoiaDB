@@ -9,6 +9,7 @@ public class MultiPartUploadConfig {
     private boolean partlistinuse = true;
     private boolean partsizelimit = true;
     private int     incompletelifecycle = 3;
+    private int     completereservetime = 24 * 60;
 
     public void setPartlistinuse(boolean partlistinuse) {
         this.partlistinuse = partlistinuse;
@@ -32,5 +33,13 @@ public class MultiPartUploadConfig {
 
     public int getIncompletelifecycle() {
         return incompletelifecycle;
+    }
+
+    public void setCompletereservetime(int completereservetime) {
+        this.completereservetime = completereservetime;
+    }
+
+    public int getCompletereservetime() {
+        return completereservetime;
     }
 }

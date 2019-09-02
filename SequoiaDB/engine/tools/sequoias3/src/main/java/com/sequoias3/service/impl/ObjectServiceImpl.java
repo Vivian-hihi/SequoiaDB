@@ -21,6 +21,7 @@ import com.sequoias3.service.ObjectService;
 import com.sequoias3.taskmanager.OutStreamFlushQueue;
 import com.sequoias3.utils.DataFormatUtils;
 import com.sequoias3.utils.DirUtils;
+import com.sequoias3.utils.RestUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -89,27 +90,15 @@ public class ObjectServiceImpl implements ObjectService {
     @Autowired
     TaskDao uploadStatusDao;
 
+    @Autowired
+    RestUtils restUtils;
+
     @Override
-    public PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
+    public PutDeleteResult putObject(Bucket bucket, String objectName,
                                      String contentMD5, Map<String, String> headers,
                                      Map<String, String> xMeta, InputStream inputStream,
                                      Long contentLength)
             throws S3ServerException {
-        //check key length
-        if (objectName.length() > RestParamDefine.KEY_LENGTH){
-            throw new S3ServerException(S3Error.OBJECT_KEY_TOO_LONG,
-                    "ObjectName is too long. objectName:"+objectName);
-        }
-
-        //check meta length
-        if (getXMetaLength(xMeta) > RestParamDefine.X_AMZ_META_LENGTH){
-            throw new S3ServerException(S3Error.OBJECT_METADATA_TOO_LARGE,
-                    "metadata headers exceed the maximum. xMeta:"+xMeta.toString());
-        }
-
-        //get and check bucket
-        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-
         Region region = null;
         if (bucket.getRegion() != null) {
             region = regionDao.queryRegion(bucket.getRegion());
@@ -171,7 +160,7 @@ public class ObjectServiceImpl implements ObjectService {
             cleanRedundencyLob(dataCsName, dataClName, insertResult.getLobId());
             if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
                 throw new S3ServerException(S3Error.OBJECT_PUT_fAILED,
-                        "bucket+key duplicate too times. bucket:"+bucketName+" key:"+objectName, e);
+                        "bucket+key duplicate too times. bucket:"+bucket.getBucketName() +" key:"+objectName, e);
             } else {
                 throw e;
             }
@@ -997,7 +986,7 @@ public class ObjectServiceImpl implements ObjectService {
         }
 
         //check meta length
-        if (getXMetaLength(xMeta) > RestParamDefine.X_AMZ_META_LENGTH){
+        if (restUtils.getXMetaLength(xMeta) > RestParamDefine.X_AMZ_META_LENGTH){
             throw new S3ServerException(S3Error.OBJECT_METADATA_TOO_LARGE,
                     "metadata headers exceed the maximum. xMeta:"+xMeta.toString());
         }
@@ -1050,20 +1039,11 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public String uploadPart(long ownerID, String bucketName, String objectName,
-                             String uploadIdStr, int partNumber, String contentMD5,
+    public String uploadPart(Bucket bucket, String objectName,
+                             long uploadId, int partNumber, String contentMD5,
                              InputStream inputStream, long contentLength)
             throws S3ServerException {
         try {
-            if (partNumber < RestParamDefine.PART_NUMBER_MIN
-                    || partNumber > RestParamDefine.PART_NUMBER_MAX) {
-                throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
-                        "invalid partNumber:" + partNumber);
-            }
-
-            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-            long uploadId = convertUploadId(uploadIdStr);
-
             Region region = null;
             if (bucket.getRegion() != null) {
                 region = regionDao.queryRegion(bucket.getRegion());
@@ -1196,7 +1176,7 @@ public class ObjectServiceImpl implements ObjectService {
         } catch (Exception e) {
             throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED,
                     "upload part failed. objectName=" + objectName +
-                            ", uploadId=" + uploadIdStr +
+                            ", uploadId=" + uploadId +
                             ", partNumber=" + partNumber, e);
         }
     }
@@ -1208,7 +1188,7 @@ public class ObjectServiceImpl implements ObjectService {
                                                         ServletOutputStream outputStream)
             throws S3ServerException {
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-        long uploadId = convertUploadId(uploadIdStr);
+        long uploadId = restUtils.convertUploadId(uploadIdStr);
 
         Region region = null;
         if (bucket.getRegion() != null) {
@@ -1297,6 +1277,7 @@ public class ObjectServiceImpl implements ObjectService {
             upload.setClName(destCLName);
             upload.setLobId(destLobId);
             upload.setUploadStatus(UploadMeta.UPLOAD_COMPLETE);
+            upload.setLastModified(System.currentTimeMillis());
             uploadDao.updateUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, upload);
             logger.debug("complete end");
 
@@ -1359,7 +1340,7 @@ public class ObjectServiceImpl implements ObjectService {
                             String uploadIdStr)
             throws S3ServerException {
         Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-        long uploadId = convertUploadId(uploadIdStr);
+        long uploadId = restUtils.convertUploadId(uploadIdStr);
 
         ConnectionDao connection = daoMgr.getConnectionDao();
         transaction.begin(connection);
@@ -1394,7 +1375,7 @@ public class ObjectServiceImpl implements ObjectService {
         QueryDbCursor partsCursor = null;
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
-            long uploadId = convertUploadId(uploadIdStr);
+            long uploadId = restUtils.convertUploadId(uploadIdStr);
             UploadMeta upload = uploadDao.queryUploadByUploadId(null, bucket.getBucketId(),
                     objectName, uploadId, false);
             if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
@@ -1722,15 +1703,6 @@ public class ObjectServiceImpl implements ObjectService {
         return reBuildLob;
     }
 
-    private long convertUploadId(String uploadId) throws S3ServerException{
-        try{
-            return Long.parseLong(uploadId);
-        }catch (Exception e){
-            throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
-                    "uploadId is invalid, uploadId:"+ uploadId, e);
-        }
-    }
-
     private void createNewMinusPart(long uploadId, String dataCsName, String dataClName,
                             Region region, long size) throws S3ServerException{
         DataAttr dataMinus = dataDao.createNewData(dataCsName, dataClName, region);
@@ -1743,7 +1715,7 @@ public class ObjectServiceImpl implements ObjectService {
             Part nPart = new Part(uploadId, partNumber, dataCsName, dataClName, dataMinus.getLobId(), size, null);
             partDao.insertPart(null, uploadId, partNumber, nPart);
         }catch (Exception e){
-            logger.error("create new minus part fail. uploadId:" + uploadId, e);
+            logger.warn("create new minus part fail. uploadId:" + uploadId, e);
             cleanRedundencyLob(dataCsName, dataClName, dataMinus.getLobId());
         }
     }
@@ -2350,25 +2322,6 @@ public class ObjectServiceImpl implements ObjectService {
 
         long readLength  = range.getEnd() - range.getStart() + 1;
         range.setContentLength(readLength);
-    }
-
-    private int getXMetaLength(Map<String, String> xMeta){
-        if (xMeta == null){
-            return 0;
-        }
-
-        int length = 0;
-        int prefixLength = RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX.length();
-        for (Map.Entry<String, String> entry : xMeta.entrySet()){
-            String headerName = entry.getKey();
-            String headerValue = entry.getValue();
-            if(headerName.startsWith(RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX)){
-                length += (headerName.length()-prefixLength);
-                length += headerValue.length();
-            }
-        }
-
-        return length;
     }
 
     private long getSecondTime(long millionSecond){

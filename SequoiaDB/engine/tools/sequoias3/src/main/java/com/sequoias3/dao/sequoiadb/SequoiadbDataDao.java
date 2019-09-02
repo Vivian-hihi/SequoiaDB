@@ -110,11 +110,11 @@ public class SequoiadbDataDao implements DataDao {
 
             long count = 0;
             boolean firstPiece = true;
-            int leftTryTime = 100;
+            int remainTryTime = 10;
             DBLob dbLob = null;
             int size = readAsMuchAsPossible(data, buffer, 0, (int) Math.min((length - count), buffer.length));
-            while (leftTryTime > 0) {
-                leftTryTime--;
+            while (remainTryTime > 0) {
+                remainTryTime--;
                 dbLob = destCL.openLob(lobId, DBLob.SDB_LOB_WRITE);
                 dbLob.lockAndSeek(offset, length);
                 try {
@@ -131,10 +131,11 @@ public class SequoiadbDataDao implements DataDao {
                     dbLob.close();
                     break;
                 } catch (BaseException e) {
-                    logger.error("write lob with offset:" +offset + ", leftTryTime:" + leftTryTime + ", firstPiece:" + firstPiece + " error, e.getMessage" + e.getMessage(), e);
+                    logger.error("write lob with offset:" +offset + ", remainTryTime:" + remainTryTime + ", firstPiece:" + firstPiece + " error, e.getMessage" + e.getMessage(), e);
                     closeLob(dbLob);
                     if (e.getErrorCode() == SDBError.SDB_LOB_PIECESINFO_OVERFLOW.getErrorCode()){
-                        if (leftTryTime > 0 && firstPiece){
+                        if (remainTryTime > 0 && firstPiece){
+                            Thread.sleep(10);
                             continue;
                         } else {
                             throw new S3ServerException(S3Error.DAO_LOB_PIECES_INFO_OVERFLOW, "receive -319");
@@ -161,6 +162,8 @@ public class SequoiadbDataDao implements DataDao {
         } catch (IOException e){
             throw new S3ServerException(S3Error.UNKNOWN_ERROR, "IOException", e);
         } catch (NoSuchAlgorithmException e){
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR, "NoSuchAlgorithmException", e);
+        } catch (InterruptedException e){
             throw new S3ServerException(S3Error.UNKNOWN_ERROR, "NoSuchAlgorithmException", e);
         } catch (BaseException e){
             throw e;

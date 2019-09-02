@@ -206,7 +206,7 @@ public class BucketServiceImpl implements BucketService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_DELETE_FAILED,
-                    "delete bucket error. bucket name = "+bucketName);
+                    "delete bucket error. bucket name = "+bucketName, e);
         }
     }
 

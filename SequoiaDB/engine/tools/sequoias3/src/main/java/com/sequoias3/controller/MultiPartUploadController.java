@@ -3,11 +3,13 @@ package com.sequoias3.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.common.RestParamDefine;
+import com.sequoias3.core.Bucket;
 import com.sequoias3.core.S3InputStreamReaderChunk;
 import com.sequoias3.core.User;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.model.*;
+import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
 import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
@@ -36,6 +38,9 @@ public class MultiPartUploadController {
 
     @Autowired
     ObjectService objectService;
+
+    @Autowired
+    BucketService bucketService;
 
     @PostMapping(value="/{bucketname:.+}/**", params = RestParamDefine.UPLOADS, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity initMultiPartUploadObject(@PathVariable("bucketname") String bucketName,
@@ -72,15 +77,54 @@ public class MultiPartUploadController {
     public ResponseEntity uploadPart(@PathVariable("bucketname") String bucketName,
                                      @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                      @RequestHeader(name = RestParamDefine.PutObjectHeader.CONTENT_MD5, required = false) String contentMD5,
-                                     @RequestParam(RestParamDefine.PARTNUMBER) int partNumber,
-                                     @RequestParam(RestParamDefine.UPLOADID) String uploadId,
+                                     @RequestParam(RestParamDefine.PARTNUMBER) String partNumberStr,
+                                     @RequestParam(RestParamDefine.UPLOADID) String uploadIdStr,
                                      HttpServletRequest httpServletRequest)
             throws S3ServerException, IOException {
         try {
-            User operator = restUtils.getOperatorByAuthorization(authorization);
+            User operator;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OPERATOR) == null) {
+                operator = restUtils.getOperatorByAuthorization(authorization);
+            }else {
+                operator = (User) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OPERATOR);
+            }
 
-            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-            logger.debug("upload part. bucketName={}, objectName={}, uploadId={}, partNumber={}", bucketName, objectName, uploadId, partNumber);
+            String objectName;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OBJECTURI) == null) {
+                objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            } else {
+                objectName = ((ObjectUri) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OBJECTURI)).getObjectName();
+            }
+
+            logger.debug("upload part. bucketName={}, objectName={}, uploadId={}, partNumber={}",
+                    bucketName, objectName, uploadIdStr, partNumberStr);
+
+            //get and check bucket
+            Bucket bucket;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_BUCKET) == null) {
+                bucket = bucketService.getBucket(operator.getUserId(), bucketName);
+            } else {
+                bucket = (Bucket) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_BUCKET);
+            }
+
+            long uploadId;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_UPLOADID) != null){
+                uploadId = (long) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_UPLOADID);
+            } else {
+                uploadId = restUtils.convertUploadId(uploadIdStr);
+            }
+
+            int partNumber;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_PARTNUMBER) != null){
+                partNumber = (int) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_PARTNUMBER);
+            } else {
+                partNumber = restUtils.convertPartNumber(partNumberStr);
+                if (partNumber < RestParamDefine.PART_NUMBER_MIN
+                        || partNumber > RestParamDefine.PART_NUMBER_MAX) {
+                    throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
+                            "invalid partNumber:" + partNumber);
+                }
+            }
 
             InputStream body = httpServletRequest.getInputStream();
             Long realContenLength = 0L;
@@ -92,8 +136,7 @@ public class MultiPartUploadController {
                     realContenLength = Long.parseLong(httpServletRequest.getHeader("content-length"));
                 }
             }
-            String eTag = objectService.uploadPart(operator.getUserId(),
-                    bucketName,
+            String eTag = objectService.uploadPart(bucket,
                     objectName,
                     uploadId,
                     partNumber,
@@ -108,7 +151,7 @@ public class MultiPartUploadController {
             }
 
             logger.debug("upload part success. bucketName={}, objectName={}, uploadId={}, " +
-                            "partNumber={}, eTag={}, realContenLength={}",
+                            "partNumber={}, eTag={}, realContentLength={}",
                     bucketName, objectName, uploadId, partNumber, eTag, realContenLength);
             return ResponseEntity.ok()
                     .headers(headers)
@@ -116,7 +159,12 @@ public class MultiPartUploadController {
         }catch (Exception e){
             logger.error("upload part failed. bucketName={}, bucketName/objectName={}," +
                     " uploadId={}, partNumber={}", bucketName,
-                    httpServletRequest.getRequestURI(), uploadId, partNumber);
+                    httpServletRequest.getRequestURI(), uploadIdStr, partNumberStr);
+            try{
+                httpServletRequest.getInputStream().skip(httpServletRequest.getContentLength());
+            }catch (Exception e2){
+                logger.error("skip content length fail");
+            }
             throw e;
         }
     }

@@ -5,6 +5,7 @@ import com.sequoias3.core.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.model.*;
+import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
 import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
@@ -32,6 +33,9 @@ public class ObjectController {
     @Autowired
     ObjectService objectService;
 
+    @Autowired
+    BucketService bucketService;
+
     @PutMapping(value="/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity putObject(@PathVariable("bucketname") String bucketName,
                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
@@ -39,14 +43,49 @@ public class ObjectController {
                                     HttpServletRequest httpServletRequest)
             throws S3ServerException, IOException {
         try {
-            User operator = restUtils.getOperatorByAuthorization(authorization);
+            User operator;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OPERATOR) == null) {
+                operator = restUtils.getOperatorByAuthorization(authorization);
+            }else {
+                operator = (User) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OPERATOR);
+            }
 
-            String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+            String objectName;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OBJECTURI) == null) {
+                objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
+                //check key length
+                if (objectName.length() > RestParamDefine.KEY_LENGTH) {
+                    throw new S3ServerException(S3Error.OBJECT_KEY_TOO_LONG,
+                            "ObjectName is too long. objectName:" + objectName);
+                }
+            } else {
+                objectName = ((ObjectUri) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_OBJECTURI)).getObjectName();
+            }
             logger.debug("put object. bucketName={}, objectName={}", bucketName, objectName);
 
-            Map<String, String> requestHeaders = new HashMap<>();
-            Map<String, String> xMeta = new HashMap<>();
-            restUtils.getHeaders(httpServletRequest, requestHeaders, xMeta);
+            Map<String, String> requestHeaders;
+            Map<String, String> xMeta;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_HEADERS) != null
+                    && httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_XMETA) != null){
+                requestHeaders = (Map<String, String>)httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_HEADERS);
+                xMeta = (Map<String, String>) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_XMETA);
+            } else {
+                requestHeaders = new HashMap<>();
+                xMeta = new HashMap<>();
+                restUtils.getHeaders(httpServletRequest, requestHeaders, xMeta);
+                if (restUtils.getXMetaLength(xMeta) > RestParamDefine.X_AMZ_META_LENGTH) {
+                    throw new S3ServerException(S3Error.OBJECT_METADATA_TOO_LARGE,
+                            "metadata headers exceed the maximum. xMeta:" + xMeta.toString());
+                }
+            }
+
+            //get and check bucket
+            Bucket bucket;
+            if (httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_BUCKET) == null) {
+                bucket = bucketService.getBucket(operator.getUserId(), bucketName);
+            } else {
+                bucket = (Bucket) httpServletRequest.getAttribute(RestParamDefine.Attribute.S3_BUCKET);
+            }
 
             InputStream body = null;
             Long realContenLength = 0L;
@@ -60,8 +99,7 @@ public class ObjectController {
                 }
             }
 
-            PutDeleteResult result = objectService.putObject(operator.getUserId(),
-                    bucketName,
+            PutDeleteResult result = objectService.putObject(bucket,
                     objectName,
                     contentMD5,
                     requestHeaders,
@@ -85,6 +123,11 @@ public class ObjectController {
                     .build();
         }catch (Exception e){
             logger.error("put object failed. bucketName/objectName:" + httpServletRequest.getRequestURI());
+            try{
+                httpServletRequest.getInputStream().skip(httpServletRequest.getContentLength());
+            }catch (Exception e2){
+                logger.error("skip content length fail");
+            }
             throw e;
         }
     }

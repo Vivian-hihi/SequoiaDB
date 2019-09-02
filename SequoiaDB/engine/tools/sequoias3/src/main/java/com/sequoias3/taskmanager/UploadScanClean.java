@@ -52,8 +52,16 @@ public class UploadScanClean {
         try {
             invalidUploads = uploadDao.queryInvalidUploads();
             if (invalidUploads != null){
+                long cleanCompleteTime = System.currentTimeMillis() -
+                        config.getCompletereservetime() * 60 * 1000;
                 while (invalidUploads.hasNext()){
                     BSONObject record = invalidUploads.getNext();
+                    int uploadStatus   = (int) record.get(UploadMeta.META_STATUS);
+                    long lastModified  = (long) record.get(UploadMeta.META_INIT_TIME);
+                    if (uploadStatus == UploadMeta.UPLOAD_COMPLETE
+                            && lastModified > cleanCompleteTime){
+                        continue;
+                    }
                     long uploadId     = (long) record.get(UploadMeta.META_UPLOAD_ID);
                     ConnectionDao connectionA = daoMgr.getConnectionDao();
                     transaction.begin(connectionA);

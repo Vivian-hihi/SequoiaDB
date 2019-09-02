@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ObjectService {
-    PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
+    PutDeleteResult putObject(Bucket bucket, String objectName,
                               String contentMD5, Map<String, String> requestHeaders,
                               Map<String, String> xMeta, InputStream inputStream,
                               Long contentLength)
@@ -68,7 +68,7 @@ public interface ObjectService {
                                                       Map<String, String> requestHeaders,
                                                       Map<String, String> xMeta) throws S3ServerException;
 
-    String uploadPart(long ownerID, String bucketName, String objectName,String uploadId,
+    String uploadPart(Bucket bucket, String objectName, long uploadId,
                       int partnumber, String contentMD5, InputStream inputStream,
                       long contentLength) throws S3ServerException;
 
