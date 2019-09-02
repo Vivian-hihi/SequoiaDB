@@ -206,7 +206,16 @@ namespace sdbclient
 
       /** \fn  INT32 next ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE )
             \brief Return the next document of current cursor, and move forward
-            \param [in] getOwned whether the return bson object should have its own buffer
+            \param [in] getOwned Whether the return bson object should have its own buffer, default to be TRUE.
+                <ul>
+                <li>
+                TRUE : In this case the return bson object is a new full (and owned) copy of the next document and it
+                       keep the contents in it's own buffer, that mean you can use the return bson object whenever you
+                       want.
+                <li>
+                FALSE : In this case the return bson object does not keep contents in it's own buffer, and you should
+                        use the return bson object before the receive buffer of the connection is overwrite by another
+                        operation.
             \param [out] obj The return bson object
             \retval SDB_OK Operation Success
             \retval Others Operation Fail
@@ -218,9 +227,18 @@ namespace sdbclient
          return pCursor->next ( obj, getOwned ) ;
       }
 
-      /** \fn INT32 current ( bson::BSONObj &obj )
+      /** \fn INT32 current ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE )
             \brief Return the current document of cursor, and don't move
-            \param [in] getOwned whether the return bson object should have its own buffer
+            \param [in] getOwned Whether the return bson object should have its own buffer, default to be TRUE.
+                <ul>
+                <li>
+                TRUE : In this case the return bson object is a new full (and owned) copy of the current document and it
+                       keep the contents in it's own buffer, that mean you can use the return bson object whenever you
+                       want.
+                <li>
+                FALSE : In this case the return bson object does not keep contents in it's own buffer, and you should
+                        use the return bson object before the receive buffer of the connection is overwrite by another
+                        operation.
             \param [out] obj The return bson object
             \retval SDB_OK Operation Success
             \retval Others Operation Fail
