@@ -56,7 +56,7 @@ public class UploadPart18762 extends S3TestBase {
         s3Client.createBucket(bucketName);
     }
 
-    @Test
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         es.addWorker(new ThreadUploadPart18762(keyName[0], 4 * 1024 * 1024, file));

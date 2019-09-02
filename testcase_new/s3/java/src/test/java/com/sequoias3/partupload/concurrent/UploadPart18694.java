@@ -65,7 +65,7 @@ public class UploadPart18694 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
-    @Test
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         long filepositon = 0;
         // 指定多个分段上传对象

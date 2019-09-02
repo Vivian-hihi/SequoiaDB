@@ -34,7 +34,7 @@ public class UploadPart18714 extends S3TestBase {
     private String keyNameA = "key18714a";
     private String keyNameB = "key18714b";
     private AmazonS3 s3Client = null;
-    private long fileSize = 5 * 1024 * 1024;
+    private long fileSize = 10 * 1024;
     private File localPath = null;
     private File file = null;
     private String filePath = null;
@@ -71,7 +71,7 @@ public class UploadPart18714 extends S3TestBase {
             Assert.assertEquals(e.getErrorCode(), "NoSuchUpload");
         }
 
-        // 上传分段指定uploadId为对象的uploadId
+        // 上传分段指定uploadId为对象A的uploadId
         try {
             PartUploadUtils.partUpload(s3Client, bucketName, keyNameB, uploadIdA, file);
             Assert.fail("upload part with uploadId of other keys should fail.");
@@ -99,7 +99,7 @@ public class UploadPart18714 extends S3TestBase {
 
     private String uploadObjectA(List<PartETag> partEtags) {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameA);
-        long partSize = 500 * 1024;
+        long partSize = 5 * 1024;
         UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1)
                 .withPartSize(partSize).withBucketName(bucketName).withKey(keyNameA).withUploadId(uploadId);
         UploadPartResult uploadPartResult = s3Client.uploadPart(partRequest);

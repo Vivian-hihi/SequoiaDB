@@ -54,7 +54,7 @@ public class UploadPart18684 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    @Test
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         long filepositon, partSize;
         int partNumber;

@@ -70,7 +70,7 @@ public class UploadPart18688 extends S3TestBase {
         partList.add(parts);
     }
 
-    @Test
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         ThreadExecutor es = new ThreadExecutor();

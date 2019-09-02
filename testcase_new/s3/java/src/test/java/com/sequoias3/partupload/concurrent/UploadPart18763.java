@@ -71,7 +71,7 @@ public class UploadPart18763 extends S3TestBase {
         prepareDiffPartNumberList();
     }
 
-    @Test
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         ThreadExecutor es = new ThreadExecutor();

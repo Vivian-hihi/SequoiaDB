@@ -64,7 +64,7 @@ public class UploadPart18682 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    @Test(dataProvider = "uploadProvider")
+    @Test(enabled = false) // (dataProvider = "uploadProvider")
     private void testUpload(String keyName, long oldPartSize, long newPartSize) throws Exception {
         runSuccess = false;
         partEtags = new ArrayList<>();
