@@ -27,7 +27,7 @@ function main()
    var groups = commGetGroups(db, false, "", false, true, true );
    var groupNames = [ groups[1][0].GroupName, groups[2][0].GroupName ];
    var cl;
-   var recordsNum = getRandomInt(5000, 10000);
+   var recordsNum = getRandomInt(1000, 5000);
    println( "\nrecords number = " + recordsNum );
 
    commDropCS( db, csName, true, "drop cs in the begin");

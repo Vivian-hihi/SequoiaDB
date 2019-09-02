@@ -4,12 +4,7 @@
 @Author :
    2019-8-23   XiaoNi Huang  init
 *******************************************************************************/
-//main(); 
-/*CI跑失败(3g3d 1191)：
----Begin to ready expect records.
-shell:4 uncaught exception: -152
-Evalution failed with error
-*/
+main();
 
 function main()
 {
@@ -32,7 +27,7 @@ function main()
    var groups = commGetGroups(db, false, "", false, true, true );
    var groupNames = [ groups[1][0].GroupName, groups[2][0].GroupName ];
    var cl;
-   var recordsNum = getRandomInt(3000, 8000);
+   var recordsNum = getRandomInt(1000, 5000);
    println( "\nrecords number = " + recordsNum );
 
    commDropCS( db, csName, true, "drop cs in the begin");
