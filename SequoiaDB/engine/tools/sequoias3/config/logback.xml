@@ -24,6 +24,8 @@
         </encoder>
     </appender>
 
+	<logger name="org.apache.http" level="INFO"/>
+    <logger name="org.springframework" level="INFO"></logger>
     <root level="INFO">
         <appender-ref ref="FILE"/>
     </root>
