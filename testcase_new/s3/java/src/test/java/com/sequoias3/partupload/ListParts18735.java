@@ -25,13 +25,11 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 带partnumberMarker和nextPartnumberMarker查询分段列表
- * testlink-case:seqDB-18735
- * 
- * @author wangkexin
- * @Date 2019.8.5
- * @version 1.00
+ * @Description seqDB-18735:带partnumberMarker和nextPartnumberMarker查询分段列表
+ * @Author wangkexin
+ * @Date 2019.08.05
  */
+
 public class ListParts18735 extends S3TestBase {
     private boolean runSuccess = false;
     private int partNumber = 6;
@@ -87,9 +85,11 @@ public class ListParts18735 extends S3TestBase {
             int partNumber = parts.getPartNumber();
             actPartNumbersList.add(partNumber);
         }
-        // check the keyName
-        partNumbers.remove(0);// TODO 建议另外定义一个变量赋值，不要在原始值上面改，出问题时可能会影响定位
-        Assert.assertEquals(actPartNumbersList, partNumbers);
+        // 检查结果
+        List<Integer> expPartNumbers = new ArrayList<>();
+        expPartNumbers.addAll(partNumbers);
+        expPartNumbers.remove(0);
+        Assert.assertEquals(actPartNumbersList, expPartNumbers);
         runSuccess = true;
     }
 

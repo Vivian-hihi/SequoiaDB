@@ -31,12 +31,11 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 import com.sequoias3.user.UserCommDefind;
 
 /**
- * test content: 上传分段号为降序 testlink-case: seqDB-18683
- * 
- * @author wangkexin
- * @Date 2019.7.29
- * @version 1.00
+ * @Description seqDB-18683:上传分段号为降序
+ * @Author wangkexin
+ * @Date 2019.07.29
  */
+
 public class UploadPart18683 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18683";
@@ -76,11 +75,11 @@ public class UploadPart18683 extends S3TestBase {
         uploadPart(partSize * 2, 3);
         // 完成分段上传
         try {
-            completeMultipartUpload();// TODO
-                                      // 用公共方法PartUploadUtils.completeMultipartUpload
+            // 由于客户端发送请求时会自动将partEtags中的内容按照partNumber升序排序，所以此处使用REST接口发送请求
+            completeMultipartUpload();
             Assert.fail("the list of parts was not in ascending order should fail.");
         } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "InvalidPartOrder ");
+            Assert.assertEquals(e.getErrorCode(), "InvalidPartOrder");
         }
         runSuccess = true;
     }
@@ -108,7 +107,6 @@ public class UploadPart18683 extends S3TestBase {
         Assert.assertEquals(actPartMd5, expPartMd5, "part number = " + uploadPartResult.getPartETag().getPartNumber());
     }
 
-    // TODO 删除用公共方法
     private void completeMultipartUpload() throws Exception {
         HttpPost request = new HttpPost(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
                 + URLEncoder.encode(keyName, "UTF-8") + "?uploadId=" + uploadId);
@@ -133,7 +131,6 @@ public class UploadPart18683 extends S3TestBase {
         }
     }
 
-    // TODO 删除如下方法
     private AmazonS3Exception httpToAmazon(Exception e) {
         AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
         amazonS3Exception.setErrorCode(getString(e.getMessage(), "Code"));
@@ -141,7 +138,6 @@ public class UploadPart18683 extends S3TestBase {
         return amazonS3Exception;
     }
 
-    // TODO 删除删除如下方法
     private String getString(String s, String flag) {
         int length = flag.length();
         String parttern = "<" + flag + ">.*</" + flag + ">";

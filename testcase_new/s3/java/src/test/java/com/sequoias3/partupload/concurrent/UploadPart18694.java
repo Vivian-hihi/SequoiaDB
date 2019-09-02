@@ -1,13 +1,10 @@
 package com.sequoias3.partupload.concurrent;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.commons.codec.binary.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -28,22 +25,23 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 开启版本控制，多次分段上传相同对象 testlink-case:seqDB-18694
- * 
- * @author wangkexin
- * @Date 2019.7.30
- * @version 1.00
+ * @Description seqDB-18694:开启版本控制，多次分段上传相同对象
+ * @Author wangkexin
+ * @Date 2019.07.30
  */
+
 public class UploadPart18694 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18694";
     private String keyName = "key18694";
     private AmazonS3 s3Client = null;
-    private long fileSize = 500 * 1024;
+    private long fileSize = 300 * 1024;
     private long partSize = 100 * 1024;
     private File localPath = null;
-    private File file = null;
-    private String filePath = null;
+    private File oldFile = null;
+    private File newFile = null;
+    private String oldFilePath = null;
+    private String newFilePath = null;
     private List<PartETag> partEtags = new CopyOnWriteArrayList<>();
     private int[] partNums1 = new int[] { 1, 3, 5 };
     private int[] partNums2 = new int[] { 2, 3, 5 };
@@ -51,12 +49,15 @@ public class UploadPart18694 extends S3TestBase {
     @BeforeClass
     private void setUp() throws IOException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+        oldFilePath = localPath + File.separator + "localFile_" + fileSize + "old.txt";
+        newFilePath = localPath + File.separator + "localFile_" + fileSize + "new.txt";
 
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
-        TestTools.LocalFile.createFile(filePath, fileSize);
-        file = new File(filePath);
+        TestTools.LocalFile.createFile(oldFilePath, fileSize);
+        TestTools.LocalFile.createFile(newFilePath, fileSize);
+        oldFile = new File(oldFilePath);
+        newFile = new File(newFilePath);
 
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
@@ -66,13 +67,27 @@ public class UploadPart18694 extends S3TestBase {
 
     @Test
     private void testUpload() throws Exception {
+        long filepositon = 0;
         // 指定多个分段上传对象
-        String uploadId1 = putObject(partNums1);
+        String uploadId1 = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        ThreadExecutor es = new ThreadExecutor();
+        for (int i : partNums1) {
+            es.addWorker(new ThreadUploadPart18694(i, filepositon, oldFile, uploadId1));
+            filepositon += partSize;
+        }
+        es.run();
         List<PartETag> partEtags1 = partEtags;
 
         // 再次指定多个分段上传对象
+        filepositon = 0;
         partEtags = new CopyOnWriteArrayList<>();
-        String uploadId2 = putObject(partNums2);
+        String uploadId2 = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        es = new ThreadExecutor();
+        for (int i : partNums2) {
+            es.addWorker(new ThreadUploadPart18694(i, filepositon, newFile, uploadId2));
+            filepositon += partSize;
+        }
+        es.run();
         List<PartETag> partEtags2 = partEtags;
 
         // 完成分段上传
@@ -94,30 +109,23 @@ public class UploadPart18694 extends S3TestBase {
         }
     }
 
-    private String putObject(int[] partNums) throws Exception {
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-        ThreadExecutor es = new ThreadExecutor();// TODO 并发建议直接写在test里面
-        for (int i : partNums) {
-            es.addWorker(new ThreadUploadPart18694(i, uploadId));
-        }
-        es.run();
-        return uploadId;
-    }
-
     class ThreadUploadPart18694 {
         private AmazonS3 s3Client = CommLib.buildS3Client();
         private int partNumber;
+        private long filepositon;
+        private File file;
         private String uploadId;
 
-        public ThreadUploadPart18694(int partNumber, String uploadId) {
+        public ThreadUploadPart18694(int partNumber, long filepositon, File file, String uploadId) {
             this.partNumber = partNumber;
+            this.filepositon = filepositon;
+            this.file = file;
             this.uploadId = uploadId;
         }
 
         @ExecuteOrder(step = 1, desc = "分段上传对象")
         public void putObject() {
             try {
-                long filepositon = (partNumber - 1) * partSize;
                 UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(filepositon)
                         .withPartNumber(partNumber).withPartSize(partSize).withBucketName(bucketName).withKey(keyName)
                         .withUploadId(uploadId);
@@ -132,35 +140,12 @@ public class UploadPart18694 extends S3TestBase {
     }
 
     private void checkResult() throws Exception {
-        String actMd5List = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, "1");
-        String expMd5List = getMd5(partNums2);
-        Assert.assertEquals(actMd5List, expMd5List, "version id = 1");
+        String expMd5 = TestTools.getMD5(newFilePath);
+        String downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, "1");
+        Assert.assertEquals(downloadMd5, expMd5, "version id = 1");
 
-        actMd5List = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, "0");
-        expMd5List = getMd5(partNums1);
-        Assert.assertEquals(actMd5List, expMd5List, "version id = 0");
-    }
-
-    private String getMd5(int[] partNums) throws IOException {// TODO 不能直接用公共方法？
-        FileInputStream fileInputStream = null;
-        int length = (int) file.length();
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            fileInputStream = new FileInputStream(file);
-            byte[] buffer = new byte[length];
-            if (fileInputStream.read(buffer) != -1) {
-                for (int i = 0; i < partNums.length; i++) {
-                    md5.update(buffer, (int) ((partNums[i] - 1) * partSize), (int) partSize);
-                }
-            }
-            return new String(Hex.encodeHex(md5.digest()));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;// TODO ??为什么需要返回null？这里可以不用catch
-        } finally {
-            if (fileInputStream != null) {
-                fileInputStream.close();
-            }
-        }
+        expMd5 = TestTools.getMD5(oldFilePath);
+        downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, "0");
+        Assert.assertEquals(downloadMd5, expMd5, "version id = 0");
     }
 }

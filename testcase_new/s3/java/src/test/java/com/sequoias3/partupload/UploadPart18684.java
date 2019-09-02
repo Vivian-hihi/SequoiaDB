@@ -22,12 +22,11 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 关闭检测开关，上传多个分段存在分段为空 testlink-case: seqDB-18684
- * 
- * @author wangkexin
- * @Date 2019.7.29
- * @version 1.00
+ * @Description seqDB-18684:关闭检测开关，上传多个分段存在分段为空
+ * @Author wangkexin
+ * @Date 2019.07.29
  */
+
 public class UploadPart18684 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18684";
@@ -57,19 +56,45 @@ public class UploadPart18684 extends S3TestBase {
 
     @Test
     private void testUpload() throws Exception {
+        long filepositon, partSize;
+        int partNumber;
+
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        filepositon = 0;
+        partSize = 0;
+        partNumber = 1;
         // upload part 1
-        uploadPart(0, 0, 1);// TODO 建议数字通过传参的方式，不然就看这一行代码不指定每个值的含义
+        uploadPart(filepositon, partSize, partNumber);
+
+        filepositon = 0;
+        partSize = 100 * 1024;
+        partNumber = 2;
         // upload part 2
-        uploadPart(0, 100 * 1024, 2);
+        uploadPart(filepositon, partSize, partNumber);
+
+        filepositon = 100 * 1024;
+        partSize = 0;
+        partNumber = 3;
         // upload part 3
-        uploadPart(100 * 1024, 0, 3);
+        uploadPart(filepositon, partSize, partNumber);
+
+        filepositon = 100 * 1024;
+        partSize = 200 * 1024;
+        partNumber = 4;
         // upload part 4
-        uploadPart(100 * 1024, 200 * 1024, 4);
+        uploadPart(filepositon, partSize, partNumber);
+
+        filepositon = 300 * 1024;
+        partSize = 200 * 1024;
+        partNumber = 5;
         // upload part 5
-        uploadPart(300 * 1024, 200 * 1024, 5);
+        uploadPart(filepositon, partSize, partNumber);
+
+        filepositon = 500 * 1024;
+        partSize = 0;
+        partNumber = 6;
         // upload part 6
-        uploadPart(500 * 1024, 0, 6);
+        uploadPart(filepositon, partSize, partNumber);
         // 完成分段上传
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
         String expMd5 = TestTools.getMD5(filePath);

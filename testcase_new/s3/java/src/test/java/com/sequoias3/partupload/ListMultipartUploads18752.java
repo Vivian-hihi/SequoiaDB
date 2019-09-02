@@ -20,13 +20,12 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 带prefix、keyMarker、uploadIdMarker和delimiter匹配查询桶分段上传列表
- * testlink-case: seqDB-18752
- * 
- * @author wangkexin
- * @Date 2019.8.5
- * @version 1.00
+ * @Description seqDB-18752:带prefix、keyMarker、
+ *              uploadIdMarker和delimiter匹配查询桶分段上传列表
+ * @Author wangkexin
+ * @Date 2019.08.05
  */
+
 public class ListMultipartUploads18752 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18752";
@@ -67,7 +66,6 @@ public class ListMultipartUploads18752 extends S3TestBase {
         List<String> expCommonPrefixes = new ArrayList<>();
         expCommonPrefixes.add("dir1a/");
         expCommonPrefixes.add("dir1b/");
-        // TODO 文本用例预期结果：...upload项中显示为空，这个貌似没校验
         MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
         expUploads.add(keyNames[4], uploadIds1.get(4));
         expUploads.add(keyNames[4], uploadIds2.get(4));

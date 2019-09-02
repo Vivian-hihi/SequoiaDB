@@ -28,14 +28,11 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 关闭检测开关，上传多个分段存在partNum为1、部分连续分段号且分段长度不一致
- * testlink-case:seqDB-18689
- * 
- * @author wangkexin
- * @Date 2019.7.30
- * @version 1.00
+ * @Description seqDB-18689:关闭检测开关，上传多个分段存在partNum为1、部分连续分段号且分段长度不一致
+ * @Author wangkexin
+ * @Date 2019.07.30
  */
-@Test(groups = "partsizelimitoff")
+
 public class UploadPart18689 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18689";
@@ -123,6 +120,8 @@ public class UploadPart18689 extends S3TestBase {
     private void preparePartList() {
         // part 1: 10k , part 2: 5k , part 3: 5k , part 5: 10k , part 50: 20k ,
         // part 51: 15k ,part 100: 10k
+
+        // parts = {offset, partsize, partNumber}
         int[] parts = new int[] { 0, 10 * 1024, 1 };
         partList.add(parts);
         parts = new int[] { 10 * 1024, 5 * 1024, 2 };
@@ -154,8 +153,6 @@ public class UploadPart18689 extends S3TestBase {
             String expMd5 = new String(Hex.encodeHex(md5.digest()));
             String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
             Assert.assertEquals(actMd5, expMd5);
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (fileInputStream != null) {
                 fileInputStream.close();

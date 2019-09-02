@@ -22,12 +22,11 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 指定nextPartnumberMarker匹配记录不存在，查询分段列表 testlink-case: seqDB-18734
- * 
- * @author wangkexin
- * @Date 2019.8.5
- * @version 1.00
+ * @Description seqDB-18734:指定nextPartnumberMarker匹配记录不存在，查询分段列表
+ * @Author wangkexin
+ * @Date 2019.08.05
  */
+
 public class ListParts18734 extends S3TestBase {
     private boolean runSuccess = false;
     private int partNumber = 5;
@@ -71,10 +70,10 @@ public class ListParts18734 extends S3TestBase {
             actPartNumbersList.add(partNumber);
         }
 
-        // check the keyName
         Assert.assertEquals(actPartNumbersList, expPartNumbersList);
         Assert.assertEquals((int) listResult.getNextPartNumberMarker(), maxParts);
-        // TODO 再次查询，添加注释。容易看成预期结果。
+
+        // 再次查询指定PartNumberMarker匹配记录不存在，返回结果为空
         request.setPartNumberMarker(partNumber);
         listResult = s3Client.listParts(request);
         int actListSize = listResult.getParts().size();

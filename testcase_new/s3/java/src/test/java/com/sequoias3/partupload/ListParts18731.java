@@ -22,12 +22,11 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
- * test content:非桶管理用户查询分段列表 testlink-case: seqDB-18731
- * 
- * @author wangkexin
- * @Date 2019.8.5
- * @version 1.00
+ * @Description seqDB-18731:非桶管理用户查询分段列表
+ * @Author wangkexin
+ * @Date 2019.08.05
  */
+
 public class ListParts18731 extends S3TestBase {
     private boolean runSuccess = false;
     private String userNameA = "userA18731";
@@ -55,14 +54,14 @@ public class ListParts18731 extends S3TestBase {
         CommLib.clearUser(userNameA);
         CommLib.clearUser(userNameB);
 
-        // create user A
+        // 创建用户 A
         String[] acessKeys = UserUtils.createUser(userNameA, roleName);
         s3ClientA = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 
         CommLib.clearBucket(s3ClientA, bucketName);
         s3ClientA.createBucket(new CreateBucketRequest(bucketName));
 
-        // create user B
+        // 创建用户 B
         String[] acessKeysB = UserUtils.createUser(userNameB, roleName);
         s3ClientB = CommLib.buildS3Client(acessKeysB[0], acessKeysB[1]);
     }
@@ -83,7 +82,8 @@ public class ListParts18731 extends S3TestBase {
         }
 
         PartUploadUtils.completeMultipartUpload(s3ClientA, bucketName, keyName, uploadId, partEtags);
-        // check //TODO 注释要不就都英文，要不都中文，风格保持一致
+
+        // 检查结果
         String expMd5 = TestTools.getMD5(filePath);
         String downloadMd5 = ObjectUtils.getMd5OfObject(s3ClientA, localPath, bucketName, keyName);
         Assert.assertEquals(downloadMd5, expMd5);

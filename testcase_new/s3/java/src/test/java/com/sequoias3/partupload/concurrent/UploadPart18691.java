@@ -24,13 +24,11 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 关闭检测开关，上传多个分段不存在partNum为1、连续分段号且分段长度不一致
- * testlink-case:seqDB-18691
- * 
- * @author wangkexin
- * @Date 2019.7.30
- * @version 1.00
+ * @Description seqDB-18691:关闭检测开关，上传多个分段不存在partNum为1、连续分段号且分段长度不一致
+ * @Author wangkexin
+ * @Date 2019.07.30
  */
+
 public class UploadPart18691 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18691";

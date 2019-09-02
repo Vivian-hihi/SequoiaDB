@@ -21,12 +21,11 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 不同key并发上传分段 testlink-case:seqDB-18762
- * 
- * @author wangkexin
- * @Date 2019.8.7
- * @version 1.00
+ * @Description seqDB-18762:不同key并发上传分段
+ * @Author wangkexin
+ * @Date 2019.08.07
  */
+
 public class UploadPart18762 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18762";
@@ -89,7 +88,6 @@ public class UploadPart18762 extends S3TestBase {
     }
 
     class ThreadUploadPart18762 {
-        private AmazonS3 s3Client = CommLib.buildS3Client();
         private String keyName;
         private long partSize;
         private File file;
@@ -109,17 +107,12 @@ public class UploadPart18762 extends S3TestBase {
 
         @ExecuteOrder(step = 2, desc = "分段上传对象")
         public void UploadPart() {
-            PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file, partSize);
+            partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file, partSize);
         }
 
         @ExecuteOrder(step = 3, desc = "完成分段上传")
         public void CompleteMultipartUpload() {
-            try {
-                PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
-            } finally {
-                s3Client.shutdown();// TODO
-                                    // step3之前失败了client残留。建议在当前类里面使用@AfterClass关闭client
-            }
+            PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
         }
     }
 }

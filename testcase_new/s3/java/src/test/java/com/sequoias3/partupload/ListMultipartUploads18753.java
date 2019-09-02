@@ -20,13 +20,12 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 带prefix、keyMarker、uploadIdMarker和delimiter查询桶分段上传列表，不匹配其中一个条件
- * testlink-case: seqDB-18753
- * 
- * @author wangkexin
- * @Date 2019.8.6
- * @version 1.00
+ * @Description seqDB-18753:带prefix、keyMarker、uploadIdMarker和delimiter查询桶分段上传列表，
+ *              不匹配其中一个条件
+ * @Author wangkexin
+ * @Date 2019.08.06
  */
+
 public class ListMultipartUploads18753 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18753";

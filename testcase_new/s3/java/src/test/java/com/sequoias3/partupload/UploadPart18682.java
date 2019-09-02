@@ -23,23 +23,20 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 上传相同分段，其中分段长度不同 testlink-case: seqDB-18682 //TODO
- * 直接贴testlink用例标题就可以了，如"@Description seqDB-18682:上传...."（-公共问题-）
- * 
- * @author wangkexin
- * @Date 2019.7.25
- * @version 1.00
+ * @Description seqDB-18682:上传相同分段，其中分段长度不同
+ * @Author wangkexin
+ * @Date 2019.07.25
  */
-// TODO 所有的缩进都是用的Tab键，要改成4个空格（-公共问题-）
+
 public class UploadPart18682 extends S3TestBase {
     @DataProvider(name = "uploadProvider")
     public Object[][] generateObjectNumber() {
+        // parameter : keyName, oldPartSize, newPartSize
         return new Object[][] {
                 // test a : 再次上传分段长度大于原分段长度
                 new Object[] { "/dir1/dir2/obj18682a.tar", 4 * 1024 * 1024, 5 * 1024 * 1024 },
                 // test b : 再次上传分段长度小于原分段长度
-                new Object[] { "/dir1/dir2/obj18682b.tar", 5 * 1024 * 1024, 2 * 1024 * 1024 }, };// TODO
-                                                                                                 // 末尾最后一个元素结尾“,”去掉
+                new Object[] { "/dir1/dir2/obj18682b.tar", 5 * 1024 * 1024, 2 * 1024 * 1024 } };
     }
 
     private boolean runSuccess = false;
@@ -69,15 +66,16 @@ public class UploadPart18682 extends S3TestBase {
 
     @Test(dataProvider = "uploadProvider")
     private void testUpload(String keyName, long oldPartSize, long newPartSize) throws Exception {
+        runSuccess = false;
         partEtags = new ArrayList<>();
         uploadPartFirst(keyName, oldPartSize);
         long partTwoOffset = oldPartSize;
 
         uploadPartTwoAgain(keyName, partTwoOffset, newPartSize);
         long currentFileSize = partTwoOffset + newPartSize;
+        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
         checkResult(keyName, currentFileSize);
-        runSuccess = true; // TODO
-                           // 参数池，参数1成功参数2失败，则最终runSuccess也是为true，赋值不准确(公共问题)
+        runSuccess = true;
     }
 
     @AfterClass
@@ -122,8 +120,6 @@ public class UploadPart18682 extends S3TestBase {
     }
 
     private void checkResult(String keyName, long fileSize) throws Exception {
-        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);// TODO
-                                                                                                    // 上传文件操作步骤，放到test
         String expMd5 = TestTools.getFilePartMD5(file, 0, fileSize);
         String downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
         Assert.assertEquals(downloadMd5, expMd5);

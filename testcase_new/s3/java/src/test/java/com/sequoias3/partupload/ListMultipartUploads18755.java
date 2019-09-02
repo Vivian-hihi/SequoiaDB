@@ -22,12 +22,11 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content:带delimiter和maxkeys查询桶分段上传列表，只匹配其中一个条件 testlink-case: seqDB-18755
- * 
- * @author wangkexin
- * @Date 2019.8.6
- * @version 1.00
+ * @Description seqDB-18755:带delimiter和maxkeys查询桶分段上传列表，只匹配其中一个条件
+ * @Author wangkexin
+ * @Date 2019.08.06
  */
+
 public class ListMultipartUploads18755 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18755";
@@ -80,7 +79,6 @@ public class ListMultipartUploads18755 extends S3TestBase {
         }
     }
 
-    // TODO 代码能不能简化？太复杂了。建议分类抽取私有方法，或者能用公共方法的尽量用公共方法，这样看着一大段代码然后各种变量好累的，不好维护
     private void listAndCheckResult(String delimiter, int maxUploads, int expReturnedUploadNum,
             List<String> expCommonPrefixes, MultiValueMap<String, String> expUploads) {
         ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);

@@ -23,15 +23,15 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content:带partnumberMarker查询分段列表 testlink-case: seqDB-18733
- * 
- * @author wangkexin
- * @Date 2019.8.5
- * @version 1.00
+ * @Description seqDB-18733:带partnumberMarker查询分段列表
+ * @Author wangkexin
+ * @Date 2019.08.05
  */
+
 public class ListParts18733 extends S3TestBase {
     @DataProvider(name = "partNumberMarkerProvider")
     public Object[][] generateObjectNumber() {
+        // parameter : partNumberMarker, expPartNumbersList
         return new Object[][] {
                 // test a : 指定第一个partnumber
                 new Object[] { 1, Arrays.asList(2, 3, 4, 5) },
@@ -75,6 +75,7 @@ public class ListParts18733 extends S3TestBase {
 
     @Test(dataProvider = "partNumberMarkerProvider")
     private void testListParts(Integer partNumberMarker, List<Integer> expPartNumbersList) throws Exception {
+        runSuccess = false;
         ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
         request.setPartNumberMarker(partNumberMarker);
         PartListing listResult = s3Client.listParts(request);
@@ -87,8 +88,7 @@ public class ListParts18733 extends S3TestBase {
 
         // check the keyName
         Assert.assertEquals(actPartNumbersList, expPartNumbersList);
-
-        runSuccess = true;// TODO 赋值不准确，同18682（公共问题）
+        runSuccess = true;
     }
 
     @AfterClass

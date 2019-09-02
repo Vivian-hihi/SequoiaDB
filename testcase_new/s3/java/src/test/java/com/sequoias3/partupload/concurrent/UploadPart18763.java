@@ -31,12 +31,11 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 相同key相同uploadId并发上传分段 testlink-case:seqDB-18763
- * 
- * @author wangkexin
- * @Date 2019.8.7
- * @version 1.00
+ * @Description seqDB-18763:相同key相同uploadId并发上传分段
+ * @Author wangkexin
+ * @Date 2019.08.07
  */
+
 public class UploadPart18763 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18763";
@@ -66,7 +65,10 @@ public class UploadPart18763 extends S3TestBase {
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(new CreateBucketRequest(bucketName));
 
-        preparePartNumberList();
+        // 准备相同分段数据，如指定分段号为1，覆盖a:分段长度不同 ，b:分段长度相同
+        prepareSamePartNumberList();
+        // 准备其他分段数据，如指定分段号为2,3,4,5,6，覆盖a:分段长度不同 ，b:分段长度相同
+        prepareDiffPartNumberList();
     }
 
     @Test
@@ -80,8 +82,8 @@ public class UploadPart18763 extends S3TestBase {
             es.addWorker(new ThreadUploadDiffPart18763(diffPartNumberList.get(i)));
         }
         es.run();
-        // TODO 后面的代码有些乱，建议优化。测试点和检查结果最好能直接跟文本用例对应上
-        // 查询分段上传列表
+
+        // 查询分段上传列表 查出实际上传成功part1的etag值
         String actSamePartNumberEtag = "";
         PartETag samePartEtag = null;
         ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
@@ -93,13 +95,11 @@ public class UploadPart18763 extends S3TestBase {
 
         // 查看相同分段（分段1）的etag值是否正确
         Assert.assertTrue(expSamePartNumberEtags.contains(actSamePartNumberEtag),
-                "actSamePartNumberEtag : " + actSamePartNumberEtag + ", expSamePartNumberEtags :"
-                        + expSamePartNumberEtags.toString() + ", diffPartNumberEtags : " // TODO
-                                                                                         // 上下首字符对齐
+                "actSamePartNumberEtag : " + actSamePartNumberEtag + ", expSamePartNumberEtags : "
+                        + expSamePartNumberEtags.toString() + ", diffPartNumberEtags : "
                         + diffPartNumberEtags.toString());
 
-        // 将分段1的PartETag值与其他分段PartETag值放在一起，完成分段上传 //TODO
-        // 注释按测试点写，这个看不出来测的啥（其他注释也是一样的）
+        // 将分段1的PartETag值与其他分段PartETag值放在一起，完成分段上传
         diffPartNumberEtags.add(samePartEtag);
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, diffPartNumberEtags);
 
@@ -178,10 +178,11 @@ public class UploadPart18763 extends S3TestBase {
         }
     }
 
-    // TODO samePartNumberList、expSamePartNumberEtags、diffPartNumberList分3个方法写
-    private void preparePartNumberList() throws IOException {
-        int[] parts = { 0, 2 * 1024 * 1024, 1 };// TODO 加注释说明下每个值的含义
+    private void prepareSamePartNumberList() throws IOException {
+        // parameter: parts{offset, partSize, partNumber}
+        int[] parts = { 0, 2 * 1024 * 1024, 1 };
         samePartNumberList.add(parts);
+        // expSamePartNumberEtags[part1Md5, part2Md5, part3Md5, ...]
         expSamePartNumberEtags.add(TestTools.getFilePartMD5(file, parts[0], parts[1]));
         parts = new int[] { 0, 3 * 1024 * 1024, 1 };
         samePartNumberList.add(parts);
@@ -195,8 +196,11 @@ public class UploadPart18763 extends S3TestBase {
         parts = new int[] { 3 * 1024 * 1024, 2 * 1024 * 1024, 1 };
         samePartNumberList.add(parts);
         expSamePartNumberEtags.add(TestTools.getFilePartMD5(file, parts[0], parts[1]));
+    }
 
-        parts = new int[] { 10 * 1024 * 1024, 5 * 1024 * 1024, 2 };
+    private void prepareDiffPartNumberList() throws IOException {
+        // parameter: parts{offset, partSize, partNumber}
+        int[] parts = new int[] { 10 * 1024 * 1024, 5 * 1024 * 1024, 2 };
         diffPartNumberList.add(parts);
         parts = new int[] { 15 * 1024 * 1024, 5 * 1024 * 1024, 3 };
         diffPartNumberList.add(parts);
@@ -223,8 +227,6 @@ public class UploadPart18763 extends S3TestBase {
             String expMd5 = new String(Hex.encodeHex(md5.digest()));
             String actMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
             Assert.assertEquals(actMd5, expMd5);
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (fileInputStream != null) {
                 fileInputStream.close();

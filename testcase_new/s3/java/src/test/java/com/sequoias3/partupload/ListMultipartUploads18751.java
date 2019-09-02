@@ -22,12 +22,11 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content:带prefix、keyMarker匹配查询桶分段上传列表 testlink-case: seqDB-18751
- * 
- * @author wangkexin
- * @Date 2019.8.5
- * @version 1.00
+ * @Description seqDB-18751:带prefix、keyMarker匹配查询桶分段上传列表
+ * @Author wangkexin
+ * @Date 2019.08.05
  */
+
 public class ListMultipartUploads18751 extends S3TestBase {
     private boolean runSuccess = false;
     private int partNumber = 3;

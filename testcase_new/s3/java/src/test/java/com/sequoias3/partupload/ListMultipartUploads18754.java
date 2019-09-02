@@ -23,12 +23,11 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * test content: 带delimiter和maxkeys查询桶分段上传列表 testlink-case: seqDB-18754
- * 
- * @author wangkexin
- * @Date 2019.8.6
- * @version 1.00
+ * @Description seqDB-18754:带delimiter和maxkeys查询桶分段上传列表
+ * @Author wangkexin
+ * @Date 2019.08.06
  */
+
 public class ListMultipartUploads18754 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18754";
@@ -56,7 +55,7 @@ public class ListMultipartUploads18754 extends S3TestBase {
             uploadIds2.add(uploadId);
         }
 
-        // 指定maxkeys为3 //TODO 注释按测试点说明更详细一点，这个注释看不出什么内容
+        // 指定maxkeys一次返回所有匹配条件的对象，指定为3
         ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
         request.setDelimiter("/");
         request.setMaxUploads(3);
@@ -69,8 +68,7 @@ public class ListMultipartUploads18754 extends S3TestBase {
         MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
         PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
 
-        // 指定maxkeys为1 //TODO
-        // 代码能不能简化？或者分类抽取私有方法，这样看着一大段代码然后各种变量好累的。另外list有公共方法，有些可以直接用公共方法
+        // 指定maxkeys多次返回所有匹配条件的对象，指定为1
         ListMultipartUploadsRequest request2 = new ListMultipartUploadsRequest(bucketName);
         request2.setDelimiter("/");
         request2.setMaxUploads(1);
