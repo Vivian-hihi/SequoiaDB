@@ -826,16 +826,6 @@ namespace engine
          }
          itr++ ;
       }
-
-      // Release all cached contexts, if any.
-      if ( _dataOprCtxQue.size() > 0 )
-      {
-         rtnExtContextBase *ctx = NULL ;
-         while ( _dataOprCtxQue.try_pop( ctx ) )
-         {
-            SAFE_OSS_DELETE( ctx ) ;
-         }
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTCONTEXTMGR_FINDCONTEXT, "_rtnExtContextMgr::findContext" )
@@ -869,17 +859,7 @@ namespace engine
          case DMS_EXTOPR_TYPE_INSERT:
          case DMS_EXTOPR_TYPE_DELETE:
          case DMS_EXTOPR_TYPE_UPDATE:
-            // First try to get a cached context from the queue. If there is not
-            // any, allocate a new one.
-            if ( !_dataOprCtxQue.try_pop( newCtx ) )
-            {
-               newCtx = SDB_OSS_NEW rtnExtDataOprCtx( type ) ;
-            }
-            else
-            {
-               SDB_ASSERT( newCtx, "Context from cache is NULL" ) ;
-               ((rtnExtDataOprCtx *)newCtx)->reset( type ) ;
-            }
+            newCtx = SDB_OSS_NEW rtnExtDataOprCtx( type ) ;
             break ;
          case DMS_EXTOPR_TYPE_DROPCS:
             newCtx = SDB_OSS_NEW rtnExtDropCSCtx ;
@@ -957,15 +937,7 @@ namespace engine
 
       if ( context )
       {
-         if ( context->canCache() &&
-              ( _dataOprCtxQue.size() < RTN_EXT_CACHE_CTX_MAX ) )
-         {
-            _dataOprCtxQue.push( context ) ;
-         }
-         else
-         {
-            SDB_OSS_DEL context ;
-         }
+         SDB_OSS_DEL context ;
       }
 
    done:

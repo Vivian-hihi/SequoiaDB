@@ -62,7 +62,7 @@ namespace engine
 
    // The life circle of this context is in each operation. It holds all the
    // text index processors of one collection.
-   class _rtnExtContextBase : public SDBObject
+   class _rtnExtContextBase : public utilPooledObject
    {
    public:
       _rtnExtContextBase( DMS_EXTOPR_TYPE type ) ;
@@ -296,7 +296,6 @@ namespace engine
 
    private:
       RTN_CTX_MAP       _contextMap ;
-      ossQueue<rtnExtContextBase *> _dataOprCtxQue ;
    } ;
    typedef _rtnExtContextMgr rtnExtContextMgr ;
 }

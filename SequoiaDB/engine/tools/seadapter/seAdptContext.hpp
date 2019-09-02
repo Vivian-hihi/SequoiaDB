@@ -42,6 +42,7 @@
 #include "pmdEDU.hpp"
 #include "utilCommObjBuff.hpp"
 #include "utilESFetcher.hpp"
+#include "utilPooledObject.hpp"
 #include "rtnSimpleCondParser.hpp"
 #include "seAdptIdxMetaMgr.hpp"
 
@@ -86,7 +87,7 @@ namespace seadapter
 
    // Context for operations of adapter.
    // It maintains the buffer.
-   class _seAdptContextBase : public SDBObject
+   class _seAdptContextBase : public utilPooledObject
    {
    public:
       _seAdptContextBase() {}
