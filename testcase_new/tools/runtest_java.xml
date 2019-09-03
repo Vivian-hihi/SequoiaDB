@@ -217,6 +217,13 @@
                <var name="fail_num" value="0"/>
                <var name="error_num" value="0"/>
                <if>
+                   <equals arg1="@{xmlname}" arg2="s3testng.xml"/>
+                   <then>
+                      <var name="report_detect_dir" unset="true"/>
+                      <var name="report_detect_dir" value="${tmp_report_dir}/junitreports"/>
+                   </then>
+               </if>
+               <if>
                   <available file="${tmp_report_dir}/junitreports" type="dir"/>
                   <then>
                      <countstr str="&lt;failure&gt;"  resultproperty="fail_num">
