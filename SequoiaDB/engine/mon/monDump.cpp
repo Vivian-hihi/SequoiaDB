@@ -1516,10 +1516,10 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monTransFetcher, RTN_FETCH_TRANS )
 
    _monTransFetcher::_monTransFetcher()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _dumpCurrent = TRUE ;
       _detail = FALSE ;
-      _hitEnd = TRUE ;
       _addInfoMask = 0 ;
       _slice = 0 ;
    }
@@ -1579,11 +1579,6 @@ namespace engine
       }
       return _detail ? CMD_NAME_SNAPSHOT_TRANSACTIONS :
                        CMD_NAME_LIST_TRANSACTIONS ;
-   }
-
-   BOOLEAN _monTransFetcher::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monTransFetcher::_fetchNextTransInfo()
@@ -1773,7 +1768,6 @@ namespace engine
       _dumpCurrent = FALSE ;
       _detail = TRUE ;
       _addInfoMask = 0 ;
-      _hitEnd = TRUE ;
    }
 
    _monContextFetcher::~_monContextFetcher()
@@ -1826,11 +1820,6 @@ namespace engine
       }
       return _detail ? CMD_NAME_SNAPSHOT_CONTEXTS :
                        CMD_NAME_LIST_CONTEXTS ;
-   }
-
-   BOOLEAN _monContextFetcher::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monContextFetcher::fetch( BSONObj &obj )
@@ -2009,7 +1998,6 @@ namespace engine
       _dumpCurrent = TRUE ;
       _detail = FALSE ;
       _addInfoMask = 0 ;
-      _hitEnd = TRUE ;
    }
 
    _monSessionFetcher::~_monSessionFetcher()
@@ -2069,11 +2057,6 @@ namespace engine
       }
       return _detail ? CMD_NAME_SNAPSHOT_SESSIONS :
                        CMD_NAME_LIST_SESSIONS ;
-   }
-
-   BOOLEAN _monSessionFetcher::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monSessionFetcher::fetch( BSONObj &obj )
@@ -2245,7 +2228,6 @@ namespace engine
       _detail = FALSE ;
       _includeSys = FALSE ;
       _addInfoMask = 0 ;
-      _hitEnd = TRUE ;
    }
 
    _monCollectionFetch::~_monCollectionFetch()
@@ -2283,11 +2265,6 @@ namespace engine
    {
       return _detail ? CMD_NAME_SNAPSHOT_COLLECTIONS :
                        CMD_NAME_LIST_COLLECTIONS ;
-   }
-
-   BOOLEAN _monCollectionFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monCollectionFetch::fetch( BSONObj &obj )
@@ -2526,7 +2503,6 @@ namespace engine
       _detail = FALSE ;
       _includeSys = FALSE ;
       _addInfoMask = 0 ;
-      _hitEnd = TRUE ;
    }
 
    _monCollectionSpaceFetch::~_monCollectionSpaceFetch()
@@ -2564,11 +2540,6 @@ namespace engine
    {
       return _detail ? CMD_NAME_SNAPSHOT_COLLECTIONSPACES :
                        CMD_NAME_LIST_COLLECTIONSPACES ;
-   }
-
-   BOOLEAN _monCollectionSpaceFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monCollectionSpaceFetch::fetch( BSONObj &obj )
@@ -2765,7 +2736,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
    }
 
    _monDataBaseFetch::~_monDataBaseFetch()
@@ -2787,11 +2757,6 @@ namespace engine
    const CHAR* _monDataBaseFetch::getName() const
    {
       return CMD_NAME_SNAPSHOT_DATABASE ;
-   }
-
-   BOOLEAN _monDataBaseFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monDataBaseFetch::fetch( BSONObj &obj )
@@ -2901,7 +2866,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
    }
 
    _monSystemFetch::~_monSystemFetch()
@@ -2923,11 +2887,6 @@ namespace engine
    const CHAR* _monSystemFetch::getName() const
    {
       return CMD_NAME_SNAPSHOT_SYSTEM ;
-   }
-
-   BOOLEAN _monSystemFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monSystemFetch::fetch( BSONObj &obj )
@@ -3002,7 +2961,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
    }
 
    _monHealthFetch::~_monHealthFetch()
@@ -3024,11 +2982,6 @@ namespace engine
    const CHAR* _monHealthFetch::getName() const
    {
       return CMD_NAME_SNAPSHOT_HEALTH ;
-   }
-
-   BOOLEAN _monHealthFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MONHEALTHFETCH_FETCH, "_monHealthFetch::fetch" )
@@ -3111,7 +3064,6 @@ namespace engine
    {
       _includeSys    = FALSE ;
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
    }
 
    _monStorageUnitFetch::~_monStorageUnitFetch()
@@ -3139,11 +3091,6 @@ namespace engine
    const CHAR* _monStorageUnitFetch::getName() const
    {
       return CMD_NAME_LIST_STORAGEUNITS ;
-   }
-
-   BOOLEAN _monStorageUnitFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monStorageUnitFetch::fetch( BSONObj &obj )
@@ -3236,7 +3183,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
       _pos           = 0 ;
    }
 
@@ -3311,11 +3257,6 @@ namespace engine
    const CHAR* _monIndexFetch::getName() const
    {
       return CMD_NAME_GET_INDEXES ;
-   }
-
-   BOOLEAN _monIndexFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monIndexFetch::fetch( BSONObj &obj )
@@ -3427,7 +3368,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ * 4 )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
       _pos           = 0 ;
    }
 
@@ -3502,11 +3442,6 @@ namespace engine
    const CHAR* _monCLBlockFetch::getName() const
    {
       return CMD_NAME_GET_DATABLOCKS ;
-   }
-
-   BOOLEAN _monCLBlockFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monCLBlockFetch::fetch( BSONObj &obj )
@@ -3594,7 +3529,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
       _pos           = 0 ;
    }
 
@@ -3697,11 +3631,6 @@ namespace engine
       return CMD_NAME_LIST_BACKUPS ;
    }
 
-   BOOLEAN _monBackupFetch::isHitEnd() const
-   {
-      return _hitEnd ;
-   }
-
    INT32 _monBackupFetch::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
@@ -3779,7 +3708,6 @@ namespace engine
    _monAccessPlansFetch::_monAccessPlansFetch ()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
-      _hitEnd = TRUE ;
       _pos = 0 ;
    }
 
@@ -3844,11 +3772,6 @@ namespace engine
    const CHAR* _monAccessPlansFetch::getName () const
    {
       return CMD_NAME_SNAPSHOT_ACCESSPLANS ;
-   }
-
-   BOOLEAN _monAccessPlansFetch::isHitEnd () const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monAccessPlansFetch::fetch ( BSONObj &obj )
@@ -3930,7 +3853,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
-      _hitEnd        = TRUE ;
       _isLocalMode   = FALSE ;
       _isExpand      = TRUE ;
    }
@@ -3997,11 +3919,6 @@ namespace engine
       return CMD_NAME_SNAPSHOT_CONFIGS ;
    }
 
-   BOOLEAN _monConfigsFetch::isHitEnd() const
-   {
-      return _hitEnd ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MONCONFIGSFETCH_FETCH, "_monConfigsFetch::fetch" )
    INT32 _monConfigsFetch::fetch( BSONObj &obj )
    {
@@ -4058,7 +3975,6 @@ namespace engine
    _monVCLSessionInfoFetch::_monVCLSessionInfoFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
-      _hitEnd = TRUE ;
    }
 
    _monVCLSessionInfoFetch::~_monVCLSessionInfoFetch()
@@ -4103,11 +4019,6 @@ namespace engine
       return SYS_CL_SESSION_INFO ;
    }
 
-   BOOLEAN _monVCLSessionInfoFetch::isHitEnd() const
-   {
-      return _hitEnd ;
-   }
-
    INT32 _monVCLSessionInfoFetch::fetch( BSONObj & obj )
    {
       INT32 rc = SDB_OK ;
@@ -4133,7 +4044,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask = 0 ;
-      _hitEnd = TRUE ;
       _isDetail= TRUE ;
    }
 
@@ -4169,11 +4079,6 @@ namespace engine
    {
       return _isDetail ? CMD_NAME_SNAPSHOT_SVCTASKS :
                          CMD_NAME_LIST_SVCTASKS ;
-   }
-
-   BOOLEAN _monSvcTasksFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monSvcTasksFetch::fetch( BSONObj &obj )
@@ -4220,7 +4125,6 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask = 0 ;
-      _hitEnd = FALSE ;
       _isDetail= TRUE ;
    }
 
@@ -4234,7 +4138,7 @@ namespace engine
                                   UINT32 addInfoMask,
                                   const BSONObj obj )
    {
-
+      _hitEnd = TRUE ;
       _isDetail = isDetail ;
       _addInfoMask = addInfoMask ;
 
@@ -4244,11 +4148,6 @@ namespace engine
    const CHAR* _monQueriesFetch::getName() const
    {
       return CMD_NAME_SNAPSHOT_QUERIES ;
-   }
-
-   BOOLEAN _monQueriesFetch::isHitEnd() const
-   {
-      return _hitEnd ;
    }
 
    INT32 _monQueriesFetch::fetch( BSONObj &obj )

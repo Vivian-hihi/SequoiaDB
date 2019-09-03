@@ -137,7 +137,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -151,7 +150,6 @@ namespace engine
          BOOLEAN                    _dumpCurrent ;
          BOOLEAN                    _detail ;
          UINT32                     _addInfoMask ;
-         BOOLEAN                    _hitEnd ;
          UINT32                     _slice ;
    } ;
    typedef _monTransFetcher monTransFetcher ;
@@ -176,7 +174,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -187,7 +184,6 @@ namespace engine
          BOOLEAN                    _dumpCurrent ;
          BOOLEAN                    _detail ;
          UINT32                     _addInfoMask ;
-         BOOLEAN                    _hitEnd ;
 
          std::map<UINT64, pmdEDUCB::SET_CONTEXT >  _contextList ;
          std::map<UINT64, std::set<monContextFull> >  _contextInfoList ;
@@ -214,7 +210,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -225,7 +220,6 @@ namespace engine
          BOOLEAN                    _dumpCurrent ;
          BOOLEAN                    _detail ;
          UINT32                     _addInfoMask ;
-         BOOLEAN                    _hitEnd ;
 
          std::set<monEDUSimple>     _setInfoSimple ;
          std::set<monEDUFull>       _setInfoDetail ;
@@ -254,7 +248,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -265,7 +258,6 @@ namespace engine
          BOOLEAN                    _detail ;
          BOOLEAN                    _includeSys ;
          UINT32                     _addInfoMask ;
-         BOOLEAN                    _hitEnd ;
 
          MON_CL_SIM_LIST            _collectionList ;
          MON_CL_LIST                _collectionInfo ;
@@ -294,7 +286,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -305,7 +296,6 @@ namespace engine
          BOOLEAN                    _detail ;
          BOOLEAN                    _includeSys ;
          UINT32                     _addInfoMask ;
-         BOOLEAN                    _hitEnd ;
 
          MON_CS_SIM_LIST            _csList ;
          MON_CS_LIST                _csInfo ;
@@ -332,12 +322,10 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
    } ;
    typedef _monDataBaseFetch monDataBaseFetch ;
@@ -362,12 +350,10 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
    } ;
    typedef _monSystemFetch monSystemFetch ;
@@ -392,12 +378,10 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
    } ;
    typedef _monHealthFetch monHealthFetch ;
@@ -425,7 +409,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -434,7 +417,6 @@ namespace engine
       private:
          BOOLEAN                 _includeSys ;
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
          MON_SU_LIST             _suInfo ;
    } ;
@@ -460,7 +442,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -468,7 +449,6 @@ namespace engine
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
          UINT32                  _pos ;
          MON_IDX_LIST            _indexInfo ;
@@ -495,7 +475,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -503,7 +482,6 @@ namespace engine
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
          UINT32                  _pos ;
          vector<dmsExtentID>     _vecBlock ;
@@ -530,7 +508,6 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       protected:
@@ -538,7 +515,6 @@ namespace engine
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
 
          UINT32                  _pos ;
          vector < BSONObj >      _vecBackup ;
@@ -565,7 +541,6 @@ namespace engine
          virtual const CHAR* getName () const ;
 
       public :
-         virtual BOOLEAN isHitEnd () const ;
          virtual INT32 fetch ( BSONObj &obj ) ;
 
       protected :
@@ -574,7 +549,6 @@ namespace engine
       private :
          UINT32               _addInfoMask ;
          BSONObj              _sysInfo ;
-         BOOLEAN              _hitEnd ;
          UINT32               _pos ;
          vector<BSONObj>      _cachedPlanList ;
    } ;
@@ -601,12 +575,10 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
          BOOLEAN                 _isLocalMode ;
          BOOLEAN                 _isExpand ;
 
@@ -633,11 +605,9 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
-         BOOLEAN                 _hitEnd ;
          BSONObj                 _info ;
    } ;
    typedef _monVCLSessionInfoFetch monVCLSessionInfoFetch ;
@@ -662,12 +632,10 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
          BOOLEAN                 _isDetail ;
 
          MAP_SVCTASKINFO_PTR     _mapSvcTask ;
@@ -694,12 +662,10 @@ namespace engine
          virtual const CHAR*  getName() const ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const ;
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
          UINT32                  _addInfoMask ;
-         BOOLEAN                 _hitEnd ;
          BOOLEAN                 _isDetail ;
    } ;
    typedef _monQueriesFetch monQueriesFetch ;

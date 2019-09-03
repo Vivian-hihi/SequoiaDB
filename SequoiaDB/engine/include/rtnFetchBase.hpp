@@ -96,9 +96,7 @@ namespace engine
    class _rtnFetchBase : public SDBObject
    {
       public :
-         _rtnFetchBase() {}
-
-         _rtnFetchBase(INT32 sz) : _builder (sz) {}
+         _rtnFetchBase(INT32 sz) : _builder( sz ), _hitEnd( TRUE ) {}
 
          virtual ~_rtnFetchBase() {}
 
@@ -113,11 +111,14 @@ namespace engine
          virtual const CHAR*     getName() const = 0 ;
 
       public:
-         virtual BOOLEAN   isHitEnd() const = 0 ;
+         virtual BOOLEAN   isHitEnd() const { return _hitEnd ; }
          virtual INT32     fetch( BSONObj &obj ) = 0 ;
 
       public:
          BufBuilder _builder ;
+
+      protected:
+         BOOLEAN    _hitEnd ;
    } ;
    typedef _rtnFetchBase rtnFetchBase ;
 
