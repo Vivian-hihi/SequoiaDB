@@ -66,7 +66,7 @@ public class Split10527B extends SdbTestBase {
     }
 
     @Test(timeOut = 30 * 60 * 1000)
-    public void dropCS() {
+    public void test() {
         Sequoiadb dataNode = null;
         Split splitThread = null;
         try {
@@ -139,7 +139,8 @@ public class Split10527B extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(customCSName).getCollection(clName);
                 cl.split(srcGroupName, destGroupName, 90);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -34 && e.getErrorCode() != -23) {
+                if (e.getErrorCode() != -34 && e.getErrorCode() != -23
+                        && e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     throw e;
                 }
             } finally {
