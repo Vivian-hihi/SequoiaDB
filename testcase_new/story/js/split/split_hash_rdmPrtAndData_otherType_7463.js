@@ -126,7 +126,7 @@ function readyRdmRecs( recordsNum )
    var boolArr = [true, false, null, {"$minKey": 1}, {"$maxKey": 1}, ""]; 
    for(var i = 0; i < recordsNum ; i++ )
    {
-      recordsArr.push( {"a": i, "b": boolArr[ getRandomInt( 0, boolArr.length )] } );
+      recordsArr.push( {"a": i, "b": boolArr[ getRandomInt( 0, boolArr.length - 1 )] } );
    }
    return recordsArr;
 }
