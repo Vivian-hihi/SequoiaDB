@@ -131,7 +131,7 @@ public class SequoiadbDataDao implements DataDao {
                     dbLob.close();
                     break;
                 } catch (BaseException e) {
-                    logger.error("write lob with offset:" +offset + ", remainTryTime:" + remainTryTime + ", firstPiece:" + firstPiece + " error, e.getMessage" + e.getMessage(), e);
+                    logger.error("write lob with offset:" +offset + ", remainTryTime:" + remainTryTime + ", firstPiece:" + firstPiece + " error, e.getMessage" + e.getMessage());
                     closeLob(dbLob);
                     if (e.getErrorCode() == SDBError.SDB_LOB_PIECESINFO_OVERFLOW.getErrorCode()){
                         if (remainTryTime > 0 && firstPiece){

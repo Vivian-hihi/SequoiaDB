@@ -163,7 +163,7 @@ public class UploadScanClean {
                     } catch (BaseException e){
                         transaction.rollback(connectionC);
                         if (e.getErrorCode() == SDBError.SDB_TIMEOUT.getErrorCode()){
-                            logger.error("completing upload. uploadId:"+uploadId);
+                            logger.warn("upload is completing. uploadId:"+uploadId);
                             continue;
                         }else {
                             logger.error("clean invalid complete status failed. uploadId:"+uploadId, e);

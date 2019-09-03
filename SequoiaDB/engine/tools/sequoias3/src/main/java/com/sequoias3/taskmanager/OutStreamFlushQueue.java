@@ -51,7 +51,7 @@ public class OutStreamFlushQueue {
 
     @Scheduled(initialDelay = 1000 * 10,fixedDelay = TWENTY_SECONDS)
     public void flushOutputStream(){
-//        logger.debug("scan begin, outputStreamHashMap size:" + outputStreamHashMap.size());
+        logger.debug("scan begin, outputStreamHashMap size:" + outputStreamHashMap.size());
         String whiteSpace = " ";
         byte[] whitebyte = whiteSpace.getBytes();
         lock.lock();
@@ -60,17 +60,16 @@ public class OutStreamFlushQueue {
             while (it.hasNext()) {
                 Map.Entry<Long, ServletOutputStream> entry = it.next();
                 try {
-                    entry.getValue().flush();
                     entry.getValue().write(whitebyte);
                     entry.getValue().flush();
                 }catch (Exception e){
-                    logger.error("the outputstream is invalid.", e);
+                    logger.error("the outputStream is invalid.", e);
                     it.remove();
                 }
             }
         }finally {
             lock.unlock();
         }
-//        logger.debug("scan end, outputStreamHashMap size:" + outputStreamHashMap.size());
+        logger.debug("scan end, outputStreamHashMap size:" + outputStreamHashMap.size());
     }
 }
