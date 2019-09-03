@@ -444,7 +444,7 @@ namespace engine
       {
          /// the message is old( no hashValue, no reserved )
          PD_LOG( PDWARNING, "Session[%s]: Consultation responses message "
-                 "length[%d] is less than %d", header->messageLength,
+                 "length[%d] is less than %d", sessionName(), header->messageLength,
                  sizeof( _MsgReplConsultationRes ) ) ;
          goto done ;
       }
