@@ -14,9 +14,9 @@
     <parameter name="S3USERNAME" value="administrator"/>
     <parameter name="S3ACCESSKEYID" value="ABCDEFGHIJKLMNOPQRST"/>
     <parameter name="CONFTOOL" value="/tmp/ci/testcase/tools/changeConf.js"/>
-    <parameter name="ROOTPASSWD" value="sequoiadb"/>
+    <parameter name="ROOTPASSWD" value="jenkins"/>
     <parameter name="REMOTEUSER" value="root"/>
-    <parameter name="REMOTEPASSWD" value="sequoiadb"/>
+    <parameter name="REMOTEPASSWD" value="jenkins"/>
     <parameter name="SCRIPTDIR" value="${SCRIPTDIR}"/>
 
     <listeners>
