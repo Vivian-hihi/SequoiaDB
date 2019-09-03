@@ -157,26 +157,3 @@
    ok
    ```
 
-2. 使用 root 用户权限查看服务运行状态
-
-   ```lang-bash
-   $ service sequoiasql-mysql status
-     Status of service sequoiasql-mysql: 
-     running. (PID: 20679)
-   ```
-
-3. 使用 root 用户权限停止服务
-
-   ```lang-bash
-   $ service sequoiasql-mysql stop
-     Stoping service sequoiasql-mysql ...
-     ok.
-   ```
-   
-4. 使用 root 用户权限启动服务
-
-   ```lang-bash
-   $ service sequoiasql-mysql start
-     Starting service sequoiasql-mysql ...
-     ok. (PID: 20860)
-   ```
