@@ -62,11 +62,6 @@ namespace engine
       FOR_EACH_CMAP_ELEMENT_END ;
 
       _contextMap.clear() ;
-
-      if ( _remoteMessenger )
-      {
-         SDB_OSS_DEL _remoteMessenger ;
-      }
    }
 
    void* _SDB_RTNCB::queryInterface( SDB_INTERFACE_TYPE type )
@@ -138,6 +133,11 @@ namespace engine
 
       rtnJobMgr* jobMgr = rtnGetJobMgr() ;
       jobMgr->fini() ;
+
+      if ( _remoteMessenger )
+      {
+         SDB_OSS_DEL _remoteMessenger ;
+      }
 
       return SDB_OK ;
    }

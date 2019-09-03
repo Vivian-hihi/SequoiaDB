@@ -1489,6 +1489,14 @@ namespace engine
          }
       }
 
+      // Remove remote session, if any.
+      rtnRemoteMessenger *messenger =
+         pmdGetKRCB()->getRTNCB()->getRemoteMessenger() ;
+      if ( messenger )
+      {
+         messenger->removeSession( eduCB() ) ;
+      }
+
       // delete all context
       INT64 contextID = -1 ;
       while ( -1 != ( contextID = eduCB()->contextPeek() ) )
