@@ -71,8 +71,7 @@ public class InitPartUploadAndKillData18779 extends S3TestBase {
 
     }
 
-    // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4843
-    @Test(enabled = false)
+    @Test
     public void test() throws Exception {
         TaskMgr mgr = new TaskMgr();
         mgr.addTask(new InitPartUpload());
