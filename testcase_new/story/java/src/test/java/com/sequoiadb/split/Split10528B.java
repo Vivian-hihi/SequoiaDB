@@ -64,7 +64,7 @@ public class Split10528B extends SdbTestBase {
 	}	
 
 	@Test(timeOut = 30 * 60 * 1000)
-	public void dropCL() {		
+	public void test() {		
 		Sequoiadb dataNode = null;
 		Split splitThread = null;
 		try {

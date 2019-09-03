@@ -60,7 +60,7 @@ public class Split10527C extends SdbTestBase {
     }
 
     @Test(timeOut = 30 * 60 * 1000)
-    public void splitAnddropCS() throws InterruptedException {
+    public void test() throws InterruptedException {
         int condition = 0;
         int endCondition = 1024;
         List<SplitTask> splitTasks = new ArrayList<>(5);

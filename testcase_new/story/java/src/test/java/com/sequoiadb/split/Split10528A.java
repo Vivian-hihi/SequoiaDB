@@ -62,7 +62,7 @@ public class Split10528A extends SdbTestBase {
     }
 
     @Test
-    public void dropCL() {
+    public void test() {
         // 切分线程启动
         Split splitThread = new Split();
         splitThread.start();
