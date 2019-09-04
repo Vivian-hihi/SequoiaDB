@@ -2806,266 +2806,150 @@ namespace engine
 
    INT32 RestToMSGTransfer::_convertListBase( restAdaptor *pAdaptor,
                                               restRequest &request,
-                                              BSONObj &match, BSONObj &selector,
-                                              BSONObj &order )
+                                              const CHAR  *command,
+                                              MsgHeader  **msg )
    {
-      BSONObj hint ;
-      SINT64  skip ;
-      SINT64  returnRow ;
-      return _convertSnapshotBase( pAdaptor, request, match, selector,
-                                   order, hint, &skip, &returnRow ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      string matchStr ;
+      string selectorStr ;
+      string orderStr ;
+
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+
+      const CHAR *pCommand  = command ;
+
+      matchStr = request.getQuery( FIELD_NAME_FILTER ) ;
+      if ( matchStr.empty() )
+      {
+         matchStr = request.getQuery( REST_KEY_NAME_MATCHER ) ;
+      }
+
+      selectorStr = request.getQuery( FIELD_NAME_SELECTOR ) ;
+
+      orderStr = request.getQuery( FIELD_NAME_SORT ) ;
+      if ( orderStr.empty() )
+      {
+         orderStr = request.getQuery( REST_KEY_NAME_ORDERBY ) ;
+      }
+
+      if ( FALSE == matchStr.empty() )
+      {
+         rc = fromjson( matchStr.c_str(), match, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_FILTER, REST_KEY_NAME_MATCHER,
+                        matchStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( FALSE == selectorStr.empty() )
+      {
+         rc = fromjson( selectorStr.c_str(), selector, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s",
+                        FIELD_NAME_SELECTOR, selectorStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      if ( FALSE == orderStr.empty() )
+      {
+         rc = fromjson( orderStr.c_str(), order, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s[or %s], "
+                        "value=%s", FIELD_NAME_SORT, REST_KEY_NAME_ORDERBY,
+                        orderStr.c_str() ) ;
+            goto error ;
+         }
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             0, -1, &match,
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 RestToMSGTransfer::_convertListContexts( restAdaptor *pAdaptor,
                                                   restRequest &request,
                                                   MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CONTEXTS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListContextsCurrent( restAdaptor *pAdaptor,
                                                          restRequest &request,
                                                          MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CONTEXTS_CURRENT ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListSessions( restAdaptor *pAdaptor,
                                                   restRequest &request,
                                                   MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_SESSIONS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListSessionsCurrent( restAdaptor *pAdaptor,
                                                          restRequest &request,
                                                          MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_SESSIONS_CURRENT ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListCollections( restAdaptor *pAdaptor,
                                                      restRequest &request,
                                                      MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListCollectionSpaces( restAdaptor *pAdaptor,
                                                           restRequest &request,
                                                           MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListStorageUnits( restAdaptor *pAdaptor,
                                                       restRequest &request,
                                                       MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_STORAGEUNITS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertCreateProcedure( restAdaptor *pAdaptor,
@@ -3175,61 +3059,9 @@ namespace engine
                                                     restRequest &request,
                                                     MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      INT32 buffSize = 0 ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff = NULL ;
       const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES ;
-      string skipStr ;
-      string returnRowStr ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      //Skip
-      skipStr = request.getQuery( FIELD_NAME_SKIP ) ;
-
-      //ReturnNum(Limit)
-      returnRowStr = request.getQuery( FIELD_NAME_RETURN_NUM ) ;
-      if ( returnRowStr.empty() )
-      {
-         returnRowStr = request.getQuery( REST_KEY_NAME_LIMIT ) ;
-      }
-
-      if ( FALSE == skipStr.empty() )
-      {
-         skip = ossAtoll( skipStr.c_str() ) ;
-      }
-
-      if ( FALSE == returnRowStr.empty() )
-      {
-         returnRow = ossAtoll( returnRowStr.c_str() ) ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, skip,
-                             returnRow, &match, &selector, &order,
-                             NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertAlterDomain( restAdaptor *pAdaptor,
@@ -3308,36 +3140,9 @@ namespace engine
                                                  restRequest &request,
                                                  MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertCreateDomain( restAdaptor *pAdaptor,
@@ -3453,36 +3258,9 @@ namespace engine
                                                restRequest &request,
                                                MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListIndexes( restAdaptor *pAdaptor,
@@ -3532,72 +3310,18 @@ namespace engine
                                                     restRequest &request,
                                                     MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListCLInDomain( restAdaptor *pAdaptor,
                                                     restRequest &request,
                                                     MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ;
 
-      rc = _convertListBase( pAdaptor, request, match, selector, order ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _convertListBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertListLobs( restAdaptor *pAdaptor,
@@ -3682,19 +3406,27 @@ namespace engine
 
    INT32 RestToMSGTransfer::_convertSnapshotBase( restAdaptor *pAdaptor,
                                                   restRequest &request,
-                                                  BSONObj &match, BSONObj &selector,
-                                                  BSONObj &order,
-                                                  BSONObj &hint,
-                                                  SINT64* skip,
-                                                  SINT64* returnRow )
+                                                  const CHAR *command,
+                                                  MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
       string matchStr ;
       string selectorStr ;
       string orderStr ;
       string hintStr ;
       string skipStr ;
       string returnRowStr ;
+
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+
+      const CHAR *pCommand  = command ;
 
       matchStr = request.getQuery( FIELD_NAME_FILTER ) ;
       if ( matchStr.empty() )
@@ -3766,13 +3498,25 @@ namespace engine
 
       if ( FALSE == skipStr.empty() )
       {
-         *skip = ossAtoll( skipStr.c_str() ) ;
+         skip = ossAtoll( skipStr.c_str() ) ;
       }
 
       if ( FALSE == returnRowStr.empty() )
       {
-         *returnRow = ossAtoll( returnRowStr.c_str() ) ;
+         returnRow = ossAtoll( returnRowStr.c_str() ) ;
       }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
 
    done:
       return rc ;
@@ -3784,41 +3528,9 @@ namespace engine
                                                      restRequest &request,
                                                      MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotContextCurrent(
@@ -3826,83 +3538,19 @@ namespace engine
                                                      restRequest &request,
                                                      MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX
                               CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotSessions( restAdaptor *pAdaptor,
                                                       restRequest &request,
                                                       MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotSessionsCurrent(
@@ -3910,83 +3558,19 @@ namespace engine
                                                         restRequest &request,
                                                         MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX
                               CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotCollections( restAdaptor *pAdaptor,
                                                          restRequest &request,
                                                          MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotCollectionSpaces(
@@ -3994,329 +3578,73 @@ namespace engine
                                                          restRequest &request,
                                                          MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX
                               CMD_NAME_SNAPSHOT_COLLECTIONSPACES ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotDatabase( restAdaptor *pAdaptor,
                                                       restRequest &request,
                                                       MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotSystem( restAdaptor *pAdaptor,
                                                     restRequest &request,
                                                     MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotCata( restAdaptor *pAdaptor,
                                                   restRequest &request,
                                                   MsgHeader **msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotAccessPlans ( restAdaptor * pAdaptor,
                                                           restRequest &request,
                                                           MsgHeader ** msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_ACCESSPLANS ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotHealth ( restAdaptor * pAdaptor,
                                                      restRequest &request,
                                                      MsgHeader ** msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_HEALTH ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotConfigs ( restAdaptor * pAdaptor,
                                                       restRequest &request,
                                                       MsgHeader ** msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONFIGS ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, &hint ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_convertSnapshotQueries ( restAdaptor * pAdaptor,
                                                       restRequest &request,
                                                       MsgHeader ** msg )
    {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj match ;
-      BSONObj hint ;
-      SINT64 skip = 0 ;
-      SINT64 returnRow = -1 ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_QUERIES ;
 
-      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
-                                 hint, &skip, &returnRow ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
-                             skip, returnRow, &match,
-                             &selector, &order, &hint ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
-                     pCommand, rc ) ;
-         goto error ;
-      }
-
-      *msg = ( MsgHeader * )pBuff ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return  _convertSnapshotBase( pAdaptor, request, pCommand, msg ) ;
    }
 
    INT32 RestToMSGTransfer::_buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
