@@ -915,6 +915,7 @@ void ossOnMemConfigChange( BOOLEAN debugEnable,
    {
       gMemTrackCB.reset() ;
       gPoolMemTrackCB.reset() ;
+      gThreadMemTrackCB.reset() ;
    }
    else
    {
