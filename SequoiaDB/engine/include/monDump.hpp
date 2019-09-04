@@ -101,8 +101,11 @@ namespace engine
                              INT32 direction,
                              rtnContextDump *context ) ;
 
-   void  monResetMon ( RTN_COMMAND_TYPE type, BOOLEAN resetAllEDU,
-                       EDUID eduID ) ;
+   INT32  monResetMon ( RTN_COMMAND_TYPE type,
+                        BOOLEAN resetAllEDU,
+                        EDUID eduID,
+                        const CHAR * collectionSpace,
+                        const CHAR * collection ) ;
    INT32 monDBDumpStorageInfo( BSONObjBuilder &ob );
 
    INT32 monDBDumpProcMemInfo( BSONObjBuilder &ob );

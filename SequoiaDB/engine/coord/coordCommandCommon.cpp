@@ -44,6 +44,8 @@
 #include "aggrDef.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "msgMessage.hpp"
+#include "rtn.hpp"
 
 using namespace bson ;
 
@@ -197,6 +199,99 @@ namespace engine
          return rc ;
       error:
          goto done ;
+   }
+
+   INT32 _coordCmdWithLocation::_getCSGrps ( const CHAR * collectionSpace,
+                                             pmdEDUCB * cb,
+                                             coordCtrlParam & ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
+
+      CHAR * catMessage = NULL ;
+      INT32 catMessageSize = 0 ;
+
+      CoordGroupList grpLst ;
+      rtnQueryOptions queryOpt ;
+
+      PD_CHECK( !dmsIsSysCSName( collectionSpace ), SDB_INVALIDARG, error,
+                PDERROR, "Could not analyze SYS collection space [%s]",
+                collectionSpace ) ;
+
+      queryOpt.setCLFullName( "CAT" ) ;
+      queryOpt.setQuery( BSON( CAT_COLLECTION_SPACE_NAME <<
+                               collectionSpace ) ) ;
+      rc = queryOpt.toQueryMsg( &catMessage, catMessageSize, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Alloc query msg failed, rc: %d", rc ) ;
+
+      /// change the opCode
+      ((MsgHeader*)catMessage)->opCode = MSG_CAT_QUERY_SPACEINFO_REQ ;
+      rc = executeOnCataGroup( (MsgHeader*)catMessage, cb, &grpLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collectionspace[%s] info from catalog "
+                   "failed, rc: %d", collectionSpace, rc ) ;
+
+      ctrlParam._useSpecialGrp = TRUE ;
+      ctrlParam._specialGrps = grpLst ;
+
+   done :
+      if ( catMessage )
+      {
+         msgReleaseBuffer( catMessage, cb ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _coordCmdWithLocation::_getCLGrps ( MsgHeader * message,
+                                             const CHAR * collection,
+                                             pmdEDUCB * cb,
+                                             coordCtrlParam & ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
+
+      coordCataSel cataSel ;
+      CoordGroupList grpLst, exceptLst ;
+      MsgOpQuery *request = (MsgOpQuery *)message ;
+
+      CHAR collectionSpace[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      CHAR clShortName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
+
+      rc = rtnResolveCollectionName( collection,
+                                     ossStrlen( collection ),
+                                     collectionSpace,
+                                     DMS_COLLECTION_SPACE_NAME_SZ,
+                                     clShortName,
+                                     DMS_COLLECTION_NAME_SZ ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to resolve collection name [%s], "
+                    "rc: %d", collection, rc ) ;
+
+      PD_CHECK( !dmsIsSysCSName( collectionSpace ), SDB_INVALIDARG, error,
+                PDERROR, "Could not analyze SYS collection space [%s]",
+                collectionSpace ) ;
+
+      PD_CHECK( !dmsIsSysCLName( clShortName ), SDB_INVALIDARG, error, PDERROR,
+                "Could not analyze SYS collection [%s]", clShortName ) ;
+
+      rc = cataSel.bind( _pResource, collection, cb, TRUE, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update collection[%s]'s catalog info failed, "
+                   "rc: %d", collection, rc ) ;
+
+
+      rc = cataSel.getGroupLst( cb, exceptLst, grpLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get collection[%s]'s group list failed, "
+                   "rc: %d", collection, rc ) ;
+
+      // Set the version for verify in data-groups
+      request->version = cataSel.getCataPtr()->getVersion() ;
+
+      ctrlParam._useSpecialGrp = TRUE ;
+      ctrlParam._specialGrps = grpLst ;
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    /*

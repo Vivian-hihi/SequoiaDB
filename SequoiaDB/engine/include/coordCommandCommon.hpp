@@ -87,6 +87,16 @@ namespace engine
             return _showErrorMode ;
          }
 
+      protected :
+         INT32   _getCSGrps ( const CHAR * collectionSpace,
+                              pmdEDUCB * cb,
+                              coordCtrlParam & ctrlParam ) ;
+
+         INT32   _getCLGrps ( MsgHeader * message,
+                              const CHAR * collection,
+                              pmdEDUCB * cb,
+                              coordCtrlParam & ctrlParam ) ;
+
       protected:
          COORD_SHOWERROR_TYPE _showError ;
          COORD_SHOWERRORMODE_TYPE _showErrorMode ;

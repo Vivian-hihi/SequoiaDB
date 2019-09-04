@@ -345,6 +345,11 @@ namespace engine
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
 
+         virtual const CHAR * collectionFullName ()
+         {
+            return _collection ;
+         }
+
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
@@ -357,6 +362,8 @@ namespace engine
          RTN_COMMAND_TYPE _type ;
          EDUID _sessionID ;
          BOOLEAN _resetAllSession ;
+         const CHAR * _collectionSpace ;
+         const CHAR * _collection ;
 
    };
 

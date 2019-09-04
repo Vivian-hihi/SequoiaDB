@@ -996,9 +996,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONRESETMON, "monResetMon" )
-   void monResetMon ( RTN_COMMAND_TYPE type, BOOLEAN resetAllEDU,
-                      EDUID eduID )
+   INT32 monResetMon ( RTN_COMMAND_TYPE type,
+                       BOOLEAN resetAllEDU,
+                       EDUID eduID,
+                       const CHAR * collectionSpace,
+                       const CHAR * collection )
    {
+      INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( SDB_MONRESETMON ) ;
 
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -1018,7 +1023,7 @@ namespace engine
             startLogger->clearAll() ;
             krcb->getSvcTaskMgr()->reset() ;
             sdbGetClsCB()->resetDumpSchedInfo() ;
-            dmsCB->clearMBCRUDCB() ;
+            dmsCB->clearAllCRUDCB() ;
             break ;
          }
          case CMD_SNAPSHOT_DATABASE :
@@ -1058,14 +1063,35 @@ namespace engine
          }
          case CMD_SNAPSHOT_COLLECTIONS :
          {
-            dmsCB->clearMBCRUDCB() ;
+            if ( NULL != collectionSpace )
+            {
+               rc = dmsCB->clearSUCRUDCB( collectionSpace ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to reset snapshot for "
+                            "collection space [%s], rc: %d", collectionSpace,
+                            rc ) ;
+            }
+            else if ( NULL != collection )
+            {
+               rc = dmsCB->clearMBCRUDCB( collection ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to reset snapshot for "
+                            "collection [%s], rc: %d", collection, rc ) ;
+            }
+            else
+            {
+               dmsCB->clearAllCRUDCB() ;
+            }
             break ;
          }
          default :
             break ;
       }
 
-      PD_TRACE_EXIT ( SDB_MONRESETMON ) ;
+   done :
+      PD_TRACE_EXITRC( SDB_MONRESETMON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPTRACESTATUS, "monDumpTraceStatus" )

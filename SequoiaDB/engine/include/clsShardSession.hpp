@@ -303,6 +303,7 @@ namespace engine
                              SDB_DPSCB *dpsCB ) ;
 
          INT32 _analyzeMainCL( _rtnCommand *command ) ;
+         INT32 _resetSnapshotMainCL ( _rtnCommand * command ) ;
 
          INT32 _checkPrimaryStatus() ;
 

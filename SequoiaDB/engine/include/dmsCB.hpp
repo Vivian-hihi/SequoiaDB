@@ -464,7 +464,9 @@ namespace engine
 
       void fixTransMBStats () ;
 
-      void clearMBCRUDCB () ;
+      void clearAllCRUDCB () ;
+      INT32 clearSUCRUDCB ( const CHAR * collectionSpace ) ;
+      INT32 clearMBCRUDCB ( const CHAR * collection ) ;
    } ;
    typedef class _SDB_DMSCB SDB_DMSCB ;
 

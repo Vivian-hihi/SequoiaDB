@@ -43,6 +43,7 @@
 #include "rtnContextExplain.hpp"
 #include "rtnContextMainCL.hpp"
 #include "rtnContextDel.hpp"
+#include "rtnCommandSnapshot.hpp"
 #include "utilCompressor.hpp"
 #include "pmdStartup.hpp"
 #include "clsCommand.hpp"
@@ -3107,6 +3108,11 @@ namespace engine
          rc = _analyzeMainCL( pCommand ) ;
          break ;
 
+      case CMD_SNAPSHOT_RESET :
+         writable = pCommand->writable() ;
+         rc = _resetSnapshotMainCL( pCommand ) ;
+         break ;
+
       default:
          rc = SDB_MAIN_CL_OP_ERR;
          break;
@@ -4682,6 +4688,66 @@ namespace engine
          lockDms = FALSE ;
       }
       return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_resetSnapshotMainCL ( _rtnCommand * command )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN lockDms = FALSE ;
+
+      SDB_ASSERT( command->type() == CMD_SNAPSHOT_RESET,
+                  "command is invalid" ) ;
+
+      const CHAR * mainCLName = command->collectionFullName() ;
+      vector< string > strSubCLList ;
+      vector< string >::iterator iterSubCL ;
+
+      _rtnSnapshotReset * resetCmd = (_rtnSnapshotReset *)command ;
+
+      rc = _getSubCLList( mainCLName, strSubCLList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
+                   "main-collection [%s], rc: %d", mainCLName, rc ) ;
+
+      iterSubCL = strSubCLList.begin() ;
+      while( iterSubCL != strSubCLList.end() )
+      {
+         const CHAR * subCLName = iterSubCL->c_str() ;
+
+         if ( _pEDUCB->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         rc = monResetMon( CMD_SNAPSHOT_COLLECTIONS, FALSE, _sessionID,
+                           NULL, subCLName ) ;
+         if ( SDB_OK != rc )
+         {
+            if ( SDB_DMS_CS_NOTEXIST == rc ||
+                 SDB_DMS_NOTEXIST == rc )
+            {
+               // The error should be found earlier in clsShardSesssion
+               // If report here, means the collection or collection space had
+               // been dropped, ignore the error to avoid clsShardSession to
+               // retry
+               rc = SDB_OK ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to reset snapshot for sub-collection "
+                       "[%s], rc: %d", subCLName, rc ) ;
+            }
+            break ;
+         }
+
+         ++ iterSubCL ;
+      }
+
+   done :
+      return rc ;
+
    error :
       goto done ;
    }

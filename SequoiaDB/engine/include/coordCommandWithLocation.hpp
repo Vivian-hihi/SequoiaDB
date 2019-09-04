@@ -248,12 +248,6 @@ namespace engine
                                       pmdEDUCB *cb,
                                       coordCtrlParam &ctrlParam,
                                       SET_RC &ignoreRCList ) ;
-
-         INT32   _getCSGrps ( const CHAR *csname, pmdEDUCB *cb,
-                              coordCtrlParam &ctrlParam ) ;
-
-         INT32   _getCLGrps ( MsgHeader *pMsg, const CHAR *clname,
-                              pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
    } ;
 
    typedef _coordCMDAnalyze coordCMDAnalyze ;

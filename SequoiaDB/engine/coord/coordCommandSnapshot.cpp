@@ -40,6 +40,8 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "catGTSDef.hpp"
+#include "msgMessage.hpp"
+#include "rtn.hpp"
 
 using namespace bson ;
 
@@ -87,6 +89,119 @@ namespace engine
    {
       // catalog / data has been set with default 1
       ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
+   }
+
+   INT32 _coordCmdSnapshotReset::_preExcute ( MsgHeader * pMsg,
+                                              pmdEDUCB * cb,
+                                              coordCtrlParam & ctrlParam,
+                                              SET_RC & ignoreRCList )
+   {
+      INT32 rc = SDB_OK ;
+
+      CHAR * query = NULL ;
+
+      const CHAR * typeName = NULL ;
+      const CHAR * collectionSpace = NULL ;
+      const CHAR * collection = NULL ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &query, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj obj( query ) ;
+
+         rc = rtnGetStringElement( obj, FIELD_NAME_TYPE, &typeName ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      FIELD_NAME_TYPE, rc ) ;
+
+         if ( 0 != ossStrcmp( typeName, VALIE_NAME_COLLECTIONS ) )
+         {
+            if ( obj.hasField( FIELD_NAME_COLLECTIONSPACE ) )
+            {
+               PD_LOG( PDERROR, "Field[%s] take effect only when reset snapshot "
+                       "collections", FIELD_NAME_COLLECTIONSPACE ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            if ( obj.hasField( FIELD_NAME_COLLECTION ) )
+            {
+               PD_LOG( PDERROR, "Field[%s] take effect only when reset snapshot "
+                       "collections", FIELD_NAME_COLLECTION ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            rc = SDB_OK ;
+            goto done ;
+         }
+
+         // check collection space
+         rc = rtnGetStringElement( obj, FIELD_NAME_COLLECTIONSPACE,
+                                   &collectionSpace ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      FIELD_NAME_COLLECTIONSPACE, rc ) ;
+
+         // check collection
+         rc = rtnGetStringElement( obj, FIELD_NAME_COLLECTION,
+                                   &collection ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      FIELD_NAME_COLLECTION, rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // Check conflicts
+      if ( NULL != collectionSpace && NULL != collection )
+      {
+         PD_LOG( PDERROR, "Field [%s] and Field [%s] conflict",
+                 FIELD_NAME_COLLECTIONSPACE, FIELD_NAME_COLLECTION ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( NULL != collectionSpace )
+      {
+         rc = _getCSGrps( collectionSpace, cb, ctrlParam ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get groups of collection space [%s], "
+                      "rc: %d", collectionSpace, rc ) ;
+         // The group list may contain sub-collections' groups, which may
+         // not belong to the collection space
+         // Ignore the error in this case
+         ignoreRCList.insert( SDB_DMS_CS_NOTEXIST ) ;
+      }
+      else if ( NULL != collection )
+      {
+         rc = _getCLGrps( pMsg, collection, cb, ctrlParam ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get groups of collection[%s], rc: %d",
+                      collection, rc ) ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    /*

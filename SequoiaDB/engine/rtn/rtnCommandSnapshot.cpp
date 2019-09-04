@@ -114,7 +114,9 @@ namespace engine
    _rtnSnapshotReset::_rtnSnapshotReset ()
    :_type( CMD_SNAPSHOT_ALL ),
     _sessionID( PMD_INVALID_EDUID ),
-    _resetAllSession( FALSE )
+    _resetAllSession( FALSE ),
+    _collectionSpace( NULL ),
+    _collection( NULL )
    {
    }
 
@@ -196,11 +198,55 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
                       FIELD_NAME_SESSIONID, rc ) ;
 
+         // check collection space
+         rc = rtnGetStringElement( obj, FIELD_NAME_COLLECTIONSPACE,
+                                   &_collectionSpace ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      FIELD_NAME_COLLECTIONSPACE, rc ) ;
+
+         // check collection
+         rc = rtnGetStringElement( obj, FIELD_NAME_COLLECTION,
+                                   &_collection ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                      FIELD_NAME_COLLECTION, rc ) ;
+
          // check conflict
          if ( hasSessionID && _type != CMD_SNAPSHOT_SESSIONS )
          {
             PD_LOG( PDERROR, "Field[%s] take effect only when reset snapshot "
                     "session", FIELD_NAME_SESSIONID ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( NULL != _collectionSpace && CMD_SNAPSHOT_COLLECTIONS != _type )
+         {
+            PD_LOG( PDERROR, "Field[%s] take effect only when reset snapshot "
+                    "collections", FIELD_NAME_COLLECTIONSPACE ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( NULL != _collection && CMD_SNAPSHOT_COLLECTIONS != _type )
+         {
+            PD_LOG( PDERROR, "Field[%s] take effect only when reset snapshot "
+                    "collections", FIELD_NAME_COLLECTION ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( NULL != _collection && NULL != _collectionSpace )
+         {
+            PD_LOG( PDERROR, "Field [%s] and Field [%s] conflict",
+                    FIELD_NAME_COLLECTIONSPACE, FIELD_NAME_COLLECTION ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -228,8 +274,8 @@ namespace engine
                                   _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                   INT16 w, INT64 *pContextID )
    {
-      monResetMon( _type, _resetAllSession, _sessionID ) ;
-      return SDB_OK ;
+      return monResetMon( _type, _resetAllSession, _sessionID,
+                          _collectionSpace, _collection ) ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSessions)

@@ -2953,10 +2953,11 @@ namespace engine
       PD_TRACE_EXIT( SDB__SDB_DMSCB_FIXTRANSMBSTATS ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLEARMBCRUDCB, "_SDB_DMSCB::clearMBCRUDCB" )
-   void _SDB_DMSCB::clearMBCRUDCB ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLEARALLCRUDCB, "_SDB_DMSCB::clearAllCRUDCB" )
+   void _SDB_DMSCB::clearAllCRUDCB ()
    {
-      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CLEARMBCRUDCB ) ;
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CLEARALLCRUDCB ) ;
+
       MON_CS_SIM_LIST monCSList ;
       dumpInfo( monCSList, TRUE, FALSE, FALSE ) ;
       for ( MON_CS_SIM_LIST::const_iterator csIter = monCSList.begin() ;
@@ -2980,7 +2981,88 @@ namespace engine
 
          suUnlock( monCS._suID, SHARED ) ;
       }
-      PD_TRACE_EXIT( SDB__SDB_DMSCB_CLEARMBCRUDCB ) ;
+
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_CLEARALLCRUDCB ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLEARSUCRUDCB, "_SDB_DMSCB::clearSUCRUDCB" )
+   INT32 _SDB_DMSCB::clearSUCRUDCB ( const CHAR * collectionSpace )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CLEARSUCRUDCB ) ;
+
+      SDB_ASSERT( NULL != collectionSpace, "collection space is invalid" ) ;
+
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      dmsStorageUnit * su = NULL ;
+
+      rc = nameToSUAndLock( collectionSpace, suID, &su, SHARED, OSS_ONE_SEC ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get storage unit [%s], rc: %d",
+                   collectionSpace, rc ) ;
+
+      su->clearMBCRUDCB() ;
+
+   done :
+      if ( DMS_INVALID_SUID != suID )
+      {
+         suUnlock( suID ) ;
+      }
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_CLEARSUCRUDCB, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLEARMBCRUDCB, "_SDB_DMSCB::clearMBCRUDCB" )
+   INT32 _SDB_DMSCB::clearMBCRUDCB ( const CHAR * collection )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CLEARMBCRUDCB ) ;
+
+      SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
+
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      dmsStorageUnit * su = NULL ;
+      CHAR collectionSpace[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      CHAR clShortName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
+      dmsMBContext * mbContext = NULL ;
+
+      rc = rtnResolveCollectionName( collection,
+                                     ossStrlen( collection ),
+                                     collectionSpace,
+                                     DMS_COLLECTION_SPACE_NAME_SZ,
+                                     clShortName,
+                                     DMS_COLLECTION_NAME_SZ ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to resolve collection name [%s], "
+                    "rc: %d", collection, rc ) ;
+
+      rc = nameToSUAndLock( collectionSpace, suID, &su, SHARED, OSS_ONE_SEC ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get storage unit [%s], rc: %d",
+                   collectionSpace, rc ) ;
+
+      rc = su->data()->getMBContext( &mbContext, clShortName, -1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get mb context [%s], rc: %d",
+                   collection, rc ) ;
+
+      mbContext->mbStat()->_crudCB.resetOnce() ;
+
+   done :
+      if ( NULL != su && NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( DMS_INVALID_SUID != suID )
+      {
+         suUnlock( suID ) ;
+      }
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_CLEARMBCRUDCB, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    /*

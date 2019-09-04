@@ -88,6 +88,11 @@ namespace engine
       private:
          virtual BOOLEAN _useContext() { return FALSE ; }
          void _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
+
+         virtual INT32   _preExcute ( MsgHeader *pMsg,
+                                      pmdEDUCB *cb,
+                                      coordCtrlParam &ctrlParam,
+                                      SET_RC &ignoreRCList ) ;
    } ;
    typedef _coordCmdSnapshotReset coordCmdSnapshotReset ;
 
