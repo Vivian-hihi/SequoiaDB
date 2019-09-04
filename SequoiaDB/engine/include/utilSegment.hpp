@@ -189,6 +189,12 @@ namespace engine
                                       // an array of object(T)
       utilSegmentHandler   *_pHandler;// callback handler
 
+      /// stat info
+      UINT64         _acquireTimes ;
+      UINT64         _releaseTimes ;
+      UINT64         _oomTimes ;
+      UINT64         _shrinkSize ;
+
    public :
       _utilSegmentPool() : _list(NULL),
                            _begin(0),
@@ -200,7 +206,11 @@ namespace engine
                            _maintaining(0),
                            _highWatermark(0),
                            _isInitialized( FALSE ),
-                           _pHandler( NULL )
+                           _pHandler( NULL ),
+                           _acquireTimes( 0 ),
+                           _releaseTimes( 0 ),
+                           _oomTimes( 0 ),
+                           _shrinkSize( 0 )
                            { }
 
       ~_utilSegmentPool() ;
@@ -231,14 +241,26 @@ namespace engine
                             " Max Objects   : %u"OSS_NEWLINE
                             " Delta         : %u"OSS_NEWLINE
                             " Objects Num   : %u"OSS_NEWLINE
+                            " Segment Num   : %u"OSS_NEWLINE
                             " Begin Pos     : %u"OSS_NEWLINE
-                            " High Watermark: %u"OSS_NEWLINE,
+                            " High Watermark: %u"OSS_NEWLINE
+                            " Acquire Times : %llu"OSS_NEWLINE
+                            " Release Times : %llu"OSS_NEWLINE
+                            " Allocated Num : %u"OSS_NEWLINE
+                            " OOM Times     : %llu"OSS_NEWLINE
+                            " Shrink Size   : %llu"OSS_NEWLINE,
                             _poolId,
                             _maxNumOfObjs,
                             _delta,
                             _numOfObjs,
+                            (UINT32)_segList.size(),
                             _begin,
-                            _highWatermark ) ;
+                            _highWatermark,
+                            _acquireTimes,
+                            _releaseTimes,
+                            (UINT32)( _acquireTimes - _releaseTimes ),
+                            _oomTimes,
+                            _shrinkSize ) ;
          return len ;
       }
 
@@ -799,10 +821,13 @@ namespace engine
                ++freeSegNum ;
             }
 
+            freedSize = ( (UINT64)freeSegNum << _exponent ) *
+                        sizeof( _objX ) ;
+
+            _shrinkSize += freedSize ;
+
             if ( _pHandler )
             {
-               freedSize = ( (UINT64)freeSegNum << _exponent ) *
-                           sizeof( _objX ) ;
                _pHandler->onReleaseSegment( freedSize ) ;
             }
          }  // no enough free segs, _segList.size() > segInUse
@@ -937,6 +962,7 @@ namespace engine
             if ( _isUpToLimit() )
             {
                // exceed limitation
+               ++_oomTimes ;
                rc = SDB_OSS_UP_TO_LIMIT ;
                PD_LOG( PDINFO,
                        "Exceed resource limitation "
@@ -962,6 +988,7 @@ namespace engine
                       !_pHandler->canAllocSegment( (UINT64)_delta *
                                                    sizeof( _objX ) ) )
             {
+               ++_oomTimes ;
                rc = SDB_OSS_UP_TO_LIMIT ;
                PD_LOG( PDINFO, "Can't alloc segment[%u * %u(ObjT Size: %u)] "
                        "by handler", _delta, sizeof( _objX ), sizeof( T ) ) ;
@@ -1065,6 +1092,7 @@ namespace engine
 
          // advance to next position
          _begin ++ ; 
+         ++_acquireTimes ;
 
          // return the object address
          pT = ( T * )&( pObjX->_obj ) ;
@@ -1200,6 +1228,7 @@ namespace engine
 
             // fill in current slot with the obj index( to the segment)
             _list[ --_begin ] = ( idx & _SEGMENT_OBJ_INDEX_MASK ) ;
+            ++_releaseTimes ;
          }
          else
          {
@@ -1237,7 +1266,6 @@ namespace engine
       goto done ;
    }
 
-
    template < class T >
    class _utilSegmentManager : public SDBObject
    {
@@ -1248,10 +1276,6 @@ namespace engine
          UINT32      _poolNum ;
 
          _utilSegmentPool< T > _pool[ _SEGMENT_MGR_MAX_POOLS ] ;         
-
-         // stat info
-         volatile UINT64   _failedTimes ;
-         volatile UINT64   _shrinkSize ;
 
       private :
          // internal / helper function to get the poolId an object belongs to
@@ -1280,8 +1304,6 @@ namespace engine
                ossStrncpy( _name, pName, UTIL_SEGMENT_NAME_LEN ) ;
             }
             _poolNum = 0 ;
-            _failedTimes = 0 ;
-            _shrinkSize = 0 ;
          }
          _utilSegmentManager( UINT64 numberOfObjs,
                               UINT64 maxNumberOfObjs,
@@ -1293,8 +1315,6 @@ namespace engine
                ossStrncpy( _name, pName, UTIL_SEGMENT_NAME_LEN ) ;
             }
             _poolNum = 0 ;
-            _failedTimes = 0 ;
-            _shrinkSize = 0 ;
             init( numberOfObjs, maxNumberOfObjs ) ;
          }
 
@@ -1434,7 +1454,6 @@ namespace engine
                {
                   break ;
                }
-               ++_failedTimes ;
             } while ( ( SDB_OSS_UP_TO_LIMIT == rc ) &&
                       ( retryCount <= _poolNum ) ) ;
             return rc ;
@@ -1470,23 +1489,21 @@ namespace engine
             // REVISIT :
             // proper scheduling algorithm to be implemented
             INT32 rc = SDB_OK ;
-            UINT64 freedSize = 0 ;
+
+            if ( pFreedSize )
+            {
+               *pFreedSize = 0 ;
+            }
 
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
-               rc = _pool[ i ].shrink( freeSegToKeep, &freedSize ) ;
+               rc = _pool[ i ].shrink( freeSegToKeep, pFreedSize ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to shrink pool:%u, rc:%d", i, rc ) ;
                   break ;
                }
             }
-
-            if ( pFreedSize )
-            {
-               *pFreedSize = freedSize ;
-            }
-            _shrinkSize += freedSize ;
 
             return rc ;
          }
@@ -1499,12 +1516,11 @@ namespace engine
                                OSS_NEWLINE
                                "---- Segment Name( %s ) ----"OSS_NEWLINE
                                "Pool Num       : %u"OSS_NEWLINE
-                               "Failed Times   : %llu"OSS_NEWLINE
-                               "Shrink Size    : %llu"OSS_NEWLINE,
+                               "Total Size     : %llu"OSS_NEWLINE,
                                _name,
                                _poolNum,
-                               _failedTimes,
-                               _shrinkSize ) ;
+                               (UINT64)getNumOfObjAllocated() *
+                               sizeof( typename _utilSegmentPool< T >::_objX ) ) ;
 
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {

@@ -1394,6 +1394,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+      cb->setName( "PoolIdle" ) ;
 
       // set to creating status
       cb->setStatus ( PMD_EDU_IDLE ) ;
@@ -2148,6 +2149,11 @@ namespace engine
          idleTime = 0 ;
          eduType = cb->getType() ;
          ossStrcpy( eduName, "PoolIdle" ) ;
+
+         if ( cb->_pMemPool )
+         {
+            cb->_pMemPool->setName( getEDUName( eduType ) ) ;
+         }
 
          if ( PMD_EDU_EVENT_RESUME == event._eventType )
          {

@@ -51,6 +51,8 @@ namespace engine
    void     utilSetMaxTCSize( UINT32 maxCacheSize ) ;       /// bytes
    UINT32   utilGetMaxTCSize() ;
 
+   #define UTIL_MEM_THREAD_NAME_LEN          ( 64 )
+
    /*
       _utilMemListNode define
    */
@@ -154,7 +156,10 @@ namespace engine
          INT32    init() ;
          void     fini() ;
 
+         void     setName( const CHAR *pName ) ;
          BOOLEAN  isInit() const { return _hasInit ; }
+
+         const CHAR* getName() const { return _name ; }
 
       public:
          virtual void      onReleaseCache( UINT64 size ) ;
@@ -193,6 +198,7 @@ namespace engine
       private:
          UINT64            _cachedSize ;
          BOOLEAN           _hasInit ;
+         CHAR              _name[ UTIL_MEM_THREAD_NAME_LEN + 1 ] ;
          utilMemListItem*  _arrayList[ UTIL_MEM_POOL_LIST_NUM + 1 ] ;
 
          CHAR              *_pSpecBlock ;

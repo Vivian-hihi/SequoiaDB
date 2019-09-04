@@ -320,6 +320,7 @@ namespace engine
    {
       _hasInit = FALSE ;
 
+      ossMemset( _name, 0, sizeof( _name ) ) ;
       SDB_ASSERT( sizeof( _arrayList ) / sizeof( utilMemListItem* ) ==
                   UTIL_MEM_POOL_LIST_NUM + 1,
                   "Invalid arrayList size" ) ;
@@ -392,6 +393,11 @@ namespace engine
    error:
       fini() ;
       goto done ;
+   }
+
+   void _utilMemListPool::setName( const CHAR *pName )
+   {
+      ossStrncpy( _name, pName, UTIL_MEM_THREAD_NAME_LEN ) ;
    }
 
    void _utilMemListPool::clearSpecBlock()
@@ -874,8 +880,9 @@ namespace engine
 
          len = ossSnprintf( buff, UTIL_DUMP_BUFFSIZE,
                             OSS_NEWLINE
-                            "---- Thread ID( %u ) ----"OSS_NEWLINE,
-                            ossGetCurrentThreadID() ) ;
+                            "---- Thread ID( %u : %s ) ----"OSS_NEWLINE,
+                            ossGetCurrentThreadID(),
+                            g_thdMemPool->getName() ) ;
          len += g_thdMemPool->dump( buff + len, UTIL_DUMP_BUFFSIZE - len ) ;
 
          utilDumpInfo2File( pPath, UTIL_THREAD_MEM_STAT_FILE, buff, len ) ;
