@@ -49,8 +49,8 @@ namespace engine
    #define UTIL_MEM_ALLOC_MAX_TRY_LEVEL         ( 2 )
 
    #define UTIL_POOL_MEM_STAT_FILE              ".mempoolstat"
-   #define UTIL_MEM_TRACEDUMP_TM_BUF            64
-   #define UTIL_DUMP_BUFFSIZE                   ( 2800 )
+   #define UTIL_MEMPOOL_TRACEDUMP_TM_BUF        64
+   #define UTIL_MEMPOOL_DUMP_BUFFSIZE           ( 65536 )
 
    /*
       _utilMemBlockPool implement
@@ -1072,26 +1072,33 @@ namespace engine
    {
       if ( utilGetGlobalMemPool() )
       {
-         CHAR buff[ UTIL_DUMP_BUFFSIZE ] = { 0 } ;
          UINT32 len = 0 ;
-         CHAR timebuff[ UTIL_MEM_TRACEDUMP_TM_BUF ] = { 0 } ;
+         CHAR *pBuff = ( CHAR* )SDB_OSS_MALLOC( UTIL_MEMPOOL_DUMP_BUFFSIZE )  ;
+         if ( !pBuff )
+         {
+            return ;
+         }
+         ossMemset( pBuff, 0, UTIL_MEMPOOL_DUMP_BUFFSIZE ) ;
+
+         CHAR timebuff[ UTIL_MEMPOOL_TRACEDUMP_TM_BUF ] = { 0 } ;
          ossTimestamp current ;
 
          ossGetCurrentTime( current ) ;
          ossTimestampToString( current, timebuff ) ;
 
          /// dump header
-         len = ossSnprintf( buff, sizeof( buff ),
-                            OSS_NEWLINE
+         len = ossSnprintf( pBuff, UTIL_MEMPOOL_DUMP_BUFFSIZE,
+                            OSS_NEWLINE OSS_NEWLINE
                             "====> Dump pool memory status( %s ) ====>"
                             OSS_NEWLINE,
                             timebuff ) ;
 
-         utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, buff, len ) ;
+         utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, pBuff, len ) ;
 
          /// dump context
-         len = utilGetGlobalMemPool()->dump( buff, UTIL_DUMP_BUFFSIZE ) ;
-         utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, buff, len ) ;
+         len = utilGetGlobalMemPool()->dump( pBuff,
+                                             UTIL_MEMPOOL_DUMP_BUFFSIZE ) ;
+         utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, pBuff, len ) ;
       }
    }
 

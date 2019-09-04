@@ -226,6 +226,7 @@ namespace engine
          ossScopedLock lock( &_latch ) ;
 
          len = ossSnprintf( pBuff, buffLen,
+                            OSS_NEWLINE
                             " Pool ID       : %u"OSS_NEWLINE
                             " Max Objects   : %u"OSS_NEWLINE
                             " Delta         : %u"OSS_NEWLINE
@@ -1495,7 +1496,8 @@ namespace engine
             UINT32 len = 0 ;
 
             len = ossSnprintf( pBuff, buffLen,
-                               "Segment Name   : %s"OSS_NEWLINE
+                               OSS_NEWLINE
+                               "---- Segment Name( %s ) ----"OSS_NEWLINE
                                "Pool Num       : %u"OSS_NEWLINE
                                "Failed Times   : %llu"OSS_NEWLINE
                                "Shrink Size    : %llu"OSS_NEWLINE,

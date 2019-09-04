@@ -857,7 +857,7 @@ namespace engine
       ossTimestampToString( current, timebuff ) ;
 
       len = ossSnprintf( buff, sizeof( buff ),
-                         OSS_NEWLINE
+                         OSS_NEWLINE OSS_NEWLINE
                          "====> Dump threads memory status( %s ) ====>"
                          OSS_NEWLINE,
                          timebuff ) ;
@@ -873,8 +873,8 @@ namespace engine
          UINT32 len = 0 ;
 
          len = ossSnprintf( buff, UTIL_DUMP_BUFFSIZE,
-                            "Dump thread memory info:"OSS_NEWLINE
-                            " Thread ID   : %u"OSS_NEWLINE,
+                            OSS_NEWLINE
+                            "---- Thread ID( %u ) ----"OSS_NEWLINE,
                             ossGetCurrentThreadID() ) ;
          len += g_thdMemPool->dump( buff + len, UTIL_DUMP_BUFFSIZE - len ) ;
 
