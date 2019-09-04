@@ -69,7 +69,7 @@ function insertRecordsAgain(dbcl, records){
    }
    catch(e){
       if(e != -38){
-         throw buildException("insert()", e, "dbcl insert duplicate records on unique index", "success", "fail");
+         throw new Error(e);
       }
    }
 }
@@ -81,4 +81,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

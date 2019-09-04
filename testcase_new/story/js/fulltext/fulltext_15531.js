@@ -62,4 +62,16 @@ function insertData( dbcl )
    dbcl.insert( { _id : { "$binary": "aGVsbG8gd29ybGQ=", "$type": "1" }, a : "a94" } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

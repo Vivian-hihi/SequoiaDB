@@ -67,7 +67,7 @@ function createUniqueIndex(dbcl){
    }
    catch(e){
       if(e != -38){
-         throw buildException("createIndex()", e, "dbcl exists duplicate records, create unique index", "success", "fail");
+         throw new Error(e);
       }
    }
 }
@@ -79,4 +79,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

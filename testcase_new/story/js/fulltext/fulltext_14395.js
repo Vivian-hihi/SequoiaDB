@@ -44,11 +44,23 @@ function main(){
 
 function checkAllResult(actCount, expCount){
    if(actCount != expCount){
-      throw buildException( "count ", null, "dbcl.find().count()", "success", "fail" );
+      throw new Error("expect record num: " + expCount + ",actual record num: " + actCount);
    }
    else{
       println("check records success!")
    }
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

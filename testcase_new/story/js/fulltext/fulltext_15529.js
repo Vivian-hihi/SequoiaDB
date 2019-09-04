@@ -144,4 +144,16 @@ function updateToDifferTypeNotSuppot( dbcl )
    dbcl.update( { $set : { _id : { "$binary": "aJJsbG8gd29ybGQ=", "$type": "1" } } }, { a : "a13" } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

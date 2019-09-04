@@ -63,11 +63,11 @@ function main(){
 function updateFieldId(dbcl){
    try{
       dbcl.update({$set : {_id : 1002}},{_id : 1001});
-      throw "update error!";
+      throw new Error("update error!");
    }
    catch(e){
       if(e != -38){
-         throw buildException("update()", e, "dbcl update _id duplicate to another record", "success", "fail");
+         throw new Error(e);
       }
    }
 }
@@ -79,4 +79,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

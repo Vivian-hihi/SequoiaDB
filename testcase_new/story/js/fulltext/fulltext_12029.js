@@ -67,4 +67,16 @@ function updateData( dbcl )
    dbcl.update( { $replace : { a : "a" } }, { _id : 4 } );  
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

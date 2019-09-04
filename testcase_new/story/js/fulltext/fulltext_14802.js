@@ -22,15 +22,26 @@ function main()
    {
       var cursor = dbcl.find({"":{$Text:{query:{match_all:{}}}}});
       while(cursor.next()){}
-      throw "NEED_FIND_ERR";
+      throw new Error("NEED_FIND_ERR");
    }catch(e)
    {
       if(e !== -52)
       {
-         throw e;
+         throw new Error(e);
       }
    }
    
    commDropCL( db, COMMCSNAME, clName);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

@@ -56,4 +56,16 @@ function upsert( dbcl )
    dbcl.upsert( { $set : { _id : 3, a : "a3" } }, { _id : 3 } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

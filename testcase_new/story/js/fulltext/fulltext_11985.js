@@ -21,11 +21,11 @@ function main()
    commCheckIndex( dbcl, indexName, true );
    try{
       dbcl.createIndex( indexName, {content:"text"});
-      throw "CREATEINDEXERR";
+      throw new Error("CREATEINDEXERR");
    }
    catch( e ){
       if( e != -46){
-         throw buildException("main()", "create duplicate index success", "create index", "fail to create index", "create index success");
+         throw new Error("create duplicate index success");
       }
    }
    
@@ -34,11 +34,11 @@ function main()
    commCheckIndex( dbcl, "b_11985", true );
    try{
       dbcl.createIndex( "c_11985", {content:"text"});
-      throw "CREATEINDEXERR" ;
+      throw new Error("CREATEINDEXERR") ;
    }
    catch( e ){
       if( e != -42){
-         throw buildException("main()", "create index on same field", "create full index", "fail to create index", "create index success");
+         throw new Error("create index on same field success");
       }
    }
    
@@ -48,4 +48,15 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

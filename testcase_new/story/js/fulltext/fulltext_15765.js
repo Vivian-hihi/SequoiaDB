@@ -63,11 +63,11 @@ function main(){
 function createCLIdIndex(dbcl){
    try{
       dbcl.createIdIndex();
-      throw 'create duplicate _id index should fail!';
+      throw new Error('create duplicate _id index should fail!');
    }
    catch(e){
       if(e != -38){
-         throw buildException("createIdIndex()", e, "dbcl exists duplicate _id, create _id index", "success", "fail");
+         throw new Error(e);
       }
    }
 }
@@ -79,4 +79,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

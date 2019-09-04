@@ -113,4 +113,16 @@ function update( dbcl )
    dbcl.update( { $set : { _id : {"$maxKey" : 1 } } }, { b : 4 } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

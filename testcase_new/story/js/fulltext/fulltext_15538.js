@@ -75,13 +75,13 @@ function main()
    try
    {
       dbcl.insert(doc);
-      throw buildException("insert()", "insert", "insert many arrays of keys", "fail","success");
+      throw new Error("insert many arrays of keys");
    }
    catch(e)
    {
       if(-37 != e)
       {
-         throw buildException("insert()", "insert", "insert other exception", e, e);
+         throw new Error(e);
       }
    }
 
@@ -159,4 +159,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

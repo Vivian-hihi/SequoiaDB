@@ -78,4 +78,15 @@ function getActualIndexes(actIndexes){
    return actualIndexes;
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

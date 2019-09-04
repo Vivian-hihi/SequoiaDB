@@ -33,13 +33,13 @@ function main()
    {
       var rec = dbcl.find({"": {"$text": {"query": {"match_all":{}}}}}); // should fail
       rec.next();
-      throw buildException("find()", "find", "find with wrong command", "fail","success");
+      throw new Error("find with wrong command");
    }
    catch(e)
    {
       if(-6 !== e)  
       {
-          throw buildException("find()", "find", "find other exception", e, e); 
+          throw new Error(e);
       }
 
    }
@@ -49,4 +49,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

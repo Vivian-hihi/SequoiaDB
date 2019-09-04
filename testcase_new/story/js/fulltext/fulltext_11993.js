@@ -19,11 +19,11 @@ function main()
    var indexName = "a_11993";
    try{
       dbcl.createIndex(indexName, {content:"int"});
-      throw "CREATEINDEXERR";
+      throw new Error("CREATEINDEXERR");
    }
    catch( e ){
       if( e != -6){
-         throw buildException("main()", "create illegal index success", "create full index", "fail to create index", "create index success");
+         throw new Error("create illegal index success");
       }
    }
    commCheckIndex( dbcl, indexName, false );
@@ -31,11 +31,11 @@ function main()
    //创建非法的复合索引
    try{
       dbcl.createIndex(indexName, {content:"text", about : 1});
-      throw "CREATEINDEXERR";
+      throw new Error("CREATEINDEXERR");
    }
    catch( e ){
       if( e != -6){
-         throw buildException("mian()", "create illegal composite index", "create full index", "fail to create index", "create index success");
+         throw new Error("create illegal composite index success");
       }
    }
    commCheckIndex( dbcl, indexName, false );
@@ -56,4 +56,15 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

@@ -50,34 +50,28 @@ function lobGenerateFile( fileName, fileLine)
       fileLine = 1000 ; 
    }
    
-   try
+   var cnt = 0 ;
+   while( true == lobFileIsExist( fileName ))
    {
-      var cnt = 0 ;
-      while( true == lobFileIsExist( fileName ))
-      {
-         File.remove( fileName ) ;
-         if ( cnt > 10) break ;
-         cnt++ ;
-         sleep(10) ;
-      }
-      
-      if( 10 <= cnt )
-         throw "failed to remove file: " + fileName ;
-      var file = new File( fileName ) ;
-      for( var i = 0 ; i < fileLine ; ++i )
-      {
-         var record = '{ no:'+i+', score:'+i+', interest:["movie", "photo"],' +
-                      '  major:"计算机软件与理论", dep:"计算机学院",' +
-                      '  info:{name:"Holiday", age:22, sex:"男"} }' ;
-         file.write( record ) ;
-      }
-      if( false == lobFileIsExist( fileName ) )
-         throw "NoFile: " + fileName ;
+      File.remove( fileName ) ;
+      if ( cnt > 10) break ;
+      cnt++ ;
+      sleep(10) ;
    }
-   catch( e )
+   
+   if( 10 <= cnt )
+      throw new Error("failed to remove file: " + fileName) ;
+   var file = new File( fileName ) ;
+   for( var i = 0 ; i < fileLine ; ++i )
    {
-      println( "faile to auto generate file, rc = " + e ) ;
-      throw e ;
+      var record = '{ no:'+i+', score:'+i+', interest:["movie", "photo"],' +
+                   '  major:"计算机软件与理论", dep:"计算机学院",' +
+                   '  info:{name:"Holiday", age:22, sex:"男"} }' ;
+      file.write( record ) ;
+   }
+   if( false == lobFileIsExist( fileName ) )
+   {
+      throw new Error("NoFile: " + fileName) ;
    }
 }
 
@@ -97,4 +91,15 @@ function lobFileIsExist( fileName )
    return isExist ;
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

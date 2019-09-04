@@ -86,4 +86,16 @@ function main()
    checkIndexNotExistInES(esIndexNames2);
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

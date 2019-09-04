@@ -71,4 +71,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES( esIndexNames );  
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

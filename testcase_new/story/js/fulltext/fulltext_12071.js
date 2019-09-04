@@ -14,7 +14,6 @@ function main()
    commDropCL(db, COMMCSNAME, mainclName, true, true);
    
    //主表及子表在相同和不同的集合空间上
-   commDropCL(db, COMMCSNAME, mainclName, true, true);
    var mainCL = commCreateCLByOption( db, COMMCSNAME, mainclName, {ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
    var subCLName1 = COMMCLNAME + "sub1_cl_12071";
    commDropCL(db, COMMCSNAME, subCLName1, true, true);
@@ -46,8 +45,19 @@ function main()
    checkIndexNotExistInES(esIndexNames1);
    checkIndexNotExistInES(esIndexNames2);
    
-   commDropCL(db, COMMCSNAME, subCLName1, true, true);
    commDropCS( db, csName );
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

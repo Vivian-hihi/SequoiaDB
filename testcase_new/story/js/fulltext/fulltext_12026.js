@@ -50,15 +50,27 @@ function update( dbcl )
    try
    {
       dbcl.update( { $set : { a : "text2", b : "text2" } } );
-      throw 'should update fail!';
+      throw new Error("should update fail!");
    }
    catch( e )
    {
       if( e !== -279 )
         {
-         throw e;
+         throw new Error(e);
       }        
    }
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

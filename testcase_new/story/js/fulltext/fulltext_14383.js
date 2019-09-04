@@ -31,13 +31,13 @@ function main()
    try
    {
       dbcl.remove({"": {"$Text": {"query": {"match_all":{}}}}}); // should fail
-      throw buildException("remove()", "remove with DSL", "remove", "fail","success");
+      throw new Error("remove with DSL");
    }
    catch(e)
    {
       if(-6 !== e)  
       {
-          throw buildException("remove()", "remove fail exception", "remove", e, e); 
+          throw new Error(e);
       }
    }
    
@@ -50,4 +50,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

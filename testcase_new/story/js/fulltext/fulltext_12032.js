@@ -60,7 +60,7 @@ function removeRecords(dbcl){
    }
    catch(e){
       if(e != "-279"){
-		 throw buildException("remove()", e, "dbcl delete records without $id index", "success", "fail");
+		 throw new Error(e);
       }
    }
 }
@@ -72,4 +72,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

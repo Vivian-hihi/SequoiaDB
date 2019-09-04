@@ -28,12 +28,12 @@ function main()
    {
       var cursor = dbcl.find({"":{$Text:{query:{match_all:{}},sort:[{a:{order:"desc"}}]}}});
       while(cursor.next()){}
-      throw "NEED_SORT_ERR";
+      throw new Error("NEED_SORT_ERR");
    }catch(e)
    {
       if(e !== -6)
       {
-         throw e;
+         throw new Error(e);
       }
    }
    
@@ -42,4 +42,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

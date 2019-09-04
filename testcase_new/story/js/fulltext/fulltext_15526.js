@@ -90,4 +90,16 @@ function updateData( dbcl )
    dbcl.update( { $set : { _id : { "$oid" : "123abcd00ef12358902300ef" } } }, { a : "a9" } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

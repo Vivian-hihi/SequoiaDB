@@ -61,4 +61,16 @@ function insertDate( dbcl )
    dbcl.insert( { _id : 1, a : "a1" } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

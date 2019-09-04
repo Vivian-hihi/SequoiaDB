@@ -65,11 +65,11 @@ function main(){
 function createDuplicateIndex(dbcl){
    try{
       dbcl.createIndex("nameIndex", {name : 1}, true);
-      throw 'create unique index on duplicate field should fail!';
+      throw new Error('create unique index on duplicate field should fail!');
    }
    catch(e){
       if(e != -38){
-         throw buildException("creatIndex()", e, "dbcl create unique index on duplicate field", "success", "fail");
+         throw new Error(e);
       }
    }
 }
@@ -81,4 +81,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

@@ -24,11 +24,11 @@ function main()
    //在已创建64个索引的情况下，创建全文索引
    try{
       dbcl.createIndex( "fullIndex_11983", {content : "text"});
-      throw "CREATEINDEXERR" ;
+      throw new Error("CREATEINDEXERR") ;
    }
    catch( e ){
       if( e != -42){
-         throw buildException("main()", "create more than 64 indexes", "create index", "fail to create index", "create index success");
+         throw new Error("create more than 64 indexes");
       }
    }
    commCheckIndex( dbcl, "fullIndex_11983", false );
@@ -43,9 +43,20 @@ function main()
    //检查listIndexes是否包含创建失败的索引名
    for(var i in arrayIndexes){
       if (arrayIndexes[i] == "fullIndex_11983"){
-         throw buildException("main()", "list indexes with not exist index", "arrayIndexes[i] equal to fullIndex_11983", arrayIndexes[i], "fullIndex_11983");	  
+         throw new Error("fullIndex_11983 exists,index in cl: " + arrayIndexes);
       }
    }
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

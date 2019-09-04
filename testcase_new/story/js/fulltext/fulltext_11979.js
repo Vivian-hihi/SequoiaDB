@@ -42,8 +42,8 @@ function main()
    
    for (var i in expCappedAttr){
       if (expCappedAttr[i] != actCappedAttr[i]){
-         throw buildException("main()", "capped cl's attributes is not default value", "expCappedAttr equal to actCappedAttr", JSON.stringify(expCappedAttr), JSON.stringify(actCappedAttr));	   
-      }
+         throw new Error("expect attr: " + expCappedAttr[i] + ",expect attr: " + actCappedAttr[i]);
+         }
    }  
    
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
@@ -51,4 +51,15 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

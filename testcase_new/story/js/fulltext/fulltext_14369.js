@@ -63,11 +63,11 @@ function main()
    }
    try{
       dbcl.createIndex(indexName, {content : "text"}); 
-      throw "CREATEINDEXERR" ;
+      throw new Error("CREATEINDEXERR") ;
    }
    catch( e ){
 	  if( e != -6){
-         throw buildException("mian()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
+         throw new Error(e);
       }
    }
    commCheckIndex( dbcl, indexName, false );
@@ -82,11 +82,11 @@ function main()
    }
    try{
       dbcl.createIndex(indexName, {content : "text"});	   
-      throw "CREATEINDEXERR" ;
+      throw new Error("CREATEINDEXERR") ;
    }
    catch( e ){
       if( e != -6){
-         throw buildException("main()", "create more than 127B index", "create index " + indexName, "fail to create index", "create index success");
+         throw new Error(e);
       }
    }
    commCheckIndex( dbcl, indexName, false );
@@ -95,4 +95,15 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

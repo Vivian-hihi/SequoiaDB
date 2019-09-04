@@ -29,13 +29,13 @@ function createIndexOnId( dbcl, textIndexName )
 {
    try
    {
-      commCreateIndex( dbcl, textIndexName, { _id : "text" } );
-      throw 'create text index on _id should fail!';
+      dbcl.createIndex(textIndexName, {_id: "text"});
+      throw new Error('create text index on _id should fail!');
    }catch( e )
    {
       if( e !== -6 )
       {
-         throw e;
+         throw new Error(e);
       }
    }
 }
@@ -44,15 +44,27 @@ function createIndexContainId( dbcl, textIndexName )
 {
    try
    {
-      commCreateIndex( dbcl, textIndexName, { _id : "text", a : "text" } );
-      throw 'create text index include _id should fail!';
+      dbcl.createIndex(textIndexName, { _id : "text", a : "text" });
+      throw new Error('create text index include _id should fail!');
    }catch( e )
    {
       if( e !== -6 )
       {
-         throw e;
+         throw new Error(e);
       }
    }
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

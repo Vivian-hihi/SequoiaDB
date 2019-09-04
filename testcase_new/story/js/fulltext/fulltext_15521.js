@@ -91,4 +91,16 @@ function insertData( dbcl )
    dbcl.insert( { _id : { "$date" : "9999-12-31" }, a : "date3" } );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

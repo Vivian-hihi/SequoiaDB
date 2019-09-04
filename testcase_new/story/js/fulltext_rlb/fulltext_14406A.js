@@ -105,4 +105,16 @@ function main()
        db.updateConf( { "weight" : 10 }, { "NodeName" : preMasterNodeName } );
    } 
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

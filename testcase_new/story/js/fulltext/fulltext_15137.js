@@ -186,8 +186,20 @@ function checkCount( expectCount, actCount )
 {
    if(expectCount != actCount)
    {
-      throw buildException("checkCount()", "check count", "check count", expectCount, actCount);
+      throw new Error("expect record num: " + expectCount + ",actual record num: " + actCount);
    }
    println("check result success!");
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

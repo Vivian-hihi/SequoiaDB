@@ -39,7 +39,7 @@ function main()
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
-      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+      throw new Error("expect record num:0, actual record num: " + count);
    }
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
@@ -65,7 +65,7 @@ function main()
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
-      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+      throw new Error("expect record num:0, actual record num: " + count);
    }
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
@@ -99,7 +99,7 @@ function main()
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
-      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+      throw new Error("expect record num:0, actual record num: " + count);
    }
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
@@ -126,7 +126,7 @@ function main()
    var cappedCL = cappedCL[0];
    var count = cappedCL.count();
    if (count != 0){
-      throw buildException("main()", "cappedCL is not empty", "equal", 0, count);
+      throw new Error("expect record num:0, actual record num: " + count);
    }
    
    var actResult = dbOperator.findFromCL(dbcl, {"" : {$Text : {"query" : {"match_all" :{}}}}}, null, {"_id" : 1});
@@ -146,4 +146,16 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

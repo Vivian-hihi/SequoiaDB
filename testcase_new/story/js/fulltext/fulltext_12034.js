@@ -53,7 +53,7 @@ function main(){
 
 function checkAllResult(count){
    if(count != 1){
-      throw buildException( "Count ", null, "cappedCL.find({Type : 2}).count();", "success", "fail" );
+      throw new Error("expect record num: 1, actual record num: " + count);
    }
    else{
       println("new {Type : 2} record succeeded");
@@ -67,4 +67,16 @@ function checkRecords( expRecords, actRecords )
    checkResult(expRecords, actRecords)
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

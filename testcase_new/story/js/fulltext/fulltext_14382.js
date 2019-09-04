@@ -38,7 +38,7 @@ function main()
    {
       if(e !== -178)
       {
-         throw "update error!";
+         throw new Error(e);
       }
    }
    dbcl.insert({a : "new"});
@@ -54,4 +54,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

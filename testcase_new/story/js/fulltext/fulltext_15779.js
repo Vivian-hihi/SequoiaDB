@@ -32,13 +32,13 @@ function main()
    try
    {
       dbcl.update({"$set":{a:[1, 1.001],b:[true, null], c:[{"o":"m"}], d:[{"$regex" : "^update", "$options" : "i"}]}}, {a : {"$exists" : 1}});
-      throw buildException("update()", "update", "update many arrays of keys", "fail","success");
+      throw new Error("update many arrays of keys need fail.");
    }
    catch(e)
    {
       if(-37 != e)
       {
-         throw buildException("update()", "update", "update other exception", e, e);
+         throw new Error(e);
       }
    }
    
@@ -62,4 +62,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

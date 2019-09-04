@@ -82,4 +82,16 @@ function initCappedCS( csName )
    commCreateCS( db, csName, false, "beginning to create cappedCS", options );
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

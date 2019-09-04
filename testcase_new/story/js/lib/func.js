@@ -86,8 +86,7 @@ this.ReplSize_groups = function( db )
    {
       if ( e != -159 )
       {
-         println( "list replica groups failed: " + e ) ;
-         throw e ;
+         throw new Error( "list replica groups failed: " + e ) ;
       }
    }
 
@@ -183,8 +182,7 @@ function commIsStandalone( db )
       }
       else
       {
-         println("execute listReplicaGroups happen error , e =" +e ) ;
-         throw e ;
+         throw new Error( "execute listReplicaGroups happen error , e =" +e ) ;
       }
    }
 }
@@ -216,8 +214,7 @@ function commCreateCS( db, csName, ignoreExisted, message, options )
    {
       if ( e != -33 || !ignoreExisted )
       {
-         println( "commCreateCS[" + funcCommCreateCSTimes + "] Create collection space[" + csName + "] failed: " + e + ", message: " + message ) ;
-         throw e ;
+         throw new Error( "commCreateCS[" + funcCommCreateCSTimes + "] Create collection space[" + csName + "] failed: " + e + ", message: " + message ) ;
       }
    }
    // get collection space object
@@ -227,8 +224,7 @@ function commCreateCS( db, csName, ignoreExisted, message, options )
    }
    catch ( e )
    {
-      println( "commCreateCS[" + funcCommCreateCSTimes + "] Get existed collection space[" + csName + "] failed: " + e + ",message: " + message  ) ;
-      throw e ;
+      throw new Error( "commCreateCS[" + funcCommCreateCSTimes + "] Get existed collection space[" + csName + "] failed: " + e + ",message: " + message ) ;
    }
 }
 
@@ -264,8 +260,7 @@ function commCreateCL( db, csName, clName, replSize, compressed, autoCreateCS, i
    {
       if ( e != -22 || !ignoreExisted )
       {
-         println( "commCreateCL[" + funcCommCreateCLTimes + "] create collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
-         throw e ;
+         throw new Error("commCreateCL[" + funcCommCreateCLTimes + "] create collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message) ;
       }
    }
    //get collection
@@ -275,8 +270,7 @@ function commCreateCL( db, csName, clName, replSize, compressed, autoCreateCS, i
    }
    catch ( e )
    {
-      println( "commCreateCL[" + funcCommCreateCLTimes + "] get collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
-      throw e ;
+      throw new Error( "commCreateCL[" + funcCommCreateCLTimes + "] get collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
    }
 
 }
@@ -301,7 +295,7 @@ function commCreateCLByOption( db, csName, clName, optionObj, autoCreateCS, igno
 
    if ( typeof( optionObj ) != "object" )
    {
-      throw "commCreateCLByOption: optionObj is not object" ;
+      throw new Error("commCreateCLByOption: optionObj is not object") ;
    }
    var csObj ;
    if ( autoCreateCS )
@@ -316,8 +310,7 @@ function commCreateCLByOption( db, csName, clName, optionObj, autoCreateCS, igno
       }
       catch( e )
       {
-         println( "commCreateCLByOption[" + funcCommCreateCLOptTimes + "] get collection space[" + csName + "] failed: " + e ) ;
-         throw e ;
+         throw new Error( "commCreateCLByOption[" + funcCommCreateCLOptTimes + "] get collection space[" + csName + "] failed: " + e ) ;
       }
    }
 
@@ -329,8 +322,7 @@ function commCreateCLByOption( db, csName, clName, optionObj, autoCreateCS, igno
    {
       if ( e != -22 || !ignoreExisted )
       {
-         println( "commCreateCLByOption[" + funcCommCreateCLOptTimes + "] create collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
-         throw e ;
+         throw new Error( "commCreateCLByOption[" + funcCommCreateCLOptTimes + "] create collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
       }
    }
    //get collection
@@ -340,8 +332,7 @@ function commCreateCLByOption( db, csName, clName, optionObj, autoCreateCS, igno
    }
    catch ( e )
    {
-      println( "commCreateCLByOption[" + funcCommCreateCLOptTimes + "] get collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
-      throw e ;
+      throw new Error( "commCreateCLByOption[" + funcCommCreateCLOptTimes + "] get collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message );
    }
 }
 
@@ -370,8 +361,7 @@ function commDropCS( db, csName, ignoreNotExist, message )
       }
       else
       {
-         println( "commDropCS[" + funcCommDropCSTimes + "] Drop collection space[" + csName + "] failed: " + e + ",message: " + message ) ;
-         throw e ;
+         throw new Error( "commDropCS[" + funcCommDropCSTimes + "] Drop collection space[" + csName + "] failed: " + e + ",message: " + message ) ;
       }
    }
 }
@@ -403,8 +393,7 @@ function commDropCL( db, csName, clName, ignoreCSNotExist, ignoreCLNotExist, mes
       }
       else
       {
-         println( "commDropCL[" + funcCommDropCLTimes + "] Drop collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
-         throw e ;
+         throw new Error( "commDropCL[" + funcCommDropCLTimes + "] Drop collection[" + csName + "." + clName + "] failed: " + e + ",message: " + message ) ;
       }
    }
 }
@@ -424,7 +413,7 @@ function commCreateIndex( cl, name, indexDef, isUnique, ignoreExist )
    
    if ( typeof( indexDef ) != "object" )
    {
-      throw "commCreateIndex: indexDef is not object" ;
+      throw new Error("commCreateIndex: indexDef is not object") ;
    }
 
    try
@@ -440,7 +429,7 @@ function commCreateIndex( cl, name, indexDef, isUnique, ignoreExist )
       }
       else
       {
-         throw e ;
+         throw new Error("commCreateIndex: create index[" + name + "] failed: " + e) ;
       }
    }
 }
@@ -461,8 +450,7 @@ function commDropIndex( cl, name, ignoreNotExist )
       }
       else
       {
-         println( "commDropIndex: drop index[" + name + "] failed: " + e ) ;
-         throw e ;
+         throw new Error( "commDropIndex: drop index[" + name + "] failed: " + e ) ;
       }
    }
 }
@@ -502,8 +490,7 @@ function commCheckIndex( cl, name, exist, timeout )
                sleep( 1000 ) ;
                continue ;
             }
-            println( "commCheckIndex: check index[" + name + "] time out" ) ;
-            throw "check index time out" ;
+            throw new Error( "commCheckIndex: check index[" + name + "] time out" ) ;
          }
 
          if ( tmpInfo != undefined )
@@ -513,15 +500,14 @@ function commCheckIndex( cl, name, exist, timeout )
             {
                println("commCheckIndex: get index name[" + tmpObj.IndexDef.name + "] is not the same with name[" + name + "]" ) ;
                println( tmpInfo ) ;
-               throw "check name error" ;
+               throw new Error("check name error") ;
             }
          }
          break ;
       }
       catch( e )
       {
-         println( "commCheckIndex: get index[" + name + "] failed: " + e ) ;
-         throw "get index failed" ;
+         throw new Error( "commCheckIndex: get index[" + name + "] failed: " + e );
       }
    }
 }
@@ -701,7 +687,7 @@ function commGetCLGroups( db, clName )
 {
    if ( typeof(clName) != "string" || clName.length == 0 )
    {
-      throw "commGetCLGroups: Invalid clName parameter or clName is empty" ;
+      throw new Error("commGetCLGroups: Invalid clName parameter or clName is empty") ;
    }
    if ( commIsStandalone( db ) )
    {
@@ -717,8 +703,7 @@ function commGetCLGroups( db, clName )
    }
    catch( e )
    {
-      println( "commGetCLGroups: snapshot collection space failed: " + e ) ;
-      throw e ;
+      throw new Error( "commGetCLGroups: snapshot collection space failed: " + e ) ;
    }
 
    while ( cursor.next() )
@@ -750,7 +735,7 @@ function commGetCSGroups( db, csname )
 {
    if ( typeof(csname) != "string" || csname.length == 0 )
    {
-      throw "commGetCSGroups: Invalid csname parameter or csname is empty" ;
+      throw new Error("commGetCSGroups: Invalid csname parameter or csname is empty") ;
    }
    if ( commIsStandalone( db ) )
    {
@@ -765,8 +750,7 @@ function commGetCSGroups( db, csname )
    }
    catch( e )
    {
-      println( "commGetCSGroups: snapshot collection space failed: " + e ) ;
-      throw e ;
+      throw new Error( "commGetCSGroups: snapshot collection space failed: " + e ) ;
    }
 
    for ( var i = 0 ; i < tmpInfo.length; ++i )
@@ -823,7 +807,7 @@ function commGetGroups( db, print, filter, exceptCata, exceptCoord, exceptSpare 
       {
          if( true == print )
             println( "commGetGroups failed: " + e ) ;
-         throw e ;
+         throw new Error( "commGetGroups failed: " + e ) ;
       }
    }
 
@@ -921,7 +905,7 @@ function commGetGroupsNum( db, print, filter, exceptCata, exceptCoord, exceptSpa
       {
          if( true == print )
             println( "commGetGroups failed: " + e ) ;
-         throw e ;
+         throw new Error( "commGetGroups failed: " + e) ;
       }
    }
 
@@ -1027,11 +1011,11 @@ function commGetBackups( db, filter, path, isSubDir, cond, grpNameArray )
 
    if ( typeof( cond ) != "object" )
    {
-      throw "commGetBackups: cond is not a object" ;
+      throw new Error("commGetBackups: cond is not a object") ;
    }
    if ( typeof( grpNameArray ) != "object" )
    {
-      throw "commGetBackups: grpNameArray is not a array" ;
+      throw new Error("commGetBackups: grpNameArray is not a array") ;
    }
 
    var tmpBackup = new Array() ;
@@ -1382,16 +1366,15 @@ function commGetInstallPath()
             if( 2 <= fcnt )
                InstallPath = LocalPath ;
             else
-               throw "Don'tGetLocalPath" ;
+               throw new Error("Don'tGetLocalPath") ;
          }
          else
-            throw e ;
+            throw new Error(e) ;
       }
    }
    catch( e )
    {
-      println( "failed to get install path[common]: " + e ) ;
-      throw e ;
+      throw new Error( "failed to get install path[common]: " + e ) ;
    }
    return InstallPath ;
 }
@@ -1742,8 +1725,7 @@ function commMakeDir( host, dir )
     }
     catch( e )
     {
-        throw buildException( "commMakeDir", e, 
-              "make dir " + dir + " in " + host, 0, e ) ;
+        throw new Error( "commMakeDir make dir " + dir + " in " + host + " error: " + e ) ;
     } 
 }
 
@@ -1765,8 +1747,7 @@ function commCreateDomain( db, domainName, groupNames, options, ignoreExisted, m
    {
       if(e !== -215 || !ignoreExisted)
       {
-         println( "commCreateDomain, create domain: " + domainName + " failed: " + e + outmessage ) ;
-         throw e;
+         throw new Error( "commCreateDomain, create domain: " + domainName + " failed: " + e + outmessage ) ;
       }
    }
    
@@ -1776,8 +1757,7 @@ function commCreateDomain( db, domainName, groupNames, options, ignoreExisted, m
    }
    catch ( e )
    {
-      println( "commCreateDomain, get domain: " + domainName + " failed: " + e + outmessage ) ;
-      throw e ;
+      throw new Error( "commCreateDomain, get domain: " + domainName + " failed: " + e + outmessage ) ;
    }
    
    
@@ -1807,8 +1787,7 @@ function commDropDomain( db, domainName, ignoreNotExist, message)
    {
       if( e !== -214 || !ignoreNotExist)
       {
-         println( "commDropDomain, drop domain: " + domainName + " failed: " + e + outmessage ) ;
-         throw e ;
+         throw new Error( "commDropDomain, drop domain: " + domainName + " failed: " + e + outmessage ) ;
       }
    }
    
@@ -1831,8 +1810,7 @@ function commCreateProcedure( db, code, ignoreExisted, message)
    {
       if(e !== -38 || !ignoreExisted)
       {
-         println( "commCreateProcedure, create procedure: " + code + " failed: " + e + outmessage ) ;
-         throw e;
+         throw new Error( "commCreateProcedure, create procedure: " + code + " failed: " + e + outmessage ) ;
       }
    }
 }
@@ -1854,8 +1832,7 @@ function commRemoveProcedure( db, functionName, ignoreNotExist, message)
    {
       if( e !== -233 || !ignoreNotExist)
       {
-         println( "commRemoveProcedure, remove procedure: " + functionName + " failed: " + e + outmessage ) ;
-         throw e ;
+         throw new Error( "commRemoveProcedure, remove procedure: " + functionName + " failed: " + e + outmessage ) ;
       }
    }
    
@@ -1879,8 +1856,7 @@ function commCreateUsr( db, userName, password, options, ignoreExisted, message)
    {
       if(e !== -295 || !ignoreExisted)
       {
-         println( "commCreateUsr, create userName: " + userName + " failed: " + e + outmessage ) ;
-         throw e;
+         throw new Error( "commCreateUsr, create userName: " + userName + " failed: " + e + outmessage ) ;
       }
    }
 }
@@ -1902,8 +1878,7 @@ function commDropUsr( db, userName, password, ignoreNotExist, message)
    {
       if( e !== -300 || !ignoreNotExist)
       {
-         println( "commDropUsr, drop userName: " + userName + " failed: " + e + outmessage ) ;
-         throw e ;
+         throw new Error( "commDropUsr, drop userName: " + userName + " failed: " + e + outmessage ) ;
       }
    }
    

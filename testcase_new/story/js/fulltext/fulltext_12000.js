@@ -32,12 +32,12 @@ function main()
    try
    {
       dbcl.insert({a:str});
-      throw "NEED_INSERT_ERR";
+      throw new Error("NEED_INSERT_ERR");
    }catch(e)
    {
       if(e !== -24)
       {
-         throw e;
+         throw new Error(e);
       }
    }
    
@@ -48,4 +48,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983 
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+

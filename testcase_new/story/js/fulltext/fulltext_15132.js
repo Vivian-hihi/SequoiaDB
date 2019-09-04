@@ -176,8 +176,19 @@ function main()
 
 function checkCount(expResult, actResult){
    if (actResult.length != expResult.length){
-      throw buildException("checkCount()", "different length between actResult and expResult", "equal length", expResult.length, actResult.length);
+      throw new Error("expect result length: " + expResult.length + ",actual result length: " + actResult.length);
    }
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

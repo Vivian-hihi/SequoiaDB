@@ -26,10 +26,10 @@ function main()
    var expResult = dbOperator.findFromCL( dbcl, null, {a : ""});
      
    if (expResult.length != 1){
-      throw buildException("main()", "unexpect records", "equal", 1, expResult.length);
+      throw new Error("expect record num: 1,actual record num: " + expResult.length);
    }
    if (expResult[0]["a"] != actResult[0]["a"]){
-      throw buildException("main()", "unexpect record value", "equal", expResult[0]["a"], actResult[0]["a"]);
+      throw new Error("expect record: " + expResult[0]["a"] + ",actual record: " + actResult[0]["a"]);
    }
    
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "a_11984");
@@ -37,4 +37,15 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

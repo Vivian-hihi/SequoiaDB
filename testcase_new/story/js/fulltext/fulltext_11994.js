@@ -27,11 +27,11 @@ function main()
    commCheckIndex( dbcl, indexName, false );
    try{
       dbcl.dropIndex( indexName ); 
-      throw "DROPINDEXERR";
+      throw new Error("DROPINDEXERR");
    }
    catch( e ){
       if( e != -47){
-         throw buildException("main()", "drop not exist index success", "drop full index", "fail to drop", "drop success");
+         throw new Error("drop not exist index success");
       }
    }
    commCheckIndex( dbcl, indexName, false );
@@ -39,4 +39,15 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

@@ -53,7 +53,7 @@ function main()
    for (var i in cappedArray){
       var cpName = cappedArray[i];
       if (cappedArray.indexOf(cpName) != cappedArray.lastIndexOf(cpName)){
-         throw buildException("main()", "exists duplicate capped cl name", "equal", JSON.stringify(cappedArray), cpName);
+         throw new Error("exists duplicate capped cl name, cappedName: " + cpName  + "in cappedArray: " + JSON.stringify(cappedArray));
       }	  
    }
    
@@ -69,22 +69,22 @@ function main()
    var esOperator = new ESOperator();
    var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
    var esIndexName1 = FULLTEXTPREFIX.toLowerCase() + cappedCLName.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName1);
+   esOperator.isCreateIndexInES(esIndexName1);
    var groups = commGetCLGroups( db, csName + "." + clName );
    var esIndexName2 = FULLTEXTPREFIX.toLowerCase() + cappedCLName1.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName2);
+   esOperator.isCreateIndexInES(esIndexName2);
    var groups = commGetCLGroups( db, csName + "." + clName + "_2" );
    var esIndexName3 = FULLTEXTPREFIX.toLowerCase() + cappedCLName2.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName3);
+   esOperator.isCreateIndexInES(esIndexName3);
    var groups = commGetCLGroups( db, csName + "." + clName + "_3" );
    var esIndexName4 = FULLTEXTPREFIX.toLowerCase() +  cappedCLName3.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName4);
+   esOperator.isCreateIndexInES(esIndexName4);
    var groups = commGetCLGroups( db, csName + "." + clName + "_4_1" );
    var esIndexName5 = FULLTEXTPREFIX.toLowerCase() + cappedSubCLName1.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName5);
+   esOperator.isCreateIndexInES(esIndexName5);
    var groups = commGetCLGroups( db, csName + "." + clName + "_4_2" );
    var esIndexName6 = FULLTEXTPREFIX.toLowerCase() +  cappedSubCLName2.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName6);
+   esOperator.isCreateIndexInES(esIndexName6);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName, true );
@@ -101,8 +101,19 @@ function checkExtDataName(dbcl, indexName, cappedCLName){
    var index = dbcl.getIndex(indexName).toObj();
    var extDataName = index["ExtDataName"];
    if (cappedCLName != extDataName){
-      throw buildException("checkExtDataName()", "index's property ExtDataName is not equal to cappedCLName", "equal", "cappedCLName : " + cappedCLName, "extDataName : " + extDataName);
+      throw new Error("index's property ExtDataName is not equal to cappedCLName, cappedName: " + cappedCLName + ",extDataName: " + extDataName);
    }
 }
 
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

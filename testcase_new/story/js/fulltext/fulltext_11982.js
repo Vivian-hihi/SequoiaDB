@@ -20,11 +20,11 @@ function main()
    commCheckIndex( dbcl, "a_11982", true );
    try{
       dbcl.createIndex( "b_11982", {about:"text"});
-      throw "CREATEINDEXERR";
+      throw new Error("CREATEINDEXERR");
    }
    catch( e ){
       if( e != -42){
-         throw buildException("main()", "create duplicate indexes", "create index", "fail to create index", "create index success");
+         throw new Error("expect error: -42, actual error: " + e );
       }
    }
    
@@ -36,11 +36,11 @@ function main()
    
    //listIndexes不显示创建失败的集合
    if(arrayIndexes.length != 2){
-      throw buildException("main()", "more than 2 indexes", "indexes.length equal to 2", 2, arrayIndexes.length);
+      throw new Error("more than 2 indexes: " + arrayIndexes.length);
    }
    for(var i in arrayIndexes){
       if(arrayIndexes[i]["IndexDef"]["name"] != "$id" && arrayIndexes[i]["IndexDef"]["name"] != "a_11982"){
-         throw buildException("main()", "have not exist index", "equal", "$id or a_11982", arrayIndexes[i]["IndexDef"]["name"]);
+         throw new Error("index: $id or a_11982 is not exists.");
       }
    }
    
@@ -50,4 +50,15 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

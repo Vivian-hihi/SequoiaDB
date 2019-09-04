@@ -58,4 +58,16 @@ function main()
 }
 
 // Jira 4575 暂时屏蔽此用例
-// main();
+try
+{
+   //main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

@@ -39,7 +39,7 @@ function main()
    if(parseInt(actCount) !== expectCount)
    {
       println("actCount:" + actCount + ",expectCount:" + expectCount);
-      throw "COUNT_ERR";
+      throw new Error("COUNT_ERR");
    }
    println("---check not match any record---");
    
@@ -48,7 +48,7 @@ function main()
    if(parseInt(actCount) !== expectCount)
    {
       println("actCount:" + actCount + ",expectCount:" + expectCount);
-      throw "COUNT_ERR";
+      throw new Error("COUNT_ERR");
    }
    println("---check match part of records---");
    
@@ -57,7 +57,7 @@ function main()
    if(parseInt(actCount) !== expectCount)
    {
       println("actCount:" + actCount + ",expectCount:" + expectCount);
-      throw "COUNT_ERR";
+      throw new Error("COUNT_ERR");
    }
    println("---check match all records---");
    
@@ -66,4 +66,16 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+
