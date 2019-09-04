@@ -162,13 +162,13 @@ public class CreateCL18964 extends SdbTestBase {
             for (int i = 0; i < CL_NUM; i++) {
                 String clName = clNameBase + "_" + i;
                 if (!commCS.isCollectionExist(clName)) {
-                    if (node1.isCollectionSpaceExist(csName)) {
+                    if (node1.getCollectionSpace(csName).isCollectionExist(clName)) {
                         node1.getCollectionSpace(csName).dropCollection(clName);
                     }
-                    if (node2.isCollectionSpaceExist(csName)) {
+                    if (node2.getCollectionSpace(csName).isCollectionExist(clName)) {
                         node1.getCollectionSpace(csName).dropCollection(clName);
                     }
-                    if (node3.isCollectionSpaceExist(csName)) {
+                    if (node3.getCollectionSpace(csName).isCollectionExist(clName)) {
                         node1.getCollectionSpace(csName).dropCollection(clName);
                     }
                 }
