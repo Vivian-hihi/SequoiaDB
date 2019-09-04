@@ -23,7 +23,7 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 
 /**
- * @Description MainNodeErrRename.java:  seqDB-16296:rename cl未同步到备节点时主节点异常
+ * @Description MainNodeErrRename.java: seqDB-16296:rename cl未同步到备节点时主节点异常
  * @author luweikang
  * @date 2018年11月7日
  */

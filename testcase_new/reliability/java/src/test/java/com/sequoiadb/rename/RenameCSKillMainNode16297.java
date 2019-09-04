@@ -27,7 +27,7 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description RenameKillMainNode16297.java  seqDB-16297:执行rename cs过程中，数据主节点故障
+ * @Description RenameKillMainNode16297.java seqDB-16297:执行rename cs过程中，数据主节点故障
  * @author luweikang
  * @date 2018年11月7日
  */
@@ -63,6 +63,7 @@ public class RenameCSKillMainNode16297 extends SdbTestBase {
             oldCSNameList.add(oldCSName + i);
             newCSNameList.add(newCSName + i);
         }
+        sdb.sync();
     }
 
     @Test

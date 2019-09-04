@@ -65,6 +65,7 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase {
             oldCLNameList.add(oldCLName + i);
             newCLNameList.add(newCLName + i);
         }
+        sdb.sync();
     }
 
     @Test(enabled = false)

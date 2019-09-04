@@ -65,6 +65,7 @@ public class RenameCSNetworkfailNode16771 extends SdbTestBase {
             oldCSNameList.add(oldCSName + i);
             newCSNameList.add(newCSName + i);
         }
+        sdb.sync();
     }
 
     @Test(enabled = false)
