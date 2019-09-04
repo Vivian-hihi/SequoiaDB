@@ -880,7 +880,7 @@ namespace engine
 
          len = ossSnprintf( buff, UTIL_DUMP_BUFFSIZE,
                             OSS_NEWLINE
-                            "---- Thread ID( %u : %s ) ----"OSS_NEWLINE,
+                            "---- Thread( ID: %u, Name: %s ) ----"OSS_NEWLINE,
                             ossGetCurrentThreadID(),
                             g_thdMemPool->getName() ) ;
          len += g_thdMemPool->dump( buff + len, UTIL_DUMP_BUFFSIZE - len ) ;
