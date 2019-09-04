@@ -2090,8 +2090,18 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
       {
          if( 0 <= e )
          {
+            var result = getLastErrObj().toObj() ;
+
             this._retCode = e ;
-            this._strOut = getLastErrMsg() ;
+
+            if ( typeof( result.detail ) == 'string' )
+            {
+               this._strOut = result.detail ;
+            }
+            else
+            {
+               this._strOut = getLastErrMsg() ;
+            }
          }
          throw e ;
       }
