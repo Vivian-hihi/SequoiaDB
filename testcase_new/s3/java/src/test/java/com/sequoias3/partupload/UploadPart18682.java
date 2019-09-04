@@ -66,7 +66,8 @@ public class UploadPart18682 extends S3TestBase {
 
     @Test(enabled = false) // (dataProvider = "uploadProvider")
     private void testUpload(String keyName, long oldPartSize, long newPartSize) throws Exception {
-        runSuccess = false;
+        runSuccess = false; // TODO
+                            // 公共变量有初始化了，这里就不需要了，因为只有一个test；另外，多个test如果前面test失败而最后一个test成功，最终runSuccess=true还是会清理环境
         partEtags = new ArrayList<>();
         uploadPartFirst(keyName, oldPartSize);
         long partTwoOffset = oldPartSize;

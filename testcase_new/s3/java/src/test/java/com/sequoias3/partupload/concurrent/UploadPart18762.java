@@ -100,6 +100,7 @@ public class UploadPart18762 extends S3TestBase {
             this.file = file;
         }
 
+        // TODO 并发里面的s3Client和全局的命名不要相同，1容易出错，2不好看是否新建和关闭
         @ExecuteOrder(step = 1, desc = "初始化分段上传")
         public void initPartUpload() {
             uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);

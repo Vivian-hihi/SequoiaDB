@@ -126,11 +126,12 @@ public class UploadPart18683 extends S3TestBase {
         CloseableHttpClient client = RestClient.createHttpClient();
         try {
             RestClient.sendRequest(client, request);
-        } catch (Exception e) {
+        } catch (Exception e) {// TODO 这里应该直接用实际抛出的异常类型
             throw httpToAmazon(e);
         }
     }
 
+    // TODO 用公共方法RegionUtils.httpToAmazon
     private AmazonS3Exception httpToAmazon(Exception e) {
         AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
         amazonS3Exception.setErrorCode(getString(e.getMessage(), "Code"));
@@ -138,6 +139,7 @@ public class UploadPart18683 extends S3TestBase {
         return amazonS3Exception;
     }
 
+    // TODO 为什么还需要getString？同公共方法
     private String getString(String s, String flag) {
         int length = flag.length();
         String parttern = "<" + flag + ">.*</" + flag + ">";

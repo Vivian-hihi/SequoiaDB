@@ -75,7 +75,7 @@ public class ListParts18733 extends S3TestBase {
 
     @Test(dataProvider = "partNumberMarkerProvider")
     private void testListParts(Integer partNumberMarker, List<Integer> expPartNumbersList) throws Exception {
-        runSuccess = false;
+        runSuccess = false;// TODO 只有一个test，前面有初始化了，这里不需要
         ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
         request.setPartNumberMarker(partNumberMarker);
         PartListing listResult = s3Client.listParts(request);

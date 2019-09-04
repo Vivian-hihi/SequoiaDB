@@ -54,13 +54,22 @@ public class UploadPart18684 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    @Test(enabled = false)
+    @Test(enabled = false) // TODO 用例注释需要备注上原因，问题单号或者配置...
     private void testUpload() throws Exception {
         long filepositon, partSize;
         int partNumber;
 
+        // TODO
+        // 如下参数建议定义2个数组，uploadPart时直接传数组元素，会更清晰，另外，partNumber直接定义多少个段然后for循环上传，如：
+        // offsetArr = {1,2,3...};
+        // partSizeArr = {1,2,3...};
+        // partNumbers = 6;
+        // for (int i = 0; i < partNumbers; i++) {
+        // partNumber = i;
+        // uploadPart(offsetArr[i], partSizeArr[i], partNumber);
+        // }
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-        filepositon = 0;
+        filepositon = 0;// TODO 参数应该放到注释后面
         partSize = 0;
         partNumber = 1;
         // upload part 1
