@@ -246,7 +246,6 @@ namespace engine
                             " High Watermark: %u"OSS_NEWLINE
                             " Acquire Times : %llu"OSS_NEWLINE
                             " Release Times : %llu"OSS_NEWLINE
-                            " Allocated Num : %u"OSS_NEWLINE
                             " OOM Times     : %llu"OSS_NEWLINE
                             " Shrink Size   : %llu"OSS_NEWLINE,
                             _poolId,
@@ -258,7 +257,6 @@ namespace engine
                             _highWatermark,
                             _acquireTimes,
                             _releaseTimes,
-                            (UINT32)( _acquireTimes - _releaseTimes ),
                             _oomTimes,
                             _shrinkSize ) ;
          return len ;
