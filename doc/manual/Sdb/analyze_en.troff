@@ -35,8 +35,8 @@ Analyze Collections and Indexs to collect statistics information.
 .sp 2
        \fBCollectionSpace\fR
 .br
-              Specify the collectionspace to analyze. Could be used
-              with Collection option.
+              Specify the collection space to analyze. Could not be
+              used with Collection option.
 .br
               CollectionSpace:"foo"
 .sp 2

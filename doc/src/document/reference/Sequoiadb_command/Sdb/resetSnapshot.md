@@ -15,13 +15,16 @@
  | ------ | ------ | -------| ---- |
  | Type   | 指定重置的[快照类型](database_management/monitoring/snapshot/snapshot.md)。取值：<br/>"sessions"<br/>"sessions current"<br/>"database"<br/>"health"<br/>"collections"<br/>"all" | "all" | Type: "sessions" |
  | SessionID | 指定重置的会话ID。 | 所有会话 | SessionID: 1 |
+ | CollectionSpace | 指定需要重置快照统计信息的集合空间名称，字符串类型。 | 空 | CollectionSpace : "foo" |
+ | Collection | 指定需要重置快照统计信息的集合名称，字符串类型。需要为集合全名。 | 空 | Collection : "foo.bar" |
  | Location Elements | [命令位置参数](reference/Sequoiadb_command/Overview/location.md) | 所有节点 | GroupName:"db1" |
 
  > **Note:**
  >
  > * Type: "all" 表示重置所有快照。
  > * SessionID 字段只在 Type: "sessions" 才生效。
- 
+ > * CollectionSpace 字段和 Collection 字段只在 Type : "collections" 时生效；CollectionSpace 字段和 Collection 字段不能同时指定；Collection 字段和 CollectionSpace 字段不指定时为清空所有所有集合的快照统计信息。
+
 2. **重置项**
 
  | 快照类型 | 重置项  |

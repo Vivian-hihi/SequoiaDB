@@ -37,7 +37,24 @@ Reset snapshot.
        \fBSessionID\fR
 .br
               Specify the session ID. all sessions in default.
+.br
               SessionID: 1
+.sp 2
+       \fBCollectionSpace\fR
+.br
+              Specify the collection space to reset. Could not be used
+              with Collection option. Could be only used for
+              "collections" type.
+.br
+              CollectionSpace:"foo"
+.sp 2
+       \fBCollection\fR
+.br
+              Specify the collection to reset. Could not be used with
+              CollectionSpace option. Should be full name of
+              collection. Could be only used for "collections" type.
+.br
+              Collection:"foo.bar"
 .sp 2
        \fBGlobal\fR
 .br
