@@ -165,6 +165,12 @@ namespace engine
    pmdSysInfo*    pmdGetSysInfo () ;
 
    /*
+      perf stat
+   */
+   void           pmdEnablePerfStat( BOOLEAN enablePerfStat ) ;
+   BOOLEAN        pmdIsEnabledPerfStat() ;
+
+   /*
       pmd trap functions
    */
 

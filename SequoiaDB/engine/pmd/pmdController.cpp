@@ -103,6 +103,7 @@ namespace engine
       CHAR fapModuleName[ FAP_MODULE_NAME_SIZE + 1 ] = { 0 } ;
 
       utilSetMaxTCSize( (UINT64)pmdGetOptionCB()->maxTCSize() << 10 ) ;
+      pmdEnablePerfStat( pmdGetOptionCB()->isEnabledPerfStat() ) ;
 
       if ( pOptCB->hasField( FAP_OPTION_NAME ) )
       {
@@ -303,6 +304,7 @@ namespace engine
          (UINT64)( pmdGetOptionCB()->memPoolSize() ) << 20 ) ;
 
       utilSetMaxTCSize( (UINT64)pmdGetOptionCB()->maxTCSize() << 10 ) ;
+      pmdEnablePerfStat( pmdGetOptionCB()->isEnabledPerfStat() ) ;
    }
 
    void _pmdController::registerCB( SDB_ROLE dbrole )

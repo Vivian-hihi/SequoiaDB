@@ -2218,7 +2218,7 @@ namespace engine
          pmdEduEventRelease( event, cb ) ;
          event.reset() ;
 
-         if ( pmdGetOptionCB()->isEnabledPerfStat() )
+         if ( pmdIsEnabledPerfStat() )
          {
             utilDumpThreadMemPoolInfo( getEDUName( eduType ), eduName ) ;
          }

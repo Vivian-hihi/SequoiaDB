@@ -118,6 +118,8 @@ namespace engine
 // while the lower 28 bits is object number within that pool.
 // 
 
+   #define UTIL_SEGMENT_NAME_LEN       ( 16 )
+
    // max number of segment pool, shall be power of 2
    #define _SEGMENT_MGR_MAX_POOLS      ( ( UINT32 ) 16 )
    // masks for bitwise operations on object index correlated with pool number
@@ -175,12 +177,12 @@ namespace engine
       UTIL_OBJIDX *  _list  ;         // a list/array of obj indices
       UINT32         _begin ;         // the position in list where acquire from
       UINT32         _delta ;         // number of objects in a segment
-      ossAtomic32    _numOfObjs ;     // total number of objects in this pool
+      UINT32         _numOfObjs ;     // total number of objects in this pool
       UINT32         _maxNumOfObjs ;  // max number of objects in this pool
       UINT32         _exponent ;      // exponent when round up to power of 2
       UINT32         _poolId  ;       // pool ID
       ossAtomic32    _maintaining ;   // shrinking in progres
-      ossAtomic32    _highWatermark ; // max object index in use
+      UINT32         _highWatermark ; // max object index in use
       BOOLEAN        _isInitialized ;
       ossSpinXLatch  _latch ;
       std::vector< _objX * > _segList;// a list of segments, each segment is
@@ -217,6 +219,28 @@ namespace engine
          }
       }
 
+      UINT32 dump( CHAR *pBuff, UINT32 buffLen )
+      {
+         UINT32 len = 0 ;
+
+         ossScopedLock lock( &_latch ) ;
+
+         len = ossSnprintf( pBuff, buffLen,
+                            " Pool ID       : %u"OSS_NEWLINE
+                            " Max Objects   : %u"OSS_NEWLINE
+                            " Delta         : %u"OSS_NEWLINE
+                            " Objects Num   : %u"OSS_NEWLINE
+                            " Begin Pos     : %u"OSS_NEWLINE
+                            " High Watermark: %u"OSS_NEWLINE,
+                            _poolId,
+                            _maxNumOfObjs,
+                            _delta,
+                            _numOfObjs,
+                            _begin,
+                            _highWatermark ) ;
+         return len ;
+      }
+
    private :
       //
       // Description: add a new segment and expand the _list
@@ -239,7 +263,7 @@ namespace engine
       //
       OSS_INLINE BOOLEAN _needExpand() const
       {
-         return ( _numOfObjs.peek() - 1 ) <= _begin ? TRUE : FALSE ;
+         return ( _numOfObjs - 1 ) <= _begin ? TRUE : FALSE ;
       }
 
       //
@@ -253,7 +277,7 @@ namespace engine
       //
       OSS_INLINE BOOLEAN _isUpToLimit() const
       {
-         return _numOfObjs.peek() >= _maxNumOfObjs ? TRUE : FALSE ;
+         return _numOfObjs >= _maxNumOfObjs ? TRUE : FALSE ;
       }
 
       //
@@ -272,7 +296,7 @@ namespace engine
          UTIL_OBJIDX index = ( idx & _SEGMENT_OBJ_INDEX_MASK ) ;
 
 #ifdef _DEBUG
-         if ( IS_VALID_SEG_OBJ_INDEX( idx ) && ( index < _numOfObjs.fetch() ) )
+         if ( IS_VALID_SEG_OBJ_INDEX( idx ) && ( index < _numOfObjs ) )
 #endif
          {
             // i = idx / _delta ;
@@ -325,7 +349,7 @@ namespace engine
       // Description: get total number of objects allocated in a segment pool
       // Return     : total number of objects allocated in a segment pool
       //
-      OSS_INLINE UINT32 getNumOfObjAllocated() { return _numOfObjs.fetch() ; }
+      OSS_INLINE UINT32 getNumOfObjAllocated() { return _numOfObjs ; }
 
       //
       // Description: get an object's address by its index
@@ -413,7 +437,7 @@ namespace engine
          return _maintaining.compare( 1 ) ;
       }
 
-      OSS_INLINE UINT32 getHighWatermark() { return _highWatermark.fetch() ; }
+      OSS_INLINE UINT32 getHighWatermark() { return _highWatermark ; }
 
       //
       // Description: shrink unused segments and the _list
@@ -524,7 +548,7 @@ namespace engine
       INT32         rc       = SDB_OK ;
       UTIL_OBJIDX * pListTmp = NULL ;
       _objX       * pSegTmp  = NULL ;
-      UINT32    numOfObjects = _numOfObjs.peek() ;
+      UINT32    numOfObjects = _numOfObjs ;
       UINT32    newSize      = numOfObjects + _delta ;
       UINT32    packedPoolID = _GET_PACKED_POOLID( _poolId ) ;
 
@@ -560,7 +584,7 @@ namespace engine
             }
 
             // set _numOfObjs to new size
-            _numOfObjs.swap( newSize ) ;
+            _numOfObjs = newSize ;
 
             // discard old _list
             SAFE_OSS_FREE( _list ) ;
@@ -625,7 +649,7 @@ namespace engine
       _latch.get() ;
       bLatched = TRUE ;
 
-      numOfObjects = _numOfObjs.peek() ;
+      numOfObjects = _numOfObjs ;
 
       // this flag is checked without latching
       _maintaining.swap( 1 ) ;
@@ -690,7 +714,7 @@ namespace engine
          // set high water mark if it is greater than 2 times of segment
          if ( maxObj >= ( _delta << 1 ) ) 
          {
-            _highWatermark.swap( maxObj ) ;
+            _highWatermark = maxObj ;
          }
  
          // calculate the highest segment in use by max obj index
@@ -756,7 +780,7 @@ namespace engine
             }
 
             // set _numOfObjs to new size
-            _numOfObjs.swap( newSize ) ;
+            _numOfObjs = newSize ;
 
             // discard old _list
             SAFE_OSS_FREE( _list ) ;
@@ -837,7 +861,7 @@ namespace engine
          {
             _maxNumOfObjs = _delta ;
          }
-         _highWatermark.init( _delta << 1 ) ;
+         _highWatermark = ( _delta << 1 ) ;
          _pHandler = pHandler ;
          _isInitialized = TRUE ;
       }
@@ -927,7 +951,7 @@ namespace engine
                        _poolId,
                        _delta,
                        _maxNumOfObjs,
-                       _numOfObjs.peek(),
+                       _numOfObjs,
                        _begin,
                        sizeof( T ),
                        sizeof( _objX ) ) ;
@@ -959,7 +983,7 @@ namespace engine
                        _poolId,
                        _delta,
                        _maxNumOfObjs,
-                       _numOfObjs.peek(),
+                       _numOfObjs,
                        _begin,
                        sizeof( T ),
                        sizeof( _objX ) ) ;
@@ -1113,7 +1137,7 @@ namespace engine
       bLatched = TRUE ;
       if ( _isInitialized && ( NULL != _list ) )
       {
-         if ( ( _begin > 0 ) && ( _numOfObjs.peek() > _begin ) )
+         if ( ( _begin > 0 ) && ( _numOfObjs > _begin ) )
          {
             // get the _objX address by the index
             pObjX = _getObjXByIndex( idx ) ;
@@ -1219,8 +1243,14 @@ namespace engine
       private :
          // acquire operation proceed in round robin
          ossAtomic32 _round ;
+         CHAR        _name[ UTIL_SEGMENT_NAME_LEN + 1 ] ;
          UINT32      _poolNum ;
+
          _utilSegmentPool< T > _pool[ _SEGMENT_MGR_MAX_POOLS ] ;         
+
+         // stat info
+         volatile UINT64   _failedTimes ;
+         volatile UINT64   _shrinkSize ;
 
       private :
          // internal / helper function to get the poolId an object belongs to
@@ -1241,13 +1271,29 @@ namespace engine
          }
 
       public  :
-         _utilSegmentManager() : _round( 0 )
+         _utilSegmentManager( const CHAR *pName = NULL ) : _round( 0 )
          {
+            ossMemset( _name, 0, sizeof( _name ) ) ;
+            if ( pName )
+            {
+               ossStrncpy( _name, pName, UTIL_SEGMENT_NAME_LEN ) ;
+            }
             _poolNum = 0 ;
+            _failedTimes = 0 ;
+            _shrinkSize = 0 ;
          }
-         _utilSegmentManager( UINT64 numberOfObjs, UINT64 maxNumberOfObjs )
+         _utilSegmentManager( UINT64 numberOfObjs,
+                              UINT64 maxNumberOfObjs,
+                              const CHAR *pName = NULL )
          {
+            ossMemset( _name, 0, sizeof( _name ) ) ;
+            if ( pName )
+            {
+               ossStrncpy( _name, pName, UTIL_SEGMENT_NAME_LEN ) ;
+            }
             _poolNum = 0 ;
+            _failedTimes = 0 ;
+            _shrinkSize = 0 ;
             init( numberOfObjs, maxNumberOfObjs ) ;
          }
 
@@ -1387,6 +1433,7 @@ namespace engine
                {
                   break ;
                }
+               ++_failedTimes ;
             } while ( ( SDB_OSS_UP_TO_LIMIT == rc ) &&
                       ( retryCount <= _poolNum ) ) ;
             return rc ;
@@ -1422,22 +1469,47 @@ namespace engine
             // REVISIT :
             // proper scheduling algorithm to be implemented
             INT32 rc = SDB_OK ;
-
-            if ( pFreedSize )
-            {
-               *pFreedSize = 0 ;
-            }
+            UINT64 freedSize = 0 ;
 
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
-               rc = _pool[ i ].shrink( freeSegToKeep, pFreedSize ) ;
+               rc = _pool[ i ].shrink( freeSegToKeep, &freedSize ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to shrink pool:%u, rc:%d", i, rc ) ;
                   break ;
                }
             }
+
+            if ( pFreedSize )
+            {
+               *pFreedSize = freedSize ;
+            }
+            _shrinkSize += freedSize ;
+
             return rc ;
+         }
+
+         OSS_INLINE UINT32 dump( CHAR *pBuff, UINT32 buffLen )
+         {
+            UINT32 len = 0 ;
+
+            len = ossSnprintf( pBuff, buffLen,
+                               "Segment Name   : %s"OSS_NEWLINE
+                               "Pool Num       : %u"OSS_NEWLINE
+                               "Failed Times   : %llu"OSS_NEWLINE
+                               "Shrink Size    : %llu"OSS_NEWLINE,
+                               _name,
+                               _poolNum,
+                               _failedTimes,
+                               _shrinkSize ) ;
+
+            for ( UINT32 i = 0; i < _poolNum ; i++ )
+            {
+               len += _pool[ i ].dump( pBuff + len, buffLen - len ) ;
+            }
+
+            return len ;
          }
 
 #ifdef _DEBUG

@@ -42,6 +42,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "ossUtil.hpp"
+#include "utilMemListPool.hpp"
 
 using namespace bson ;
 
@@ -167,6 +168,21 @@ namespace engine
       return pmdGetSysInfo()->_numErr ;
    }
 
+   /*
+      Perf stat
+   */
+   static BOOLEAN s_pmdPerfStat = FALSE ;
+
+   void pmdEnablePerfStat( BOOLEAN enablePerfStat )
+   {
+      s_pmdPerfStat = enablePerfStat ;
+   }
+
+   BOOLEAN pmdIsEnabledPerfStat()
+   {
+      return s_pmdPerfStat ;
+   }
+
 #if defined (_LINUX)
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSIGHND, "pmdSignalHandler" )
@@ -281,10 +297,13 @@ namespace engine
          PD_LOG ( PDEVENT, "Signal %d is received, "
                   "prepare to dump stack for all threads", signum ) ;
 
+         utilDumpThreadMemBegin( dumpPath ) ;
+
          pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
          pMgr->killByThreadID( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
 
          ossMemTrace ( dumpPath ) ;
+         utilDumpPoolMemInfo ( dumpPath ) ;
       }
       else if ( signum == OSS_STACK_DUMP_SIGNAL_INTERNAL )
       {
@@ -293,6 +312,7 @@ namespace engine
                   ossGetCurrentProcessID(),
                   ossGetCurrentThreadID() ) ;
          ossStackTrace( OSS_HANDARGS, dumpPath ) ;
+         utilDumpThreadMemPoolInfo( dumpPath ) ;
       }
       else
       {

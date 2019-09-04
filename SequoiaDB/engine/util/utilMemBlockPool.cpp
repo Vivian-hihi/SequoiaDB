@@ -38,6 +38,7 @@
 *******************************************************************************/
 
 #include "utilMemBlockPool.hpp"
+#include "ossFile.hpp"
 #include "pd.hpp"
 
 extern BOOLEAN ossMemDebugEnabled ;
@@ -46,6 +47,10 @@ namespace engine
 {
 
    #define UTIL_MEM_ALLOC_MAX_TRY_LEVEL         ( 2 )
+
+   #define UTIL_POOL_MEM_STAT_FILE              ".mempoolstat"
+   #define UTIL_MEM_TRACEDUMP_TM_BUF            64
+   #define UTIL_DUMP_BUFFSIZE                   ( 2800 )
 
    /*
       _utilMemBlockPool implement
@@ -147,7 +152,7 @@ namespace engine
       aBlockMaxSize = _maxSize >> 3 ;
 
       /// when alloc or init failed, ignored
-      _32BSeg = SDB_OSS_NEW _utilSegmentManager<element32B>() ;
+      _32BSeg = SDB_OSS_NEW _utilSegmentManager<element32B>( "32B" ) ;
       if ( _32BSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_32 ) ;
@@ -163,7 +168,7 @@ namespace engine
          }
       }
 
-      _64BSeg = SDB_OSS_NEW _utilSegmentManager<element64B>() ;
+      _64BSeg = SDB_OSS_NEW _utilSegmentManager<element64B>( "64B" ) ;
       if ( _64BSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_64 ) ;
@@ -179,7 +184,7 @@ namespace engine
          }
       }
 
-      _128BSeg = SDB_OSS_NEW _utilSegmentManager<element128B>() ;
+      _128BSeg = SDB_OSS_NEW _utilSegmentManager<element128B>( "128B" ) ;
       if ( _128BSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
@@ -195,7 +200,7 @@ namespace engine
          }
       }
 
-      _256BSeg = SDB_OSS_NEW _utilSegmentManager<element256B>() ;
+      _256BSeg = SDB_OSS_NEW _utilSegmentManager<element256B>( "256B" ) ;
       if ( _256BSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_256 ) ;
@@ -211,7 +216,7 @@ namespace engine
          }
       }
 
-      _512BSeg = SDB_OSS_NEW _utilSegmentManager<element512B>() ;
+      _512BSeg = SDB_OSS_NEW _utilSegmentManager<element512B>( "512B" ) ;
       if ( _512BSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_512 ) ;
@@ -227,7 +232,7 @@ namespace engine
          }
       }
 
-      _1KSeg = SDB_OSS_NEW _utilSegmentManager<element1K>() ;
+      _1KSeg = SDB_OSS_NEW _utilSegmentManager<element1K>( "1KB" ) ;
       if ( _1KSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
@@ -243,7 +248,7 @@ namespace engine
          }
       }
 
-      _2KSeg = SDB_OSS_NEW _utilSegmentManager<element2K>() ;
+      _2KSeg = SDB_OSS_NEW _utilSegmentManager<element2K>( "2KB" ) ;
       if ( _2KSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_2048 ) ;
@@ -259,7 +264,7 @@ namespace engine
          }
       }
 
-      _4KSeg = SDB_OSS_NEW _utilSegmentManager<element4K>() ;
+      _4KSeg = SDB_OSS_NEW _utilSegmentManager<element4K>( "4KB" ) ;
       if ( _4KSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_4096 ) ;
@@ -275,7 +280,7 @@ namespace engine
          }
       }
 
-      _8KSeg = SDB_OSS_NEW _utilSegmentManager<element8K>() ;
+      _8KSeg = SDB_OSS_NEW _utilSegmentManager<element8K>( "8KB" ) ;
       if ( _8KSeg )
       {
          UINT32 typeSize = type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
@@ -912,6 +917,56 @@ namespace engine
       return FALSE ;
    }
 
+   UINT32 _utilMemBlockPool::dump( CHAR *pBuff, UINT32 buffLen )
+   {
+      UINT32 len = 0 ;
+
+      len = ossSnprintf( pBuff, buffLen,
+                         "Max Size       : %llu"OSS_NEWLINE
+                         "Total Size     : %llu"OSS_NEWLINE,
+                         _maxSize,
+                         _totalSize.fetch() ) ;
+
+      if ( _32BSeg )
+      {
+         len += _32BSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _64BSeg )
+      {
+         len += _64BSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _128BSeg )
+      {
+         len += _128BSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _256BSeg )
+      {
+         len += _256BSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _512BSeg )
+      {
+         len += _512BSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _1KSeg )
+      {
+         len += _1KSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _2KSeg )
+      {
+         len += _2KSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _4KSeg )
+      {
+         len += _4KSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+      if ( _8KSeg )
+      {
+         len += _8KSeg->dump( pBuff + len, buffLen - len ) ;
+      }
+
+      return len ;
+   }
+
    /*
       Callback Funcs
    */
@@ -955,6 +1010,90 @@ namespace engine
          }
    } ;
    _utilPoolCallbackAssit s_assitPoolCallbak ;
+
+   /*
+      Tool function
+   */
+   INT32 utilDumpInfo2File( const CHAR *pPath,
+                            const CHAR *pFilePostfix,
+                            const CHAR *pBuff,
+                            UINT32 buffLen )
+   {
+      ossFile trapFile ;
+      CHAR fileName [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      UINT32 len = 0 ;
+      INT32 mode = OSS_WRITEONLY | OSS_CREATE ;
+      INT32 rc = SDB_OK ;
+
+      // build trace file name
+      len = ossSnprintf ( fileName, sizeof(fileName), "%s%s%u%s",
+                          pPath, OSS_FILE_SEP,
+                          ossGetCurrentProcessID(),
+                          pFilePostfix ) ;
+      if ( len >= sizeof( fileName ) )
+      {
+         rc = SDB_INVALIDPATH ;
+         // file path invalid
+         goto error ;
+      }
+      else
+      {
+         static ossSpinXLatch s_dumpLatch ;
+         ossScopedLock lock( &s_dumpLatch ) ;
+   
+         // open file
+         rc = trapFile.open( fileName, mode, OSS_DEFAULTFILE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+   
+         rc = trapFile.seek( 0, OSS_SEEK_END ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+   
+         rc = trapFile.writeN( pBuff, (INT64)buffLen ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done :
+      trapFile.close() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void utilDumpPoolMemInfo( const CHAR *pPath )
+   {
+      if ( utilGetGlobalMemPool() )
+      {
+         CHAR buff[ UTIL_DUMP_BUFFSIZE ] = { 0 } ;
+         UINT32 len = 0 ;
+         CHAR timebuff[ UTIL_MEM_TRACEDUMP_TM_BUF ] = { 0 } ;
+         ossTimestamp current ;
+
+         ossGetCurrentTime( current ) ;
+         ossTimestampToString( current, timebuff ) ;
+
+         /// dump header
+         len = ossSnprintf( buff, sizeof( buff ),
+                            OSS_NEWLINE
+                            "====> Dump pool memory status( %s ) ====>"
+                            OSS_NEWLINE,
+                            timebuff ) ;
+
+         utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, buff, len ) ;
+
+         /// dump context
+         len = utilGetGlobalMemPool()->dump( buff, UTIL_DUMP_BUFFSIZE ) ;
+         utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, buff, len ) ;
+      }
+   }
 
    /*
       Global var

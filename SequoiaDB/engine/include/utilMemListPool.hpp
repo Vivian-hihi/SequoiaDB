@@ -218,6 +218,10 @@ namespace engine
    void        utilSetThreadMemPool( utilMemListPool *pPool ) ;
    void        utilDumpThreadMemPoolInfo( const CHAR *pType,
                                           const CHAR *pName ) ;
+
+   void        utilDumpThreadMemBegin( const CHAR *pPath ) ;
+   void        utilDumpThreadMemPoolInfo( const CHAR *pPath ) ;
+
    void        utilClearThreadMemPool() ;
    UINT32      utilThreadMemPoolSize() ;
 

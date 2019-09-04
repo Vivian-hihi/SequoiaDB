@@ -45,6 +45,9 @@
    #error "Invalid UTIL_MEM_LIST_BASE_EXPONENT define"
 #endif
 
+#define UTIL_THREAD_MEM_STAT_FILE            ".memtcstat"
+#define UTIL_MEM_TRACEDUMP_TM_BUF            64
+
 extern BOOLEAN ossMemDebugEnabled ;
 
 namespace engine
@@ -832,20 +835,50 @@ namespace engine
    {
       if ( g_thdMemPool )
       {
-         CHAR *pBuff = (CHAR*)SDB_OSS_MALLOC( UTIL_DUMP_BUFFSIZE ) ;
-         if ( pBuff )
-         {
-            ossMemset( pBuff, 0, UTIL_DUMP_BUFFSIZE ) ;
-            g_thdMemPool->dump( pBuff, UTIL_DUMP_BUFFSIZE - 1 ) ;
+         CHAR buff[ UTIL_DUMP_BUFFSIZE ] = { 0 } ;
+         g_thdMemPool->dump( buff, UTIL_DUMP_BUFFSIZE - 1 ) ;
 
-            PD_LOG( PDEVENT, "Dump thread memory info:"OSS_NEWLINE
-                             " Thread Type : %s"OSS_NEWLINE
-                             " Thread Name : %s"OSS_NEWLINE
-                             "%s",
-                    pType, pName, pBuff ) ;
+         PD_LOG( PDEVENT, "Dump thread memory info:"OSS_NEWLINE
+                          " Thread Type : %s"OSS_NEWLINE
+                          " Thread Name : %s"OSS_NEWLINE
+                          "%s",
+                 pType, pName, buff ) ;
+      }
+   }
 
-            SDB_OSS_FREE( pBuff ) ;
-         }
+   void utilDumpThreadMemBegin( const CHAR *pPath )
+   {
+      UINT32 len = 0 ;
+      CHAR buff[ 256 ] = { 0 } ;
+      CHAR timebuff[ UTIL_MEM_TRACEDUMP_TM_BUF ] = { 0 } ;
+      ossTimestamp current ;
+
+      ossGetCurrentTime( current ) ;
+      ossTimestampToString( current, timebuff ) ;
+
+      len = ossSnprintf( buff, sizeof( buff ),
+                         OSS_NEWLINE
+                         "====> Dump threads memory status( %s ) ====>"
+                         OSS_NEWLINE,
+                         timebuff ) ;
+
+      utilDumpInfo2File( pPath, UTIL_THREAD_MEM_STAT_FILE, buff, len ) ;
+   }
+
+   void utilDumpThreadMemPoolInfo( const CHAR *pPath )
+   {
+      if ( g_thdMemPool )
+      {
+         CHAR buff[ UTIL_DUMP_BUFFSIZE ] = { 0 } ;
+         UINT32 len = 0 ;
+
+         len = ossSnprintf( buff, UTIL_DUMP_BUFFSIZE,
+                            "Dump thread memory info:"OSS_NEWLINE
+                            " Thread ID   : %u"OSS_NEWLINE,
+                            ossGetCurrentThreadID() ) ;
+         len += g_thdMemPool->dump( buff + len, UTIL_DUMP_BUFFSIZE - len ) ;
+
+         utilDumpInfo2File( pPath, UTIL_THREAD_MEM_STAT_FILE, buff, len ) ;
       }
    }
 

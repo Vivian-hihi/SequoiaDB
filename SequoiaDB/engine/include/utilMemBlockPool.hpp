@@ -170,6 +170,8 @@ namespace engine
                            UINT32 *pRealSize = NULL ) ;
       void        release( void*& ptr ) ;
 
+      UINT32      dump( CHAR *pBuff, UINT32 buffLen ) ;
+
    public:
       virtual BOOLEAN   canAllocSegment( UINT64 size ) ;
       virtual void      onAllocSegment( UINT64 size ) ;
@@ -203,6 +205,16 @@ namespace engine
       ossAtomic64    _totalSize ;
    } ;
    typedef _utilMemBlockPool utilMemBlockPool ;
+
+   /*
+      Tool function
+   */
+   INT32 utilDumpInfo2File( const CHAR *pPath,
+                            const CHAR *pFilePostfix,
+                            const CHAR *pBuff,
+                            UINT32 buffLen ) ;
+
+   void  utilDumpPoolMemInfo( const CHAR *pPath ) ;
 
    /*
       Global function
