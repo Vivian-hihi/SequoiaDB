@@ -62,8 +62,9 @@ namespace engine
       dpsTransLRB       * prevLRB ;    // prev LRB in the owner/waiter chain
       ossTick             beginTick ;  // timestamp( ossTick ) of owning/waiting
       UINT32              refCounter ; // lock reference counter
-      DPS_TRANSLOCK_TYPE  lockMode ;   // lock mode, UINT8, 1 byte
-      UINT8               pad[3] ;     // 3 byte for padding
+      DPS_TRANSLOCK_TYPE  lockMode ;   // lock mode owned/request, UINT8, 1 byte
+      DPS_TRANSLOCK_TYPE  originMode ; // origin lock mode before upgrade
+      UINT8               pad[2] ;     // 2 byte for padding
 
       dpsTransLRB()
       : dpsTxExectr( NULL ),
@@ -73,7 +74,8 @@ namespace engine
         nextLRB( NULL ),
         prevLRB( NULL ),
         refCounter( 0 ),
-        lockMode( DPS_TRANSLOCK_MAX )
+        lockMode( DPS_TRANSLOCK_MAX ),
+        originMode( DPS_TRANSLOCK_MAX )
       {
       }
 
@@ -87,7 +89,8 @@ namespace engine
         nextLRB( NULL ),
         prevLRB( NULL ),
         refCounter( 1 ),
-        lockMode( _lockMode )
+        lockMode( _lockMode ),
+        originMode( DPS_TRANSLOCK_MAX )
       {
       }
    } ;  // 64 bytes in total
@@ -95,7 +98,7 @@ namespace engine
    class dpsLRBExtData ;
 
    typedef BOOLEAN (*DPS_EXTDATA_VALID_FUNC)( const dpsLRBExtData *pExtData ) ;
-   typedef BOOLEAN (*DPS_EXTDATA_RELEASE_CHECK)( const dpsLRBExtData *pExtData ) ;
+   typedef BOOLEAN (*DPS_EXTDATA_RELEASE_CHECK)(const dpsLRBExtData *pExtData) ;
    typedef void    (*DPS_EXTDATA_RELEASE)( dpsLRBExtData *pExtData ) ;
    typedef void    (*DPS_EXTDATA_ON_LOCKRELEASE)( const dpsTransLockId &lockId,
                                                   DPS_TRANSLOCK_TYPE lockMode,

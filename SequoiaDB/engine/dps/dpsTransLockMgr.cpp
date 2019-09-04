@@ -354,6 +354,56 @@ namespace engine
 
 
    //
+   // Description: walk through the upgrade list check if the request
+   //              LRB might be dead-lock with others, and
+   //              and find the first incompatible one
+   // Input:
+   //    lrbBegin -- the LRB in the uprade queue to start searching
+   //    pLRBTobeChecked -- the input LRB to be checked with others
+   // Output:
+   //    pLRBIncompatible -- the first incompatible LRB
+   // Return:
+   //    TRUE     -- if a potential dead-lock issue is detected`
+   //    FALSE    -- no dead-lock deteced
+   // Dependency:  the lock bucket latch shall be acquired
+   //
+   BOOLEAN dpsTransLockManager::_deadlockDetectedWhenUpgrade
+   (
+      const dpsTransLRB *  lrbBegin,
+      const dpsTransLRB *  pLRBTobeChecked,
+      dpsTransLRB *     &  pLRBIncompatible
+   )
+   {
+      dpsTransLRB *plrb = (dpsTransLRB *)lrbBegin ;
+      BOOLEAN foundIncomp = FALSE ;
+
+      pLRBIncompatible = NULL ;
+      if ( ( NULL == pLRBTobeChecked ) || ( NULL == lrbBegin ) )
+      {
+         goto exit ;
+      }
+
+      while ( plrb )
+      {
+         if ( ( ! dpsIsLockCompatible( plrb->originMode,
+                                       pLRBTobeChecked->lockMode ) ) ||
+              ( ! dpsIsLockCompatible( plrb->lockMode,
+                                       pLRBTobeChecked->originMode ) ) )
+
+         {
+            pLRBIncompatible = plrb ;
+            foundIncomp = TRUE ;
+            break ;
+         }
+         plrb = plrb->nextLRB ;
+      }
+
+   exit :
+      return foundIncomp ;
+   }
+
+
+   //
    // Description: add a LRB at the end of the LRB chain/list
    // Function:    walk through LRB list/chain, add the LRB at the end of
    //              list( owner, waiter or upgrade )
@@ -1132,6 +1182,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       dpsTransLRB *pLRBNew          = NULL ,
                   *pLRBIncompatible = NULL ,
+                  *pLRBDeadlock     = NULL ,
                   *pLRBToInsert     = NULL ,
                   *pLRBOwner        = NULL ,
                   *pLRB             = NULL ;
@@ -1379,17 +1430,44 @@ namespace engine
 
             if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
             {
-               // add the new LRB to upgrade list
-               _addToLRBListTail( pLRBHdr->upgradeLRB, pLRBNew ) ;
+               // save current owining lock mode
+               pLRBNew->originMode = pLRBOwner->lockMode ;
 
-               // set the wait info in dpsTxExectr
-               dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_UPGRADE ) ;
+               // do dead-lock detection before put in upgrade list.
+               // For example, when two S owners both want to upgrade,
+               // if allow both of them go in upgrade queue, there will
+               // be a dead-lock, and eventually timed out.
+               // scenarios:
+               //  Owner          Upgrade
+               //  1. S     --->  X
+               //  2. S     --->  X <--- dead lock with owner 1
+               //
+               //  Owner          Uprade
+               //  1. S     --->  U
+               //  2. S     --->  U <--- compatible, no dead-lock
+               //  3. U     --->  X <--- dead lock with owner 1 and 2
+               if ( FALSE == _deadlockDetectedWhenUpgrade( pLRBHdr->upgradeLRB,
+                                                           pLRBNew,
+                                                           pLRBDeadlock ) )
+               {
+                  // add the new LRB to upgrade list
+                  _addToLRBListTail( pLRBHdr->upgradeLRB, pLRBNew ) ;
 
-               // mark the new LRB is used
-               bFreeLRB = FALSE ;
+                  // set the wait info in dpsTxExectr
+                  dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_UPGRADE ) ;
 
-               // set return code to SDB_DPS_TRANS_APPEND_TO_WAIT
-               rc = SDB_DPS_TRANS_APPEND_TO_WAIT ;
+                  // mark the new LRB is used
+                  bFreeLRB = FALSE ;
+
+                  // set return code to SDB_DPS_TRANS_APPEND_TO_WAIT
+                  rc = SDB_DPS_TRANS_APPEND_TO_WAIT ;
+               }
+               else
+               {
+                  // may cause dead-lock, can't do upgrade
+                  pLRBIncompatible = pLRBDeadlock ;
+                  rc = SDB_DPS_TRANS_LOCK_INCOMPATIBLE ;
+               }
             }
             else
             {

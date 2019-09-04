@@ -303,6 +303,16 @@ namespace engine
          dpsTransLRB *           & pLRBIncompatible
       ) ;
 
+      // search upgarde LRB list, and verify / find if the requested LRB
+      // . may be dead-lock with others in the upgrade queue
+      // . the pointer of first LRB that would be dead-lock with the request one
+      BOOLEAN _deadlockDetectedWhenUpgrade
+      (
+         const dpsTransLRB *  lrbBegin,
+         const dpsTransLRB *  pLRBTobeChecked,
+         dpsTransLRB *     &  pLRBIncompatible
+      ) ;
+
       void _moveToEDULRBListTail
       (
          _dpsTransExecutor    * dpsTxExectr,
