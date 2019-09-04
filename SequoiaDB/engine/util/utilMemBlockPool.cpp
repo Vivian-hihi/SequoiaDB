@@ -922,8 +922,8 @@ namespace engine
       UINT32 len = 0 ;
 
       len = ossSnprintf( pBuff, buffLen,
-                         "Max Size       : %llu"OSS_NEWLINE
-                         "Total Size     : %llu"OSS_NEWLINE,
+                         "      Max Size : %llu"OSS_NEWLINE
+                         "    Total Size : %llu"OSS_NEWLINE,
                          _maxSize,
                          _totalSize.fetch() ) ;
 

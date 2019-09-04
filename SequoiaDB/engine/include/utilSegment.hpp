@@ -237,17 +237,17 @@ namespace engine
 
          len = ossSnprintf( pBuff, buffLen,
                             OSS_NEWLINE
-                            " Pool ID       : %u"OSS_NEWLINE
-                            " Max Objects   : %u"OSS_NEWLINE
-                            " Delta         : %u"OSS_NEWLINE
-                            " Objects Num   : %u"OSS_NEWLINE
-                            " Segment Num   : %u"OSS_NEWLINE
-                            " Begin Pos     : %u"OSS_NEWLINE
+                            "       Pool ID : %u"OSS_NEWLINE
+                            "   Max Objects : %u"OSS_NEWLINE
+                            "         Delta : %u"OSS_NEWLINE
+                            "   Objects Num : %u"OSS_NEWLINE
+                            "   Segment Num : %u"OSS_NEWLINE
+                            "     Begin Pos : %u"OSS_NEWLINE
                             " High Watermark: %u"OSS_NEWLINE
                             " Acquire Times : %llu"OSS_NEWLINE
                             " Release Times : %llu"OSS_NEWLINE
-                            " OOM Times     : %llu"OSS_NEWLINE
-                            " Shrink Size   : %llu"OSS_NEWLINE,
+                            "     OOM Times : %llu"OSS_NEWLINE
+                            "   Shrink Size : %llu"OSS_NEWLINE,
                             _poolId,
                             _maxNumOfObjs,
                             _delta,
@@ -1513,8 +1513,8 @@ namespace engine
             len = ossSnprintf( pBuff, buffLen,
                                OSS_NEWLINE
                                "---- Segment Name( %s ) ----"OSS_NEWLINE
-                               "Pool Num       : %u"OSS_NEWLINE
-                               "Total Size     : %llu"OSS_NEWLINE,
+                               "      Pool Num : %u"OSS_NEWLINE
+                               "    Total Size : %llu"OSS_NEWLINE,
                                _name,
                                _poolNum,
                                (UINT64)getNumOfObjAllocated() *
