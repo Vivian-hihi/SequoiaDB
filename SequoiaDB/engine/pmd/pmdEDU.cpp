@@ -207,6 +207,7 @@ namespace engine
       if ( _pMemPool )
       {
          _pMemPool->clear() ;
+         _pMemPool->setName( "PoolIdle" ) ;
       }
    }
 
