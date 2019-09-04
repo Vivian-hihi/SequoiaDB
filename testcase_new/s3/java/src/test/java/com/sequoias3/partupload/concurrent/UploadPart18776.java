@@ -104,8 +104,7 @@ public class UploadPart18776 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                s3Client.deleteObject(bucketName, key);
-                s3Client.deleteBucket(bucketName);
+                CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
