@@ -39,7 +39,7 @@ function createCL( clName, field )
 {
    try
    {
-      commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : [ { Field : "a.aa" }, { Field : field } ] } );     
+      db.getCS(COMMCSNAME).createCL(clName, { AutoIncrement : [ { Field : "a.aa" }, { Field : field } ] });
       throw "create autoIncrement error!";
    }catch( e )
    {

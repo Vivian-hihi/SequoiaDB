@@ -30,7 +30,7 @@ function main( db )
       // drop CS
       try
       {
-         commDropCS( db, DOMCSNAME, true, "drop CS in the beginning" );
+         db.dropCS(DOMCSNAME);
       }
       catch( e )
       {
@@ -83,8 +83,7 @@ function main( db )
    // "NULL domain" cannot be created CS [Testing Point]
    try
    {
-      commCreateCS( db, csName, false, "create CS specify domain",
-                   { "Domain" : domainName } ) ;
+      db.createCS(csName, { "Domain" : domainName })
    }
    catch ( e )
    {

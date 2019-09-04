@@ -16,7 +16,7 @@ function main()
    
    try
    {
-      commCreateCLByOption( db, COMMCSNAME, clName, {AutoIncrement : {Field : "a1", CurrentValue : 5}} );     
+      db.getCS(COMMCSNAME).createCL(clName, {AutoIncrement : {Field : "a1", CurrentValue : 5}});
       throw "create error!";
    }catch(e)
    {
