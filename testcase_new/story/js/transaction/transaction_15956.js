@@ -55,4 +55,15 @@ function main()
    commDropCL(db, COMMCSNAME, clName1, true, true);
    commDropCL(db, COMMCSNAME, clName2, true, true);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

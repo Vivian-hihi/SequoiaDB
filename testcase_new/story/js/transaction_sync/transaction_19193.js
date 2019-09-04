@@ -29,12 +29,12 @@ function main()
       try
       {
          cl1.insert(record1);
-         throw "need_err";
+         throw new Error("need_err");
       }catch(e)
       {
          if(e !==-38)
          {
-            throw e;
+            throw new Error(e);
          }
       }
       var record2 = {a:2};
@@ -57,4 +57,16 @@ function main()
       db.deleteConf({transautorollback:""});
    }
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

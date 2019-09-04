@@ -24,8 +24,7 @@ function main()
    var transUseRBS = db1.getSessionAttr().toObj().TransUseRBS;
    if(transUseRBS !== transUseRBSSet)
    {
-      println("actual transUseRBS:" + transUseRBS + ",expect transUseRBS: " + transUseRBSSet);
-      throw "transUseRBS_err";
+      throw new Error("actual transUseRBS:" + transUseRBS + ",expect transUseRBS: " + transUseRBSSet);
    }
    db1.transBegin();
    var cl1 = db1.getCS(COMMCSNAME).getCL(clName);
@@ -36,8 +35,7 @@ function main()
    var transUseRBS = db2.getSessionAttr().toObj().TransUseRBS;
    if(transUseRBS !== transUseRBSSet)
    {
-      println("actual transUseRBS:" + transUseRBS + ",expect transUseRBS: " + transUseRBSSet);
-      throw "transUseRBS_err";
+      throw new Error("actual transUseRBS:" + transUseRBS + ",expect transUseRBS: " + transUseRBSSet);
    }
    db2.transBegin();
    var cl2 = db2.getCS(COMMCSNAME).getCL(clName);
@@ -45,12 +43,12 @@ function main()
    try
    {
       cl2.find().next();
-      throw "need_err";
+      throw new Error("need_err");
    }catch(e)
    {
       if(e !==-13)
       {
-         throw e;
+         throw new Error(e);
       }
       
    }
@@ -63,4 +61,16 @@ function main()
    db1.close();
    db2.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

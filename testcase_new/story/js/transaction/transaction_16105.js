@@ -5,7 +5,19 @@
 *@testlinkCase:seqDB-16105
 **************************************/
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
 
 function main()
 {
@@ -31,7 +43,7 @@ function main()
       {
          if(e!==-336)
          {
-            throw buildException("rename cs during the trans", e, "trans", -336, e);
+            throw new Error(e);
          }
       }
    }
@@ -56,6 +68,6 @@ function checkCLRecord( cl, cond, expNum )
 {
    var actNum = cl.count(cond);
    if(actNum != expNum){
-      throw buildException("checkCLRecord", "", "check the cl recond num error", expNum, actNum);
+      throw new Error("expect record num: " + expNum + ",actual record num: " + actNum);
    }
 }

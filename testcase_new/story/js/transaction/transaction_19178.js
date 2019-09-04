@@ -33,8 +33,7 @@ function main()
    var transIsolation = db3.getSessionAttr().toObj().TransIsolation;
    if(transIsolation !== transIsolationSet)
    {
-      println("actual transIsolation:" + transIsolation + ",expect transIsolation: " + transIsolationSet);
-      throw "transIsolation_err";
+      throw new Error("actual transIsolation:" + transIsolation + ",expect transIsolation: " + transIsolationSet);
    }
    db3.transBegin();
    var cl3 = db3.getCS(COMMCSNAME).getCL(clName);
@@ -64,4 +63,16 @@ function main()
    db3.close();
    db4.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

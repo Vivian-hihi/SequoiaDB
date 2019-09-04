@@ -35,13 +35,12 @@ function main()
       try
       {
          db2.getCS(COMMCSNAME).getCL(clName).find().next();
-         throw "need_err";
+         throw new Error("need_err");
       }catch(e)
       {
          if(e !== -13)
          {
-            println("actual err:" + e + ",expect err:" + "-13");
-            throw e;
+            throw new Error(e);
          } 
       }
       
@@ -57,4 +56,16 @@ function main()
    }
    
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

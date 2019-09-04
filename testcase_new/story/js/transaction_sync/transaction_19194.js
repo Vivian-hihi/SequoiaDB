@@ -36,8 +36,7 @@ function main()
       recordNum= db2.getCS(COMMCSNAME).getCL(clName).count();
       if(parseInt(recordNum) !== 0)
       {
-         println("actual recordNum:" + parseInt(recordNum) + ",expect recordNum:" + 0);
-         throw "count_err";
+         throw new Error("actual recordNum:" + parseInt(recordNum) + ",expect recordNum:" + 0);
       }
       
       db1.transCommit();
@@ -51,4 +50,16 @@ function main()
    }
    
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

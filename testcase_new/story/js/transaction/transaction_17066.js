@@ -22,19 +22,19 @@ function main()
    var count1 = dbcl1.find({"transTest": 0}).count();
    if(count1 != 1)
    {
-      throw buildException("main()", "cl count1 is wrong", "compare", 1, count1);
+      throw new Error("expect record num: 1,actual record num: " + count1);
    }
    
    var count2 = dbcl2.find({"transTest" : 9999}).count();
    if(count2 != 1)
    {
-      throw buildException("main()", "cl count2 is wrong", "compare", 1, count2);
+      throw new Error("expect record num: 1,actual record num: " + count2);
    }
    
    var count3 = dbcl1.find({"transTest" : 9999}).count();
    if(count3 != 1)
    {
-      throw buildException("main()", "cl count3 is wrong", "compare", 1, count3);
+      throw new Error("expect record num: 1,actual record num: " + count3);
    }
    
    db1.transCommit() ;
@@ -43,4 +43,16 @@ function main()
    db1.close();
    db2.close();
 }
-main() ;
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+ ;

@@ -40,13 +40,25 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
 
 function verifyDate(dbcl, options, expectValue)
 {
    var rc = dbcl .find(options);
    if ( rc.size() != expectValue )
    {
-      throw buildException("main()", "cl remvoe count is wrong", "compare", expectValue, rc.size());
+      throw new Error("expect record count: " + expectValue + ", actual record count: " + rc.size());
    }
 }

@@ -5,7 +5,19 @@
 *@testlinkCase:seqDB-16106
 **************************************/
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
 
 function main()
 {
@@ -47,6 +59,6 @@ function checkcl1Record( cl1, cond, expNum )
 {
    var actNum = cl1.count(cond);
    if(actNum != expNum){
-      throw buildException("checkcl1Record", "", "check the cl1 recond num error", expNum, actNum);
+      throw new Error("expect record num: " + expNum + ",actual record num: " + actNum);
    }
 }

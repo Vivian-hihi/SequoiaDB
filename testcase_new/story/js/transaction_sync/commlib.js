@@ -6,9 +6,6 @@
 
 import ( "../lib/fulltext_commlib.js" );
 
-var CREATEINDEXSYNCOPERATION = 0;
-var DELETEINDEXSYNCOPERATION = 1;
-
 function dbNew( db )
 {
    try
@@ -18,7 +15,7 @@ function dbNew( db )
    catch( e )
    {
       println( " new  Sdb failed : " + e ) ;
-      throw e ;
+      throw new Error(e) ;
    }
 }
 
@@ -31,7 +28,7 @@ function dbClose( db )
    catch( e )
    {
       println( " close Sdb failed : " + e ) ;
-      throw e ;
+      throw new Error(e) ;
    }
 }
 
@@ -47,7 +44,7 @@ function dbArrayNew( db )
    catch( e )
    {
       println( " new the " + i + "st Sdb failed : " + e ) ;
-      throw e ;
+      throw new Error(e) ;
    }
 }
 
@@ -63,7 +60,7 @@ function dbArrayClose( db )
    catch( e )
    {
       println( " close the" + i + "st Sdb failed : " + e ) ;
-      throw e ;
+      throw new Error(e) ;
    }
 }
 
@@ -84,8 +81,7 @@ function checkRec( rc, expRecs )
 	if( actRecs.length !== expRecs.length )
    {
    	//println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));
-   	throw buildException("check count", null, "",
-									expRecs.length, actRecs.length);
+   	throw new Error("expect count: " + expRecs.length + ",actual count: " + actRecs.length);
    }
    
    //check every records every fields
@@ -96,10 +92,8 @@ function checkRec( rc, expRecs )
    	for ( var f in expRec )
    	{
    		if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
-	   	{
-	   		println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
-	   		println("\nactual recs in cl= "+JSON.stringify(actRec)+"\n\nexpect recs= "+JSON.stringify(expRec));   		
-	   		throw buildException("checkRec()", "rec ERROR");
+	   	{	
+	   		throw new Error("error occurs in " + (parseInt(i)+1) + "th record, in field' " + f + "'expect record: " + JSON.stringify(expRec) + ",actual record: " + JSON.stringify(actRec));
 	   	}
    	}
    }
@@ -118,9 +112,7 @@ function checkRec( rc, expRecs )
    	   }
    		if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
 	   	{
-	   		println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
-	   		println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec)); 		
-	   		throw buildException("checkRec()", "rec ERROR");
+	   		throw new Error("error occurs in " + (parseInt(i)+1) + "th record, in field' " + f + "'expect record: " + JSON.stringify(expRec) + ",actual record: " + JSON.stringify(actRec));
 	   	}
    	}
    }
@@ -158,7 +150,7 @@ function checkConsistency(csName, clName)
          }
          else
          {
-            throw "check lsn time out";
+            throw new Error("check lsn time out");
          }     
       }
       else 
@@ -311,7 +303,7 @@ function compare(name, minor) {
          }
          return typeof a < typeof b ? -1 : 1;
       } else {
-         throw("error");
+         throw new Error("error");
       }
    }
 }
@@ -325,7 +317,7 @@ function checkResult(expectResult, actResult)
 {
    if(expectResult.length !== actResult.length)
    {
-      throw buildException("checkResult()", "check records", "check records length", expectResult.length, actResult.length);
+      throw new Error("record length failed, expect record count: " + expectResult.length + ", actual record count: " + actResult.length);
    }
 
    // compare array  
@@ -338,10 +330,7 @@ function checkResult(expectResult, actResult)
       {
          if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) ) 
          {
-            println("expResult : " + JSON.stringify(expectResult));
-            println("actResult : " + JSON.stringify(actResult));
-            throw buildException("checkResult()", "check record fail", "fail",
-                    JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
+            throw new Error("check record failed, expect record: " + JSON.stringify(expRec) + ", actual record: " + JSON.stringify(actRec));
          }
       }
    }
@@ -355,10 +344,7 @@ function checkResult(expectResult, actResult)
       {
          if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
          {
-            println("expResult : " + JSON.stringify(expectResult));
-            println("actResult : " + JSON.stringify(actResult));
-            throw buildException("checkResult()", "check record fail", "fail",
-                    JSON.stringify(JSON.stringify(expRec)), JSON.stringify(actRec));
+            throw new Error("check record failed, expect record: " + JSON.stringify(expRec) + ", actual record: " + JSON.stringify(actRec));
          }
       }
    }
@@ -377,9 +363,9 @@ function checkIndexNotExistInES(csName, clName, esIndexNames)
    // check indexnames in ES not exist
    for(var i in esIndexNames)
    {
-      if(esOpr.isExistIndexInES(esIndexNames[i], DELETEINDEXSYNCOPERATION))
+      if(esOpr.isDropIndexInES(esIndexNames[i]))
       {
-         throw buildException("checkIndexNotExistInES()","check index name exist"," index name exsit", "not exsit","exsit");
+         throw new Error("index name exists in ES");
       }
    }
 }
@@ -407,69 +393,37 @@ function removeDuplicateItems(array)
 function insertData( dbcl, number)
 {
    if( undefined == this.number ){ this.number = 1000 ; }
-   try
-   {
-      println("---Begin to insert data " );   
-      var docs = [];
-      for( var i = 0; i < number; ++i )
-      {      
-         var no = i;
-         var a = i;
-         var user = "test"+i;
-         var phone = 13700000000+i;
-         var time = new Date().getTime(); 
-         var doc = {no:no, a:a,customerName:user, phone:phone, openDate:time};      
-         //data example: {"no":5, customerName:"test5", "phone":13700000005, "openDate":1402990912105
-         
-         docs.push( doc );
-      }	
-      dbcl.insert( docs );       
-   }
-   catch(e)
-   {
-      throw buildException("insertData()",e,"insert", "insert success","insert fail");
-   }
+   println("---Begin to insert data " );   
+   var docs = [];
+   for( var i = 0; i < number; ++i )
+   {      
+      var no = i;
+      var a = i;
+      var user = "test"+i;
+      var phone = 13700000000+i;
+      var time = new Date().getTime(); 
+      var doc = {no:no, a:a,customerName:user, phone:phone, openDate:time};      
+      //data example: {"no":5, customerName:"test5", "phone":13700000005, "openDate":1402990912105
+      
+      docs.push( doc );
+   }	
+   dbcl.insert( docs ); 
 }
 
 function beginTrans( db )
 {
-   try
-   {
-      println( "---transBegin" );
-      db.transBegin();     
-      
-   }
-   catch( e )
-   {
-      throw buildException("beginTrans()", e);
-   }
+   db.transBegin(); 
 }
 
 
 function commitTrans( db )
 {
-   try
-   {
-      println( "---transCommit" ) ;
-      db.transCommit() ;
-   }
-   catch( e )
-   {
-      throw buildException("commitTrans()", e);
-   }
+   db.transCommit() ;
 }
 
 function rollbackTrans()
 {
-   try
-   {
-      println( "--transRollback" ) ;
-      db.transRollback() ;
-   }
-   catch( e )
-   {
-      throw buildException("rollbackTrans()", e );
-   }
+   db.transRollback() ;
 }
 
 /************************************
@@ -479,34 +433,26 @@ function rollbackTrans()
 **************************************/
 function checkRenameCLResult( csName, oldCLName, newCLName)
 {   
+   var clFullName = csName + "." + newCLName; 
+   var getNewCLName = db.snapshot(SDB_SNAP_COLLECTIONS ,{"Name": clFullName }).current().toObj().Name;     
+   if( getNewCLName !== clFullName  )
+   {
+      throw new Error("check the new cl name, old cl name: " + clFullName + ", new cl name: " + getNewCLName);
+   }   
+   
+   //check the old cl is not exist
    try
    {
-      var clFullName = csName + "." + newCLName; 
-      var getNewCLName = db.snapshot(SDB_SNAP_COLLECTIONS ,{"Name": clFullName }).current().toObj().Name;     
-      if( getNewCLName !== clFullName  )
-      {
-         throw buildException("check cl name", null, "check the new cl name",
-									clFullName, getNewCLName);
-      }   
-      
-      //check the old cl is not exist
-      try
-	   {
-		   db.getCS(csName).getCL( oldCLName );
-		   throw "need throw error";
-	   }
-	   catch ( e )
-	   { 
-		   if ( e !== -23  )
-		   {		      
-			   throw buildException("check old clName:",e);
-		   }		
-	   }
+	   db.getCS(csName).getCL( oldCLName );
+	   throw new Error("need throw error");
    }
-   catch(e)
-   {      
-      throw buildException("checkRenameCLResult", e)
-   }   
+   catch ( e )
+   { 
+	   if ( e !== -23  )
+	   {		      
+		   throw new Error(e);
+	   }		
+   }  
 }
 
 /************************************
@@ -516,49 +462,39 @@ function checkRenameCLResult( csName, oldCLName, newCLName)
 **************************************/
 function checkRenameCSResult( oldCSName, newCSName, clNum)
 {   
+   var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();     
+   var getNewCSName = newCSObj.Name;
+   if( getNewCSName !== newCSName  )
+   {
+      throw new Error("check the new cs name, expect cs name: " + newCSName + ", actual cs name: " + getNewCSName);
+   }
+   
+   var clArray = newCSObj.Collection;
+   
+   if(clNum != clArray.length){
+      throw new Error("check cl num, expect cl num: " + clNum + ",actual cl num: " + clArray.length);
+   }
+   
+   for( i = 0; i< clArray.length; i++)
+   {
+      var csname = clArray[i].Name.split(".")[0];
+      if( csname !== newCSName  )
+      {
+         throw new Error("expect cs name:" + newCSName + ",actual cs name: " + csname);
+      }
+   }
+   
+   //check the old cl is not exist
    try
    {
-      var newCSObj = db.snapshot(SDB_SNAP_COLLECTIONSPACES ,{"Name": newCSName }).current().toObj();     
-      var getNewCSName = newCSObj.Name;
-      if( getNewCSName !== newCSName  )
-      {
-         throw buildException("check cs name", null, "check the new cs name",
-									newCSName, getNewCSName);
-      }
-      
-      var clArray = newCSObj.Collection;
-      
-      if(clNum != clArray.length){
-         throw buildException("check cl num", null, "check the cs.cl num",
-                              clNum, clArray.length);
-      }
-      
-      for( i = 0; i< clArray.length; i++)
-      {
-         var csname = clArray[i].Name.split(".")[0];
-         if( csname !== newCSName  )
-         {
-            throw buildException("check cs.cl name", null, "check the new cs name",
-                              newCSName, csname);
-         }
-      }
-      
-      //check the old cl is not exist
-      try
-	   {
-		   db.getCS(oldCSName);
-		   throw "CS_IS_EXIT";
-	   }
-	   catch ( e )
-	   { 
-		   if ( e !== -34  )
-		   {		      
-			   throw buildException("check old csName:",e);
-		   }		
-	   }
+	   db.getCS(oldCSName);
+	   throw new Error("CS_IS_EXIT");
    }
-   catch(e)
-   {      
-      throw buildException("checkRenameCSResult", e)
-   }   
+   catch ( e )
+   { 
+	   if ( e !== -34  )
+	   {		      
+		   throw new Error(e);
+	   }		
+   } 
 }

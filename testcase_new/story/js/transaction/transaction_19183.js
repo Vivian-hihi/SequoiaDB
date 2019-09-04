@@ -28,8 +28,7 @@ function main()
    var transAutoRollback = db2.getSessionAttr().toObj().TransAutoRollback;
    if(transAutoRollback !== transAutoRollbackSet)
    {
-      println("actual transAutoRollback:" + transAutoRollback + ",expect transAutoRollback: " + transAutoRollbackSet);
-      throw "transAutoRollback_err";
+      throw new Error("actual transAutoRollback:" + transAutoRollback + ",expect transAutoRollback: " + transAutoRollbackSet);
    }
    db2.transBegin();
    var cl2 = db2.getCS(COMMCSNAME).getCL(clName);
@@ -62,19 +61,31 @@ function main()
    db2.close();
    db3.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
 
 function insertRecordErr( cl, record )
 {
    try
    {
       cl.insert(record);
-      throw "need_err";
+      throw new Error("need_err");
    }catch(e)
    {
       if(e !== -38)
       {
-         throw e;
+         throw new Error(e);
       }
    }
 }

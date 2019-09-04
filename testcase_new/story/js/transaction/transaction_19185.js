@@ -34,8 +34,7 @@ function main()
       {
          if(expectOption[key] !== sessionOption[key])
          {
-            println("expect:" + key + ":" + expectOption[key] + ",actual:" + key + ":" + sessionOption[key]);
-            throw "transaction_option_err";
+            throw new Error("expect:" + key + ":" + expectOption[key] + ",actual:" + key + ":" + sessionOption[key]);
          }
       }
       
@@ -46,20 +45,31 @@ function main()
    
    db1.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
 
 function setSessionAttr(db1, option)
 {
    try
    {
       db1.setSessionAttr(option);
-      throw "need_err";
+      throw new Error("need_err");
    }catch(e)
    {
       if(e !== -6)
       {
-         println("actual err:" + e + ",expect err:" + "-6");
-         throw e;
+         throw new Error(e);
       }  
    }
    

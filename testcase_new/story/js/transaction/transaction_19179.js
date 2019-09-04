@@ -28,8 +28,7 @@ function main()
       var transTimeout = db3.getSessionAttr().toObj().TransTimeout;
       if(transTimeout !== transTimeoutSet)
       {
-         println("actual transTimeout:" + transTimeout + ",expect transTimeout: " + transTimeoutSet);
-         throw "transTimeout_err";
+         throw new Error("actual transTimeout:" + transTimeout + ",expect transTimeout: " + transTimeoutSet);
       }
       db3.transBegin();
       var cl3 = db3.getCS(COMMCSNAME).getCL(clName);
@@ -38,8 +37,7 @@ function main()
       var date2 = new Date();
       if((date2 - date1) > 15*1000)
       {
-         println("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
-         throw "transTimeout_err";
+         throw new Error("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
       }
       
       
@@ -50,8 +48,7 @@ function main()
       date2 = new Date();
       if((date2 - date1) > 65*1000)
       {
-         println("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
-         throw "transTimeout_err";
+         throw new Error("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
       }
       
       var db4 = new Sdb(db);
@@ -62,8 +59,7 @@ function main()
       date2 = new Date();
       if((date2 - date1) > 65*1000)
       {
-         println("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
-         throw "transTimeout_err";
+         throw new Error("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
       }
       
       db1.transCommit();
@@ -78,7 +74,19 @@ function main()
       db3.close();
       db4.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
 
 function updateTimeOut( cl )
 {
@@ -89,7 +97,7 @@ function updateTimeOut( cl )
       {
          if(e !==-13)
          {
-            throw e;
+            throw new Error(e);
          }
       }
 }

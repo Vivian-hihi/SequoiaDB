@@ -48,41 +48,26 @@ function renameCLInTrans( db, csName, clName, newCLName )
    {
       if ( -336 !== e )
       {
-         throw buildException("renameCLInTrans()", e);
+         throw new Error(e);
       }      
    }
 }
 
 function renameCLNoTrans( db, csName, clName, newCLName )
 {
-   try
-   {
-      println( "---Begin to rename cl, the cl no transaction" ) ;
-      var dbcs = db.getCS( csName );
-      dbcs.renameCL( clName, newCLName );
-   }
-   catch( e )
-   {
-      throw buildException("renameCLNoTrans()", e);
-   }
+   println( "---Begin to rename cl, the cl no transaction" ) ;
+   var dbcs = db.getCS( csName );
+   dbcs.renameCL( clName, newCLName );
 }
 
 function checkDatas( csName, newCLName, expRecordNums )
 {   
-   try
-   {    
-      println("---Begin to check the records");
-      var dbcl = db.getCS( csName ).getCL( newCLName );
-      var count = dbcl.count();      
-      if( count != expRecordNums  )
-      {
-         throw buildException("check datas", null, "check the new cl record nums",
-									expRecordNums, count);
-      }      
-   }
-   catch(e)
+   println("---Begin to check the records");
+   var dbcl = db.getCS( csName ).getCL( newCLName );
+   var count = dbcl.count();      
+   if( count != expRecordNums  )
    {
-      throw buildException("checkDatas", e)
+      throw new Error("expect record num: " + expRecordNums + "actual record num: " + count);
    }  
 }
 

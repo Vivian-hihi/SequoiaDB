@@ -35,19 +35,18 @@ function main()
       try
       {
          db2.getCS(COMMCSNAME).getCL(clName).update({$set:{a:2}});
-         throw "need_err";
+         throw new Error("need_err");
       }catch(e)
       {
          if(e !== -13)
          {
-            throw e;
+            throw new Error(e);
          } 
       }
       var date2 = new Date();
       if((date2 - date1) > 15*1000)
       {
-         println("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
-         throw "transTimeout_err";
+         throw new Error("actual transTimeout begin trans:" + (date2 - date1) + ",expect transTimeout: " + transTimeoutSet);
       }
       
       db1.transCommit();
@@ -66,4 +65,16 @@ function main()
    }
    
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

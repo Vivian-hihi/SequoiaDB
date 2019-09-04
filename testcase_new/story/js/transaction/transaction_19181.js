@@ -28,20 +28,19 @@ function main()
    var transLockWait = db3.getSessionAttr().toObj().TransLockWait;
    if(transLockWait !== transLockWaitSet)
    {
-      println("actual transLockWait:" + transLockWait + ",expect transLockWait: " + transLockWaitSet);
-      throw "transLockWait_err";
+      throw new Error("actual transLockWait:" + transLockWait + ",expect transLockWait: " + transLockWaitSet);
    }
    db3.transBegin();
    var cl3 = db3.getCS(COMMCSNAME).getCL(clName);
    try
    {
       cl3.find().next();
-      throw "need_err";
+      throw new Error("need_err");
    }catch(e)
    {
       if(e !==-13)
       {
-         throw e;
+         throw new Error(e);
       }
       
    }
@@ -69,4 +68,16 @@ function main()
    db3.close();
    db4.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

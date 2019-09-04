@@ -20,12 +20,23 @@ function main()
    var transAutoCommit = db3.getSessionAttr().toObj().TransAutoCommit;
    if(transAutoCommit !== transAutoCommitSet)
    {
-      println("actual transAutoCommit:" + transAutoCommit + ",expect transAutoCommit: " + transAutoCommitSet);
-      throw "transAutoCommit_err";
+      throw new Error("actual transAutoCommit:" + transAutoCommit + ",expect transAutoCommit: " + transAutoCommitSet);
    }
    
    commDropCL( db, COMMCSNAME, clName);
    
    db3.close();
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

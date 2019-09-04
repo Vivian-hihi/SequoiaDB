@@ -24,8 +24,7 @@ function main()
          {
             if(sessionAttr[key] !== actSessionAttr[key])
             {
-               println("expect:" + key + ":" + sessionAttr[key] + ",actual:" + key + ":" + actSessionAttr[key]);
-               throw "transaction_option_err";
+               throw new Error("expect:" + key + ":" + sessionAttr[key] + ",actual:" + key + ":" + actSessionAttr[key]);
             }
          }
          
@@ -37,4 +36,16 @@ function main()
    }
    
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
