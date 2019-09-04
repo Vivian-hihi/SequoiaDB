@@ -919,20 +919,20 @@ void ossOnMemConfigChange( BOOLEAN debugEnable,
    }
    else
    {
-      if ( ( ossMemDebugMask & OSS_MEMDEBUG_MASK_OSSMALLOC ) &&
-           !( memDebugMask & OSS_MEMDEBUG_MASK_OSSMALLOC ) )
+      if ( ( ossMemDebugMask & OSS_MEMDEBUG_MASK_OSSMALLOC ) ^
+           ( memDebugMask & OSS_MEMDEBUG_MASK_OSSMALLOC ) )
       {
          gMemTrackCB.reset() ;
       }
 
-      if ( ( ossMemDebugMask & OSS_MEMDEBUG_MASK_POOLALLOC ) &&
-           !( memDebugMask & OSS_MEMDEBUG_MASK_POOLALLOC) )
+      if ( ( ossMemDebugMask & OSS_MEMDEBUG_MASK_POOLALLOC ) ^
+           ( memDebugMask & OSS_MEMDEBUG_MASK_POOLALLOC) )
       {
          gPoolMemTrackCB.reset() ;
       }
 
-      if ( ( ossMemDebugMask & OSS_MEMDEBUG_MASK_THREADALLOC ) &&
-           !( memDebugMask & OSS_MEMDEBUG_MASK_THREADALLOC ) )
+      if ( ( ossMemDebugMask & OSS_MEMDEBUG_MASK_THREADALLOC ) ^
+           ( memDebugMask & OSS_MEMDEBUG_MASK_THREADALLOC ) )
       {
          gThreadMemTrackCB.reset() ;
       }
