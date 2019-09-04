@@ -25,8 +25,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 public class ListParts18727 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client;
-    //TODO : key名中用例编号不正确
-    private String key = "/aa/bb/obj18706";
+    private String key = "/aa/bb/obj18727";
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -36,7 +35,7 @@ public class ListParts18727 extends S3TestBase {
     @Test
     private void test() throws Exception {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
-        ListPartsRequest request = new ListPartsRequest(bucketName, key, uploadId);
+        ListPartsRequest request = new ListPartsRequest(S3TestBase.bucketName, key, uploadId);
         PartListing partList = s3Client.listParts(request);
         List<PartSummary> parts = partList.getParts();
         Assert.assertEquals(parts.size(), 0);
@@ -47,7 +46,6 @@ public class ListParts18727 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-            	// TODO： 对象未上传成功，这里不需要删除对象
                 s3Client.deleteObject(S3TestBase.bucketName, key);
             }
         } finally {

@@ -63,15 +63,11 @@ public class UploadPart18681 extends S3TestBase {
     private Object[][] generateFirstPartSize(){
         // parameter : firstPartNumber1, firstPartNumber2, firstPartSize1, firstPartSize2, key
         return new Object[][]{
-        	//TODO: firstPartNumber同组数据都是相同的，指定为一个参数传递就可以了吧
-            // test point a: the same partNumber and firstPartSize
-            new Object[]{ 1, 1, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_1" }, 
-            // test point b: the same partNumber, and the different firstPartSize
-            new Object[]{ 1, 1, 5 * 1024 * 1024, 6 * 1024 * 1024, keyBase + "_2" }, 
-            // test point c: partNumber != 1, and the same firstPartSize
-            new Object[]{ 2, 2, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_3" }, 
-            // test point d: partNumber != 1, and the different firstPartSize
-            new Object[]{ 2, 2, 5 * 1024 * 1024, 6 * 1024 * 1024, keyBase + "_4" } 
+            // firstPartNumber, firstPartSize1, firstPartSize2, key
+            new Object[]{ 1, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_1" }, 
+            new Object[]{ 1, 5 * 1024 * 1024, 6 * 1024 * 1024, keyBase + "_2" }, 
+            new Object[]{ 2, 5 * 1024 * 1024, 5 * 1024 * 1024, keyBase + "_3" }, 
+            new Object[]{ 2, 5 * 1024 * 1024, 6 * 1024 * 1024, keyBase + "_4" } 
         };
     }
 
@@ -82,8 +78,8 @@ public class UploadPart18681 extends S3TestBase {
     }
 
     @Test(dataProvider = "firstPartSize")
-    private void test(int firstPartNumber1, int firstPartNumber2, 
-            int firstPartSize1, int firstPartSize2, String key ) throws Exception {
+    private void test(int firstPartNumber, int firstPartSize1, int firstPartSize2, 
+            String key ) throws Exception {
         filePath3 = this.createFile(0);
         keys.add(key);
         List<PartETag> partETags = new ArrayList<>();
@@ -94,16 +90,15 @@ public class UploadPart18681 extends S3TestBase {
         // upload first part
         ThreadExecutor threadExec = new ThreadExecutor();
         threadExec.addWorker(
-                new ThreadUploadFirstPart(file1, key, firstPartNumber1, firstPartSize1));
+                new ThreadUploadFirstPart(file1, key, firstPartNumber, firstPartSize1));
         threadExec.addWorker(
-                new ThreadUploadFirstPart(file2, key, firstPartNumber2, firstPartSize2));
+                new ThreadUploadFirstPart(file2, key, firstPartNumber, firstPartSize2));
         threadExec.run();
+        Assert.assertEquals(firstPartETags.size(), 2);
         
-        //TODO:下方注释successful拼写有误
-        // get first part info, make sure the successfull part
+        // get first part info, make sure the successful part
         // get the firstPartETagStr
         ListPartsRequest request = new ListPartsRequest(bucketName, key, uploadId);
-        //TODO: 此处通过查询分段列表获取实际上传内容的etag来确定最终上传成功的分段是哪个，但是不能保证初次上传的分段是被覆盖的
         PartListing parts = s3Client.listParts(request);
         PartSummary partSummary = parts.getParts().get(0);
         // get the firstPartETag
@@ -123,7 +118,7 @@ public class UploadPart18681 extends S3TestBase {
         
         // upload others part
         PartETag otherPartETag = 
-                this.uploadOthersPart(key, partSummary.getSize(), firstPartNumber2);
+                this.uploadOthersPart(key, partSummary.getSize(), firstPartNumber);
         partETags.add(otherPartETag);
         
         // upload

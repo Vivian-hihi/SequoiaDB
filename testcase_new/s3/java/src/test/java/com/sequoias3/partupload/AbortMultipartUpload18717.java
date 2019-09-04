@@ -39,10 +39,8 @@ public class AbortMultipartUpload18717 extends S3TestBase {
     @Test
     private void test() throws Exception {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
-        PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId, 
-                file, fileSize / maxPartNumber);
-        s3Client.abortMultipartUpload(
-                new AbortMultipartUploadRequest(bucketName, key, uploadId));
+        PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId, file, fileSize / maxPartNumber);
+        s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(bucketName, key, uploadId));
         PartUploadUtils.checkAbortMultipartUploadResult(s3Client, bucketName, key, uploadId);
 
         runSuccess = true;
@@ -52,15 +50,13 @@ public class AbortMultipartUpload18717 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-            	//TODO：因为用例中的对象未上传成功，所以删除对象的步骤可以去掉
-                s3Client.deleteObject(S3TestBase.bucketName, key);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             s3Client.shutdown();
         }
     }
-    
+
     private void initFile() throws IOException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";

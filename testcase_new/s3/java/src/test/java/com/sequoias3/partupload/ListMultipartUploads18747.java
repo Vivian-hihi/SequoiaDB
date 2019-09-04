@@ -36,12 +36,10 @@ public class ListMultipartUploads18747 extends S3TestBase {
     private File file;
     private long fileSize = 2 * 1024 * 1024;
     private int maxPartNumber = 2;
-    private String[] keys = {"/aa/bb/test18747_1", "/aa/bb/test18747_2", 
-            "test18747_3", "test18747_4"};
+    private String[] keys = { "/aa/bb/test18747_1", "/aa/bb/test18747_2", "test18747_3", "test18747_4" };
     private List<String> uploadIds = new ArrayList<>();
-    
-    private MultiValueMap<String, String> expUploads = 
-            new LinkedMultiValueMap<String, String>();
+
+    private MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
     private List<String> expCommonPrefixes = new ArrayList<>();
 
     @BeforeClass
@@ -53,16 +51,15 @@ public class ListMultipartUploads18747 extends S3TestBase {
         // uploadPart
         for (String key : keys) {
             String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, key);
-            PartUploadUtils.partUpload(s3Client, bucketName, key, uploadId, 
-                file, fileSize / maxPartNumber);
+            PartUploadUtils.partUpload(s3Client, bucketName, key, uploadId, file, fileSize / maxPartNumber);
             uploadIds.add(uploadId);
         }
     }
 
     @Test
     private void test_NotSatisfyPrefix() throws Exception {
-        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName)
-                .withPrefix("notExist").withKeyMarker(keys[0]).withUploadIdMarker(uploadIds.get(0));
+        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName).withPrefix("notExist")
+                .withKeyMarker(keys[0]).withUploadIdMarker(uploadIds.get(0));
         MultipartUploadListing result = s3Client.listMultipartUploads(request);
         PartUploadUtils.checkListMultipartUploadsResults(result, expCommonPrefixes, expUploads);
         runSuccessNum++;
@@ -70,8 +67,8 @@ public class ListMultipartUploads18747 extends S3TestBase {
 
     @Test
     private void test_NotSatisfyKeyMarker() throws Exception {
-        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName)
-                .withPrefix("/aa").withKeyMarker("notExist").withUploadIdMarker(uploadIds.get(0));
+        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName).withPrefix("/aa")
+                .withKeyMarker("notExist").withUploadIdMarker(uploadIds.get(0));
         MultipartUploadListing result = s3Client.listMultipartUploads(request);
         PartUploadUtils.checkListMultipartUploadsResults(result, expCommonPrefixes, expUploads);
         runSuccessNum++;
@@ -79,12 +76,10 @@ public class ListMultipartUploads18747 extends S3TestBase {
 
     @Test
     private void test_NotSatisfyUploadIdMarker() throws Exception {
-        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName)
-                .withPrefix("test").withKeyMarker(keys[2])
-                .withUploadIdMarker("9999999999999");
+        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName).withPrefix("test")
+                .withKeyMarker(keys[2]).withUploadIdMarker("9999999999999");
         MultipartUploadListing result = s3Client.listMultipartUploads(request);
         expUploads.clear();
-        // TODO ：此处与文本用例预期结果不符，需要确认下实际期望结果
         expUploads.add(keys[3], uploadIds.get(3));
         PartUploadUtils.checkListMultipartUploadsResults(result, expCommonPrefixes, expUploads);
         runSuccessNum++;
@@ -101,7 +96,7 @@ public class ListMultipartUploads18747 extends S3TestBase {
             s3Client.shutdown();
         }
     }
-    
+
     private void initFile() throws IOException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";

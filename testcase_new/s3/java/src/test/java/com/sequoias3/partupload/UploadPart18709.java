@@ -2,7 +2,6 @@ package com.sequoias3.partupload;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.testng.Assert;
@@ -12,8 +11,6 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PartETag;
-import com.amazonaws.services.s3.model.UploadPartRequest;
-import com.amazonaws.services.s3.model.UploadPartResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -34,10 +31,9 @@ public class UploadPart18709 extends S3TestBase {
     private String filePath2;
     private File file1;
     private File file2;
-    private int fileSize = 30 * 1024 * 1024;
-    private int maxPartNumber = 5;
+    private int fileSize = 60 * 1024 * 1024;
+    private int partSize = 6 * 1024 * 1024;
     private String key = "/aa/bb/obj18706";
-    List<PartETag> partETags = new ArrayList<>();
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -47,17 +43,22 @@ public class UploadPart18709 extends S3TestBase {
 
     @Test
     private void test() throws Exception {
-    	//TODO ：文本用例中测试步骤为使用不同uploadId多次上传分段，但这里使用的是同一个uploadId，请确认后更改
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
-        this.partUpload(uploadId);
-        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, 
-                uploadId, partETags);
+        String uploadId1 = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
+        List<PartETag> partETags1 = PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId1, file1,
+                partSize);
+        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, S3TestBase.bucketName, key, partETags1, uploadId1);
+        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, uploadId1, partETags1);
+
+        String uploadId2 = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
+        List<PartETag> partETags2 = PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, key, uploadId2, file2,
+                partSize);
+        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, S3TestBase.bucketName, key, partETags2, uploadId2);
+        PartUploadUtils.completeMultipartUpload(s3Client, bucketName, key, uploadId2, partETags2);
 
         // check results
-        String downfileMd5 = 
-                ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
+        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath2));
-        
+
         runSuccess = true;
     }
 
@@ -73,31 +74,6 @@ public class UploadPart18709 extends S3TestBase {
         }
     }
 
-    private List<PartETag> partUpload(String uploadId){
-        File file = file1;
-        for (int i = 0; i < 2; i++) {
-            if (i != 0) {
-                file = file2;
-            }
-            // part upload
-            long fileOffset = 0;
-            long partSize = fileSize / maxPartNumber;
-            for (int j = 0; j < maxPartNumber; j++) {
-                UploadPartRequest partRequest = new UploadPartRequest().withFile(file)
-                        .withFileOffset(fileOffset).withPartNumber(j + 1).withPartSize(partSize)
-                        .withBucketName(bucketName).withKey(key).withUploadId(uploadId);
-                UploadPartResult partResult = s3Client.uploadPart(partRequest);
-                
-                if (i != 0) {
-                    partETags.add(partResult.getPartETag());
-                }
-                fileOffset = partSize * (j + 1);
-            }
-        }
-        //TODO: partETags为全局变量，这里不需要将它返回
-        return partETags;
-    }
-    
     private void initFile() throws IOException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         TestTools.LocalFile.removeFile(localPath);

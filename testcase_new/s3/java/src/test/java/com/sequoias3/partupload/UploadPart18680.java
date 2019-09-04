@@ -60,7 +60,7 @@ public class UploadPart18680 extends S3TestBase {
         // check results
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath3));
-        
+
         runSuccess = true;
     }
 
@@ -76,7 +76,7 @@ public class UploadPart18680 extends S3TestBase {
         }
     }
 
-    private List<PartETag> partUpload(String uploadId){
+    private void partUpload(String uploadId) {
         File file = file1;
         long fileOffset = 0;
         int partNum = 1;
@@ -90,23 +90,21 @@ public class UploadPart18680 extends S3TestBase {
                     file = file2;
                 }
             }
-            UploadPartRequest partRequest = new UploadPartRequest().withFile(file)
-                    .withFileOffset(fileOffset).withPartNumber(partNum).withPartSize(partSize)
-                    .withBucketName(bucketName).withKey(key).withUploadId(uploadId);
+            UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(fileOffset)
+                    .withPartNumber(partNum).withPartSize(partSize).withBucketName(bucketName).withKey(key)
+                    .withUploadId(uploadId);
             UploadPartResult partResult = s3Client.uploadPart(partRequest);
             if (i == 0 || i == 2) {
                 partETags.add(partResult.getPartETag());
             }
         }
-        //TODO：因partETags为全局变量，故此处不需要返回
-        return partETags;
     }
-    
+
     private void initFile() throws IOException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
-        
+
         String filePathBase = localPath + File.separator + "localFile_" + fileSize;
         filePath1 = filePathBase + "_1.txt";
         filePath2 = filePathBase + "_2.txt";
@@ -115,13 +113,13 @@ public class UploadPart18680 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
         file1 = new File(filePath1);
         file2 = new File(filePath2);
-        
+
         // expect file content
         TestTools.LocalFile.createFile(filePath3, 0);
         this.readFile(filePath1, 0, firstPartSize, filePath3);
         this.readFile(filePath2, firstPartSize, remainPartSize, filePath3);
     }
-    
+
     private void readFile(String filePath, int off, int len, String downloadPath)
             throws FileNotFoundException, IOException {
         RandomAccessFile raf = null;
