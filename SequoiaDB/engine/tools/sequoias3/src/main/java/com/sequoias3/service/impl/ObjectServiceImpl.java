@@ -1218,12 +1218,11 @@ public class ObjectServiceImpl implements ObjectService {
                 throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
                         "no such upload. uploadId:" + uploadId);
             }
-            uploadDao.updateUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, upload);
             // 只upload表中的记录加U锁，可能会被其他并发任务读取upload写新的part(Uploadpart)，
             // 如果该part查找到size一致的part并写入对应lob，如果该lob就是最终合并的lob，就会把已经合并完成的lob内容破坏
             // 如果修改为complete状态，会导致同步日志过大
             //增加uploadId在task表中，相当于是个互斥锁，防止其他upload part再向该uploadId中增加内容
-//            uploadStatusDao.insertUploadId(uploadId);
+            uploadStatusDao.insertUploadId(uploadId);
             mutexLock = true;
             //准备
             List<Part> partArray = new ArrayList<>();
