@@ -862,6 +862,7 @@ typedef class _ossSpinSLatch ossSpinSLatch ;
 
 #if defined (_WINDOWS)
 typedef class _ossSpinSLatch _ossSpinSLatchPOSIX ;
+#define ossSpinSLatchPOSIX _ossSpinSLatchPOSIX
 #else
 class _ossSpinSLatchPOSIX : public ossSLatch
 {
@@ -909,8 +910,9 @@ public :
       return 0 == rc ? TRUE : FALSE ;
    }
 } ;
-#endif
+
 typedef class _ossSpinSLatchPOSIX ossSpinSLatchPOSIX ;
+#endif
 
 enum OSS_LATCH_MODE
 {
