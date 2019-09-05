@@ -11,24 +11,24 @@
 1.  启动服务，拉起守护进程 sequoiasql-mysql-daemon 和相关数据库实例进程；
 
     ```lang-bash
-    $ service sequoiasql-mysql start
+    # service sequoiasql-mysql start
     ```
 
 2.  停止服务，停止守护进程 sequoiasql-mysql-daemon 和相关数据库实例进程；
 
     ```lang-bash
-    $ service sequoiasql-mysql stop
+    # service sequoiasql-mysql stop
     ```
 
 3.  查看服务状态，系统提示 running 表示服务正在运行；
 
     ```lang-bash
-    $ service sequoiasql-mysql status
+    # service sequoiasql-mysql status
     ```
 
 4.  重启服务，重启守护进程 sequoiasql-mysql-daemon 和相关数据库实例进程；
 
     ```lang-bash
-    $ service sequoiasql-mysql restart
+    # service sequoiasql-mysql restart
     ```  
     
