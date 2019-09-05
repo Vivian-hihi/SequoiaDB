@@ -355,7 +355,7 @@ namespace memcheck
       if ( FALSE == isError )
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%p    %10ld    %25s(%10u)    %6u\n",
+                      "%p    %10ld    %30s(%10u)    %6u\n",
                       pointer, pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
@@ -364,7 +364,7 @@ namespace memcheck
       else
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%p    %10ld    %25s(%10u)    %6u    ****(has error)\n",
+                      "%p    %10ld    %30s(%10u)    %6u    ****(has error)\n",
                       pointer, pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
@@ -447,7 +447,7 @@ namespace memcheck
 
       ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
                    "\n\nStat Info:\n"
-                   "                      File           :   Line ----      Count\n\n") ;
+                   "                        File              :   Line ----      Count\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWrite( &g_pOutFile, g_textBuff, ossStrlen(g_textBuff), &writeLen ) ;
@@ -473,7 +473,7 @@ namespace memcheck
       {
          ossUnpack32From64( it->second, file, line ) ;
 
-         ossSnprintf( g_textBuff, sizeof(g_textBuff)-1, "%25s(%10u): %6u ---- %10u\n",
+         ossSnprintf( g_textBuff, sizeof(g_textBuff)-1, "%30s(%10u): %6u ---- %10u\n",
                       autoGetFileName(file).c_str(), file, line, it->first ) ;
          
          if ( g_openOutFile )
@@ -538,7 +538,7 @@ namespace memcheck
       /// print title
       ossSnprintf( titleStr, OSS_MAX_PATHSIZE,
                    "Memory Info List:\n"
-                   "  Address                Size                        File                  Line\n\n" ) ;
+                   "  Address                Size                          File                     Line\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWriteN( &g_pOutFile, titleStr, ossStrlen( titleStr ) ) ;
