@@ -26,7 +26,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  * @Date 2019.04.24
  * @version 1.00
  */
-
+@Test(groups = "contextlifecycleconf")
 public class ListObjectsWithDelimiter18132 extends S3TestBase {
     private String bucketName = "bucket18132";
     private String keyNamePrefix = "dir/dir";
@@ -49,8 +49,7 @@ public class ListObjectsWithDelimiter18132 extends S3TestBase {
         }
     }
 
-    // 暂未解决修改配置文件的问题，先将用例屏蔽
-    @Test(enabled = false)
+    @Test
     public void testGetObjectList() throws Exception {
         // 将分隔符设置为? （默认为'/'）
         DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
@@ -78,7 +77,7 @@ public class ListObjectsWithDelimiter18132 extends S3TestBase {
             s3Client.listObjectsV2(req2);
             Assert.fail("exp fail but found success");
         } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "ListObjectsFailed");
+            Assert.assertEquals(e.getErrorCode(), "InvalidArgument");
         }
 
         runSuccess = true;

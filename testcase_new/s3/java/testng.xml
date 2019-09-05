@@ -5,22 +5,29 @@
   <parameter name="HOSTNAME" value="${HOSTNAME}" />  
    <parameter name="SVCNAME" value="${SVCNAME}" />
    <parameter name="S3HOSTNAME" value="${S3HOSTNAME}" />
-   <parameter name="S3PORT" value="${S3SVCNAME}" />
+   <!-- <parameter name="S3PORT" value="${S3SVCNAME}" /> -->
    <parameter name="CHANGEDPREFIX" value="newstory_java_test" />
    <parameter name="RSRVPORTBEGIN" value="26000" />
    <parameter name="RSRVPORTEND" value="27000" />
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
    <parameter name="S3USERNAME" value="administrator" />
+   <parameter name="REMOTEUSER" value="root"/>
+   <parameter name="REMOTEPASSWD" value="jenkins"/>
    <parameter name="S3ACCESSKEYID" value="ABCDEFGHIJKLMNOPQRST" />
-   <parameter name="CONFTOOL" value="/tmp/ci/testcase/tools/changeConf.js" />
+   
    <listeners> 
           <listener class-name = "com.sequoias3.testcommon.TimePrinterListener"/>
    </listeners>
    
-   
-   
    <test name="javadriver" parallel="classes" thread-count="5">  
+      <groups>
+         <run>
+            <exclude name="allowreputon" />
+            <exclude name="authorizationoff" />
+            <exclude name="contextlifecycleconf" />
+         </run>
+      </groups>
       <packages>    
                <package name="com.sequoias3.bucket" /> 
                <package name="com.sequoias3.object" />
@@ -41,6 +48,41 @@
          <package name="com.sequoias3.region.concurrent" />
          <package name="com.sequoias3.object.serial" /> 
          <package name="com.sequoias3.delimiter.serial" /> 
+      </packages>
+   </test>
+
+   <test name="contextlifecycle" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="contextlifecycleconf" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoias3.object" />
+         <package name="com.sequoias3.delimiter" />
+      </packages>
+   </test>
+
+   <test name="allowreput" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="allowreputon" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoias3.config" />
+         <package name="com.sequoias3.config.concurrent" />
+      </packages>
+   </test>
+   
+   <test name="authorization" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="authorizationoff" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoias3.config" />
       </packages>
    </test>
    

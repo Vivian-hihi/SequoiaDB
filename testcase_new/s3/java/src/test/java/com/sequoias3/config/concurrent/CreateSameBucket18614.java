@@ -23,6 +23,7 @@ import com.sequoias3.user.UserCommDefind;
  * @Date 2019.06.25
  * @version 1.00
  */
+@Test(groups = "allowreputon")
 public class CreateSameBucket18614 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18614";
@@ -52,9 +53,8 @@ public class CreateSameBucket18614 extends S3TestBase {
         RegionUtils.putRegion(region2);
     }
 
-    // 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
     @SuppressWarnings("deprecation")
-    @Test(enabled = false)
+    @Test
     private void testReputBacket() throws Exception {
         s3Client.createBucket(bucketName, regionName);
 
@@ -104,7 +104,7 @@ public class CreateSameBucket18614 extends S3TestBase {
         }
     }
 
-    public void checkBucket() {
+    private void checkBucket() {
         s3Client.putObject(bucketName, keyName, content);
         String actEtg = s3Client.getObject(bucketName, keyName).getObjectMetadata().getETag();
         Assert.assertEquals(actEtg, TestTools.getMD5(content.getBytes()));

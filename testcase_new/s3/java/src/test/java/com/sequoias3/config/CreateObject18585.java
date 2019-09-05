@@ -43,6 +43,7 @@ import com.sequoias3.user.UserCommDefind;
  * @Date 2019.06.20
  * @version 1.00
  */
+@Test(groups = "authorizationoff")
 public class CreateObject18585 extends S3TestBase {
     @DataProvider(name = "authorizationProvider")
     public Object[][] generateAuthorization() {
@@ -72,9 +73,8 @@ public class CreateObject18585 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
     }
 
-    // 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
     @SuppressWarnings("deprecation")
-    @Test(enabled = false) // (dataProvider = "authorizationProvider")
+    @Test(dataProvider = "authorizationProvider")
     private void testCreateObject(String bucketName, String authorization) throws Exception {
         String tmpContent = "content18585" + authorization;
 
@@ -119,7 +119,7 @@ public class CreateObject18585 extends S3TestBase {
         }
     }
 
-    public void createBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+    private void createBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
         TestRest rest = new TestRest(type);
         try {
             rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.PUT)
@@ -130,7 +130,7 @@ public class CreateObject18585 extends S3TestBase {
         }
     }
 
-    public void headBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+    private void headBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
         TestRest rest = new TestRest(type);
         try {
             rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.HEAD)
@@ -141,7 +141,7 @@ public class CreateObject18585 extends S3TestBase {
         }
     }
 
-    public void deleteBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+    private void deleteBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
         TestRest rest = new TestRest(type);
         try {
             rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.DELETE)

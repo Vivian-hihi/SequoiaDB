@@ -1,37 +1,21 @@
 package com.sequoias3.testcommon;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import org.bson.BSONObject;
-import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 
 public class S3TestBase {
     protected static String coordUrl;
@@ -49,8 +33,8 @@ public class S3TestBase {
     protected static String workDir;
     protected static String s3UserName;
     protected static String s3AccessKeyId;
-    protected static String confTool;
-    private static SdbConfTestBase sdbConfTestBase = new SdbConfTestBase();
+    protected static String remoteuser;
+    protected static String remotepasswd;
     protected static String installPath;
 
     public static final String PARTLISTINUSEOFF = "partlistinuseoff";
@@ -58,23 +42,40 @@ public class S3TestBase {
     public static final String CONTEXTLIFECYCLECONF = "contextlifecycleconf";
     public static final String AUTHORIZATIONOFF = "authorizationoff";
     public static final String ALLOWREPUTON = "allowreputon";
-    private static final String PARTLISTINUSE = "sdbs3.multipartupload.partlistinuse=";
-    private static final String PARTSIZELIMIT = "sdbs3.multipartupload.partsizelimit=";
-    private static final String CONTEXTLIFECYCLE = "sdbs3.context.lifecycle=2";
-    private static final String AUTHORIZATION = "sdbs3.authorization.check=";
-    private static final String ALLOWREPUT = "sdbs3.bucket.allowreput=";
+    private static final String PARTLISTINUSE = "sdbs3.multipartupload.partlistinuse";
+    private static final String PARTSIZELIMIT = "sdbs3.multipartupload.partsizelimit";
+    private static final String CONTEXTLIFECYCLE = "sdbs3.context.lifecycle";
+    private static final String AUTHORIZATION = "sdbs3.authorization.check";
+    private static final String ALLOWREPUT = "sdbs3.bucket.allowreput";
 
     private static String propertiesFileName = "";
     private static String replaceFileName = "";
+    private static String clusterFileName = "";
+    private static String clusterInfo = "";
     private static String testGroup = null;
-    private static final Map<String, String> group2Conf = new HashMap<String, String>();
+    private static StorageInterface storage = new SdbStorage();
+    private static final Map<String, Map<String, String>> group2Conf = new HashMap<String, Map<String, String>>();
 
     static {
-        group2Conf.put(PARTLISTINUSEOFF, PARTLISTINUSE + "false");
-        group2Conf.put(PARTSIZELIMITOFF, PARTSIZELIMIT + "false");
-        group2Conf.put(CONTEXTLIFECYCLECONF, CONTEXTLIFECYCLE);
-        group2Conf.put(AUTHORIZATIONOFF, AUTHORIZATION + "false");
-        group2Conf.put(ALLOWREPUTON, ALLOWREPUT + "true");
+        Map<String, String> partListiNuseOffMap = new HashMap<>();
+        partListiNuseOffMap.put(PARTLISTINUSE, "false");
+        group2Conf.put(PARTLISTINUSEOFF, partListiNuseOffMap);
+
+        Map<String, String> partSizeLimitOffMap = new HashMap<>();
+        partSizeLimitOffMap.put(PARTSIZELIMIT, "false");
+        group2Conf.put(PARTSIZELIMITOFF, partSizeLimitOffMap);
+
+        Map<String, String> contextLifeCycleConfMap = new HashMap<>();
+        contextLifeCycleConfMap.put(CONTEXTLIFECYCLE, "2");
+        group2Conf.put(CONTEXTLIFECYCLECONF, contextLifeCycleConfMap);
+
+        Map<String, String> authorizationMap = new HashMap<>();
+        authorizationMap.put(AUTHORIZATION, "false");
+        group2Conf.put(AUTHORIZATIONOFF, authorizationMap);
+
+        Map<String, String> allowReputMap = new HashMap<>();
+        allowReputMap.put(ALLOWREPUT, "true");
+        group2Conf.put(ALLOWREPUTON, allowReputMap);
     }
 
     public static synchronized void setRunGroup(List<String> testGroups) {
@@ -87,12 +88,11 @@ public class S3TestBase {
     }
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR",
-            "S3HOSTNAME", "S3PORT", "S3USERNAME", "S3ACCESSKEYID", "CONFTOOL" })
+            "S3HOSTNAME", "S3PORT", "S3USERNAME", "S3ACCESSKEYID", "REMOTEUSER", "REMOTEPASSWD" })
     @BeforeSuite(alwaysRun = true)
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
-            String RSRVNODEDIR, String WORKDIR, String S3HOSTNAME, String S3PORT, String S3USERNAME,
-            String S3ACCESSKEYID, String CONFTOOL) {
-        System.out.println("=========before suite ========");
+            String RSRVNODEDIR, String WORKDIR, String S3HOSTNAME, @Optional("8002") String S3PORT, String S3USERNAME,
+            String S3ACCESSKEYID, String REMOTEUSER, String REMOTEPASSWD) throws Exception {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
@@ -108,11 +108,12 @@ public class S3TestBase {
         s3ClientUrl = "http://" + S3HOSTNAME + ":" + S3PORT;
         bucketName = "commbucket";
         enableVerBucketName = "commbucketwithversion";
-        confTool = CONFTOOL;
+        remoteuser = REMOTEUSER;
+        remotepasswd = REMOTEPASSWD;
 
         getInstallPath();
 
-        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
+        storage.envPrePare(coordUrl);
         changeConfAndStartS3();
         // clean file
         File workDirFile = new File(workDir);
@@ -152,82 +153,37 @@ public class S3TestBase {
 
     @BeforeTest(groups = { PARTLISTINUSEOFF, PARTLISTINUSEOFF, CONTEXTLIFECYCLECONF, AUTHORIZATIONOFF,
             ALLOWREPUTON }, alwaysRun = true)
-    public static synchronized void initTestGroups() {
+    public static synchronized void initTestGroups() throws Exception {
         if (testGroup == null)
             return;
         System.out.println("init " + testGroup + " Groups...........");
-        FileWriter writer = null;
-        String config = group2Conf.get(testGroup) + System.getProperty("line.separator");
-        try {
-            writer = new FileWriter(new File(propertiesFileName), true);
-            writer.write(config);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        stopS3();
-        startS3();
+        execCmd(Command.S3_CHANGECONF_BEFORETEST);
+        execCmd(Command.S3_STOP);
+        execCmd(Command.S3_START);
     }
 
     @AfterTest(groups = { PARTLISTINUSEOFF, PARTLISTINUSEOFF, CONTEXTLIFECYCLECONF, AUTHORIZATIONOFF,
             ALLOWREPUTON }, alwaysRun = true)
-    public static synchronized void finiTestGroups() {
+    public static synchronized void finiTestGroups() throws Exception {
         if (testGroup == null)
             return;
         System.out.println("fini " + testGroup + " Groups...........");
-        RandomAccessFile raf = null;
-        try {
-            raf = new RandomAccessFile(new File(propertiesFileName), "rw");
-            String line = null;
-            // 记住上一次的偏移量
-            long lastPoint = 0;
-            while ((line = raf.readLine()) != null) {
-                final long point = raf.getFilePointer();
-                System.out.println("group2Conf.get(testGroup) ： " + group2Conf.get(testGroup));
-                if (line.contains(group2Conf.get(testGroup))) {
-                    String config = group2Conf.get(testGroup);
-                    String str = line.replace(config, "#" + config + System.getProperty("line.separator"));
-                    raf.seek(lastPoint);
-                    raf.writeBytes(str);
-                }
-                lastPoint = point;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                raf.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        execCmd(Command.S3_CHANGECONF_AFTERTEST);
         testGroup = null;
-        stopS3();
-        startS3();
+        execCmd(Command.S3_STOP);
+        execCmd(Command.S3_START);
     }
 
     @AfterSuite(alwaysRun = true)
     public static void finiSuite() throws Exception {
-        File tempFile = new File(propertiesFileName);
-        if (tempFile.exists() && tempFile.isFile()) {
-            tempFile.delete();
-        }
-        File originalFile = new File(replaceFileName);
-        if (originalFile.exists() && originalFile.isFile()) {
-            originalFile.renameTo(tempFile);
-        }
         try {
-            getClusterInfo();
-            sdbConfTestBase.closeTransaction(hostName, serviceName);
+            execCmd(Command.S3_RESTORECONF);
+            clusterFileName = installPath + "/tools/sequoias3/log/cluster.log";
+            clusterInfo = storage.getClusterInfo(coordUrl);
+            execCmd(Command.S3_SAVECLUSTERINFO);
+            storage.envRestore(coordUrl);
         } finally {
-            stopS3();
+            execCmd(Command.S3_STOP);
         }
     }
 
@@ -243,141 +199,116 @@ public class S3TestBase {
         return s3ClientUrl;
     }
 
-    public static void changeConfAndStartS3() {
-        propertiesFileName = installPath + "/tools/sequoias3/config/application.properties";
-        replaceFileName = installPath + "/tools/sequoias3/config/ori_application.properties";
+    public static void changeConfAndStartS3() throws Exception {
         // 更新properties
-        System.out.println("begin update application.properties");
-        Sequoiadb localdb = null;
         try {
-            localdb = new Sequoiadb(coordUrl, "", "");
-            ReplicaGroup rg = localdb.getReplicaGroup("SYSCoord");
-            BSONObject rgDetail = rg.getDetail();
-            BasicBSONList groupInfo = (BasicBSONList) rgDetail.get("Group");
-            String coordUrls = "";
-            for (int i = 0; i < groupInfo.toArray().length; i++) {
-                BSONObject groupObj = (BSONObject) groupInfo.toArray()[i];
-                String groupName = (String) groupObj.get("HostName");
-                if (i != 0) {
-                    coordUrls = coordUrls + ",";
-                }
-                coordUrls = coordUrls + groupName + ":" + serviceName;
-            }
-
-            File temFile = new File(propertiesFileName);
-            File replaceFile = new File(replaceFileName);
-            if (temFile.exists() && temFile.isFile()) {
-                temFile.renameTo(replaceFile);
-            }
-            temFile.createNewFile();
-            FileWriter f = new FileWriter(propertiesFileName);
-            f.write("sdbs3.sequoiadb.url=sequoiadb://" + coordUrls + "\n");
-            f.flush();
-            f.close();
-            System.out.println("write properties: " + propertiesFileName);
-
+            execCmd(Command.S3_SETCONFBEFORE);
             // change log level
-            File file = new File(installPath + "/tools/sequoias3/config/logback.xml");
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-            CharArrayWriter caw = new CharArrayWriter();
-            String line = null;
-            while ((line = br.readLine()) != null) {
-                line = line.replaceAll("INFO", "DEBUG");
-                caw.write(line);
-                caw.append(System.getProperty("line.separator"));
-            }
-            br.close();
-            FileWriter fw = new FileWriter(file);
-            caw.writeTo(fw);
-            fw.close();
+            execCmd(Command.S3_CHANGEDIALEVEL);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("update application.properties file failed");
-        } finally {
-            if (localdb != null) {
-                localdb.close();
-            }
         }
         System.out.println("finish update application.properties");
-        startS3();
+        execCmd(Command.S3_START);
     }
 
-    public static void startS3() {
-        try {
-            // 启动
-            String[] cmd = new String[2];
-            cmd[0] = installPath + "/tools/sequoias3/sequoias3.sh";
-            cmd[1] = "start";
-            System.out.println("exec cmd: " + Arrays.toString(cmd));
-            Process process = Runtime.getRuntime().exec(cmd);
-            BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            int exitValue = process.waitFor();
-            if (0 != exitValue) {
-                Assert.fail("fail to start s3, return code=" + exitValue);
-            }
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-            Assert.fail("fail to createCSCLAndStartS3");
+    public static void getInstallPath() throws Exception {
+        Command.S3_GETINSTALLPATH.execCmd(s3HostName, remoteuser, remotepasswd, Command.S3_GETINSTALLPATH.cmd);
+        installPath = Command.S3_GETINSTALLPATH.getOutput();
+    }
+
+    private static void execCmd(Command cmd) throws Exception {
+        String command = "";
+        switch (cmd) {
+        case S3_START:
+        case S3_STOP:
+            cmd.exec(s3HostName, remoteuser, remotepasswd, installPath);
+            break;
+        case S3_SETCONFBEFORE:
+            propertiesFileName = installPath + "/tools/sequoias3/config/application.properties";
+            replaceFileName = installPath + "/tools/sequoias3/config/ori_application.properties";
+            String coordUrls = storage.getUrls(coordUrl);
+            cmd.exec(s3HostName, remoteuser, remotepasswd, propertiesFileName, replaceFileName, coordUrls,
+                    propertiesFileName);
+            break;
+        case S3_CHANGEDIALEVEL:
+            String logBackFileName = installPath + "/tools/sequoias3/config/logback.xml";
+            cmd.exec(s3HostName, remoteuser, remotepasswd, logBackFileName);
+            break;
+        case S3_RESTORECONF:
+            cmd.exec(s3HostName, remoteuser, remotepasswd, propertiesFileName, replaceFileName, propertiesFileName);
+            break;
+        case S3_CHANGECONF_BEFORETEST:
+            String config = group2Conf.get(testGroup).toString().replace("{", "").replace("}", "");
+            cmd.exec(s3HostName, remoteuser, remotepasswd, config, propertiesFileName);
+            break;
+        case S3_CHANGECONF_AFTERTEST:
+            String conf = group2Conf.get(testGroup).toString().replace("{", "").replace("}", "");
+            cmd.exec(s3HostName, remoteuser, remotepasswd, conf, conf, propertiesFileName);
+            break;
+        case S3_SAVECLUSTERINFO:
+            cmd.exec(s3HostName, remoteuser, remotepasswd, clusterInfo, clusterFileName);
+            break;
+        default:
+            break;
         }
-    }
 
-    public static void getInstallPath() {
+        Ssh ssh = null;
         try {
-            Properties prop = new Properties();
-            InputStream in = new FileInputStream(new File("/etc/default/sequoiadb"));
-            prop.load(in);
-            installPath = prop.getProperty("INSTALL_DIR");
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail("fail to get installPath");
-        }
-    }
-
-    public static void getClusterInfo() throws IOException {
-        Sequoiadb db = null;
-        try {
-            db = new Sequoiadb(coordUrl, "", "");
-            DBCursor cur = db.getList(7, null, null, null);
-            String info = "";
-            while (cur.hasNext()) {
-                info += cur.getNext().toString();
+            ssh = new Ssh(s3HostName, remoteuser, remotepasswd);
+            ssh.exec(command);
+            if (ssh.getExitStatus() != 0) {
+                throw new Exception("exec command : " + command + " failed, stout= " + ssh.getStdout());
             }
-            cur.close();
-            File file = new File(installPath + "/tools/sequoias3/log/cluster.log");
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-
-            FileWriter fw = new FileWriter(file.getAbsoluteFile(), false);
-            BufferedWriter bw = new BufferedWriter(fw);
-            bw.write(info);
-            bw.close();
-        } catch (BaseException e) {
-            Assert.fail("connect " + coordUrl + " get cluster info error : " + e.getErrorCode());
         } finally {
-            if (db != null) {
-                db.close();
+            if (ssh != null) {
+                ssh.disconnect();
             }
         }
     }
 
-    public static void stopS3() {
-        try {
-            String[] cmd = new String[3];
-            cmd[0] = installPath + "/tools/sequoias3/sequoias3.sh";
-            cmd[1] = "stop";
-            cmd[2] = "-a";
-            System.out.println("exec cmd: " + Arrays.toString(cmd));
-            Process process = Runtime.getRuntime().exec(cmd);
-            BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    enum Command {
+        S3_START("source /etc/profile;%s/tools/sequoias3/sequoias3.sh start > /tmp/s3start.log"), S3_STOP(
+                "%s/tools/sequoias3/sequoias3.sh stop -a"), S3_SETCONFBEFORE(
+                        "mv %s %s;echo 'sdbs3.sequoiadb.url=sequoiadb://%s' > %s"), S3_CHANGEDIALEVEL(
+                                "sed -i 's/INFO/DEBUG/g' %s"), S3_RESTORECONF(
+                                        "rm -f %s;mv %s %s"), S3_CHANGECONF_BEFORETEST(
+                                                "echo '%s' >> %s"), S3_CHANGECONF_AFTERTEST(
+                                                        "sed -i 's/%s/#%s/g' %s"), S3_SAVECLUSTERINFO(
+                                                                "echo %s > %s"), S3_GETINSTALLPATH(
+                                                                        "cat /etc/default/sequoiadb | grep 'INSTALL_DIR' | awk -F '=' '{printf(\"%s\",$2)}'");
 
-            int exitValue = process.waitFor();
-            if (0 != exitValue) {
-                Assert.fail("fail to stop s3, return code=" + exitValue);
+        private String cmd;
+        private String output;
+
+        private Command(String cmd) {
+            this.cmd = cmd;
+        }
+
+        public void execCmd(String remoteHost, String user, String password, String command) throws Exception {
+            Ssh ssh = null;
+            try {
+                ssh = new Ssh(remoteHost, user, password);
+                ssh.exec(command);
+                if (ssh.getExitStatus() != 0) {
+                    throw new Exception("exec command : " + command + " failed, stout= " + ssh.getStdout());
+                }
+                this.output = ssh.getStdout();
+            } finally {
+                if (ssh != null) {
+                    ssh.disconnect();
+                }
             }
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-            Assert.fail("fail to stop s3");
+        }
+
+        public void exec(String remoteHost, String user, String password, String... args) throws Exception {
+            String command = String.format(this.cmd, args);
+            execCmd(remoteHost, user, password, command);
+        }
+
+        public String getOutput() {
+            return this.output;
         }
     }
 }

@@ -26,6 +26,7 @@ import com.sequoias3.testcommon.S3TestBase;
  * @Date 2018.11.21
  * @version 1.00
  */
+@Test(groups = "contextlifecycleconf")
 public class GetObjectList16438 extends S3TestBase {
     private String bucketName = "bucket16438";
     private String keyName = "/dir/dir";
@@ -48,8 +49,7 @@ public class GetObjectList16438 extends S3TestBase {
         }
     }
 
-    // 暂时未解决修改配置文件 调整上下文生命周期
-    @Test(enabled = false)
+    @Test
     public void testGetObjectList() throws Exception {
         int keyCount = 5;
         // first query
@@ -59,7 +59,7 @@ public class GetObjectList16438 extends S3TestBase {
         checkListObjectsV2Result(objectSummaries, keyCount);
         String NextContinuationToken = result.getNextContinuationToken();
 
-        Thread.sleep(2 * 60 * 1000);
+        Thread.sleep(3 * 60 * 1000);
         // second query
         ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName)
                 .withContinuationToken(NextContinuationToken);
@@ -67,7 +67,7 @@ public class GetObjectList16438 extends S3TestBase {
             s3Client.listObjectsV2(req2);
             Assert.fail("exp fail but found success");
         } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "ListObjectsFailed");
+            Assert.assertEquals(e.getErrorCode(), "InvalidArgument");
         }
 
         runSuccess = true;
