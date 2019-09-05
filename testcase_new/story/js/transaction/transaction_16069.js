@@ -4,36 +4,46 @@
 ***************************************************************************** */
 main(db);
 function main(db)
-{		
-
-   if( !commIsTransEnabled( db ) )
+{
+   try
    {
-      println( "transaction is disabled" ) ; 
-      return;  
-   }
-   var clName = CHANGEDPREFIX + "_renameCL16069";
-   var newCLName = CHANGEDPREFIX + "_newrenameCL16069";
-   commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the beginning" ) ; 
-   commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the beginning" ) ; 
-   var dbcl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ;          
+      if( !commIsTransEnabled( db ) )
+      {
+         println( "transaction is disabled" ) ; 
+         return;  
+      }
+      var clName = CHANGEDPREFIX + "_renameCL16069";
+      var newCLName = CHANGEDPREFIX + "_newrenameCL16069";
+      commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the beginning" ) ; 
+      commDropCL( db, COMMCSNAME, newCLName, true, true, "clear collection in the beginning" ) ; 
+      var dbcl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ;          
       
-   var dataNums = 100;
-   beginTrans( db );      
-   insertData( dbcl, dataNums );      
+      var dataNums = 100;
+      beginTrans( db );      
+      insertData( dbcl, dataNums );      
       
-   //rename cl fail in a transction, check the clName is oldName
-   renameCLInTrans( db, COMMCSNAME, clName, newCLName );      
-   checkRenameCLResult( COMMCSNAME, newCLName, clName);
+      //rename cl fail in a transction, check the clName is oldName
+      renameCLInTrans( db, COMMCSNAME, clName, newCLName );      
+      checkRenameCLResult( COMMCSNAME, newCLName, clName);
       
-   commitTrans( db );
-   checkDatas( COMMCSNAME, clName, dataNums ); 
+      commitTrans( db );
+      checkDatas( COMMCSNAME, clName, dataNums ); 
       
-   //rename cl success after commit the transction
-   renameCLNoTrans( db, COMMCSNAME, clName, newCLName );
-   checkRenameCLResult( COMMCSNAME, clName, newCLName); 
-   checkDatas( COMMCSNAME, newCLName, dataNums );     
+      //rename cl success after commit the transction
+      renameCLNoTrans( db, COMMCSNAME, clName, newCLName );
+      checkRenameCLResult( COMMCSNAME, clName, newCLName); 
+      checkDatas( COMMCSNAME, newCLName, dataNums );     
 
-   commDropCL( db, COMMCSNAME, newCLName, true, true,"drop CL in the ending" );    
+      commDropCL( db, COMMCSNAME, newCLName, true, true,"drop CL in the ending" );  
+   }
+   catch( e )
+   {
+      if ( e.constructor === Error )
+      {
+         println(e.stack) ;
+      }
+      throw e ;      
+   }   
 }
 
 function renameCLInTrans( db, csName, clName, newCLName )
@@ -43,6 +53,7 @@ function renameCLInTrans( db, csName, clName, newCLName )
       println( "---Begin to rename cl in a transaction" ) ;
       var dbcs = db.getCS( csName );
       dbcs.renameCL( clName, newCLName );
+      throw "rename cl in trans should be fail!";
    }
    catch( e )
    {
@@ -65,7 +76,7 @@ function checkDatas( csName, newCLName, expRecordNums )
    println("---Begin to check the records");
    var dbcl = db.getCS( csName ).getCL( newCLName );
    var count = dbcl.count();      
-   if( count != expRecordNums  )
+   if( Number(count) !== Number(expRecordNums) )
    {
       throw new Error("expect record num: " + expRecordNums + "actual record num: " + count);
    }  

@@ -38,10 +38,11 @@ function main()
       try
       {
          db.renameCS(oldcsName, newcsName);
+         throw "rename cs in trans should be fail!";
       }
       catch(e)
       {
-         if(e!==-336)
+         if(e !== -336)
          {
             throw new Error(e);
          }

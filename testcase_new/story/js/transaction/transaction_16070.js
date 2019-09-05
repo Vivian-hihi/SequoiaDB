@@ -4,9 +4,9 @@
 ***************************************************************************** */
 main(db);
 function main(db)
-{		
-	try
-	{
+{
+   try
+   {
       if( !commIsTransEnabled( db ) )
       {
          println( "transaction is disabled" ) ; 
@@ -34,7 +34,15 @@ function main(db)
       checkRenameCLResult( COMMCSNAME, clName, newCLName); 
       checkDatas( COMMCSNAME, newCLName, dataNums );     
 
-		commDropCL( db, COMMCSNAME, newCLName, true, true,"drop CL in the ending" );
+      commDropCL( db, COMMCSNAME, newCLName, true, true,"drop CL in the ending" );
+   }
+   catch( e )
+   {
+      if ( e.constructor === Error )
+      {
+         println(e.stack) ;
+      }
+      throw e ;      
    }
    finally
    {
@@ -52,10 +60,11 @@ function renameCLExistTrans( db, csName, clName, newCLName )
       println( "---Begin to rename cl, the cl exist transaction" ) ;
       var dbcs = db.getCS( csName );
       dbcs.renameCL( clName, newCLName );
+      throw "rename cl should be fail!";
    }
    catch( e )
    {
-      if ( -190 != e )
+      if ( -190 !== e )
       {
          throw new Error(e);
       }      
@@ -73,8 +82,8 @@ function checkDatas( csName, newCLName, expRecordNums )
 {   
    println("---Begin to check the records");
    var dbcl = db.getCS( csName ).getCL( newCLName );
-   var count = dbcl.count();      
-   if( count != expRecordNums  )
+   var count = dbcl.count();    
+   if( Number(count) !== Number(expRecordNums) )
    {
       throw new Error("expect record num: " + expRecordNums + "actual record num: " + count);
    }  
