@@ -426,13 +426,14 @@ namespace memcheck
             goto error ;
          }
 
+         /*
          ossPrintf( "Pasrse ELF header succeed:"OSS_NEWLINE
                     "  Elf Phoff : %llu"OSS_NEWLINE
                     "  Elf Phnum : %llu"OSS_NEWLINE
                     "  Elf Phsize: %llu"OSS_NEWLINE,
                     g_elfPhoff,
                     g_elfPhnum,
-                    g_elfPhsize ) ;
+                    g_elfPhsize ) ; */
 
          pos += pElfHeader->e_ehsize ;
          g_readPos += pos ;
@@ -443,7 +444,7 @@ namespace memcheck
       if ( g_elfParsedPhnum >= g_elfPhnum )
       {
          g_elfParsed = TRUE ;
-         ossPrintf( "Parse ELF Header table succeed"OSS_NEWLINE ) ;
+         // ossPrintf( "Parse ELF Header table succeed"OSS_NEWLINE ) ;
          goto done ;
       }
       else if ( g_readPos + g_dataLen < g_elfPhoff + sizeof( Elf_Phdr ) )
@@ -476,7 +477,7 @@ namespace memcheck
          if ( g_elfParsedPhnum >= g_elfPhnum )
          {
             g_elfParsed = TRUE ;
-            ossPrintf( "Parse ELF Header table succeed"OSS_NEWLINE ) ;
+            // ossPrintf( "Parse ELF Header table succeed"OSS_NEWLINE ) ;
             break ;
          }
       }
