@@ -92,6 +92,11 @@ namespace engine
       }
 
       rc = _updateCataInfo( FALSE, cb ) ;
+      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+      {
+         rc = _updateCataInfo( TRUE, cb ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to update catalog info of:%s, rc:%d",
