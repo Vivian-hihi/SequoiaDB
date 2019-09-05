@@ -17,16 +17,15 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, use_partition:<true|fal
 示例1：在 SequoiaDB 上创建根据时间进行范围切分的表。
 
 ```lang-sql
-mysql> CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY KEY(ts)) 
+mysql> CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY KEY(ts))
     -> ENGINE=sequoiadb
-    -> COMMENT="Sharding table for example,
-    "> sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
+    -> COMMENT="Sharding table for example, sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
 ```
 示例2：在[引擎配置项](sql_engine/sequoiasql_mysql/config.md#引擎配置)`sequoiadb_use_partition`为 ON 时，指定`use_partition`为 false 显式创建普通表。
 
 ```lang-sql
-mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE KEY(name))
-    -> ENGINE=sequoiadb
+mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
+    -> ENGINE=sequoiadb 
     -> COMMENT='sequoiadb:{ use_partition: false }';
 ```
 
@@ -48,6 +47,7 @@ mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE 
    |sequoiadb_use_autocommit|bool|ON|Yes|Global|是否启用自动提交模式(已弃用)。|
    |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
    |sequoiadb_optimizer_select_count|bool|ON|Yes|Global|是否开启优化select count(*)行为。|
+   |sequoiadb_alter_table_overhead_threshold|long|10000000|Yes|Global, Session|更改表开销阈值。当表记录数超过这个阈值，需要全表更新的更改操作将被禁止。|
    |sequoiadb_selector_pushdown_threshold|unsigned int|30|Yes|Global, Session|查询字段下压触发阈值，取值范围[0, 100]，单位：%。|
    |sequoiadb_execute_only_in_mysql|bool|OFF|Yes|Global, Session|DDL 命令只在 MySQL 执行，不下压到 SequoiaDB 执行。|
 
@@ -111,7 +111,9 @@ mysql> CREATE TABLE employee(id INT, name VARCHAR(128), PRIMARY KEY(id), UNIQUE 
    `sequoiadb_optimizer_select_count`决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。
 
 + **其它配置**
-    
+
+   `sequoiadb_alter_table_overhead_threshold`配置是更改表开销阈值。当表记录数超过这个阈值，需要全表更新的更改操作将被禁止。这个限制是防止对大表误进行了更改操作。大表的更新可能花费较多的时间。该阈值对添加 DEFAULT NULL 的列、数据类型扩容等无需更新的轻量操作不生效。如确认要对大表结构进行更改，在线上调阈值后，重新执行更改操作即可。
+       
    `sequoiadb_execute_only_in_mysql`配置开启后，DDL 语句只在 MySQL 侧执行，即只更改 MySQL 侧表元数据信息，而不会下压到 SDB 侧同步表 DDL 操作。
    
    `sequoiadb_debug_log`配置开启后，MySQL 日志会打印 SequoiaDB 存储引擎有关 debug 信息。
