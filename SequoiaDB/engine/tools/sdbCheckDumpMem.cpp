@@ -355,8 +355,8 @@ namespace memcheck
       if ( FALSE == isError )
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%16x    %10ld    %30s(%10u)    %6u\n",
-                      offset, pHeader->_size,
+                      "%14x %14ld %10ld    %30s(%10u)    %6u\n",
+                      offset, offset, pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
                       pHeader->_line ) ;
@@ -364,8 +364,8 @@ namespace memcheck
       else
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%16x    %10ld    %30s(%10u)    %6u    ****(has error)\n",
-                      offset, pHeader->_size,
+                      "%14x %14ld %10ld    %30s(%10u)    %6u    ****(has error)\n",
+                      offset, offset, pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
                       pHeader->_line ) ;
@@ -538,7 +538,7 @@ namespace memcheck
       /// print title
       ossSnprintf( titleStr, OSS_MAX_PATHSIZE,
                    "Memory Info List:\n"
-                   "  Offset                 Size                          File                     Line\n\n" ) ;
+                   "   Offset(Hex)    Offset(Dec)       Size                                          File      Line\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWriteN( &g_pOutFile, titleStr, ossStrlen( titleStr ) ) ;
