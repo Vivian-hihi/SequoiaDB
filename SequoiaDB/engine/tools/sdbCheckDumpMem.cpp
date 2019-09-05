@@ -521,8 +521,8 @@ namespace memcheck
       if ( FALSE == isError )
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%14x %14ld %18s %10ld    %30s(%10u)    %6u\n",
-                      offset, offset,
+                      "%14x %18s %10ld    %30s(%10u)    %6u\n",
+                      offset,
                       getAddrByOffset( offset ),
                       pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
@@ -532,8 +532,8 @@ namespace memcheck
       else
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%14x %14ld %18s %10ld    %30s(%10u)    %6u    ****(has error)\n",
-                      offset, offset,
+                      "%14x %18s %10ld    %30s(%10u)    %6u    ****(has error)\n",
+                      offset,
                       getAddrByOffset( offset ),
                       pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
@@ -719,7 +719,7 @@ namespace memcheck
       /// print title
       ossSnprintf( titleStr, OSS_MAX_PATHSIZE,
                    "Memory Info List:\n"
-                   "   Offset(Hex)    Offset(Dec)            Address       Size                                          File      Line\n\n" ) ;
+                   "   Offset(Hex)            Address       Size                                          File      Line\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWriteN( &g_pOutFile, titleStr, ossStrlen( titleStr ) ) ;
