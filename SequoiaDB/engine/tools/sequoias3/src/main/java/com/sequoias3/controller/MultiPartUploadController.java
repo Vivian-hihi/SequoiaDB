@@ -63,7 +63,7 @@ public class MultiPartUploadController {
                     requestHeaders,
                     xMeta);
 
-            logger.debug("initMultiPartUploadObject success. bucketName={}, objectName={}", bucketName, objectName);
+            logger.debug("initMultiPartUploadObject success. bucketName={}, objectName={}, uploadId={}", bucketName, objectName, result.getUploadId());
             return ResponseEntity.ok()
                     .body(result);
         }catch (Exception e){
