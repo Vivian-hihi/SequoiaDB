@@ -48,6 +48,22 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
 
+#ifdef _LINUX
+#include <elf.h>
+
+#ifdef OSS_ARCH_64
+
+   typedef Elf64_Ehdr Elf_Ehdr ;
+   typedef Elf64_Phdr Elf_Phdr ;
+
+#else
+   typedef Elf32_Ehdr Elf_Ehdr ;
+   typedef Elf32_Phdr Elf_Phdr ;
+
+#endif // OSS_ARCH_64
+
+#endif //_LINUX
+
 using namespace std ;
 using namespace engine ;
 
@@ -215,7 +231,15 @@ namespace memcheck
    INT64   g_dataLen       = 0 ;
    OSSFILE g_pOutFile ;
    BOOLEAN g_openOutFile   = FALSE ;
-   CHAR    g_textBuff[ 1024 ] = {0} ;
+   CHAR    g_textBuff[ 1024 ] = { 0 } ;
+   CHAR    g_textAddr[ 64 ] = { 0 } ;
+
+   map< UINT64, UINT64 > g_elfHdlrMap ;
+   BOOLEAN               g_elfParsed = FALSE ;
+   UINT64                g_elfPhnum = 0 ;
+   UINT64                g_elfParsedPhnum = 0 ;
+   UINT64                g_elfPhoff = 0 ;
+   UINT64                g_elfPhsize = 0 ;
 
    map< UINT64, UINT32 > g_memMap ;
    UINT64  g_totalMemSize  = 0 ;
@@ -349,14 +373,158 @@ namespace memcheck
       }
    }
 
+#ifdef _LINUX
+
+   INT32 doParseElfInfo()
+   {
+      INT32 rc = SDB_OK ;
+      INT64 pos = 0 ;
+
+      /// elf header
+      if ( 0 == g_readPos )
+      {
+         Elf_Ehdr *pElfHeader = (Elf_Ehdr*)( g_pBuff + pos ) ;
+
+         /// check magic
+         if ( pElfHeader->e_ident[ EI_MAG0 ] != ELFMAG0 ||
+              pElfHeader->e_ident[ EI_MAG1 ] != ELFMAG1 ||
+              pElfHeader->e_ident[ EI_MAG2 ] != ELFMAG2 ||
+              pElfHeader->e_ident[ EI_MAG3 ] != ELFMAG3 )
+         {
+            ossPrintf( "Invalid elf file\n" ) ;
+            rc = SDB_INVALID_FILE_TYPE ;
+            goto error ;
+         }
+         /// check type
+         else if ( pElfHeader->e_type != ET_CORE )
+         {
+            ossPrintf( "Invalid corefile\n" ) ;
+            rc = SDB_INVALID_FILE_TYPE ;
+            goto error ;
+         }
+         else if ( pElfHeader->e_ehsize < sizeof( Elf_Ehdr ) )
+         {
+            ossPrintf( "Invalid ehsize\n" ) ;
+            rc = SDB_INVALID_FILE_TYPE ;
+            goto error ;
+         }
+         else if ( pElfHeader->e_phoff < pElfHeader->e_ehsize )
+         {
+            ossPrintf( "Invalid phoff\n" ) ;
+            rc = SDB_INVALID_FILE_TYPE ;
+            goto error ;
+         }
+
+         g_elfPhoff = pElfHeader->e_phoff ;
+         g_elfPhnum = pElfHeader->e_phnum ;
+         g_elfPhsize= pElfHeader->e_phentsize ;
+
+         if ( g_elfPhsize < sizeof( Elf_Phdr ) )
+         {
+            ossPrintf( "Invalid phsize\n" ) ;
+            rc = SDB_INVALID_FILE_TYPE ;
+            goto error ;
+         }
+
+         ossPrintf( "Pasrse ELF header succeed:"OSS_NEWLINE
+                    "  Elf Phoff : %llu"OSS_NEWLINE
+                    "  Elf Phnum : %llu"OSS_NEWLINE
+                    "  Elf Phsize: %llu"OSS_NEWLINE,
+                    g_elfPhoff,
+                    g_elfPhnum,
+                    g_elfPhsize ) ;
+
+         pos += pElfHeader->e_ehsize ;
+         g_readPos += pos ;
+         g_dataLen -= pos ;
+         pos = 0 ;
+      }
+
+      if ( g_elfParsedPhnum >= g_elfPhnum )
+      {
+         g_elfParsed = TRUE ;
+         ossPrintf( "Parse ELF Header table succeed"OSS_NEWLINE ) ;
+         goto done ;
+      }
+      else if ( g_readPos + g_dataLen < g_elfPhoff + sizeof( Elf_Phdr ) )
+      {
+         g_readPos = g_elfPhoff ;
+         goto done ;
+      }
+      else if ( g_readPos < g_elfPhoff )
+      {
+         pos = g_elfPhoff - g_readPos ;
+      }
+
+      while ( pos < g_dataLen &&
+              pos < ( INT64 )(TEST_BUFFSIZE - sizeof( Elf_Phdr ) ) )
+      {
+         Elf_Phdr *pPhdr = ( Elf_Phdr* )( g_pBuff + pos ) ;
+
+         /*
+         ossPrintf( "PHDR Item (%llu)"OSS_NEWLINE
+                    "offset: %lx, vaddr: %lx, paddr: %lx, filesz: %lx, memsz: %lx"OSS_NEWLINE,
+                    g_elfParsedPhnum + 1,
+                    pPhdr->p_offset, pPhdr->p_vaddr,
+                    pPhdr->p_paddr, pPhdr->p_filesz,
+                    pPhdr->p_memsz ) ; */
+
+         g_elfHdlrMap[ pPhdr->p_vaddr ] = pPhdr->p_paddr ;
+         ++g_elfParsedPhnum ;
+         pos += g_elfPhsize ;
+
+         if ( g_elfParsedPhnum >= g_elfPhnum )
+         {
+            g_elfParsed = TRUE ;
+            ossPrintf( "Parse ELF Header table succeed"OSS_NEWLINE ) ;
+            break ;
+         }
+      }
+
+      g_readPos += pos ;
+      g_dataLen -= pos ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+#else
+
+   INT32 doParseElfInfo()
+   {
+      g_elfParsed = TRUE ;
+      return SDB_OK ;
+   }
+
+#endif // _LINUX
+
+   const CHAR* getAddrByOffset( UINT64 offset )
+   {
+      map< UINT64, UINT64 >::iterator it = g_elfHdlrMap.upper_bound( offset ) ;
+      if ( it != g_elfHdlrMap.end() && --it != g_elfHdlrMap.end() )
+      {
+         CHAR *ptr = NULL ;
+         *(ossValuePtr*)( &ptr ) =
+            ( ossValuePtr )( it->second + offset - it->first ) ;
+         ossSnprintf( g_textAddr, sizeof( g_textAddr ),
+                      "%p", ptr ) ;
+         return g_textAddr ;
+      }
+      return "-" ;
+   }
+
    void printMemInfo( CHAR *pointer, UINT64 offset, BOOLEAN isError )
    {
       memHeader *pHeader = (memHeader*)pointer ;
       if ( FALSE == isError )
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%14x %14ld %10ld    %30s(%10u)    %6u\n",
-                      offset, offset, pHeader->_size,
+                      "%14x %14ld %18s %10ld    %30s(%10u)    %6u\n",
+                      offset, offset,
+                      getAddrByOffset( offset ),
+                      pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
                       pHeader->_line ) ;
@@ -364,8 +532,10 @@ namespace memcheck
       else
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%14x %14ld %10ld    %30s(%10u)    %6u    ****(has error)\n",
-                      offset, offset, pHeader->_size,
+                      "%14x %14ld %18s %10ld    %30s(%10u)    %6u    ****(has error)\n",
+                      offset, offset,
+                      getAddrByOffset( offset ),
+                      pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
                       pHeader->_line ) ;
@@ -536,10 +706,20 @@ namespace memcheck
          goto error ;
       }
 
+      /// parse elf file
+      while ( !g_elfParsed && SDB_OK == getNextBlock() )
+      {
+         rc = doParseElfInfo() ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
       /// print title
       ossSnprintf( titleStr, OSS_MAX_PATHSIZE,
                    "Memory Info List:\n"
-                   "   Offset(Hex)    Offset(Dec)       Size                                          File      Line\n\n" ) ;
+                   "   Offset(Hex)    Offset(Dec)            Address       Size                                          File      Line\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWriteN( &g_pOutFile, titleStr, ossStrlen( titleStr ) ) ;
