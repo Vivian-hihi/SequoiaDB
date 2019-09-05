@@ -38,6 +38,8 @@
                <package name="com.sequoias3.delimiter.concurrent" /> 
                <package name="com.sequoias3.config" />
                <package name="com.sequoias3.config.concurrent" />
+               <package name="com.sequoias3.partupload" />
+               <package name="com.sequoias3.partupload.concurrent" />
       </packages>
    </test> 
    
