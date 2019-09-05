@@ -1,11 +1,8 @@
 package com.sequoias3.commlibs3;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
-import org.bson.BSONObject;
-import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -15,12 +12,9 @@ import org.testng.annotations.Parameters;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
-import com.sequoiadb.exception.BaseException;
 
 public class S3TestBase {
     public static String coordUrl;
@@ -43,20 +37,21 @@ public class S3TestBase {
     public static String enableVerBucketName;
     public static String s3UserName;
     public static String s3AccessKeyId;
-    public static String confTool;
-    public static SdbConfTestBase sdbConfTestBase = new SdbConfTestBase();
     public static String installPath;
     public static String propertiesFileName = "";
     public static String replaceFileName = "";
+    private static String clusterFileName = "";
+    private static String clusterInfo = "";
+    private static StorageInterface storage = new SdbStorage();
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR",
-            "S3HOSTNAME", "S3PORT", "S3USERNAME", "S3ACCESSKEYID", "CONFTOOL", "ROOTPASSWD", "REMOTEUSER",
-            "REMOTEPASSWD", "SCRIPTDIR" })
+            "S3HOSTNAME", "S3PORT", "S3USERNAME", "S3ACCESSKEYID", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD",
+            "SCRIPTDIR" })
     @BeforeSuite
     public void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR, String S3HOSTNAME, @Optional("8002") String S3PORT, String S3USERNAME,
-            String S3ACCESSKEYID, String CONFTOOL, String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD,
-            String SCRIPTDIR) throws Exception {
+            String S3ACCESSKEYID, String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD, String SCRIPTDIR)
+                    throws Exception {
 
         SdbTestBase.hostName = hostName = HOSTNAME;
         SdbTestBase.serviceName = serviceName = SVCNAME;
@@ -78,10 +73,9 @@ public class S3TestBase {
         s3ClientUrl = "http://" + S3HOSTNAME + ":" + S3PORT;
         bucketName = "commbucket";
         enableVerBucketName = "commbucketwithversion";
-        confTool = CONFTOOL;
 
         getInstallPath();
-        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
+        storage.envPrePare(coordUrl);
         changeConfAndStartS3();
         // clean file
         File workDirFile = new File(workDir);
@@ -94,22 +88,14 @@ public class S3TestBase {
 
     @AfterSuite
     public void finiSuite() throws Exception {
-        Ssh ssh = null;
         try {
-            ssh = new Ssh(s3HostName, remoteUser, remotePwd);
-            ssh.exec("rm -f " + propertiesFileName + ";" + "mv " + replaceFileName + " " + propertiesFileName);
-            System.out.println("restore properties: " + propertiesFileName);
-            if (ssh.getExitStatus() != 0) {
-                throw new Exception("exec rm -f " + propertiesFileName + ";" + "mv " + replaceFileName + " "
-                        + propertiesFileName + " failed in the end, stout= " + ssh.getStdout());
-            }
-            getClusterInfo();
-            sdbConfTestBase.closeTransaction(hostName, serviceName);
+            execCmd(Command.S3_RESTORECONF);
+            clusterFileName = installPath + "/tools/sequoias3/log/cluster.log";
+            clusterInfo = storage.getClusterInfo(coordUrl);
+            execCmd(Command.S3_SAVECLUSTERINFO);
+            storage.envRestore(coordUrl);
         } finally {
-            if (ssh != null) {
-                ssh.disconnect();
-            }
-            stopS3();
+            execCmd(Command.S3_STOP);
         }
     }
 
@@ -126,166 +112,22 @@ public class S3TestBase {
     }
 
     public static void changeConfAndStartS3() throws Exception {
-        propertiesFileName = installPath + "/tools/sequoias3/config/application.properties";
-        replaceFileName = installPath + "/tools/sequoias3/config/ori_application.properties";
-        String logBackFileName = installPath + "/tools/sequoias3/config/logback.xml";
         // 更新properties
-        System.out.println("begin update application.properties");
-        Sequoiadb localdb = null;
         try {
-            localdb = new Sequoiadb(coordUrl, "", "");
-            ReplicaGroup rg = localdb.getReplicaGroup("SYSCoord");
-            BSONObject rgDetail = rg.getDetail();
-            BasicBSONList groupInfo = (BasicBSONList) rgDetail.get("Group");
-            String coordUrls = "";
-            for (int i = 0; i < groupInfo.toArray().length; i++) {
-                BSONObject groupObj = (BSONObject) groupInfo.toArray()[i];
-                String groupName = (String) groupObj.get("HostName");
-                if (i != 0) {
-                    coordUrls = coordUrls + ",";
-                }
-                coordUrls = coordUrls + groupName + ":" + serviceName;
-            }
-
-            Ssh ssh = null;
-            try {
-                ssh = new Ssh(s3HostName, remoteUser, remotePwd);
-                ssh.exec("mv " + propertiesFileName + " " + replaceFileName + ";" + "touch " + propertiesFileName + ";"
-                        + "echo 'sdbs3.sequoiadb.url=sequoiadb://" + coordUrls + "' >" + propertiesFileName);
-                System.out.println("write properties: " + propertiesFileName);
-                if (ssh.getExitStatus() != 0) {
-                    throw new Exception("exec update application.properties file failed in the beginning, stout= "
-                            + ssh.getStdout());
-                }
-
-                // change log level
-                ssh.exec("sed -i 's/INFO/DEBUG/g' " + logBackFileName);
-                if (ssh.getExitStatus() != 0) {
-                    throw new Exception("exec change log level failed in the beginning, stout= " + ssh.getStdout());
-                }
-            } finally {
-                if (ssh != null) {
-                    ssh.disconnect();
-                }
-            }
+            execCmd(Command.S3_SETCONFBEFORE);
+            // change log level
+            execCmd(Command.S3_CHANGEDIALEVEL);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("update application.properties file failed");
-        } finally {
-            if (localdb != null) {
-                localdb.close();
-            }
         }
         System.out.println("finish update application.properties");
-        startS3();
+        execCmd(Command.S3_START);
     }
 
-    public static void getInstallPath() {
-        Ssh ssh = null;
-        try {
-            ssh = new Ssh(s3HostName, remoteUser, remotePwd);
-            ssh.exec("cat /etc/default/sequoiadb | grep 'INSTALL_DIR'");
-            if (ssh.getExitStatus() != 0) {
-                throw new Exception(
-                        "exec cat /etc/default/sequoiadb | grep 'INSTALL_DIR' failed, stout= " + ssh.getStdout());
-            }
-            String installDirConf = ssh.getStdout();
-            installPath = installDirConf.substring(installDirConf.lastIndexOf("=") + 1, installDirConf.length() - 1);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("get s3 server installPath failed");
-        } finally {
-            if (ssh != null) {
-                ssh.disconnect();
-            }
-        }
-    }
-
-    public static void getClusterInfo() throws IOException {
-        String clusterFileName = installPath + "/tools/sequoias3/log/cluster.log";
-        String info = "";
-        Sequoiadb db = null;
-        try {
-            db = new Sequoiadb(coordUrl, "", "");
-            DBCursor cur = db.getList(7, null, null, null);
-            while (cur.hasNext()) {
-                info += cur.getNext().toString();
-            }
-            cur.close();
-        } catch (BaseException e) {
-            Assert.fail("connect " + coordUrl + " get cluster info error : " + e.getErrorCode());
-        } finally {
-            if (db != null) {
-                db.close();
-            }
-        }
-
-        Ssh ssh = null;
-        try {
-            ssh = new Ssh(s3HostName, remoteUser, remotePwd);
-            ssh.exec("touch " + clusterFileName + ";" + "echo " + info + " >" + clusterFileName);
-            if (ssh.getExitStatus() != 0) {
-                throw new Exception("exec touch " + clusterFileName + ";" + "echo " + info + " >" + clusterFileName
-                        + " failed, stout= " + ssh.getStdout());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("write cluster info failed");
-        } finally {
-            if (ssh != null) {
-                ssh.disconnect();
-            }
-        }
-    }
-
-    public static void startS3() throws Exception {
-        Ssh ssh = null;
-        try {
-            ssh = new Ssh(s3HostName, remoteUser, remotePwd);
-            ssh.exec("source /etc/profile;" + installPath + "/tools/sequoias3/sequoias3.sh start "
-                    + ">/tmp/s3start.log");
-            if (ssh.getExitStatus() != 0) {
-                throw new Exception("exec command : source /etc/profile;" + installPath
-                        + "/tools/sequoias3/sequoias3.sh start" + "failed,stout= " + ssh.getStdout());
-            }
-        } finally {
-            if (ssh != null) {
-                ssh.disconnect();
-            }
-        }
-    }
-
-    public static void stopS3() throws Exception {
-        Ssh ssh = null;
-        try {
-            ssh = new Ssh(s3HostName, remoteUser, remotePwd);
-            ssh.exec(installPath + "/tools/sequoias3/sequoias3.sh stop -a");
-            if (ssh.getExitStatus() != 0) {
-                throw new Exception("exec command : " + installPath + "/tools/sequoias3/sequoias3.sh stop -a "
-                        + "failed,stdout= " + ssh.getStdout() + ",stderr = " + ssh.getStderr());
-            }
-        } finally {
-            if (ssh != null) {
-                ssh.disconnect();
-            }
-        }
-    }
-
-    public static String getSdbInstallDir(String host, String username, String password) throws Exception {
-        Ssh ssh = new Ssh(host, username, password);
-        String dir = null;
-        try {
-            ssh.exec("cat /etc/default/sequoiadb |grep INSTALL_DIR");
-            String str = ssh.getStdout();
-            if (str.length() <= 0) {
-                throw new Exception(
-                        "exec command:cat /etc/default/sequoiadb |grep INSTALL_DIR can not find sequoiacm install dir");
-            }
-            dir = str.substring(str.indexOf("=") + 1, str.length() - 1);
-        } finally {
-            ssh.disconnect();
-        }
-        return dir;
+    public static void getInstallPath() throws Exception {
+        Command.S3_GETINSTALLPATH.execCmd(s3HostName, remoteUser, remotePwd, Command.S3_GETINSTALLPATH.cmd);
+        installPath = Command.S3_GETINSTALLPATH.getOutput();
     }
 
     public static void createCommonCS() {
@@ -327,6 +169,92 @@ public class S3TestBase {
             if (s3Client != null) {
                 s3Client.shutdown();
             }
+        }
+    }
+
+    private static void execCmd(Command cmd) throws Exception {
+        String command = "";
+        switch (cmd) {
+        case S3_START:
+        case S3_STOP:
+            cmd.exec(s3HostName, remoteUser, remotePwd, installPath);
+            break;
+        case S3_SETCONFBEFORE:
+            propertiesFileName = installPath + "/tools/sequoias3/config/application.properties";
+            replaceFileName = installPath + "/tools/sequoias3/config/ori_application.properties";
+            String coordUrls = storage.getUrls(coordUrl);
+            cmd.exec(s3HostName, remoteUser, remotePwd, propertiesFileName, replaceFileName, coordUrls,
+                    propertiesFileName);
+            break;
+        case S3_CHANGEDIALEVEL:
+            String logBackFileName = installPath + "/tools/sequoias3/config/logback.xml";
+            cmd.exec(s3HostName, remoteUser, remotePwd, logBackFileName);
+            break;
+        case S3_RESTORECONF:
+            cmd.exec(s3HostName, remoteUser, remotePwd, propertiesFileName, replaceFileName, propertiesFileName);
+            break;
+        case S3_SAVECLUSTERINFO:
+            cmd.exec(s3HostName, remoteUser, remotePwd, clusterInfo, clusterFileName);
+            break;
+        default:
+            break;
+        }
+
+        Ssh ssh = null;
+        try {
+            ssh = new Ssh(s3HostName, remoteUser, remotePwd);
+            ssh.exec(command);
+            if (ssh.getExitStatus() != 0) {
+                throw new Exception("exec command : " + command + " failed, stout= " + ssh.getStdout());
+            }
+        } finally {
+            if (ssh != null) {
+                ssh.disconnect();
+            }
+        }
+    }
+
+    enum Command {
+        S3_START("source /etc/profile;%s/tools/sequoias3/sequoias3.sh start > /tmp/s3start.log"),
+        S3_STOP("%s/tools/sequoias3/sequoias3.sh stop -a"), 
+        S3_SETCONFBEFORE("mv %s %s;echo 'sdbs3.sequoiadb.url=sequoiadb://%s' > %s"), 
+        S3_CHANGEDIALEVEL("sed -i 's/INFO/DEBUG/g' %s"), 
+        S3_RESTORECONF("rm -f %s;mv %s %s"), 
+        S3_CHANGECONF_BEFORETEST("echo '%s' >> %s"), 
+        S3_CHANGECONF_AFTERTEST("sed -i 's/%s/#%s/g' %s"), 
+        S3_SAVECLUSTERINFO("echo %s > %s"), 
+        S3_GETINSTALLPATH("cat /etc/default/sequoiadb | grep 'INSTALL_DIR' | awk -F '=' '{printf(\"%s\",$2)}'");
+
+        private String cmd;
+        private String output;
+
+        private Command(String cmd) {
+            this.cmd = cmd;
+        }
+
+        public void execCmd(String remoteHost, String user, String password, String command) throws Exception {
+            Ssh ssh = null;
+            try {
+                ssh = new Ssh(remoteHost, user, password);
+                ssh.exec(command);
+                if (ssh.getExitStatus() != 0) {
+                    throw new Exception("exec command : " + command + " failed, stout= " + ssh.getStdout());
+                }
+                this.output = ssh.getStdout();
+            } finally {
+                if (ssh != null) {
+                    ssh.disconnect();
+                }
+            }
+        }
+
+        public void exec(String remoteHost, String user, String password, String... args) throws Exception {
+            String command = String.format(this.cmd, args);
+            execCmd(remoteHost, user, password, command);
+        }
+
+        public String getOutput() {
+            return this.output;
         }
     }
 }

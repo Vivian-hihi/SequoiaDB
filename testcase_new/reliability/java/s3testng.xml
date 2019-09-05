@@ -13,7 +13,6 @@
     <parameter name="WORKDIR" value="/tmp"/>
     <parameter name="S3USERNAME" value="administrator"/>
     <parameter name="S3ACCESSKEYID" value="ABCDEFGHIJKLMNOPQRST"/>
-    <parameter name="CONFTOOL" value="/tmp/ci/testcase/tools/changeConf.js"/>
     <parameter name="ROOTPASSWD" value="jenkins"/>
     <parameter name="REMOTEUSER" value="root"/>
     <parameter name="REMOTEPASSWD" value="jenkins"/>
