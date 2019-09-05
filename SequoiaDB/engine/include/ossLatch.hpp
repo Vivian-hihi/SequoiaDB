@@ -859,6 +859,59 @@ public :
 } ;
 typedef class _ossSpinSLatch ossSpinSLatch ;
 
+
+#if defined (_WINDOWS)
+typedef class _ossSpinSLatch _ossSpinSLatchPOSIX ;
+#else
+class _ossSpinSLatchPOSIX : public ossSLatch
+{
+private :
+   pthread_rwlock_t  _lock ;
+public :
+   _ossSpinSLatchPOSIX ()
+   {
+      SDB_ASSERT( 0 == pthread_rwlock_init( &_lock, NULL ),
+                  "init rwlock failed" ) ;
+   }
+   ~_ossSpinSLatchPOSIX()
+   {
+      SDB_ASSERT( 0 == pthread_rwlock_destroy( &_lock ),
+                  "destory rwlock failed" ) ;
+   }
+   void get ()
+   {
+      INT32 rc = pthread_rwlock_wrlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "write rwlock failed" ) ;
+   }
+   void release ()
+   {
+      INT32 rc = pthread_rwlock_unlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "release write rwlock failed" ) ;
+   }
+   void get_shared ()
+   {
+      INT32 rc = pthread_rwlock_rdlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "read rwlock failed" ) ;
+   }
+   void release_shared ()
+   {
+      INT32 rc = pthread_rwlock_unlock( &_lock ) ;
+      SDB_ASSERT( 0 == rc, "release read rwlock failed" ) ;
+   }
+   BOOLEAN try_get ()
+   {
+      INT32 rc = pthread_rwlock_trywrlock( &_lock ) ;
+      return 0 == rc ? TRUE : FALSE ;
+   }
+   BOOLEAN try_get_shared()
+   {
+      INT32 rc = pthread_rwlock_tryrdlock( &_lock ) ;
+      return 0 == rc ? TRUE : FALSE ;
+   }
+} ;
+#endif
+typedef class _ossSpinSLatchPOSIX ossSpinSLatchPOSIX ;
+
 enum OSS_LATCH_MODE
 {
    SHARED ,
@@ -1077,8 +1130,8 @@ public :
 class _ossRWLatchNS: public SDBObject
 {
 private :
-   _ossSpinSLatch _latch ;
-   _ossTicket     _ticket ;
+   _ossSpinSLatchPOSIX _latch ;
+   _ossTicket          _ticket ;
 
 public :
    _ossRWLatchNS() {}
