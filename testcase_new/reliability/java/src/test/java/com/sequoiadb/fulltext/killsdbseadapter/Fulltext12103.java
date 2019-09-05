@@ -18,6 +18,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillSdbseadapter;
 import com.sequoiadb.fulltext.FullTextDBUtils;
@@ -142,6 +143,8 @@ public class Fulltext12103 extends SdbTestBase {
                         cursor.getNext();
                     }
                 }
+            } catch (BaseException e) {
+                e.printStackTrace();
             } finally {
                 db.close();
             }

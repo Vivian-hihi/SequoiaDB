@@ -69,6 +69,7 @@ public class Fulltext14494 extends SdbTestBase {
         TaskMgr taskMgr = new  TaskMgr();
         DropCsTask dropCsTask = new DropCsTask();
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 60, 10);
+        //TODO:延迟时间设置太长，建议设置为1秒
         taskMgr.addTask(dropCsTask);
         taskMgr.addTask(faultMakeTask);
         taskMgr.execute();
@@ -88,7 +89,6 @@ public class Fulltext14494 extends SdbTestBase {
         private Sequoiadb db = null;
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             for(int i=0; i<10; i++){
                 FullTextDBUtils.dropCollectionSpace(db, csNames.get(i));

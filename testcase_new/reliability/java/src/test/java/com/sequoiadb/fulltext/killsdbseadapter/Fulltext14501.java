@@ -17,6 +17,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillSdbseadapter;
 import com.sequoiadb.fulltext.FullTextDBUtils;
@@ -82,12 +83,16 @@ public class Fulltext14501 extends SdbTestBase {
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
         for (int i = 0; i < 10; i++) {
-            String cappedName = cappedESNames.get(i * 2);
-            String esIndexName = cappedESNames.get(i * 2 + 1);
-            FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName);
-
             String csName = this.csName + "_" + i;
-            Assert.assertFalse(sdb.isCollectionSpaceExist(csName));
+            if (sdb.isCollectionSpaceExist(csName)) {
+                String clName = this.clName + "_" + i;
+                DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+                FullTextUtils.isIndexCreated(cl, fulltextName, 10000);
+            } else {
+                String cappedName = cappedESNames.get(i * 2);
+                String esIndexName = cappedESNames.get(i * 2 + 1);
+                FullTextUtils.isIndexDeleted(sdb, esIndexName, cappedName);
+            }
         }
     }
 
@@ -114,6 +119,8 @@ public class Fulltext14501 extends SdbTestBase {
                     String csName = Fulltext14501.this.csName + "_" + i;
                     db.dropCollectionSpace(csName);
                 }
+            } catch (BaseException e) {
+                e.printStackTrace();
             } finally {
                 db.close();
             }

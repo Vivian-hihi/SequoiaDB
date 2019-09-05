@@ -20,8 +20,10 @@ import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fulltext.FullTextDBUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
+
 /**
- * @Description seqDB-15925:cs下存在多个cl，部分cl无效，全量同步clean cs节点清理无效集合对应的全文索引processor 
+ * @Description seqDB-15925:cs下存在多个cl，部分cl无效，全量同步clean
+ *              cs节点清理无效集合对应的全文索引processor
  * @date 2019/8/13
  */
 public class Fulltext15925 extends SdbTestBase {
@@ -31,9 +33,9 @@ public class Fulltext15925 extends SdbTestBase {
     private List<String> clNames = new ArrayList<String>();
     private List<String> indexNames = new ArrayList<String>();
     private List<DBCollection> collections = new ArrayList<DBCollection>();
-    
+
     @BeforeClass()
-    public void setUp() throws ReliabilityException{
+    public void setUp() throws ReliabilityException {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         groupMgr = GroupMgr.getInstance();
         if (CommLib.isStandAlone(sdb)) {
@@ -44,73 +46,80 @@ public class Fulltext15925 extends SdbTestBase {
         }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
-        for(int i=0; i<10; i++){
+        for (int i = 0; i < 10; i++) {
             clNames.add("cl_15925_" + i);
             indexNames.add("indexName_15925_" + i);
-            collections.add(sdb.getCollectionSpace(csName).createCollection(clNames.get(i), (BSONObject)JSON.parse("{Group: '"+ groupName +"'}")));
-            if(i < 5){
+            collections.add(sdb.getCollectionSpace(csName).createCollection(clNames.get(i),
+                    (BSONObject) JSON.parse("{Group: '" + groupName + "'}")));
+            if (i < 5) {
                 collections.get(i).createIndex(indexNames.get(i), "{a:'text'}", false, false);
             }
         }
     }
-    
+
     @Test()
-    public void Test() throws Exception{
+    public void Test() throws Exception {
         Node slave = sdb.getReplicaGroup(groupName).getSlave();
         String remoteHostName = slave.getHostName();
         Ssh ssh = new Ssh(remoteHostName, "root", SdbTestBase.rootPwd);
         String command = "lsof -iTCP:11790 -sTCP:LISTEN| sed '1d' | awk '{print $2}'";
-        ssh.exec(command);  
-        System.out.println("ssh.getStdout():"+ssh.getStdout());
+        ssh.exec(command);
+        System.out.println("ssh.getStdout():" + ssh.getStdout());
         String pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
-        command = "ls -l /proc/" + pid + "/exe | awk '{print $11}'" ;
+        command = "ls -l /proc/" + pid + "/exe | awk '{print $11}'";
         ssh.exec(command);
         command = ssh.getStdout().substring(0, ssh.getStdout().length() - 1) + "top";
         ssh.exec(command);
-        
-        for(int i=0; i<10; i++){
+        // TODO:这里应该校验sdbcm是否停止
+
+        for (int i = 0; i < 10; i++) {
             FullTextDBUtils.insertData(collections.get(i), 10000);
         }
+        // TODO:这里是存在全文索引的集合插入记录
 
         int remotePort = slave.getPort();
         command = "lsof -iTCP:" + remotePort + " -sTCP:LISTEN | sed '1d' | awk '{print $2}'";
         ssh.exec(command);
-        pid = ssh.getStdout().substring(0, ssh.getStdout().length() -1);
+        pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
         command = "kill -9 " + pid;
         ssh.exec(command);
-                
-        for(int i=0; i<10; i++){
+        // TODO:1.这里是插入的过程中kill节点，需要开启线程并发，查询得到数据量超过10w时，kill节点
+        // 2.这里需要校验备节点是否已停止，并且需要校验一段时间，确保没有被拉起
+
+        for (int i = 0; i < 10; i++) {
             FullTextDBUtils.insertData(collections.get(i), 10000);
         }
+        // TODO:这一步不需要
 
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        for(int i = 0; i < 5; i++){
+        for (int i = 0; i < 5; i++) {
             FullTextDBUtils.dropCollection(cs, clNames.get(i));
         }
-        
+
         collections.clear();
-        for(int i = 0; i < 5; i++ ){
-            collections.add(sdb.getCollectionSpace(csName).createCollection(clNames.get(i), (BSONObject)JSON.parse("{Group: '"+ groupName +"'}")));
+        for (int i = 0; i < 5; i++) {
+            collections.add(sdb.getCollectionSpace(csName).createCollection(clNames.get(i),
+                    (BSONObject) JSON.parse("{Group: '" + groupName + "'}")));
             collections.get(i).createIndex(indexNames.get(i), "{a:'text'}", false, false);
             collections.get(i).insert("{a : 'Only one record'}");
         }
-        
-        
+
         command = "service sdbcm start";
         ssh.exec(command);
-        
+
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
-        for(int i = 0; i < 5; i++){
+        for (int i = 0; i < 5; i++) {
             Assert.assertTrue(FullTextUtils.isIndexCreated(collections.get(i), indexNames.get(i), 1));
-        } 
+        }
     }
-    
+
     @AfterClass()
-    public void tearDown(){
+    public void tearDown() {
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        for(int i = 0; i < 10; i++){
+        for (int i = 0; i < 10; i++) {
             FullTextDBUtils.dropCollection(cs, clNames.get(i));
         }
         sdb.close();
+        // TODO:集合比较多时，建议创建集合空间，这样可以在清理环境的时候直接删除CS，而无需关心集合（此处可改可不改）
     }
 }

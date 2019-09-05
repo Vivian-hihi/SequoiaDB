@@ -22,8 +22,9 @@ import com.sequoiadb.fulltext.FullTextUtils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+
 /**
- * @Description seqDB-14495:删除集合空间时备节点异常重启 
+ * @Description seqDB-14495:删除集合空间时备节点异常重启
  * @author xiaoni Zhao
  * @date 2019/8/10
  */
@@ -37,9 +38,9 @@ public class Fulltext14495 extends SdbTestBase {
     private List<String> cappedClNames = new ArrayList<String>();
     private List<String> esIndexNames = new ArrayList<String>();
     private List<DBCollection> collections = new ArrayList<DBCollection>();
-    
+
     @BeforeClass
-    public void setUp() throws ReliabilityException{
+    public void setUp() throws ReliabilityException {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         groupMgr = GroupMgr.getInstance();
         if (CommLib.isStandAlone(sdb)) {
@@ -50,51 +51,53 @@ public class Fulltext14495 extends SdbTestBase {
         }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
-        for( int i=0; i<10; i++ )
-        {
-            csNames.add("cs_14495_"+i);
-            clNames.add("cl_14495_"+i);
-            indexNames.add("fullTextIndex_14495_"+i);
-            collections.add(sdb.createCollectionSpace(csNames.get(i)).createCollection(clNames.get(i), (BSONObject)JSON.parse("{'Group':'" + groupName + "'}")));
+        for (int i = 0; i < 10; i++) {
+            csNames.add("cs_14495_" + i);
+            clNames.add("cl_14495_" + i);
+            indexNames.add("fullTextIndex_14495_" + i);
+            collections.add(sdb.createCollectionSpace(csNames.get(i)).createCollection(clNames.get(i),
+                    (BSONObject) JSON.parse("{'Group':'" + groupName + "'}")));
             collections.get(i).createIndex(indexNames.get(i), "{a:'text'}", false, false);
             FullTextDBUtils.insertData(collections.get(i), 100000);
             cappedClNames.add(FullTextDBUtils.getCappedName(collections.get(i), indexNames.get(i)));
             esIndexNames.add(FullTextDBUtils.getESIndexName(collections.get(i), indexNames.get(i)));
         }
-        
+
     }
-    
+
     @Test
-    public void Test() throws Exception{
+    public void Test() throws Exception {
         NodeWrapper node = groupMgr.getGroupByName(groupName).getSlave();
-        TaskMgr taskMgr = new  TaskMgr();
+        TaskMgr taskMgr = new TaskMgr();
         DropCsTask dropCsTask = new DropCsTask();
         FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(node, 60);
+        // TODO:延迟时间太长，建议设置为1秒，因为删除集合还是挺快的
         taskMgr.addTask(dropCsTask);
         taskMgr.addTask(faultMakeTask);
         taskMgr.execute();
-        
+
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
 
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedClNames));
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         sdb.close();
     }
-    
-    private class DropCsTask extends OperateTask{
+
+    private class DropCsTask extends OperateTask {
         private Sequoiadb db = null;
+
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            for(int i=0; i<10; i++){
+            for (int i = 0; i < 10; i++) {
                 FullTextDBUtils.dropCollectionSpace(db, csNames.get(i));
             }
             db.close();
-        } 
+        }
+        // TODO:这里验证点错误，是删除集合
     }
 }

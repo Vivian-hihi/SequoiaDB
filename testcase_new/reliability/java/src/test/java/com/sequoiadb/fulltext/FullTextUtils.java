@@ -36,8 +36,7 @@ public class FullTextUtils {
 
     /**
      * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查: 1.先检查文索引名是否都映射到ES端
-     * 2.再检查ES端全文索引的总记录数是否正确
-     * 3.最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
+     * 2.再检查ES端全文索引的总记录数是否正确 3.最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
      * 
      * @param esClient
      * @param cl
@@ -71,8 +70,7 @@ public class FullTextUtils {
 
     /**
      * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查： 1. 先检查子表的全文索引名是否都映射到ES端 2.
-     * 再检查ES端子表的全文索引总记录数是否正确 3.
-     * 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
+     * 再检查ES端子表的全文索引总记录数是否正确 3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
      * 
      * @param esClient
      * @param cl
@@ -223,15 +221,11 @@ public class FullTextUtils {
     }
 
     /**
-     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建
-     * 检查原始集合内的多个全文索引
+     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建 检查原始集合内的多个全文索引
      * 
-     * @param esClient
-     *            es连接
-     * @param cl
-     *            原始集合
-     * @param indexNames
-     *            多个原始集合索引名
+     * @param esClient   es连接
+     * @param cl         原始集合
+     * @param indexNames 多个原始集合索引名
      * @return boolean 如果原始集合LogicalID与ES端全文索引_cllid一致则返回true，否则返回false
      * @throws Exception
      * @Author liuxiaoxuan
@@ -253,15 +247,11 @@ public class FullTextUtils {
     }
 
     /**
-     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建
-     * 检查原始集合内的多个全文索引
+     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建 检查原始集合内的多个全文索引
      * 
-     * @param esClient
-     *            es连接
-     * @param cl
-     *            原始集合
-     * @param indexName
-     *            原始集合索引名
+     * @param esClient  es连接
+     * @param cl        原始集合
+     * @param indexName 原始集合索引名
      * @return boolean 如果原始集合LogicalID与ES端全文索引_cllid一致则返回true，否则返回false
      * @throws Exception
      * @Author liuxiaoxuan
@@ -283,12 +273,9 @@ public class FullTextUtils {
      * FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexNames )
      * 获取每个全文索引对应的SDBCOMMIT._cllid
      * 
-     * @param esClient
-     *            es连接
-     * @param cl
-     *            原始集合
-     * @param esIndexName
-     *            ES端全文索引名
+     * @param esClient    es连接
+     * @param cl          原始集合
+     * @param esIndexName ES端全文索引名
      * @return boolean 如果原始集合LogicalID与ES端全文索引_cllid一致则返回true，否则返回false
      * @throws Exception
      * @Author liuxiaoxuan
