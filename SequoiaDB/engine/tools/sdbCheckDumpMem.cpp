@@ -349,14 +349,14 @@ namespace memcheck
       }
    }
 
-   void printMemInfo( CHAR *pointer, BOOLEAN isError )
+   void printMemInfo( CHAR *pointer, UINT64 offset, BOOLEAN isError )
    {
       memHeader *pHeader = (memHeader*)pointer ;
       if ( FALSE == isError )
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%p    %10ld    %30s(%10u)    %6u\n",
-                      pointer, pHeader->_size,
+                      "%16x    %10ld    %30s(%10u)    %6u\n",
+                      offset, pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
                       pHeader->_line ) ;
@@ -364,8 +364,8 @@ namespace memcheck
       else
       {
          ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
-                      "%p    %10ld    %30s(%10u)    %6u    ****(has error)\n",
-                      pointer, pHeader->_size,
+                      "%16x    %10ld    %30s(%10u)    %6u    ****(has error)\n",
+                      offset, pHeader->_size,
                       autoGetFileName(pHeader->_file).c_str(),
                       pHeader->_file,
                       pHeader->_line ) ;
@@ -426,7 +426,7 @@ namespace memcheck
                g_totalMemSize += pHeader->_size ;
             }
 
-            printMemInfo( (CHAR*)pHeader, hasError ) ;
+            printMemInfo( (CHAR*)pHeader, g_readPos + pos, hasError ) ;
          }
          else
          {
@@ -538,7 +538,7 @@ namespace memcheck
       /// print title
       ossSnprintf( titleStr, OSS_MAX_PATHSIZE,
                    "Memory Info List:\n"
-                   "  Address                Size                          File                     Line\n\n" ) ;
+                   "  Offset                 Size                          File                     Line\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWriteN( &g_pOutFile, titleStr, ossStrlen( titleStr ) ) ;
