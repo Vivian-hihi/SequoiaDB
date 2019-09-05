@@ -411,6 +411,7 @@ namespace memcheck
               pHeader->_eye2 == SDB_MEMHEAD_EYECATCHER2 &&
               pHeader->_freed == 0 )
          {
+            INT64 tmpPos = g_readPos + pos ;
             ++g_totalMemNum ;
             UINT64 key = ossPack32To64( pHeader->_file, pHeader->_line ) ;
             addMem( key ) ;
@@ -426,7 +427,7 @@ namespace memcheck
                g_totalMemSize += pHeader->_size ;
             }
 
-            printMemInfo( (CHAR*)pHeader, g_readPos + pos, hasError ) ;
+            printMemInfo( (CHAR*)pHeader, tmpPos, hasError ) ;
          }
          else
          {
