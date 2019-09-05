@@ -15,11 +15,11 @@ public class FaultTask {
     private LinkedList<FaultMsg> faultMsgs;
     private String faultName;
 
-    public FaultTask() {
+    private FaultTask() {
         faultMsgs = new LinkedList<>();
     }
 
-    public FaultTask(String faultName) {
+    private FaultTask(String faultName) {
         this();
         this.faultName = faultName;
     }
@@ -28,15 +28,11 @@ public class FaultTask {
         return new FaultTask(faultName);
     }
 
-    public LinkedList<FaultMsg> getFaultMsgs() {
-        return faultMsgs;
-    }
-
-    public void push(FaultMsg m) {
+    private void push(FaultMsg m) {
         faultMsgs.push(m);
     }
 
-    public boolean isMakeFini() {
+    private boolean isMakeFini() {
         FaultMQ.REQMSGQUEUE.empty();
         if (!"prepare".equals(makeStatus())) {
             return true;
@@ -44,14 +40,14 @@ public class FaultTask {
         return false;
     }
 
-    public boolean isRestoreFini() {
+    private boolean isRestoreFini() {
         if (!"prepare".equals(restoreStatus())) {
             return true;
         }
         return false;
     }
 
-    public String makeStatus() {
+    private String makeStatus() {
         for (FaultMsg m : faultMsgs) {
             if (-1 == m.getMakeStatus()) {
                 return "fail";
@@ -65,7 +61,7 @@ public class FaultTask {
         return "ok";
     }
 
-    public String restoreStatus() {
+    private String restoreStatus() {
         for (FaultMsg m : faultMsgs) {
             if (-1 == m.getRestoreStatus()) {
                 return "fail";
@@ -115,9 +111,6 @@ public class FaultTask {
         if (!FaultUtils.isAllMsgSuccess()) {
             throw new Exception(FaultUtils.getErrorMsg());
         }
-    }
-
-    public void make(String hostName) {
     }
 
     public void restore() throws Exception {
