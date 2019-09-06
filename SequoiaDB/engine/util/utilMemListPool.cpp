@@ -664,17 +664,17 @@ namespace engine
 
    void _utilMemListPool::release2SpecBlock( void *&p, UINT32 size )
    {
+      if ( ossMemDebugEnabled )
+      {
+         ossThreadMemUnTrack( p ) ;
+      }
+
       if ( size >= UTIL_MIN_SPEC_BLOCK_SIZE &&
            size <= UTIL_MAX_SPEC_BLOCK_SIZE &&
            size > _specBlockSize &&
            canCacheBlock( size - _specBlockSize ) )
       {
          clearSpecBlock() ;
-
-         if ( ossMemDebugEnabled )
-         {
-            ossThreadMemUnTrack( p ) ;
-         }
 
          _pSpecBlock = (CHAR*)p ;
          _specBlockSize = size ;

@@ -77,17 +77,20 @@ namespace memcheck
    #define MEMCHECK_OPTION_VERSION           "version"
    #define MEMCHECK_OPTION_CORE_FILE         "corefile"
    #define MEMCHECK_OPTION_OUTPUT            "output"
+   #define MEMCHECK_OPTION_DETAIL            "detail"
 
    #define MEMCHECK_EXPLAIN_HELP             "print help information"
    #define MEMCHECK_EXPLAIN_VERSION          "print version"
    #define MEMCHECK_EXPLAIN_CORE_FILE        "core file"
    #define MEMCHECK_EXPLAIN_OUTPUT           "output file"
+   #define MEMCHECK_EXPLAIN_DETAIL           "show detial items"
 
    #define MEMCHECK_GENERAL_OPTIONS \
       (MEMCHECK_OPTION_HELP",h",             /* no arg */     MEMCHECK_EXPLAIN_HELP) \
       (MEMCHECK_OPTION_VERSION",V",          /* no arg */     MEMCHECK_EXPLAIN_VERSION) \
       (MEMCHECK_EXPLAIN_CORE_FILE",f",      _TYPE(string),    MEMCHECK_EXPLAIN_CORE_FILE) \
       (MEMCHECK_OPTION_OUTPUT",o",          _TYPE(string),    MEMCHECK_EXPLAIN_OUTPUT) \
+      (MEMCHECK_OPTION_DETAIL",d",           /* no arg */     MEMCHECK_EXPLAIN_DETAIL) \
 
 
    class Options: public utilOptions
@@ -102,6 +105,7 @@ namespace memcheck
 
       OSS_INLINE const string& coreFile() const { return _coreFile; }
       OSS_INLINE const string& outputFile() const { return _outputFile; }
+      OSS_INLINE BOOLEAN       isDetail() const { return _detail ; }
 
    private:
       INT32 setOptions();
@@ -110,11 +114,13 @@ namespace memcheck
       BOOLEAN        _parsed;
       string         _coreFile;
       string         _outputFile;
+      BOOLEAN        _detail ;
    } ;
 
    Options::Options()
    {
       _parsed = FALSE ;
+      _detail = FALSE ;
    }
 
    Options::~Options()
@@ -194,6 +200,11 @@ namespace memcheck
          _outputFile = get<string>(MEMCHECK_OPTION_OUTPUT);
       }
 
+      if (has(MEMCHECK_OPTION_DETAIL))
+      {
+         _detail = TRUE ;
+      }
+
    done:
       return rc;
    error:
@@ -223,6 +234,7 @@ namespace memcheck
    // global define
    string g_corefile ;
    string g_outputfile ;
+   BOOLEAN g_outDetail = FALSE ;
 
    OSSFILE g_pCoreFile ;
    BOOLEAN g_openCoreFile  = FALSE ;
@@ -241,7 +253,24 @@ namespace memcheck
    UINT64                g_elfPhoff = 0 ;
    UINT64                g_elfPhsize = 0 ;
 
-   map< UINT64, UINT32 > g_memMap ;
+   typedef struct _memItem
+   {
+      UINT32      _count ;
+      UINT64      _size ;
+
+      _memItem( UINT32 count = 0, UINT64 size = 0 )
+      {
+         _count = count ;
+         _size  = size ;
+      }
+
+      bool operator< ( const _memItem &rhs ) const
+      {
+         return _count < rhs._count ? true : false ;
+      }
+   } memItem ;
+
+   map< UINT64, memItem > g_memMap ;
    UINT64  g_totalMemSize  = 0 ;
    UINT64  g_totalMemNum   = 0 ;
    UINT32  g_errMemNum     = 0 ;
@@ -360,16 +389,17 @@ namespace memcheck
       goto done ;
    }
 
-   void addMem( UINT64 key )
+   void addMem( UINT64 key, UINT64 size )
    {
-      map< UINT64, UINT32 >::iterator it = g_memMap.find( key ) ;
+      map< UINT64, memItem >::iterator it = g_memMap.find( key ) ;
       if ( it == g_memMap.end() )
       {
-         g_memMap[ key ] = 1 ;
+         g_memMap[ key ] = memItem( 1, size ) ;
       }
       else
       {
-         (it->second)++ ;
+         ++(it->second)._count ;
+         (it->second)._size += size ;
       }
    }
 
@@ -585,8 +615,9 @@ namespace memcheck
             INT64 tmpPos = g_readPos + pos ;
             ++g_totalMemNum ;
             UINT64 key = ossPack32To64( pHeader->_file, pHeader->_line ) ;
-            addMem( key ) ;
-            if ( pHeader->_size > 1024*1024*1024 )
+            addMem( key, pHeader->_size ) ;
+
+            if ( !ossMemVerify( (void*)( (CHAR*)pHeader + TEST_MEM_HEADSZ ) ) )
             {
                hasError = TRUE ;
                pos += 1 ;
@@ -598,7 +629,10 @@ namespace memcheck
                g_totalMemSize += pHeader->_size ;
             }
 
-            printMemInfo( (CHAR*)pHeader, tmpPos, hasError ) ;
+            if ( hasError || g_outDetail )
+            {
+               printMemInfo( (CHAR*)pHeader, tmpPos, hasError ) ;
+            }
          }
          else
          {
@@ -619,7 +653,7 @@ namespace memcheck
 
       ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
                    "\n\nStat Info:\n"
-                   "                        File              :   Line ----      Count\n\n" ) ;
+                   "                        File              :   Line ----      Count           Size\n\n" ) ;
       if ( g_openOutFile )
       {
          ossWrite( &g_pOutFile, g_textBuff, ossStrlen(g_textBuff), &writeLen ) ;
@@ -630,23 +664,25 @@ namespace memcheck
       }
 
       // order by count
-      multimap<UINT32, UINT64> countFileMap ;
-      map< UINT64, UINT32 >::iterator fileCountIt = g_memMap.begin() ;
+      multimap<memItem, UINT64> countFileMap ;
+      map< UINT64, memItem >::iterator fileCountIt = g_memMap.begin() ;
       while ( fileCountIt != g_memMap.end() )
       {
          countFileMap.insert(
-            multimap<UINT32, UINT64>::value_type(
+            multimap<memItem, UINT64>::value_type(
                fileCountIt->second, fileCountIt->first ) ) ;
          ++fileCountIt ;
       }
 
-      multimap<UINT32, UINT64>::reverse_iterator it = countFileMap.rbegin() ;
+      multimap<memItem, UINT64>::reverse_iterator it = countFileMap.rbegin() ;
       while ( it != countFileMap.rend() )
       {
          ossUnpack32From64( it->second, file, line ) ;
 
-         ossSnprintf( g_textBuff, sizeof(g_textBuff)-1, "%30s(%10u): %6u ---- %10u\n",
-                      autoGetFileName(file).c_str(), file, line, it->first ) ;
+         ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
+                      "%30s(%10u): %6u ---- %10u %14ld\n",
+                      autoGetFileName(file).c_str(), file, line,
+                      it->first._count, it->first._size ) ;
          
          if ( g_openOutFile )
          {
@@ -700,6 +736,7 @@ namespace memcheck
 
       g_corefile = options.coreFile();
       g_outputfile = options.outputFile();
+      g_outDetail = options.isDetail() ;
 
       rc = init() ;
       if ( rc )

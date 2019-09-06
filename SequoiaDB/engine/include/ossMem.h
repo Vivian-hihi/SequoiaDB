@@ -86,6 +86,9 @@ void  ossMemFree ( void *p ) ;
 /*
    Mem tools
 */
+BOOLEAN ossMemVerify ( void *p ) ;
+BOOLEAN ossMemSanityCheck ( void *p ) ;
+
 void    ossMemTrack ( void *p ) ;
 void    ossMemUnTrack ( void *p ) ;
 INT32   ossMemTrace ( const CHAR *pPath ) ;

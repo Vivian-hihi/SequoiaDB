@@ -108,7 +108,7 @@ void  ossOnMemConfigChange( BOOLEAN debugEnable,
 {}
 #endif
 
-static BOOLEAN ossMemSanityCheck ( void *p )
+BOOLEAN ossMemSanityCheck ( void *p )
 {
    CHAR *headerMem = NULL ;
    if ( !p )
@@ -126,7 +126,7 @@ static BOOLEAN ossMemSanityCheck ( void *p )
 // right guardian bytes
 // and then move back size bytes and make sure it's followed by GUARDEND and
 // GUARDSTOP
-static BOOLEAN ossMemVerify ( void *p )
+BOOLEAN ossMemVerify ( void *p )
 {
    CHAR *headerMem  = NULL ;
    UINT32 debugSize = 0 ;
