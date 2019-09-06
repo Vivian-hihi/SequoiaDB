@@ -10,7 +10,7 @@
 | 参数名 | 参数类型 | 描述   | 是否必填 |
 | ------ | -------- | ------ | -------- |
 | name | string | 索引名，同一个集合中的索引名必须唯一。 | 是 |
-| indexDef | Json 对象 |  索引键，包含一个或多个指定索引字段与类型的对象。类型值 1 表示字段升序，-1 表示字段降序，"text" 则表示创建[全文索引](../../../basic_operation/text_search/overview.md)。 | 是 |
+| indexDef | Json 对象 |  索引键，包含一个或多个指定索引字段与类型的对象。类型值 1 表示字段升序，-1 表示字段降序，"text" 则表示创建[全文索引](basic_operation/text_search/overview.md)。 | 是 |
 | isUnique | Boolean | 索引是否唯一，默认 false。设置为 true 时代表该索引为唯一索引。 | 否 |
 | enforced | Boolean | 索引是否强制唯一，可选参数，在 isUnique 为 true 时生效，默认 false。设置为 true 时代表该索引在 isUnique 为 true 的前提下，不可存在一个以上全空的索引键。 | 否 |
 | sortBufferSize | int | 创建索引时使用的排序缓存的大小，单位为MB。取值为0时表示不使用排序缓存。默认为64。| 否 |
