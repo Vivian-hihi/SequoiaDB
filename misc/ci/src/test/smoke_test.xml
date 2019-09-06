@@ -86,6 +86,12 @@
          <fileset dir="${INSTALL_DIR}/driver/C&amp;CPP/lib" includes="*.so,*.a"/>
       </copy>
       
+      <!--ready boost lib-->
+      <delete dir="${WORKSPACE}/sequoiadb/thirdparty" failonerror="false" />
+      <mkdir dir="${WORKSPACE}/sequoiadb/thirdparty"/>
+      <!-- untar -->
+      <untar compression="gzip" src="${WORKSPACE}/archive/current/boost.tar.gz" dest="${WORKSPACE}/sequoiadb/thirdparty"/>
+      
       <!--ready sequoiadb.jar -->
       <!--staf location="local" service="PROCESS"
             request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/driver -R WAIT 10m RETURNSTDERR"

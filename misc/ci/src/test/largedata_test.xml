@@ -102,6 +102,11 @@
       <copy todir="${client_dir}/lib">
          <fileset dir="${INSTALL_DIR}/lib" includes="*.so,*.a"/>
       </copy>
+      <!--ready boost lib-->
+      <delete dir="${WORKSPACE}/sequoiadb/thirdparty" failonerror="false" />
+      <mkdir dir="${WORKSPACE}/sequoiadb/thirdparty"/>
+      <!-- untar -->
+      <untar compression="gzip" src="${WORKSPACE}/archive/current/boost.tar.gz" dest="${WORKSPACE}/sequoiadb/thirdparty"/>
    </target>
    
    <target name="compile_testcase">      
