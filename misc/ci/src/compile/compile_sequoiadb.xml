@@ -34,6 +34,7 @@
       <antcall target="compile_postgresql_plugin"/>
       <antcall target="compile_sequoias3"/>
       <antcall target="build_driver_package"/>
+      <antcall target="tar_thirdparty_boost"/>
       <if>
          <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
          <then>
@@ -524,6 +525,14 @@
       
       
 
+   </target>
+
+   
+   <target name="tar_thirdparty_boost">
+      <delete file="${release_dir}/boost.tar.gz" failonerror="false"/>
+      <!--boost -->
+      <tar destfile="${release_dir}/boost.tar.gz" 
+           compression="gzip" longfile="gnu" basedir="${srccode_dir}/thirdparty" includes="boost/**/*" />
    </target>
    
    <target name="tar_commit_tool_package">
