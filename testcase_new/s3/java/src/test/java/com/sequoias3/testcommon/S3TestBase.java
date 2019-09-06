@@ -269,15 +269,15 @@ public class S3TestBase {
     }
 
     enum Command {
-        S3_START("source /etc/profile;%s/tools/sequoias3/sequoias3.sh start > /tmp/s3start.log"), S3_STOP(
-                "%s/tools/sequoias3/sequoias3.sh stop -a"), S3_SETCONFBEFORE(
-                        "mv %s %s;echo 'sdbs3.sequoiadb.url=sequoiadb://%s' > %s"), S3_CHANGEDIALEVEL(
-                                "sed -i 's/INFO/DEBUG/g' %s"), S3_RESTORECONF(
-                                        "rm -f %s;mv %s %s"), S3_CHANGECONF_BEFORETEST(
-                                                "echo '%s' >> %s"), S3_CHANGECONF_AFTERTEST(
-                                                        "sed -i 's/%s/#%s/g' %s"), S3_SAVECLUSTERINFO(
-                                                                "echo %s > %s"), S3_GETINSTALLPATH(
-                                                                        "cat /etc/default/sequoiadb | grep 'INSTALL_DIR' | awk -F '=' '{printf(\"%s\",$2)}'");
+        S3_START("source /etc/profile;%s/tools/sequoias3/sequoias3.sh start > /tmp/s3start.log"), 
+        S3_STOP("%s/tools/sequoias3/sequoias3.sh stop -a"), 
+        S3_SETCONFBEFORE("mv %s %s;echo 'sdbs3.sequoiadb.url=sequoiadb://%s\nsdbs3.multipartupload.completereservetime=1' > %s"), 
+        S3_CHANGEDIALEVEL("sed -i 's/INFO/DEBUG/g' %s"), 
+        S3_RESTORECONF("rm -f %s;mv %s %s"), 
+        S3_CHANGECONF_BEFORETEST("echo '%s' >> %s"), 
+        S3_CHANGECONF_AFTERTEST("sed -i 's/%s/#%s/g' %s"), 
+        S3_SAVECLUSTERINFO("echo %s > %s"), 
+        S3_GETINSTALLPATH("cat /etc/default/sequoiadb | grep 'INSTALL_DIR' | awk -F '=' '{printf(\"%s\",$2)}'");
 
         private String cmd;
         private String output;
