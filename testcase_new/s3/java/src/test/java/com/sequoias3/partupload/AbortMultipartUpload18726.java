@@ -84,6 +84,8 @@ public class AbortMultipartUpload18726 extends S3TestBase {
         try {
             if (runSuccess) {
                 s3ClientA.deleteBucket(bucketName);
+                CommLib.clearUser(userA);
+                CommLib.clearUser(userB);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
