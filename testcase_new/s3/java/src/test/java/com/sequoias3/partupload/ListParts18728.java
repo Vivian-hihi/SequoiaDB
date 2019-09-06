@@ -81,6 +81,7 @@ public class ListParts18728 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+                s3Client.deleteObject(S3TestBase.bucketName, keyName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
