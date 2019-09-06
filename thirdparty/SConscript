@@ -159,7 +159,15 @@ class SpiderMonkeyCompiler(CompilerBase):
         self.append_cmd('cd src && rm -rf ' + self.build_dir +
                         ' && mkdir ' + self.build_dir)
         self.append_cmd('autoconf2.13')
-        self.append_cmd('cd ' + self.build_dir + ' && ../configure && make')
+        self.append_cmd('cd ' + self.build_dir)
+        config_args = ''
+        if 'linux' == self.platform:
+            if 'ia32' == self.arch or 'ia64' == self.arch:
+                config_args = '--disable-methodjit'
+            elif 'ppc64le' == self.arch:
+                config_args = 'ppc64le'
+        self.append_cmd('cd ' + self.build_dir + '&& ../configure', config_args)
+        self.append_cmd('cd ' + self.build_dir + '&& make')
 
     def archive(self):
         shutil.move(os.path.join(self.build_dir, 'libjs_static.a'),
