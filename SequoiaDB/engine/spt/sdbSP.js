@@ -23,6 +23,40 @@ const SDB_FILE_SHAREWRITE =    SDB_FILE_SHAREREAD | 0x00000020 ;
 const SDB_FILE_READONLY =      0x00000004 | SDB_FILE_SHAREREAD ;
 const SDB_FILE_WRITEONLY =     0x00000008 ;
 const SDB_FILE_READWRITE =     0x00000004 | SDB_FILE_WRITEONLY ;
+
+
+const SDB_INIFILE_NOTCASE          = 0x00000001 ;
+
+//Support annotation symbols ( ; )
+const SDB_INIFILE_SEMICOLON        = 0x00000002 ;
+
+//Support annotation symbols ( # )
+const SDB_INIFILE_HASHMARK         = 0x00000004 ;
+
+//Support escape character   ( '\\' )
+const SDB_INIFILE_ESCAPE           = 0x00000008 ;
+
+//Support Double quotation mark ( " )
+const SDB_INIFILE_DOUBLE_QUOMARK   = 0x00000010 ;
+
+//Support Single quotation mark ( ' )
+const SDB_INIFILE_SINGLE_QUOMARK   = 0x00000020 ;
+
+//Support Colon ( = )
+const SDB_INIFILE_EQUALSIGN        = 0x00000040 ;
+
+//Support Colon ( : )
+const SDB_INIFILE_COLON            = 0x00000080 ;
+
+const SDB_INIFILE_UNICODE          = 0x00010000 ;
+
+//The same section name and key are not allowed
+const SDB_INIFILE_STRICTMODE       = 0x00020000 ;
+
+const SDB_INIFILE_FLAGS_DEFAULT    = SDB_INIFILE_SEMICOLON | SDB_INIFILE_EQUALSIGN | SDB_INIFILE_STRICTMODE ;
+const SDB_INIFILE_FLAGS_MYSQL      = SDB_INIFILE_HASHMARK | SDB_INIFILE_EQUALSIGN | SDB_INIFILE_STRICTMODE ;
+
+
 var SDB_PRINT_JSON_FORMAT        = true ;
 
 function jsonFormat(pretty) {
@@ -706,6 +740,26 @@ Remote.prototype.getFile = function( filename, permission, openMode ) {
       file._filename = filename ;
    }
    return file ;
+}
+
+Remote.prototype.getIniFile = function( filename, flags ) {
+   var file    = this.getFile( filename, 0, SDB_FILE_READONLY ) ;
+   var length  = file.getSize( filename ) ;
+   var content = file.read( length ) ;
+   var ini ;
+
+   file.close() ;
+
+   if ( undefined == flags )
+   {
+      flags = 0 ;
+   }
+
+   ini = new IniFile( filename, flags, content ) ;
+
+   ini._remote = this ;
+
+   return ini ;
 }
 
 Remote.prototype.getCmd = function() {
@@ -3253,3 +3307,385 @@ File.prototype.readLine = function() {
 }
 
 // end File
+
+// IniFile member function
+IniFile.prototype.setValue = function( argv1, argv2, argv3 ) {
+   var section, key, value ;
+   var argc = arguments.length ;
+
+   if ( 2 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 2 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
+      value   = argv2 ;
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+      value   = argv3 ;
+   }
+
+   this._setValue( section, key, value ) ;
+}
+
+IniFile.prototype.getValue = function( argv1, argv2 ) {
+   var section, key ;
+   var argc = arguments.length ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 1 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+   }
+
+   return this._getValue( section, key ) ;
+}
+
+IniFile.prototype.setSectionComment = function( section, comment ) {
+   var argc = arguments.length ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument section" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 2 > argc )
+   {
+      setLastErrMsg( "Missing argument comment" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   comment = this._convertComment( comment ) ;
+
+   this._setSectionComment( section, comment ) ;
+}
+
+IniFile.prototype.getSectionComment = function( section ) {
+   var argc = arguments.length ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument section" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   return this._getSectionComment( section ) ;
+}
+
+IniFile.prototype.addSectionComment = function( section, comment ) {
+   var argc  = arguments.length ;
+   var flags = this._getFlags() ;
+   var newComment ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument section" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 2 > argc )
+   {
+      setLastErrMsg( "Missing argument comment" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   newComment = this._getSectionComment( section ) ;
+
+   newComment = newComment + this._convertComment( comment ) ;
+
+   this._setSectionComment( section, newComment ) ;
+}
+
+IniFile.prototype.delSectionComment = function( section ) {
+   var argc = arguments.length ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument section" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   this._setSectionComment( section, "" ) ;
+}
+
+IniFile.prototype.setComment = function( argv1, argv2, argv3, argv4 ) {
+   var section, key, comment, pos ;
+   var argc = arguments.length ;
+
+   pos = true ;
+
+   if ( 2 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 2 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
+      comment = argv2 ;
+   }
+   else if ( 3 == argc )
+   {
+      if ( typeof( argv3 ) == 'string' )
+      {
+         section = argv1 ;
+         key     = argv2 ;
+         comment = argv3 ;
+      }
+      else
+      {
+         section = "" ;
+         key     = argv1 ;
+         comment = argv2 ;
+         pos     = argv3 ;
+      }
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+      comment = argv3 ;
+      pos     = argv4 ;
+   }
+
+   comment = this._convertComment( comment ) ;
+
+   this._setComment( section, key, comment, pos ) ;
+}
+
+IniFile.prototype.getComment = function( argv1, argv2, argv3 ) {
+   var section, key, pos ;
+   var argc = arguments.length ;
+
+   pos = true ;
+
+   if ( 2 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 2 == argc )
+   {
+      if ( typeof( argv2 ) == 'string' )
+      {
+         section = argv1 ;
+         key     = argv2 ;
+      }
+      else
+      {
+         section = "" ;
+         key     = argv1 ;
+         pos     = argv2 ;
+      }
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+      pos     = argv3 ;
+   }
+
+   return this._getComment( section, key, pos ) ;
+}
+
+IniFile.prototype.addComment = function( argv1, argv2, argv3, argv4 ) {
+   var section, key, comment, pos ;
+   var argc  = arguments.length ;
+   var newComment ;
+
+   if ( 3 > argc )
+   {
+      setLastErrMsg( "Missing argument section" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 3 == argc )
+   {
+      if ( typeof( argv3 ) == 'string' )
+      {
+         section = argv1 ;
+         key     = argv2 ;
+         comment = argv3 ;
+      }
+      else
+      {
+         section = "" ;
+         key     = argv1 ;
+         comment = argv2 ;
+         pos     = argv3 ;
+      }
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+      comment = argv3 ;
+      pos     = argv4 ;
+   }
+
+   newComment = this._getComment( section, key, pos ) ;
+
+   newComment = newComment + this._convertComment( comment ) ;
+
+   this._setComment( section, key, newComment, pos ) ;
+}
+
+IniFile.prototype.delComment = function( argv1, argv2, argv3 ) {
+   var section, key, pos ;
+   var argc = arguments.length ;
+
+   pos = true ;
+
+   if ( 2 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 2 == argc )
+   {
+      if ( typeof( argv2 ) == 'string' )
+      {
+         section = argv1 ;
+         key     = argv2 ;
+      }
+      else
+      {
+         section = "" ;
+         key     = argv1 ;
+         pos     = argv2 ;
+      }
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+      pos     = argv3 ;
+   }
+
+   this._setComment( section, key, "", pos ) ;
+}
+
+IniFile.prototype.setLastComment = function( comment ) {
+
+   comment = this._convertComment( comment ) ;
+
+   this._setLastComment( comment ) ;
+}
+
+IniFile.prototype.getLastComment = function() {
+   return this._getLastComment() ;
+}
+
+IniFile.prototype.addLastComment = function( comment ) {
+   var newComment ;
+
+   newComment = this._getLastComment() ;
+
+   newComment = newComment + this._convertComment( comment ) ;
+
+   return this._setLastComment( newComment ) ;
+}
+
+IniFile.prototype.delLastComment = function() {
+   return this._delLastComment() ;
+}
+
+IniFile.prototype.enableItem = function( argv1, argv2 ) {
+   var section, key ;
+   var argc = arguments.length ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 1 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+   }
+
+   this._enableItem( section, key ) ;
+}
+
+IniFile.prototype.disableItem = function( argv1, argv2 ) {
+   var section, key ;
+   var argc = arguments.length ;
+
+   if ( 1 > argc )
+   {
+      setLastErrMsg( "Missing argument" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   else if ( 1 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
+   }
+   else
+   {
+      section = argv1 ;
+      key     = argv2 ;
+   }
+
+   this._disableItem( section, key ) ;
+}
+
+IniFile.prototype.toString = function() {
+   return this._toString() ;
+}
+
+IniFile.prototype.toObj = function() {
+   return this._toObj() ;
+}
+
+IniFile.prototype.save = function() {
+   if ( undefined != this._remote )
+   {
+      var file = this._remote.getFile( filename, 0, SDB_FILE_WRITEONLY ) ;
+      var content = this._toString() ;
+
+      file.write( content ) ;
+
+      file.close() ;
+   }
+   else
+   {
+      return this._save() ;
+   }
+}
+
+// end IniFile
+
+
+
+
+
+
+
+
+
+
+
+
+
