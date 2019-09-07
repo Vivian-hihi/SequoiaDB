@@ -29,8 +29,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 public class ListMultipartUploads18752 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18752";
-    private String[] keyNames = { "dir1/a18752", "dir1/dir2/test18752", "dir1a/test18752", "dir1b/18752",
-            "dir1_test18752", "test18752" };
+    private String[] keyNames = { "dir1/a18752", "dir1/dir2/test18752", "dir1a/test18752", "dir1b/18752", "test18752" };
     private AmazonS3 s3Client = null;
 
     @BeforeClass
@@ -67,9 +66,6 @@ public class ListMultipartUploads18752 extends S3TestBase {
         expCommonPrefixes.add("dir1a/");
         expCommonPrefixes.add("dir1b/");
         MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
-        expUploads.add(keyNames[4], uploadIds1.get(4));
-        expUploads.add(keyNames[4], uploadIds2.get(4));
-        expUploads.add(keyNames[4], uploadIds3.get(4));
         PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
         runSuccess = true;
     }

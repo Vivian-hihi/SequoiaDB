@@ -215,7 +215,7 @@ public class RegionUtils extends S3TestBase {
         return result;
     }
 
-    private static AmazonS3Exception httpToAmazon(HttpClientErrorException e) {
+    public static AmazonS3Exception httpToAmazon(HttpClientErrorException e) {
         AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
         amazonS3Exception.setStatusCode(e.getStatusCode().value());
         JSONObject jsonBody = XML.toJSONObject(e.getResponseBodyAsString());

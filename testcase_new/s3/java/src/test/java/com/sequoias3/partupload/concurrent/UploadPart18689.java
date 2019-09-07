@@ -62,7 +62,8 @@ public class UploadPart18689 extends S3TestBase {
         preparePartList();
     }
 
-    @Test(enabled = false) // TODO 用例屏蔽需要备注原因，是bug需要备注问题单号
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         ThreadExecutor es = new ThreadExecutor();

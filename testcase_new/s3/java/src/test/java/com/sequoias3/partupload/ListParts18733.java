@@ -39,13 +39,14 @@ public class ListParts18733 extends S3TestBase {
                 new Object[] { partNumber / 2, Arrays.asList(3, 4, 5) },
                 // test c : 指定最后一个分段号
                 new Object[] { partNumber, new ArrayList<>() },
-                // test b : 指定倒数第二个分段号
+                // test d : 指定倒数第二个分段号
                 new Object[] { partNumber - 1, Arrays.asList(5) },
-                // test b : 指定大于所有分段号的值
+                // test e : 指定大于所有分段号的值
                 new Object[] { partNumber + 1, new ArrayList<>() } };
     }
 
-    private boolean runSuccess = false;
+    private int runSuccessNum = 0;
+    private int expRunSuccessNum = 5;
     private int partNumber = 5;
     private String bucketName = "bucket18733";
     private String keyName = "key18733";
@@ -75,7 +76,6 @@ public class ListParts18733 extends S3TestBase {
 
     @Test(dataProvider = "partNumberMarkerProvider")
     private void testListParts(Integer partNumberMarker, List<Integer> expPartNumbersList) throws Exception {
-        runSuccess = false;// TODO 只有一个test，前面有初始化了，这里不需要
         ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
         request.setPartNumberMarker(partNumberMarker);
         PartListing listResult = s3Client.listParts(request);
@@ -88,13 +88,13 @@ public class ListParts18733 extends S3TestBase {
 
         // check the keyName
         Assert.assertEquals(actPartNumbersList, expPartNumbersList);
-        runSuccess = true;
+        runSuccessNum++;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (expRunSuccessNum == runSuccessNum) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

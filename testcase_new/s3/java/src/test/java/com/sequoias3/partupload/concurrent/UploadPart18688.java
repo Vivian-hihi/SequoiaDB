@@ -70,7 +70,8 @@ public class UploadPart18688 extends S3TestBase {
         partList.add(parts);
     }
 
-    @Test(enabled = false) // TODO 备注不跑的原因，如果是bug需要备注单号
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
+    @Test(enabled = false)
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         ThreadExecutor es = new ThreadExecutor();

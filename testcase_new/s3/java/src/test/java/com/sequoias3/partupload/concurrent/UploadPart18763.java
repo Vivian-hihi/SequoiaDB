@@ -71,6 +71,7 @@ public class UploadPart18763 extends S3TestBase {
         prepareDiffPartNumberList();
     }
 
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
     @Test(enabled = false)
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
@@ -82,30 +83,11 @@ public class UploadPart18763 extends S3TestBase {
             es.addWorker(new ThreadUploadDiffPart18763(diffPartNumberList.get(i)));
         }
         es.run();
+        // 构造预期的PartNumberEtags
+        getExpPartNumberEtags();
 
-        // 查询分段上传列表 查出实际上传成功part1的etag值
-        String actSamePartNumberEtag = "";
-        PartETag samePartEtag = null;
-        ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
-        PartListing listResult = s3Client.listParts(request);
-        List<PartSummary> listParts = listResult.getParts();
-        int partNumber = listParts.get(0).getPartNumber();
-        actSamePartNumberEtag = listParts.get(0).getETag();
-        samePartEtag = new PartETag(partNumber, actSamePartNumberEtag);
-
-        // 查看相同分段（分段1）的etag值是否正确
-        Assert.assertTrue(expSamePartNumberEtags.contains(actSamePartNumberEtag),
-                "actSamePartNumberEtag : " + actSamePartNumberEtag + ", expSamePartNumberEtags : "
-                        + expSamePartNumberEtags.toString() + ", diffPartNumberEtags : "
-                        + diffPartNumberEtags.toString());
-
-        // 将分段1的PartETag值与其他分段PartETag值放在一起，完成分段上传
-        diffPartNumberEtags.add(samePartEtag);
+        // 完成分段上传后检查对象内容与预期结果一致
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, diffPartNumberEtags);
-
-        // 找到实际上传的etag对应的分段信息（filepositon和partsize）,计算最终上传对象的完整md5并和实际上传对象的md5进行比较
-        int index = expSamePartNumberEtags.indexOf(actSamePartNumberEtag);
-        diffPartNumberList.add(0, samePartNumberList.get(index));
         checkResult();
 
         runSuccess = true;
@@ -210,6 +192,31 @@ public class UploadPart18763 extends S3TestBase {
         diffPartNumberList.add(parts);
         parts = new int[] { 28 * 1024 * 1024, 1 * 1024 * 1024, 6 };
         diffPartNumberList.add(parts);
+    }
+
+    private void getExpPartNumberEtags() {
+        // 查询分段上传列表 查出实际上传成功part1的etag值
+        String actSamePartNumberEtag = "";
+        PartETag samePartEtag = null;
+        ListPartsRequest request = new ListPartsRequest(bucketName, keyName, uploadId);
+        PartListing listResult = s3Client.listParts(request);
+        List<PartSummary> listParts = listResult.getParts();
+        int partNumber = listParts.get(0).getPartNumber();
+        actSamePartNumberEtag = listParts.get(0).getETag();
+        samePartEtag = new PartETag(partNumber, actSamePartNumberEtag);
+
+        // 查看相同分段（分段1）的etag值是否正确
+        Assert.assertTrue(expSamePartNumberEtags.contains(actSamePartNumberEtag),
+                "actSamePartNumberEtag : " + actSamePartNumberEtag + ", expSamePartNumberEtags : "
+                        + expSamePartNumberEtags.toString() + ", diffPartNumberEtags : "
+                        + diffPartNumberEtags.toString());
+
+        // 将分段1的PartETag值与其他分段PartETag值放在一起
+        diffPartNumberEtags.add(samePartEtag);
+
+        // 找到实际上传的etag对应的分段信息（filepositon和partsize）,计算最终上传对象的完整md5并和实际上传对象的md5进行比较
+        int index = expSamePartNumberEtags.indexOf(actSamePartNumberEtag);
+        diffPartNumberList.add(0, samePartNumberList.get(index));
     }
 
     private void checkResult() throws Exception {

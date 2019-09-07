@@ -108,7 +108,11 @@ public class ListMultipartUploads18755 extends S3TestBase {
             Assert.assertEquals(returnedUploadNum, expReturnedUploadNum,
                     "commonprefixes : " + actCommonPrefixes.toString() + " uploads:" + actUploads.toString());
         } while (partUploadList.isTruncated());
+        checkResult(expCommonPrefixes, actCommonPrefixes, expUploads, actUploads);
+    }
 
+    private void checkResult(List<String> expCommonPrefixes, List<String> actCommonPrefixes,
+            MultiValueMap<String, String> expUploads, MultiValueMap<String, String> actUploads) {
         Assert.assertEquals(actCommonPrefixes, expCommonPrefixes, "actCommonPrefixes = " + actCommonPrefixes.toString()
                 + ",expCommonPrefixes = " + expCommonPrefixes.toString());
         Assert.assertEquals(actUploads.size(), expUploads.size(),

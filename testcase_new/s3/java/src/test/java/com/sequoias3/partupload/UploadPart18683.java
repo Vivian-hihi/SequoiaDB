@@ -3,15 +3,12 @@ package com.sequoias3.partupload;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -24,10 +21,11 @@ import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestRest;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import com.sequoias3.testcommon.s3utils.RegionUtils;
 import com.sequoias3.user.UserCommDefind;
 
 /**
@@ -48,6 +46,7 @@ public class UploadPart18683 extends S3TestBase {
     private String filePath = null;
     private String uploadId = "";
     private List<PartETag> partEtags = new ArrayList<>();
+    private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -64,6 +63,7 @@ public class UploadPart18683 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
     @Test(enabled = false)
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
@@ -108,47 +108,22 @@ public class UploadPart18683 extends S3TestBase {
     }
 
     private void completeMultipartUpload() throws Exception {
-        HttpPost request = new HttpPost(S3TestBase.s3ClientUrl + "/" + URLEncoder.encode(bucketName, "UTF-8") + "/"
-                + URLEncoder.encode(keyName, "UTF-8") + "?uploadId=" + uploadId);
-        // RequestHeaders:
-        request.setHeader("Authorization", UserCommDefind.authValPre + S3TestBase.s3AccessKeyId + "/");
-
-        // Requeatbody:
-        String completeMultipartUpload = "<CompleteMultipartUpload>";
-        for (PartETag etag : partEtags) {
-            completeMultipartUpload += "<Part><PartNumber>" + etag.getPartNumber() + "</PartNumber><ETag>"
-                    + etag.getETag() + "</ETag></Part>";
-        }
-        completeMultipartUpload += "</CompleteMultipartUpload>";
-
-        StringEntity testString = new StringEntity(completeMultipartUpload, StandardCharsets.UTF_8);
-        request.setEntity(testString);
-        CloseableHttpClient client = RestClient.createHttpClient();
+        TestRest rest = new TestRest(type);
         try {
-            RestClient.sendRequest(client, request);
-        } catch (Exception e) {// TODO 这里应该直接用实际抛出的异常类型
-            throw httpToAmazon(e);
-        }
-    }
+            String body = "<CompleteMultipartUpload>";
+            for (PartETag etag : partEtags) {
+                body += "<Part><PartNumber>" + etag.getPartNumber() + "</PartNumber><ETag>" + etag.getETag()
+                        + "</ETag></Part>";
+            }
+            body += "</CompleteMultipartUpload>";
 
-    // TODO 用公共方法RegionUtils.httpToAmazon
-    private AmazonS3Exception httpToAmazon(Exception e) {
-        AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
-        amazonS3Exception.setErrorCode(getString(e.getMessage(), "Code"));
-        amazonS3Exception.setErrorMessage(getString(e.getMessage(), "Message"));
-        return amazonS3Exception;
-    }
-
-    // TODO 为什么还需要getString？同公共方法
-    private String getString(String s, String flag) {
-        int length = flag.length();
-        String parttern = "<" + flag + ">.*</" + flag + ">";
-        Pattern r = Pattern.compile(parttern);
-        Matcher m = r.matcher(s);
-        if (m.find()) {
-            return m.group(0).substring(length + 2, m.group(0).length() - (length + 3));
-        } else {
-            return "NO MATCH";
+            rest.setApi("/" + URLEncoder.encode(bucketName, "UTF-8") + "/" + URLEncoder.encode(keyName, "UTF-8")
+                    + "?uploadId=" + uploadId)
+                    .setRequestHeaders(UserCommDefind.authorization,
+                            UserCommDefind.authValPre + S3TestBase.s3AccessKeyId + "/")
+                    .setRequestBody(body).setRequestMethod(HttpMethod.POST).setResponseType(String.class).exec();
+        } catch (HttpClientErrorException e) {
+            throw RegionUtils.httpToAmazon(e);
         }
     }
 }

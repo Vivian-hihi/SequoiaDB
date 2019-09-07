@@ -3,6 +3,7 @@ package com.sequoias3.partupload.concurrent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -37,6 +38,7 @@ public class UploadPart18762 extends S3TestBase {
     private File file2 = null;
     private String filePath = null;
     private String filePath2 = null;
+    private List<AmazonS3> clientList = Collections.synchronizedList(new ArrayList<AmazonS3>());
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -56,6 +58,7 @@ public class UploadPart18762 extends S3TestBase {
         s3Client.createBucket(bucketName);
     }
 
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
     @Test(enabled = false)
     private void testUpload() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
@@ -84,6 +87,11 @@ public class UploadPart18762 extends S3TestBase {
             }
         } finally {
             s3Client.shutdown();
+            for (AmazonS3 client : clientList) {
+                if (client != null) {
+                    client.shutdown();
+                }
+            }
         }
     }
 
@@ -93,27 +101,28 @@ public class UploadPart18762 extends S3TestBase {
         private File file;
         private String uploadId;
         private List<PartETag> partEtags = new ArrayList<>();
+        private AmazonS3 inner_s3Client = CommLib.buildS3Client();
 
         public ThreadUploadPart18762(String keyName, long partSize, File file) {
+            clientList.add(inner_s3Client);
             this.keyName = keyName;
             this.partSize = partSize;
             this.file = file;
         }
 
-        // TODO 并发里面的s3Client和全局的命名不要相同，1容易出错，2不好看是否新建和关闭
         @ExecuteOrder(step = 1, desc = "初始化分段上传")
         public void initPartUpload() {
-            uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+            uploadId = PartUploadUtils.initPartUpload(inner_s3Client, bucketName, keyName);
         }
 
         @ExecuteOrder(step = 2, desc = "分段上传对象")
         public void UploadPart() {
-            partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file, partSize);
+            partEtags = PartUploadUtils.partUpload(inner_s3Client, bucketName, keyName, uploadId, file, partSize);
         }
 
         @ExecuteOrder(step = 3, desc = "完成分段上传")
         public void CompleteMultipartUpload() {
-            PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
+            PartUploadUtils.completeMultipartUpload(inner_s3Client, bucketName, keyName, uploadId, partEtags);
         }
     }
 }

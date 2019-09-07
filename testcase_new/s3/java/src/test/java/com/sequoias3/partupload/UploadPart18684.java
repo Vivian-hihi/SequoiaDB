@@ -54,56 +54,18 @@ public class UploadPart18684 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    @Test(enabled = false) // TODO 用例注释需要备注上原因，问题单号或者配置...
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
+    @Test(enabled = false)
     private void testUpload() throws Exception {
-        long filepositon, partSize;
-        int partNumber;
-
-        // TODO
-        // 如下参数建议定义2个数组，uploadPart时直接传数组元素，会更清晰，另外，partNumber直接定义多少个段然后for循环上传，如：
-        // offsetArr = {1,2,3...};
-        // partSizeArr = {1,2,3...};
-        // partNumbers = 6;
-        // for (int i = 0; i < partNumbers; i++) {
-        // partNumber = i;
-        // uploadPart(offsetArr[i], partSizeArr[i], partNumber);
-        // }
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-        filepositon = 0;// TODO 参数应该放到注释后面
-        partSize = 0;
-        partNumber = 1;
-        // upload part 1
-        uploadPart(filepositon, partSize, partNumber);
+        long[] offsetArr = { 0, 0, 100 * 1024, 100 * 1024, 300 * 1024, 500 * 1024 };
+        long[] partSizeArr = { 0, 100 * 1024, 0, 200 * 1024, 200 * 1024, 0 };
+        int partNumber = 1;
+        for (int i = 0; i < partSizeArr.length; i++) {
+            uploadPart(offsetArr[i], partSizeArr[i], partNumber);
+            partNumber++;
+        }
 
-        filepositon = 0;
-        partSize = 100 * 1024;
-        partNumber = 2;
-        // upload part 2
-        uploadPart(filepositon, partSize, partNumber);
-
-        filepositon = 100 * 1024;
-        partSize = 0;
-        partNumber = 3;
-        // upload part 3
-        uploadPart(filepositon, partSize, partNumber);
-
-        filepositon = 100 * 1024;
-        partSize = 200 * 1024;
-        partNumber = 4;
-        // upload part 4
-        uploadPart(filepositon, partSize, partNumber);
-
-        filepositon = 300 * 1024;
-        partSize = 200 * 1024;
-        partNumber = 5;
-        // upload part 5
-        uploadPart(filepositon, partSize, partNumber);
-
-        filepositon = 500 * 1024;
-        partSize = 0;
-        partNumber = 6;
-        // upload part 6
-        uploadPart(filepositon, partSize, partNumber);
         // 完成分段上传
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
         String expMd5 = TestTools.getMD5(filePath);

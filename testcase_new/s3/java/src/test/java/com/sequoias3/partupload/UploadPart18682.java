@@ -39,7 +39,8 @@ public class UploadPart18682 extends S3TestBase {
                 new Object[] { "/dir1/dir2/obj18682b.tar", 5 * 1024 * 1024, 2 * 1024 * 1024 } };
     }
 
-    private boolean runSuccess = false;
+    private int runSuccessNum = 0;
+    private int expRunSuccessNum = 2;
     private String bucketName = "bucket18682";
     private AmazonS3 s3Client = null;
     private long fileSize = 10 * 1024 * 1024;
@@ -64,10 +65,9 @@ public class UploadPart18682 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
+    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
     @Test(enabled = false) // (dataProvider = "uploadProvider")
     private void testUpload(String keyName, long oldPartSize, long newPartSize) throws Exception {
-        runSuccess = false; // TODO
-                            // 公共变量有初始化了，这里就不需要了，因为只有一个test；另外，多个test如果前面test失败而最后一个test成功，最终runSuccess=true还是会清理环境
         partEtags = new ArrayList<>();
         uploadPartFirst(keyName, oldPartSize);
         long partTwoOffset = oldPartSize;
@@ -76,13 +76,13 @@ public class UploadPart18682 extends S3TestBase {
         long currentFileSize = partTwoOffset + newPartSize;
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
         checkResult(keyName, currentFileSize);
-        runSuccess = true;
+        runSuccessNum++;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (expRunSuccessNum == runSuccessNum) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
