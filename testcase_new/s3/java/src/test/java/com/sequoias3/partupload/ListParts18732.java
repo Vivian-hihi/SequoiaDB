@@ -11,6 +11,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.s3.model.ListPartsRequest;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.PartListing;
@@ -109,6 +110,7 @@ public class ListParts18732 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccessNum == expRunSuccessNum) {
+                s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(S3TestBase.bucketName, key, uploadId));
                 s3Client.deleteObject(S3TestBase.bucketName, key);
                 TestTools.LocalFile.removeFile(localPath);
             }

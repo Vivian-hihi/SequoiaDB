@@ -9,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.s3.model.ListPartsRequest;
 import com.amazonaws.services.s3.model.PartListing;
 import com.amazonaws.services.s3.model.PartSummary;
@@ -26,6 +27,7 @@ public class ListParts18727 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client;
     private String key = "/aa/bb/obj18727";
+    private String uploadId;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -34,7 +36,7 @@ public class ListParts18727 extends S3TestBase {
 
     @Test
     private void test() throws Exception {
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
+        uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, key);
         ListPartsRequest request = new ListPartsRequest(S3TestBase.bucketName, key, uploadId);
         PartListing partList = s3Client.listParts(request);
         List<PartSummary> parts = partList.getParts();
@@ -46,6 +48,7 @@ public class ListParts18727 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+                s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(S3TestBase.bucketName, key, uploadId));
                 s3Client.deleteObject(S3TestBase.bucketName, key);
             }
         } finally {

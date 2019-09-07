@@ -86,7 +86,7 @@ public class UploadPart18770B extends S3TestBase {
         private void list() {
             ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName).withPrefix("/dir")
                     .withKeyMarker(keys[2]).withUploadIdMarker(uploadIdsOld.get(2));
-            result = s3Client.listMultipartUploads(request);
+            result = s3.listMultipartUploads(request);
         }
 
         @ExecuteOrder(step = 3, desc = "check results")
