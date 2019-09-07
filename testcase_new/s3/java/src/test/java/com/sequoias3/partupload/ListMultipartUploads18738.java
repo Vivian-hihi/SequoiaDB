@@ -30,8 +30,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  */
 public class ListMultipartUploads18738 extends S3TestBase {
     private boolean runSuccess = false;
-    // TODO :桶名对应用例编号有误
-    private String bucketName = "bucket18378";
+    private String bucketName = "bucket18738";
     private String keyNameA = "/aa/object18738A";
     private String keyNameB = "/aa/object18738B";
     private String keyNameC = "/aa/object18738C";
@@ -61,17 +60,21 @@ public class ListMultipartUploads18738 extends S3TestBase {
         // test a: PartUpload
         String uploadIdA = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameA);
         PartUploadUtils.partUpload(s3Client, bucketName, keyNameA, uploadIdA, file);
+
         // test b: initPartUpload
         String uploadIdB = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameB);
+
         // test c: upload partial uploads
         String uploadIdC = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameC);
-        // TODO :这里请求并没有发到s3服务端，没有上传分段，和test b属于一种情况
-        new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1).withPartSize(1024 * 1024 * 5)
-                .withBucketName(bucketName).withKey(keyNameC).withUploadId(uploadIdC);
+        UploadPartRequest partRequest = new UploadPartRequest().withFile(file).withFileOffset(0).withPartNumber(1)
+                .withPartSize(1024 * 1024 * 5).withBucketName(bucketName).withKey(keyNameC).withUploadId(uploadIdC);
+        s3Client.uploadPart(partRequest);
+
         // test d: completeMultipartUpload
         String uploadIdD = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameD);
         List<PartETag> partEtagsD = PartUploadUtils.partUpload(s3Client, bucketName, keyNameD, uploadIdD, file);
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyNameD, uploadIdD, partEtagsD);
+
         // test e: abortMultipartUpload
         String uploadIdE = PartUploadUtils.initPartUpload(s3Client, bucketName, keyNameE);
         AbortMultipartUploadRequest abortRequest = new AbortMultipartUploadRequest(bucketName, keyNameE, uploadIdE);

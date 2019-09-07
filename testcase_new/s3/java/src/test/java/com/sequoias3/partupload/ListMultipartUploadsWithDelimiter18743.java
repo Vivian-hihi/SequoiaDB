@@ -17,8 +17,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18743: lists in-progress multipart uploads by
- *              bucket.specify prefix:matching prefix and mismatched prefix.
+ * @Description seqDB-18743: lists in-progress multipart uploads by bucket.specify prefix:matching
+ *              prefix and mismatched prefix.
  * @author wuyan
  * @Date 2019.08.05
  * @version 1.00
@@ -44,8 +44,6 @@ public class ListMultipartUploadsWithDelimiter18743 extends S3TestBase {
             String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
             uploadIds.add(keyName, uploadId);
         }
-        // TODO: 文本用例第2步没有实现
-
         // test a: matching prefix
         String prefixA = "dir";
         listPartUploadsMatchedPrefix(uploadIds, prefixA);

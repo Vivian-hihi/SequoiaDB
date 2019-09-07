@@ -22,8 +22,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18678: upload multiple parts,the length of the middle
- *              parts is inconsistent.
+ * @Description seqDB-18678: upload multiple parts,the length of the middle parts is inconsistent.
  * @author wuyan
  * @Date 2019.07.26
  * @version 1.00
@@ -37,8 +36,7 @@ public class UploadPart18678 extends S3TestBase {
                 // test a: the length of the middle parts is inconsistent
                 new Object[] { 1024 * 1024 * 45, 1024 * 1024 * 8, 1024 * 1024 * 5, 1024 * 1024 * 9, 1024 * 1024 * 9,
                         1024 * 1024 * 6 },
-                // TODO:下方small拼写错误
-                // test b: the length of the middle parts grows from samll to
+                // test b: the length of the middle parts grows from small to
                 // large
                 new Object[] { 1024 * 1024 * 40, 1024 * 1024 * 7, 1024 * 1024 * 5, 1024 * 1024 * 6, 1024 * 1024 * 7,
                         1024 * 1024 * 8 },
