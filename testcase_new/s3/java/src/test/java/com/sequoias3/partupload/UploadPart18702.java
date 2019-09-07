@@ -19,15 +19,15 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18702: setting detection,upload multiple parts,the
- *              specified partNums is inconsistent with the partNums actually
- *              uploaded.
+ * @Description seqDB-18702: setting detection,upload multiple parts,the specified partNums is
+ *              inconsistent with the partNums actually uploaded.
  * @author wuyan
  * @Date 2019.07.30
  * @version 1.00
  */
 public class UploadPart18702 extends S3TestBase {
     private boolean runSuccess = false;
+    private String bucketName = "bucket18702";
     private String keyNameA = "/aa/maa/bb/object18702A";
     private String keyNameB = "/aa/maa/bb/object18702B";
     private AmazonS3 s3Client = null;
@@ -45,6 +45,8 @@ public class UploadPart18702 extends S3TestBase {
         TestTools.LocalFile.createDir(localPath.toString());
         TestTools.LocalFile.createFile(filePath, fileSize);
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
     }
 
     @Test
@@ -63,8 +65,7 @@ public class UploadPart18702 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                s3Client.deleteObject(S3TestBase.bucketName, keyNameA);
-                s3Client.deleteObject(S3TestBase.bucketName, keyNameB);
+                CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -73,7 +74,7 @@ public class UploadPart18702 extends S3TestBase {
     }
 
     private void uploadPartsA(File file, String keyName) throws Exception {
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);
+        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         List<PartETag> partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file);
 
         // remove the first partNumber
@@ -88,7 +89,7 @@ public class UploadPart18702 extends S3TestBase {
     }
 
     private void uploadPartsB(File file, String keyName) throws Exception {
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);
+        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         List<PartETag> partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file);
 
         // add a part,the partNumber is 6,the part Etag is the Etag of
