@@ -19,8 +19,9 @@
     <parameter name="SCRIPTDIR" value="${SCRIPTDIR}"/>
 
     <listeners>
-    	<listener class-name="com.sequoias3.commlibs3.TimePrinterListener"/>
-    </listeners>
+      <listener
+         class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener" />
+   </listeners>
 
     <test name = "reliability_s3" preserve-order="true">
     	<packages>
