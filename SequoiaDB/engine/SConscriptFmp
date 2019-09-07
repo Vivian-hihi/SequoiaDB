@@ -54,6 +54,7 @@ sptFiles = [
       "spt/usrdef/sptUsrSystemCommon.cpp",
       "spt/usrdef/sptUsrCmdCommon.cpp",
       "spt/usrdef/sptUsrOmaCommon.cpp",
+      "spt/usrdef/sptUsrIniFile.cpp",
       "spt/db/sptDBSdb.cpp",
       "spt/db/sptDBSecureSdb.cpp",
       "spt/db/sptDBRG.cpp",
@@ -185,7 +186,9 @@ utilFiles = [
       "bson/md5.c",
       "bson/bsonDecimal.cpp",
       "util/utilCipher.c",
-      "util/utilTypeCast.c"
+      "util/utilTypeCast.c",
+      "util/utilIniParser.c",
+      "util/utilIniParserEx.cpp"
       ]
 
 clientCFiles = [
