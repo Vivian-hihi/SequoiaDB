@@ -2,6 +2,8 @@ package com.sequoias3.partupload.concurrent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.util.LinkedMultiValueMap;
@@ -25,8 +27,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18764: enabling bucket versioning,the key upload multiple
- *              parts concurrently by different uploadId.
+ * @Description seqDB-18764: enabling bucket versioning,the key upload multiple parts concurrently
+ *              by different uploadId.
  * @author wuyan
  * @Date 2019.08.06
  * @version 1.00
@@ -131,6 +133,8 @@ public class UploadPartBySameKey18764 extends S3TestBase {
         // listObjectVersion, then get object to check filemd5
         VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
         List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
+        List<String> versionList = new ArrayList<>();
+        List<String> expVersionList = new ArrayList<>();
         int count = 0;
         for (S3VersionSummary versionSummary : vsSummaryList) {
             String keyName = versionSummary.getKey();
@@ -140,9 +144,15 @@ public class UploadPartBySameKey18764 extends S3TestBase {
             String expFileMd5 = expFileSizeAndMd5.get(size).get(0);
             Assert.assertEquals(downfileMd5, expFileMd5,
                     "the object version is :" + versionId + "  object Size is:" + size);
+            expVersionList.add(count + "");
+            versionList.add(versionId);
             count++;
         }
-        // TODO :建议增加检测返回的versions中的版本信息都是不相同的，如果版本列表中存在重复的版本信息是检测不出来的
+
+        // check the versionId
+        Collections.sort(expVersionList);
+        Collections.sort(versionList);
+        Assert.assertEquals(versionList, expVersionList);
         // the object has 5 versions.
         Assert.assertEquals(count, filePaths.length);
     }

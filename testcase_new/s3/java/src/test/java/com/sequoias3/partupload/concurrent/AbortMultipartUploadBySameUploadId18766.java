@@ -20,8 +20,8 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18766: the key upload multiple parts and
- *              AbortMultipartUpload concurrently by the same uploadId.
+ * @Description seqDB-18766: the key upload multiple parts and AbortMultipartUpload concurrently by
+ *              the same uploadId.
  * @author wuyan
  * @Date 2019.08.06
  * @version 1.00
@@ -51,8 +51,6 @@ public class AbortMultipartUploadBySameUploadId18766 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        // TODO ：文本用例中未提及需开启桶版本控制状态，请确认此测试点
-        CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
     }
 
     @Test

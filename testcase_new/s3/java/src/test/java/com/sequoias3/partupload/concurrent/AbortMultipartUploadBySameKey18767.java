@@ -19,10 +19,9 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
-//TODO：下方@Description信息有误
 /**
- * @Description seqDB-18766: the key upload multiple parts and
- *              AbortMultipartUpload concurrently by the same uploadId.
+ * @Description seqDB-18767: the key upload multiple parts and AbortMultipartUpload concurrently by
+ *              the same key.
  * @author wuyan
  * @Date 2019.08.06
  * @version 1.00

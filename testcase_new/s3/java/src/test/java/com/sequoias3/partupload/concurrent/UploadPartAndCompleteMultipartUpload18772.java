@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -21,11 +22,12 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18772: upload multiple parts concurrently,the length of
- *              the parts is the same and there is partNum of 1.
+ * @Description seqDB-18772: upload multiple parts concurrently,the length of the parts is the same
+ *              and there is partNum of 1.
  * @author wuyan
  * @Date 2019.07.27
  * @version 1.00
@@ -40,6 +42,7 @@ public class UploadPartAndCompleteMultipartUpload18772 extends S3TestBase {
     private int partSize = 1024 * 1024 * 20;
     private String uploadId = null;
     private List<PartETag> partEtags = Collections.synchronizedList(new ArrayList<PartETag>());
+    private boolean isCompleteMultipartUploadOK = false;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -63,12 +66,18 @@ public class UploadPartAndCompleteMultipartUpload18772 extends S3TestBase {
             threadExec.addWorker(new PartUpload(partNum, partSize, file, uploadId));
         }
 
-        // TODO :需要补充完成分段上传成功的结果判断
         threadExec.addWorker(new CompletePartUpload(uploadId));
         threadExec.run();
 
-        // check the upload part info
-        PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, S3TestBase.bucketName, keyName, partEtags, uploadId);
+        if (isCompleteMultipartUploadOK) {
+            // get the upload object to check content by md5
+            String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+            Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
+        } else {
+            // check the upload part info
+            PartUploadUtils.listPartsAndCheckPartNumbers(s3Client, S3TestBase.bucketName, keyName, partEtags, uploadId);
+        }
+
         runSuccess = true;
     }
 
@@ -130,6 +139,7 @@ public class UploadPartAndCompleteMultipartUpload18772 extends S3TestBase {
         private void completeMultipartUpload() {
             try {
                 PartUploadUtils.completeMultipartUpload(s3Client, S3TestBase.bucketName, keyName, uploadId, partEtags);
+                isCompleteMultipartUploadOK = true;
             } catch (AmazonS3Exception e) {
                 int errCode = e.getStatusCode();
                 // 400: InvalidPart
