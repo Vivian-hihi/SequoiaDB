@@ -64,7 +64,12 @@ public class InitAdminUserConfig implements ApplicationRunner {
             RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
             String name = runtimeMXBean.getName();
             int processID = Integer.valueOf(name.substring(0, name.indexOf("@")));
-            String fileName = "/tmp/s3"+processID+".txt";
+            String folder = "/tmp";
+            File path = new File(folder);
+            if (!path.exists()){
+                path.mkdir();
+            }
+            String fileName = folder + "/s3"+processID+".txt";
             File file = new File(fileName);
             if (!file.exists()){
                 file.createNewFile();
@@ -78,7 +83,7 @@ public class InitAdminUserConfig implements ApplicationRunner {
             osw.close();
             fos.close();
         }catch (Exception e){
-            throw e;
+            logger.error("write pid:port to /tmp/s3pid.txt failed. e:"+e.getMessage());
         }
     }
 }
