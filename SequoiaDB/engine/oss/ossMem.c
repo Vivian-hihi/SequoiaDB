@@ -43,11 +43,15 @@
 #include <malloc.h>
 #endif
 
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL ) || defined ( SDB_SHELL )
+#include "ossUtil.hpp"
+#define OSS_USE_MEM_DEBUG
+#endif
+
 // in engine we always compile in C++, so we can include pd.hpp
 #if defined (SDB_ENGINE)
 #include "pd.hpp"
 #include "pdTrace.hpp"
-#include "ossUtil.hpp"
 #include "ossTrace.h"
 #else
 #define SDB__OSSMEMALLOC
@@ -97,7 +101,7 @@ UINT32  ossMemDebugSize    = 0 ;
 
 // in C version, we don't do anything
 // in C++, we keep track of all memory allocations from ossMemAlloc
-#if !defined (__cplusplus)  || ! ( defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL ) || defined ( SDB_SHELL ) )
+#if !defined (__cplusplus)  || ! defined ( OSS_USE_MEM_DEBUG ) )
 void ossMemTrack ( void *p ) {}
 void ossMemUnTrack ( void *p ) {}
 INT32 ossMemTrace ( const CHAR *pPath ) { return 0 ; }
@@ -317,10 +321,10 @@ void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line )
 //   PD_TRACE_ENTRY ( SDB__OSSMEMALLOC ) ;
    void *p = NULL ;
 
-#if defined (SDB_ENGINE)
+#if defined (OSS_USE_MEM_DEBUG)
    ossSignalShield shield ;
    shield.doNothing() ;
-#endif // SDB_ENGINE
+#endif // OSS_USE_MEM_DEBUG
 
    if ( size == 0 )
       p = NULL ;
@@ -560,10 +564,10 @@ void ossMemFree1 ( void *p )
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMFREE, "ossMemFree" )
 void ossMemFree ( void *p )
 {
-#if defined (SDB_ENGINE)
+#if defined (OSS_USE_MEM_DEBUG)
    ossSignalShield shield ;
    shield.doNothing() ;
-#endif // SDB_ENGINE
+#endif // OSS_USE_MEM_DEBUG
 //   PD_TRACE_ENTRY ( SDB__OSSMEMFREE ) ;
    if ( !ossMemDebugEnabled || !ossMemDebugSize )
       ossMemFree1 ( p ) ;
