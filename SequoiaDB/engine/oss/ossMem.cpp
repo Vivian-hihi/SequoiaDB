@@ -41,10 +41,35 @@
 #include "ossUtil.hpp"
 #include "ossLatch.hpp"
 #include "ossPrimitiveFileOp.hpp"
+#include "ossAllocator.hpp"
 #include "filenames.hpp"
 #include "ossVer.h"
 #include <set>
 #include <map>
+
+template < typename K, typename V, class Compare = std::less<K> >
+class ossMap : public std::map<K, V, Compare, engine::_ossAllocator<std::pair<const K, V> > >{
+  /**
+   * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+   * DO NOT USE THIS CLASS IN POLYMORPHISM
+   */
+};
+
+template < typename K, typename V, class Compare = std::less<K> >
+class ossMultiMap : public std::multimap<K, V, Compare, engine::_ossAllocator<std::pair<const K, V> > > {
+   /**
+    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+    * DO NOT USE THIS CLASS IN POLYMORPHISM
+    */
+};
+
+template < typename K, class Compare = std::less<K> >
+class ossSet : public std::set<K, Compare, engine::_ossAllocator<K> >{
+  /**
+   * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+   * DO NOT USE THIS CLASS IN POLYMORPHISM
+   */
+};
 
 /*
    _ossMemInfoAssit define
@@ -159,12 +184,12 @@ typedef _ossMemStatItem ossMemStatItem ;
 #define OSS_MEM_DUMP_STAT_FORMAT \
    "%10ld    %30s(%10u): %6u ---- %16lu    %16ld"
 
-typedef std::set<ossMemTrackItem>               OSS_MEM_TRACKMAP ;
+typedef ossSet<ossMemTrackItem>                 OSS_MEM_TRACKMAP ;
 typedef OSS_MEM_TRACKMAP::iterator              OSS_MEM_TRACKMAP_IT ;
-typedef std::map<UINT64,ossMemStatItem>         OSS_MEM_STATMAP ;
+typedef ossMap<UINT64,ossMemStatItem>           OSS_MEM_STATMAP ;
 typedef OSS_MEM_STATMAP::iterator               OSS_MEM_STATMAP_IT ;
 typedef OSS_MEM_STATMAP::const_iterator         OSS_MEM_STATMAP_CIT ;
-typedef std::multimap<ossMemStatItem, UINT64>   OSS_MEM_SORTMAP ;
+typedef ossMultiMap<ossMemStatItem, UINT64>     OSS_MEM_SORTMAP ;
 typedef OSS_MEM_SORTMAP::iterator               OSS_MEM_SORTMAP_IT ;
 typedef OSS_MEM_SORTMAP::const_iterator         OSS_MEM_SORTMAP_CIT ;
 
