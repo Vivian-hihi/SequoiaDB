@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateRegionWithKillCoord17342 extends S3TestBase {
     private boolean runSuccess = false;
-    private int regionNum = 50;
+    private int regionNum = 10;
     private String regionNameBase = "region17342a";
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "year";

@@ -1,14 +1,5 @@
 package com.sequoias3.region;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -21,6 +12,14 @@ import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
 import com.sequoias3.commlibs3.s3utils.bean.Region;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @Description seqDB-17341:创建区域过程中db端节点异常
@@ -31,7 +30,7 @@ import com.sequoias3.commlibs3.s3utils.bean.Region;
 
 public class PutRegionWithKillCoord17341 extends S3TestBase {
 	private boolean runSuccess = false;
-	private int regionNum = 50;
+	private int regionNum = 20;
 	private String regionNameBase = "region17341a";
 	private String dataCSShardingType = "year";
 	private String dataCLShardingType = "month";

@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PutRegionWithStopS3N17345 extends S3TestBase{
     private boolean runSuccess = false;
-    private int regionNum = 20;
+    private int regionNum = 10;
     private String regionNameBase = "region17345a";
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "month";
