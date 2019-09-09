@@ -39,7 +39,7 @@ def GuessArch():
    elif id == 'ppc64':
       return 'ppc64'
    elif id == 'ppc64le':
-      return 'ppc64le'   
+      return 'ppc64le'
    else:
       return None
 
@@ -223,7 +223,7 @@ elif "win32" == guess_os:
         else:
             #use current environment
             env['ENV'] = dict(os.environ)
-	
+
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )
@@ -269,7 +269,7 @@ elif "win32" == guess_os:
         env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  " )
     else:
         env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  /NODEFAULTLIB:MSVCRT  " )
-	
+
 elif guess_os == 'aix':
    aix = True
    nix = True
@@ -299,7 +299,7 @@ if nix:
     if xlc:
         env.Append( CPPFLAGS=" -qpic=large -qalias=noansi -g " )
     else:
-        env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
+        env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
         env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
         if aix:
             env.Append( LINKFLAGS=" -fPIC -pthread " )
@@ -325,7 +325,7 @@ if nix:
 env['CPPPATH']=['include', 'src']
 env.Append( CPPPATH=env["EXTRACPPPATH"], LIBPATH=env["EXTRALIBPATH"])
 
-targetLibPath = "lib/" + targetLibPath
+targetLibPath = "stage/lib"
 
 snappyFiles = [
       "src/snappy.cc",

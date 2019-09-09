@@ -4,8 +4,17 @@ import stat
 import subprocess
 import shutil
 
+Import("thirdpartyEnv")
 Import("guess_os")
 Import("guess_arch")
+Import("release")
+Import("debugBuild")
+Import("boost_lib_dir")
+Import("ssl_lib_dir")
+Import("zlib_lib_dir")
+Import("lz4_lib_dir")
+Import("snappy_lib_dir")
+Import("sm_lib_dir")
 
 
 class Utils:
@@ -28,31 +37,11 @@ class CompilerBase:
         self.arch = ""
         self.cmds = []
 
-    def _get_build_lib_dir(self):
-        return os.path.join(self.src_root)
+    def _get_stage_lib_dir(self):
+        return os.path.join(self.src_root, 'stage/lib')
 
-    def _get_lib_base_dir(self):
-        # Add platform directory
-        subpath = ""
-        if "win32" == self.platform:
-            if "ia64" == self.arch:
-                subpath = "win64"
-            elif "ia32" == self.arch:
-                subpath = "win32"
-        elif "linux" == self.platform:
-            if "ia64" == self.arch:
-                subpath = "linux64"
-            elif "ia32" == self.arch:
-                subpath = "linux32"
-            elif "ppc64" == self.arch:
-                subpath = "ppclinux64"
-            elif "ppc64le" == self.arch:
-                subpath = "ppclelinux64"
-        elif "aix" == self.platform:
-            subpath = "aix64"
-        if "" != subpath :
-            subpath = os.path.join('./', 'lib', subpath)
-        return subpath
+    def _get_lib_archive_dir(self):
+        return None
 
     def _init_win32_cmds(self, arch):
         return None
@@ -66,9 +55,10 @@ class CompilerBase:
     def get_src_root(self):
         return self.src_root
 
-    def init(self, platform, arch):
+    def init(self, platform, arch, build_type):
         self.platform = platform
         self.arch = arch
+        self.build_type = build_type
         rc = None
         if "win32" == platform:
             rc = self._init_win32_cmds(arch)
@@ -77,13 +67,22 @@ class CompilerBase:
         if rc is not None:
             return rc
 
+        stage_dir = self._get_stage_lib_dir()
+        if not os.path.exists(stage_dir):
+            try:
+                os.makedirs(stage_dir)
+            except IOError, e:
+                print('Create lib stage directory failed: ' + stage_dir +
+                      ". Error: " + e.message())
+                return 1
+
         # Check target library path. Create it if not exists.
-        lib_path = os.path.abspath(self._get_lib_base_dir())
+        lib_path = os.path.abspath(self._get_lib_archive_dir())
         if not os.path.exists(lib_path):
             try:
                 os.makedirs(lib_path)
             except IOError, e:
-                print('Create lib directory directory failed: ' + lib_path +
+                print('Create lib archive directory failed: ' + lib_path +
                       ". Error: " + e.message())
                 return 1
         elif os.listdir(lib_path):
@@ -103,10 +102,11 @@ class CompilerBase:
 
     def archive(self):
         print('Archive libraries...')
-        source_dir = self._get_build_lib_dir()
+        source_dir = self._get_stage_lib_dir()
         libs = os.listdir(source_dir)
         for lib in libs:
-            shutil.move(os.path.join(source_dir, lib), self._get_lib_base_dir())
+            shutil.copy(os.path.join(source_dir, lib),
+                        self._get_lib_archive_dir())
         print("Compile " + self.name + " done!")
 
 
@@ -114,8 +114,8 @@ class BoostCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "boost", src_root)
 
-    def _get_build_lib_dir(self):
-        return os.path.join(self.src_root, 'stage/lib')
+    def _get_lib_archive_dir(self):
+        return boost_lib_dir
 
     def _init_linux_cmds(self, arch):
         # Add executable permission to the building scripts.
@@ -124,6 +124,7 @@ class BoostCompiler(CompilerBase):
                                   'tools/build/src/engine/build.sh')
         os.chmod(bootstrap_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
         os.chmod(build_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+        shutil.rmtree(os.path.join(self.src_root, 'stage'))
         if "ia32" == self.arch:
             address_mode = 32
         else:
@@ -134,12 +135,13 @@ class BoostCompiler(CompilerBase):
         # the address mode is different.
         self.append_cmd('./bootstrap.sh',
                         '--with-libraries=system,filesystem,thread,'
-                        'program_options,chrono, --prefix=./')
-        self.append_cmd('./bjam',
-                        'link=static threading=multi variant=release '
-                        'address-model=' + str(address_mode) +
-                        ' toolset=gcc runtime-link=static '
-                        'cxxflags="-fPIC"')
+                        'program_options,chrono --prefix=./')
+        self.append_cmd('./b2',
+                        'link=static threading=multi ' +
+                        'variant=' + self.build_type +
+                        ' address-model=' + str(address_mode) +
+                        ' toolset=gcc runtime-link=static'
+                        ' cxxflags="-fPIC"')
 
 
 class SpiderMonkeyCompiler(CompilerBase):
@@ -147,8 +149,11 @@ class SpiderMonkeyCompiler(CompilerBase):
         CompilerBase.__init__(self, "spidermonkey", src_root)
         self.build_dir = ''
 
-    def _get_build_lib_dir(self):
+    def _get_stage_lib_dir(self):
         return os.path.join(self.src_root, self.build_dir, 'dist/lib')
+
+    def _get_lib_archive_dir(self):
+        return sm_lib_dir
 
     def _init_linux_cmds(self, arch):
         if not Utils.is_program_installed('autoconf2.13'):
@@ -166,14 +171,19 @@ class SpiderMonkeyCompiler(CompilerBase):
                 config_args = '--disable-methodjit'
             elif 'ppc64le' == self.arch:
                 config_args = 'ppc64le'
-        self.append_cmd('cd ' + self.build_dir + '&& ../configure', config_args)
-        self.append_cmd('cd ' + self.build_dir + '&& make')
+        if debugBuild:
+            config_args += ' --enable-debug --disable-optimize'
+        self.append_cmd('cd ' + self.build_dir +
+                        ' && export CFLAGS="-DJS_C_STRING_ARE_UTF8"'
+                        ' && export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"'
+                        ' && ../configure ' + silent_opt, config_args)
+        self.append_cmd('cd ' + self.build_dir + '&& make ' + silent_opt)
 
     def archive(self):
-        shutil.move(os.path.join(self.build_dir, 'libjs_static.a'),
-                    self._get_lib_base_dir())
-        shutil.move(os.path.join(self.build_dir, 'libmozjs185.so'),
-                    self._get_lib_base_dir())
+        shutil.copy(os.path.join(self.build_dir, 'libjs_static.a'),
+                    self._get_lib_archive_dir())
+        shutil.copy(os.path.join(self.build_dir, 'libmozjs185.so'),
+                    self._get_lib_archive_dir())
         include_path = os.path.join(self.src_root, 'include')
         if os.path.exists(include_path):
             shutil.rmtree(include_path)
@@ -184,6 +194,9 @@ class SpiderMonkeyCompiler(CompilerBase):
 class SslCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "ssl", src_root)
+
+    def _get_lib_archive_dir(self):
+        return ssl_lib_dir
 
     def _init_linux_cmds(self, arch):
         config_file = ''
@@ -200,76 +213,113 @@ class SslCompiler(CompilerBase):
         elif "aix" == self.platform:
             config_file = './Configure'
             config_args = 'aix64-gcc -fPIC threads'
+
+        if debugBuild:
+            config_args += ' -d'
         config_exec = os.path.join(self.src_root, config_file)
         os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
         self.append_cmd(config_exec, config_args)
-        self.append_cmd('make')
+        self.append_cmd('make ' + silent_opt)
 
     def archive(self):
-        shutil.move(os.path.join(self.src_root, 'libcrypto.a'),
-                    self._get_lib_base_dir())
-        shutil.move(os.path.join(self.src_root, 'libssl.a'),
-                    self._get_lib_base_dir())
+        shutil.copy(os.path.join(self.src_root, 'libcrypto.a'),
+                    self._get_lib_archive_dir())
+        shutil.copy(os.path.join(self.src_root, 'libssl.a'),
+                    self._get_lib_archive_dir())
 
 
 class SnappyCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "snappy", src_root)
 
-    def _init_linux_cmds(self, arch):
-        self.append_cmd('scons')
+    def _get_lib_archive_dir(self):
+        return snappy_lib_dir
 
-    def archive(self):
-        # The scons script is doing all the work. No more archive is needed.
-        pass
+    def _init_linux_cmds(self, arch):
+        args = silent_opt
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
+
+    def _init_win32_cmds(self, arch):
+        args = silent_opt
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
 
 
 class LZ4Compiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "lz4", src_root)
 
-    def _init_linux_cmds(self, arch):
-        self.append_cmd('scons')
+    def _get_lib_archive_dir(self):
+        return lz4_lib_dir
 
-    def archive(self):
-        # The scons script is doing all the work. No more archive is needed.
-        pass
+    def _init_linux_cmds(self, arch):
+        args = silent_opt
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
+
+    def _init_win32_cmds(self, arch):
+        args = silent_opt
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
 
 
 class ZlibCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "zlib", src_root)
 
-    def _init_linux_cmds(self, arch):
-        self.append_cmd('scons')
+    def _get_lib_archive_dir(self):
+        return zlib_lib_dir
 
-    def archive(self):
-        # The scons script is doing all the work. No more archive is needed.
-        pass
+    def _init_linux_cmds(self, arch):
+        args = silent_opt
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
+
+    def _init_win32_cmds(self, arch):
+        args = silent_opt
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
 
 
 components = []
 
-boost_compiler = BoostCompiler('boost')
-spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
-ssl_compiler = SslCompiler('crypto/openssl-1.0.1c')
 snappy_compiler = SnappyCompiler('snappy')
 lz4_compiler = LZ4Compiler('lz4')
 zlib_compiler = ZlibCompiler('zlib')
 
-
-components.append(boost_compiler)
-components.append(spidermonkey_compiler)
-components.append(ssl_compiler)
 components.append(snappy_compiler)
 components.append(lz4_compiler)
 components.append(zlib_compiler)
 
-# TODO: windows is not supported to compile from source for now.
 if "win32" != guess_os:
-    for component in components:
-        os.chdir(component.get_src_root())
-        # None means no error happened.
-        if component.init(guess_os, guess_arch) is None:
-            component.run()
-            component.archive()
+    # Auto compilation of boost, spider monkey and ssl is not supported on
+    # windows for now.
+    boost_compiler = BoostCompiler('boost')
+    spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
+    ssl_compiler = SslCompiler('crypto/openssl-1.0.1c')
+    components.append(boost_compiler)
+    components.append(spidermonkey_compiler)
+    components.append(ssl_compiler)
+
+if release:
+    build_type = 'release'
+else:
+    build_type = 'debug'
+
+
+silent_opt = ''
+if GetOption("silent"):
+    silent_opt = '--silent'
+for component in components:
+    os.chdir(component.get_src_root())
+    # None means no error happened.
+    if component.init(guess_os, guess_arch, build_type) is None:
+        component.run()
+        component.archive()

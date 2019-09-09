@@ -42,7 +42,7 @@ def GuessArch():
     elif id == 'ppc64':
         return 'ppc64'
     elif id == 'ppc64le':
-      return 'ppc64le'        
+      return 'ppc64le'
     else:
         return None
 
@@ -54,7 +54,7 @@ def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
     if dest is None:
         dest = name
 
-    AddOption( "--" + name , 
+    AddOption( "--" + name ,
                dest=dest,
                type="string",
                nargs=nargs,

@@ -35,10 +35,12 @@ boost_lib_dir = join(boost_dir, 'lib')
 parser_dir = join(thirdparty_dir, 'parser' )
 sm_dir = join(parser_dir, 'sm')
 js_dir = join(sm_dir, 'js')
+sm_lib_dir = join(js_dir, 'lib')
 pcre_dir = join(engine_dir,'pcre')
 ssh2_dir = join(engine_dir,'ssh2')
 crypto_dir = join(thirdparty_dir, 'crypto')
 ssl_dir = join(crypto_dir, 'openssl-1.0.1c')
+ssl_lib_dir = join(ssl_dir, 'lib')
 lz4_dir = join(thirdparty_dir, 'lz4')
 lz4_lib_dir = join(lz4_dir, 'lib')
 zlib_dir = join(thirdparty_dir, 'zlib')
@@ -218,6 +220,24 @@ def get_variant_dir():
         s += "normal/"
     return s
 
+def get_platform_dir():
+    if "linux" == guess_os:
+        if "ia64" == guess_arch:
+            return "linux64"
+        elif "ia32" == guess_arch:
+            return "linux32"
+        elif "ppc64" == guess_arch:
+            return "ppclinux64"
+        elif "ppc64le" == guess_arch:
+            return "ppclelinux64"
+    elif "win32" == guess_os:
+        if "ia64" == guess_arch:
+            return "win64"
+        else:
+            return "win32"
+    elif "aix" == guess_os:
+        return "aix64"
+
 # build options
 add_option( "all", "build engine/tools/testcases/shell/client/fmp/fap", 0, False)
 add_option( "engine", "build engine", 0, False)
@@ -283,7 +303,7 @@ boostLibs = [ "thread" , "filesystem", "program_options", "system", "chrono" ]
 
 nix = False
 linux = False
-linux64  = False
+linux64 = False
 windows = False
 aix = False
 xlc = False
@@ -307,6 +327,13 @@ if not release and not debugBuild:
 elif release and debugBuild:
    release = False
    debugBuild = True
+
+# Debug and release libraries are placed in seperated directories.
+build_dir = None
+if release:
+    build_dir = "release"
+else:
+    build_dir = "debug"
 
 cov = False
 
@@ -383,7 +410,9 @@ if hasAll:
    else:
       hasFap = True
 # if nothing specified, let's use engine+client+shell by default
-elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp or hasFap or hasDoc or hasWebSite or hasChm or hasOffline or hasDoxygen ):
+elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or
+           hasFmp or hasFap or hasDoc or hasWebSite or hasChm or hasOffline or
+           hasDoxygen ):
    hasEngine = True
    hasClient = True
    hasShell = True
@@ -454,7 +483,8 @@ def findVersion( root , choices ):
         for c in choices:
             if ( os.path.exists( r + c ) ):
                 return r + c
-    raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
+    raise RuntimeError("can't find a version of [" + repr(root) + "] choices: "
+                       + repr(choices))
 
 # add database include, boost include here
 hdfsJniPath = ""
@@ -489,6 +519,23 @@ CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),
 
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H", "BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
+
+# Add third party libraries.
+if guess_os is not None:
+    platform_dir = get_platform_dir()
+    boost_lib_dir = join(boost_lib_dir, platform_dir, build_dir)
+    ssl_lib_dir = join(ssl_lib_dir, platform_dir, build_dir)
+    zlib_lib_dir = join(zlib_lib_dir, platform_dir, build_dir)
+    lz4_lib_dir = join(lz4_lib_dir, platform_dir, build_dir)
+    snappy_lib_dir = join(snappy_lib_dir, platform_dir, build_dir)
+    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, zlib_lib_dir,
+                             lz4_lib_dir, snappy_lib_dir])
+    # use project-related spidermonkey library
+    if usesm:
+        env.Append(CPPPATH=join(sm_lib_dir, platform_dir, 'include'))
+        sm_lib_dir = join(sm_lib_dir, platform_dir, build_dir)
+        env.Append(EXTRALIBPATH=[sm_lib_dir])
+
 # specify dependent libraries for javascript engine and boost
 if guess_os == "linux":
     linux = True
@@ -505,119 +552,43 @@ if guess_os == "linux":
     if guess_arch == "ia64":
         linux64 = True
         nixLibPrefix = "lib64"
-        boost_lib_dir = join(boost_lib_dir,'linux64')
         env.Append( EXTRALIBPATH="/lib64" )
-        # use project-related boost library
-        env.Append( EXTRALIBPATH=boost_lib_dir )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux64') )
-        env.Append( EXTRALIBPATH=join(mdocml_dir,'lib/linux64') )
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'linux64') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'linux64') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'linux64') )
+        env.Append( EXTRALIBPATH=join(mdocml_dir, 'lib/linux64') )
         # use project-related spidermonkey library
-        if usesm:
-            smlib_dir = join(js_dir,'lib/linux64')
-            env.Append( CPPPATH=join(js_dir,'include') )
-            env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/linux64')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'linux64')
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'linux64')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'linux64')
         fuse_lib = join(fuse_lib_dir, 'libfuse.a')
         Export("fuse_lib")
     # in case for 32 bit linux or compiling 32 bit in 64 env
     elif guess_arch == "ia32":
         linux64 = False
         nixLibPrefix = "lib"
-        boost_lib_dir = join(boost_lib_dir,'linux32')
         env.Append( EXTRALIBPATH="/lib" )
-        # we want 32 bit boost library
-        env.Append( EXTRALIBPATH=boost_lib_dir )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'linux32') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'linux32') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'linux32') )
-        # and 32 bit spidermonkey library
-        if usesm:
-            smlib_dir = join(js_dir,'lib/linux32')
-            env.Append( CPPPATH=join(js_dir,'include') )
-            env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/linux32')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'linux32')
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'linux32')
-        snappy_lib_dir_platform = join(snappy_lib_dir,'linux32')
     # power pc linux
     elif guess_arch == "ppc64":
         linux64 = True
         nixLibPrefix = "lib64"
-        boost_lib_dir = join(boost_lib_dir,'ppclinux64')
         # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
-        #env.Append( EXTRALIBPATH="/usr/lib64" )
         env.Append( EXTRALIBPATH="/lib64" )
-        # use project-related boost library
-        env.Append( EXTRALIBPATH=boost_lib_dir )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclinux64') )
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'ppclinux64') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'ppclinux64') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'ppclinux64') )
-        # use project-related spidermonkey library
-        if usesm:
-            smlib_dir = join(js_dir,'lib/ppclinux64')
-            env.Append( CPPPATH=join(js_dir,'include') )
-            env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/ppclinux64')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclinux64')
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclinux64')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclinux64')
-        # power pc linux little endian
     elif guess_arch == "ppc64le":
         linux64 = True
         nixLibPrefix = "lib64"
-        boost_lib_dir = join(boost_lib_dir,'ppclelinux64')
-        # use little endian
         env.Append( CPPDEFINES=[ "SDB_LITTLE_ENDIAN" ] )
-        #env.Append( EXTRALIBPATH="/usr/lib64" )
         env.Append( EXTRALIBPATH="/lib64" )
-        # use project-related boost library
-        env.Append( EXTRALIBPATH=boost_lib_dir )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclelinux64') )
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'ppclelinux64') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'ppclelinux64') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'ppclelinux64') )
-        # use project-related spidermonkey library
-        if usesm:
-            smlib_dir = join(js_dir,'lib/ppclelinux64')
-            env.Append( CPPPATH=join(js_dir,'include') )
-            env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/ppclelinux64')
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclelinux64')
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclelinux64')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclelinux64')
 
-    # SSL
-    env.Append( LIBS=['ssl'] )
-    env.Append( LIBS=['crypto'] )
-    ssllib_file = join(ssllib_dir, 'libcrypto.a')
-    ssllib_file1 = join(ssllib_dir, 'libssl.a')
+    env.Append(LIBS=['ssl', 'crypto', 'lz4', 'zlib', 'snappy'])
+    ssllib_file = join(ssl_lib_dir, 'libcrypto.a')
+    ssllib_file1 = join(ssl_lib_dir, 'libssl.a')
 
     # spider monkey
     if usesm:
-        smlib_file = join(smlib_dir, 'libmozjs185.so')
+        smlib_file = join(sm_lib_dir, 'libmozjs185.so')
         env.Append( CPPDEFINES=[ "XP_UNIX" ] )
         env.Append( LIBS=['js_static'] )
 
     # lz4, zlib and snappy
-    env.Append( LIBS=['lz4'] )
-    env.Append( LIBS=['zlib'] )
-    env.Append( LIBS=['snappy'] )
-    zlib_lib = join(zlib_lib_dir_platform, 'libzlib.a')
-    lz4_lib = join(lz4_lib_dir_platform, 'liblz4.a')
-    snappy_lib = join(snappy_lib_dir_platform, 'libsnappy.a')
+    zlib_lib = join(zlib_lib_dir, 'libzlib.a')
+    lz4_lib = join(lz4_lib_dir, 'liblz4.a')
+    snappy_lib = join(snappy_lib_dir, 'libsnappy.a')
 
     nix = True
 
@@ -638,62 +609,20 @@ elif guess_os == "win32":
 
     # if we are 64 bit
     if guess_arch == "ia64":
-        boost_lib_dir = join(boost_lib_dir,'win64')
-        # use 64 bit boost library
-        env.Append( EXTRALIBPATH=boost_lib_dir )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
         env.Append( EXTRALIBPATH=join(mdocml_dir,'lib/win64') )
-        # use 64 bit spidermonkey
-        if usesm:
-            smlib_dir = join(js_dir,'lib/win64/lib')
-            env.Append( CPPPATH=join(js_dir,'lib/win64/include') )
-            env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/win64')
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win64') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win64') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win64') )
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'win64')
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'win64')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'win64')
-    else:
-        boost_lib_dir = join(boost_lib_dir,'win32')
-        # we are 32 bit
-        env.Append( EXTRALIBPATH=boost_lib_dir )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win32') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win32') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win32') )
-        if usesm:
-            smlib_dir = join(js_dir,'lib/win32/lib')
-            env.Append( CPPPATH=join(js_dir,'lib/win32/include') )
-            env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/win32')
-        env.Append( EXTRALIBPATH=join(zlib_lib_dir,'win32') )
-        env.Append( EXTRALIBPATH=join(lz4_lib_dir,'win32') )
-        env.Append( EXTRALIBPATH=join(snappy_lib_dir,'win32') )
-        zlib_lib_dir_platform = join(zlib_lib_dir, 'win32')
-        lz4_lib_dir_platform = join(lz4_lib_dir, 'win32')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'win32')
+
     if usesm:
-        smlib_file = join(smlib_dir, 'mozjs185-1.0.dll')
+        smlib_file = join(sm_lib_dir, 'mozjs185-1.0.dll')
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
         env.Append( LIBS=['mozjs185-1.0'] )
         env.Append( CPPDEFINES=["JS_HAVE_STDINT_H"] )
     # SSL
-    env.Append( LIBS=['ssleay32'] )
-    env.Append( LIBS=['libeay32'] )
-    ssllib_file = join(ssllib_dir, 'libeay32.lib')
-    ssllib_file1 = join(ssllib_dir, 'ssleay32.lib')
-
-    # lz4, zlib and snappy
-    env.Append( LIBS=['liblz4'] )
-    env.Append( LIBS=['libzlib'] )
-    env.Append( LIBS=['libsnappy'] )
-    zlib_lib = join(zlib_lib_dir_platform, 'libzlib.lib')
-    lz4_lib = join(lz4_lib_dir_platform, 'liblz4.lib')
-    snappy_lib = join(snappy_lib_dir_platform, 'libsnappy.lib')
+    env.Append( LIBS=['ssleay32', 'libeay32', 'liblz4', 'libzlib', 'libsnappy'])
+    ssllib_file = join(ssl_lib_dir, 'libeay32.lib')
+    ssllib_file1 = join(ssl_lib_dir, 'ssleay32.lib')
+    zlib_lib = join(zlib_lib_dir, 'libzlib.lib')
+    lz4_lib = join(lz4_lib_dir, 'liblz4.lib')
+    snappy_lib = join(snappy_lib_dir, 'libsnappy.lib')
 
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
@@ -766,42 +695,31 @@ elif guess_os == 'aix':
       env.Append( LINKFLAGS=" -maix64 -static-libgcc -static-libstdc++ " )
    env.Append( AR=" -X64 " )
    nixLibPrefix = "lib"
-   boost_lib_dir = join(boost_lib_dir,'aix64')
    # use big endian
    env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
    env.Append( EXTRALIBPATH="/lib" )
-   # use project-related boost library
-   env.Append( EXTRALIBPATH=boost_lib_dir )
-   # use project-related ssl library
-   env.Append( EXTRALIBPATH=join(ssl_dir,'lib/aix64') )
-   # use project-related spidermonkey library
-   if usesm:
-      smlib_dir = join(js_dir,'lib/aix64')
-      env.Append( CPPPATH=join(js_dir,'include') )
-      env.Append( EXTRALIBPATH=[smlib_dir] )
 
-   # SSL
-   ssllib_dir = join(ssl_dir,'lib/aix64')
    #env.Append( LIBS=['ssl'] )
    #env.Append( LIBS=['crypto'] )
-   ssllib_file = join(ssllib_dir, 'libcrypto.a')
-   ssllib_file1 = join(ssllib_dir, 'libssl.a')
+   ssllib_file = join(ssl_lib_dir, 'libcrypto.a')
+   ssllib_file1 = join(ssl_lib_dir, 'libssl.a')
 
    # spider monkey
    if usesm:
-      smlib_file = join(smlib_dir, 'libmozjs185.so')
+      smlib_file = join(sm_lib_dir, 'libmozjs185.so')
       env.Append( CPPDEFINES=[ "XP_UNIX" ] )
       env.Append( LIBS=['js_static'] )
 
    # lz4, zlib and snappy
-   env.Append( LIBS=['lz4'] )
-   env.Append( LIBS=['zlib'] )
-   env.Append( LIBS=['snappy'] )
-   zlib_lib = join(zlib_lib_dir_platform, 'libzlib.a')
-   lz4_lib = join(lz4_lib_dir_platform, 'liblz4.a')
-   snappy_lib = join(snappy_lib_dir_platform, 'libsnappy.a')
+   env.Append( LIBS=['lz4', 'zlib', 'snappy'] )
+   zlib_lib = join(zlib_lib_dir, 'libzlib.a')
+   lz4_lib = join(lz4_lib_dir, 'liblz4.a')
+   snappy_lib = join(snappy_lib_dir, 'libsnappy.a')
 else:
+    platform_valid = False
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
+
+
 
 env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
 if nix:
@@ -874,6 +792,7 @@ if linux:
    # add -lrt for boost_thread.a, need clock_gettime reference
    env.Append ( _LIBFLAGS=' -lrt ' )
 
+thirdpartyEnv = env.Clone()
 testEnv = env.Clone()
 testEnv.Append( CPPPATH=["../"] )
 
@@ -971,6 +890,7 @@ if linux64:
 # conditional decision making that hasn't been moved up to this SConstruct file,
 # and they are exported here, as well.
 Export("env")
+Export("thirdpartyEnv")
 Export("shellEnv")
 Export("toolEnv")
 Export("testEnv")
@@ -999,6 +919,7 @@ Export("hasSSL")
 Export("release")
 Export("debugBuild")
 Export("cov")
+Export("boost_lib_dir")
 # Generating Versioning information
 # In order to change the file location, we have to modify both win32 and linux
 # ossVer_Autogen.h is NOT in SVN, we have to generate this file by scons before
@@ -1018,15 +939,22 @@ if not os.path.isfile ( "gitbuild" ):
       os.system( "sed 's/\$WCREV\$/" + svnVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
 
 print("Begin to build thirdparty...")
-env.SConscript('thirdparty/SConscript', duplicate=False)
+thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
+                         "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir",
+                         "snappy_lib_dir", "sm_lib_dir"], duplicate=False)
 
 if not has_option("noautogen"):
    language = get_option ( "language" )
    autogen_result = 0
+   silent_opt = ''
+   if has_option("silent"):
+      silent_opt = "--silent"
+
    if language is None:
-      autogen_result = os.system ( "scons -C misc/autogen" )
+      autogen_result = os.system ( "scons -C misc/autogen" + " " + silent_opt )
    else:
-      autogen_result = os.system ( "scons -C misc/autogen --language=" + language )
+      autogen_result = os.system ( "scons -C misc/autogen --language=" +
+                                   language + " " + silent_opt)
    if autogen_result != 0:
       os._exit( 1 )
 
