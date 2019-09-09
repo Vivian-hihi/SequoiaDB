@@ -1,6 +1,5 @@
 package com.sequoiadb.fulltext.killnode;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -22,15 +21,14 @@ import com.sequoiadb.fulltext.FullTextDBUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
 /**
  * @Description seqDB-15926:cs下存在多个cl均有效，全量同步clean cs节点清理无效集合对应的全文索引processor 
+ * @author zhaoxiaoni
  * @date 2019/8/13
  */
 public class Fulltext15926 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private GroupMgr groupMgr = null;
     private String groupName = "";
-    private List<String> clNames = new ArrayList<String>();
-    private List<String> indexNames = new ArrayList<String>();
-    private List<DBCollection> collections = new ArrayList<DBCollection>();
+    private CollectionSpace cs = null;
     
     @BeforeClass()
     public void setUp() throws ReliabilityException{
@@ -43,12 +41,11 @@ public class Fulltext15926 extends SdbTestBase {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
+        cs = sdb.getCollectionSpace(csName);
         groupName = groupNames.get(0);
         for(int i=0; i<10; i++){
-            clNames.add("cl_15926_" + i);
-            indexNames.add("indexName_15926_" + i);
-            collections.add(sdb.getCollectionSpace(csName).createCollection(clNames.get(i), (BSONObject)JSON.parse("{Group: '"+ groupName +"'}")));
-            collections.get(i).createIndex(indexNames.get(i), "{a:'text'}", false, false);
+            DBCollection cl = cs.createCollection("cl_15926_" + i, (BSONObject)JSON.parse("{Group: '"+ groupName +"'}"));
+            cl.createIndex("indexName_15926_" + i, "{a:'text'}", false, false);
         }
     }
     
@@ -57,53 +54,47 @@ public class Fulltext15926 extends SdbTestBase {
         Node slave = sdb.getReplicaGroup(groupName).getSlave();
         String remoteHostName = slave.getHostName();
         Ssh ssh = new Ssh(remoteHostName, "root", SdbTestBase.rootPwd);
-        String command = "lsof -iTCP:11790 -sTCP:LISTEN | sed '1d' | awk '{print $2}'";
-        ssh.exec(command);  
-        System.out.println("ssh.getStdout():"+ssh.getStdout());
-        String pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
-        command = "ls -l /proc/" + pid + "/exe | awk '{print $11}'" ;
-        ssh.exec(command);
-        command = ssh.getStdout().substring(0, ssh.getStdout().length() - 1) + "top";
+        String installDir = ssh.getSdbInstallDir();
+        String command = installDir+"/bin/sdbcmtop";
         ssh.exec(command);
         
         for(int i=0; i<10; i++){
-            FullTextDBUtils.insertData(collections.get(i), 10000);
+            DBCollection cl = cs.getCollection("cl_15926_" + i);
+            FullTextDBUtils.insertData(cl, 10000);
         }
 
         int remotePort = slave.getPort();
         command = "lsof -iTCP:" + remotePort + " -sTCP:LISTEN | sed '1d' | awk '{print $2}'";
         ssh.exec(command);
-        pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
+        String pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
         command = "kill -9 " + pid;
         ssh.exec(command);
 
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         for(int i=0; i<10; i++){
-            FullTextDBUtils.dropCollection(cs, clNames.get(i));
+            FullTextDBUtils.dropCollection(cs, "cl_15926_" + i);
         }
         
-        collections.clear();
         for(int i=0; i<10; i++ ){
-            collections.add(sdb.getCollectionSpace(csName).createCollection(clNames.get(i), (BSONObject)JSON.parse("{Group: '"+ groupName +"'}")));
-            collections.get(i).createIndex(indexNames.get(i), "{a:'text'}", false, false);
-            collections.get(i).insert("{a : 'Only one record'}");
+            DBCollection cl = cs.createCollection("cl_15926_" + i, (BSONObject)JSON.parse("{Group: '"+ groupName +"'}"));
+            cl.createIndex("indexName_15926_" + i, "{a:'text'}", false, false);
+            cl.insert("{a : 'Only one record'}");
         }
-        
         
         command = "service sdbcm start";
         ssh.exec(command);
         
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
         for(int i=0; i<10; i++){
-            Assert.assertTrue(FullTextUtils.isIndexCreated(collections.get(i), indexNames.get(i), 1));
+            DBCollection cl = cs.getCollection("cl_15926_" + i);
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, "indexName_15926_" + i, 1));
         } 
     }
     
     @AfterClass()
     public void tearDown(){
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
         for(int i=0; i<10; i++){
-            FullTextDBUtils.dropCollection(cs, clNames.get(i));
+            FullTextDBUtils.dropCollection(cs, "cl_15926_" + i);
         }
         sdb.close();
     }

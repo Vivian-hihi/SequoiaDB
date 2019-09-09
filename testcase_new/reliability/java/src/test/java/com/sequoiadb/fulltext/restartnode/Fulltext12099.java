@@ -50,22 +50,20 @@ public class Fulltext12099 extends SdbTestBase {
         groupName = groupNames.get(0);
         cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject)JSON.parse("{Group:'" + groupName + "'}"));
         cl.createIndex(indexName, "{a:'text'}", false, false);
-        FullTextDBUtils.insertData(cl, 10);
+        FullTextDBUtils.insertData(cl, 10000);
     }
     
     @Test
     public void Test() throws Exception{
         NodeWrapper node = groupMgr.getGroupByName(groupName).getSlave();
-        TaskMgr taskMgr = new  TaskMgr();
-        OperationTask operationTask = new OperationTask();
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 60, 10);
-        taskMgr.addTask(operationTask);
-        taskMgr.addTask(faultMakeTask);
+        TaskMgr taskMgr = new  TaskMgr(faultMakeTask);
+        taskMgr.addTask(new OperationTask());
         taskMgr.execute();
         
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
-        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 10));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 10000));
     }
     
     @AfterClass

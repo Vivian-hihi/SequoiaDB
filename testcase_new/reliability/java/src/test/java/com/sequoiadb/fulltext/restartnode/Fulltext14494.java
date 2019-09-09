@@ -8,6 +8,8 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
@@ -30,12 +32,9 @@ public class Fulltext14494 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private GroupMgr groupMgr = null;
     private String groupName = "";
-    private List<String> csNames = new ArrayList<String>();
-    private List<String> clNames = new ArrayList<String>();
-    private List<String> indexNames = new ArrayList<String>();
+    private CollectionSpace cs = null;
     private List<String> cappedClNames = new ArrayList<String>();
     private List<String> esIndexNames = new ArrayList<String>();
-    private List<DBCollection> collections = new ArrayList<DBCollection>();
     
     @BeforeClass
     public void setUp() throws ReliabilityException{
@@ -49,16 +48,14 @@ public class Fulltext14494 extends SdbTestBase {
         }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
+        cs = sdb.getCollectionSpace(csName);
         for( int i=0; i<10; i++ )
         {
-            csNames.add("cs_14494_"+i);
-            clNames.add("cl_14494_"+i);
-            indexNames.add("fullTextIndex_14494_"+i);
-            collections.add(sdb.createCollectionSpace(csNames.get(i)).createCollection(clNames.get(i), (BSONObject)JSON.parse("{'Group':'" + groupName + "'}")));
-            collections.get(i).createIndex(indexNames.get(i), "{a:'text'}", false, false);
-            FullTextDBUtils.insertData(collections.get(i), 100000);
-            cappedClNames.add(FullTextDBUtils.getCappedName(collections.get(i), indexNames.get(i)));
-            esIndexNames.add(FullTextDBUtils.getESIndexName(collections.get(i), indexNames.get(i)));
+            DBCollection cl = cs.createCollection("cl_14494_"+i, (BSONObject)JSON.parse("{'Group':'" + groupName + "'}"));
+            cl.createIndex("fullTextIndex_14494_"+i, "{a:'text'}", false, false);
+            FullTextDBUtils.insertData(cl, 100000);
+            cappedClNames.add(FullTextDBUtils.getCappedName(cl, "fullTextIndex_14494_"+i));
+            esIndexNames.add(FullTextDBUtils.getESIndexName(cl, "fullTextIndex_14494_"+i));
         }
         
     }
@@ -66,17 +63,15 @@ public class Fulltext14494 extends SdbTestBase {
     @Test
     public void Test() throws Exception{
         NodeWrapper node = groupMgr.getGroupByName(groupName).getSlave();
-        TaskMgr taskMgr = new  TaskMgr();
-        DropCsTask dropCsTask = new DropCsTask();
-        FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 60, 10);
-        //TODO:延迟时间设置太长，建议设置为1秒
-        taskMgr.addTask(dropCsTask);
-        taskMgr.addTask(faultMakeTask);
+        FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 1, 10);
+        TaskMgr taskMgr = new  TaskMgr(faultMakeTask);
+        taskMgr.addTask(new DropClTask());
         taskMgr.execute();
         
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
 
+        //此用例對應問題單SEQUOIADBMAINSTREAM-4325，這裡會有索引殘留
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedClNames));
     }
     
@@ -85,13 +80,17 @@ public class Fulltext14494 extends SdbTestBase {
         sdb.close();
     }
     
-    private class DropCsTask extends OperateTask{
+    private class DropClTask extends OperateTask{
         private Sequoiadb db = null;
+        private CollectionSpace cs = null;
+        
         @Override
         public void exec() throws Exception {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cs = db.getCollectionSpace(csName);
+            
             for(int i=0; i<10; i++){
-                FullTextDBUtils.dropCollectionSpace(db, csNames.get(i));
+                FullTextDBUtils.dropCollection(cs, "cl_14494_"+i);
             }
             db.close();
         } 
