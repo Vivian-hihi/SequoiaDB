@@ -801,8 +801,8 @@
       <name>PMD_OPTION_MEMDEBUGMASK</name>
       <long>memdebugmask</long>
       <description>
-         <en>Memory debug mask,value list:OSS_MALLOC,POOL_ALLOC,THREAD_ALLOC or ALL. Use '|' join multiple values, ALL enable all mask. Default:OSS_MALLOC|POOL_ALLOC</en>
-         <cn>内存调试掩码，取值 OSS_MALLOC,POOL_ALLOC,THREAD_ALLOC 或 ALL, 可以使用'|'连接多个值，ALL表示开启所有，默认:OSS_MALLOC|POOL_ALLOC</cn>
+         <en>Memory debug mask,value list:OSS,POOL,TC or ALL. Use '|' join multiple values, ALL enable all mask. Default:OSS|POOL</en>
+         <cn>内存调试掩码，取值 OSS,POOL,TC 或 ALL, 可以使用'|'连接多个值，ALL表示开启所有，默认:OSS|POOL</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
