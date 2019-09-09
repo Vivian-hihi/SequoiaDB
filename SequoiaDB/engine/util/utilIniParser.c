@@ -101,6 +101,7 @@ static const CHAR *parseItemValue( utilIniItem *item, const CHAR *str,
 
 /* skip */
 static const CHAR *skip( const CHAR *str ) ;
+static const CHAR *rskip( const CHAR *str ) ;
 static const CHAR *skipEmptyLine( const CHAR *str ) ;
 
 /* string */
@@ -1143,6 +1144,7 @@ static const CHAR *parseItemValue( utilIniItem *item, const CHAR *str,
                                    UINT32 flags )
 {
    BOOLEAN isEscape = FALSE ;
+   const CHAR *rstr = NULL ;
 
    item->value.ownmem = FALSE ;
    item->value.str = (CHAR *)str ;
@@ -1172,7 +1174,9 @@ static const CHAR *parseItemValue( utilIniItem *item, const CHAR *str,
       ++str ;
    }
 
-   item->value.length = str - item->value.str ;
+   rstr = rskip( str - 1 ) ;
+
+   item->value.length = rstr - item->value.str + 1 ;
 
    if ( UTIL_INI_DOUBLE_QUOMARK & flags &&
         UTIL_INI_CHAR_DOUBLEMARK == *item->value.str )
@@ -1282,6 +1286,16 @@ static const CHAR *skip( const CHAR *str )
          ( UTIL_INI_CHAR_SPACE == *str || UTIL_INI_CHAR_TAB == *str ) )
    {
       ++str ;
+   }
+   return str ;
+}
+
+static const CHAR *rskip( const CHAR *str )
+{
+   while( str && *str &&
+         ( UTIL_INI_CHAR_SPACE == *str || UTIL_INI_CHAR_TAB == *str ) )
+   {
+      --str ;
    }
    return str ;
 }
