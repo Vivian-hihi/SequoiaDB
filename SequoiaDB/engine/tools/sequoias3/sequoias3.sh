@@ -124,7 +124,7 @@ function Start()
     fi
     portpid=$(lsof -t -i:$port)                                                                                               
     if [ "$portpid" != "" ] ; then
-      echo -e "\033[31mthe port $port already be used\033[0m"                                                                                   
+      echo -e "\033[31mthe port $port already be used by $portpid\033[0m"                                                                                   
       exit 1                                                                                                                          
     fi
 
@@ -144,35 +144,40 @@ function Start()
 
   pid=$(jobs -l|awk '{print $2}')
   echo "pid:"$pid
+  
+  portfile="/tmp/s3$pid.txt"
 
-  sleep 15 
+  sleep 5 
 
   listenport=""
   
   loop=0
-  while(( $loop < 10 ))
+  while(( $loop < 50 ))
   do
-    #echo $loop
     let "loop++"
-    listenpid=$( ps -ef |grep $pid |grep -v grep)
-    if [ "$listenpid" != "" ]; then
-      if [ -n "$(lsof -p $pid |grep LISTEN )" ]; then
-        listenport=$(lsof -p $pid |grep LISTEN | awk '{print $9}'|awk -F":" '{print $2}')
-        echo "sequoias3($listenport) is started. pid: $pid"
-        break
-      else
+    if [ ! -e "$portfile" ]; then
+      listenpid=$( ps -ef |grep $pid |grep -v grep)
+      if [ "$listenpid" != "" ]; then
         sleep 1
         continue
+      else
+        echo -e "\033[31mstart failed. please check configfile and \log\sequoias3.log\033[0m "
+        exit 1
       fi
     else
-      echo -e "\033[31mstart failed. please check configfile and \log\sequoias3.log\033[0m "
-      exit 1
+      listenport=$(cat "$portfile")
+      echo "sequoias3($listenport) is started. pid: $pid"
+      break
     fi
   done
   
   if [ -z $listenport ]; then
     if [ -z "$( ps -ef |grep $pid |grep -v grep)" ]; then
       echo -e "\033[31mprocess is started, but the LISTEN port is unknown.\033[0m"
+	  exit 1
+	else
+      echo -e "\033[31mstart failed. please check configfile and \log\sequoias3.log\033[0m "	
+	  exit 1
     fi
   fi
   
