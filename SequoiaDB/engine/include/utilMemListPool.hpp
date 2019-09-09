@@ -188,12 +188,12 @@ namespace engine
          UINT32      dump( CHAR *pBuff, UINT32 buffSize ) ;
 
       protected:
-         void        clearSpecBlock() ;
-         void*       allocFromSpecBlock( UINT32 size,
-                                         const CHAR *pFile,
-                                         UINT32 line,
-                                         UINT32 *pRealSize = NULL ) ;
-         void        release2SpecBlock( void *&p, UINT32 size ) ;
+         void        clearEBB() ;
+         void*       allocFromEBB( UINT32 size,
+                                   const CHAR *pFile,
+                                   UINT32 line,
+                                   UINT32 *pRealSize = NULL ) ;
+         void        release2EBB( void *&p, UINT32 size ) ;
 
       private:
          UINT64            _cachedSize ;
@@ -201,9 +201,9 @@ namespace engine
          CHAR              _name[ UTIL_MEM_THREAD_NAME_LEN + 1 ] ;
          utilMemListItem*  _arrayList[ UTIL_MEM_POOL_LIST_NUM + 1 ] ;
 
-         CHAR              *_pSpecBlock ;
-         UINT32            _specBlockSize ;
-         UINT64            _allocSpecCount ;
+         CHAR              *_pEBB ;
+         UINT32            _EBBSize ;
+         UINT64            _allocEBBCount ;
 
          /// stat info
          UINT64            _allocCount ;

@@ -59,8 +59,8 @@ namespace engine
    static UINT32 g_maxTCCacheSize = UTIL_MEM_POOL_MAXCACHE_SIZE_DFT ;
 
    #define UTIL_DUMP_BUFFSIZE             ( 2800 )
-   #define UTIL_MIN_SPEC_BLOCK_SIZE       ( 2048 )    /// 2K
-   #define UTIL_MAX_SPEC_BLOCK_SIZE       ( 131072 )  /// 128K
+   #define UTIL_MIN_EBB_SIZE              ( 2048 )    /// 2K
+   #define UTIL_MAX_EBB_SIZE              ( 131072 )  /// 128K
 
    void utilSetMaxTCSize( UINT32 maxCacheSize )
    {
@@ -326,9 +326,9 @@ namespace engine
                   "Invalid arrayList size" ) ;
       ossMemset( _arrayList, 0, sizeof( _arrayList ) ) ;
 
-      _pSpecBlock = NULL ;
-      _specBlockSize = 0 ;
-      _allocSpecCount = 0 ;
+      _pEBB = NULL ;
+      _EBBSize = 0 ;
+      _allocEBBCount = 0 ;
 
       _allocCount = 0 ;
       _reallocCount = 0 ;
@@ -400,15 +400,15 @@ namespace engine
       ossStrncpy( _name, pName, UTIL_MEM_THREAD_NAME_LEN ) ;
    }
 
-   void _utilMemListPool::clearSpecBlock()
+   void _utilMemListPool::clearEBB()
    {
-      if ( _pSpecBlock )
+      if ( _pEBB )
       {
-         onReleaseCache( _specBlockSize ) ;
+         onReleaseCache( _EBBSize ) ;
 
-         SDB_POOL_FREE( _pSpecBlock ) ;
-         _pSpecBlock = NULL ;
-         _specBlockSize = 0 ;
+         SDB_POOL_FREE( _pEBB ) ;
+         _pEBB = NULL ;
+         _EBBSize = 0 ;
       }
    }
 
@@ -422,8 +422,8 @@ namespace engine
          }
       }
 
-      clearSpecBlock() ;
-      _allocSpecCount = 0 ;
+      clearEBB() ;
+      _allocEBBCount = 0 ;
 
       _allocCount = 0 ;
       _reallocCount = 0 ;
@@ -459,13 +459,13 @@ namespace engine
                  pMemList->getBlockSize(), freeSize ) ;
       }
 
-      if ( _allocSpecCount > 0 )
+      if ( _allocEBBCount > 0 )
       {
-         _allocSpecCount = 0 ;
+         _allocEBBCount = 0 ;
       }
-      else if ( 0 == _allocSpecCount )
+      else if ( 0 == _allocEBBCount )
       {
-         clearSpecBlock() ;
+         clearEBB() ;
       }
    }
 
@@ -515,32 +515,32 @@ namespace engine
       return FALSE ;
    }
 
-   void* _utilMemListPool::allocFromSpecBlock( UINT32 size,
-                                               const CHAR *pFile,
-                                               UINT32 line,
-                                               UINT32 *pRealSize )
+   void* _utilMemListPool::allocFromEBB( UINT32 size,
+                                         const CHAR *pFile,
+                                         UINT32 line,
+                                         UINT32 *pRealSize )
    {
       void *p = NULL ;
 
-      if ( _specBlockSize >= size )
+      if ( _EBBSize >= size )
       {
-         p = ( void* )_pSpecBlock ;
+         p = ( void* )_pEBB ;
 
          if ( pRealSize )
          {
-            *pRealSize = _specBlockSize ;
+            *pRealSize = _EBBSize ;
          }
 
-         onAllocCache( _specBlockSize ) ;
+         onAllocCache( _EBBSize ) ;
 
          if ( ossMemDebugEnabled )
          {
             ossThreadMemTrack( p, size, ossHashFileName( pFile ), line ) ;
          }
 
-         ++_allocSpecCount ;
-         _specBlockSize = 0 ;
-         _pSpecBlock = NULL ;
+         ++_allocEBBCount ;
+         _EBBSize = 0 ;
+         _pEBB = NULL ;
       }
 
       return p ;
@@ -590,10 +590,10 @@ namespace engine
             ptr = _arrayList[ index ]->alloc( size, pFile, line, pRealSize ) ;
          }
       }
-      else if ( size >= UTIL_MIN_SPEC_BLOCK_SIZE &&
-                size <= UTIL_MAX_SPEC_BLOCK_SIZE &&
-                ( NULL != ( ptr = allocFromSpecBlock( size, pFile,
-                                                      line, pRealSize ) ) ) )
+      else if ( size >= UTIL_MIN_EBB_SIZE &&
+                size <= UTIL_MAX_EBB_SIZE &&
+                ( NULL != ( ptr = allocFromEBB( size, pFile,
+                                                line, pRealSize ) ) ) )
       {
          /// do nothing
       }
@@ -662,24 +662,24 @@ namespace engine
       return pNewPtr ;
    }
 
-   void _utilMemListPool::release2SpecBlock( void *&p, UINT32 size )
+   void _utilMemListPool::release2EBB( void *&p, UINT32 size )
    {
       if ( ossMemDebugEnabled )
       {
          ossThreadMemUnTrack( p ) ;
       }
 
-      if ( size >= UTIL_MIN_SPEC_BLOCK_SIZE &&
-           size <= UTIL_MAX_SPEC_BLOCK_SIZE &&
-           size > _specBlockSize &&
-           canCacheBlock( size - _specBlockSize ) )
+      if ( size >= UTIL_MIN_EBB_SIZE &&
+           size <= UTIL_MAX_EBB_SIZE &&
+           size > _EBBSize &&
+           canCacheBlock( size - _EBBSize ) )
       {
-         clearSpecBlock() ;
+         clearEBB() ;
 
-         _pSpecBlock = (CHAR*)p ;
-         _specBlockSize = size ;
+         _pEBB = (CHAR*)p ;
+         _EBBSize = size ;
 
-         onPushedCache( _specBlockSize ) ;
+         onPushedCache( _EBBSize ) ;
 
          p = NULL ;
       }
@@ -712,7 +712,7 @@ namespace engine
          }
          else
          {
-            release2SpecBlock( ptr, oldSize - UTIL_MEM_TOTAL_FILL_LEN ) ;
+            release2EBB( ptr, oldSize - UTIL_MEM_TOTAL_FILL_LEN ) ;
          }
       }
       else
@@ -746,10 +746,10 @@ namespace engine
       /// dump self
       len = ossSnprintf( pBuff, buffSize,
                          "   CacheSize : %llu"OSS_NEWLINE
-                         "    SpecSize : %u"OSS_NEWLINE
+                         "    EBB Size : %u"OSS_NEWLINE
                          "  AllocCount : %llu"OSS_NEWLINE
                          "   OOR Alloc : %llu"OSS_NEWLINE
-                         "  Spec Alloc : %llu"OSS_NEWLINE
+                         "   EBB Alloc : %llu"OSS_NEWLINE
                          "ReallocCount : %llu"OSS_NEWLINE
                          "DeallocCount : %llu"OSS_NEWLINE
                          " OOR Dealloc : %llu"OSS_NEWLINE
@@ -757,8 +757,8 @@ namespace engine
                          "   PushCount : %llu (%.2f%%)"OSS_NEWLINE
                          "   CopyCount : %llu (%.2f%%)"OSS_NEWLINE,
                          _cachedSize,
-                         _specBlockSize,
-                         _allocCount, _outrangeAlloc, _allocSpecCount,
+                         _EBBSize,
+                         _allocCount, _outrangeAlloc, _allocEBBCount,
                          _reallocCount, _deallocCount, _outrangeDealloc,
                          _hitCount, hitRatio,
                          _pushCount, pushRatio,

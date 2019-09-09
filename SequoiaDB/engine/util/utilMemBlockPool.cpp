@@ -58,7 +58,8 @@ namespace engine
    _utilMemBlockPool::_utilMemBlockPool( BOOLEAN isGlobal )
    :_isGlobal( isGlobal ),
     _maxSize( 0 ),
-    _totalSize( 0 )
+    _totalSize( 0 ),
+    _oorTimes( 0 )
    {
       _32BSeg = NULL ;
       _64BSeg = NULL ;
@@ -69,6 +70,8 @@ namespace engine
       _2KSeg = NULL ;
       _4KSeg = NULL ;
       _8KSeg = NULL ;
+
+      _clearStat() ;
    }
 
    _utilMemBlockPool::~_utilMemBlockPool()
@@ -627,6 +630,10 @@ namespace engine
                }
                /// don't break
             default :
+               if ( realSize > MEMBLOCKPOOL_TYPE_8192 )
+               {
+                  _oorTimes.inc() ;
+               }
                break ;
          }
       }
@@ -917,9 +924,27 @@ namespace engine
       return FALSE ;
    }
 
+   void _utilMemBlockPool::_clearStat()
+   {
+      _acquireTimes = 0 ;
+      _releaseTimes = 0 ;
+      _oomTimes = 0 ;
+      _oolTimes = 0 ;
+      _shrinkSize = 0 ;
+      _oorTimes.swap( 0 ) ;
+      _lastOORTimes = 0 ;
+   }
+
    UINT32 _utilMemBlockPool::dump( CHAR *pBuff, UINT32 buffLen )
    {
       UINT32 len = 0 ;
+
+      UINT64 acquireTimes = 0 ;
+      UINT64 releaseTimes = 0 ;
+      UINT64 oomTimes = 0 ;
+      UINT64 oolTimes = 0 ;
+      UINT64 shrinkSize = 0 ;
+      UINT64 oorTimes = _oorTimes.fetch() ;
 
       len = ossSnprintf( pBuff, buffLen,
                          "      Max Size : %llu"OSS_NEWLINE
@@ -929,40 +954,114 @@ namespace engine
 
       if ( _32BSeg )
       {
-         len += _32BSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _32BSeg->dump( pBuff + len, buffLen - len,
+                               &acquireTimes,
+                               &releaseTimes,
+                               &oomTimes,
+                               &oolTimes,
+                               &shrinkSize ) ;
       }
       if ( _64BSeg )
       {
-         len += _64BSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _64BSeg->dump( pBuff + len, buffLen - len,
+                               &acquireTimes,
+                               &releaseTimes,
+                               &oomTimes,
+                               &oolTimes,
+                               &shrinkSize ) ;
       }
       if ( _128BSeg )
       {
-         len += _128BSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _128BSeg->dump( pBuff + len, buffLen - len,
+                                &acquireTimes,
+                                &releaseTimes,
+                                &oomTimes,
+                                &oolTimes,
+                                &shrinkSize ) ;
       }
       if ( _256BSeg )
       {
-         len += _256BSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _256BSeg->dump( pBuff + len, buffLen - len,
+                                &acquireTimes,
+                                &releaseTimes,
+                                &oomTimes,
+                                &oolTimes,
+                                &shrinkSize ) ;
       }
       if ( _512BSeg )
       {
-         len += _512BSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _512BSeg->dump( pBuff + len, buffLen - len,
+                                &acquireTimes,
+                                &releaseTimes,
+                                &oomTimes,
+                                &oolTimes,
+                                &shrinkSize ) ;
       }
       if ( _1KSeg )
       {
-         len += _1KSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _1KSeg->dump( pBuff + len, buffLen - len,
+                              &acquireTimes,
+                              &releaseTimes,
+                              &oomTimes,
+                              &oolTimes,
+                              &shrinkSize ) ;
       }
       if ( _2KSeg )
       {
-         len += _2KSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _2KSeg->dump( pBuff + len, buffLen - len,
+                              &acquireTimes,
+                              &releaseTimes,
+                              &oomTimes,
+                              &oolTimes,
+                              &shrinkSize ) ;
       }
       if ( _4KSeg )
       {
-         len += _4KSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _4KSeg->dump( pBuff + len, buffLen - len,
+                              &acquireTimes,
+                              &releaseTimes,
+                              &oomTimes,
+                              &oolTimes,
+                              &shrinkSize ) ;
       }
       if ( _8KSeg )
       {
-         len += _8KSeg->dump( pBuff + len, buffLen - len ) ;
+         len += _8KSeg->dump( pBuff + len, buffLen - len,
+                              &acquireTimes,
+                              &releaseTimes,
+                              &oomTimes,
+                              &oolTimes,
+                              &shrinkSize ) ;
       }
+
+      len += ossSnprintf( pBuff + len, buffLen - len,
+                          OSS_NEWLINE
+                          "Pool Memory Stat"OSS_NEWLINE
+                          " Acquire Times : %llu (Inc: %lld )"OSS_NEWLINE
+                          " Release Times : %llu (Inc: %lld )"OSS_NEWLINE
+                          "     OOM Times : %llu (Inc: %lld )"OSS_NEWLINE
+                          "     OOL Times : %llu (Inc: %lld )"OSS_NEWLINE
+                          "     OOR Times : %llu (Inc: %lld )"OSS_NEWLINE
+                          "   Shrink Size : %llu (Inc: %lld )"OSS_NEWLINE,
+                          acquireTimes,
+                          acquireTimes - _acquireTimes,
+                          releaseTimes,
+                          releaseTimes - _releaseTimes,
+                          oomTimes,
+                          oomTimes - _oomTimes,
+                          oolTimes,
+                          oolTimes - _oolTimes,
+                          oorTimes,
+                          oorTimes - _lastOORTimes,
+                          shrinkSize,
+                          shrinkSize - _shrinkSize ) ;
+
+      _acquireTimes = acquireTimes ;
+      _releaseTimes = releaseTimes ;
+      _oomTimes = oomTimes ;
+      _oolTimes = oolTimes ;
+      _lastOORTimes = oorTimes ;
+      _shrinkSize = shrinkSize ;
 
       return len ;
    }

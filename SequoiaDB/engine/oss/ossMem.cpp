@@ -630,7 +630,7 @@ class _ossMemTrackCB
 } ;
 typedef _ossMemTrackCB ossMemTrackCB ;
 
-static ossMemTrackCB gMemTrackCB( "OSS_MALLOC" ) ;
+static ossMemTrackCB gMemTrackCB( "OSS_MEMORY" ) ;
 
 void ossMemTrack ( void *p )
 {
@@ -758,7 +758,7 @@ class _ossPoolMemTrackCB : public _ossMemTrackCB
 } ;
 typedef _ossPoolMemTrackCB ossPoolMemTrackCB ;
 
-static ossPoolMemTrackCB gPoolMemTrackCB( "POOL_ALLOC" ) ;
+static ossPoolMemTrackCB gPoolMemTrackCB( "POOL_MEMORY" ) ;
 
 void ossPoolMemTrack( void *p, UINT64 userSize, UINT32 file,UINT32 line )
 {
@@ -805,7 +805,7 @@ class _ossThreadMemTrackCB : public _ossPoolMemTrackCB
 } ;
 typedef _ossThreadMemTrackCB ossThreadMemTrackCB ;
 
-ossThreadMemTrackCB gThreadMemTrackCB( "THREAD_ALLOC" ) ;
+ossThreadMemTrackCB gThreadMemTrackCB( "THREAD_CACHE" ) ;
 
 void ossThreadMemTrack( void *p, UINT64 userSize, UINT32 file, UINT32 line )
 {

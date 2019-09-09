@@ -193,7 +193,18 @@ namespace engine
       UINT64         _acquireTimes ;
       UINT64         _releaseTimes ;
       UINT64         _oomTimes ;
+      UINT64         _oolTimes ;
       UINT64         _shrinkSize ;
+
+   protected:
+      void   clearStat_i()
+      {
+         _acquireTimes = 0 ;
+         _releaseTimes = 0 ;
+         _oomTimes = 0 ;
+         _oolTimes = 0 ;
+         _shrinkSize = 0 ;
+      }
 
    public :
       _utilSegmentPool() : _list(NULL),
@@ -206,12 +217,10 @@ namespace engine
                            _maintaining(0),
                            _highWatermark(0),
                            _isInitialized( FALSE ),
-                           _pHandler( NULL ),
-                           _acquireTimes( 0 ),
-                           _releaseTimes( 0 ),
-                           _oomTimes( 0 ),
-                           _shrinkSize( 0 )
-                           { }
+                           _pHandler( NULL )
+      {
+         clearStat_i() ;
+      }
 
       ~_utilSegmentPool() ;
 
@@ -229,11 +238,37 @@ namespace engine
          }
       }
 
-      UINT32 dump( CHAR *pBuff, UINT32 buffLen )
+      UINT32 dump( CHAR *pBuff, UINT32 buffLen,
+                   UINT64 *pAcquireTimes = NULL,
+                   UINT64 *pReleaseTimes = NULL,
+                   UINT64 *pOOMTimes = NULL,
+                   UINT64 *pOOLTimes = NULL,
+                   UINT64 *pShrinkSize = NULL )
       {
          UINT32 len = 0 ;
 
          ossScopedLock lock( &_latch ) ;
+
+         if ( pAcquireTimes )
+         {
+            *pAcquireTimes += _acquireTimes ;
+         }
+         if ( pReleaseTimes )
+         {
+            *pReleaseTimes += _releaseTimes ;
+         }
+         if ( pOOMTimes )
+         {
+            *pOOMTimes += _oomTimes ;
+         }
+         if ( pOOLTimes )
+         {
+            *pOOLTimes += _oolTimes ;
+         }
+         if ( pShrinkSize )
+         {
+            *pShrinkSize += _shrinkSize ;
+         }
 
          len = ossSnprintf( pBuff, buffLen,
                             OSS_NEWLINE
@@ -247,6 +282,7 @@ namespace engine
                             " Acquire Times : %llu"OSS_NEWLINE
                             " Release Times : %llu"OSS_NEWLINE
                             "     OOM Times : %llu"OSS_NEWLINE
+                            "     OOL Times : %llu"OSS_NEWLINE
                             "   Shrink Size : %llu"OSS_NEWLINE,
                             _poolId,
                             _maxNumOfObjs,
@@ -258,6 +294,7 @@ namespace engine
                             _acquireTimes,
                             _releaseTimes,
                             _oomTimes,
+                            _oolTimes,
                             _shrinkSize ) ;
          return len ;
       }
@@ -960,7 +997,7 @@ namespace engine
             if ( _isUpToLimit() )
             {
                // exceed limitation
-               ++_oomTimes ;
+               ++_oolTimes ;
                rc = SDB_OSS_UP_TO_LIMIT ;
                PD_LOG( PDINFO,
                        "Exceed resource limitation "
@@ -986,7 +1023,7 @@ namespace engine
                       !_pHandler->canAllocSegment( (UINT64)_delta *
                                                    sizeof( _objX ) ) )
             {
-               ++_oomTimes ;
+               ++_oolTimes ;
                rc = SDB_OSS_UP_TO_LIMIT ;
                PD_LOG( PDINFO, "Can't alloc segment[%u * %u(ObjT Size: %u)] "
                        "by handler", _delta, sizeof( _objX ), sizeof( T ) ) ;
@@ -996,6 +1033,7 @@ namespace engine
             rc = _expandList() ;
             if ( rc )
             {
+               ++_oomTimes ;
                PD_LOG( PDWARNING,
                        "Failed to expand : %d"OSS_NEWLINE
                        "  PoolID         : %u"OSS_NEWLINE
@@ -1273,6 +1311,13 @@ namespace engine
          CHAR        _name[ UTIL_SEGMENT_NAME_LEN + 1 ] ;
          UINT32      _poolNum ;
 
+         /// stat info
+         UINT64      _acquireTimes ;
+         UINT64      _releaseTimes ;
+         UINT64      _oomTimes ;
+         UINT64      _oolTimes ;
+         UINT64      _shrinkSize ;
+
          _utilSegmentPool< T > _pool[ _SEGMENT_MGR_MAX_POOLS ] ;         
 
       private :
@@ -1293,6 +1338,15 @@ namespace engine
             return poolId ;
          }
 
+         OSS_INLINE void   clearStat_i()
+         {
+            _acquireTimes = 0 ;
+            _releaseTimes = 0 ;
+            _oomTimes = 0 ;
+            _oolTimes = 0 ;
+            _shrinkSize = 0 ;
+         }
+
       public  :
          _utilSegmentManager( const CHAR *pName = NULL ) : _round( 0 )
          {
@@ -1302,6 +1356,8 @@ namespace engine
                ossStrncpy( _name, pName, UTIL_SEGMENT_NAME_LEN ) ;
             }
             _poolNum = 0 ;
+
+            clearStat_i() ;
          }
          _utilSegmentManager( UINT64 numberOfObjs,
                               UINT64 maxNumberOfObjs,
@@ -1313,6 +1369,9 @@ namespace engine
                ossStrncpy( _name, pName, UTIL_SEGMENT_NAME_LEN ) ;
             }
             _poolNum = 0 ;
+
+            clearStat_i() ;
+
             init( numberOfObjs, maxNumberOfObjs ) ;
          }
 
@@ -1506,9 +1565,20 @@ namespace engine
             return rc ;
          }
 
-         OSS_INLINE UINT32 dump( CHAR *pBuff, UINT32 buffLen )
+         OSS_INLINE UINT32 dump( CHAR *pBuff, UINT32 buffLen,
+                                 UINT64 *pAcquireTimes = NULL,
+                                 UINT64 *pReleaseTimes = NULL,
+                                 UINT64 *pOOMTimes = NULL,
+                                 UINT64 *pOOLTimes = NULL,
+                                 UINT64 *pShrinkSize = NULL)
          {
             UINT32 len = 0 ;
+
+            UINT64 acquireTimes = 0 ;
+            UINT64 releaseTimes = 0 ;
+            UINT64 oomTimes = 0 ;
+            UINT64 oolTimes = 0 ;
+            UINT64 shrinkSize = 0 ;
 
             len = ossSnprintf( pBuff, buffLen,
                                OSS_NEWLINE
@@ -1522,8 +1592,59 @@ namespace engine
 
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
-               len += _pool[ i ].dump( pBuff + len, buffLen - len ) ;
+               len += _pool[ i ].dump( pBuff + len, buffLen - len,
+                                       &acquireTimes,
+                                       &releaseTimes,
+                                       &oomTimes,
+                                       &oolTimes,
+                                       &shrinkSize ) ;
             }
+
+            if ( pAcquireTimes )
+            {
+               *pAcquireTimes += acquireTimes ;
+            }
+            if ( pReleaseTimes )
+            {
+               *pReleaseTimes += releaseTimes ;
+            }
+            if ( pOOMTimes )
+            {
+               *pOOMTimes += oomTimes ;
+            }
+            if ( pOOLTimes )
+            {
+               *pOOLTimes += oolTimes ;
+            }
+            if ( pShrinkSize )
+            {
+               *pShrinkSize += shrinkSize ;
+            }
+
+            len += ossSnprintf( pBuff + len, buffLen - len,
+                                OSS_NEWLINE
+                                "Segment Stat"OSS_NEWLINE
+                                " Acquire Times : %llu (Inc: %lld )"OSS_NEWLINE
+                                " Release Times : %llu (Inc: %lld )"OSS_NEWLINE
+                                "     OOM Times : %llu (Inc: %lld )"OSS_NEWLINE
+                                "     OOL Times : %llu (Inc: %lld )"OSS_NEWLINE
+                                "   Shrink Size : %llu (Inc: %lld )"OSS_NEWLINE,
+                                acquireTimes,
+                                acquireTimes - _acquireTimes,
+                                releaseTimes,
+                                releaseTimes - _releaseTimes,
+                                oomTimes,
+                                oomTimes - _oomTimes,
+                                oolTimes,
+                                oolTimes - _oolTimes,
+                                shrinkSize,
+                                shrinkSize - _shrinkSize ) ;
+
+            _acquireTimes = acquireTimes ;
+            _releaseTimes = releaseTimes ;
+            _oomTimes = oomTimes ;
+            _oolTimes = oolTimes ;
+            _shrinkSize = shrinkSize ;
 
             return len ;
          }

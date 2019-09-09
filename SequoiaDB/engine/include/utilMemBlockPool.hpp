@@ -187,6 +187,8 @@ namespace engine
                                                 UINT32 *pUserSize,
                                                 UINT16 *pType ) ;
 
+      void                    _clearStat() ;
+
    // private attributes:
    private:
       BOOLEAN        _isGlobal ;
@@ -203,6 +205,16 @@ namespace engine
 
       UINT64         _maxSize ;
       ossAtomic64    _totalSize ;
+
+      /// stat info
+      UINT64         _acquireTimes ;
+      UINT64         _releaseTimes ;
+      UINT64         _oomTimes ;
+      UINT64         _oolTimes ;
+      UINT64         _shrinkSize ;
+
+      ossAtomic64    _oorTimes ;
+      UINT64         _lastOORTimes ;
    } ;
    typedef _utilMemBlockPool utilMemBlockPool ;
 
