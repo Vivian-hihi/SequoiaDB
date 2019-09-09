@@ -1,18 +1,29 @@
 package com.sequoias3;
 
 import org.springframework.boot.autoconfigure.batch.BatchProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Configuration
+@EnableScheduling
 public class ScheduleConfig implements SchedulingConfigurer {
     @Override
     public void configureTasks(ScheduledTaskRegistrar scheduledTaskRegistrar) {
+        scheduledTaskRegistrar.setScheduler(taskExecutor());
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public ExecutorService taskExecutor() {
         Method[] methods = BatchProperties.Job.class.getMethods();
         int scheduleSize = 5;
         int newScheduleSize = 0;
@@ -27,6 +38,6 @@ public class ScheduleConfig implements SchedulingConfigurer {
         if (scheduleSize > newScheduleSize){
             newScheduleSize = scheduleSize;
         }
-        scheduledTaskRegistrar.setScheduler(Executors.newScheduledThreadPool(newScheduleSize));
+        return Executors.newScheduledThreadPool(newScheduleSize);
     }
 }

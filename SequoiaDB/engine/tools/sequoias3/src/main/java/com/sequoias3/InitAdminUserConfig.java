@@ -1,6 +1,7 @@
 package com.sequoias3;
 
 import com.sequoias3.common.InitAdminUserDefine;
+import com.sequoias3.config.ServiceInfo;
 import com.sequoias3.core.IDGenerator;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.IDGeneratorDao;
@@ -15,6 +16,12 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+
 @Component
 @Order(2)
 public class InitAdminUserConfig implements ApplicationRunner {
@@ -24,6 +31,9 @@ public class InitAdminUserConfig implements ApplicationRunner {
 
     @Autowired
     IDGeneratorDao idGeneratorDao;
+
+    @Autowired
+    ServiceInfo serviceInfo;
 
     @Override
     public void run(ApplicationArguments applicationArguments)
@@ -47,6 +57,27 @@ public class InitAdminUserConfig implements ApplicationRunner {
         }
         catch (Exception e) {
             logger.error("Init admin user failed.");
+            throw e;
+        }
+
+        try{
+            RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+            String name = runtimeMXBean.getName();
+            int processID = Integer.valueOf(name.substring(0, name.indexOf("@")));
+            String fileName = "/tmp/s3"+processID+".txt";
+            File file = new File(fileName);
+            if (!file.exists()){
+                file.createNewFile();
+            }
+            int port = serviceInfo.getPort();
+            logger.info("fileName:"+file.getAbsolutePath() + ", port:" + port);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            osw.write(""+port);
+            osw.close();
+            fos.close();
+        }catch (Exception e){
             throw e;
         }
     }
