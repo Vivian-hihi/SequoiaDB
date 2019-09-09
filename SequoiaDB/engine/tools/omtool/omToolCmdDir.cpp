@@ -141,6 +141,12 @@ namespace omTool
                goto error ;
             }
          }
+
+         rc = _setDirOwnership( tmpPath ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
    done:
