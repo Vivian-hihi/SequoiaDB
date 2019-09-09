@@ -828,6 +828,7 @@
                for( var i = 0; i < length; ++i )
                {
                   var field   = value[i][0] ;
+                  var type    = value[i][1] ;
                   var operate = value[i][2] ;
                   var param   = value[i][3] ;
                   
@@ -840,12 +841,33 @@
                      fields += ',' ;
                      params += ',' ;
                   }
+
+                  switch( type )
+                  {
+                     case 'int':
+                     case 'smallint':
+                     case 'bigint':
+                     case 'mediumint':
+                     case 'tinyint':
+                        param = parseInt( param ) ;
+                        break ;
+                     case 'float':
+                     case 'double':
+                     case 'decimal':
+                        param = parseFloat( param ) ;
+                        break ;
+                  }
+                  
                   fields += field ;
                   if( operate == false )
                   {
                      if( typeof( param ) == 'undefined' || param === null )
                      {
                         params += '\'\'' ;
+                     }
+                     else if( typeof( param ) == 'number' || type == 'bit' )
+                     {
+                        params += param ;
                      }
                      else
                      {
