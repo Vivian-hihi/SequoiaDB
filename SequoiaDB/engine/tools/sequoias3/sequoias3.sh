@@ -124,7 +124,7 @@ function Start()
     fi
     portpid=$(lsof -t -i:$port)                                                                                               
     if [ "$portpid" != "" ] ; then
-      echo -e "\033[31mthe port $port already be used by $portpid\033[0m"                                                                                   
+      echo -e "\033[31mthe port $port already be used by pid:$portpid\033[0m"                                                                                   
       exit 1                                                                                                                          
     fi
 
@@ -172,7 +172,7 @@ function Start()
   done
   
   if [ -z $listenport ]; then
-    if [ -z "$( ps -ef |grep $pid |grep -v grep)" ]; then
+    if [ -n "$( ps -ef |grep $pid |grep -v grep)" ]; then
       echo -e "\033[31mprocess is started, but the LISTEN port is unknown.\033[0m"
 	  exit 1
 	else
