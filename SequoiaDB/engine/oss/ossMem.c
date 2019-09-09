@@ -47,6 +47,7 @@
 #if defined (SDB_ENGINE)
 #include "pd.hpp"
 #include "pdTrace.hpp"
+#include "ossUtil.hpp"
 #include "ossTrace.h"
 #else
 #define SDB__OSSMEMALLOC
@@ -315,6 +316,12 @@ void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line )
 {
 //   PD_TRACE_ENTRY ( SDB__OSSMEMALLOC ) ;
    void *p = NULL ;
+
+#if defined (SDB_ENGINE)
+   ossSignalShield shield ;
+   shield.doNothing() ;
+#endif // SDB_ENGINE
+
    if ( size == 0 )
       p = NULL ;
    else if ( !ossMemDebugEnabled || !ossMemDebugSize )
@@ -553,6 +560,10 @@ void ossMemFree1 ( void *p )
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMFREE, "ossMemFree" )
 void ossMemFree ( void *p )
 {
+#if defined (SDB_ENGINE)
+   ossSignalShield shield ;
+   shield.doNothing() ;
+#endif // SDB_ENGINE
 //   PD_TRACE_ENTRY ( SDB__OSSMEMFREE ) ;
    if ( !ossMemDebugEnabled || !ossMemDebugSize )
       ossMemFree1 ( p ) ;
