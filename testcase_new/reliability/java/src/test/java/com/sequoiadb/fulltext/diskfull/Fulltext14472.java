@@ -105,7 +105,7 @@ public class Fulltext14472 extends SdbTestBase {
         try {
             sdb.dropCollectionSpace(csName);
             for (int i = 0; i < esIndexNames.size(); i++) {
-                FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i));
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i)));
             }
         } finally {
             if (sdb != null) {
