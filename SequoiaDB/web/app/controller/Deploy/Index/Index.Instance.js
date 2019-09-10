@@ -1215,22 +1215,33 @@
                      "webName": $scope.autoLanguage( "批量插入的最大记录数" ),
                      "type": "int",
                      "required": true,
-                     "value": 100,
+                     "value": 2000,
                      "valid": {
                         'min': 1,
                         'max': 100000
                      }
                   },
                   {
-                     "name": "sequoiadb_use_autocommit",
-                     "webName": $scope.autoLanguage( "自动提交模式" ),
-                     "type": "select",
+                     "name": "sequoiadb_replica_size",
+                     "webName": $scope.autoLanguage( "一致性写副本数" ),
+                     "type": "int",
                      "required": true,
-                     "value": "ON",
-                     "valid":[
-                        { 'key': 'ON', 'value': 'ON' },
-                        { 'key': 'OFF', 'value': 'OFF' }
-                     ]
+                     "value": 1,
+                     "valid": {
+                        'min': -1,
+                        'max': 7
+                     }
+                  },
+                  {
+                     "name": "sequoiadb_selector_pushdown_threshold",
+                     "webName": $scope.autoLanguage( "查询字段下压触发阈值" ),
+                     "type": "int",
+                     "required": true,
+                     "value": 30,
+                     "valid": {
+                        'min': 0,
+                        'max': 100
+                     }
                   },
                   {
                      "name": "sequoiadb_debug_log",
@@ -1306,6 +1317,15 @@
          }
 
          $scope.CreateRelationWindow['config'].ShowType = 1 ;
+         $scope.CreateRelationWindow['config'].inputErrNum1 = 0 ;
+         $scope.CreateRelationWindow['config'].inputErrNum2 = 0 ;
+
+         if ( isFunction( $scope.CreateRelationWindow['config']['normal'].ResetDefault ) &&
+              isFunction( $scope.CreateRelationWindow['config']['advance'].ResetDefault ) )
+         {
+            $scope.CreateRelationWindow['config']['normal'].ResetDefault() ;
+            $scope.CreateRelationWindow['config']['advance'].ResetDefault() ;
+         }
 
          var pgsqlBusList = [] ;
          var mysqlBusList = [] ;
@@ -1333,7 +1353,8 @@
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_partition' ) ;
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_bulk_insert' ) ;
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_bulk_insert_size' ) ;
-               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_autocommit' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_replica_size' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_selector_pushdown_threshold' ) ;
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_debug_log' ) ;
 
                fromValid = pgsqlBusList ;
@@ -1360,7 +1381,8 @@
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_partition' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_bulk_insert' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_bulk_insert_size' ) ;
-               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_autocommit' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_replica_size' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_selector_pushdown_threshold' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_debug_log' ) ;
 
                $scope.CreateRelationWindow['config']['normal'] .DisableItem( 'DbName' ) ;
@@ -1494,11 +1516,12 @@
             setArrayItemValue( advanceInput, 'name', 'preferedinstance', { 'enable': true } ) ;
             setArrayItemValue( advanceInput, 'name', 'transaction',      { 'enable': true } ) ;
 
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',     { 'enable': false } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',   { 'enable': false } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',  { 'enable': false } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_autocommit',    { 'enable': false } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_debug_log',         { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',                 { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',               { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',              { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_replica_size',                  { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_selector_pushdown_threshold',   { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_debug_log',                     { 'enable': false } ) ;
 
             getPostgresqlDB( $scope.ClusterList[$scope.CurrentCluster]['ClusterName'], fromValid[0]['value'], function( dbList ){
 
@@ -1520,11 +1543,12 @@
          {
             fromValid = mysqlBusList ;
 
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',     { 'enable': true } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',   { 'enable': true } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',  { 'enable': true } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_autocommit',    { 'enable': true } ) ;
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_debug_log',         { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',                 { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',               { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',              { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_replica_size',                  { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_selector_pushdown_threshold',   { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_debug_log',                     { 'enable': true } ) ;
 
             setArrayItemValue( normalInput,  'name', 'DbName',           { 'enable': false } ) ;
             setArrayItemValue( advanceInput, 'name', 'preferedinstance', { 'enable': false } ) ;
