@@ -49,6 +49,9 @@ public class Fulltext12086 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
@@ -67,7 +70,7 @@ public class Fulltext12086 extends SdbTestBase {
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
-
+        Assert.assertTrue(FullTextUtils.checkAdapter());
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 200000));
     }
 

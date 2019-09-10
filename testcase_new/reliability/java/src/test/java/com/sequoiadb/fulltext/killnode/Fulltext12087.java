@@ -49,6 +49,9 @@ public class Fulltext12087 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
@@ -67,7 +70,7 @@ public class Fulltext12087 extends SdbTestBase {
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
-
+        Assert.assertTrue(FullTextUtils.checkAdapter());
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, 20000));
     }
 
@@ -84,7 +87,6 @@ public class Fulltext12087 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cl = db.getCollectionSpace(csName).getCollection(clName);
             try {
@@ -101,7 +103,6 @@ public class Fulltext12087 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cl = db.getCollectionSpace(csName).getCollection(clName);
             try {

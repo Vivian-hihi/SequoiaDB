@@ -48,16 +48,19 @@ public class Fulltext14465 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
         cs = sdb.getCollectionSpace(csName);
         for (int i = 0; i < 10; i++) {
-            DBCollection cl = cs.createCollection("cl_14465_"+i,
+            DBCollection cl = cs.createCollection("cl_14465_" + i,
                     (BSONObject) JSON.parse("{'Group':'" + groupName + "'}"));
-            cl.createIndex("fullTextIndex_14465_"+i, "{a:'text'}", false, false);
+            cl.createIndex("fullTextIndex_14465_" + i, "{a:'text'}", false, false);
             FullTextDBUtils.insertData(cl, 10000);
-            cappedClNames.add(FullTextDBUtils.getCappedName(cl, "fullTextIndex_14465_"+i));
-            esIndexNames.add(FullTextDBUtils.getESIndexName(cl, "fullTextIndex_14465_"+i));
+            cappedClNames.add(FullTextDBUtils.getCappedName(cl, "fullTextIndex_14465_" + i));
+            esIndexNames.add(FullTextDBUtils.getESIndexName(cl, "fullTextIndex_14465_" + i));
         }
     }
 
@@ -72,9 +75,10 @@ public class Fulltext14465 extends SdbTestBase {
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
+        Assert.assertTrue(FullTextUtils.checkAdapter());
 
         for (int i = 0; i < 10; i++) {
-            DBCollection cl = cs.getCollection("cl_14465_"+i);
+            DBCollection cl = cs.getCollection("cl_14465_" + i);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedClNames.get(i)));
             Assert.assertTrue(FullTextUtils.isCLConsistency(cl));
             Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
@@ -85,7 +89,7 @@ public class Fulltext14465 extends SdbTestBase {
     public void tearDown() {
         try {
             for (int i = 0; i < 10; i++) {
-                cs.dropCollection("cl_14465_"+i);
+                cs.dropCollection("cl_14465_" + i);
             }
         } finally {
             sdb.close();
@@ -97,11 +101,10 @@ public class Fulltext14465 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try {
                 for (int i = 0; i < 10; i++) {
-                    DBCollection cl = db.getCollectionSpace(csName).getCollection("cl_14465_"+i);
+                    DBCollection cl = db.getCollectionSpace(csName).getCollection("cl_14465_" + i);
                     FullTextDBUtils.insertData(cl, 10000);
                 }
             } finally {
@@ -115,11 +118,10 @@ public class Fulltext14465 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             for (int i = 0; i < 10; i++) {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection("cl_14465_"+i);
-                FullTextDBUtils.dropFullTextIndex(cl, "fullTextIndex_14465_"+i);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection("cl_14465_" + i);
+                FullTextDBUtils.dropFullTextIndex(cl, "fullTextIndex_14465_" + i);
             }
             db.close();
         }

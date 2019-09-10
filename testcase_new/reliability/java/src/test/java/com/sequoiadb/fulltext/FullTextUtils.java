@@ -14,6 +14,8 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.Ssh;
+import com.sequoiadb.exception.ReliabilityException;
 
 /**
  * 全文索引的公共类，检查方法、其他与DB端和ES内部操作无关的方法均可放于此类
@@ -833,4 +835,71 @@ public class FullTextUtils {
         return isEquals;
     }
 
+    public static boolean checkAdapter() throws ReliabilityException {
+        return checkAdapter(60);
+    }
+
+    /**
+     * check sdbseadapter with check times, default: 60s (60 times)
+     * 
+     * @param checkTimes
+     * @return
+     * @throws ReliabilityException
+     */
+    public static boolean checkAdapter(int checkTimes) throws ReliabilityException {
+        try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            List<String> gNames = CommLib.getDataGroupNames(db);
+            for (int i = 0; i < gNames.size(); i++) {
+                List<String> nodeNames = CommLib.getNodeAddress(db, gNames.get(i));
+                for (int j = 0; j < nodeNames.size(); j++) {
+                    String hostName = nodeNames.get(j).split(":")[0];
+                    String svcName = nodeNames.get(j).split(":")[1];
+                    String t = svcName.substring(0, svcName.length() - 1);
+
+                    Ssh ssh = new Ssh(hostName, "root", SdbTestBase.rootPwd);
+                    while (true) {
+                        ssh.exec("ps -ef | grep sdbseadapter | grep -v grep | grep " + t + " | awk '{print $2}'");
+                        if (ssh.getStdout().trim().length() == 0) {
+                            if (checkTimes-- > 0) {
+                                try {
+                                    Thread.sleep(1000);
+                                    continue;
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                System.out.println("Check adapter fail by [" + nodeNames.get(j) + "]");
+                                return false;
+                            }
+                        } else {
+                            int pid = Integer.parseInt(ssh.getStdout().trim());
+                            ssh.exec("netstat -anp | grep " + pid + " | grep -v grep | grep LISTEN | awk '{print $4}'");
+                            if (ssh.getStdout().trim().length() == 0) {
+                                if (checkTimes-- > 0) {
+                                    try {
+                                        Thread.sleep(1000);
+                                        continue;
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    System.out.println("Check adapter fail by [" + nodeNames.get(j) + "]");
+                                    return false;
+                                }
+                            } else {
+                                String out = ssh.getStdout().trim().split(":")[1];
+                                if (!out.subSequence(0, out.length() - 1).equals(t)) {
+                                    System.out.println("Check adapter fail by [" + nodeNames.get(j) + "]");
+                                    return false;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
 }

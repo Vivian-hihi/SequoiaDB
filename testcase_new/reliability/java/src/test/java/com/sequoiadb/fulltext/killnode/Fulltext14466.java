@@ -3,7 +3,6 @@ package com.sequoiadb.fulltext.killnode;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.catalina.filters.CsrfPreventionFilter;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -48,6 +47,9 @@ public class Fulltext14466 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         cs = sdb.getCollectionSpace(csName);
         groupName = groupNames.get(0);
@@ -72,9 +74,10 @@ public class Fulltext14466 extends SdbTestBase {
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
+        Assert.assertTrue(FullTextUtils.checkAdapter());
 
         for (int i = 0; i < 10; i++) {
-            DBCollection cl = cs.getCollection("cl_14466_"+i);
+            DBCollection cl = cs.getCollection("cl_14466_" + i);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedClNames.get(i)));
             Assert.assertTrue(FullTextUtils.isCLConsistency(cl));
             Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
@@ -94,11 +97,9 @@ public class Fulltext14466 extends SdbTestBase {
 
     private class InsertTask extends OperateTask {
         private Sequoiadb db = null;
-        private CollectionSpace cs = null;
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try {
                 for (int i = 0; i < 10; i++) {
@@ -113,10 +114,9 @@ public class Fulltext14466 extends SdbTestBase {
 
     private class DropIndexTask extends OperateTask {
         private Sequoiadb db = null;
-        
+
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             for (int i = 0; i < 10; i++) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection("cl_14466_" + i);

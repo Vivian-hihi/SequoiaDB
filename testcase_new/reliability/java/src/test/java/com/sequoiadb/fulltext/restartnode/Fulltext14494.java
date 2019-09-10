@@ -1,4 +1,5 @@
 package com.sequoiadb.fulltext.restartnode;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
@@ -23,8 +24,9 @@ import com.sequoiadb.fulltext.FullTextUtils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+
 /**
- * @Description seqDB-14494:删除集合空间时备节点正常重启 
+ * @Description seqDB-14494:删除集合空间时备节点正常重启
  * @author xiaoni Zhao
  * @date 2019/8/10
  */
@@ -35,9 +37,9 @@ public class Fulltext14494 extends SdbTestBase {
     private CollectionSpace cs = null;
     private List<String> cappedClNames = new ArrayList<String>();
     private List<String> esIndexNames = new ArrayList<String>();
-    
+
     @BeforeClass
-    public void setUp() throws ReliabilityException{
+    public void setUp() throws ReliabilityException {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         groupMgr = GroupMgr.getInstance();
         if (CommLib.isStandAlone(sdb)) {
@@ -46,53 +48,57 @@ public class Fulltext14494 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
         cs = sdb.getCollectionSpace(csName);
-        for( int i=0; i<10; i++ )
-        {
-            DBCollection cl = cs.createCollection("cl_14494_"+i, (BSONObject)JSON.parse("{'Group':'" + groupName + "'}"));
-            cl.createIndex("fullTextIndex_14494_"+i, "{a:'text'}", false, false);
+        for (int i = 0; i < 10; i++) {
+            DBCollection cl = cs.createCollection("cl_14494_" + i,
+                    (BSONObject) JSON.parse("{'Group':'" + groupName + "'}"));
+            cl.createIndex("fullTextIndex_14494_" + i, "{a:'text'}", false, false);
             FullTextDBUtils.insertData(cl, 100000);
-            cappedClNames.add(FullTextDBUtils.getCappedName(cl, "fullTextIndex_14494_"+i));
-            esIndexNames.add(FullTextDBUtils.getESIndexName(cl, "fullTextIndex_14494_"+i));
+            cappedClNames.add(FullTextDBUtils.getCappedName(cl, "fullTextIndex_14494_" + i));
+            esIndexNames.add(FullTextDBUtils.getESIndexName(cl, "fullTextIndex_14494_" + i));
         }
-        
+
     }
-    
+
     @Test
-    public void Test() throws Exception{
+    public void Test() throws Exception {
         NodeWrapper node = groupMgr.getGroupByName(groupName).getSlave();
         FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(node, 1, 10);
-        TaskMgr taskMgr = new  TaskMgr(faultMakeTask);
+        TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         taskMgr.addTask(new DropClTask());
         taskMgr.execute();
-        
+
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
+        Assert.assertTrue(FullTextUtils.checkAdapter());
 
-        //此用例對應問題單SEQUOIADBMAINSTREAM-4325，這裡會有索引殘留
+        // 此用例對應問題單SEQUOIADBMAINSTREAM-4325，這裡會有索引殘留
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedClNames));
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         sdb.close();
     }
-    
-    private class DropClTask extends OperateTask{
+
+    private class DropClTask extends OperateTask {
         private Sequoiadb db = null;
         private CollectionSpace cs = null;
-        
+
         @Override
         public void exec() throws Exception {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cs = db.getCollectionSpace(csName);
-            
-            for(int i=0; i<10; i++){
-                FullTextDBUtils.dropCollection(cs, "cl_14494_"+i);
+
+            for (int i = 0; i < 10; i++) {
+                FullTextDBUtils.dropCollection(cs, "cl_14494_" + i);
             }
             db.close();
-        } 
+        }
     }
 }

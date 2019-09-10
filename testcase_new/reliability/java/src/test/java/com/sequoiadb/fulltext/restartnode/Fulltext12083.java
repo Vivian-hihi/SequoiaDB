@@ -62,6 +62,9 @@ public class Fulltext12083 extends SdbTestBase {
         if (sdb.isCollectionSpaceExist(csName)) {
             sdb.dropCollectionSpace(csName);
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         cs = sdb.createCollectionSpace(csName);
         for (int i = 0; i < clNum; i++) {
             DBCollection cl = cs.createCollection(clName + "_" + i,
@@ -86,6 +89,7 @@ public class Fulltext12083 extends SdbTestBase {
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true);
         Assert.assertEquals(dataGroup.checkInspect(1), true);
+        Assert.assertEquals(FullTextUtils.checkAdapter(), true);
 
         for (int i = 0; i < clNum; i++) {
             DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName + "_" + i);
@@ -102,7 +106,7 @@ public class Fulltext12083 extends SdbTestBase {
         try {
             sdb.dropCollectionSpace(csName);
             for (int i = 0; i < esIndexNames.size(); i++) {
-                FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i));
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames.get(i), cappedNames.get(i)));
             }
         } finally {
             if (sdb != null) {

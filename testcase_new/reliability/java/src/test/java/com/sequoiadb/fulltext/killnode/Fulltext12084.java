@@ -59,6 +59,9 @@ public class Fulltext12084 extends SdbTestBase {
         if (!groupMgr.checkBusiness()) {
             throw new SkipException("checkBusiness failed");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         if (sdb.isCollectionSpaceExist(csName)) {
             sdb.dropCollectionSpace(csName);
         }
@@ -87,6 +90,7 @@ public class Fulltext12084 extends SdbTestBase {
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true);
         Assert.assertEquals(dataGroup.checkInspect(1), true);
+        Assert.assertEquals(FullTextUtils.checkAdapter(), true);
 
         for (int i = 0; i < clNum; i++) {
             DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName + "_" + i);

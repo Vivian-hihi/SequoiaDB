@@ -49,6 +49,9 @@ public class Fulltext14484 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
         for (int i = 0; i < 10; i++) {
@@ -89,6 +92,7 @@ public class Fulltext14484 extends SdbTestBase {
                 Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
             }
         }
+        Assert.assertTrue(FullTextUtils.checkAdapter());
     }
 
     @AfterClass

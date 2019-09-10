@@ -48,11 +48,15 @@ public class Fulltext14495 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         groupName = groupNames.get(0);
         cs = sdb.getCollectionSpace(csName);
         for (int i = 0; i < 10; i++) {
-            DBCollection cl = cs.createCollection("cl_14495_" + i,(BSONObject) JSON.parse("{'Group':'" + groupName + "'}"));
+            DBCollection cl = cs.createCollection("cl_14495_" + i,
+                    (BSONObject) JSON.parse("{'Group':'" + groupName + "'}"));
             cl.createIndex("fullTextIndex_14495_" + i, "{a:'text'}", false, false);
             FullTextDBUtils.insertData(cl, 100000);
             cappedClNames.add(FullTextDBUtils.getCappedName(cl, "fullTextIndex_14495_" + i));
@@ -70,7 +74,9 @@ public class Fulltext14495 extends SdbTestBase {
 
         Assert.assertTrue(taskMgr.isAllSuccess(), taskMgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(600));
-        //此處會有索引殘留，同14494
+        Assert.assertTrue(FullTextUtils.checkAdapter());
+
+        // 此處會有索引殘留，同14494
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esIndexNames, cappedClNames));
     }
 
@@ -82,12 +88,12 @@ public class Fulltext14495 extends SdbTestBase {
     private class DropClTask extends OperateTask {
         private Sequoiadb db = null;
         private CollectionSpace cs = null;
-        
+
         @Override
         public void exec() throws Exception {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cs = db.getCollectionSpace(csName);
-            
+
             for (int i = 0; i < 10; i++) {
                 FullTextDBUtils.dropCollection(cs, "cl_14495_" + i);
             }

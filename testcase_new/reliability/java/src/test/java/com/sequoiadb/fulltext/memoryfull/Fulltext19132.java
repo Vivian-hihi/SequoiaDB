@@ -45,13 +45,16 @@ public class Fulltext19132 extends SdbTestBase {
         if (!groupMgr.checkBusiness(120)) {
             throw new SkipException("checkBusiness() FAIL, GROUP ERROR");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
 
         groupName = CommLib.getDataGroupNames(sdb).get(0);
         cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName,
                 (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));
         cl.createIndex(fulltextName, "{'a':'text', 'b':'text', 'c':'text'}", false, false);
         FullTextDBUtils.insertData(cl, 10000);
-        FullTextUtils.isIndexCreated(cl, fulltextName, 10000);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fulltextName, 10000));
     }
 
     @Test
@@ -76,7 +79,8 @@ public class Fulltext19132 extends SdbTestBase {
         }
 
         FullTextDBUtils.insertData(cl, 1000);
-        FullTextUtils.isIndexCreated(cl, fulltextName, (int) cl.getCount());
+        Assert.assertTrue(FullTextUtils.isIndexCreated(cl, fulltextName, (int) cl.getCount()));
+        Assert.assertTrue(FullTextUtils.checkAdapter());
     }
 
     @AfterClass

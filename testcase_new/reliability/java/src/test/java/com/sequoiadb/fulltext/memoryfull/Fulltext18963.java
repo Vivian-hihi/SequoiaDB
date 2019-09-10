@@ -52,6 +52,9 @@ public class Fulltext18963 extends SdbTestBase {
         if (!groupMgr.checkBusiness()) {
             throw new SkipException("checkBusiness failed");
         }
+        if (!FullTextUtils.checkAdapter()) {
+            throw new SkipException("Check adapter failed");
+        }
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
                 (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));
         FullTextDBUtils.insertData(cl, insertNum);
@@ -77,6 +80,8 @@ public class Fulltext18963 extends SdbTestBase {
 
         Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true);
         Assert.assertEquals(dataGroup.checkInspect(1), true);
+        Assert.assertEquals(FullTextUtils.checkAdapter(), true);
+
         cl.insert("{a:'text18963'}");
         int expCount = (int) cl.getCount();
         Assert.assertEquals(expCount, insertNum + 1);
