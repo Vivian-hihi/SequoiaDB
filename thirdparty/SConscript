@@ -173,10 +173,8 @@ class SpiderMonkeyCompiler(CompilerBase):
                 config_args = 'ppc64le'
         if debugBuild:
             config_args += ' --enable-debug --disable-optimize'
-        self.append_cmd('cd ' + self.build_dir +
-                        ' && export CFLAGS="-DJS_C_STRING_ARE_UTF8"'
-                        ' && export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"'
-                        ' && ../configure ' + silent_opt, config_args)
+        self.append_cmd('cd ' + self.build_dir + ' && ../configure ' +
+                        silent_opt, config_args)
         self.append_cmd('cd ' + self.build_dir + '&& make ' + silent_opt)
 
     def archive(self):

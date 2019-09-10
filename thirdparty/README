@@ -35,8 +35,6 @@ Windows32:
 		export PATH=$PATH:/c/Python27
 		export PATH=$PATH:/c/mozilla-build/info-zip
 		export MOZ_TOOLS=/c/mozilla-build/moztools
-		export CFLAGS="-DJS_C_STRING_ARE_UTF8"
-		export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
 		cd parser\sm\js\src
 		autoconf-2.13
 		mkdir build-release
@@ -59,17 +57,17 @@ Windows32:
 		nmake -f ms\ntdll.mak
 		copy the following files to crypto\openssl-1.0.1c\lib\win32:
 			libeay32.dll  libeay32.exp  libeay32.lib  libeay32.pdb  ssleay32.dll  ssleay32.exp  ssleay32.lib  ssleay32.pdb
-	
+
 	snappy 1.1.0:
 		cd snappy
         scons [--dd|--release]
         By default it will compile in release mode.
-		
+
 	lz4 1.7.1:
 		cd lz4
         scons [--dd|--release]
         By default it will compile in release mode.
-		
+
 	zlib 1.2.8:
 		cd zlib
 		nmake -f win32\Makefile.msc
@@ -106,8 +104,6 @@ Windows64:
         export PATH=$PATH:/c/Python27
         export PATH=$PATH:/c/mozilla-build/info-zip
         export MOZ_TOOLS=/c/mozilla-build/moztools
-        export CFLAGS="-DJS_C_STRING_ARE_UTF8"
-        export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
         cd parser\sm\js\src
         autoconf-2.13
         mkdir build-release
@@ -135,12 +131,12 @@ Windows64:
         cd snappy
         scons [--dd|--release]
         By default it will compile in release mode.
-        
+
     lz4 1.7.1:
         cd lz4
         scons [--dd|--release]
         By default it will compile in release mode.
-        
+
     zlib 1.2.8:
         cd zlib
         nmake -f win32\Makefile.msc
@@ -166,8 +162,6 @@ Linux32:
         copy boost/stage/lib/* to boost/lib/linux32
 
     SpiderMonkey 1.8.5:
-        export CFLAGS="-DJS_C_STRING_ARE_UTF8"
-        export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
         cd parser/sm/js/src
         autoconf-2.13
         mkdir build-release
@@ -179,10 +173,10 @@ Linux32:
         cd build-debug
         ../configure --enable-debug --disable-optimize --disable-methodjit
         make
-        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and 
+        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and
         parser/sm/js/src/build-release/dist/lib to parser/sm/js/lib/linux32.
         Do same operation for build-debug.
-        
+
         Note:
             autoconf2.13 is required to compile this version of SpiderMonkey. If it's not
             installed in your system, you can compile and install it from source provided
@@ -190,7 +184,7 @@ Linux32:
             Compile and install as follows:
             cd autoconf-2.13
             ./configure --program-suffix=2.13   # Be sure to use this version number
-            make 
+            make
             sudo make install
             Then check if it's installed successfully:
             autoconf2.13 --version
@@ -204,11 +198,11 @@ Linux32:
     snappy 1.1.0:
         cd snappy
         scons
-        
+
     lz4 1.7.1:
         cd lz4
         scons
-        
+
     zlib 1.2.8:
         cd zlib
         ./configure
@@ -218,7 +212,7 @@ Linux32:
     The second way to build:
         cd zlib
         scons
-			
+
 Linux64:
     Building Prerequisites:
         g++ 4.6.3
@@ -236,8 +230,6 @@ Linux64:
         cp ./stage/lib/* ./lib/linux64   /* copy boost/stage/lib/* to boost/lib/linux64 */
 
     SpiderMonkey 1.8.5:
-        export CFLAGS="-DJS_C_STRING_ARE_UTF8"
-        export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
         cd parser/sm/js/src
         autoconf-2.13
         mkdir build-release
@@ -249,10 +241,10 @@ Linux64:
         cd build-debug
         ../configure --enable-debug --disable-optimize --disable-methodjit
         make
-        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and 
+        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and
         parser/sm/js/src/build-release/dist/lib to parser/sm/js/lib/linux64.
         do same operation for build-debug
-        
+
         Note:
             autoconf2.13 is required to compile this version of SpiderMonkey. If it's not
             installed in your system, you can compile and install it from source provided
@@ -260,7 +252,7 @@ Linux64:
             Compile and install as follows:
             cd autoconf-2.13
             ./configure --program-suffix=2.13   # Be sure to use this version number
-            make 
+            make
             sudo make install
             Then check if it's installed successfully:
             autoconf2.13 --version
@@ -270,7 +262,7 @@ Linux64:
         ./configure
         make
         copy libcrypto.a and libssl.a to crypto/openssl-1.0.1c/lib/linux64/
-            
+
     snappy 1.1.0:
         cd snappy
         scons
@@ -278,7 +270,7 @@ Linux64:
     lz4 1.7.1:
         cd lz4
         scons
-        
+
     zlib 1.2.8:
         cd zlib
         ./configure
@@ -288,7 +280,7 @@ Linux64:
     The second way to build:
         cd zlib
         scons
-        
+
     fuse 2.9.4
         cd fuse
         ./makeconf.sh
@@ -311,8 +303,6 @@ PowerLinux64:
         copy boost/stage/lib/* to boost/lib/ppclinux64
 
     SpiderMonkey 1.8.5:
-        export CFLAGS="-DJS_C_STRING_ARE_UTF8"
-        export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
         cd parser/sm/js/src
         vi Makefile.in, remove all "-DENABLE_ASSEMBLER=1 -DENABLE_JIT=1" options, and add -mminimal-toc option
         cp jsval.h.bak jsval.h
@@ -327,7 +317,7 @@ PowerLinux64:
         cd build-debug
         ../configure --enable-debug --disable-optimize
         make
-        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and 
+        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and
         parser/sm/js/src/build-release/dist/lib to parser/sm/js/lib/ppclinux64.
         do same operation for build-debug
 
@@ -344,7 +334,7 @@ PowerLinux64:
     lz4 1.7.1:
         cd lz4
         scons
-        
+
     zlib 1.2.8:
         cd zlib
         ./configure
@@ -354,7 +344,7 @@ PowerLinux64:
     The second way to build:
         cd zlib
         scons
-			
+
 PowerleLinux64:
     Building Prerequisites:
         g++ 4.8.3
@@ -370,8 +360,6 @@ PowerleLinux64:
         copy boost/stage/lib/* to boost/lib/ppclelinux64
 
     SpiderMonkey 1.8.5:
-        export CFLAGS="-DJS_C_STRING_ARE_UTF8"
-        export CXXFLAGS="-DJS_C_STRINGS_ARE_UTF8"
         cd parser/sm/js/src
         vi Makefile.in, remove all "-DENABLE_ASSEMBLER=1 -DENABLE_JIT=1" options, and add -mminimal-toc option
         cp jsval.h.bak jsval.h
@@ -386,7 +374,7 @@ PowerleLinux64:
         cd build-debug
         ../configure ppc64le --enable-debug --disable-optimize
         make
-        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and 
+        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and
         parser/sm/js/src/build-release/dist/lib to parser/sm/js/lib/ppclelinux64.
         do same operation for build-debug
 
@@ -404,7 +392,7 @@ PowerleLinux64:
     lz4 1.7.1:
         cd lz4
         scons
-        
+
     zlib 1.2.8:
         cd zlib
         ./configure
@@ -414,7 +402,7 @@ PowerleLinux64:
     The second way to build:
         cd zlib
         scons
-						
+
 Aix64:
     Building Prerequisites:
         g++ 4.6.3
@@ -445,7 +433,7 @@ Aix64:
     lz4 1.7.1:
         cd lz4
         scons
-        
+
     zlib 1.2.8:
         cd zlib
         ./configure
