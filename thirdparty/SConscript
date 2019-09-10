@@ -124,7 +124,9 @@ class BoostCompiler(CompilerBase):
                                   'tools/build/src/engine/build.sh')
         os.chmod(bootstrap_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
         os.chmod(build_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
-        shutil.rmtree(os.path.join(self.src_root, 'stage'))
+        stage_path = os.path.join(self.src_root, 'stage')
+        if os.path.exists(stage_path):
+            shutil.rmtree(stage_path)
         if "ia32" == self.arch:
             address_mode = 32
         else:
@@ -163,8 +165,7 @@ class SpiderMonkeyCompiler(CompilerBase):
                                          'src/build_OPT.OBJ'))
         self.append_cmd('cd src && rm -rf ' + self.build_dir +
                         ' && mkdir ' + self.build_dir)
-        self.append_cmd('autoconf2.13')
-        self.append_cmd('cd ' + self.build_dir)
+        self.append_cmd('cd src && autoconf2.13')
         config_args = ''
         if 'linux' == self.platform:
             if 'ia32' == self.arch or 'ia64' == self.arch:
