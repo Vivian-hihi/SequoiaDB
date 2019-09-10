@@ -60,30 +60,49 @@ public class InitAdminUserConfig implements ApplicationRunner {
             throw e;
         }
 
+        FileOutputStream fos = null;
+        OutputStreamWriter osw = null;
+        int processID = serviceInfo.getPid();
+        int port = serviceInfo.getPort();
+        String folder = "/tmp";
+        String fileName = folder + "/s3"+processID+".txt";
         try{
-            RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-            String name = runtimeMXBean.getName();
-            int processID = Integer.valueOf(name.substring(0, name.indexOf("@")));
-            String folder = "/tmp";
             File path = new File(folder);
             if (!path.exists()){
                 path.mkdir();
             }
-            String fileName = folder + "/s3"+processID+".txt";
             File file = new File(fileName);
             if (!file.exists()){
                 file.createNewFile();
             }
-            int port = serviceInfo.getPort();
             logger.info("fileName:"+file.getAbsolutePath() + ", port:" + port);
 
-            FileOutputStream fos = new FileOutputStream(file);
-            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            fos = new FileOutputStream(file);
+            osw = new OutputStreamWriter(fos);
             osw.write(""+port);
             osw.close();
             fos.close();
         }catch (Exception e){
-            logger.error("write pid:port to /tmp/s3pid.txt failed. e:"+e.getMessage());
+            logger.warn("write pid:port to " + fileName + " failed. e:"+e.getMessage());
+        }finally {
+            closeStream(osw);
+            closeFile(fos);
+        }
+    }
+
+    private void closeFile(FileOutputStream fos){
+        try{
+            fos.close();
+        }catch (Exception e){
+            logger.warn("closeFile failed. e:"+e.getMessage());
+        }
+    }
+
+    private void closeStream(OutputStreamWriter osw){
+        try {
+            osw.close();
+        }catch (Exception e){
+            logger.warn("closeStream failed. e:"+e.getMessage());
         }
     }
 }

@@ -6,22 +6,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @EnableScheduling
 public class ScheduleConfig implements SchedulingConfigurer {
     @Override
     public void configureTasks(ScheduledTaskRegistrar scheduledTaskRegistrar) {
-        scheduledTaskRegistrar.setScheduler(taskExecutor());
+        scheduledTaskRegistrar.setTaskScheduler(myThreadPoolScheduler());
     }
 
-    @Bean(destroyMethod = "shutdown")
-    public ExecutorService taskExecutor() {
+    @Bean
+    public ThreadPoolTaskScheduler myThreadPoolScheduler(){
+        ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
+        taskScheduler.setPoolSize(getPoolSize());
+        taskScheduler.setWaitForTasksToCompleteOnShutdown(true);
+        taskScheduler.setAwaitTerminationSeconds(10);
+        return taskScheduler;
+   }
+
+    private int getPoolSize(){
         Method[] methods = BatchProperties.Job.class.getMethods();
         int scheduleSize = 5;
         int newScheduleSize = 0;
@@ -36,6 +43,6 @@ public class ScheduleConfig implements SchedulingConfigurer {
         if (scheduleSize > newScheduleSize){
             newScheduleSize = scheduleSize;
         }
-        return Executors.newScheduledThreadPool(newScheduleSize);
+        return newScheduleSize;
     }
 }

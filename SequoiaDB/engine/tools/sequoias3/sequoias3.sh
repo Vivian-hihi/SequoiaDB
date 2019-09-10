@@ -180,8 +180,6 @@ function Start()
       exit 1
     fi
   fi
-  
-  
 }
 
 function Stop()
@@ -208,6 +206,18 @@ function Stop()
       kill $pid
       echo "Terminating process: $pid"
     done
+	loop=0
+    while(( $loop < 3 ))
+    do
+      let "loop++"
+      pidlist2=$(ps -ef|grep $prefix | grep -v grep )
+      if [ -z "$pidlist2" ]; then
+        break
+      else
+        sleep 3
+        continue	  
+      fi
+    done  
     exit 0
   fi
 
@@ -222,13 +232,24 @@ function Stop()
     for pid in $pidlist
     do  
       if [ "$pid" == "$portpid" ]; then
-          echo "Terminating process $pid: sequoias3($port)"
-          kill $pid
-          exit 0
+        echo "Terminating process $pid: sequoias3($port)"
+        kill $pid
+	    loop=0
+        while(( $loop < 3 ))
+        do
+          let "loop++"
+          pid2=$(ps -ef|grep $pid | grep -v grep )
+          if [ -z "$pid2" ]; then
+            break
+          else
+            sleep 3
+            continue	  
+          fi
+        done 
+        exit 0
       fi
     done
   fi
-
 }
 
 function List()
