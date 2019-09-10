@@ -1,10 +1,13 @@
-package com.sequoiadb.lob;
+package com.sequoiadb.lob.base;
 
-import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.fault.NodeRestart;
+import com.sequoiadb.lob.LobBean;
+import com.sequoiadb.lob.LobTask;
+import com.sequoiadb.lob.LobUtil;
 import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
@@ -26,12 +29,12 @@ import static org.testng.AssertJUnit.assertTrue;
  * @Date 17-5-11
  * @Version 1.00
  */
-public class Lob3476 implements StandTestInterface {
-    String csName = "lob3476cs";
-    String clName = "lob3476cl";
+public class Lob11434 implements StandTestInterface {
+    String csName = "lob11434cs";
+    String clName = "lob11434cl";
+
     private List<LobBean> lobs2Create = new Vector<>();
     private List<LobBean> lobs2Delete = new Vector<>();
-
 
     @BeforeClass
     @Override
@@ -40,12 +43,10 @@ public class Lob3476 implements StandTestInterface {
         LobUtil.createLobCsAndCl(csName, clName);
         MyUtil.deleteAllLobs(csName, clName);
 
-        byte[] data = createRandomBytes(1024 * 20);
         for (int i = 0; i < 100; i++) {
-            lobs2Delete.add(new LobBean(data));
-            lobs2Create.add(new LobBean(data));
+            lobs2Delete.add(new LobBean(createRandomBytes(1024 * 200)));
+            lobs2Create.add(new LobBean(createRandomBytes(1024 * 200)));
         }
-
         createLobs(csName, clName, lobs2Delete);
     }
 
@@ -57,37 +58,37 @@ public class Lob3476 implements StandTestInterface {
     }
 
     /**
-     * 1.在集合上并发执行以下操作： (1)不停地写lob，覆盖不同lob大小，例如：200k、500M (2)不停地读lob (3)不停地删除lob，并发的同时主节点断网
-     * 2.成功选出新主后，继续读写删lob
-     * 3.故障恢复后，检查lob数据
+     * 1.在集合上并发执行以下操作：
+     * (1)循环增删改查数据、循环读写Lob，其中lob大小取不同值，如200K/500k
+     * (2)循环读写删lob、循环增删改查数据操作
+     * 2.并发执行步骤1时，数据组主节点正常重启
+     * 3.故障恢复后，再次读写lob操作
      *
      * @throws ReliabilityException
      */
     @Test
     public void test() throws ReliabilityException {
-
         GroupMgr groupMgr = GroupMgr.getInstance();
-        String hostName = groupMgr.getGroupByName("group1").getMaster().hostName();
-        FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 0, 5);
-        String safeHosName = CommLib.getSafeCoordUrl(hostName);
+        NodeWrapper master = groupMgr.getGroupByName("group1").getMaster();
+        FaultMakeTask faultMakeTask = NodeRestart.getFaultMakeTask(master, 0, 3);
 
         LobTask createTask = LobTask.getCreateLobsTask(lobs2Create)
-                .setCsAndClName(csName, clName)
-                .setHostName(safeHosName);
+                .setCsAndClName(csName, clName);
+        createTask.setName("create lob task");
         LobTask readTask = LobTask.getReadLobsTask(lobs2Delete)
-                .setCsAndClName(csName, clName)
-                .setHostName(safeHosName);
+                .setCsAndClName(csName, clName);
+        readTask.setName("read lob task");
         LobTask deleteTask = LobTask.getDeleteLobsTask(lobs2Delete)
-                .setCsAndClName(csName, clName)
-                .setHostName(safeHosName);
+                .setCsAndClName(csName, clName);
+        deleteTask.setName("delete lob task");
 
         TaskMgr taskMgr = new TaskMgr(faultMakeTask);
         taskMgr.addTask(createTask);
         taskMgr.addTask(readTask);
         taskMgr.addTask(deleteTask);
-
         taskMgr.execute();
 
+        groupMgr.checkBusiness();
         assertTrue(MyUtil.isLobsAllCreated(csName, clName, lobs2Create));
         assertTrue(MyUtil.isLobsAllDelete(csName, clName, lobs2Delete));
         assertTrue(MyUtil.isLobNumInspectInGroup(csName, clName, "group1"));
@@ -98,4 +99,6 @@ public class Lob3476 implements StandTestInterface {
         assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group1", lobs));
         assertTrue(MyUtil.isLobMd5InspectInGroup(csName, clName, "group2", lobs));
     }
+
+
 }

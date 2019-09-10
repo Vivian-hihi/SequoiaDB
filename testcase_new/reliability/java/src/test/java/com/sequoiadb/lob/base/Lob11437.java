@@ -1,4 +1,4 @@
-package com.sequoiadb.lob;
+package com.sequoiadb.lob.base;
 
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -6,6 +6,10 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.lob.ClTask;
+import com.sequoiadb.lob.LobBean;
+import com.sequoiadb.lob.LobTask;
+import com.sequoiadb.lob.LobUtil;
 import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
