@@ -87,12 +87,7 @@ function _resetConfigOnline( PD_LOGGER, hostName, agentPort, mysqlPort,
    var configs = {
       'sequoiadb_conn_addr': 'localhost:11810',
       'sequoiadb_user': '',
-      'sequoiadb_password': '',
-      'sequoiadb_use_partition': 'ON',
-      'sequoiadb_use_bulk_insert': 'ON',
-      'sequoiadb_bulk_insert_size': 100,
-      'sequoiadb_use_autocommit': 'ON',
-      'sequoiadb_debug_log': 'OFF'
+      'sequoiadb_password': ''
    } ;
 
    result[FIELD_ERRNO] = SDB_OK ;
@@ -138,18 +133,13 @@ function _resetConfigOnline( PD_LOGGER, hostName, agentPort, mysqlPort,
 
 function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
 {
-   var oma ;
-   var original = null ;
-   var result = {} ;
-
-   result[FIELD_ERRNO] = SDB_OK ;
-   result[FIELD_DETAIL] = "" ;
+   var remote ;
 
    PD_LOGGER.log( PDEVENT, "Save mysql configs" ) ;
 
    try
    {
-      oma = new Oma( hostName, agentPort ) ;
+      remote = new Remote( hostName, agentPort ) ;
    }
    catch( e )
    {
@@ -160,43 +150,35 @@ function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
 
    try
    {
-      var config = {
-         'mysqld.sequoiadb_conn_addr': 'localhost:11810',
-         'mysqld.sequoiadb_user': '',
-         'mysqld.sequoiadb_password': '',
-         'mysqld.sequoiadb_use_partition': 'ON',
-         'mysqld.sequoiadb_use_bulk_insert': 'ON',
-         'mysqld.sequoiadb_bulk_insert_size': 100,
-         'mysqld.sequoiadb_use_autocommit': 'ON',
-         'mysqld.sequoiadb_debug_log': 'OFF'
-      } ;
-      var newConfig = {} ;
-      var options = { 'EnableType': true, 'StrDelimiter': false } ;
+      var disableList = [
+         'sequoiadb_user', 'sequoiadb_password', 'sequoiadb_use_partition',
+         'sequoiadb_use_bulk_insert', 'sequoiadb_bulk_insert_size',
+         'sequoiadb_replica_size', 'sequoiadb_selector_pushdown_threshold',
+         'sequoiadb_debug_log'
+      ] ;
+      var file = remote.getIniFile( path, SDB_INIFILE_FLAGS_MYSQL ) ;
 
-      original = oma.getIniConfigs( path, options ).toObj() ;
+      file.setValue( 'mysqld', 'sequoiadb_conn_addr', 'localhost:11810' ) ;
+      file.setValue( 'mysqld', 'sequoiadb_user', '' ) ;
+      file.setValue( 'mysqld', 'sequoiadb_password', '' ) ;
 
-      for ( var key in original )
+      for ( var index in disableList )
       {
-         newConfig[key] = original[key] ;
+         try
+         {
+            file.disableItem( 'mysqld', disableList[index] ) ;
+         }
+         catch( e )
+         {
+         }
       }
 
-      for ( var key in config )
-      {
-         newConfig[key] = config[key] ;
-      }
-
-      oma.setIniConfigs( newConfig, path, { 'StrDelimiter': null } ) ;
+      file.save() ;
    }
    catch( e )
    {
       var error = _getErrorResult( "Failed to modify config file, detail: ?" ) ;
       PD_LOGGER.log( PDERROR, error ) ;
-
-      if ( original != null )
-      {
-         oma.setIniConfigs( original, path, { 'StrDelimiter': null } ) ;
-      }
-
       throw error ;
    }
 }
