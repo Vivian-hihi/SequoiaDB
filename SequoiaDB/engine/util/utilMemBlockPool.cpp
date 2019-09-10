@@ -38,7 +38,7 @@
 *******************************************************************************/
 
 #include "utilMemBlockPool.hpp"
-#include "ossFile.hpp"
+#include "ossPrimitiveFileOp.hpp"
 #include "pd.hpp"
 
 extern BOOLEAN ossMemDebugEnabled ;
@@ -1118,10 +1118,9 @@ namespace engine
                             const CHAR *pBuff,
                             UINT32 buffLen )
    {
-      ossFile trapFile ;
+      ossPrimitiveFileOp trapFile ;
       CHAR fileName [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       UINT32 len = 0 ;
-      INT32 mode = OSS_WRITEONLY | OSS_CREATE ;
       INT32 rc = SDB_OK ;
 
       // build trace file name
@@ -1141,27 +1140,19 @@ namespace engine
          ossScopedLock lock( &s_dumpLatch ) ;
    
          // open file
-         rc = trapFile.open( fileName, mode, OSS_DEFAULTFILE ) ;
-         if ( rc )
+         trapFile.Open ( fileName ) ;
+         if ( !trapFile.isValid() )
          {
+            rc = SDB_IO ;
             goto error ;
          }
-   
-         rc = trapFile.seek( 0, OSS_SEEK_END ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-   
-         rc = trapFile.writeN( pBuff, (INT64)buffLen ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
+
+         trapFile.seekToEnd () ;
+         trapFile.Write( pBuff, (INT64)buffLen ) ;
       }
 
    done :
-      trapFile.close() ;
+      trapFile.Close() ;
       return rc ;
    error:
       goto done ;

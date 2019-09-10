@@ -1220,7 +1220,7 @@ private:
 
 BOOLEAN ossNetIpIsValid( const CHAR *ip, INT32 len ) ;
 
-BOOLEAN& ossGetSignalShieldFlag() ;
+INT32& ossGetSignalShieldFlag() ;
 INT32& ossGetPendingSignal() ;
 
 /*
@@ -1231,8 +1231,9 @@ class ossSignalShield
    public:
       ossSignalShield() ;
       ~ossSignalShield() ;
-      void close() ;
       void doNothing() {}
+   private:
+      void close() ;
 } ;
 
 #endif  //OSSUTIL_HPP_

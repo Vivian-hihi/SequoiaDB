@@ -2256,9 +2256,9 @@ BOOLEAN ossNetIpIsValid( const CHAR *ip, INT32 len )
 
 }
 
-BOOLEAN& ossGetSignalShieldFlag()
+INT32& ossGetSignalShieldFlag()
 {
-   static OSS_THREAD_LOCAL BOOLEAN s_signalShieldFlag = FALSE ;
+   static OSS_THREAD_LOCAL INT32 s_signalShieldFlag = 0 ;
    return s_signalShieldFlag ;
 }
 
@@ -2273,7 +2273,7 @@ INT32& ossGetPendingSignal()
 */
 ossSignalShield::ossSignalShield()
 {
-   ossGetSignalShieldFlag() = TRUE ;
+   ++ ossGetSignalShieldFlag() ;
 }
 
 ossSignalShield::~ossSignalShield()
@@ -2283,14 +2283,17 @@ ossSignalShield::~ossSignalShield()
 
 void ossSignalShield::close()
 {
-   ossGetSignalShieldFlag() = FALSE ;
+   -- ossGetSignalShieldFlag() ;
 
-#if defined (_LINUX)
-   if ( ossGetPendingSignal() > 0 &&
-        SIGPIPE != ossGetPendingSignal() )
+   if ( 0 == ossGetSignalShieldFlag() )
    {
-      ossPThreadKill( ossPThreadSelf(), ossGetPendingSignal() ) ;
-   }
+#if defined (_LINUX)
+      if ( ossGetPendingSignal() > 0 &&
+           SIGPIPE != ossGetPendingSignal() )
+      {
+         ossPThreadKill( ossPThreadSelf(), ossGetPendingSignal() ) ;
+      }
 #endif // _LINUX
-   ossGetPendingSignal() = 0 ;
+      ossGetPendingSignal() = 0 ;
+   }
 }
