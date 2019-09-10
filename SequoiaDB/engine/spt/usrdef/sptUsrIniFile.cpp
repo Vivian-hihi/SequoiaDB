@@ -770,7 +770,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = _parser.setCommentItem( name.c_str(), key.c_str(), TRUE ) ;
+      rc = _parser.setCommentItem( name.c_str(), key.c_str(), FALSE ) ;
       if ( rc )
       {
          _setError( detail, "Failed to enable item" ) ;
@@ -819,7 +819,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = _parser.setCommentItem( name.c_str(), key.c_str(), FALSE ) ;
+      rc = _parser.setCommentItem( name.c_str(), key.c_str(), TRUE ) ;
       if ( rc )
       {
          _setError( detail, "Failed to disable item" ) ;
