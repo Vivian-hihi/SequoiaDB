@@ -1,6 +1,6 @@
 #!/bin/bash
 trap "" 1 2 3 24
-eth=`ifconfig | grep 'eth' | awk '{print $1}'`
+eth=`route | grep default | awk '{print $8}'`
 ifconfig ${eth} down
 sleep $1 &
 wait

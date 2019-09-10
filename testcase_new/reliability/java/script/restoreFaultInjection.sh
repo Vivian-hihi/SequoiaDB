@@ -20,6 +20,12 @@ case ${faultname} in
                                  output=$(fiu-ctrl -c 'disable name=posix/mm/mmap' ${pid})
                                  echo ${pid}:${output}
                                  ;;
+    DiskLimit)                   check_params 1
+                                 svcname=$2
+                                 pid=$(lsof -nP -iTCP:${svcname} -sTCP:LISTEN | sed '1d' | awk '{print $2}')
+                                 output=$(fiu-ctrl -c 'disable name=posix/io/rw/write' ${pid})
+                                 echo ${pid}:${output}
+                                 ;;
     *)                           echo "${scriptname} can not match any fault injection with ${faultname}" >&2
                                  exit 2
                                  ;;
