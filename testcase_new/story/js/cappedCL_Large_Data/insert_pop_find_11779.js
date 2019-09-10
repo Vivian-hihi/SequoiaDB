@@ -1,4 +1,4 @@
-﻿/************************************
+/************************************
 *@Description:repeat insert/pop/find
 *@author:      zhaoyu
 *@createdate:  2017.7.14
