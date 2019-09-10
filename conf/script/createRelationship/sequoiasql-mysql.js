@@ -227,14 +227,13 @@ function _updateConfigOnline( PD_LOGGER, hostName, agentPort, mysqlPort,
 
 function _updateConfigOffline( PD_LOGGER, hostName, agentPort, path, config )
 {
-   var oma ;
-   var original = null ;
+   var remote ;
 
    PD_LOGGER.log( PDEVENT, "Save mysql configs" ) ;
 
    try
    {
-      oma = new Oma( hostName, agentPort ) ;
+      remote = new Remote( hostName, agentPort ) ;
    }
    catch( e )
    {
@@ -245,47 +244,22 @@ function _updateConfigOffline( PD_LOGGER, hostName, agentPort, path, config )
 
    try
    {
-      var newConfig = {
-         'mysqld.sequoiadb_conn_addr': 'localhost:11810',
-         'mysqld.sequoiadb_user': '',
-         'mysqld.sequoiadb_password': '',
-         'mysqld.sequoiadb_use_partition': 'ON',
-         'mysqld.sequoiadb_use_bulk_insert': 'ON',
-         'mysqld.sequoiadb_bulk_insert_size': 100,
-         'mysqld.sequoiadb_use_autocommit': 'ON',
-         'mysqld.sequoiadb_debug_log': 'OFF'
-      } ;
-      var options = { 'EnableType': true, 'StrDelimiter': false } ;
-
-      original = oma.getIniConfigs( path, options ).toObj() ;
-
-      for ( var key in original )
-      {
-         newConfig[key] = original[key] ;
-      }
+      var file = remote.getIniFile( path, SDB_INIFILE_FLAGS_MYSQL ) ;
 
       for ( var key in config )
       {
          if( key.indexOf( 'sequoiadb_' ) == 0 )
          {
-            var newKey = 'mysqld.' + key ;
-
-            newConfig[newKey] = config[key] ;
+            file.setValue( 'mysqld', key, config[key] ) ;
          }
       }
 
-      oma.setIniConfigs( newConfig, path, { 'StrDelimiter': null } ) ;
+      file.save() ;
    }
    catch( e )
    {
       var error = _getErrorResult( "Failed to modify config file, detail: ?" ) ;
       PD_LOGGER.log( PDERROR, error ) ;
-
-      if ( original != null )
-      {
-         oma.setIniConfigs( original, path, { 'StrDelimiter': null } ) ;
-      }
-
       throw error ;
    }
 }
