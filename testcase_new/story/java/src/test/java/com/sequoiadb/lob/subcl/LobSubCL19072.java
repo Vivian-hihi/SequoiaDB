@@ -2,7 +2,6 @@ package com.sequoiadb.lob.subcl;
 
 import java.util.Random;
 
-import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -22,17 +21,17 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
- * @Description seqDB-19071 :: 版本: 1 :: 并发主表去挂载子表和子表增删改lob
+ * @Description seqDB-19072 :: 版本: 1 :: 并发主表增删改lob和删除子表
  * @author luweikang
  * @Date 2019.8.26
  * @version 1.0
  */
 
-public class LobSubCL19071A extends SdbTestBase {
+public class LobSubCL19072 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
-    private String mainCLName = "mainCL_19071A";
-    private String subCLName = "subCL_19071A";
+    private String mainCLName = "mainCL_19072";
+    private String subCLName = "subCL_19072";
     private DBCollection mainCL = null;
     private int writeLobSize = 1024 * 1024;
     private byte[] lobBuff;
@@ -51,11 +50,14 @@ public class LobSubCL19071A extends SdbTestBase {
     @Test
     public void test() throws Exception {
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker(new DetachCLThread());
+        thread.addWorker(new DropCLThread());
         thread.addWorker(new PutLobThread());
         thread.run();
 
-        Assert.assertFalse(isAttachMainCL(sdb, csName, subCLName), "check sub cl attach when it is detach");
+        DBCursor cur = mainCL.listLobs();
+        if (cur.hasNext()) {
+            Assert.fail("The lob should not exist when subcl it is drop: " + cur.getNext().toString());
+        }
     }
 
     @AfterClass
@@ -75,17 +77,16 @@ public class LobSubCL19071A extends SdbTestBase {
         }
     }
 
-    private class DetachCLThread {
+    private class DropCLThread {
 
         @ExecuteOrder(step = 1)
-        private void detachCL() {
+        private void dropCL() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection maincl = db.getCollectionSpace(csName).getCollection(mainCLName);
                 try {
                     Thread.sleep(new Random().nextInt(1000));
                 } catch (InterruptedException e) {
                 }
-                maincl.detachCollection(csName + "." + subCLName);
+                db.getCollectionSpace(csName).dropCollection(subCLName);
             }
         }
     }
@@ -97,23 +98,11 @@ public class LobSubCL19071A extends SdbTestBase {
                 DBCollection maincl = db.getCollectionSpace(csName).getCollection(mainCLName);
                 LobSubUtils.createAndWriteLob(maincl, lobBuff);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -135) {
+                if (e.getErrorCode() != -23 && e.getErrorCode() != -135) {
                     throw e;
                 }
             }
         }
-    }
-
-    private boolean isAttachMainCL(Sequoiadb db, String csName, String subCLName) {
-        String clFullName = csName + "." + subCLName;
-        DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", clFullName), null,
-                null);
-        if (cursor.hasNext()) {
-            BasicBSONObject subCLInfo = (BasicBSONObject) cursor.getNext();
-            return subCLInfo.containsField("MainCLName");
-        }
-        cursor.close();
-        return false;
     }
 
 }

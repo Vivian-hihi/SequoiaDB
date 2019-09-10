@@ -15,7 +15,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.fulltext.utils.FullTextUtils;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
@@ -54,7 +53,7 @@ public class LobSubCL19071B extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thread = new ThreadExecutor(FullTextUtils.THREAD_TIMEOUT);
+        ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker(new DetachCLThread());
         thread.addWorker(new PutLobThread());
         thread.run();
