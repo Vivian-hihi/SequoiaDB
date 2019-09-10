@@ -47,10 +47,6 @@ using namespace bson ;
 
 namespace engine
 {
-   #define SPT_FILE_PROPERTY_FILENAME   "_filename"
-   #define FILE_TRANSFORM_UNIT_512K 524288
-   #define SPT_READ_LEN 1024
-
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, setValue )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, getValue )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, setSectionComment )
@@ -64,6 +60,7 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, disableItem )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, toString )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, toObj )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, save )
+JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, getFileName )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, getFlags )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, convertComment )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrIniFile, construct )
@@ -83,6 +80,7 @@ JS_BEGIN_MAPPING( _sptUsrIniFile, "IniFile" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_toString",             toString, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_toObj",                toObj, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_save",                 save, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_getFileName",          getFileName, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_getFlags",             getFlags, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_convertComment",       convertComment, 0 )
    JS_ADD_CONSTRUCT_FUNC( construct )
@@ -883,11 +881,47 @@ JS_MAPPING_END()
                                bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      string tmpFileName = _fileName + "~" ;
 
-      rc = _parser.save( _fileName.c_str() ) ;
+      {
+         BOOLEAN isExist = FALSE ;
+
+         rc = _exist( tmpFileName, isExist ) ;
+         if ( rc )
+         {
+            _setError( detail, "Failed to access temporary file" ) ;
+            goto error ;
+         }
+
+         if ( isExist )
+         {
+            rc = ossDelete( tmpFileName.c_str() ) ;
+            if ( rc )
+            {
+               _setError( detail, "Failed to remove temporary file" ) ;
+               goto error ;
+            }
+         }
+      }
+
+      rc = _parser.save( tmpFileName.c_str() ) ;
       if ( rc )
       {
          _setError( detail, "Failed to save file" ) ;
+         goto error ;
+      }
+
+      rc = ossDelete( _fileName.c_str() ) ;
+      if ( rc )
+      {
+         _setError( detail, "Failed to remove file" ) ;
+         goto error ;
+      }
+
+      rc = ossRenamePath( tmpFileName.c_str(), _fileName.c_str() ) ;
+      if ( rc )
+      {
+         _setError( detail, "Failed to rename file" ) ;
          goto error ;
       }
 
@@ -895,6 +929,14 @@ JS_MAPPING_END()
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrIniFile::getFileName( const _sptArguments &arg, _sptReturnVal &rval,
+                                      bson::BSONObj &detail )
+   {
+      rval.getReturnVal().setValue( _fileName ) ;
+
+      return SDB_OK ;
    }
 
    INT32 _sptUsrIniFile::getFlags( const _sptArguments &arg, _sptReturnVal &rval,
@@ -991,4 +1033,35 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << errMsg ) ;
       }
    }
+
+   INT32 _sptUsrIniFile::_exist( const string &path, BOOLEAN &isExist )
+   {
+      INT32 rc = SDB_OK ;
+
+      isExist = FALSE ;
+
+      rc = ossAccess( path.c_str() ) ;
+      if ( rc )
+      {
+         if ( SDB_FNE == rc )
+         {
+            rc = SDB_OK ;
+            isExist = FALSE ;
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+      else
+      {
+         isExist = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }

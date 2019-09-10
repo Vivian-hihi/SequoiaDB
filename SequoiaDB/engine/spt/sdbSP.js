@@ -756,7 +756,25 @@ Remote.prototype.getIniFile = function( filename, flags ) {
       flags = 0 ;
    }
 
-   ini = new IniFile( filename, flags, content ) ;
+   try
+   {
+      ini = new IniFile( filename, flags, content ) ;
+   }
+   catch( e )
+   {
+      if ( typeof( e ) == 'number' )
+      {
+         var msg = getLastErrMsg() ;
+         var result = {
+            'errno': e,
+            'description': msg,
+            'detail': msg
+         } ;
+         setLastErrObj( result ) ;
+      }
+
+      throw e ;
+   }
 
    ini._remote = this ;
 
@@ -3663,10 +3681,42 @@ IniFile.prototype.toObj = function() {
 IniFile.prototype.save = function() {
    if ( undefined != this._remote )
    {
-      var file = this._remote.getFile( filename, 0, SDB_FILE_WRITEONLY ) ;
-      var content = this._toString() ;
+      var file = this._remote.getFile( this._getFileName() ) ;
+      var tmpFileName = this._getFileName() + '~' ;
+      var content = '' ;
+
+      if ( file.exist( tmpFileName ) )
+      {
+         file.remove( tmpFileName ) ;
+      }
+
+      file.close() ;
+
+      file = this._remote.getFile( tmpFileName, 0, SDB_FILE_CREATE | SDB_FILE_WRITEONLY ) ;
+
+      try
+      {
+         content = this._toString() ;
+      }
+      catch( e )
+      {
+         if ( typeof( e ) == 'number' )
+         {
+            var msg = getLastErrMsg() ;
+            var result = {
+               'errno': e,
+               'description': msg,
+               'detail': msg
+            } ;
+            setLastErrObj( result ) ;
+         }
+
+         throw e ;
+      }
 
       file.write( content ) ;
+
+      file.move( tmpFileName, this._getFileName() ) ;
 
       file.close() ;
    }

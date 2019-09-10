@@ -91,6 +91,9 @@ namespace engine
       INT32 save( const _sptArguments &arg, _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;
 
+      INT32 getFileName( const _sptArguments &arg, _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
+
       INT32 getFlags( const _sptArguments &arg, _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
@@ -98,6 +101,7 @@ namespace engine
                             bson::BSONObj &detail ) ;
 
    private:
+      INT32 _exist( const string &path, BOOLEAN &isExist ) ;
       void _setError( bson::BSONObj &detail, const CHAR *errMsg ) ;
 
    private:
