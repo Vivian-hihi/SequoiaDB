@@ -38,7 +38,7 @@ public class MyContextClosedHandler implements ApplicationListener<ContextClosed
             if (!pool.awaitTermination(5, TimeUnit.SECONDS)){
                 pool.shutdownNow();
                 if (!pool.awaitTermination(5, TimeUnit.SECONDS)){
-                    System.err.println("Pool did not terminate in 20s.");
+                    System.err.println("Pool did not terminate in 10s.");
                 }
             }
         }catch (InterruptedException e){
