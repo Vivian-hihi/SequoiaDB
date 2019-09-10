@@ -203,7 +203,7 @@ typedef OSS_MEM_SORTMAP::const_iterator         OSS_MEM_SORTMAP_CIT ;
 class _ossMemTrackCB
 {
    private:
-      ossSpinXLatch              _memTrackMutex ;
+      ossSpinRecursiveXLatch     _memTrackMutex ;
       OSS_MEM_TRACKMAP           _memTrackMap ;
       OSS_MEM_STATMAP            _memStatMap ;
       CHAR                       _name[ OSS_MEM_TRACKCB_NAME_SZ + 1 ] ;
