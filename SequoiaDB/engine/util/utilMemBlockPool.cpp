@@ -1189,6 +1189,8 @@ namespace engine
          len = utilGetGlobalMemPool()->dump( pBuff,
                                              UTIL_MEMPOOL_DUMP_BUFFSIZE ) ;
          utilDumpInfo2File( pPath, UTIL_POOL_MEM_STAT_FILE, pBuff, len ) ;
+
+         SDB_OSS_FREE( pBuff ) ;
       }
    }
 
