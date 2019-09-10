@@ -328,8 +328,7 @@ elif "win32" == guess_os:
         winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
 
     env.Append( LIBS=Split(winLibString) )
-    env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /TP /errorReport:none /D_CRT_SECURE_NO_DEPRECATE " )
-    env.Append( LINKFLAGS=" /debug " )
+    env.Append( CPPFLAGS=" /MT /Z7 /TP /errorReport:none /D_CRT_SECURE_NO_DEPRECATE " )
     env.Append( CPPFLAGS=" /Od " )
 
 else:
