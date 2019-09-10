@@ -30,7 +30,7 @@ import com.sequoiadb.transaction.common.TransferTh;
  * @date 2019-7-17
  *
  */
-@Test(groups = "rcauto")
+@Test(groups = "rcauto", enabled = false)
 public class Transaction18835 extends SdbTestBase {
     private Sequoiadb sdb;
     private String hashCLName = "cl18835_hash";
@@ -70,7 +70,7 @@ public class Transaction18835 extends SdbTestBase {
         return new Object[][] { { hashCLName }, { mainCLName } };
     }
 
-    @Test(dataProvider = "getCL")
+    @Test(dataProvider = "getCL", enabled = false)
     public void test(String clName) throws ReliabilityException, InterruptedException {
         // 正常重启一个数据主节点
         TaskMgr taskMgr = new TaskMgr();
