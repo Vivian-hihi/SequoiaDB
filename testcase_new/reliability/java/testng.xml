@@ -45,6 +45,9 @@
          <package name="com.sequoiadb.cappedCL.killnode" />
          <package name="com.sequoiadb.cappedCL.restartnode" />
          <package name="com.sequoiadb.rename" />
+         <!-- lob用例未调试完成，待调试 -->
+         <!-- <package name="com.sequoiadb.lob.base" /> -->
+         <package name="com.sequoiadb.lob.subcl" />
          <!--全文索引用例暂时屏蔽，待问题单SEQUOIADBMAINSTREAM-4325修复后再统一放开-->
 <!--          <package name="com.sequoiadb.fulltext.killnode" />
          <package name="com.sequoiadb.fulltext.restartnode" /> -->
