@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.bson.types.ObjectId;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -16,6 +17,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -48,16 +50,14 @@ public class RewriteLob13261_18993 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        } catch (BaseException e) {
-            Assert.assertTrue(false, "connect %s failed," + SdbTestBase.coordUrl + e.getMessage());
-        }
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024," + "ReplSize:0,Compressed:true}";
         RandomWriteLobUtil.createCL(cs, clName, clOptions);
-        LobSubUtils.createMainCLAndAttachCL(sdb, SdbTestBase.csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(sdb)) {
+            LobSubUtils.createMainCLAndAttachCL(sdb, SdbTestBase.csName, mainCLName, subCLName);
+        }
 
         // put lob
         int writeSize = 1024 * 1024 * 2;
@@ -66,6 +66,9 @@ public class RewriteLob13261_18993 extends SdbTestBase {
 
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) {
+        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
         DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
         ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, testLobBuff);
         int offset1 = 1024 * 1024 * 1;
@@ -113,9 +116,17 @@ public class RewriteLob13261_18993 extends SdbTestBase {
             if (cs.isCollectionExist(clName)) {
                 cs.dropCollection(clName);
             }
-            sdb.close();
-        } catch (BaseException e) {
-            Assert.assertTrue(false, "clean up failed:" + e.getMessage());
+            if (cs.isCollectionExist(mainCLName)) {
+                cs.dropCollection(mainCLName);
+            }
+            if (cs.isCollectionExist(subCLName)) {
+                cs.dropCollection(subCLName);
+            }
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
+
         }
     }
 

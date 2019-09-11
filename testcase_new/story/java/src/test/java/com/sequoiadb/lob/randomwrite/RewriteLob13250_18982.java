@@ -3,6 +3,7 @@ package com.sequoiadb.lob.randomwrite;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -14,6 +15,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -51,7 +53,9 @@ public class RewriteLob13250_18982 extends SdbTestBase {
         cs = sdb.createCollectionSpace(csName, csOpt);
         BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
         cs.createCollection(clName, clOpt);
-        LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(sdb)) {
+            LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
+        }
     }
 
     @DataProvider
@@ -90,6 +94,9 @@ public class RewriteLob13250_18982 extends SdbTestBase {
 
     @Test(dataProvider = "rangeProvider")
     public void testLob(String clName, LobPart part) {
+        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
         byte[] data = new byte[0];
         DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
         ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);

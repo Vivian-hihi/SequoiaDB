@@ -3,6 +3,7 @@ package com.sequoiadb.lob.randomwrite;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -13,6 +14,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -41,6 +43,9 @@ public class RewriteLob18992 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("is standalone skip testcase");
+        }
     }
 
     @Test(dataProvider = "pageSizeProvider")

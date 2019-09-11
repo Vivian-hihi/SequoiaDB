@@ -12,6 +12,7 @@ import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -23,6 +24,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -59,7 +61,9 @@ public class RewriteLob13271_19013 extends SdbTestBase {
         cs = db.getCollectionSpace(SdbTestBase.csName);
         cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
 
-        LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(db)) {
+            LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        }
     }
 
     /**
@@ -69,6 +73,9 @@ public class RewriteLob13271_19013 extends SdbTestBase {
      */
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) throws InterruptedException {
+        if (CommLib.isStandAlone(db) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
         int lobsize = 1024 * 1024 * 20;
         byte[] expectBytes = getRandomBytes(lobsize);
         DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);

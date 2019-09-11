@@ -1,5 +1,9 @@
 package com.sequoiadb.lob.randomwrite;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
@@ -14,41 +18,42 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- * @Description seqDB-13245 : 写lob超过锁定范围 seqDB-18977 主子表写lob超过锁定范围
+ * @Description seqDB-13273:并发读lob，其中读数据范围有交集 seqDB-19015 主子表并发读lob，其中读数据范围有交集
  * @author laojingtang
  * @UpdateAuthor wuyan
- * @Date 2017.12.1
- * @UpdateDate 2019.07.17
+ * @Date 2017.11.22
+ * @UpdateDate 2018.08.26
  * @version 1.10
  */
-public class RewriteLob13245_18977 extends SdbTestBase {
+public class RewriteLob13273_19015 extends SdbTestBase {
     private Sequoiadb db = null;
     private CollectionSpace cs = null;
-    private String clName = "lobcl_13245";
-    private String mainCLName = "maincl_18977";
-    private String subCLName = "subcl_18977";
+    private String clName = "lob_13273";
+    private String mainCLName = "mainCL_19015";
+    private String subCLName = "subCL_19015";
 
     @DataProvider(name = "clNameProvider", parallel = false)
     public Object[][] generateCLName() {
         return new Object[][] {
-                // the parameter is clname
-                // testcase:13245
+                // the parameter is clName
+                // testcase:13273
                 new Object[] { clName },
-                // testcase:18977
+                // testcase:19015
                 new Object[] { mainCLName } };
     }
 
     @BeforeClass
     public void setUp() {
-        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db = new Sequoiadb(coordUrl, "", "");
+        if (CommLib.isStandAlone(db)) {
+            throw new SkipException("is standalone skip testcase");
+        }
         cs = db.getCollectionSpace(SdbTestBase.csName);
         cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
         if (!CommLib.isStandAlone(db)) {
@@ -57,32 +62,37 @@ public class RewriteLob13245_18977 extends SdbTestBase {
     }
 
     @Test(dataProvider = "clNameProvider")
-    public void testLob(String clName) {
+    public void testLob13274(String clName) throws InterruptedException {
         if (CommLib.isStandAlone(db) && clName.equals(mainCLName)) {
             throw new SkipException("is standalone skip testcase!");
         }
+        int lobsize = 1024 * 1024 * 2;
+        byte[] expectBytes = RandomWriteLobUtil.getRandomBytes(lobsize);
         DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-        ObjectId id = RandomWriteLobUtil.createEmptyLob(dbcl);
+        DBLob lob = dbcl.createLob();
+        final ObjectId oid = lob.getID();
+        lob.write(expectBytes);
+        lob.close();
 
-        int lobSize = 1024 * 50;
-        byte[] lobBytes = RandomWriteLobUtil.getRandomBytes(lobSize);
-        long offset = 0;
-        long lockLength = lobSize - 1;
-        try (DBLob lob = dbcl.openLob(id, DBLob.SDB_LOB_WRITE)) {
-            lob.lock(offset, lockLength);
-            try {
-                lob.write(lobBytes);
-                Assert.fail("write lob size exceed the lock length should fail!");
-            } catch (BaseException e) {
-                if (e.getErrorCode() != SDBError.SDB_INVALIDARG.getErrorCode())
-                    throw e;
-            }
-        }
+        List<DbLobReadTask> lobTasks = new ArrayList<>(10);
 
-        // check lob content,the actual lob size is 0
-        try (DBLob lob = dbcl.openLob(id)) {
-            byte[] actual = RandomWriteLobUtil.readLob(lob);
-            Assert.assertEquals(actual.length, 0);
+        int begin = 1024 * 10;
+        int end = 1024 * 100;
+        for (int i = 1; i <= 10; i++)
+            lobTasks.add(new DbLobReadTask(SdbTestBase.csName, clName, begin * i, end * i, oid));
+
+        for (DbLobReadTask lobTask : lobTasks)
+            lobTask.start();
+        for (DbLobReadTask lobTask : lobTasks)
+            lobTask.join();
+
+        for (DbLobReadTask lobTask : lobTasks) {
+            Assert.assertTrue(lobTask.isTaskSuccess(), lobTask.getErrorMsg());
+            int b = lobTask.getBegin();
+            int length = lobTask.getLength();
+            byte[] expect = Arrays.copyOfRange(expectBytes, b, b + length);
+            byte[] actual = lobTask.getResult();
+            RandomWriteLobUtil.assertByteArrayEqual(actual, expect);
         }
     }
 
@@ -99,9 +109,9 @@ public class RewriteLob13245_18977 extends SdbTestBase {
                 cs.dropCollection(subCLName);
             }
         } finally {
-            if (db != null) {
-                db.close();
-            }
+            db.close();
         }
+
     }
+
 }

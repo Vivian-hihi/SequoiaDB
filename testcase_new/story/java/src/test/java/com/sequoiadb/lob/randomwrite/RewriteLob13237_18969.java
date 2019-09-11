@@ -5,6 +5,7 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -16,6 +17,7 @@ import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -49,11 +51,16 @@ public class RewriteLob13237_18969 extends SdbTestBase {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = db.getCollectionSpace(SdbTestBase.csName);
         cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-        LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(db)) {
+            LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        }
     }
 
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) {
+        if (CommLib.isStandAlone(db) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
         DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
         ObjectId id = RandomWriteLobUtil.createEmptyLob(dbcl);
 

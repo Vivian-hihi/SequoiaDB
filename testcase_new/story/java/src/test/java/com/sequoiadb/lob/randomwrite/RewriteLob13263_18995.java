@@ -8,6 +8,7 @@ import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -21,6 +22,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -62,55 +64,47 @@ public class RewriteLob13263_18995 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
 
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cs.createCollection(clName, clOpt);
-
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+        cs.createCollection(clName, clOpt);
+        if (!CommLib.isStandAlone(sdb)) {
             LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
-
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
         }
     }
 
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) {
-        try {
-            int lobSize = 8 * 1024 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-
-            expData = data;
-            List<LobPart> parts = new ArrayList<>(threadNum);
-            final int partSize = lobSize / threadNum;
-            for (int i = 0; i < threadNum; ++i) {
-                parts.add(new LobPart(partSize * i, partSize));
-            }
-
-            List<WriteLobThread> thrdList = new ArrayList<>(threadNum);
-            for (int i = 0; i < threadNum; ++i) {
-                WriteLobThread wLobThrd = new WriteLobThread(clName, oid, parts.get(i));
-                wLobThrd.start();
-                thrdList.add(wLobThrd);
-            }
-            for (int i = 0; i < threadNum; ++i) {
-                Assert.assertTrue(thrdList.get(i).isSuccess(), thrdList.get(i).getErrorMsg());
-            }
-
-            Assert.assertNotEquals(successTimes.get(), 0, "nobody succeed");
-            byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
-            RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
-        } catch (BaseException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
         }
+        int lobSize = 8 * 1024 * 1024;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+
+        expData = data;
+        List<LobPart> parts = new ArrayList<>(threadNum);
+        final int partSize = lobSize / threadNum;
+        for (int i = 0; i < threadNum; ++i) {
+            parts.add(new LobPart(partSize * i, partSize));
+        }
+
+        List<WriteLobThread> thrdList = new ArrayList<>(threadNum);
+        for (int i = 0; i < threadNum; ++i) {
+            WriteLobThread wLobThrd = new WriteLobThread(clName, oid, parts.get(i));
+            wLobThrd.start();
+            thrdList.add(wLobThrd);
+        }
+        for (int i = 0; i < threadNum; ++i) {
+            Assert.assertTrue(thrdList.get(i).isSuccess(), thrdList.get(i).getErrorMsg());
+        }
+
+        Assert.assertNotEquals(successTimes.get(), 0, "nobody succeed");
+        byte[] actData = RandomWriteLobUtil.readLob(cl, oid);
+        RandomWriteLobUtil.assertByteArrayEqual(actData, expData, "lob data is wrong");
     }
 
     @AfterClass

@@ -2,6 +2,7 @@ package com.sequoiadb.lob.randomwrite;
 
 import org.bson.types.ObjectId;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -14,6 +15,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -47,11 +49,16 @@ public class RewriteLob13249_18981 extends SdbTestBase {
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024}";
         RandomWriteLobUtil.createCL(cs, clName, clOptions);
-        LobSubUtils.createMainCLAndAttachCL(sdb, SdbTestBase.csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(sdb)) {
+            LobSubUtils.createMainCLAndAttachCL(sdb, SdbTestBase.csName, mainCLName, subCLName);
+        }
     }
 
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) {
+        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
         int writeSize = 261120;
         byte[] testLobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
         DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);

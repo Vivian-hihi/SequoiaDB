@@ -123,9 +123,16 @@ public class RewriteLob13270_19002 extends SdbTestBase {
             if (cs.isCollectionExist(clName)) {
                 cs.dropCollection(clName);
             }
-            sdb.close();
-        } catch (BaseException e) {
-            Assert.assertTrue(false, "clean up failed:" + e.getMessage());
+            if (cs.isCollectionExist(mainCLName)) {
+                cs.dropCollection(mainCLName);
+            }
+            if (cs.isCollectionExist(subCLName)) {
+                cs.dropCollection(subCLName);
+            }
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
         }
     }
 
