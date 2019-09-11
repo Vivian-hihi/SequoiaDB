@@ -1,5 +1,5 @@
 EnsureSConsVersion( 1, 1, 0 )
-  
+
 import platform
 import os
 import re
@@ -44,7 +44,7 @@ def GuessArch():
   elif id == 'ppc64' :
     return 'ppc64'
   elif id == 'ppc64le' :
-    return 'ppc64le'  
+    return 'ppc64le'
   else:
     return None
 
@@ -61,7 +61,7 @@ def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
     if dest is None:
         dest = name
 
-    AddOption( "--" + name , 
+    AddOption( "--" + name ,
                dest=dest,
                type="string",
                nargs=nargs,
@@ -69,9 +69,9 @@ def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
                help=help )
 
     options[name] = { "help" : help ,
-                      "nargs" : nargs , 
+                      "nargs" : nargs ,
                       "contibutesToVariantDir" : contibutesToVariantDir ,
-                      "dest" : dest } 
+                      "dest" : dest }
 
 def get_option( name ):
     return GetOption( name )
@@ -135,6 +135,11 @@ debugBuild = has_option( "debugBuildAndLogging" )
 testBuild = has_option( "testpro" )
 clienttestBuild = has_option( "clienttestpro" )
 
+if debugBuild:
+   build_type = 'debug'
+else:
+    build_type = 'release'
+
 phpedition = ""
 if testBuild or clienttestBuild :
     print "build test program file ! "
@@ -197,8 +202,8 @@ if guess_os == "win32":
         else:
             env.Append( LIBPATH=[join(lib_dir,'win32')] )
             env.Append( CPPDEFINES=[ "_USE_32BIT_TIME_T=1"])
-            env.Append( LIBPATH=[join(boost_lib_dir,'win32')] )
-            env.Append( LIBPATH=[join(ssl_lib_dir,'win32')] )
+            env.Append( LIBPATH=[join(boost_lib_dir,'win32', build_type)] )
+            env.Append( LIBPATH=[join(ssl_lib_dir,'win32', build_type)] )
 
     if guess_ver == "10":
         env.Append( CPPPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
@@ -246,27 +251,27 @@ elif guess_os == "linux":
     if guess_arch == "ia64":
         env.Append( LIBPATH="/usr/lib64")
         env.Append( LIBPATH="/lib64")
-        env.Append( LIBPATH=[join(boost_lib_dir,'linux64')] )
-        env.Append( LIBPATH=[join(ssl_lib_dir,'linux64')] )
+        env.Append( LIBPATH=[join(boost_lib_dir,'linux64', build_type)] )
+        env.Append( LIBPATH=[join(ssl_lib_dir,'linux64', build_type)] )
     elif guess_arch == "ia32":
         env.Append( LIBPATH="/usr/lib")
         env.Append( LIBPATH="/lib")
-        env.Append( LIBPATH=[join(boost_lib_dir,'linux32')] )
-        env.Append( LIBPATH=[join(ssl_lib_dir,'linux32')] )
+        env.Append( LIBPATH=[join(boost_lib_dir,'linux32', build_type)] )
+        env.Append( LIBPATH=[join(ssl_lib_dir,'linux32', build_type)] )
     elif guess_arch == 'ppc64':
         if phpedition.split( '.' )[0] == '7':
             env.Append ( CPPDEFINES=[ "WORDS_BIGENDIAN" ] )
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
         env.Append( LIBPATH="/usr/lib64")
         env.Append( LIBPATH="/lib64")
-        env.Append( LIBPATH=[join(boost_lib_dir,'ppclinux64')] )
-        env.Append( LIBPATH=[join(ssl_lib_dir,'ppclinux64')] )
+        env.Append( LIBPATH=[join(boost_lib_dir,'ppclinux64', build_type)] )
+        env.Append( LIBPATH=[join(ssl_lib_dir,'ppclinux64', build_type)] )
     elif guess_arch == 'ppc64le':
         env.Append( CPPDEFINES=[ "SDB_LITTLE_ENDIAN" ] )
         env.Append( LIBPATH="/usr/lib64")
         env.Append( LIBPATH="/lib64")
-        env.Append( LIBPATH=[join(boost_lib_dir,'ppclelinux64')] )
-        env.Append( LIBPATH=[join(ssl_lib_dir,'ppclelinux64')] )
+        env.Append( LIBPATH=[join(boost_lib_dir,'ppclelinux64', build_type)] )
+        env.Append( LIBPATH=[join(ssl_lib_dir,'ppclelinux64', build_type)] )
     if testBuild or clienttestBuild :
        winLibString = "sdbcpp"
        env.Append( LIBS=Split(winLibString) )

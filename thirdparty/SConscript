@@ -139,7 +139,7 @@ class BoostCompiler(CompilerBase):
                         '--with-libraries=system,filesystem,thread,'
                         'program_options,chrono --prefix=./')
         self.append_cmd('./b2',
-                        'link=static threading=multi ' +
+                        '-d0 link=static threading=multi ' +
                         'variant=' + self.build_type +
                         ' address-model=' + str(address_mode) +
                         ' toolset=gcc runtime-link=static'
@@ -175,8 +175,9 @@ class SpiderMonkeyCompiler(CompilerBase):
         if debugBuild:
             config_args += ' --enable-debug --disable-optimize'
         self.append_cmd('cd ' + self.build_dir + ' && ../configure ' +
-                        silent_opt, config_args)
-        self.append_cmd('cd ' + self.build_dir + '&& make ' + silent_opt)
+                        comm_config_opt, config_args)
+        self.append_cmd('cd ' + self.build_dir + '&& make -j ' +
+                        str(comm_job_num) + ' ' + comm_build_opt)
 
     def archive(self):
         shutil.copy(os.path.join(self.build_dir, 'libjs_static.a'),
@@ -218,7 +219,7 @@ class SslCompiler(CompilerBase):
         config_exec = os.path.join(self.src_root, config_file)
         os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
         self.append_cmd(config_exec, config_args)
-        self.append_cmd('make ' + silent_opt)
+        self.append_cmd('make ' + comm_build_opt)
 
     def archive(self):
         shutil.copy(os.path.join(self.src_root, 'libcrypto.a'),
@@ -235,13 +236,13 @@ class SnappyCompiler(CompilerBase):
         return snappy_lib_dir
 
     def _init_linux_cmds(self, arch):
-        args = silent_opt
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
 
     def _init_win32_cmds(self, arch):
-        args = silent_opt
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
@@ -255,13 +256,13 @@ class LZ4Compiler(CompilerBase):
         return lz4_lib_dir
 
     def _init_linux_cmds(self, arch):
-        args = silent_opt
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
 
     def _init_win32_cmds(self, arch):
-        args = silent_opt
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
@@ -275,13 +276,13 @@ class ZlibCompiler(CompilerBase):
         return zlib_lib_dir
 
     def _init_linux_cmds(self, arch):
-        args = silent_opt
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
 
     def _init_win32_cmds(self, arch):
-        args = silent_opt
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
@@ -312,10 +313,13 @@ if release:
 else:
     build_type = 'debug'
 
+comm_config_opt = ''
+comm_build_opt = ''
+comm_job_num = int(GetOption('num_jobs'))
 
-silent_opt = ''
 if GetOption("silent"):
-    silent_opt = '--silent'
+    comm_config_opt += ' --silent'
+    comm_build_opt += ' --silent'
 for component in components:
     os.chdir(component.get_src_root())
     # None means no error happened.
