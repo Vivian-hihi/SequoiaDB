@@ -113,8 +113,7 @@ public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
                     System.out.println("---end to put " + i);
                 }
             } catch (BaseException e) {
-                System.out.println("---e=" + e.getErrorCode());
-                if (e.getErrorCode() != -134 && e.getErrorCode() != -79) {
+                if (e.getErrorCode() != -81 && e.getErrorCode() != -79 && e.getErrorCode() != -134) {
                     throw e;
                 }
             }
@@ -139,7 +138,7 @@ public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
         BSONObject clOptions = new BasicBSONObject();
         clOptions.put("ShardingKey", new BasicBSONObject("date", 1));
         clOptions.put("ShardingType", "hash");
-        clOptions.put("AutoSplit", true);
+        clOptions.put("Group", groupName);
         cs.createCollection(subCLName, clOptions);
 
         BSONObject bound = new BasicBSONObject();

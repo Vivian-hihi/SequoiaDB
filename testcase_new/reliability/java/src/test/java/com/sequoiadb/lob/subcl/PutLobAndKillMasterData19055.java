@@ -137,7 +137,7 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
         BSONObject clOptions = new BasicBSONObject();
         clOptions.put("ShardingKey", new BasicBSONObject("date", 1));
         clOptions.put("ShardingType", "hash");
-        clOptions.put("AutoSplit", true);
+        clOptions.put("Group", groupName);
         cs.createCollection(subCLName, clOptions);
 
         BSONObject bound = new BasicBSONObject();
@@ -157,7 +157,24 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
     }
 
     private void checkPutLobResult(DBCollection dbcl) {
-        // 检查故障前创建lob结果
+        // 检查故障前创建lob结果,主节点故障后，备节点升主后之前未同步的lob会丢失,如果lob不存在则重新插入
+        for (ObjectId lobId : lobIds) {
+            try {
+                byte[] data = new byte[lobBuff.length];
+                DBLob rlob = dbcl.openLob(lobId);
+                rlob.read(data);
+                rlob.close();
+            } catch (BaseException e) {
+                if (e.getErrorCode() == -4) {
+                    DBLob wlob = dbcl.createLob(lobId);
+                    wlob.write(lobBuff);
+                    wlob.close();
+                } else {
+                    Assert.fail("write lob fail! loboid is " + lobId);
+                }
+            }
+        }
+
         LobUtil.checkLobMD5(mainCL, lobIds, lobBuff);
         checkLobNums(mainCL, lobIds);
         // 再次创建lob，读取lob信息正确
