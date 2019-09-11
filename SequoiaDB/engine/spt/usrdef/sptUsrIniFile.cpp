@@ -562,6 +562,7 @@ JS_MAPPING_END()
       {
          if ( FALSE == arg.isBoolean( 3 ) )
          {
+            rc = SDB_INVALIDARG ;
             detail = BSON( SPT_ERR << "Pos must be boolean" ) ;
             goto error ;
          }
@@ -638,6 +639,7 @@ JS_MAPPING_END()
       {
          if ( FALSE == arg.isBoolean( 2 ) )
          {
+            rc = SDB_INVALIDARG ;
             detail = BSON( SPT_ERR << "Pos must be boolean" ) ;
             goto error ;
          }
