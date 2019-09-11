@@ -247,7 +247,7 @@ class MdocmlCompiler(CompilerBase):
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
-                    
+
 class SnappyCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "snappy", src_root)
@@ -324,10 +324,10 @@ if "win32" != guess_os:
     # Auto compilation of boost, spider monkey and ssl is not supported on
     # windows for now.
     boost_compiler = BoostCompiler('boost')
-    spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
+    # spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
     ssl_compiler = SslCompiler('crypto/openssl-1.0.1c')
     components.append(boost_compiler)
-    components.append(spidermonkey_compiler)
+    # components.append(spidermonkey_compiler)
     components.append(ssl_compiler)
 
 if release:
@@ -337,7 +337,8 @@ else:
 
 comm_config_opt = ''
 comm_build_opt = ''
-comm_job_num = int(GetOption('num_jobs'))
+# comm_job_num = int(GetOption('num_jobs'))
+comm_job_num = 1
 
 if GetOption("silent"):
     comm_config_opt += ' --silent'
