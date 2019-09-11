@@ -1400,7 +1400,9 @@ public class ObjectServiceImpl implements ObjectService {
                 LinkedHashSet<Part> partList = result.getPartList();
                 int count = 0;
                 while (partsCursor.hasNext() && count < maxNumber) {
-                    partList.add(new Part(partsCursor.getNext()));
+                    Part part = new Part(partsCursor.getNext());
+                    part.setEtag("\"" + part.getEtag() + "\"");
+                    partList.add(part);
                     count++;
                 }
 
@@ -1599,7 +1601,7 @@ public class ObjectServiceImpl implements ObjectService {
                         "partNumber " + partNumber + " is not exist.");
             }
 
-            if (!part.getEtag().equals(locPartArray.get(partNumber-1).getEtag())){
+            if (!trimQuotes(part.getEtag()).equals(locPartArray.get(partNumber-1).getEtag())){
                 throw new S3ServerException(S3Error.PART_INVALID_PART,
                         "the tag not matched. partNumber:" + partNumber +
                                 " . reqEtag:" + part.getEtag() +
@@ -1622,6 +1624,18 @@ public class ObjectServiceImpl implements ObjectService {
 
             lastPartNumber = partNumber;
         }
+    }
+
+    private String trimQuotes(String str){
+        if (str == null || str.length() <= 32){
+            return str;
+        }
+
+        if (str.startsWith("\"")){
+            return str.substring(1, str.length() - 1);
+        }
+
+        return str;
     }
 
     private void getLocalPartList(ConnectionDao connection, long uploadId, List<Part> partArray, List<Part> baseArray)

@@ -127,13 +127,13 @@ public class MultiPartUploadController {
             }
 
             InputStream body = httpServletRequest.getInputStream();
-            Long realContenLength = 0L;
+            Long realContentLength = 0L;
             if (httpServletRequest.getHeader("x-amz-decoded-content-length") != null) {
                 body = new S3InputStreamReaderChunk(httpServletRequest.getInputStream());
-                realContenLength = Long.parseLong(httpServletRequest.getHeader("x-amz-decoded-content-length"));
+                realContentLength = Long.parseLong(httpServletRequest.getHeader("x-amz-decoded-content-length"));
             } else {
                 if (httpServletRequest.getHeader("content-length") != null) {
-                    realContenLength = Long.parseLong(httpServletRequest.getHeader("content-length"));
+                    realContentLength = Long.parseLong(httpServletRequest.getHeader("content-length"));
                 }
             }
             String eTag = objectService.uploadPart(bucket,
@@ -142,7 +142,7 @@ public class MultiPartUploadController {
                     partNumber,
                     contentMD5,
                     body,
-                    realContenLength);
+                    realContentLength);
 
             HttpHeaders headers = new HttpHeaders();
             if (eTag != null) {
@@ -152,7 +152,7 @@ public class MultiPartUploadController {
 
             logger.debug("upload part success. bucketName={}, objectName={}, uploadId={}, " +
                             "partNumber={}, eTag={}, realContentLength={}",
-                    bucketName, objectName, uploadId, partNumber, eTag, realContenLength);
+                    bucketName, objectName, uploadId, partNumber, eTag, realContentLength);
             return ResponseEntity.ok()
                     .headers(headers)
                     .build();
