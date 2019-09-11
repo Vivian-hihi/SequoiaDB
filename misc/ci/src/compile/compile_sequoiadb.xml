@@ -160,15 +160,25 @@
    <target name="compile_pg_connector">
       <var name="src_dir" value="${srccode_dir}/driver/postgresql" />
       
+      <if>
+         <equals arg1="${IS_DEBUG}" arg2="true"/>
+         <then>
+            <var name="cmd_make" value="ver=debug"/>
+         </then>
+         <else>
+            <var name="cmd_make" value="ver=release"/>
+         </else>
+      </if>
+	  
       <!--compile--> 
       <exec executable="make" dir="${src_dir}" failonerror="true" logError="true">
-         <arg line="clean" />
+         <arg line=" clean" />
       </exec>
       <exec executable="make" dir="${src_dir}" failonerror="true" logError="true">
-         <arg line="local" />
+         <arg line=" ${cmd_make} local" />
       </exec>
       <exec executable="make" dir="${src_dir}" failonerror="true" logError="true">
-         <arg line="all" />
+         <arg line=" ${cmd_make} all" />
       </exec>
       
       <!--get svn version--> 
