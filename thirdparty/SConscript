@@ -11,6 +11,7 @@ Import("release")
 Import("debugBuild")
 Import("boost_lib_dir")
 Import("ssl_lib_dir")
+Import("mdocml_lib_dir")
 Import("zlib_lib_dir")
 Import("lz4_lib_dir")
 Import("snappy_lib_dir")
@@ -138,12 +139,11 @@ class BoostCompiler(CompilerBase):
         self.append_cmd('./bootstrap.sh',
                         '--with-libraries=system,filesystem,thread,'
                         'program_options,chrono --prefix=./')
-        self.append_cmd('./b2',
-                        '-d0 link=static threading=multi ' +
-                        'variant=' + self.build_type +
-                        ' address-model=' + str(address_mode) +
-                        ' toolset=gcc runtime-link=static'
-                        ' cxxflags="-fPIC"')
+        config_args = '-d0 link=static threading=multi variant={} address-model={} toolset=gcc runtime-link=static cxxflags="-fPIC"'
+        config_args = config_args.format(self.build_type, str(address_mode))
+        if "arm64" == self.arch:
+            config_args += ' architecture=arm'
+        self.append_cmd('./b2', config_args)
 
 
 class SpiderMonkeyCompiler(CompilerBase):
@@ -168,12 +168,14 @@ class SpiderMonkeyCompiler(CompilerBase):
         self.append_cmd('cd src && autoconf2.13')
         config_args = ''
         if 'linux' == self.platform:
-            if 'ia32' == self.arch or 'ia64' == self.arch:
+            if 'ia32' == self.arch or 'ia64' == self.arch or 'arm64' == self.arch:
                 config_args = '--disable-methodjit'
             elif 'ppc64le' == self.arch:
                 config_args = 'ppc64le'
-        if debugBuild:
-            config_args += ' --enable-debug --disable-optimize'
+            if debugBuild:
+                config_args += ' --enable-debug --disable-optimize'
+            if 'arm64' == self.arch:
+                config_args += ' --host=aarch64'
         self.append_cmd('cd ' + self.build_dir + ' && ../configure ' +
                         comm_config_opt, config_args)
         self.append_cmd('cd ' + self.build_dir + '&& make -j ' +
@@ -228,6 +230,25 @@ class SslCompiler(CompilerBase):
                     self._get_lib_archive_dir())
 
 
+class MdocmlCompiler(CompilerBase):
+    def __init__(self, src_root):
+        CompilerBase.__init__(self, "mdocml", src_root)
+
+    def _get_lib_archive_dir(self):
+        return mdocml_lib_dir
+
+    def _init_linux_cmds(self, arch):
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
+
+    def _init_win32_cmds(self, arch):
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
+        if debugBuild:
+            args += ' --dd'
+        self.append_cmd('scons', args)
+                    
 class SnappyCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "snappy", src_root)
@@ -290,10 +311,12 @@ class ZlibCompiler(CompilerBase):
 
 components = []
 
+mdocml_compiler = MdocmlCompiler('mdocml')
 snappy_compiler = SnappyCompiler('snappy')
 lz4_compiler = LZ4Compiler('lz4')
 zlib_compiler = ZlibCompiler('zlib')
 
+components.append(mdocml_compiler)
 components.append(snappy_compiler)
 components.append(lz4_compiler)
 components.append(zlib_compiler)

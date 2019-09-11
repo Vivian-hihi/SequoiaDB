@@ -41,14 +41,14 @@ ssh2_dir = join(engine_dir,'ssh2')
 crypto_dir = join(thirdparty_dir, 'crypto')
 ssl_dir = join(crypto_dir, 'openssl-1.0.1c')
 ssl_lib_dir = join(ssl_dir, 'lib')
+mdocml_dir = join(thirdparty_dir, 'mdocml' )
+mdocml_lib_dir = join(mdocml_dir, 'lib')
 lz4_dir = join(thirdparty_dir, 'lz4')
 lz4_lib_dir = join(lz4_dir, 'lib')
 zlib_dir = join(thirdparty_dir, 'zlib')
 zlib_lib_dir = join(zlib_dir, 'lib')
 snappy_dir = join(thirdparty_dir, 'snappy')
 snappy_lib_dir = join(snappy_dir, 'lib')
-mdocml_dir = join(thirdparty_dir, 'mdocml' )
-mdocml_include_dir = join(mdocml_dir,'include')
 gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
@@ -138,6 +138,8 @@ def GuessArch():
       return 'ppc64'
    elif id == 'ppc64le':
       return 'ppc64le'
+   elif id == 'aarch64':
+      return 'arm64'
    else:
       return None
 
@@ -222,7 +224,7 @@ def get_variant_dir():
 
 def get_platform_dir():
     if "linux" == guess_os:
-        if "ia64" == guess_arch:
+        if "ia64" == guess_arch or "arm64" == guess_arch:
             return "linux64"
         elif "ia32" == guess_arch:
             return "linux32"
@@ -493,7 +495,7 @@ if guess_os == "linux":
     if guess_arch == "ia32":
         hdfsJniPath = join(java_dir,"jdk_linux32/include")
         hdfsJniMdPath = join(java_dir,"jdk_linux32/include/linux")
-    elif guess_arch == "ia64":
+    elif guess_arch == "ia64" or guess_arch == "arm64":
         hdfsJniPath = join(java_dir,"jdk_linux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_linux64/include/linux")
     elif guess_arch == "ppc64":
@@ -525,11 +527,12 @@ if guess_os is not None:
     platform_dir = get_platform_dir()
     boost_lib_dir = join(boost_lib_dir, platform_dir, build_dir)
     ssl_lib_dir = join(ssl_lib_dir, platform_dir, build_dir)
+    mdocml_lib_dir = join(mdocml_lib_dir, platform_dir, build_dir)
     zlib_lib_dir = join(zlib_lib_dir, platform_dir, build_dir)
     lz4_lib_dir = join(lz4_lib_dir, platform_dir, build_dir)
     snappy_lib_dir = join(snappy_lib_dir, platform_dir, build_dir)
-    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, zlib_lib_dir,
-                             lz4_lib_dir, snappy_lib_dir])
+    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, mdocml_lib_dir,
+                             zlib_lib_dir, lz4_lib_dir, snappy_lib_dir])
     # use project-related spidermonkey library
     if usesm:
         env.Append(CPPPATH=join(sm_lib_dir, platform_dir, 'include'))
@@ -549,7 +552,7 @@ if guess_os == "linux":
     # GNU
     env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
     # 64 bit linux
-    if guess_arch == "ia64":
+    if guess_arch == "ia64" or guess_arch == "arm64":
         linux64 = True
         nixLibPrefix = "lib64"
         env.Append( EXTRALIBPATH="/lib64" )
@@ -814,7 +817,7 @@ if windows:
         shellEnv.Append( LIBS=['mdocml'] )
 elif linux:
     shellEnv.Append( LIBS=['mdocml'] )
-shellEnv.Append(CPPPATH=[mdocml_include_dir])
+shellEnv.Append(CPPPATH=[join(mdocml_dir, 'include')])
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )
@@ -936,11 +939,14 @@ if not os.path.isfile ( "gitbuild" ):
    else:
       # In NIX platform, we use svn and sed to send to ossVer_Autogen.h
       svnVer = os.popen( "svn info | grep Revision | awk '{print $2}'" ).read().replace("\n","")
+      if svnVer == "":
+          print( "error: failed to get svn from 'svn info'." )
+          os._exit( 1 )
       os.system( "sed 's/\$WCREV\$/" + svnVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
 
 print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
-                         "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir",
+                         "ssl_lib_dir", "mdocml_lib_dir", "zlib_lib_dir", "lz4_lib_dir",
                          "snappy_lib_dir", "sm_lib_dir"], duplicate=False)
 
 if not has_option("noautogen"):
