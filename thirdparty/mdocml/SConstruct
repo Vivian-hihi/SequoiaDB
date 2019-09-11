@@ -1,39 +1,17 @@
 # -*- mode: python; -*-
-# build file for SequoiaDB
+# build snappy library
 # this requires scons
 # you can get from http://www.scons.org
 # then just type scons
-
-# some common tasks
-#   build 64-bit mac and pushing to s3
-#      scons --64 s3dist
-
-# This file, SConstruct, configures the build environment, and then delegates to
-# several, subordinate SConscript files, which describe specific build rules.
 
 EnsureSConsVersion( 1, 1, 0 )
 
 import platform
 import os
-import sys
-import imp
-import types
 import re
-import shutil
-import subprocess
-import urllib
-import urllib2
-import stat
-from os.path import join, dirname, abspath
-#import libdeps
-root_dir = dirname(File('SConstruct').rfile().abspath)
-src_dir = root_dir
-lib_dir = join(root_dir, "lib")
-include_dir = join(root_dir, "include")
-build_dir = join(root_dir, "build")
-
-# --- options ----
+from os.path import join
 options = {}
+
 options_topass = {}
 
 def GuessOS():
@@ -61,7 +39,9 @@ def GuessArch():
    elif id == 'ppc64':
       return 'ppc64'
    elif id == 'ppc64le':
-      return 'ppc64le'   
+      return 'ppc64le'
+   elif id == 'aarch64':
+      return 'arm64'
    else:
       return None
 
@@ -115,24 +95,18 @@ def has_option( name ):
 
     return x
 
-# build options
-add_option( "all", "build static library of mdocml", 0, False)
-
 # linking options
 add_option( "release" , "release build" , 0 , True )
 
 # dev options
 add_option( "dd", "debug build no optimization" , 0 , True , "debugBuild" )
 add_option( "noscreenout", "do not send anything to screen", 0, True )
-
 #aix xlc
 add_option("xlc", "use xlc in AIX", 0, False)
 
 # don't run configure if user calls --help
 if GetOption('help'):
     Return()
-
-# --- environment setup ---
 
 def printLocalInfo():
    import sys, SCons
@@ -155,9 +129,8 @@ release = True
 debugBuild = False
 
 release = has_option( "release" )
-
-# get whether we are using debug build
 debugBuild = has_option( "debugBuild" )
+targetLibPath = ""
 
 # if neither release/debugBuild specified, by default using release
 # if both release/debugBuild specified, by defaul use debugBuild
@@ -168,17 +141,10 @@ elif release and debugBuild:
    release = False
    debugBuild = True
 
-if release:
-   build_dir = join(build_dir, "normal")
-else:
-   build_dir = join(build_dir, "dd")
-   
-# define env
-env = Environment( BUILD_DIR=build_dir,
+env = Environment( BUILD_DIR='src',
                    tools=["default"],
                    PYSYSPLATFORM=os.sys.platform,
                    )
-env['INSTALL_DIR'] = root_dir
 
 if env['PYSYSPLATFORM'] == 'linux3':
    env['PYSYSPLATFORM'] = 'linux2'
@@ -200,18 +166,12 @@ env["LIBPATH"] = []
 if has_option( "noscreenout" ):
     env.Append( CPPDEFINES=[ "_NOSCREENOUT" ] )
 
-hasAll = has_option( "all" )
-
-# if everything are set, let's set everything to true
-hasEngine = True
-
-extraLibPlaces = []
-
 env['EXTRACPPPATH'] = []
 env['EXTRALIBPATH'] = []
 
 # ---- other build setup -----
 
+platform = os.sys.platform
 if "uname" in dir(os):
     processor = os.uname()[4]
 else:
@@ -228,38 +188,30 @@ def findVersion( root , choices ):
                 return r + c
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
-
-env.Append(CPPPATH=[src_dir] )
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
-
-# specify dependent libraries for javascript engine and boost
 if guess_os == "linux":
     linux = True
-
-    # -lm
-    env.Append( LIBS=['m'] )
-    # -ldl
-    env.Append( LIBS=['dl'] )
-    # -lpthread
-    env.Append( LIBS=["pthread"] )
+    platform = "linux"
     # GNU
     env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
     # 64 bit linux
-    if guess_arch == "ia64":
+    if guess_arch == "ia64" or guess_arch == "arm64":
         linux64 = True
-        env.Append( EXTRALIBPATH="/lib64" )
+        targetLibPath = "linux64"
     # in case for 32 bit linux or compiling 32 bit in 64 env
     elif guess_arch == "ia32":
         linux64 = False
-        env.Append( EXTRALIBPATH="/lib" )
+        targetLibPath = "linux32"
     # power pc linux
     elif guess_arch == "ppc64":
         linux64 = True
-        # power pc linux little endian     
+        targetLibPath = "ppclinux64"
+        # use big endian
+        env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
+   # power pc linux little endian
     elif guess_arch == "ppc64le":
         linux64 = True
-        env.Append( EXTRALIBPATH="/lib64" )
-
+        targetLibPath = "ppclelinux64"
     nix = True
 
 elif "win32" == guess_os:
@@ -274,9 +226,6 @@ elif "win32" == guess_os:
             #use current environment
             env['ENV'] = dict(os.environ)
 
-    if platform.version().split('.')[0] >= '6':
-        env.Append( CPPDEFINES=[ "USE_SRW" ] )
-        
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )
@@ -296,28 +245,33 @@ elif "win32" == guess_os:
     if release:
         env.Append( CPPDEFINES=[ "NDEBUG" ] )
         env.Append( CPPFLAGS= " /O2 /Gy " )
-        env.Append( CPPFLAGS= " /Zi /errorReport:none " )
+        env.Append( CPPFLAGS= " /MT /Zi /errorReport:none " )
         env.Append( CPPFLAGS= " /GL " )
-        env.Append( LINKFLAGS=" /LTCG " )
-        env.Append( LINKFLAGS=" /DEBUG " )
     else:
-        env.Append( CPPFLAGS=" /RTC1 /Z7 /errorReport:none " )
+        env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /errorReport:none " )
 
         if debugBuild:
-            env.Append( LINKFLAGS=" /debug " )
             env.Append( CPPFLAGS=" /Od " )
             env.Append( CPPDEFINES=[ "_DEBUG" ] )
 
     if guess_arch == "ia64":
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib/x64" ] )
+        if release:
+            targetLibPath = "win64/release"
+        else:
+            targetLibPath = "win64/debug"
     else:
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib" ] )
+        if release:
+            targetLibPath = "win32/release"
+        else:
+            targetLibPath = "win32/debug"
 
-    winLibString = "ws2_32.lib kernel32.lib advapi32.lib Psapi.lib"
-    winLibString += " user32.lib gdi32.lib winspool.lib comdlg32.lib  shell32.lib ole32.lib oleaut32.lib "
-    winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
+    if release:
+        env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  " )
+    else:
+        env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  /NODEFAULTLIB:MSVCRT  " )
 
-    env.Append( LIBS=Split(winLibString) )
 elif guess_os == 'aix':
    aix = True
    nix = True
@@ -325,12 +279,6 @@ elif guess_os == 'aix':
    if xlc:
       env.Replace( CC=" xlC_r -qtls " )
       env.Replace( CXX=" xlC_r -qtls " )
-   # -lm
-   env.Append( LIBS=['m'] )
-   # -ldl
-   env.Append( LIBS=['dl'] )
-   # -lpthread
-   env.Append( LIBS=["pthread"] )
    # GNU
    env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
    # AIX64
@@ -342,17 +290,19 @@ elif guess_os == 'aix':
       env.Append( CPPFLAGS=" -maix64 -static-libgcc -static-libstdc++ " )
       env.Append( LINKFLAGS=" -maix64 -static-libgcc -static-libstdc++ " )
    env.Append( AR=" -X64 " )
+   targetLibPath = "aix64"
+   # use big endian
+   env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
    env.Append( EXTRALIBPATH="/lib" )
 else:
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 
-env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
 if nix:
     if xlc:
         env.Append( CPPFLAGS=" -qpic=large -qalias=noansi -g " )
     else:
-        env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
-        env.Append( CXXFLAGS=" -Wnon-virtual-dtor -fcheck-new" )
+        env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
+        env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
         if aix:
             env.Append( LINKFLAGS=" -fPIC -pthread " )
         else:
@@ -373,51 +323,81 @@ if nix:
         env.Append( CPPFLAGS=" -D_DEBUG" )
     else:
         env.Append( CPPFLAGS=" -O3 " )
-        
 
-try:
-    umask = os.umask(022)
-except OSError:
-    pass
-
+env['CPPPATH']=['include', 'src']
 env.Append( CPPPATH=env["EXTRACPPPATH"], LIBPATH=env["EXTRALIBPATH"])
 
-# --- check system ---
-def getSysInfo():
-    if windows:
-        return "windows " + str( sys.getwindowsversion() )
-    else:
-        return " ".join( os.uname() )
+targetLibPath = "stage/lib"
 
-if windows:
-    if release:
-        env.Append( CPPFLAGS= " /MT " )
-        env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  " )
-    else:
-        env.Append( CPPFLAGS= " /MDd " )
-        env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  /NODEFAULTLIB:MSVCRT  " )
-   
-# The following symbols are exported for use in subordinate SConscript files.
-# Ideally, the SConscript files would be purely declarative.  They would only
-# import build environment objects, and would contain few or no conditional
-# statements or branches.
-#
-# Currently, however, the SConscript files do need some predicates for
-# conditional decision making that hasn't been moved up to this SConstruct file,
-# and they are exported here, as well.
-Export("env")
-Export("linux")
-Export("aix") 
-Export("windows")
-Export("release")
-Export("debugBuild")
+# files
+mdocmlFiles = [
+      "src/parseMandoc.c",
+      ]
+      
+mdocmlLibFiles = [
+      mdocmlFiles,
+      "src/att.c",
+      "src/chars.c",
+      "src/compat_err.c",
+      "src/compat_fts.c",
+      "src/compat_getline.c",
+      "src/compat_getsubopt.c",
+      "src/compat_isblank.c",
+      "src/compat_mkdtemp.c",
+      "src/compat_ohash.c",
+      "src/compat_progname.c",
+      "src/compat_reallocarray.c",
+      "src/compat_sqlite3_errstr.c",
+      "src/compat_strcasestr.c",
+      "src/compat_stringlist.c",
+      "src/compat_strlcat.c",
+      "src/compat_strlcpy.c",
+      "src/compat_strsep.c",
+      "src/compat_strtonum.c",
+      "src/compat_vasprintf.c",
+      "src/eqn.c",
+      "src/eqn_html.c",
+      "src/eqn_term.c",
+      "src/html.c",
+      "src/lib.c",
+      "src/man.c",
+      "src/man_hash.c",
+      "src/man_html.c",
+      "src/man_macro.c",
+      "src/man_term.c",
+      "src/man_validate.c",
+      "src/mandoc.c",
+      "src/mandoc_aux.c",
+      "src/mandoc_ohash.c",
+      "src/manpath.c",
+      "src/mdoc.c",
+      "src/mdoc_argv.c",
+      "src/mdoc_hash.c",
+      "src/mdoc_html.c",
+      "src/mdoc_macro.c",
+      "src/mdoc_man.c",
+      "src/mdoc_state.c",
+      "src/mdoc_term.c",
+      "src/msec.c",
+      "src/out.c",
+      "src/preconv.c",
+      "src/read.c",
+      "src/roff.c",
+      "src/st.c",
+      "src/tbl.c",
+      "src/tbl_data.c",
+      "src/tbl_html.c",
+      "src/tbl_layout.c",
+      "src/tbl_opts.c",
+      "src/tbl_term.c",
+      "src/term.c",
+      "src/term_ascii.c",
+      "src/term_ps.c",
+      "src/tree.c",
+      "src/common.c"
+      ]
 
-env.SConscript( 'SConscript', variant_dir=build_dir, duplicate=False )
-
-
-
-
-
-
-
-
+#Static Library
+env.StaticLibrary( targetLibPath + '/libmdocml', mdocmlLibFiles )
+#Header files
+env.Install( '#/include', "src/parseMandoc.h" )
