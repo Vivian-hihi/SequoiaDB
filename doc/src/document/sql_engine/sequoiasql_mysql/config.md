@@ -120,3 +120,19 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    
    `sequoiadb_use_autocommit`配置项已弃用。请直接使用 MySQL 的`autocommit`配置项。
 
+## MySQL 常用系统配置
+
+| 参数名                 | 类型   | 动态生效 | 动态范围   | 默认值  | 说明 |
+| ---------------------- | ----   | -------- | ---------- | ------- | ---- |
+| max_connections        | int    | Yes | Global          | 151     | 客户端最大连接数 |
+| sql_mode               | set    | Yes | Global, Session | STRICT_TRANS_TABLES,<br>ERROR_FOR_DIVISION_BY_ZERO,<br>NO_AUTO_CREATE_USER,<br>NO_ENGINE_SUBSTITUTION | SQL 模式。取值意义参考[MySQL SQL 模式](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html) |
+| character_set_server   | string | Yes | Global, Session | utf8mb4 | 默认字符集 |
+| collation_server       | string | Yes | Global, Session | utf8mb4_bin | 默认校对集 |
+| default_storage_engine | string | Yes | Global, Session | SequoiaDB | 默认存储引擎 |
+| lower_case_table_names | int    | No  | Global          | 0       | 表名大小写策略。取 0 时，大小写敏感。取 1 时，所有表名均以小写存储。取 2 时，表名以原样存储，但以小写进行比较。 |
+
+> **Note:** 
+>
+> * 在系统最大文件句柄数不足时，max_connections 可能被自动调整。如果发现修改该配置没有生效，请检查系统 limit 设置和 MySQL 日志。
+> * SequoiaDB 不支持大小写敏感的校对集。
+
