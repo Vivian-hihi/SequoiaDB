@@ -366,8 +366,8 @@ error :
              ossSleep ( 100 ) ; // sleep for 0.1 seconds
              continue ;
           }
-          pdLog ( PDERROR, __func__, __FILE__, __LINE__,
-                  "Failed to open file: %s, errno: %d", pFileName, err ) ;
+          PD_LOG ( PDINFO, "Failed to open file: %s, errno: %d",
+                   pFileName, err ) ;
           // setup return code based on errno
           switch ( err )
           {
@@ -536,8 +536,9 @@ INT32 ossChmod ( const CHAR* pPathName, UINT32 iPermission )
       }
       else
       {
-         PD_LOG( PDERROR, "Changes the mode of the file or directory[%s] failed"
-                          ", errno: %d",
+         PD_LOG( PDERROR,
+                 "Changes the mode of the file or directory[%s] failed"
+                 ", errno: %d",
                  pPathName, e.code().value() ) ;
          rc = SDB_IO ;
       }
