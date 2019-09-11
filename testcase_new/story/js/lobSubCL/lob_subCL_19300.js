@@ -3,7 +3,19 @@
 *@author:      wuyan
 *@createDate:  2019.9.5
 **************************************/
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+
 function main()
 {
    if(commIsStandalone( db ))

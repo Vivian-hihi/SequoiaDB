@@ -3,62 +3,75 @@
 *@author:      luweikang
 *@createDate:  2019.8.12
 **************************************/
-function main()
+try
 {
-    if(commIsStandalone( db ))
-    {
-        println("skip standalone mode");
-        return;
-    }
-    
-    var oldMainCSName = "mainCS_19049old";
-    var newMainCSName = "mainCS_19049new";
-    var mainCLName = "mainCL_19049";
-    var subCSName = COMMCSNAME;
-    var subCLName = "subCL_19049";
-    var filePath = WORKDIR + "/lob19049/";
-    var fileName = "file19049"
-    var fileFullPath = filePath + fileName;
-    var fileMD5 = makeTmpFile( filePath, fileName );
-    
-    commDropCS(db, oldMainCSName);
-    commDropCS(db, newMainCSName);
-    commDropCL(db, subCSName, subCLName);
-    
-    var mainCL = createMainCLAndAttachCL(db, oldMainCSName, mainCLName, subCLName, "YYYYMMDD", 1, 20190801, 5);
-    commCreateCL(db, subCSName, subCLName);
-    mainCL.attachCL( subCSName + "." + subCLName, {"LowBound": {"date": "20190806"}, "UpBound": {"date": "20190811"}});
-    var lobOids1 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801");
-    
-    db.renameCS(oldMainCSName, newMainCSName);
-    db.renameCS(newMainCSName, oldMainCSName);
-    db.renameCS(oldMainCSName, newMainCSName);
-    var mainCL = db.getCS(newMainCSName).getCL(mainCLName);
-    
-    var lobOids2 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801"); 
-    checkLobMD5(mainCL, lobOids1, fileMD5);
-    checkLobMD5(mainCL, lobOids2, fileMD5);
-    
-    for(i in lobOids1)
-    {
-        mainCL.deleteLob(lobOids1[i]);
-        try
-        {
-            mainCL.getLob(lobOids1[i], filePath + "/checkLob19049_" + i );
-            throw 0;
-        }
-        catch( e )
-        {
-            if( e !== -4 )
-            {
-                throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids1[i], -4, e ); 
-            }
-        }
-    }
-    
-    deleteTmpFile( filePath );
-    cleanMainCL(db, newMainCSName, mainCLName);
-    commDropCS(db, newMainCSName);
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
 }
 
-main();
+function main()
+{
+   if(commIsStandalone( db ))
+   {
+       println("skip standalone mode");
+       return;
+   }
+   
+   var oldMainCSName = "mainCS_19049old";
+   var newMainCSName = "mainCS_19049new";
+   var mainCLName = "mainCL_19049";
+   var subCSName = COMMCSNAME;
+   var subCLName = "subCL_19049";
+   var filePath = WORKDIR + "/lob19049/";
+   var fileName = "file19049"
+   var fileFullPath = filePath + fileName;
+   var fileMD5 = makeTmpFile( filePath, fileName );
+   
+   commDropCS(db, oldMainCSName);
+   commDropCS(db, newMainCSName);
+   commDropCL(db, subCSName, subCLName);
+   
+   var mainCL = createMainCLAndAttachCL(db, oldMainCSName, mainCLName, subCLName, "YYYYMMDD", 1, 20190801, 5);
+   commCreateCL(db, subCSName, subCLName);
+   mainCL.attachCL( subCSName + "." + subCLName, {"LowBound": {"date": "20190806"}, "UpBound": {"date": "20190811"}});
+   var lobOids1 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801");
+   
+   db.renameCS(oldMainCSName, newMainCSName);
+   db.renameCS(newMainCSName, oldMainCSName);
+   db.renameCS(oldMainCSName, newMainCSName);
+   var mainCL = db.getCS(newMainCSName).getCL(mainCLName);
+   
+   var lobOids2 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801"); 
+   checkLobMD5(mainCL, lobOids1, fileMD5);
+   checkLobMD5(mainCL, lobOids2, fileMD5);
+   
+   for(i in lobOids1)
+   {
+      mainCL.deleteLob(lobOids1[i]);
+      try
+      {
+         mainCL.getLob(lobOids1[i], filePath + "/checkLob19049_" + i );
+         throw 0;
+      }
+      catch( e )
+      {
+         if( e !== -4 )
+         {
+             throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids1[i], -4, e ); 
+         }
+      }
+   }
+   
+   deleteTmpFile( filePath );
+   //TODO:1、清理环境不建议用该方法
+   cleanMainCL(db, newMainCSName, mainCLName);
+   commDropCS(db, newMainCSName);
+}
+
