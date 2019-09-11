@@ -1,10 +1,13 @@
 package com.sequoiadb.fulltext.parallel;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,6 +17,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
 import com.sequoiadb.fulltext.utils.FullTextUtils;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.FullTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
@@ -28,6 +32,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 public class Fulltext15881 extends FullTestBase {
     private Random random = new Random();
+    private String groupName;
     private final String CL_NAME = "cl_es_15881";
     private final String IDX_NAME = "idx_es_15881";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
@@ -40,6 +45,9 @@ public class Fulltext15881 extends FullTestBase {
     protected void initTestProp() {
         caseProp.setProperty(IGNORESTANDALONE, "true");
         caseProp.setProperty(CLNAME, CL_NAME);
+        groupName = CommLib.getDataGroupNames(sdb).get(0);
+        String clOptions = new BasicBSONObject("Group", groupName).toString();
+        caseProp.setProperty(CLOPT, clOptions);
     }
 
     @Override
@@ -73,6 +81,8 @@ public class Fulltext15881 extends FullTestBase {
         } else if (threadAlterCL.getRetCode() != 0) {
             this.checkAlterCLResults(false);
         }
+
+        this.checkIndexCommitLSN();
     }
 
     @Override
@@ -120,11 +130,43 @@ public class Fulltext15881 extends FullTestBase {
 
     private void checkAlterCLResults(boolean alterCLSucc) {
         DBCursor cursor = sdb.getSnapshot(8, new BasicBSONObject("Name", cl.getFullName()), null, null);
-        BasicBSONObject clInfo = (BasicBSONObject)cursor.getCurrent();
+        BasicBSONObject clInfo = (BasicBSONObject) cursor.getCurrent();
         if (alterCLSucc) {
             Assert.assertEquals(clInfo.get("ShardingType").toString(), "hash");
         } else {
-            Assert.assertFalse(clInfo.containsField( "ShardingType" ));
+            Assert.assertFalse(clInfo.containsField("ShardingType"));
+        }
+    }
+
+    private void checkIndexCommitLSN() {
+        List<String> nodeAddress = CommLib.getNodeAddress(sdb, groupName);
+        if (nodeAddress.size() < 2) {
+            return;
+        }
+
+        List<Long> LSNs = new ArrayList<>();
+        for (String address : nodeAddress) {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(address, "", "");
+                BSONObject match = new BasicBSONObject("Name", SdbTestBase.csName + "." + CL_NAME);
+                DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, match, null, null);
+                BSONObject info = cursor.getNext();
+                BasicBSONList detail = (BasicBSONList) info.get("Details");
+                long idxCommitLSN = (long) ((BasicBSONObject) detail.get(0)).get("IndexCommitLSN");
+                LSNs.add(idxCommitLSN);
+                cursor.close();
+            } finally {
+                if (null != db) {
+                    db.close();
+                }
+            }
+        }
+
+        for (int i = 0; i < LSNs.size(); i++) {
+            if (i > 0) {
+                Assert.assertEquals(LSNs.get(i - 1), LSNs.get(i), "LSNs = " + LSNs);
+            }
         }
     }
 }
