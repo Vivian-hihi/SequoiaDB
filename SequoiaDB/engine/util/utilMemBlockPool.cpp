@@ -39,6 +39,7 @@
 
 #include "utilMemBlockPool.hpp"
 #include "ossPrimitiveFileOp.hpp"
+#include "ossUtil.hpp"
 #include "pd.hpp"
 
 extern BOOLEAN ossMemDebugEnabled ;
@@ -1137,6 +1138,10 @@ namespace engine
       else
       {
          static ossSpinXLatch s_dumpLatch ;
+
+         ossSignalShield shield ;
+         shield.doNothing() ;
+
          ossScopedLock lock( &s_dumpLatch ) ;
    
          // open file

@@ -247,7 +247,9 @@ namespace engine
       {
          UINT32 len = 0 ;
 
-         ossScopedLock lock( &_latch ) ;
+         /// don't use _latch, because will callback by kill -23 signal,
+         /// and the thread maybe in acquire function with hold the _latch,
+         /// so dump use _latch, will occur dead lock
 
          if ( pAcquireTimes )
          {
@@ -288,7 +290,7 @@ namespace engine
                             _maxNumOfObjs,
                             _delta,
                             _numOfObjs,
-                            (UINT32)_segList.size(),
+                            _numOfObjs / _delta,
                             _begin,
                             _highWatermark,
                             _acquireTimes,
