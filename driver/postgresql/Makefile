@@ -1,4 +1,6 @@
 
+# To build debug or release version?
+ver?=release
 
 CURRENT_PATH = .
 MD5_PATH = $(CURRENT_PATH)/external/sdbbson
@@ -24,7 +26,7 @@ EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERN
                   $(EXTERNAL_PATH)/cJSON_iterator.c                     $(EXTERNAL_PATH)/utilCipher.c \
                   $(EXTERNAL_PATH)/utilTypeCast.c
 
-BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h $(BSON_PATH)/common_decimal_fun.h $(BSON_PATH)/common_decimal_type.h 
+BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h $(BSON_PATH)/common_decimal_fun.h $(BSON_PATH)/common_decimal_type.h
 
 EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTERNAL_PATH)/base64c.h \
                   $(EXTERNAL_PATH)/core.h     $(EXTERNAL_PATH)/ossErr.h  $(EXTERNAL_PATH)/ossFeat.h \
@@ -100,10 +102,16 @@ endian := $(shell sh -c 'echo "ab" | od -x | grep "6261" >/dev/null && echo litt
 ifeq ($(endian),big)
     ALL_DEFINES+=-DSDB_BIG_ENDIAN
 endif
-OPTIMIZATION?=-O3
+
+ifeq ($(ver), debug)
+    OPTIMIZATION?=-O0
+else
+    OPTIMIZATION?=-O3
+endif
+
 WARNINGS?=-Wall -Wno-unknown-pragmas -Wno-missing-prototypes -Wno-missing-format-attribute
 #DEBUG?=-ggdb -DSDB_USE_OWN_POSTGRES
-DEBUG?=-ggdb 
+DEBUG?=-ggdb
 INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH) -I$(MD5_PATH) -I$(OPENSSL_PATH)/include
 ALL_CFLAGS=$(CFLAGS) $(OPTIMIZATION) $(WARNINGS) $(DEBUG) $(INCLUDEPATH) $(ALL_DEFINES) $(DYN_FLAGS)
 
@@ -129,16 +137,25 @@ else
     UNAME_P := $(shell uname -p)
     ifeq ($(UNAME_S),Linux)
         ifeq ($(UNAME_P),x86_64)
-            SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_LIBRARY)/linux64
+            ifeq ($(ver), debug)
+                OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/linux64/debug
+            else
+                OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/linux64/release
+            endif
         else
-            SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_LIBRARY)/linux32
+            ifeq ($(ver), debug)
+                OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/linux32/debug
+            else
+                OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/linux32/release
+            endif
         endif
+        SHLIB_LINK = -pthread -lcrypto -L$(OPENSSL_LIBRARY_PATH)
     endif
 endif
 
 
 # Procedures
-local: $(BSON_PATH) $(MD5_HEADER_PATH) $(MD5_PATH) $(COPY_FILES) $(COMPILEOBJECTS) 
+local: $(BSON_PATH) $(MD5_HEADER_PATH) $(MD5_PATH) $(COPY_FILES) $(COMPILEOBJECTS)
 
 $(BSON_PATH):
 	mkdir -p $@
@@ -146,16 +163,16 @@ $(BSON_PATH):
 $(BSON_PATH)/%.c:
 	cp -f $< $@
 	sed -i "s/bson/sdbbson/g" $@
-	
+
 $(MD5_HEADER_PATH):
 	mkdir -p $@
-	
+
 $(MD5_HEADER_PATH)/md5.h:
 	cp -f $< $@
 
 $(MD5_PATH):
 	mkdir -p $@
-	
+
 $(MD5_PATH)/md5.c:
 	cp -f $< $@
 
