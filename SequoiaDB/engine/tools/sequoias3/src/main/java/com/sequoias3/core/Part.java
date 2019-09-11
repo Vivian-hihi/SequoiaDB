@@ -2,8 +2,13 @@ package com.sequoias3.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sequoias3.exception.S3Error;
+import com.sequoias3.exception.S3ServerException;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 import static com.sequoias3.utils.DataFormatUtils.formatDate;
 
@@ -33,7 +38,7 @@ public class Part {
     private String etag;
     @JsonIgnore
     private long lastModified;
-    @JsonProperty("LastModifed")
+    @JsonProperty("LastModified")
     private String lastModifiedDate;
     @JsonProperty("Size")
     private long size;
@@ -90,6 +95,41 @@ public class Part {
         if (record.get(Part.SIZE) != null){
             this.size = (long) record.get(Part.SIZE);
         }
+    }
+
+    public Part(BSONObject record, String encodingType) throws S3ServerException{
+        try {
+            if (record.get(Part.UPLOADID) != null){
+                this.uploadId = (long) record.get(Part.UPLOADID);
+            }
+            if (record.get(Part.PARTNUMBER) != null){
+                this.partNumber = (int) record.get(Part.PARTNUMBER);
+            }
+            if (record.get(Part.CSNAME) != null){
+                this.csName = record.get(Part.CSNAME).toString();
+            }
+            if (record.get(Part.CLNAME) != null){
+                this.clName = record.get(Part.CLNAME).toString();
+            }
+            if (record.get(Part.LOBID) != null){
+                this.lobId = (ObjectId) record.get(Part.LOBID);
+            }
+            if (record.get(Part.LASTMODIFIED) != null){
+                this.lastModified = (long) record.get(Part.LASTMODIFIED);
+                this.lastModifiedDate = formatDate(this.lastModified);
+            }
+            if (encodingType != null) {
+                this.etag = URLEncoder.encode("\"" + record.get(Part.ETAG).toString() +"\"", "UTF-8");
+            }else {
+                this.etag = "\"" + record.get(Part.ETAG).toString() + "\"";
+            }
+            if (record.get(Part.SIZE) != null){
+                this.size = (long) record.get(Part.SIZE);
+            }
+        }catch (UnsupportedEncodingException e) {
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR, "URL encode failed", e);
+        }
+
     }
 
     public Part(long uploadId, int partNumber, String csName,

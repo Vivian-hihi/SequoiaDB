@@ -308,7 +308,7 @@ public class ObjectServiceImpl implements ObjectService {
                         bucket.getBucketId(), versioningStatusType, region);
 
                 deleteObjectLob(deleteObject);
-                copyObjectResult.setLastModifed(DataFormatUtils.formatDate(objectMeta.getLastModified()));
+                copyObjectResult.setLastModified(DataFormatUtils.formatDate(objectMeta.getLastModified()));
                 if (!sourceMeta.getNoVersionFlag()){
                     copyObjectResult.setSourceVersionId(sourceMeta.getVersionId());
                 }
@@ -1392,7 +1392,7 @@ public class ObjectServiceImpl implements ObjectService {
 
             int maxNumber = Math.min(maxParts, RestParamDefine.MAX_KEYS_DEFAULT);
             ListPartsResult result = new ListPartsResult(bucketName, objectName, uploadId,
-                    maxNumber, userDao.getOwnerByUserID(ownerID), encodingType);
+                    maxNumber, partNumberMarker, userDao.getOwnerByUserID(ownerID), encodingType);
 
             partsCursor = partDao.queryPartList(uploadId, true,
                     partNumberMarker, maxNumber + 1);
@@ -1400,15 +1400,14 @@ public class ObjectServiceImpl implements ObjectService {
                 LinkedHashSet<Part> partList = result.getPartList();
                 int count = 0;
                 while (partsCursor.hasNext() && count < maxNumber) {
-                    Part part = new Part(partsCursor.getNext());
-                    part.setEtag("\"" + part.getEtag() + "\"");
+                    Part part = new Part(partsCursor.getNext(), encodingType);
                     partList.add(part);
                     count++;
                 }
 
+                result.setNextPartNumberMarker((int) (partsCursor.getCurrent().get(Part.PARTNUMBER)));
                 if (partsCursor.hasNext()) {
                     result.setIsTruncated(true);
-                    result.setNextPartNumberMarker((int) (partsCursor.getCurrent().get(Part.PARTNUMBER)));
                 }
             }
             return result;

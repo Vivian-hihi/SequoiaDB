@@ -25,7 +25,7 @@ public class CopyObjectResult {
         return eTag;
     }
 
-    public void setLastModifed(String lastModified) {
+    public void setLastModified(String lastModified) {
         this.lastModified = lastModified;
     }
 

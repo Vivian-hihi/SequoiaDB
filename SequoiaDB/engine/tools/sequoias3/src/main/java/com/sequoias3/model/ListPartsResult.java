@@ -27,6 +27,8 @@ public class ListPartsResult {
     private Integer   maxparts;
     @JsonProperty("IsTruncated")
     private Boolean isTruncated = false;
+    @JsonProperty("PartNumberMarker")
+    private int partNumberMarker;
     @JsonProperty("NextPartNumberMarker")
     private int nextPartNumberMarker;
     @JacksonXmlElementWrapper(localName = "Part", useWrapping = false)
@@ -34,7 +36,7 @@ public class ListPartsResult {
     private LinkedHashSet<Part> partList;
 
     public ListPartsResult(String bucket, String key, Long uploadId, Integer maxparts,
-                           Owner owner, String encodingType) throws S3ServerException{
+                           Integer partNumberMarker, Owner owner, String encodingType) throws S3ServerException{
         try {
             this.bucket = bucket;
             if (encodingType != null) {
@@ -46,6 +48,9 @@ public class ListPartsResult {
             this.maxparts  = maxparts;
             this.initiator = owner;
             this.owner     = owner;
+            if (partNumberMarker != null){
+                this.partNumberMarker = partNumberMarker;
+            }
             this.partList  = new LinkedHashSet<>();
         }catch (UnsupportedEncodingException e) {
             throw new S3ServerException(S3Error.UNKNOWN_ERROR, "URL encode failed", e);

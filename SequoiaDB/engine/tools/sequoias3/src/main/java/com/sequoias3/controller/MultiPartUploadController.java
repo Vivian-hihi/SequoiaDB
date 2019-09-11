@@ -227,7 +227,7 @@ public class MultiPartUploadController {
             User operator = restUtils.getOperatorByAuthorization(authorization);
 
             String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-            logger.debug("listParts. bucketName={}, objectName={}, uploadId:{}", bucketName, objectName, uploadId);
+            logger.debug("listParts. bucketName={}, objectName={}, uploadId:{}, encodeType={}", bucketName, objectName, uploadId, encodingType);
 
             ListPartsResult result = objectService.listParts(operator.getUserId(),
                     bucketName,
