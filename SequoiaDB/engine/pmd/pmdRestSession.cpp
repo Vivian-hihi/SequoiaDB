@@ -3508,7 +3508,7 @@ namespace engine
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
                              skip, returnRow, &match,
-                             &selector, &order, NULL ) ;
+                             &selector, &order, &hint ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",

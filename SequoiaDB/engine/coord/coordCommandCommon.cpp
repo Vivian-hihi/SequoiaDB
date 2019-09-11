@@ -632,6 +632,19 @@ namespace engine
             if ( 0 == ossStrcasecmp( elem.fieldName(), "$Options" ) )
             {
                BSONObjBuilder sub( builder.subobjStart( "$Options" ) ) ;
+               BSONObj tmp( elem.value() );
+               BSONObjIterator itr ( tmp ) ;
+               BSONElement elem2 ;
+               while ( itr.more() )
+               {
+                  elem2 = itr.next() ;
+                  if ( 0 != ossStrcmp( elem.fieldName(), COORD_SHOWERROR ) &&
+                       0 != ossStrcmp( elem.fieldName(), COORD_SHOWERRORMODE ) )
+                  {
+                     sub.append( elem2 ) ;
+                  }
+               }
+
                switch ( _getShowErrorType() )
                {
                   case COORD_SHOWERROR_ONLY :
