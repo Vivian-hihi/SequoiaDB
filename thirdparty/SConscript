@@ -139,8 +139,7 @@ class BoostCompiler(CompilerBase):
         self.append_cmd('./bootstrap.sh',
                         '--with-libraries=system,filesystem,thread,'
                         'program_options,chrono --prefix=./')
-        config_args = '-d0 link=static threading=multi variant={} address-model={} toolset=gcc runtime-link=static cxxflags="-fPIC"'
-        config_args = config_args.format(self.build_type, str(address_mode))
+        config_args = '-d0 link=static threading=multi variant=' + self.build_type + ' address-model=' + str(address_mode) + ' toolset=gcc runtime-link=static cxxflags="-fPIC"'
         if "arm64" == self.arch:
             config_args += ' architecture=arm'
         self.append_cmd('./b2', config_args)
