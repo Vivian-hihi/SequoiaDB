@@ -15,6 +15,12 @@ normal user:
 4) cd /home/sequoiadb/trunk/driver/postgresql
 5) PATH=/usr/local/pgsql934/bin:$PATH make local
 6) PATH=/usr/local/pgsql934/bin:$PATH make all
+By default, release version will be built, and the release version off SSL
+library will be used. If you want to build debug version, you can add ver=debug
+to the make commands in step 5 and step 6 as follows:
+make ver=debug local
+make ver=debug all
+In that way, debug version of SSL library will be used.
 
 Root user:
 7) cd /home/sequoiadb/trunk/driver/postgresql
