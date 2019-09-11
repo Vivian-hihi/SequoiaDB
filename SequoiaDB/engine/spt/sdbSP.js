@@ -3528,6 +3528,8 @@ IniFile.prototype.addComment = function( argv1, argv2, argv3, argv4 ) {
    var argc  = arguments.length ;
    var newComment ;
 
+   pos = true ;
+
    if ( 3 > argc )
    {
       setLastErrMsg( "Missing argument section" ) ;
