@@ -145,7 +145,7 @@ function Start()
   pid=$(jobs -l|awk '{print $2}')
   echo "pid:"$pid
   
-  portfile="/tmp/s3$pid.txt"
+  portfile="$BashPath/$pid.pid"
 
   sleep 5 
 

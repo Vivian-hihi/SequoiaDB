@@ -37,8 +37,19 @@ public class CustomContextValve extends ValveBase {
     @Autowired
     UploadDao uploadDao;
 
+    @Autowired
+    SystemStatus systemStatus;
+
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {
+        if (systemStatus.getSystemStatus() != SystemStatus.STATUS_NORMAL){
+            response.setStatus(500);
+            ObjectMapper objectMapper = new XmlMapper();
+            Error exceptionBody = new Error(new S3ServerException(S3Error.UNKNOWN_ERROR, "system status is not normal"), request.getRequestURI());
+            response.getResponse().getOutputStream().write(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(exceptionBody));
+            return;
+        }
+
         if (request.getHeader(RestParamDefine.EXPECT) != null
                 && request.getMethod().equals("PUT")
                 && request.getContentLength() > 512 * 1024

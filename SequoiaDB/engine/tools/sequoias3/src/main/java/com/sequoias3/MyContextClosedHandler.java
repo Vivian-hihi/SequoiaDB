@@ -25,9 +25,13 @@ public class MyContextClosedHandler implements ApplicationListener<ContextClosed
     @Autowired
     ServiceInfo serviceInfo;
 
+    @Autowired
+    SystemStatus systemStatus;
+
     @Override
     public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
         logger.info("SequoiaS3Application is stop.");
+        systemStatus.exitSystemStatus();
         shutDownAndAwaitTermination(myThreadPoolScheduler.getScheduledExecutor());
         cleanTmpfile();
     }
@@ -50,7 +54,7 @@ public class MyContextClosedHandler implements ApplicationListener<ContextClosed
     private void cleanTmpfile(){
         try {
             int processID = serviceInfo.getPid();
-            String fileName = "/tmp/s3" + processID + ".txt";
+            String fileName = processID + ".pid";
             File file = new File(fileName);
             if (!file.exists()) {
                 return;
