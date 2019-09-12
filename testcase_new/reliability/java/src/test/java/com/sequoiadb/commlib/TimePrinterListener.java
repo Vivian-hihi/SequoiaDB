@@ -2,33 +2,17 @@ package com.sequoiadb.commlib;
 
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.base.Sequoiadb;
 
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays ;
 import java.util.Date;
 
 /**
  * Created by laojingtang on 17-11-23.
  */
 public class TimePrinterListener extends TestListenerAdapter {
-    
-    @Override
-    public void onTestFailure(ITestResult itr){
-        System.out.println("runGroup" + itr.getMethod().getXmlTest().getIncludedGroups().toString() + " " 
-                   + itr.getMethod().getTestClass().getRealClass() + " failed") ;
-        super.onTestFailure( itr ) ;
-    }
-    
-   
-    @Override
-    public void onTestFailedButWithinSuccessPercentage(ITestResult itr){
-        super.onTestFailedButWithinSuccessPercentage(itr) ;
-        
-    }
-    
-    
+
     @Override
     public void onConfigurationSuccess(ITestResult itr) {
         super.onConfigurationSuccess(itr);
@@ -59,9 +43,6 @@ public class TimePrinterListener extends TestListenerAdapter {
     @Override
     public void beforeConfiguration(ITestResult tr) {
         super.beforeConfiguration(tr);
-        if (tr.getMethod().isBeforeTestConfiguration()){
-            SdbTestBase.setRunGroup( tr.getTestClass().getXmlTest().getIncludedGroups() ) ;
-        }
         if (tr.getMethod().isBeforeClassConfiguration()) {
             printBeginTime(tr);
             dbMsgBeginTime(tr);
