@@ -1405,9 +1405,9 @@ public class ObjectServiceImpl implements ObjectService {
                     count++;
                 }
 
-                result.setNextPartNumberMarker((int) (partsCursor.getCurrent().get(Part.PARTNUMBER)));
                 if (partsCursor.hasNext()) {
                     result.setIsTruncated(true);
+                    result.setNextPartNumberMarker((int) (partsCursor.getCurrent().get(Part.PARTNUMBER)));
                 }
             }
             return result;
