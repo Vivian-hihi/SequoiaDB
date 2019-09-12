@@ -91,9 +91,10 @@ public class LobSubCL19072 extends SdbTestBase {
         }
     }
 
+    // TODO:1、文本用例中是增删读lob
     private class PutLobThread {
         @ExecuteOrder(step = 1)
-        private void detachCL() {
+        private void detachCL() {// TODO:2、建议改下方法名，和实现保持一致
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection maincl = db.getCollectionSpace(csName).getCollection(mainCLName);
                 LobSubUtils.createAndWriteLob(maincl, lobBuff);

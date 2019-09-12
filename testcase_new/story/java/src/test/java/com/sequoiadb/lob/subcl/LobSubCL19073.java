@@ -54,7 +54,7 @@ public class LobSubCL19073 extends SdbTestBase {
         thread.addWorker(new PutLobThread(lobId));
         thread.addWorker(new PutLobThread(lobId));
         thread.run();
-
+        // TODO:需要检测只有一个成功的场景
         List<ObjectId> lobIds = new ArrayList<ObjectId>();
         lobIds.add(lobId);
         LobSubUtils.checkLobMD5(mainCL, lobIds, lobBuff);

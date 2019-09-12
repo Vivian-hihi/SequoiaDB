@@ -53,7 +53,7 @@ public class RewriteLob13274_19016 extends SdbTestBase {
         db = new Sequoiadb(coordUrl, "", "");
         if (CommLib.isStandAlone(db)) {
             throw new SkipException("is standalone skip testcase");
-        }
+        }// TODO:1、这个用例非主子表不需要屏蔽独立模式
         cs = db.getCollectionSpace(SdbTestBase.csName);
         cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
         LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);

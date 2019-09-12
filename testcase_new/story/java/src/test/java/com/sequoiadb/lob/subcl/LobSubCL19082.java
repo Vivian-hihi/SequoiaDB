@@ -150,7 +150,7 @@ public class LobSubCL19082 extends SdbTestBase {
     }
 
     private class RenameThread {
-
+        // TODO:1、建议补充rename结果检查
         @ExecuteOrder(step = 1)
         private void renameCS() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {

@@ -22,10 +22,9 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description: ConcurrentRewriteLob13267.java test content:lock the data
- *               segment to concurrent write lob, and the locking range of
- *               intersection testlink case:seqDB-13267 seqDB-18999
- *               主子表并发加锁写lob，其中锁定数据范围有交集
+ * @Description: ConcurrentRewriteLob13267.java test content:lock the data segment to concurrent
+ *               write lob, and the locking range of intersection testlink case:seqDB-13267
+ *               seqDB-18999 主子表并发加锁写lob，其中锁定数据范围有交集
  * 
  * @author wuyan
  * @Date 2017.11.8
@@ -102,7 +101,6 @@ public class RewriteLob13267_18999 extends SdbTestBase {
                 byte[] expBuff = Arrays.copyOfRange(testLobBuff, offset2, offset2 + rewriteSize);
                 RandomWriteLobUtil.assertByteArrayEqual(actBuff, expBuff);
             }
-
         }
     }
 
@@ -161,11 +159,6 @@ public class RewriteLob13267_18999 extends SdbTestBase {
         RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
 
         // check the all write lob
-        // byte[] expBuff = RandomWriteLobUtil.appendBuff(lobBuff, rewriteBuff,
-        // offset);
-        // byte[] actAllLobBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid,
-        // expBuff.length, 0);
-        // RandomWriteLobUtil.assertByteArrayEqual(actAllLobBuff, expBuff);
         try (DBLob lob = cl.openLob(oid)) {
             byte[] actAllLob = new byte[(int) lob.getSize()];
             lob.read(actAllLob);

@@ -152,6 +152,7 @@ public class LobSubCL19081 extends SdbTestBase {
         }
     }
 
+    // TODO:1、建议补充rename结果检查
     private class RenameThread {
 
         @ExecuteOrder(step = 1)

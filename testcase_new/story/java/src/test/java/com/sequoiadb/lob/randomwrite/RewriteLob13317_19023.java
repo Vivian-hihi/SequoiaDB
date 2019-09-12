@@ -26,8 +26,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  */
 
 /*
- * 1、共享模式下，并发执行如下操作 (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob，
- * 重复多次加锁不同范围写lob （2）执行切分操作（异步切分），其中切分过程中需要覆盖元数据片迁移到目标组场景 2、读取lob，检查操作结果
+ * 1、共享模式下，并发执行如下操作 (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob， 重复多次加锁不同范围写lob
+ * （2）执行切分操作（异步切分），其中切分过程中需要覆盖元数据片迁移到目标组场景 2、读取lob，检查操作结果
  */
 
 public class RewriteLob13317_19023 extends SdbTestBase {
@@ -83,7 +83,7 @@ public class RewriteLob13317_19023 extends SdbTestBase {
         String srcGroupName = RandomWriteLobUtil.getSrcGroupName(sdb, csName, subCLName);
         String dstGroupName = RandomWriteLobUtil.getSplitGroupName(sdb, srcGroupName);
         long taskId = 0;
-
+        // TODO:1、切分范围没有检查
         taskId = subCL.splitAsync(srcGroupName, dstGroupName, 50);
 
         try (DBLob lob = mainCL.openLob(oid, DBLob.SDB_LOB_WRITE)) {

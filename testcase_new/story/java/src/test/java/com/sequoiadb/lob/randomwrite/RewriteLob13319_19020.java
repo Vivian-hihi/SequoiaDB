@@ -26,16 +26,15 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @FileName seqDB-13319: 并发加锁写lob过程中执行truncate seqDB-19020
- *           主子表并发加锁写lob过程中执行truncate
+ * @FileName seqDB-13319: 并发加锁写lob过程中执行truncate seqDB-19020 主子表并发加锁写lob过程中执行truncate
  * @Author linsuqiang
  * @Date 2017-11-08
  * @Version 1.00
  */
 
 /*
- * 1、共享模式下，多个连接多线程并发如下操作: (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob，
- * 其中多个线程锁定不同数据段 （2）执行truncate操作 2、读取lob，检查操作结果
+ * 1、共享模式下，多个连接多线程并发如下操作: (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob， 其中多个线程锁定不同数据段
+ * （2）执行truncate操作 2、读取lob，检查操作结果
  */
 
 public class RewriteLob13319_19020 extends SdbTestBase {
@@ -67,8 +66,8 @@ public class RewriteLob13319_19020 extends SdbTestBase {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("is standalone skip testcase");
-        }
-        // create cs cl
+        }// TODO:1、非主子表不需要屏蔽独立模式
+         // create cs cl
         BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
         cs = sdb.createCollectionSpace(csName, csOpt);
         BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
@@ -111,7 +110,7 @@ public class RewriteLob13319_19020 extends SdbTestBase {
             Assert.assertFalse(isLobExist(cl, oid), "lob still exist after truncate!");
 
         } catch (BaseException e) {
-            e.printStackTrace();
+            e.printStackTrace();// TODO:2、try-catch和失败打屏信息建议去掉
             Assert.fail(e.getMessage());
         }
     }
@@ -123,7 +122,7 @@ public class RewriteLob13319_19020 extends SdbTestBase {
                 sdb.dropCollectionSpace(csName);
             }
         } catch (BaseException e) {
-            e.printStackTrace();
+            e.printStackTrace();// TODO:2、try-catch和失败打屏信息建议去掉
             Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {

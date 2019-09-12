@@ -19,6 +19,7 @@ import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
+//TODO:1、用例注释需要更新时间和作者，另外建议和13236用例合并
 /**
  * @Description seqDB-18968 主子表加锁写lob时分片边界值验证
  * @author wuyan

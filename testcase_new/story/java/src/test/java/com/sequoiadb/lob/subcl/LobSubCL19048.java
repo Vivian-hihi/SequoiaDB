@@ -110,6 +110,7 @@ public class LobSubCL19048 extends SdbTestBase {
         }
     }
 
+    // TODO:1、类名和方法名建议修改和实际操作一致
     private class AttachCLThread {
 
         @ExecuteOrder(step = 1)

@@ -32,8 +32,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 /*
- * 1、多个连接多线程并发如下操作: (1)打开已存在lob对象，锁定（lockAndSeek）指定范围数据段，写入lob
- * （2）打开已存在lob对象，seek指定偏移范围读 2、检查操作结果
+ * 1、多个连接多线程并发如下操作: (1)打开已存在lob对象，锁定（lockAndSeek）指定范围数据段，写入lob （2）打开已存在lob对象，seek指定偏移范围读 2、检查操作结果
  */
 
 public class RewriteLob13275_19017 extends SdbTestBase {
@@ -62,6 +61,7 @@ public class RewriteLob13275_19017 extends SdbTestBase {
 
         try {
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            // TODO:1、非主子表不需要屏蔽独立模式
             if (CommLib.isStandAlone(sdb)) {
                 throw new SkipException("is standalone skip testcase");
             }
@@ -74,7 +74,7 @@ public class RewriteLob13275_19017 extends SdbTestBase {
             LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
 
         } catch (BaseException e) {
-            e.printStackTrace();
+            e.printStackTrace();// TODO:2、这里的try-catch和打印信息可以去掉
             Assert.fail(e.getMessage());
         }
     }
@@ -109,7 +109,7 @@ public class RewriteLob13275_19017 extends SdbTestBase {
                 System.out.println("writing and reading lob are not concurrently");
             }
 
-        } catch (BaseException e) {
+        } catch (BaseException e) {// TODO:3、这里的try-catch和打印信息可以去掉
             e.printStackTrace();
             Assert.fail(e.getMessage());
         }
@@ -122,7 +122,7 @@ public class RewriteLob13275_19017 extends SdbTestBase {
                 sdb.dropCollectionSpace(csName);
             }
         } catch (BaseException e) {
-            e.printStackTrace();
+            e.printStackTrace();// TODO:2、这里打印信息可以去掉
             Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {

@@ -54,7 +54,7 @@ public class LobSubCL19075 extends SdbTestBase {
         thread.addWorker(new RemoveLobThread());
         thread.addWorker(new RemoveLobThread());
         thread.run();
-
+        // TODO:1、补充只有一个操作成功的检查
         checkRemoveLobResult(lobIds);
     }
 

@@ -97,6 +97,7 @@ public class LobSubCL19078 extends SdbTestBase {
         }
     }
 
+    // TODO:1、测试结果和用例中描述结果不一致，建议这里不需要sleep，直接补充两种并发结果检查
     private class TruncateLobThread {
 
         @ExecuteOrder(step = 1)

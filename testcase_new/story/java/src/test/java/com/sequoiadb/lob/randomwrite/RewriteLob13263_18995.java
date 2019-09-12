@@ -61,9 +61,9 @@ public class RewriteLob13263_18995 extends SdbTestBase {
                 new Object[] { mainCLName } };
     }
 
+    // TODO:1、setUp和test中的try-catch建议去掉
     @BeforeClass
     public void setUp() {
-
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         // create cs cl
         BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");

@@ -34,8 +34,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 /*
- * (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob，
- * 其中多个线程锁定不同数据段，锁定数据段范围较大（如每个数据段锁定10G大小） （2）写lob过程中执行drop cl操作 2、读取lob，检查操作结果
+ * (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob， 其中多个线程锁定不同数据段，锁定数据段范围较大（如每个数据段锁定10G大小）
+ * （2）写lob过程中执行drop cl操作 2、读取lob，检查操作结果
  */
 
 public class RewriteLob13606_19021 extends SdbTestBase {
@@ -65,7 +65,7 @@ public class RewriteLob13606_19021 extends SdbTestBase {
     public void setUp() {
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
+        if (CommLib.isStandAlone(sdb)) {// TODO:1、非主子表不需要屏蔽独立模式
             throw new SkipException("is standalone skip testcase");
         }
         // create cs cl
@@ -111,7 +111,7 @@ public class RewriteLob13606_19021 extends SdbTestBase {
             Assert.assertFalse(cs.isCollectionExist(clName), "cl still exist after drop!");
 
         } catch (BaseException e) {
-            e.printStackTrace();
+            e.printStackTrace();// TODO:2、try-catch建议去掉，失败打屏信息建议去掉
             Assert.fail(e.getMessage());
         }
     }
@@ -123,7 +123,7 @@ public class RewriteLob13606_19021 extends SdbTestBase {
                 sdb.dropCollectionSpace(csName);
             }
         } catch (BaseException e) {
-            e.printStackTrace();
+            e.printStackTrace();// TODO:3、失败打屏信息建议去掉，testng框架会打印失败栈信息
             Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
