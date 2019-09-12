@@ -1,0 +1,12 @@
+#story/java用例执行说明
+#1. set sequoiadb project's root path
+export PROJECT_ROOT_PATH=/opt/svn/sequoiadb/
+
+#2. package java driver(sequoiadb-driver-3.2-SNAPSHOT.jar)
+cd $PROJECT_ROOT_PATH/trunk/driver/java
+mvn clean package -Dmaven.test.skip=true
+
+#3. run testcase
+cd $PROJECT_ROOT_PATH/trunk/testcase_new/story/java/
+mvn surefire-report:report -DxmlFileName=testng.xml -Dsdbdriver=3.2-SNAPSHOT -DsdbdriverDir=$PROJECT_ROOT_PATH/trunk/driver/java/target/ -DthreadexecutorDir=$PROJECT_ROOT_PATH/trunk/testcase_new/tools/ -DreportDir=$PROJECT_ROOT_PATH/trunk/testcase_new/story/java/report -DHOSTNAME=192.168.20.56 -DSVCNAME=50000
+
