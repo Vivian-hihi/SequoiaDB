@@ -936,9 +936,6 @@ if not os.path.isfile ( "gitbuild" ):
    else:
       # In NIX platform, we use svn and sed to send to ossVer_Autogen.h
       svnVer = os.popen( "svn info | grep Revision | awk '{print $2}'" ).read().replace("\n","")
-      if svnVer == "":
-          print( "error: failed to get svn from 'svn info'." )
-          os._exit( 1 )
       os.system( "sed 's/\$WCREV\$/" + svnVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
 
 print("Begin to build thirdparty...")
