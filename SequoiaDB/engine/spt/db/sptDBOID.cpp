@@ -128,6 +128,13 @@ namespace engine
          goto error ;
       }
 
+      if( !utilIsValidOID( data.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         errMsg = "Invalid oid str" ;
+         goto error ;
+      }
+
       {
          OID oid( data ) ;
          builder.appendOID( key, &oid ) ;
