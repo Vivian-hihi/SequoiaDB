@@ -384,6 +384,7 @@
    //消息通知，用于同页面直接发生通知消息
    sacApp.service( 'SdbSignal', function( $rootScope ){
       var queue = [] ;
+      var commitQueue = [] ;
       /*
       注册信号监听
          event:      string   监听的信号名
@@ -392,6 +393,13 @@
       */
       this['on'] = function( event, callback, isGlobal ){
          queue.push( { 'event': event, 'callback': callback, 'global': isGlobal } ) ;
+
+         $.each( commitQueue, function( index, caller ){
+            if( caller['event'] === event )
+            {
+               callback( caller['data'] ) ;
+            }
+         } ) ;
       }
 
       /*
@@ -407,6 +415,10 @@
                results.push( listener['callback']( data ) ) ;
             }
          } ) ;
+         if ( results.length == 0 )
+         {
+            commitQueue.push( { 'event': event, 'data': data } ) ;
+         }
          return results ;
       }
       $rootScope.$on( '$locationChangeStart', function( event, newUrl, oldUrl ){

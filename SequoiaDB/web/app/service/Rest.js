@@ -477,6 +477,11 @@
          if( options['scope'] == true )
          {
             options['scope'] = $location.url() ;
+
+            if ( options['scope'].length == 0 )
+            {
+               options['scope'] = '__init__' ;
+            }
          }
          if( typeof( options['parseJson'] ) == 'undefined' )
          {
@@ -498,7 +503,7 @@
 
       //循环模块
       g._eventLoop = function( type, url, data, event, options, loop ){
-         if( options['scope'] === false || options['scope'] === $location.url() )
+         if( options['scope'] === false || options['scope'] !== '__init__' || options['scope'] === $location.url() )
          {
             if( options['loop'] === loop )
             {
@@ -800,7 +805,7 @@
             return ;
          }
 
-         if( options['scope'] !== false && options['scope'] !== $location.url() )
+         if( options['scope'] !== false && options['scope'] !== '__init__' && options['scope'] !== $location.url() )
          {
             return ;
          }
@@ -834,7 +839,7 @@
 
          $.ajax( { 'type': type, 'url': url, 'data': data,
             'beforeSend': function( XMLHttpRequest ){
-               if( options['scope'] !== false && options['scope'] !== $location.url() )
+               if( options['scope'] !== false && options['scope'] !== '__init__' && options['scope'] !== $location.url() )
                {
                   return ;
                }
@@ -842,7 +847,7 @@
                return g._eventBefore( type, url, data, event, options, XMLHttpRequest ) ;
             },
             'success': function( json, textStatus, jqXHR ){
-               if( options['scope'] !== false && options['scope'] !== $location.url() )
+               if( options['scope'] !== false && options['scope'] !== '__init__' && options['scope'] !== $location.url() )
                {
                   return ;
                }
@@ -850,7 +855,7 @@
                g._eventSuccess( type, url, data, event, options, json, textStatus, jqXHR ) ;
             },
             'error': function( XMLHttpRequest, textStatus, errorThrown ) {
-               if( options['scope'] !== false && options['scope'] !== $location.url() )
+               if( options['scope'] !== false && options['scope'] !== '__init__' && options['scope'] !== $location.url() )
                {
                   return ;
                }
