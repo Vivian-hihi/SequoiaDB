@@ -811,7 +811,9 @@ fmpEnv = env.Clone() ;
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
-shellEnv.Append( LIBS=['mdocml'] )
+    shellEnv.Append( LIBS=['libmdocml'] )
+else:
+    shellEnv.Append( LIBS=['mdocml'] )
 shellEnv.Append(CPPPATH=[join(mdocml_dir, 'include')])
 
 # add engine and client variable
