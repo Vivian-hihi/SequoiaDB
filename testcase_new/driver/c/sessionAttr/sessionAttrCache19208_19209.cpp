@@ -15,6 +15,8 @@
 class sessionAttrCache19208_19209 : public testBase
 {
 protected:
+    INT32 transisolation ;
+    INT32 transactiontimeout ;
 
     void SetUp()
     {
@@ -26,8 +28,8 @@ protected:
         INT32 rc = SDB_OK ;
         bson config ;
         bson_init( &config ) ;
-        bson_append_int( &config, "transisolation", 0 ) ;
-        bson_append_int( &config, "transactiontimeout", 60 ) ;
+        bson_append_int( &config, "transisolation", transisolation ) ;
+        bson_append_int( &config, "transactiontimeout", transactiontimeout ) ;
         bson_finish( &config ) ;
         bson option ;
         bson_init( &option ) ;
@@ -51,10 +53,12 @@ TEST_F( sessionAttrCache19208_19209, getSessionAttr19208 )
     
     // get default session attr 
     bson_iterator it ;
-    bson_find( &it, &attrObj, "TransIsolation" ) ;
-    ASSERT_EQ( 0, bson_iterator_int( &it ) ) ;
+    bson_find( &it, &attrObj, "TransIsolation" ) ; 
+    transisolation = bson_iterator_int( &it ) ;
+    ASSERT_EQ( 0, transisolation ) ;
     bson_find( &it, &attrObj, "TransTimeout" ) ;
-    ASSERT_EQ( 60, bson_iterator_int( &it ) ) ;
+    transactiontimeout =  bson_iterator_int( &it ) ;
+    ASSERT_EQ( 60, transactiontimeout ) ;
     bson_destroy( &attrObj ) ;
     
     // set session attr
