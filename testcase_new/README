@@ -1,4 +1,4 @@
-#story/java用例执行说明
+#story/java testcase readme
 #1. set sequoiadb project's root path
 export PROJECT_ROOT_PATH=/opt/svn/sequoiadb/
 
