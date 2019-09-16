@@ -64,7 +64,7 @@ namespace engine
    */
    enum RTN_CONTEXT_TYPE
    {
-      RTN_CONTEXT_DATA     = 1,
+      RTN_CONTEXT_DATA     = 0,
       RTN_CONTEXT_DUMP,
       RTN_CONTEXT_COORD,
       RTN_CONTEXT_COORD_EXP,

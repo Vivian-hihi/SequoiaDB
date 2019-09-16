@@ -464,4 +464,32 @@ namespace engine
    {
       return FALSE ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotLatchWaits )
+
+   BOOLEAN _rtnSnapshotLatchWaits::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotLatchWaitsInner )
+
+   BOOLEAN _rtnSnapshotLatchWaitsInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotLockWaits )
+
+   BOOLEAN _rtnSnapshotLockWaits::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotLockWaitsInner )
+
+   BOOLEAN _rtnSnapshotLockWaitsInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
 }

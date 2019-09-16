@@ -573,7 +573,63 @@ namespace engine
       public:
          _coordSnapshotQueriesIntr() ;
          virtual ~_coordSnapshotQueriesIntr() ;
+         virtual void    _preSet( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
    } ;
    typedef _coordSnapshotQueriesIntr coordSnapshotQueriesIntr ;
+
+   /*
+      _coordCMDSnapshotLatchWaits define
+   */
+   class _coordCMDSnapshotLatchWaits : public _coordCMDMonBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotLatchWaits() ;
+         virtual ~_coordCMDSnapshotLatchWaits() ;
+     private:
+        virtual const CHAR *getIntrCMDName() ;
+        virtual const CHAR *getInnerAggrContent() ;
+   } ;
+   typedef _coordCMDSnapshotLatchWaits coordCMDSnapshotLatchWaits ;
+
+   /*
+      _coordCMDSnapshotLockWaitsIntr define
+   */
+   class _coordCMDSnapshotLatchWaitsIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotLatchWaitsIntr() {}
+         virtual ~_coordCMDSnapshotLatchWaitsIntr() {}
+   } ;
+   typedef _coordCMDSnapshotLatchWaitsIntr coordCMDSnapshotLatchWaitsIntr ;
+
+   /*
+      _coordCMDSnapshotLockWaits define
+   */
+   class _coordCMDSnapshotLockWaits : public _coordCMDMonBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotLockWaits() ;
+         virtual ~_coordCMDSnapshotLockWaits() ;
+     private:
+        virtual const CHAR *getIntrCMDName() ;
+        virtual const CHAR *getInnerAggrContent() ;
+   } ;
+   typedef _coordCMDSnapshotLockWaits coordCMDSnapshotLockWaits ;
+
+   /*
+      _coordCMDSnapshotLockWaitsIntr define
+   */
+   class _coordCMDSnapshotLockWaitsIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotLockWaitsIntr() {}
+         virtual ~_coordCMDSnapshotLockWaitsIntr() {}
+   } ;
+   typedef _coordCMDSnapshotLockWaitsIntr coordCMDSnapshotLockWaitsIntr ;
+
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__

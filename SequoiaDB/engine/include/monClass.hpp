@@ -39,7 +39,7 @@
 #define MONCLASS_HPP_
 
 #include "ossTypes.h"
-#include "ossLatch.hpp"
+#include "monLatch.hpp"
 #include "ossAtomic.hpp"
 #include "ossUtil.hpp"
 #include "../bson/bson.hpp"
@@ -57,6 +57,8 @@ typedef enum
    MON_CLASS_DATABASE,   // MonClassDatabase
    MON_CLASS_EDU,        // MonClassEDU
    MON_CLASS_QUERY,      // MonClassQuery
+   MON_CLASS_LATCH,      // MonClassLatch
+   MON_CLASS_LOCK,       // MonClassLock
    MON_CLASS_MAX
 } MonitorClassType ;
 
@@ -64,6 +66,22 @@ typedef enum
 #define MON_CLASS_STATUS_NORMAL   0x00
 #define MON_CLASS_STATUS_PEND_DEL 0x01
 #define MON_CLASS_STATUS_PEND_ARC 0x02
+
+struct _MonClassBaseData
+{
+} ;
+
+struct _MonClassLatchData : public _MonClassBaseData
+{
+   UINT32 waiterTID ;
+   UINT32 ownerTID ;
+   MON_LATCH_IDENTIFIER latchID ;
+   void* latchAddr ;
+   OSS_LATCH_MODE latchMode ;
+} ;
+
+typedef _MonClassLatchData MonClassLatchData ;
+
 
 typedef boost::intrusive::list_base_hook< > BaseHook ;
 
@@ -91,19 +109,25 @@ public:
    /**
     * getType - return the type of the object
     */
-   MonitorClassType getType () const { return _type; } 
+   MonitorClassType getType () const { return _type; }
 
    /**
     * setPendingDelete - mark an object to be pending delete
     */
    void setPendingDelete() { _status |= MON_CLASS_STATUS_PEND_DEL ; }
-   BOOLEAN isPendingDelete() const { return ( _status & MON_CLASS_STATUS_PEND_DEL ) ? TRUE : FALSE ; }
+   BOOLEAN isPendingDelete() const
+   {
+      return ( _status & MON_CLASS_STATUS_PEND_DEL ) ? TRUE : FALSE ;
+   }
 
    /**
     * setPendingArchive - mark an object to be pending archive
     */
    void setPendingArchive() { _status |= MON_CLASS_STATUS_PEND_ARC ; }
-   BOOLEAN isPendingArchive() const { return ( _status & MON_CLASS_STATUS_PEND_ARC ) ? TRUE : FALSE ; }
+   BOOLEAN isPendingArchive() const
+   {
+      return ( _status & MON_CLASS_STATUS_PEND_ARC ) ? TRUE : FALSE ;
+   }
 
    /**
     * getStatus() - get the current status
@@ -225,8 +249,8 @@ public:
    ossTickDelta _responseTime;
    UINT32 _accessPlanID;
    UINT32 _transactionID;
-   UINT32 _latchWaitTime;
-   UINT32 _lockWaitTime;
+   ossTickDelta _latchWaitTime;
+   ossTickDelta _lockWaitTime;
    UINT32 _dataRead;
    UINT32 _dataWrite;
 
@@ -236,8 +260,6 @@ public:
    MonClassQuery ()
      :  _accessPlanID( 0 ),
         _transactionID( 0 ),
-        _latchWaitTime( 0 ),
-        _lockWaitTime( 0 ),
         _dataRead( 0 ),
         _dataWrite( 0 ),
         _latchTable( NULL ),
@@ -252,6 +274,51 @@ public:
    virtual void dump( BSONObj &obj ) {}
 
    //TODO: to be implemented
+   virtual void reset() {}
+
+   void startLatchTimer() { _latchWaitTimer.sample() ; }
+
+   void stopLatchTimer()
+   {
+      ossTick tick ;
+      tick.sample() ;
+      _latchWaitTime += (tick - _latchWaitTimer) ;
+   }
+
+private:
+   ossTick _latchWaitTimer ;
+} ;
+
+class MonClassLatch : public MonClassTemplate<MonClassLatch>
+{
+public:
+   MonClassLatch ()
+   {
+      _type = MON_CLASS_LATCH ;
+   }
+
+   static MonitorClassType getType () { return MON_CLASS_LATCH ; }
+
+   virtual void dump( BSONObj &obj ) {}
+
+   virtual void reset() {}
+
+   ossTickDelta _waitTime ;
+   MON_LATCH_IDENTIFIER _latchID ;
+} ;
+
+class MonClassLock : public MonClassTemplate<MonClassLatch>
+{
+public:
+   MonClassLock ()
+   {
+      _type = MON_CLASS_LOCK ;
+   }
+
+   static MonitorClassType getType () { return MON_CLASS_LOCK ; }
+
+   virtual void dump( BSONObj &obj ) {}
+
    virtual void reset() {}
 } ;
 
@@ -343,7 +410,7 @@ private:
    MonClassContainer( const MonClassContainer& other ) ;
 
    // a list of all the active objects
-   MonClassList activeList ;
+   MonClassList _activeList ;
 
    // latch protecting the activeList
    // Protocol is as follows:
@@ -353,13 +420,13 @@ private:
    // - Real delete will be done by a background agent. It gets the headLatch in S and latch in X.
    //   It releases the headLatch after processing the list head.
    // - Latches should be acquired in this order: listLatch->archiveLatch->headLatch
-   ossSpinSLatch activeListLatch ;
-   ossSpinSLatch activeListHeadLatch ;
+   ossSpinSLatch _activeListLatch ;
+   ossSpinSLatch _activeListHeadLatch ;
 
    // a list of all the archived objects
-   MonClassList archivedList ;
+   MonClassList _archivedList ;
 
-   ossSpinSLatch archiveListLatch ;
+   ossSpinSLatch _archiveListLatch ;
 
    ossAtomic32 _activeListLen ;       /**< number of elements in the active list */
    UINT32 _archivedListLen ;          /**< number of elements in the archived list, protected by archivedListLatch */
@@ -375,13 +442,18 @@ private:
     */
    void _processPendingObj() ;
 
+   /*
+    * Remove archived objects when the number of obj exceeds the capacity
+    */
+   void _removeArchivedObj() ;
+
    MonClassContainer (archiveFunc fp)
       : _activeListLen( 0 ),
         _archivedListLen( 0 ),
-        _archivedListMaxLen( 100 ),
+        _archivedListMaxLen( 10000 ),
         _numPendingArchive( 0 ),
         _numPendingDelete( 0 ),
-        _active ( FALSE ) 
+        _active ( FALSE )
    {
       doArchive = fp ;
    }
@@ -390,7 +462,9 @@ public:
 
    UINT32 getActiveListLen() { return _activeListLen.fetch() ; }
 
-   UINT32 getArchivedListLen() const { return _archivedListLen ; }
+   UINT32 getArchivedListLen() const { return _archivedList.size() ; }
+
+   UINT32 getMaxArchivedListLen() const { return _archivedListMaxLen ; }
 
    UINT32 getNumPendingArchive() { return _numPendingArchive.fetch() ; }
 
@@ -398,35 +472,38 @@ public:
 
    void getListLatch ( OSS_LATCH_MODE latchMode )
    {
-      latchMode == EXCLUSIVE ? activeListLatch.get() : activeListLatch.get_shared() ;
+      latchMode == EXCLUSIVE ? _activeListLatch.get()
+                             : _activeListLatch.get_shared() ;
    }
 
    void releaseListLatch ( OSS_LATCH_MODE latchMode )
    {
-      latchMode == EXCLUSIVE ? activeListLatch.release()
-                             : activeListLatch.release_shared() ;
+      latchMode == EXCLUSIVE ? _activeListLatch.release()
+                             : _activeListLatch.release_shared() ;
    }
 
    void getHeadLatch ( OSS_LATCH_MODE latchMode )
    {
-      latchMode == EXCLUSIVE ? activeListHeadLatch.get() : activeListHeadLatch.get_shared() ;
+      latchMode == EXCLUSIVE ? _activeListHeadLatch.get()
+                             : _activeListHeadLatch.get_shared() ;
    }
 
    void releaseHeadLatch ( OSS_LATCH_MODE latchMode )
    {
-      latchMode == EXCLUSIVE ? activeListHeadLatch.release()
-                             : activeListHeadLatch.release_shared() ;
+      latchMode == EXCLUSIVE ? _activeListHeadLatch.release()
+                             : _activeListHeadLatch.release_shared() ;
    }
 
    void getArchiveLatch ( OSS_LATCH_MODE latchMode )
    {
-      latchMode == EXCLUSIVE ? archiveListLatch.get() : archiveListLatch.get_shared() ;
+      latchMode == EXCLUSIVE ? _archiveListLatch.get()
+                             : _archiveListLatch.get_shared() ;
    }
 
    void releaseArchiveLatch ( OSS_LATCH_MODE latchMode )
    {
-      latchMode == EXCLUSIVE ? archiveListLatch.release()
-                             : archiveListLatch.release_shared() ;
+      latchMode == EXCLUSIVE ? _archiveListLatch.release()
+                             : _archiveListLatch.release_shared() ;
    }
 
    /**
@@ -465,10 +542,10 @@ public:
       switch ( listType )
       {
          case ( MON_CLASS_ARCHIVED_LIST ):
-            return iterator( archivedList.begin() ) ;
+            return iterator( _archivedList.begin() ) ;
          case ( MON_CLASS_ACTIVE_LIST ):
          default:
-            return iterator( activeList.begin() ) ;
+            return iterator( _activeList.begin() ) ;
       }
    }
 
@@ -480,11 +557,11 @@ public:
 
       if ( listType == MON_CLASS_ARCHIVED_LIST )
       {
-         return iterator( archivedList.end() ) ;
+         return iterator( _archivedList.end() ) ;
       }
       else
       {
-         return iterator( activeList.end() ) ;
+         return iterator( _activeList.end() ) ;
       }
    }
 } ;

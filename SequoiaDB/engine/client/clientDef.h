@@ -63,6 +63,10 @@
 #define SDB_SNAP_RESERVED2        17
 /** snapshot of queries */
 #define SDB_SNAP_QUERIES          18
+/** snapshot of latch waits */
+#define SDB_SNAP_LATCHWAITS       19
+/** snapshot of lock waits */
+#define SDB_SNAP_LOCKWAITS        20
 
 /** list of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0
@@ -100,6 +104,8 @@
 #define SDB_LIST_BACKUPS          17
 /** reserved */
 #define SDB_LIST_RESERVED1        18
+#define SDB_LIST_RESERVED2        19
+#define SDB_LIST_RESERVED3        20
 
 // reserved
 #define SDB_LIST_CL_IN_DOMAIN     129

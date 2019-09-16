@@ -925,5 +925,78 @@ namespace engine
    _coordSnapshotQueriesIntr::~_coordSnapshotQueriesIntr()
    {
    }
+
+   void _coordSnapshotQueriesIntr::_preSet( pmdEDUCB *cb,
+                                            coordCtrlParam &ctrlParam )
+   {
+      // catalog / data has been selected in constructor of _coordCtrlParam
+      ctrlParam._role[ SDB_ROLE_COORD ] = 1 ;
+      ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
+      ctrlParam._role[ SDB_ROLE_DATA ] = 0 ;
+   }
+
+   /*
+    * _coordCMDSnapshotLatchWaits implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLatchWaits,
+                                      CMD_NAME_SNAPSHOT_LATCHWAITS,
+                                      TRUE ) ;
+
+   _coordCMDSnapshotLatchWaits::_coordCMDSnapshotLatchWaits()
+   {
+   }
+
+   _coordCMDSnapshotLatchWaits::~_coordCMDSnapshotLatchWaits()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotLatchWaits::getIntrCMDName()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_LATCHWAITS_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotLatchWaits::getInnerAggrContent()
+   {
+      return NULL ;
+   }
+
+   /*
+      _coordSnapshotLatchWaitsIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLatchWaitsIntr,
+                                      CMD_NAME_SNAPSHOT_LATCHWAITS_INTR,
+                                      TRUE ) ;
+
+   /*
+    * _coordCMDSnapshotLockWaits implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLockWaits,
+                                      CMD_NAME_SNAPSHOT_LOCKWAITS,
+                                      TRUE ) ;
+
+   _coordCMDSnapshotLockWaits::_coordCMDSnapshotLockWaits()
+   {
+   }
+
+   _coordCMDSnapshotLockWaits::~_coordCMDSnapshotLockWaits()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotLockWaits::getIntrCMDName()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_LOCKWAITS_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotLockWaits::getInnerAggrContent()
+   {
+      return NULL ;
+   }
+
+   /*
+      _coordSnapshotLockWaitsIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLockWaitsIntr,
+                                      CMD_NAME_SNAPSHOT_LOCKWAITS_INTR,
+                                      TRUE ) ;
 }
 

@@ -676,6 +676,79 @@ namespace engine
          virtual BOOLEAN _isCurrent() const ;
    } ;
 
+   class _rtnSnapshotLatchWaits : public _rtnSnapshot
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotLatchWaits()
+            : _rtnSnapshot( NAME_SNAPSHOT_LATCHWAITS,
+                            CMD_NAME_SNAPSHOT_LATCHWAITS_INTR,
+                            CMD_SNAPSHOT_LATCHWAITS,
+                            RTN_FETCH_LATCHWAITS,
+                            MON_MASK_NODE_NAME )
+         {}
+
+         virtual ~_rtnSnapshotLatchWaits() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+   } ;
+
+   class _rtnSnapshotLatchWaitsInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotLatchWaitsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_LATCHWAITS_INTR,
+                                 CMD_SNAPSHOT_LATCHWAITS,
+                                 RTN_FETCH_LATCHWAITS,
+                                 MON_MASK_NODE_NAME )
+         {}
+
+         virtual ~_rtnSnapshotLatchWaitsInner() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+   } ;
+
+   class _rtnSnapshotLockWaits : public _rtnSnapshot
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotLockWaits()
+            : _rtnSnapshot( NAME_SNAPSHOT_LOCKWAITS,
+                            CMD_NAME_SNAPSHOT_LOCKWAITS_INTR,
+                            CMD_SNAPSHOT_LOCKWAITS,
+                            RTN_FETCH_LOCKWAITS,
+                            MON_MASK_NODE_NAME )
+         {}
+
+         virtual ~_rtnSnapshotLockWaits() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+   } ;
+
+   class _rtnSnapshotLockWaitsInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotLockWaitsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_LOCKWAITS_INTR,
+                                 CMD_SNAPSHOT_LOCKWAITS,
+                                 RTN_FETCH_LOCKWAITS,
+                                 MON_MASK_NODE_NAME )
+         {}
+
+         virtual ~_rtnSnapshotLockWaitsInner() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+   } ;
 }
 
 #endif //RTN_COMMAND_SNAPSHOT_HPP_

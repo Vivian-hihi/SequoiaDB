@@ -44,7 +44,8 @@ namespace engine
 archiveFunc monClassArchiveFP[MON_CLASS_MAX] = {
    noArchive,
    noArchive,
-   archiveQuery
+   archiveQuery,
+   noArchive
 };
 
 MonitorManager::MonitorManager()

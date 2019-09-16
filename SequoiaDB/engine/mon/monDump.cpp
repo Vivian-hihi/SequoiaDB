@@ -67,7 +67,7 @@
 #include "msgDef.h"
 
 using namespace bson ;
-
+using namespace boost::asio::ip ;
 #define OSS_MAX_SESSIONNAME ( OSS_MAX_HOSTNAME+OSS_MAX_SERVICENAME+30 )
 
 namespace engine
@@ -1539,10 +1539,10 @@ namespace engine
    /*
       _monTransFetcher implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monTransFetcher, RTN_FETCH_TRANS )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monTransFetcher )
 
    _monTransFetcher::_monTransFetcher()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_TRANS )
    {
       _dumpCurrent = TRUE ;
       _detail = FALSE ;
@@ -1786,10 +1786,10 @@ namespace engine
    /*
       _monContextFetcher implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monContextFetcher, RTN_FETCH_CONTEXT )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monContextFetcher )
 
    _monContextFetcher::_monContextFetcher()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_CONTEXT )
    {
       _dumpCurrent = FALSE ;
       _detail = TRUE ;
@@ -2016,10 +2016,10 @@ namespace engine
    /*
       _monSessionFetcher implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monSessionFetcher, RTN_FETCH_SESSION )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monSessionFetcher )
 
    _monSessionFetcher::_monSessionFetcher()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_SESSION )
    {
       _dumpCurrent = TRUE ;
       _detail = FALSE ;
@@ -2246,10 +2246,10 @@ namespace engine
    /*
       _monCollectionFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionFetch, RTN_FETCH_COLLECTION )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionFetch )
 
    _monCollectionFetch::_monCollectionFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_COLLECTION )
    {
       _detail = FALSE ;
       _includeSys = FALSE ;
@@ -2521,10 +2521,10 @@ namespace engine
    /*
       _monCollectionSpaceFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionSpaceFetch, RTN_FETCH_COLLECTIONSPACE )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionSpaceFetch )
 
    _monCollectionSpaceFetch::_monCollectionSpaceFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_COLLECTIONSPACE )
    {
       _detail = FALSE ;
       _includeSys = FALSE ;
@@ -2756,10 +2756,10 @@ namespace engine
    /*
       _monDataBaseFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monDataBaseFetch, RTN_FETCH_DATABASE )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monDataBaseFetch )
 
    _monDataBaseFetch::_monDataBaseFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_DATABASE )
    {
       _addInfoMask   = 0 ;
    }
@@ -2886,10 +2886,10 @@ namespace engine
    /*
       _monSystemFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monSystemFetch, RTN_FETCH_SYSTEM )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monSystemFetch )
 
    _monSystemFetch::_monSystemFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_SYSTEM )
    {
       _addInfoMask   = 0 ;
    }
@@ -2981,10 +2981,10 @@ namespace engine
    /*
       _monHealthFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monHealthFetch, RTN_FETCH_HEALTH )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monHealthFetch )
 
    _monHealthFetch::_monHealthFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_HEALTH )
    {
       _addInfoMask   = 0 ;
    }
@@ -3083,10 +3083,10 @@ namespace engine
    /*
       _monStorageUnitFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monStorageUnitFetch, RTN_FETCH_STORAGEUNIT )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monStorageUnitFetch )
 
    _monStorageUnitFetch::_monStorageUnitFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_STORAGEUNIT )
    {
       _includeSys    = FALSE ;
       _addInfoMask   = 0 ;
@@ -3203,10 +3203,10 @@ namespace engine
    /*
       _monIndexFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monIndexFetch, RTN_FETCH_INDEX )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monIndexFetch )
 
    _monIndexFetch::_monIndexFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_INDEX )
    {
       _addInfoMask   = 0 ;
       _pos           = 0 ;
@@ -3388,10 +3388,10 @@ namespace engine
    /*
       _monCLBlockFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monCLBlockFetch, RTN_FETCH_DATABLOCK )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monCLBlockFetch )
 
    _monCLBlockFetch::_monCLBlockFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ * 4 )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ * 4, RTN_FETCH_DATABLOCK )
    {
       _addInfoMask   = 0 ;
       _pos           = 0 ;
@@ -3549,10 +3549,10 @@ namespace engine
    /*
       _monBackupFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monBackupFetch, RTN_FETCH_BACKUP )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monBackupFetch )
 
    _monBackupFetch::_monBackupFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_BACKUP )
    {
       _addInfoMask   = 0 ;
       _pos           = 0 ;
@@ -3730,9 +3730,9 @@ namespace engine
    /*
       _monCachedPlanFetch implement
     */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monAccessPlansFetch, RTN_FETCH_ACCESSPLANS )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monAccessPlansFetch )
    _monAccessPlansFetch::_monAccessPlansFetch ()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_ACCESSPLANS )
    {
       _pos = 0 ;
    }
@@ -3873,10 +3873,10 @@ namespace engine
    /*
       _monConfigFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monConfigsFetch, RTN_FETCH_CONFIGS )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monConfigsFetch )
 
    _monConfigsFetch::_monConfigsFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_CONFIGS )
    {
       _addInfoMask   = 0 ;
       _isLocalMode   = FALSE ;
@@ -3997,9 +3997,9 @@ namespace engine
    /*
       _monVCLSessionInfoFetch implement
    */
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monVCLSessionInfoFetch, RTN_FETCH_VCL_SESSIONINFO )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monVCLSessionInfoFetch )
    _monVCLSessionInfoFetch::_monVCLSessionInfoFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_VCL_SESSIONINFO )
    {
    }
 
@@ -4062,12 +4062,12 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monSvcTasksFetch, RTN_FETCH_SVCTASKS )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monSvcTasksFetch )
    /*
       _monSvcTasksFetch implement
    */
    _monSvcTasksFetch::_monSvcTasksFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_SVCTASKS )
    {
       _addInfoMask = 0 ;
       _isDetail= TRUE ;
@@ -4143,12 +4143,12 @@ namespace engine
       return rc ;
    }
 
-   IMPLEMENT_FETCH_AUTO_REGISTER( _monQueriesFetch, RTN_FETCH_QUERIES )
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monQueriesFetch )
    /*
       _monQueriesFetch implement
    */
    _monQueriesFetch::_monQueriesFetch()
-      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_QUERIES )
    {
       _addInfoMask = 0 ;
       _isDetail= TRUE ;
@@ -4190,5 +4190,115 @@ namespace engine
       return rc ;
    }
 
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monLatchWaitsFetch )
+   /*
+      _monLatchWaitsFetch implement
+   */
+   _monLatchWaitsFetch::_monLatchWaitsFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LATCHWAITS )
+   {
+      _addInfoMask = MON_MASK_NODE_NAME ;
+      _isDetail= TRUE ;
+      _scanner = NULL ;
+   }
+
+   _monLatchWaitsFetch::~_monLatchWaitsFetch()
+   {
+      if ( _scanner )
+      {
+         delete ( _scanner ) ;
+      }
+   }
+
+   INT32 _monLatchWaitsFetch::init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj )
+   {
+      //TODO: to be implemented
+      _latchCB = NULL ;
+
+      _hitEnd = ( NULL == _latchCB ) ? TRUE : FALSE ;
+      _isDetail = isDetail ;
+      _addInfoMask = addInfoMask ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monLatchWaitsFetch::getName() const
+   {
+      return CMD_NAME_SNAPSHOT_LATCHWAITS ;
+   }
+
+   INT32 _monLatchWaitsFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      //TODO: to be implemented
+      _builder.reset() ;
+      BSONObjBuilder builder( _builder ) ;
+
+      obj = builder.done() ;
+
+      _hitEnd = TRUE ;
+      return rc ;
+   }
+
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monLockWaitsFetch )
+   /*
+      _monLockWaitsFetch implement
+   */
+   _monLockWaitsFetch::_monLockWaitsFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LOCKWAITS )
+   {
+      _addInfoMask = MON_MASK_NODE_NAME ;
+      _isDetail= TRUE ;
+      _scanner = NULL ;
+   }
+
+   _monLockWaitsFetch::~_monLockWaitsFetch()
+   {
+      if ( _scanner )
+      {
+         delete ( _scanner ) ;
+      }
+   }
+
+   INT32 _monLockWaitsFetch::init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj )
+   {
+      //TODO: to be implemented
+      _lockCB = NULL ;
+
+      _hitEnd = ( NULL == _lockCB ) ? TRUE : FALSE ;
+      _isDetail = isDetail ;
+      _addInfoMask = addInfoMask ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monLockWaitsFetch::getName() const
+   {
+      return CMD_NAME_SNAPSHOT_LOCKWAITS ;
+   }
+
+   INT32 _monLockWaitsFetch::fetch( BSONObj &obj )
+   {
+      //TODO: to be implemented
+      INT32 rc = SDB_OK ;
+      _builder.reset() ;
+      BSONObjBuilder builder( _builder ) ;
+      if ( NULL == _lockCB )
+      {
+         _hitEnd = TRUE ;
+      }
+
+      obj = builder.done() ;
+      return rc ;
+   }
 }
 

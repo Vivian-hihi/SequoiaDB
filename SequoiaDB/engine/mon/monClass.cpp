@@ -63,8 +63,8 @@ MonClass::~MonClass() {}
  */
 void MonClassContainer::add ( MonClass *obj )
 {
-   ossScopedLock l( &activeListHeadLatch, EXCLUSIVE ) ;
-   activeList.push_front( *obj ) ;
+   ossScopedLock l( &_activeListHeadLatch, EXCLUSIVE ) ;
+   _activeList.push_front( *obj ) ;
    _activeListLen.inc() ;
 }
 
@@ -90,6 +90,37 @@ void MonClassContainer::remove ( MonClass *obj )
 }
 
 /**
+ * Remove archived obj back to capacity
+ * The archived list is structured as a MRU list with the tail being most recent used
+ * So elements are removed from the head which are the oldest
+ */
+void MonClassContainer::_removeArchivedObj()
+{
+   getArchiveLatch( EXCLUSIVE ) ;
+
+   UINT32 archivedListSize = _archivedList.size() ;
+
+   if ( archivedListSize >_archivedListMaxLen )
+   {
+      UINT32 numToDelete = archivedListSize - _archivedListMaxLen ;
+
+      MonClassList::iterator it = _archivedList.begin() ;
+
+      while ( numToDelete > 0 )
+      {
+         MonClass &monClass = *it ;
+
+         it = _archivedList.erase(it) ;
+
+         delete &monClass ;
+
+         numToDelete-- ;
+      }
+   }
+   releaseArchiveLatch( EXCLUSIVE ) ;
+}
+
+/**
  * Process pending delete or pending archive object
  */
 void MonClassContainer::_processPendingObj()
@@ -98,19 +129,19 @@ void MonClassContainer::_processPendingObj()
    getArchiveLatch( EXCLUSIVE ) ;
    getHeadLatch( EXCLUSIVE ) ;
 
-   MonClassList::iterator it = activeList.begin() ;
+   MonClassList::iterator it = _activeList.begin() ;
 
-   while ( it != activeList.end() )
+   while ( it != _activeList.end() )
    {
       if ( TRUE == it->isPendingArchive() )
       {
          MonClass &obj = *it ;
-         activeList.erase(it) ;
-         archivedList.push_back(obj) ;
+         it = _activeList.erase(it) ;
+         _archivedList.push_back(obj) ;
       }
       else if ( TRUE == it->isPendingDelete() )
       {
-         activeList.erase(it) ;
+         it = _activeList.erase(it) ;
       }
       else
       {

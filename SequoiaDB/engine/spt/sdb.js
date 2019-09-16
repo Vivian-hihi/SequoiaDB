@@ -38,6 +38,8 @@ const SDB_SNAP_CONFIGS             = 13 ;
 const SDB_SNAP_SVCTASKS            = 14 ;
 const SDB_SNAP_SEQUENCES           = 15 ;
 const SDB_SNAP_QUERIES             = 18 ;
+const SDB_SNAP_LATCHWAITS          = 19 ;
+const SDB_SNAP_LOCKWAITS           = 20 ;
 
 const SDB_LIST_CONTEXTS            = 0 ;
 const SDB_LIST_CONTEXTS_CURRENT    = 1 ;

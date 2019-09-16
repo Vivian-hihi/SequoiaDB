@@ -381,6 +381,7 @@ monFiles = [
       "mon/monDump.cpp",
       "mon/monMgr.cpp",
       "mon/monClass.cpp",
+      "mon/monLatch.cpp",
       "mon/monCB.cpp"
       ]
 

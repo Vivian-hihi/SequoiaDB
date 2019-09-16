@@ -46,6 +46,7 @@
 #include "dpsTransCB.hpp"
 #include "../bson/bson.h"
 #include "rtnCommandDef.hpp"
+#include "monClass.hpp"
 
 using namespace bson ;
 
@@ -673,6 +674,65 @@ namespace engine
    } ;
    typedef _monQueriesFetch monQueriesFetch ;
 
+   /*
+      _monLatchWaitsFetch define
+   */
+   class _monLatchWaitsFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monLatchWaitsFetch() ;
+         virtual ~_monLatchWaitsFetch() ;
+
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR*  getName() const ;
+
+      public:
+         virtual INT32     fetch( BSONObj &obj ) ;
+
+      private:
+         UINT32                  _addInfoMask ;
+         MonClassReadScanner    *_scanner ;
+         MonClassLatch          *_latchCB ;
+         BOOLEAN                 _isDetail ;
+   } ;
+   typedef _monLatchWaitsFetch monLatchWaitsFetch ;
+
+   /*
+      _monLockWaitsFetch define
+   */
+   class _monLockWaitsFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monLockWaitsFetch() ;
+         virtual ~_monLockWaitsFetch() ;
+
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR*  getName() const ;
+
+      public:
+         virtual INT32     fetch( BSONObj &obj ) ;
+
+      private:
+         UINT32                  _addInfoMask ;
+         MonClassReadScanner    *_scanner ;
+         MonClassLock           *_lockCB ;
+         BOOLEAN                 _isDetail ;
+   } ;
+   typedef _monLockWaitsFetch monLockWaitsFetch ;
 }
 
 #endif //MONDUMP_HPP_

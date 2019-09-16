@@ -93,6 +93,7 @@ public:
     */
    void removeMonitorObject(MonClass* obj)
    {
+      SDB_ASSERT ( NULL != obj, "removing a NULL monitor object" ) ;
       MonitorClassType classType = obj->getType();
       _monClass[classType]->remove(obj);
    }

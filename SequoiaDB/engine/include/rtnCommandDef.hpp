@@ -87,6 +87,8 @@ namespace engine
 #define NAME_SNAPSHOT_CONFIGS                CMD_NAME_SNAPSHOT_CONFIGS
 #define NAME_SNAPSHOT_SVCTASKS               CMD_NAME_SNAPSHOT_SVCTASKS
 #define NAME_SNAPSHOT_QUERIES                CMD_NAME_SNAPSHOT_QUERIES
+#define NAME_SNAPSHOT_LATCHWAITS             CMD_NAME_SNAPSHOT_LATCHWAITS
+#define NAME_SNAPSHOT_LOCKWAITS              CMD_NAME_SNAPSHOT_LOCKWAITS
 #define NAME_TEST_COLLECTION                 CMD_NAME_TEST_COLLECTION
 #define NAME_TEST_COLLECTIONSPACE            CMD_NAME_TEST_COLLECTIONSPACE
 #define NAME_SET_PDLEVEL                     CMD_NAME_SET_PDLEVEL
@@ -226,6 +228,7 @@ namespace engine
       CMD_SNAPSHOT_SVCTASKS                  = 106,
       CMD_SNAPSHOT_SEQUENCES                 = 107,
       CMD_SNAPSHOT_QUERIES                   = 108,
+      CMD_SNAPSHOT_LATCHWAITS                = 109,
 
       CMD_TEST_COLLECTION                    = 110,
       CMD_TEST_COLLECTIONSPACE               = 111,
@@ -285,6 +288,7 @@ namespace engine
       CMD_ANALYZE                            = 253,
       CMD_INVALIDATE_SEQUENCE_CACHE          = 254,
 
+      CMD_SNAPSHOT_LOCKWAITS                 = 255,
       CMD_UNKNOW                             = 65535
    };
 

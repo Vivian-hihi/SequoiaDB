@@ -48,17 +48,12 @@ namespace engine
    #define DECLARE_FETCH_AUTO_REGISTER() \
    public: \
       static _rtnFetchBase *newThis () ; \
-      virtual RTN_FETCH_TYPE getType() const ; \
 
 
-   #define IMPLEMENT_FETCH_AUTO_REGISTER(theClass, type) \
+   #define IMPLEMENT_FETCH_AUTO_REGISTER(theClass) \
    _rtnFetchBase *theClass::newThis () \
    { \
       return SDB_OSS_NEW theClass() ;\
-   } \
-   RTN_FETCH_TYPE theClass::getType() const \
-   { \
-      return (RTN_FETCH_TYPE)(type) ; \
    } \
    _rtnFetchAssit theClass##Assit ( theClass::newThis ) ; \
 
@@ -86,6 +81,8 @@ namespace engine
 
       RTN_FETCH_VCL_SESSIONINFO,       /// VCL session info
       RTN_FETCH_QUERIES,               /// queries
+      RTN_FETCH_LATCHWAITS,            /// latch waits
+      RTN_FETCH_LOCKWAITS,             /// lock waits
 
       RTN_FETCH_MAX
    } ;
@@ -96,11 +93,9 @@ namespace engine
    class _rtnFetchBase : public SDBObject
    {
       public :
-         _rtnFetchBase(INT32 sz) : _builder( sz ), _hitEnd( TRUE ) {}
+         _rtnFetchBase(INT32 sz, RTN_FETCH_TYPE type) : _builder( sz ), _hitEnd( TRUE ), _type(type) {}
 
          virtual ~_rtnFetchBase() {}
-
-         virtual RTN_FETCH_TYPE  getType() const = 0 ;
 
          virtual INT32           init( pmdEDUCB *cb,
                                        BOOLEAN isCurrent,
@@ -114,11 +109,14 @@ namespace engine
          virtual BOOLEAN   isHitEnd() const { return _hitEnd ; }
          virtual INT32     fetch( BSONObj &obj ) = 0 ;
 
+         RTN_FETCH_TYPE    getType() const { return _type ; }
+
       public:
          BufBuilder _builder ;
 
       protected:
          BOOLEAN    _hitEnd ;
+         RTN_FETCH_TYPE _type ;
    } ;
    typedef _rtnFetchBase rtnFetchBase ;
 
