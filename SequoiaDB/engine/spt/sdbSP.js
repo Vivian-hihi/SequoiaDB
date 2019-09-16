@@ -3404,7 +3404,11 @@ IniFile.prototype.getSectionComment = function( section ) {
       throw SDB_INVALIDARG ;
    }
 
-   return this._getSectionComment( section ) ;
+   var comment = this._getSectionComment( section ) ;
+
+   comment = this._comment2String( comment ) ;
+
+   return comment ;
 }
 
 IniFile.prototype.addSectionComment = function( section, comment ) {
@@ -3520,7 +3524,11 @@ IniFile.prototype.getComment = function( argv1, argv2, argv3 ) {
       pos     = argv3 ;
    }
 
-   return this._getComment( section, key, pos ) ;
+   var comment = this._getComment( section, key, pos ) ;
+
+   comment = this._comment2String( comment ) ;
+
+   return comment ;
 }
 
 IniFile.prototype.addComment = function( argv1, argv2, argv3, argv4 ) {
@@ -3609,7 +3617,11 @@ IniFile.prototype.setLastComment = function( comment ) {
 }
 
 IniFile.prototype.getLastComment = function() {
-   return this._getLastComment() ;
+   var comment = this._getLastComment() ;
+
+   comment = this._comment2String( comment ) ;
+
+   return comment ;
 }
 
 IniFile.prototype.addLastComment = function( comment ) {

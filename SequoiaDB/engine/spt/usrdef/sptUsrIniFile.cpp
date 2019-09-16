@@ -63,6 +63,7 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, save )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, getFileName )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, getFlags )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, convertComment )
+JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, comment2String )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrIniFile, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrIniFile, destruct )
 
@@ -83,6 +84,7 @@ JS_BEGIN_MAPPING( _sptUsrIniFile, "IniFile" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_getFileName",          getFileName, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_getFlags",             getFlags, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_convertComment",       convertComment, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_comment2String",       comment2String, 0 )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -961,7 +963,7 @@ JS_MAPPING_END()
       if ( 1 > argc )
       {
          rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Missing argument section" ) ;
+         detail = BSON( SPT_ERR << "Missing argument Comment" ) ;
          goto error ;
       }
 
@@ -1007,6 +1009,85 @@ JS_MAPPING_END()
 
          newComment = annotator + newComment ;
          newComment += '\n' ;
+      }
+
+      rval.getReturnVal().setValue( newComment ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrIniFile::comment2String( const _sptArguments &arg, _sptReturnVal &rval,
+                                         bson::BSONObj &detail )
+   {
+      INT32 rc      = SDB_OK ;
+      INT32 length  = 0 ;
+      UINT32 argc   = arg.argc() ;
+      string comment ;
+      string newComment ;
+
+      if ( 1 > argc )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Missing argument Comment" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 0, comment ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "Comment must be string" ) ;
+         goto error ;
+      }
+
+      length = comment.length() ;
+
+      if ( 0 < length )
+      {
+         BOOLEAN isCommentChar = FALSE ;
+         INT32 i = 0 ;
+         const CHAR *p = comment.c_str() ;
+
+         for ( i = 0; i < length; ++i )
+         {
+            if ( TRUE == isCommentChar && ( ' ' == p[i] || '\t' == p[i] ) )
+            {
+               continue ;
+            }
+            else
+            {
+               isCommentChar = FALSE ;
+
+               if ( i == 0 && UTIL_INI_SEMICOLON & _flags && ';' == p[i] )
+               {
+                  isCommentChar = TRUE ;
+                  continue ;
+               }
+               else if ( i == 0 && UTIL_INI_HASHMARK & _flags && '#' == p[i] )
+               {
+                  isCommentChar = TRUE ;
+                  continue ;
+               }
+               else if ( UTIL_INI_SEMICOLON & _flags && ';' == p[i] &&
+                         '\n' == p[i-1] )
+               {
+                  isCommentChar = TRUE ;
+                  continue ;
+               }
+               else if ( UTIL_INI_HASHMARK & _flags && '#' == p[i] &&
+                         '\n' == p[i-1] )
+               {
+                  isCommentChar = TRUE ;
+                  continue ;
+               }
+               else
+               {
+                  newComment += p[i] ;
+               }
+            }
+         }
       }
 
       rval.getReturnVal().setValue( newComment ) ;

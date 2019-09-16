@@ -100,6 +100,9 @@ namespace engine
       INT32 convertComment( const _sptArguments &arg, _sptReturnVal &rval,
                             bson::BSONObj &detail ) ;
 
+      INT32 comment2String( const _sptArguments &arg, _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
    private:
       INT32 _exist( const string &path, BOOLEAN &isExist ) ;
       void _setError( bson::BSONObj &detail, const CHAR *errMsg ) ;
