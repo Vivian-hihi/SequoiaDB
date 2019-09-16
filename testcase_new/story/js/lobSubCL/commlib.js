@@ -400,21 +400,22 @@ function listLobsWithSelCondAndCheckResult(mainCL, selSymbol, selCondition, cond
             break;
          case "$add":  
             listObj.Size = objValue + modifyValue;
-            expListResult.push(listObj);               
+            expListResult.push(listObj);
             break;  
          case "$subtract":  
             listObj.Size = objValue - modifyValue;
-            expListResult.push(listObj);               
+            expListResult.push(listObj);
             break;
          case "$multiply":  
             listObj.Size = objValue * modifyValue;
-            expListResult.push(listObj);               
+            expListResult.push(listObj);
             break;
          case "$divide":  
             listObj.Size = objValue / modifyValue;
-            expListResult.push(listObj);               
+            expListResult.push(listObj);
             break;
          default:
+            expListResult.push({"Size" : objValue});
             break;                                 
       }    
    }
