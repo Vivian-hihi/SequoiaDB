@@ -63,10 +63,10 @@ public class RewriteLob13238_18970 extends SdbTestBase {
 
     @Test(dataProvider = "pagesizeProvider")
     public void testLob(String clName, int writeLobSize, int offset, int rewriteLobSize) {
-        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
-            throw new SkipException("is standalone skip testcase!");
-        }
         try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+                throw new SkipException("is standalone skip testcase!");
+            }
             DBCollection dbcl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
             byte[] lobBuff = RandomWriteLobUtil.getRandomBytes(writeLobSize);
             ObjectId oid = RandomWriteLobUtil.createAndWriteLob(dbcl, lobBuff);

@@ -18,6 +18,7 @@ import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
@@ -52,13 +53,21 @@ public class LobSubCL19077 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         ThreadExecutor thread = new ThreadExecutor();
+        TruncateLobThread truncateLob = new TruncateLobThread();
         thread.addWorker(new PutLobThread());
-        thread.addWorker(new TruncateLobThread());
+        thread.addWorker(truncateLob);
         thread.run();
 
         List<ObjectId> idList = new ArrayList<ObjectId>();
         idList.add(lobId);
-        LobSubUtils.checkLobMD5(mainCL, idList, lobBuff);
+        if (truncateLob.getRetCode() == 0) {
+            byte[] expBuff = new byte[writeLobSize / 2];
+            System.arraycopy(lobBuff, 0, expBuff, 0, writeLobSize / 2);
+            LobSubUtils.checkLobMD5(mainCL, idList, expBuff);
+        } else {
+            LobSubUtils.checkLobMD5(mainCL, idList, lobBuff);
+        }
+
     }
 
     @AfterClass
@@ -91,7 +100,7 @@ public class LobSubCL19077 extends SdbTestBase {
         }
     }
 
-    private class TruncateLobThread {
+    private class TruncateLobThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
         private void truncateLob() {
@@ -103,6 +112,7 @@ public class LobSubCL19077 extends SdbTestBase {
                 }
                 mainCL.truncateLob(lobId, writeLobSize / 2);
             } catch (BaseException e) {
+                saveResult(e.getErrorCode(), e);
                 if (e.getErrorCode() != -317) {
                     throw e;
                 }
