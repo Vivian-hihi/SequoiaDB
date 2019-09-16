@@ -81,10 +81,17 @@ namespace engine
       }
       else
       {
+         if( SPT_OID_STR_LENGTH != oidStr.size() )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Invalid oid str length" ) ;
+            goto error ;
+         }
+
          if( !utilIsValidOID( oidStr.c_str() ) )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Invalid data" ) ;
+            detail = BSON( SPT_ERR << "Invalid oid str" ) ;
             goto error ;
          }
       }
@@ -123,7 +130,7 @@ namespace engine
       }
       if( SPT_OID_STR_LENGTH != data.size() )
       {
-         rc = SDB_SYS ;
+         rc = SDB_INVALIDARG ;
          errMsg = "Invalid oid str length" ;
          goto error ;
       }
