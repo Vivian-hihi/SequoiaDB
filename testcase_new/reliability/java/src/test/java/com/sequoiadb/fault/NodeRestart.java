@@ -7,12 +7,12 @@
  */
 package com.sequoiadb.fault;
 
+import com.sequoiadb.base.ConfigOptions;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.task.FaultMakeTask;
 
 public class NodeRestart extends Fault {
@@ -20,19 +20,16 @@ public class NodeRestart extends Fault {
 
     public NodeRestart(NodeWrapper node) {
         super("nodeRestart");
-        // TODO Auto-generated constructor stub
-
         this.node = node;
-
     }
 
     @Override
     public void make() throws FaultException {
-        System.out.println("target node:" + this.node.hostName() + " : " + this.node.svcName() + "  "
-                + node.node.getReplicaGroup().getSequoiadb().hashCode());
+        System.out.println("target node:" + this.node.hostName() + " : " + this.node.svcName());
         try {
             this.node.stop();
-        } catch (ReliabilityException e) {
+        }
+        catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -46,13 +43,16 @@ public class NodeRestart extends Fault {
             conf.setMaxAutoConnectRetryTime(1000);
             db = new Sequoiadb(node.hostName() + ":" + node.svcName(), "", "", conf);
             return false;
-        } catch (BaseException e) {
+        }
+        catch (BaseException e) {
             if (e.getErrorCode() == -15) {
                 return true;
-            } else {
+            }
+            else {
                 throw new FaultException(e);
             }
-        } finally {
+        }
+        finally {
             if (db != null) {
                 db.close();
             }
@@ -63,7 +63,8 @@ public class NodeRestart extends Fault {
     public void restore() throws FaultException {
         try {
             this.node.start();
-        } catch (ReliabilityException e) {
+        }
+        catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -85,12 +86,16 @@ public class NodeRestart extends Fault {
     /**
      * 
      * @param node
-     * @param maxDelay   最大延迟启动时间s
-     * @param duration   持续时间s
-     * @param checkTimes 检查构造成功与否的检测次数
+     * @param maxDelay
+     *            最大延迟启动时间s
+     * @param duration
+     *            持续时间s
+     * @param checkTimes
+     *            检查构造成功与否的检测次数
      * @return
      */
-    public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration, int checkTimes) {
+    public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration,
+            int checkTimes) {
         FaultMakeTask task = null;
         NodeRestart nr = new NodeRestart(node);
         task = new FaultMakeTask(nr, maxDelay, duration, checkTimes);
@@ -100,8 +105,10 @@ public class NodeRestart extends Fault {
     /**
      * 
      * @param node
-     * @param maxDelay 最大延迟启动时间s
-     * @param duration 持续时间s
+     * @param maxDelay
+     *            最大延迟启动时间s
+     * @param duration
+     *            持续时间s
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration) {

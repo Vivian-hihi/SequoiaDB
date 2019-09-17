@@ -18,11 +18,11 @@ import org.bson.util.JSON;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.HashSet ;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.Set ;
 
 public class GroupMgr {
     private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();
@@ -78,7 +78,7 @@ public class GroupMgr {
                 }
                 break;
             } catch (BaseException e) {
-                if (e.getErrorCode() == -104 || e.getErrorCode() == -191) {
+                if (e.getErrorCode() == -104) {
                     continue;
                 }
                 throw new ReliabilityException(e);
@@ -141,12 +141,12 @@ public class GroupMgr {
             return null;
         }
         List<String> hosts = new ArrayList<String>();
-        Set<String> origHosts = new HashSet<String>();
+        Set<String> origHosts = new HashSet<String>() ;
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             Set<String> hostsPerGroup = entry.getValue().getAllHosts();
             origHosts.addAll(hostsPerGroup);
         }
-        hosts.addAll(origHosts);
+        hosts.addAll( origHosts ) ;
         return hosts;
     }
 
@@ -197,35 +197,35 @@ public class GroupMgr {
     public boolean checkBusiness(int timeOutSecond, boolean ignoreIndeploy) throws ReliabilityException {
         refresh();
         long timestamp = System.currentTimeMillis();
-        boolean isPrintRes = false;
-        boolean ret = false;
-        ReliabilityException prev = null;
-        do {
-            try {
-                ret = checkBusiness(isPrintRes, ignoreIndeploy);
-                if (ret) {
-                    break;
-                }
-            } catch (ReliabilityException e) {
-                if (prev == null || prev.getExceptionType() != e.getExceptionType()) {
-                    e.printStackTrace();
-                    prev = e;
-                }
-                if (isPrintRes) {
-                    throw e;
-                }
-            }
-            try {
+        boolean isPrintRes = false ;
+        boolean ret = false ;
+        ReliabilityException prev = null ;
+        do{
+           try{
+               ret = checkBusiness(isPrintRes, ignoreIndeploy) ;
+               if ( ret ){
+                   break ;
+               }
+           }catch(ReliabilityException e){
+               if ( prev == null || prev.getExceptionType() != e.getExceptionType()){
+                   e.printStackTrace() ;
+                   prev = e ;
+               }
+               if ( isPrintRes ){
+                   throw e ;
+               }
+           }           
+           try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+           } catch (InterruptedException e) {
                 // ignore
-            }
-
-            if (System.currentTimeMillis() - timestamp >= timeOutSecond * 1000) {
-                isPrintRes = true;
-            }
-        } while (!isPrintRes);
-
+           }
+           
+           if (System.currentTimeMillis() - timestamp >= timeOutSecond * 1000) {
+               isPrintRes = true ;
+           }
+        }while(!isPrintRes); 
+        
         return ret;
     }
 

@@ -13,6 +13,7 @@ import com.sequoiadb.fault.Fault;
 import com.sequoiadb.fault.FaultWrapper;
 
 public class FaultMakeTask extends Task {
+    @SuppressWarnings("unused")
     private final static Logger log = Logger.getLogger(FaultMakeTask.class.getName());
 
     public static final String MAKE_RESULT = "MakeResult";
@@ -21,7 +22,6 @@ public class FaultMakeTask extends Task {
     private FaultWrapper faultInstance;
     private int duration;
     private int _randomStartMaxDuration = 0;
-
     private volatile boolean isMakeSuccess = false;
 
     public FaultMakeTask(Fault instance, int maxDlay, int duration, int checkTimes) {

@@ -20,7 +20,6 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.faultmodule.th.FaultWorker;
 import com.sequoiadb.fulltext.FullTextUtils;
 
 public class SdbTestBase {
@@ -109,7 +108,6 @@ public class SdbTestBase {
             Assert.assertTrue(ret);
             createWorkDir();
             createReserveDir();
-            FaultWorker.startFault();
         } catch (BaseException e) {
             Assert.fail("connect " + coordUrl + ": " + e.getErrorCode());
         } finally {
@@ -232,7 +230,6 @@ public class SdbTestBase {
             if (db.isCollectionSpaceExist(cappedCSName)) {
                 db.dropCollectionSpace(cappedCSName);
             }
-            FaultWorker.stopFault();
         } catch (BaseException e) {
             e.printStackTrace();
         } finally {

@@ -15,17 +15,18 @@ import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
 
-import java.io.BufferedReader;
+import java.io.BufferedReader ;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.InputStream ;
+import java.io.InputStreamReader ;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Set ;
 import java.util.logging.Logger;
 
+
 public class BrokenNetwork extends Fault {
-    private final static Logger log = Logger.getLogger(BrokenNetwork.class.getName());
+    private final static Logger log=Logger.getLogger(BrokenNetwork.class.getName());
 
     private String hostName;
     private String user;
@@ -69,13 +70,15 @@ public class BrokenNetwork extends Fault {
         try {
             if (group == null) {
                 log.info("brokenHost: " + hostName);
-                ssh.execBackground(
-                        "nohup " + remotePath + "/" + scriptName + " " + duration + " > /tmp/brokenNet.log &");
+                ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration
+                        + " > /tmp/brokenNet.log &");
                 brokenTime = System.currentTimeMillis();
-            } else {
+            }
+            else {
                 continuouslyMakeOnPri();
             }
-        } catch (ReliabilityException e) {
+        }
+        catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -91,7 +94,8 @@ public class BrokenNetwork extends Fault {
             ssh = new Ssh(host, user, passwd, port);
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
-            ssh.execBackground("nohup " + remotePath + "/" + scriptName + " 15 > /tmp/brokenNet.log &");
+            ssh.execBackground(
+                    "nohup " + remotePath + "/" + scriptName + " 15 > /tmp/brokenNet.log &");
             ssh.disconnect();
 
             while (true) {
@@ -108,7 +112,7 @@ public class BrokenNetwork extends Fault {
                 brokenHost.clear();
             }
             boolean breakFlag = false;
-            Exception exception1 = new Exception();
+            Exception exception1 =new Exception();
             Exception exception2 = new Exception();
             while (true) {
                 try {
@@ -120,9 +124,10 @@ public class BrokenNetwork extends Fault {
                                 breakFlag = true;
                                 break;
                             }
-                        } catch (Exception e) {
-                            if (!e.getMessage().equals(exception1.getMessage())) {
-                                System.out.println("ignore some exceptions:" + e.getMessage());
+                        }
+                        catch (Exception e) {
+                            if(!e.getMessage().equals(exception1.getMessage())){
+                                System.out.println("ignore some exceptions:"+e.getMessage());
                                 exception1 = e;
                             }
                             continue;
@@ -131,14 +136,16 @@ public class BrokenNetwork extends Fault {
                     if (breakFlag) {
                         break;
                     }
-                } catch (Exception e) {
-                    if (!e.getMessage().equals(exception2.getMessage())) {
-                        System.out.println("ignore some exceptions:" + e.getMessage());
+                }
+                catch (Exception e) {
+                    if(!e.getMessage().equals(exception2.getMessage())){
+                        System.out.println("ignore some exceptions:"+e.getMessage());
                         exception2 = e;
                     }
                     try {
                         Thread.sleep(1000);
-                    } catch (InterruptedException e1) {
+                    }
+                    catch (InterruptedException e1) {
                         // ignore
                     }
                     continue;
@@ -169,7 +176,8 @@ public class BrokenNetwork extends Fault {
         if (diff < duration * 1000) {
             try {
                 Thread.sleep(duration * 1000 - diff);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
 
             }
         }
@@ -206,51 +214,53 @@ public class BrokenNetwork extends Fault {
         String cmd;
         if (os.startsWith("win") || os.startsWith("Win")) {
             cmd = "ping " + host + " -n 2 -w 2";
-        } else {
+        }
+        else {
             cmd = "ping " + host + " -c 2 -w 2";
         }
-
+        
         Process pr = null;
         Runtime rt = Runtime.getRuntime();
-
+        
         BufferedReader brIn = null;
         BufferedReader byErr = null;
-
+        
         try {
             pr = rt.exec(cmd);
             InputStream stderr = pr.getErrorStream();
-            InputStream stdin = pr.getInputStream();
+            InputStream stdin = pr.getInputStream() ;
             InputStreamReader isIn = new InputStreamReader(stdin);
             InputStreamReader isErr = new InputStreamReader(stderr);
             brIn = new BufferedReader(isIn);
             byErr = new BufferedReader(isErr);
-
+            
+            @SuppressWarnings("unused")
             String line = null;
-            while ((line = brIn.readLine()) != null)
-                ;
-            while ((line = byErr.readLine()) != null)
-                ;
+            while((line = brIn.readLine()) != null);
+            while((line = byErr.readLine()) != null);
             int exitcode = pr.waitFor();
             System.out.println("exitcode: " + exitcode);
             if (exitcode == 0) {
                 return true;
-            } else {
+            }
+            else {
                 return false;
             }
-        } catch (InterruptedException | IOException e) {
+        }
+        catch (InterruptedException | IOException e) {
             throw new FaultException(e);
         } finally {
             if (brIn != null) {
                 try {
                     brIn.close();
-                } catch (IOException e) {
+                } catch (IOException e){
                     e.printStackTrace();
                 }
             }
             if (byErr != null) {
                 try {
-                    byErr.close();
-                } catch (IOException e) {
+                	byErr.close();
+                } catch (IOException e){
                     e.printStackTrace();
                 }
             }
@@ -269,7 +279,8 @@ public class BrokenNetwork extends Fault {
             ssh = new Ssh(hostName, user, passwd, port);
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
-        } catch (ReliabilityException e) {
+        }
+        catch (ReliabilityException e) {
             throw new FaultException(e);
         }
     }
@@ -287,9 +298,11 @@ public class BrokenNetwork extends Fault {
                 ssh = new Ssh(hostName, user, passwd);
                 ssh.exec("rm -rf " + remotePath + "/" + scriptName);
             }
-        } catch (ReliabilityException e) {
+        }
+        catch (ReliabilityException e) {
             throw new FaultException(e);
-        } finally {
+        }
+        finally {
             ssh.disconnect();
         }
 
@@ -299,12 +312,16 @@ public class BrokenNetwork extends Fault {
      * 对主机单次断网
      * 
      * @param hostName
-     * @param maxDelay   最大延迟启动时间
-     * @param duration   持续时间
-     * @param checkTimes 检查构造故障成功与否的次数（15）
+     * @param maxDelay
+     *            最大延迟启动时间
+     * @param duration
+     *            持续时间
+     * @param checkTimes
+     *            检查构造故障成功与否的次数（15）
      * @return
      */
-    public static FaultMakeTask getFaultMakeTask(String hostName, int maxDelay, int duration, int checkTimes) {
+    public static FaultMakeTask getFaultMakeTask(String hostName, int maxDelay, int duration,
+            int checkTimes) {
         FaultMakeTask task = null;
         BrokenNetwork bn = new BrokenNetwork(hostName, duration);
         task = new FaultMakeTask(bn, maxDelay, duration, checkTimes);
@@ -315,8 +332,10 @@ public class BrokenNetwork extends Fault {
      * 对主机单次断网
      * 
      * @param hostName
-     * @param maxDelay 最大延迟启动时间
-     * @param duration 持续时间
+     * @param maxDelay
+     *            最大延迟启动时间
+     * @param duration
+     *            持续时间
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(String hostName, int maxDelay, int duration) {
@@ -330,8 +349,10 @@ public class BrokenNetwork extends Fault {
      * 对group的主节点做连续断网操作
      * 
      * @param group
-     * @param times    断网次数（3-4）耗时大概1分钟
-     * @param maxDelay 延迟启动时间
+     * @param times
+     *            断网次数（3-4）耗时大概1分钟
+     * @param maxDelay
+     *            延迟启动时间
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(GroupWrapper group, int times, int maxDelay) {
