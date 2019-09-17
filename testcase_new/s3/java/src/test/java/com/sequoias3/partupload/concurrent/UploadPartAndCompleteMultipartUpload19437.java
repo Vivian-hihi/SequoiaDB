@@ -40,7 +40,7 @@ public class UploadPartAndCompleteMultipartUpload19437 extends S3TestBase {
     }
 
     private int runSuccessNum = 0;
-    private int expRunSuccessNum = 1;
+    private int expRunSuccessNum = 3;
     private String keyName = "/aa/object19437";
     private AmazonS3 s3Client = null;
     private File localPath = null;
