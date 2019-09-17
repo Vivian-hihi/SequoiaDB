@@ -5669,7 +5669,7 @@ namespace sdbclient
           \param [in] options The options for setting session attributes. Can not be
                       NULL. While it's a empty options, the local session attributes
                       cache will be cleanup. Please reference
-                      <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302">here</a>
+                      <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-@SDB_SYMBOL_VERSION">here</a>
                       for more detail.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
