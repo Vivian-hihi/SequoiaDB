@@ -56,7 +56,7 @@ namespace CSharp.Transaction
             BsonDocument config = new BsonDocument();
             config.Add("PreferedInstance", "A");
             option = new BsonDocument();
-            config.Add("transtsolation", 0);
+            config.Add("transisolation", 0);
             config.Add("transactiontimeout", 120);
             option.Add("Global", true);
             sdb.UpdateConfig(config, option);
@@ -80,7 +80,7 @@ namespace CSharp.Transaction
             BsonDocument config = new BsonDocument();
             config.Add("PreferedInstance", "M");
             BsonDocument option = new BsonDocument();
-            config.Add("transtsolation", 1);
+            config.Add("transisolation", 1);
             config.Add("transactiontimeout", 60);
             option.Add("Global", true);
             sdb.UpdateConfig(config, option);
