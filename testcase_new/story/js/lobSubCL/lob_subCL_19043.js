@@ -38,7 +38,6 @@ function main()
    commDropCL(db, csName, mainCLName);
    commDropCL(db, csName, subCLName);
    
-   //测试创建LobShardingKeyFormat为YYYYMMDD主表  //TODO：1、这个注释不是测试点，可以去掉
    var options = {"IsMainCL": true, "ShardingKey": {"date": 1}, "LobShardingKeyFormat": "YYYYMMDD", "ShardingType": "range"};
    var mainCL = commCreateCLByOption(db, csName, mainCLName, options, true, false, "create main cl");
    commCreateCL( db, csName, subCLName );

@@ -41,7 +41,8 @@ function main()
    mainCL.attachCL( csName + "." + subCLName, {"LowBound": {"date": {"$minKey": 1}}, "UpBound": {"date": {"$maxKey": 1}}});
    var lobOids = insertLob(mainCL, fileFullPath);
    checkLobMD5(mainCL, lobOids, fileMD5);
-   //TODO:1、文本用例中有删除lob操作
+   deleteLob(mainCL, lobOids); 
+   
    deleteTmpFile( filePath );
    cleanMainCL(db, csName, mainCLName);
 }

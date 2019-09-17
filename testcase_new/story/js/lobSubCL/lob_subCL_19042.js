@@ -34,7 +34,6 @@ function main()
    commDropCL(db, csName, mainCLName);
    commDropCL(db, csName, subCLName);
    
-   //测试创建LobShardingKeyFormat为YYYYMMDD主表
    var mainCL = createMainCLAndAttachCL( db, csName, mainCLName, subCLName, "YYYYMMDD", 4 );
    var nameArr = mainCL.toString().split(".");
    var mainCLFullName = nameArr[1] + "." + nameArr[2] ;
@@ -58,9 +57,9 @@ function main()
          }
       }
    }
-
-   //TODO:只是清理环境删除主表，不需要用这个方法
-   cleanMainCL(db, csName, mainCLName);
+   
+   commDropCL(db, csName, mainCLName);
+   commDropCL(db, csName, subCLName);
    deleteTmpFile( filePath );
 }
 

@@ -58,6 +58,6 @@ function main()
    checkLobMD5(mainCL, lobOids, fileMD5);
    
    deleteTmpFile( filePath );
-   cleanMainCL(db, csName, mainCLName);
+   commDropCL(db, csName, mainCLName);
 }
 

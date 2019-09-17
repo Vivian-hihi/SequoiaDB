@@ -50,27 +50,10 @@ function main()
    var lobOids2 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801"); 
    checkLobMD5(mainCL, lobOids1, fileMD5);
    checkLobMD5(mainCL, lobOids2, fileMD5);
+   deleteLob(mainCL, lobOids1);
    
-   for(i in lobOids1)
-   {
-      mainCL.deleteLob(lobOids1[i]);
-      try
-      {
-         mainCL.getLob(lobOids1[i], filePath + "/checkLob19050_" + i );
-         throw 0;
-      }
-      catch( e )
-      {
-         if( e !== -4 )
-         {
-             throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids1[i], -4, e ); 
-         }
-      }
-   }
-   
-   deleteTmpFile( filePath );
-   //TODO:1、清理主表和子表，不需要用这个方法，这个方法还要去检查子表
-   cleanMainCL(db, mainCSName, newMainCLName);
+   commDropCL(db, mainCSName, newMainCLName);
    commDropCS(db, subCSName);
+   deleteTmpFile( filePath );
 }
 

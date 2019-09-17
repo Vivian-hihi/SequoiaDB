@@ -56,24 +56,21 @@ function main()
    var lobOids2 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 1, "20190810");
    checkLobMD5(mainCL, lobOids1, fileMD5);
    checkLobMD5(mainCL, lobOids2, fileMD5);
+   deleteLob(mainCL, lobOids1);
    
-   for(i in lobOids1)
+   var actLobOid = [];
+   var cursor = mainCL.listLobs(SdbQueryOption().sort({"Oid":1}))
+   while(cursor.next())
    {
-      mainCL.deleteLob(lobOids1[i]);
-      try
-      {
-         mainCL.getLob(lobOids1[i], filePath + "/checkLob19046_" + i );
-         throw 0;
-      }
-      catch( e )
-      {
-         if( e !== -4 )
-         {
-            throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids1[i], -4, e ); 
-         }
-      }
+       var lobInfo = cursor.current().toObj();
+       actLobOid.push(lobInfo.Oid["$oid"]);
    }
-   //TODO:1、用例中listLobs操作没有覆盖到
+   if( JSON.stringify(actLobOid) !== JSON.stringify(lobOids2))
+   {       
+      throw buildException("check lobOid", "\nactual value= " + JSON.stringify(actLobOid) + "\nexpect value= "
+                              + JSON.stringify(lobOids2));
+   }
+   
    deleteTmpFile( filePath );
    commDropCL(db, csName, mainCLName);
    commDropCL(db, csName, subCLName);

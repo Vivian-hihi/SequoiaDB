@@ -53,7 +53,6 @@ function main()
    subcl2.insert({a: 1});
    subcl2.insert({a: 2});
    subcl2.split(targetGroup, sourceGroup, 50);
-   //TODO：1、和文本用例测试结果不一致，请确认
    mainCL.attachCL( csName + "." + subCLName1, {"LowBound": {"date": "20190801"}, "UpBound": {"date": "20190805"}});
    try
    {
@@ -64,7 +63,7 @@ function main()
    {
       if(e !== -6)
       {
-          throw buildException( "put lob", e, "to range subCL should be fail: " + subCLName2, -6, e );
+          throw buildException( "attach cl", e, "to attach range subCL should be fail: " + subCLName2, -6, e );
       }
    }
    var lobOids = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 1, "20190801");

@@ -229,6 +229,32 @@ function getSubCLNames(db, mainCLFullName)
 }
 
 /************************************
+*@Description: 删除lob并检查删除结果
+*@author:      luweikang
+*@createDate:  2019.8.7
+**************************************/
+function deleteLob(cl, lobOids)
+{
+   var clName = cl.toString().split(".")[2];
+   for(i in lobOids)
+   {
+      cl.deleteLob(lobOids[i]);
+      try
+      {
+         cl.getLob(lobOids[i], WORKDIR + "/" + clName + "_" + i );
+         throw 0;
+      }
+      catch( e )
+      {
+         if( e !== -4 )
+         {
+             throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids[i], -4, e ); 
+         }
+      }
+   }
+}
+
+/************************************
 *@Description: 检查主表lob落到子表区域
 *@author:      luweikang
 *@createDate:  2019.8.7

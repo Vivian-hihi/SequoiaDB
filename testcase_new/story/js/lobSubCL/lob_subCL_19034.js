@@ -1,6 +1,5 @@
 /************************************
 *@Description: seqDB-19034 主表挂载其他主表去挂载的子表
-               seqDB-19035 主表去挂载子表
 *@author:      luweikang
 *@createDate:  2019.8.12
 **************************************/
@@ -48,7 +47,6 @@ function main()
    
    var lobOids1 = insertLob(subCL, fileFullPath, "YYYYMM", 1, 10, 1, "20190801");
    var lobOids2 = insertLob(subCL, fileFullPath, "YYYYMM", 1, 10, 1, "20190901");
-   //TODO:1、没有覆盖到19035的测试点，文本用例中描述是去挂载后对子表进行lob增删除操作
    mainCL1.detachCL( csName + "." + subCLName );
    mainCL2.attachCL( csName + "." + subCLName, {"LowBound": {"date": "201909"}, "UpBound": {"date": "201911"}});
    

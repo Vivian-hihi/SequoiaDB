@@ -42,34 +42,15 @@ function main()
    commCreateCL(db, oldSubCSName, subCLName);
    mainCL.attachCL( oldSubCSName + "." + subCLName, {"LowBound": {"date": "20190806"}, "UpBound": {"date": "20190811"}});
    var lobOids1 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801");
-   //TODO：1、这里为啥要rename多次操作？
-   db.renameCS(oldSubCSName, newSubCSName);
-   db.renameCS(newSubCSName, oldSubCSName);
+   
    db.renameCS(oldSubCSName, newSubCSName);
    
    var lobOids2 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 2, "20190801"); 
    checkLobMD5(mainCL, lobOids1, fileMD5);
    checkLobMD5(mainCL, lobOids2, fileMD5);
-   
-   for(i in lobOids1)
-   {
-      mainCL.deleteLob(lobOids1[i]);
-      try
-      {
-         mainCL.getLob(lobOids1[i], filePath + "/checkLob19051_" + i );
-         throw 0;
-      }
-      catch( e )
-      {
-         if( e !== -4 )
-         {
-             throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids1[i], -4, e ); 
-         }
-      }
-   }
+   deleteLob(mainCL, lobOids1);
    
    deleteTmpFile( filePath );
-   //TODO：2、清理环境不需要用该方法
-   cleanMainCL(db, mainCSName, mainCLName);
+   commDropCL(db, mainCSName, mainCLName);
    commDropCS(db, newSubCSName);
 }

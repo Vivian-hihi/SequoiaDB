@@ -49,23 +49,7 @@ function main()
    lobIDs.push(lobID3);
    
    checkLobMD5(cl, lobIDs, fileMD5);
-   
-   for(i in lobIDs)
-   {
-      cl.deleteLob(lobIDs[i]);
-      try
-      {
-         cl.getLob(lobIDs[i], filePath + "/checkLob19044_" + i );
-         throw 0;
-      }
-      catch( e )
-      {
-         if( e !== -4 )
-         {
-             throw buildException( "check delete lob", e, "gets the deleted lob: " + lobIDs[i], -4, e ); 
-         }
-      }
-   }
+   deleteLob(cl, lobIDs);
    
    deleteTmpFile( filePath );
    commDropCL(db, csName, clName);

@@ -58,5 +58,5 @@ function main()
    }
    
    deleteTmpFile( filePath );
-   cleanMainCL(db, csName, mainCLName);
+   commDropCL(db, csName, mainCLName);
 }

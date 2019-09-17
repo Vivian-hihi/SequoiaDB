@@ -67,7 +67,11 @@ function main()
    checkLobMD5(mainCL1, lobOids1, fileMD5);
    checkLobMD5(mainCL2, lobOids2, fileMD5);
    checkLobMD5(mainCL3, lobOids3, fileMD5);
-   //TODO:1、文本用例有覆盖lob增删操作，自动化用例没有覆盖删除lob操作
+   
+   deleteLob(mainCL1, lobOids1);
+   deleteLob(mainCL2, lobOids2);
+   deleteLob(mainCL3, lobOids3);
+   
    deleteTmpFile( filePath );
    commDropCS(db, csName);
    commDropCS(db, mainName1);

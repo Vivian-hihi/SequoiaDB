@@ -55,23 +55,7 @@ function main()
    var lobOids2 = insertLob(mainCL, fileFullPath, "YYYYMMDD", 5, 10, 1, "20190810");
    checkLobMD5(mainCL, lobOids1, fileMD5);
    checkLobMD5(mainCL, lobOids2, fileMD5);
-   
-   for(i in lobOids1)
-   {
-      mainCL.deleteLob(lobOids1[i]);
-      try
-      {
-         mainCL.getLob(lobOids1[i], filePath + "/checkLob19045_" + i );
-         throw 0;
-      }
-      catch( e )
-      {
-         if( e !== -4 )
-         {
-             throw buildException( "check delete lob", e, "gets the deleted lob: " + lobOids1[i], -4, e ); 
-         }
-      }
-   }
+   deleteLob(mainCL, lobOids1);
    
    deleteTmpFile( filePath );
    commDropCL(db, csName, mainCLName);
