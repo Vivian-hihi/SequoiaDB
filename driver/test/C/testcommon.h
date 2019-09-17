@@ -14,7 +14,7 @@
 
 #define HOST                  "localhost"
 #define SERVER                "11810" // for coord
-//#define HOST                  "192.168.20.42"
+//#define HOST                  "192.168.30.77"
 //#define SERVER                "50000" // for coord
 #define SERVER1               "11800" // for catalog
 #define SERVER2               "20100" // for data
@@ -26,6 +26,9 @@
 #define COLLECTION_NAME       "testbar"
 #define COLLECTION_NAME1      "testbar1"
 #define COLLECTION_FULL_NAME  "testfoo.testbar"
+#define PRIMARY_COLLECTION_NAME  "primaryCL"
+#define SUB_A_COLLECTION_FULL_NAME  "testfoo.subACL"
+#define SUB_B_COLLECTION_FULL_NAME  "testfoo.subBCL"
 #define INDEX_NAME            "testIndex"
 #define SOURCEGROUP           "group1"
 #define TARGETGROUP           "group2"
