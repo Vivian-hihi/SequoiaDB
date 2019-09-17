@@ -533,21 +533,21 @@
              "dir": "usage",
              "cn": "使用",
              "en": "Usage",
-			 "contents": [
-			 {
-			 "id": 1525956060,
-			 "file": "mount",
-			 "cn": "挂载目录",
-			 "en": "Mount"			 
-			 },
-			 {
-			 "id": 1525956070,
-			 "file": "unmount",
-			 "cn": "卸载目录",
-			 "en": "Unmount"
-			 }	
-			 ]
-          }          	  
+          "contents": [
+          {
+          "id": 1525956060,
+          "file": "mount",
+          "cn": "挂载目录",
+          "en": "Mount"          
+          },
+          {
+          "id": 1525956070,
+          "file": "unmount",
+          "cn": "卸载目录",
+          "en": "Unmount"
+          }   
+          ]
+          }               
         ]
       },
       {
@@ -706,7 +706,7 @@
                "cn": "数据库配置",
                "en": "Database Configuration"
             },
-			      {
+               {
                "id": 1432191411,
                "dir": "Special_configuration_modify",
                "cn": "特殊配置项修改",
@@ -1024,7 +1024,7 @@
                            "cn": "配置快照",
                            "en": "SDB_SNAP_CONFIGS"
                         },
-						{
+                  {
                            "id": 1565839362,
                            "file": "SDB_SNAP_SVCTASKS",
                            "cn": "服务任务快照",
@@ -1110,7 +1110,7 @@
                            "cn": "当前事务列表",
                            "en": "SDB_LIST_TRANSACTIONS_CURRENT"
                         },
-						{
+                  {
                            "id": 1565839437,
                            "file": "SDB_LIST_SVCTASKS",
                            "cn": "服务任务列表",
@@ -1674,7 +1674,7 @@
                      "cn": "Python开发基础",
                      "en": "Python Development Foundation"
                   },
-				  {
+              {
                      "id": 1562911641,
                      "file": "python_bson_usage",
                      "cn": "Python BSON使用",
@@ -1864,7 +1864,7 @@
                      "cn": "Sdb",
                      "en": "Sdb",
                      "contents": [
-					    {
+                   {
                            "id": 1564969947,
                            "file": "Sdb",
                            "cn": "Sdb()",
@@ -2924,21 +2924,21 @@
                            "cn": "stopAllNodes()",
                            "en": "stopAllNodes()"
                         },
-						{
+                        {
                            "id": 1529910092,
                            "file": "setNodeConfigs",
                            "cn": "setNodeConfigs()",
                            "en": "setNodeConfigs()"
                         }
                      ]
-                  },				  
-				  {
+                  },
+                  {
                      "id": 1552033393,
                      "dir": "File",
                      "cn": "File",
                      "en": "File",
                      "contents": [
-					    {
+                        {
                            "id": 1552034509,
                            "file": "File",
                            "cn": "File()",
@@ -2950,37 +2950,37 @@
                            "cn": "chgrp()",
                            "en": "chgrp()"
                         },
-						{
+                        {
                            "id": 1552034306,
                            "file": "chmod",
                            "cn": "chmod()",
                            "en": "chmod()"
-                        },                        
-						{
+                        },
+                        {
                            "id": 1552034314,
                            "file": "chown",
                            "cn": "chown()",
                            "en": "chown()"
-                        },						
-						{
+                        },
+                        {
                            "id": 1552034536,
                            "file": "close",
                            "cn": "close()",
                            "en": "close()"
-                        },					 
+                        },
                         {
                            "id": 1552034465,
                            "file": "copy",
                            "cn": "copy()",
                            "en": "copy()"
-                        },	
+                        },
                         {
                            "id": 1552034485,
                            "file": "exist",
                            "cn": "exist()",
                            "en": "exist()"
-                        },												
-						{
+                        },
+                        {
                            "id": 1552034961,
                            "file": "find",
                            "cn": "find()",
@@ -2991,8 +2991,8 @@
                            "file": "getSize",
                            "cn": "getSize()",
                            "en": "getSize()"
-                        },					 
-						{
+                        },
+                        {
                            "id": 1552034969,
                            "file": "getUmask",
                            "cn": "getUmask()",
@@ -3016,7 +3016,7 @@
                            "cn": "isFile()",
                            "en": "isFile()"
                         },
-						{
+                        {
                            "id": 1552035012,
                            "file": "list",
                            "cn": "list()",
@@ -3033,8 +3033,8 @@
                            "file": "mkdir",
                            "cn": "mkdir()",
                            "en": "mkdir()"
-                        },													
-						{
+                        },
+                        {
                            "id": 1552035045,
                            "file": "move",
                            "cn": "move()",
@@ -3099,10 +3099,10 @@
                            "file": "writeContent",
                            "cn": "writeContent()",
                            "en": "writeContent()"
-                        }					
+                        }
                      ]
-                  },				  
-				  {
+                  },
+              {
                      "id": 1552035549,
                      "dir": "FileContent",
                      "cn": "FileContent",
@@ -3239,6 +3239,140 @@
                            "file": "md5",
                            "cn": "md5()",
                            "en": "md5()"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1568720801,
+                     "dir": "IniFile",
+                     "cn": "IniFile",
+                     "en": "IniFile",
+                     "contents": [
+                        {
+                           "id": 1568720802,
+                           "file": "IniFile",
+                           "cn": "IniFile()",
+                           "en": "IniFile()"
+                        },
+                        {
+                           "id": 1568720803,
+                           "file": "addComment",
+                           "cn": "addComment()",
+                           "en": "addComment()"
+                        },
+                        {
+                           "id": 1568720804,
+                           "file": "addSectionComment",
+                           "cn": "addSectionComment()",
+                           "en": "addSectionComment()"
+                        },
+                        {
+                           "id": 1568720805,
+                           "file": "addLastComment",
+                           "cn": "addLastComment()",
+                           "en": "addLastComment()"
+                        },
+                        {
+                           "id": 1568720806,
+                           "file": "setComment",
+                           "cn": "setComment()",
+                           "en": "setComment()"
+                        },
+                        {
+                           "id": 1568720807,
+                           "file": "setSectionComment",
+                           "cn": "setSectionComment()",
+                           "en": "setSectionComment()"
+                        },
+                        {
+                           "id": 1568720808,
+                           "file": "setLastComment",
+                           "cn": "setLastComment()",
+                           "en": "setLastComment()"
+                        },
+                        {
+                           "id": 1568720809,
+                           "file": "delComment",
+                           "cn": "delComment()",
+                           "en": "delComment()"
+                        },
+                        {
+                           "id": 1568720810,
+                           "file": "delSectionComment",
+                           "cn": "delSectionComment()",
+                           "en": "delSectionComment()"
+                        },
+                        {
+                           "id": 1568720811,
+                           "file": "delLastComment",
+                           "cn": "delLastComment()",
+                           "en": "delLastComment()"
+                        },
+                        {
+                           "id": 1568720812,
+                           "file": "enableItem",
+                           "cn": "enableItem()",
+                           "en": "enableItem()"
+                        },
+                        {
+                           "id": 1568720813,
+                           "file": "disableItem",
+                           "cn": "disableItem()",
+                           "en": "disableItem()"
+                        },
+                        {
+                           "id": 1568720814,
+                           "file": "disableAllItem",
+                           "cn": "disableAllItem()",
+                           "en": "disableAllItem()"
+                        },
+                        {
+                           "id": 1568720815,
+                           "file": "getComment",
+                           "cn": "getComment()",
+                           "en": "getComment()"
+                        },
+                        {
+                           "id": 1568720816,
+                           "file": "getSectionComment",
+                           "cn": "getSectionComment()",
+                           "en": "getSectionComment()"
+                        },
+                        {
+                           "id": 1568720817,
+                           "file": "getLastComment",
+                           "cn": "getLastComment()",
+                           "en": "getLastComment()"
+                        },
+                        {
+                           "id": 1568720818,
+                           "file": "getValue",
+                           "cn": "getValue()",
+                           "en": "getValue()"
+                        },
+                        {
+                           "id": 1568720819,
+                           "file": "setValue",
+                           "cn": "setValue()",
+                           "en": "setValue()"
+                        },
+                        {
+                           "id": 1568720820,
+                           "file": "toObj",
+                           "cn": "toObj()",
+                           "en": "toObj()"
+                        },
+                        {
+                           "id": 1568720821,
+                           "file": "toString",
+                           "cn": "toString()",
+                           "en": "toString()"
+                        },
+                        {
+                           "id": 1568720822,
+                           "file": "save",
+                           "cn": "save()",
+                           "en": "save()"
                         }
                      ]
                   },
@@ -3621,7 +3755,7 @@
                            "file": "BSONObj",
                            "cn": "BSONObj",
                            "en": "BSONObj"
-                        },	
+                        },   
                         {
                            "id": 1440658409,
                            "file": "MaxKey",
@@ -3633,7 +3767,7 @@
                            "file": "MinKey",
                            "cn": "MinKey",
                            "en": "MinKey"
-                        },						
+                        },                  
                         {
                            "id": 1562588927,
                            "file": "NumberDecimal",
@@ -4478,7 +4612,7 @@
                            "cn": "$SNAPSHOT_CONFIGS",
                            "en": "$SNAPSHOT_CONFIGS"
                         },
-						{
+                  {
                            "id": 1565839923,
                            "file": "SNAPSHOT_SVCTASKS",
                            "cn": "$SNAPSHOT_SVCTASKS",
