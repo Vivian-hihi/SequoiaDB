@@ -1,7 +1,10 @@
+
 import platform
 import os
 import sys
 from os.path import join
+from replaceUnit import ReplaceSymbol
+
 
 mode = "doc"
 
@@ -22,14 +25,21 @@ def GuessOS():
         return None
 
 errno = 0
+api_dir = None
+version_file = None
+
 os.chdir( root_dir )
 if GuessOS() == 'win32':
+    api_dir =  os.path.join(root_dir, 'build\\output\\api')
+    version_file = os.path.join(os.path.dirname(root_dir), 'SequoiaDB\\engine\\include\\ossVer.h')
     php_file = join(root_dir, '..\\tools\\server\\php_win\\php.exe')
     script_file = join(root_dir, 'tools\\controller\\main.php')
     execCmd = php_file + ' ' + script_file + ' -m ' + mode
     os.environ['PATH'] = os.environ['PATH'] + ';' + join(root_dir, 'tools\\wordConvertor\\libs' )
     errno = os.system( execCmd )
 else:
+    api_dir =  os.path.join(root_dir, 'build/output/api')
+    version_file = os.path.join(os.path.dirname(root_dir), 'SequoiaDB/engine/include/ossVer.h')
     php_file = join(root_dir, 'tools/html2mysql/php/bin/php')
     script_file = join(root_dir, 'tools/controller/main.php')
     execCmd = php_file + ' ' + script_file + ' -m ' + mode
@@ -46,3 +56,7 @@ else:
 
 if errno != 0:
    os._exit( 1 )
+
+replace = ReplaceSymbol(version_file)
+print( "replace symbol... \n" )
+replace.replace_in_directory(api_dir)
