@@ -22,7 +22,6 @@ public class KillNode extends Fault {
     private final String scriptName = "killNode.sh";
     private final static Logger log = Logger.getLogger(KillNode.class.getName());
 
-
     public KillNode(String hostName, String svcName) {
         super("killNode");
         this.hostName = hostName;
@@ -89,7 +88,7 @@ public class KillNode extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-            
+
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
         } catch (ReliabilityException e) {
@@ -116,8 +115,7 @@ public class KillNode extends Fault {
      * @param checkTimes 构造成功与否的检查次数（20）
      * @return
      */
-    public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay,
-                                                 int checkTimes) {
+    public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay, int checkTimes) {
         FaultMakeTask task = null;
         KillNode kn = new KillNode(hostName, svcName);
         task = new FaultMakeTask(kn, maxDelay, 3, checkTimes);
@@ -128,7 +126,6 @@ public class KillNode extends Fault {
         return getFaultMakeTask(node.hostName(), node.svcName(), maxDelay);
     }
 
-
     /**
      * @param hostName
      * @param svcName
@@ -138,7 +135,7 @@ public class KillNode extends Fault {
     public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay) {
         FaultMakeTask task = null;
         KillNode kn = new KillNode(hostName, svcName);
-        task = new FaultMakeTask(kn, maxDelay, 3, 1000);//TODO:1000 checkTimes jira:2383
+        task = new FaultMakeTask(kn, maxDelay, 3, 1000);// TODO:1000 checkTimes jira:2383
         return task;
     }
 }

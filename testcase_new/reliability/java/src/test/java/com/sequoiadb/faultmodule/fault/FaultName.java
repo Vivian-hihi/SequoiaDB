@@ -1,4 +1,4 @@
-package com.sequoiadb.faultmodel.fault;
+package com.sequoiadb.faultmodule.fault;
 
 public class FaultName {
 

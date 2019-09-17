@@ -142,6 +142,7 @@ public class FaultFulltextBase extends Fault {
                     break;
                 }
                 try {
+                    System.out.println("checkFlag: " + checkFlag);
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();

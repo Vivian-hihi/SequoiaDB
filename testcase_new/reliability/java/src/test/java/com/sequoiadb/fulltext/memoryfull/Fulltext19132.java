@@ -16,8 +16,8 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.faultmodel.fault.FaultName;
-import com.sequoiadb.faultmodel.task.FaultTask;
+import com.sequoiadb.faultmodule.fault.FaultName;
+import com.sequoiadb.faultmodule.task.FaultTask;
 import com.sequoiadb.fulltext.FullTextDBUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
 
@@ -70,7 +70,7 @@ public class Fulltext19132 extends SdbTestBase {
                     continue;
                 } else {
                     svcName = svcName.substring(0, svcName.length() - 1) + "7";
-                    task.make(node.getHostName(), svcName);
+                    task.make(node.getHostName(), svcName, "root", SdbTestBase.rootPwd);
                 }
             }
             Assert.assertTrue(FullTextUtils.isRecordEqualsByMulQueryMode(cl));

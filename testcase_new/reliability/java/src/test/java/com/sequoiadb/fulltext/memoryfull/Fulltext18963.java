@@ -17,8 +17,8 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.faultmodel.fault.FaultName;
-import com.sequoiadb.faultmodel.task.FaultTask;
+import com.sequoiadb.faultmodule.fault.FaultName;
+import com.sequoiadb.faultmodule.task.FaultTask;
 import com.sequoiadb.fulltext.FullTextDBUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
 import com.sequoiadb.task.OperateTask;
@@ -68,7 +68,7 @@ public class Fulltext18963 extends SdbTestBase {
         FaultTask task = FaultTask.getFault(FaultName.MEMORYLIMIT);
         int adaptSvcName = Integer.parseInt(master.svcName()) + 7;
         try {
-            task.make(master.hostName(), String.valueOf(adaptSvcName));
+            task.make(master.hostName(), String.valueOf(adaptSvcName), "root", SdbTestBase.rootPwd);
             TaskMgr mgr = new TaskMgr();
             mgr.addTask(new CreateIndexThread());
             mgr.execute();

@@ -15,8 +15,8 @@ import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.faultmodel.fault.FaultName;
-import com.sequoiadb.faultmodel.task.FaultTask;
+import com.sequoiadb.faultmodule.fault.FaultName;
+import com.sequoiadb.faultmodule.task.FaultTask;
 import com.sequoiadb.fulltext.FullTextDBUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
 
@@ -66,7 +66,7 @@ public class Fulltext19130 extends SdbTestBase {
         try {
             String svcName = String.valueOf(node.getPort());
             svcName = svcName.substring(0, svcName.length() - 1) + "7";
-            task.make(node.getHostName(), svcName);
+            task.make(node.getHostName(), svcName, "root", SdbTestBase.rootPwd);
             cl.dropIndex(fulltextName);
         } finally {
             task.restore();

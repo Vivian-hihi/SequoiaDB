@@ -215,7 +215,6 @@ public class CommLib {
             matcher.put("Name", subObj);
 
             // get all dataGroupNames
-            CommLib CommLib = new CommLib();
             ArrayList<String> dataGroupNames = CommLib.getDataGroupNames(sdb);
             for (int i = 0; i < dataGroupNames.size(); i++) {
                 List<String> nodeAddrs = CommLib.getNodeAddress(sdb, dataGroupNames.get(i));
@@ -314,7 +313,6 @@ public class CommLib {
                     BasicBSONObject groupInfo = (BasicBSONObject) cataInfo.get(i);
                     String groupName = groupInfo.getString("GroupName");
                     // get node address within the group
-                    CommLib CommLib = new CommLib();
                     List<String> nodeAddrs = CommLib.getNodeAddress(sdb, groupName);
                     // direct node and compare node's data
                     int failCnt = 0;
@@ -382,7 +380,6 @@ public class CommLib {
     public boolean compareDataAndCata(Sequoiadb sdb, String csName, String clName) {
         try {
             // get all dataGroupNames
-            CommLib CommLib = new CommLib();
             ArrayList<String> dataGroupNames = CommLib.getDataGroupNames(sdb);
             for (int i = 0; i < dataGroupNames.size(); i++) {
                 // direct connect data master node, listCollections
@@ -458,14 +455,12 @@ public class CommLib {
      * compare node's data within the group
      * 
      * @param .......
-     * @param matcher,
-     *            matching condition for query
+     * @param matcher, matching condition for query
      */
     public void compareNodeData(Sequoiadb sdb, String rgName, String csName, String clName, BSONObject matcher) {
         Sequoiadb dataDB = null;
         try {
             // get node address within the group
-            CommLib CommLib = new CommLib();
             List<String> nodeAdrrs = CommLib.getNodeAddress(sdb, rgName);
 
             // direct node and compare node's data
@@ -615,7 +610,7 @@ public class CommLib {
      */
     public void clearGroup(Sequoiadb sdb, String rgName) {
         try {
-            ArrayList<String> groupNames = CommLib.this.getDataGroupNames(sdb);
+            ArrayList<String> groupNames = CommLib.getDataGroupNames(sdb);
             for (int i = 0; i < groupNames.size(); i++) {
                 String tmpName = groupNames.get(i);
                 if (tmpName.indexOf(rgName) >= 0) {
@@ -715,11 +710,9 @@ public class CommLib {
      * 3、切分和fillUpCL（SYSCAT.SYSCOLLECTIONS,128）并发;4、磁盘恢复，执行cl.delete(
      * "{deleteFlag:1}");5、结果检验. 步骤2是为了让步骤3的fillUpCL快速返回，以达到SYSCL无法写入记录与切分并发的目的
      * 
-     * @param cl
-     *            SYSCOLLECTIONS，SYSCOLLECTIONSPACES，SYSDOMAINS（不支持SYSNODES）
-     * @param recordSizeByte
-     *            插入单条记录的大小(1024*1024Byte,512*1024Byte,1024Byte,512Byte,256Byte,
-     *            128Byte)
+     * @param cl             SYSCOLLECTIONS，SYSCOLLECTIONSPACES，SYSDOMAINS（不支持SYSNODES）
+     * @param recordSizeByte 插入单条记录的大小(1024*1024Byte,512*1024Byte,1024Byte,512Byte,256Byte,
+     *                       128Byte)
      * 
      */
     public static void fillUpCL(DBCollection cl, int recordSizeByte) {
