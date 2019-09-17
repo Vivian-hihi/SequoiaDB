@@ -3047,7 +3047,7 @@ __METHOD_IMP(cl_list_lobs)
 done:
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( selected ) ;
-   DELETE_CPPOBJECT( order_by
+   DELETE_CPPOBJECT( order_by ) ;
    DELETE_CPPOBJECT( hint ) ;
    return MAKE_RETURN_INT(rc) ;
 error:
