@@ -3209,6 +3209,12 @@
                            "en": "getFile()"
                         },
                         {
+                           "id": 1568721867,
+                           "file": "getIniFile",
+                           "cn": "getIniFile()",
+                           "en": "getIniFile()"
+                        },
+                        {
                            "id": 1561519542,
                            "file": "getInfo",
                            "cn": "getInfo()",
