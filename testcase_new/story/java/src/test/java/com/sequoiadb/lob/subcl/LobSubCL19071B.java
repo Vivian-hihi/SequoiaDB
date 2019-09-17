@@ -37,8 +37,9 @@ public class LobSubCL19071B extends SdbTestBase {
     private DBCollection mainCL = null;
     private int writeLobSize = 1024 * 1024;
     private byte[] lobBuff;
-    private List<ObjectId> lobIds1;
-    private List<ObjectId> lobIds2;
+    private List<ObjectId> putOids;
+    private List<ObjectId> readOids;
+    private List<ObjectId> deleteOids;
 
     @BeforeClass
     public void setUp() {
@@ -48,7 +49,8 @@ public class LobSubCL19071B extends SdbTestBase {
         }
         mainCL = LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
         lobBuff = RandomWriteLobUtil.getRandomBytes(writeLobSize);
-        lobIds1 = LobSubUtils.createAndWriteLob(mainCL, lobBuff);
+        readOids = LobSubUtils.createAndWriteLob(mainCL, lobBuff);
+        deleteOids = LobSubUtils.createAndWriteLob(mainCL, lobBuff);
     }
 
     @Test
@@ -56,12 +58,14 @@ public class LobSubCL19071B extends SdbTestBase {
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker(new DetachCLThread());
         thread.addWorker(new PutLobThread());
+        thread.addWorker(new ReadLobThread());
+        thread.addWorker(new DeleteLobThread());
         thread.run();
 
         Assert.assertFalse(isAttachMainCL(sdb, csName, subCLName), "check sub cl attach when it is detach");
         DBCollection subCL = sdb.getCollectionSpace(csName).getCollection(subCLName);
-        Assert.assertTrue(LobSubUtils.checkLobMD5(subCL, lobIds1, lobBuff));
-        Assert.assertTrue(LobSubUtils.checkLobMD5(subCL, lobIds2, lobBuff));
+        Assert.assertTrue(LobSubUtils.checkLobMD5(subCL, readOids, lobBuff));
+        Assert.assertTrue(LobSubUtils.checkLobMD5(subCL, putOids, lobBuff));
     }
 
     @AfterClass
@@ -96,13 +100,34 @@ public class LobSubCL19071B extends SdbTestBase {
         }
     }
 
-    // TODO:1、文本用例中描述是增删读lob，这里的测试点只有putlob
     private class PutLobThread {
         @ExecuteOrder(step = 1)
-        private void detachCL() {// TODO:2、方法名需要修改
+        private void putLob() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection subcl = db.getCollectionSpace(csName).getCollection(subCLName);
-                lobIds2 = LobSubUtils.createAndWriteLob(subcl, lobBuff);
+                putOids = LobSubUtils.createAndWriteLob(subcl, lobBuff);
+            }
+        }
+    }
+
+    private class ReadLobThread {
+        @ExecuteOrder(step = 1)
+        private void getLob() {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection subcl = db.getCollectionSpace(csName).getCollection(subCLName);
+                LobSubUtils.checkLobMD5(subcl, readOids, lobBuff);
+            }
+        }
+    }
+
+    private class DeleteLobThread {
+        @ExecuteOrder(step = 1)
+        private void deleteLob() {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection subcl = db.getCollectionSpace(csName).getCollection(mainCLName);
+                for (ObjectId oid : deleteOids) {
+                    subcl.removeLob(oid);
+                }
             }
         }
     }

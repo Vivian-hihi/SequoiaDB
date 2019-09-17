@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,6 +19,7 @@ import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
@@ -51,10 +53,16 @@ public class LobSubCL19073 extends SdbTestBase {
     public void test() throws Exception {
         ObjectId lobId = mainCL.createLobID();
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker(new PutLobThread(lobId));
-        thread.addWorker(new PutLobThread(lobId));
+        PutLobThread putLob1 = new PutLobThread(lobId);
+        PutLobThread putLob2 = new PutLobThread(lobId);
+        thread.addWorker(putLob1);
+        thread.addWorker(putLob2);
         thread.run();
-        // TODO:需要检测只有一个成功的场景
+
+        if (putLob1.getRetCode() == putLob2.getRetCode()) {
+            Assert.fail("threads that insert the same lob concurrently have the same results, thread1: "
+                    + putLob1.getRetCode() + ", thread2: " + putLob2.getRetCode());
+        }
         List<ObjectId> lobIds = new ArrayList<ObjectId>();
         lobIds.add(lobId);
         LobSubUtils.checkLobMD5(mainCL, lobIds, lobBuff);
@@ -77,7 +85,7 @@ public class LobSubCL19073 extends SdbTestBase {
         }
     }
 
-    private class PutLobThread {
+    private class PutLobThread extends ResultStore {
 
         private ObjectId id;
 
@@ -93,7 +101,8 @@ public class LobSubCL19073 extends SdbTestBase {
                 lob.write(lobBuff);
                 lob.close();
             } catch (BaseException e) {
-                if (e.getErrorCode() != -317) {
+                saveResult(e.getErrorCode(), e);
+                if (e.getErrorCode() != -297 && e.getErrorCode() != -317) {
                     throw e;
                 }
             }

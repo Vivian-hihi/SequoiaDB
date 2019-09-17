@@ -1,8 +1,10 @@
 package com.sequoiadb.lob.subcl;
 
+import java.util.List;
 import java.util.Random;
 
 import org.bson.BasicBSONObject;
+import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -36,6 +38,8 @@ public class LobSubCL19071A extends SdbTestBase {
     private DBCollection mainCL = null;
     private int writeLobSize = 1024 * 1024;
     private byte[] lobBuff;
+    private List<ObjectId> readOids;
+    private List<ObjectId> deleteOids;
 
     @BeforeClass
     public void setUp() {
@@ -45,7 +49,8 @@ public class LobSubCL19071A extends SdbTestBase {
         }
         mainCL = LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
         lobBuff = RandomWriteLobUtil.getRandomBytes(writeLobSize);
-        LobSubUtils.createAndWriteLob(mainCL, lobBuff);
+        readOids = LobSubUtils.createAndWriteLob(mainCL, lobBuff);
+        deleteOids = LobSubUtils.createAndWriteLob(mainCL, lobBuff);
     }
 
     @Test
@@ -53,6 +58,8 @@ public class LobSubCL19071A extends SdbTestBase {
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker(new DetachCLThread());
         thread.addWorker(new PutLobThread());
+        thread.addWorker(new ReadLobThread());
+        thread.addWorker(new DeleteLobThread());
         thread.run();
 
         Assert.assertFalse(isAttachMainCL(sdb, csName, subCLName), "check sub cl attach when it is detach");
@@ -90,13 +97,42 @@ public class LobSubCL19071A extends SdbTestBase {
         }
     }
 
-    // TODO:1、文本用例中描述是增删读lob，这里的测试点只有putlob
     private class PutLobThread {
         @ExecuteOrder(step = 1)
-        private void detachCL() {// TODO:2、方法名需要修改
+        private void putLob() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection maincl = db.getCollectionSpace(csName).getCollection(mainCLName);
                 LobSubUtils.createAndWriteLob(maincl, lobBuff);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -135) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private class ReadLobThread {
+        @ExecuteOrder(step = 1)
+        private void getLob() {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection maincl = db.getCollectionSpace(csName).getCollection(mainCLName);
+                LobSubUtils.checkLobMD5(maincl, readOids, lobBuff);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -135) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private class DeleteLobThread {
+        @ExecuteOrder(step = 1)
+        private void deleteLob() {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection maincl = db.getCollectionSpace(csName).getCollection(mainCLName);
+                for (ObjectId oid : deleteOids) {
+                    maincl.removeLob(oid);
+                }
             } catch (BaseException e) {
                 if (e.getErrorCode() != -135) {
                     throw e;

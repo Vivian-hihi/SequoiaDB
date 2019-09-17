@@ -7,6 +7,7 @@ import org.bson.BasicBSONObject;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -84,6 +85,7 @@ public class LobSubCL19081 extends SdbTestBase {
         thread.run();
 
         LobSubUtils.checkLobMD5(mainCL, lobIds1, lobBuff);
+        Assert.assertFalse(sdb.isCollectionSpaceExist(oldSubCSName), "subCL cs has changed its name.");
     }
 
     @AfterClass
@@ -152,7 +154,6 @@ public class LobSubCL19081 extends SdbTestBase {
         }
     }
 
-    // TODO:1、建议补充rename结果检查
     private class RenameThread {
 
         @ExecuteOrder(step = 1)

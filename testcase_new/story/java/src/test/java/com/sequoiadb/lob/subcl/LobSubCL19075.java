@@ -17,6 +17,7 @@ import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
@@ -51,10 +52,15 @@ public class LobSubCL19075 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker(new RemoveLobThread());
-        thread.addWorker(new RemoveLobThread());
+        RemoveLobThread removeLob1 = new RemoveLobThread();
+        RemoveLobThread removeLob2 = new RemoveLobThread();
+        thread.addWorker(removeLob1);
+        thread.addWorker(removeLob2);
         thread.run();
-        // TODO:1、补充只有一个操作成功的检查
+        if (removeLob1.getRetCode() == removeLob2.getRetCode()) {
+            Assert.fail("threads that remove the same lob concurrently have the same results, thread1: "
+                    + removeLob1.getRetCode() + ", thread2: " + removeLob2.getRetCode());
+        }
         checkRemoveLobResult(lobIds);
     }
 
@@ -75,7 +81,7 @@ public class LobSubCL19075 extends SdbTestBase {
         }
     }
 
-    private class RemoveLobThread {
+    private class RemoveLobThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
         private void readLob() {
@@ -85,6 +91,7 @@ public class LobSubCL19075 extends SdbTestBase {
                     try {
                         mainCL.removeLob(lobId);
                     } catch (BaseException e) {
+                        saveResult(e.getErrorCode(), e);
                         if (e.getErrorCode() != -4 && e.getErrorCode() != -317) {
                             throw e;
                         }

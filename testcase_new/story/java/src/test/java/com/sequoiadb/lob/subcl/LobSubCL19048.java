@@ -82,7 +82,7 @@ public class LobSubCL19048 extends SdbTestBase {
     public void test() throws Exception {
         ThreadExecutor thread = new ThreadExecutor();
         SplitCLThread splitCL = new SplitCLThread();
-        thread.addWorker(new AttachCLThread());
+        thread.addWorker(new DetachCLThread());
         thread.addWorker(splitCL);
         thread.run();
 
@@ -110,11 +110,10 @@ public class LobSubCL19048 extends SdbTestBase {
         }
     }
 
-    // TODO:1、类名和方法名建议修改和实际操作一致
-    private class AttachCLThread {
+    private class DetachCLThread {
 
         @ExecuteOrder(step = 1)
-        private void attachCL() {
+        private void detachCL() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
                 try {

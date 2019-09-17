@@ -1,5 +1,8 @@
 package com.sequoiadb.lob.subcl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -16,6 +19,7 @@ import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
@@ -55,10 +59,18 @@ public class LobSubCL19078 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         ThreadExecutor thread = new ThreadExecutor();
+        TruncateLobThread truncate = new TruncateLobThread();
         thread.addWorker(new ReadLobThread());
-        thread.addWorker(new TruncateLobThread());
+        thread.addWorker(truncate);
         thread.run();
 
+        if (truncate.getRetCode() == 0) {
+            byte[] expBuff = new byte[writeLobSize / 2];
+            System.arraycopy(lobBuff, 0, expBuff, 0, writeLobSize / 2);
+            List<ObjectId> lobIds = new ArrayList<ObjectId>();
+            lobIds.add(lobId);
+            LobSubUtils.checkLobMD5(mainCL, lobIds, expBuff);
+        }
     }
 
     @AfterClass
@@ -93,23 +105,23 @@ public class LobSubCL19078 extends SdbTestBase {
                     throw new BaseException(0,
                             "check lob: " + lobId + " md5 error, exp: " + expMD5 + ", act: " + actMD5);
                 }
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -317) {
+                    throw e;
+                }
             }
         }
     }
 
-    // TODO:1、测试结果和用例中描述结果不一致，建议这里不需要sleep，直接补充两种并发结果检查
-    private class TruncateLobThread {
+    private class TruncateLobThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
         private void truncateLob() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                }
                 mainCL.truncateLob(lobId, writeLobSize / 2);
             } catch (BaseException e) {
+                saveResult(e.getErrorCode(), e);
                 if (e.getErrorCode() != -317) {
                     throw e;
                 }

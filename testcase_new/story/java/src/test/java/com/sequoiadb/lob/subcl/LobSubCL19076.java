@@ -83,7 +83,7 @@ public class LobSubCL19076 extends SdbTestBase {
     private class ReadLobThread {
 
         @ExecuteOrder(step = 1)
-        private void putLob() {// TODO:1、建议更新方法名
+        private void readLob() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
                 LobSubUtils.checkLobMD5(mainCL, lobIds1, lobBuff);
