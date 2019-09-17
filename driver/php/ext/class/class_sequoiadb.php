@@ -2107,7 +2107,7 @@ class SequoiaDB
    /**
     * Set the attributes of the session.
     *
-    * @param $options an array or the string argument. The configuration options for session. Please reference <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302">here</a> for more detail.
+    * @param $options an array or the string argument. The configuration options for session. Please reference <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-@SDB_SYMBOL_VERSION">here</a> for more detail.
     *
     * @return Returns the result, default return array.
     *

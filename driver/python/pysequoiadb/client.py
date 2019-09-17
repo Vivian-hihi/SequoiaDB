@@ -1509,7 +1509,7 @@ class client(object):
         Parameters:
            Name         Type     Info:
            options      dict     The configuration options for session. visit this url:
-                                 "http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302"
+                                 "http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-@SDB_SYMBOL_VERSION"
                                  to get more details.
         Exceptions:
            pysequoiadb.error.SDBBaseError

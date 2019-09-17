@@ -871,7 +871,7 @@ class collection(object):
                                     eg. {'name':1, 'age':-1}
            idx_name     str      The index name.
            options      dict     The configuration options for index. visit this url:
-                                 "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-0"
+                                 "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-@SDB_SYMBOL_VERSION"
                                  to get more details.
         Exceptions:
            pysequoiadb.error.SDBBaseError
