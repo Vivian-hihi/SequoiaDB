@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @FileName seqDB-13242: 锁定多个数据范围后写入lob seqDB-18974 主子表锁定多个数据范围后写入lob
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

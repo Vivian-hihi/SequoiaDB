@@ -21,11 +21,10 @@ import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
-//TODO:1、用例注释需要更新，建议和13235用例合并
 /**
  * @Description seqDB-18967 主子表未加锁写lob时分片边界值验证
- * @author wuyan
- * @Date 2017.11.2
+ * @author luweikang
+ * @Date 2019.09.12
  * @version 1.00
  */
 public class RewriteLob18967 extends SdbTestBase {

@@ -22,12 +22,15 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description: ConcurrentRewriteLob13267.java test content:lock the data segment to concurrent
- *               write lob, and the locking range of intersection testlink case:seqDB-13267
- *               seqDB-18999 主子表并发加锁写lob，其中锁定数据范围有交集
+ * @Description: ConcurrentRewriteLob13267.java test content:lock the data
+ *               segment to concurrent write lob, and the locking range of
+ *               intersection testlink case:seqDB-13267 seqDB-18999
+ *               主子表并发加锁写lob，其中锁定数据范围有交集
  * 
  * @author wuyan
  * @Date 2017.11.8
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13267_18999 extends SdbTestBase {

@@ -50,7 +50,8 @@ public class RewriteLob13237_18969 extends SdbTestBase {
     public void setUp() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = db.getCollectionSpace(SdbTestBase.csName);
-        cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
+        cs.createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\",AutoSplit:true}"));
         if (!CommLib.isStandAlone(db)) {
             LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
         }

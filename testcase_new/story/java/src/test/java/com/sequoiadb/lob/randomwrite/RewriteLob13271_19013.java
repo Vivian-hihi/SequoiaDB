@@ -96,7 +96,6 @@ public class RewriteLob13271_19013 extends SdbTestBase {
             lobTask.start();
         for (DbLobReadTask lobTask : lobTasks)
             lobTask.join();
-
         for (DbLobReadTask lobTask : lobTasks) {
             Assert.assertTrue(lobTask.isTaskSuccess(), lobTask.getErrorMsg());
             int b = lobTask.getBegin();

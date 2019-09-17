@@ -30,7 +30,9 @@ import com.sequoiadb.testcommon.SdbTestBase;
 /**
  * @Description: seqDB-13268:普通表并发加锁写lob seqDB-19000 :: 版本: 1 :: 主子表并发加锁写lob
  * @author laojingtang
- * @Date 17-12-1.
+ * @Date 2017.12.01
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  */
 public class RewriteLob13268_19000 extends SdbTestBase {
     private Sequoiadb db = null;
@@ -60,8 +62,9 @@ public class RewriteLob13268_19000 extends SdbTestBase {
     }
 
     /**
-     * 1、共享模式下，多个连接多线程并发如下操作: (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob 多个并发线程中锁定数据段范围不冲突
-     * 2、读取lob，检查操作结果 1、所有线程写入lob成功，查询lob信息按指定位置写入数据，且写入数据信息正确（比较MD5值）
+     * 1、共享模式下，多个连接多线程并发如下操作: (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob
+     * 多个并发线程中锁定数据段范围不冲突 2、读取lob，检查操作结果
+     * 1、所有线程写入lob成功，查询lob信息按指定位置写入数据，且写入数据信息正确（比较MD5值）
      */
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) throws InterruptedException {
@@ -83,7 +86,7 @@ public class RewriteLob13268_19000 extends SdbTestBase {
         for (DbLobWriteTask task : tasks)
             task.start();
         for (DbLobWriteTask task : tasks)
-            task.join();// TODO:1、这个join可以去掉
+            task.join();
         for (DbLobWriteTask task : tasks)
             Assert.assertTrue(task.isTaskSuccess(), task.getErrorMsg());
 

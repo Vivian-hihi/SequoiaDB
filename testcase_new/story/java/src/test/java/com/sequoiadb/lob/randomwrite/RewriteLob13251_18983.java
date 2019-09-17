@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @FileName seqDB-13251: 不同模式下执行seek操作 seqDB-18983 主子表不同模式下执行seek操作
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

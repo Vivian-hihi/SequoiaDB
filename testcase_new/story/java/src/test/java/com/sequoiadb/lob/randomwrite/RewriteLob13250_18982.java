@@ -22,6 +22,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @FileName seqDB-13250: 写入空切片数据 seqDB-18982 主子表写入空切片数据
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

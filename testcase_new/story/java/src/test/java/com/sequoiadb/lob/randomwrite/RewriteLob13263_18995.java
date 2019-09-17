@@ -30,6 +30,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName seqDB-13263: 并发锁全部lob写入 seqDB-18995 主子表并发锁全部lob写入
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

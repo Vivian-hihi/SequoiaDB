@@ -21,19 +21,20 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
-//TODO:1、用例注释需要优化下
 /**
  * @FileName seqDB-18997 主子表并发加锁写lob，其中写数据范围不连续 seqDB-19014 主子表并发读lob，其中读数据范围不连续
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019-09-12
  * @Version 1.00
  */
 
 /*
  * seqDB-18997
  * 
- * 1、共享模式下，多个连接多线程并发如下操作: (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段， 向锁定数据段写入lob 多个并发线程中锁定数据段为连续范围，
- * 如线程1锁定数据范围为1-3、线程2锁定数据范围为4-5、线程3锁定数据范围为5-9 2、读取lob，检查操作结果
+ * 1、共享模式下，多个连接多线程并发如下操作: (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段， 向锁定数据段写入lob
+ * 多个并发线程中锁定数据段为连续范围， 如线程1锁定数据范围为1-3、线程2锁定数据范围为4-5、线程3锁定数据范围为5-9 2、读取lob，检查操作结果
  */
 
 /*

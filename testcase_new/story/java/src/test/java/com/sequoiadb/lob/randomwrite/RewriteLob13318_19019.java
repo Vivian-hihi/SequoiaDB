@@ -27,6 +27,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName seqDB-13318: 并发读lob过程中执行切分 seqDB-19019 主子表并发读lob过程中执行切分
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

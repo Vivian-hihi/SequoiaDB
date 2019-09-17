@@ -124,7 +124,7 @@ public class LobSubCL19071B extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void deleteLob() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection subcl = db.getCollectionSpace(csName).getCollection(mainCLName);
+                DBCollection subcl = db.getCollectionSpace(csName).getCollection(subCLName);
                 for (ObjectId oid : deleteOids) {
                     subcl.removeLob(oid);
                 }

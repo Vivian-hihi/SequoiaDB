@@ -51,16 +51,19 @@ public class RewriteLob13274_19016 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         db = new Sequoiadb(coordUrl, "", "");
-        if (CommLib.isStandAlone(db)) {
-            throw new SkipException("is standalone skip testcase");
-        }// TODO:1、这个用例非主子表不需要屏蔽独立模式
         cs = db.getCollectionSpace(SdbTestBase.csName);
-        cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-        LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        cs.createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1}, ShardingType:\"hash\", AutoSplit: true}"));
+        if (!CommLib.isStandAlone(db)) {
+            LobSubUtils.createMainCLAndAttachCL(db, SdbTestBase.csName, mainCLName, subCLName);
+        }
     }
 
     @Test(dataProvider = "clNameProvider")
     public void testLob13274(String clName) throws InterruptedException {
+        if (CommLib.isStandAlone(db) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
+        }
         int lobsize = 1024 * 1024 * 2;
         byte[] expectBytes = RandomWriteLobUtil.getRandomBytes(lobsize);
         DBCollection dbcl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);

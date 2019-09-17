@@ -28,11 +28,14 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName seqDB-13275: 并发读写lob seqDB-19017 主子表并发读写lob
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 
 /*
- * 1、多个连接多线程并发如下操作: (1)打开已存在lob对象，锁定（lockAndSeek）指定范围数据段，写入lob （2）打开已存在lob对象，seek指定偏移范围读 2、检查操作结果
+ * 1、多个连接多线程并发如下操作: (1)打开已存在lob对象，锁定（lockAndSeek）指定范围数据段，写入lob
+ * （2）打开已存在lob对象，seek指定偏移范围读 2、检查操作结果
  */
 
 public class RewriteLob13275_19017 extends SdbTestBase {
@@ -59,60 +62,51 @@ public class RewriteLob13275_19017 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
 
-        try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            // TODO:1、非主子表不需要屏蔽独立模式
-            if (CommLib.isStandAlone(sdb)) {
-                throw new SkipException("is standalone skip testcase");
-            }
-            // create cs cl
-            BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
-            cs = sdb.createCollectionSpace(csName, csOpt);
-            BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
-            cs.createCollection(clName, clOpt);
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        // create cs cl
+        BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
+        cs = sdb.createCollectionSpace(csName, csOpt);
+        BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',AutoSplit:true}");
+        cs.createCollection(clName, clOpt);
 
+        if (!CommLib.isStandAlone(sdb)) {
             LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
-
-        } catch (BaseException e) {
-            e.printStackTrace();// TODO:2、这里的try-catch和打印信息可以去掉
-            Assert.fail(e.getMessage());
         }
+
     }
 
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) {
-        try {
-            int lobSize = 1 * 1024 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-
-            WriteLobThread wThrd = new WriteLobThread(clName, oid, data);
-            ReadLobThread rThrd = new ReadLobThread(csName, clName, oid, data);
-            wThrd.start();
-            rThrd.start();
-            boolean writeOk = wThrd.isSuccess();
-            boolean readOk = rThrd.isSuccess();
-
-            if (writeOk && !readOk) {
-                int readErrCode = ((BaseException) rThrd.getExceptions().get(0)).getErrorCode();
-                Assert.assertEquals(readErrCode, -317, rThrd.getErrorMsg());
-
-            } else if (!writeOk && readOk) {
-                int writeErrCode = ((BaseException) wThrd.getExceptions().get(0)).getErrorCode();
-                Assert.assertEquals(writeErrCode, -317, wThrd.getErrorMsg());
-
-            } else if (!writeOk && !readOk) {
-                Assert.fail("both write and read lob fail");
-
-            } else if (writeOk && readOk) {
-                System.out.println("writing and reading lob are not concurrently");
-            }
-
-        } catch (BaseException e) {// TODO:3、这里的try-catch和打印信息可以去掉
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
         }
+        int lobSize = 1 * 1024 * 1024;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+
+        WriteLobThread wThrd = new WriteLobThread(clName, oid, data);
+        ReadLobThread rThrd = new ReadLobThread(csName, clName, oid, data);
+        wThrd.start();
+        rThrd.start();
+        boolean writeOk = wThrd.isSuccess();
+        boolean readOk = rThrd.isSuccess();
+
+        if (writeOk && !readOk) {
+            int readErrCode = ((BaseException) rThrd.getExceptions().get(0)).getErrorCode();
+            Assert.assertEquals(readErrCode, -317, rThrd.getErrorMsg());
+
+        } else if (!writeOk && readOk) {
+            int writeErrCode = ((BaseException) wThrd.getExceptions().get(0)).getErrorCode();
+            Assert.assertEquals(writeErrCode, -317, wThrd.getErrorMsg());
+
+        } else if (!writeOk && !readOk) {
+            Assert.fail("both write and read lob fail");
+
+        } else if (writeOk && readOk) {
+            System.out.println("writing and reading lob are not concurrently");
+        }
+
     }
 
     @AfterClass
@@ -121,9 +115,6 @@ public class RewriteLob13275_19017 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();// TODO:2、这里打印信息可以去掉
-            Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
                 sdb.close();

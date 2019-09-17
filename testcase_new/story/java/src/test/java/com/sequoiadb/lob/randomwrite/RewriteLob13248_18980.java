@@ -21,6 +21,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              segment range discontinuity seqDB-18980 主子表多次锁定相同数据段范围写入lob
  * @author wuyan
  * @Date 2017.11.7
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13248_18980 extends SdbTestBase {

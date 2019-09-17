@@ -25,6 +25,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *           主子表多次锁定写lob，其中不连续范围重复写入为连续数据段
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

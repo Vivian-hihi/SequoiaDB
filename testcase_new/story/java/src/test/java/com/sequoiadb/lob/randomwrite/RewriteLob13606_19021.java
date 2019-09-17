@@ -25,17 +25,17 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @FileName seqDB-13606:并发加锁写lob过程中drop cl
- * 
- *           seqDB-19021 主子表并发加锁写lob过程中drop cl
+ * @FileName seqDB-13606:并发加锁写lob过程中drop cl seqDB-19021 主子表并发加锁写lob过程中drop cl
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 
 /*
- * (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob， 其中多个线程锁定不同数据段，锁定数据段范围较大（如每个数据段锁定10G大小）
- * （2）写lob过程中执行drop cl操作 2、读取lob，检查操作结果
+ * (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob，
+ * 其中多个线程锁定不同数据段，锁定数据段范围较大（如每个数据段锁定10G大小） （2）写lob过程中执行drop cl操作 2、读取lob，检查操作结果
  */
 
 public class RewriteLob13606_19021 extends SdbTestBase {
@@ -65,55 +65,52 @@ public class RewriteLob13606_19021 extends SdbTestBase {
     public void setUp() {
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {// TODO:1、非主子表不需要屏蔽独立模式
-            throw new SkipException("is standalone skip testcase");
-        }
         // create cs cl
         BSONObject csOpt = (BSONObject) JSON.parse("{LobPageSize: " + lobPageSize + "}");
         cs = sdb.createCollectionSpace(csName, csOpt);
         BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
         cs.createCollection(clName, clOpt);
 
-        LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
+        if (!CommLib.isStandAlone(sdb)) {
+            LobSubUtils.createMainCLAndAttachCL(sdb, csName, mainCLName, subCLName);
+        }
 
     }
 
     @Test(dataProvider = "clNameProvider")
     public void testLob(String clName) {
-        try {
-            int lobSize = 1 * 1024 * 1024;
-            byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
-            DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-            ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
-            List<LobPart> parts = getParts(threadNum, writeSizePerThread);
-            List<WriteLobThread> wLobThrds = new ArrayList<WriteLobThread>();
-
-            // init
-            DropCLThread trunThrd = new DropCLThread(clName);
-            for (int i = 0; i < threadNum; ++i) {
-                WriteLobThread wLobThrd = new WriteLobThread(clName, oid, parts.get(i));
-                wLobThrds.add(wLobThrd);
-            }
-
-            // start
-            for (WriteLobThread wLobThrd : wLobThrds) {
-                wLobThrd.start();
-            }
-            trunThrd.start();
-
-            // join
-            Assert.assertTrue(trunThrd.isSuccess(), trunThrd.getErrorMsg());
-            for (WriteLobThread wLobThrd : wLobThrds) {
-                Assert.assertTrue(wLobThrd.isSuccess(), wLobThrd.getErrorMsg());
-            }
-
-            // check truncate ok
-            Assert.assertFalse(cs.isCollectionExist(clName), "cl still exist after drop!");
-
-        } catch (BaseException e) {
-            e.printStackTrace();// TODO:2、try-catch建议去掉，失败打屏信息建议去掉
-            Assert.fail(e.getMessage());
+        if (CommLib.isStandAlone(sdb) && clName.equals(mainCLName)) {
+            throw new SkipException("is standalone skip testcase!");
         }
+        int lobSize = 1 * 1024 * 1024;
+        byte[] data = RandomWriteLobUtil.getRandomBytes(lobSize);
+        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+        ObjectId oid = RandomWriteLobUtil.createAndWriteLob(cl, data);
+        List<LobPart> parts = getParts(threadNum, writeSizePerThread);
+        List<WriteLobThread> wLobThrds = new ArrayList<WriteLobThread>();
+
+        // init
+        DropCLThread trunThrd = new DropCLThread(clName);
+        for (int i = 0; i < threadNum; ++i) {
+            WriteLobThread wLobThrd = new WriteLobThread(clName, oid, parts.get(i));
+            wLobThrds.add(wLobThrd);
+        }
+
+        // start
+        for (WriteLobThread wLobThrd : wLobThrds) {
+            wLobThrd.start();
+        }
+        trunThrd.start();
+
+        // join
+        Assert.assertTrue(trunThrd.isSuccess(), trunThrd.getErrorMsg());
+        for (WriteLobThread wLobThrd : wLobThrds) {
+            Assert.assertTrue(wLobThrd.isSuccess(), wLobThrd.getErrorMsg());
+        }
+
+        // check truncate ok
+        Assert.assertFalse(cs.isCollectionExist(clName), "cl still exist after drop!");
+
     }
 
     @AfterClass
@@ -122,9 +119,6 @@ public class RewriteLob13606_19021 extends SdbTestBase {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
             }
-        } catch (BaseException e) {
-            e.printStackTrace();// TODO:3、失败打屏信息建议去掉，testng框架会打印失败栈信息
-            Assert.fail(e.getMessage());
         } finally {
             if (null != sdb) {
                 sdb.close();

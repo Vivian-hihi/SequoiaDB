@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              segment range intersection seqDB-18975 主子表锁定多个数据范围有交集，写入lob
  * @author wuyan
  * @Date 2017.11.7
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13243_18975 extends SdbTestBase {

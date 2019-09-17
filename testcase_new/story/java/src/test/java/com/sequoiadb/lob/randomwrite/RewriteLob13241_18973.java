@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              segment range discontinuity
  * @author wuyan
  * @Date 2017.11.7
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13241_18973 extends SdbTestBase {

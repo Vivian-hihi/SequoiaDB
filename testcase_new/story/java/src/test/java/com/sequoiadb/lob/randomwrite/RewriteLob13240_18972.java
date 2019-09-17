@@ -21,8 +21,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 /**
  * @Description seqDB-13240 : 锁定连续范围数据段写lob seqDB-18972 主子表锁定连续范围数据段写lob
  * @author laojingtang
- * @UpdateAuthor wuyan
  * @Date 2017.12.1
+ * @UpdateAuthor wuyan
  * @UpdateDate 2019.07.16
  * @version 1.10
  */

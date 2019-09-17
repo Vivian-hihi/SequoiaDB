@@ -21,6 +21,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              offset positions to covering rewrite lob seqDB-18970 主子表加锁覆盖写lob
  * @author wuyan
  * @Date 2017.11.2
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13238_18970 extends SdbTestBase {

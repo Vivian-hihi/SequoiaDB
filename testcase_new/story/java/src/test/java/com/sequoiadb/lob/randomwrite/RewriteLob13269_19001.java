@@ -27,6 +27,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName seqDB-13269: 切分表并发加锁写lob
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

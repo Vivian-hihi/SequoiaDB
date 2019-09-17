@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              lob operations, and locking data segment range discontinuity
  *              seqDB-18976 主子表同一会话多次锁定/写入lob，其中锁定范围有交集
  * @author wuyan
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Date 2017.11.7
  * @version 1.00
  */

@@ -23,6 +23,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Description seqDB-13254: read empty lob piece. seqDB-18986 主子表读取lob中空切片数据
  * @author wuyan
  * @Date 2017.11.7
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13254_18986 extends SdbTestBase {

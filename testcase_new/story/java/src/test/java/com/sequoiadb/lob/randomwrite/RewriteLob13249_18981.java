@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              empty pieces * seqDB-18981 主子表写空切片超出限制
  * @author wuyan
  * @Date 2017.11.7
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13249_18981 extends SdbTestBase {

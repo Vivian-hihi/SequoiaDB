@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @FileName seqDB-13257: read模式下锁定数据，读取lob seqDB-18989 主子表read模式下锁定数据，读取lob
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

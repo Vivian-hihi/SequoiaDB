@@ -26,6 +26,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName seqDB-13252: 加锁写入过程中删除lob seqDB-18984 主子表加锁写入过程中删除lob
  * @Author wuyan modify
  * @Date 2019-06-11
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 public class RewriteLob13252_18984 extends SdbTestBase {

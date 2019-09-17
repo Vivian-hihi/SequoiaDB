@@ -51,9 +51,6 @@ public class RewriteLob13273_19015 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         db = new Sequoiadb(coordUrl, "", "");
-        if (CommLib.isStandAlone(db)) {
-            throw new SkipException("is standalone skip testcase");
-        }
         cs = db.getCollectionSpace(SdbTestBase.csName);
         cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
         if (!CommLib.isStandAlone(db)) {
@@ -85,7 +82,6 @@ public class RewriteLob13273_19015 extends SdbTestBase {
             lobTask.start();
         for (DbLobReadTask lobTask : lobTasks)
             lobTask.join();
-
         for (DbLobReadTask lobTask : lobTasks) {
             Assert.assertTrue(lobTask.isTaskSuccess(), lobTask.getErrorMsg());
             int b = lobTask.getBegin();

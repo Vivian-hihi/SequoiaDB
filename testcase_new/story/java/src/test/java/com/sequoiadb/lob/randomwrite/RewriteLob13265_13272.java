@@ -23,6 +23,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName seqDB-13265: 并发加锁写lob，其中写数据范围连续 seqDB-13272: 并发读lob，其中读数据范围不连续
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

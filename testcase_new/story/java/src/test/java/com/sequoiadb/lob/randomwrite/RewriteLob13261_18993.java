@@ -22,11 +22,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description: testlink case:seqDB-13261:write lobdata to the locked data segment and write
- *               lobdata to the non locked data segment, seqDB-18993 主子表并发写加锁数据段和不加锁数据段
- * 
+ * @Description: testlink case:seqDB-13261:write lobdata to the locked data
+ *               segment and write lobdata to the non locked data segment,
+ *               seqDB-18993 主子表并发写加锁数据段和不加锁数据段
  * @author wuyan
  * @Date 2017.11.8
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.16
  * @version 1.00
  */
 public class RewriteLob13261_18993 extends SdbTestBase {

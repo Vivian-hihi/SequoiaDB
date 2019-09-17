@@ -24,6 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @FileName seqDB-13253: 加锁写入过程中读取lob seqDB-18985 主子表加锁写入过程中读取lob
  * @Author linsuqiang
  * @Date 2017-11-08
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @Version 1.00
  */
 

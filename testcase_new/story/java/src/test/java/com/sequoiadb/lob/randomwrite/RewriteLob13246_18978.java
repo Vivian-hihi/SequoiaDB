@@ -21,6 +21,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  *              positions to covering rewrite lob seqDB-18978 主子表锁定整个lob写入
  * @author wuyan
  * @Date 2019.07.16
+ * @UpdateAuthor luweikang
+ * @UpdateDate 2019.09.12
  * @version 1.00
  */
 public class RewriteLob13246_18978 extends SdbTestBase {
