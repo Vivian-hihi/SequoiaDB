@@ -24,7 +24,6 @@ import com.sequoiadb.exception.ReliabilityException;
  * @author huangqiaohui
  */
 public class Ssh {
-    @SuppressWarnings("unused")
     private final static Logger log = Logger.getLogger(Ssh.class.getName());
 
     private static final int CHANNEL_CONNECT_TIMEOUT = 60 * 1000;
@@ -353,7 +352,7 @@ public class Ssh {
                     Date date = new Date();
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
                     String strTime = format.format(date.getTime());
-                    logger = new PrintStream("E://yinzhen/jsch" + strTime + ".log");
+                    logger = new PrintStream(SdbTestBase.workDir + "/jsch" + strTime + ".log");
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
