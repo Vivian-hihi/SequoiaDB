@@ -50,6 +50,7 @@
          <package name="com.sequoias3.region.concurrent" />
          <package name="com.sequoias3.object.serial" /> 
          <package name="com.sequoias3.delimiter.serial" /> 
+         <package name="com.sequoias3.partupload.serial" />
       </packages>
    </test>
 
