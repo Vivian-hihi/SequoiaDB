@@ -1,4 +1,4 @@
-package com.sequoias3.partupload;
+package com.sequoias3.partupload.serial;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +30,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
  * test content: 上传分段时指定分段长度较大 testlink-case: seqDB-18712
+ * (由于50G的文件运行时间较长，用例中使用10G文件进行测试)
  * 
  * @author wangkexin
  * @Date 2019.7.31
@@ -44,9 +45,9 @@ public class UploadPart18712 extends S3TestBase {
                 // test b : 1G
                 new Object[] { 1 * 1024 * 1024 * 1024L },
                 // test c : 5G
-                new Object[] { 5 * 1024 * 1024 * 1024L },
-                // test d : 10G
-                new Object[] { 10 * 1024 * 1024 * 1024L } };
+                new Object[] { 5 * 1024 * 1024 * 1024L } };
+        // test d : 10G
+        // new Object[] { 10 * 1024 * 1024 * 1024L } };
     }
 
     private boolean runSuccess = false;
@@ -55,7 +56,7 @@ public class UploadPart18712 extends S3TestBase {
     private String uploadId = "";
     private MultiValueMap<Integer, String> expPartsMap = null;
     private AmazonS3 s3Client = null;
-    private long fileSize = 50 * 1024 * 1024 * 1024L;
+    private long fileSize = 10 * 1024 * 1024 * 1024L;
     private File localPath = null;
     private File file = null;
     private String filePath = null;
@@ -75,9 +76,7 @@ public class UploadPart18712 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    // SEQUOIADBMAINSTREAM-4818
-    // 【BUG】【new】【story】【S3分段上传】对象分段上传，存在分段长度较大，完成分段上传时返回EntityTooSmall错误
-    @Test(enabled = false) // (dataProvider = "partSizeProvider")
+    @Test(dataProvider = "partSizeProvider")
     private void testUpload(long partSize) throws Exception {
         expPartsMap = new LinkedMultiValueMap<Integer, String>();
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);

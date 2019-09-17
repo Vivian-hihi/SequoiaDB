@@ -1,4 +1,4 @@
-package com.sequoias3.partupload;
+package com.sequoias3.partupload.serial;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,16 +58,13 @@ public class UploadPart18713 extends S3TestBase {
         s3Client.createBucket(bucketName);
     }
 
-    // SEQUOIADBMAINSTREAM-4818
-    // 【BUG】【new】【story】【S3分段上传】对象分段上传，存在分段长度较大，完成分段上传时返回EntityTooSmall错误
-    @Test(enabled = false)
+    @Test
     private void testUpload() throws Exception {
         // put object
         long[] partSizes = { 100 * M, 100 * M, 150 * M, 200 * M, 50 * M, 50 * M, 100 * M, 500 * M, 500 * M, 200 * M,
                 500 * M, 300 * M, 600 * M, 100 * M, 300 * M, 1050 * M, 320 * M };
         putObject(partSizes, oldfile);
 
-        System.out.println("------------------------------------------------------");
         long[] partSizes2 = { 100 * M, 500 * M, 200 * M, 150 * M, 300 * M, 500 * M, 200 * M, 50 * M, 600 * M, 100 * M,
                 1000 * M, 100 * M, 296 * M };
         putObject(partSizes2, newfile);
