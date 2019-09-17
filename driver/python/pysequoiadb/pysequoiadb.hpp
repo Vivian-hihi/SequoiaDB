@@ -102,6 +102,7 @@ __METHOD_DECLARE(cl_get_query_meta) ;
 __METHOD_DECLARE(cl_attach_collection) ;
 __METHOD_DECLARE(cl_detach_collection) ;
 __METHOD_DECLARE(cl_create_lob) ;
+__METHOD_DECLARE(cl_create_lob_id) ;
 __METHOD_DECLARE(cl_open_lob) ;
 __METHOD_DECLARE(cl_remove_lob) ;
 __METHOD_DECLARE(cl_truncate_lob);

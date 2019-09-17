@@ -2872,6 +2872,40 @@ error:
    goto done ;
 }
 
+
+
+
+
+
+__METHOD_IMP(cl_create_lob_id)
+{
+   INT32 rc              = SDB_OK ;
+   PYOBJECT *obj         = NULL ;
+   sdbCollection *cl     = NULL ;
+   PYOBJECT *oid_obj     = NULL ;
+   const CHAR *str_date  = NULL ;
+   bson::OID oid;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &oid_obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   if ( Py_None != oid_obj )
+   {
+      str_date = PyString_AsString(oid_obj) ;
+   }
+
+   rc = cl->createLobID( oid, str_date) ;
+
+done:
+   return MAKE_RETURN_INT_PYSTRING( rc, oid.toString().c_str() ) ;
+error:
+   goto done ;
+}
+
 __METHOD_IMP(cl_open_lob)
 {
    INT32 rc           = SDB_OK ;
@@ -2978,13 +3012,24 @@ error:
 
 __METHOD_IMP(cl_list_lobs)
 {
-   INT32 rc           = SDB_OK ;
-   PYOBJECT *obj      = NULL ;
-   PYOBJECT *obj_cr   = NULL ;
-   sdbCollection *cl  = NULL ;
-   sdbCursor  *cursor = NULL ;
+   INT32 rc                       = SDB_OK ;
+   INT64 num_to_skip              = 0 ;
+   INT64 num_to_return            = -1 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *obj_cr               = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selected        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   PYOBJECT *bson_hint            = NULL ;
+   sdbCollection *cl              = NULL ;
+   sdbCursor  *cursor             = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selected  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *hint      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &obj_cr) )
+   if ( !PARSE_PYTHON_ARGS(args, "OOOOOOLL", &obj, &obj_cr, &bson_condition, &bson_selected, &bson_order_by,
+                  &bson_hint, &num_to_skip, &num_to_return) )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -2992,9 +3037,18 @@ __METHOD_IMP(cl_list_lobs)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( obj_cr, sdbCursor, cursor) ;
-   rc = cl->listLobs( *cursor ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selected, selected ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
+
+   rc = cl->listLobs( *cursor, *condition, *selected, *order_by, *hint, num_to_skip, num_to_return ) ;
 
 done:
+   DELETE_CPPOBJECT( condition ) ;
+   DELETE_CPPOBJECT( selected ) ;
+   DELETE_CPPOBJECT( order_by
+   DELETE_CPPOBJECT( hint ) ;
    return MAKE_RETURN_INT(rc) ;
 error:
    goto done ;
@@ -5098,6 +5152,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_attach_collection",            cl_attach_collection,            METH_VARARGS},
    {"cl_detach_collection",            cl_detach_collection,            METH_VARARGS},
    {"cl_create_lob",                   cl_create_lob,                   METH_VARARGS},
+   {"cl_create_lob_id",                cl_create_lob_id,                METH_VARARGS},
    {"cl_open_lob",                     cl_open_lob,                     METH_VARARGS},
    {"cl_remove_lob",                   cl_remove_lob,                   METH_VARARGS},
    {"cl_truncate_lob",                 cl_truncate_lob,                 METH_VARARGS},
