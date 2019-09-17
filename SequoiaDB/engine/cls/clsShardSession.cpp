@@ -4695,7 +4695,6 @@ namespace engine
    INT32 _clsShdSession::_resetSnapshotMainCL ( _rtnCommand * command )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN lockDms = FALSE ;
 
       SDB_ASSERT( command->type() == CMD_SNAPSHOT_RESET,
                   "command is invalid" ) ;
@@ -4703,8 +4702,6 @@ namespace engine
       const CHAR * mainCLName = command->collectionFullName() ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCL ;
-
-      _rtnSnapshotReset * resetCmd = (_rtnSnapshotReset *)command ;
 
       rc = _getSubCLList( mainCLName, strSubCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
