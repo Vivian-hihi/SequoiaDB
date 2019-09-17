@@ -2144,6 +2144,29 @@ error:
    goto done ;
 }
 
+
+INT32 clientBuildCreateLobIDMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                             const bson *meta, SINT32 flags, SINT16 w,
+                             UINT64 reqID,
+                             BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_BS_LOB_CREATELOBID_REQ, meta,
+                           flags, w, -1, reqID, NULL,
+                           NULL, NULL, endianConvert ) ;
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+
 INT32 clientBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                const bson *meta,
                                SINT32 flags, SINT16 w,

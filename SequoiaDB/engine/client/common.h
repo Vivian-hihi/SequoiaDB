@@ -226,6 +226,11 @@ INT32 clientBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                              UINT64 reqID,
                              BOOLEAN endianConvert ) ;
 
+INT32 clientBuildCreateLobIDMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                    const bson *meta, SINT32 flags, SINT16 w,
+                                    UINT64 reqID, BOOLEAN endianConvert ) ;
+
+
 INT32 clientBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                const bson *meta,
                                SINT32 flags, SINT16 w,

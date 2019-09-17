@@ -61,6 +61,8 @@ struct _sdbConnectionStruct
 
    UINT64 reserveSpace1 ;
    ossMutex _sockMutex ;
+
+   BOOLEAN _isOldVersionLobServer;
 } ;
 typedef struct _sdbConnectionStruct sdbConnectionStruct ;
 
