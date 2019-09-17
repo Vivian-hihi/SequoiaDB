@@ -1,6 +1,6 @@
 ##NAME##
 
-cancelTask - cancel task.
+cancelTask - cancel the task.
 
 ##SYNOPSIS##
 **db.cancelTask( \<id\>, [isAsync] )**
@@ -11,7 +11,7 @@ Sdb
 
 ##DESCRIPTION##
 
-cancel task.
+cancel the task.
 
 ##PARAMETERS##
 
@@ -26,7 +26,7 @@ cancel task.
 
 ##RETURN VALUE##
 
-On success, return an object of Collection.
+On success, return a new object of Collection.
 
 On error, exception will be thrown.
 
@@ -47,7 +47,7 @@ since v1.2
 
 ##EXAMPLES##
 
-1. Stop split task.
+1. Stop split the task.
 
 	```lang-javascript
 	> var taskid1 = db.foo.bar.splitAsync( "group1", "group2", 50 );
