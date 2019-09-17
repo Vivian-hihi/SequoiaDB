@@ -32,7 +32,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @Author wangkexin
  * @Date 2019.07.30
  */
-
+@Test(groups = "partlistinuseoff")
 public class UploadPart18689 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18689";
@@ -62,8 +62,7 @@ public class UploadPart18689 extends S3TestBase {
         preparePartList();
     }
 
-    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
-    @Test(enabled = false)
+    @Test
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         ThreadExecutor es = new ThreadExecutor();

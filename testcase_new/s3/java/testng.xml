@@ -20,12 +20,15 @@
           <listener class-name = "com.sequoias3.testcommon.TimePrinterListener"/>
    </listeners>
    
+   <!-- allowreputon:允许重复创建桶：开启；authorizationoff：鉴权校验：关闭；contextlifecycleconf：上下文生命周期：默认设置为2分钟；partlistinuseoff：分段检测：关闭；partsizelimitoff：分段大小检测：关闭 -->
    <test name="javadriver" parallel="classes" thread-count="5">  
       <groups>
          <run>
             <exclude name="allowreputon" />
             <exclude name="authorizationoff" />
             <exclude name="contextlifecycleconf" />
+            <exclude name="partlistinuseoff" />
+            <exclude name="partsizelimitoff" />
          </run>
       </groups>
       <packages>    
@@ -51,6 +54,30 @@
          <package name="com.sequoias3.object.serial" /> 
          <package name="com.sequoias3.delimiter.serial" /> 
          <package name="com.sequoias3.partupload.serial" />
+      </packages>
+   </test>
+   
+   <test name="partlistinuse" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="partlistinuseoff" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoias3.partupload" />
+         <package name="com.sequoias3.partupload.concurrent" />
+      </packages>
+   </test>
+   
+   <test name="partsizelimit" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="partsizelimitoff" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoias3.partupload" />
+         <package name="com.sequoias3.partupload.concurrent" />
       </packages>
    </test>
 

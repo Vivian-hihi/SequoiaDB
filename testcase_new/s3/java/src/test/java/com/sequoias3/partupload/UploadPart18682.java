@@ -27,7 +27,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @Author wangkexin
  * @Date 2019.07.25
  */
-
+@Test(groups = "partsizelimitoff")
 public class UploadPart18682 extends S3TestBase {
     @DataProvider(name = "uploadProvider")
     public Object[][] generateObjectNumber() {
@@ -65,8 +65,7 @@ public class UploadPart18682 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
-    @Test(enabled = false) // (dataProvider = "uploadProvider")
+    @Test(dataProvider = "uploadProvider")
     private void testUpload(String keyName, long oldPartSize, long newPartSize) throws Exception {
         partEtags = new ArrayList<>();
         uploadPartFirst(keyName, oldPartSize);

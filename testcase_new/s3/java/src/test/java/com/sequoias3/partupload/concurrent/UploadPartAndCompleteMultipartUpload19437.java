@@ -60,8 +60,7 @@ public class UploadPartAndCompleteMultipartUpload19437 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
     }
 
-    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
-    @Test(enabled = false) // (dataProvider = "thirdPartSize")
+    @Test(dataProvider = "thirdPartSize")
     public void uploadParts(long thirdPartSize) throws Exception {
         File file = new File(filePath);
         uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);

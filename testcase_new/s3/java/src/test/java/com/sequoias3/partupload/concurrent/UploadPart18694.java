@@ -29,7 +29,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @Author wangkexin
  * @Date 2019.07.30
  */
-
+@Test(groups = "partsizelimitoff")
 public class UploadPart18694 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket18694";
@@ -65,8 +65,7 @@ public class UploadPart18694 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
     }
 
-    // 需配置后开放,已在《暂时屏蔽用例记录表》中记录
-    @Test(enabled = false)
+    @Test
     private void testUpload() throws Exception {
         long filepositon = 0;
         // 指定多个分段上传对象
