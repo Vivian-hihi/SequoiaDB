@@ -57,6 +57,7 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, setLastComment )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, getLastComment )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, enableItem )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, disableItem )
+JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, disableAllItem )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, toString )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, toObj )
 JS_MEMBER_FUNC_DEFINE( _sptUsrIniFile, save )
@@ -78,6 +79,7 @@ JS_BEGIN_MAPPING( _sptUsrIniFile, "IniFile" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_getLastComment",       getLastComment, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_enableItem",           enableItem, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_disableItem",          disableItem, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_disableAllItem",       disableAllItem, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_toString",             toString, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_toObj",                toObj, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_save",                 save, 0 )
@@ -834,6 +836,15 @@ JS_MAPPING_END()
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrIniFile::disableAllItem( const _sptArguments &arg,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail )
+   {
+      _parser.commentAllItems() ;
+
+      return SDB_OK ;
    }
 
    INT32 _sptUsrIniFile::toString( const _sptArguments &arg,

@@ -725,8 +725,94 @@ error:
 INT32 utilIniParserEx::setValue( const CHAR *section, const CHAR *key,
                                  const string &value )
 {
-   return utilIniSetValue( &_handler, section, key,
-                           value.c_str(), value.length() ) ;
+   INT32 length  = value.length() ;
+   const CHAR *p = value.c_str() ;
+
+   if ( UTIL_INI_SINGLE_QUOMARK & _handler.flags ||
+        UTIL_INI_DOUBLE_QUOMARK & _handler.flags )
+   {
+      INT32 i = 0 ;
+      string newValue = "" ;
+
+      if ( UTIL_INI_ESCAPE & _handler.flags )
+      {
+         for ( i = 0; i < length; ++i )
+         {
+            if ( '\\' == p[i] )
+            {
+               newValue += "\\\\" ;
+            }
+            else if ( '\0' == p[i] )
+            {
+               newValue += "\\0" ;
+            }
+            else if ( '\a' == p[i] )
+            {
+               newValue += "\\a" ;
+            }
+            else if ( '\b' == p[i] )
+            {
+               newValue += "\\b" ;
+            }
+            else if ( '\t' == p[i] )
+            {
+               newValue += "\\t" ;
+            }
+            else if ( '\r' == p[i] )
+            {
+               newValue += "\\r" ;
+            }
+            else if ( '\n' == p[i] )
+            {
+               newValue += "\\n" ;
+            }
+            else if ( UTIL_INI_SEMICOLON & _handler.flags && ';' == p[i] )
+            {
+               newValue += "\\;" ;
+            }
+            else if ( UTIL_INI_HASHMARK & _handler.flags && '#' == p[i] )
+            {
+               newValue += "\\#" ;
+            }
+            else if ( UTIL_INI_EQUALSIGN & _handler.flags && '=' == p[i] )
+            {
+               newValue += "\\=" ;
+            }
+            else if ( UTIL_INI_COLON & _handler.flags && ':' == p[i] )
+            {
+               newValue += "\\:" ;
+            }
+            else if ( UTIL_INI_DOUBLE_QUOMARK & _handler.flags && '"' == p[i] )
+            {
+               newValue += "\\\"" ;
+            }
+            else if ( UTIL_INI_SINGLE_QUOMARK & _handler.flags && '\'' == p[i] )
+            {
+               newValue += "\\'" ;
+            }
+            else
+            {
+               newValue += p[i] ;
+            }
+         }
+      }
+
+      if ( UTIL_INI_SINGLE_QUOMARK & _handler.flags )
+      {
+         newValue = "'" + newValue + "'" ;
+      }
+      else if ( UTIL_INI_DOUBLE_QUOMARK & _handler.flags )
+      {
+         newValue = '"' + newValue + '"' ;
+      }
+
+      return utilIniSetValue( &_handler, section, key,
+                              newValue.c_str(), newValue.length() ) ;
+   }
+   else
+   {
+      return utilIniSetValue( &_handler, section, key, p, length ) ;
+   }
 }
 
 INT32 utilIniParserEx::setValue( const CHAR *section, const CHAR *key,

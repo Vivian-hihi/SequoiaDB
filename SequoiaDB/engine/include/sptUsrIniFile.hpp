@@ -82,6 +82,9 @@ namespace engine
       INT32 disableItem( const _sptArguments &arg, _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
 
+      INT32 disableAllItem( const _sptArguments &arg, _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
       INT32 toString( const _sptArguments &arg, _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
