@@ -83,7 +83,7 @@ namespace engine
       {
          if( SPT_OID_STR_LENGTH != oidStr.size() )
          {
-            rc = SDB_SYS ;
+            rc = SDB_INVALIDARG ;
             detail = BSON( SPT_ERR << "Invalid oid str length" ) ;
             goto error ;
          }
