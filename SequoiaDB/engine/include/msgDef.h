@@ -52,6 +52,7 @@
 #define FIELD_NAME_GROUPNAME                 "GroupName"
 #define FIELD_NAME_DOMAIN                    "Domain"
 #define FIELD_NAME_NODEID                    "NodeID"
+#define FIELD_NAME_INSTANCEID                "InstanceID"
 #define FIELD_NAME_IS_PRIMARY                "IsPrimary"
 #define FIELD_NAME_CURRENT_LSN               "CurrentLSN"
 #define FIELD_NAME_BEGIN_LSN                 "BeginLSN"

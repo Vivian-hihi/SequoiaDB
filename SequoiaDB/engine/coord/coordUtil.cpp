@@ -392,6 +392,7 @@ namespace engine
       vector< const CHAR* > vecHostName ;
       vector< const CHAR* > vecSvcName ;
       vector< const CHAR* > vecNodeName ;
+      vector< INT32 > vecInstanceID ;
       BOOLEAN emptyFilter = TRUE ;
 
       nodes.clear() ;
@@ -400,13 +401,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Group ids to group info failed, rc: %d", rc ) ;
 
       rc = coordParseNodesInfo( filterObj, vecNodeID, vecHostName,
-                                vecSvcName, vecNodeName,
+                                vecSvcName, vecNodeName, vecInstanceID,
                                 pNewObj, strictCheck ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes info failed, rc: %d",
                    filterObj.toString().c_str(), rc ) ;
 
       if ( vecNodeID.size() > 0 || vecHostName.size() > 0 ||
-           vecSvcName.size() > 0 || vecNodeName.size() > 0 )
+           vecSvcName.size() > 0 || vecNodeName.size() > 0 ||
+           vecInstanceID.size() > 0 )
       {
          emptyFilter = FALSE ;
       }
@@ -506,6 +508,21 @@ namespace engine
                   if ( coordMatchNodeName( vecNodeName[ index ],
                                            itrn->_host,
                                            itrn->_service[MSG_ROUTE_LOCAL_SERVICE].c_str() ) )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
+               {
+                  continue ;
+               }
+
+               /// check instance ID
+               findNode = FALSE ;
+               for ( index = 0 ; index < vecInstanceID.size() ; ++ index )
+               {
+                  if ( itrn->_instanceID == (UINT8)( vecInstanceID[ index ] ) )
                   {
                      findNode = TRUE ;
                      break ;

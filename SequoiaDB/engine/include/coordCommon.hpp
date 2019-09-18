@@ -164,6 +164,24 @@ namespace engine
             _role[ i ] = 1 ;
          }
       }
+      void setParseRole ( INT32 ( &role )[ SDB_ROLE_MAX ] )
+      {
+         if ( OSS_BIT_TEST( _parseMask, COORD_CTRL_MASK_ROLE ) )
+         {
+            for ( INT32 i = 0 ; i < SDB_ROLE_MAX ; ++ i )
+            {
+               if ( _role[ i ] != role[ i ] )
+               {
+                  _role[ i ] = 0 ;
+               }
+            }
+         }
+         else
+         {
+            ossMemcpy( _role, role, sizeof( role ) ) ;
+            OSS_BIT_SET( _parseMask, COORD_CTRL_MASK_ROLE ) ;
+         }
+      }
    } ;
    typedef _coordCtrlParam coordCtrlParam ;
 
@@ -187,6 +205,7 @@ namespace engine
                                  vector< const CHAR* > &vecHostName,
                                  vector< const CHAR* > &vecSvcName,
                                  vector< const CHAR* > &vecNodeName,
+                                 vector< INT32 > & vecInstanceID,
                                  BSONObj *pNewObj = NULL,
                                  BOOLEAN strictCheck = FALSE ) ;
 
@@ -198,6 +217,7 @@ namespace engine
 
    INT32    coordCheckNodeName( const CHAR *pNodeName ) ;
    INT32    coordCheckNodeName( const vector< const CHAR* > &vecNodeName ) ;
+   INT32    coordCheckInstanceID ( const vector< INT32 > & vecInstanceID ) ;
 
    BOOLEAN  coordMatchNodeName( const CHAR *pNodeName,
                                 const CHAR *pHostName,

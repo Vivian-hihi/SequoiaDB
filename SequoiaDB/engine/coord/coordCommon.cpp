@@ -41,6 +41,7 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "coordSequenceAgent.hpp"
+#include "utilCommon.hpp"
 
 using namespace bson ;
 
@@ -560,8 +561,7 @@ namespace engine
             if ( SDB_OK == rc )
             {
                modify = TRUE ;
-               param._parseMask |= COORD_CTRL_MASK_ROLE ;
-               ossMemcpy( param._role, tmpRole, sizeof( tmpRole ) ) ;
+               param.setParseRole( tmpRole ) ;
 
                if ( mask & COORD_CTRL_MASK_GLOBAL )
                {
@@ -577,6 +577,25 @@ namespace engine
                rc = SDB_OK ;
             }
             tmpVecStr.clear() ;
+         }
+         else if ( ( mask & COORD_CTRL_MASK_ROLE ) &&
+                   ( 0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_INSTANCEID ) ||
+                     0 == ossStrcasecmp( e.fieldName(), PMD_OPTION_INSTANCE_ID ) ) )
+         {
+            // Instance ID could be only used in DATA nodes
+            INT32 tmpRole[ SDB_ROLE_MAX ] = { 0 } ;
+            tmpRole[ SDB_ROLE_DATA ] = 1 ;
+            modify = TRUE ;
+            param.setParseRole( tmpRole ) ;
+
+            if ( mask & COORD_CTRL_MASK_GLOBAL )
+            {
+               param._isGlobal = TRUE ;
+            }
+            if ( pNewObj )
+            {
+               builder.append( e ) ;
+            }
          }
          else if ( ( mask & COORD_CTRL_MASK_RAWDATA ) &&
                    0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) )
@@ -748,6 +767,7 @@ namespace engine
                               vector< const CHAR* > &vecHostName,
                               vector< const CHAR* > &vecSvcName,
                               vector< const CHAR* > &vecNodeName,
+                              vector< INT32 > & vecInstanceID,
                               BSONObj *pNewObj,
                               BOOLEAN strictCheck )
    {
@@ -782,7 +802,7 @@ namespace engine
                   BSONObj tmpObj = tmpE.embeddedObject() ;
                   rc = coordParseNodesInfo( tmpObj, vecNodeID,
                                             vecHostName, vecSvcName,
-                                            vecNodeName,
+                                            vecNodeName, vecInstanceID,
                                             pNewObj ? &tmpNew : NULL,
                                             strictCheck ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes failed ",
@@ -869,6 +889,31 @@ namespace engine
             if ( SDB_OK == rc )
             {
                rc = coordCheckNodeName( vecNodeName ) ;
+            }
+
+            /// check result
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
+         }
+         else if ( 0 == ossStrcasecmp( ele.fieldName(),
+                                       FIELD_NAME_INSTANCEID ) ||
+                   0 == ossStrcasecmp( ele.fieldName(),
+                                       PMD_OPTION_INSTANCE_ID ) )
+         {
+            rc = coordParseInt( ele, vecInstanceID, COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = coordCheckInstanceID( vecInstanceID ) ;
             }
 
             /// check result
@@ -985,6 +1030,22 @@ namespace engine
          rc = coordCheckNodeName( vecNodeName[i] ) ;
          if ( rc )
          {
+            break ;
+         }
+      }
+
+      return rc ;
+   }
+
+   INT32 coordCheckInstanceID ( const vector< INT32 > & vecInstanceID )
+   {
+      INT32 rc = SDB_OK ;
+
+      for ( UINT32 i = 0 ; i < vecInstanceID.size() ; ++ i )
+      {
+         if ( !utilCheckInstanceID( (UINT32)( vecInstanceID[ i ] ), FALSE ) )
+         {
+            rc = SDB_INVALIDARG ;
             break ;
          }
       }
