@@ -19,11 +19,12 @@
       
       <delete dir="${release_dir}" failonerror="false"/>
       <mkdir dir="${release_dir}"/>
-      
-      <dbversion srccodedir="${srccode_dir}" version="sequoiadb_version"/>
+
+
       <getplatform resultProperty="platform" />
-      
-      <antcall target="compile_src"/>   
+
+      <antcall target="compile_src"/>
+      <dbversion srccodedir="${srccode_dir}" version="sequoiadb_version"/>
       <antcall target="compile_java_driver"/>
       <antcall target="compile_php_driver"/>
       <antcall target="compile_python_driver"/>
