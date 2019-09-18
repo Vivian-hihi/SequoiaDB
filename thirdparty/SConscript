@@ -30,12 +30,69 @@ class Utils:
         return False
 
 
+class DependencyChecker:
+    def __init__(self):
+        self.programs = []
+        self.libs = []
+
+    @staticmethod
+    def _print_check_result(name, version, is_lib, succeed):
+        msg = "Checking"
+        if is_lib:
+            msg += " library "
+        else:
+            msg += " program "
+        msg += name + " of version " + version
+        dot_num = 64 - len(msg)
+        for i in range(dot_num):
+            msg += '.'
+        if succeed:
+            msg += "PASS!"
+        else:
+            msg += "FAILED!"
+        print(msg)
+
+
+    def add_program(self, program_name, version = None):
+        self.programs.append((program_name, version))
+
+    def add_library(self, library_name, version = None):
+        self.libs.append((library_name, version))
+
+    def check(self):
+        for name, version in self.programs:
+            if version is None:
+                version = 'any'
+            if Utils.is_program_installed(name):
+                self._print_check_result(name, version, False, True)
+            else:
+                self._print_check_result(name, version, False, False)
+                return False
+        for name, version in self.libs:
+            full_name = name
+            if version is not None:
+                full_name = name + ".so." + version
+            else:
+                version = "any"
+            p1 = subprocess.Popen(["ldconfig", "-p"], stdout=subprocess.PIPE)
+            p2 = subprocess.Popen(["grep", full_name], stdin=p1.stdout,
+                                  stdout=subprocess.PIPE)
+            p1.stdout.close()
+            out, error = p2.communicate()
+            if '' == out:
+                self._print_check_result(name, version, True, False)
+                return False
+            else:
+                self._print_check_result(name, version, True, True)
+
+
 class CompilerBase:
     def __init__(self, name, src_root):
         self.name = name
         self.src_root = os.path.abspath(os.path.join('./', src_root))
         self.platform = ""
         self.arch = ""
+        self.build_type = None
         self.cmds = []
 
     def _get_stage_lib_dir(self):
@@ -45,10 +102,10 @@ class CompilerBase:
         return None
 
     def _init_win32_cmds(self, arch):
-        return None
+        return 0
 
     def _init_linux_cmds(self, arch):
-        return None
+        return 0
 
     def get_name(self):
         return self.name
@@ -60,12 +117,12 @@ class CompilerBase:
         self.platform = platform
         self.arch = arch
         self.build_type = build_type
-        rc = None
+        rc = 0
         if "win32" == platform:
             rc = self._init_win32_cmds(arch)
         elif "linux" == platform:
             rc = self._init_linux_cmds(arch)
-        if rc is not None:
+        if 0 != rc:
             return rc
 
         stage_dir = self._get_stage_lib_dir()
@@ -89,17 +146,23 @@ class CompilerBase:
         elif os.listdir(lib_path):
             print("Target library path[" + lib_path +
                   "] not empty, Skip the compilation of " + self.name)
-            return 2
+            return -1
+        return 0
 
     def append_cmd(self, cmd, args=''):
         # Append the command into the command list as a tuple.
         self.cmds.append((cmd, args))
 
     def run(self):
+        rc = 0
         print("Begin to compile " + self.name + "...")
         for cmd in self.cmds:
             command = cmd[0] + ' ' + cmd[1]
-            os.system(command)
+            rc = os.system(command)
+            if 0 != rc:
+                print("Run command failed: " + command)
+                break
+        return rc
 
     def archive(self):
         print('Archive libraries...')
@@ -143,6 +206,7 @@ class BoostCompiler(CompilerBase):
         if "arm64" == self.arch:
             config_args += ' architecture=arm'
         self.append_cmd('./b2', config_args)
+        return 0
 
 
 class SpiderMonkeyCompiler(CompilerBase):
@@ -157,9 +221,6 @@ class SpiderMonkeyCompiler(CompilerBase):
         return sm_lib_dir
 
     def _init_linux_cmds(self, arch):
-        if not Utils.is_program_installed('autoconf2.13'):
-            print("autoconf2.13 is not install")
-            return 1
         self.build_dir = os.path.abspath(os.path.join(self.src_root,
                                          'src/build_OPT.OBJ'))
         self.append_cmd('cd src && rm -rf ' + self.build_dir +
@@ -179,6 +240,7 @@ class SpiderMonkeyCompiler(CompilerBase):
                         comm_config_opt, config_args)
         self.append_cmd('cd ' + self.build_dir + '&& make -j ' +
                         str(comm_job_num) + ' ' + comm_build_opt)
+        return 0
 
     def archive(self):
         shutil.copy(os.path.join(self.build_dir, 'libjs_static.a'),
@@ -221,6 +283,7 @@ class SslCompiler(CompilerBase):
         os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
         self.append_cmd(config_exec, config_args)
         self.append_cmd('make ' + comm_build_opt)
+        return 0
 
     def archive(self):
         shutil.copy(os.path.join(self.src_root, 'libcrypto.a'),
@@ -241,12 +304,15 @@ class MdocmlCompiler(CompilerBase):
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
     def _init_win32_cmds(self, arch):
         args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
+
 
 class SnappyCompiler(CompilerBase):
     def __init__(self, src_root):
@@ -260,12 +326,14 @@ class SnappyCompiler(CompilerBase):
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
     def _init_win32_cmds(self, arch):
         args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
 
 class LZ4Compiler(CompilerBase):
@@ -280,12 +348,14 @@ class LZ4Compiler(CompilerBase):
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
     def _init_win32_cmds(self, arch):
         args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
 
 class ZlibCompiler(CompilerBase):
@@ -300,12 +370,14 @@ class ZlibCompiler(CompilerBase):
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
     def _init_win32_cmds(self, arch):
         args = comm_build_opt + ' -j ' + str(comm_job_num)
         if debugBuild:
             args += ' --dd'
         self.append_cmd('scons', args)
+        return 0
 
 
 components = []
@@ -343,9 +415,24 @@ comm_job_num = 1
 if GetOption("silent"):
     comm_config_opt += ' --silent'
     comm_build_opt += ' --silent'
+
+if "win32" != guess_os:
+    depend_checker = DependencyChecker()
+    depend_checker.add_program('gcc')
+    depend_checker.add_program('g++')
+    depend_checker.add_program('make')
+    if False == depend_checker.check():
+        print("Dependency check failed")
+        exit(1)
+
 for component in components:
     os.chdir(component.get_src_root())
-    # None means no error happened.
-    if component.init(guess_os, guess_arch, build_type) is None:
-        component.run()
-        component.archive()
+    rc = component.init(guess_os, guess_arch, build_type)
+    if 0 == rc:
+        rc = component.run()
+        if 0 == rc:
+            component.archive()
+        else:
+            exit(rc)
+    elif rc > 0:
+        exit(rc)
