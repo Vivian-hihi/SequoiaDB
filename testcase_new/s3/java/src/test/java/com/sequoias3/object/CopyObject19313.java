@@ -18,29 +18,33 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * @Description seqDB-19307:目标桶开启版本控制，指定不同桶复制对象
+ * @Description seqDB-19313:不同桶复制对象，指定目标桶开启版本控制，且指定目标对象已存在
  * @author wuyan
- * @Date 2019.09.17
+ * @Date 2019.09.18
  * @version 1.00
  */
-public class CopyObject19307 extends S3TestBase {
+public class CopyObject19313 extends S3TestBase {
     private boolean runSuccess = false;
-    private String srcKeyName = "/object19307a";
-    private String destKeyName = "/object19307b";
-    private String srcBucketName = "bucket19307a";
-    private String destBucketName = "bucket19307b";
+    private String srcKeyName = "/srcObject19313";
+    private String destKeyName = "/dest/object19313";
+    private String srcBucketName = "srcbucket19313";
+    private String destBucketName = "destbucket19313";
     private AmazonS3 s3Client = null;
-    private int copyFileSize = 1024 * 1024 * 300;
+    private int fileSize = 1024 * 1024 * 50;
+    private int copyFileSize = 1024 * 1024 * 30;
     private File localPath = null;
+    private String filePath = null;
     private String copyFilePath = null;
 
     @BeforeClass
     private void setUp() throws IOException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
         copyFilePath = localPath + File.separator + "localFile_" + copyFileSize + ".txt";
 
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
         TestTools.LocalFile.createFile(copyFilePath, copyFileSize);
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, srcBucketName);
@@ -51,15 +55,18 @@ public class CopyObject19307 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, destBucketName, "Enabled");
 
         s3Client.putObject(srcBucketName, srcKeyName, new File(copyFilePath));
+        s3Client.putObject(destBucketName, destKeyName, new File(filePath));
     }
 
-    @Test
+    // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4921
+    @Test(enabled = false)
     public void testCopyObject() throws Exception {
         CopyObjectResult result = s3Client.copyObject(srcBucketName, srcKeyName, destBucketName, destKeyName);
 
-        String currentVersionId = "0";
+        String currentVersionId = "1";
+        String hisVersionId = "0";
         checkObjectAttributeInfo(result, destBucketName, destKeyName, currentVersionId);
-        checkObjectContent(destBucketName, destKeyName);
+        checkObjectContent(destBucketName, destKeyName, currentVersionId, hisVersionId);
 
         runSuccess = true;
     }
@@ -77,10 +84,15 @@ public class CopyObject19307 extends S3TestBase {
         }
     }
 
-    private void checkObjectContent(String bucketName, String keyName) throws Exception {
+    private void checkObjectContent(String bucketName, String keyName, String currentVersionId, String hisVersionId)
+            throws Exception {
         // down file by currentVersion
-        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, currentVersionId);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(copyFilePath));
+
+        // down file by historyVersion,is the old keyName
+        downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, hisVersionId);
+        Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
     }
 
     private void checkObjectAttributeInfo(CopyObjectResult objAttrInfo, String bucketName, String keyName,
@@ -94,7 +106,6 @@ public class CopyObject19307 extends S3TestBase {
 
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), copyFileSize);
-        // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4921
-        // Assert.assertEquals(result.getVersionId(), currentVersionId, "the keyName=" + keyName);
+        Assert.assertEquals(result.getVersionId(), currentVersionId, "the keyName=" + keyName);
     }
 }
