@@ -41,7 +41,6 @@ public class ListMultipartUploads18752 extends S3TestBase {
 
     }
 
-    // TODO upload项中显示为空，这个测试点没校验，跟文本用例不符，建议：分开补充测试点，或跟文本用例责任人确认修改文本用例
     @Test
     private void testListMultipartUploads() throws Exception {
         List<String> uploadIds1 = new ArrayList<>();
