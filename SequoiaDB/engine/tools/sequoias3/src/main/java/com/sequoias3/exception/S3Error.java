@@ -121,7 +121,7 @@ public enum S3Error {
     PART_COMPLETING_CONFLICT(-656, "UploadConflict", "The uploadId is completing, upload part is forbidden."),
     PART_ENTITY_TOO_LARGE(-657, "EntityTooLarge", "Your proposed upload is larger than the maximum allowed object size. Each part must be not more 5 GB in size, except the last part."),
 
-    OBJECT_COPY_INVALID_DIRECTIVE(-661, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),
+    OBJECT_COPY_INVALID_DIRECTIVE(-661, "InvalidArgument", "Unknown metadata directive."),
     OBJECT_COPY_WITHOUT_CHANGE(-662, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),
     OBJECT_COPY_DELETE_MARKER(-663, "InvalidRequest", "The source of a copy request may not specifically refer to a delete marker by version id."),
     OBJECT_COPY_INVALID_SOURCE(-664, "InvalidArgument", "Copy source must mention the source bucket and key: sourcebucket/sourcekey ."),

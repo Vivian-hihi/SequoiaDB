@@ -253,7 +253,7 @@ public class ObjectServiceImpl implements ObjectService {
                     && destObject.equals(sourceUri.getObjectName())
                     && !sourceUri.isWithVersionId()) {
                 if (directiveCopy) {
-                    throw new S3ServerException(S3Error.OBJECT_COPY_WITHOUT_CHANGE, "copy without change");
+                    throw new S3ServerException(S3Error.OBJECT_COPY_WITHOUT_CHANGE, "copy an object to itself without changing the object's metadata.");
                 }
             }
 
