@@ -1691,7 +1691,7 @@ namespace engine
       BSONElement grantConfEle ;
 
       clusterInfoStr = _request->getQuery( OM_REST_CLUSTER_INFO ) ;
-      if ( clusterInfoStr.empty() ) 
+      if ( clusterInfoStr.empty() )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "invalid argument:%s is null,rc=%d",
@@ -11038,11 +11038,12 @@ namespace engine
       INT32 fix          = 0 ;
       INT32 release      = 0 ;
       const CHAR *pBuild = NULL ;
+      const CHAR *pGitVer = NULL ;
       BSONObj ob ;
       BSONObjBuilder systemInfo ;
       BSONObjBuilder obVersion ;
 
-      ossGetVersion ( &major, &minor, &fix, &release, &pBuild ) ;
+      ossGetVersion ( &major, &minor, &fix, &release, &pBuild, &pGitVer ) ;
       try
       {
          obVersion.append ( FIELD_NAME_MAJOR, major ) ;
@@ -11050,6 +11051,10 @@ namespace engine
          obVersion.append ( FIELD_NAME_FIX, fix ) ;
          obVersion.append ( FIELD_NAME_RELEASE, release ) ;
          obVersion.append ( FIELD_NAME_BUILD, pBuild ) ;
+         if ( pGitVer )
+         {
+            obVersion.append( FIELD_NAME_GITVERSION, pGitVer ) ;
+         }
          systemInfo.append ( FIELD_NAME_VERSION, obVersion.obj () ) ;
 #ifdef SDB_ENTERPRISE
          systemInfo.append ( FIELD_NAME_EDITION, "Enterprise" ) ;

@@ -929,7 +929,30 @@ Export("boost_lib_dir")
 # In github build, we don't have svn info, so we don't run svn or SubWCRev
 # command. Instead the svn fork tool should already generated the right
 # ossVer_Autogen.h file
-if not os.path.isfile ( "gitbuild" ):
+
+if os.path.isfile ( "gitbuild" ):
+    gitVer = os.popen( "git rev-parse HEAD" ).read().replace("\n","")
+    if guess_os == "win32":
+        # For now, it's not easy to get the 'git release' on windows. Keep it as 0.
+        releaseVer = 0
+        ver_file = 'misc/autogen/ver_conf.h'
+        shutil.copyfile('misc/autogen/ver_conf.h.in', ver_file)
+        with open(ver_file, 'r+') as f:
+            data = ''
+            for line in f.readlines():
+                if line.find('\$WCREV\$') != -1:
+                    line = '#define SDB_ENGINE_RELEASE_CURRENT 0' + '\n'
+                elif line.find('\$GITVER\$') != -1:
+                    line = '#define SDB_ENGINE_GIT_VERSION "' +  gitVer + '"' + '\n'
+                data += line
+        with open(ver_file, 'r+') as f:
+            f.write(data)
+    else:
+        releaseVer = os.popen( "git rev-list --all | awk -v git_head=`git show-ref --head --hash head` '$0==git_head {i=1;next};i' | wc -l" ).read().replace("\n","")
+        os.system( "sed 's/\$WCREV\$/" + releaseVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
+        os.system( "sed -i 's/\$GITVER\$/" + gitVer + "/g' misc/autogen/ver_conf.h" )
+else:
+    # For svn
    if guess_os == "win32":
       # In windows platform, we take advantage of SubWCRev
       os.system ("SubWCRev . misc/autogen/ver_conf.h.in misc/autogen/ver_conf.h")

@@ -2,8 +2,8 @@
 #define CONFIG_H
 
 /* =============== Compilation options and priority =============== */
-#define GENERAL_RC_C_FILE           10
-#define GENERAL_RC_CPP_FILE         10
+#define GENERAL_RC_C_FILE           50
+#define GENERAL_RC_CPP_FILE         30
 #define GENERAL_RC_JS_FILE          10
 #define GENERAL_RC_CS_FILE          10
 #define GENERAL_RC_JAVA_FILE        10

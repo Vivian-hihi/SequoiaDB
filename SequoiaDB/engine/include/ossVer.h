@@ -108,7 +108,8 @@ void ossGetVersion ( INT32 *version,
                      INT32 *subVersion,
                      INT32 *fixVersion,
                      INT32 *release,
-                     const CHAR **ppBuild ) ;
+                     const CHAR **ppBuild,
+                     const CHAR **ppGitVer ) ;
 
 void ossGetSimpleVersion( CHAR *pBuff, UINT32 bufLen ) ;
 
