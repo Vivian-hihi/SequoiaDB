@@ -30,7 +30,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
  * test content: 上传分段时指定分段长度较大 testlink-case: seqDB-18712
- * (由于50G的文件运行时间较长，用例中使用10G文件进行测试)
+ * (由于50G的文件运行时间较长，用例中使用5G文件进行测试)
  * 
  * @author wangkexin
  * @Date 2019.7.31
@@ -46,17 +46,16 @@ public class UploadPart18712 extends S3TestBase {
                 new Object[] { 1 * 1024 * 1024 * 1024L },
                 // test c : 5G
                 new Object[] { 5 * 1024 * 1024 * 1024L } };
-        // test d : 10G
-        // new Object[] { 10 * 1024 * 1024 * 1024L } };
     }
 
-    private boolean runSuccess = false;
+    private int runSuccessNum = 0;
+    private int expRunSuccessNum = 3;
     private String bucketName = "bucket18712";
     private String keyName = "key18712";
     private String uploadId = "";
     private MultiValueMap<Integer, String> expPartsMap = null;
     private AmazonS3 s3Client = null;
-    private long fileSize = 10 * 1024 * 1024 * 1024L;
+    private long fileSize = 5 * 1024 * 1024 * 1024L;
     private File localPath = null;
     private File file = null;
     private String filePath = null;
@@ -68,8 +67,6 @@ public class UploadPart18712 extends S3TestBase {
 
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
-        TestTools.LocalFile.createFile(filePath, fileSize);
-        file = new File(filePath);
 
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
@@ -78,24 +75,32 @@ public class UploadPart18712 extends S3TestBase {
 
     @Test(dataProvider = "partSizeProvider")
     private void testUpload(long partSize) throws Exception {
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        file = new File(filePath);
+
         expPartsMap = new LinkedMultiValueMap<Integer, String>();
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         List<PartETag> partEtags = partUpload(partSize);
         checkPartList();
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
 
-        // check
         String expMd5 = TestTools.getMD5(filePath);
+        // delete uploaded files to save device space
+        if (!file.delete()) {
+            throw new Exception("delete upload file failed!");
+        }
+        // check
         String downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
         Assert.assertEquals(downloadMd5, expMd5);
+        TestTools.LocalFile.removeFile(localPath);
 
-        runSuccess = true;
+        runSuccessNum++;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (runSuccessNum == expRunSuccessNum) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
