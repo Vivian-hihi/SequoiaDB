@@ -295,6 +295,7 @@ public class ObjectServiceImpl implements ObjectService {
                     objectMeta.setCsName(dataCsName);
                     objectMeta.setClName(dataClName);
                     objectMeta.setLobId(newLobData.getLobId());
+                    objectMeta.setNoVersionFlag(generateNoVersionFlag(versioningStatusType));
                 } else {
                     objectMeta = buildObjectMeta(destObject, bucket.getBucketId(),
                             requestHeaders, xMeta, dataCsName, dataClName, false,
