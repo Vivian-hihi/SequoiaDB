@@ -17,6 +17,7 @@
 | NodeSelect | string | 在未指定节点时分区组的节点选择策略，取值：<br> *all*: 选择该组所有节点<br>*master(primary)*: 选择该组主节点<br>*any*: 选择该组任意节点<br>*secondary*: 选择该组任意备节点  | 否 |
 | Role | string 或数组 | 指定命令运行的节点角色，取值：<br> *data*: 数据节点<br> *catalog*: 编目节点<br> *coord*: 协调节点<br> *all*: 所有节点 | 否 |
 | RawData | bool | 是否返回原始数据，仅对 [list](reference/Sequoiadb_command/Sdb/list.md) 或 [snapshot](reference/Sequoiadb_command/Sdb/snapshot.md) 命令生效，<br>为 true 则返回各节点的原始数据，不在协调节点进行聚集处理 | 否 |
+| InstanceID | int 或数组 | 节点的实例 ID（数据节点通过的配置项 instanceid 指定）。<br>有效取值范围：1 - 255。<br>指定 InstanceID 时仅选取数据节点。 | 否 |
 
 
 > **Note:**
@@ -26,4 +27,4 @@
 > * NodeID、HostName、ServiceName、NodeName：指定分区组中节点过滤条件，对于查询命令，缺省值为该组所有节点，对于操作命令，缺省值为该组主节点。上述字段为与的关系，如 {NodeID:1001, ServiceName:'11810'}，如果节点1001的ServiceName不为11810，则节点为空。
 > * Groups: 为了兼容之前的命令而保留，与GroupName作用相同，不推荐使用。
 > * svcname：与ServiceName参数功能相同，都表示设置节点服务名。
-
+> * instanceid：与 InstanceID 参数功能相同，都表示设置节点的实例 ID。
