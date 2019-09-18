@@ -385,6 +385,7 @@ namespace engine
       UINT64 usedLogSpace() ;
 
       dpsTransLockManager * getLockMgrHandle() ;
+      ixmIndexLockManager * getIndexLockMgrHandle() ;
 
       UINT32 getMaxLRSize() ;
       void   updateMaxLRSize( UINT32 recordSize, DPS_LSN_OFFSET curLSN ) ;
@@ -433,6 +434,7 @@ namespace engine
       ossAtomic64       _reservedSpace ;
 
       dpsTransLockManager  *_transLockMgr ;
+      ixmIndexLockManager  *_indexLockMgr ;
       oldVersionCB         *_oldVCB ;  // control block holding old(last committed)
                                        // version of record and index key value
 

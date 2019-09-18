@@ -124,10 +124,10 @@ namespace engine
    //
    // Valid upgrade :
    //     IS --> IX
-   //      S --> X
    //     IS --> S
+   //      S --> X
+   //      S --> U
    //      U --> X
-   //
    // Why IS or IX can't upgrade to X ?
    //   when IUD, IX lock is applied on collection; if later drop collection is
    //   allowed( X lock on collection ), then no way to rollback.
@@ -153,6 +153,7 @@ namespace engine
       }
       return SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST ;
    }
+
 
    // Lock coverage
    //                   State of Held
@@ -193,7 +194,7 @@ namespace engine
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IX
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_S
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_U
-      DPS_TRANSLOCK_IX,   // <-- DPS_TRANSLOCK_X
+      DPS_TRANSLOCK_IX,  // <-- DPS_TRANSLOCK_X
       DPS_TRANSLOCK_MAX
    };
    OSS_INLINE DPS_TRANSLOCK_TYPE dpsIntentLockMode
@@ -227,6 +228,11 @@ namespace engine
    #define DPS_LOCKID_CLID          "CLID"
    #define DPS_LOCKID_EXTENTID      "ExtentID"
    #define DPS_LOCKID_OFFSET        "Offset"
+
+   // To implement index page latch using record locking mechanism,
+   // need to construct a special lockId for an index page :
+   // ( CSId, -2, indexPageNumber, -1 )
+   #define DPS_LOCKID_IDX_COLLECTION_TYPE ((UINT16)( -2 ))
 
    /*
       _dpsTransLockId define
@@ -278,6 +284,7 @@ namespace engine
          OSS_INLINE UINT32          lockIdHash() const ;
          OSS_INLINE BOOLEAN         isLeafLevel() const ;
          OSS_INLINE BOOLEAN         isRootLevel() const ;
+         OSS_INLINE BOOLEAN         isIndexLock() const ;
          OSS_INLINE _dpsTransLockId upOneLevel() const ;
 
          /*
@@ -393,20 +400,29 @@ namespace engine
    OSS_INLINE UINT32 _dpsTransLockId::lockIdHash() const
    {
       UINT64 b = 0 ;
-
-      if ( DMS_INVALID_OFFSET != _recordOffset )
+      if ( DPS_LOCKID_IDX_COLLECTION_TYPE == _collectionID )
       {
-         // recordExtentID is unique within a CS, so no
-         // need to use collectionID
-         // 12 bits for CS, 24 bits for extentID, 28 bits for offset
-         b |= (UINT64)(_logicCSID & 0xFFF) << 52 ;
-         b |= (UINT64)(_recordExtentID & 0xFFFFFF) << 28 ;
-         b |= (_recordOffset & 0xFFFFFFF) ;
+         // index page lock
+         b |= (UINT64)(_logicCSID & 0xFFFFFFFF) << 32 ;
+         b |= (_recordExtentID & 0xFFFFFFFF) ;
       }
       else
       {
-         b |= (UINT64)(_logicCSID & 0xFFFFFFFF) << 32 ;
-         b |= (_collectionID & 0xFFFFFFF) ;
+         // trans lock
+         if ( DMS_INVALID_OFFSET != _recordOffset )
+         {
+            // recordExtentID is unique within a CS, so no
+            // need to use collectionID
+            // 12 bits for CS, 24 bits for extentID, 28 bits for offset
+            b |= (UINT64)(_logicCSID & 0xFFF) << 52 ;
+            b |= (UINT64)(_recordExtentID & 0xFFFFFF) << 28 ;
+            b |= (_recordOffset & 0xFFFFFFF) ;
+         }
+         else
+         {
+            b |= (UINT64)(_logicCSID & 0xFFFFFFFF) << 32 ;
+            b |= (_collectionID & 0xFFFFFFF) ;
+         }
       }
 
       // ossHash use DJB Hash ( Daniel J. Bernstein ) algorithm :
@@ -435,6 +451,17 @@ namespace engine
            && ( DMS_INVALID_MBID   == _collectionID )
            && ( DMS_INVALID_EXTENT == _recordExtentID )
            && ( DMS_INVALID_OFFSET == _recordOffset ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   OSS_INLINE BOOLEAN  _dpsTransLockId::isIndexLock() const
+   {
+      if ( isValid() && 
+           ( DPS_LOCKID_IDX_COLLECTION_TYPE == _collectionID ) &&
+           ( DMS_INVALID_OFFSET == _recordOffset ) )
       {
          return TRUE ;
       }

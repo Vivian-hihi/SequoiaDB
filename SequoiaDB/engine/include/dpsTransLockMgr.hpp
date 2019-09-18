@@ -51,16 +51,24 @@ namespace engine
    class _dpsTransExecutor ;
    class _dpsITransLockCallback ;
    class _IContext ;
+
+   enum LOCKMGR_TYPE
+   {
+      LOCKMGR_TRANS_LOCK = 0,
+      LOCKMGR_INDEX_LOCK
+   } ;
+   #define LOCKMGR_TYPE_MAX ( 2 )
  
    // lock bucket,  524287 ( a prime number close to 524288  ) for now
    #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UINT32) 524287 ) 
-   #define DPS_TRANS_INVALID_BUCKET_SLOT DPS_TRANS_LOCKBUCKET_SLOTS_MAX
+   #define DPS_TRANS_INVALID_BUCKET_SLOT  ( (UINT32) -1 )
+   #define DPS_INDEX_LOCKBUCKET_SLOTS_MAX ( (UINT32) 65537  ) 
 
    class dpsTransLockManager : public SDBObject
    {
       friend class _dpsTransExecutor ;
    public:
-      dpsTransLockManager();
+      dpsTransLockManager( LOCKMGR_TYPE managerType );
 
       virtual ~dpsTransLockManager();
 
@@ -113,6 +121,17 @@ namespace engine
          _dpsITransLockCallback * callback = NULL
       ) ;
 
+      // release all index page locks an EDU is holding
+      void releaseAllIndexLock( _dpsTransExecutor * dpsTxExectr ) ;
+
+      // count number of index pages being locked by the calling EDU
+      UINT32 countAllLocks
+      (
+         _dpsTransExecutor * dpsTxExectr,
+         BOOLEAN             bPrintLog = FALSE,
+         CHAR              * memoStr   = NULL
+      ) ;
+
       // try to acquire a lock with given mode and will try to acquire higher
       // level intent lock respectively.
       // If a lock can not be acquired right away, it will NOT put itself in
@@ -142,10 +161,22 @@ namespace engine
 
       // Latching for monitoring / dumping locking info of an EDU.
       //   . latch _rwMutext in exclusive mode
-      OSS_INLINE void acquireMonLatch() { _rwMutex.lock_w() ; }
+      OSS_INLINE void acquireMonLatch() 
+      {
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+         {
+            _rwMutex.lock_w() ; 
+         }
+      }
 
       // release monitoring / dumping latch
-      OSS_INLINE void releaseMonLatch() { _rwMutex.release_w() ; }
+      OSS_INLINE void releaseMonLatch() 
+      {
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+         {
+            _rwMutex.release_w() ;
+         }
+      }
 
       // dump specific lock info to a file for debugging purpose
       void dumpLockInfo
@@ -198,14 +229,28 @@ namespace engine
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
 
+      // query if the caller is holding a given lock retrun TRUE if it is,
+      // FALSE if it isn't; and output owning lock mode and refCount
+      // when returns TRUE.
+      BOOLEAN isHolding
+      (
+         _dpsTransExecutor    * dpsTxExectr,
+         const dpsTransLockId & lockId,
+         INT8                 & owningLockMode,
+         UINT32               & refCount
+      ) ;
+
    private:
       // Latch for normal lock operation ( acquire, tryAcquire,
       // testAcquire, release, releaseAll, hasWait etc on ) :
       //     . latch _rwMutext in shared mode
       //     . latch a bucket slot in exclusively
-      OSS_INLINE void _acquireOpLatch ( const UINT32 bucketIndex )
+      OSS_INLINE void _acquireOpLatch ( const UINT32  bucketIndex )
       {
-         _rwMutex.lock_r() ;
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+         {
+            _rwMutex.lock_r() ;
+         }
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
@@ -213,7 +258,10 @@ namespace engine
       OSS_INLINE void _releaseOpLatch ( const UINT32 bucketIndex )
       {
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
-         _rwMutex.release_r() ;
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+         {
+            _rwMutex.release_r() ;
+         }
       }
 
       // release/return a LRB Header to LRB Header manager
@@ -436,10 +484,14 @@ namespace engine
       ) ;
 
    private:
-      dpsTransLRBHeaderHash  _LockHdrBkt[ DPS_TRANS_LOCKBUCKET_SLOTS_MAX ] ;
+      // dpsTransLRBHeaderHash  _LockHdrBkt[ DPS_TRANS_LOCKBUCKET_SLOTS_MAX ] ;
+      dpsTransLRBHeaderHash * _LockHdrBkt ;
+      UINT32                 _bktSlotMax ;
 
-      // flag mark if lock manager has been initialized
+      // a flag marks if lock manager has been initialized
       BOOLEAN                _initialized ;
+
+      LOCKMGR_TYPE           _lockMgrType ;
 
       //
       // monitor/dump EDU locking info latch
@@ -455,6 +507,7 @@ namespace engine
       //     . latch _rwMutext in exclusive mode
       ossRWMutex             _rwMutex ;
    } ;
+   typedef class dpsTransLockManager ixmIndexLockManager ;
 }
 
 #endif // DPSTRANSLOCKMANAGER_HPP_

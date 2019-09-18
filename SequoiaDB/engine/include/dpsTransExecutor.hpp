@@ -291,15 +291,16 @@ namespace engine
       public:
 
          void                 setWaiterInfo( dpsTransLRB * lrb,
-                                             DPS_TRANS_QUE_TYPE type ) ;
-         void                 clearWaiterInfo() ;
+                                             DPS_TRANS_QUE_TYPE type,
+                                             LOCKMGR_TYPE managerType  ) ;
+         void                 clearWaiterInfo( LOCKMGR_TYPE managerType ) ;
 
-         dpsTransLRB*         getWaiterLRB() const ;
-         DPS_TRANS_QUE_TYPE   getWaiterQueType() const ;
+         dpsTransLRB*         getWaiterLRB( LOCKMGR_TYPE managerType ) const ;
+         DPS_TRANS_QUE_TYPE   getWaiterQueType( LOCKMGR_TYPE managerType ) const ;
 
-         void                 setLastLRB( dpsTransLRB *lrb ) ;
-         void                 clearLastLRB() ;
-         dpsTransLRB *          getLastLRB() const ;
+         void                 setLastLRB( dpsTransLRB *lrb, LOCKMGR_TYPE managerType ) ;
+         void                 clearLastLRB( LOCKMGR_TYPE managerType ) ;
+         dpsTransLRB *        getLastLRB( LOCKMGR_TYPE managerType ) const ;
 
          BOOLEAN              addLock( const dpsTransLockId &lockID,
                                        dpsTransLRB * lrb ) ;
@@ -308,10 +309,10 @@ namespace engine
          BOOLEAN              removeLock( const dpsTransLockId &lockID ) ;
          void                 clearLock() ;
 
-         void                 incLockCount() ;
-         void                 decLockCount() ;
-         void                 clearLockCount() ;
-         UINT32               getLockCount() const ;
+         void                 incLockCount( LOCKMGR_TYPE managerType ) ;
+         void                 decLockCount( LOCKMGR_TYPE managerType ) ;
+         void                 clearLockCount( LOCKMGR_TYPE managerType ) ;
+         UINT32               getLockCount( LOCKMGR_TYPE managerType ) const ;
 
          /*
             Transaction Related
@@ -391,12 +392,12 @@ namespace engine
          virtual IExecutor*   getExecutor() = 0 ;
 
       protected:
-         dpsTransLRB *           _waiter ;
-         DPS_TRANS_QUE_TYPE      _waiterQueType ;
-         dpsTransLRB *           _lastLRB ;
+         dpsTransLRB *           _waiter[ LOCKMGR_TYPE_MAX ] ;
+         DPS_TRANS_QUE_TYPE      _waiterQueType[ LOCKMGR_TYPE_MAX ] ;
+         dpsTransLRB *           _lastLRB[ LOCKMGR_TYPE_MAX ] ;
 
          DPS_LOCKID_MAP          _mapCSCLLockID ;
-         UINT32                  _lockCount ;
+         UINT32                  _lockCount[ LOCKMGR_TYPE_MAX ] ;
 
          /*
             LSN to record info

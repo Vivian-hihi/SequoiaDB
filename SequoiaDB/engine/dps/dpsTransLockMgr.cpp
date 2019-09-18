@@ -61,7 +61,11 @@ namespace engine
    {
    }
 
-   dpsTransLockManager::dpsTransLockManager() : _initialized( FALSE )
+   dpsTransLockManager::dpsTransLockManager( LOCKMGR_TYPE managerType ) 
+   : _LockHdrBkt( NULL ),
+     _bktSlotMax( 0 ) ,
+     _initialized( FALSE ),
+     _lockMgrType( managerType )
    {
    }
 
@@ -87,6 +91,11 @@ namespace engine
       if ( _initialized )
       {
          _initialized = FALSE ;
+         if ( _LockHdrBkt )
+         {
+            SDB_OSS_DEL [] _LockHdrBkt ;
+            _LockHdrBkt = NULL ;
+         }
       }
    }
 
@@ -102,6 +111,22 @@ namespace engine
    //
    INT32 dpsTransLockManager::init()
    {
+      if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+      {
+         _bktSlotMax = DPS_TRANS_LOCKBUCKET_SLOTS_MAX ;       
+      }
+      else if ( LOCKMGR_INDEX_LOCK == _lockMgrType )
+      {
+         _bktSlotMax = DPS_INDEX_LOCKBUCKET_SLOTS_MAX ;
+      }
+      _LockHdrBkt = SDB_OSS_NEW dpsTransLRBHeaderHash[ _bktSlotMax + 1 ] ;
+      if ( NULL == _LockHdrBkt )
+      {
+         PD_LOG( PDERROR,
+                 "Failed to allocate memory for lock bucket, bucket size:%d",
+                 _bktSlotMax + 1 ) ;
+         return SDB_OOM ;
+      } 
       // set initialized flag
       _initialized = TRUE ;
       return SDB_OK ;
@@ -131,21 +156,28 @@ namespace engine
       SDB_ASSERT( pLRBHdr, "Invalid LRB Header pointer." ) ;
 #endif
 
-      if ( pLRBHdr->extData.isValid() )
+      // The old version container is hanging off
+      // transaction lock LRB header. Index lock doesn't
+      // need to do this validation
+      if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
       {
-         /// release check
-         SDB_ASSERT( pLRBHdr->extData.canRelease(),
-                     "Extend data can't be released" ) ;
-
-         /// release
-         if ( !pLRBHdr->extData.release() )
+         if ( pLRBHdr->extData.isValid() )
          {
-            PD_LOG( PDWARNING, "Extend data[%llu] doesn't clear in LRBHdr[%s]",
-                    pLRBHdr->extData._data,
-                    pLRBHdr->lockId.toString().c_str() ) ;
+            /// release check
+            SDB_ASSERT( pLRBHdr->extData.canRelease(),
+                        "Extend data can't be released" ) ;
+
+            /// release
+            if ( !pLRBHdr->extData.release() )
+            {
+               PD_LOG( PDWARNING,
+                       "Extend data[%llu] doesn't clear in LRBHdr[%s]",
+                       pLRBHdr->extData._data,
+                       pLRBHdr->lockId.toString().c_str() ) ;
+            }
          }
       }
-
+      
       SDB_OSS_DEL pLRBHdr ;
 
 #ifdef _DEBUG
@@ -389,7 +421,6 @@ namespace engine
                                        pLRBTobeChecked->lockMode ) ) ||
               ( ! dpsIsLockCompatible( plrb->lockMode,
                                        pLRBTobeChecked->originMode ) ) )
-
          {
             pLRBIncompatible = plrb ;
             foundIncomp = TRUE ;
@@ -701,7 +732,7 @@ namespace engine
       {
          // get the pointer of last LRB in the EDU LRB chain
          // and add the new LRB into the chain
-         dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+         dpsTransLRB *plrb = dpsTxExectr->getLastLRB( _lockMgrType ) ;
          if ( plrb )
          {
             plrb->eduLrbNext   = insLRB ; 
@@ -715,16 +746,19 @@ namespace engine
          }
 
          // set this newly inserted lrb as the last LRB
-         dpsTxExectr->setLastLRB( insLRB ) ;
+         dpsTxExectr->setLastLRB( insLRB, _lockMgrType ) ;
 
          // add to executor lock map if it is CS or CL lock
-         dpsTxExectr->addLock( lockId, insLRB ) ;
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+         {
+            dpsTxExectr->addLock( lockId, insLRB ) ;
+         }
 
          // increase the lock count
-         dpsTxExectr->incLockCount() ;
+         dpsTxExectr->incLockCount( _lockMgrType ) ;
 
          // clear the wait info in dpsTxExectr
-         dpsTxExectr->clearWaiterInfo() ;
+         dpsTxExectr->clearWaiterInfo( _lockMgrType ) ;
       }
    }
 
@@ -749,7 +783,7 @@ namespace engine
       dpsTransLRB          * insLRB
    )
    {
-      dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+      dpsTransLRB *plrb = dpsTxExectr->getLastLRB( _lockMgrType ) ;
       if ( plrb == insLRB)
       {
          return ;
@@ -769,7 +803,7 @@ namespace engine
       insLRB->eduLrbNext = NULL ;
 
       // set this newly inserted lrb as the last LRB
-      dpsTxExectr->setLastLRB( insLRB ) ;
+      dpsTxExectr->setLastLRB( insLRB, _lockMgrType ) ;
    }
 
    //
@@ -862,7 +896,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST ) ;
 
-      dpsTransLRB *pLRB = dpsTxExectr->getWaiterLRB() ;
+      dpsTransLRB *pLRB = dpsTxExectr->getWaiterLRB( _lockMgrType ) ;
       dpsTransLRB *pLRBNext = NULL;
       dpsTransLRB *pLRBIncompatible = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
@@ -899,13 +933,13 @@ namespace engine
             ossPanic() ;
          }
        
-         if ( DPS_QUE_UPGRADE == dpsTxExectr->getWaiterQueType() )
+         if ( DPS_QUE_UPGRADE == dpsTxExectr->getWaiterQueType( _lockMgrType ) )
          {
             // remove from upgrade list
             _removeFromLRBList( pLRBHdr->upgradeLRB, pLRB ) ; 
 
             // clear the wait info in dpsTxExectr
-            dpsTxExectr->clearWaiterInfo() ;
+            dpsTxExectr->clearWaiterInfo( _lockMgrType ) ;
 
             // if it is the last one in upgrade list,
             // set pLRBNext to the first one in waiter list
@@ -914,13 +948,13 @@ namespace engine
                pLRBNext = pLRBHdr->waiterLRB ;
             }
          }
-         else if ( DPS_QUE_WAITER == dpsTxExectr->getWaiterQueType() )
+         else if ( DPS_QUE_WAITER == dpsTxExectr->getWaiterQueType( _lockMgrType ) )
          {
             // remove from waiter list
             _removeFromLRBList( pLRBHdr->waiterLRB, pLRB ) ; 
 
             // clear the wait info in dpsTxExectr
-            dpsTxExectr->clearWaiterInfo() ;
+            dpsTxExectr->clearWaiterInfo( _lockMgrType ) ;
 
             // in case upgrade is not empty,
             // set the pLRBNext to the first one in upgrade list,
@@ -995,20 +1029,24 @@ namespace engine
          if (    removeLRBHeader
               && ( !  pLRBHdr->ownerLRB   )
               && ( !  pLRBHdr->upgradeLRB )
-              && ( !  pLRBHdr->waiterLRB  )
-              && (    pLRBHdr->extData.canRelease() ) )
+              && ( !  pLRBHdr->waiterLRB  ) )
          {
+            if ( ( LOCKMGR_INDEX_LOCK == _lockMgrType ) ||
+                 ( ( LOCKMGR_TRANS_LOCK == _lockMgrType ) &&
+                   pLRBHdr->extData.canRelease() ) )
+            {
 #ifdef _DEBUG
-            PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
-                       PD_PACK_STRING( "LRB Header to be removed:" ),
-                       PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ) ) ;
+               PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
+                          PD_PACK_STRING( "LRB Header to be removed:" ),
+                          PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ) ) ;
 #endif
-            // remove the LRB Header from the list
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
-            // release the LRB Header
-            //
-            _releaseLRBHdr( pLRBHdr ) ;
-            pLRBHdr = NULL ;
+               // remove the LRB Header from the list
+               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
+               // release the LRB Header
+               //
+               _releaseLRBHdr( pLRBHdr ) ;
+               pLRBHdr = NULL ;
+            }
          }
       }
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST ) ;
@@ -1087,7 +1125,7 @@ namespace engine
       const dpsTransLockId & lockId
    )
    {
-      if ( dpsTxExectr && delLRB && dpsTxExectr->getLastLRB() ) 
+      if ( dpsTxExectr && delLRB && dpsTxExectr->getLastLRB( _lockMgrType ) ) 
       {
          if ( delLRB->eduLrbPrev )
          {
@@ -1098,15 +1136,18 @@ namespace engine
             delLRB->eduLrbNext->eduLrbPrev = delLRB->eduLrbPrev ;
          }
          // set new last LRB if I am the last one
-         if ( dpsTxExectr->getLastLRB() == delLRB )
+         if ( dpsTxExectr->getLastLRB( _lockMgrType ) == delLRB )
          {
-            dpsTxExectr->setLastLRB( delLRB->eduLrbPrev ) ;
+            dpsTxExectr->setLastLRB( delLRB->eduLrbPrev, _lockMgrType ) ;
          } 
-         // remove the lock from lock ID map if it is CS or CL lock
-         dpsTxExectr->removeLock( lockId ) ;
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+         {
+            // remove the lock from lock ID map if it is CS or CL lock
+            dpsTxExectr->removeLock( lockId ) ;
+         }
          
          // decrease the lock count
-         dpsTxExectr->decLockCount() ;
+         dpsTxExectr->decLockCount( _lockMgrType ) ;
       }
    }
 
@@ -1226,7 +1267,8 @@ namespace engine
       // in the executor _mapLockID map
       //
       // findLock works for CS or CL lock only
-      if ( dpsTxExectr->findLock( lockId, pLRB ) )
+      if ( ( LOCKMGR_TRANS_LOCK == _lockMgrType ) &&
+           ( dpsTxExectr->findLock( lockId, pLRB ) ) )
       {
          if ( pLRB )
          {
@@ -1238,7 +1280,7 @@ namespace engine
                   pLRB->refCounter++ ;
 
                   // clear the wait info in dpsTxExectr
-                  dpsTxExectr->clearWaiterInfo() ;
+                  dpsTxExectr->clearWaiterInfo( _lockMgrType ) ;
                }
 
                pLRBHdr = pLRB->lrbHdr ;
@@ -1338,8 +1380,9 @@ namespace engine
          pLRBNew->lrbHdr = pLRBHdr;
       }
 
-      // Record lock
-      if ( lockId.isLeafLevel() )
+      // Record lock or index page lock
+      if (   (( LOCKMGR_TRANS_LOCK == _lockMgrType ) && lockId.isLeafLevel()) 
+          || (( LOCKMGR_INDEX_LOCK == _lockMgrType ) && lockId.isIndexLock()) )
       {
          // For record lock,
          // search owner LRB list, which is sorted on lock mode
@@ -1398,7 +1441,7 @@ namespace engine
                _moveToEDULRBListTail( dpsTxExectr, pLRB ) ;
 
                // clear the wait info in dpsTxExectr
-               dpsTxExectr->clearWaiterInfo() ;
+               dpsTxExectr->clearWaiterInfo( _lockMgrType ) ;
             }
             goto done ; 
          }
@@ -1454,7 +1497,8 @@ namespace engine
                   _addToLRBListTail( pLRBHdr->upgradeLRB, pLRBNew ) ;
 
                   // set the wait info in dpsTxExectr
-                  dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_UPGRADE ) ;
+                  dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_UPGRADE,
+                                              _lockMgrType ) ;
 
                   // mark the new LRB is used
                   bFreeLRB = FALSE ;
@@ -1521,7 +1565,7 @@ namespace engine
                _moveToEDULRBListTail( dpsTxExectr, pLRB ) ;
 
                // clear the wait info in dpsTxExectr
-               dpsTxExectr->clearWaiterInfo() ;
+               dpsTxExectr->clearWaiterInfo( _lockMgrType ) ;
 
                // update current lock mode to the request mode
                pLRB->lockMode = requestLockMode ;
@@ -1549,7 +1593,8 @@ namespace engine
                _addToLRBListTail( pLRBHdr->waiterLRB, pLRBNew ) ;
 
                // set the wait info in dpsTxExectr
-               dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER ) ;
+               dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER,
+                                           _lockMgrType ) ;
 
                // mark the new LRB is used
                bFreeLRB = FALSE ;
@@ -1656,7 +1701,8 @@ namespace engine
                   _addToLRBListTail( pLRBHdr->waiterLRB, pLRBNew ) ;
 
                   // set the wait info in dpsTxExectr
-                  dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER ) ;
+                  dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER,
+                                              _lockMgrType ) ;
 
                   // set return code to SDB_DPS_TRANS_APPEND_TO_WAIT
                   rc = SDB_DPS_TRANS_APPEND_TO_WAIT ;
@@ -1672,7 +1718,7 @@ namespace engine
                // construct the conflict lock info ( representative )
                if ( pdpsTxResInfo )
                {
-                  pLRB = pLRBIncompatible ; 
+                  pLRB = pLRBIncompatible ;
 
                   pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
                   pdpsTxResInfo->_lockType = pLRB->lockMode ;
@@ -1687,30 +1733,33 @@ namespace engine
          }  // if request lock mode is compatible with other owners
       }  // if in owner list
    done:
-      if( callback )
+      if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
       {
-         // need to call this under bktlatch to make sure we are safe to
-         // lookup information in LRBHdr
-         callback->afterLockAcquire( lockId, rc,
-                                     requestLockMode,
-                                     pLRB ? pLRB->refCounter : 0,
-                                     opMode,
-                                     pLRBHdr,
-                                     pLRBHdr ? &(pLRBHdr->extData) : NULL ) ;
-      }
-      // there is a scenario, using testX to clean up 'old version' hanging off
-      // LRB header. Release LRB header if it is possible when test opreation
-      // succeeded.
-      if ( ( DPS_TRANSLOCK_OP_MODE_TEST == opMode ) && ( SDB_OK == rc ) )
-      {
-         if (    ( NULL != pLRBHdr )
-              && ( NULL == pLRBHdr->ownerLRB )
-              && ( NULL == pLRBHdr->upgradeLRB )
-              && ( NULL == pLRBHdr->waiterLRB )
-              && ( pLRBHdr->extData.canRelease() ) )
+         if( callback )
          {
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
-            _releaseLRBHdr( pLRBHdr ) ;
+            // need to call this under bktlatch to make sure we are safe to
+            // lookup information in LRBHdr
+            callback->afterLockAcquire( lockId, rc,
+                                        requestLockMode,
+                                        pLRB ? pLRB->refCounter : 0,
+                                        opMode,
+                                        pLRBHdr,
+                                        pLRBHdr ? &(pLRBHdr->extData) : NULL ) ;
+         }
+         // there is a scenario, using testX to clean up 'old version'
+         // hanging off LRB header. Release LRB header if it is possible
+         // when test opreation succeeded.
+         if ( ( DPS_TRANSLOCK_OP_MODE_TEST == opMode ) && ( SDB_OK == rc ) )
+         {
+            if (    ( NULL != pLRBHdr )
+                 && ( NULL == pLRBHdr->ownerLRB )
+                 && ( NULL == pLRBHdr->upgradeLRB )
+                 && ( NULL == pLRBHdr->waiterLRB )
+                 && ( pLRBHdr->extData.canRelease() ) )
+            {
+               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
+               _releaseLRBHdr( pLRBHdr ) ;
+            }
          }
       }
 
@@ -1771,7 +1820,6 @@ namespace engine
       dpsTransLRB       *      & pLRBNew
    )
    {
-
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER ) ;
 
       INT32   rc             = SDB_OK ;
@@ -1892,8 +1940,8 @@ namespace engine
          goto error ;
       }
 
-      // get intent lock at first
-      if ( ! lockId.isRootLevel() )
+      // for trans lock, get intent lock at first
+      if ( ( LOCKMGR_TRANS_LOCK == _lockMgrType ) && ( ! lockId.isRootLevel()) )
       {
          iLockId   = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
@@ -2051,7 +2099,7 @@ namespace engine
          _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
-      if ( isIntentLockAcquired )
+      if ( ( isIntentLockAcquired ) && ( LOCKMGR_TRANS_LOCK == _lockMgrType ) )
       {
          release( dpsTxExectr, iLockId, FALSE ) ;
          isIntentLockAcquired = FALSE ;
@@ -2087,7 +2135,7 @@ namespace engine
       const dpsTransLockId & lockId
    )
    {
-      dpsTransLRB * pLRB = dpsTxExectr->getLastLRB() ;
+      dpsTransLRB * pLRB = dpsTxExectr->getLastLRB( _lockMgrType ) ;
       while ( pLRB )
       {
          if ( ( NULL != pLRB->lrbHdr ) && ( lockId == pLRB->lrbHdr->lockId ) )
@@ -2099,6 +2147,45 @@ namespace engine
       return pLRB ;
    }
 
+   //
+   // Description: search EDU LRB chain and find the LRB has same lock ID
+   // Function:    walk through the EDU LRB chain( doubly linked list ),
+   //              and search for the LRB with the LRB Header it associated to
+   //              containing the same lockId.
+   // Input:
+   //    dpsTxExectr  -- dpsTxExectr
+   //    lockId       -- the lock ID
+   // Output:
+   //    owningLockMode -- the lock mode it is owning when found
+   //    refCount       -- the lock reference counter when found
+   // Return:      TRUE  the caller thread is owning this lock
+   //              FALSE the caller thread is not ownning this lock 
+   // Dependency:  None
+   //
+   BOOLEAN dpsTransLockManager::isHolding
+   (
+      _dpsTransExecutor    * dpsTxExectr,
+      const dpsTransLockId & lockId,
+      INT8                 & owningLockMode,
+      UINT32               & refCount
+   )
+   {
+      BOOLEAN found = FALSE ;
+      dpsTransLRB * pLRB = dpsTxExectr->getLastLRB( _lockMgrType ) ;
+
+      while ( pLRB )
+      {
+         if ( ( NULL != pLRB->lrbHdr ) && ( lockId == pLRB->lrbHdr->lockId ) )
+         {
+            refCount       = pLRB->refCounter ;
+            owningLockMode = pLRB->lockMode ;
+            found          = TRUE ;
+            break ;
+         }
+         pLRB = pLRB->eduLrbPrev ;
+      }
+      return found ;
+   }
 
    //
    // Description: core logic of release a lock
@@ -2152,7 +2239,7 @@ namespace engine
 
       UINT32       bktIdx        = DPS_TRANS_INVALID_BUCKET_SLOT ;
       dpsTransLRB *pMyLRB        = pOwnerLRB,
-                  *lrbToRelease   = NULL ,
+                  *lrbToRelease  = NULL ,
                   *pWaiterLRB    = NULL ;
       dpsTransLRB *pLRBIncompatible = NULL ;
       dpsTransLRBHeader *pLRBHdr = NULL, 
@@ -2173,17 +2260,24 @@ namespace engine
       // some quick ways to get LRB
       if ( NULL == pMyLRB )
       {
-         // for non-leaf lock ( CS, CL ), lookup the executor _mapLockID map
-         if ( ! lockId.isLeafLevel() )
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
          {
-            dpsTxExectr->findLock( lockId, pMyLRB ) ;
+            // for non-leaf lock ( CS, CL ), lookup the executor _mapLockID map
+            if ( ! lockId.isLeafLevel() )
+            {
+               dpsTxExectr->findLock( lockId, pMyLRB ) ;
+            }
+            else
+            {
+               // for record lock, find the LRB from the EDU LRB list
+               // in a single lock release scenario, the lock ID's LRB should
+               // be at the end of the EDU LRB list. This should be guaranteed 
+               // through _moveToEDULRBListTail and _addToEDULRBListTail
+               pMyLRB = _getLRBFromEDULRBList( dpsTxExectr, lockId ) ;
+            }
          }
-         else
+         else if ( LOCKMGR_INDEX_LOCK == _lockMgrType )
          {
-            // for record lock, find the LRB from the EDU LRB list
-            // in a single lock release scenario, the lock ID's LRB should
-            // be at the end of the EDU LRB list. This should be guaranteed 
-            // through _moveToEDULRBListTail and _addToEDULRBListTail
             pMyLRB = _getLRBFromEDULRBList( dpsTxExectr, lockId ) ;
          }
 
@@ -2209,49 +2303,38 @@ namespace engine
       SDB_ASSERT( ( NULL != pLRBHdr ),
                   "Trying to release a non-exist lock" ) ;
 
-      // remove the LRB Header if owner, waiter,
-      // and upgrade list are all empty
-/*      if (    ( NULL == pLRBHdr->ownerLRB ) 
-           && ( NULL == pLRBHdr->upgradeLRB )
-           && ( NULL == pLRBHdr->waiterLRB )
-           && ( pLRBHdr->extData.canRelease() ) )
-
-      {
-#ifdef _DEBUG
-         PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASE,
-                    PD_PACK_STRING( "LRB Header to be removed:" ),
-                    PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ) ) ;
-#endif
-         _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr);
-         pLRBHdrToRelease = pLRBHdr;
-         goto done ;
-      }
-*/
       if ( bForceRelease )
       {
-         if ( lockId.isLeafLevel() )
-         { 
-            // save the record lock refCounter to output parameter 
-            // so can we decrease that value for CL,CS lock later
-            refCountToDecrease = pMyLRB->refCounter ;
-            pMyLRB->refCounter = 0 ;
-         }
-         else
+         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
          {
-            if ( 0 == refCountToDecrease )
+            if ( lockId.isLeafLevel() )
             { 
-               // when release CL, CL lock with 'refoce' mode,
-               // if the refCounter passed in is zero, 
-               // then set lock refCounter to zero
+               // save the record lock refCounter to output parameter 
+               // so can we decrease that value for CL,CS lock later
+               refCountToDecrease = pMyLRB->refCounter ;
                pMyLRB->refCounter = 0 ;
             }
             else
             {
-               // when release CL, CL lock with 'refoce' mode,
-               // if the refCounter passed in is non-zero value, 
-               // then substract that value from current lock refCounter
-               pMyLRB->refCounter -= refCountToDecrease ;
+               if ( 0 == refCountToDecrease )
+               { 
+                  // when release CL, CL lock with 'refoce' mode,
+                  // if the refCounter passed in is zero, 
+                  // then set lock refCounter to zero
+                  pMyLRB->refCounter = 0 ;
+               }
+               else
+               {
+                  // when release CL, CL lock with 'refoce' mode,
+                  // if the refCounter passed in is non-zero value, 
+                  // then substract that value from current lock refCounter
+                  pMyLRB->refCounter -= refCountToDecrease ;
+               }
             }
+         }
+         else if ( LOCKMGR_INDEX_LOCK == _lockMgrType )
+         {
+            pMyLRB->refCounter = 0 ;
          }
       }
       else
@@ -2266,22 +2349,25 @@ namespace engine
               " lockid=%s,bForceRelease=%d,callback=%x,refcounter=%d",
               lockIdStr, bForceRelease, callback, pMyLRB->refCounter);
 #endif
-      // invoke call back function before release
-      if( callback )
+      if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
       {
-         callback->beforeLockRelease( lockId,
-                                      pMyLRB->lockMode,
-                                      pMyLRB->refCounter,
-                                      pLRBHdr,
-                                      pLRBHdr ? &(pLRBHdr->extData) :
-                                                NULL ) ;
-      }
-      else if ( pLRBHdr && pLRBHdr->extData._onLockReleaseFunc )
-      {
-         pLRBHdr->extData._onLockReleaseFunc( lockId,
-                                              pMyLRB->lockMode,
-                                              pMyLRB->refCounter,
-                                              &(pLRBHdr->extData) ) ;
+         // invoke call back function before release
+         if( callback )
+         {
+            callback->beforeLockRelease( lockId,
+                                         pMyLRB->lockMode,
+                                         pMyLRB->refCounter,
+                                         pLRBHdr,
+                                         pLRBHdr ? &(pLRBHdr->extData) :
+                                                   NULL ) ;
+         }
+         else if ( pLRBHdr && pLRBHdr->extData._onLockReleaseFunc )
+         {
+            pLRBHdr->extData._onLockReleaseFunc( lockId,
+                                                 pMyLRB->lockMode,
+                                                 pMyLRB->refCounter,
+                                                 &(pLRBHdr->extData) ) ;
+         }
       }
 
       if ( 0 == pMyLRB->refCounter )
@@ -2326,14 +2412,18 @@ namespace engine
          // and upgrade list are all empty
          if (    ( NULL == pLRBHdr->ownerLRB )
               && ( NULL == pLRBHdr->upgradeLRB )
-              && ( NULL == pLRBHdr->waiterLRB )
-              && ( pLRBHdr->extData.canRelease() ) )
+              && ( NULL == pLRBHdr->waiterLRB ) )
          {
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
-            pLRBHdrToRelease = pLRBHdr;
+            if ( ( LOCKMGR_INDEX_LOCK == _lockMgrType ) ||
+                 ( ( LOCKMGR_TRANS_LOCK == _lockMgrType ) &&
+                   pLRBHdr->extData.canRelease() ) )
+            {
+               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
+               pLRBHdrToRelease = pLRBHdr;
+            }
          }
       }  // end of if pMyLRB->refCounter is zero
-   done: 
+   done:
       // release the bucket latch
       if ( bLatched )
       {
@@ -2410,12 +2500,20 @@ namespace engine
                       NULL, bForceRelease, refCountToBeDecreased,
                       callback ) ;
 
-            // release the intent lock
-            if ( ! myLockId.isRootLevel() )
+            if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
             {
-               myLockId = myLockId.upOneLevel() ;
+               // release the intent lock
+               if ( ! myLockId.isRootLevel() )
+               {
+                  myLockId = myLockId.upOneLevel() ;
+               }
+               else
+               {
+                  done = TRUE ;
+                  break ;
+               }
             }
-            else
+            else if ( LOCKMGR_INDEX_LOCK == _lockMgrType )
             {
                done = TRUE ;
                break ;
@@ -2461,71 +2559,175 @@ namespace engine
                  PD_PACK_ULONG( dpsTxExectr ) ) ;
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
-      if ( dpsTxExectr->getLastLRB() )
-      {
-         // walk through EDU LRB list,
-         //   first loop, release all record locks with force mode.
-         //   second loop, release all CL locks with force mode. 
-         //   last loopi, release all CS locks 
-         for ( UINT32 loop = 0 ; loop < 3; loop++ )
+      if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+      { 
+         if ( dpsTxExectr->getLastLRB( _lockMgrType ) )
          {
-            dpsTransLRB       * pLRB = dpsTxExectr->getLastLRB() ;
-            dpsTransLRBHeader * pLRBHdr ;
-            dpsTransLockId      lockId ;
-            UINT32              refCount = 0 ;
-
-            while ( pLRB )
+            // walk through EDU LRB list,
+            //   first loop, release all record locks with force mode.
+            //   second loop, release all CL locks with force mode. 
+            //   last loopi, release all CS locks 
+            for ( UINT32 loop = 0 ; loop < 3; loop++ )
             {
-               // save the next LRB address, pLRB->eduLrbPrev,
-               // before release
-               dpsTransLRB * pNextOne = pLRB->eduLrbPrev ;
-               // peek LRB Header 
-               pLRBHdr = pLRB->lrbHdr ;
-#ifdef _DEBUG
-               PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
-                          PD_PACK_STRING( "LRB Header and LRB:" ),
-                          PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ),
-                          PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ;
-               SDB_ASSERT( pLRBHdr, "LRB Header can't be null" ) ;
-#endif
-               // get LRB Header
-               if ( NULL != pLRBHdr )
+               dpsTransLRB       * pLRB = dpsTxExectr->getLastLRB(_lockMgrType);
+               dpsTransLRBHeader * pLRBHdr ;
+               dpsTransLockId      lockId ;
+               UINT32              refCount = 0 ;
+
+               while ( pLRB )
                {
-                  lockId  = pLRBHdr->lockId ;
+                  // save the next LRB address, pLRB->eduLrbPrev,
+                  // before release
+                  dpsTransLRB * pNextOne = pLRB->eduLrbPrev ;
+                  // peek LRB Header 
+                  pLRBHdr = pLRB->lrbHdr ;
 #ifdef _DEBUG
-                  SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+                  PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
+                             PD_PACK_STRING( "LRB Header and LRB:" ),
+                             PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ),
+                             PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ;
+                  SDB_ASSERT( pLRBHdr, "LRB Header can't be null" ) ;
 #endif
-                  // first loop, release all record locks 
-                  if ( ( 0 == loop ) && ( ! lockId.isLeafLevel() ) )
+                  // get LRB Header
+                  if ( NULL != pLRBHdr )
                   {
-                     goto nextLock ;
-                  }
-                  // second loop, release all CL locks
-                  if ( ( 1 == loop ) && lockId.isRootLevel() )
-                  {
-                     goto nextLock ;
-                  }
+                     lockId  = pLRBHdr->lockId ;
 #ifdef _DEBUG
-                  ossSnprintf( lockIdStr, sizeof( lockIdStr ),
-                               "%s", lockId.toString().c_str() ) ;
-                  PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
-                             PD_PACK_STRING( "Releasing lock:" ),
-                             PD_PACK_STRING( lockIdStr ) ) ;
+                     SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+                     SDB_ASSERT( (! lockId.isIndexLock()), "Invalid lockId" ) ;
 #endif
-                  refCount = 0 ;
-                  _release( dpsTxExectr, lockId, pLRB, TRUE, refCount,
-                            callback ) ; 
-               }
+                     // first loop, release all record locks 
+                     if ( ( 0 == loop ) && ( ! lockId.isLeafLevel() ) )
+                     {
+                        goto nextLock ;
+                     }
+                     // second loop, release all CL locks
+                     if ( ( 1 == loop ) && lockId.isRootLevel() )
+                     {
+                        goto nextLock ;
+                     }
+#ifdef _DEBUG
+                     ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                                  "%s", lockId.toString().c_str() ) ;
+                     PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
+                                PD_PACK_STRING( "Releasing lock:" ),
+                                PD_PACK_STRING( lockIdStr ) ) ;
+#endif
+                     refCount = 0 ;
+                     _release( dpsTxExectr, lockId, pLRB, TRUE, refCount,
+                               callback ) ; 
+                  }
 nextLock:
-               // move to next lock attempt to be released
-               pLRB = pNextOne ;
-            } // end while
+                  // move to next lock attempt to be released
+                  pLRB = pNextOne ;
+               } // end while
+            }
          }
+      }
+      else if ( LOCKMGR_INDEX_LOCK == _lockMgrType )
+      {
+         releaseAllIndexLock( dpsTxExectr ) ;
       }
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER_RELEASEALL ) ;
       return ;
    }
 
+
+   //
+   // Description: Force release all index locks an EDU is holding
+   // Function: walk though the EDU LRB chain, force release all
+   //           index locks an EDU is holding.
+   //           . remove them from the edu ( caller ) LRB chain
+   //           . remove it from owner list
+   //           . wake up a waiter when necessary,
+   // Input:
+   //    dpsTxExectr  -- pointer to _dpsTransExecutor
+   // Output:
+   //    none
+   // Dependency:  the lock manager must be initialized
+   //
+
+   void dpsTransLockManager::releaseAllIndexLock( _dpsTransExecutor * dpsTxExectr )
+   {
+      dpsTransLRB * pLRB = dpsTxExectr->getLastLRB( _lockMgrType ) ;
+      dpsTransLRBHeader * pLRBHdr ;
+      dpsTransLockId      lockId ;
+      UINT32              refCount = 0 ;
+
+      // walk through EDU LRB list,
+      while ( pLRB )
+      {
+         pLRBHdr = pLRB->lrbHdr ;
+         // get LRB Header
+         if ( NULL != pLRBHdr )
+         {
+            lockId  = pLRBHdr->lockId ;
+#ifdef _DEBUG
+            SDB_ASSERT( lockId.isIndexLock(), "Invalid lockId" ) ;
+#endif
+            _release( dpsTxExectr, lockId, pLRB, TRUE, refCount, NULL ) ; 
+         }
+         // move to next LRB
+         pLRB = pLRB->eduLrbPrev ;
+      }
+      return ;
+   }
+
+
+   UINT32 dpsTransLockManager::countAllLocks
+   (
+      _dpsTransExecutor * dpsTxExectr,
+      BOOLEAN             bPrintLog,
+      CHAR              * memoStr
+   )
+   {
+      dpsTransLRB * pLRB = dpsTxExectr->getLastLRB( _lockMgrType ) ;
+      dpsTransLRBHeader * pLRBHdr ;
+      dpsTransLockId      lockId ;
+      UINT32              lockCount = 0 ;
+
+      std::stringstream lockInfo ;
+
+      // walk through EDU LRB list,
+      while ( pLRB )
+      {
+         pLRBHdr = pLRB->lrbHdr ;
+         // get LRB Header
+         if ( NULL != pLRBHdr )
+         {
+            lockId  = pLRBHdr->lockId ;
+#ifdef _DEBUG
+            if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
+            {
+               SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+            }
+            else if ( LOCKMGR_INDEX_LOCK == _lockMgrType )
+            {
+               SDB_ASSERT( lockId.isIndexLock(), "Invalid lockId" ) ;
+            }
+#endif
+            lockCount++ ;
+            if ( bPrintLog )
+            {
+               lockInfo << "LockId[" << lockId.toString() << "] "
+                        << "lockMode:" << lockModeToString( pLRB->lockMode )
+                        << std::endl ;
+            }
+         }
+         // move to next LRB
+         pLRB = pLRB->eduLrbPrev ;
+      }
+      if ( bPrintLog )
+      {
+         PD_LOG( PDDEBUG,
+                 "%s"OSS_NEWLINE
+                 "Number of locks:%d"OSS_NEWLINE"%s",
+                 ( memoStr ? memoStr : "" ),
+                 lockCount,
+                 lockInfo.str().c_str() ) ;
+      }
+      return lockCount ;
+   }
 
 
    //
@@ -2542,7 +2744,7 @@ nextLock:
       const dpsTransLockId &lockId
    )
    {
-      return (UINT32)( lockId.lockIdHash() % DPS_TRANS_LOCKBUCKET_SLOTS_MAX ) ;
+      return (UINT32)( lockId.lockIdHash() % _bktSlotMax ) ;
    }
 
 
@@ -2579,10 +2781,9 @@ nextLock:
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__WAITLOCK, "dpsTransLockManager::_waitLock" )
-   INT32 dpsTransLockManager::_waitLock( _dpsTransExecutor *dpsTxExectr )
+   INT32 dpsTransLockManager::_waitLock ( _dpsTransExecutor *dpsTxExectr )
    {
       INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__WAITLOCK ) ;
 #ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTransExecutor can't be NULL" ) ;
@@ -2658,7 +2859,7 @@ nextLock:
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
-      if ( ! lockId.isRootLevel() )
+      if ( ( LOCKMGR_TRANS_LOCK == _lockMgrType ) && ( ! lockId.isRootLevel()) )
       {
          iLockId = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
@@ -2696,7 +2897,7 @@ nextLock:
       return rc;
 
    error:
-      if ( isIntentLockAcquired )
+      if ( ( isIntentLockAcquired ) && ( LOCKMGR_TRANS_LOCK == _lockMgrType ) )
       {
          release( dpsTxExectr, iLockId, FALSE ) ;
          isIntentLockAcquired = FALSE ;
@@ -2771,7 +2972,7 @@ nextLock:
 
       // get intent lock at first
       // it is not need to get intent lock while lock space
-      if ( ! lockId.isRootLevel() )
+      if ( ( LOCKMGR_TRANS_LOCK == _lockMgrType ) && ( ! lockId.isRootLevel()) )
       {
          iLockId = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
@@ -3063,7 +3264,7 @@ nextLock:
             goto error ;
          }
          
-         pLRB = dpsTxExectr->getLastLRB() ;
+         pLRB = dpsTxExectr->getLastLRB( _lockMgrType ) ;
          while ( pLRB )
          {
             SDB_ASSERT( pLRB->lrbHdr != NULL ,

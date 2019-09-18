@@ -64,6 +64,7 @@ namespace engine
       _isNeedSyncTrans     = TRUE ;
       _logFileTotalSize    = 0 ;
       _transLockMgr        = NULL ;
+      _indexLockMgr        = NULL ;
       _oldVCB              = NULL;
       _maxLRSize1          = 0 ;
       _maxLRSize2          = 0 ;
@@ -105,7 +106,7 @@ namespace engine
       {
          _TransIDL48Cur.init( ossRand() ) ;
 
-         _transLockMgr = SDB_OSS_NEW dpsTransLockManager() ;
+         _transLockMgr = SDB_OSS_NEW dpsTransLockManager( LOCKMGR_TRANS_LOCK ) ;
          if ( !_transLockMgr )
          {
             rc = SDB_OOM ;
@@ -120,7 +121,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-
+        
          _oldVCB = SDB_OSS_NEW oldVersionCB() ;
          if ( !_oldVCB )
          {
@@ -195,6 +196,13 @@ namespace engine
          _transLockMgr->fini() ;
          SDB_OSS_DEL _transLockMgr ;
          _transLockMgr = NULL ;
+      }
+
+      if ( _indexLockMgr )
+      {
+         _indexLockMgr->fini() ;
+         SDB_OSS_DEL _indexLockMgr ;
+         _indexLockMgr = NULL ;
       }
 
       if ( _oldVCB )
@@ -944,7 +952,7 @@ namespace engine
                                       const dmsRecordID *recordID,
                                       _dpsITransLockCallback * callback )
    {
-      if ( 0 == eduCB->getTransExecutor()->getLockCount() )
+      if ( 0 == eduCB->getTransExecutor()->getLockCount( LOCKMGR_TRANS_LOCK ) )
       {
          return ;
       }
@@ -957,7 +965,7 @@ namespace engine
    void dpsTransCB::transLockReleaseAll( _pmdEDUCB *eduCB,
                                          _dpsITransLockCallback * callback )
    {
-      if ( 0 == eduCB->getTransExecutor()->getLockCount() )
+      if ( 0 == eduCB->getTransExecutor()->getLockCount( LOCKMGR_TRANS_LOCK ) )
       {
          return ;
       }
@@ -1353,7 +1361,12 @@ namespace engine
 
    dpsTransLockManager * dpsTransCB::getLockMgrHandle()
    {
-      return ( _transLockMgr->isInitialized() ? (  _transLockMgr ) : NULL ) ;
+      return ( _transLockMgr->isInitialized() ? ( _transLockMgr ) : NULL ) ;
+   }
+
+   ixmIndexLockManager * dpsTransCB::getIndexLockMgrHandle()
+   {
+      return ( _indexLockMgr->isInitialized() ? ( _indexLockMgr ) : NULL ) ;
    }
 
    /*

@@ -970,8 +970,8 @@ namespace engine
       transInfo._transID      = _curTransID ;
       transInfo._curTransLsn  = _curTransLSN ;
 
-      transInfo._lastLRB   = _transExecutor.getLastLRB() ;
-      transInfo._waitLRB   = _transExecutor.getWaiterLRB() ;
+      transInfo._lastLRB   = _transExecutor.getLastLRB( LOCKMGR_TRANS_LOCK ) ;
+      transInfo._waitLRB   = _transExecutor.getWaiterLRB( LOCKMGR_TRANS_LOCK ) ;
 
       {
          ossScopedLock lock( &_mutex, SHARED ) ;
