@@ -1314,15 +1314,16 @@ __METHOD_IMP(sdb_get_version)
    INT32 fixed = 0;
    INT32 release = 0 ;
    const CHAR *build = NULL ;
-   const CHAR *gitVersion = NULL ;
+   const CHAR *gitVer = NULL ;
 
    ossGetVersion( &version, &sub_version, &fixed,
                   &release, &build, &gitVer ) ;
 
    if ( gitVer )
    {
-      return MAKE_RETURN_INT_INT_INT_STRING_STRING( version, sub_version, fixed,
-                                                    release, build, gitVer ) ;
+      return MAKE_RETURN_INT_INT_INT_INT_STRING_STRING( version, sub_version,
+                                                        fixed, release, build,
+                                                        gitVer ) ;
    }
    else
    {
