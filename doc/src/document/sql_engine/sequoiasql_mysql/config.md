@@ -37,19 +37,20 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
 
    |参数名|类型|默认值|动态生效|作用范围|说明|
    |---|---|---|---|---|---|
-   |sequoiadb_conn_addr|string|"localhost:11810"|Yes|Global|SequoiaDB 连接地址。|
-   |sequoiadb_user|string|""|Yes|Global|SequoiaDB 鉴权用户。|
-   |sequoiadb_password|string|""|Yes|Global|SequoiaDB 鉴权密码。|
-   |sequoiadb_use_partition|bool|ON|Yes|Global|是否启用自动分区。|
-   |sequoiadb_use_bulk_insert|bool|ON|Yes|Global|是否启用批量插入。|
-   |sequoiadb_bulk_insert_size|int|100|Yes|Global|批量插入时每批的插入记录数。|
-   |sequoiadb_replica_size|int|1|Yes|Global|写操作需同步的副本数。取值范围为[-1, 7]。|
-   |sequoiadb_use_autocommit|bool|ON|Yes|Global|是否启用自动提交模式(已弃用)。|
-   |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
-   |sequoiadb_optimizer_select_count|bool|ON|Yes|Global|是否开启优化select count(*)行为。|
    |sequoiadb_alter_table_overhead_threshold|long|10000000|Yes|Global, Session|更改表开销阈值。当表记录数超过这个阈值，需要全表更新的更改操作将被禁止。|
-   |sequoiadb_selector_pushdown_threshold|unsigned int|30|Yes|Global, Session|查询字段下压触发阈值，取值范围[0, 100]，单位：%。|
+   |sequoiadb_bulk_insert_size|int|100|Yes|Global|批量插入时每批的插入记录数。|  
+   |sequoiadb_conn_addr|string|"localhost:11810"|Yes|Global|SequoiaDB 连接地址。|
+   |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
    |sequoiadb_execute_only_in_mysql|bool|OFF|Yes|Global, Session|DDL 命令只在 MySQL 执行，不下压到 SequoiaDB 执行。|
+   |sequoiadb_optimizer_options|set|"direct_count,direct_delete,direct_update"|Yes|Global, Session|SequoiaDB 优化选项开关，以决定是否优化计数、更新、删除操作。|
+   |sequoiadb_optimizer_select_count|bool|ON|Yes|Global|是否开启优化select count(*)行为。|
+   |sequoiadb_password|string|""|Yes|Global|SequoiaDB 鉴权密码。|
+   |sequoiadb_replica_size|int|1|Yes|Global|写操作需同步的副本数。取值范围为[-1, 7]。|
+   |sequoiadb_selector_pushdown_threshold|unsigned int|30|Yes|Global, Session|查询字段下压触发阈值，取值范围[0, 100]，单位：%。|
+   |sequoiadb_use_autocommit|bool|ON|Yes|Global|是否启用自动提交模式(已弃用)。|
+   |sequoiadb_use_bulk_insert|bool|ON|Yes|Global|是否启用批量插入。|
+   |sequoiadb_use_partition|bool|ON|Yes|Global|是否启用自动分区。|
+   |sequoiadb_user|string|""|Yes|Global|SequoiaDB 鉴权用户。|
 
 + **配置修改方式**
 
@@ -109,6 +110,8 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    `sequoiadb_selector_pushdown_threshold`可以配置查询字段下压的触发阈值。查询字段不下压时，SequoiaDB 集群总是返回完整记录给 MySQL，由 MySQL 过滤有用字段。而在查询字段下压时，SequoiaDB 集群只返回 MySQL 所需字段。在查询字段个数/表总字段个数的百分比小于等于该阈值时，查询字段下压，否则不下压。下压查询字段可以节省了网络传输，但它也会增加 SequoiaDB 工作。可以根据实际适当调整。
 
    `sequoiadb_optimizer_select_count`决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。
+
+   `sequoiadb_optimizer_options`SequoiaDB 优化选项开关，以决定是否优化计数、更新、删除操作。direct_count 作用等同于sequoiadb_optimizer_select_count；direct_delete 、direct_update 开启后，在符合优化的场景下会直接下压 delete、update 语句到 SequoiaDB 执行，而非正常的先 query 后 delete、update 流程，以减少网络 IO。
 
 + **其它配置**
 
