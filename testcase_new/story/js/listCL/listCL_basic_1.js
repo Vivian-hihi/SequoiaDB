@@ -33,8 +33,7 @@ catch ( e )
 
 try
 {
-	 var claSize = new RSize( csName );
-   var varCL = varCS.createCL( clName_1,{ReplSize:claSize.ReplSize(),Compressed:true} ) ;
+   var varCL = varCS.createCL( clName_1,{ReplSize:0,Compressed:true} ) ;
 }
 catch ( e )
 {
@@ -44,7 +43,7 @@ catch ( e )
 
 try
 {
-   var varCL1 = varCS.createCL( clName_2,{ReplSize:claSize.ReplSize(),Compressed:true} ) ;
+   var varCL1 = varCS.createCL( clName_2,{ReplSize:0,Compressed:true} ) ;
 }
 catch ( e )
 {

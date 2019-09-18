@@ -10,9 +10,8 @@ catch(e)
 }
 
 try{
-   var claSize = new RSize( COMMCSNAME );
    var varCS = commCreateCS( db, COMMCSNAME, true, "create CS in the beginning" );
-   var varCL = varCS.createCL(COMMCLNAME,{ReplSize:claSize.ReplSize()},{Compressed:true});
+   var varCL = varCS.createCL(COMMCLNAME,{ReplSize:0, Compressed:true});
 }catch( e ){
    println("createCS or createCL fail");
    throw e ;	

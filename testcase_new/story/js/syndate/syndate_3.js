@@ -11,7 +11,6 @@ catch(e)
 }
 
 try{
-   var claSize = new RSize( COMMCSNAME );
    var varCS = commCreateCS( db, COMMCSNAME, true, "create CS in the beginning" );
    var varCL = varCS.createCL(COMMCLNAME,{ReplSize:6,Compressed:true});
 }catch( e ){

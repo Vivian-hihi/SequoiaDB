@@ -6,7 +6,6 @@
 // var cataPort = CATASVCNAME ;
 var csName = COMMCSNAME ;
 var clName = COMMCLNAME ;
-var claSize = new RSize( csName ) ;
 
 //var cdb = new Sdb( hostName, cataPort ) ;
 
@@ -56,7 +55,7 @@ function inspectGroup( db )
 function createCL( db, csName, clName, shardKey, shardType, partition, replSize, compressed )
 {
    commCreateCS( db, csName, true, "commCreateCL auto to create collection space" ) ;
-   if( undefined == replSize || "" == replSize ) { replSize = claSize.ReplSize() ; }
+   if( undefined == replSize || "" == replSize ) { replSize = 0 ; }
    try
    {
       if( undefined == partition || "" == partition )

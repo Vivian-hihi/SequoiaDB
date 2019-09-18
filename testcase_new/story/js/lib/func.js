@@ -139,7 +139,7 @@ function commCreateCS( db, csName, ignoreExisted, message, options )
 @discription: create collection
 @author: Jianhui Xu
 @parameter
-   replSize: default = RSize().ReplSize(), value 0, 1, 2,...
+   replSize: default = 0
    compressed: default = true, value: true/false
    autoCreateCS: default = true, value: true/false
    ignoreExisted: default = false, value: true/false
@@ -148,7 +148,7 @@ function commCreateCS( db, csName, ignoreExisted, message, options )
 function commCreateCL( db, csName, clName, replSize, compressed, autoCreateCS, ignoreExisted, message )
 {
    ++funcCommCreateCLTimes ;
-   if ( replSize == undefined || replSize < 0 ) { replSize = new RSize( csName ).ReplSize( db ) ; }
+   if ( replSize == undefined || replSize < 0 ) { replSize = 0 ; }
    if ( compressed == undefined ) { compressed = true ; }
    if ( autoCreateCS == undefined ) { autoCreateCS = true ; }
    if ( ignoreExisted == undefined ) { ignoreExisted = false ; }
