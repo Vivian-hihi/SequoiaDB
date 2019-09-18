@@ -453,7 +453,7 @@ public class ObjectController {
                 if (result.getMeta().getDeleteMarker()) {
                     throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
                 } else {
-                    buildHeadersForGetObject(result.getMeta(), null, range, response);
+                    buildHeadersForGetObject(result.getMeta(), new HashMap<String, String>(), range, response);
                 }
             } finally {
                 objectService.releaseGetResult(result);
