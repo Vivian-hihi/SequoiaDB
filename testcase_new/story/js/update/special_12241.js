@@ -17,9 +17,8 @@ catch(e)
 
 try
 {
-   var claSize = new RSize( csName );
    var cs = commCreateCS( db, csName, true, "create CS in the beginning" );
-   var cl = cs.createCL(clName, {ReplSize:claSize.ReplSize(), Compressed:true});
+   var cl = cs.createCL(clName, {ReplSize:0, Compressed:true});
 }
 catch(e)
 {

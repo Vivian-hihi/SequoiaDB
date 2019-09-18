@@ -9,7 +9,6 @@
 
 function main( db )
 {
-   var replSize = new RSize( COMMCSNAME ).ReplSize( db ) ;
    var srcRg = "" ;
    var destRg = "" ;
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
@@ -18,7 +17,7 @@ function main( db )
    // create cl
    var cl = commCreateCLByOption( db, COMMCSNAME, COMMCLNAME, { ShardingKey:{"No":-1},
                                   ShardingType:"hash", Partition:1024,
-                                  ReplSize:replSize },
+                                  ReplSize:0 },
                                   true, false, "create collection in split" ) ;
    // get group where collection space located in[ one cs and more group]
    var csRg = commGetCLGroups( db, COMMCSNAME + "." + COMMCLNAME ) ;

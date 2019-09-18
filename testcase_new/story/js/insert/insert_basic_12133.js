@@ -18,13 +18,8 @@ catch ( e )
    }
 }
 
-try{
-	var claSize = new RSize( COMMCSNAME );
-   var varCS = commCreateCS( db, COMMCSNAME, true, "create CS" );
-	var varCL = varCS.createCL(COMMCLNAME,{ReplSize:claSize.ReplSize()});
-}catch( e ){
-  throw e ;
-}
+var varCS = commCreateCS( db, COMMCSNAME, true, "create CS" );
+var varCL = varCS.createCL(COMMCLNAME,{ReplSize:0});
 
 //int32 && int64
 var records = new Array();

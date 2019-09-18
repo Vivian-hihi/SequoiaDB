@@ -13,7 +13,6 @@ function main( db )
       throw "RunMode_StandAlone" ;
 
    var domName = csName + "_DomAlterAutoSplit" ;
-   var replSize = new RSize( csName ).ReplSize( db ) ;
    // Clear domain in the beginning
    clearDomain( db, domName ) ;
    println( "Clear domain in the beginning" ) ;

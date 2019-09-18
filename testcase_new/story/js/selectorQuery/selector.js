@@ -22,8 +22,7 @@ catch ( e )
 }
 
 try{
-   var claSize = new RSize( COMMCSNAME );
-   var varCL = varCS.createCL(COMMCLNAME,{ReplSize:claSize.ReplSize(),Compressed:true});
+   var varCL = varCS.createCL(COMMCLNAME,{ReplSize:0,Compressed:true});
 }catch( e ){
    throw e ;
 }

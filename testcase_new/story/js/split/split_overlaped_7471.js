@@ -7,12 +7,11 @@
 function main()
 {
    try{
-      var claSize = new RSize( COMMCSNAME );
       //createCS
       var varCS = commCreateCS( db, COMMCSNAME, true, "create CS" );
       //createCL , split in a
       var varCL = varCS.createCL(COMMCLNAME,{ShardingKey:{id:1},
-                                 ReplSize:claSize.ReplSize(),Compressed:true});
+                                 ReplSize:0,Compressed:true});
    }catch( e ){
       throw e ;
    }

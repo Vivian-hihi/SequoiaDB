@@ -13,7 +13,6 @@ function main( db )
       throw "RunMode_StandAlone" ;
 
    var domName = csName + "_DomRangeHashAutoSplit" ;
-   var replSize = new RSize( csName ).ReplSize( db ) ;
    var rangeCL = clName + "_Range" ;
    var commonCL = clName + "_Common" ;
 
@@ -58,11 +57,11 @@ function main( db )
                     { "Domain" : domName } ) ;
       commCreateCLByOption( db, csName, rangeCL, { ShardingKey:{"No":-1},
                             ShardingType:"range", Partition:1024 ,
-                            ReplSize:replSize },
+                            ReplSize:0 },
                             false, false, "create collection in domain" ) ;
       // Comman CL
       commCreateCLByOption( db, csName, commonCL, { ShardingKey:{"No":-1},
-                            ReplSize:replSize },
+                            ReplSize:0 },
                             false, false, "create collection in domain" ) ;
    }
    catch ( e )

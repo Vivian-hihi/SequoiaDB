@@ -12,11 +12,9 @@ catch(e)
 
 try{
 
-//var claSize = new RSize( COMMCSNAME );
-
 //var varCS = db.createCS(COMMCSNAME);
 
-//var varCL = varCS.createCL(COMMCLNAME,{ReplSize:claSize.ReplSize()});
+//var varCL = varCS.createCL(COMMCLNAME,{ReplSize:0});
 
 }catch( e ){
    throw e ;	

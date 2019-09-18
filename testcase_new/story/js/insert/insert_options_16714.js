@@ -13,9 +13,8 @@ function main( db )
 	
 	commDropCL( db, COMMCSNAME, clName, true, true, "clear collection in the beginning" ) ; 
 	
-	var claSize = new RSize( COMMCSNAME );
 	var cs = db.getCS(COMMCSNAME);
-	var cl = cs.createCL(clName,{ReplSize:claSize.ReplSize(), Compressed:true});
+	var cl = cs.createCL(clName,{ReplSize:0, Compressed:true});
    
 	println("begin to insert  data and check result")
 	// test a : check ReturnOID and ContOnDup default values
