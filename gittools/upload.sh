@@ -47,7 +47,7 @@ svn_version=`svn info | grep Revision`
 echo "Current version is $svn_version"
 cd ~/github/SequoiaDB
 git pull origin master
-"Wait for adding changes into git"
+echo "Wait for adding changes into git"
 sleep 10
 
 echo "Add removed/modified/added files into git"

@@ -1,9 +1,8 @@
 misc/ci
 misc/dita2troff
 driver/hadoop/pig_connector
-thirdparty/zlib/lib/aix64
-thirdparty/zlib/lib/linux32
-thirdparty/zlib/lib/ppclinux64
-thirdparty/zlib/lib/win32
-thirdparty/zlib/lib/win64
 thirdparty/mdocml/lib/win64
+thirdparty/boost/lib/win32
+thirdparty/boost/lib/win64
+thirdparty/crypto/openssl-1.0.1c/lib/win32
+thirdparty/crypto/openssl-1.0.1c/lib/win64

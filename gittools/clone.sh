@@ -27,9 +27,11 @@ rm -rf $1/* 2>/dev/null
 echo "Build svn version"
 # just in case SVN use chinese
 export LANG='en_US'
-sed "s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g" $ROOTPATH/misc/autogen/ossVer.tmp > $ROOTPATH/oss.tmp
+sed "s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g" $ROOTPATH/misc/autogen/ver_conf.h.in > $ROOTPATH/ver_conf.h.in.tmp
 # replace $ to empty string and replace ossVer_autogen.h
-sed 's/\$//g' $ROOTPATH/oss.tmp > $ROOTPATH/SequoiaDB/engine/include/ossVer_Autogen.h
+sed 's/\$//g' $ROOTPATH/ver_conf.h.in.tmp > $ROOTPATH/misc/autogen/ver_conf.h
+
+sed -i '/#define GENERAL_OPT_DOC_FILE/'d $ROOTPATH/misc/autogen/config.h
 
 # copy file to new location
 echo "Copy files"
