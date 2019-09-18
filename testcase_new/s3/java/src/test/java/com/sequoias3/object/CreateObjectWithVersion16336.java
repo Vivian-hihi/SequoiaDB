@@ -16,8 +16,7 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * @Description seqDB-16336: enabling bucket versioning , create object on the
- *              bucket
+ * @Description seqDB-16336: enabling bucket versioning , create object on the bucket
  * @author wuyan
  * @Date 2018.11.6
  * @version 1.00
@@ -40,7 +39,6 @@ public class CreateObjectWithVersion16336 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         if (s3Client.doesObjectExist(S3TestBase.enableVerBucketName, keyName)) {
             s3Client.deleteVersion(S3TestBase.enableVerBucketName, keyName, "0");
-            ;
         }
     }
 
