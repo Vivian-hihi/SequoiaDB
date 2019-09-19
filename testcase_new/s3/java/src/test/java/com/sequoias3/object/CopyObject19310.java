@@ -95,6 +95,6 @@ public class CopyObject19310 extends S3TestBase {
 
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), fileSize);
-        Assert.assertEquals(result.getVersionId(), "0");
+        Assert.assertEquals(result.getVersionId(), "null");
     }
 }
