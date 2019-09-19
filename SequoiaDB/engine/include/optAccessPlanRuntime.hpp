@@ -271,6 +271,12 @@ namespace engine
             return _plan ? _plan->getDirection() : 1 ;
          }
 
+         OSS_INLINE INT64 getAccessPlanID() const
+         {
+            SDB_ASSERT( _plan, "_plan is invalid" ) ;
+            return _plan ? _plan->getAccessPlanID() : -1 ;
+         }
+
          OSS_INLINE const CHAR *getIndexName () const
          {
             SDB_ASSERT( _plan, "_plan is invalid" ) ;

@@ -250,6 +250,7 @@ namespace engine
    #define OPT_FIELD_SCAN_TYPE            FIELD_NAME_SCANTYPE
    #define OPT_VALUE_TBSCAN               VALUE_NAME_TBSCAN
    #define OPT_VALUE_IXSCAN               VALUE_NAME_IXSCAN
+   #define OPT_FIELD_ACCESSPLAN_ID        FIELD_NAME_ACCESSPLAN_ID
    #define OPT_FIELD_USE_EXT_SORT         FIELD_NAME_USE_EXT_SORT
    #define OPT_FIELD_OPERATOR             "Operator"
    #define OPT_FIELD_ESTIMATE             FIELD_NAME_ESTIMATE
