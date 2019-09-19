@@ -248,7 +248,7 @@ public class DataUtils {
             throws BuildException {
         List<BSONObject> l = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            l.add(getBSONRecord(records, containStr));
+            l.add(getBSONRecord(records, containStr, containStr2));
         }
         return l;
     }
