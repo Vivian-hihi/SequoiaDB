@@ -1919,7 +1919,9 @@ namespace engine
          event = pSub->getOwnedRspMsg() ;
          pReply = (MsgOpReply*)event._Data ;
          flags = pReply->flags ;
-         id = pReply->header.routeID ;
+         /// Should use pSub's nodeID, because the remote node maybe isn't
+         /// the same node with error SDB_INVALID_ROUTEID
+         id.value = pSub->getNodeIDUInt() ;
 
          if ( SDB_OK == flags ||
               ( pIgoreErr && pIgoreErr->count( flags ) > 0 ) )
@@ -1963,8 +1965,7 @@ namespace engine
          }
          else
          {
-            _nokRC[ pReply->header.routeID.value ] =
-               coordErrorInfo( pReply ) ;
+            _nokRC[ id.value ] = coordErrorInfo( pReply ) ;
          }
 
          pmdEduEventRelease( event, cb ) ;
