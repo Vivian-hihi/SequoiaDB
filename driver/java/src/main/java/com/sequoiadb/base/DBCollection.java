@@ -1290,7 +1290,13 @@ public class DBCollection {
             BSONObject hint, int flag) throws BaseException {
         flag = flag | DBQuery.FLG_QUERY_WITH_RETURNDATA;
         DBCursor cursor = query(matcher, selector, orderBy, hint, 0, 1, flag);
-        return cursor.getNext();
+        BSONObject obj;
+        try {
+            obj = cursor.getNext();
+        } finally {
+            cursor.close();
+        }
+        return obj;
     }
 
     /**
