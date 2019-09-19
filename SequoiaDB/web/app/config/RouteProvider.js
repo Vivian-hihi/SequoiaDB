@@ -23,7 +23,7 @@
          'data': { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessType': 1, 'BusinessName': 1, 'ClusterName': 1 } ) },
          'url': '/',
          'async': async,
-         'dataType': 'text',
+         'dataType': 'json',
          'beforeSend': function( jqXHR ){
             var id = localLocalData( 'SdbSessionID' ) ;
 	         if( id !== null )
@@ -37,7 +37,7 @@
 	         }
          },
          'success': function( response, status ){
-            var businessList = parseJson2( response, true, null ) ;
+            var businessList = response ;
             if( businessList[0]['errno'] === 0 )
             {
                businessList.splice( 0, 1 ) ;
@@ -54,7 +54,7 @@
    {
       _getBusinessList( async, function( buzList ){
          $.each( buzList, function( index, buzInfo ){
-            if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) < 0 )
+            if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) < 0 && buzInfo['AddtionType'] == 0 )
             {
                _getPluginRoute( async, buzInfo['ClusterName'], buzInfo['BusinessName'], function( routes ){
                   if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) >= 0 )

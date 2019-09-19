@@ -1980,7 +1980,7 @@
                                                                                   select, inline, multiple, switch, normal
                                           'placeholder': 'xxx'，     //配置项默认描述内容, 类型是 string, int, double, port, text 有效。
                                           'valid':       { ... }     //值的校验规则
-                                          'default':     xxx         //默认值, list 的子项用到, default的值作为List的新的子项的值
+                                          'default':     xxx         //默认值, list 的子项用到, default的值作为List的新的子项的值；普通类型也可以用，用来恢复默认值
                                           'template':    { ... }     //模板, list 用，添加新的子项时，使用模板来构建，如果没有模板就用添加按钮的那个项
                                           'value':       xxx         //默认值
                                           'required':    true|false  //要不要显示必填提示, 默认false
@@ -2104,6 +2104,11 @@
                         }
                      }
 
+                     if( isUndefined( $scope.data.inputList[index]['default'] ) )
+                     {
+                        $scope.data.inputList[index]['default'] = $scope.data.inputList[index]['value'] ;
+                     }
+
                      if( $scope.data.inputList[index]['type'] == 'list' )
                      {
                         $.each( $scope.data.inputList[index]['child'], function( index2 ){
@@ -2155,6 +2160,16 @@
                      }
                      $scope.Setting['Table']['options']['tools'] = false ;
                      $scope.Setting['Table']['options']['height'] = 'auto' ;
+                  }
+
+                  $scope.data.ResetDefault = function(){
+                     $.each( $scope.data.inputList, function( index ){
+                        if( !isUndefined( $scope.data.inputList[index]['default'] ) )
+                        {
+                           $scope.data.inputList[index]['value'] = $scope.data.inputList[index]['default'] ;
+                           $scope.data.inputList[index]['error'] = '' ;
+                        }
+                     } ) ;
                   }
 
                   $scope.data.EnableItem = function( name ){
