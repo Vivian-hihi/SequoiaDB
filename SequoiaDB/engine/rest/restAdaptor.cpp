@@ -46,7 +46,7 @@
 #include "../util/url.h"
 
 /* response body cache max size */
-#define RESPONSE_MAX_CACHE_SIZE  (64*1024*1024)
+#define RESPONSE_MAX_CACHE_SIZE   (64*1024*1024)
 
 /* once recv size */
 #define REST_ONCE_RECV_SIZE       1024
@@ -64,24 +64,32 @@
 #define REST_STRING_PRAGMA        "Pragma"
 #define REST_STRING_CONTENT_TYPE  "Content-Type"
 #define REST_STRING_TRANSFER      "Transfer-Encoding"
+#define REST_STRING_ACCEPT        "Accept"
 
 /* http header value */
 #define REST_STRING_CLOSE         "close"
 #define REST_STRING_KEEP_ALIVE    "keep-alive"
 #define REST_STRING_NO_STORE      "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
 #define REST_STRING_NO_CACHE      "no-cache"
+
 #define REST_STRING_TEXT_HTML     "text/html"
 #define REST_STRING_TEXT_JS       "text/javascript"
 #define REST_STRING_TEXT_CSS      "text/css"
+
 #define REST_STRING_TEXT_PNG      "image/png"
 #define REST_STRING_TEXT_BMP      "image/bmp"
 #define REST_STRING_TEXT_JPG      "image/jpeg"
 #define REST_STRING_TEXT_GIF      "image/gif"
 #define REST_STRING_TEXT_SVG      "image/svg+xml"
-#define REST_STRING_TEXT_WOFF     "application/font-woff"
-#define REST_STRING_TEXT_EOT      "application/vnd.ms-fontobject"
+#define REST_STRING_IMAGE_ICON    "image/x-icon"
+
+#define REST_STRING_APP_JSON      "application/json"
+#define REST_STRING_APP_WOFF      "application/font-woff"
+#define REST_STRING_APP_EOT       "application/vnd.ms-fontobject"
 #define REST_STRING_TEXT_OCTET_STREAM  "application/octet-stream"
+
 #define REST_STRING_CONLEN_SIZE   "0"
+
 #define REST_STRING_CHUNKED       "chunked"
 #define REST_STRING_IDENTITY      "identity"
 
@@ -112,8 +120,8 @@ static const CHAR *responseHeader[] = {
 } ;
 
 static const CHAR *fileExtension[] = {
-      "html",   "js",   "css",   "png",   "bmp",   "jpg",
-      "gif",    "svg",  "woff",  "eot",   "otf",   "ttf",
+      "html",   "json", "js",    "css",   "png",   "bmp",   "jpg",
+      "gif",    "svg",  "ico",   "woff",  "eot",   "otf",   "ttf",
       "jsp",    "php",  "asp"
 } ;
 
@@ -338,9 +346,19 @@ namespace engine
       if ( pRest->getBodySize() > 0 &&
            pRest->isHeaderExist( REST_STRING_CONLEN ) == FALSE )
       {
+         INT32 totalSize = pRest->getBodySize() ;
+         BOOLEAN isJson = ( HTTP_FILE_JSON == pRest->getDataType() &&
+                            SDB_REST_RESPONSE == pRest->type() ) ;
          CHAR bodySizeTmp[256] = { 0 } ;
 
-         ossSnprintf( bodySizeTmp, 256, "%d", pRest->getBodySize() ) ;
+         if ( isJson )
+         {
+            INT32 recordNum = pRest->_bodyContent.size() ;
+
+            totalSize += recordNum + 1 ;
+         }
+
+         ossSnprintf( bodySizeTmp, 256, "%d", totalSize ) ;
 
          pRest->putHeader( REST_STRING_CONLEN, bodySizeTmp ) ;
       }
@@ -425,12 +443,45 @@ namespace engine
 
       if ( pRest->_bodyContent.size() > 0 )
       {
+         BOOLEAN isJson = ( HTTP_FILE_JSON == pRest->getDataType() &&
+                            SDB_REST_RESPONSE == pRest->type() ) ;
+
+         if ( isJson )
+         {
+            rc = _sendData( sock, "[", 1 ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+
          for( it = pRest->_bodyContent.begin();
               it != pRest->_bodyContent.end(); ++it )
          {
             string context = *it ;
 
+            if ( isJson && it != pRest->_bodyContent.begin() )
+            {
+               rc = _sendData( sock, ",", 1 ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+
             rc = _sendData( sock, context.c_str(), context.length() ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         if ( isJson )
+         {
+            rc = _sendData( sock, "]", 1 ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
@@ -1379,9 +1430,25 @@ namespace engine
       response.putHeader( REST_STRING_PRAGMA, REST_STRING_NO_CACHE ) ;
       response.putHeader( REST_STRING_CONTENT_TYPE, REST_STRING_TEXT_HTML ) ;
 
-      response.setDataType( this->getDataType() ) ;
+      if ( COM_CMD == _command )
+      {
+         string accept = getHeader( REST_STRING_ACCEPT ) ;
 
-      if ( this->isKeepAlive() )
+         if ( NULL == ossStrstr( accept.c_str(), REST_STRING_APP_JSON ) )
+         {
+            response.setDataType( getDataType() ) ;
+         }
+         else
+         {
+            response.setDataType( HTTP_FILE_JSON ) ;
+         }
+      }
+      else
+      {
+         response.setDataType( getDataType() ) ;
+      }
+
+      if ( isKeepAlive() )
       {
          response.setKeepAlive() ;
       }
@@ -1583,15 +1650,16 @@ namespace engine
          }
          else
          {
-            INT32 extenSize = ossStrlen( pExtension ) ;
+            UINT32 extenSize = ossStrlen( pExtension ) ;
 
             _command = COM_GETFILE ;
             _dataType = HTTP_FILE_UNKNOW ;
 
             for( UINT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
             {
-               if ( 0 == ossStrncasecmp( pExtension,
-                                         fileExtension[i], extenSize ) )
+               if ( ossStrlen( fileExtension[i] ) == extenSize &&
+                    0 == ossStrncasecmp( pExtension, fileExtension[i],
+                                         extenSize ) )
                {
                   _dataType = (HTTP_DATA_TYPE)i ;
                   break ;
@@ -1698,6 +1766,9 @@ namespace engine
 
       switch( type )
       {
+      case HTTP_FILE_JSON:
+         fileType = REST_STRING_APP_JSON ;
+         break ;
       case HTTP_FILE_PNG:
          fileType = REST_STRING_TEXT_PNG ;
          break ;
@@ -1713,11 +1784,14 @@ namespace engine
       case HTTP_FILE_SVG:
          fileType = REST_STRING_TEXT_SVG ;
          break ;
+      case HTTP_FILE_ICON:
+         fileType = REST_STRING_IMAGE_ICON ;
+         break ;
       case HTTP_FILE_WOFF:
-         fileType = REST_STRING_TEXT_WOFF ;
+         fileType = REST_STRING_APP_WOFF ;
          break ;
       case HTTP_FILE_EOT:
-         fileType = REST_STRING_TEXT_EOT ;
+         fileType = REST_STRING_APP_EOT ;
          break ;
       case HTTP_FILE_OTF:
       case HTTP_FILE_TTF:
@@ -1737,6 +1811,7 @@ namespace engine
          break ;
       }
 
+      _dataType = type ;
       putHeader( REST_STRING_CONTENT_TYPE, fileType ) ;
    }
 
@@ -1765,6 +1840,11 @@ namespace engine
          _bodyContent.push_back( result ) ;
 
          _bodySize += result.length() ;
+      }
+
+      if ( FALSE == isObjBuffer && HTTP_FILE_JSON == _dataType )
+      {
+         setDataType( HTTP_FILE_HTML ) ;
       }
 
       return restBase::appendBody( pBuffer, length, number, isObjBuffer ) ;
