@@ -1,5 +1,6 @@
 package com.sequoiadb.builddata;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +49,52 @@ public class Connect {
         if (size % 100 != 0) {
             l = DataUtils.getBSONRecords(record, size % 100);
             cl.insert(l);
+            l.clear();
+        }
+    }
+
+    public void insert(DataRecord record, int size, int recordNum) throws BuildException {
+        List<BSONObject> l = null;
+        for (int i = 0; i < size / 100; i++) {
+            l = DataUtils.getBSONRecords(record, 100, "", "");
+            for (int j = 0; j < recordNum; j++) {
+                for (BSONObject bsonObject : l) {
+                    bsonObject.removeField("_id");
+                    if (j == 0) {
+                        synchronized (Build.BUILD.sameRecordFileName) {
+                            String field = (String) bsonObject.get(Build.BUILD.fields[0]);
+                            try {
+                                BuildUtils.write2File(Build.BUILD.filePath + Build.BUILD.sameRecordFileName,
+                                        field + "\n");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+                cl.insert(l);
+            }
+            l.clear();
+        }
+        if (size % 100 != 0) {
+            l = DataUtils.getBSONRecords(record, size % 100, "", "");
+            for (int i = 0; i < recordNum; i++) {
+                for (BSONObject bsonObject : l) {
+                    bsonObject.removeField("_id");
+                    if (i == 0) {
+                        synchronized (Build.BUILD.sameRecordFileName) {
+                            String field = (String) bsonObject.get(Build.BUILD.fields[0]);
+                            try {
+                                BuildUtils.write2File(Build.BUILD.filePath + Build.BUILD.sameRecordFileName,
+                                        field + "\n");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+                cl.insert(l);
+            }
             l.clear();
         }
     }

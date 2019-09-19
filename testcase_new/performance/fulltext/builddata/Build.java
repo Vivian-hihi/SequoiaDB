@@ -14,8 +14,11 @@ public enum Build {
     int thNum;
     int keywords;
     int keywordNum;
+    int records;
+    int recordNum;
     double percent;
     boolean jmeter;
+    boolean jmeter2;
     String coord;
     String csName;
     String clName;
@@ -23,6 +26,7 @@ public enum Build {
     String fulltextFileName;
     String sdbQuery100FileName;
     String sdbQuery1FileName;
+    String sameRecordFileName;
     String[] hostName;
     String[] fields;
 
@@ -53,6 +57,9 @@ public enum Build {
             BuildUtils.createFile(filePath + sdbQuery100FileName);
             BuildUtils.createFile(filePath + sdbQuery1FileName);
         }
+        if (jmeter2) {
+            BuildUtils.createFile(filePath + sameRecordFileName);
+        }
     }
 
     private void fini() {
@@ -61,6 +68,10 @@ public enum Build {
     }
 
     private void start() throws IOException, BuildException {
+        if (jmeter2) {
+            total = records;
+        }
+
         int arrayNum = (int) (total * percent);
         int strNum = total - arrayNum;
         int[][] thNeed2Insert = new int[thNum][];
@@ -103,6 +114,7 @@ public enum Build {
         String csname = prop.getProperty("csname");
         String clname = prop.getProperty("clname");
         String fields = prop.getProperty("fields");
+
         String jmeter = prop.getProperty("jmeter");
         String keywords = prop.getProperty("keywords");
         String keywordnum = prop.getProperty("keywordnum");
@@ -110,6 +122,11 @@ public enum Build {
         String fulltextfilename = prop.getProperty("fulltextfilename");
         String sdbquery100filename = prop.getProperty("sdbquery100filename");
         String sdbquery1filename = prop.getProperty("sdbquery1filename");
+
+        String jmeter2 = prop.getProperty("jmeter2");
+        String records = prop.getProperty("records");
+        String recordnum = prop.getProperty("recordnum");
+        String samerecordfilename = prop.getProperty("samerecordfilename");
 
         this.total = Integer.parseInt(total);
         this.percent = "".equals(percent) ? 0 : Double.parseDouble(percent);
@@ -129,6 +146,10 @@ public enum Build {
         this.fulltextFileName = fulltextfilename;
         this.sdbQuery100FileName = sdbquery100filename;
         this.sdbQuery1FileName = sdbquery1filename;
+        this.jmeter2 = "".equals(jmeter2) ? false : Boolean.parseBoolean(jmeter2);
+        this.records = Integer.parseInt(records);
+        this.recordNum = Integer.parseInt(recordnum);
+        this.sameRecordFileName = samerecordfilename;
     }
 
     private int getLen(String len) {

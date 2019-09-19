@@ -45,7 +45,13 @@ public class InsertTh implements Runnable {
 
     private void insertData(DataRecord record, int size) throws BuildException {
         if (size > 0) {
-            conn.insert(record, size, Build.BUILD.jmeter);
+            if (Build.BUILD.jmeter) {
+                conn.insert(record, size, true);
+            } else if (Build.BUILD.jmeter2) {
+                conn.insert(record, size, Build.BUILD.recordNum);
+            } else {
+                conn.insert(record, size);
+            }
         }
     }
 }
