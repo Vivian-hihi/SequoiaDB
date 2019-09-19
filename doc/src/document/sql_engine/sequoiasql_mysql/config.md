@@ -42,8 +42,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    |sequoiadb_conn_addr|string|"localhost:11810"|Yes|Global|SequoiaDB 连接地址。|
    |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
    |sequoiadb_execute_only_in_mysql|bool|OFF|Yes|Global, Session|DDL 命令只在 MySQL 执行，不下压到 SequoiaDB 执行。|
-   |sequoiadb_optimizer_options|set|"direct_count,direct_delete,direct_update"|Yes|Global, Session|SequoiaDB 优化选项开关，以决定是否优化计数、更新、删除操作。|
-   |sequoiadb_optimizer_select_count|bool|ON|Yes|Global|是否开启优化select count(*)行为。|
+   |sequoiadb_optimizer_options|set|"direct_count,<br>direct_delete,<br>direct_update"|Yes|Global, Session|SequoiaDB 优化选项开关，以决定是否优化计数、更新、删除操作。|
    |sequoiadb_password|string|""|Yes|Global|SequoiaDB 鉴权密码。|
    |sequoiadb_replica_size|int|1|Yes|Global|写操作需同步的副本数。取值范围为[-1, 7]。|
    |sequoiadb_selector_pushdown_threshold|unsigned int|30|Yes|Global, Session|查询字段下压触发阈值，取值范围[0, 100]，单位：%。|
@@ -82,14 +81,14 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
 
 + **配置 SequoiaDB 连接与鉴权**
 
-   `sequoiadb_conn_addr`可以配置 MySQL 实例所连接的 SequoiaDB 存储集群。可以配置一个或多个协调节点的地址。使用多个时，地址之间要以逗号隔开。如“sdbserver1:11810,sdbserver2:11810”。在配置多个地址时，每次连接会从地址中随机随机选择。在 MySQL 会话数很多时，压力会基本平均地分摊给每个协调节点。
+   `sequoiadb_conn_addr` 可以配置 MySQL 实例所连接的 SequoiaDB 存储集群。可以配置一个或多个协调节点的地址。使用多个时，地址之间要以逗号隔开。如“sdbserver1:11810,sdbserver2:11810”。在配置多个地址时，每次连接会从地址中随机随机选择。在 MySQL 会话数很多时，压力会基本平均地分摊给每个协调节点。
    
    `sequoiadb_user`和`sequoiadb_password`则需设置为所连接的 SequoiaDB 集群的鉴权用户和密码。
    以上的配置在命令行修改后，均在建立新连接时才生效，不影响旧连接。
 
 + **配置自动分区功能**
 
-   `sequoiadb_use_partition`配置项决定 MySQL 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MySQL 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
+   `sequoiadb_use_partition` 配置项决定 MySQL 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MySQL 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
    
    如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mysql/config.md#自定义表配置)中指定`use_partition`为 false。
 
@@ -109,9 +108,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
 
    `sequoiadb_selector_pushdown_threshold`可以配置查询字段下压的触发阈值。查询字段不下压时，SequoiaDB 集群总是返回完整记录给 MySQL，由 MySQL 过滤有用字段。而在查询字段下压时，SequoiaDB 集群只返回 MySQL 所需字段。在查询字段个数/表总字段个数的百分比小于等于该阈值时，查询字段下压，否则不下压。下压查询字段可以节省了网络传输，但它也会增加 SequoiaDB 工作。可以根据实际适当调整。
 
-   `sequoiadb_optimizer_select_count`决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。
-
-   `sequoiadb_optimizer_options`SequoiaDB 优化选项开关，以决定是否优化计数、更新、删除操作。direct_count 作用等同于sequoiadb_optimizer_select_count；direct_delete 、direct_update 开启后，在符合优化的场景下会直接下压 delete、update 语句到 SequoiaDB 执行，而非正常的先 query 后 delete、update 流程，以减少网络 IO。
+   `sequoiadb_optimizer_options` 优化选项开关，以决定是否优化计数、更新、删除操作。direct_count 决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。；direct_delete 、direct_update 开启后，在符合优化的场景下会直接下压 delete、update 语句到 SequoiaDB 执行，而非正常的先 query 后 delete、update 流程，以减少网络 IO。
 
 + **其它配置**
 
