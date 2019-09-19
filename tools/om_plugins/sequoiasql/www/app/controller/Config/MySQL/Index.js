@@ -68,18 +68,39 @@
       function isOptionFileItem( name )
       {
          var configs = SdbSwap.mysqlConfig ;
-         var result = false ;
+         var result = null ;
 
          if( name.indexOf( 'sequoiadb_' ) >= 0 )
          {
-            result = true ;
+            result = name ;
          }
          else
          {
             $.each( configs, function( index, info ){
-               if ( info['Name'] == name && info['Option File'] == 'Yes' )
+               if ( info['Name'] == name )
                {
-                  result = true ;
+                  if ( info['OptionName'] == null )
+                  {
+                     if ( info['Option File'] == 'Yes' )
+                     {
+                        result = name ;
+                     }
+                  }
+                  else
+                  {
+                     var tmpName = info['OptionName'] ;
+
+                     $.each( configs, function( index2, info2 ){
+                        if ( info2['Name'] == tmpName )
+                        {
+                           if ( info2['Option File'] == 'Yes' )
+                           {
+                              result = tmpName ;
+                           }
+                           return false ;
+                        }
+                     } ) ;
+                  }
                   return false ;
                }
             } ) ;
@@ -93,9 +114,10 @@
          var tmp = {} ;
          for( var key in updator )
          {
-            if ( isOptionFileItem( key ) )
+            var newKey = isOptionFileItem( key ) ;
+            if ( newKey )
             {
-               tmp[key] = updator[key] ;
+               tmp[newKey] = updator[key] ;
             }
          }
 
