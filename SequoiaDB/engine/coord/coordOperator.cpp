@@ -240,7 +240,9 @@ namespace engine
          replyEvent = pSub->getOwnedRspMsg() ;
          pReply = ( MsgOpReply* )replyEvent._Data ;
 
-         routeID.value = pReply->header.routeID.value ;
+         /// Should use pSub's nodeID, because the remote node maybe isn't
+         /// the same node with error SDB_INVALID_ROUTEID
+         routeID.value = pSub->getNodeIDUInt() ;
          primaryID = pReply->startFrom ;
          groupID = routeID.columns.groupID ;
          rcTmp = pReply->flags ;

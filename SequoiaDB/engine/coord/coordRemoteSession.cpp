@@ -1543,14 +1543,14 @@ namespace engine
          goto done ;
       }
 
-      if ( SDB_CLS_NOT_PRIMARY == flag )
+      if ( SDB_CLS_NOT_PRIMARY == flag || SDB_INVALID_ROUTEID == flag )
       {
-         if ( groupPtr.get() )
+         if ( groupPtr.get() && SDB_CLS_NOT_PRIMARY == flag )
          {
             groupPtr->updatePrimary( nodeID, FALSE ) ;
          }
 
-         if ( canUpdate )
+         if ( canUpdate || SDB_INVALID_ROUTEID == flag )
          {
             UINT32 groupID = nodeID.columns.groupID ;
             INT32 rc = _pResource->updateGroupInfo( groupID, groupPtr, cb ) ;
@@ -1575,9 +1575,7 @@ namespace engine
       {
          /// do nothing
       }
-      else if ( SDB_CLS_FULL_SYNC == flag ||
-                SDB_RTN_IN_REBUILD == flag ||
-                SDB_INVALID_ROUTEID == flag )
+      else if ( SDB_CLS_FULL_SYNC == flag || SDB_RTN_IN_REBUILD == flag )
       {
          if( groupPtr.get() )
          {
