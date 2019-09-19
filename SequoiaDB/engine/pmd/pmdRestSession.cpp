@@ -305,8 +305,6 @@ namespace engine
             break ;
          }
 
-         request.buildResponse( response ) ;
-
          // session is not exist
          if ( !_pSessionInfo )
          {
@@ -343,6 +341,8 @@ namespace engine
             }
             break ;
          }
+
+         request.buildResponse( response ) ;
 
          // update active time
          if ( _pSessionInfo )
