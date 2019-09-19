@@ -31,7 +31,7 @@ public class CopyObject19306 extends S3TestBase {
     private String srcBucketName = "bucket19306a";
     private String destBucketName = "bucket19306b";
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 1024 * 100;
+    private int fileSize = 1024 * 1024 * 50;
     private File localPath = null;
     private String filePath = null;
 
@@ -95,6 +95,6 @@ public class CopyObject19306 extends S3TestBase {
 
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), fileSize);
-        Assert.assertEquals(result.getVersionId(), "0");
+        Assert.assertEquals(result.getVersionId(), "null");
     }
 }
