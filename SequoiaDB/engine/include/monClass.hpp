@@ -247,7 +247,7 @@ class MonClassQuery : public MonClassTemplate<MonClassQuery>
 {
 public:
    ossTickDelta _responseTime;
-   UINT32 _accessPlanID;
+   SINT64 _accessPlanID;
    UINT32 _transactionID;
    ossTickDelta _latchWaitTime;
    ossTickDelta _lockWaitTime;

@@ -148,6 +148,7 @@
 #define FIELD_NAME_TID                       "TID"
 #define FIELD_NAME_CONTEXTS                  "Contexts"
 #define FIELD_NAME_CONTEXTID                 "ContextID"
+#define FIELD_NAME_ACCESSPLAN_ID             "AccessPlanID"
 #define FIELD_NAME_DATAREAD                  "DataRead"
 #define FIELD_NAME_DATAWRITE                 "DataWrite"
 #define FIELD_NAME_INDEXREAD                 "IndexRead"

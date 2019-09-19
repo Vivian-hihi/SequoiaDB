@@ -61,6 +61,7 @@ namespace engine
      _mthMatchTreeStackHolder(),
      _mthMatchRuntimeHolder(),
      _key( planKey ),
+     _accessPlanID( -1 ),
      _isInitialized( FALSE ),
      _isInvalid( FALSE ),
      _hintFailed( FALSE ),

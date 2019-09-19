@@ -555,6 +555,8 @@ namespace engine
          optCachedPlanMonitor    _monitor ;
          EDUID                   _clearJobEduID ;
 
+         ossAtomicSigned64       _accessPlanIdGenerator ;
+
          // Configured options
          OPT_PLAN_CACHE_LEVEL    _cacheLevel ;
    } ;

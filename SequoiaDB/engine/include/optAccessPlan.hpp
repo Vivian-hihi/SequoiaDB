@@ -136,6 +136,16 @@ namespace engine
             return _key.getCLLID() ;
          }
 
+         OSS_INLINE INT64 getAccessPlanID () const
+         {
+            return _accessPlanID ;
+         }
+
+         OSS_INLINE void setAccessPlanID (INT64 accessPlanID )
+         {
+            _accessPlanID = accessPlanID ;
+         }
+
          string toString () const ;
 
          virtual INT32 toBSON ( BSONObjBuilder &builder ) const ;
@@ -330,6 +340,7 @@ namespace engine
       protected :
          optAccessPlanKey  _key ;
 
+         INT64   _accessPlanID ;
          BOOLEAN _isInitialized ;
          BOOLEAN _isInvalid ;
 

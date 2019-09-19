@@ -467,6 +467,8 @@ namespace engine
                PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection space "
                             "name, rc: %d", rc ) ;
 
+               planBuilder.append( OPT_FIELD_ACCESSPLAN_ID,
+                                   pPlan->getAccessPlanID() ) ;
                planBuilder.append( OPT_FIELD_COLLECTION,
                                    pPlan->getCLFullName() ) ;
                planBuilder.append( OPT_FIELD_COLLECTION_SPACE, csName ) ;
@@ -992,6 +994,7 @@ namespace engine
      _planCache(),
      _monitor(),
      _clearJobEduID( PMD_INVALID_EDUID ),
+     _accessPlanIdGenerator( 0 ),
      _cacheLevel( OPT_PLAN_NOCACHE )
    {
    }
@@ -2069,6 +2072,16 @@ namespace engine
       BOOLEAN isParameterized = needCache &&
                                 planKey.getCacheLevel() >= OPT_PLAN_PARAMETERIZED ;
 
+      INT64 accessPlanID = _accessPlanIdGenerator.fetch() ;
+
+      PD_CHECK( accessPlanID >= 0, SDB_SYS, error, PDERROR,
+                "Access Plan ID exceeds limit" ) ;
+
+      accessPlanID = _accessPlanIdGenerator.inc() ;
+
+      PD_CHECK( accessPlanID >= 0, SDB_SYS, error, PDERROR,
+                "Access Plan ID exceeds limit" ) ;
+
       if ( isParameterized )
       {
          pPlan = SDB_OSS_NEW optParamAccessPlan( planKey,
@@ -2081,6 +2094,8 @@ namespace engine
       }
       PD_CHECK( NULL != pPlan, SDB_OOM, error, PDERROR,
                 "Not able to allocate memory for new plan" ) ;
+
+      pPlan->setAccessPlanID( accessPlanID ) ;
 
       rc = pPlan->getKeyOwned() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get key of access plan owned, "
