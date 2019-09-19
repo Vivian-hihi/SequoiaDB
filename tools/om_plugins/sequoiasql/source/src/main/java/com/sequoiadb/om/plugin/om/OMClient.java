@@ -11,6 +11,7 @@ import com.sequoiadb.om.plugin.config.SequoiaSQLConfig;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,8 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
             RestTemplate restTemp = new RestTemplate();
             String response = restTemp.postForObject(url, httpEntity, String.class);
             omInfo.setRegisterTime(new Date().getTime() / 1000);
-            JSONObject result = new JSONObject(response);
+            JSONArray arr = new JSONArray(response);
+            JSONObject result = arr.getJSONObject(0);
             int errno = result.getInt("errno");
             if (errno != 0) {
                 logger.error("Failed to register with om svc, detail: " + result.getString("detail"));
