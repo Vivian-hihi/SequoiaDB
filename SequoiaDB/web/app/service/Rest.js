@@ -493,7 +493,7 @@
          }
          if( typeof( options['v'] ) == 'undefined' )
          {
-            options['v'] = 'v1' ;
+            options['v'] = 'v2' ;
          }
          return options ;
       }
@@ -572,14 +572,29 @@
                jsonArr = json ;
                arrLen = jsonArr.length ;
             }
+
             if( isArray( jsonArr ) == false )
             {
                jsonArr = [ jsonArr ] ;
                arrLen = jsonArr.length ;
             }
+
             if( options['parseJson'] == false )
             {
-               //还没实现
+               var tmpArr = jsonArr ;
+
+               jsonArr = [] ;
+
+               $.each( tmpArr, function( index, record ){
+                  if ( index == 0 )
+                  {
+                     jsonArr.push( record ) ;
+                  }
+                  else
+                  {
+                     jsonArr.push( JSON.stringify( record ) ) ;
+                  }
+               } ) ;
             }
          }
 
@@ -837,7 +852,7 @@
             Loading.create() ;
          }
 
-         $.ajax( { 'type': type, 'url': url, 'data': data,
+         $.ajax( { 'type': type, 'url': url, 'data': data, 'dataType': 'json',
             'beforeSend': function( XMLHttpRequest ){
                if( options['scope'] !== false && options['scope'] !== '__init__' && options['scope'] !== $location.url() )
                {
@@ -1090,11 +1105,6 @@
                return oldBefore( jqXHR ) ;
             }
          }
-         if( typeof( options ) != 'object' )
-         {
-            options = {} ;
-         }
-         options['v'] = 'v2' ;
          event = g._checkEvent( event ) ;
          options = g._checkOptions( options ) ;
          g._sendAjax( 'POST', path, data, event, options ) ;
@@ -1117,11 +1127,6 @@
                return oldBefore( jqXHR ) ;
             }
          }
-         if( typeof( options ) != 'object' )
-         {
-            options = {} ;
-         }
-         options['v'] = 'v2' ;
          event = g._checkEvent( event ) ;
          options = g._checkOptions( options ) ;
          g._sendAjax( 'POST', path, data, event, options ) ;
