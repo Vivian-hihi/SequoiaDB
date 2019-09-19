@@ -51,7 +51,7 @@ public class UploadPart18705 extends S3TestBase {
         s3Client.createBucket(new CreateBucketRequest(bucketName));
     }
 
-    @Test(enabled = false)
+    @Test
     private void testUpload() throws Exception {
         String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         List<PartETag> partEtags = PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file, 50 * 1024);
