@@ -94,10 +94,10 @@ public class RestParamDefine {
     public static class CopyObjectHeader {
         public static final String X_AMZ_COPY_SOURCE    = "x-amz-copy-source";
         public static final String METADATA_DIRECTIVE   = "x-amz-metadata-directive";
-        public static final String IF_MODIFIED_SINCE    = "x-amz-copy-if-modified-since";
-        public static final String IF_UNMODIFIED_SINCE  = "x-amz-copy-if-unmodified-since";
-        public static final String IF_MATCH             = "x-amz-copy-if-match";
-        public static final String IF_NONE_MATCH        = "x-amz-copy-if-none-match";
+        public static final String IF_MODIFIED_SINCE    = "x-amz-copy-source-if-modified-since";
+        public static final String IF_UNMODIFIED_SINCE  = "x-amz-copy-source-if-unmodified-since";
+        public static final String IF_MATCH             = "x-amz-copy-source-if-match";
+        public static final String IF_NONE_MATCH        = "x-amz-copy-source-if-none-match";
     }
 
     public static class CopyObjectResultHeader {
