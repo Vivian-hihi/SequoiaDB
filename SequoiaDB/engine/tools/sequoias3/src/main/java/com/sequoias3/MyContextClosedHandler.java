@@ -30,7 +30,7 @@ public class MyContextClosedHandler implements ApplicationListener<ContextClosed
 
     @Override
     public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
-        logger.info("SequoiaS3Application is stop.");
+        logger.info("SequoiaS3Application is stop with PID " + serviceInfo.getPid());
         systemStatus.exitSystemStatus();
         shutDownAndAwaitTermination(myThreadPoolScheduler.getScheduledExecutor());
         cleanTmpfile();
