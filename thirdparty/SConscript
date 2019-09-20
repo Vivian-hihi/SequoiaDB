@@ -145,10 +145,6 @@ class CompilerBase:
                 print('Create lib archive directory failed: ' + lib_path +
                       ". Error: " + e.message())
                 return 1
-        elif os.listdir(lib_path):
-            print("Target library path[" + lib_path +
-                  "] not empty, Skip the compilation of " + self.name)
-            return -1
         return 0
 
     def append_cmd(self, cmd, args=''):
@@ -204,7 +200,9 @@ class BoostCompiler(CompilerBase):
         self.append_cmd('./bootstrap.sh',
                         '--with-libraries=system,filesystem,thread,'
                         'program_options,chrono --prefix=./')
-        config_args = '-d0 link=static threading=multi variant=' + self.build_type + ' address-model=' + str(address_mode) + ' toolset=gcc runtime-link=static cxxflags="-fPIC"'
+        config_args = '-d0 link=static threading=multi variant=' + \
+                      self.build_type + ' address-model=' + str(address_mode) +\
+                      ' toolset=gcc runtime-link=static cxxflags="-fPIC"'
         if "arm64" == self.arch:
             config_args += ' architecture=arm'
         self.append_cmd('./b2', config_args)
@@ -283,8 +281,13 @@ class SslCompiler(CompilerBase):
             config_args += ' -d'
         config_exec = os.path.join(self.src_root, config_file)
         os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
-        self.append_cmd(config_exec, config_args)
-        self.append_cmd('make ' + comm_build_opt)
+        makefile = os.path.join(self.src_root, 'Makefile.bak')
+        if os.path.exists(makefile):
+            print("Makefile.bak exists. Configure has been done already.")
+        else:
+            self.append_cmd(config_exec, config_args)
+        self.append_cmd('make ' + comm_build_opt + ' build_crypto')
+        self.append_cmd('make ' + comm_build_opt + ' build_ssl')
         return 0
 
     def archive(self):
