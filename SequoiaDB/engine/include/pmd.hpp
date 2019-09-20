@@ -56,6 +56,7 @@
 #include "schedTaskMgr.hpp"
 #include "utilMemBlockPool.hpp"
 #include "pmdLightJobMgr.hpp"
+#include "monMgr.hpp"
 
 namespace engine
 {
@@ -227,10 +228,12 @@ namespace engine
 
       monConfigCB    _monCfgCB ;
       monDBCB        _monDBCB ;
+      MonitorManager _monMgr ;
       schedTaskMgr   _svcTaskMgr ;
 
       pmdLightJobMgr    *_pLightJobMgr ;
       UINT32            _timeCounter ;    /// ms
+      UINT32            _monTimeCounter ; /// ms
 
       // RESERVED FOR NOW, can be used to jump out sleep in the future
       BOOLEAN        _keepSleep ;
@@ -275,6 +278,10 @@ namespace engine
       OSS_INLINE monDBCB * getMonDBCB ()
       {
          return &_monDBCB ;
+      }
+      OSS_INLINE MonitorManager * getMonMgr ()
+      {
+         return &_monMgr ;
       }
       OSS_INLINE schedTaskMgr* getSvcTaskMgr()
       {

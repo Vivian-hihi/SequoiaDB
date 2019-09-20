@@ -47,6 +47,7 @@ namespace engine
 {
 
    #define PMD_MEM_SHRINK_TIMER_INTERVAL        ( 120000 )     // ms
+   #define PMD_MONITOR_CLEANUP_INTERVAL         ( 2000 )       // ms
 
    /*
       _SDB_KRCB implement
@@ -95,8 +96,9 @@ namespace engine
       // register config handler to option mgr
       _optioncb.setConfigHandler( this ) ;
 
-      _pLightJobMgr  = NULL ;
-      _timeCounter   = 0 ;
+      _pLightJobMgr   = NULL ;
+      _timeCounter    = 0 ;
+      _monTimeCounter = 0 ;
    }
 
    _SDB_KRCB::~_SDB_KRCB ()
@@ -540,11 +542,18 @@ namespace engine
    void _SDB_KRCB::onTimer( UINT32 interval )
    {
       _timeCounter += interval ;
+      _monTimeCounter += interval ;
 
       if ( _timeCounter >= PMD_MEM_SHRINK_TIMER_INTERVAL )
       {
          utilGetGlobalMemPool()->shrink() ;
          _timeCounter = 0 ;
+      }
+
+      if (_monTimeCounter >= PMD_MONITOR_CLEANUP_INTERVAL )
+      {
+         _monMgr.cleanup() ;
+         _monTimeCounter = 0 ;
       }
    }
 
