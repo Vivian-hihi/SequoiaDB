@@ -570,6 +570,15 @@ namespace engine
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
+
+      protected:
+         INT32          _parseNodeInfo( CoordGroupInfoPtr &ptr,
+                                        const BSONObj &obj,
+                                        pmdEDUCB *cb,
+                                        const CHAR *& pGroupName,
+                                        MsgRouteID &nodeID ) ;
+
+         void           _notifyReelect2Dest( UINT64 nodeID, pmdEDUCB *cb ) ;
    } ;
    typedef _coordCMDReelection coordCMDReelection ;
 

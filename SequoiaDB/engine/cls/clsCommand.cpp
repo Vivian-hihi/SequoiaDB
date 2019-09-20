@@ -441,7 +441,7 @@ namespace engine
    :_timeout( 30 ),
     _level( CLS_REELECTION_LEVEL_3 )
    {
-
+      _isDestNotify = FALSE ;
    }
 
    _rtnReelect::~_rtnReelect()
@@ -452,6 +452,11 @@ namespace engine
    INT32 _rtnReelect::spaceNode()
    {
       return CMD_SPACE_NODE_DATA | CMD_SPACE_NODE_CATA  ;
+   }
+
+   INT32 _rtnReelect::spaceService()
+   {
+      return CMD_SPACE_SERVICE_SHARD ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREELECT_INIT, "_rtnReelect::init" )
@@ -467,8 +472,16 @@ namespace engine
       BSONObj obj ;
       try
       {
+         BSONElement e ;
          obj = BSONObj( pMatcherBuff ) ;
-         BSONElement e = obj.getField( FIELD_NAME_REELECTION_TIMEOUT ) ;
+
+         if ( obj.isEmpty() )
+         {
+            _isDestNotify = TRUE ;
+            goto done ;
+         }
+
+         e = obj.getField( FIELD_NAME_REELECTION_TIMEOUT ) ;
          if ( !e.eoo() )
          {
             if ( !e.isNumber() )
@@ -516,12 +529,20 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSREELECT_DOIT ) ;
       replCB *repl = sdbGetReplCB() ;
 
-      rc = repl->reelect( _level, _timeout, cb ) ;
-      if ( SDB_OK != rc )
+      if ( _isDestNotify )
       {
-         PD_LOG( PDERROR, "failed to reelect:%d", rc ) ;
-         goto error ;
+         repl->voteMachine()->setShadowWeight( CLS_ELECTION_WEIGHT_MAX ) ;
       }
+      else
+      {
+         rc = repl->reelect( _level, _timeout, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to reelect:%d", rc ) ;
+            goto error ;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__CLSREELECT_DOIT, rc ) ;
       return rc ;

@@ -2593,6 +2593,216 @@ namespace engine
    {
    }
 
+   INT32 _coordCMDReelection::_parseNodeInfo( CoordGroupInfoPtr &ptr,
+                                              const BSONObj &obj,
+                                              pmdEDUCB *cb,
+                                              const CHAR *& pGroupName,
+                                              MsgRouteID &nodeID )
+   {
+      INT32 rc = SDB_OK ;
+
+      UINT16 tmpNodeID = 0 ;
+      const CHAR *pHostName = "" ;
+      const CHAR *pSvcName = "" ;
+
+      nodeID.value = 0 ;
+
+      BSONElement e ;
+      BSONObjIterator itr( obj ) ;
+      while( itr.more() )
+      {
+         e = itr.next() ;
+
+         if ( 0 == ossStrcasecmp( FIELD_NAME_NODEID, e.fieldName() ) )
+         {
+            if ( !e.isNumber() || 0 == e.numberInt() )
+            {
+               rc = SDB_INVALIDARG ;
+               break ;
+            }
+            tmpNodeID = e.numberInt() ;
+         }
+         else if ( 0 == ossStrcasecmp( FIELD_NAME_HOST, e.fieldName() ) )
+         {
+            if ( String != e.type() || !*e.valuestr() )
+            {
+               rc = SDB_INVALIDARG ;
+               break ;
+            }
+            pHostName = e.valuestr() ;
+         }
+         else if ( 0 == ossStrcasecmp( FIELD_NAME_SERVICE_NAME,
+                                       e.fieldName() ) )
+         {
+            if ( String != e.type() || !*e.valuestr() )
+            {
+               rc = SDB_INVALIDARG ;
+               break ;
+            }
+            pSvcName = e.valuestr() ;
+         }
+         else if ( 0 == ossStrcasecmp( PMD_OPTION_SVCNAME, e.fieldName() ) )
+         {
+            if ( String != e.type() || !*e.valuestr() )
+            {
+               rc = SDB_INVALIDARG ;
+               break ;
+            }
+            pSvcName = e.valuestr() ;
+         }
+         else if ( 0 == ossStrcmp( FIELD_NAME_GROUPNAME, e.fieldName() ) )
+         {
+            if ( String != e.type() || !*e.valuestr() )
+            {
+               rc = SDB_INVALIDARG ;
+               break ;
+            }
+            pGroupName = e.valuestr() ;
+         }
+         else if ( 0 == ossStrcmp( FIELD_NAME_REELECTION_TIMEOUT,
+                                   e.fieldName() ) ||
+                   0 == ossStrcmp( FIELD_NAME_REELECTION_LEVEL,
+                                   e.fieldName() ) )
+         {
+            /// ignore
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Param[%s] is unknown", e.fieldName() ) ;
+            goto error ;
+         }
+      }
+
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Param[%s] is invalid", e.fieldName() ) ;
+         goto error ;
+      }
+      else if ( !pGroupName || !*pGroupName )
+      {
+         PD_LOG_MSG( PDERROR, "Param[%s] is not configured",
+                     FIELD_NAME_GROUPNAME ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( 0 != tmpNodeID || *pHostName || *pSvcName )
+      {
+         clsNodeItem *pItem = NULL ;
+         UINT32 pos = 0 ;
+
+         /// update group info
+         rc = _pResource->updateGroupInfo( pGroupName, ptr, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update group[%s] info failed, rc: %d",
+                    pGroupName, rc ) ;
+            goto error ;
+         }
+
+         while ( NULL != ( pItem = ptr->nodeItemByPos( pos++ ) ) )
+         {
+            if ( 0 != tmpNodeID )
+            {
+               if ( pItem->_id.columns.nodeID == tmpNodeID )
+               {
+                  nodeID.value = pItem->_id.value ;
+                  break ;
+               }
+            }
+            else if ( *pHostName )
+            {
+               if ( 0 == ossStrcmp( pHostName, pItem->_host ) &&
+                    ( !*pSvcName || 0 == ossStrcmp( pSvcName,
+                       pItem->_service[ MSG_ROUTE_LOCAL_SERVICE ].c_str() ) ) )
+               {
+                  nodeID.value = pItem->_id.value ;
+                  break ;
+               }
+            }
+            else if ( *pSvcName && 0 == ossStrcmp( pSvcName,
+                        pItem->_service[ MSG_ROUTE_LOCAL_SERVICE ].c_str() ) )
+            {
+               nodeID.value = pItem->_id.value ;
+               break ;
+            }
+         }
+
+         if ( 0 == nodeID.value )
+         {
+            rc = SDB_CLS_NODE_NOT_EXIST ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = _pResource->getOrUpdateGroupInfo( pGroupName, ptr, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update group[%s] info failed, rc: %d",
+                    pGroupName, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordCMDReelection::_notifyReelect2Dest( UINT64 nodeID,
+                                                  pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      pmdRemoteSession *pRemote = _groupSession.getSession() ;
+      pmdSubSession *pSub = NULL ;
+      CHAR *pMsgBuff = NULL ;
+      INT32 buffSize = 0 ;
+
+      _groupSession.clear() ;
+
+      rc = msgBuildQueryMsg( &pMsgBuff, &buffSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_REELECT,
+                             0, 0, 0, -1,
+                             NULL, NULL, NULL, NULL,
+                             cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Build message failed, rc: %d", rc ) ;
+         goto done ;
+      }
+
+      pSub = pRemote->addSubSession( nodeID ) ;
+      pSub->setReqMsg( ( MsgHeader* )pMsgBuff, PMD_EDU_MEM_NONE ) ;
+
+      rc = pRemote->sendMsg( pSub ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Send message to node[%s] failed, rc: %d",
+                 routeID2String( pSub->getNodeID() ).c_str(), rc ) ;
+         goto done ;
+      }
+
+      rc = pRemote->waitReply1( TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Recieve reply message from node[%s] failed, "
+                 "rc: %d", routeID2String( pSub->getNodeID() ).c_str(), rc ) ;
+         goto done ;
+      }
+
+      /// ignore reply
+
+   done:
+      if ( pMsgBuff )
+      {
+         msgReleaseBuffer( pMsgBuff, cb ) ;
+      }
+      return ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( COORD_REELECT_EXE, "_coordCMDReelection::execute" )
    INT32 _coordCMDReelection::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
@@ -2606,6 +2816,8 @@ namespace engine
       CoordGroupInfoPtr gpInfo ;
       CoordGroupList gpLst ;
 
+      MsgRouteID nodeID ;
+
       contextID = -1 ;
 
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
@@ -2615,16 +2827,13 @@ namespace engine
 
       try
       {
-         BSONObj query( pQuery ) ;
-         BSONElement ele = query.getField( FIELD_NAME_GROUPNAME ) ;
-         if ( String != ele.type() )
+         BSONObj options( pQuery ) ;
+
+         rc = _parseNodeInfo( gpInfo, options, cb, gpName, nodeID ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "Invalid reelection msg:%s",
-                    query.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
             goto error ;
          }
-         gpName = ele.valuestr() ;
       }
       catch ( std::exception &e )
       {
@@ -2633,12 +2842,10 @@ namespace engine
          goto error ;
       }
 
-      rc = _pResource->getOrUpdateGroupInfo( gpName, gpInfo, cb ) ;
-      if ( rc )
+      if ( 0 != nodeID.value )
       {
-         PD_LOG( PDERROR, "Update group info by name[%s] failed, rc: %d",
-                 gpName, rc ) ;
-         goto error ;
+         nodeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
+         _notifyReelect2Dest( nodeID.value, cb ) ;
       }
 
       gpLst[gpInfo->groupID()] = gpInfo->groupID() ;
