@@ -156,13 +156,6 @@ public class ObjectController {
                 range = restUtils.getRange(requestHeaders.get(RestParamDefine.GetObjectReqHeader.REQ_RANGE));
             }
 
-            Map<String, String> requestParas = new HashMap<>();
-            Enumeration paraNames = httpServletRequest.getParameterNames();
-            while (paraNames.hasMoreElements()) {
-                String name = paraNames.nextElement().toString();
-                requestParas.put(name, httpServletRequest.getParameter(name));
-            }
-
             Boolean nullVersionFlag = null;
             Long cvtVersionId = null;
             if (versionId != null) {
@@ -184,7 +177,7 @@ public class ObjectController {
                         throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED, "no object. object:" + objectName);
                     }
                 } else {
-                    buildHeadersForGetObject(result.getMeta(), requestParas, range, response);
+                    buildHeadersForGetObject(result.getMeta(), httpServletRequest, range, response);
                     objectService.readObjectData(result.getData(), response.getOutputStream(), range);
                 }
             } finally {
@@ -453,7 +446,7 @@ public class ObjectController {
                 if (result.getMeta().getDeleteMarker()) {
                     throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY, "no object. object:" + objectName);
                 } else {
-                    buildHeadersForGetObject(result.getMeta(), new HashMap<String, String>(), range, response);
+                    buildHeadersForGetObject(result.getMeta(), httpServletRequest, range, response);
                 }
             } finally {
                 objectService.releaseGetResult(result);
@@ -555,7 +548,7 @@ public class ObjectController {
         }
     }
 
-    private void buildHeadersForGetObject(ObjectMeta objectMeta, Map<String, String> requestParas,
+    private void buildHeadersForGetObject(ObjectMeta objectMeta, HttpServletRequest request,
                                           Range range, HttpServletResponse response){
         response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, "\""+objectMeta.geteTag()+"\"");
         response.addDateHeader(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, objectMeta.getLastModified());
@@ -575,61 +568,60 @@ public class ObjectController {
             }
         }
 
-        if (requestParas != null) {
-            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL)) {
-                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
-                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
-            } else {
-                if (objectMeta.getCacheControl() != null) {
-                    response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
-                }
-            }
-
-            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION)) {
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
-                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
-            } else {
-                if (objectMeta.getContentDisposition() != null) {
-                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
-                }
-            }
-
-            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING)) {
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
-                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
-            } else {
-                if (objectMeta.getContentEncoding() != null) {
-                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
-                }
-            }
-
-            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE)) {
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
-                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
-            } else {
-                if (objectMeta.getContentLanguage() != null) {
-                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
-                }
-            }
-
-            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE)) {
-                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
-                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
-            } else {
-                if (objectMeta.getContentType() != null) {
-                    response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
-                }
-            }
-
-            if (requestParas.containsKey(RestParamDefine.GetObjectReqPara.RES_EXPIRES)) {
-                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
-                        requestParas.get(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
-            } else {
-                if (objectMeta.getExpires() != null) {
-                    response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
-                }
+        if (request.getParameter(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL) != null){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL,
+                    request.getParameter(RestParamDefine.GetObjectReqPara.RES_CACHE_CONTROL));
+        } else {
+            if (objectMeta.getCacheControl() != null) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CACHE_CONTROL, objectMeta.getCacheControl());
             }
         }
+
+        if (request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION) != null){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION,
+                    request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_DISPOSITION));
+        } else{
+            if (objectMeta.getContentDisposition() != null) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_DISPOSITION, objectMeta.getContentDisposition());
+            }
+        }
+
+        if (request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING) != null){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING,
+                    request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_ENCODING));
+        } else {
+            if (objectMeta.getContentEncoding() != null) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_ENCODING, objectMeta.getContentEncoding());
+            }
+        }
+
+        if (request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE) != null){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE,
+                    request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_LANGUAGE));
+        } else {
+            if (objectMeta.getContentLanguage() != null) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_LANGUAGE, objectMeta.getContentLanguage());
+            }
+        }
+
+        if (request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE) != null){
+            response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE,
+                    request.getParameter(RestParamDefine.GetObjectReqPara.RES_CONTENT_TYPE));
+        } else {
+            if (objectMeta.getContentType() != null) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.CONTENT_TYPE, objectMeta.getContentType());
+            }
+        }
+
+        if (request.getParameter(RestParamDefine.GetObjectReqPara.RES_EXPIRES) != null){
+            response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES,
+                    request.getParameter(RestParamDefine.GetObjectReqPara.RES_EXPIRES));
+        } else {
+            if (objectMeta.getExpires() != null) {
+                response.addHeader(RestParamDefine.GetObjectResHeader.EXPIRES, objectMeta.getExpires());
+            }
+        }
+
 
         if (null == range){
             response.setContentLengthLong(objectMeta.getSize());
