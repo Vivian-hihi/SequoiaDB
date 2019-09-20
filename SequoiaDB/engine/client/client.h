@@ -2788,6 +2788,7 @@ SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
                                   SINT64 sessionID,
                                   bson *options ) ;
+
 /** \fn INT32 sdbCreateLobID( sdbCollectionHandle cHandle,
                               const bson_oid_t *oid )
     \brief create a large object 
@@ -2816,29 +2817,13 @@ SDB_EXPORT INT32 sdbCreateLobID1( sdbCollectionHandle cHandle,
                               const CHAR *pTimeStamp,
                               bson_oid_t *oid ) ;
 
-/** \fn INT32 sdbCreateLob( sdbCollectionHandle cHandle,
-                          const bson_oid_t *oid,
-                          sdbLobHandle *lobHandle )
-    \brief create a large object 
-    \param [in] cHandle The collection handle
-    \param [in] oid The object id
-    \param [out] lobHandle The handle of object
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-SDB_EXPORT INT32 sdbCreateLob( sdbCollectionHandle cHandle,
-                             const bson_oid_t *oid,
-                             sdbLobHandle *lobHandle ) ;
-
-
-
 /** \fn INT32 sdbOpenLob( sdbCollectionHandle cHandle,
                           const bson_oid_t *oid,
                           INT32 mode,
                           sdbLobHandle *lobHandle )
     \brief create a large object or open a large object to read or write
     \param [in] cHandle The collection handle
-    \param [in] oid The object id
+    \param [in] oid The object id, if mode is SDB_LOB_CREATEONLY, the oid can be NULL
     \param [in] mode The open mode: SDB_LOB_CREATEONLY/SDB_LOB_READ/SDB_LOB_WRITE
     \param [out] lobHandle The handle of object
     \retval SDB_OK Operation Success
