@@ -286,8 +286,7 @@ class SslCompiler(CompilerBase):
             print("Makefile exists. Configure has been done already.")
         else:
             self.append_cmd(config_exec, config_args)
-        self.append_cmd('make ' + comm_build_opt + ' build_crypto')
-        self.append_cmd('make ' + comm_build_opt + ' build_ssl')
+        self.append_cmd('make ' + comm_build_opt)
         return 0
 
     def archive(self):
