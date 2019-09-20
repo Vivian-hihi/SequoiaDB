@@ -247,6 +247,7 @@ const zend_function_entry clFun[] = {
    PHP_ME( SequoiaCL, truncateLob,           NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, listLob,               NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaCL, listLobPieces,         NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaCL, createLobID,           NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaCL, deleteIndex, dropIndex,
                                              NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaCL, getCollectionName, getName,

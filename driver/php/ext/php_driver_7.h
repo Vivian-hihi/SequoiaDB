@@ -43,6 +43,10 @@
 #define PHP_FE_END {NULL,NULL,NULL}
 #endif
 
+//oid size
+#define PHP_OID_SIZE 25
+#define PHP_OID_LEN  (PHP_OID_SIZE-1)
+
 //name size
 #define PHP_NAME_SIZE 128
 #define PHP_NAME_LEN  (PHP_NAME_SIZE-1)

@@ -2079,68 +2079,89 @@ error:
 PHP_METHOD( SequoiaCL, listLob )
 {
    INT32 rc = SDB_OK ;
-   zval *pCondition = NULL ;
-   zval *pSelector  = NULL ;
-   zval *pOrderBy   = NULL ;
-   zval *pHint      = NULL ;
-   zval *pThisObj   = getThis() ;
+   INT64 numToSkip    = 0 ;
+   INT64 numToReturn  = -1 ;
+   zval *pCondition   = NULL ;
+   zval *pSelector    = NULL ;
+   zval *pOrderBy     = NULL ;
+   zval *pHint        = NULL ;
+   zval *pNumToSkip   = NULL ;
+   zval *pNumToReturn = NULL ;
+   zval *pThisObj     = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
    bson condition ;
    bson selector ;
    bson orderBy ;
    bson hint ;
+
    bson_init( &condition ) ;
    bson_init( &selector ) ;
    bson_init( &orderBy ) ;
    bson_init( &hint ) ;
+
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|zzzz",
+
+   if ( PHP_GET_PARAMETERS( "|zzzzzz",
                             &pCondition,
                             &pSelector,
                             &pOrderBy,
-                            &pHint ) == FAILURE )
+                            &pHint,
+                            &pNumToSkip,
+                            &pNumToReturn ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   /* 预留参数
+
    rc = php_auto2Bson( pCondition, &condition TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pSelector, &selector TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pOrderBy, &orderBy TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pHint, &hint TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   */
-   PHP_READ_HANDLE( pThisObj,
-                    cl,
-                    sdbCollectionHandle,
-                    SDB_CL_HANDLE_NAME,
-                    clDesc ) ;
-   rc = sdbListLobs( cl, &cursor ) ;
+
+   rc = php_zval2Long( pNumToSkip, &numToSkip TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   PHP_BUILD_CLASS( FALSE,
-                    pThisObj,
-                    pSequoiadbCursor,
-                    cursor,
-                    cursorDesc ) ;
+
+   rc = php_zval2Long( pNumToReturn, &numToReturn TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   PHP_READ_HANDLE( pThisObj, cl, sdbCollectionHandle, SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+
+   rc = sdbListLobs1( cl, &condition, &selector, &orderBy, &hint,
+                      numToSkip, numToReturn, &cursor ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   PHP_BUILD_CLASS( FALSE, pThisObj, pSequoiadbCursor, cursor, cursorDesc ) ;
+
 done:
    bson_destroy( &condition ) ;
    bson_destroy( &selector ) ;
@@ -2156,68 +2177,89 @@ error:
 PHP_METHOD( SequoiaCL, listLobPieces )
 {
    INT32 rc = SDB_OK ;
-   zval *pCondition = NULL ;
-   zval *pSelector  = NULL ;
-   zval *pOrderBy   = NULL ;
-   zval *pHint      = NULL ;
-   zval *pThisObj   = getThis() ;
+   INT64 numToSkip    = 0 ;
+   INT64 numToReturn  = -1 ;
+   zval *pCondition   = NULL ;
+   zval *pSelector    = NULL ;
+   zval *pOrderBy     = NULL ;
+   zval *pHint        = NULL ;
+   zval *pNumToSkip   = NULL ;
+   zval *pNumToReturn = NULL ;
+   zval *pThisObj     = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
    bson condition ;
    bson selector ;
    bson orderBy ;
    bson hint ;
+
    bson_init( &condition ) ;
    bson_init( &selector ) ;
    bson_init( &orderBy ) ;
    bson_init( &hint ) ;
+
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "|zzzz",
+
+   if ( PHP_GET_PARAMETERS( "|zzzzzz",
                             &pCondition,
                             &pSelector,
                             &pOrderBy,
-                            &pHint ) == FAILURE )
+                            &pHint,
+                            &pNumToSkip,
+                            &pNumToReturn ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   /* 预留参数
+
    rc = php_auto2Bson( pCondition, &condition TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pSelector, &selector TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pOrderBy, &orderBy TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
+
    rc = php_auto2Bson( pHint, &hint TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   */
-   PHP_READ_HANDLE( pThisObj,
-                    cl,
-                    sdbCollectionHandle,
-                    SDB_CL_HANDLE_NAME,
-                    clDesc ) ;
-   rc = sdbListLobPieces( cl, &cursor ) ;
+
+   rc = php_zval2Long( pNumToSkip, &numToSkip TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   PHP_BUILD_CLASS( FALSE,
-                    pThisObj,
-                    pSequoiadbCursor,
-                    cursor,
-                    cursorDesc ) ;
+
+   rc = php_zval2Long( pNumToReturn, &numToReturn TSRMLS_CC ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   PHP_READ_HANDLE( pThisObj, cl, sdbCollectionHandle, SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+
+   rc = sdbListLobPieces1( cl, &condition, &selector, &orderBy, &hint,
+                           numToSkip, numToReturn, &cursor ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   PHP_BUILD_CLASS( FALSE, pThisObj, pSequoiadbCursor, cursor, cursorDesc ) ;
+
 done:
    bson_destroy( &condition ) ;
    bson_destroy( &selector ) ;
@@ -2226,6 +2268,62 @@ done:
    return ;
 error:
    RETVAL_NULL() ;
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}
+
+PHP_METHOD( SequoiaCL, createLobID )
+{
+   INT32 rc = SDB_OK ;
+   PHP_LONG timeLen = 0 ;
+   CHAR *pTime      = NULL ;
+   CHAR *pOid       = NULL ;
+   zval *pThisObj   = getThis() ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   bson_oid_t bot ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   if ( PHP_GET_PARAMETERS( "|s", &pTime, &timeLen ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   pOid = (CHAR *)emalloc( PHP_OID_SIZE ) ;
+   if( !pOid )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   ossMemset( pOid, 0, PHP_OID_SIZE ) ;
+
+   PHP_READ_HANDLE( pThisObj, cl, sdbCollectionHandle, SDB_CL_HANDLE_NAME,
+                    clDesc ) ;
+
+   if ( pTime && timeLen > 0 )
+   {
+      rc = sdbCreateLobID1( cl, pTime, &bot ) ;
+   }
+   else
+   {
+      rc = sdbCreateLobID( cl, &bot ) ;
+   }
+
+   if ( rc )
+   {
+      goto error ;
+   }
+
+   bson_oid_to_string( &bot, pOid ) ;
+
+   PHP_RETVAL_STRING( pOid, 0 ) ;
+
+done:
+   return ;
+error:
+   RETVAL_EMPTY_STRING() ;
    PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
    goto done ;
 }
