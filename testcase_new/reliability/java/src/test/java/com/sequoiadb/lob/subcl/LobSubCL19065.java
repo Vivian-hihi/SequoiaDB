@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -45,6 +46,7 @@ public class LobSubCL19065 extends SdbTestBase {
     private int writeLobSize = 1024 * 1024 * 10;
     private byte[] lobBuff;
     private List<ObjectId> lobIds;
+    private String safeCoordUrl;
 
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -69,6 +71,8 @@ public class LobSubCL19065 extends SdbTestBase {
     public void test() throws ReliabilityException {
         GroupWrapper catalogGroup = groupMgr.getGroupByName("SYSCatalogGroup");
         NodeWrapper cataMaster = catalogGroup.getSlave();
+
+        safeCoordUrl = CommLib.getSafeCoordUrl(cataMaster.hostName());
 
         // 建立并行任务
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataMaster.hostName(), 0, 10);
@@ -107,7 +111,7 @@ public class LobSubCL19065 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(safeCoordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
                 lobIds = LobUtil.createAndWriteLob(mainCL, lobBuff);
             }
