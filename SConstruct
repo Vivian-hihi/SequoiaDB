@@ -138,8 +138,6 @@ def GuessArch():
       return 'ppc64'
    elif id == 'ppc64le':
       return 'ppc64le'
-   elif id == 'aarch64':
-      return 'arm64'
    else:
       return None
 
@@ -224,10 +222,10 @@ def get_variant_dir():
 
 def get_platform_dir():
     if "linux" == guess_os:
-        if "ia64" == guess_arch or "arm64" == guess_arch:
-            return "linux64"
-        elif "ia32" == guess_arch:
+        if "ia32" == guess_arch:
             return "linux32"
+        elif "ia64" == guess_arch:
+            return "linux64"
         elif "ppc64" == guess_arch:
             return "ppclinux64"
         elif "ppc64le" == guess_arch:
@@ -430,6 +428,10 @@ usesm = False
 if guess_os == 'linux' or guess_os == 'win32':
    usesm = True
 
+usefuse = False
+if guess_os == 'linux' and guess_arch == "ia64":
+    usefuse = True
+
 extraLibPlaces = []
 
 env['EXTRACPPPATH'] = []
@@ -495,7 +497,7 @@ if guess_os == "linux":
     if guess_arch == "ia32":
         hdfsJniPath = join(java_dir,"jdk_linux32/include")
         hdfsJniMdPath = join(java_dir,"jdk_linux32/include/linux")
-    elif guess_arch == "ia64" or guess_arch == "arm64":
+    elif guess_arch == "ia64":
         hdfsJniPath = join(java_dir,"jdk_linux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_linux64/include/linux")
     elif guess_arch == "ppc64":
@@ -516,7 +518,7 @@ env.Append(
 CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),
          join(ssl_dir,'include'),join(lz4_dir,'include'),join(zlib_dir,'./'),
          join(snappy_dir,'include'),join(gtest_dir,'include'),
-         join(js_dir, 'include'), pcre_dir, boost_dir, ssh2_dir, hdfsJniPath,
+         pcre_dir, boost_dir, ssh2_dir, hdfsJniPath,
          hdfsJniMdPath] )
 
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H", "BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC"] )
@@ -538,6 +540,8 @@ if guess_os is not None:
         env.Append(CPPPATH=join(sm_lib_dir, platform_dir, 'include'))
         sm_lib_dir = join(sm_lib_dir, platform_dir, build_dir)
         env.Append(EXTRALIBPATH=[sm_lib_dir])
+    if usefuse:
+        fuse_lib_dir = join(fuse_lib_dir, platform_dir, '')
 
 # specify dependent libraries for javascript engine and boost
 if guess_os == "linux":
@@ -551,20 +555,16 @@ if guess_os == "linux":
     env.Append( LIBS=["pthread"] )
     # GNU
     env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
-    # 64 bit linux
-    if guess_arch == "ia64" or guess_arch == "arm64":
-        linux64 = True
-        nixLibPrefix = "lib64"
-        env.Append( EXTRALIBPATH="/lib64" )
-        env.Append( EXTRALIBPATH=join(mdocml_dir, 'lib/linux64') )
-        # use project-related spidermonkey library
-        fuse_lib = join(fuse_lib_dir, 'libfuse.a')
-        Export("fuse_lib")
     # in case for 32 bit linux or compiling 32 bit in 64 env
-    elif guess_arch == "ia32":
+    if guess_arch == "ia32":
         linux64 = False
         nixLibPrefix = "lib"
         env.Append( EXTRALIBPATH="/lib" )
+    # 64 bit linux
+    elif guess_arch == "ia64":
+        linux64 = True
+        nixLibPrefix = "lib64"
+        env.Append( EXTRALIBPATH="/lib64" )
     # power pc linux
     elif guess_arch == "ppc64":
         linux64 = True
@@ -587,8 +587,11 @@ if guess_os == "linux":
         smlib_file = join(sm_lib_dir, 'libmozjs185.so')
         env.Append( CPPDEFINES=[ "XP_UNIX" ] )
         env.Append( LIBS=['js_static'] )
-
-    # lz4, zlib and snappy
+    # fuse
+    if usefuse:
+        fuse_lib = join(fuse_lib_dir, 'libfuse.a')
+    # mdocml, lz4, zlib and snappy
+    mdocml_lib = join(mdocml_lib_dir, 'libmdocml.a')
     zlib_lib = join(zlib_lib_dir, 'libzlib.a')
     lz4_lib = join(lz4_lib_dir, 'liblz4.a')
     snappy_lib = join(snappy_lib_dir, 'libsnappy.a')
@@ -875,10 +878,11 @@ if cov:
 
 
 if linux64:
-    toolEnv.Append( LIBS=['fuse'] )
     toolEnv.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
-    toolEnv.Append( CPPPATH = join(fuse_dir, "include") )
-    toolEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )
+    if usefuse:
+        toolEnv.Append( LIBS=['fuse'] )
+        toolEnv.Append( CPPPATH = join(fuse_dir, "include") )
+        toolEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )
     toolEnv.Append( LIBPATH=['$EXTRALIBPATH'] )
 
 # The following symbols are exported for use in subordinate SConscript files.
@@ -900,6 +904,7 @@ Export("clientCppEnv")
 Export("clientCEnv")
 Export("installSetup getSysInfo")
 Export("usesm")
+Export("usefuse")
 Export("windows linux nix aix linux64")
 if usesm:
    Export("smlib_file")
@@ -908,6 +913,8 @@ Export("ssllib_file1")
 Export("zlib_lib")
 Export("lz4_lib")
 Export("snappy_lib")
+if usefuse:
+   Export("fuse_lib")
 Export("hasEngine")
 Export("hasTestcase")
 Export("hasTool")
@@ -964,7 +971,7 @@ else:
 print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
                          "ssl_lib_dir", "mdocml_lib_dir", "zlib_lib_dir", "lz4_lib_dir",
-                         "snappy_lib_dir", "sm_lib_dir"], duplicate=False)
+                         "snappy_lib_dir", "sm_lib_dir", "fuse_lib_dir"], duplicate=False)
 
 if not has_option("noautogen"):
    language = get_option ( "language" )

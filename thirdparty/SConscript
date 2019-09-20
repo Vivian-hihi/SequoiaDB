@@ -16,6 +16,8 @@ Import("zlib_lib_dir")
 Import("lz4_lib_dir")
 Import("snappy_lib_dir")
 Import("sm_lib_dir")
+Import("fuse_lib_dir")
+Import("usefuse")
 
 
 class Utils:
@@ -247,7 +249,7 @@ class SpiderMonkeyCompiler(CompilerBase):
                     self._get_lib_archive_dir())
         shutil.copy(os.path.join(self.build_dir, 'libmozjs185.so'),
                     self._get_lib_archive_dir())
-        include_path = os.path.join(self.src_root, 'include')
+        include_path = os.path.join(self._get_lib_archive_dir(), './../include')
         if os.path.exists(include_path):
             shutil.rmtree(include_path)
         shutil.copytree(os.path.join(self.build_dir, 'dist/include'),
@@ -379,6 +381,31 @@ class ZlibCompiler(CompilerBase):
         self.append_cmd('scons', args)
         return 0
 
+class FuseCompiler(CompilerBase):
+    def __init__(self, src_root):
+        CompilerBase.__init__(self, "fuse", src_root)
+
+    def _get_lib_archive_dir(self):
+        return fuse_lib_dir
+
+    def _init_linux_cmds(self, arch):
+        makeconf_file = './makeconf.sh'
+        config_file = './configure'
+        config_args = ''
+
+        makeconf_exec = os.path.join(self.src_root, makeconf_file)
+        config_exec = os.path.join(self.src_root, config_file)
+        os.chmod(makeconf_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+        os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+        self.append_cmd(makeconf_exec, '')
+        self.append_cmd(config_exec, '')
+        args = comm_build_opt + ' -j ' + str(comm_job_num)
+        self.append_cmd('make ' + args)
+        return 0
+
+    def archive(self):
+        shutil.copy(os.path.join(self.src_root, 'lib/.libs/libfuse.a'),
+                    self._get_lib_archive_dir())
 
 components = []
 
