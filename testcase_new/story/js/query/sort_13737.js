@@ -32,29 +32,16 @@ function main()
 
    //query1
    //select a,b,c from foo.bar order by a
-   var sel = varCL.find(null,{a:null,b:'b',c:'c'}).sort({a:1}).hint({"":indexName1});
+   var sel = varCL.find().sort({a:1}).hint({"":indexName1});
    checkRec( sel, records );
    println("'select a,b,c from foo.bar order by a' with index1 finished!");
 
    //query2
    //select b,a from foo.bar order by b desc
-   var sel = varCL.find(null,{b:'b',a:null}).sort({b:-1}).hint({"":indexName2});
-   var flag=true;
+   var sel = varCL.find().sort({b:-1}).hint({"":indexName2});
    //expected result {a:9999,...} {a:9998,...} ... {a:0,...}
-   var i = rownums;
-   while(sel.next())
-   {
-      var ret = sel.current();
-      if(ret.toObj()['a']!=(i-1))
-      {
-          throw buildException("main()", null, "failed to run index query, check rc : a=" + ret.toObj()['a'], i+1, ret.toObj()['a']);
-      }
-      i--;
-   }
-   if(i !== 0)
-   {
-      throw "returned record number is : " + i;
-   }
+   records.reverse();
+   checkRec( sel, records );
    println("'select b,a from foo.bar order by b desc' with index2 finished!");
    commDropCL( db, csName, clName, false, false, "drop cl in the end" ) ;
 }

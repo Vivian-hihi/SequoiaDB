@@ -2,9 +2,10 @@
 *@Description: find().sort({a:1|-1}).skip(number).limit(number)
 *@Modify list:
 *   2014-5-5 wenjing wang  Init
+*   2019-08-23 wangkexin Modified
 *******************************************************************************/
 
-var clName = CHANGEDPREFIX + "_find"
+var clName = "cl13756";
 
 function loadData(cl, number)
 {
@@ -303,7 +304,7 @@ function test_OnHorizontalTbl(db)
 }
 
 /*******************************************************************************
-*@Description：水平分区表上测试 sort({a:1|-1})结合(skip(1)、limit(1)、
+*@Description：垂直分区表上测试 sort({a:1|-1})结合(skip(1)、limit(1)、
                skip one datagroup's records, limit one datagroup's records)
                skip one subCL's records, limit one subCL's records
 *@Input：db 连接对象  
@@ -313,8 +314,8 @@ function test_onVerticalTbl(db)
 {
    try
    {
-      var subclName1 = CHANGEDPREFIX + "_findsubcl1";
-      var subclName2 = CHANGEDPREFIX + "_findsubcl2";
+      var subclName1 = "cl13756_subcl1";
+      var subclName2 = "cl13756_subcl2";
       var mainCL = commCreateCLByOption(db, COMMCSNAME, clName, buildOption("a", true, 0), true);
       var subcl1 = commCreateCLByOption(db, COMMCSNAME, subclName1, buildOption("a", false, 0), true);
       var groupsnum = splitTable(db, subcl1, subclName1, "a");
