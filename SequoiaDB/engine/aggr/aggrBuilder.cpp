@@ -111,7 +111,6 @@ namespace engine
                              SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
-      BOOLEAN hasNew = FALSE;
       qgmOptiTreeNode *pOptiTree = NULL;
       qgmOptiTreeNode *pExtend = NULL;
       qgmPlanContainer *pContainer = NULL;
@@ -121,8 +120,7 @@ namespace engine
 
       pContainer = SDB_OSS_NEW _qgmPlanContainer() ;
       PD_CHECK( pContainer != NULL, SDB_OOM, error, PDERROR,
-               "malloc failed" );
-      hasNew = TRUE;
+                "malloc failed" );
 
       // 1.parse the input objs and build the opti tree
       rc = buildTree( objs, objNum, pOptiTree, pContainer->ptrTable(),
@@ -159,17 +157,17 @@ namespace engine
                      "invalid container type!" );
       }
 
-      // 5.execute
-      rc = pContainer->execute( cb );
-      PD_RC_CHECK( rc, PDERROR, "execute failed(rc=%d)", rc );
-
-      // 6. create context
+      // 5. create context
       SDB_ASSERT( QGM_PLAN_TYPE_RETURN == pContainer->type(),
                   "invalid container type!" );
       rc = createContext( pContainer, cb, contextID );
       PD_RC_CHECK( rc, PDERROR, "failed to create context(rc=%d)", rc );
 
-      /// set cur trans context id
+      // 6.execute
+      rc = pContainer->execute( cb );
+      PD_RC_CHECK( rc, PDERROR, "execute failed(rc=%d)", rc );
+
+      /// 7. set cur trans context id
       if ( cb->isAutoCommitTrans() )
       {
          cb->setCurAutoTransCtxID( contextID ) ;
@@ -184,13 +182,18 @@ namespace engine
       {
          SAFE_OSS_DELETE( pOptiTree );
       }
-      if ( hasNew
-         && ( rc != SDB_OK || QGM_PLAN_TYPE_RETURN != pContainer->type()) )
+      if ( pContainer && QGM_PLAN_TYPE_RETURN != pContainer->type() )
       {
          SDB_OSS_DEL pContainer;
       }
       return rc;
    error:
+      if ( -1 != contextID )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      SAFE_OSS_DELETE( pContainer ) ;
       goto done;
    }
 
