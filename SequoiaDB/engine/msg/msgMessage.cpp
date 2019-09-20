@@ -74,7 +74,7 @@ INT32 msgCheckBuffer ( CHAR **ppBuffer,
 
    if ( packetLength > *bufferSize )
    {
-      INT32 newSize = ossRoundUpToMultipleX ( packetLength, SDB_PAGE_SIZE ) ;
+      INT32 newSize = ossRoundUpToMultipleX ( packetLength, 4 ) ;
       if ( newSize < 0 )
       {
          PD_LOG ( PDERROR, "new buffer overflow" ) ;
