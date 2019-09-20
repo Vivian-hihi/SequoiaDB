@@ -1247,7 +1247,7 @@ public class DBCollection {
             else {
                 String msg = "matcher = " + matcher + ", selector = " + selector + ", orderBy = "
                         + orderBy + ", hint = " + hint + ", skipRows = " + skipRows
-                        + ", returnRows = " + returnRows;
+                        + ", returnRows = " + returnRows + ", flags = " + flags;
                 sequoiadb.throwIfError(response, msg);
             }
         }
