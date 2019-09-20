@@ -68,13 +68,14 @@ public class LobSubCL19059 extends SdbTestBase {
         mainCL = createMainCLAndAttachCL();
         lobBuff = LobUtil.getRandomBytes(writeLobSize);
 
-        safeCoordUrl = CommLib.getSafeCoordUrl(groupMgr.getGroupByName(groupName).getMaster().hostName());
     }
 
     @Test
     public void test() throws ReliabilityException {
         GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
         NodeWrapper dataSlave = dataGroup.getSlave();
+
+        safeCoordUrl = CommLib.getSafeCoordUrl(dataSlave.hostName());
 
         // 建立并行任务
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlave.hostName(), 0, 10);
