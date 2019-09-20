@@ -3,37 +3,31 @@
 *               context, duplicate index read will happen. [jira_201]
 *@Modify list :
 *               2014-11-6  xiaojun Hu  Changed
+*               2019-08-23 wangkexin Modified
 *******************************************************************************/
 main() ;
 // main function
 function main()
 {
-   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true, "clear collection in the beginning" ) ;
-   var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "failed to create collection in the beginning" ) ;
-   println("create collection success") ;
+   var clName = "cl7518";
+   var cl = readyCL( clName );
    // insert data
    var count = 2000;
+   var records = [];
    for(var i = 1 ;i <= count ;i++)
    {
-      var records = [];
-      for(var j = 1 ;j <= 10 ;j++)
-      {
-         records.push({id:i,pid:j,name:"mike"+i+"index"+j,content:"afdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsa",uid:i});
-      }
-      cl.insert(records);
+      records.push({id:i,pid:i,name:"mike"+i+"index"+i,content:"afdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsa",uid:i});  
    }
+   cl.insert(records);
    println("insert data success") ;
    
    // create index
    cl.createIndex("idIndex",{id:1},false) ;
-   sleep(1000) ;
    cl.createIndex("idpidIndex",{id:-1,pid:1},false) ;
-   sleep(1000) ;
    cl.createIndex("idpidnameIndex",{id:1,pid:1,name:1},true) ;
-   sleep(1000) ;
    println("create index successful") ;
    
-   var _clName = COMMCSNAME + "." + COMMCLNAME ;
+   var _clName = COMMCSNAME + "." + clName ;
    var snapInfo1 = getCurrentRead( db, _clName ) ;
    var dataRead1 = snapInfo1[0] ;
    var indexRead1 = snapInfo1[1];
@@ -121,7 +115,7 @@ function main()
    }
    println( "query data success" ) ;
 
-   commDropCL( db, COMMCSNAME, COMMCLNAME, false, false, "clear collection in the end, correct way" ) ;
+   commDropCL( db, COMMCSNAME, clName, false, false, "clear collection in the end, correct way" ) ;
 }
 
 function getCurrentRead( db, clName )

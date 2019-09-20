@@ -42,23 +42,18 @@ function main()
    mainCL.attachCL(csName + "." + subCLName3,{LowBound:{a:6000},UpBound:{a:20000}});
 
    //insert data
-   var records = [];
-   for(var i=0;i<rownums;i++)  
-   {
-      records.push({a:rownums-i,b:i,c:"abcdefghijkl"+i});
-   }
-   mainCL.insert(records);
+   var records = readyData( mainCL, rownums );
 
-   //query1
+   //query1 切分键索引排序
    //select a,b,c from foo.bar order by a desc
-   var sel = mainCL.find(null,{a:0,b:0,c:'c'}).sort({a:-1});
-   checkRec( sel, records );
+   var sel = mainCL.find().sort({a:-1});
+   checkSortResult( mainCL, records, -1 , sel );
    println("'select a,b,c from foo.bar order by a desc' finished!");
 
    //create index
    mainCL.createIndex(indexName,{a:1, b:1},true);
 
-   //query2
+   //query2 普通索引排序
    //select b from foo.bar order by b
    db.setSessionAttr( {PreferedInstance:'M'} ) ;
    // 走索引查询
@@ -72,23 +67,10 @@ function main()
          throw "failed to run index query";
       }
    }
-   var sel = mainCL.find(null,{b:0}).sort({b:1}).hint({"":indexName});
+   var sel = mainCL.find().sort({b:1}).hint({"":indexName});
    //expected result {b:0} {b:1} ... {b:rownums-1}
-   var i = 0;
-   while(sel.next())
-   {
-      var ret = sel.current();
-      if(ret.toObj()['b']!=i)
-      {
-         throw buildException("main()", null, "failed to run index query, check rc : b=" + ret.toObj()['b'], i, ret.toObj()['b']);
-      }
-      i++;
-   }
-   if( i !== rownums )
-   {
-      throw "returned record number is : " + i;
-   }
-   println("'select b from foo.bar order by b' finished!");
+   checkSortResult( mainCL, records, 1 , sel );
+   println("'select a,b,c from foo.bar order by b' finished!");
 
    mainCL.detachCL(COMMCSNAME + "." + subCLName1);
    mainCL.detachCL(COMMCSNAME + "." + subCLName2);
@@ -99,4 +81,38 @@ function main()
    commDropCL( db, csName, subCLName2, false, false, "drop sub cl2 in the end" ) ;
    commDropCL( db, csName, subCLName3, false, false, "drop sub cl3 in the end" ) ;
    commDropCL( db, csName, mainclName, false, false, "drop main cl in the end" ) ;
+}
+
+function readyData( cl, insertNum )
+{
+	try
+	{
+        var orderedRecords = new Array();
+		println("\n---Begin to insert cl data.");
+        var records = new Array();
+        for(var i = 0; i < insertNum; i++ )
+        {
+            records[i] = {_id:i,a:i,b:i,c:"strTest13744_" + i};
+        }
+        //将有序的数组中数据保存在orderedRecords并返回（使用slice()避免将原数组的引用赋值给orderedRecords）
+        var orderedRecords = records.slice();
+        //将有序的数组中数据打乱顺序并插入到集合中
+        var randomRecords = records.sort(function(){return 0.5-Math.random()});
+        cl.insert( randomRecords );
+        return orderedRecords;
+	}
+	catch(e)
+	{
+		throw buildException("readyData()",e,"insert", "insert success","insert fail");
+	}
+}
+
+function checkSortResult( cl, records, sortOrder , sel )
+{
+   var expRecords = records.slice();
+   if( sortOrder == -1 )
+   {
+        expRecords.reverse();
+   }
+   checkRec( sel, expRecords );
 }
