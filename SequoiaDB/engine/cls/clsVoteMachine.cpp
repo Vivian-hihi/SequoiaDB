@@ -106,7 +106,8 @@ namespace engine
     _current( NULL ),
     _groupInfo( info ),
     _shadowWeight( CLS_ELECTION_WEIGHT_USR_MIN ),
-    _forceMillis( 0 )
+    _forceMillis( 0 ),
+    _shadowTimeout( 0 )
    {
 
    }
@@ -184,6 +185,16 @@ namespace engine
    void _clsVoteMachine::handleTimeout( const UINT32 &millisec )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_HDTMOUT ) ;
+
+      if ( _shadowTimeout > millisec )
+      {
+         _shadowTimeout -= millisec ;
+      }
+      else
+      {
+         _shadowTimeout = 0 ;
+      }
+
       if ( !_current )
       {
          goto done ;

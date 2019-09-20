@@ -46,6 +46,9 @@ using namespace std ;
 
 namespace engine
 {
+
+   #define CLS_SHADOWN_TIMEOUT_DFT           ( 3000 )
+
    class _clsVoteMachine : public SDBObject
    {
    public:
@@ -69,15 +72,21 @@ namespace engine
          return _shadowWeight ;
       }
 
-      OSS_INLINE void setShadowWeight( UINT8 weight )
+      OSS_INLINE void setShadowWeight( UINT8 weight,
+                                       UINT32 timeout = CLS_SHADOWN_TIMEOUT_DFT )
       {
          _shadowWeight = weight ;
-         return ;
+         _shadowTimeout = timeout ;
       }
 
       OSS_INLINE BOOLEAN isInStepUp() const
       {
          return 0 < _forceMillis ;
+      }
+
+      OSS_INLINE BOOLEAN isShadowTimeout() const
+      {
+         return 0 == _shadowTimeout ;
       }
 
    public:
@@ -99,6 +108,7 @@ namespace engine
       _clsVoteStatus             *_current ;
       _clsGroupInfo              *_groupInfo ;
       UINT8                      _shadowWeight ;
+      UINT32                     _shadowTimeout ;  /// ms
       UINT32                     _forceMillis ;
    } ;
 

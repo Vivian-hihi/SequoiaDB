@@ -172,6 +172,7 @@ namespace engine
       _rtnReelect() ;
       virtual ~_rtnReelect() ;
       virtual INT32 spaceNode () ;
+      virtual INT32 spaceService () ;
 
    public:
       virtual const CHAR * name () { return NAME_REELECT ; }
@@ -186,6 +187,7 @@ namespace engine
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
 
    private:
+      BOOLEAN _isDestNotify ;
       UINT32 _timeout ;
       CLS_REELECTION_LEVEL _level ;
    } ;

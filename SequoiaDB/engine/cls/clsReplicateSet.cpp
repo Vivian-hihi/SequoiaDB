@@ -1032,7 +1032,8 @@ namespace engine
             }
 
             // if find new primary node, should to wake up reelection
-            if ( CLS_ELECTION_WEIGHT_USR_MIN != _vote.getShadowWeight() )
+            if ( CLS_ELECTION_WEIGHT_USR_MIN != _vote.getShadowWeight() &&
+                 _vote.isShadowTimeout() )
             {
                reelectionDone() ;
             }
@@ -1285,7 +1286,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSREPSET__HANDLESTEPDOWN ) ;
       _vote.setShadowWeight( CLS_ELECTION_WEIGHT_MIN ) ;
       _vote.force( CLS_ELECTION_STATUS_SEC ) ;
-//      _reelection.signal( CLS_REELECTION_LEVEL_5 ) ;
       PD_TRACE_EXITRC( SDB__CLSREPSET__HANDLESTEPDOWN, rc ) ;
       return rc ;
    }
