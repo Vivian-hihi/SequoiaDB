@@ -122,7 +122,16 @@ public class S3TestBase {
             Assert.fail("update application.properties file failed");
         }
         System.out.println("finish update application.properties");
-        execCmd(Command.S3_START);
+        execCmd(Command.S3_CHECKPORTALIVE);
+        String output = Command.S3_CHECKPORTALIVE.getOutput();
+        //检查如已存在s3进程，则重启s3服务，不存在的话就直接启动s3
+        if (output.contains("sequoias3")) {
+            System.out.println("restart s3...");
+            execCmd(Command.S3_STOP);
+            execCmd(Command.S3_START);
+        } else {
+            execCmd(Command.S3_START);
+        }
     }
 
     public static void getInstallPath() throws Exception {
@@ -175,6 +184,7 @@ public class S3TestBase {
     private static void execCmd(Command cmd) throws Exception {
         String command = "";
         switch (cmd) {
+        case S3_CHECKPORTALIVE:
         case S3_START:
         case S3_STOP:
             cmd.exec(s3HostName, remoteUser, remotePwd, installPath);
@@ -215,6 +225,7 @@ public class S3TestBase {
     }
 
     enum Command {
+        S3_CHECKPORTALIVE("%s/tools/sequoias3/sequoias3.sh status"), 
         S3_START("source /etc/profile;%s/tools/sequoias3/sequoias3.sh start > /tmp/s3start.log"),
         S3_STOP("%s/tools/sequoias3/sequoias3.sh stop -a"), 
         S3_SETCONFBEFORE("mv %s %s;echo 'sdbs3.sequoiadb.url=sequoiadb://%s' > %s"), 
