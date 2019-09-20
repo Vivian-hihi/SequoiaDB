@@ -161,16 +161,7 @@ namespace engine
       SDB_ASSERT( QGM_PLAN_TYPE_MAX != container->type(),
                   "impossible" ) ;
 
-      /// step 6: execute.
-      rc = container->execute( cb ) ;
-      needRollback = container->needRollback() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to execute qgm tree, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      /// step 7: if it is a query. create context.
+      /// step 6: if it is a query. create context.
       if ( QGM_PLAN_TYPE_RETURN == container->type() )
       {
          rc = _createContext( container, cb, contextID ) ;
@@ -179,30 +170,45 @@ namespace engine
             PD_LOG( PDERROR, "failed to create context:%d", rc ) ;
             goto error ;
          }
-         /// set cur trans context id
-         if ( cb->isAutoCommitTrans() )
-         {
-            cb->setCurAutoTransCtxID( contextID ) ;
-         }
       }
+
+      /// step 7: execute.
+      rc = container->execute( cb ) ;
+      needRollback = container->needRollback() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to execute qgm tree, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /// step 8: set cur trans context id
+      if ( -1 != contextID && cb->isAutoCommitTrans() )
+      {
+         cb->setCurAutoTransCtxID( contextID ) ;
+      }
+
       }
    done:
       /// if extended, we noly need release extended root.
       if ( NULL != extend )
       {
-         SAFE_OSS_DELETE( extend ) ;
+         SDB_OSS_DEL extend ;
       }
       else
       {
          SAFE_OSS_DELETE( opti ) ;
       }
-      if ( NULL != container &&
-           QGM_PLAN_TYPE_RETURN != container->type() )
+      if ( container && QGM_PLAN_TYPE_RETURN != container->type() )
       {
-         SAFE_OSS_DELETE( container ) ;
+         SDB_OSS_DEL container ;
       }
       return rc ;
    error:
+      if ( -1 != contextID )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
       SAFE_OSS_DELETE( container ) ;
       goto done ;
    }
