@@ -10070,15 +10070,14 @@ error:
 }
 
 SDB_EXPORT INT32 sdbCreateLobID( sdbCollectionHandle cHandle,
-                             bson_oid_t *oid )
+                                 bson_oid_t *oid )
 {
    return sdbCreateLobID1(cHandle, NULL, oid);
 }
 
-
 SDB_EXPORT INT32 sdbCreateLobID1( sdbCollectionHandle cHandle,
-                             const CHAR *pTimeStamp,
-                             bson_oid_t *oid )
+                                  const CHAR *pTimeStamp,
+                                  bson_oid_t *oid )
 {
    INT32 rc                        = SDB_OK ;
    SINT64 contextID                = -1 ;
@@ -10182,8 +10181,7 @@ SDB_EXPORT INT32 sdbCreateLobID1( sdbCollectionHandle cHandle,
 
 }
 
-
-static INT32 _sdbCreateLob( sdbCollectionHandle cHandle,
+static INT32 _sdbCreateLob1( sdbCollectionHandle cHandle,
                              const bson_oid_t *oid,
                              sdbLobHandle* lobHandle,
                              BOOLEAN* isOldVersionLobServer)
@@ -10347,10 +10345,9 @@ static INT32 _sdbCreateLob( sdbCollectionHandle cHandle,
       goto done ;
 }
 
-
-SDB_EXPORT INT32 sdbCreateLob( sdbCollectionHandle cHandle,
-                             const bson_oid_t *oid,
-                             sdbLobHandle* lobHandle )
+static INT32 _sdbCreateLob( sdbCollectionHandle cHandle,
+                            const bson_oid_t *oid,
+                            sdbLobHandle* lobHandle )
 {
    INT32 rc                        = SDB_OK ;
    bson_oid_t oidObj ;
@@ -10360,7 +10357,6 @@ SDB_EXPORT INT32 sdbCreateLob( sdbCollectionHandle cHandle,
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    connection = (sdbConnectionStruct*)(cs->_connection) ;
 
-   
    if ( !cs->_collectionFullName[0] || NULL == lobHandle )
    {
       rc = SDB_INVALIDARG ;
@@ -10375,12 +10371,12 @@ SDB_EXPORT INT32 sdbCreateLob( sdbCollectionHandle cHandle,
    if ( !connection->_isOldVersionLobServer )
    {
       BOOLEAN isOldVersionLobServer = FALSE ;
-      rc = _sdbCreateLob( cHandle, &oidObj, lobHandle, &isOldVersionLobServer) ;
+      rc = _sdbCreateLob1( cHandle, &oidObj, lobHandle, &isOldVersionLobServer) ;
       if ( isOldVersionLobServer )
       { 
          // deal with old version server. oid should be generate in client side
          bson_oid_gen ( &oidObj ) ;
-         rc = _sdbCreateLob( cHandle, &oidObj, lobHandle, NULL) ;
+         rc = _sdbCreateLob1( cHandle, &oidObj, lobHandle, NULL) ;
          if ( SDB_OK == rc )
          {
             connection->_isOldVersionLobServer = TRUE ;
@@ -10391,7 +10387,7 @@ SDB_EXPORT INT32 sdbCreateLob( sdbCollectionHandle cHandle,
    {
       // deal with old version server. oid should be generate in client side
       bson_oid_gen ( &oidObj ) ;
-      rc = _sdbCreateLob( cHandle, &oidObj, lobHandle, NULL) ;
+      rc = _sdbCreateLob1( cHandle, &oidObj, lobHandle, NULL) ;
    }
 
    if ( SDB_OK != rc )
@@ -10404,9 +10400,6 @@ SDB_EXPORT INT32 sdbCreateLob( sdbCollectionHandle cHandle,
    error:
       goto done ;   
 }
-
-
-
 
 SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
                              const bson_oid_t *oid,
@@ -10427,11 +10420,6 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    bson_init( &obj ) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    connection = (sdbConnectionStruct*)(cs->_connection) ;
-   if ( NULL == oid )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
 
    if ( !cs->_collectionFullName[0] || NULL == lobHandle )
    {
@@ -10442,6 +10430,26 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    if ( SDB_LOB_CREATEONLY != mode &&
         SDB_LOB_READ != mode &&
         SDB_LOB_WRITE != mode )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   // use _sdbCreateLob to create Lob.
+   if (SDB_LOB_CREATEONLY == mode)
+   {
+      rc = _sdbCreateLob(cHandle, oid, lobHandle) ;
+      if ( SDB_OK != rc )
+      { 
+         goto error ;
+      }
+      else
+      {  
+         goto done ;
+      }
+   }
+   // mode not equal SDB_LOB_CREATEONLY, the oid can't be NULL
+   if ( NULL == oid )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -11539,22 +11547,20 @@ error:
    goto done ;
 }
 
-
 SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
                               sdbCursorHandle *cursor)
 {
    return sdbListLobs1(cHandle, NULL, NULL, NULL, NULL, 0, -1 ,cursor);
 }
 
-
 SDB_EXPORT INT32 sdbListLobs1( sdbCollectionHandle cHandle,
-                              bson *condition,
-                              bson *selected,
-                              bson *orderBy,
-                              bson *hint,
-                              INT64 numToSkip,
-                              INT64 numToReturn,
-                              sdbCursorHandle *cursor)
+                               bson *condition,
+                               bson *selected,
+                               bson *orderBy,
+                               bson *hint,
+                               INT64 numToSkip,
+                               INT64 numToReturn,
+                               sdbCursorHandle *cursor)
 {
    INT32 rc                        = SDB_OK ;
    bson newHint;
@@ -11658,24 +11664,20 @@ error:
    goto done ;
 }
 
-
-
 SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
-                                  sdbCursorHandle *cursor )
+                                   sdbCursorHandle *cursor )
 {
     return sdbListLobPieces1(cHandle, NULL, NULL, NULL, NULL, 0, -1, cursor);
 }
 
-
-
 SDB_EXPORT INT32 sdbListLobPieces1( sdbCollectionHandle cHandle,
-                                  bson *condition,
-                                  bson *selected,
-                                  bson *orderBy,
-                                  bson *hint,
-                                  INT64 numToSkip,
-                                  INT64 numToReturn,
-                                  sdbCursorHandle *cursor )
+                                    bson *condition,
+                                    bson *selected,
+                                    bson *orderBy,
+                                    bson *hint,
+                                    INT64 numToSkip,
+                                    INT64 numToReturn,
+                                    sdbCursorHandle *cursor )
 {
    INT32 rc                        = SDB_OK ;
    bson newHint ;
