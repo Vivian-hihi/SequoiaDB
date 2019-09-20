@@ -79,6 +79,10 @@ namespace engine
                        "failed[%d]", rc ) ;
             }
          }
+         if ( msg )
+         {
+            msgReleaseBuffer( msg, _eduCB ) ;
+         }
       }
 
       if ( _subContext )
