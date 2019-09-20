@@ -5,6 +5,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
 import java.lang.IllegalArgumentException;
 import org.bson.BSONObject;
@@ -18,6 +19,7 @@ import org.junit.rules.ExpectedException;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Random;
 
 
 public class Bug_JIRA_ {
@@ -101,5 +103,25 @@ public class Bug_JIRA_ {
         }
     }
 
+    @Test
+    public void jira_4923() {
+        Sequoiadb mydb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
+//        DBCollection mycl =
+//                mydb.getCollectionSpace("maincs").getCollection("maincl");
+//                mydb.getCollectionSpace("mytest").getCollection("mytest");
+//        long runTimes = 100000000L;
+        long runTimes = 1L;
+        int range = 1000;
+        Random random = new Random();
+        while (runTimes-- > 0) {
+            BSONObject cond = new BasicBSONObject("a", random.nextInt(range));
+            try {
+                BSONObject obj = cl.queryOne(cond, null, null, null, -1);
+                System.out.println("obj is: " + obj.toString());
+            } catch (BaseException e) {
+                Assert.assertEquals(SDBError.SDB_INVALIDARG.getErrorCode(), e.getErrorCode());
+            }
+        }
+    }
 
 }
