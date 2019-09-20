@@ -555,7 +555,7 @@
       </copy>
       <!--conf,bin,jdk -->
       <tar destfile="${release_dir}/sequoiadb-commit-build-tools.tar.gz" 
-           compression="gzip" longfile="gnu" basedir="${srccode_dir}" includes="conf/**/*,bin/**/*,java/jdk_linux64/**/*,tools/server/php/bin/**/*" />
+           compression="gzip" longfile="gnu" basedir="${srccode_dir}" includes="conf/**/*,bin/**/*,java/jdk_linux64/**/*,tools/server/php/bin/**/*,tools/sdbmemcheck" />
    </target>
    
    <target name="copy_package_file" >
