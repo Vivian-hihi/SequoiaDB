@@ -278,6 +278,7 @@ static const CJSON_MATCH _command[] = {
    { SYMBOL_INTERNAL,    0,                 1, INPUT_LEN_STR( "$Meta" ) },
    { SYMBOL_INTERNAL,    0,                 2, INPUT_LEN_STR( "$Modify" ) },
    { SYMBOL_INTERNAL,    0,                 1, INPUT_LEN_STR( "$SetOnInsert" ) },
+   { SYMBOL_MATCHER,     0,                 1, INPUT_LEN_STR( "$Text" ) },
 } ;
 
 static const INT32 _commandSize = sizeof( _command ) / sizeof( CJSON_MATCH ) ;
