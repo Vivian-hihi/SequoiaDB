@@ -24,6 +24,18 @@ Re-elect the master node in the replica group.
 .br
               Re-election start in how many seconds.
 .sp 2
+       \fBNodeID\fR
+.br
+              Node ID of the expected primary node.
+.sp 2
+       \fBHostName\fR
+.br
+              Host name of the expected primary node.
+.sp 2
+       \fBServiceName\fR
+.br
+              Service name of the expected primary node.
+.sp 2
 
 .sp 2
 \fBNote: \fR
@@ -34,6 +46,8 @@ Re-elect the master node in the replica group.
 .sp 2
    *  The re-election can only be started when there is a master
    node in the replica group.
+.sp 3
+   *  When NodeID is used, will ignore HostName and ServiceName.
 .SH "Examples"
 
 .sp 2
