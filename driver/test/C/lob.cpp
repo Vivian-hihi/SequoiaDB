@@ -237,7 +237,8 @@ TEST(lob,lob_createLob_test)
 
    // case 1, use bson_oid_gen()
    bson_oid_gen( &oid );
-   rc = sdbCreateLob(cl, &oid, &lob1);
+   //rc = sdbCreateLob(cl, &oid, &lob1);
+   rc = sdbOpenLob(cl, &oid, SDB_LOB_CREATEONLY, &lob1);
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = sdbCloseLob(&lob1);
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -246,7 +247,8 @@ TEST(lob,lob_createLob_test)
 
 
    // case 2, oid is NULL 
-   rc = sdbCreateLob(cl, NULL, &lob2);
+   //rc = sdbCreateLob(cl, NULL, &lob2);
+   rc = sdbOpenLob(cl, NULL, SDB_LOB_CREATEONLY, &lob2);
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = sdbCloseLob(&lob2);
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -259,7 +261,8 @@ TEST(lob,lob_createLob_test)
    rc = sdbCreateLobID1(cl,pTimeStamp, &oid );
    ASSERT_EQ( SDB_OK, rc ) ;
 
-   rc = sdbCreateLob(cl, &oid , &lob3);
+   //rc = sdbCreateLob(cl, &oid , &lob3);
+   rc = sdbOpenLob(cl, &oid, SDB_LOB_CREATEONLY, &lob3);
    ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbCloseLob(&lob3);
@@ -273,7 +276,8 @@ TEST(lob,lob_createLob_test)
    rc = sdbCreateLobID(cl, &oid );
    ASSERT_EQ( SDB_OK, rc ) ;
 
-   rc = sdbCreateLob(cl, &oid , &lob4);
+   //rc = sdbCreateLob(cl, &oid , &lob4);
+   rc = sdbOpenLob(cl, &oid, SDB_LOB_CREATEONLY, &lob4);
    ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbCloseLob(&lob4);
@@ -290,7 +294,6 @@ TEST(lob,lob_createLob_test)
    
    printf("#######display had create Lob########\n");
    displayRecord( &cursor ) ;
-
 
    rc = sdbDropCollectionSpace( db, COLLECTION_SPACE_NAME);
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -496,7 +499,8 @@ TEST(lob,lob_primaryAndSubLob_test)
 
    // createLOB in primaryCL
    printf("#####createLob in primaryCL #####\n");
-   rc = sdbCreateLob(primaryCL, &oid, &primaryLob);
+   //rc = sdbCreateLob(primaryCL, &oid, &primaryLob);
+   rc = sdbOpenLob(primaryCL, &oid, SDB_LOB_CREATEONLY, &primaryLob);
    ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbCloseLob( &primaryLob);
@@ -564,7 +568,8 @@ TEST(lob,lob_primaryAndSubLob_test)
    rc = sdbCreateLobID1(subBCL,pTimeStamp, &oidB);
    ASSERT_EQ( SDB_OK, rc ) ;
    printf("#####CreateLob in subBCL #####\n");
-   rc = sdbCreateLob(subBCL, &oidB, &subBLOb);
+   //rc = sdbCreateLob(subBCL, &oidB, &subBLOb);
+   rc = sdbOpenLob(subBCL, &oidB, SDB_LOB_CREATEONLY, &subBLOb);
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = sdbCloseLob( &subBLOb );
    ASSERT_EQ( SDB_OK, rc ) ;
