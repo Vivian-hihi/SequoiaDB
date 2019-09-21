@@ -6994,8 +6994,11 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              INT32 flags,
                              sdbCursorHandle *handle )
 {
-    // remove the explain flag
-    flags &= ~FLG_QUERY_EXPLAIN ;
+    // remove query plan flag
+    if ( 0 != flags )
+    {
+       flags = eraseSingleFlag( flags, FLG_QUERY_EXPLAIN ) ;
+    }
     return _sdbQuery( cHandle, condition, select, orderBy, hint,
                       numToSkip, numToReturn, flags, handle ) ;
 }
@@ -7077,9 +7080,7 @@ static INT32 _sdbQueryAndModify ( sdbCollectionHandle cHandle,
    BSON_APPEND( newHint, FIELD_NAME_MODIFY, &modify, bson ) ;
    BSON_FINISH( newHint ) ;
 
-   flag &= ~FLG_QUERY_EXPLAIN ;
    flag |= FLG_QUERY_MODIFY ;
-
    rc = sdbQuery1( cHandle, condition, select, orderBy, &newHint,
                      numToSkip, numToReturn, flag, handle ) ;
 

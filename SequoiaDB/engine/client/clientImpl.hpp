@@ -275,8 +275,6 @@ namespace sdbclient
                    )
       {
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
-         // remove the explain flag
-         flag &= ~FLG_QUERY_EXPLAIN ;
          return query ( &cursor.pCursor,
                         condition, selected, orderBy, hint,
                         numToSkip, numToReturn, flag ) ;
@@ -560,6 +558,15 @@ namespace sdbclient
                              const bson::BSONObj * argument,
                              BOOLEAN allowNullArgs ) ;
       INT32 _insert ( const BSONObj &obj, INT32 flags, BSONObj &newObj ) ;
+      INT32 _query ( _sdbCursor **cursor,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &selected  = _sdbStaticObject,
+                     const BSONObj &orderBy   = _sdbStaticObject,
+                     const BSONObj &hint      = _sdbStaticObject,
+                     INT64 numToSkip          = 0,
+                     INT64 numToReturn        = -1,
+                     INT32 flag               = 0
+                   ) ;
    } ;
 
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
