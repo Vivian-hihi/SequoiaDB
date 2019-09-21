@@ -281,11 +281,7 @@ class SslCompiler(CompilerBase):
             config_args += ' -d'
         config_exec = os.path.join(self.src_root, config_file)
         os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
-        makefile = os.path.join(self.src_root, 'Makefile')
-        if os.path.exists(makefile):
-            print("Makefile exists. Configure has been done already.")
-        else:
-            self.append_cmd(config_exec, config_args)
+        self.append_cmd(config_exec, config_args)
         self.append_cmd('make ' + comm_build_opt)
         return 0
 
