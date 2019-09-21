@@ -553,8 +553,15 @@ do                                                            \
       INT32 rc = SDB_OK ;
 
       // check wether the cursor had been close or not
-      if ( _isClosed || -1 == _contextID )
+      if ( _isClosed )
       {
+         goto done ;
+      }
+      // when _contextID is -1, the context in engine has been delete,
+      // so, no need to send kill context message.
+      if ( -1 == _contextID )
+      {
+         _close() ;
          goto done ;
       }
       if ( NULL == _connection )
@@ -1413,14 +1420,14 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::query ( _sdbCursor **cursor,
-                                     const BSONObj &condition,
-                                     const BSONObj &selected,
-                                     const BSONObj &orderBy,
-                                     const BSONObj &hint,
-                                     INT64 numToSkip,
-                                     INT64 numToReturn,
-                                     INT32 flags )
+   INT32 _sdbCollectionImpl::_query ( _sdbCursor **cursor,
+                                      const BSONObj &condition,
+                                      const BSONObj &selected,
+                                      const BSONObj &orderBy,
+                                      const BSONObj &hint,
+                                      INT64 numToSkip,
+                                      INT64 numToReturn,
+                                      INT32 flags )
    {
       INT32 rc              = SDB_OK ;
       INT32 newFlags        = 0 ;
@@ -1472,6 +1479,24 @@ do                                                            \
       return rc ;
    error :
       goto done;
+   }
+
+   INT32 _sdbCollectionImpl::query ( _sdbCursor **cursor,
+                                     const BSONObj &condition,
+                                     const BSONObj &selected,
+                                     const BSONObj &orderBy,
+                                     const BSONObj &hint,
+                                     INT64 numToSkip,
+                                     INT64 numToReturn,
+                                     INT32 flags )
+   {
+      // remove query plan flag
+      if ( 0 != flags )
+      {
+         flags = eraseSingleFlag( flags, FLG_QUERY_EXPLAIN ) ;
+      }
+      return _query( cursor, condition, selected, orderBy, hint,
+                     numToSkip, numToReturn, flags ) ;
    }
 
    INT32 _sdbCollectionImpl::queryOne( bson::BSONObj &obj,
@@ -1565,7 +1590,6 @@ do                                                            \
          goto error ;
       }
 
-      flag &= ~FLG_QUERY_EXPLAIN ;
       flag |= FLG_QUERY_MODIFY ;
 
       rc = query( cursor, condition, selected, orderBy, newHint,
@@ -2545,8 +2569,8 @@ do                                                            \
          goto error ;
       }
       // get query explain
-      rc = query( cursor, condition, select, orderBy, newObj,
-                  numToSkip, numToReturn, flags | FLG_QUERY_EXPLAIN ) ;
+      rc = _query( cursor, condition, select, orderBy, newObj,
+                   numToSkip, numToReturn, flags | FLG_QUERY_EXPLAIN ) ;
       if ( rc )
       {
          goto error ;
