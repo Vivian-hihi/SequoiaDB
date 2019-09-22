@@ -1,24 +1,26 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<!--this xml is for ci, please don't modify it-->
-<!--sync testcase, which should be excute serially-->
+<!--this xml is for ci, please don't modify it -->
+<!--sync testcase, which should be excute serially -->
 
-<suite name="sdv" verbose="1"> 
-   <parameter name="HOSTNAME"       value="${HOSTNAME}" />
-   <parameter name="SVCNAME"        value="${SVCNAME}" />
-   <parameter name="CHANGEDPREFIX"  value="story_java_test" />
-   <parameter name="RSRVPORTBEGIN"  value="26000" />
-   <parameter name="RSRVPORTEND"    value="27000" />
-   <parameter name="RSRVNODEDIR"    value="/opt/sequoiadb/database/" />
-   <parameter name="WORKDIR"        value="/tmp/javatest" />
+<suite name="sdv" verbose="1">
+	<parameter name="HOSTNAME"      value="${HOSTNAME}" />
+	<parameter name="SVCNAME"       value="${SVCNAME}" />
+	<parameter name="CHANGEDPREFIX" value="story_java_test" />
+	<parameter name="RSRVPORTBEGIN" value="26000" />
+	<parameter name="RSRVPORTEND"   value="27000" />
+	<parameter name="RSRVNODEDIR"   value="/opt/sequoiadb/database/" />
+	<parameter name="WORKDIR"       value="/tmp/javatest" />
 
-   <listeners>
-      <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
-   </listeners>
-   
-   <test name="lzwtransaction">
-      <packages>
-          <package name="com.sequoiadb.lzwtransactionsync"/>
-      </packages>
-   </test>
+	<listeners>
+		<listener class-name="com.sequoiadb.testcommon.TimePrinterListener" />
+	</listeners>
+
+	<test name="lzwtransaction">
+		<packages>
+			<package name="com.sequoiadb.lzwtransactionsync" />
+			<package name="com.sequoiadb.lzw" />
+			<package name="com.sequoiadb.crud.compress.concurrency" />
+		</packages>
+	</test>
 </suite>
    
