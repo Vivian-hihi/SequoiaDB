@@ -17,8 +17,6 @@
    
    <test name="largedata" parallel="classes" thread-count="1">
         <packages>
-            <package name="com.sequoiadb.lzw" />
-            <package name="com.sequoiadb.crud.compress.concurrency" />
         </packages>
    </test>
 
