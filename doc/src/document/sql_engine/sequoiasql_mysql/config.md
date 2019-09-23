@@ -38,7 +38,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    |参数名|类型|默认值|动态生效|作用范围|说明|
    |---|---|---|---|---|---|
    |sequoiadb_alter_table_overhead_threshold|long|10000000|Yes|Global, Session|更改表开销阈值。当表记录数超过这个阈值，需要全表更新的更改操作将被禁止。|
-   |sequoiadb_bulk_insert_size|int|100|Yes|Global|批量插入时每批的插入记录数。|  
+   |sequoiadb_bulk_insert_size|int|2000|Yes|Global|批量插入时每批的插入记录数。|  
    |sequoiadb_conn_addr|string|"localhost:11810"|Yes|Global|SequoiaDB 连接地址。|
    |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
    |sequoiadb_execute_only_in_mysql|bool|OFF|Yes|Global, Session|DDL 命令只在 MySQL 执行，不下压到 SequoiaDB 执行。|
