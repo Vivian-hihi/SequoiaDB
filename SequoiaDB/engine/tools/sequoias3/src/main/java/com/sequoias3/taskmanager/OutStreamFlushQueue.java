@@ -51,7 +51,7 @@ public class OutStreamFlushQueue {
 
     @Scheduled(initialDelay = 1000 * 10,fixedDelay = TWENTY_SECONDS)
     public void flushOutputStream(){
-        logger.debug("scan begin, outputStreamHashMap size:" + outputStreamHashMap.size());
+        logger.debug("scan begin, outputStreamHashMap size:{}", outputStreamHashMap.size());
         String whiteSpace = " ";
         byte[] whitebyte = whiteSpace.getBytes();
         lock.lock();
@@ -70,6 +70,6 @@ public class OutStreamFlushQueue {
         }finally {
             lock.unlock();
         }
-        logger.debug("scan end, outputStreamHashMap size:" + outputStreamHashMap.size());
+        logger.debug("scan end, outputStreamHashMap size:{}", outputStreamHashMap.size());
     }
 }

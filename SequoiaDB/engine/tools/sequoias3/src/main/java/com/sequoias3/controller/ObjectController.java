@@ -126,9 +126,15 @@ public class ObjectController {
             try{
                 httpServletRequest.getInputStream().skip(httpServletRequest.getContentLength());
             }catch (Exception e2){
-                logger.error("skip content length fail");
+                logger.warn("skip content length fail");
             }
             throw e;
+        }finally {
+            try {
+                httpServletRequest.getInputStream().close();
+            }catch (Exception e2){
+                logger.warn("close inputStream failed", e2);
+            }
         }
     }
 
@@ -189,6 +195,12 @@ public class ObjectController {
             logger.error("get object failed. bucketName={}, bucketName/objectName={}, versionId={}",
                     bucketName, httpServletRequest.getRequestURI(), versionId);
             throw e;
+        }finally {
+            try {
+                response.getOutputStream().close();
+            }catch (Exception e2){
+                logger.warn("close outputStream failed", e2);
+            }
         }
     }
 
