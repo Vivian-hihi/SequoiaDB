@@ -108,7 +108,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
 
    `sequoiadb_selector_pushdown_threshold`可以配置查询字段下压的触发阈值。查询字段不下压时，SequoiaDB 集群总是返回完整记录给 MySQL，由 MySQL 过滤有用字段。而在查询字段下压时，SequoiaDB 集群只返回 MySQL 所需字段。在查询字段个数/表总字段个数的百分比小于等于该阈值时，查询字段下压，否则不下压。下压查询字段可以节省了网络传输，但它也会增加 SequoiaDB 工作。可以根据实际适当调整。
 
-   `sequoiadb_optimizer_options` 优化选项开关，以决定是否优化计数、更新、删除操作。direct_count 决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。；direct_delete 、direct_update 开启后，在符合优化的场景下会直接下压 delete、update 语句到 SequoiaDB 执行，而非正常的先 query 后 delete、update 流程，以减少网络 IO。
+   `sequoiadb_optimizer_options` 优化选项开关，以决定是否优化计数、更新、删除操作。direct_count 决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MySQL 进行计数。开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的[SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md)方法，由 SequoiaDB 进行计数。direct_delete 、direct_update 开启后，在符合优化的场景下会直接下压 delete、update 语句到 SequoiaDB 执行，而非正常的先 query 后 delete、update 流程，以减少网络 IO。
 
 + **其它配置**
 
