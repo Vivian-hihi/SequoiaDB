@@ -224,6 +224,9 @@ namespace engine
       pdInitCurAuditMask( pdGetAuditMask() ) ;
       pmdSetLocalPort( pmdGetOptionCB()->getServicePort() ) ;
 
+      pmdGetKRCB()->getMonMgr()->setMonitorStatus( pmdGetOptionCB()->monGroupMask() ) ;
+      pmdGetKRCB()->getMonMgr()->setHistEventSize( pmdGetOptionCB()->monHistEvent() ) ;
+
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
 
       PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,

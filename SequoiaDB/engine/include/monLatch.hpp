@@ -140,12 +140,6 @@ public:
 
    monSpinSLatch( ) {}
 
-   monSpinSLatch& operator=( monSpinSLatch& rhs )
-   {
-      _latchID = rhs._latchID ;
-      return *this ;
-   }
-
    monSpinSLatch& operator=(const monSpinSLatch& rhs )
    {
       _latchID = rhs._latchID ;

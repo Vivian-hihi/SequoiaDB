@@ -51,6 +51,7 @@
 #include "omStrategyDef.hpp"
 #include "optCommon.hpp"
 #include "dpsTransDef.hpp"
+#include "monMgr.hpp"
 
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
@@ -2376,6 +2377,18 @@ done:
       rdxBooleanS( pEX, PMD_OPTION_TRANS_RCCOUNT, _transRCCount, FALSE,
                    PMD_CFG_CHANGE_RUN, DPS_TRANS_RCCOUNT_DFT, FALSE ) ;
 
+      // --monslowquerythreshold
+      rdxUInt( pEX, PMD_OPTION_MON_SLOWQUERY_THRESHOLD, _slowQueryThreshold, FALSE,
+               PMD_CFG_CHANGE_RUN, 300, TRUE ) ;
+
+      // --mongroupmask
+      rdxString( pEX, PMD_OPTION_MON_GROUP_MASK, _monGroupMaskStr,
+                 sizeof (_monGroupMaskStr), FALSE, PMD_CFG_CHANGE_RUN,
+                 "") ;
+
+      // --monhistevent
+      rdxUInt( pEX, PMD_OPTION_MON_HIST_EVENT, _monHistEvent, FALSE,
+               PMD_CFG_CHANGE_RUN, 1000, TRUE ) ;
       // end map
 
       return getResult () ;
@@ -2449,6 +2462,15 @@ done:
          std::cerr << PMD_OPTION_AUDIT_MASK << " value error, use default"
                    << endl ;
          _auditMask = AUDIT_MASK_DEFAULT ;
+      }
+
+      // audit mask check
+      _monGroupMask = 0 ;
+      if ( SDB_OK != optString2MonGroupMask( _monGroupMaskStr, _monGroupMask ) )
+      {
+         std::cerr << PMD_OPTION_MON_GROUP_MASK << " value error, use default"
+                   << endl ;
+         _monGroupMask = MON_GROUP_MASK_DEFAULT ;
       }
 
       if ( 0 == ossStrlen( _replServiceName ) )
@@ -3282,6 +3304,140 @@ done:
       return rc ;
    }
 
+   INT32 optString2MonGroupMask( const CHAR *str, UINT32 &value )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !str || !*str )
+      {
+         value = MON_GROUP_MASK_DEFAULT ;
+      }
+      else
+      {
+         const CHAR *p = str ;
+         CHAR *p1 = NULL ;
+         UINT32 theMask = 0 ;
+
+         while( p && *p )
+         {
+            p1 = (CHAR*)ossStrchr( p, '|' ) ;
+
+            CHAR *token = NULL ;
+
+            token = (CHAR*)ossStrchr( p, ':' ) ;
+
+            if ( !token )
+            {
+               break ;
+            }
+            const CHAR *keyStart = p ;
+
+            while( ' ' == *keyStart )
+            {
+               ++keyStart ;
+            }
+
+            if ( !*keyStart )
+            {
+               break ;
+            }
+
+            const CHAR *keyEnd = keyStart + ( token - keyStart ) ;
+
+            while( keyEnd != keyStart && ' ' == *keyEnd )
+            {
+               --keyEnd ;
+            }
+            UINT32 keyLen = keyEnd - keyStart ;
+
+            const CHAR *valueStart = token + 1 ;
+
+            if ( !*valueStart )
+            {
+               break ;
+            }
+            while( ' ' == *valueStart )
+            {
+               ++valueStart ;
+            }
+
+            const CHAR *valueEnd = p1? p1: valueStart + ossStrlen( valueStart ) - 1 ;
+            while( valueEnd != valueStart && ' ' == *valueEnd )
+            {
+               --valueEnd ;
+            }
+            UINT32 valueLen = valueEnd - valueStart + 1 ;
+            /// compare
+            if ( 0 == ossStrncasecmp( keyStart, "slowquery", keyLen ) )
+            {
+               if ( 0 == ossStrncasecmp( valueStart, "basic", valueLen ) )
+               {
+                  theMask |= MON_GROUP_QUERY_BASIC ;
+                  theMask |= MON_GROUP_LATCH_BASIC ;
+                  theMask |= MON_GROUP_LOCK_BASIC ;
+               }
+               else if ( 0 == ossStrncasecmp( valueStart, "detail", valueLen ) )
+               {
+                  theMask |= MON_GROUP_QUERY_DETAIL ;
+                  theMask |= MON_GROUP_LATCH_DETAIL ;
+                  theMask |= MON_GROUP_LOCK_DETAIL ;
+               }
+            }
+            else if ( 0 == ossStrncasecmp( keyStart, "all", keyLen ) )
+            {
+               // this is the same as 'slowquery' right now because there is only one group
+               if ( 0 == ossStrncasecmp( valueStart, "basic", valueLen ) )
+               {
+                  theMask |= MON_GROUP_QUERY_BASIC ;
+                  theMask |= MON_GROUP_LATCH_BASIC ;
+                  theMask |= MON_GROUP_LOCK_BASIC ;
+               }
+               else if ( 0 == ossStrncasecmp( valueStart, "detail", valueLen ) )
+               {
+                  theMask |= MON_GROUP_QUERY_DETAIL ;
+                  theMask |= MON_GROUP_LATCH_DETAIL ;
+                  theMask |= MON_GROUP_LOCK_DETAIL ;
+               }
+            }
+            else if ( 0 == ossStrncasecmp( keyStart, "latch", keyLen ) )
+            {
+               if ( 0 == ossStrncasecmp( valueStart, "basic", valueLen ) )
+               {
+                  theMask |= MON_GROUP_LATCH_BASIC ;
+               }
+               else if ( 0 == ossStrncasecmp( valueStart, "detail", valueLen ) )
+               {
+                  theMask |= MON_GROUP_LATCH_DETAIL ;
+               }
+            }
+            else if ( 0 == ossStrncasecmp( keyStart, "lock", keyLen ) )
+            {
+               if ( 0 == ossStrncasecmp( valueStart, "basic", valueLen ) )
+               {
+                  theMask |= MON_GROUP_LOCK_BASIC ;
+               }
+               else if ( 0 == ossStrncasecmp( valueStart, "detail", valueLen ) )
+               {
+                  theMask |= MON_GROUP_LOCK_DETAIL ;
+               }
+            }
+            else if ( 0 == ossStrncasecmp( keyStart, "query", keyLen ) )
+            {
+               if ( 0 == ossStrncasecmp( valueStart, "basic", valueLen ) )
+               {
+                  theMask |= MON_GROUP_QUERY_BASIC ;
+               }
+               else if ( 0 == ossStrncasecmp( valueStart, "detail", valueLen ) )
+               {
+                  theMask |= MON_GROUP_QUERY_DETAIL ;
+               }
+            }
+            value |= theMask ;
+
+            p = p1? p1 + 1: NULL ;
+         }
+      }
+      return rc ;
+   }
    INT32 optLogMod2String( UINT32 value, CHAR *str, INT32 len )
    {
       INT32 rc = SDB_OK ;
