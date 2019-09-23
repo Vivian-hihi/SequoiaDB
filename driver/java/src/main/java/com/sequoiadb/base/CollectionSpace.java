@@ -68,6 +68,9 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public DBCollection getCollection(String collectionName) throws BaseException {
+        if(collectionName == null || collectionName.equals("")){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
+        }
         // get cl from cache
         String collectionFullName = name + "." + collectionName;
         if (sequoiadb.fetchCache(collectionFullName)) {
@@ -91,6 +94,9 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public boolean isCollectionExist(String collectionName) throws BaseException {
+        if(collectionName == null || collectionName.equals("")){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
+        }
         String collectionFullName = name + "." + collectionName;
 
         BSONObject obj = new BasicBSONObject();
@@ -153,8 +159,8 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public DBCollection createCollection(String collectionName, BSONObject options) {
-        if(collectionName == null){
-            throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null");
+        if(collectionName == null || collectionName.equals("")){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
         }
         String collectionFullName = name + "." + collectionName;
         BSONObject obj = new BasicBSONObject();
@@ -189,6 +195,9 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void dropCollection(String collectionName) throws BaseException {
+        if(collectionName == null || collectionName.equals("")){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
+        }
         String collectionFullName = name + "." + collectionName;
         BSONObject obj = new BasicBSONObject();
         obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);

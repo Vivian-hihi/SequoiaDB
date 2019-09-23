@@ -585,6 +585,9 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void removeUser(String username, String password) throws BaseException {
+        if (username == null || username.length() == 0 || password == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.DeleteUser);
         SdbReply response = requestAndResponse(request);
         throwIfError(response, username);
@@ -2354,6 +2357,9 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public ReplicaGroup createReplicaGroup(String rgName) throws BaseException {
+        if ( null == rgName || rgName.isEmpty()){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The name of replica group is null or empty");
+        }
         BSONObject rg = new BasicBSONObject();
         rg.put(SdbConstants.FIELD_NAME_GROUPNAME, rgName);
 
@@ -2372,6 +2378,9 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void removeReplicaGroup(String rgName) throws BaseException {
+        if ( null == rgName || rgName.isEmpty()){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The name of replica group is null or empty");
+        }
         BSONObject rg = new BasicBSONObject();
         rg.put(SdbConstants.FIELD_NAME_GROUPNAME, rgName);
 
@@ -2393,6 +2402,9 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void activateReplicaGroup(String rgName) throws BaseException {
+        if ( null == rgName || rgName.isEmpty()){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "The name of replica group is null or empty");
+        }
         BSONObject rg = new BasicBSONObject();
         rg.put(SdbConstants.FIELD_NAME_GROUPNAME, rgName);
 
@@ -2556,6 +2568,9 @@ public class Sequoiadb implements Closeable {
     }
 
     BSONObject getDetailByName(String name) throws BaseException {
+        if ( null == name || name.isEmpty()){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "name is null or empty");
+        }
         BSONObject condition = new BasicBSONObject();
         condition.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
 
