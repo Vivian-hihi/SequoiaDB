@@ -30,6 +30,9 @@ public class SdbAclDao implements AclDao {
     SequoiadbConfig config;
 
     @Autowired
+    SdbBaseOperation sdbBaseOperation;
+
+    @Autowired
     SdbDataSourceWrapper sdbDataSourceWrapper;
 
     @Override
@@ -122,6 +125,7 @@ public class SdbAclDao implements AclDao {
             logger.error("delete ACL failed. aclId=" + aclId +", errorMessage = " + e.getMessage());
             throw e;
         } finally {
+            sdbBaseOperation.releaseDBCursor(cursor);
             sdbDataSourceWrapper.releaseSequoiadb(sdb);
         }
     }

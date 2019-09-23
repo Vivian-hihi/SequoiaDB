@@ -138,7 +138,7 @@ public class SdbUploadDao implements UploadDao {
                 return new UploadMeta(queryResult);
             }
         } catch (Exception e){
-            logger.error("query upload failed. uploadId:{}", uploadId);
+            logger.warn("query upload failed. uploadId:{}, error:{}", uploadId, e.getMessage());
             throw e;
         } finally {
             if (connection == null){

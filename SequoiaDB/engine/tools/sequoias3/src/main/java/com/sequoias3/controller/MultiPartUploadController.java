@@ -166,6 +166,12 @@ public class MultiPartUploadController {
                 logger.error("skip content length fail");
             }
             throw e;
+        }finally {
+            try {
+                httpServletRequest.getInputStream().close();
+            }catch (Exception e2){
+                logger.warn("close inputStream failed", e2);
+            }
         }
     }
 
@@ -211,6 +217,12 @@ public class MultiPartUploadController {
             logger.error("completeMultiPart failed. bucketName={}, bucketName/objectName={}, uploadId:{}",
                     bucketName, httpServletRequest.getRequestURI(), uploadId);
             throw e;
+        }finally {
+            try {
+                httpServletResponse.getOutputStream().close();
+            }catch (Exception e2){
+                logger.warn("close outputStream failed", e2);
+            }
         }
     }
 
