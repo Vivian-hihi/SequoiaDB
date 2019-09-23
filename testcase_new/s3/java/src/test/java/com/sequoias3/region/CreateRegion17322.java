@@ -1,18 +1,19 @@
 package com.sequoias3.region;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Description: seqDB-17322 :: 区域中创建/删除多个桶，获取区域信息
@@ -24,7 +25,7 @@ public class CreateRegion17322 extends S3TestBase {
     private String regionName = "region17322";
     private String bucketNameBase = "bucket17322";
     private List<String> bucketNames = new ArrayList<String>();
-    private int bucketNum = 90;
+    private int bucketNum = 80;
     private AmazonS3 s3Client = null;
     private boolean runSuccess = false;
 
