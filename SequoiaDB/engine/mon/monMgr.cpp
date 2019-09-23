@@ -40,26 +40,18 @@
 
 namespace engine
 {
-
-archiveFunc monClassArchiveFP[MON_CLASS_MAX] = {
-   noArchive,
-   noArchive,
-   archiveQuery,
-   noArchive
-};
-
-MonitorManager::MonitorManager()
+_MonitorManager::_MonitorManager()
    : _monClass(MON_CLASS_MAX)
 {
    for (int i = 0; i < MON_CLASS_MAX; i ++ )
    {
       //TODO: create array of function pointers
-      MonClassContainer *list = new MonClassContainer(monClassArchiveFP[i]) ;
+      MonClassContainer *list = new MonClassContainer((MonitorClassType)i) ;
       _monClass[i] = list ;
    }
 }
 
-MonitorManager::~MonitorManager()
+_MonitorManager::~_MonitorManager()
 {
    for (int i = 0; i < MON_CLASS_MAX; i ++ )
    {
@@ -67,7 +59,7 @@ MonitorManager::~MonitorManager()
    }
 }
 
-void MonitorManager::cleanup()
+void _MonitorManager::cleanup()
 {
    for (int i = 0; i < MON_CLASS_MAX; i++ )
    {
@@ -77,6 +69,12 @@ void MonitorManager::cleanup()
            curContainer->_numPendingDelete.fetch() > 0 )
       {
          curContainer->_processPendingObj() ;
+      }
+
+      if ( !curContainer->isOperational() ||
+           curContainer->getArchivedListLen() > curContainer->getMaxArchivedListLen() )
+      {
+         curContainer->_removeArchivedObj() ;
       }
    }
 }
