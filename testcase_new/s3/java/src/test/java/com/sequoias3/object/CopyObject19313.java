@@ -63,6 +63,7 @@ public class CopyObject19313 extends S3TestBase {
     public void testCopyObject() throws Exception {
         CopyObjectResult result = s3Client.copyObject(srcBucketName, srcKeyName, destBucketName, destKeyName);
 
+        // TODO 如下属性校验了当前版本，内容校验了当前和历史版本，建议属性和内容均分别校验当前版本、历史版本
         String currentVersionId = "1";
         String hisVersionId = "0";
         checkObjectAttributeInfo(result, destBucketName, destKeyName, currentVersionId);

@@ -67,6 +67,7 @@ public class CopyObject19349 extends S3TestBase {
         metaData.setContentDisposition(contentDisposition);
     }
 
+    // TODO 建议统一用最新的并发框架
     @Test(invocationCount = 3, threadPoolSize = 3)
     private void testCopyObject() {
         AmazonS3 s3Client1 = CommLib.buildS3Client();
@@ -83,6 +84,7 @@ public class CopyObject19349 extends S3TestBase {
 
     }
 
+    // TODO 这个是检查结果，不建议单独放到另一个Test里面。
     @Test(dependsOnMethods = "testCopyObject")
     private void checkResult() throws Exception {
         checkObjectMetaData(userMeta, contentDisposition);

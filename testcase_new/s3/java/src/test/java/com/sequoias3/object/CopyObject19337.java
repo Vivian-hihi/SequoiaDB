@@ -14,7 +14,8 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 
 /**
- * @Description seqDB-19337:指定ifUnModifiedSince和ifModifiedSince条件复制对象，源对象不匹配ifUnModifiedSince
+ * @Description seqDB-19337:指定ifUnModifiedSince和ifModifiedSince条件复制对象，
+ *              源对象不匹配ifUnModifiedSince
  * @author wuyan
  * @Date 2019.09.19
  * @version 1.00
@@ -39,6 +40,7 @@ public class CopyObject19337 extends S3TestBase {
 
     @Test
     public void testCopyObject() throws Exception {
+        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
         // set date 2 minutes early than the current time
         long currentTimestamp = new Date().getTime();
         long beforeTimestamp = currentTimestamp - 2 * 60 * 1000l;

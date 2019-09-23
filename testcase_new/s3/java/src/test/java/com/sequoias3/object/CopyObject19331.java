@@ -55,16 +55,21 @@ public class CopyObject19331 extends S3TestBase {
 
     @Test
     public void testCopyObject() throws Exception {
-        // test c:the currentVersion of sourceObject has not been modified after the date
+        // test c:the currentVersion of sourceObject has not been modified after
+        // the date
         copyObjectWithModifiedSinceC();
 
         // set date an hour early at the current time
+        // TODO
+        // 建议获取源对象的LastModified时间，而不是获取本地时间，本地时间可能跟服务器时间不一致，有可能存在较大误差，且误差范围外用例会失败
         long currentTimestamp = new Date().getTime();
         long timestamp = currentTimestamp - 60 * 60 * 1000l;
         Date date = new Date(timestamp);
-        // test a: the hisVersion of sourceObject has been modified after the date
+        // test a: the hisVersion of sourceObject has been modified after the
+        // date
         copyObjectWithModifiedSinceA(date);
-        // test b: the currentVersion of sourceObject has been modified after the date
+        // test b: the currentVersion of sourceObject has been modified after
+        // the date
         copyObjectWithModifiedSinceB(date);
 
         runSuccess = true;

@@ -38,6 +38,7 @@ public class CopyObject19343 extends S3TestBase {
 
     @Test
     public void testCopyObject() throws Exception {
+        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
         // set date 3 minutes early at the current time
         long currentTimestamp = new Date().getTime();
         long timestamp = currentTimestamp - 3 * 60 * 1000l;

@@ -18,6 +18,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  * @Date 2019.09.18
  * @version 1.00
  */
+// TODO 1.跟文本用例测试点不符；2.文本用例未标记执行结果
 public class CopyObject19324 extends S3TestBase {
     private boolean runSuccess = false;
     private String userNameA = "UserA19324";
