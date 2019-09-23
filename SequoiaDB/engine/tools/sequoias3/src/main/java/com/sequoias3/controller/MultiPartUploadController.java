@@ -217,12 +217,6 @@ public class MultiPartUploadController {
             logger.error("completeMultiPart failed. bucketName={}, bucketName/objectName={}, uploadId:{}",
                     bucketName, httpServletRequest.getRequestURI(), uploadId);
             throw e;
-        }finally {
-            try {
-                httpServletResponse.getOutputStream().close();
-            }catch (Exception e2){
-                logger.warn("close outputStream failed", e2);
-            }
         }
     }
 
