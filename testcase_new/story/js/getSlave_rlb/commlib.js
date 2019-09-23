@@ -109,7 +109,7 @@ function isMasterExist( db, rgName )
    var hasMaster = false ;
    try
    {
-      commCreateCLByOption( db, COMMCSNAME, clName, { Group: rgName } ) ;
+      db.getCS(COMMCSNAME).createCL(clName,{Group : rgName});
       hasMaster = true ;
       commDropCL( db, COMMCSNAME, clName ) ;
    }
@@ -117,7 +117,7 @@ function isMasterExist( db, rgName )
    {
       if( e !== -104 )
       {
-         throw buildException( "isMasterExist", e, "create cl", "0 -104", e ) ;
+         throw buildException( "isMasterExist", e, "create cl", "-104", e ) ;
       }
    }
    return hasMaster ;
