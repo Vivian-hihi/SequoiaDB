@@ -112,7 +112,7 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
                     lobIds.add(lobId);
                 }
             } catch (BaseException e) {
-                if (e.getErrorCode() != -134 && e.getErrorCode() != -79) {
+                if (e.getErrorCode() != -134 && e.getErrorCode() != -79 && e.getErrorCode() != -81) {
                     throw e;
                 }
             }
