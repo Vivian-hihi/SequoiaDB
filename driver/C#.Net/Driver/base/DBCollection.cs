@@ -830,7 +830,10 @@ namespace SequoiaDB
         public DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
                               long skipRows, long returnRows, int flag)
         {
-            flag = DBQuery.eraseSingleFlag(flag, DBQuery.FLG_QUERY_EXPLAIN);
+            if (flag != 0)
+            {
+                flag = DBQuery.eraseSingleFlag(flag, DBQuery.FLG_QUERY_EXPLAIN);
+            }
             return _Query(query, selector, orderBy, hint, skipRows, returnRows, flag);
         }
 
