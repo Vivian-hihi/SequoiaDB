@@ -25,7 +25,7 @@ Create a Sdb object to connect to the SequoiaDB.
 Target hostname, default to be "localhost".
 .RE
 .IP \[bu] 2
-\f[C]svcname\f[] ( \f[I]int\f[]， \f[I]Required\f[] )
+\f[C]svcname\f[] ( \f[I]int\f[], \f[I]Required\f[] )
 .RS 2
 .PP
 Target svcname, default to be 11810.
@@ -256,7 +256,7 @@ since v1.12
 .SH EXAMPLES
 .IP "1." 3
 Create a Sdb object connection to the SequoiaDB, hostname default to be
-"localhost"，svcname default to be 11810.
+"localhost", svcname default to be 11810.
 .nf
 \f[C]
 >\ var\ db\ =\ new\ Sdb()
@@ -274,8 +274,7 @@ hostname is "sdbserver1".
 .RE
 .IP "3." 3
 Create a Sdb object connection to the SequoiaDB on the specified host using the
-default username and password.
-default username and password are empty.
+default username and password, default username and password are empty.
 .nf
 \f[C]
 >\ var\ db\ =\ new\ Sdb("sdbserver1",11810,"","")
