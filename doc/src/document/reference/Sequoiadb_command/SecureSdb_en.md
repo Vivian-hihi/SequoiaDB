@@ -43,16 +43,14 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Create a SecureSdb object.
+1. Create a SecureSdb object.
 
-   ```lang-javascript
-   > var securesdb = new SecureSdb( "192.168.20.71", 11790 )
-   ```
+	```lang-javascript
+ 	> var securesdb = new SecureSdb( "192.168.20.71", 11790 )
+ 	```
 
-* Create a SecureSdb object with a username and password.
-
-
+2. Create a SecureSdb object with a username and password.
 
 	```lang-javascript
  	> var securesdb = new SecureSdb("sdbserver1",11810,"sdbadmin","123")
-	```
+ 	```

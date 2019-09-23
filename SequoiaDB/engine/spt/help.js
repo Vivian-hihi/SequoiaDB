@@ -20,11 +20,11 @@
       println("   var db = new Sdb()                                 - Connect to database use default host");
       println("                                                        'localhost' and default port 11810.");
       println("   var db = new Sdb('localhost',11810)                - Connect to database use specified host and port.");
-      println("   var db = new Sdb('ubuntu',11810,'','')             - Connect to database with username and password.");
+      println("   var db = new Sdb('ubuntu',11810,'admin','123')     - Connect to database with username and password.");
       println("   var db = new SecureSdb()                           - Connect to database securely use default host");
       println("                                                        'localhost' and default port 11810.");
       println("   var db = new SecureSdb('localhost',11810)          - Connect to database securely use specified host and port.");
-      println("   var db = new SecureSdb('ubuntu',11810,'','')       - Connect to database securely with username and password.");
+      println("   var db = new SecureSdb('ubuntu',11810,'admin','123') - Connect to database securely with username and password.");
       println("");
       println("   --Get help information:");
       println("   help(<method>)                                     - Help on specified method, e.g. help(\'createCS\').");

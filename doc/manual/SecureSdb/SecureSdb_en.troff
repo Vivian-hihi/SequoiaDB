@@ -113,14 +113,16 @@ when exception happen, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
-.IP \[bu] 2
+.IP "1." 3
 Create a SecureSdb object.
-.PP
-\f[C]lang\-javascript\ \ \ \ >\ var\ securesdb\ =\ new\ SecureSdb(\ "192.168.20.71",\ 11790\ )\f[]
-.IP \[bu] 2
+.nf
+\f[C]
+>\ var\ securesdb\ =\ new\ SecureSdb(\ "192.168.20.71",\ 11790\ )
+\f[]
+.fi
+.RE
+.IP "2." 3
 Create a SecureSdb object with a username and password.
-.RS 2
-.IP
 .nf
 \f[C]
 >\ var\ securesdb\ =\ new\ SecureSdb("sdbserver1",11810,"sdbadmin","123")

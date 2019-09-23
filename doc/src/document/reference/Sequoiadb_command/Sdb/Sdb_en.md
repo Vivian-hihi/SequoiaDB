@@ -21,7 +21,7 @@ Create a Sdb object to connect to the SequoiaDB.
 
 	Target hostname, default to be "localhost".
 
-* `svcname` ( *int*， *Required* )
+* `svcname` ( *int*, *Required* )
 
 	Target svcname, default to be 11810.
 
@@ -67,7 +67,7 @@ since v1.12
 
 ##EXAMPLES##
 
-1. Create a Sdb object connection to the SequoiaDB, hostname default to be "localhost"，svcname default to be 11810.
+1. Create a Sdb object connection to the SequoiaDB, hostname default to be "localhost", svcname default to be 11810.
 
 	```lang-javascript
  	> var db = new Sdb()
@@ -79,7 +79,7 @@ since v1.12
  	> var db = new Sdb("sdbserver1",11810)
 	```
 
-3. Create a Sdb object  connection to the SequoiaDB on the specified host using the default username and password. default username and password are empty.
+3. Create a Sdb object  connection to the SequoiaDB on the specified host using the default username and password, default username and password are empty.
 
 	```lang-javascript
  	> var db = new Sdb("sdbserver1",11810,"","")
