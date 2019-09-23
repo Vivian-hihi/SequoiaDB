@@ -103,6 +103,7 @@ public class CopyObject19334 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLib.clearBucket(s3Client, srcBucketName);
+                CommLib.clearBucket(s3Client, dstBucketName);
                 UserUtils.deleteUser(userName);
                 TestTools.LocalFile.removeFile(localPath);
             }
