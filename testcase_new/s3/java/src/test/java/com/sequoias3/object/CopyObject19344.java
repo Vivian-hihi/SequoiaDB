@@ -17,7 +17,8 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * @Description seqDB-19344: 指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件获取对象
+ * @Description seqDB-19344:
+ *              指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件获取对象
  * @author wuyan
  * @Date 2019.09.20
  * @version 1.00
@@ -54,6 +55,7 @@ public class CopyObject19344 extends S3TestBase {
         String curVersionETag = TestTools.getMD5(curVersionContent.getBytes());
         String keyBETag = TestTools.getMD5(keyBContent.getBytes());
 
+        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
         // set date 3 minutes early at the current time
         long currentTimestamp = new Date().getTime();
         long beforeTimestamp = currentTimestamp - 3 * 60 * 1000l;
