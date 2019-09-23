@@ -114,6 +114,7 @@ namespace engine
       qgmOptiTreeNode *pOptiTree = NULL;
       qgmOptiTreeNode *pExtend = NULL;
       qgmPlanContainer *pContainer = NULL;
+      BOOLEAN containerOwnned = TRUE ;
 
       PD_CHECK( objNum > 0, SDB_INVALIDARG, error, PDERROR,
                "input error, no object input!" );
@@ -163,6 +164,8 @@ namespace engine
       rc = createContext( pContainer, cb, contextID );
       PD_RC_CHECK( rc, PDERROR, "failed to create context(rc=%d)", rc );
 
+      containerOwnned = FALSE ;
+
       // 6.execute
       rc = pContainer->execute( cb );
       PD_RC_CHECK( rc, PDERROR, "execute failed(rc=%d)", rc );
@@ -182,7 +185,7 @@ namespace engine
       {
          SAFE_OSS_DELETE( pOptiTree );
       }
-      if ( pContainer && QGM_PLAN_TYPE_RETURN != pContainer->type() )
+      if ( pContainer && containerOwnned )
       {
          SDB_OSS_DEL pContainer;
       }
@@ -193,7 +196,11 @@ namespace engine
          pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
          contextID = -1 ;
       }
-      SAFE_OSS_DELETE( pContainer ) ;
+      if ( pContainer && containerOwnned )
+      {
+         SDB_OSS_DEL pContainer ;
+         pContainer = NULL ;
+      }
       goto done;
    }
 
