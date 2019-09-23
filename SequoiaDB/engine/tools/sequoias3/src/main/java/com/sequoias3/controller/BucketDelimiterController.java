@@ -1,10 +1,7 @@
 package com.sequoias3.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.core.User;
-import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.model.DelimiterConfiguration;
 import com.sequoias3.service.BucketDelimiterService;
@@ -15,10 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import java.net.URLDecoder;
 
 @RestController
 public class BucketDelimiterController {
@@ -34,11 +27,9 @@ public class BucketDelimiterController {
             produces = MediaType.APPLICATION_XML_VALUE)
     public void putBucketDelimiter(@PathVariable("bucketname") String bucketName,
                                      @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
-                                     HttpServletRequest request )
+                                     @RequestBody DelimiterConfiguration delimiterCon)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
-
-        DelimiterConfiguration delimiterCon = getDelimiterConfig(request);
 
         logger.info("put delimiter. bucket=" + bucketName + "@delimiter=" + delimiterCon.getDelimiter());
 
@@ -56,37 +47,5 @@ public class BucketDelimiterController {
         logger.debug("get delimiter. bucket={}", bucketName);
 
         return ResponseEntity.ok(bucketDelimiterService.getBucketDelimiter(operator.getUserId(), bucketName));
-    }
-
-    private DelimiterConfiguration getDelimiterConfig(HttpServletRequest httpServletRequest)
-            throws S3ServerException{
-        int ONCE_READ_BYTES  = 1024;
-        try {
-            ServletInputStream inputStream = httpServletRequest.getInputStream();
-            StringBuilder stringBuilder = new StringBuilder();
-            byte[] b = new byte[ONCE_READ_BYTES];
-            int len = inputStream.read(b , 0, ONCE_READ_BYTES);
-            while(len > 0){
-                stringBuilder.append(new String(b,0, len));
-                len = inputStream.read(b , 0, ONCE_READ_BYTES);
-            }
-            String content = stringBuilder.toString();
-            if (content.length() > 0) {
-                ObjectMapper objectMapper = new XmlMapper();
-                DelimiterConfiguration configuration = objectMapper.readValue(content, DelimiterConfiguration.class);
-                configuration.setDelimiter(URLDecoder.decode(configuration.getDelimiter(), "UTF-8"));
-                return configuration;
-            }else {
-                return null;
-            }
-        }catch (Exception e){
-            throw new S3ServerException(S3Error.MALFORMED_XML, "get delimiter failed", e);
-        }finally {
-            try {
-                httpServletRequest.getInputStream().close();
-            }catch (Exception e2){
-                logger.warn("close inputStream failed", e2);
-            }
-        }
     }
 }
