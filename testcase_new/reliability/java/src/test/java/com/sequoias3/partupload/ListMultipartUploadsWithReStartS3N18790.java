@@ -13,6 +13,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListMultipartUploadsRequest;
 import com.amazonaws.services.s3.model.MultipartUploadListing;
@@ -36,111 +37,115 @@ import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
  * @version 1.00
  */
 public class ListMultipartUploadsWithReStartS3N18790 extends S3TestBase {
-	private String bucketName = "bucket18790";
-	private String keyName = "key18790";
-	private int keyNum = 20;
-	private AmazonS3 s3Client = null;
-	private long fileSize = 100 * 1024 * 1024;
-	MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
-	private File localPath = null;
-	private String filePath = null;
-	private boolean runSuccess = false;
+    private String bucketName = "bucket18790";
+    private String keyName = "key18790";
+    private int keyNum = 20;
+    private AmazonS3 s3Client = null;
+    private long fileSize = 100 * 1024 * 1024;
+    MultiValueMap<String, String> expUploads = new LinkedMultiValueMap<String, String>();
+    private File localPath = null;
+    private String filePath = null;
+    private boolean runSuccess = false;
 
-	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
 
-		s3Client = CommLibS3.buildS3Client();
-		CommLibS3.clearBucket(s3Client, bucketName);
-		s3Client.createBucket(new CreateBucketRequest(bucketName));
-	}
+        s3Client = CommLibS3.buildS3Client();
+        CommLibS3.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(new CreateBucketRequest(bucketName));
+    }
 
-	@Test
-	public void ListMultipartUploads() throws Exception {
-		ThreadExecutor threadExec = new ThreadExecutor();
-		for (int i = 0; i < keyNum; i++) {
-			threadExec.addWorker(new InitPartUpload(keyName + "_" + i));
-		}
-		threadExec.run();
+    @Test
+    public void ListMultipartUploads() throws Exception {
+        ThreadExecutor threadExec = new ThreadExecutor();
+        for (int i = 0; i < keyNum; i++) {
+            threadExec.addWorker(new InitPartUpload(keyName + "_" + i));
+        }
+        threadExec.run();
 
-		FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 0, 30);
-		TaskMgr mgr = new TaskMgr(faultMakeTask);
-		mgr.addTask(new ListMultipartUploads());
-		mgr.execute();
-		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-		s3Client = CommLibS3.buildS3Client();
-		listMultipartUploadAgain();
-		runSuccess = true;
-	}
+        FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 0, 30);
+        TaskMgr mgr = new TaskMgr(faultMakeTask);
+        mgr.addTask(new ListMultipartUploads());
+        mgr.execute();
+        Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+        s3Client = CommLibS3.buildS3Client();
+        listMultipartUploadAgain();
+        runSuccess = true;
+    }
 
-	@AfterClass
-	private void tearDown() throws Exception {
-		try {
-			if (runSuccess) {
-				CommLibS3.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
-			}
-		} finally {
-			if (s3Client != null) {
-				s3Client.shutdown();
-			}
-		}
-	}
+    @AfterClass
+    private void tearDown() throws Exception {
+        try {
+            if (runSuccess) {
+                CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
 
-	private class ListMultipartUploads extends OperateTask {
-		@Override
-		public void exec() throws Exception {
-			AmazonS3 s3Client = CommLibS3.buildS3Client();
-			try {
-				Thread.sleep(1000);
-				ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
-				MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
-				List<String> expCommonPrefixes = new ArrayList<>();
-				PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
-			} catch (Exception e) {
-				if (!e.getMessage().contains("Unable to execute HTTP request")) {
-					throw e;
-				}
-			} finally {
-				if (s3Client != null) {
-					s3Client.shutdown();
-				}
-			}
-		}
-	}
+    private class ListMultipartUploads extends OperateTask {
+        @Override
+        public void exec() throws Exception {
+            AmazonS3 s3Client = CommLibS3.buildS3Client();
+            try {
+                Thread.sleep(1000);
+                ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
+                MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
+                List<String> expCommonPrefixes = new ArrayList<>();
+                PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
+            } catch (AmazonS3Exception e) {
+                if (e.getStatusCode() != 500) {
+                    throw e;
+                }
+            } catch (Exception e) {
+                if (!e.getMessage().contains("Unable to execute HTTP request")) {
+                    throw e;
+                }
+            } finally {
+                if (s3Client != null) {
+                    s3Client.shutdown();
+                }
+            }
+        }
+    }
 
-	private void listMultipartUploadAgain() {
-		ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
-		MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
-		List<String> expCommonPrefixes = new ArrayList<>();
-		if (expUploads.size() >= keyNum) {
-			PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
-		}
-	}
+    private void listMultipartUploadAgain() {
+        ListMultipartUploadsRequest request = new ListMultipartUploadsRequest(bucketName);
+        MultipartUploadListing partUploadList = s3Client.listMultipartUploads(request);
+        List<String> expCommonPrefixes = new ArrayList<>();
+        if (expUploads.size() >= keyNum) {
+            PartUploadUtils.checkListMultipartUploadsResults(partUploadList, expCommonPrefixes, expUploads);
+        }
+    }
 
-	private class InitPartUpload {
-		private AmazonS3 s3Client = CommLibS3.buildS3Client();
-		private String keyName;
+    private class InitPartUpload {
+        private AmazonS3 s3Client = CommLibS3.buildS3Client();
+        private String keyName;
 
-		public InitPartUpload(String keyName) {
-			this.keyName = keyName;
-		}
+        public InitPartUpload(String keyName) {
+            this.keyName = keyName;
+        }
 
-		@ExecuteOrder(step = 1)
-		private void partUpload() {
-			try {
-				String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
-				expUploads.add(keyName, uploadId);
-			} finally {
-				if (s3Client != null) {
-					s3Client.shutdown();
-				}
-			}
-		}
-	}
+        @ExecuteOrder(step = 1)
+        private void partUpload() {
+            try {
+                String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+                expUploads.add(keyName, uploadId);
+            } finally {
+                if (s3Client != null) {
+                    s3Client.shutdown();
+                }
+            }
+        }
+    }
 }
