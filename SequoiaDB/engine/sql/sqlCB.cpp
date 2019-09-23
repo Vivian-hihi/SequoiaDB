@@ -86,6 +86,7 @@ namespace engine
       SDB_ASSERT( NULL != sql, "impossible" ) ;
       INT32 rc = SDB_OK ;
       qgmPlanContainer *container = NULL ;
+      BOOLEAN containerOwnned = TRUE ;
       qgmOptiTreeNode *opti = NULL ;
       qgmOptiTreeNode *extend = NULL ;
       const CHAR *trimedSql = NULL ;
@@ -170,6 +171,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to create context:%d", rc ) ;
             goto error ;
          }
+         containerOwnned = FALSE ;
       }
 
       /// step 7: execute.
@@ -198,7 +200,8 @@ namespace engine
       {
          SAFE_OSS_DELETE( opti ) ;
       }
-      if ( container && QGM_PLAN_TYPE_RETURN != container->type() )
+      if ( container && containerOwnned &&
+           QGM_PLAN_TYPE_RETURN != container->type() )
       {
          SDB_OSS_DEL container ;
       }
@@ -209,7 +212,11 @@ namespace engine
          pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
          contextID = -1 ;
       }
-      SAFE_OSS_DELETE( container ) ;
+      if ( container && containerOwnned )
+      {
+         SDB_OSS_DEL container ;
+         container = NULL ;
+      }
       goto done ;
    }
 
