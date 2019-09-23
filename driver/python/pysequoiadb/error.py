@@ -84,9 +84,9 @@ class SDBBaseError(Exception):
 
     @property
     def error_object(self):
-        """Return the error dict. it basically corresponds to the SequoiaDB engine's error object.
+        """Return the error dict. It basically corresponds to the SequoiaDB engine's error object.
 
-        None if no error object. if there has an error, it contains the follow fields:
+        None if no error object. If there has an error, it contains the follow fields:
            * errno : The error number.
            * ErrNodes : More detailed error message.
            * description : The description of the errno.
