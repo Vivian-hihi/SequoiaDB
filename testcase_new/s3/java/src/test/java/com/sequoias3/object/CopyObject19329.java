@@ -80,7 +80,7 @@ public class CopyObject19329 extends S3TestBase {
         String expDstObjVer = "0";
         checkObjectAttribute(dstKeyName, expDstObjVer, srcHisVerETag);
         checkObjectContent(dstKeyName, filePath1);
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     // b.appoint eTag is history version eTag
@@ -93,7 +93,7 @@ public class CopyObject19329 extends S3TestBase {
         String expDstObjVer = "0";
         checkObjectAttribute(dstKeyName, expDstObjVer, srcCurVerETag);
         checkObjectContent(dstKeyName, filePath2);
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     // c.appoint eTag is current version eTag
@@ -114,7 +114,7 @@ public class CopyObject19329 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
         }
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     @AfterClass

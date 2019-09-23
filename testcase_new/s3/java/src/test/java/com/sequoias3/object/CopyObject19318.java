@@ -60,7 +60,7 @@ public class CopyObject19318 extends S3TestBase {
         String expDstObjVer = "2";
         checkObjectAttribute(filePath2, expDstObjVer);
         checkObjectContent(filePath2);
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     @Test(priority = 2)
@@ -72,7 +72,7 @@ public class CopyObject19318 extends S3TestBase {
         String expDstObjVer = "3";
         checkObjectAttribute(filePath1, expDstObjVer);
         checkObjectContent(filePath1);
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     @AfterClass

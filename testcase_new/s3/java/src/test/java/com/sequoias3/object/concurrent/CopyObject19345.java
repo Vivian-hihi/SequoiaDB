@@ -29,7 +29,7 @@ public class CopyObject19345 extends S3TestBase {
     private int runSuccessNum = 0;
     private int expRunSuccessNum = 2;
     private AmazonS3 s3Client = null;
-    private String bucketName = "bucket19345a";
+    private String bucketName = "bucket19345";
     private String srcKeyNameA = "obj19345a";
     private String srcKeyNameB = "obj19345b";
     private String dstKeyNameC = "obj19345c";
@@ -92,7 +92,7 @@ public class CopyObject19345 extends S3TestBase {
                 checkObjectContent(dstKeyNameC, expDstObjHisVer, filePath1);
             }
         }
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     @Test
@@ -126,7 +126,7 @@ public class CopyObject19345 extends S3TestBase {
                 checkObjectContent(dstKeyNameC, expDstObjHisVer, filePath1);
             }
         }
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     @AfterClass

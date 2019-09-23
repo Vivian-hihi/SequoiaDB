@@ -82,7 +82,7 @@ public class CopyObject19330 extends S3TestBase {
         // check results
         checkObjectAttribute(dstBucketName, dstKeyName, filePath1);
         checkObjectContent(dstBucketName, dstKeyName, filePath1);
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     // b.modified after appoint the date
@@ -106,7 +106,7 @@ public class CopyObject19330 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
         }
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     // c.not modified after appoint the date
@@ -123,7 +123,7 @@ public class CopyObject19330 extends S3TestBase {
         // check results
         checkObjectAttribute(dstBucketName, dstKeyName, filePath1);
         checkObjectContent(dstBucketName, dstKeyName, filePath1);
-        expRunSuccessNum++;
+        runSuccessNum++;
     }
 
     @AfterClass
@@ -131,6 +131,7 @@ public class CopyObject19330 extends S3TestBase {
         try {
             if (runSuccessNum == expRunSuccessNum) {
                 CommLib.clearBucket(s3Client, srcBucketName);
+                CommLib.clearBucket(s3Client, dstBucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

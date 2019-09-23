@@ -87,6 +87,7 @@ public class CopyObject19342 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLib.clearBucket(s3Client, srcBucketName);
+                CommLib.clearBucket(s3Client, dstBucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
