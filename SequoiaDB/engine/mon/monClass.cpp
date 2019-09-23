@@ -37,35 +37,70 @@
 *******************************************************************************/
 
 #include "monClass.hpp"
+#include "monCB.hpp"
 #include "pmd.hpp"
 
 namespace engine
 {
 
-BOOLEAN (*MonClassArchiveFP[MON_CLASS_MAX])(MonClass*) = {
-   noArchive,
-   noArchive,
-   archiveQuery
+// microsecond
+#define MON_LATCH_ARCHIVE_THRESHOLD 1000
+
+// microsecond
+#define MON_LOCK_ARCHIVE_THRESHOLD 1000
+
+archiveFunc monClassArchiveFP[MON_CLASS_MAX] = {
+   archiveQuery,  // MON_CLASS_QUERY
+   archiveLatch,  // MON_CLASS_LATCH
+   archiveLock    // MON_CLASS_LOCK
 };
 
-MonClass::MonClass()
-   : _createTS(pmdGetKRCB()->getCurTime()),
-     _status(MON_CLASS_STATUS_NORMAL),
-     _type(MON_CLASS_MAX)
-{}
-
-MonClass::~MonClass() {}
+MonDataLvl monClassCreateCB[MON_CLASS_MAX] = {
+   MON_DATA_LVL_BASIC,   // MON_CLASS_QUERY
+   MON_DATA_LVL_DETAIL,  // MON_CLASS_LATCH
+   MON_DATA_LVL_DETAIL   // MON_CLASS_LOCK
+};
 
 /**
- * add an object to the active list.
- *
- * @param obj object to be added to the active list
+ * _MonClass constructor
  */
-void MonClassContainer::add ( MonClass *obj )
+_MonClass::_MonClass()
+   : _status(MON_CLASS_STATUS_NORMAL),
+     _type(MON_CLASS_MAX)
 {
-   ossScopedLock l( &_activeListHeadLatch, EXCLUSIVE ) ;
-   _activeList.push_front( *obj ) ;
-   _activeListLen.inc() ;
+   ossGetCurrentTime( _createTS ) ;
+   _createTSTick.sample() ;
+}
+
+_MonClass::~_MonClass() {}
+
+_MonClassQueryTmpData& _MonClassQueryTmpData::operator=(const _monAppCB& cb)
+{
+   _dataRead  = cb.totalDataRead ;
+   _dataWrite = cb.totalDataWrite ;
+   _indexRead = cb.totalIndexRead ;
+   _indexWrite = cb.totalIndexWrite ;
+   return *this ;
+}
+
+void _MonClassQueryTmpData::diff(_monAppCB &cb)
+{
+   _dataRead  = cb.totalDataRead - _dataRead ;
+   _dataWrite = cb.totalDataWrite - _dataWrite ;
+   _indexRead = cb.totalIndexRead - _indexRead ;
+   _indexWrite = cb.totalIndexWrite - _indexWrite ;
+}
+
+_MonClassContainer::_MonClassContainer ( MonitorClassType type )
+   : _activeListLen( 0 ),
+     _archivedListLen( 0 ),
+     _archivedListMaxLen( pmdGetKRCB()->getOptionCB()->monHistEvent() ),
+     _numPendingArchive( 0 ),
+     _numPendingDelete( 0 ),
+     _curCollectionLvl( MON_DATA_LVL_NONE )
+{
+   doArchive = monClassArchiveFP[(INT32)type] ;
+   _minOperationalLvl = monClassCreateCB[(INT32)type] ;
 }
 
 /**
@@ -75,8 +110,10 @@ void MonClassContainer::add ( MonClass *obj )
  *
  * @param obj object to be removed.
  */
-void MonClassContainer::remove ( MonClass *obj )
+void _MonClassContainer::remove ( MonClass *obj )
 {
+   ossGetCurrentTime( obj->getEndTS() ) ;
+
    if ( (*doArchive)( obj ) )
    {
       obj->setPendingArchive() ;
@@ -94,16 +131,24 @@ void MonClassContainer::remove ( MonClass *obj )
  * The archived list is structured as a MRU list with the tail being most recent used
  * So elements are removed from the head which are the oldest
  */
-void MonClassContainer::_removeArchivedObj()
+void _MonClassContainer::_removeArchivedObj()
 {
    getArchiveLatch( EXCLUSIVE ) ;
+   SINT32 numToDelete = 0 ;
 
    UINT32 archivedListSize = _archivedList.size() ;
 
-   if ( archivedListSize >_archivedListMaxLen )
+   if ( !isOperational() )
    {
-      UINT32 numToDelete = archivedListSize - _archivedListMaxLen ;
+      numToDelete = archivedListSize ;
+   }
+   else
+   {
+      numToDelete = archivedListSize - _archivedListMaxLen ;
+   }
 
+   if ( numToDelete > 0 )
+   {
       MonClassList::iterator it = _archivedList.begin() ;
 
       while ( numToDelete > 0 )
@@ -112,7 +157,7 @@ void MonClassContainer::_removeArchivedObj()
 
          it = _archivedList.erase(it) ;
 
-         delete &monClass ;
+         SDB_OSS_DEL &monClass ;
 
          numToDelete-- ;
       }
@@ -123,12 +168,13 @@ void MonClassContainer::_removeArchivedObj()
 /**
  * Process pending delete or pending archive object
  */
-void MonClassContainer::_processPendingObj()
+void _MonClassContainer::_processPendingObj()
 {
    getListLatch( EXCLUSIVE ) ;
    getArchiveLatch( EXCLUSIVE ) ;
    getHeadLatch( EXCLUSIVE ) ;
 
+   BOOLEAN headLatchHeld = TRUE ;
    MonClassList::iterator it = _activeList.begin() ;
 
    while ( it != _activeList.end() )
@@ -137,30 +183,83 @@ void MonClassContainer::_processPendingObj()
       {
          MonClass &obj = *it ;
          it = _activeList.erase(it) ;
+         _activeListLen.dec() ;
+         _numPendingArchive.dec() ;
          _archivedList.push_back(obj) ;
       }
       else if ( TRUE == it->isPendingDelete() )
       {
          it = _activeList.erase(it) ;
+         _activeListLen.dec() ;
+         _numPendingDelete.dec() ;
       }
       else
       {
          it++ ;
       }
    }
+
    //TODO: fix this
-   releaseHeadLatch( EXCLUSIVE ) ;
+   if (headLatchHeld)
+   {
+      releaseHeadLatch( EXCLUSIVE ) ;
+   }
    releaseArchiveLatch( EXCLUSIVE ) ;
    releaseListLatch( EXCLUSIVE ) ;
 }
 
 /**
  * archive query based on response time
- * TODO: dummy function for now
  */
 BOOLEAN archiveQuery ( MonClass *obj )
 {
-   return TRUE ;
+   MonClassQuery *monQuery = (MonClassQuery*)obj ;
+   UINT64 responseTime = monQuery->_responseTime.toUINT64() ; // in microsecond
+
+   if ((responseTime/1000) >= pmdGetKRCB()->getOptionCB()->slowQueryThreshold())
+   {
+      return TRUE ;
+   }
+   else
+   {
+      return FALSE ;
+   }
+}
+
+/**
+ * archive latch when there is latch wait
+ */
+BOOLEAN archiveLatch ( MonClass *obj )
+{
+   MonClassLatch *monLatch = (MonClassLatch*)obj ;
+   UINT64 waitTime = monLatch->_waitTime.toUINT64() ; // in microsecond
+
+   if ( waitTime > MON_LATCH_ARCHIVE_THRESHOLD )
+   {
+      return TRUE ;
+   }
+   else
+   {
+      return FALSE ;
+   }
+}
+
+/**
+ * archive lock when there is lock wait
+ */
+BOOLEAN archiveLock ( MonClass *obj )
+{
+   MonClassLock *monLock = (MonClassLock*)obj ;
+   UINT64 waitTime = monLock->_waitTime.toUINT64() ; // in microsecond
+
+   if ( waitTime > MON_LOCK_ARCHIVE_THRESHOLD )
+   {
+      return TRUE ;
+   }
+   else
+   {
+      return FALSE ;
+   }
 }
 
 BOOLEAN noArchive ( MonClass *obj )
@@ -168,10 +267,9 @@ BOOLEAN noArchive ( MonClass *obj )
    return FALSE ;
 }
 
-
 // MonClassScanner implements
 
-void MonClassReadScanner::initScan()
+void _MonClassReadScanner::initScan()
 {
    _container->getListLatch( SHARED ) ;
    _hasListLatch = TRUE ;
@@ -211,7 +309,7 @@ void MonClassReadScanner::initScan()
    _initCalled = TRUE ;
 }
 
-MonClass* MonClassReadScanner::getNext()
+MonClass* _MonClassReadScanner::getNext()
 {
    MonClass *ret = NULL ;
    BOOLEAN found = FALSE ;
@@ -225,8 +323,10 @@ MonClass* MonClassReadScanner::getNext()
    {
       // 1. We skip any pending deletes
       // 2. Skip if this is a pending archive and we are only interested in the active list
+      // 3. Skip if this is active and we are only interested in the archived list
       if ( itr->isPendingDelete() ||
-           (itr->isPendingArchive() && _listType == MON_CLASS_ACTIVE_LIST ) )
+           (itr->isPendingArchive() && _listType == MON_CLASS_ACTIVE_LIST ) ||
+           (!itr->isPendingArchive() && _listType == MON_CLASS_ARCHIVED_LIST ) )
       {
          itr++ ;
       }
@@ -268,7 +368,7 @@ MonClass* MonClassReadScanner::getNext()
    return ret ;
 }
 
-void MonClassReadScanner::doneScan()
+void _MonClassReadScanner::doneScan()
 {
    if (_hasListLatch)
    {
@@ -284,101 +384,4 @@ void MonClassReadScanner::doneScan()
    }
 }
 
-// MonClassWriteScanner implements
-/* TODO: to be completed
-void MonClassWriteScanner::initScan()
-{
-   if ( _listType == MON_CLASS_ARCHIVED_LIST )
-   {
-      _container->getArchiveLatch() ;
-      _hasArchiveLatch = TRUE ;
-   }
-   else
-   {
-      _container->getListLatch( EXCLUSIVE ) ;
-      _hasListLatch = TRUE ;
-
-      _container->getHeadLatch( EXCLUSIVE ) ;
-      _hasHeadLatch = TRUE ;
-   }
-
-   if ( _listType == MON_CLASS_ACTIVE_LIST &&
-        _container->getActiveListLen() > 0 )
-   {
-      itr = _container->begin( _listType ) ;
-   }
-   else if ( _listType == MON_CLASS_ARCHIVED_LIST &&
-             _container->getArchivedListLen() > 0 )
-   {
-      itr = _container->begin( _listType ) ;
-   }
-   else
-   {
-      _endReached = TRUE ;
-   }
-
-   _initCalled = TRUE ;
-}
-
-MonClass* MonClassWriteScanner::getNext()
-{
-   MonClass *ret = NULL ;
-   BOOLEAN found = FALSE ;
-
-   if ( !_initCalled )
-   {
-      initScan() ;
-   }
-
-   // If we have not reached the end of the lists
-   while (!_endReached && !found)
-   {
-      // 1. We skip any pending deletes
-      // 2. Skip if this is a pending archive and we are only interested in the active list
-      if ( itr->isPendingDelete() || itr->isPendingArchive() ||
-           _listType == MON_CLASS_ARCHIVED_LIST )
-      {
-         // Found a match, return
-         ret = &(*itr) ;
-         itr++ ;
-         found = TRUE ;
-      }
-      else
-      {
-         itr++ ;
-      }
-
-      if ( itr == _container->end(_listType) )
-      {
-         _endReached = TRUE ;
-      }
-   }
-
-   // The headLatch is required when reading the first node of the active list.
-   // By the time we get here, it is guaranteed that we have already read the first node.
-   // So we can now release the headLatch.
-   if ( _hasHeadLatch )
-   {
-      _container->releaseHeadLatch(SHARED) ;
-      _hasHeadLatch = FALSE ;
-   }
-
-   return ret ;
-}
-void MonClassWriteScanner::doneScan()
-{
-   if (_hasListLatch)
-   {
-      _container->releaseListLatch(EXCLUSIVE) ;
-   }
-   if (_hasHeadLatch )
-   {
-      _container->releaseHeadLatch(EXCLUSIVE) ;
-   }
-   if ( _hasArchiveLatch)
-   {
-      _container->releaseArchiveLatch() ;
-   }
-}
-*/
 } // namespace engine

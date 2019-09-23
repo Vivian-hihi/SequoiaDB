@@ -2236,4 +2236,63 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_MON_SLOWQUERY_THRESHOLD</name>
+      <long>monslowquerythreshold</long>
+      <description>
+        <en>The threshold for a slow query (ms). Default is 200.</en>
+        <cn>单位：ms。默认为200</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>The threshold for a slow query (ms). Default is 200.</en>
+        <cn>单位：ms。默认为200。</cn>
+      </detail>
+      <type>int</type>
+      <default>200</default>
+      <hidden>false</hidden>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_MON_GROUP_MASK</name>
+      <long>mongroupmask</long>
+      <description>
+        <en>Monitor group mask, '|' delimited string in the format of 'groupname':'loglevel'. Valid groupname: slowQuery, all. Valid loglevel: off,basic,detail. Default is all:off. </en>
+        <cn></cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>This specifies the group of activities to monitor within sequoiaDB, along with the log level for each<fig></fig>
+        group. Valid groups are slowQuery and all. loglevel can be off,basic or detail.
+        </en>
+        <cn></cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+      <hidden>false</hidden>
+   </opt>
+   <opt>
+      <name>PMD_OPTION_MON_HIST_EVENT</name>
+      <long>monhistevent</long>
+      <description>
+        <en>The number of history events to keep in monitor archive. Default is 1000</en>
+        <cn>默认为1000</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>Specifies the number of history events to keep for a monitor component. Default is 1000</en>
+        <cn>默认为1000。</cn>
+      </detail>
+      <type>int</type>
+      <default>1000</default>
+      <hidden>true</hidden>
+   </opt>
 </optlist>
