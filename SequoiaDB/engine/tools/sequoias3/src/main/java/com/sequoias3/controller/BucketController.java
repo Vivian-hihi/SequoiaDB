@@ -122,6 +122,35 @@ public class BucketController {
                 .build();
     }
 
+    @RequestMapping(value = "/{bucketname:.+}", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity bucketRejectUploadId(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
+                                               HttpServletRequest httpServletRequest)
+            throws S3ServerException{
+        try {
+            restUtils.getOperatorByAuthorization(authorization);
+            logger.error("bucketRejectUploadId: need a key name.");
+            throw new S3ServerException(S3Error.NEED_A_KEY, "need a key");
+        }catch (Exception e){
+            try{
+                if (httpServletRequest.getInputStream() != null) {
+                    httpServletRequest.getInputStream().skip(httpServletRequest.getContentLength());
+                }
+            }catch (Exception e2){
+                logger.error("skip content length fail");
+            }
+            throw e;
+        }
+    }
+
+    @RequestMapping(value = "/{bucketname:.+}", headers = RestParamDefine.CopyObjectHeader.X_AMZ_COPY_SOURCE, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity bucketRejectCopy(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
+            throws S3ServerException{
+        restUtils.getOperatorByAuthorization(authorization);
+        logger.error("bucketRejectCopy: need a key name.");
+        throw new S3ServerException(S3Error.NEED_A_KEY, "need a key");
+    }
+
+
     private String getLocation(HttpServletRequest httpServletRequest)
             throws S3ServerException{
         int ONCE_READ_BYTES  = 1024;

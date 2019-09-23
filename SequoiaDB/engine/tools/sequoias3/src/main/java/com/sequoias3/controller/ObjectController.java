@@ -195,12 +195,6 @@ public class ObjectController {
             logger.error("get object failed. bucketName={}, bucketName/objectName={}, versionId={}",
                     bucketName, httpServletRequest.getRequestURI(), versionId);
             throw e;
-        }finally {
-            try {
-                response.getOutputStream().close();
-            }catch (Exception e2){
-                logger.warn("close outputStream failed", e2);
-            }
         }
     }
 
