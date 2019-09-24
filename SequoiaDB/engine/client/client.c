@@ -777,6 +777,10 @@ static INT32 _extract ( sdbConnectionHandle cHandle,
       goto error ;
    }
 
+   if ( SDB_OK != replyFlag )
+   {
+      contextID = -1 ;
+   }
    rc = replyFlag ;
    pConnStruct->_pErrObjBuf = NULL ;
    pConnStruct->_errObjBufSize = 0 ;
