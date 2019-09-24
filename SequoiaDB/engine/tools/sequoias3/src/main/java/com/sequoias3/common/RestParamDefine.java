@@ -196,6 +196,10 @@ public class RestParamDefine {
         public static final String VERSION_ID                    = "x-amz-version-id";
     }
 
+    public static class DelimiterHeader{
+        public static final String ENCODING_TYPE           = "encoding-type";
+    }
+
     public static final String EXPECT               = "Expect";
 
     public static final int PART_NUMBER_MIN         = 1;
