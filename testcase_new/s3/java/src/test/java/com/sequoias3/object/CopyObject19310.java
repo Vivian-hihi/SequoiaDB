@@ -51,11 +51,11 @@ public class CopyObject19310 extends S3TestBase {
         s3Client.createBucket(destBucketName);
 
         s3Client.putObject(srcBucketName, srcKeyName, "contentofhistoryVersion");
-        s3Client.putObject(srcBucketName, srcKeyName, new File(filePath));
+        s3Client.putObject(srcBucketName, srcKeyName, "contentofcurrentVersion");
         CommLib.setBucketVersioning(s3Client, srcBucketName, "Suspended");
+        s3Client.putObject(srcBucketName, srcKeyName, new File(filePath));
     }
 
-    // TODO 禁用源对象版本后复制对象，是否需要覆盖源对象的当前版本、历史版本？
     @Test
     public void testCopyObject() throws Exception {
         CopyObjectResult result = s3Client.copyObject(srcBucketName, srcKeyName, destBucketName, destKeyName);

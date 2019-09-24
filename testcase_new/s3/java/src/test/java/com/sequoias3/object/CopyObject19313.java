@@ -63,10 +63,9 @@ public class CopyObject19313 extends S3TestBase {
     public void testCopyObject() throws Exception {
         CopyObjectResult result = s3Client.copyObject(srcBucketName, srcKeyName, destBucketName, destKeyName);
 
-        // TODO 如下属性校验了当前版本，内容校验了当前和历史版本，建议属性和内容均分别校验当前版本、历史版本
         String currentVersionId = "1";
         String hisVersionId = "0";
-        checkObjectAttributeInfo(result, destBucketName, destKeyName, currentVersionId);
+        checkObjectAttributeInfo(result, destBucketName, destKeyName, currentVersionId, hisVersionId);
         checkObjectContent(destBucketName, destKeyName, currentVersionId, hisVersionId);
 
         runSuccess = true;
@@ -97,16 +96,22 @@ public class CopyObject19313 extends S3TestBase {
     }
 
     private void checkObjectAttributeInfo(CopyObjectResult objAttrInfo, String bucketName, String keyName,
-            String currentVersionId) throws IOException {
+            String currentVersionId, String hisVersionId) throws IOException {
         String expMd5 = TestTools.getMD5(copyFilePath);
         Assert.assertEquals(objAttrInfo.getETag(), expMd5);
 
-        // check the attributeInfo of get object
+        // check the attributeInfo of get copy object
         GetObjectMetadataRequest request = new GetObjectMetadataRequest(bucketName, keyName);
         ObjectMetadata result = s3Client.getObjectMetadata(request);
-
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), copyFileSize);
         Assert.assertEquals(result.getVersionId(), currentVersionId, "the keyName=" + keyName);
+
+        // check the attributeInfo of old destObject
+        GetObjectMetadataRequest request1 = new GetObjectMetadataRequest(bucketName, keyName, hisVersionId);
+        ObjectMetadata result1 = s3Client.getObjectMetadata(request1);
+        Assert.assertEquals(result1.getETag(), expMd5);
+        Assert.assertEquals(result1.getContentLength(), copyFileSize);
+        Assert.assertEquals(result1.getVersionId(), hisVersionId, "the keyName=" + keyName);
     }
 }

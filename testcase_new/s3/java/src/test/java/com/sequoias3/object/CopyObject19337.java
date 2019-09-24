@@ -10,12 +10,12 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.CopyObjectResult;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 
 /**
- * @Description seqDB-19337:指定ifUnModifiedSince和ifModifiedSince条件复制对象，
- *              源对象不匹配ifUnModifiedSince
+ * @Description seqDB-19337:指定ifUnModifiedSince和ifModifiedSince条件复制对象， 源对象不匹配ifUnModifiedSince
  * @author wuyan
  * @Date 2019.09.19
  * @version 1.00
@@ -26,6 +26,7 @@ public class CopyObject19337 extends S3TestBase {
     private String srcKeyName = "/src/bb%/object19337";
     private String destKeyName = "/dest/object19337";
     private AmazonS3 s3Client = null;
+    private long lastModifiedTime = 0;
 
     @BeforeClass
     private void setUp() {
@@ -35,19 +36,19 @@ public class CopyObject19337 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
         s3Client.putObject(bucketName, srcKeyName, "testcontent1");
-        s3Client.putObject(bucketName, srcKeyName, "testcontent2");
+        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, "testcontent2");
+        Date lastModifiedDate = result.getMetadata().getLastModified();
+        lastModifiedTime = lastModifiedDate.getTime();
     }
 
     @Test
     public void testCopyObject() throws Exception {
-        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
-        // set date 2 minutes early than the current time
-        long currentTimestamp = new Date().getTime();
-        long beforeTimestamp = currentTimestamp - 2 * 60 * 1000l;
+        // set date 2 minutes early than the last modified time
+        long beforeTimestamp = lastModifiedTime - 2 * 60 * 1000l;
         Date beforeDate = new Date(beforeTimestamp);
 
-        // set date 3 minutes early than current time
-        long timestamp = currentTimestamp - 3 * 60 * 1000l;
+        // set date 3 minutes early than last modified time
+        long timestamp = lastModifiedTime - 3 * 60 * 1000l;
         Date noModifiedDate = new Date(timestamp);
 
         // copyObject

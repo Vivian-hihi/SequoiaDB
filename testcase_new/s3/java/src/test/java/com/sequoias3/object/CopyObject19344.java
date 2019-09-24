@@ -11,14 +11,14 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * @Description seqDB-19344:
- *              指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件获取对象
+ * @Description seqDB-19344: 指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件获取对象
  * @author wuyan
  * @Date 2019.09.20
  * @version 1.00
@@ -34,6 +34,7 @@ public class CopyObject19344 extends S3TestBase {
     private String hisVersionContent0 = "testHisVersionContent0";
     private String keyBContent = "testContent1_19344";
     private String curVersionContent = "testcurVersionContent19344";
+    private long lastModifiedTime = 0;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -47,7 +48,9 @@ public class CopyObject19344 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
         s3Client.putObject(bucketName, srcKeyNameA, hisVersionContent0);
         s3Client.putObject(bucketName, srcKeyNameB, keyBContent);
-        s3Client.putObject(bucketName, srcKeyNameA, curVersionContent);
+        PutObjectResult result = s3Client.putObject(bucketName, srcKeyNameA, curVersionContent);
+        Date lastModifiedDate = result.getMetadata().getLastModified();
+        lastModifiedTime = lastModifiedDate.getTime();
     }
 
     @Test
@@ -55,14 +58,12 @@ public class CopyObject19344 extends S3TestBase {
         String curVersionETag = TestTools.getMD5(curVersionContent.getBytes());
         String keyBETag = TestTools.getMD5(keyBContent.getBytes());
 
-        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
         // set date 3 minutes early at the current time
-        long currentTimestamp = new Date().getTime();
-        long beforeTimestamp = currentTimestamp - 3 * 60 * 1000l;
+        long beforeTimestamp = lastModifiedTime - 3 * 60 * 1000l;
         Date beforeDate = new Date(beforeTimestamp);
 
         // set date 1 minutes later than current time
-        long afterTimestamp = currentTimestamp + 1 * 60 * 1000l;
+        long afterTimestamp = lastModifiedTime + 1 * 60 * 1000l;
         Date afterDate = new Date(afterTimestamp);
 
         CopyObjectRequest request = new CopyObjectRequest(bucketName, srcKeyNameA, bucketName, destKeyName);

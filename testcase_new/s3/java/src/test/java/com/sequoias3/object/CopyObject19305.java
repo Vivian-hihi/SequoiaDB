@@ -20,8 +20,6 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * TODO 如下字段首字母建议统一大小写（公共问题）
- * 
  * @Description seqDB-19305:不同桶复制对象
  * @author wuyan
  * @Date 2019.09.17
@@ -65,7 +63,6 @@ public class CopyObject19305 extends S3TestBase {
         s3Client.putObject(bucketNameA, keyName, new File(filePath));
     }
 
-    // TODO 建议同一定义为私有方法 public -> private （公共问题）
     @Test(dataProvider = "keyNameProvider")
     public void testCopyObject(String destKeyName) throws Exception {
         Date beforeDate = new Date();

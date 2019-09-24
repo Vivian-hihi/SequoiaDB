@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -34,6 +35,7 @@ public class CopyObject19331 extends S3TestBase {
     private File localPath = null;
     private String hisVersionFilePath = null;
     private String curVersionFilePath = null;
+    private long lastModifiedTime = 0;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -50,7 +52,9 @@ public class CopyObject19331 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
         s3Client.putObject(bucketName, srcKeyName, new File(hisVersionFilePath));
-        s3Client.putObject(bucketName, srcKeyName, new File(curVersionFilePath));
+        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, new File(curVersionFilePath));
+        Date lastModifiedDate = result.getMetadata().getLastModified();
+        lastModifiedTime = lastModifiedDate.getTime();
     }
 
     @Test
@@ -59,11 +63,8 @@ public class CopyObject19331 extends S3TestBase {
         // the date
         copyObjectWithModifiedSinceC();
 
-        // set date an hour early at the current time
-        // TODO
-        // 建议获取源对象的LastModified时间，而不是获取本地时间，本地时间可能跟服务器时间不一致，有可能存在较大误差，且误差范围外用例会失败
-        long currentTimestamp = new Date().getTime();
-        long timestamp = currentTimestamp - 60 * 60 * 1000l;
+        // set date an hour early at the lastModified time
+        long timestamp = lastModifiedTime - 60 * 60 * 1000l;
         Date date = new Date(timestamp);
         // test a: the hisVersion of sourceObject has been modified after the
         // date
@@ -110,9 +111,8 @@ public class CopyObject19331 extends S3TestBase {
     }
 
     private void copyObjectWithModifiedSinceC() throws Exception {
-        // set date 10 minutes later than current time
-        long currentTimestamp = new Date().getTime();
-        long timestamp = currentTimestamp + 10 * 60 * 1000l;
+        // set date 10 minutes later than lastModified time
+        long timestamp = lastModifiedTime + 10 * 60 * 1000l;
         Date date = new Date(timestamp);
 
         try {

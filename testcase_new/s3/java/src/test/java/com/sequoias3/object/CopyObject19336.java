@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -35,6 +36,7 @@ public class CopyObject19336 extends S3TestBase {
     private File localPath = null;
     private String hisVersionFilePath = null;
     private String curVersionFilePath = null;
+    private long lastModifiedTime = 0;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -51,19 +53,19 @@ public class CopyObject19336 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
         s3Client.putObject(bucketName, srcKeyName, new File(hisVersionFilePath));
-        s3Client.putObject(bucketName, srcKeyName, new File(curVersionFilePath));
+        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, new File(curVersionFilePath));
+        Date lastModifiedDate = result.getMetadata().getLastModified();
+        lastModifiedTime = lastModifiedDate.getTime();
     }
 
     @Test
     public void testCopyObject() throws Exception {
-        // set date 2 minutes early at the current time
-        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
-        long currentTimestamp = new Date().getTime();
-        long beforeTimestamp = currentTimestamp - 2 * 60 * 1000l;
+        // set date 2 minutes early at the lastModified time
+        long beforeTimestamp = lastModifiedTime - 2 * 60 * 1000l;
         Date beforeDate = new Date(beforeTimestamp);
 
-        // set date 2 minutes later than current time
-        long afterTimestamp = currentTimestamp + 2 * 60 * 1000l;
+        // set date 2 minutes later than lastModified time
+        long afterTimestamp = lastModifiedTime + 2 * 60 * 1000l;
         Date afterDate = new Date(afterTimestamp);
 
         // copyObject

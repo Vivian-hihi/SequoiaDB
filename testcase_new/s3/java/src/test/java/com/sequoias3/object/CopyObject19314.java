@@ -19,6 +19,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  * @author wuyan
  * @Date 2019.09.18
  * @version 1.00
+ * 
  */
 public class CopyObject19314 extends S3TestBase {
     private boolean runSuccess = false;
