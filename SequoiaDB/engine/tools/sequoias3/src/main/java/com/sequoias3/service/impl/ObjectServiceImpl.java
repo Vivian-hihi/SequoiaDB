@@ -93,6 +93,9 @@ public class ObjectServiceImpl implements ObjectService {
     @Autowired
     RestUtils restUtils;
 
+    @Autowired
+    AclDao aclDao;
+
     @Override
     public PutDeleteResult putObject(Bucket bucket, String objectName,
                                      String contentMD5, Map<String, String> headers,
@@ -145,7 +148,7 @@ public class ObjectServiceImpl implements ObjectService {
 
             ObjectMeta deleteObject = writeObjectMeta(objectMeta, objectName, bucket.getBucketId(),
                     versioningStatusType, region);
-            deleteObjectLob(deleteObject);
+            deleteObjectLobAndAcl(deleteObject);
 
             //build response
             PutDeleteResult response = new PutDeleteResult();
@@ -296,6 +299,7 @@ public class ObjectServiceImpl implements ObjectService {
                     objectMeta.setClName(dataClName);
                     objectMeta.setLobId(newLobData.getLobId());
                     objectMeta.setNoVersionFlag(generateNoVersionFlag(versioningStatusType));
+                    objectMeta.setAclId(null);
                 } else {
                     objectMeta = buildObjectMeta(destObject, bucket.getBucketId(),
                             requestHeaders, xMeta, dataCsName, dataClName, false,
@@ -308,7 +312,7 @@ public class ObjectServiceImpl implements ObjectService {
                 deleteObject = writeObjectMeta(objectMeta, destObject,
                         bucket.getBucketId(), versioningStatusType, region);
 
-                deleteObjectLob(deleteObject);
+                deleteObjectLobAndAcl(deleteObject);
                 copyObjectResult.setLastModified(DataFormatUtils.formatDate(objectMeta.getLastModified()));
                 if (!sourceMeta.getNoVersionFlag()){
                     copyObjectResult.setSourceVersionId(sourceMeta.getVersionId());
@@ -454,7 +458,7 @@ public class ObjectServiceImpl implements ObjectService {
                     String metaCsName    = regionDao.getMetaCurCSName(region);
                     String metaClName    = regionDao.getMetaCurCLName(region);
                     ObjectMeta objectMeta = removeMetaForNoneVersioning(metaCsName, metaClName, bucket, objectName);
-                    deleteObjectLob(objectMeta);
+                    deleteObjectLobAndAcl(objectMeta);
                     return null;
                 case SUSPENDED:
                 case ENABLED:
@@ -464,7 +468,7 @@ public class ObjectServiceImpl implements ObjectService {
                             noVersionFlag);
                     ObjectMeta oldObject = writeObjectMeta(deleteMarker, objectName,
                             bucket.getBucketId(), versioningStatusType, region);
-                    deleteObjectLob(oldObject);
+                    deleteObjectLobAndAcl(oldObject);
 
                     response = new PutDeleteResult();
                     if (deleteMarker.getNoVersionFlag()){
@@ -578,7 +582,7 @@ public class ObjectServiceImpl implements ObjectService {
                     break;
             }
 
-            deleteObjectLob(deleteObject);
+            deleteObjectLobAndAcl(deleteObject);
             PutDeleteResult response = null;
             if (deleteObject != null && deleteObject.getDeleteMarker()){
                 response = new PutDeleteResult();
@@ -1307,7 +1311,7 @@ public class ObjectServiceImpl implements ObjectService {
             logger.debug("write cur meta end");
 
             transaction.commit(connection);
-            deleteObjectLob(oldObjectMeta);
+            deleteObjectLobAndAcl(oldObjectMeta);
             uploadStatusDao.deleteUploadId(uploadId);
 
             //build response
@@ -1830,6 +1834,9 @@ public class ObjectServiceImpl implements ObjectService {
                     ObjectId lobId = (ObjectId)record.get(ObjectMeta.META_LOB_ID);
                     dataDao.deleteObjectDataByLobId(connection, dataCsName, dataClName, lobId);
                 }
+                if (record.get(ObjectMeta.META_ACLID) != null) {
+                    aclDao.deleteAcl(connection, (long) record.get(ObjectMeta.META_ACLID));
+                }
             }
         } catch (S3ServerException e) {
             throw e;
@@ -2057,8 +2064,15 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
-    private void deleteObjectLob(ObjectMeta deleteObject){
+    private void deleteObjectLobAndAcl(ObjectMeta deleteObject){
         if (deleteObject != null && !deleteObject.getDeleteMarker()) {
+            try{
+                if (deleteObject.getAclId() != null) {
+                    aclDao.deleteAcl(null, deleteObject.getAclId());
+                }
+            }catch (Exception e){
+                logger.error("delete acl failed. aclId:{}", deleteObject.getAclId());
+            }
             int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
             while (tryTime > 0) {
                 tryTime--;

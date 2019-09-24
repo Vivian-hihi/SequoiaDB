@@ -263,25 +263,45 @@ public class BucketServiceImpl implements BucketService {
                 while (!objectService.isEmptyBucket(null, bucket)) {
                     objectService.deleteObjectByBucket(bucket);
                 }
+            }catch (Exception e){
+                logger.error("delete bucket force. clean objects failed. " +
+                        "bucketName=" + bucket.getBucketName() + ", bucketId={}" + bucket.getBucketId(), e);
+            }
 
+            try {
                 //delete dir
                 String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
                 dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
+            } catch (Exception e){
+                logger.error("delete bucket force. clean dir failed. " +
+                        "bucketName=" + bucket.getBucketName() + ", bucketId={}" + bucket.getBucketId(), e);
+            }
 
+            try {
                 //task
                 if (bucket.getTaskID() != null) {
                     taskDao.deleteTaskId(null, bucket.getTaskID());
                 }
+            }catch (Exception e){
+                logger.error("delete bucket force. clean task failed. " +
+                        "bucketName=" + bucket.getBucketName() + ", bucketId={}" + bucket.getBucketId(), e);
+            }
 
+            try {
                 //delete acl
                 if (bucket.getAclId() != null) {
                     aclDao.deleteAcl(null, bucket.getAclId());
                 }
+            }catch (Exception e){
+                logger.error("delete bucket force. clean acl failed. " +
+                        "bucketName=" + bucket.getBucketName() + ", bucketId={}" + bucket.getBucketId(), e);
+            }
 
+            try{
                 //uploadId
                 uploadDao.setUploadsStatus(bucket.getBucketId(), null, UploadMeta.UPLOAD_ABORT);
             } catch (Exception e){
-                logger.error("delete bucket force. clean failed, might something is left. " +
+                logger.error("delete bucket force. clean uploads failed. " +
                         "bucketName=" + bucket.getBucketName() + ", bucketId={}" + bucket.getBucketId(), e);
             }
         }catch (S3ServerException e) {
