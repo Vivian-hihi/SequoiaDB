@@ -539,8 +539,6 @@ TEST_F( clParaVerify, lob )
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbOpenLob( cs, &oid, SDB_LOB_CREATEONLY, &lob ) ;
    ASSERT_EQ( SDB_CLT_INVALID_HANDLE, rc ) ;
-   rc = sdbOpenLob( cl, NULL, SDB_LOB_CREATEONLY, &lob ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    rc = sdbOpenLob( cl, &oid, 2, &lob ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) ;
    // rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, NULL ) ;  // core dump
