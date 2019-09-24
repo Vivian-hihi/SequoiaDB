@@ -60,7 +60,7 @@ On success, return an object of Sdb.
 On error, exception will be thrown.
 .SH ERRORS
 .PP
-the exceptions of \f[C]Sdb()\f[] are as below:
+The exceptions of \f[C]Sdb()\f[] are as below:
 .PP
 .TS
 tab(@);
@@ -247,12 +247,12 @@ started.
 T}
 .TE
 .PP
-when exception happen, use getLastError() to get the error code and use
+When exception happen, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH HISTORY
 .PP
-since v1.12
+Since v1.12
 .SH EXAMPLES
 .IP "1." 3
 Create a Sdb object connection to the SequoiaDB, hostname default to be

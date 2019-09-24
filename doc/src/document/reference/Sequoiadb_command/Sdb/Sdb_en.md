@@ -49,7 +49,7 @@ On error, exception will be thrown.
 
 ##ERRORS##
 
-the exceptions of `Sdb()` are as below:
+The exceptions of `Sdb()` are as below:
 
 | Error Code | Error Type | Description | Solution |
 | ------ | --- | ------------ | ----------- |
@@ -59,11 +59,11 @@ the exceptions of `Sdb()` are as below:
 | -250 | SDB_CLS_NODE_BSFAULT | The node is not in normal status | ChecKs the node statusf of the current replicaGroup. like chesks that  check that catalog node is started. |
 
 
-when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
+When exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
 ##HISTORY##
 
-since v1.12
+Since v1.12
 
 ##EXAMPLES##
 

@@ -149,7 +149,7 @@ On error, exception will be thrown.
 
 ##ERRORS##
 
-the exceptions of `createCL()` are as below:
+The exceptions of `createCL()` are as below:
 
 | Error Code | Error Type | Description | Solution |
 | ------ | ------ | --- | ------ |
@@ -227,72 +227,72 @@ Since v1.0.
     ```
 
 
+##MATTERS NEEDING ATTENTION##
+
+After creating the primary partition collection (the primary table) or subpartition collection, there are some special cases to be taken into account when using the primary/subpartition collection.
 
 
-##Matters needing attention##
-
-After creating the primary partition collection (the primary table) or subpartition collection, there are some special cases to be taken into account when using the primary/subpartition collection
-
-
-1. Insert is performed from the primary partition collection, and the property uses the corresponding property of the primary partition collection
+1. Insert is performed from the primary partition collection, and the property uses the corresponding property of the primary partition collection.
 
 2. Insert is performed from a subpartition collection, and the property uses the corresponding property of the subpartition collection.
 
  
 ###Example###
 
-Validates the use of AutoIncrement when writing from the primary partition collection and subpartition collections
-.
+Validates the use of AutoIncrement when writing from the primary partition collection and subpartition collections.
 
-Create primary partition collection "masterCL", and AutoIncrement set to "masterID" 
 
-   ```lang-javascript
+1. Create primary partition collection "masterCL", and AutoIncrement set to "masterID".
+
+	```lang-javascript
     > db.foo.createCL("masterCL",{ IsMainCL: true, ShardingKey: { a: 1 }, ShardingType: "range", AutoIncrement: { Field: "masterID" } })
     localhost:11810.foo.masterCL
     Takes 0.002450s.
-   ```
-Create subpartition collection "slaveCL", and AutoIncrement set to "slaveID"
+	```
 
-   ```lang-javascript
+2. Create subpartition collection "slaveCL", and AutoIncrement set to "slaveID".
+
+	```lang-javascript
     > db.foo.createCL("slaveCL",{ ShardingKey: { b: 1 }, ShardingType: "hash", Partition: 1024, AutoIncrement: { Field: "slaveID" }})
     localhost:11810.foo.slaveCL
     Takes 0.263536s.
-   ```
-Subpartition collection "slaveCL" attach to primary partition collection "masterCL".
+	```
 
-   ```lang-javascript
+3. Subpartition collection "slaveCL" attach to primary partition collection "masterCL".
+
+	```lang-javascript
     > db.foo.masterCL.attachCL( "foo.slaveCL", { LowBound: { a: 0 }, UpBound: { a: 100 } } )
+    localhost:11810.foo.slaveCL
     Takes 0.002743s.
-   ```
+	```
 
-When inserting data from the primary partition: masterCL, AutoIncrement will use the corresponding property of the primary partition collection, so the data {"a":1} will have "masterID".
+4. When inserting data from the primary partition: masterCL, AutoIncrement will use the corresponding property of the primary partition collection, so the data {"a":1} will have "masterID".
  When inserting data from the subpartition collection: slaveCL, AutoIncrement will use the corresponding property of the subpartition collection, so the data {"a":2} will have "slaveID".
 
-
-   ```lang-javascript
+	```lang-javascript
     > db.foo.masterCL.insert({"a":1}) //inserting data from masterCL
     Takes 0.001877s. 
     > db.foo.slaveCL.insert({"a":2}) //inserting data from slaveCL
     Takes 0.001238s.
     > db.foo.masterCL.find() //get results
-    {
-      "_id": {
-        "$oid": "5d42b40d2d7dfa6391e3cbd9"
-      },
-      "a": 1,
-      "masterID": 1
-    }
-    {
-      "_id": {
-        "$oid": "5d42b4342d7dfa6391e3cbda"
-      },
-      "a": 2,
-      "slaveID": 1
-    }
-    Return 2 row(s).
-    Takes 0.001234s.
-    > 
-   ```
- 
+	{
+	  "_id": {
+	    "$oid": "5d42b40d2d7dfa6391e3cbd9"
+	  },
+	  "a": 1,
+	  "masterID": 1
+	}
+	{
+	  "_id": {
+	    "$oid": "5d42b4342d7dfa6391e3cbda"
+	  },
+	  "a": 2,
+	  "slaveID": 1
+	}
+	Return 2 row(s).
+	Takes 0.001234s.
+	> 
+	```
+
 For other properties of the collection, such as ShardingKey, Compressed, AutoIndexId and so on, the subpartition collection uses its own properties instead of the properties of the primary partition collection
 .
