@@ -159,6 +159,7 @@ public class DBCursor implements Closeable {
 
         int flag = response.getFlag();
         if (flag != 0) {
+            contextId = -1;
             if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 isEOC = true;
                 return null;
