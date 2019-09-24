@@ -275,16 +275,16 @@ public class BucketDelimiterServiceImpl implements BucketDelimiterService {
     }
 
     @Override
-    public DelimiterConfiguration getBucketDelimiter(long ownerID, String bucketName)
+    public DelimiterConfiguration getBucketDelimiter(long ownerID, String bucketName, String encodingType)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
 
             DelimiterConfiguration result;
             if (bucket.getDelimiter() == 1) {
-                result = new DelimiterConfiguration(bucket.getDelimiter1(), bucket.getDelimiter1Status());
+                result = new DelimiterConfiguration(bucket.getDelimiter1(), bucket.getDelimiter1Status(), encodingType);
             } else {
-                result = new DelimiterConfiguration(bucket.getDelimiter2(), bucket.getDelimiter2Status());
+                result = new DelimiterConfiguration(bucket.getDelimiter2(), bucket.getDelimiter2Status(), encodingType);
             }
             return result;
         }catch (S3ServerException e){
