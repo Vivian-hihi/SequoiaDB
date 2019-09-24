@@ -109,16 +109,17 @@ public class CopyObject19305 extends S3TestBase {
         GetObjectMetadataRequest request = new GetObjectMetadataRequest(bucketName, keyName);
         ObjectMetadata result = s3Client.getObjectMetadata(request);
         Date modifiedDate = result.getLastModified();
-        // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4920
-        // String defaultContenttype = "text/plain";
-        // Assert.assertEquals(result.getContentType(), defaultContenttype);
+        String defaultContenttype = "text/plain";
+        Assert.assertEquals(result.getContentType(), defaultContenttype);
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), fileSize);
 
         // modifiedDate range is [ beforeDate, afterDate]
+
         Assert.assertFalse(modifiedDate.before(beforeDate), "modifiedDate must not be less than beforeDate,"
                 + "modifiedDate:" + modifiedDate + " beforeDate:" + beforeDate);
         Assert.assertFalse(modifiedDate.after(afterDate), "modifiedDate must not be greater than afterDate,"
                 + "modifiedDate:" + modifiedDate + " afterDate:" + afterDate);
+
     }
 }
