@@ -407,9 +407,9 @@ class SequoiaCL
    /**
     * Attach the specified collection.
     *
-    * @param $subClFullName	the string argument. The name of the subcollection.
+    * @param $subClFullName   the string argument. The name of the subcollection.
     *
-    * @param $options an array or the string argument. The low boudary and up boudary eg: @code
+    * @param $options         an array or the string argument. The low boudary and up boudary eg: @code
     *                                                                                     array( 'LowBound' => array( '<key>' => <value> ), 'UpBound' => array( '<key>' => <value> ) )
     *                                                                                     @endcode
     *
@@ -432,7 +432,7 @@ class SequoiaCL
    /**
     * Detach the specified collection.
     *
-    * @param $subClFullName	the string argument. The name of the subcollection.
+    * @param $subClFullName   the string argument. The name of the subcollection.
     *
     * @return Returns the result, default return array.
     *
@@ -511,7 +511,7 @@ class SequoiaCL
     *
     * @param $record an array or the string argument. The inserted record, cannot be empty.
     *
-    * @param $flags an integer argument.
+    * @param $flags  an integer argument.
     *                                    @code
     *                                    0                           :  while 0 is set, database will stop inserting
     *                                                                   when the record hit index key duplicate error.
@@ -561,7 +561,7 @@ class SequoiaCL
    /**
     * Insert records into current collection.
     *
-    * @param $records	an array or the string argument. The inserted record, cannot be empty.
+    * @param $records   an array or the string argument. The inserted record, cannot be empty.
     *
     * @param $flags an integer argument. 
     *                                    @code
@@ -681,9 +681,9 @@ class SequoiaCL
    /**
     * Delete the matching documents in current collection, never rollback if failed.
     *
-    * @param $condition	an array or the string argument. The matching rule, delete all the documents if null.
+    * @param $condition an array or the string argument. The matching rule, delete all the documents if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint      an array or the string argument. The hint, automatically match the optimal hint if null.
     *
     * @return Returns the result, default return array.
     *
@@ -713,13 +713,13 @@ class SequoiaCL
    /**
     * Update the matching documents in current collection.
     *
-    * @param $rule	an array or the string argument. The updating rule, cannot be null.
+    * @param $rule      an array or the string argument. The updating rule, cannot be null.
     *
-    * @param $condition	an array or the string argument. The matching rule, update all the documents if null.
+    * @param $condition an array or the string argument. The matching rule, update all the documents if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint      an array or the string argument. The hint, automatically match the optimal hint if null.
     *
-    * @param $flag	an integer argument. The query flag, default to be 0.
+    * @param $flag      an integer argument. The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_UPDATE_KEEP_SHARDINGKEY(0x00008000) : The sharding key in update rule is not filtered.
     *                                   @endcode
@@ -743,15 +743,15 @@ class SequoiaCL
    /**
     * Update the matching documents in current collection, insert if no matching.
     *
-    * @param $rule	an array or the string argument. The updating rule, cannot be null.
+    * @param $rule         an array or the string argument. The updating rule, cannot be null.
     *
-    * @param $condition	an array or the string argument. The matching rule, update all the documents if null.
+    * @param $condition    an array or the string argument. The matching rule, update all the documents if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint         an array or the string argument. The hint, automatically match the optimal hint if null.
     *
-    * @param $setOnInsert	an array or the string argument. The setOnInsert, assigns the specified values to the fileds when insert
+    * @param $setOnInsert  an array or the string argument. The setOnInsert, assigns the specified values to the fileds when insert
     *
-    * @param $flag	an integer argument. The query flag, default to be 0.
+    * @param $flag         an integer argument. The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_UPDATE_KEEP_SHARDINGKEY(0x00008000) : The sharding key in update rule is not filtered.
     *                                   @endcode
@@ -775,19 +775,19 @@ class SequoiaCL
    /**
     * Get the matching records in current collection.
     *
-    * @param $condition	an array or the string argument. The matching rule, return all the record if null.
+    * @param $condition    an array or the string argument. The matching rule, return all the record if null.
     *
-    * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
+    * @param $selector     an array or the string argument. The selective rule, return the whole record if null.
     *
-    * @param $orderBy	an array or the string argument. The The ordered rule, never sort if null.
+    * @param $orderBy      an array or the string argument. The The ordered rule, never sort if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint         an array or the string argument. The hint, automatically match the optimal hint if null.
     *
-    * @param $numToSkip an integer argument.	Skip the first numToSkip records, never skip if this parameter is 0.
+    * @param $numToSkip    an integer argument.   Skip the first numToSkip records, never skip if this parameter is 0.
     *
-    * @param $numToReturn	an integer argument. Only return numToReturn records, return all if this parameter is -1.
+    * @param $numToReturn  an integer argument. Only return numToReturn records, return all if this parameter is -1.
     *
-    * @param $flag	an integer argument. The query flag, default to be 0.
+    * @param $flag         an integer argument. The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)        : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)          : Enable paralled sub query
@@ -824,21 +824,21 @@ class SequoiaCL
    /**
     * Get the matching records in current collection and update.
     *
-    * @param $rule	an array or the string argument. The update rule, can't be null.
+    * @param $rule         an array or the string argument. The update rule, can't be null.
     *
-    * @param $condition	an array or the string argument. The matching rule, return all the record if null.
+    * @param $condition    an array or the string argument. The matching rule, return all the record if null.
     *
-    * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
+    * @param $selector     an array or the string argument. The selective rule, return the whole record if null.
     *
-    * @param $orderBy	an array or the string argument. The The ordered rule, never sort if null.
+    * @param $orderBy      an array or the string argument. The The ordered rule, never sort if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint         an array or the string argument. The hint, automatically match the optimal hint if null.
     *
-    * @param $numToSkip	an integer argument.	Skip the first numToSkip records, never skip if this parameter is 0.
+    * @param $numToSkip    an integer argument.   Skip the first numToSkip records, never skip if this parameter is 0.
     *
-    * @param $numToReturn	an integer argument.	Only return numToReturn records, return all if this parameter is -1.
+    * @param $numToReturn  an integer argument.   Only return numToReturn records, return all if this parameter is -1.
     *
-    * @param $flag	an integer argument.	The query flag, default to be 0.
+    * @param $flag         an integer argument.   The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)                 : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)                   : Enable paralled sub query
@@ -852,7 +852,7 @@ class SequoiaCL
     *
     *                                   @endcode
     *
-    * @param $returnNew	a boolean argument. When TRUE, returns the updated record rather than the original.
+    * @param $returnNew   a boolean argument. When TRUE, returns the updated record rather than the original.
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -876,19 +876,19 @@ class SequoiaCL
    /**
     * Get the matching documents in current collection and remove.
     *
-    * @param $condition	an array or the string argument. The matching rule, return all the record if null.
+    * @param $condition    an array or the string argument. The matching rule, return all the record if null.
     *
-    * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
+    * @param $selector     an array or the string argument. The selective rule, return the whole record if null.
     *
-    * @param $orderBy	an array or the string argument. The The ordered rule, never sort if null.
+    * @param $orderBy      an array or the string argument. The The ordered rule, never sort if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint         an array or the string argument. The hint, automatically match the optimal hint if null.
     *
-    * @param $numToSkip	an integer argument.	Skip the first numToSkip records, never skip if this parameter is 0.
+    * @param $numToSkip    an integer argument. Skip the first numToSkip records, never skip if this parameter is 0.
     *
-    * @param $numToReturn	an integer argument.	Only return numToReturn records, return all if this parameter is -1.
+    * @param $numToReturn  an integer argument. Only return numToReturn records, return all if this parameter is -1.
     *
-    * @param $flag	an integer argument.	The query flag, default to be 0.
+    * @param $flag   an integer argument.   The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
@@ -923,19 +923,19 @@ class SequoiaCL
    /**
     * Get access plan of query
     *
-    * @param $condition	an array or the string argument. The matching rule, return all the record if null.
+    * @param $condition    an array or the string argument. The matching rule, return all the record if null.
     *
-    * @param $selector	an array or the string argument. The selective rule, return the whole record if null.
+    * @param $selector     an array or the string argument. The selective rule, return the whole record if null.
     *
-    * @param $orderBy	an array or the string argument. The ordered rule, never sort if null.
+    * @param $orderBy      an array or the string argument. The ordered rule, never sort if null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint         an array or the string argument. The hint, automatically match the optimal hint if null.
     *
-    * @param $numToSkip	an integer argument.	Skip the first numToSkip records, never skip if this parameter is 0.
+    * @param $numToSkip    an integer argument. Skip the first numToSkip records, never skip if this parameter is 0.
     *
-    * @param $numToReturn	an integer argument.	Only return numToReturn records, return all if this parameter is -1.
+    * @param $numToReturn  an integer argument. Only return numToReturn records, return all if this parameter is -1.
     *
-    * @param $flag	an integer argument.	The query flag, default to be 0.
+    * @param $flag   an integer argument.   The query flag, default to be 0.
     *                                   @code
     *                                   SDB_FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
@@ -943,7 +943,7 @@ class SequoiaCL
     *                                                                               when add this flag, return data in query response, it will be more high-performance
     *                                   @endcode
     *
-    * @param $options	an array or the string argument. The rules of explain, the options are as below:
+    * @param $options   an array or the string argument. The rules of explain, the options are as below:
     *                                   @code
     *                                   Run: Whether execute query explain or not, true for excuting query explain then get
     *                                        the data and time information; false for not excuting query explain but get the
@@ -973,9 +973,9 @@ class SequoiaCL
    /**
     * Get the count of records in specified collection.
     *
-    * @param $condition	an array or the string argument. The matching rule, return the count of all records if this parameter is null.
+    * @param $condition an array or the string argument. The matching rule, return the count of all records if this parameter is null.
     *
-    * @param $hint	an array or the string argument. The hint, automatically match the optimal hint if null.
+    * @param $hint      an array or the string argument. The hint, automatically match the optimal hint if null.
     *
     * @return Returns the number of records matching the query.
     *
@@ -1035,11 +1035,11 @@ class SequoiaCL
    /**
     * Create the index in current collection.
     *
-    * @param $indexDef an array or the string argument. The index element. e.g. array( 'name' => 1, 'age' => -1 )
+    * @param $indexDef     an array or the string argument. The index element. e.g. array( 'name' => 1, 'age' => -1 )
     *
-    * @param $indexName the string argument. The index name.
+    * @param $indexName    the string argument. The index name.
     *
-    * @param $options an array or the string argument. The options are as below:
+    * @param $options      an array or the string argument. The options are as below:
     *                                  @code
     *                                  Unique:         Whether the index elements are unique or not
     *                                  Enforced:       Whether the index is enforced unique. This element is meaningful when Unique is true
@@ -1067,15 +1067,15 @@ class SequoiaCL
    /**
     * Create the index in current collection.
     *
-    * @param $indexDef an array or the string argument. The index element. e.g. array( 'name' => 1, 'age' => -1 )
+    * @param $indexDef        an array or the string argument. The index element. e.g. array( 'name' => 1, 'age' => -1 )
     *
-    * @param $indexName the string argument. The index name.
+    * @param $indexName       the string argument. The index name.
     *
-    * @param $isUnique a boolean argument. Whether the index elements are unique or not,default is false.
+    * @param $isUnique        a boolean argument. Whether the index elements are unique or not,default is false.
     *
-    * @param $isEnforced a boolean argument. Whether the index is enforced unique This element is meaningful when isUnique is set to true.
+    * @param $isEnforced      a boolean argument. Whether the index is enforced unique This element is meaningful when isUnique is set to true.
     *
-    * @param $sortBufferSize an integer argument. The size of sort buffer used when creating index, the unit is MB, zero means don't use sort buffer.
+    * @param $sortBufferSize  an integer argument. The size of sort buffer used when creating index, the unit is MB, zero means don't use sort buffer.
     *
     * @return Returns the result, default return array.
     *
@@ -1208,13 +1208,13 @@ class SequoiaCL
    /**
     * Create a large object or open a large object to read or write.
     *
-    * @param $oid the string argument. The object id.
+    * @param $oid    the string argument. The object id.
     *
-    * @param $mode an integer argument. The open mode: @code
-    *                                                  SDB_LOB_CREATEONLY
-    *                                                  SDB_LOB_READ
-    *                                                  SDB_LOB_WRITE
-    *                                                  @endcode
+    * @param $mode   an integer argument. The open mode: @code
+    *                                                    SDB_LOB_CREATEONLY
+    *                                                    SDB_LOB_READ
+    *                                                    SDB_LOB_WRITE
+    *                                                    @endcode
     *
     * @return Returns a new SequoiaLob object.
     *
@@ -1256,7 +1256,7 @@ class SequoiaCL
    /**
     * Truncate lob
     *
-    * @param $oid the string argument. The object id.
+    * @param $oid    the string argument. The object id.
     *
     * @param $length the integer argument. The truncate length.
     *
@@ -1279,17 +1279,17 @@ class SequoiaCL
    /**
     * List all the lobs' meta data in current collection.
     *
-    * @param $condition	an array or the string argument. The matching rule, return all the lob if not provided.
+    * @param $condition    an array or the string argument. The matching rule, return all the lob if not provided.
     *
-    * @param $selector	an array or the string argument. The selective rule, return the whole infomation if not provided.
+    * @param $selector     an array or the string argument. The selective rule, return the whole infomation if not provided.
     *
-    * @param $orderBy	an array or the string argument. The ordered rule, result set is unordered if not provided.
+    * @param $orderBy      an array or the string argument. The ordered rule, result set is unordered if not provided.
     *
-    * @param $hint	an array or the string argument. Specified options. e.g. {"ListPieces": 1} means get the detail piece info of lobs.
+    * @param $hint         an array or the string argument. Specified options. e.g. {"ListPieces": 1} means get the detail piece info of lobs.
     *
-    * @param $numToSkip an integer argument.	Skip the first numToSkip lob, default is 0.
+    * @param $numToSkip    an integer argument.   Skip the first numToSkip lob, default is 0.
     *
-    * @param $numToReturn	an integer argument. Only return numToReturn lob, default is -1 for returning all results.
+    * @param $numToReturn  an integer argument. Only return numToReturn lob, default is -1 for returning all results.
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -1313,17 +1313,17 @@ class SequoiaCL
    /**
     * List all the pieces in the lob.
     *
-    * @param $condition	an array or the string argument. The matching rule, return all the lob if not provided.
+    * @param $condition    an array or the string argument. The matching rule, return all the lob if not provided.
     *
-    * @param $selector	an array or the string argument. The selective rule, return the whole infomation if not provided.
+    * @param $selector     an array or the string argument. The selective rule, return the whole infomation if not provided.
     *
-    * @param $orderBy	an array or the string argument. The ordered rule, result set is unordered if not provided.
+    * @param $orderBy      an array or the string argument. The ordered rule, result set is unordered if not provided.
     *
-    * @param $hint	an array or the string argument. Specified options. e.g. {"ListPieces": 1} means get the detail piece info of lobs.
+    * @param $hint         an array or the string argument. Specified options. e.g. {"ListPieces": 1} means get the detail piece info of lobs.
     *
-    * @param $numToSkip an integer argument.	Skip the first numToSkip lob, default is 0.
+    * @param $numToSkip    an integer argument.   Skip the first numToSkip lob, default is 0.
     *
-    * @param $numToReturn	an integer argument. Only return numToReturn lob, default is -1 for returning all results.
+    * @param $numToReturn  an integer argument. Only return numToReturn lob, default is -1 for returning all results.
     *
     * @return Returns a new SequoiaCursor object.
     *
@@ -1345,9 +1345,9 @@ class SequoiaCL
    public function listLobPieces( array|string $condition = null, array|string $selector = null, array|string $orderBy = null, array|string $hint = null, integer $numToSkip = 0, integer $numToReturn = -1 ){}
 
    /**
-    * Create a large object.
+    * Create a lob ID.
     *
-    * @param $time	the string argument. Timestamp(format:YYYY-MM-DD-HH.mm.ss).
+    * @param $time   the string argument. Timestamp(format:YYYY-MM-DD-HH.mm.ss).
     *                if Timestamp is empty string, the Timestamp will be generated by server.
     *
     * @return Returns The object id.
