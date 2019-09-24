@@ -140,7 +140,9 @@ namespace SequoiaDB
         /** \fn DBCollection CreateCollection(string collectionName, BsonDocument options)
          *  \brief Create the named collection in current collection space
          *  \param collectionName The collection name
-         *  \param options The options
+         *  \param options The options for creating collection. Please reference
+         *             <a href="http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION">here</a>
+         *             for more detail.
          *  \return The DBCollection handle
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
