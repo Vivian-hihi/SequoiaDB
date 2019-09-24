@@ -18,8 +18,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18703: upload multiple parts,the specified partNums is
- *              inconsistent with the partNums actually uploaded.
+ * @Description seqDB-18703: upload multiple parts,the specified partNums is inconsistent with the
+ *              partNums actually uploaded.
  * @author wuyan
  * @Date 2019.07.30
  * @version 1.00
@@ -44,8 +44,7 @@ public class UploadPart18703 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
     }
 
-    // 需要实现配置组后再放开运行用例
-    @Test(enabled = false)
+    @Test(groups = "partlistinuseoff")
     public void uploadParts() throws Exception {
         File file = new File(filePath);
         // test a: the specified partNums is less than the partNums actually

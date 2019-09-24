@@ -18,8 +18,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18708: upload multiple parts,the key specified different
- *              uploadId.
+ * @Description seqDB-18708: upload multiple parts,the key specified different uploadId.
  * @author wuyan
  * @Date 2019.07.30
  * @version 1.00
@@ -47,8 +46,7 @@ public class UploadPart18708 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
     }
 
-    // 需要等配置组添加后再运行用例
-    @Test(enabled = false)
+    @Test(groups = "partlistinuseoff")
     public void uploadParts() throws Exception {
         File file1 = new File(filePath1);
         String uploadId1 = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);

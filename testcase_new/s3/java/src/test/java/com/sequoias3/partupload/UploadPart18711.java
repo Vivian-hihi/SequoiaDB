@@ -18,8 +18,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18711: enabling bucket versioning,upload multiple
- *              parts,the key specified different uploadId.
+ * @Description seqDB-18711: enabling bucket versioning,upload multiple parts,the key specified
+ *              different uploadId.
  * @author wuyan
  * @Date 2019.07.30
  * @version 1.00
@@ -52,8 +52,7 @@ public class UploadPart18711 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
     }
 
-    // 待添加配置组后再运行该用例
-    @Test(enabled = false)
+    @Test(groups = "partlistinuseoff")
     public void uploadParts() throws Exception {
         File file1 = new File(filePath1);
         String uploadId1 = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);

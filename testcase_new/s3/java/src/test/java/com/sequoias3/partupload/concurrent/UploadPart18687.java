@@ -24,9 +24,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
 
 /**
- * @Description seqDB-18687: upload multiple parts concurrently,the partNums
- *              discontinuity,the length of the parts is the same and there is
- *              partNum of 1.
+ * @Description seqDB-18687: upload multiple parts concurrently,the partNums discontinuity,the
+ *              length of the parts is the same and there is partNum of 1.
  * @author wuyan
  * @Date 2019.07.29
  * @version 1.00
@@ -51,8 +50,7 @@ public class UploadPart18687 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
     }
 
-    // 待增加配置组后再运行该用例
-    @Test(enabled = false)
+    @Test(groups = "partlistinuseoff")
     public void uploadParts() throws Exception {
         File file = new File(filePath);
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);
