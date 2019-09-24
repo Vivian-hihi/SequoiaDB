@@ -162,10 +162,11 @@ namespace engine
       UINT64         _totalLobs ;
       UINT64         _totalOrgDataLen ;
       UINT64         _totalDataLen ;
-      CHAR           _pad2[ 16 ] ;  // reserved
       // end stat
 
       // for persistence
+      UINT64         _maxGlobTransID ;  
+      CHAR           _pad2[ 8 ] ;  // reserved
       UINT32         _commitFlag ;
       UINT64         _commitLSN ;
       UINT64         _commitTime ;
@@ -245,6 +246,7 @@ namespace engine
          _totalOrgDataLen        = 0 ;
          _totalDataLen           = 0 ;
 
+         _maxGlobTransID         = 0 ;
          _commitFlag             = 0 ;
          _commitLSN              = ~0 ;
          _commitTime             = 0 ;
@@ -370,6 +372,8 @@ namespace engine
 
       ossAtomic32 _commitFlag ;
       ossAtomic64 _lastLSN ;
+      // FIXME: need "atomic" for DPS_TRANS_ID later
+      ossAtomic64 _maxGlobTransID ;
       UINT64      _lastWriteTick ;
       BOOLEAN     _isCrash ;
 
@@ -419,6 +423,7 @@ namespace engine
          _isCrash                = FALSE ;
          _idxCommitFlag.init( 0 ) ;
          _idxLastLSN.init( ~0 ) ;
+         _maxGlobTransID.init( 0 ) ;
          _idxLastWriteTick       = 0 ;
          _idxIsCrash             = FALSE ;
          _lobCommitFlag.init( 0 ) ;
@@ -496,6 +501,19 @@ namespace engine
          }
       }
 
+      // compare and update GlobTransID is the one passed in is newer
+      // FIXME: need implement automic compare and swap for DPS_TRANS_ID later
+      void updateGlobTransIDWithComp( DPS_TRANS_ID transID )
+      {
+         _maxGlobTransID.swapGreaterThan( transID ) ;
+      }
+
+      // compare and update GTID is the one passed in is newer
+      UINT64 getMaxGlobTransID( )
+      {
+         return _maxGlobTransID.peek() ; 
+      }
+
       OSS_INLINE oldVersionContainer* getChain() { return _oldVerChain ; }
 
       OSS_INLINE  void   addToChain( oldVersionContainer * oldVer )
@@ -547,6 +565,7 @@ namespace engine
       _dmsMBStatInfo ()
       : _commitFlag( 0 ),
         _lastLSN( 0 ),
+        _maxGlobTransID( 0 ),
         _idxCommitFlag( 0 ),
         _idxLastLSN( 0 ),
         _lobCommitFlag( 0 ),
@@ -833,6 +852,8 @@ namespace engine
       friend class _dmsStorageIndex ;
       friend class _dmsStorageUnit ;
       friend class _dmsStorageLob ;
+      friend class _dmsRBSSUMgr ;
+
 
       struct cmp_str
       {

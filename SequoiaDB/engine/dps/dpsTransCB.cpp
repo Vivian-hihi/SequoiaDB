@@ -291,6 +291,20 @@ namespace engine
       return DPS_TRANS_GET_ID( rollbackID ) ;
    }
 
+   //TODO:  implement
+   // In order to find the system lowTran, we just need to use the smaller
+   // head of _TransMap and _hisTransStatus
+   DPS_TRANS_ID dpsTransCB::getLowTran( )
+   {
+      return DPS_INVALID_TRANS_ID ;
+   }
+
+   // FIXME: Guomin to implement the proper one
+   BOOLEAN dpsTransCB::transIDLessThan( DPS_TRANS_ID tidL, DPS_TRANS_ID tidR )
+   {
+      return ( DPS_TRANS_GET_SN(tidL) < DPS_TRANS_GET_SN(tidR) ) ;
+   }
+
    BOOLEAN dpsTransCB::isRollback( DPS_TRANS_ID transID )
    {
       if ( transID & DPS_TRANSID_ROLLBACKTAG_BIT )

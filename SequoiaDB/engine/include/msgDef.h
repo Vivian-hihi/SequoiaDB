@@ -378,6 +378,7 @@
 #define FIELD_NAME_SCAN                      "Scan"
 #define FIELD_NAME_FILTER                    "Filter"
 #define FIELD_NAME_SPLITBY                   "SPLITBY"
+#define FIELD_NAME_MAX_GTID                  "MaxGlobTransID"
 #define FIELD_NAME_DATA_COMMIT_LSN           "DataCommitLSN"
 #define FIELD_NAME_IDX_COMMIT_LSN            "IndexCommitLSN"
 #define FIELD_NAME_LOB_COMMIT_LSN            "LobCommitLSN"
@@ -487,6 +488,8 @@
 #define FIELD_NAME_TRANS_RCCOUNT             "TransRCCount"
 #define FIELD_NAME_LAST_GENERATE_ID          "LastGenerateID"
 #define FIELD_NAME_MEMPOOL_SIZE              "MemPoolSize"
+#define FIELD_NAME_CUR_RBS_CL                "CurRBSCL"
+#define FIELD_NAME_LAST_FREE_RBS_CL          "LastFreeRBSCL"
 #define FIELD_NAME_LATCH_WAIT_TIME           "LatchWaitTime"
 
 /// strategy field begin

@@ -304,6 +304,7 @@ dmsFiles = [
       "dms/dmsInspect.cpp",
       "dms/dmsStorageUnit.cpp",
       "dms/dmsTempSUMgr.cpp",
+      "dms/dmsRBSSUMgr.cpp",
       "dms/dmsCB.cpp",
       "dms/dmsReorgUnit.cpp",
       "dms/dmsSMEMgr.cpp",

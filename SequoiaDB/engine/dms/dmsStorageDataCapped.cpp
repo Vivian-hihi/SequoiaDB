@@ -437,7 +437,7 @@ namespace engine
          size += sizeof( LogicalIDToInsert ) ;
       }
 
-      size += DMS_RECORD_METADATA_SZ ;
+      size += DMS_RECORD_CAP_METADATA_SZ ;
       // record is ALWAYS 4 bytes aligned
       size = OSS_MIN( DMS_RECORD_MAX_SZ, ossAlignX ( size, 4 ) ) ;
       PD_TRACE2 ( SDB__DMSSTORAGEDATACAPPED__FINALRECORDSIZE,

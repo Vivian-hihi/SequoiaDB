@@ -2480,6 +2480,8 @@ namespace engine
             sub.appendBool ( FIELD_NAME_DATA_COMMITTED, detail._dataIsValid ) ;
             sub.appendBool ( FIELD_NAME_IDX_COMMITTED, detail._idxIsValid ) ;
             sub.appendBool ( FIELD_NAME_LOB_COMMITTED, detail._lobIsValid ) ;
+            // TODO: enble it after enable
+            //sub.append ( FIELD_NAME_MAX_GTID, (INT64)detail._maxGlobTransID ) ;
 
             /// CRUD statistics
             sub.append( FIELD_NAME_TOTALDATAREAD,

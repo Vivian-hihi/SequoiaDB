@@ -208,6 +208,17 @@ namespace engine
       DPS_TRANS_ID getRollbackID( DPS_TRANS_ID transID ) ;
       DPS_TRANS_ID getTransID( DPS_TRANS_ID rollbackID ) ;
 
+      DPS_TRANS_ID getLowTran( ) ;
+
+      // FIXME: guoming to implement
+      BOOLEAN isVersionVisible( DPS_TRANS_ID recTransID, 
+                                DPS_TRANS_ID transID ) 
+      {
+         // Simple implementation: if transactionID is older than
+         // record transID, this record is visible to the transaction
+         return transIDLessThan( transID, recTransID ) ;
+      }
+
       oldVersionCB * getOldVCB () { return _oldVCB ; }
 
       BOOLEAN isRollback( DPS_TRANS_ID transID ) ;
@@ -252,6 +263,8 @@ namespace engine
       void           delBeginLsn( DPS_TRANS_ID transID ) ;
       DPS_LSN_OFFSET getBeginLsn( DPS_TRANS_ID transID ) ;
       DPS_LSN_OFFSET getOldestBeginLsn() ;
+
+      BOOLEAN  transIDLessThan( DPS_TRANS_ID tidL, DPS_TRANS_ID tidR ) ;
 
       BOOLEAN  isNeedSyncTrans() ;
       void     setIsNeedSyncTrans( BOOLEAN isNeed ) ;

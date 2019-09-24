@@ -612,6 +612,12 @@ namespace engine
                _dmsMME->_mbList[i]._totalOrgDataLen =
                   _mbStatInfo[i]._totalOrgDataLen ;
             }
+            if ( _dmsMME->_mbList[i]._maxGlobTransID !=
+                 _mbStatInfo[i]._maxGlobTransID.peek() )
+            {
+               _dmsMME->_mbList[i]._maxGlobTransID =
+                  _mbStatInfo[i]._maxGlobTransID.peek() ;
+            }
             if ( _dmsMME->_mbList[i]._commitLSN !=
                  _mbStatInfo[i]._lastLSN.peek() )
             {
@@ -962,6 +968,11 @@ namespace engine
             }
             _mbStatInfo[i]._isCrash = ( 0 == _mbStatInfo[i]._commitFlag.peek() ) ?
                                       TRUE : FALSE ;
+
+            // read the max GTID from disk
+            _mbStatInfo[i]._maxGlobTransID.init(
+                                  _dmsMME->_mbList[i]._maxGlobTransID ) ;
+
             /// lsn
             _mbStatInfo[i]._lastLSN.init( _dmsMME->_mbList[i]._commitLSN ) ;
 
