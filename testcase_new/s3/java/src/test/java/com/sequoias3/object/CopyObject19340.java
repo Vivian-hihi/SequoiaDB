@@ -10,7 +10,8 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.CopyObjectResult;
-import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -25,7 +26,6 @@ public class CopyObject19340 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket19340";
     private String srcKeyName = "/src/bb%/object19340";
-    private String otherKeyName = "/bb%/object19340";
     private String destKeyName = "/dest/object19340";
     private AmazonS3 s3Client = null;
     private String otherKeyContent = "otherKeyContent19340!";
@@ -36,10 +36,11 @@ public class CopyObject19340 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, "curVersionContent");
-        Date lastModifiedDate = result.getMetadata().getLastModified();
+        s3Client.putObject(bucketName, srcKeyName, "curVersionContent");
+        GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(bucketName, srcKeyName);
+        ObjectMetadata objMetadata = s3Client.getObjectMetadata(metadataRequest);
+        Date lastModifiedDate = objMetadata.getLastModified();
         lastModifiedTime = lastModifiedDate.getTime();
-        s3Client.putObject(bucketName, otherKeyName, otherKeyContent);
     }
 
     @Test

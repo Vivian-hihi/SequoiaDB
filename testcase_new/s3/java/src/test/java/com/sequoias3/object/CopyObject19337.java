@@ -10,7 +10,8 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.CopyObjectResult;
-import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 
@@ -30,14 +31,15 @@ public class CopyObject19337 extends S3TestBase {
 
     @BeforeClass
     private void setUp() {
-
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
         s3Client.putObject(bucketName, srcKeyName, "testcontent1");
-        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, "testcontent2");
-        Date lastModifiedDate = result.getMetadata().getLastModified();
+        s3Client.putObject(bucketName, srcKeyName, "testcontent2");
+        GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(bucketName, srcKeyName);
+        ObjectMetadata objMetadata = s3Client.getObjectMetadata(metadataRequest);
+        Date lastModifiedDate = objMetadata.getLastModified();
         lastModifiedTime = lastModifiedDate.getTime();
     }
 

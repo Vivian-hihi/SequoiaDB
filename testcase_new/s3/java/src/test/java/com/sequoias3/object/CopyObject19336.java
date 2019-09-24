@@ -11,14 +11,15 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
-import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
- * TODO 文本用例有要求创建用户A
  * 
  * @Description seqDB-19336:指定ifUnModifiedSince和ifModifiedSince条件匹配源对象复制
  * @author wuyan
@@ -27,6 +28,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class CopyObject19336 extends S3TestBase {
     private boolean runSuccess = false;
+    private String userName = "user19336";
+    private String roleName = "normal";
     private String bucketName = "bucket19336";
     private String srcKeyName = "/src/bb%/object19336";
     private String destKeyName = "/dest/object19336";
@@ -48,13 +51,16 @@ public class CopyObject19336 extends S3TestBase {
         TestTools.LocalFile.createFile(hisVersionFilePath, fileSize1);
         TestTools.LocalFile.createFile(curVersionFilePath, fileSize2);
 
-        s3Client = CommLib.buildS3Client();
-        CommLib.clearBucket(s3Client, bucketName);
+        CommLib.clearUser(userName);
+        String[] acessKeys = UserUtils.createUser(userName, roleName);
+        s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
         s3Client.putObject(bucketName, srcKeyName, new File(hisVersionFilePath));
-        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, new File(curVersionFilePath));
-        Date lastModifiedDate = result.getMetadata().getLastModified();
+        s3Client.putObject(bucketName, srcKeyName, new File(curVersionFilePath));
+        GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(bucketName, srcKeyName);
+        ObjectMetadata objMetadata = s3Client.getObjectMetadata(metadataRequest);
+        Date lastModifiedDate = objMetadata.getLastModified();
         lastModifiedTime = lastModifiedDate.getTime();
     }
 
@@ -83,7 +89,7 @@ public class CopyObject19336 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLib.clearBucket(s3Client, bucketName);
+                UserUtils.deleteUser(userName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
