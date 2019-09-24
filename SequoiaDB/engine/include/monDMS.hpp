@@ -171,6 +171,7 @@ namespace engine
       UINT64 _dataCommitLSN ;
       UINT64 _idxCommitLSN ;
       UINT64 _lobCommitLSN ;
+      UINT64 _maxGlobTransID ;
       BOOLEAN _dataIsValid ;
       BOOLEAN _idxIsValid ;
       BOOLEAN _lobIsValid ;
@@ -207,6 +208,7 @@ namespace engine
          _dataCommitLSN       = -1 ;
          _idxCommitLSN        = -1 ;
          _lobCommitLSN        = -1 ;
+         _maxGlobTransID      = 0 ;
          _dataIsValid         = FALSE ;
          _idxIsValid          = FALSE ;
          _lobIsValid          = FALSE ;

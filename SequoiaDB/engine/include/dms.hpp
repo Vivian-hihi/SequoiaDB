@@ -125,6 +125,13 @@ namespace engine
 #define SDB_DMSTEMP_NAME            "SYSTEMP"
 #define DMS_TEMP_NAME_PATTERN       "%s%04d"
 
+#define SDB_DMSRBS_NAME            "SYSRBS"
+#define SDB_DMSRBS_FULLNAME        "SYSRBS.SYSRBS"
+#define DMS_RBS_NAME_PATTERN       "%s%04d"
+#define DMS_MAX_RBS_CL             DMS_MME_SLOTS 
+#define DMS_FIRST_RBS_CL           1 
+#define DMS_META_RBS_CL            0
+
 #define DMS_INDEX_SORT_BUFFER_MIN_SIZE     32
 
 #define DMS_CAP_EXTENT_SZ           (32 * 1024 * 1024)
@@ -137,6 +144,9 @@ namespace engine
 #define DMS_MAX_CL_SIZE_ALIGN_SIZE  ( 32 * 1024 * 1024 )
 
 #define DMS_MAX_EXT_NAME_SIZE       DMS_COLLECTION_SPACE_NAME_SZ
+
+// Default size of Rollback Segment collection is 128MB each.
+#define DMS_DFT_RBSCL_SIZE          ( 128 * 1024 * 1024 )
 
    /*
       MB FLAG(_flag) values :

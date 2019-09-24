@@ -185,6 +185,7 @@ namespace engine
 
    class _dmsStorageDataCapped : public _dmsStorageDataCommon
    {
+      friend class _dmsRBSSUMgr ;
       typedef ossPoolMap<UINT32, UINT32> SIZE_REQ_MAP ;
    public:
       _dmsStorageDataCapped( const CHAR* pSuFileName,
@@ -209,7 +210,10 @@ namespace engine
       virtual INT32 postDataRestored( dmsMBContext * context ) ;
 
       OSS_INLINE BOOLEAN spaceEnough( dmsMBContext *context, UINT32 newSize ) ;
-
+   protected:
+      OSS_INLINE void _extLidAndOffset2RecLid( dmsExtentID extID,
+                                               dmsOffset offset,
+                                               INT64 &logicalID ) ;
    private:
       virtual const CHAR* _getEyeCatcher() const ;
       virtual INT32 _onOpened() ;
@@ -333,9 +337,6 @@ namespace engine
       OSS_INLINE void _recLid2ExtLidAndOffset( INT64 logicalID,
                                                dmsExtentID &extID,
                                                dmsOffset &offset ) ;
-      OSS_INLINE void _extLidAndOffset2RecLid( dmsExtentID extID,
-                                               dmsOffset offset,
-                                               INT64 &logicalID ) ;
       OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
                                              INT64 logicalID,
                                              const dmsExtent *&extent ) ;

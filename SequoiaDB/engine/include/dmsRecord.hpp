@@ -44,6 +44,7 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "utilCompressor.hpp"
+#include "dpsDef.hpp"
 
 namespace engine
 {
@@ -167,15 +168,25 @@ namespace engine
    #define DMS_RECORD_FLAG_DELETED           0x04
    // 4~7 bit for ATTR
    #define DMS_RECORD_FLAG_COMPRESSED        0x10
+   // Indicate this record has global transaction ID, introduced in v1
+   #define DMS_RECORD_FLAG_HASGLOBTRANSID    0x20
    // some one wait X-lock, the last one who get X-lock will delete the record
    #define DMS_RECORD_FLAG_DELETING          0x80
 
-   #define DMS_RECORD_METADATA_SZ   sizeof(_dmsRecord)
+   #define DMS_RECORD_V0_METADATA_SZ   sizeof(_dmsRecord_v0)
+   #define DMS_RECORD_V1_METADATA_SZ   sizeof(_dmsRecord_v1)
+   #define DMS_RECORD_RBS_METADATA_SZ   sizeof(_dmsRBSRecord)
+   #define DMS_RECORD_CAP_METADATA_SZ   sizeof(_dmsCappedRecord)
+   #define DMS_RECORD_METADATA_SZ DMS_RECORD_V0_METADATA_SZ
+   // based on current record version to decide the record metadata size
+   #define DMS_RECORD_VERSIONED_METADATA_SZ               \
+           ( hasGlobTransID() ? DMS_RECORD_V1_METADATA_SZ : \
+                              DMS_RECORD_V0_METADATA_SZ )
 
    /*
       _dmsRecord defined
    */
-   class _dmsRecord : public SDBObject
+   class _dmsRecord_v0 : public SDBObject
    {
    public:
       union
@@ -245,15 +256,11 @@ namespace engine
       {
          return getAttr() & DMS_RECORD_FLAG_DELETING ;
       }
-      dmsRecordID getOvfRID() const
+      BOOLEAN hasGlobTransID() const
       {
-         if ( isOvf() )
-         {
-            return *( const dmsRecordID* )( (const CHAR*)this +
-                                            sizeof( _dmsRecord ) ) ;
-         }
-         return dmsRecordID() ;
+         return getAttr() & DMS_RECORD_FLAG_HASGLOBTRANSID ;
       }
+      OSS_INLINE dmsRecordID getOvfRID() const ;
 
       UINT32 getSize() const
       {
@@ -264,28 +271,13 @@ namespace engine
 #endif // SDB_BIG_ENDIAN
       }
 
-      UINT8 getCompressType () const
-      {
-#if defined (SDB_BIG_ENDIAN)
-         return ( (const UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 0 ] ;
-#else
-         return ( (const UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 3 ] ;
-#endif // SDB_BIG_ENDIAN
-      }
+      OSS_INLINE UINT8 getCompressType () const ;
 
-      UINT32 getDataLength() const
-      {
-         return ( *(const UINT32 *)( (const CHAR*)this + DMS_RECORD_METADATA_SZ ) ) & 0x00FFFFFF ;
-      }
+      OSS_INLINE UINT32 getDataLength() const ;
       /*
          Get disk data only, if compressed, not uncompressed
       */
-      const CHAR* getData() const
-      {
-         return isCompressed() ?
-            ((const CHAR*)this+sizeof(UINT32)+DMS_RECORD_METADATA_SZ) :
-            ((const CHAR*)this+DMS_RECORD_METADATA_SZ) ;
-      }
+      OSS_INLINE const CHAR* getData() const ;
 
       /*
          Set Functions
@@ -354,10 +346,8 @@ namespace engine
       {
          unsetAttr( DMS_RECORD_FLAG_DELETING ) ;
       }
-      void setOvfRID( const dmsRecordID &rid )
-      {
-         *((dmsRecordID*)((CHAR*)this+DMS_RECORD_METADATA_SZ)) = rid ;
-      }
+      OSS_INLINE void setOvfRID( const dmsRecordID &rid ) ;
+
       void  setSize( UINT32 size )
       {
 #if defined (SDB_BIG_ENDIAN)
@@ -368,45 +358,165 @@ namespace engine
 #endif
       }
 
-      void setCompressType ( UINT8 type )
-      {
-         *(UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) |=
-            ( ( (UINT32)type << 24 ) & 0xFF000000 ) ;
-//#if defined (SDB_BIG_ENDIAN)
-//         ( (UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 0 ] = type ;
-//#else
-//         ( (UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 3 ] = type ;
-//#endif // SDB_BIG_ENDIAN
-      }
+      OSS_INLINE void setCompressType ( UINT8 type ) ;
 
       /*
          Copy the data to disk directly
       */
-      void  setData( const dmsRecordData &data )
-      {
-         if ( data.isEmpty() )
-         {
-            return ;
-         }
-         if ( data.isCompressed() )
-         {
-            setCompressed() ;
-            UINT32 * temp = (UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) ;
-            (*temp) = data.len() ;
-            (*temp) |= ( ( (UINT32)data.getCompressType() << 24 ) &
-                           0xFF000000 ) ;
-            ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ+sizeof(UINT32),
-                       data.data(), data.len() ) ;
-         }
-         else
-         {
-            unsetCompressed() ;
-            ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ,
-                       data.data(), data.len() ) ;
-         }
-      }
+      OSS_INLINE void  setData( const dmsRecordData &data ) ;
    } ;
+   typedef _dmsRecord_v0 dmsRecord_v0 ;
+   
+
+   class _dmsRecord_v1 : public _dmsRecord_v0
+   {
+   public :
+     DPS_TRANS_ID  _globTransID ;  // global transaction ID
+
+      /*
+         Follow _globTransID is:
+            if overflow, is overflow rid(8bytes)
+            else, is the data length(4 bytes).
+                In compressed: 4bytes + data
+                uncompressed:  data( the first 4bytes is bson size )
+      */
+
+   public :
+      _dmsRecord_v1()
+      {
+         // V1 record has GlobTransID attribute
+         setHasGlobTransID() ;
+      }
+
+      void resetAttr()
+      {
+         unsetAttr( 0xF0 ) ;
+         // v1 should always have GlobTransID field, although the value could be 
+         // invalid if the update/insert is done when transaction is not ON
+         setHasGlobTransID() ;
+      }
+
+      DPS_TRANS_ID getGlobTransID() const
+      {
+         return _globTransID ;
+      }
+
+      void setHasGlobTransID()
+      {
+         setAttr( DMS_RECORD_FLAG_HASGLOBTRANSID ) ;
+      }
+
+      void resetGlobTransID ( )
+      {
+         _globTransID = DPS_INVALID_TRANS_ID ;
+         setHasGlobTransID() ;
+      }
+
+      void setGlobTransID ( const DPS_TRANS_ID globtransid )
+      {
+         _globTransID = globtransid ;
+         setHasGlobTransID() ;
+      }
+
+      // inflight migration from a v0 record
+      void migrateFromV0( )
+      {
+         SDB_ASSERT( !(this->hasGlobTransID()), 
+                     "This is not a V0 record" ) ;
+         // FIXME: consider allocating overflow record in the future, 
+         // assume we have enough space(8 Byte) for now
+         SDB_ASSERT( ( ((dmsRecord_v0*)this)->getSize() - ((dmsRecord_v0 *) this)->getDataLength() ) > 8 , 
+                     "Not enough space for migration" ) ;
+
+         ossMemmove( (CHAR*)this + DMS_RECORD_V1_METADATA_SZ, 
+                     (CHAR*)this + DMS_RECORD_V0_METADATA_SZ, 
+                     ((dmsRecord_v0 *) this)->getDataLength() ) ;
+         setHasGlobTransID() ;
+         return ;
+      }
+   
+   };
+   typedef _dmsRecord_v1 dmsRecord_v1 ;
+
+   // current version is v1 which has GlobTransID for MVCC purpose
+   typedef _dmsRecord_v0 _dmsRecord ;
    typedef _dmsRecord dmsRecord ;
+
+   // implementations has to put after _dmsRecord_v1 definition
+   OSS_INLINE dmsRecordID _dmsRecord_v0::getOvfRID() const 
+   {
+      if ( isOvf() )
+      {
+         return *( const dmsRecordID* )( (const CHAR*)this +
+                                      DMS_RECORD_VERSIONED_METADATA_SZ ) ;
+      }
+      return dmsRecordID() ;
+   }
+
+   OSS_INLINE UINT8 _dmsRecord_v0::getCompressType () const
+   {
+#if defined (SDB_BIG_ENDIAN)
+      return ( (const UINT8 *)this + DMS_RECORD_VERSIONED_METADATA_SZ )[ 0 ] ;
+#else
+      return ( (const UINT8 *)this + DMS_RECORD_VERSIONED_METADATA_SZ )[ 3 ] ;
+#endif // SDB_BIG_ENDIAN
+   }
+
+   OSS_INLINE UINT32 _dmsRecord_v0::getDataLength() const
+   {
+      return ( *(const UINT32 *)
+                ( (const CHAR*)this + DMS_RECORD_VERSIONED_METADATA_SZ ) )
+             & 0x00FFFFFF ;
+   }
+
+   OSS_INLINE const CHAR* _dmsRecord_v0::getData() const
+   {
+      return isCompressed() ?
+         ((const CHAR*)this+sizeof(UINT32)+ DMS_RECORD_VERSIONED_METADATA_SZ) :
+         ((const CHAR*)this+DMS_RECORD_VERSIONED_METADATA_SZ) ;
+   }
+
+   OSS_INLINE void _dmsRecord_v0::setOvfRID( const dmsRecordID &rid )
+   {
+      *((dmsRecordID*)((CHAR*)this+DMS_RECORD_VERSIONED_METADATA_SZ)) = rid ;
+   }
+
+   OSS_INLINE void _dmsRecord_v0::setCompressType ( UINT8 type )
+   {
+      *(UINT32 *)( (CHAR *)this + DMS_RECORD_VERSIONED_METADATA_SZ ) |=
+         ( ( (UINT32)type << 24 ) & 0xFF000000 ) ;
+//#if defined (SDB_BIG_ENDIAN)
+//      ( (UINT8 *)this + DMS_RECORD_VERSIONED_METADATA_SZ )[ 0 ] = type ;
+//#else
+//      ( (UINT8 *)this + DMS_RECORD_VERSIONED_METADATA_SZ )[ 3 ] = type ;
+//#endif // SDB_BIG_ENDIAN
+   }
+
+   OSS_INLINE void  _dmsRecord_v0::setData( const dmsRecordData &data )
+   {
+      if ( data.isEmpty() )
+      {
+         return ;
+      }
+      if ( data.isCompressed() )
+      {
+         setCompressed() ;
+         UINT32 * temp = (UINT32 *)( (CHAR *)this + 
+                                       DMS_RECORD_VERSIONED_METADATA_SZ ) ;
+         (*temp) = data.len() ;
+         (*temp) |= ( ( (UINT32)data.getCompressType() << 24 ) &
+                        0xFF000000 ) ;
+         ossMemcpy( (CHAR*)this + 
+                       DMS_RECORD_VERSIONED_METADATA_SZ + sizeof(UINT32),
+                    data.data(), data.len() ) ;
+      }
+      else
+      {
+         unsetCompressed() ;
+         ossMemcpy( (CHAR*)this+DMS_RECORD_VERSIONED_METADATA_SZ,
+                    data.data(), data.len() ) ;
+      }
+   }
 
    // Extract Data
    #define DMS_RECORD_EXTRACTDATA( pRecord, retPtr, compressorEntry )   \
@@ -450,6 +560,8 @@ namespace engine
       // excludes those which have been popped out backward. In a valid record,
       // it should always be greater than 0.
       UINT32      _recNo ;
+      // similar to LR LSN, logical ID is an strictly incremental offset of
+      // an record within the capped CS
       INT64       _logicalID ;
 
    public:
@@ -535,6 +647,7 @@ namespace engine
    } ;
    typedef _dmsCappedRecord dmsCappedRecord ;
 
+
    /*
       _dmsDeletedRecord defined
    */
@@ -548,6 +661,11 @@ namespace engine
       }                 _head ;
       dmsOffset         _myOffset ;
       dmsRecordID       _next ;
+      // FIXME: Enable this once we switch default record to V1
+      // DPS_TRANS_ID     _globTransID ;  // the position of GlobTransID is same 
+                                          // as V1 Record. So once a record is
+                                          // deleted under new release, it's 
+                                          // automatically converted to V1 type
 
       /*
          Get Functions
@@ -558,7 +676,8 @@ namespace engine
       }
       BOOLEAN isDeleted() const
       {
-         return DMS_RECORD_FLAG_DELETED == getFlag() ;
+         return ( ( DMS_RECORD_FLAG_DELETED | getFlag() ) 
+                  == DMS_RECORD_FLAG_DELETED ) ;
       }
       UINT32 getSize() const
       {
@@ -596,6 +715,17 @@ namespace engine
       {
          setFlag( DMS_RECORD_FLAG_DELETED ) ;
       }
+#if 0    // FIXME:enable this later
+      void setHasGlobTransID()
+      {
+         _head._recordHead[ 0 ] |= DMS_RECORD_FLAG_HASGLOBTRANSID ;
+      }
+      void resetGlobTransID()
+      {
+         setHasGlobTransID() ;
+         _globTransID = DPS_INVALID_TRANS_ID ;
+      }
+#endif
    } ;
    typedef _dmsDeletedRecord dmsDeletedRecord ;
    #define DMS_DELETEDRECORD_METADATA_SZ  sizeof(dmsDeletedRecord)

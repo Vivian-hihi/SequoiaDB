@@ -44,6 +44,7 @@
 #include "ossUtil.hpp"
 #include "monDMS.hpp"
 #include "dmsTempSUMgr.hpp"
+#include "dmsRBSSUMgr.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "pdTrace.hpp"
@@ -94,6 +95,7 @@ namespace engine
     _nullCSUniqueIDCnt( 0 ),
     _tempSUMgr( this ),
     _statSUMgr( this ),
+    _rbsSUMgr( this ),
     _ixmKeySorterCreator( NULL )
    {
       for ( UINT32 i = 0 ; i< DMS_MAX_CS_NUM ; ++i )
@@ -156,6 +158,13 @@ namespace engine
          {
             _registerHandler( &_statSUMgr ) ;
          }
+      }
+
+      // 4. init Rollback Segment CS mgr
+      // check if MVCC is supported
+      if ( pmdGetOptionCB()->mvccOn() )
+      {
+         rc = _rbsSUMgr.init() ;
       }
 
    done:
@@ -1442,8 +1451,8 @@ namespace engine
 
       rc = nameToSUAndLock( pCSName, suID, &pSU, lockType, millisec ) ;
       PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to get collection space [%s], rc: %d",
-                   pCSName, rc ) ;
+                   "Failed to get collection space [%s] in %d, rc: %d",
+                   pCSName, lockType, rc ) ;
 
       suLID = pSU->LogicalCSID() ;
 
@@ -2768,6 +2777,11 @@ namespace engine
    dmsStatSUMgr *_SDB_DMSCB::getStatSUMgr ()
    {
       return &_statSUMgr ;
+   }
+
+   _dmsRBSSUMgr *_SDB_DMSCB::getRBSSUMgr ()
+   {
+      return &_rbsSUMgr ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLRSUCACHES, "_SDB_DMSCB::clearSUCaches" )
