@@ -425,12 +425,16 @@ boostCompiler = ""
 boostVersion = ""
 
 usesm = False
+usemdocml = False
+usefuse = False
 if guess_os == 'linux' or guess_os == 'win32':
    usesm = True
-
-usefuse = False
-if guess_os == 'linux' and guess_arch == "ia64":
-    usefuse = True
+if guess_os == 'linux' or guess_os == 'win32':
+    if guess_arch == "ia64":
+        usemdocml = True
+if guess_os == 'linux':
+    if guess_arch == "ia64":
+        usefuse = True
 
 extraLibPlaces = []
 
@@ -529,18 +533,23 @@ if guess_os is not None:
     platform_dir = get_platform_dir()
     boost_lib_dir = join(boost_lib_dir, platform_dir, build_dir)
     ssl_lib_dir = join(ssl_lib_dir, platform_dir, build_dir)
-    mdocml_lib_dir = join(mdocml_lib_dir, platform_dir, build_dir)
     zlib_lib_dir = join(zlib_lib_dir, platform_dir, build_dir)
     lz4_lib_dir = join(lz4_lib_dir, platform_dir, build_dir)
     snappy_lib_dir = join(snappy_lib_dir, platform_dir, build_dir)
-    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, mdocml_lib_dir,
-                             zlib_lib_dir, lz4_lib_dir, snappy_lib_dir])
+    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, zlib_lib_dir, 
+                             lz4_lib_dir, snappy_lib_dir])
     # use project-related spidermonkey library
     if usesm:
         env.Append(CPPPATH=join(sm_lib_dir, platform_dir, 'include'))
         sm_lib_dir = join(sm_lib_dir, platform_dir, build_dir)
         env.Append(EXTRALIBPATH=[sm_lib_dir])
+    if usemdocml:
+        # for engine does not need to use mdocml, so we are not going to add
+        # its lib_dir to env
+        mdocml_lib_dir = join(mdocml_lib_dir, platform_dir, build_dir)
     if usefuse:
+        # for engine does not need to use fuse, so we are not going to add
+        # its lib_dir to env
         fuse_lib_dir = join(fuse_lib_dir, platform_dir, '')
 
 # specify dependent libraries for javascript engine and boost
@@ -590,8 +599,10 @@ if guess_os == "linux":
     # fuse
     if usefuse:
         fuse_lib = join(fuse_lib_dir, 'libfuse.a')
-    # mdocml, lz4, zlib and snappy
-    mdocml_lib = join(mdocml_lib_dir, 'libmdocml.a')
+    # mdocml
+    if usemdocml:
+        mdocml_lib = join(mdocml_lib_dir, 'libmdocml.a')
+    # lz4, zlib and snappy
     zlib_lib = join(zlib_lib_dir, 'libzlib.a')
     lz4_lib = join(lz4_lib_dir, 'liblz4.a')
     snappy_lib = join(snappy_lib_dir, 'libsnappy.a')
@@ -613,15 +624,14 @@ elif guess_os == "win32":
     if platform.version().split('.')[0] >= '6':
         env.Append( CPPDEFINES=[ "USE_SRW" ] )
 
-    # if we are 64 bit
-    if guess_arch == "ia64":
-        env.Append( EXTRALIBPATH=join(mdocml_dir,'lib/win64') )
-
     if usesm:
         smlib_file = join(sm_lib_dir, 'mozjs185-1.0.dll')
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
         env.Append( LIBS=['mozjs185-1.0'] )
         env.Append( CPPDEFINES=["JS_HAVE_STDINT_H"] )
+    if usemdocml:
+        mdocml_lib = join(mdocml_lib_dir, 'libmdocml.lib')
+        
     # SSL
     env.Append( LIBS=['ssleay32', 'libeay32', 'liblz4', 'libzlib', 'libsnappy'])
     ssllib_file = join(ssl_lib_dir, 'libeay32.lib')
@@ -814,10 +824,15 @@ fmpEnv = env.Clone() ;
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
-    shellEnv.Append( LIBS=['libmdocml'] )
-else:
-    shellEnv.Append( LIBS=['mdocml'] )
-shellEnv.Append(CPPPATH=[join(mdocml_dir, 'include')])
+    
+if usemdocml:
+    if windows:
+        shellEnv.Append( LIBS=['libmdocml'] )
+    else:
+        shellEnv.Append( LIBS=['mdocml'] )
+    shellEnv.Append(CPPPATH=[join(mdocml_dir, 'include')])
+    shellEnv.Append(EXTRALIBPATH=[mdocml_lib_dir])
+    shellEnv.Append( LIBPATH=['$EXTRALIBPATH'] )
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )
@@ -879,11 +894,11 @@ if cov:
 
 if linux64:
     toolEnv.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
-    if usefuse:
-        toolEnv.Append( LIBS=['fuse'] )
-        toolEnv.Append( CPPPATH = join(fuse_dir, "include") )
-        toolEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )
-    toolEnv.Append( LIBPATH=['$EXTRALIBPATH'] )
+if usefuse:
+    toolEnv.Append( LIBS=['fuse'] )
+    toolEnv.Append( CPPPATH = join(fuse_dir, "include") )
+    toolEnv.Append( EXTRALIBPATH=[fuse_lib_dir] )
+toolEnv.Append( LIBPATH=['$EXTRALIBPATH'] )
 
 # The following symbols are exported for use in subordinate SConscript files.
 # Ideally, the SConscript files would be purely declarative.  They would only
@@ -905,6 +920,7 @@ Export("clientCEnv")
 Export("installSetup getSysInfo")
 Export("usesm")
 Export("usefuse")
+Export("usemdocml")
 Export("windows linux nix aix linux64")
 if usesm:
    Export("smlib_file")
@@ -913,6 +929,8 @@ Export("ssllib_file1")
 Export("zlib_lib")
 Export("lz4_lib")
 Export("snappy_lib")
+if usemdocml:
+   Export("mdocml_lib")
 if usefuse:
    Export("fuse_lib")
 Export("hasEngine")
@@ -970,8 +988,8 @@ else:
 
 print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
-                         "ssl_lib_dir", "mdocml_lib_dir", "zlib_lib_dir", "lz4_lib_dir",
-                         "snappy_lib_dir", "sm_lib_dir", "fuse_lib_dir"], duplicate=False)
+                         "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir", "snappy_lib_dir", 
+                         "sm_lib_dir", "mdocml_lib_dir", "fuse_lib_dir"], duplicate=False)
 
 if not has_option("noautogen"):
    language = get_option ( "language" )
