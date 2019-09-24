@@ -20,7 +20,6 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 
 /**
- * TODO 文本用例未标记执行结果
  * 
  * @Description seqDB-19440:setMetadataDirective接口参数校验
  * @author wuyan

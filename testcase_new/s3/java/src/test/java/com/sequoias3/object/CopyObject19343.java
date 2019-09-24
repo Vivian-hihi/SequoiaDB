@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -27,21 +28,22 @@ public class CopyObject19343 extends S3TestBase {
     private String destKeyName = "/dest/object19343";
     private String srcKeyContent = "testsrcObject!19343";
     private AmazonS3 s3Client = null;
+    private long lastModifiedTime = 0;
 
     @BeforeClass
     private void setUp() {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        s3Client.putObject(bucketName, srcKeyName, srcKeyContent);
+        PutObjectResult result = s3Client.putObject(bucketName, srcKeyName, srcKeyContent);
+        Date lastModifiedDate = result.getMetadata().getLastModified();
+        lastModifiedTime = lastModifiedDate.getTime();
     }
 
     @Test
     public void testCopyObject() throws Exception {
-        // TODO 建议获取源对象的LastModified时间，而不是获取本地时间
-        // set date 3 minutes early at the current time
-        long currentTimestamp = new Date().getTime();
-        long timestamp = currentTimestamp - 3 * 60 * 1000l;
+        // set date 3 minutes early at the lastModified time
+        long timestamp = lastModifiedTime - 3 * 60 * 1000l;
         Date date = new Date(timestamp);
 
         // copy object
