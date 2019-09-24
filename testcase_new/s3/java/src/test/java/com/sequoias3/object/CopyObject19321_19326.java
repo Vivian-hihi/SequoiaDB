@@ -12,7 +12,7 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 
 /**
- * @Description seqDB-19321:复制对象，源对象不存在 ;seqDB-19326:指定桶不存在 // TODO 写错用例标题了
+ * @Description seqDB-19321:复制对象，源对象不存在 ; seqDB-19326:指定桶不存在
  * @author wuyan
  * @Date 2019.09.18
  * @version 1.00
