@@ -153,6 +153,14 @@ if( $param['m'] == "doc" || $param['m'] == "chm" || $param['m'] == "offline" || 
    }
    
    printLog( "Finish build doxygen document, path: doc/build/output/api", "Event" ) ;
+   
+   printLog( "replace symbol..., path: doc/build/output/api", "Event" ) ;
+   if( execCmd( "python $root/replaceUnit.py" ) != 0 )
+   {
+      printLog( "Failed to exec \"python $root/replaceUnit.py\"" ) ;
+      exit( 1 ) ;
+   }
+
 }
 
 //=== ×ª»» + Éú³É ===
