@@ -2161,16 +2161,14 @@ namespace SequoiaDB
             Analyze(new BsonDocument());
         }
 
-        /** \fn DBCursor UpdateConfig(BsonDocument configs, BsonDocument options)
+        /** \fn void UpdateConfig(BsonDocument configs, BsonDocument options)
          *  \brief Force the node to update configs online
-         *  \param configs the specific configuration parameters to update 
-         *  \param options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+         *  \param configs the specific configuration parameters to update. Please reference
+         *             <a href="http://doc.sequoiadb.com/cn/index-cat_id-1521424274-edition_id-@SDB_SYMBOL_VERSION">here</a>
+         *             for more detail. 
+         *  \param options The control options:(Only take effect in coordinate nodes). Please reference
+         *             <a href="http://doc.sequoiadb.com/cn/index-cat_id-1521424274-edition_id-@SDB_SYMBOL_VERSION">here</a>
+         *             for more detail. 
          *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
