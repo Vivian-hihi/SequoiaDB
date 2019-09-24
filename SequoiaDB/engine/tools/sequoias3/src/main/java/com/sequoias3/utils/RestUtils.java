@@ -182,6 +182,7 @@ public class RestUtils {
             case ACL_INVALID_EMAIL:
             case MALFORMED_XML:
             case NEED_A_KEY:
+            case OBJECT_INVALID_ENCODING_TYPE:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:

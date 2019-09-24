@@ -41,6 +41,12 @@ public class BucketDelimiterController {
 
         DelimiterConfiguration delimiterCon = getDelimiterConfig(request, encodingType);
 
+        if (null != encodingType) {
+            if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
+                throw new S3ServerException(S3Error.OBJECT_INVALID_ENCODING_TYPE, "encoding type must be url");
+            }
+        }
+
         logger.info("put delimiter. bucket=" + bucketName + "@delimiter=" + delimiterCon.getDelimiter());
 
         bucketDelimiterService.putBucketDelimiter(operator.getUserId(), bucketName, delimiterCon.getDelimiter());
@@ -56,6 +62,12 @@ public class BucketDelimiterController {
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
         logger.debug("get delimiter. bucket={}, encodingType:{}", bucketName, encodingType);
+
+        if (null != encodingType) {
+            if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
+                throw new S3ServerException(S3Error.OBJECT_INVALID_ENCODING_TYPE, "encoding type must be url");
+            }
+        }
 
         return ResponseEntity.ok(bucketDelimiterService.getBucketDelimiter(operator.getUserId(), bucketName, encodingType));
     }
