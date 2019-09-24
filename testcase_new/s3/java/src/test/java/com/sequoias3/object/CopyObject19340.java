@@ -27,6 +27,7 @@ public class CopyObject19340 extends S3TestBase {
     private String bucketName = "bucket19340";
     private String srcKeyName = "/src/bb%/object19340";
     private String destKeyName = "/dest/object19340";
+    private String otherKeyName = "/bb%/object19340";
     private AmazonS3 s3Client = null;
     private String otherKeyContent = "otherKeyContent19340!";
     private long lastModifiedTime = 0;
@@ -37,6 +38,7 @@ public class CopyObject19340 extends S3TestBase {
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         s3Client.putObject(bucketName, srcKeyName, "curVersionContent");
+        s3Client.putObject(bucketName, otherKeyName, otherKeyContent);
         GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(bucketName, srcKeyName);
         ObjectMetadata objMetadata = s3Client.getObjectMetadata(metadataRequest);
         Date lastModifiedDate = objMetadata.getLastModified();
