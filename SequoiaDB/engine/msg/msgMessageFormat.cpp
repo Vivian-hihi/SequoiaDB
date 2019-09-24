@@ -140,7 +140,7 @@ const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
       case MSG_BS_LOB_LOCK_REQ :
          return "LOB LOCK" ;
    } ;
-   return "UNKNOW" ;
+   return "UNKNOWN" ;
 }
 
 /*
