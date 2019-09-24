@@ -1,0 +1,81 @@
+package com.sequoias3.privilege;
+
+import java.io.IOException;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AccessControlList;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.GroupGrantee;
+import com.amazonaws.services.s3.model.Owner;
+import com.amazonaws.services.s3.model.Permission;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+
+/**
+ * @Description seqDB-19451:指定非桶Owner信息配置桶acl
+ * @Author wangkexin
+ * @Date 2019.09.19
+ */
+public class SetBucketAcl19451 extends S3TestBase {
+    private boolean runSuccess = false;
+    private String userName = "user19451";
+    private String roleName = "normal";
+    private String bucketName = "bucket19451";
+    private String[] acessKeys = null;
+    private AmazonS3 userS3Client = null;
+    private AmazonS3 ownerS3Client = null;
+    private String non_ownerId;
+    private String non_ownerDisplayName;
+
+    @BeforeClass
+    private void setUp() throws IOException {
+        // create a user
+        CommLib.clearUser(userName);
+        acessKeys = UserUtils.createUser(userName, roleName);
+        userS3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
+        non_ownerId = userS3Client.getS3AccountOwner().getId();
+        non_ownerDisplayName = userS3Client.getS3AccountOwner().getDisplayName();
+
+        ownerS3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(ownerS3Client, bucketName);
+        ownerS3Client.createBucket(new CreateBucketRequest(bucketName));
+    }
+
+    @Test
+    private void testSetBucketAcl() throws Exception {
+        // 使用request body 方式配置桶acl
+        AccessControlList bucketAcl = new AccessControlList();
+        bucketAcl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
+        bucketAcl.setOwner(new Owner(non_ownerId, non_ownerDisplayName));
+        try {
+            ownerS3Client.setBucketAcl(bucketName, bucketAcl);
+            Assert.fail("expect failed but found success.");
+        } catch (AmazonS3Exception e) {
+            if (!e.getErrorCode().equals("InvalidArgument")) {
+                throw e;
+            }
+        }
+
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                ownerS3Client.deleteBucket(bucketName);
+                CommLib.clearUser(userName);
+            }
+        } finally {
+            ownerS3Client.shutdown();
+            userS3Client.shutdown();
+        }
+    }
+}
