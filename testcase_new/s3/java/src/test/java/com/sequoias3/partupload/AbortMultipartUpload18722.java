@@ -42,8 +42,7 @@ public class AbortMultipartUpload18722 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
     }
 
-    // SEQUOIADBMAINSTREAM-4784
-    @Test(enabled = false)
+    @Test()
     public void abortMultipartUpload() throws Exception {
         File file = new File(filePath);
         String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);
