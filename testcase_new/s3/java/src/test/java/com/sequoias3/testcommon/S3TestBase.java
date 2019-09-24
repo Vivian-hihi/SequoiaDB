@@ -239,7 +239,7 @@ public class S3TestBase {
             propertiesFileName = installPath + "/tools/sequoias3/config/application.properties";
             replaceFileName = installPath + "/tools/sequoias3/config/ori_application.properties";
             String coordUrls = storage.getUrls(coordUrl);
-            cmd.exec(s3HostName, remoteuser, remotepasswd, propertiesFileName, replaceFileName, coordUrls,
+            cmd.exec(s3HostName, remoteuser, remotepasswd, propertiesFileName, replaceFileName, s3Port, coordUrls,
                     propertiesFileName);
             break;
         case S3_CHANGEDIALEVEL:
@@ -282,7 +282,7 @@ public class S3TestBase {
         S3_CHECKPORTALIVE("%s/tools/sequoias3/sequoias3.sh status"), 
         S3_START("source /etc/profile;%s/tools/sequoias3/sequoias3.sh start > /tmp/s3start.log"), 
         S3_STOP("%s/tools/sequoias3/sequoias3.sh stop -a"), 
-        S3_SETCONFBEFORE("mv %s %s;echo 'sdbs3.sequoiadb.url=sequoiadb://%s\nsdbs3.multipartupload.completereservetime=1' > %s"), 
+        S3_SETCONFBEFORE("mv %s %s;echo 'server.port=%s\nsdbs3.sequoiadb.url=sequoiadb://%s\nsdbs3.multipartupload.completereservetime=1' > %s"), 
         S3_CHANGEDIALEVEL("sed -i 's/INFO/DEBUG/g' %s"), 
         S3_RESTORECONF("rm -f %s;mv %s %s"), 
         S3_CHANGECONF_BEFORETEST("echo '%s' >> %s"), 
