@@ -16,18 +16,18 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- * @FileName:BaseExceptionTest16536  验证CollectionSpace类下接口引擎报错
+ * @FileName:BaseExceptionTest16536 验证CollectionSpace类下接口引擎报错
  * @author wangkexin
  * @Date 2018-11-21
  * @version 1.00
  */
 
-public class BaseExceptionTest16536 extends SdbTestBase{
+public class BaseExceptionTest16536 extends SdbTestBase {
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private String clName = "notexistcl16536";
     private String coordAddr;
-    
+
     @BeforeClass
     public void setUp() {
         this.coordAddr = SdbTestBase.coordUrl;
@@ -37,48 +37,42 @@ public class BaseExceptionTest16536 extends SdbTestBase{
             throw new SkipException("run mode is standalone,test case skip");
         }
     }
-    
+
     @Test
     public void test() {
-    	//getCollection
-    	try {
+        // getCollection
+        try {
             this.cs.getCollection(clName);
             Assert.fail("exp fail but act success");
-        }catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.assertEquals(SDBError.SDB_DMS_NOTEXIST.getErrorCode(), e.getErrorCode());
-            Assert.assertEquals("{ \"errno\" : " + SDBError.SDB_DMS_NOTEXIST.getErrorCode()+ " , \"description\" : \"" + SDBError.SDB_DMS_NOTEXIST.getErrorDescription() + "\" , \"detail\" : \"\" }", e.getErrorObject().toString());
+            Assert.assertEquals(
+                    "{ \"errno\" : " + SDBError.SDB_DMS_NOTEXIST.getErrorCode() + " , \"description\" : \""
+                            + SDBError.SDB_DMS_NOTEXIST.getErrorDescription() + "\" , \"detail\" : \"\" }",
+                    e.getErrorObject().toString());
         }
-    	
-    	//createCollection
-    	try {
-            this.cs.createCollection("");
-            Assert.fail("exp fail but act success");
-        }catch (BaseException e) {
-        	BSONObject errObject = e.getErrorObject();
-        	Assert.assertEquals(errObject.get("errno"), SDBError.SDB_INVALIDARG.getErrorCode());
-        	Assert.assertEquals(errObject.get("description").toString(), SDBError.SDB_INVALIDARG.getErrorDescription());
-        	ReplicaGroup rg = this.sdb.getReplicaGroup("SYSCatalogGroup");
-        	String expected = "[{ \"NodeName\" : \"" + rg.getMaster().getNodeName() + "\" , \"GroupName\" : \"SYSCatalogGroup\" , \"Flag\" : " + SDBError.SDB_INVALIDARG.getErrorCode() + " , \"ErrInfo\" : { \"errno\" : "+ SDBError.SDB_INVALIDARG.getErrorCode() +" , \"description\" : \"" + SDBError.SDB_INVALIDARG.getErrorDescription() + "\" , \"detail\" : \"collection name length is not valid: \" } }]";
-        	Assert.assertEquals(errObject.get("ErrNodes").toString(), expected);
-        }
-    	
-    	//dropCollection
-    	try {
+
+        // dropCollection
+        try {
             this.cs.dropCollection(clName);
             Assert.fail("exp fail but act success");
-        }catch (BaseException e) {
-        	BSONObject errObject = e.getErrorObject();
-        	Assert.assertEquals(errObject.get("errno"), SDBError.SDB_DMS_NOTEXIST.getErrorCode());
-        	Assert.assertEquals(errObject.get("description").toString(), SDBError.SDB_DMS_NOTEXIST.getErrorDescription());
-        	ReplicaGroup rg = this.sdb.getReplicaGroup("SYSCatalogGroup");
-        	String expected = "[{ \"NodeName\" : \"" + rg.getMaster().getNodeName() + "\" , \"GroupName\" : \"SYSCatalogGroup\" , \"Flag\" : " + SDBError.SDB_DMS_NOTEXIST.getErrorCode() + " , \"ErrInfo\" : { \"errno\" : "+ SDBError.SDB_DMS_NOTEXIST.getErrorCode() +" , \"description\" : \"" + SDBError.SDB_DMS_NOTEXIST.getErrorDescription() + "\" , \"detail\" : \"\" } }]";
-        	Assert.assertEquals(errObject.get("ErrNodes").toString(), expected);
+        } catch (BaseException e) {
+            BSONObject errObject = e.getErrorObject();
+            Assert.assertEquals(errObject.get("errno"), SDBError.SDB_DMS_NOTEXIST.getErrorCode());
+            Assert.assertEquals(errObject.get("description").toString(),
+                    SDBError.SDB_DMS_NOTEXIST.getErrorDescription());
+            ReplicaGroup rg = this.sdb.getReplicaGroup("SYSCatalogGroup");
+            String expected = "[{ \"NodeName\" : \"" + rg.getMaster().getNodeName()
+                    + "\" , \"GroupName\" : \"SYSCatalogGroup\" , \"Flag\" : "
+                    + SDBError.SDB_DMS_NOTEXIST.getErrorCode() + " , \"ErrInfo\" : { \"errno\" : "
+                    + SDBError.SDB_DMS_NOTEXIST.getErrorCode() + " , \"description\" : \""
+                    + SDBError.SDB_DMS_NOTEXIST.getErrorDescription() + "\" , \"detail\" : \"\" } }]";
+            Assert.assertEquals(errObject.get("ErrNodes").toString(), expected);
         }
     }
-    
+
     @AfterClass
     public void tearDown() {
         sdb.close();
-    } 
+    }
 }
- 
