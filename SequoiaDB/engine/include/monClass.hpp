@@ -382,6 +382,8 @@ class _MonClassLock : public MonClassTemplate<_MonClassLock>
 {
 public:
    _MonClassLock ()
+      : _xOwnerTID( 0 ), _waiterTID( 0 ), _numOwner( 0 ),
+        _lockMode( DPS_TRANSLOCK_MAX )
    {
       _type = MON_CLASS_LOCK ;
    }

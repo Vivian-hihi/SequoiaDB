@@ -2,6 +2,8 @@
 #define MONLATCH_HPP_
 
 #include "ossLatch.hpp"
+#include "ossRWMutex.hpp"
+#include "ossAtomic.hpp"
 
 namespace engine
 {
@@ -9,7 +11,7 @@ class _MonClassLatch ;
 
 enum MON_LATCH_IDENTIFIER
 {
-   MON_LATCH_DMSCB_STATEMTX,       // 1
+   MON_LATCH_DMSCB_STATEMTX = 1,       // 1
    MON_LATCH_DMSSB_PERSIST_LATCH,  // 2
    MON_LATCH_DMSSB_COMMIT_LATCH,   // 3
    MON_LATCH_DMSSDC_LATCHCONTEXT,  // 4
@@ -114,6 +116,8 @@ enum MON_LATCH_IDENTIFIER
 
 } ;
 
+const CHAR* monLatchIDtoName ( MON_LATCH_IDENTIFIER latchID) ;
+
 class monSpinXLatch : public ossXLatch
 {
 public:
@@ -130,7 +134,9 @@ public:
 public:
    ossSpinXLatch _latch ;
    MON_LATCH_IDENTIFIER _latchID ;
-   UINT32 _ownerTID ;
+   UINT32 _xOwnerTID ;
+   ossAtomic32 _numOwner ;
+   UINT32 _lastSOwnerTID ;
 } ;
 
 class monSpinSLatch : public ossSLatch
@@ -138,7 +144,9 @@ class monSpinSLatch : public ossSLatch
 public:
    monSpinSLatch( MON_LATCH_IDENTIFIER latchID ) ;
 
-   monSpinSLatch( ) {}
+   monSpinSLatch( )
+      : _numOwner( 0 )
+   {}
 
    monSpinSLatch& operator=(const monSpinSLatch& rhs )
    {
@@ -161,7 +169,9 @@ public:
 public:
    ossSpinSLatch _latch ;
    MON_LATCH_IDENTIFIER _latchID ;
-   UINT32 _ownerTID ;
+   UINT32 _xOwnerTID ;
+   UINT32 _lastSOwnerTID ;
+   ossAtomic32 _numOwner ;
 } ;
 }
 #endif

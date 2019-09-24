@@ -849,19 +849,9 @@ namespace engine
             return _dataRead ;
          }
 
-         OSS_INLINE void setDataRead ( UINT64 dataRead )
-         {
-            _dataRead = dataRead ;
-         }
-
          OSS_INLINE UINT64 getIndexRead () const
          {
             return _indexRead ;
-         }
-
-         OSS_INLINE void setIndexRead ( UINT64 indexRead )
-         {
-            _indexRead = indexRead ;
          }
 
          OSS_INLINE UINT64 getLobRead() const
@@ -869,19 +859,9 @@ namespace engine
             return _lobRead ;
          }
 
-         OSS_INLINE void setLobRead( UINT64 lobRead )
-         {
-            _lobRead = lobRead ;
-         }
-
          OSS_INLINE UINT64 getLobWrite() const
          {
             return _lobWrite ;
-         }
-
-         OSS_INLINE void setLobWrite( UINT64 lobWrite )
-         {
-            _lobWrite = lobWrite ;
          }
 
          OSS_INLINE UINT32 getReturnBatches () const
@@ -889,29 +869,14 @@ namespace engine
             return _returnBatches ;
          }
 
-         OSS_INLINE void setReturnBatches ( UINT32 returnBatches )
-         {
-            _returnBatches = returnBatches ;
-         }
-
          OSS_INLINE UINT64 getReturnRecords () const
          {
             return _returnRecords ;
          }
 
-         OSS_INLINE void setReturnRecords ( UINT64 returnRecords )
-         {
-            _returnRecords = returnRecords ;
-         }
-
          OSS_INLINE const ossTimestamp & getStartTimestamp () const
          {
             return _startTimestamp ;
-         }
-
-         OSS_INLINE void setStartTimestamp ( const ossTimestamp & startTimestamp )
-         {
-            _startTimestamp = startTimestamp ;
          }
 
          OSS_INLINE const ossTickDelta & getWaitTime () const
@@ -956,28 +921,6 @@ namespace engine
             _returnRecords += recordDelta ;
          }
 
-         OSS_INLINE void monOperationCountInc ( MON_OPERATION_TYPES op,
-                                                UINT64 delta = 1 )
-         {
-            switch ( op )
-            {
-               case MON_DATA_READ :
-                  monDataReadInc( delta ) ;
-                  break ;
-               case MON_INDEX_READ :
-                  monIndexReadInc( delta ) ;
-                  break ;
-               case MON_LOB_READ :
-                  monLobReadInc( delta ) ;
-                  break ;
-               case MON_LOB_WRITE :
-                  monLobWriteInc( delta ) ;
-                  break ;
-               default:
-                  break ;
-            }
-         }
-
          OSS_INLINE void monDataReadInc ( UINT64 delta )
          {
             _dataRead += delta ;
@@ -996,33 +939,6 @@ namespace engine
          OSS_INLINE void monLobWriteInc( UINT64 delta )
          {
             _lobWrite += delta ;
-         }
-
-         OSS_INLINE void monOperationTimeInc ( MON_OPERATION_TYPES op,
-                                               ossTickDelta &delta )
-         {
-            switch ( op )
-            {
-               case MON_TOTAL_WAIT_TIME :
-                  monWaitTimeInc( delta ) ;
-                  break ;
-               case MON_TOTAL_READ_TIME :
-                  monQueryTimeInc( delta ) ;
-                  break ;
-               case MON_TOTAL_WRITE_TIME :
-                  monExecuteTimeInc( delta ) ;
-                  break ;
-               default :
-                  break ;
-            }
-         }
-
-         OSS_INLINE void monOperationTimeInc ( MON_OPERATION_TYPES op,
-                                               const ossTick &startTime,
-                                               const ossTick &endTime )
-         {
-            ossTickDelta delta = endTime - startTime ;
-            monOperationTimeInc( op, delta ) ;
          }
 
          OSS_INLINE void monWaitTimeInc ( ossTickDelta &delta )
