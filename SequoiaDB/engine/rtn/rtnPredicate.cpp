@@ -60,8 +60,6 @@ using namespace bson ;
 
 namespace engine
 {
-   typedef ossPoolSet< BSONElement, element_cmp_lt > rtnElementSet ;
-
    /*
       _rtnParamList implement
     */
@@ -1477,56 +1475,30 @@ namespace engine
 
       if ( _paramIndex >= 0 )
       {
-         BSONElement param = parameters.getParam( _paramIndex ) ;
-
-         if ( Array == param.type() )
+         // Bind the start and stop key pairs with specified parameters
+         for ( RTN_SSKEY_LIST::iterator i = _startStopKeys.begin() ;
+               i != _startStopKeys.end();
+               ++ i )
          {
-            _startStopKeys.clear() ;
-
-            rtnElementSet valSet ;
-            BSONObjIterator iter( param.embeddedObject() ) ;
-            if ( !iter.more() )
+            if ( i->_startKey._parameterized )
             {
-               valSet.insert( param ) ;
-            }
-            while ( iter.more() )
-            {
-               valSet.insert( iter.next() ) ;
-            }
-            for ( rtnElementSet::iterator iterSet = valSet.begin() ;
-                  iterSet != valSet.end() ;
-                  ++ iterSet )
-            {
-               _startStopKeys.push_back( rtnStartStopKey( *iterSet ) ) ;
-            }
-         }
-         else
-         {
-            SDB_ASSERT( 1 == _startStopKeys.size(),
-                        "should be only on start-stop key for parameterized "
-                        "predicate" ) ;
-            rtnStartStopKey & key = _startStopKeys.front() ;
-            // Bind the start and stop key pairs with specified parameters
-            if ( key._startKey._parameterized )
-            {
-               key._startKey._bound = param ;
+               i->_startKey._bound = parameters.getParam( _paramIndex ) ;
                if ( _fuzzyIndex >= 0 )
                {
-                  key._startKey._inclusive =
+                  i->_startKey._inclusive =
                         parameters.getParam( _fuzzyIndex ).booleanSafe() ;
                }
             }
-            if ( key._stopKey._parameterized )
+            if ( i->_stopKey._parameterized )
             {
-               key._stopKey._bound = param ;
+               i->_stopKey._bound = parameters.getParam( _paramIndex ) ;
                if ( _fuzzyIndex >= 0 )
                {
-                  key._stopKey._inclusive =
+                  i->_stopKey._inclusive =
                         parameters.getParam( _fuzzyIndex ).booleanSafe() ;
                }
             }
          }
-
          // Mark the parameter matching is done by predicates
          if ( markDone )
          {
@@ -1555,7 +1527,8 @@ namespace engine
       {
          // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
-         rtnElementSet valSet ;
+         ossPoolSet<BSONElement, element_cmp_lt> vals ;
+         ossPoolSet<BSONElement,element_cmp_lt>::iterator iterSet ;
 
          RTN_PREDICATE_LIST regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
@@ -1564,7 +1537,7 @@ namespace engine
          // the _startStopKeys
          if ( !i.more() )
          {
-            valSet.insert( e ) ;
+            vals.insert ( e ) ;
          }
          // for each element in the array
          while ( i.more() )
@@ -1594,22 +1567,14 @@ namespace engine
                          "Failed to create regex predicate" ) ;
             }
 
-            valSet.insert( ie ) ;
+            vals.insert ( ie ) ;
          }
 
          // after going through all elements, let's push all in $in into
          // start/stopkey list
-         for ( rtnElementSet::iterator iterSet = valSet.begin() ;
-               iterSet != valSet.end() ;
-               ++ iterSet )
+         for ( iterSet = vals.begin() ; iterSet != vals.end() ; iterSet++ )
          {
-            _startStopKeys.push_back( rtnStartStopKey( *iterSet ) ) ;
-            if ( -1 != _paramIndex )
-            {
-               rtnStartStopKey &keyPair = _startStopKeys.back() ;
-               keyPair._startKey._parameterized = TRUE ;
-               keyPair._stopKey._parameterized = TRUE ;
-            }
+            _startStopKeys.push_back ( rtnStartStopKey ( *iterSet ) ) ;
          }
 
          // and then union with regular expression
