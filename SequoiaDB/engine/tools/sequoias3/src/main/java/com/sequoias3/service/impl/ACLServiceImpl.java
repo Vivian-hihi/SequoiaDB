@@ -262,6 +262,9 @@ public class ACLServiceImpl implements ACLService {
 
     private boolean insertGrants(ConnectionDao connection, AccessControlPolicy aclConfig,
                               long aclId) throws S3ServerException{
+        if (aclConfig == null || aclConfig.getGrants() == null){
+            return true;
+        }
         List<Grant> grantList = aclConfig.getGrants();
         boolean isPrivate = true;
         for (int i=0; i < grantList.size(); i++){
