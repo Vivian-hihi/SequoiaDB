@@ -40,14 +40,16 @@ public class AbortMultipartUpload18722 extends S3TestBase {
         TestTools.LocalFile.createDir(localPath.toString());
         TestTools.LocalFile.createFile(filePath, fileSize);
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
     }
 
     @Test()
     public void abortMultipartUpload() throws Exception {
         File file = new File(filePath);
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, S3TestBase.bucketName, keyName);
-        PartUploadUtils.partUpload(s3Client, S3TestBase.bucketName, keyName, uploadId, file);
-        AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(S3TestBase.bucketName, keyName, uploadId);
+        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
+        PartUploadUtils.partUpload(s3Client, bucketName, keyName, uploadId, file);
+        AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, keyName, uploadId);
         s3Client.abortMultipartUpload(request);
 
         // repeat upload part use the same uploadId
@@ -66,6 +68,7 @@ public class AbortMultipartUpload18722 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+                CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
