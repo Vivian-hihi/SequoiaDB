@@ -115,7 +115,6 @@ public class CopyObject19305 extends S3TestBase {
         Assert.assertEquals(result.getContentLength(), fileSize);
 
         // modifiedDate range is [ beforeDate, afterDate]
-
         Assert.assertFalse(modifiedDate.before(beforeDate), "modifiedDate must not be less than beforeDate,"
                 + "modifiedDate:" + modifiedDate + " beforeDate:" + beforeDate);
         Assert.assertFalse(modifiedDate.after(afterDate), "modifiedDate must not be greater than afterDate,"
