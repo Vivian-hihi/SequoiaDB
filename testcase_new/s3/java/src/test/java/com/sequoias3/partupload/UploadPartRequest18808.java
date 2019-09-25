@@ -192,7 +192,7 @@ public class UploadPartRequest18808 extends S3TestBase {
             s3Client.uploadPart(partRequest);
             Assert.fail("when bucketName is '',it should fail");
         } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "MalformedXML");
+            Assert.assertEquals(e.getErrorCode(), "InvalidRequest");
         }
     }
 
