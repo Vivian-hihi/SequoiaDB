@@ -65,6 +65,7 @@
 #include "utilMemListPool.hpp"
 #include "dpsUtil.hpp"
 #include "msgDef.h"
+#include "monMgr.hpp"
 
 using namespace bson ;
 using namespace boost::asio::ip ;
@@ -1552,6 +1553,41 @@ namespace engine
       tmpTime = pInfo->_resetTimestamp ;
       ossTimestampToString( tmpTime, timestamp ) ;
       ob.append ( FIELD_NAME_RESETTIMESTAMP, timestamp ) ;
+   }
+
+   INT32 monParseArchiveOpt( const BSONObj &obj, BOOLEAN &archiveOpt )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObjIterator itr( obj ) ;
+         BSONElement elem ;
+         while ( itr.more() )
+         {
+            elem = itr.next() ;
+            // ignore case for backward compatibility
+            if ( 0 == ossStrcasecmp( elem.fieldName(), FIELD_NAME_VIEW_HISTORY ) )
+            {
+               if ( elem.type() == bson::Bool )
+               {
+                  archiveOpt = elem.boolean() ;
+               }
+               else if ( elem.type() == bson::String )
+               {
+                  ossStrToBoolean( elem.valuestr(), &archiveOpt ) ;
+               }
+               break ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to read configs options ",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+      }
+
+      return rc ;
    }
 
    /*
@@ -4170,12 +4206,18 @@ namespace engine
    _monQueriesFetch::_monQueriesFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_QUERIES )
    {
-      _addInfoMask = 0 ;
+      _addInfoMask = MON_MASK_NODEID ;
+      _viewArchive = FALSE ;
       _isDetail= TRUE ;
+      _scanner = NULL ;
    }
 
    _monQueriesFetch::~_monQueriesFetch()
    {
+      if ( _scanner )
+      {
+         delete ( _scanner ) ;
+      }
    }
 
    INT32 _monQueriesFetch::init( pmdEDUCB *cb,
@@ -4184,11 +4226,35 @@ namespace engine
                                   UINT32 addInfoMask,
                                   const BSONObj obj )
    {
-      _hitEnd = TRUE ;
+      INT32 rc = SDB_OK ;
+
+      MonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
+
+      rc =  monParseArchiveOpt( obj, _viewArchive ) ;
+
+      if ( rc != SDB_OK )
+      {
+         goto error ;
+      }
+
+      if ( _viewArchive )
+      {
+         _scanner = monMgr->getReadScanner(MON_CLASS_QUERY, MON_CLASS_ARCHIVED_LIST) ;
+      }
+      else
+      {
+         _scanner = monMgr->getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST) ;
+      }
+      _queryCB = (MonClassQuery*)_scanner->getNext() ;
+
+      _hitEnd = ( NULL == _queryCB ) ? TRUE : FALSE ;
       _isDetail = isDetail ;
       _addInfoMask = addInfoMask ;
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR* _monQueriesFetch::getName() const
@@ -4199,25 +4265,98 @@ namespace engine
    INT32 _monQueriesFetch::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
+      ossTimestamp createTS = _queryCB->getCreateTS() ;
+      ossTimestamp endTS = _queryCB->getEndTS() ;
+      CHAR   timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+      UINT32 seconds, microseconds ;
+      double responseTime ;
+      double latchWaitTime ;
+      double lockWaitTime ;
+      ossTickConversionFactor factor ;
+      SDB_ROLE role = pmdGetKRCB()->getDBRole() ;
 
-      //TODO: to be implemented
       _builder.reset() ;
       BSONObjBuilder builder( _builder ) ;
 
-      obj = builder.done() ;
+      ossTimestampToString ( createTS, timestamp ) ;
+      _queryCB->_responseTime.convertToTime ( factor, seconds, microseconds ) ;
+      responseTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
-      _hitEnd = TRUE ;
+      /// add system info
+      monAppendSystemInfo( builder, _addInfoMask ) ;
+      builder.append( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
+
+      ossTimestampToString ( endTS, timestamp ) ;
+      builder.append( FIELD_NAME_ENDTIMESTAMP, timestamp ) ;
+      builder.append( FIELD_NAME_TID, _queryCB->_tid ) ;
+      //FIXME: PASSING IN FALSE AS DEFAULT
+      builder.append( FIELD_NAME_OPTYPE,
+                    msgType2String( (MSG_TYPE)_queryCB->_opCode, FALSE ) ) ;
+
+      builder.append( FIELD_NAME_NAME, _queryCB->_name ) ;
+      builder.append( FIELD_NAME_QUERYTIMESPENT, responseTime ) ;
+      builder.append( FIELD_NAME_RETURN_NUM, _queryCB->_rowsReturned ) ;
+
+      if ( SDB_ROLE_COORD == role )
+      {
+         double nodeWaitTime ;
+         double msgSentTime ;
+         _queryCB->_remoteNodesResponseTime.convertToTime ( factor, seconds, microseconds ) ;
+         nodeWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
+
+         _queryCB->_msgSentTime.convertToTime ( factor, seconds, microseconds ) ;
+         msgSentTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
+         builder.append( FIELD_NAME_NUM_MSG_SENT, _queryCB->_numMsgSent ) ;
+         builder.append( FIELD_NAME_LASTOPINFO, _queryCB->_queryText ) ;
+         builder.append( FIELD_NAME_MSG_SENT_TIME, msgSentTime ) ;
+         builder.append( FIELD_NAME_NODEWAITTIME, nodeWaitTime ) ;
+         if ( _queryCB->nodes.size() > 0 )
+         {
+            builder.append( FIELD_NAME_RELATED_NODE, _queryCB->nodes ) ;
+         }
+      }
+      else
+      {
+         _queryCB->_latchWaitTime.convertToTime ( factor, seconds, microseconds ) ;
+         latchWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
+
+         _queryCB->_lockWaitTime.convertToTime ( factor, seconds, microseconds ) ;
+         lockWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
+
+         builder.append( FIELD_NAME_RELATED_NID, _queryCB->_relatedNID.columns.nodeID ) ;
+         builder.append( FIELD_NAME_RELATED_TID, _queryCB->_relatedTID ) ;
+         builder.append( FIELD_NAME_SESSIONID, _queryCB->_sessionID ) ;
+         builder.append( FIELD_NAME_ACCESSPLAN_ID, _queryCB->_accessPlanID ) ;
+         builder.append( FIELD_NAME_DATAREAD, _queryCB->_dataRead ) ;
+         builder.append( FIELD_NAME_DATAWRITE, _queryCB->_dataWrite ) ;
+         builder.append( FIELD_NAME_INDEXREAD, _queryCB->_indexRead ) ;
+         builder.append( FIELD_NAME_INDEXWRITE, _queryCB->_indexWrite ) ;
+         builder.append( FIELD_NAME_LOBREAD, _queryCB->_lobRead ) ;
+         builder.append( FIELD_NAME_LOBWRITE, _queryCB->_lobWrite ) ;
+         builder.append( FIELD_NAME_TRANS_WAITLOCKTIME, lockWaitTime ) ;
+         builder.append( FIELD_NAME_LATCH_WAIT_TIME, latchWaitTime ) ;
+      }
+
+      _queryCB = (MonClassQuery*)_scanner->getNext() ;
+
+      if ( NULL == _queryCB )
+      {
+         _hitEnd = TRUE ;
+      }
+
+      obj = builder.done() ;
       return rc ;
    }
 
    IMPLEMENT_FETCH_AUTO_REGISTER( _monLatchWaitsFetch )
    /*
-      _monLatchWaitsFetch implement
+      _monQueriesFetch implement
    */
    _monLatchWaitsFetch::_monLatchWaitsFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LATCHWAITS )
    {
       _addInfoMask = MON_MASK_NODE_NAME ;
+      _viewArchive = FALSE ;
       _isDetail= TRUE ;
       _scanner = NULL ;
    }
@@ -4236,14 +4375,34 @@ namespace engine
                                     UINT32 addInfoMask,
                                     const BSONObj obj )
    {
-      //TODO: to be implemented
-      _latchCB = NULL ;
+      INT32 rc = SDB_OK ;
+      MonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
+
+      rc =  monParseArchiveOpt( obj, _viewArchive ) ;
+      if ( rc != SDB_OK )
+      {
+         goto error ;
+      }
+
+      if ( _viewArchive )
+      {
+         _scanner = monMgr->getReadScanner(MON_CLASS_LATCH, MON_CLASS_ARCHIVED_LIST) ;
+      }
+      else
+      {
+         _scanner = monMgr->getReadScanner(MON_CLASS_LATCH, MON_CLASS_ACTIVE_LIST) ;
+      }
+
+      _latchCB = (MonClassLatch*)_scanner->getNext() ;
 
       _hitEnd = ( NULL == _latchCB ) ? TRUE : FALSE ;
       _isDetail = isDetail ;
       _addInfoMask = addInfoMask ;
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR* _monLatchWaitsFetch::getName() const
@@ -4254,18 +4413,72 @@ namespace engine
    INT32 _monLatchWaitsFetch::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
+      CHAR timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+      CHAR addr[16] = { 0 } ;
+      UINT32 seconds, microseconds ;
+      double waitTime ;
+      ossTickConversionFactor factor ;
 
-      //TODO: to be implemented
       _builder.reset() ;
       BSONObjBuilder builder( _builder ) ;
 
-      obj = builder.done() ;
+      ossTimestamp createTS = _latchCB->getCreateTS() ;
+      ossTimestampToString ( createTS, timestamp ) ;
 
-      _hitEnd = TRUE ;
+      if ( !_viewArchive )
+      {
+         ossTick now ;
+         now.sample() ;
+         ossTickDelta delta = now - _latchCB->getCreateTSTick() ;
+         delta.convertToTime ( factor, seconds, microseconds ) ;
+      }
+      else
+      {
+         _latchCB->_waitTime.convertToTime ( factor, seconds, microseconds ) ;
+      }
+
+      waitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
+
+      /// add system info
+      monAppendSystemInfo( builder, _addInfoMask ) ;
+
+      ossSnprintf( addr, sizeof(addr)-1, "%p", _latchCB->_latchAddr ) ;
+      builder.append( FIELD_NAME_ADDRESS, addr ) ;
+      if ( EXCLUSIVE == _latchCB->_latchMode )
+      {
+         builder.append( FIELD_NAME_MODE, "X" ) ;
+      }
+      else
+      {
+         builder.append( FIELD_NAME_MODE, "S" ) ;
+      }
+
+      if ( _viewArchive )
+      {
+         builder.append( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
+      }
+
+      builder.append( FIELD_NAME_TID, _latchCB->_waiterTID ) ;
+      builder.append( FIELD_NAME_XOWNER_TID, _latchCB->_xOwnerTID ) ;
+      builder.append( FIELD_NAME_LATCH_NAME, monLatchIDtoName(_latchCB->_latchID) ) ;
+      builder.append( FIELD_NAME_LATCH_DESC, "" ) ;
+      builder.append( FIELD_NAME_LATCH_WAIT_TIME, waitTime ) ;
+      builder.append( FIELD_NAME_NUM_OWNER, _latchCB->_numOwner ) ;
+      builder.append( FIELD_NAME_LAST_S_OWNER, _latchCB->_lastSOwner ) ;
+
+      _latchCB = (MonClassLatch*)_scanner->getNext() ;
+
+      if ( NULL == _latchCB )
+      {
+         _hitEnd = TRUE ;
+      }
+
+      obj = builder.done() ;
       return rc ;
    }
 
    IMPLEMENT_FETCH_AUTO_REGISTER( _monLockWaitsFetch )
+
    /*
       _monLockWaitsFetch implement
    */
@@ -4273,6 +4486,7 @@ namespace engine
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LOCKWAITS )
    {
       _addInfoMask = MON_MASK_NODE_NAME ;
+      _viewArchive = FALSE ;
       _isDetail= TRUE ;
       _scanner = NULL ;
    }
@@ -4291,14 +4505,35 @@ namespace engine
                                     UINT32 addInfoMask,
                                     const BSONObj obj )
    {
-      //TODO: to be implemented
-      _lockCB = NULL ;
+      INT32 rc = SDB_OK ;
+
+      MonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
+
+      rc =  monParseArchiveOpt( obj, _viewArchive ) ;
+      if ( rc != SDB_OK )
+      {
+         goto error ;
+      }
+
+      if ( _viewArchive )
+      {
+         _scanner = monMgr->getReadScanner(MON_CLASS_LOCK, MON_CLASS_ARCHIVED_LIST) ;
+      }
+      else
+      {
+         _scanner = monMgr->getReadScanner(MON_CLASS_LOCK, MON_CLASS_ACTIVE_LIST) ;
+      }
+
+      _lockCB = (MonClassLock*)_scanner->getNext() ;
 
       _hitEnd = ( NULL == _lockCB ) ? TRUE : FALSE ;
       _isDetail = isDetail ;
       _addInfoMask = addInfoMask ;
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR* _monLockWaitsFetch::getName() const
@@ -4308,10 +4543,44 @@ namespace engine
 
    INT32 _monLockWaitsFetch::fetch( BSONObj &obj )
    {
-      //TODO: to be implemented
       INT32 rc = SDB_OK ;
       _builder.reset() ;
       BSONObjBuilder builder( _builder ) ;
+
+      CHAR timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+
+      UINT32 seconds, microseconds ;
+      double waitTime ;
+      ossTickConversionFactor factor ;
+
+      ossTimestamp createTS = _lockCB->getCreateTS() ;
+      ossTimestampToString ( createTS, timestamp ) ;
+
+      if ( !_viewArchive )
+      {
+         ossTick now ;
+         now.sample() ;
+         ossTickDelta delta = now - _lockCB->getCreateTSTick() ;
+         delta.convertToTime ( factor, seconds, microseconds ) ;
+      }
+      else
+      {
+         _lockCB->_waitTime.convertToTime ( factor, seconds, microseconds ) ;
+      }
+
+      if ( _viewArchive )
+      {
+         builder.append( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
+      }
+      waitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
+      builder.append( FIELD_NAME_TID, _lockCB->_waiterTID ) ;
+      builder.append( FIELD_NAME_XOWNER_TID, _lockCB->_xOwnerTID ) ;
+      _lockCB->_lockID.toBson(builder) ;
+      builder.append( FIELD_NAME_TRANS_WAITLOCKTIME, waitTime ) ;
+      builder.append( FIELD_NAME_NUM_OWNER, _lockCB->_numOwner ) ;
+
+      _lockCB = (MonClassLock*)_scanner->getNext() ;
+
       if ( NULL == _lockCB )
       {
          _hitEnd = TRUE ;

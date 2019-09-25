@@ -121,6 +121,8 @@ namespace engine
                              const monSvcTaskInfo *pInfo,
                              BOOLEAN exceptIDName = FALSE ) ;
 
+   INT32 monParseArchiveOpt ( const BSONObj &obj , BOOLEAN &archiveOpt ) ;
+
    /*
       _monTransFetcher define
    */
@@ -670,6 +672,9 @@ namespace engine
 
       private:
          UINT32                  _addInfoMask ;
+         BOOLEAN                 _viewArchive ;
+         MonClassReadScanner    *_scanner ;
+         MonClassQuery          *_queryCB ;
          BOOLEAN                 _isDetail ;
    } ;
    typedef _monQueriesFetch monQueriesFetch ;
@@ -698,6 +703,7 @@ namespace engine
 
       private:
          UINT32                  _addInfoMask ;
+         BOOLEAN                 _viewArchive ;
          MonClassReadScanner    *_scanner ;
          MonClassLatch          *_latchCB ;
          BOOLEAN                 _isDetail ;
@@ -727,6 +733,7 @@ namespace engine
          virtual INT32     fetch( BSONObj &obj ) ;
 
       private:
+         BOOLEAN                 _viewArchive ;
          UINT32                  _addInfoMask ;
          MonClassReadScanner    *_scanner ;
          MonClassLock           *_lockCB ;
