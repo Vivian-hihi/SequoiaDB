@@ -120,7 +120,7 @@ public class UploadPartRequest18808 extends S3TestBase {
             s3Client.uploadPart(partRequest);
             Assert.fail("when key name is '',it should fail");
         } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "MalformedXML");
+            Assert.assertEquals(e.getErrorCode(), "InvalidRequest");
         }
 
         partRequest = new UploadPartRequest().withFile(file[0]).withFileOffset(filePosition).withPartNumber(1)
