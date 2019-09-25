@@ -2129,6 +2129,9 @@ namespace engine
       PD_LOG ( PDEVENT, "Start thread[%u] for EDU[ID:%lld, type:%s, Name:%s]",
                cb->getTID(), myEDUID, getEDUName( eduType ), cb->getName() ) ;
 
+      // copy name
+      ossStrncpy( eduName, cb->getName(), OSS_MAX_PATHSIZE ) ;
+
       /// Notify ok
       ePtr->signal() ;
       quitWithException = TRUE ;
