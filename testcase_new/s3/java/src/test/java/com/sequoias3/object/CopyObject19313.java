@@ -58,8 +58,7 @@ public class CopyObject19313 extends S3TestBase {
         s3Client.putObject(destBucketName, destKeyName, new File(filePath));
     }
 
-    // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4921
-    @Test(enabled = false)
+    @Test
     public void testCopyObject() throws Exception {
         CopyObjectResult result = s3Client.copyObject(srcBucketName, srcKeyName, destBucketName, destKeyName);
 
@@ -110,8 +109,8 @@ public class CopyObject19313 extends S3TestBase {
         // check the attributeInfo of old destObject
         GetObjectMetadataRequest request1 = new GetObjectMetadataRequest(bucketName, keyName, hisVersionId);
         ObjectMetadata result1 = s3Client.getObjectMetadata(request1);
-        Assert.assertEquals(result1.getETag(), expMd5);
-        Assert.assertEquals(result1.getContentLength(), copyFileSize);
+        Assert.assertEquals(result1.getETag(), TestTools.getMD5(filePath));
+        Assert.assertEquals(result1.getContentLength(), fileSize);
         Assert.assertEquals(result1.getVersionId(), hisVersionId, "the keyName=" + keyName);
     }
 }
