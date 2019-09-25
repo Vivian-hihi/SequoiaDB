@@ -30,7 +30,7 @@ public class CopyObject19307 extends S3TestBase {
     private String srcBucketName = "bucket19307a";
     private String destBucketName = "bucket19307b";
     private AmazonS3 s3Client = null;
-    private int copyFileSize = 1024 * 1024 * 300;
+    private int copyFileSize = 1024 * 1024 * 100;
     private File localPath = null;
     private String copyFilePath = null;
 
@@ -94,7 +94,6 @@ public class CopyObject19307 extends S3TestBase {
 
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), copyFileSize);
-        // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4921
-        // Assert.assertEquals(result.getVersionId(), currentVersionId, "the keyName=" + keyName);
+        Assert.assertEquals(result.getVersionId(), currentVersionId, "the keyName=" + keyName);
     }
 }

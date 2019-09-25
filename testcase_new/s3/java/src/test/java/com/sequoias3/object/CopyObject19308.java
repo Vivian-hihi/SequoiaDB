@@ -115,7 +115,6 @@ public class CopyObject19308 extends S3TestBase {
         ObjectMetadata result = s3Client.getObjectMetadata(request);
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), fileSize);
-        // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4921
-        // Assert.assertEquals(result.getVersionId(), "0", "the keyName=" + keyName);
+        Assert.assertEquals(result.getVersionId(), "null", "the keyName=" + keyName);
     }
 }
