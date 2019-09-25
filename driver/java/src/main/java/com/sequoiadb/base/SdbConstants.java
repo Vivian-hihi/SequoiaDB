@@ -49,6 +49,8 @@ final class SdbConstants {
     final static String FIELD_NAME_AUTOINCREMENT = "AutoIncrement";
     final static String FIELD_NAME_AUTOINC_FIELD = "Field";
 
+    final static String FIELD_NAME_SESSION_ID = "SessionID";
+
     final static String FIELD_NAME_ARGS = "Args";
     final static String FIELD_NAME_ALTER = "Alter";
     final static String FIELD_NAME_ALTER_TYPE = "AlterType";

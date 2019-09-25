@@ -2357,7 +2357,7 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public ReplicaGroup createReplicaGroup(String rgName) throws BaseException {
-        if ( null == rgName || rgName.isEmpty()){
+        if ( rgName == null || rgName.isEmpty()){
             throw new BaseException(SDBError.SDB_INVALIDARG, "The name of replica group is null or empty");
         }
         BSONObject rg = new BasicBSONObject();
@@ -2378,7 +2378,7 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void removeReplicaGroup(String rgName) throws BaseException {
-        if ( null == rgName || rgName.isEmpty()){
+        if ( rgName == null || rgName.isEmpty()){
             throw new BaseException(SDBError.SDB_INVALIDARG, "The name of replica group is null or empty");
         }
         BSONObject rg = new BasicBSONObject();
@@ -2402,7 +2402,7 @@ public class Sequoiadb implements Closeable {
      *             If error happens.
      */
     public void activateReplicaGroup(String rgName) throws BaseException {
-        if ( null == rgName || rgName.isEmpty()){
+        if ( rgName == null || rgName.isEmpty()){
             throw new BaseException(SDBError.SDB_INVALIDARG, "The name of replica group is null or empty");
         }
         BSONObject rg = new BasicBSONObject();
@@ -2477,6 +2477,38 @@ public class Sequoiadb implements Closeable {
         createReplicaCataGroup(hostName, port, dbPath, obj);
     }
 
+    /**
+     * Stop the specified session's current operation and terminate it.
+     *
+     * @param sessionID
+     *            The ID of the session.
+     */
+    public void forceSession(long sessionID){
+        forceSession(sessionID, null);
+    }
+
+    /**
+     * Stop the specified session's current operation and terminate it.
+     *
+     * @param sessionID
+     *            The ID of the session.
+     * @param options
+     *            The control options, Please reference
+     *            {@see <a
+     *            href=http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1482314609-edition_id-@SDB_SYMBOL_VERSION>here</a>}
+     *            for more detail.
+     */
+    public void forceSession(long sessionID,BSONObject options ){
+
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put(SdbConstants.FIELD_NAME_SESSION_ID, sessionID);
+        if (options != null) {
+            matcher.put(SdbConstants.FIELD_NAME_OPTIONS, options);
+        }
+        AdminRequest request = new AdminRequest(AdminCommand.FORCE_SESSION, matcher);
+        SdbReply response = requestAndResponse(request);
+        throwIfError(response);
+    }
     /**
      * Send message to server.
      *
@@ -2568,7 +2600,7 @@ public class Sequoiadb implements Closeable {
     }
 
     BSONObject getDetailByName(String name) throws BaseException {
-        if ( null == name || name.isEmpty()){
+        if ( name == null || name.isEmpty()){
             throw new BaseException(SDBError.SDB_INVALIDARG, "name is null or empty");
         }
         BSONObject condition = new BasicBSONObject();
