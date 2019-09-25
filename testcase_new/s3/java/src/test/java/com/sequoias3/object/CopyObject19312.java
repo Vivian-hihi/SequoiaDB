@@ -2,6 +2,7 @@ package com.sequoias3.object;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,14 +29,15 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class CopyObject19312 extends S3TestBase {
     private boolean runSuccess = false;
-    private String srcKeyName = "/bb%/object19312a";
-    private String destKeyName = "/object19312a";
+    private String srcKeyName = "/bb%/object19312a.txt";
+    private String destKeyName = "/object19312a.png";
     private String srcBucketName = "bucket19312a";
     private String destBucketName = "bucket19312b";
     private AmazonS3 s3Client = null;
     private int fileSize = 1024 * 1024 * 12;
     private File localPath = null;
     private String filePath = null;
+    private Date httpExpiresDate = null;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -57,9 +59,23 @@ public class CopyObject19312 extends S3TestBase {
         PutObjectRequest request = new PutObjectRequest(srcBucketName, srcKeyName, new File(filePath));
         ObjectMetadata metaData = new ObjectMetadata();
         metaData.setContentDisposition("this is src object!");
+        metaData.setContentType("txt");
+        metaData.setCacheControl("null");
+        metaData.setContentEncoding("tar");
+        metaData.setContentLanguage("zh");
+        metaData.setHttpExpiresDate(new Date());
         metaData.setUserMetadata(srcObjectMeta);
         request.withMetadata(metaData);
         s3Client.putObject(request);
+
+        // set the httpExpiresData
+        GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(srcBucketName, srcKeyName);
+        ObjectMetadata objMetadata = s3Client.getObjectMetadata(metadataRequest);
+        Date lastModifiedDate = objMetadata.getLastModified();
+        long lastModifiedTime = lastModifiedDate.getTime();
+        // set date 1 hour later than lastModified time
+        long timestamp = lastModifiedTime + 60 * 60 * 1000l;
+        httpExpiresDate = new Date(timestamp);
     }
 
     @Test
@@ -69,6 +85,11 @@ public class CopyObject19312 extends S3TestBase {
         ObjectMetadata metaData = new ObjectMetadata();
         metaData.setUserMetadata(destObjectMeta);
         metaData.setContentDisposition("this is copy object!");
+        metaData.setContentType("png");
+        metaData.setCacheControl("RFC2616");
+        metaData.setContentEncoding("gzip");
+        metaData.setContentLanguage("en");
+        metaData.setHttpExpiresDate(httpExpiresDate);
 
         // copy object
         CopyObjectRequest request = new CopyObjectRequest(srcBucketName, srcKeyName, destBucketName, destKeyName);
@@ -117,8 +138,12 @@ public class CopyObject19312 extends S3TestBase {
         ObjectMetadata result = s3Client.getObjectMetadata(request);
         Assert.assertEquals(result.getETag(), TestTools.getMD5(filePath));
         Assert.assertEquals(result.getContentLength(), fileSize);
-        // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4920
-        // Assert.assertEquals(result.getContentDisposition(), "this is copy object!");
+        Assert.assertEquals(result.getContentDisposition(), "this is copy object!");
+        Assert.assertEquals(result.getCacheControl(), "RFC2616");
+        Assert.assertEquals(result.getContentEncoding(), "gzip");
+        Assert.assertEquals(result.getContentLanguage(), "en");
+        Assert.assertEquals(result.getContentType(), "png");
+        Assert.assertEquals(result.getHttpExpiresDate(), httpExpiresDate);
 
         Map<String, String> actMeta = result.getUserMetadata();
         Assert.assertEquals(actMeta.size(), expMeta.size(),
