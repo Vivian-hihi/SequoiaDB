@@ -44,6 +44,13 @@ public class BucketController {
         try {
             User operator = restUtils.getOperatorByAuthorization(authorization);
 
+            if (httpServletRequest.getParameterNames().hasMoreElements()){
+                throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED,
+                        "parameter " +
+                                httpServletRequest.getParameterNames().nextElement() +
+                                " is not support.");
+            }
+
             String location = getLocation(httpServletRequest);
             logger.debug("Create bucket. bucketName ={}, operator={}, location={} ",
                     bucketName, operator.getUserName(), location);
@@ -75,10 +82,18 @@ public class BucketController {
 
     @DeleteMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteBucket(@PathVariable("bucketname") String bucketName,
-                               @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
+                               @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
+                                       HttpServletRequest httpServletRequest)
             throws S3ServerException {
         try {
             User operator = restUtils.getOperatorByAuthorization(authorization);
+
+            if (httpServletRequest.getParameterNames().hasMoreElements()){
+                throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED,
+                        "parameter " +
+                                httpServletRequest.getParameterNames().nextElement() +
+                                " is not support.");
+            }
 
             logger.debug("delete bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
             bucketService.deleteBucket(operator.getUserId(), bucketName);
@@ -121,6 +136,36 @@ public class BucketController {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .build();
     }
+
+    @RequestMapping(value = "/{bucketname:.+}", params = RestParamDefine.UPLOADID, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity bucketRejectUploadId(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
+                                               HttpServletRequest httpServletRequest)
+            throws S3ServerException{
+        try {
+            restUtils.getOperatorByAuthorization(authorization);
+            logger.error("bucketRejectUploadId: need a key name.");
+            throw new S3ServerException(S3Error.NEED_A_KEY, "need a key");
+        }catch (Exception e){
+            try{
+                if (httpServletRequest.getInputStream() != null) {
+                    httpServletRequest.getInputStream().skip(httpServletRequest.getContentLength());
+                    httpServletRequest.getInputStream().close();
+                }
+            }catch (Exception e2){
+                logger.error("skip content length fail");
+            }
+            throw e;
+        }
+    }
+
+    @RequestMapping(value = "/{bucketname:.+}", headers = RestParamDefine.CopyObjectHeader.X_AMZ_COPY_SOURCE, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity bucketRejectCopy(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
+            throws S3ServerException{
+        restUtils.getOperatorByAuthorization(authorization);
+        logger.error("bucketRejectCopy: need a key name.");
+        throw new S3ServerException(S3Error.NEED_A_KEY, "need a key");
+    }
+
 
     private String getLocation(HttpServletRequest httpServletRequest)
             throws S3ServerException{
