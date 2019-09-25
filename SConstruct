@@ -536,7 +536,7 @@ if guess_os is not None:
     zlib_lib_dir = join(zlib_lib_dir, platform_dir, build_dir)
     lz4_lib_dir = join(lz4_lib_dir, platform_dir, build_dir)
     snappy_lib_dir = join(snappy_lib_dir, platform_dir, build_dir)
-    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, zlib_lib_dir, 
+    env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, zlib_lib_dir,
                              lz4_lib_dir, snappy_lib_dir])
     # use project-related spidermonkey library
     if usesm:
@@ -631,7 +631,7 @@ elif guess_os == "win32":
         env.Append( CPPDEFINES=["JS_HAVE_STDINT_H"] )
     if usemdocml:
         mdocml_lib = join(mdocml_lib_dir, 'libmdocml.lib')
-        
+
     # SSL
     env.Append( LIBS=['ssleay32', 'libeay32', 'liblz4', 'libzlib', 'libsnappy'])
     ssllib_file = join(ssl_lib_dir, 'libeay32.lib')
@@ -824,7 +824,7 @@ fmpEnv = env.Clone() ;
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
-    
+
 if usemdocml:
     if windows:
         shellEnv.Append( LIBS=['libmdocml'] )
@@ -965,9 +965,9 @@ if os.path.isfile ( "gitbuild" ):
         with open(ver_file, 'r+') as f:
             data = ''
             for line in f.readlines():
-                if line.find('\$WCREV\$') != -1:
+                if line.find('$WCREV$') != -1:
                     line = '#define SDB_ENGINE_RELEASE_CURRENT 0' + '\n'
-                elif line.find('\$GITVER\$') != -1:
+                elif line.find('$GITVER$') != -1:
                     line = '#define SDB_ENGINE_GIT_VERSION "' +  gitVer + '"' + '\n'
                 data += line
         with open(ver_file, 'r+') as f:
@@ -988,7 +988,7 @@ else:
 
 print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
-                         "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir", "snappy_lib_dir", 
+                         "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir", "snappy_lib_dir",
                          "sm_lib_dir", "mdocml_lib_dir", "fuse_lib_dir"], duplicate=False)
 
 if not has_option("noautogen"):
