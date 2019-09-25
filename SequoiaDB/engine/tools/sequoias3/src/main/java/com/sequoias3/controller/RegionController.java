@@ -33,6 +33,7 @@ public class RegionController {
                           @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                           @RequestBody(required = false) Region regionCon)
             throws S3ServerException {
+        logger.info("put region. regionName:{}", regionName.toLowerCase());
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         if (!operator.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
@@ -46,7 +47,7 @@ public class RegionController {
             regionCon = new Region();
         }
 
-        logger.info("put region. regionName:{}", regionName.toLowerCase());
+
         regionCon.setName(regionName.toLowerCase());
         regionService.putRegion(regionCon);
     }
@@ -54,9 +55,8 @@ public class RegionController {
     @PostMapping(params = RestParamDefine.RegionPara.LIST_REGIONS, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity ListRegions(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
-        restUtils.getOperatorByAuthorization(authorization);
-
         logger.debug("list regions.");
+        restUtils.getOperatorByAuthorization(authorization);
 
         return ResponseEntity.ok()
                 .body(regionService.ListRegions());
@@ -66,6 +66,7 @@ public class RegionController {
     public ResponseEntity GetRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
+        logger.info("get region. regionName:{}", regionName);
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         if (!operator.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
@@ -73,8 +74,6 @@ public class RegionController {
                     "not an admin user. operator = " + operator.getUserName() +
                             ",role=" + operator.getRole());
         }
-
-        logger.info("get region. regionName:{}", regionName);
 
         return ResponseEntity.ok()
                 .body(regionService.getRegion(regionName.toLowerCase()));
@@ -84,6 +83,7 @@ public class RegionController {
     public void headRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
                            @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
+        logger.info("head region. regionName:{}", regionName);
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         if (!operator.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
@@ -91,8 +91,6 @@ public class RegionController {
                     "not an admin user. operator = " + operator.getUserName() +
                             ",role=" + operator.getRole());
         }
-
-        logger.info("head region. regionName:{}", regionName);
 
         regionService.headRegion(regionName.toLowerCase());
     }
@@ -100,7 +98,8 @@ public class RegionController {
     @PostMapping(params = RestParamDefine.RegionPara.DELETE_REGION, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity DeleteRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
                                        @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
-    throws S3ServerException{
+            throws S3ServerException{
+        logger.info("delete region. regionName:{}", regionName);
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         if (!operator.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
@@ -108,8 +107,6 @@ public class RegionController {
                     "not an admin user. operator = " + operator.getUserName() +
                             ",role=" + operator.getRole());
         }
-
-        logger.info("delete region. regionName:{}", regionName);
 
         checkRegionName(regionName);
 
