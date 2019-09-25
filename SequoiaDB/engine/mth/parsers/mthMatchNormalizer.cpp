@@ -265,74 +265,35 @@ namespace engine
       BSONObjBuilder opBuilder ;
       BSONObjBuilder subBuilder( opBuilder.subobjStart( _fieldName ) ) ;
 
-      for ( MTH_FUNC_OP_LIST::const_iterator iter = _funcList.begin() ;
-            iter != _funcList.end() ;
-            iter ++ )
+      rc = _normalizeFunctions( subBuilder ) ;
+      PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize functions, rc: %d", rc ) ;
+
+      switch ( _opCode )
       {
-         iter->normalize( subBuilder ) ;
+         case EN_MATCH_OPERATOR_REGEX :
+         {
+            rc = _normalizeREGEX( subBuilder ) ;
+            PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize $regex, "
+                         "rc: %d", rc ) ;
+            break ;
+         }
+         default :
+         {
+            rc = _normalizeOPTR( config, subBuilder, parameters ) ;
+            PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize parameter, "
+                         "rc: %d", rc ) ;
+            break ;
+         }
       }
 
-      if ( EN_MATCH_OPERATOR_REGEX == _opCode )
-      {
-         // Process $regex
-         subBuilder.append( MTH_OPERATOR_STR_REGEX, _opName ) ;
-         subBuilder.append( MTH_OPERATOR_STR_OPTIONS, _options ) ;
-      }
-      else if ( config->_enableParameterized &&
-                parameters.canParameterize() &&
-                _canParameterize() )
-      {
-         const CHAR *opName = _opName ;
-
-         _paramIndex = parameters.addParam( _element ) ;
-
-         if ( config->_enableFuzzyOptr &&
-              parameters.canParameterize() &&
-              _canFuzzyOptr() )
-         {
-            _fuzzyIndex = parameters.addParam( _isExclusiveOperator() ?
-                                               _mthFuzzyExcOptr.firstElement() :
-                                               _mthFuzzyIncOptr.firstElement() ) ;
-            opName = _getFuzzyOpStr() ;
-         }
-
-         // Generate $param field { $param : x, $ctype : y }
-         // 1. If it is not mix-compare mode, we need $ctype ( canonical type )
-         //    in the normalized query, since the mix or max keys in predicates
-         //    generated with different data type will be different
-         // 2. If it is mix-compare mode, the $type could be ignore, since the
-         //    mix or max keys are the same with different data type
-         BSONObjBuilder paramBuilder( subBuilder.subobjStart( opName ) ) ;
-         if ( -1 == _fuzzyIndex )
-         {
-            paramBuilder.append( FIELD_NAME_PARAM, (INT32)_paramIndex ) ;
-         }
-         else
-         {
-            // Generate $param field with fuzzy operator
-            // $param : [ paramIndex, fuzzyIndex ]
-            BSONArrayBuilder paramArrBuilder(
-                  paramBuilder.subarrayStart( FIELD_NAME_PARAM ) ) ;
-            paramArrBuilder.append( (INT32)_paramIndex ) ;
-            paramArrBuilder.append( (INT32)_fuzzyIndex ) ;
-            paramArrBuilder.done() ;
-         }
-         if ( !config->_enableMixCmp )
-         {
-            paramBuilder.append( FIELD_NAME_CTYPE,
-                                 (INT32)_element.canonicalType() ) ;
-         }
-         paramBuilder.done() ;
-      }
-      else
-      {
-         subBuilder.appendAs( _element, _opName ) ;
-      }
-
-      subBuilder.done() ;
+      subBuilder.doneFast() ;
       builder.append( opBuilder.obj() ) ;
 
+   done :
       return rc ;
+
+   error :
+      goto done ;
    }
 
    void _mthMatchOpItem::setDoneByPred ()
@@ -365,12 +326,35 @@ namespace engine
       return FALSE ;
    }
 
+   BOOLEAN _mthCanBSONTypeParameterize ( BSONType type )
+   {
+      switch ( type )
+      {
+         case NumberDouble :
+         case NumberInt :
+         case NumberLong :
+         case NumberDecimal :
+         case Date :
+         case Timestamp :
+         case String :
+         case jstOID :
+         {
+            return TRUE ;
+         }
+         default :
+         {
+            return FALSE ;
+         }
+      }
+      return FALSE ;
+   }
+
    BOOLEAN _mthMatchOpItem::_canParameterize () const
    {
       // Operators with below cases could be parameterized
       // 1. have no functions
       // 2. have no ".$" matches in field name
-      // 3. $et, $gt, $gte, $lt, $lte
+      // 3. $et, $gt, $gte, $lt, $lte, $in
       // 4. simple data types
       if ( _funcList.empty() &&
            NULL == ossStrstr( _fieldName, ".$" ) )
@@ -383,24 +367,16 @@ namespace engine
             case EN_MATCH_OPERATOR_GT :
             case EN_MATCH_OPERATOR_GTE :
             {
-               switch ( _element.type() )
-               {
-                  case NumberDouble :
-                  case NumberInt :
-                  case NumberLong :
-                  case NumberDecimal :
-                  case Date :
-                  case Timestamp :
-                  case String :
-                  case jstOID :
-                     return TRUE ;
-                  default :
-                    break ;
-               }
-               break ;
+               return _mthCanBSONTypeParameterize( _element.type() ) ;
+            }
+            case EN_MATCH_OPERATOR_IN :
+            {
+               return TRUE ;
             }
             default :
-               break ;
+            {
+               return FALSE ;
+            }
          }
       }
       return FALSE ;
@@ -502,6 +478,110 @@ namespace engine
       }
 
       return 0 ;
+   }
+
+   INT32 _mthMatchOpItem::_normalizeFunctions ( BSONObjBuilder & subBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      for ( MTH_FUNC_OP_LIST::const_iterator iter = _funcList.begin() ;
+            iter != _funcList.end() ;
+            iter ++ )
+      {
+         rc = iter->normalize( subBuilder ) ;
+         PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize function [%s], rc: %d",
+                      iter->getFieldName(), rc ) ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 _mthMatchOpItem::_normalizeREGEX ( BSONObjBuilder & subBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      subBuilder.append( MTH_OPERATOR_STR_REGEX, _opName ) ;
+      subBuilder.append( MTH_OPERATOR_STR_OPTIONS, _options ) ;
+
+      return rc ;
+   }
+
+   INT32 _mthMatchOpItem::_normalizeOPTR ( const mthNodeConfig * config,
+                                           BSONObjBuilder & subBuilder,
+                                           rtnParamList & parameters )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( config->_enableParameterized &&
+           parameters.canParameterize() &&
+           _canParameterize() )
+      {
+         _paramIndex = parameters.addParam( _element ) ;
+
+         const CHAR * opName = _opName ;
+         if ( config->_enableFuzzyOptr &&
+              parameters.canParameterize() &&
+              _canFuzzyOptr() )
+         {
+            _fuzzyIndex = parameters.addParam(
+                  _isExclusiveOperator() ? _mthFuzzyExcOptr.firstElement() :
+                                           _mthFuzzyIncOptr.firstElement() ) ;
+            opName = _getFuzzyOpStr() ;
+         }
+
+         // Generate $param field { $param : x, $ctype : y }
+         // 1. If it is not mix-compare mode, we need $ctype ( canonical type )
+         //    in the normalized query, since the mix or max keys in predicates
+         //    generated with different data type will be different
+         // 2. If it is mix-compare mode, the $type could be ignore, since the
+         //    mix or max keys are the same with different data type
+         BSONObjBuilder paramBuilder( subBuilder.subobjStart( opName ) ) ;
+         if ( -1 == _fuzzyIndex )
+         {
+            paramBuilder.append( FIELD_NAME_PARAM, (INT32)_paramIndex ) ;
+         }
+         else
+         {
+            // Generate $param field with fuzzy operator
+            // $param : [ paramIndex, fuzzyIndex ]
+            BSONArrayBuilder paramArrBuilder(
+                  paramBuilder.subarrayStart( FIELD_NAME_PARAM ) ) ;
+            paramArrBuilder.append( (INT32)_paramIndex ) ;
+            paramArrBuilder.append( (INT32)_fuzzyIndex ) ;
+            paramArrBuilder.doneFast() ;
+         }
+         if ( !config->_enableMixCmp )
+         {
+            paramBuilder.append( FIELD_NAME_CTYPE,
+                                 (INT32)_element.canonicalType() ) ;
+         }
+         paramBuilder.doneFast() ;
+
+      }
+      else
+      {
+         rc = _normalizeItem( subBuilder ) ;
+         PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize item, rc: %d", rc ) ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 _mthMatchOpItem::_normalizeItem ( BSONObjBuilder & subBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+      subBuilder.appendAs( _element, _opName ) ;
+
+      return rc ;
    }
 
    INT32 mthMatchOpItemComparator ( const void *a, const void *b )
@@ -867,8 +947,16 @@ namespace engine
                                 element.toString( FALSE, TRUE ).c_str() ) ;
                         goto invalidate ;
                      }
-                     if ( Object == subElement.type() ||
-                          Array == subElement.type() )
+                     if ( EN_MATCH_OPERATOR_IN == opCode )
+                     {
+                        PD_CHECK( Array == subElement.type(),
+                                  SDB_INVALIDARG, invalidate, PDERROR,
+                                  "Failed to parse $in operator [%s], "
+                                  "element is not Array",
+                                  element.toString( TRUE, FALSE ).c_str() ) ;
+                     }
+                     else if ( Object == subElement.type() ||
+                               Array == subElement.type() )
                      {
                         // Too complex for normalizer to parse embedded objects
                         rc = SDB_INVALIDARG ;
@@ -951,16 +1039,25 @@ namespace engine
    INT32 _mthMatchNormalizer::_normalize ( BSONObjBuilder &normalBuilder,
                                            rtnParamList &parameters )
    {
+      INT32 rc = SDB_OK ;
+
       BSONArrayBuilder subNormalBuilder(
             normalBuilder.subarrayStart( MTH_OPERATOR_STR_AND ) ) ;
       for ( UINT8 i = 0 ; i < _itemNumber ; i ++ )
       {
-         _itemIndexes[ i ]->normalize( getMatchConfigPtr(), subNormalBuilder,
-                                       parameters ) ;
+         rc = _itemIndexes[ i ]->normalize( getMatchConfigPtr(),
+                                            subNormalBuilder,
+                                            parameters ) ;
+         PD_RC_CHECK( rc, PDDEBUG, "Failed to normalize item %s, rc: %d",
+                      _itemIndexes[ i ]->toString().c_str(), rc ) ;
       }
       subNormalBuilder.done() ;
 
-      return SDB_OK ;
+   done :
+      return rc ;
+
+   error :
+      goto done ;
    }
 
    INT32 _mthMatchNormalizer::_addOpItem ( const CHAR *fieldName,
