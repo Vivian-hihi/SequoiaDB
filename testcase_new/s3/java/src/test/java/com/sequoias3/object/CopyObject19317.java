@@ -110,6 +110,7 @@ public class CopyObject19317 extends S3TestBase {
         runSuccessNum++;
     }
 
+    // TODO:1、注释描述不正确
     // d.setMetadataDirective is "COPY", srcObj and dstObj are objB, and not set
     // metadata
     @Test

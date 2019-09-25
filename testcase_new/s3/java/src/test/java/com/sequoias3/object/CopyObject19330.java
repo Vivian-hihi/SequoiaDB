@@ -98,9 +98,9 @@ public class CopyObject19330 extends S3TestBase {
         CopyObjectRequest objRequest = new CopyObjectRequest(srcBucketName, srcKeyName, dstBucketName, dstKeyName);
         objRequest.withUnmodifiedSinceConstraint(srcCurLastModDate);
         s3Client.copyObject(objRequest);
-
+        // TODO:1、需要校验下复制对象返回结果，java客户端会把412错误转换成null
         // check results
-        try {
+        try {// TODO:2、建议用doesObjectExist接口判断对象是否存在
             s3Client.getObject(dstBucketName, dstKeyName);
             Assert.fail("expect fail, but actual success.");
         } catch (AmazonS3Exception e) {
@@ -121,6 +121,7 @@ public class CopyObject19330 extends S3TestBase {
         s3Client.copyObject(objRequest);
 
         // check results
+        // TODO:3、源对象当前版本的内容应该是new File(filePath2)，请确认？
         checkObjectAttribute(dstBucketName, dstKeyName, filePath1);
         checkObjectContent(dstBucketName, dstKeyName, filePath1);
         runSuccessNum++;
