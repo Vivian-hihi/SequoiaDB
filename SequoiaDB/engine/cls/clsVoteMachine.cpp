@@ -106,8 +106,8 @@ namespace engine
     _current( NULL ),
     _groupInfo( info ),
     _shadowWeight( CLS_ELECTION_WEIGHT_USR_MIN ),
-    _forceMillis( 0 ),
-    _shadowTimeout( 0 )
+    _shadowTimeout( 0 ),
+    _forceMillis( 0 )
    {
 
    }
