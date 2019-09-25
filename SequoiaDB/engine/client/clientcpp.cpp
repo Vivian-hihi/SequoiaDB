@@ -408,7 +408,6 @@ do                                                            \
       // receive from engine
       rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
                                        contextID ) ;
-      // when replyFlag(that is rc) != SDB_OK, contextID is -1
       if ( rc || contextID != _contextID )
       {
          goto error ;
@@ -7526,10 +7525,6 @@ do                                                            \
          goto error ;
       }
 
-      if ( SDB_OK != replyFlag )
-      {
-         contextID = -1 ;
-      }
       rc = replyFlag ;
       if ( pRemoteErr && SDB_OK != replyFlag )
       {
