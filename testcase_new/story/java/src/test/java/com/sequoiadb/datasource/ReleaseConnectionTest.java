@@ -176,6 +176,7 @@ public class ReleaseConnectionTest extends DataSourceTestBase {
 	@Test(timeOut=20000)
 	public void releaseOlderVersion() {
 		try{
+			long start = System.currentTimeMillis() ;
 			Sequoiadb sdb = datasource.getConnection();
 			int totalTimeLen = 10000;
 			int alreadySleepTime = 0;
@@ -186,17 +187,26 @@ public class ReleaseConnectionTest extends DataSourceTestBase {
 					alreadySleepTime += 10;
 				}else break;
 			}while(alreadySleepTime <= totalTimeLen);
-		
+			
+			long end = System.currentTimeMillis() ;
+			start = end ;
+			System.out.println("step 1 findish" + (end - start )) ;
 			int priorNum = datasource.getIdleConnNum();
 			DatasourceOptions option = new DatasourceOptions();
 			option.setCheckInterval(50);
 			//option.setConnectStrategy(ConnectStrategy.SERIAL);
 			option.setConnectStrategy(ConnectStrategy.RANDOM);
 			datasource.updateDatasourceOptions(option);
+			end = System.currentTimeMillis() ;
+			start = end ;
+			System.out.println("step 2 findish" + (end - start )) ;
+			
 			datasource.releaseConnection(sdb);
 			Thread.sleep(100);
 			int laterNum = datasource.getIdleConnNum();
 			Assert.assertEquals(laterNum, priorNum);
+			end = System.currentTimeMillis() ;
+			System.out.println("step 2 findish" + (end - start )) ;
 			//Assert.assertEquals(sdb.isValid(), false);
 		}catch(InterruptedException e){
 			Assert.assertFalse(true, e.getMessage());
