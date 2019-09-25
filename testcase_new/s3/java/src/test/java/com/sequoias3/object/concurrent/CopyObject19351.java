@@ -62,6 +62,7 @@ public class CopyObject19351 extends S3TestBase {
             checkObjectAttribute(dstKeyName, filePath1);
             checkObjectContent(dstKeyName, filePath1);
         } catch (AssertionError e) {
+            // TODO:1、这里匹配的消息内容建议给出描述说明，“but found”这个看不出错误含义，另外如果不等于预期结果这里就没有判断也不会报错
             if (e.getMessage().contains("but found")) {
                 checkObjectAttribute(dstKeyName, filePath2);
                 checkObjectContent(dstKeyName, filePath2);
@@ -97,6 +98,7 @@ public class CopyObject19351 extends S3TestBase {
             try {
                 s3 = CommLib.buildS3Client();
                 CopyObjectRequest request = new CopyObjectRequest(bucketName, srcKeyName, bucketName, dstKeyName);
+                // TODO:2、这里的连接用的不是并发线程中建的连接s3
                 s3Client.copyObject(request);
             } finally {
                 if (s3 != null) {
@@ -118,6 +120,7 @@ public class CopyObject19351 extends S3TestBase {
             AmazonS3 s3 = null;
             try {
                 s3 = CommLib.buildS3Client();
+                // TODO:3、这里的连接用的不是并发线程中建的连接s3
                 s3Client.putObject(bucketName, keyName, new File(filePath2));
             } finally {
                 if (s3 != null) {

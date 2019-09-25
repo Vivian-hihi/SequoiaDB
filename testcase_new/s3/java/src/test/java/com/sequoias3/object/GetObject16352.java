@@ -17,9 +17,8 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * @Description seqDB-16352: enabling bucket versioning,create multiple objects
- *              with the same name, get the object without specifying the
- *              versionId
+ * @Description seqDB-16352: enabling bucket versioning,create multiple objects with the same name,
+ *              get the object without specifying the versionId
  * @author wuyan
  * @Date 2018.11.13
  * @version 1.00

@@ -92,11 +92,13 @@ public class CopyObject19341 extends S3TestBase {
         }
     }
 
+    // TODO:1、应该是获取目标对象比较内容
     private void checkObjectContent(String filePath) throws Exception {
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, srcBucketName, keyName);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
     }
 
+    // TODO:2、应该是获取目标对象比较对象属性信息
     private void checkObjectAttribute(String filePath, String expVersion) throws IOException {
         GetObjectMetadataRequest request = new GetObjectMetadataRequest(srcBucketName, keyName);
         ObjectMetadata objMetadata = s3Client.getObjectMetadata(request);
