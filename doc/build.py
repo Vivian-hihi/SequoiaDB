@@ -3,8 +3,6 @@ import platform
 import os
 import sys
 from os.path import join
-from replaceUnit import ReplaceSymbol
-
 
 mode = "doc"
 
@@ -49,4 +47,5 @@ else:
 
 if errno != 0:
    os._exit( 1 )
+
 
