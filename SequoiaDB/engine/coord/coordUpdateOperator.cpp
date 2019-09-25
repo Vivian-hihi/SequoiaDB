@@ -132,6 +132,7 @@ namespace engine
       BSONObj boSelector ;
       BSONObj boHint ;
       BSONObj boUpdator ;
+
       rc = msgExtractUpdate( (CHAR*)pMsg, &flag, &pCollectionName,
                              &pSelector, &pUpdator, &pHint ) ;
       if ( rc )
@@ -140,6 +141,8 @@ namespace engine
          pCollectionName = NULL ;
          goto error ;
       }
+
+      MONQUERY_SET_NAME( cb, pCollectionName ) ;
 
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
@@ -169,6 +172,8 @@ namespace engine
                              boUpdator.toString().c_str(),
                              boHint.toString().c_str(),
                              oldFlag, oldFlag ) ;
+
+         MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
       }
       catch ( std::exception &e )
       {

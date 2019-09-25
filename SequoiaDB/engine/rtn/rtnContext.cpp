@@ -352,7 +352,7 @@ namespace engine
       _enableQueryActivity = FALSE ;
 
       _isTransCtx          = FALSE ;
-
+      _monQueryCB          = NULL ;
       _monCtxCB.setContextID( contextID ) ;
    }
 
@@ -373,6 +373,12 @@ namespace engine
       _prefetchLock.release_w() ;
 
       _pPrefWatcher = NULL ;
+
+      if ( _monQueryCB )
+      {
+         _monQueryCB->_anchorToContext = FALSE ;
+         _monQueryCB = NULL ;
+      }
 
       SDB_ASSERT( 0 == _waitPrefetchNum.peek(), "Has wait prefetch jobs" ) ;
       SDB_ASSERT( FALSE == _isInPrefetch, "Has prefetch job run" ) ;

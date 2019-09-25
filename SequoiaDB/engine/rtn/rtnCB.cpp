@@ -171,6 +171,15 @@ namespace engine
             pContext = ret.first ;
          }
       }
+
+      // This assert is to ensure that the same edu resumes a previous context
+#ifdef _DEBUG
+      if ( pContext && pContext->getMonQueryCB() && cb)
+      {
+         SDB_ASSERT( cb->getMonQueryCB() == pContext->getMonQueryCB(), "Mismatch monQuery" ) ;
+      }
+#endif
+
       return pContext ;
    }
 
@@ -253,6 +262,15 @@ namespace engine
       if ( pTaskInfo )
       {
          pTaskInfo->monContextInc( 1 ) ;
+      }
+
+      // Anchor the monQuery on the first context that gets created in a query
+      MonClassQuery *monQuery = pEDUCB->getMonQueryCB() ;
+      if ( NULL != monQuery &&
+           !monQuery->_anchorToContext )
+      {
+         (*context)->setMonQueryCB( monQuery ) ;
+         monQuery->_anchorToContext = TRUE ;
       }
 
       PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s])",

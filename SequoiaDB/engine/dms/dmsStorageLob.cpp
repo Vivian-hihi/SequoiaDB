@@ -38,6 +38,7 @@
 #include "dpsTransCB.hpp"
 #include "dmsTrace.hpp"
 #include "pdTrace.hpp"
+#include "monClass.hpp"
 
 namespace engine
 {
@@ -994,6 +995,11 @@ namespace engine
          }
       }
 
+      if ( cb->getMonQueryCB() )
+      {
+         cb->getMonQueryCB()->_lobWrite ++ ;
+      }
+
    done:
       if ( locked )
       {
@@ -1087,6 +1093,11 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to read data from file, rc:%d", rc ) ;
          goto error ;
+      }
+
+      if ( cb->getMonQueryCB() )
+      {
+         cb->getMonQueryCB()->_lobRead ++ ;
       }
 
    done:

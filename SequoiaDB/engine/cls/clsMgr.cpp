@@ -303,6 +303,7 @@ namespace engine
             /// save identify info
             clsIdentifyInfo info ;
             info._id = pSession->identifyID() ;
+            info._nid = pSession->identifyNID() ;
             info._eduid = pSession->identifyEDUID() ;
             info._tid = pSession->identifyTID() ;
             info._username = pSession->getClient()->getUsername() ;

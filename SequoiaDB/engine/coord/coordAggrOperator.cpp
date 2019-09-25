@@ -87,6 +87,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to parse aggregate request "
                    "message, rc: %d", rc ) ;
 
+      MONQUERY_SET_NAME( cb, pCollectionName ) ;
+
       try
       {
          objs = BSONObj( pObjs ) ;

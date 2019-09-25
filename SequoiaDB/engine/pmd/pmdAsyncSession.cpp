@@ -149,6 +149,11 @@ namespace engine
       return _identifyID ;
    }
 
+   MsgRouteID _pmdAsyncSession::identifyNID()
+   {
+      return _identifyNID ;
+   }
+
    UINT32 _pmdAsyncSession::identifyTID()
    {
       return _identifyTID ;
@@ -160,9 +165,11 @@ namespace engine
    }
 
    void _pmdAsyncSession::setIdentifyInfo( UINT32 ip, UINT16 port,
+                                           MsgRouteID nid,
                                            UINT32 tid, UINT64 eduID )
    {
       _identifyID = ossPack32To64( ip, port ) ;
+      _identifyNID.value = nid.value ;
       _identifyTID = tid ;
       _identifyEDUID = eduID ;
    }

@@ -61,6 +61,7 @@ namespace engine
          virtual ~_pmdSession() ;
 
          virtual UINT64    identifyID() ;
+         virtual MsgRouteID identifyNID() ;
          virtual UINT32    identifyTID() ;
          virtual UINT64    identifyEDUID() ;
 

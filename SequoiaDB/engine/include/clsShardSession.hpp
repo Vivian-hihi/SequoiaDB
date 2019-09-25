@@ -54,6 +54,7 @@ namespace engine
    struct _clsIdentifyInfo
    {
       UINT64   _id ;
+      MsgRouteID _nid ;
       UINT32   _tid ;
       UINT64   _eduid ;
 
@@ -71,6 +72,7 @@ namespace engine
       _clsIdentifyInfo()
       {
          _id = 0 ;
+         _nid.value = 0 ;
          _tid = 0 ;
          _eduid = 0 ;
 

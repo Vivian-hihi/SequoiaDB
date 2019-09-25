@@ -167,7 +167,6 @@ namespace engine
       BSONObj matcher ;
       BSONObj selector ;
       BSONObj orderBy ;
-      BSONObj hint ;
 
       try
       {
@@ -175,7 +174,6 @@ namespace engine
          BSONObj nodeMatcher ;
          selector = BSONObj( _selectBuff ) ;
          orderBy = BSONObj( _orderByBuff ) ;
-         hint = BSONObj( _hintBuff ) ;
 
          rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;

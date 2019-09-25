@@ -341,7 +341,6 @@ namespace engine
       _sessionChange = FALSE ;
       _userData      = 0 ;
       _totalWaitTime = 0 ;
-
       setTimeout( timeout ) ;
    }
 
@@ -354,7 +353,6 @@ namespace engine
       _pSite         = NULL ;
       _sessionChange = FALSE ;
       _userData      = 0 ;
-
       setTimeout( -1 ) ;
    }
 
@@ -871,6 +869,12 @@ namespace engine
       UINT64 oldReqID = 0 ;
       INT32 oldAddPos = 0 ;
       BOOLEAN hasSend = FALSE ;
+      MonClassQuery *monQuery = getEDUCB()->getMonQueryCB() ;
+      ossTick startTimer ;
+      if ( monQuery )
+      {
+         startTimer.sample() ;
+      }
 
       if ( !pSub )
       {
@@ -1003,6 +1007,16 @@ namespace engine
          _pSite->addNodeNet( pSub->getNodeIDUInt(), pSub->getHandle() ) ;
       }
 
+      if ( monQuery )
+      {
+         ossTick endTimer ;
+         endTimer.sample() ;
+
+         monQuery->nodes.insert( pSub->getNodeID().columns.nodeID ) ;
+         monQuery->_numMsgSent++ ;
+         monQuery->_msgSentTime += endTimer - startTimer ;
+      }
+
       if ( pSub->isNeedToDel() )
       {
          stopSubSession( pSub ) ;
@@ -1076,9 +1090,16 @@ namespace engine
       _sessionChange                = FALSE ;
       IRemoteSiteHandle *pSiteHandle= _pSite->getHandle() ;
       BOOLEAN gotEvent              = FALSE ;
-
+      MonClassQuery *monQuery       = getEDUCB()->getMonQueryCB() ;
       _milliTimeout = _milliTimeoutHard ;
       totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
+      ossTick startTimer ;
+
+      if ( monQuery )
+      {
+         startTimer.sample() ;
+      }
+
       while ( totalUnReplyNum > 0 || _mapPendingSubSession.size() > 0 )
       {
          // if pending sessions is not empty
@@ -1188,6 +1209,12 @@ namespace engine
       }
 
    done:
+      if ( monQuery )
+      {
+         ossTick endTimer;
+         endTimer.sample();
+         monQuery->_remoteNodesResponseTime += endTimer - startTimer ;
+      }
       _totalWaitTime += ( _milliTimeoutHard - _milliTimeout ) ;
       PD_TRACE_EXITRC( SDB__PMDRMTSESSION_WAITREPLY1, rc ) ;
       return rc ;

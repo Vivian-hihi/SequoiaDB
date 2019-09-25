@@ -118,6 +118,8 @@ namespace engine
          goto error ;
       }
 
+      MONQUERY_SET_NAME( cb, pCollectionName ) ;
+
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
       {
@@ -144,6 +146,8 @@ namespace engine
                           boDeletor.toString().c_str(),
                           BSONObj(pHint).toString().c_str(),
                           oldFlag, oldFlag ) ;
+
+      MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
 
       rc = cataSel.bind( _pResource, pCollectionName, cb, FALSE, TRUE ) ;
       if ( rc )

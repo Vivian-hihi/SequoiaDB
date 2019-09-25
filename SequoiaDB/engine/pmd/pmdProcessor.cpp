@@ -85,12 +85,32 @@ namespace engine
    {
       INT32 rc     = SDB_OK ;
       INT32 opCode = msg->opCode ;
+      MonClassQuery *monQuery = NULL ;
+      ossTick startTime ;
+      MonClassQueryTmpData tmpData ;
+      tmpData = *(eduCB()->getMonAppCB()) ;
 
       PD_TRACE_ENTRY ( SDB_PMDDATAPROC_PROMSG );
 
       SDB_ASSERT( getSession(), "Must attach session at first" ) ;
 
       needRollback = FALSE ;
+
+      if ( eduCB()->getMonQueryCB() == NULL )
+      {
+         monQuery = pmdGetKRCB()->getMonMgr()->
+                    registerMonitorObject<MonClassQuery>() ;
+
+         if ( monQuery )
+         {
+            monQuery->_sessionID = eduCB()->getID() ;
+            monQuery->_opCode = opCode ;
+            monQuery->_tid = eduCB()->getTID() ;
+            eduCB()->setMonQueryCB( monQuery ) ;
+         }
+      }
+
+      startTime.sample() ;
 
       if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
@@ -204,6 +224,24 @@ namespace engine
          }
       }
 
+      if ( eduCB()->getMonQueryCB() )
+      {
+         monQuery = eduCB()->getMonQueryCB() ;
+         ossTick endTime ;
+         endTime.sample() ;
+         monQuery->_responseTime += endTime - startTime ;
+         monQuery->_rowsReturned += contextBuff.recordNum() ;
+
+         tmpData.diff(*(eduCB()->getMonAppCB())) ;
+         monQuery->incMetrics(tmpData) ;
+
+         if ( !monQuery->_anchorToContext )
+         {
+            pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
+
+            eduCB()->setMonQueryCB( NULL ) ;
+         }
+      }
    done:
       PD_TRACE_EXITRC ( SDB_PMDDATAPROC_PROMSG, rc ) ;
       return rc ;
@@ -430,6 +468,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract update message failed, "
                    "rc: %d", getSession()->sessionName(), rc ) ;
 
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
+
       /// When update virtual cs
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
@@ -521,6 +561,8 @@ namespace engine
                              &pInsertor, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       if ( (flag & FLG_INSERT_CONTONDUP) && (flag & FLG_INSERT_REPLACEONDUP) )
       {
@@ -622,12 +664,15 @@ namespace engine
       INT64 numToSkip = -1 ;
       INT64 numToReturn = -1 ;
       _rtnCommand *pCommand = NULL ;
+      MonClassQuery *monQuery = NULL ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQueryBuff,
                              &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract query msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
@@ -703,6 +748,15 @@ namespace engine
             if ( pContext && pContext->isWrite() )
             {
                pContext->setWriteInfo( dpsCB, 1 ) ;
+            }
+
+            monQuery = pContext->getMonQueryCB() ;
+
+            if ( monQuery && pContext->getPlanRuntime() )
+            {
+               monQuery->_accessPlanID = pContext->
+                                         getPlanRuntime()->
+                                         getAccessPlanID() ;
             }
 
             if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
@@ -809,6 +863,8 @@ namespace engine
                               &pDeletorBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       /// When delete virtual cs
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
@@ -917,6 +973,7 @@ namespace engine
       }
 
       needRollback = pContext->needRollback() ;
+
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRTNCB ) ;
       if ( rc )
       {
@@ -934,6 +991,7 @@ namespace engine
       {
          needRollback = FALSE ;
       }
+
       return rc ;
    error:
       goto done ;
@@ -984,6 +1042,8 @@ namespace engine
       rc = msgExtractSql( (CHAR*)msg, &sql ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract sql msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      MONQUERY_SET_NAME( eduCB(), sql ) ;
 
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
@@ -1068,6 +1128,8 @@ namespace engine
                                   &pObjs, count, &flags ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace aggr msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       try
       {
@@ -1843,6 +1905,8 @@ namespace engine
          goto error ;
       }
 
+      MONQUERY_SET_NAME(eduCB(), pCollectionName) ;
+
       /// command
       if ( pCollectionName && CMD_ADMIN_PREFIX[0] == pCollectionName[0] )
       {
@@ -1869,6 +1933,8 @@ namespace engine
                               BSONObj(pOrderby).toString().c_str(),
                               BSONObj(pHint).toString().c_str(),
                               numToSkip, numToReturn, flag, flag ) ;
+
+         MONQUERY_SET_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->_lastOpDetail ) ;
 
          rc = pOpr->init( pResource, eduCB() ) ;
          if ( rc )
@@ -1960,7 +2026,30 @@ namespace engine
                                          BOOLEAN &needRollback )
    {
       INT32 rc = SDB_OK ;
+      MonClassQuery *monQueryCB = NULL ;
+      ossTick startTime ;
+
+      MonClassQueryTmpData tmpData ;
+      tmpData = *(eduCB()->getMonAppCB()) ;
+
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROMSG );
+
+      if ( eduCB()->getMonQueryCB() == NULL )
+      {
+         monQueryCB = pmdGetKRCB()->getMonMgr()->
+                      registerMonitorObject<MonClassQuery>() ;
+
+         if ( monQueryCB )
+         {
+            monQueryCB->_sessionID = eduCB()->getID() ;
+            monQueryCB->_opCode = msg->opCode ;
+            monQueryCB->_tid = eduCB()->getTID() ;
+
+            eduCB()->setMonQueryCB( monQueryCB ) ;
+         }
+      }
+
+      startTime.sample() ;
 
       rc = _processCoordMsg( msg, contextID, contextBuff,
                              needReply, needRollback ) ;
@@ -1969,6 +2058,24 @@ namespace engine
          contextBuff.release() ;
          rc = _pmdDataProcessor::processMsg( msg, contextBuff, contextID,
                                              needReply, needRollback ) ;
+      }
+      else
+      {
+         if ( eduCB()->getMonQueryCB() )
+         {
+            monQueryCB = eduCB()->getMonQueryCB() ;
+            ossTick endTime ;
+            endTime.sample() ;
+            monQueryCB->_responseTime += endTime - startTime ;
+            monQueryCB->_rowsReturned += contextBuff.recordNum() ;
+            tmpData.diff(*(eduCB()->getMonAppCB())) ;
+            monQueryCB->incMetrics(tmpData) ;
+            if ( !monQueryCB->_anchorToContext )
+            {
+               pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQueryCB ) ;
+               eduCB()->setMonQueryCB( NULL ) ;
+            }
+         }
       }
 
       if ( rc )

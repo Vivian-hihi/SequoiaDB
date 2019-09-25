@@ -294,6 +294,7 @@ namespace engine
 
       public:
          virtual UINT64             identifyID() = 0 ;
+         virtual MsgRouteID         identifyNID() = 0 ;
          virtual UINT32             identifyTID() = 0 ;
          virtual UINT64             identifyEDUID() = 0 ;
 

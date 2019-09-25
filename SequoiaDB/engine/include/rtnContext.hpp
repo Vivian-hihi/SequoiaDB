@@ -51,6 +51,7 @@
 #include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
 #include "utilPooledObject.hpp"
+#include "monClass.hpp"
 #include <string>
 
 using namespace bson ;
@@ -355,6 +356,16 @@ namespace engine
 
       // Monitor
       public :
+         void setMonQueryCB(MonClassQuery *cb)
+         {
+            _monQueryCB = cb ;
+         }
+
+         MonClassQuery* getMonQueryCB()
+         {
+            return _monQueryCB ;
+         }
+
          monContextCB* getMonCB ()
          {
             return &_monCtxCB ;
@@ -414,6 +425,7 @@ namespace engine
 
       protected:
          monContextCB            _monCtxCB ;
+         MonClassQuery          *_monQueryCB ;
          _mthSelector            _selector ;
 
          // status

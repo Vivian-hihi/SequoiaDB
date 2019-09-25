@@ -650,13 +650,14 @@ namespace engine
                             CMD_NAME_SNAPSHOT_QUERIES_INTR,
                             CMD_SNAPSHOT_QUERIES,
                             RTN_FETCH_QUERIES,
-                            MON_MASK_NODE_NAME )
+                            MON_MASK_NODEID )
          {}
 
          virtual ~_rtnSnapshotQueries() {}
 
       protected:
          virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
    } ;
    class _rtnSnapshotQueriesInner : public _rtnSnapshotInner
    {
@@ -667,13 +668,14 @@ namespace engine
             : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_QUERIES_INTR,
                                  CMD_SNAPSHOT_QUERIES,
                                  RTN_FETCH_QUERIES,
-                                 MON_MASK_NODE_NAME )
+                                 MON_MASK_NODEID )
          {}
 
          virtual ~_rtnSnapshotQueriesInner() {}
 
       protected:
          virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
    } ;
 
    class _rtnSnapshotLatchWaits : public _rtnSnapshot
@@ -693,6 +695,7 @@ namespace engine
 
       protected:
          virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
    } ;
 
    class _rtnSnapshotLatchWaitsInner : public _rtnSnapshotInner
@@ -711,6 +714,7 @@ namespace engine
 
       protected:
          virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
    } ;
 
    class _rtnSnapshotLockWaits : public _rtnSnapshot
@@ -730,6 +734,7 @@ namespace engine
 
       protected:
          virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
    } ;
 
    class _rtnSnapshotLockWaitsInner : public _rtnSnapshotInner
@@ -748,6 +753,7 @@ namespace engine
 
       protected:
          virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
    } ;
 }
 

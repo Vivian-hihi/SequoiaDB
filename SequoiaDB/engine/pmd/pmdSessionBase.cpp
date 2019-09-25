@@ -157,6 +157,11 @@ namespace engine
                             pmdGetLocalPort() ) ;
    }
 
+   MsgRouteID _pmdSession::identifyNID()
+   {
+      return pmdGetNodeID() ;
+   }
+
    UINT32 _pmdSession::identifyTID()
    {
       if ( _pEDUCB )

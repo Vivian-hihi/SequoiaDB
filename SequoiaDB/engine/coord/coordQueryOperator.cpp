@@ -468,6 +468,8 @@ namespace engine
                              numToSkip, numToReturn,
                              flag, flag ) ;
 
+         MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
+
          if ( OSS_BIT_TEST( flag, FLG_QUERY_MODIFY ) )
          {
             _needRollback = TRUE ;
@@ -1060,6 +1062,7 @@ namespace engine
          {
             _pContext->addSubDone( cb ) ;
          }
+
          goto done ;
       }
       else if ( checkRetryForCLOpr( rcTmp, &nokRC, cataSel, inMsg.msg(),

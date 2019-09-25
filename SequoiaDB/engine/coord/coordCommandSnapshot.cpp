@@ -961,8 +961,8 @@ namespace engine
    }
 
    /*
-      _coordSnapshotLatchWaitsIntr implement
-   */
+    * _coordCMDSnapshotLatchWaitsIntr implement
+    */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLatchWaitsIntr,
                                       CMD_NAME_SNAPSHOT_LATCHWAITS_INTR,
                                       TRUE ) ;
@@ -993,8 +993,8 @@ namespace engine
    }
 
    /*
-      _coordSnapshotLockWaitsIntr implement
-   */
+    * _coordCMDSnapshotLockWaitsIntr implement
+    */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLockWaitsIntr,
                                       CMD_NAME_SNAPSHOT_LOCKWAITS_INTR,
                                       TRUE ) ;

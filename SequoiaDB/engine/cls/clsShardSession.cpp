@@ -294,7 +294,7 @@ namespace engine
 
       UINT32 ip = 0, port = 0 ;
       ossUnpack32From64( info._id, ip, port ) ;
-      setIdentifyInfo( ip, port, info._tid, info._eduid ) ;
+      setIdentifyInfo( ip, port, info._nid, info._tid, info._eduid ) ;
       _username = info._username ;
       _passwd = info._passwd ;
       _source = info._source ;
@@ -586,6 +586,10 @@ namespace engine
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE ;
       BOOLEAN isAutoCommit = FALSE ;
+      MonClassQuery *monQuery = NULL ;
+      ossTick startTime ;
+      MonClassQueryTmpData tmpData ;
+      tmpData = *(eduCB()->getMonAppCB()) ;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
@@ -611,6 +615,29 @@ namespace engine
 
          MON_START_OP( _pEDUCB->getMonAppCB() ) ;
          _pEDUCB->getMonAppCB()->setLastOpType( opCode ) ;
+
+         if ( _pEDUCB->getMonQueryCB() == NULL )
+         {
+            monQuery = pmdGetKRCB()->getMonMgr()->
+                       registerMonitorObject<MonClassQuery>() ;
+
+            if ( monQuery )
+            {
+               monQuery->_sessionID = _pEDUCB->getID() ;
+               monQuery->_opCode = opCode ;
+               monQuery->_tid = _pEDUCB->getTID() ;
+
+               ISession *pSession = _pEDUCB->getSession() ;
+               if ( pSession )
+               {
+                  monQuery->_relatedTID = pSession->identifyTID() ;
+                  monQuery->_relatedNID = pSession->identifyNID() ;
+               }
+
+               _pEDUCB->setMonQueryCB( monQuery ) ;
+            }
+         }
+         startTime.sample() ;
 
          switch ( opCode )
          {
@@ -811,6 +838,22 @@ namespace engine
          if ( SDB_CLS_DATA_NODE_CAT_VER_OLD == rc )
          {
             rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+         }
+
+         if ( _pEDUCB->getMonQueryCB() )
+         {
+            monQuery = _pEDUCB->getMonQueryCB() ;
+            ossTick endTime ;
+            endTime.sample() ;
+            monQuery->_responseTime += endTime - startTime ;
+            monQuery->_rowsReturned += buffObj.recordNum() ;
+            tmpData.diff(*(_pEDUCB->getMonAppCB())) ;
+            monQuery->incMetrics(tmpData) ;
+            if ( !monQuery->_anchorToContext )
+            {
+               pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
+               _pEDUCB->setMonQueryCB( NULL ) ;
+            }
          }
 
          loop = FALSE ;
@@ -1191,6 +1234,8 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
+
       /// When update virtual cs
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
                             SYS_VIRTUAL_CS_LEN + 1 ) )
@@ -1328,6 +1373,8 @@ namespace engine
          goto error ;
       }
 
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
+
       if ( (flags & FLG_INSERT_CONTONDUP) && (flags & FLG_INSERT_REPLACEONDUP) )
       {
          rc = SDB_INVALIDARG ;
@@ -1430,6 +1477,8 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
+
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
@@ -1527,6 +1576,7 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
+      MonClassQuery *monQuery = NULL ;
       utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
       CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
@@ -1539,6 +1589,8 @@ namespace engine
                   sessionName(), rc ) ;
          goto error ;
       }
+
+      MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
@@ -1641,6 +1693,15 @@ namespace engine
             if ( pContext && pContext->isWrite() )
             {
                pContext->setWriteInfo( _pDpsCB, w ) ;
+            }
+
+            monQuery = pContext->getMonQueryCB() ;
+
+            if ( monQuery && pContext->getPlanRuntime() )
+            {
+               monQuery->_accessPlanID = pContext->
+                                         getPlanRuntime()->
+                                         getAccessPlanID() ;
             }
 
             // query with return data
@@ -1926,6 +1987,7 @@ namespace engine
       {
          needRollback = FALSE ;
       }
+
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONGETMOREREQMSG, rc ) ;
       return rc ;
    error:
@@ -2319,6 +2381,7 @@ namespace engine
                }
                /// set the remote info into this session
                setIdentifyInfo( pMsgReq->localIP, pMsgReq->localPort,
+                                pMsgReq->srcRouteID,
                                 pMsgReq->localTID, pMsgReq->localSessionID ) ;
                /// inner login
                _login() ;

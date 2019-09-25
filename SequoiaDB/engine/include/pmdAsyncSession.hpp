@@ -153,6 +153,7 @@ namespace engine
          virtual ~_pmdAsyncSession();
 
          virtual UINT64          identifyID() ;
+         virtual MsgRouteID      identifyNID() ;
          virtual UINT32          identifyTID() ;
          virtual UINT64          identifyEDUID() ;
 
@@ -214,7 +215,7 @@ namespace engine
          BOOLEAN        isBufferFull() const ;
          BOOLEAN        isBufferEmpty() const ;
 
-         void           setIdentifyInfo( UINT32 ip, UINT16 port,
+         void           setIdentifyInfo( UINT32 ip, UINT16 port, MsgRouteID nid,
                                          UINT32 tid, UINT64 eduID ) ;
 
       private:
@@ -276,6 +277,7 @@ namespace engine
 
          /// identify info
          UINT64               _identifyID ;
+         MsgRouteID           _identifyNID ;
          UINT32               _identifyTID ;
          UINT64               _identifyEDUID ;
 

@@ -1881,6 +1881,7 @@ namespace engine
             rc = SDB_OOM ;
             goto error ;
          }
+
          pSub->setReqMsg( pSrcMsg, PMD_EDU_MEM_NONE ) ;
          if ( pIov )
          {
