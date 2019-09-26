@@ -262,7 +262,7 @@ namespace engine
 
       SDB_ASSERT( config, "config is invalid" ) ;
 
-      BSONObjBuilder opBuilder ;
+      BSONObjBuilder opBuilder( builder.subobjStart() ) ;
       BSONObjBuilder subBuilder( opBuilder.subobjStart( _fieldName ) ) ;
 
       rc = _normalizeFunctions( subBuilder ) ;
@@ -286,8 +286,8 @@ namespace engine
          }
       }
 
-      subBuilder.done() ;
-      builder.append( opBuilder.obj() ) ;
+      subBuilder.doneFast() ;
+      opBuilder.doneFast() ;
 
    done :
       return rc ;
