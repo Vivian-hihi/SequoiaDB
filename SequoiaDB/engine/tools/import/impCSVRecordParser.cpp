@@ -120,7 +120,7 @@ namespace import
    #define CSV_STR_RIGHTBRACKET  ')'
 
    #define CSV_INT32_MAX  (2147483647)
-   #define CSV_INT32_MIN  ((INT32)-2147483648)
+   #define CSV_INT32_MIN  ((INT32)0-2147483648)
    #define CSV_INT64_MAX OSS_SINT64_MAX
    #define CSV_INT64_MIN OSS_SINT64_MIN
 
