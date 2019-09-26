@@ -122,7 +122,8 @@ namespace engine
       RTN_CONTEXT_CAT_CREATE_IDX,
       RTN_CONTEXT_CAT_DROP_IDX,
 
-      RTN_CONTEXT_CAT_END,
+      /// The last
+      RTN_CONTEXT_CAT_END
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
