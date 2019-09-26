@@ -45,10 +45,10 @@ public class BucketController {
             User operator = restUtils.getOperatorByAuthorization(authorization);
 
             if (httpServletRequest.getParameterNames().hasMoreElements()){
-                throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED,
+                throw new S3ServerException(S3Error.PARAMETER_NOT_SUPPORT,
                         "parameter " +
                                 httpServletRequest.getParameterNames().nextElement() +
-                                " is not support.");
+                                " is not supported for bucket.");
             }
 
             String location = getLocation(httpServletRequest);
@@ -89,10 +89,10 @@ public class BucketController {
             User operator = restUtils.getOperatorByAuthorization(authorization);
 
             if (httpServletRequest.getParameterNames().hasMoreElements()){
-                throw new S3ServerException(S3Error.METHOD_NOT_ALLOWED,
+                throw new S3ServerException(S3Error.PARAMETER_NOT_SUPPORT,
                         "parameter " +
                                 httpServletRequest.getParameterNames().nextElement() +
-                                " is not support.");
+                                " is not supported for bucket.");
             }
 
             logger.debug("delete bucket. bucketName={}, operator={}", bucketName, operator.getUserName());

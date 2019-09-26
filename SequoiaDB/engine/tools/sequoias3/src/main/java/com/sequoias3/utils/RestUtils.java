@@ -183,6 +183,7 @@ public class RestUtils {
             case MALFORMED_XML:
             case NEED_A_KEY:
             case OBJECT_INVALID_ENCODING_TYPE:
+            case PARAMETER_NOT_SUPPORT:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
