@@ -78,16 +78,22 @@ public class SetObejctAcl19528 extends S3TestBase {
     }
 
     private void copyObjectAndCheckObjectAcl(String dstKeyName, String metadataDirective) throws Exception {
+        // put destinationKey
+        s3Client.putObject(bucketName, dstKeyName, "test" + dstKeyName + "19528");
+
+        // copy object
         CopyObjectRequest request = new CopyObjectRequest(bucketName, srcKeyName, bucketName, dstKeyName);
         request.setMetadataDirective(metadataDirective);
         s3Client.copyObject(request);
 
+        // check copy result
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, srcKeyName);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
         downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, dstKeyName);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
+        // check object acl
         Grant defaultGrant = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
         PrivilegeUtils.checkSetObjectAclResult(s3Client, bucketName, dstKeyName, defaultGrant);
     }
