@@ -87,7 +87,7 @@ int outputMode = OUTPUTNONE ;
 #define RECEIVE_BUFFER_SIZE 4095
 #define MAX_CS_SIZE         127
 #define QUIT_COMMAND       "quit"
-#define HELP_COMMAND       "help"
+#define TESTHELP_COMMAND   "help"
 #define CONNECT_COMMAND    "connect"
 #define INSERT_COMMAND     "put"
 #define UPDATE_COMMAND     "update"
@@ -550,7 +550,7 @@ void displayHelp ( vector<string> subHelp )
                "    %s\n    %s\n    %s\n    %s\n    %s\n    %s\n    %s\n"
                "    %s\n    %s\n    %s\n    %s\n    %s\n",
                QUIT_COMMAND,
-               HELP_COMMAND,
+               TESTHELP_COMMAND,
                CONNECT_COMMAND,
                INSERT_COMMAND,
                UPDATE_COMMAND,
@@ -578,10 +578,10 @@ void displayHelp ( vector<string> subHelp )
       {
          printf ( "%s%s: quit the program\n", TABSPACE, QUIT_COMMAND ) ;
       }
-      else if ( HELP_COMMAND == (*it) )
+      else if ( TESTHELP_COMMAND == (*it) )
       {
          printf ( "%s%s [suboptions]...: display help menu\n", TABSPACE,
-                  HELP_COMMAND ) ;
+                  TESTHELP_COMMAND ) ;
       }
       else if ( CONNECT_COMMAND == (*it) )
       {
@@ -2515,7 +2515,7 @@ void receivePrompt ()
    {
       linenoiseClearScreen() ;
    }
-   else if ( HELP_COMMAND == command )
+   else if ( TESTHELP_COMMAND == command )
    {
       displayHelp ( options ) ;
    }

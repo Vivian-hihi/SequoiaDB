@@ -120,7 +120,7 @@ namespace import
    #define CSV_STR_RIGHTBRACKET  ')'
 
    #define CSV_INT32_MAX  (2147483647)
-   #define CSV_INT32_MIN  (-2147483648)
+   #define CSV_INT32_MIN  ((INT32)-2147483648)
    #define CSV_INT64_MAX OSS_SINT64_MAX
    #define CSV_INT64_MIN OSS_SINT64_MIN
 
@@ -882,12 +882,12 @@ namespace import
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
-      UINT64 intNum;
-      FLOAT64 floatNum;
+      UINT64 intNum = 0 ;
+      FLOAT64 floatNum = 0.0 ;
       BOOLEAN neg = FALSE;
-      UINT64 quo; // quoteint
-      INT64 rem; // remainder
-      CHAR* start;
+      UINT64 quo = 0 ; // quoteint
+      INT64 rem = 0 ; // remainder
+      CHAR* start = NULL ;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
@@ -970,7 +970,7 @@ namespace import
    finish:
       if (CSV_TYPE_LONG == type)
       {
-         value.longVal = neg ? (INT64)(-intNum) : (INT64)intNum;
+         value.longVal = neg ? -(INT64)intNum : (INT64)intNum;
       }
       else // CSV_TYPE_DOUBLE
       {
