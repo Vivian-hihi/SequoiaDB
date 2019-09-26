@@ -56,9 +56,9 @@ public class SetObjectAcl19455 extends S3TestBase {
     private Object[][] generateMethodProvider() {
         // parameter : method
         return new Object[][] {
-                // 使用x-amz-grant-*方式配置对象acl
+                // set object acl with x-amz-grant-* in the request header
                 new Object[] { "setByRequestHeader" },
-                // 使用body配置对象acl
+                // set object acl with access control list in request body
                 new Object[] { "setByRequestBody" } };
     }
 

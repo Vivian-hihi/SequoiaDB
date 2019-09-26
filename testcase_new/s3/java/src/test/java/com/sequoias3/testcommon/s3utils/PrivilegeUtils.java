@@ -14,7 +14,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.GetObjectAclRequest;
 import com.amazonaws.services.s3.model.Grant;
-import com.amazonaws.services.s3.model.Owner;
 import com.amazonaws.services.s3.model.SetObjectAclRequest;
 import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
@@ -59,11 +58,9 @@ public class PrivilegeUtils extends S3TestBase {
      * @return
      */
     public static void setBucketAclByBody(AmazonS3 s3Client, String bucketName, Grant... grants) {
-        String ownerId = s3Client.getS3AccountOwner().getId();
-        String displayName = s3Client.getS3AccountOwner().getDisplayName();
         AccessControlList bucketAcl = new AccessControlList();
         bucketAcl.grantAllPermissions(grants);
-        bucketAcl.setOwner(new Owner(ownerId, displayName));
+        bucketAcl.setOwner(s3Client.getS3AccountOwner());
         s3Client.setBucketAcl(bucketName, bucketAcl);
     }
 
@@ -78,8 +75,11 @@ public class PrivilegeUtils extends S3TestBase {
      */
     public static void checkSetBucketAclResult(AmazonS3 s3Client, String bucketName, Grant... expGrants) {
         boolean isEqual = false;
+        List<Grant> expGrantsList = new ArrayList<>();
         AccessControlList result = s3Client.getBucketAcl(bucketName);
-        List<Grant> expGrantsList = new ArrayList<>(Arrays.asList(expGrants));
+        if (expGrants != null) {
+            expGrantsList = new ArrayList<>(Arrays.asList(expGrants));
+        }
         List<Grant> actGrantsList = result.getGrantsAsList();
         if (actGrantsList.size() == expGrantsList.size() && actGrantsList.containsAll(expGrantsList)
                 && expGrantsList.containsAll(actGrantsList)) {
@@ -168,12 +168,10 @@ public class PrivilegeUtils extends S3TestBase {
      */
     public static void setObjectAclByBody(AmazonS3 s3Client, String bucketName, String keyName, String versionId,
             Grant... grants) {
-        String ownerId = s3Client.getS3AccountOwner().getId();
-        String displayName = s3Client.getS3AccountOwner().getDisplayName();
-        AccessControlList bucketAcl = new AccessControlList();
-        bucketAcl.grantAllPermissions(grants);
-        bucketAcl.setOwner(new Owner(ownerId, displayName));
-        s3Client.setObjectAcl(new SetObjectAclRequest(bucketName, keyName, versionId, bucketAcl));
+        AccessControlList objectAcl = new AccessControlList();
+        objectAcl.grantAllPermissions(grants);
+        objectAcl.setOwner(s3Client.getS3AccountOwner());
+        s3Client.setObjectAcl(new SetObjectAclRequest(bucketName, keyName, versionId, objectAcl));
     }
 
     /**
@@ -191,19 +189,33 @@ public class PrivilegeUtils extends S3TestBase {
         checkSetObjectAclResult(s3Client, bucketName, keyName, null, expGrants);
     }
 
+    /**
+     * check object acl
+     * 
+     * @author wangkexin
+     * @param s3Client
+     * @param bucketName
+     * @param keyName
+     * @param versionId
+     * @param expGrants
+     * @return
+     */
     public static void checkSetObjectAclResult(AmazonS3 s3Client, String bucketName, String keyName, String versionId,
             Grant... expGrants) {
         boolean isEqual = false;
+        List<Grant> expGrantsList = new ArrayList<>();
         AccessControlList result = s3Client.getObjectAcl(new GetObjectAclRequest(bucketName, keyName, versionId));
-        List<Grant> expGrantsList = new ArrayList<>(Arrays.asList(expGrants));
+        if (expGrants != null) {
+            expGrantsList = new ArrayList<>(Arrays.asList(expGrants));
+        }
         List<Grant> actGrantsList = result.getGrantsAsList();
         if (actGrantsList.size() == expGrantsList.size() && actGrantsList.containsAll(expGrantsList)
                 && expGrantsList.containsAll(actGrantsList)) {
             isEqual = true;
         }
         if (!isEqual) {
-            Assert.fail("object acl is wrong! exp grants = " + expGrantsList.toString() + ", act grants = "
-                    + actGrantsList.toString() + " versionId = " + versionId);
+            Assert.fail("object acl is wrong! " + " key = " + keyName + " , exp grants = " + expGrantsList.toString()
+                    + ", act grants = " + actGrantsList.toString() + " versionId = " + versionId);
         }
     }
 

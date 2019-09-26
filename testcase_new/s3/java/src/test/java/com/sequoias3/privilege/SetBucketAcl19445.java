@@ -56,9 +56,9 @@ public class SetBucketAcl19445 extends S3TestBase {
     private Object[][] generateMethodProvider() {
         // parameter : method
         return new Object[][] {
-                // 使用x-amz-grant-*方式配置桶acl
+                // set bucket acl with x-amz-grant-* in the request header
                 new Object[] { "setByRequestHeader" },
-                // 使用body配置桶acl
+                // set bucket acl with access control list in request body
                 new Object[] { "setByRequestBody" } };
     }
 

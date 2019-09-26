@@ -97,7 +97,7 @@ public class SetObjectAcl19454 extends S3TestBase {
 
     @Test(dataProvider = "aclProvider")
     private void testSetObjectAcl1(CannedAccessControlList acl, Grant[] expGrant) throws Exception {
-        // 使用标准acl配置对象acl
+        // set object acl using standard acl mode
         ownerS3Client.setObjectAcl(bucketName, keyName, acl);
         PrivilegeUtils.checkSetObjectAclResult(ownerS3Client, bucketName, keyName, expGrant);
         getObjectByOtherUser();
@@ -106,7 +106,7 @@ public class SetObjectAcl19454 extends S3TestBase {
 
     @Test(dataProvider = "grantProvider")
     private void testSetObjectAcl2(Grantee grantee) throws Exception {
-        // 使用x-amz-grant-*方式配置对象acl
+        // set object acl with x-amz-grant-* in the request header
         for (Permission permission : Permission.values()) {
             Grant expGrant = new Grant(grantee, permission);
             PrivilegeUtils.setObjectAclByHeader(s3AccessKeyId, bucketName, keyName, expGrant);
@@ -118,7 +118,7 @@ public class SetObjectAcl19454 extends S3TestBase {
 
     @Test(dataProvider = "grantProvider")
     private void testSetObjectAcl3(Grantee grantee) throws Exception {
-        // 使用body配置对象acl
+        // set object acl with access control list in request body
         for (Permission permission : Permission.values()) {
             Grant expGrant = new Grant(grantee, permission);
             PrivilegeUtils.setObjectAclByBody(ownerS3Client, bucketName, keyName, expGrant);

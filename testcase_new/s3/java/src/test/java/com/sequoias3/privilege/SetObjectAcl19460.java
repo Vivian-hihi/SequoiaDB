@@ -46,7 +46,7 @@ public class SetObjectAcl19460 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath, fileSize);
         file = new File(filePath);
 
-        // create a user
+        // 创建一个用户
         CommLib.clearUser(userName);
         acessKeys = UserUtils.createUser(userName, roleName);
         userS3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);

@@ -48,7 +48,7 @@ public class SetObjectAcl19453 extends S3TestBase {
 
     @BeforeClass
     private void setUp() throws IOException {
-        // create a user
+        // 创建用户
         CommLib.clearUser(userName);
         acessKeys = UserUtils.createUser(userName, roleName);
         userS3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
