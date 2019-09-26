@@ -430,6 +430,15 @@ namespace engine
       return BSONElement() ;
    }
 
+   const RTN_ELEMENT_SET * _mthMatchTreeContext::getParamValueSet ( INT8 index )
+   {
+      if ( NULL != _parameters )
+      {
+         return _parameters->getValueSet( index ) ;
+      }
+      return NULL ;
+   }
+
    BOOLEAN _mthMatchTreeContext::paramDoneByPred ( INT8 index )
    {
       if ( _parameters )

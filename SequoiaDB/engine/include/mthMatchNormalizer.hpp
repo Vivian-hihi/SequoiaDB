@@ -158,6 +158,11 @@ namespace engine
             return _fuzzyIndex ;
          }
 
+         OSS_INLINE ossPoolString toString () const
+         {
+            return _element.toPoolString() ;
+         }
+
          void setOpItem ( const CHAR *fieldName,
                           EN_MATCH_OP_FUNC_TYPE opCode,
                           const CHAR *opName,
@@ -197,6 +202,14 @@ namespace engine
          BOOLEAN _isExclusiveOperator () const ;
          const CHAR *_getFuzzyOpStr () const ;
          UINT32 _getOPWeight ( BOOLEAN fuzzyOptr ) const ;
+
+      protected :
+         INT32 _normalizeFunctions ( BSONObjBuilder & subBuilder ) ;
+         INT32 _normalizeREGEX ( BSONObjBuilder & subBuilder ) ;
+         INT32 _normalizeOPTR ( const mthNodeConfig * config,
+                                BSONObjBuilder & subBuilder,
+                                rtnParamList & parameters ) ;
+         INT32 _normalizeItem ( BSONObjBuilder & subBuilder ) ;
 
       protected :
          UINT32                        _opWeight ;

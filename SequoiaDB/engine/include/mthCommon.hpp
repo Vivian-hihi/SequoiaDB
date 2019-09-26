@@ -135,24 +135,6 @@ namespace engine
    INT32 mthSize( const CHAR *name, const BSONElement &in,
                   BSONObjBuilder &outBuilder ) ;
 
-   struct element_cmp_lt
-   {
-      BOOLEAN operator() ( const BSONElement& l, const BSONElement& r ) const
-      {
-         INT32 x = (INT32) l.canonicalType() - (INT32) r.canonicalType() ;
-         if ( x < 0 )
-         {
-            return TRUE ;
-         }
-         else if ( x > 0 )
-         {
-            return FALSE ;
-         }
-
-         return compareElementValues( l, r ) < 0 ;
-      }
-   } ;
-
    class _mthCastTranslator
    {
    public:

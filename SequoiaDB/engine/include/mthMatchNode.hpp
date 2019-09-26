@@ -314,6 +314,7 @@ namespace engine
          }
 
          BSONElement getParameter ( INT8 index ) ;
+         const RTN_ELEMENT_SET * getParamValueSet ( INT8 index ) ;
          BOOLEAN paramDoneByPred ( INT8 index ) ;
 
       private:

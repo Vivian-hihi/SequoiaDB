@@ -958,11 +958,11 @@ namespace engine
          virtual UINT32 _evalCPUCost () const ;
 
       protected:
-         BOOLEAN _isMatch( const BSONElement &ele ) ;
+         BOOLEAN _isMatch ( const RTN_ELEMENT_SET * valueSet,
+                            const BSONElement & ele ) ;
 
       protected:
-         typedef ossPoolSet<BSONElement, element_cmp_lt>    VALUE_SET ;
-         VALUE_SET      _valueSet ;
+         RTN_ELEMENT_SET _valueSet ;
 
          typedef vector<_mthMatchOpNodeRegex *> REGEX_VECTOR ;
          REGEX_VECTOR   _regexVector ;

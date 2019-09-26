@@ -3344,11 +3344,12 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _mthMatchOpNodeIN::_isMatch( const BSONElement &ele )
+   BOOLEAN _mthMatchOpNodeIN::_isMatch ( const RTN_ELEMENT_SET * valueSet,
+                                         const BSONElement & ele )
    {
       UINT32 i = 0 ;
 
-      INT32 count = _valueSet.count( ele ) ;
+      INT32 count = valueSet->count( ele ) ;
       if ( count > 0 )
       {
          return TRUE ;
@@ -3373,7 +3374,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN tmpResult = FALSE ;
-      if ( _valueSet.size() == 0 && _regexVector.size() == 0 &&
+      const RTN_ELEMENT_SET * valueSet = NULL ;
+
+      if ( -1 != _paramIndex )
+      {
+         valueSet = context.getParamValueSet( _paramIndex ) ;
+      }
+      if ( NULL == valueSet )
+      {
+         valueSet = ( &_valueSet ) ;
+      }
+
+      if ( valueSet->size() == 0 &&
+           _regexVector.size() == 0 &&
            left.type() == Array )
       {
          BSONObj obj = left.embeddedObject() ;
@@ -3391,7 +3404,7 @@ namespace engine
 
       if ( Array != left.type() )
       {
-         result = _isMatch( left ) ;
+         result = _isMatch( valueSet, left ) ;
          goto done ;
       }
 
@@ -3402,7 +3415,7 @@ namespace engine
          {
             BOOLEAN isMatch = FALSE ;
             BSONElement ele = iter.next() ;
-            isMatch = _isMatch( ele ) ;
+            isMatch = _isMatch( valueSet, ele ) ;
             rc = _saveElement( context, isMatch, index ) ;
             PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
@@ -3509,7 +3522,7 @@ namespace engine
 
       if ( Array != left.type() )
       {
-         result = !_isMatch( left ) ;
+         result = !_isMatch( &_valueSet, left ) ;
          goto done ;
       }
 
@@ -3520,7 +3533,7 @@ namespace engine
          {
             BOOLEAN isFound = FALSE ;
             BSONElement ele = iter.next() ;
-            isFound = _isMatch( ele ) ;
+            isFound = _isMatch( &_valueSet, ele ) ;
             rc = _saveElement( context, !isFound, index ) ;
             PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
@@ -3620,7 +3633,7 @@ namespace engine
    BOOLEAN _mthMatchOpNodeALL::_isMatchSingle( const BSONElement &ele )
    {
       UINT32 i = 0 ;
-      VALUE_SET::iterator iterSet ;
+      RTN_ELEMENT_SET::iterator iterSet ;
       iterSet = _valueSet.begin() ;
       while ( iterSet != _valueSet.end() )
       {
@@ -3652,7 +3665,7 @@ namespace engine
                                                  BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
-      VALUE_SET::iterator iterSet ;
+      RTN_ELEMENT_SET::iterator iterSet ;
 
       UINT32 i = 0 ;
 
@@ -3745,8 +3758,8 @@ namespace engine
                                                     const BSONElement &right )
    {
       UINT32 i = 0 ;
-      VALUE_SET::iterator iterSet ;
-      VALUE_SET leftValueSet ;
+      RTN_ELEMENT_SET::iterator iterSet ;
+      RTN_ELEMENT_SET leftValueSet ;
       if ( Array != left.type() )
       {
          leftValueSet.insert( left ) ;

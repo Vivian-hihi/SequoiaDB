@@ -45,6 +45,7 @@
 #include "pd.hpp"
 #include <string>
 #include "ossMemPool.hpp"
+#include "utilPooledObject.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -55,6 +56,68 @@ namespace engine
    // Each query could have no more than 16 parameters
    #define RTN_MAX_PARAM_NUM                    ( 16 )
 
+   // value set for $in etc.
+   struct element_cmp_lt
+   {
+      BOOLEAN operator() ( const BSONElement& l, const BSONElement& r ) const
+      {
+         INT32 x = (INT32)( l.canonicalType() ) -
+                   (INT32)( r.canonicalType() ) ;
+         if ( x < 0 )
+         {
+            return TRUE ;
+         }
+         else if ( x > 0 )
+         {
+            return FALSE ;
+         }
+
+         return compareElementValues( l, r ) < 0 ;
+      }
+   } ;
+
+   typedef ossPoolSet< BSONElement, element_cmp_lt > RTN_ELEMENT_SET ;
+
+   /*
+      _rtnParamValueSet define
+    */
+   class _rtnParamValueSet : public utilPooledObject
+   {
+      public :
+         _rtnParamValueSet ()
+         {
+         }
+
+         ~_rtnParamValueSet ()
+         {
+         }
+
+         void buildValueSet ( const BSONElement & element )
+         {
+            SDB_ASSERT( Array == element.type(), "element is invalid" ) ;
+
+            BSONObjIterator iter( element.embeddedObject() ) ;
+            if ( !iter.more() )
+            {
+               _valueSet.insert( element ) ;
+            }
+            while ( iter.more() )
+            {
+               _valueSet.insert( iter.next() ) ;
+            }
+         }
+
+         const RTN_ELEMENT_SET * getValueSet () const
+         {
+            return ( &_valueSet ) ;
+         }
+
+      protected :
+         RTN_ELEMENT_SET _valueSet ;
+   } ;
+
+   typedef class _rtnParamValueSet rtnParamValueSet ;
+
    /*
       _rtnParamList define
    */
@@ -64,12 +127,14 @@ namespace engine
          typedef struct _rtnParam
          {
             _rtnParam ()
-            : _doneByPred( FALSE )
+            : _doneByPred( FALSE ),
+              _valueSet( NULL )
             {
             }
 
-            BSONElement _param ;
-            BOOLEAN     _doneByPred ;
+            BSONElement          _param ;
+            BOOLEAN              _doneByPred ;
+            rtnParamValueSet *   _valueSet ;
          } _rtnParam, rtnParam ;
 
       public :
@@ -88,6 +153,10 @@ namespace engine
 
          OSS_INLINE void clearParams ()
          {
+            for ( INT8 i = 0 ; i < _paramNum ; ++ i )
+            {
+               SAFE_OSS_DELETE( _params[ i ]._valueSet ) ;
+            }
             _paramNum = 0 ;
          }
 
@@ -117,6 +186,17 @@ namespace engine
             SDB_ASSERT( index >= 0 && index < _paramNum,
                         "index is invalid" ) ;
             return _params[ index ]._doneByPred ;
+         }
+
+         INT32 buildValueSet ( INT8 index ) ;
+         const RTN_ELEMENT_SET * getValueSet ( INT8 index )
+         {
+            SDB_ASSERT( index >= 0 && index < _paramNum, "index is invalid" ) ;
+            if ( NULL != _params[ index ]._valueSet )
+            {
+               return _params[ index ]._valueSet->getValueSet() ;
+            }
+            return NULL ;
          }
 
       protected :
@@ -480,6 +560,17 @@ namespace engine
       INT32 _initFullRange () ;
       INT32 _initTypeRange ( BSONType type, BOOLEAN forCmp ) ;
       INT32 _initMinRange ( BOOLEAN startIncluded ) ;
+
+      void _bindValueSet ( const RTN_ELEMENT_SET * valueSet )
+      {
+         SDB_ASSERT( NULL != valueSet, "value set is invalid" ) ;
+         for ( RTN_ELEMENT_SET::const_iterator iterSet = valueSet->begin() ;
+               iterSet != valueSet->end() ;
+               ++ iterSet )
+         {
+            _startStopKeys.push_back( rtnStartStopKey( *iterSet ) ) ;
+         }
+      }
    } ;
 
    typedef ossPoolVector< rtnPredicate >                     RTN_PREDICATE_LIST ;
