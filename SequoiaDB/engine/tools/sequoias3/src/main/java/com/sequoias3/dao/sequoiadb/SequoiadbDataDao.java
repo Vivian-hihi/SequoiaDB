@@ -101,6 +101,7 @@ public class SequoiadbDataDao implements DataDao {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
+//            logger.debug("sdb port:" + sdb.getLocalAddress());
             CollectionSpace destCS = sdb.getCollectionSpace(csName);
             DBCollection destCL = destCS.getCollection(clName);
 
@@ -144,7 +145,7 @@ public class SequoiadbDataDao implements DataDao {
                         throw e;
                     }
                 } catch (Exception e) {
-                    logger.error("write lob fail. e" + e.getMessage());
+                    logger.error("write lob fail. e:" + e.getMessage());
                     closeLob(dbLob);
                     throw e;
                 }
