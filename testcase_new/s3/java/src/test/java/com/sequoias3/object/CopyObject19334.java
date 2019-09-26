@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -51,15 +49,8 @@ public class CopyObject19334 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath1, fileSize);
         TestTools.LocalFile.createFile(filePath2, fileSize);
         TestTools.LocalFile.createFile(filePath3, fileSize);
-        // TODO:1、建议用CommLib.clearUser(userName)清理环境，如果该用户下有残留桶则直接删除桶，用如下方法如果残留桶和用户则删除用户会失败。
-        try {
-            UserUtils.deleteUser(userName);
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
-                throw e;
-            }
-        }
 
+        CommLib.clearUser(userName);
         String[] acessKeys = UserUtils.createUser(userName, UserCommDefind.normal);
         s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
 
@@ -68,7 +59,6 @@ public class CopyObject19334 extends S3TestBase {
         CommLib.setBucketVersioning(s3Client, srcBucketName, "Enabled");
         CommLib.setBucketVersioning(s3Client, dstBucketName, "Enabled");
 
-        // put object, version is 0, 1
         s3Client.putObject(srcBucketName, keyName, new File(filePath1));
         s3Client.putObject(srcBucketName, keyName, new File(filePath2));
     }
@@ -102,10 +92,7 @@ public class CopyObject19334 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                // TODO:2、有用户可直接使用CommLib.clearUser(userName)清理，默认删除该用户下所有桶
-                CommLib.clearBucket(s3Client, srcBucketName);
-                CommLib.clearBucket(s3Client, dstBucketName);
-                UserUtils.deleteUser(userName);
+                CommLib.clearUser(userName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

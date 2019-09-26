@@ -19,7 +19,8 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * @Description seqDB-19342:指定ifNoneMatch和ifModifiedSince条件复制对象， 源对象不匹配ifModifiedSince
+ * @Description seqDB-19342:指定ifNoneMatch和ifModifiedSince条件复制对象，
+ *              源对象不匹配ifModifiedSince
  * @Author huangxiaoni
  * @Date 2019.09.17
  */
@@ -45,13 +46,13 @@ public class CopyObject19342 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
-
+        CommLib.clearBucket(s3Client, srcBucketName);
+        CommLib.clearBucket(s3Client, dstBucketName);
         s3Client.createBucket(srcBucketName);
         s3Client.createBucket(dstBucketName);
         CommLib.setBucketVersioning(s3Client, srcBucketName, "Enabled");
         CommLib.setBucketVersioning(s3Client, dstBucketName, "Enabled");
 
-        // put object, version is 0, 1
         s3Client.putObject(srcBucketName, keyName, new File(filePath1));
     }
 
@@ -71,12 +72,11 @@ public class CopyObject19342 extends S3TestBase {
         // copy object
         CopyObjectRequest request = new CopyObjectRequest(srcBucketName, keyName, dstBucketName, keyName);
         request.withNonmatchingETagConstraint(srcObjHisVerETag);
-        request.withModifiedSinceConstraint(new Date(srcObjCurLastModDate.getTime() + 10000));
+        request.withModifiedSinceConstraint(srcObjCurLastModDate);
         s3Client.copyObject(request);
 
         // check results
-        String expVer = "1";
-        checkObjectAttribute(filePath2, expVer);
+        checkObjectAttribute(filePath2);
         checkObjectContent(filePath2);
         runSuccess = true;
     }
@@ -94,19 +94,17 @@ public class CopyObject19342 extends S3TestBase {
         }
     }
 
-    // TODO:1、应该是获取目标对象比较内容
     private void checkObjectContent(String filePath) throws Exception {
-        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, srcBucketName, keyName);
+        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, dstBucketName, keyName);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
     }
 
-    // TODO:2、应该是获取目标对象比较属性
-    private void checkObjectAttribute(String filePath, String expVersion) throws IOException {
-        GetObjectMetadataRequest request = new GetObjectMetadataRequest(srcBucketName, keyName);
+    private void checkObjectAttribute(String filePath) throws IOException {
+        GetObjectMetadataRequest request = new GetObjectMetadataRequest(dstBucketName, keyName);
         ObjectMetadata objMetadata = s3Client.getObjectMetadata(request);
         String expMd5 = TestTools.getMD5(filePath);
         Assert.assertEquals(objMetadata.getETag(), expMd5);
         Assert.assertEquals(objMetadata.getContentLength(), fileSize);
-        Assert.assertEquals(objMetadata.getVersionId(), expVersion, "the keyName=" + keyName);
+        Assert.assertEquals(objMetadata.getVersionId(), "0", "the keyName=" + keyName);
     }
 }

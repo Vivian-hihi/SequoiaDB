@@ -48,6 +48,8 @@ public class CopyObject19346 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, srcBucketName);
+        CommLib.clearBucket(s3Client, dstBucketName);
         s3Client.createBucket(srcBucketName);
         s3Client.createBucket(dstBucketName);
 
@@ -63,15 +65,17 @@ public class CopyObject19346 extends S3TestBase {
         threadExec.run();
 
         try {
+            // multi-thread concurrency may have result 1
             checkObjectAttribute(dstKeyNameC, filePath1);
             checkObjectContent(dstKeyNameC, filePath1);
         } catch (AssertionError e) {
-            // TODO:1、这里匹配的消息内容建议给出描述说明，“but found”这个看不出错误含义，建议用错误码比较，另外如果不等于预期结果这里就没有判断了
+            // or result 2
             if (e.getMessage().contains("but found")) {
                 checkObjectAttribute(dstKeyNameC, filePath2);
                 checkObjectContent(dstKeyNameC, filePath2);
             }
         }
+
         runSuccess = true;
     }
 
@@ -103,8 +107,7 @@ public class CopyObject19346 extends S3TestBase {
             try {
                 s3 = CommLib.buildS3Client();
                 CopyObjectRequest request = new CopyObjectRequest(srcBucketName, srcKeyName, dstBucketName, dstKeyName);
-                // TODO:2、这里的连接用的不是并发线程中建的连接s3
-                s3Client.copyObject(request);
+                s3.copyObject(request);
             } finally {
                 if (s3 != null) {
                     s3.shutdown();

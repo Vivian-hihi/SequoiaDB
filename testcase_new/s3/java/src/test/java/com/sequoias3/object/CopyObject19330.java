@@ -11,8 +11,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
+import com.amazonaws.services.s3.model.CopyObjectResult;
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.sequoias3.testcommon.CommLib;
@@ -49,6 +49,8 @@ public class CopyObject19330 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, srcBucketName);
+        CommLib.clearBucket(s3Client, dstBucketName);
         s3Client.createBucket(srcBucketName);
         s3Client.createBucket(dstBucketName);
         CommLib.setBucketVersioning(s3Client, srcBucketName, "Enabled");
@@ -92,20 +94,15 @@ public class CopyObject19330 extends S3TestBase {
         Date srcCurLastModDate = getObjLastModDate(srcBucketName, srcKeyName);
 
         // put object after last modified date of current version object
-        s3Client.putObject(srcBucketName, srcKeyName, new File(filePath1));
+        s3Client.putObject(srcBucketName, srcKeyName, new File(filePath2));
 
         // copy object
         CopyObjectRequest objRequest = new CopyObjectRequest(srcBucketName, srcKeyName, dstBucketName, dstKeyName);
         objRequest.withUnmodifiedSinceConstraint(srcCurLastModDate);
-        s3Client.copyObject(objRequest);
-        // TODO:1、需要校验下复制对象返回结果，java客户端会把412错误转换成null
+        CopyObjectResult result = s3Client.copyObject(objRequest);
         // check results
-        try {// TODO:2、建议用doesObjectExist接口判断对象是否存在
-            s3Client.getObject(dstBucketName, dstKeyName);
-            Assert.fail("expect fail, but actual success.");
-        } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
-        }
+        Assert.assertEquals(result, null);
+        Assert.assertFalse(s3Client.doesObjectExist(dstBucketName, dstKeyName));
         runSuccessNum++;
     }
 
@@ -121,9 +118,8 @@ public class CopyObject19330 extends S3TestBase {
         s3Client.copyObject(objRequest);
 
         // check results
-        // TODO:3、源对象当前版本的内容应该是new File(filePath2)，请确认？
-        checkObjectAttribute(dstBucketName, dstKeyName, filePath1);
-        checkObjectContent(dstBucketName, dstKeyName, filePath1);
+        checkObjectAttribute(dstBucketName, dstKeyName, filePath2);
+        checkObjectContent(dstBucketName, dstKeyName, filePath2);
         runSuccessNum++;
     }
 

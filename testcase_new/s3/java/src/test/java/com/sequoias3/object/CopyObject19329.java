@@ -50,6 +50,7 @@ public class CopyObject19329 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 
@@ -101,20 +102,14 @@ public class CopyObject19329 extends S3TestBase {
     private void testCopyObject_C() throws Exception {
         CopyObjectRequest request = new CopyObjectRequest(bucketName, srcKeyName, bucketName, dstKeyName);
         request.withNonmatchingETagConstraint(srcCurVerETag);
-        // TODO:1、文本用例结果需要对应更新下
         try {
             s3Client.copyObject(request);
             Assert.fail("expect fail, but actual success.");
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "304 ");
         }
-        // TODO:2、现在已经实现doesObjectExist()接口，建议使用该接口判断对象是否存更简洁。
-        try {
-            s3Client.getObject(bucketName, dstKeyName);
-            Assert.fail("expect fail, but actual success.");
-        } catch (AmazonS3Exception e) {
-            Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
-        }
+        Assert.assertFalse(s3Client.doesObjectExist(bucketName, dstKeyName));
+
         runSuccessNum++;
     }
 

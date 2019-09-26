@@ -49,6 +49,7 @@ public class CopyObject19345 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 
@@ -76,22 +77,21 @@ public class CopyObject19345 extends S3TestBase {
         String expDstObjCurVer = "1";
         String expDstObjHisVer = "0";
         try {
+            // multi-thread concurrency may have result 1
             // current version
-            checkObjectAttribute(dstKeyNameC, expDstObjCurVer, filePath1);
-            checkObjectContent(dstKeyNameC, expDstObjCurVer, filePath1);
+            checkObjectAttribute(expDstObjCurVer, filePath1);
+            checkObjectContent(expDstObjCurVer, filePath1);
             // history version
-            checkObjectAttribute(dstKeyNameC, expDstObjHisVer, filePath2);
-            checkObjectContent(dstKeyNameC, expDstObjHisVer, filePath2);
+            checkObjectAttribute(expDstObjHisVer, filePath2);
+            checkObjectContent(expDstObjHisVer, filePath2);
         } catch (AssertionError e) {
-            // TODO:1、这里匹配的消息内容建议给出描述说明，“but found”这个看不出错误含义，另外如果不等于预期结果这里就没有判断也不会报错
-            if (e.getMessage().contains("but found")) {
-                // current version
-                checkObjectAttribute(dstKeyNameC, expDstObjCurVer, filePath2);
-                checkObjectContent(dstKeyNameC, expDstObjCurVer, filePath2);
-                // history version
-                checkObjectAttribute(dstKeyNameC, expDstObjHisVer, filePath1);
-                checkObjectContent(dstKeyNameC, expDstObjHisVer, filePath1);
-            }
+            // or result 2
+            // current version
+            checkObjectAttribute(expDstObjCurVer, filePath2);
+            checkObjectContent(expDstObjCurVer, filePath2);
+            // history version
+            checkObjectAttribute(expDstObjHisVer, filePath1);
+            checkObjectContent(expDstObjHisVer, filePath1);
         }
         runSuccessNum++;
     }
@@ -112,21 +112,18 @@ public class CopyObject19345 extends S3TestBase {
         String expDstObjHisVer = "1";
         try {
             // current version
-            checkObjectAttribute(dstKeyNameC, expDstObjCurVer, filePath1);
-            checkObjectContent(dstKeyNameC, expDstObjCurVer, filePath1);
+            checkObjectAttribute(expDstObjCurVer, filePath1);
+            checkObjectContent(expDstObjCurVer, filePath1);
             // history version
-            checkObjectAttribute(dstKeyNameC, expDstObjHisVer, filePath2);
-            checkObjectContent(dstKeyNameC, expDstObjHisVer, filePath2);
+            checkObjectAttribute(expDstObjHisVer, filePath2);
+            checkObjectContent(expDstObjHisVer, filePath2);
         } catch (AssertionError e) {
-            // TODO:1、这里匹配的消息内容建议给出描述说明，“but found”这个看不出错误含义
-            if (e.getMessage().contains("but found")) {
-                // current version
-                checkObjectAttribute(dstKeyNameC, expDstObjCurVer, filePath2);
-                checkObjectContent(dstKeyNameC, expDstObjCurVer, filePath2);
-                // history version
-                checkObjectAttribute(dstKeyNameC, expDstObjHisVer, filePath1);
-                checkObjectContent(dstKeyNameC, expDstObjHisVer, filePath1);
-            }
+            // current version
+            checkObjectAttribute(expDstObjCurVer, filePath2);
+            checkObjectContent(expDstObjCurVer, filePath2);
+            // history version
+            checkObjectAttribute(expDstObjHisVer, filePath1);
+            checkObjectContent(expDstObjHisVer, filePath1);
         }
         runSuccessNum++;
     }
@@ -158,8 +155,7 @@ public class CopyObject19345 extends S3TestBase {
             try {
                 s3 = CommLib.buildS3Client();
                 CopyObjectRequest request = new CopyObjectRequest(bucketName, srcKeyName, bucketName, dstKeyName);
-                // TODO:2、这里的连接用的不是并发线程中建的连接s3
-                s3Client.copyObject(request);
+                s3.copyObject(request);
             } finally {
                 if (s3 != null) {
                     s3.shutdown();
@@ -168,17 +164,17 @@ public class CopyObject19345 extends S3TestBase {
         }
     }
 
-    private void checkObjectContent(String keyName, String expVersion, String filePath) throws Exception {
-        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName, expVersion);
+    private void checkObjectContent(String expVersion, String filePath) throws Exception {
+        String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, dstKeyNameC, expVersion);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
     }
 
-    private void checkObjectAttribute(String keyName, String expVersion, String filePath) throws IOException {
-        GetObjectMetadataRequest request = new GetObjectMetadataRequest(bucketName, keyName, expVersion);
+    private void checkObjectAttribute(String expVersion, String filePath) throws IOException {
+        GetObjectMetadataRequest request = new GetObjectMetadataRequest(bucketName, dstKeyNameC, expVersion);
         ObjectMetadata objMetadata = s3Client.getObjectMetadata(request);
         String expMd5 = TestTools.getMD5(filePath);
         Assert.assertEquals(objMetadata.getETag(), expMd5);
         Assert.assertEquals(objMetadata.getContentLength(), fileSize);
-        Assert.assertEquals(objMetadata.getVersionId(), expVersion, "the keyName=" + keyName);
+        Assert.assertEquals(objMetadata.getVersionId(), expVersion, "the keyName=" + dstKeyNameC);
     }
 }

@@ -44,14 +44,15 @@ public class CopyObject19335 extends S3TestBase {
         TestTools.LocalFile.createDir(localPath.toString());
         TestTools.LocalFile.createFile(filePath1, fileSize);
         TestTools.LocalFile.createFile(filePath2, fileSize);
-        s3Client = CommLib.buildS3Client();
 
+        s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, srcBucketName);
+        CommLib.clearBucket(s3Client, dstBucketName);
         s3Client.createBucket(srcBucketName);
         s3Client.createBucket(dstBucketName);
         CommLib.setBucketVersioning(s3Client, srcBucketName, "Enabled");
         CommLib.setBucketVersioning(s3Client, dstBucketName, "Enabled");
 
-        // put object, version is 0, 1
         s3Client.putObject(srcBucketName, keyName, new File(filePath1));
         s3Client.putObject(srcBucketName, keyName, new File(filePath2));
     }

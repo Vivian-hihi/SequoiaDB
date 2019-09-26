@@ -44,6 +44,7 @@ public class CopyObject19318 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 

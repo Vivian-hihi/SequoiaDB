@@ -46,6 +46,7 @@ public class CopyObject19351 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath2, fileSize);
 
         s3Client = CommLib.buildS3Client();
+        CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
 
         s3Client.putObject(bucketName, srcKeyName, new File(filePath1));
@@ -59,14 +60,13 @@ public class CopyObject19351 extends S3TestBase {
         threadExec.run();
 
         try {
+            // multi-thread concurrency may have result 1
             checkObjectAttribute(dstKeyName, filePath1);
             checkObjectContent(dstKeyName, filePath1);
         } catch (AssertionError e) {
-            // TODO:1、这里匹配的消息内容建议给出描述说明，“but found”这个看不出错误含义，另外如果不等于预期结果这里就没有判断也不会报错
-            if (e.getMessage().contains("but found")) {
-                checkObjectAttribute(dstKeyName, filePath2);
-                checkObjectContent(dstKeyName, filePath2);
-            }
+            // or result 2
+            checkObjectAttribute(dstKeyName, filePath2);
+            checkObjectContent(dstKeyName, filePath2);
         }
         runSuccess = true;
     }
@@ -98,8 +98,7 @@ public class CopyObject19351 extends S3TestBase {
             try {
                 s3 = CommLib.buildS3Client();
                 CopyObjectRequest request = new CopyObjectRequest(bucketName, srcKeyName, bucketName, dstKeyName);
-                // TODO:2、这里的连接用的不是并发线程中建的连接s3
-                s3Client.copyObject(request);
+                s3.copyObject(request);
             } finally {
                 if (s3 != null) {
                     s3.shutdown();
@@ -120,8 +119,7 @@ public class CopyObject19351 extends S3TestBase {
             AmazonS3 s3 = null;
             try {
                 s3 = CommLib.buildS3Client();
-                // TODO:3、这里的连接用的不是并发线程中建的连接s3
-                s3Client.putObject(bucketName, keyName, new File(filePath2));
+                s3.putObject(bucketName, keyName, new File(filePath2));
             } finally {
                 if (s3 != null) {
                     s3.shutdown();
