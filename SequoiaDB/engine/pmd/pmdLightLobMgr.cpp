@@ -204,6 +204,7 @@ namespace engine
          else if ( info.totalCost() < UTIL_LJOB_MIN_AVG_COST *
                                       info.totalTimes() )
          {
+            // this light job executes too fast, may be it is endless loop?
             if ( info.totalTimes() < PMD_LJOB_EXE_COUNT_SLICE )
             {
                _utilLightJobMgr::push( info ) ;
@@ -225,6 +226,7 @@ namespace engine
          }
          else if ( size() <= ( _idleAgent << 4 ) )
          {
+            // there is a small amount of light jobs to process
             info.resetStat() ;
             _utilLightJobMgr::push( info ) ;
             ++num ;
@@ -234,6 +236,7 @@ namespace engine
             UINT64 expectTotalCost = info.expectAvgCost() * info.totalTimes() ;
             if ( info.totalCost() > ( expectTotalCost << 4 ) )
             {
+               // this light job takes too much time to execute
                if ( (UINT64)( curTime - info.lastDoTime() ) >=
                     ( PMD_LJOB_CONTROL_INTERVAL << 1 ) )
                {
