@@ -1,5 +1,0 @@
-Program('testlob',['src/dataopertask.cpp', 'src/recordresulttask.cpp', 'src/task.cpp', 'src/taskmng.cpp', 'src/main.cpp'],
-        CPPPATH=['include'],
-        LIBS = ['boost_thread','dl'],
-        CCFLAGS = '-g'
-       )

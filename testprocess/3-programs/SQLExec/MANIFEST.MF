@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: ./lib/dom4j-2.0.0-ALPHA-2.jar ./lib/log4j-1.2.17.jar ./lib/ojdbc6.jar ./lib/postgresql-9.3-1102.jdbc4.jar
-Main-Class: com.sequoiadb.test.SQLExec
-

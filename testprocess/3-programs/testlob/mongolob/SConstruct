@@ -1,6 +1,0 @@
-SharedLibrary('mongolob',['mongolob.cpp'],
-	     CPPPATH=['../include/'],
-	     LIBS = ['mongoclient','boost_thread','dl'],
-	     LIBPATH = '../lib',
-	     CCFLAGS = '-g'
-	    )
