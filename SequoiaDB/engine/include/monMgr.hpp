@@ -176,6 +176,11 @@ public:
       return _monClass[classType]->getCollectionLvl() ;
    }
 
+   BOOLEAN isOperational( MonitorClassType classType )
+   {
+      return _monClass[classType]->isOperational() ;
+   }
+
    /**
     * Update the history event size of all class container
     *

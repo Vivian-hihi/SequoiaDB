@@ -356,7 +356,8 @@ namespace engine
    /*
       _dpsTransExecutor implement
    */
-   _dpsTransExecutor::_dpsTransExecutor()
+   _dpsTransExecutor::_dpsTransExecutor(MonitorManager *monMgr)
+      : _monMgr( monMgr )
    {
       for ( UINT32 i = LOCKMGR_TRANS_LOCK; i <= LOCKMGR_INDEX_LOCK; i++ )
       {
@@ -367,6 +368,8 @@ namespace engine
       }
       _useTransLock     = TRUE ;
       _reservedLogSpace = 0 ;
+      _lockWaitStarted  = FALSE ;
+      _monLock          = NULL ;
    }
 
    _dpsTransExecutor::~_dpsTransExecutor()
@@ -410,6 +413,38 @@ namespace engine
    {
       _waiter[ lockMgrType ]        = waiter ;
       _waiterQueType[ lockMgrType ] = type ;
+
+      if ( !_lockWaitStarted )
+      {
+         _lockWaitStartTimer.sample() ;
+         _lockWaitStarted = TRUE ;
+
+         if ( _monMgr->isOperational( MON_CLASS_LOCK ) &&
+              _monLock == NULL )
+         {
+            _monLock = _monMgr->registerMonitorObject<MonClassLock>() ;
+            if ( _monLock )
+            {
+               dpsTransLRB *ownerLRB = waiter->lrbHdr->ownerLRB ;
+               SDB_ASSERT( ownerLRB != NULL, "Owner cannot be NULL") ;
+
+               if ( ownerLRB->lockMode == DPS_TRANSLOCK_X )
+               {
+                  _monLock->_xOwnerTID = ownerLRB->dpsTxExectr->getTID() ;
+               }
+
+               _monLock->_numOwner = 1 ;
+               while ( ownerLRB->nextLRB != NULL )
+               {
+                  _monLock->_numOwner++ ;
+                  ownerLRB = ownerLRB->nextLRB ;
+               }
+               _monLock->_waiterTID = getTID() ;
+               _monLock->_lockID = waiter->lrbHdr->lockId ;
+               _monLock->_lockMode = waiter->lockMode ;
+            }
+         }
+      }
    }
 
    void _dpsTransExecutor::clearWaiterInfo( LOCKMGR_TYPE lockMgrType )
@@ -768,4 +803,19 @@ namespace engine
       return FALSE ;
    }
 
+   void _dpsTransExecutor::finishLockWait()
+   {
+      SDB_ASSERT( TRUE == _lockWaitStarted, "No lock wait observed" ) ;
+      ossTick end ;
+      end.sample() ;
+      _lockWaitTime = end - _lockWaitStartTimer ;
+
+      if ( _monLock )
+      {
+         _monLock->_waitTime = _lockWaitTime ;
+         _monMgr->removeMonitorObject( _monLock ) ;
+         _monLock = NULL ;
+      }
+      _lockWaitStarted = FALSE ;
+   }
 }

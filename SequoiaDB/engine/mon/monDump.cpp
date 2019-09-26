@@ -2200,7 +2200,7 @@ namespace engine
          monAppendSessionIdentify( ob, simple._relatedNID,
                                    simple._relatedTID ) ;
 
-         obj = BSONObj( ob.done () );
+         obj = ob.done () ;
 
          /// remove current
          _setInfoSimple.erase( it ) ;
@@ -2274,7 +2274,7 @@ namespace engine
          ossGetCPUUsage( full._threadHdl, userTime, sysTime ) ;
          /// add app cb info
          monSessionMonEDUFull( ob, full, factor, userTime, sysTime ) ;
-         obj = BSONObj(ob.done ()) ;
+         obj = ob.done () ;
 
          /// remove the current
          _setInfoDetail.erase( it ) ;
@@ -4480,7 +4480,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monLockWaitsFetch )
 
    /*
-      _monLockWaitsFetch implement
+      _monQueriesFetch implement
    */
    _monLockWaitsFetch::_monLockWaitsFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LOCKWAITS )
@@ -4575,6 +4575,7 @@ namespace engine
       waitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
       builder.append( FIELD_NAME_TID, _lockCB->_waiterTID ) ;
       builder.append( FIELD_NAME_XOWNER_TID, _lockCB->_xOwnerTID ) ;
+      builder.append( FIELD_NAME_MODE, lockModeToString( _lockCB->_lockMode ) );
       _lockCB->_lockID.toBson(builder) ;
       builder.append( FIELD_NAME_TRANS_WAITLOCKTIME, waitTime ) ;
       builder.append( FIELD_NAME_NUM_OWNER, _lockCB->_numOwner ) ;

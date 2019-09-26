@@ -51,6 +51,7 @@
 #include "sdbInterface.hpp"
 #include "ossEvent.hpp"
 #include "ossMemPool.hpp"
+#include "monLatch.hpp"
 
 using namespace bson ;
 
@@ -408,21 +409,21 @@ namespace engine
       DPS_TRANS_ID      _TransIDH16 ;
       ossAtomic64       _TransIDL48Cur ;
 
-      ossSpinXLatch     _MapMutex ;
+      monSpinXLatch     _MapMutex ;
       TRANS_MAP         _TransMap ;
 
-      ossSpinXLatch     _CBMapMutex ;
+      monSpinXLatch     _CBMapMutex ;
       TRANS_CB_MAP      _cbMap ;
 
       BOOLEAN           _isOn ;
       BOOLEAN           _doRollback ;
       ossEvent          _rollbackEvent ;
 
-      ossSpinXLatch     _lsnMapMutex ;
+      monSpinXLatch     _lsnMapMutex ;
       TRANS_LSN_ID_MAP  _beginLsnIdMap ;
       TRANS_ID_LSN_MAP  _idBeginLsnMap ;
 
-      ossSpinXLatch     _hisMutex ;
+      monSpinXLatch     _hisMutex ;
       TRANS_ID_2_STATUS _hisTransStatus ;
       TRANS_LSN_ID_MAP  _hisLsnTrans ;
 

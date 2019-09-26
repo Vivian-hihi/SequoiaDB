@@ -55,6 +55,10 @@ namespace engine
 
    dpsTransCB::dpsTransCB()
    :_TransIDL48Cur( 1 ) ,
+    _MapMutex( MON_LATCH_DPSTRANSCB_MAPMUTEX ),
+    _CBMapMutex( MON_LATCH_DPSTRANSCB_CBMAPMUTEX ),
+    _lsnMapMutex( MON_LATCH_DPSTRANSCB_LSNMAPMUTEX ),
+    _hisMutex( MON_LATCH_DPSTRANSCB_HISMUTEX ),
     _reservedRBSpace( 0 ) ,
     _reservedSpace( 0 )
    {
@@ -107,6 +111,7 @@ namespace engine
          _TransIDL48Cur.init( ossRand() ) ;
 
          _transLockMgr = SDB_OSS_NEW dpsTransLockManager( LOCKMGR_TRANS_LOCK ) ;
+
          if ( !_transLockMgr )
          {
             rc = SDB_OOM ;
@@ -879,15 +884,30 @@ namespace engine
                                     dpsTransRetInfo * pdpsTxResInfo,
                                     _dpsITransLockCallback * callback )
    {
+      INT32 rc = SDB_OK ;
       if ( !_isOn )
       {
-         return SDB_OK ;
+         return rc ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _transLockMgr->acquire( eduCB->getTransExecutor(),
-                                     lockId, DPS_TRANSLOCK_X,
-                                     pContext, pdpsTxResInfo,
-                                     callback );
+      rc =  _transLockMgr->acquire( eduCB->getTransExecutor(),
+                                    lockId, DPS_TRANSLOCK_X,
+                                    pContext, pdpsTxResInfo,
+                                    callback );
+
+      if ( eduCB->getTransExecutor()->hasLockWait() )
+      {
+         eduCB->getTransExecutor()->finishLockWait() ;
+
+         if ( eduCB->getMonQueryCB() )
+         {
+            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+                                                     getTransExecutor()->
+                                                     getLockWaitTime() ;
+         }
+      }
+
+      return rc ;
    }
 
 
@@ -898,15 +918,29 @@ namespace engine
                                     dpsTransRetInfo * pdpsTxResInfo,
                                     _dpsITransLockCallback * callback )
    {
+      INT32 rc = SDB_OK ;
       if ( !_isOn )
       {
-         return SDB_OK ;
+         return rc ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _transLockMgr->acquire( eduCB->getTransExecutor(),
-                                     lockId, DPS_TRANSLOCK_U,
-                                     pContext, pdpsTxResInfo,
-                                     callback ) ;
+      rc = _transLockMgr->acquire( eduCB->getTransExecutor(),
+                                   lockId, DPS_TRANSLOCK_U,
+                                   pContext, pdpsTxResInfo,
+                                   callback ) ;
+
+      if ( eduCB->getTransExecutor()->hasLockWait() )
+      {
+         eduCB->getTransExecutor()->finishLockWait() ;
+
+         if ( eduCB->getMonQueryCB() )
+         {
+            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+                                                     getTransExecutor()->
+                                                     getLockWaitTime() ;
+         }
+      }
+      return rc ;
    }
 
 
@@ -917,15 +951,29 @@ namespace engine
                                     dpsTransRetInfo * pdpsTxResInfo,
                                     _dpsITransLockCallback * callback )
    {
+      INT32 rc = SDB_OK ;
       if ( !_isOn )
       {
          return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
-      return _transLockMgr->acquire( eduCB->getTransExecutor(),
-                                     lockId, DPS_TRANSLOCK_S,
-                                     pContext, pdpsTxResInfo,
-                                     callback );
+      rc = _transLockMgr->acquire( eduCB->getTransExecutor(),
+                                   lockId, DPS_TRANSLOCK_S,
+                                   pContext, pdpsTxResInfo,
+                                   callback );
+
+      if ( eduCB->getTransExecutor()->hasLockWait() )
+      {
+         eduCB->getTransExecutor()->finishLockWait() ;
+
+         if ( eduCB->getMonQueryCB() )
+         {
+            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+                                                     getTransExecutor()->
+                                                     getLockWaitTime() ;
+         }
+      }
+      return rc ;
    }
 
 
@@ -934,14 +982,28 @@ namespace engine
                                      _IContext *pContext,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
+      INT32 rc = SDB_OK ;
       if ( !_isOn )
       {
-         return SDB_OK ;
+         return rc ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
-      return _transLockMgr->acquire( eduCB->getTransExecutor(),
-                                     lockId, DPS_TRANSLOCK_IX,
-                                     pContext, pdpsTxResInfo );
+      rc = _transLockMgr->acquire( eduCB->getTransExecutor(),
+                                   lockId, DPS_TRANSLOCK_IX,
+                                   pContext, pdpsTxResInfo );
+
+      if ( eduCB->getTransExecutor()->hasLockWait() )
+      {
+         eduCB->getTransExecutor()->finishLockWait() ;
+
+         if ( eduCB->getMonQueryCB() )
+         {
+            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+                                                     getTransExecutor()->
+                                                     getLockWaitTime() ;
+         }
+      }
+      return rc ;
    }
 
 
@@ -950,14 +1012,28 @@ namespace engine
                                      _IContext *pContext,
                                      dpsTransRetInfo * pdpsTxResInfo )
    {
+      INT32 rc = SDB_OK ;
       if ( !_isOn )
       {
-         return SDB_OK ;
+         return rc ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
-      return _transLockMgr->acquire( eduCB->getTransExecutor(),
-                                    lockId, DPS_TRANSLOCK_IS,
-                                    pContext, pdpsTxResInfo );
+      rc = _transLockMgr->acquire( eduCB->getTransExecutor(),
+                                   lockId, DPS_TRANSLOCK_IS,
+                                   pContext, pdpsTxResInfo );
+
+      if ( eduCB->getTransExecutor()->hasLockWait() )
+      {
+         eduCB->getTransExecutor()->finishLockWait() ;
+
+         if ( eduCB->getMonQueryCB() )
+         {
+            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+                                                     getTransExecutor()->
+                                                     getLockWaitTime() ;
+         }
+      }
+      return rc ;
    }
 
 

@@ -44,6 +44,8 @@
 #include "dpsTransLockDef.hpp"
 #include "dpsTransDef.hpp"
 #include "dpsTransLockMgr.hpp"
+#include "monClass.hpp"
+#include "monMgr.hpp"
 #include "utilSegment.hpp"
 #include "ossMemPool.hpp"
 #include "dpsDef.hpp"
@@ -282,7 +284,7 @@ namespace engine
       friend class _pmdEDUCB ;
 
       public:
-         _dpsTransExecutor() ;
+         _dpsTransExecutor( MonitorManager *monMgr ) ;
          virtual ~_dpsTransExecutor() ;
 
          void     clearAll() ;
@@ -313,6 +315,10 @@ namespace engine
          void                 decLockCount( LOCKMGR_TYPE managerType ) ;
          void                 clearLockCount( LOCKMGR_TYPE managerType ) ;
          UINT32               getLockCount( LOCKMGR_TYPE managerType ) const ;
+
+         BOOLEAN              hasLockWait() const { return _lockWaitStarted ; }
+         void                 finishLockWait() ;
+         ossTickDelta         getLockWaitTime() const { return _lockWaitTime ; }
 
          /*
             Transaction Related
@@ -412,6 +418,11 @@ namespace engine
          // undo LR space reserved by this transaction
          UINT64                  _reservedLogSpace ;
 
+         MonitorManager         *_monMgr ;
+         MonClassLock           *_monLock ;
+         BOOLEAN                 _lockWaitStarted ;
+         ossTick                 _lockWaitStartTimer ;
+         ossTickDelta            _lockWaitTime ;
    } ;
    typedef _dpsTransExecutor dpsTransExecutor ;
 

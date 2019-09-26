@@ -85,7 +85,7 @@ namespace engine
    */
    _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, INT32 type )
 #if defined ( SDB_ENGINE )
-   :_transExecutor( this )
+   :_transExecutor( this, pmdGetKRCB()->getMonMgr() )
 #endif // SDB_ENGINE
    {
       _eduMgr           = mgr ;

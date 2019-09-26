@@ -523,7 +523,6 @@ namespace engine
       INT64                   _curAutoTransCtxID ;
       utilMemListPool         *_pMemPool ;
       MonClassQuery           *_monQueryCB ;
-
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 
