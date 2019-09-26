@@ -150,7 +150,7 @@ namespace engine
             _pendingJobVec.push_back( job ) ;
             job.reset() ;
          }
-         /// inc idla agent
+         /// inc idle agent
          ++_idleAgent ;
       }
 
@@ -416,7 +416,7 @@ namespace engine
             }
             else if ( timeout > (UINT32)_timeout )
             {
-               /// over _timeout millsecs, donothing, qiut the job
+               /// over _timeout millsecs, donothing, quit the job
                break ;
             }
          }
