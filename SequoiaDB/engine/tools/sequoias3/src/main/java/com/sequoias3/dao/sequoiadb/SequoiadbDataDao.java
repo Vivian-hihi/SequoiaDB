@@ -101,7 +101,6 @@ public class SequoiadbDataDao implements DataDao {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
-//            logger.debug("sdb port:" + sdb.getLocalAddress());
             CollectionSpace destCS = sdb.getCollectionSpace(csName);
             DBCollection destCL = destCS.getCollection(clName);
 
