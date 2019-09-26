@@ -657,8 +657,8 @@ namespace exprt
       stringstream ss ;
       const CHAR* str = in.c_str() ;
       INT32 len = in.length() ;
-      BOOLEAN hasEscape = false ;
-      BOOLEAN hasHex = false ;
+      BOOLEAN hasEscape = FALSE ;
+      BOOLEAN hasHex = FALSE ;
 
       while ( len > 0 )
       {
@@ -788,7 +788,7 @@ namespace exprt
          len-- ;
       }
 
-      if ( true == hasEscape && true == hasHex )
+      if ( TRUE == hasEscape && TRUE == hasHex )
       {
          cerr << "doesn't support value in mixed format for option \""  OPTION_DELFIELD "\"" 
               << endl ;
