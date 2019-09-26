@@ -118,6 +118,11 @@ namespace seadapter
       }
    }
 
+   void _rtnCondNode::operator delete( void *p, rtnCondNodeAllocator *allocator )
+   {
+      _rtnCondNode::operator delete( p ) ;
+   }
+
    void _rtnCondNode::init( const CHAR *fieldName )
    {
       _fieldName = fieldName ;

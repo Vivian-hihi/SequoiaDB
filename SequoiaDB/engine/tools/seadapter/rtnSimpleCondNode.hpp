@@ -82,6 +82,7 @@ namespace seadapter
       public:
          void* operator new( size_t size, rtnCondNodeAllocator *allocator ) ;
          void operator delete( void *p ) ;
+         void operator delete( void *p, rtnCondNodeAllocator *allocator ) ;
 
          virtual void init( const CHAR *fieldName ) ;
          virtual INT32 addChild( _rtnCondNode *child ) ;
