@@ -11,6 +11,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.CanonicalGrantee;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -26,14 +27,12 @@ import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
- * @Description seqDB-19525:配置桶acl，向桶中分段上传对象
+ * @Description seqDB-19525:桶禁用版本控制，配置对象acl，使用分段上传方式更新对象
  * @Author wangkexin
  * @Date 2019.09.25
  */
-public class SetBucketAcl19525 extends S3TestBase {
-    private boolean runSuccess = false;
+public class SetObjectAcl19525 extends S3TestBase {
     private String ownerName = "owner19525";
-    private String userName = "user19525";
     private String roleName = "normal";
     private String bucketName = "bucket19525";
     private String keyName = "key19525";
@@ -42,7 +41,6 @@ public class SetBucketAcl19525 extends S3TestBase {
     private File file = null;
     private String filePath = null;
     private String[] acessKeys = null;
-    private AmazonS3 userS3Client = null;
     private AmazonS3 ownerS3Client = null;
     private String ownerId;
 
@@ -62,49 +60,38 @@ public class SetBucketAcl19525 extends S3TestBase {
         ownerS3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
         ownerId = ownerS3Client.getS3AccountOwner().getId();
 
-        // create another uesr
-        CommLib.clearUser(userName);
-        acessKeys = UserUtils.createUser(userName, roleName);
-        userS3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
-
         CommLib.clearBucket(ownerS3Client, bucketName);
         ownerS3Client.createBucket(new CreateBucketRequest(bucketName));
+        CommLib.setBucketVersioning(ownerS3Client, bucketName, BucketVersioningConfiguration.SUSPENDED);
+        ownerS3Client.putObject(bucketName, keyName, "testcontent19525");
     }
 
     @Test
     private void testSetBucketAcl() throws Exception {
-        // put bucket acl
-        ownerS3Client.setBucketAcl(bucketName, CannedAccessControlList.PublicReadWrite);
+        // put object acl
+        ownerS3Client.setObjectAcl(bucketName, keyName, CannedAccessControlList.PublicReadWrite);
 
-        // part upload object by other user
+        // part upload object again
         List<PartETag> partEtags = new ArrayList<>();
-        String uploadId = PartUploadUtils.initPartUpload(userS3Client, bucketName, keyName);
-        partEtags = PartUploadUtils.partUpload(userS3Client, bucketName, keyName, uploadId, file);
-        PartUploadUtils.completeMultipartUpload(userS3Client, bucketName, keyName, uploadId, partEtags);
+        String uploadId = PartUploadUtils.initPartUpload(ownerS3Client, bucketName, keyName);
+        partEtags = PartUploadUtils.partUpload(ownerS3Client, bucketName, keyName, uploadId, file);
+        PartUploadUtils.completeMultipartUpload(ownerS3Client, bucketName, keyName, uploadId, partEtags);
 
         // check put object result
-        String actMd5 = ObjectUtils.getMd5OfObject(userS3Client, localPath, bucketName, keyName);
+        String actMd5 = ObjectUtils.getMd5OfObject(ownerS3Client, localPath, bucketName, keyName);
         String expMd5 = TestTools.getMD5(filePath);
         Assert.assertEquals(actMd5, expMd5);
 
-        // check object default acl by other user
+        // check object default acl
         Grant expGrant = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
-        PrivilegeUtils.checkSetObjectAclResult(userS3Client, bucketName, keyName, expGrant);
+        PrivilegeUtils.checkSetObjectAclResult(ownerS3Client, bucketName, keyName, expGrant);
 
         // force delete owner
         UserUtils.deleteUser(ownerName, S3TestBase.s3AccessKeyId, true);
-        runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
-        try {
-            if (runSuccess) {
-                CommLib.clearUser(userName);
-            }
-        } finally {
-            ownerS3Client.shutdown();
-            userS3Client.shutdown();
-        }
+        ownerS3Client.shutdown();
     }
 }
