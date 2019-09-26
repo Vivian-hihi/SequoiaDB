@@ -494,7 +494,7 @@ namespace replay
       {
          UINT64 lastSubmitTime = _monitor->getSubmitTime() ;
          UINT64 currentTime = ossGetCurrentMicroseconds() ;
-         if ( currentTime - lastSubmitTime > _submitInterval )
+         if ( currentTime - lastSubmitTime > (UINT64)_submitInterval )
          {
             return TRUE ;
          }
