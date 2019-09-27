@@ -50,6 +50,7 @@
 #include "dpsOp2Record.hpp"
 #include "dpsLogRecordDef.hpp"
 #include "dpsUtil.hpp"
+#include "rtnLob.hpp"
 
 using namespace bson ;
 
@@ -804,6 +805,9 @@ namespace engine
                break ;
             case MSG_BS_LOB_UPDATE_REQ:
                rc = _onUpdateLobReq( msg ) ;
+               break ;
+            case MSG_BS_LOB_GETRTDETAIL_REQ:
+               rc = _onGetLobRTDetailReq( msg, buffObj ) ;
                break ;
             default:
                rc = SDB_CLS_UNKNOW_MSG ;
@@ -4004,7 +4008,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "Option:%s", lob.toPoolString().c_str() ) ;
 
-      if ( SDB_LOB_MODE_READ != mode.Int() )
+      if ( !SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
       {
          rc = _checkWriteStatus() ;
          if ( SDB_OK != rc )
@@ -4033,7 +4037,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_READ != mode.Int() )
+      if ( SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
       {
          rc = _calculateW( &replSize, &( header->w ), w ) ;
          if ( SDB_OK != rc )
@@ -4706,6 +4710,78 @@ namespace engine
             rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
          }
       }
+      goto done ;
+   }
+
+   /// get lob's runtime detail
+   INT32 _clsShdSession::_onGetLobRTDetailReq( MsgHeader *msg,
+                                               rtnContextBuf &buffObj )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContext *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      BSONObj detail ;
+
+      rc = msgExtractGetLobRTDetailRequest( ( const CHAR * )msg, &header ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract read msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist",
+                  header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, Collection:%s",
+                          header->contextID, _pCollectionName ) ;
+
+      rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
+         goto error ;
+      }
+
+      /// check catalog version
+      rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
+                                    header->version,
+                                    &_isMainCL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = lobContext->getLobRTDetail( _pEDUCB, detail ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+         goto error ;
+      }
+
+      buffObj = rtnContextBuf( detail ) ;
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

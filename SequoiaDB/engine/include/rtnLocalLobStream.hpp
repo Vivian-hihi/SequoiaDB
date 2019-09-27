@@ -105,6 +105,8 @@ namespace engine
 
       virtual INT32 _close( _pmdEDUCB *cb ) ;
 
+      virtual INT32 _getRTDetail( _pmdEDUCB *cb, bson::BSONObj &detail ) ;
+
       INT32 _read( const _rtnLobTuple &tuple,
                    _pmdEDUCB *cb,
                    CHAR *buf ) ;

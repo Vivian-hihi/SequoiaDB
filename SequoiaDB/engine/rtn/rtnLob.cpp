@@ -450,6 +450,55 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBRTDETAIL, "rtnGetLobRTDetail" )
+   INT32 rtnGetLobRTDetail( SINT64 contextID, pmdEDUCB *cb,
+                            rtnContextBuf *bufObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNGETLOBRTDETAIL ) ;
+      rtnContextLob *lobContext = NULL ;
+      BSONObj detail ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
+                 ", contextID:%lld", context->getType(), contextID ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextLob * )context ;
+      rc = lobContext->getRTDetail( cb, detail ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( NULL != bufObj )
+         {
+            lobContext->getErrorInfo( rc, cb, *bufObj ) ;
+         }
+         PD_LOG( PDERROR, "Failed to get lob runtime detail, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != bufObj )
+      {
+         *bufObj = detail ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNGETLOBRTDETAIL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB, "rtnCloseLob" )
    INT32 rtnCloseLob( SINT64 contextID,
                       pmdEDUCB *cb,
@@ -490,8 +539,7 @@ namespace engine
       if ( NULL != bufObj )
       {
          INT32 mode = lobContext->mode() ;
-         if ( SDB_LOB_MODE_CREATEONLY == mode ||
-              SDB_LOB_MODE_WRITE == mode )
+         if ( SDB_LOB_MODE_CREATEONLY == mode || SDB_HAS_LOBWRITE_MODE( mode ) )
          {
             BSONObj meta ;
             rc = lobContext->getLobMetaData( meta ) ;

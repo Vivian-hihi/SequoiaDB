@@ -206,7 +206,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLOB_WRITE ) ;
       SDB_ASSERT( NULL != _stream, "can not be null" ) ;
 
-      if ( -1 != lobOffset )
+      if ( -1 != lobOffset && lobOffset != _stream->curOffset() )
       {
          rc = _stream->seek( lobOffset, cb ) ;
          if ( SDB_OK != rc )
@@ -214,6 +214,11 @@ namespace engine
             PD_LOG( PDERROR, "failed to seek lob:%d", rc ) ;
             goto error ;
          }
+      }
+
+      if ( SDB_IS_LOBSREADWRITE_MODE(_stream->mode()) )
+      {
+         _empty() ;  /// clear data in context.
       }
 
       rc = _stream->write( len, buf, cb ) ;
@@ -247,6 +252,27 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTLOB_LOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTLOB_GETRTDETAIL, "_rtnContextLob::getRTDetail" )
+   INT32 _rtnContextLob::getRTDetail( _pmdEDUCB *cb, BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCONTEXTLOB_GETRTDETAIL ) ;
+      SDB_ASSERT( NULL != _stream, "can not be null" ) ;
+
+      rc = _stream->getRTDetail( cb, detail ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get lob detail:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCONTEXTLOB_GETRTDETAIL, rc ) ;
       return rc ;
    error:
       goto done ;

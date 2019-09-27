@@ -16,12 +16,14 @@
 
 package com.sequoiadb.base;
 
-import com.sequoiadb.exception.BaseException;
-import org.bson.types.ObjectId;
-
 import java.io.Closeable;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.bson.BSONObject;
+import org.bson.types.ObjectId;
+
+import com.sequoiadb.exception.BaseException;
 
 /**
  * LOB of SequoiaDB.
@@ -51,6 +53,11 @@ public interface DBLob extends Closeable {
      * LOB open mode for writing
      */
     int SDB_LOB_WRITE = 0x00000008;
+
+    /**
+     * LOB open mode for share read
+     */
+    int SDB_LOB_SHAREREAD = 0x00000040;
 
     /**
      * Get the lob's id.
@@ -179,8 +186,10 @@ public interface DBLob extends Closeable {
     /**
      * Close the lob.
      *
-     * @throws BaseException If error happens.
+     * @throws BaseException
+     *             If error happens.
      */
+    @Override
     void close() throws BaseException;
 
     /**
@@ -189,5 +198,12 @@ public interface DBLob extends Closeable {
      * @return Return true if yes while false for not.
      */
     boolean isEof();
+
+    /**
+     * Get the run time detail information of lob.
+     *
+     * @return Return detail of runtime information.
+     */
+    BSONObject getRunTimeDetail() throws BaseException;
 }
 

@@ -73,7 +73,7 @@ using namespace bson ;
 namespace engine
 {
 
-   static OSS_INLINE CHAR* _rtnLobOpName( SDB_LOB_MODE mode )
+   static OSS_INLINE CHAR* _rtnLobOpName( INT32 mode )
    {
       switch( mode )
       {
@@ -81,8 +81,12 @@ namespace engine
          return "LOB CREATE" ;
       case SDB_LOB_MODE_READ:
          return "LOB READ" ;
+      case SDB_LOB_MODE_SHAREREAD:
+         return "LOB SHAREREAD" ;
       case SDB_LOB_MODE_WRITE:
          return "LOB WRITE" ;
+      case (SDB_LOB_MODE_WRITE | SDB_LOB_MODE_SHAREREAD):
+         return "LOB WRITE | LOB SHAREREAD" ;
       case SDB_LOB_MODE_REMOVE:
          return "LOB REMOVE" ;
       case SDB_LOB_MODE_TRUNCATE:
@@ -153,17 +157,17 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_READ == mode )
+      if ( SDB_IS_LOBREADONLY_MODE(mode) )
       {
          rc = _open4Read( cb ) ;
          /// AUDIT
-         PD_AUDIT_OP_WITHNAME( AUDIT_DQL, "LOB READ", AUDIT_OBJ_CL,
+         PD_AUDIT_OP_WITHNAME( AUDIT_DQL, _rtnLobOpName(mode), AUDIT_OBJ_CL,
                                getFullName(), rc,
                                "OID:%s, Length:%llu, CreateTime:%llu, ModificationTime:%llu",
                                getOID().toString().c_str(),
                                _meta._lobLen, _meta._createTime, _meta._modificationTime ) ;
       }
-      else if ( SDB_LOB_MODE_WRITE == mode )
+      else if ( SDB_HAS_LOBWRITE_MODE(mode) )
       {
          rc = _open4Write( cb ) ;
       }
@@ -243,7 +247,7 @@ namespace engine
       rc = _lw.init( _lobPageSz,
                      _meta._version >= DMS_LOB_META_MERGE_DATA_VERSION ?
                      TRUE : FALSE,
-                     SDB_LOB_MODE_WRITE == mode ? FALSE : TRUE ) ;
+                     SDB_HAS_LOBWRITE_MODE(mode) ? FALSE : TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to init stream window, rc:%d", rc ) ;
@@ -340,8 +344,7 @@ namespace engine
          goto done ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY == _mode ||
-           SDB_LOB_MODE_WRITE == _mode )
+      if ( SDB_LOB_MODE_CREATEONLY == _mode || SDB_HAS_LOBWRITE_MODE( _mode ) )
       {
          rc = _writeLobMeta( cb ) ;
          if ( SDB_OK != rc )
@@ -410,19 +413,19 @@ namespace engine
          rc = _rollback( cb ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to rollback lob[%s], rc:%d",
+            PD_LOG( PDERROR, "Failed to rollback lob[%s], rc:%d",
                     _oid.str().c_str(), rc ) ;
             goto error ;
          }
       }
-      else if ( SDB_LOB_MODE_WRITE == _mode )
+      else if ( SDB_HAS_LOBWRITE_MODE(_mode) )
       {
          PD_LOG( PDERROR, "Lob[%s] is closed with exception, write meta data",
                  getOID().str().c_str() ) ;
          rc = _writeLobMeta( cb, TRUE ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to write meta data of lob[%s], rc:%d",
+            PD_LOG( PDERROR, "Failed to write meta data of lob[%s], rc:%d",
                     _oid.str().c_str(), rc ) ;
             goto error ;
          }
@@ -434,7 +437,7 @@ namespace engine
          rc = _queryAndInvalidateMetaData( cb, _meta ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to invalidate lob[%s], rc:%d",
+            PD_LOG( PDERROR, "Failed to invalidate lob[%s], rc:%d",
                     _oid.str().c_str(), rc ) ;
             goto error ;
          }
@@ -451,6 +454,18 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT64 _rtnLobStream::_calculateLockedLobLen( INT64 lobLen,
+                                                BOOLEAN wholeLobLocked,
+                                                INT64 lockedEnd )
+   {
+      if ( wholeLobLocked )
+      {
+         return lobLen ;
+      }
+
+      return lobLen < lockedEnd ? lobLen : lockedEnd ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_WRITE, "_rtnLobStream::write" )
@@ -470,8 +485,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY != _mode &&
-           SDB_LOB_MODE_WRITE != _mode )
+      if ( SDB_LOB_MODE_CREATEONLY != _mode && !SDB_HAS_LOBWRITE_MODE(_mode) )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -479,22 +493,28 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_WRITE == _mode && !_wholeLobLocked )
+      if ( SDB_IS_LOBSREADWRITE_MODE( _mode ) )
       {
-         if ( _lockSections.sectionNum() > 0 )
+         _pool.clear() ;
+      }
+
+      if ( SDB_HAS_LOBWRITE_MODE(_mode) && !_wholeLobLocked )
+      {
+         if ( !_sectionMgr.isEmpty() )
          {
-            if ( !_lockSections.completelyContains( _rtnLobSection( _offset, len, uniqueId() ) ) )
+            if ( !_sectionMgr.isTotalContain( _offset, len ) )
             {
                rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Write not locked section[%lld, %u] in write mode, rc=%d",\
-                       _offset, len, rc ) ;
+               PD_LOG( PDERROR, "Section is not locked before write:"
+                       "offset=%lld,len=%d,mode=%d,rc=%d", _offset, len,
+                       _mode, rc ) ;
                goto error ;
             }
          }
          else
          {
             // lock the whole lob
-            rc = lock( cb, 0, -1 ) ;
+            rc = lock( cb, 0, OSS_SINT64_MAX ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Failed to lock the whole lob, rc=%d", rc ) ;
@@ -503,7 +523,7 @@ namespace engine
          }
       }
 
-      if ( SDB_LOB_MODE_WRITE == _mode && !_hasPiecesInfo )
+      if ( SDB_HAS_LOBWRITE_MODE(_mode) && !_hasPiecesInfo )
       {
          UINT32 piece = _getSequence( _meta._lobLen - 1 ) ;
          rc = _lobPieces.addPieces( _rtnLobPieces(0, piece) ) ;
@@ -568,6 +588,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_READ ) ;
       UINT32 readLen = 0 ;
+      INT64 lockedEnd = -1 ;
       RTN_LOB_TUPLES tuples ;
 
       SDB_ASSERT( _meta.isDone(), "lob has not been completed yet" ) ;
@@ -580,7 +601,8 @@ namespace engine
          goto error ;
       }
 
-      if ( !( SDB_LOB_MODE_READ & _mode ) )
+      if ( !SDB_IS_LOBREADONLY_MODE(_mode)
+           && !SDB_IS_LOBSREADWRITE_MODE(_mode) )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -604,6 +626,47 @@ namespace engine
          len = _meta._lobLen - _offset ;
       }
 
+      if ( SDB_IS_LOBSREADWRITE_MODE(_mode) )
+      {
+         _rtnLobTuple tuple ;
+         if ( _lw.getCachedData( tuple ) )
+         {
+            rc = _writeOrUpdate( tuple, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to clean lob[%s] write cache, rc:%d",
+                       _oid.str().c_str(), rc ) ;
+                goto error ;
+            }
+         }
+      }
+
+      if ( (SDB_LOB_MODE_SHAREREAD == _mode || SDB_IS_LOBSREADWRITE_MODE(_mode))
+           && !_wholeLobLocked )
+      {
+         if ( !_sectionMgr.isEmpty() )
+         {
+            if ( !_sectionMgr.isTotalContain( _offset, len, &lockedEnd ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Section is not locked before write:"
+                       "offset=%lld,len=%d,mode=%d,rc=%d", _offset, len,
+                       _mode, rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            // lock the whole lob
+            rc = lock( cb, 0, OSS_SINT64_MAX ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to lock the whole lob, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+
       /// data may be cached.
       if ( _pool.match( _offset ) )
       {
@@ -621,10 +684,22 @@ namespace engine
       /// clear cache when we can not get data from it.
       _pool.clear() ;
 
-      /// reset the read len of a suitable value
-      rc = _lw.prepare4Read( _meta._lobLen,
-                             _offset, len,
-                             tuples ) ;
+      if ( SDB_LOB_MODE_SHAREREAD == _mode
+           || SDB_IS_LOBSREADWRITE_MODE(_mode) )
+      {
+         SDB_ASSERT( ( _wholeLobLocked && -1 == lockedEnd )
+                     || ( !_wholeLobLocked && -1 != lockedEnd ), "lock check" ) ;
+         INT64 lockedLobLen = _calculateLockedLobLen( _meta._lobLen,
+                                                      _wholeLobLocked,
+                                                      lockedEnd ) ;
+         rc = _lw.prepare4Read( lockedLobLen, _offset, len, tuples ) ;
+      }
+      else
+      {
+         /// reset the read len of a suitable value
+         rc = _lw.prepare4Read( _meta._lobLen, _offset, len, tuples ) ;
+      }
+
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to read:%d", rc ) ;
@@ -656,22 +731,34 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnLobStream::getRTDetail( _pmdEDUCB *cb, bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !isOpened() )
+      {
+         PD_LOG( PDERROR, "Lob[%s] is not opened yet", _oid.str().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = _getRTDetail( cb, detail ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get lob detail:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_LOCK, "_rtnLobStream::lock" )
-   INT32 _rtnLobStream::lock( _pmdEDUCB *cb,
-                              INT64 offset,
-                              INT64 length )
+   INT32 _rtnLobStream::lock( _pmdEDUCB *cb, INT64 offset, INT64 length )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_LOCK ) ;
-      std::vector<INT64> offsets ;  // for rollbacking
-      _rtnLobSection section( offset, length, uniqueId() ) ;
-
-      if ( SDB_LOB_MODE_WRITE != _mode )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "LOB can only be locked in write mode, rc=%d", rc ) ;
-         goto error ;
-      }
 
       if ( offset < 0 )
       {
@@ -695,44 +782,35 @@ namespace engine
          goto error ;
       }
 
-      if ( _wholeLobLocked )
-      {
-         // the whole lob is locked, nothing to do
-         goto done ;
-      }
-
       // endlessly lock from offset
       if ( -1 == length )
       {
          // subtract offset to avoid section.end() overflow
          length = OSS_SINT64_MAX - offset ;
-         section.length = length ;
       }
 
-      if ( _lockSections.completelyContains( section ) )
+      if ( _wholeLobLocked )
+      {
+         goto done ;
+      }
+
+      if ( _sectionMgr.isTotalContain( offset, length ) )
       {
          // already locked
          goto done ;
-      }
-      else
-      {
-         // add to local firstly,
-         // record offsets for rollbacking if error happens
-         rc = _lockSections.addSection( section, &offsets ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to add section in lob stream, rc=%d", rc ) ;
-            goto error ;
-         }
       }
 
       rc = _lock( cb, offset, length ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to lock LOB[%s] in (offset:%lld, length:%lld), rc=%d",
-                 _oid.str().c_str(), offset, length, rc) ;
+         PD_LOG( PDERROR, "Failed to lock LOB[%s] in (offset:%lld,length:%lld),"
+                 " rc=%d", _oid.str().c_str(), offset, length, rc ) ;
          goto error ;
       }
+
+      rc = _sectionMgr.addSection( offset, length ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add section:offset=%lld,"
+                   "length=%lld,rc=%d", offset, length, rc ) ;
 
       if ( OSS_SINT64_MAX == length && 0 == offset )
       {
@@ -743,14 +821,11 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_LOCK, rc ) ;
       return rc ;
    error:
-      if ( !offsets.empty() )
+      if ( SDB_OP_INCOMPLETE == rc )
       {
-         // rollback
-         std::vector<INT64>::const_iterator iter ;
-         for ( iter = offsets.begin() ; iter != offsets.end() ; iter++ )
-         {
-            _lockSections.delSectionByOffset( *iter ) ;
-         }
+         // if lock section can't be completely done,
+         // we should kill the context to avoid incomplete lock sections
+         closeWithException( cb ) ;
       }
       goto done ;
    }
@@ -771,9 +846,8 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_READ != _mode &&
-           SDB_LOB_MODE_CREATEONLY != _mode &&
-           SDB_LOB_MODE_WRITE != _mode )
+      if ( !SDB_IS_LOBREADONLY_MODE(_mode) && !SDB_HAS_LOBWRITE_MODE(_mode)
+           && SDB_LOB_MODE_CREATEONLY != _mode )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -781,14 +855,13 @@ namespace engine
          goto error ;
       }
 
-      if ( offset >= _meta._lobLen && SDB_LOB_MODE_READ == _mode )
+      if ( offset >= _meta._lobLen && SDB_IS_LOBREADONLY_MODE(_mode) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY == _mode ||
-           SDB_LOB_MODE_WRITE == _mode )
+      if ( SDB_LOB_MODE_CREATEONLY == _mode || SDB_HAS_LOBWRITE_MODE(_mode) )
       {
          if ( !_lw.continuous( offset ) )
          {
@@ -937,7 +1010,7 @@ namespace engine
       {
          if ( !_lobPieces.hasPiece( tuple.tuple.columns.sequence ) )
          {
-            BOOLEAN orUpdate = SDB_LOB_MODE_WRITE == _mode ? TRUE : FALSE ;
+            BOOLEAN orUpdate = SDB_HAS_LOBWRITE_MODE(_mode) ? TRUE : FALSE ;
             rc = _write( tuple, cb, orUpdate ) ;
             if ( SDB_OK == rc )
             {
@@ -1019,7 +1092,7 @@ namespace engine
 
          if ( !tuples.empty() )
          {
-            BOOLEAN orUpdate = SDB_LOB_MODE_WRITE == _mode ? TRUE : FALSE ;
+            BOOLEAN orUpdate = SDB_HAS_LOBWRITE_MODE(_mode) ? TRUE : FALSE ;
             rc = _writev( tuples, cb, orUpdate ) ;
             if ( SDB_OK != rc )
             {
@@ -1268,9 +1341,9 @@ namespace engine
       _rtnLobTuple tuple ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__WRITELOBMETA ) ;
 
-      SDB_ASSERT( SDB_LOB_MODE_CREATEONLY == _mode ||
-                  SDB_LOB_MODE_WRITE == _mode ||
-                  SDB_LOB_MODE_TRUNCATE == _mode, "incorrect mode" ) ;
+      SDB_ASSERT( SDB_LOB_MODE_CREATEONLY == _mode
+                  || SDB_HAS_LOBWRITE_MODE(_mode)
+                  || SDB_LOB_MODE_TRUNCATE == _mode, "incorrect mode" ) ;
 
       // write last data
       if ( withData && _lw.getCachedData( tuple ) )
@@ -1385,7 +1458,7 @@ namespace engine
 
       rc = _completeLob( tuple, cb ) ;
       PD_AUDIT_OP_WITHNAME( AUDIT_DML,
-                            _rtnLobOpName( (SDB_LOB_MODE)_mode ),
+                            _rtnLobOpName(_mode),
                             AUDIT_OBJ_CL,
                             getFullName(), rc, "OID:%s, Length:%llu",
                             getOID().toString().c_str(),

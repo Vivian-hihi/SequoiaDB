@@ -115,6 +115,8 @@ namespace engine
                                                   SDB_DPSCB *dpsCB ) ;
          INT32                   _onTruncateLobMsg( MsgHeader *msg,
                                                     SDB_DPSCB *dpsCB ) ;
+         INT32                   _onGetLobRTDetailMsg( MsgHeader *msg,
+                                                     rtnContextBuf &buffObj ) ;
          INT32                   _onCreateLobIDMsg( MsgHeader *msg,
                                                     rtnContextBuf &buffObj ) ;
          INT32                   _onInterruptMsg( MsgHeader *msg,

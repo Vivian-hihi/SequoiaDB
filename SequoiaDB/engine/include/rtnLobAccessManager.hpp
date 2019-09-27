@@ -38,7 +38,7 @@
 #include "ossUtil.hpp"
 #include "utilConcurrentMap.hpp"
 #include "rtnLobMetaCache.hpp"
-#include "rtnLobSections.hpp"
+#include "rtnLobLockSectionMgr.hpp"
 #include "../bson/bson.hpp"
 #include <string>
 
@@ -47,10 +47,12 @@ namespace engine
    #define RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES     (3)
    #define RTN_LOB_ACCESS_PRIVILEGE_RETRY_INTERVAL  (50) /* ms */
 
+   typedef ossPoolSet<INT64> RTN_LOB_CONTEXT_SET ;
+
    class _rtnLobAccessInfo: public SDBObject
    {
    public:
-      _rtnLobAccessInfo( const bson::OID& oid, UINT32 mode, INT64 accessId = -1 ) ;
+      _rtnLobAccessInfo( const bson::OID& oid ) ;
       ~_rtnLobAccessInfo() ;
 
    private:
@@ -59,10 +61,8 @@ namespace engine
       void operator=( const _rtnLobAccessInfo& ) ;
 
    public:
-      OSS_INLINE const bson::OID&   getOID() const { return _oid ; }
-      OSS_INLINE UINT32             getMode() const { return _mode ; }
-      OSS_INLINE INT32              getRefCount() const { return _refCount ; }
-      OSS_INLINE INT64              getAccessId() const { return _accessId ; }
+      OSS_INLINE const bson::OID& getOID() const { return _oid ; }
+      OSS_INLINE INT32 getRefCount() const { return _refCount ; }
 
       OSS_INLINE void lock()
       {
@@ -78,21 +78,41 @@ namespace engine
       }
       void setMetaCache( _rtnLobMetaCache* metaCache ) ;
 
-      INT32 lockSection( const _rtnLobSection& section ) ;
-      INT32 unlockSectionByAccessId( INT64 accessId ) ;
+      INT32 lockSection( INT32 mode, INT64 offset, INT64 length,
+                         INT64 contextID ) ;
+      INT32 unlockSectionByContextId( INT64 contextID ) ;
+      BOOLEAN isLockSectionEmpty() ;
+
+      INT32 toBSONObjBuilder( BSONObjBuilder &builder ) ;
+
+      void addContext( INT64 contextID ) ;
+      void delContext( INT64 contextID ) ;
+      UINT64 getContextCount() ;
+      INT64 peekContextID() ;
 
    private:
-      OSS_INLINE void incRefCount() { _refCount++ ; }
-      OSS_INLINE void decRefCount() { _refCount-- ; }
+      OSS_INLINE void incRefCount( INT32 mode ) ;
+      OSS_INLINE void decRefCount( INT32 mode ) ;
+      BOOLEAN checkCount() ;
 
    private:
       bson::OID         _oid ;
-      UINT32            _mode ;
-      INT32             _refCount ;
-      INT64             _accessId ;
       ossSpinXLatch     _lock ;
+
+      INT32             _refCount ;
+
+      INT32             _createCount ;
+      // remove or truncate count
+      INT32             _rtCount ;
+      // only for SDB_LOB_MODE_READ
+      INT32             _readCount ;
+      // only for SDB_LOB_MODE_SHAREREAD
+      INT32             _shareReadCount ;
+      INT32             _writeCount ;
+
       _rtnLobMetaCache* _metaCache ;
-      _rtnLobSections*  _lockSections ;
+      _rtnLobLockSectionMgr _lockSectionMgr ;
+      RTN_LOB_CONTEXT_SET _contextSet ;
 
       friend class _rtnLobAccessManager ;
    } ;
@@ -151,10 +171,14 @@ namespace engine
 
    public:
       INT32 getAccessPrivilege( const std::string& clName, const bson::OID& oid,
-                                      UINT32 mode, INT64 accessId = -1,
-                                      _rtnLobAccessInfo** accessInfo = NULL ) ;
-      INT32 releaseAccessPrivilege( const std::string& clName, const bson::OID& oid,
-                                           UINT32 mode, INT64 accessId = -1 ) ;
+                                INT32 mode, INT64 contextID,
+                                _rtnLobAccessInfo** accessInfo ) ;
+      INT32 releaseAccessPrivilege( const std::string& clName,
+                                    const bson::OID& oid, INT32 mode ,
+                                    INT64 contextID ) ;
+
+   private:
+      INT32 _checkCompatible( _rtnLobAccessInfo* accessInfo, INT32 mode ) ;
 
    private:
       RTN_LOB_MAP _lobMap ;

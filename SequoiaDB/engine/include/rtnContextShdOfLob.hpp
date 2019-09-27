@@ -97,6 +97,8 @@ namespace engine
 
       INT32 close( _pmdEDUCB *cb ) ;
 
+      INT32 getLobRTDetail( _pmdEDUCB *cb, BSONObj &detail ) ;
+
    public:
       const CHAR *getFullName() const
       {
@@ -133,13 +135,13 @@ namespace engine
       virtual void  _toString( stringstream &ss ) ;
 
    private:
-      INT32 _open( _pmdEDUCB *cb,
-                   const CHAR **data,
-                   UINT32 &read ) ;
+      INT32 _open( _pmdEDUCB *cb, _utilSectionMgr &sectionMgr,
+                   const CHAR **data, UINT32 &read ) ;
 
       INT32 _getAccessPrivilege() ;
 
-      INT32 _parseOpenArgs( const bson::BSONObj &lob ) ;
+      INT32 _parseOpenArgs( const bson::BSONObj &lob,
+                            _utilSectionMgr &sectionMgr ) ;
 
       INT32 _meta2Obj( bson::BSONObj &obj ) ;
 
@@ -170,13 +172,11 @@ namespace engine
       ossPoolSet<UINT32>  _written ;
       _rtnLobPiecesInfo    _lobPieces ;
       _rtnLobAccessInfo*   _accessInfo ;
-      _rtnLobSections      _lockSections ;
 
       _dmsStorageUnit*     _su ;
       _dmsMBContext*       _mbContext ;
       _SDB_DMSCB*          _dmsCB ;
       BOOLEAN              _writeDMS ;
-      BOOLEAN              _hasLobPrivilege ;
       BOOLEAN              _reopened ;
       BOOLEAN              _isMetaWrote ; // used in CREATEONLY mode
    } ;

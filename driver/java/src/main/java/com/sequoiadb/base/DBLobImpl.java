@@ -30,6 +30,7 @@ import com.sequoiadb.message.request.LobCloseRequest;
 import com.sequoiadb.message.request.LobLockRequest;
 import com.sequoiadb.message.request.LobOpenRequest;
 import com.sequoiadb.message.request.LobReadRequest;
+import com.sequoiadb.message.request.LobRuntimeDetailRequest;
 import com.sequoiadb.message.request.LobWriteRequest;
 import com.sequoiadb.message.response.LobOpenResponse;
 import com.sequoiadb.message.response.LobReadResponse;
@@ -66,7 +67,6 @@ class DBLobImpl implements DBLob {
     private long _cachedOffset = -1;
     private ByteBuffer _cachedDataBuff = null;
     private boolean _isOpened = false;
-    private boolean _seekWrite = false;
     private boolean _isOldVersionLobServer = false;
 
     /*
@@ -86,6 +86,18 @@ class DBLobImpl implements DBLob {
 
         _cl = cl;
         _sdb = cl.getSequoiadb();
+    }
+
+    public static boolean isReadOnlyMode(int mode) {
+        return mode == DBLob.SDB_LOB_READ || mode == DBLob.SDB_LOB_SHAREREAD;
+    }
+
+    public static boolean isReadWriteMode(int mode) {
+        return (mode == (DBLob.SDB_LOB_SHAREREAD | DBLob.SDB_LOB_WRITE));
+    }
+
+    public static boolean hasWriteMode(int mode) {
+        return (mode == DBLob.SDB_LOB_WRITE || isReadWriteMode(mode));
     }
 
     /**
@@ -115,11 +127,11 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_INVALIDARG, "lob have opened: id = " + _id);
         }
 
-        if (mode != SDB_LOB_CREATEONLY && mode != SDB_LOB_READ && mode != SDB_LOB_WRITE) {
+        if (mode != SDB_LOB_CREATEONLY && !hasWriteMode(mode) && !isReadOnlyMode(mode)) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "mode is unsupported: " + mode);
         }
 
-        if (mode == SDB_LOB_READ || mode == SDB_LOB_WRITE) {
+        if (mode != SDB_LOB_CREATEONLY) {
             if (id == null) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
                         "id must be specify" + " in mode:" + mode);
@@ -348,6 +360,13 @@ class DBLobImpl implements DBLob {
         if (off + len > b.length) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "off + len is great than b.length");
         }
+
+        if (isReadWriteMode(_mode)) {
+            //clean the read cache
+            _cachedOffset = -1;
+            _cachedDataBuff = null;
+        }
+
         int offset = off;
         int leftLen = len;
         int writeLen = 0;
@@ -457,7 +476,8 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
 
-        if (_mode != SDB_LOB_READ && _mode != SDB_LOB_CREATEONLY && _mode != SDB_LOB_WRITE) {
+        if (!DBLobImpl.hasWriteMode(_mode) && !DBLobImpl.isReadOnlyMode(_mode)
+                && _mode != SDB_LOB_CREATEONLY) {
             throw new BaseException(SDBError.SDB_OPTION_NOT_SUPPORT,
                     "seek() is not supported" + " in mode=" + _mode);
         }
@@ -487,10 +507,6 @@ class DBLobImpl implements DBLob {
         } else {
             throw new BaseException(SDBError.SDB_INVALIDARG, "unreconigzed seekType: " + seekType);
         }
-
-        if (_mode == SDB_LOB_CREATEONLY || _mode == SDB_LOB_WRITE) {
-            _seekWrite = true;
-        }
     }
 
     /**
@@ -511,7 +527,7 @@ class DBLobImpl implements DBLob {
                     "out of bound, offset=" + offset + ", length=" + length);
         }
 
-        if (_mode != SDB_LOB_WRITE) {
+        if (!hasWriteMode(_mode) && _mode != SDB_LOB_SHAREREAD) {
             return;
         }
 
@@ -610,8 +626,14 @@ class DBLobImpl implements DBLob {
         _cachedOffset = -1;
         _cachedDataBuff = null;
 
-        // page align
-        alignedLen = _reviseReadLen(needRead);
+        if (_mode == DBLob.SDB_LOB_READ) {
+            // page align
+            alignedLen = _reviseReadLen(needRead);
+        }
+        else {
+            //DBLob.SDB_LOB_SHAREREAD, DBLob.SDB_LOB_SHAREREAD|DBLob.SDB_LOB_WRITE
+            alignedLen = len;
+        }
 
         LobReadRequest request = new LobReadRequest(_contextID, alignedLen, _currentOffset);
         LobReadResponse response = _sdb.requestAndResponse(request, LobReadResponse.class);
@@ -688,12 +710,25 @@ class DBLobImpl implements DBLob {
             return;
         }
 
-        long offset = _seekWrite ? _currentOffset : -1;
-        LobWriteRequest request = new LobWriteRequest(_contextID, input, off, len, offset);
+        LobWriteRequest request = new LobWriteRequest(_contextID, input, off, len, _currentOffset);
         SdbReply response = _sdb.requestAndResponse(request);
         _sdb.throwIfError(response);
         _currentOffset += len;
         _lobSize = Math.max(_lobSize, _currentOffset);
-        _seekWrite = false;
+    }
+
+    @Override
+    public BSONObject getRunTimeDetail() throws BaseException {
+        LobRuntimeDetailRequest request = new LobRuntimeDetailRequest(_contextID);
+        SdbReply response = _sdb.requestAndResponse(request);
+        _sdb.throwIfError(response);
+
+        ResultSet r = response.getResultSet();
+        if (!r.hasNext()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "Response must have obj");
+        }
+
+        BSONObject o = r.getNext();
+        return o;
     }
 }

@@ -547,6 +547,55 @@ namespace engine
    }
 
    /*
+      _coordGetLobRTDetail
+   */
+   _coordGetLobRTDetail::_coordGetLobRTDetail()
+   {
+      const static string s_name( "GetLobRTDetail" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordGetLobRTDetail::~_coordGetLobRTDetail()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_GETLOBRTDETAIL_EXE, "_coordGetLobRTDetail::execute" )
+   INT32 _coordGetLobRTDetail::execute( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        INT64 &contextID,
+                                        rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_GETLOBRTDETAIL_EXE ) ;
+      const MsgOpLob *header = NULL ;
+      contextID = -1 ;
+
+      rc = msgExtractGetLobRTDetailRequest( (const CHAR*)pMsg, &header ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to extract msg:%d", rc ) ;
+         goto error ;
+      }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
+                          "ContextID:%lld", header->contextID ) ;
+
+      rc = rtnGetLobRTDetail( header->contextID, cb, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get lob detail:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_GETLOBRTDETAIL_EXE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _coordCreateLobID implement
    */
    _coordCreateLobID::_coordCreateLobID()

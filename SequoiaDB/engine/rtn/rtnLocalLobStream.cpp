@@ -40,6 +40,8 @@
 #include "rtnLob.hpp"
 #include "rtnLobAccessManager.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _rtnLocalLobStream::_rtnLocalLobStream()
@@ -92,7 +94,7 @@ namespace engine
       const CHAR *clName = NULL ;
       _dmsCB = sdbGetDMSCB() ;
 
-      if ( SDB_LOB_MODE_READ != mode() )
+      if ( !SDB_IS_LOBREADONLY_MODE( mode() ))
       {
          rc = _dmsCB->writable( cb ) ;
          if ( rc )
@@ -146,8 +148,7 @@ namespace engine
       for ( INT32 i = 0 ; i < RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES ; i++ )
       {
          rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
-                  fullName, oid, mode, uniqueId(),
-                  SDB_LOB_MODE_WRITE == mode ? &_accessInfo : NULL ) ;
+                  fullName, oid, mode, uniqueId(), &_accessInfo ) ;
          if ( SDB_OK == rc )
          {
             _hasLobPrivilege = TRUE ;
@@ -185,7 +186,7 @@ namespace engine
       CHAR *buf = NULL ;
       dmsLobRecord record ;
 
-      if ( SDB_LOB_MODE_WRITE == _getMode() )
+      if ( SDB_HAS_LOBWRITE_MODE(_getMode()) )
       {
          rc = _queryLobMeta4Write( cb, meta, piecesInfo ) ;
          if ( SDB_OK != rc )
@@ -298,7 +299,8 @@ namespace engine
       const _dmsLobMeta* cachedMeta = NULL ;
       BOOLEAN accessInfoLocked = FALSE ;
       SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
-      SDB_ASSERT( SDB_LOB_MODE_WRITE == _getMode(), "should be write mode" ) ;
+      SDB_ASSERT( SDB_HAS_LOBWRITE_MODE(_getMode()),
+                  "should be write mode" ) ;
 
       _accessInfo->lock() ;
       accessInfoLocked = TRUE ;
@@ -478,8 +480,8 @@ namespace engine
       {
          rc = _write( tuple, cb ) ;
       }
-      else if ( SDB_LOB_MODE_WRITE == _getMode() ||
-                SDB_LOB_MODE_TRUNCATE == _getMode() )
+      else if ( SDB_HAS_LOBWRITE_MODE(_getMode())
+                || SDB_LOB_MODE_TRUNCATE == _getMode() )
       {
          rc = _update( tuple, cb ) ;
       }
@@ -582,7 +584,7 @@ namespace engine
                   t.columns.len, ( const CHAR * )tuple.data ) ;
 
       if ( DMS_LOB_META_SEQUENCE == t.columns.sequence &&
-           SDB_LOB_MODE_WRITE == _getMode() &&
+           SDB_HAS_LOBWRITE_MODE(_getMode()) &&
            0 == t.columns.offset &&
            t.columns.len >= sizeof(_dmsLobMeta) )
       {
@@ -899,7 +901,7 @@ namespace engine
                              INT64 length )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = TRUE ;
+      BOOLEAN locked = FALSE ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__LOCK ) ;
 
       if ( -1 == uniqueId() )
@@ -909,19 +911,12 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_WRITE != _getMode() )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "LOB can only be locked in write mode, rc=%d", rc ) ;
-         goto error ;
-      }
-
       SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
 
       _accessInfo->lock() ;
       locked = TRUE ;
 
-      rc = _accessInfo->lockSection( _rtnLobSection( offset, length, uniqueId() ) ) ;
+      rc = _accessInfo->lockSection( _getMode(), offset, length, uniqueId() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to lock section[%lld, %lld, %lld], rc=%d",
@@ -931,6 +926,60 @@ namespace engine
 
       _accessInfo->unlock() ;
       locked = FALSE ;
+
+   done:
+      if ( locked )
+      {
+         _accessInfo->unlock() ;
+         locked = FALSE ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__LOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLocalLobStream::_getRTDetail( _pmdEDUCB *cb,
+                                           bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      BSONObjBuilder builder ;
+
+      if ( -1 == uniqueId() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "invalid unique id, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
+
+      _accessInfo->lock() ;
+      locked = TRUE ;
+
+      rc = _accessInfo->toBSONObjBuilder( builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get accessInfo:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _accessInfo->unlock() ;
+      locked = FALSE ;
+
+      try
+      {
+         builder.append( FIELD_NAME_CONTEXTID, uniqueId() ) ;
+         detail = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to build obj, occur unexpected "
+                 "error:%s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
    done:
       if ( locked )

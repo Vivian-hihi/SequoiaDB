@@ -2377,7 +2377,7 @@ public class DBCollection {
      * @throws BaseException If error happens..
      */
     public DBLob openLob(ObjectId id, int mode) throws BaseException {
-        if (mode != DBLob.SDB_LOB_READ && mode != DBLob.SDB_LOB_WRITE) {
+        if (!DBLobImpl.hasWriteMode(mode) && !DBLobImpl.isReadOnlyMode(mode)) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "mode is unsupported: " + mode);
         }
 

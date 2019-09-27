@@ -105,6 +105,8 @@ namespace engine
          virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                                  _pmdEDUCB *cb ) ;
 
+         virtual INT32 _getRTDetail( _pmdEDUCB *cb, bson::BSONObj &detail ) ;
+
          virtual INT32 _lock( _pmdEDUCB *cb,
                               INT64 offset,
                               INT64 length ) ;
@@ -226,6 +228,9 @@ namespace engine
          INT32 _extractMeta( const MsgOpReply *header,
                              bson::BSONObj &obj,
                              _rtnLobDataPool::tuple &dataTuple ) ;
+
+         INT32 _extractDetail( const MsgOpReply *header,
+                               bson::BSONObj &detail ) ;
 
          INT32 _closeSubStreams( _pmdEDUCB *cb, BOOLEAN exceptMeta ) ;
 

@@ -63,7 +63,6 @@ namespace engine
     _mbContext( NULL ),
     _dmsCB( NULL ),
     _writeDMS( FALSE ),
-    _hasLobPrivilege( FALSE ),
     _reopened( FALSE ),
     _isMetaWrote( FALSE )
    {
@@ -122,8 +121,9 @@ namespace engine
       _dmsCB = sdbGetDMSCB() ;
       const CHAR *clName = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      _utilSectionMgr sectionMgr ;
 
-      rc = _parseOpenArgs( lob ) ;
+      rc = _parseOpenArgs( lob, sectionMgr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Invalid open arguments: %s, rc=%d",
@@ -132,7 +132,7 @@ namespace engine
       }
 
       // Check writable first
-      if ( SDB_LOB_MODE_READ != _mode )
+      if ( !SDB_IS_LOBREADONLY_MODE( _mode ) )
       {
          rc = _dmsCB->writable( cb ) ;
          if ( rc )
@@ -172,12 +172,13 @@ namespace engine
          rc = _getAccessPrivilege() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to get lob privilege:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to get lob privilege:cl=%s,oid=%s,rc=%d",
+                    _getRealCLName(), _oid.toString().c_str(), rc ) ;
             goto error ;
          }
       }
 
-      rc = _open( cb, data, read ) ;
+      rc = _open( cb, sectionMgr, data, read ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open lob:%d", rc ) ;
@@ -271,9 +272,9 @@ namespace engine
       BOOLEAN accessInfoLocked = FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_UPDATE ) ;
 
-      if ( DMS_LOB_META_SEQUENCE == sequence &&
-           SDB_LOB_MODE_WRITE == _mode &&
-           0 == offset && len >= sizeof(_dmsLobMeta) )
+      if ( DMS_LOB_META_SEQUENCE == sequence
+           && SDB_HAS_LOBWRITE_MODE(_mode)
+           && 0 == offset && len >= sizeof(_dmsLobMeta) )
       {
          _rtnLobMetaCache newCache ;
          _rtnLobMetaCache* metaCache = NULL ;
@@ -419,7 +420,8 @@ namespace engine
          << ",BuffLen:" << _bufLen ;
    }
 
-   INT32 _rtnContextShdOfLob::_parseOpenArgs( const bson::BSONObj &lob )
+   INT32 _rtnContextShdOfLob::_parseOpenArgs( const bson::BSONObj &lob,
+                                              _utilSectionMgr &sectionMgr )
    {
       INT32 rc = SDB_OK ;
 
@@ -519,23 +521,9 @@ namespace engine
 
       if ( _isMainShd && _reopened )
       {
-         ele = lob.getField( FIELD_NAME_LOB_LOCK_SECTIONS ) ;
-         if ( Array == ele.type() )
-         {
-            BSONArray array = BSONArray( ele.embeddedObject() ) ;
-            rc = _lockSections.readFrom( array, contextID() ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to read lock sections, rc=%d", rc ) ;
-               goto error ;
-            }
-         }
-         else if ( !ele.eoo() )
-         {
-            PD_LOG( PDERROR, "invalid LockSections type:%d", ele.type() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
+         rc = sectionMgr.fromBSONObj( lob ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse sections from obj,rc=%d",
+                      rc ) ;
       }
 
    done:
@@ -553,11 +541,9 @@ namespace engine
       for ( INT32 i = 0 ; i < RTN_LOB_ACCESS_PRIVILEGE_RETRY_TIMES ; i++ )
       {
          rc = sdbGetRTNCB()->getLobAccessManager()->getAccessPrivilege(
-                     _getRealCLName(), _oid, _mode, contextID(),
-                     SDB_LOB_MODE_WRITE == _mode ? &_accessInfo : NULL ) ;
+                  _getRealCLName(), _oid, _mode, contextID(), &_accessInfo ) ;
          if ( SDB_OK == rc )
          {
-            _hasLobPrivilege = TRUE ;
             break ;
          }
          else if ( SDB_LOB_IS_IN_USE == rc )
@@ -580,20 +566,21 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__OPEN, "_rtnContextShdOfLob::_open" )
-   INT32 _rtnContextShdOfLob::_open( _pmdEDUCB *cb,
-                                     const CHAR **data,
-                                     UINT32 &read )
+   INT32 _rtnContextShdOfLob::_open( _pmdEDUCB *cb, _utilSectionMgr &sectionMgr,
+                                     const CHAR **data, UINT32 &read )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN accessInfoLocked = FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__OPEN ) ;
       if ( _isMainShd &&
-           ( SDB_LOB_MODE_READ == _mode ||
+           ( SDB_IS_LOBREADONLY_MODE( _mode ) ||
              SDB_LOB_MODE_TRUNCATE == _mode ) )
       {
          UINT32 readLen = 0 ;
          UINT32 len = _su->getLobPageSize() ;
          dmsLobRecord record ;
+         // SDB_LOB_MODE_SHAREREAD can't open withData because data should be
+         // locked before read data.
          BOOLEAN withData = ( SDB_LOB_MODE_READ == _mode && !_reopened ) ?
                             TRUE : FALSE ;
 
@@ -677,7 +664,7 @@ namespace engine
             goto error ;
          }
       }
-      else if ( _isMainShd && SDB_LOB_MODE_WRITE == _mode )
+      else if ( _isMainShd && SDB_HAS_LOBWRITE_MODE(_mode) )
       {
          _rtnLobMetaCache* metaCache = NULL ;
          const _dmsLobMeta* meta = NULL ;
@@ -803,15 +790,12 @@ namespace engine
          _accessInfo->unlock() ;
          accessInfoLocked = FALSE ;
 
-         if ( !_lockSections.isEmpty() )
+         if ( !sectionMgr.isEmpty() )
          {
-            for ( _rtnLobSections::iterator it = _lockSections.begin() ;
-                  it != _lockSections.end() ;
-                  it++ )
+            for ( _utilSectionMgr::const_iterator it = sectionMgr.begin() ;
+                  it != sectionMgr.end() ; it++ )
             {
-               const _rtnLobSection& sec = *it;
-
-               rc = lock( cb, sec.offset, sec.length ) ;
+               rc = lock( cb, it->begin(), it->length() ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to lock lob sections, rc:%d", rc ) ;
@@ -900,6 +884,59 @@ namespace engine
          _accessInfo->unlock() ;
       }
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB__OPEN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB_GETLOBRTDETAIL, "_rtnContextShdOfLob::getLobRTDetail" )
+   INT32 _rtnContextShdOfLob::getLobRTDetail( _pmdEDUCB *cb, BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      BSONObjBuilder builder ;
+      PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_GETLOBRTDETAIL ) ;
+
+      if ( !_isMainShd || NULL == _accessInfo )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Runtime detail is in main shard only!" ) ;
+         goto error ;
+      }
+
+      _accessInfo->lock() ;
+      locked = TRUE ;
+
+      rc = _accessInfo->toBSONObjBuilder( builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get accessInfo:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _accessInfo->unlock() ;
+      locked = FALSE ;
+
+      try
+      {
+         builder.append( FIELD_NAME_CONTEXTID, contextID() ) ;
+         detail = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to build obj, occur unexpected "
+                 "error:%s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      if ( locked )
+      {
+         _accessInfo->unlock() ;
+         locked = FALSE ;
+      }
+      PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_GETLOBRTDETAIL, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1002,24 +1039,18 @@ namespace engine
       BOOLEAN locked= FALSE ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_LOCK ) ;
 
-      if ( SDB_LOB_MODE_WRITE != _mode )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "LOB can only be locked in write mode, rc=%d", rc ) ;
-         goto error ;
-      }
-
       SDB_ASSERT( NULL != _accessInfo, "_accessInfo is null" ) ;
       SDB_ASSERT( length > 0, "length <= 0" ) ;
 
       _accessInfo->lock() ;
       locked = TRUE ;
 
-      rc = _accessInfo->lockSection( _rtnLobSection( offset, length, contextID() ) ) ;
+      rc = _accessInfo->lockSection( _mode, offset, length, contextID() ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to lock section[offset: %lld, length: %lld, accessId: %lld], rc=%d",
-                 offset, length, contextID(), rc ) ;
+         PD_LOG( PDERROR, "Failed to lock section[offset: %lld, length: %lld, "
+                 "accessId: %lld],cl=%s,lob=%s,rc=%d", offset, length,
+                 contextID(), _getRealCLName(), _oid.toString().c_str(), rc ) ;
          goto error ;
       }
 
@@ -1042,15 +1073,17 @@ namespace engine
    INT32 _rtnContextShdOfLob::close( _pmdEDUCB *cb )
    {
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_CLOSE ) ;
+
       _isOpened = FALSE ;
       _closeWithException = FALSE ;
 
-      if ( _hasLobPrivilege )
+      if ( NULL != _accessInfo )
       {
          sdbGetRTNCB()->getLobAccessManager()->releaseAccessPrivilege(
             _getRealCLName(), _oid, _mode, contextID() ) ;
-         _hasLobPrivilege = FALSE ;
+         _accessInfo = NULL ;
       }
+
       if ( _mbContext && _su )
       {
          _su->data()->releaseMBContext( _mbContext ) ;
@@ -1131,13 +1164,13 @@ namespace engine
          {
             _meta._modificationTime = _meta._createTime ;
          }
-         builder.append( FIELD_NAME_LOB_MODIFICATION_TIME, (INT64)_meta._modificationTime ) ;
+         builder.append( FIELD_NAME_LOB_MODIFICATION_TIME,
+                         (INT64)_meta._modificationTime ) ;
          builder.append( FIELD_NAME_LOB_FLAG, (INT32)_meta._flag ) ;
          builder.append( FIELD_NAME_LOB_PIECESINFONUM, _meta._piecesInfoNum ) ;
          if ( _meta.hasPiecesInfo() &&
-              ( SDB_LOB_MODE_READ == _mode ||
-                SDB_LOB_MODE_WRITE == _mode ||
-                SDB_LOB_MODE_TRUNCATE == _mode ) )
+              ( SDB_IS_LOBREADONLY_MODE(_mode) || SDB_HAS_LOBWRITE_MODE(_mode)
+                || SDB_LOB_MODE_TRUNCATE == _mode ) )
          {
             SDB_ASSERT( !_lobPieces.empty(), "empty pieces info" ) ;
             BSONArray array ;

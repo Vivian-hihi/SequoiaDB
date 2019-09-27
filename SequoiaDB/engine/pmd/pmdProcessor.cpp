@@ -230,6 +230,9 @@ namespace engine
             case MSG_BS_LOB_TRUNCATE_REQ:
                rc = _onTruncateLobMsg( msg, getDPSCB() ) ;
                break ;
+            case MSG_BS_LOB_GETRTDETAIL_REQ:
+               rc = _onGetLobRTDetailMsg( msg, contextBuff ) ;
+               break ;
             case MSG_BS_LOB_CREATELOBID_REQ:
                rc = _onCreateLobIDMsg( msg, contextBuff ) ;
                break ;
@@ -1479,6 +1482,23 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdDataProcessor::_onGetLobRTDetailMsg( MsgHeader *msg,
+                                                  rtnContextBuf &buffObj )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rc = msgExtractGetLobRTDetailRequest( (const CHAR*)msg, &header ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extract get Lob runtime detail msg"
+                   ":rc=%d", rc) ;
+
+      rc = rtnGetLobRTDetail( header->contextID, eduCB(), &buffObj ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdDataProcessor::_onCreateLobIDMsg( MsgHeader *msg,
                                                rtnContextBuf &buffObj )
    {
@@ -1859,6 +1879,16 @@ namespace engine
          case MSG_BS_LOB_TRUNCATE_REQ:
          {
             coordTruncateLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_GETRTDETAIL_REQ:
+         {
+            coordGetLobRTDetail opr ;
             rc = opr.init( pResource, eduCB() ) ;
             PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
                          opr.getName(), rc ) ;

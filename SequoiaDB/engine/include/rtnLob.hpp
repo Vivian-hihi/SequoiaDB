@@ -40,6 +40,25 @@
 
 using namespace bson ;
 
+// SHARE_READ | WRITE mode
+#define SDB_IS_LOBSREADWRITE_MODE( mode ) \
+   ( (SDB_LOB_MODE_WRITE | SDB_LOB_MODE_SHAREREAD) == ( mode ) )
+
+#define SDB_HAS_LOBWRITE_MODE( mode ) \
+   ( SDB_LOB_MODE_WRITE == ( mode ) || \
+     SDB_IS_LOBSREADWRITE_MODE( mode ) )
+
+#define SDB_IS_LOBREADONLY_MODE( mode ) \
+   ( SDB_LOB_MODE_READ == ( mode ) || \
+     SDB_LOB_MODE_SHAREREAD == ( mode ) )
+
+#define SDB_IS_VALID_LOB_MODE( mode ) \
+   ( SDB_IS_LOBREADONLY_MODE( mode ) || \
+     SDB_HAS_LOBWRITE_MODE( mode ) || \
+     SDB_LOB_MODE_CREATEONLY == ( mode ) || \
+     SDB_LOB_MODE_REMOVE == ( mode ) || \
+     SDB_LOB_MODE_TRUNCATE == ( mode ) )
+
 namespace engine
 {
    class _rtnLobStream ;
@@ -78,6 +97,9 @@ namespace engine
                      INT64 offset,
                      INT64 length,
                      rtnContextBuf *errBuf = NULL ) ;
+
+   INT32 rtnGetLobRTDetail( SINT64 contextID, pmdEDUCB *cb,
+                            rtnContextBuf *bufObj = NULL ) ;
 
    INT32 rtnCloseLob( SINT64 contextID,
                       pmdEDUCB *cb,

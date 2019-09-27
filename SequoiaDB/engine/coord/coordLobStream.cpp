@@ -106,8 +106,8 @@ namespace engine
       }
 
       /// set primary
-      _groupSession.getGroupSel()->setPrimary( ( SDB_LOB_MODE_READ != mode() ) ?
-                                               TRUE : FALSE ) ;
+      _groupSession.getGroupSel()->setPrimary(
+                            !SDB_IS_LOBREADONLY_MODE(mode()) ? TRUE : FALSE ) ;
       _groupSession.getGroupCtrl()->setMaxRetryTimes( LOB_MAX_RETRYTIMES ) ;
 
       rc = _openMainStream( getFullName(), getOID(), mode(), cb ) ;
@@ -335,7 +335,7 @@ namespace engine
          builder.append( FIELD_NAME_SUBCLNAME, _subCLInfo->getName() ) ;
       }
 
-      if ( SDB_LOB_MODE_READ == mode )
+      if ( SDB_IS_LOBREADONLY_MODE( mode ) )
       {
          /// send meta data to every group.
          builder.append( FIELD_NAME_LOB_META_DATA, _metaObj ) ;
@@ -476,23 +476,24 @@ namespace engine
       {
          builder.append( FIELD_NAME_LOB_CREATETIME, (INT64)_getMeta()._createTime ) ;
       }
+
       if ( _mainStreamOpened )
       {
          builder.appendBool( FIELD_NAME_LOB_REOPENED, TRUE ) ;
-         if ( SDB_LOB_MODE_WRITE == _getMode() &&
-              !_getLockSections().isEmpty() )
+         if ( SDB_HAS_LOBWRITE_MODE( mode ) || SDB_LOB_MODE_SHAREREAD == mode )
          {
-            BSONArray array ;
-            rc = _getLockSections().saveTo( array ) ;
-            if ( SDB_OK != rc )
+            if (!_getSectionMgr().isEmpty())
             {
-               PD_LOG( PDERROR, "Failed to save LobSections, rc=%d", rc ) ;
-               goto error ;
+               rc = _getSectionMgr().toBSONObjBuilder( builder ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to save LobSections, rc=%d", rc ) ;
+                  goto error ;
+               }
             }
-
-            builder.appendArray( FIELD_NAME_LOB_LOCK_SECTIONS, array ) ;
          }
       }
+
       obj = builder.obj() ;
 
       _initHeader( header, MSG_BS_LOB_OPEN_REQ,
@@ -1454,8 +1455,8 @@ namespace engine
          // See also _rtnContextShdOfLob::update().
          rc = _update( tuple, cb ) ;
       }
-      else if ( SDB_LOB_MODE_WRITE == _getMode() ||
-                SDB_LOB_MODE_TRUNCATE == _getMode() )
+      else if ( SDB_HAS_LOBWRITE_MODE( _getMode() )
+                || SDB_LOB_MODE_TRUNCATE == _getMode() )
       {
          rc = _update( tuple, cb ) ;
       }
@@ -1553,6 +1554,92 @@ namespace engine
    done:
       _clearMsgData() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_LOCK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordLobStream::_getRTDetail( _pmdEDUCB *cb, bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+
+      MsgOpLob header ;
+      UINT32 groupID = 0 ;
+      const subStream *sub = NULL ;
+      const MsgOpReply *reply = NULL ;
+
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
+      pmdSubSession *pSub = NULL ;
+
+      /// reset retry times
+      pCtrl->resetRetry() ;
+      _initHeader( header, MSG_BS_LOB_GETRTDETAIL_REQ,
+                   0, -1, sizeof( header ) ) ;
+      do
+      {
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         header.version = _cataInfo->getVersion() ;
+         rc = _getLobGroupID( getOID(), DMS_LOB_META_SEQUENCE, groupID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = _getSubStream( groupID, &sub, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get sub stream:%d", rc ) ;
+            goto error ;
+         }
+
+         header.contextID = sub->contextID ;
+
+         pSub = pSession->addSubSession( sub->id.value ) ;
+         pSub->setReqMsg( &( header.header ), PMD_EDU_MEM_NONE ) ;
+
+         rc = pSession->sendMsg( pSub ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Send msg to node[%d:%d] failed, rc:%d",
+                    sub->id.columns.groupID, sub->id.columns.nodeID, rc ) ;
+            goto error ;
+         }
+
+         rc = _getReply( cb, TRUE, tag ) ;
+         pCtrl->incRetry() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get reply msg, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( RETRY_TAG_NULL == tag )
+         {
+            SDB_ASSERT( 1 == _results.size(), "impossible" ) ;
+            reply = _results.empty() ? NULL :
+                    (MsgOpReply*)((*_results.begin())._Data ) ;
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to reopen sub streams, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+      } while ( TRUE ) ;
+
+      rc = _extractDetail( reply, detail ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extract detail from reply msg:rc=%d",
+                   rc ) ;
+
+   done:
+      _clearMsgData() ;
       return rc ;
    error:
       goto done ;
@@ -1735,6 +1822,45 @@ namespace engine
       _groupSession.resetSubSession() ;
       _subs.clear() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_CLOSESUBSTREAMWITHEXCEP, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordLobStream::_extractDetail( const MsgOpReply *header,
+                                          bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *detailRaw = NULL ;
+
+      if ( NULL == header )
+      {
+         PD_LOG( PDERROR, "header is NULL" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( ( UINT32 )header->header.messageLength < sizeof( MsgOpReply ) + 5 )
+      {
+         PD_LOG( PDERROR, "invalid msg length:%d",
+                 header->header.messageLength ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      detailRaw = ( const CHAR * )header + sizeof( MsgOpReply ) ;
+      try
+      {
+         detail = BSONObj( detailRaw ).getOwned() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
       return rc ;
    error:
       goto done ;

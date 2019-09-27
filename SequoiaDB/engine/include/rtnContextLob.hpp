@@ -82,6 +82,8 @@ namespace engine
                   INT64 offset,
                   INT64 length ) ;
 
+      INT32 getRTDetail( _pmdEDUCB *cb, BSONObj &detail ) ;
+
       INT32 close( _pmdEDUCB *cb ) ;
 
       INT32 getLobMetaData( BSONObj &meta ) ;

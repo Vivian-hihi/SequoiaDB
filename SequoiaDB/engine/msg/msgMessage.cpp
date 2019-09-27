@@ -2601,6 +2601,30 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTGETLOBRTDETAILREQ, "msgExtractGetLobRTDetailRequest" )
+INT32 msgExtractGetLobRTDetailRequest( const CHAR *pBuffer,
+                                       const MsgOpLob **header )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTGETLOBRTDETAILREQ ) ;
+   SDB_ASSERT( NULL != pBuffer && NULL != header, "cat not be null" ) ;
+
+   BSONObj lob ;
+
+   rc = msgExtractLobRequest( pBuffer, header, lob, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTGETLOBRTDETAILREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTCLOSELOBREQ, "msgExtractCloseLobRequest" )
 INT32 msgExtractCloseLobRequest( const CHAR *pBuffer, const MsgOpLob **header )
 {

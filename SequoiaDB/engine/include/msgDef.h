@@ -455,6 +455,14 @@
 #define FIELD_NAME_LOB_OFFSET                "Offset"
 #define FIELD_NAME_LOB_LENGTH                "Length"
 #define FIELD_NAME_LOB_ACCESSID              "AccessId"
+#define FIELD_NAME_LOB_REFCOUNT              "RefCount"
+#define FIELD_NAME_LOB_READCOUNT             "ReadCount"
+#define FIELD_NAME_LOB_WRITECOUNT            "WriteCount"
+#define FIELD_NAME_LOB_SHAREREADCOUNT        "ShareReadCount"
+#define FIELD_NAME_LOB_SECTION_BEGIN         "Begin"
+#define FIELD_NAME_LOB_SECTION_END           "End"
+#define FIELD_NAME_LOB_LOCK_TYPE             "LockType"
+#define FIELD_NAME_LOB_ACCESSINFO            "AccessInfo"
 #define FIELD_NAME_AUTO_INDEX_ID             "AutoIndexId"
 #define FIELD_NAME_REELECTION_TIMEOUT        "Seconds"
 #define FIELD_NAME_REELECTION_LEVEL          "Level"
@@ -801,15 +809,9 @@ enum SDB_LOB_MODE
    SDB_LOB_MODE_READ       = 0x00000004,
    SDB_LOB_MODE_WRITE      = 0x00000008,
    SDB_LOB_MODE_REMOVE     = 0x00000010,
-   SDB_LOB_MODE_TRUNCATE   = 0x00000020
+   SDB_LOB_MODE_TRUNCATE   = 0x00000020,
+   SDB_LOB_MODE_SHAREREAD  = 0x00000040,
 } ;
-
-#define SDB_IS_VALID_LOB_MODE( mode ) \
-   ( SDB_LOB_MODE_READ == ( mode ) || \
-     SDB_LOB_MODE_CREATEONLY == ( mode ) || \
-     SDB_LOB_MODE_WRITE == ( mode ) || \
-     SDB_LOB_MODE_REMOVE == ( mode ) || \
-     SDB_LOB_MODE_TRUNCATE == ( mode ) )
 
 #define SDB_ANALYZE_MODE_SAMPLE     ( 1 )
 #define SDB_ANALYZE_MODE_FULL       ( 2 )
@@ -835,7 +837,7 @@ enum SDB_LOB_MODE
 #define SDB_CATALOG_CL_ID_INDEX     "id index"
 #define SDB_CATALOG_CL_SHARDING     "sharding"
 #define SDB_CATALOG_CL_COMPRESS     "compression"
-#define SDB_CATALOG_CL_AUTOINC_FLD 	"autoincrement"
+#define SDB_CATALOG_CL_AUTOINC_FLD  "autoincrement"
 
 #define SDB_CATALOG_CS_DOMAIN    SDB_CATALOG_DOMAIN
 #define SDB_CATALOG_CS_CAPPED    "capped"

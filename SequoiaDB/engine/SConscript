@@ -192,7 +192,8 @@ utilFiles = [
       "util/utilInsertResult.cpp",
       "util/utilResult.cpp",
       "util/utilTypeCast.c",
-      "util/utilLobID.cpp"
+      "util/utilLobID.cpp",
+      "util/utilSectionMgr.cpp"
       ]
 
 rtnFiles = [
@@ -267,7 +268,6 @@ rtnFiles = [
       "rtn/rtnLobAccessManager.cpp",
       "rtn/rtnLobPieces.cpp",
       "rtn/rtnLobMetaCache.cpp",
-      "rtn/rtnLobSections.cpp",
       "rtn/rtnIxmKeySorter.cpp",
       "rtn/rtnDictCreatorJob.cpp",
       "rtn/rtnAnalyze.cpp",
@@ -283,7 +283,8 @@ rtnFiles = [
       "rtn/rtnAlter.cpp",
       "rtn/rtnContextAlter.cpp",
       "rtn/rtnExtContext.cpp",
-      "rtn/rtnTSClt.cpp"
+      "rtn/rtnTSClt.cpp",
+      "rtn/rtnLobLockSectionMgr.cpp"
       ]
 
 msgFiles = [

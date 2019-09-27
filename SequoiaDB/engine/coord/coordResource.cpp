@@ -1247,13 +1247,14 @@ namespace engine
          rc = rtnGetMore( contextID, 1, buffObj, cb, rtnCB ) ;
          if ( rc )
          {
-            contextID = -1 ;
             if ( SDB_DMS_EOC != rc )
             {
                PD_LOG( PDERROR, "Get more from context[%lld] failed, rc: %d",
                        contextID ) ;
+               contextID = -1;
                goto error ;
             }
+            contextID = -1 ;
             rc = SDB_OK ;
             break ;
          }

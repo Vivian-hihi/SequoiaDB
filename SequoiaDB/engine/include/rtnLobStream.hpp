@@ -39,8 +39,9 @@
 #include "rtnLobWindow.hpp"
 #include "rtnLobDataPool.hpp"
 #include "rtnLobPieces.hpp"
-#include "rtnLobSections.hpp"
+#include "utilSectionMgr.hpp"
 #include "msgDef.hpp"
+#include "rtnLob.hpp"
 #include "../bson/bson.hpp"
 
 namespace engine
@@ -81,6 +82,8 @@ namespace engine
       INT32 lock( _pmdEDUCB *cb,
                   INT64 offset,
                   INT64 length ) ;
+
+      INT32 getRTDetail( _pmdEDUCB *cb, bson::BSONObj &detail ) ;
 
       /// buf may be invalid when do next read.
       /// copy data to your own buf if necessary.
@@ -128,7 +131,7 @@ namespace engine
 
       OSS_INLINE BOOLEAN isReadonly() const
       {
-         return SDB_LOB_MODE_READ == _mode ? TRUE : FALSE ;
+         return SDB_IS_LOBREADONLY_MODE( _mode ) ;
       }
 
       virtual void   getErrorInfo( INT32 rc,
@@ -178,9 +181,9 @@ namespace engine
          return _lobPieces ;
       }
 
-      OSS_INLINE _rtnLobSections &_getLockSections()
+      OSS_INLINE _utilSectionMgr &_getSectionMgr()
       {
-         return _lockSections ;
+         return _sectionMgr ;
       }
 
       OSS_INLINE INT32 _getMode() const
@@ -244,6 +247,8 @@ namespace engine
       virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                               _pmdEDUCB *cb ) = 0 ;
 
+      virtual INT32 _getRTDetail( _pmdEDUCB *cb, bson::BSONObj &detail ) = 0 ;
+
    private:
       INT32 _readFromPool( UINT32 len,
                            _rtnContextBase *context,
@@ -270,6 +275,9 @@ namespace engine
       INT32 _writeOrUpdateV( RTN_LOB_TUPLES &tuples,
                             _pmdEDUCB *cb ) ;
 
+      INT64 _calculateLockedLobLen( INT64 lobLen, BOOLEAN wholeLobLocked,
+                                    INT64 lockedEnd ) ;
+
    private:
       INT64                _uniqueId ;
       CHAR                 _fullName[ DMS_COLLECTION_SPACE_NAME_SZ +
@@ -290,8 +298,9 @@ namespace engine
       _rtnLobPiecesInfo    _lobPieces ;
       BOOLEAN              _hasPiecesInfo ;
 
-      _rtnLobSections      _lockSections ;
+      _utilSectionMgr      _sectionMgr ;
       BOOLEAN              _wholeLobLocked ;
+
       BOOLEAN              _truncated ;
    } ;
    typedef class _rtnLobStream rtnLobStream ;

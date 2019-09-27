@@ -152,6 +152,22 @@ namespace engine
    typedef _coordTruncateLob coordTruncateLob ;
 
    /*
+      _coordGetLobRTDetail define
+   */
+   class _coordGetLobRTDetail : public _coordOperator
+   {
+      public:
+         _coordGetLobRTDetail() ;
+         virtual ~_coordGetLobRTDetail() ;
+      public:
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordGetLobRTDetail coordGetLobRTDetail ;
+
+   /*
       _coordCreateLobID define
    */
    class _coordCreateLobID : public _coordOperator
