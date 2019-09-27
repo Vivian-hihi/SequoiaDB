@@ -1586,7 +1586,14 @@
 
                for ( var key in formVal2 )
                {
-                  if ( key == 'address' )
+                  if ( key == 'address' ||
+                       ( key == 'sequoiadb_use_partition' && formVal2['sequoiadb_use_partition'] == "ON" ) ||
+                       ( key == 'sequoiadb_use_bulk_insert' && formVal2['sequoiadb_use_bulk_insert'] == "ON" ) ||
+                       ( key == 'sequoiadb_bulk_insert_size' && formVal2['sequoiadb_bulk_insert_size'] == 2000 ) ||
+                       ( key == 'sequoiadb_replica_size' && formVal2['sequoiadb_replica_size'] == 1 ) ||
+                       ( key == 'sequoiadb_selector_pushdown_threshold' && formVal2['sequoiadb_selector_pushdown_threshold'] == 30 ) ||
+                       ( key == 'sequoiadb_debug_log' && formVal2['sequoiadb_debug_log'] == "OFF" )
+                     )
                   {
                      continue ;
                   }
