@@ -163,7 +163,7 @@ public class BucketController {
             throws S3ServerException{
         restUtils.getOperatorByAuthorization(authorization);
         logger.error("bucketRejectCopy: need a key name.");
-        throw new S3ServerException(S3Error.NEED_A_KEY, "need a key");
+        throw new S3ServerException(S3Error.OBJECT_COPY_INVALID_DEST, "You can only specify a copy source header for copy requests.");
     }
 
 

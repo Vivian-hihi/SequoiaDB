@@ -124,7 +124,8 @@ public enum S3Error {
     OBJECT_COPY_INVALID_DIRECTIVE(-661, "InvalidArgument", "Unknown metadata directive."),
     OBJECT_COPY_WITHOUT_CHANGE(-662, "InvalidRequest", "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata."),
     OBJECT_COPY_DELETE_MARKER(-663, "InvalidRequest", "The source of a copy request may not specifically refer to a delete marker by version id."),
-    OBJECT_COPY_INVALID_SOURCE(-664, "InvalidArgument", "Copy source must mention the source bucket and key: sourcebucket/sourcekey ."),
+    OBJECT_COPY_INVALID_SOURCE(-664, "InvalidArgument", "Copy source must mention the source bucket and key: sourcebucket/sourcekey."),
+    OBJECT_COPY_INVALID_DEST(-665, "InvalidArgument", "You can only specify a copy source header for copy requests."),
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Non-admin users cannot do this operator."),
@@ -152,6 +153,7 @@ public enum S3Error {
     MALFORMED_XML(-902, "MalformedXML", "The XML you provided was not well-formed or did not validate against our published schema."),
     NEED_A_KEY(-903, "InvalidRequest", "A key must be specified."),
     PARAMETER_NOT_SUPPORT(-904, "ParameterNotAllowed", "The specified parameter is not supported.");
+
 
     private int errIndex;
     private String code;

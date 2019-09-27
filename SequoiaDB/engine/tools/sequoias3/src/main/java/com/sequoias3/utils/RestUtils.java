@@ -184,6 +184,7 @@ public class RestUtils {
             case NEED_A_KEY:
             case OBJECT_INVALID_ENCODING_TYPE:
             case PARAMETER_NOT_SUPPORT:
+            case OBJECT_COPY_INVALID_DEST:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
