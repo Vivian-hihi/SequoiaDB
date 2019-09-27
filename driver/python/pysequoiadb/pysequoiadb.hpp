@@ -84,7 +84,7 @@ __METHOD_DECLARE(cl_split_async_by_condition) ;
 __METHOD_DECLARE(cl_split_async_by_percent) ;
 __METHOD_DECLARE(cl_bulk_insert) ;
 __METHOD_DECLARE(cl_insert) ;
-__METHOD_DECLARE(cl_insert_with_flags) ;
+__METHOD_DECLARE(cl_insert_with_flag) ;
 __METHOD_DECLARE(cl_update) ;
 __METHOD_DECLARE(cl_upsert) ;
 __METHOD_DECLARE(cl_del) ;

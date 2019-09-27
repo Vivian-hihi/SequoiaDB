@@ -282,29 +282,30 @@ class collection(object):
 
         return task_id
 
-    def bulk_insert(self, flags , records):
+    def bulk_insert(self, flag , records):
         """Insert a bulk of record into current collection.
 
         Parameters:
            Name        Type       Info:
-           flags       int        See Info as below.
+           flag        int        See Info as below.
            records     list/tuple The list of inserted records.
         Return values:
-           Empty dict: when flags is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
-           Dict which contains the field "_id": when flags "INSERT_FLG_RETURN_OID" is set, return all the values of "_id"
+           Empty dict: when flag is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
+           Dict which contains the field "_id": when flag "INSERT_FLG_RETURN_OID" is set, return all the values of "_id"
            field in a dict. eg: { '_id': [ObjectId('5d514a25c764c60acb58de38'), ObjectId('5d514a25c764c60acb58de39')]}.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         Info:
-           flags :
-           INSERT_FLG_DEFAULT : While INSERT_FLG_DEFAULT is set, database will stop inserting when some records hit index
-               key duplicate error.
-           INSERT_FLG_CONTONDUP : If some records hit index key duplicate error, database will skip them and go on inserting.
-           INSERT_FLG_RETURN_OID : Return the value of "_id" field in the records.
-           INSERT_FLG_REPLACEONDUP : If the records hit index key duplicate error, database will replace the existing records by
-               the inserting new records.
+           The flag to control the behavior of inserting. The value of flag default to be INSERT_FLG_DEFAULT, and it can
+           choose the follow values:
+             INSERT_FLG_DEFAULT : While INSERT_FLG_DEFAULT is set, database will stop inserting when the record hit index
+                 key duplicate error.
+             INSERT_FLG_CONTONDUP : If the record hit index key duplicate error, database will skip it.
+             INSERT_FLG_RETURN_OID : Return the value of "_id" field in the record.
+             INSERT_FLG_REPLACEONDUP : If the record hit index key duplicate error, database will replace the existing record by
+                 the inserting new record and then go on inserting.
         """
-        if not isinstance(flags, int):
+        if not isinstance(flag, int):
             raise SDBTypeError("flags must be an instance of int")
 
         container = []
@@ -314,7 +315,7 @@ class collection(object):
             record = bson.BSON.encode(elem)
             container.append(record)
 
-        rc, bson_string = sdb.cl_bulk_insert(self._cl, flags, container)
+        rc, bson_string = sdb.cl_bulk_insert(self._cl, flag, container)
         raise_if_error(rc, "Failed to insert records")
         result, size = bson._bson_to_dict(bson_string, dict, False,
                                           bson.OLD_UUID_SUBTYPE, True)
@@ -340,35 +341,36 @@ class collection(object):
         oid = bson.ObjectId(id_str)
         return oid
 
-    def insert_with_flags(self, record, flags=INSERT_FLG_DEFAULT):
+    def insert_with_flag(self, record, flag=INSERT_FLG_DEFAULT):
         """Insert a record into current collection.
 
          Parameters:
             Name      Type    Info:
-            records   dict    The inserted record.
-            flags     int     See Info as below.
+            record    dict    The inserted record.
+            flag      int     See Info as below.
          Return values:
-           Empty dict: when flags is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
-           Dict which contains the field "_id": when flags "INSERT_FLG_RETURN_OID" is set,return all the values of "_id"
+           Empty dict: when flag is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
+           Dict which contains the field "_id": when flag "INSERT_FLG_RETURN_OID" is set,return all the values of "_id"
            field in a dict. eg:{ '_id': ObjectId('5d5149ade3071dce3692e93b') }.
          Exceptions:
             pysequoiadb.error.SDBBaseError
          Info:
-           flags :
-           INSERT_FLG_DEFAULT : While INSERT_FLG_DEFAULT is set, database will stop inserting when the record hit index
-               key duplicate error.
-           INSERT_FLG_CONTONDUP : If the record hit index key duplicate error, database will skip it.
-           INSERT_FLG_RETURN_OID : Return the value of "_id" field in the record.
-           INSERT_FLG_REPLACEONDUP : If the record hit index key duplicate error, database will replace the existing record by
-               the inserting new record and then go on inserting.
+           The flag to control the behavior of inserting. The value of flag default to be INSERT_FLG_DEFAULT, and it can
+           choose the follow values:
+             INSERT_FLG_DEFAULT : While INSERT_FLG_DEFAULT is set, database will stop inserting when the record hit index
+                 key duplicate error.
+             INSERT_FLG_CONTONDUP : If the record hit index key duplicate error, database will skip it.
+             INSERT_FLG_RETURN_OID : Return the value of "_id" field in the record.
+             INSERT_FLG_REPLACEONDUP : If the record hit index key duplicate error, database will replace the existing record by
+                 the inserting new record and then go on inserting.
          """
         if not isinstance(record, dict):
             raise SDBTypeError("record must be an instance of dict")
-        if not isinstance(flags, int):
+        if not isinstance(flag, int):
             raise SDBTypeError("flags must be an instance of int")
 
         bson_record = bson.BSON.encode(record)
-        rc, bson_string = sdb.cl_insert_with_flags(self._cl, bson_record, flags)
+        rc, bson_string = sdb.cl_insert_with_flag(self._cl, bson_record, flag)
         raise_if_error(rc, "Failed to insert record")
         result, size = bson._bson_to_dict(bson_string, dict, False,
                                           bson.OLD_UUID_SUBTYPE, True)

@@ -2262,7 +2262,7 @@ done:
    return MAKE_RETURN_INT_PYSTRING( rc, id.toString().c_str() ) ;
 }
 
-__METHOD_IMP(cl_insert_with_flags)
+__METHOD_IMP(cl_insert_with_flag)
 {
    INT32 rc                    = 0 ;
    INT32 flags                 = 0 ;
@@ -5146,7 +5146,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_split_async_by_percent",       cl_split_async_by_percent,       METH_VARARGS},
    {"cl_bulk_insert",                  cl_bulk_insert,                  METH_VARARGS},
    {"cl_insert",                       cl_insert,                       METH_VARARGS},
-   {"cl_insert_with_flags",            cl_insert_with_flags,            METH_VARARGS},
+   {"cl_insert_with_flag",            cl_insert_with_flag,            METH_VARARGS},
    {"cl_update",                       cl_update,                       METH_VARARGS},
    {"cl_upsert",                       cl_upsert,                       METH_VARARGS},
    {"cl_delete",                       cl_del,                          METH_VARARGS},
