@@ -36,9 +36,21 @@
    Last Changed =
 
 *******************************************************************************/
+/*
+#include "core.hpp"
+#include "ossUtil.hpp"
+#include "ossProc.hpp"
+#include "ossMem.hpp"
+
+#include "utilNodeOpr.hpp"
+#include "utilCommon.hpp"
+
+#include "utilParam.hpp"
+
+*/
+
 #include "ossVer.h"
 #include "omToolCmdBase.hpp"
-#include "utilCommon.hpp"
 
 namespace omTool
 {
@@ -88,7 +100,7 @@ namespace omTool
          getOmToolCmdBuilder()->release( cmd ) ;
          cmd = NULL ;
       }
-      return SDB_OK == rc ? 0 : engine::utilRC2ShellRC( rc ) ;
+      return rc ;
    error:
       goto done ;
    }
