@@ -181,7 +181,7 @@ function getnodeaddrs()
     nodesconf=($(ssh ${USER}@${host} "ls ${sdbpath}/conf/local"))
     for nodeconf in ${nodesconf[*]}
     do
-        nodeinfo=$(ssh ${USER}@${host} "cat ${sdbpath}/conf/local/${nodeconf}/sdb.conf")
+        nodeinfo=$(ssh ${USER}@${host} "cat ${sdbpath}/conf/local/${nodeconf}/sdb.conf | sed 's/ //g'")
         svcname=$(echo "${nodeinfo}" | grep svcname | sed 's/svcname=//g')
         nodetype=$(echo "${nodeinfo}" | grep role | sed 's/role=//g')
         nodeaddrs[${count}]=${svcname}":"${nodetype}
