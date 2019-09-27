@@ -345,6 +345,7 @@ namespace omTool
       INT32 rc = SDB_OK ;
       SDB_OSS_FILETYPE type ;
       multimap< string, string > mapFiles ;
+      vector< string > dirs ;
 
       rc = ossAccess( path ) ;
       if ( rc )
@@ -369,13 +370,27 @@ namespace omTool
       }
 
       rc = ossEnumFiles( path, mapFiles, NULL, 1 ) ;
-      if( SDB_OK != rc )
+      if( rc )
       {
-         cout << "Failed to enum dir" << endl ;
+         cout << "Failed to enum files" << endl ;
          goto error ;
       }
 
       if ( !mapFiles.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         cout << "path is not empty" << endl ;
+         goto error ;
+      }
+
+      rc = ossEnumSubDirs( path, dirs, 1 ) ;
+      if( rc )
+      {
+         cout << "Failed to enum dirs" << endl ;
+         goto error ;
+      }
+
+      if ( !dirs.empty() )
       {
          rc = SDB_INVALIDARG ;
          cout << "path is not empty" << endl ;
