@@ -608,7 +608,8 @@ namespace engine
    }
 
    void _optCachedPlanActivity::setQueryActivity (
-                                    const optQueryActivity &queryActivity )
+                                    const optQueryActivity &queryActivity,
+                                    const rtnParamList &parameters )
    {
       if ( !isEmpty() )
       {
@@ -626,11 +627,13 @@ namespace engine
               !_minQueryActivity.isValid() )
          {
             _minQueryActivity = queryActivity ;
+            _minQueryActivity.setParameters( parameters ) ;
          }
          if ( queryActivity.getQueryTime() > _maxQueryActivity.getQueryTime() ||
               !_maxQueryActivity.isValid() )
          {
             _maxQueryActivity = queryActivity ;
+            _maxQueryActivity.setParameters( parameters ) ;
          }
          incAccessCount() ;
       }
@@ -1334,7 +1337,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_SETQUERYACT, "_optAccessPlanManager::setQueryActivity" )
    void _optAccessPlanManager::setQueryActivity ( INT32 activityID,
-                                                  const optQueryActivity &queryActivity )
+                                                  const optQueryActivity &queryActivity,
+                                                  const rtnParamList &parameters )
    {
       PD_TRACE_ENTRY( SDB_OPTAPM_SETQUERYACT ) ;
 
@@ -1343,7 +1347,7 @@ namespace engine
          optCachedPlanActivity *activity = _monitor.getActivity( activityID ) ;
          if ( NULL != activity )
          {
-            activity->setQueryActivity( queryActivity ) ;
+            activity->setQueryActivity( queryActivity, parameters ) ;
          }
       }
 

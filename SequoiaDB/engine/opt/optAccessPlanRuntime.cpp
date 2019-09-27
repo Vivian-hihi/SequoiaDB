@@ -54,9 +54,11 @@ namespace engine
    /*
       _optQueryActivity implement
     */
+   static BSONObj s_emptyParameters ;
+
    _optQueryActivity::_optQueryActivity ()
    : _optrType( MON_COUNTER_OPERATION_NONE ),
-     _parameters(),
+     _parameters( s_emptyParameters ),
      _returnOptions(),
      _contextMonitor(),
      _hitEnd( FALSE )
@@ -64,19 +66,15 @@ namespace engine
    }
 
    _optQueryActivity::_optQueryActivity ( MON_OPERATION_TYPES optrType,
-                                          const rtnParamList &parameters,
                                           const monContextCB &monCtxCB,
                                           const rtnReturnOptions &returnOptions,
                                           BOOLEAN hitEnd )
    : _optrType( optrType),
+     _parameters( s_emptyParameters ),
      _returnOptions( returnOptions ),
      _contextMonitor( monCtxCB ),
      _hitEnd( hitEnd )
    {
-      if ( !parameters.isEmpty() )
-      {
-         _parameters = parameters.toBSON() ;
-      }
    }
 
    _optQueryActivity::~_optQueryActivity ()
@@ -86,7 +84,7 @@ namespace engine
    void _optQueryActivity::reset ()
    {
       _optrType = MON_COUNTER_OPERATION_NONE ;
-      _parameters = BSONObj() ;
+      _parameters = s_emptyParameters ;
       _contextMonitor.reset() ;
       _returnOptions.reset() ;
       _hitEnd = FALSE ;
@@ -164,6 +162,18 @@ namespace engine
       builder.append( OPT_FIELD_RETURN_NUM,
                       (INT64)_contextMonitor.getReturnRecords() ) ;
       builder.appendBool( OPT_FIELD_HIT_END, _hitEnd ) ;
+   }
+
+   void _optQueryActivity::setParameters ( const rtnParamList & parameters )
+   {
+      if ( parameters.isEmpty() )
+      {
+         _parameters = s_emptyParameters ;
+      }
+      else
+      {
+         _parameters = parameters.toBSON() ;
+      }
    }
 
    /*
@@ -377,9 +387,10 @@ namespace engine
    {
       if ( canSetQueryActivity() )
       {
-         optQueryActivity queryActivity( optrType, getParameters(),
-                                         monCtxCB, returnOptions, hitEnd ) ;
-         _apm->setQueryActivity( _plan->getActivityID(), queryActivity ) ;
+         optQueryActivity queryActivity( optrType, monCtxCB, returnOptions,
+                                         hitEnd ) ;
+         _apm->setQueryActivity( _plan->getActivityID(), queryActivity,
+                                 getParameters() ) ;
          _hasQueryActivity = TRUE ;
       }
    }

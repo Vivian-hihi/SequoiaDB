@@ -181,7 +181,8 @@ namespace engine
             return ( NULL == _pPlan ) ;
          }
 
-         void setQueryActivity ( const optQueryActivity &queryActivity ) ;
+         void setQueryActivity ( const optQueryActivity &queryActivity,
+                                 const rtnParamList &parameters ) ;
 
          void toBSON ( BSONObjBuilder &builder ) ;
 
@@ -388,7 +389,8 @@ namespace engine
          void invalidateAllPlans () ;
 
          void setQueryActivity ( INT32 activityID,
-                                 const optQueryActivity &queryActivity ) ;
+                                 const optQueryActivity &queryActivity,
+                                 const rtnParamList &parameters ) ;
 
       public :
          // For _IDmsEventHandler

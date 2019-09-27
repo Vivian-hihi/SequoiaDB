@@ -65,7 +65,6 @@ namespace engine
          _optQueryActivity () ;
 
          _optQueryActivity ( MON_OPERATION_TYPES optrType,
-                             const rtnParamList &parameters,
                              const monContextCB &monCtxCB,
                              const rtnReturnOptions &returnOptions,
                              BOOLEAN hitEnd ) ;
@@ -87,6 +86,8 @@ namespace engine
          {
             return _parameters ;
          }
+
+         void setParameters ( const rtnParamList & parameters ) ;
 
          OSS_INLINE const ossTickDelta & getQueryTime () const
          {
