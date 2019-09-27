@@ -7,8 +7,8 @@
         2018-4-26 XiaoNi Huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../func.php';
+
+include_once dirname(__FILE__).'/../func.php';
 
 class CSOperator15158_02 extends BaseOperator 
 {  

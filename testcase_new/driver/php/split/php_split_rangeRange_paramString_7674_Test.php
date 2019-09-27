@@ -11,9 +11,9 @@
         2016-4-29 XiaoNi Huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
+
 include_once "func.php";
-include_once Cur_Path.'/../func.php';
+include_once dirname(__FILE__).'/../func.php';
 
 class SplitOper04 extends BaseOperator 
 {  

@@ -13,8 +13,8 @@
         2016-4-18 XiaoNi Huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../func.php';
+
+include_once dirname(__FILE__).'/../func.php';
 
 class DomainOper03 extends BaseOperator 
 {  

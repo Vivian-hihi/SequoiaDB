@@ -6,10 +6,10 @@
 ****************************************************/
 
 <?php
-   define('Cur_Path', dirname(__FILE__));
-   include_once Cur_Path.'/lib/task.php';
-   include_once Cur_Path.'/lib/comm.php';
-   include_once Cur_Path.'/../global.php';
+   
+   include_once dirname(__FILE__).'/lib/task.php';
+   include_once dirname(__FILE__).'/lib/comm.php';
+   include_once dirname(__FILE__).'/../global.php';
 class taskTest extends PHPUnit_Framework_TestCase
 {
     private static $db;

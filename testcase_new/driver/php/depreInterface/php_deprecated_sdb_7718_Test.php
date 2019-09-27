@@ -9,8 +9,8 @@
         2016-4-29 XiaoNi Huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../func.php';
+
+include_once dirname(__FILE__).'/../func.php';
 
 class DepreOperator01 extends BaseOperator 
 {  

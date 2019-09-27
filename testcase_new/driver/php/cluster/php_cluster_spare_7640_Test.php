@@ -5,9 +5,9 @@
         2016-4-27 wenjing wang init
 ****************************************************/
 <?php
- define('Cur_Path', dirname(__FILE__));
- include_once Cur_Path.'/../commlib/ReplicaGroupMgr.php';
- include_once Cur_Path.'/../global.php';
+ 
+ include_once dirname(__FILE__).'/../commlib/ReplicaGroupMgr.php';
+ include_once dirname(__FILE__).'/../global.php';
 
 class spareRGTest extends PHPUnit_Framework_TestCase
 {

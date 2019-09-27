@@ -10,8 +10,8 @@
         2016-10-18 XiaoNi Huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../func.php';
+
+include_once dirname(__FILE__).'/../func.php';
 
 class SdbConnect03 extends BaseOperator 
 {  

@@ -5,8 +5,8 @@
         2018-11-19 Luweikang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../global.php';
+
+include_once dirname(__FILE__).'/../global.php';
 
 class TestTimestamp16646 extends PHPUnit_Framework_TestCase
 {

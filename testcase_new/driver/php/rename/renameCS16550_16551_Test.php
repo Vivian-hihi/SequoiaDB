@@ -7,8 +7,8 @@
         2018-11-13 Luweikang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../global.php';
+
+include_once dirname(__FILE__).'/../global.php';
 
 class Rename16550_16551 extends PHPUnit_Framework_TestCase
 {

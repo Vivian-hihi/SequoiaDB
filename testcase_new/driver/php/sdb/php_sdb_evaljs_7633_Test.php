@@ -5,9 +5,9 @@
         2016-6-13 wenjing wang init
 ****************************************************/
 <?php
-   define('Cur_Path', dirname(__FILE__));
-   include_once Cur_Path.'/lib/comm.php';
-   include_once Cur_Path.'/../global.php';
+   
+   include_once dirname(__FILE__).'/lib/comm.php';
+   include_once dirname(__FILE__).'/../global.php';
 class evalJsTest extends PHPUnit_Framework_TestCase
 {
     protected $db;

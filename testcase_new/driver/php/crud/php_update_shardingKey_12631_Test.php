@@ -5,8 +5,8 @@
         2017-11-28 xiaoni huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../func.php';
+
+include_once dirname(__FILE__).'/../func.php';
 
 class UpdateShardingKey12631 extends BaseOperator 
 {  

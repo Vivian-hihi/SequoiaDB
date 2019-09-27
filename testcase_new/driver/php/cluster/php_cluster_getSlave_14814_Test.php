@@ -7,8 +7,8 @@
       2018-03-21  Suqiang Ling init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../global.php';
+
+include_once dirname(__FILE__).'/../global.php';
 
 class TestGetSlave14814 extends PHPUnit_Framework_TestCase
 {

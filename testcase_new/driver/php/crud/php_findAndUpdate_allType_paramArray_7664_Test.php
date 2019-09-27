@@ -15,8 +15,8 @@
         2016-4-22 XiaoNi Huang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/../func.php';
+
+include_once dirname(__FILE__).'/../func.php';
 
 class DataOperator06 extends BaseOperator 
 {  
