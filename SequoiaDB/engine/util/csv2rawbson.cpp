@@ -66,8 +66,8 @@
 #define RELATIVE_HOUR 24
 #define RELATIVE_MIN_SEC 60
 
-#define TIME_MAX_NUM  2147356800
-#define TIME_MIX_NUM (-2209017600)
+#define TIME_MAX_NUM ((INT64)2147356800)
+#define TIME_MIN_NUM ((INT64)-2209017600)
 
 const CHAR *_pCSVTYPESTR[] = {
    CSV_STR_INT,         CSV_STR_INTEGER,        CSV_STR_LONG,
@@ -1343,10 +1343,10 @@ INT32 csvParser::_string2timestamp2( _csvTimestamp &value,
    temp1 = varLong / 1000 ;
    temp2 = varLong - ( temp1 * 1000 ) ;
 
-   if ( varLong < TIME_MIX_NUM )
+   if ( temp1 < TIME_MIN_NUM )
    {
-      PD_LOG ( PDERROR, "The time stamp %lld is greater than %d000",
-               varLong, TIME_MIX_NUM ) ;
+      PD_LOG ( PDERROR, "The time stamp %lld is smaller than %lld",
+               varLong, TIME_MIN_NUM ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -1354,7 +1354,7 @@ INT32 csvParser::_string2timestamp2( _csvTimestamp &value,
    if ( ( temp1 > TIME_MAX_NUM ) ||
         ( ( temp1 == TIME_MAX_NUM ) && temp2 > 0 ) )
    {
-      PD_LOG ( PDERROR, "The time stamp %lld is greater than %d000",
+      PD_LOG ( PDERROR, "The time stamp %lld is greater than %lld000",
                varLong, TIME_MAX_NUM ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -1461,10 +1461,10 @@ INT32 csvParser::_string2date2( INT64 &value, CHAR *pBuffer, INT32 size )
       value = (INT64)valueInt ;
    }
 
-   if ( value < TIME_MIX_NUM )
+   if ( value < TIME_MIN_NUM )
    {
       PD_LOG ( PDERROR, "The time stamp %lld is greater than %d",
-               value, TIME_MIX_NUM ) ;
+               value, TIME_MIN_NUM ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
