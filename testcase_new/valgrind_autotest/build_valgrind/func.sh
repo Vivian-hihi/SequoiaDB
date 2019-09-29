@@ -192,9 +192,9 @@ function getnodeaddrs()
     done
 }
 
-function startvalgrind()
+function start_valgrind()
 {
-    stop_valgrind
+    # stop_valgrind
     for host in ${host_address[*]}
     do
         getnodeaddrs ${host}

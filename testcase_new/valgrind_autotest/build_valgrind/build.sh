@@ -33,7 +33,7 @@ if [[ "${needcover}"M = "true"M || "${needinstall}"M = "true"M ]];then
 fi
 
 # Start valgrind and run testcase then stop
-startvalgrind
+start_valgrind
 runtestcase
 stop_valgrind
 
