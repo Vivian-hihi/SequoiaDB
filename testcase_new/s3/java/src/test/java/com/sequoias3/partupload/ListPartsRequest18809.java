@@ -7,6 +7,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListPartsRequest;
@@ -68,6 +69,17 @@ public class ListPartsRequest18809 extends S3TestBase {
             Assert.fail("when keyName is null, it should fail.");
         } catch (IllegalArgumentException e) {
             Assert.assertEquals(e.getMessage(), "The key parameter must be specified when listing parts");
+        }
+
+        // key取值为空串
+        request = new ListPartsRequest(bucketName, "", uploadId);
+        try {
+            s3Client.listParts(request);
+            Assert.fail("when keyName is '', it should fail.");
+        } catch (AmazonServiceException e) {
+            if (!e.getErrorCode().equals("InvalidRequest") || !e.getErrorMessage().equals("A key must be specified.")) {
+                throw e;
+            }
         }
 
         runSuccess = true;

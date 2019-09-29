@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -55,13 +56,14 @@ public class AbortMultipartUploadRequest18812 extends S3TestBase {
         // a.接口参数取值合法---已在功能测试中验证
         // b.接口参数取值非法---对象名为空串""，null
         AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(bucketName, "", uploadId);
-        // SEQUOIADBMAINSTREAM-4791
-        // 【BUG】【new】【story】【S3分段上传对象】初始化分段上传对象，指定对象名为空串不报错
-        /*
-         * try { s3Client.abortMultipartUpload(request); Assert.fail(
-         * "when keyName is '', it should fail."); } catch (AmazonS3Exception e)
-         * { Assert.assertEquals(e.getErrorCode(), "InvalidRequest"); }
-         */
+        try {
+            s3Client.abortMultipartUpload(request);
+            Assert.fail("when keyName is '', it should fail.");
+        } catch (AmazonS3Exception e) {
+            if (!e.getErrorCode().equals("InvalidRequest") || !e.getErrorMessage().equals("A key must be specified.")) {
+                throw e;
+            }
+        }
 
         request = new AbortMultipartUploadRequest(bucketName, null, uploadId);
         try {
