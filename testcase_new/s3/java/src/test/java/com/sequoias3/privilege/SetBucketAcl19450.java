@@ -60,7 +60,6 @@ public class SetBucketAcl19450 extends S3TestBase {
         // check grant
         Grant grant = new Grant(new CanonicalGrantee(adminOwner.getId()), Permission.FullControl);
         PrivilegeUtils.checkSetBucketAclResult(adminS3, bucketName, grant);
-        // TODO：下面这个步骤可以手工执行，不实现自动化
         // check isPrivate from sdb
         checkIsPrivate();
 

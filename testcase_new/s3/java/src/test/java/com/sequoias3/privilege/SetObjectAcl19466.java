@@ -56,19 +56,24 @@ public class SetObjectAcl19466 extends S3TestBase {
         adminS3.putObject(bucketName, keyName, fileContentA);
         adminS3.putObject(bucketName, keyName, fileContentB);
 
-        // TODO ： 两个版本指定的权限信息应该要不相同，文本用例没有写清楚，现已修改，请对应修改下用例
         // set object acl, current version
         String objCurVer = "1";
         adminS3.setObjectAcl(bucketName, keyName, objCurVer, CannedAccessControlList.AuthenticatedRead);
         // check results
-        checkObjectAcl(objCurVer);
+        Grant[] expGrants1 = {
+                new Grant(new CanonicalGrantee(adminS3.getS3AccountOwner().getId()), Permission.FullControl),
+                new Grant(GroupGrantee.AuthenticatedUsers, Permission.Read) };
+        checkObjectAcl(objCurVer, expGrants1);
         checkObjectContent(adminS3, keyName, objCurVer, fileContentB);
 
         // set object acl, current version
         String objHisVer = "0";
-        adminS3.setObjectAcl(bucketName, keyName, objHisVer, CannedAccessControlList.AuthenticatedRead);
+        adminS3.setObjectAcl(bucketName, keyName, objHisVer, CannedAccessControlList.PublicReadWrite);
         // check results
-        checkObjectAcl(objHisVer);
+        Grant[] expGrants2 = {
+                new Grant(new CanonicalGrantee(adminS3.getS3AccountOwner().getId()), Permission.FullControl),
+                new Grant(GroupGrantee.AllUsers, Permission.Read), new Grant(GroupGrantee.AllUsers, Permission.Write) };
+        checkObjectAcl(objHisVer, expGrants2);
         checkObjectContent(adminS3, keyName, objHisVer, fileContentA);
 
         runSuccess = true;
@@ -86,17 +91,13 @@ public class SetObjectAcl19466 extends S3TestBase {
         }
     }
 
-    private void checkObjectAcl(String objectVersion) {
+    private void checkObjectAcl(String objectVersion, Grant[] grants) {
         // check owner
         Owner owner = adminS3.getS3AccountOwner();
         AccessControlList acl = adminS3.getObjectAcl(bucketName, keyName, objectVersion);
         Assert.assertEquals(acl.getOwner(), owner);
         // check grant
-        Grant[] grants = { new Grant(new CanonicalGrantee(owner.getId()), Permission.FullControl),
-                new Grant(GroupGrantee.AuthenticatedUsers, Permission.Read) };
         PrivilegeUtils.checkSetObjectAclResult(adminS3, bucketName, keyName, objectVersion, grants);
-        // TODO ：下面的注释是多余的，可以删掉
-        // check file content
     }
 
     private void checkObjectContent(AmazonS3 authUserS3, String keyName, String objectVersion, String expFileContent)

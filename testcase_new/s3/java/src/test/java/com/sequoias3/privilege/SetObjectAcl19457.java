@@ -7,7 +7,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.CanonicalGrantee;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.Grant;
@@ -44,9 +43,8 @@ public class SetObjectAcl19457 extends S3TestBase {
         userS3 = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
     }
 
-    // TODO :下方注释拼写错误：authorezed -》 authorized
     /*
-     * adminS3 create bucket and put object, and set object acl, then authorezed
+     * adminS3 create bucket and put object, and set object acl, then authorized
      * to userS3
      */
     @Test
@@ -78,16 +76,9 @@ public class SetObjectAcl19457 extends S3TestBase {
     }
 
     private void setObjectAclAndCheckResults(Permission permission) {
-        // TODO :1、下方注释拼写错误：authorezed -》 authorized
-        // 2、可以直接使用公共方法：PrivilegeUtils.setObjectAclByBody(s3Client, bucketName,
-        // keyName, grants);
-
-        // adminS3 set object acl, authorezed to userS3
-        AccessControlList acl = new AccessControlList();
-        acl.setOwner(adminS3.getS3AccountOwner());
+        // adminS3 set object acl, authorized to userS3
         Grant grant = new Grant(new CanonicalGrantee(userS3.getS3AccountOwner().getId()), permission);
-        acl.grantAllPermissions(grant);
-        adminS3.setObjectAcl(bucketName, keyName, acl);
+        PrivilegeUtils.setObjectAclByBody(adminS3, bucketName, keyName, grant);
         // userS3 get object acl and check results
         PrivilegeUtils.checkSetObjectAclResult(userS3, bucketName, keyName, grant);
     }
