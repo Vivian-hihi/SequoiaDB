@@ -95,8 +95,9 @@ public class GeBucketAclAndKillData19482 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                // TODO ： 可以删除用例里面创建的桶，公共桶不可以删除
-                CommLibS3.clearBucket(adminS3, bucketName);
+                for (String bucketName : bucketNames) {
+                    CommLibS3.clearBucket(adminS3, bucketName);
+                }
             }
         } finally {
             if (adminS3 != null)

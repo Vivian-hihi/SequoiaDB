@@ -34,8 +34,7 @@ import com.sequoias3.commlibs3.s3utils.PrivilegeUtils;
 public class SeBucketAclAndKillData19480 extends S3TestBase {
     private boolean runSuccess = false;
     private int threadNum = 20;
-    // TODO : 下方用例编号有误
-    private String tcId = "19469";
+    private String tcId = "19480";
     private AmazonS3 adminS3 = null;
     private String ownerId;
     private String bucketNameBase = "bucket" + tcId + "a";
@@ -98,8 +97,9 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                // TODO ： 可以删除用例里面创建的桶，公共桶不可以删除
-                CommLibS3.clearBucket(adminS3, bucketName);
+                for (String bucketName : bucketNames) {
+                    CommLibS3.clearBucket(adminS3, bucketName);
+                }
             }
         } finally {
             if (adminS3 != null)
