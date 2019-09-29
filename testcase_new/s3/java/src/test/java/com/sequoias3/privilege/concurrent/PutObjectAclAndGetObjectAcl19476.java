@@ -26,7 +26,7 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
 
 /**
- * @Description seqDB-19473: 并发配置和获取对象acl
+ * @Description seqDB-19476: 并发配置和获取对象acl
  * @Author wangkexin
  * @Date 2019.09.25
  */
