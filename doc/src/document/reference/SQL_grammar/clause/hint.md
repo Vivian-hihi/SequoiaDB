@@ -195,13 +195,15 @@ hint有多种不同类型：
   | ------ | ------------------------- |
   | Mode | 指定返回配置的模式。在 run 模式下，显示当前运行时配置信息，在 local 模式下，显示配置文件中配置信息。如 ```use_option(Mode,local)```。默认为 run。 |
   | Expand | 是否扩展显示用户未配置的配置项。如 ```use_option(Expand,false)```。默认为 true。 |
+  | ShowError | 指定是否返回错误信息。在 show 模式下，显示错误信息，在 only 模式下，只显示错误信息，不显示其他快照信息，在 ignore 模式下，不显示错误信息。如 ```use_option(ShowError,only)```。默认为 show。 |
+  | ShowErrorMode | 指定返回错误信息的格式。在 aggr 模式下，错误信息聚合为一条记录显示，在 flat 模式下，一个错误节点对应一条记录显示。如 ```use_option(ShowErrorMode,flat)```。默认为 aggr。 |
 
 * 例子
 
 查看数据组 db1 中数据节点 20000 上的用户指定的配置信息
 
 ```lang-javascript
-> db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and SvcName = "20000" /*+use_option(Mode, local)use_option(Expand, false)*/') 
+> db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and SvcName = "20000" /*+use_option(Mode, local) use_option(Expand, false)*/') 
 {
   "NodeName": "hostname:20000",
   "dbpath": "/opt/test/20000/",
@@ -216,3 +218,30 @@ hint有多种不同类型：
 }
 ```
 
+查看数据组 db1 各个节点的配置信息，并且把错误信息显示为单独一条记录
+
+```
+> db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" /*+use_option(Mode, local) use_option(Expand, false) use_option(ShowError,show) use_option(ShowErrorMode,flat)*/')
+{
+  "NodeName": "hostname:20000",
+  "GroupName": "db1",
+  "Flag": -79,
+  "ErrInfo": {}
+}
+{
+  "NodeName": "hostname:21000",
+  "GroupName": "db1",
+  "Flag": -79,
+  "ErrInfo": {}
+}
+{
+  "NodeName": "hostname:22000",
+  "dbpath": "/opt/database/22000/",
+  "svcname": "22000",
+  "diaglevel": 5,
+  "role": "data",
+  "catalogaddr": "hostname:30003,hostname:30013,hostname:30023",
+  "sparsefile": "TRUE",
+  "plancachelevel": 3
+}
+```
