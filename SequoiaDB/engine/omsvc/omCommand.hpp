@@ -470,6 +470,9 @@ namespace engine
                                              list<BSONObj> &hostResult,
                                              MsgRouteID id, int flag,
                                              const string &error ) ;
+         INT32           _getTmpAgentPort( pmdSubSession *subSession,
+                                           string &tmpAgentPort ) ;
+
          INT32           _checkHostEnv( list<omScanHostInfo> &hostInfoList,
                                         list<BSONObj> &hostResult ) ;
 

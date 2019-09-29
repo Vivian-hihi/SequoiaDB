@@ -3130,18 +3130,41 @@ namespace engine
               hostName.c_str(), flag ) ;
    }
 
+   INT32 omCheckHostCommand::_getTmpAgentPort( pmdSubSession *subSession,
+                                               string &tmpAgentPort )
+   {
+      INT32 rc = SDB_OK ;
+      MsgRouteID id = subSession->getNodeID() ;
+      map<UINT64, omScanHostInfo>::iterator iter ;
+      omScanHostInfo info ;
+
+      iter = _id2Host.find( id.value ) ;
+      if ( iter == _id2Host.end() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      info = iter->second ;
+      tmpAgentPort = info.agentPort ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omCheckHostCommand::_checkHostEnv( list<omScanHostInfo> &hostInfoList,
                                             list<BSONObj> &hostResult )
    {
-      INT32 rc          = SDB_OK ;
-      omManager *om     = NULL ;
-      pmdRemoteSession *remoteSession = NULL ;
-      VEC_SUB_SESSIONPTR subSessionVec ;
+      INT32 rc = SDB_OK ;
       INT32 sucNum   = 0 ;
       INT32 totalNum = 0 ;
+      pmdRemoteSession *remoteSession = NULL ;
+      omManager *om = sdbGetOMManager() ;
+      VEC_SUB_SESSIONPTR subSessionVec ;
 
       // create remote session
-      om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb,
                                                       OM_CHECK_HOST_INTERVAL,
                                                       NULL ) ;
@@ -3151,36 +3174,57 @@ namespace engine
          PD_LOG_MSG( PDERROR, "addSession failed:rc=%d", rc ) ;
          goto error ;
       }
+
       rc = _addCheckHostReq( om, remoteSession, hostInfoList ) ;
-      if ( SDB_OK != rc )
+      if ( rc )
       {
          PD_LOG_MSG( PDERROR, "generate check host request failed:rc=%d", rc ) ;
          goto done ;
       }
 
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
+
       rc = _getAllReplay( remoteSession, &subSessionVec ) ;
-      if ( SDB_OK != rc )
+      if ( rc )
       {
          PD_LOG_MSG( PDERROR, "wait agent's replay failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
+      for ( UINT32 i = 0; i < subSessionVec.size(); ++i )
       {
          rc = SDB_OK ;
-         vector<BSONObj> objVec ;
-         SINT32 flag               = SDB_OK ;
-         SINT64 contextID          = -1 ;
-         SINT32 startFrom          = 0 ;
-         SINT32 numReturned        = 0 ;
-         MsgHeader* pRspMsg        = NULL ;
+         SINT32 flag        = SDB_OK ;
+         SINT32 startFrom   = 0 ;
+         SINT32 numReturned = 0 ;
+         SINT64 contextID   = -1 ;
+         MsgHeader* pRspMsg = NULL ;
          pmdSubSession *subSession = subSessionVec[i] ;
          string errorMsg ;
+         vector<BSONObj> objVec ;
+
          if ( subSession->isDisconnect() )
          {
-            PD_LOG( PDERROR, "session disconnected:id=%s,rc=%d",
-                    routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            string tmpAgentPort ;
+
+            rc = _getTmpAgentPort( subSession, tmpAgentPort ) ;
+            if ( rc )
+            {
+               errorMsg = "Network error, check the firewall." ;
+
+               PD_LOG( PDERROR, "%s", errorMsg.c_str() ) ;
+            }
+            else
+            {
+               errorMsg = "Network error, port " + tmpAgentPort ;
+               errorMsg += " must be on the white list of firewalls." ;
+
+               PD_LOG( PDERROR, "%s", errorMsg.c_str() ) ;
+            }
+
+            _errorCheckHostEnv( hostInfoList, hostResult,
+                                subSession->getNodeID(), SDB_NETWORK,
+                                errorMsg ) ;
             continue ;
          }
 
@@ -3251,7 +3295,8 @@ namespace engine
             BSONObj tmp = BSON( OM_BSON_FIELD_HOST_IP << iter->ip
                                 << OM_BSON_FIELD_HOST_NAME << iter->hostName
                                 << OM_REST_RES_RETCODE << SDB_NETWORK
-                                << OM_REST_RES_DETAIL << "network error" ) ;
+                                << OM_REST_RES_DETAIL << "Network error, \
+checking system firewall for blocked ports" ) ;
             hostResult.push_back( tmp ) ;
             hostInfoList.erase( iter++ ) ;
          }
