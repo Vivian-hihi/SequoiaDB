@@ -1494,37 +1494,38 @@ namespace engine
 
       if ( _paramIndex >= 0 )
       {
-         BSONElement param = parameters.getParam( _paramIndex ) ;
-
-         if ( Array == param.type() )
+         const RTN_ELEMENT_SET * valueSet = parameters.getValueSet( _paramIndex ) ;
+         if ( NULL != valueSet )
          {
-            const RTN_ELEMENT_SET * valueSet = parameters.getValueSet( _paramIndex ) ;
-            if ( NULL != valueSet )
-            {
-               _startStopKeys.clear() ;
-               _bindValueSet( valueSet ) ;
-            }
+            // Bind for value set
+            _startStopKeys.clear() ;
+            _bindValueSet( valueSet ) ;
          }
          else
          {
-            rtnStartStopKey & key = _startStopKeys.front() ;
             // Bind the start and stop key pairs with specified parameters
-            if ( key._startKey._parameterized )
+            BSONElement param = parameters.getParam( _paramIndex ) ;
+            for ( RTN_SSKEY_LIST::iterator iter = _startStopKeys.begin() ;
+                  iter != _startStopKeys.end() ;
+                  ++ iter )
             {
-               key._startKey._bound = param ;
-               if ( _fuzzyIndex >= 0 )
+               if ( iter->_startKey._parameterized )
                {
-                  key._startKey._inclusive =
-                        parameters.getParam( _fuzzyIndex ).booleanSafe() ;
+                  iter->_startKey._bound = param ;
+                  if ( _fuzzyIndex >= 0 )
+                  {
+                     iter->_startKey._inclusive =
+                           parameters.getParam( _fuzzyIndex ).booleanSafe() ;
+                  }
                }
-            }
-            if ( key._stopKey._parameterized )
-            {
-               key._stopKey._bound = param ;
-               if ( _fuzzyIndex >= 0 )
+               if ( iter->_stopKey._parameterized )
                {
-                  key._stopKey._inclusive =
-                        parameters.getParam( _fuzzyIndex ).booleanSafe() ;
+                  iter->_stopKey._bound = param ;
+                  if ( _fuzzyIndex >= 0 )
+                  {
+                     iter->_stopKey._inclusive =
+                           parameters.getParam( _fuzzyIndex ).booleanSafe() ;
+                  }
                }
             }
          }
@@ -1605,13 +1606,9 @@ namespace engine
                iterSet != valSet.end() ;
                ++ iterSet )
          {
+            // we don't need to set parameterized flag, it will rebuild
+            // during binding phase
             _startStopKeys.push_back( rtnStartStopKey( *iterSet ) ) ;
-            if ( -1 != _paramIndex )
-            {
-               rtnStartStopKey &keyPair = _startStopKeys.back() ;
-               keyPair._startKey._parameterized = TRUE ;
-               keyPair._stopKey._parameterized = TRUE ;
-            }
          }
 
          // and then union with regular expression
