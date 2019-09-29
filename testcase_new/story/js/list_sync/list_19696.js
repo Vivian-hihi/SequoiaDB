@@ -15,7 +15,7 @@ function main()
    var rgName = groupsArray[0][0].GroupName;
    var backupName = "backup19696";
 
-   //backup group19696 data 
+   //backup group data 
    println("begin to backup data group: " + rgName);
    db.backup( { Name: backupName,GroupName:rgName} );
       
