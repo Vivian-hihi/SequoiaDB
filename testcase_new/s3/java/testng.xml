@@ -43,6 +43,8 @@
                <package name="com.sequoias3.config.concurrent" />
                <package name="com.sequoias3.partupload" />
                <package name="com.sequoias3.partupload.concurrent" />
+               <package name="com.sequoias3.privilege" />
+               <package name="com.sequoias3.privilege.concurrent" />
       </packages>
    </test> 
    
