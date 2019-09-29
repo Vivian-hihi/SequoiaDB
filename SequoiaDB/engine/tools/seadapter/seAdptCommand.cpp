@@ -82,7 +82,7 @@ namespace seadapter
                                 _condition.toString(false, true).c_str(),
                                 totalCount ) ;
       esCltMgr->releaseClient( client ) ;
-	  client = NULL ;
+      client = NULL ;
       PD_RC_CHECK( rc, PDERROR, "Get document count failed[%d]", rc ) ;
 
       // If it's match_all, we need to filter out the SDBCOMMIT record.
