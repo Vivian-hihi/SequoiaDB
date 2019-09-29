@@ -4,7 +4,6 @@
 *@author      : wangkexin
 *@Date        : 2019-09-27
 ******************************************************************************/
-main(db) ;
 function main()
 {
    if(commIsStandalone( db )){
@@ -36,18 +35,31 @@ function checkListUsersResult(expUser, expOptions)
       var obj = cur.current().toObj();
       if(obj.User != expUser)
       {
-         throw buildException("compare user name failed", "", "list( SDB_LIST_USERS, {\"User\": " + expUser + "} )", expUser, obj.User);
+         throw new Error( "compare user name failed, expUser is " + expUser + ", actUser " + obj.User ) ;
       }
 
       if(JSON.stringify(obj.Options) != JSON.stringify(expOptions))
       {
-          throw buildException("compare options failed", "", "list( SDB_LIST_USERS, {\"User\": " + expUser + "} )", JSON.stringify(expOptions), JSON.stringify(obj.Options));
+          throw new Error( "compare options failed, exp options is " + JSON.stringify(expOptions) + ", act options is " + JSON.stringify(obj.Options) ) ;
       }
       returnedCount++;
    }
    
    if(returnedCount != 1)
    {
-      throw buildException("check list returned number failed", "", "list( SDB_LIST_USERS, {\"User\": " + expUser + "} )", "returned number is 1", "returned number is " + returnedCount);
+      throw new Error( "check list returned number failed, returned number is 1, act returned number is " + returnedCount ) ;
    }
+}
+
+try
+{
+   main();
+}
+catch( e )
+{
+   if(e.constructor === Error)
+   {
+      println(e.stack);
+   }
+   throw e;
 }

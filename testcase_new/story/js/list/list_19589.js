@@ -4,7 +4,6 @@
 *@author      : wangkexin
 *@Date        : 2019-09-27
 ******************************************************************************/
-main(db) ;
 function main()
 {
    var groups = commGetGroups( db, false, "", true, true, false );
@@ -21,7 +20,20 @@ function main()
       if(arr.length != 1)
       {
          println("act arr :" + arr);
-         throw buildException("check list failed", "", "list(SDB_LIST_SVCTASKS, {'NodeName': " + dataNodeNames[index] + ",'TaskID': 0,'TaskName': 'Default'}", "returned number is 1", "returned number is " + arr.length);
+         throw new Error( "check list failed, exp returned number is 1, act returned number is " + arr.length ) ;
       }
    }
+}
+
+try
+{
+   main();
+}
+catch( e )
+{
+   if(e.constructor === Error)
+   {
+      println(e.stack);
+   }
+   throw e;
 }
