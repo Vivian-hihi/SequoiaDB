@@ -63,9 +63,7 @@ public class ListParts18771 extends S3TestBase {
         s3Client.createBucket(bucketName);
     }
 
-    // SEQUOIADBMAINSTREAM-4807
-    // 【BUG】【new】【story】【S3分段上传对象】并发多线程上传多个分段失败，查看db端返回-319错误
-    @Test(enabled = false)
+    @Test
     private void testUpload() throws Exception {
         uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, keyName);
         ThreadExecutor es = new ThreadExecutor(300000);
@@ -74,7 +72,6 @@ public class ListParts18771 extends S3TestBase {
         for (int i = 1; filePosition < fileSize; i++) {
             es.addWorker(new ThreadUploadPart18771(filePosition, i));
             expPartNumberList.add(i);
-            System.out.println(" i = " + i);
             expEtagList.add(TestTools.getLargeFilePartMD5(file, filePosition, partSize));
             filePosition += partSize;
         }
