@@ -9,9 +9,7 @@ import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.junit.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static com.sequoiadb.base.Sequoiadb.SDB_SNAP_SESSIONS;
 import static com.sequoiadb.base.Sequoiadb.SDB_SNAP_SESSIONS_CURRENT;
@@ -60,37 +58,54 @@ public class SdbforceSession {
         sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
     }
 
-    public long getCurrentSessionID(){
-        long sessionID = -1;
+    public Map<Long,String> getSessionInfo(){
+        Map<Long,String> sessionInfoMap = new TreeMap<Long, String>();
         BSONObject con = new BasicBSONObject();
         con.put("Global",false);
-        DBCursor cursor = sdb.getSnapshot(SDB_SNAP_SESSIONS_CURRENT, con, null, null);
+        DBCursor cursor = sdb.getSnapshot(SDB_SNAP_SESSIONS, con, null, null);
 
-        if (cursor.hasNext()){
+        while (cursor.hasNext()){
             BSONObject obj = cursor.getNext();
-            sessionID = (Long)obj.get("SessionID");
-            System.out.println("SessionID:" + sessionID);
+            long sessionID = (Long)obj.get("SessionID");
+            String nodeName = (String)obj.get("NodeName");
+            sessionInfoMap.put(sessionID,nodeName);
+            System.out.println("SessionID:" + sessionID + "   NodeName: " + nodeName);
         }
         cursor.close();
-        return sessionID;
+        return sessionInfoMap;
     }
     @Test
     public void forceSession_test() {
-        long sessionID = getCurrentSessionID();
+        long sessionID = -1;
+        Map<Long,String> sessionInfoMap = getSessionInfo();
+        for (Object obj: sessionInfoMap.keySet()) {
+            sessionID = (Long)obj;
+        }
         if ( sessionID != -1){
             sdb.forceSession(sessionID);
         }
+        System.out.println("=========================");
+        System.out.println("stop sessionID is " + sessionID );
+        getSessionInfo();
     }
 
     @Test
     public void forceSession_test_with_options() {
+        long sessionID = -1;
+        Map<Long,String> sessionInfoMap = getSessionInfo();
+        for (Object obj: sessionInfoMap.keySet()) {
+            sessionID = (Long)obj;
+        }
         BSONObject options = new BasicBSONObject();
         options.put("Global",false);
-        options.put("GroupName","db1");
-        long sessionID = getCurrentSessionID();
+
         if ( sessionID != -1){
-            sdb.forceSession(sessionID, options);
+            options.put("GroupName",sessionInfoMap.get(sessionID));
+            sdb.forceSession(sessionID);
         }
+        System.out.println("=========================");
+        System.out.println("stop sessionID is " + sessionID );
+        getSessionInfo();
     }
 
 }

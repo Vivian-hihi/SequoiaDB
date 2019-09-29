@@ -2492,18 +2492,18 @@ public class Sequoiadb implements Closeable {
      *
      * @param sessionID
      *            The ID of the session.
-     * @param options
+     * @param option
      *            The control options, Please reference
      *            {@see <a
      *            href=http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1482314609-edition_id-@SDB_SYMBOL_VERSION>here</a>}
      *            for more detail.
      */
-    public void forceSession(long sessionID,BSONObject options ){
+    public void forceSession(long sessionID,BSONObject option ){
 
         BSONObject matcher = new BasicBSONObject();
         matcher.put(SdbConstants.FIELD_NAME_SESSION_ID, sessionID);
-        if (options != null) {
-            matcher.put(SdbConstants.FIELD_NAME_OPTIONS, options);
+        if (option != null) {
+            matcher.put(SdbConstants.FIELD_NAME_OPTIONS, option);
         }
         AdminRequest request = new AdminRequest(AdminCommand.FORCE_SESSION, matcher);
         SdbReply response = requestAndResponse(request);
