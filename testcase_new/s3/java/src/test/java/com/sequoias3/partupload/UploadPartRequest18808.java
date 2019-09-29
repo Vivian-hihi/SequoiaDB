@@ -13,7 +13,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.PartETag;
@@ -45,13 +51,17 @@ public class UploadPartRequest18808 extends S3TestBase {
                 new Object[] { ObjectUtils.getRandomString(900), 10000, 0 } };
     }
 
+    private String AWS_ACCESS_KEY = "ABCDEFGHIJKLMNOPQRST";
+    private String AWS_SECRET_KEY = "abcdefghijklmnopqrstuvwxyz0123456789ABCD";
+    private String clientRegion = "us-east-1";
     private String bucketName = "bucket18808";
     private AmazonS3 s3Client = null;
-    private long fileSize = 5 * 1024;
+    private long fileSize = 10 * 1024 * 1024;
     private File localPath = null;
     private File file[] = new File[2];
     private String filePath[] = new String[2];
-    private boolean runSuccess = false;
+    private int runSuccessNum = 0;
+    private int expRunSuccessNum = 8;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -69,25 +79,61 @@ public class UploadPartRequest18808 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(new CreateBucketRequest(bucketName));
+        s3Client.shutdown();
     }
 
     @Test(dataProvider = "legalKeyNameProvider")
-    public void testLegalParameter(String keyName, int partNumber, int fileIndex) throws Exception {
-        runSuccess = false;
+    public void testUseExpectContinue1(String keyName, int partNumber, int fileIndex) throws Exception {
+        s3Client = buildS3ClientUseExpectContinue();
         testLegalKeyName(keyName, partNumber, fileIndex);
-        runSuccess = true;
+        s3Client.shutdown();
+        runSuccessNum++;
     }
 
     @Test
+    public void testUseExpectContinue2() throws Exception {
+        s3Client = buildS3ClientUseExpectContinue();
+        testIllLegalParameter();
+        s3Client.shutdown();
+        runSuccessNum++;
+    }
+
+    @Test(dataProvider = "legalKeyNameProvider")
+    public void testNotUseExpectContinue1(String keyName, int partNumber, int fileIndex) throws Exception {
+        s3Client = CommLib.buildS3Client();
+        testLegalKeyName(keyName, partNumber, fileIndex);
+        runSuccessNum++;
+    }
+
+    @Test
+    public void testNotUseExpectContinue2() throws Exception {
+        s3Client = CommLib.buildS3Client();
+        testIllLegalParameter();
+        s3Client.shutdown();
+        runSuccessNum++;
+    }
+
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccessNum == expRunSuccessNum) {
+                s3Client = CommLib.buildS3Client();
+                CommLib.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
+    }
+
     public void testIllLegalParameter() throws Exception {
-        runSuccess = false;
         testIllegalKeyName();
         testIllegalPartNumber();
         testIllegalBucketName();
         testIllegalFile();
-        testIllegalFilePosition();
         testIllegalMd5();
-        runSuccess = true;
     }
 
     public void testLegalKeyName(String keyName, int partNumber, int fileIndex) throws Exception {
@@ -224,35 +270,6 @@ public class UploadPartRequest18808 extends S3TestBase {
         }
     }
 
-    private void testIllegalFilePosition() throws Exception {
-        // test a : filePosition取值小于0
-        String uploadId = PartUploadUtils.initPartUpload(s3Client, bucketName, "key18808");
-        long fileSize = file[0].length();
-        UploadPartRequest partRequest = new UploadPartRequest().withFile(file[0]).withFileOffset(-1).withPartNumber(1)
-                .withPartSize(fileSize).withBucketName(bucketName).withKey("key18808").withUploadId(uploadId);
-        try {
-            s3Client.uploadPart(partRequest);
-            Assert.fail("when fileOffset is -1,it should fail");
-        } catch (AmazonS3Exception e) {
-            if (e.getStatusCode() != 500) {
-                throw e;
-            }
-        }
-
-        // test b : filePosition大于文件长度
-        int filePosition = (int) file[0].length() + 1;
-        partRequest = new UploadPartRequest().withFile(file[0]).withFileOffset(filePosition).withPartNumber(1)
-                .withPartSize(fileSize).withBucketName(bucketName).withKey("key18808").withUploadId(uploadId);
-        try {
-            s3Client.uploadPart(partRequest);
-            Assert.fail("when fileOffset greater than file length,it should fail");
-        } catch (AmazonS3Exception e) {
-            if (e.getStatusCode() != 500) {
-                throw e;
-            }
-        }
-    }
-
     private void testIllegalMd5() throws Exception {
         // test a : withMD5Digest取值和上传分段不一致
         String md5Digest = "123456789";
@@ -266,20 +283,6 @@ public class UploadPartRequest18808 extends S3TestBase {
             Assert.fail("when md5 digest is wrong,it should fail");
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "InvalidDigest");
-        }
-    }
-
-    @AfterClass
-    private void tearDown() {
-        try {
-            if (runSuccess) {
-                CommLib.clearBucket(s3Client, bucketName);
-                TestTools.LocalFile.removeFile(localPath);
-            }
-        } finally {
-            if (s3Client != null) {
-                s3Client.shutdown();
-            }
         }
     }
 
@@ -305,5 +308,19 @@ public class UploadPartRequest18808 extends S3TestBase {
                 fileInputStream.close();
             }
         }
+    }
+
+    private AmazonS3 buildS3ClientUseExpectContinue() {
+        AmazonS3 s3Client = null;
+        AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY, AWS_SECRET_KEY);
+        AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
+                S3TestBase.s3ClientUrl, clientRegion);
+        ClientConfiguration config = new ClientConfiguration();
+        config.setUseExpectContinue(true);
+        config.setSocketTimeout(300000);
+        s3Client = AmazonS3ClientBuilder.standard().withEndpointConfiguration(endpointConfiguration)
+                .withClientConfiguration(config).withChunkedEncodingDisabled(true).withPathStyleAccessEnabled(true)
+                .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+        return s3Client;
     }
 }
