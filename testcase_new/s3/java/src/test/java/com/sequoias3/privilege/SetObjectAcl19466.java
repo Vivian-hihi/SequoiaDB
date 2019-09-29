@@ -56,6 +56,7 @@ public class SetObjectAcl19466 extends S3TestBase {
         adminS3.putObject(bucketName, keyName, fileContentA);
         adminS3.putObject(bucketName, keyName, fileContentB);
 
+        // TODO ： 两个版本指定的权限信息应该要不相同，文本用例没有写清楚，现已修改，请对应修改下用例
         // set object acl, current version
         String objCurVer = "1";
         adminS3.setObjectAcl(bucketName, keyName, objCurVer, CannedAccessControlList.AuthenticatedRead);
@@ -94,6 +95,7 @@ public class SetObjectAcl19466 extends S3TestBase {
         Grant[] grants = { new Grant(new CanonicalGrantee(owner.getId()), Permission.FullControl),
                 new Grant(GroupGrantee.AuthenticatedUsers, Permission.Read) };
         PrivilegeUtils.checkSetObjectAclResult(adminS3, bucketName, keyName, objectVersion, grants);
+        // TODO ：下面的注释是多余的，可以删掉
         // check file content
     }
 

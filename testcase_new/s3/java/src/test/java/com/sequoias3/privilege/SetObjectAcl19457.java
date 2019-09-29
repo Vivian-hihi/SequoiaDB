@@ -44,6 +44,7 @@ public class SetObjectAcl19457 extends S3TestBase {
         userS3 = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);
     }
 
+    // TODO :下方注释拼写错误：authorezed -》 authorized
     /*
      * adminS3 create bucket and put object, and set object acl, then authorezed
      * to userS3
@@ -77,6 +78,10 @@ public class SetObjectAcl19457 extends S3TestBase {
     }
 
     private void setObjectAclAndCheckResults(Permission permission) {
+        // TODO :1、下方注释拼写错误：authorezed -》 authorized
+        // 2、可以直接使用公共方法：PrivilegeUtils.setObjectAclByBody(s3Client, bucketName,
+        // keyName, grants);
+
         // adminS3 set object acl, authorezed to userS3
         AccessControlList acl = new AccessControlList();
         acl.setOwner(adminS3.getS3AccountOwner());

@@ -95,6 +95,11 @@ public class SetBucketAcl19468 extends S3TestBase {
             try {
                 ownerS3 = CommLib.buildS3Client();
                 authS3 = CommLib.buildS3Client(userAcessKeys[0], userAcessKeys[1]);
+                // TODO :1、下方注释拼写错误：authorezed -》 authorized
+                // 2、可以直接使用公共方法：PrivilegeUtils.setBucketAclByBody(s3Client,
+                // bucketName,
+                // grants);
+
                 // ownerS3 set object acl, authorezed to userS3, and set
                 // permission
                 AccessControlList acl = new AccessControlList();

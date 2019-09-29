@@ -98,6 +98,10 @@ public class SetObjectAcl19458 extends S3TestBase {
     }
 
     private void setObjectAclAndCheckResults(AmazonS3 authUserS3, String keyName, Permission permission) {
+        // TODO :1、下方注释拼写错误：authorezed -》 authorized
+        // 2、可以直接使用公共方法：PrivilegeUtils.setObjectAclByBody(s3Client, bucketName,
+        // keyName, grants);
+
         // adminS3 set object acl, authorezed to userS3
         AccessControlList acl = new AccessControlList();
         acl.setOwner(adminS3.getS3AccountOwner());
