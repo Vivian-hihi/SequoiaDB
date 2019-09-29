@@ -6,6 +6,7 @@ import codecs
 import os
 import sys
 import platform
+import json
 
 # symbol head. all symbol should had.
 SDB_SYMBOL_HEAD = "@SDB_SYMBOL_"
@@ -21,6 +22,7 @@ DEFAULT_VALUE = ""
 # if add new symbol,  _symbol_map had to add it and you maybe add a new function to get it's value.
 _symbol_map = {
     SDB_SYMBOL_VERSION : DEFAULT_VALUE
+    # new symbol...
 }
 
 
@@ -31,10 +33,15 @@ class ReplaceSymbol(object):
 
         """
         # init SDB_SYMBOL_VERSION's value.
+        print ("init _symbol_map.")
         version_value = self.__get_sdb_version(file_path)
         _symbol_map[SDB_SYMBOL_VERSION] = version_value
         # if add new symbol, can init it's value in here.
         # ...
+
+        for symbol in _symbol_map:
+            print("key:", symbol," value:", _symbol_map[SDB_SYMBOL_VERSION] )
+
 
     def replace_in_directory(self, files):
         """replace in a directory.
@@ -42,6 +49,9 @@ class ReplaceSymbol(object):
         :param files:  A directory.
         :return:
         """
+        if not os.path.exists(files):
+            raise Exception("file :", files, " is not exist")
+
         for root, dirs,files in os.walk(files):
             for file_name in files:
                 self.replace_in_file(os.path.join(root,file_name))
@@ -79,44 +89,24 @@ class ReplaceSymbol(object):
                 line = line.replace(symbol, _symbol_map.get(symbol))
         return line
 
-    def __get_sdb_version(self, file_path):
-        """read file to get sdb version information
 
-        """
+    def __get_sdb_version(self,file_path):
         if not os.path.exists(file_path):
-            print("file_path:", file_path, " is not exist" )
-            return
-
-        sdb_engine_version_str = None
-        sub_version_str = None
-
-        sdb_engine_version = None
-        sub_version = None
+            raise Exception("file :", file_path, " is not exist")
 
         with codecs.open(file_path, mode='r', encoding='utf-8') as f:
-            for line in f:
-                if "SDB_ENGINE_VERISON_CURRENT" in line:
-                    str_list = line.replace("\n","").replace("\r","").split(' ')
-                    sdb_engine_version_str = "#define " + str_list[-1]
-                if "SDB_ENGINE_SUBVERSION_CURRENT" in line:
-                    str_list = line.replace("\n","").replace("\r","").split(' ')
-                    sub_version_str = "#define " + str_list[-1]
+            content = json.load(f)
+            major_version = content['major']
+            minor_version = content['minor']
             f.close()
-        if sdb_engine_version_str != None and sub_version_str != None :
-            with codecs.open(file_path, mode='r', encoding='utf-8') as f:
-                for line in f:
-                    if sdb_engine_version_str in line:
-                        str_list = line.replace("\n","").replace("\r","").split(' ')
-                        sdb_engine_version = str_list[-1]
-                    if sub_version_str in line:
-                        str_list = line.replace("\n","").replace("\r","").split(' ')
-                        sub_version = str_list[-1]
-                f.close()
-        if sub_version is None :
-            version = "000"
+        if minor_version is None or major_version is None :
+            version = "0"
+        elif minor_version < 10:
+            version = str(major_version) + "0" + str(minor_version)
         else:
-            version = sdb_engine_version + "0" + sub_version
+            version = str(major_version) + str(minor_version)
         return version
+
 
 def __guess_os():
     plat_id = platform.system()
@@ -135,9 +125,9 @@ if __name__ == "__main__":
     root_dir = os.path.split( os.path.realpath( sys.argv[0] ) )[0]
     if __guess_os() == 'win32':
         api_dir =  os.path.join(root_dir, 'build\\output\\api')
-        version_file = os.path.join(os.path.dirname(root_dir), 'SequoiaDB\\engine\\include\\ossVer.h')
+        version_file = os.path.join(root_dir, 'config\\version.json')
     else:
         api_dir =  os.path.join(root_dir, 'build/output/api')
-        version_file = os.path.join(os.path.dirname(root_dir), 'SequoiaDB/engine/include/ossVer.h')
+        version_file = os.path.join(root_dir, 'config/version.json')
     replace = ReplaceSymbol(version_file)
     replace.replace_in_directory(api_dir)
