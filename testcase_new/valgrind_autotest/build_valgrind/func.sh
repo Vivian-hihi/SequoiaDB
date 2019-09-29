@@ -1,9 +1,12 @@
 #!/bin/bash
 
 source ${curpath}/build.conf
+source ${curpath}/utils.sh
 
 host_address=(${host_address//,/ })
 testcase_dir=(${testcase_dir//,/ })
+javapath=(${javapath//,/ })
+testngxml=(${testngxml//,/ })
 runtype=(${runtype//,/ })
 
 function help()
@@ -348,14 +351,27 @@ function run_jstest()
 
 function run_javatest()
 {
-    cd ${javapath}
     driver=$(get_sdbdriver)
     host=${host_address[0]}
     driver_version=$(echo ${driver} | sed 's/sequoiadb-driver-//g' | sed 's/.jar//g')
     if [ -f ${curpath}/java/console.log ];then
         rm ${curpath}/java/console.log
     fi
-    mvn surefire-report:report -DxmlFileName=${testngxml} -Dsdbdriver=${driver_version} -DsdbdriverDir=${curpath}/java/ -DreportDir=${curpath}/java/output -DHOSTNAME=${host} -DSVCNAME=11810 -DESHOSTNAME=${host} -DESSVCNAME=9200 -DthreadexecutorDir=${curpath}/java/ -DSCRIPTDIR=${javapath}/script/ >> ${curpath}/java/console.log 2>&1
+    for path in ${javapath[*]}
+    do
+        if [ ${path:0:1}"" != "/" ];then
+            path=$(cd ${curpath}/${path}; pwd)
+        fi
+        cd ${path}
+        for xml in ${testngxml[*]}
+        do
+            if [ -f ${path}/${xml} ];then
+                ouput=$(get_new_output "Run java [path:${path}, xml:${xml} ]")
+                echo "${ouput}" >> ${curpath}/java/console.log
+                mvn surefire-report:report -DxmlFileName=${testngxml} -Dsdbdriver=${driver_version} -DsdbdriverDir=${curpath}/java/ -DreportDir=${curpath}/java/output -DHOSTNAME=${host} -DSVCNAME=11810 -DESHOSTNAME=${host} -DESSVCNAME=9200 -DthreadexecutorDir=${curpath}/java/ -DSCRIPTDIR=${path}/script/ >> ${curpath}/java/console.log 2>&1
+            fi
+       done
+    done
 }
 
 function get_sdbdriver()
