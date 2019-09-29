@@ -31,6 +31,7 @@
             <package name="com.sequoias3.object" />
             <package name="com.sequoias3.region" /> 
             <package name="com.sequoias3.partupload" />
+            <package name="com.sequoias3.privilege" />
         </packages>
     </test>
 </suite>
