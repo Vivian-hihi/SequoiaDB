@@ -51,11 +51,11 @@ public class SeBucketAclAndKillS319481 extends S3TestBase {
             adminS3.createBucket(bucketName);
             bucketNames.add(bucketName);
 
-            Grant grantFirst = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
+            Grant grantFirst = new Grant(new CanonicalGrantee(ownerId), Permission.Read);
             PrivilegeUtils.setBucketAclByBody(adminS3, bucketName, grantFirst);
         }
 
-        grant = new Grant(new CanonicalGrantee(ownerId), Permission.Read);
+        grant = new Grant(new CanonicalGrantee(ownerId), Permission.Write);
     }
 
     @Test
@@ -73,7 +73,6 @@ public class SeBucketAclAndKillS319481 extends S3TestBase {
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
 
-        // TODO ：这里应该再次配置在故障时配置失败的桶acl
         // set failed bucket acl again
         for (String bucketName : setBucketAclFailList) {
             PrivilegeUtils.setBucketAclByBody(adminS3, bucketName, grant);
@@ -81,8 +80,6 @@ public class SeBucketAclAndKillS319481 extends S3TestBase {
 
         // check all bucket restults
         for (String bucketName : bucketNames) {
-            // TODO
-            // :这里检查可以成功的话说明setBucketAclFailList中包含了所有的桶，请确认现有线程数是否可以撞到测试点
             PrivilegeUtils.checkSetBucketAclResult(adminS3, bucketName, grant);
         }
 
@@ -100,7 +97,6 @@ public class SeBucketAclAndKillS319481 extends S3TestBase {
         } finally {
             if (adminS3 != null)
                 adminS3.shutdown();
-
         }
     }
 
@@ -117,9 +113,8 @@ public class SeBucketAclAndKillS319481 extends S3TestBase {
             try {
                 s3 = CommLibS3.buildS3Client();
                 PrivilegeUtils.setBucketAclByBody(s3, bucketName, grant);
-                // TODO ：下面这个集合应该存储的是配置桶acl成功的桶名集合
-                setBucketAclFailList.add(bucketName);
             } catch (AmazonServiceException e) {
+                setBucketAclFailList.add(bucketName);
                 if (e.getStatusCode() != 500) {
                     throw e;
                 }

@@ -52,8 +52,7 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
             adminS3.createBucket(bucketName);
             bucketNames.add(bucketName);
         }
-        // TODO：配置的权限最好和默认配置不同，不然无法验证是否配置成功
-        grant = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
+        grant = new Grant(new CanonicalGrantee(ownerId), Permission.Read);
     }
 
     @Test
@@ -77,10 +76,11 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
 
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
-        // TODO ：需要增加集群环境恢复检测的步骤
 
-        // TODO ：这里应该再次配置在故障时配置失败的桶acl
-        // set failed bucket acl again
+        // wait business recover
+        Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
+
+        // set failed bucket again
         for (String bucketName : setBucketAclFailList) {
             PrivilegeUtils.setBucketAclByBody(adminS3, bucketName, grant);
         }
@@ -104,7 +104,6 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
         } finally {
             if (adminS3 != null)
                 adminS3.shutdown();
-
         }
     }
 
@@ -121,9 +120,8 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
             try {
                 s3 = CommLibS3.buildS3Client();
                 PrivilegeUtils.setBucketAclByBody(s3, bucketName, grant);
-                // TODO ：下面这个集合应该存储的是配置桶acl成功的桶名集合
-                setBucketAclFailList.add(bucketName);
             } catch (AmazonServiceException e) {
+                setBucketAclFailList.add(bucketName);
                 if (e.getStatusCode() != 500) {
                     throw e;
                 }
