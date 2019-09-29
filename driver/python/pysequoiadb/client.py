@@ -1508,9 +1508,11 @@ class client(object):
 
         Parameters:
            Name         Type     Info:
-           options      dict     The configuration options for session. visit this url:
-                                 "http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-@SDB_SYMBOL_VERSION"
-                                 to get more details.
+           options      dict     The options for setting session attributes. Can not be None.
+                                         While it's a empty options, the local session attributes cache
+                                         will be cleanup. Please visit this url:
+                                         "http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-@SDB_SYMBOL_VERSION"
+                                         to get more details.
         Exceptions:
            pysequoiadb.error.SDBBaseError
 
@@ -1523,7 +1525,7 @@ class client(object):
         raise_if_error(rc, "Failed to set session attribute")
 
     def get_session_attri(self, useCache=True):
-        """Get the attributes of the session.
+        """Get the attributes of the current session.
 
         Parameters:
            Name         Type     Info:
