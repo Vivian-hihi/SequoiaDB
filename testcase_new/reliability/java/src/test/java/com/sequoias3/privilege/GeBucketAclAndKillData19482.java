@@ -34,6 +34,7 @@ import com.sequoias3.commlibs3.s3utils.PrivilegeUtils;
 public class GeBucketAclAndKillData19482 extends S3TestBase {
     private boolean runSuccess = false;
     private int threadNum = 20;
+    // TODO ： 下方用例编号有误
     private String tcId = "19469";
     private AmazonS3 adminS3 = null;
     private String ownerId;
@@ -46,6 +47,7 @@ public class GeBucketAclAndKillData19482 extends S3TestBase {
     private void setUp() throws IOException {
         adminS3 = CommLibS3.buildS3Client();
         ownerId = adminS3.getS3AccountOwner().getId();
+        // 如果配置的桶acl与桶默认acl相同，这里可以不配置，或者修改下配置，与默认桶acl配置不同
         grant = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
         for (int i = 0; i < threadNum; i++) {
             String bucketName = bucketNameBase + i;
@@ -79,7 +81,8 @@ public class GeBucketAclAndKillData19482 extends S3TestBase {
 
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
-
+        // TODO ：需要增加集群环境恢复检测的步骤
+        // TODO: 如果再次获取配置桶信息是要获取所有配置过的桶acl，建议将集合setBucketAclFailList名称修改下
         // get bucket acl again, and check results
         for (String bucketName : setBucketAclFailList) {
             PrivilegeUtils.checkSetBucketAclResult(adminS3, bucketName, grant);
@@ -92,6 +95,7 @@ public class GeBucketAclAndKillData19482 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+                // TODO ： 可以删除用例里面创建的桶，公共桶不可以删除
                 CommLibS3.clearBucket(adminS3, bucketName);
             }
         } finally {
@@ -113,6 +117,8 @@ public class GeBucketAclAndKillData19482 extends S3TestBase {
             AmazonS3 s3 = null;
             try {
                 s3 = CommLibS3.buildS3Client();
+                // TODO:
+                // 这里不需要getBucketAcl这个步骤了，因为PrivilegeUtils.checkSetBucketAclResult中已经包含此步骤
                 s3.getBucketAcl(bucketName);
                 PrivilegeUtils.checkSetBucketAclResult(s3, bucketName, grant);
             } catch (AmazonServiceException e) {

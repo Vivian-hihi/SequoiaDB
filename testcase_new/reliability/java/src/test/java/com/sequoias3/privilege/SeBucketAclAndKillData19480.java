@@ -34,6 +34,7 @@ import com.sequoias3.commlibs3.s3utils.PrivilegeUtils;
 public class SeBucketAclAndKillData19480 extends S3TestBase {
     private boolean runSuccess = false;
     private int threadNum = 20;
+    // TODO : 下方用例编号有误
     private String tcId = "19469";
     private AmazonS3 adminS3 = null;
     private String ownerId;
@@ -52,6 +53,7 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
             adminS3.createBucket(bucketName);
             bucketNames.add(bucketName);
         }
+        // TODO：配置的权限最好和默认配置不同，不然无法验证是否配置成功
         grant = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
     }
 
@@ -76,7 +78,9 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
 
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        // TODO ：需要增加集群环境恢复检测的步骤
 
+        // TODO ：这里应该再次配置在故障时配置失败的桶acl
         // set failed bucket acl again
         for (String bucketName : setBucketAclFailList) {
             PrivilegeUtils.setBucketAclByBody(adminS3, bucketName, grant);
@@ -94,6 +98,7 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
+                // TODO ： 可以删除用例里面创建的桶，公共桶不可以删除
                 CommLibS3.clearBucket(adminS3, bucketName);
             }
         } finally {
@@ -116,6 +121,7 @@ public class SeBucketAclAndKillData19480 extends S3TestBase {
             try {
                 s3 = CommLibS3.buildS3Client();
                 PrivilegeUtils.setBucketAclByBody(s3, bucketName, grant);
+                // TODO ：下面这个集合应该存储的是配置桶acl成功的桶名集合
                 setBucketAclFailList.add(bucketName);
             } catch (AmazonServiceException e) {
                 if (e.getStatusCode() != 500) {
