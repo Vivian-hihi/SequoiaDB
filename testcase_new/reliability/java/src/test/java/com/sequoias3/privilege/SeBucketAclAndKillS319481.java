@@ -32,8 +32,7 @@ import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
 public class SeBucketAclAndKillS319481 extends S3TestBase {
     private boolean runSuccess = false;
     private int threadNum = 50;
-    // TODO ： 下方用例编号有误
-    private String tcId = "19469";
+    private String tcId = "19481";
     private AmazonS3 adminS3 = null;
     private String ownerId;
     private String bucketNameBase = "bucket" + tcId + "a";
