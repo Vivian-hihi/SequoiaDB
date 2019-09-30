@@ -267,7 +267,7 @@ static INT32 parseCmdLine( const po::options_description &desc,
          preferNum = boost::lexical_cast<UINT32>( prefer ) ;
          builder.append( FIELD_NAME_PREFERED_INSTANCE, preferNum ) ;
       }
-      catch ( boost::bad_lexical_cast &e )
+      catch ( boost::bad_lexical_cast & )
       {
          builder.append( FIELD_NAME_PREFERED_INSTANCE, prefer ) ;
       }

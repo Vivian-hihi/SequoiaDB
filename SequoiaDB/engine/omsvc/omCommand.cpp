@@ -4396,7 +4396,7 @@ checking system firewall for blocked ports" ) ;
       {
          type = pt.get<string>( OM_XMLATTR_TYPE ) ;
       }
-      catch( std::exception &e )
+      catch( std::exception & )
       {
          isArr = FALSE ;
          goto done ;

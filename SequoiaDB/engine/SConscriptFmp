@@ -123,7 +123,6 @@ ossFiles = [
       "oss/ossPath.cpp",
       "oss/ossVer.cpp",
       "oss/ossMem.cpp",
-      "oss/ossProc.cpp",
       "oss/ossCmdRunner.cpp",
       "oss/ossLatch.cpp",
       "oss/ossRWMutex.cpp",
