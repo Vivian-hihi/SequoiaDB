@@ -655,6 +655,32 @@ public class ReplicaGroup {
         return isCataRG;
     }
 
+    /**
+     * Force the replica group to reelect primary node.
+     */
+    public void reelect(){
+        reelect(null);
+    }
+
+    /**
+     * Force the replica group to reelect primary node.
+     *
+     * @param option The options of reelect. Please reference
+     *            {@see <a
+     *            href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION> <b>here</b> </a>}
+     *            for more detail.
+     */
+    public void reelect(BSONObject option){
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put(SdbConstants.FIELD_NAME_GROUPNAME,getGroupName());
+        if (option != null && !option.isEmpty()) {
+            matcher.putAll(option);
+        }
+        AdminRequest request = new AdminRequest(AdminCommand.REELECT, matcher);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.throwIfError(response);
+    }
+
     private Node getNodeByMetaInfo(final String inputHostName, final int inputPort) {
         // check
         if (inputHostName == null || inputHostName.isEmpty() || inputPort < 0 || inputPort > 65535) {

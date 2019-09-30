@@ -119,6 +119,8 @@ final class AdminCommand {
     final static String SHUTDOWN_GROUP = PREFIX + "shutdown group";
     final static String CREATE_CATALOG_GROUP = PREFIX + "create catalog group";
 
+    final static String REELECT = PREFIX + "reelect";
+
     final static String STARTUP_NODE = PREFIX + "startup node";
     final static String SHUTDOWN_NODE = PREFIX + "shutdown node";
     final static String CREATE_NODE = PREFIX + "create node";
