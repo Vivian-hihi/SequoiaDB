@@ -74,6 +74,7 @@ public class SdbforceSession {
         cursor.close();
         return sessionInfoMap;
     }
+
     @Test
     public void forceSession_test() {
         long sessionID = -1;
@@ -100,7 +101,7 @@ public class SdbforceSession {
         options.put("Global",false);
 
         if ( sessionID != -1){
-            options.put("GroupName",sessionInfoMap.get(sessionID));
+            options.put("NodeName",sessionInfoMap.get(sessionID));
             sdb.forceSession(sessionID,options);
         }
         System.out.println("=========================");
