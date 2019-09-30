@@ -220,7 +220,7 @@ hint有多种不同类型：
 
 查看数据组 db1 各个节点的配置信息，并且把错误信息显示为单独一条记录
 
-```
+```lang-javascript
 > db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" /*+use_option(Mode, local) use_option(Expand, false) use_option(ShowError,show) use_option(ShowErrorMode,flat)*/')
 {
   "NodeName": "hostname:20000",
