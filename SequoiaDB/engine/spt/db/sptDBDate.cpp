@@ -107,7 +107,7 @@ namespace engine
                {
                   mills = boost::lexical_cast< INT64 >( timeStr ) ;
                }
-               catch( boost::bad_lexical_cast &e )
+               catch( boost::bad_lexical_cast & )
                {
                   rc = SDB_INVALIDARG ;
                   detail = BSON( SPT_ERR << "Invalid time str" ) ;
@@ -197,7 +197,7 @@ namespace engine
             {
                tm = boost::lexical_cast<UINT64>( dateStr.c_str() ) ;
             }
-            catch( boost::bad_lexical_cast &e )
+            catch( boost::bad_lexical_cast & )
             {
                errMsg = "Failed to convert Date:" + dateStr ;
                rc = SDB_INVALIDARG ;

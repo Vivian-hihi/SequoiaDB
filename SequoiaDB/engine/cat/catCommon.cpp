@@ -5232,7 +5232,7 @@ namespace engine
          rc = sequence.validate() ;
          PD_RC_CHECK( rc, PDERROR, "AutoIncrement sequence options is invalid" ) ;
       }
-      catch( std::exception& e )
+      catch( std::exception & )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Failed to check autoincrement option[%s]",

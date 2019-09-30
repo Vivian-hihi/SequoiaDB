@@ -124,7 +124,7 @@ INT32 main(INT32 argc, char* argv[])
          goto error;
       }
    }
-   catch( exception &e )
+   catch( exception & )
    {
       std::cerr << "unexpected error" << endl ;
       goto error ;

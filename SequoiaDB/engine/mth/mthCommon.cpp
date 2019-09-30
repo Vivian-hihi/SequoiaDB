@@ -176,7 +176,7 @@ namespace engine
                f = boost::lexical_cast<FLOAT64>( e.valuestr () ) ;
                builder.appendNumber( fieldName, f ) ;
             }
-            catch ( boost::bad_lexical_cast &e )
+            catch ( boost::bad_lexical_cast & )
             {
                builder.appendNumber( fieldName, 0.0 ) ;
             }
@@ -517,7 +517,7 @@ namespace engine
                }
                builder.appendNumber( fieldName, i ) ;
             }
-            catch ( boost::bad_lexical_cast &e )
+            catch ( boost::bad_lexical_cast & )
             {
                builder.appendNumber( fieldName, 0 ) ;
             }
@@ -682,7 +682,7 @@ namespace engine
                   builder.appendNumber( fieldName, l ) ;
                }
             }
-            catch ( boost::bad_lexical_cast &e )
+            catch ( boost::bad_lexical_cast & )
             {
                builder.appendNumber( fieldName, 0 ) ;
             }

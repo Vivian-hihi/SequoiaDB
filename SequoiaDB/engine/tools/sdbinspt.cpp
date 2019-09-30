@@ -1950,7 +1950,7 @@ void inspectIndexDef ( OSSFILE &file, UINT32 pageSize, UINT16 collectionID,
             }
          }
       }
-      catch( std::exception &e )
+      catch( std::exception & )
       {
          /// donothing
       }

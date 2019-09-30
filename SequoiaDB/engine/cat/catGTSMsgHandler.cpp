@@ -537,7 +537,7 @@ namespace engine
          ) ;
          buf = _rtnContextBuf( result ) ;
       }
-      catch( std::exception& e )
+      catch( std::exception & )
       {
          rc = SDB_SYS ;
          goto error ;

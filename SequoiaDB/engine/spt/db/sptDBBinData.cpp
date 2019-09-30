@@ -98,7 +98,7 @@ namespace engine
                goto error ;
             }
          }
-         catch ( std::exception &e )
+         catch ( std::exception & )
          {
             rc = SDB_INVALIDARG ;
             detail = BSON( SPT_ERR << "Invalid argument: type" ) ;
@@ -123,7 +123,7 @@ namespace engine
          {
             type = boost::lexical_cast<string>( typeNumber ) ;
          }
-         catch ( std::exception &e )
+         catch ( std::exception & )
          {
             rc = SDB_INVALIDARG ;
             detail = BSON( SPT_ERR << "Invalid argument: type" ) ;
@@ -219,7 +219,7 @@ namespace engine
             goto error ;
          }
       }
-      catch ( std::bad_cast &e )
+      catch ( std::bad_cast & )
       {
          errMsg = "Bad type for binary" ;
          rc = SDB_INVALIDARG ;

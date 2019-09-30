@@ -381,7 +381,7 @@ namespace engine
                   {
                      rval = lexical_cast<FLOAT64>( v ) ;
                   }
-                  catch( boost::bad_lexical_cast &e )
+                  catch( boost::bad_lexical_cast & )
                   {
                      rc = SDB_INVALIDARG ;
                      goto error ;

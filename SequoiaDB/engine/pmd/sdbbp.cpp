@@ -146,7 +146,7 @@ INT32 createShellMonitorThread ( const OSSPID & shpid ,
       boost::thread monitor ( monitor_thread , shpid , f2bName , b2fName ) ;
       monitor.detach() ;
    }
-   catch ( boost::thread_resource_error & e )
+   catch ( boost::thread_resource_error & )
    {
       rc = SDB_SYS ;
       goto error ;

@@ -583,7 +583,7 @@ namespace engine
          {
             bucket.insert( COORD_SEQ_MAP::value_type( name, sequence ) ) ;
          }
-         catch( std::exception& e )
+         catch( std::exception & )
          {
             rc = SDB_SYS ;
             PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache",

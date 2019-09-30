@@ -1514,7 +1514,11 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITINSERT, "linenoiseEditInsert" )
 int linenoiseEditInsert(struct linenoiseState *l, char c)
 {
     PD_TRACE_ENTRY ( SDB_LNEDITINSERT );
-    int ret = 0;
+
+#ifndef _WINDOWS
+    int ret = 0 ;
+#endif // _WINDOWS
+
     if (l->len < l->buflen)
     {
         if (l->len == l->pos)
@@ -1553,11 +1557,16 @@ int linenoiseEditInsert(struct linenoiseState *l, char c)
             refreshLine(l);
         }
     }
+
+#ifndef _WINDOWS
 done:
     PD_TRACE_EXIT ( SDB_LNEDITINSERT );
     return ret;
 error:
     goto done;
+#else
+    return 0 ;
+#endif // _WINDOWS
 }
 
 /* Move cursor on the left. */
