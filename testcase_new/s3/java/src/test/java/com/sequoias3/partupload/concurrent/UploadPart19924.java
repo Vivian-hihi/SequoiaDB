@@ -28,14 +28,13 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  * @Author wangkexin
  * @Date 2019.09.29
  */
-@Test(groups = "partsizelimitoff")
 public class UploadPart19924 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket19924";
     private String keyName = "key19924";
     private AmazonS3 s3Client = null;
-    private long fileSize = 100 * 1024 * 1024;
-    private long partSize = 1 * 1024 * 1024;
+    private long fileSize = 500 * 1024 * 1024;
+    private long partSize = 5 * 1024 * 1024;
     private File localPath = null;
     private File file = null;
     private String uploadId;
