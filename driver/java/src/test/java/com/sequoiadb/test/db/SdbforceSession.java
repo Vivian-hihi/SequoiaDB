@@ -101,7 +101,7 @@ public class SdbforceSession {
 
         if ( sessionID != -1){
             options.put("GroupName",sessionInfoMap.get(sessionID));
-            sdb.forceSession(sessionID);
+            sdb.forceSession(sessionID,options);
         }
         System.out.println("=========================");
         System.out.println("stop sessionID is " + sessionID );
