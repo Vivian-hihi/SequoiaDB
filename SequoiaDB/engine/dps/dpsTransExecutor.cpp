@@ -359,7 +359,7 @@ namespace engine
    _dpsTransExecutor::_dpsTransExecutor(MonitorManager *monMgr)
       : _monMgr( monMgr )
    {
-      for ( UINT32 i = LOCKMGR_TRANS_LOCK; i <= LOCKMGR_INDEX_LOCK; i++ )
+      for ( UINT32 i = LOCKMGR_TRANS_LOCK; i < LOCKMGR_TYPE_MAX; i++ )
       {
          _waiter[ i ]        = NULL;
          _waiterQueType[ i ] = DPS_QUE_NULL ;
@@ -379,22 +379,27 @@ namespace engine
    void _dpsTransExecutor::clearAll()
    {
       clearMBStats() ;
-      for ( UINT32 i = LOCKMGR_TRANS_LOCK; i <= LOCKMGR_INDEX_LOCK; i++ )
+      for ( UINT32 i = LOCKMGR_TRANS_LOCK; i < LOCKMGR_TYPE_MAX; i++ )
       {
          clearWaiterInfo( (LOCKMGR_TYPE)i ) ;
          clearLastLRB( (LOCKMGR_TYPE) i ) ;
          clearLockCount( (LOCKMGR_TYPE) i ) ;
+         clearLock( (LOCKMGR_TYPE) i ) ;
       }
-      clearLock() ;
       clearRecordMap() ;
       resetLogSpace() ;
    }
 
    void _dpsTransExecutor::assertLocks()
    {
-      SDB_ASSERT( _mapCSCLLockID.size() == 0, "Lock must be 0" ) ;
-      SDB_ASSERT( _lockCount[LOCKMGR_TRANS_LOCK] == 0, "Trans Lock must be 0" );
-      SDB_ASSERT( _lockCount[LOCKMGR_INDEX_LOCK] == 0, "Index lock must be 0" );
+      SDB_ASSERT( _mapCSCLLockID[LOCKMGR_TRANS_LOCK].size() == 0,
+                  "Trans lock must be 0" ) ;
+      SDB_ASSERT( _mapCSCLLockID[LOCKMGR_INDEX_LOCK].size() == 0,
+                  "Index lock must be 0" ) ;
+      SDB_ASSERT( _lockCount[LOCKMGR_TRANS_LOCK] == 0,
+                  "Trans Lock must be 0" ) ;
+      SDB_ASSERT( _lockCount[LOCKMGR_INDEX_LOCK] == 0,
+                  "Index lock must be 0" ) ;
       SDB_ASSERT( _waiter[ LOCKMGR_TRANS_LOCK ] == NULL,
                   "Trans lock waiter LRB must be invalid" ) ;
       SDB_ASSERT( _waiter[ LOCKMGR_INDEX_LOCK ] == NULL,
@@ -479,12 +484,14 @@ namespace engine
    }
 
    BOOLEAN _dpsTransExecutor::addLock( const dpsTransLockId &lockID,
-                                       dpsTransLRB * lrb )
+                                       dpsTransLRB * lrb,
+                                       LOCKMGR_TYPE lockMgrType )
    {
       // only add CS or CL lock into the map
-      if ( ( ! lockID.isIndexLock() ) && ( ! lockID.isLeafLevel() ) )
+      if ( ! lockID.isLeafLevel() )
       {
-         if ( _mapCSCLLockID.insert( std::make_pair( lockID, lrb ) ).second )
+         if ( _mapCSCLLockID[ lockMgrType ].insert(
+                  std::make_pair( lockID, lrb ) ).second )
          {
             return TRUE ;
          }
@@ -493,13 +500,14 @@ namespace engine
    }
 
    BOOLEAN _dpsTransExecutor::findLock( const dpsTransLockId &lockID,
-                                        dpsTransLRB * &lrb ) const
+                                        dpsTransLRB * &lrb,
+                                        LOCKMGR_TYPE lockMgrType ) const
    {
       // only search the map if it is CS or CL lock
-      if ( ( ! lockID.isIndexLock() ) && ( ! lockID.isLeafLevel() ) )
+      if ( ! lockID.isLeafLevel() )
       {
-         DPS_LOCKID_MAP_CIT cit = _mapCSCLLockID.find( lockID ) ;
-         if ( cit != _mapCSCLLockID.end() )
+         DPS_LOCKID_MAP_CIT cit = _mapCSCLLockID[ lockMgrType ].find( lockID ) ;
+         if ( cit != _mapCSCLLockID[ lockMgrType ].end() )
          {
             lrb = cit->second ;
             return TRUE ;
@@ -508,19 +516,20 @@ namespace engine
       return FALSE ;
    }
 
-   BOOLEAN _dpsTransExecutor::removeLock( const dpsTransLockId &lockID )
+   BOOLEAN _dpsTransExecutor::removeLock( const dpsTransLockId &lockID,
+                                          LOCKMGR_TYPE lockMgrType )
    {
       // only do the remove if it is CS or CL lock
-      if ( ( ! lockID.isIndexLock() ) && ( ! lockID.isLeafLevel() ) )
+      if ( ! lockID.isLeafLevel() )
       {
-         return _mapCSCLLockID.erase( lockID ) ? TRUE : FALSE ;
+         return _mapCSCLLockID[ lockMgrType ].erase( lockID ) ? TRUE : FALSE ;
       }
       return FALSE ;
    }
 
-   void _dpsTransExecutor::clearLock()
+   void _dpsTransExecutor::clearLock( LOCKMGR_TYPE lockMgrType )
    {
-      _mapCSCLLockID.clear() ;
+      _mapCSCLLockID[ lockMgrType ].clear() ;
    }
 
    void _dpsTransExecutor::incLockCount( LOCKMGR_TYPE lockMgrType )

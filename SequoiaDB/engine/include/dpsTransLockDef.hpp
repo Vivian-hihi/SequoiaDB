@@ -229,10 +229,15 @@ namespace engine
    #define DPS_LOCKID_EXTENTID      "ExtentID"
    #define DPS_LOCKID_OFFSET        "Offset"
 
-   // To implement index page latch using record locking mechanism,
-   // need to construct a special lockId for an index page :
-   // ( CSId, -2, indexPageNumber, -1 )
-   #define DPS_LOCKID_IDX_COLLECTION_TYPE ((UINT16)( -2 ))
+   // Note :
+   // In order to implement index page lock through record locking mechanism,
+   // we construct a special lockId to delinetate
+   // . an index page :
+   //    ( CSId, -2, indexPageNumber, -1 )
+   //
+   // When DPS_LOCKID_CLSID field is filled with -2, we can tell a lock is
+   // an index lock.
+   #define DPS_LOCKID_IDX_COLLECTION ((UINT16)( -2 ))
 
    /*
       _dpsTransLockId define
@@ -284,7 +289,6 @@ namespace engine
          OSS_INLINE UINT32          lockIdHash() const ;
          OSS_INLINE BOOLEAN         isLeafLevel() const ;
          OSS_INLINE BOOLEAN         isRootLevel() const ;
-         OSS_INLINE BOOLEAN         isIndexLock() const ;
          OSS_INLINE _dpsTransLockId upOneLevel() const ;
 
          /*
@@ -400,15 +404,14 @@ namespace engine
    OSS_INLINE UINT32 _dpsTransLockId::lockIdHash() const
    {
       UINT64 b = 0 ;
-      if ( DPS_LOCKID_IDX_COLLECTION_TYPE == _collectionID )
+      if ( DPS_LOCKID_IDX_COLLECTION == _collectionID )
       {
-         // index page lock
+         // index page lock only use CS and extent field
          b |= (UINT64)(_logicCSID & 0xFFFFFFFF) << 32 ;
          b |= (_recordExtentID & 0xFFFFFFFF) ;
       }
       else
       {
-         // trans lock
          if ( DMS_INVALID_OFFSET != _recordOffset )
          {
             // recordExtentID is unique within a CS, so no
@@ -451,17 +454,6 @@ namespace engine
            && ( DMS_INVALID_MBID   == _collectionID )
            && ( DMS_INVALID_EXTENT == _recordExtentID )
            && ( DMS_INVALID_OFFSET == _recordOffset ) )
-      {
-         return TRUE ;
-      }
-      return FALSE ;
-   }
-
-   OSS_INLINE BOOLEAN  _dpsTransLockId::isIndexLock() const
-   {
-      if ( isValid() && 
-           ( DPS_LOCKID_IDX_COLLECTION_TYPE == _collectionID ) &&
-           ( DMS_INVALID_OFFSET == _recordOffset ) )
       {
          return TRUE ;
       }

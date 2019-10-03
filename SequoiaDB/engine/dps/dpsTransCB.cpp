@@ -110,6 +110,7 @@ namespace engine
       {
          _TransIDL48Cur.init( ossRand() ) ;
 
+         // create trans lock manager
          _transLockMgr = SDB_OSS_NEW dpsTransLockManager( LOCKMGR_TRANS_LOCK ) ;
 
          if ( !_transLockMgr )
@@ -119,7 +120,7 @@ namespace engine
          }
 
          // Initialize trans lock manager
-         rc = _transLockMgr->init() ;
+         rc = _transLockMgr->init( DPS_TRANS_LOCKBUCKET_SLOTS_MAX, TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d",

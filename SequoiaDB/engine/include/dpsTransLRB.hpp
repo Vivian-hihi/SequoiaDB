@@ -93,6 +93,19 @@ namespace engine
         originMode( DPS_TRANSLOCK_MAX )
       {
       }
+
+      void reset()
+      {
+         dpsTxExectr = NULL ; 
+         eduLrbNext  = NULL ; 
+         eduLrbPrev  = NULL ;
+         lrbHdr      = NULL ;
+         nextLRB     = NULL ;
+         prevLRB     = NULL ;
+         refCounter  = 0 ;
+         lockMode    = DPS_TRANSLOCK_MAX ;
+         originMode  = DPS_TRANSLOCK_MAX ;
+      }
    } ;  // 64 bytes in total
 
    class dpsLRBExtData ;
@@ -168,6 +181,15 @@ namespace engine
          }
          return FALSE ;
       }
+
+      void reset()
+      {
+         _data = 0 ;
+         _validFunc = NULL ;
+         _releaseCheckFunc = NULL ;
+         _releaseFunc = NULL ;
+         _onLockReleaseFunc = NULL ;
+      }
    } ;
 
    // Lock Request Block Header ( LRB Header )
@@ -191,6 +213,17 @@ namespace engine
         waiterLRB(NULL), upgradeLRB(NULL),
         lockId(lock), bktIdx(_bktIdx)
       {
+      }
+
+      void reset()
+      {
+         nextLRBHdr = NULL ;
+         ownerLRB   = NULL ;
+         waiterLRB  = NULL ;
+         upgradeLRB = NULL ;
+         bktIdx     = ( (UINT32) -1 ) ;
+         lockId.reset() ;
+         extData.reset() ;
       }
    } ;
 

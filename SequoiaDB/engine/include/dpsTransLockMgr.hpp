@@ -59,10 +59,15 @@ namespace engine
    } ;
    #define LOCKMGR_TYPE_MAX ( 2 )
  
-   // lock bucket,  524287 ( a prime number close to 524288  ) for now
+   // trans lock bucket, 524287 ( a prime number close to 524288 )
    #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UINT32) 524287 ) 
-   #define DPS_TRANS_INVALID_BUCKET_SLOT  ( (UINT32) -1 )
-   #define DPS_INDEX_LOCKBUCKET_SLOTS_MAX ( (UINT32) 65537  ) 
+   // index lock bucket, 131071 ( a prime number close to 131072 ) 
+   // The size of an index normally is around 1/4 of size of
+   // the table, so we take 524288 / 4 = 131072 as the size of
+   // the index lock bucket
+   #define DPS_INDEX_LOCKBUCKET_SLOTS_MAX ( (UINT32) 131071 ) 
+
+   #define DPS_LOCK_INVALID_BUCKET_SLOT  ( (UINT32) -1 )
 
    class dpsTransLockManager : public SDBObject
    {
@@ -73,7 +78,7 @@ namespace engine
       virtual ~dpsTransLockManager();
 
       // initialization,
-      INT32 init() ;
+      INT32 init( UINT32 bucketSize, BOOLEAN autoOperateOnUpperLock ) ;
 
       // free allocated LRB and LRB Header segments
       void fini() ;
@@ -163,19 +168,13 @@ namespace engine
       //   . latch _rwMutext in exclusive mode
       OSS_INLINE void acquireMonLatch() 
       {
-         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
-         {
-            _rwMutex.lock_w() ; 
-         }
+         _rwMutex.lock_w() ; 
       }
 
       // release monitoring / dumping latch
       OSS_INLINE void releaseMonLatch() 
       {
-         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
-         {
-            _rwMutex.release_w() ;
-         }
+         _rwMutex.release_w() ;
       }
 
       // dump specific lock info to a file for debugging purpose
@@ -247,10 +246,7 @@ namespace engine
       //     . latch a bucket slot in exclusively
       OSS_INLINE void _acquireOpLatch ( const UINT32  bucketIndex )
       {
-         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
-         {
-            _rwMutex.lock_r() ;
-         }
+         _rwMutex.lock_r() ;
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
@@ -258,10 +254,7 @@ namespace engine
       OSS_INLINE void _releaseOpLatch ( const UINT32 bucketIndex )
       {
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
-         if ( LOCKMGR_TRANS_LOCK == _lockMgrType )
-         {
-            _rwMutex.release_r() ;
-         }
+         _rwMutex.release_r() ;
       }
 
       // release/return a LRB Header to LRB Header manager
@@ -484,7 +477,6 @@ namespace engine
       ) ;
 
    private:
-      // dpsTransLRBHeaderHash  _LockHdrBkt[ DPS_TRANS_LOCKBUCKET_SLOTS_MAX ] ;
       dpsTransLRBHeaderHash * _LockHdrBkt ;
       UINT32                 _bktSlotMax ;
 
@@ -492,6 +484,9 @@ namespace engine
       BOOLEAN                _initialized ;
 
       LOCKMGR_TYPE           _lockMgrType ;
+
+      // a flag tells if autogmatically operate on upper level lock
+      BOOLEAN                _autoUpperLockOp ;
 
       //
       // monitor/dump EDU locking info latch
@@ -511,4 +506,3 @@ namespace engine
 }
 
 #endif // DPSTRANSLOCKMANAGER_HPP_
-

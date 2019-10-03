@@ -300,16 +300,20 @@ namespace engine
          dpsTransLRB*         getWaiterLRB( LOCKMGR_TYPE managerType ) const ;
          DPS_TRANS_QUE_TYPE   getWaiterQueType( LOCKMGR_TYPE managerType ) const ;
 
-         void                 setLastLRB( dpsTransLRB *lrb, LOCKMGR_TYPE managerType ) ;
+         void                 setLastLRB( dpsTransLRB *lrb,
+                                          LOCKMGR_TYPE managerType ) ;
          void                 clearLastLRB( LOCKMGR_TYPE managerType ) ;
          dpsTransLRB *        getLastLRB( LOCKMGR_TYPE managerType ) const ;
 
          BOOLEAN              addLock( const dpsTransLockId &lockID,
-                                       dpsTransLRB * lrb ) ;
+                                       dpsTransLRB * lrb,
+                                       LOCKMGR_TYPE managerType ) ;
          BOOLEAN              findLock( const dpsTransLockId &lockID,
-                                        dpsTransLRB * &lrb ) const ;
-         BOOLEAN              removeLock( const dpsTransLockId &lockID ) ;
-         void                 clearLock() ;
+                                        dpsTransLRB * &lrb,
+                                        LOCKMGR_TYPE managerType ) const ;
+         BOOLEAN              removeLock( const dpsTransLockId &lockID,
+                                          LOCKMGR_TYPE managerType ) ;
+         void                 clearLock( LOCKMGR_TYPE managerType ) ;
 
          void                 incLockCount( LOCKMGR_TYPE managerType ) ;
          void                 decLockCount( LOCKMGR_TYPE managerType ) ;
@@ -402,7 +406,7 @@ namespace engine
          DPS_TRANS_QUE_TYPE      _waiterQueType[ LOCKMGR_TYPE_MAX ] ;
          dpsTransLRB *           _lastLRB[ LOCKMGR_TYPE_MAX ] ;
 
-         DPS_LOCKID_MAP          _mapCSCLLockID ;
+         DPS_LOCKID_MAP          _mapCSCLLockID[ LOCKMGR_TYPE_MAX ] ;
          UINT32                  _lockCount[ LOCKMGR_TYPE_MAX ] ;
 
          /*
