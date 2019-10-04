@@ -869,7 +869,7 @@ namespace engine
       UINT64 oldReqID = 0 ;
       INT32 oldAddPos = 0 ;
       BOOLEAN hasSend = FALSE ;
-      MonClassQuery *monQuery = getEDUCB()->getMonQueryCB() ;
+      monClassQuery *monQuery = getEDUCB()->getMonQueryCB() ;
       ossTick startTimer ;
       if ( monQuery )
       {
@@ -1013,8 +1013,8 @@ namespace engine
          endTimer.sample() ;
 
          monQuery->nodes.insert( pSub->getNodeID().columns.nodeID ) ;
-         monQuery->_numMsgSent++ ;
-         monQuery->_msgSentTime += endTimer - startTimer ;
+         monQuery->numMsgSent++ ;
+         monQuery->msgSentTime += endTimer - startTimer ;
       }
 
       if ( pSub->isNeedToDel() )
@@ -1090,7 +1090,7 @@ namespace engine
       _sessionChange                = FALSE ;
       IRemoteSiteHandle *pSiteHandle= _pSite->getHandle() ;
       BOOLEAN gotEvent              = FALSE ;
-      MonClassQuery *monQuery       = getEDUCB()->getMonQueryCB() ;
+      monClassQuery *monQuery       = getEDUCB()->getMonQueryCB() ;
       _milliTimeout = _milliTimeoutHard ;
       totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
       ossTick startTimer ;
@@ -1213,7 +1213,7 @@ namespace engine
       {
          ossTick endTimer;
          endTimer.sample();
-         monQuery->_remoteNodesResponseTime += endTimer - startTimer ;
+         monQuery->remoteNodesResponseTime += endTimer - startTimer ;
       }
       _totalWaitTime += ( _milliTimeoutHard - _milliTimeout ) ;
       PD_TRACE_EXITRC( SDB__PMDRMTSESSION_WAITREPLY1, rc ) ;

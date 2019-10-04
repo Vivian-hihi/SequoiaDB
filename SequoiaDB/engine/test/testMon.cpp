@@ -23,52 +23,52 @@ public:
 // Test register object
 TEST (monitorManagerTest, registerObj1)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
 
    // Turn on monitoring
    mgr.setMonitorStatus( MON_CLASS_QUERY, TRUE ) ;
 
-   MonClassQuery *obj = mgr.registerMonitorObject<MonClassQuery>() ;
+   monClassQuery *obj = mgr.registerMonitorObject<monClassQuery>() ;
 
-   ASSERT_NE( obj, (MonClassQuery*)NULL );
+   ASSERT_NE( obj, (monClassQuery*)NULL );
 }
 
 // Test register object when object class monitoring is off
 TEST (monitorManagerTest, registerObj2)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
 
    // Turn off monitoring
    mgr.setMonitorStatus( MON_CLASS_QUERY, FALSE ) ;
 
-   MonClassQuery *obj = mgr.registerMonitorObject<MonClassQuery>() ;
+   monClassQuery *obj = mgr.registerMonitorObject<monClassQuery>() ;
 
-   ASSERT_EQ( obj, (MonClassQuery*)NULL );
+   ASSERT_EQ( obj, (monClassQuery*)NULL );
 }
 
 // Test scanning objects
 TEST (monitorManagerTest, scanObj1)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
 
    // Turn on monitoring
    mgr.setMonitorStatus(MON_CLASS_QUERY, TRUE) ;
 
-   MonClassQuery *obj = mgr.registerMonitorObject<MonClassQuery>() ;
-   MonClassQuery *obj2 = mgr.registerMonitorObject<MonClassQuery>() ;
+   monClassQuery *obj = mgr.registerMonitorObject<monClassQuery>() ;
+   monClassQuery *obj2 = mgr.registerMonitorObject<monClassQuery>() ;
 
-   MonClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST);
-   MonClassQuery *retObj = (MonClassQuery*)scanner->getNext();
+   monClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST);
+   monClassQuery *retObj = (monClassQuery*)scanner->getNext();
 
    ASSERT_EQ(retObj, obj2) ;
 
-   retObj = (MonClassQuery*)scanner->getNext() ;
+   retObj = (monClassQuery*)scanner->getNext() ;
 
    ASSERT_EQ(retObj, obj) ;
 
-   retObj = (MonClassQuery*)scanner->getNext() ;
+   retObj = (monClassQuery*)scanner->getNext() ;
 
-   ASSERT_EQ( retObj, (MonClassQuery*)NULL ) ;
+   ASSERT_EQ( retObj, (monClassQuery*)NULL ) ;
 
    delete ( scanner ) ;
 }
@@ -76,15 +76,15 @@ TEST (monitorManagerTest, scanObj1)
 // Test scanning empty active list
 TEST (monitorManagerTest, scanObj2)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
 
    // Turn on monitoring
    mgr.setMonitorStatus(MON_CLASS_EDU, TRUE) ;
 
-   MonClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ACTIVE_LIST );
-   MonClassEDU *retObj = (MonClassEDU*)scanner->getNext();
+   monClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ACTIVE_LIST );
+   monClassEDU *retObj = (monClassEDU*)scanner->getNext();
 
-   ASSERT_EQ( retObj, (MonClassEDU*)NULL ) ;
+   ASSERT_EQ( retObj, (monClassEDU*)NULL ) ;
 
    delete ( scanner ) ;
 }
@@ -92,29 +92,29 @@ TEST (monitorManagerTest, scanObj2)
 // Test scanning empty archive list
 TEST (monitorManagerTest, scanObj3)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
 
    // Turn on monitoring
    mgr.setMonitorStatus(MON_CLASS_EDU, TRUE) ;
 
-   MonClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ARCHIVED_LIST );
-   MonClassEDU *retObj = (MonClassEDU*)scanner->getNext();
+   monClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ARCHIVED_LIST );
+   monClassEDU *retObj = (monClassEDU*)scanner->getNext();
 
-   ASSERT_EQ( retObj, (MonClassEDU*)NULL ) ;
+   ASSERT_EQ( retObj, (monClassEDU*)NULL ) ;
    delete ( scanner ) ;
 }
 
 // Test deleting objects. If archiving is off, then the object should be removed
 TEST (monitorManagerTest, deleteObj1)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
    // Turn on monitoring
    mgr.setMonitorStatus(MON_CLASS_EDU, TRUE) ;
 
-   MonClassEDU *obj = mgr.registerMonitorObject<MonClassEDU>() ;
+   monClassEDU *obj = mgr.registerMonitorObject<monClassEDU>() ;
 
-   MonClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ACTIVE_LIST );
-   MonClassEDU *retObj = (MonClassEDU*)scanner->getNext();
+   monClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ACTIVE_LIST );
+   monClassEDU *retObj = (monClassEDU*)scanner->getNext();
    ASSERT_EQ(retObj, obj) ;
 
    delete ( scanner ) ;
@@ -123,8 +123,8 @@ TEST (monitorManagerTest, deleteObj1)
 
    // Can no longer read this from a scan
    scanner = mgr.getReadScanner(MON_CLASS_EDU, MON_CLASS_ACTIVE_LIST ) ;
-   retObj = (MonClassEDU*)scanner->getNext() ;
-   ASSERT_EQ( retObj, (MonClassEDU*)NULL ) ;
+   retObj = (monClassEDU*)scanner->getNext() ;
+   ASSERT_EQ( retObj, (monClassEDU*)NULL ) ;
    delete ( scanner ) ;
 
    // Object should be in pending delete state
@@ -135,14 +135,14 @@ TEST (monitorManagerTest, deleteObj1)
 // Test deleting objects. If archiving is on, can still see it when reading archive list
 TEST (monitorManagerTest, deleteObj2)
 {
-   MonitorManager mgr ;
+   monMonitorManager mgr ;
    // Turn on monitoring
    mgr.setMonitorStatus(MON_CLASS_QUERY, TRUE) ;
 
-   MonClassQuery *obj = mgr.registerMonitorObject<MonClassQuery>() ;
+   monClassQuery *obj = mgr.registerMonitorObject<monClassQuery>() ;
 
-   MonClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST );
-   MonClassQuery *retObj = (MonClassQuery*)scanner->getNext();
+   monClassReadScanner *scanner = mgr.getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST );
+   monClassQuery *retObj = (monClassQuery*)scanner->getNext();
    ASSERT_EQ(retObj, obj) ;
 
    delete ( scanner ) ;
@@ -150,15 +150,15 @@ TEST (monitorManagerTest, deleteObj2)
 
    // Can no longer read this from a active list scan
    scanner = mgr.getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST ) ;
-   retObj = (MonClassQuery*)scanner->getNext() ;
-   ASSERT_EQ( retObj, (MonClassQuery*)NULL ) ;
+   retObj = (monClassQuery*)scanner->getNext() ;
+   ASSERT_EQ( retObj, (monClassQuery*)NULL ) ;
    delete ( scanner ) ;
    // Object should be in pending archive state
    ASSERT_TRUE(obj->isPendingArchive()) ;
 
    // Can read this from an archive list scan
    scanner = mgr.getReadScanner(MON_CLASS_QUERY, MON_CLASS_ARCHIVED_LIST ) ;
-   retObj = (MonClassQuery*)scanner->getNext() ;
+   retObj = (monClassQuery*)scanner->getNext() ;
    ASSERT_EQ( retObj, obj ) ;
    delete ( scanner ) ;
 }

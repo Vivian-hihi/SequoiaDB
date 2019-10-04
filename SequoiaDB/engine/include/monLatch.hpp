@@ -7,7 +7,7 @@
 
 namespace engine
 {
-class _MonClassLatch ;
+class _monClassLatch ;
 
 enum MON_LATCH_IDENTIFIER
 {
@@ -132,11 +132,11 @@ public:
    BOOLEAN try_get() ;
 
 public:
-   ossSpinXLatch _latch ;
-   MON_LATCH_IDENTIFIER _latchID ;
-   UINT32 _xOwnerTID ;
-   ossAtomic32 _numOwner ;
-   UINT32 _lastSOwnerTID ;
+   ossSpinXLatch latch ;
+   MON_LATCH_IDENTIFIER latchID ;
+   UINT32 xOwnerTID ;
+   ossAtomic32 numOwner ;
+   UINT32 lastSOwnerTID ;
 } ;
 
 class monSpinSLatch : public ossSLatch
@@ -145,12 +145,12 @@ public:
    monSpinSLatch( MON_LATCH_IDENTIFIER latchID ) ;
 
    monSpinSLatch( )
-      : _numOwner( 0 )
+      : numOwner( 0 )
    {}
 
    monSpinSLatch& operator=(const monSpinSLatch& rhs )
    {
-      _latchID = rhs._latchID ;
+      latchID = rhs.latchID ;
       return *this ;
    }
    ~monSpinSLatch() ;
@@ -167,11 +167,11 @@ public:
 
    BOOLEAN try_get_shared() ;
 public:
-   ossSpinSLatch _latch ;
-   MON_LATCH_IDENTIFIER _latchID ;
-   UINT32 _xOwnerTID ;
-   UINT32 _lastSOwnerTID ;
-   ossAtomic32 _numOwner ;
+   ossSpinSLatch latch ;
+   MON_LATCH_IDENTIFIER latchID ;
+   UINT32 xOwnerTID ;
+   UINT32 lastSOwnerTID ;
+   ossAtomic32 numOwner ;
 } ;
 }
 #endif

@@ -228,7 +228,7 @@ namespace engine
 
       monConfigCB    _monCfgCB ;
       monDBCB        _monDBCB ;
-      MonitorManager _monMgr ;
+      monMonitorManager _monMgr ;
       schedTaskMgr   _svcTaskMgr ;
 
       pmdLightJobMgr    *_pLightJobMgr ;
@@ -279,7 +279,7 @@ namespace engine
       {
          return &_monDBCB ;
       }
-      OSS_INLINE MonitorManager * getMonMgr ()
+      OSS_INLINE monMonitorManager * getMonMgr ()
       {
          return &_monMgr ;
       }

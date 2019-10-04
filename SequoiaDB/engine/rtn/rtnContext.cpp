@@ -376,7 +376,7 @@ namespace engine
 
       if ( _monQueryCB )
       {
-         _monQueryCB->_anchorToContext = FALSE ;
+         _monQueryCB->anchorToContext = FALSE ;
          _monQueryCB = NULL ;
       }
 

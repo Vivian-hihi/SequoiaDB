@@ -85,9 +85,9 @@ namespace engine
    {
       INT32 rc     = SDB_OK ;
       INT32 opCode = msg->opCode ;
-      MonClassQuery *monQuery = NULL ;
+      monClassQuery *monQuery = NULL ;
       ossTick startTime ;
-      MonClassQueryTmpData tmpData ;
+      monClassQueryTmpData tmpData ;
       tmpData = *(eduCB()->getMonAppCB()) ;
 
       PD_TRACE_ENTRY ( SDB_PMDDATAPROC_PROMSG );
@@ -99,13 +99,13 @@ namespace engine
       if ( eduCB()->getMonQueryCB() == NULL )
       {
          monQuery = pmdGetKRCB()->getMonMgr()->
-                    registerMonitorObject<MonClassQuery>() ;
+                    registerMonitorObject<monClassQuery>() ;
 
          if ( monQuery )
          {
-            monQuery->_sessionID = eduCB()->getID() ;
-            monQuery->_opCode = opCode ;
-            monQuery->_tid = eduCB()->getTID() ;
+            monQuery->sessionID = eduCB()->getID() ;
+            monQuery->opCode = opCode ;
+            monQuery->tid = eduCB()->getTID() ;
             eduCB()->setMonQueryCB( monQuery ) ;
          }
       }
@@ -229,13 +229,13 @@ namespace engine
          monQuery = eduCB()->getMonQueryCB() ;
          ossTick endTime ;
          endTime.sample() ;
-         monQuery->_responseTime += endTime - startTime ;
-         monQuery->_rowsReturned += contextBuff.recordNum() ;
+         monQuery->responseTime += endTime - startTime ;
+         monQuery->rowsReturned += contextBuff.recordNum() ;
 
          tmpData.diff(*(eduCB()->getMonAppCB())) ;
          monQuery->incMetrics(tmpData) ;
 
-         if ( !monQuery->_anchorToContext )
+         if ( !monQuery->anchorToContext )
          {
             pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
 
@@ -664,7 +664,7 @@ namespace engine
       INT64 numToSkip = -1 ;
       INT64 numToReturn = -1 ;
       _rtnCommand *pCommand = NULL ;
-      MonClassQuery *monQuery = NULL ;
+      monClassQuery *monQuery = NULL ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQueryBuff,
@@ -754,7 +754,7 @@ namespace engine
 
             if ( monQuery && pContext->getPlanRuntime() )
             {
-               monQuery->_accessPlanID = pContext->
+               monQuery->accessPlanID = pContext->
                                          getPlanRuntime()->
                                          getAccessPlanID() ;
             }
@@ -2026,10 +2026,10 @@ namespace engine
                                          BOOLEAN &needRollback )
    {
       INT32 rc = SDB_OK ;
-      MonClassQuery *monQueryCB = NULL ;
+      monClassQuery *monQueryCB = NULL ;
       ossTick startTime ;
 
-      MonClassQueryTmpData tmpData ;
+      monClassQueryTmpData tmpData ;
       tmpData = *(eduCB()->getMonAppCB()) ;
 
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROMSG );
@@ -2037,13 +2037,13 @@ namespace engine
       if ( eduCB()->getMonQueryCB() == NULL )
       {
          monQueryCB = pmdGetKRCB()->getMonMgr()->
-                      registerMonitorObject<MonClassQuery>() ;
+                      registerMonitorObject<monClassQuery>() ;
 
          if ( monQueryCB )
          {
-            monQueryCB->_sessionID = eduCB()->getID() ;
-            monQueryCB->_opCode = msg->opCode ;
-            monQueryCB->_tid = eduCB()->getTID() ;
+            monQueryCB->sessionID = eduCB()->getID() ;
+            monQueryCB->opCode = msg->opCode ;
+            monQueryCB->tid = eduCB()->getTID() ;
 
             eduCB()->setMonQueryCB( monQueryCB ) ;
          }
@@ -2066,11 +2066,11 @@ namespace engine
             monQueryCB = eduCB()->getMonQueryCB() ;
             ossTick endTime ;
             endTime.sample() ;
-            monQueryCB->_responseTime += endTime - startTime ;
-            monQueryCB->_rowsReturned += contextBuff.recordNum() ;
+            monQueryCB->responseTime += endTime - startTime ;
+            monQueryCB->rowsReturned += contextBuff.recordNum() ;
             tmpData.diff(*(eduCB()->getMonAppCB())) ;
             monQueryCB->incMetrics(tmpData) ;
-            if ( !monQueryCB->_anchorToContext )
+            if ( !monQueryCB->anchorToContext )
             {
                pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQueryCB ) ;
                eduCB()->setMonQueryCB( NULL ) ;

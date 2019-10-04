@@ -586,9 +586,9 @@ namespace engine
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE ;
       BOOLEAN isAutoCommit = FALSE ;
-      MonClassQuery *monQuery = NULL ;
+      monClassQuery *monQuery = NULL ;
       ossTick startTime ;
-      MonClassQueryTmpData tmpData ;
+      monClassQueryTmpData tmpData ;
       tmpData = *(eduCB()->getMonAppCB()) ;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
@@ -619,19 +619,19 @@ namespace engine
          if ( _pEDUCB->getMonQueryCB() == NULL )
          {
             monQuery = pmdGetKRCB()->getMonMgr()->
-                       registerMonitorObject<MonClassQuery>() ;
+                       registerMonitorObject<monClassQuery>() ;
 
             if ( monQuery )
             {
-               monQuery->_sessionID = _pEDUCB->getID() ;
-               monQuery->_opCode = opCode ;
-               monQuery->_tid = _pEDUCB->getTID() ;
+               monQuery->sessionID = _pEDUCB->getID() ;
+               monQuery->opCode = opCode ;
+               monQuery->tid = _pEDUCB->getTID() ;
 
                ISession *pSession = _pEDUCB->getSession() ;
                if ( pSession )
                {
-                  monQuery->_relatedTID = pSession->identifyTID() ;
-                  monQuery->_relatedNID = pSession->identifyNID() ;
+                  monQuery->relatedTID = pSession->identifyTID() ;
+                  monQuery->relatedNID = pSession->identifyNID() ;
                }
 
                _pEDUCB->setMonQueryCB( monQuery ) ;
@@ -845,11 +845,11 @@ namespace engine
             monQuery = _pEDUCB->getMonQueryCB() ;
             ossTick endTime ;
             endTime.sample() ;
-            monQuery->_responseTime += endTime - startTime ;
-            monQuery->_rowsReturned += buffObj.recordNum() ;
+            monQuery->responseTime += endTime - startTime ;
+            monQuery->rowsReturned += buffObj.recordNum() ;
             tmpData.diff(*(_pEDUCB->getMonAppCB())) ;
             monQuery->incMetrics(tmpData) ;
-            if ( !monQuery->_anchorToContext )
+            if ( !monQuery->anchorToContext )
             {
                pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
                _pEDUCB->setMonQueryCB( NULL ) ;
@@ -1576,7 +1576,7 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
-      MonClassQuery *monQuery = NULL ;
+      monClassQuery *monQuery = NULL ;
       utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
       CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
@@ -1699,7 +1699,7 @@ namespace engine
 
             if ( monQuery && pContext->getPlanRuntime() )
             {
-               monQuery->_accessPlanID = pContext->
+               monQuery->accessPlanID = pContext->
                                          getPlanRuntime()->
                                          getAccessPlanID() ;
             }

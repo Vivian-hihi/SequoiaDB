@@ -349,11 +349,11 @@ namespace engine
       void           resetMon() { _monApplCB.reset () ; }
       monConfigCB*   getMonConfigCB() { return & _monCfgCB ; }
       monAppCB*      getMonAppCB() { return & _monApplCB ; }
-      void           setMonQueryCB ( MonClassQuery *monQueryCB )
+      void           setMonQueryCB ( monClassQuery *monQueryCB )
       {
          _monQueryCB = monQueryCB ;
       }
-      MonClassQuery* getMonQueryCB () { return _monQueryCB ; }
+      monClassQuery* getMonQueryCB () { return _monQueryCB ; }
       void           dumpInfo( monEDUSimple &simple ) ;
       void           dumpInfo( monEDUFull &full ) ;
 
@@ -522,7 +522,7 @@ namespace engine
       SET_CONTEXT             _contextList ;
       INT64                   _curAutoTransCtxID ;
       utilMemListPool         *_pMemPool ;
-      MonClassQuery           *_monQueryCB ;
+      monClassQuery           *_monQueryCB ;
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 

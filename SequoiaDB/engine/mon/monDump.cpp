@@ -4216,7 +4216,7 @@ namespace engine
    {
       if ( _scanner )
       {
-         delete ( _scanner ) ;
+         SDB_OSS_DEL ( _scanner ) ;
       }
    }
 
@@ -4228,7 +4228,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      MonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
+      monMonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
 
       rc =  monParseArchiveOpt( obj, _viewArchive ) ;
 
@@ -4245,7 +4245,7 @@ namespace engine
       {
          _scanner = monMgr->getReadScanner(MON_CLASS_QUERY, MON_CLASS_ACTIVE_LIST) ;
       }
-      _queryCB = (MonClassQuery*)_scanner->getNext() ;
+      _queryCB = (monClassQuery*)_scanner->getNext() ;
 
       _hitEnd = ( NULL == _queryCB ) ? TRUE : FALSE ;
       _isDetail = isDetail ;
@@ -4279,7 +4279,7 @@ namespace engine
       BSONObjBuilder builder( _builder ) ;
 
       ossTimestampToString ( createTS, timestamp ) ;
-      _queryCB->_responseTime.convertToTime ( factor, seconds, microseconds ) ;
+      _queryCB->responseTime.convertToTime ( factor, seconds, microseconds ) ;
       responseTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
       /// add system info
@@ -4288,26 +4288,26 @@ namespace engine
 
       ossTimestampToString ( endTS, timestamp ) ;
       builder.append( FIELD_NAME_ENDTIMESTAMP, timestamp ) ;
-      builder.append( FIELD_NAME_TID, _queryCB->_tid ) ;
+      builder.append( FIELD_NAME_TID, _queryCB->tid ) ;
       //FIXME: PASSING IN FALSE AS DEFAULT
       builder.append( FIELD_NAME_OPTYPE,
-                    msgType2String( (MSG_TYPE)_queryCB->_opCode, FALSE ) ) ;
+                    msgType2String( (MSG_TYPE)_queryCB->opCode, FALSE ) ) ;
 
-      builder.append( FIELD_NAME_NAME, _queryCB->_name ) ;
+      builder.append( FIELD_NAME_NAME, _queryCB->name ) ;
       builder.append( FIELD_NAME_QUERYTIMESPENT, responseTime ) ;
-      builder.append( FIELD_NAME_RETURN_NUM, _queryCB->_rowsReturned ) ;
+      builder.append( FIELD_NAME_RETURN_NUM, _queryCB->rowsReturned ) ;
 
       if ( SDB_ROLE_COORD == role )
       {
          double nodeWaitTime ;
          double msgSentTime ;
-         _queryCB->_remoteNodesResponseTime.convertToTime ( factor, seconds, microseconds ) ;
+         _queryCB->remoteNodesResponseTime.convertToTime ( factor, seconds, microseconds ) ;
          nodeWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
-         _queryCB->_msgSentTime.convertToTime ( factor, seconds, microseconds ) ;
+         _queryCB->msgSentTime.convertToTime ( factor, seconds, microseconds ) ;
          msgSentTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
-         builder.append( FIELD_NAME_NUM_MSG_SENT, _queryCB->_numMsgSent ) ;
-         builder.append( FIELD_NAME_LASTOPINFO, _queryCB->_queryText ) ;
+         builder.append( FIELD_NAME_NUM_MSG_SENT, _queryCB->numMsgSent ) ;
+         builder.append( FIELD_NAME_LASTOPINFO, _queryCB->queryText ) ;
          builder.append( FIELD_NAME_MSG_SENT_TIME, msgSentTime ) ;
          builder.append( FIELD_NAME_NODEWAITTIME, nodeWaitTime ) ;
          if ( _queryCB->nodes.size() > 0 )
@@ -4317,27 +4317,27 @@ namespace engine
       }
       else
       {
-         _queryCB->_latchWaitTime.convertToTime ( factor, seconds, microseconds ) ;
+         _queryCB->latchWaitTime.convertToTime ( factor, seconds, microseconds ) ;
          latchWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
-         _queryCB->_lockWaitTime.convertToTime ( factor, seconds, microseconds ) ;
+         _queryCB->lockWaitTime.convertToTime ( factor, seconds, microseconds ) ;
          lockWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
-         builder.append( FIELD_NAME_RELATED_NID, _queryCB->_relatedNID.columns.nodeID ) ;
-         builder.append( FIELD_NAME_RELATED_TID, _queryCB->_relatedTID ) ;
-         builder.append( FIELD_NAME_SESSIONID, _queryCB->_sessionID ) ;
-         builder.append( FIELD_NAME_ACCESSPLAN_ID, _queryCB->_accessPlanID ) ;
-         builder.append( FIELD_NAME_DATAREAD, _queryCB->_dataRead ) ;
-         builder.append( FIELD_NAME_DATAWRITE, _queryCB->_dataWrite ) ;
-         builder.append( FIELD_NAME_INDEXREAD, _queryCB->_indexRead ) ;
-         builder.append( FIELD_NAME_INDEXWRITE, _queryCB->_indexWrite ) ;
-         builder.append( FIELD_NAME_LOBREAD, _queryCB->_lobRead ) ;
-         builder.append( FIELD_NAME_LOBWRITE, _queryCB->_lobWrite ) ;
+         builder.append( FIELD_NAME_RELATED_NID, _queryCB->relatedNID.columns.nodeID ) ;
+         builder.append( FIELD_NAME_RELATED_TID, _queryCB->relatedTID ) ;
+         builder.append( FIELD_NAME_SESSIONID, _queryCB->sessionID ) ;
+         builder.append( FIELD_NAME_ACCESSPLAN_ID, _queryCB->accessPlanID ) ;
+         builder.append( FIELD_NAME_DATAREAD, _queryCB->dataRead ) ;
+         builder.append( FIELD_NAME_DATAWRITE, _queryCB->dataWrite ) ;
+         builder.append( FIELD_NAME_INDEXREAD, _queryCB->indexRead ) ;
+         builder.append( FIELD_NAME_INDEXWRITE, _queryCB->indexWrite ) ;
+         builder.append( FIELD_NAME_LOBREAD, _queryCB->lobRead ) ;
+         builder.append( FIELD_NAME_LOBWRITE, _queryCB->lobWrite ) ;
          builder.append( FIELD_NAME_TRANS_WAITLOCKTIME, lockWaitTime ) ;
          builder.append( FIELD_NAME_LATCH_WAIT_TIME, latchWaitTime ) ;
       }
 
-      _queryCB = (MonClassQuery*)_scanner->getNext() ;
+      _queryCB = (monClassQuery*)_scanner->getNext() ;
 
       if ( NULL == _queryCB )
       {
@@ -4365,7 +4365,7 @@ namespace engine
    {
       if ( _scanner )
       {
-         delete ( _scanner ) ;
+         SDB_OSS_DEL ( _scanner ) ;
       }
    }
 
@@ -4376,7 +4376,7 @@ namespace engine
                                     const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
-      MonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
+      monMonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
 
       rc =  monParseArchiveOpt( obj, _viewArchive ) ;
       if ( rc != SDB_OK )
@@ -4393,7 +4393,7 @@ namespace engine
          _scanner = monMgr->getReadScanner(MON_CLASS_LATCH, MON_CLASS_ACTIVE_LIST) ;
       }
 
-      _latchCB = (MonClassLatch*)_scanner->getNext() ;
+      _latchCB = (monClassLatch*)_scanner->getNext() ;
 
       _hitEnd = ( NULL == _latchCB ) ? TRUE : FALSE ;
       _isDetail = isDetail ;
@@ -4434,7 +4434,7 @@ namespace engine
       }
       else
       {
-         _latchCB->_waitTime.convertToTime ( factor, seconds, microseconds ) ;
+         _latchCB->waitTime.convertToTime ( factor, seconds, microseconds ) ;
       }
 
       waitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
@@ -4442,9 +4442,9 @@ namespace engine
       /// add system info
       monAppendSystemInfo( builder, _addInfoMask ) ;
 
-      ossSnprintf( addr, sizeof(addr)-1, "%p", _latchCB->_latchAddr ) ;
+      ossSnprintf( addr, sizeof(addr)-1, "%p", _latchCB->latchAddr ) ;
       builder.append( FIELD_NAME_ADDRESS, addr ) ;
-      if ( EXCLUSIVE == _latchCB->_latchMode )
+      if ( EXCLUSIVE == _latchCB->latchMode )
       {
          builder.append( FIELD_NAME_MODE, "X" ) ;
       }
@@ -4458,15 +4458,15 @@ namespace engine
          builder.append( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
       }
 
-      builder.append( FIELD_NAME_TID, _latchCB->_waiterTID ) ;
-      builder.append( FIELD_NAME_XOWNER_TID, _latchCB->_xOwnerTID ) ;
-      builder.append( FIELD_NAME_LATCH_NAME, monLatchIDtoName(_latchCB->_latchID) ) ;
+      builder.append( FIELD_NAME_TID, _latchCB->waiterTID ) ;
+      builder.append( FIELD_NAME_XOWNER_TID, _latchCB->xOwnerTID ) ;
+      builder.append( FIELD_NAME_LATCH_NAME, monLatchIDtoName(_latchCB->latchID) ) ;
       builder.append( FIELD_NAME_LATCH_DESC, "" ) ;
       builder.append( FIELD_NAME_LATCH_WAIT_TIME, waitTime ) ;
-      builder.append( FIELD_NAME_NUM_OWNER, _latchCB->_numOwner ) ;
-      builder.append( FIELD_NAME_LAST_S_OWNER, _latchCB->_lastSOwner ) ;
+      builder.append( FIELD_NAME_NUM_OWNER, _latchCB->numOwner ) ;
+      builder.append( FIELD_NAME_LAST_S_OWNER, _latchCB->lastSOwner ) ;
 
-      _latchCB = (MonClassLatch*)_scanner->getNext() ;
+      _latchCB = (monClassLatch*)_scanner->getNext() ;
 
       if ( NULL == _latchCB )
       {
@@ -4495,7 +4495,7 @@ namespace engine
    {
       if ( _scanner )
       {
-         delete ( _scanner ) ;
+         SDB_OSS_DEL ( _scanner ) ;
       }
    }
 
@@ -4507,7 +4507,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      MonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
+      monMonitorManager *monMgr = pmdGetKRCB()->getMonMgr() ;
 
       rc =  monParseArchiveOpt( obj, _viewArchive ) ;
       if ( rc != SDB_OK )
@@ -4524,7 +4524,7 @@ namespace engine
          _scanner = monMgr->getReadScanner(MON_CLASS_LOCK, MON_CLASS_ACTIVE_LIST) ;
       }
 
-      _lockCB = (MonClassLock*)_scanner->getNext() ;
+      _lockCB = (monClassLock*)_scanner->getNext() ;
 
       _hitEnd = ( NULL == _lockCB ) ? TRUE : FALSE ;
       _isDetail = isDetail ;
@@ -4565,7 +4565,7 @@ namespace engine
       }
       else
       {
-         _lockCB->_waitTime.convertToTime ( factor, seconds, microseconds ) ;
+         _lockCB->waitTime.convertToTime ( factor, seconds, microseconds ) ;
       }
 
       if ( _viewArchive )
@@ -4573,14 +4573,14 @@ namespace engine
          builder.append( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
       }
       waitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
-      builder.append( FIELD_NAME_TID, _lockCB->_waiterTID ) ;
-      builder.append( FIELD_NAME_XOWNER_TID, _lockCB->_xOwnerTID ) ;
-      builder.append( FIELD_NAME_MODE, lockModeToString( _lockCB->_lockMode ) );
-      _lockCB->_lockID.toBson(builder) ;
+      builder.append( FIELD_NAME_TID, _lockCB->waiterTID ) ;
+      builder.append( FIELD_NAME_XOWNER_TID, _lockCB->xOwnerTID ) ;
+      builder.append( FIELD_NAME_MODE, lockModeToString( _lockCB->lockMode ) );
+      _lockCB->lockID.toBson(builder) ;
       builder.append( FIELD_NAME_TRANS_WAITLOCKTIME, waitTime ) ;
-      builder.append( FIELD_NAME_NUM_OWNER, _lockCB->_numOwner ) ;
+      builder.append( FIELD_NAME_NUM_OWNER, _lockCB->numOwner ) ;
 
-      _lockCB = (MonClassLock*)_scanner->getNext() ;
+      _lockCB = (monClassLock*)_scanner->getNext() ;
 
       if ( NULL == _lockCB )
       {

@@ -53,7 +53,7 @@ namespace engine
    class _pmdTransExecutor : public _dpsTransExecutor
    {
       public:
-         _pmdTransExecutor( _pmdEDUCB *cb, MonitorManager *monMgr ) ;
+         _pmdTransExecutor( _pmdEDUCB *cb, monMonitorManager *monMgr ) ;
          virtual ~_pmdTransExecutor() ;
 
       public:

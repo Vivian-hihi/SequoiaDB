@@ -265,12 +265,12 @@ namespace engine
       }
 
       // Anchor the monQuery on the first context that gets created in a query
-      MonClassQuery *monQuery = pEDUCB->getMonQueryCB() ;
+      monClassQuery *monQuery = pEDUCB->getMonQueryCB() ;
       if ( NULL != monQuery &&
-           !monQuery->_anchorToContext )
+           !monQuery->anchorToContext )
       {
          (*context)->setMonQueryCB( monQuery ) ;
-         monQuery->_anchorToContext = TRUE ;
+         monQuery->anchorToContext = TRUE ;
       }
 
       PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s])",

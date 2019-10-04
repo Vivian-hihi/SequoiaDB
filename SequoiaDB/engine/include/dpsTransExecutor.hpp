@@ -284,7 +284,7 @@ namespace engine
       friend class _pmdEDUCB ;
 
       public:
-         _dpsTransExecutor( MonitorManager *monMgr ) ;
+         _dpsTransExecutor( monMonitorManager *monMgr ) ;
          virtual ~_dpsTransExecutor() ;
 
          void     clearAll() ;
@@ -422,8 +422,8 @@ namespace engine
          // undo LR space reserved by this transaction
          UINT64                  _reservedLogSpace ;
 
-         MonitorManager         *_monMgr ;
-         MonClassLock           *_monLock ;
+         monMonitorManager         *_monMgr ;
+         monClassLock           *_monLock ;
          BOOLEAN                 _lockWaitStarted ;
          ossTick                 _lockWaitStartTimer ;
          ossTickDelta            _lockWaitTime ;

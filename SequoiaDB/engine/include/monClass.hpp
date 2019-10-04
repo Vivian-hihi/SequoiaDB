@@ -18,7 +18,7 @@
 
    Source File Name = monClass.hpp
 
-   Descriptive Name = Monitor Service Header
+   Descriptive Name = monitor Service Header
 
    When/how to use: this program may be used on binary and text-formatted
    versions of OSS component. This file contains functions for OSS operations.
@@ -61,42 +61,43 @@ class _monAppCB ;
 #define MONQUERY_SET_NAME(edu, n)\
   if (edu->getMonQueryCB()) \
   { \
-     edu->getMonQueryCB()->_name.assign(n); \
+     edu->getMonQueryCB()->name.assign(n); \
   }\
 
 #define MONQUERY_SET_QUERY_TEXT(edu, n)\
-  if (edu->getMonQueryCB() && edu->getMonQueryCB()->_dataLvl == MON_DATA_LVL_DETAIL )\
+  if (edu->getMonQueryCB() && \
+      edu->getMonQueryCB()->dataLvl == MON_DATA_LVL_DETAIL )\
   {\
-     edu->getMonQueryCB()->_queryText.assign(n); \
+     edu->getMonQueryCB()->queryText.assign(n); \
   }\
 
 typedef enum
 {
-   MON_CLASS_QUERY = 0,  // _MonClassQuery
-   MON_CLASS_LATCH,      // _MonClassLatch
-   MON_CLASS_LOCK,       // _MonClassLock
+   MON_CLASS_QUERY = 0,  // _monClassQuery
+   MON_CLASS_LATCH,      // _monClassLatch
+   MON_CLASS_LOCK,       // _monClassLock
    MON_CLASS_MAX
-} MonitorClassType ;
+} MON_CLASS_TYPE ;
 
-// Status for _MonClass
+// Status for _monClass
 #define MON_CLASS_STATUS_NORMAL   0x00
 #define MON_CLASS_STATUS_PEND_DEL 0x01
 #define MON_CLASS_STATUS_PEND_ARC 0x02
 
-// Monitor data capture level
+// monitor data capture level
 typedef enum
 {
    MON_DATA_LVL_NONE = 0,
    MON_DATA_LVL_BASIC,
    MON_DATA_LVL_DETAIL
-} MonDataLvl ;
+} MON_DATA_LEVEL ;
 
-struct _MonClassBaseData
+struct _monClassBaseData
 {
 } ;
 
-// Data structure used when constructing a MonClassLatch
-struct _MonClassLatchData : public _MonClassBaseData
+// Data structure used when constructing a monClassLatch
+struct _monClassLatchData : public _monClassBaseData
 {
    UINT32 waiterTID ;
    UINT32 ownerTID ;
@@ -106,25 +107,26 @@ struct _MonClassLatchData : public _MonClassBaseData
    UINT32 lastSOwner ;
    UINT32 numOwner ;
 
-   _MonClassLatchData()
+   _monClassLatchData()
       : waiterTID( 0 ), ownerTID( 0 ), latchID( MON_LATCH_ID_MAX ),
         latchAddr( NULL ), latchMode( SHARED ), lastSOwner( 0 ),
         numOwner( 0 )
    {}
 } ;
 
-typedef _MonClassLatchData MonClassLatchData ;
+typedef _monClassLatchData monClassLatchData ;
 
 typedef boost::intrusive::list_base_hook< > BaseHook ;
 
 /**
- * _MonClass - Parent class for all monitor class
+ * _monClass - Parent class for all monitor class
  *
- * It is up to the user to define the synchronization strategy for each _MonClass.
- * For example, if a metric can be concurrently updated by more than one thread,
- * then the user might want to define that metric as atomic
+ * It is up to the user to define the synchronization strategy for each
+ * _monClass. For example, if a metric can be concurrently updated
+ * by more than one thread, then the user might want to
+ * define that metric as atomic
  */
-class _MonClass : public BaseHook, public utilPooledObject
+class _monClass : public BaseHook, public utilPooledObject
 {
    ossTimestamp _createTS ;      /**! create timestamp for this object */
    ossTimestamp    _endTS ;      /**! end timestamp for this object */
@@ -132,19 +134,19 @@ class _MonClass : public BaseHook, public utilPooledObject
    UINT16         _status ;      /**! object status */
 
 protected:
-   MonitorClassType _type ;      /**! object type */
+   MON_CLASS_TYPE _type ;      /**! object type */
 
 public:
    //TODO retrieve this directly from container
-   MonDataLvl    _dataLvl ;      /**! Monitor data collection level */
+   MON_DATA_LEVEL    dataLvl ;      /**! monitor data collection level */
 
-   _MonClass() ;
-   virtual ~_MonClass() ;
+   _monClass() ;
+   virtual ~_monClass() ;
 
    /**
     * getType - return the type of the object
     */
-   MonitorClassType getType () const { return _type; }
+   MON_CLASS_TYPE getType () const { return _type; }
 
    /**
     * setPendingDelete - mark an object to be pending delete
@@ -195,19 +197,19 @@ public:
    virtual void reset() = 0 ;
 } ;
 
-typedef _MonClass MonClass ;
+typedef _monClass monClass ;
 
 /**
  * Template to ensure all subclasses implement the getType function
  */
 template<class T>
-class MonClassTemplate : public _MonClass
+class monClassTemplate : public _monClass
 {
 protected:
-   MonClassTemplate() {}
+   monClassTemplate() {}
 
 public:
-   ~MonClassTemplate()
+   ~monClassTemplate()
    {
       T::getType();
    }
@@ -216,97 +218,97 @@ public:
 /**
  * archive query information based on response time
  */
-BOOLEAN archiveQuery ( _MonClass *obj ) ;
+BOOLEAN monArchiveQuery ( _monClass *obj ) ;
 
 /**
  * archive latch information based on wait time
  */
-BOOLEAN archiveLatch ( _MonClass *obj ) ;
+BOOLEAN monArchiveLatch ( _monClass *obj ) ;
 
-BOOLEAN archiveLock ( _MonClass *obj ) ;
+BOOLEAN monArchiveLock ( _monClass *obj ) ;
 
 /**
  * Default function pointer to indicate no archive
  */
-BOOLEAN noArchive ( _MonClass *obj ) ;
+BOOLEAN monNoArchive ( _monClass *obj ) ;
 
-typedef BOOLEAN (*archiveFunc)(_MonClass *) ;
+typedef BOOLEAN (*archiveFunc)(_monClass *) ;
 
 typedef enum
 {
    MON_CLASS_ACTIVE_LIST,
    MON_CLASS_ARCHIVED_LIST
-} MonClassListType ;
+} MON_CLASS_LIST_TYPE ;
 
 /*
  * Structure to help compute the delta from monAppCB
  */
-struct _MonClassQueryTmpData
+struct _monClassQueryTmpData
 {
-   UINT32            _dataRead ;
-   UINT32           _indexRead ;
-   UINT32           _dataWrite ;
-   UINT32          _indexWrite ;
+   UINT32            dataRead ;
+   UINT32           indexRead ;
+   UINT32           dataWrite ;
+   UINT32           indexWrite ;
 
-   _MonClassQueryTmpData()
-      : _dataRead(0), _indexRead(0), _dataWrite(0), _indexWrite(0)
+   _monClassQueryTmpData()
+      : dataRead(0), indexRead(0), dataWrite(0), indexWrite(0)
    {}
 
-   _MonClassQueryTmpData& operator=(const _monAppCB& cb) ;
+   _monClassQueryTmpData& operator=(const _monAppCB& cb) ;
 
    void diff(_monAppCB &cb) ;
 } ;
-typedef _MonClassQueryTmpData MonClassQueryTmpData ;
+typedef _monClassQueryTmpData monClassQueryTmpData ;
 
 /**
  * Capture metrics about a query
  */
-class _MonClassQuery : public MonClassTemplate<_MonClassQuery>
+class _monClassQuery : public monClassTemplate<_monClassQuery>
 {
 public:
-   UINT32                 _tid ;  /**! TID of the EDU */
-   std::string           _name ;  /**! The target object name of this query */
-   SINT64        _accessPlanID ;  /**! Access plan ID used by the query */
-   UINT32              _opCode ;  /**! Message opCode */
-   UINT32           _sessionID ;  /**! EDU Session ID */
-   ossTickDelta  _responseTime ;  /**! Response time of the query */
-   ossTickDelta _latchWaitTime ;  /**! Time spent on latch wait */
-   ossTickDelta  _lockWaitTime ;  /**! Time spent on lock wait */
-   UINT32            _dataRead ;  /**! Total data read (record)*/
-   UINT32           _indexRead ;  /**! Total index read (record)*/
-   UINT32             _lobRead ;  /**! Total LOB read */
-   UINT32           _dataWrite ;  /**! Total data write (record) */
-   UINT32          _indexWrite ;  /**! Total index write (record) */
-   UINT32            _lobWrite ;  /**! Total LOB write */
-   UINT32        _rowsReturned ;  /**! Total number of rows returned */
-   UINT32          _numMsgSent ;  /**! Total number of messages sent to remote nodes */
-   std::set<UINT32>      nodes ;  /**! Node ID where messages were sent to */
-   MsgRouteID      _relatedNID ;  /**! coordinator node node ID */
-   UINT32          _relatedTID ;  /**! coordinator node edu TID */
-   BOOLEAN    _anchorToContext ;  /**! Whether this object is anchored to a context */
-   std::string      _queryText ;  /**! Full query text */
-   ossTickDelta _remoteNodesResponseTime ; /**! Time spent waiting on remote nodes */
-   ossTickDelta _msgSentTime ;    /**! Time spent sending messages to remote nodes */
+   UINT32                 tid ;  /**! TID of the EDU */
+   std::string           name ;  /**! The target object name of this query */
+   SINT64        accessPlanID ;  /**! Access plan ID used by the query */
+   UINT32              opCode ;  /**! Message opCode */
+   UINT32           sessionID ;  /**! EDU Session ID */
+   ossTickDelta  responseTime ;  /**! Response time of the query */
+   ossTickDelta latchWaitTime ;  /**! Time spent on latch wait */
+   ossTickDelta  lockWaitTime ;  /**! Time spent on lock wait */
+   UINT32            dataRead ;  /**! Total data read (record)*/
+   UINT32           indexRead ;  /**! Total index read (record)*/
+   UINT32             lobRead ;  /**! Total LOB read */
+   UINT32           dataWrite ;  /**! Total data write (record) */
+   UINT32          indexWrite ;  /**! Total index write (record) */
+   UINT32            lobWrite ;  /**! Total LOB write */
+   UINT32        rowsReturned ;  /**! Total number of rows returned */
+   UINT32          numMsgSent ;  /**! Total # of msgs sent to remote nodes */
+   std::set<UINT32>     nodes ;  /**! Node ID where messages were sent to */
+   MsgRouteID      relatedNID ;  /**! coordinator node node ID */
+   UINT32          relatedTID ;  /**! coordinator node edu TID */
+   BOOLEAN    anchorToContext ;  /**! Whether this obj anchored to a context */
+   std::string      queryText ;  /**! Full query text */
+   ossTickDelta remoteNodesResponseTime ; /*! Time spent waiting remote nodes */
+   ossTickDelta msgSentTime ;    /**! Time spent sending msgs to remote nodes */
 
-   _MonClassQuery ()
-     :  _accessPlanID( -1 ),
-        _opCode( 0 ),
-        _sessionID( 0 ),
-        _dataRead( 0 ),
-        _indexRead( 0 ),
-        _lobRead( 0 ),
-        _dataWrite( 0 ),
-        _indexWrite( 0 ),
-        _lobWrite( 0 ),
-        _rowsReturned( 0 ),
-        _numMsgSent( 0 ),
-        _relatedTID( 0 ),
-        _anchorToContext( FALSE )
+   _monClassQuery ()
+     :  accessPlanID( -1 ),
+        opCode( 0 ),
+        sessionID( 0 ),
+        dataRead( 0 ),
+        indexRead( 0 ),
+        lobRead( 0 ),
+        dataWrite( 0 ),
+        indexWrite( 0 ),
+        lobWrite( 0 ),
+        rowsReturned( 0 ),
+        numMsgSent( 0 ),
+        relatedTID( 0 ),
+        anchorToContext( FALSE )
    {
       _type = MON_CLASS_QUERY ;
-      _relatedNID.value = 0 ;
+      relatedNID.value = 0 ;
    }
-   static MonitorClassType getType () { return MON_CLASS_QUERY ; }
+   static MON_CLASS_TYPE getType () { return MON_CLASS_QUERY ; }
 
    //TODO: to be implemented
    virtual void dump( BSONObj &obj ) {}
@@ -320,89 +322,89 @@ public:
    {
       ossTick tick ;
       tick.sample() ;
-      _latchWaitTime += (tick - _latchWaitTimer) ;
+      latchWaitTime += (tick - _latchWaitTimer) ;
    }
 
-   void incMetrics( MonClassQueryTmpData &tmpData )
+   void incMetrics( monClassQueryTmpData &tmpData )
    {
-      _dataRead += tmpData._dataRead ;
-      _dataWrite += tmpData._dataWrite ;
-      _indexRead += tmpData._indexRead ;
-      _indexWrite += tmpData._indexWrite ;
+      dataRead += tmpData.dataRead ;
+      dataWrite += tmpData.dataWrite ;
+      indexRead += tmpData.indexRead ;
+      indexWrite += tmpData.indexWrite ;
    }
 
 private:
    ossTick _latchWaitTimer ;
 } ;
 
-typedef _MonClassQuery MonClassQuery ;
+typedef _monClassQuery monClassQuery ;
 
-class _MonClassLatch : public MonClassTemplate<_MonClassLatch>
+class _monClassLatch : public monClassTemplate<_monClassLatch>
 {
 public:
-   _MonClassLatch ()
+   _monClassLatch ()
    {
       _type = MON_CLASS_LATCH ;
    }
 
-   _MonClassLatch (_MonClassBaseData *data)
+   _monClassLatch (_monClassBaseData *data)
    {
       if ( data )
       {
-         _MonClassLatchData *latchData = (_MonClassLatchData *) data ;
-         _xOwnerTID = latchData->ownerTID ;
-         _waiterTID = latchData->waiterTID ;
-         _latchID = latchData->latchID ;
-         _latchAddr = latchData->latchAddr ;
-         _latchMode = latchData->latchMode ;
-         _numOwner = latchData->numOwner ;
-         _lastSOwner = latchData->lastSOwner ;
+         _monClassLatchData *latchData = (_monClassLatchData *) data ;
+         xOwnerTID = latchData->ownerTID ;
+         waiterTID = latchData->waiterTID ;
+         latchID = latchData->latchID ;
+         latchAddr = latchData->latchAddr ;
+         latchMode = latchData->latchMode ;
+         numOwner = latchData->numOwner ;
+         lastSOwner = latchData->lastSOwner ;
       }
       _type = MON_CLASS_LATCH ;
    }
-   static MonitorClassType getType () { return MON_CLASS_LATCH ; }
+   static MON_CLASS_TYPE getType () { return MON_CLASS_LATCH ; }
 
    virtual void dump( BSONObj &obj ) {}
 
    virtual void reset() {}
 
-   ossTickDelta _waitTime ;
-   UINT32 _xOwnerTID ;
-   UINT32 _waiterTID ;
-   MON_LATCH_IDENTIFIER _latchID ;
-   void *_latchAddr ;
-   OSS_LATCH_MODE _latchMode ;
-   UINT32 _numOwner ;
-   UINT32 _lastSOwner ;
+   ossTickDelta waitTime ;
+   UINT32 xOwnerTID ;
+   UINT32 waiterTID ;
+   MON_LATCH_IDENTIFIER latchID ;
+   void *latchAddr ;
+   OSS_LATCH_MODE latchMode ;
+   UINT32 numOwner ;
+   UINT32 lastSOwner ;
 } ;
 
-typedef _MonClassLatch MonClassLatch ;
+typedef _monClassLatch monClassLatch ;
 
-class _MonClassLock : public MonClassTemplate<_MonClassLock>
+class _monClassLock : public monClassTemplate<_monClassLock>
 {
 public:
-   _MonClassLock ()
-      : _xOwnerTID( 0 ), _waiterTID( 0 ), _numOwner( 0 ),
-        _lockMode( DPS_TRANSLOCK_MAX )
+   _monClassLock ()
+      : xOwnerTID( 0 ), waiterTID( 0 ), numOwner( 0 ),
+        lockMode( DPS_TRANSLOCK_MAX )
    {
       _type = MON_CLASS_LOCK ;
    }
 
-   static MonitorClassType getType () { return MON_CLASS_LOCK ; }
+   static MON_CLASS_TYPE getType () { return MON_CLASS_LOCK ; }
 
    virtual void dump( BSONObj &obj ) {}
 
    virtual void reset() {}
 
-   ossTickDelta _waitTime ;
-   UINT32 _xOwnerTID ;
-   UINT32 _waiterTID ;
-   UINT32 _numOwner ;
-   dpsTransLockId _lockID ;
-   DPS_TRANSLOCK_TYPE _lockMode ;
+   ossTickDelta waitTime ;
+   UINT32 xOwnerTID ;
+   UINT32 waiterTID ;
+   UINT32 numOwner ;
+   dpsTransLockId lockID ;
+   DPS_TRANSLOCK_TYPE lockMode ;
 } ;
 
-typedef _MonClassLock MonClassLock ;
+typedef _monClassLock monClassLock ;
 
 
 /**
@@ -415,112 +417,130 @@ class listFwdIterator : public std::iterator<std::forward_iterator_tag,
                                                T*,
                                                T& >
 {
-   typename T::iterator itr;
-   typedef typename T::reference reference ;
-   typedef typename T::pointer pointer ;
+   typename T::iterator _itr;
+   typedef typename T::reference REFERENCE ;
+   typedef typename T::pointer POINTER ;
 
 public:
    explicit listFwdIterator(typename T::iterator it)
    {
-      itr = it ;
+      _itr = it ;
    }
 
    listFwdIterator() {}
 
    listFwdIterator& operator++ () // Pre-increment
    {
-      itr++ ;
+      _itr++ ;
       return *this;
    }
 
    listFwdIterator operator++ (int) // Post-increment
    {
       listFwdIterator tmp(*this);
-      itr++ ;
+      _itr++ ;
       return tmp;
    }
 
    template<class OtherType>
    bool operator == (const listFwdIterator<OtherType>& rhs) const
    {
-      return itr == rhs.itr;
+      return _itr == rhs._itr;
    }
 
    template<class OtherType>
    bool operator != (const listFwdIterator<OtherType>& rhs) const
    {
-      return itr != rhs.itr;
+      return _itr != rhs._itr;
    }
 
-   reference operator* () const
+   REFERENCE operator* () const
    {
-      return *itr;
+      return *_itr;
    }
 
-   pointer operator-> () const
+   POINTER operator-> () const
    {
-      return &(*itr);
+      return &(*_itr);
    }
 
    operator listFwdIterator<const T>() const
    {
-      return listFwdIterator<const T>(itr);
+      return listFwdIterator<const T>(_itr);
    }
 };
 
 
 /**
- * _MonClassContainer defines
+ * _monClassContainer defines
  *
- * It is a container for a _MonClass type. Contains an active list and archived list.
+ * It is a container for a _monClass type.
+ * Contains an active list and archived list.
  * See below for latch protocol for these two lists.
  */
-class _MonClassContainer : public utilPooledObject
+class _monClassContainer : public utilPooledObject
 {
-friend class _MonitorManager ;
+friend class _monMonitorManager ;
 
-   typedef boost::intrusive::list< _MonClass, boost::intrusive::base_hook<BaseHook> > MonClassList ;
+   typedef boost::intrusive::list< _monClass,
+                        boost::intrusive::base_hook<BaseHook> > MONCLASS_LIST ;
 
 public:
-   typedef listFwdIterator<MonClassList> iterator ;
-   typedef listFwdIterator<const MonClassList> const_iterator ;
+   typedef listFwdIterator<MONCLASS_LIST> iterator ;
+   typedef listFwdIterator<const MONCLASS_LIST> const_iterator ;
 
 private:
-   _MonClassContainer (MonitorClassType type) ;
+   _monClassContainer (MON_CLASS_TYPE type) ;
 
    // disable assignment/copy
-   _MonClassContainer& operator= (const _MonClassContainer& other) ;
-   _MonClassContainer( const _MonClassContainer& other ) ;
-
+   _monClassContainer& operator= (const _monClassContainer& other) ;
+   _monClassContainer( const _monClassContainer& other ) ;
 
    // a list of all the active objects
-   MonClassList _activeList ;
+   MONCLASS_LIST _activeList ;
 
    // latch protecting the activeList
    // Protocol is as follows:
-   // - Scanner gets the headLatch and latch in S. It releases the headLatch after making a copy of the list head.
-   // - Delete is async, and does not need any latch. It simply marks the object as pending delete.
+   // - Scanner gets the headLatch and latch in S. 
+   //   It releases the headLatch after making a copy of the list head.
+   // - Delete is async, and does not need any latch.
+   //   It simply marks the object as pending delete.
    // - Add gets the headLatch in X, then add a node to the head of the list.
-   // - Real delete will be done by a background agent. It gets the headLatch in S and latch in X.
+   // - Real delete will be done by a background agent. 
+   //   It gets the headLatch in S and latch in X.
    //   It releases the headLatch after processing the list head.
    // - Latches should be acquired in this order: listLatch->archiveLatch->headLatch
    ossSpinSLatch _activeListLatch ;
    ossSpinSLatch _activeListHeadLatch ;
 
    // a list of all the archived objects
-   MonClassList _archivedList ;
+   MONCLASS_LIST _archivedList ;
 
    ossSpinSLatch _archiveListLatch ;
 
    ossAtomic32 _activeListLen ;       /**< number of elements in the active list */
-   UINT32 _archivedListLen ;          /**< number of elements in the archived list, protected by archivedListLatch */
-   UINT32 _archivedListMaxLen ;       /**< maximum number of elements allowed in the archived list */
+   /**< number of elements in the archived list, protected by archivedListLatch */
+   UINT32 _archivedListLen ;
+   /**< maximum number of elements allowed in the archived list */
+   UINT32 _archivedListMaxLen ; 
 
-   ossAtomic32 _numPendingArchive ;   /**< Number of pending archive objects in the active list */
-   ossAtomic32 _numPendingDelete ;    /**< Number of pending delete objects in the active list */
+   /**< Number of pending archive objects in the active list */
+   ossAtomic32 _numPendingArchive ;
+   /**< Number of pending delete objects in the active list */
+   ossAtomic32 _numPendingDelete ;
 
-   MonDataLvl _curCollectionLvl ;     /**< The current data collection level for this class */
-   MonDataLvl _minOperationalLvl ;    /**< The minimum data collection level when MonClass objects will get created */
+   /**< The current data collection level for this class */
+   MON_DATA_LEVEL _curCollectionLvl ; 
+   /**< The minimum collection level when monClass objects will get created */
+   MON_DATA_LEVEL _minOperationalLvl ;
+
+  /**
+    * function pointer to specify the archive rule
+    * @param obj the object to be archived
+    */
+
+   archiveFunc _doArchive ;
+
    /*
     * Process pending archive/delete objects from the active list
     */
@@ -580,11 +600,11 @@ public:
                              : _archiveListLatch.release_shared() ;
    }
 
-   void setCollectionLvl( MonDataLvl mode )
+   void setCollectionLvl( MON_DATA_LEVEL mode )
    {
       _curCollectionLvl = mode ;
    }
-   MonDataLvl getCollectionLvl() { return _curCollectionLvl ; }
+   MON_DATA_LEVEL getCollectionLvl() { return _curCollectionLvl ; }
 
    BOOLEAN isOperational()
    {
@@ -604,7 +624,7 @@ public:
          obj = SDB_OSS_NEW T() ;
          if ( obj )
          {
-            obj->_dataLvl = getCollectionLvl() ;
+            obj->dataLvl = getCollectionLvl() ;
             ossScopedLock l( &_activeListHeadLatch, EXCLUSIVE ) ;
             _activeList.push_front( *obj ) ;
             _activeListLen.inc() ;
@@ -622,7 +642,7 @@ public:
     * @return The object added to the container
     */
    template<class T>
-   T* add (_MonClassBaseData *data)
+   T* add (_monClassBaseData *data)
    {
       T* obj = NULL ;
       if ( isOperational() )
@@ -630,7 +650,7 @@ public:
          obj = SDB_OSS_NEW T(data) ;
          if ( obj )
          {
-            obj->_dataLvl = getCollectionLvl() ;
+            obj->dataLvl = getCollectionLvl() ;
             ossScopedLock l( &_activeListHeadLatch, EXCLUSIVE ) ;
             _activeList.push_front( *obj ) ;
             _activeListLen.inc() ;
@@ -644,17 +664,11 @@ public:
    }
 
    /**
-    * Remove an object from the active list. The object will get archived based on
-    * the archive rule.
+    * Remove an object from the active list. The object will get archived based
+    * on the archive rule.
     * @param obj the object to be added
     */
-   void remove ( _MonClass *obj ) ;
-
-   /**
-    * function pointer to specify the archive rule
-    * @param obj the object to be archived
-    */
-   archiveFunc doArchive ;
+   void remove ( _monClass *obj ) ;
 
    /**
     * Return iterator to the first node of the list
@@ -662,7 +676,7 @@ public:
     * Dependency: appropriate latch has been taken
     * @param listType the type of list to read
     */
-   iterator begin( MonClassListType listType )
+   iterator begin( MON_CLASS_LIST_TYPE listType )
    {
       SDB_ASSERT ( listType == MON_CLASS_ARCHIVED_LIST ||
                    listType == MON_CLASS_ACTIVE_LIST,
@@ -677,7 +691,7 @@ public:
       }
    }
 
-   iterator end( MonClassListType listType )
+   iterator end( MON_CLASS_LIST_TYPE listType )
    {
       SDB_ASSERT ( listType == MON_CLASS_ARCHIVED_LIST ||
                    listType == MON_CLASS_ACTIVE_LIST,
@@ -694,28 +708,28 @@ public:
    }
 } ;
 
-typedef _MonClassContainer MonClassContainer ;
+typedef _monClassContainer monClassContainer ;
 
-class _MonClassReadScanner
+class _monClassReadScanner : public utilPooledObject
 {
 private:
-   typedef _MonClassContainer::iterator iterator ;
+   typedef _monClassContainer::iterator IT ;
 
-   _MonClassContainer *_container ; /**< container for the type of MonClass */
-   iterator itr ;                  /**< iterator pointing to current node */
-   MonClassListType _listType ;    /**< The types of nodes to scan (active/archive) */
-   MonClassListType _currentList ; /**< The list currently being scanned */
-   BOOLEAN _initCalled ;           /**< Whether scan initialization has been called */
-   BOOLEAN _hasHeadLatch ;         /**< Whether headLatch has been obtained */
-   BOOLEAN _hasListLatch ;         /**< Whether listLatch has been obtained */
-   BOOLEAN _hasArchiveLatch ;      /**< Whether archiveLatch has been obtained */
+   _monClassContainer *_container ; /**< container for the type of monClass */
+   IT _itr ;                  /**< iterator pointing to current node */
+   MON_CLASS_LIST_TYPE _listType ; /**< Type of list to scan (active/archive) */
+   MON_CLASS_LIST_TYPE _currentList ; /**< The list currently being scanned */
+   BOOLEAN _initCalled ;        /**< Whether scan initialization has done */
+   BOOLEAN _hasHeadLatch ;      /**< Whether headLatch has been obtained */
+   BOOLEAN _hasListLatch ;      /**< Whether listLatch has been obtained */
+   BOOLEAN _hasArchiveLatch ;   /**< Whether archiveLatch has been obtained */
    BOOLEAN _endReached ;           /**< Whether the scan has read all the nodes */
 
    void initScan() ;
    void doneScan() ;
 
 public:
-   _MonClassReadScanner( MonClassContainer *container, MonClassListType listType )
+   _monClassReadScanner( monClassContainer *container, MON_CLASS_LIST_TYPE listType )
      : _container( container ),
        _listType( listType ),
        _initCalled( FALSE ),
@@ -726,7 +740,7 @@ public:
    {
    }
 
-   ~_MonClassReadScanner()
+   ~_monClassReadScanner()
    {
       doneScan() ;
    }
@@ -734,10 +748,10 @@ public:
    /**
     * Return the next node
     */
-   _MonClass* getNext() ;
+   _monClass* getNext() ;
 } ;
 
-typedef _MonClassReadScanner MonClassReadScanner ;
+typedef _monClassReadScanner monClassReadScanner ;
 } // namespace engine
 
 #endif //MONCLASS_HPP_

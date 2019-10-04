@@ -356,7 +356,7 @@ namespace engine
    /*
       _dpsTransExecutor implement
    */
-   _dpsTransExecutor::_dpsTransExecutor(MonitorManager *monMgr)
+   _dpsTransExecutor::_dpsTransExecutor(monMonitorManager *monMgr)
       : _monMgr( monMgr )
    {
       for ( UINT32 i = LOCKMGR_TRANS_LOCK; i < LOCKMGR_TYPE_MAX; i++ )
@@ -427,7 +427,7 @@ namespace engine
          if ( _monMgr->isOperational( MON_CLASS_LOCK ) &&
               _monLock == NULL )
          {
-            _monLock = _monMgr->registerMonitorObject<MonClassLock>() ;
+            _monLock = _monMgr->registerMonitorObject<monClassLock>() ;
             if ( _monLock )
             {
                dpsTransLRB *ownerLRB = waiter->lrbHdr->ownerLRB ;
@@ -435,18 +435,18 @@ namespace engine
 
                if ( ownerLRB->lockMode == DPS_TRANSLOCK_X )
                {
-                  _monLock->_xOwnerTID = ownerLRB->dpsTxExectr->getTID() ;
+                  _monLock->xOwnerTID = ownerLRB->dpsTxExectr->getTID() ;
                }
 
-               _monLock->_numOwner = 1 ;
+               _monLock->numOwner = 1 ;
                while ( ownerLRB->nextLRB != NULL )
                {
-                  _monLock->_numOwner++ ;
+                  _monLock->numOwner++ ;
                   ownerLRB = ownerLRB->nextLRB ;
                }
-               _monLock->_waiterTID = getTID() ;
-               _monLock->_lockID = waiter->lrbHdr->lockId ;
-               _monLock->_lockMode = waiter->lockMode ;
+               _monLock->waiterTID = getTID() ;
+               _monLock->lockID = waiter->lrbHdr->lockId ;
+               _monLock->lockMode = waiter->lockMode ;
             }
          }
       }
@@ -821,7 +821,7 @@ namespace engine
 
       if ( _monLock )
       {
-         _monLock->_waitTime = _lockWaitTime ;
+         _monLock->waitTime = _lockWaitTime ;
          _monMgr->removeMonitorObject( _monLock ) ;
          _monLock = NULL ;
       }

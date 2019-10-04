@@ -57,16 +57,16 @@ namespace engine
  * A monitor manager responsible for memory management and metric management
  * of the monitor classes
  */
-class _MonitorManager
+class _monMonitorManager
 {
    // disable assignment/copy
-   _MonitorManager& operator= (const _MonitorManager&) ;
-   _MonitorManager(_MonitorManager&) ;
+   _monMonitorManager& operator= (const _monMonitorManager&) ;
+   _monMonitorManager(_monMonitorManager&) ;
 
 public:
-   _MonitorManager() ;
+   _monMonitorManager() ;
 
-   ~_MonitorManager() ;
+   ~_monMonitorManager() ;
 
    /**
     * Register a new monitor object
@@ -77,8 +77,8 @@ public:
    template<class T>
    T* registerMonitorObject()
    {
-      //TODO need to verify T is a subclass of MonClass
-      MonitorClassType classType = T::getType() ;
+      //TODO need to verify T is a subclass of monClass
+      MON_CLASS_TYPE classType = T::getType() ;
       T* ptr = _monClass[classType]->add<T>();
       return ptr ;
    }
@@ -90,10 +90,10 @@ public:
     * @return T a pointer to the new monitor object
     */
    template<class T>
-   T* registerMonitorObject(_MonClassBaseData *data)
+   T* registerMonitorObject(_monClassBaseData *data)
    {
-      //TODO need to verify T is a subclass of MonClass
-      MonitorClassType classType = T::getType() ;
+      //TODO need to verify T is a subclass of monClass
+      MON_CLASS_TYPE classType = T::getType() ;
       T* ptr = _monClass[classType]->add<T>(data);
 
       return ptr ;
@@ -106,10 +106,10 @@ public:
     *
     * @param obj the object to be removed
     */
-   void removeMonitorObject(MonClass* obj)
+   void removeMonitorObject(monClass* obj)
    {
       SDB_ASSERT ( NULL != obj, "removing a NULL monitor object" ) ;
-      MonitorClassType classType = obj->getType();
+      MON_CLASS_TYPE classType = obj->getType();
       _monClass[classType]->remove(obj);
    }
 
@@ -166,17 +166,17 @@ public:
     * @param classType the class type to update
     * @param mode      the new collection level
     */
-   void setCollectionLvl( MonitorClassType classType, MonDataLvl mode )
+   void setCollectionLvl( MON_CLASS_TYPE classType, MON_DATA_LEVEL mode )
    {
       _monClass[classType]->setCollectionLvl( mode ) ;
    }
 
-   MonDataLvl getCollectionLvl( MonitorClassType classType )
+   MON_DATA_LEVEL getCollectionLvl( MON_CLASS_TYPE classType )
    {
       return _monClass[classType]->getCollectionLvl() ;
    }
 
-   BOOLEAN isOperational( MonitorClassType classType )
+   BOOLEAN isOperational( MON_CLASS_TYPE classType )
    {
       return _monClass[classType]->isOperational() ;
    }
@@ -199,9 +199,9 @@ public:
     * @param classType the class type to scan
     * @param listType the list to scan (active/archived)
     */
-   MonClassReadScanner* getReadScanner ( MonitorClassType classType, MonClassListType listType )
+   monClassReadScanner* getReadScanner ( MON_CLASS_TYPE classType, MON_CLASS_LIST_TYPE listType )
    {
-      MonClassReadScanner *scanner = new MonClassReadScanner( _monClass[classType], listType ) ;
+      monClassReadScanner *scanner = new monClassReadScanner( _monClass[classType], listType ) ;
 
       return scanner ;
    }
@@ -212,9 +212,9 @@ public:
    void cleanup() ;
 
 private:
-   std::vector<MonClassContainer*> _monClass;
+   ossPoolVector<monClassContainer*> _monClass;
 } ;
 
-typedef _MonitorManager MonitorManager ;
+typedef _monMonitorManager monMonitorManager ;
 }
 #endif

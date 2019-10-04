@@ -40,30 +40,30 @@
 
 namespace engine
 {
-_MonitorManager::_MonitorManager()
+_monMonitorManager::_monMonitorManager()
    : _monClass(MON_CLASS_MAX)
 {
    for (int i = 0; i < MON_CLASS_MAX; i ++ )
    {
       //TODO: create array of function pointers
-      MonClassContainer *list = new MonClassContainer((MonitorClassType)i) ;
+      monClassContainer *list = SDB_OSS_NEW monClassContainer((MON_CLASS_TYPE)i) ;
       _monClass[i] = list ;
    }
 }
 
-_MonitorManager::~_MonitorManager()
+_monMonitorManager::~_monMonitorManager()
 {
    for (int i = 0; i < MON_CLASS_MAX; i ++ )
    {
-      delete _monClass[i] ;
+      SDB_OSS_DEL _monClass[i] ;
    }
 }
 
-void _MonitorManager::cleanup()
+void _monMonitorManager::cleanup()
 {
    for (int i = 0; i < MON_CLASS_MAX; i++ )
    {
-      MonClassContainer *curContainer = _monClass[i] ;
+      monClassContainer *curContainer = _monClass[i] ;
 
       if ( curContainer->_numPendingArchive.fetch() > 0 ||
            curContainer->_numPendingDelete.fetch() > 0 )

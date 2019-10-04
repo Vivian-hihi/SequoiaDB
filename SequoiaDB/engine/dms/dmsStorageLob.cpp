@@ -997,7 +997,7 @@ namespace engine
 
       if ( cb->getMonQueryCB() )
       {
-         cb->getMonQueryCB()->_lobWrite ++ ;
+         cb->getMonQueryCB()->lobWrite ++ ;
       }
 
    done:
@@ -1097,7 +1097,7 @@ namespace engine
 
       if ( cb->getMonQueryCB() )
       {
-         cb->getMonQueryCB()->_lobRead ++ ;
+         cb->getMonQueryCB()->lobRead ++ ;
       }
 
    done:

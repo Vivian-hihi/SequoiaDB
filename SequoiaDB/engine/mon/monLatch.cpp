@@ -40,7 +40,8 @@
 
 namespace engine
 {
-#define monLatchON ( pmdGetKRCB()->getMonMgr()->getCollectionLvl(MON_CLASS_LATCH) )
+#define monLatchON ( pmdGetKRCB()->getMonMgr() \
+                       ->getCollectionLvl(MON_CLASS_LATCH) )
 
 const CHAR* monLatchName[] =
 {
@@ -112,9 +113,9 @@ const CHAR* monLatchName[] =
    "dmsStorageDataCommon metadataLatch",
    "dmsSysSUMgr mutex",
    "oldVersionCB oldVersionCBLatch",
-   "MonClassContainer activeListLatch",
-   "MonClassContainer activeListHeadLatch",
-   "MonClassContainer archiveListLatch",
+   "monClassContainer activeListLatch",
+   "monClassContainer activeListHeadLatch",
+   "monClassContainer archiveListLatch",
    "netEHSegment mtx",
    "netFrame suiteMtx",
    "netFrame mtx",
@@ -200,70 +201,70 @@ void _monGetLatch(T* latchObj)
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
-      if ( FALSE == latchObj->_latch.try_get() )
+      if ( FALSE == latchObj->latch.try_get() )
       {
-         MonClassLatch *monLatchCB = NULL ;
+         monClassLatch *monLatchCB = NULL ;
 
          ossTick begin, end ;
          begin.sample() ;
 
          if ( monLatchON == MON_DATA_LVL_DETAIL )
          {
-            MonClassLatchData data;
-            data.latchID = latchObj->_latchID ;
+            monClassLatchData data;
+            data.latchID = latchObj->latchID ;
 
             if ( cb )
             {
                data.waiterTID = cb->getTID() ;
             }
-            data.ownerTID = latchObj->_xOwnerTID ;
+            data.ownerTID = latchObj->xOwnerTID ;
             data.latchAddr = (void *) latchObj ;
             data.latchMode = EXCLUSIVE ;
-            data.numOwner = latchObj->_numOwner.fetch() ;
-            data.lastSOwner = latchObj->_lastSOwnerTID ;
+            data.numOwner = latchObj->numOwner.fetch() ;
+            data.lastSOwner = latchObj->lastSOwnerTID ;
 
             if ( pmdGetKRCB() && pmdGetKRCB()->getMonMgr() )
             {
                monLatchCB = pmdGetKRCB()->getMonMgr()->
-                            registerMonitorObject<MonClassLatch>(&data) ;
+                            registerMonitorObject<monClassLatch>(&data) ;
             }
          }
 
-         latchObj->_latch.get() ;
+         latchObj->latch.get() ;
 
          if ( cb )
          {
-            latchObj->_xOwnerTID = cb->getTID() ;
+            latchObj->xOwnerTID = cb->getTID() ;
          }
 
          end.sample() ;
 
          if ( monLatchCB )
          {
-            monLatchCB->_waitTime += end - begin ;
+            monLatchCB->waitTime += end - begin ;
             pmdGetKRCB()->getMonMgr()->removeMonitorObject( monLatchCB ) ;
          }
 
          if (cb && cb->getMonQueryCB() )
          {
-           cb->getMonQueryCB()->_latchWaitTime += end - begin ;
+           cb->getMonQueryCB()->latchWaitTime += end - begin ;
          }
       }
       else
       {
          if ( cb )
          {
-            latchObj->_xOwnerTID = cb->getTID() ;
+            latchObj->xOwnerTID = cb->getTID() ;
          }
       }
    }
    else
    {
-     latchObj->_latch.get() ;
+     latchObj->latch.get() ;
    }
-   latchObj->_numOwner.inc() ;
+   latchObj->numOwner.inc() ;
 #else
-   latchObj->_latch.get() ;
+   latchObj->latch.get() ;
 #endif
 }
 
@@ -278,76 +279,76 @@ void _monGetSLatch(T* latchObj)
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
-      if ( FALSE == latchObj->_latch.try_get_shared() )
+      if ( FALSE == latchObj->latch.try_get_shared() )
       {
-         MonClassLatch *monLatchCB = NULL ;
+         monClassLatch *monLatchCB = NULL ;
 
          ossTick begin, end ;
          begin.sample() ;
 
          if ( monLatchON == MON_DATA_LVL_DETAIL )
          {
-            MonClassLatchData data;
-            data.latchID = latchObj->_latchID ;
+            monClassLatchData data;
+            data.latchID = latchObj->latchID ;
             if ( cb )
             {
                data.waiterTID = cb->getTID() ;
             }
-            data.ownerTID = latchObj->_xOwnerTID ;
+            data.ownerTID = latchObj->xOwnerTID ;
             data.latchAddr = (void *)latchObj ;
             data.latchMode = SHARED ;
-            data.numOwner = latchObj->_numOwner.fetch() ;
-            data.lastSOwner = latchObj->_lastSOwnerTID ;
+            data.numOwner = latchObj->numOwner.fetch() ;
+            data.lastSOwner = latchObj->lastSOwnerTID ;
 
             if ( pmdGetKRCB() && pmdGetKRCB()->getMonMgr() )
             {
                monLatchCB = pmdGetKRCB()->getMonMgr()->
-                            registerMonitorObject<MonClassLatch>(&data) ;
+                            registerMonitorObject<monClassLatch>(&data) ;
             }
          }
 
-         latchObj->_latch.get_shared() ;
+         latchObj->latch.get_shared() ;
 
          if ( cb )
          {
-            latchObj->_lastSOwnerTID = cb->getTID() ;
+            latchObj->lastSOwnerTID = cb->getTID() ;
          }
 
          end.sample() ;
 
          if ( monLatchCB )
          {
-            monLatchCB->_waitTime += end - begin ;
+            monLatchCB->waitTime += end - begin ;
             pmdGetKRCB()->getMonMgr()->removeMonitorObject( monLatchCB ) ;
          }
 
          if (cb && cb->getMonQueryCB() )
          {
-           cb->getMonQueryCB()->_latchWaitTime += end - begin ;
+           cb->getMonQueryCB()->latchWaitTime += end - begin ;
          }
       }
       else
       {
          if ( cb )
          {
-            latchObj->_lastSOwnerTID = cb->getTID() ;
+            latchObj->lastSOwnerTID = cb->getTID() ;
          }
       }
    }
    else
    {
-     latchObj->_latch.get_shared() ;
+     latchObj->latch.get_shared() ;
    }
-   latchObj->_numOwner.inc() ;
+   latchObj->numOwner.inc() ;
 #else
-   latchObj->_latch.get() ;
+   latchObj->latch.get() ;
 #endif
 
 }
 monSpinXLatch::monSpinXLatch( MON_LATCH_IDENTIFIER latchID )
-   : _numOwner( 0 )
+   : numOwner( 0 )
 {
-   _latchID = latchID ;
+   latchID = latchID ;
 }
 
 monSpinXLatch::~monSpinXLatch()
@@ -361,22 +362,22 @@ void monSpinXLatch::get()
 
 void monSpinXLatch::release()
 {
-   _latch.release() ;
-   _numOwner.dec() ;
-   _xOwnerTID = 0 ;
+   latch.release() ;
+   numOwner.dec() ;
+   xOwnerTID = 0 ;
 }
 
 BOOLEAN monSpinXLatch::try_get()
 {
-   BOOLEAN ret = _latch.try_get() ;
+   BOOLEAN ret = latch.try_get() ;
    if ( ret )
    {
-      _numOwner.inc() ;
+      numOwner.inc() ;
 
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       if ( cb )
       {
-         _xOwnerTID = cb->getTID() ;
+         xOwnerTID = cb->getTID() ;
       }
    }
 
@@ -388,9 +389,9 @@ BOOLEAN monSpinXLatch::try_get()
  */
 
 monSpinSLatch::monSpinSLatch( MON_LATCH_IDENTIFIER latchID )
-   : _numOwner( 0 )
+   : numOwner( 0 )
 {
-   _latchID = latchID ;
+   latchID = latchID ;
 }
 
 monSpinSLatch::~monSpinSLatch()
@@ -404,9 +405,9 @@ void monSpinSLatch::get()
 
 void monSpinSLatch::release()
 {
-   _latch.release() ;
-   _xOwnerTID = 0 ;
-   _numOwner.dec() ;
+   latch.release() ;
+   xOwnerTID = 0 ;
+   numOwner.dec() ;
 }
 
 void monSpinSLatch::get_shared ()
@@ -416,21 +417,21 @@ void monSpinSLatch::get_shared ()
 
 void monSpinSLatch::release_shared ()
 {
-   _latch.release_shared() ;
-   _numOwner.dec() ;
+   latch.release_shared() ;
+   numOwner.dec() ;
 }
 
 BOOLEAN monSpinSLatch::try_get_shared()
 {
-   BOOLEAN ret = _latch.try_get_shared() ;
+   BOOLEAN ret = latch.try_get_shared() ;
    if ( ret )
    {
-      _numOwner.inc() ;
+      numOwner.inc() ;
 
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       if ( cb )
       {
-         _lastSOwnerTID = cb->getTID() ;
+         lastSOwnerTID = cb->getTID() ;
       }
    }
 
@@ -439,15 +440,15 @@ BOOLEAN monSpinSLatch::try_get_shared()
 
 BOOLEAN monSpinSLatch::try_get()
 {
-   BOOLEAN ret = _latch.try_get() ;
+   BOOLEAN ret = latch.try_get() ;
    if ( ret )
    {
-      _numOwner.inc() ;
+      numOwner.inc() ;
 
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       if ( cb )
       {
-         _xOwnerTID = cb->getTID() ;
+         xOwnerTID = cb->getTID() ;
       }
    }
 

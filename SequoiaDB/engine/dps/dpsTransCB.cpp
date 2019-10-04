@@ -902,7 +902,7 @@ namespace engine
 
          if ( eduCB->getMonQueryCB() )
          {
-            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+            eduCB->getMonQueryCB()->lockWaitTime += eduCB->
                                                      getTransExecutor()->
                                                      getLockWaitTime() ;
          }
@@ -936,7 +936,7 @@ namespace engine
 
          if ( eduCB->getMonQueryCB() )
          {
-            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+            eduCB->getMonQueryCB()->lockWaitTime += eduCB->
                                                      getTransExecutor()->
                                                      getLockWaitTime() ;
          }
@@ -969,7 +969,7 @@ namespace engine
 
          if ( eduCB->getMonQueryCB() )
          {
-            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+            eduCB->getMonQueryCB()->lockWaitTime += eduCB->
                                                      getTransExecutor()->
                                                      getLockWaitTime() ;
          }
@@ -999,7 +999,7 @@ namespace engine
 
          if ( eduCB->getMonQueryCB() )
          {
-            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+            eduCB->getMonQueryCB()->lockWaitTime += eduCB->
                                                      getTransExecutor()->
                                                      getLockWaitTime() ;
          }
@@ -1029,7 +1029,7 @@ namespace engine
 
          if ( eduCB->getMonQueryCB() )
          {
-            eduCB->getMonQueryCB()->_lockWaitTime += eduCB->
+            eduCB->getMonQueryCB()->lockWaitTime += eduCB->
                                                      getTransExecutor()->
                                                      getLockWaitTime() ;
          }

@@ -357,12 +357,12 @@ namespace engine
 
       // Monitor
       public :
-         void setMonQueryCB(MonClassQuery *cb)
+         void setMonQueryCB(monClassQuery *cb)
          {
             _monQueryCB = cb ;
          }
 
-         MonClassQuery* getMonQueryCB()
+         monClassQuery* getMonQueryCB()
          {
             return _monQueryCB ;
          }
@@ -426,7 +426,7 @@ namespace engine
 
       protected:
          monContextCB            _monCtxCB ;
-         MonClassQuery          *_monQueryCB ;
+         monClassQuery          *_monQueryCB ;
          _mthSelector            _selector ;
 
          // status

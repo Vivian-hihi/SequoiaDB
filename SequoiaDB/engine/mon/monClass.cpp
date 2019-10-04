@@ -18,7 +18,7 @@
 
    Source File Name = monClass.cpp
 
-   Descriptive Name = Monitor Class source
+   Descriptive Name = monitor Class source
 
    When/how to use: this program may be used on binary and text-formatted
    versions of OSS component. This file contains functions for OSS operations.
@@ -50,21 +50,21 @@ namespace engine
 #define MON_LOCK_ARCHIVE_THRESHOLD 1000
 
 archiveFunc monClassArchiveFP[MON_CLASS_MAX] = {
-   archiveQuery,  // MON_CLASS_QUERY
-   archiveLatch,  // MON_CLASS_LATCH
-   archiveLock    // MON_CLASS_LOCK
+   monArchiveQuery,  // MON_CLASS_QUERY
+   monArchiveLatch,  // MON_CLASS_LATCH
+   monArchiveLock    // MON_CLASS_LOCK
 };
 
-MonDataLvl monClassCreateCB[MON_CLASS_MAX] = {
+MON_DATA_LEVEL monClassCreateCB[MON_CLASS_MAX] = {
    MON_DATA_LVL_BASIC,   // MON_CLASS_QUERY
    MON_DATA_LVL_DETAIL,  // MON_CLASS_LATCH
    MON_DATA_LVL_DETAIL   // MON_CLASS_LOCK
 };
 
 /**
- * _MonClass constructor
+ * _monClass constructor
  */
-_MonClass::_MonClass()
+_monClass::_monClass()
    : _status(MON_CLASS_STATUS_NORMAL),
      _type(MON_CLASS_MAX)
 {
@@ -72,26 +72,26 @@ _MonClass::_MonClass()
    _createTSTick.sample() ;
 }
 
-_MonClass::~_MonClass() {}
+_monClass::~_monClass() {}
 
-_MonClassQueryTmpData& _MonClassQueryTmpData::operator=(const _monAppCB& cb)
+_monClassQueryTmpData& _monClassQueryTmpData::operator=(const _monAppCB& cb)
 {
-   _dataRead  = cb.totalDataRead ;
-   _dataWrite = cb.totalDataWrite ;
-   _indexRead = cb.totalIndexRead ;
-   _indexWrite = cb.totalIndexWrite ;
+   dataRead  = cb.totalDataRead ;
+   dataWrite = cb.totalDataWrite ;
+   indexRead = cb.totalIndexRead ;
+   indexWrite = cb.totalIndexWrite ;
    return *this ;
 }
 
-void _MonClassQueryTmpData::diff(_monAppCB &cb)
+void _monClassQueryTmpData::diff(_monAppCB &cb)
 {
-   _dataRead  = cb.totalDataRead - _dataRead ;
-   _dataWrite = cb.totalDataWrite - _dataWrite ;
-   _indexRead = cb.totalIndexRead - _indexRead ;
-   _indexWrite = cb.totalIndexWrite - _indexWrite ;
+   dataRead  = cb.totalDataRead - dataRead ;
+   dataWrite = cb.totalDataWrite - dataWrite ;
+   indexRead = cb.totalIndexRead - indexRead ;
+   indexWrite = cb.totalIndexWrite - indexWrite ;
 }
 
-_MonClassContainer::_MonClassContainer ( MonitorClassType type )
+_monClassContainer::_monClassContainer ( MON_CLASS_TYPE type )
    : _activeListLen( 0 ),
      _archivedListLen( 0 ),
      _archivedListMaxLen( pmdGetKRCB()->getOptionCB()->monHistEvent() ),
@@ -99,7 +99,7 @@ _MonClassContainer::_MonClassContainer ( MonitorClassType type )
      _numPendingDelete( 0 ),
      _curCollectionLvl( MON_DATA_LVL_NONE )
 {
-   doArchive = monClassArchiveFP[(INT32)type] ;
+   _doArchive = monClassArchiveFP[(INT32)type] ;
    _minOperationalLvl = monClassCreateCB[(INT32)type] ;
 }
 
@@ -110,11 +110,11 @@ _MonClassContainer::_MonClassContainer ( MonitorClassType type )
  *
  * @param obj object to be removed.
  */
-void _MonClassContainer::remove ( MonClass *obj )
+void _monClassContainer::remove ( monClass *obj )
 {
    ossGetCurrentTime( obj->getEndTS() ) ;
 
-   if ( (*doArchive)( obj ) )
+   if ( (*_doArchive)( obj ) )
    {
       obj->setPendingArchive() ;
       _numPendingArchive.inc() ;
@@ -128,10 +128,10 @@ void _MonClassContainer::remove ( MonClass *obj )
 
 /**
  * Remove archived obj back to capacity
- * The archived list is structured as a MRU list with the tail being most recent used
- * So elements are removed from the head which are the oldest
+ * The archived list is structured as a MRU list with the tail being most
+ * recent used. So elements are removed from the head which are the oldest
  */
-void _MonClassContainer::_removeArchivedObj()
+void _monClassContainer::_removeArchivedObj()
 {
    getArchiveLatch( EXCLUSIVE ) ;
    SINT32 numToDelete = 0 ;
@@ -149,11 +149,11 @@ void _MonClassContainer::_removeArchivedObj()
 
    if ( numToDelete > 0 )
    {
-      MonClassList::iterator it = _archivedList.begin() ;
+     MONCLASS_LIST::iterator it = _archivedList.begin() ;
 
       while ( numToDelete > 0 )
       {
-         MonClass &monClass = *it ;
+         monClass &monClass = *it ;
 
          it = _archivedList.erase(it) ;
 
@@ -168,20 +168,20 @@ void _MonClassContainer::_removeArchivedObj()
 /**
  * Process pending delete or pending archive object
  */
-void _MonClassContainer::_processPendingObj()
+void _monClassContainer::_processPendingObj()
 {
    getListLatch( EXCLUSIVE ) ;
    getArchiveLatch( EXCLUSIVE ) ;
    getHeadLatch( EXCLUSIVE ) ;
 
    BOOLEAN headLatchHeld = TRUE ;
-   MonClassList::iterator it = _activeList.begin() ;
+   MONCLASS_LIST::iterator it = _activeList.begin() ;
 
    while ( it != _activeList.end() )
    {
       if ( TRUE == it->isPendingArchive() )
       {
-         MonClass &obj = *it ;
+         monClass &obj = *it ;
          it = _activeList.erase(it) ;
          _activeListLen.dec() ;
          _numPendingArchive.dec() ;
@@ -211,10 +211,11 @@ void _MonClassContainer::_processPendingObj()
 /**
  * archive query based on response time
  */
-BOOLEAN archiveQuery ( MonClass *obj )
+BOOLEAN monArchiveQuery ( monClass *obj )
 {
-   MonClassQuery *monQuery = (MonClassQuery*)obj ;
-   UINT64 responseTime = monQuery->_responseTime.toUINT64() ; // in microsecond
+   monClassQuery *monQuery = (monClassQuery*)obj ;
+   // in microsecond
+   UINT64 responseTime = monQuery->responseTime.toUINT64() ; 
 
    if ((responseTime/1000) >= pmdGetKRCB()->getOptionCB()->slowQueryThreshold())
    {
@@ -229,10 +230,11 @@ BOOLEAN archiveQuery ( MonClass *obj )
 /**
  * archive latch when there is latch wait
  */
-BOOLEAN archiveLatch ( MonClass *obj )
+BOOLEAN monArchiveLatch ( monClass *obj )
 {
-   MonClassLatch *monLatch = (MonClassLatch*)obj ;
-   UINT64 waitTime = monLatch->_waitTime.toUINT64() ; // in microsecond
+   monClassLatch *monLatch = (monClassLatch*)obj ;
+   // in microsecond
+   UINT64 waitTime = monLatch->waitTime.toUINT64() ;;
 
    if ( waitTime > MON_LATCH_ARCHIVE_THRESHOLD )
    {
@@ -247,10 +249,11 @@ BOOLEAN archiveLatch ( MonClass *obj )
 /**
  * archive lock when there is lock wait
  */
-BOOLEAN archiveLock ( MonClass *obj )
+BOOLEAN monArchiveLock ( monClass *obj )
 {
-   MonClassLock *monLock = (MonClassLock*)obj ;
-   UINT64 waitTime = monLock->_waitTime.toUINT64() ; // in microsecond
+   monClassLock *monLock = (monClassLock*)obj ;
+   // in microsecond
+   UINT64 waitTime = monLock->waitTime.toUINT64() ; 
 
    if ( waitTime > MON_LOCK_ARCHIVE_THRESHOLD )
    {
@@ -262,14 +265,14 @@ BOOLEAN archiveLock ( MonClass *obj )
    }
 }
 
-BOOLEAN noArchive ( MonClass *obj )
+BOOLEAN monNoArchive ( monClass *obj )
 {
    return FALSE ;
 }
 
-// MonClassScanner implements
+// monClassScanner implements
 
-void _MonClassReadScanner::initScan()
+void _monClassReadScanner::initScan()
 {
    _container->getListLatch( SHARED ) ;
    _hasListLatch = TRUE ;
@@ -291,7 +294,7 @@ void _MonClassReadScanner::initScan()
           _container->getActiveListLen() > 0 ) ||
         _container->getNumPendingArchive() > 0 )
    {
-      itr = _container->begin( _currentList ) ;
+      _itr = _container->begin( _currentList ) ;
    }
    else
    {
@@ -299,7 +302,7 @@ void _MonClassReadScanner::initScan()
            _container->getArchivedListLen() > 0 )
       {
          _currentList = MON_CLASS_ARCHIVED_LIST ;
-         itr = _container->begin( _currentList ) ;
+         _itr = _container->begin( _currentList ) ;
       }
       else
       {
@@ -309,9 +312,9 @@ void _MonClassReadScanner::initScan()
    _initCalled = TRUE ;
 }
 
-MonClass* _MonClassReadScanner::getNext()
+monClass* _monClassReadScanner::getNext()
 {
-   MonClass *ret = NULL ;
+   monClass *ret = NULL ;
    BOOLEAN found = FALSE ;
    if ( !_initCalled )
    {
@@ -324,29 +327,29 @@ MonClass* _MonClassReadScanner::getNext()
       // 1. We skip any pending deletes
       // 2. Skip if this is a pending archive and we are only interested in the active list
       // 3. Skip if this is active and we are only interested in the archived list
-      if ( itr->isPendingDelete() ||
-           (itr->isPendingArchive() && _listType == MON_CLASS_ACTIVE_LIST ) ||
-           (!itr->isPendingArchive() && _listType == MON_CLASS_ARCHIVED_LIST ) )
+      if ( _itr->isPendingDelete() ||
+           (_itr->isPendingArchive() && _listType == MON_CLASS_ACTIVE_LIST ) ||
+           (!_itr->isPendingArchive() && _listType == MON_CLASS_ARCHIVED_LIST ) )
       {
-         itr++ ;
+         _itr++ ;
       }
       else
       {
          // Found a match, return
-         ret = &(*itr) ;
-         itr++ ;
+         ret = &(*_itr) ;
+         _itr++ ;
          found = TRUE ;
       }
 
       // Reached the end of the current list, move to the next list
       // if there is one
-      if ( itr == _container->end(_currentList) )
+      if ( _itr == _container->end(_currentList) )
       {
          if ( _currentList == MON_CLASS_ACTIVE_LIST &&
               _listType == MON_CLASS_ARCHIVED_LIST &&
               _container->getArchivedListLen() > 0 )
          {
-            itr = _container->begin( MON_CLASS_ARCHIVED_LIST ) ;
+            _itr = _container->begin( MON_CLASS_ARCHIVED_LIST ) ;
             _currentList = MON_CLASS_ARCHIVED_LIST ;
          }
          else
@@ -368,7 +371,7 @@ MonClass* _MonClassReadScanner::getNext()
    return ret ;
 }
 
-void _MonClassReadScanner::doneScan()
+void _monClassReadScanner::doneScan()
 {
    if (_hasListLatch)
    {

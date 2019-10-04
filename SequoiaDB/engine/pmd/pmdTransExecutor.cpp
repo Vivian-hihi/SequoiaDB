@@ -49,7 +49,7 @@ namespace engine
    /*
       _pmdTransExecutor implement
    */
-   _pmdTransExecutor::_pmdTransExecutor( _pmdEDUCB *cb, MonitorManager *monMgr )
+   _pmdTransExecutor::_pmdTransExecutor( _pmdEDUCB *cb, monMonitorManager *monMgr )
       : _dpsTransExecutor( monMgr )
    {
       SDB_ASSERT( cb, "CB can't be NULL" ) ;
