@@ -152,53 +152,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      // defalut value
-      _showError = COORD_SHOWERROR_SHOW ;
-      _showErrorMode = COORD_SHOWERRORMODE_AGGR ;
+      rc = coordParseShowErrorHint( hint, _showError, _showErrorMode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse show error hint, rc: %d" ) ;
 
-      try
-      {
-         BSONObjIterator itr ( hint.getObjectField( "$Options" ) ) ;
-         BSONElement elem ;
-         while ( itr.more() )
-         {
-            elem = itr.next() ;
-            if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERROR ) )
-            {
-               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
-                      "Field [%s] is not string", COORD_SHOWERROR ) ;
-               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_IGNORE ) )
-               {
-                  _showError = COORD_SHOWERROR_IGNORE ;
-               }
-               else if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_ONLY ) )
-               {
-                  _showError = COORD_SHOWERROR_ONLY ;
-               }
-            }
-            else if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERRORMODE ) )
-            {
-               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
-                      "Field [%s] is not string", COORD_SHOWERRORMODE ) ;
-               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERRORMODE_VALUE_FLAT ) )
-               {
-                  _showErrorMode = COORD_SHOWERRORMODE_FLAT ;
-               }
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to handle hints, received unexpected "
-                 "error:%s", e.what() ) ;
-         goto error ;
-      }
+   done :
+      return rc ;
 
-      done:
-         return rc ;
-      error:
-         goto done ;
+   error :
+      goto done ;
    }
 
    INT32 _coordCmdWithLocation::_getCSGrps ( const CHAR * collectionSpace,
@@ -588,47 +549,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      // defalut value
-      _showError = COORD_SHOWERROR_SHOW ;
-      _showErrorMode = COORD_SHOWERRORMODE_AGGR ;
+      rc = coordParseShowErrorHint( hint, _showError, _showErrorMode ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse show error hint, rc: %d" ) ;
 
       try
       {
-         BSONObjIterator itr ( hint.getObjectField( "$Options" ) ) ;
-         BSONElement elem ;
-         while ( itr.more() )
-         {
-            elem = itr.next() ;
-            if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERROR ) )
-            {
-               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
-                      "Field [%s] is not string", COORD_SHOWERROR ) ;
-               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_IGNORE ) )
-               {
-                  _showError = COORD_SHOWERROR_IGNORE ;
-               }
-               else if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERROR_VALUE_ONLY ) )
-               {
-                  _showError = COORD_SHOWERROR_ONLY ;
-               }
-            }
-            else if ( 0 == ossStrcmp( elem.fieldName(), COORD_SHOWERRORMODE ) )
-            {
-               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
-                      "Field [%s] is not string", COORD_SHOWERRORMODE ) ;
-               if ( 0 == ossStrcasecmp( elem.valuestr(), COORD_SHOWERRORMODE_VALUE_FLAT ) )
-               {
-                  _showErrorMode = COORD_SHOWERRORMODE_FLAT ;
-               }
-            }
-         }
-
          // rebuild hint according to the mask
          BSONObjBuilder builder ;
          BSONObjIterator itr2 ( hint ) ;
          while ( itr2.more() )
          {
-            elem = itr2.next() ;
+            BSONElement elem = itr2.next() ;
             if ( 0 == ossStrcasecmp( elem.fieldName(), "$Options" ) )
             {
                BSONObjBuilder sub( builder.subobjStart( "$Options" ) ) ;
@@ -638,8 +569,10 @@ namespace engine
                while ( itr.more() )
                {
                   elem2 = itr.next() ;
-                  if ( 0 != ossStrcmp( elem.fieldName(), COORD_SHOWERROR ) &&
-                       0 != ossStrcmp( elem.fieldName(), COORD_SHOWERRORMODE ) )
+                  if ( 0 != ossStrcasecmp( elem.fieldName(),
+                                           COORD_SHOWERROR ) &&
+                       0 != ossStrcasecmp( elem.fieldName(),
+                                           COORD_SHOWERRORMODE ) )
                   {
                      sub.append( elem2 ) ;
                   }

@@ -230,6 +230,48 @@ namespace engine
    INT32 coordInvalidateSequenceCache( CoordCataInfoPtr cataPtr,
                                        _pmdEDUCB *cb ) ;
 
+   /*
+      Coord Show Error Control
+    */
+   #define COORD_SHOWERROR                "ShowError"
+   #define COORD_SHOWERROR_VALUE_SHOW     "show"
+   #define COORD_SHOWERROR_VALUE_ONLY     "only"
+   #define COORD_SHOWERROR_VALUE_IGNORE   "ignore"
+   #define COORD_SHOWERRORMODE            "ShowErrorMode"
+   #define COORD_SHOWERRORMODE_VALUE_AGGR "aggr"
+   #define COORD_SHOWERRORMODE_VALUE_FLAT "flat"
+
+   #define COORD_MASK_SHOWERROR_SHOW         0x00000001
+   #define COORD_MASK_SHOWERROR_ONLY         0x00000002
+   #define COORD_MASK_SHOWERROR_IGNORE       0x00000004
+   #define COORD_MASK_SHOWERRORMODE_AGGR     0x00000008
+   #define COORD_MASK_SHOWERRORMODE_FLAT     0x00000010
+   #define COORD_MASK_SHOWERROR_ALL          0xFFFFFFFF
+
+   #define COORD_MASK_SHOWERROR     ( COORD_MASK_SHOWERROR_SHOW |\
+                                      COORD_MASK_SHOWERROR_ONLY |\
+                                      COORD_MASK_SHOWERROR_IGNORE )
+
+   #define COORD_MASK_SHOWERRORMODE ( COORD_MASK_SHOWERRORMODE_AGGR |\
+                                      COORD_MASK_SHOWERRORMODE_FLAT )
+
+   enum COORD_SHOWERROR_TYPE
+   {
+      COORD_SHOWERROR_SHOW ,
+      COORD_SHOWERROR_IGNORE ,
+      COORD_SHOWERROR_ONLY
+   } ;
+
+   enum COORD_SHOWERRORMODE_TYPE
+   {
+      COORD_SHOWERRORMODE_AGGR ,
+      COORD_SHOWERRORMODE_FLAT
+   } ;
+
+   INT32 coordParseShowErrorHint ( const BSONObj & hint,
+                                   COORD_SHOWERROR_TYPE & showError,
+                                   COORD_SHOWERRORMODE_TYPE & showErrorMode ) ;
+
 }
 
 #endif // COORD_COMMON_HPP__

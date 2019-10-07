@@ -1151,5 +1151,87 @@ namespace engine
       goto done ;
    }
 
+   INT32 coordParseShowErrorHint ( const BSONObj & hint,
+                                   COORD_SHOWERROR_TYPE & showError,
+                                   COORD_SHOWERRORMODE_TYPE & showErrorMode )
+   {
+      INT32 rc = SDB_OK ;
+
+      // default value
+      showError = COORD_SHOWERROR_SHOW ;
+      showErrorMode = COORD_SHOWERRORMODE_AGGR ;
+
+      try
+      {
+         BSONObjIterator itr ( hint.getObjectField( "$Options" ) ) ;
+         BSONElement elem ;
+         while ( itr.more() )
+         {
+            elem = itr.next() ;
+            if ( 0 == ossStrcasecmp( elem.fieldName(), COORD_SHOWERROR ) )
+            {
+               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field [%s] is not string", COORD_SHOWERROR ) ;
+               if ( 0 == ossStrcasecmp( elem.valuestr(),
+                                        COORD_SHOWERROR_VALUE_SHOW ) )
+               {
+                  showError = COORD_SHOWERROR_SHOW ;
+               }
+               else if ( 0 == ossStrcasecmp( elem.valuestr(),
+                                             COORD_SHOWERROR_VALUE_IGNORE ) )
+               {
+                  showError = COORD_SHOWERROR_IGNORE ;
+               }
+               else if ( 0 == ossStrcasecmp( elem.valuestr(),
+                                             COORD_SHOWERROR_VALUE_ONLY ) )
+               {
+                  showError = COORD_SHOWERROR_ONLY ;
+               }
+               else
+               {
+                  PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
+                            "Field [%s] is unknown option [%s]",
+                            COORD_SHOWERROR, elem.valuestr() ) ;
+               }
+            }
+            else if ( 0 == ossStrcasecmp( elem.fieldName(),
+                                          COORD_SHOWERRORMODE ) )
+            {
+               PD_CHECK( String == elem.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field [%s] is not string", COORD_SHOWERRORMODE ) ;
+               if ( 0 == ossStrcasecmp( elem.valuestr(),
+                                        COORD_SHOWERRORMODE_VALUE_AGGR ) )
+               {
+                  showErrorMode = COORD_SHOWERRORMODE_AGGR ;
+               }
+               else if ( 0 == ossStrcasecmp( elem.valuestr(),
+                                             COORD_SHOWERRORMODE_VALUE_FLAT ) )
+               {
+                  showErrorMode = COORD_SHOWERRORMODE_FLAT ;
+               }
+               else
+               {
+                  PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
+                            "Field [%s] is unknown option [%s]",
+                            COORD_SHOWERRORMODE, elem.valuestr() ) ;
+               }
+            }
+         }
+      }
+      catch ( std::exception & e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to handle hints, received unexpected "
+                 "error:%s", e.what() ) ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
 }
 
