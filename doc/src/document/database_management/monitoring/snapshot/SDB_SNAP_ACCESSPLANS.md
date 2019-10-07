@@ -14,6 +14,7 @@ SDB_SNAP_ACCESSPLANS
 | -------------------- | --------- | ---------------------------------------------- |
 | NodeName             | 字符串    | 该访问计划所在的节点名（"主机名:端口号"）      |
 | GroupName            | 字符串    | 该访问计划所在的数据组名                       |
+| AccessPlanID         | 长整型    | 该访问计划的 ID 标识                           |
 | Collection           | 字符串    | 该访问计划所在的集合名                         |
 | CollectionSpace      | 字符串    | 该访问计划所在的集合空间名                     |
 | ScanType             | 字符串    | 该访问计划的扫描类型：<br/>1. "tbscan"为表扫描<br/>2. "ixscan"为索引扫描 |
@@ -75,6 +76,7 @@ SDB_SNAP_ACCESSPLANS
 {
   "NodeName": "hostname:11820",
   "GroupName": "group1",
+  "AccessPlanID": 14,
   "Collection": "foo.bar",
   "CollectionSpace": "foo",
   "ScanType": "tbscan",
