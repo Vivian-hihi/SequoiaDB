@@ -306,8 +306,10 @@ namespace engine
       utilSetMaxTCSize( (UINT64)pmdGetOptionCB()->maxTCSize() << 10 ) ;
       pmdEnablePerfStat( pmdGetOptionCB()->isEnabledPerfStat() ) ;
 
-      pmdGetKRCB()->getMonMgr()->setMonitorStatus( pmdGetOptionCB()->monGroupMask() ) ;
-      pmdGetKRCB()->getMonMgr()->setHistEventSize( pmdGetOptionCB()->monHistEvent() ) ;
+      pmdGetKRCB()->getMonMgr()->setMonitorStatus(
+         pmdGetOptionCB()->monGroupMask() ) ;
+      pmdGetKRCB()->getMonMgr()->setHistEventSize(
+         pmdGetOptionCB()->monHistEvent() ) ;
    }
 
    void _pmdController::registerCB( SDB_ROLE dbrole )

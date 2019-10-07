@@ -72,7 +72,8 @@ void _monMonitorManager::cleanup()
       }
 
       if ( !curContainer->isOperational() ||
-           curContainer->getArchivedListLen() > curContainer->getMaxArchivedListLen() )
+           curContainer->getArchivedListLen() >
+              curContainer->getMaxArchivedListLen() )
       {
          curContainer->_removeArchivedObj() ;
       }

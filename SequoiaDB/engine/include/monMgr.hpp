@@ -46,12 +46,12 @@ namespace engine
 {
 
 #define MON_GROUP_MASK_DEFAULT 0
-#define MON_GROUP_QUERY_BASIC 0x0000001
+#define MON_GROUP_QUERY_BASIC  0x0000001
 #define MON_GROUP_QUERY_DETAIL 0x00000002
-#define MON_GROUP_LATCH_BASIC 0x00000004
+#define MON_GROUP_LATCH_BASIC  0x00000004
 #define MON_GROUP_LATCH_DETAIL 0x00000008
-#define MON_GROUP_LOCK_BASIC  0x00000010
-#define MON_GROUP_LOCK_DETAIL 0x00000020
+#define MON_GROUP_LOCK_BASIC   0x00000010
+#define MON_GROUP_LOCK_DETAIL  0x00000020
 
 /**
  * A monitor manager responsible for memory management and metric management
@@ -122,41 +122,41 @@ public:
    {
       if ( mask & MON_GROUP_QUERY_DETAIL )
       {
-         setCollectionLvl(MON_CLASS_QUERY, MON_DATA_LVL_DETAIL) ;
+         setCollectionLvl( MON_CLASS_QUERY, MON_DATA_LVL_DETAIL ) ;
       }
       else if ( mask & MON_GROUP_QUERY_BASIC )
       {
-         setCollectionLvl(MON_CLASS_QUERY, MON_DATA_LVL_BASIC) ;
+         setCollectionLvl( MON_CLASS_QUERY, MON_DATA_LVL_BASIC ) ;
       }
       else
       {
-         setCollectionLvl(MON_CLASS_QUERY, MON_DATA_LVL_NONE) ;
+         setCollectionLvl( MON_CLASS_QUERY, MON_DATA_LVL_NONE ) ;
       }
 
       if ( mask & MON_GROUP_LATCH_DETAIL )
       {
-         setCollectionLvl(MON_CLASS_LATCH, MON_DATA_LVL_DETAIL) ;
+         setCollectionLvl( MON_CLASS_LATCH, MON_DATA_LVL_DETAIL ) ;
       }
       else if ( mask & MON_GROUP_LATCH_BASIC )
       {
-         setCollectionLvl(MON_CLASS_LATCH, MON_DATA_LVL_BASIC) ;
+         setCollectionLvl( MON_CLASS_LATCH, MON_DATA_LVL_BASIC ) ;
       }
       else
       {
-         setCollectionLvl(MON_CLASS_LATCH, MON_DATA_LVL_NONE) ;
+         setCollectionLvl( MON_CLASS_LATCH, MON_DATA_LVL_NONE ) ;
       }
 
       if ( mask & MON_GROUP_LOCK_DETAIL )
       {
-         setCollectionLvl(MON_CLASS_LOCK, MON_DATA_LVL_DETAIL) ;
+         setCollectionLvl( MON_CLASS_LOCK, MON_DATA_LVL_DETAIL ) ;
       }
       else if ( mask & MON_GROUP_LOCK_BASIC )
       {
-         setCollectionLvl(MON_CLASS_LOCK, MON_DATA_LVL_BASIC) ;
+         setCollectionLvl( MON_CLASS_LOCK, MON_DATA_LVL_BASIC ) ;
       }
       else
       {
-         setCollectionLvl(MON_CLASS_LOCK, MON_DATA_LVL_NONE) ;
+         setCollectionLvl( MON_CLASS_LOCK, MON_DATA_LVL_NONE ) ;
       }
    }
 
@@ -199,9 +199,11 @@ public:
     * @param classType the class type to scan
     * @param listType the list to scan (active/archived)
     */
-   monClassReadScanner* getReadScanner ( MON_CLASS_TYPE classType, MON_CLASS_LIST_TYPE listType )
+   monClassReadScanner* getReadScanner ( MON_CLASS_TYPE classType,
+                                         MON_CLASS_LIST_TYPE listType )
    {
-      monClassReadScanner *scanner = new monClassReadScanner( _monClass[classType], listType ) ;
+      monClassReadScanner *scanner =
+         SDB_OSS_NEW monClassReadScanner( _monClass[classType], listType ) ;
 
       return scanner ;
    }

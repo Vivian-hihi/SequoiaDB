@@ -400,7 +400,7 @@ monSpinSLatch::~monSpinSLatch()
 
 void monSpinSLatch::get()
 {
-   _monGetLatch<monSpinSLatch>(this) ;
+   _monGetLatch<monSpinSLatch>( this ) ;
 }
 
 void monSpinSLatch::release()

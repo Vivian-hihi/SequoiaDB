@@ -118,7 +118,7 @@ namespace engine
          INT32                   _transIsolation ;
          UINT32                  _transTimeout ;      /// Unit:ms
          // if transaction wait for lock
-         BOOLEAN                 _transWaitLock ;  
+         BOOLEAN                 _transWaitLock ;
          // if transaction use old copy in rollback segment
          BOOLEAN                 _useRollbackSegment ;
          // insert/update/delete/query operator auto use transaction
@@ -242,8 +242,8 @@ namespace engine
    {
       struct cmpCSCLLock
       {
-         bool operator() ( const dpsTransLockId& lhs, 
-                           const dpsTransLockId& rhs ) const 
+         bool operator() ( const dpsTransLockId& lhs,
+                           const dpsTransLockId& rhs ) const
          {
             if ( lhs.csID() < rhs.csID() )
             {
@@ -268,7 +268,7 @@ namespace engine
       // Only CS and CL lock should be inserted in this map. If other locks
       // are to be inserted, the cmpCSCLLock compare function needs to be updated
       typedef ossPoolMap< dpsTransLockId,
-                          dpsTransLRB*, 
+                          dpsTransLRB*,
                           cmpCSCLLock >                  DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
@@ -422,7 +422,7 @@ namespace engine
          // undo LR space reserved by this transaction
          UINT64                  _reservedLogSpace ;
 
-         monMonitorManager         *_monMgr ;
+         monMonitorManager      *_monMgr ;
          monClassLock           *_monLock ;
          BOOLEAN                 _lockWaitStarted ;
          ossTick                 _lockWaitStartTimer ;

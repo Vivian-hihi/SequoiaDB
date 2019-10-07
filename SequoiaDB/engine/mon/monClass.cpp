@@ -215,7 +215,7 @@ BOOLEAN monArchiveQuery ( monClass *obj )
 {
    monClassQuery *monQuery = (monClassQuery*)obj ;
    // in microsecond
-   UINT64 responseTime = monQuery->responseTime.toUINT64() ; 
+   UINT64 responseTime = monQuery->responseTime.toUINT64() ;
 
    if ((responseTime/1000) >= pmdGetKRCB()->getOptionCB()->slowQueryThreshold())
    {
@@ -253,7 +253,7 @@ BOOLEAN monArchiveLock ( monClass *obj )
 {
    monClassLock *monLock = (monClassLock*)obj ;
    // in microsecond
-   UINT64 waitTime = monLock->waitTime.toUINT64() ; 
+   UINT64 waitTime = monLock->waitTime.toUINT64() ;
 
    if ( waitTime > MON_LOCK_ARCHIVE_THRESHOLD )
    {
@@ -325,8 +325,10 @@ monClass* _monClassReadScanner::getNext()
    while (!_endReached && !found)
    {
       // 1. We skip any pending deletes
-      // 2. Skip if this is a pending archive and we are only interested in the active list
-      // 3. Skip if this is active and we are only interested in the archived list
+      // 2. Skip if this is a pending archive and we are only interested in
+      //    the active list
+      // 3. Skip if this is active and we are only interested in the
+      //    archived list
       if ( _itr->isPendingDelete() ||
            (_itr->isPendingArchive() && _listType == MON_CLASS_ACTIVE_LIST ) ||
            (!_itr->isPendingArchive() && _listType == MON_CLASS_ARCHIVED_LIST ) )
@@ -360,8 +362,8 @@ monClass* _monClassReadScanner::getNext()
    }
 
    // The headLatch is required when reading the first node of the active list.
-   // By the time we get here, it is guaranteed that we have already read the first node.
-   // So we can now release the headLatch.
+   // By the time we get here, it is guaranteed that we have already read the
+   // first node. So we can now release the headLatch.
    if ( _hasHeadLatch )
    {
       _container->releaseHeadLatch(SHARED) ;
