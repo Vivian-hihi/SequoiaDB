@@ -569,9 +569,9 @@ namespace engine
                while ( itr.more() )
                {
                   elem2 = itr.next() ;
-                  if ( 0 != ossStrcasecmp( elem.fieldName(),
+                  if ( 0 != ossStrcasecmp( elem2.fieldName(),
                                            COORD_SHOWERROR ) &&
-                       0 != ossStrcasecmp( elem.fieldName(),
+                       0 != ossStrcasecmp( elem2.fieldName(),
                                            COORD_SHOWERRORMODE ) )
                   {
                      sub.append( elem2 ) ;
@@ -580,16 +580,25 @@ namespace engine
 
                switch ( _getShowErrorType() )
                {
+                  case COORD_SHOWERROR_SHOW :
+                     if ( COORD_MASK_SHOWERROR_SHOW & mask )
+                     {
+                        sub.append( COORD_SHOWERROR,
+                                    COORD_SHOWERROR_VALUE_SHOW ) ;
+                     }
+                     break ;
                   case COORD_SHOWERROR_ONLY :
                      if ( COORD_MASK_SHOWERROR_ONLY & mask )
                      {
-                        sub.append( COORD_SHOWERROR, COORD_SHOWERROR_VALUE_ONLY ) ;
+                        sub.append( COORD_SHOWERROR,
+                                    COORD_SHOWERROR_VALUE_ONLY ) ;
                      }
                      break ;
                   case COORD_SHOWERROR_IGNORE :
                      if ( COORD_MASK_SHOWERROR_IGNORE & mask )
                      {
-                        sub.append( COORD_SHOWERROR, COORD_SHOWERROR_VALUE_IGNORE ) ;
+                        sub.append( COORD_SHOWERROR,
+                                    COORD_SHOWERROR_VALUE_IGNORE ) ;
                      }
                      break ;
                   default :
@@ -598,10 +607,18 @@ namespace engine
 
                switch ( _getShowErrorModeType() )
                {
+                  case COORD_SHOWERRORMODE_AGGR :
+                     if ( COORD_MASK_SHOWERRORMODE_AGGR & mask )
+                     {
+                        sub.append( COORD_SHOWERRORMODE,
+                                    COORD_SHOWERRORMODE_AGGR ) ;
+                     }
+                     break ;
                   case COORD_SHOWERRORMODE_FLAT :
                      if ( COORD_MASK_SHOWERRORMODE_FLAT & mask )
                      {
-                        sub.append( COORD_SHOWERRORMODE, COORD_SHOWERRORMODE_FLAT ) ;
+                        sub.append( COORD_SHOWERRORMODE,
+                                    COORD_SHOWERRORMODE_FLAT ) ;
                      }
                      break ;
                   default :
