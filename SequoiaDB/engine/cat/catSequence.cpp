@@ -518,7 +518,8 @@ namespace engine
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
       {
          INT64 increment = ele.numberLong() ;
-         PD_CHECK( increment >= OSS_SINT32_MIN && increment <= OSS_SINT32_MAX,
+         PD_CHECK( increment >= OSS_SINT32_MIN_LL &&
+                   increment <= OSS_SINT32_MAX_LL,
                    SDB_INVALIDARG, error, PDERROR,
                    "Option [%s] is overflow: %lld",
                    CAT_SEQUENCE_INCREMENT, increment ) ;
@@ -613,7 +614,8 @@ namespace engine
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
       {
          INT64 cacheSize = ele.numberLong() ;
-         PD_CHECK( cacheSize >= OSS_SINT32_MIN && cacheSize <= OSS_SINT32_MAX,
+         PD_CHECK( cacheSize >= OSS_SINT32_MIN_LL &&
+                   cacheSize <= OSS_SINT32_MAX_LL,
                    SDB_INVALIDARG, error, PDERROR,
                    "Option [%s] is overflow: %lld",
                    CAT_SEQUENCE_CACHE_SIZE, cacheSize ) ;
@@ -635,8 +637,8 @@ namespace engine
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
       {
          INT64 acquireSize = ele.numberLong() ;
-         PD_CHECK( acquireSize >= OSS_SINT32_MIN &&
-                   acquireSize <= OSS_SINT32_MAX,
+         PD_CHECK( acquireSize >= OSS_SINT32_MIN_LL &&
+                   acquireSize <= OSS_SINT32_MAX_LL,
                    SDB_INVALIDARG, error, PDERROR,
                    "Option [%s] is overflow: %lld",
                    CAT_SEQUENCE_ACQUIRE_SIZE, acquireSize ) ;
