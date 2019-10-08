@@ -40,7 +40,7 @@
 
 namespace engine
 {
-#define monLatchON ( pmdGetKRCB()->getMonMgr() \
+#define MON_GET_LATCH_LVL ( pmdGetKRCB()->getMonMgr() \
                        ->getCollectionLvl(MON_CLASS_LATCH) )
 
 const CHAR* monLatchName[] =
@@ -197,7 +197,7 @@ template <class T>
 void _monGetLatch(T* latchObj)
 {
 #if defined (SDB_ENGINE)
-   if ( monLatchON != MON_DATA_LVL_NONE )
+   if ( MON_GET_LATCH_LVL != MON_DATA_LVL_NONE )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
@@ -208,7 +208,7 @@ void _monGetLatch(T* latchObj)
          ossTick begin, end ;
          begin.sample() ;
 
-         if ( monLatchON == MON_DATA_LVL_DETAIL )
+         if ( MON_GET_LATCH_LVL == MON_DATA_LVL_DETAIL )
          {
             monClassLatchData data;
             data.latchID = latchObj->latchID ;
@@ -275,7 +275,7 @@ template <class T>
 void _monGetSLatch(T* latchObj)
 {
 #if defined (SDB_ENGINE)
-   if ( monLatchON != MON_DATA_LVL_NONE )
+   if ( MON_GET_LATCH_LVL != MON_DATA_LVL_NONE )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
@@ -286,7 +286,7 @@ void _monGetSLatch(T* latchObj)
          ossTick begin, end ;
          begin.sample() ;
 
-         if ( monLatchON == MON_DATA_LVL_DETAIL )
+         if ( MON_GET_LATCH_LVL == MON_DATA_LVL_DETAIL )
          {
             monClassLatchData data;
             data.latchID = latchObj->latchID ;

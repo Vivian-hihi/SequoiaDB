@@ -128,7 +128,6 @@ typedef boost::intrusive::list_base_hook< > BaseHook ;
  */
 class _monClass : public BaseHook, public utilPooledObject
 {
-   ossTimestamp _createTS ;      /**! create timestamp for this object */
    ossTimestamp    _endTS ;      /**! end timestamp for this object */
    ossTick  _createTSTick ;      /**! create tick for this object */
    UINT16         _status ;      /**! object status */
@@ -174,7 +173,12 @@ public:
    /**
     * Get the create timestamp
     */
-   ossTimestamp getCreateTS() const { return _createTS ; }
+   ossTimestamp getCreateTS() const
+   {
+      ossTimestamp ts ;
+      _createTSTick.convertToTimestamp( ts ) ;
+      return ts ;
+   }
 
    /**
     * Get the end timestamp
@@ -267,7 +271,7 @@ class _monClassQuery : public monClassTemplate<_monClassQuery>
 {
 public:
    UINT32                 tid ;  /**! TID of the EDU */
-   std::string           name ;  /**! The target object name of this query */
+   ossPoolString         name ;  /**! The target object name of this query */
    SINT64        accessPlanID ;  /**! Access plan ID used by the query */
    UINT32              opCode ;  /**! Message opCode */
    UINT32           sessionID ;  /**! EDU Session ID */
@@ -286,7 +290,7 @@ public:
    MsgRouteID      relatedNID ;  /**! coordinator node node ID */
    UINT32          relatedTID ;  /**! coordinator node edu TID */
    BOOLEAN    anchorToContext ;  /**! Whether this obj anchored to a context */
-   std::string      queryText ;  /**! Full query text */
+   ossPoolString    queryText ;  /**! Full query text */
    ossTickDelta remoteNodesResponseTime ; /*! Time spent waiting remote nodes */
    ossTickDelta msgSentTime ;    /**! Time spent sending msgs to remote nodes */
 
@@ -316,7 +320,7 @@ public:
    //TODO: to be implemented
    virtual void reset() {}
 
-   void startLatchTimer() { _latchWaitTimer.sample() ; }
+   void startLatchTimer() { _latchWaitTimer.sample() ; } 
 
    void stopLatchTimer()
    {
@@ -600,7 +604,7 @@ public:
                              : _archiveListLatch.release_shared() ;
    }
 
-   void setCollectionLvl( MON_DATA_LEVEL mode )
+   void setMonitorLvl( MON_DATA_LEVEL mode )
    {
       _curCollectionLvl = mode ;
    }

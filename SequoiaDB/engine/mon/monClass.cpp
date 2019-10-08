@@ -68,7 +68,6 @@ _monClass::_monClass()
    : _status(MON_CLASS_STATUS_NORMAL),
      _type(MON_CLASS_MAX)
 {
-   ossGetCurrentTime( _createTS ) ;
    _createTSTick.sample() ;
 }
 

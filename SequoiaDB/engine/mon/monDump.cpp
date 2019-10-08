@@ -4293,7 +4293,7 @@ namespace engine
       builder.append( FIELD_NAME_OPTYPE,
                     msgType2String( (MSG_TYPE)_queryCB->opCode, FALSE ) ) ;
 
-      builder.append( FIELD_NAME_NAME, _queryCB->name ) ;
+      builder.append( FIELD_NAME_NAME, _queryCB->name.c_str() ) ;
       builder.append( FIELD_NAME_QUERYTIMESPENT, responseTime ) ;
       builder.append( FIELD_NAME_RETURN_NUM, _queryCB->rowsReturned ) ;
 
@@ -4307,7 +4307,7 @@ namespace engine
          _queryCB->msgSentTime.convertToTime ( factor, seconds, microseconds ) ;
          msgSentTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
          builder.append( FIELD_NAME_NUM_MSG_SENT, _queryCB->numMsgSent ) ;
-         builder.append( FIELD_NAME_LASTOPINFO, _queryCB->queryText ) ;
+         builder.append( FIELD_NAME_LASTOPINFO, _queryCB->queryText.c_str() ) ;
          builder.append( FIELD_NAME_MSG_SENT_TIME, msgSentTime ) ;
          builder.append( FIELD_NAME_NODEWAITTIME, nodeWaitTime ) ;
          if ( _queryCB->nodes.size() > 0 )

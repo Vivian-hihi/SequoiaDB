@@ -122,41 +122,41 @@ public:
    {
       if ( mask & MON_GROUP_QUERY_DETAIL )
       {
-         setCollectionLvl( MON_CLASS_QUERY, MON_DATA_LVL_DETAIL ) ;
+         setMonitorLvl( MON_CLASS_QUERY, MON_DATA_LVL_DETAIL ) ;
       }
       else if ( mask & MON_GROUP_QUERY_BASIC )
       {
-         setCollectionLvl( MON_CLASS_QUERY, MON_DATA_LVL_BASIC ) ;
+         setMonitorLvl( MON_CLASS_QUERY, MON_DATA_LVL_BASIC ) ;
       }
       else
       {
-         setCollectionLvl( MON_CLASS_QUERY, MON_DATA_LVL_NONE ) ;
+         setMonitorLvl( MON_CLASS_QUERY, MON_DATA_LVL_NONE ) ;
       }
 
       if ( mask & MON_GROUP_LATCH_DETAIL )
       {
-         setCollectionLvl( MON_CLASS_LATCH, MON_DATA_LVL_DETAIL ) ;
+         setMonitorLvl( MON_CLASS_LATCH, MON_DATA_LVL_DETAIL ) ;
       }
       else if ( mask & MON_GROUP_LATCH_BASIC )
       {
-         setCollectionLvl( MON_CLASS_LATCH, MON_DATA_LVL_BASIC ) ;
+         setMonitorLvl( MON_CLASS_LATCH, MON_DATA_LVL_BASIC ) ;
       }
       else
       {
-         setCollectionLvl( MON_CLASS_LATCH, MON_DATA_LVL_NONE ) ;
+         setMonitorLvl( MON_CLASS_LATCH, MON_DATA_LVL_NONE ) ;
       }
 
       if ( mask & MON_GROUP_LOCK_DETAIL )
       {
-         setCollectionLvl( MON_CLASS_LOCK, MON_DATA_LVL_DETAIL ) ;
+         setMonitorLvl( MON_CLASS_LOCK, MON_DATA_LVL_DETAIL ) ;
       }
       else if ( mask & MON_GROUP_LOCK_BASIC )
       {
-         setCollectionLvl( MON_CLASS_LOCK, MON_DATA_LVL_BASIC ) ;
+         setMonitorLvl( MON_CLASS_LOCK, MON_DATA_LVL_BASIC ) ;
       }
       else
       {
-         setCollectionLvl( MON_CLASS_LOCK, MON_DATA_LVL_NONE ) ;
+         setMonitorLvl( MON_CLASS_LOCK, MON_DATA_LVL_NONE ) ;
       }
    }
 
@@ -166,9 +166,9 @@ public:
     * @param classType the class type to update
     * @param mode      the new collection level
     */
-   void setCollectionLvl( MON_CLASS_TYPE classType, MON_DATA_LEVEL mode )
+   void setMonitorLvl( MON_CLASS_TYPE classType, MON_DATA_LEVEL mode )
    {
-      _monClass[classType]->setCollectionLvl( mode ) ;
+      _monClass[classType]->setMonitorLvl( mode ) ;
    }
 
    MON_DATA_LEVEL getCollectionLvl( MON_CLASS_TYPE classType )
