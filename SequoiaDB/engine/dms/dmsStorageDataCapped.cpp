@@ -2243,6 +2243,10 @@ namespace engine
       }
 
    done:
+      if ( 0 != logRecSize)
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb ) ;
+      }
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED_POPRECORD, rc ) ;
       return rc ;
    error:
