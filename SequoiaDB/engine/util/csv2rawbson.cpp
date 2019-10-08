@@ -1345,7 +1345,7 @@ INT32 csvParser::_string2timestamp2( _csvTimestamp &value,
 
    if ( temp1 < TIME_MIN_NUM )
    {
-      PD_LOG ( PDERROR, "The time stamp %lld is smaller than %lld",
+      PD_LOG ( PDERROR, "The time stamp %lld is smaller than %lld000",
                varLong, TIME_MIN_NUM ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
