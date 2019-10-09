@@ -2503,7 +2503,7 @@ public class Sequoiadb implements Closeable {
         BSONObject matcher = new BasicBSONObject();
         matcher.put(SdbConstants.FIELD_NAME_SESSION_ID, sessionID);
         if (option != null) {
-            matcher.putAll(option);
+            matcher.putAllUnique(option);
         }
         AdminRequest request = new AdminRequest(AdminCommand.FORCE_SESSION, matcher);
         SdbReply response = requestAndResponse(request);
