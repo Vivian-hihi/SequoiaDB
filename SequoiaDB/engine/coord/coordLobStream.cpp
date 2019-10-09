@@ -368,6 +368,8 @@ namespace engine
          {
             if ( 0 < _subs.count( itr->first ) )
             {
+               PD_LOG( PDDEBUG, "ignore open substream:lobID=%s,groupID=%d",
+                       getOID().toString().c_str(), itr->first ) ;
                continue ;
             }
 
@@ -587,6 +589,8 @@ namespace engine
       SUB_STREAMS::iterator itr = _subs.find( groupID ) ;
       if ( _subs.end() == itr )
       {
+         PD_LOG( PDDEBUG, "intent to create substream:lobID=%s,groupID=%d",
+                 getOID().toString().c_str(), groupID ) ;
          if ( groupID == _metaGroup )
          {
             rc = _openMainStream( getFullName(), getOID(),
@@ -1558,6 +1562,10 @@ namespace engine
          {
             if ( exceptMeta && _metaGroup == itr->second.id.columns.groupID )
             {
+               PD_LOG( PDDEBUG, "ignore close stream:lobID=%s,groupID=%d"
+                       "nodeID=%d", getOID().toString().c_str(),
+                       itr->second.id.columns.groupID,
+                       itr->second.id.columns.nodeID ) ;
                continue ;
             }
             header.contextID = itr->second.contextID ;
@@ -1647,6 +1655,11 @@ namespace engine
 
             pSub = pSession->addSubSession( itr->second.id.value ) ;
             pSub->setReqMsg( &( killMsg.header ), PMD_EDU_MEM_NONE ) ;
+
+            PD_LOG( PDDEBUG, "kill lob context:lobID=%s,groupID=%d,"
+                    "nodeID=%d,contextID=%lld", getOID().toString().c_str(),
+                    itr->second.id.columns.groupID,
+                    itr->second.id.columns.nodeID, itr->second.contextID ) ;
 
             rc = pSession->sendMsg( pSub ) ;
             if ( rc )
@@ -2254,6 +2267,13 @@ namespace engine
                            pReply->header.routeID.columns.groupID ),
                      "impossible" ) ;
          _subs.erase( pReply->header.routeID.columns.groupID ) ;
+         SDB_ASSERT( 0 == _subs.count(
+                           pReply->header.routeID.columns.groupID ),
+                     "impossible" ) ;
+         PD_LOG( PDDEBUG, "_removeClosedSubStreams:lobID=%s,groupID=%d,"
+                 "nodeID=%d", getOID().toString().c_str(),
+                 pReply->header.routeID.columns.groupID,
+                 pReply->header.routeID.columns.nodeID ) ;
       }
       return rc ;
    }
@@ -2306,6 +2326,10 @@ namespace engine
    {
       SDB_ASSERT( 0 == _subs.count( groupID ), "impossible" ) ;
       _subs[groupID] = subStream( contextID, id ) ;
+      PD_LOG( PDDEBUG, "_add2Subs:lobID=%s,groupIDKey=%d,groupID=%d"
+              "nodeID=%d,contextID=%lld", getOID().toString().c_str(),
+              groupID, id.columns.groupID,
+              id.columns.nodeID, contextID ) ;
       return ;
    }
 
