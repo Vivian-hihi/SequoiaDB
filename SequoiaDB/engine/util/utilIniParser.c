@@ -565,13 +565,9 @@ SDB_EXPORT INT32 utilIniSetSectionComment( utilIniHandler *handler,
    tmpSection = getSection( handler->section, section, handler->flags ) ;
    if ( NULL == tmpSection )
    {
-      tmpSection = createSection( handler ) ;
-      if ( NULL == tmpSection )
-      {
-         handler->errMsg = UTIL_INI_ERROR_OOM ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
+      rc = SDB_FIELD_NOT_EXIST ;
+      handler->errMsg = UTIL_INI_ERROR_SECTION_NOTEXIST ;
+      goto error ;
    }
 
    rc = setString( &tmpSection->comment, comment, length ) ;
