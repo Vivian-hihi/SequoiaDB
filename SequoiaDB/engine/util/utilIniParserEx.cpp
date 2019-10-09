@@ -300,13 +300,21 @@ INT32 utilIniParserEx::getType( const CHAR *section, const CHAR *key, INT32 &typ
       goto error ;
    }
 
-   utilStrToNumber( tmp, length, &numType, &numValue, &tmpValLen ) ;
-   if ( length != tmpValLen )
-   {
-      numType = -1 ;
-   }
-
    type = UTIL_INI_EX_TYPE_STRING ;
+
+   if ( 0 < length )
+   {
+      utilStrToNumber( tmp, length, &numType, &numValue, &tmpValLen ) ;
+      if ( length != tmpValLen )
+      {
+         numType = -1 ;
+      }
+   }
+   else
+   {
+      type = UTIL_INI_EX_TYPE_STRING ;
+      goto done ;
+   }
 
    if( numType == 0 )
    {
