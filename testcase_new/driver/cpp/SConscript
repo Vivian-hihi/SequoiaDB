@@ -192,6 +192,7 @@ testFiles = [
    [ "./datatype/timestamptest_15861.cpp" ],
    [ "./paramVerify/snapshotTest15759.cpp" ],
    [ "./lob/lobIsEof15671.cpp" ],
+   [ "./list/listtest_19946.cpp" ],
    #[ "./sdb/errobj_17385.cpp"]
 ]
 
