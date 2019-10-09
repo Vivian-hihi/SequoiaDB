@@ -131,7 +131,7 @@ namespace engine
             if ( to_pass_further.size() )
             {
                std::cerr << "Unrecongnized options: ";
-               for ( vector<string>::iterator i = to_pass_further.begin() ; 
+               for ( vector<string>::iterator i = to_pass_further.begin() ;
                      i != to_pass_further.end() ; ++i )
                {
                   std::cerr << *i << ' ' ;
@@ -234,7 +234,7 @@ namespace engine
 
       // 2. Create the file
       rc = ossOpen ( pFile, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
-                     OSS_RWXU, file ) ;
+                     OSS_DEFAULTFILE, file ) ;
       if ( rc )
       {
          goto error ;

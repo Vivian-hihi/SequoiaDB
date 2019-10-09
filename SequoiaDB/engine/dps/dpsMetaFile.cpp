@@ -156,7 +156,7 @@ namespace engine
       _dpsMetaFileContent content( _cacheLSN ) ;
 
       rc = ossOpen( _path, OSS_CREATEONLY | OSS_READWRITE,
-                    OSS_RWXU, _file ) ;
+                    OSS_DEFAULTFILE | OSS_RO, _file ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create meta file:file=%s,rc=%d",
                    _path, rc ) ;
       isCreated = TRUE ;

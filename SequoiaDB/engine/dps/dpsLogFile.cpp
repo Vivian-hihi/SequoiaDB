@@ -120,7 +120,9 @@ namespace engine
       // if the file exist, restore
       if ( SDB_OK == ossAccess( path ) )
       {
-         rc = ossOpen ( path, OSS_READWRITE|OSS_SHAREWRITE, OSS_RWXU, *_file ) ;
+         rc = ossOpen ( path, OSS_READWRITE|OSS_SHAREWRITE,
+                        OSS_DEFAULTFILE | OSS_RO,
+                        *_file ) ;
          if ( rc == SDB_OK )
          {
             rc = _restore () ;
@@ -160,7 +162,7 @@ namespace engine
 
       // open the file with "create only" and "read write" mode, for rx-r-----
       rc = ossOpen( path, OSS_CREATEONLY |OSS_READWRITE | OSS_SHAREWRITE,
-                    OSS_RWXU, *_file );
+                    OSS_DEFAULTFILE | OSS_RO, *_file );
 
       if ( rc )
       {
@@ -722,7 +724,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to sync file, file no:%d, rc:%d",
                  _fileNum, rc ) ;
          goto error ;
-      }      
+      }
       _dirty = FALSE ;
 
    done:

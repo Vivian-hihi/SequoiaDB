@@ -97,7 +97,7 @@ namespace engine
       BOOLEAN isExist = FALSE ;
       BOOLEAN doCreate = FALSE ;
       INT32 mode = OSS_READWRITE | OSS_CREATE ;
-      INT32 permission = OSS_RU | OSS_WU | OSS_RG | OSS_RO ;
+      INT32 permission = OSS_DEFAULTFILE ;
 
       // 1. open file
       rc = utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
