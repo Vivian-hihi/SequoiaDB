@@ -944,16 +944,18 @@ public class DBCollection {
     public DBCursor explain(BSONObject matcher, BSONObject selector, BSONObject orderBy,
             BSONObject hint, long skipRows, long returnRows, int flag, BSONObject options)
             throws BaseException {
-
-        flag |= DBQuery.FLG_QUERY_EXPLAIN;
         BSONObject innerHint = new BasicBSONObject();
-        if (null != hint) {
+        if (hint != null) {
             innerHint.put(SdbConstants.FIELD_NAME_HINT, hint);
         }
 
-        if (null != options) {
+        if (options != null) {
             innerHint.put(SdbConstants.FIELD_NAME_OPTIONS, options);
         }
+        if (flag != 0) {
+            flag = DBQuery.eraseSingleFlag(flag, DBQuery.FLG_QUERY_MODIFY);
+        }
+        flag |= DBQuery.FLG_QUERY_EXPLAIN;
         return _query(matcher, selector, orderBy, innerHint, skipRows, returnRows, flag);
     }
 
@@ -1220,6 +1222,7 @@ public class DBCollection {
             BSONObject hint, long skipRows, long returnRows, int flags) throws BaseException {
         if (flags != 0) {
             flags = DBQuery.eraseSingleFlag(flags, DBQuery.FLG_QUERY_EXPLAIN);
+            flags = DBQuery.eraseSingleFlag(flags, DBQuery.FLG_QUERY_MODIFY);
         }
         return _query(matcher, selector, orderBy, hint, skipRows, returnRows, flags);
     }
@@ -1364,8 +1367,11 @@ public class DBCollection {
             newHint.putAll(hint);
         }
         newHint.put(SdbConstants.FIELD_NAME_MODIFY, modify);
+        if (flag != 0) {
+            flag = DBQuery.eraseSingleFlag(flag, DBQuery.FLG_QUERY_EXPLAIN);
+        }
         flag |= DBQuery.FLG_QUERY_MODIFY;
-        return query(matcher, selector, orderBy, newHint, skipRows, returnRows, flag);
+        return _query(matcher, selector, orderBy, newHint, skipRows, returnRows, flag);
     }
 
     /**
