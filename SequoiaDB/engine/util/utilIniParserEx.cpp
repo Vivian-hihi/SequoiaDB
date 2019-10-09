@@ -804,6 +804,10 @@ INT32 utilIniParserEx::setValue( const CHAR *section, const CHAR *key,
             }
          }
       }
+      else
+      {
+         newValue = value ;
+      }
 
       if ( UTIL_INI_SINGLE_QUOMARK & _handler.flags )
       {
