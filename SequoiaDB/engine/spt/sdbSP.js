@@ -3406,7 +3406,10 @@ IniFile.prototype.getSectionComment = function( section ) {
 
    var comment = this._getSectionComment( section ) ;
 
-   comment = this._comment2String( comment ) ;
+   if ( typeof( comment ) == 'string' )
+   {
+      comment = this._comment2String( comment ) ;
+   }
 
    return comment ;
 }
@@ -3536,7 +3539,10 @@ IniFile.prototype.getComment = function( argv1, argv2, argv3 ) {
 
    var comment = this._getComment( section, key, pos ) ;
 
-   comment = this._comment2String( comment ) ;
+   if ( typeof( comment ) == 'string' )
+   {
+      comment = this._comment2String( comment ) ;
+   }
 
    return comment ;
 }
@@ -3659,7 +3665,10 @@ IniFile.prototype.setLastComment = function( comment ) {
 IniFile.prototype.getLastComment = function() {
    var comment = this._getLastComment() ;
 
-   comment = this._comment2String( comment ) ;
+   if ( typeof( comment ) == 'string' )
+   {
+      comment = this._comment2String( comment ) ;
+   }
 
    return comment ;
 }
