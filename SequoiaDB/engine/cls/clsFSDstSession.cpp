@@ -2644,7 +2644,7 @@ namespace engine
       }
       else if ( STEP_CLEANUP == _step )
       {
-         // notify the dst session to clean up data
+         // notify the src session to clean up data
          MsgClsFSEnd msg ;
 
          msg.header.TID = CLS_TID( _sessionID ) ;
