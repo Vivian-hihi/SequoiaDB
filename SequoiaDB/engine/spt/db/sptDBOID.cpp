@@ -83,15 +83,17 @@ namespace engine
       {
          if( SPT_OID_STR_LENGTH != oidStr.size() )
          {
+            stringstream ss ;
+            ss << "The length of ObjectId is not equal " << SPT_OID_STR_LENGTH ;
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Invalid oid str length" ) ;
+            detail = BSON( SPT_ERR << ss.str() ) ;
             goto error ;
          }
 
          if( !utilIsValidOID( oidStr.c_str() ) )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Invalid oid str" ) ;
+            detail = BSON( SPT_ERR << "The ObjectId is invalid" ) ;
             goto error ;
          }
       }
@@ -130,15 +132,17 @@ namespace engine
       }
       if( SPT_OID_STR_LENGTH != data.size() )
       {
+         stringstream ss ;
+         ss << "The length of oid str is not equal " << SPT_OID_STR_LENGTH ;
+         errMsg = ss.str() ;
          rc = SDB_INVALIDARG ;
-         errMsg = "Invalid oid str length" ;
          goto error ;
       }
 
       if( !utilIsValidOID( data.c_str() ) )
       {
          rc = SDB_INVALIDARG ;
-         errMsg = "Invalid oid str" ;
+         errMsg = "The oid str is invalid" ;
          goto error ;
       }
 
