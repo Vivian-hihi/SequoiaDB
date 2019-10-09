@@ -3503,10 +3503,15 @@ IniFile.prototype.getComment = function( argv1, argv2, argv3 ) {
 
    pos = true ;
 
-   if ( 2 > argc )
+   if ( 1 > argc )
    {
       setLastErrMsg( "Missing argument" ) ;
       throw SDB_INVALIDARG ;
+   }
+   else if ( 1 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
    }
    else if ( 2 == argc )
    {
@@ -3543,10 +3548,16 @@ IniFile.prototype.addComment = function( argv1, argv2, argv3, argv4 ) {
 
    pos = true ;
 
-   if ( 3 > argc )
+   if ( 2 > argc )
    {
       setLastErrMsg( "Missing argument section" ) ;
       throw SDB_INVALIDARG ;
+   }
+   else if ( 2 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
+      comment = argv2 ;
    }
    else if ( 3 == argc )
    {
@@ -3604,10 +3615,15 @@ IniFile.prototype.delComment = function( argv1, argv2, argv3 ) {
 
    pos = true ;
 
-   if ( 2 > argc )
+   if ( 1 > argc )
    {
       setLastErrMsg( "Missing argument" ) ;
       throw SDB_INVALIDARG ;
+   }
+   else if ( 1 == argc )
+   {
+      section = "" ;
+      key     = argv1 ;
    }
    else if ( 2 == argc )
    {
