@@ -200,7 +200,7 @@ INT32 _ossSocket::initSocket ()
    {
       PD_LOG ( PDERROR, "Failed to initialize socket, errno: %d( %s )",
                SOCKET_GETLASTERROR,
-               ossGetLastSysErrMsg( SOCKET_GETLASTERROR ) ) ;
+               ossGetLastErrorMsg( SOCKET_GETLASTERROR ) ) ;
       rc = ( SOCKET_EMFILE == SOCKET_GETLASTERROR ) ?
            SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       goto error ;
@@ -409,7 +409,7 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
             continue ;
          }
          PD_LOG ( PDERROR, "Failed to select from socket, errno: %d( %s )",
-                  rc, ossGetLastSysErrMsg( rc ) ) ;
+                  rc, ossGetLastErrorMsg( rc ) ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -475,7 +475,7 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
          }
          PD_LOG ( PDERROR, "Failed to send, errno: %d( %s )",
                   SOCKET_GETLASTERROR,
-                  ossGetLastSysErrMsg( SOCKET_GETLASTERROR ) ) ;
+                  ossGetLastErrorMsg( SOCKET_GETLASTERROR ) ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -901,7 +901,7 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
       rc = ( SOCKET_EMFILE == sysError ) ? SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       PD_LOG ( ( rc == SDB_NETWORK ? PDERROR : PDINFO ) ,
                "Failed to accept socket, errno: %d( %s ), rc: %d",
-               sysError, ossGetLastSysErrMsg( sysError ), rc ) ;
+               sysError, ossGetLastErrorMsg( sysError ), rc ) ;
       goto error ;
    }
 
@@ -1254,7 +1254,7 @@ retry:
          goto retry ;
       }
       PD_LOG( PDERROR, "select(2), error: %d( %s )",
-              rc, ossGetLastSysErrMsg( rc ) ) ;
+              rc, ossGetLastErrorMsg( rc ) ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -1279,7 +1279,7 @@ retry:
    {
       errno = err ;
       PD_LOG( PDERROR, "failed to connect to remote, errno: %d( %s )",
-              errno, ossGetLastSysErrMsg( errno ) ) ;
+              errno, ossGetLastErrorMsg( errno ) ) ;
       rc = SDB_NET_CANNOT_CONNECT ;
       goto error ;
    }
