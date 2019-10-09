@@ -1023,9 +1023,6 @@ namespace engine
                  "Split cancel: got task ID [%llu]",
                  taskID ) ;
 
-         // Remove context first
-         //rc = catRemoveTaskContext( taskID, cb ) ;
-
          rc = catGetTask( taskID, taskObj, cb ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get task [%llu], rc: %d",
@@ -1093,9 +1090,6 @@ namespace engine
          }
 
          BSONObj match = matchBuilder.obj() ;
-
-         // Remove contexts first
-         //rc = catRemoveTaskContexts( match, cb ) ;
 
          rc = catRemoveTask( match, TRUE, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR,
