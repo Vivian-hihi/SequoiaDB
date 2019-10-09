@@ -3684,7 +3684,7 @@ IniFile.prototype.addLastComment = function( comment ) {
 }
 
 IniFile.prototype.delLastComment = function() {
-   return this._delLastComment() ;
+   this._setLastComment( "" ) ;
 }
 
 IniFile.prototype.enableItem = function( argv1, argv2 ) {
