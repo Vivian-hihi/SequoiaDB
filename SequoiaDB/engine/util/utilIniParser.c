@@ -33,6 +33,10 @@
 #include "ossMem.h"
 #include "ossUtil.h"
 
+#define UTIL_INI_COMMENT_PARSE_LINE    1
+#define UTIL_INI_COMMENT_PARSE_BLOCK   2
+#define UTIL_INI_COMMENT_PARSE_ALL     3
+
 #define UTIL_INI_CHAR_SPACE         ' '
 #define UTIL_INI_CHAR_TAB           '\t'
 #define UTIL_INI_CHAR_CR            '\r'
@@ -85,7 +89,7 @@ static void appendItem2Section( utilIniSection *section,
 
 /* parse */
 static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
-                                 BOOLEAN isFull, utilIniString *comment ) ;
+                                 INT32 type, utilIniString *comment ) ;
 
 static const CHAR *parseSection( utilIniHandler *handler,
                                  utilIniSection *section, const CHAR *str ) ;
@@ -171,7 +175,8 @@ SDB_EXPORT INT32 utilIniParse( utilIniHandler *handler, const CHAR *content )
       if ( ( UTIL_INI_SEMICOLON & flags && UTIL_INI_CHAR_SEMICOLON == *cur ) ||
            ( UTIL_INI_HASHMARK & flags && UTIL_INI_CHAR_HASHMARK == *cur ) )
       {
-         cur = parseComment( handler, cur, TRUE, &comment ) ;
+         cur = parseComment( handler, cur, UTIL_INI_COMMENT_PARSE_ALL,
+                             &comment ) ;
       }
 
       if ( *cur )
@@ -976,7 +981,8 @@ static const CHAR *parseSection( utilIniHandler *handler,
       ossMemset( &tmp, 0, sizeof( utilIniItem ) ) ;
 
       begin = str ;
-      str = parseComment( handler, str, TRUE, &tmp.pre_comment ) ;
+      str = parseComment( handler, str, UTIL_INI_COMMENT_PARSE_ALL,
+                          &tmp.pre_comment ) ;
 
       str = parseItem( handler, &tmp, str ) ;
       if ( handler->errnum )
@@ -1091,7 +1097,8 @@ static const CHAR *parseItem( utilIniHandler *handler, utilIniItem *item,
    else if ( ( UTIL_INI_SEMICOLON & flags && UTIL_INI_CHAR_SEMICOLON == *str )||
              ( UTIL_INI_HASHMARK & flags && UTIL_INI_CHAR_HASHMARK == *str ) )
    {
-      str = parseComment( handler, str, FALSE, &item->pos_comment ) ;
+      str = parseComment( handler, str, UTIL_INI_COMMENT_PARSE_LINE,
+                          &item->pos_comment ) ;
       str = skipEmptyLine( str ) ;
    }
 
@@ -1201,7 +1208,7 @@ static const CHAR *parseItemValue( utilIniItem *item, const CHAR *str,
 }
 
 static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
-                                 BOOLEAN isFull, utilIniString *comment )
+                                 INT32 type, utilIniString *comment )
 {
    INT32 len = 0 ;
    UINT32 flags = handler->flags ;
@@ -1248,25 +1255,35 @@ static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
          break ;
       }
 
-      if ( isFull )
+      if ( UTIL_INI_COMMENT_PARSE_ALL == type )
       {
+         len = str - begin ;
+
          if ( '\0' != *str )
          {
             ++str ;
          }
-         len = str - begin ;
+
          str = skipEmptyLine( str ) ;
       }
       else
       {
+         len = str - begin ;
+
          if ( '\0' != *str )
          {
             ++str ;
          }
-         len = str - begin ;
+
          str = skip( str ) ;
       }
+
       end = str ;
+
+      if ( UTIL_INI_COMMENT_PARSE_LINE == type )
+      {
+         break ;
+      }
    }
 
    if ( 0 < len )
