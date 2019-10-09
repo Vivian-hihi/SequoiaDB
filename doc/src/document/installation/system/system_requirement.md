@@ -187,3 +187,65 @@
 >**Note:**  
 >1. 以上“配置主机名”、“配置主机名/IP地址映射”和“配置防火墙”这几个步骤都需要在每台作为数据库服务器的机器上配置;  
 >2. 社区版要求系统安装glibc 2.15以及libstdc++ 6.0.18以上版本。
+
+#### SELinux ####
+**配置方法**
+
+关闭SELinux
+```lang-bash
+vi /etc/selinux/config
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=disabled
+#SELINUX=enforcing
+# SELINUXTYPE= can take one of three two values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected.
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted 
+```
+
+模式设置成 permissive
+```lang-bash
+$ setenforce 0
+vi /etc/selinux/config
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=permissive
+#SELINUX=enforcing
+# SELINUXTYPE= can take one of three two values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected.
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted 
+```
+
+**验证方法**
+关闭 SELinux
+```lang-bash
+$ sestatus
+SELinux status:                 disabled
+```
+
+模式设置为 permissive
+```lang-bash
+$ sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   permissive
+Mode from config file:          permissive
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      28
+```
+>**Note:** 
+> 建议关闭 SELinux 或者调整为 permissive 模式
+
