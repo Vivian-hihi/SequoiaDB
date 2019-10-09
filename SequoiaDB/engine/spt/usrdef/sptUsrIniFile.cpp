@@ -1019,7 +1019,6 @@ JS_MAPPING_END()
          }
 
          newComment = annotator + newComment ;
-         newComment += '\n' ;
       }
 
       rval.getReturnVal().setValue( newComment ) ;
@@ -1081,13 +1080,13 @@ JS_MAPPING_END()
                   isCommentChar = TRUE ;
                   continue ;
                }
-               else if ( UTIL_INI_SEMICOLON & _flags && ';' == p[i] &&
+               else if ( i > 0 && UTIL_INI_SEMICOLON & _flags && ';' == p[i] &&
                          '\n' == p[i-1] )
                {
                   isCommentChar = TRUE ;
                   continue ;
                }
-               else if ( UTIL_INI_HASHMARK & _flags && '#' == p[i] &&
+               else if ( i > 0 && UTIL_INI_HASHMARK & _flags && '#' == p[i] &&
                          '\n' == p[i-1] )
                {
                   isCommentChar = TRUE ;

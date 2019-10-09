@@ -3429,7 +3429,12 @@ IniFile.prototype.addSectionComment = function( section, comment ) {
 
    newComment = this._getSectionComment( section ) ;
 
-   newComment = newComment + this._convertComment( comment ) ;
+   if ( newComment.length > 0 )
+   {
+      newComment += '\n' ;
+   }
+
+   newComment += this._convertComment( comment ) ;
 
    this._setSectionComment( section, newComment ) ;
 }
@@ -3569,7 +3574,26 @@ IniFile.prototype.addComment = function( argv1, argv2, argv3, argv4 ) {
 
    newComment = this._getComment( section, key, pos ) ;
 
-   newComment = newComment + this._convertComment( comment ) ;
+   if ( pos )
+   {
+      if ( newComment.length > 0 )
+      {
+         newComment += '\n' ;
+      }
+
+      newComment += this._convertComment( comment ) ;
+   }
+   else
+   {
+      if ( newComment.length > 0 )
+      {
+         newComment += ' ' + comment ;
+      }
+      else
+      {
+         newComment = this._convertComment( comment ) ;
+      }
+   }
 
    this._setComment( section, key, newComment, pos ) ;
 }
@@ -3629,7 +3653,7 @@ IniFile.prototype.addLastComment = function( comment ) {
 
    newComment = this._getLastComment() ;
 
-   newComment = newComment + this._convertComment( comment ) ;
+   newComment = newComment + '\n' + this._convertComment( comment ) ;
 
    return this._setLastComment( newComment ) ;
 }

@@ -1150,6 +1150,11 @@ INT32 utilIniParserEx::toString( string &iniText, UINT32 flags )
 
    _sectionToString( ss, _handler.section, flags ) ;
 
+   if ( 0 < ss.str().length() && 0 < _handler.lastComment.length )
+   {
+      ss << "\n" ;
+   }
+
    _toString( ss, &_handler.lastComment ) ;
 
    iniText = ss.str() ;
@@ -1389,7 +1394,17 @@ static void _sectionToString( stringstream &ss, utilIniSection *section,
 {
    while ( section )
    {
-      _toString( ss, &section->comment ) ;
+      if ( 0 < ss.str().length() )
+      {
+         ss << "\n" ;
+      }
+
+      if ( 0 < section->comment.length )
+      {
+         _toString( ss, &section->comment ) ;
+
+         ss << "\n" ;
+      }
 
       if ( section->name.length > 0 )
       {
@@ -1408,9 +1423,25 @@ static void _sectionToString( stringstream &ss, utilIniSection *section,
 
 static void _itemToString( stringstream &ss, utilIniItem *item, UINT32 flags )
 {
+   BOOLEAN isFirst = TRUE ;
+
    while( item )
    {
-      _toString( ss, &item->pre_comment ) ;
+      if ( isFirst )
+      {
+         isFirst = FALSE ;
+      }
+      else
+      {
+         ss << "\n" ;
+      }
+
+      if ( 0 < item->pre_comment.length )
+      {
+         _toString( ss, &item->pre_comment ) ;
+
+         ss << "\n" ;
+      }
 
       if ( item->isComment )
       {
@@ -1451,8 +1482,6 @@ static void _itemToString( stringstream &ss, utilIniItem *item, UINT32 flags )
 
          _toString( ss, &item->pos_comment ) ;
       }
-
-      ss << "\n" ;
 
       item = item->next ;
    }
