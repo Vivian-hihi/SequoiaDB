@@ -896,47 +896,11 @@ JS_MAPPING_END()
                                bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      string tmpFileName = _fileName + "~" ;
 
-      {
-         BOOLEAN isExist = FALSE ;
-
-         rc = _exist( tmpFileName, isExist ) ;
-         if ( rc )
-         {
-            _setError( detail, "Failed to access temporary file" ) ;
-            goto error ;
-         }
-
-         if ( isExist )
-         {
-            rc = ossDelete( tmpFileName.c_str() ) ;
-            if ( rc )
-            {
-               _setError( detail, "Failed to remove temporary file" ) ;
-               goto error ;
-            }
-         }
-      }
-
-      rc = _parser.save( tmpFileName.c_str() ) ;
+      rc = _parser.save( _fileName.c_str() ) ;
       if ( rc )
       {
          _setError( detail, "Failed to save file" ) ;
-         goto error ;
-      }
-
-      rc = ossDelete( _fileName.c_str() ) ;
-      if ( rc )
-      {
-         _setError( detail, "Failed to remove file" ) ;
-         goto error ;
-      }
-
-      rc = ossRenamePath( tmpFileName.c_str(), _fileName.c_str() ) ;
-      if ( rc )
-      {
-         _setError( detail, "Failed to rename file" ) ;
          goto error ;
       }
 

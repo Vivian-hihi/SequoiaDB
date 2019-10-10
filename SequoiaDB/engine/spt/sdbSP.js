@@ -3749,17 +3749,7 @@ IniFile.prototype.save = function() {
    if ( undefined != this._remote )
    {
       var file = this._remote.getFile( this._getFileName() ) ;
-      var tmpFileName = this._getFileName() + '~' ;
       var content = '' ;
-
-      if ( file.exist( tmpFileName ) )
-      {
-         file.remove( tmpFileName ) ;
-      }
-
-      file.close() ;
-
-      file = this._remote.getFile( tmpFileName, 0, SDB_FILE_CREATE | SDB_FILE_WRITEONLY ) ;
 
       try
       {
@@ -3782,8 +3772,6 @@ IniFile.prototype.save = function() {
       }
 
       file.write( content ) ;
-
-      file.move( tmpFileName, this._getFileName() ) ;
 
       file.close() ;
    }
