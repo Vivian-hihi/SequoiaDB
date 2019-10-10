@@ -191,7 +191,8 @@
 #### SELinux ####
 **配置方法**
 
-关闭SELinux
+关闭 SELinux
+
 ```lang-bash
 vi /etc/selinux/config
 # This file controls the state of SELinux on the system.
@@ -206,11 +207,10 @@ SELINUX=disabled
 #     minimum - Modification of targeted policy. Only selected processes are protected.
 #     mls - Multi Level Security protection.
 SELINUXTYPE=targeted 
-
-$ reboot #需要重启系统
 ```
 
 模式设置成 permissive
+
 ```lang-bash
 $ setenforce 0
 vi /etc/selinux/config
@@ -226,16 +226,21 @@ SELINUX=permissive
 #     minimum - Modification of targeted policy. Only selected processes are protected.
 #     mls - Multi Level Security protection.
 SELINUXTYPE=targeted 
+
+$ reboot # 需要重启系统
 ```
 
 **验证方法**
+
 关闭 SELinux
+
 ```lang-bash
 $ sestatus
 SELinux status:                 disabled
 ```
 
 模式设置为 permissive
+
 ```lang-bash
 $ sestatus
 SELinux status:                 enabled
@@ -250,4 +255,3 @@ Max kernel policy version:      28
 ```
 >**Note:** 
 > 建议关闭 SELinux 或者调整为 permissive 模式
-
