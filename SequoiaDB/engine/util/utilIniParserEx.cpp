@@ -809,15 +809,6 @@ INT32 utilIniParserEx::setValue( const CHAR *section, const CHAR *key,
          newValue = value ;
       }
 
-      if ( UTIL_INI_SINGLE_QUOMARK & _handler.flags )
-      {
-         newValue = "'" + newValue + "'" ;
-      }
-      else if ( UTIL_INI_DOUBLE_QUOMARK & _handler.flags )
-      {
-         newValue = '"' + newValue + '"' ;
-      }
-
       return utilIniSetValue( &_handler, section, key,
                               newValue.c_str(), newValue.length() ) ;
    }
@@ -1478,7 +1469,25 @@ static void _itemToString( stringstream &ss, utilIniItem *item, UINT32 flags )
          ss << "=" ;
       }
 
+      if ( UTIL_INI_SINGLE_QUOMARK & flags )
+      {
+         ss << '\'' ;
+      }
+      else if ( UTIL_INI_DOUBLE_QUOMARK & flags )
+      {
+         ss << '"' ;
+      }
+
       _toString( ss, &item->value ) ;
+
+      if ( UTIL_INI_SINGLE_QUOMARK & flags )
+      {
+         ss << '\'' ;
+      }
+      else if ( UTIL_INI_DOUBLE_QUOMARK & flags )
+      {
+         ss << '"' ;
+      }
 
       if ( item->pos_comment.length > 0 )
       {
