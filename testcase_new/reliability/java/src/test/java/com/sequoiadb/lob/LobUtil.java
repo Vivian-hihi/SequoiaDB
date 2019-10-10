@@ -17,11 +17,13 @@ import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
 
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -177,12 +179,23 @@ public class LobUtil {
                 cal.set(Calendar.DATE, day + i);
                 break;
             }
-            Date date = cal.getTime();
-            ObjectId lodID = cl.createLobID(date);
-            DBLob lob = cl.createLob(lodID);
-            lob.write(data);
-            lob.close();
-            idList.add(lodID);
+            Sequoiadb sdb = cl.getSequoiadb();
+            try {
+                Date date = cal.getTime();
+                ObjectId lodID = cl.createLobID(date);
+                DBLob lob = cl.createLob(lodID);
+                lob.write(data);
+                lob.close();
+                idList.add(lodID);
+            } catch (BaseException e) {
+                DBCursor cur = sdb.getSnapshot(8, new BasicBSONObject("Name", cl.getFullName()), null, null);
+                if (cur.hasNext()) {
+                    System.out.println(cur.getNext().toString());
+                } else {
+                    System.out.println(cl.getFullName() + " not snapshot message.");
+                }
+                throw e;
+            }
         }
         return idList;
     }
