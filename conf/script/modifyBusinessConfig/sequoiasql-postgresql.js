@@ -84,21 +84,18 @@ function _runRemoteCmd( cmd, command, arg, timeout )
    return { 'error': error, 'out': out } ;
 }
 
-function _deleteConfig( oma, configFile, options, original, config )
+function _deleteConfig( remote, configFile, config )
 {
    try
    {
-      var newConfig = {} ;
+      var ini = remote.getIniFile( configFile, SDB_INIFILE_FLAGS_POSTGRESQL ) ;
 
-      for ( var key in original )
+      for ( var key in config )
       {
-         if ( config[key] == undefined )
-         {
-            newConfig[key] = original[key] ;
-         }
+         ini.disableItem( config[key] ) ;
       }
 
-      oma.setIniConfigs( newConfig, configFile, options ) ;
+      ini.save() ;
    }
    catch( e )
    {
@@ -111,23 +108,18 @@ function _deleteConfig( oma, configFile, options, original, config )
    return null ;
 }
 
-function _updateConfig( oma, configFile, options, original, config )
+function _updateConfig( remote, configFile, config )
 {
    try
    {
-      var newConfig = {} ;
-
-      for ( var key in original )
-      {
-         newConfig[key] = original[key] ;
-      }
+      var ini = remote.getIniFile( configFile, SDB_INIFILE_FLAGS_POSTGRESQL ) ;
 
       for ( var key in config )
       {
-         newConfig[key] = config[key] ;
+         ini.setValue( key, config[key] ) ;
       }
 
-      oma.setIniConfigs( newConfig, configFile, options ) ;
+      ini.save() ;
    }
    catch( e )
    {
@@ -137,6 +129,7 @@ function _updateConfig( oma, configFile, options, original, config )
          return lastErrObj ;
       }
    }
+
    return null ;
 }
 
@@ -158,14 +151,11 @@ function _modifyConfig( PD_LOGGER, command )
    var exec          = ctlFile ;
    var args          = '' ;
    var timeout       = 600000 ;
-   var original      = null ;
-   var oma           = null ;
-   var options       = { 'EnableType': true, 'StrDelimiter': false } ;
+   var remote        = null ;
 
    try
    {
-      oma = new Oma( hostName, agentPort ) ;
-      original = oma.getIniConfigs( configFile, options ).toObj() ;
+      remote = new Remote( hostName, agentPort ) ;
    }
    catch( e )
    {
@@ -177,17 +167,16 @@ function _modifyConfig( PD_LOGGER, command )
 
    if ( FIELD_UPDATE_BUSINESS_CONFIG == command )
    {
-      result = _updateConfig( oma, configFile, options, original, property ) ;
+      result = _updateConfig( remote, configFile, property ) ;
    }
    else if ( FIELD_DELETE_BUSINESS_CONFIG == command )
    {
-      result = _deleteConfig( oma, configFile, options, original, property ) ;
+      result = _deleteConfig( remote, configFile, property ) ;
    }
 
    if ( result !== null )
    {
       PD_LOGGER.log( PDERROR, result ) ;
-      oma.setIniConfigs( original, configFile, options ) ;
       return result.toObj() ;
    }
 

@@ -199,15 +199,15 @@ function _createDBPath( oma, system, cmd, installPath, dbpath, timeout )
 //'/opt/sequoiasql-postgresql/database/5432/postgresql.conf'
 function _setPostgresqlConf( remote, hostName, confPath, configs )
 {
-   var file    = null ;
-   var error   = null ;
+   var error = null ;
 
    try
    {
-      file = remote.getFile( confPath, 0,
-                             SDB_FILE_REPLACE | SDB_FILE_WRITEONLY ) ;
+      var ini = remote.getIniFile( confPath, SDB_INIFILE_FLAGS_POSTGRESQL ) ;
 
-      file.write( 'listen_addresses = \'0.0.0.0\'\n' ) ;
+      ini.disableAllItem() ;
+
+      ini.setValue( 'listen_addresses', '0.0.0.0' ) ;
 
       for ( key in configs )
       {
@@ -218,17 +218,12 @@ function _setPostgresqlConf( remote, hostName, confPath, configs )
          {
             if ( configs[key].length > 0 )
             {
-               if ( isNaN( configs[key] ) == true )
-               {
-                  file.write( key + ' = \'' + configs[key] + '\'\n' ) ;
-               }
-               else
-               {
-                  file.write( key + ' = ' + configs[key] + '\n' ) ;
-               }
+               ini.setValue( key, configs[key] ) ;
             }
          }
       }
+
+      ini.save() ;
    }
    catch( e )
    {
