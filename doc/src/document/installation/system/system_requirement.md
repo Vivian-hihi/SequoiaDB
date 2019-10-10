@@ -201,7 +201,7 @@ vi /etc/selinux/config
 #     permissive - SELinux prints warnings instead of enforcing.
 #     disabled - No SELinux policy is loaded.
 SELINUX=disabled
-#SELINUX=enforcing
+# SELINUX=enforcing
 # SELINUXTYPE= can take one of three two values:
 #     targeted - Targeted processes are protected,
 #     minimum - Modification of targeted policy. Only selected processes are protected.
@@ -220,7 +220,7 @@ vi /etc/selinux/config
 #     permissive - SELinux prints warnings instead of enforcing.
 #     disabled - No SELinux policy is loaded.
 SELINUX=permissive
-#SELINUX=enforcing
+# SELINUX=enforcing
 # SELINUXTYPE= can take one of three two values:
 #     targeted - Targeted processes are protected,
 #     minimum - Modification of targeted policy. Only selected processes are protected.
