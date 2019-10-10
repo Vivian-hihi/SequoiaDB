@@ -207,6 +207,8 @@ SELINUX=disabled
 #     minimum - Modification of targeted policy. Only selected processes are protected.
 #     mls - Multi Level Security protection.
 SELINUXTYPE=targeted 
+
+$ reboot # 需要重启系统
 ```
 
 模式设置成 permissive
@@ -227,7 +229,6 @@ SELINUX=permissive
 #     mls - Multi Level Security protection.
 SELINUXTYPE=targeted 
 
-$ reboot # 需要重启系统
 ```
 
 **验证方法**
