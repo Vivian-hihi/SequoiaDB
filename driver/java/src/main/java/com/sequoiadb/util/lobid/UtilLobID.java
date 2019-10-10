@@ -8,7 +8,7 @@ public class UtilLobID {
     private static Random r = new Random();
     private static AtomicInteger atomicSerial = new AtomicInteger(r.nextInt(100000));
 
-    private static final byte isOddArray[] = { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0,
+    private static final byte isOddArray[] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0,
             0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0,
             1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
             1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1,
@@ -17,7 +17,7 @@ public class UtilLobID {
             0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
             0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1,
             0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0,
-            0, 1, 0, 1, 1, 0 };
+            0, 1, 0, 1, 1, 0};
 
     private long seconds; // use lower 6 bytes
     private byte oddCheck; // user lower 6 bits
@@ -185,8 +185,7 @@ public class UtilLobID {
     private boolean isOdd(int v) {
         if (1 == isOddArray[v]) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }

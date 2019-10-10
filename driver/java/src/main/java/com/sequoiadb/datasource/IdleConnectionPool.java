@@ -50,12 +50,12 @@ class IdleConnectionPool implements IConnectionPool {
     }
 
     public synchronized Sequoiadb peek(ConnItem connItem) {
-            return _conns.get(connItem);
+        return _conns.get(connItem);
     }
 
     /**
-     * @brief Poll a connection out from the pool according to the offered ConnItem.
      * @return a connection or null for no connection in that ConnItem
+     * @brief Poll a connection out from the pool according to the offered ConnItem.
      */
     @Override
     public synchronized Sequoiadb poll(ConnItem connItem) {

@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.exception;
 
@@ -96,8 +96,8 @@ public class BaseException extends RuntimeException {
     }
 
     /**
-     * @param errCode The error code return by engine.
-     * @param detail  The error detail.
+     * @param errCode     The error code return by engine.
+     * @param detail      The error detail.
      * @param errorObject The error object return from engine.
      * @since 3.0.1
      */
@@ -169,16 +169,16 @@ public class BaseException extends RuntimeException {
      * error object is null.
      *
      * @return The error object got from engine or null for no error object got from engine.
-     *          If there has an error, it contains the follow fields:
-     *          <ul>
-     *              <li>errno:       the error number.</li>
-     *              <li>description: the description of the errno.</li>
-     *              <li>detail:      the error detail.</li>
-     *          </ul>
-     *          Actually, the follow extended fields may return from the database depend on the operations:
-     *          <ul>
-     *              <li>ErrNodes:    More detailed error message.</li>
-     *          </ul>
+     * If there has an error, it contains the follow fields:
+     * <ul>
+     * <li>errno:       the error number.</li>
+     * <li>description: the description of the errno.</li>
+     * <li>detail:      the error detail.</li>
+     * </ul>
+     * Actually, the follow extended fields may return from the database depend on the operations:
+     * <ul>
+     * <li>ErrNodes:    More detailed error message.</li>
+     * </ul>
      */
     public BSONObject getErrorObject() {
         return errorObject;

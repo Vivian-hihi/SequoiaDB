@@ -44,15 +44,11 @@ public class SdbDecrypt {
     /**
      * parse cipher file, get the specify user's password.
      *
-     * @param user
-     *            the user's name
-     * @param token
-     *            password encryption token
-     * @param passwdFile
-     *            the password's file
+     * @param user       the user's name
+     * @param token      password encryption token
+     * @param passwdFile the password's file
      * @return the parsed SdbDecryptUserInfo
-     * @throws BaseException
-     *             when parse failed
+     * @throws BaseException when parse failed
      */
     public SdbDecryptUserInfo parseCipherFile(String user, String token, File passwdFile) {
         // token can be null
@@ -83,11 +79,9 @@ public class SdbDecrypt {
     /**
      * decrypt encrypted password
      *
-     * @param encryptPasswd
-     *            the encrypted password
+     * @param encryptPasswd the encrypted password
      * @return the decrypted password
-     * @throws BaseException
-     *             when parse failed
+     * @throws BaseException when parse failed
      */
     public String decryptPasswd(String encryptPasswd) {
         return decryptPasswd(encryptPasswd, null);
@@ -96,13 +90,10 @@ public class SdbDecrypt {
     /**
      * decrypt encrypted password
      *
-     * @param encryptPasswd
-     *            the encrypted password
-     * @param token
-     *            password encryption token
+     * @param encryptPasswd the encrypted password
+     * @param token         password encryption token
      * @return the decrypted password
-     * @throws BaseException
-     *             when parse failed
+     * @throws BaseException when parse failed
      */
     public String decryptPasswd(String encryptPasswd, String token) {
         final int DECRYPT_LENGTH = 8;
@@ -120,8 +111,7 @@ public class SdbDecrypt {
             byte[] t = null;
             try {
                 t = token.getBytes("UTF-8");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new BaseException(SDBError.SDB_INVALIDARG, "token is invalid:token=" + token,
                         e);
             }
@@ -272,12 +262,10 @@ public class SdbDecrypt {
             }
 
             return info;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "read file failed:file=" + passwdFile,
                     e);
-        }
-        finally {
+        } finally {
             close(br);
         }
     }
@@ -301,18 +289,15 @@ public class SdbDecrypt {
             if (null == cluster && null == info.getClusterName()) {
                 info.setPasswd(line.substring(idxPasswd + 1));
                 return EN_MATCH_RESULT.perfect_match;
-            }
-            else if (null != cluster && null != info.getClusterName()) {
+            } else if (null != cluster && null != info.getClusterName()) {
                 if (cluster.equals(info.getClusterName())) {
                     // clusterName is exactly the same
                     info.setPasswd(line.substring(idxPasswd + 1));
                     return EN_MATCH_RESULT.perfect_match;
-                }
-                else {
+                } else {
                     return EN_MATCH_RESULT.mismatch;
                 }
-            }
-            else {
+            } else {
                 // just one side have clusterName
                 info.setPasswd(line.substring(idxPasswd + 1));
                 return EN_MATCH_RESULT.match;
@@ -325,13 +310,10 @@ public class SdbDecrypt {
     /**
      * parse cipher file, get the specify user's password.
      *
-     * @param user
-     *            the user's name
-     * @param passwdFile
-     *            the password's file
+     * @param user       the user's name
+     * @param passwdFile the password's file
      * @return the parsed SdbDecryptUserInfo
-     * @throws BaseException
-     *             when parse failed
+     * @throws BaseException when parse failed
      */
     public SdbDecryptUserInfo parseCipherFile(String user, File passwdFile) {
         return parseCipherFile(user, null, passwdFile);
@@ -341,8 +323,7 @@ public class SdbDecrypt {
         if (null != c) {
             try {
                 c.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
             }
         }
     }

@@ -37,6 +37,7 @@ interface IConnectStrategy {
     public ConnItem pollConnItemForGetting();
 
     public ConnItem pollConnItemForDeleting();
+
     public ConnItem peekConnItemForDeleting();
 
     /*

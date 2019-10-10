@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
@@ -96,7 +96,7 @@ public class Domain {
         } else {
             Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
             if (tmpAlter instanceof BasicBSONObject ||
-                tmpAlter instanceof BasicBSONList) {
+                    tmpAlter instanceof BasicBSONList) {
                 newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
             } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());

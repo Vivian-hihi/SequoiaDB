@@ -15,8 +15,7 @@ class SdbDesEcbDecryptor {
             SecretKeySpec keySpec = new SecretKeySpec(key, "DES");
             cipher = Cipher.getInstance("DES/ECB/NoPadding");
             cipher.init(mode, keySpec);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "init cipher failed", e);
         }
     }
@@ -24,8 +23,7 @@ class SdbDesEcbDecryptor {
     public byte[] desDecrypt(byte[] encryptedValue) {
         try {
             return cipher.doFinal(encryptedValue);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "descrypt failed", e);
         }
     }

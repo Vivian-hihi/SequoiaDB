@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
@@ -66,7 +66,7 @@ final class SdbConstants {
     final static String SDB_ALTER_DISABLE_SHARDING = "disable sharding";
     final static String SDB_ALTER_ENABLE_COMPRESSION = "enable compression";
     final static String SDB_ALTER_DISABLE_COMPRESSION = "disable compression";
-    final static String SDB_ALTER_SET_ATTRIBUTES = "set attributes" ;
+    final static String SDB_ALTER_SET_ATTRIBUTES = "set attributes";
     final static String SDB_ALTER_SET_DOMAIN = "set domain";
     final static String SDB_ALTER_REMOVE_DOMAIN = "remove domain";
     final static String SDB_ALTER_ENABLE_CAPPED = "enable capped";

@@ -37,8 +37,7 @@ public final class Helper {
         MessageDigest md5;
         try {
             md5 = MessageDigest.getInstance("MD5");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new BaseException(SDBError.SDB_SYS, e);
         }
 
@@ -92,8 +91,7 @@ public final class Helper {
         if (length < in.remaining()) {
             int alignedSize = alignedSize(length);
             in.position(alignedSize + position);
-        }
-        else {
+        } else {
             in.position(length + position);
         }
 
@@ -127,8 +125,7 @@ public final class Helper {
         ByteBuffer bb = ByteBuffer.wrap(byteArray);
         if (endianConvert) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
-        }
-        else {
+        } else {
             bb.order(ByteOrder.BIG_ENDIAN);
         }
 
@@ -347,8 +344,7 @@ public final class Helper {
             md = MessageDigest.getInstance("SHA-256");
             md.update(original);
             return md.digest();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "sha256 failed", e);
         }
     }

@@ -76,10 +76,8 @@ class DBLobImpl implements DBLob {
     private long _contextID;
 
     /**
-     * @param cl
-     *            The instance of DBCollection
-     * @throws BaseException
-     *             If error happens.
+     * @param cl The instance of DBCollection
+     * @throws BaseException If error happens.
      */
     DBLobImpl(DBCollection cl) throws BaseException {
         if (cl == null) {
@@ -93,14 +91,11 @@ class DBLobImpl implements DBLob {
     /**
      * Create a lob, lob's id will auto generate in this function.
      *
-     * @param id
-     *            the lob's id
-     * @throws BaseException
-     *             If error happens. public void open() { open(null, SDB_LOB_CREATEONLY); }
-     *             <p>
-     *             /** Open an existing lob with id.
-     * @throws BaseException
-     *             If error happens.
+     * @param id the lob's id
+     * @throws BaseException If error happens. public void open() { open(null, SDB_LOB_CREATEONLY); }
+     *                       <p>
+     *                       /** Open an existing lob with id.
+     * @throws BaseException If error happens.
      */
     public void open(ObjectId id) {
         open(id, SDB_LOB_READ);
@@ -109,14 +104,11 @@ class DBLobImpl implements DBLob {
     /**
      * Open an existing lob, or create a lob.
      *
-     * @param id
-     *            the lob's id
-     * @param mode
-     *            available mode is SDB_LOB_CREATEONLY or SDB_LOB_READ. SDB_LOB_CREATEONLY create a
-     *            new lob with given id, if id is null, it will be generated in this function;
-     *            SDB_LOB_READ read an exist lob
-     * @throws BaseException
-     *             If error happens.
+     * @param id   the lob's id
+     * @param mode available mode is SDB_LOB_CREATEONLY or SDB_LOB_READ. SDB_LOB_CREATEONLY create a
+     *             new lob with given id, if id is null, it will be generated in this function;
+     *             SDB_LOB_READ read an exist lob
+     * @throws BaseException If error happens.
      */
     public void open(ObjectId id, int mode) throws BaseException {
         if (_isOpened) {
@@ -160,8 +152,7 @@ class DBLobImpl implements DBLob {
             _open();
             _isOpened = true;
             return;
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (!_isOldVersionLobServer) {
                 throw e;
             }
@@ -202,8 +193,7 @@ class DBLobImpl implements DBLob {
         _createTime = (Long) obj.get(FIELD_NAME_LOB_CREATE_TIME);
         if (obj.containsField(FIELD_NAME_LOB_MODIFICATION_TIME)) {
             _modificationTime = (Long) obj.get(FIELD_NAME_LOB_MODIFICATION_TIME);
-        }
-        else {
+        } else {
             _modificationTime = _createTime;
         }
         _pageSize = (Integer) obj.get(FIELD_NAME_LOB_PAGESIZE);
@@ -259,8 +249,7 @@ class DBLobImpl implements DBLob {
     /**
      * Close the lob.
      *
-     * @throws BaseException
-     *             If error happens.
+     * @throws BaseException If error happens.
      */
     @Override
     public void close() throws BaseException {
@@ -285,10 +274,8 @@ class DBLobImpl implements DBLob {
     /**
      * Write bytes from the input stream to this lob.
      *
-     * @param in
-     *            the input stream.
-     * @throws BaseException
-     *             If error happens.
+     * @param in the input stream.
+     * @throws BaseException If error happens.
      */
     @Override
     public void write(InputStream in) throws BaseException {
@@ -305,8 +292,7 @@ class DBLobImpl implements DBLob {
             while (-1 < (readNum = in.read(tmpBuf))) {
                 write(tmpBuf, 0, readNum);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new BaseException(SDBError.SDB_SYS, e);
         }
     }
@@ -314,10 +300,8 @@ class DBLobImpl implements DBLob {
     /**
      * Write <code>b.length</code> bytes from the specified byte array to this lob.
      *
-     * @param b
-     *            the data.
-     * @throws BaseException
-     *             If error happens.
+     * @param b the data.
+     * @throws BaseException If error happens.
      */
     @Override
     public void write(byte[] b) throws BaseException {
@@ -328,14 +312,10 @@ class DBLobImpl implements DBLob {
      * Write <code>len</code> bytes from the specified byte array starting at offset
      * <code>off</code> to this lob.
      *
-     * @param b
-     *            the data.
-     * @param off
-     *            the start offset in the data.
-     * @param len
-     *            the number of bytes to write.
-     * @throws BaseException
-     *             If error happens.
+     * @param b   the data.
+     * @param off the start offset in the data.
+     * @param len the number of bytes to write.
+     * @throws BaseException If error happens.
      */
     @Override
     public void write(byte[] b, int off, int len) throws BaseException {
@@ -374,10 +354,8 @@ class DBLobImpl implements DBLob {
     /**
      * Read data from this lob into the output stream.
      *
-     * @param out
-     *            the output stream.
-     * @throws BaseException
-     *             If error happens.
+     * @param out the output stream.
+     * @throws BaseException If error happens.
      */
     @Override
     public void read(OutputStream out) throws BaseException {
@@ -394,8 +372,7 @@ class DBLobImpl implements DBLob {
         while (-1 < (readNum = read(tmpBuf, 0, tmpBuf.length))) {
             try {
                 out.write(tmpBuf, 0, readNum);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new BaseException(SDBError.SDB_SYS, e);
             }
         }
@@ -404,13 +381,11 @@ class DBLobImpl implements DBLob {
     /**
      * Read up to <code>b.length</code> bytes of data from this lob into an array of bytes.
      *
-     * @param b
-     *            the buffer into which the data is read.
+     * @param b the buffer into which the data is read.
      * @return the total number of bytes read into the buffer, or <code>-1</code> if there is no
-     *         more data because the end of the file has been reached, or <code>0<code> if
+     * more data because the end of the file has been reached, or <code>0<code> if
      * <code>b.length</code> is Zero.
-     * @throws BaseException
-     *             If error happens.
+     * @throws BaseException If error happens.
      */
     @Override
     public int read(byte[] b) throws BaseException {
@@ -420,17 +395,13 @@ class DBLobImpl implements DBLob {
     /**
      * Read up to <code>len</code> bytes of data from this lob into an array of bytes.
      *
-     * @param b
-     *            the buffer into which the data is read.
-     * @param off
-     *            the start offset in the destination array <code>b</code>.
-     * @param len
-     *            the maximum number of bytes read.
+     * @param b   the buffer into which the data is read.
+     * @param off the start offset in the destination array <code>b</code>.
+     * @param len the maximum number of bytes read.
      * @return the total number of bytes read into the buffer, or <code>-1</code> if there is no
-     *         more data because the end of the file has been reached, or <code>0</code> if
-     *         <code>len</code> is Zero.
-     * @throws BaseException
-     *             If error happens.
+     * more data because the end of the file has been reached, or <code>0</code> if
+     * <code>len</code> is Zero.
+     * @throws BaseException If error happens.
      */
     @Override
     public int read(byte[] b, int off, int len) throws BaseException {
@@ -466,12 +437,9 @@ class DBLobImpl implements DBLob {
      * <code>seekType</code> is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, the
      * offset is relative to the start of the lob, the current position of lob, or the end of lob.
      *
-     * @param size
-     *            the adding size.
-     * @param seekType
-     *            SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
-     * @throws BaseException
-     *             If error happens.
+     * @param size     the adding size.
+     * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
+     * @throws BaseException If error happens.
      */
     @Override
     public void seek(long size, int seekType) throws BaseException {
@@ -491,8 +459,7 @@ class DBLobImpl implements DBLob {
             }
 
             _currentOffset = size;
-        }
-        else if (SDB_LOB_SEEK_CUR == seekType) {
+        } else if (SDB_LOB_SEEK_CUR == seekType) {
             if ((_currentOffset + size >= _lobSize && _mode == SDB_LOB_READ)
                     || (_currentOffset + size < 0)) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
@@ -500,16 +467,14 @@ class DBLobImpl implements DBLob {
             }
 
             _currentOffset += size;
-        }
-        else if (SDB_LOB_SEEK_END == seekType) {
+        } else if (SDB_LOB_SEEK_END == seekType) {
             if (size < 0 || (size > _lobSize && _mode == SDB_LOB_READ)) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
                         "out of bound, lobSize=" + _lobSize);
             }
 
             _currentOffset = _lobSize - size;
-        }
-        else {
+        } else {
             throw new BaseException(SDBError.SDB_INVALIDARG, "unreconigzed seekType: " + seekType);
         }
 
@@ -521,12 +486,9 @@ class DBLobImpl implements DBLob {
     /**
      * Lock LOB section for writing.
      *
-     * @param offset
-     *            lock start position
-     * @param length
-     *            lock length, -1 means lock to the end of lob
-     * @throws BaseException
-     *             If error happens..
+     * @param offset lock start position
+     * @param length lock length, -1 means lock to the end of lob
+     * @throws BaseException If error happens..
      */
     @Override
     public void lock(long offset, long length) throws BaseException {
@@ -551,12 +513,9 @@ class DBLobImpl implements DBLob {
     /**
      * Lock LOB section for writing and seek to the offset position.
      *
-     * @param offset
-     *            lock start position
-     * @param length
-     *            lock length, -1 means lock to the end of lob
-     * @throws BaseException
-     *             If error happens..
+     * @param offset lock start position
+     * @param length lock length, -1 means lock to the end of lob
+     * @throws BaseException If error happens..
      */
     @Override
     public void lockAndSeek(long offset, long length) throws BaseException {
@@ -616,8 +575,7 @@ class DBLobImpl implements DBLob {
         if (_cachedDataBuff.remaining() == 0) {
             // TODO: shell we need to reuse the ByteBuffer ?
             _cachedDataBuff = null;
-        }
-        else {
+        } else {
             _cachedOffset = _currentOffset + readInCache;
         }
         return readInCache;
@@ -651,8 +609,7 @@ class DBLobImpl implements DBLob {
         int rc = response.getFlag();
         if (rc == SDBError.SDB_EOF.getErrorCode()) {
             return -1; // meet the end of the lob
-        }
-        else if (rc != 0) {
+        } else if (rc != 0) {
             _sdb.throwIfError(response);
         }
 
@@ -680,8 +637,7 @@ class DBLobImpl implements DBLob {
             totalRead += needRead;
             _currentOffset += needRead;
             _cachedOffset = _currentOffset;
-        }
-        else {
+        } else {
             _cachedDataBuff.get(buf, off, retLobLen);
             totalRead += retLobLen;
             _currentOffset += retLobLen;

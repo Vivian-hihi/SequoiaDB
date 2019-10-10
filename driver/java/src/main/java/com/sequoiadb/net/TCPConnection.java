@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.net;
 
@@ -71,11 +71,11 @@ public class TCPConnection implements IConnection {
                                 }
 
                                 public void checkClientTrusted(X509Certificate[] arg0, String arg1)
-                                    throws CertificateException {
+                                        throws CertificateException {
                                 }
 
                                 public void checkServerTrusted(X509Certificate[] arg0, String arg1)
-                                    throws CertificateException {
+                                        throws CertificateException {
                                 }
                             };
                             SSLContext ctx = SSLContext.getInstance("SSL");

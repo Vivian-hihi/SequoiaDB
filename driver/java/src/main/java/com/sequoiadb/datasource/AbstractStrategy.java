@@ -95,7 +95,7 @@ abstract class AbstractStrategy implements IConnectStrategy {
             // get the oldest one
             ConnItem connItem = _newlyCreatedConnItemDeque.peekFirst();
             if (connItem == null) {
-                connItem =  _activeConnItemDeque.peekLast();
+                connItem = _activeConnItemDeque.peekLast();
             }
             return connItem;
         } finally {
@@ -138,7 +138,7 @@ abstract class AbstractStrategy implements IConnectStrategy {
             while (iterator.hasNext()) {
                 ConnItem connItem = iterator.next();
                 if (addr.equals(connItem.getAddr())) {
-                	returnList.add(connItem);
+                    returnList.add(connItem);
                     iterator.remove();
                 }
             }

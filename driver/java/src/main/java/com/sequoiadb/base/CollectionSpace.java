@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
@@ -23,6 +23,7 @@ import com.sequoiadb.message.response.SdbReply;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +69,7 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public DBCollection getCollection(String collectionName) throws BaseException {
-        if(collectionName == null || collectionName.equals("")){
+        if (collectionName == null || collectionName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
         }
         // get cl from cache
@@ -94,7 +95,7 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public boolean isCollectionExist(String collectionName) throws BaseException {
-        if(collectionName == null || collectionName.equals("")){
+        if (collectionName == null || collectionName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
         }
         String collectionFullName = name + "." + collectionName;
@@ -154,12 +155,12 @@ public class CollectionSpace {
      *
      * @param collectionName The collection name
      * @param options        The {@see <a href=http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-300>options</a>}
-     *                        for creating collection or null for not specified any options.
+     *                       for creating collection or null for not specified any options.
      * @return the newly created object of collection.
      * @throws BaseException If error happens.
      */
     public DBCollection createCollection(String collectionName, BSONObject options) {
-        if(collectionName == null || collectionName.equals("")){
+        if (collectionName == null || collectionName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
         }
         String collectionFullName = name + "." + collectionName;
@@ -195,7 +196,7 @@ public class CollectionSpace {
      * @throws BaseException If error happens.
      */
     public void dropCollection(String collectionName) throws BaseException {
-        if(collectionName == null || collectionName.equals("")){
+        if (collectionName == null || collectionName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "collectionName can't be null or empty");
         }
         String collectionFullName = name + "." + collectionName;
@@ -243,7 +244,7 @@ public class CollectionSpace {
         } else {
             Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
             if (tmpAlter instanceof BasicBSONObject ||
-                tmpAlter instanceof BasicBSONList) {
+                    tmpAlter instanceof BasicBSONList) {
                 newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
             } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
@@ -322,11 +323,10 @@ public class CollectionSpace {
         alterInternal(SdbConstants.SDB_ALTER_SET_ATTRIBUTES, options, false);
     }
 
-   /**
+    /**
      * @param oldName The old collection name
      * @param newName The new collection name
      * @throws BaseException If error happens.
-     * 
      */
     public void renameCollection(String oldName, String newName) throws BaseException {
         if (oldName == null || oldName.length() == 0) {
@@ -344,7 +344,7 @@ public class CollectionSpace {
         AdminRequest request = new AdminRequest(AdminCommand.RENAME_CL, matcher);
         SdbReply response = sequoiadb.requestAndResponse(request);
         sequoiadb.throwIfError(response);
-        sequoiadb.removeCache(name+"."+oldName);
-        sequoiadb.upsertCache(name+"."+newName);
+        sequoiadb.removeCache(name + "." + oldName);
+        sequoiadb.upsertCache(name + "." + newName);
     }
 }

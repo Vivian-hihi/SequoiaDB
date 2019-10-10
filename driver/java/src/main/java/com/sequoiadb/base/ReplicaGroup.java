@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
@@ -386,6 +386,7 @@ public class ReplicaGroup {
 
     /**
      * Get node by node's name (IP:PORT).
+     *
      * @param nodeName The name of the node
      * @return the specified node
      * @throws com.sequoiadb.exception.BaseException
@@ -413,6 +414,7 @@ public class ReplicaGroup {
 
     /**
      * Get node by hostName and port.
+     *
      * @param hostName host name
      * @param port     port
      * @return the Node object
@@ -430,15 +432,15 @@ public class ReplicaGroup {
     /**
      * Attach node.
      *
-     * @param hostName  host name
-     * @param port      port
-     * @param options configuration for this operation,
-     *                can not be null or empty, can be the follow options:
-     *                <ul>
-     *                <li>KeepData : Whether to keep the original data of the new
-     *                               node. This option has no default value. User
-     *                               should specify its value explicitly.</li>
-     *                </ul>
+     * @param hostName host name
+     * @param port     port
+     * @param options  configuration for this operation,
+     *                 can not be null or empty, can be the follow options:
+     *                 <ul>
+     *                 <li>KeepData : Whether to keep the original data of the new
+     *                 node. This option has no default value. User
+     *                 should specify its value explicitly.</li>
+     *                 </ul>
      * @return the attach Node object
      * @throws BaseException If error happens.
      */
@@ -472,17 +474,17 @@ public class ReplicaGroup {
     /**
      * Detach node.
      *
-     * @param hostName  host name
-     * @param port      port
-     * @param options configuration for this operation,
-     *                can not be null or empty, can be the follow options:
-     *                <ul>
-     *                <li>KeepData : Whether to keep the original data of the
-     *                               detached node. This option has no default
-     *                               value. User should specify its value explicitly.</li>
-     *                <li>Enforced : Whether to detach the node forcibly, default
-     *                               to be false.</li>
-     *                </ul>
+     * @param hostName host name
+     * @param port     port
+     * @param options  configuration for this operation,
+     *                 can not be null or empty, can be the follow options:
+     *                 <ul>
+     *                 <li>KeepData : Whether to keep the original data of the
+     *                 detached node. This option has no default
+     *                 value. User should specify its value explicitly.</li>
+     *                 <li>Enforced : Whether to detach the node forcibly, default
+     *                 to be false.</li>
+     *                 </ul>
      * @throws BaseException If error happens.
      */
     public void detachNode(String hostName, int port,
@@ -658,7 +660,7 @@ public class ReplicaGroup {
     /**
      * Force the replica group to reelect primary node.
      */
-    public void reelect(){
+    public void reelect() {
         reelect(null);
     }
 
@@ -666,13 +668,13 @@ public class ReplicaGroup {
      * Force the replica group to reelect primary node.
      *
      * @param option The options of reelect. Please reference
-     *            {@see <a
-     *            href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION> <b>here</b> </a>}
-     *            for more detail.
+     *               {@see <a
+     *               href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION> <b>here</b> </a>}
+     *               for more detail.
      */
-    public void reelect(BSONObject option){
+    public void reelect(BSONObject option) {
         BSONObject matcher = new BasicBSONObject();
-        matcher.put(SdbConstants.FIELD_NAME_GROUPNAME,getGroupName());
+        matcher.put(SdbConstants.FIELD_NAME_GROUPNAME, getGroupName());
         if (option != null && !option.isEmpty()) {
             matcher.putAll(option);
         }

@@ -21,11 +21,14 @@ import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 /**
  * Options of data source
+ *
  * @since 2.2
  */
 public class DatasourceOptions implements Cloneable {
@@ -46,6 +49,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Clone the current options.
+     *
      * @since 2.2
      */
     public Object clone() throws CloneNotSupportedException {
@@ -55,6 +59,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Set the number of new connections to create once running out the
      * connection pool.
+     *
      * @param deltaIncCount Default to be 10.
      */
     public void setDeltaIncCount(int deltaIncCount) {
@@ -64,6 +69,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Set the max number of the idle connection left in connection
      * pool after periodically cleaning.
+     *
      * @param maxIdleCount Default to be 10.
      * @since 2.2
      */
@@ -74,6 +80,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Set the capacity of the connection pool.
      * When maxCount is set to 0, the connection pool will be disabled.
+     *
      * @param maxCount Default to be 500.
      * @since 2.2
      */
@@ -89,6 +96,7 @@ public class DatasourceOptions implements Cloneable {
      * When "keepAliveTimeout" is not set to 0, it's better to set it
      * greater than "checkInterval" triple over. Besides, unless you know what you need,
      * never enable this option.
+     *
      * @param keepAliveTimeout Default to be 0ms, means not care about how long does a connection
      *                         have not be used(send and receive).
      * @since 2.2
@@ -103,6 +111,7 @@ public class DatasourceOptions implements Cloneable {
      * and keeps the number of idle connection not more than "maxIdleCount".
      * When "keepAliveTimeout" is not be 0, "checkInterval" should be less than it.
      * It's better to set "keepAliveTimeout" greater than "checkInterval" triple over.
+     *
      * @param checkInterval Default to be 1 * 60 * 1000ms.
      * @since 2.2
      */
@@ -116,6 +125,7 @@ public class DatasourceOptions implements Cloneable {
      * When "syncCoordInterval" is 0, the pool will stop updating coord's addresses from
      * catalog. when "syncCoordInterval" is less than 60,000 milliseconds,
      * use 60,000 milliseconds instead.
+     *
      * @param syncCoordInterval Default to be 1 * 60 * 1000ms.
      * @since 2.2
      */
@@ -130,6 +140,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * When a idle connection is got out of pool, we need
      * to validate whether it can be used or not.
+     *
      * @param validateConnection Default to be false.
      * @since 2.2
      */
@@ -141,6 +152,7 @@ public class DatasourceOptions implements Cloneable {
      * Set connection strategy.
      * When choosing ConnectStrategy.LOCAL, if there have no local coord address,
      * use other address instead.
+     *
      * @param strategy Should one of the follow:
      *                 ConnectStrategy.SERIAL,
      *                 ConnectStrategy.RANDOM,
@@ -165,14 +177,14 @@ public class DatasourceOptions implements Cloneable {
      * if user reset the session attribute of the connection, Datasource will keep the latest changes of the setting.
      *
      * @param preferedInstance Could be single value in "M", "m", "S", "s", "A", "a", "1"-"255", or multiple values of them.
-     *          <ul>
-     *              <li>"M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.</li>
-     *              <li>"S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.</li>
-     *              <li>"A", "a": any instance.</li>
-     *              <li>"1"-"255": the instance with specified instance ID.</li>
-     *              <li>If multiple alphabet instances are given, only first one will be used.</li>
-     *              <li>If matched instance is not found, will choose instance by random.</li>
-     *          </ul>
+     *                         <ul>
+     *                         <li>"M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.</li>
+     *                         <li>"S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.</li>
+     *                         <li>"A", "a": any instance.</li>
+     *                         <li>"1"-"255": the instance with specified instance ID.</li>
+     *                         <li>If multiple alphabet instances are given, only first one will be used.</li>
+     *                         <li>If matched instance is not found, will choose instance by random.</li>
+     *                         </ul>
      */
     public void setPreferedInstance(final List<String> preferedInstance) {
         if (preferedInstance == null || preferedInstance.size() == 0) {
@@ -180,7 +192,7 @@ public class DatasourceOptions implements Cloneable {
         }
         List<String> list = new ArrayList<String>();
 
-        for(String s : preferedInstance) {
+        for (String s : preferedInstance) {
             if (isValidMode(s)) {
                 if (!list.contains(s)) {
                     list.add(s);
@@ -193,10 +205,10 @@ public class DatasourceOptions implements Cloneable {
             return;
         }
         _preferedInstance = new ArrayList<Object>();
-        for(String s : list) {
+        for (String s : list) {
             try {
                 _preferedInstance.add(Integer.valueOf(s));
-            } catch(NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 _preferedInstance.add(s);
             }
         }
@@ -206,10 +218,10 @@ public class DatasourceOptions implements Cloneable {
      * Set the mode to choose query instance when multiple preferred instances are found in the session.
      *
      * @param mode can be one of the follow, default to be "random".
-     *                    <ul>
-     *                        <li>"random": choose the instance from matched instances by random.</li>
-     *                        <li>"ordered": choose the instance from matched instances by the order of "PreferedInstance".</li>
-     *                    </ul>
+     *             <ul>
+     *             <li>"random": choose the instance from matched instances by random.</li>
+     *             <li>"ordered": choose the instance from matched instances by the order of "PreferedInstance".</li>
+     *             </ul>
      */
     public void setPreferedInstanceMode(String mode) {
         if (mode == null || mode.isEmpty()) {
@@ -235,6 +247,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Get the number of connections to create once running out the
      * connection pool.
+     *
      * @return the number of connections created each time
      */
     public int getDeltaIncCount() {
@@ -243,6 +256,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the max number of idle connection.
+     *
      * @return The max number of idle connection after checking.
      */
     public int getMaxIdleCount() {
@@ -251,6 +265,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the capacity of the pool.
+     *
      * @return The capacity of the pool.
      */
     public int getMaxCount() {
@@ -260,6 +275,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Get the setup time for abandoning a connection
      * which has not been used for long time.
+     *
      * @return the keep alive timeout time
      * @since 2.2
      */
@@ -269,6 +285,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the interval for checking the idle connections periodically.
+     *
      * @return the interval
      * @since 2.2
      */
@@ -278,6 +295,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the interval for updating coord's addresses from catalog periodically.
+     *
      * @return the interval
      * @since 2.2
      */
@@ -287,6 +305,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get whether to validate a connection which is got from the pool or not.
+     *
      * @return true or false
      * @since 2.2
      */
@@ -296,6 +315,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the current strategy of creating connections.
+     *
      * @return the strategy
      * @since 2.2
      */
@@ -305,6 +325,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the preferred instance.
+     *
      * @return The preferred instance or null for no any setting.
      */
     public List<String> getPreferedInstance() {
@@ -312,10 +333,10 @@ public class DatasourceOptions implements Cloneable {
             return null;
         }
         List<String> list = new ArrayList<String>();
-        for(Object o : _preferedInstance) {
+        for (Object o : _preferedInstance) {
             if (o instanceof String) {
-                list.add((String)o);
-            } else if(o instanceof Integer) {
+                list.add((String) o);
+            } else if (o instanceof Integer) {
                 list.add(o + "");
             }
         }
@@ -337,6 +358,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * The Session timeout value.
+     *
      * @return Session timeout value.
      */
     public int getSessionTimeout() {
@@ -349,10 +371,10 @@ public class DatasourceOptions implements Cloneable {
      * When the connection pool is enabled, the first time to get connection,
      * the pool increases "deltaIncCount" number of connections. Used
      * setDeltaIncCount() instead.
+     *
      * @param initConnectionNum default to be 10
      * @see #setDeltaIncCount(int)
      * @deprecated Does not work since 2.2.
-     *
      */
     public void setInitConnectionNum(int initConnectionNum) {
     }
@@ -360,6 +382,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Set the max number of the idle connection left in connection
      * pool after periodically cleaning.
+     *
      * @param maxIdeNum default to be 10
      * @see #setMaxIdleCount(int)
      * @deprecated Used setMaxIdleCount() instead.
@@ -373,6 +396,7 @@ public class DatasourceOptions implements Cloneable {
      * the connection pool doesn't really work. In this situation, when request comes,
      * it builds a connection and return it directly. When a connection goes back to pool,
      * it disconnects the connection directly and will not put the connection back to pool.
+     *
      * @param maxConnectionNum default to be 500
      * @see #setMaxCount(int)
      * @deprecated Use setMaxCount() instead.
@@ -386,6 +410,7 @@ public class DatasourceOptions implements Cloneable {
      * maxConnectionNum, the pool can't offer connection immediately, the
      * requests will be blocked to wait for a moment. When timeout, and there is
      * still no available connection, connection pool throws exception
+     *
      * @param timeout Default to be 5 * 1000ms.
      * @see SequoiadbDatasource#getConnection(long)
      * @since 2.2
@@ -399,6 +424,7 @@ public class DatasourceOptions implements Cloneable {
      * connection pool cleans all the discardable connection,
      * and keep the number of valid connection not more than maxIdeNum.
      * It's better to set abandonTime greater than recheckCyclePeriod twice over.
+     *
      * @param recheckCyclePeriod recheckCyclePeriod should be less than abandonTime. Default to be 1 * 60 * 1000ms
      * @see #setCheckInterval(int)
      * @deprecated Use setCheckInterval() instead.
@@ -415,6 +441,7 @@ public class DatasourceOptions implements Cloneable {
      * into a queue, and check them periodically. If some of them is valid again,
      * get them back for use.
      * The pool will test the invalid address automatically every 30 seconds.
+     *
      * @param recaptureConnPeriod default to be 30 * 1000ms
      * @deprecated
      */
@@ -427,6 +454,7 @@ public class DatasourceOptions implements Cloneable {
      * connection pool would not let it come back to pool. And it will clean this
      * kind of connections in the pool periodically.
      * It's better to set abandonTime greater than recheckCyclePeriod twice over.
+     *
      * @param abandonTime default to be 10 * 60 * 1000ms
      * @see #setKeepAliveTimeout(int)
      * @deprecated Use setKeepAliveTimeout() instead.
@@ -437,6 +465,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the setup number of initial connection.
+     *
      * @deprecated Always return 0.
      */
     public int getInitConnectionNum() {
@@ -445,6 +474,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the max number of connection.
+     *
      * @see #getMaxCount()
      * @deprecated Use getMaxCount() instead.
      */
@@ -454,6 +484,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the max number of the idle connection.
+     *
      * @see #getMaxIdleCount()
      * @deprecated Use getMaxIdleCount() instead.
      */
@@ -464,6 +495,7 @@ public class DatasourceOptions implements Cloneable {
     /**
      * Get the setup time for abandoning a connection
      * which is not used for long time.
+     *
      * @see #getKeepAliveTimeout()
      * @deprecated Use getKeepAliveTimeout() instead.
      */
@@ -473,6 +505,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the cycle for checking.
+     *
      * @see #getCheckInterval()
      * @deprecated Use getCheckInterval() instead.
      */
@@ -482,6 +515,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the period for getting back useful addresses.
+     *
      * @deprecated Always return 0.
      */
     public int getRecaptureConnPeriod() {
@@ -490,6 +524,7 @@ public class DatasourceOptions implements Cloneable {
 
     /**
      * Get the wait time.
+     *
      * @deprecated Always return 0.
      */
     public int getTimeout() {
@@ -502,7 +537,7 @@ public class DatasourceOptions implements Cloneable {
             // preferred instance
             BSONObject list = new BasicBSONList();
             int i = 0;
-            for(Object o : _preferedInstance) {
+            for (Object o : _preferedInstance) {
                 list.put("" + i++, o);
             }
             obj.put(DatasourceConstants.FIELD_NAME_PREFERED_INSTANCE, list);
@@ -515,7 +550,7 @@ public class DatasourceOptions implements Cloneable {
     }
 
     private boolean isCharMode(String s) {
-        for(int i = 0; i < MODE.size(); i++) {
+        for (int i = 0; i < MODE.size(); i++) {
             if (MODE.get(i).equals(s)) {
                 return true;
             }

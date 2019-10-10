@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
@@ -34,7 +34,7 @@ final class AdminCommand {
     final static String CREATE_CL = PREFIX + "create collection";
     final static String DROP_CL = PREFIX + "drop collection";
     final static String RENAME_CL = PREFIX + "rename collection";
-    
+
 
     final static String GET_INDEXES = PREFIX + "get indexes";
     final static String CREATE_INDEX = PREFIX + "create index";

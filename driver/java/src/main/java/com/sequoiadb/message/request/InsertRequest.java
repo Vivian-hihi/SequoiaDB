@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.message.request;
 
@@ -95,7 +95,7 @@ public class InsertRequest extends SdbRequest {
                 doc.put(OID, ObjectId.get());
             }
             if ((flags & FLG_INSERT_RETURN_OID) != 0 && doc.containsField(OID)) {
-                ((BasicBSONList)oid).put(index++, doc.get(OID));
+                ((BasicBSONList) oid).put(index++, doc.get(OID));
             }
             byte[] docBytes = Helper.encodeBSONObj(doc);
             docsBytes.add(docBytes);

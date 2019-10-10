@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package com.sequoiadb.base;
 
@@ -34,6 +34,7 @@ public class ConfigOptions {
      * Set the max auto connect retry time in milliseconds. Default to be 15,000ms.
      * when "connectTimeout" is set to 10,000ms(default value), the max number of retries is
      * ceiling("maxAutoConnectRetryTime" / "connectTimeout"), which is 2.
+     *
      * @param maxRetryTimeMillis the max auto connect retry time in milliseconds
      */
     public void setMaxAutoConnectRetryTime(long maxRetryTimeMillis) {
@@ -46,6 +47,7 @@ public class ConfigOptions {
     /**
      * Set the connection timeout in milliseconds. A value of 0 means no timeout.
      * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
+     *
      * @param connectTimeoutMillis The connection timeout in milliseconds. Default is 10,000ms.
      */
     public void setConnectTimeout(int connectTimeoutMillis) {
@@ -58,6 +60,7 @@ public class ConfigOptions {
     /**
      * Get the socket timeout in milliseconds.
      * It is used for I/O socket read operations {@link java.net.Socket#setSoTimeout(int)}
+     *
      * @param socketTimeoutMillis The socket timeout in milliseconds. Default is 0ms and means no timeout.
      */
     public void setSocketTimeout(int socketTimeoutMillis) {
@@ -69,6 +72,7 @@ public class ConfigOptions {
 
     /**
      * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link java.net.Socket#setKeepAlive(boolean)}
+     *
      * @param on whether keep-alive is enabled on each socket. Default is true.
      */
     public void setSocketKeepAlive(boolean on) {
@@ -77,6 +81,7 @@ public class ConfigOptions {
 
     /**
      * Set whether enable/disable Nagle's algorithm(disable/enable TCP_NODELAY)
+     *
      * @param on <code>false</code> to enable TCP_NODELAY, default to be false and going to use enable TCP_NODELAY.
      */
     public void setUseNagle(boolean on) {
@@ -85,6 +90,7 @@ public class ConfigOptions {
 
     /**
      * Set whether use the SSL or not
+     *
      * @param on Default to be false.
      */
     public void setUseSSL(boolean on) {
@@ -93,6 +99,7 @@ public class ConfigOptions {
 
     /**
      * Get the max auto connect retry time in milliseconds.
+     *
      * @return the max auto connect retry time in milliseconds.
      */
     public long getMaxAutoConnectRetryTime() {
@@ -104,6 +111,7 @@ public class ConfigOptions {
      * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
      * <p/>
      * Default is 10,000ms.
+     *
      * @return the socket connect timeout
      */
     public int getConnectTimeout() {
@@ -115,6 +123,7 @@ public class ConfigOptions {
      * It is used for I/O socket read operations {@link java.net.Socket#setSoTimeout(int)}
      * <p/>
      * Default is 0ms and means no timeout.
+     *
      * @return the socket timeout
      */
     public int getSocketTimeout() {
@@ -123,6 +132,7 @@ public class ConfigOptions {
 
     /**
      * Get whether the socket keeps alive or not
+     *
      * @return the status of setting
      */
     public boolean getSocketKeepAlive() {
@@ -131,6 +141,7 @@ public class ConfigOptions {
 
     /**
      * Get whether use the Nagle Algorithm or not
+     *
      * @return the status of setting
      */
     public boolean getUseNagle() {
@@ -139,6 +150,7 @@ public class ConfigOptions {
 
     /**
      * Get whether use the SSL or not
+     *
      * @return the status of setting
      */
     public boolean getUseSSL() {
