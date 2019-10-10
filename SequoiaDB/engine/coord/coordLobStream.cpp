@@ -92,8 +92,9 @@ namespace engine
       }
 
       rc = _updateCataInfo( FALSE, cb ) ;
-      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+      if ( SDB_OK != rc && coordCataCheckFlag( rc ) )
       {
+         PD_LOG( PDEVENT, "Retry to update catalog info" ) ;
          rc = _updateCataInfo( TRUE, cb ) ;
       }
 
@@ -133,7 +134,7 @@ namespace engine
       rc = mainCLcataPtr->getSubCLNameByLobID( lobId, subCLName ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Couldn't find the lobId[%s]'s sub-collection "
+         PD_LOG( PDWARNING, "Couldn't find the lobId[%s]'s sub-collection "
                  "in MainCL(%s), rc: %d", lobId.toString().c_str(),
                  mainCLcataPtr->getName(), rc ) ;
          goto error ;
@@ -194,6 +195,7 @@ namespace engine
       {
          rc = _pResource->getCataInfo( getFullName(), _cataInfo ) ;
       }
+
       if ( rc || refresh )
       {
          rc = _pResource->updateCataInfo( getFullName(), _cataInfo, cb ) ;
@@ -232,7 +234,7 @@ namespace engine
          rc  = _getSubCLInfo( _cataInfo, lobId, cb, _subCLInfo ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to get subcl info:MainCL=%s,id=%s,rc=%d",
+            PD_LOG( PDWARNING, "Failed to get subcl info:MainCL=%s,id=%s,rc=%d",
                     getFullName(), oid.str().c_str(), rc ) ;
             goto error ;
          }

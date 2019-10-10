@@ -2470,7 +2470,7 @@ namespace engine
       rc = findSubCLName ( obj, subCLName ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Operation only support in a Lob MainCL:cl=%s,"
+         PD_LOG( PDWARNING, "Operation only support in a Lob MainCL:cl=%s,"
                  "cata=%s", name(), toCataInfoBson().toString().c_str() ) ;
          goto error ;
       }
