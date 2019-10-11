@@ -98,7 +98,7 @@ SdbSnapshotOption[.cond(<cond>)]
 
 | SQL 语句 | API 语句        |
 | -------- | -------------- |
-| db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and SvcName = "20000" /*+use_option(Mode, local) use_option(Expand, false)*/') | db.snapshot( SDB_SNAP_CONFIGS, new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "Mode": "local", "Expand": false } ) ) |
+| db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and ServiceName = "20000" /*+use_option(Mode, local) use_option(Expand, false)*/') | db.snapshot( SDB_SNAP_CONFIGS, new SdbSnapshotOption().cond( { GroupName:'db1', ServiceName:'20000' } ).options( { "Mode": "local", "Expand": false } ) ) |
 
 ###skip(\<skip\>)###
 | SQL 语句 | API 语句        |
