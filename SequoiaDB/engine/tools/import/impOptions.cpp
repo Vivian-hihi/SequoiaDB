@@ -87,6 +87,7 @@ namespace import
    #define IMP_OPTION_IGNORENULL        "ignorenull"
    #define IMP_OPTION_STRICTFIELDNUM    "strictfieldnum"
    #define IMP_OPTION_UNICODE           "unicode"
+   #define IMP_OPTION_CHECKDELIMETER    "checkdelimeter"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -133,6 +134,7 @@ namespace import
    #define IMP_EXPLAIN_IGNORENULL       "ignore null field, default: false"
    #define IMP_EXPLAIN_STRICTFIELDNUM   "report error if record fields num does not equal to fields definition, default: false"
    #define IMP_EXPLAIN_UNICODE          "whether to escape Unicode encoding, default: true"
+   #define IMP_EXPLAIN_CHECKDEL         "whether to check delimeter strictly, default: true"
 
    #define _TYPE(T) utilOptType(T)
    #define _IMPLICIT_TYPE(T,V) implicit_value<T>(V)
@@ -198,6 +200,7 @@ namespace import
       (IMP_OPTION_EXTRA,               _TYPE(string),    IMP_EXPLAIN_EXTRA) \
       (IMP_OPTION_CAST,                _TYPE(string),    IMP_EXPLAIN_CAST) \
       (IMP_OPTION_STRICTFIELDNUM,      _TYPE(string),    IMP_EXPLAIN_STRICTFIELDNUM) \
+      (IMP_OPTION_CHECKDELIMETER,      _TYPE(bool),      IMP_EXPLAIN_CHECKDEL) \
 
    #define IMP_HELPFUL_OPTIONS \
       (IMP_OPTION_HELPFULL,             /* no arg */     IMP_EXPLAIN_HELPFULL) \
@@ -325,6 +328,7 @@ namespace import
       _autoCompletion = FALSE;
       _cast = FALSE;
       _strictFieldNum = FALSE;
+      _strictCheckDel = TRUE;
 
       _bufferSize = 64;
       _dryRun = FALSE;
@@ -418,6 +422,55 @@ namespace import
    void Options::printHelpfullInfo()
    {
       print(TRUE);
+   }
+
+   BOOLEAN Options::_checkDelimeters(string &stringDelimiter,
+                                     string &fieldDelimiter,
+                                     string &recordDelimiter)
+   {
+      if (stringDelimiter.find( fieldDelimiter ) != string::npos)
+      {
+         std::cerr << IMP_OPTION_DELCHAR << " can't contain "
+                   << IMP_OPTION_DELFIELD << std::endl;
+         return FALSE;
+      }
+
+      if (stringDelimiter.find( recordDelimiter ) != string::npos)
+      {
+         std::cerr << IMP_OPTION_DELCHAR << " can't contain "
+                   << IMP_OPTION_DELRECORD << std::endl;
+         return FALSE;
+      }
+
+      if (fieldDelimiter.find( stringDelimiter ) != string::npos)
+      {
+         std::cerr << IMP_OPTION_DELFIELD << " can't contain "
+                   << IMP_OPTION_DELCHAR << std::endl;
+         return FALSE;
+      }
+
+      if (fieldDelimiter.find( recordDelimiter ) != string::npos)
+      {
+         std::cerr << IMP_OPTION_DELFIELD << " can't contain "
+                   << IMP_OPTION_DELRECORD << std::endl;
+         return FALSE;
+      }
+
+      if (recordDelimiter.find( stringDelimiter ) != string::npos)
+      {
+         std::cerr << IMP_OPTION_DELRECORD << " can't contain "
+                   << IMP_OPTION_DELCHAR << std::endl;
+         return FALSE;
+      }
+
+      if (recordDelimiter.find( fieldDelimiter ) != string::npos)
+      {
+         std::cerr << IMP_OPTION_DELRECORD << " can't contain "
+                   << IMP_OPTION_DELFIELD << std::endl;
+         return FALSE;
+      }
+
+      return TRUE;
    }
 
    INT32 Options::setOptions()
@@ -540,8 +593,8 @@ namespace import
 
       if (has(IMP_OPTION_FILENAME) && has(IMP_OPTION_EXEC))
       {
-         std::cerr << IMP_OPTION_FILENAME 
-                   << " can't be specified with " 
+         std::cerr << IMP_OPTION_FILENAME
+                   << " can't be specified with "
                    << IMP_OPTION_EXEC
                    << std::endl;
          rc = SDB_INVALIDARG;
@@ -556,7 +609,7 @@ namespace import
          rc = parseFileList(fileList, _files);
          if (SDB_OK != rc)
          {
-            std::cerr << "invalid " << IMP_OPTION_FILENAME 
+            std::cerr << "invalid " << IMP_OPTION_FILENAME
                       << std::endl;
             goto error;
          }
@@ -698,6 +751,11 @@ namespace import
          }
       }
 
+      if (has(IMP_OPTION_CHECKDELIMETER))
+      {
+         _strictCheckDel = get<bool>(IMP_OPTION_CHECKDELIMETER);
+      }
+
       if (FORMAT_CSV == _inputFormat)
       {
          if (_stringDelimiter == _recordDelimiter)
@@ -724,12 +782,22 @@ namespace import
             goto error;
          }
 
-         if ( _fieldDelimiter.find( _recordDelimiter ) != string::npos )
+         if (_fieldDelimiter.find( _recordDelimiter ) != string::npos)
          {
             std::cerr << IMP_OPTION_DELFIELD << " can't contain "
                       << IMP_OPTION_DELRECORD << std::endl;
             rc = SDB_INVALIDARG;
             goto error;
+         }
+
+         if (_strictCheckDel)
+         {
+            if (!_checkDelimeters(_stringDelimiter, _fieldDelimiter,
+                                  _recordDelimiter))
+            {
+               rc = SDB_INVALIDARG;
+               goto error;
+            }
          }
       }
 

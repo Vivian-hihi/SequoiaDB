@@ -131,6 +131,8 @@ namespace import
 
    private:
       INT32 setOptions();
+      BOOLEAN _checkDelimeters(string &stringDelimiter, string &fieldDelimiter,
+                               string &recordDelimiter);
 
    private:
       BOOLEAN        _parsed;
@@ -185,11 +187,12 @@ namespace import
       BOOLEAN        _autoCompletion;
       BOOLEAN        _cast;
       BOOLEAN        _strictFieldNum;
+      BOOLEAN        _strictCheckDel;
 
       /* helpfull */
       BOOLEAN        _dryRun;
       INT32          _bufferSize;
-      INT64          _recordsMem; // the records used momory threshold 
+      INT64          _recordsMem; // the records used momory threshold
       BOOLEAN        _ignoreNull;
 
    };

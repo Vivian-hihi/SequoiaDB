@@ -54,7 +54,7 @@ namespace exprt
       FORMAT_COUNT
    } ;
    INT32 formatOfName( const string & name, EXP_FILE_FORMAT &format ) ;
-   
+
    class expOptions : public SDBObject
    {
    public :
@@ -63,7 +63,7 @@ namespace exprt
       // parse command-line, confifure-file will be parsed inside of parseCmd
       // when option '--conf' is specified in command-line
       INT32   parseCmd( INT32 argc, CHAR* argv[] ) ;
-      // write options to configure-file which specified by option '--genconf' 
+      // write options to configure-file which specified by option '--genconf'
       INT32   writeToConf( const expCLSet &clSet ) ;
       void    printHelpInfo() const ;
       BOOLEAN hasHelp() const ;
@@ -106,18 +106,21 @@ namespace exprt
       inline EXP_FILE_FORMAT type()       const { return _type ; }
       inline const string &floatFmt()     const { return _floatFmt ; }
       inline BOOLEAN replace()            const { return _replace ; }
-      
-      inline const vector<string> &fieldsList() const 
-      { 
+
+      inline const vector<string> &fieldsList() const
+      {
          return _fields ;
       }
-      
+
    private :
       INT32    _parseConf( const CHAR *confFileName ) ;
       BOOLEAN  _cmdHas( const CHAR *option ) const ;
       BOOLEAN  _confHas( const CHAR *option ) const ;
       BOOLEAN  _has( const CHAR *option ) const ;
       INT32    _setOptions() ;
+      BOOLEAN  _checkDelimeters( string &stringDelimiter,
+                                 string &fieldDelimiter,
+                                 string &recordDelimiter ) ;
       INT32    _setDelOptions() ;
       INT32    _setConfOptions() ;
       INT32    _setCollectionOptions() ;
@@ -142,7 +145,7 @@ namespace exprt
       string               _delRecord ;
       string               _typeName ;
       EXP_FILE_FORMAT      _type ;
-      BOOLEAN              _withId ;  
+      BOOLEAN              _withId ;
       BOOLEAN              _errorStop ;
       BOOLEAN              _useSSL ;
       UINT64               _fileLimit ;
@@ -171,11 +174,12 @@ namespace exprt
       /* CSV */
       string         _delChar ;
       string         _delField ;
-      BOOLEAN        _headLine ; 
+      BOOLEAN        _headLine ;
       BOOLEAN        _includeBinary ;
       BOOLEAN        _includeRegex ;
       BOOLEAN        _force ;
       BOOLEAN        _kickNull ;
+      BOOLEAN        _strictCheckDel ;
 
       /* conf */
       string         _conf ;
