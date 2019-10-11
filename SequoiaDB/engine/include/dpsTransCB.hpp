@@ -83,7 +83,7 @@ namespace engine
          BSONElement l, r ;
          l = _obj.getField( DMS_ID_KEY_NAME ) ;
          r = rhs._obj.getField( DMS_ID_KEY_NAME ) ;
-         return l.woCompare( l, FALSE ) < 0 ;
+         return l.woCompare( r, FALSE ) < 0 ;
       }
       bool operator== ( const _dpsTransPendingKey &rhs ) const
       {
@@ -91,7 +91,7 @@ namespace engine
          BSONElement l, r ;
          l = _obj.getField( DMS_ID_KEY_NAME ) ;
          r = rhs._obj.getField( DMS_ID_KEY_NAME ) ;
-         return l.woCompare( l, FALSE ) == 0 ;
+         return l.woCompare( r, FALSE ) == 0 ;
       }
    } ;
    typedef _dpsTransPendingKey dpsTransPendingKey ;
