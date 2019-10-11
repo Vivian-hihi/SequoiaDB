@@ -788,7 +788,7 @@ function checkGroupBusiness( timeoutSecond, csName, clName )
       var doTimes = 1;
       while( doTimes <= timeoutSecond )
       {      
-         if( !isSuccesscreateTestCollection( groupNames[i] ) && !isNodesNormal( groupNames[i] ) )
+         if( !isSuccesscreateTestCollection( groupNames[i] ) || !isNodesNormal( groupNames[i] ) )
          {
             doTimes++;
             sleep( 1000 );
@@ -838,7 +838,7 @@ function isSuccesscreateTestCollection( groupName )
     try
     {
         commDropCL( db, COMMCSNAME, clName, true, true );
-        var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { "ReplSize" : -1, "Group": groupName }, false, false );
+        var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { "ReplSize" : 0, "Group": groupName }, false, false );
         return true;
     }
     catch ( e )
