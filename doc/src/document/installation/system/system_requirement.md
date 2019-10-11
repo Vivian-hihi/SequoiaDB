@@ -188,18 +188,21 @@
 >1. 以上“配置主机名”、“配置主机名/IP地址映射”和“配置防火墙”这几个步骤都需要在每台作为数据库服务器的机器上配置;  
 >2. 社区版要求系统安装glibc 2.15以及libstdc++ 6.0.18以上版本。
 
-#### SELinux ####
-- **配置方法**
+#### SELinux 配置 ####
 
-  - 关闭 SELinux
+针对 SELinux 可以配置为关闭或者将模式调整成 permissive，建议关闭 SELinux。
 
-  	1. 使用 root 权限，打开 /etc/selinux/config 文件 
+- **关闭 SELinux**
+
+ - 配置方法
+
+   1. 使用 root 权限，打开 /etc/selinux/config 文件 
 
      ```lang-bash
      $ vi /etc/selinux/config
      ```
 
-  	2. 将 SELINUX 调整成 disabled
+   2. 将 SELINUX 调整成 disabled
 
      ```lang-ini
      # This file controls the state of SELinux on the system.
@@ -216,22 +219,31 @@
      SELINUXTYPE=targeted 
      ```
 
-  	3. 重启操作系统
+   3. 重启操作系统
 
      ```lang-bash
      $ reboot # 需要重启系统
      ```
 
-  - 模式设置成 permissive
+  - 验证方法
 
-  	1. 使用 root 权限，执行命令 setenforce 0 ; 打开 /etc/selinux/config 文件
+     ```lang-bash
+     $ sestatus
+     SELinux status:                 disabled
+     ```
+
+- **模式设置成 permissive**
+
+  - 配置方法
+
+   1. 使用 root 权限，执行命令 setenforce 0 ; 打开 /etc/selinux/config 文件
 
      ```lang-bash
      $ setenforce 0
      $ vi /etc/selinux/config
      ```
 
-  	2. 调整 SELINUX 的值为 permissive
+   2. 调整 SELINUX 的值为 permissive
 
      ```lang-ini
      # This file controls the state of SELinux on the system.
@@ -248,16 +260,7 @@
      SELINUXTYPE=targeted 
      ```
 
-- **验证方法**
-
-  - 关闭 SELinux
-
-     ```lang-bash
-     $ sestatus
-     SELinux status:                 disabled
-     ```
-
-  - 模式设置为 permissive
+  - 验证方法
 
      ```lang-bash
      $ sestatus
@@ -271,5 +274,3 @@
      Policy deny_unknown status:     allowed
      Max kernel policy version:      28
      ```
->**Note:** 
-> 建议关闭 SELinux 或者调整为 permissive 模式
