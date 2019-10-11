@@ -235,24 +235,37 @@ TEST(lob,lob_createLob_test)
    ASSERT_EQ( SDB_OK, rc ) ;
 
 
-   // case 1, use bson_oid_gen()
+  // case 1, use bson_oid_gen()
    bson_oid_gen( &oid );
    //rc = sdbCreateLob(cl, &oid, &lob1);
    rc = sdbOpenLob(cl, &oid, SDB_LOB_CREATEONLY, &lob1);
    ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_oid_t lob_oid1 ;
+   rc = sdbGetLobId(lob1, &lob_oid1) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   CHECK_MSG("%s%d\n","oid = ", oid) ;
+   CHECK_MSG("%s%d\n","lob_oid1 = ", lob_oid1) ;
+
+   ASSERT_STREQ(oid.bytes,lob_oid1.bytes);
    rc = sdbCloseLob(&lob1);
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = sdbOpenLob(cl, &oid, SDB_LOB_READ, &lob1);
    ASSERT_EQ( SDB_OK, rc ) ;
 
-
    // case 2, oid is NULL 
    //rc = sdbCreateLob(cl, NULL, &lob2);
    rc = sdbOpenLob(cl, NULL, SDB_LOB_CREATEONLY, &lob2);
    ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_oid_t lob_oid ;
+   rc = sdbGetLobId(lob2, &lob_oid) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   CHECK_MSG("%s%d\n","lob_oid = ", lob_oid) ;
+
    rc = sdbCloseLob(&lob2);
    ASSERT_EQ( SDB_OK, rc ) ;
-   rc = sdbOpenLob(cl, &oid, SDB_LOB_READ, &lob2);
+   rc = sdbOpenLob(cl, &lob_oid, SDB_LOB_READ, &lob2);
    ASSERT_EQ( SDB_OK, rc ) ;
 
 
