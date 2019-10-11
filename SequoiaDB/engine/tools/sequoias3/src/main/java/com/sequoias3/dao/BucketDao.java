@@ -14,7 +14,7 @@ public interface BucketDao {
 
     Bucket getBucketByName(String bucketName) throws S3ServerException;
 
-    Bucket getBucketById(long bucketId) throws S3ServerException;
+    Bucket getBucketById(ConnectionDao connection, long bucketId) throws S3ServerException;
 
     List<Bucket> getBucketListByOwnerID(long ownerId) throws S3ServerException;
 

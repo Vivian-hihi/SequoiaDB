@@ -60,7 +60,7 @@ public interface ObjectService {
                                     Integer maxKeys, String encodingType)
             throws S3ServerException;
 
-    Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket) throws S3ServerException;
+    Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket, Region region) throws S3ServerException;
 
     void deleteObjectByBucket(Bucket bucket) throws S3ServerException;
 

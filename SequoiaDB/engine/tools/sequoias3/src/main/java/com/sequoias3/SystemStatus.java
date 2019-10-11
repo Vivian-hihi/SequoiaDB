@@ -22,7 +22,7 @@ public class SystemStatus implements ApplicationRunner {
     public static final int STATUS_NORMAL = 1;
     public static final int STATUS_EXIT   = 2;
 
-    // status: 0 Init; 1 Normal;
+    // status: 0 Init; 1 Normal; 2 Exit
     private int systemStatus = STATUS_INIT;
 
     @Autowired
@@ -70,7 +70,9 @@ public class SystemStatus implements ApplicationRunner {
 
     private void closeFile(FileOutputStream fos){
         try{
-            fos.close();
+            if (fos != null) {
+                fos.close();
+            }
         }catch (Exception e){
             logger.warn("closeFile failed. e:"+e.getMessage());
         }
@@ -78,7 +80,9 @@ public class SystemStatus implements ApplicationRunner {
 
     private void closeStream(OutputStreamWriter osw){
         try {
-            osw.close();
+            if (osw != null) {
+                osw.close();
+            }
         }catch (Exception e){
             logger.warn("closeStream failed. e:"+e.getMessage());
         }

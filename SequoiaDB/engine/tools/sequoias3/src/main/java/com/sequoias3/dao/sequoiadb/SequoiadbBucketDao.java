@@ -99,7 +99,7 @@ public class SequoiadbBucketDao implements BucketDao {
 
             cl.delete(deleteBucket, hint);
         }catch (Exception e) {
-            logger.error("deleteBucket failed. errorMessage = " + e.getMessage(), e);
+            logger.error("deleteBucket failed. errorMessage = " + e.getMessage());
             throw e;
         }finally {
             if (connection == null) {
@@ -125,7 +125,7 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject queryResult = cl.queryOne(matcher,null,null,hint,0);
             return convertBsonToBucket(queryResult);
         }catch (Exception e) {
-            logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketByName failed. bucketName:" + bucketName + ", errorMessage = " + e.getMessage());
             throw e;
         }  finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -133,10 +133,14 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     @Override
-    public Bucket getBucketById(long bucketId) throws S3ServerException {
+    public Bucket getBucketById(ConnectionDao connection, long bucketId) throws S3ServerException {
         Sequoiadb sdb = null;
         try {
-            sdb = sdbDatasourceWrapper.getSequoiadb();
+            if (connection != null){
+                sdb = ((SdbConnectionDao)connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
 
@@ -148,11 +152,13 @@ public class SequoiadbBucketDao implements BucketDao {
 
             BSONObject queryResult = cl.queryOne(matcher,null,null,hint,0);
             return convertBsonToBucket(queryResult);
-        }catch (Exception e) {
-            logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("getBucketById failed. bucketId:" + bucketId + ", errorMessage = " + e.getMessage());
             throw e;
-        }  finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        } finally {
+            if (connection == null) {
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
         }
     }
 
@@ -181,7 +187,7 @@ public class SequoiadbBucketDao implements BucketDao {
 
             return bucketList;
         }catch (Exception e) {
-            logger.error("getBucketListByOwnerID failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketListByOwnerID failed. errorMessage = " + e.getMessage());
             throw e;
         } finally {
             sdbBaseOperation.releaseDBCursor(cursor);
@@ -217,7 +223,7 @@ public class SequoiadbBucketDao implements BucketDao {
             }
             return bucketList;
         }catch (Exception e) {
-            logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage());
             throw e;
         } finally {
             sdbBaseOperation.releaseDBCursor(cursor);
@@ -263,7 +269,7 @@ public class SequoiadbBucketDao implements BucketDao {
             }
             return bucketList;
         }catch (Exception e) {
-            logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage());
             throw e;
         } finally {
             sdbBaseOperation.releaseDBCursor(cursor);
@@ -284,7 +290,7 @@ public class SequoiadbBucketDao implements BucketDao {
 
             return cl.getCount(matcher);
         }catch (Exception e) {
-            logger.error("getBucketNumber failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketNumber failed. errorMessage = " + e.getMessage());
             throw e;
         }finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -316,7 +322,7 @@ public class SequoiadbBucketDao implements BucketDao {
             cl.update(matcher, setModifier, hint);
             return;
         }catch (Exception e) {
-            logger.error("updateBucket failed. errorMessage = " + e.getMessage(), e);
+            logger.error("updateBucket failed. errorMessage = " + e.getMessage());
             throw e;
         }  finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -427,7 +433,7 @@ public class SequoiadbBucketDao implements BucketDao {
             cl.update(matcher, setModifier, hint);
             return;
         }catch (Exception e) {
-            logger.error("update bucket acl failed. errorMessage = " + e.getMessage(), e);
+            logger.error("update bucket acl failed. errorMessage = " + e.getMessage());
             throw e;
         }  finally {
             if (connection == null){
@@ -490,7 +496,7 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject queryResult = cl.queryOne(matcher,null,null,hint, DBQuery.FLG_QUERY_FOR_UPDATE);
             return convertBsonToBucket(queryResult);
         }catch (Exception e) {
-            logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketByName failed. errorMessage = " + e.getMessage());
             throw e;
         }
     }

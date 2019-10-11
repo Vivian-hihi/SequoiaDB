@@ -154,8 +154,13 @@ public class BucketServiceImpl implements BucketService {
             //get and check bucket
             Bucket bucket = getBucket(ownerID, bucketName);
 
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+
             //is bucket empty
-            if (!objectService.isEmptyBucket(null, bucket)){
+            if (!objectService.isEmptyBucket(null, bucket, region)){
                 throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
                         "The bucket you tried to delete is not empty. bucket name = "+bucketName);
             }
@@ -163,14 +168,20 @@ public class BucketServiceImpl implements BucketService {
             ConnectionDao connectionA = daoMgr.getConnectionDao();
             transaction.begin(connectionA);
             try {
-                //delete bucket
-                bucketDao.deleteBucket(connectionA, deleteName);
+                Bucket deleteBucket = bucketDao.queryBucketForUpdate(connectionA, deleteName);
+                if (deleteBucket == null){
+                    throw new S3ServerException(S3Error.BUCKET_NOT_EXIST,
+                            "The specified bucket does not exist. bucket name = "+bucketName);
+                }
+                bucketDao.updateBucketDelimiter(connectionA, deleteName, deleteBucket);
 
-                if (!objectService.isEmptyBucket(connectionA, bucket)){
+                if (!objectService.isEmptyBucket(connectionA, bucket, region)){
                     throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
                             "The bucket you tried to delete is not empty. bucket name = "+bucketName);
                 }
 
+                //delete bucket
+                bucketDao.deleteBucket(connectionA, deleteName);
                 transaction.commit(connectionA);
             } catch (S3ServerException e){
                 transaction.rollback(connectionA);
@@ -206,7 +217,7 @@ public class BucketServiceImpl implements BucketService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_DELETE_FAILED,
-                    "delete bucket error. bucket name = "+bucketName, e);
+                    "delete bucket failed. bucket name = "+bucketName, e);
         }
     }
 
@@ -228,7 +239,7 @@ public class BucketServiceImpl implements BucketService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_GET_SERVICE_FAILED,
-                    "Get bucket list error. ownerID="+owner.getUserId());
+                    "Get bucket list error. ownerID="+owner.getUserId(), e);
         }
     }
 
@@ -251,7 +262,12 @@ public class BucketServiceImpl implements BucketService {
     @Override
     public void deleteBucketForce(Bucket bucket) throws S3ServerException {
         try {
-            while (!objectService.isEmptyBucket(null, bucket)) {
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+
+            while (!objectService.isEmptyBucket(null, bucket, region)) {
                 //delete objects in the bucket
                 objectService.deleteObjectByBucket(bucket);
             }
@@ -260,7 +276,7 @@ public class BucketServiceImpl implements BucketService {
             bucketDao.deleteBucket(null, bucket.getBucketName());
 
             try {
-                while (!objectService.isEmptyBucket(null, bucket)) {
+                while (!objectService.isEmptyBucket(null, bucket, region)) {
                     objectService.deleteObjectByBucket(bucket);
                 }
             }catch (Exception e){
@@ -308,7 +324,7 @@ public class BucketServiceImpl implements BucketService {
             throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_DELETE_FAILED,
-                    "delete bucket force failed. bucket name = "+bucket.getBucketName());
+                    "delete bucket force failed. bucket name = "+bucket.getBucketName(), e);
         }
     }
 

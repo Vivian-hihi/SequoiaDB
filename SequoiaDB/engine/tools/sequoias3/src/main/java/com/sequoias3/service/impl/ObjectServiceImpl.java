@@ -549,7 +549,7 @@ public class ObjectServiceImpl implements ObjectService {
                                 deleteDirForObject(connection, metaCsName, metaClName, bucket, objectName);
                                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                                         objectName, objectMeta.getVersionId(), null);
-                                Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
+                                Bucket newBucket = bucketDao.getBucketById(null, bucket.getBucketId());
                                 if (newBucket != null && newBucket.getDelimiter() != bucket.getDelimiter()){
                                     deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
                                 }
@@ -936,12 +936,8 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket) throws S3ServerException{
+    public Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket, Region region) throws S3ServerException{
         try {
-            Region region = null;
-            if (bucket.getRegion() != null) {
-                region = regionDao.queryRegion(bucket.getRegion());
-            }
             String metaCsName    = regionDao.getMetaCurCSName(region);
             String metaClName    = regionDao.getMetaCurCLName(region);
             String metaHisCsName = regionDao.getMetaHisCSName(region);
@@ -958,7 +954,7 @@ public class ObjectServiceImpl implements ObjectService {
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
-            throw new S3ServerException(S3Error.DAO_DB_ERROR, "unknown error", e);
+            throw e;
         }
     }
 
@@ -1793,7 +1789,7 @@ public class ObjectServiceImpl implements ObjectService {
                 deleteDirForObject(connection, metaCsName, metaClName, bucket, objectName);
                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                         objectName, null, null);
-                Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
+                Bucket newBucket = bucketDao.getBucketById(null, bucket.getBucketId());
                 if (newBucket != null && newBucket.getDelimiter() != bucket.getDelimiter()){
                     deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
                 }
@@ -2225,14 +2221,14 @@ public class ObjectServiceImpl implements ObjectService {
                         bucketId, objectName, null, null);
                 if (null == metaResult) {
                     objectMeta.setVersionId(0);
-                    Bucket bucket = bucketDao.getBucketById(bucketId);
+                    Bucket bucket = bucketDao.getBucketById(connection, bucketId);
                     if (bucket == null){
                         throw new S3ServerException(S3Error.BUCKET_NOT_EXIST, "bucket is deleting before insert meta.");
                     }
                     buildDirForObject(connection, metaCsName, bucket, objectName, objectMeta, region);
                     metaDao.insertMeta(connection, metaCsName, metaClName, objectMeta,
                             false, region);
-                    Bucket newBucket = bucketDao.getBucketById(bucketId);
+                    Bucket newBucket = bucketDao.getBucketById(connection, bucketId);
                     if (newBucket == null){
                         throw new S3ServerException(S3Error.BUCKET_NOT_EXIST, "bucket is deleting after insert meta.");
                     }

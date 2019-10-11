@@ -304,11 +304,11 @@ public class ObjectController {
                     maxKeys, continueToken, encodingType, fetchOwner);
 
             logger.debug("list objectsV2 success. bucketName={}, " +
-                            "commonprefix.size={}, " +
+                            "commonPrefix.size={}, " +
                             "content.size={} ",
                     bucketName,
                     result.getCommonPrefixList().size(),
-                    result.getCommonPrefixList().size());
+                    result.getContentList().size());
             return ResponseEntity.ok()
                     .body(result);
         }catch (Exception e){

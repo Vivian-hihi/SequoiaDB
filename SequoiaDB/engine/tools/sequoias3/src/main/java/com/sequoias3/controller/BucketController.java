@@ -97,6 +97,7 @@ public class BucketController {
 
             logger.debug("delete bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
             bucketService.deleteBucket(operator.getUserId(), bucketName);
+            logger.debug("delete bucket success. bucketName={}, operator={}", bucketName, operator.getUserName());
             return ResponseEntity.noContent().build();
         }catch (Exception e){
             logger.error("delete bucket failed. bucketName ={}, authorization={}",
