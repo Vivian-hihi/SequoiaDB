@@ -34,7 +34,7 @@
  ```lang-javascript
  // 连接协调节点
  > db = new Sdb( "localhost", 11810 )
- > db.deleteConf( { diaglevel:1 }, { GroupName:"db1", Svcname:"20000" } )
+ > db.deleteConf( { diaglevel:1 }, { GroupName:"db1", ServiceName:"20000" } )
  ```
 
 * 删除数据组 db2 上所有数据节点的 preferedinstance 和 diaglevel 参数，恢复默认值。
@@ -51,7 +51,7 @@
  // 连接协调节点
  > db = new Sdb( "localhost", 11810 )
  // 进行参数配置，报错
- > db.deleteConf( { transactionon:1 }, { Svcname:"20000" } )
+ > db.deleteConf( { transactionon:1 }, { ServiceName:"20000" } )
    (nofile):0 uncaught exception: -264
    One or more nodes did not complete successfully
    Takes 0.009322s.

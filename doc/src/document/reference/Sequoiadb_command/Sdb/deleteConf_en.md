@@ -19,7 +19,7 @@ Restore configurations to their default values, reload to take effect and delete
 
 * `options` ( json object )
 
-	Specify location params, such as NodeID, HostName, svcname, etc.
+	Specify location params, such as NodeID, HostName, ServiceName, etc.
 
 	It only takes effect on coordinate nodes. The global nodes in default.
 
@@ -55,17 +55,17 @@ Restore configurations to their default values, reload to take effect and delete
 
 	Specify the command's location by node name.
 
-	* The param should be used with 'svcname'.
+	* The param should be used with 'ServiceName'.
 	* HostName:"host-01"
 	* HostName:[ "centos-01", "ubuntu-02", ... ]
 
-6. svcname
+6. ServiceName
 
-	Specify the command's location by svcname.
+	Specify the command's location by ServiceName.
 
 	* The param should be used with 'HostName'.
-	* svcname:"11820"
-	* svcname:[ "11780", "11810", ... ]
+	* ServiceName:"11820"
+	* ServiceName:[ "11780", "11810", ... ]
 
 7. NodeSelect
 
@@ -96,7 +96,7 @@ Since v2.9.
 	```lang-javascript
 	// connect to coord
 	> db = new Sdb( "localhost", 11810 )
-	> db.deleteConf( { diaglevel:1 }, { GroupName:"db1", Svcname:"20000" } )
+	> db.deleteConf( { diaglevel:1 }, { GroupName:"db1", ServiceName:"20000" } )
  	```
 
 2. Delete and restore configuration 'preferedinstance' and 'diaglevel' on all nodes of group db2.
@@ -113,7 +113,7 @@ Since v2.9.
 	// connect to coord
 	> db = new Sdb( "localhost", 11810 )
 	// set configurations, get error message.
-	> db.deleteConf( { transactionon:1 }, { Svcname:"20000" } )
+	> db.deleteConf( { transactionon:1 }, { ServiceName:"20000" } )
 	(nofile):0 uncaught exception: -264
 	One or more nodes did not complete successfully
 	Takes 0.009322s.

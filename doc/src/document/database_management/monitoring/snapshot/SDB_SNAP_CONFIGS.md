@@ -28,7 +28,7 @@ SDB_SNAP_CONFIGS
 查看数据组 db1 中数据节点 20000 上的配置信息
 
 ```lang-javascript
-> db.snapshot( SDB_SNAP_CONFIGS, { GroupName:'db1', SvcName:'20000' } )
+> db.snapshot( SDB_SNAP_CONFIGS, { GroupName:'db1', ServiceName:'20000' } )
 {
   "NodeName": "ubuntu-zwb:20000"
   "confpath": "/home/sequoiadb/conf/local/20000/",
@@ -45,7 +45,7 @@ SDB_SNAP_CONFIGS
   "diagnum": 20,
   "auditnum": 20,
   "auditmask": "SYSTEM|DDL|DCL",
-  "svcname": "20000",
+  "ServiceName": "20000",
   "replname": "20001",
   "catalogname": "20003",
   "shardname": "20002",
@@ -117,12 +117,12 @@ Return 1 row(s).
 查看数据组 db1 中数据节点 20000 上配置文件中的配置信息
 
 ```lang-javascript
-> var option = new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "Mode": "local", "Expand": false } )
+> var option = new SdbSnapshotOption().cond( { GroupName:'db1', ServiceName:'20000' } ).options( { "Mode": "local", "Expand": false } )
 > db.snapshot( SDB_SNAP_CONFIGS, option )
 {
   "NodeName": "ubuntu-zwb:20000",
   "dbpath": "/home/sequoiadb/20000/",
-  "svcname": "20000",
+  "ServiceName": "20000",
   "diaglevel": 3,
   "role": "data",
   "catalogaddr": "ubuntu-zwb:30003,ubuntu-zwb:30013,ubuntu-zwb:30023",

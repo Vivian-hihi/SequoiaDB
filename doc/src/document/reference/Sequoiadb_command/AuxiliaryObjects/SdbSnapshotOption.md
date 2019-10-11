@@ -143,7 +143,7 @@
 * 通过“组名+主机名+服务名”或“组 ID+节点 ID”查询某个节点的快照信息，如：
 
 	```lang-javascript
-    > var option = new SdbSnapshotOption().cond( { GroupName: 'data1', HostName: "vmsvr1-cent-x64-1", svcname: "11820" } )
+    > var option = new SdbSnapshotOption().cond( { GroupName: 'data1', HostName: "vmsvr1-cent-x64-1", ServiceName: "11820" } )
 	> db.snapshot( SDB_SNAP_CONTEXTS, option )
 	{
 	  "SessionID": "vmsvr1-cent-x64-1:11820:22",
@@ -164,7 +164,7 @@
 * 通过“主机名+服务名”查询某个节点的快照信息，如：
 
 	```lang-javascript
-    > var option = new SdbSnapshotOption().cond( { HostName: "ubuntu-200-043", svcname: "11820" } )
+    > var option = new SdbSnapshotOption().cond( { HostName: "ubuntu-200-043", ServiceName: "11820" } )
 	> db.snapshot( SDB_SNAP_CONTEXTS, option )
 	{
 	  "NodeName": "ubuntu-200-043:11820",
@@ -186,12 +186,12 @@
 * 查看数据组 db1 中数据节点 20000 上配置文件中的配置信息并指定快照参数。
 
 	```lang-javascript
-	> var option = new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "mode": "local", "expand": false } )
+	> var option = new SdbSnapshotOption().cond( { GroupName:'db1', ServiceName:'20000' } ).options( { "mode": "local", "expand": false } )
 	> db.snapshot( SDB_SNAP_CONFIGS, option )
 	{
   	"NodeName": "ubuntu-zwb:20000",
   	"dbpath": "/home/equoiadb/20000/",
-  	"svcname": "20000",
+  	"ServiceName": "20000",
   	"diaglevel": 3,
   	"role": "data",
   	"catalogaddr": "ubuntu-zwb:30003,ubuntu-zwb:30013,ubuntu-zwb:30023",

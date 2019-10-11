@@ -30,7 +30,7 @@ diaglevel:1 }, \[aq]1\[aq] is just a placeholder with no actual meaning.
 \f[C]options\f[] ( json object )
 .RS 2
 .PP
-Specify location params, such as NodeID, HostName, svcname, etc.
+Specify location params, such as NodeID, HostName, ServiceName, etc.
 .PP
 It only takes effect on coordinate nodes.
 The global nodes in default.
@@ -81,7 +81,7 @@ HostName
 .PP
 Specify the command\[aq]s location by node name.
 .IP \[bu] 2
-The param should be used with \[aq]svcname\[aq].
+The param should be used with \[aq]ServiceName\[aq].
 .IP \[bu] 2
 HostName:"host\-01"
 .IP \[bu] 2
@@ -89,16 +89,16 @@ HostName:[ "centos\-01", "ubuntu\-02", ...
 ]
 .RE
 .IP "6." 3
-svcname
+ServiceName
 .RS 4
 .PP
-Specify the command\[aq]s location by svcname.
+Specify the command\[aq]s location by ServiceName.
 .IP \[bu] 2
 The param should be used with \[aq]HostName\[aq].
 .IP \[bu] 2
-svcname:"11820"
+ServiceName:"11820"
 .IP \[bu] 2
-svcname:[ "11780", "11810", ...
+ServiceName:[ "11780", "11810", ...
 ]
 .RE
 .IP "7." 3
@@ -143,7 +143,7 @@ Delete and restore configuration \[aq]diaglevel\[aq] on data node 20000.
 \f[C]
 //\ connect\ to\ coord
 >\ db\ =\ new\ Sdb(\ "localhost",\ 11810\ )
->\ db.deleteConf(\ {\ diaglevel:1\ },\ {\ GroupName:"db1",\ Svcname:"20000"\ }\ )
+>\ db.deleteConf(\ {\ diaglevel:1\ },\ {\ GroupName:"db1",\ ServiceName:"20000"\ }\ )
 \f[]
 .fi
 .RE
@@ -165,7 +165,7 @@ Get more specific informantion on error.
 //\ connect\ to\ coord
 >\ db\ =\ new\ Sdb(\ "localhost",\ 11810\ )
 //\ set\ configurations,\ get\ error\ message.
->\ db.deleteConf(\ {\ transactionon:1\ },\ {\ Svcname:"20000"\ }\ )
+>\ db.deleteConf(\ {\ transactionon:1\ },\ {\ ServiceName:"20000"\ }\ )
 (nofile):0\ uncaught\ exception:\ \-264
 One\ or\ more\ nodes\ did\ not\ complete\ successfully
 Takes\ 0.009322s.
