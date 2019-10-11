@@ -1,8 +1,6 @@
 package com.sequoiadb.basicoperation;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -31,7 +29,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class QueryOne19944 extends SdbTestBase {
     private boolean runSuccess = false;
-    private SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS");
     private Random random = new Random();
     private Sequoiadb sdb;
     private String mcsName = "mcs19944";
@@ -46,8 +43,6 @@ public class QueryOne19944 extends SdbTestBase {
 
     @BeforeClass
     private void setUp() {
-        System.out.println(this.getClass().getName() + " Begin at " + sdf.format(new Date()));
-
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("Is standalone.");
@@ -75,7 +70,6 @@ public class QueryOne19944 extends SdbTestBase {
             BSONObject cond = new BasicBSONObject("a", random.nextInt(recordsNum));
             BSONObject obj = mcl.queryOne(cond, null, null, null, 1024);
             obj.toString();
-            // System.out.println(runTimes + ", " + obj.toString());
         }
 
         DBCursor cursor = sdb.getList(0, new BasicBSONObject("Global", false), null, null);
@@ -100,7 +94,6 @@ public class QueryOne19944 extends SdbTestBase {
         } finally {
             sdb.disconnect();
         }
-        System.out.println(this.getClass().getName() + " End   at " + sdf.format(new Date()));
     }
 
     private void readyCSCL() {
