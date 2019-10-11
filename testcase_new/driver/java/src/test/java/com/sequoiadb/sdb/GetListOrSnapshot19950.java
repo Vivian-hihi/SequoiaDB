@@ -66,7 +66,7 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
      * TestgetSnapshot15758 has covered hint/limit/skip of snapshot, the test
      * only cover snapshotType: SDB_SNAP_SVCTASKS
      */
-    @Test(enabled = false)
+    @Test(enabled = false) // SEQUOIADBMAINSTREAM-5011
     public void test_getSnapshot() {
         // test snapshotType: SDB_SNAP_SVCTASKS, not need verify results
         DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SVCTASKS, null, null, null, null, 0, 1);
