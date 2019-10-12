@@ -100,6 +100,22 @@ class List20008 extends PHPUnit_Framework_TestCase
 	 throw new Exception('get list SDB_LIST_SVCTASKS error, nothing is returned');
       }
 
+      $taskSnapCur = self::$db -> snapshot( SDB_SNAP_SVCTASKS );
+      if( empty( $taskSnapCur ) )
+      {
+         throw new Exception('get list SDB_SNAP_SVCTASKS error, is empty');
+      }
+      if( $record = $taskSnapCur -> next())
+      {
+         if(!isset( $record["TaskName"]))throw new Exception('list SDB_SNAP_SVCTASKS content error, no TaskName');
+         if(!isset( $record["TaskID"]))throw new Exception('list SDB_SNAP_SVCTASKS content error, no TaskID');
+         if(!isset( $record["Time"]))throw new Exception('list SDB_SNAP_SVCTASKS content error, no Time');
+      }
+      else
+      {
+         throw new Exception('get list SDB_SNAP_SVCTASKS error, nothing is returned');
+      }
+
       self::$db -> selectCS("cs20008") -> selectCL("cl20008") -> createAutoIncrement( array( 'Field' => 'a', 'MaxValue' => 2000 ) );
       self::checkErrno( 0, self::$db -> getError()['errno'] );
       $sequenceCur = self::$db -> list( SDB_LIST_SEQUENCES );
