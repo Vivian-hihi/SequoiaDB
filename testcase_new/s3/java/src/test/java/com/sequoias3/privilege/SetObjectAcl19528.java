@@ -20,7 +20,13 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
 
-public class SetObejctAcl19528 extends S3TestBase {
+/**
+ * @Description seqDB-19528:配置对象acl后复制对象
+ * @Author wangkexin
+ * @Date 2019.09.25
+ */
+
+public class SetObjectAcl19528 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
     private String bucketName = "bucket19528";
