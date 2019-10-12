@@ -10386,7 +10386,7 @@ static INT32 _sdbCreateLob( sdbCollectionHandle cHandle,
                             sdbLobHandle* lobHandle )
 {
    INT32 rc                        = SDB_OK ;
-   bson_oid_t *oidObj              = NULL ;
+   bson_oid_t oidObj ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    
@@ -10398,21 +10398,16 @@ static INT32 _sdbCreateLob( sdbCollectionHandle cHandle,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-
-   if ( NULL != oid)
-   {  
-      oidObj = oid ;
-   }
    
    if ( !connection->_isOldVersionLobServer )
    {
       BOOLEAN isOldVersionLobServer = FALSE ;
-      rc = _sdbCreateLob1( cHandle, oidObj, lobHandle, &isOldVersionLobServer) ;
+      rc = _sdbCreateLob1( cHandle, oid, lobHandle, &isOldVersionLobServer) ;
       if ( isOldVersionLobServer )
       { 
          // deal with old version server. oid should be generate in client side
-         bson_oid_gen ( oidObj ) ;
-         rc = _sdbCreateLob1( cHandle, oidObj, lobHandle, NULL) ;
+         bson_oid_gen ( &oidObj ) ;
+         rc = _sdbCreateLob1( cHandle, &oidObj, lobHandle, NULL) ;
          if ( SDB_OK == rc )
          {
             connection->_isOldVersionLobServer = TRUE ;
@@ -10422,8 +10417,8 @@ static INT32 _sdbCreateLob( sdbCollectionHandle cHandle,
    else
    {
       // deal with old version server. oid should be generate in client side
-      bson_oid_gen ( oidObj ) ;
-      rc = _sdbCreateLob1( cHandle, oidObj, lobHandle, NULL) ;
+      bson_oid_gen ( &oidObj ) ;
+      rc = _sdbCreateLob1( cHandle, &oidObj, lobHandle, NULL) ;
    }
 
    if ( SDB_OK != rc )
