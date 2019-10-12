@@ -154,9 +154,9 @@ class collectionspace(object):
         Parameters:
            Name      Type     Info:
            cl_name   str      The collection name.
-           options   dict     The options for creating collection, including
-                                    "ShardingKey", "ReplSize", "IsMainCL" and
-                                    "Compressed" informations, no options, if None.
+           options   dict     The options for creating collection or None for not specified any options.
+                                      Please visit this url: "http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION"
+                                      to get more details.
         Return values:
            a collection object created
         Exceptions:

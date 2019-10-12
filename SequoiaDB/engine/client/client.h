@@ -1157,9 +1157,9 @@ SDB_EXPORT INT32 sdbCreateCollection ( sdbCSHandle cHandle,
     \brief Create the specified collection in current collection space
     \param [in] cHandle The collection space handle
     \param [in] pCollectionName The collection name
-    \param [in] options The options for creating collection,
-                including "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
-                no options, if null
+    \param [in] options The options for creating collection or NULL for not specified any options.
+                        Please reference <a href="http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                        for more detail.
     \param [out] handle The collection handle
                       when fail to create collection,
                       *handle == -1 and error code is return

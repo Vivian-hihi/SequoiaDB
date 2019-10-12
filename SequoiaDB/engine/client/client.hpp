@@ -2962,9 +2962,9 @@ namespace sdbclient
                                        _sdbCollection **collection )
           \brief Create the specified collection in current collection space with options
           \param [in] pCollection The collection name
-          \param [in] options The options for creating collection,
-                      including "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
-                      no options, if null
+          \param [in] options The options for creating collection or NULL for not specified any options.
+                              Please reference <a href="http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                              for more detail.
           \param [out] collection The return collection handle.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
@@ -2985,9 +2985,9 @@ namespace sdbclient
                                        sdbCollection &collection )
           \brief Create the specified collection in current collection space with options
           \param [in] pCollection The collection name
-          \param [in] options The options for creating collection,
-                      including "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
-                      no options, if null
+          \param [in] options The options for creating collection or NULL for not specified any options.
+                              Please reference <a href="http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                              for more detail.
           \param [out] collection The return collection object .
           \retval SDB_OK Operation Success
           \retval Others Operation Fail

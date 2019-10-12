@@ -68,21 +68,7 @@ class SequoiaCS
     *
     * @param $name	the string argument. The collection name.
     *
-    * @param $options an array or the string argument. When the collection is created, $options into force.
-    *                                                  @code
-    *                                                  ShardingKey         : The partition key.
-    *                                                  ShardingType        : The partition type.
-    *                                                  Partition           : Number of partitions, ShardingType is 'hash', represented the number of hash partitions, its value must be a power of 2, range [ 2^3, 2^20 ], default 1024.
-    *                                                  ReplSize            : Copy write by default number is 1.
-    *                                                  Compressed          : Data compression, default true.
-    *                                                  CompressionType     : Types of compression, default 'lzw'.
-    *                                                  IsMainCL            : Main partition, default false. 
-    *                                                  AutoSplit           : Automatic split, default true.
-    *                                                  Group               : To create a replication group.
-    *                                                  AutoIndexId         : Collection is automatically created using the _id field is called '$id' a unique index, default true.
-    *                                                  EnsureShardingIndex : Collection is automatically created using the ShardingKey contains the field names for the '$shard' index, default true.
-    *                                                  AutoIncrement       : Auto increment.
-    *                                                  @endcode
+    * @param $options an array or the string argument. Please reference <a href="http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION">here</a> to get the $options's info of create collection.
     *
     * @return Returns a new SequoiaCL object.
     *
@@ -114,24 +100,7 @@ class SequoiaCS
     *
     * @param $name   the string argument. The collection name.
     *
-    * @param $options an array or the string argument. The options specified by use.
-    *                                                  e.g. @code
-    *                                                       array( 'Compressed' => true )
-    *                                                       @endcode
-    *                                                  @code
-    *                                                  ShardingKey         : The partition key.
-    *                                                  ShardingType        : The partition type.
-    *                                                  Partition           : Number of partitions, ShardingType is 'hash', represented the number of hash partitions, its value must be a power of 2, range [ 2^3, 2^20 ], default 1024.
-    *                                                  ReplSize            : Copy write by default number is 1.
-    *                                                  Compressed          : Data compression, default true.
-    *                                                  CompressionType     : Types of compression, default 'lzw'.
-    *                                                  IsMainCL            : Main partition, default false. 
-    *                                                  AutoSplit           : Automatic split, default true.
-    *                                                  Group               : To create a replication group.
-    *                                                  AutoIndexId         : Collection is automatically created using the _id field is called '$id' a unique index, default true.
-    *                                                  EnsureShardingIndex : Collection is automatically created using the ShardingKey contains the field names for the '$shard' index, default true.
-    *                                                  AutoIncrement       : Auto increment.
-    *                                                  @endcode
+    * @param $options an array or the string argument. The $options for creating collection. Please reference <a href="http://doc.sequoiadb.com/cn/index-cat_id-1432190821-edition_id-@SDB_SYMBOL_VERSION">here</a> for more detail.
     *
     * @return Returns the result, default return array.
     *
