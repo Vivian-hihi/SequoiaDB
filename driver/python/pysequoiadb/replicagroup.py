@@ -378,8 +378,9 @@ class replicagroup(object):
 
         Parameters:
            Name         Type     Info:
-           options      dict     The control parameters:
-                                 Seconds: (Type: int) Specify how long the reelect should be done. Default value is 30.
+           options      dict     The options of reelection. Please visit this url:
+                                         "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION"
+                                         for more detail.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """

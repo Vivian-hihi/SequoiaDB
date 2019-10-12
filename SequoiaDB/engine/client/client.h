@@ -3073,7 +3073,9 @@ SDB_EXPORT INT32 sdbListLobPieces1( sdbCollectionHandle cHandle,
 /** \fn INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
                           const bson *options )
     \param [in] cHandle The replica group handle
-    \param [in] options The options of reelection
+    \param [in] options The options of reelection. Please reference
+                        <a href="http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                        for more detail.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */

@@ -2805,9 +2805,9 @@ namespace sdbclient
 
       /** \fn INT32 reelect( const bson::BSONObj &options )
           \brief Force the replica group to reelect primary node.
-          \param [in] options The options of reelect. The options are as below:
-
-              Seconds: Reelection timeout
+          \param [in] options The options of reelection. Please reference
+                              <a href="http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                              for more detail.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
        */

@@ -104,10 +104,7 @@ class SequoiaGroup
    /**
     * Re-elected in the replication group.
     *
-    * @param $options an array or the string argument. 
-    *                                           @code
-    *                                           Seconds:  New elections needed within the number of seconds to complete, default 30 seconds.
-    *                                           @endcode
+    * @param $options an array or the string argument. The $options of reelection. Please reference <a href="http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190873-edition_id-@SDB_SYMBOL_VERSION">here</a> for more detail.
     *
     * @return Returns the result, default return array.
     *
