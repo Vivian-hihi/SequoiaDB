@@ -357,7 +357,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMCONDITIONNODEHELPER__GETALLATTR, "_qgmConditionNodeHelper::_getAllAttr" )
    void _qgmConditionNodeHelper::_getAllAttr( _qgmConditionNode *node,
-                                              vector<qgmDbAttr*> &fields )
+                                              qgmDbAttrPtrVec &fields )
    {
       PD_TRACE_ENTRY( SDB__QGMCONDITIONNODEHELPER__GETALLATTR ) ;
 

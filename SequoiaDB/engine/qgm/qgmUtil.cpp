@@ -105,7 +105,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMFINDFIELDFROMFUNC, "qgmFindFieldFromFunc" )
    INT32 qgmFindFieldFromFunc( const CHAR *str, UINT32 strSize,
                                _qgmField &func,
-                               vector< qgmOpField > &params,
+                               qgmOPFieldVec &params,
                                _qgmPtrTable *table,
                                BOOLEAN needRele )
    {
@@ -726,7 +726,7 @@ namespace engine
 
          if ( SQL_GRAMMAR::FUNC == selector.value.type )
          {
-            vector<qgmOpField>::iterator iter = selector.param.begin();
+            qgmOPFieldVec::iterator iter = selector.param.begin();
             while ( iter != selector.param.end() )
             {
                downAAttrByFieldAlias( iter->value, fieldAlias, isOptional );
@@ -935,7 +935,7 @@ namespace engine
 
          if ( SQL_GRAMMAR::FUNC == selector.value.type )
          {
-            vector<qgmOpField>::iterator iter = selector.param.begin();
+            qgmOPFieldVec::iterator iter = selector.param.begin();
             while ( iter != selector.param.end() )
             {
                upAAttrByFieldAlias( iter->value, fieldAlias );
@@ -961,7 +961,7 @@ namespace engine
       for ( ; i != hint.end(); ++i )
       {
          ss << i->value.toString() << "(" ;
-         vector<qgmOpField>::const_iterator j = i->param.begin() ;
+         qgmOPFieldVec::const_iterator j = i->param.begin() ;
          for ( ; j != i->param.end(); ++j )
          {
             ss << j->value.toString() << "," ;

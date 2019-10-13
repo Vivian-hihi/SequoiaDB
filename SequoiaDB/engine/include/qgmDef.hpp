@@ -131,6 +131,8 @@ namespace engine
       friend class _qgmPtrTable ;
    } ;
    typedef class _qgmField qgmField ;
+   typedef vector< qgmField* >   qgmFieldPtrVec ;
+   typedef vector< qgmField >    qgmFieldVec ;
 
    /*
       _qgmDbAttr define
@@ -319,7 +321,8 @@ namespace engine
    typedef struct _qgmOpField qgmOpField ;
    typedef std::vector< qgmOpField >  qgmOPFieldVec ;
    typedef std::vector< qgmOpField* > qgmOPFieldPtrVec ;
-
+   
+   typedef std::vector<BSONElement>   qgmFOElementVec ;
    /*
       _qgmFetchOut define
    */
@@ -342,7 +345,7 @@ namespace engine
 
       INT32 element( const _qgmDbAttr &attr, BSONElement &ele )const ;
 
-      void elements( std::vector<BSONElement> &eles ) const ;
+      void elements( qgmFOElementVec &eles ) const ;
 
       BSONObj mergedObj() const ;
    } ;
@@ -358,8 +361,8 @@ namespace engine
 
    struct _qgmHint : public SDBObject
    {
-      qgmField value ;
-      vector<qgmOpField> param ;
+      qgmField       value ;
+      qgmOPFieldVec  param ;
    } ;
    typedef struct _qgmHint qgmHint ;
 

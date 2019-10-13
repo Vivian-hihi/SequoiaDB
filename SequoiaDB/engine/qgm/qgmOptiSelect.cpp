@@ -147,7 +147,7 @@ namespace engine
          filterUnit->emptyCondition() ;
       }
 
-      /// When the child node is scan, can put down the limit and skip
+      /// When the child node is scan/filter, can put down the limit and skip
       if ( QGM_OPTI_TYPE_FILTER == getType() &&
            QGM_OPTI_TYPE_SCAN == getSubNode(0)->getType() )
       {
@@ -200,7 +200,7 @@ namespace engine
          else if ( QGM_OPTI_TYPE_AGGR == getParent()->getType() &&
                    NULL == _condition && !hasConstraint() )
          {
-            vector< qgmField > subAlias ;
+            qgmFieldVec subAlias ;
             qgmAggrUnit *aggrUnit = ( qgmAggrUnit* )
                (getParent()->getOprUnitByType( QGM_OPTI_TYPE_AGGR )) ;
 
@@ -258,7 +258,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT_OUTPUTSTREAM ) ;
       INT32 rc = SDB_OK ;
 
-      vector<qgmOpField>::iterator itr = _selector.begin() ;
+      qgmOPFieldVec::iterator itr = _selector.begin() ;
       for ( ; itr != _selector.end(); itr++ )
       {
          stream.stream.push_back( *itr ) ;
@@ -280,8 +280,7 @@ namespace engine
       if ( !_selector.empty() )
       {
          ss << ",selector:[" ;
-         vector<qgmOpField>::const_iterator itr =
-                               _selector.begin() ;
+         qgmOPFieldVec::const_iterator itr = _selector.begin() ;
          for ( ; itr != _selector.end(); itr++ )
          {
             if ( SQL_GRAMMAR::WILDCARD == itr->type )
@@ -308,8 +307,7 @@ namespace engine
       if ( !_orderby.empty() )
       {
          ss << ",orderby:[" ;
-         vector<qgmOpField>::const_iterator itr =
-                               _orderby.begin() ;
+         qgmOPFieldVec::const_iterator itr = _orderby.begin() ;
          for ( ; itr != _orderby.end(); itr++ )
          {
             string t ;
@@ -332,8 +330,7 @@ namespace engine
       if ( !_groupby.empty() )
       {
          ss << ",groupby:[" ;
-         vector<qgmOpField>::const_iterator itr =
-                                     _groupby.begin() ;
+         qgmOPFieldVec::const_iterator itr = _groupby.begin() ;
          for ( ; itr != _groupby.end(); itr++ )
          {
             ss << "{value:" << itr->value.toString()
@@ -710,7 +707,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT__VALIDATEANDCRTPLAN ) ;
       INT32 rc = SDB_OK ;
-      vector<qgmOpField>::iterator itr ;
+      qgmOPFieldVec::iterator itr ;
       qgmField uniqueField ;
       BOOLEAN addSortFeild = FALSE ;
       BOOLEAN addRootFilter = FALSE ;
@@ -833,7 +830,7 @@ namespace engine
             }
             {
             /// ensure that every param in func exist in stream.
-            vector<qgmOpField>::const_iterator itrPara = func.param.begin() ;
+            qgmOPFieldVec::const_iterator itrPara = func.param.begin() ;
             for ( ; itrPara != func.param.end(); itrPara++ )
             {
                if ( !stream.find( itrPara->value ) )
@@ -913,7 +910,7 @@ namespace engine
          }
          else
          {
-            vector<qgmOpField>::iterator itrPara = itrFunc->param.begin() ;
+            qgmOPFieldVec::iterator itrPara = itrFunc->param.begin() ;
             for ( ; itrPara != itrFunc->param.end(); itrPara++ )
             {
                BOOLEAN found ;
@@ -1020,22 +1017,22 @@ namespace engine
 
       if ( NULL != _condition )
       {
-      vector<qgmDbAttr*> conditionFields ;
-      vector<qgmDbAttr*>::iterator citr ;
-      _qgmConditionNodeHelper cTree( _condition ) ;
-      cTree.getAllAttr( conditionFields ) ;
-      for ( citr = conditionFields.begin()
-            ; citr != conditionFields.end()
-            ; citr++ )
-      {
-         if ( !stream.find( *(*citr)) )
+         qgmDbAttrPtrVec conditionFields ;
+         qgmDbAttrPtrVec::iterator citr ;
+         _qgmConditionNodeHelper cTree( _condition ) ;
+         cTree.getAllAttr( conditionFields ) ;
+         for ( citr = conditionFields.begin()
+               ; citr != conditionFields.end()
+               ; citr++ )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "condition attr[%s] not found in sub output.",
-                        (*(*citr)).toString().c_str() ) ;
-            goto error ;
+            if ( !stream.find( *(*citr)) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "condition attr[%s] not found in sub output.",
+                           (*(*citr)).toString().c_str() ) ;
+               goto error ;
+            }
          }
-      }
       }
 
       if ( !_splitby.empty() )
@@ -1110,7 +1107,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT__PARAMEXISTINSELECOTR ) ;
       INT32 rc = SDB_OK ;
       found = FALSE ;
-      vector<qgmOpField>::iterator itr = _selector.begin() ;
+      qgmOPFieldVec::iterator itr = _selector.begin() ;
       for ( ; itr != _selector.end(); itr++ )
       {
          if ( SQL_GRAMMAR::WILDCARD == itr->type )

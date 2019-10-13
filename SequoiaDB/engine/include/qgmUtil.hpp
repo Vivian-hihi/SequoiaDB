@@ -66,7 +66,7 @@ namespace engine
 
    INT32 qgmFindFieldFromFunc( const CHAR *str, UINT32 size,
                                _qgmField &func,
-                               vector<qgmOpField> &params,
+                               qgmOPFieldVec &params,
                                _qgmPtrTable *table,
                                BOOLEAN needRele ) ;
 

@@ -146,37 +146,37 @@ namespace engine
       }
 
       {
-      vector<_qgmOpField>::const_iterator itr = stream.begin() ;
-      for ( ; itr != this->stream.end(); itr++ )
-      {
-         if ( !itr->alias.empty() )
+         qgmOPFieldVec::const_iterator itr = stream.begin() ;
+         for ( ; itr != this->stream.end(); itr++ )
          {
-            if ( field.attr().isSubfix( itr->alias, TRUE ) )
+            if ( !itr->alias.empty() )
             {
-               found = TRUE ;
-               goto done ;
-            }
-            else
-            {
-               continue ;
-            }
-         }
-
-         if ( SQL_GRAMMAR::FUNC != itr->type )
-         {
-            if ( SQL_GRAMMAR::WILDCARD== itr->type )
-            {
-               found = TRUE ;
-               goto done ;
+               if ( field.attr().isSubfix( itr->alias, TRUE ) )
+               {
+                  found = TRUE ;
+                  goto done ;
+               }
+               else
+               {
+                  continue ;
+               }
             }
 
-            if ( field.attr().isSubfix( itr->value.attr(), TRUE ) )
+            if ( SQL_GRAMMAR::FUNC != itr->type )
             {
-               found = TRUE ;
-               goto done ;
+               if ( SQL_GRAMMAR::WILDCARD== itr->type )
+               {
+                  found = TRUE ;
+                  goto done ;
+               }
+
+               if ( field.attr().isSubfix( itr->value.attr(), TRUE ) )
+               {
+                  found = TRUE ;
+                  goto done ;
+               }
             }
          }
-      }
       }
 
    done:
@@ -603,7 +603,7 @@ namespace engine
       return _oprUnits[ pos ] ;
    }
 
-   UINT32 _qgmOptiTreeNode::_getSubAlias( vector < qgmField > & aliases ) const
+   UINT32 _qgmOptiTreeNode::_getSubAlias( qgmFieldVec & aliases ) const
    {
       UINT32 index = 0 ;
       while ( index < _children.size() )
@@ -762,7 +762,7 @@ namespace engine
          // step1: replace table alias
          if ( validSelfAlias() )
          {
-            vector< qgmField > subAlias ;
+            qgmFieldVec subAlias ;
             if ( _getSubAlias( subAlias ) > 1 )
             {
                PD_LOG_MSG( PDERROR,

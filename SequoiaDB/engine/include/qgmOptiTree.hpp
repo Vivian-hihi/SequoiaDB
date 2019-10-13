@@ -154,7 +154,7 @@ namespace engine
 
          qgmField             _dispatchAlias ;
 
-         vector< qgmField >   _reles ;
+         qgmFieldVec          _reles ;
 
    } ;
    typedef _qgmOprUnit qgmOprUnit ;
@@ -217,7 +217,7 @@ namespace engine
       virtual INT32     outputSort( qgmOPFieldVec &sortFields ) ;
       virtual INT32     outputStream( qgmOpStream &stream ) = 0 ;
       virtual BOOLEAN   isEmpty() { return FALSE ;}
-      virtual INT32 handleHints( QGM_HINS &hints ) { return SDB_OK ;}
+      virtual INT32     handleHints( QGM_HINS &hints ) { return SDB_OK ;}
       virtual BOOLEAN validateBeforeChange( QGM_OPTI_TYPE type ) const
       {
          return getType() == type ;
@@ -246,7 +246,7 @@ namespace engine
       void dump() const ;
 
    protected:
-      UINT32 _getSubAlias( vector< qgmField > &aliases ) const ;
+      UINT32 _getSubAlias( qgmFieldVec &aliases ) const ;
       INT32  _onPushOprUnit( qgmOprUnit *oprUnit, PUSH_FROM from ) ;
       void   _upFields( qgmOPFieldVec &fields ) ;
       void   _toTotalString( stringstream &ss, const string &fill,

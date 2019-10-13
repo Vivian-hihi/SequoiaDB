@@ -866,10 +866,10 @@ namespace engine
       }
       else
       {
-         vector < qgmDbAttr * > condFields ;
+         qgmDbAttrPtrVec condFields ;
          qgmConditionNodeHelper condTree( condNode ) ;
          condTree.getAllAttr( condFields ) ;
-         vector < qgmDbAttr * >::iterator itCond = condFields.begin() ;
+         qgmDbAttrPtrVec::iterator itCond = condFields.begin() ;
          while ( itCond != condFields.end() )
          {
             qgmDbAttr &attr = *(*itCond) ;

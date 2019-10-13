@@ -45,8 +45,8 @@ namespace engine
 {
    struct _qgmAggrSelector
    {
-      qgmOpField value ;
-      vector<qgmOpField> param ;
+      qgmOpField     value ;
+      qgmOPFieldVec  param ;
 
       _qgmAggrSelector()
       {
@@ -80,7 +80,7 @@ namespace engine
             if ( !param.empty() )
             {
                ss << ", params:[" ;
-               for ( vector<qgmOpField>::const_iterator itr = param.begin() ;
+               for ( qgmOPFieldVec::const_iterator itr = param.begin() ;
                      itr != param.end();
                      itr++ )
                {

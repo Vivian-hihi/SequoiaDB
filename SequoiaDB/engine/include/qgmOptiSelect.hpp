@@ -62,11 +62,11 @@ namespace engine
 
    public:
       virtual INT32     outputSort( qgmOPFieldVec &sortFields ) ;
-      virtual INT32 outputStream( qgmOpStream &stream ) ;
+      virtual INT32     outputStream( qgmOpStream &stream ) ;
       virtual BOOLEAN   isEmpty() ;
 
       virtual string toString() const ;
-      virtual INT32 handleHints( QGM_HINS &hints ) ;
+      virtual INT32  handleHints( QGM_HINS &hints ) ;
 
       BOOLEAN hasExpr() const ;
 

@@ -498,7 +498,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMFETCHOUT_ELEMENTS, "_qgmFetchOut::elements" )
-   void _qgmFetchOut::elements( std::vector<BSONElement> &eles ) const
+   void _qgmFetchOut::elements( qgmFOElementVec &eles ) const
    {
       PD_TRACE_ENTRY( SDB__QGMFETCHOUT_ELEMENTS ) ;
       BSONObjIterator itr( obj ) ;

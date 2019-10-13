@@ -70,11 +70,11 @@ namespace engine
       INT32 _result( qgmFetchOut &result ) ;
 
       INT32 _select( const qgmFetchOut &next,
-                     const vector<qgmOpField> &fields,
+                     const qgmOPFieldVec &fields,
                      RTN_FUNC_PARAMS &param ) ;
 
    private:
-      std::vector<_rtnSQLFunc *> _func ;
+      rtnSQLFuncPtrVec _func ;
       _qgmSelector _groupby ;
       BSONObj _groupbyKey ;
       BSONObj _preObj ;

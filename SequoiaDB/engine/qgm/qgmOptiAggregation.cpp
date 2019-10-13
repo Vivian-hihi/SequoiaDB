@@ -212,7 +212,7 @@ namespace engine
          }
          else
          {
-            vector<qgmOpField>::iterator itAttr = select.param.begin() ;
+            qgmOPFieldVec::iterator itAttr = select.param.begin() ;
             while ( itAttr != select.param.end() )
             {
                qgmDbAttr &attr = itAttr->value ;

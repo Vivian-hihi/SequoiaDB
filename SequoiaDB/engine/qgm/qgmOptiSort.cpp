@@ -220,13 +220,12 @@ namespace engine
       if ( !_orderby.empty() )
       {
          ss << ",orderby:[" ;
-         vector<qgmOpField>::const_iterator itr =
-                               _orderby.begin() ;
+         qgmOPFieldVec::const_iterator itr = _orderby.begin() ;
          for ( ; itr != _orderby.end(); itr++ )
          {
             string t ;
-            if ( SQL_GRAMMAR::DBATTR == itr->type
-                 || SQL_GRAMMAR::ASC == itr->type )
+            if ( SQL_GRAMMAR::DBATTR == itr->type ||
+                 SQL_GRAMMAR::ASC == itr->type )
             {
                t = "asc" ;
             }

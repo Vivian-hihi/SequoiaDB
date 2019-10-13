@@ -50,11 +50,14 @@ namespace engine
    class _qgmOperatorElement : public SDBObject
    {
    public :
+      typedef std::vector<_qgmOperatorElement*>    oprElePtrVec ;
+
+   public :
       INT32 _id ;
       CHAR _opID[32] ;
       CHAR _opName[32] ;
 
-      std::vector<_qgmOperatorElement*> _children ;
+      oprElePtrVec _children ;
       INT32 _selfWidth ;
       INT32 _totalWidth ;
       INT32 _pos ;
@@ -73,16 +76,16 @@ namespace engine
       }
       ~_qgmOperatorElement()
       {
-         std::vector<_qgmOperatorElement*>::iterator it ;
-         for ( it = _children.begin() ;
-               it != _children.end() ;
-               ++it )
+         oprElePtrVec::iterator it ;
+         for ( it = _children.begin() ; it != _children.end() ; ++it )
          {
             SDB_OSS_DEL ( *it ) ;
          }
          _children.clear() ;
          if ( _pCLName )
+         {
             SDB_OSS_FREE ( _pCLName ) ;
+         }
       }
    } ;
    typedef class _qgmOperatorElement qgmOperatorElement ;
@@ -245,8 +248,8 @@ namespace engine
       // children
       if ( line >= 5 )
       {
-         std::vector<_qgmOperatorElement*>::iterator it ;
-         for ( it = ele->_children.begin();
+         _qgmOperatorElement::oprElePtrVec::iterator it ;
+         for ( it = ele->_children.begin() ;
                it != ele->_children.end() ;
                ++it )
          {

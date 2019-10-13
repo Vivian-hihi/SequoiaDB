@@ -128,12 +128,15 @@ namespace engine
 
 
    protected:
-      std::string _name ;
-      _qgmField _alias ;
-      vector<qgmOpField> _param ;
+      std::string       _name ;
+      _qgmField         _alias ;
+      qgmOPFieldVec     _param ;
    } ;
 
-   typedef class _rtnSQLFunc rtnSQLFunc ;
+   typedef class _rtnSQLFunc     rtnSQLFunc ;
+   typedef vector< rtnSQLFunc >  rtnSQLFuncVec ;
+   typedef vector< rtnSQLFunc* > rtnSQLFuncPtrVec ;
+
 }
 
 #endif

@@ -113,7 +113,7 @@ namespace engine
 
             {
                SDB_ASSERT( NULL != func, "impossible") ;
-               vector<qgmOpField> param ;
+               qgmOPFieldVec param ;
                param.push_back( itr->value ) ;
                rc = func->init( itr->value.alias.empty()?
                                 itr->value.value.attr() :
@@ -146,7 +146,7 @@ namespace engine
 
    _qgmPlAggregation::~_qgmPlAggregation()
    {
-      vector<_rtnSQLFunc *>::iterator itr = _func.begin() ;
+      rtnSQLFuncPtrVec::iterator itr = _func.begin() ;
       for ( ; itr != _func.end(); itr++ )
       {
          SAFE_OSS_DELETE( *itr ) ;
@@ -162,7 +162,7 @@ namespace engine
       if ( !_func.empty() )
       {
          ss << "Func:[" ;
-         for ( vector<_rtnSQLFunc *>::const_iterator itr = _func.begin() ;
+         for ( rtnSQLFuncPtrVec::const_iterator itr = _func.begin() ;
                itr != _func.end();
                itr++ )
          {
@@ -333,12 +333,12 @@ namespace engine
    }
 
    INT32 _qgmPlAggregation::_select( const qgmFetchOut &next,
-                                     const vector<qgmOpField> &fields,
+                                     const qgmOPFieldVec &fields,
                                      RTN_FUNC_PARAMS &param )
    {
       INT32 rc = SDB_OK ;
 
-      vector<qgmOpField>::const_iterator itr = fields.begin() ;
+      qgmOPFieldVec::const_iterator itr = fields.begin() ;
       for ( ; itr != fields.end(); itr++ )
       {
          if ( !itr->empty() )
@@ -363,10 +363,10 @@ namespace engine
       RTN_FUNC_PARAMS param ;
       if ( !_func.empty() )
       {
-         vector<_rtnSQLFunc *>::iterator itr = _func.begin() ;
+         rtnSQLFuncPtrVec::iterator itr = _func.begin() ;
          for ( ; itr != _func.end(); itr++ )
          {
-            const vector<qgmOpField> &fields = (*itr)->param() ;
+            const qgmOPFieldVec &fields = (*itr)->param() ;
             rc = _select( next, fields, param ) ;
             if ( SDB_OK != rc )
             {
@@ -403,7 +403,7 @@ namespace engine
       if ( !_func.empty() )
       {
          BSONObjBuilder builder ;
-         vector<_rtnSQLFunc *>::iterator itr = _func.begin() ;
+         rtnSQLFuncPtrVec::iterator itr = _func.begin() ;
          for ( ; itr != _func.end(); itr++ )
          {
             rc = (*itr)->result( builder ) ;

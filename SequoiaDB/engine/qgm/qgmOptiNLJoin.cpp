@@ -892,8 +892,8 @@ namespace engine
       if ( NULL != _condition )
       {
          qgmOpStream lstream, rstream ;
-         vector<qgmDbAttr*> conditionFields ;
-         vector<qgmDbAttr*>::iterator citr ;
+         qgmDbAttrPtrVec conditionFields ;
+         qgmDbAttrPtrVec::iterator citr ;
          _qgmConditionNodeHelper cTree( _condition ) ;
 
          cTree.getAllAttr( conditionFields ) ;
