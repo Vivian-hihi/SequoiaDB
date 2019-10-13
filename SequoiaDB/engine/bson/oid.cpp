@@ -147,6 +147,15 @@ namespace bson {
         }
     }
 
+    void OID::init( const char *s ) {
+       assert( s && strlen( s ) == 24 );
+       const char *p = s;
+       for( int i = 0; i < 12; i++ ) {
+           data[i] = fromHex(p);
+           p += 2;
+       }
+    }
+
     void OID::init( string s ) {
         assert( s.size() == 24 );
         const char *p = s.c_str();

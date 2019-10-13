@@ -72,6 +72,9 @@ namespace bson {
         void init();
 
         /** init from a 24 char hex string */
+        void init( const char *s ) ;
+
+        /** init from a 24 char hex string */
         void init( string s );
 
         /** init from a 12 unsigned char array */

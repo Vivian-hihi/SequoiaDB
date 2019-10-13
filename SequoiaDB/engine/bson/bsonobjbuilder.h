@@ -362,7 +362,7 @@ namespace bson {
         /** tries to append the data as a number
          * @return true if the data was able to be converted to a number
          */
-        bool appendAsNumber( const StringData& fieldName , const string& data );
+        bool appendAsNumber( const StringData& fieldName , const StringData& data );
 
         /** Append a BSON Object ID (OID type).
             @deprecated Generally, it is preferred to use the append
@@ -493,6 +493,10 @@ namespace bson {
         /** Append a string element */
         BSONObjBuilder& append(const StringData& fieldName, const string& str) {
             return append(fieldName, str.c_str(), (int) str.size()+1);
+        }
+        /** Append a string element */
+        BSONObjBuilder& append(const StringData& fieldName, const StringData& str) {
+            return append(fieldName, str.data(), (int) str.size()+1);
         }
 
         BSONObjBuilder& appendSymbol(const StringData& fieldName,

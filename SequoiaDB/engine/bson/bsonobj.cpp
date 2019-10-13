@@ -1567,21 +1567,22 @@ namespace bson {
     };
 
     bool BSONObjBuilder::appendAsNumber( const StringData& fieldName ,
-      const string& data ) {
-        if ( data.size() == 0 || data == "-")
+      const StringData& data ) {
+        const char* p = data.data() ;
+        if ( data.size() == 0 || ( data.size() == 1 && p[0] == '-' ) )
             return false;
 
-        unsigned int pos=0;
-        if ( data[0] == '-' )
+        unsigned int pos = 0 ;
+        if ( p[0] == '-' )
             pos++;
 
         bool hasDec = false;
 
-        for ( ; pos<data.size(); pos++ ) {
-            if ( isdigit(data[pos]) )
+        for ( ; pos < data.size() ; pos++ ) {
+            if ( isdigit(p[pos]) )
                 continue;
 
-            if ( data[pos] == '.' ) {
+            if ( p[pos] == '.' ) {
                 if ( hasDec )
                     return false;
                 hasDec = true;
@@ -1592,27 +1593,27 @@ namespace bson {
         }
 
         if ( hasDec ) {
-            double d = atof( data.c_str() );
+            double d = atof( p );
             append( fieldName , d );
             return true;
         }
 
         if ( data.size() < 8 ) {
-            append( fieldName , atoi( data.c_str() ) );
+            append( fieldName , atoi( p ) );
             return true;
         }
         char *pEndPtr = NULL ;
 #if defined (_WIN32)
-        long long num = _strtoi64 ( data.c_str(), &pEndPtr, 10 ) ;
+        long long num = _strtoi64 ( p, &pEndPtr, 10 ) ;
 #else
-        long long num = strtoll ( data.c_str(), &pEndPtr, 10 ) ;
+        long long num = strtoll ( p, &pEndPtr, 10 ) ;
 #endif
         if ( '\0' != *pEndPtr )
            return false ;
         append( fieldName , num );
         return true ;
 /*        try {
-            long long num = boost::lexical_cast<long long>( data );
+            long long num = boost::lexical_cast<long long>( p );
             append( fieldName , num );
             return true;
         }
