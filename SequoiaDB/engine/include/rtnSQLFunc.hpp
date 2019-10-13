@@ -97,14 +97,14 @@ namespace engine
       }
 
       INT32 init( const _qgmField &alias,
-                  const vector<qgmOpField> &param )
+                  const qgmOPFieldVec &param )
       {
          _alias = alias ;
          _param = param ;
          return SDB_OK ;
       }
 
-      const vector<qgmOpField> &param() const
+      const qgmOPFieldVec &param() const
       {
          return _param ;
       }
