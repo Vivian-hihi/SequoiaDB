@@ -91,19 +91,13 @@ public class LobSubCL19062 extends SdbTestBase {
         redoAttachCL();
         List<ObjectId> lobIds = new ArrayList<ObjectId>();
         // 插入lob时有可能其他连接会刷新catalogInfo，重试一次插入
-        try {
-            lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190101"));
-        } catch (BaseException e) {
-            if (e.getErrorCode() == -135) {
-                lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190101"));
-            } else {
-                throw e;
-            }
-        }
+        lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190101"));
         lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190201"));
         lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190301"));
         lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190401"));
         LobUtil.checkLobMD5(mainCL, lobIds, lobBuff);
+
+        sdb.sync();
     }
 
     @AfterClass

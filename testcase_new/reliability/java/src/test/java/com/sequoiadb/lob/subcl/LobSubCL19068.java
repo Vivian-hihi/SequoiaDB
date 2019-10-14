@@ -94,6 +94,8 @@ public class LobSubCL19068 extends SdbTestBase {
             mainCL.removeLob(lobId);
         }
         checkRemoveLobResult(lobIds2);
+
+        sdb.sync();
     }
 
     @AfterClass

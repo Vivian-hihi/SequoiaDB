@@ -91,6 +91,8 @@ public class LobSubCL19061 extends SdbTestBase {
         lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190301"));
         lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190401"));
         LobUtil.checkLobMD5(mainCL, lobIds, lobBuff);
+
+        sdb.sync();
     }
 
     @AfterClass

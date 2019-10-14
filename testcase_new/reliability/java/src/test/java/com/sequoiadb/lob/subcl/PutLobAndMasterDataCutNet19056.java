@@ -85,6 +85,7 @@ public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
         checkPutLobResult(mainCL);
+        sdb.sync();
         runSuccess = true;
     }
 

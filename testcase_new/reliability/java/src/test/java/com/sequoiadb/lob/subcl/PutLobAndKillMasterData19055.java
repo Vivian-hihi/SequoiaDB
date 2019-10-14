@@ -86,6 +86,7 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
         checkPutLobResult(mainCL);
+        sdb.sync();
         runSuccess = true;
     }
 
