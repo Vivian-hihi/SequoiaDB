@@ -149,7 +149,8 @@ namespace engine
 
       /// When the child node is scan/filter, can put down the limit and skip
       if ( QGM_OPTI_TYPE_FILTER == getType() &&
-           QGM_OPTI_TYPE_SCAN == getSubNode(0)->getType() )
+           ( QGM_OPTI_TYPE_SCAN == getSubNode(0)->getType() ||
+             QGM_OPTI_TYPE_FILTER == getSubNode(0)->getType() ) )
       {
          qgmOptiSelect *pNode = (qgmOptiSelect*)getSubNode(0) ;
 

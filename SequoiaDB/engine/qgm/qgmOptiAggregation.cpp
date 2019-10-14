@@ -258,13 +258,32 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION__GETFIELDALIAS ) ;
       UINT32 count = 0 ;
+      _tmpSelector.clear() ;
       qgmAggrSelectorVec::iterator it = _selector.begin() ;
       while ( it != _selector.end() )
       {
          qgmAggrSelector &select = *it ;
-         if ( select.value.type != SQL_GRAMMAR::FUNC &&
-              select.value.type != SQL_GRAMMAR::WILDCARD &&
+         if ( select.value.type == SQL_GRAMMAR::FUNC &&
+              1 == select.param.size() &&
               ( getAll || !select.value.alias.empty() ) )
+         {
+            const qgmField &funcField = select.value.value.attr() ;
+            if ( 0 == ossStrncmp( funcField.begin(), RTN_SQL_FUNC_FIRST,
+                                  funcField.size() ) ||
+                 0 == ossStrncmp( funcField.begin(), RTN_SQL_FUNC_LAST,
+                                  funcField.size() ) )
+            {
+               qgmOpField tmp( select.param[0] ) ;
+               tmp.alias = select.value.alias ;
+               _tmpSelector.push_back( tmp ) ;
+
+               fieldAlias.push_back( &(*(--_tmpSelector.end())) ) ;
+               ++count ;
+            }
+         }
+         else if ( select.value.type != SQL_GRAMMAR::FUNC &&
+                   select.value.type != SQL_GRAMMAR::WILDCARD &&
+                   ( getAll || !select.value.alias.empty() ) )
          {
             fieldAlias.push_back( &select.value ) ;
             ++count ;
