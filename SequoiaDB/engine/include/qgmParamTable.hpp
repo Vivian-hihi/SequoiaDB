@@ -40,7 +40,6 @@
 #define QGMPARAMTABLE_HPP_
 
 #include "qgmDef.hpp"
-#include <vector>
 #include "ossMemPool.hpp"
 
 using namespace bson ;

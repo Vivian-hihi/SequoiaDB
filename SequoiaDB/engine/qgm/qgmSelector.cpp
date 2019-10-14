@@ -127,8 +127,8 @@ namespace engine
                goto done ;
             }
             {
-            string fieldName = itr->value.attr().toFieldName() ;
-            BSONElement ele = src.getFieldDotted( fieldName ) ;
+            ossPoolString fieldName = itr->value.attr().toFieldName() ;
+            BSONElement ele = src.getFieldDotted( fieldName.c_str() ) ;
             if ( ele.eoo() )
             {
                if ( itr->alias.empty() )
@@ -277,7 +277,7 @@ namespace engine
       {
          if ( !itr->value.attr().empty() )
          {
-            string name = itr->value.attr().toString() ;
+            ossPoolString name = itr->value.attr().toString() ;
 
             /// do not pass name like 'a.$[1]' to query
             const CHAR *dollarArray = ossStrstr( name.c_str(), ".$[" ) ;

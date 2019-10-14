@@ -77,8 +77,8 @@ namespace engine
       _qgmPlan *_probe ;
       const qgmField *_buildAlias ;
       const qgmField *_probeAlias ;
-      std::string _buildKey ;
-      std::string _probeKey ;
+      ossPoolString _buildKey ;
+      ossPoolString _probeKey ;
       QGM_HT_CONTEXT _hashContext ;
       _qgmFetchOut _buildF ;
       _qgmFetchOut _probeF ;

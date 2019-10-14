@@ -100,7 +100,7 @@ namespace engine
       _SDB_KRCB *krcb = pmdGetKRCB() ;
       SDB_ROLE role = krcb->getDBRole() ;
       BSONObj hint ;
-      string clName = _collection.toString() ;
+      ossPoolString clName = _collection.toString() ;
 
       CHAR *pMsg = NULL ;
       INT32 msgSize = 0 ;

@@ -95,7 +95,7 @@ namespace engine
 
          SDB_ASSERT( NULL == _fetch.next, "impossible" ) ;
 
-         _splitEle = _fetch.obj.getFieldDotted( _fieldName ) ;
+         _splitEle = _fetch.obj.getFieldDotted( _fieldName.c_str() ) ;
          if ( Array != _splitEle.type() ) /// not array
          {
             next = _fetch ;

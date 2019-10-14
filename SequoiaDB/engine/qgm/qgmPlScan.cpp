@@ -189,7 +189,7 @@ namespace engine
 
    BOOLEAN _qgmPlScan::canUseTrans() const
    {
-      string strName = _collection.toString() ;
+      ossPoolString strName = _collection.toString() ;
       const CHAR *pCLName = strName.c_str() ;
 
       if ( rtnIsCommand( pCLName ) )
@@ -206,7 +206,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       _rtnCommand *pCommand = NULL ;
 
-      string strName = _collection.toString() ;
+      ossPoolString strName = _collection.toString() ;
       const CHAR *pCLName = strName.c_str() ;
       BSONObj selector = _selector.selector() ;
 

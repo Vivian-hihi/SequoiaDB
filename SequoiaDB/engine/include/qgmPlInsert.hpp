@@ -76,7 +76,7 @@ namespace engine
                         _pmdEDUCB *cb ) ;
 
    private:
-      string         _fullName ;
+      ossPoolString  _fullName ;
       BSONObj        _insertor ;
       BOOLEAN        _got ;
       SDB_ROLE       _role ;

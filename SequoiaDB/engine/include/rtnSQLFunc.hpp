@@ -43,13 +43,12 @@
 #include "qgmDef.hpp"
 #include "pd.hpp"
 #include "../bson/bson.h"
-#include <vector>
 
 using namespace bson ;
 
 namespace engine
 {
-   typedef std::vector<BSONElement> RTN_FUNC_PARAMS ;
+   typedef ossPoolVector<BSONElement>  RTN_FUNC_PARAMS ;
 
    class _rtnSQLFunc : public SDBObject
    {
@@ -126,16 +125,15 @@ namespace engine
    private:
       virtual INT32 _push( const RTN_FUNC_PARAMS &param ) = 0 ;
 
-
    protected:
-      std::string       _name ;
+      ossPoolString     _name ;
       _qgmField         _alias ;
       qgmOPFieldVec     _param ;
    } ;
 
    typedef class _rtnSQLFunc     rtnSQLFunc ;
-   typedef vector< rtnSQLFunc >  rtnSQLFuncVec ;
-   typedef vector< rtnSQLFunc* > rtnSQLFuncPtrVec ;
+   typedef ossPoolVector< _rtnSQLFunc >      rtnSQLFuncVec ;
+   typedef ossPoolVector< _rtnSQLFunc* >     rtnSQLFuncPtrVec ;
 
 }
 

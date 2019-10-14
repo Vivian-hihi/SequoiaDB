@@ -116,7 +116,7 @@ namespace engine
       }
       else
       {
-         rc = qgmParseValue( root, builder, string() ) ;
+         rc = qgmParseValue( root, builder, ossPoolString() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Parse value failed, rc: %d", rc ) ;
@@ -1335,7 +1335,7 @@ namespace engine
 
          SQL_CON_ITR itrKey = root->children.begin() ;
          SQL_CON_ITR itrValue = itrKey + 1 ;
-         string key( itrKey->value.begin(), itrKey->value.end() ) ;
+         ossPoolString key( itrKey->value.begin(), itrKey->value.end() ) ;
 
          rc = qgmParseValue( itrValue, builder, key ) ;
          if ( rc )

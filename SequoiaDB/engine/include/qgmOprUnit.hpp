@@ -42,7 +42,6 @@
 #include "core.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
-#include <vector>
 
 #include "qgmOptiTree.hpp"
 #include "qgmConditionNodeHelper.hpp"

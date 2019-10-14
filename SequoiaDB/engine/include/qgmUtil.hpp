@@ -81,7 +81,7 @@ namespace engine
 
    BSONObj qgmMerge( const BSONObj &left, const BSONObj &right ) ;
 
-   string qgmPlanType( QGM_PLAN_TYPE type ) ;
+   const CHAR* qgmPlanType( QGM_PLAN_TYPE type ) ;
 
 
    BOOLEAN isWildCard( const qgmOPFieldVec &fields ) ;
@@ -121,7 +121,7 @@ namespace engine
    INT32 upAggrsByFieldAlias( qgmAggrSelectorVec &aggrs,
                               const qgmOPFieldPtrVec & fieldAlias ) ;
 
-   string qgmHintToString( const QGM_HINS &hint ) ;
+   ossPoolString qgmHintToString( const QGM_HINS &hint ) ;
 
    void   qgmUseIndexHintToBson( const qgmHint &h, BSONObjBuilder &build ) ;
    void   qgmUseOptionToBson( const qgmHint &h, BSONObjBuilder &build ) ;
@@ -135,17 +135,17 @@ namespace engine
                                BOOLEAN keepAlias ) ;
 
    INT32    qgmParseValue( INT32 type,
-                           const string &value,
+                           const ossPoolString &value,
                            BSONObjBuilder &builder,
-                           const string &fieldName ) ;
+                           const ossPoolString &fieldName ) ;
 
    INT32    qgmParseValue( const qgmOpField &value,
                            BSONObjBuilder &builder,
-                           const string &fieldName ) ;
+                           const ossPoolString &fieldName ) ;
 
    INT32    qgmParseValue( const SQL_CON_ITR &root,
                            BSONObjBuilder &builder,
-                           const string &fieldName ) ;
+                           const ossPoolString &fieldName ) ;
 
    BOOLEAN  sqlIsCommonValue( INT32 type ) ;
    BOOLEAN  sqlIsNestedValue( INT32 type ) ;

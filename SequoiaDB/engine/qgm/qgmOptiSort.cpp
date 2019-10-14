@@ -223,7 +223,7 @@ namespace engine
          qgmOPFieldVec::const_iterator itr = _orderby.begin() ;
          for ( ; itr != _orderby.end(); itr++ )
          {
-            string t ;
+            const CHAR *t = "" ;
             if ( SQL_GRAMMAR::DBATTR == itr->type ||
                  SQL_GRAMMAR::ASC == itr->type )
             {

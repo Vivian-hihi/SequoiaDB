@@ -43,6 +43,7 @@
 #include "qgmTrace.hpp"
 #include "mthDef.hpp"
 #include "utilMath.hpp"
+#include "utilMemListPool.hpp"
 
 using namespace bson ;
 
@@ -323,9 +324,9 @@ namespace engine
       return FALSE ;
    }
 
-   string _qgmField::toFieldName() const
+   ossPoolString _qgmField::toFieldName() const
    {
-      stringstream ss ;
+      StringBuilder ss( _size + 1 ) ;
 
       if ( _size > 0 )
       {
@@ -334,10 +335,10 @@ namespace engine
 
          if ( _size > QGM_FAST_STRING_SIZE )
          {
-            namePtr = (CHAR*)SDB_OSS_MALLOC( _size + 1 ) ;
+            namePtr = (CHAR*)SDB_THREAD_ALLOC( _size + 1 ) ;
             if ( !namePtr )
             {
-               return string() ;
+               return ossPoolString() ;
             }
             ossMemcpy( namePtr, _begin, _size ) ;
             namePtr[ _size ] = 0 ;
@@ -377,12 +378,12 @@ namespace engine
 
          if ( namePtr && namePtr != fastStr )
          {
-            SDB_OSS_FREE( namePtr ) ;
+            SDB_THREAD_FREE( namePtr ) ;
             namePtr = NULL ;
          }
       }
 
-      return ss.str() ;
+      return ss.poolStr() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMFETCHOUT_ELEMENT, "_qgmFetchOut::element" )
@@ -399,7 +400,7 @@ namespace engine
       {
          try
          {
-            local = obj.getFieldDotted( attr.attr().toFieldName() );
+            local = obj.getFieldDotted( attr.attr().toFieldName().c_str() );
          }
          catch ( std::exception &e )
          {
@@ -416,9 +417,9 @@ namespace engine
          {
             try
             {
-               string fieldName = attr.attr().toFieldName() ;
-               local = obj.getFieldDotted( fieldName ) ;
-               next = this->next->obj.getFieldDotted( fieldName ) ;
+               ossPoolString fieldName = attr.attr().toFieldName() ;
+               local = obj.getFieldDotted( fieldName.c_str() ) ;
+               next = this->next->obj.getFieldDotted( fieldName.c_str() ) ;
             }
             catch ( std::exception &e )
             {
@@ -477,7 +478,7 @@ namespace engine
 
             try
             {
-               local = srcObj.getFieldDotted( attr.attr().toFieldName() ) ;
+               local = srcObj.getFieldDotted( attr.attr().toFieldName().c_str() ) ;
             }
             catch ( std::exception &e )
             {

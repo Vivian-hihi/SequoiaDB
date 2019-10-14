@@ -80,7 +80,7 @@ namespace engine
       qgmFetchOut       _fetch ;
       BSONObjIterator   _itr ;
       BSONElement       _splitEle ;
-      std::string       _fieldName ;
+      ossPoolString     _fieldName ;
       BOOLEAN           _replaced ;
 
    } ;

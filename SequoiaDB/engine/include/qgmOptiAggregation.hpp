@@ -95,7 +95,7 @@ namespace engine
       }
    } ;
    typedef struct _qgmAggrSelector qgmAggrSelector ;
-   typedef std::vector< qgmAggrSelector > qgmAggrSelectorVec ;
+   typedef ossPoolVector< qgmAggrSelector >  qgmAggrSelectorVec ;
 
    class _qgmOptiAggregation : public _qgmOptiTreeNode
    {

@@ -50,7 +50,7 @@ namespace engine
    class _qgmOperatorElement : public SDBObject
    {
    public :
-      typedef std::vector<_qgmOperatorElement*>    oprElePtrVec ;
+      typedef ossPoolVector<_qgmOperatorElement*>     oprElePtrVec ;
 
    public :
       INT32 _id ;

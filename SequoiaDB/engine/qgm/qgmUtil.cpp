@@ -355,9 +355,9 @@ namespace engine
       return obj ;
    }
 
-   string qgmPlanType( QGM_PLAN_TYPE type )
+   const CHAR* qgmPlanType( QGM_PLAN_TYPE type )
    {
-      string t ;
+      const CHAR *t = "" ;
       if ( QGM_PLAN_TYPE_RETURN == type )
       {
          t = "RETURN" ;
@@ -954,9 +954,9 @@ namespace engine
       return rc ;
    }
 
-   string qgmHintToString( const QGM_HINS &hint )
+   ossPoolString qgmHintToString( const QGM_HINS &hint )
    {
-      stringstream ss ;
+      StringBuilder ss ;
       QGM_HINS::const_iterator i = hint.begin() ;
       for ( ; i != hint.end(); ++i )
       {
@@ -968,7 +968,7 @@ namespace engine
          }
          ss << ") " ;
       }
-      return ss.str() ;
+      return ss.poolStr() ;
    }
 
    void qgmUseIndexHintToBson( const qgmHint &h, BSONObjBuilder &build )
@@ -1150,9 +1150,9 @@ namespace engine
    }
 
    INT32 qgmParseValue( INT32 type,
-                        const string &value,
+                        const ossPoolString &value,
                         BSONObjBuilder &builder,
-                        const string &fieldName )
+                        const ossPoolString &fieldName )
    {
       INT32 rc = SDB_OK ;
 
@@ -1224,7 +1224,8 @@ namespace engine
             }
             else
             {
-               OID tmpOid( value ) ;
+               OID tmpOid ;
+               tmpOid.init( value.c_str() ) ;
                builder.appendOID( fieldName, &tmpOid ) ;
             }
          }
@@ -1273,29 +1274,29 @@ namespace engine
 
    INT32 qgmParseValue( const qgmOpField &value,
                         BSONObjBuilder &builder,
-                        const string &fieldName )
+                        const ossPoolString &fieldName )
    {
-      string str = value.value.toString() ;
+      ossPoolString str = value.value.toString() ;
       return qgmParseValue( value.type, str, builder, fieldName ) ;
    }
 
    INT32 qgmParseValue( const SQL_CON_ITR &root,
                         BSONObjBuilder &builder,
-                        const string &fieldName )
+                        const ossPoolString &fieldName )
    {
       INT32 type = (INT32)(root->value.id().to_long()) ;
-      string value ;
+      ossPoolString value ;
 
       if ( sqlIsNestedValue( type ) )
       {
          SDB_ASSERT( 1 == root->children.size(), "impossible" ) ;
          SQL_CON_ITR itr = root->children.begin() ;
-         value = string( itr->value.begin(), itr->value.end() ) ;
+         value = ossPoolString( itr->value.begin(), itr->value.end() ) ;
       }
       else
       {
          SDB_ASSERT( root->children.empty(), "impossible" ) ;
-         value = string( root->value.begin(), root->value.end() ) ;
+         value = ossPoolString( root->value.begin(), root->value.end() ) ;
       }
 
       return qgmParseValue( type, value, builder, fieldName ) ;

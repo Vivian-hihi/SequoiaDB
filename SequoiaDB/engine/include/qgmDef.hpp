@@ -41,6 +41,8 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossMemPool.hpp"
+#include "utilPooledObject.hpp"
 #include "sqlGrammar.hpp"
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
@@ -53,19 +55,18 @@ using namespace bson ;
 namespace engine
 {
    class _qgmPtrTable ;
-
    /*
       _qgmField define
    */
-   class _qgmField : public SDBObject
+   class _qgmField : public _utilPooledObject
    {
    public:
       const static UINT32 npos ;
 
    private:
-      _qgmPtrTable *_ptrTable ;
-      const CHAR *_begin ;
-      UINT32 _size ;
+      _qgmPtrTable   *_ptrTable ;
+      const CHAR     *_begin ;
+      UINT32         _size ;
 
    public:
       _qgmField() ;
@@ -115,24 +116,24 @@ namespace engine
          return _size ;
       }
 
-      string toString() const
+      ossPoolString toString() const
       {
          if ( _begin )
          {
-            return string( _begin, _size ) ;
+            return ossPoolString( _begin, _size ) ;
          }
          return "" ;
       }
 
-      string toFieldName() const ;
+      ossPoolString toFieldName() const ;
 
       _qgmPtrTable* ptrTable() { return _ptrTable ; }
 
       friend class _qgmPtrTable ;
    } ;
    typedef class _qgmField qgmField ;
-   typedef vector< qgmField* >   qgmFieldPtrVec ;
-   typedef vector< qgmField >    qgmFieldVec ;
+   typedef ossPoolVector< qgmField* >     qgmFieldPtrVec ;
+   typedef ossPoolVector< qgmField >      qgmFieldVec ;
 
    /*
       _qgmDbAttr define
@@ -184,15 +185,15 @@ namespace engine
                 && _attr == attr._attr ;
       }
 
-      OSS_INLINE string toString() const
+      OSS_INLINE ossPoolString toString() const
       {
          if ( !_relegation.empty() && !_attr.empty() )
          {
-            stringstream ss ;
+            StringBuilder ss( _relegation.size() + _attr.size() + 2 ) ;
             ss << _relegation.toString()
                << "."
                << _attr.toString() ;
-            return ss.str() ;
+            return ss.poolStr() ;
          }
          else
          {
@@ -201,15 +202,15 @@ namespace engine
          }
       }
 
-      OSS_INLINE string toFieldName() const
+      OSS_INLINE ossPoolString toFieldName() const
       {
          if ( !_relegation.empty() && !_attr.empty() )
          {
-            stringstream ss ;
+            StringBuilder ss( _relegation.size() + _attr.size() + 2 ) ;
             ss << _relegation.toString()
                << "."
                << _attr.toFieldName() ;
-            return ss.str() ;
+            return ss.poolStr() ;
          }
          else
          {
@@ -238,8 +239,8 @@ namespace engine
       qgmField _attr ;
    } ;
    typedef class _qgmDbAttr qgmDbAttr ;
-   typedef vector< qgmDbAttr* > qgmDbAttrPtrVec ;
-   typedef vector< qgmDbAttr >  qgmDbAttrVec ;
+   typedef ossPoolVector< qgmDbAttr* >    qgmDbAttrPtrVec ;
+   typedef ossPoolVector< qgmDbAttr >     qgmDbAttrVec ;
 
    /*
       _qgmOpField define
@@ -302,9 +303,9 @@ namespace engine
          return value.empty() && alias.empty() ;
       }
 
-      string toString() const
+      ossPoolString toString() const
       {
-         stringstream ss ;
+         StringBuilder ss( 100 ) ;
          ss << "value:" << value.toString() ;
          ss << ",type:" << type ;
          if ( !alias.empty() )
@@ -315,14 +316,14 @@ namespace engine
          {
             ss << ",expr:" << expr.toString() ;
          }
-         return ss.str() ;
+         return ss.poolStr() ;
       }
    } ;
    typedef struct _qgmOpField qgmOpField ;
-   typedef std::vector< qgmOpField >  qgmOPFieldVec ;
-   typedef std::vector< qgmOpField* > qgmOPFieldPtrVec ;
+   typedef ossPoolVector< qgmOpField >    qgmOPFieldVec ;
+   typedef ossPoolVector< qgmOpField* >   qgmOPFieldPtrVec ;
    
-   typedef std::vector<BSONElement>   qgmFOElementVec ;
+   typedef ossPoolVector<BSONElement>     qgmFOElementVec ;
    /*
       _qgmFetchOut define
    */
@@ -357,7 +358,7 @@ namespace engine
       qgmDbAttr      _varName ;
    }varItem ;
 
-   typedef vector< varItem >     QGM_VARLIST ;
+   typedef ossPoolVector< varItem >    QGM_VARLIST ;
 
    struct _qgmHint : public SDBObject
    {
@@ -366,7 +367,7 @@ namespace engine
    } ;
    typedef struct _qgmHint qgmHint ;
 
-   typedef vector<qgmHint>  QGM_HINS ;
+   typedef ossPoolVector< qgmHint >    QGM_HINS ;
 
    enum QGM_JOIN_ACHIEVE
    {

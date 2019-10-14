@@ -65,7 +65,7 @@ namespace engine
    } ;
 
    class _qgmPlan ;
-   typedef vector<_qgmPlan *> QGM_PINPUT ;
+   typedef ossPoolVector<_qgmPlan *>   QGM_PINPUT ;
 
    class _pmdEDUCB ;
 

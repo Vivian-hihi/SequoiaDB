@@ -40,12 +40,13 @@
 #define QGMOPTITREE_HPP_
 
 #include "qgmDef.hpp"
+#include "utilPooledObject.hpp"
+#include "ossMemPool.hpp"
 #include "qgmPtrTable.hpp"
 #include "qgmParamTable.hpp"
 #include "ossUtil.hpp"
 #include "sqlGrammar.hpp"
 #include "pd.hpp"
-#include <vector>
 
 using namespace std ;
 
@@ -100,7 +101,7 @@ namespace engine
    class _qgmOptiTreeNode ;
    typedef _qgmOptiTreeNode qgmOptiTreeNode ;
 
-   class _qgmOprUnit : public SDBObject
+   class _qgmOprUnit : public _utilPooledObject
    {
       public:
          _qgmOprUnit ( QGM_OPTI_TYPE type ) ;
@@ -158,14 +159,14 @@ namespace engine
 
    } ;
    typedef _qgmOprUnit qgmOprUnit ;
-   typedef std::vector< qgmOprUnit* > qgmOprUnitPtrVec ;
+   typedef ossPoolVector< qgmOprUnit* >      qgmOprUnitPtrVec ;
 
-   typedef std::vector< qgmOptiTreeNode* >  qgmOptiTreeNodePtrVec ;
+   typedef ossPoolVector< qgmOptiTreeNode* > qgmOptiTreeNodePtrVec ;
    struct _qgmConditionNode ;
 
    class _qgmOptTree ;
 
-   class _qgmOptiTreeNode : public SDBObject
+   class _qgmOptiTreeNode : public _utilPooledObject
    {
       friend class _qgmOptTree ;
    public:
@@ -279,7 +280,7 @@ namespace engine
 
    } ;
 
-   class _qgmOptTree : public SDBObject
+   class _qgmOptTree : public _utilPooledObject
    {
       public:
          class _iterator : public SDBObject

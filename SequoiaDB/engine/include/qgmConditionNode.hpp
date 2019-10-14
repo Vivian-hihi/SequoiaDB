@@ -44,7 +44,7 @@
 
 namespace engine
 {
-   struct _qgmConditionNode : public SDBObject
+   struct _qgmConditionNode : public _utilPooledObject
    {
       qgmDbAttr value ;
 
@@ -102,9 +102,9 @@ namespace engine
          right = NULL ;
       }
    } ;
-   typedef struct _qgmConditionNode qgmConditionNode ;
-   typedef vector< qgmConditionNode* > qgmConditionNodePtrVec ;
-   typedef vector< qgmConditionNode >  qgmConditionNodeVec ;
+   typedef struct _qgmConditionNode             qgmConditionNode ;
+   typedef ossPoolVector< qgmConditionNode* >   qgmConditionNodePtrVec ;
+   typedef ossPoolVector< qgmConditionNode >    qgmConditionNodeVec ;
 }
 
 #endif

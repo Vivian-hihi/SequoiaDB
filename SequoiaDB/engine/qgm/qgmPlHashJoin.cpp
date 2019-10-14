@@ -123,8 +123,8 @@ namespace engine
    string _qgmPlHashJoin::toString()const
    {
       stringstream ss ;
-      ss << "Build Key: " << _buildKey << "\n" ;
-      ss << "Probe Key: " << _probeKey << "\n" ;
+      ss << "Build Key: " << _buildKey.c_str() << "\n" ;
+      ss << "Probe Key: " << _probeKey.c_str() << "\n" ;
       return ss.str() ;
    }
 

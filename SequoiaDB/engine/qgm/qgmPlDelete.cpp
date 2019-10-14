@@ -107,7 +107,7 @@ namespace engine
       SDB_ROLE role = krcb->getDBRole() ;
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
-      string clName = _collection.toString() ;
+      ossPoolString clName = _collection.toString() ;
 
       /// When delete virtual cs
       if ( 0 == ossStrncmp( clName.c_str(), CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",

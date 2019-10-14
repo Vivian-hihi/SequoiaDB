@@ -46,7 +46,7 @@ namespace engine
       stringstream ss ;
 
       ss << "{name:"
-         << _name ;
+         << _name.c_str() ;
       if ( !_alias.empty() )
       {
          ss << ",alias:"
@@ -55,7 +55,7 @@ namespace engine
       if ( !_param.empty() )
       {
          ss << ",param:[" ;
-         vector<qgmOpField>::const_iterator itr = _param.begin() ;
+         qgmOPFieldVec::const_iterator itr = _param.begin() ;
          for ( ; itr != _param.end(); itr++ )
          {
             ss <<"{" << itr->toString() << "}," ;

@@ -38,6 +38,7 @@
 
 #include "qgmPtrTable.hpp"
 #include "qgmUtil.hpp"
+#include "utilMemListPool.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 
@@ -66,7 +67,8 @@ namespace engine
       STR_TABLE::iterator it = _stringTable.begin() ;
       while ( it != _stringTable.end() )
       {
-         SDB_OSS_FREE( (CHAR*)(it->first) ) ;
+         CHAR *p = ( CHAR* )it->first ;
+         SDB_THREAD_FREE( p ) ;
          ++it ;
       }
       _stringTable.clear() ;
@@ -181,7 +183,7 @@ namespace engine
       }
       else
       {
-         string str( sub1.begin(), sub1.size() ) ;
+         ossPoolString str( sub1.begin(), sub1.size() ) ;
          str += sub2.toString() ;
          qgmField merge ;
          getOwnField( str.c_str(), merge ) ;
@@ -304,8 +306,20 @@ namespace engine
       }
       else
       {
-         CHAR *dup = ossStrdup( str ) ;
-         _stringTable[ dup ] = 1 ;
+         UINT32 size = ossStrlen( str ) ;
+         CHAR *dup = (CHAR*)SDB_THREAD_ALLOC( size + 1 ) ;
+         if ( !dup )
+         {
+            PD_LOG( PDERROR, "Alloc string(%s, %d) failed: out-of-memory",
+                    str, size ) ;
+            dup = "" ;
+         }
+         else
+         {
+            ossStrncpy( dup, str, size ) ;
+            dup[ size ] = '\0' ;
+            _stringTable[ dup ] = 1 ;
+         }
          return dup ;
       }
    }

@@ -67,7 +67,7 @@ namespace engine
    /*
       _qgmPtrTable define
    */
-   class _qgmPtrTable : public SDBObject
+   class _qgmPtrTable : public _utilPooledObject
    {
    public:
       _qgmPtrTable() ;

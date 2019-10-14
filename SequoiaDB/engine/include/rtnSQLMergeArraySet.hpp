@@ -48,8 +48,8 @@ namespace engine
 
    class rtnSQLMergeArraySet : public _rtnSQLFunc
    {
-   typedef ossPoolSet< bson::BSONElement > FIELD_SET;
-   typedef std::vector< bson::BSONObj >          OBJ_VEC;
+   typedef ossPoolSet< bson::BSONElement >   FIELD_SET;
+   typedef ossPoolVector< bson::BSONObj >    OBJ_VEC;
    public:
       rtnSQLMergeArraySet( const CHAR *pName );
 

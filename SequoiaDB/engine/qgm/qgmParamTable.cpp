@@ -66,12 +66,10 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMPARAMTABLE_ADDCONST ) ;
       INT32 rc = SDB_OK ;
 
-      const static string s_ConstField( "$const" ) ;
-
       BSONObjBuilder builder ;
       _qgmBsonPair bPair ;
 
-      rc = qgmParseValue( value, builder, s_ConstField ) ;
+      rc = qgmParseValue( value, builder, "$const" ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Parse value[%d,%s] failed, rc: %d",

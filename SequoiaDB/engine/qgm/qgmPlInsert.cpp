@@ -73,7 +73,7 @@ namespace engine
    {
       stringstream ss ;
       ss << "Type:" << qgmPlanType( _type ) << '\n' ;
-      ss << "Name:" << _fullName << '\n' ;
+      ss << "Name:" << _fullName.c_str() << '\n' ;
       if ( !_insertor.isEmpty() )
       {
          ss << "Record:" << _insertor.toString() << '\n' ;
