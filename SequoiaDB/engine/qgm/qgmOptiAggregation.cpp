@@ -37,6 +37,7 @@
 ******************************************************************************/
 
 #include "qgmOptiAggregation.hpp"
+#include "rtnSQLFuncFactory.hpp"
 #include "qgmUtil.hpp"
 #include "qgmOprUnit.hpp"
 #include "utilStr.hpp"

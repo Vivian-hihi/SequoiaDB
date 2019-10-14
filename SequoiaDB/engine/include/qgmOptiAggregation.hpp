@@ -140,7 +140,7 @@ namespace engine
 
    public:
       qgmAggrSelectorVec _selector ;      /// parsed
-      qgmAggrSelectorVec _tmpSelector ;
+      qgmOPFieldVec      _tmpSelector ;
       qgmOPFieldVec      _groupby ;
 
    private:
