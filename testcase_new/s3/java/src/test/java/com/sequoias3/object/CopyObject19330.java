@@ -98,7 +98,7 @@ public class CopyObject19330 extends S3TestBase {
 
         // copy object
         CopyObjectRequest objRequest = new CopyObjectRequest(srcBucketName, srcKeyName, dstBucketName, dstKeyName);
-        objRequest.withUnmodifiedSinceConstraint(srcCurLastModDate);
+        objRequest.withUnmodifiedSinceConstraint(new Date(srcCurLastModDate.getTime() - 1000));
         CopyObjectResult result = s3Client.copyObject(objRequest);
         // check results
         Assert.assertEquals(result, null);
