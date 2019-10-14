@@ -21,6 +21,7 @@
             <package name="com.sequoiadb.clustermanager"/>
             <package name="com.sequoiadb.basicoperation.analyze"/>
             <package name="com.sequoiadb.metadata.sync" />
+            <package name="com.sequoiadb.sdb.serial" />
         </packages>
     </test>
 	
