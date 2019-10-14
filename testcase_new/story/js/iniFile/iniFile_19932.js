@@ -1,5 +1,5 @@
 /************************************
-*@Description: seqDB-19532 IniFile类SDB_INIFILE_EQUALSIGN测试
+*@Description: seqDB-19932 IniFile类SDB_INIFILE_EQUALSIGN测试
 *@author:      luweikang
 *@createDate:  2019.10.08
 **************************************/

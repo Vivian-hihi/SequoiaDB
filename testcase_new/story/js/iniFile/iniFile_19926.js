@@ -1,5 +1,5 @@
 /************************************
-*@Description: seqDB-19526 IniFile类SDB_INIFILE_NOTCASE测试
+*@Description: seqDB-19926 IniFile类SDB_INIFILE_NOTCASE测试
 *@author:      luweikang
 *@createDate:  2019.10.08
 **************************************/
