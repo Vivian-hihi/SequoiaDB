@@ -6970,7 +6970,11 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
       BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson ) ;
    }
    BSON_FINISH ( newObj ) ;
-
+   
+   if ( 0 != flag )
+   {
+      flag = eraseSingleFlag( flag, FLG_QUERY_MODIFY ) ;
+   }
    rc = _sdbQuery( cHandle, condition, selector, orderBy, &newObj,
                    numToSkip, numToReturn, flag | FLG_QUERY_EXPLAIN,
                    handle ) ;
@@ -7006,16 +7010,17 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              bson *hint,
                              INT64 numToSkip,
                              INT64 numToReturn,
-                             INT32 flags,
+                             INT32 flag,
                              sdbCursorHandle *handle )
 {
-    // remove query plan flag
-    if ( 0 != flags )
+    // remove "query plan" and "query and modify" flag
+    if ( 0 != flag )
     {
-       flags = eraseSingleFlag( flags, FLG_QUERY_EXPLAIN ) ;
+       flag = eraseSingleFlag( flag, FLG_QUERY_EXPLAIN ) ;
+       flag = eraseSingleFlag( flag, FLG_QUERY_MODIFY ) ;
     }
     return _sdbQuery( cHandle, condition, select, orderBy, hint,
-                      numToSkip, numToReturn, flags, handle ) ;
+                      numToSkip, numToReturn, flag, handle ) ;
 }
 
 static INT32 _mergeBson( bson* to, bson* from )
@@ -7094,9 +7099,12 @@ static INT32 _sdbQueryAndModify ( sdbCollectionHandle cHandle,
    }
    BSON_APPEND( newHint, FIELD_NAME_MODIFY, &modify, bson ) ;
    BSON_FINISH( newHint ) ;
-
+   if ( 0 != flag )
+   {
+      flag = eraseSingleFlag( flag, FLG_QUERY_EXPLAIN ) ;
+   }
    flag |= FLG_QUERY_MODIFY ;
-   rc = sdbQuery1( cHandle, condition, select, orderBy, &newHint,
+   rc = _sdbQuery( cHandle, condition, select, orderBy, &newHint,
                      numToSkip, numToReturn, flag, handle ) ;
 
 done:

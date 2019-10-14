@@ -290,31 +290,115 @@ namespace engine
 
       }
 
-      if( Object == hint.getField( FIELD_NAME_MODIFY ).type() )
+      // in case of "query and modify"
+      if ( Object == hint.getField( FIELD_NAME_MODIFY ).type() )
       {
-         flags |= FLG_QUERY_MODIFY ;
-      }
-      if( options.hasField( FIELD_NAME_KEEP_SHARDING_KEY ) )
-      {
-         BSONElement ele = options.getField( FIELD_NAME_KEEP_SHARDING_KEY ) ;
-         if( Bool != ele.type() )
+         BSONObj filter = BSON( FIELD_NAME_MODIFY << "" ) ;
+         BSONObj hintObj = hint.filterFieldsUndotted( filter, FALSE ) ;
+         BSONObj modifyObj = hint.filterFieldsUndotted( filter, TRUE ) ;
+         BSONObj modifyObjVal ;
+         string opType ; 
+         
+         // get modify obj
+         BSONElement ele = modifyObj.getField( FIELD_NAME_MODIFY ) ;
+         if ( Object != ele.type() )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "FIELD_NAME_KEEP_SHARDING_KEY must be bool in options" ) ;
+            detail = BSON( SPT_ERR << 
+                           "$Modify in 'query and modify' should be an object" ) ;
             goto error ;
          }
-         if( TRUE == ele.Bool() )
+         modifyObjVal = ele.Obj() ;
+         // get op type
+         ele = modifyObjVal.getField( FIELD_NAME_OP ) ;
+         if ( String != ele.type() )
          {
-            flags |= QUERY_KEEP_SHARDINGKEY_IN_UPDATE ;
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << 
+                           "OP type in 'query and modify' should be a string" ) ;
+            goto error ;
+         }   
+         opType = ele.String() ;
+         if ( FIELD_OP_VALUE_UPDATE == opType )
+         {
+            BSONObj rule ;
+            BOOLEAN returnNew = FALSE ;
+            // get update rule
+            ele = modifyObjVal.getField( FIELD_NAME_OP_UPDATE ) ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               detail = BSON( SPT_ERR << 
+                              "'query and update' has no update rule" ) ;
+               goto error ;
+            }
+            rule = ele.Obj() ;
+            // get returnNew
+            ele = modifyObjVal.getField( FIELD_NAME_RETURNNEW ) ;
+            if ( Bool != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               detail = BSON( SPT_ERR << 
+                              "'query and update' does not specify returnNew" ) ;
+               goto error ;               
+            }
+            returnNew = ele.Bool() ;
+            // get options
+            if ( options.hasField( FIELD_NAME_KEEP_SHARDING_KEY ) )
+            {
+               ele = options.getField( FIELD_NAME_KEEP_SHARDING_KEY ) ;
+               if( Bool != ele.type() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  detail = BSON( SPT_ERR << "FIELD_NAME_KEEP_SHARDING_KEY must be bool in options" ) ;
+                  goto error ;
+               }
+               if( TRUE == ele.Bool() )
+               {
+                  flags |= QUERY_KEEP_SHARDINGKEY_IN_UPDATE ;
+               }
+            }
+            // execute
+            rc = _cl.pCollection->queryAndUpdate( &pCursor, rule, cond, sel, 
+                                                  order, hintObj, numToSkip, 
+                                                  numToRet, flags, returnNew ) ;
+            if( SDB_OK != rc && SDB_DMS_EOC != rc )
+            {
+               detail = BSON( SPT_ERR <<
+                              "Failed to query and update in collection" ) ;
+               goto error ;
+            }
+         }
+         else if ( FIELD_OP_VALUE_REMOVE == opType )
+         {
+            // execute
+            rc = _cl.pCollection->queryAndRemove( &pCursor, cond, sel, 
+                                                  order, hintObj,
+                                                  numToSkip, numToRet, flags ) ;
+            if( SDB_OK != rc && SDB_DMS_EOC != rc )
+            {
+               detail = BSON( SPT_ERR <<
+                              "Failed to query and remove in collection" ) ;
+               goto error ;
+            }            
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << 
+                           "invalid OP type for 'query and modify'" ) ;
+            goto error ;
          }
       }
-
-      rc = _cl.query( &pCursor, cond, sel, order, hint,
-                      numToSkip, numToRet, flags ) ;
-      if( SDB_OK != rc && SDB_DMS_EOC != rc )
+      else // in case of "query" only
       {
-         detail = BSON( SPT_ERR << "Failed to query collection" ) ;
-         goto error ;
+         rc = _cl.pCollection->query( &pCursor, cond, sel, order, hint,
+                                      numToSkip, numToRet, flags ) ;
+         if( SDB_OK != rc && SDB_DMS_EOC != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to query collection" ) ;
+            goto error ;
+         }
       }
       SPT_SET_CURSOR_TO_RETURNVAL( pCursor ) ;
    done:

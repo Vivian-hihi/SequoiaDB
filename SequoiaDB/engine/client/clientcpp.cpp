@@ -1504,15 +1504,16 @@ do                                                            \
                                      const BSONObj &hint,
                                      INT64 numToSkip,
                                      INT64 numToReturn,
-                                     INT32 flags )
+                                     INT32 flag )
    {
-      // remove query plan flag
-      if ( 0 != flags )
+      // remove "query plan" and "query and modify" flag
+      if ( 0 != flag )
       {
-         flags = eraseSingleFlag( flags, FLG_QUERY_EXPLAIN ) ;
+         flag = eraseSingleFlag( flag, FLG_QUERY_EXPLAIN ) ;
+         flag = eraseSingleFlag( flag, FLG_QUERY_MODIFY ) ;
       }
       return _query( cursor, condition, selected, orderBy, hint,
-                     numToSkip, numToReturn, flags ) ;
+                     numToSkip, numToReturn, flag ) ;
    }
 
    INT32 _sdbCollectionImpl::queryOne( bson::BSONObj &obj,
@@ -1605,11 +1606,13 @@ do                                                            \
          rc = SDB_SYS ;
          goto error ;
       }
-
+      if ( 0 != flag )
+      {
+         flag = eraseSingleFlag( flag, FLG_QUERY_EXPLAIN ) ;
+      }
       flag |= FLG_QUERY_MODIFY ;
-
-      rc = query( cursor, condition, selected, orderBy, newHint,
-                  numToSkip, numToReturn, flag ) ;
+      rc = _query( cursor, condition, selected, orderBy, newHint,
+                   numToSkip, numToReturn, flag ) ;
       if ( rc )
       {
          goto error ;
@@ -2559,7 +2562,7 @@ do                                                            \
                                        const bson::BSONObj &hint,
                                        INT64 numToSkip,
                                        INT64 numToReturn,
-                                       INT32 flags,
+                                       INT32 flag,
                                        const bson::BSONObj &options )
    {
       INT32 rc = SDB_OK ;
@@ -2584,9 +2587,13 @@ do                                                            \
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
+      if ( 0 != flag )
+      {
+         flag = eraseSingleFlag( flag, FLG_QUERY_MODIFY ) ;
+      }
       // get query explain
       rc = _query( cursor, condition, select, orderBy, newObj,
-                   numToSkip, numToReturn, flags | FLG_QUERY_EXPLAIN ) ;
+                   numToSkip, numToReturn, flag | FLG_QUERY_EXPLAIN ) ;
       if ( rc )
       {
          goto error ;
