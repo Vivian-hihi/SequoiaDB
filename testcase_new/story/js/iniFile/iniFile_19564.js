@@ -62,13 +62,13 @@ function main()
     
     var checkFile = new IniFile(fileFullPath);
     var checkComment1 = checkFile.getSectionComment(section1);
-    compareValue(undefined, checkComment1);
+    compareValue("", checkComment1);
     var checkComment2 = checkFile.getSectionComment(section2);
-    compareValue(undefined, checkComment2);
+    compareValue("", checkComment2);
     var checkComment3 = checkFile.getSectionComment(section3);
-    compareValue(undefined, checkComment3);
+    compareValue("", checkComment3);
     var checkComment4 = checkFile.getSectionComment(section4);
-    compareValue(undefined, checkComment4);
+    compareValue("", checkComment4);
     
     deleteIniFile(filePath);
 }

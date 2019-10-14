@@ -1,5 +1,5 @@
 /************************************
-*@Description: seqDB-19558 指定section删除item的注释
+*@Description: seqDB-19556 删除item的注释
 *@author:      luweikang
 *@createDate:  2019.10.08
 **************************************/
@@ -18,8 +18,8 @@ catch(e)
 
 function main()
 {
-    var filePath = WORKDIR + "/ini19558/";
-    var fileName = "file19558";
+    var filePath = WORKDIR + "/ini19556/";
+    var fileName = "file19556";
     var fileFullPath = filePath + fileName;
     makeIniFile(filePath, fileName);
     
@@ -38,52 +38,31 @@ function main()
     var content = "; " + comment1 + "\n" +
                   "; " + comment2 + "\n" +
                   key1 + "=" + value1 + "; " + comment3 + " " + comment4 +"\n" +
+                  key2 + "=" + value2 + "\n" +
                   "; test section comment\n" +            
                   "[" + section + "]\n" +
                   "; " + comment1 + "\n" +
-                  "; " + comment2 + "\n" +
-                  key1 + "=" + value1 + "; " + comment3 + " " + comment4 +"\n" +
+                  key2 + "=" + value2 + " ; "+ comment3 +"\n" +
                   "; test last comment";
     initFile(fileFullPath, content);
     
     var iniFile = new IniFile(fileFullPath);
-    iniFile.delComment(section, key1, true);
-    iniFile.delComment(section, key1, false);
+    iniFile.delComment(key1, true);
+    iniFile.delComment(key1, false);
+    iniFile.delComment(key2, true);
+    iniFile.delComment(key2, false);
     iniFile.save();
     
-    try
-    {
-       iniFile.delComment("notsection", key1, true);    
-       iniFile.save();
-       throw "SECTION_NOT_EXIST";
-    }
-    catch(e)
-    {
-        if(e != -211)
-        {
-            throw new Error(e);
-        }
-    }
-    
-    try
-    {
-       iniFile.delComment("notsection", key1, false);    
-       iniFile.save();
-       throw "SECTION_NOT_EXIST";
-    }
-    catch(e)
-    {
-        if(e != -211)
-        {
-            throw new Error(e);
-        }
-    }
-    
     var checkFile = new IniFile(fileFullPath);
-    var checkComment1 = checkFile.getComment(section, key1, true);
+    var checkComment1 = checkFile.getComment(key1, true);
     compareValue("", checkComment1);
-    var checkComment2 = checkFile.getComment(section, key1, false);
+    var checkComment2 = checkFile.getComment(key1, false);
     compareValue("", checkComment2);
+    
+    var checkComment3 = checkFile.getComment(key2, true);
+    compareValue("", checkComment3);
+    var checkComment4 = checkFile.getComment(key2, false);
+    compareValue("", checkComment4);
     
     deleteIniFile(filePath);
 }
