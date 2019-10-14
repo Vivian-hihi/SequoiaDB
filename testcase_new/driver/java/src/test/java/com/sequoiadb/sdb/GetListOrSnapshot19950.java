@@ -36,7 +36,7 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
         fullCLName = csName + "." + clName;
     }
 
-    @Test
+    @Test(enabled = false) // SEQUOIADBMAINSTREAM-5011
     public void test_getList() {
         // test hint / skip / limit
         BSONObject query = new BasicBSONObject("Name", fullCLName);
