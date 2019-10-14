@@ -1,0 +1,53 @@
+/************************************
+*@Description: seqDB-19572 注释item，item key和section名相同 
+*@author:      luweikang
+*@createDate:  2019.10.08
+**************************************/
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+
+function main()
+{
+    var filePath = WORKDIR + "/ini19572/";
+    var fileName = "file19572";
+    var fileFullPath = filePath + fileName;
+    makeIniFile(filePath, fileName);
+    
+    var section1 = "auto";
+    var section2 = "mysqld";
+    
+    var value1 = "428df49d-7ad1-11e9-b432-000c292210af";
+    var value2 = "3306";
+    
+    var content = section1 + "=" + value1 + "\n" +
+                  "[" + section1 + "]\n" +
+                  section1 + "=" + value1 + "\n" +
+                  "[" + section2 + "]\n" +
+                  section2 + "=" + value2 + "\n";
+    initFile(fileFullPath, content);
+    
+    var iniFile = new IniFile(fileFullPath);
+    iniFile.disableItem(section1);
+    iniFile.disableItem(section2, section2);
+    iniFile.save();
+    
+    var checkFile = new IniFile(fileFullPath);
+    var checkLastComment1 = checkFile.getValue(section1);
+    compareValue(undefined, checkLastComment1);
+    var checkLastComment2 = checkFile.getValue(section1, section1);
+    compareValue(value1, checkLastComment2);
+    var checkLastComment3 = checkFile.getValue(section2, section2);
+    compareValue(undefined, checkLastComment3);
+    
+    deleteIniFile(filePath);
+}

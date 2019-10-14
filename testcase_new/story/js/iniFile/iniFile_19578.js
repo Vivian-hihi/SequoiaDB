@@ -1,0 +1,64 @@
+/************************************
+*@Description: seqDB-19578 注释所有的item
+*@author:      luweikang
+*@createDate:  2019.10.08
+**************************************/
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+
+function main()
+{
+    var filePath = WORKDIR + "/ini19578/";
+    var fileName = "file19578";
+    var fileFullPath = filePath + fileName;
+    makeIniFile(filePath, fileName);
+    
+    var section1 = "auto";
+    var section2 = "mysqld";
+    
+    var key1 = "server-uuid";
+    var value1 = "428df49d-7ad1-11e9-b432-000c292210af";
+    var key2 = "port";
+    var value2 = "3306";
+    var key3 = "log_error";
+    var value3 = "/opt/sequoiasql/mysql/myinst.log";
+    
+    var content = key1 + "=" + value1 + "\n" +
+                  "[" + section1 + "]\n" +
+                  key1 + "=" + value1 + "\n" +
+                  key2 + "=" + value2 + "\n" +
+                  "[" + section2 + "]\n" +
+                  key2 + "=" + value2 + "\n";
+                  key3 + "=" + value3 + "\n";
+    initFile(fileFullPath, content);
+    
+    var iniFile = new IniFile(fileFullPath);
+    iniFile.disableAllItem();
+    iniFile.save();
+    
+    var checkFile = new IniFile(fileFullPath);
+    var checkLastComment1 = checkFile.getValue(key1);
+    compareValue(undefined, checkLastComment1);
+    var checkLastComment2 = checkFile.getValue(section1, key1);
+    compareValue(undefined, checkLastComment2);
+    
+    var checkLastComment3 = checkFile.getValue(section1, key2);
+    compareValue(undefined, checkLastComment3);
+    var checkLastComment4 = checkFile.getValue(section2, key2);
+    compareValue(undefined, checkLastComment4);
+    
+    var checkLastComment3 = checkFile.getValue(section2, key3);
+    compareValue(undefined, checkLastComment3);
+    
+    deleteIniFile(filePath);
+}
