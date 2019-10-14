@@ -67,7 +67,6 @@ testFiles = [
    [ "./misc/configs14875.cpp" ], # sync
    [ "./misc/invalidFlag15382.cpp" ],
    [ "./load/loadUnloadCS.cpp" ],
-   [ "./load/reloadConf.cpp" ],
    [ "./load/rename.cpp" ],   # sync
    [ "./load/setPDLevel.cpp" ],
    [ "./ssl/sslFalse.cpp" ],
