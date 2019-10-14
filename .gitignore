@@ -26,6 +26,7 @@ ver_conf.h
 CMakeLists.txt
 
 bin/
+build/
 error_cn.php
 error_en.php
 client/include/
