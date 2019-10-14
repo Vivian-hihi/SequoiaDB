@@ -4,7 +4,7 @@
 ***************************************************************************** */
 try
 {
-   main();
+   //main();
 }
 catch(e)
 {
@@ -17,6 +17,12 @@ catch(e)
 
 function main()
 {  
+   if(commIsStandalone( db ))
+   {
+      println( "run mode is standalone" );
+      return;
+   }
+
    var hostName = System.getHostName();
    var dataNodeAttr = createNode( hostName );
    var svcName = dataNodeAttr["svcName"];
