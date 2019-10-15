@@ -94,7 +94,7 @@ TEST_F( invalidFlag15381, test )
    INT64 dftSkipNum  = 0 ;
    INT64 dftReturnNum= -1 ;
 
-   INT32 invalidFlag = -100 ;
+   INT32 invalidFlag = 0x00001000 ;
 	BSONObj update = BSON( "$set" << BSON( "a" << 1 ) ) ;
 
    rc = cl.query( cursor, dftCond, dftSelect, dftOrder, dftHint, dftSkipNum, invalidFlag ) ;
@@ -105,7 +105,7 @@ TEST_F( invalidFlag15381, test )
    ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = cl.queryOne( obj, dftCond, dftSelect, dftOrder, dftHint, dftSkipNum, invalidFlag ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = cl.queryAndUpdate( cursor, update, dftCond, dftSelect, dftOrder, dftHint, 
                            dftSkipNum, dftReturnNum, invalidFlag ) ;
