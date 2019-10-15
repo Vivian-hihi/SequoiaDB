@@ -2355,7 +2355,7 @@ namespace engine
 
       // it is not need to lock that drop temp collection while startup
       // which cb is NULL
-      if ( cb && dpscb )
+      if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
@@ -2557,7 +2557,7 @@ namespace engine
       }
 
       // trans lock
-      if ( cb && dpscb )
+      if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
@@ -2879,7 +2879,7 @@ namespace engine
          goto error ;
       }
 
-      if ( cb && dpscb )
+      if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
          rc = pTransCB->transLockTryX( cb, _logicalCSID, mbID,

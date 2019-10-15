@@ -1902,7 +1902,7 @@ namespace engine
 
       // lock transaction, standalone need lock trans here
       csLID = pCSCB->_su->LogicalCSID() ;
-      if ( cb && dpsCB )
+      if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
          rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
@@ -2204,7 +2204,7 @@ namespace engine
 
       // lock transaction, standalone need lock trans here
       csLID = pCSCB->_su->LogicalCSID() ;
-      if ( cb && dpsCB )
+      if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
          rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
