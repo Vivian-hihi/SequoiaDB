@@ -43,7 +43,7 @@
 
 namespace engine
 {
-   class _qgmSelector : public SDBObject
+   class _qgmSelector : public _utilPooledObject
    {
    public:
       _qgmSelector() ;

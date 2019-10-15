@@ -49,7 +49,7 @@ namespace engine
    typedef INT32 QGM_EXTEND_ID ;
    typedef ossPoolMap<QGM_EXTEND_ID, qgmOptiTreeNode*> QGM_EXTEND_TABLE ;
 
-   class _qgmExtendPlan : public SDBObject
+   class _qgmExtendPlan : public _utilPooledObject
    {
    public:
       _qgmExtendPlan() ;

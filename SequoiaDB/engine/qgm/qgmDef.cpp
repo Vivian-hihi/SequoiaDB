@@ -544,7 +544,7 @@ namespace engine
    {
       if ( _isOwn )
       {
-         SDB_OSS_FREE( _row ) ;
+         SDB_THREAD_FREE( _row ) ;
          _row   = NULL ;
          _isOwn = FALSE ;
       }
@@ -559,12 +559,12 @@ namespace engine
          ossMemcpy( &saved, _row, sizeof( saved ) ) ;
          if ( _isOwn )
          {
-            SDB_OSS_FREE( _row ) ;
+            SDB_THREAD_FREE( _row ) ;
             _row   = NULL ;
             _isOwn = FALSE ;
          }
 
-         _row = (CHAR *) SDB_OSS_MALLOC( dataLen + sizeof( _tuple ) ) ;
+         _row = (CHAR *) SDB_THREAD_ALLOC( dataLen + sizeof( _tuple ) ) ;
          if ( NULL == _row )
          {
             rc = SDB_OOM ;

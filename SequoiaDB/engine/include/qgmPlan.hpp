@@ -69,7 +69,7 @@ namespace engine
 
    class _pmdEDUCB ;
 
-   class _qgmPlan : public SDBObject
+   class _qgmPlan : public _utilPooledObject
    {
    public:
       _qgmPlan( QGM_PLAN_TYPE type, const qgmField &alias ) ;
