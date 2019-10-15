@@ -226,12 +226,13 @@ function toolPutLobs( cl, lobfile, lobNum )
 ******************************************************************************/
 function toolCheckLob( cl,lobnum,OID )
 {
-   var num = cl.listLobs().toArray().length ;
+   var lobs = cl.listLobs(new SdbQueryOption().sort({Oid:1})).toArray();
+   var num = lobs.length ;
    if( num != lobnum )
       throw ( ">fail to check lob num,num = " + num + ",lobnum = " + lobnum ) ;
    for(var i = 0;i < num;++i)
    {
-      var obj = JSON.parse( cl.listLobs()[i] ) ;
+      var obj = JSON.parse( lobs[i] ) ;
       var oid = obj["Oid"]["$oid"] ;
       if( oid != OID[i] )
          throw ( ">fail to check lob oid,oid = " + oid + ",OID = " + OID[i] ) ;
