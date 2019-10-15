@@ -233,6 +233,15 @@ dmypy.json
 # Java ignore
 # Compiled class file
 *.class
+# project file
+.classpath
+.project
+.settings/
+# compile targets
+/driver/java/target/
+/testcase_new/reliability/java/target/
+/testcase_new/s3/java/target/
+/thirdparty/CI-tools/threadexecutor/code/target/
 
 # Log file
 *.log
