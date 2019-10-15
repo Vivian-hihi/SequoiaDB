@@ -75,13 +75,8 @@ public class Transaction18211A extends SdbTestBase {
     }
 
     private class OperatorTh extends SdbThreadBase {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private OperatorTh() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
-        }
+        private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");;
+        private DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 
         @Override
         public void exec() throws Exception {
@@ -90,6 +85,11 @@ public class Transaction18211A extends SdbTestBase {
                 insertDatas(cl, 10000, 20000);
                 cl.delete("{$and:[{a:{$gte:0}},{a:{$lt:5000}}]}", "{'':'idx18211'}");
                 cl.update("{$and:[{a:{$gte:5000}},{a:{$lt:15000}}]}", "{$inc:{a:10}}", "{}'':'idx18211'");
+            } catch (BaseException e) {
+                // 集合已被删除,未开始做事务操作
+                if (e.getErrorCode() != -23) {
+                    throw e;
+                }
             } finally {
                 db.commit();
                 db.close();
@@ -99,11 +99,7 @@ public class Transaction18211A extends SdbTestBase {
 
     // 在事务内删除集合
     private class DropCLTh extends SdbThreadBase {
-        private Sequoiadb db;
-
-        private DropCLTh() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        }
+        private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         @Override
         public void exec() throws Exception {
