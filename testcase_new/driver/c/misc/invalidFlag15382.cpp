@@ -71,7 +71,7 @@ TEST_F( invalidFlag15382, test )
    INT64 dftSkipNum  = 0 ;
    INT64 dftReturnNum= -1 ;
 
-   INT32 invalidFlag = -100 ;
+   INT32 invalidFlag = 4096;
    bson *update = bson_create() ;
    bson_append_start_object( update, "$set" ) ;
    bson_append_int( update, "a", 1 ) ;
@@ -80,13 +80,13 @@ TEST_F( invalidFlag15382, test )
 
 
    rc = sdbQuery1( cl, dftCond, dftSelect, dftOrder, dftHint, dftSkipNum, dftReturnNum, invalidFlag, &cursor ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbQueryAndUpdate( cl, dftCond, dftSelect, dftOrder, dftHint, update,
                            dftSkipNum, dftReturnNum, invalidFlag, false, &cursor ) ;
-   ASSERT_EQ( SDB_RTN_INVALID_HINT, rc ) ; // force hint flag is on
+   ASSERT_EQ( SDB_OK, rc ) ; // force hint flag is on
 
    rc = sdbQueryAndRemove( cl, dftCond, dftSelect, dftOrder, dftHint, 
                            dftSkipNum, dftReturnNum, invalidFlag, &cursor ) ;
-   ASSERT_EQ( SDB_RTN_INVALID_HINT, rc ) ; // force hint flag is on
+   ASSERT_EQ( SDB_OK, rc ) ; // force hint flag is on
 }
