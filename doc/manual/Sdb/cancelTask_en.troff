@@ -23,7 +23,7 @@ cancel the task.
 Task id.
 .RE
 .IP \[bu] 2
-\f[C]isAsync\f[] ( \f[I]Bool\f[], \f[I]Required\f[] )
+\f[C]isAsync\f[] ( \f[I]Bool\f[], \f[I]Optional\f[] )
 .RS 2
 .PP
 Whether the asynchronous.
@@ -53,11 +53,30 @@ Solution
 T}
 _
 T{
-\-\-\-
+1
+T}@T{
+\-173
+T}@T{
+SDB_CAT_TASK_NOTFOUND
+T}@T{
+The specified task does
+T}@T{
+use listTasks() to
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+not exist
+T}@T{
+check if the task
+T}
+T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
+exists
 T}
 .TE
 .PP
@@ -69,7 +88,7 @@ For more detial, please reference to Troubleshooting.
 since v1.2
 .SH EXAMPLES
 .IP "1." 3
-Stop split the task.
+Stop split task.
 .nf
 \f[C]
 >\ var\ taskid1\ =\ db.foo.bar.splitAsync(\ "group1",\ "group2",\ 50\ );

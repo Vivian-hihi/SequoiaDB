@@ -33,7 +33,7 @@ Sdb
 
 | 错误码 | 错误类型 | 描述 | 解决方法 |
 | ------ | ------ | --- | ------ |
-||||
+|-173|SDB_CAT_TASK_NOTFOUND|任务不存在|使用[listTasks()](reference/Sequoiadb_command/Sdb/listTasks.md)检查任务是否存在|
 
 当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。

@@ -19,7 +19,7 @@ cancel the task.
 
 	Task id.
 
-* `isAsync` ( *Bool*, *Required* )
+* `isAsync` ( *Bool*, *Optional* )
 
 	Whether the asynchronous.
 
@@ -36,7 +36,7 @@ the exceptions of `cancelTask ()` are as below:
 
 | Error Code | Error Type | Description | Solution |
 | ------ | --- | ------------ | ----------- |
-| | | | |
+|-173|SDB_CAT_TASK_NOTFOUND|The specified task does not exist|use [listTasks()](reference/Sequoiadb_command/Sdb/listTasks.md) to check if the task exists |
 
 
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
@@ -47,7 +47,7 @@ since v1.2
 
 ##EXAMPLES##
 
-1. Stop split the task.
+1. Stop split task.
 
 	```lang-javascript
 	> var taskid1 = db.foo.bar.splitAsync( "group1", "group2", 50 );
