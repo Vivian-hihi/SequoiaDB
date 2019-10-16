@@ -65,5 +65,13 @@ function main()
     var checkValue4 = checkFile.getValue(section, key4);
     compareValue(value4, checkValue4);
     
+    var expContent = key1 + "=" +  newValue1 + "\n" + 
+                     key3 + "=" +  value3 + "\n" + 
+                     "[" + section + "]\n" + 
+                     key2 + "=" +  newValue2 + "\n" +
+                     key4 + "=" +  value4;
+    var checkContent = checkFile.toString();
+    compareValue(expContent, checkContent);
+    
     deleteIniFile(filePath);
 }

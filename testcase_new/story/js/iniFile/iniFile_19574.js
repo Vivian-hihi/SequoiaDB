@@ -59,15 +59,15 @@ function main()
     }
     
     var checkFile = new IniFile(fileFullPath);
-    var checkLastComment1 = checkFile.getValue(section1, key1);
-    compareValue(value1, checkLastComment1);
-    var checkLastComment2 = checkFile.getValue(section1, key2);
-    compareValue(undefined, checkLastComment2);
+    var checkItemValue1 = checkFile.getValue(section1, key1);
+    compareValue(value1, checkItemValue1);
+    var checkItemValue2 = checkFile.getValue(section1, key2);
+    compareValue(undefined, checkItemValue2);
     
-    var checkLastComment3 = checkFile.getValue(key1);
-    compareValue(undefined, checkLastComment3);
-    var checkLastComment4 = checkFile.getValue(section2, key2);
-    compareValue(value2, checkLastComment4);
+    var checkItemValue3 = checkFile.getValue(key1);
+    compareValue(undefined, checkItemValue3);
+    var checkItemValue4 = checkFile.getValue(section2, key2);
+    compareValue(value2, checkItemValue4);
     
     deleteIniFile(filePath);
 }

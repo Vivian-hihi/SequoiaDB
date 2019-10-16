@@ -1,5 +1,5 @@
 /************************************
-*@Description: seqDB-19528 IniFile类SDB_INIFILE_HASHMARK测试
+*@Description: seqDB-19928 IniFile类SDB_INIFILE_HASHMARK测试
 *@author:      luweikang
 *@createDate:  2019.10.08
 **************************************/
@@ -18,8 +18,8 @@ catch(e)
 
 function main()
 {
-    var filePath = WORKDIR + "/ini19528/";
-    var fileName = "file19528";
+    var filePath = WORKDIR + "/ini19928/";
+    var fileName = "file19928";
     var fileFullPath = filePath + fileName;
     makeIniFile(filePath, fileName);
     
@@ -32,12 +32,9 @@ function main()
     var itemComment = "This comment is intended to illustrate the purpose of the item";
     var lastComment = "This comment is intended to illustrate the purpose in the end";
     
-    var content = "# test item comment\n" + 
-                  key + "=" +  value + "\n" +
-                  "# test section comment\n" +                   
+    var content = key + "=" +  value + "\n" +
                   "[" + section + "]\n" + 
-                  key + "=" +  value + "\n" + 
-                  "# test last comment";
+                  key + "=" +  value + "\n";
                   
     initFile(fileFullPath, content);
     
@@ -58,6 +55,15 @@ function main()
     
     var checkComment3 = checkFile.getLastComment();
     compareValue(lastComment, checkComment3);
+    
+    var expContent = "# " + itemComment + "\n" + 
+                     key + "=" +  value + "\n" +
+                     "# " + sectionComment + "\n" +
+                     "[" + section + "]\n" +
+                     key + "=" +  value + "\n" +
+                     "# "+ lastComment;
+    var checkContent = checkFile.toString();
+    compareValue(expContent, checkContent);
     
     deleteIniFile(filePath);
 }

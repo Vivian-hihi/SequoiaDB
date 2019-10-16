@@ -52,6 +52,7 @@ function main()
     iniFile.addComment(section, key, comment4, false);
     iniFile.save();
     
+    // SEQUOIADBMAINSTREAM-5042
     /*
     try
     {

@@ -42,12 +42,12 @@ function main()
     iniFile.save();
     
     var checkFile = new IniFile(fileFullPath);
-    var checkLastComment1 = checkFile.getValue(section1);
-    compareValue(value1, checkLastComment1);
-    var checkLastComment2 = checkFile.getValue(section1, section1);
-    compareValue(undefined, checkLastComment2);
-    var checkLastComment3 = checkFile.getValue(section2, section2);
-    compareValue(value2, checkLastComment3);
+    var checkItemValue1 = checkFile.getValue(section1);
+    compareValue(value1, checkItemValue1);
+    var checkItemValue2 = checkFile.getValue(section1, section1);
+    compareValue(undefined, checkItemValue2);
+    var checkItemValue3 = checkFile.getValue(section2, section2);
+    compareValue(value2, checkItemValue3);
     
     deleteIniFile(filePath);
 }

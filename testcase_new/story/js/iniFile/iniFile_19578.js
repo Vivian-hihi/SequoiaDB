@@ -47,18 +47,18 @@ function main()
     iniFile.save();
     
     var checkFile = new IniFile(fileFullPath);
-    var checkLastComment1 = checkFile.getValue(key1);
-    compareValue(undefined, checkLastComment1);
-    var checkLastComment2 = checkFile.getValue(section1, key1);
-    compareValue(undefined, checkLastComment2);
+    var checkItemValue1 = checkFile.getValue(key1);
+    compareValue(undefined, checkItemValue1);
+    var checkItemValue2 = checkFile.getValue(section1, key1);
+    compareValue(undefined, checkItemValue2);
     
-    var checkLastComment3 = checkFile.getValue(section1, key2);
-    compareValue(undefined, checkLastComment3);
-    var checkLastComment4 = checkFile.getValue(section2, key2);
-    compareValue(undefined, checkLastComment4);
+    var checkItemValue3 = checkFile.getValue(section1, key2);
+    compareValue(undefined, checkItemValue3);
+    var checkItemValue4 = checkFile.getValue(section2, key2);
+    compareValue(undefined, checkItemValue4);
     
-    var checkLastComment3 = checkFile.getValue(section2, key3);
-    compareValue(undefined, checkLastComment3);
+    var checkItemValue5 = checkFile.getValue(section2, key3);
+    compareValue(undefined, checkItemValue5);
     
     deleteIniFile(filePath);
 }
