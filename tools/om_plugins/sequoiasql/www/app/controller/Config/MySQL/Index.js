@@ -100,6 +100,14 @@
                            return false ;
                         }
                      } ) ;
+
+                     if ( result == null )
+                     {
+                        if ( info['Option File'] == 'Yes' )
+                        {
+                           result = name ;
+                        }
+                     }
                   }
                   return false ;
                }
