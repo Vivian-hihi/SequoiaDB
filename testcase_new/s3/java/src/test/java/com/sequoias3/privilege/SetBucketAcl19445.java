@@ -101,9 +101,11 @@ public class SetBucketAcl19445 extends S3TestBase {
             PrivilegeUtils.setBucketAclByBody(ownerS3Client, bucketName, expGrant);
             break;
         }
+
         PrivilegeUtils.checkSetBucketAclResult(ownerS3Client, bucketName, expGrant);
         putObjectByOtherUser();
         getObjectByOtherUser();
+
         runSuccessNum++;
     }
 

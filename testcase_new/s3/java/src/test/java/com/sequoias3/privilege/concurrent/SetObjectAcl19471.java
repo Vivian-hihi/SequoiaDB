@@ -66,19 +66,21 @@ public class SetObjectAcl19471 extends S3TestBase {
     @Test
     private void testSetObjectAcl() throws Exception {
         ThreadExecutor threadExec = new ThreadExecutor();
+
         Map<String, Grant> grants = new HashMap<String, Grant>();
         Random random = new Random();
-
         for (int i = 0; i < threadNum; i++) {
             String keyName = keyName_base + "_" + i;
             s3Client.putObject(bucketName, keyName, file);
+
             int randomGranteeIndex = random.nextInt(granteeList.size());
             int randomPermissionIndex = random.nextInt(Permission.values().length);
-
             Permission permission = Permission.values()[randomPermissionIndex];
             Grantee grantee = granteeList.get(randomGranteeIndex);
             Grant grant = new Grant(grantee, permission);
+
             threadExec.addWorker(new ThreadSetObjectAcl(keyName, grant));
+
             grants.put(keyName, grant);
         }
         threadExec.run();
@@ -86,6 +88,7 @@ public class SetObjectAcl19471 extends S3TestBase {
         for (Map.Entry<String, Grant> entry : grants.entrySet()) {
             PrivilegeUtils.checkSetObjectAclResult(s3Client, bucketName, entry.getKey(), entry.getValue());
         }
+
         runSuccess = true;
     }
 

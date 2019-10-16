@@ -32,7 +32,7 @@ import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
  * @Author wangkexin
  * @Date 2019.09.25
  */
-public class PutBucketAclAndPutObjectAcl19475 extends S3TestBase {
+public class SetBucketAclAndSetObjectAcl19475 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket19475";
     private String keyName_base = "key19475";
@@ -66,6 +66,7 @@ public class PutBucketAclAndPutObjectAcl19475 extends S3TestBase {
     @Test
     private void test() throws Exception {
         ThreadExecutor threadExec = new ThreadExecutor();
+
         Grant bucketGrant = new Grant(GroupGrantee.AllUsers, Permission.WriteAcp);
         threadExec.addWorker(new ThreadSetBucketAcl(bucketGrant));
 
@@ -74,13 +75,15 @@ public class PutBucketAclAndPutObjectAcl19475 extends S3TestBase {
         for (int i = 0; i < threadNum; i++) {
             String keyName = keyName_base + "_" + i;
             s3Client.putObject(bucketName, keyName, file);
+
             int randomGranteeIndex = random.nextInt(granteeList.size());
             int randomPermissionIndex = random.nextInt(Permission.values().length);
-
             Permission permission = Permission.values()[randomPermissionIndex];
             Grantee grantee = granteeList.get(randomGranteeIndex);
             Grant grant = new Grant(grantee, permission);
+
             threadExec.addWorker(new ThreadSetObjectAcl(keyName, grant));
+
             grants.put(keyName, grant);
         }
         threadExec.run();

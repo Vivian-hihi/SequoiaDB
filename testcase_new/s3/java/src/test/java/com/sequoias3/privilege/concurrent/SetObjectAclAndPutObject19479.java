@@ -31,7 +31,7 @@ import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
  * @Author wangkexin
  * @Date 2019.09.25
  */
-public class PutObjectAclAndPutObject19479 extends S3TestBase {
+public class SetObjectAclAndPutObject19479 extends S3TestBase {
     private String bucketName = "bucket19479";
     private String keyName = "key19479";
     private AmazonS3 s3Client = null;

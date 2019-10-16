@@ -53,7 +53,9 @@ public class GetObjectAcl19472 extends S3TestBase {
         CommLib.clearBucket(s3Client, bucketName);
         s3Client.createBucket(new CreateBucketRequest(bucketName));
         ownerId = s3Client.getS3AccountOwner().getId();
+
         s3Client.putObject(bucketName, keyName, file);
+
         s3Client.setObjectAcl(bucketName, keyName, CannedAccessControlList.PublicRead);
         expGrant[0] = new Grant(new CanonicalGrantee(ownerId), Permission.FullControl);
         expGrant[1] = new Grant(GroupGrantee.AllUsers, Permission.Read);
