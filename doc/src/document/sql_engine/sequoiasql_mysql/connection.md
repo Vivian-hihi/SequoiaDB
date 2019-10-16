@@ -125,7 +125,7 @@
 MySQL实例组件支持大多数 DDL 的在线修改。在线修改支持原表中（INPLACE）修改表属性，并且允许并发的 DML。可以通过 ALGORITHM 参数控制 ALTER TABLE 语句修改 DDL 时使用的算法。当 ALGORITHM = INPLACE 时，可以在线地修改表属性，而 ALGORITHM = COPY 时，则会把原表内容拷贝到新表，性能会下降。不指定 ALGORITHM 时会自动选择算法。如需在线修改 DDL，一般建议显式地指定 ALGORITHM = INPLACE。例子：
 
  ```lang-sql
- mysql> ALTER TABLE cl ADD INDEX id_idx(id) ALGORITHM=INPLACE;
+ mysql> ALTER TABLE cl ADD INDEX id_idx(id), ALGORITHM=INPLACE;
  ```
 
 + **建表选项**

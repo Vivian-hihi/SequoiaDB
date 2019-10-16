@@ -129,10 +129,11 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
 | character_set_server   | string | Yes | Global, Session | utf8mb4 | 默认字符集 |
 | collation_server       | string | Yes | Global, Session | utf8mb4_bin | 默认校对集 |
 | default_storage_engine | string | Yes | Global, Session | SequoiaDB | 默认存储引擎 |
-| lower_case_table_names | int    | No  | Global          | 1       | 表名大小写策略。取 0 时，大小写敏感。取 1 时，所有表名均以小写存储。取 2 时，表名以原样存储，但以小写进行比较。 |
+| lower_case_table_names | int    | No  | Global          | 0       | 表名大小写策略。取 0 时，大小写敏感。取 1 时，所有表名均以小写存储。取 2 时，表名以原样存储，但以小写进行比较。 |
 
 > **Note:** 
 >
 > * 在系统最大文件句柄数不足时，max_connections 可能被自动调整。如果发现修改该配置没有生效，请检查系统 limit 设置和 MySQL 日志。
 > * SequoiaDB 不支持大小写敏感的校对集。
+> * 在 Linux 平台下，MySQL 默认表名大小写敏感。更改成大小写不敏感后有可能导致匹配不到原表，须谨慎使用。
 
