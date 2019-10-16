@@ -566,6 +566,7 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
         SDB_LIST_SVCTASKS         : Get all the schedule task informations
         SDB_LIST_SEQUENCES        : Get all the sequence informations
         SDB_LIST_USERS            : Get all the user informations
+        SDB_LIST_BACKUPS          : Get all the backups
 
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -610,6 +611,7 @@ SDB_EXPORT INT32 sdbGetList ( sdbConnectionHandle cHandle,
         SDB_LIST_SVCTASKS         : Get all the schedule task informations
         SDB_LIST_SEQUENCES        : Get all the sequence informations
         SDB_LIST_USERS            : Get all the user informations
+        SDB_LIST_BACKUPS          : Get all the backups
 
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null

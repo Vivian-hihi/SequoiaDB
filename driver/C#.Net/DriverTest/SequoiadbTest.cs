@@ -452,6 +452,18 @@ namespace DriverTest
                 }
             }
 
+            // 14 svntasks
+            {
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_SVCTASKS, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_SNAP_SVCTASKS is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+            }
+
             // sequences
             {
                 cursor.Close();
@@ -465,6 +477,8 @@ namespace DriverTest
                     Console.WriteLine(rec);
                 }
             }
+
+
 
         }
 
@@ -607,7 +621,15 @@ namespace DriverTest
             Assert.IsNotNull(cursor);
             while ((bson = cursor.Next()) != null)
             {
-                Console.WriteLine("Result of SDB_LIST_SVCTASKS: " + base.ToString());
+                Console.WriteLine("Result of SDB_LIST_USERS: " + base.ToString());
+            }
+            
+            // list 17
+            cursor = db.GetList(SDBConst.SDB_LIST_BACKUPS, dummy, dummy, dummy, null, 0, -1);
+            Assert.IsNotNull(cursor);
+            while ((bson = cursor.Next()) != null)
+            {
+                Console.WriteLine("Result of SDB_LIST_BACKUPS: " + base.ToString());
             }
 
             // list 14

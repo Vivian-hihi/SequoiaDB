@@ -118,6 +118,7 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_LIST_SVCTASKS = 14;
     public final static int SDB_LIST_SEQUENCES = 15;
     public final static int SDB_LIST_USERS = 16;
+    public final static int SDB_LIST_BACKUPS = 17 ;
     public final static int SDB_LIST_CL_IN_DOMAIN = 129;
     public final static int SDB_LIST_CS_IN_DOMAIN = 130;
 
@@ -1095,6 +1096,7 @@ public class Sequoiadb implements Closeable {
      *                   <dt>Sequoiadb.SDB_LIST_SVCTASKS : Get all the schedule task information
      *                   <dt>Sequoiadb.SDB_LIST_SEQUENCES : Get the information of sequences
      *                   <dt>Sequoiadb.SDB_LIST_USERS : Get all the user information.
+     *                   <dt>Sequoiadb.SDB_LIST_BACKUPS : Get all the backup information.
      *                   </dl>
      * @param query      The matching rule, match all the documents if null.
      * @param selector   The selective rule, return the whole document if null.
@@ -1148,6 +1150,7 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_LIST_SVCTASKS : Get all the schedule task information
      *                 <dt>Sequoiadb.SDB_LIST_SEQUENCES : Get the information of sequences
      *                 <dt>Sequoiadb.SDB_LIST_USERS : Get all the user information.
+     *                 <dt>Sequoiadb.SDB_LIST_BACKUPS : Get all the backup information.
      *                 </dl>
      * @param query    The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
@@ -1434,6 +1437,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_HEALTH;
             case SDB_SNAP_CONFIGS:
                 return AdminCommand.SNAP_CONFIGS;
+            case SDB_SNAP_SVCTASKS:
+                return AdminCommand.SNAP_SVCTASKS;
             case SDB_SNAP_SEQUENCES:
                 return AdminCommand.SNAP_SEQUENCES;
             default:
@@ -2349,6 +2354,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.LIST_SEQUENCES;
             case SDB_LIST_USERS:
                 return AdminCommand.LIST_USERS;
+            case SDB_LIST_BACKUPS:
+                return AdminCommand.LIST_BACKUPS;
             case SDB_LIST_CL_IN_DOMAIN:
                 return AdminCommand.LIST_CL_IN_DOMAIN;
             case SDB_LIST_CS_IN_DOMAIN:

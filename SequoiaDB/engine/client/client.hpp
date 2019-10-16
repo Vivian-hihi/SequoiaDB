@@ -4603,6 +4603,7 @@ namespace sdbclient
               SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
               SDB_SNAP_HEALTH           : Get snapshot of node health detection
               SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+              SDB_SNAP_SVCTASKS         : Get snapshot of service task
               SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
           \param [in] numToSkip Skip the first numToSkip documents, default is 0
@@ -4661,6 +4662,7 @@ namespace sdbclient
               SDB_SNAP_ACCESSPLANS      : Get the snapshot of cached access plans
               SDB_SNAP_HEALTH           : Get snapshot of node health detection
               SDB_SNAP_CONFIGS          : Get snapshot of node configurations
+              SDB_SNAP_SVCTASKS         : Get snapshot of service task
               SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
 
            \param [in] condition The matching rule, match all the documents if not provided.

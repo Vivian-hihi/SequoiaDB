@@ -124,6 +124,7 @@ public class SdbSnapshotList {
                 System.out.println(cursor.getNext());
             }
         } catch(BaseException e) {
+            e.printStackTrace();
             Assert.assertTrue(e.getErrorType().equals("SDB_DPS_TRANS_DIABLED"));
         }finally {
             sdb.commit();
@@ -260,5 +261,13 @@ public class SdbSnapshotList {
         while(cursor.hasNext()){
             System.out.println(cursor.getNext());
         }
+
+        // 17
+        cursor = sdb.getList(Sequoiadb.SDB_LIST_BACKUPS, dump, dump, dump, dump, 0, -1);
+        System.out.println("result of SDB_LIST_BACKUPS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
     }
 }

@@ -79,6 +79,7 @@ namespace SequoiaDB
         public const int SDB_LIST_SVCTASKS         = 14;
         public const int SDB_LIST_SEQUENCES        = 15;
         public const int SDB_LIST_USERS            = 16;
+        public const int SDB_LIST_BACKUPS          = 17;
         public const int SDB_LIST_CL_IN_DOMAIN     = 129;
         public const int SDB_LIST_CS_IN_DOMAIN     = 130;
 

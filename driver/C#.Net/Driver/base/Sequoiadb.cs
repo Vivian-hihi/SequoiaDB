@@ -951,6 +951,10 @@ namespace SequoiaDB
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
                            SequoiadbConstants.CONFIGS;
                     break;
+                case SDBConst.SDB_SNAP_SVCTASKS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
+                           SequoiadbConstants.SVCTASKS;
+                    break;
                 case SDBConst.SDB_SNAP_SEQUENCES:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SNAP_CMD + " " +
                            SequoiadbConstants.SEQUENCES;
@@ -1008,6 +1012,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_LIST_SVCTASKS
          *      SDBConst.SDB_LIST_SEQUENCES
          *      SDBConst.SDB_LIST_USERS
+         *      SDBConst.SDB_LIST_BACKUPS
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -1090,6 +1095,10 @@ namespace SequoiaDB
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
                            SequoiadbConstants.USERS;
                     break;
+                case SDBConst.SDB_LIST_BACKUPS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.BACKUPS;
+                    break;
                 case SDBConst.SDB_LIST_CL_IN_DOMAIN:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
                            SequoiadbConstants.CL_IN_DOMAIN;
@@ -1143,6 +1152,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_LIST_SVCTASKS
          *      SDBConst.SDB_LIST_SEQUENCES
          *      SDBConst.SDB_LIST_USERS
+         *      SDBConst.SDB_LIST_BACKUPS
          *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
@@ -1177,6 +1187,7 @@ namespace SequoiaDB
          *      SDBConst.SDB_LIST_SVCTASKS
          *      SDBConst.SDB_LIST_SEQUENCES
          *      SDBConst.SDB_LIST_USERS
+         *      SDBConst.SDB_LIST_BACKUPS
          *      
          *  \return A DBCursor of all the fitted objects or null
          *  \exception SequoiaDB.BaseException
