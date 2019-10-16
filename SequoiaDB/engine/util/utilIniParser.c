@@ -1040,6 +1040,11 @@ static const CHAR *parseSectionName( utilIniSection *section, const CHAR *str )
          section->name.length = len ;
          str = skipEmptyLine( str + 1 ) ;
       }
+      else if ( '\0' == *str )
+      {
+         //[xxxxxx] \0
+         section->name.length = len ;
+      }
    }
 
    return str ;
@@ -1219,6 +1224,12 @@ static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
       utilIniItem tmpItem ;
 
       str = skip( str + 1 ) ;
+
+      if ( '\0' == *str )
+      {
+         len = 1 ;
+         break ;
+      }
 
       parseItem( handler, &tmpItem, str ) ;
       if ( handler->errnum )
