@@ -38,8 +38,6 @@ public class SdbTransaction implements Transaction {
         }
         try {
             sdb.commit();
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
-            sdbConnection.setSdb(null);
         }catch (Exception e){
             throw new S3ServerException(S3Error.DAO_TRANSACTION_COMMIT_FAILED, "commit transaction failed", e);
         }
@@ -50,16 +48,12 @@ public class SdbTransaction implements Transaction {
         SdbConnectionDao sdbConnection = (SdbConnectionDao)connection;
         Sequoiadb sdb = sdbConnection.getConnection();
         if (sdb == null){
-//            logger.error("rollback sdb is null.");
             return;
         }
         try {
             sdb.rollback();
         }catch (Exception e){
             logger.error("rollback failed.", e);
-        }finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
-            sdbConnection.setSdb(null);
         }
     }
 }

@@ -166,6 +166,7 @@ public class BucketServiceImpl implements BucketService {
             }
 
             ConnectionDao connectionA = daoMgr.getConnectionDao();
+            int transTimeout = connectionA.getTransTimeOut();
             transaction.begin(connectionA);
             try {
                 Bucket deleteBucket = bucketDao.queryBucketForUpdate(connectionA, deleteName);
@@ -175,6 +176,7 @@ public class BucketServiceImpl implements BucketService {
                 }
                 bucketDao.updateBucketDelimiter(connectionA, deleteName, deleteBucket);
 
+                connectionA.setTransTimeOut(10);
                 if (!objectService.isEmptyBucket(connectionA, bucket, region)){
                     throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
                             "The bucket you tried to delete is not empty. bucket name = "+bucketName);
@@ -190,6 +192,7 @@ public class BucketServiceImpl implements BucketService {
                 transaction.rollback(connectionA);
                 throw e;
             } finally {
+                connectionA.setTransTimeOut(transTimeout);
                 daoMgr.releaseConnectionDao(connectionA);
             }
 
@@ -211,7 +214,8 @@ public class BucketServiceImpl implements BucketService {
                 //multi part upload
                 uploadDao.setUploadsStatus(bucket.getBucketId(), null, UploadMeta.UPLOAD_ABORT);
             }catch (Exception e){
-                logger.error("clean bucket failed, might something is left.", e);
+                logger.error("clean bucket failed, might something is left. " +
+                        "bucketId:"+bucket.getBucketId(), e);
             }
         }catch (S3ServerException e) {
             throw e;

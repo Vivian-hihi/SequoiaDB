@@ -19,6 +19,8 @@ public class SdbDaoMgr implements DaoMgr {
 
     @Override
     public void releaseConnectionDao(ConnectionDao connection){
-        sdbDatasourceWrapper.releaseSequoiadb(((SdbConnectionDao)connection).getConnection());
+        SdbConnectionDao sdbConnection = (SdbConnectionDao)connection;
+        sdbDatasourceWrapper.releaseSequoiadb(sdbConnection.getConnection());
+        sdbConnection.setSdb(null);
     }
 }
