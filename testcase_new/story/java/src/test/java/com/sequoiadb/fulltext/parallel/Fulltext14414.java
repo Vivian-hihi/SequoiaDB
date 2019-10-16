@@ -73,7 +73,7 @@ public class Fulltext14414 extends FullTestBase {
                 esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
                 checkFlag = true;
             } catch (BaseException e) {
-                if (e.getErrorCode() != -199) {
+                if (e.getErrorCode() != -199 && e.getErrorCode() != -47) {
                     throw e;
                 }
             }
