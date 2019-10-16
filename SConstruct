@@ -986,7 +986,6 @@ else:
       svnVer = os.popen( "svn info | grep Revision | awk '{print $2}'" ).read().replace("\n","")
       os.system( "sed 's/\$WCREV\$/" + svnVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
 
-print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
                          "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir", "snappy_lib_dir",
                          "sm_lib_dir", "mdocml_lib_dir", "fuse_lib_dir"], duplicate=False)

@@ -1,5 +1,6 @@
 EnsureSConsVersion(1, 1, 0)
 import os
+import time
 import stat
 import subprocess
 import shutil
@@ -21,9 +22,27 @@ Import("usemdocml")
 Import("usefuse")
 
 
+ERROR = 1
+WARNING = 2
+INFO = 3
+DEBUG = 4
+
+def print_msg(level, message):
+    if g_silent and level > WARNING:
+        return
+    if ERROR == level:
+        print('[ERROR] ' + message)
+    elif WARNING == level:
+        print('[WARNING] ' + message)
+    elif INFO == level:
+        print('[INFO] ' + message)
+    elif DEBUG == level:
+        print('[DEBUG] ' + message)
+
+
 class Utils:
     def __init__(self):
-        pass
+        self.silent = False
 
     @staticmethod
     def is_program_installed(program_name):
@@ -51,9 +70,10 @@ class DependencyChecker:
             msg += '.'
         if succeed:
             msg += "PASS!"
+            print_msg(INFO, msg)
         else:
             msg += "FAILED!"
-        print(msg)
+            print_msg(ERROR, msg)
 
 
     def add_program(self, program_name, version = None):
@@ -104,6 +124,9 @@ class CompilerBase:
     def _get_lib_archive_dir(self):
         return None
 
+    def _get_lib_list(self):
+        return None
+
     def _init_win32_cmds(self, arch):
         return 0
 
@@ -127,14 +150,60 @@ class CompilerBase:
             rc = self._init_linux_cmds(arch)
         if 0 != rc:
             return rc
+        return 0
 
+    def need_recompile(self):
+        arch_dir = os.path.abspath(self._get_lib_archive_dir())
+        libs = self._get_lib_list()
+        # If any expected library of the component is missing, recompile it.
+        for item in libs:
+            lib_path = os.path.join(arch_dir, item)
+            if not os.path.exists(lib_path):
+                print_msg(INFO, "Library {} does not exist".format(lib_path))
+                return True
+
+        libs = sorted(libs,
+                      key=lambda x: os.path.getmtime(os.path.join(arch_dir, x)),
+                      reverse=True)
+        latest_lib_mtime = time.ctime(
+            os.path.getmtime(os.path.join(arch_dir, libs[0]))
+            )
+
+        root_dir_mtime = time.ctime(os.path.getmtime(self.src_root))
+        if root_dir_mtime > latest_lib_mtime:
+            print_msg(INFO, "Modification time of directory {} is newer than "
+                      "libs. Rebuild the compoment {}".format(self.src_root,
+                                                              self.get_name()))
+            return True
+
+        # If modification time of any file in the path, recompile the component.
+        for root, dirs, files in os.walk(self.src_root):
+            for file in files:
+                mtime = time.ctime(os.path.getmtime(os.path.join(root, file)))
+                if mtime > latest_lib_mtime:
+                    print_msg(INFO, "Modification time of file {} is newer than"
+                              " libs. Rebuild the component {}".format(
+                                os.path.join(root, file), self.get_name()))
+                    return True
+        print_msg(INFO, "All libraries of {} are up to date. No need to "
+                  "compile.".format(self.get_name()))
+        return False
+
+    def append_cmd(self, cmd, args=''):
+        # Append the command into the command list as a tuple.
+        self.cmds.append((cmd, args))
+
+    def run(self):
+        rc = 0
         stage_dir = self._get_stage_lib_dir()
+        if os.path.exists(stage_dir):
+            shutil.rmtree(stage_dir)
         if not os.path.exists(stage_dir):
             try:
                 os.makedirs(stage_dir)
             except IOError, e:
-                print('Create lib stage directory failed: ' + stage_dir +
-                      ". Error: " + e.message())
+                print_msg(ERROR, 'Create lib stage directory failed: ' +
+                          stage_dir + ". Error: " + e.message())
                 return 1
 
         # Check target library path. Create it if not exists.
@@ -143,34 +212,27 @@ class CompilerBase:
             try:
                 os.makedirs(lib_path)
             except IOError, e:
-                print('Create lib archive directory failed: ' + lib_path +
-                      ". Error: " + e.message())
+                print_msg(ERROR, 'Create lib archive directory failed: ' +
+                          lib_path + ". Error: " + e.message())
                 return 1
-        return 0
 
-    def append_cmd(self, cmd, args=''):
-        # Append the command into the command list as a tuple.
-        self.cmds.append((cmd, args))
-
-    def run(self):
-        rc = 0
-        print("Begin to compile " + self.name + "...")
+        print_msg(INFO, "Begin to compile " + self.name + "...")
         for cmd in self.cmds:
             command = cmd[0] + ' ' + cmd[1]
             rc = os.system(command)
             if 0 != rc:
-                print("Run command failed: " + command)
+                print_msg(ERROR, "Run command failed: " + command)
                 break
         return rc
 
     def archive(self):
-        print('Archive libraries...')
+        print_msg(INFO, 'Archive libraries...')
         source_dir = self._get_stage_lib_dir()
         libs = os.listdir(source_dir)
         for lib in libs:
             shutil.copy(os.path.join(source_dir, lib),
                         self._get_lib_archive_dir())
-        print("Compile " + self.name + " done!")
+        print_msg(INFO, "Compile " + self.name + " done!")
 
 
 class BoostCompiler(CompilerBase):
@@ -187,9 +249,6 @@ class BoostCompiler(CompilerBase):
                                   'tools/build/src/engine/build.sh')
         os.chmod(bootstrap_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
         os.chmod(build_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
-        stage_path = os.path.join(self.src_root, 'stage')
-        if os.path.exists(stage_path):
-            shutil.rmtree(stage_path)
         if "ia32" == self.arch:
             address_mode = 32
         else:
@@ -209,6 +268,13 @@ class BoostCompiler(CompilerBase):
         self.append_cmd('./b2', config_args)
         return 0
 
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libboost_chrono.a', 'libboost_filesystem.a',
+                    'libboost_program_options.a', 'libboost_system.a',
+                    'libboost_thread.a']
+        return libs
 
 class SpiderMonkeyCompiler(CompilerBase):
     def __init__(self, src_root):
@@ -242,6 +308,14 @@ class SpiderMonkeyCompiler(CompilerBase):
         self.append_cmd('cd ' + self.build_dir + '&& make -j ' +
                         str(comm_job_num) + ' ' + comm_build_opt)
         return 0
+
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libjs_static.a', 'libmozjs185.so']
+        elif 'win32' == self.platform:
+            libs = ['js_static.lib', 'mozjs185-1.0.dll', 'mozjs185-1.0.lib']
+        return libs
 
     def archive(self):
         shutil.copy(os.path.join(self.build_dir, 'libjs_static.a'),
@@ -286,6 +360,14 @@ class SslCompiler(CompilerBase):
         self.append_cmd('make ' + comm_build_opt)
         return 0
 
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libcrypto.a', 'libssl.a']
+        elif 'win32' == self.platform:
+            libs = ['libeay32.lib',  'ssleay32.lib']
+        return libs
+
     def archive(self):
         shutil.copy(os.path.join(self.src_root, 'libcrypto.a'),
                     self._get_lib_archive_dir())
@@ -314,6 +396,14 @@ class MdocmlCompiler(CompilerBase):
         self.append_cmd('scons', args)
         return 0
 
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libmdocml.a']
+        elif 'win32' == self.platform:
+            libs = ['libmdocml.lib']
+        return libs
+
 
 class SnappyCompiler(CompilerBase):
     def __init__(self, src_root):
@@ -336,6 +426,13 @@ class SnappyCompiler(CompilerBase):
         self.append_cmd('scons', args)
         return 0
 
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libsnappy.a']
+        elif 'win32' == self.platform:
+            libs = ['libsnappy.lib']
+        return libs
 
 class LZ4Compiler(CompilerBase):
     def __init__(self, src_root):
@@ -358,6 +455,13 @@ class LZ4Compiler(CompilerBase):
         self.append_cmd('scons', args)
         return 0
 
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['liblz4.a']
+        elif 'win32' == self.platform:
+            libs = ['liblz4.lib']
+        return libs
 
 class ZlibCompiler(CompilerBase):
     def __init__(self, src_root):
@@ -380,6 +484,14 @@ class ZlibCompiler(CompilerBase):
         self.append_cmd('scons', args)
         return 0
 
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libzlib.a']
+        elif 'win32' == self.platform:
+            libs = ['libzlib.lib']
+        return libs
+
 class FuseCompiler(CompilerBase):
     def __init__(self, src_root):
         CompilerBase.__init__(self, "fuse", src_root)
@@ -401,6 +513,12 @@ class FuseCompiler(CompilerBase):
         args = comm_build_opt + ' -j ' + str(comm_job_num)
         self.append_cmd('make ' + args)
         return 0
+
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libfuse.a']
+        return libs
 
     def archive(self):
         shutil.copy(os.path.join(self.src_root, 'lib/.libs/libfuse.a'),
@@ -440,9 +558,11 @@ comm_build_opt = ''
 # comm_job_num = int(GetOption('num_jobs'))
 comm_job_num = 1
 
+g_silent = False
 if GetOption("silent"):
     comm_config_opt += ' --silent'
     comm_build_opt += ' --silent'
+    g_silent = True
 
 if "win32" != guess_os:
     depend_checker = DependencyChecker()
@@ -450,13 +570,14 @@ if "win32" != guess_os:
     depend_checker.add_program('g++')
     depend_checker.add_program('make')
     if False == depend_checker.check():
-        print("Dependency check failed")
+        print_msg(ERROR, "Dependency check failed")
         exit(1)
 
+print_msg(INFO, 'Begin to build third party components...')
 for component in components:
     os.chdir(component.get_src_root())
     rc = component.init(guess_os, guess_arch, build_type)
-    if 0 == rc:
+    if 0 == rc and component.need_recompile():
         rc = component.run()
         if 0 == rc:
             component.archive()
