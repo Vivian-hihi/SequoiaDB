@@ -1549,6 +1549,9 @@ namespace sdbclient
       // close all cursors
       INT32 closeAllCursors ();
 
+      // interrupt
+      INT32 interrupt() ;
+
       // connection is closed
       INT32   isValid( BOOLEAN *result ) ;
       BOOLEAN isValid() ;

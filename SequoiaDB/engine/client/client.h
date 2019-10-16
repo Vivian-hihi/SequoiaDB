@@ -2176,8 +2176,18 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle ) ;
     \param [in] cHandle The database connection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Deprecated, use sdbInterrupt() instead.
 */
 SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle ) ;
+
+/** \fn INT32 sdbInterrupt( sdbConnectionHandle cHandle )
+    \brief Send a "Interrpt" message to engine, as a result, all the cursors and
+           lobs created by current connection will be closed.
+    \param [in] cHandle The database connection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbInterrupt ( sdbConnectionHandle cHandle ) ;
 
 
 /** \fn INT32 sdbExec( sdbConnectionHandle cHandle,

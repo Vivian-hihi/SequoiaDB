@@ -4227,6 +4227,9 @@ namespace sdbclient
       // close all cursor
       virtual INT32 closeAllCursors () = 0 ;
 
+      // interrupt
+      virtual INT32 interrupt() = 0 ;
+
       // connection is valid
       virtual INT32 isValid( BOOLEAN *result ) = 0 ;
       virtual BOOLEAN isValid() = 0 ;
@@ -5706,12 +5709,25 @@ namespace sdbclient
                  lobs created by current connection will be closed.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
+          \deprecated Deprecated, use interrupt() instead.
       */
       INT32 closeAllCursors ()
       {
+         return interrupt() ;
+      }
+
+      /** \fn INT32 interrupt () ;
+          \brief Send a "Interrpt" message to engine, as a result, all the cursors and
+                 lobs created by current connection will be closed.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+          \deprecated Deprecated, use interrupt() instead.
+      */
+      INT32 interrupt()
+      {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->closeAllCursors () ;
+         return pSDB->interrupt () ;
       }
 
       /** \fn INT32 isValid ( BOOLEAN *result ) ;

@@ -7680,6 +7680,11 @@ error :
 
 SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle )
 {
+   return sdbInterrupt( cHandle ) ;
+}
+
+SDB_EXPORT INT32 sdbInterrupt ( sdbConnectionHandle cHandle )
+{
    INT32 rc            = SDB_OK ;
    Node *pCursorHandle = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;

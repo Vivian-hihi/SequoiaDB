@@ -9019,6 +9019,11 @@ do                                                            \
 
    INT32 _sdbImpl::closeAllCursors()
    {
+      return interrupt() ;
+   }
+
+   INT32 _sdbImpl::interrupt()
+   {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       std::set<ossValuePtr>::iterator it ;
