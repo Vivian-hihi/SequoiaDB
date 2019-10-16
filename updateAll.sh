@@ -25,7 +25,7 @@ function display()
    echo " -release     : 编译release版本"
    echo " -install     : 执行安装部署"
    echo " -installES   : 执行安装部署ES"
-   echo " -start       : 启动集群"  
+   echo " -start       : 启动集群"
    echo " -dbpath path : 指定节点路径"
    echo " -test        : 调用runtest.sh执行测试"
    echo " -full        : 执行story测试用例，不加表示执行basic用例"
@@ -260,7 +260,7 @@ function autoTest()
    if [ $runAll -eq 0 ]; then
       ./runtest.sh -s 0
    else
-      ./runtest.sh -s 0 -t story 
+      ./runtest.sh -s 0 -t story
    fi
    echo "=============================End test usecases================================="
 }
@@ -338,11 +338,15 @@ fi
 modules=()
 costs=()
 if [ $needUpdate -ne 0 ] ; then
-   start=$(date +%s)
-   svnUp
-   end=$(date +%s)
-   modules+=("svn")
-   costs+=($(($end - $start)))
+   if [ -f 'gitbuild' ] ; then
+      echo "Auto update is disabled with git repository"
+   else
+      start=$(date +%s)
+      svnUp
+      end=$(date +%s)
+      modules+=("svn")
+      costs+=($(($end - $start)))
+   fi
 fi
 
 if [ $needCompile -ne 0 ] ; then
