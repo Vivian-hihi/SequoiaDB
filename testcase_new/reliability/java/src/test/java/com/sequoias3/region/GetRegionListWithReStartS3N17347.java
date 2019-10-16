@@ -1,6 +1,7 @@
 package com.sequoias3.region;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
@@ -70,13 +71,7 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 		TaskMgr mgr = new TaskMgr(faultMakeTask);
 		mgr.addTask(new GetRegionList());
 		mgr.execute();
-		mgr.isAllSuccess();
-		List<Exception> eList = mgr.getExceptions();
-		for (Exception e : eList) {
-			if (!e.getMessage().contains("Unable to execute HTTP request")) {
-				throw e;
-			}
-		}
+		Assert.assertTrue(mgr.isAllSuccess(),mgr.getErrorMsg());
 		// list again
 		List<String> actRegions = RegionUtils.listRegions();
 		checkListResult(actRegions);
@@ -103,8 +98,14 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 	private class GetRegionList extends OperateTask {
 		@Override
 		public void exec() throws Exception {
-			List<String> actRegions = RegionUtils.listRegions();
-			checkListResult(actRegions);
+		    try {
+                List<String> actRegions = RegionUtils.listRegions();
+                checkListResult(actRegions);
+            }catch (AmazonS3Exception e){
+		        if(e.getStatusCode() != 500){
+		            throw e;
+                }
+            }
 		}
 	}
 

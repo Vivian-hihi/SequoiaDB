@@ -1,6 +1,7 @@
 package com.sequoias3.delimiter;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -11,7 +12,6 @@ import com.sequoias3.commlibs3.s3utils.DelimiterUtils;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -63,14 +63,7 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
             mgr.addTask(new DeleteObject(keyNames.get(i)));
         }
 		mgr.execute();
-		mgr.isAllSuccess();
-		List<Exception> eList = mgr.getExceptions();
-		for (Exception e : eList) {
-			if (!e.getMessage().contains("Unable to execute HTTP request")) {
-				throw e;
-			}
-		}
-		
+		Assert.assertTrue(mgr.isAllSuccess(),mgr.getErrorMsg());
 		//delete again
 		keyNames.removeAll(keyNameList);
         for (String keyName : keyNames) {
@@ -99,16 +92,21 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 
 	private class DeleteObject extends OperateTask {
 		private String keyName = null;
+
 		public DeleteObject(String keytName) {
-            this.keyName = keytName;
-        }
-		
+			this.keyName = keytName;
+		}
+
 		@Override
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
 				s3Client.deleteObject(bucketName, keyName);
 				keyNameList.add(this.keyName);
+			} catch (AmazonS3Exception e) {
+				if (e.getStatusCode() != 500) {
+					throw new Exception(bucketName + ":" + keyName, e);
+				}
 			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();

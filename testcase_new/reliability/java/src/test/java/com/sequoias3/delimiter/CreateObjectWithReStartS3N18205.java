@@ -1,6 +1,7 @@
 package com.sequoias3.delimiter;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
@@ -23,7 +24,10 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -70,13 +74,7 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 			mgr.addTask(new PutObject(objectName, contents.get(i)));
 		}
 		mgr.execute();
-		mgr.isAllSuccess();
-		List<Exception> eList = mgr.getExceptions();
-		for (Exception e : eList) {
-			if (!e.getMessage().contains("Unable to execute HTTP request")) {
-				throw e;
-			}
-		}
+		Assert.assertTrue(mgr.isAllSuccess(),mgr.getErrorMsg());
 		// 继续上传对象A
 		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		putRemainVersionsAgain();
@@ -89,7 +87,6 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
-				
 			}
 		} finally {
 			if (s3Client != null) {
@@ -114,6 +111,10 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 				PutObjectResult result = s3Client.putObject(bucketName, objectName, content);
 				versionAndMd5Map.put(result.getVersionId(), TestTools.getMD5(content.getBytes()));
 				putObjectContentList.add(content);
+			} catch (AmazonS3Exception e) {
+				if (e.getStatusCode() != 500) {
+					throw new Exception(objectName + ":" + content, e);
+				}
 			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();

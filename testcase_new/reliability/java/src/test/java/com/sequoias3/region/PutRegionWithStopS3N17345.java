@@ -105,10 +105,10 @@ public class PutRegionWithStopS3N17345 extends S3TestBase{
                 regionNameList.add(this.regionName);
             } catch (AmazonS3Exception e) {
                 if (e.getStatusCode() != 500) {
-                    throw e;
+                    throw new Exception("regionName = " + regionName, e);
                 }
-            }catch (Exception e){
-                if(!e.getMessage().contains("I/O error on POST request")){
+            } catch (Exception e) {
+                if (!e.getMessage().contains("I/O error on POST request")) {
                     throw e;
                 }
             }

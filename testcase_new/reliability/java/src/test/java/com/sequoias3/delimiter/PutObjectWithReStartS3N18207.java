@@ -70,13 +70,7 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
             mgr.addTask(new PutObject(objectNames.get(i), filePath));
         }
         mgr.execute();
-        mgr.isAllSuccess();
-        List<Exception> eList = mgr.getExceptions();
-        for (Exception e : eList) {
-            if (!e.getMessage().contains("Unable to execute HTTP request")) {
-                throw e;
-            }
-        }
+        Assert.assertTrue(mgr.isAllSuccess(),mgr.getErrorMsg());
         //put again
         objectNames.removeAll(objectNameList);
         s3Client = CommLibS3.buildS3Client();
@@ -105,7 +99,7 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
         }
     }
 
-       private class PutObject extends OperateTask {
+    private class PutObject extends OperateTask {
         private String objectName = null;
         private String filePath = null;
 
@@ -116,8 +110,14 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
 
         @Override
         public void exec() throws Exception {
-            s3Client.putObject(bucketName, this.objectName, new File(filePath));
-            objectNameList.add(this.objectName);
+            try {
+                s3Client.putObject(bucketName, this.objectName, new File(filePath));
+                objectNameList.add(this.objectName);
+            } catch (AmazonS3Exception e) {
+                if (e.getStatusCode() != 500) {
+                    throw new Exception(bucketName + ":" + objectName, e);
+                }
+            }
         }
     }
 
