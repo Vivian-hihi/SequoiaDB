@@ -31,7 +31,8 @@ SDB_SNAP_DATABASE
 | Version.Major         | 整型   | 数据库主版本号                                                                  |
 | Version.Minor         | 整型   | 数据库子版本号                                                                  |
 | Version.Fix           | 整型   | 数据库修复版本号                                                                |
-| Version.Release       | 整型   | 数据库发行版本号                                                                |
+| Version.Release       | 整型   | 数据库内部版本号                                                                |
+| Version.GitVersion    | 字符串 | 数据库发行版本号                                                                |
 | Version.Build         | 字符串 | 数据库编译时间                                                                  |
 | Editon                | 字符串 | “Enterprise”表示企业版（备注：社区版中无该字段）                                |
 | CurrentActiveSessions | 整型   | 当前活动会话                                                                |
@@ -160,6 +161,7 @@ SDB_SNAP_DATABASE
     "Minor": 8,
     "Fix": 0,
     "Release": 13971,
+    "GitVersion": "7b21adc4206894102682a621a4b49f17ed96a46f",
     "Build": "2014-08-07-11.04.12(Debug)"
   },
   "CurrentActiveSessions": 18,
