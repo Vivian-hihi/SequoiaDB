@@ -3431,6 +3431,10 @@ IniFile.prototype.addSectionComment = function( section, comment ) {
    }
 
    newComment = this._getSectionComment( section ) ;
+   if ( undefined === newComment )
+   {
+      newComment = "" ;
+   }
 
    if ( newComment.length > 0 )
    {
@@ -3590,6 +3594,10 @@ IniFile.prototype.addComment = function( argv1, argv2, argv3, argv4 ) {
    }
 
    newComment = this._getComment( section, key, pos ) ;
+   if ( undefined === newComment )
+   {
+      newComment = "" ;
+   }
 
    if ( pos )
    {
