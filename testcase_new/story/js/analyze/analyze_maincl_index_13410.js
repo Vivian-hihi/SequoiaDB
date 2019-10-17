@@ -378,7 +378,7 @@ function main()
    //db2.close();
    
  }
- //main()
+ main()
  
  function checkExplainBeforeAnalyze()
 {

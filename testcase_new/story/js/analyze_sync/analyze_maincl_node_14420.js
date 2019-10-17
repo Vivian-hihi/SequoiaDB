@@ -324,7 +324,7 @@ function main()
    //db2.close();
    
  }
- //main()
+ main()
  
   
 function checkExplainAnalyzeSetMode3()
