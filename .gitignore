@@ -27,6 +27,7 @@ CMakeLists.txt
 
 bin/
 build/
+thirdparty/
 error_cn.php
 error_en.php
 client/include/

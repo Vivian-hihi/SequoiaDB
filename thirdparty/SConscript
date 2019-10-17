@@ -4,6 +4,7 @@ import time
 import stat
 import subprocess
 import shutil
+from datetime import datetime
 
 Import("thirdpartyEnv")
 Import("guess_os")
@@ -50,6 +51,46 @@ class Utils:
             if os.path.isdir(cmdpath) and program_name in os.listdir(cmdpath):
                 return True
         return False
+
+    @classmethod
+    def timestamp_to_datetime(cls, timestamp):
+        local_dt_time = datetime.fromtimestamp(timestamp / 1000000.0)
+        return local_dt_time
+
+    @classmethod
+    def datetime_to_timestamp(cls, datetime_obj):
+        local_timestamp = long(time.mktime(
+            datetime_obj.timetuple()) * 1000000.0 + datetime_obj.microsecond)
+        return local_timestamp
+
+    @classmethod
+    def datetime_to_strtime(cls, datetime_obj, date_format):
+        local_str_time = datetime_obj.strftime(date_format)
+        return local_str_time
+
+    @classmethod
+    def strtime_to_datetime(cls, timestr, date_format):
+        local_datetime = datetime.strptime(timestr, date_format)
+        return local_datetime
+
+    @classmethod
+    def timestamp_to_strtime(cls, timestamp, date_format):
+        return cls.datetime_to_strtime(cls.timestamp_to_datetime(timestamp),
+                                       date_format)
+
+    @classmethod
+    def strtime_to_timestamp(cls, timestr, date_format):
+        try:
+            local_str_time = cls.datetime_to_timestamp(
+                cls.strtime_to_datetime(timestr, date_format))
+            return local_str_time
+        except Exception:
+            return 0
+
+    @classmethod
+    def get_file_mtime_timestamp(cls, f):
+        return cls.datetime_to_timestamp(
+            datetime.fromtimestamp(os.path.getmtime(f)))
 
 
 class DependencyChecker:
@@ -155,6 +196,8 @@ class CompilerBase:
     def need_recompile(self):
         arch_dir = os.path.abspath(self._get_lib_archive_dir())
         libs = self._get_lib_list()
+        if libs is None:
+            return True
         # If any expected library of the component is missing, recompile it.
         for item in libs:
             lib_path = os.path.join(arch_dir, item)
@@ -165,11 +208,9 @@ class CompilerBase:
         libs = sorted(libs,
                       key=lambda x: os.path.getmtime(os.path.join(arch_dir, x)),
                       reverse=True)
-        latest_lib_mtime = time.ctime(
-            os.path.getmtime(os.path.join(arch_dir, libs[0]))
-            )
-
-        root_dir_mtime = time.ctime(os.path.getmtime(self.src_root))
+        latest_lib_mtime = \
+            Utils.get_file_mtime_timestamp(os.path.join(arch_dir, libs[0]))
+        root_dir_mtime = Utils.get_file_mtime_timestamp(self.src_root)
         if root_dir_mtime > latest_lib_mtime:
             print_msg(INFO, "Modification time of directory {} is newer than "
                       "libs. Rebuild the compoment {}".format(self.src_root,
@@ -179,7 +220,7 @@ class CompilerBase:
         # If modification time of any file in the path, recompile the component.
         for root, dirs, files in os.walk(self.src_root):
             for file in files:
-                mtime = time.ctime(os.path.getmtime(os.path.join(root, file)))
+                mtime = Utils.get_file_mtime_timestamp(os.path.join(root, file))
                 if mtime > latest_lib_mtime:
                     print_msg(INFO, "Modification time of file {} is newer than"
                               " libs. Rebuild the component {}".format(
@@ -368,7 +409,23 @@ class SslCompiler(CompilerBase):
             libs = ['libeay32.lib',  'ssleay32.lib']
         return libs
 
+    def _post_action(self):
+        directories = [os.path.join(self.src_root, 'include/openssl'),
+                       os.path.join(self.src_root, 'test'),
+                       os.path.join(self.src_root, 'apps')]
+        for directory in directories:
+            files = os.listdir(directory)
+            for file in files:
+                file_path = os.path.join(directory, file)
+                if os.path.isfile(file_path) and os.path.islink(file_path):
+                    orig_file_path = os.path.join(directory,
+                                                  os.readlink(file_path))
+                    # Remove the symbol link and copy the real file.
+                    os.unlink(file_path)
+                    shutil.copyfile(orig_file_path, file_path)
+
     def archive(self):
+        self._post_action()
         shutil.copy(os.path.join(self.src_root, 'libcrypto.a'),
                     self._get_lib_archive_dir())
         shutil.copy(os.path.join(self.src_root, 'libssl.a'),
