@@ -471,7 +471,7 @@ static void *ossMemRealloc1 ( void* pOld, size_t size,
       if ( pOldHeader )
       {
          /// restore free
-         *(UINT32*)(p+OSS_MEM_HEAD_FREEDOFFSET) = 0 ;
+         *(UINT32*)(pOldHeader+OSS_MEM_HEAD_FREEDOFFSET) = 0 ;
 
          if ( ossMemDebugEnabled )
          {
