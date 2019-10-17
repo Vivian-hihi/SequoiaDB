@@ -129,7 +129,7 @@ namespace engine
          goto error ;
       }
       // get contents from config file
-      rc = ossOpen( pFilePath, OSS_READONLY, 0, file ) ;
+      rc = ossOpen( pFilePath, OSS_READONLY | OSS_SHAREREAD, 0, file ) ;
       if ( rc )
       {
          ss << "Failed to open file[" << pFilePath << "], rc = "
