@@ -84,13 +84,14 @@ class SDBBaseError(Exception):
 
     @property
     def error_object(self):
-        """Return the error dict. It basically corresponds to the SequoiaDB engine's error object.
+        """Return the error object of last operation which type is dict.
 
-        None if no error object. If there has an error, it contains the follow fields:
+        None if no error object. The error object contains the follow 3 fields:
            * errno : The error number.
-           * ErrNodes : More detailed error message.
            * description : The description of the errno.
            * detail : The error detail.
+           When an error happen in the data nodes, the error object will also contains the follow field:
+           * ErrNodes: The error detail of the data nodes.
         eg. This is a Redefine index error:
         {
             'errno': -247,
