@@ -1148,7 +1148,8 @@ namespace DriverTest
             data.Connect(config.conf.UserName, config.conf.Password);
             Assert.IsNotNull(data.Connection);
             BsonDocument attribute = data.GetSessionAttr();
-            Assert.IsNull(attribute);
+            Console.WriteLine("attribute is: " + attribute.ToString());
+            Assert.IsNotNull(attribute);
             data.Disconnect();
         }
 

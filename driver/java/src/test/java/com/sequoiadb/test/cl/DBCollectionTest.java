@@ -3,6 +3,7 @@ package com.sequoiadb.test.cl;
 import java.util.LinkedList;
 import com.sequoiadb.base.*;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
 import com.sequoiadb.test.common.ConstantsInsert;
 import com.sequoiadb.testdata.SDBTestHelper;
@@ -500,6 +501,23 @@ public class DBCollectionTest {
         }
     }
 
+    @Test
+    public void testInterrupt() {
+        BSONObject obj = new BasicBSONObject();
+        obj.put("date", new Date());
+        cl.delete("");
+        cl.insert(obj);
+        DBCursor cursor = cl.query("", "", "", "", 0, 0);
+        sdb.closeAllCursors();
+        try {
+            while (cursor.hasNext()) {
+                System.out.println("record is: " + cursor.getNext());
+            }
+        } catch (BaseException e) {
+            Assert.assertEquals(SDBError.SDB_RTN_CONTEXT_NOTEXIST.getErrorCode(), e.getErrorCode());
+        }
+    }
+
     // create chinese record
     private static BSONObject createChineseRecord() {
 
@@ -586,20 +604,6 @@ public class DBCollectionTest {
         while(cursor.hasNext()) {
             BSONObject object = cursor.getNext();
             System.out.println("record is: " + object);
-        }
-    }
-
-    @Test
-    @Ignore
-    public void jira_aa() {
-        BSONObject obj = new BasicBSONObject();
-        obj.put("date", new Date());
-        cl.delete("");
-        cl.insert(obj);
-        DBCursor cursor = cl.query("", "", "", "", 0, 0);
-        sdb.closeAllCursors();
-        while (cursor.hasNext()) {
-            System.out.println("record is: " + cursor.getNext());
         }
     }
 

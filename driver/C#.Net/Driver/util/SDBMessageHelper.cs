@@ -597,7 +597,7 @@ namespace SequoiaDB
             return msgInByteArray;
         }
 
-        internal static byte[] BuildTransactionRequest(SDBMessage sdbMessage, bool isBigEndian)
+        internal static byte[] BuildOpRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
             int opcode = (int)sdbMessage.OperationCode;
             ulong requestID = sdbMessage.RequestID;
@@ -616,6 +616,11 @@ namespace SequoiaDB
                 logger.Debug("Disconnect Request string==>" + buff.ToString() + "<==");
             }
             return msgInByteArray;
+        }
+
+        internal static byte[] BuildTransactionRequest(SDBMessage sdbMessage, bool isBigEndian)
+        {
+            return BuildOpRequest(sdbMessage, isBigEndian);
         }
 
         internal static byte[] BuildGetMoreRequest(SDBMessage sdbMessage, bool isBigEndian)
@@ -742,9 +747,9 @@ namespace SequoiaDB
             return buf.ToByteArray();
         }
 
-        internal static byte[] BuildKillAllContextsRequest(SDBMessage sdbMessage, bool isBigEndian)
+        internal static byte[] BuildInterruptRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
-            return BuildTransactionRequest(sdbMessage, isBigEndian);
+            return BuildOpRequest(sdbMessage, isBigEndian);
         }
 
         internal static void AddMsgHeader(ByteBuffer buff, int totalLen,

@@ -268,7 +268,7 @@ namespace SequoiaDB
         OP_KILL_CONTEXT           = 2007,
         OP_DISCONNECT             = 2008,
 
-        OP_KILL_ALL_CONTEXTS      = 2009,
+        OP_INTERRUPT              = 2009,
         OP_TRANS_BEGIN            = 2010,
         OP_TRANS_COMMIT           = 2011,
         OP_TRANS_ROLLBACK         = 2012,

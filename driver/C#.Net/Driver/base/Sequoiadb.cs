@@ -1627,13 +1627,24 @@ namespace SequoiaDB
          *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
+         *  \deprecated Use Interrupt() instead.
          */
         public void CloseAllCursors()
         {
-            // TODO: it's better for us to use DBCursor::Close() to close all the cursor
+            Interrupt();
+        }
+
+        /** \fn void Interrupt()
+         *  \brief Send an interrupt message to engine.
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Interrupt()
+        {
             SDBMessage sdbMessage = new SDBMessage();
-            sdbMessage.OperationCode = Operation.OP_KILL_ALL_CONTEXTS;
-            byte[] request = SDBMessageHelper.BuildKillAllContextsRequest(sdbMessage, isBigEndian);
+            sdbMessage.OperationCode = Operation.OP_INTERRUPT;
+            byte[] request = SDBMessageHelper.BuildInterruptRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
         }
 
