@@ -589,11 +589,12 @@ class SequoiaDB
     *                                                               SDB_SNAP_DATABASE              : Get the snapshot of the database
     *                                                               SDB_SNAP_SYSTEM                : Get the snapshot of the system
     *                                                               SDB_SNAP_CATALOG               : Get the snapshot of the catalog
-    *                                                               SDB_SNAP_TRANSACTIONS          : Get snapshot of transactions
-    *                                                               SDB_SNAP_TRANSACTIONS_CURRENT  : Get snapshot of all the transactions in current session
+    *                                                               SDB_SNAP_TRANSACTIONS          : Get the snapshot of transactions
+    *                                                               SDB_SNAP_TRANSACTIONS_CURRENT  : Get the snapshot of all the transactions in current session
     *                                                               SDB_SNAP_ACCESSPLANS           : Get the snapshot of cached access plans
-    *                                                               SDB_SNAP_HEALTH                : Get snapshot of node health detection
-    *                                                               SDB_SNAP_CONFIGS               : Get snapshot of node configurations
+    *                                                               SDB_SNAP_HEALTH                : Get the snapshot of node health detection
+    *                                                               SDB_SNAP_CONFIGS               : Get the snapshot of node configurations
+    *                                                               SDB_SNAP_SVCTASKS              : Get the snapshot of service tasks
     *                                                               SDB_SNAP_SEQUENCES             : Get the snapshot of sequences
     *                                                               @endcode
     *
@@ -697,8 +698,6 @@ class SequoiaDB
     *                                                           SDB_LIST_SVCTASKS
     *                                                           SDB_LIST_SEQUENCES
     *                                                           SDB_LIST_USERS
-    *                                                           SDB_LIST_CL_IN_DOMAIN
-    *                                                           SDB_LIST_CS_IN_DOMAIN
     *                                                           @endcode
     *
     * @param $condition an array or the string argument. The matching rule, match all the documents if null.
