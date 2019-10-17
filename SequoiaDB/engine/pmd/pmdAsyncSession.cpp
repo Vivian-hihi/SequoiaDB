@@ -1774,6 +1774,7 @@ namespace engine
          if ( 0 == pSession->getPendingMsgNum() &&
               !pSession->hasHold() &&
               !pSession->isProcess() &&
+              pSession->isAttached() &&
               pSession->timeout( interval ) )
          {
             PD_LOG ( PDEVENT, "Session[%s] timeout", pSession->sessionName() ) ;
