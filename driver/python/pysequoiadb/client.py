@@ -682,8 +682,6 @@ class client(object):
                      SDB_LIST_SEQUENCES             : Get all the sequence informations
                      SDB_LIST_USERS                 : Get all the user informations
                      SDB_LIST_BACKUPS               : Get backups list
-                     SDB_LIST_CL_IN_DOMAIN          : Reserved
-                     SDB_LIST_CS_IN_DOMAIN          : Reserved
         """
         if not isinstance(list_type, int):
             raise SDBTypeError("list type must be an instance of int")
