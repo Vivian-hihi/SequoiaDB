@@ -100,6 +100,10 @@ class SDBBaseError(Exception):
             'description': 'Redefine index',
             'detail': ''
         }
+
+        Visit this url:
+        "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1482317447-edition_id-@SDB_SYMBOL_VERSION"
+        to get more details about the error object.
         """
         return self.__error_obj
 
