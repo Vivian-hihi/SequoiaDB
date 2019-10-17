@@ -70,7 +70,7 @@ INT32 utilIniParserEx::parse( const CHAR *fileName, UINT32 flags )
    INT32 rc = SDB_OK ;
    OSSFILE file ;
 
-   rc = ossOpen( fileName, OSS_READONLY, 0, file ) ;
+   rc = ossOpen( fileName, OSS_READONLY | OSS_SHAREREAD, 0, file ) ;
    if ( rc )
    {
       goto error ;
