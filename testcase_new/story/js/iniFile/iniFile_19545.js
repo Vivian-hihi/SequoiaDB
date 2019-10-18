@@ -5,16 +5,15 @@
 **************************************/
 try
 {
-    // SEQUOIADBMAINSTREAM-5013
-    // main();
+    main();
 }
 catch(e)
 {
-   if ( e.constructor === Error )
-   {
-      println(e.stack);  
-   }
-   throw e;
+    if ( e.constructor === Error )
+    {
+       println(e.stack);  
+    }
+    throw e;
 }
 
 function main()
