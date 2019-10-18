@@ -577,6 +577,28 @@ class SequoiaDB
    public function invalidateCache( array|string $condition = array( 'Global' => true ) ){}
 
    /**
+    * Send a "Interrpt" message to engine, as a result, all the cursors and lobs created by current connection will be closed.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> interrupt() ;
+    * var_dump( $result ) ;
+    * @endcode
+   */
+   public function interrupt(){}
+
+   /**
     * Get the snapshot.
     *
     * @param $type	an integer argument. The snapshot type as below: @code
