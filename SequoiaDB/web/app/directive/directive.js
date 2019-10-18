@@ -2094,45 +2094,45 @@
                {
                   $.each( $scope.data.inputList, function( index ){
 
-                     $scope.data.inputList[index]['isClick'] = false ;
-
                      if( $scope.data.type != 'grid' && $scope.data.type != 'table' )
                      {
+                        $scope.data.inputList[index]['isClick'] = false ;
+
                         if( !isBoolean( $scope.data.inputList[index]['enable']) )
                         {
                            $scope.data.inputList[index]['enable'] = true ;
                         }
-                     }
 
-                     if( isUndefined( $scope.data.inputList[index]['default'] ) )
-                     {
-                        $scope.data.inputList[index]['default'] = $scope.data.inputList[index]['value'] ;
-                     }
-
-                     if( $scope.data.inputList[index]['type'] == 'list' )
-                     {
-                        $.each( $scope.data.inputList[index]['child'], function( index2 ){
-                           $.each( $scope.data.inputList[index]['child'][index2], function( index3 ){
-                              if( typeof( $scope.data.inputList[index]['child'][index2][index3]['default'] ) == 'undefined' )
-                              {
-                                 $scope.data.inputList[index]['child'][index2][index3]['default'] = $scope.data.inputList[index]['child'][index2][index3]['value'] ;
-                              }
-                           } ) ;
-                        } ) ;
-                     }
-                     else if( $scope.data.inputList[index]['type'] == 'multiple' )
-                     {
-                        if( typeof( $scope.data.inputList[index]['valid'] ) == 'object' )
+                        if( isUndefined( $scope.data.inputList[index]['default'] ) )
                         {
-                           if( isArray( $scope.data.inputList[index]['valid']['list'] ) == true )
-                           {
-                              $scope.data.inputList[index]['value'] = [] ;
-                              $.each( $scope.data.inputList[index]['valid']['list'], function( listIndex, validInfo ){
-                                 if( validInfo['checked'] == true )
+                           $scope.data.inputList[index]['default'] = $scope.data.inputList[index]['value'] ;
+                        }
+
+                        if( $scope.data.inputList[index]['type'] == 'list' )
+                        {
+                           $.each( $scope.data.inputList[index]['child'], function( index2 ){
+                              $.each( $scope.data.inputList[index]['child'][index2], function( index3 ){
+                                 if( typeof( $scope.data.inputList[index]['child'][index2][index3]['default'] ) == 'undefined' )
                                  {
-                                    $scope.data.inputList[index]['value'].push( validInfo['value'] ) ;
+                                    $scope.data.inputList[index]['child'][index2][index3]['default'] = $scope.data.inputList[index]['child'][index2][index3]['value'] ;
                                  }
                               } ) ;
+                           } ) ;
+                        }
+                        else if( $scope.data.inputList[index]['type'] == 'multiple' )
+                        {
+                           if( typeof( $scope.data.inputList[index]['valid'] ) == 'object' )
+                           {
+                              if( isArray( $scope.data.inputList[index]['valid']['list'] ) == true )
+                              {
+                                 $scope.data.inputList[index]['value'] = [] ;
+                                 $.each( $scope.data.inputList[index]['valid']['list'], function( listIndex, validInfo ){
+                                    if( validInfo['checked'] == true )
+                                    {
+                                       $scope.data.inputList[index]['value'].push( validInfo['value'] ) ;
+                                    }
+                                 } ) ;
+                              }
                            }
                         }
                      }

@@ -491,6 +491,19 @@
          return has ;
       }
 
+      function getModuleList( moduleName )
+      {
+         var list = [] ;
+         $.each( $scope.Left.navMenu, function( index, info ){
+            if ( info['module'] == moduleName )
+            {
+               list = info['list'] ;
+               return false ;
+            }
+         } ) ;
+         return list ;
+      }
+
       function addBusinessTitle( titles, name )
       {
          var index = -1 ;
@@ -529,7 +542,7 @@
       function addDataOperation( businessInfo )
       {
          var title = getNavTitle( businessInfo['type'] ) ;
-         var titleInfo = addBusinessTitle( $scope.Left.navMenu[0]['list'], title ) ;
+         var titleInfo = addBusinessTitle( getModuleList( 'Data' ), title ) ;
          titleInfo['list'].push( businessInfo ) ;
       }
 
@@ -541,16 +554,16 @@
          }
 
          var title = getNavTitle( businessInfo['type'] ) ;
-         var titleInfo = addBusinessTitle( $scope.Left.navMenu[1]['list'], title ) ;
+         var titleInfo = addBusinessTitle( getModuleList( 'Monitor' ), title ) ;
          titleInfo['list'].push( businessInfo ) ;
       }
 
-      function addStrateg( businessInfo )
+      function addStrategy( businessInfo )
       {
          if( businessInfo['type'] == 'sequoiadb' )
          {
             var title = getNavTitle( businessInfo['type'] ) ;
-            var titleInfo = addBusinessTitle( $scope.Left.navMenu[3]['list'], title ) ;
+            var titleInfo = addBusinessTitle( getModuleList( 'Strategy' ), title ) ;
             titleInfo['list'].push( businessInfo ) ;
          }
       }
@@ -562,7 +575,7 @@
              businessInfo['type'] == 'sequoiasql-mysql' )
          {
             var title = getNavTitle( businessInfo['type'] ) ;
-            var titleInfo = addBusinessTitle( $scope.Left.navMenu[4]['list'], title ) ;
+            var titleInfo = addBusinessTitle( getModuleList( 'Config' ), title ) ;
             titleInfo['list'].push( businessInfo ) ;
          }
       }
@@ -583,7 +596,7 @@
 
          addDataOperation( thisModule ) ;
          addMonitor( thisModule ) ;
-         addStrateg( thisModule ) ;
+         addStrategy( thisModule ) ;
          addConfig( thisModule ) ;
       }
 
