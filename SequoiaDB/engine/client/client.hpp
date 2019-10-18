@@ -5709,7 +5709,6 @@ namespace sdbclient
                  lobs created by current connection will be closed.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
-          \deprecated Deprecated, use interrupt() instead.
       */
       INT32 closeAllCursors ()
       {
@@ -5721,7 +5720,6 @@ namespace sdbclient
                  lobs created by current connection will be closed.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
-          \deprecated Deprecated, use interrupt() instead.
       */
       INT32 interrupt()
       {

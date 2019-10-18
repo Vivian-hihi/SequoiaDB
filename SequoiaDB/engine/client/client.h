@@ -2176,7 +2176,6 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle ) ;
     \param [in] cHandle The database connection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-    \deprecated Deprecated, use sdbInterrupt() instead.
 */
 SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle ) ;
 

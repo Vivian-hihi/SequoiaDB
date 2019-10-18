@@ -1899,7 +1899,6 @@ public class Sequoiadb implements Closeable {
      * again.
      *
      * @throws BaseException If error happens.
-     * @deprecated Use interrupt() instead.
      */
     public void closeAllCursors() throws BaseException {
         interrupt();

@@ -1627,7 +1627,6 @@ namespace SequoiaDB
          *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
-         *  \deprecated Use Interrupt() instead.
          */
         public void CloseAllCursors()
         {
