@@ -9030,8 +9030,8 @@ do                                                            \
       std::set<ossValuePtr> cursors ;
       std::set<ossValuePtr> lobs ;
 
-      rc = clientBuildKillAllContextsMsg( &_pSendBuffer, &_sendBufferSize, 0,
-                                          _endianConvert ) ;
+      rc = clientBuildInterruptMsg( &_pSendBuffer, &_sendBufferSize, 0,
+                                    FALSE, _endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -9074,6 +9074,36 @@ do                                                            \
    error :
       goto done ;
    }
+
+   INT32 _sdbImpl::interruptOperator()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      rc = clientBuildInterruptMsg( &_pSendBuffer, &_sendBufferSize, 0,
+                                    TRUE, _endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      if ( locked )
+      {
+         unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
 
    INT32 _sdbImpl::isValid( BOOLEAN *result )
    {

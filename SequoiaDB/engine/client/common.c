@@ -2753,8 +2753,9 @@ error :
    goto done ;
 }
 
-INT32 clientBuildKillAllContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                                      UINT64 reqID, BOOLEAN endianConvert )
+INT32 clientBuildInterruptMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                UINT64 reqID, BOOLEAN isSelf, 
+                                BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
    MsgOpKillAllContexts *killAllContexts = NULL ;
@@ -2775,7 +2776,14 @@ INT32 clientBuildKillAllContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    killAllContexts                       = (MsgOpKillAllContexts *)
                                            ( *ppBuffer ) ;
    killAllContexts->header.messageLength = len ;
-   killAllContexts->header.opCode        = MSG_BS_INTERRUPTE ;
+   if ( isSelf )
+   {
+      killAllContexts->header.opCode        = MSG_BS_INTERRUPTE_SELF ;
+   }
+   else
+   {
+      killAllContexts->header.opCode        = MSG_BS_INTERRUPTE ;
+   }
    killAllContexts->header.TID           = ossGetCurrentThreadID() ;
    killAllContexts->header.routeID.value = 0 ;
    killAllContexts->header.requestID     = reqID ;
