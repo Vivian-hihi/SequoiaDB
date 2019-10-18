@@ -7691,8 +7691,8 @@ SDB_EXPORT INT32 sdbInterrupt ( sdbConnectionHandle cHandle )
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // build msg
-   rc = clientBuildKillAllContextsMsg( &connection->_pSendBuffer, &connection->_sendBufferSize, 0,
-									   connection->_endianConvert ) ;
+   rc = clientBuildInterruptMsg( &connection->_pSendBuffer, &connection->_sendBufferSize, 0,
+                                 FALSE, connection->_endianConvert ) ;
    if ( rc )
    {
 	  goto error ;
