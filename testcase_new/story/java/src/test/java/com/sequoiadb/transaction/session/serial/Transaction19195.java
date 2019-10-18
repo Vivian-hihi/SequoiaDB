@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.session;
+package com.sequoiadb.transaction.session.serial;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -9,8 +9,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.CommLib;
-import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
  * 

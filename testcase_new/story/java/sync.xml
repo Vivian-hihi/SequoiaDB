@@ -35,6 +35,7 @@
          <package name="com.sequoiadb.dataconsistency"/>
          <package name="com.sequoiadb.subcl.serial" />
          <package name="com.sequoiadb.split.serial" />
+         <package name="com.sequoiadb.transaction.session.serial" />
       </packages>    
    </test>
 </suite>

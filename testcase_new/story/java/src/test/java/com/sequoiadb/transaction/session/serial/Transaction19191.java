@@ -1,5 +1,6 @@
-package com.sequoiadb.transaction.session;
+package com.sequoiadb.transaction.session.serial;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -13,20 +14,21 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.CommLib;
-import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.transaction.common.TransUtil;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.transaction.TransUtils;
 
 /**
  * 
- * @description seqDB-19190:coord及数据节点均开启事务，TransUseRBS属性不一致
+ * @description seqDB-19191:coord及数据节点均开启事务，TransLockWait属性不一致
  * @author yinzhen
  * @date 2019年9月18日
  */
-public class Transaction19190 extends SdbTestBase {
+public class Transaction19191 extends SdbTestBase {
 
     private Sequoiadb sdb;
-    private String clName = "cl_19190";
+    private String clName = "cl_19191";
 
     @BeforeClass
     public void setUp() {
@@ -37,7 +39,7 @@ public class Transaction19190 extends SdbTestBase {
         sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{_id:1}, AutoSplit:true}"));
         sdb.updateConfig((BSONObject) JSON.parse("{transisolation:1}"), (BSONObject) JSON.parse("{Global:true}"));
-        sdb.updateConfig((BSONObject) JSON.parse("{transuserbs:false}"), (BSONObject) JSON.parse("{Role:'data'}"));
+        sdb.updateConfig((BSONObject) JSON.parse("{translockwait:true}"), (BSONObject) JSON.parse("{Global:false}"));
     }
 
     @Test
@@ -53,21 +55,27 @@ public class Transaction19190 extends SdbTestBase {
             DBCollection cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
             BSONObject obj = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
             cl1.insert(obj);
+            List<BSONObject> expList = new ArrayList<>();
+            expList.add(obj);
 
             // 开启事务2，查询记录R1
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2.beginTransaction();
             DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
             DBCursor cursor = cl2.query();
-            List<BSONObject> actList = TransUtil.getReadActList(cursor);
-            Assert.assertTrue(actList.isEmpty());
+            try {
+                TransUtils.getReadActList(cursor);
+                Assert.fail();
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -13);
+            }
 
-            // 回滚所有事务
-            db1.rollback();
-            db2.rollback();
-            cursor = cl1.query();
-            actList = TransUtil.getReadActList(cursor);
-            Assert.assertTrue(actList.isEmpty());
+            // 提交所有事务
+            db1.commit();
+            db2.commit();
+            cursor = cl2.query();
+            List<BSONObject> actList = TransUtils.getReadActList(cursor);
+            Assert.assertEquals(actList, expList);
         } finally {
             if (null != db1) {
                 db1.commit();
@@ -85,7 +93,7 @@ public class Transaction19190 extends SdbTestBase {
         if (null != sdb) {
             sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
             sdb.deleteConfig((BSONObject) JSON.parse("{transisolation:''}"), (BSONObject) JSON.parse("{Global:true}"));
-            sdb.deleteConfig((BSONObject) JSON.parse("{transuserbs:''}"), (BSONObject) JSON.parse("{Role:'data'}"));
+            sdb.deleteConfig((BSONObject) JSON.parse("{translockwait:''}"), (BSONObject) JSON.parse("{Global:false}"));
             sdb.close();
         }
     }

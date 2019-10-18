@@ -99,7 +99,6 @@
          <package name="com.sequoiadb.transaction.brokennetwork" />
          <package name="com.sequoiadb.transaction.killnode" />
          <package name="com.sequoiadb.transaction.restartnode" />
-         <package name="com.sequoiadb.transaction.session" />
       </packages>
    </test>
 </suite>

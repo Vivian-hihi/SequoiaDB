@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.session;
+package com.sequoiadb.transaction.session.serial;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +14,10 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.CommLib;
-import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.transaction.common.TransUtil;
+import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.transaction.TransUtils;
 
 /**
  * 
@@ -66,7 +66,7 @@ public class Transaction19193 extends SdbTestBase {
 
             db1.rollback();
             DBCursor cursor = cl1.query();
-            List<BSONObject> actList = TransUtil.getReadActList(cursor);
+            List<BSONObject> actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
         } finally {
             if (null != db1) {
