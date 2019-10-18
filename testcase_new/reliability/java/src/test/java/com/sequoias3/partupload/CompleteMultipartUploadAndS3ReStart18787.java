@@ -102,7 +102,7 @@ public class CompleteMultipartUploadAndS3ReStart18787 extends S3TestBase {
                 PartUploadUtils.completeMultipartUpload(s3Client1, bucketName, keyName, uploadId, partEtags);
             } catch (AmazonS3Exception e) {
                 // e:0 Get connection failed.
-                if (e.getStatusCode() != 0) {
+                if (e.getStatusCode() != 0 && e.getStatusCode() != 500) {
                     throw new Exception(keyName, e);
                 }
             } catch (Exception e) {
