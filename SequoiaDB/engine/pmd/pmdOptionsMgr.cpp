@@ -2474,7 +2474,6 @@ done:
          std::cerr << PMD_OPTION_AUDIT_MASK << " value error, use default"
                    << endl ;
          _auditMask = AUDIT_MASK_DEFAULT ;
-         ossStrncpy( _auditMaskStr, AUDIT_MASK_DFT_STR, OSS_MAX_PATHSIZE ) ;
       }
 
       // audit mask check
@@ -2484,29 +2483,6 @@ done:
          std::cerr << PMD_OPTION_MON_GROUP_MASK << " value error, use default"
                    << endl ;
          _monGroupMask = MON_GROUP_MASK_DEFAULT ;
-      }
-
-      // preferedinstance
-      if( 0 != ossStrcmp( _prefInstStr, PREFER_INSTANCE_MASTER_STR ) &&
-          0 != ossStrcmp( _prefInstStr, PREFER_INSTANCE_SLAVE_STR ) &&
-          0 != ossStrcmp( _prefInstStr, PREFER_INSTANCE_ANY_STR ) &&
-          0 != ossStrcmp( _prefInstStr, PREFER_INSTANCE_MASTER_LOWSTR ) &&
-          0 != ossStrcmp( _prefInstStr, PREFER_INSTANCE_SLAVE_LOWSTR ) &&
-          0 != ossStrcmp( _prefInstStr, PREFER_INSTANCE_ANY_LOWSTR ) )
-      {
-         std::cerr << PMD_OPTION_PREFINST << " value error, use default"
-                   << endl ;
-         ossStrncpy( _prefInstStr, PMD_DFT_PREFINST, PMD_MAX_LONG_STR_LEN ) ;
-      }
-
-      // preferedinstancemode
-      if( 0 != ossStrcmp( _prefInstModeStr, PREFER_INSTANCE_RANDOM_STR ) &&
-          0 != ossStrcmp( _prefInstModeStr, PREFER_INSTANCE_ORDERED_STR ) )
-      {
-         std::cerr << PMD_OPTION_PREFINST_MODE << " value error, use default"
-                   << endl ;
-         ossStrncpy( _prefInstModeStr, PMD_DFT_PREFINST_MODE,
-                     PMD_MAX_SHORT_STR_LEN ) ;
       }
 
       if ( 0 == ossStrlen( _replServiceName ) )
