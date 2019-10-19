@@ -8,6 +8,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
@@ -23,8 +24,9 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
     private int runSuccNum = 0;
     private int expRunSuccNum = 2;
     private Sequoiadb sdb;
-    private String clName = "cl19950";
-    private String fullCLName;
+    private CollectionSpace cs;
+    private int clNum = 3;
+    private String clNameBase = "cl19950_";
 
     @BeforeClass
     public void setUp() {
@@ -32,22 +34,28 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip standalone.");
         }
-        sdb.getCollectionSpace(csName).createCollection(clName);
-        fullCLName = csName + "." + clName;
+        cs = sdb.getCollectionSpace(csName);
+        for (int i = 0; i < clNum; i++) {
+            cs.createCollection(clNameBase + i);
+        }
     }
 
-    @Test(enabled = false) // SEQUOIADBMAINSTREAM-5011
+    @Test
     public void test_getList() {
         // test hint / skip / limit
-        BSONObject query = new BasicBSONObject("Name", fullCLName);
+        BasicBSONObject queryObj = new BasicBSONObject();
+        queryObj.put("$regex", "^" + csName + "." + clNameBase);
+        queryObj.put("$options", "i");
+        BSONObject query = new BasicBSONObject("Name", queryObj);
         BSONObject hint = new BasicBSONObject("", "test");
-        long skipRows = 0;
+        long skipRows = 1;
         long returnRows = 1;
         DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_COLLECTIONS, query, null, null, hint, skipRows, returnRows);
         int size = 0;
         while (cursor.hasNext()) {
             Object name = cursor.getNext().get("Name");
-            Assert.assertEquals(name, fullCLName);
+            // records disorder, the results are not unique
+            Assert.assertTrue(name.toString().contains(csName + "." + clNameBase));
             size++;
         }
         Assert.assertEquals(size, returnRows);
@@ -58,37 +66,42 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
             cursor.getNext().get("User");
         }
 
-        // test listType: SDB_LIST_SVCTASKS, not need verify results
-        cursor = sdb.getList(Sequoiadb.SDB_LIST_SVCTASKS, null, null, null);
-        while (cursor.hasNext()) {
-            cursor.getNext();
-        }
-
         runSuccNum++;
     }
 
-    /*
-     * TestgetSnapshot15758 has covered hint/limit/skip of snapshot, the test
-     * only cover snapshotType: SDB_SNAP_SVCTASKS
-     */
-    @Test(enabled = false) // SEQUOIADBMAINSTREAM-5011
+    @Test
     public void test_getSnapshot() {
-        // test snapshotType: SDB_SNAP_SVCTASKS, not need verify results
-        DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SVCTASKS, null, null, null, null, 0, 1);
+        BasicBSONObject queryObj = new BasicBSONObject();
+        queryObj.put("$regex", "^" + csName + "." + clNameBase);
+        queryObj.put("$options", "i");
+        BSONObject query = new BasicBSONObject("Name", queryObj);
+        BSONObject hint = new BasicBSONObject("", "test");
+        long skipRows = 1;
+        long returnRows = 1;
+        DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, query, null, null, hint, skipRows,
+                returnRows);
+        int size = 0;
         while (cursor.hasNext()) {
-            System.out.println(cursor.getNext().get("NodeName"));
+            Object name = cursor.getNext().get("Name");
+            // records disorder, the results are not unique
+            Assert.assertTrue(name.toString().contains(csName + "." + clNameBase));
+            size++;
         }
+        Assert.assertEquals(size, returnRows);
         runSuccNum++;
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            if (runSuccNum < expRunSuccNum) {
-                sdb.getCollectionSpace(csName).dropCollection(clName);
+            if (runSuccNum == expRunSuccNum) {
+                for (int i = 0; i < clNum; i++) {
+                    cs.dropCollection(clNameBase + i);
+                }
             }
         } finally {
-            sdb.close();
+            sdb.disconnect();
         }
     }
 }
+
