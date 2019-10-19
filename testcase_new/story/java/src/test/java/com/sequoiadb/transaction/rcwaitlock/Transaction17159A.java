@@ -1,7 +1,7 @@
 package com.sequoiadb.transaction.rcwaitlock;
 
 /**
- * @Description seqDB-17159:  多个原子操作与读并发，事务回滚 
+ * @Description seqDB-17159:  多个原子操作与读并发，事务回滚
  * @author xiaoni Zhao
  * @date 2019-1-23
  */
@@ -20,7 +20,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 @Test(groups = "rcwaitlock")
@@ -44,30 +43,27 @@ public class Transaction17159A extends SdbTestBase {
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
+        expList = TransUtils.insertRandomDatas(cl, 0, 10000);
     }
 
     @Test
     public void test() {
-        expList = TransUtils.insertRandomDatas(cl, 0, 10000);
-
-        // 开启事务
         db1.beginTransaction();
         db2.beginTransaction();
 
         // 事务1对同一条记录执行多个原子操作
-        BSONObject insertR3 = (BSONObject) JSON.parse("{a:20000,b:20000}");
+        BSONObject insertR3 = (BSONObject) JSON.parse("{a:10000,b:10000}");
         for (int i = 0; i < 10000; i++) {
             cl1.insert(insertR3);
-            cl1.update("{a:20000}", "{$set:{a:20001}}", "{'':'a'}");
-            cl1.delete("{a:20001}", "{'':'a'}");
+            cl1.update("{a:10000}", "{$set:{a:10001}}", "{'':'a'}");
+            cl1.delete("{a:10001}", "{'':'a'}");
         }
 
         // 事务2表扫描记录
-        Read read1 = new Read("{'':null}");
-        read1.start();
-        Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
+        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-        // 操作同一条记录时，事务2索引扫描不阻塞，读老记录，单号记录为SEQUOIADBMAINSTREAM-4254
+        // 事务2索引扫描记录
         cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
@@ -81,64 +77,23 @@ public class Transaction17159A extends SdbTestBase {
 
         db1.rollback();
 
-        // 校验阻塞线程返回的记录
-        if (!read1.isSuccess()) {
-            Assert.fail(read1.getErrorMsg());
-        }
-        try {
-            Assert.assertEquals(read1.getExecResult(), expList);
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
+        // 事务2表扫描记录
+        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-        cursor.close();
+        // 事务2索引扫描记录
+        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-        db2.rollback();
-    }
+        // 非事务表扫描记录
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-    private class Read extends SdbThreadBase {
-        private Sequoiadb db = null;
-        private Sequoiadb db2 = null;
-        private DBCollection cl = null;
-        private DBCollection cl2 = null;
-        private String hint = null;
-        private DBCursor cursor = null;
+        // 非事务索引扫描记录
+        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-        public Read(String hint) {
-            this.hint = hint;
-        }
-
-        @Override
-        public void exec() throws Exception {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
-            cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-
-            // 开启并发事务2
-            db2.beginTransaction();
-
-            try {
-                cursor = cl2.query(null, null, "{a:1}", hint);
-                List<BSONObject> records = TransUtils.getReadActList(cursor);
-                setExecResult(records);
-
-                // 事务2扫描记录
-                cursor = cl2.query(null, null, "{a:1}", hint);
-                Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
-
-                // 非事务扫描记录
-                cursor = cl.query(null, null, "{a:1}", hint);
-                Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
-
-                db2.rollback();
-            } finally {
-                db2.rollback();
-                cursor.close();
-                db2.close();
-                db.close();
-            }
-        }
+        db2.commit();
     }
 
     @AfterClass
