@@ -52,8 +52,6 @@ function main()
     iniFile.addComment(section, key, comment4, false);
     iniFile.save();
     
-    // SEQUOIADBMAINSTREAM-5042
-    /*
     try
     {
        iniFile.addComment("notsection", key, comment1, true);
@@ -81,7 +79,7 @@ function main()
            throw new Error(e);    
         }
     }
-    */
+    
     var checkFile = new IniFile(fileFullPath);
     
     var checkComment1 = checkFile.getComment(section, key, true);
