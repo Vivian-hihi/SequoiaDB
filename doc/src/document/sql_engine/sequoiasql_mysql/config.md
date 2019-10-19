@@ -3,16 +3,20 @@
 在 MySQL 上创建表时，可以在其表选项 COMMENT 中通过指定关键词 "sequoiadb" ，并紧跟一 json 对象以传入自定义的表配置参数。格式如下：
 
 ```
-COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, use_partition:<true|false>] }"
+COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|false>] }"
 ```
-
+ 
 具体配置参数如下表:
 
 | 参数名 | 类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
 | string | string |用户自定义注释字符串 | 否 |
 | table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否 |
-| use_partition | bool | 是否创建分区表。取值 false 则显式创建非分区表。| 否 |
+| auto_partition | bool | 是否创建分区表。取值 false 则显式创建非分区表。| 否 |
+
+>**Note：**
+>
+>use_partition已弃用，3.2.4版本更名为auto_partition。引擎配置项相应更名为sequoiadb_auto_partition。<br>
 
 示例1：在 SequoiaDB 上创建根据时间进行范围切分的表。
 
@@ -21,12 +25,12 @@ mysql> CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY 
     -> ENGINE=sequoiadb
     -> COMMENT="Sharding table for example, sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
 ```
-示例2：在[引擎配置项](sql_engine/sequoiasql_mysql/config.md#引擎配置)`sequoiadb_use_partition`为 ON 时，指定`use_partition`为 false 显式创建普通表。
+示例2：在[引擎配置项](sql_engine/sequoiasql_mysql/config.md#引擎配置)`sequoiadb_auto_partition`为 ON 时，指定`auto_partition`为 false 显式创建普通表。
 
 ```lang-sql
 mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
     -> ENGINE=sequoiadb 
-    -> COMMENT='sequoiadb:{ use_partition: false }';
+    -> COMMENT='sequoiadb:{ auto_partition: false }';
 ```
 
 
@@ -38,6 +42,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    |参数名|类型|默认值|动态生效|作用范围|说明|
    |---|---|---|---|---|---|
    |sequoiadb_alter_table_overhead_threshold|long|10000000|Yes|Global, Session|更改表开销阈值。当表记录数超过这个阈值，需要全表更新的更改操作将被禁止。|
+   |sequoiadb_auto_partition|bool|ON|Yes|Global|是否启用自动分区。|
    |sequoiadb_bulk_insert_size|int|2000|Yes|Global|批量插入时每批的插入记录数。|  
    |sequoiadb_conn_addr|string|"localhost:11810"|Yes|Global|SequoiaDB 连接地址。|
    |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
@@ -48,7 +53,6 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    |sequoiadb_selector_pushdown_threshold|unsigned int|30|Yes|Global, Session|查询字段下压触发阈值，取值范围[0, 100]，单位：%。|
    |sequoiadb_use_autocommit|bool|ON|Yes|Global|是否启用自动提交模式(已弃用)。|
    |sequoiadb_use_bulk_insert|bool|ON|Yes|Global|是否启用批量插入。|
-   |sequoiadb_use_partition|bool|ON|Yes|Global|是否启用自动分区。|
    |sequoiadb_user|string|""|Yes|Global|SequoiaDB 鉴权用户。|
 
 + **配置修改方式**
@@ -64,7 +68,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    + 修改实例数据目录下的配置文件auto.cnf，在[mysqld]下添加/更改对应配置项。示例：
 
    ```lang-ini
-   sequoiadb_use_partition=OFF
+   sequoiadb_auto_partition=OFF
    ```
 
    > **Note:** 修改配置文件后需要重新启动MySQL服务
@@ -72,10 +76,12 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    + 通过MySQL命令行修改，示例：
 
    ```lang-sql
-   mysql> SET GLOBAL sequoiadb_use_partition=OFF;
+   mysql> SET GLOBAL sequoiadb_auto_partition=OFF;
    ```
 
-   > **Note:** 通过命令行方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。  
+   > **Note:** 
+   >
+   >通过命令行方式进行的配置为临时有效，当重启MySQL服务后配置将失效。如果需要配置永久生效则必须通过修改配置文件。 
 
 ## 引擎配置使用说明
 
@@ -88,12 +94,15 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
 
 + **配置自动分区功能**
 
-   `sequoiadb_use_partition` 配置项决定 MySQL 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MySQL 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
+   `sequoiadb_auto_partition` 配置项决定 MySQL 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MySQL 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
    
-   如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mysql/config.md#自定义表配置)中指定`use_partition`为 false。
+   如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mysql/config.md#自定义表配置)中指定`auto_partition`为 false。
 
-   > **Note:** 自动分区时，主键或唯一索引只在建表时对应分区键。建表后添加删除主键或唯一索引都不会更改分区键。
-
+   > **Note:**
+   >
+   >* 自动分区时，主键或唯一索引只在建表时对应分区键。建表后添加删除主键或唯一索引都不会更改分区键。<br>
+   >* use_partition已弃用，3.2.4版本更名为auto_partition。引擎配置项相应更名为sequoiadb_auto_partition。<br>
+   
 + **配置默认副本数**
 
    `sequoiadb_replica_size`配置项可以设置表默认的写操作需同步的副本数。副本数多时，数据一致性强度高，但性能会有所下降。副本数少时，则反之。具体可参考 SequoiaDB 的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。
