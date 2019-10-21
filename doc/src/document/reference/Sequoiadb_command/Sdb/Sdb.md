@@ -63,25 +63,19 @@ v1.12及以上版本。
 
 ##示例##
 
-1. 连接默认主机上的 SequoiaDB，hostname 默认为：localhost，svcname 默认为 11810。
+1. 连接默认主机上的 SequoiaDB，hostname 默认为 "localhost"，svcname 默认为 11810。
 
 	```lang-javascript
  	> var db = new Sdb()
  	```
 
-2. 连接指定机器上的 SequoiaDB，目标机器："sdbserver1"。
+2. 连接指定机器上的 SequoiaDB，目标机器 "sdbserver1"。
 
 	```lang-javascript
  	> var db = new Sdb("sdbserver1",11810)
 	```
 
-3. 连接指定机器上的 SequoiaDB，如果没有设置用户名和密码，则用户名和密码可以为空。
-
-	```lang-javascript
- 	> var db = new Sdb("sdbserver1",11810,"","")
-	```
-
-4. 使用用户名和密码连接指定机器上的 SequoiaDB。
+3. 使用用户名和密码连接指定机器上的 SequoiaDB。
 
 	```lang-javascript
  	> var db = new Sdb("sdbserver1",11810,"admin","123")

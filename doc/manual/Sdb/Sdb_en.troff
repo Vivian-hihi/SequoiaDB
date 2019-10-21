@@ -19,13 +19,13 @@ Sdb
 Create a Sdb object to connect to the SequoiaDB.
 .SH PARAMETERS
 .IP \[bu] 2
-\f[C]hostname\f[] ( \f[I]String\f[]， \f[I]Required\f[] )
+\f[C]hostname\f[] ( \f[I]String\f[] )
 .RS 2
 .PP
 Target hostname, default to be "localhost".
 .RE
 .IP \[bu] 2
-\f[C]svcname\f[] ( \f[I]int\f[], \f[I]Required\f[] )
+\f[C]svcname\f[] ( \f[I]int\f[] )
 .RS 2
 .PP
 Target svcname, default to be 11810.
@@ -38,7 +38,7 @@ default to be empty.
 .IP \[bu] 2
 \f[C]password\f[] ( \f[I]String\f[] )
 .PP
-The password name of the SequoiaDB user, if the SequoiaDB has no users.
+The password of the SequoiaDB user, if the SequoiaDB has no users.
 default to be empty.
 .RS
 .PP
@@ -93,14 +93,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-the port fo sdbcm is
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-reachable.
+port are reachable.
 T}
 T{
 2
@@ -111,7 +104,7 @@ SDB_NET_CANNOT_CONNECT
 T}@T{
 Unable to connect to
 T}@T{
-Check that the address,
+Check that the
 T}
 T{
 T}@T{
@@ -119,21 +112,28 @@ T}@T{
 T}@T{
 the address
 T}@T{
-port and node
+configuration
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-configuration are
+information of the
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-correct.
+address, port and node
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+are correct.
 T}
 T{
 3
@@ -144,7 +144,7 @@ SDB_CLS_NOT_PRIMARY
 T}@T{
 Primary node does not
 T}@T{
-Checks if there is a
+Check if the current
 T}
 T{
 T}@T{
@@ -152,43 +152,43 @@ T}@T{
 T}@T{
 exit
 T}@T{
-true node of "isPrimary
+replicaGroup has a node
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-" in current
+with "isPrimary" being
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-replicaGroup.
-Start the
+"true".
+Start the node
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-node if there is a
+if there is a node
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-node that is not
+that is not started in
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-started in the current
+the current
 T}
 T{
 T}@T{
@@ -206,7 +206,7 @@ SDB_CLS_NODE_BSFAULT
 T}@T{
 The node is not in
 T}@T{
-ChecKs the node statusf
+Check the node status
 T}
 T{
 T}@T{
@@ -222,28 +222,21 @@ T}@T{
 T}@T{
 T}@T{
 replicaGroup.
-like
+Like
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-chesks that check that
+check if the catalog
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-catalog node is
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-started.
+node is started.
 T}
 .TE
 .PP
@@ -273,15 +266,6 @@ hostname is "sdbserver1".
 .fi
 .RE
 .IP "3." 3
-Create a Sdb object connection to the SequoiaDB on the specified host using the
-default username and password, default username and password are empty.
-.nf
-\f[C]
->\ var\ db\ =\ new\ Sdb("sdbserver1",11810,"","")
-\f[]
-.fi
-.RE
-.IP "4." 3
 Create a Sdb object connection to the SequoiaDB on the specified host with a
 username and password.
 .nf
