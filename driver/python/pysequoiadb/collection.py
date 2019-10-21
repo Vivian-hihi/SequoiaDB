@@ -326,9 +326,9 @@ class collection(object):
 
         Parameters:
            Name      Type    Info:
-           records   dict    The inserted record.
+           record    dict    The inserted record.
         Return values:
-           A ObjectId object of record inserted. eg:  { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
+           A ObjectId object of record inserted. eg: { '_id': ObjectId('5d5149ade3071dce3692e93b') }
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
@@ -350,7 +350,7 @@ class collection(object):
             flag      int     See Info as below.
          Return values:
            Empty dict: when flag is not equal INSERT_FLG_RETURN_OID, will return a empty dict, eg: { }.
-           Dict which contains the field "_id": when flag "INSERT_FLG_RETURN_OID" is set,return all the values of "_id"
+           Dict which contains the field "_id": when flag "INSERT_FLG_RETURN_OID" is set, return all the values of "_id"
            field in a dict. eg:{ '_id': ObjectId('5d5149ade3071dce3692e93b') }.
          Exceptions:
             pysequoiadb.error.SDBBaseError
