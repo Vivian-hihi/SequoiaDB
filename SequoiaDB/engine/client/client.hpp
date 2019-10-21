@@ -4229,7 +4229,7 @@ namespace sdbclient
 
       // interrupt
       virtual INT32 interrupt() = 0 ;
-      virtual INT32 interruptOperator() = 0 ;
+      virtual INT32 interruptOperation() = 0 ;
 
       // connection is valid
       virtual INT32 isValid( BOOLEAN *result ) = 0 ;
@@ -5729,7 +5729,7 @@ namespace sdbclient
          return pSDB->interrupt () ;
       }
 
-      /** \fn INT32 interruptOperator () ;
+      /** \fn INT32 interruptOperation () ;
           \brief Send "INTERRUPT_SELF" message to engine to stop the current 
                  operation. When the current operation had finish, nothing 
                  happend, Otherwise, the current operation will be stop, and 
@@ -5737,11 +5737,11 @@ namespace sdbclient
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 interruptOperator()
+      INT32 interruptOperation()
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->interruptOperator () ;
+         return pSDB->interruptOperation () ;
       }      
 
       /** \fn INT32 isValid ( BOOLEAN *result ) ;

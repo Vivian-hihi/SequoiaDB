@@ -2188,6 +2188,17 @@ SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbInterrupt ( sdbConnectionHandle cHandle ) ;
 
+/** \fn INT32 sdbInterruptOperation( sdbConnectionHandle cHandle )
+    \brief Send "INTERRUPT_SELF" message to engine to stop the current 
+           operation. When the current operation had finish, nothing 
+           happend, Otherwise, the current operation will be stop, and 
+           return error.
+    \param [in] cHandle The database connection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbInterruptOperation ( sdbConnectionHandle cHandle ) ;
+
 
 /** \fn INT32 sdbExec( sdbConnectionHandle cHandle,
                        const CHAR *sql,

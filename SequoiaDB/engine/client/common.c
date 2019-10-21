@@ -2776,14 +2776,8 @@ INT32 clientBuildInterruptMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    killAllContexts                       = (MsgOpKillAllContexts *)
                                            ( *ppBuffer ) ;
    killAllContexts->header.messageLength = len ;
-   if ( isSelf )
-   {
-      killAllContexts->header.opCode        = MSG_BS_INTERRUPTE_SELF ;
-   }
-   else
-   {
-      killAllContexts->header.opCode        = MSG_BS_INTERRUPTE ;
-   }
+   killAllContexts->header.opCode = isSelf ? MSG_BS_INTERRUPTE_SELF :
+                                    MSG_BS_INTERRUPTE ;
    killAllContexts->header.TID           = ossGetCurrentThreadID() ;
    killAllContexts->header.routeID.value = 0 ;
    killAllContexts->header.requestID     = reqID ;

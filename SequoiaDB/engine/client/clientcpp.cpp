@@ -9075,7 +9075,7 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::interruptOperator()
+   INT32 _sdbImpl::interruptOperation()
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;

@@ -7691,15 +7691,16 @@ SDB_EXPORT INT32 sdbInterrupt ( sdbConnectionHandle cHandle )
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // build msg
-   rc = clientBuildInterruptMsg( &connection->_pSendBuffer, &connection->_sendBufferSize, 0,
+   rc = clientBuildInterruptMsg( &connection->_pSendBuffer,
+                                 &connection->_sendBufferSize, 0,
                                  FALSE, connection->_endianConvert ) ;
    if ( rc )
    {
-	  goto error ;
+      goto error ;
    }
    // send msg
    rc = _send ( cHandle, connection->_sock, (MsgHeader*)connection->_pSendBuffer,
-		        connection->_endianConvert ) ;
+                connection->_endianConvert ) ;
    if ( rc )
    {
       goto error ;
@@ -7708,15 +7709,43 @@ SDB_EXPORT INT32 sdbInterrupt ( sdbConnectionHandle cHandle )
    pCursorHandle = connection->_cursors ;
    while ( pCursorHandle )
    {
-	  // unregister from connection
-	  _unregCursor ( cHandle, pCursorHandle->data ) ;
-	  // mark the cursor to be closed
-	  ((sdbCursorStruct*)pCursorHandle->data)->_contextID = -1 ;
-	  ((sdbCursorStruct*)pCursorHandle->data)->_isClosed = TRUE ;
+      // unregister from connection
+      _unregCursor ( cHandle, pCursorHandle->data ) ;
+      // mark the cursor to be closed
+      ((sdbCursorStruct*)pCursorHandle->data)->_contextID = -1 ;
+      ((sdbCursorStruct*)pCursorHandle->data)->_isClosed = TRUE ;
       // goto next cursor node
       pCursorHandle = pCursorHandle->next ;
    }
 
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbInterruptOperation ( sdbConnectionHandle cHandle )
+{
+   INT32 rc            = SDB_OK ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+   // build msg
+   rc = clientBuildInterruptMsg( &connection->_pSendBuffer,
+                                 &connection->_sendBufferSize, 0,
+                                 TRUE, connection->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   // send msg
+   rc = _send ( cHandle, connection->_sock, (MsgHeader*)connection->_pSendBuffer,
+                connection->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   
 done :
    return rc ;
 error :
