@@ -841,14 +841,13 @@ class collection(object):
         Parameters:
            Name         Type  Info:
            index_def    dict  The dict object of index element.
-                            eg. {'name':1, 'age':-1}
+                                      eg. {'name':1, 'age':-1}
            idx_name     str   The index name.
            is_unique    bool  Whether the index elements are unique or not.
-           is_enforced  bool  Whether the index is enforced unique This
-                            element is meaningful when isUnique is set to
-                            true.
+           is_enforced  bool  Whether the index is enforced unique, this element
+                                      is meaningful when isUnique is set to true.
            buffer_size  int   The size of sort buffer used when creating index,
-                            the unit is MB, zero means don't use sort buffer
+                                      the unit is MB, zero means don't use sort buffer
         Exceptions:
            pysequoiadb.error.SDBBaseError
 
@@ -856,25 +855,25 @@ class collection(object):
         if not isinstance(is_unique, bool):
             raise SDBTypeError("is_unique must be an instance of bool")
         if not isinstance(is_enforced, bool):
-            raise SDBTypeError("is_unique must be an instance of bool")
+            raise SDBTypeError("is_enforced must be an instance of bool")
         if not isinstance(buffer_size, int):
-            raise SDBTypeError("is_unique must be an instance of int")
+            raise SDBTypeError("buffer_size must be an instance of int")
 
-        options = {"Unique":is_unique, "Enforced":is_enforced, "NotNull":False, "SortBufferSize":buffer_size}
-        self.create_index_with_options(index_def, idx_name, options)
+        option = {"Unique":is_unique, "Enforced":is_enforced, "NotNull":False, "SortBufferSize":buffer_size}
+        self.create_index_with_options(index_def, idx_name, option)
 
 
-    def create_index_with_options(self, index_def, idx_name, options=None):
+    def create_index_with_option(self, index_def, idx_name, option=None):
         """Create an index in current collection.
 
         Parameters:
            Name         Type     Info:
            index_def    dict     The dict object of index element.
-                                    eg. {'name':1, 'age':-1}
+                                         eg. {'name':1, 'age':-1}
            idx_name     str      The index name.
-           options      dict     The configuration options for index. visit this url:
-                                 "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-@SDB_SYMBOL_VERSION"
-                                 to get more details.
+           option      dict      The configuration option for index. visit this url:
+                                         "http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-@SDB_SYMBOL_VERSION"
+                                         to get more details.
         Exceptions:
            pysequoiadb.error.SDBBaseError
 
@@ -883,14 +882,14 @@ class collection(object):
             raise SDBTypeError("index definition must be an instance of dict")
         if not isinstance(idx_name, str_type):
             raise SDBTypeError("index name must be an instance of str_type")
-        if options is None:
-            options = {}
-        elif not isinstance(options, dict):
-            raise SDBTypeError("options must be an instance of dict")
+        if option is None:
+            option = {}
+        elif not isinstance(option, dict):
+            raise SDBTypeError("option must be an instance of dict")
 
         bson_index_def = bson.BSON.encode(index_def)
-        bson_options = bson.BSON.encode(options)
-        rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name, bson_options)
+        bson_option = bson.BSON.encode(option)
+        rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name, bson_option)
 
         raise_if_error(rc, "Failed to create index")
 

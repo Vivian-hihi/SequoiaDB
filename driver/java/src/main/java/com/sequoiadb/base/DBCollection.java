@@ -1381,7 +1381,7 @@ public class DBCollection {
      * Create a index with name and key.
      *
      * @param name    The index name.
-     * @param key     The index keys in JSON format, like: "{\"a\":1, \"b\":-1}".
+     * @param key     The index keys in JSON format, like: { "a":1, "b":-1 }.
      * @param options Optional configuration, type is BSONObject. Please reference
      *                {@see <a href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-302>here</a>}
      *                for more detail, like: { "Unique" : false , "Enforced" : false , "NotNull" : false , "SortBufferSize" : 64 }
@@ -1449,28 +1449,10 @@ public class DBCollection {
     /**
      * Create a index with name and key.
      *
-     * @param name    The index name.
-     * @param key     The index keys in JSON format, like: "{\"a\":1, \"b\":-1}".
-     * @param options Optional configuration, type is BSONObject. Please reference
-     *                {@see <a href=http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1432190830-edition_id-302>here</a>}
-     *                for more detail.
-     * @throws BaseException
-     */
-    public void createIndex(String name, String key, BSONObject options) throws BaseException {
-        BSONObject k = null;
-        if (key != null) {
-            k = (BSONObject) JSON.parse(key);
-        }
-        createIndex(name, k, options);
-    }
-
-    /**
-     * Create a index with name and key.
-     *
      * @param name           The index name
-     * @param key            The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
+     * @param key            The index keys in JSON format, like: { "a":1, "b":-1 }
      * @param isUnique       Whether the index elements are unique or not
-     * @param enforced       Whether the index is enforced unique This element is meaningful when isUnique is
+     * @param enforced       Whether the index is enforced unique, this element is meaningful when isUnique is
      *                       set to true
      * @param sortBufferSize The size(MB) of sort buffer used when creating index, zero means don't use sort
      *                       buffer
@@ -1495,7 +1477,7 @@ public class DBCollection {
      * @param name           The index name
      * @param key            The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
      * @param isUnique       Whether the index elements are unique or not
-     * @param enforced       Whether the index is enforced unique This element is meaningful when isUnique is
+     * @param enforced       Whether the index is enforced unique, this element is meaningful when isUnique is
      *                       set to true
      * @param sortBufferSize The size(MB) of sort buffer used when creating index, zero means don't use sort
      *                       buffer
@@ -1514,10 +1496,10 @@ public class DBCollection {
      * Create a index with name and key
      *
      * @param name     The index name
-     * @param key      The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
+     * @param key      The index keys in JSON format, like: { "a":1, "b":-1}
      * @param isUnique Whether the index elements are unique or not
-     * @param enforced Whether the index is enforced unique This element is meaningful when isUnique is
-     *                 set to true
+     * @param enforced Whether the index is enforced unique, this element is meaningful when isUnique is
+     *                  set to true
      * @throws BaseException If error happens.
      */
     public void createIndex(String name, BSONObject key, boolean isUnique, boolean enforced)
@@ -1531,7 +1513,7 @@ public class DBCollection {
      * @param name     The index name
      * @param key      The index keys in JSON format, like: "{\"a\":1, \"b\":-1}"
      * @param isUnique Whether the index elements are unique or not
-     * @param enforced Whether the index is enforced unique This element is meaningful when isUnique is
+     * @param enforced Whether the index is enforced unique, this element is meaningful when isUnique is
      *                 set to true
      * @throws BaseException If error happens.
      */
