@@ -192,6 +192,18 @@ namespace CSharp.monitor
                 Assert.AreEqual("{ \"IsPrimary\" : true, \"ServiceStatus\" : true }", cursor.Current().ToString());
             }
             Assert.IsTrue(num>0);
+
+            //SDB_LIST_SVCTASKS
+            cursor = sdb.GetList(SDBConst.SDB_LIST_SVCTASKS, null, null, null, null, 0, 1);
+            int count = 0;
+            while (cursor.Next() != null)
+            {
+                doc = cursor.Current();
+                count++;
+                Assert.IsTrue(doc.ToString().Contains("\"TaskID\" : 0, \"TaskName\" : \"Default\""));
+            }
+            cursor.Close();
+            Assert.AreEqual(1, count);
         }
 
         [TestCleanup()]

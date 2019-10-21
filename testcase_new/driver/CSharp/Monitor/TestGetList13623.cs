@@ -197,6 +197,35 @@ namespace CSharp.Monitor
                SDBConst.SDB_LIST_TRANSACTIONS 
                SDBConst.SDB_LIST_TRANSACTIONS_CURRENT*/
 
+            //SDB_LIST_USERS
+            sdb.CreateUser("user13623", "user13623");
+            sdb.CreateUser("user13623_1", "user13623_1");
+            sdb.CreateUser("user13623_2", "user13623_2");
+            cursor = sdb.GetList(SDBConst.SDB_LIST_USERS, null, null, null, null, 1, 1);
+            count = 0;
+            while (cursor.Next() != null)
+            {
+                doc = cursor.Current();
+                count++;
+                Assert.AreEqual("{ \"User\" : \"user13623_1\" }", doc.ToString());
+            }
+            cursor.Close();
+            Assert.AreEqual(1, count);
+            sdb.RemoveUser("user13623", "user13623");
+            sdb.RemoveUser("user13623_1", "user13623_1");
+            sdb.RemoveUser("user13623_2", "user13623_2");
+            //SDB_LIST_SVCTASKS
+            cursor = sdb.GetList(SDBConst.SDB_LIST_SVCTASKS, null, null, null, null, 0, 1);
+            count = 0;
+            while (cursor.Next() != null)
+            {
+                doc = cursor.Current();
+                count++;
+                Assert.IsTrue(doc.ToString().Contains("\"TaskID\" : 0, \"TaskName\" : \"Default\""));
+            }
+            cursor.Close();
+            Assert.AreEqual(1, count);
+
         }
 
         [TestCleanup()]
