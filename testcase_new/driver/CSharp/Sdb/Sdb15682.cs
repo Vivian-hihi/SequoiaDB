@@ -46,13 +46,12 @@ namespace CSharp.Sdb
             }
             DBCursor cur1 = cl.Query();
             DBCursor cur2 = cl.Query();
-            DBCursor cur3 = cl.Query();
-            DBCursor cur4 = cl.Query();
-            DBCursor cur5 = cl.Query();
+
             sdb.CloseAllCursors();
             try
             {
                 cur1.Next();
+                Assert.Fail("expected thorw -36 but success!");
             }
             catch(BaseException e)
             {
@@ -62,14 +61,20 @@ namespace CSharp.Sdb
             try
             {
                 cur2.Next();
+                Assert.Fail("expected thorw -36 but success!");
             }
             catch (BaseException e)
             {
                 Assert.AreEqual(-36, e.ErrorCode);
             }
+            DBCursor cur3 = cl.Query();
+            DBCursor cur4 = cl.Query();
+            DBCursor cur5 = cl.Query();
+            sdb.Interrupt();
             try
             {
                 cur3.Next();
+                Assert.Fail("expected thorw -36 but success!");
             }
             catch (BaseException e)
             {
@@ -78,6 +83,7 @@ namespace CSharp.Sdb
             try
             {
                 cur4.Next();
+                Assert.Fail("expected thorw -36 but success!");
             }
             catch (BaseException e)
             {
@@ -86,6 +92,7 @@ namespace CSharp.Sdb
             try
             {
                 cur5.Next();
+                Assert.Fail("expected thorw -36 but success!");
             }
             catch (BaseException e)
             {
@@ -113,3 +120,4 @@ namespace CSharp.Sdb
         }
     }
 }
+
