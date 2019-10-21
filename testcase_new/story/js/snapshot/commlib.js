@@ -1,4 +1,3 @@
-
 function checkStatistics(clFullName, nodeNameMaster, expStatistics)
 {
    var actStatistics = getStatistics(clFullName, nodeNameMaster);
@@ -10,7 +9,6 @@ function checkStatistics(clFullName, nodeNameMaster, expStatistics)
          println("expStatistics:" + JSON.stringify(expStatistics));
          throw "ERR";
       }
-      
    }
    
 }
@@ -30,7 +28,7 @@ function getStatistics(clFullName, nodeNameMaster)
             var tmpObj = {};
             tmpObj.NodeName = group[i].NodeName;
             tmpObj.TotalDataRead = group[i].TotalDataRead;
-            //ÊÂÎñtransuserbs=trueÊ±£¬¿ÉÄÜ²úÉú¶îÍâTotalIndexRead£¬²»¶Ô¸ÃÖµ½øĞĞ±È½Ï
+            //äº‹åŠ¡transuserbs=trueæ—¶ï¼Œå¯èƒ½äº§ç”Ÿé¢å¤–TotalIndexReadï¼Œä¸å¯¹è¯¥å€¼è¿›è¡Œæ¯”è¾ƒ
             //tmpObj.TotalIndexRead = group[i].TotalIndexRead;
             tmpObj.TotalDataWrite = group[i].TotalDataWrite;
             tmpObj.TotalIndexWrite = group[i].TotalIndexWrite;
@@ -47,8 +45,7 @@ function getStatistics(clFullName, nodeNameMaster)
          
       } 
    }
-   
-      
+        
    var statArray = [];
    for(var i=0; i<tmpArray.length; i++)
    {
@@ -81,4 +78,76 @@ function getDataGroupNames()
       }
    }
    return dataGroupNames; 
+}
+
+/************************************
+*@Description: get a coord nod, a cata node, a data node
+*@author:      zhaoxiaoni
+*@createDate:  2019/10/21
+**************************************/
+function getNodeAddresses()
+{
+   var cata = true;
+   var data = true;
+   var coord = true;
+   var nodeAddresses = new Array();
+   var cursor = db.listReplicaGroups();
+   
+   while(cursor.next())
+   {
+      var groupObj = cursor.current().toObj();
+      var groupArray = groupObj["Group"];
+      for(var i = 0; i < groupArray.length; i++)
+      {
+         var hostName = groupArray[i]["HostName"];
+         var svcName = groupArray[i]["Service"][0]["Name"];
+         var json = {"hostName": hostName, "svcName": svcName};
+         if(groupObj["Role"] === 1 && hostName != System.getHostName() && coord == true)
+         {
+            nodeAddresses.push(json);
+            coord = false;
+         }
+         else if(groupObj["Role"] === 2 && cata == true)
+         {
+            nodeAddresses.push(json);
+            cata = false;
+         }
+         else if(groupObj["Role"] === 0 && data == true)
+         {
+            nodeAddresses.push(json);
+            data = false;
+         }
+      }
+   }
+   return nodeAddresses;
+}
+
+function stopNodes( nodeAddresses )
+{
+   var installDir = commGetInstallPath();
+   command = installDir + "/bin/sdbstop -p ";
+   
+   for(var i=0; i<nodeAddresses.length; i++)
+   {
+      var hostName = nodeAddresses[i]["hostName"];
+      var svcName = nodeAddresses[i]["svcName"];
+      var remote = new Remote(hostName, 11790);
+      var cmd = remote.getCmd();
+      cmd.run(command + svcName);
+   }
+}
+
+function startNodes( nodeAddresses )
+{
+   var installDir = commGetInstallPath();
+   command = installDir + "/bin/sdbstart -p ";
+      
+   for(var i=0; i<nodeAddresses.length; i++)
+   {
+      var hostName = nodeAddresses[i]["hostName"];
+      var svcName = nodeAddresses[i]["svcName"];
+      var remote = new Remote(hostName, 11790);
+      var cmd = remote.getCmd();
+      cmd.run(command + svcName);
+   }
 }
