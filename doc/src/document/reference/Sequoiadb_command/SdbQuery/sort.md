@@ -37,16 +37,16 @@ SdbQuery
   ```lang-javascript
   > db.foo.bar.find( { age: { $gt: 20 } }, { age: "", name: "" } ).sort( { age: 1 } )
   {
-      "name": "alice",
-      "age": 19
+    "name": "Jack",
+    "age": 22
   }
   {
-      "name": "tom",
-      "age": 20
+    "name": "Tom",
+    "age": 23
   }
   {
-      "name": "ben",
-      "age": 21
+    "name": "John",
+    "age": 25
   }
   ```
 
@@ -55,15 +55,15 @@ SdbQuery
   ```lang-javascript
   > db.foo.bar.find( { age: { $gt: 20 } }, { age: "", name: "" } ).sort( { "sex": 1 } )
   {
-      "name": "alice",
-      "age": 19
+    "name": "Jack",
+    "age": 22
   }
   {
-      "name": "tom",
-      "age": 20
+    "name": "Tom",
+    "age": 23
   }
   {
-      "name": "ben",
-      "age": 21
+    "name": "John",
+    "age": 25
   }
   ```

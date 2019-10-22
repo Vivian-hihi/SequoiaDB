@@ -43,38 +43,38 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Select the record that the age field value greater than (with using [$gt](reference/operator/match_operator/gt.md)) 10 under the collection, bar, and return only name field and age field with sorting by ascending order of age field values.
+* Select the record that the age field value greater than (with using [$gt](reference/operator/match_operator/gt.md)) 20 under the collection, bar, and return only name field and age field with sorting by ascending order of age field values.
 
 ```lang-javascript
-> db.foo.bar.find( { age: { $gt: 10 } }, { age: "", name: "" } ).sort( { age: 1 } )
+> db.foo.bar.find( { age: { $gt: 20 } }, { age: "", name: "" } ).sort( { age: 1 } )
 {
-  "name": "alice",
-  "age": 19
+  "name": "Jack",
+  "age": 22
 }
 {
-  "name": "tom",
-  "age": 20
+  "name": "Tom",
+  "age": 23
 }
 {
-  "name": "ben",
-  "age": 21
+  "name": "John",
+  "age": 25
 }
 ```
 
 * Specifiy an invalid field.
 
 ```lang-javascript
-> db.foo.bar.find( { age: { $gt: 10 } }, { age: "", name: "" } ).sort( { "sex": 1 } )
+> db.foo.bar.find( { age: { $gt: 20 } }, { age: "", name: "" } ).sort( { "sex": 1 } )
 {
-  "name": "alice",
-  "age": 19
+  "name": "Jack",
+  "age": 22
 }
 {
-  "name": "tom",
-  "age": 20
+  "name": "Tom",
+  "age": 23
 }
 {
-  "name": "ben",
-  "age": 21
+  "name": "John",
+  "age": 25
 }
 ```

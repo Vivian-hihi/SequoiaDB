@@ -8,7 +8,7 @@
 explain \- Get the access plan for the query.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]query.explain( [option] )\f[]\f[]
+\f[B]\f[I]query.explain( [options] )\f[]\f[]
 .SH CATEGORY
 .PP
 SdbQuery
@@ -1524,15 +1524,9 @@ T{
 T}@T{
 UseExtSort
 T}@T{
-boo
+bool
 T}@T{
-whether to use ono\-
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-index sorting
+non\-index
 T}
 T{
 8
@@ -1737,7 +1731,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
-time
+time( unit: s )
 T}
 T{
 16
@@ -1752,7 +1746,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
-time
+time( unit: s )
 T}
 .TE
 .PP
@@ -1981,15 +1975,9 @@ T{
 T}@T{
 UseExtSort
 T}@T{
-boo
+bool
 T}@T{
-whether to use ono\-
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-index sorting
+non\-index
 T}
 T{
 5
@@ -2194,7 +2182,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
-time
+time( unit: s )
 T}
 T{
 13
@@ -2209,7 +2197,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
-time
+time( unit: s )
 T}
 .TE
 

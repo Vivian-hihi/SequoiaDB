@@ -36,10 +36,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var arr = db.foo.bar.find().toArray()
 > arr[0]
 {
-  "_id": {
-    "$oid": "5cf8aef75e72aea111e82b38"
-  },
-  "name": "tom",
-  "age": 20
+  "name": "Alice",
+  "age": 19
 }
 ```

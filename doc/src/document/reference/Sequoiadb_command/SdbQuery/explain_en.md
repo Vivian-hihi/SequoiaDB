@@ -4,7 +4,7 @@ explain - Get the access plan for the query.
 
 ##SYNOPSIS##
 
-***query.explain( [option] )***
+***query.explain( [options] )***
 
 ##CATEGORY##
 
@@ -47,7 +47,7 @@ When the Detail option is false, a normal access plan will be displayed. Access 
 | Name        | string | the name of the collection where the access plan accessed. |
 | ScanType    | string | the scan type of the access plan. "tbscan" represents full tables scan. "ixscan" represents index scan |
 | IndexName   | string | the name of the index that the access plan uses. The index name is "" if the scan type is full tables scan |
-| UseExtSort  | boo    | whether to use ono-index sorting |
+| UseExtSort  | bool   | non-index |
 | Query       | BSON   | the user query condition after analysising access plan |
 | IXBound     | BSON   | the index's search range that access plan uses and it is null if the scan is a table scan |
 | NeedMatch   | bool   | whether to filter according to the match when access plan gets the record. If NeedMatch is false, it means there is no query conditions or query conditions can be covered by the index |
@@ -55,8 +55,8 @@ When the Detail option is false, a normal access plan will be displayed. Access 
 | ElapsedTime | double | the query time of access plan( unit: s ) |
 | IndexRead   | long   | the number of index records that access plan scanns |
 | DataRead    | long   | the number of data records that access plan scanns |
-| UserCPU     | double | user mode CPU usage time |
-| SysCPU      | bouble | kernel state CPU usage time |
+| UserCPU     | double | user mode CPU usage time( unit: s ) |
+| SysCPU      | bouble | kernel state CPU usage time( unit: s ) |
 
 Access plan information for the primary table in the vertical partition:
 
@@ -75,7 +75,7 @@ Access plan information for subtables in a vertical partition:
 | Name        | string | the collection name where access plan is located |
 | ScanType    | string | access plan's scanning method. "tbscan" means full table scan and "ixscan" means index scan |
 | IndexName   | string | the name of index that access plan uses. If it is full table scan, the IndexName is "" |
-| UseExtSort  | boo    | whether to use ono-index sorting |
+| UseExtSort  | bool   | non-index |
 | Query       | BSON   | the user query condition after analysising access plan |
 | IXBound     | BSON   | the index's search range that access plan uses and it is null if the scan is a table scan |
 | NeedMatch   | bool   | whether to filter according to the match when access plan gets the record. If NeedMatch is false, it means there is no query conditions or query conditions can be covered by the index |
@@ -83,8 +83,8 @@ Access plan information for subtables in a vertical partition:
 | ElapsedTime | double | the query time of access plan( unit: s ) |
 | IndexRead   | long   | the number of index records that access plan scanns |
 | DataRead    | long   | the number of data records that access plan scanns |
-| UserCPU     | double | user mode CPU usage time |
-| SysCPU      | bouble | kernel state CPU usage time |
+| UserCPU     | double | user mode CPU usage time( unit: s ) |
+| SysCPU      | bouble | kernel state CPU usage time( unit: s ) |
 
 >**Note:**
 

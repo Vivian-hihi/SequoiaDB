@@ -34,7 +34,7 @@ options 参数详细说明如下：
 
 > **Note:**  
 
-> 1. query.update()方法的定义格式包含 rule 参数、 returnNew 参数 options 参数。其中 rule 参数与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 rule 参数相同，options 参数与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 options 参数相同。
+> 1. query.update()方法的定义格式包含 rule 参数、 returnNew 参数和options 参数。其中 rule 参数与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 rule 参数相同，options 参数与 [update()](reference/Sequoiadb_command/SdbCollection/update.md)的 options 参数相同。
 
 > 2. returnNew 参数默认为 false，当为 true 时，返回修改后的记录值。
 

@@ -1,6 +1,6 @@
 ##语法##
 
-***close()***
+***query.close()***
 
 ##类别##
 
@@ -27,7 +27,7 @@ SdbQuery
 
 ##示例##
 
-* 关闭游标；
+* 关闭游标。
 
   ```lang-javascript
   > var query = db.foo.bar.find()

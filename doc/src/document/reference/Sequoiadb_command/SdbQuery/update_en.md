@@ -27,7 +27,7 @@ Update the result set after the query.
 | Name      | Type | Default | Description | Required or not |
 | --------- | ---- | ------- | ----------- | --------------- |
 | rule      | JSON | ---     | update rules and records are updated according to specified rules | yes |
-| returnNew | bool | true    | whether to return the record after the update | not |
+| returnNew | bool | false   | whether to return the record after the update | not |
 | options   | JSON | ---     | specify partition key properties | not | 
 
 The detail description of 'options' parameter is as follow:

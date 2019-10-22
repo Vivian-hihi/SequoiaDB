@@ -27,16 +27,13 @@ SdbQuery
 
 ##示例##
 
-* 以数组的形式返回集合 bar 中 age 字段值大于5的记录（如使用 [$gt](reference/operator/match_operator/gt.md) 查询）。
+* 以数组的形式返回集合 bar 中 age 字段值大于20的记录（如使用 [$gt](reference/operator/match_operator/gt.md) 查询）。
 
   ```lang-javascript
-  > var arr = db.foo.bar.find().toArray()
+  > var arr = db.foo.bar.find( { age: { $gt: 20 } }, { age: "", name: "" }).toArray()
   > arr[0]
   {
-      "_id": {
-        "$oid": "5cf8aef75e72aea111e82b38"
-      },
-      "name": "tom",
-      "age": 20
+    "name": "John",
+    "age": 25
   }
   ```
