@@ -51,6 +51,11 @@ using namespace std ;
 
 namespace engine
 {
+#define MTH_INC_VALUE   "Value"
+#define MTH_INC_DEFAULT "Default"
+#define MTH_INC_MIN     "Min"
+#define MTH_INC_MAX     "Max"
+
 #define ADD_CHG_FIELD_VALUE( builder, fieldName, value, strChg ) \
       do { \
          if ( builder ) \
@@ -142,12 +147,6 @@ namespace engine
                       ele.toString().c_str() ) ;
          goto error ;
       }
-      else if ( INC == type && !ele.isNumber() )
-      {
-         PD_LOG_MSG ( PDERROR, "$inc field must be number, %s",
-                      ele.toString().c_str() ) ;
-         goto error ;
-      }
       else if ( ( PUSH_ALL == type || PULL_ALL == type ||
                   PULL_ALL_BY == type ) &&
                 Array != ele.type () )
@@ -217,9 +216,83 @@ namespace engine
       {
          _keepKeys.insert( ele.fieldName() ) ;
       }
+      else if ( INC == type )
+      {
+         if ( ele.isNumber() )
+         {
+            IncModifierElement *pMe = SDB_OSS_NEW IncModifierElement( ele,
+                                                                   dollarNum ) ;
+            PD_CHECK( NULL != pMe, SDB_OOM, error, PDERROR,
+                      "Failed to new IncModifierElement:rc=%d", rc ) ;
+            _modifierElements.push_back( pMe ) ;
+         }
+         else if ( Object == ele.type() )
+         {
+            BSONElement valueEle ;
+            BSONElement minEle ;
+            BSONElement maxEle ;
+            BSONElement defaultEle ;
+            BSONObjIterator iterIncOpt( ele.embeddedObject() ) ;
+            while ( iterIncOpt.more() )
+            {
+               BSONElement eIncOpt = iterIncOpt.next() ;
+               if ( 0 == ossStrcmp( eIncOpt.fieldName(), MTH_INC_VALUE ) )
+               {
+                  valueEle = eIncOpt ;
+               }
+               else if ( 0 == ossStrcmp( eIncOpt.fieldName(),
+                                         MTH_INC_DEFAULT ) )
+               {
+                  defaultEle = eIncOpt ;
+               }
+               else if ( 0 == ossStrcmp( eIncOpt.fieldName(), MTH_INC_MIN ) )
+               {
+                  minEle = eIncOpt ;
+               }
+               else if ( 0 == ossStrcmp( eIncOpt.fieldName(), MTH_INC_MAX ) )
+               {
+                  maxEle = eIncOpt ;
+               }
+            }
+
+            if ( !valueEle.isNumber() || ( !minEle.isNumber() && !minEle.eoo() )
+                 || ( !maxEle.isNumber() && !maxEle.eoo() )
+                 || ( !defaultEle.isNumber() && !defaultEle.eoo()
+                      && !defaultEle.isNull() ) )
+            {
+               PD_LOG_MSG ( PDERROR, "inc field is invalid, %s",
+                            ele.toString().c_str() ) ;
+               goto error ;
+            }
+
+            IncModifierElement *incMe = SDB_OSS_NEW IncModifierElement( ele,
+                                                  valueEle, defaultEle, minEle,
+                                                  maxEle, dollarNum ) ;
+            PD_CHECK( NULL != incMe, SDB_OOM, error, PDERROR,
+                      "Failed to new IncModifierElement:rc=%d", rc ) ;
+            rc = incMe->calcDefaultResult( _strictDataMode ) ;
+            if ( SDB_OK != rc )
+            {
+               SDB_OSS_DEL incMe ;
+               PD_LOG( PDERROR, "Failed to calculate default result:rc=%d",
+                       rc ) ;
+               goto error ;
+            }
+            _modifierElements.push_back( incMe ) ;
+         }
+         else
+         {
+            PD_LOG_MSG ( PDERROR, "inc field must be number or object , %s",
+                         ele.toString().c_str() ) ;
+            goto error ;
+         }
+      }
       else
       {
-         ModifierElement me( ele, type, dollarNum ) ;
+         ModifierElement *me = SDB_OSS_NEW ModifierElement( ele, type,
+                                                            dollarNum ) ;
+         PD_CHECK( NULL != me, SDB_OOM, error, PDERROR,
+                   "Failed to new IncModifierElement:rc=%d", rc ) ;
          _modifierElements.push_back( me ) ;
       }
 
@@ -227,7 +300,11 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__MTHMDF__ADDMDF, rc );
       return rc ;
    error :
-      rc = SDB_INVALIDARG ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+
       goto done ;
    }
 
@@ -235,135 +312,45 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_applyIncModifier ( const CHAR *pRoot, Builder &bb,
                                            const BSONElement &in,
-                                           ModifierElement &me )
+                                           IncModifierElement &me )
    {
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPINCMDF );
       INT32 rc        = SDB_OK ;
-      BSONElement elt = me._toModify ;
-      BSONType a      = in.type() ;
-      BSONType b      = elt.type() ;
-
-      if ( NumberDecimal == a || NumberDecimal == b )
+      BSONObjBuilder builder( 20 ) ;
+      BSONObj objResult ;
+      BSONElement resultEle ;
+      BSONElement elt ;
+      if ( me._isSimple )
       {
-         bsonDecimal inc ;
-         bsonDecimal decimal ;
-
-         decimal = in.numberDecimal() ;
-         inc     = elt.numberDecimal() ;
-         if ( inc.isZero() )
-         {
-            //not change, add the old element
-            bb.append ( in ) ;
-         }
-         else
-         {
-            bsonDecimal result ;
-
-            rc = decimal.add( inc, result ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG_MSG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d",
-                           decimal.toString().c_str(),
-                           inc.toString().c_str(), rc ) ;
-               goto error ;
-            }
-
-            rc = result.updateTypemod( decimal.getTypemod() ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG_MSG( PDERROR, "result is out of precision:result=%s,"
-                           "precision=%d,scale=%d,rc=%d",
-                           result.toString().c_str(),
-                           decimal.getPrecision(), decimal.getScale(), rc ) ;
-               goto error ;
-            }
-
-            bb.append ( in.fieldName(), result ) ;
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
-         }
-      }
-      else if ( in.isNumber() && 0 != elt.numberDouble() )
-      {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
-
-         if ( NumberDouble == a || NumberDouble == b )
-         {
-            bb.append ( in.fieldName(), in.numberDouble()+elt.numberDouble()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
-                             in.numberDouble()+elt.numberDouble(), "$set" ) ;
-         }
-         else if ( NumberLong == a || NumberLong == b )
-         {
-            INT64 arg1 = in.numberLong() ;
-            INT64 arg2 = elt.numberLong() ;
-            INT64 result = arg1 + arg2 ;
-            if ( !utilAddIsOverflow( arg1, arg2, result) )
-            {
-               bb.append ( in.fieldName(), result) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
-            }
-            else if ( !_strictDataMode )
-            {
-               // overflow
-               bsonDecimal decimalE ;
-               bsonDecimal decimalArg ;
-               bsonDecimal decimalResult ;
-
-               decimalE   = in.numberDecimal() ;
-               decimalArg = elt.numberDecimal() ;
-               rc = decimalE.add( decimalArg, decimalResult ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d",
-                          decimalE.toString().c_str(),
-                          decimalArg.toString().c_str(), rc ) ;
-                  goto error ;
-               }
-               bb.append( in.fieldName(), decimalResult ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, decimalResult, "$set" ) ;
-            }
-            else
-            {
-               rc = SDB_VALUE_OVERFLOW ;
-               PD_LOG( PDERROR, "overflow happened, field: %s(%lld, inc: %lld), rc = %d",
-                       in.fieldName(), arg1, arg2, rc ) ;
-               goto error ;
-
-            }
-         }
-         else
-         {
-            INT32 arg1 = in.numberInt();
-            INT32 arg2 = elt.numberInt() ;
-
-            INT32 result = arg1 + arg2 ;
-            INT64 result64 = (INT64)arg1 + (INT64)arg2 ;
-            if ( result64 == (INT64)result )
-            {
-               bb.append ( in.fieldName(), result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
-            }
-            else if ( !_strictDataMode )
-            {
-               bb.append ( in.fieldName(), result64) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result64, "$set" ) ;
-            }
-            else
-            {
-               //32 bit overflow or underflow happened
-               rc = SDB_VALUE_OVERFLOW ;
-               PD_LOG( PDERROR, "overflow happened, field: %s(%d, inc: %d), rc = %d",
-                       in.fieldName(), arg1, arg2, rc ) ;
-               goto error ;
-            }
-         }
+         elt = me._toModify ;
       }
       else
       {
-         //not change, add the old element
-         bb.append ( in ) ;
+         elt = me._valueEle ;
       }
+
+      rc = mthModifierInc( in, elt, _strictDataMode, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to execute $inc:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      objResult = builder.obj() ;
+      resultEle = objResult.firstElement() ;
+      if ( resultEle.isNumber() && !me.isValidRange( resultEle ) )
+      {
+         rc = SDB_VALUE_OVERFLOW ;
+         PD_LOG_MSG( PDERROR, "Result is overflow:min=%s,max=%s,result=%s,"
+                     "rc=%d", me._minEle.toString( FALSE ).c_str(),
+                     me._maxEle.toString( FALSE ).c_str(),
+                     resultEle.toString( FALSE ).c_str() ,rc ) ;
+         goto error ;
+      }
+
+      bb.appendAs ( resultEle, in.fieldName() ) ;
+      ADD_CHG_ELEMENT_AS( _srcChgBuilder, in, pRoot, "$set" ) ;
+      ADD_CHG_ELEMENT_AS( _dstChgBuilder, resultEle, pRoot, "$set" ) ;
 
    done:
       PD_TRACE_EXIT ( SDB__MTHMDF__APPINCMDF ) ;
@@ -2184,9 +2171,11 @@ namespace engine
             iter = _modifierElements.begin() ;
             while ( iter != _modifierElements.end() )
             {
-               BSONElement e = iter->_toModify ;
+               ModifierElement *me = *iter ;
+               BSONElement e = me->_toModify ;
                if ( _keepKeys.count( e.fieldName() ) > 0 )
                {
+                  SAFE_OSS_DELETE( me ) ;
                   iter = _modifierElements.erase( iter ) ;
                }
                else
@@ -2238,11 +2227,64 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPNEW );
-      ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
+      ModifierElement *me = _modifierElements[(*modifierIndex)] ;
 
       switch ( me->_modType )
       {
       case INC:
+      {
+         try
+         {
+            IncModifierElement *incModifier = ( IncModifierElement * ) me ;
+            if ( incModifier->_isSimple )
+            {
+               b.appendAs ( incModifier->_toModify, pShort ) ;
+               ADD_CHG_ELEMENT_AS ( _dstChgBuilder, incModifier->_toModify,
+                                    pRoot, "$set" ) ;
+            }
+            else
+            {
+               if ( incModifier->_default.isNull() )
+               {
+                  //do nothing SEQUOIADBMAINSTREAM-4906
+               }
+               else
+               {
+                  if ( incModifier->_default.eoo()
+                       || incModifier->_default.isNumber() )
+                  {
+                     BSONElement defaultResultEle =
+                              incModifier->_defaultResult.firstElement() ;
+                     b.appendAs ( defaultResultEle, pShort ) ;
+                     ADD_CHG_ELEMENT_AS ( _dstChgBuilder, defaultResultEle,
+                                          pRoot, "$set" ) ;
+                  }
+                  else
+                  {
+                     rc = SDB_SYS ;
+                     PD_LOG( PDERROR, "Unreconigzed default value[%s]:rc=%d",
+                             incModifier->_default.toPoolString().c_str(),
+                             rc ) ;
+                     SDB_ASSERT( FALSE, "Impossible" ) ;
+                     goto done ;
+                  }
+               }
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG_MSG ( ( _ignoreTypeError ? PDINFO : PDERROR ),
+                         "Failed to append for %s: %s",
+                         me->_toModify.toString().c_str(), e.what() ) ;
+            if ( !_ignoreTypeError )
+            {
+               rc = SDB_INVALIDARG ;
+               goto done ;
+            }
+         }
+
+         break ;
+      }
       case SET:
       {
          try
@@ -2383,10 +2425,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPNEWFRMMODS ) ;
-      ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
+      ModifierElement *me = _modifierElements[(*modifierIndex)] ;
       BOOLEAN hasUnknowDollar = FALSE ;
       const CHAR *pDollar = NULL ;
       INT32 newRootLen = rootLen ;
+      BOOLEAN isRoot = FALSE ;
+      INT32 savedLen = 0 ;
 
       // if the modified request does not exist in original one
       // first let's see if there's nested object in the request
@@ -2444,8 +2488,12 @@ namespace engine
 
       if ( !hasCreateNewRoot )
       {
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, *ppRoot ) ;
+         isRoot = TRUE ;
          hasCreateNewRoot = TRUE ;
+         if ( NULL != _dstChgBuilder )
+         {
+            savedLen = _dstChgBuilder->len() ;
+         }
       }
 
       // given example
@@ -2513,6 +2561,14 @@ namespace engine
       }
 
    done :
+      if ( SDB_OK == rc )
+      {
+         if ( isRoot && NULL != _dstChgBuilder
+              && _dstChgBuilder->len() != savedLen )
+         {
+            ADD_CHG_UNSET_FIELD ( _srcChgBuilder, *ppRoot ) ;
+         }
+      }
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPNEWFRMMODS, rc );
       return rc ;
    error :
@@ -2531,15 +2587,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__ALYCHG ) ;
-      ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
+      ModifierElement *me = _modifierElements[(*modifierIndex)] ;
 
       // basically we need to take the original data from e, and use modifier
       // element me to make some change, and add into builder b
       switch ( me->_modType )
       {
       case INC:
-         rc = _applyIncModifier ( *ppRoot, b, e, *me ) ;
+      {
+         IncModifierElement *incMe = ( IncModifierElement* ) me ;
+         rc = _applyIncModifier ( *ppRoot, b, e, *incMe ) ;
          break ;
+      }
       case SET:
          rc = _applySetModifier ( *ppRoot, b, e, *me ) ;
          break ;
@@ -2644,8 +2703,8 @@ namespace engine
          UINT32 i = 0 ;
          while ( i < _modifierElements.size() )
          {
-            redoRBuilder.append( _modifierElements[i]._toModify ) ;
-            b.append( _modifierElements[i]._toModify ) ;
+            redoRBuilder.append( _modifierElements[i]->_toModify ) ;
+            b.append( _modifierElements[i]->_toModify ) ;
             ++i ;
          }
 
@@ -2698,6 +2757,7 @@ namespace engine
       if ( _isReplace )
       {
          rc = _buildNewObjReplace( b, es ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build new object:rc=%d", rc ) ;
          goto done ;
       }
 
@@ -2731,10 +2791,10 @@ namespace engine
 
          // compare the full field name with requested update field
          /*FieldCompareResult cmp = compareDottedFieldNames (
-               _modifierElements[(*modifierIndex)]._toModify.fieldName(),
+               _modifierElements[(*modifierIndex)]->_toModify.fieldName(),
                *ppRoot ) ;*/
          FieldCompareResult cmp = _fieldCompare.compField (
-               _modifierElements[(*modifierIndex)]._toModify.fieldName(),
+               _modifierElements[(*modifierIndex)]->_toModify.fieldName(),
                *ppRoot, &compareLeftPos, NULL ) ;
 
          // compare the full path
@@ -2870,7 +2930,7 @@ namespace engine
                                       modifierIndex, hasCreateNewRoot ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to append for %s, rc: %d",
                           _modifierElements[(*modifierIndex)
-                          ]._toModify.toString().c_str(), rc ) ;
+                          ]->_toModify.toString().c_str(), rc ) ;
             // note we don't change e here because we just add the field
             // requested by modifier into new object, the original e shoudln't
             // be changed.
@@ -2894,7 +2954,7 @@ namespace engine
             {
                PD_LOG_MSG ( PDERROR, "Failed to apply changes for %s: %s",
                             _modifierElements[(*modifierIndex)
-                            ]._toModify.toString().c_str(),
+                            ]->_toModify.toString().c_str(),
                             e.what() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -2903,7 +2963,7 @@ namespace engine
             {
                PD_LOG_MSG ( PDERROR, "Failed to apply change for %s, rc: %d",
                             _modifierElements[(*modifierIndex)
-                            ]._toModify.toString().c_str(), rc ) ;
+                            ]->_toModify.toString().c_str(), rc ) ;
                goto error ;
             }
             // since we have processed the original data, we increase element
@@ -2934,7 +2994,7 @@ namespace engine
             //we should never reach this codepath
             PD_LOG_MSG ( PDERROR, "Reaching unexpected codepath, cmp( %s, %s, "
                          "res: %d )", _modifierElements[(*modifierIndex)
-                         ]._toModify.toString().c_str(),
+                         ]->_toModify.toString().c_str(),
                          *ppRoot, cmp ) ;
             rc = SDB_SYS ;
             goto error ;
@@ -2957,10 +3017,10 @@ namespace engine
 
          // compare the full field name with requested update field
          /*FieldCompareResult cmp = compareDottedFieldNames (
-               _modifierElements[(*modifierIndex)]._toModify.fieldName(),
+               _modifierElements[(*modifierIndex)]->_toModify.fieldName(),
                *ppRoot ) ;*/
          FieldCompareResult cmp = _fieldCompare.compField (
-               _modifierElements[(*modifierIndex)]._toModify.fieldName(),
+               _modifierElements[(*modifierIndex)]->_toModify.fieldName(),
                *ppRoot, &compareLeftPos, NULL ) ;
          if ( LEFT_SUBFIELD == cmp )
          {
@@ -2971,7 +3031,7 @@ namespace engine
             {
                PD_LOG_MSG ( PDERROR, "Failed to append for %s, rc: %d",
                             _modifierElements[(*modifierIndex)
-                            ]._toModify.toString().c_str(), rc );
+                            ]->_toModify.toString().c_str(), rc );
                goto error ;
             }
          }
@@ -3167,8 +3227,248 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__MTHMDF_MODIFY, rc );
       return rc ;
    error :
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      if ( NULL != cb )
+      {
+         BSONElement ele = source.getField( DMS_ID_KEY_NAME ) ;
+         if ( !ele.eoo() )
+         {
+            cb->appendInfo( EDU_INFO_ERROR, ",%s=%s", DMS_ID_KEY_NAME,
+                            ele.toString( FALSE ).c_str() ) ;
+         }
+      }
       goto done ;
    }
 
+   INT32 _IncModifierElement::calcDefaultResult( BOOLEAN strictMode )
+   {
+      INT32 rc = SDB_OK ;
+      if ( _isSimple )
+      {
+         goto done ;
+      }
+
+      // check param
+      if ( _minEle.isNumber() && _maxEle.isNumber() )
+      {
+         if ( _maxEle.woCompare( _minEle, FALSE ) < 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Max(%s) is less then Min(%s):rc=%d",
+                        _maxEle.toString( FALSE ).c_str(),
+                        _minEle.toString( FALSE ).c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      // calculate default result
+      if ( _default.isNumber() || _default.eoo() )
+      {
+         BSONObj tmpValue ;
+         BSONElement leftEle ;
+         BSONElement resultEle ;
+         BSONObjBuilder builder( 20 ) ;
+
+         if ( _default.eoo() )
+         {
+            tmpValue = BSON( "" << 0 ) ;
+            leftEle = tmpValue.firstElement() ;
+         }
+         else
+         {
+            leftEle = _default ;
+         }
+
+         rc = mthModifierInc( leftEle, _valueEle, strictMode, builder ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Invalid inc:default=%s,inc=%s,min=%s,max=%s,"
+                        "rc=%d", leftEle.toString( FALSE ).c_str(),
+                        _valueEle.toString( FALSE ).c_str(),
+                        _minEle.toString( FALSE ).c_str(),
+                        _maxEle.toString( FALSE ).c_str(), rc ) ;
+            goto error ;
+         }
+
+         _defaultResult = builder.obj() ;
+         resultEle = _defaultResult.firstElement() ;
+         if ( !isValidRange( resultEle ) )
+         {
+            rc = SDB_VALUE_OVERFLOW ;
+            PD_LOG_MSG( PDERROR, "default value plus inc is not in valid "
+                        "range:default=%s,inc=%s,result=%s,min=%s,max=%s,rc=%d",
+                        leftEle.toString( FALSE ).c_str(),
+                        _valueEle.toString( FALSE ).c_str(),
+                        _defaultResult.toString().c_str(),
+                        _minEle.toString( FALSE ).c_str(),
+                        _maxEle.toString( FALSE ).c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _IncModifierElement::isValidRange( BSONElement &resultEle )
+   {
+      INT32 compRC = 0 ;
+
+      if ( _isSimple )
+      {
+         return TRUE ;
+      }
+
+      if ( EOO == resultEle.type() )
+      {
+         return TRUE ;
+      }
+
+      if ( _minEle.isNumber() )
+      {
+         compRC = _minEle.woCompare( resultEle, FALSE ) ;
+         if ( compRC > 0 )
+         {
+            return FALSE ;
+         }
+      }
+
+      if ( _maxEle.isNumber() )
+      {
+         compRC = _maxEle.woCompare( resultEle, FALSE ) ;
+         if ( compRC < 0 )
+         {
+            return FALSE ;
+         }
+      }
+
+      return TRUE ;
+   }
+
+   INT32 mthModifierInc( const BSONElement& existElement,
+                         const BSONElement &incElement,BOOLEAN strictMode,
+                         BSONObjBuilder &resBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONType a = existElement.type() ;
+      BSONType b = incElement.type() ;
+
+      if ( NumberDecimal == a || NumberDecimal == b )
+      {
+         bsonDecimal inc ;
+         bsonDecimal decimal ;
+
+         decimal = existElement.numberDecimal() ;
+         inc     = incElement.numberDecimal() ;
+         if ( inc.isZero() )
+         {
+            resBuilder.appendAs( existElement, "" ) ;
+         }
+         else
+         {
+            bsonDecimal result ;
+            rc = decimal.add( inc, result ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d",
+                           decimal.toString().c_str(),
+                           inc.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            rc = result.updateTypemod( decimal.getTypemod() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "result is out of precision:result=%s,"
+                           "precision=%d,scale=%d,rc=%d",
+                           result.toString().c_str(),
+                           decimal.getPrecision(), decimal.getScale(), rc ) ;
+               goto error ;
+            }
+            resBuilder.append( "", result ) ;
+         }
+      }
+      else if ( existElement.isNumber() && 0 != incElement.numberDouble() )
+      {
+         if ( NumberDouble == a || NumberDouble == b )
+         {
+            resBuilder.append( "", existElement.numberDouble()
+                                   + incElement.numberDouble() ) ;
+         }
+         else if ( NumberLong == a || NumberLong == b )
+         {
+            INT64 arg1 = existElement.numberLong() ;
+            INT64 arg2 = incElement.numberLong() ;
+            INT64 result = arg1 + arg2 ;
+
+            if ( !utilAddIsOverflow( arg1, arg2, result) )
+            {
+               resBuilder.append( "", result ) ;
+            }
+            else if ( !strictMode )
+            {
+               // overflow
+               bsonDecimal decimalE ;
+               bsonDecimal decimalArg ;
+               bsonDecimal decimalResult ;
+
+               decimalE   = existElement.numberDecimal() ;
+               decimalArg = incElement.numberDecimal() ;
+               rc = decimalE.add( decimalArg, decimalResult ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to add decimal:%s+%s,rc=%d",
+                          decimalE.toString().c_str(),
+                          decimalArg.toString().c_str(), rc ) ;
+                  goto error ;
+               }
+
+               resBuilder.append( "", decimalResult ) ;
+            }
+            else
+            {
+               rc = SDB_VALUE_OVERFLOW ;
+               PD_LOG( PDERROR, "overflow happened, field: %s(%lld, inc: %lld),"
+                       " rc = %d", existElement.fieldName(), arg1, arg2, rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            INT32 arg1 = existElement.numberInt();
+            INT32 arg2 = incElement.numberInt() ;
+
+            INT32 result = arg1 + arg2 ;
+            INT64 result64 = (INT64)arg1 + (INT64)arg2 ;
+            if ( result64 == (INT64)result )
+            {
+               resBuilder.append( "", result ) ;
+            }
+            else if ( !strictMode )
+            {
+               resBuilder.append( "", result64 ) ;
+            }
+            else
+            {
+               //32 bit overflow or underflow happened
+               rc = SDB_VALUE_OVERFLOW ;
+               PD_LOG( PDERROR, "overflow happened, field: %s(%d, inc: %d), "
+                       "rc = %d", existElement.fieldName(), arg1, arg2, rc ) ;
+               goto error ;
+            }
+         }
+      }
+      else
+      {
+         resBuilder.appendAs( existElement, "" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

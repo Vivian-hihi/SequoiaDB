@@ -237,6 +237,7 @@ namespace engine
 
       void        updateTransConf() ;
 
+      INT32       appendInfo( EDU_INFO_TYPE type, const CHAR * format, ...) ;
       INT32       printInfo ( EDU_INFO_TYPE type, const CHAR *format, ... ) ;
       const CHAR* getInfo ( EDU_INFO_TYPE type ) ;
       void        resetInfo ( EDU_INFO_TYPE type ) ;
@@ -399,18 +400,18 @@ namespace engine
       pmdTransExecutor*    getTransExecutor() ;
 
       void     addReservedSpace( const UINT64 len )
-      { 
+      {
          _transExecutor.addReservedSpace( len ) ;
       }
 
-      UINT64   getReservedSpace() const 
-      { 
-         return _transExecutor.getReservedSpace(); 
+      UINT64   getReservedSpace() const
+      {
+         return _transExecutor.getReservedSpace();
       }
 
       void     resetLogSpace()
-      { 
-         _transExecutor.resetLogSpace(); 
+      {
+         _transExecutor.resetLogSpace();
       }
    #endif // SDB_ENGINE
 

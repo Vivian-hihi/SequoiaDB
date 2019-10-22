@@ -334,6 +334,52 @@ namespace engine
       return buff ;
    }
 
+   INT32 _pmdEDUCB::appendInfo( EDU_INFO_TYPE type, const CHAR * format, ...)
+   {
+      INT32 rc = SDB_OK ;
+      //do not have info yet, do nothing
+      if ( !getInfo ( type ) )
+      {
+         goto done ;
+      }
+
+      {
+         UINT32 buffSize = 0 ;
+         CHAR *buff = _getBuffInfo ( type, buffSize ) ;
+         INT32 len = 0 ;
+         CHAR *leftBuff = NULL ;
+         INT32 leftLen = 0 ;
+
+         if ( NULL == buff || buffSize == 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         len = ossStrlen( buff ) ;
+         if ( (INT32)buffSize <= len )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         leftLen = buffSize - len ;
+         leftBuff = buff + len ;
+
+         va_list ap ;
+         va_start ( ap, format ) ;
+         vsnprintf ( leftBuff, leftLen, format, ap ) ;
+         va_end ( ap ) ;
+
+         leftBuff[ leftLen ] = 0 ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_PRINTINFO, "_pmdEDUCB::printInfo" )
    INT32 _pmdEDUCB::printInfo ( EDU_INFO_TYPE type, const CHAR * format, ... )
    {

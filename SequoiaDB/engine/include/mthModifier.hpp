@@ -87,7 +87,7 @@ namespace engine
    /*
       _ModifierElement define
    */
-   class _ModifierElement : public SDBObject
+   class _ModifierElement : public utilPooledObject
    {
    public :
       BSONElement _toModify ; // the element to modify
@@ -104,6 +104,41 @@ namespace engine
    } ;
    typedef _ModifierElement ModifierElement ;
 
+   class _IncModifierElement : public _ModifierElement
+   {
+   public :
+      BOOLEAN _isSimple ;
+      BSONElement _valueEle ;
+      BSONElement _default ;
+      BSONElement _minEle ;
+      BSONElement _maxEle ;
+      BSONObj _defaultResult ;
+
+      _IncModifierElement( const BSONElement &e,
+                           INT32 dollarNum = 0 )
+                        : _ModifierElement( e, INC, dollarNum )
+      {
+         _isSimple = TRUE ;
+      }
+
+      _IncModifierElement( const BSONElement &e, const BSONElement &valueEle,
+                           const BSONElement &myDefault,
+                           const BSONElement &minEle,
+                           const BSONElement &maxEle,
+                           INT32 dollarNum = 0 )
+                        : _ModifierElement( e, INC, dollarNum )
+      {
+         _valueEle = valueEle ;
+         _default = myDefault ;
+         _minEle = minEle ;
+         _maxEle = maxEle ;
+         _isSimple = FALSE ;
+      }
+
+      INT32 calcDefaultResult( BOOLEAN strictMode ) ;
+      BOOLEAN isValidRange( BSONElement &resultEle ) ;
+   } ;
+   typedef _IncModifierElement IncModifierElement ;
 
    #define MTH_DOLLAR_FIELD_SIZE          (10)
    /*
@@ -160,12 +195,12 @@ namespace engine
          _dollarList = dollarList ;
       }
 
-      BOOLEAN operator () ( const ModifierElement &l,
-                            const ModifierElement &r ) const
+      BOOLEAN operator () ( const ModifierElement *l,
+                            const ModifierElement *r ) const
       {
          _compareFieldNames1 compare ( _dollarList ) ;
          FieldCompareResult result = compare.compField(
-            l._toModify.fieldName(), r._toModify.fieldName() ) ;
+            l->_toModify.fieldName(), r->_toModify.fieldName() ) ;
          return ( (result == RIGHT_SUBFIELD) || (result == LEFT_BEFORE) ) ;
       }
    } ;
@@ -178,7 +213,7 @@ namespace engine
    */
    class _mthModifier : public SDBObject
    {
-   typedef vector<ModifierElement> MODIFIER_VEC ;
+   typedef ossPoolVector<ModifierElement*> MODIFIER_VEC ;
 
    private :
       BSONObjBuilder *_srcChgBuilder ;
@@ -192,7 +227,7 @@ namespace engine
       _ixmIndexKeyGen *_shardingKeyGen ;
 
       // add for replace begin
-      set<string>    _keepKeys ;
+      ossPoolSet<string>    _keepKeys ;
       BOOLEAN        _isReplaceID ;
       BOOLEAN        _isReplace ;
       // add for replace end
@@ -225,7 +260,7 @@ namespace engine
       template<class Builder>
       INT32 _applyIncModifier ( const CHAR *pRoot, Builder &bb,
                                 const BSONElement &in,
-                                ModifierElement &me ) ;
+                                IncModifierElement &me ) ;
       template<class Builder>
       INT32 _applySetModifier ( const CHAR *pRoot, Builder &bb,
                                 const BSONElement &in,
@@ -359,6 +394,14 @@ namespace engine
       }
       ~_mthModifier()
       {
+         INT32 i = 0 ;
+         while ( i < (SINT32)_modifierElements.size() )
+         {
+            ModifierElement *me = _modifierElements[i] ;
+            SAFE_OSS_DELETE( me ) ;
+            ++i ;
+         }
+
          _modifierElements.clear() ;
          SAFE_OSS_DELETE( _shardingKeyGen ) ;
       }
@@ -390,13 +433,13 @@ namespace engine
       while ( *modifierIndex < (INT32)_modifierElements.size() )
       {
          if ( _dollarList && _dollarList->size() == 0 &&
-              _modifierElements[*modifierIndex]._dollarNum > 0 )
+              _modifierElements[*modifierIndex]->_dollarNum > 0 )
          {
             ++(*modifierIndex) ;
             continue ;
          }
          else if ( !mthCheckUnknowDollar(
-            _modifierElements[*modifierIndex]._toModify.fieldName(),
+            _modifierElements[*modifierIndex]->_toModify.fieldName(),
             _dollarList ) )
          {
             ++(*modifierIndex) ;
@@ -405,8 +448,8 @@ namespace engine
          else if ( tmpModifierIndex >= 0 )
          {
             FieldCompareResult cmp = _fieldCompare.compField (
-              _modifierElements[tmpModifierIndex]._toModify.fieldName(),
-              _modifierElements[*modifierIndex]._toModify.fieldName() ) ;
+              _modifierElements[tmpModifierIndex]->_toModify.fieldName(),
+              _modifierElements[*modifierIndex]->_toModify.fieldName() ) ;
             if ( SAME == cmp || RIGHT_SUBFIELD == cmp )
             {
                ++(*modifierIndex) ;
@@ -416,6 +459,10 @@ namespace engine
          break ;
       }
    }
+
+   INT32 mthModifierInc( const BSONElement& existElement,
+                         const BSONElement &inc, BOOLEAN strictMode,
+                         BSONObjBuilder &resBuilder ) ;
 
 }
 
