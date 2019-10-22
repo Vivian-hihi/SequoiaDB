@@ -121,7 +121,7 @@ namespace engine
       if ( SDB_OK == ossAccess( path ) )
       {
          rc = ossOpen ( path, OSS_READWRITE|OSS_SHAREWRITE,
-                        OSS_DEFAULTFILE | OSS_RO,
+                        OSS_DEFAULTFILE,
                         *_file ) ;
          if ( rc == SDB_OK )
          {
@@ -162,7 +162,7 @@ namespace engine
 
       // open the file with "create only" and "read write" mode, for rx-r-----
       rc = ossOpen( path, OSS_CREATEONLY |OSS_READWRITE | OSS_SHAREWRITE,
-                    OSS_DEFAULTFILE | OSS_RO, *_file );
+                    OSS_DEFAULTFILE, *_file );
 
       if ( rc )
       {
