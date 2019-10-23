@@ -60,10 +60,11 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
         }
         Assert.assertEquals(size, returnRows);
 
-        // test listType: SDB_LIST_USERS, not need verify results
+        // test listType: SDB_LIST_USERS
         cursor = sdb.getList(Sequoiadb.SDB_LIST_USERS, null, null, null);
         while (cursor.hasNext()) {
-            cursor.getNext().get("User");
+            Object user = cursor.getNext().get("User");
+            Assert.assertNotNull(user);
         }
 
         runSuccNum++;
@@ -71,6 +72,7 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
 
     @Test
     public void test_getSnapshot() {
+        // test param: hint / skip / limit
         BasicBSONObject queryObj = new BasicBSONObject();
         queryObj.put("$regex", "^" + csName + "." + clNameBase);
         queryObj.put("$options", "i");
@@ -88,6 +90,14 @@ public class GetListOrSnapshot19950 extends SdbTestBase {
             size++;
         }
         Assert.assertEquals(size, returnRows);
+
+        // test snapType: SDB_SNAP_SVCTASKS
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SVCTASKS, new BasicBSONObject(), null, null);
+        while (cursor.hasNext()) {
+            Object taskName = cursor.getNext().get("TaskName");
+            Assert.assertNotNull(taskName);
+        }
+
         runSuccNum++;
     }
 
