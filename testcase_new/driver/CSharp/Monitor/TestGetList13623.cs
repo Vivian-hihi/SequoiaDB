@@ -139,6 +139,7 @@ namespace CSharp.Monitor
             cursor.Close();
 
             //SDBConst.SDB_LIST_STORAGEUNITS 
+            
             ReplicaGroup rg = sdb.GetReplicaGroup(dataList[0]);
             Sequoiadb dataDB = rg.GetMaster().Connect();
             cursor = dataDB.GetList(SDBConst.SDB_LIST_STORAGEUNITS, matcher, null, null);
@@ -197,6 +198,7 @@ namespace CSharp.Monitor
                SDBConst.SDB_LIST_TRANSACTIONS 
                SDBConst.SDB_LIST_TRANSACTIONS_CURRENT*/
 
+            //SEQUOIADBMAINSTREAM-4998
             //SDB_LIST_USERS
             sdb.CreateUser("user13623", "user13623");
             sdb.CreateUser("user13623_1", "user13623_1");
@@ -226,11 +228,38 @@ namespace CSharp.Monitor
             cursor.Close();
             Assert.AreEqual(1, count);
 
+            List<string> dataGroups = Common.getDataGroupNames(sdb);
+            string backupName1 = "backup13623";
+            BsonDocument option1 = new BsonDocument();
+            option1.Add("Name", backupName1);
+            option1.Add("GroupName", new BsonArray(dataGroups));
+            sdb.Backup(option1);
+           cursor = sdb.GetList(SDBConst.SDB_LIST_BACKUPS, null, null, null);
+           count = 0;
+           while (cursor.Next() != null)
+           {
+               doc = cursor.Current();
+               count++;
+               Console.WriteLine(doc.ToString());
+           }
+           Assert.AreEqual(dataGroups.Count(), count);
+           cursor.Close();
         }
 
         [TestCleanup()]
         public void TearDown()
         {
+            BsonDocument removeOption = new BsonDocument();
+            removeOption.Add("Name", "backup13623");
+            try
+            {
+                sdb.RemoveBackup(removeOption);
+            }
+            catch (BaseException e)
+            {
+                if (e.ErrorCode != -264)
+                    Assert.Fail("clear env failed, errMsg:" + e.Message);
+            }
             if (sdb.IsCollectionSpaceExist(localCSName))
             {
                 sdb.DropCollectionSpace(localCSName);
@@ -243,3 +272,4 @@ namespace CSharp.Monitor
         }
     }
 }
+
