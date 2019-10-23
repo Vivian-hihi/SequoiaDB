@@ -518,6 +518,9 @@ class SequoiaCL
     *                                    SDB_FLG_INSERT_CONTONDUP    :  if the record hit index key duplicate error,
     *                                                                   database will skip them and go on inserting.
     *                                    SDB_FLG_INSERT_RETURN_OID   :  return the value of "_id" field in the record.
+    *                                    SDB_FLG_INSERT_REPLACEONDUP :  if the record hit index key duplicate error,
+    *                                                                   database will replace the existing record by
+    *                                                                   the inserting new record.
     *                                    @endcode
     *
     * @return Returns the result, default return array. When flag SDB_FLG_INSERT_RETURN_OID is set,
@@ -570,6 +573,9 @@ class SequoiaCL
     *                                    SDB_FLG_INSERT_CONTONDUP    :  if the record hit index key duplicate error,
     *                                                                   database will skip them and go on inserting.
     *                                    SDB_FLG_INSERT_RETURN_OID   :  return the value of "_id" field in the record.
+    *                                    SDB_FLG_INSERT_REPLACEONDUP :  if the record hit index key duplicate error,
+    *                                                                   database will replace the existing record by
+    *                                                                   the inserting new record and then go on inserting.
     *                                    @endcode
     *
     * @return Returns the result, default return array.
