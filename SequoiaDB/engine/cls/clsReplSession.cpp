@@ -714,8 +714,9 @@ namespace engine
 
          PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
          pClsCB->getReplCB()->getFaultEvent()->signalAll( SDB_RTN_IN_REBUILD ) ;
-         /// interrupt writing edu
-         eduCB()->getEDUMgr()->interruptWritingEDUS() ;
+
+         /// interrupt writing and transaction EDUs
+         eduCB()->getEDUMgr()->interruptWritingAndTransEDUs() ;
          /// disconnect al shard agent
          pClsCB->getShardRouteAgent()->disconnectAll() ;
          /// do rebuild

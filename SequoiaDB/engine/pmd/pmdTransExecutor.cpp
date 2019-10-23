@@ -120,5 +120,14 @@ namespace engine
       return _pEDUCB ;
    }
 
+   BOOLEAN _pmdTransExecutor::isInterrupted ()
+   {
+      if ( NULL != _pEDUCB && _pEDUCB->isInterrupted() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
 }
 

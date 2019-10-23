@@ -142,6 +142,7 @@ namespace engine
                                          void *pData = NULL,
                                          UINT64 usrData = 0 ) ;
 
+         UINT32            interruptWritingAndTransEDUs () ;
          UINT32            interruptWritingEDUS() ;
          UINT32            getWritingEDUCount( INT32 eduTypeFilter = -1,
                                                UINT64 idThreshold = 0 ) ;
@@ -189,7 +190,7 @@ namespace engine
          void              _forceEDUs( INT32 property = EDU_ALL ) ;
          UINT32            _getEDUCount( INT32 property = EDU_ALL ) ;
 
-         UINT32            _interruptWritingEDUs() ;
+         UINT32            _interruptWritingEDUs( BOOLEAN withUserTrans ) ;
          UINT32            _getWritingEDUCount( INT32 eduTypeFilter = -1,
                                                 UINT64 idThreshold = 0 ) ;
 

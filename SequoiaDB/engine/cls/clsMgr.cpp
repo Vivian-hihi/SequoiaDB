@@ -1068,11 +1068,14 @@ namespace engine
          }
       }
       // if we are switching to slave, let's interrupt all EDUs that doing write
-      else if ( !primary && SDB_EVT_OCCUR_BEFORE == type )
+      // or transaction
+      else if ( !primary )
       {
+         // interrupt both before and after
          sdbGetDPSCB()->cancelIncVersion() ;
-         // interrupt writing edus
-         pmdGetKRCB()->getEDUMgr()->interruptWritingEDUS() ;
+
+         // interrupt writing and transaction EDUs
+         pmdGetKRCB()->getEDUMgr()->interruptWritingAndTransEDUs() ;
       }
 
       // notify sub members

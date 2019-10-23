@@ -65,6 +65,7 @@ namespace engine
          virtual void         wakeup() ;
          virtual INT32        wait( INT64 timeout ) ;
          virtual IExecutor*   getExecutor() ;
+         virtual BOOLEAN      isInterrupted () ;
 
       protected:
          _pmdEDUCB            *_pEDUCB ;

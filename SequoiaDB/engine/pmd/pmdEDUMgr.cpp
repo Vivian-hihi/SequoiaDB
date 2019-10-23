@@ -841,7 +841,7 @@ namespace engine
       return eduCount ;
    }
 
-   UINT32 _pmdEDUMgr::_interruptWritingEDUs()
+   UINT32 _pmdEDUMgr::_interruptWritingEDUs( BOOLEAN withUserTrans )
    {
       MAP_EDUCB_IT it ;
       pmdEDUCB *cb = NULL ;
@@ -857,6 +857,16 @@ namespace engine
             cb->interrupt() ;
             PD_LOG ( PDDEBUG, "Interrupt edu[ID:%lld]", it->first ) ;
          }
+#if defined ( SDB_ENGINE )
+         else if ( withUserTrans &&
+                   !_isSystemEDU( cb ) &&
+                   cb->isTransaction() )
+         {
+            ++count ;
+            cb->interrupt() ;
+            PD_LOG ( PDDEBUG, "Interrupt edu[ID:%lld]", it->first ) ;
+         }
+#endif
       }
       _latch.release() ;
 
@@ -936,9 +946,14 @@ namespace engine
       goto done ;
    }
 
+   UINT32 _pmdEDUMgr::interruptWritingAndTransEDUs ()
+   {
+      return _interruptWritingEDUs( TRUE ) ;
+   }
+
    UINT32 _pmdEDUMgr::interruptWritingEDUS()
    {
-      return _interruptWritingEDUs() ;
+      return _interruptWritingEDUs( FALSE ) ;
    }
 
    UINT32 _pmdEDUMgr::getWritingEDUCount( INT32 eduTypeFilter,

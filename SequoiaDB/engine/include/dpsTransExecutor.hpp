@@ -400,6 +400,7 @@ namespace engine
          virtual void         wakeup() = 0 ;
          virtual INT32        wait( INT64 timeout ) = 0 ;
          virtual IExecutor*   getExecutor() = 0 ;
+         virtual BOOLEAN      isInterrupted () = 0 ;
 
       protected:
          dpsTransLRB *           _waiter[ LOCKMGR_TYPE_MAX ] ;
