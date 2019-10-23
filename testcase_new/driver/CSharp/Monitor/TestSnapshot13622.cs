@@ -194,7 +194,7 @@ namespace CSharp.monitor
             Assert.IsTrue(num>0);
 
             //SDB_LIST_SVCTASKS
-            cursor = sdb.GetList(SDBConst.SDB_LIST_SVCTASKS, null, null, null, null, 0, 1);
+            cursor = sdb.GetSnapshot(SDBConst.SDB_LIST_SVCTASKS, null, null, null, null, 0, 1);
             int count = 0;
             while (cursor.Next() != null)
             {
