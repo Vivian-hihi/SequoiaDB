@@ -1637,15 +1637,24 @@ class client(object):
                                           bson.OLD_UUID_SUBTYPE, True)
         return record
 
-    def close_all_cursors(self):
-        """Close all the cursors in current thread, we can't use those cursors to
-        get data again.
+    def interrupt(self):
+        """Send a "Interrupt" message to engine, as a result, all the cursors and lobs created by
+        current connection will be closed.
 
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        rc = sdb.sdb_close_all_cursors(self._client)
-        raise_if_error(rc, "Failed to close all cursors")
+        rc = sdb.sdb_interrupt(self._client)
+        raise_if_error(rc, "Failed to interrupt")
+
+    def close_all_cursors(self):
+        """Send a "Interrupt" message to engine, as a result, all the cursors and lobs created by
+         current connection will be closed.
+
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        self.interrupt()
 
     def is_valid(self):
         """Judge whether the connection is valid.

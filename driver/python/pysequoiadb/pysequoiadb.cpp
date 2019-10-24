@@ -1257,7 +1257,7 @@ error :
    goto done ;
 }
 
-__METHOD_IMP(sdb_close_all_cursors)
+__METHOD_IMP(sdb_interrupt)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -1271,7 +1271,7 @@ __METHOD_IMP(sdb_close_all_cursors)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
-   rc = client->closeAllCursors() ;
+   rc = client->interrupt() ;
    if ( rc )
    {
       goto done ;
@@ -5109,7 +5109,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_cancel_task",                 sdb_cancel_task,                 METH_VARARGS},
    {"sdb_set_session_attri",           sdb_set_session_attri,           METH_VARARGS},
    {"sdb_get_session_attri",           sdb_get_session_attri,           METH_VARARGS},
-   {"sdb_close_all_cursors",           sdb_close_all_cursors,           METH_VARARGS},
+   {"sdb_interrupt",                   sdb_interrupt,           METH_VARARGS},
    {"sdb_is_valid",                    sdb_is_valid,                    METH_VARARGS},
    {"sdb_get_version",                 sdb_get_version,                 METH_VARARGS},
    {"sdb_init_client",                 sdb_init_client,                 METH_VARARGS},
