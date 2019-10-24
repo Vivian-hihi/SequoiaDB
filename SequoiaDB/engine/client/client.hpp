@@ -6334,22 +6334,9 @@ namespace sdbclient
           \brief Get the error object(only return by engine) of the last operation.
                  The error object will not be clean up automatically until the next
                  error object cover it.
-          \param [out] errObj The return error bson object.
-                              It contains the follow fields:
-                               <ul>
-                               <li>
-                               errno:       the error number.
-                               <li>
-                               description: the description of the errno.
-                               <li>
-                               detail:      the error detail.
-                               </ul>
-                       Actrally, the follow extended fields may return from the
-                       database depend on the operations:
-                               <ul>
-                               <li>
-                               ErrNodes:    More detailed error message.
-                               </ul>
+          \param [out] errObj The return error bson object. Please reference
+                              <a href="http://doc.sequoiadb.com/cn/sequoiadb-cat_id-1482317447-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                              for more detail.
           \retval SDB_OK Operation Success.
           \retval SDB_DMS_EOC There is no error object.
           \retval Others Operation Fail.
