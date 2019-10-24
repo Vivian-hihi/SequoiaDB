@@ -46,6 +46,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    |sequoiadb_bulk_insert_size|int|2000|Yes|Global|批量插入时每批的插入记录数。|  
    |sequoiadb_conn_addr|string|"localhost:11810"|Yes|Global|SequoiaDB 连接地址。|
    |sequoiadb_debug_log|bool|OFF|Yes|Global|是否打印debug日志。|
+   |sequoiadb_error_level|enum|error|Yes|Global| 错误级别控制，为error输出错误信息，为warning输出告警信息。|
    |sequoiadb_execute_only_in_mysql|bool|OFF|Yes|Global, Session|DDL 命令只在 MySQL 执行，不下压到 SequoiaDB 执行。|
    |sequoiadb_optimizer_options|set|"direct_count,<br>direct_delete,<br>direct_update"|Yes|Global, Session|SequoiaDB 优化选项开关，以决定是否优化计数、更新、删除操作。|
    |sequoiadb_password|string|""|Yes|Global|SequoiaDB 鉴权密码。|
@@ -126,6 +127,8 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    `sequoiadb_execute_only_in_mysql`配置开启后，DDL 语句只在 MySQL 侧执行，即只更改 MySQL 侧表元数据信息，而不会下压到 SDB 侧同步表 DDL 操作。
    
    `sequoiadb_debug_log`配置开启后，MySQL 日志会打印 SequoiaDB 存储引擎有关 debug 信息。
+   
+   `sequoiadb_error_level`错误级别控制参数。该参数可选的配置项有error（默认值）和warning，用于控制连接器的某些特定错误返回给客户端的方式（报错还是警告）。在sql语句执行出错时，当该参数配置为error时，连接器直接返回错误信息给客户端；当参数配置为warning时，连接器给客户端返回警告信息，用户想要查看详细的错误信息，可根据warning进行查询。注意：该参数并不适用于连接器所有的错误，其适用的错误仅限于：update ignore更新分区键错误。
    
    `sequoiadb_use_autocommit`配置项已弃用。请直接使用 MySQL 的`autocommit`配置项。
 
