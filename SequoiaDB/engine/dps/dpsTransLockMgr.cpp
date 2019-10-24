@@ -1326,12 +1326,6 @@ namespace engine
       }
       bLatched = TRUE ;
 
-      if ( dpsTxExectr->isInterrupted() )
-      {
-         rc = SDB_APP_INTERRUPT ;
-         goto error ;
-      }
-
       // if no LRB Header
       if ( NULL == _LockHdrBkt[ bktIdx ].lrbHdr )
       {
@@ -1975,6 +1969,13 @@ namespace engine
       bktIdx = _getBucketNo( lockId ) ;
 
    acquireRetry:
+      // check if EDU is intrrupted first
+      if ( dpsTxExectr->isInterrupted() )
+      {
+         rc = SDB_APP_INTERRUPT ;
+         goto error ;
+      }
+
       //
       // acquire the lock
       //
@@ -2853,6 +2854,13 @@ nextLock:
             goto error ;
          }
          isIntentLockAcquired = TRUE;
+      }
+
+      // check if EDU is intrrupted first
+      if ( dpsTxExectr->isInterrupted() )
+      {
+         rc = SDB_APP_INTERRUPT ;
+         goto error ;
       }
 
       // try to acquire the lock
