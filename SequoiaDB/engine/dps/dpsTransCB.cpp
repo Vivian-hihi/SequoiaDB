@@ -330,6 +330,26 @@ namespace engine
       DPS_TRANS_CLEAR_FIRSTOP( transID ) ;
    }
 
+   BOOLEAN dpsTransCB::isRBPending( DPS_TRANS_ID transID )
+   {
+      return DPS_TRANS_IS_RBPENDING( transID ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN dpsTransCB::hasRBPendingTrans()
+   {
+      ossScopedLock _lock( &_MapMutex ) ;
+      for ( TRANS_MAP::iterator iter = _TransMap.begin() ;
+            iter != _TransMap.end() ;
+            ++ iter )
+      {
+         if ( DPS_INVALID_LSN_OFFSET != iter->second._curLSNWithRBPending )
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
    INT32 dpsTransCB::startRollbackTask()
    {
       INT32 rc = SDB_OK ;
@@ -381,7 +401,7 @@ namespace engine
            !sdbGetDPSCB()->isInRestore() )
       {
          DPS_LSN_OFFSET lastLsn = DPS_INVALID_LSN_OFFSET ;
-
+         BOOLEAN rbPending = isRBPending( transID ) ;
          transID = getTransID( transID ) ;
          TRANS_MAP::iterator it ;
 
@@ -395,6 +415,14 @@ namespace engine
             if ( it != _TransMap.end() )
             {
                lastLsn = it->second._lsn ;
+               if ( rbPending )
+               {
+                  // just check the tag, current pending LSN may not reset
+                  // ( it should be reset by the tag )
+                  PD_LOG( PDWARNING, "Transaction [%llu] is still rollback "
+                          "pending", transID ) ;
+                  SDB_ASSERT( FALSE, "transaction is rollback pending" ) ;
+               }
                _TransMap.erase( it ) ;
             }
          }
@@ -402,11 +430,11 @@ namespace engine
          {
             if ( it != _TransMap.end() )
             {
-               it->second._lsn = lsnOffset ;
-               it->second._status = status ;
+               updateTransInfo( it->second, status, lsnOffset, rbPending ) ;
             }
             else
             {
+               SDB_ASSERT( !rbPending, "should not be rollback pending" ) ;
                _TransMap[ transID ] = dpsTransBackInfo( lsnOffset, status ) ;
             }
          }
@@ -422,12 +450,16 @@ namespace engine
       return ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_ADDTRANSINFO, "dpsTransCB::addTransInfo" )
    void dpsTransCB::addTransInfo( DPS_TRANS_ID transID,
                                   DPS_LSN_OFFSET lsnOffset,
-                                  INT32 status,
-                                  const MAP_TRANS_PENDING_OBJ &mapPendingObj )
+                                  INT32 status )
    {
+      PD_TRACE_ENTRY( SDB_DPSTRANSCB_ADDTRANSINFO ) ;
+
       TRANS_MAP::iterator it ;
+
+      BOOLEAN rbPending = isRBPending( transID ) ;
       transID = getTransID( transID ) ;
 
       ossScopedLock _lock( &_MapMutex ) ;
@@ -435,17 +467,50 @@ namespace engine
       it = _TransMap.find( transID ) ;
       if ( it == _TransMap.end() )
       {
+         SDB_ASSERT( !rbPending, "should not be rollback pending" ) ;
          // it is means transaction is synchronous by log if transID is exist
-         _TransMap[ transID ] = dpsTransBackInfo( lsnOffset,
-                                                  mapPendingObj,
-                                                  status ) ;
+         _TransMap[ transID ] = dpsTransBackInfo( lsnOffset, status ) ;
       }
       else
       {
-         it->second._lsn = lsnOffset ;
-         it->second._status = status ;
-         it->second._mapPendingObj = mapPendingObj ;
+         updateTransInfo( it->second, status, lsnOffset, rbPending ) ;
       }
+
+      PD_TRACE_EXIT( SDB_DPSTRANSCB_ADDTRANSINFO ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_UPDATETRANSINFO_INFO, "dpsTransCB::updateTransInfo" )
+   void dpsTransCB::updateTransInfo( dpsTransBackInfo &transInfo,
+                                     INT32 status,
+                                     DPS_LSN_OFFSET lsn,
+                                     BOOLEAN rbPending )
+   {
+      PD_TRACE_ENTRY( SDB_DPSTRANSCB_UPDATETRANSINFO_INFO ) ;
+
+      if ( rbPending )
+      {
+         // if it is rollback pending, save current relatedLSN as pendingLSN
+         // and do not move transaction's LSN ( it is the last related LSN
+         // which is not pending )
+         // NOTE: in consult rollback mode, actually we don't know the last non
+         // pending LSN to reset the transaction's LSN, but the consult
+         // rollback will rollback to a non pending LSN, so it is safe to reset
+         transInfo._curLSNWithRBPending = lsn ;
+         transInfo._curNonPendingLSN.insert( lsn ) ;
+      }
+      else
+      {
+         // if it is not rollback pending, reset current pending LSN if needed
+         transInfo._lsn = lsn ;
+         if ( DPS_INVALID_LSN_OFFSET != transInfo._curLSNWithRBPending )
+         {
+            transInfo._curLSNWithRBPending = DPS_INVALID_LSN_OFFSET ;
+            transInfo._curNonPendingLSN.clear() ;
+         }
+      }
+      transInfo._status = status ;
+
+      PD_TRACE_EXIT( SDB_DPSTRANSCB_UPDATETRANSINFO_INFO ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_ADDTRANSCB, "dpsTransCB::addTransCB" )
@@ -851,7 +916,7 @@ namespace engine
          _dpsLogRecord record ;
          rc = record.load( mb.readPtr() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to load log record, rc=%d", rc );
-         saveTransInfoFromLog( record );
+         saveTransInfoFromLog( record ) ;
          curLsn.offset += record.head()._length;
       }
    done:
@@ -1467,6 +1532,159 @@ namespace engine
    {
       static dpsTransCB s_transCB ;
       return &s_transCB ;
+   }
+
+   /*
+      helper functions for dpsTransPendingKey
+    */
+   // check pending key and value
+   // 1. should have OID
+   // 2. should be owned
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSCHECKPENDING, "_dpsCheckTransPending" )
+   static INT32 _dpsCheckTransPending( dpsTransPendingKey &pendingKey,
+                                       dpsTransPendingValue &pendingValue )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DPSCHECKPENDING ) ;
+
+      try
+      {
+         BSONElement element ;
+
+         element = pendingKey._obj.getField( DMS_ID_KEY_NAME ) ;
+         PD_CHECK( EOO != element.type(), SDB_SYS, error, PDERROR,
+                   "Failed to check pending key, "
+                   "OID is not found in BSON [%s]",
+                   pendingKey._obj.toPoolString().c_str() ) ;
+         pendingKey._obj = pendingKey._obj.getOwned() ;
+
+         if ( !( pendingValue._obj.isEmpty() ) )
+         {
+            element = pendingValue._obj.getField( DMS_ID_KEY_NAME ) ;
+            PD_CHECK( EOO != element.type(), SDB_SYS, error, PDERROR,
+                      "Failed to check pending value, "
+                      "OID is not found in BSON [%s]",
+                      pendingValue._obj.toPoolString().c_str() ) ;
+         }
+         pendingValue._obj = pendingValue._obj.getOwned() ;
+      }
+      catch ( std::exception & e )
+      {
+         PD_LOG( PDERROR, "Failed to check pending key, exception: %s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DPSCHECKPENDING, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSADDTRANSPENDING, "dpsAddTransPending" )
+   INT32 dpsAddTransPending( MAP_TRANS_PENDING_OBJ &pendingMap,
+                             dpsTransPendingKey &pendingKey,
+                             dpsTransPendingValue &pendingValue,
+                             BOOLEAN &added )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DPSADDTRANSPENDING ) ;
+
+      MAP_TRANS_PENDING_OBJ::iterator iter ;
+
+      added = FALSE ;
+
+      rc = _dpsCheckTransPending( pendingKey, pendingValue ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check transaction rollback pending "
+                   "key [ collection %s, key %s ], value [ %s ], rc: %d",
+                   pendingKey._collection.c_str(),
+                   pendingKey._obj.toPoolString().c_str(),
+                   pendingValue._obj.toPoolString().c_str(), rc ) ;
+
+      iter = pendingMap.find( pendingKey ) ;
+      if ( iter != pendingMap.end() )
+      {
+         PD_LOG( PDDEBUG, "Find duplicated transaction rollback pending "
+                 "object [ collection %s, key %s ],"
+                 "old value [ %s ], "
+                 "new value [ %s ]",
+                 pendingKey._collection.c_str(),
+                 pendingKey._obj.toPoolString().c_str(),
+                 iter->second._obj.toPoolString().c_str(),
+                 pendingValue._obj.toPoolString().c_str() ) ;
+         // replace
+         iter->second = pendingValue ;
+      }
+      else
+      {
+         PD_LOG( PDDEBUG, "Insert transaction rollback pending "
+                 "object [ collection %s, key %s ], value [ %s ]",
+                 pendingKey._collection.c_str(),
+                 pendingKey._obj.toPoolString().c_str(),
+                 pendingValue._obj.toPoolString().c_str() ) ;
+         pendingMap.insert( make_pair( pendingKey, pendingValue ) ) ;
+      }
+
+      added = TRUE ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__DPSADDTRANSPENDING, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRMTRANSPENDING, "dpsRemoveTransPending" )
+   INT32 dpsRemoveTransPending( MAP_TRANS_PENDING_OBJ &pendingMap,
+                                const dpsTransPendingKey &pendingKey,
+                                BSONObj *oldKey,
+                                dpsTransPendingValue *oldValue,
+                                BOOLEAN &removed )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DPSRMTRANSPENDING ) ;
+
+      removed = FALSE ;
+
+      MAP_TRANS_PENDING_OBJ::iterator iter =
+                                       pendingMap.find( pendingKey ) ;
+      if ( iter != pendingMap.end() )
+      {
+         PD_LOG( PDDEBUG, "Delete transaction rollback pending "
+                 "object [ collection %s, key %s ], value [ %s ]",
+                 pendingKey._collection.c_str(),
+                 pendingKey._obj.toPoolString().c_str(),
+                 iter->second._obj.toPoolString().c_str() ) ;
+
+         if ( NULL != oldKey )
+         {
+            (*oldKey) = iter->first._obj ;
+         }
+         if ( NULL != oldValue )
+         {
+            oldValue->setValue( iter->second._obj, iter->second._opType ) ;
+         }
+
+         pendingMap.erase( iter ) ;
+         removed = TRUE ;
+      }
+      else
+      {
+         PD_LOG( PDDEBUG, "Failed to find transaction rollback pending "
+                 "object for delete [ collection %s, key %s ]",
+                 pendingKey._collection.c_str(),
+                 pendingKey._obj.toPoolString().c_str() ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__DPSRMTRANSPENDING, rc ) ;
+
+      return rc ;
    }
 
 }

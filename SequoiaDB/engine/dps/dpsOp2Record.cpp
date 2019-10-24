@@ -1716,36 +1716,37 @@ namespace engine
       goto done ;
    }
 
-/*
-   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_TRANSROLLBACK2RECORD, "dpsTransRollback2Record" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_TRANSROLLBACK2RECORD, "dpsTransRollback2Record" )
    INT32 dpsTransRollback2Record( const DPS_TRANS_ID &transID,
-                                  const DPS_LSN_OFFSET &preTransLsn,
+                                  const DPS_LSN_OFFSET &preTransLSN,
+                                  const DPS_LSN_OFFSET &relatedLSN,
                                   dpsLogRecord &record )
    {
-      PD_TRACE_ENTRY( SDB__DPS_TRANSROLLBACK2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != csName && NULL != clName, "impossible" ) ;
+
+      PD_TRACE_ENTRY( SDB__DPS_TRANSROLLBACK2RECORD ) ;
+
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_TS_ROLLBACK ;
 
-      rc = dpsPushTran( transID,
-                        preTransLsn,
-                        record ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to push trans to record, rc: %d",rc ) ;
-         goto error ;
-      }
+      rc = dpsPushTran( transID, preTransLSN, relatedLSN, record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to push transaction information, "
+                   "rc: %d", rc ) ;
 
-   done:
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time information, "
+                   "rc: %d", rc ) ;
+
+      header._length = record.alignedLen() ;
+
+   done :
       PD_TRACE_EXITRC( SDB__DPS_TRANSROLLBACK2RECORD, rc ) ;
       return rc ;
-   error:
-      goto done ;
 
+   error :
+      goto done ;
    }
 
-*/
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_INVALIDCATA2RECORD, "dpsInvalidCata2Record" )
    INT32 dpsInvalidCata2Record( const UINT8 &type,
                                 const CHAR * clFullName,
@@ -2891,6 +2892,5 @@ namespace engine
    error :
       goto done ;
    }
-
 
 }

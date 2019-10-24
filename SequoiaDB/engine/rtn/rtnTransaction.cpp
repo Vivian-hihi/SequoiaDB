@@ -330,9 +330,9 @@ namespace engine
          // in cluster mode, when not primary, need add trans info to map
          if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) && !pmdIsPrimary() )
          {
-            sdbGetTransCB()->addTransInfo( transID, curLsnOffset,
-                                           cb->getTransStatus(),
-                                           mapPendingObj ) ;
+            sdbGetTransCB()->addTransInfo( transID,
+                                           curLsnOffset,
+                                           cb->getTransStatus() ) ;
             mapPendingObj.clear() ;
             rc = SDB_CLS_NOT_PRIMARY ;
             goto error ;
@@ -459,14 +459,25 @@ namespace engine
       while ( tmpTransMap.size() != 0 )
       {
          TRANS_MAP::iterator iterMap = tmpTransMap.begin();
+         dpsTransBackInfo &transInfo = iterMap->second ;
+         MAP_TRANS_PENDING_OBJ mapPendingObj ;
          transID = iterMap->first ;
          rollbackID = pTransCB->getRollbackID( transID ) ;
-         curLsnOffset = iterMap->second._lsn ;
+         curLsnOffset = transInfo._lsn ;
          cb->setTransID( rollbackID ) ;
 
          PD_LOG( PDEVENT, "Begin to rollback transaction[ID:%s, "
                  "LastLSN: %llu]...", dpsTransIDToString( transID ).c_str(),
                  curLsnOffset ) ;
+
+         if ( DPS_INVALID_LSN_OFFSET != transInfo._curLSNWithRBPending )
+         {
+            PD_LOG( PDEVENT, "Transaction[ID:%s] is rollback pending, "
+                    "restart from previous non pending LSN: %llu, "
+                    "current pending LSN: %llu",
+                    dpsTransIDToString( transID ).c_str(),
+                    curLsnOffset, transInfo._curLSNWithRBPending ) ;
+         }
 
          while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
          {
@@ -476,6 +487,7 @@ namespace engine
                rc = SDB_INTERRUPT ;
                goto error ;
             }
+            dpsLogRecordHeader *recordHeader = NULL ;
             dpsLogRecord record ;
             mb.clear() ;
             dpsLsn.offset = curLsnOffset;
@@ -490,7 +502,8 @@ namespace engine
                         curLsnOffset, dpsLsn.version, rc ) ;
                break ;
             }
-            rc = record.load( mb.offset( 0 )) ;
+            recordHeader = (dpsLogRecordHeader *)( mb.offset( 0 ) ) ;
+            rc = record.load( mb.offset( 0 ) ) ;
             if ( rc )
             {
                // don't return,
@@ -535,11 +548,38 @@ namespace engine
                }
                cb->setCurTransLsn( curLsnOffset ) ;
 
+               // rollback pending record had been replayed earlier,
+               // but interrupted by primary switch or reboot,
+               // just reconstruct pending objects and move to next
+               if ( DPS_INVALID_LSN_OFFSET != transInfo._curLSNWithRBPending &&
+                    DPS_INVALID_LSN_OFFSET != curLsnOffset &&
+                    curLsnOffset >= transInfo._curLSNWithRBPending )
+               {
+                  BOOLEAN removeOnly =
+                        transInfo._curNonPendingLSN.count( curLsnOffset ) > 0 ;
+                  // found a DPS log already rollbacked, but which may create
+                  // or resolve a pending object, so try to rebuild pending
+                  // objects from original DPS log
+                  PD_LOG( PDDEBUG, "Rollback transaction [ID: %s] meets "
+                          "older rollbacked record LSN [%llu], "
+                          "created pending object: %s, "
+                          "current pending LSN: [%llu]",
+                          dpsTransIDToString( transID ).c_str(),
+                          recordHeader->_lsn,
+                          removeOnly ? "FALSE" : "TRUE",
+                          transInfo._curLSNWithRBPending ) ;
+                  rc = replayer.replayRBPending( recordHeader, removeOnly, cb,
+                                                 mapPendingObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to replay rollback "
+                               "pending record LSN [%llu], rc: %d",
+                               recordHeader->_lsn, rc ) ;
+                  continue ;
+               }
+
                /// when rollback failed, need to retry some times.
                /// But all the way do it failed, need to restart the db
                rc = replayer.rollbackTrans( ( dpsLogRecordHeader *)mb.offset(0),
-                                            cb,
-                                            iterMap->second._mapPendingObj ) ;
+                                            cb, mapPendingObj ) ;
                if ( rc )
                {
                   ++retryTimes ;
@@ -561,24 +601,33 @@ namespace engine
                else
                {
                   retryTimes = 0 ;
-                  iterMap->second._lsn = curLsnOffset ;
+                  pTransCB->updateTransInfo( transInfo,
+                                             DPS_TRANS_ROLLBACK,
+                                             curLsnOffset,
+                                             cb->isTransRBPending() ) ;
                }
             }
          } /// while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
 
-         if ( !iterMap->second._mapPendingObj.empty() )
+         if ( !mapPendingObj.empty() )
          {
             SDB_ASSERT( FALSE, "Transaction's pending object map is "
                         "not empty" ) ;
             PD_LOG( PDERROR, "Transaction(%s)'s pending object map"
                     " is not empty(size:%d)",
                     dpsTransIDToString( transID ).c_str(),
-                    iterMap->second._mapPendingObj.size() ) ;
+                    mapPendingObj.size() ) ;
+         }
+         else if ( cb->isTransRBPending() )
+         {
+            SDB_ASSERT( FALSE, "Transaction's rollback pending" ) ;
+            PD_LOG( PDERROR, "Transaction(%s)'s rollback pending",
+                    dpsTransIDToString( transID ).c_str() ) ;
          }
 
          /// remove the transaction
          pTransMap->erase( iterMap->first ) ;
-         tmpTransMap.erase(iterMap ) ;
+         tmpTransMap.erase( iterMap ) ;
          PD_LOG( PDEVENT, "Rollback transaction(ID:%s, IDAttr:%s) finished "
                  "with rc[%d]", dpsTransIDToString( transID ).c_str(),
                  dpsTransIDAttrToString( transID ).c_str(),
@@ -593,6 +642,7 @@ namespace engine
       cb->getTransExecutor()->clearRecordMap() ;
       pTransCB->transLockReleaseAll( cb ) ;
       pTransCB->stopRollbackTask() ;
+
       cb->stopRollback() ;
 
       PD_LOG ( PDEVENT, "Rollback all unfinished transactions finished with "
@@ -614,7 +664,6 @@ namespace engine
 
       DPS_LSN_OFFSET curLsnOffset = cb->getCurTransLsn() ;
       DPS_TRANS_ID transID = cb->getTransID() ;
-      MAP_TRANS_PENDING_OBJ mapPendingObj ;
 
       savedAsWaitCommit = FALSE ;
 
@@ -631,9 +680,7 @@ namespace engine
 
       // in cluster mode, when not primary, need add trans info to map
       sdbGetTransCB()->addTransInfo( transID, curLsnOffset,
-                                     cb->getTransStatus(),
-                                     mapPendingObj ) ;
-      mapPendingObj.clear() ;
+                                     cb->getTransStatus() ) ;
 
       // just clear meta-block statistics
       cb->getTransExecutor()->clearMBStats() ;
