@@ -44,6 +44,7 @@ public class CopyObject19305 extends S3TestBase {
     private int fileSize = 1024 * 1024 * 30;
     private File localPath = null;
     private String filePath = null;
+    private Date expModifiedTime;
     private int successNum = 0;
 
     @BeforeClass
@@ -61,14 +62,14 @@ public class CopyObject19305 extends S3TestBase {
         s3Client.createBucket(bucketNameA);
         s3Client.createBucket(bucketNameB);
         s3Client.putObject(bucketNameA, keyName, new File(filePath));
+        expModifiedTime = s3Client.getObject(bucketNameA, keyName).getObjectMetadata().getLastModified();
     }
 
     @Test(dataProvider = "keyNameProvider")
     public void testCopyObject(String destKeyName) throws Exception {
-        Date beforeDate = new Date();
         CopyObjectResult result = s3Client.copyObject(bucketNameA, keyName, bucketNameB, destKeyName);
 
-        checkObjectAttributeInfo(result, bucketNameB, destKeyName, beforeDate);
+        checkObjectAttributeInfo(result, bucketNameB, destKeyName, expModifiedTime);
         checkObjectContent(bucketNameB, destKeyName);
         checkObjectContent(bucketNameA, keyName);
 
@@ -101,7 +102,6 @@ public class CopyObject19305 extends S3TestBase {
 
     private void checkObjectAttributeInfo(CopyObjectResult objAttrInfo, String bucketName, String keyName,
             Date beforeDate) throws IOException {
-        Date afterDate = new Date();
         String expMd5 = TestTools.getMD5(filePath);
         Assert.assertEquals(objAttrInfo.getETag(), expMd5);
 
@@ -114,11 +114,11 @@ public class CopyObject19305 extends S3TestBase {
         Assert.assertEquals(result.getETag(), expMd5);
         Assert.assertEquals(result.getContentLength(), fileSize);
 
-        // modifiedDate range is [ beforeDate, afterDate]
-        Assert.assertFalse(modifiedDate.before(beforeDate), "modifiedDate must not be less than beforeDate,"
-                + "modifiedDate:" + modifiedDate + " beforeDate:" + beforeDate);
-        Assert.assertFalse(modifiedDate.after(afterDate), "modifiedDate must not be greater than afterDate,"
-                + "modifiedDate:" + modifiedDate + " afterDate:" + afterDate);
-
+        Assert.assertTrue(modifiedDate.after(new Date(beforeDate.getTime() - 1000)),
+                "modifiedDate must greater beforeDate, modifiedDate = " + modifiedDate + ", beforeDate = "
+                        + beforeDate);
+        // 3s error allowed in time range
+        Assert.assertTrue(modifiedDate.getTime() - beforeDate.getTime() < 3 * 1000);
     }
 }
+
