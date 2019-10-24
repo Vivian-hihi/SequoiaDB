@@ -166,10 +166,10 @@ public class CreateCL18964 extends SdbTestBase {
                         node1.getCollectionSpace(csName).dropCollection(clName);
                     }
                     if (node2.getCollectionSpace(csName).isCollectionExist(clName)) {
-                        node1.getCollectionSpace(csName).dropCollection(clName);
+                        node2.getCollectionSpace(csName).dropCollection(clName);
                     }
                     if (node3.getCollectionSpace(csName).isCollectionExist(clName)) {
-                        node1.getCollectionSpace(csName).dropCollection(clName);
+                        node3.getCollectionSpace(csName).dropCollection(clName);
                     }
                 }
                 try {
