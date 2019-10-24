@@ -76,14 +76,89 @@
      $ /sbin/sysctl -p  
      ```
   4. ssd盘建议调整预读大小和块层读写请求数：
+         
+         4.1. 确定块设备
 
-     ```lang-bash
-     $ vi /etc/profile
-     echo 32 >/sys/block/sdj/queue/read_ahead_kb
-     echo 256 >/sys/block/sdj/queue/nr_requests
-     ```
-     > **Note:**  
-     > 注意上面sdj是ssd盘，需要调整成实际环境中的值，并且每个用到的ssd盘都需要配置上述两项。
+         当前环境存在 sd[a-l] 12 块块设备
+
+          ```lang-bash
+          $ ls /sys/block/
+          sda  sdb  sdc  sdd  sde  sdf  sdg  sdh  sdi  sdj  sdk  sdl
+          ```
+
+		 4.2. 确定磁盘是否是 SSD
+         
+         建议 fio 测试一下块设备的随机读写的 IOPS (我们希望采用的 SSD 盘有上万的IOPS) 来确定，或者咨询系统管理员
+
+          ```lang-bash
+          $ fio -filename=/data/disk_ssd2/test -direct=1 -iodepth 1 -thread -rw=randrw -rwmixread=70 -ioengine=psync -bs=4k -size=500G -numjobs=50 -runtime=180 -group_reporting -name=ranrw_70read_4k_local
+            ranrw_70read_4k_local: (g=0): rw=randrw, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=psync, iodepth=1
+            ...
+            fio-3.7
+            Starting 50 threads
+            ranrw_70read_4k_local: Laying out IO file (1 file / 512000MiB)
+            ranrw_70read_4k_local: Laying out IO file (1 file / 512000MiB)
+            Jobs: 50 (f=50): [m(50)][100.0%][r=103MiB/s,w=44.0MiB/s][r=26.4k,w=11.5k IOPS][eta 00m:00s]
+            ranrw_70read_4k_local: (groupid=0, jobs=50): err= 0: pid=1322291: Thu Oct 24 12:01:56 2019
+               # 这里可以看到当前场景下，read 的 IOPS 为26700
+               read: IOPS=26.7k, BW=104MiB/s (109MB/s)(18.4GiB/180004msec)
+                clat (usec): min=33, max=6654, avg=1386.15, stdev=1112.59
+                 lat (usec): min=33, max=6654, avg=1386.30, stdev=1112.59
+                clat percentiles (usec):
+                 |  1.00th=[  135],  5.00th=[  149], 10.00th=[  159], 20.00th=[  178],
+                 | 30.00th=[  212], 40.00th=[  469], 50.00th=[ 1663], 60.00th=[ 1926],
+                 | 70.00th=[ 2147], 80.00th=[ 2474], 90.00th=[ 2802], 95.00th=[ 3032],
+                 | 99.00th=[ 3752], 99.50th=[ 4228], 99.90th=[ 4817], 99.95th=[ 5014],
+                 | 99.99th=[ 5276]
+               bw (  KiB/s): min= 1776, max= 2632, per=2.00%, avg=2138.01, stdev=101.57, samples=17964
+               iops        : min=  444, max=  658, avg=534.47, stdev=25.39, samples=17964
+              # 这里可以看到当前场景下，write 的IOPS 为 11500
+              write: IOPS=11.5k, BW=44.8MiB/s (46.0MB/s)(8064MiB/180004msec)
+               clat (usec): min=29, max=5153, avg=1122.50, stdev=1030.29
+                lat (usec): min=29, max=5153, avg=1122.73, stdev=1030.29
+               clat percentiles (usec):
+                |  1.00th=[   38],  5.00th=[   45], 10.00th=[   48], 20.00th=[   55],
+                | 30.00th=[   61], 40.00th=[   77], 50.00th=[ 1467], 60.00th=[ 1762],
+                | 70.00th=[ 1958], 80.00th=[ 2180], 90.00th=[ 2442], 95.00th=[ 2606],
+                | 99.00th=[ 2835], 99.50th=[ 2933], 99.90th=[ 3097], 99.95th=[ 3163],
+                | 99.99th=[ 3326]
+              bw (  KiB/s): min=  528, max= 1368, per=2.00%, avg=917.29, stdev=96.92, samples=17964
+              iops        : min=  132, max=  342, avg=229.30, stdev=24.23, samples=17964
+             lat (usec)   : 50=3.90%, 100=9.07%, 250=25.19%, 500=4.08%, 750=1.97%
+             lat (usec)   : 1000=1.10%
+             lat (msec)   : 2=20.66%, 4=33.52%, 10=0.51%
+             cpu          : usr=0.31%, sys=1.88%, ctx=13575553, majf=1, minf=5
+             IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+                submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+                complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+                issued rwts: total=4811226,2064291,0,0 short=0,0,0,0 dropped=0,0,0,0
+                latency   : target=0, window=0, percentile=100.00%, depth=1
+              
+            Run status group 0 (all jobs):
+               READ: bw=104MiB/s (109MB/s), 104MiB/s-104MiB/s (109MB/s-109MB/s), io=18.4GiB (19.7GB), run=180004-180004msec
+              WRITE: bw=44.8MiB/s (46.0MB/s), 44.8MiB/s-44.8MiB/s (46.0MB/s-46.0MB/s), io=8064MiB (8455MB), run=180004-180004msec
+              
+            Disk stats (read/write):
+             sdh: ios=4806033/2062158, merge=0/35, ticks=1475846/96883, in_queue=1572092, util=99.66%
+          ```
+
+         4.3. 调整 SSD 盘预读大小和块层读写请求数
+          
+         这里是根据前面确定的 SSD 来调整
+
+          ```lang-bash
+          $ vi /etc/profile
+          # 修改第一块 SSD 配置， 这里的 sdg 是前面确定的 SSD 设备
+          echo 32 >/sys/block/sdg/queue/read_ahead_kb
+          echo 256 >/sys/block/sdg//queue/nr_requests
+          
+          # 修改第二块 SSD 配置， 这里的 sdh 是前面确定的 SSD 设备
+          echo 32 >/sys/block/sdh/queue/read_ahead_kb
+          echo 256 >/sys/block/sdh//queue/nr_requests
+          ...
+          ```
+   >**Note:**  
+  	> 上面的设备号 (如: sdg) 需要先确定，并且要确定是不是 SSD 类型。
 
 - **关闭transparent_hugepage**
   1. 编辑/etc/rc.local，在第一行 “#!/bin/sh” 的下一行添加如下两行内容：
