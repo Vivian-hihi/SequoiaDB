@@ -274,6 +274,7 @@ namespace SequoiaDB
         OP_TRANS_ROLLBACK         = 2012,
 
 	    OP_AGGREGATE              = 2019,
+        OP_INTERRUPTE_SELF        = 2020,
 
         MSG_AUTH_VERIFY_REQ       = 7000,
         MSG_AUTH_CRTUSR_REQ       = 7001,

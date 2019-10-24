@@ -1633,6 +1633,14 @@ namespace SequoiaDB
             Interrupt();
         }
 
+        private void _Interrupt(bool isSelfInterrupt)
+        {
+            SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = isSelfInterrupt ? Operation.OP_INTERRUPTE_SELF : Operation.OP_INTERRUPT;
+            byte[] request = SDBMessageHelper.BuildInterruptRequest(sdbMessage, isBigEndian);
+            connection.SendMessage(request);
+        }
+
         /** \fn void Interrupt()
          *  \brief Send an interrupt message to engine.
          *  \return void
@@ -1641,10 +1649,21 @@ namespace SequoiaDB
          */
         public void Interrupt()
         {
-            SDBMessage sdbMessage = new SDBMessage();
-            sdbMessage.OperationCode = Operation.OP_INTERRUPT;
-            byte[] request = SDBMessageHelper.BuildInterruptRequest(sdbMessage, isBigEndian);
-            connection.SendMessage(request);
+            _Interrupt(false);
+        }
+
+        /** \fn void InterruptOperation()
+         *  \brief Send "INTERRUPT_SELF" message to engine to stop the current 
+         *         operation. When the current operation had finish, nothing 
+         *         happend, Otherwise, the current operation will be stop, and 
+         *         throw exception.
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void InterruptOperation()
+        {
+            _Interrupt(true);
         }
 
         /** \fn bool IsDomainExist(string dmName)

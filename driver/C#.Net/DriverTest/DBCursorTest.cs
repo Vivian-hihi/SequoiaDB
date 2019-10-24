@@ -279,6 +279,7 @@ namespace DriverTest
             obj = cursor1.Next();
             obj = cursor2.Next();
             // DO:
+            sdb.InterruptOperation();
             sdb.CloseAllCursors();
             // cursor
             try
