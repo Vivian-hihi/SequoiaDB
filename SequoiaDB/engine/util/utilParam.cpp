@@ -234,7 +234,7 @@ namespace engine
 
       // 2. Create the file
       rc = ossOpen ( pFile, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
-                     OSS_DEFAULTFILE, file ) ;
+                     OSS_DEFAULTFILE | OSS_RO , file ) ;
       if ( rc )
       {
          goto error ;

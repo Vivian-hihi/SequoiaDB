@@ -52,7 +52,7 @@ namespace engine
       ossFile file ;
 
       rc = file.open( pOutputPath, OSS_REPLACE | OSS_WRITEONLY | OSS_EXCLUSIVE,
-                      OSS_RU | OSS_WU | OSS_RG ) ;
+                      OSS_DEFAULTFILE | OSS_RO ) ;
       if ( rc )
       {
          goto error ;
