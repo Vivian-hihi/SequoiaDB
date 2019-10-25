@@ -518,6 +518,15 @@ public class DBCollectionTest {
         }
     }
 
+    @Test
+    public void testInterruptOperation() {
+        BSONObject obj = new BasicBSONObject();
+        obj.put("date", new Date());
+        cl.delete("");
+        sdb.interruptOperation();
+        cl.insert(obj);
+    }
+
     // create chinese record
     private static BSONObject createChineseRecord() {
 

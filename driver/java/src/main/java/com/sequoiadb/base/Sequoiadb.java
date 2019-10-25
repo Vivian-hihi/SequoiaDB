@@ -1918,6 +1918,20 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
+     * Send "INTERRUPT_SELF" message to engine to stop the current operation. When the current operation had finish,
+     * nothing happened, Otherwise, the current operation will be stop, and return error.
+     *
+     * @throws BaseException If error happens.
+     */
+    public void interruptOperation() throws BaseException {
+        if (isClosed()) {
+            return;
+        }
+        InterruptRequest request = new InterruptRequest(true);
+        sendRequest(request);
+    }
+
+    /**
      * List all the replica group.
      *
      * @return information of all replica groups.

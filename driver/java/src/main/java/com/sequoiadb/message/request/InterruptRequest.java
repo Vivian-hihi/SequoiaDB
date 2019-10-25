@@ -22,7 +22,11 @@ import java.nio.ByteBuffer;
 
 public class InterruptRequest extends SdbRequest {
     public InterruptRequest() {
-        opCode = MsgOpCode.INTERRUPT;
+        this(false);
+    }
+
+    public InterruptRequest(boolean isSelf){
+        opCode = isSelf ? MsgOpCode.INTERRUPT_SELF : MsgOpCode.INTERRUPT;
     }
 
     @Override

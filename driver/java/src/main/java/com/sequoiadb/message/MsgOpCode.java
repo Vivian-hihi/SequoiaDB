@@ -64,6 +64,8 @@ public final class MsgOpCode {
     public static final int AGGREGATE_REQ = 2019;
     public static final int AGGREFATE_RESP = RESP_MASK | AGGREGATE_REQ;
 
+    public static final int INTERRUPT_SELF = 2020;
+
     public static final int AUTH_VERIFY_REQ = 7000;
     public static final int AUTH_VERIFY_RESP = RESP_MASK | AUTH_VERIFY_REQ;
 
