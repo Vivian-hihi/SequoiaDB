@@ -860,7 +860,7 @@ class collection(object):
             raise SDBTypeError("buffer_size must be an instance of int")
 
         option = {"Unique":is_unique, "Enforced":is_enforced, "NotNull":False, "SortBufferSize":buffer_size}
-        self.create_index_with_options(index_def, idx_name, option)
+        self.create_index_with_option(index_def, idx_name, option)
 
 
     def create_index_with_option(self, index_def, idx_name, option=None):
