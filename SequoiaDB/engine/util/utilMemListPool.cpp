@@ -918,7 +918,14 @@ namespace engine
       {
          return g_thdMemPool->realloc( ptr, size, pFile, line, pRealSize ) ;
       }
-      return utilPoolRealloc( ptr, size, pFile, line, pRealSize ) ;
+      else
+      {
+         if ( ossMemDebugEnabled && ptr )
+         {
+            ossThreadMemUnTrack( ptr ) ;
+         }
+         return utilPoolRealloc( ptr, size, pFile, line, pRealSize ) ;
+      }
    }
 
    void utilThreadRelease( void*& ptr )
@@ -929,6 +936,10 @@ namespace engine
       }
       else
       {
+         if ( ossMemDebugEnabled && ptr )
+         {
+            ossThreadMemUnTrack( ptr ) ;
+         }
          utilPoolRelease( ptr ) ;
       }
    }
