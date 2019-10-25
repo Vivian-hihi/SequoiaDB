@@ -54,6 +54,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    |sequoiadb_selector_pushdown_threshold|unsigned int|30|Yes|Global, Session|查询字段下压触发阈值，取值范围[0, 100]，单位：%。|
    |sequoiadb_use_autocommit|bool|ON|Yes|Global|是否启用自动提交模式(已弃用)。|
    |sequoiadb_use_bulk_insert|bool|ON|Yes|Global|是否启用批量插入。|
+   |sequoiadb_use_transaction|bool|ON|No|Global|是否开启事务功能。|
    |sequoiadb_user|string|""|Yes|Global|SequoiaDB 鉴权用户。|
 
 + **配置修改方式**
@@ -129,6 +130,8 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    `sequoiadb_debug_log`配置开启后，MySQL 日志会打印 SequoiaDB 存储引擎有关 debug 信息。
    
    `sequoiadb_error_level`错误级别控制参数。该参数可选的配置项有error（默认值）和warning，用于控制连接器的某些特定错误返回给客户端的方式（报错还是警告）。在sql语句执行出错时，当该参数配置为error时，连接器直接返回错误信息给客户端；当参数配置为warning时，连接器给客户端返回警告信息，用户想要查看详细的错误信息，可根据warning进行查询。注意：该参数并不适用于连接器所有的错误，其适用的错误仅限于：update ignore更新分区键错误。
+
+   `sequoiadb_use_transaction`用于配置事务功能。默认为 ON。在业务无需事务功能时，可以将它设成 OFF，从而节省不必要的开销。
    
    `sequoiadb_use_autocommit`配置项已弃用。请直接使用 MySQL 的`autocommit`配置项。
 
