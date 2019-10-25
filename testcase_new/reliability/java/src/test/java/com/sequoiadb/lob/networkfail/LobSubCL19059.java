@@ -1,4 +1,4 @@
-package com.sequoiadb.lob.subcl;
+package com.sequoiadb.lob.networkfail;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,33 +18,36 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.lob.LobUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description seqDB-19064 主表进行lob操作过程中，编目主节点异常重启
+ * @Description seqDB-19059 主子表插入lob过程中，子表所在数据组的备节点网络故障
  * @author luweikang
  * @date 2019年9月4日
  */
-public class LobSubCL19064 extends SdbTestBase {
-    private String csName = "cs_19064";
-    private String mainCLName = "mainCL_19064";
-    private String subCLName = "subCL_19064";
+public class LobSubCL19059 extends SdbTestBase {
+    private String csName = "cs_19059";
+    private String mainCLName = "mainCL_19059";
+    private String subCLName = "subCL_19059";
     private GroupMgr groupMgr = null;
+    private String groupName = null;
     private Sequoiadb sdb = null;
     private DBCollection mainCL;
     private int writeLobSize = 1024 * 1024 * 10;
     private byte[] lobBuff;
     private List<ObjectId> lobIds;
+    private String safeCoordUrl;
 
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -56,6 +59,7 @@ public class LobSubCL19064 extends SdbTestBase {
         if (!groupMgr.checkBusinessWithLSN(120)) {
             throw new SkipException("checkBusinessWithLSN return false");
         }
+        groupName = groupMgr.getAllDataGroupName().get(0);
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (sdb.isCollectionSpaceExist(csName)) {
@@ -63,15 +67,18 @@ public class LobSubCL19064 extends SdbTestBase {
         }
         mainCL = createMainCLAndAttachCL();
         lobBuff = LobUtil.getRandomBytes(writeLobSize);
+
     }
 
     @Test
     public void test() throws ReliabilityException {
-        GroupWrapper catalogGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-        NodeWrapper cataMaster = catalogGroup.getMaster();
+        GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
+        NodeWrapper dataSlave = dataGroup.getSlave();
+
+        safeCoordUrl = CommLib.getSafeCoordUrl(dataSlave.hostName());
 
         // 建立并行任务
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(), cataMaster.svcName(), 0);
+        FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlave.hostName(), 0, 10);
         TaskMgr mgr = new TaskMgr(faultTask);
 
         PutLob puLobTask = new PutLob();
@@ -88,7 +95,6 @@ public class LobSubCL19064 extends SdbTestBase {
             mainCL.removeLob(lobId);
         }
         checkRemoveLobResult(lobIds2);
-
         sdb.sync();
     }
 
@@ -109,7 +115,7 @@ public class LobSubCL19064 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(safeCoordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
                 lobIds = LobUtil.createAndWriteLob(mainCL, lobBuff);
             }
@@ -125,7 +131,7 @@ public class LobSubCL19064 extends SdbTestBase {
         options.put("LobShardingKeyFormat", "YYYYMMDD");
         DBCollection mainCL = cs.createCollection(mainCLName, options);
 
-        cs.createCollection(subCLName);
+        cs.createCollection(subCLName, new BasicBSONObject("Group", groupName));
 
         BSONObject bound = new BasicBSONObject();
         bound.put("LowBound", new BasicBSONObject("date", new MinKey()));

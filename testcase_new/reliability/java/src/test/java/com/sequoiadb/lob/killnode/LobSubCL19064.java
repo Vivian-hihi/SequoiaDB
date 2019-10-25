@@ -1,4 +1,4 @@
-package com.sequoiadb.lob.subcl;
+package com.sequoiadb.lob.killnode;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,35 +18,33 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.lob.LobUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description seqDB-19065 主表进行lob操作过程中，编目主节点网络异常
+ * @Description seqDB-19064 主表进行lob操作过程中，编目主节点异常重启
  * @author luweikang
  * @date 2019年9月4日
  */
-public class LobSubCL19065 extends SdbTestBase {
-    private String csName = "cs_19065";
-    private String mainCLName = "mainCL_19065";
-    private String subCLName = "subCL_19065";
+public class LobSubCL19064 extends SdbTestBase {
+    private String csName = "cs_19064";
+    private String mainCLName = "mainCL_19064";
+    private String subCLName = "subCL_19064";
     private GroupMgr groupMgr = null;
     private Sequoiadb sdb = null;
     private DBCollection mainCL;
     private int writeLobSize = 1024 * 1024 * 10;
     private byte[] lobBuff;
     private List<ObjectId> lobIds;
-    private String safeCoordUrl;
 
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -70,12 +68,10 @@ public class LobSubCL19065 extends SdbTestBase {
     @Test
     public void test() throws ReliabilityException {
         GroupWrapper catalogGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-        NodeWrapper cataMaster = catalogGroup.getSlave();
-
-        safeCoordUrl = CommLib.getSafeCoordUrl(cataMaster.hostName());
+        NodeWrapper cataMaster = catalogGroup.getMaster();
 
         // 建立并行任务
-        FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataMaster.hostName(), 0, 10);
+        FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(), cataMaster.svcName(), 0);
         TaskMgr mgr = new TaskMgr(faultTask);
 
         PutLob puLobTask = new PutLob();
@@ -113,7 +109,7 @@ public class LobSubCL19065 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            try (Sequoiadb db = new Sequoiadb(safeCoordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
                 lobIds = LobUtil.createAndWriteLob(mainCL, lobBuff);
             }

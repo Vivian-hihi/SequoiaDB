@@ -1,12 +1,13 @@
-package com.sequoiadb.lob.subcl;
+package com.sequoiadb.lob.networkfail;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -17,33 +18,34 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.lob.LobUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description seqDB-19061 主表挂载子表过程中，编目主节点异常重启
+ * @Description seqDB-19065 主表进行lob操作过程中，编目主节点网络异常
  * @author luweikang
  * @date 2019年9月4日
  */
-public class LobSubCL19061 extends SdbTestBase {
-    private String csName = "cs_19061";
-    private String mainCLName = "mainCL_19061";
-    private String subCLName = "subCL_19061";
-    private int clNum = 100;
+public class LobSubCL19065 extends SdbTestBase {
+    private String csName = "cs_19065";
+    private String mainCLName = "mainCL_19065";
+    private String subCLName = "subCL_19065";
     private GroupMgr groupMgr = null;
     private Sequoiadb sdb = null;
     private DBCollection mainCL;
     private int writeLobSize = 1024 * 1024 * 10;
     private byte[] lobBuff;
+    private String safeCoordUrl;
 
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -60,37 +62,34 @@ public class LobSubCL19061 extends SdbTestBase {
         if (sdb.isCollectionSpaceExist(csName)) {
             sdb.dropCollectionSpace(csName);
         }
-        mainCL = createMainCL();
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        for (int i = 0; i < clNum; i++) {
-            cs.createCollection(subCLName + "_" + i);
-        }
+        mainCL = createMainCLAndAttachCL();
         lobBuff = LobUtil.getRandomBytes(writeLobSize);
     }
 
     @Test
     public void test() throws ReliabilityException {
-        GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-        NodeWrapper cataMaster = cataGroup.getMaster();
+        GroupWrapper catalogGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+        NodeWrapper cataMaster = catalogGroup.getSlave();
+
+        safeCoordUrl = CommLib.getSafeCoordUrl(cataMaster.hostName());
 
         // 建立并行任务
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(), cataMaster.svcName(), 0);
+        FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataMaster.hostName(), 0, 10);
         TaskMgr mgr = new TaskMgr(faultTask);
 
-        AttachCL attchCLTask = new AttachCL();
-        mgr.addTask(attchCLTask);
+        PutLob puLobTask = new PutLob();
+        mgr.addTask(puLobTask);
         mgr.execute();
 
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
-        redoAttachCL();
-        List<ObjectId> lobIds = new ArrayList<ObjectId>();
-        lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190101"));
-        lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190201"));
-        lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190301"));
-        lobIds.addAll(LobUtil.createAndWriteLob(mainCL, lobBuff, "YYYYMMDD", 25, 1, "20190401"));
+        List<ObjectId> lobIds = LobUtil.createAndWriteLob(mainCL, lobBuff);
         LobUtil.checkLobMD5(mainCL, lobIds, lobBuff);
+        for (ObjectId lobId : lobIds) {
+            mainCL.removeLob(lobId);
+        }
+        checkRemoveLobResult(lobIds);
 
         sdb.sync();
     }
@@ -108,32 +107,20 @@ public class LobSubCL19061 extends SdbTestBase {
         }
     }
 
-    class AttachCL extends OperateTask {
+    class PutLob extends OperateTask {
 
         @Override
         public void exec() throws Exception {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(safeCoordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
-                int date = 20190101;
-                int k = 0;
-                for (int i = 0; i < clNum; i++) {
-                    if (i != 0 && i % 25 == 0) {
-                        date = date + 100;
-                        k = 0;
-                    }
-                    BSONObject bound = new BasicBSONObject();
-                    bound.put("LowBound", new BasicBSONObject("date", (date + k) + ""));
-                    bound.put("UpBound", new BasicBSONObject("date", (date + 1 + k) + ""));
-                    mainCL.attachCollection(csName + "." + subCLName + "_" + i, bound);
-                    k++;
-                }
+                LobUtil.createAndWriteLob(mainCL, lobBuff);
             } catch (BaseException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private DBCollection createMainCL() {
+    private DBCollection createMainCLAndAttachCL() {
         CollectionSpace cs = sdb.createCollectionSpace(csName);
         BSONObject options = new BasicBSONObject();
         options.put("IsMainCL", true);
@@ -142,31 +129,27 @@ public class LobSubCL19061 extends SdbTestBase {
         options.put("LobShardingKeyFormat", "YYYYMMDD");
         DBCollection mainCL = cs.createCollection(mainCLName, options);
 
+        cs.createCollection(subCLName);
+
+        BSONObject bound = new BasicBSONObject();
+        bound.put("LowBound", new BasicBSONObject("date", new MinKey()));
+        bound.put("UpBound", new BasicBSONObject("date", new MaxKey()));
+        mainCL.attachCollection(csName + "." + subCLName, bound);
+
         return mainCL;
     }
 
-    private void redoAttachCL() {
-        int k = 0;
-        int date = 20190101;
-        for (int i = 0; i < clNum; i++) {
+    private void checkRemoveLobResult(List<ObjectId> lobIds) {
+        for (ObjectId lobId : lobIds) {
             try {
-                if (i != 0 && i % 25 == 0) {
-                    date = date + 100;
-                    k = 0;
-                }
-                BSONObject bound = new BasicBSONObject();
-                bound.put("LowBound", new BasicBSONObject("date", (date + k) + ""));
-                bound.put("UpBound", new BasicBSONObject("date", (date + 1 + k) + ""));
-                mainCL.attachCollection(csName + "." + subCLName + "_" + i, bound);
+                mainCL.openLob(lobId);
+                Assert.fail("the lob: " + lobId + " has been deleted and the read should fail");
             } catch (BaseException e) {
-                if (e.getErrorCode() != -235) {
-                    e.printStackTrace();
+                if (e.getErrorCode() != -4) {
                     throw e;
                 }
             }
-            k++;
         }
 
     }
-
 }

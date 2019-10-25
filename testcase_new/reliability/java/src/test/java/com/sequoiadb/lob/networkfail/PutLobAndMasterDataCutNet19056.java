@@ -1,4 +1,4 @@
-package com.sequoiadb.lob.subcl;
+package com.sequoiadb.lob.networkfail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,23 +26,23 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.lob.LobUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description seqDB-19055:主子表插入lob过程中，子表所在数据组的主节点异常重启
+ * @Description seqDB-19056:主子表插入lob过程中，子表所在数据组的主节点网络故障
  * @author wuyan
  * @Date 2019.9.10
  * @version 1.00
  */
-public class PutLobAndKillMasterData19055 extends SdbTestBase {
+public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
     private boolean runSuccess = false;
-    private String csName = "cs_19055";
-    private String mainCLName = "mainCL_19055";
-    private String subCLName = "subCL_19055";
+    private String csName = "cs_19056";
+    private String mainCLName = "mainCL_19056";
+    private String subCLName = "subCL_19056";
     private GroupMgr groupMgr = null;
     private String groupName = null;
     private Sequoiadb sdb = null;
@@ -74,8 +74,7 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
         GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
         NodeWrapper master = dataGroup.getMaster();
 
-        // 建立并行任务
-        FaultMakeTask faultMakeTask = KillNode.getFaultMakeTask(master, 3);
+        FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(master.hostName(), 0, 10);
         TaskMgr mgr = new TaskMgr(faultMakeTask);
 
         PutLob puLobTask = new PutLob();
@@ -109,11 +108,13 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
                 for (int i = 0; i < lobNums; i++) {
+                    System.out.println("---begin to put " + i);
                     ObjectId lobId = putLob(mainCL);
                     lobIds.add(lobId);
+                    System.out.println("---end to put " + i);
                 }
             } catch (BaseException e) {
-                if (e.getErrorCode() != -134 && e.getErrorCode() != -79 && e.getErrorCode() != -81) {
+                if (e.getErrorCode() != -81 && e.getErrorCode() != -79 && e.getErrorCode() != -134) {
                     throw e;
                 }
             }
@@ -158,24 +159,7 @@ public class PutLobAndKillMasterData19055 extends SdbTestBase {
     }
 
     private void checkPutLobResult(DBCollection dbcl) {
-        // 检查故障前创建lob结果,主节点故障后，备节点升主后之前未同步的lob会丢失,如果lob不存在则重新插入
-        for (ObjectId lobId : lobIds) {
-            try {
-                byte[] data = new byte[lobBuff.length];
-                DBLob rlob = dbcl.openLob(lobId);
-                rlob.read(data);
-                rlob.close();
-            } catch (BaseException e) {
-                if (e.getErrorCode() == -4) {
-                    DBLob wlob = dbcl.createLob(lobId);
-                    wlob.write(lobBuff);
-                    wlob.close();
-                } else {
-                    Assert.fail("write lob fail! loboid is " + lobId);
-                }
-            }
-        }
-
+        // 检查故障前创建lob结果
         LobUtil.checkLobMD5(mainCL, lobIds, lobBuff);
         checkLobNums(mainCL, lobIds);
         // 再次创建lob，读取lob信息正确

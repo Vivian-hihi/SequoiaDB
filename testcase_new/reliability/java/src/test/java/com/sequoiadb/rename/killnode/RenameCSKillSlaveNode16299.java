@@ -1,4 +1,4 @@
-package com.sequoiadb.rename;
+package com.sequoiadb.rename.killnode;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +20,7 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.rename.RenameUtils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;

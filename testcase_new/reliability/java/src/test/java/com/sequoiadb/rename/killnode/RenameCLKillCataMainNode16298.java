@@ -1,4 +1,4 @@
-package com.sequoiadb.rename;
+package com.sequoiadb.rename.killnode;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,27 +21,26 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.rename.RenameUtils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description RenameKillSlaveNode16771.java 执行rename cl过程中，主节点网络异常
+ * @Description RenameKillMainNode16297.java seqDB-16298:执行renameCL过程中，编目主节点故障
  * @author luweikang
  * @date 2018年11月7日
  */
-public class RenameClNetworkfailNode16771 extends SdbTestBase {
+public class RenameCLKillCataMainNode16298 extends SdbTestBase {
 
     private List<String> oldCLNameList = new ArrayList<>();
     private List<String> newCLNameList = new ArrayList<>();
-    private String csName = "cs16771A";
-    private String oldCLName = "oldCL_16771A";
-    private String newCLName = "newCL_16771A";
+    private String csName = "cs_16298_A";
+    private String oldCLName = "oldCL_16298_A";
+    private String newCLName = "newCL_16298_A";
     private GroupMgr groupMgr = null;
     private String groupName = null;
     private Sequoiadb sdb = null;
-    private Sequoiadb sdb1 = null;
     private int clNum = 20;
     private int completeTimes = 0;
 
@@ -53,12 +52,11 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase {
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
         if (!groupMgr.checkBusinessWithLSN(20)) {
-            throw new SkipException("checkBusinessWithLSN return false");
+            throw new SkipException("checkBusiness return false");
         }
         groupName = groupMgr.getAllDataGroupName().get(0);
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         CollectionSpace cs = sdb.createCollectionSpace(csName);
         for (int i = 0; i < clNum; i++) {
             cs.createCollection(oldCLName + i, new BasicBSONObject("Group", groupName));
@@ -68,24 +66,25 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase {
         sdb.sync();
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() throws ReliabilityException {
-        GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
-        NodeWrapper dataMaster = dataGroup.getMaster();
-        // 建立并行任务
-        FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataMaster.hostName(), 0, 10);
-        TaskMgr mgr = new TaskMgr(faultTask);
-        Rename renameTask = new Rename(sdb1);
-        mgr.addTask(renameTask);
-        mgr.execute();
+        GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+        NodeWrapper cataMaster = cataGroup.getMaster();
 
-        Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        // 建立并行任务
+        FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(), cataMaster.svcName(), 0);
+
+        Rename renameTask = new Rename();
+        renameTask.start();
+
+        faultTask.init();
+        faultTask.start();
+
+        Assert.assertTrue(renameTask.isSuccess(), renameTask.getErrorMsg());
+        Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
-        if (sdb1 != null) {
-            sdb1.close();
-        }
-
+        // 继续执行rename将剩下未修改的cl修改,然后再进行检查结果
         for (int i = 0; i < oldCLNameList.size(); i++) {
             if (completeTimes < i + 1) {
                 RenameUtils.retryRenameCL(csName, oldCLNameList.get(i), newCLNameList.get(i));
@@ -107,15 +106,10 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
-            }
+            sdb.dropCollectionSpace(csName);
         } finally {
-            if (sdb != null && !sdb.isClosed()) {
+            if (sdb != null) {
                 sdb.close();
-            }
-            if (sdb1 != null && !sdb1.isClosed()) {
-                sdb1.close();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -124,25 +118,16 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase {
 
     class Rename extends OperateTask {
 
-        private Sequoiadb db = null;
-
-        public Rename(Sequoiadb db) {
-            this.db = db;
-        }
-
         @Override
         public void exec() throws Exception {
-            try {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 for (int i = 0; i < oldCLNameList.size(); i++) {
                     cs.renameCollection(oldCLNameList.get(i), newCLNameList.get(i));
                     completeTimes++;
                 }
             } catch (BaseException e) {
-                int actErrCode = e.getErrorCode();
-                if (actErrCode != -134 && actErrCode != -15) {
-                    throw e;
-                }
+                Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
             }
         }
     }

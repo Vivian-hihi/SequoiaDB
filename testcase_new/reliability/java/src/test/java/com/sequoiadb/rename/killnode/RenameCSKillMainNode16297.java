@@ -1,4 +1,4 @@
-package com.sequoiadb.rename;
+package com.sequoiadb.rename.killnode;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,25 +22,27 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.rename.RenameUtils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description RenameKillMainNode16297.java seqDB-16298:执行renameCL过程中，编目主节点故障
+ * @Description RenameKillMainNode16297.java seqDB-16297:执行rename cs过程中，数据主节点故障
  * @author luweikang
  * @date 2018年11月7日
  */
-public class RenameCLKillCataMainNode16298 extends SdbTestBase {
+public class RenameCSKillMainNode16297 extends SdbTestBase {
 
-    private List<String> oldCLNameList = new ArrayList<>();
-    private List<String> newCLNameList = new ArrayList<>();
-    private String csName = "cs_16298_A";
-    private String oldCLName = "oldCL_16298_A";
-    private String newCLName = "newCL_16298_A";
+    private List<String> oldCSNameList = new ArrayList<>();
+    private List<String> newCSNameList = new ArrayList<>();
+    private String oldCSName = "oldcs_16297B";
+    private String newCSName = "newcs_16297B";
+    private String clName = "cl_16297B";
     private GroupMgr groupMgr = null;
     private String groupName = null;
     private Sequoiadb sdb = null;
-    private int clNum = 20;
+    private int csNum = 20;
     private int completeTimes = 0;
 
     @BeforeClass
@@ -51,49 +53,45 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase {
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
         if (!groupMgr.checkBusinessWithLSN(20)) {
-            throw new SkipException("checkBusiness return false");
+            throw new SkipException("checkBusinessWithLSN return false");
         }
         groupName = groupMgr.getAllDataGroupName().get(0);
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        CollectionSpace cs = sdb.createCollectionSpace(csName);
-        for (int i = 0; i < clNum; i++) {
-            cs.createCollection(oldCLName + i, new BasicBSONObject("Group", groupName));
-            oldCLNameList.add(oldCLName + i);
-            newCLNameList.add(newCLName + i);
+        for (int i = 0; i < csNum; i++) {
+            CollectionSpace cs = sdb.createCollectionSpace(oldCSName + i);
+            cs.createCollection(clName, new BasicBSONObject("Group", groupName));
+            oldCSNameList.add(oldCSName + i);
+            newCSNameList.add(newCSName + i);
         }
         sdb.sync();
     }
 
     @Test
     public void test() throws ReliabilityException {
-        GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-        NodeWrapper cataMaster = cataGroup.getMaster();
+        GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
+        NodeWrapper dataMaster = dataGroup.getMaster();
 
         // 建立并行任务
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(), cataMaster.svcName(), 0);
-
+        FaultMakeTask faultTask = KillNode.getFaultMakeTask(dataMaster.hostName(), dataMaster.svcName(), 0);
+        TaskMgr mgr = new TaskMgr(faultTask);
         Rename renameTask = new Rename();
-        renameTask.start();
-
-        faultTask.init();
-        faultTask.start();
-
-        Assert.assertTrue(renameTask.isSuccess(), renameTask.getErrorMsg());
-        Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
+        mgr.addTask(renameTask);
+        mgr.execute();
+        Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
-        // 继续执行rename将剩下未修改的cl修改,然后再进行检查结果
-        for (int i = 0; i < oldCLNameList.size(); i++) {
+        System.out.println("completeTimes: " + completeTimes);
+        for (int i = 0; i < oldCSNameList.size(); i++) {
             if (completeTimes < i + 1) {
-                RenameUtils.retryRenameCL(csName, oldCLNameList.get(i), newCLNameList.get(i));
+                RenameUtils.retryRenameCS(oldCSNameList.get(i), newCSNameList.get(i));
             }
-            RenameUtils.checkRenameCLResult(sdb, csName, oldCLNameList.get(i), newCLNameList.get(i));
+            RenameUtils.checkRenameCSResult(sdb, oldCSNameList.get(i), newCSNameList.get(i), 1);
         }
 
         // 插入数据
-        for (int i = 0; i < newCLNameList.size(); i++) {
-            DBCollection cl = sdb.getCollectionSpace(csName).getCollection(newCLNameList.get(i));
+        for (int i = 0; i < newCSNameList.size(); i++) {
+            DBCollection cl = sdb.getCollectionSpace(newCSNameList.get(i)).getCollection(clName);
             RenameUtils.insertData(cl, 1000);
             long actNum = cl.getCount();
             Assert.assertEquals(actNum, 1000, "check record num");
@@ -105,7 +103,12 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            sdb.dropCollectionSpace(csName);
+            for (int i = 0; i < newCSNameList.size(); i++) {
+                String csName = newCSNameList.get(i);
+                if (sdb.isCollectionSpaceExist(csName)) {
+                    sdb.dropCollectionSpace(csName);
+                }
+            }
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -120,13 +123,14 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                CollectionSpace cs = db.getCollectionSpace(csName);
-                for (int i = 0; i < oldCLNameList.size(); i++) {
-                    cs.renameCollection(oldCLNameList.get(i), newCLNameList.get(i));
+                for (int i = 0; i < oldCSNameList.size(); i++) {
+                    db.renameCollectionSpace(oldCSNameList.get(i), newCSNameList.get(i));
                     completeTimes++;
                 }
             } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
+                if (e.getErrorCode() != -104 && e.getErrorCode() != -134) {
+                    throw e;
+                }
             }
         }
     }

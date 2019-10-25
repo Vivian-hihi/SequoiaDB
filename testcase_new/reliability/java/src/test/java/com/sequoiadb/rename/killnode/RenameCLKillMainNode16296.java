@@ -1,4 +1,4 @@
-package com.sequoiadb.rename;
+package com.sequoiadb.rename.killnode;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,24 +19,24 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.rename.RenameUtils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 
 /**
- * @Description MainNodeErrRename.java: seqDB-16296:rename cs未同步到备节点时主节点异常
+ * @Description MainNodeErrRename.java: seqDB-16296:rename cl未同步到备节点时主节点异常
  * @author luweikang
  * @date 2018年11月7日
  */
-public class RenameCSKillMainNode16296 extends SdbTestBase {
+public class RenameCLKillMainNode16296 extends SdbTestBase {
 
-    private String oldCSName = "oldcs_16296";
-    private String newCSName = "newcs_16296";
-    private String clName = "cl_16296";
+    private String csName = "cs16296A";
+    private String oldCLName = "oldCL_16296A";
+    private String newCLName = "newCL_16296A";
     private GroupMgr groupMgr = null;
     private String groupName = null;
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
-    private DBCollection cl = null;
 
     @BeforeClass
     public void setUp() throws ReliabilityException {
@@ -48,17 +48,22 @@ public class RenameCSKillMainNode16296 extends SdbTestBase {
         if (!groupMgr.checkBusinessWithLSN(20)) {
             throw new SkipException("checkBusinessWithLSN return false");
         }
+
         groupName = groupMgr.getAllDataGroupName().get(0);
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cs = sdb.createCollectionSpace(oldCSName);
-        cl = cs.createCollection(clName, new BasicBSONObject("Group", groupName));
+        cs = sdb.createCollectionSpace(csName);
+        cs.createCollection(oldCLName, new BasicBSONObject("Group", groupName));
     }
 
     @Test
     public void test() throws ReliabilityException {
         GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
         NodeWrapper dataMaster = dataGroup.getMaster();
+
+        // stop slave node
+        NodeWrapper slave = dataGroup.getSlave();
+        slave.stop();
 
         // 建立并行任务
         FaultMakeTask faultTask = KillNode.getFaultMakeTask(dataMaster.hostName(), dataMaster.svcName(), 0);
@@ -72,13 +77,14 @@ public class RenameCSKillMainNode16296 extends SdbTestBase {
         }
 
         Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
+        slave.start();
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
-        RenameUtils.retryRenameCS(oldCSName, newCSName);
-        RenameUtils.checkRenameCSResult(sdb, oldCSName, newCSName, 1);
+        RenameUtils.retryRenameCL(csName, oldCLName, newCLName);
+        RenameUtils.checkRenameCLResult(sdb, csName, oldCLName, newCLName);
 
         // 插入数据
-        cl = sdb.getCollectionSpace(newCSName).getCollection(clName);
+        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(newCLName);
         RenameUtils.insertData(cl, 1000);
         long actNum = cl.getCount();
         Assert.assertEquals(actNum, 1000, "check record num");
@@ -89,7 +95,7 @@ public class RenameCSKillMainNode16296 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            sdb.dropCollectionSpace(newCSName);
+            sdb.dropCollectionSpace(csName);
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -100,10 +106,12 @@ public class RenameCSKillMainNode16296 extends SdbTestBase {
     }
 
     class Rename extends OperateTask {
+
         @Override
         public void exec() throws Exception {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                db.renameCollectionSpace(oldCSName, newCSName);
+                CollectionSpace csp = db.getCollectionSpace(csName);
+                csp.renameCollection(oldCLName, newCLName);
             }
         }
     }

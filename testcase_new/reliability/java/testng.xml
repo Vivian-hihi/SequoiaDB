@@ -43,16 +43,16 @@
          <package name="com.sequoiadb.metaopr.killnode" />
          <package name="com.sequoiadb.metaopr.networkfail.cl" />
          <package name="com.sequoiadb.metaopr.networkfail.cs" />
-         <package
-            name="com.sequoiadb.metaopr.networkfail.domain" />
+         <package name="com.sequoiadb.metaopr.networkfail.domain" />
          <package name="com.sequoiadb.metaopr.noderestart" />
          <package name="com.sequoiadb.autoincrement.killnode" />
          <package name="com.sequoiadb.cappedCL.killnode" />
          <package name="com.sequoiadb.cappedCL.restartnode" />
-         <package name="com.sequoiadb.rename" />
-         <!-- lob用例未调试完成，待调试 -->
-         <!-- <package name="com.sequoiadb.lob.base" /> -->
-         <package name="com.sequoiadb.lob.subcl" />
+         <package name="com.sequoiadb.rename.killnode" />
+         <package name="com.sequoiadb.rename.networkfail" />
+         <package name="com.sequoiadb.lob.killnode" />
+         <package name="com.sequoiadb.lob.networkfail" />
+         <package name="com.sequoiadb.lob.noderestart" />
          <!--全文索引用例暂时屏蔽，待问题单SEQUOIADBMAINSTREAM-4325修复后再统一放开 -->
          <!-- <package name="com.sequoiadb.fulltext.killnode" /> <package 
             name="com.sequoiadb.fulltext.restartnode" /> -->
