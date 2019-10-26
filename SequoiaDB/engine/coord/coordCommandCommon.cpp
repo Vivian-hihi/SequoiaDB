@@ -611,14 +611,14 @@ namespace engine
                      if ( COORD_MASK_SHOWERRORMODE_AGGR & mask )
                      {
                         sub.append( COORD_SHOWERRORMODE,
-                                    COORD_SHOWERRORMODE_AGGR ) ;
+                                    COORD_SHOWERRORMODE_VALUE_AGGR ) ;
                      }
                      break ;
                   case COORD_SHOWERRORMODE_FLAT :
                      if ( COORD_MASK_SHOWERRORMODE_FLAT & mask )
                      {
                         sub.append( COORD_SHOWERRORMODE,
-                                    COORD_SHOWERRORMODE_FLAT ) ;
+                                    COORD_SHOWERRORMODE_VALUE_FLAT ) ;
                      }
                      break ;
                   default :
