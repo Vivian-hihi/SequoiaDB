@@ -3,242 +3,104 @@
 *@Modify list :
 *               2014-07-08  pusheng Ding  Init
 *               2015-03-28  xiaojun Hu    Changed
+*               2019-10-21  luweikang modify
 ******************************************************************************/
-MAINCLNAME = CHANGEDPREFIX+"bar" ;
-SUBCL1NAME = CHANGEDPREFIX+"_sub1";
-SUBCL2NAME = CHANGEDPREFIX+"_sub2";
-SUBCL3NAME = CHANGEDPREFIX+"_sub3";
-function main()
-{
-   //get ReplicaGroups
-   try{
-      var grouplist = Array();
-      var cur = db.listReplicaGroups();
-      while(cur.next()){
-         if(cur.current().toObj()['GroupID'] >= DATA_GROUP_ID_BEGIN ){
-            grouplist.push(cur.current().toObj()['GroupName']);
-         }
-      }
-      var groups_num = grouplist.length;
-   }catch(e)
-   {
-      println("get ReplicaGroups info fail! rc="+e);
-      throw e;
-   }
-   println("ReplicaGroups: " + grouplist);
-
-   try
-   {
-      commDropCL( db, COMMCSNAME, SUBCL1NAME, true, true, "drop sub colleciton 1" );
-      commDropCL( db, COMMCSNAME, SUBCL2NAME, true, true, "drop sub colleciton 2" );
-      commDropCL( db, COMMCSNAME, SUBCL3NAME, true, true, "drop sub colleciton 3" );
-      commDropCL( db, COMMCSNAME, MAINCLNAME, true, true, "drop main colleciton" );
-   }
-   catch( e )
-   {
-      println( "failed to clean in the beginning" + e ) ;
-      throw e ;
-   }
-
-   //create main-CL
-   try{
-      var optionObj = {IsMainCL:true,ShardingKey:{id:1}};
-      var mainCL = commCreateCLByOption( db, COMMCSNAME, MAINCLNAME, optionObj,
-                                         true, false, "create main collecton failed" );
-   }catch(e)
-   {
-      println("can't create main-CL:" + MAINCLNAME + " rc="+e);
-      throw e;
-   }
-   println("create mainCL finished");
-
-   //create sub-CL
-   try{
-      var optionObj1 = {ShardingKey:{b:1},ShardingType:"hash",Partition:4096};
-      var subCL1 = commCreateCLByOption( db, COMMCSNAME, SUBCL1NAME, optionObj1, true,
-                                         false, "create sub collecton 1 failed" );
-      var sn1 = db.snapshot(8,{Name:MAINCLNAME+"."+SUBCL1NAME});
-      var optionObj2 = {ReplSize:2};
-      var subCL2 = commCreateCLByOption( db, COMMCSNAME, SUBCL2NAME, optionObj2, true,
-                                         false, "create sub collecton 2 failed" );
-      var sn2 = db.snapshot(8,{Name:MAINCLNAME+"."+SUBCL2NAME});
-      var sourceGroup2 = sn2.current().toObj()['CataInfo'][0]['GroupName'];
-      var optionObj3 = {Compressed:false};
-      var subCL3 = commCreateCLByOption( db, COMMCSNAME, SUBCL3NAME, optionObj3, true,
-                                         false, "create sub collecton 3 failed" );
-      var sn3 = db.snapshot(8,{Name:MAINCLNAME+"."+SUBCL3NAME});
-      var sourceGroup3 = sn3.current().toObj()['CataInfo'][0]['GroupName'];
-   }catch(e)
-   {
-      println("create subCLs fail! rc="+e);
-      throw e;
-   }
-   println("create subCLs finished");
-
-   //attach sub-cl
-   try{
-      mainCL.attachCL(MAINCLNAME + "." + SUBCL1NAME,{LowBound:{id:-10000},UpBound:{id:0}});
-      mainCL.attachCL(MAINCLNAME + "." + SUBCL2NAME,{LowBound:{id:0},UpBound:{id:10000}});
-      mainCL.attachCL(MAINCLNAME + "." + SUBCL3NAME,{LowBound:{id:10000},UpBound:{id:20000}});
-   }catch(e)
-   {
-      println("attach sub-CL fail!");
-      throw e;
-   }
-   println("attach sub-CL finish!");
-
-   //alter subCL2 to range-collection and split
-   try{
-      subCL2.alter({ShardingKey:{b:1},ShardingType:'range',ReplSize:1});
-      if(groups_num>1)
-      {
-         var tarGroupIndex=-1;
-         var stepId = 2000;
-         var partId = 5;
-         var lowId = 0;
-         var highId = 0;
-         for(var i=0;i<partId;i++){
-            tarGroupIndex++;
-            if(tarGroupIndex == groups_num)
-               tarGroupIndex=0;
-            if(grouplist[tarGroupIndex]==sourceGroup2)
-            {
-               i--;
-               continue;
-            }
-            lowId = (i-1)*stepId + 10000;
-            highId = i*stepId + 10000;
-            subCL2.split(sourceGroup2, grouplist[tarGroupIndex],{b:lowId},{b:highId});
-            println(SUBCL2NAME+" split from "+sourceGroup2+" to "+ grouplist[tarGroupIndex]+" {b:"+lowId+"} {b:"+highId+"}");
-         }
-      }
-   }catch(e)
-   {
-      println("alter " + SUBCL2NAME + " to range-collection and split fail! rc="+e);
-      throw e;
-   }
-   println("alter " + SUBCL2NAME + " to range-collection and split finish!");
-
-   //alter subCL3 to hash-collection and split
-   try{
-      subCL3.alter({ShardingKey:{id:1},ShardingType:'hash',Partition:1024});
-      if(groups_num>1)
-      {
-         tarGroupIndex=-1;
-         var stepPar = 256;
-         var partId = 3;
-         var lowPar = 0;
-         var highPar = 0;
-         for(var i=0;i<partId;i++){
-            tarGroupIndex++;
-            if(tarGroupIndex == groups_num)
-               tarGroupIndex=0;
-            if(grouplist[tarGroupIndex]==sourceGroup3)
-            {
-               i--;
-               continue;
-            }
-            lowPar = i*stepPar;
-            highPar = (i+1)*stepPar;
-            subCL3.split(sourceGroup3, grouplist[tarGroupIndex],{Partition:lowPar},{Partition:highPar});
-            println(SUBCL3NAME+" split from "+sourceGroup3+" to "+ grouplist[tarGroupIndex]+" {Partition:"+lowPar+"} {Partition:"+highPar+"}");
-         }
-      }
-   }catch(e)
-   {
-      println("alter " + SUBCL3NAME + " to hash-collection and split fail! rc="+e);
-      throw e;
-   }
-   println("alter " + SUBCL3NAME + " to hash-collection and split finish!");
-
-   //insert data
-   try{
-      for(var i=0;i<30000;i++){mainCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
-      println("insert-data succ");
-   }catch(e)
-   {
-      println("insert-data fail! rc="+e);
-      throw e;
-   }
-
-   //select * from bar where id=1
-   //expect one record
-   try{
-      var sel = mainCL.find({id:{$et:1}});
-      var size=0;
-      var flag=false;
-      while(sel.next())
-      {
-         size++;
-         if(size>100)
-            break;
-         var ret = sel.current();
-         if(ret.toObj()['id']==1 && ret.toObj()['b']==10001 && ret.toObj()['c']=='abcdefghijkl10001')
-            flag = true;
-      }
-      if(size!=1)
-      {
-         throw 1;
-      }
-      if(!flag)
-      {
-         throw 2;
-      }	
-   }catch(e)
-   {
-      if(e==-1)
-         println("result-records count not expected. expect:1 return:"+size);
-      else if(e==-2)
-      {	
-         println("record not expected!");
-         println("expected:{id:1,b:10001,c:'abcdefghijkl10001'}");
-         println("returned:"+ret);
-      }
-      else
-         println("select " + MAINCLNAME + " fail! rc="+e);
-      throw e;
-   }
-   println("data-verify succ!");
-
-   //detachCL
-   try{
-      mainCL.detachCL(MAINCLNAME + "." + SUBCL1NAME);
-      mainCL.detachCL(MAINCLNAME + "." + SUBCL2NAME);
-      mainCL.detachCL(MAINCLNAME + "." + SUBCL3NAME);
-   }catch(e)
-   {
-      println("detachCL fail! rc="+e);
-      throw e;
-   }
-   println("detach subCL succ!");
-
-   //clean test-env
-   try{
-      commDropCL( db, COMMCSNAME, SUBCL1NAME, false, false, "drop sub colleciton 1" );
-      commDropCL( db, COMMCSNAME, SUBCL2NAME, false, false, "drop sub colleciton 2" );
-      commDropCL( db, COMMCSNAME, SUBCL3NAME, false, false, "drop sub colleciton 3" );
-      commDropCL( db, COMMCSNAME, MAINCLNAME, false, false, "drop main colleciton" );
-   }catch(e)
-   {
-      println("clean test-evn fail! rc="+e);
-      throw e;
-   }
-   println("clean test-evn succ!");
-}
-
-// Add inspect standalone run mode
 try
 {
-   // Inspect the run mode is standalone or not
-   if( true == commIsStandalone( db ) )
-      throw "ModeStandAlone" ;
    main();
 }
-catch( e )
+catch(e)
 {
-   if( "ModeStandAlone" == e )
-      println( "The run mode is standalone" ) ;
-   else
-      throw e ;
+   if ( e.constructor === Error )
+   {
+      println(e.stack);  
+   }
+   throw e;
+}
+
+function main()
+{
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   var groupName = commGetGroups(db);
+   if(groupName.length < 2)
+   {
+      println( "group num less 2" ) ;
+      return ;
+   }
+   
+   var mainCLName = "alter8186_main";
+   var subCLName1 = "alter8186_sub_1";
+   var subCLName2 = "alter8186_sub_2";
+   var subCLName3 = "alter8186_sub_3";
+   var srcGroup = groupName[0][0]["GroupName"];
+   var tarGroup = groupName[1][0]["GroupName"];
+   commDropCL( db, COMMCSNAME, mainCLName ) ;
+   commDropCL( db, COMMCSNAME, subCLName1 ) ;
+   commDropCL( db, COMMCSNAME, subCLName2 ) ;
+   commDropCL( db, COMMCSNAME, subCLName3 ) ;
+   
+   var maincl = commCreateCLByOption( db, COMMCSNAME, mainCLName, {IsMainCL: true, ShardingKey:{id: 1}, ShardingType: "range"} );
+   var subcl1 = commCreateCLByOption( db, COMMCSNAME, subCLName1, {ShardingKey:{id: 1}, ShardingType: 'hash', Group: srcGroup} );
+   var subcl2 = commCreateCLByOption( db, COMMCSNAME, subCLName2, {Group: srcGroup});
+   var subcl3 = commCreateCLByOption( db, COMMCSNAME, subCLName3, {Group: srcGroup} );
+   maincl.attachCL(COMMCSNAME + "." + subCLName1, {LowBound: {id: 0}, UpBound: {id: 300}});
+   maincl.attachCL(COMMCSNAME + "." + subCLName2, {LowBound: {id: 300}, UpBound: {id: 700}});
+   maincl.attachCL(COMMCSNAME + "." + subCLName3, {LowBound: {id: 700}, UpBound: {id: 1100}});
+   
+   //alters replsize
+   subcl2.alter({ShardingKey:{id: 1}, ShardingType: 'hash'});
+   subcl3.alter({ShardingKey:{id: 1}, ShardingType: 'hash'});
+   subcl2.split(srcGroup, tarGroup, 50);
+   subcl3.split(srcGroup, tarGroup, 50);
+   
+   //check snapshot
+   var snap2 = db.snapshot(8,{Name:COMMCSNAME + "." + subCLName2});
+   var info = snap2.current().toObj();
+   var shardingKey = info['ShardingKey'];
+   var shardingType = info['ShardingType'];
+   if(JSON.stringify(shardingKey) !== '{"id":1}')
+   {
+      throw new Error("check shardingKey, \nexpect: {\"id\": 1}, \nbut found: " + JSON.stringify(shardingKey));
+   }
+   if(shardingType !== "hash")
+   {
+      throw new Error("check shardingType, \nexpect: hash, \nbut found: " + shardingType);
+   }
+   
+   var snap3 = db.snapshot(8,{Name:COMMCSNAME + "." + subCLName3});
+   var info = snap3.current().toObj();
+   var shardingKey = info['ShardingKey'];
+   var shardingType = info['ShardingType'];
+   if(JSON.stringify(shardingKey) !== '{"id":1}')
+   {
+      throw new Error("check shardingKey, \nexpect: {\"id\": 1}, \nbut found: " + JSON.stringify(shardingKey));
+   }
+   if(shardingType !== "hash")
+   {
+      throw new Error("check shardingType, \nexpect: hash, \nbut found: " + shardingType);
+   }
+   
+   var data = [];
+   for(var i = 0; i < 1000; i++)
+   {
+      data.push({"id": i, "text": "test alter " + i});
+   }
+   maincl.insert(data);
+   
+   var num = maincl.count();
+   if(num != 1000)
+   {
+      throw new Error("check recordNum, \nexpect: 1000, \nbut found: " + num);
+   }
+   
+   //clean test-env
+   commDropCL( db, COMMCSNAME, mainCLName ) ;
+   commDropCL( db, COMMCSNAME, subCLName1 ) ;
+   commDropCL( db, COMMCSNAME, subCLName2 ) ;
+   commDropCL( db, COMMCSNAME, subCLName3 ) ;
 }
 

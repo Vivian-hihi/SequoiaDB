@@ -3,173 +3,73 @@
 *@Modify list :
 *               2014-07-08  pusheng Ding  Init
 *               2015-03-28  xiaojun Hu    Changed
+*               2019-10-21  luweikang modify
 ******************************************************************************/
-function main()
-{
-	//get ReplicaGroups
-	try{
-		var grouplist = Array();
-		var cur = db.listReplicaGroups();
-		while(cur.next()){
-			if(cur.current().toObj()['GroupID'] >= DATA_GROUP_ID_BEGIN ){
-				grouplist.push(cur.current().toObj()['GroupName']);
-			}
-		}
-		var groups_num = grouplist.length;
-	}catch(e)
-	{
-		println("get ReplicaGroups info fail! rc="+e);
-		throw e;
-	}
-	println("ReplicaGroups: " + grouplist);
-
-   try
-   {
-      commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
-                  "drop colleciton in the beginning" );
-   }
-   catch( e )
-   {
-      println( "failed to clean in the beginning" + e ) ;
-      throw e ;
-   }
-
-	//create normal-CL
-	try{
-      var optionObj = {ReplSize:3};
-      var normalCL = commCreateCLByOption( db, COMMCSNAME, COMMCLNAME, optionObj,
-                                           true, false, "create collecton failed" );
-		var sn1 = db.snapshot(8,{Name:COMMCSNAME+"."+COMMCLNAME});
-		var sourceGroup = sn1.current().toObj()['CataInfo'][0]['GroupName'];
-	}catch(e)
-	{
-		println("can't create normal-CL:" + COMMCLNAME + " rc="+e);
-		throw e;
-	}
-	println("createCL " + COMMCLNAME + " at ReplicaGroup:" + sourceGroup + " finished");
-	
-	//insert data
-   var data = [];
-	try{
-		for(var i=0;i<3000;i++)
-      {
-         data.push({b:i,id:i-1000,c:"abcdefghijkl"+i});
-      }
-      normalCL.insert(data);
-	}catch(e)
-	{
-		println("insert-data fail! rc="+e);
-		throw e;
-	}
-	println("insert-data succ!");
-	
-	//normalCL with data altered to range-collection
-	try{
-		normalCL.alter({ShardingKey:{id:1},ShardingType:'range'});
-	}catch(e)
-	{
-		println("normalCL altered to range-collection fail! rc="+e);
-		throw e;
-	}
-	println("normalCL altered to range-collection finish!");
-	
-	//split
-	try{
-		if(groups_num>1){
-			var tarGroupIndex=-1;
-			var stepId = 1000;
-			var partId = 3;
-			var lowId = 0;
-			var highId = 0;
-			for(var i=0;i<partId;i++){
-				tarGroupIndex++;
-				if(tarGroupIndex == groups_num)
-					tarGroupIndex=0;
-				if(grouplist[tarGroupIndex]==sourceGroup)
-				{
-					i--;
-					continue;
-				}
-				lowId = (i-1)*stepId;
-				highId = i*stepId;
-				normalCL.split(sourceGroup, grouplist[tarGroupIndex],{id:lowId},{id:highId});
-				println(COMMCLNAME+" split from "+sourceGroup+" to "+ grouplist[tarGroupIndex]+" {id:"+lowId+"} {id:"+highId+"}");
-			}
-			println("split succ!");
-		}
-		else{
-			println("can't split to groups!groupsNum is "+groups_num);
-		}
-	}catch(e)
-	{
-		println("split fail! rc="+e);
-		throw e;
-	}
-	
-	//select * from bar where id=1
-	//expect one record
-	try{
-		var sel = normalCL.find({id:{$et:1}});
-		var size=0;
-		var flag=false;
-		while(sel.next())
-		{
-			size++;
-			if(size>100)
-				break;
-			var ret = sel.current();
-			if(ret.toObj()['id']==1 && ret.toObj()['b']==1001 && ret.toObj()['c']=='abcdefghijkl1001')
-				flag = true;
-		}
-		if(size!=1)
-		{
-			throw 1;
-		}
-		if(!flag)
-		{
-			throw 2;
-		}	
-	}catch(e)
-	{
-		if(e==-1)
-			println("result-records count not expected. expect:1 return:"+size);
-		else if(e==-2)
-		{	
-			println("record not expected!");
-			println("expected:{id:1,b:1001,c:'abcdefghijkl1001'}");
-			println("returned:"+ret);
-		}
-		else
-			println("select " + COMMCLNAME + " fail! rc="+e);
-		throw e;
-	}
-	println("data-verify succ!");
-	
-	//clean test-env
-	try{
-      commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-                  "drop colleciton in the end" );
-	}catch(e)
-	{
-		println("clean test-evn fail! rc="+e);
-		throw e;
-	}
-	println("clean test-evn succ!");
-}
-
-// Add inspect standalone run mode
 try
 {
-   // Inspect the run mode is standalone or not
-   if( true == commIsStandalone( db ) )
-      throw "ModeStandAlone" ;
    main();
 }
-catch( e )
+catch(e)
 {
-   if( "ModeStandAlone" == e )
-      println( "The run mode is standalone" ) ;
-   else
-      throw e ;
+   if ( e.constructor === Error )
+   {
+      println(e.stack);  
+   }
+   throw e;
+}
+
+function main()
+{
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   var groupName = commGetGroups(db);
+   if(groupName.length < 2)
+   {
+      println( "group num less 2" ) ;
+      return ;
+   }
+   
+   var clName = "alter8183";
+   var srcGroup = groupName[0][0]["GroupName"];
+   var tarGroup = groupName[1][0]["GroupName"];
+   commDropCL( db, COMMCSNAME, clName ) ;
+
+   var cl = commCreateCLByOption(db, COMMCSNAME, clName, {Group: srcGroup});
+   
+   var data = [];
+   for(var i = 0; i < 1000; i++)
+   {
+      data.push({"id": i, "text": "test alter " + i});
+   }
+   cl.insert(data);
+   
+   //alter cl to shardingCL
+   cl.alter({"ShardingKey": {"id": 1}, "ShardingType": "range"});
+   cl.split(srcGroup, tarGroup, 50);
+   
+   //check snapshot
+   var snap = db.snapshot(8,{Name:COMMCSNAME + "." + clName});
+   var info = snap.current().toObj();
+   var shardingKey = info['ShardingKey'];
+   var shardingType = info['ShardingType'];
+   if(JSON.stringify(shardingKey) !== '{"id":1}')
+   {
+      throw new Error("check shardingKey, \nexpect: {\"id\": 1}, \nbut found: " + JSON.stringify(shardingKey));
+   }
+   if(shardingType !== "range")
+   {
+      throw new Error("check shardingType, \nexpect: range, \nbut found: " + shardingType);
+   }
+   
+   var num = cl.count();
+   if(num != 1000)
+   {
+      throw new Error("check recordNum, \nexpect: 1000, \nbut found: " + num);
+   }
+   
+   commDropCL( db, COMMCSNAME, clName ) ;
 }
 

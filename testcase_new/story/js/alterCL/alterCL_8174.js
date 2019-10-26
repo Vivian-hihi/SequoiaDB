@@ -3,135 +3,98 @@
 *@Modify list :
 *               2014-07-10 pusheng Ding  Init
 *               2015-03-28 xiaojun Hu    Changed
+*               2019-10-21  luweikang modify
 ******************************************************************************/
-CLNAME_1 = CHANGEDPREFIX+"bar1" ;
-CLNAME_2 = CHANGEDPREFIX+"bar2" ;
-CLNAME_3 = CHANGEDPREFIX+"bar3" ;
-CLNAME_4 = CHANGEDPREFIX+"bar4" ;
-
 try
 {
-   commDropCL( db, COMMCSNAME, CLNAME_1, true, true, "drop colleciton 1" );
-   commDropCL( db, COMMCSNAME, CLNAME_2, true, true, "drop colleciton 2" );
-   commDropCL( db, COMMCSNAME, CLNAME_3, true, true, "drop colleciton 3" );
-   commDropCL( db, COMMCSNAME, CLNAME_4, true, true, "drop colleciton 4" );
+   main();
 }
-catch( e )
+catch(e)
 {
-   println( "failed to clean in the beginning" + e ) ;
-   throw e ;
+   if ( e.constructor === Error )
+   {
+      println(e.stack);  
+   }
+   throw e;
 }
 
-//create normalCL
-try{
-   var normalCL= commCreateCL( db, COMMCSNAME, CLNAME_1, -1, true, true,
-                               false, "Failed to create collection" ) ;
-}catch(e)
+function main()
 {
-	println("can't create normal-CL:" + CLNAME_1 + " rc="+e);
-	throw e;
-}
-println("create normalCL finished");
+   if( commIsStandalone( db ) )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   var clName1 = "alter8174_1";
+   var clName2 = "alter8174_2";
+   var clName3 = "alter8174_3";
+   var clName4 = "alter8174_4";
+   commDropCL( db, COMMCSNAME, clName1 ) ;
+   commDropCL( db, COMMCSNAME, clName2 ) ;
+   commDropCL( db, COMMCSNAME, clName3 ) ;
+   commDropCL( db, COMMCSNAME, clName4 ) ;
 
-//normalCL altered to main-collection,expect fail
-try{
-	normalCL.alter({ShardingKey:{id:1},IsMainCL:true});
-	throw 1;
-}catch(e)
-{
-	if(e == 1)
-	{
-		println("normalCL altered to main-collection succ,but expect fail!");
-		throw e;
-	}
+   var cl1 = commCreateCL(db, COMMCSNAME, clName1);
+   var cl2 = commCreateCLByOption(db, COMMCSNAME, clName2, {ShardingKey:{id: 1}, ShardingType: "hash"});
+   var cl3 = commCreateCLByOption(db, COMMCSNAME, clName3, {ShardingKey:{id: 1}, ShardingType: "range"});
+   var cl4 = commCreateCLByOption(db, COMMCSNAME, clName4, {ShardingKey:{id: 1}, ShardingType: "range", IsMainCL: true});
+   
+   //alter cl
+   try
+   {
+      cl1.alter({"IsMainCL": true});
+      throw "ERR_ALTEL_ISMAINCL";
+   }
+   catch(e)
+   {
+      if(e !== -6)
+      {
+         throw new Error("alter cl IsMainCL, \nexp: -6, \nact: " + e );   
+      }
+   }
+   
+   try
+   {
+      cl2.alter({"IsMainCL": true});
+      throw "ERR_ALTEL_ISMAINCL";
+   }
+   catch(e)
+   {
+      if(e !== -6)
+      {
+         throw new Error("alter cl IsMainCL, \nexp: -6, \nact: " + e );   
+      }
+   }
+   
+   try
+   {
+      cl3.alter({"IsMainCL": true});
+      throw "ERR_ALTEL_ISMAINCL";
+   }
+   catch(e)
+   {
+      if(e !== -6)
+      {
+         throw new Error("alter cl IsMainCL, \nexp: -6, \nact: " + e );   
+      }
+   }
+   
+   try
+   {
+      cl4.alter({"IsMainCL": false});
+      throw "ERR_ALTEL_ISMAINCL";
+   }
+   catch(e)
+   {
+      if(e !== -6)
+      {
+         throw new Error("alter cl IsMainCL, \nexp: -6, \nact: " + e );   
+      }
+   }
+   
+   commDropCL( db, COMMCSNAME, clName1 ) ;
+   commDropCL( db, COMMCSNAME, clName2 ) ;
+   commDropCL( db, COMMCSNAME, clName3 ) ;
+   commDropCL( db, COMMCSNAME, clName4 ) ;
 }
-println("normalCL test finish!");
-
-//create rangeCL
-try{
-   var optionObj = {ShardingKey:{a:1,b:1},ShardingType:'range',ReplSize:1};
-   var rangeCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_2, optionObj, true,
-                                       false, "create collecton 2 failed" );
-}catch(e)
-{
-	println("can't create rangeCL:" + CLNAME_2 + " rc="+e);
-	throw e;
-}
-println("create rangeCL finished");
-
-try{
-	rangeCL.alter({ReplSize:0,IsMainCL:true});
-	throw 1;
-}catch(e)
-{
-	if(e == 1)
-	{
-		println("rangeCL altered to main-collection succ,but expect fail!");
-		throw e;
-	}
-}
-println("rangeCL test finish!");
-
-//create hashCL
-try{
-   var optionObj = {ShardingKey:{b:1},ShardingType:'hash'};
-   var hashCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_3, optionObj, true,
-                                       false, "create collecton 3 failed" );
-}catch(e)
-{
-	println("can't create hashCL:" + CLNAME_3 + " rc="+e);
-	throw e;
-}
-println("create hashCL finished");
-
-try{
-	hashCL.alter({IsMainCL:true});
-	throw 1;
-}catch(e)
-{
-	if(e == 1)
-	{
-		println("hashCL altered to main-collection succ,but expect fail!");
-		throw e;
-	}
-}
-println("hashCL test finish!");
-
-//create mainCL
-try{
-   var optionObj = {ShardingKey:{b:1},IsMainCL:true};
-   var mainCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_4, optionObj, true,
-                                       false, "create collecton 4 failed" );
-}catch(e)
-{
-	println("can't create mainCL:" + CLNAME_4 + " rc="+e);
-	throw e;
-}
-println("create mainCL finished");
-
-try{
-	mainCL.alter({IsMainCL:false});
-	throw 1;
-}catch(e)
-{
-	if(e == 1)
-	{
-		println("mainCL altered to normal-collection succ,but expect fail!");
-		throw e;
-	}
-}
-println("mainCL test finish!");
-
-//clean test-env
-try{
-   commDropCL( db, COMMCSNAME, CLNAME_1, false, false, "drop colleciton 1" );
-   commDropCL( db, COMMCSNAME, CLNAME_2, false, false, "drop colleciton 2" );
-   commDropCL( db, COMMCSNAME, CLNAME_3, false, false, "drop colleciton 3" );
-   commDropCL( db, COMMCSNAME, CLNAME_4, false, false, "drop colleciton 4" );
-}catch(e)
-{
-	println("clean test-evn fail! rc="+e);
-	throw e;
-}
-println("clean test-evn succ!");
 

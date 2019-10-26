@@ -2,154 +2,84 @@
 @Description : 1. collection altered Compress, fail
 @Modify list :
                2014-07-10 pusheng Ding  Init
+               2019-10-21  luweikang modify
 ******************************************************************************/
-CLNAME_1 = CHANGEDPREFIX+"bar1" ;
-CLNAME_2 = CHANGEDPREFIX+"bar2" ;
-CLNAME_3 = CHANGEDPREFIX+"bar3" ;
-CLNAME_4 = CHANGEDPREFIX+"bar4" ;
-
 try
 {
-   commDropCL( db, COMMCSNAME, CLNAME_1, true, true, "drop colleciton 1" );
-   commDropCL( db, COMMCSNAME, CLNAME_2, true, true, "drop colleciton 2" );
-   commDropCL( db, COMMCSNAME, CLNAME_3, true, true, "drop colleciton 3" );
-   commDropCL( db, COMMCSNAME, CLNAME_4, true, true, "drop colleciton 4" );
+   main();
 }
-catch( e )
+catch(e)
 {
-   println( "failed to clean in the beginning" + e ) ;
-   throw e ;
-}
-
-//create normalCL
-try{
-   var optionObj = {ReplSize:0,Compressed:true};
-   var normalCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_1, optionObj, true,
-                                       false, "create collecton 1 failed" );
-}catch(e)
-{
-	println("can't create normal-CL:" + CSPREFIX_CL1 + " rc="+e);
-	throw e;
-}
-println("create normalCL finished");
-
-//Compressed True to False,expect fail
-if( true == commIsStandalone( db ) ) 
-{
-   try{
-		normalCL.alter({ShardingKey:{id:1},ShardingType:'hash',Compressed:false});
-   }catch(e)
+   if ( e.constructor === Error )
    {
-		if (-166 !== e) 
-		{
-			println("normalCL alters Compressed fail,but expect succ!");
-			throw e;
-		}
+      println(e.stack);  
    }
-}
-else 
-{
-   try{
-	   normalCL.alter({ShardingKey:{id:1},ShardingType:'hash',Compressed:false});
-   }catch(e)
-   {
-		println("normalCL alters Compressed fail,but expect succ!");
-		throw e;
-   }
-}
-println("normalCL test finish!");
-
-//create rangeCL
-try{
-   var optionObj = {ShardingKey:{a:1,b:1},ShardingType:'range',ReplSize:1};
-   var rangeCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_2, optionObj, true,
-                                       false, "create collecton 2 failed" );
-}catch(e)
-{
-	println("can't create rangeCL:" + CSPREFIX_CL2 + " rc="+e);
-	throw e;
-}
-println("create rangeCL finished");
-
-try{
-	rangeCL.alter({Compressed:true});
-}catch(e)
-{
-   println("rangeCL alters Compressed fail, but expect succ!");
    throw e;
 }
-println("rangeCL test finish!");
 
-//create hashCL
-try{
-   var optionObj = {ShardingKey:{b:1},ShardingType:'hash',Compressed:true};
-   var hashCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_3, optionObj, true,
-                                       false, "create collecton 3 failed" );
-}catch(e)
+function main()
 {
-	println("can't create hashCL:" + CSPREFIX_CL3 + " rc="+e);
-	throw e;
-}
-println("create hashCL finished");
-
-try{
-	hashCL.alter({Compressed:true});
-}catch(e)
-{
-   println("hashCL alters Compressed succ,but expect fail!");
-   throw e;
-}
-println("hashCL test finish!");
-
-//create mainCL
-try{
-   var optionObj = {ShardingKey:{b:1},IsMainCL:true};
-   var mainCL = commCreateCLByOption( db, COMMCSNAME, CLNAME_4, optionObj, true,
-                                       false, "create collecton 4 failed" );
-}catch(e)
-{
-	println("can't create mainCL:" + CSPREFIX_CL4 + " rc="+e);
-	throw e;
-}
-println("create mainCL finished");
-
-if( true == commIsStandalone( db ) ) 
-{
-   try{
-   	mainCL.alter({Compressed:true});
-   }catch(e)
+   if( commIsStandalone( db ) )
    {
-      println("mainCL alters Compressed fail,but expect succ!");
-      throw e;
-   }  
-}
-else 
-{
-   try{
-	   mainCL.alter({Compressed:true});
-	   throw 1;
-   }catch(e)
-   {
-   	if(e == 1)
-   	{
-   		println("mainCL alters Compressed succ,but expect fail!");
-   		throw e;
-   	}
+      println( "Run mode is standalone" ) ;
+      return ;
    }
-}
+   var clName1 = "alter8175_1";
+   var clName2 = "alter8175_2";
+   var clName3 = "alter8175_3";
+   var clName4 = "alter8175_4";
+   commDropCL( db, COMMCSNAME, clName1 ) ;
+   commDropCL( db, COMMCSNAME, clName2 ) ;
+   commDropCL( db, COMMCSNAME, clName3 ) ;
+   commDropCL( db, COMMCSNAME, clName4 ) ;
 
-println("mainCL test finish!");
-
-//clean test-env
-try{
-   commDropCL( db, COMMCSNAME, CLNAME_1, false, false, "drop colleciton 1" );
-   commDropCL( db, COMMCSNAME, CLNAME_2, false, false, "drop colleciton 2" );
-   commDropCL( db, COMMCSNAME, CLNAME_3, false, false, "drop colleciton 3" );
-   commDropCL( db, COMMCSNAME, CLNAME_4, false, false, "drop colleciton 4" );
-}catch(e)
-{
-	println("clean test-evn fail! rc="+e);
-	throw e;
+   var cl1 = commCreateCLByOption(db, COMMCSNAME, clName1, {Compressed: false});
+   var cl2 = commCreateCLByOption(db, COMMCSNAME, clName2, {ShardingKey:{id: 1}, ShardingType: "hash", Compressed: false});
+   var cl3 = commCreateCLByOption(db, COMMCSNAME, clName3, {ShardingKey:{id: 1}, ShardingType: "range", Compressed: false});
+   var cl4 = commCreateCLByOption(db, COMMCSNAME, clName4, {ShardingKey:{id: 1}, ShardingType: "range", IsMainCL: true, Compressed: false});
+   
+   cl1.alter({"Compressed": true});
+   cl2.alter({"Compressed": true});
+   cl3.alter({"Compressed": true});
+   
+   try
+   {
+      cl4.alter({"Compressed": true});   
+      throw "ERR_ALTER_MAINCL";
+   }
+   catch(e)
+   {
+      if(e !== -32)
+      {
+         throw new Error("alter main cl compress, \nexp: -32, \nbut found: " + e);
+      }
+   }
+   
+   //check cl snapshot
+   var snap1 = db.snapshot(8, {Name:COMMCSNAME + "." + clName1});
+   var compressionType = snap1.current().toObj()['CompressionType'];
+   if(compressionType !== 0)
+   {
+      throw new Error("check compressionType, \nexpect: 0, \nbut found: " + compressionType);
+   }
+   
+   var snap2 = db.snapshot(8, {Name:COMMCSNAME + "." + clName2});
+   var compressionType = snap2.current().toObj()['CompressionType'];
+   if(compressionType !== 0)
+   {
+      throw new Error("check compressionType, \nexpect: 0, \nbut found: " + compressionType);
+   }
+   
+   var snap3 = db.snapshot(8, {Name:COMMCSNAME + "." + clName3});
+   var compressionType = snap3.current().toObj()['CompressionType'];
+   if(compressionType !== 0)
+   {
+      throw new Error("check compressionType, \nexpect: 0, \nbut found: " + compressionType);
+   }
+   
+   commDropCL( db, COMMCSNAME, clName1 ) ;
+   commDropCL( db, COMMCSNAME, clName2 ) ;
+   commDropCL( db, COMMCSNAME, clName3 ) ;
+   commDropCL( db, COMMCSNAME, clName4 ) ;
 }
-println("clean test-evn succ!");
 
