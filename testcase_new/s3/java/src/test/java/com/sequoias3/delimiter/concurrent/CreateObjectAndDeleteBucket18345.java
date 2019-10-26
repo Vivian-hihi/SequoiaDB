@@ -3,7 +3,6 @@ package com.sequoias3.delimiter.concurrent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.testng.Assert;
@@ -39,7 +38,7 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
     private String delimiter = "?";
     private int objectNum = 10;
     private AmazonS3 s3Client = null;
-    private List<String> expKeyList = Collections.synchronizedList(new LinkedList<String>());
+    private List<String> keyList = new ArrayList<>();
 
     @BeforeClass
     private void setUp() {
@@ -51,10 +50,11 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
 
     @SuppressWarnings("deprecation")
     @Test
-    public void testObject() throws Exception {
+    private void test() throws Exception {
         ThreadExecutor threadExec = new ThreadExecutor();
         for (int i = 0; i < objectNum; i++) {
             String subKeyName = keyName + "_" + i + delimiter + "test.png";
+            keyList.add(subKeyName);
             threadExec.addWorker(new CreateObject(subKeyName));
         }
         DeleteBucket deleteBucket = new DeleteBucket();
@@ -63,17 +63,17 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
 
         int errorDeleteBucketCode = deleteBucket.getRetCode();
         if (errorDeleteBucketCode == 0) {
-            // delete bucket success,create object fail.
+            // delete bucket success, create object fail.
             Assert.assertFalse(s3Client.doesBucketExist(bucketName));
-            for (String keyName : expKeyList) {
+            for (String keyName : keyList) {
                 Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyName));
             }
         } else {
-            // create object success,delete bucekt fail,the
-            // errorCode:409(BucketNotEmpty)
+            // delete bucekt fail, create object success, the
+            // errorCode:409(BucketNotEmpty).
             Assert.assertEquals(errorDeleteBucketCode, 409);
             Assert.assertTrue(s3Client.doesBucketExist(bucketName));
-            listObjectsAndCheckResult(expKeyList);
+            listObjectsAndCheckResult(keyList);
         }
         runSuccess = true;
     }
@@ -104,7 +104,6 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
             try {
                 String content = keyName + "_testcontent";
                 s3Client1.putObject(bucketName, keyName, content);
-                expKeyList.add(keyName);
             } catch (AmazonS3Exception e) {
                 int errCode = e.getStatusCode();
                 // 404:NoSuchBucket
@@ -152,7 +151,7 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
 
         // check the keyName
         Collections.sort(keyList);
-        Assert.assertEquals(queryKeyList, keyList);
+        Assert.assertEquals(queryKeyList, keyList, "queryKeyList = " + queryKeyList + ", keyList = " + keyList);
     }
 
 }
