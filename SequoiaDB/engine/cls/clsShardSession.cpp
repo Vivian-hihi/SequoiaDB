@@ -65,6 +65,8 @@ namespace engine
 #define SHD_TRANS_WAITCOMMIT_TIMEOUT      ( 60000 )   // 60 sec
 #define SHD_TRANS_WAITCOMMIT_INTERVAL     ( 3000 )    // 3 sec
 
+#define SHD_RET_BUILDER_DFT_SIZE          ( 80 )
+
    BEGIN_OBJ_MSG_MAP( _clsShdSession, _pmdAsyncSession )
       ON_MSG ( MSG_BS_UPDATE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_INSERT_REQ, _onOPMsg )
@@ -100,7 +102,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSDSESS__CLSSHDSESS, "_clsShdSession::_clsShdSession" )
    _clsShdSession::_clsShdSession ( UINT64 sessionID, _schedTaskInfo *pTaskInfo )
-      :_pmdAsyncSession ( sessionID )
+      :_pmdAsyncSession ( sessionID ),
+       _retBuilder( SHD_RET_BUILDER_DFT_SIZE )
    {
       PD_TRACE_ENTRY ( SDB__CLSSDSESS__CLSSHDSESS ) ;
       _pCollectionName  = NULL ;
@@ -600,6 +603,8 @@ namespace engine
 
       while ( loop )
       {
+         _retBuilder.reset() ;
+
          if ( MSG_PACKET == opCode )
          {
             rc = _onPacketMsg( handle, msg, contextID, buffObj,
@@ -642,26 +647,49 @@ namespace engine
          switch ( opCode )
          {
             case MSG_BS_UPDATE_REQ :
+            {
+               MsgOpUpdate *pUpdateMsg = ( MsgOpUpdate* )msg ;
+               utilUpdateResult upResult ;
                isNeedRollback = TRUE ;
-               rc = _onUpdateReqMsg ( handle, msg, contextID ) ;
+               rc = _onUpdateReqMsg ( handle, msg, upResult ) ;
+               upResult.toBSON( _retBuilder ) ;
+               if ( FLG_UPDATE_RETURNNUM & pUpdateMsg->flags )
+               {
+                  /// compatiable with old version
+                  contextID = upResult.modifiedNum() ;
+               }
                break ;
+            }
             case MSG_BS_INSERT_REQ :
             {
                MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
-               INT32 insertedNum = 0 ;
-               INT32 ignoredNum = 0 ;
+               utilInsertResult inResult ;
                isNeedRollback = TRUE ;
-               rc = _onInsertReqMsg ( handle, msg, insertedNum, ignoredNum ) ;
+               rc = _onInsertReqMsg ( handle, msg, inResult ) ;
+               inResult.toBSON( _retBuilder ) ;
                if ( pInsert->flags & FLG_INSERT_RETURNNUM )
                {
-                  contextID = ossPack32To64( insertedNum, ignoredNum ) ;
+                  /// compatiable with old version
+                  contextID = ossPack32To64( inResult.insertedNum(),
+                                             inResult.ignoredNum() +
+                                             inResult.replacedNum() ) ;
                }
+               break ;
             }
-               break ;
             case MSG_BS_DELETE_REQ :
+            {
+               MsgOpDelete *pDeleteMsg = ( MsgOpDelete* )msg ;
+               utilDeleteResult delResult ;
                isNeedRollback = TRUE ;
-               rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
+               rc = _onDeleteReqMsg ( handle, msg, delResult ) ;
+               delResult.toBSON( _retBuilder ) ;
+               if ( FLG_DELETE_RETURNNUM & pDeleteMsg->flags )
+               {
+                  /// compatiable with old version
+                  contextID = delResult.deletedNum() ;
+               }
                break ;
+            }
             case MSG_BS_QUERY_REQ :
                rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
                                      contextID, isNeedRollback ) ;
@@ -671,27 +699,48 @@ namespace engine
                                        contextID, isNeedRollback ) ;
                break ;
             case MSG_BS_TRANS_UPDATE_REQ :
+            {
+               MsgOpUpdate *pUpdateMsg = ( MsgOpUpdate* )msg ;
+               utilUpdateResult upResult ;
                isNeedRollback = TRUE ;
-               rc = _onTransUpdateReqMsg ( handle, msg, contextID ) ;
+               rc = _onTransUpdateReqMsg ( handle, msg, upResult ) ;
+               upResult.toBSON( _retBuilder ) ;
+               if ( FLG_UPDATE_RETURNNUM & pUpdateMsg->flags )
+               {
+                  /// compatiable with old version
+                  contextID = upResult.modifiedNum() ;
+               }
                break ;
+            }
             case MSG_BS_TRANS_INSERT_REQ :
             {
-               INT32 insertedNum = 0 ;
-               INT32 ignoredNum = 0 ;
                MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
+               utilInsertResult inResult ;
                isNeedRollback = TRUE ;
-               rc = _onTransInsertReqMsg ( handle, msg, insertedNum,
-                                           ignoredNum ) ;
+               rc = _onTransInsertReqMsg ( handle, msg, inResult ) ;
+               inResult.toBSON( _retBuilder ) ;
                if ( pInsert->flags & FLG_INSERT_RETURNNUM )
                {
-                  contextID = ossPack32To64( insertedNum, ignoredNum ) ;
+                  contextID = ossPack32To64( inResult.insertedNum(),
+                                             inResult.ignoredNum() +
+                                             inResult.replacedNum() ) ;
                }
+               break ;
             }
-               break ;
             case MSG_BS_TRANS_DELETE_REQ :
+            {
+               MsgOpDelete *pDeleteMsg = ( MsgOpDelete* )msg ;
+               utilDeleteResult delResult ;
                isNeedRollback = TRUE ;
-               rc = _onTransDeleteReqMsg ( handle, msg, contextID ) ;
+               rc = _onTransDeleteReqMsg ( handle, msg, delResult ) ;
+               delResult.toBSON( _retBuilder ) ;
+               if ( FLG_DELETE_RETURNNUM & pDeleteMsg->flags )
+               {
+                  /// compatiable with old version
+                  contextID = delResult.deletedNum() ;
+               }
                break ;
+            }
             case MSG_BS_TRANS_QUERY_REQ :
                rc = _onTransQueryReqMsg( handle, msg, buffObj, startFrom,
                                          contextID, isNeedRollback ) ;
@@ -915,21 +964,29 @@ namespace engine
 
          if ( 0 == buffObj.size() )
          {
-            _errorInfo = utilGetErrorBson( rc, _pEDUCB->getInfo(
-                                           EDU_INFO_ERROR ),
-                                           inTrans ? &hasRollbacked : NULL ) ;
-            buffObj = rtnContextBuf( _errorInfo.objdata(),
-                                     _errorInfo.objsize(),
-                                     1 ) ;
+            utilBuildErrorBson( _retBuilder, rc,
+                                _pEDUCB->getInfo( EDU_INFO_ERROR ),
+                                inTrans ? &hasRollbacked : NULL ) ;
+            _errorInfo = _retBuilder.done() ;
+            buffObj = rtnContextBuf( _errorInfo ) ;
          }
          else
          {
             SDB_ASSERT( 1 == buffObj.recordNum(), "Record number must be 1" ) ;
+
             BSONObj errObj( buffObj.data() ) ;
-            BSONObjBuilder errBuilder( errObj.objsize() * 2 ) ;
-            errBuilder.appendElements( errObj ) ;
-            errBuilder.appendBool( FIELD_NAME_ROLLBACK, hasRollbacked ) ;
-            buffObj = rtnContextBuf( errObj ) ;
+            BSONObjIterator itr( errObj ) ;
+            while( itr.more() )
+            {
+               BSONElement e = itr.next() ;
+               if ( 0 != ossStrcmp( FIELD_NAME_ROLLBACK, e.fieldName() ) )
+               {
+                  _retBuilder.append( e ) ;
+               }
+            }
+            _retBuilder.appendBool( FIELD_NAME_ROLLBACK, hasRollbacked ) ;
+            _errorInfo = _retBuilder.done() ;
+            buffObj = rtnContextBuf( _errorInfo ) ;
          }
 
          if ( rc != SDB_DMS_EOC )
@@ -951,6 +1008,12 @@ namespace engine
                startFrom = _primaryID.columns.nodeID ;
             }
          }
+      }
+      /// succeed and has result info
+      else if ( !_retBuilder.isEmpty() && 0 == buffObj.size() )
+      {
+         _errorInfo = _retBuilder.done() ;
+         buffObj = rtnContextBuf( _errorInfo ) ;
       }
 
       if ( _inPacketLevel > 0 )
@@ -1207,7 +1270,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONUPREQMSG, "_clsShdSession::_onUpdateReqMsg" )
    INT32 _clsShdSession::_onUpdateReqMsg( NET_HANDLE handle, MsgHeader * msg,
-                                          INT64 &updateNum )
+                                          utilUpdateResult &upResult )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONUPREQMSG ) ;
       PD_LOG ( PDDEBUG, "session[%s] _onUpdateReqMsg", sessionName() ) ;
@@ -1309,9 +1372,8 @@ namespace engine
 
          if ( _isMainCL )
          {
-            rc = _updateToMainCL( options, updator, _pEDUCB, _pDmsCB, _pDpsCB, w,
-                                  ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
-                                  &updateNum : NULL ) ;
+            rc = _updateToMainCL( options, updator, _pEDUCB, _pDmsCB, _pDpsCB,
+                                  w, upResult ) ;
          }
          else
          {
@@ -1320,14 +1382,13 @@ namespace engine
             rc = _getShardingKey( pCollectionName, shardingKey ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to get sharding key of collection[%s], rc=%d",
-                       pCollectionName, rc ) ;
+               PD_LOG( PDERROR, "Failed to get sharding key of "
+                       "collection[%s], rc=%d", pCollectionName, rc ) ;
                goto error ;
             }
 
             rc = rtnUpdate( options, updator, _pEDUCB, _pDmsCB, _pDpsCB, w,
-                            ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
-                            &updateNum : NULL, NULL,
+                            &upResult,
                             shardingKey.isEmpty() ? NULL : &shardingKey ) ;
          }
       }
@@ -1348,8 +1409,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONINSTREQMSG, "_clsShdSession::_onInsertReqMsg" )
    INT32 _clsShdSession::_onInsertReqMsg ( NET_HANDLE handle, MsgHeader * msg,
-                                           INT32 &insertedNum,
-                                           INT32 &ignoredNum )
+                                           utilInsertResult &inResult )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onInsertReqMsg", sessionName() ) ;
 
@@ -1424,14 +1484,14 @@ namespace engine
          if ( _isMainCL )
          {
             rc = _insertToMainCL( insertor, recordNum, flags, w,
-                                  insertedNum, ignoredNum );
+                                  inResult );
          }
          else
          {
 
             rc = rtnInsert ( pCollectionName, insertor, recordNum, flags,
                              _pEDUCB, _pDmsCB, _pDpsCB, w,
-                             &insertedNum, &ignoredNum ) ;
+                             &inResult ) ;
          }
       }
       catch ( std::exception &e )
@@ -1451,7 +1511,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONDELREQMSG, "_clsShdSession::_onDeleteReqMsg" )
    INT32 _clsShdSession::_onDeleteReqMsg ( NET_HANDLE handle, MsgHeader * msg,
-                                           INT64 &delNum )
+                                           utilDeleteResult &delResult )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onDeleteReqMsg", sessionName() ) ;
 
@@ -1528,14 +1588,12 @@ namespace engine
          if ( _isMainCL )
          {
             rc = _deleteToMainCL( options, _pEDUCB, _pDmsCB, _pDpsCB, w,
-                                  ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
-                                  &delNum : NULL ) ;
+                                  delResult ) ;
          }
          else
          {
             rc = rtnDelete( options, _pEDUCB, _pDmsCB, _pDpsCB, w,
-                            ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
-                            &delNum : NULL ) ;
+                            &delResult ) ;
          }
       }
       catch ( std::exception &e )
@@ -2226,37 +2284,36 @@ namespace engine
 
    INT32 _clsShdSession::_onTransUpdateReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
-                                                INT64 &updateNum )
+                                                utilUpdateResult &upResult )
    {
       INT32 rc = _checkTransAutoCommit( msg ) ;
       if ( SDB_OK == rc )
       {
-         rc = _onUpdateReqMsg( handle, msg, updateNum ) ;
+         rc = _onUpdateReqMsg( handle, msg, upResult ) ;
       }
       return rc ;
    }
 
    INT32 _clsShdSession::_onTransInsertReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
-                                                INT32 &insertedNum,
-                                                INT32 &ignoredNum )
+                                                utilInsertResult &inResult )
    {
       INT32 rc = _checkTransAutoCommit( msg ) ;
       if ( SDB_OK == rc )
       {
-         rc = _onInsertReqMsg( handle, msg, insertedNum, ignoredNum ) ;
+         rc = _onInsertReqMsg( handle, msg, inResult ) ;
       }
       return rc ;
    }
 
    INT32 _clsShdSession::_onTransDeleteReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
-                                                INT64 &delNum )
+                                                utilDeleteResult &delResult )
    {
       INT32 rc = _checkTransAutoCommit( msg ) ;
       if ( SDB_OK == rc )
       {
-         rc = _onDeleteReqMsg( handle, msg, delNum ) ;
+         rc = _onDeleteReqMsg( handle, msg, delResult ) ;
       }
       return rc ;
    }
@@ -2437,8 +2494,7 @@ namespace engine
 
    INT32 _clsShdSession::_insertToMainCL( BSONObj &objs, INT32 objNum,
                                           INT32 flags, INT16 w,
-                                          INT32 &insertedNum,
-                                          INT32 &ignoredNum )
+                                          utilInsertResult &inResult )
    {
       INT32 rc = SDB_OK ;
       ossValuePtr pCurPos = 0 ;
@@ -2480,14 +2536,10 @@ namespace engine
             insertor = BSONObj( (CHAR *)pCurPos ) ;
 
       retryInsert:
-            INT32 subInsertNum = 0 ;
-            INT32 subIgnoredNum = 0 ;
             /// insert to sub collection
             rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags,
                              _pEDUCB, _pDmsCB, _pDpsCB, w,
-                             &subInsertNum, &subIgnoredNum ) ;
-            insertedNum += subInsertNum ;
-            ignoredNum += subIgnoredNum ;
+                             &inResult ) ;
             if ( rc )
             {
                rc = _processSubCLResult( rc, pSubCLName, _pCollectionName ) ;
@@ -2961,15 +3013,13 @@ namespace engine
                                           SDB_DMSCB *pDmsCB,
                                           SDB_DPSCB *pDpsCB,
                                           INT16 w,
-                                          INT64 *pUpdateNum )
+                                          utilUpdateResult &upResult )
    {
       INT32 rc = SDB_OK;
       BSONObj boNewMatcher;
       const CHAR *pSubCLName = NULL ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCLSet ;
-      INT64 updateNum = 0 ;
-      INT64 numTmp = 0 ;
 
       rc = _getSubCLList( options.getQuery(), options.getCLFullName(),
                           boNewMatcher, strSubCLList ) ;
@@ -2982,7 +3032,6 @@ namespace engine
       iterSubCLSet = strSubCLList.begin() ;
       while( iterSubCLSet != strSubCLList.end() )
       {
-         numTmp = 0 ;
          pSubCLName = (*iterSubCLSet).c_str() ;
          BSONObj shardingKey ;
 
@@ -2999,8 +3048,9 @@ namespace engine
             goto error ;
          }
 
-         rc = rtnUpdate( subCLOptions, updator, cb, pDmsCB, pDpsCB, w, &numTmp,
-                         NULL, shardingKey.isEmpty() ? NULL : &shardingKey ) ;
+         rc = rtnUpdate( subCLOptions, updator, cb, pDmsCB, pDpsCB, w,
+                         &upResult,
+                         shardingKey.isEmpty() ? NULL : &shardingKey ) ;
          if ( rc )
          {
             rc = _processSubCLResult( rc, pSubCLName, options.getCLFullName() ) ;
@@ -3019,15 +3069,10 @@ namespace engine
          }
 
          /// continue next sub collection
-         updateNum += numTmp ;
          ++iterSubCLSet ;
       }
 
    done:
-      if ( pUpdateNum )
-      {
-         *pUpdateNum = updateNum;
-      }
       return rc ;
    error:
       goto done ;
@@ -3038,15 +3083,13 @@ namespace engine
                                            SDB_DMSCB *dmsCB,
                                            SDB_DPSCB *dpsCB,
                                            INT16 w,
-                                           INT64 *pDelNum )
+                                           utilDeleteResult &delResult )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSubCLName = NULL ;
       BSONObj boNewMatcher ;
       vector< string > strSubCLList ;
       vector< string >::iterator iterSubCLSet ;
-      INT64 delNum = 0 ;
-      INT64 numTmp = 0 ;
 
       rc = _getSubCLList( options.getQuery(), options.getCLFullName(),
                           boNewMatcher, strSubCLList ) ;
@@ -3058,7 +3101,6 @@ namespace engine
       iterSubCLSet = strSubCLList.begin() ;
       while( iterSubCLSet != strSubCLList.end() )
       {
-         numTmp = 0 ;
          pSubCLName = (*iterSubCLSet).c_str() ;
 
          // Construct query options for sub-collection
@@ -3066,7 +3108,7 @@ namespace engine
          subCLOptions.setMainCLQuery( options.getCLFullName(), pSubCLName ) ;
          subCLOptions.setQuery( boNewMatcher ) ;
 
-         rc = rtnDelete( subCLOptions, cb, dmsCB, dpsCB, w, &numTmp ) ;
+         rc = rtnDelete( subCLOptions, cb, dmsCB, dpsCB, w, &delResult ) ;
          if ( rc )
          {
             rc = _processSubCLResult( rc, pSubCLName, options.getCLFullName() ) ;
@@ -3085,15 +3127,10 @@ namespace engine
          }
 
          /// continue next sub collection
-         delNum += numTmp;
          ++iterSubCLSet;
       }
 
    done:
-      if ( pDelNum )
-      {
-         *pDelNum = delNum;
-      }
       return rc;
    error:
       goto done;

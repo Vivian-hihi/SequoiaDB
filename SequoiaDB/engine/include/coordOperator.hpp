@@ -249,6 +249,8 @@ namespace engine
       void clear() ;
    } ;
 
+   #define COORD_RET_BUILDER_DFT_SIZE           ( 128 )
+
    /*
       _coordOperator define
    */

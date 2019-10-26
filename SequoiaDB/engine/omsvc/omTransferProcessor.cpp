@@ -133,7 +133,8 @@ namespace engine
                                            rtnContextBuf &contextBuff,
                                            INT64 &contextID,
                                            BOOLEAN &needReply,
-                                           BOOLEAN &needRollback )
+                                           BOOLEAN &needRollback,
+                                           BSONObjBuilder &builder )
    {
       pmdKRCB *pKrcb       = pmdGetKRCB();
       SDB_RTNCB *pRtncb    = pKrcb->getRTNCB();

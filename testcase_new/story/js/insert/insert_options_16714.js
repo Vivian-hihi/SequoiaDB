@@ -40,7 +40,7 @@ function main( db )
 	//test c : ReturnOID is false
 	var obj3 = {"name": "Tom","age": "20"};
 	var returnOidNull = cl.insert(obj3,{ReturnOID:false});
-	if(returnOidNull !== undefined)
+	if(returnOidNull !== undefined && returnOidNull.toObj()["_id"] !== undefined )
 	{
 		throw "obj3 verify failed, ReturnOID is false but returned oid is not undefined";
 	}

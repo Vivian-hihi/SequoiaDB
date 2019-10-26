@@ -33,48 +33,126 @@
 #define UTIL_INSERT_RESULT_HPP_
 
 #include "oss.hpp"
-#include "../bson/bson.hpp"
 #include "utilResult.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
-   class utilIdxDupErrInfo : public SDBObject
+   /*
+      utilIdxDupErrAssit define
+   */
+   class utilIdxDupErrAssit : public SDBObject
    {
    public:
-      utilIdxDupErrInfo( BSONObj errorInfo ) ;
-      ~utilIdxDupErrInfo() ;
+      utilIdxDupErrAssit( const BSONObj &idxKeyPattern,
+                          const BSONObj &idxValue ) ;
+      ~utilIdxDupErrAssit() ;
 
-   public:
-      const CHAR *getIdxName() ;
-      BSONObj getIdxValue() ;
-      BSONObj getIdxMatcher() ;
-      BSONObj getIdxPattern() ;
+      INT32    getIdxMatcher( BSONObj &idxMatcher ) ;
 
    private:
-      BSONObj _errInfo ;
+      BSONObj        _idxKeyPattern ;
+      BSONObj        _idxValue ;
+
    } ;
 
+   /*
+      utilInsertResult define
+   */
    class utilInsertResult : public utilWriteResult
    {
    public:
       utilInsertResult() ;
-      ~utilInsertResult() ;
+      virtual ~utilInsertResult() ;
+
+      virtual void      reset() ;
+      virtual void      toBSON( BSONObjBuilder &builder ) const ;
+
+      void              resetDupInfo() ;
 
    public:
-      void enableDupErrInfo() ;
-      void disableDupErrInfo() ;
-      BOOLEAN isEnaleDupErrInfo() ;
-      void setDupErrInfo( const CHAR *idxName, const BSONObj& idxKeyPattern,
-                          const BSONObj& idxValueWithoutKey ) ;
+      void     enableDupErrInfo() ;
+      void     disableDupErrInfo() ;
+      BOOLEAN  isEnaleDupErrInfo() const ;
 
-      BSONObj getErrorInfo() ;
+      INT32    setDupErrInfo( const CHAR *idxName,
+                              const BSONObj& idxKeyPattern,
+                              const BSONObj& idxValueWithoutKey ) ;
+
+      void     setDupErrInfo( const utilInsertResult *pResult ) ;
+
+      ossPoolString        getIdxName() const ;
+      BSONObj              getIdxKeyPattern() const ;
+      BSONObj              getIdxValue() const ;
+
+      UINT32               insertedNum() const { return _insertedNum ; }
+      UINT32               ignoredNum() const { return _ignoredNum ; }
+      UINT32               replacedNum() const { return _replacedNum ; }
+
+      void                 incInsertedNum() { ++_insertedNum ; }
+      void                 incIngoreOrRepaceNum( BOOLEAN isReplace = FALSE,
+                                                 UINT32 step = 1 ) ;
 
    private:
-      BOOLEAN _isEnableDupErrInfo ;
-      BSONObj _errInfo ;
+      BOOLEAN              _isEnableDupErrInfo ;
+
+      ossPoolString        _idxName ;
+      BSONObj              _idxKeyPattern ;
+      BSONObj              _idxValue ;
+
+      UINT32               _insertedNum ;
+      UINT32               _ignoredNum ;
+      UINT32               _replacedNum ;
    } ;
+
+   /*
+      utilUpdateResult define
+   */
+   class utilUpdateResult : public utilInsertResult
+   {
+   public:
+      utilUpdateResult() ;
+      virtual ~utilUpdateResult() ;
+
+      virtual void      reset() ;
+      virtual void      toBSON( BSONObjBuilder &builder ) const ;
+
+   public:
+      UINT64               updateNum() const { return _updatedNum ; }
+      UINT64               modifiedNum() const { return _modifiedNum ; }
+
+      void                 incUpdatedNum() { ++_updatedNum ; }
+      void                 incModifiedNum() { ++_modifiedNum ; }
+
+   private:
+      UINT64               _updatedNum ;
+      UINT64               _modifiedNum ;
+
+   } ;
+
+   /*
+      utilDeleteResult define
+   */
+   class utilDeleteResult : public utilWriteResult
+   {
+   public:
+      utilDeleteResult() ;
+      virtual ~utilDeleteResult() ;
+
+      virtual void      reset() ;
+      virtual void      toBSON( BSONObjBuilder &builder ) const ;
+
+      UINT64            deletedNum() const { return _deletedNum ; }
+
+      void              incDeletedNum() { ++_deletedNum ; }
+
+   private:
+      UINT64               _deletedNum ;
+
+   } ;
+
 }
 
 #endif /* UTIL_INSERT_RESULT_HPP_ */

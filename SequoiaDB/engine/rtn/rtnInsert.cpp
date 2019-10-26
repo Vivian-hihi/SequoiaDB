@@ -56,8 +56,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT1, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
-                     INT32 flags, pmdEDUCB *cb, INT32 *pInsertedNum,
-                     INT32 *pIgnoredNum )
+                     INT32 flags, pmdEDUCB *cb, utilInsertResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNINSERT1 ) ;
@@ -71,7 +70,7 @@ namespace engine
          dpsCB = NULL ;
       }
       rc = rtnInsert ( pCollectionName, objs, objNum, flags, cb,
-                       dmsCB, dpsCB, 1, pInsertedNum ) ;
+                       dmsCB, dpsCB, 1, pResult ) ;
       PD_TRACE_EXITRC ( SDB_RTNINSERT1, rc ) ;
 
       return rc ;
@@ -80,8 +79,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT2, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                     SDB_DPSCB *dpsCB, INT16 w, INT32 *pInsertedNum,
-                     INT32 *pIgnoredNum )
+                     SDB_DPSCB *dpsCB, INT16 w, utilInsertResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNINSERT2 ) ;
@@ -92,11 +90,15 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
       UINT32 insertCount = 0 ;
-      INT32  ignoredNum = 0 ;
-      INT32  allInsertNum = 0 ;
       BOOLEAN writable = FALSE ;
-
       ossValuePtr pDataPos = 0 ;
+      utilInsertResult inTmpResult ;
+
+      if ( !pResult )
+      {
+         pResult = &inTmpResult ;
+      }
+
       rc = dmsCB->writable( cb ) ;
       if ( rc )
       {
@@ -121,6 +123,11 @@ namespace engine
          goto error ;
       }
 
+      if ( FLG_INSERT_CONTONDUP & flags )
+      {
+         pResult->disableDupErrInfo() ;
+      }
+
       pDataPos = (ossValuePtr)objs.objdata() ;
       for ( INT32 i = 0 ; i < objNum ; ++i )
       {
@@ -134,75 +141,81 @@ namespace engine
             }
          }
 
+         pResult->resetDupInfo() ;
+
          try
          {
-            utilInsertResult insertResult ;
-            if ( FLG_INSERT_REPLACEONDUP & flags )
-            {
-               insertResult.enableDupErrInfo() ;
-            }
-
             BSONObj record ( (const CHAR*)pDataPos ) ;
             rc = su->insertRecord ( pCollectionShortName, record, cb, dpsCB,
-                                    TRUE, TRUE, NULL, -1, &insertResult ) ;
+                                    TRUE, TRUE, NULL, -1, pResult ) ;
             // check return code
-            if ( rc )
+            if ( SDB_IXM_DUP_KEY == rc )
             {
-               if ( SDB_IXM_DUP_KEY == rc && FLG_INSERT_CONTONDUP & flags )
+               if ( FLG_INSERT_CONTONDUP & flags )
                {
+                  pResult->incIngoreOrRepaceNum( FALSE );
+                  pResult->resetDupInfo() ;
                   // skip duplicate key error
-                  ++ignoredNum ;
                   rc = SDB_OK ;
                }
-               else if ( SDB_IXM_DUP_KEY == rc
-                         && FLG_INSERT_REPLACEONDUP & flags )
+               else if ( FLG_INSERT_REPLACEONDUP & flags )
                {
                   // update record when duplicate key error
-                  INT32 rcTmp = SDB_OK ;
-                  INT64 updateNum = 0 ;
-                  INT32 insertNum = 0 ;
                   BSONObj hint ;
                   BSONObj updator ;
-                  utilIdxDupErrInfo dupErrInfo( insertResult.getErrorInfo() ) ;
+                  BSONObj matcher ;
+                  utilUpdateResult upResult ;
 
-                  BSONObj matcher = dupErrInfo.getIdxMatcher() ;
-                  PD_LOG( PDDEBUG, "DupInfo: %s", matcher.toString().c_str() ) ;
-                  if ( matcher.isEmpty() )
+                  utilIdxDupErrAssit dupErrAssit( pResult->getIdxKeyPattern(),
+                                                  pResult->getIdxValue() ) ;
+
+                  rc = dupErrAssit.getIdxMatcher( matcher ) ;
+                  if ( rc )
                   {
-                     PD_LOG ( PDERROR, "matcher is empty, insert record %s into"
-                              " collection: %s, rc: %d",
-                              record.toString().c_str(), pCollectionName, rc ) ;
                      goto error ;
                   }
+                  pResult->resetDupInfo() ;
 
                   updator = generateUpdator( record ) ;
-                  rcTmp = rtnUpdate( pCollectionName, matcher, updator, hint,
-                                     0, cb, &updateNum, &insertNum ) ;
-                  if ( SDB_OK != rcTmp )
+                  rc = rtnUpdate( pCollectionName, matcher, updator, hint,
+                                  0, cb, &upResult ) ;
+                  if ( rc )
                   {
-                     PD_LOG( PDERROR, "Try to update record: %s when insert "
-                             "exists duplicate error. collection: %s, "
-                             "rcTmp:%d, rc: %d",
+                     pResult->setDupErrInfo( &upResult ) ;
+
+                     PD_LOG( PDERROR, "Failed to update record[%s] in "
+                             "collection[%s] when insert exists duplicate key, "
+                             "rc: %d",
                              record.toString().c_str(), pCollectionName,
-                             rcTmp, rc ) ;
+                             rc ) ;
                      goto error ;
                   }
                   else
                   {
                      // update success.
-                     ++ignoredNum ;
+                     pResult->incIngoreOrRepaceNum( TRUE,
+                                                    upResult.updateNum() ) ;
                      rc = SDB_OK ;
                   }
                }
                else
                {
                   PD_LOG ( PDERROR, "Failed to insert record %s into "
-                           "collection: %s, rc: %d", record.toString().c_str(),
+                           "collection: %s, rc: %d",
+                           record.toPoolString().c_str(),
                            pCollectionName, rc ) ;
                   goto error ;
                }
             }
-            ++allInsertNum ;
+            else if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to insert record %s into "
+                       "collection: %s, rc: %d",
+                       record.toPoolString().c_str(),
+                       pCollectionName, rc ) ;
+               goto error ;
+            }
+
             pDataPos += ossAlignX ( (ossValuePtr)record.objsize(), 4 ) ;
          }
          catch ( std::exception &e )
@@ -215,14 +228,6 @@ namespace engine
       }
 
    done :
-      if ( pInsertedNum )
-      {
-         *pInsertedNum = allInsertNum ;
-      }
-      if ( pIgnoredNum )
-      {
-         *pIgnoredNum = ignoredNum ;
-      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;

@@ -602,7 +602,7 @@ namespace engine
             BSONObj newMatch ;
             BSONObj modifier ;   //new change obj
             const CHAR *fullname = NULL ;
-            INT64 updateNum = 0 ;
+            utilUpdateResult upResult ;
             UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
             rc = dpsRecord2Update( (CHAR *)recordHeader,
                                    &fullname,
@@ -619,11 +619,11 @@ namespace engine
             {
                rc = rtnUpdate( fullname, match, modifier,
                                s_replayHint, 0, eduCB, _dmsCB, _dpsCB, 1,
-                               &updateNum, NULL, NULL, logWriteMod ) ;
+                               &upResult, NULL, logWriteMod ) ;
             }
             if ( SDB_OK == rc )
             {
-               if ( updateNum > 0 )
+               if ( upResult.updateNum() > 0 )
                {
                   if ( incCount )
                   {
@@ -632,7 +632,8 @@ namespace engine
                }
                else if ( _isReplSync )
                {
-                  SDB_ASSERT( updateNum > 0, "Updated number must > 0" ) ;
+                  SDB_ASSERT( upResult.updateNum() > 0,
+                              "Updated number must > 0" ) ;
                }
             }
             break ;
@@ -641,7 +642,7 @@ namespace engine
          {
             const CHAR *fullname = NULL ;
             BSONObj obj ;
-            INT64 deleteNum = 0 ;
+            utilDeleteResult delResult ;
             rc = dpsRecord2Delete( (CHAR *)recordHeader,
                                    &fullname,
                                    obj ) ;
@@ -664,12 +665,12 @@ namespace engine
                   selectorBuilder.append( idEle ) ;
                   BSONObj selector = selectorBuilder.obj() ;
                   rc = rtnDelete( fullname, selector, s_replayHint, 0, eduCB,
-                                  _dmsCB, _dpsCB, 1, &deleteNum ) ;
+                                  _dmsCB, _dpsCB, 1, &delResult ) ;
                }
             }
             if ( SDB_OK == rc )
             {
-               if ( deleteNum > 0 )
+               if ( delResult.deletedNum() > 0 )
                {
                   if ( incCount )
                   {
@@ -678,7 +679,8 @@ namespace engine
                }
                else if ( _isReplSync )
                {
-                  SDB_ASSERT( deleteNum > 0, "Deleted number must > 0" ) ;
+                  SDB_ASSERT( delResult.deletedNum() > 0,
+                              "Deleted number must > 0" ) ;
                }
             }
             break ;
@@ -1394,7 +1396,7 @@ namespace engine
             if ( !modifier.isEmpty() )
             {
                rc = rtnUpdate( fullname, newMatch, modifier, s_replayHint,
-                               0, eduCB, _dmsCB, _dpsCB, 1, NULL, NULL,
+                               0, eduCB, _dmsCB, _dpsCB, 1, NULL,
                                NULL, logWriteMod ) ;
             }
             break ;
@@ -1925,22 +1927,22 @@ namespace engine
       /// delete disk
       if ( !deleteSelector.isEmpty() )
       {
-         INT64 deletedNumber = 0 ;
+         utilDeleteResult delResult ;
          rc = rtnDelete( clFullName, deleteSelector, s_replayHint, 0, eduCB,
-                         _dmsCB, _dpsCB, 1, &deletedNumber ) ;
+                         _dmsCB, _dpsCB, 1, &delResult ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to delete record to rollback "
                       "LSN [%llu], rc: %d", recordHeader->_lsn, rc ) ;
 
-         if ( deletedNumber == 0 )
+         if ( delResult.deletedNum() == 0 )
          {
             PD_LOG( PDWARNING, "Rollback insert record of LSN [%llu], "
                     "no record is rollbacked", recordHeader->_lsn ) ;
          }
-         else if ( deletedNumber > 1 )
+         else if ( delResult.deletedNum() > 1 )
          {
             PD_LOG( PDWARNING, "Rollback insert record of LSN [%llu], "
                     "more than one record [%lld] are rollbacked",
-                    recordHeader->_lsn, deletedNumber ) ;
+                    recordHeader->_lsn, delResult.deletedNum() ) ;
          }
       }
       else if ( pendingRemoved )
@@ -2059,21 +2061,21 @@ namespace engine
          // if pending key does not exist, perform the original update rollback
          // and if pending value is not empty, means a incorrect record exists
          // in DMS, so we need to update the
-         INT64 updatedNumber = 0 ;
+         utilUpdateResult upResult ;
          rc = rtnUpdate( clFullName, newMatch, oldObject,
                          s_replayHint, 0, eduCB, _dmsCB, _dpsCB, 1,
-                         &updatedNumber, NULL, NULL, logWriteMod ) ;
+                         &upResult, NULL, logWriteMod ) ;
 
-         if ( updatedNumber == 0 )
+         if ( upResult.updateNum() == 0 )
          {
             PD_LOG( PDWARNING, "Rollback update record of LSN [%llu], "
                     "no record is rollbacked", recordHeader->_lsn ) ;
          }
-         else if ( updatedNumber > 1 )
+         else if ( upResult.updateNum() > 1 )
          {
             PD_LOG( PDWARNING, "Rollback update record of LSN [%llu], "
                     "more than one record [%lld] are rollbacked",
-                    recordHeader->_lsn, updatedNumber ) ;
+                    recordHeader->_lsn, upResult.updateNum() ) ;
          }
       }
       if ( SDB_IXM_DUP_KEY == rc )

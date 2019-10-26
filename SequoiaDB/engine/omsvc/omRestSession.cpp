@@ -552,6 +552,7 @@ namespace engine
       INT32 rtnCode   = SDB_OK ;
       INT64 contextID = -1 ;
       rtnContextBuf contextBuff ;
+      BSONObjBuilder retBuilder( PMD_RETBUILDER_DFT_SIZE ) ;
       BOOLEAN needReplay = FALSE ;
       BOOLEAN needRollback = FALSE ;
       MsgHeader *msg = NULL ;
@@ -607,31 +608,28 @@ namespace engine
       }
 
       rtnCode = transProcessor->processMsg( msg, contextBuff, contextID, 
-                                            needReplay, needRollback ) ;
+                                            needReplay, needRollback,
+                                            retBuilder ) ;
       if ( rtnCode )
       {
          BSONObj tmp ;
-         BSONObjBuilder builder ;
 
-         if ( contextBuff.recordNum() > 0 )
+         if ( 0 == contextBuff.size() )
          {
-            BSONObj errorInfo( contextBuff.data() ) ;
-
-            if ( !errorInfo.hasField( OM_REST_RES_RETCODE ) )
-            {
-               builder.append( OM_REST_RES_RETCODE, rtnCode ) ;
-            }
-
-            builder.appendElements( errorInfo ) ;
+            utilBuildErrorBson( retBuilder, rtnCode,
+                                _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
          }
          else
          {
-            BSONObj errorInfo = utilGetErrorBson( rtnCode,
-                                          _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
-            builder.appendElements( errorInfo ) ;
+            BSONObj errorInfo( contextBuff.data() ) ;
+            if ( !errorInfo.hasField( OM_REST_RES_RETCODE ) )
+            {
+               retBuilder.append( OM_REST_RES_RETCODE, rtnCode ) ;
+            }
+            retBuilder.appendElements( errorInfo ) ;
          }
 
-         tmp = builder.obj() ;
+         tmp = retBuilder.obj() ;
 
          response.setOPResult( rtnCode, tmp ) ;
 
@@ -645,10 +643,10 @@ namespace engine
          goto error ;
       }
 
-
-      //set result
+      /// succeed and has result info
       {
-         BSONObj tmp = BSON( OM_REST_RES_RETCODE << rtnCode ) ;
+         retBuilder.append( OM_REST_RES_RETCODE, rtnCode ) ;
+         BSONObj tmp = retBuilder.obj() ;
 
          response.setOPResult( rtnCode, tmp ) ;
       }

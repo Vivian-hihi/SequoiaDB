@@ -36,26 +36,69 @@
 *******************************************************************************/
 
 #include "utilInsertResult.hpp"
+#include "msgDef.hpp"
+#include "pd.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
-   static const CHAR *UTIL_INSERT_DUP_ERR          = "DupErrorInfo" ;
-   static const CHAR *UTIL_INSERT_DUP_ERR_MATCHER  = "Matcher" ;
-   static const CHAR *UTIL_INSERT_DUP_ERR_IDXNAME  = "IndexName" ;
-   static const CHAR *UTIL_INSERT_DUP_ERR_IDXVALUE = "IndexValue" ;
-   static const CHAR *UTIL_INSERT_DUP_ERR_PATTERN  = "Pattern" ;
 
-   static const BSONObj INEXIST_OP                 = BSON( "$exists" << 0 ) ;
-
+   /*
+      utilInsertResult implement
+   */
    utilInsertResult::utilInsertResult()
    {
-      _isEnableDupErrInfo = FALSE ;
+      _isEnableDupErrInfo = TRUE ;
+      _insertedNum = 0 ;
+      _ignoredNum = 0 ;
+      _replacedNum = 0 ;
    }
 
    utilInsertResult::~utilInsertResult()
    {
+   }
+
+   void utilInsertResult::reset()
+   {
+      utilWriteResult::reset() ;
+      resetDupInfo() ;
+
+      _insertedNum = 0 ;
+      _ignoredNum = 0 ;
+      _replacedNum = 0 ;
+   }
+
+   void utilInsertResult::toBSON( BSONObjBuilder &builder ) const
+   {
+      try
+      {
+         /// stat info
+         builder.append( FIELD_NAME_INSERT_NUM, (INT32)_insertedNum ) ;
+         builder.append( FIELD_NAME_IGNORE_NUM, (INT32)_ignoredNum ) ;
+         builder.append( FIELD_NAME_REPLACE_NUM, (INT32)_replacedNum ) ;
+
+         /*
+         /// dup error info
+         if ( !_idxValue.isEmpty() && !_idxName.empty() &&
+              !_idxKeyPattern.isEmpty() )
+         {
+            builder.append( FIELD_NAME_INDEXNAME, _idxName ) ;
+            builder.append( FIELD_NAME_INDEX, _idxKeyPattern ) ;
+         } */
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Insert result to BSON occur exception: %s",
+                 e.what() ) ;
+      }
+   }
+
+   void utilInsertResult::resetDupInfo()
+   {
+      _idxName.clear() ;
+      _idxKeyPattern = BSONObj() ;
+      _idxValue = BSONObj() ;
    }
 
    void utilInsertResult::enableDupErrInfo()
@@ -68,99 +111,218 @@ namespace engine
       _isEnableDupErrInfo = FALSE ;
    }
 
-   BOOLEAN utilInsertResult::isEnaleDupErrInfo()
+   BOOLEAN utilInsertResult::isEnaleDupErrInfo() const
    {
       return _isEnableDupErrInfo ;
    }
 
-   void utilInsertResult::setDupErrInfo( const CHAR *idxName,
-                                         const BSONObj& idxKeyPattern,
-                                         const BSONObj& idxValueWithoutKey )
+   ossPoolString utilInsertResult::getIdxName() const
    {
+      return _idxName ;
+   }
+
+   BSONObj utilInsertResult::getIdxKeyPattern() const
+   {
+      return _idxKeyPattern ;
+   }
+
+   BSONObj utilInsertResult::getIdxValue() const
+   {
+      return _idxValue ;
+   }
+
+   INT32 utilInsertResult::setDupErrInfo( const CHAR *idxName,
+                                          const BSONObj& idxKeyPattern,
+                                          const BSONObj& idxValueWithoutKey )
+   {
+      INT32 rc = SDB_OK ;
+
       if ( !isEnaleDupErrInfo() )
       {
-         return ;
+         goto done ;
       }
 
+      try
       {
-         BSONObjIterator keyIter( idxKeyPattern ) ;
-         BSONObjIterator valueIter( idxValueWithoutKey ) ;
-         BSONObjBuilder builder ;
-         BSONObjBuilder dupInfoBuilder(
-            builder.subarrayStart( UTIL_INSERT_DUP_ERR )) ;
+         _idxName = idxName ;
+         _idxKeyPattern = idxKeyPattern.getOwned() ;
+         _idxValue = idxValueWithoutKey.getOwned() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Build insert error info occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
 
-         /*
-           idxKeyPattern + idxValueWithoutKey = > matcher
-           idxKeyPattern: {"a":1, "b":1}
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
-           idxValueWithoutKey: {"":10, "":10}
-           => matcher: {"a":10, "b":10}
+   void utilInsertResult::setDupErrInfo( const utilInsertResult *pResult )
+   {
+      _idxName = pResult->getIdxName() ;
+      _idxKeyPattern = pResult->getIdxKeyPattern() ;
+      _idxValue = pResult->getIdxValue() ;
+   }
 
-           idxValueWithoutKey: {"":10, "":{$undefined:1}}
-           => matcher: {"a":10, "b":{$exists:0}}
-         */
-         BSONObjBuilder matcherBuilder(
-            dupInfoBuilder.subobjStart( UTIL_INSERT_DUP_ERR_MATCHER ) ) ;
-         while ( keyIter.more() && valueIter.more() )
+   void utilInsertResult::incIngoreOrRepaceNum( BOOLEAN isReplace,
+                                                UINT32 step )
+   {
+      if ( isReplace )
+      {
+         _replacedNum += step ;
+      }
+      else
+      {
+         _ignoredNum += step ;
+      }
+   }
+
+   /*
+      utilUpdateResult implement
+   */
+   utilUpdateResult::utilUpdateResult()
+   {
+      _updatedNum = 0 ;
+      _modifiedNum = 0 ;
+   }
+
+   utilUpdateResult::~utilUpdateResult()
+   {
+   }
+
+   void utilUpdateResult::reset()
+   {
+      utilInsertResult::reset() ;
+      _updatedNum = 0 ;
+      _modifiedNum = 0 ;
+   }
+
+   void utilUpdateResult::toBSON( BSONObjBuilder &builder ) const
+   {
+      try
+      {
+         builder.append( FIELD_NAME_UPDATE_NUM, (INT64)_updatedNum ) ;
+         builder.append( FIELD_NAME_MODIFIED_NUM, (INT64)_modifiedNum ) ;
+         builder.append( FIELD_NAME_INSERT_NUM, (INT32)insertedNum() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Update result to BSON occur exception: %s",
+                 e.what() ) ;
+      }
+   }
+
+   /*
+      utilDeleteResult implement
+   */
+   utilDeleteResult::utilDeleteResult()
+   {
+      _deletedNum = 0 ;
+   }
+
+   utilDeleteResult::~utilDeleteResult()
+   {
+   }
+
+   void utilDeleteResult::reset()
+   {
+      utilWriteResult::reset() ;
+      _deletedNum = 0 ;
+   }
+
+   void utilDeleteResult::toBSON( BSONObjBuilder &builder ) const
+   {
+      try
+      {
+         builder.append( FIELD_NAME_DELETE_NUM, (INT64)_deletedNum ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Delete result to BSON occur exception: %s",
+                 e.what() ) ;
+      }
+   }
+
+   /*
+      utilIdxDupErrAssit implement
+   */
+   utilIdxDupErrAssit::utilIdxDupErrAssit( const BSONObj &idxKeyPattern,
+                                           const BSONObj &idxValue )
+   {
+      _idxKeyPattern = idxKeyPattern ;
+      _idxValue = idxValue ;
+   }
+
+   utilIdxDupErrAssit::~utilIdxDupErrAssit()
+   {
+   }
+
+   INT32 utilIdxDupErrAssit::getIdxMatcher( BSONObj &idxMatcher )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _idxKeyPattern.isEmpty() || _idxValue.isEmpty() )
+      {
+         PD_LOG( PDERROR, "Key pattern or value is empty" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder builder( _idxKeyPattern.objsize() +
+                                 _idxValue.objsize() ) ;
+
+         BSONObjIterator itrK( _idxKeyPattern ) ;
+         BSONObjIterator itrV( _idxValue ) ;
+
+         while( itrK.more() && itrV.more() )
          {
-            BSONElement ke = keyIter.next() ;
-            BSONElement ve = valueIter.next() ;
-            if ( ve.type() != Undefined )
+            BSONElement eK = itrK.next() ;
+            BSONElement eV = itrV.next() ;
+
+            if ( Undefined != eV.type() )
             {
-               matcherBuilder.appendAs( ve, ke.fieldName() );
+               builder.appendAs( eV, eK.fieldName() ) ;
             }
             else
             {
-               matcherBuilder.append( ke.fieldName(), INEXIST_OP ) ;
+               BSONObjBuilder sub( builder.subobjStart( eK.fieldName() ) ) ;
+               sub.append( "$exists", 0 ) ;
+               sub.done() ;
             }
          }
-         matcherBuilder.done() ;
-         dupInfoBuilder.done() ;
 
-         builder.append( UTIL_INSERT_DUP_ERR_IDXNAME, idxName ) ;
-         builder.append( UTIL_INSERT_DUP_ERR_PATTERN, idxKeyPattern ) ;
+         if ( itrK.more() || itrV.more() )
+         {
+            PD_LOG( PDERROR, "Key value[%s] is not match the key pattern[%s]",
+                    _idxValue.toString().c_str(),
+                    _idxKeyPattern.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
 
-         _errInfo = builder.obj() ;
+         idxMatcher = builder.obj() ;
       }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Builder index matcher occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
-   BSONObj utilInsertResult::getErrorInfo()
-   {
-      return _errInfo ;
-   }
-
-   utilIdxDupErrInfo::utilIdxDupErrInfo( BSONObj errorInfo )
-   {
-      _errInfo = errorInfo ;
-   }
-
-   utilIdxDupErrInfo::~utilIdxDupErrInfo()
-   {
-   }
-
-   const CHAR *utilIdxDupErrInfo::getIdxName()
-   {
-      BSONObj dupErrInfo = _errInfo.getObjectField( UTIL_INSERT_DUP_ERR ) ;
-      return dupErrInfo.getStringField( UTIL_INSERT_DUP_ERR_IDXNAME ) ;
-   }
-
-   BSONObj utilIdxDupErrInfo::getIdxMatcher()
-   {
-      BSONObj dupErrInfo = _errInfo.getObjectField( UTIL_INSERT_DUP_ERR ) ;
-      return dupErrInfo.getObjectField( UTIL_INSERT_DUP_ERR_MATCHER ) ;
-   }
-
-   BSONObj utilIdxDupErrInfo::getIdxValue()
-   {
-      BSONObj dupErrInfo = _errInfo.getObjectField( UTIL_INSERT_DUP_ERR ) ;
-      return dupErrInfo.getObjectField( UTIL_INSERT_DUP_ERR_IDXVALUE ) ;
-   }
-
-   BSONObj utilIdxDupErrInfo::getIdxPattern()
-   {
-      BSONObj dupErrInfo = _errInfo.getObjectField( UTIL_INSERT_DUP_ERR ) ;
-      return dupErrInfo.getObjectField( UTIL_INSERT_DUP_ERR_PATTERN ) ;
-   }
 }
 
 

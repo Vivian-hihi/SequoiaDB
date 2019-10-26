@@ -2027,7 +2027,7 @@ namespace engine
          BSONObj selector = BSON( OM_HOST_FIELD_NAME << hostName ) ;
          BSONObj updator  = BSON( "$set" << BSON( OM_HOST_FIELD_IP << IP ) ) ;
          BSONObj hint ;
-         INT64 updateNum  = 0 ;
+         utilUpdateResult upResult ;
 
          string clusterName ;
          rc = _getClusterName( hostName, clusterName ) ;
@@ -2039,13 +2039,14 @@ namespace engine
          }
 
          rc = rtnUpdate( OM_CS_DEPLOY_CL_HOST, selector, updator, hint, 0,
-                         pmdGetThreadEDUCB(), &updateNum ) ;
-         if ( SDB_OK != rc || 0 == updateNum )
+                         pmdGetThreadEDUCB(), &upResult ) ;
+         if ( SDB_OK != rc || 0 == upResult.updateNum() )
          {
             PD_LOG_MSG( PDERROR, "update host failed:table=%s,updateNum=%d,"
                         "host=%s,updator=%s,selector=%s,rc=%d",
-                        OM_CS_DEPLOY_CL_HOST, updateNum, hostName.c_str(),
-                        updator.toString().c_str(), selector.toString().c_str(),
+                        OM_CS_DEPLOY_CL_HOST, upResult.updateNum(),
+                        hostName.c_str(), updator.toString().c_str(),
+                        selector.toString().c_str(),
                         rc ) ;
             goto error ;
          }
@@ -5625,14 +5626,15 @@ checking system firewall for blocked ports" ) ;
       BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
       BSONObj updator  = BSON( "$set" << builder.obj() ) ;
       BSONObj hint ;
-      INT64 updateNum = 0 ;
+      utilUpdateResult upResult ;
+
       rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0,
-                      pmdGetThreadEDUCB(), &updateNum ) ;
-      if ( SDB_OK != rc || 0 == updateNum )
+                      pmdGetThreadEDUCB(), &upResult ) ;
+      if ( SDB_OK != rc || 0 == upResult.updateNum() )
       {
          PD_LOG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
                  OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
-                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID,
+                 OM_CS_DEPLOY_CL_TASKINFO, upResult.updateNum(), taskID,
                  updator.toString().c_str(), selector.toString().c_str(), rc ) ;
          goto error ;
       }
@@ -9706,14 +9708,15 @@ checking system firewall for blocked ports" ) ;
       BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
       BSONObj updator  = BSON( "$set" << builder.obj() ) ;
       BSONObj hint ;
-      INT64 updateNum = 0 ;
+      utilUpdateResult upResult ;
+
       rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0,
-                      pmdGetThreadEDUCB(), &updateNum ) ;
-      if ( SDB_OK != rc || 0 == updateNum )
+                      pmdGetThreadEDUCB(), &upResult ) ;
+      if ( SDB_OK != rc || 0 == upResult.updateNum() )
       {
          PD_LOG_MSG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
                      OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
-                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID,
+                 OM_CS_DEPLOY_CL_TASKINFO, upResult.updateNum(), taskID,
                  updator.toString().c_str(), selector.toString().c_str(), rc ) ;
          goto error ;
       }

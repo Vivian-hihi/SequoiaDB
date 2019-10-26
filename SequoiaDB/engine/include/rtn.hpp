@@ -50,6 +50,7 @@
 #include "pmd.hpp"
 #include "pd.hpp"
 #include "utilRenameLogger.hpp"
+#include "utilInsertResult.hpp"
 
 #define RTN_SORT_INDEX_NAME "sort"
 using namespace bson;
@@ -106,15 +107,13 @@ namespace engine
 
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb,
-                     INT32 *pInsertedNum = NULL,
-                     INT32 *pIgnoredNum = NULL ) ;
+                     utilInsertResult *pResult = NULL ) ;
 
    // for insert/update/delete, if dpsCB = NULL, that means we don't log
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                      SDB_DPSCB *dpsCB, INT16 w = 1,
-                     INT32 *pInsertedNum = NULL,
-                     INT32 *pIgnoredNum = NULL ) ;
+                     utilInsertResult *pResult = NULL ) ;
 
    // for replaying insert operation. Only one record will be inserted in one
    // call.
@@ -124,23 +123,23 @@ namespace engine
 
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
-                     pmdEDUCB *cb, INT64 *pUpdateNum = NULL,
-                     INT32 *pInsertNum = NULL,
+                     pmdEDUCB *cb,
+                     utilUpdateResult *pResult = NULL,
                      const BSONObj *shardingKey = NULL,
                      UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
 
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w = 1, INT64 *pUpdateNum = NULL,
-                     INT32 *pInsertNum = NULL,
+                     INT16 w = 1,
+                     utilUpdateResult *pResult = NULL,
                      const BSONObj *shardingKey = NULL,
                      UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
 
    INT32 rtnUpdate ( rtnQueryOptions &options, const BSONObj &updator,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w = 1, INT64 *pUpdateNum = NULL,
-                     INT32 *pInsertNum = NULL,
+                     INT16 w = 1,
+                     utilUpdateResult *pResult = NULL,
                      const BSONObj *shardingKey = NULL,
                      UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
 
@@ -148,16 +147,16 @@ namespace engine
 
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
-                     INT64 *pDelNum = NULL ) ;
+                     utilDeleteResult *pResult = NULL ) ;
 
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w = 1,
-                     INT64 *pDelNum = NULL ) ;
+                     utilDeleteResult *pResult = NULL ) ;
 
    INT32 rtnDelete ( rtnQueryOptions &options, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w = 1,
-                     INT64 *pDelNum = NULL ) ;
+                     utilDeleteResult *pResult = NULL ) ;
 
    INT32 rtnTraversalDelete ( const CHAR *pCollectionName,
                               const BSONObj &key,

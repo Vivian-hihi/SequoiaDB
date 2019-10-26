@@ -43,16 +43,22 @@ Collection
 
 ##返回值##
 
-成功：
+* 成功返回详细结果信息（BSONObj 对象），结构如下：
 
-* 当用户通过 `flag` 参数的 SDB_INSERT_RETURN_ID 选项或者 `options` 参数的 ReturnOID 选项要求数据库返回记录的“_id”字段的内容时，情况如下：
-	
+ ```lang-json
+ {
+		InsertedNum : <INT32>  成功插入的记录数，包含替代和忽略的记录,
+		IgnoredNum  : <INT32>  因重复键冲突被忽略的记录数,
+		ReplacedNum : <INT32>  因重复键冲突被替代的记录数
+ }
+ ```
+
+  当用户开启 `flag` 参数的 SDB_INSERT_RETURN_ID 选项或者 `options` 参数的 ReturnOID 选项时，详细结果信息中还包含 "_id" 字段，情况如下：
+
 	* 单条插入：直接返回插入记录的“_id”字段的内容。
 	* 批量插入：以数组的方式返回插入记录的“_id”字段的内容。
 
-* 其它情况，成功插入无返回值。
-
-失败：抛出异常。
+* 出错抛异常。
 
 ##错误##
 
@@ -119,7 +125,11 @@ v1.0及以上版本。
    		"_id": {
      		"$oid": "5becec3d6404b9295a63caca"
    		}
+		"InsertedNum": 1,
+  		"IgnoredNum": 0,
+  		"ReplacedNum": 0
  	}
+	>
  	> db.foo.bar.insert([{a:1}, {b:1}], {ReturnOID:true, ContOnDup:true})
  	{
    		"_id": [
@@ -130,5 +140,8 @@ v1.0及以上版本。
        			"$oid": "5bececdf6404b9295a63cacc"
      		}
    		]
+		"InsertedNum": 2,
+		"IgnoredNum": 0,
+		"ReplacedNum": 0
  	}
  	```

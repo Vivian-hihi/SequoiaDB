@@ -223,6 +223,7 @@ namespace engine
       BOOLEAN _initialized ;
       MODIFIER_VEC _modifierElements ;
       UINT32  _modifierBits ;
+      BOOLEAN _hasModified ;
 
       _ixmIndexKeyGen *_shardingKeyGen ;
 
@@ -387,6 +388,7 @@ namespace engine
          _dollarList    = NULL ;
          _ignoreTypeError = TRUE ;
          _modifierBits  = 0 ;
+         _hasModified   = FALSE ;
          _isReplace     = FALSE ;
          _isReplaceID   = FALSE ;
          _shardingKeyGen = NULL ;
@@ -419,7 +421,8 @@ namespace engine
                      BSONObj *dstChange = NULL,
                      BSONObj *srcShardingKey = NULL,
                      BSONObj *dstShardingKey = NULL ) ;
-      OSS_INLINE BOOLEAN isInitialized () { return _initialized ; }
+      OSS_INLINE BOOLEAN isInitialized () const { return _initialized ; }
+      OSS_INLINE BOOLEAN hasModified() const { return _hasModified ; }
    } ;
    typedef _mthModifier mthModifier ;
 

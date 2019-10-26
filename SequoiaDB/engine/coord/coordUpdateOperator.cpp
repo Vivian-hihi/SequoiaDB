@@ -55,12 +55,15 @@ using namespace bson;
 namespace engine
 {
 
+   static BSONObj s_nullUpdator = BSON( "$null" << BSON( "null" << 1 ) ) ;
+
    /*
       _coordUpdateOperator implement
    */
    _coordUpdateOperator::_coordUpdateOperator()
    {
       _insertedNum = 0 ;
+      _modifiedNum = 0 ;
 
       const static string s_name( "Update" ) ;
       setName( s_name ) ;
@@ -81,14 +84,20 @@ namespace engine
       return _insertedNum ;
    }
 
-   UINT32 _coordUpdateOperator::getUpdatedNum() const
+   UINT64 _coordUpdateOperator::getUpdatedNum() const
    {
       return _recvNum ;
+   }
+
+   UINT64 _coordUpdateOperator::getModifiedNum() const
+   {
+      return _modifiedNum ;
    }
 
    void _coordUpdateOperator::clearStat()
    {
       _insertedNum = 0 ;
+      _modifiedNum = 0 ;
       _recvNum = 0 ;
    }
 
@@ -116,6 +125,8 @@ namespace engine
       CHAR *pMsgBuff = NULL ;
       INT32 buffLen  = 0 ;
       MsgOpUpdate *pNewUpdate          = NULL ;
+
+      BSONObjBuilder retBuilder( COORD_RET_BUILDER_DFT_SIZE ) ;
 
       // fill default-reply(update success)
       MsgOpUpdate *pUpdate             = (MsgOpUpdate *)pMsg ;
@@ -168,9 +179,9 @@ namespace engine
                              "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
                              "Flag:0x%08x(%u)",
                              pCollectionName,
-                             boSelector.toString().c_str(),
-                             boUpdator.toString().c_str(),
-                             boHint.toString().c_str(),
+                             boSelector.toPoolString().c_str(),
+                             boUpdator.toPoolString().c_str(),
+                             boHint.toPoolString().c_str(),
                              oldFlag, oldFlag ) ;
 
          MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
@@ -239,7 +250,7 @@ namespace engine
             {
                if ( flag & FLG_UPDATE_UPSERT )
                {
-                  tmpNewObj = BSON( "$null" << BSON( "null" << 1 ) ) ;
+                  tmpNewObj = s_nullUpdator ;
                }
                else if ( !cataSel.hasUpdated() )
                {
@@ -323,23 +334,35 @@ namespace engine
       }
 
    done:
-      if ( oldFlag & FLG_UPDATE_RETURNNUM )
-      {
-         /// insertedNum(hi) + updatedNum(lo)
-         contextID = ossPack32To64( _insertedNum, _recvNum ) ;
-      }
       if ( pCollectionName )
       {
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
-                      "UpdatedNum:%llu, InsertedNum:%u, Matcher:%s, "
-                      "Updator:%s, Hint:%s, Flag:0x%08x(%u)",
-                      _recvNum, _insertedNum,
-                      boSelector.toString().c_str(),
-                      boUpdator.toString().c_str(),
-                      boHint.toString().c_str(), oldFlag, oldFlag ) ;
+                      "UpdatedNum:%llu, ModifiedNum:%llu, InsertedNum:%u, "
+                      "Matcher:%s, Updator:%s, Hint:%s, Flag:0x%08x(%u)",
+                      _recvNum, _modifiedNum, _insertedNum,
+                      boSelector.toPoolString().c_str(),
+                      boUpdator.toPoolString().c_str(),
+                      boHint.toPoolString().c_str(),
+                      oldFlag, oldFlag ) ;
       }
+
+      if ( buf )
+      {
+         if ( oldFlag & FLG_UPDATE_RETURNNUM )
+         {
+            retBuilder.append( FIELD_NAME_UPDATE_NUM, (INT64)_recvNum ) ;
+            retBuilder.append( FIELD_NAME_MODIFIED_NUM, (INT64)_modifiedNum ) ;
+            retBuilder.append( FIELD_NAME_INSERT_NUM, (INT32)_insertedNum ) ;
+         }
+
+         if ( !retBuilder.isEmpty() )
+         {
+            *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
+      }
+
       if ( pMsgBuff )
       {
          cb->releaseBuff( pMsgBuff ) ;
@@ -347,10 +370,9 @@ namespace engine
       PD_TRACE_EXITRC ( COORD_UPDATEOPR_EXEC, rc ) ;
       return rc ;
    error:
-      if ( buf && nokRC.size() > 0 )
+      if ( buf && ( nokRC.size() > 0 || rc ) )
       {
-         *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
-                                                   cb, &nokRC ) ) ;
+         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
       }
       goto done ;
    }
@@ -426,12 +448,12 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Insert record[%s] failed because of "
                        "the record is already exist when upsert",
-                       target.toString().c_str() ) ;
+                       target.toPoolString().c_str() ) ;
             }
             else
             {
                PD_LOG( PDERROR, "Insert record[%s] failed when upsert, rc: %d",
-                       target.toString().c_str(), rc ) ;
+                       target.toPoolString().c_str(), rc ) ;
             }
             goto error ;
          }
@@ -593,6 +615,65 @@ namespace engine
       babSubCL.done() ;
 
       return builder.obj() ;
+   }
+
+   void _coordUpdateOperator::_onNodeReply( INT32 processType,
+                                            MsgOpReply *pReply,
+                                            pmdEDUCB *cb,
+                                            coordSendMsgIn &inMsg )
+   {
+      BOOLEAN inProcessed = FALSE ;
+      BOOLEAN upProcessed = FALSE ;
+      BOOLEAN moProcessed = FALSE ;
+
+      if ( pReply->header.messageLength > (INT32)sizeof( MsgOpReply ) &&
+           1 == pReply->numReturned )
+      {
+         try
+         {
+            BSONObj objResult( ( const CHAR* )pReply + sizeof( MsgOpReply ) ) ;
+            BSONObjIterator itr( objResult ) ;
+            while ( itr.more() )
+            {
+               BSONElement e = itr.next() ;
+               if ( !moProcessed &&
+                    0 == ossStrcmp( e.fieldName(), FIELD_NAME_MODIFIED_NUM ) )
+               {
+                  moProcessed = TRUE ;
+                  _modifiedNum += (UINT64)e.numberLong() ;
+               }
+               else if ( !upProcessed &&
+                         0 == ossStrcmp( e.fieldName(),
+                                         FIELD_NAME_UPDATE_NUM ) )
+               {
+                  upProcessed = TRUE ;
+                  _recvNum += (UINT64)e.numberLong() ;
+               }
+               else if ( !inProcessed &&
+                         0 == ossStrcmp( e.fieldName(),
+                                         FIELD_NAME_INSERT_NUM ) )
+               {
+                  inProcessed = TRUE ;
+                  _insertedNum += (UINT32)e.numberInt() ;
+               }
+
+               if ( inProcessed && upProcessed && moProcessed )
+               {
+                  break ;
+               }
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Extract update result exception: %s",
+                    e.what() ) ;
+         }
+      }
+
+      if ( !upProcessed )
+      {
+         _coordTransOperator::_onNodeReply( processType, pReply, cb, inMsg ) ;
+      }
    }
 
 }

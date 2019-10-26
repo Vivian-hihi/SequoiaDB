@@ -69,7 +69,8 @@ namespace engine
                                                    rtnContextBuf &contextBuff,
                                                    INT64 &contextID,
                                                    BOOLEAN &needReply,
-                                                   BOOLEAN &needRollback ) = 0 ;
+                                                   BOOLEAN &needRollback,
+                                                   BSONObjBuilder &builder ) = 0 ;
 
          virtual INT32                 doRollback() = 0 ;
          virtual INT32                 doCommit() = 0 ;

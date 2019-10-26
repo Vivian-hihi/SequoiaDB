@@ -118,15 +118,11 @@ accesses) is the same as if
         _BufBuilder& operator=( const _BufBuilder& );
         myAllocator al;
     public:
-        _BufBuilder(int initsize = 512) : size(initsize) {
-            if ( size > 0 ) {
-                data = (char *) al.Malloc(size);
-                if( data == 0 )
-                    msgasserted(10000, "out of memory BufBuilder");
+        _BufBuilder(int initsize = 512) : _initsize(initsize), size(0) {
+            if ( _initsize <= 0 ) {
+               _initsize = 256 ;
             }
-            else {
-                data = 0;
-            }
+            data = 0;
             reservedBytes = 0;
             l = 0;
         }
@@ -255,12 +251,19 @@ accesses) is the same as if
         /* "slow" portion of 'grow()'  */
         void NOINLINE_DECL grow_reallocate(int minSize) {
             int a = size * 2;
-            if ( a == 0 )
-                a = 512;
-            if ( minSize > a )
+            if ( a == 0 ) {
+                a = minSize <= _initsize ? _initsize : minSize ;
+            }
+            if ( minSize > a ) {
                 a = minSize + 16 * 1024;
-            if ( a > BufferMaxSize )
-                msgasserted(13548, "BufBuilder grow() > 64MB");
+            }
+            if ( a > BufferMaxSize ) {
+                if ( minSize > BufferMaxSize ) {
+                    msgasserted(13548, "BufBuilder grow() > 64MB") ;
+                } else {
+                    a = BufferMaxSize ;
+                }
+            }
             char * newData = (char *) al.Realloc(data, a);
             if ( !newData )
                msgasserted(13550, "BufBuilder grow() out-of-memory");
@@ -270,6 +273,7 @@ accesses) is the same as if
 
         char *data;
         int l;
+        int _initsize ;
         int size;
         // eagerly grow_reallocate to keep this many bytes of spare room.
         int reservedBytes;

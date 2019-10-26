@@ -58,6 +58,7 @@ namespace engine
 
 #define ADD_CHG_FIELD_VALUE( builder, fieldName, value, strChg ) \
       do { \
+         _hasModified = TRUE ; \
          if ( builder ) \
          { \
             BSONObjBuilder subBuilder ( builder->subobjStart ( strChg ) ) ; \
@@ -68,6 +69,7 @@ namespace engine
 
 #define ADD_CHG_ELEMENT( builder, ele, strChg ) \
    do { \
+      _hasModified = TRUE ; \
       if ( builder ) \
       { \
          BSONObjBuilder subBuilder ( builder->subobjStart ( strChg ) ) ; \
@@ -78,6 +80,7 @@ namespace engine
 
 #define ADD_CHG_OBJECT( builder, obj, name ) \
    do { \
+      _hasModified = TRUE ; \
       if ( builder ) \
       { \
          builder->append( name, obj ) ; \
@@ -87,6 +90,7 @@ namespace engine
 
 #define ADD_CHG_ELEMENT_AS( builder, ele, eleFieldName, strChg ) \
    do { \
+      _hasModified = TRUE ; \
       if ( builder ) \
       { \
          BSONObjBuilder subBuilder ( builder->subobjStart ( strChg ) ) ; \
@@ -97,6 +101,7 @@ namespace engine
 
 #define ADD_CHG_UNSET_FIELD( builder, fieldName ) \
    do { \
+      _hasModified = TRUE ; \
       if ( builder ) \
       { \
          BSONObjBuilder subBuilder ( builder->subobjStart ( "$unset" ) ) ; \
@@ -107,6 +112,7 @@ namespace engine
 
 #define ADD_CHG_NUMBER( builder, fieldName, value, strChg ) \
    do { \
+      _hasModified = TRUE ; \
       if ( builder ) \
       { \
          BSONObjBuilder subBuilder ( builder->subobjStart ( strChg ) ) ; \
@@ -117,6 +123,7 @@ namespace engine
 
 #define ADD_CHG_ARRAY_OBJ( builder, obj, objFiledName, strChg ) \
    do { \
+      _hasModified = TRUE ; \
       if ( builder ) \
       { \
          BSONObjBuilder subBuilder ( builder->subobjStart ( strChg ) ) ; \
@@ -1389,6 +1396,8 @@ namespace engine
 
       SDB_ASSERT( beginPos >= 0, "beginPos must >= 0" ) ;
 
+      _hasModified = TRUE ;
+
       if ( beginPos <= 10 && endPos < 0 )
       {
          // The "pos" field will take a space of the record, so if it is a small
@@ -1458,6 +1467,8 @@ namespace engine
 
       SDB_ASSERT( beginPos >= 0, "beginPos must >= 0" ) ;
 
+      _hasModified = TRUE ;
+
       if ( beginPos == 0 )
       {
          ADD_CHG_ARRAY_OBJ( builder, arr, pRoot, "$set" ) ;
@@ -1483,6 +1494,8 @@ namespace engine
       }
 
       SDB_ASSERT( beginPos >= 0, "beginPos must >= 0" ) ;
+
+      _hasModified = TRUE ;
 
       if ( beginPos == 0 )
       {
@@ -2723,7 +2736,7 @@ namespace engine
          if ( _keepKeys.size() > 0 )
          {
             BSONObjBuilder redoKBuilder ;
-            set<string>::iterator it = _keepKeys.begin() ;
+            ossPoolSet<string>::iterator it = _keepKeys.begin() ;
             while ( it != _keepKeys.end() )
             {
                // make sure $keep is after $replace
@@ -3075,6 +3088,8 @@ namespace engine
 
       CHAR *pBuffer = NULL ;
       INT32 bufferSize = 0 ;
+
+      _hasModified = FALSE ;
 
       if ( _dollarList && _dollarList->size() > 0 )
       {

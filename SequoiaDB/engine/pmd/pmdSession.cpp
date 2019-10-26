@@ -356,6 +356,8 @@ namespace engine
       BOOLEAN isAutoCommit = FALSE ;
       BOOLEAN isDoCommit   = FALSE ;
 
+      BSONObjBuilder retBuilder( PMD_RETBUILDER_DFT_SIZE ) ;
+
       PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG ) ;
 
       UINT64 bTime = ossGetCurrentMicroseconds() ;
@@ -372,7 +374,8 @@ namespace engine
          rc = _processor->processMsg( msg, contextBuff,
                                       _replyHeader.contextID,
                                       _needReply,
-                                      needRollback ) ;
+                                      needRollback,
+                                      retBuilder ) ;
          pBody     = contextBuff.data() ;
          bodyLen   = contextBuff.size() ;
          _replyHeader.numReturned = contextBuff.recordNum() ;
@@ -411,14 +414,39 @@ namespace engine
 
       if ( _needReply )
       {
-         if ( rc && bodyLen == 0 )
+         if ( rc )
          {
-            _errorInfo = utilGetErrorBson( rc, _pEDUCB->getInfo(
-                                           EDU_INFO_ERROR ) ) ;
+            if ( 0 == bodyLen )
+            {
+               utilBuildErrorBson( retBuilder, rc,
+                                   _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
+               _errorInfo = retBuilder.obj() ;
+               pBody = _errorInfo.objdata() ;
+               bodyLen = (INT32)_errorInfo.objsize() ;
+               _replyHeader.numReturned = 1 ;
+            }
+            else
+            {
+               SDB_ASSERT( 1 == _replyHeader.numReturned,
+                           "Record number must be 1" ) ;
+
+               BSONObj errObj( pBody ) ;
+               retBuilder.appendElements( errObj ) ;
+               _errorInfo = retBuilder.obj() ;
+               pBody = _errorInfo.objdata() ;
+               bodyLen = (INT32)_errorInfo.objsize() ;
+               _replyHeader.numReturned = 1 ;
+            }
+         }
+         /// succeed and has result info
+         else if ( !retBuilder.isEmpty() && 0 == bodyLen )
+         {
+            _errorInfo = retBuilder.obj() ;
             pBody = _errorInfo.objdata() ;
             bodyLen = (INT32)_errorInfo.objsize() ;
             _replyHeader.numReturned = 1 ;
          }
+
          // fill the return opCode
          _replyHeader.header.opCode = MAKE_REPLY_TYPE(opCode) ;
          _replyHeader.flags         = rc ;

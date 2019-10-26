@@ -1011,7 +1011,8 @@ namespace engine
                               SDB_DPSCB *dpscb,
                               _mthModifier &modifier,
                               BSONObj* newRecord = NULL,
-                              IDmsOprHandler *pHandler = NULL ) ;
+                              IDmsOprHandler *pHandler = NULL,
+                              utilUpdateResult *pResult = NULL ) ;
 
          virtual INT32 popRecord( dmsMBContext *context,
                                   INT64 targetID,

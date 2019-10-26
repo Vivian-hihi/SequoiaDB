@@ -57,6 +57,12 @@ namespace engine
                                _pmdEDUCB *cb,
                                ROUTE_RC_MAP *pFailedNodes ) ;
 
+   void    coordBuildErrorObj( coordResource *pResource,
+                               INT32 &flag,
+                               _pmdEDUCB *cb,
+                               ROUTE_RC_MAP *pFailedNodes,
+                               BSONObjBuilder &builder ) ;
+
    INT32 coordGetGroupsFromObj( const BSONObj &obj,
                                 CoordGroupList &groupLst ) ;
 

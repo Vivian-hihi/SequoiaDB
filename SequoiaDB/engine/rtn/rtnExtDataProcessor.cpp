@@ -299,8 +299,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSINSERT ) ;
       BSONObj recordObj ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       rc = _prepareInsert( inputObj, recordObj ) ;
@@ -316,7 +314,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
-                      cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
+                      cb, dmsCB, dpsCB, 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Insert record into collection[ %s ] "
                    "failed[ %d ]", _cappedCLName, rc ) ;
 
@@ -336,8 +334,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSDELETE ) ;
       BSONObj recordObj ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       rc = _prepareDelete( inputObj, recordObj ) ;
@@ -353,7 +349,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
-                      cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
+                      cb, dmsCB, dpsCB, 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Insert record insert collection[ %s ] "
                    "failed[ %d ]", _cappedCLName, rc ) ;
 
@@ -374,8 +370,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSUPDATE ) ;
       BSONObj recordObj ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       rc = _prepareUpdate( originalObj, newObj, recordObj ) ;
@@ -392,7 +386,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
-                      cb, dmsCB, dpsCB, 1, &insertNum, &ignoreNum ) ;
+                      cb, dmsCB, dpsCB, 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Insert record insert collection[ %s ] "
                    "failed[ %d ]", _cappedCLName, rc ) ;
 
@@ -1149,8 +1143,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj record ;
-      INT32 insertNum = 0 ;
-      INT32 ignoreNum = 0 ;
       BSONElement dummyEle = BSONElement() ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
@@ -1158,7 +1150,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Prepare rebuild record failed[%d]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, record, 1, 0, cb, dmsCB,
-                      dpsCB, 1, &insertNum, &ignoreNum ) ;
+                      dpsCB, 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Insert rebuild record into collection[%s] "
                    "failed[%d]", _cappedCLName, rc ) ;
    done:

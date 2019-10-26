@@ -55,7 +55,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE1, "rtnUpdate" )
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
-                     pmdEDUCB *cb, INT64 *pUpdateNum, INT32 *pInsertNum,
+                     pmdEDUCB *cb, utilUpdateResult *pResult,
                      const BSONObj *shardingKey, UINT32 logWriteMod )
    {
       INT32 rc = SDB_OK ;
@@ -70,8 +70,7 @@ namespace engine
       }
 
       rc = rtnUpdate ( pCollectionName, matcher, updator, hint, flags, cb,
-                       dmsCB, dpsCB, 1, pUpdateNum, pInsertNum, shardingKey,
-                       logWriteMod ) ;
+                       dmsCB, dpsCB, 1, pResult, shardingKey, logWriteMod ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNUPDATE1, rc ) ;
       return rc ;
@@ -81,7 +80,7 @@ namespace engine
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum,
+                     INT16 w, utilUpdateResult *pResult,
                      const BSONObj *shardingKey, UINT32 logWriteMod )
    {
       INT32 rc = SDB_OK ;
@@ -90,8 +89,8 @@ namespace engine
       // matcher, selector, order, hint, collection, skip, limit, flag
       rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
                                0, -1, flags ) ;
-      rc = rtnUpdate( options, updator, cb, dmsCB, dpsCB, w, pUpdateNum,
-                      pInsertNum, shardingKey, logWriteMod ) ;
+      rc = rtnUpdate( options, updator, cb, dmsCB, dpsCB, w, pResult,
+                      shardingKey, logWriteMod ) ;
       PD_TRACE_EXITRC( SDB_RTNUPDATE2, rc ) ;
       return rc ;
    }
@@ -99,7 +98,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE_OPTIONS, "rtnUpdate" )
    INT32 rtnUpdate ( rtnQueryOptions &options, const BSONObj &updator,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
-                     INT16 w, INT64 *pUpdateNum, INT32 *pInsertNum,
+                     INT16 w, utilUpdateResult *pResult,
                      const BSONObj *shardingKey, UINT32 logWriteMod )
    {
       INT32 rc = SDB_OK ;
@@ -111,8 +110,7 @@ namespace engine
 
       pmdKRCB *krcb                    = pmdGetKRCB() ;
       SDB_RTNCB *rtnCB                 = krcb->getRTNCB() ;
-      SINT64 numUpdatedRecords         = 0 ;
-      INT32  insertNum                 = 0 ;
+      UINT64 numUpdatedRecords         = 0 ;
       dmsStorageUnit *su               = NULL ;
       dmsMBContext   *mbContext        = NULL ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
@@ -254,7 +252,8 @@ namespace engine
                rc = su->data()->updateRecord( mbContext, recordID,
                                               recordDataPtr, cb, dpsCB,
                                               modifier, NULL,
-                                              pScanner->callbackHandler() ) ;
+                                              pScanner->callbackHandler(),
+                                              pResult ) ;
                PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
 
                ++numUpdatedRecords ;
@@ -316,7 +315,7 @@ namespace engine
             }
 
             rc = su->data()->insertRecord( mbContext, target, cb, dpsCB,
-                                           TRUE, TRUE ) ;
+                                           TRUE, TRUE, -1, pResult ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to insert record %s\ninto "
@@ -324,7 +323,6 @@ namespace engine
                         pCollectionShortName ) ;
                goto error ;
             }
-            ++insertNum ;
 
             execEndTime = krcb->getCurTime() ;
             monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
@@ -342,14 +340,6 @@ namespace engine
       }
 
    done :
-      if ( pUpdateNum )
-      {
-         *pUpdateNum = numUpdatedRecords ;
-      }
-      if ( pInsertNum )
-      {
-         *pInsertNum = insertNum ;
-      }
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;

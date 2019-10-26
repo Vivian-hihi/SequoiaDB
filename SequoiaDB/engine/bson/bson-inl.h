@@ -274,6 +274,11 @@ namespace bson {
         _builder = builder;
     }
 
+    inline void BSONObjBuilderValueStream::reset() {
+        _fieldName = 0 ;
+        _subobj.reset() ;
+    }
+
     template<class T>
     inline BSONObjBuilder& BSONObjBuilderValueStream::operator<<( T value ) {
         _builder->append(_fieldName, value);

@@ -1641,7 +1641,7 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       const CHAR *pDomainName = NULL ;
-      INT64 numDeleted        = 0 ;
+      utilDeleteResult delResult ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPDOMAIN ) ;
 
       catCtxLockMgr lockMgr ;
@@ -1702,7 +1702,7 @@ namespace engine
          // attempt to delete from the SYSDOMAINS
          queryObj = BSON ( CAT_DOMAINNAME_NAME << pDomainName ) ;
          rc = rtnDelete ( CAT_DOMAIN_COLLECTION, queryObj,
-                          tempObj, 0, _pEduCB, &numDeleted ) ;
+                          tempObj, 0, _pEduCB, &delResult ) ;
          // if something wrong happened
          if ( rc )
          {
@@ -1712,7 +1712,7 @@ namespace engine
             goto error ;
          }
          // if delete is fine but we didn't find anything
-         if ( 0 == numDeleted )
+         if ( 0 == delResult.deletedNum() )
          {
             PD_LOG ( PDERROR,
                      "Domain [%s] does not exist",

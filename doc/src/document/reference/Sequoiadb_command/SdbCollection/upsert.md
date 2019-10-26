@@ -27,11 +27,18 @@
 >
 > * 目前分区集合上，不支持更新分区键。如果 `KeepShardingKey` 为 true，并且更新规则中带有分区键字段，将会报错-178。
 
-
-
 ##返回值##
+* 成功返回详细结果信息（BSONObj 对象），结构如下：
 
-无返回值，出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。
+ ```lang-json
+ {
+		UpdatedNum  : <INT64>  成功更新的记录数，包括匹配但未发生数据变化的记录,
+		ModifiedNum : <INT64>  成功更新且发生数据变化的记录数,
+		InsertedNum : <INT32>  成功插入的记录数，仅在 upsert 下生效
+ }
+ ```
+
+* 出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。错误信息对象包括详细结果信息。
 
 ##错误##
 
@@ -67,6 +74,13 @@
  ```lang-javascript
  > db.foo.bar.upsert( { $inc: { age: 1 }, $set: { name: "Mike" } } )
  {
+   "UpdatedNum": 2,
+   "ModifiedNum": 2,
+   "InsertedNum": 0
+ }
+ >
+ > db.foo.bar.find()
+ {
       "_id": {
       "$oid": "516a76a1c9565daf06030000"
       },
@@ -81,12 +95,20 @@
       "age": 22,
       "name":"Mike"
  }
+ Return 2 row(s).
  ```
 
 * 选择符合匹配条件的记录，对这些记录按更新规则更新，即设定 rule 和 cond 参数。如下操作使用[$exists](reference/operator/match_operator/exists.md)匹配存在 type 字段的记录，使用[$inc](reference/operator/update_operator/inc.md)将这些记录的 age 字段值加3。在上面给出的两条记录中，都没有 type 字段，此时，upsert 操作会插入一条新的记录，新记录只有 \_id 字段和 age 字段名，\_id 字段值自动生成，而 age 字段值为3。
 
  ```lang-javascript
  > db.foo.bar.upsert( { $inc: { age: 3 } }, { type: { $exists: 1 } } )
+ {
+   "UpdatedNum": 0,
+   "ModifiedNum": 0,
+   "InsertedNum": 1
+ }
+ >
+ > db.foo.bar.find()
  {
       "_id": {
       "$oid": "516a76a1c9565daf06030000"
@@ -108,12 +130,20 @@
       },
       "age": 3
  }
+ Return 3 row(s).
  ```
 
 * 按访问计划更新记录，假设集合中存在指定的索引名 testIndex，此操作等效于使用 update 方法，使用索引名为 testIndex 的索引访问集合 bar 中 age 字段值大于20的记录，将这些记录的 age 字段名加1。
 
  ```lang-javascript
  > db.foo.bar.upsert( { $inc: { age: 1 } }, { age: { $gt: 20 } }, { "": "testIndex" } )
+ {
+   "UpdatedNum": 1,
+   "ModifiedNum": 1,
+   "InsertedNum": 0
+ }
+ >
+ > db.foo.bar.find()
  {
       "_id": {
       "$oid": "516a76a1c9565daf06050000"
@@ -122,6 +152,7 @@
       "age": 23,
       "name":"Mike"
  }
+ Return 1 row(s).
  ```
 
 * 使用setOnInsert更新记录，由于集合 bar 中 age 字段值大于30的记录为空，upsert在做插入操作时向插入的记录中追加字段{"name":"Mike"}。
@@ -129,12 +160,20 @@
  ```lang-javascript
  > db.foo.bar.upsert( { $inc: { age: 1 } }, { age: { $gt: 30 } }, {}, { "name": "Mike" } )
  {
+   "UpdatedNum": 0,
+   "ModifiedNum": 0,
+   "InsertedNum": 1
+ }
+ >
+ > db.foo.bar.find( { "age" : 1, "name": "Mike" } )
+ {
       "_id": {
       "$oid": "516a76a1c9565daf06050000"
       },
       "age":1,
       "name":"Mike"
  } 
+ Return 1 row(s).
  ```
 
 * 分区集合 foo.bar，分区键为 { a: 1 }，含有以下记录
@@ -155,7 +194,11 @@
  
  ```lang-javascript
  > db.foo.bar.upsert( { $set: { a: 9, b: 9 } }, {}, {}, {}, { KeepShardingKey: false } )
- Takes 0.038184s.
+ {
+   "UpdatedNum": 1,
+   "ModifiedNum": 1,
+   "InsertedNum": 0
+ }
  >
  > db.foo.bar.find()
  {
@@ -166,7 +209,6 @@
    "b": 9
  }
  Return 1 row(s).
- Takes 0.006393s.
  ```
  
  指定 KeepShardingKey 参数：保留更新规则中的分区键字段。因为目前不支持更新分区键，所以会报错。
@@ -175,5 +217,4 @@
  > db.foo.bar.upsert( { $set: { a: 9 } }, {}, {}, {}, { KeepShardingKey: true } )
  (nofile):0 uncaught exception: -178
  Sharding key cannot be updated
- Takes 0.002696s.
  ```

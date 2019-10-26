@@ -121,15 +121,20 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 
 /** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
 #define FLG_INSERT_CONTONDUP              0x00000001
-/** The flag represent whether insert return the "_id" field of the record for user */
-#define FLG_INSERT_RETURN_OID             0x00000002
+/** The flag represent whether insert return detail result */
+// #define FLG_INSERT_RETURNNUM              0x00000002
 /** The flag represent replacing the existing record by the new record and continuing when insert hitting index key duplicate error */
 #define FLG_INSERT_REPLACEONDUP           0x00000004
-
-
+/** The flag represent whether insert return the "_id" field of the record for user */
+#define FLG_INSERT_RETURN_OID             0x10000000
 
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
 #define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+/** The flag represent whether update return detail result */
+// #define UPDATE_RETURNNUM                  0x00000004
+
+/** The flag represent whether update return detail result */
+// #define FLG_DELETE_RETURNNUM              0x00000004
 
 /** \fn INT32 initClient ( sdbClientConf* config ) ;
     \brief set client global configuration such as cache strategy to improve performance

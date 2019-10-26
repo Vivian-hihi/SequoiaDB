@@ -65,7 +65,7 @@ function insertSetFlag_ReturnOid( cl )
    } 
    
    var rc = cl.insert( {a:1,b:4}, {ReturnOID:false} );
-   if( null != rc )
+   if( null != rc && rc.toObj()["_id"] != null )
    {
       throw buildException( "checkReturnOid", null, "", "not return oid", "  " + "return oid" );
    } 

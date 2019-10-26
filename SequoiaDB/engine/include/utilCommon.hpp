@@ -96,6 +96,10 @@ namespace engine
    BSONObj        utilGetErrorBson( INT32 flags, const CHAR *detail,
                                     BOOLEAN *pRollback = NULL ) ;
 
+   void           utilBuildErrorBson( BSONObjBuilder &builder,
+                                      INT32 flags, const CHAR *detail,
+                                      BOOLEAN *pRollback = NULL ) ;
+
    /*
       util rc to shell return code
    */

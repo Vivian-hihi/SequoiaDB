@@ -304,6 +304,42 @@ namespace engine
       return FALSE ;
    }
 
+   void utilBuildErrorBson( BSONObjBuilder &builder,
+                            INT32 flags, const CHAR *detail,
+                            BOOLEAN *pRollback )
+   {
+      // check flags
+      if ( flags < -SDB_MAX_ERROR || flags > SDB_MAX_WARNING )
+      {
+         PD_LOG ( PDERROR, "Error code error[rc:%d]", flags ) ;
+         flags = SDB_SYS ;
+      }
+
+      try
+      {
+         builder.append ( OP_ERRNOFIELD, flags ) ;
+         builder.append ( OP_ERRDESP_FIELD, getErrDesp ( flags ) ) ;
+
+         if ( detail )
+         {
+            builder.append ( OP_ERR_DETAIL, detail ) ;
+         }
+         else
+         {
+            builder.append( OP_ERR_DETAIL, "" ) ;
+         }
+         if ( pRollback )
+         {
+            builder.appendBool ( FIELD_NAME_ROLLBACK,
+                                 *pRollback ? TRUE : FALSE ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Build return object failed: %s", e.what() ) ;
+      }
+   }
+
    BSONObj utilGetErrorBson( INT32 flags, const CHAR *detail,
                              BOOLEAN *pRollback )
    {

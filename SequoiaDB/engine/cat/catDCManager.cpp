@@ -1355,7 +1355,7 @@ namespace engine
       }
       else
       {
-         INT64 updateNum = 0 ;
+         utilUpdateResult upResult ;
          string tmpClsName ;
          string tmpBusName ;
          clsDCBaseInfo dcBaseInfo ;
@@ -1381,10 +1381,10 @@ namespace engine
                                     CAT_BASE_TYPE_GLOBAL_STR ) ;
             rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
                             BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB, 1,
-                            &updateNum ) ;
+                            &upResult ) ;
             PD_RC_CHECK( rc, PDERROR, "Update global info[%s] failed, rc: %d",
                          updator.toString().c_str(), rc ) ;
-            if ( updateNum <= 0 )
+            if ( upResult.updateNum() <= 0 )
             {
                PD_LOG( PDERROR, "Not found global info, matcher: %s",
                        matcher.toString().c_str() ) ;

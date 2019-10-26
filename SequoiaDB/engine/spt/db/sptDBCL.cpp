@@ -510,6 +510,7 @@ namespace engine
          // detail have set in _parseInsertOptions() when rc is not ok.
          goto error ;
       }
+      flags |= FLG_INSERT_RETURNNUM ;
 
       rc = _cl.insert( record, flags, &result ) ;
       if ( rc )
@@ -518,7 +519,7 @@ namespace engine
          goto error ;
       }
 
-      if ( flags & FLG_INSERT_RETURN_OID )
+      if ( !result.isEmpty() )
       {
          rval.getReturnVal().setValue( result ) ;
       }
@@ -538,6 +539,7 @@ namespace engine
       BSONObj cond ;
       BSONObj hint ;
       BSONObj options ;
+      BSONObj result ;
       INT32 flags = 0 ;
       // Get rule
       if( !arg.isVoid( 0 ) && !arg.isNull( 0 ) )
@@ -596,16 +598,24 @@ namespace engine
          }
          if( TRUE == ele.Bool() )
          {
-            flags |= FLG_UPDATE_KEEP_SHARDINGKEY ;
+            flags |= UPDATE_KEEP_SHARDINGKEY ;
          }
       }
+
+      flags |= UPDATE_RETURNNUM ;
       // Call cpp driver interface
-      rc = _cl.update( rule, cond, hint, flags ) ;
+      rc = _cl.update( rule, cond, hint, flags, &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to update record" ) ;
          goto error ;
       }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
+      }
+
    done:
       return rc ;
    error:
@@ -622,6 +632,7 @@ namespace engine
       BSONObj hint ;
       BSONObj setOnInsert ;
       BSONObj options ;
+      BSONObj result ;
       INT32 flags = 0 ;
 
       rc = arg.getBsonobj( 0, rule ) ;
@@ -687,12 +698,19 @@ namespace engine
          }
       }
 
-      rc = _cl.upsert( rule, cond, hint, setOnInsert, flags ) ;
+      flags |= UPDATE_RETURNNUM ;
+      rc = _cl.upsert( rule, cond, hint, setOnInsert, flags, &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to upsert collection" ) ;
          goto error ;
       }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
+      }
+
    done:
       return rc ;
    error:
@@ -706,6 +724,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj cond ;
       BSONObj hint ;
+      BSONObj result ;
 
       if( !arg.isNull( 0 ) )
       {
@@ -725,11 +744,16 @@ namespace engine
             goto error ;
          }
       }
-      rc = _cl.del( cond, hint ) ;
+      rc = _cl.del( cond, hint, FLG_DELETE_RETURNNUM, &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to remove record" ) ;
          goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
    done:
       return rc ;
@@ -981,6 +1005,7 @@ namespace engine
          goto error ;
       }
 
+      flags |= FLG_INSERT_RETURNNUM ;
       rc = _cl.insert( objVec, flags, &result ) ;
       if ( rc )
       {
@@ -988,7 +1013,7 @@ namespace engine
          goto error ;
       }
 
-      if ( flags & FLG_INSERT_RETURN_OID )
+      if ( !result.isEmpty() )
       {
          rval.getReturnVal().setValue( result ) ;
       }

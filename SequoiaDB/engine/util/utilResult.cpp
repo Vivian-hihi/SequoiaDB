@@ -55,5 +55,12 @@ namespace engine
    utilWriteResult::~utilWriteResult()
    {
    }
+
+   BSONObj utilWriteResult::toBSON() const
+   {
+      BSONObjBuilder builder( 128 ) ;
+      toBSON( builder ) ;
+      return builder.obj() ;
+   }
 }
 

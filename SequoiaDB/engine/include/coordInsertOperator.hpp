@@ -69,6 +69,7 @@ namespace engine
 
          UINT32         getInsertedNum() const ;
          UINT32         getIgnoredNum() const ;
+         UINT32         getReplacedNum() const ;
          void           clearStat() ;
 
       private:
@@ -180,6 +181,8 @@ namespace engine
       private:
          UINT32         _insertedNum ;
          UINT32         _ignoredNum ;
+         UINT32         _replacedNum ;
+         BOOLEAN        _repalceOnDup ;
          BOOLEAN        _hasRetry ;
 
          BOOLEAN        _hasGenerated ;

@@ -712,7 +712,7 @@ namespace engine
                                            pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT64 updatedNum = 0 ;
+      utilUpdateResult upResult ;
       BSONObj matcher ;
       BSONObj updator ;
 
@@ -738,7 +738,7 @@ namespace engine
          ossScopedLock lock( &m_mutex ) ;
          rc = rtnUpdate( OM_CS_STRATEGY_CL_TASK_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
-                         &updatedNum ) ;
+                         &upResult ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
@@ -747,7 +747,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-         else if ( 0 == updatedNum )
+         else if ( 0 == upResult.updateNum() )
          {
             rc = SDB_STRTGY_TASK_NOT_EXISTED ;
             goto error ;
@@ -864,7 +864,7 @@ namespace engine
                                                  pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT64 updatedNum = 0 ;
+      utilUpdateResult upResult ;
       BSONObj updator ;
       BSONObj matcher ;
 
@@ -893,7 +893,7 @@ namespace engine
          ossScopedLock lock( &m_mutex ) ;
          rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
-                         &updatedNum ) ;
+                         &upResult ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
@@ -902,7 +902,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-         else if ( 0 == updatedNum )
+         else if ( 0 == upResult.updateNum() )
          {
             PD_LOG( PDWARNING, "Strategy[%s] does not exist",
                     matcher.toString().c_str() ) ;
@@ -942,7 +942,7 @@ namespace engine
 
       if ( !ips.empty() )
       {
-         INT64 updatedNum = 0 ;
+         utilUpdateResult upResult ;
          BSONObjBuilder builder( 512 ) ;
          BSONArrayBuilder arr( builder.subarrayStart( OM_REST_FIELD_IPS ) ) ;
 
@@ -966,7 +966,7 @@ namespace engine
             ossScopedLock lock( &m_mutex ) ;
             rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                             matcher, updator, s_emptyObj, 0, cb,
-                            &updatedNum ) ;
+                            &upResult ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Update[%s] on collection failed, rc: %d",
@@ -975,7 +975,7 @@ namespace engine
                        rc ) ;
                goto error ;
             }
-            else if ( 0 == updatedNum )
+            else if ( 0 == upResult.updateNum() )
             {
                PD_LOG( PDERROR, "Strategy[%s] does not exist",
                        matcher.toString().c_str() ) ;
@@ -1016,7 +1016,7 @@ namespace engine
 
       if ( !ips.empty() )
       {
-         INT64 updatedNum = 0 ;
+         utilUpdateResult upResult ;
          BSONObjBuilder builder( 512 ) ;
          BSONArrayBuilder arr( builder.subarrayStart( OM_REST_FIELD_IPS ) ) ;
 
@@ -1037,7 +1037,7 @@ namespace engine
             ossScopedLock lock( &m_mutex ) ;
             rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                             matcher, updator, s_emptyObj, 0, cb,
-                            &updatedNum ) ;
+                            &upResult ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Update[%s] on collection failed, rc: %d",
@@ -1046,7 +1046,7 @@ namespace engine
                        rc ) ;
                goto error ;
             }
-            else if ( 0 == updatedNum )
+            else if ( 0 == upResult.updateNum() )
             {
                PD_LOG( PDERROR, "Strategy[%s] does not exist",
                        matcher.toString().c_str() ) ;
@@ -1085,7 +1085,7 @@ namespace engine
       }
       else
       {
-         INT64 updatedNum = 0 ;
+         utilUpdateResult upResult ;
          BSONObjBuilder builder ;
          BSONArrayBuilder arr( builder.subarrayStart( OM_REST_FIELD_IPS ) ) ;
          arr.done() ;
@@ -1099,7 +1099,7 @@ namespace engine
             ossScopedLock lock( &m_mutex ) ;
             rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                             matcher, updator, s_emptyObj, 0, cb,
-                            &updatedNum ) ;
+                            &upResult ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Update[%s] on collection failed, rc: %d",
@@ -1108,7 +1108,7 @@ namespace engine
                        rc ) ;
                goto error ;
             }
-            else if ( 0 == updatedNum )
+            else if ( 0 == upResult.updateNum() )
             {
                PD_LOG( PDERROR, "Strategy[%s] does not exist",
                        matcher.toString().c_str() ) ;
@@ -1141,7 +1141,7 @@ namespace engine
       INT64 taskID = OM_TASK_STRATEGY_INVALID_TASK_ID ;
       INT64 sortID = OM_TASK_STRATEGY_INVALID_SORTID ;
       BSONObj matcher ;
-      INT64 delNum = 0 ;
+      utilDeleteResult delResult ;
       static BSONObj updator = BSON( "$inc" << BSON(
                                OM_REST_FIELD_SORT_ID << -1 ) ) ;
 
@@ -1165,7 +1165,7 @@ namespace engine
 
          /// delete
          rc = rtnDelete( OM_CS_STRATEGY_CL_STRATEGY_PRO,
-                         matcher, s_emptyObj, 0, cb, &delNum ) ;
+                         matcher, s_emptyObj, 0, cb, &delResult ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Delete[%s] on collection failed, rc: %d",
@@ -1174,7 +1174,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-         else if ( 0 == delNum )
+         else if ( 0 == delResult.deletedNum() )
          {
             goto done ;
          }
@@ -1215,7 +1215,7 @@ namespace engine
                                                    pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT64 updatedNum = 0 ;
+      utilUpdateResult upResult ;
       BSONObj matcher ;
       BSONObj updator ;
 
@@ -1241,7 +1241,7 @@ namespace engine
          ossScopedLock lock( &m_mutex ) ;
          rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
-                         &updatedNum ) ;
+                         &upResult ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
@@ -1250,7 +1250,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-         else if ( 0 == updatedNum )
+         else if ( 0 == upResult.updateNum() )
          {
             rc = SDB_RULE_ID_IS_NOT_EXIST ;
             goto error ;
@@ -1396,7 +1396,7 @@ namespace engine
                                                  pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT64 updatedNum = 0 ;
+      utilUpdateResult upResult ;
       BSONObj matcher ;
       BSONObj updator ;
 
@@ -1417,7 +1417,7 @@ namespace engine
          ossScopedLock lock( &m_mutex ) ;
          rc = rtnUpdate( OM_CS_STRATEGY_CL_STRATEGY_PRO,
                          matcher, updator, s_emptyObj, 0, cb,
-                         &updatedNum ) ;
+                         &upResult ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Update[%s] on collection[%s] failed, rc: %d",
@@ -1426,7 +1426,7 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-         else if ( 0 == updatedNum )
+         else if ( 0 == upResult.updateNum() )
          {
             rc = SDB_RULE_ID_IS_NOT_EXIST ;
             goto error ;

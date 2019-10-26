@@ -33,6 +33,9 @@
 #define UTIL_RESULT_HPP_
 
 #include "oss.hpp"
+#include "../bson/bson.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -41,6 +44,8 @@ namespace engine
    public:
       utilResult() ;
       virtual ~utilResult() ;
+
+      virtual void reset() {}
    } ;
 
    class utilWriteResult : public utilResult
@@ -48,6 +53,12 @@ namespace engine
    public:
       utilWriteResult() ;
       virtual ~utilWriteResult() ;
+
+      BSONObj           toBSON() const ;
+
+   public:
+      virtual void      toBSON( BSONObjBuilder &builder ) const = 0 ;
+
    } ;
 }
 

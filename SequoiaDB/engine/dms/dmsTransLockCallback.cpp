@@ -831,9 +831,13 @@ namespace engine
             rc = SDB_IXM_DUP_KEY ;
             if ( NULL != insertResult )
             {
-               insertResult->setDupErrInfo( indexCB->getName(),
-                                            indexCB->keyPattern(),
-                                            keyObj ) ;
+               INT32 rcTmp = insertResult->setDupErrInfo( indexCB->getName(),
+                                                          indexCB->keyPattern(),
+                                                          keyObj ) ;
+               if ( rcTmp )
+               {
+                  rc = rcTmp ;
+               }
             }
             PD_LOG ( PDERROR, "Insert index(%s) key(%s) with rid(%d, %d) "
                      "failed, rc: %d", indexCB->getDef().toString().c_str(),

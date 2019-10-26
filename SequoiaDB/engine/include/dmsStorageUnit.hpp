@@ -438,17 +438,17 @@ namespace engine
                                   SDB_DPSCB *dpscb,
                                   _mthMatchRuntime *matchRuntime,
                                   _mthModifier &modifier,
-                                  SINT64 &numRecords,
                                   SINT64 maxUpdate = -1,
-                                  dmsMBContext *context = NULL ) ;
+                                  dmsMBContext *context = NULL,
+                                  utilUpdateResult *pResult = NULL ) ;
 
          INT32    deleteRecords ( const CHAR *pName,
                                   _pmdEDUCB * cb,
                                   SDB_DPSCB *dpscb,
                                   _mthMatchRuntime *matchRuntime,
-                                  SINT64 &numRecords,
                                   SINT64 maxDelete = -1,
-                                  dmsMBContext *context = NULL ) ;
+                                  dmsMBContext *context = NULL,
+                                  utilDeleteResult *pResult = NULL ) ;
 
          INT32    rebuildIndexes ( const CHAR *pName,
                                    _pmdEDUCB * cb,

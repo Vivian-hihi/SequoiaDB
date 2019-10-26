@@ -139,7 +139,8 @@ namespace sdbclient
       INT32 _update ( const BSONObj &rule,
                       const BSONObj &condition,
                       const BSONObj &hint,
-                      INT32 flag ) ;
+                      INT32 flag,
+                      BSONObj *pResult ) ;
 
       INT32 _appendOID ( const BSONObj &input,
                          BSONObj &output ) ;
@@ -213,10 +214,12 @@ namespace sdbclient
       // update condition ( optional )
       // hint ( optional )
       // flag ( optional )
+      // pResult ( optional )
       INT32 update ( const BSONObj &rule,
-                     const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject,
-                     INT32 flag = 0
+                     const BSONObj &condition   = _sdbStaticObject,
+                     const BSONObj &hint        = _sdbStaticObject,
+                     INT32 flag                 = 0,
+                     BSONObj *pResult           = NULL
                    ) ;
 
       // update bson object from current collection, if no record has been
@@ -228,18 +231,24 @@ namespace sdbclient
       // hint ( optional )
       // setOnInsert ( optional )
       // flag ( optional )
+      // pResult ( optional )
       INT32 upsert ( const BSONObj &rule,
                      const BSONObj &condition = _sdbStaticObject,
                      const BSONObj &hint = _sdbStaticObject,
                      const BSONObj &setOnInsert = _sdbStaticObject,
-                     INT32 flag = 0
+                     INT32 flag                 = 0,
+                     BSONObj *pResult           = NULL
                    ) ;
       // delete bson objects from current collection
       // given:
       // delete condition ( optional )
       // hint ( optional )
-      INT32 del    ( const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject
+      // flag ( optional )
+      // pResult ( optional )
+      INT32 del    ( const BSONObj &condition   = _sdbStaticObject,
+                     const BSONObj &hint        = _sdbStaticObject,
+                     INT32 flag                 = 0,
+                     BSONObj *pResult           = NULL
                    ) ;
 
       // pop bson objects from current collection
@@ -557,7 +566,12 @@ namespace sdbclient
       INT32 _alterInternal ( const CHAR * taskName,
                              const bson::BSONObj * argument,
                              BOOLEAN allowNullArgs ) ;
-      INT32 _insert ( const BSONObj &obj, INT32 flags, BSONObj &newObj ) ;
+
+      INT32 _insert ( const BSONObj &obj,
+                      INT32 flags,
+                      BSONObj &newObj,
+                      BSONObj *pResult = NULL ) ;
+
       INT32 _query ( _sdbCursor **cursor,
                      const BSONObj &condition = _sdbStaticObject,
                      const BSONObj &selected  = _sdbStaticObject,

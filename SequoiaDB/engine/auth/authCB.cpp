@@ -301,7 +301,7 @@ namespace engine
                                 const string &newPasswd, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT64 updatedNum = 0 ;
+      utilUpdateResult result ;
 
       BSONObj condition = BSON( SDB_AUTH_USER << user << SDB_AUTH_PASSWD
                                 << oldPasswd );
@@ -312,14 +312,14 @@ namespace engine
          SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
          BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
          rc = rtnUpdate( AUTH_USR_COLLECTION, condition, obj, hint,
-                         0, cb, dmsCB, dpsCB, 1, &updatedNum ) ;
+                         0, cb, dmsCB, dpsCB, 1, &result ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to update passwd for %s in %s:rc=%d", 
                     user.c_str(), AUTH_USR_COLLECTION, rc ) ;
             goto error ;
          }
-         else if ( updatedNum <= 0 )
+         else if ( result.updateNum() <= 0 )
          {
             PD_LOG( PDERROR, "User name[%s] or password[%s] is error",
                     user.c_str(), oldPasswd.c_str() ) ;

@@ -81,7 +81,8 @@ namespace engine
                                         rtnContextBuf &contextBuff,
                                         INT64 &contextID,
                                         BOOLEAN &needReply,
-                                        BOOLEAN &needRollback )
+                                        BOOLEAN &needRollback,
+                                        BSONObjBuilder &builder )
    {
       INT32 rc     = SDB_OK ;
       INT32 opCode = msg->opCode ;
@@ -145,21 +146,45 @@ namespace engine
                rc = _onMsgReqMsg( msg ) ;
                break ;
             case MSG_BS_UPDATE_REQ :
+            {
+               MsgOpUpdate *pUpdateMsg = ( MsgOpUpdate* )msg ;
+               utilUpdateResult upResult ;
                needRollback = TRUE ;
-               rc = _onUpdateReqMsg( msg, getDPSCB() ) ;
+               rc = _onUpdateReqMsg( msg, getDPSCB(), upResult ) ;
+               if ( FLG_UPDATE_RETURNNUM & pUpdateMsg->flags )
+               {
+                  upResult.toBSON( builder ) ;
+               }
                break ;
+            }
             case MSG_BS_INSERT_REQ :
+            {
+               MsgOpInsert *pInsertMsg = ( MsgOpInsert* )msg ;
+               utilInsertResult inResult ;
                needRollback = TRUE ;
-               rc = _onInsertReqMsg( msg ) ;
+               rc = _onInsertReqMsg( msg, contextBuff, inResult ) ;
+               if ( FLG_INSERT_RETURNNUM & pInsertMsg->flags )
+               {
+                  inResult.toBSON( builder ) ;
+               }
                break ;
+            }
             case MSG_BS_QUERY_REQ :
                rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID,
                                     needRollback ) ;
                break ;
             case MSG_BS_DELETE_REQ :
+            {
+               MsgOpDelete *pDeleteMsg = ( MsgOpDelete* )msg ;
+               utilDeleteResult delResult ;
                needRollback = TRUE ;
-               rc = _onDelReqMsg( msg, getDPSCB() ) ;
+               rc = _onDelReqMsg( msg, getDPSCB(), delResult ) ;
+               if ( FLG_DELETE_RETURNNUM & pDeleteMsg->flags )
+               {
+                  delResult.toBSON( builder ) ;
+               }
                break ;
+            }
             case MSG_BS_GETMORE_REQ :
                rc = _onGetMoreReqMsg( msg, contextBuff, contextID,
                                       needRollback ) ;
@@ -453,7 +478,9 @@ namespace engine
       return rc ;
    }
 
-   INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader *msg,
+                                             SDB_DPSCB *dpsCB,
+                                             utilUpdateResult &upResult )
    {
       INT32 rc    = SDB_OK ;
       INT32 flags = 0 ;
@@ -501,8 +528,6 @@ namespace engine
 
       try
       {
-         INT64   updatedNum = 0 ;
-         INT32   insertNum = 0 ;
          BSONObj selector( pSelectorBuffer );
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
@@ -518,27 +543,28 @@ namespace engine
 
          PD_LOG ( PDDEBUG, "Session[%s] Update:\nMatcher: %s\nUpdator: %s\n"
                   "hint: %s\nFlag: 0x%08x(%u)", getSession()->sessionName(),
-                  selector.toString().c_str(),
-                  updator.toString().c_str(), hint.toString().c_str(),
+                  selector.toPoolString().c_str(),
+                  updator.toPoolString().c_str(), hint.toPoolString().c_str(),
                   flags, flags ) ;
 
          rc = rtnUpdate( pCollectionName, selector, updator, hint,
-                         flags, eduCB(), _pDMSCB, dpsCB, 1, &updatedNum,
-                         &insertNum ) ;
+                         flags, eduCB(), _pDMSCB, dpsCB, 1, &upResult ) ;
+
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
-                      "UpdatedNum:%llu, InsertedNum:%u, Matcher:%s, "
-                      "Updator:%s, Hint:%s, Flag:0x%08x(%u)",
-                      updatedNum, insertNum,
-                      selector.toString().c_str(),
-                      updator.toString().c_str(),
-                      hint.toString().c_str(), flags, flags ) ;
+                      "UpdatedNum:%llu, ModifiedNum:%llu, InsertedNum:%u, "
+                      "Matcher:%s, Updator:%s, Hint:%s, Flag:0x%08x(%u)",
+                      upResult.updateNum(), upResult.modifiedNum(),
+                      upResult.insertedNum(), selector.toPoolString().c_str(),
+                      updator.toPoolString().c_str(),
+                      hint.toPoolString().c_str(), flags, flags ) ;
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR, "Session[%s] Failed to create selector and updator "
-                  "for update: %s", getSession()->sessionName(), e.what () ) ;
+         PD_LOG_MSG ( PDERROR, "Session[%s] Failed to create selector and "
+                      "updator for update: %s",
+                      getSession()->sessionName(), e.what () ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -549,7 +575,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdDataProcessor::_onInsertReqMsg( MsgHeader * msg )
+   INT32 _pmdDataProcessor::_onInsertReqMsg( MsgHeader *msg,
+                                             rtnContextBuf &buff,
+                                             utilInsertResult &inResult )
    {
       INT32 rc    = SDB_OK ;
       INT32 flag  = 0 ;
@@ -567,8 +595,8 @@ namespace engine
       if ( (flag & FLG_INSERT_CONTONDUP) && (flag & FLG_INSERT_REPLACEONDUP) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR,"Conflict insert flag(CONTONDUP and REPLACEONDUP):"
-                 "flag=%d,rc=%d", flag, rc ) ;
+         PD_LOG_MSG( PDERROR,"Conflict insert flag(CONTONDUP and REPLACEONDUP):"
+                     "flag=%d,rc=%d", flag, rc ) ;
          goto error ;
       }
 
@@ -603,8 +631,6 @@ namespace engine
 
       try
       {
-         INT32   insertedNum = 0 ;
-         INT32   ignoredNum = 0 ;
          BSONObj insertor( pInsertor ) ;
          // add list op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
@@ -617,27 +643,30 @@ namespace engine
          /*
          PD_LOG ( PDDEBUG, "Session[%s] insert objs: %s\nObjCount: %d\n"
                   "Collection: %s\nFlag:0x%08x(%u)",
-                  getSession()->sessionName(), insertor.toString().c_str(),
+                  getSession()->sessionName(), insertor.toPoolString().c_str(),
                   count, pCollectionName, flag, flag ) ; */
 
          rc = rtnInsert( pCollectionName, insertor, count, flag, eduCB(),
-                         &insertedNum, &ignoredNum ) ;
+                         &inResult ) ;
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc, "InsertedNum:%u, IgnoredNum:%u, "
-                      "ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)", insertedNum,
-                      ignoredNum, count, insertor.toString().c_str(), flag,
+                      "ReplacedNum:%u, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
+                      inResult.insertedNum(), inResult.ignoredNum(),
+                      inResult.replacedNum(), count,
+                      insertor.toPoolString().c_str(), flag,
                       flag ) ;
 
          PD_RC_CHECK( rc, PDERROR, "Session[%s] insert objs[%s, count:%d, "
                       "collection: %s] failed, rc: %d",
-                      getSession()->sessionName(), insertor.toString().c_str(),
+                      getSession()->sessionName(),
+                      insertor.toPoolString().c_str(),
                       count, pCollectionName, rc ) ;
       }
       catch( std::exception &e )
       {
-         PD_LOG( PDERROR, "Session[%s] insert objs occur exception: %s",
-                 getSession()->sessionName(), e.what() ) ;
+         PD_LOG_MSG( PDERROR, "Session[%s] insert objs occur exception: %s",
+                     getSession()->sessionName(), e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -851,7 +880,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdDataProcessor::_onDelReqMsg( MsgHeader * msg, SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onDelReqMsg( MsgHeader * msg,
+                                          SDB_DPSCB *dpsCB,
+                                          utilDeleteResult &delResult )
    {
       INT32 rc    = SDB_OK ;
       INT32 flags = 0 ;
@@ -897,7 +928,6 @@ namespace engine
 
       try
       {
-         INT64 deletedNum = 0 ;
          BSONObj deletor ( pDeletorBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
          // add last op info
@@ -915,18 +945,18 @@ namespace engine
                   getSession()->sessionName(), deletor.toString().c_str(),
                   hint.toString().c_str(), flags, flags ) ; */
          rc = rtnDelete( pCollectionName, deletor, hint, flags, eduCB(),
-                         _pDMSCB, dpsCB, 1, &deletedNum ) ;
+                         _pDMSCB, dpsCB, 1, &delResult ) ;
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
                       "DeletedNum:%u, Deletor:%s, Hint:%s, Flag:0x%08x(%u)",
-                      deletedNum, deletor.toString().c_str(),
-                      hint.toString().c_str(), flags, flags ) ;
+                      delResult.deletedNum(), deletor.toPoolString().c_str(),
+                      hint.toPoolString().c_str(), flags, flags ) ;
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR, "Session[%s] Failed to create deletor for "
-                  "DELETE: %s", getSession()->sessionName(), e.what () ) ;
+         PD_LOG_MSG ( PDERROR, "Session[%s] Failed to create deletor for "
+                      "DELETE: %s", getSession()->sessionName(), e.what () ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -2023,7 +2053,8 @@ namespace engine
                                          rtnContextBuf &contextBuff,
                                          INT64 &contextID,
                                          BOOLEAN &needReply,
-                                         BOOLEAN &needRollback )
+                                         BOOLEAN &needRollback,
+                                         BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       monClassQuery *monQueryCB = NULL ;
@@ -2057,7 +2088,8 @@ namespace engine
       {
          contextBuff.release() ;
          rc = _pmdDataProcessor::processMsg( msg, contextBuff, contextID,
-                                             needReply, needRollback ) ;
+                                             needReply, needRollback,
+                                             builder ) ;
       }
       else
       {

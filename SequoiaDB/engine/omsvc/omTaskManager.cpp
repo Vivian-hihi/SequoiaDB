@@ -1270,7 +1270,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 configNum  = 0 ;
       BOOLEAN isExist  = FALSE ;
-      INT64 updateNum  = -1 ;
       SINT64 contextID = -1 ;
       pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
       pmdKRCB *pKRCB     = pmdGetKRCB() ;
@@ -1357,8 +1356,7 @@ namespace engine
       if ( 0 < configNum )
       {
          rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, updator, hint,
-                         FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
-                         cb, &updateNum ) ;
+                         FLG_UPDATE_UPSERT, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "falied to update host config,"
@@ -1865,7 +1863,7 @@ namespace engine
                                      BOOLEAN isFinish )
    {
       INT32 rc = SDB_OK ;
-      INT64 updateNum = 0 ;
+      utilUpdateResult upResult ;
       time_t now = time( NULL ) ;
       BSONObj selector = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
       BSONObj updator ;
@@ -1889,15 +1887,16 @@ namespace engine
       updator  = BSON( "$set" << builder.obj() ) ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint, 0,
-                      pmdGetThreadEDUCB(), &updateNum ) ;
-      if ( rc || 0 == updateNum )
+                      pmdGetThreadEDUCB(), &upResult ) ;
+      if ( rc || 0 == upResult.updateNum() )
       {
          PD_LOG( PDERROR, "update task failed:table=%s,updateNum=%d,taskID="
                  OSS_LL_PRINT_FORMAT",updator=%s,selector=%s,rc=%d",
-                 OM_CS_DEPLOY_CL_TASKINFO, updateNum, taskID,
+                 OM_CS_DEPLOY_CL_TASKINFO, upResult.updateNum(), taskID,
                  updator.toString().c_str(), selector.toString().c_str(), rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:

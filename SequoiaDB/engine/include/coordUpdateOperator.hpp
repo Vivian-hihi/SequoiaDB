@@ -59,7 +59,8 @@ namespace engine
 
          virtual BOOLEAN      isReadOnly() const ;
 
-         UINT32               getUpdatedNum() const ;
+         UINT64               getUpdatedNum() const ;
+         UINT64               getModifiedNum() const ;
          UINT32               getInsertedNum() const ;
          void                 clearStat() ;
 
@@ -78,6 +79,11 @@ namespace engine
                                                    coordSendOptions &options,
                                                    pmdEDUCB *cb,
                                                    coordProcessResult &result ) ;
+
+         virtual void               _onNodeReply( INT32 processType,
+                                                  MsgOpReply *pReply,
+                                                  pmdEDUCB *cb,
+                                                  coordSendMsgIn &inMsg ) ;
 
       private:
 
@@ -98,6 +104,7 @@ namespace engine
 
       private:
          UINT32               _insertedNum ;
+         UINT64               _modifiedNum ;
          vector< CHAR* >      _vecBlock ;
 
    } ;

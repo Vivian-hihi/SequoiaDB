@@ -14,8 +14,15 @@
 > * 参数`cond`和`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 
 ##返回值##
+*  成功返回详细结果信息（BSONObj 对象），结构如下：
 
-无返回值，出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。
+ ```lang-json
+ {
+		DeletedNum : <INT64>  成功删除的记录数
+ }
+ ```
+
+* 出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。错误信息对象包括详细结果信息。
 
 ##错误##
 

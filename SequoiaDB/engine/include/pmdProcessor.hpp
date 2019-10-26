@@ -56,7 +56,8 @@ namespace engine
                                              rtnContextBuf &contextBuff,
                                              INT64 &contextID,
                                              BOOLEAN &needReply,
-                                             BOOLEAN &needRollback ) ;
+                                             BOOLEAN &needRollback,
+                                             BSONObjBuilder &builder ) ;
 
          virtual INT32           doRollback() ;
          virtual INT32           doCommit() ;
@@ -71,15 +72,19 @@ namespace engine
       protected:
          INT32                   _onMsgReqMsg( MsgHeader * msg ) ;
          INT32                   _onUpdateReqMsg( MsgHeader * msg,
-                                                  SDB_DPSCB *dpsCB ) ;
-         INT32                   _onInsertReqMsg( MsgHeader * msg ) ;
+                                                  SDB_DPSCB *dpsCB,
+                                                  utilUpdateResult &upResult ) ;
+         INT32                   _onInsertReqMsg( MsgHeader * msg,
+                                                  rtnContextBuf &buff,
+                                                  utilInsertResult &inResult ) ;
          INT32                   _onQueryReqMsg( MsgHeader * msg,
                                                  SDB_DPSCB *dpsCB,
                                                  _rtnContextBuf &buffObj,
                                                  INT64 &contextID,
                                                  BOOLEAN &needRollback ) ;
          INT32                   _onDelReqMsg( MsgHeader * msg,
-                                               SDB_DPSCB *dpsCB ) ;
+                                               SDB_DPSCB *dpsCB,
+                                               utilDeleteResult &delResult ) ;
          INT32                   _onGetMoreReqMsg( MsgHeader * msg,
                                                    rtnContextBuf &buffObj,
                                                    INT64 &contextID,
@@ -154,7 +159,8 @@ namespace engine
                                              rtnContextBuf &contextBuff,
                                              INT64 &contextID,
                                              BOOLEAN &needReply,
-                                             BOOLEAN &needRollback ) ;
+                                             BOOLEAN &needRollback,
+                                             BSONObjBuilder &builder ) ;
 
          virtual INT32           doRollback() ;
          virtual INT32           doCommit() ;

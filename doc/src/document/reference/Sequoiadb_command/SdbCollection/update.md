@@ -9,8 +9,8 @@
 | ------ | -------- | ---- | -------- |
 | rule   | Json 对象| 更新规则。记录按 rule 的内容更新。 | 是 |
 | cond   | Json 对象| 选择条件。为空时，更新所有记录，不为空时，更新符合条件的记录。 | 否 |
-| hint | Json 对象 | 指定访问计划。 | 否 |
-| options | Json 对象 | 可选项，详见options选项说明。| 否 |
+| hint   | Json 对象| 指定访问计划。 | 否 |
+| options| Json 对象| 可选项，详见options选项说明。| 否 |
 
 ##options选项##
 
@@ -26,8 +26,17 @@
 
 
 ##返回值##
+* 成功返回详细结果信息（BSONObj 对象），结构如下：
 
-无返回值，出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。
+ ```lang-json
+ {
+		UpdatedNum  : <INT64>  成功更新的记录数，包括匹配但未发生数据变化的记录,
+		ModifiedNum : <INT64>  成功更新且发生数据变化的记录数,
+		InsertedNum : <INT32>  成功插入的记录数，仅在 upsert 下生效
+ }
+ ```
+
+* 出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。错误信息对象包括详细结果信息。
 
 ##错误##
 
@@ -75,6 +84,11 @@
  
  ```lang-javascript
  > db.foo.bar.update( { $set: { a: 9, b: 9 } }, {}, {}, { KeepShardingKey: false } )
+ {
+   "UpdatedNum": 1,
+   "ModifiedNum": 0,
+   "InsertedNum": 0
+ }
  Takes 0.038184s.
  >
  > db.foo.bar.find()

@@ -159,7 +159,9 @@ namespace engine
    {
       _insertedNum = 0 ;
       _ignoredNum = 0 ;
+      _replacedNum = 0 ;
       _hasRetry = FALSE ;
+      _repalceOnDup = FALSE ;
 
       _hasGenerated = FALSE ;
       _lastGenerateID = 0 ;
@@ -187,10 +189,16 @@ namespace engine
       return _ignoredNum ;
    }
 
+   UINT32 _coordInsertOperator::getReplacedNum() const
+   {
+      return _replacedNum ;
+   }
+
    void _coordInsertOperator::clearStat()
    {
       _insertedNum = 0 ;
       _ignoredNum = 0 ;
+      _replacedNum = 0 ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR_EXE, "_coordInsertOperator::execute" )
@@ -228,6 +236,8 @@ namespace engine
       BOOLEAN hasExplicitKey = FALSE ;
       BOOLEAN needNewAutoInc = FALSE ;
 
+      BSONObjBuilder retBuilder ;
+
       // fill default-reply(insert success)
       MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg ;
       INT32 oldFlag                    = pInsertMsg->flags ;
@@ -261,8 +271,17 @@ namespace engine
                           "Collection:%s, Insertors:%s, ObjNum:%d, "
                           "Flag:0x%08x(%u)",
                           pCollectionName,
-                          BSONObj(pInsertor).toString().c_str(),
+                          BSONObj(pInsertor).toPoolString().c_str(),
                           count, oldFlag, oldFlag ) ;
+
+      if ( flag & FLG_INSERT_REPLACEONDUP )
+      {
+         _repalceOnDup = TRUE ;
+      }
+      else
+      {
+         _repalceOnDup = FALSE ;
+      }
 
       MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
 
@@ -352,28 +371,38 @@ namespace engine
       {
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc, "InsertedNum:%u, IgnoredNum:%u, "
-                      "ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)", _insertedNum,
-                      _ignoredNum, count, BSONObj(pInsertor).toString().c_str(),
+                      "ReplacedNum:%u, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
+                      _insertedNum, _ignoredNum, _replacedNum, count,
+                      BSONObj(pInsertor).toPoolString().c_str(),
                       oldFlag, oldFlag ) ;
       }
-      if ( oldFlag & FLG_INSERT_RETURNNUM )
+
+      if ( buf )
       {
-         /// InsertedNum(Hi) + IgnoredNum(Lo)
-         contextID = ossPack32To64( _insertedNum, _ignoredNum ) ;
-      }
-      if ( buf && _hasGenerated )
-      {
-         *buf = rtnContextBuf( BSON( FIELD_NAME_LAST_GENERATE_ID <<
-                                     _lastGenerateID ) ) ;
+         if ( oldFlag & FLG_INSERT_RETURNNUM )
+         {
+            retBuilder.append( FIELD_NAME_INSERT_NUM, _insertedNum ) ;
+            retBuilder.append( FIELD_NAME_IGNORE_NUM, _ignoredNum ) ;
+            retBuilder.append( FIELD_NAME_REPLACE_NUM, _replacedNum ) ;
+         }
+
+         if ( _hasGenerated )
+         {
+            retBuilder.append( FIELD_NAME_LAST_GENERATE_ID, _lastGenerateID ) ;
+         }
+
+         if ( !retBuilder.isEmpty() )
+         {
+            *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
       }
       msgReleaseBuffer( pNewMsg, cb ) ;
       PD_TRACE_EXITRC ( COORD_INSERTOPR_EXE, rc ) ;
       return rc ;
    error:
-      if ( buf && nokRC.size() > 0 )
+      if ( buf && ( nokRC.size() > 0 || rc ) )
       {
-         *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
-                                                   cb, &nokRC ) ) ;
+         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
       }
       goto done;
    }
@@ -489,13 +518,67 @@ namespace engine
                                             pmdEDUCB *cb,
                                             coordSendMsgIn &inMsg )
    {
-      if ( pReply->contextID > 0 )
+      if ( pReply->header.messageLength > (INT32)sizeof( MsgOpReply ) &&
+           1 == pReply->numReturned )
       {
-         UINT32 hi1 = 0, lo1 = 0 ;
+         BOOLEAN insertedProcessed = FALSE ;
+         BOOLEAN ignoredProcessed = FALSE ;
+         BOOLEAN replacedProcessed = FALSE ;
+
+         try
+         {
+            BSONObj objResult( ( const CHAR* )pReply + sizeof( MsgOpReply ) ) ;
+            BSONObjIterator itr( objResult ) ;
+            while ( itr.more() )
+            {
+               BSONElement e = itr.next() ;
+               if ( !insertedProcessed &&
+                    0 == ossStrcmp( e.fieldName(), FIELD_NAME_INSERT_NUM ) )
+               {
+                  insertedProcessed = TRUE ;
+                  _insertedNum += (UINT32)e.numberInt() ;
+               }
+               else if ( !ignoredProcessed &&
+                         0 == ossStrcmp( e.fieldName(),
+                                         FIELD_NAME_IGNORE_NUM ) )
+               {
+                  ignoredProcessed = TRUE ;
+                  _ignoredNum += (UINT32)e.numberInt() ;
+               }
+               else if ( !replacedProcessed &&
+                         0 == ossStrcmp( e.fieldName(),
+                                         FIELD_NAME_REPLACE_NUM ) )
+               {
+                  replacedProcessed = TRUE ;
+                  _replacedNum += (UINT32)e.numberInt() ;
+               }
+
+               if ( insertedProcessed && ignoredProcessed && replacedProcessed )
+               {
+                  break ;
+               }
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Extract insert result exception: %s",
+                    e.what() ) ;
+         }
+      }
+      else if ( pReply->contextID > 0 )
+      {
+         UINT32 hi = 0, lo = 0 ;
          /// (UINT32)insertedNum + (UINT32)ignoredNum
-         ossUnpack32From64( pReply->contextID, hi1, lo1 ) ;
-         _insertedNum += hi1 ;
-         _ignoredNum += lo1 ;
+         ossUnpack32From64( pReply->contextID, hi, lo ) ;
+         _insertedNum += hi ;
+         if ( _repalceOnDup )
+         {
+            _replacedNum += lo ;
+         }
+         else
+         {
+            _ignoredNum += lo ;
+         }
       }
    }
 

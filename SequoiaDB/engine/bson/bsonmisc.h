@@ -154,6 +154,8 @@ namespace bson {
         friend class Labeler;
         BSONObjBuilderValueStream( BSONObjBuilder * builder );
 
+        void reset() ;
+
         BSONObjBuilder& operator<<( const BSONElement& e );
 
         template<class T>
@@ -191,6 +193,12 @@ namespace bson {
         }
 
         ~BSONSizeTracker() {
+        }
+
+        void reset() {
+            _pos = 0 ;
+            for ( int i = 0 ; i < SIZE ; ++i )
+                _sizes[i] = 512 ;
         }
 
         void got( int size ) {

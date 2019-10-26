@@ -78,6 +78,11 @@ namespace engine
                                        pmdEDUCB *cb,
                                        coordProcessResult &result ) ;
 
+         virtual void   _onNodeReply( INT32 processType,
+                                      MsgOpReply *pReply,
+                                      pmdEDUCB *cb,
+                                      coordSendMsgIn &inMsg ) ;
+
       private:
          BSONObj        _buildNewDeletor( const BSONObj &deletor,
                                           const CoordSubCLlist &subCLList ) ;

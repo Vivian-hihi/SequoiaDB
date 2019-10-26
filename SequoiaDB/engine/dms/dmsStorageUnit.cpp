@@ -1605,9 +1605,9 @@ namespace engine
                                           SDB_DPSCB *dpscb,
                                           mthMatchRuntime *matchRuntime,
                                           mthModifier &modifier,
-                                          SINT64 &numRecords,
                                           SINT64 maxUpdate,
-                                          dmsMBContext *context )
+                                          dmsMBContext *context,
+                                          utilUpdateResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1631,7 +1631,6 @@ namespace engine
          _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
-         numRecords = 0 ;
          dmsTBScanner tbScanner( _pDataSu, context, matchRuntime,
                                  DMS_ACCESS_TYPE_UPDATE, maxUpdate ) ;
          while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
@@ -1640,10 +1639,9 @@ namespace engine
             generator.getDataPtr( recordDataPtr ) ;
             rc = _pDataSu->updateRecord( context, recordID, recordDataPtr, cb,
                                          dpscb, modifier, NULL,
-                                         tbScanner.callbackHandler() ) ;
+                                         tbScanner.callbackHandler(),
+                                         pResult ) ;
             PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
-
-            ++numRecords ;
          }
 
          if ( SDB_DMS_EOC == rc )
@@ -1676,9 +1674,9 @@ namespace engine
                                           pmdEDUCB * cb,
                                           SDB_DPSCB *dpscb,
                                           mthMatchRuntime *matchRuntime,
-                                          SINT64 &numRecords,
                                           SINT64 maxDelete,
-                                          dmsMBContext *context )
+                                          dmsMBContext *context,
+                                          utilDeleteResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1702,7 +1700,6 @@ namespace engine
          _mthRecordGenerator generator ;
          dmsRecordID recordID ;
          ossValuePtr recordDataPtr = 0 ;
-         numRecords = 0 ;
          dmsTBScanner tbScanner( _pDataSu, context, matchRuntime,
                                  DMS_ACCESS_TYPE_DELETE, maxDelete ) ;
          while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
@@ -1715,7 +1712,10 @@ namespace engine
                                          tbScanner.recordInfo() ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
 
-            ++numRecords ;
+            if ( pResult )
+            {
+               pResult->incDeletedNum() ;
+            }
          }
 
          if ( SDB_DMS_EOC == rc )

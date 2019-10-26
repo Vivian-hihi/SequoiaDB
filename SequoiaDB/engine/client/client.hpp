@@ -66,11 +66,12 @@ do                                     \
 
 /** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
 #define FLG_INSERT_CONTONDUP      0x00000001
-/** The flag represent whether insert return the "_id" field of the record for user */
-#define FLG_INSERT_RETURN_OID     0x00000002
+/** The flag represent whether insert return detail result */
+#define FLG_INSERT_RETURNNUM      0x00000002
 /** The flag represent replacing the existing record by the new record and continuing when insert hitting index key duplicate error */
 #define FLG_INSERT_REPLACEONDUP   0x00000004
-
+/** The flag represent whether insert return the "_id" field of the record for user */
+#define FLG_INSERT_RETURN_OID     0x10000000
 
 // client socket timeout value
 // since client and server may not sit in the same network, we need
@@ -102,6 +103,11 @@ do                                     \
 
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
 #define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+/** The flag represent whether update return detail result */
+#define UPDATE_RETURNNUM                  0x00000004
+
+/** The flag represent whether update return detail result */
+#define FLG_DELETE_RETURNNUM              0x00000004
 
 enum _SDB_LOB_OPEN_MODE
 {
@@ -300,10 +306,12 @@ namespace sdbclient
       // update condition ( optional )
       // hint ( optional )
       // flag ( optional )
+      // pResult ( optional )
       virtual INT32 update ( const bson::BSONObj &rule,
                              const bson::BSONObj &condition = _sdbStaticObject,
                              const bson::BSONObj &hint      = _sdbStaticObject,
-                             INT32 flag = 0
+                             INT32 flag = 0,
+                             bson::BSONObj *pResult = NULL
                            ) = 0 ;
 
       // update bson object from current collection, if there's nothing match
@@ -314,19 +322,25 @@ namespace sdbclient
       // hint ( optional )
       // setOnInsert ( optional )
       // flag ( optional )
+      // pResult ( optional )
       virtual INT32 upsert ( const bson::BSONObj &rule,
                              const bson::BSONObj &condition = _sdbStaticObject,
                              const bson::BSONObj &hint      = _sdbStaticObject,
                              const bson::BSONObj &setOnInsert = _sdbStaticObject,
-                             INT32 flag = 0
+                             INT32 flag                     = 0,
+                             bson::BSONObj *pResult         = NULL
                            ) = 0 ;
 
       // delete bson objects from current collection
       // given:
       // delete condition ( optional )
       // hint ( optional )
+      // flag ( optional )
+      // pResult ( optional )
       virtual INT32 del ( const bson::BSONObj &condition = _sdbStaticObject,
-                          const bson::BSONObj &hint      = _sdbStaticObject
+                          const bson::BSONObj &hint      = _sdbStaticObject,
+                          INT32 flag                     = 0,
+                          bson::BSONObj *pResult         = NULL
                         ) = 0 ;
 
       // query objects from current collection
@@ -985,7 +999,7 @@ namespace sdbclient
                FLG_INSERT_REPLACEONDUP:
                                      if the record hit index key duplicate
                                      error, database will replace the existing
-                                     record by the inserting new record and them
+                                     record by the inserting new record and then
                                      go on inserting.
 
           \param [in] objs The bson objects to be inserted.
@@ -1016,6 +1030,7 @@ namespace sdbclient
           \code
               UPDATE_KEEP_SHARDINGKEY
           \endcode
+          \param [out] pResult The detail result for updating.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
           \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
@@ -1024,12 +1039,13 @@ namespace sdbclient
       INT32 update ( const bson::BSONObj &rule,
                      const bson::BSONObj &condition = _sdbStaticObject,
                      const bson::BSONObj &hint      = _sdbStaticObject,
-                     INT32 flag = 0
+                     INT32 flag = 0,
+                     bson::BSONObj *pResult = NULL
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->update ( rule, condition, hint, flag ) ;
+         return pCollection->update ( rule, condition, hint, flag, pResult ) ;
       }
 
       /** \fn INT32 upsert ( const bson::BSONObj &rule,
@@ -1049,21 +1065,24 @@ namespace sdbclient
           \code
               UPDATE_KEEP_SHARDINGKEY
           \endcode
+          \param [out] pResult The detail result for upserting
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
           \note When flag is set to 0, it won't work to update the "ShardingKey" field, but the
                     other fields take effect
       */
       INT32 upsert ( const bson::BSONObj &rule,
-                     const bson::BSONObj &condition = _sdbStaticObject,
-                     const bson::BSONObj &hint      = _sdbStaticObject,
+                     const bson::BSONObj &condition   = _sdbStaticObject,
+                     const bson::BSONObj &hint        = _sdbStaticObject,
                      const bson::BSONObj &setOnInsert = _sdbStaticObject,
-                     INT32 flag = 0
+                     INT32 flag                       = 0,
+                     bson::BSONObj *pResult           = NULL
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->upsert ( rule, condition, hint, setOnInsert, flag ) ;
+         return pCollection->upsert ( rule, condition, hint, setOnInsert,
+                                      flag, pResult ) ;
       }
 
       /** \fn   INT32 del ( const bson::BSONObj &condition,
@@ -1075,16 +1094,20 @@ namespace sdbclient
                           using index "ageIndex" to scan data(index scan);
                           {"":null} means table scan. when hint is not provided,
                           database automatically match the optimal index to scan data
+          \param [in] flag Reserved
+          \param [out] pResult The detail result for deleting
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
       INT32 del ( const bson::BSONObj &condition = _sdbStaticObject,
-                  const bson::BSONObj &hint      = _sdbStaticObject
+                  const bson::BSONObj &hint      = _sdbStaticObject,
+                  INT32 flag                     = 0,
+                  bson::BSONObj *pResult         = NULL
                 )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->del ( condition, hint ) ;
+         return pCollection->del ( condition, hint, flag, pResult ) ;
       }
 
       /* \fn INT32 query  ( _sdbCursor **cursor,

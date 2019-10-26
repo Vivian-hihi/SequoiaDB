@@ -2016,7 +2016,7 @@ namespace engine
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
       BSONObj taskObj ;
       BSONObj dummyObj ;
-      INT64 deletedNum = 0 ;
+      utilDeleteResult delResult ;
 
       if ( checkExist )
       {
@@ -2036,11 +2036,11 @@ namespace engine
       }
 
       rc = rtnDelete( CAT_TASK_INFO_COLLECTION, match, dummyObj, 0, cb,
-                      dmsCB, dpsCB, w, &deletedNum ) ;
+                      dmsCB, dpsCB, w, &delResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to remove task from collection[%s], "
                    "rc: %d, del cond: %s", CAT_TASK_INFO_COLLECTION, rc,
                    match.toString().c_str() ) ;
-      PD_LOG( PDINFO, "Removed %lld tasks for [%s]", deletedNum,
+      PD_LOG( PDINFO, "Removed %llu tasks for [%s]", delResult.deletedNum(),
               match.toString().c_str() ) ;
    done:
       PD_TRACE_EXITRC ( SDB_CATREMOVETASK, rc ) ;
@@ -2346,8 +2346,8 @@ namespace engine
       BSONObj updator ;
       BSONObj matcher = BSON( FIELD_NAME_TYPE <<
                               CAT_BASE_TYPE_GLOBAL_STR ) ;
-      INT64 updateNum = 0 ;
       BSONObj hint ;
+      utilUpdateResult result ;
 
       if ( enable )
       {
@@ -2360,11 +2360,11 @@ namespace engine
                                          << false ) ) ;
       }
       rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
-                      hint, 0, cb, dmsCB, dpsCB, w, &updateNum ) ;
+                      hint, 0, cb, dmsCB, dpsCB, w, &result ) ;
       PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
                    "rc: %d", updator.toString().c_str(),
                    CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
-      if ( 0 == updateNum )
+      if ( 0 == result.updateNum() )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "No found obj[%s] in collection[%s]",
@@ -2386,8 +2386,8 @@ namespace engine
       BSONObj updator ;
       BSONObj matcher = BSON( FIELD_NAME_TYPE <<
                               CAT_BASE_TYPE_GLOBAL_STR ) ;
-      INT64 updateNum = 0 ;
       BSONObj hint ;
+      utilUpdateResult upResult ;
 
       if ( status )
       {
@@ -2398,11 +2398,11 @@ namespace engine
          updator = BSON( "$set" << BSON( pField << false ) ) ;
       }
       rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
-                      hint, 0, cb, dmsCB, dpsCB, w, &updateNum ) ;
+                      hint, 0, cb, dmsCB, dpsCB, w, &upResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
                    "rc: %d", updator.toString().c_str(),
                    CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
-      if ( 0 == updateNum )
+      if ( 0 == upResult.updateNum() )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "No found obj[%s] in collection[%s]",

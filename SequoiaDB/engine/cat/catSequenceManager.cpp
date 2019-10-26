@@ -1181,7 +1181,7 @@ namespace engine
                                                _pmdEDUCB* eduCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      INT64 deleteNum = 0 ;
+      utilDeleteResult delResult ;
       BSONObj hint ;
       BSONObj matcher ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__DELETE_SEQ ) ;
@@ -1203,7 +1203,7 @@ namespace engine
 
       rc = rtnDelete( GTS_SEQUENCE_COLLECTION_NAME,
                       matcher, hint, 0, eduCB,
-                      dmsCB, dpsCB, w, &deleteNum ) ;
+                      dmsCB, dpsCB, w, &delResult ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to delete sequence[%s], rc=%d",
@@ -1211,18 +1211,18 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == deleteNum )
+      if ( 0 == delResult.deletedNum() )
       {
          rc = SDB_SEQUENCE_NOT_EXIST ;
          PD_LOG( PDERROR, "Sequence[%s] is not found, rc=%d",
                  name.c_str(), rc ) ;
          goto error ;
       }
-      else if ( deleteNum > 1 )
+      else if ( delResult.deletedNum() > 1 )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected delete num[%lld] for sequence[%s], rc=%d",
-                 deleteNum, name.c_str(), rc ) ;
+         PD_LOG( PDERROR, "Unexpected delete num[%llu] for sequence[%s], rc=%d",
+                 delResult.deletedNum(), name.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1242,7 +1242,7 @@ namespace engine
       BSONObj matcher ;
       BSONObj updator ;
       BSONObj hint ;
-      INT64 updateNum = 0 ;
+      utilUpdateResult upResult ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__UPDATE_SEQ ) ;
 
       SDB_DMSCB* dmsCB = pmdGetKRCB()->getDMSCB() ;
@@ -1265,7 +1265,7 @@ namespace engine
 
       rc = rtnUpdate( GTS_SEQUENCE_COLLECTION_NAME,
                       matcher, updator, hint, 0, eduCB,
-                      dmsCB, dpsCB, w, &updateNum ) ;
+                      dmsCB, dpsCB, w, &upResult ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
@@ -1273,18 +1273,18 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == updateNum )
+      if ( 0 == upResult.updateNum() )
       {
          rc = SDB_SEQUENCE_NOT_EXIST ;
          PD_LOG( PDERROR, "Sequence[%s] is not found, rc=%d",
                  name.c_str(), rc ) ;
          goto error ;
       }
-      else if ( updateNum > 1 )
+      else if ( upResult.updateNum() > 1 )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Unexpected update num[%lld] for sequence[%s], rc=%d",
-                 updateNum, name.c_str(), rc ) ;
+                 upResult.updateNum(), name.c_str(), rc ) ;
          goto error ;
       }
 

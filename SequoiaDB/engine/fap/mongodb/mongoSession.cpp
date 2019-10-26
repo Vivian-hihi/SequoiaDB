@@ -273,6 +273,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    BOOLEAN needReply = FALSE ;
    BOOLEAN needRollback = FALSE ;
    bson::BSONObjBuilder bob ;
+   bson::BSONObjBuilder retBuilder ;
    mongoDataPacket &packet = _converter.getParser().dataPacket() ;
 
    rc = _onMsgBegin( (MsgHeader *) pMsg ) ;
@@ -285,7 +286,8 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
                                        _contextBuff, _replyHeader.contextID,
                                        needReply,
-                                       needRollback ) ;
+                                       needRollback,
+                                       retBuilder ) ;
       _errorInfo = engine::utilGetErrorBson( rc,
                    _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
       if ( SDB_OK != rc )

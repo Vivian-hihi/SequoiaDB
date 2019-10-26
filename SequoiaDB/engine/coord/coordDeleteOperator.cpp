@@ -99,6 +99,8 @@ namespace engine
 
       BSONObj boDeletor ;
 
+      BSONObjBuilder retBuilder( COORD_RET_BUILDER_DFT_SIZE ) ;
+
       // fill default-reply(delete success)
       MsgOpDelete *pDelMsg             = (MsgOpDelete *)pMsg ;
       INT32 oldFlag                    = pDelMsg->flags ;
@@ -143,8 +145,8 @@ namespace engine
                           "Collection:%s, Deletor:%s, Hint:%s, "
                           "Flag:0x%08x(%u)",
                           pCollectionName,
-                          boDeletor.toString().c_str(),
-                          BSONObj(pHint).toString().c_str(),
+                          boDeletor.toPoolString().c_str(),
+                          BSONObj(pHint).toPoolString().c_str(),
                           oldFlag, oldFlag ) ;
 
       MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
@@ -181,26 +183,34 @@ namespace engine
       }
 
    done:
-      if ( oldFlag & FLG_DELETE_RETURNNUM )
-      {
-         contextID = _recvNum ;
-      }
       if ( pCollectionName )
       {
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
                       "DeletedNum:%u, Deletor:%s, Hint:%s, Flag:0x%08x(%u)",
-                      _recvNum, boDeletor.toString().c_str(),
-                      BSONObj(pHint).toString().c_str(), oldFlag, oldFlag ) ;
+                      _recvNum, boDeletor.toPoolString().c_str(),
+                      BSONObj(pHint).toPoolString().c_str(),
+                      oldFlag, oldFlag ) ;
+      }
+      if ( buf )
+      {
+         if ( oldFlag & FLG_DELETE_RETURNNUM )
+         {
+            retBuilder.append( FIELD_NAME_DELETE_NUM, (INT64)_recvNum ) ;
+         }
+
+         if ( !retBuilder.isEmpty() )
+         {
+            *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
       }
       PD_TRACE_EXITRC ( COORD_OPERATORDEL_EXE, rc ) ;
       return rc ;
    error:
-      if ( buf && nokRC.size() > 0 )
+      if ( buf && ( nokRC.size() > 0 || rc ) )
       {
-         *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
-                                                   cb, &nokRC ) ) ;
+         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
       }
       goto done ;
    }
@@ -342,6 +352,45 @@ namespace engine
       babSubCL.done() ;
 
       return builder.obj() ;
+   }
+
+   void _coordDeleteOperator::_onNodeReply( INT32 processType,
+                                            MsgOpReply *pReply,
+                                            pmdEDUCB *cb,
+                                            coordSendMsgIn &inMsg )
+   {
+      BOOLEAN processed = FALSE ;
+
+      if ( pReply->header.messageLength > (INT32)sizeof( MsgOpReply ) &&
+           1 == pReply->numReturned )
+      {
+         try
+         {
+            BSONObj objResult( ( const CHAR* )pReply + sizeof( MsgOpReply ) ) ;
+            BSONObjIterator itr( objResult ) ;
+            while ( itr.more() )
+            {
+               BSONElement e = itr.next() ;
+               if ( !processed &&
+                    0 == ossStrcmp( e.fieldName(), FIELD_NAME_DELETE_NUM ) )
+               {
+                  processed = TRUE ;
+                  _recvNum += (UINT64)e.numberLong() ;
+                  break ;
+               }
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Extract delete result exception: %s",
+                    e.what() ) ;
+         }
+      }
+
+      if ( !processed )
+      {
+         _coordTransOperator::_onNodeReply( processType, pReply, cb, inMsg ) ;
+      }
    }
 
 }

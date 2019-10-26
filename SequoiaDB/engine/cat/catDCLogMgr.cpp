@@ -392,16 +392,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
-      INT64 delNum = 0 ;
+      utilDeleteResult delResult ;
       BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET << BSON(
                               "$gte" << (INT64)lowOffset ) ) ;
       BSONObj orderByFirst = BSON( FIELD_NAME_LSN_OFFSET << 1 ) ;
       BSONObj orderByLast = BSON( FIELD_NAME_LSN_OFFSET << -1 ) ;
 
       rc = rtnDelete( _clName.c_str(), matcher, hint, 0, cb, _pDmsCB,
-                      _pDpsCB, 1, &delNum ) ;
+                      _pDpsCB, 1, &delResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Delete objs[%s] from system log[%s] failed, "
-                   "del num: %lld, rc: %d", delNum, rc ) ;
+                   "del num: %llu, rc: %d", delResult.deletedNum(), rc ) ;
 
       _reset() ;
 

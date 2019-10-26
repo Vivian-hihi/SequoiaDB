@@ -939,7 +939,8 @@ do                                                            \
 
    INT32 _sdbCollectionImpl::_insert ( const BSONObj &obj,
                                        INT32 flags,
-                                       BSONObj &newObj )
+                                       BSONObj &newObj,
+                                       BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -966,6 +967,10 @@ do                                                            \
 
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
+      if ( pResult )
+      {
+         _connection->getLastResultObj( *pResult, FALSE ) ;
+      }
       /// update, and ignore the update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -1023,7 +1028,7 @@ do                                                            \
       INT32 rc = SDB_OK ;
       BSONObj newObj ;
 
-      rc = _insert( obj, flags, newObj ) ;
+      rc = _insert( obj, flags, newObj, pResult ) ;
       if ( rc )
       {
          goto error ;
@@ -1032,11 +1037,8 @@ do                                                            \
       {
          BSONObjBuilder bob ;
          bob.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;
+         bob.appendElements( *pResult ) ;
          *pResult = bob.obj() ;
-      }
-      else if ( pResult )
-      {
-         *pResult = BSONObj() ;
       }
 
    done:
@@ -1111,6 +1113,10 @@ do                                                            \
 
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
+      if ( pResult )
+      {
+         _connection->getLastResultObj( *pResult, FALSE ) ;
+      }
       /// update and ignore the update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -1120,16 +1126,10 @@ do                                                            \
       }
 
       // return output object
-      if ( pResult )
+      if ( pResult && ( flags & FLG_INSERT_RETURN_OID ) )
       {
-         if ( flags & FLG_INSERT_RETURN_OID )
-         {
-            *pResult = builder.obj() ;
-         }
-         else
-         {
-            *pResult = BSONObj() ;
-         }
+         builder.appendElements( *pResult ) ;
+         *pResult = builder.obj() ;
       }
 
    done :
@@ -1205,6 +1205,10 @@ do                                                            \
 
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
+      if ( pResult )
+      {
+         _connection->getLastResultObj( *pResult, FALSE ) ;
+      }
       /// update and ignore the update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -1214,16 +1218,10 @@ do                                                            \
       }
 
       // return output object
-      if ( pResult )
+      if ( pResult && ( flags & FLG_INSERT_RETURN_OID ) )
       {
-         if ( flags & FLG_INSERT_RETURN_OID )
-         {
-            *pResult = builder.obj() ;
-         }
-         else
-         {
-            *pResult = BSONObj() ;
-         }
+         builder.appendElements( *pResult ) ;
+         *pResult = builder.obj() ;
       }
 
    done :
@@ -1253,16 +1251,18 @@ do                                                            \
    INT32 _sdbCollectionImpl::update ( const BSONObj &rule,
                                       const BSONObj &condition,
                                       const BSONObj &hint,
-                                      INT32 flag )
+                                      INT32 flag,
+                                      BSONObj *pResult )
    {
-      return _update ( rule, condition, hint, flag ) ;
+      return _update ( rule, condition, hint, flag, pResult ) ;
    }
 
    INT32 _sdbCollectionImpl::upsert ( const BSONObj &rule,
                                       const BSONObj &condition,
                                       const BSONObj &hint,
                                       const BSONObj &setOnInsert,
-                                      INT32 flag )
+                                      INT32 flag,
+                                      BSONObj *pResult )
    {
       BSONObj newHint ;
       INT32 rc = SDB_OK ;
@@ -1291,7 +1291,8 @@ do                                                            \
          goto error ;
       }
 
-      rc = _update ( rule, condition, newHint, flag | FLG_UPDATE_UPSERT ) ;
+      rc = _update ( rule, condition, newHint, flag | FLG_UPDATE_UPSERT,
+                     pResult ) ;
 
    done:
       return rc ;
@@ -1302,7 +1303,8 @@ do                                                            \
    INT32 _sdbCollectionImpl::_update ( const BSONObj &rule,
                                        const BSONObj &condition,
                                        const BSONObj &hint,
-                                       INT32 flag )
+                                       INT32 flag,
+                                       BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -1325,6 +1327,11 @@ do                                                            \
 
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
+      /// get result
+      if ( pResult )
+      {
+         _connection->getLastResultObj( *pResult, FALSE ) ;
+      }
       /// update and ignore the update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -1340,7 +1347,9 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::del ( const BSONObj &condition,
-                                   const BSONObj &hint )
+                                   const BSONObj &hint,
+                                   INT32 flag,
+                                   BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -1351,7 +1360,7 @@ do                                                            \
       }
 
       rc = clientBuildDeleteMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                     _collectionFullName, 0, 0,
+                                     _collectionFullName, flag, 0,
                                      condition.objdata(),
                                      hint.objdata(),
                                      _connection->_endianConvert ) ;
@@ -1362,6 +1371,10 @@ do                                                            \
 
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
+      if ( pResult )
+      {
+         _connection->getLastResultObj( *pResult, FALSE ) ;
+      }
       /// ignore the update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -7587,7 +7600,9 @@ do                                                            \
          Temp solution. Insert result return the LastGenerateID
       */
       else if ( SDB_OK == replyFlag && 1 == numReturned &&
-                MSG_BS_INSERT_RES == ((MsgHeader*)(*ppBuffer))->opCode )
+                ( MSG_BS_INSERT_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
+                  MSG_BS_UPDATE_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
+                  MSG_BS_DELETE_RES == ((MsgHeader*)(*ppBuffer))->opCode ) )
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
@@ -9915,6 +9930,8 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       BSONObj localObj ;
+
+      result = localObj ;
 
       if ( _pResultBuf && _resultBufSize >= 5 &&
            *(INT32*)_pResultBuf >= 5 )

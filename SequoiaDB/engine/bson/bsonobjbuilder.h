@@ -131,6 +131,30 @@ namespace bson {
             }
         }
 
+        void reset() {
+            _b.reset() ;
+            _s.reset() ;
+            if ( _tracker )
+                _tracker->reset() ;
+            if ( owned() ) {
+               _offset = sizeof(unsigned) ;
+               _b.appendNum((unsigned)0);
+            }
+            else {
+               _offset = _b.len() ;
+            }
+            _doneCalled = false ;
+            _b.skip( 4 ) ;
+            _b.reserveBytes( 1 ) ;
+        }
+
+        bool isEmpty() const {
+           if ( owned() ) {
+              return _b.len() <= (int)(sizeof(unsigned) + 4) ? true : false ;
+           }
+           return _b.len() <= 4 ? true : false ;
+        }
+
         /** add all the fields from the object specified to this object */
         BSONObjBuilder& appendElements(BSONObj x);
 

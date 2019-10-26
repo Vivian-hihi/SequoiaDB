@@ -46,13 +46,20 @@ Insert record or records into the current collection. If the current collection 
 
 ##RETURN VALUE##
 
-On success, the follow result will be returned:
+* On success, the follow result will be returned:
 
-* When using "SDB_INSERT_RETURN_ID" in flag or "ReturnOID" in options to control the insert behavior and result, a Json object will be returned.
+ ```
+ {
+		InsertedNum : <INT32>  Number of records successfully inserted, including replaced and ignored records,
+		IgnoredNum  : <INT32>  Number of records ignored due to duplicate key conflicts,
+		ReplacedNum : <INT32>  Number of records replaced due to duplicate key conflicts
+ }
+ ```
+
+  When using "SDB_INSERT_RETURN_ID" in flag or "ReturnOID" in options, the result also include field "_id", as follows:
 	* for single inserting: return the value of field "_id".
 	* for bulk inseting: return the value of field "_id" by array.
 
-* Void for the other situations.
 
 On error, exception will be thrown.
 
@@ -113,6 +120,9 @@ Since v1.0.
    		"_id": {
      		"$oid": "5becec3d6404b9295a63caca"
    		}
+		"InsertedNum": 1,
+  		"IgnoredNum": 0,
+  		"ReplacedNum": 0
  	}
 	```
 
@@ -127,5 +137,8 @@ Since v1.0.
        			"$oid": "5bececdf6404b9295a63cacc"
      		}
    		]
+		"InsertedNum": 2,
+		"IgnoredNum": 0,
+		"ReplacedNum": 0
  	}
  	```

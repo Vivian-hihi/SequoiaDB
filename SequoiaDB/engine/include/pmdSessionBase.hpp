@@ -51,6 +51,7 @@ namespace engine
    class _dpsLogWrapper ;
    class _pmdProcessor ;
 
+   #define PMD_RETBUILDER_DFT_SIZE              ( 96 )
    /*
       _pmdSession define
    */

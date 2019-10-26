@@ -3386,6 +3386,10 @@ namespace engine
       {
          cb->releaseBuff( pMergedData ) ;
       }
+      if ( insertResult && SDB_OK == rc )
+      {
+         insertResult->incInsertedNum() ;
+      }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD, rc ) ;
       return rc ;
    error:
@@ -3755,7 +3759,8 @@ namespace engine
                                               SDB_DPSCB *dpscb,
                                               mthModifier &modifier,
                                               BSONObj* newRecord,
-                                              IDmsOprHandler *pHandler )
+                                              IDmsOprHandler *pHandler,
+                                              utilUpdateResult *pResult )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_UPDATERECORD ) ;
@@ -3905,6 +3910,10 @@ namespace engine
                         rc ) ;
                goto error ;
             }
+            else if ( !modifier.hasModified() )
+            {
+               goto done ;
+            }
 
             textIdxNum = context->mbStat()->_textIdxNum ;
             if ( textIdxNum > 0 )
@@ -4030,6 +4039,14 @@ namespace engine
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize, cb );
+      }
+      if ( pResult && SDB_OK == rc )
+      {
+         pResult->incUpdatedNum() ;
+         if ( modifier.hasModified() )
+         {
+            pResult->incModifiedNum() ;
+         }
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_UPDATERECORD, rc ) ;
       return rc ;

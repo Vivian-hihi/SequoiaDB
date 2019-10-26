@@ -56,7 +56,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL1, "rtnDelete" )
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
-                     INT64 *pDelNum )
+                     utilDeleteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDEL1 ) ;
@@ -70,7 +70,7 @@ namespace engine
       }
 
       rc = rtnDelete ( pCollectionName, matcher, hint, flags, cb,
-                       dmsCB, dpsCB, 1, pDelNum ) ;
+                       dmsCB, dpsCB, 1, pResult ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNDEL1, rc ) ;
       return rc ;
@@ -80,7 +80,7 @@ namespace engine
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
-                     INT64 *pDelNum )
+                     utilDeleteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNDEL2 ) ;
@@ -88,7 +88,7 @@ namespace engine
       // matcher, selector, order, hint, collection, skip, limit, flag
       rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
                                0, -1, flags ) ;
-      rc = rtnDelete( options, cb, dmsCB, dpsCB, w, pDelNum ) ;
+      rc = rtnDelete( options, cb, dmsCB, dpsCB, w, pResult ) ;
       PD_TRACE_EXITRC( SDB_RTNDEL2, rc ) ;
       return rc ;
    }
@@ -96,7 +96,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL_OPTIONS, "rtnDelete" )
    INT32 rtnDelete ( rtnQueryOptions &options, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
-                     INT64 *pDelNum )
+                     utilDeleteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDEL_OPTIONS ) ;
@@ -114,7 +114,6 @@ namespace engine
       const CHAR *pCollectionShortName    = NULL ;
       dmsScanner *pScanner                = NULL ;
       BOOLEAN writable                    = FALSE ;
-      INT64 delNum                        = 0 ;
 
       optAccessPlanRuntime planRuntime ;
 
@@ -212,7 +211,10 @@ namespace engine
                                               pScanner->callbackHandler(),
                                               pScanner->recordInfo() ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
-               ++delNum ;
+               if ( pResult )
+               {
+                  pResult->incDeletedNum() ;
+               }
 
                execEndTime = krcb->getCurTime() ;
                monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
@@ -245,10 +247,6 @@ namespace engine
       }
 
    done :
-      if ( pDelNum )
-      {
-         *pDelNum = delNum ;
-      }
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;

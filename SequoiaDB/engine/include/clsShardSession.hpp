@@ -149,11 +149,11 @@ namespace engine
       protected:
          INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onUpdateReqMsg ( NET_HANDLE handle, MsgHeader *msg,
-                                 INT64 &updateNum ) ;
+                                 utilUpdateResult &upResult ) ;
          INT32 _onInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg,
-                                 INT32 &insertedNum, INT32 &ignoredNum ) ;
+                                 utilInsertResult &inResult ) ;
          INT32 _onDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
-                                 INT64 &delNum ) ;
+                                 utilDeleteResult &delResult ) ;
          INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                 rtnContextBuf &buffObj, INT32 &startingPos,
                                 INT64 &contextID, BOOLEAN &needRollback ) ;
@@ -168,12 +168,11 @@ namespace engine
          INT32 _onTransRollbackMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onTransCommitPreMsg( NET_HANDLE handle, MsgHeader *msg );
          INT32 _onTransUpdateReqMsg ( NET_HANDLE handle, MsgHeader *msg,
-                                      INT64 &updateNum ) ;
+                                      utilUpdateResult &upResult ) ;
          INT32 _onTransInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg,
-                                      INT32 &insertedNum,
-                                      INT32 &ignoredNum ) ;
+                                      utilInsertResult &inResult ) ;
          INT32 _onTransDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
-                                      INT64 &delNum ) ;
+                                      utilDeleteResult &delResult ) ;
          INT32 _onTransQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                      rtnContextBuf &buffObj, INT32 &startingPos,
                                      INT64 &contextID, BOOLEAN &needRollback ) ;
@@ -215,8 +214,7 @@ namespace engine
                                       const BSONObj &orderBy,
                                       BOOLEAN &result ) ;
          INT32 _insertToMainCL( BSONObj &objs, INT32 objNum, INT32 flags,
-                                INT16 w, INT32 &insertedNum,
-                                INT32 &ignoredNum ) ;
+                                INT16 w, utilInsertResult &inResult ) ;
 
          INT32 _queryToMainCL( rtnQueryOptions &options,
                                pmdEDUCB *cb,
@@ -229,13 +227,13 @@ namespace engine
                                 SDB_DMSCB *pDmsCB,
                                 SDB_DPSCB *pDpsCB,
                                 INT16 w,
-                                INT64 *pUpdateNum = NULL );
+                                utilUpdateResult &upResult );
          INT32 _deleteToMainCL ( rtnQueryOptions &options,
                                  pmdEDUCB *cb,
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  INT16 w,
-                                 INT64 *pDelNum = NULL );
+                                 utilDeleteResult &delResult );
          INT32 _runOnMainCL( const CHAR *pCommandName,
                              _rtnCommand *pCommand,
                              INT32 flags,
@@ -362,6 +360,8 @@ namespace engine
 
          UINT32                 _transWaitTimeout ;
          DPS_TRANS_ID           _transWaitID ;
+
+         BSONObjBuilder         _retBuilder ;
    } ;
 
 }

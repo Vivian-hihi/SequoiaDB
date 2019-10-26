@@ -131,6 +131,18 @@ namespace engine
                                ROUTE_RC_MAP *pFailedNodes )
    {
       BSONObjBuilder builder ;
+
+      coordBuildErrorObj( pResource, flag, cb, pFailedNodes, builder ) ;
+
+      return builder.obj() ;
+   }
+
+   void coordBuildErrorObj( coordResource *pResource,
+                            INT32 &flag,
+                            _pmdEDUCB *cb,
+                            ROUTE_RC_MAP *pFailedNodes,
+                            BSONObjBuilder &builder )
+   {
       const CHAR *pDetail = "" ;
 
       if ( SDB_OK == flag && pFailedNodes && pFailedNodes->size() > 0 )
@@ -143,16 +155,21 @@ namespace engine
          pDetail = cb->getInfo( EDU_INFO_ERROR ) ;
       }
 
-      builder.append( OP_ERRNOFIELD, flag ) ;
-      builder.append( OP_ERRDESP_FIELD, getErrDesp( flag ) ) ;
-      builder.append( OP_ERR_DETAIL, pDetail ? pDetail : "" ) ;
-      /// add ErrNodes
-      if ( pFailedNodes && pFailedNodes->size() > 0 )
+      try
       {
-         coordBuildFailedNodeReply( pResource, *pFailedNodes, builder ) ;
+         builder.append( OP_ERRNOFIELD, flag ) ;
+         builder.append( OP_ERRDESP_FIELD, getErrDesp( flag ) ) ;
+         builder.append( OP_ERR_DETAIL, pDetail ? pDetail : "" ) ;
+         /// add ErrNodes
+         if ( pFailedNodes && pFailedNodes->size() > 0 )
+         {
+            coordBuildFailedNodeReply( pResource, *pFailedNodes, builder ) ;
+         }
       }
-
-      return builder.obj() ;
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Build return object failed: %s", e.what() ) ;
+      }
    }
 
    INT32 coordGetGroupsFromObj( const BSONObj &obj,

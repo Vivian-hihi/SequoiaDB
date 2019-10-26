@@ -1109,10 +1109,12 @@ namespace engine
       BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
       BSONObj updator = BSON( "$replace" << newBusinessInfo ) ;
       BSONObj hint ;
+      utilUpdateResult upResult ;
    
       rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS, condition, updator, hint,
-                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
-                      _cb, &updateNum ) ;
+                      FLG_UPDATE_UPSERT,
+                      _cb, &upResult ) ;
+      updateNum = upResult.updateNum() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "falied to update business info,"
@@ -1312,13 +1314,12 @@ namespace engine
                                             const BSONObj &clusterInfo )
    {
       INT32 rc = SDB_OK ;
-      INT64 updateNum = 0 ;
       BSONObj condition = BSON( OM_CLUSTER_FIELD_NAME << clusterName ) ;
       BSONObj updator = BSON( "$set" << clusterInfo ) ;
       BSONObj hint ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_CLUSTER, condition, updator, hint,
-                      FLG_UPDATE_RETURNNUM, _cb, &updateNum ) ;
+                      0, _cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "falied to update cluster info,"
@@ -2065,10 +2066,11 @@ namespace engine
             businessName << OM_CONFIGURE_FIELD_HOSTNAME <<  hostName ) ;
       BSONObj updator = BSON( "$replace" << newConfig ) ;
       BSONObj hint ;
+      utilUpdateResult upResult ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, updator, hint,
-                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
-                      _cb, &updateNum ) ;
+                      FLG_UPDATE_UPSERT, _cb, &upResult ) ;
+      updateNum = upResult.updateNum() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "falied to update host config,"
@@ -2275,7 +2277,6 @@ namespace engine
                                      BSONObj &options )
    {
       INT32 rc = SDB_OK ;
-      INT64 updateNum = 0 ;
       BSONObj condition = BSON( OM_AUTH_FIELD_BUSINESS_NAME << businessName ) ;
       BSONObj updator ;
       BSONObj hint ;
@@ -2295,8 +2296,7 @@ namespace engine
       updator = BSON( "$set" << updatorBuilder.obj() ) ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS_AUTH, condition, updator, hint,
-                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
-                      _cb, &updateNum ) ;
+                      FLG_UPDATE_UPSERT, _cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "falied to update business auth,"
@@ -3240,7 +3240,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       time_t now = time( NULL ) ;
-      INT64 updateNum = 0 ;
       BSONObj condition ;
       BSONObj updator ;
       BSONObj hint ;
@@ -3278,8 +3277,7 @@ namespace engine
       updator = BSON( "$replace" << builder.obj() ) ;
 
       rc = rtnUpdate( OM_CS_DEPLOY_CL_PLUGINS, condition, updator, hint,
-                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
-                      _cb, &updateNum ) ;
+                      FLG_UPDATE_UPSERT, _cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "falied to update business auth,"
