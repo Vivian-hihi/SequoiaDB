@@ -4,6 +4,7 @@
 # @author:     yinzhen 2019-10-24
 
 import unittest
+from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor, SDBError)
 from lib import testlib
 from pysequoiadb.client import (SDB_LIST_SVCTASKS)
 
@@ -11,11 +12,11 @@ class TestListSvctasks12504(testlib.SdbTestBase):
    def setUp(self):
       pass
 
-   def test_list_backups_12504(self):
+   def test_list_svctasks_12504(self):
 
       # get list with option
-      expect_result = {"Name":"Default", "TaskID":0}
-      cursor = self.db.get_list(SDB_LIST_SVCTASKS, condition={"Name":"Default"})
+      expect_result = {"TaskName":"Default", "TaskID":0}
+      cursor = self.db.get_list(SDB_LIST_SVCTASKS, condition={"TaskName":"Default"})
       act_results = testlib.get_all_records(cursor)
       act_result = act_results[0]
       
