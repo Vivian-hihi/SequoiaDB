@@ -117,8 +117,9 @@ public class CopyObject19305 extends S3TestBase {
         Assert.assertTrue(modifiedDate.after(new Date(beforeDate.getTime() - 1000)),
                 "modifiedDate must greater beforeDate, modifiedDate = " + modifiedDate + ", beforeDate = "
                         + beforeDate);
-        // 3s error allowed in time range
-        Assert.assertTrue(modifiedDate.getTime() - beforeDate.getTime() < 3 * 1000);
+        // 60s error allowed in time range
+        Assert.assertTrue(modifiedDate.getTime() - beforeDate.getTime() < 60 * 1000,
+                "modifiedDate = " + modifiedDate + ", " + beforeDate);
     }
 }
 
