@@ -337,20 +337,28 @@ namespace engine
       }
 
       objResult = builder.obj() ;
-      resultEle = objResult.firstElement() ;
-      if ( resultEle.isNumber() && !me.isValidRange( resultEle ) )
+      if ( objResult.nFields() > 0 )
       {
-         rc = SDB_VALUE_OVERFLOW ;
-         PD_LOG_MSG( PDERROR, "Result is overflow:min=%s,max=%s,result=%s,"
-                     "rc=%d", me._minEle.toString( FALSE ).c_str(),
-                     me._maxEle.toString( FALSE ).c_str(),
-                     resultEle.toString( FALSE ).c_str() ,rc ) ;
-         goto error ;
-      }
+         resultEle = objResult.firstElement() ;
+         if ( !me.isValidRange( resultEle ) )
+         {
+            rc = SDB_VALUE_OVERFLOW ;
+            PD_LOG_MSG( PDERROR, "Result is overflow:min=%s,max=%s,result=%s,"
+                        "rc=%d", me._minEle.toString( FALSE ).c_str(),
+                        me._maxEle.toString( FALSE ).c_str(),
+                        resultEle.toString( FALSE ).c_str() ,rc ) ;
+            goto error ;
+         }
 
-      bb.appendAs ( resultEle, in.fieldName() ) ;
-      ADD_CHG_ELEMENT_AS( _srcChgBuilder, in, pRoot, "$set" ) ;
-      ADD_CHG_ELEMENT_AS( _dstChgBuilder, resultEle, pRoot, "$set" ) ;
+         bb.appendAs( resultEle, in.fieldName() ) ;
+         ADD_CHG_ELEMENT_AS( _srcChgBuilder, in, pRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS( _dstChgBuilder, resultEle, pRoot, "$set" ) ;
+      }
+      else
+      {
+         // empty builder imply in is not changed
+         bb.append( in ) ;
+      }
 
    done:
       PD_TRACE_EXIT ( SDB__MTHMDF__APPINCMDF ) ;
@@ -3291,12 +3299,20 @@ namespace engine
          }
 
          _defaultResult = builder.obj() ;
+         if ( 0 == _defaultResult.nFields() )
+         {
+            // empty builder imply leftEle is not changed. set leftEle as result
+            BSONObjBuilder defaultBuilder( 20 ) ;
+            defaultBuilder.appendAs( leftEle, "" ) ;
+            _defaultResult = defaultBuilder.obj() ;
+         }
+
          resultEle = _defaultResult.firstElement() ;
          if ( !isValidRange( resultEle ) )
          {
-            rc = SDB_VALUE_OVERFLOW ;
-            PD_LOG_MSG( PDERROR, "default value plus inc is not in valid "
-                        "range:default=%s,inc=%s,result=%s,min=%s,max=%s,rc=%d",
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Default + Value is not in valid range:"
+                        "Default=%s,Value=%s,result=%s,Min=%s,Max=%s,rc=%d",
                         leftEle.toString( FALSE ).c_str(),
                         _valueEle.toString( FALSE ).c_str(),
                         _defaultResult.toString().c_str(),
@@ -3364,7 +3380,7 @@ namespace engine
          inc     = incElement.numberDecimal() ;
          if ( inc.isZero() )
          {
-            resBuilder.appendAs( existElement, "" ) ;
+            // empty resBuilder imply existElement is not changed
          }
          else
          {
@@ -3462,7 +3478,7 @@ namespace engine
       }
       else
       {
-         resBuilder.appendAs( existElement, "" ) ;
+         // empty resBuilder imply existElement is not changed
       }
 
    done:
