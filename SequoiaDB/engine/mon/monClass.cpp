@@ -189,8 +189,10 @@ void _monClassContainer::_processPendingObj()
       }
       else if ( TRUE == it->isPendingDelete() )
       {
+         monClass &monClass = *it ;
          it = _activeList.erase(it) ;
          _activeListLen.dec() ;
+         SDB_OSS_DEL &monClass ;
          _numPendingDelete.dec() ;
       }
       else
