@@ -45,7 +45,7 @@ namespace engine
 
 const CHAR* monLatchName[] =
 {
-   "LatchName start point",
+   ""
    "SDB_DMSCB stateMtx",
    "dmsStorageBase persistLatch",
    "dmsStorageBase commitLatch",
@@ -56,7 +56,6 @@ const CHAR* monLatchName[] =
    "dpsTransCB hisMutex",
    "SDB_RTNCB mutex",
    "dmsStorageDataCommon mblock",
-
    "catGTSMsgHandler jobLatch",
    "catMainController contextLatch",
    "catSequence latch",
@@ -99,7 +98,6 @@ const CHAR* monLatchName[] =
    "utilCacheUnit pageCleaner",
    "utilMemBlockPool latch",
    "utilSegmentPool latch",
-
    "catDCLogMgr latch",
    "clsMgr clsLatch",
    "clsShardMgr shardLatch",
@@ -147,7 +145,6 @@ const CHAR* monLatchName[] =
    "rtnJobMgr latch",
    "rtnJobMgr latchRemove",
    "rtnExtDataProcessorMgr mutex",
-
    "clsCatalogAgent rwMutex",
    "clsGroupItem rwMutex",
    "clsNodeMgrAgent rwMutex",
@@ -175,14 +172,13 @@ const CHAR* monLatchName[] =
    "rtnRemoteMessenger lock",
    "utilCacheBucket rwMutex",
    "utilHashTable bucketNumLock",
-
 } ;
 
 const CHAR* monLatchIDtoName ( MON_LATCH_IDENTIFIER latchID)
 {
    if ( (latchID < 1) || (latchID >= MON_LATCH_ID_MAX) )
    {
-      return NULL ;
+      return monLatchName[0] ;
    }
    else
    {
@@ -348,7 +344,7 @@ void _monGetSLatch(T* latchObj)
 monSpinXLatch::monSpinXLatch( MON_LATCH_IDENTIFIER latchID )
    : numOwner( 0 )
 {
-   latchID = latchID ;
+   this->latchID = latchID ;
 }
 
 monSpinXLatch::~monSpinXLatch()
@@ -391,7 +387,7 @@ BOOLEAN monSpinXLatch::try_get()
 monSpinSLatch::monSpinSLatch( MON_LATCH_IDENTIFIER latchID )
    : numOwner( 0 )
 {
-   latchID = latchID ;
+   this->latchID = latchID ;
 }
 
 monSpinSLatch::~monSpinSLatch()
