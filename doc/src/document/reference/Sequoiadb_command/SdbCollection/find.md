@@ -26,7 +26,7 @@ Collection
 
 * `cond` ( *Object*， *选填* )
 
-	记录匹配条件。为空时，查询所有记录；不为空时，查询符合条件记录。如：{"age":{"$gt":30}}。关于匹配条件的使用，可参考[匹配符](reference/operator/match_operator/overview.md)。
+	记录匹配条件。为空时，查询所有记录；不为空时，查询符合条件记录。如：{"age":{"$gt":30}}。匹配条件可使用[匹配符](reference/operator/match_operator/overview.md)或[全文检索语法](basic_operation/text_search/text_search_grammer.md)。
 
 * `sel` ( *Object*， *选填* )
 
@@ -65,11 +65,11 @@ Collection
 
 * `sel`参数为Object类型，其字段内容为空字符串即可，数据库只关心其字段名。
 
-* `hint`参数为Object类型，其字段名可以为任意不重复的字符串，数据库只关心起字段内容。 
+* `hint`参数为Object类型，其字段名可以为任意不重复的字符串，数据库只关心起字段内容。
 
 ##返回值##
 
-成功：返回DBCursor对象。  
+成功：返回DBCursor对象。
 
 失败：抛出异常。
 
@@ -164,3 +164,10 @@ v1.0及以上版本。
 	```
 	因为“sex”字段并不存在 find() 方法的 sel 选项 {age:"",name:""} 中，
 	所以 sort() 指定的排序字段 {"sex":1} 将被忽略。
+
+8. 使用[全文检索语法](basic_operation/text_search/text_search_grammer.md)查询集合 "bar" 中的 "about" 字段包含 "rock climbing" 的记录。
+
+	```lang-javascript
+	> db.foo.bar.find({"":{"$Text":{"query":{"match":{"about" : "rock climbing"}}}}})
+	```
+

@@ -18,39 +18,39 @@ Collection
 
 ##DESCRIPTION##
 
-Select records from database. Return a cursor on the selected records. 
-Cursor is a pointer in SequoiaDB, it points to a query result set, the 
+Select records from database. Return a cursor on the selected records.
+Cursor is a pointer in SequoiaDB, it points to a query result set, the
 search result can be iterated in the client.
 
 ##PARAMETERS##
 
 * `cond` ( *Object*， *Optional* )
 
-	Selecting condtion. If it is null, it will find all the records. 
-    If it is not null, it will find records that matches the condition.
+	Selecting condtion. If it is null, it will find all the records.
+    If it is not null, it will find records that matches the condition. Both match operators and full text query conditions can be used.
 
 * `sel` ( *Object*， *Optional* )
 
 	It chooses fields to be returned. If it is null, it will return all the fields.
-    If a field doesn't exist, it will return the same contents which was input. 
-	
+    If a field doesn't exist, it will return the same contents which was input.
+
 	Format: {"filed1":"", "filed2":"", "filed3":""}
 
 * `hint` ( *Object*， *Optional* )
 
 	specified the hint for query.
-	* when not specified 'hint', it is up to the database to decide whether 
-      to use the index and which index to be used. 
+	* when not specified 'hint', it is up to the database to decide whether
+      to use the index and which index to be used.
 	* when 'hint' is {"":null}, table scan.
 	* when 'hint' contains only one index, such as: {"":"myIdx"}, the query will be
       made using the index named "myIdx" in the currrent collection; However, when index "myIdx" does not exist in current collection, query goes with table scan.
 	* when 'hint' contains several indexes, such as: {"1":"idx1","2":"idx2","3":"idx3"},
- 	  the query	will be made using one of the three indexes described above. Which 
+ 	  the query	will be made using one of the three indexes described above. Which
 	  index is used eventually, determined by the database evaluation.
 
 * `skipNum` ( *Int32*， *Optional* )
 
-	specified where returns from the record of the result set. The default value is 0, 
+	specified where returns from the record of the result set. The default value is 0,
 	means returns from the first record of the result set.
 
 * `retNum` ( *Int32*， *Optional* )
@@ -60,7 +60,7 @@ search result can be iterated in the client.
 
 * `sort` ( *Object*， *Optional* )
 
-	Specifies whether the result set is sorted by the specified field name. The 
+	Specifies whether the result set is sorted by the specified field name. The
   	value of the field name is 1 or -1, such as: {"name":1,"age":-1}.
 	* when not specified 'sort', means the result set is not sorted.
 	* when the value of field name is 1, means sort by field name in ascending order.
@@ -72,7 +72,7 @@ search result can be iterated in the client.
 
 **Note：**
 
-* The parameter 'sel' is an object, the values of it's fields are empty string, 
+* The parameter 'sel' is an object, the values of it's fields are empty string,
   database only care about the name of the fields.
 
 * The parameter 'hint' is an object, the name of it's fields can be any unique string,
@@ -109,15 +109,15 @@ Since v1.0.
 	> db.foo.bar.find()
  	```
 
-2. query records with the specified condition. Return the records which name 
-   is "Tom" and "age" is greater then 25. 
+2. query records with the specified condition. Return the records which name
+   is "Tom" and "age" is greater then 25.
 
 	```lang-javascript
  	> db.foo.bar.find( { age: { $gt: 25 }, name: "Tom" } )
  	```
 
 3. specified the fields to be returned. when we have recored { age: 25, type: "system" }
-   and { age: 20, name: "Tom", type: "normal" }, the follow operation return the contents 
+   and { age: 20, name: "Tom", type: "normal" }, the follow operation return the contents
    of field "age" and field "name".
 
 	```lang-javascript
@@ -149,7 +149,7 @@ Since v1.0.
 	}
 	```
 
-5. select records from collection 'foo.bar' and return records which field "age" is greater 
+5. select records from collection 'foo.bar' and return records which field "age" is greater
    than 10 by using [$gt](reference/operator/match_operator/gt.md). when get the result set,
    we skip the first 3 records and return 5 records.
 
@@ -175,3 +175,10 @@ Since v1.0.
   	> db.foo.bar.find( { age: { $gt: 20 } }, { age: "", name: "" } ).sort( { "sex": 1 } )
 	```
 	for the return records do not contain field "sex", so the sort request does not work.
+
+8. Find records which contain "rock climbing" in collection "bar" by using [full text search](basic_operation/text_search/text_search_grammer.md).
+
+	```lang-javascript
+	> db.foo.bar.find({"":{"$Text":{"query":{"match":{"about" : "rock climbing"}}}}})
+	```
+

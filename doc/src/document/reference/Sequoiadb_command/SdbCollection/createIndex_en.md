@@ -51,7 +51,7 @@ Create an index for the collection to accelerate query.
 
 1. There should not be any exactly same records in the fields that are specified by the unique index in a collection.
 2. Index name should not be null string. It should not contain "." or "$". The length of it should be no more than 127B.
-3. IndexPageSize 4096 / 8192 / 16384 / 32768 / 65536 bytes, the maximum index value is 1024 / 2048 / 4096 / 4096 / 4096 bytes. 
+3. IndexPageSize 4096 / 8192 / 16384 / 32768 / 65536 bytes, the maximum index value is 1024 / 2048 / 4096 / 4096 / 4096 bytes.
 4. The number of the index fields should be no more than 32.
 
 ##RETURN VALUE##
@@ -67,21 +67,27 @@ On error, exception will be thrown.
 	```lang-javascript
 	> db.foo.bar.createIndex( "ageIndex", { age: 1 }, true )
 	```
-   
+
 2. Create an unique index in collection "bar", and any field of index should exist and cannot be null.
 
 	```lang-javascript
 	> db.foo.bar.createIndex( "ab", { a: 1, b: 1 }, { Unique: true, NotNull: true } )
-	> 
+	>
 	> // "b" field is null. Insert will throw error.
 	> db.foo.bar.insert( { a: 1, b: null } )
 	sdb.js:625 uncaught exception: -339
 	Any field of index key should exist and cannot be null
 	Takes 0.002531s.
-	> 
+	>
 	> // "b" field does not exist. Insert will throw error.
 	> db.foo.bar.insert( { a: 1 } )
 	sdb.js:625 uncaught exception: -339
 	Any field of index key should exist and cannot be null
 	Takes 0.002531s
 	```
+
+3. Create a text index named "addr_tag" on field "address" and "tags" in collection "bar", which will be used for full text search.
+
+	```lang-javascript
+	 > db.foo.bar.createIndex( "addr_tags", { address: "text", tags: "text" } )
+	 ```

@@ -48,7 +48,7 @@
  > db.foo.bar.createIndex( "ageIndex", { age: 1 }, true )
  ```
 
-* 集合 bar 创建唯一索引，并且索引字段不允许为 null 或者不存在 。
+* 集合 bar 创建唯一索引，并且索引字段不允许为 null 或者不存在。
 
  ```lang-javascript
  > db.foo.bar.createIndex( "ab", { a: 1, b: 1 }, { Unique: true, NotNull: true } )
@@ -64,4 +64,10 @@
  sdb.js:625 uncaught exception: -339
  Any field of index key should exist and cannot be null
  Takes 0.002531s.
+ ```
+
+* 在集合 bar 中的 address 及 tags 字段上建立[全文索引](basic_operation/text_search/overview.md)，用于对这两个字段进行全文检索。
+
+ ```lang-javascript
+ > db.foo.bar.createIndex( "addr_tags", { address: "text", tags: "text" } )
  ```
