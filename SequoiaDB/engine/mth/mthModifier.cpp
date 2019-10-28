@@ -2276,6 +2276,18 @@ namespace engine
                   {
                      BSONElement defaultResultEle =
                               incModifier->_defaultResult.firstElement() ;
+                     if ( !incModifier->isValidRange( defaultResultEle ) )
+                     {
+                        rc = SDB_VALUE_OVERFLOW ;
+                        PD_LOG_MSG( PDERROR, "Result is overflow:min=%s,"
+                                "max=%s,result=%s,rc=%d",
+                                incModifier->_minEle.toString( FALSE ).c_str(),
+                                incModifier->_maxEle.toString( FALSE ).c_str(),
+                                defaultResultEle.toString( FALSE ).c_str(),
+                                rc ) ;
+                        goto done ;
+                     }
+
                      b.appendAs ( defaultResultEle, pShort ) ;
                      ADD_CHG_ELEMENT_AS ( _dstChgBuilder, defaultResultEle,
                                           pRoot, "$set" ) ;
@@ -3289,7 +3301,6 @@ namespace engine
       {
          BSONObj tmpValue ;
          BSONElement leftEle ;
-         BSONElement resultEle ;
          BSONObjBuilder builder( 20 ) ;
 
          if ( _default.eoo() )
@@ -3320,20 +3331,6 @@ namespace engine
             BSONObjBuilder defaultBuilder( 20 ) ;
             defaultBuilder.appendAs( leftEle, "" ) ;
             _defaultResult = defaultBuilder.obj() ;
-         }
-
-         resultEle = _defaultResult.firstElement() ;
-         if ( !isValidRange( resultEle ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "Default + Value is not in valid range:"
-                        "Default=%s,Value=%s,result=%s,Min=%s,Max=%s,rc=%d",
-                        leftEle.toString( FALSE ).c_str(),
-                        _valueEle.toString( FALSE ).c_str(),
-                        _defaultResult.toString().c_str(),
-                        _minEle.toString( FALSE ).c_str(),
-                        _maxEle.toString( FALSE ).c_str(), rc ) ;
-            goto error ;
          }
       }
 
