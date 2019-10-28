@@ -9,11 +9,13 @@ from pysequoiadb.client import (SDB_LIST_SEQUENCES, SDB_SNAP_CATALOG)
 
 class TestListSequences12504(testlib.SdbTestBase):
    def setUp(self):
+      if testlib.is_standalone():
+         self.skipTest('run mode is standalone')
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
 
-   def test_list_collections_12504(self):
+   def test_list_sequences_12504(self):
 
       self.cl.create_autoincrement({"Field":"a", "Increment":1})
 

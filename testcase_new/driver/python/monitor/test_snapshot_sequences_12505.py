@@ -8,11 +8,13 @@ from lib import testlib
 
 class TestSnapshotSequences12505(testlib.SdbTestBase):
    def setUp(self):
+      if testlib.is_standalone():
+         self.skipTest('run mode is standalone')
       testlib.drop_cs(self.db, self.cs_name, ignore_not_exist=True)
       self.cs = self.db.create_collection_space(self.cs_name)
       self.cl = self.cs.create_collection(self.cl_name)
 
-   def test_snapshot_collections_12505(self):
+   def test_snapshot_sequences_12505(self):
   
       self.cl.create_autoincrement({"Field":"a", "Increment":1})
 
