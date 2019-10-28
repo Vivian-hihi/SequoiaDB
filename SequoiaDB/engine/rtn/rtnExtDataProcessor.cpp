@@ -696,7 +696,7 @@ namespace engine
                   std::advance( itr, 2 ) ;
                   while ( itr != keySet.end() )
                   {
-                     arrBuilder.append( itr->getStringField( arrField ) ) ;
+                     arrBuilder.append( itr->getField( arrField ) ) ;
                      ++itr ;
                   }
                   arrBuilder.done() ;
