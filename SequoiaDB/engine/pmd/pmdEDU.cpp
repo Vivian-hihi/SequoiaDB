@@ -96,6 +96,7 @@ namespace engine
       _isLocked         = FALSE ;
       _ctrlFlag         = 0 ;
       _isInterruptSelf  = FALSE ;
+      _interruptRC      = SDB_OK ;
       _writingDB        = FALSE ;
       _writingID        = 0 ;
       _processEventCount= 0 ;
@@ -179,6 +180,7 @@ namespace engine
 
       _ctrlFlag = 0 ;
       _isInterruptSelf = FALSE ;
+      _interruptRC = SDB_OK ;
       resetLsn() ;
       writingDB( FALSE ) ;
       releaseAlignedBuff() ;
@@ -262,10 +264,11 @@ namespace engine
       _eduType = type ;
    }
 
-   void _pmdEDUCB::interrupt( BOOLEAN onlySelf )
+   void _pmdEDUCB::interrupt( BOOLEAN onlySelf, INT32 interruptRC )
    {
       _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
       _isInterruptSelf = onlySelf ;
+      _interruptRC = interruptRC ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DISCONNECT, "_pmdEDUCB::disconnect" )
@@ -274,6 +277,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_DISCONNECT );
       interrupt () ;
       _ctrlFlag |= EDU_CTRL_DISCONNECTED ;
+      // reset return code to disconnected
+      _interruptRC = SDB_APP_DISCONNECT ;
       postEvent ( pmdEDUEvent ( PMD_EDU_EVENT_TERM ) ) ;
       PD_TRACE_EXIT ( SDB__PMDEDUCB_DISCONNECT );
    }
@@ -284,6 +289,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_FORCE );
       disconnect () ;
       _ctrlFlag |= EDU_CTRL_FORCED ;
+      // reset return code to forced
+      _interruptRC = SDB_APP_FORCED ;
       PD_TRACE_EXIT ( SDB__PMDEDUCB_FORCE );
    }
 
@@ -291,6 +298,7 @@ namespace engine
    {
       _ctrlFlag &= ~EDU_CTRL_INTERRUPTED ;
       _isInterruptSelf = FALSE ;
+      _interruptRC = SDB_OK ;
    }
 
    void _pmdEDUCB::resetDisconnect ()
@@ -648,6 +656,11 @@ namespace engine
    BOOLEAN _pmdEDUCB::isOnlySelfWhenInterrupt() const
    {
       return _isInterruptSelf ;
+   }
+
+   INT32 _pmdEDUCB::getInterruptRC() const
+   {
+      return _interruptRC ;
    }
 
    BOOLEAN _pmdEDUCB::isDisconnected ()

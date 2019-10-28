@@ -722,7 +722,8 @@ namespace engine
          pClsCB->getReplCB()->getFaultEvent()->signalAll( SDB_RTN_IN_REBUILD ) ;
 
          /// interrupt writing and transaction EDUs
-         eduCB()->getEDUMgr()->interruptWritingAndTransEDUs() ;
+         eduCB()->getEDUMgr()->interruptWritingAndTransEDUs(
+                                                         SDB_RTN_IN_REBUILD ) ;
          /// disconnect al shard agent
          pClsCB->getShardRouteAgent()->disconnectAll() ;
          /// do rebuild

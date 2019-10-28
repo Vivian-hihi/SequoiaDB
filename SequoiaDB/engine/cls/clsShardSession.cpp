@@ -962,6 +962,14 @@ namespace engine
             hasRollbacked = TRUE ;
          }
 
+         if ( SDB_APP_INTERRUPT == rc &&
+              SDB_OK != _pEDUCB->getInterruptRC() )
+         {
+            rc = _pEDUCB->getInterruptRC() ;
+            PD_LOG ( PDDEBUG, "Interrupted EDU [%llu] with return code %d",
+                     _pEDUCB->getID(), rc ) ;
+         }
+
          if ( 0 == buffObj.size() )
          {
             utilBuildErrorBson( _retBuilder, rc,

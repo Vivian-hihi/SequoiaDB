@@ -841,7 +841,8 @@ namespace engine
       return eduCount ;
    }
 
-   UINT32 _pmdEDUMgr::_interruptWritingEDUs( BOOLEAN withUserTrans )
+   UINT32 _pmdEDUMgr::_interruptWritingEDUs( BOOLEAN withUserTrans,
+                                             INT32 interruptRC )
    {
       MAP_EDUCB_IT it ;
       pmdEDUCB *cb = NULL ;
@@ -854,7 +855,7 @@ namespace engine
          if ( cb->isWritingDB() )
          {
             ++count ;
-            cb->interrupt() ;
+            cb->interrupt( FALSE, interruptRC ) ;
             PD_LOG ( PDDEBUG, "Interrupt edu[ID:%lld]", it->first ) ;
          }
 #if defined ( SDB_ENGINE )
@@ -863,7 +864,7 @@ namespace engine
                    cb->isTransaction() )
          {
             ++count ;
-            cb->interrupt() ;
+            cb->interrupt( FALSE, interruptRC ) ;
             PD_LOG ( PDDEBUG, "Interrupt edu[ID:%lld]", it->first ) ;
          }
 #endif
@@ -946,14 +947,14 @@ namespace engine
       goto done ;
    }
 
-   UINT32 _pmdEDUMgr::interruptWritingAndTransEDUs ()
+   UINT32 _pmdEDUMgr::interruptWritingAndTransEDUs( INT32 interruptRC )
    {
-      return _interruptWritingEDUs( TRUE ) ;
+      return _interruptWritingEDUs( TRUE, interruptRC ) ;
    }
 
-   UINT32 _pmdEDUMgr::interruptWritingEDUS()
+   UINT32 _pmdEDUMgr::interruptWritingEDUS( INT32 interruptRC )
    {
-      return _interruptWritingEDUs( FALSE ) ;
+      return _interruptWritingEDUs( FALSE, interruptRC ) ;
    }
 
    UINT32 _pmdEDUMgr::getWritingEDUCount( INT32 eduTypeFilter,

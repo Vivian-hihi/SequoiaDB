@@ -559,6 +559,14 @@ namespace engine
       {
          BSONObj tmp ;
 
+         if ( SDB_APP_INTERRUPT == rtnCode &&
+              SDB_OK != _pEDUCB->getInterruptRC() )
+         {
+            rtnCode = _pEDUCB->getInterruptRC() ;
+            PD_LOG ( PDDEBUG, "Interrupted EDU [%llu] with return code %d",
+                     _pEDUCB->getID(), rtnCode ) ;
+         }
+
          if ( 0 == contextBuff.size() )
          {
             utilBuildErrorBson( retBuilder, rc,

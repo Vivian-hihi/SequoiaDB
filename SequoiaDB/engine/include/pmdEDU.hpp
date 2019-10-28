@@ -233,10 +233,12 @@ namespace engine
       CHAR*       getUncompressBuff( UINT32 len ) ;
       INT32       getUncompressBuffLen() const { return _uncompressBuffLen ; }
 
-      void        interrupt ( BOOLEAN onlySelf = FALSE ) ;
+      void        interrupt ( BOOLEAN onlySelf = FALSE,
+                              INT32 interruptRC = SDB_APP_INTERRUPT ) ;
       void        resetInterrupt () ;
       void        resetDisconnect () ;
       BOOLEAN     isOnlySelfWhenInterrupt() const ;
+      INT32       getInterruptRC() const ;
 
       void        updateTransConf() ;
 
@@ -514,6 +516,8 @@ namespace engine
 
       INT32                   _ctrlFlag ;
       BOOLEAN                 _isInterruptSelf ;
+      /// return code for interrupted EDU
+      INT32                   _interruptRC ;
       BOOLEAN                 _writingDB ;
       UINT64                  _writingID ;
       /// aligned memory.
