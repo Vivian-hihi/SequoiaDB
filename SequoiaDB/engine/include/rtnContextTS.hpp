@@ -40,6 +40,7 @@
 #define RTN_CONTEXTTS_HPP__
 
 #include "rtnContextMainCL.hpp"
+#include "rtnResultSetFilter.hpp"
 #include "pmdRemoteSession.hpp"
 
 namespace engine
@@ -58,6 +59,7 @@ namespace engine
          virtual RTN_CONTEXT_TYPE getType() const ;
          virtual _dmsStorageUnit* getSU() ;
 
+         void enableRIDFilter() ;
          INT32 open( const rtnQueryOptions &options, pmdEDUCB *eduCB ) ;
 
       protected:
@@ -85,9 +87,10 @@ namespace engine
          UINT64               _remoteSessionID ;
          rtnSubCLContext      *_subContext ;
          INT64                _remoteCtxID ;
+         BOOLEAN              _enableRIDFilter ;
+         rtnResultSetFilter   _ridFilter ;
    } ;
    typedef _rtnContextTS rtnContextTS ;
 }
 
 #endif /* RTN_CONTEXTTS_HPP__ */
-

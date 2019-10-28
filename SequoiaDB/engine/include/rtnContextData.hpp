@@ -42,6 +42,7 @@
 #include "rtnContext.hpp"
 #include "rtnQueryOptions.hpp"
 #include "rtnQueryModifier.hpp"
+#include "rtnResultSetFilter.hpp"
 #include "optAccessPlanRuntime.hpp"
 
 namespace engine
@@ -100,6 +101,9 @@ namespace engine
          virtual _dmsStorageUnit* getSU () { return _su ; }
          virtual BOOLEAN          isWrite() const ;
          virtual BOOLEAN          needRollback() const ;
+
+         virtual void setResultSetFilter( rtnResultSetFilter *rsFilter,
+                                          BOOLEAN appendMode = TRUE ) ;
 
       protected:
          INT32 _queryModify( _pmdEDUCB* eduCB,
@@ -174,6 +178,9 @@ namespace engine
          BOOLEAN                    _indexBlockScan ;
          INT32                      _direction ;
 
+         rtnResultSetFilter         *_rsFilter ;
+         BOOLEAN                    _appendRIDFilter ;
+
          // query modify
          rtnQueryModifier*          _queryModifier ;
    } ;
@@ -245,4 +252,3 @@ namespace engine
 }
 
 #endif /* RTN_CONTEXT_DATA_HPP_ */
-

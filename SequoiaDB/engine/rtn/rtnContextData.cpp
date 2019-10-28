@@ -80,6 +80,8 @@ namespace engine
       // Save query activity
       _enableMonContext = TRUE ;
       _enableQueryActivity = TRUE ;
+      _rsFilter         = NULL ;
+      _appendRIDFilter  = FALSE ;
    }
 
    _rtnContextData::~_rtnContextData ()
@@ -128,6 +130,13 @@ namespace engine
    BOOLEAN _rtnContextData::needRollback() const
    {
       return isWrite() ;
+   }
+
+   void _rtnContextData::setResultSetFilter( rtnResultSetFilter *rsFilter,
+                                             BOOLEAN appendMode )
+   {
+      _rsFilter = rsFilter ;
+      _appendRIDFilter = appendMode ;
    }
 
    void _rtnContextData::_toString( stringstream & ss )
@@ -695,6 +704,28 @@ namespace engine
                generator.getDataPtr( recordDataPtr ) ;
                BSONObj obj( (const CHAR*)recordDataPtr ) ;
 
+               if ( _rsFilter )
+               {
+                  if ( _appendRIDFilter )
+                  {
+                     BOOLEAN pushed = FALSE ;
+                     rc = _rsFilter->push( recordID, pushed ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Push record id to result set "
+                                  "filter failed: %d", rc ) ;
+                     if ( !pushed )
+                     {
+                        continue ;
+                     }
+                  }
+                  else
+                  {
+                     if ( _rsFilter->isFiltered( recordID ) )
+                     {
+                        continue ;
+                     }
+                  }
+               }
+
                if ( _queryModifier )
                {
                   //dollarList is pointed to _queryModifier->getDollarList()
@@ -876,6 +907,28 @@ namespace engine
          while ( SDB_OK == ( rc = secScanner.advance( recordID, generator,
                                                       cb, &mthContext ) ) )
          {
+            if ( _rsFilter )
+            {
+               if ( _appendRIDFilter )
+               {
+                  BOOLEAN pushed = FALSE ;
+                  rc = _rsFilter->push( recordID, pushed ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Push record id to result set "
+                               "filter failed: %d", rc ) ;
+                  if ( !pushed )
+                  {
+                     continue ;
+                  }
+               }
+               else
+               {
+                  if ( _rsFilter->isFiltered( recordID ) )
+                  {
+                     continue ;
+                  }
+               }
+            }
+
             if ( !isCountMode() )
             {
                try

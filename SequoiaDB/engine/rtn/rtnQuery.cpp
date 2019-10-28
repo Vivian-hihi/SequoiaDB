@@ -314,10 +314,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__FINDFIELDINOBJ, "_findFieldInObj" )
    static INT32 _findFieldInObj( const BSONObj &object, const CHAR *fieldName,
-                                 BOOLEAN &found )
+                                 BOOLEAN &found, BOOLEAN &ridFilterRequired )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__FINDFIELDINOBJ ) ;
+
+      found = FALSE ;
 
       try
       {
@@ -334,14 +336,11 @@ namespace engine
                BSONElement ele = itr.next() ;
                if ( Object == ele.type() )
                {
-                  rc = _findFieldInObj( ele.Obj(), fieldName, found ) ;
+                  rc = _findFieldInObj( ele.Obj(), fieldName, found,
+                                        ridFilterRequired) ;
                   if ( rc )
                   {
                      goto error ;
-                  }
-                  if ( found )
-                  {
-                     goto done ;
                   }
                }
                // for combined condition by $and, $or, $not
@@ -353,17 +352,34 @@ namespace engine
                      BSONElement subEle = subItr.next() ;
                      if ( Object == subEle.type() )
                      {
-                        rc = _findFieldInObj( subEle.Obj(), fieldName, found ) ;
+                        rc = _findFieldInObj( subEle.Obj(), fieldName,
+                                              found, ridFilterRequired ) ;
                         if ( rc )
                         {
                            goto error ;
                         }
                         if ( found )
                         {
-                           goto done ;
+                           // Text query condition is found in sub level of this
+                           // one.
+                           if ( !ridFilterRequired &&
+                                ( 0 == ossStrcmp( MTH_OPERATOR_STR_OR,
+                                                  ele.fieldName() )
+                                  ||
+                                  0 == ossStrcmp( MTH_OPERATOR_STR_NOT,
+                                                  ele.fieldName() ) ) )
+                           {
+                              ridFilterRequired = TRUE ;
+                           }
+                           break ;
                         }
                      }
                   }
+               }
+
+               if ( found )
+               {
+                  goto done ;
                }
             }
          }
@@ -383,13 +399,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__GETQUERYTYPE, "_getQueryType" )
-   static INT32 _getQueryType( const BSONObj &query, rtnQueryType &qType )
+   static INT32 _getQueryType( const BSONObj &query, rtnQueryType &qType,
+                               BOOLEAN &ridFilterRequired )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__GETQUERYTYPE ) ;
       BOOLEAN textFound = FALSE ;
 
-      rc = _findFieldInObj( query, FIELD_NAME_TEXT, textFound ) ;
+      rc = _findFieldInObj( query, FIELD_NAME_TEXT, textFound,
+                            ridFilterRequired ) ;
       PD_RC_CHECK( rc, PDERROR, "Find field[ %s ] in query[ %s ]failed[ %d ]",
                    FIELD_NAME_TEXT, query.toString().c_str(), rc ) ;
       qType = textFound ? RTN_QUERY_TEXT : RTN_QUERY_NORMAL ;
@@ -404,7 +422,9 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNQUERYWITHTS, "rtnQueryWithTS" )
    static INT32 rtnQueryWithTS( const rtnQueryOptions &options, pmdEDUCB *cb,
                                 SDB_RTNCB *rtnCB, SINT64 &contextID,
-                                rtnContextBase **ppContext, BOOLEAN enablePrefetch )
+                                rtnContextBase **ppContext,
+                                BOOLEAN enablePrefetch,
+                                BOOLEAN ridFilterRequired )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNQUERYWITHTS ) ;
@@ -429,6 +449,11 @@ namespace engine
          if ( options.canPrepareMore() )
          {
             contextTS->setPrepareMoreData( TRUE ) ;
+         }
+
+         if ( ridFilterRequired )
+         {
+            contextTS->enableRIDFilter() ;
          }
 
          if ( options.isOrderByEmpty() )
@@ -615,12 +640,15 @@ namespace engine
       // check if the adapter is registered.
       if ( messenger && messenger->isReady() )
       {
-         rc = _getQueryType( options.getQuery(), queryType ) ;
+         BOOLEAN ridFilterRequired = FALSE ;
+         rc = _getQueryType( options.getQuery(), queryType,
+                             ridFilterRequired ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get query type, rc: %d", rc ) ;
          if ( RTN_QUERY_TEXT == queryType )
          {
             rc = rtnQueryWithTS( options, cb, rtnCB, contextID,
-                                 ppContext, enablePrefetch ) ;
+                                 ppContext, enablePrefetch,
+                                 ridFilterRequired ) ;
             if ( rc )
             {
                if ( SDB_DMS_EOC != rc )

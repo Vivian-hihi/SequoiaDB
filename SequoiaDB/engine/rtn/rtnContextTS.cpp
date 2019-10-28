@@ -52,6 +52,7 @@ namespace engine
       _remoteSessionID = 0 ;
       _subContext = NULL ;
       _remoteCtxID = -1 ;
+      _enableRIDFilter = FALSE ;
    }
 
    _rtnContextTS::~_rtnContextTS()
@@ -109,6 +110,11 @@ namespace engine
    _dmsStorageUnit* _rtnContextTS::getSU()
    {
       return NULL ;
+   }
+
+   void _rtnContextTS::enableRIDFilter()
+   {
+      _enableRIDFilter = TRUE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTTS_OPEN, "_rtnContextTS::open" )
@@ -323,6 +329,8 @@ namespace engine
          goto error ;
       }
 
+      _options.clearFlag( FLG_QUERY_PARALLED ) ;
+
       // Do a query, and get another subcontext.
       rc = rtnQuery( _options.getCLFullName(), objList[1], objList[0],
                      objList[2], objList[3], _options.getFlag(), eduCB,
@@ -333,6 +341,13 @@ namespace engine
       {
          SDB_OSS_DEL _subContext ;
          _subContext = NULL ;
+      }
+
+      if ( _enableRIDFilter )
+      {
+         SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+         rtnContext *dataContext = rtnCB->contextFind( subContextID, eduCB ) ;
+         dataContext->setResultSetFilter( &_ridFilter ) ;
       }
 
       _subContext = SDB_OSS_NEW rtnSubCLContext( _options.getOrderBy(), _keyGen,
@@ -446,4 +461,3 @@ namespace engine
       goto done ;
    }
 }
-

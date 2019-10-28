@@ -50,6 +50,7 @@
 #include "mthSelector.hpp"
 #include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
+#include "rtnResultSetFilter.hpp"
 #include "utilPooledObject.hpp"
 #include "monClass.hpp"
 #include <string>
@@ -402,6 +403,11 @@ namespace engine
          virtual void setQueryActivity ( BOOLEAN hitEnd )
          {
             // Do nothing
+         }
+
+         virtual void setResultSetFilter( rtnResultSetFilter *rsFilter,
+                                          BOOLEAN appendMode = TRUE )
+         {
          }
 
       protected:

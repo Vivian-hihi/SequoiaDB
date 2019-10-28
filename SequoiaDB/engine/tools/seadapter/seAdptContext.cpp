@@ -167,6 +167,7 @@ namespace seadapter
       rtnCondNode *textNode = NULL ;
       BSONObj textRootObj ;
       BSONObj textObj ;
+      BOOLEAN validEmptyResult = FALSE ;
 
       objBuff.reset() ;
 
@@ -235,24 +236,31 @@ namespace seadapter
       if ( _condTree.textNodeInNot() )
       {
          rc = _fetchAll( queryObj, searchResult, SEADPT_FETCH_MAX_SIZE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Fetch all documents failed[ %d ]", rc ) ;
       }
       else
       {
          rc = _prepareSearch( queryObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Prepare search failed[ %d ]", rc ) ;
          rc = _getMore( searchResult ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC != rc )
-            {
-               PD_LOG( PDERROR, "Get more result failed[ %d ]", rc ) ;
-            }
-            goto error ;
-         }
       }
 
-      if ( 0 == searchResult.getObjNum() )
+      if ( SDB_DMS_EOC == rc &&
+           ( _condTree.textNodeInNot() || _condTree.textNodeInOr() ) )
+      {
+         validEmptyResult = TRUE ;
+      }
+      else if ( rc )
+      {
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Get more result failed[ %d ]", rc ) ;
+         }
+         // If text condition is descendant of '$or' or '$not' clause, the query
+         // should not end.
+         goto error ;
+      }
+
+      if ( !validEmptyResult && ( 0 == searchResult.getObjNum() ) )
       {
          rc = SDB_DMS_EOC ;
          goto error ;
@@ -262,7 +270,7 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Build the $in condition failed[ %d ]", rc ) ;
 
       PD_LOG( PDDEBUG, "The new in condition is: %s",
-              inCond.toString().c_str() ) ;
+            inCond.toString().c_str() ) ;
 
       rc = _condTree.updateNode( textNode, inCond.firstElement() ) ;
       PD_RC_CHECK( rc, PDERROR, "Update condition node failed[ %d ]", rc ) ;
@@ -511,7 +519,7 @@ namespace seadapter
          // 2. The result buffer is full.
          if ( result.getObjNum() > limitNum )
          {
-            rc = SDB_INVALIDARG ;
+            rc = SDB_OSS_UP_TO_LIMIT ;
             PD_LOG( PDERROR, "Record number[%u] too large for the operation",
                     result.getObjNum() ) ;
             goto error ;
@@ -635,4 +643,3 @@ namespace seadapter
    }
 
 }
-

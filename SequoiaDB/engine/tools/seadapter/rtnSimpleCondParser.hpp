@@ -79,6 +79,7 @@ namespace seadapter
          BOOLEAN hasTextCond() ;
          rtnCondNode* getTextNode() ;
          BOOLEAN textNodeInNot() const { return _textNodeInNot ; }
+         BOOLEAN textNodeInOr() const { return _textNodeInOr; }
          INT32 updateNode( rtnCondNode *node, const BSONElement &newEle ) ;
          BSONObj toBson() ;
 
@@ -106,6 +107,7 @@ namespace seadapter
          rtnCondNode          *_textNode ;
          // Whether text node is descendant of a $not clause.
          BOOLEAN              _textNodeInNot ;
+         BOOLEAN              _textNodeInOr ;
    } ;
    typedef _rtnSimpleCondParseTree rtnSimpleCondParseTree ;
 
@@ -113,4 +115,3 @@ namespace seadapter
 }
 
 #endif /* RTN_SIMPLECONDPARSER_HPP__ */
-

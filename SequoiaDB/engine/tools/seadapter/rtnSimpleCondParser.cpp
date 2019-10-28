@@ -101,6 +101,7 @@ namespace seadapter
       _root = NULL ;
       _textNode = NULL ;
       _textNodeInNot = FALSE ;
+      _textNodeInOr = FALSE ;
    }
 
    _rtnSimpleCondParseTree::~_rtnSimpleCondParseTree()
@@ -483,6 +484,14 @@ namespace seadapter
          if ( RTN_COND_NODE_LOGIC_NOT == parentTmp->getType() )
          {
             _textNodeInNot = TRUE ;
+         }
+         else if ( RTN_COND_NODE_LOGIC_OR == parentTmp->getType() )
+         {
+            _textNodeInOr = TRUE ;
+         }
+
+         if ( _textNodeInNot  && _textNodeInOr )
+         {
             break ;
          }
          else
@@ -624,4 +633,3 @@ namespace seadapter
       return &factory ;
    }
 }
-
