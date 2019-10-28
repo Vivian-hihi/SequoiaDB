@@ -1189,7 +1189,7 @@
                      ]
                   },
                   {
-                     "name": "sequoiadb_use_partition",
+                     "name": "sequoiadb_auto_partition",
                      "webName": $scope.autoLanguage( "自动分区" ),
                      "type": "select",
                      "required": true,
@@ -1350,7 +1350,7 @@
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'preferedinstance' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'transaction' ) ;
 
-               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_partition' ) ;
+               $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_auto_partition' ) ;
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_use_bulk_insert' ) ;
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_bulk_insert_size' ) ;
                $scope.CreateRelationWindow['config']['advance'].DisableItem( 'sequoiadb_replica_size' ) ;
@@ -1378,7 +1378,7 @@
             else if( value == 'mysql-sdb' )
             {
                //切换配置项
-               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_partition' ) ;
+               $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_auto_partition' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_use_bulk_insert' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_bulk_insert_size' ) ;
                $scope.CreateRelationWindow['config']['advance'].EnableItem( 'sequoiadb_replica_size' ) ;
@@ -1516,7 +1516,7 @@
             setArrayItemValue( advanceInput, 'name', 'preferedinstance', { 'enable': true } ) ;
             setArrayItemValue( advanceInput, 'name', 'transaction',      { 'enable': true } ) ;
 
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',                 { 'enable': false } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_auto_partition',                { 'enable': false } ) ;
             setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',               { 'enable': false } ) ;
             setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',              { 'enable': false } ) ;
             setArrayItemValue( advanceInput, 'name', 'sequoiadb_replica_size',                  { 'enable': false } ) ;
@@ -1543,7 +1543,7 @@
          {
             fromValid = mysqlBusList ;
 
-            setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_partition',                 { 'enable': true } ) ;
+            setArrayItemValue( advanceInput, 'name', 'sequoiadb_auto_partition',                { 'enable': true } ) ;
             setArrayItemValue( advanceInput, 'name', 'sequoiadb_use_bulk_insert',               { 'enable': true } ) ;
             setArrayItemValue( advanceInput, 'name', 'sequoiadb_bulk_insert_size',              { 'enable': true } ) ;
             setArrayItemValue( advanceInput, 'name', 'sequoiadb_replica_size',                  { 'enable': true } ) ;
@@ -1587,7 +1587,7 @@
                for ( var key in formVal2 )
                {
                   if ( key == 'address' ||
-                       ( key == 'sequoiadb_use_partition' && formVal2['sequoiadb_use_partition'] == "ON" ) ||
+                       ( key == 'sequoiadb_auto_partition' && formVal2['sequoiadb_auto_partition'] == "ON" ) ||
                        ( key == 'sequoiadb_use_bulk_insert' && formVal2['sequoiadb_use_bulk_insert'] == "ON" ) ||
                        ( key == 'sequoiadb_bulk_insert_size' && formVal2['sequoiadb_bulk_insert_size'] == 2000 ) ||
                        ( key == 'sequoiadb_replica_size' && formVal2['sequoiadb_replica_size'] == 1 ) ||
