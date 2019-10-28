@@ -599,6 +599,43 @@ class SequoiaDB
    public function interrupt(){}
 
    /**
+    * Send "INTERRUPT_SELF" message to engine to stop the current operation.
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example: Interrupt query operation
+    * @code 
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    *
+    * $cl = $db -> getCL( 'foo.bar' ) ;
+    * if( empty( $cl ) ) {
+    *    $err = $db -> getLastErrorMsg() ;
+    *    echo "Failed to call getCL, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    *
+    * $cursor = $cl -> find() ;
+    * if( empty( $cursor ) ) {
+    *    $err = $db -> getLastErrorMsg() ;
+    *    echo "Failed to find, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    *
+    * $result = $db -> interruptOperation() ;
+    * var_dump( $result ) ;
+    * @endcode
+   */
+   public function interruptOperation(){}
+
+   /**
     * Get the snapshot.
     *
     * @param $type	an integer argument. The snapshot type as below: @code

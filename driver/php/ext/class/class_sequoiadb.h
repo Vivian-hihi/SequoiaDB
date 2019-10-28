@@ -32,6 +32,7 @@ PHP_METHOD( SequoiaDB, isValid ) ;
 PHP_METHOD( SequoiaDB, syncDB ) ;
 PHP_METHOD( SequoiaDB, invalidateCache ) ;
 PHP_METHOD( SequoiaDB, interrupt ) ;
+PHP_METHOD( SequoiaDB, interruptOperation ) ;
 
 //snapshot & list
 //e.g. Rename getSnapshot
