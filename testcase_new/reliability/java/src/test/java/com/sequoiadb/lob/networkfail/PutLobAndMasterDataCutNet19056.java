@@ -114,7 +114,8 @@ public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
                     System.out.println("---end to put " + i);
                 }
             } catch (BaseException e) {
-                if (e.getErrorCode() != -81 && e.getErrorCode() != -79 && e.getErrorCode() != -134) {
+                if (e.getErrorCode() != -81 && e.getErrorCode() != -79 && e.getErrorCode() != -134
+                        && e.getErrorCode() != -15) {
                     throw e;
                 }
             }
