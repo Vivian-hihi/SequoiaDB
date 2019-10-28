@@ -131,7 +131,16 @@ namespace engine
 
       try
       {
+         BSONObj hint( pHint ) ;
+         BSONObj dummy ;
+
          boDeletor = BSONObj( pDeletor ) ;
+
+         rtnQueryOptions options( boDeletor, dummy, dummy, hint, pCollectionName,
+                                  0, -1, oldFlag ) ;
+
+         // add last op info
+         MON_SAVE_OP_OPTION( cb->getMonAppCB(), pMsg->opCode, options ) ;
       }
       catch ( std::exception &e )
       {
@@ -140,16 +149,7 @@ namespace engine
                       e.what() ) ;
       }
 
-      // add last op info
-      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
-                          "Collection:%s, Deletor:%s, Hint:%s, "
-                          "Flag:0x%08x(%u)",
-                          pCollectionName,
-                          boDeletor.toPoolString().c_str(),
-                          BSONObj(pHint).toPoolString().c_str(),
-                          oldFlag, oldFlag ) ;
-
-      MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
+      MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->getLastOpDetail() ) ;
 
       rc = cataSel.bind( _pResource, pCollectionName, cb, FALSE, TRUE ) ;
       if ( rc )

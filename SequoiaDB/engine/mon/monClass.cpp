@@ -66,7 +66,8 @@ MON_DATA_LEVEL monClassCreateCB[MON_CLASS_MAX] = {
  */
 _monClass::_monClass()
    : _status(MON_CLASS_STATUS_NORMAL),
-     _type(MON_CLASS_MAX)
+     _type(MON_CLASS_MAX),
+     dataLvl( MON_DATA_LVL_NONE )
 {
    _createTSTick.sample() ;
 }

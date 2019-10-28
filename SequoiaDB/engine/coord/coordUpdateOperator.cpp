@@ -164,9 +164,13 @@ namespace engine
 
       try
       {
+         BSONObj dummy ;
          boSelector = BSONObj( pSelector ) ;
          boHint = BSONObj( pHint ) ;
          boUpdator = BSONObj( pUpdator ) ;
+
+         rtnQueryOptions options( boSelector, dummy, dummy, boHint, pCollectionName,
+                                  0, -1, oldFlag ) ;
 
          if ( boUpdator.isEmpty() )
          {
@@ -174,17 +178,13 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         // add last op info
-         MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
-                             "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
-                             "Flag:0x%08x(%u)",
-                             pCollectionName,
-                             boSelector.toPoolString().c_str(),
-                             boUpdator.toPoolString().c_str(),
-                             boHint.toPoolString().c_str(),
-                             oldFlag, oldFlag ) ;
 
-         MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
+         options.setUpdator( boUpdator ) ;
+
+         // add last op info
+         MON_SAVE_OP_OPTION( cb->getMonAppCB(), pMsg->opCode, options ) ;
+
+         MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->getLastOpDetail() ) ;
       }
       catch ( std::exception &e )
       {

@@ -454,21 +454,15 @@ namespace engine
       else
       {
          coordSendOptions sendOpt( cb->isTransaction() ) ;
+         rtnQueryOptions options ( BSONObj( pQuery ), BSONObj( pSelector ),
+                                   BSONObj( pOrderby ), BSONObj( pHint ),
+                                   pCollectionName, numToSkip, numToReturn,
+                                   flag ) ;
 
          // add last op info
-         MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
-                             "Collection:%s, Matcher:%s, Selector:%s, "
-                             "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
-                             "Flag:0x%08x(%u)",
-                             pCollectionName,
-                             BSONObj(pQuery).toString().c_str(),
-                             BSONObj(pSelector).toString().c_str(),
-                             BSONObj(pOrderby).toString().c_str(),
-                             BSONObj(pHint).toString().c_str(),
-                             numToSkip, numToReturn,
-                             flag, flag ) ;
+         MON_SAVE_OP_OPTION( cb->getMonAppCB(), pMsg->opCode, options ) ;
 
-         MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
+         MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->getLastOpDetail() ) ;
 
          if ( OSS_BIT_TEST( flag, FLG_QUERY_MODIFY ) )
          {

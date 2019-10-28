@@ -313,6 +313,42 @@ namespace engine
             return ossHash( _hint.objdata(), _hint.objsize() ) ;
          }
 
+         OSS_INLINE void setInsertor( const BSONObj &insertor )
+         {
+            // reuse selector as insertor
+            _selector = insertor ;
+         }
+
+         OSS_INLINE const BSONObj &getInsertor() const
+         {
+            // reuse selector as insertor
+            return _selector ;
+         }
+
+         OSS_INLINE void setInsertNum( INT32 insertNum )
+         {
+            // reuse skip as insert number
+            _skip = insertNum ;
+         }
+
+         OSS_INLINE INT32 getInsertNum() const
+         {
+            // reuse skip as insert number
+            return _skip ;
+         }
+
+         OSS_INLINE void setUpdator( const BSONObj &updator )
+         {
+            // reuse selector as updator
+            _selector = updator ;
+         }
+
+         OSS_INLINE const BSONObj &getUpdator() const
+         {
+            // reuse selector as updator
+            return _selector ;
+         }
+
          /// Collection name
          void setCLFullName ( const CHAR *clFullName ) ;
 

@@ -185,7 +185,10 @@ namespace engine
       _readTimeSpent            = rhs._readTimeSpent ;
       _writeTimeSpent           = rhs._writeTimeSpent ;
       ossStrcpy( _lastOpDetail, rhs._lastOpDetail ) ;
-
+      if ( rhs._lastOpQuerySaved )
+      {
+         formatLastOpDetail( rhs._lastQueryOptions ) ;
+      }
       return *this ;
    }
 
@@ -256,7 +259,8 @@ namespace engine
       _lastOpEndTime.clear() ;
       _readTimeSpent.clear() ;
       _writeTimeSpent.clear() ;
-      ossMemset( _lastOpDetail, 0, sizeof( _lastOpDetail ) ) ;
+      _lastOpDetail[ 0 ] = '\0' ;
+      _lastOpQuerySaved = FALSE ;
    }
 
    void _monAppCB::startOperator()
@@ -265,7 +269,8 @@ namespace engine
       _lastOpEndTime.clear() ;
       _lastOpType = MSG_NULL ;
       _cmdType = CMD_UNKNOW ;
-      ossMemset( _lastOpDetail, 0, sizeof(_lastOpDetail) ) ;
+      _lastOpDetail[ 0 ] = '\0' ;
+      _lastOpQuerySaved = FALSE ;
    }
 
    void _monAppCB::endOperator()
@@ -325,6 +330,23 @@ namespace engine
       }
    }
 
+   const CHAR *_monAppCB::getLastOpDetail()
+   {
+      if ( _lastOpQuerySaved )
+      {
+         formatLastOpDetail( _lastQueryOptions ) ;
+         _lastOpQuerySaved = FALSE ;
+      }
+      return _lastOpDetail ;
+   }
+
+   void _monAppCB::saveLastOpQuery( const rtnQueryOptions &options )
+   {
+      _lastQueryOptions = options ;
+      _lastQueryOptions.getOwned() ;
+      _lastOpQuerySaved = TRUE ;
+   }
+
    void _monAppCB::saveLastOpDetail( const CHAR *format, ... )
    {
       va_list argList ;
@@ -347,8 +369,73 @@ namespace engine
                  sizeof( _lastOpDetail ) - curLen - 1,
                  format, argList ) ;
       va_end( argList ) ;
+
+      _lastOpDetail[ sizeof( _lastOpDetail ) - 1 ] = '\0' ;
+      _lastOpQuerySaved = FALSE ;
+
    done:
       return ;
+   }
+
+   void _monAppCB::formatLastOpDetail( const rtnQueryOptions &options )
+   {
+      switch ( _lastOpType )
+      {
+         case MSG_BS_QUERY_REQ :
+         {
+            saveLastOpDetail( "Collection:%s, Matcher:%s, Selector:%s, "
+                              "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
+                              "Flag:0x%08x(%u)",
+                              options.getCLFullName(),
+                              options.getQuery().toPoolString().c_str(),
+                              options.getSelector().toPoolString().c_str(),
+                              options.getOrderBy().toPoolString().c_str(),
+                              options.getHint().toPoolString().c_str(),
+                              options.getSkip(),
+                              options.getLimit(),
+                              options.getFlag(),
+                              options.getFlag() ) ;
+            break ;
+         }
+         case MSG_BS_INSERT_REQ :
+         {
+            saveLastOpDetail( "Collection:%s, Insertors:%s, ObjNum:%d, "
+                              "Flag:0x%08x(%u)",
+                              options.getCLFullName(),
+                              options.getInsertor().toPoolString().c_str(),
+                              options.getInsertNum(),
+                              options.getFlag(),
+                              options.getFlag() ) ;
+            break ;
+         }
+         case MSG_BS_UPDATE_REQ :
+         {
+            saveLastOpDetail( "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
+                              "Flag:0x%08x(%u)",
+                              options.getCLFullName(),
+                              options.getQuery().toPoolString().c_str(),
+                              options.getUpdator().toPoolString().c_str(),
+                              options.getHint().toPoolString().c_str(),
+                              options.getFlag(),
+                              options.getFlag() ) ;
+            break ;
+         }
+         case MSG_BS_DELETE_REQ :
+         {
+            saveLastOpDetail( "Collection:%s, Deletor:%s, Hint:%s, "
+                              "Flag:0x%08x(%u)",
+                              options.getCLFullName(),
+                              options.getQuery().toPoolString().c_str(),
+                              options.getHint().toPoolString().c_str(),
+                              options.getFlag(),
+                              options.getFlag() ) ;
+            break ;
+         }
+         default :
+         {
+            break ;
+         }
+      }
    }
 
    /*

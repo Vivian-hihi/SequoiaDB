@@ -1349,21 +1349,15 @@ namespace engine
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
 
-         // add last op info
-         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "Collection:%s, Matcher:%s, Updator:%s, Hint:%s, "
-                             "Flag:0x%08x(%u)",
-                             pCollectionName,
-                             matcher.toPoolString().c_str(),
-                             updator.toPoolString().c_str(),
-                             hint.toPoolString().c_str(),
-                             flags, flags ) ;
-
          // Construct query options
          // matcher, selector, order, hint, collection, skip, limit, flag
          rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
                                   0, -1, flags ) ;
          options.setMainCLName( mainCLName ) ;
+         options.setUpdator( updator ) ;
+
+         // add last op info
+         MON_SAVE_OP_OPTION( eduCB()->getMonAppCB(), msg->opCode, options ) ;
 
          /*
          PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
@@ -1469,13 +1463,14 @@ namespace engine
       try
       {
          BSONObj insertor ( pInsertorBuffer ) ;
-         // add list op info
-         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "Collection:%s, Insertors:%s, ObjNum:%d, "
-                             "Flag:0x%08x(%u)",
-                             pCollectionName,
-                             insertor.toPoolString().c_str(),
-                             recordNum, flags, flags ) ;
+
+         rtnQueryOptions options ;
+         options.setCLFullName( pCollectionName ) ;
+         options.setInsertor( insertor ) ;
+
+         // add last op info
+         MON_SAVE_OP_OPTION( eduCB()->getMonAppCB(), msg->opCode, options ) ;
+
          /*
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
                   sessionName(), insertor.toString().c_str(),
@@ -1566,15 +1561,6 @@ namespace engine
          BSONObj matcher ( pMatcherBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
 
-         // add last op info
-         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                             "Collection:%s, Deletor:%s, Hint:%s, "
-                             "Flag:0x%08x(%u)",
-                             pCollectionName,
-                             matcher.toPoolString().c_str(),
-                             hint.toPoolString().c_str(),
-                             flags, flags ) ;
-
          /*
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
                   sessionName(), deletor.toString().c_str(),
@@ -1584,6 +1570,9 @@ namespace engine
          rtnQueryOptions options( matcher, dummy, dummy, hint, pCollectionName,
                                   0, -1, flags ) ;
          options.setMainCLName( mainCLName ) ;
+
+         // add last op info
+         MON_SAVE_OP_OPTION( eduCB()->getMonAppCB(), msg->opCode, options ) ;
 
          if ( _isMainCL )
          {
@@ -1702,25 +1691,15 @@ namespace engine
             BSONObj orderBy ( pOrderByBuffer ) ;
             BSONObj hint ( pHintBuffer ) ;
 
-            // add last op info
-            MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                                "Collection:%s, Matcher:%s, Selector:%s, "
-                                "OrderBy:%s, Hint:%s, Skip:%llu, Limit:%lld, "
-                                "Flag:0x%08x(%u)",
-                                pCollectionName,
-                                matcher.toPoolString().c_str(),
-                                selector.toPoolString().c_str(),
-                                orderBy.toPoolString().c_str(),
-                                hint.toPoolString().c_str(),
-                                numToSkip, numToReturn,
-                                flags, flags ) ;
-
             // Construct query options
             // matcher, selector, order, hint, collection, skip, limit, flag
             rtnQueryOptions options( matcher, selector, orderBy, hint,
                                      pCollectionName, numToSkip, numToReturn,
                                      flags ) ;
             options.setMainCLName( mainCLName ) ;
+
+            // add last op info
+            MON_SAVE_OP_OPTION( eduCB()->getMonAppCB(), msg->opCode, options ) ;
 
             /*
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "

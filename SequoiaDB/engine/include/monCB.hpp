@@ -44,6 +44,7 @@
 #include "ossUtil.hpp"
 #include "ossAtomic.hpp"
 #include "msg.h"
+#include "rtnQueryOptions.hpp"
 
 namespace engine
 {
@@ -80,6 +81,18 @@ namespace engine
             _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;              \
             _pMonAppCB_->saveLastOpDetail( format,                   \
                                            ##__VA_ARGS__ ) ;         \
+         } catch( ... ) {}                                           \
+      }                                                              \
+   }
+
+   #define MON_SAVE_OP_OPTION( _pMonAppCB_, opType, options )        \
+   {                                                                 \
+      if ( NULL != _pMonAppCB_ )                                     \
+      {                                                              \
+         try {                                                       \
+            _pMonAppCB_->setLastOpType( opType ) ;                   \
+            _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;              \
+            _pMonAppCB_->saveLastOpQuery( options ) ;                \
          } catch( ... ) {}                                           \
       }                                                              \
    }
@@ -709,6 +722,8 @@ namespace engine
       ossTickDelta   _readTimeSpent ;
       ossTickDelta   _writeTimeSpent ;
       CHAR           _lastOpDetail[ MON_APP_LASTOP_DESC_LEN + 1 ] ;
+      BOOLEAN        _lastOpQuerySaved ;
+      rtnQueryOptions _lastQueryOptions ;
 
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
@@ -810,7 +825,10 @@ namespace engine
       void setLastOpType( INT32 opType ) ;
       void setLastCmdType( INT32 cmdType ) ;
       void opTimeSpentInc( ossTickDelta delta );
+      const CHAR * getLastOpDetail() ;
+      void saveLastOpQuery( const rtnQueryOptions &options ) ;
       void saveLastOpDetail( const CHAR *format, ... ) ;
+      void formatLastOpDetail( const rtnQueryOptions &options ) ;
 
       OSS_INLINE void setCRUDCB ( monCRUDCB * crudCB )
       {

@@ -248,6 +248,8 @@ namespace engine
       CHAR *pCollectionName = NULL ;
       CHAR *pInsertor = NULL;
       INT32 count = 0 ;
+      rtnQueryOptions options ;
+
       rc = msgExtractInsert( (CHAR*)pMsg, &flag,
                              &pCollectionName, &pInsertor, count ) ;
       if( rc )
@@ -266,13 +268,12 @@ namespace engine
          goto error ;
       }
 
+      options.setCLFullName( pCollectionName ) ;
+      options.setInsertor( BSONObj( pInsertor ) ) ;
+
       // add list op info
-      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
-                          "Collection:%s, Insertors:%s, ObjNum:%d, "
-                          "Flag:0x%08x(%u)",
-                          pCollectionName,
-                          BSONObj(pInsertor).toPoolString().c_str(),
-                          count, oldFlag, oldFlag ) ;
+      MON_SAVE_OP_OPTION( cb->getMonAppCB(), pMsg->opCode, options ) ;
+
 
       if ( flag & FLG_INSERT_REPLACEONDUP )
       {
@@ -283,7 +284,7 @@ namespace engine
          _repalceOnDup = FALSE ;
       }
 
-      MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
+      MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->getLastOpDetail() ) ;
 
       rc = cataSel.bind( _pResource, pCollectionName, cb, FALSE, TRUE ) ;
       if ( rc )
