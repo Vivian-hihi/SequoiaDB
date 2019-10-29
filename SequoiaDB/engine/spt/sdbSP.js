@@ -3798,6 +3798,8 @@ IniFile.prototype.save = function() {
          throw e ;
       }
 
+      file.truncate() ;
+
       file.write( content ) ;
 
       file.close() ;
