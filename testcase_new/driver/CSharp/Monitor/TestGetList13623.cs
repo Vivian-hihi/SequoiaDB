@@ -50,10 +50,11 @@ namespace CSharp.Monitor
         {
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
+            
             sdb.Connect();
+           
 
         }
-
         [TestMethod]
         public void Test13623()
         {
@@ -223,7 +224,8 @@ namespace CSharp.Monitor
             {
                 doc = cursor.Current();
                 count++;
-                Assert.IsTrue(doc.ToString().Contains("\"TaskID\" : 0, \"TaskName\" : \"Default\""));
+                Assert.IsTrue(doc.ToString().Contains("\"TaskID\" : 0"));
+                Assert.IsTrue(doc.ToString().Contains("\"TaskName\" : \"Default\""));
             }
             cursor.Close();
             Assert.AreEqual(1, count);
@@ -234,16 +236,16 @@ namespace CSharp.Monitor
             option1.Add("Name", backupName1);
             option1.Add("GroupName", new BsonArray(dataGroups));
             sdb.Backup(option1);
-           cursor = sdb.GetList(SDBConst.SDB_LIST_BACKUPS, null, null, null);
-           count = 0;
-           while (cursor.Next() != null)
-           {
-               doc = cursor.Current();
-               count++;
-               Console.WriteLine(doc.ToString());
-           }
-           Assert.AreEqual(dataGroups.Count(), count);
-           cursor.Close();
+            cursor = sdb.GetList(SDBConst.SDB_LIST_BACKUPS, null, null, null);
+            count = 0;
+            while (cursor.Next() != null)
+            {
+                doc = cursor.Current();
+                count++;
+                Assert.IsTrue(doc.ToString().Contains("\"Name\" : \"backup13623\""));
+            }
+            Assert.AreEqual(dataGroups.Count(), count);
+            cursor.Close();
         }
 
         [TestCleanup()]
