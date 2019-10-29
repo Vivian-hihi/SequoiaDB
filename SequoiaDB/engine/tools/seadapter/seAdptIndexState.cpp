@@ -1505,39 +1505,46 @@ namespace seadapter
             {
                BSONElement lNextEle = itrFirst.next() ;
                BSONElement rNextEle = itrSecond.next() ;
-               if ( String != lNextEle.type() || String != rNextEle.type() )
-               {
-                  goto done ;
-               }
                if ( found || 0 == lNextEle.woCompare( rNextEle, true) )
                {
-                  // Same, it's not the array field.
+                  // Same, it's not the array field. Only keep  string fields.
+                  if ( String != lNextEle.type() )
+                  {
+                     continue ;
+                  }
                   builder.append( lNextEle ) ;
                }
                else
                {
                   // Found the array field.
-                  const CHAR *arrField = lNextEle.fieldName() ;
-                  BSONArrayBuilder arrBuilder( builder.subarrayStart( arrField ) ) ;
-                  arrBuilder.append( lNextEle ) ;
-                  arrBuilder.append( rNextEle ) ;
-                  // Get the array field from all key record.
-                  BSONObjSet::iterator itr = keySet.begin() ;
-                  // Skip the first and second key.
-                  std::advance( itr, 2 ) ;
-                  while ( itr != keySet.end() )
+                  if ( String != lNextEle.type() || String != rNextEle.type() )
                   {
-                     BSONElement ele = itr->getField( arrField ) ;
-                     if ( String != ele.type() )
-                     {
-                        goto done ;
-                     }
-
-                     arrBuilder.append( itr->getStringField( arrField ) ) ;
-                     ++itr ;
+                     goto done ;
                   }
-                  arrBuilder.done() ;
-                  found = TRUE ;
+                  {
+                     const CHAR *arrField = lNextEle.fieldName() ;
+                     BSONArrayBuilder arrBuilder(
+                        builder.subarrayStart( arrField ) ) ;
+                     arrBuilder.append( lNextEle ) ;
+                     arrBuilder.append( rNextEle ) ;
+                     // Get the array field from all key record.
+                     BSONObjSet::iterator itr = keySet.begin() ;
+                     // Skip the first and second key.
+                     std::advance( itr, 2 ) ;
+                     while ( itr != keySet.end() )
+                     {
+                        BSONElement ele = itr->getField( arrField ) ;
+                        if ( String != ele.type() )
+                        {
+                           goto done ;
+                        }
+
+                        arrBuilder.append( itr->getStringField( arrField ) ) ;
+                        ++itr ;
+                     }
+                     arrBuilder.done() ;
+                     found = TRUE ;
+                  }
                }
             }
          }
