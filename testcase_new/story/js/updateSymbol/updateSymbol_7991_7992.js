@@ -72,4 +72,16 @@ function main()
    checkResult( dbcl, null,null, expRecs2, {_id:1} );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

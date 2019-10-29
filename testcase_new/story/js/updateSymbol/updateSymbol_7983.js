@@ -63,4 +63,16 @@ function main()
    checkResult( dbcl, {a:{$type:1,$et:100}}, null, expRecsFindByDecimailType2, {_id:1} );
    
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

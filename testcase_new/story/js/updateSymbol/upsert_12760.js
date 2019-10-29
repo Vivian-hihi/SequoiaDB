@@ -91,4 +91,16 @@ function main()
    checkResult( dbcl, null, null, expectResult, {_id:1});
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

@@ -54,4 +54,16 @@ function main()
    var expRecs4 = [{b:{0:{$decimal:"5"}},c:{1:[10]},d:{0:{0:15}},d:1020},{a:1},{a:{$decimal:"5"},b:[10,20,30],d:1000,c:1},{a:6,b:7,c:8},{a:{$decimal:"9.00",$precision:[10,2]},b:10,c:11}]; 
    checkResult( dbcl, null, null, expRecs4, {a:1} ); 
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

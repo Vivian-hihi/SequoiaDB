@@ -81,4 +81,16 @@ function main()
                     arr3:{1:[40,55,60]}}];
    checkResult( dbcl, null, null, expRecs3, {a:1} );
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

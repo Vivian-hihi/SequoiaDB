@@ -70,4 +70,16 @@ function main()
 	invalidDataUpdateCheckResult( dbcl, updateCondition4, -6 );
 	                                    
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;

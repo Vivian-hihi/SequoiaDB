@@ -5,15 +5,13 @@
 **************************************/
 function insertData( dbcl, condition )
 {  
-   try
-   {
-      dbcl.insert(condition);
-      println( "--insert data success" ) ;
-   }
-   catch(e)
-   {
-      throw buildException("insertData()",e,"insert", "insert success","insert fail");
-   }
+    try
+    {
+        dbcl.insert(condition);
+    }catch(e)
+    {
+        throw new Error(e);
+    }
 }
 
 /************************************
@@ -23,16 +21,14 @@ function insertData( dbcl, condition )
 **************************************/
 function updateData( dbcl, updateCondition, findCondition )
 {
-   if ( typeof(findCondition) == "undefined" ) { findCondition = null ; }  
-   try
-   {
-      dbcl.update( updateCondition, findCondition );
-      println( "--update data success" ) ;
-   }
-   catch(e)
-   {
-      throw buildException("updateData()",e,"update", "update success","update fail");
-   }
+    if ( typeof(findCondition) == "undefined" ) { findCondition = null ; }  
+    try
+    {
+        dbcl.update( updateCondition, findCondition );
+    }catch(e)
+    {
+        throw new Error(e);
+    }
 }
 
 /************************************
@@ -42,16 +38,14 @@ function updateData( dbcl, updateCondition, findCondition )
 **************************************/
 function upsertData( dbcl, upsertCondition, findCondition )
 {
-   if ( typeof(findCondition) == "undefined" ) { findCondition = null ; }  
-   try
-   {
-      dbcl.upsert( upsertCondition, findCondition );
-      println( "--upsert data success" ) ;
-   }
-   catch(e)
-   {
-      throw buildException("upsertData()",e,"upsert", "upsert success","upsert fail");
-   }
+    if ( typeof(findCondition) == "undefined" ) { findCondition = null ; }  
+    try
+    {
+        dbcl.upsert( upsertCondition, findCondition );
+    }catch(e)
+    {
+        throw new Error(e);
+    }
 }
 
 /************************************
@@ -61,16 +55,14 @@ function upsertData( dbcl, upsertCondition, findCondition )
 **************************************/
 function deleteData( dbcl, condition )
 {
-	 if ( typeof(condition) == "undefined" ) { condition = null ; }  
-   try
-   {
-      dbcl.remove(condition);
-      println( "--remove data success" ) ;
-   }
-   catch(e)
-   {
-      throw buildException("deleteData()",e,"delete", "delete success","delete fail");
-   }
+    if ( typeof(condition) == "undefined" ) { condition = null ; }  
+    try
+    {
+        dbcl.remove(condition);
+    }catch(e)
+    {
+        throw new Error(e);
+    }
 }
 
 /************************************
@@ -80,16 +72,15 @@ function deleteData( dbcl, condition )
 **************************************/
 function sortFindData(dbcl, findCondition, findCondition2, sortCondition )
 {
-	 if ( typeof( findCondition ) == "undefined" ) { findCondition = null; }
-   try
-   {
-      var sortResult = dbcl.find( findCondition, findCondition2 ).sort( sortCondition );
-   }
-   catch(e)
-   {
-      throw buildException("sortFindData()",e,"find and sort data", "find and sort data success","find and sort data fail");
-   }
-   return sortResult;
+    if ( typeof( findCondition ) == "undefined" ) { findCondition = null; }
+    try
+    {
+        var sortResult = dbcl.find( findCondition, findCondition2 ).sort( sortCondition );
+    }catch(e)
+    {
+        throw new Error(e);
+    }
+    return sortResult;
 }
 
 /************************************
@@ -99,10 +90,8 @@ function sortFindData(dbcl, findCondition, findCondition2, sortCondition )
 **************************************/
 function checkResult( dbcl, findCondition, findCondition2, expRecs, sortCondition )
 {
-   var rc = sortFindData(dbcl, findCondition, findCondition2, sortCondition );
-   println("--begin to check the data");
-   checkRec( rc, expRecs );
-   println("--end check the data");
+    var rc = sortFindData(dbcl, findCondition, findCondition2, sortCondition );
+    checkRec( rc, expRecs );
 }
 
 /************************************
@@ -115,55 +104,52 @@ function checkResult( dbcl, findCondition, findCondition2, expRecs, sortConditio
 function checkRec( rc, expRecs )
 {				
 	//get actual records to array
-	var actRecs = [];
-   while( rc.next() )
-   {
-		actRecs.push( rc.current().toObj() );
-   }
-   //check count
-	if( actRecs.length !== expRecs.length )
-   {
-   	println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));
-   	throw buildException("check count", null, "",
-									expRecs.length, actRecs.length);
-   }
-   
-   //check every records every fields,expRecs as compare source
-   for( var i in expRecs )
-   {
-   	var actRec = actRecs[i];
-   	var expRec = expRecs[i];
-   	
-   	for ( var f in expRec )
-   	{
-   		if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
-	   	{
-	   		println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
-	   		println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));   		
-	   		throw buildException("checkRec()", "rec ERROR");
-	   	}
-   	}
-   }
-   //check every records every fields,actRecs as compare source
-   for( var i in actRecs )
-   {
-   	var actRec = actRecs[i];
-   	var expRec = expRecs[i];
-   	
-   	for ( var f in actRec )
-   	{
-   	   if(f == "_id")
-   	   {
-   	      continue;
-   	   }
-   		if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
-	   	{
-	   		println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
-	   		println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));   		
-	   		throw buildException("checkRec()", "rec ERROR");
-	   	}
-   	}
-   }
+    var actRecs = [];
+    while( rc.next() )
+    {
+        actRecs.push( rc.current().toObj() );
+    }
+    //check count
+    if( actRecs.length !== expRecs.length )
+    {
+        throw new Error("expect num: " + expRecs.length + ",actual num: " + actRecs.length 
+                        + "\nactual recs in cl= " + JSON.stringify(actRecs) + "\n\nexpect recs= " + JSON.stringify(expRecs));
+    }
+
+    //check every records every fields,expRecs as compare source
+    for( var i in expRecs )
+    {
+        var actRec = actRecs[i];
+        var expRec = expRecs[i];
+
+        for ( var f in expRec )
+        {
+            if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+            {
+                throw new Error("\nerror occurs in " + (parseInt(i) + 1) + "th record, in field '" + f + "'"
+                                + "\nactual recs in cl= " + JSON.stringify(actRecs) + "\n\nexpect recs= " + JSON.stringify(expRecs));
+            }
+        }
+    }
+    //check every records every fields,actRecs as compare source
+    for( var i in actRecs )
+    {
+        var actRec = actRecs[i];
+        var expRec = expRecs[i];
+
+        for ( var f in actRec )
+        {
+            if(f == "_id")
+            {
+                continue;
+            }
+            if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+            {  		
+                throw new Error("\nerror occurs in " + (parseInt(i) + 1) + "th record, in field '" + f + "'" 
+                                + "\nactual recs in cl= " + JSON.stringify(actRecs) + "\n\nexpect recs= " + JSON.stringify(expRecs));
+            }
+        }
+    }
 }
 
 /************************************
@@ -174,23 +160,17 @@ function checkRec( rc, expRecs )
 **************************************/
 function invalidDataUpdateCheckResult( dbcl, invalidDoc, expRecs )
 {
-   try
-   {
-      dbcl.update( invalidDoc );
-      throw "need throw error";
-   }
-   catch(e)
-   {
-      if(expRecs != e )
-      {
-         throw buildException("invalidDataUpdateCheckResult() "+e+"\ncheckResult "+" \nExpect result: "+expRecs+" \nActual result: "+e);
-      }
-      else
-   	{
-   	    println("--check result is ok!");   		
-   	}
-   
-   }
+    try
+    {
+        dbcl.update( invalidDoc );
+        throw new Error("need throw error");
+    }catch(e)
+    {
+        if(expRecs != e )
+        {
+            throw new Error("expect error: " + expRecs + "actual error : " + e);
+        }
+    }
 }
 
 /************************************
@@ -201,42 +181,42 @@ function invalidDataUpdateCheckResult( dbcl, invalidDoc, expRecs )
 **************************************/
 function getGroupName(db, mustBePrimary)
 {
-   var RGname = null ;
-   try
-   {
-      RGname = db.listReplicaGroups().toArray();
-   }
-   catch (e)
-   {
-      throw e;
-   }
-   var j = 0;
-   var arrGroupName = Array();
-   for (var i=1 ; i != RGname.length ; ++i )
-   {
-      var eRGname = eval('('+RGname[i]+')') ;   
-      if( 1000 <= eRGname["GroupID"] )
-      {
-         arrGroupName[j] = Array();
-         var primaryNodeID = eRGname["PrimaryNode"] ;
-         var groups = eRGname["Group"] ;
-         for ( var m = 0; m < groups.length; m++ )
-         {  
-            if ( true == mustBePrimary )
-            {
-               var nodeID = groups[m]["NodeID"] ;
-               if ( primaryNodeID != nodeID )
-                  continue ;
-            }               
-            arrGroupName[j].push(eRGname["GroupName"]) ;
-            arrGroupName[j].push(groups[m]["HostName"]) ;
-            arrGroupName[j].push(groups[m]["Service"][0]["Name"]) ;
-            break ;
-         }
-         ++j;
-      }
-   }
-   return arrGroupName;
+    var RGname = null ;
+    try
+    {
+		RGname = db.listReplicaGroups().toArray();
+		var j = 0;
+		var arrGroupName = Array();
+		for (var i=1 ; i != RGname.length ; ++i )
+		{
+		    var eRGname = eval('('+RGname[i]+')') ;   
+		    if( 1000 <= eRGname["GroupID"] )
+		    {
+			    arrGroupName[j] = Array();
+			    var primaryNodeID = eRGname["PrimaryNode"] ;
+			    var groups = eRGname["Group"] ;
+			    for ( var m = 0; m < groups.length; m++ )
+			    {  
+				    if ( true == mustBePrimary )
+				    {
+				        var nodeID = groups[m]["NodeID"] ;
+				        if ( primaryNodeID != nodeID )
+					    continue ;
+				    }               
+				    arrGroupName[j].push(eRGname["GroupName"]) ;
+				    arrGroupName[j].push(groups[m]["HostName"]) ;
+				    arrGroupName[j].push(groups[m]["Service"][0]["Name"]) ;
+				    break ;
+			    }
+			    ++j;
+		    }
+		}
+    }catch (e)
+	{
+	  throw new Error(e);
+	}
+   
+    return arrGroupName;
 }
 
 /************************************
@@ -246,13 +226,11 @@ function getGroupName(db, mustBePrimary)
 **************************************/
 function createIndex( dbcl, indexName, key )
 {
-  try
-  {
-     dbcl.createIndex(indexName , key);
-     println("--create index success");
-   }
-  catch(e)
-   {
-     throw buildException("createIndex()",e,"create index", "create success","create fail");
-   }
+    try
+    {
+        dbcl.createIndex(indexName , key);
+    }catch(e)
+    {
+        throw new Error(e);
+    }
 }

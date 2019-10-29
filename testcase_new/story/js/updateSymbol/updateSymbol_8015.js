@@ -58,4 +58,16 @@ function main()
    var expRecs1 =[{age:1},{age:2},{age:[1,2,3]}]; 
    checkResult( dbcl, null,null, expRecs1, {_id:1} );
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+;
