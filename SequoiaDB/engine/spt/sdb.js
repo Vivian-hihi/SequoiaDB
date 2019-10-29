@@ -60,7 +60,7 @@ const SDB_LIST_USERS               = 16 ;
 const SDB_LIST_BACKUPS             = 17 ;
 
 const SDB_INSERT_CONTONDUP         = 1 ;
-const SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one document
+const SDB_INSERT_RETURN_ID         = 0x10000000 ;
 const SDB_INSERT_REPLACEONDUP      = 4 ;
 
 const SDB_TRACE_FLW                = 0 ;
