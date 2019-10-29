@@ -325,6 +325,32 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrFileCommon::truncate( INT64 size, string &err )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_file.isOpened() )
+      {
+         PD_LOG( PDERROR, "The file is not opened." ) ;
+         err = "File is not opened" ;
+         rc = SDB_IO ;
+         goto error ;
+      }
+
+      rc = ossTruncateFile( &_file, size ) ;
+      if ( rc )
+      {
+         err = getErrDesp( rc ) ;
+         PD_LOG( PDERROR, "Failed to truncate file:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrFileCommon::seek( INT64 seekSize, const BSONObj &optionObj,
                                   string &err )
    {

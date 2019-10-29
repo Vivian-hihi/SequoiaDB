@@ -74,6 +74,10 @@ namespace engine
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;
 
+      INT32 truncate( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
       INT32 seek( const _sptArguments &arg,
                   _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;

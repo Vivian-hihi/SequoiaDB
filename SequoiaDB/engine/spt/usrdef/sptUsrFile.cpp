@@ -59,6 +59,7 @@ namespace engine
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
+JS_MEMBER_FUNC_DEFINE( _sptUsrFile, truncate )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, readLine )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, readContent )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, writeContent )
@@ -91,6 +92,7 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, getPermission )
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_read", read, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_write", write, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_truncate", truncate, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_readLine", readLine, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_readContent", readContent, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_writeContent", writeContent, 0 )
@@ -638,6 +640,34 @@ JS_MAPPING_END()
       {
          goto error ;
       }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::truncate( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 size = 0 ;
+      string err ;
+
+      rc = arg.getNative( 0, &size, SPT_NATIVE_INT64 ) ;
+      if ( rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << "Size must be native type" ) ;
+         goto error ;
+      }
+
+      rc = _fileCommon.truncate( size, err ) ;
+      if( rc )
+      {
+         detail = BSON( SPT_ERR << err ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:

@@ -344,6 +344,7 @@ namespace engine
    #define OMA_REMOTE_FILE_OPEN                   "file open"
    #define OMA_REMOTE_FILE_READ                   "file read"
    #define OMA_REMOTE_FILE_WRITE                  "file write"
+   #define OMA_REMOTE_FILE_TRUNCATE               "file truncate"
    #define OMA_REMOTE_FILE_SEEK                   "file seek"
    #define OMA_REMOTE_FILE_CLOSE                  "file close"
    #define OMA_REMOTE_FILE_REMOVE                 "file remove"

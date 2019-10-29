@@ -105,6 +105,28 @@ namespace engine
    } ;
 
    /*
+      _remoteFileTruncate define
+   */
+   class _remoteFileTruncate : public _remoteExec
+   {
+   DECLARE_OACMD_AUTO_REGISTER()
+   public:
+      _remoteFileTruncate() ;
+
+      ~_remoteFileTruncate() ;
+
+      INT32 init( const CHAR * pInfomation ) ;
+
+      const CHAR *name() ;
+
+      INT32 doit( BSONObj &retObj ) ;
+
+   private:
+      UINT32 _FID ;
+      INT64  _size ;
+   } ;
+
+   /*
       _remoteFileSeek define
    */
    class _remoteFileSeek : public _remoteExec

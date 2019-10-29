@@ -74,6 +74,8 @@ namespace engine
 
       INT32 write( const CHAR* buf, SINT64 size, std::string &err ) ;
 
+      INT32 truncate( INT64 size, string &err ) ;
+
       INT32 seek( INT64 seekSize, const bson::BSONObj &optionObj,
                   std::string &err ) ;
 

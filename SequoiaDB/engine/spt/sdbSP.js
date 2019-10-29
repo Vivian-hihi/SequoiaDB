@@ -2695,6 +2695,25 @@ File.prototype.writeContent = function( content )
    }
 }
 
+File.prototype.truncate = function( size ) {
+   if ( undefined != this._remote )
+   {
+      if ( 'number' == typeof( size ) )
+      {
+         this._remote._runCommand( "file truncate", {}, { "FID": this._FID },
+                                    { "Size": size } ) ;
+      }
+      else
+      {
+         this._remote._runCommand( "file truncate", {}, { "FID": this._FID } ) ;
+      }
+   }
+   else
+   {
+      this._truncate( size ) ;
+   }
+}
+
 File.prototype.seek = function( offset, where ) {
 
    // check argument

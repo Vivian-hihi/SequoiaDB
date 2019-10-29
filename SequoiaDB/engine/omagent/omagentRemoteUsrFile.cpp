@@ -408,6 +408,110 @@ namespace engine
    }
 
    /*
+      _remoteFileTruncate implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileTruncate )
+
+   _remoteFileTruncate::_remoteFileTruncate(): _FID( 0 ),
+                                               _size( 0 )
+   {
+   }
+
+   _remoteFileTruncate::~_remoteFileTruncate()
+   {
+   }
+
+   INT32 _remoteFileTruncate::init( const CHAR * pInfomation )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _remoteExec::init( pInfomation ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get argument, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // get FID
+      if( FALSE == _matchObj.hasField( OMA_REMOTE_FIELD_NAME_FID ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "FID must be config" ) ;
+         goto error ;
+      }
+
+      if( NumberInt != _matchObj.getField( OMA_REMOTE_FIELD_NAME_FID ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "FID must be numberInt" ) ;
+         goto error ;
+      }
+
+      _FID = _matchObj.getIntField( OMA_REMOTE_FIELD_NAME_FID ) ;
+
+      // get Size
+      if( _valueObj.hasField( OMA_REMOTE_FIELD_NAME_SIZE ) )
+      {
+         BSONElement element ;
+
+         element = _valueObj.getField( OMA_REMOTE_FIELD_NAME_SIZE ) ;
+
+         if( NumberInt != element.type() && NumberLong != element.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Size must be number" ) ;
+            goto error ;
+         }
+
+         _size = element.numberLong() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _remoteFileTruncate::name()
+   {
+      return OMA_REMOTE_FILE_TRUNCATE ;
+   }
+
+   INT32 _remoteFileTruncate::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      omaSession *pAgentSession = NULL ;
+      _sptUsrFileCommon *fileCommon = NULL ;
+      string err ;
+
+      pAgentSession = _getThreadOmaSession() ;
+      if( NULL == pAgentSession )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get omagent session" ) ;
+         goto error ;
+      }
+
+      fileCommon = pAgentSession->getFileObjByID( _FID ) ;
+      if( NULL == fileCommon )
+      {
+         goto done ;
+      }
+
+      rc = fileCommon->truncate( _size, err ) ;
+      if( rc )
+      {
+         PD_LOG_MSG( PDERROR, "%s", err.c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _remoteFileSeek implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileSeek )
