@@ -1213,8 +1213,9 @@ static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
 {
    INT32 len = 0 ;
    UINT32 flags = handler->flags ;
-   const CHAR *begin = str ;
-   const CHAR *end   = str ;
+   const CHAR *begin    = str ;
+   const CHAR *blockEnd = str ;
+   const CHAR *end      = str ;
 
    while ( *str &&
           ( ( UTIL_INI_SEMICOLON & flags && UTIL_INI_CHAR_SEMICOLON == *str ) ||
@@ -1258,13 +1259,15 @@ static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
       else
       {
          str = end ;
-         len = str - begin ;
+         len = blockEnd - begin ;
          break ;
       }
 
+      blockEnd = str ;
+
       if ( UTIL_INI_COMMENT_PARSE_ALL == type )
       {
-         len = str - begin ;
+         len = blockEnd - begin ;
 
          if ( '\0' != *str )
          {
@@ -1275,7 +1278,7 @@ static const CHAR *parseComment( utilIniHandler *handler, const CHAR *str,
       }
       else
       {
-         len = str - begin ;
+         len = blockEnd - begin ;
 
          if ( '\0' != *str )
          {
