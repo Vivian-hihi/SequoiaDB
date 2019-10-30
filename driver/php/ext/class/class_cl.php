@@ -26,6 +26,8 @@ class SequoiaCL
 {
    /** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
    define( "SDB_FLG_INSERT_CONTONDUP",                   0x00000001 ) ;
+   /** The flag represent if the record hit index key duplicate error, database will replace the existing record by the inserting new record. */
+   define( "SDB_FLG_INSERT_REPLACEONDUP",                0x00000004 ) ;
    /** The flag represent whether insert return the "_id" field of the record for user */
    define( "SDB_FLG_INSERT_RETURN_OID",                  0x10000000 ) ;
 
