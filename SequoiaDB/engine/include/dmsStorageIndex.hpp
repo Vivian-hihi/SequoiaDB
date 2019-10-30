@@ -42,7 +42,7 @@
 #include "dmsStorageBase.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dmsPageMap.hpp"
-#include "utilInsertResult.hpp"
+#include "utilResult.hpp"
 #include "dmsOprHandler.hpp"
 
 using namespace bson ;
@@ -86,7 +86,8 @@ namespace engine
          INT32    createIndex ( _dmsMBContext *context, const BSONObj &index,
                                 _pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                 BOOLEAN isSys = FALSE,
-                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+                                INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
+                                utilWriteResult *pResult = NULL ) ;
 
          INT32    dropIndex ( _dmsMBContext *context, OID &indexOID,
                               _pmdEDUCB *cb, SDB_DPSCB *dpscb,
@@ -111,14 +112,15 @@ namespace engine
                                   BSONObj &inputObj, const dmsRecordID &rid,
                                   _pmdEDUCB *cb,
                                   IDmsOprHandler *pOprHandle,
-                                  utilInsertResult *insertResult = NULL ) ;
+                                  utilWriteResult *pResult = NULL ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesUpdate ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &originalObj, BSONObj &newObj,
                                   const dmsRecordID &rid, _pmdEDUCB *cb,
                                   BOOLEAN isRollback,
-                                  IDmsOprHandler *pOprHandle ) ;
+                                  IDmsOprHandler *pOprHandle,
+                                  utilWriteResult *pResult = NULL ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesDelete ( _dmsMBContext *context, dmsExtentID extLID,
@@ -154,7 +156,8 @@ namespace engine
                                 _pmdEDUCB *cb,
                                 SDB_DPSCB *dpscb,
                                 BOOLEAN isSys,
-                                INT32 sortBufferSize ) ;
+                                INT32 sortBufferSize,
+                                utilWriteResult *pResult ) ;
 
          INT32 _checkForCrtTextIdx( _dmsMBContext *context,
                                     const BSONObj &index ) ;
@@ -173,26 +176,29 @@ namespace engine
                                  dmsExtentID indexLID, _pmdEDUCB *cb,
                                  INT32 sortBufferSize,
                                  UINT16 indexType,
-                                 IDmsOprHandler *pOprHandle = NULL ) ;
+                                 IDmsOprHandler *pOprHandle = NULL,
+                                 utilWriteResult *pResult = NULL ) ;
 
          INT32    _indexInsert( _ixmIndexCB *indexCB,
                                  const _ixmKey &key, const dmsRecordID &rid,
                                  const Ordering& order,
                                  _pmdEDUCB *cb, BOOLEAN dupAllowed,
-                                 BOOLEAN dropDups ) ;
+                                 BOOLEAN dropDups,
+                                 utilWriteResult *pResult = NULL ) ;
 
          INT32    _indexInsert ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &inputObj, const dmsRecordID &rid,
                                  _pmdEDUCB *cb, BOOLEAN dupAllowed,
                                  BOOLEAN dropDups,
                                  IDmsOprHandler *pOprHandle,
-                                 utilInsertResult *insertResult = NULL ) ;
+                                 utilWriteResult *pResult = NULL ) ;
 
          INT32    _indexUpdate ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &originalObj, BSONObj &newObj,
                                  const dmsRecordID &rid, _pmdEDUCB *cb,
                                  BOOLEAN isRollback,
-                                 IDmsOprHandler *pOprHandle ) ;
+                                 IDmsOprHandler *pOprHandle,
+                                 utilWriteResult *pResult = NULL ) ;
 
          INT32    _indexDelete ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &inputObj, const dmsRecordID &rid,

@@ -1176,7 +1176,8 @@ namespace engine
                                                       const dmsRecordData &recordData,
                                                       const BSONObj &newObj,
                                                       pmdEDUCB *cb,
-                                                      IDmsOprHandler *pHandler )
+                                                      IDmsOprHandler *pHandler,
+                                                      utilUpdateResult *pResult )
    {
       SDB_ASSERT( FALSE, "Should not be here" ) ;
       return SDB_OPERATION_INCOMPATIBLE ;

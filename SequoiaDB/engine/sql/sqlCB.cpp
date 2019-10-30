@@ -81,7 +81,8 @@ namespace engine
 
    INT32 _sqlCB::exec( const CHAR *sql, _pmdEDUCB *cb,
                        SINT64 &contextID,
-                       BOOLEAN &needRollback )
+                       BOOLEAN &needRollback,
+                       BSONObjBuilder *pBuilder )
    {
       SDB_ASSERT( NULL != sql, "impossible" ) ;
       INT32 rc = SDB_OK ;
@@ -177,6 +178,10 @@ namespace engine
       /// step 7: execute.
       rc = container->execute( cb ) ;
       needRollback = container->needRollback() ;
+      if ( pBuilder )
+      {
+         container->buildRetInfo( *pBuilder ) ;
+      }
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to execute qgm tree, rc: %d", rc ) ;

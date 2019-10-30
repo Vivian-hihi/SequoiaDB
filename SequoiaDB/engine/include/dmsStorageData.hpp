@@ -67,16 +67,6 @@ namespace engine
       virtual INT32 setExtOptions ( dmsMBContext * context,
                                     const BSONObj & extOptions ) ;
 
-      // the dataRecord is not owned
-      // Caller must hold mb exclusive/shared lock
-      INT32 fetch ( dmsMBContext *context,
-                    const dmsRecordID &recordID,
-                    BSONObj &dataRecord,
-                    _pmdEDUCB *cb,
-                    BOOLEAN dataOwned = FALSE ) ;
-
-
-
    private:
       virtual const CHAR* _getEyeCatcher() const ;
 
@@ -179,7 +169,8 @@ namespace engine
                                    const dmsRecordData &recordData,
                                    const BSONObj &newObj,
                                    _pmdEDUCB *cb,
-                                   IDmsOprHandler *pHandler ) ;
+                                   IDmsOprHandler *pHandler,
+                                   utilUpdateResult *pResult ) ;
 
    } ;
    typedef _dmsStorageData dmsStorageData ;

@@ -39,6 +39,7 @@
 
 #include "coordTransOperator.hpp"
 #include "ossMemPool.hpp"
+#include "utilInsertResult.hpp"
 
 using namespace bson ;
 
@@ -67,9 +68,9 @@ namespace engine
 
          virtual BOOLEAN      isReadOnly() const ;
 
-         UINT32         getInsertedNum() const ;
-         UINT32         getIgnoredNum() const ;
-         UINT32         getReplacedNum() const ;
+         UINT64         getInsertedNum() const ;
+         UINT64         getIgnoredNum() const ;
+         UINT64         getReplacedNum() const ;
          void           clearStat() ;
 
       private:
@@ -179,9 +180,7 @@ namespace engine
                                                   coordSendMsgIn &inMsg ) ;
 
       private:
-         UINT32         _insertedNum ;
-         UINT32         _ignoredNum ;
-         UINT32         _replacedNum ;
+         utilInsertResult  _inResult ;
          BOOLEAN        _repalceOnDup ;
          BOOLEAN        _hasRetry ;
 

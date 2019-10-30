@@ -1208,6 +1208,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string sql ;
+      BSONObj result ;
 
       rc = arg.getString( 0, sql ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1221,11 +1222,16 @@ namespace engine
          goto error ;
       }
 
-      rc = _sptSdb.execUpdate( sql.c_str() ) ;
+      rc = _sptSdb.execUpdate( sql.c_str(), &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to exec update" ) ;
          goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
    done:
       return rc ;

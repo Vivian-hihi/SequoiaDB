@@ -2208,7 +2208,8 @@ namespace engine
       // create $id index[s_idKeyObj]
       if ( !OSS_BIT_TEST( attributes, DMS_MB_ATTR_NOIDINDEX ) )
       {
-         rc = _pIdxSU->createIndex( context, ixmGetIDIndexDefine(), cb, NULL, TRUE ) ;
+         rc = _pIdxSU->createIndex( context, ixmGetIDIndexDefine(),
+                                    cb, NULL, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Create $id index failed in collection[%s], "
                       "rc: %d", pName, rc ) ;
       }
@@ -3331,7 +3332,31 @@ namespace engine
                                       insertObj, foundRID, cb,
                                       dpscb ? &callback : NULL,
                                       insertResult ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
+         if ( rc )
+         {
+            if ( SDB_IXM_DUP_KEY == rc && insertResult )
+            {
+               /// current id
+               if ( insertResult->getCurID().isEmpty() )
+               {
+                  insertResult->setCurrentID( insertObj ) ;
+               }
+               /// peer id
+               if ( insertResult->getPeerID().isEmpty() &&
+                    insertResult->getPeerRID().isValid() )
+               {
+                  BSONObj peerObj ;
+                  if ( SDB_OK == fetch( context, insertResult->getPeerRID(),
+                                        peerObj, cb, FALSE ) )
+                  {
+                     insertResult->setPeerID( peerObj ) ;
+                  }
+               }
+            }
+
+            PD_LOG( PDERROR, "Failed to insert to index, rc: %d", rc ) ;
+            goto error ;
+         }
       }
       catch( std::exception &e )
       {
@@ -3965,9 +3990,30 @@ namespace engine
 
             rc = _extentUpdatedRecord( context, extRW, recordRW,
                                        recordData, newobj, cb,
-                                       dpscb ? pHandler : NULL ) ;
+                                       dpscb ? pHandler : NULL,
+                                       pResult ) ;
             if ( rc )
             {
+               if ( SDB_IXM_DUP_KEY == rc && pResult )
+               {
+                  /// current id
+                  if ( pResult->getCurID().isEmpty() )
+                  {
+                     pResult->setCurrentID( BSONObj( recordData.data() ) ) ;
+                  }
+                  /// peer id
+                  if ( pResult->getPeerID().isEmpty() &&
+                       pResult->getPeerRID().isValid() )
+                  {
+                     BSONObj peerObj ;
+                     if ( SDB_OK == fetch( context, pResult->getPeerRID(),
+                                           peerObj, cb, FALSE ) )
+                     {
+                        pResult->setPeerID( peerObj ) ;
+                     }
+                  }
+               }
+
                PD_LOG ( PDERROR, "Failed to update record from (%s) to (%s), "
                         "rc: %d", obj.toString().c_str(),
                         newobj.toString().c_str(), rc ) ;

@@ -147,6 +147,14 @@ namespace engine
       return _plan ? _plan->needRollback() : FALSE ;
    }
 
+   void _qgmPlanContainer::buildRetInfo( BSONObjBuilder &builder ) const
+   {
+      if ( _plan )
+      {
+         _plan->buildRetInfo( builder ) ;
+      }
+   }
+
    INT32 _qgmPlanContainer::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;

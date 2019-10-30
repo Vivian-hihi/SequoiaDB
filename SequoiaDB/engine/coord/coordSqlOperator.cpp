@@ -39,6 +39,8 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -71,6 +73,7 @@ namespace engine
       INT32 rc          = SDB_OK ;
       SQL_CB *sqlcb     = pmdGetKRCB()->getSqlCB() ;
       CHAR *sql         = NULL ;
+      BSONObjBuilder retBuilder ;
 
       contextID         = -1 ;
 
@@ -90,11 +93,23 @@ namespace engine
 
       MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->_lastOpDetail ) ;
 
-      rc = sqlcb->exec( sql, cb, contextID, _needRollback ) ;
+      rc = sqlcb->exec( sql, cb, contextID, _needRollback, &retBuilder ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
    done:
+      if ( !retBuilder.isEmpty() )
+      {
+         *buf = rtnContextBuf( retBuilder.obj() ) ;
+      }
       return rc ;
    error:
+      if ( !retBuilder.isEmpty() )
+      {
+         utilBuildErrorBson( retBuilder, rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
+      }
       goto done ;
    }
 

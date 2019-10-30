@@ -124,7 +124,8 @@ namespace engine
 
       virtual INT32 onRebuildIndex( _dmsMBContext *context,
                                     const ixmIndexCB *indexCB,
-                                    _pmdEDUCB *cb ) ;
+                                    _pmdEDUCB *cb,
+                                    utilWriteResult *pResult ) ;
 
       virtual INT32 onInsertRecord( _dmsMBContext *context,
                                     const BSONObj &object,
@@ -153,7 +154,7 @@ namespace engine
                                    const BSONObjSet &keySet,
                                    const dmsRecordID &rid,
                                    _pmdEDUCB* cb,
-                                   utilInsertResult *insertResult ) ;
+                                   utilWriteResult *pResult ) ;
 
       virtual INT32 onInsertIndex( _dmsMBContext *context,
                                    const ixmIndexCB *indexCB,
@@ -162,7 +163,7 @@ namespace engine
                                    const BSONObj &keyObj,
                                    const dmsRecordID &rid,
                                    _pmdEDUCB* cb,
-                                   utilInsertResult *insertResult ) ;
+                                   utilWriteResult *pResult ) ;
 
       virtual INT32 onUpdateIndex( _dmsMBContext *context,
                                    const ixmIndexCB *indexCB,
@@ -172,7 +173,8 @@ namespace engine
                                    const BSONObjSet &newKeySet,
                                    const dmsRecordID &rid,
                                    BOOLEAN isRollback,
-                                   _pmdEDUCB* cb ) ;
+                                   _pmdEDUCB* cb,
+                                   utilWriteResult *pResult ) ;
 
       virtual INT32 onDeleteIndex( _dmsMBContext *context,
                                    const ixmIndexCB *indexCB,
@@ -196,7 +198,7 @@ namespace engine
                                        const dmsRecordID &rid,
                                        _pmdEDUCB* cb,
                                        BOOLEAN allowSelfDup,
-                                       utilInsertResult *insertResult ) ;
+                                       utilWriteResult *pResult ) ;
 
    enum _DELETE_CURSOR
    {

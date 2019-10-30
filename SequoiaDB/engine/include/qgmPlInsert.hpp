@@ -41,6 +41,7 @@
 
 #include "qgmPlan.hpp"
 #include "msgDef.h"
+#include "utilInsertResult.hpp"
 
 namespace engine
 {
@@ -57,6 +58,7 @@ namespace engine
 
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const { return TRUE ; }
+      virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
 
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
@@ -80,6 +82,8 @@ namespace engine
       BSONObj        _insertor ;
       BOOLEAN        _got ;
       SDB_ROLE       _role ;
+
+      utilInsertResult  _inResult ;
    } ;
 
    typedef class _qgmPlInsert qgmPlInsert ;

@@ -2160,6 +2160,7 @@ namespace engine
 
             if ( eduMgr->forceDestory( cb, idleTime ) )
             {
+               utilClearThreadMemPool() ;
                break ;
             }
             continue ;

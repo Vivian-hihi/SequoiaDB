@@ -176,6 +176,14 @@ namespace engine
       return FALSE ;
    }
 
+   void _qgmPlCommand::buildRetInfo( BSONObjBuilder &builder ) const
+   {
+      if ( SQL_GRAMMAR::CRTINDEX == _commandType )
+      {
+         _wrResult.toBSON( builder ) ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__EXEC, "_qgmPlCommand::_execute" )
    INT32 _qgmPlCommand::_execute( _pmdEDUCB *eduCB )
    {
@@ -440,7 +448,15 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
+
          rc = pOpr->execute( (MsgHeader*)msg, eduCB, _contextID, &buff ) ;
+         if ( buff.recordNum() == 1 )
+         {
+            BSONObj tmpResult ;
+            buff.nextObj( tmpResult ) ;
+            _wrResult.setResultObj( tmpResult ) ;
+         }
+
          if ( rc )
          {
             PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
@@ -540,7 +556,10 @@ namespace engine
             indexBuilder.appendBool( IXM_FIELD_NAME_UNIQUE, TRUE ) ;
             rc =  rtnCreateIndexCommand( _fullName.toString().c_str(),
                                          indexBuilder.obj(),
-                                         eduCB, dmsCB, dpsCB ) ;
+                                         eduCB, dmsCB, dpsCB,
+                                         FALSE,
+                                         SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
+                                         &_wrResult ) ;
          }
       }
       else if ( SQL_GRAMMAR::DROPINDEX == _commandType )

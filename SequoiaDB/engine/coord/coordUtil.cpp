@@ -49,11 +49,33 @@ using namespace std ;
 namespace engine
 {
 
+   void coordSetResultInfo( INT32 flag,
+                            ROUTE_RC_MAP &failedNodes,
+                            utilWriteResult *pResult )
+   {
+      if ( pResult && pResult->getResultInfo().isEmpty() )
+      {
+         ROUTE_RC_MAP::iterator iter = failedNodes.begin() ;
+         while( iter != failedNodes.end() )
+         {
+            if ( flag == iter->second._rc &&
+                 !iter->second._obj.isEmpty() )
+            {
+               pResult->setResultObj( iter->second._obj ) ;
+               break ;
+            }
+            ++iter ;
+         }
+      }
+   }
+
    void coordBuildFailedNodeReply( coordResource *pResource,
                                    ROUTE_RC_MAP &failedNodes,
                                    BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
+      BSONObj lastObj ;
+      INT32 lastFlag = SDB_OK ;
 
       if ( failedNodes.size() > 0 )
       {
@@ -73,6 +95,14 @@ namespace engine
             strServiceName.clear() ;
             strNodeName.clear() ;
             strGroupName.clear() ;
+
+            if ( lastFlag == iter->second._rc &&
+                 0 == lastObj.woCompare( iter->second._obj ) )
+            {
+               /// skip the same reason node
+               ++iter ;
+               continue ;
+            }
 
             routeID.value = iter->first ;
             rc = pResource->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
@@ -111,6 +141,9 @@ namespace engine
                objBD.append( FIELD_NAME_RCFLAG, iter->second._rc ) ;
                objBD.append( FIELD_NAME_ERROR_IINFO, iter->second._obj ) ;
                objBD.done() ;
+
+               lastObj = iter->second._obj ;
+               lastFlag = iter->second._rc ;
             }
             catch ( std::exception &e )
             {

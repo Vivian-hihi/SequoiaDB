@@ -138,6 +138,15 @@ namespace engine
       return canUseTransaction ;
    }
 
+   void _qgmPlan::buildRetInfo( BSONObjBuilder &builder ) const
+   {
+      for ( UINT32 i = 0 ; i < _input.size() ; ++i )
+      {
+         const _qgmPlan *pPlan = _input[i] ;
+         pPlan->buildRetInfo( builder ) ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLAN_EXECUTE, "_qgmPlan::execute" )
    INT32 _qgmPlan::execute( _pmdEDUCB *eduCB )
    {

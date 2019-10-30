@@ -626,6 +626,8 @@ namespace engine
          _coordCMDAlterCollection () ;
          virtual ~_coordCMDAlterCollection () ;
 
+         virtual utilWriteResult*  getWriteResult() { return &_wrResult ; }
+
       protected :
          virtual INT32 _parseMsg ( MsgHeader *pMsg,
                                    coordCMDArguments *pArgs ) ;
@@ -682,6 +684,9 @@ namespace engine
          INT32 _invalidateSequences ( const CHAR * collection,
                                       const autoIncFieldsList & autoIncList,
                                       pmdEDUCB * cb ) ;
+
+      protected:
+         utilWriteResult            _wrResult ;
    } ;
 
    typedef _coordCMDAlterCollection coordCMDAlterCollection ;
@@ -904,6 +909,8 @@ namespace engine
          _coordCMDCreateIndex() ;
          virtual ~_coordCMDCreateIndex() ;
 
+         virtual utilWriteResult*  getWriteResult() { return &_wrResult ; }
+
       protected :
 
          virtual INT32 _parseMsg ( MsgHeader *pMsg,
@@ -948,6 +955,7 @@ namespace engine
 
       protected:
          string                  _indexName ;
+         utilWriteResult         _wrResult ;
    } ;
    typedef _coordCMDCreateIndex coordCMDCreateIndex ;
 

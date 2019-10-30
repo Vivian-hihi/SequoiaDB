@@ -59,6 +59,7 @@ namespace engine
       _unique = FALSE ;
       _dropDups = FALSE ;
       _pOprHandler = NULL ;
+      _pResult = NULL ;
    }
 
    _dmsIndexBuilder::~_dmsIndexBuilder()
@@ -76,6 +77,11 @@ namespace engine
    void _dmsIndexBuilder::setOprHandler( IDmsOprHandler *pOprHander )
    {
       _pOprHandler = pOprHander ;
+   }
+
+   void _dmsIndexBuilder::setWriteResult( utilWriteResult *pResult )
+   {
+      _pResult = pResult ;
    }
 
    INT32 _dmsIndexBuilder::_init()
@@ -353,7 +359,7 @@ namespace engine
                                            _indexCB->unique(),
                                            _indexCB->enforced(),
                                            key.toBson( &_bufBuilder ),
-                                           rid, _eduCB, NULL ) ;
+                                           rid, _eduCB, _pResult ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Insert index callback failed, rc: %d", rc ) ;
@@ -362,7 +368,8 @@ namespace engine
       }
 
       rc = _suIndex->_indexInsert( _indexCB, key, rid, ordering,
-                                   _eduCB, !_unique, _dropDups ) ;
+                                   _eduCB, !_unique, _dropDups,
+                                   _pResult ) ;
       if ( SDB_OK != rc )
       {
          // during index rebuild, it's possible some other
@@ -381,7 +388,31 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to insert into index, rc: %d", rc ) ;
          }
       }
+
    done:
+      if ( SDB_IXM_DUP_KEY == rc && _pResult )
+      {
+         if ( _pResult->getCurID().isEmpty() &&
+              _pResult->getCurRID().isValid() )
+         {
+            BSONObj curObj ;
+            if ( SDB_OK == _suData->fetch( _mbContext, _pResult->getCurRID(),
+                                           curObj, _eduCB, FALSE ) )
+            {
+               _pResult->setCurrentID( curObj ) ;
+            }
+         }
+         if ( _pResult->getPeerID().isEmpty() &&
+              _pResult->getPeerRID().isValid() )
+         {
+            BSONObj peerObj ;
+            if ( SDB_OK == _suData->fetch( _mbContext, _pResult->getPeerRID(),
+                                           peerObj, _eduCB, FALSE ) )
+            {
+               _pResult->setPeerID( peerObj ) ;
+            }
+         }
+      }
       return rc ;
    }
 
@@ -449,7 +480,8 @@ namespace engine
                                                        dmsExtentID indexLogicID,
                                                        INT32 sortBufferSize,
                                                        UINT16 indexType,
-                                                       IDmsOprHandler *pOprHandler )
+                                                       IDmsOprHandler *pOprHandler,
+                                                       utilWriteResult *pResult )
    {
       _dmsIndexBuilder* builder = NULL ;
 
@@ -503,6 +535,7 @@ namespace engine
          if ( builder )
          {
             builder->setOprHandler( pOprHandler ) ;
+            builder->setWriteResult( pResult ) ;
          }
       }
 

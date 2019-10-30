@@ -1779,7 +1779,8 @@ namespace engine
    INT32 _dmsStorageUnit::createIndex( const CHAR *pName, const BSONObj &index,
                                        pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                        BOOLEAN isSys, dmsMBContext * context,
-                                       INT32 sortBufferSize )
+                                       INT32 sortBufferSize,
+                                       utilWriteResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1795,7 +1796,7 @@ namespace engine
       }
 
       rc = _pIndexSu->createIndex( context, index, cb, dpscb,
-                                   isSys, sortBufferSize ) ;
+                                   isSys, sortBufferSize, pResult ) ;
       if ( rc )
       {
          goto error ;

@@ -53,7 +53,8 @@ namespace engine
                              _pmdEDUCB * cb,
                              _dpsLogWrapper * dpsCB,
                              _dmsMBContext * mbContext,
-                             _dmsStorageUnit * su )
+                             _dmsStorageUnit * su,
+                             utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -68,7 +69,7 @@ namespace engine
       const CHAR * collectionShortName = mb->_collectionName ;
 
       rc = su->createIndex( collectionShortName, ixmGetIDIndexDefine(), cb,
-                            NULL, TRUE, mbContext, sortBufferSize ) ;
+                            NULL, TRUE, mbContext, sortBufferSize, pResult ) ;
       if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
       {
          /// already exists
@@ -128,7 +129,8 @@ namespace engine
                                      _pmdEDUCB * cb,
                                      _dpsLogWrapper * dpsCB,
                                      _dmsMBContext * mbContext,
-                                     _dmsStorageUnit * su )
+                                     _dmsStorageUnit * su,
+                                     utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -191,7 +193,7 @@ namespace engine
                                   IXM_V_FIELD << 0 ) ;
 
          rc = su->createIndex( collectionShortName, indexDef, cb, NULL, TRUE,
-                               mbContext, 0 ) ;
+                               mbContext, 0, pResult ) ;
          if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
          {
             /// sharding key index already exists.
@@ -480,7 +482,8 @@ namespace engine
                                     _dmsMBContext * mbContext,
                                     _dmsStorageUnit * su,
                                     _SDB_DMSCB * dmsCB,
-                                    DMS_FILE_TYPE & dpsType )
+                                    DMS_FILE_TYPE & dpsType,
+                                    utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -507,7 +510,7 @@ namespace engine
          const rtnCLShardingArgument & argument =
                                              localTask->getShardingArgument() ;
          rc = _rtnCollectionSetSharding( collection, argument, cb, dpsCB,
-                                         mbContext, su ) ;
+                                         mbContext, su, pResult ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set sharding on collection [%s], "
                       "rc: %d", collection, rc ) ;
       }
@@ -556,7 +559,8 @@ namespace engine
          OSS_BIT_SET( dpsType, DMS_FILE_IDX ) ;
          if ( localTask->isAutoIndexID() )
          {
-            rc = _rtnCreateIDIndex( collection, 0, cb, dpsCB, mbContext, su ) ;
+            rc = _rtnCreateIDIndex( collection, 0, cb, dpsCB, mbContext,
+                                    su, pResult ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to create id index on collection "
                          "[%s], rc: %d", collection, rc ) ;
          }
@@ -741,7 +745,8 @@ namespace engine
                     const rtnAlterTask * task,
                     const rtnAlterOptions * options,
                     _pmdEDUCB * cb,
-                    _dpsLogWrapper * dpsCB )
+                    _dpsLogWrapper * dpsCB,
+                    utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -760,7 +765,7 @@ namespace engine
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
          {
-            rc = rtnAlterCollection( name, task, options, cb, dpsCB ) ;
+            rc = rtnAlterCollection( name, task, options, cb, dpsCB, pResult ) ;
             break ;
          }
          // alter collection space actions
@@ -868,7 +873,8 @@ namespace engine
                               const rtnAlterTask * task,
                               const rtnAlterOptions * options,
                               _pmdEDUCB * cb,
-                              _dpsLogWrapper * dpsCB )
+                              _dpsLogWrapper * dpsCB,
+                              utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -901,7 +907,7 @@ namespace engine
                    collection, rc ) ;
 
       rc = rtnAlterCollection( collection, task, options, cb, dpsCB, mbContext,
-                               su, dmsCB ) ;
+                               su, dmsCB, pResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to alter collection [%s], rc: %d",
                    collection, rc ) ;
 
@@ -933,7 +939,8 @@ namespace engine
                               _dpsLogWrapper * dpsCB,
                               _dmsMBContext * mbContext,
                               _dmsStorageUnit * su,
-                              _SDB_DMSCB * dmsCB )
+                              _SDB_DMSCB * dmsCB,
+                              utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -951,7 +958,7 @@ namespace engine
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get create id index task" ) ;
             rc = _rtnCreateIDIndex( collection, localTask->getSortBufferSize(),
-                                    cb, dpsCB, mbContext, su ) ;
+                                    cb, dpsCB, mbContext, su, pResult ) ;
             break ;
          }
          case RTN_ALTER_CL_DROP_ID_INDEX :
@@ -969,7 +976,8 @@ namespace engine
                       "Failed to get alter task" ) ;
             rc = _rtnCollectionSetSharding( collection,
                                             localTask->getShardingArgument(),
-                                            cb, dpsCB, mbContext, su ) ;
+                                            cb, dpsCB, mbContext, su,
+                                            pResult ) ;
             break ;
          }
          case RTN_ALTER_CL_DISABLE_SHARDING :
@@ -978,7 +986,7 @@ namespace engine
             rtnCLShardingArgument argument ;
             argument.setEnsureShardingIndex( FALSE ) ;
             rc = _rtnCollectionSetSharding( collection, argument, cb, dpsCB,
-                                            mbContext, su ) ;
+                                            mbContext, su, pResult ) ;
             break ;
          }
          case RTN_ALTER_CL_ENABLE_COMPRESS :
@@ -1001,7 +1009,8 @@ namespace engine
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          {
             rc = _rtnAlterCLSetAttributes( collection, task, cb, dpsCB,
-                                           mbContext, su, dmsCB, dpsType ) ;
+                                           mbContext, su, dmsCB, dpsType,
+                                           pResult ) ;
             break ;
          }
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :

@@ -188,7 +188,8 @@ namespace engine
                                                 const dmsRecordData &recordData,
                                                 const BSONObj &newObj,
                                                 _pmdEDUCB *cb,
-                                                IDmsOprHandler *pHandler )
+                                                IDmsOprHandler *pHandler,
+                                                utilUpdateResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       UINT32 dmsRecordSize         = 0 ;
@@ -271,7 +272,8 @@ namespace engine
             rc = _pIdxSU->indexesUpdate( context, pExtent->_logicID,
                                          oriObj, newObj,
                                          recordRW.getRecordID(),
-                                         cb, FALSE, pHandler ) ;
+                                         cb, FALSE, pHandler,
+                                         pResult ) ;
             rollbackIndex = TRUE ;
             if ( rc )
             {

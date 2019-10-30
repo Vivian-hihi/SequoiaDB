@@ -36,6 +36,7 @@
 
 #include "rtnCommand.hpp"
 #include "clsDef.hpp"
+#include "utilResult.hpp"
 
 using namespace bson ;
 
@@ -345,6 +346,8 @@ namespace engine
          _rtnAlterCollection () ;
          virtual ~_rtnAlterCollection () ;
 
+         virtual utilResult* getResult() { return &_writeResult ; }
+
       public :
          virtual const CHAR * name () { return NAME_ALTER_COLLECTION ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_COLLECTION ; }
@@ -373,6 +376,10 @@ namespace engine
          virtual INT32 _openContext ( _pmdEDUCB * cb,
                                       _SDB_RTNCB * rtnCB,
                                       INT64 * pContextID = NULL ) ;
+
+      protected:
+         utilWriteResult            _writeResult ;
+
    } ;
 
 }

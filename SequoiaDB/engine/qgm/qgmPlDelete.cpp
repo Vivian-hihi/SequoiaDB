@@ -97,6 +97,11 @@ namespace engine
       return TRUE ;
    }
 
+   void _qgmPlDelete::buildRetInfo( BSONObjBuilder &builder ) const
+   {
+      _delResult.toBSON( builder ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLDELETE__EXEC, "_qgmPlDelete::_execute" )
    INT32 _qgmPlDelete::_execute( _pmdEDUCB *eduCB )
    {
@@ -141,6 +146,15 @@ namespace engine
             goto error ;
          }
          rc = opr.execute( (MsgHeader*)msg, eduCB, contextID, &buff ) ;
+         /// update info
+         _delResult.incDeletedNum( opr.getDeletedNum() ) ;
+         if ( buff.recordNum() == 1 )
+         {
+            BSONObj tmpResult ;
+            buff.nextObj( tmpResult ) ;
+            _delResult.setResultObj( tmpResult ) ;
+         }
+         opr.clearStat() ;
       }
       else
       {
@@ -153,9 +167,10 @@ namespace engine
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          BSONObj empty ;
 
+         _delResult.resetDupInfo() ;
          rc = rtnDelete( clName.c_str(),
                          _condition, empty, 0, eduCB,
-                         dmsCB, dpsCB ) ;
+                         dmsCB, dpsCB, 1, &_delResult ) ;
       }
 
       if ( rc )

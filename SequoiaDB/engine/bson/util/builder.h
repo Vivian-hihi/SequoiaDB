@@ -91,10 +91,11 @@ accesses) is the same as if
             return al.Malloc(sz);
         }
         void* Realloc(void *p, size_t sz) {
-            if( p == buf ) {
+            if( !p || p == buf ) {
                 if( sz <= SZ ) return buf;
                 void *d = al.Malloc(sz);
-                memcpy(d, p, SZ);
+                if ( d && p )
+                   memcpy(d, p, SZ);
                 return d;
             }
             return al.Realloc(p, sz);
@@ -124,6 +125,7 @@ accesses) is the same as if
             }
             data = 0;
             reservedBytes = 0;
+            _isdelay = false;
             l = 0;
         }
         ~_BufBuilder() { kill(); }
@@ -132,16 +134,20 @@ accesses) is the same as if
             if ( data ) {
                 al.Free(data);
                 data = 0;
+                size = 0;
             }
+            reset() ;
         }
 
         void reset() {
             l = 0;
             reservedBytes = 0;
+            _isdelay = false;
         }
         void reset( int maxSize ) {
             l = 0;
             reservedBytes = 0;
+            _isdelay = false;
             if ( maxSize && size > maxSize ) {
                 al.Free(data);
                 data = (char*)al.Malloc(maxSize);
@@ -155,12 +161,37 @@ accesses) is the same as if
         */
         char* skip(int n) { return grow(n); }
 
+        void  skipDeplay( int n ) {
+           if ( !_isdelay && l + n + reservedBytes > size ) {
+               _isdelay = true ;
+           }
+           l = l + n ;
+        }
+
+        char* ensureBuf() { return grow( 0 ) ; }
+
         /* note this may be deallocated (realloced) if you keep writing. */
-        char* buf() { return data; }
-        const char* buf() const { return data; }
+        char* buf() {
+           if ( _isdelay ) {
+               return ensureBuf() ;
+           }
+           return data;
+        }
+
+        const char* buf() const {
+            if ( _isdelay ) {
+                msgasserted(13551, "BufBuilder should call ensureBuff() "
+                                   "before buf()");
+            }
+            return data;
+        }
 
         /* assume ownership of the buffer - you must then free() it */
-        void decouple() { data = 0; }
+        void decouple() {
+            data = 0 ;
+            size = 0 ;
+            reset() ;
+        }
 
         void appendUChar(unsigned char j) {
             *((unsigned char*)grow(sizeof(unsigned char))) = j;
@@ -209,7 +240,21 @@ accesses) is the same as if
 
         /** @return length of current string */
         int len() const { return l; }
-        void setlen( int newLen ) { l = newLen; }
+        void setlen( int newLen ) {
+           l = newLen;
+           if ( l + reservedBytes > size ) {
+               _isdelay = true ;
+           } else {
+               _isdelay = false ;
+           }
+        }
+        int  getReserveBytes() const { return reservedBytes ; }
+        void setReserveBytes( int bytes ) {
+           reservedBytes = bytes ;
+           if ( l + reservedBytes > size ) {
+               _isdelay = true ;
+           }
+        }
         /** @return size of the buffer */
         int getSize() const { return size; }
 
@@ -222,16 +267,23 @@ accesses) is the same as if
                 grow_reallocate(minSize);
             }
             l = newLen;
+            _isdelay = false;
             return data + oldlen;
         }
 
         /**
          * Reserve room for some number of bytes to be claimed at a later time.
          */
-        void reserveBytes(int bytes) {
+        void reserveBytes(int bytes, bool delay=false) {
             int minSize = l + reservedBytes + bytes;
-            if (minSize > size)
-                grow_reallocate(minSize);
+            if (minSize > size) {
+                if ( delay ) {
+                    _isdelay = true ;
+                } else {
+                    grow_reallocate(minSize);
+                    _isdelay = false ;
+                }
+            }
 
             // This must happen *after* any attempt to grow.
             reservedBytes += bytes;
@@ -244,6 +296,9 @@ accesses) is the same as if
          * need to reallocate.
          */
         void claimReservedBytes(int bytes) {
+            if ( _isdelay ) {
+               ensureBuf() ;
+            }
             assert(reservedBytes >= bytes);
             reservedBytes -= bytes;
         }
@@ -253,8 +308,7 @@ accesses) is the same as if
             int a = size * 2;
             if ( a == 0 ) {
                 a = minSize <= _initsize ? _initsize : minSize ;
-            }
-            if ( minSize > a ) {
+            } else if ( minSize > a ) {
                 a = minSize + 16 * 1024;
             }
             if ( a > BufferMaxSize ) {
@@ -264,7 +318,11 @@ accesses) is the same as if
                     a = BufferMaxSize ;
                 }
             }
-            char * newData = (char *) al.Realloc(data, a);
+            char * newData = (char *)0 ;
+            if ( !data )
+               newData = (char *) al.Malloc( a ) ;
+            else
+               newData = (char *) al.Realloc(data, a);
             if ( !newData )
                msgasserted(13550, "BufBuilder grow() out-of-memory");
             data = newData;
@@ -274,6 +332,7 @@ accesses) is the same as if
         char *data;
         int l;
         int _initsize ;
+        bool _isdelay ;
         int size;
         // eagerly grow_reallocate to keep this many bytes of spare room.
         int reservedBytes;

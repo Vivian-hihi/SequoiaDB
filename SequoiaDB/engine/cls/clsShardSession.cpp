@@ -692,7 +692,8 @@ namespace engine
             }
             case MSG_BS_QUERY_REQ :
                rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
-                                     contextID, isNeedRollback ) ;
+                                     contextID, isNeedRollback,
+                                     &_retBuilder ) ;
                break ;
             case MSG_BS_GETMORE_REQ :
                rc = _onGetMoreReqMsg ( msg, buffObj, startFrom,
@@ -1613,7 +1614,8 @@ namespace engine
                                           rtnContextBuf &buffObj,
                                           INT32 &startingPos,
                                           INT64 &contextID,
-                                          BOOLEAN &needRollback )
+                                          BOOLEAN &needRollback,
+                                          BSONObjBuilder *pBuilder )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONQYREQMSG ) ;
 
@@ -1916,7 +1918,7 @@ namespace engine
             rc = _runOnMainCL( pCollectionName, pCommand, flags, numToSkip,
                                numToReturn, pQueryBuff, pFieldSelector,
                                pOrderByBuffer, pHintBuffer, w,
-                               contextID ) ;
+                               contextID, pBuilder ) ;
          }
          else
          {
@@ -1940,6 +1942,10 @@ namespace engine
             if ( pCommand->hasBuff() )
             {
                buffObj = pCommand->getBuff() ;
+            }
+            if ( rc && pBuilder && pCommand->getResult() )
+            {
+               pCommand->getResult()->toBSON( *pBuilder ) ;
             }
             if ( rc && CMD_CREATE_COLLECTION == pCommand->type() )
             {
@@ -2316,7 +2322,7 @@ namespace engine
       if ( SDB_OK == rc )
       {
          rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
-                              contextID, needRollback ) ;
+                              contextID, needRollback, NULL ) ;
       }
       return rc ;
    }
@@ -3133,7 +3139,8 @@ namespace engine
                                        const CHAR *pOrderBy,
                                        const CHAR *pHint,
                                        INT16 w,
-                                       SINT64 &contextID )
+                                       SINT64 &contextID,
+                                       BSONObjBuilder *pBuilder )
    {
       INT32 rc = SDB_OK;
       BOOLEAN writable = FALSE ;
@@ -3152,12 +3159,13 @@ namespace engine
          writable = TRUE ;
          rc = _createIndexOnMainCL( pCommandName,
                                     pCommand->collectionFullName(),
-                                    pQuery, pHint, w, contextID );
+                                    pQuery, pHint, w, contextID, FALSE,
+                                    pBuilder );
          break;
 
       case CMD_ALTER_COLLECTION :
          writable = TRUE ;
-         rc = _alterMainCL( pCommand, _pEDUCB, _pDpsCB ) ;
+         rc = _alterMainCL( pCommand, _pEDUCB, _pDpsCB, pBuilder ) ;
          break ;
       case CMD_DROP_INDEX:
          writable = TRUE ;
@@ -3406,7 +3414,8 @@ namespace engine
                                                const CHAR *pHint,
                                                INT16 w,
                                                SINT64 &contextID,
-                                               BOOLEAN syscall )
+                                               BOOLEAN syscall,
+                                               BSONObjBuilder *pBuilder )
    {
       INT32 rc = SDB_OK;
       const CHAR *pSubCLName = NULL ;
@@ -3418,6 +3427,7 @@ namespace engine
       vector< string >::iterator iter ;
       INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
       BOOLEAN lockDms = FALSE ;
+      utilWriteResult wrResult ;
 
       try
       {
@@ -3476,9 +3486,11 @@ namespace engine
          INT32 rcTmp = SDB_OK ;
          pSubCLName = iter->c_str() ;
 
+         wrResult.resetDupInfo() ;
          rcTmp = rtnCreateIndexCommand( pSubCLName, boIndex, _pEDUCB,
                                         _pDmsCB, _pDpsCB, syscall,
-                                        sortBufferSize ) ;
+                                        sortBufferSize,
+                                        &wrResult ) ;
          if ( rcTmp )
          {
             rcTmp = _processSubCLResult( rcTmp, pSubCLName,
@@ -3498,6 +3510,10 @@ namespace engine
 
             if ( SDB_OK == rc )
             {
+               if ( pBuilder )
+               {
+                  wrResult.toBSON( *pBuilder ) ;
+               }
                rc = rcTmp ;
             }
          }
@@ -4575,9 +4591,11 @@ namespace engine
 
    INT32 _clsShdSession::_alterMainCL( _rtnCommand *command,
                                        pmdEDUCB *cb,
-                                       SDB_DPSCB *dpsCB )
+                                       SDB_DPSCB *dpsCB,
+                                       BSONObjBuilder *pBuilder )
    {
       INT32 rc = SDB_OK ;
+      utilWriteResult wrResult ;
       vector< string > subCLs ;
       const _rtnAlterCollection *alterCommand = ( const _rtnAlterCollection * )command ;
 
@@ -4623,7 +4641,8 @@ namespace engine
             INT32 rcTmp = SDB_OK ;
             const CHAR * subCLName = iterCL->c_str() ;
 
-            rcTmp = rtnAlter( subCLName, task, options, cb, dpsCB ) ;
+            wrResult.resetDupInfo() ;
+            rcTmp = rtnAlter( subCLName, task, options, cb, dpsCB, &wrResult ) ;
             if ( rcTmp )
             {
                rcTmp = _processSubCLResult( rcTmp, subCLName, collectionName ) ;
@@ -4641,6 +4660,10 @@ namespace engine
 
                if ( SDB_OK == rc )
                {
+                  if ( pBuilder )
+                  {
+                     wrResult.toBSON( *pBuilder ) ;
+                  }
                   rc = rcTmp ;
                }
             }

@@ -62,9 +62,6 @@ namespace engine
    */
    _coordUpdateOperator::_coordUpdateOperator()
    {
-      _insertedNum = 0 ;
-      _modifiedNum = 0 ;
-
       const static string s_name( "Update" ) ;
       setName( s_name ) ;
    }
@@ -79,26 +76,24 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _coordUpdateOperator::getInsertedNum() const
+   UINT64 _coordUpdateOperator::getInsertedNum() const
    {
-      return _insertedNum ;
+      return _upResult.insertedNum() ;
    }
 
    UINT64 _coordUpdateOperator::getUpdatedNum() const
    {
-      return _recvNum ;
+      return _upResult.updateNum() ;
    }
 
    UINT64 _coordUpdateOperator::getModifiedNum() const
    {
-      return _modifiedNum ;
+      return _upResult.modifiedNum() ;
    }
 
    void _coordUpdateOperator::clearStat()
    {
-      _insertedNum = 0 ;
-      _modifiedNum = 0 ;
-      _recvNum = 0 ;
+      _upResult.reset() ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( COORD_UPDATEOPR_EXEC, "_coordUpdateOperator::execute" )
@@ -318,7 +313,7 @@ namespace engine
       }
 
       // upsert
-      if ( ( flag & FLG_UPDATE_UPSERT ) && 0 == _recvNum )
+      if ( ( flag & FLG_UPDATE_UPSERT ) && 0 == _upResult.updateNum() )
       {
          if ( OSS_BIT_TEST( cataSel.getCataPtr()->getCatalogSet()->getAttribute(),
                             DMS_MB_ATTR_STRICTDATAMODE ) )
@@ -326,7 +321,7 @@ namespace engine
             strictDataMode = TRUE ;
          }
          rc = _upsert( pCollectionName, boSelector, boUpdator, boHint,
-                       strictDataMode, cb, _insertedNum, contextID, buf ) ;
+                       strictDataMode, cb, contextID, buf ) ;
          if ( rc )
          {
             goto error ;
@@ -339,9 +334,10 @@ namespace engine
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
-                      "UpdatedNum:%llu, ModifiedNum:%llu, InsertedNum:%u, "
+                      "UpdatedNum:%llu, ModifiedNum:%llu, InsertedNum:%llu, "
                       "Matcher:%s, Updator:%s, Hint:%s, Flag:0x%08x(%u)",
-                      _recvNum, _modifiedNum, _insertedNum,
+                      _upResult.updateNum(), _upResult.modifiedNum(),
+                      _upResult.insertedNum(),
                       boSelector.toPoolString().c_str(),
                       boUpdator.toPoolString().c_str(),
                       boHint.toPoolString().c_str(),
@@ -350,11 +346,9 @@ namespace engine
 
       if ( buf )
       {
-         if ( oldFlag & FLG_UPDATE_RETURNNUM )
+         if ( rc || ( oldFlag & FLG_UPDATE_RETURNNUM ) )
          {
-            retBuilder.append( FIELD_NAME_UPDATE_NUM, (INT64)_recvNum ) ;
-            retBuilder.append( FIELD_NAME_MODIFIED_NUM, (INT64)_modifiedNum ) ;
-            retBuilder.append( FIELD_NAME_INSERT_NUM, (INT32)_insertedNum ) ;
+            _upResult.toBSON( retBuilder ) ;
          }
 
          if ( !retBuilder.isEmpty() )
@@ -373,6 +367,7 @@ namespace engine
       if ( buf && ( nokRC.size() > 0 || rc ) )
       {
          coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
+         coordSetResultInfo( rc, nokRC, &_upResult ) ;
       }
       goto done ;
    }
@@ -383,7 +378,6 @@ namespace engine
                                         const BSONObj &hint,
                                         BOOLEAN strictDataMode,
                                         pmdEDUCB *cb,
-                                        UINT32 &insertNum,
                                         INT64 &contextID,
                                         rtnContextBuf *buf )
    {
@@ -457,7 +451,7 @@ namespace engine
             }
             goto error ;
          }
-         insertNum += insertOpr.getInsertedNum() ;
+         _upResult.incInsertedNum( insertOpr.getInsertedNum() ) ;
       }
       catch ( std::exception &e )
       {
@@ -640,21 +634,21 @@ namespace engine
                     0 == ossStrcmp( e.fieldName(), FIELD_NAME_MODIFIED_NUM ) )
                {
                   moProcessed = TRUE ;
-                  _modifiedNum += (UINT64)e.numberLong() ;
+                  _upResult.incModifiedNum( (UINT64)e.numberLong() ) ;
                }
                else if ( !upProcessed &&
                          0 == ossStrcmp( e.fieldName(),
                                          FIELD_NAME_UPDATE_NUM ) )
                {
                   upProcessed = TRUE ;
-                  _recvNum += (UINT64)e.numberLong() ;
+                  _upResult.incUpdatedNum( (UINT64)e.numberLong() ) ;
                }
                else if ( !inProcessed &&
                          0 == ossStrcmp( e.fieldName(),
                                          FIELD_NAME_INSERT_NUM ) )
                {
                   inProcessed = TRUE ;
-                  _insertedNum += (UINT32)e.numberInt() ;
+                  _upResult.incInsertedNum( (UINT64)e.numberLong() ) ;
                }
 
                if ( inProcessed && upProcessed && moProcessed )
@@ -672,7 +666,9 @@ namespace engine
 
       if ( !upProcessed )
       {
+         _recvNum = 0 ;
          _coordTransOperator::_onNodeReply( processType, pReply, cb, inMsg ) ;
+         _upResult.incUpdatedNum( _recvNum ) ;
       }
    }
 

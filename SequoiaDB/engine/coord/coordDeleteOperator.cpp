@@ -69,12 +69,12 @@ namespace engine
 
    UINT32 _coordDeleteOperator::getDeletedNum() const
    {
-      return _recvNum ;
+      return _delResult.deletedNum() ;
    }
 
    void _coordDeleteOperator::clearStat()
    {
-      _recvNum = 0 ;
+      _delResult.reset() ;
    }
  
    //PD_TRACE_DECLARE_FUNCTION ( COORD_OPERATORDEL_EXE, "_coordDeleteOperator::execute" )
@@ -189,15 +189,15 @@ namespace engine
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
                       "DeletedNum:%u, Deletor:%s, Hint:%s, Flag:0x%08x(%u)",
-                      _recvNum, boDeletor.toPoolString().c_str(),
+                      _delResult.deletedNum(), boDeletor.toPoolString().c_str(),
                       BSONObj(pHint).toPoolString().c_str(),
                       oldFlag, oldFlag ) ;
       }
       if ( buf )
       {
-         if ( oldFlag & FLG_DELETE_RETURNNUM )
+         if ( ( oldFlag & FLG_DELETE_RETURNNUM ) || rc )
          {
-            retBuilder.append( FIELD_NAME_DELETE_NUM, (INT64)_recvNum ) ;
+            _delResult.toBSON( retBuilder ) ;
          }
 
          if ( !retBuilder.isEmpty() )
@@ -211,6 +211,7 @@ namespace engine
       if ( buf && ( nokRC.size() > 0 || rc ) )
       {
          coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
+         coordSetResultInfo( flag, nokRC, &_delResult ) ;
       }
       goto done ;
    }
@@ -375,7 +376,7 @@ namespace engine
                     0 == ossStrcmp( e.fieldName(), FIELD_NAME_DELETE_NUM ) )
                {
                   processed = TRUE ;
-                  _recvNum += (UINT64)e.numberLong() ;
+                  _delResult.incDeletedNum( (UINT64)e.numberLong() ) ;
                   break ;
                }
             }
@@ -389,7 +390,9 @@ namespace engine
 
       if ( !processed )
       {
+         _recvNum = 0 ;
          _coordTransOperator::_onNodeReply( processType, pReply, cb, inMsg ) ;
+         _delResult.incDeletedNum( _recvNum ) ;
       }
    }
 

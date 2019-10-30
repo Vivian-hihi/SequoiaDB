@@ -38,6 +38,7 @@
 #define COORD_UPDATE_OPERATOR_HPP__
 
 #include "coordTransOperator.hpp"
+#include "utilInsertResult.hpp"
 
 using namespace bson ;
 
@@ -61,7 +62,7 @@ namespace engine
 
          UINT64               getUpdatedNum() const ;
          UINT64               getModifiedNum() const ;
-         UINT32               getInsertedNum() const ;
+         UINT64               getInsertedNum() const ;
          void                 clearStat() ;
 
       protected:
@@ -96,15 +97,13 @@ namespace engine
                            const BSONObj &hint,
                            BOOLEAN strictDataMode,
                            pmdEDUCB *cb,
-                           UINT32 &insertNum,
                            INT64 &contextID,
                            rtnContextBuf *buf ) ;
 
          void     _clearBlock( pmdEDUCB *cb ) ;
 
       private:
-         UINT32               _insertedNum ;
-         UINT64               _modifiedNum ;
+         utilUpdateResult     _upResult ;
          vector< CHAR* >      _vecBlock ;
 
    } ;

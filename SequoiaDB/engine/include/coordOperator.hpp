@@ -41,6 +41,7 @@
 #include "coordGroupHandle.hpp"
 #include "coordRemoteHandle.hpp"
 #include "rtnContextBuff.hpp"
+#include "utilResult.hpp"
 
 #include "../bson/bson.h"
 
@@ -274,6 +275,8 @@ namespace engine
          virtual BOOLEAN      isReadOnly() const ;
          virtual const CHAR*  getName() const ;
          virtual BOOLEAN      needRollback() const ;
+
+         virtual utilWriteResult*  getWriteResult() { return NULL ; }
 
       public:
          virtual INT32        execute( MsgHeader *pMsg,

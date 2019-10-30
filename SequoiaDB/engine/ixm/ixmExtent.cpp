@@ -261,10 +261,11 @@ namespace engine
    // syncronized insert, insert a key and rid into index
    INT32 _ixmExtent::insert ( const ixmKey &key, const dmsRecordID &rid,
                               const Ordering &order, BOOLEAN dupAllowed,
-                              ixmIndexCB *indexCB )
+                              ixmIndexCB *indexCB,
+                              utilWriteResult *pResult )
    {
       return _insert ( rid, key, order, dupAllowed, DMS_INVALID_EXTENT,
-                       DMS_INVALID_EXTENT, indexCB ) ;
+                       DMS_INVALID_EXTENT, indexCB, pResult ) ;
    }
 
    // This function is the wrapper for _basicInsert and _split, depends on
@@ -1154,7 +1155,8 @@ namespace engine
    INT32 _ixmExtent::_insert ( const dmsRecordID &rid, const ixmKey &key,
                                const Ordering &order, BOOLEAN dupAllowed,
                                dmsExtentID lchild, dmsExtentID rchild,
-                               ixmIndexCB *indexCB )
+                               ixmIndexCB *indexCB,
+                               utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__INSERT ) ;
@@ -1239,6 +1241,11 @@ namespace engine
                      kn->_rid._extent, kn->_rid._offset, _me, keyFoundPos,
                      rid._extent, rid._offset ) ;
 #endif
+            if ( pResult )
+            {
+               pResult->setCurRID( rid ) ;
+               pResult->setPeerRID( kn->_rid ) ;
+            }
             rc = SDB_IXM_DUP_KEY ;
             goto error ;
          }
@@ -1270,7 +1277,8 @@ namespace engine
       else
       {
          rc = _ixmExtent(ch, _pIndexSu)._insert( rid, key, order, dupAllowed,
-                                                 lchild, rchild, indexCB ) ;
+                                                 lchild, rchild, indexCB,
+                                                 pResult ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to insert, rc = %d", rc ) ;

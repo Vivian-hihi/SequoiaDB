@@ -50,6 +50,7 @@
 #include "dmsStorageBase.hpp"
 #include "dmsPageMap.hpp"
 #include "rtnPredicate.hpp"
+#include "utilResult.hpp"
 
 using namespace bson ;
 
@@ -191,7 +192,8 @@ namespace engine
       INT32 _insert ( const dmsRecordID &rid, const ixmKey &key,
                       const Ordering &order, BOOLEAN dupAllowed,
                       dmsExtentID lchild, dmsExtentID rchild,
-                      ixmIndexCB *indexCB ) ;
+                      ixmIndexCB *indexCB,
+                      utilWriteResult *pResult = NULL ) ;
       INT32 _delKeyAtPos ( UINT16 pos ) ;
       INT32 _delKeyAtPos ( UINT16 pos, const Ordering &order,
                            ixmIndexCB *indexCB ) ;
@@ -403,7 +405,8 @@ namespace engine
       // syncronized insert, insert a key and rid into index
       INT32 insert ( const ixmKey &key, const dmsRecordID &rid,
                      const Ordering &order, BOOLEAN dupAllowed,
-                     ixmIndexCB *indexCB ) ;
+                     ixmIndexCB *indexCB,
+                     utilWriteResult *pResult = NULL ) ;
       // wipe out everything in the extent and all child extents
       void truncate ( ixmIndexCB *indexCB, dmsExtentID parent, BOOLEAN &valid) ;
       // get the total number of elements in the index node and all children

@@ -1476,7 +1476,7 @@ namespace sdbclient
       }
 
       // sql
-      INT32 execUpdate( const CHAR *sql ) ;
+      INT32 execUpdate( const CHAR *sql, bson::BSONObj *pResult = NULL ) ;
       INT32 exec( const CHAR *sql, sdbCursor &result )
       {
          RELEASE_INNER_HANDLE( result.pCursor ) ;

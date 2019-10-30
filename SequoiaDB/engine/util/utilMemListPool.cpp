@@ -621,6 +621,11 @@ namespace engine
          pNewPtr = ptr ;
          goto done ;
       }
+      else if ( !ptr )
+      {
+         pNewPtr = alloc( size, pFile, line, pRealSize ) ;
+         goto done ;
+      }
 
       ++_reallocCount ;
 

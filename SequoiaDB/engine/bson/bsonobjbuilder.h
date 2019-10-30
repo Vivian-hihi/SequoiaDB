@@ -98,11 +98,12 @@ namespace bson {
             object */
         BSONObjBuilder(int initsize=512) : _b(_buf), _buf(initsize + sizeof(unsigned)),
           _offset( sizeof(unsigned) ), _s( this ) , _tracker(0) , _doneCalled(false) {
-            _b.appendNum((unsigned)0);
-            _b.skip(4); /*leave room for size field and ref-count*/
+            _orgReserve = _b.getReserveBytes() ;
+            _b.skipDeplay(4) ; /* reference count */
+            _b.skipDeplay(4); /*leave room for size field and ref-count*/
 
             // Reserve space for the EOO byte. This means _done() can't fail.
-            _b.reserveBytes(1);
+            _b.reserveBytes(1,true);
         }
 
         /** @param baseBuilder construct a BSONObjBuilder using an existing BufBuilder
@@ -111,41 +112,42 @@ namespace bson {
          */
         BSONObjBuilder( BufBuilder &baseBuilder ) : _b( baseBuilder ), _buf( 0 ),
           _offset( baseBuilder.len() ), _s( this ) , _tracker(0) , _doneCalled(false) {
-            _b.skip( 4 );
+            _orgReserve = _b.getReserveBytes() ;
+            _b.skipDeplay( 4 );
             // Reserve space for the EOO byte. This means _done() can't fail.
-            _b.reserveBytes(1);
+            _b.reserveBytes(1,true);
         }
 
         BSONObjBuilder( const BSONSizeTracker & tracker ) : _b(_buf) ,
           _buf(tracker.getSize() + sizeof(unsigned) ), _offset( sizeof(unsigned) ),
           _s( this ) , _tracker( (BSONSizeTracker*)(&tracker) ) , _doneCalled(false) {
-            _b.appendNum((unsigned)0); // ref-count
-            _b.skip(4);
+            _orgReserve = _b.getReserveBytes() ;
+            _b.skipDeplay(4); /* reference count */
+            _b.skipDeplay(4);
             // Reserve space for the EOO byte. This means _done() can't fail.
-            _b.reserveBytes(1);
+            _b.reserveBytes(1,true);
         }
 
         ~BSONObjBuilder() {
             if ( !_doneCalled && _b.buf() && _buf.getSize() == 0 ) {
-                _done();
+               try {
+                   _done();
+               } catch ( ... ) {
+                  _b.setlen( _offset ) ;
+                  _b.setReserveBytes( _orgReserve ) ;
+               }
             }
         }
 
         void reset() {
-            _b.reset() ;
+            _b.setlen( _offset ) ;
+            _b.setReserveBytes( _orgReserve ) ;
             _s.reset() ;
             if ( _tracker )
                 _tracker->reset() ;
-            if ( owned() ) {
-               _offset = sizeof(unsigned) ;
-               _b.appendNum((unsigned)0);
-            }
-            else {
-               _offset = _b.len() ;
-            }
             _doneCalled = false ;
-            _b.skip( 4 ) ;
-            _b.reserveBytes( 1 ) ;
+            _b.skipDeplay( 4 ) ;
+            _b.reserveBytes(1,true) ;
         }
 
         bool isEmpty() const {
@@ -827,9 +829,12 @@ namespace bson {
 
             _b.claimReservedBytes(1);  // Prevents adding EOO from failing.
             _b.appendNum((char) EOO);
+            if ( owned() ) {
+                *(unsigned*)_b.buf() = 0 ; /* reference count */
+            }
             char *data = _b.buf() + _offset;
             int size = _b.len() - _offset;
-            *((int*)data) = size;
+            *((int*)data) = size; /* object size */
             if ( _tracker )
                 _tracker->got( size );
             return data;
@@ -838,6 +843,7 @@ namespace bson {
         BufBuilder &_b;
         BufBuilder _buf;
         int _offset;
+        int _orgReserve ;
         BSONObjBuilderValueStream _s;
         BSONSizeTracker * _tracker;
         bool _doneCalled;

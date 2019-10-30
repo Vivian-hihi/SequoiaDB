@@ -401,7 +401,8 @@ namespace engine
       rc = rtnDelete( _clName.c_str(), matcher, hint, 0, cb, _pDmsCB,
                       _pDpsCB, 1, &delResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Delete objs[%s] from system log[%s] failed, "
-                   "del num: %llu, rc: %d", delResult.deletedNum(), rc ) ;
+                   "del num: %llu, rc: %d", matcher.toString().c_str(),
+                   _clName.c_str(), delResult.deletedNum(), rc ) ;
 
       _reset() ;
 

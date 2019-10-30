@@ -59,6 +59,7 @@ namespace engine
       INT32 build() ;
 
       void  setOprHandler( IDmsOprHandler *pOprHander ) ;
+      void  setWriteResult( utilWriteResult *pResult ) ;
 
    protected:
       virtual INT32 _build() = 0 ;
@@ -94,6 +95,7 @@ namespace engine
       BOOLEAN            _unique ;
       BOOLEAN            _dropDups ;
       IDmsOprHandler     *_pOprHandler ;
+      utilWriteResult    *_pResult ;
       bson::BufBuilder   _bufBuilder ;
 
    public:
@@ -105,7 +107,8 @@ namespace engine
                                                dmsExtentID indexLogicID,
                                                INT32 sortBufferSize,
                                                UINT16 indexType,
-                                               IDmsOprHandler *pOprHandler ) ;
+                                               IDmsOprHandler *pOprHandler,
+                                               utilWriteResult *pResult ) ;
 
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;

@@ -45,6 +45,7 @@
 #include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
 #include "rtnSessionProperty.hpp"
+#include "utilResult.hpp"
 
 using namespace bson ;
 
@@ -80,6 +81,7 @@ namespace engine
 
          virtual INT32 spaceNode () ;
          virtual INT32 spaceService () ;
+         virtual utilResult* getResult() { return NULL ; }
 
       public:
          virtual const CHAR * name () = 0 ;
@@ -601,6 +603,7 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () ;
          virtual BOOLEAN      writable () ;
          virtual const CHAR * collectionFullName () ;
+         virtual utilResult* getResult() { return &_writeResult ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -617,6 +620,7 @@ namespace engine
          BSONObj                 _index ;
          INT32                   _sortBufferSize ;
          BOOLEAN                 _textIdx ;
+         utilWriteResult         _writeResult ;
    };
 
    class _rtnDropCollection : public _rtnCommand

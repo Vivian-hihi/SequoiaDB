@@ -38,6 +38,7 @@
 #define COORD_DELETE_OPERATOR_HPP__
 
 #include "coordTransOperator.hpp"
+#include "utilInsertResult.hpp"
 
 using namespace bson ;
 
@@ -91,6 +92,7 @@ namespace engine
 
       private:
          vector<CHAR*>           _vecBlock ;
+         utilDeleteResult        _delResult ;
 
    } ;
    typedef _coordDeleteOperator coordDeleteOperator ;

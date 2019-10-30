@@ -157,9 +157,6 @@ namespace engine
    */
    _coordInsertOperator::_coordInsertOperator()
    {
-      _insertedNum = 0 ;
-      _ignoredNum = 0 ;
-      _replacedNum = 0 ;
       _hasRetry = FALSE ;
       _repalceOnDup = FALSE ;
 
@@ -179,26 +176,24 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _coordInsertOperator::getInsertedNum() const
+   UINT64 _coordInsertOperator::getInsertedNum() const
    {
-      return _insertedNum ;
+      return _inResult.insertedNum() ;
    }
 
-   UINT32 _coordInsertOperator::getIgnoredNum() const
+   UINT64 _coordInsertOperator::getIgnoredNum() const
    {
-      return _ignoredNum ;
+      return _inResult.ignoredNum() ;
    }
 
-   UINT32 _coordInsertOperator::getReplacedNum() const
+   UINT64 _coordInsertOperator::getReplacedNum() const
    {
-      return _replacedNum ;
+      return _inResult.replacedNum() ;
    }
 
    void _coordInsertOperator::clearStat()
    {
-      _insertedNum = 0 ;
-      _ignoredNum = 0 ;
-      _replacedNum = 0 ;
+      _inResult.reset() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR_EXE, "_coordInsertOperator::execute" )
@@ -371,20 +366,19 @@ namespace engine
       if ( pCollectionName )
       {
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
-                      pCollectionName, rc, "InsertedNum:%u, IgnoredNum:%u, "
-                      "ReplacedNum:%u, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
-                      _insertedNum, _ignoredNum, _replacedNum, count,
+                      pCollectionName, rc, "InsertedNum:%llu, IgnoredNum:%llu, "
+                      "ReplacedNum:%llu, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
+                      _inResult.insertedNum(), _inResult.ignoredNum(),
+                      _inResult.replacedNum(), count,
                       BSONObj(pInsertor).toPoolString().c_str(),
                       oldFlag, oldFlag ) ;
       }
 
       if ( buf )
       {
-         if ( oldFlag & FLG_INSERT_RETURNNUM )
+         if ( ( oldFlag & FLG_INSERT_RETURNNUM ) || rc )
          {
-            retBuilder.append( FIELD_NAME_INSERT_NUM, _insertedNum ) ;
-            retBuilder.append( FIELD_NAME_IGNORE_NUM, _ignoredNum ) ;
-            retBuilder.append( FIELD_NAME_REPLACE_NUM, _replacedNum ) ;
+            _inResult.toBSON( retBuilder ) ;
          }
 
          if ( _hasGenerated )
@@ -404,6 +398,7 @@ namespace engine
       if ( buf && ( nokRC.size() > 0 || rc ) )
       {
          coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
+         coordSetResultInfo( rc, nokRC, &_inResult ) ;
       }
       goto done;
    }
@@ -537,21 +532,23 @@ namespace engine
                     0 == ossStrcmp( e.fieldName(), FIELD_NAME_INSERT_NUM ) )
                {
                   insertedProcessed = TRUE ;
-                  _insertedNum += (UINT32)e.numberInt() ;
+                  _inResult.incInsertedNum( (UINT64)e.numberLong() ) ;
                }
                else if ( !ignoredProcessed &&
                          0 == ossStrcmp( e.fieldName(),
                                          FIELD_NAME_IGNORE_NUM ) )
                {
                   ignoredProcessed = TRUE ;
-                  _ignoredNum += (UINT32)e.numberInt() ;
+                  _inResult.incIngoreOrRepaceNum( FALSE,
+                                                  (UINT64)e.numberLong() ) ;
                }
                else if ( !replacedProcessed &&
                          0 == ossStrcmp( e.fieldName(),
                                          FIELD_NAME_REPLACE_NUM ) )
                {
                   replacedProcessed = TRUE ;
-                  _replacedNum += (UINT32)e.numberInt() ;
+                  _inResult.incIngoreOrRepaceNum( TRUE,
+                                                  (UINT64)e.numberLong() ) ;
                }
 
                if ( insertedProcessed && ignoredProcessed && replacedProcessed )
@@ -571,15 +568,8 @@ namespace engine
          UINT32 hi = 0, lo = 0 ;
          /// (UINT32)insertedNum + (UINT32)ignoredNum
          ossUnpack32From64( pReply->contextID, hi, lo ) ;
-         _insertedNum += hi ;
-         if ( _repalceOnDup )
-         {
-            _replacedNum += lo ;
-         }
-         else
-         {
-            _ignoredNum += lo ;
-         }
+         _inResult.incInsertedNum( hi ) ;
+         _inResult.incIngoreOrRepaceNum( _repalceOnDup, lo ) ;
       }
    }
 

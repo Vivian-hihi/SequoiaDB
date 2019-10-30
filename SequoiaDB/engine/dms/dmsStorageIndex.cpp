@@ -567,7 +567,8 @@ namespace engine
                                         pmdEDUCB * cb,
                                         SDB_DPSCB *dpscb,
                                         BOOLEAN isSys,
-                                        INT32 sortBufferSize )
+                                        INT32 sortBufferSize,
+                                        utilWriteResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtentID metaExtentID     = DMS_INVALID_EXTENT ;
@@ -625,8 +626,9 @@ namespace engine
       }
       else
       {
-         rc = _createIndex( context, index, metaExtentID, rootExtentID, indexType,
-                            cb, dpscb, isSys, sortBufferSize ) ;
+         rc = _createIndex( context, index, metaExtentID, rootExtentID,
+                            indexType, cb, dpscb, isSys, sortBufferSize,
+                            pResult ) ;
          PD_RC_CHECK (rc, PDERROR, "Create index failed, rc: %d", rc ) ;
       }
 
@@ -1075,7 +1077,8 @@ namespace engine
                                          pmdEDUCB *cb,
                                          SDB_DPSCB *dpscb,
                                          BOOLEAN isSys,
-                                         INT32 sortBufferSize )
+                                         INT32 sortBufferSize,
+                                         utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       INT32 indexID = 0 ;
@@ -1214,7 +1217,7 @@ namespace engine
       // the context and indexLID to check if it's processing the right index.
       rc = _rebuildIndex( context, metaExtentID, indexLID,
                           cb, sortBufferSize, indexType,
-                          pOprHandler );
+                          pOprHandler, pResult ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
@@ -1523,7 +1526,8 @@ namespace engine
                                           pmdEDUCB *cb,
                                           INT32 sortBufferSize,
                                           UINT16 indexType,
-                                          IDmsOprHandler *pOprHandle )
+                                          IDmsOprHandler *pOprHandle,
+                                          utilWriteResult *pResult )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX__REBUILDINDEX );
 
@@ -1541,7 +1545,7 @@ namespace engine
       if ( pOprHandle )
       {
          ixmIndexCB indexCB ( indexExtentID, this, context ) ;
-         rc = pOprHandle->onRebuildIndex( context, &indexCB, cb ) ;
+         rc = pOprHandle->onRebuildIndex( context, &indexCB, cb, pResult ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Rebuild failed to invoke callback, rc = %d",
@@ -1558,7 +1562,8 @@ namespace engine
       builder = dmsIndexBuilder::createInstance( this, _pDataSu, context, cb,
                                                  indexExtentID, indexLID,
                                                  sortBufferSize, indexType,
-                                                 pOprHandle ) ;
+                                                 pOprHandle,
+                                                 pResult ) ;
       if ( NULL == builder )
       {
          PD_LOG ( PDERROR, "Failed to get index builder instance, sort buffer size: %d",
@@ -1647,7 +1652,8 @@ namespace engine
                                          const Ordering& order,
                                          _pmdEDUCB *cb,
                                          BOOLEAN dupAllowed,
-                                         BOOLEAN dropDups )
+                                         BOOLEAN dropDups,
+                                         utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
@@ -1656,9 +1662,21 @@ namespace engine
       // insert (root split)
       ixmExtent rootidx ( indexCB->getRoot(), this ) ;
 
-      rc = rootidx.insert ( key, rid, order, dupAllowed, indexCB ) ;
+      rc = rootidx.insert ( key, rid, order, dupAllowed,
+                            indexCB, pResult ) ;
       if ( rc )
       {
+         if ( SDB_IXM_DUP_KEY == rc && NULL != pResult )
+         {
+            INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
+                                                  indexCB->keyPattern(),
+                                                  key.toBson() ) ;
+            if ( rcTmp )
+            {
+               rc = rcTmp ;
+            }
+         }
+
          PD_LOG ( PDERROR, "Failed to insert index, key[%s], rid[%d:%d], rc: %d",
                   key.toString( FALSE, TRUE ).c_str(), rid._extent,
                   rid._offset, rc ) ;
@@ -1680,7 +1698,7 @@ namespace engine
                                          BOOLEAN dupAllowed,
                                          BOOLEAN dropDups,
                                          IDmsOprHandler *pOprHandle,
-                                         utilInsertResult *insertResult )
+                                         utilWriteResult *pResult )
    {
       SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
       INT32 rc = SDB_OK ;
@@ -1698,7 +1716,7 @@ namespace engine
             rc = pOprHandle->onInsertIndex( context, indexCB, !dupAllowed,
                                             indexCB->enforced(),
                                             keySet, rid, cb,
-                                            insertResult ) ;
+                                            pResult ) ;
             if ( rc )
             {
                goto error ;
@@ -1712,14 +1730,15 @@ namespace engine
 #endif
             ixmKeyOwned ko ((*it)) ;
             rc = _indexInsert ( indexCB, ko, rid, order, cb,
-                                dupAllowed, dropDups ) ;
+                                dupAllowed, dropDups, pResult ) ;
             if ( rc )
             {
-               if ( SDB_IXM_DUP_KEY == rc && NULL != insertResult )
+               if ( SDB_IXM_DUP_KEY == rc && NULL != pResult )
                {
-                  INT32 rcTmp = insertResult->setDupErrInfo( indexCB->getName(),
-                                                             indexCB->keyPattern(),
-                                                             *it ) ;
+                  INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
+                                                        indexCB->keyPattern(),
+                                                        *it,
+                                                        inputObj ) ;
                   if ( rcTmp )
                   {
                      rc = rcTmp ;
@@ -1746,7 +1765,7 @@ namespace engine
                                           const dmsRecordID &rid,
                                           pmdEDUCB * cb,
                                           IDmsOprHandler *pOprHandle,
-                                          utilInsertResult *insertResult )
+                                          utilWriteResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
@@ -1799,7 +1818,7 @@ namespace engine
          else
          {
             rc = _indexInsert ( context, &indexCB, inputObj, rid, cb, !unique,
-                                dropDups, pOprHandle, insertResult ) ;
+                                dropDups, pOprHandle, pResult ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to insert object(%s) index(%s), "
                           "rc: %d", inputObj.toString().c_str(),
                           indexCB.getDef().toString().c_str(), rc ) ;
@@ -1854,7 +1873,8 @@ namespace engine
                                          const dmsRecordID &rid,
                                          pmdEDUCB *cb,
                                          BOOLEAN isRollback,
-                                         IDmsOprHandler *pOprHandle )
+                                         IDmsOprHandler *pOprHandle,
+                                         utilWriteResult *pResult )
    {
       INT32 rc             = SDB_OK ;
       BSONObjSet keySetOri ;
@@ -1888,7 +1908,8 @@ namespace engine
       {
          rc = pOprHandle->onUpdateIndex( context, indexCB, unique,
                                          indexCB->enforced(), keySetOri,
-                                         keySetNew, rid, isRollback, cb ) ;
+                                         keySetNew, rid, isRollback, cb,
+                                         pResult ) ;
          if ( rc )
          {
             goto error ;
@@ -1958,7 +1979,8 @@ namespace engine
                // appear in the original list, let's add it
                ixmExtent rootidx ( indexCB->getRoot(), this ) ;
                ixmKeyOwned ko ((*itnew)) ;
-               rc = rootidx.insert ( ko, rid, order, !unique, indexCB ) ;
+               rc = rootidx.insert ( ko, rid, order, !unique, indexCB,
+                                     pResult ) ;
                if ( rc )
                {
                   // during rollback, since the previous change may half-way
@@ -1970,6 +1992,18 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
+                  else if ( SDB_IXM_DUP_KEY == rc && pResult )
+                  {
+                     INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
+                                                           indexCB->keyPattern(),
+                                                           *itnew,
+                                                           originalObj ) ;
+                     if ( rcTmp )
+                     {
+                        rc = rcTmp ;
+                     }
+                  }
+
                   PD_LOG ( PDERROR, "Failed to insert index(%s) with "
                            "rid(%d, %d), rc: %d", (*itnew).toString().c_str(),
                            rid._extent, rid._offset, rc ) ;
@@ -2017,7 +2051,7 @@ namespace engine
 #endif
             ixmExtent rootidx ( indexCB->getRoot(), this ) ;
             ixmKeyOwned ko ((*itnew)) ;
-            rc = rootidx.insert ( ko, rid, order, !unique, indexCB ) ;
+            rc = rootidx.insert ( ko, rid, order, !unique, indexCB, pResult ) ;
             if ( rc )
             {
                // during rollback, since the previous change may half-way
@@ -2029,6 +2063,18 @@ namespace engine
                   rc = SDB_OK ;
                   goto done ;
                }
+               else if ( SDB_IXM_DUP_KEY == rc && pResult )
+               {
+                  INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
+                                                        indexCB->keyPattern(),
+                                                        *itnew,
+                                                        originalObj ) ;
+                  if ( rcTmp )
+                  {
+                     rc = rcTmp ;
+                  }
+               }
+
                PD_LOG ( PDERROR, "Failed to insert index(%s) with "
                         "rid(%d, %d), rc: %d", (*itnew).toString().c_str(),
                         rid._extent, rid._offset, rc ) ;
@@ -2058,7 +2104,8 @@ namespace engine
                                           const dmsRecordID &rid,
                                           pmdEDUCB *cb,
                                           BOOLEAN isRollback,
-                                          IDmsOprHandler *pOprHandle )
+                                          IDmsOprHandler *pOprHandle,
+                                          utilWriteResult *pResult )
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
@@ -2105,7 +2152,7 @@ namespace engine
          else
          {
             rc = _indexUpdate ( context, &indexCB, originalObj, newObj,
-                                rid, cb, isRollback, pOprHandle ) ;
+                                rid, cb, isRollback, pOprHandle, pResult ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to update obj(%s) index(%s), "
                           "rc: %d", newObj.toString().c_str(),
                           indexCB.getDef().toString().c_str(), rc ) ;

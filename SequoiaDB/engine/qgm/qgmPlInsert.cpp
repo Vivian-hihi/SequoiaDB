@@ -54,6 +54,11 @@ using namespace bson ;
 
 namespace engine
 {
+
+   #define QGM_INSERT_MSG_BUFF_INIT_SIZE           ( 1024 * 1024 * 2 )
+   #define QGM_INSERT_MSG_BUFF_MAX_SIZE            ( 1024 * 1024 * 8 )
+   #define QGM_INSERT_BATCH_NUM                    ( 5000 )
+
    _qgmPlInsert::_qgmPlInsert( const qgmDbAttr &collection,
                                const BSONObj &record )
    :_qgmPlan( QGM_PLAN_TYPE_INSERT, _qgmField() ),
@@ -84,6 +89,11 @@ namespace engine
    BOOLEAN _qgmPlInsert::needRollback() const
    {
       return TRUE ;
+   }
+
+   void _qgmPlInsert::buildRetInfo( BSONObjBuilder &builder ) const
+   {
+      _inResult.toBSON( builder ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLINSERT__NEXTRECORD, "_qgmPlInsert::_nextRecord" )
@@ -139,6 +149,8 @@ namespace engine
       pmdKRCB *pKrcb                   = pmdGetKRCB() ;
       CHAR *pMsg    = NULL ;
       INT32 bufSize = 0 ;
+      UINT32 batchNum = 0 ;
+      BOOLEAN fetchEOC = FALSE ;
       BSONObj obj ;
       INT64 contextID = -1  ;
       SDB_DMSCB *dmsCB = pKrcb->getDMSCB() ;
@@ -149,6 +161,13 @@ namespace engine
       if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
+      }
+
+      if ( !_directInsert() )
+      {
+         /// ignore error
+         msgCheckBuffer( &pMsg, &bufSize, QGM_INSERT_MSG_BUFF_INIT_SIZE,
+                         eduCB ) ;
       }
 
       if ( SDB_ROLE_COORD == _role )
@@ -165,46 +184,88 @@ namespace engine
 
       while ( TRUE )
       {
+         fetchEOC = FALSE ;
          rc = _nextRecord( eduCB, obj ) ;
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_OK ;
-            goto done ;
+            fetchEOC = TRUE ;
          }
          else if ( SDB_OK != rc )
          {
             goto error ;
          }
+         /// When insert virtual cs
+         else if ( 0 == ossStrncmp( _fullName.c_str(),
+                                    CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
+                                    SYS_VIRTUAL_CS_LEN + 1 ) )
+         {
+            rc = _insertVCS( _fullName.c_str(), obj, eduCB ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+         else if ( !_directInsert() || SDB_ROLE_COORD == _role )
+         {
+            MsgOpInsert *pInsertMsg = NULL ;
+            if ( 0 == batchNum )
+            {
+               rc = msgBuildInsertMsg( &pMsg, &bufSize, _fullName.c_str(),
+                                       0, 0, &obj, eduCB ) ;
+            }
+            else
+            {
+               rc = msgAppendInsertMsg( &pMsg, &bufSize, &obj, eduCB ) ;
+            }
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Build insert message failed, rc: %d", rc ) ;
+               goto error ;
+            }
+            ++batchNum ;
+            pInsertMsg = ( MsgOpInsert* )pMsg ;
+
+            if ( batchNum < QGM_INSERT_BATCH_NUM &&
+                 pInsertMsg->header.messageLength < QGM_INSERT_MSG_BUFF_MAX_SIZE )
+            {
+               continue ;
+            }
+         }
          else
          {
-            /// When insert virtual cs
-            if ( 0 == ossStrncmp( _fullName.c_str(),
-                                  CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
-                                  SYS_VIRTUAL_CS_LEN + 1 ) )
+            _inResult.resetDupInfo() ;
+            rc = rtnInsert ( _fullName.c_str(), obj, 1, 0, eduCB,
+                             dmsCB, dpsCB, 1, &_inResult ) ;
+            if ( rc )
             {
-               rc = _insertVCS( _fullName.c_str(), obj, eduCB ) ;
-               if ( rc )
-               {
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "Insert record on node failed, rc: %d",
+                       rc ) ;
+               goto error ;
             }
+         }
+
+         if ( batchNum > 0 )
+         {
             if ( SDB_ROLE_COORD == _role )
             {
-               rc = msgBuildInsertMsg ( &pMsg,
-                                        &bufSize,
-                                        _fullName.c_str(),
-                                        0, 0,
-                                        &obj,
-                                        eduCB ) ;
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "Build insert message failed, rc: %d",
-                          rc ) ;
-                  goto error ;
-               }
-
                rc = opr.execute ( (MsgHeader*)pMsg, eduCB,
                                   contextID, &buff ) ;
+
+               /// update info
+               _inResult.incInsertedNum( opr.getInsertedNum() ) ;
+               _inResult.incIngoreOrRepaceNum( FALSE,
+                                               opr.getIgnoredNum() ) ;
+               _inResult.incIngoreOrRepaceNum( TRUE,
+                                               opr.getReplacedNum() ) ;
+               if ( buff.recordNum() == 1 )
+               {
+                  BSONObj tmpResult ;
+                  buff.nextObj( tmpResult ) ;
+                  _inResult.setResultObj( tmpResult ) ;
+               }
+               opr.clearStat() ;
+
                if ( rc )
                {
                   PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
@@ -214,15 +275,48 @@ namespace engine
             }
             else
             {
-               rc = rtnInsert ( _fullName.c_str(), obj, 1, 0, eduCB,
-                                dmsCB, dpsCB ) ;
+               CHAR *pInsertor = NULL ;
+               INT32 count = 0 ;
+               INT32 flag = 0 ;
+               CHAR *pCollectionName = NULL ;
+
+               rc = msgExtractInsert( pMsg, &flag, &pCollectionName,
+                                      &pInsertor, count ) ;
                if ( rc )
                {
-                  PD_LOG( PDERROR, "Insert record on node failed, rc: %d",
+                  PD_LOG( PDERROR, "Extract insert message failed, rc: %d",
                           rc ) ;
                   goto error ;
                }
+
+               try
+               {
+                  BSONObj firstObj( pInsertor ) ;
+                  _inResult.resetDupInfo() ;
+                  rc = rtnInsert ( _fullName.c_str(), firstObj, count, flag,
+                                   eduCB, dmsCB, dpsCB, 1, &_inResult ) ;
+                  if ( rc )
+                  {
+                     PD_LOG( PDERROR, "Insert record on node failed, rc: %d",
+                             rc ) ;
+                     goto error ;
+                  }
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Insert record occur exception: %s",
+                          e.what() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
             }
+
+            batchNum = 0 ;
+         }
+
+         if ( fetchEOC )
+         {
+            break ;
          }
       }
 

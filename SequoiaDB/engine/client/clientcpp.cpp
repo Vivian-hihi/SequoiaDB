@@ -7602,7 +7602,8 @@ do                                                            \
       else if ( SDB_OK == replyFlag && 1 == numReturned &&
                 ( MSG_BS_INSERT_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
                   MSG_BS_UPDATE_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
-                  MSG_BS_DELETE_RES == ((MsgHeader*)(*ppBuffer))->opCode ) )
+                  MSG_BS_DELETE_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
+                  MSG_BS_SQL_RES == ((MsgHeader*)(*ppBuffer))->opCode ) )
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
@@ -8344,7 +8345,7 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::execUpdate( const CHAR *sql )
+   INT32 _sdbImpl::execUpdate( const CHAR *sql, bson::BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
@@ -8373,6 +8374,11 @@ do                                                            \
 
       rc = _sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                          &_receiveBufferSize, NULL, FALSE ) ;
+      /// get result
+      if ( pResult )
+      {
+         getLastResultObj( *pResult, FALSE ) ;
+      }
       if ( rc )
       {
          goto error ;

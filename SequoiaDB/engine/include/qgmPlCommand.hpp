@@ -42,6 +42,7 @@
 #include "qgmPlan.hpp"
 #include "msg.h"
 #include "msgDef.h"
+#include "utilResult.hpp"
 
 namespace engine
 {
@@ -64,6 +65,8 @@ namespace engine
 
       virtual BOOLEAN needRollback() const ;
 
+      virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
+
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 
@@ -83,6 +86,8 @@ namespace engine
       qgmOPFieldVec _indexColumns ;
       BSONObj _partition ;
       BOOLEAN _uniqIndex ;
+
+      utilWriteResult   _wrResult ;
 
    } ;
 

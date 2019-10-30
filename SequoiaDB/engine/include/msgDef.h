@@ -514,6 +514,9 @@
 #define FIELD_NAME_LATCH_NAME                "LatchName"
 #define FIELD_NAME_LATCH_DESC                "LatchDesc"
 #define FIELD_NAME_VIEW_HISTORY              "ViewHistory"
+#define FIELD_NAME_INDEXVALUE                "IndexValue"
+#define FIELD_NAME_CURRENTID                 "CurrentID"
+#define FIELD_NAME_PEERID                    "PeerID"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

@@ -4178,7 +4178,8 @@ namespace sdbclient
       virtual INT32 activateReplicaGroup ( const CHAR *pName,
                                     sdbReplicaGroup &replicaGroup ) = 0 ;
 
-      virtual INT32 execUpdate( const CHAR *sql ) = 0 ;
+      virtual INT32 execUpdate( const CHAR *sql,
+                                bson::BSONObj *pResult = NULL ) = 0 ;
 
       virtual INT32 exec( const CHAR *sql,
                           _sdbCursor **result ) = 0 ;
@@ -5311,14 +5312,15 @@ namespace sdbclient
       /** \fn INT32 execUpdate( const CHAR *sql )
           \brief Executing SQL command for updating.
           \param [in] sql The SQL command.
+          \param [out] pResult The detail result info
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 execUpdate( const CHAR *sql )
+      INT32 execUpdate( const CHAR *sql, bson::BSONObj *pResult = NULL )
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->execUpdate( sql ) ;
+         return pSDB->execUpdate( sql, pResult ) ;
       }
 
       /* \fn INT32 exec( const CHAR *sql,

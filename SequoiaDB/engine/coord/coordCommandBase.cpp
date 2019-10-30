@@ -246,6 +246,7 @@ namespace engine
       coordProcessResult result ;
       rtnContextCoord *pTmpContext = NULL ;
       INT64 contextID = -1 ;
+      BSONObjBuilder retBuilder ;
 
       BOOLEAN preRead = _flagCoordCtxPreRead() ;
 
@@ -326,6 +327,18 @@ namespace engine
       }
 
    done:
+      if ( buf )
+      {
+         if ( getWriteResult() && rc )
+         {
+            getWriteResult()->toBSON( retBuilder ) ;
+         }
+
+         if ( !retBuilder.isEmpty() )
+         {
+            *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
+      }
       return rc ;
    error:
       if ( -1 != contextID  )
@@ -336,8 +349,11 @@ namespace engine
       }
       if ( buf && nokRC.size() > 0 )
       {
-         *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
-                                                   cb, &nokRC ) ) ;
+         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
+         if ( getWriteResult() )
+         {
+            coordSetResultInfo( rc, nokRC, getWriteResult() ) ;
+         }
       }
       goto done ;
    }

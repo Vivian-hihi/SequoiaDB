@@ -38,6 +38,7 @@
 #include "ossUtil.hpp"
 #include "rtnAlterTask.hpp"
 #include "dms.hpp"
+#include "utilResult.hpp"
 
 namespace engine
 {
@@ -58,7 +59,8 @@ namespace engine
                     const rtnAlterTask * task,
                     const rtnAlterOptions * options,
                     _pmdEDUCB * cb,
-                    _dpsLogWrapper * dpsCB ) ;
+                    _dpsLogWrapper * dpsCB,
+                    utilWriteResult *pResult = NULL ) ;
 
    INT32 rtnCheckAlterCollection ( const CHAR * collection,
                                    const rtnAlterTask * task,
@@ -71,7 +73,8 @@ namespace engine
                               const rtnAlterTask * task,
                               const rtnAlterOptions * options,
                               _pmdEDUCB * cb,
-                              _dpsLogWrapper * dpsCB ) ;
+                              _dpsLogWrapper * dpsCB,
+                              utilWriteResult *pResult = NULL ) ;
 
    INT32 rtnAlterCollection ( const CHAR * collection,
                               const rtnAlterTask * task,
@@ -80,7 +83,8 @@ namespace engine
                               _dpsLogWrapper * dpsCB,
                               _dmsMBContext * mbContext,
                               _dmsStorageUnit * su,
-                              _SDB_DMSCB * dmsCB ) ;
+                              _SDB_DMSCB * dmsCB,
+                              utilWriteResult *pResult = NULL ) ;
 
    INT32 rtnAlterCollectionSpace ( const CHAR * collectionSpace,
                                    const rtnAlterTask * task,

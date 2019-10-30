@@ -1471,7 +1471,8 @@ namespace engine
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
                                  BOOLEAN isSys,
-                                 INT32 sortBufferSize )
+                                 INT32 sortBufferSize,
+                                 utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
@@ -1504,7 +1505,8 @@ namespace engine
       }
 
       rc = su->createIndex ( pCollectionShortName, indexObj,
-                             cb, dpsCB, isSys, NULL, sortBufferSize ) ;
+                             cb, dpsCB, isSys, NULL, sortBufferSize,
+                             pResult ) ;
       if ( rc )
       {
          // SDB_IXM_EXIST may happen when user mistakenly type index name with

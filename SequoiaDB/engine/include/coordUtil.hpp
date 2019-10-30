@@ -41,6 +41,7 @@
 #include "coordCommon.hpp"
 #include "coordResource.hpp"
 #include "../bson/bson.h"
+#include "utilResult.hpp"
 
 using namespace bson ;
 
@@ -62,6 +63,10 @@ namespace engine
                                _pmdEDUCB *cb,
                                ROUTE_RC_MAP *pFailedNodes,
                                BSONObjBuilder &builder ) ;
+
+   void    coordSetResultInfo( INT32 flag,
+                               ROUTE_RC_MAP &failedNodes,
+                               utilWriteResult *pResult ) ;
 
    INT32 coordGetGroupsFromObj( const BSONObj &obj,
                                 CoordGroupList &groupLst ) ;

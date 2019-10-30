@@ -96,9 +96,9 @@ namespace engine
 
       INT32 execute( _pmdEDUCB *cb ) ;
       BOOLEAN needRollback() const ;
+      void    buildRetInfo( BSONObjBuilder &builder ) const ;
 
       INT32 fetch( BSONObj &obj ) ;
-
 
    private:
       SQL_AST _ast ;

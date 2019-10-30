@@ -1085,7 +1085,8 @@ namespace engine
       }
 
       rc = rtnCreateIndexCommand ( _collectionName, _index, cb,
-                                   dmsCB, dpsCB, isSys, _sortBufferSize ) ;
+                                   dmsCB, dpsCB, isSys, _sortBufferSize,
+                                   &_writeResult ) ;
 
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {

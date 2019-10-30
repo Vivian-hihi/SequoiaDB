@@ -775,7 +775,7 @@ namespace engine
                                                   const dmsRecordID &rid,
                                                   _pmdEDUCB *cb,
                                                   BOOLEAN allowSelfDup,
-                                                  utilInsertResult *insertResult )
+                                                  utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
@@ -829,14 +829,18 @@ namespace engine
             }
 
             rc = SDB_IXM_DUP_KEY ;
-            if ( NULL != insertResult )
+            if ( NULL != pResult )
             {
-               INT32 rcTmp = insertResult->setDupErrInfo( indexCB->getName(),
-                                                          indexCB->keyPattern(),
-                                                          keyObj ) ;
+               INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
+                                                     indexCB->keyPattern(),
+                                                     keyObj ) ;
                if ( rcTmp )
                {
                   rc = rcTmp ;
+               }
+               else
+               {
+                  pResult->setPeerID( idxValue.getRecordObj() ) ;
                }
             }
             PD_LOG ( PDERROR, "Insert index(%s) key(%s) with rid(%d, %d) "
@@ -903,7 +907,7 @@ namespace engine
                                               const BSONObjSet &keySet,
                                               const dmsRecordID &rid,
                                               _pmdEDUCB *cb,
-                                              utilInsertResult *insertResult )
+                                              utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       preIdxTreePtr treePtr ;
@@ -920,7 +924,7 @@ namespace engine
       {
          rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                                  isUnique, isEnforce, *cit,
-                                 rid, cb, TRUE, insertResult ) ;
+                                 rid, cb, TRUE, pResult ) ;
          if ( rc )
          {
             goto error ;
@@ -940,7 +944,7 @@ namespace engine
                                               const BSONObj &keyObj,
                                               const dmsRecordID &rid,
                                               _pmdEDUCB* cb,
-                                              utilInsertResult *insertResult )
+                                              utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       preIdxTreePtr treePtr ;
@@ -954,7 +958,7 @@ namespace engine
       /// create index, don't allow self duplicate
       rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                               isUnique, isEnforce, keyObj,
-                              rid, cb, FALSE, insertResult ) ;
+                              rid, cb, FALSE, pResult ) ;
       if ( rc )
       {
          goto error ;
@@ -1105,7 +1109,8 @@ namespace engine
                                               const BSONObjSet &newKeySet,
                                               const dmsRecordID &rid,
                                               BOOLEAN isRollback,
-                                              _pmdEDUCB* cb )
+                                              _pmdEDUCB* cb,
+                                              utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       BSONObjSet::const_iterator itori ;
@@ -1155,7 +1160,7 @@ namespace engine
             hasChanged = TRUE ;
             rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                                     isUnique, isEnforce, *itnew,
-                                    rid, cb, TRUE, NULL ) ;
+                                    rid, cb, TRUE, pResult ) ;
             if ( rc )
             {
                goto error ;
@@ -1169,7 +1174,7 @@ namespace engine
       {
          rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                                  isUnique, isEnforce, *itnew,
-                                 rid, cb, TRUE, NULL ) ;
+                                 rid, cb, TRUE, pResult ) ;
          if ( rc )
          {
             goto error ;
@@ -1226,7 +1231,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSTRANSLOCKCALLBACK_ONREBUILDINDEX, "dmsTransLockCallback::onRebuildIndex" )
    INT32 dmsTransLockCallback::onRebuildIndex( _dmsMBContext *context,
                                                const ixmIndexCB *indexCB,
-                                               _pmdEDUCB *cb )
+                                               _pmdEDUCB *cb,
+                                               utilWriteResult *pResult )
    {
       INT32   rc         = SDB_OK ;
       BOOLEAN lockedHere = FALSE ;
@@ -1316,7 +1322,7 @@ namespace engine
                                           indexCB->unique(),
                                           indexCB->enforced(), *cit,
                                           oldVer->getRecordID(), cb,
-                                          FALSE, NULL ) ;
+                                          FALSE, pResult ) ;
                   if ( rc )
                   {
                      goto error ;

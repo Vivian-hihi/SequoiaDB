@@ -81,7 +81,8 @@ namespace engine
                                                  SDB_DPSCB *dpsCB,
                                                  _rtnContextBuf &buffObj,
                                                  INT64 &contextID,
-                                                 BOOLEAN &needRollback ) ;
+                                                 BOOLEAN &needRollback,
+                                                 BSONObjBuilder &builder ) ;
          INT32                   _onDelReqMsg( MsgHeader * msg,
                                                SDB_DPSCB *dpsCB,
                                                utilDeleteResult &delResult ) ;
@@ -93,7 +94,8 @@ namespace engine
          INT32                   _onSQLMsg( MsgHeader *msg,
                                             INT64 &contextID,
                                             SDB_DPSCB *dpsCB,
-                                            BOOLEAN &needRollback ) ;
+                                            BOOLEAN &needRollback,
+                                            BSONObjBuilder &builder ) ;
          INT32                   _onTransBeginMsg () ;
          INT32                   _onTransCommitMsg ( SDB_DPSCB *dpsCB ) ;
          INT32                   _onTransRollbackMsg ( SDB_DPSCB *dpsCB ) ;

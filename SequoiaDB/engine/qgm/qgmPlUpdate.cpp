@@ -92,6 +92,11 @@ namespace engine
       return TRUE ;
    }
 
+   void _qgmPlUpdate::buildRetInfo( BSONObjBuilder &builder ) const
+   {
+      _upResult.toBSON( builder ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLUPDATE__EXEC, "_qgmPlUpdate::_execute" )
    INT32 _qgmPlUpdate::_execute( _pmdEDUCB *eduCB )
    {
@@ -145,6 +150,18 @@ namespace engine
          }
 
          rc = opr.execute( (MsgHeader*)pMsg, eduCB, contextID, &buff ) ;
+         /// update info
+         _upResult.incUpdatedNum( opr.getUpdatedNum() ) ;
+         _upResult.incModifiedNum( opr.getModifiedNum() ) ;
+         _upResult.incInsertedNum( opr.getInsertedNum() ) ;
+         if ( buff.recordNum() == 1 )
+         {
+            BSONObj tmpResult ;
+            buff.nextObj( tmpResult ) ;
+            _upResult.setResultObj( tmpResult ) ;
+         }
+         opr.clearStat() ;
+
          if ( rc )
          {
             PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
@@ -162,8 +179,9 @@ namespace engine
              dpsCB = NULL ;
          }
 
+         _upResult.resetDupInfo() ;
          rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,
-                         _flag, eduCB, dmsCB, dpsCB ) ;
+                         _flag, eduCB, dmsCB, dpsCB, 1, &_upResult ) ;
          if( SDB_OK != rc )
          {
             goto error ;

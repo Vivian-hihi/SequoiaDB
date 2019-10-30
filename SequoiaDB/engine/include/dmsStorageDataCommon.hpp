@@ -1114,7 +1114,8 @@ namespace engine
                                              const dmsRecordData &recordData,
                                              const BSONObj &newObj,
                                              _pmdEDUCB *cb,
-                                             IDmsOprHandler *pHandler ) = 0 ;
+                                             IDmsOprHandler *pHandler,
+                                             utilUpdateResult *pResult ) = 0 ;
 
          virtual INT32 _extentRemoveRecord( dmsMBContext *context,
                                             dmsExtRW &extRW,

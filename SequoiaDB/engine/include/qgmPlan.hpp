@@ -84,6 +84,7 @@ namespace engine
 
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const ;
+      virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
 
       OSS_INLINE QGM_PLAN_TYPE type() const { return _type ; }
 

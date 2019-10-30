@@ -41,6 +41,7 @@
 
 #include "qgmPlan.hpp"
 #include "qgmUtil.hpp"
+#include "utilInsertResult.hpp"
 
 namespace engine
 {
@@ -69,6 +70,7 @@ namespace engine
 
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const ;
+      virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
 
    protected:
       INT32 _updateVCS( const CHAR *fullName,
@@ -88,6 +90,8 @@ namespace engine
       BSONObj     _updater ;
       BSONObj     _condition ;
       INT32       _flag ;
+
+      utilUpdateResult     _upResult ;
    } ;
 
    typedef class _qgmPlUpdate qgmPlUpdate ;

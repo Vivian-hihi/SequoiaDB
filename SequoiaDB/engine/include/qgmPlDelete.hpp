@@ -40,6 +40,7 @@
 #define QGMPLDELETE_HPP_
 
 #include "qgmPlan.hpp"
+#include "utilInsertResult.hpp"
 
 namespace engine
 {
@@ -55,6 +56,8 @@ namespace engine
       virtual string toString() const ;
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const { return TRUE ; }
+      void buildRetInfo( BSONObjBuilder &builder ) const ;
+
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 
@@ -69,8 +72,9 @@ namespace engine
                         _pmdEDUCB *cb ) ;
 
    private:
-      qgmDbAttr _collection ;
-      BSONObj _condition ;
+      qgmDbAttr         _collection ;
+      BSONObj           _condition ;
+      utilDeleteResult  _delResult ;
    } ;
 
    typedef class _qgmPlDelete qgmPlDelete ;

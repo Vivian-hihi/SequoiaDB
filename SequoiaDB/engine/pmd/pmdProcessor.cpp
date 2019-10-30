@@ -171,7 +171,7 @@ namespace engine
             }
             case MSG_BS_QUERY_REQ :
                rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID,
-                                    needRollback ) ;
+                                    needRollback, builder ) ;
                break ;
             case MSG_BS_DELETE_REQ :
             {
@@ -193,7 +193,8 @@ namespace engine
                rc = _onKillContextsReqMsg( msg ) ;
                break ;
             case MSG_BS_SQL_REQ :
-               rc = _onSQLMsg( msg, contextID, getDPSCB(), needRollback ) ;
+               rc = _onSQLMsg( msg, contextID, getDPSCB(),
+                               needRollback, builder ) ;
                break ;
             case MSG_BS_TRANS_BEGIN_REQ :
                rc = _onTransBeginMsg() ;
@@ -553,7 +554,7 @@ namespace engine
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_UPDATE_REQ, AUDIT_OBJ_CL,
                       pCollectionName, rc,
-                      "UpdatedNum:%llu, ModifiedNum:%llu, InsertedNum:%u, "
+                      "UpdatedNum:%llu, ModifiedNum:%llu, InsertedNum:%llu, "
                       "Matcher:%s, Updator:%s, Hint:%s, Flag:0x%08x(%u)",
                       upResult.updateNum(), upResult.modifiedNum(),
                       upResult.insertedNum(), selector.toPoolString().c_str(),
@@ -650,8 +651,8 @@ namespace engine
                          &inResult ) ;
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
-                      pCollectionName, rc, "InsertedNum:%u, IgnoredNum:%u, "
-                      "ReplacedNum:%u, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
+                      pCollectionName, rc, "InsertedNum:%llu, IgnoredNum:%llu, "
+                      "ReplacedNum:%llu, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
                       inResult.insertedNum(), inResult.ignoredNum(),
                       inResult.replacedNum(), count,
                       insertor.toPoolString().c_str(), flag,
@@ -681,7 +682,8 @@ namespace engine
                                             SDB_DPSCB *dpsCB,
                                             _rtnContextBuf &buffObj,
                                             INT64 &contextID,
-                                            BOOLEAN &needRollback )
+                                            BOOLEAN &needRollback,
+                                            BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -863,6 +865,10 @@ namespace engine
          if ( pCommand->hasBuff() )
          {
             buffObj = pCommand->getBuff() ;
+         }
+         if ( rc && pCommand->getResult() )
+         {
+            pCommand->getResult()->toBSON( builder ) ;
          }
          if ( rc )
          {
@@ -1063,7 +1069,8 @@ namespace engine
    INT32 _pmdDataProcessor::_onSQLMsg( MsgHeader *msg,
                                        INT64 &contextID,
                                        SDB_DPSCB *dpsCB,
-                                       BOOLEAN &needRollback )
+                                       BOOLEAN &needRollback,
+                                       BSONObjBuilder &builder )
    {
       CHAR *sql = NULL ;
       INT32 rc = SDB_OK ;
@@ -1079,7 +1086,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "%s", sql ) ;
 
-      rc = sqlcb->exec( sql, eduCB(), contextID, needRollback ) ;
+      rc = sqlcb->exec( sql, eduCB(), contextID, needRollback, &builder ) ;
       if ( rc )
       {
          goto error ;

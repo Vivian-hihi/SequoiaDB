@@ -156,7 +156,8 @@ namespace engine
                                  utilDeleteResult &delResult ) ;
          INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                 rtnContextBuf &buffObj, INT32 &startingPos,
-                                INT64 &contextID, BOOLEAN &needRollback ) ;
+                                INT64 &contextID, BOOLEAN &needRollback,
+                                BSONObjBuilder *pBuilder ) ;
          INT32 _onGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,
                                   INT32 &startingPos, INT64 &contextID,
                                   BOOLEAN &needRollback ) ;
@@ -244,7 +245,8 @@ namespace engine
                              const CHAR *pOrderBy,
                              const CHAR *pHint,
                              INT16 w,
-                             SINT64 &contextID );
+                             SINT64 &contextID,
+                             BSONObjBuilder *pBuilder );
 
          INT32 _getOnMainCL( const CHAR *pCommand,
                              const CHAR *pCollection,
@@ -264,7 +266,8 @@ namespace engine
                                      const CHAR *pHint,
                                      INT16 w,
                                      SINT64 &contextID,
-                                     BOOLEAN syscall = FALSE );
+                                     BOOLEAN syscall = FALSE,
+                                     BSONObjBuilder *pBuilder = NULL );
 
          INT32 _dropIndexOnMainCL( const CHAR *pCommand,
                                    const CHAR *pCollection,
@@ -300,7 +303,8 @@ namespace engine
 
          INT32 _alterMainCL( _rtnCommand *command,
                              pmdEDUCB *cb,
-                             SDB_DPSCB *dpsCB ) ;
+                             SDB_DPSCB *dpsCB,
+                             BSONObjBuilder *pBuilder ) ;
 
          INT32 _analyzeMainCL( _rtnCommand *command ) ;
          INT32 _resetSnapshotMainCL ( _rtnCommand * command ) ;

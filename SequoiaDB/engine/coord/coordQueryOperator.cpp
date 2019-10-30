@@ -1107,8 +1107,13 @@ namespace engine
       }
       if ( buf && nokRC.size() > 0 )
       {
-         *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
-                                                   cb, &nokRC ) ) ;
+         BSONObjBuilder retBuilder ;
+         utilWriteResult wrResult ;
+         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
+         coordSetResultInfo( rc, nokRC, &wrResult ) ;
+         wrResult.toBSON( retBuilder ) ;
+
+         *buf = rtnContextBuf( retBuilder.obj() ) ;
       }
       goto done ;
    }

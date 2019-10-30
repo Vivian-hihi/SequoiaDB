@@ -1024,7 +1024,8 @@ namespace engine
       SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
       SDB_ASSERT( NULL != task, "task is invalid" ) ;
 
-      rc = rtnAlterCollection( collection, task, options, cb, dpsCB ) ;
+      rc = rtnAlterCollection( collection, task, options, cb,
+                               dpsCB, &_writeResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to execute task [%s] on collection "
                    "[%s], rc: %d", task->getActionName(), collection, rc ) ;
 
