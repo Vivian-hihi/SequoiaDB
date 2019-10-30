@@ -204,7 +204,7 @@ function start_valgrind()
             exit 4
         fi
         sdbpath=$(get_sdb_install_dir ${host})
-        ssh ${USER}@${host} "${sdbpath}/bin/sdbstop" >> /dev/null
+        ssh ${USER}@${host} "${sdbpath}/bin/sdbstop -t db" >> /dev/null
         ret=""
         addrscount=${#nodeaddrs[@]}
         until [[ "true"M = "${ret}"M ]]

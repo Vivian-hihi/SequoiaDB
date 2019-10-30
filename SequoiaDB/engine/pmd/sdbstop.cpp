@@ -57,19 +57,21 @@
 namespace engine
 {
    #define SDBSTOP_LOG_FILE_NAME    "sdbstop.log"
+   #define SDBSTOP_OPTION_ALL       "all"
 
    #define COMMANDS_OPTIONS \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
+       ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h" ), "help" )\
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), po::value<string>(), "node type: db/om/all, default: db" ) \
+       ( PMD_COMMANDS_STRING( SDBSTOP_OPTION_ALL, ",a" ), "stop all nodes include db and om" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t" ), po::value<string>(), "node type: db/om/all" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om" ) \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, separated by comma (',')" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), po::value<string>(), "service name, separated by comma (',')" ) \
        ( PMD_OPTION_FORCE, "force stop when the node can't stop normally" )
 
    #define COMMANDS_HIDE_OPTIONS \
       ( PMD_OPTION_HELPFULL, "help all configs" ) \
       ( PMD_OPTION_CURUSER, "use current user" ) \
-      
+
    // initialize options
    void init ( po::options_description &desc,
                po::options_description &all )
@@ -84,16 +86,27 @@ namespace engine
       PMD_ADD_PARAM_OPTIONS_END
    }
 
+   void displayUsage()
+   {
+      std::cout << "Usage:" << endl ;
+      std::cout << "  sdbstop --all     # stop all nodes include db and om"
+                << endl;
+      std::cout << "  sdbstop -t db     # stop db nodes" << endl ;
+      std::cout << "  sdbstop -r data   # stop data nodes" << endl ;
+      std::cout << "  sdbstop -p 11810  # stop 11810 node" << endl ;
+   }
+
    void displayArg ( po::options_description &desc )
    {
+      displayUsage() ;
       std::cout << desc << std::endl ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
-   INT32 resolveArgument ( po::options_description &desc, 
+   INT32 resolveArgument ( po::options_description &desc,
                            po::options_description &all,
                            po::variables_map &vm,
-                           INT32 argc, CHAR **argv, 
+                           INT32 argc, CHAR **argv,
                            vector<string> &listServices,
                            INT32 &typeFilter, INT32 &roleFilter,
                            BOOLEAN &bForce )
@@ -107,11 +120,22 @@ namespace engine
          std::cout << "Read command line failed: " << rc << endl ;
          goto error ;
       }
+
       if( 0 == vm.size() && 1 < argc )
       {
          std::cout << "Unrecongnized options: " << argv[1] <<endl ;
          rc = SDB_INVALIDARG ;
          std::cout << "Read command line failed: " << rc << endl ;
+         goto error ;
+      }
+
+      if( 0 == vm.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         std::cout << "Sdbstop requires at least one parameter. You maybe want"
+                   << " to stop all nodes.\nFor detail, please refer to "
+                   << "\"sdbstop --all\""
+                   << std::endl ;
          goto error ;
       }
 
@@ -121,12 +145,13 @@ namespace engine
          rc = SDB_PMD_HELP_ONLY ;
          goto error ;
       }
+
       if ( vm.count( PMD_OPTION_HELPFULL ) )
       {
          displayArg( all ) ;
          rc = SDB_PMD_HELP_ONLY ;
          goto done ;
-      }     
+      }
       else if ( vm.count( PMD_OPTION_VERSION ) )
       {
          ossPrintVersion( "Sdb Stop Version" ) ;
@@ -145,6 +170,7 @@ namespace engine
             goto error ;
          }
       }
+
       if ( vm.count( PMD_OPTION_TYPE ) )
       {
          string listType = vm[ PMD_OPTION_TYPE ].as<string>() ;
@@ -170,6 +196,7 @@ namespace engine
             goto error ;
          }
       }
+
       if ( vm.count( PMD_OPTION_ROLE ))
       {
          string roleTemp = vm[PMD_OPTION_ROLE].as<string>() ;
@@ -183,6 +210,7 @@ namespace engine
          }
          typeFilter = -1 ;
       }
+
       if ( vm.count( PMD_OPTION_FORCE ) )
       {
          bForce = TRUE ;
@@ -208,13 +236,13 @@ namespace engine
       UTIL_VEC_NODES listNodes ;
       UTIL_VEC_NODES::iterator itrNode ;
       BOOLEAN bFind = TRUE ;
-      INT32 typeFilter = SDB_TYPE_DB ;
+      INT32 typeFilter = -1 ;
       INT32 roleFilter =  -1 ;
       BOOLEAN bForce = FALSE ;
       po::options_description desc ( "Command options" ) ;
-      po::options_description all ( "Command options" ) ;      
+      po::options_description all ( "Command options" ) ;
       po::variables_map vm ;
-      
+
       init ( desc, all ) ;
 
       // validate arguments
@@ -233,12 +261,12 @@ namespace engine
          }
          goto done ;
       }
-      
+
       if ( !vm.count( PMD_OPTION_CURUSER ) )
       {
          UTIL_CHECK_AND_CHG_USER() ;
       }
-      
+
       // make path
       rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
       if ( rc )

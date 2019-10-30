@@ -113,7 +113,7 @@ function installSdb()
          echo "sequoiadb is running, stopping..."
          #killall -e sequoiadb
          #sleep 5
-         bin/sdbstop
+         bin/sdbstop -t db
       fi
    done
 
