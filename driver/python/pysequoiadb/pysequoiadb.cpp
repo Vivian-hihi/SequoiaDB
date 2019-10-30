@@ -1281,6 +1281,30 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_interrupt_operation)
+{
+   INT32 rc      = 0 ;
+   PYOBJECT *obj = NULL ;
+   sdb *client   = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+
+   rc = client->interruptOperation() ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(sdb_is_valid)
 {
    INT32 rc        = 0 ;
@@ -5109,7 +5133,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_cancel_task",                 sdb_cancel_task,                 METH_VARARGS},
    {"sdb_set_session_attri",           sdb_set_session_attri,           METH_VARARGS},
    {"sdb_get_session_attri",           sdb_get_session_attri,           METH_VARARGS},
-   {"sdb_interrupt",                   sdb_interrupt,           METH_VARARGS},
+   {"sdb_interrupt",                   sdb_interrupt,                   METH_VARARGS},
+   {"sdb_interrupt_operation",         sdb_interrupt_operation,         METH_VARARGS},
    {"sdb_is_valid",                    sdb_is_valid,                    METH_VARARGS},
    {"sdb_get_version",                 sdb_get_version,                 METH_VARARGS},
    {"sdb_init_client",                 sdb_init_client,                 METH_VARARGS},

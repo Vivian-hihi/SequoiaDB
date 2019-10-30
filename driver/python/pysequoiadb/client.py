@@ -1637,6 +1637,16 @@ class client(object):
                                           bson.OLD_UUID_SUBTYPE, True)
         return record
 
+    def interrupt_operation(self):
+        """Send "INTERRUPT_SELF" message to engine to stop the current operation. When the current operation had finish,
+        nothing happened, Otherwise, the current operation will be stop, and return error.
+
+        Exceptions:
+           pysequoiadb.error.SDBBaseError
+        """
+        rc = sdb.sdb_interrupt_operation(self._client)
+        raise_if_error(rc, "Failed to interrupt")
+
     def interrupt(self):
         """Send a "Interrupt" message to engine, as a result, all the cursors and lobs created by
         current connection will be closed.
