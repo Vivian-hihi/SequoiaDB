@@ -652,8 +652,7 @@ class client(object):
            - selector        dict     The selective rule, return the whole
                                               documents if None.
            - order_by        dict     The ordered rule, never sort if None.
-           - hint            dict     The options provided for specific snapshot type.
-                                              Format:{ '$Options': { <options> } }
+           - hint            dict     The options provided for specific list type. Reserved.
            - num_to_skip     long     Skip the first numToSkip documents,
                                               default is 0L.
            - num_to_return   long     Only return numToReturn documents,
