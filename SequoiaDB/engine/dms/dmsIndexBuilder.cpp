@@ -390,7 +390,7 @@ namespace engine
       }
 
    done:
-      if ( SDB_IXM_DUP_KEY == rc && _pResult )
+      if ( rc && _pResult && _pResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
       {
          if ( _pResult->getCurID().isEmpty() &&
               _pResult->getCurRID().isValid() )

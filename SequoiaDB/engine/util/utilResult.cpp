@@ -104,12 +104,20 @@ namespace engine
       {
          return FALSE ;
       }
+      else if ( 0 == ossStrcmp( FIELD_NAME_CURRENTID, e.fieldName() ) &&
+                !_curID.getField( DMS_ID_KEY_NAME ).eoo() )
+      {
+         return FALSE ;
+      }
+      else if ( 0 == ossStrcmp( FIELD_NAME_PEERID, e.fieldName() ) &&
+                !_peerID.getField( DMS_ID_KEY_NAME ).eoo() )
+      {
+         return FALSE ;
+      }
 
       if ( 0 == ossStrcmp( FIELD_NAME_INDEXNAME, e.fieldName() ) ||
            0 == ossStrcmp( FIELD_NAME_INDEX, e.fieldName() ) ||
-           0 == ossStrcmp( FIELD_NAME_INDEXVALUE, e.fieldName() ) ||
-           0 == ossStrcmp( FIELD_NAME_CURRENTID, e.fieldName() ) ||
-           0 == ossStrcmp( FIELD_NAME_PEERID, e.fieldName() ) )
+           0 == ossStrcmp( FIELD_NAME_INDEXVALUE, e.fieldName() ) )
       {
          if ( !isMaskEnabled( UTIL_RESULT_MASK_DUP ) || !isDupInfoEmpty() )
          {
@@ -154,7 +162,18 @@ namespace engine
             builder.append( FIELD_NAME_INDEXNAME, _idxName ) ;
             builder.append( FIELD_NAME_INDEX, _idxKeyPattern ) ;
             builder.append( FIELD_NAME_INDEXVALUE, keyValue ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Build duplicate result occur exception: %s",
+                    e.what() ) ;
+         }
+      }
 
+      if ( isMaskEnabled( UTIL_RESULT_MASK_ID ) )
+      {
+         try
+         {
             BSONElement e = _curID.getField( DMS_ID_KEY_NAME ) ;
             if ( !e.eoo() )
             {
@@ -168,7 +187,7 @@ namespace engine
          }
          catch( std::exception &e )
          {
-            PD_LOG( PDERROR, "Build duplicate result occur exception: %s",
+            PD_LOG( PDERROR, "Build ID result occur exception: %s",
                     e.what() ) ;
          }
       }
@@ -269,7 +288,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( isMaskEnabled( UTIL_RESULT_MASK_DUP ) )
+      if ( isMaskEnabled( UTIL_RESULT_MASK_ID ) )
       {
          try
          {
@@ -295,7 +314,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( isMaskEnabled( UTIL_RESULT_MASK_DUP ) )
+      if ( isMaskEnabled( UTIL_RESULT_MASK_ID ) )
       {
          try
          {

@@ -3334,7 +3334,8 @@ namespace engine
                                       insertResult ) ;
          if ( rc )
          {
-            if ( SDB_IXM_DUP_KEY == rc && insertResult )
+            if ( insertResult &&
+                 insertResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
             {
                /// current id
                if ( insertResult->getCurID().isEmpty() )
@@ -3933,6 +3934,10 @@ namespace engine
             {
                PD_LOG ( PDERROR, "Failed to create modified record, rc: %d",
                         rc ) ;
+               if ( pResult && pResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
+               {
+                  pResult->setCurrentID( obj ) ;
+               }
                goto error ;
             }
             else if ( !modifier.hasModified() )
@@ -3994,7 +3999,7 @@ namespace engine
                                        pResult ) ;
             if ( rc )
             {
-               if ( SDB_IXM_DUP_KEY == rc && pResult )
+               if ( pResult && pResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
                {
                   /// current id
                   if ( pResult->getCurID().isEmpty() )

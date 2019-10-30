@@ -71,8 +71,10 @@ namespace engine
    } ;
 
    #define UTIL_RESULT_MASK_DUP              ( 0x00000001 )
+   #define UTIL_RESULT_MASK_ID               ( 0x00000002 )
    #define UTIL_RESULT_MASK_ALL              ( 0xFFFFFFFF )
-   #define UTIL_RESULT_MASK_DFT              ( UTIL_RESULT_MASK_DUP )
+   #define UTIL_RESULT_MASK_DFT              ( UTIL_RESULT_MASK_DUP | \
+                                               UTIL_RESULT_MASK_ID )
 
    /*
       utilWriteResult define
