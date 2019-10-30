@@ -206,6 +206,7 @@ namespace engine
          INT32 toQueryMsg ( CHAR **ppMsg, INT32 &buffSize,
                             IExecutor *cb = NULL ) const ;
 
+         virtual void reset() ;
          virtual INT32 getOwned() ;
 
          string toString () const ;

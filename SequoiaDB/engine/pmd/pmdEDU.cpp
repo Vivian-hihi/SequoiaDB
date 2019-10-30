@@ -182,6 +182,7 @@ namespace engine
       _isInterruptSelf = FALSE ;
       _interruptRC = SDB_OK ;
       resetLsn() ;
+      resetMon() ;
       writingDB( FALSE ) ;
       releaseAlignedBuff() ;
       releaseBuffer() ;

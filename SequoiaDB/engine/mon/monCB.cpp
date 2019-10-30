@@ -260,6 +260,7 @@ namespace engine
       _readTimeSpent.clear() ;
       _writeTimeSpent.clear() ;
       _lastOpDetail[ 0 ] = '\0' ;
+      _lastQueryOptions.reset() ;
       _lastOpQuerySaved = FALSE ;
    }
 
@@ -270,6 +271,7 @@ namespace engine
       _lastOpType = MSG_NULL ;
       _cmdType = CMD_UNKNOW ;
       _lastOpDetail[ 0 ] = '\0' ;
+      _lastQueryOptions.reset() ;
       _lastOpQuerySaved = FALSE ;
    }
 
@@ -342,9 +344,20 @@ namespace engine
 
    void _monAppCB::saveLastOpQuery( const rtnQueryOptions &options )
    {
-      _lastQueryOptions = options ;
-      _lastQueryOptions.getOwned() ;
-      _lastOpQuerySaved = TRUE ;
+      // only cache small query, large query will save string directly
+      if ( options.getOrderBy().objsize() < MON_APP_LASTOP_DESC_LEN &&
+           options.getSelector().objsize() < MON_APP_LASTOP_DESC_LEN &&
+           options.getHint().objsize() < MON_APP_LASTOP_DESC_LEN &&
+           options.getQuery().objsize() < MON_APP_LASTOP_DESC_LEN )
+      {
+         _lastQueryOptions = options ;
+         _lastQueryOptions.getOwned() ;
+         _lastOpQuerySaved = TRUE ;
+      }
+      else
+      {
+         formatLastOpDetail( options ) ;
+      }
    }
 
    void _monAppCB::saveLastOpDetail( const CHAR *format, ... )

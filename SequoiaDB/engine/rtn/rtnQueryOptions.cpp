@@ -47,6 +47,8 @@ using namespace std ;
 namespace engine
 {
 
+   static BSONObj s_dummy ;
+
    /*
       _rtnReturnOptions implement
     */
@@ -102,7 +104,7 @@ namespace engine
 
    void _rtnReturnOptions::reset ()
    {
-      _selector = BSONObj() ;
+      _selector = s_dummy ;
       _skip = 0 ;
       _limit = -1 ;
       _flag = 0 ;
@@ -172,6 +174,19 @@ namespace engine
    {
       _fullName = NULL ;
       _mainCLName = NULL ;
+   }
+
+   void _rtnQueryOptions::reset()
+   {
+      _rtnReturnOptions::reset() ;
+
+      _query = s_dummy ;
+      _orderBy = s_dummy ;
+      _hint = s_dummy ;
+      _mainCLNameBuf.clear() ;
+      _mainCLName = NULL ;
+      _fullNameBuf.clear() ;
+      _fullName = NULL ;
    }
 
    INT32 _rtnQueryOptions::getOwned ()
