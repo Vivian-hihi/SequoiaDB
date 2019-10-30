@@ -3,6 +3,58 @@
 
 [快速使用SequoiaDB](quickstart.md)
 
+##SequoiaDB version 3.2.4 版本说明##
+
+**接口变更：**
+
+- MySQL引擎
+  - 配置项 *sequoiadb_use_partition* 更名为 *sequoiadb_auto_partition* ；
+  - 废弃配置项 *sequoiadb_optimizer_select_count* ；
+  - 新增配置项 *sdb_use_transaction*、 *sequoiadb_optimizer_options*；
+- REST接口支持返回标准JSON格式；
+- 提供标准S3兼容的对象访问接口，实现“桶”和“对象”操作以及“多版本控制”；
+- 提供 SQL 化监控视图对数据库进行监控，可以使用SQL的各种能力灵活筛选和组合监控数据，提升监控的易用性；
+
+**主要特性：**
+
+- MySQL引擎
+  - 支持无事务模式，能够实现批量非事务的高性能操作；
+  - 完善表、列、主键和索引的修改操作；
+  - 支持多实例元数据实时同步，提供高可用能力；
+  - Update/Delete/Count/Autocommit下推优化，提升性能；
+  - 支持 Insert ... on duplicate key update ... 语法；
+- Insert/Update/Delete等支持返回记录数和详细错误信息；
+- 插入数据支持重复键替代( insert ... on duplicate replace )；
+- 访问计划实现自动过期清理，以及对 $in 操作进行参数化和缓存；
+- 全文索引支持字符串数组，以及 $or 和 $not 操作；
+- 索引支持 not null 约束；
+- 命令位置参数支持 InstanceID ；
+- 大对象存储支持按时间序进行垂直分区，提升对大对象的存取和管理能力，可以快速按时间进行归档和清理；
+- 大对象List操作支持过滤条件和精准匹配；
+- 重选举支持指定节点；
+- 复制日志支持开启全量模式和时间字段，可以通过工具进行增量数据抽取；
+- 多唯一索引的集合支持副本节点并发数据同步和重放；
+
+**性能优化：**
+
+- 对snapshot transaction进行性能优化，减少对业务操作的影响；
+- 全文索引count以及访问性能优化；同时优化连接为共享连接，减少ES引擎内存开销；
+- 实现多层级内存池模型，提升访问性能；并提供在线内存监控和离线分析能力；
+
+**工具优化：**
+
+- SHELL的File对象增加truncate接口；
+- SHELL增加IniFile对象；
+- sdbreplay支持按周期或指定时间将增量数据输出到文件；
+- SAC
+  - 创建集合支持自增字段；
+  - 支持创建全文索引和全文索引操作；
+  - 支持"数据库实例"配置修改和同步；
+
+**解决重要Bug：**
+
+NA
+
 ##SequoiaDB version 3.2.3 版本说明##
 
 **接口变更：**
