@@ -655,6 +655,7 @@ namespace seadapter
    error:
       goto done ;
    }
+
    INT32 _utilHttp::_getReply( HTTP_STATUS_CODE *statusCode, const CHAR **reply,
                                INT32 *replyLen, BOOLEAN onlyHead )
    {
@@ -670,6 +671,7 @@ namespace seadapter
       INT32 bodyTotalLen = 0 ;
       INT32 totalRecv = 0 ;
       const CHAR *itemPtr = NULL ;
+      INT32 statusResult = SDB_OK ;
       http_parser *parser = _getHttpParser() ;
 
       // 1. Receive the header.
@@ -679,6 +681,7 @@ namespace seadapter
          rc = _socket->recv( _recvBuf + headerSize, remainSize,
                              curRecvSize, _timeout, 0, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to receive data, rc: %d", rc ) ;
+         remainSize -= curRecvSize ;
          _recvBuf[ headerSize + curRecvSize + 1 ] = '\0' ;
          headFound = _checkEndOfHeader( _recvBuf + headerSize,
                                         curRecvSize, bodyOffset ) ;
@@ -714,11 +717,12 @@ namespace seadapter
       }
 
       // If rc is not SDB_OK, error has happened.
-      rc = _chkStatusCode( (HTTP_STATUS_CODE)parser->status_code ) ;
-      if ( rc )
+      statusResult = _chkStatusCode( (HTTP_STATUS_CODE)parser->status_code ) ;
+      if ( statusResult )
       {
+         rc = statusResult ;
          PD_LOG( PDERROR, "The status code is %u. Error has happened[ %d ]",
-                 (HTTP_STATUS_CODE)parser->status_code, rc ) ;
+                 (HTTP_STATUS_CODE)parser->status_code, statusResult ) ;
          // Do not go to error here. Need to check if any error information is
          // sent back by application.
       }
@@ -801,6 +805,13 @@ namespace seadapter
       {
          *replyLen = bodyTotalLen ;
       }
+
+      // If the request returns an abnormal status, error should be returned.
+      if ( SDB_OK != statusResult )
+      {
+         rc = statusResult ;
+      }
+
    done:
       return rc ;
    error:

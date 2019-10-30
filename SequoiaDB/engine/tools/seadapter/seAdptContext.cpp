@@ -464,7 +464,11 @@ namespace seadapter
          goto error ;
       }
 
+      // To be sure the index still exists when trying to get more data.
+      rc = _imContext->resume() ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index metadata failed[%d]", rc ) ;
       rc = _esFetcher->fetch( result ) ;
+      _imContext->pause() ;
       if ( rc )
       {
          if ( SDB_DMS_EOC != rc )

@@ -672,9 +672,18 @@ namespace seadapter
       rc = _getResultObjs( replyObj, result ) ;
       PD_RC_CHECK( rc, PDERROR, "Get result objects from reply failed[ %d ]",
                    rc ) ;
-
-      scrollId = string( replyObj.getStringField( ES_SCROLL_ID_KEY ) ) ;
-      PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
+      {
+         const CHAR *scroll = replyObj.getStringField( ES_SCROLL_ID_KEY ) ;
+         if ( 0 == ossStrlen( scroll ) )
+         {
+            PD_LOG( PDERROR, "Scroll id is not found in the result: %s",
+                    replyObj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         scrollId = string( scroll ) ;
+         PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
+      }
 
    done:
       return rc ;
@@ -705,11 +714,21 @@ namespace seadapter
 
       rc = _getResultObjs( replyObj, result ) ;
       PD_RC_CHECK( rc, PDERROR, "Get objects from reply failed[ %d ]", rc ) ;
-
-      // The initial search request and each ssubsequent scroll request returns
-      // a new _scroll_id. Only the most recent _scroll_id should be used.
-      scrollId = string( replyObj.getStringField( ES_SCROLL_ID_KEY ) ) ;
-      PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
+      {
+         // The initial search request and each ssubsequent scroll request
+         // returns a new _scroll_id. Only the most recent _scroll_id should be
+         // used.
+         const CHAR *scroll = replyObj.getStringField( ES_SCROLL_ID_KEY ) ;
+         if ( 0 == ossStrlen( scroll ) )
+         {
+            PD_LOG( PDERROR, "Scroll id is not found in the result: %s",
+                    replyObj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         scrollId = string( scroll ) ;
+         PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
+      }
 
    done:
       return rc ;
@@ -797,14 +816,19 @@ namespace seadapter
       INT32 rc = SDB_OK ;
       BSONElement sourceObj ;
 
-      PD_RC_CHECK( rc, PDERROR, "Initialize result buffer failed[ %d ]", rc ) ;
-
       try
       {
-         PD_LOG( PDDEBUG, "Result object: %s", replyObj.toString( FALSE, TRUE ).c_str() ) ;
+         PD_LOG( PDDEBUG, "Result object: %s",
+                 replyObj.toString( false, true ).c_str() ) ;
          {
             BSONElement hitsObj = replyObj.getField( "hits" ) ;
-            if ( Object == hitsObj.type() )
+            if ( hitsObj.eoo() )
+            {
+               PD_LOG( PDERROR, "Expected field 'hits' not found in the result:"
+                       " %s", replyObj.toString( false, true ).c_str() ) ;
+               goto error ;
+            }
+            else if ( Object == hitsObj.type() )
             {
                BSONObj hitsObj2 = hitsObj.embeddedObject() ;
                BSONElement hitsEle2 = hitsObj2.getField( "hits" ) ;
