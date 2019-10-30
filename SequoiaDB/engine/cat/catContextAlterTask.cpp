@@ -2815,6 +2815,12 @@ namespace engine
                    _task->getActionName(), _dataName.c_str() ) ;
       }
 
+      if ( localTask->getArgumentMask() == UTIL_CS_DOMAIN_FIELD )
+      {
+         // Only alter domain, no need to run on data groups
+         _groups.clear() ;
+      }
+
    done :
       PD_TRACE_EXITRC( SDB_CATCTXALTERCSTASK__CHKSETATTR, rc ) ;
       return rc ;
@@ -3041,6 +3047,7 @@ namespace engine
                                   localTask->isCapped() ? DMS_STORAGE_CAPPED :
                                                           DMS_STORAGE_NORMAL ) ;
             }
+            break ;
          }
          case RTN_ALTER_CS_REMOVE_DOMAIN :
          {

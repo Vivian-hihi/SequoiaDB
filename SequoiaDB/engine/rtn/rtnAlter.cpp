@@ -1125,19 +1125,14 @@ namespace engine
                       SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
                       "Failed to check collection space, the collection space "
                       "is not empty" ) ;
-            PD_CHECK( !task->testArgumentMask( UTIL_CS_DOMAIN_FIELD ),
-                      SDB_RTN_CMD_NO_SERVICE_AUTH, error, PDERROR,
-                      "Failed to check collection space, should execute the "
-                      "command from SHARD port" ) ;
             rc = _rtnAlterCSSetAttributes( collectionSpace, task, su, cb ) ;
             break ;
          }
          case RTN_ALTER_CS_SET_DOMAIN :
          case RTN_ALTER_CS_REMOVE_DOMAIN :
          {
-            rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
-            PD_LOG( PDERROR, "Failed to check collection space, should "
-                    "execute the command from SHARD port" ) ;
+            // do nothing
+            rc = SDB_OK ;
             break ;
          }
          case RTN_ALTER_CS_ENABLE_CAPPED :
