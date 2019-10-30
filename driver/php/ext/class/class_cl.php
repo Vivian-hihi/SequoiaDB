@@ -27,8 +27,7 @@ class SequoiaCL
    /** The flag represent whether insert continue(no errors were reported) when hitting index key duplicate error */
    define( "SDB_FLG_INSERT_CONTONDUP",                   0x00000001 ) ;
    /** The flag represent whether insert return the "_id" field of the record for user */
-   define( "SDB_FLG_INSERT_RETURN_OID",                  0x00000002 ) ;
-   
+   define( "SDB_FLG_INSERT_RETURN_OID",                  0x10000000 ) ;
 
    /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query. */
    define( "SDB_FLG_FIND_FORCE_HINT",                    0x00000080 ) ;
