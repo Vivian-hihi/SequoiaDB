@@ -569,7 +569,7 @@ namespace engine
 
          if ( 0 == contextBuff.size() )
          {
-            utilBuildErrorBson( retBuilder, rc,
+            utilBuildErrorBson( retBuilder, rtnCode,
                                 _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
          }
          else
