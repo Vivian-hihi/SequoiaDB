@@ -64,7 +64,7 @@ mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
    + 使用工具sdb_sql_ctl修改配置
 
    ```lang-bash
-   $ bin/sdb_sql_ctl chconf myinst --sdb-use-partition=OFF
+   $ bin/sdb_sql_ctl chconf myinst --sdb-auto-partition=OFF
    ```
 
    + 修改实例数据目录下的配置文件auto.cnf，在[mysqld]下添加/更改对应配置项。示例：
