@@ -234,7 +234,7 @@ namespace engine
          }
          else
          {
-            _inResult.resetDupInfo() ;
+            _inResult.resetInfo() ;
             rc = rtnInsert ( _fullName.c_str(), obj, 1, 0, eduCB,
                              dmsCB, dpsCB, 1, &_inResult ) ;
             if ( rc )
@@ -292,7 +292,7 @@ namespace engine
                try
                {
                   BSONObj firstObj( pInsertor ) ;
-                  _inResult.resetDupInfo() ;
+                  _inResult.resetInfo() ;
                   rc = rtnInsert ( _fullName.c_str(), firstObj, count, flag,
                                    eduCB, dmsCB, dpsCB, 1, &_inResult ) ;
                   if ( rc )

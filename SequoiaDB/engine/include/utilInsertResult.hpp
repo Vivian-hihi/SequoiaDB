@@ -49,16 +49,16 @@ namespace engine
       utilInsertResult() ;
       virtual ~utilInsertResult() ;
 
-      virtual void      reset() ;
-      virtual void      toBSON( BSONObjBuilder &builder ) const ;
-
    protected:
+      virtual void      _resetStat() ;
+      virtual void      _resetInfo() ;
+      virtual void      _toBSON( BSONObjBuilder &builder ) const ;
       virtual BOOLEAN   _filterResultElement( const BSONElement &e ) const ;
 
    public:
-      void     enableDupErrInfo() ;
-      void     disableDupErrInfo() ;
-      BOOLEAN  isEnaleDupErrInfo() const ;
+      void     enableIndexErrInfo() ;
+      void     disableIndexErrInfo() ;
+      BOOLEAN  isEnaleIndexErrInfo() const ;
 
       UINT64               insertedNum() const { return _insertedNum ; }
       UINT64               ignoredNum() const { return _ignoredNum ; }
@@ -86,10 +86,10 @@ namespace engine
       utilUpdateResult() ;
       virtual ~utilUpdateResult() ;
 
-      virtual void      reset() ;
-      virtual void      toBSON( BSONObjBuilder &builder ) const ;
-
    protected:
+      virtual void      _resetStat() ;
+      virtual void      _resetInfo() ;
+      virtual void      _toBSON( BSONObjBuilder &builder ) const ;
       virtual BOOLEAN   _filterResultElement( const BSONElement &e ) const ;
 
    public:
@@ -120,9 +120,6 @@ namespace engine
       utilDeleteResult() ;
       virtual ~utilDeleteResult() ;
 
-      virtual void      reset() ;
-      virtual void      toBSON( BSONObjBuilder &builder ) const ;
-
       UINT64            deletedNum() const { return _deletedNum ; }
 
       void              incDeletedNum( UINT64 step = 1 )
@@ -131,6 +128,9 @@ namespace engine
       }
 
    protected:
+      virtual void      _resetStat() ;
+      virtual void      _resetInfo() ;
+      virtual void      _toBSON( BSONObjBuilder &builder ) const ;
       virtual BOOLEAN   _filterResultElement( const BSONElement &e ) const ;
 
    private:

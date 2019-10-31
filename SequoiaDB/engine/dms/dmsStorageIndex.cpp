@@ -1666,11 +1666,15 @@ namespace engine
                             indexCB, pResult ) ;
       if ( rc )
       {
-         if ( SDB_IXM_DUP_KEY == rc && NULL != pResult )
+         if ( pResult )
          {
-            INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
-                                                  indexCB->keyPattern(),
-                                                  key.toBson() ) ;
+            if ( pResult->getCurRID().isNull() )
+            {
+               pResult->setCurRID( rid ) ;
+            }
+            INT32 rcTmp = pResult->setIndexErrInfo( indexCB->getName(),
+                                                    indexCB->keyPattern(),
+                                                    key.toBson() ) ;
             if ( rcTmp )
             {
                rc = rcTmp ;
@@ -1733,16 +1737,9 @@ namespace engine
                                 dupAllowed, dropDups, pResult ) ;
             if ( rc )
             {
-               if ( SDB_IXM_DUP_KEY == rc && NULL != pResult )
+               if ( pResult )
                {
-                  INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
-                                                        indexCB->keyPattern(),
-                                                        *it,
-                                                        inputObj ) ;
-                  if ( rcTmp )
-                  {
-                     rc = rcTmp ;
-                  }
+                  pResult->setCurrentID( inputObj ) ;
                }
                PD_LOG ( PDERROR, "Insert index key(%s) with rid(%d, %d) "
                         "failed, rc: %d", it->toString().c_str(),
@@ -1992,12 +1989,12 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
-                  else if ( SDB_IXM_DUP_KEY == rc && pResult )
+                  else if ( rc && pResult )
                   {
-                     INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
-                                                           indexCB->keyPattern(),
-                                                           *itnew,
-                                                           originalObj ) ;
+                     INT32 rcTmp = pResult->setIndexErrInfo( indexCB->getName(),
+                                                             indexCB->keyPattern(),
+                                                             *itnew,
+                                                             originalObj ) ;
                      if ( rcTmp )
                      {
                         rc = rcTmp ;
@@ -2063,12 +2060,12 @@ namespace engine
                   rc = SDB_OK ;
                   goto done ;
                }
-               else if ( SDB_IXM_DUP_KEY == rc && pResult )
+               else if ( rc && pResult )
                {
-                  INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
-                                                        indexCB->keyPattern(),
-                                                        *itnew,
-                                                        originalObj ) ;
+                  INT32 rcTmp = pResult->setIndexErrInfo( indexCB->getName(),
+                                                          indexCB->keyPattern(),
+                                                          *itnew,
+                                                          originalObj ) ;
                   if ( rcTmp )
                   {
                      rc = rcTmp ;

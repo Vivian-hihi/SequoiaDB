@@ -3486,7 +3486,7 @@ namespace engine
          INT32 rcTmp = SDB_OK ;
          pSubCLName = iter->c_str() ;
 
-         wrResult.resetDupInfo() ;
+         wrResult.resetInfo() ;
          rcTmp = rtnCreateIndexCommand( pSubCLName, boIndex, _pEDUCB,
                                         _pDmsCB, _pDpsCB, syscall,
                                         sortBufferSize,
@@ -4641,7 +4641,7 @@ namespace engine
             INT32 rcTmp = SDB_OK ;
             const CHAR * subCLName = iterCL->c_str() ;
 
-            wrResult.resetDupInfo() ;
+            wrResult.resetInfo() ;
             rcTmp = rtnAlter( subCLName, task, options, cb, dpsCB, &wrResult ) ;
             if ( rcTmp )
             {

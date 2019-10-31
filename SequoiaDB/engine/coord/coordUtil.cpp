@@ -53,7 +53,7 @@ namespace engine
                             ROUTE_RC_MAP &failedNodes,
                             utilWriteResult *pResult )
    {
-      if ( pResult && pResult->getResultInfo().isEmpty() )
+      if ( pResult && pResult->isResultObjEmpty() )
       {
          ROUTE_RC_MAP::iterator iter = failedNodes.begin() ;
          while( iter != failedNodes.end() )

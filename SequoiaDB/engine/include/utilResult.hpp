@@ -41,14 +41,48 @@ using namespace bson ;
 
 namespace engine
 {
+
+   #define UTIL_RESULT_MASK_IDX              ( 0x00000001 )
+   #define UTIL_RESULT_MASK_ID               ( 0x00000002 )
+   #define UTIL_RESULT_MASK_ALL              ( 0xFFFFFFFF )
+   #define UTIL_RESULT_MASK_DFT              ( UTIL_RESULT_MASK_IDX | \
+                                               UTIL_RESULT_MASK_ID )
+
+   /*
+      utilResult define
+   */
    class utilResult : public SDBObject
    {
    public:
-      utilResult() ;
+      utilResult( UINT32 mask = UTIL_RESULT_MASK_DFT ) ;
       virtual ~utilResult() ;
 
-      virtual void reset() {}
-      virtual void toBSON( BSONObjBuilder &builder ) const = 0 ;
+      void              enableMask( UINT32 mask ) ;
+      void              disableMask( UINT32 mask ) ;
+      BOOLEAN           isMaskEnabled( UINT32 mask ) const ;
+
+      void              setResultObj( const BSONObj &obj ) ;
+      void              resetResultObj() ;
+      BSONObj           getResultObj() const ;
+      BOOLEAN           isResultObjEmpty() const ;
+
+      void              reset() ;
+      void              resetStat() ;
+      void              resetInfo( BOOLEAN includeResult = TRUE ) ;
+
+      BSONObj           toBSON() const ;
+      void              toBSON( BSONObjBuilder &builder ) const ;
+
+   protected:
+      virtual void      _resetStat() = 0 ;
+      virtual void      _resetInfo() = 0 ;
+      virtual void      _toBSON( BSONObjBuilder &builder ) const = 0 ;
+      virtual BOOLEAN   _filterResultElement( const BSONElement &e ) const = 0 ;
+
+   private:
+      UINT32            _resultMask ;
+      BSONObj           _resultObj ;
+
    } ;
 
    /*
@@ -70,12 +104,6 @@ namespace engine
 
    } ;
 
-   #define UTIL_RESULT_MASK_DUP              ( 0x00000001 )
-   #define UTIL_RESULT_MASK_ID               ( 0x00000002 )
-   #define UTIL_RESULT_MASK_ALL              ( 0xFFFFFFFF )
-   #define UTIL_RESULT_MASK_DFT              ( UTIL_RESULT_MASK_DUP | \
-                                               UTIL_RESULT_MASK_ID )
-
    /*
       utilWriteResult define
    */
@@ -85,37 +113,21 @@ namespace engine
       utilWriteResult( UINT32 mask = UTIL_RESULT_MASK_DFT ) ;
       virtual ~utilWriteResult() ;
 
-      BSONObj           toBSON() const ;
-      void              setResultObj( const BSONObj &obj ) ;
-      void              resultResultInfo() ;
-      BSONObj           getResultInfo() const { return _resultObj ; }
-
-      void              enableMask( UINT32 mask ) ;
-      void              disableMask( UINT32 mask ) ;
-      BOOLEAN           isMaskEnabled( UINT32 mask ) const ;
-
    public:
-      virtual void      reset() ;
-      virtual void      toBSON( BSONObjBuilder &builder ) const ;
+      void     resetIndexErrInfo() ;
+      BOOLEAN  isIndexErrInfoEmpty() const ;
 
-   protected:
-      virtual BOOLEAN   _filterResultElement( const BSONElement &e ) const ;
-
-   public:
-      void     resetDupInfo() ;
-      BOOLEAN  isDupInfoEmpty() const ;
-
-      INT32    setDupErrInfo( const CHAR *idxName,
-                              const BSONObj& idxKeyPattern,
-                              const BSONObj& idxValue,
-                              const BSONObj& curObj= BSONObj() ) ;
+      INT32    setIndexErrInfo( const CHAR *idxName,
+                                const BSONObj& idxKeyPattern,
+                                const BSONObj& idxValue,
+                                const BSONObj& curObj= BSONObj() ) ;
 
       INT32    setCurrentID( const BSONObj &obj ) ;
       INT32    setPeerID( const BSONObj &obj ) ;
       void     setCurRID( const dmsRecordID &rid ) ;
       void     setPeerRID( const dmsRecordID &rid ) ;
 
-      void     setDupErrInfo( const utilWriteResult *pResult ) ;
+      void     setErrInfo( const utilWriteResult *pResult ) ;
 
       ossPoolString        getIdxName() const ;
       BSONObj              getIdxKeyPattern() const ;
@@ -126,6 +138,12 @@ namespace engine
       const dmsRecordID&   getPeerRID() const ;
 
    protected:
+      virtual void      _resetStat() ;
+      virtual void      _resetInfo() ;
+      virtual void      _toBSON( BSONObjBuilder &builder ) const ;
+      virtual BOOLEAN   _filterResultElement( const BSONElement &e ) const ;
+
+   protected:
       ossPoolString        _idxName ;
       BSONObj              _idxKeyPattern ;
       BSONObj              _idxValue ;
@@ -133,10 +151,6 @@ namespace engine
       BSONObj              _peerID ;
       dmsRecordID          _curRID ;
       dmsRecordID          _peerRID ;
-
-      BSONObj              _resultObj ;
-
-      UINT32               _resultMask ;
 
    } ;
 }

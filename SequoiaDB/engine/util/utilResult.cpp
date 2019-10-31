@@ -45,41 +45,35 @@ using namespace bson ;
 
 namespace engine
 {
-   utilResult::utilResult()
+
+   /*
+      utilResult implement
+   */
+   utilResult::utilResult( UINT32 mask )
    {
+      _resultMask = mask ;
    }
 
    utilResult::~utilResult()
    {
    }
 
-   /*
-      utilWriteResult implement
-   */
-   utilWriteResult::utilWriteResult( UINT32 mask )
+   void utilResult::enableMask( UINT32 mask )
    {
-      _resultMask = mask ;
+      OSS_BIT_SET( _resultMask, mask ) ;
    }
 
-   utilWriteResult::~utilWriteResult()
+   void utilResult::disableMask( UINT32 mask )
    {
+      OSS_BIT_CLEAR( _resultMask, mask ) ;
    }
 
-   void utilWriteResult::reset()
+   BOOLEAN utilResult::isMaskEnabled( UINT32 mask ) const
    {
-      utilResult::reset() ;
-      resetDupInfo() ;
-      resultResultInfo() ;
+      return OSS_BIT_TEST( _resultMask, mask ) ;
    }
 
-   BSONObj utilWriteResult::toBSON() const
-   {
-      BSONObjBuilder builder( 128 ) ;
-      toBSON( builder ) ;
-      return builder.obj() ;
-   }
-
-   void utilWriteResult::setResultObj( const BSONObj &obj )
+   void utilResult::setResultObj( const BSONObj &obj )
    {
       try
       {
@@ -91,9 +85,93 @@ namespace engine
       }
    }
 
-   void utilWriteResult::resultResultInfo()
+   void utilResult::resetResultObj()
    {
       _resultObj = BSONObj() ;
+   }
+
+   BSONObj utilResult::getResultObj() const
+   {
+      return _resultObj ;
+   }
+
+   BOOLEAN utilResult::isResultObjEmpty() const
+   {
+      return _resultObj.isEmpty() ;
+   }
+
+   void utilResult::reset()
+   {
+      resetStat() ;
+      resetInfo( TRUE ) ;
+   }
+
+   void utilResult::resetStat()
+   {
+      _resetStat() ;
+   }
+
+   void utilResult::resetInfo( BOOLEAN includeResult )
+   {
+      if ( includeResult )
+      {
+         resetResultObj() ;
+      }
+      _resetStat() ;
+   }
+
+   BSONObj utilResult::toBSON() const
+   {
+      BSONObjBuilder builder( 200 ) ;
+      toBSON( builder ) ;
+      return builder.obj() ;
+   }
+
+   void utilResult::toBSON( BSONObjBuilder & builder ) const
+   {
+      if ( !_resultObj.isEmpty() )
+      {
+         try
+         {
+            BSONObjIterator itr( _resultObj ) ;
+            while( itr.more() )
+            {
+               BSONElement e = itr.next() ;
+               if ( _filterResultElement( e ) )
+               {
+                  builder.append( e ) ;
+               }
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Build result information occur exception: %s",
+                    e.what() ) ;
+         }
+      }
+
+      _toBSON( builder ) ;
+   }
+
+   /*
+      utilWriteResult implement
+   */
+   utilWriteResult::utilWriteResult( UINT32 mask )
+   :utilResult( mask )
+   {
+   }
+
+   utilWriteResult::~utilWriteResult()
+   {
+   }
+
+   void utilWriteResult::_resetStat()
+   {
+   }
+
+   void utilWriteResult::_resetInfo()
+   {
+      resetIndexErrInfo() ;
    }
 
    BOOLEAN utilWriteResult::_filterResultElement( const BSONElement &e ) const
@@ -119,7 +197,8 @@ namespace engine
            0 == ossStrcmp( FIELD_NAME_INDEX, e.fieldName() ) ||
            0 == ossStrcmp( FIELD_NAME_INDEXVALUE, e.fieldName() ) )
       {
-         if ( !isMaskEnabled( UTIL_RESULT_MASK_DUP ) || !isDupInfoEmpty() )
+         if ( !isMaskEnabled( UTIL_RESULT_MASK_IDX ) ||
+              !isIndexErrInfoEmpty() )
          {
             return FALSE ;
          }
@@ -127,31 +206,10 @@ namespace engine
       return TRUE ;
    }
 
-   void utilWriteResult::toBSON( BSONObjBuilder &builder ) const
+   void utilWriteResult::_toBSON( BSONObjBuilder &builder ) const
    {
-      if ( !_resultObj.isEmpty() )
-      {
-         try
-         {
-            BSONObjIterator itr( _resultObj ) ;
-            while( itr.more() )
-            {
-               BSONElement e = itr.next() ;
-               if ( _filterResultElement( e ) )
-               {
-                  builder.append( e ) ;
-               }
-            }
-         }
-         catch ( std::exception &e )
-         {
-            PD_LOG( PDERROR, "Build result information occur exception: %s",
-                    e.what() ) ;
-         }
-      }
-
-      if ( isMaskEnabled( UTIL_RESULT_MASK_DUP ) &&
-           !isDupInfoEmpty() )
+      if ( isMaskEnabled( UTIL_RESULT_MASK_IDX ) &&
+           !isIndexErrInfoEmpty() )
       {
          try
          {
@@ -193,22 +251,7 @@ namespace engine
       }
    }
 
-   void utilWriteResult::enableMask( UINT32 mask )
-   {
-      OSS_BIT_SET( _resultMask, mask ) ;
-   }
-
-   void utilWriteResult::disableMask( UINT32 mask )
-   {
-      OSS_BIT_CLEAR( _resultMask, mask ) ;
-   }
-
-   BOOLEAN utilWriteResult::isMaskEnabled( UINT32 mask ) const
-   {
-      return OSS_BIT_TEST( _resultMask, mask ) ;
-   }
-
-   void utilWriteResult::resetDupInfo()
+   void utilWriteResult::resetIndexErrInfo()
    {
       _idxName.clear() ;
       _idxKeyPattern = BSONObj() ;
@@ -219,7 +262,7 @@ namespace engine
       _peerRID.reset() ;
    }
 
-   BOOLEAN utilWriteResult::isDupInfoEmpty() const
+   BOOLEAN utilWriteResult::isIndexErrInfoEmpty() const
    {
       if ( _idxName.empty() || _idxKeyPattern.isEmpty() ||
            _idxValue.isEmpty() )
@@ -244,14 +287,14 @@ namespace engine
       return _idxValue ;
    }
 
-   INT32 utilWriteResult::setDupErrInfo( const CHAR *idxName,
-                                         const BSONObj& idxKeyPattern,
-                                         const BSONObj& idxValue,
-                                         const BSONObj& curObj )
+   INT32 utilWriteResult::setIndexErrInfo( const CHAR *idxName,
+                                           const BSONObj& idxKeyPattern,
+                                           const BSONObj& idxValue,
+                                           const BSONObj& curObj )
    {
       INT32 rc = SDB_OK ;
 
-      if ( !isMaskEnabled( UTIL_RESULT_MASK_DUP ) )
+      if ( !isMaskEnabled( UTIL_RESULT_MASK_IDX ) )
       {
          goto done ;
       }
@@ -366,9 +409,9 @@ namespace engine
       return _peerRID ;
    }
 
-   void utilWriteResult::setDupErrInfo( const utilWriteResult *pResult )
+   void utilWriteResult::setErrInfo( const utilWriteResult *pResult )
    {
-      if ( isMaskEnabled( UTIL_RESULT_MASK_DUP ) )
+      if ( isMaskEnabled( UTIL_RESULT_MASK_IDX ) )
       {
          _idxName = pResult->getIdxName() ;
          _idxKeyPattern = pResult->getIdxKeyPattern() ;

@@ -831,9 +831,9 @@ namespace engine
             rc = SDB_IXM_DUP_KEY ;
             if ( NULL != pResult )
             {
-               INT32 rcTmp = pResult->setDupErrInfo( indexCB->getName(),
-                                                     indexCB->keyPattern(),
-                                                     keyObj ) ;
+               INT32 rcTmp = pResult->setIndexErrInfo( indexCB->getName(),
+                                                       indexCB->keyPattern(),
+                                                       keyObj ) ;
                if ( rcTmp )
                {
                   rc = rcTmp ;

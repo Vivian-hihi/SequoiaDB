@@ -179,7 +179,7 @@ namespace engine
              dpsCB = NULL ;
          }
 
-         _upResult.resetDupInfo() ;
+         _upResult.resetInfo() ;
          rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,
                          _flag, eduCB, dmsCB, dpsCB, 1, &_upResult ) ;
          if( SDB_OK != rc )

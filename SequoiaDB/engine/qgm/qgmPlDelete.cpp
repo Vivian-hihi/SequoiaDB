@@ -167,7 +167,7 @@ namespace engine
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          BSONObj empty ;
 
-         _delResult.resetDupInfo() ;
+         _delResult.resetInfo() ;
          rc = rtnDelete( clName.c_str(),
                          _condition, empty, 0, eduCB,
                          dmsCB, dpsCB, 1, &_delResult ) ;

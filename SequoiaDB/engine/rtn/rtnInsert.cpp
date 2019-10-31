@@ -125,7 +125,7 @@ namespace engine
 
       if ( FLG_INSERT_CONTONDUP & flags )
       {
-         pResult->disableDupErrInfo() ;
+         pResult->disableIndexErrInfo() ;
       }
 
       pDataPos = (ossValuePtr)objs.objdata() ;
@@ -141,7 +141,7 @@ namespace engine
             }
          }
 
-         pResult->resetDupInfo() ;
+         pResult->resetInfo() ;
 
          try
          {
@@ -154,7 +154,7 @@ namespace engine
                if ( FLG_INSERT_CONTONDUP & flags )
                {
                   pResult->incIngoreOrRepaceNum( FALSE );
-                  pResult->resetDupInfo() ;
+                  pResult->resetInfo() ;
                   // skip duplicate key error
                   rc = SDB_OK ;
                }
@@ -174,14 +174,14 @@ namespace engine
                   {
                      goto error ;
                   }
-                  pResult->resetDupInfo() ;
+                  pResult->resetInfo() ;
 
                   updator = generateUpdator( record ) ;
                   rc = rtnUpdate( pCollectionName, matcher, updator, hint,
                                   0, cb, &upResult ) ;
                   if ( rc )
                   {
-                     pResult->setDupErrInfo( &upResult ) ;
+                     pResult->setErrInfo( &upResult ) ;
 
                      PD_LOG( PDERROR, "Failed to update record[%s] in "
                              "collection[%s] when insert exists duplicate key, "

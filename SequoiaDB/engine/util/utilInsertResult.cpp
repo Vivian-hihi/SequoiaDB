@@ -49,7 +49,7 @@ namespace engine
    */
    utilInsertResult::utilInsertResult()
    {
-      enableMask( UTIL_RESULT_MASK_DUP ) ;
+      enableMask( UTIL_RESULT_MASK_IDX ) ;
       _insertedNum = 0 ;
       _ignoredNum = 0 ;
       _replacedNum = 0 ;
@@ -59,20 +59,25 @@ namespace engine
    {
    }
 
-   void utilInsertResult::reset()
+   void utilInsertResult::_resetStat()
    {
-      utilWriteResult::reset() ;
+      utilWriteResult::_resetStat() ;
 
       _insertedNum = 0 ;
       _ignoredNum = 0 ;
       _replacedNum = 0 ;
    }
 
-   void utilInsertResult::toBSON( BSONObjBuilder &builder ) const
+   void utilInsertResult::_resetInfo()
+   {
+      utilWriteResult::_resetInfo() ;
+   }
+
+   void utilInsertResult::_toBSON( BSONObjBuilder &builder ) const
    {
       try
       {
-         utilWriteResult::toBSON( builder ) ;
+         utilWriteResult::_toBSON( builder ) ;
 
          /// stat info
          builder.append( FIELD_NAME_INSERT_NUM, (INT64)_insertedNum ) ;
@@ -97,19 +102,19 @@ namespace engine
       return utilWriteResult::_filterResultElement( e ) ;
    }
 
-   void utilInsertResult::enableDupErrInfo()
+   void utilInsertResult::enableIndexErrInfo()
    {
-      enableMask( UTIL_RESULT_MASK_DUP ) ;
+      enableMask( UTIL_RESULT_MASK_IDX ) ;
    }
 
-   void utilInsertResult::disableDupErrInfo()
+   void utilInsertResult::disableIndexErrInfo()
    {
-      disableMask( UTIL_RESULT_MASK_DUP ) ;
+      disableMask( UTIL_RESULT_MASK_IDX ) ;
    }
 
-   BOOLEAN utilInsertResult::isEnaleDupErrInfo() const
+   BOOLEAN utilInsertResult::isEnaleIndexErrInfo() const
    {
-      return isMaskEnabled( UTIL_RESULT_MASK_DUP ) ;
+      return isMaskEnabled( UTIL_RESULT_MASK_IDX ) ;
    }
 
    void utilInsertResult::incIngoreOrRepaceNum( BOOLEAN isReplace,
@@ -138,18 +143,23 @@ namespace engine
    {
    }
 
-   void utilUpdateResult::reset()
+   void utilUpdateResult::_resetStat()
    {
-      utilInsertResult::reset() ;
+      utilInsertResult::_resetStat() ;
       _updatedNum = 0 ;
       _modifiedNum = 0 ;
    }
 
-   void utilUpdateResult::toBSON( BSONObjBuilder &builder ) const
+   void utilUpdateResult::_resetInfo()
+   {
+      utilInsertResult::_resetInfo() ;
+   }
+
+   void utilUpdateResult::_toBSON( BSONObjBuilder &builder ) const
    {
       try
       {
-         utilWriteResult::toBSON( builder ) ;
+         utilWriteResult::_toBSON( builder ) ;
 
          builder.append( FIELD_NAME_UPDATE_NUM, (INT64)_updatedNum ) ;
          builder.append( FIELD_NAME_MODIFIED_NUM, (INT64)_modifiedNum ) ;
@@ -178,7 +188,7 @@ namespace engine
    */
    utilDeleteResult::utilDeleteResult()
    {
-      disableMask( UTIL_RESULT_MASK_DUP ) ;
+      disableMask( UTIL_RESULT_MASK_IDX ) ;
       _deletedNum = 0 ;
    }
 
@@ -186,17 +196,22 @@ namespace engine
    {
    }
 
-   void utilDeleteResult::reset()
+   void utilDeleteResult::_resetStat()
    {
-      utilWriteResult::reset() ;
+      utilWriteResult::_resetStat() ;
       _deletedNum = 0 ;
    }
 
-   void utilDeleteResult::toBSON( BSONObjBuilder &builder ) const
+   void utilDeleteResult::_resetInfo()
+   {
+      utilWriteResult::_resetInfo() ;
+   }
+
+   void utilDeleteResult::_toBSON( BSONObjBuilder &builder ) const
    {
       try
       {
-         utilWriteResult::toBSON( builder ) ;
+         utilWriteResult::_toBSON( builder ) ;
 
          builder.append( FIELD_NAME_DELETE_NUM, (INT64)_deletedNum ) ;
       }
