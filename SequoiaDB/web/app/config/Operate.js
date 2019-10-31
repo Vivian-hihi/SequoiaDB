@@ -274,7 +274,8 @@ _operate.indexDef = function( $scope ){
                "value": "1",
                "valid": [
                   { "key": $scope.autoLanguage( '升序' ), "value": "1" },
-                  { "key": $scope.autoLanguage( '降序' ), "value": "-1" }
+                  { "key": $scope.autoLanguage( '降序' ), "value": "-1" },
+                  { "key": $scope.autoLanguage( '全文索引' ), "value": "text" }
                ]
             }
          ]
