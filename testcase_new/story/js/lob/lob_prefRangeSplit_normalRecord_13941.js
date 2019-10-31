@@ -27,7 +27,7 @@ function main( db )
    {
       var FULLCLNAME = COMMCSNAME + "." + COMMCLNAME ;
       var clRg = commGetCLGroups( db, FULLCLNAME ) ;
-      var cond = putNum/names.length ;
+      var cond = Math.floor(putNum/names.length) ;
       //println( "the group length: " + cond ) ;
       var loopCond = cond ;
       for( var i = 0 ; i < names.length ; ++i )

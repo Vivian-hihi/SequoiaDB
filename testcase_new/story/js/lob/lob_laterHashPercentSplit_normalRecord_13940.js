@@ -34,7 +34,7 @@ function main( db )
       println( "success to put normal record data" ) ;
       var FULLCLNAME = COMMCSNAME + "." + COMMCLNAME ;
       var clRg = commGetCLGroups( db, FULLCLNAME ) ;
-      var cond = 100/names.length ;
+      var cond = Math.floor(100/names.length) ;
       for( var i = 0 ; i < names.length ; ++i )
       {
          if( clRg[0] != names[i] )
