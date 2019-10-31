@@ -19,6 +19,7 @@ protected:
    const CHAR* tmpPasswd2 ;
    const CHAR* tmpUsr3 ;
    const CHAR* tmpPasswd3 ; 
+   const CHAR* backupName ; 
 
    void SetUp()
    {
@@ -45,6 +46,38 @@ protected:
       ASSERT_EQ( SDB_OK, rc ) ;
       rc = sdbCreateUsr( db, tmpUsr3, tmpPasswd3 ) ;
       ASSERT_EQ( SDB_OK, rc ) ;
+
+      // backup
+      backupName = "backup19948" ;
+      sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+      bson ret ;
+      bson_init( &ret ) ; 
+      rc = sdbListReplicaGroups( db, &cursor ) ; 
+      ASSERT_EQ( SDB_OK, rc ) ; 
+      string groupName ;
+      while( !sdbNext( cursor, &ret ) ) 
+      {   
+         bson_iterator it ;
+         bson_find( &it, &ret, "GroupName" ) ; 
+         groupName = bson_iterator_string( &it ) ; 
+         if( groupName != "SYSCoord" && groupName != "SYSCatalogGroup" )
+         {   
+             break ;
+         }   
+         bson_destroy( &ret ) ; 
+         bson_init( &ret ) ; 
+      }   
+      bson_destroy( &ret ) ; 
+      sdbCloseCursor( cursor ) ;
+      sdbReleaseCursor( cursor ) ; 
+      bson option ;
+      bson_init( &option ) ; 
+      bson_append_string( &option, "Name", backupName ) ; 
+      bson_append_string( &option, "GroupName", groupName.c_str() ) ; 
+      bson_finish( &option ) ; 
+      rc = sdbBackup( db, &option ) ; 
+      ASSERT_EQ( SDB_OK, rc ) ;
+      bson_destroy( &option ) ;
    }
    void TearDown()
    {
@@ -59,6 +92,14 @@ protected:
           ASSERT_EQ( SDB_OK, rc ) ;
           rc = sdbRemoveUsr( db, tmpUsr3, tmpPasswd3 ) ;
           ASSERT_EQ( SDB_OK, rc ) ;
+          // remove backup
+          bson option ;
+          bson_init( &option ) ; 
+          bson_append_string( &option, "Name", backupName ) ; 
+          bson_finish( &option ) ; 
+          rc = sdbRemoveBackup( db, &option ) ;
+          ASSERT_EQ( SDB_OK, rc ) ;
+          bson_destroy( &option ) ;
       }
       testBase::TearDown() ;
    }
@@ -74,7 +115,7 @@ TEST_F( list19948, list_user )
       return ;
    }
 
-   // get list
+   // get list user
    INT32 listType = SDB_LIST_USERS ;
    sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
    bson cond ;
@@ -118,4 +159,44 @@ TEST_F( list19948, list_user )
    bson_destroy( &ret ) ;
    sdbCloseCursor( cursor ) ;
    sdbReleaseCursor( cursor ) ;
+}
+
+TEST_F( list19948, list_backups )
+{
+   INT32 rc = SDB_OK ;
+
+   if( isStandalone( db ) )
+   {
+      printf( "Run mode is standalone\n" ) ;
+      return ;
+   }
+
+   // get list backup
+   bson cond ;
+   bson_init( &cond ) ;
+   bson_append_string( &cond, "Name", backupName ) ;
+   bson_finish( &cond ) ;
+   INT32 listType = SDB_LIST_BACKUPS ;
+   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+   rc = sdbGetList1( db, listType, &cond, NULL, NULL, NULL, 0, -1, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &cond ) ;
+
+   INT32 count = 0 ;
+   bson ret ;
+   bson_init( &ret ) ; 
+   while( !sdbNext( cursor, &ret ) ) 
+   {   
+      count++ ;
+      bson_iterator it ;
+      bson_find( &it, &ret, "Name" ) ; 
+      string val = bson_iterator_string( &it ) ; 
+      ASSERT_EQ( backupName, val ) ; 
+      bson_destroy( &ret ) ; 
+      bson_init( &ret ) ; 
+   }    
+   ASSERT_EQ( 1, count ) ;
+   bson_destroy( &ret ) ; 
+   sdbCloseCursor( cursor ) ; 
+   sdbReleaseCursor( cursor ) ;    
 }
