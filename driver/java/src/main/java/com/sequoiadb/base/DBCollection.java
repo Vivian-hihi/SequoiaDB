@@ -65,7 +65,7 @@ public class DBCollection {
     /**
      * The flag represent whether insert return the "_id" field of the record for user
      */
-    public static final int FLG_INSERT_RETURN_OID = 0x00000002;
+    public static final int FLG_INSERT_RETURN_OID = 0x10000000;
 
     /**
      * The flag represent whether insert becomes update when hitting index key duplicate error.

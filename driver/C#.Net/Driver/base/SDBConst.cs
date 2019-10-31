@@ -26,7 +26,7 @@ namespace SequoiaDB
         /** \memberof FLG_INSERT_RETURN_OID 0x00000002
          *  \brief The flag represent whether insert return the "_id" field of the record for user.
          */
-        public const int FLG_INSERT_RETURN_OID = 0x00000002;
+        public const int FLG_INSERT_RETURN_OID = 0x10000000;
 
         /** \memberof FLG_INSERT_REPLACEONDUP 0x00000004
          *  \brief The flag represent whether insert becomes update when hitting index key duplicate error.
