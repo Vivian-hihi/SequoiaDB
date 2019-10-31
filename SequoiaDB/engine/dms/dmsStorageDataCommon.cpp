@@ -4091,12 +4091,23 @@ namespace engine
       {
          pTransCB->releaseLogSpace( logRecSize, cb );
       }
-      if ( pResult && SDB_OK == rc )
+      if ( pResult )
       {
-         pResult->incUpdatedNum() ;
-         if ( modifier.hasModified() )
+         if ( SDB_OK == rc )
          {
-            pResult->incModifiedNum() ;
+            pResult->incUpdatedNum() ;
+            if ( modifier.hasModified() )
+            {
+               pResult->incModifiedNum() ;
+            }
+         }
+         else
+         {
+            BSONElement errEle = modifier.getErrorElement() ;
+            if ( !errEle.eoo() )
+            {
+               pResult->setCurrentField( errEle ) ;
+            }
          }
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_UPDATERECORD, rc ) ;

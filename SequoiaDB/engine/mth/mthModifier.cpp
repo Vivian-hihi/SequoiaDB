@@ -2436,6 +2436,10 @@ namespace engine
       }
 
    done :
+      if ( SDB_OK != rc )
+      {
+         _saveErrorElement( pShort ) ;
+      }
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPNEW, rc );
       return rc ;
    }
@@ -2707,6 +2711,10 @@ namespace engine
       }
 
    done :
+      if ( SDB_OK != rc )
+      {
+         _saveErrorElement( e ) ;
+      }
       PD_TRACE_EXITRC ( SDB__MTHMDF__ALYCHG, rc );
       return rc ;
    }
@@ -3080,6 +3088,42 @@ namespace engine
    error :
       goto done ;
    }
+
+   void _mthModifier::_resetErrorElement()
+   {
+      _tmpErrorObj = BSONObj() ;
+      _errorFieldElement = BSONElement() ;
+   }
+
+   void _mthModifier::_saveErrorElement( BSONElement &errorEle )
+   {
+      _errorFieldElement = errorEle ;
+   }
+
+   void _mthModifier::_saveErrorElement( const CHAR *fieldName )
+   {
+      if ( NULL != fieldName )
+      {
+         try
+         {
+            BSONObjBuilder builder( 20 ) ;
+            builder.appendUndefined( fieldName ) ;
+            _tmpErrorObj = builder.obj() ;
+            _errorFieldElement = _tmpErrorObj.firstElement() ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Save error element occur exception: %s",
+                    e.what() ) ;
+         }
+      }
+   }
+
+   BSONElement _mthModifier::getErrorElement()
+   {
+      return _errorFieldElement ;
+   }
+
    // given a source BSON object and empty target, the returned target will
    // contains modified data
 
@@ -3102,6 +3146,7 @@ namespace engine
       INT32 bufferSize = 0 ;
 
       _hasModified = FALSE ;
+      _resetErrorElement() ;
 
       if ( _dollarList && _dollarList->size() > 0 )
       {

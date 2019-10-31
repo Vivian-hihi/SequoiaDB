@@ -105,9 +105,12 @@ namespace engine
          _modifiedNum += step ;
       }
 
+      void                 setCurrentField( BSONElement &errEle ) ;
+
    private:
       UINT64               _updatedNum ;
       UINT64               _modifiedNum ;
+      BSONObj              _currentFieldObj ;
 
    } ;
 

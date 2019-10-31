@@ -153,6 +153,7 @@ namespace engine
    void utilUpdateResult::_resetInfo()
    {
       utilInsertResult::_resetInfo() ;
+      _currentFieldObj = BSONObj() ;
    }
 
    void utilUpdateResult::_toBSON( BSONObjBuilder &builder ) const
@@ -164,6 +165,10 @@ namespace engine
          builder.append( FIELD_NAME_UPDATE_NUM, (INT64)_updatedNum ) ;
          builder.append( FIELD_NAME_MODIFIED_NUM, (INT64)_modifiedNum ) ;
          builder.append( FIELD_NAME_INSERT_NUM, (INT64)insertedNum() ) ;
+         if ( !_currentFieldObj.isEmpty() )
+         {
+            builder.append( FIELD_NAME_CURRENT_FIELD, _currentFieldObj ) ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -181,6 +186,23 @@ namespace engine
          return FALSE ;
       }
       return utilWriteResult::_filterResultElement( e ) ;
+   }
+
+   void utilUpdateResult::setCurrentField( BSONElement &currentEle )
+   {
+      try
+      {
+         if ( !currentEle.eoo() )
+         {
+            BSONObjBuilder b( 20 ) ;
+            b.append( currentEle ) ;
+            _currentFieldObj = b.obj() ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Set current field occur exception: %s", e.what() ) ;
+      }
    }
 
    /*

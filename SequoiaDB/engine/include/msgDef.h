@@ -517,6 +517,7 @@
 #define FIELD_NAME_INDEXVALUE                "IndexValue"
 #define FIELD_NAME_CURRENTID                 "CurrentID"
 #define FIELD_NAME_PEERID                    "PeerID"
+#define FIELD_NAME_CURRENT_FIELD             "CurrentField"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

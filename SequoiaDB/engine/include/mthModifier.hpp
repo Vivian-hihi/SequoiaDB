@@ -225,6 +225,9 @@ namespace engine
       UINT32  _modifierBits ;
       BOOLEAN _hasModified ;
 
+      BSONObj _tmpErrorObj ;
+      BSONElement _errorFieldElement ;
+
       _ixmIndexKeyGen *_shardingKeyGen ;
 
       // add for replace begin
@@ -379,6 +382,10 @@ namespace engine
 
       template<class Builder>
       INT32 _buildNewObjReplace( Builder &b, BSONObjIteratorSorted &es ) ;
+
+      void _resetErrorElement() ;
+      void _saveErrorElement( BSONElement &errorEle ) ;
+      void _saveErrorElement( const CHAR *fieldName ) ;
    public :
       _mthModifier ()
       {
@@ -421,6 +428,7 @@ namespace engine
                      BSONObj *dstChange = NULL,
                      BSONObj *srcShardingKey = NULL,
                      BSONObj *dstShardingKey = NULL ) ;
+      BSONElement getErrorElement() ;
       OSS_INLINE BOOLEAN isInitialized () const { return _initialized ; }
       OSS_INLINE BOOLEAN hasModified() const { return _hasModified ; }
    } ;
