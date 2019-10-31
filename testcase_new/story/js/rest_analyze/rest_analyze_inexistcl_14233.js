@@ -4,8 +4,7 @@
 @modify list:
 2018-07-30        linsuqiang init
 ****************************************************/
-//TODO:SEQUOIADBMAINSTREAM-5129
-//main()
+main()
 function main()
 {
 	var clFullName = COMMCSNAME + ".inexistent_cl_name_14233";
