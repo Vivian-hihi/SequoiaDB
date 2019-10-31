@@ -57,15 +57,13 @@ function main()
    dbcl.insert(doc);
    
    // 全文检索，检查结果
-   // SEQUOIADBMAINSTREAM-4826，暂时不比较结果
-   //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 5);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 4);
    expectRecords = [{a: ["arr1"]},
                         {a: ["arr1", "arr2", "arr3"]},
                         {a: ["arr1"]},
                         {a: ["arr1", "arr2", "arr3"]}];
-   //actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {_id:{"$include":0}}, {_id:1});
-   // SEQUOIADBMAINSTREAM-4826，暂时不比较结果
-   //checkResult(expectRecords, actRecords);
+   actRecords = dbOperator.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {_id:{"$include":0}}, {_id:1});
+   checkResult(expectRecords, actRecords);
    
    // 删除集合中的所有记录，全文检索返回0条
    dbcl.remove();
