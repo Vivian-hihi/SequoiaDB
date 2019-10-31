@@ -49,7 +49,7 @@ function main()
 
 function listLobsWithCondition(mainCL,lobSize,beginDate)
 {    
-   var listResult = mainCL.listLobs();
+   var listResult = mainCL.listLobs(SdbQueryOption().sort({"Oid": 1}));
    var expListResult = [];
    while( listResult.next() )
    {
@@ -63,7 +63,7 @@ function listLobsWithCondition(mainCL,lobSize,beginDate)
 
    var condition = {"Size" : lobSize};
    var actRecs = [];
-   var actListResult = mainCL.listLobs(SdbQueryOption().cond( condition )); 
+   var actListResult = mainCL.listLobs(SdbQueryOption().cond( condition ).sort({"Oid": 1})); 
    while( actListResult.next() )
    {
       var listObj = actListResult.current().toObj();
