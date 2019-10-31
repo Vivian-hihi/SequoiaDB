@@ -149,11 +149,11 @@ namespace engine
    INT32 _coordSessionPropSite::_checkTransConf( const _dpsTransConfItem *pTransConf )
    {
       INT32 rc = SDB_OK ;
+      UINT32 mask = pTransConf->getTransConfMask() ;
 
       /// When in transaction, can only update transtimeout
       if ( _pEDUCB->isTransaction() )
       {
-         UINT32 mask = pTransConf->getTransConfMask() ;
          OSS_BIT_CLEAR( mask, TRANS_CONF_MASK_TIMEOUT ) ;
 
          if ( 0 != mask )
@@ -163,6 +163,13 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+      }
+      else if ( !sdbGetTransCB()->isTransOn() &&
+                OSS_BIT_TEST( mask, TRANS_CONF_MASK_AUTOCOMMIT ) &&
+                pTransConf->isTransAutoCommit() )
+      {
+         rc = SDB_DPS_TRANS_DIABLED ;
+         goto error ;
       }
 
    done:
@@ -311,6 +318,8 @@ namespace engine
    INT32 _coordSessionPropSite::beginTrans( _pmdEDUCB *cb,
                                             BOOLEAN isAutoCommit )
    {
+      INT32 rc = SDB_OK ;
+
       if ( !cb->isTransaction() )
       {
          SDB_ASSERT( _mapTransNodes.empty(), "Trans node is not empty" ) ;
@@ -318,23 +327,30 @@ namespace engine
          dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
          DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
 
-         /// alloc trans id
-         transID = pTransCB->allocTransID( isAutoCommit ) ;
-         /// clear first op
-         DPS_TRANS_CLEAR_FIRSTOP( transID ) ;
+         if ( !pTransCB->isTransOn() )
+         {
+            rc = SDB_DPS_TRANS_DIABLED ;
+         }
+         else
+         {
+            /// alloc trans id
+            transID = pTransCB->allocTransID( isAutoCommit ) ;
+            /// clear first op
+            DPS_TRANS_CLEAR_FIRSTOP( transID ) ;
 
-         /// set trans id
-         cb->setTransID( transID ) ;
+            /// set trans id
+            cb->setTransID( transID ) ;
 
-         _mapTransNodes.clear() ;
-         _writeTransNodeNum = 0 ;
+            _mapTransNodes.clear() ;
+            _writeTransNodeNum = 0 ;
 
-         PD_LOG( PDINFO, "Begin transaction(ID:%s, IDAttr:%s)",
-                 dpsTransIDToString( transID ).c_str(),
-                 dpsTransIDAttrToString( transID ).c_str() ) ;
+            PD_LOG( PDINFO, "Begin transaction(ID:%s, IDAttr:%s)",
+                    dpsTransIDToString( transID ).c_str(),
+                    dpsTransIDAttrToString( transID ).c_str() ) ;
+         }
       }
 
-      return SDB_OK ;
+      return rc ;
    }
 
    void _coordSessionPropSite::endTrans( _pmdEDUCB *cb )

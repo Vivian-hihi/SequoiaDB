@@ -3810,10 +3810,10 @@ error:
    {
       INT32 rc = SDB_OK ;
 
+      UINT32 mask = pTransConf->getTransConfMask() ;
       /// When in transaction, can only update transtimeout
       if ( _cb && _cb->isTransaction() )
       {
-         UINT32 mask = pTransConf->getTransConfMask() ;
          OSS_BIT_CLEAR( mask, TRANS_CONF_MASK_TIMEOUT ) ;
 
          if ( 0 != mask )
@@ -3823,6 +3823,13 @@ error:
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+      }
+      else if ( !sdbGetTransCB()->isTransOn() &&
+                OSS_BIT_TEST( mask, TRANS_CONF_MASK_AUTOCOMMIT ) &&
+                pTransConf->isTransAutoCommit() )
+      {
+         rc = SDB_DPS_TRANS_DIABLED ;
+         goto error ;
       }
 
    done:

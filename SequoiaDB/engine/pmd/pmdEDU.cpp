@@ -854,6 +854,11 @@ namespace engine
                                        optCB->transUseRBS(),
                                        optCB->transRCCount() ) ;
       }
+      else
+      {
+         _transExecutor.setTransAutoCommit( FALSE, FALSE ) ;
+      }
+
       // make sure meta-block statistics are cleared
       if ( !_transExecutor.isMBStatsEmpty() )
       {
