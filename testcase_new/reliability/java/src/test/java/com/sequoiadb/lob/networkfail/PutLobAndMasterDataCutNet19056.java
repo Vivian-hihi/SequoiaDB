@@ -39,7 +39,6 @@ import com.sequoiadb.task.TaskMgr;
  * @version 1.00
  */
 public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
-    private boolean runSuccess = false;
     private String csName = "cs_19056";
     private String mainCLName = "mainCL_19056";
     private String subCLName = "subCL_19056";
@@ -86,14 +85,26 @@ public class PutLobAndMasterDataCutNet19056 extends SdbTestBase {
 
         checkPutLobResult(mainCL);
         sdb.sync();
-        runSuccess = true;
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         try {
-            if (runSuccess) {
-                sdb.dropCollectionSpace(csName);
+            int time = 0;
+            while (true) {
+                try {
+                    sdb.dropCollectionSpace(csName);
+                    break;
+                } catch (BaseException e) {
+                    if (e.getErrorCode() == -147 && time < 60) {
+                        // 写lob时数据主节点断网，有可能导致在数据节点上写lob的context会过很久超时才会感知到断网，
+                        // 在context未超时关闭时，删除集合空间会报-147错误，所以循环删除处理
+                        Thread.sleep(10000);
+                        time++;
+                    } else {
+                        throw e;
+                    }
+                }
             }
         } finally {
             if (sdb != null) {
