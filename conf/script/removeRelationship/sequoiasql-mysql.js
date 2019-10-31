@@ -150,26 +150,27 @@ function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
 
    try
    {
-      var disableList = [
-         'sequoiadb_user', 'sequoiadb_password', 'sequoiadb_use_partition',
-         'sequoiadb_use_bulk_insert', 'sequoiadb_bulk_insert_size',
-         'sequoiadb_replica_size', 'sequoiadb_selector_pushdown_threshold',
-         'sequoiadb_debug_log'
-      ] ;
       var file = remote.getIniFile( path, SDB_INIFILE_FLAGS_MYSQL ) ;
 
       file.setValue( 'mysqld', 'sequoiadb_conn_addr', 'localhost:11810' ) ;
       file.setValue( 'mysqld', 'sequoiadb_user', '' ) ;
       file.setValue( 'mysqld', 'sequoiadb_password', '' ) ;
 
-      for ( var index in disableList )
+      var list = file.toObj().toObj() ;
+
+      for ( var key in list )
       {
-         try
+         if ( key.indexOf( 'mysqld.sequoiadb_' ) == 0 )
          {
-            file.disableItem( 'mysqld', disableList[index] ) ;
-         }
-         catch( e )
-         {
+            var item = key.split( '.', 2 ) ;
+
+            try
+            {
+               file.disableItem( item[0], item[1] ) ;
+            }
+            catch( e )
+            {
+            }
          }
       }
 
@@ -182,7 +183,6 @@ function _resetConfigOffline( PD_LOGGER, hostName, agentPort, path )
       throw error ;
    }
 }
-
 
 function _removeWithSequoiaDB( PD_LOGGER )
 {
