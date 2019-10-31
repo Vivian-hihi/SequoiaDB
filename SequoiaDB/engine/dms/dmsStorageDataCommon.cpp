@@ -2655,6 +2655,15 @@ namespace engine
                       rc ) ;
       }
 
+      if ( _pEventHolder )
+      {
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                oldCLID ) ;
+         _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, newCLID,
+                                      cb, dpscb ) ;
+      }
+
       // write dps log
       if ( dpscb )
       {
@@ -2669,15 +2678,6 @@ namespace engine
       else if ( cb->getLsnCount() > 0 )
       {
          context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_ALL ) ;
-      }
-
-      if ( _pEventHolder )
-      {
-         dmsEventCLItem clItem( context->mb()->_collectionName,
-                                context->mbID(),
-                                oldCLID ) ;
-         _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, newCLID,
-                                      cb, dpscb ) ;
       }
 
    done:
