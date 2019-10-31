@@ -351,6 +351,7 @@ namespace engine
       INT32 bodyLen     = 0 ;
       rtnContextBuf contextBuff ;
       INT32 opCode      = msg->opCode ;
+      BOOLEAN hasException = FALSE ;
 
       BOOLEAN needRollback = FALSE ;
       BOOLEAN isAutoCommit = FALSE ;
@@ -371,44 +372,59 @@ namespace engine
             isDoCommit = TRUE ;
          }
 
-         rc = _processor->processMsg( msg, contextBuff,
-                                      _replyHeader.contextID,
-                                      _needReply,
-                                      needRollback,
-                                      retBuilder ) ;
-         pBody     = contextBuff.data() ;
-         bodyLen   = contextBuff.size() ;
-         _replyHeader.numReturned = contextBuff.recordNum() ;
-         _replyHeader.startFrom = (INT32)contextBuff.getStartFrom() ;
-
-         if ( eduCB()->isAutoCommitTrans() &&
-              -1 == eduCB()->getCurAutoTransCtxID() )
+         try
          {
-            isAutoCommit = TRUE ;
-            if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+            rc = _processor->processMsg( msg, contextBuff,
+                                         _replyHeader.contextID,
+                                         _needReply,
+                                         needRollback,
+                                         retBuilder ) ;
+            pBody     = contextBuff.data() ;
+            bodyLen   = contextBuff.size() ;
+            _replyHeader.numReturned = contextBuff.recordNum() ;
+            _replyHeader.startFrom = (INT32)contextBuff.getStartFrom() ;
+
+            if ( eduCB()->isAutoCommitTrans() &&
+                 -1 == eduCB()->getCurAutoTransCtxID() )
             {
-               INT32 rcTmp = _processor->doCommit() ;
-               rc = rcTmp ? rcTmp : rc ;
+               isAutoCommit = TRUE ;
+               if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+               {
+                  INT32 rcTmp = _processor->doCommit() ;
+                  rc = rcTmp ? rcTmp : rc ;
+               }
+            }
+
+            if ( SDB_OK != rc && SDB_RTN_ALREADY_IN_AUTO_TRANS != rc &&
+                 eduCB()->isTransaction() &&
+                 ( isAutoCommit || isDoCommit ||
+                   ( needRollback &&
+                     eduCB()->getTransExecutor()->isTransAutoRollback() )
+                 )
+               )
+            {
+               PD_LOG( PDDEBUG, "Session[%s] rolling back operation "
+                       "(opCode=%d, rc=%d)", sessionName(), msg->opCode, rc ) ;
+
+               INT32 rcTmp = _processor->doRollback() ;
+               if ( rcTmp )
+               {
+                  PD_LOG( PDERROR, "Session[%s] failed to rollback trans "
+                          "info, rc: %d", sessionName(), rcTmp ) ;
+               }
             }
          }
-
-         if ( SDB_OK != rc && SDB_RTN_ALREADY_IN_AUTO_TRANS != rc &&
-              eduCB()->isTransaction() &&
-              ( isAutoCommit || isDoCommit ||
-                ( needRollback &&
-                  eduCB()->getTransExecutor()->isTransAutoRollback() )
-              )
-            )
+         catch( std::bad_alloc &e )
          {
-            PD_LOG( PDDEBUG, "Session[%s] rolling back operation "
-                    "(opCode=%d, rc=%d)", sessionName(), msg->opCode, rc ) ;
-
-            INT32 rcTmp = _processor->doRollback() ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Session[%s] failed to rollback trans "
-                       "info, rc: %d", sessionName(), rcTmp ) ;
-            }
+            hasException = TRUE ;
+            PD_LOG_MSG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_OOM ;
+         }
+         catch( std::exception &e )
+         {
+            hasException = TRUE ;
+            PD_LOG_MSG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
          }
       }
 
@@ -467,6 +483,10 @@ namespace engine
          {
             PD_LOG( PDERROR, "Session[%s] failed to send response, rc: %d",
                     sessionName(), rcTmp ) ;
+            disconnect() ;
+         }
+         else if ( hasException )
+         {
             disconnect() ;
          }
       }

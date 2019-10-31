@@ -80,7 +80,13 @@ namespace engine
 
          pointer allocate( size_type count, const void* pHint = NULL )
          {
-            return (pointer)SDB_THREAD_ALLOC( count * sizeof( value_type ) ) ;
+            pointer p = (pointer)SDB_THREAD_ALLOC( count *
+                                                   sizeof( value_type ) ) ;
+            if ( !p )
+            {
+               throw std::bad_alloc() ;
+            }
+            return p ;
          }
 
          void deallocate( pointer ptr, size_type count )

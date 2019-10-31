@@ -347,12 +347,28 @@ namespace engine
 
    found :
       SDB_ASSERT( rid.isValid(), "RID must be valid" ) ;
-      if ( !_insert2Dup( rid ) )
+      try
       {
-         rid.reset() ;
-         /// already exist
-         goto begin ;
+         if ( !_insert2Dup( rid ) )
+         {
+            rid.reset() ;
+            /// already exist
+            goto begin ;
+         }
       }
+      catch( std::bad_alloc &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       // make sure we don't hit maximum size of dedup buffer
       /*if ( _pInfo && _pInfo->isUpToLimit() )
       {

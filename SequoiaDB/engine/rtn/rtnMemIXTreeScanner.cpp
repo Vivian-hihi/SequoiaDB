@@ -530,6 +530,12 @@ namespace engine
                break ;
             }
          }
+         catch( std::bad_alloc &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
          catch( std::exception &e )
          {
             PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
