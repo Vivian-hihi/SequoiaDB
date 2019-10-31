@@ -58,14 +58,14 @@ namespace engine
       LOCKMGR_INDEX_LOCK
    } ;
    #define LOCKMGR_TYPE_MAX ( 2 )
- 
+
    // trans lock bucket, 524287 ( a prime number close to 524288 )
-   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UINT32) 524287 ) 
-   // index lock bucket, 131071 ( a prime number close to 131072 ) 
+   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UINT32) 524287 )
+   // index lock bucket, 131071 ( a prime number close to 131072 )
    // The size of an index normally is around 1/4 of size of
    // the table, so we take 524288 / 4 = 131072 as the size of
    // the index lock bucket
-   #define DPS_INDEX_LOCKBUCKET_SLOTS_MAX ( (UINT32) 131071 ) 
+   #define DPS_INDEX_LOCKBUCKET_SLOTS_MAX ( (UINT32) 131071 )
 
    #define DPS_LOCK_INVALID_BUCKET_SLOT  ( (UINT32) -1 )
 
@@ -87,7 +87,7 @@ namespace engine
       BOOLEAN hasWait( const dpsTransLockId &lockId );
 
       // if lock manager has been initialized
-      BOOLEAN isInitialized() { return _initialized ; } ; 
+      BOOLEAN isInitialized() { return _initialized ; } ;
 
       // acquire a lock with given mode, the higher level lock ( CL, CS )
       // will be also acquired respectively
@@ -122,7 +122,7 @@ namespace engine
       // or upgrade queue if it is necessary.
       void releaseAll
       (
-         _dpsTransExecutor      * dpsTxExectr, 
+         _dpsTransExecutor      * dpsTxExectr,
          _dpsITransLockCallback * callback = NULL
       ) ;
 
@@ -164,19 +164,6 @@ namespace engine
          _dpsITransLockCallback   * callback = NULL
       ) ;
 
-      // Latching for monitoring / dumping locking info of an EDU.
-      //   . latch _rwMutext in exclusive mode
-      OSS_INLINE void acquireMonLatch() 
-      {
-         _rwMutex.lock_w() ; 
-      }
-
-      // release monitoring / dumping latch
-      OSS_INLINE void releaseMonLatch() 
-      {
-         _rwMutex.release_w() ;
-      }
-
       // dump specific lock info to a file for debugging purpose
       void dumpLockInfo
       (
@@ -203,8 +190,8 @@ namespace engine
          dpsTransLRB       * lastLRB,
          VEC_TRANSLOCKCUR  & vecLocks
       ) ;
-     
-      // dump the waiting lock info of an executor ( EDU ) 
+
+      // dump the waiting lock info of an executor ( EDU )
       // the caller shall acquire the monitoring( dump ) latch before
       // calling this function and make sure the dpsTxExectr is still valid
       void dumpLockInfo
@@ -219,6 +206,10 @@ namespace engine
          const dpsTransLockId & lockId,
          monTransLockInfo     & monLockInfo
       ) ;
+
+      INT32 dumpEDUTransInfo( _dpsTransExecutor *executor,
+                              monTransLockCur &waitLock,
+                              VEC_TRANSLOCKCUR  &eduLocks ) ;
 
       // get LRB Header ( index and its pointer ) of a given lock from
       // LRB Header bucket. Wrapper of _getLRBHdrByLockId
@@ -246,7 +237,6 @@ namespace engine
       //     . latch a bucket slot in exclusively
       OSS_INLINE void _acquireOpLatch ( const UINT32  bucketIndex )
       {
-         _rwMutex.lock_r() ;
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
@@ -254,13 +244,12 @@ namespace engine
       OSS_INLINE void _releaseOpLatch ( const UINT32 bucketIndex )
       {
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
-         _rwMutex.release_r() ;
       }
 
       // release/return a LRB Header to LRB Header manager
       INT32 _releaseLRBHdr( dpsTransLRBHeader * hdrLRB ) ;
 
-      // release/return a LRB to LRB manager 
+      // release/return a LRB to LRB manager
       INT32 _releaseLRB( dpsTransLRB * lrb );
 
       // search LRB list ( owner, waiter or upgrade list ) and find
@@ -316,7 +305,7 @@ namespace engine
       (
          dpsTransLRB * insPos,
          dpsTransLRB * idxNew
-      ) ; 
+      ) ;
 
       // search owner LRB list, and find
       //  . if the edu is in owner list
@@ -386,7 +375,7 @@ namespace engine
          const BOOLEAN          removeLRBHeader
       ) ;
 
-  
+
       // remove a LRB Header from a LRB Header list
       void _removeFromLRBHeaderList
       (
@@ -451,7 +440,7 @@ namespace engine
       CHAR * _LRBToString ( dpsTransLRB * lrb, CHAR * pBuf, UINT32 bufSz ) ;
 
       // format LRB to string, one field/member per line, with optional prefix
-      CHAR * _LRBToString 
+      CHAR * _LRBToString
       (
          dpsTransLRB * lrb,
          CHAR *            pBuf,
@@ -460,7 +449,7 @@ namespace engine
       ) ;
 
       // format LRB Header to string, flat one line
-      CHAR * _LRBHdrToString 
+      CHAR * _LRBHdrToString
       (
          dpsTransLRBHeader * lrbHdr,
          CHAR              * pBuf,
@@ -487,20 +476,6 @@ namespace engine
 
       // a flag tells if autogmatically operate on upper level lock
       BOOLEAN                _autoUpperLockOp ;
-
-      //
-      // monitor/dump EDU locking info latch
-      //
-      // Latching protocol :
-      // Monitoring/dumping locking info of a specific EDU is mutually
-      // exclusive with normal lock operation( acquire, tryAcquire,
-      // testAcquire, release, releaseAll, hasWait etc on )
-      //   Normal lock operation :
-      //     . latch _rwMutext in shared mode
-      //     . latch a bucket slot in exclusively
-      //   Monitoring/dump EDU locking info :
-      //     . latch _rwMutext in exclusive mode
-      ossRWMutex             _rwMutex ;
    } ;
    typedef class dpsTransLockManager ixmIndexLockManager ;
 }

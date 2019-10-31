@@ -365,6 +365,7 @@ namespace engine
          _waiterQueType[ i ] = DPS_QUE_NULL ;
          _lastLRB[ i ]       = NULL;
          _lockCount[ i ]     = 0 ;
+         _accessingTransLRB[ i ] = NULL ;
       }
       _useTransLock     = TRUE ;
       _reservedLogSpace = 0 ;
@@ -416,8 +417,10 @@ namespace engine
                                           DPS_TRANS_QUE_TYPE type,
                                           LOCKMGR_TYPE lockMgrType )
    {
+      acquireLRBAccessingLock( lockMgrType ) ;
       _waiter[ lockMgrType ]        = waiter ;
       _waiterQueType[ lockMgrType ] = type ;
+      releaseLRBAccessingLock( lockMgrType ) ;
 
       if ( !_lockWaitStarted )
       {
@@ -454,8 +457,10 @@ namespace engine
 
    void _dpsTransExecutor::clearWaiterInfo( LOCKMGR_TYPE lockMgrType )
    {
+      acquireLRBAccessingLock( lockMgrType ) ;
       _waiter[ lockMgrType ]        = NULL;
       _waiterQueType[ lockMgrType ] = DPS_QUE_NULL ;
+      releaseLRBAccessingLock( lockMgrType ) ;
    }
 
    dpsTransLRB* _dpsTransExecutor::getWaiterLRB( LOCKMGR_TYPE lockMgrType ) const
@@ -470,12 +475,22 @@ namespace engine
 
    void _dpsTransExecutor::setLastLRB( dpsTransLRB* lrb, LOCKMGR_TYPE lockMgrType )
    {
+      acquireLRBAccessingLock( lockMgrType ) ;
+      if ( NULL == lrb )
+      {
+         setAccessingLRB( lockMgrType, NULL ) ;
+      }
+
       _lastLRB[ lockMgrType ] = lrb ;
+      releaseLRBAccessingLock( lockMgrType ) ;
    }
 
    void _dpsTransExecutor::clearLastLRB( LOCKMGR_TYPE lockMgrType )
    {
+      acquireLRBAccessingLock( lockMgrType ) ;
       _lastLRB[ lockMgrType ] = NULL ;
+      setAccessingLRB( lockMgrType, NULL ) ;
+      releaseLRBAccessingLock( lockMgrType ) ;
    }
 
    dpsTransLRB * _dpsTransExecutor::getLastLRB( LOCKMGR_TYPE lockMgrType ) const
@@ -709,9 +724,9 @@ namespace engine
       _reservedLogSpace += len ;
    }
 
-   UINT64 _dpsTransExecutor::getReservedSpace() const 
-   { 
-      return _reservedLogSpace ; 
+   UINT64 _dpsTransExecutor::getReservedSpace() const
+   {
+      return _reservedLogSpace ;
    }
 
    void  _dpsTransExecutor::resetLogSpace()
@@ -826,5 +841,28 @@ namespace engine
          _monLock = NULL ;
       }
       _lockWaitStarted = FALSE ;
+   }
+
+   // protect waiter and edu's lrb
+   void _dpsTransExecutor::acquireLRBAccessingLock( LOCKMGR_TYPE lockMgrType )
+   {
+      _accessingLRBMutex.get() ;
+   }
+
+   // protect waiter and edu's lrb
+   void _dpsTransExecutor::releaseLRBAccessingLock( LOCKMGR_TYPE lockMgrType )
+   {
+      _accessingLRBMutex.release() ;
+   }
+
+   void _dpsTransExecutor::setAccessingLRB( LOCKMGR_TYPE lockMgrType,
+                                            dpsTransLRB *LRB )
+   {
+      _accessingTransLRB[ lockMgrType ] = LRB ;
+   }
+
+   dpsTransLRB *_dpsTransExecutor::getAccessingLRB( LOCKMGR_TYPE lockMgrType )
+   {
+      return _accessingTransLRB[ lockMgrType ] ;
    }
 }

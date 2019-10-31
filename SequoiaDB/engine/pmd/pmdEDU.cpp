@@ -92,6 +92,7 @@ namespace engine
       _eduID            = PMD_INVALID_EDUID ;
       _tid              = 0 ;
       _status           = PMD_EDU_UNKNOW ;
+      _dumpTransCount     = 0 ;
       _eduType          = type ;
       _isLocked         = FALSE ;
       _ctrlFlag         = 0 ;
@@ -177,6 +178,7 @@ namespace engine
       _userName = "" ;
       _passWord = "" ;
       _isLocked = FALSE ;
+      _dumpTransCount = 0 ;
 
       _ctrlFlag = 0 ;
       _isInterruptSelf = FALSE ;
@@ -1049,9 +1051,6 @@ namespace engine
       transInfo._eduID        = _eduID ;
       transInfo._transID      = _curTransID ;
       transInfo._curTransLsn  = _curTransLSN ;
-
-      transInfo._lastLRB   = _transExecutor.getLastLRB( LOCKMGR_TRANS_LOCK ) ;
-      transInfo._waitLRB   = _transExecutor.getWaiterLRB( LOCKMGR_TRANS_LOCK ) ;
 
       {
          ossScopedLock lock( &_mutex, SHARED ) ;

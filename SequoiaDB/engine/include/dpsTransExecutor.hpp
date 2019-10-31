@@ -324,6 +324,14 @@ namespace engine
          void                 finishLockWait() ;
          ossTickDelta         getLockWaitTime() const { return _lockWaitTime ; }
 
+         void                 acquireLRBAccessingLock(
+                                               LOCKMGR_TYPE lockMgrType ) ;
+         void                 releaseLRBAccessingLock(
+                                               LOCKMGR_TYPE lockMgrType ) ;
+         void                 setAccessingLRB( LOCKMGR_TYPE lockMgrType,
+                                               dpsTransLRB *LRB ) ;
+         dpsTransLRB *        getAccessingLRB( LOCKMGR_TYPE lockMgrType ) ;
+
          /*
             Transaction Related
          */
@@ -409,6 +417,10 @@ namespace engine
 
          DPS_LOCKID_MAP          _mapCSCLLockID[ LOCKMGR_TYPE_MAX ] ;
          UINT32                  _lockCount[ LOCKMGR_TYPE_MAX ] ;
+
+         ossSpinSLatch           _accessingLRBMutex ;
+         // LOCKMGR_TRANS_LOCK
+         dpsTransLRB *           _accessingTransLRB[ LOCKMGR_TYPE_MAX ] ;
 
          /*
             LSN to record info

@@ -208,6 +208,12 @@ namespace engine
       void        clear() ;
       string      toString() const ;
 
+      // *** must under the protection of _pmdEDUMgr._latch ****
+      void incDumpTransCount() { ++_dumpTransCount ; }
+      void decDumpTransCount() { --_dumpTransCount ; }
+      INT32 getDumpTransCount() { return _dumpTransCount ; }
+      // *******************************************************
+
       EDU_STATUS  getStatus () const { return _status ; }
       INT32       getType () const { return _eduType ; }
       BOOLEAN     isLocked() const { return _isLocked ; }
@@ -451,6 +457,8 @@ namespace engine
       ossQueue<pmdEDUEvent> _queue ;
 
       EDU_STATUS     _status ;
+      INT32          _dumpTransCount ;
+
       INT32          _eduType ;
       BOOLEAN        _isLocked ;
 

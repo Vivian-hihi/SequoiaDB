@@ -60,6 +60,8 @@ namespace engine
 
    #define PMD_STOP_MIN_TIMEOUT              ( 60000 )   /// 1 min
 
+   #define PMD_EDU_DUMP_WAIT_TIME            ( 500 ) // ms
+
    /*
       _pmdThreadPoolAssist define
    */
@@ -291,8 +293,73 @@ namespace engine
    }
 
 #if defined( SDB_ENGINE )
-   INT32 _pmdEDUMgr::dumpTransInfo( EDUID eduId,
-                                    monTransInfo &transInfo )
+   INT32 _pmdEDUMgr::beginDumpEDUTrans( EDUID eduID,
+                                        pmdTransExecutor **executor,
+                                        monTransInfo &transInfo )
+   {
+      INT32 rc = SDB_OK ;
+      MAP_EDUCB_IT it ;
+      pmdEDUCB *cb = NULL ;
+      BOOLEAN isNeedWaitDumpCount = FALSE ;
+
+      while ( TRUE )
+      {
+         if ( isNeedWaitDumpCount )
+         {
+            _dumpCountEvent.wait( PMD_EDU_DUMP_WAIT_TIME ) ;
+            isNeedWaitDumpCount = FALSE ;
+         }
+
+         ossScopedLock lock( &_latch, SHARED ) ;
+         it = _mapRuns.find( eduID ) ;
+         if ( _mapRuns.end() ==  it )
+         {
+            rc = SDB_PMD_SESSION_NOT_EXIST ;
+            goto error ;
+         }
+
+         cb = it->second ;
+
+         if ( PMD_EDU_DESTROY == cb->getStatus()
+              || PMD_EDU_CREATING == cb->getStatus() )
+         {
+            // cb is destroying or creating, return error to skip this cb
+            rc = SDB_PMD_SESSION_NOT_EXIST ;
+            goto error ;
+         }
+
+         if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+         {
+            rc = SDB_DPS_TRANS_NO_TRANS ;
+            goto error ;
+         }
+
+         if ( NULL == cb->getTransExecutor() )
+         {
+            rc = SDB_DPS_TRANS_NO_TRANS ;
+            goto error ;
+         }
+
+         if ( cb->getDumpTransCount() > 0 )
+         {
+            // other snapshot_trans is running
+            isNeedWaitDumpCount = TRUE ;
+            continue ;
+         }
+
+         cb->incDumpTransCount() ;
+         cb->dumpTransInfo( transInfo ) ;
+         *executor = cb->getTransExecutor() ;
+         break ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdEDUMgr::endDumpEDUTrans( EDUID eduID )
    {
       INT32 rc = SDB_OK ;
       MAP_EDUCB_IT it ;
@@ -300,25 +367,28 @@ namespace engine
 
       ossScopedLock lock( &_latch, SHARED ) ;
 
-      it = _mapRuns.find( eduId ) ;
+      it = _mapRuns.find( eduID ) ;
       if ( _mapRuns.end() ==  it )
       {
-         it = _mapIdles.find( eduId ) ;
-         if ( _mapIdles.end() == it )
-         {
-            rc = SDB_PMD_SESSION_NOT_EXIST ;
-            goto error ;
-         }
+         SDB_ASSERT( FALSE, "Shoule still in the run map!" ) ;
+         rc = SDB_PMD_SESSION_NOT_EXIST ;
+         goto error ;
       }
-      cb = it->second ;
 
-      cb->dumpTransInfo( transInfo ) ;
+      cb = it->second ;
+      SDB_ASSERT( cb->getDumpTransCount() == 1, "must be 1" ) ;
+      if ( cb->getDumpTransCount() > 0 )
+      {
+         cb->decDumpTransCount() ;
+         _dumpCountEvent.signalAll() ;
+      }
 
    done:
       return rc ;
    error:
       goto done ;
    }
+
 #endif //SDB_ENGINE
 
    UINT32 _pmdEDUMgr::dumpAbnormalEDU()
@@ -1089,6 +1159,7 @@ namespace engine
          UINT32 sysSize = 0 ;
          UINT32 maxPool = 0 ;
          UINT32 idleLowSize = 0 ;
+         BOOLEAN isNeedWaitDump = FALSE ;
 
          idleLowSize = calIdleLowSize( &runSize, &idleSize,
                                        &sysSize, &maxPool ) ;
@@ -1103,7 +1174,14 @@ namespace engine
          }
 
          /// destory the edu
+         while ( TRUE )
          {
+            if ( isNeedWaitDump )
+            {
+               _dumpCountEvent.wait( PMD_EDU_DUMP_WAIT_TIME ) ;
+               isNeedWaitDump = FALSE ;
+            }
+
             MAP_EDUCB_IT it ;
             ossScopedLock lock( &_latch, EXCLUSIVE ) ;
 
@@ -1117,6 +1195,14 @@ namespace engine
                {
                   goto done ;
                }
+
+               cb->setStatus( PMD_EDU_DESTROY ) ;
+               if ( cb->getDumpTransCount() > 0 )
+               {
+                  isNeedWaitDump = TRUE ;
+                  continue ;
+               }
+
                _mapRuns.erase( it ) ;
             }
             else
@@ -1127,6 +1213,8 @@ namespace engine
 
             _postDestoryEDU( cb ) ;
             destoryed = TRUE ;
+
+            break ;
          }
       }
 
@@ -1165,8 +1253,17 @@ namespace engine
       pmdEPFactory &factory = pmdGetEPFactory() ;
       const pmdEPItem *pItem = NULL ;
       MAP_EDUCB_IT it ;
+      BOOLEAN isNeedWaitDump = FALSE ;
 
       destroyed = FALSE ;
+
+   retry:
+
+      if ( isNeedWaitDump )
+      {
+         _dumpCountEvent.wait( PMD_EDU_DUMP_WAIT_TIME ) ;
+         isNeedWaitDump = FALSE ;
+      }
 
       _latch.get() ;
       hasLock = TRUE ;
@@ -1195,6 +1292,15 @@ namespace engine
          /// In run map
          if ( ( it = _mapRuns.find( cb->getID() ) ) != _mapRuns.end() )
          {
+            cb->setStatus( PMD_EDU_DESTROY ) ;
+            if ( cb->getDumpTransCount() > 0 )
+            {
+               _latch.release() ;
+               hasLock = FALSE ;
+               isNeedWaitDump = TRUE ;
+               goto retry ;
+            }
+
             _mapRuns.erase( it ) ;
 
             /// add to idle map
@@ -1257,7 +1363,15 @@ namespace engine
    pmdEDUCB* _pmdEDUMgr::findAndRemove( EDUID eduID )
    {
       pmdEDUCB *cb = NULL ;
+      BOOLEAN isNeedWaitDump = FALSE ;
       MAP_EDUCB_IT it ;
+
+   Retry:
+      if ( isNeedWaitDump )
+      {
+         _dumpCountEvent.wait( PMD_EDU_DUMP_WAIT_TIME ) ;
+         isNeedWaitDump = FALSE ;
+      }
 
       _latch.get() ;
 
@@ -1269,6 +1383,15 @@ namespace engine
       else if ( _mapRuns.end() != ( it = _mapRuns.find( eduID ) ) )
       {
          cb = it->second ;
+
+         cb->setStatus( PMD_EDU_DESTROY ) ;
+         if ( cb->getDumpTransCount() > 0 )
+         {
+            _latch.release() ;
+            isNeedWaitDump = TRUE ;
+            goto Retry ;
+         }
+
          _mapRuns.erase( it ) ;
       }
 

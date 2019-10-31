@@ -221,6 +221,8 @@ namespace engine
       PMD_EDU_WAITING,
       // EDU should change status to idle when get into pool
       PMD_EDU_IDLE,
+      // EDU should change status to destroy when removing from runmap
+      PMD_EDU_DESTROY,
 
       PMD_EDU_UNKNOW,
       PMD_EDU_STATUS_MAXIMUM = PMD_EDU_UNKNOW

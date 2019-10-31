@@ -155,8 +155,10 @@ namespace engine
          void              dumpInfo( set<monEDUFull> &info ) ;
 
 #if defined(SDB_ENGINE)
-         INT32             dumpTransInfo( EDUID eduId,
-                                          monTransInfo &transInfo ) ;
+         INT32             beginDumpEDUTrans( EDUID eduID,
+                                              pmdTransExecutor **executor,
+                                              monTransInfo &transInfo ) ;
+         INT32             endDumpEDUTrans( EDUID eduID ) ;
 #endif //SDB_ENGINE
 
          pmdEDUCB*         getEDUByID( EDUID eduID ) ;
@@ -242,6 +244,8 @@ namespace engine
 
          ossAutoEvent               _monitorEvent ;
          ossAutoEvent               _deadCheckEvent ;
+
+         ossAutoEvent               _dumpCountEvent ;
 
          // protect exit of main process
          ossRWMutex                 _eduExitMutex ;

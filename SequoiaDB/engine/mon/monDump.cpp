@@ -1669,6 +1669,7 @@ namespace engine
       pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
       dpsTransCB *pTransCB = sdbGetTransCB() ;
       dpsTransLockManager *pLockMgr = pTransCB->getLockMgrHandle() ;
+      pmdTransExecutor *executor = NULL ;
 
    retry:
       if ( !pLockMgr || _eduList.empty() )
@@ -1684,29 +1685,28 @@ namespace engine
       /// clear
       _curTransInfo.clear() ;
 
-      /// lock
-      pLockMgr->acquireMonLatch() ;
-
-      if ( SDB_OK != pMgr->dumpTransInfo( eduID, _curTransInfo ) ||
-           DPS_INVALID_TRANS_ID == _curTransInfo._transID )
+      executor = NULL ;
+      if ( SDB_OK != pMgr->beginDumpEDUTrans( eduID, &executor,
+                                              _curTransInfo ) )
       {
-         /// if the edu has exited
-         pLockMgr->releaseMonLatch() ;
+         // no session or no trans
          goto retry ;
       }
 
-      /// dump lock info and waiter info
-      pLockMgr->dumpLockInfo( _curTransInfo._lastLRB,
-                              _curTransInfo._lockList ) ;
-      pLockMgr->dumpLockInfo( _curTransInfo._waitLRB,
-                              _curTransInfo._waitLock ) ;
+      rc = pLockMgr->dumpEDUTransInfo( executor, _curTransInfo._waitLock,
+                                       _curTransInfo._lockList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to dump edu transInfo:eduID=%llu,rc=%d",
+                 eduID, rc ) ;
+         pMgr->endDumpEDUTrans( eduID ) ;
+         goto error ;
+      }
 
-      /// release lock
-      pLockMgr->releaseMonLatch() ;
+      pMgr->endDumpEDUTrans( eduID ) ;
 
       _curTransInfo._locksNum = _curTransInfo._lockList.size() ;
       _pos = _curTransInfo._lockList.begin() ;
-
       try
       {
          BSONObjBuilder builder ;
@@ -1733,7 +1733,7 @@ namespace engine
          /// waiter lock
          BSONObjBuilder subWaiter( builder.subobjStart(
                                    FIELD_NAME_TRANS_WAIT_LOCK ) ) ;
-         if ( _curTransInfo._waitLRB )
+         if ( _curTransInfo._waitLock._id.isValid() )
          {
             _curTransInfo._waitLock.toBson( subWaiter, FALSE ) ;
          }
