@@ -1,6 +1,6 @@
 ##NAME##
 
-truncate - Truncate a file.
+truncate - Truncates the file to length.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ File
 
 ##DESCRIPTION##
 
-Truncate a file.
+Truncates the file to length. If size is larger than the file then the file is extended with null bytes. If size is smaller than the file then the file is truncated to that size.
 
 ##PARAMETERS##
 
@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Truncate a file.
+* Truncates the file.
 
 ```lang-javascript
 > var file = new File( "/opt/sequoiadb/file.txt" )
