@@ -40,10 +40,10 @@ function main()
       {
          var hostName = nodeAddresses[i]["hostName"];
          var svcName = nodeAddresses[i]["svcName"];
-         for(var i = 0; i < errNodes.length; i++)
+         for(var j = 0; j < errNodes.length; j++)
          {
-            var nodeName = errNodes[i]["NodeName"];
-            var flag = errNodes[i]["Flag"];
+            var nodeName = errNodes[j]["NodeName"];
+            var flag = errNodes[j]["Flag"];
             if(nodeName === hostName+":"+svcName)
             {
                if(flag !== -79)
@@ -119,10 +119,10 @@ function main()
          {
             var hostName = nodeAddresses[i]["hostName"];
             var svcName = nodeAddresses[i]["svcName"];
-            for(var i=0; i<errNodes.length; i++)
+            for(var j=0; j<errNodes.length; j++)
             {
-               var nodeName = errNodes[i]["NodeName"];
-               var flag = errNodes[i]["Flag"];
+               var nodeName = errNodes[j]["NodeName"];
+               var flag = errNodes[j]["Flag"];
                if(nodeName === hostName+":"+svcName)
                {
                   if(flag !== -79)
