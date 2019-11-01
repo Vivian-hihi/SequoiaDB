@@ -22,10 +22,10 @@ Modify the collection properties to enable compression.
 .sp 2
        \fBCompressionType\fR
 .br
-              The compression type of data, could be "snappy" or
-              "lzw". Default is "snappy".
+              The compression type of data, could be "lzw" or
+              "snappy". Default is "lzw".
 .br
-              CompressionType:"snappy"|"lzw"
+              CompressionType: "lzw" | "snappy"
 .sp 2
 
 .SH "Examples"

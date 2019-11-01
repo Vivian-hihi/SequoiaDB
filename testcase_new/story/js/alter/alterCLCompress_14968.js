@@ -23,7 +23,7 @@ function main(db)
       //enable compression
       dbcl.enableCompression(); 
       checkAlterResult( clName, "AttributeDesc", "Compressed" );
-      checkAlterResult( clName, "CompressionTypeDesc", "snappy" ); 
+      checkAlterResult( clName, "CompressionTypeDesc", "lzw" ); 
       
       //insert data and query data 
       insertAndQueryRecs( dbcl );     

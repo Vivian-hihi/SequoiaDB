@@ -55,6 +55,14 @@ Modify the collection properties.
 .br
               CompressionType:"snappy"|"lzw"
 .sp 2
+       \fBCompressed\fR
+.br
+              Whether to enable compression. If Compressed is set
+              to true and CompressionType is not specified, then
+              CompressionType is set to "lzw"
+.br
+              CompressionType: true | false
+.sp 2
        \fBEnsureShardingIndex\fR
 .br
               Assign to true to build sharding index.
@@ -76,9 +84,7 @@ Modify the collection properties.
               Using strict date mode in numeric operations or not
 .br
               StrictDataMode:true|false
-.sp 2
-
-.sp 2
+              
 \fBNote: \fR
 .sp 2
    *  Usage of ShardingKey, ShardingType, Partition, please

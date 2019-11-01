@@ -48,6 +48,14 @@ Modify the collection properties.
 .br
               Partition:<number of partitioning>
 .sp 2
+       \fBCompressed\fR
+.br
+              Whether to enable compression. If Compressed is set
+              to true and CompressionType is not specified, then
+              CompressionType is set to "lzw"
+.br
+              CompressionType: true | false
+.sp 2
        \fBCompressionType\fR
 .br
               The compression type of data, could be "snappy" or
@@ -76,9 +84,7 @@ Modify the collection properties.
               Using strict date mode in numeric operations or not
 .br
               StrictDataMode:true|false
-.sp 2
 
-.sp 2
 \fBNote: \fR
 .sp 2
    *  Usage of ShardingKey, ShardingType, Partition, please

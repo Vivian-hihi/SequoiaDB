@@ -20,16 +20,16 @@ Collection
 
     通过`options`参数可以修改集合属性：
 
-    1. `CompressionType` ( *String* )：集合的压缩算法，"snappy" 或者 "lzw"。
+    1. `CompressionType` ( *String* )：集合的压缩算法，"lzw" 或者 "snappy"。
 
-        * "snappy"：使用 snappy 算法压缩。（默认值）
-        * "lzw"：使用 lzw 算法压缩。
+        * "lzw"：使用 lzw 算法压缩。（默认值）
+        * "snappy"：使用 snappy 算法压缩。
 
-        格式：`CompressionType : "snappy" | "lzw"`
+        格式：`CompressionType : "lzw" | "snappy" `
 
 >  **Note:**
 >
->  不显式设置 `CompressionType` 将默认把压缩算法修改为 "snappy"
+>  不显式设置 `CompressionType` 将默认把压缩算法修改为 "lzw"
 
 ##返回值##
 
@@ -55,9 +55,9 @@ v2.10及以上版本。
 
 ##示例##
 
-1. 创建一个普通集合，然后将该集合修改为lzw压缩
+1. 创建一个普通集合，然后将该集合修改为 snappy 压缩
 
     ```lang-javascript
     > db.foo.createCL('bar')
-    > db.foo.bar.enableCompression( { CompressionType:'lzw' } )
+    > db.foo.bar.enableCompression( { CompressionType: 'snappy' } )
     ```

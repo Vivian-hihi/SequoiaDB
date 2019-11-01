@@ -58,23 +58,23 @@ function main()
    //check cl snapshot
    var snap1 = db.snapshot(8, {Name:COMMCSNAME + "." + clName1});
    var compressionType = snap1.current().toObj()['CompressionType'];
-   if(compressionType !== 0)
+   if(compressionType !== 1)
    {
-      throw new Error("check compressionType, \nexpect: 0, \nbut found: " + compressionType);
+      throw new Error("check compressionType, \nexpect: 1, \nbut found: " + compressionType);
    }
    
    var snap2 = db.snapshot(8, {Name:COMMCSNAME + "." + clName2});
    var compressionType = snap2.current().toObj()['CompressionType'];
-   if(compressionType !== 0)
+   if(compressionType !== 1)
    {
-      throw new Error("check compressionType, \nexpect: 0, \nbut found: " + compressionType);
+      throw new Error("check compressionType, \nexpect: 1, \nbut found: " + compressionType);
    }
    
    var snap3 = db.snapshot(8, {Name:COMMCSNAME + "." + clName3});
    var compressionType = snap3.current().toObj()['CompressionType'];
-   if(compressionType !== 0)
+   if(compressionType !== 1)
    {
-      throw new Error("check compressionType, \nexpect: 0, \nbut found: " + compressionType);
+      throw new Error("check compressionType, \nexpect: 1, \nbut found: " + compressionType);
    }
    
    commDropCL( db, COMMCSNAME, clName1 ) ;

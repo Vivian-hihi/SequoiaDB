@@ -547,7 +547,7 @@ namespace engine
          // Only Compressed is set
          if ( _compressed )
          {
-            setCompress( UTIL_COMPRESSOR_SNAPPY ) ;
+            setCompress( UTIL_COMPRESSOR_LZW ) ;
          }
          else
          {
@@ -1239,7 +1239,7 @@ namespace engine
 
       if ( !_compressArgument.isCompressed() )
       {
-         _compressArgument.setCompress( UTIL_COMPRESSOR_SNAPPY ) ;
+         _compressArgument.setCompress( UTIL_COMPRESSOR_LZW ) ;
          _compressArgument.setArgumentMask( UTIL_CL_COMPRESSED_FIELD |
                                             UTIL_CL_COMPRESSTYPE_FIELD ) ;
       }

@@ -76,7 +76,7 @@ Collection
 
         格式：`Compressed : true | false`
 
-        * 如果设置 Compressed 为 true，而没有指定 CompressionType，则 CompressionType 为 "snappy"
+        * 如果设置 Compressed 为 true，而没有指定 CompressionType，则 CompressionType 为 "lzw"
 
     8. `CompressionType` ( *String* )：集合的压缩算法，"snappy" 或者 "lzw"。
 
@@ -145,7 +145,7 @@ v1.12及以上版本。
 
     ```lang-javascript
     > db.foo.createCL('bar')
-    > db.foo.bar.alter( { CompressionType:'lzw' } )
+    > db.foo.bar.alter( { CompressionType:'snappy' } )
     ```
 
 4. 创建一个有自增字段的集合，修改其自增起始值
