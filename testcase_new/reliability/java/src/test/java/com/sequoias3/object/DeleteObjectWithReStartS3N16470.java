@@ -1,6 +1,19 @@
 package com.sequoias3.object;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
@@ -10,17 +23,6 @@ import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @Description seqDB-16470 ::开启版本控制，删除对象过程中SequiaS3Client端异常
@@ -52,7 +54,7 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath, fileSize);
         TestTools.LocalFile.createFile(updatePath, fileSize + 1024 * 200);
         s3Client = CommLibS3.buildS3Client();
-        CommLibS3.clearBucket(s3Client,bucketName);
+        CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (int i = 0; i < objectNums; i++) {
@@ -72,13 +74,8 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
         }
         mgr.execute();
         mgr.isAllSuccess();
-        List<Exception> eList = mgr.getExceptions();
-        for (Exception e : eList) {
-            if (!e.getMessage().contains("Unable to execute HTTP request")) {
-                throw e;
-            }
-        }
-        //delete again
+
+        // delete again
         objectNames.removeAll(objectNameList);
         for (String objectName : objectNames) {
             for (int i = 0; i < versionNums; i++) {
@@ -93,7 +90,7 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLibS3.clearBucket(s3Client,bucketName);
+                CommLibS3.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
@@ -111,7 +108,13 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
         @Override
         public void exec() throws Exception {
             for (int i = 0; i < versionNums; i++) {
-                s3Client.deleteVersion(bucketName, objectName, String.valueOf(i));
+                try {
+                    s3Client.deleteVersion(bucketName, objectName, String.valueOf(i));
+                } catch (AmazonS3Exception e) {
+                    if (e.getStatusCode() != 500) {
+                        throw e;
+                    }
+                }
             }
             objectNameList.add(this.objectName);
         }
