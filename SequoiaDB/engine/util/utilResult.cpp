@@ -117,7 +117,7 @@ namespace engine
       {
          resetResultObj() ;
       }
-      _resetStat() ;
+      _resetInfo() ;
    }
 
    BSONObj utilResult::toBSON() const
