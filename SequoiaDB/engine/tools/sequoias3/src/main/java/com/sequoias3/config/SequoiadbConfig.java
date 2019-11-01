@@ -40,6 +40,10 @@ public class SequoiadbConfig {
         return data.getDomain();
     }
 
+    public int getDataCSRange() {
+        return data.getCsRange();
+    }
+
     public Integer getDataLobPageSize() {
         return data.getLobPageSize();
     }

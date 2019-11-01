@@ -92,6 +92,9 @@ public class RegionServiceImpl implements RegionService {
                             if (null == newRegion.getDataReplSize()){
                                 newRegion.setDataReplSize(-1);
                             }
+                            if (null == newRegion.getDataCSRange()){
+                                newRegion.setDataCSRange(1);
+                            }
                         }
 
                         newRegion.setCreateTime(System.currentTimeMillis());

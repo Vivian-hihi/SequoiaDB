@@ -12,10 +12,12 @@ public class Region {
     public static final String REGION_CREATERTIME   = "CreateTime";
     public static final String DATA_CS_SHARDINGTYPE = "DataCSShardingType";
     public static final String DATA_CL_SHARDINGTYPE = "DataCLShardingType";
+    public static final String DATA_CS_RANGE        = "DataCSRange";
     public static final String DATA_DOMAIN          = "DataDomain";
     public static final String DATA_LOBPAGESIZE     = "DataLobPageSize";
     public static final String DATA_REPLSIZE        = "DataReplSize";
     public static final String META_DOMAIN          = "MetaDomain";
+    public static final String DATA_RANGE           = "DataRange";
     public static final String DATA_LOCATION        = "DataLocation";
     public static final String META_LOCATION        = "MetaLocation";
     public static final String META_HIS_LOCATION    = "MetaHisLocation";
@@ -38,6 +40,9 @@ public class Region {
 
     @JsonProperty(DATA_CL_SHARDINGTYPE)
     private String dataCLShardingType;
+
+    @JsonProperty(DATA_CS_RANGE)
+    private Integer dataCSRange;
 
     @JsonProperty(DATA_DOMAIN)
     private String dataDomain;
@@ -85,6 +90,7 @@ public class Region {
         this.createTime = region.getCreateTime();
         this.dataCSShardingType = region.getDataCSShardingType();
         this.dataCLShardingType = region.getDataCLShardingType();
+        this.dataCSRange        = region.getDataCSRange();
         this.dataDomain         = region.getDataDomain();
         this.dataLobPageSize    = region.getDataLobPageSize();
         this.dataReplSize       = region.getDataReplSize();
@@ -131,6 +137,14 @@ public class Region {
 
     public String getDataCLShardingType() {
         return dataCLShardingType;
+    }
+
+    public void setDataCSRange(Integer dataCSRange) {
+        this.dataCSRange = dataCSRange;
+    }
+
+    public Integer getDataCSRange() {
+        return dataCSRange;
     }
 
     public void setDataDomain(String dataDomain) {
@@ -243,6 +257,7 @@ public class Region {
         newRegion.put(Region.REGION_CREATERTIME, this.createTime);
         newRegion.put(Region.DATA_CS_SHARDINGTYPE, this.dataCSShardingType);
         newRegion.put(Region.DATA_CL_SHARDINGTYPE, this.dataCLShardingType);
+        newRegion.put(Region.DATA_CS_RANGE, this.dataCSRange);
         newRegion.put(Region.DATA_DOMAIN, this.dataDomain);
         newRegion.put(Region.DATA_LOBPAGESIZE, this.dataLobPageSize);
         newRegion.put(Region.DATA_REPLSIZE, this.dataReplSize);

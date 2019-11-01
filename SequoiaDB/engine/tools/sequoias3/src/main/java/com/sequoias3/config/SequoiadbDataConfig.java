@@ -5,6 +5,7 @@ import java.io.IOException;
 public class SequoiadbDataConfig {
     String csName;
     String domain;
+    int csRange;
     int lobPageSize;
     int replSize;
 
@@ -22,6 +23,14 @@ public class SequoiadbDataConfig {
 
     public String getDomain() {
         return domain;
+    }
+
+    public void setCsRange(int csRange) {
+        this.csRange = csRange;
+    }
+
+    public int getCsRange() {
+        return csRange;
     }
 
     public int getLobPageSize() {

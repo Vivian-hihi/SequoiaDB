@@ -83,6 +83,9 @@ public class SequoiadbRegionDao implements RegionDao {
             if (regionCon.getDataCLShardingType() != null){
                 updateData.put(Region.DATA_CL_SHARDINGTYPE, regionCon.getDataCLShardingType());
             }
+            if (regionCon.getDataCSRange() != null){
+                updateData.put(Region.DATA_CS_RANGE, regionCon.getDataCSRange());
+            }
             BSONObject setUpdate = new BasicBSONObject();
             setUpdate.put(DBParamDefine.MODIFY_SET, updateData);
 
@@ -362,11 +365,15 @@ public class SequoiadbRegionDao implements RegionDao {
                     csName.append("_");
                     csName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
                 }
+                csName.append("_");
+                csName.append((int)(Math.random() * region.getDataCSRange() + 1));
             }
         }else {
             csName.append(config.getDataCsName());
             csName.append("_");
             csName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.YEAR, date));
+            csName.append("_");
+            csName.append((int)(Math.random() * config.getDataCSRange() + 1));
         }
 
         return csName.toString();
@@ -525,6 +532,9 @@ public class SequoiadbRegionDao implements RegionDao {
         }
         if (result.get(Region.DATA_CL_SHARDINGTYPE) != null){
             region.setDataCLShardingType(result.get(Region.DATA_CL_SHARDINGTYPE).toString());
+        }
+        if (result.get(Region.DATA_CS_RANGE) != null){
+            region.setDataCSRange((int)result.get(Region.DATA_CS_RANGE));
         }
         if (result.get(Region.META_DOMAIN) != null){
             region.setMetaDomain(result.get(Region.META_DOMAIN).toString());
