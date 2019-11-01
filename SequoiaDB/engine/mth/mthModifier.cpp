@@ -3425,10 +3425,11 @@ namespace engine
                          BSONObjBuilder &resBuilder )
    {
       INT32 rc = SDB_OK ;
-      BSONType a = existElement.type() ;
-      BSONType b = incElement.type() ;
+      BSONType existType = existElement.type() ;
+      BSONType incType = incElement.type() ;
 
-      if ( NumberDecimal == a || NumberDecimal == b )
+      if ( existElement.isNumber() && ( NumberDecimal == existType
+                                        || NumberDecimal == incType ) )
       {
          bsonDecimal inc ;
          bsonDecimal decimal ;
@@ -3465,12 +3466,12 @@ namespace engine
       }
       else if ( existElement.isNumber() && 0 != incElement.numberDouble() )
       {
-         if ( NumberDouble == a || NumberDouble == b )
+         if ( NumberDouble == existType || NumberDouble == incType )
          {
             resBuilder.append( "", existElement.numberDouble()
                                    + incElement.numberDouble() ) ;
          }
-         else if ( NumberLong == a || NumberLong == b )
+         else if ( NumberLong == existType || NumberLong == incType )
          {
             INT64 arg1 = existElement.numberLong() ;
             INT64 arg2 = incElement.numberLong() ;
