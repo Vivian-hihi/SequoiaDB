@@ -23,7 +23,7 @@ namespace SequoiaDB
          */
         public const int FLG_INSERT_CONTONDUP = 0x00000001;
 
-        /** \memberof FLG_INSERT_RETURN_OID 0x00000002
+        /** \memberof FLG_INSERT_RETURN_OID 0x10000000
          *  \brief The flag represent whether insert return the "_id" field of the record for user.
          */
         public const int FLG_INSERT_RETURN_OID = 0x10000000;
