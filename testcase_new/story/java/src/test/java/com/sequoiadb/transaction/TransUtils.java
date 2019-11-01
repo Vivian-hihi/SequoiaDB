@@ -93,6 +93,23 @@ public class TransUtils {
         return domain;
     }
 
+    public static boolean getDatabaseSnapshot(Sequoiadb db, String groupName) {
+        DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE, "{RawData:true, GroupName:'" + groupName + "'}",
+                "{TransInfo:''}", null);
+        while (cursor.hasNext()) {
+            BSONObject info = (BSONObject) cursor.getNext();
+            BSONObject transInfo = (BSONObject) info.get("TransInfo");
+            int transCount = (int) transInfo.get("TotalCount");
+            Long transBeginLSN = (Long) transInfo.get("BeginLSN");
+
+            if (transCount != 0 || transBeginLSN != -1) {
+                System.out.println("transCount:" + transCount + "\ntransBeginLSN:" + transBeginLSN);
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static DBCollection createCL(String clName, CollectionSpace cs, String option) throws BaseException {
         DBCollection tmp = null;
         try {

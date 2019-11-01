@@ -36,6 +36,7 @@
          <package name="com.sequoiadb.subcl.serial" />
          <package name="com.sequoiadb.split.serial" />
          <package name="com.sequoiadb.transaction.session.serial" />
+         <package name="com.sequoiadb.transaction.pendingobject" />
       </packages>    
    </test>
 </suite>
