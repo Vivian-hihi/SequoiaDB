@@ -477,6 +477,12 @@
                      "en": "service sequoiasql-mysql"
                   },
                   {
+                     "id": 1572505575,
+                     "file": "ha",
+                     "cn": "高可用",
+                     "en": "High Availability"
+                  },
+                  {
                      "id": 1556198260,
                      "file": "upgrade",
                      "cn": "升级",
