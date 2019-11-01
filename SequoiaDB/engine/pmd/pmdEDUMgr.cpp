@@ -1565,10 +1565,12 @@ namespace engine
          PD_LOG ( PDSEVERE, "Failed to create new edu: %s",
                   e.what() ) ;
          rc = SDB_SYS ;
-         SDB_OSS_DEL cb ;
 
-         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+         _latch.get() ;
          _mapIdles.erase( newID ) ;
+         _latch.release() ;
+
+         SDB_OSS_DEL cb ;
 
          goto error ;
       }
@@ -1679,14 +1681,16 @@ namespace engine
          PD_LOG ( PDSEVERE, "Failed to create new edu: %s",
                   e.what() ) ;
          rc = SDB_SYS ;
-         SDB_OSS_DEL cb ;
 
-         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+         _latch.get() ;
          _mapRuns.erase( newID ) ;
          if ( isSystem )
          {
             _mapSystemEdu.erase( type ) ;
          }
+         _latch.release() ;
+
+         SDB_OSS_DEL cb ;
 
          goto error ;
       }
