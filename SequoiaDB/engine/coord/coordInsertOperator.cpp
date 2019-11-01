@@ -158,7 +158,6 @@ namespace engine
    _coordInsertOperator::_coordInsertOperator()
    {
       _hasRetry = FALSE ;
-      _repalceOnDup = FALSE ;
 
       _hasGenerated = FALSE ;
       _lastGenerateID = 0 ;
@@ -181,14 +180,9 @@ namespace engine
       return _inResult.insertedNum() ;
    }
 
-   UINT64 _coordInsertOperator::getIgnoredNum() const
+   UINT64 _coordInsertOperator::getDuplicatedNum() const
    {
-      return _inResult.ignoredNum() ;
-   }
-
-   UINT64 _coordInsertOperator::getReplacedNum() const
-   {
-      return _inResult.replacedNum() ;
+      return _inResult.duplicatedNum() ;
    }
 
    void _coordInsertOperator::clearStat()
@@ -268,16 +262,6 @@ namespace engine
 
       // add list op info
       MON_SAVE_OP_OPTION( cb->getMonAppCB(), pMsg->opCode, options ) ;
-
-
-      if ( flag & FLG_INSERT_REPLACEONDUP )
-      {
-         _repalceOnDup = TRUE ;
-      }
-      else
-      {
-         _repalceOnDup = FALSE ;
-      }
 
       MONQUERY_SET_QUERY_TEXT( cb, cb->getMonAppCB()->getLastOpDetail() ) ;
 
@@ -366,11 +350,11 @@ namespace engine
       if ( pCollectionName )
       {
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
-                      pCollectionName, rc, "InsertedNum:%llu, IgnoredNum:%llu, "
-                      "ReplacedNum:%llu, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
-                      _inResult.insertedNum(), _inResult.ignoredNum(),
-                      _inResult.replacedNum(), count,
-                      BSONObj(pInsertor).toPoolString().c_str(),
+                      pCollectionName, rc, "InsertedNum:%llu, "
+                      "DuplicatedNum:%llu, ObjNum:%u, Insertor:%s, "
+                      "Flag:0x%08x(%u)",
+                      _inResult.insertedNum(), _inResult.duplicatedNum(),
+                      count, BSONObj(pInsertor).toPoolString().c_str(),
                       oldFlag, oldFlag ) ;
       }
 
@@ -518,8 +502,7 @@ namespace engine
            1 == pReply->numReturned )
       {
          BOOLEAN insertedProcessed = FALSE ;
-         BOOLEAN ignoredProcessed = FALSE ;
-         BOOLEAN replacedProcessed = FALSE ;
+         BOOLEAN duplicateProcessed = FALSE ;
 
          try
          {
@@ -534,24 +517,15 @@ namespace engine
                   insertedProcessed = TRUE ;
                   _inResult.incInsertedNum( (UINT64)e.numberLong() ) ;
                }
-               else if ( !ignoredProcessed &&
+               else if ( !duplicateProcessed &&
                          0 == ossStrcmp( e.fieldName(),
-                                         FIELD_NAME_IGNORE_NUM ) )
+                                         FIELD_NAME_DUPLICATE_NUM ) )
                {
-                  ignoredProcessed = TRUE ;
-                  _inResult.incIngoreOrRepaceNum( FALSE,
-                                                  (UINT64)e.numberLong() ) ;
-               }
-               else if ( !replacedProcessed &&
-                         0 == ossStrcmp( e.fieldName(),
-                                         FIELD_NAME_REPLACE_NUM ) )
-               {
-                  replacedProcessed = TRUE ;
-                  _inResult.incIngoreOrRepaceNum( TRUE,
-                                                  (UINT64)e.numberLong() ) ;
+                  duplicateProcessed = TRUE ;
+                  _inResult.incDuplicatedNum( (UINT64)e.numberLong() ) ;
                }
 
-               if ( insertedProcessed && ignoredProcessed && replacedProcessed )
+               if ( insertedProcessed && duplicateProcessed )
                {
                   break ;
                }
@@ -569,7 +543,7 @@ namespace engine
          /// (UINT32)insertedNum + (UINT32)ignoredNum
          ossUnpack32From64( pReply->contextID, hi, lo ) ;
          _inResult.incInsertedNum( hi ) ;
-         _inResult.incIngoreOrRepaceNum( _repalceOnDup, lo ) ;
+         _inResult.incDuplicatedNum( lo ) ;
       }
    }
 

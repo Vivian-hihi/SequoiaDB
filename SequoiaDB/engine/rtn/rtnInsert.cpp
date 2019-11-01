@@ -153,7 +153,7 @@ namespace engine
             {
                if ( FLG_INSERT_CONTONDUP & flags )
                {
-                  pResult->incIngoreOrRepaceNum( FALSE );
+                  pResult->incDuplicatedNum();
                   pResult->resetInfo() ;
                   // skip duplicate key error
                   rc = SDB_OK ;
@@ -193,8 +193,7 @@ namespace engine
                   else
                   {
                      // update success.
-                     pResult->incIngoreOrRepaceNum( TRUE,
-                                                    upResult.updateNum() ) ;
+                     pResult->incDuplicatedNum( upResult.updateNum() ) ;
                      rc = SDB_OK ;
                   }
                }

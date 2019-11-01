@@ -69,8 +69,7 @@ namespace engine
          virtual BOOLEAN      isReadOnly() const ;
 
          UINT64         getInsertedNum() const ;
-         UINT64         getIgnoredNum() const ;
-         UINT64         getReplacedNum() const ;
+         UINT64         getDuplicatedNum() const ;
          void           clearStat() ;
 
       private:
@@ -181,7 +180,6 @@ namespace engine
 
       private:
          utilInsertResult  _inResult ;
-         BOOLEAN        _repalceOnDup ;
          BOOLEAN        _hasRetry ;
 
          BOOLEAN        _hasGenerated ;

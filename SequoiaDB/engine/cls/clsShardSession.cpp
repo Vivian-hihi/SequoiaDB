@@ -671,8 +671,7 @@ namespace engine
                {
                   /// compatiable with old version
                   contextID = ossPack32To64( inResult.insertedNum(),
-                                             inResult.ignoredNum() +
-                                             inResult.replacedNum() ) ;
+                                             inResult.duplicatedNum() ) ;
                }
                break ;
             }
@@ -723,8 +722,7 @@ namespace engine
                if ( pInsert->flags & FLG_INSERT_RETURNNUM )
                {
                   contextID = ossPack32To64( inResult.insertedNum(),
-                                             inResult.ignoredNum() +
-                                             inResult.replacedNum() ) ;
+                                             inResult.duplicatedNum() ) ;
                }
                break ;
             }

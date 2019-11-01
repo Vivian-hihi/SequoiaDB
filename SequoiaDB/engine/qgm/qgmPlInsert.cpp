@@ -254,10 +254,7 @@ namespace engine
 
                /// update info
                _inResult.incInsertedNum( opr.getInsertedNum() ) ;
-               _inResult.incIngoreOrRepaceNum( FALSE,
-                                               opr.getIgnoredNum() ) ;
-               _inResult.incIngoreOrRepaceNum( TRUE,
-                                               opr.getReplacedNum() ) ;
+               _inResult.incDuplicatedNum( opr.getDuplicatedNum() ) ;
                if ( buff.recordNum() == 1 )
                {
                   BSONObj tmpResult ;

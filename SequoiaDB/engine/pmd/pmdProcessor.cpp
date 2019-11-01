@@ -651,11 +651,11 @@ namespace engine
                          &inResult ) ;
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_INSERT_REQ, AUDIT_OBJ_CL,
-                      pCollectionName, rc, "InsertedNum:%llu, IgnoredNum:%llu, "
-                      "ReplacedNum:%llu, ObjNum:%u, Insertor:%s, Flag:0x%08x(%u)",
-                      inResult.insertedNum(), inResult.ignoredNum(),
-                      inResult.replacedNum(), count,
-                      insertor.toPoolString().c_str(), flag,
+                      pCollectionName, rc, "InsertedNum:%llu, "
+                      "DuplicatedNum:%llu, ObjNum:%u, Insertor:%s, "
+                      "Flag:0x%08x(%u)",
+                      inResult.insertedNum(), inResult.duplicatedNum(),
+                      count, insertor.toPoolString().c_str(), flag,
                       flag ) ;
 
          PD_RC_CHECK( rc, PDERROR, "Session[%s] insert objs[%s, count:%d, "

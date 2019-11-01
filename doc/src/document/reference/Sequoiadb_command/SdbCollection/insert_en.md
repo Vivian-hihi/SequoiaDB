@@ -50,9 +50,8 @@ Insert record or records into the current collection. If the current collection 
 
  ```
  {
-		InsertedNum : <INT32>  Number of records successfully inserted, including replaced and ignored records,
-		IgnoredNum  : <INT32>  Number of records ignored due to duplicate key conflicts,
-		ReplacedNum : <INT32>  Number of records replaced due to duplicate key conflicts
+		InsertedNum    : <INT32>  Number of records successfully inserted, including replaced and ignored records,
+		DuplicatedNum  : <INT32>  Number of records ignored or replaced due to duplicate key conflicts
  }
  ```
 
@@ -121,8 +120,7 @@ Since v1.0.
      		"$oid": "5becec3d6404b9295a63caca"
    		}
 		"InsertedNum": 1,
-  		"IgnoredNum": 0,
-  		"ReplacedNum": 0
+  		"DuplicatedNum": 0
  	}
 	```
 
@@ -138,7 +136,6 @@ Since v1.0.
      		}
    		]
 		"InsertedNum": 2,
-		"IgnoredNum": 0,
-		"ReplacedNum": 0
+		"DuplicatedNum": 0
  	}
  	```

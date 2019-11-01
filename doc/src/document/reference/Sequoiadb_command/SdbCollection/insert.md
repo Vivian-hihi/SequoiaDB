@@ -47,9 +47,8 @@ Collection
 
  ```lang-json
  {
-		InsertedNum : <INT32>  成功插入的记录数，包含替代和忽略的记录,
-		IgnoredNum  : <INT32>  因重复键冲突被忽略的记录数,
-		ReplacedNum : <INT32>  因重复键冲突被替代的记录数
+		InsertedNum    : <INT32>  成功插入的记录数，包含替代和忽略的记录,
+		DuplicatedNum  : <INT32>  因重复键冲突被忽略或替代的记录数
  }
  ```
 
@@ -126,8 +125,7 @@ v1.0及以上版本。
      		"$oid": "5becec3d6404b9295a63caca"
    		}
 		"InsertedNum": 1,
-  		"IgnoredNum": 0,
-  		"ReplacedNum": 0
+  		"DuplicatedNum": 0
  	}
 	>
  	> db.foo.bar.insert([{a:1}, {b:1}], {ReturnOID:true, ContOnDup:true})
@@ -141,7 +139,6 @@ v1.0及以上版本。
      		}
    		]
 		"InsertedNum": 2,
-		"IgnoredNum": 0,
-		"ReplacedNum": 0
+		"DuplicatedNum": 0
  	}
  	```

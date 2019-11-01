@@ -61,20 +61,21 @@ namespace engine
       BOOLEAN  isEnaleIndexErrInfo() const ;
 
       UINT64               insertedNum() const { return _insertedNum ; }
-      UINT64               ignoredNum() const { return _ignoredNum ; }
-      UINT64               replacedNum() const { return _replacedNum ; }
+      UINT64               duplicatedNum() const { return _duplicatedNum ; }
 
       void                 incInsertedNum( UINT64 step = 1 )
       {
          _insertedNum += step ;
       }
-      void                 incIngoreOrRepaceNum( BOOLEAN isReplace = FALSE,
-                                                 UINT64 step = 1 ) ;
+
+      void                 incDuplicatedNum( UINT64 step = 1 )
+      {
+         _duplicatedNum += step ;
+      }
 
    private:
       UINT64               _insertedNum ;
-      UINT64               _ignoredNum ;
-      UINT64               _replacedNum ;
+      UINT64               _duplicatedNum ;
    } ;
 
    /*

@@ -51,8 +51,7 @@ namespace engine
    {
       enableMask( UTIL_RESULT_MASK_IDX ) ;
       _insertedNum = 0 ;
-      _ignoredNum = 0 ;
-      _replacedNum = 0 ;
+      _duplicatedNum = 0 ;
    }
 
    utilInsertResult::~utilInsertResult()
@@ -64,8 +63,7 @@ namespace engine
       utilWriteResult::_resetStat() ;
 
       _insertedNum = 0 ;
-      _ignoredNum = 0 ;
-      _replacedNum = 0 ;
+      _duplicatedNum = 0 ;
    }
 
    void utilInsertResult::_resetInfo()
@@ -81,8 +79,7 @@ namespace engine
 
          /// stat info
          builder.append( FIELD_NAME_INSERT_NUM, (INT64)_insertedNum ) ;
-         builder.append( FIELD_NAME_IGNORE_NUM, (INT64)_ignoredNum ) ;
-         builder.append( FIELD_NAME_REPLACE_NUM, (INT64)_replacedNum ) ;
+         builder.append( FIELD_NAME_DUPLICATE_NUM, (INT64)_duplicatedNum ) ;
       }
       catch ( std::exception &e )
       {
@@ -94,8 +91,7 @@ namespace engine
    BOOLEAN utilInsertResult::_filterResultElement( const BSONElement &e ) const
    {
       if ( 0 == ossStrcmp( FIELD_NAME_INSERT_NUM, e.fieldName() ) ||
-           0 == ossStrcmp( FIELD_NAME_IGNORE_NUM, e.fieldName() ) ||
-           0 == ossStrcmp( FIELD_NAME_REPLACE_NUM, e.fieldName() ) )
+           0 == ossStrcmp( FIELD_NAME_DUPLICATE_NUM, e.fieldName() ) )
       {
          return FALSE ;
       }
@@ -115,19 +111,6 @@ namespace engine
    BOOLEAN utilInsertResult::isEnaleIndexErrInfo() const
    {
       return isMaskEnabled( UTIL_RESULT_MASK_IDX ) ;
-   }
-
-   void utilInsertResult::incIngoreOrRepaceNum( BOOLEAN isReplace,
-                                                UINT64 step )
-   {
-      if ( isReplace )
-      {
-         _replacedNum += step ;
-      }
-      else
-      {
-         _ignoredNum += step ;
-      }
    }
 
    /*
