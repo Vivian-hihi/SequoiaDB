@@ -1153,10 +1153,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_BLOCKWRITE, "_SDB_DMSCB::blockWrite" )
-   INT32 _SDB_DMSCB::blockWrite( _pmdEDUCB *cb, SDB_DB_STATUS byStatus )
+   INT32 _SDB_DMSCB::blockWrite( _pmdEDUCB *cb, SDB_DB_STATUS byStatus,
+                                 INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_BLOCKWRITE );
+      INT32 timeSpent = 0 ; // milliseconds
 
       if ( cb && SDB_DB_NORMAL == byStatus &&
            DMS_LOCK_WHOLE == cb->getLockItem( SDB_LOCK_DMS )->getMode() )
@@ -1199,6 +1201,14 @@ namespace engine
             rc = SDB_APP_INTERRUPT ;
             break ;
          }
+         else if ( timeout != -1 && timeSpent >= timeout )
+         {
+            _dmsCBState = DMS_STATE_NORMAL ;
+            PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
+            _blockEvent.signal() ;
+            rc = SDB_TIMEOUT ;
+            break ;
+         }
          _stateMtx.get();
          if ( 0 == _writeCounter )
          {
@@ -1214,7 +1224,8 @@ namespace engine
          else
          {
             _stateMtx.release();
-            ossSleepmillis( DMS_CHANGESTATE_WAIT_LOOP );
+            ossSleepmillis( DMS_CHANGESTATE_WAIT_LOOP ) ;
+            timeSpent += DMS_CHANGESTATE_WAIT_LOOP ;
          }
       }
 

@@ -1016,16 +1016,26 @@ namespace engine
       // When two threads concurrently do rename, blockWrite() will report
       // -148. We retry multiple times to reduce the error.
       INT16 i = 0 ;
-      while ( ( rc = _pDmsCB->blockWrite( cb ) )  &&
-              ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
+      while( i < RTN_RENAME_BLOCKWRITE_TIMES )
       {
+         rc = _pDmsCB->blockWrite( cb, SDB_DB_NORMAL, OSS_ONE_SEC * 30 ) ;
+         if ( SDB_OK == rc || SDB_APP_INTERRUPT == rc || SDB_TIMEOUT == rc )
+         {
+            break ;
+         }
          ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
          i++ ;
       }
       if ( SDB_DMS_STATE_NOT_COMPATIBLE == rc )
       {
-         PD_LOG( PDERROR, "Rename cs/cl is mutually exclusive with "
-                 "other rename cs/cl" ) ;
+         PD_LOG_MSG( PDERROR, "Rename cs is mutually exclusive with "
+                     "other rename cs/cl" ) ;
+      }
+      else if ( SDB_TIMEOUT == rc )
+      {
+         rc = SDB_LOCK_FAILED ;
+         PD_LOG_MSG( PDERROR,
+                     "Failed to wait for other write operations to finish" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
       _lockDMS = TRUE ;
@@ -1283,16 +1293,26 @@ namespace engine
       // When two threads concurrently do rename, blockWrite() will report
       // -148. We retry multiple times to reduce the error.
       INT16 i = 0 ;
-      while ( ( rc = _pDmsCB->blockWrite( cb ) )  &&
-              ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
+      while( i < RTN_RENAME_BLOCKWRITE_TIMES )
       {
+         rc = _pDmsCB->blockWrite( cb, SDB_DB_NORMAL, OSS_ONE_SEC * 30 ) ;
+         if ( SDB_OK == rc || SDB_APP_INTERRUPT == rc || SDB_TIMEOUT == rc )
+         {
+            break ;
+         }
          ossSleep( RTN_RENAME_BLOCKWRITE_INTERAL ) ;
          i++ ;
       }
       if ( SDB_DMS_STATE_NOT_COMPATIBLE == rc )
       {
-         PD_LOG( PDERROR, "Rename cs/cl is mutually exclusive with "
-                 "other rename cs/cl" ) ;
+         PD_LOG_MSG( PDERROR, "Rename cl is mutually exclusive with "
+                     "other rename cs/cl" ) ;
+      }
+      else if ( SDB_TIMEOUT == rc )
+      {
+         rc = SDB_LOCK_FAILED ;
+         PD_LOG_MSG( PDERROR,
+                     "Failed to wait for other write operations to finish" ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Block dms write failed, rc: %d", rc ) ;
       _lockDMS = TRUE ;

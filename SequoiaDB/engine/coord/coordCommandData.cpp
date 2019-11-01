@@ -1468,6 +1468,9 @@ namespace engine
          goto error ;
       }
 
+      // add retry error code
+      pArgs->_retryRCList.insert( SDB_LOCK_FAILED ) ;
+
    done :
       PD_TRACE_EXITRC ( COORD_RENAMECS_PARSEMSG, rc ) ;
       return rc ;
@@ -2036,6 +2039,9 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      // add retry error code
+      pArgs->_retryRCList.insert( SDB_LOCK_FAILED ) ;
 
    done :
       PD_TRACE_EXITRC ( COORD_RENAMECL_PARSEMSG, rc ) ;

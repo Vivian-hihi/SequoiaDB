@@ -65,6 +65,9 @@ namespace engine
          /* ignore error return codes */
          SET_RC _ignoreRCList ;
 
+         /* retry when error returned */
+         SET_RC _retryRCList ;
+
          /* the return context buf pointer */
          rtnContextBuf *_pBuf ;
    } ;
@@ -183,7 +186,7 @@ namespace engine
 
       protected :
          /*
-            Disable preRead in Coord context (send GetMore in advanced) 
+            Disable preRead in Coord context (send GetMore in advanced)
             to control the sub-context from Catalog or Data step by step
          */
          virtual BOOLEAN _flagCoordCtxPreRead () { return FALSE ; }
@@ -203,7 +206,7 @@ namespace engine
          */
          virtual BOOLEAN _flagRollbackCataBeforeData () { return FALSE ; }
 
-         virtual BOOLEAN _allowInTransaction() const { return TRUE ; } 
+         virtual BOOLEAN _allowInTransaction() const { return TRUE ; }
 
    } ;
    typedef _coordCMD2Phase coordCMD2Phase ;

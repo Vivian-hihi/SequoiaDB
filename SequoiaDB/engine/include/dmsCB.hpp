@@ -446,7 +446,8 @@ namespace engine
       void  writeDown( _pmdEDUCB * cb ) ;
 
       INT32 blockWrite( _pmdEDUCB *cb,
-                        SDB_DB_STATUS byStatus = SDB_DB_NORMAL ) ;
+                        SDB_DB_STATUS byStatus = SDB_DB_NORMAL,
+                        INT32 timeout = -1 ) ;
       void  unblockWrite( _pmdEDUCB *cb ) ;
 
       INT32 registerBackup( _pmdEDUCB *cb, BOOLEAN offline = TRUE ) ;

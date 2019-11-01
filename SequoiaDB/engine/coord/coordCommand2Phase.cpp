@@ -49,6 +49,7 @@ using namespace bson ;
 namespace engine
 {
 
+   #define COORD_CMD_RETRY_TIMES ( 10 )
    /*
       _coordCMD2Phase implement
    */
@@ -91,6 +92,7 @@ namespace engine
       coordCMDArguments *pArguments = NULL ;
 
       contextID = -1 ;
+      INT32 retryCount = 0 ;
 
       /************************************************************************
        * Prepare phase
@@ -170,9 +172,25 @@ namespace engine
                    "command[%s, target:%s], rc: %d", getName(),
                    pArguments->_targetName.c_str(), rc ) ;
 
+   retry :
       // Execute P1 on Data Groups
       rc = _doOnDataGroup( (MsgHeader*)pDataMsgBuf, cb, &pCoordCtxForData,
                            pArguments, groupLst, cataObjs, sucGroupLst ) ;
+      if ( retryCount < COORD_CMD_RETRY_TIMES &&
+           pArguments->_retryRCList.find(rc) != pArguments->_retryRCList.end() )
+      {
+         if ( pCoordCtxForData )
+         {
+            pRtncb->contextDelete ( pCoordCtxForData->contextID(), cb ) ;
+            pCoordCtxForData = NULL ;
+         }
+         sucGroupLst.clear() ;
+         PD_LOG( PDWARNING, "Do phase 1 on data failed[rc: %d] for "
+                 "command[%s, target: %s], retry",
+                 rc, getName(), pArguments->_targetName.c_str() ) ;
+         retryCount++ ;
+         goto retry ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Do phase 1 on data failed for command[%s, "
                    "target:%s, suc group size:%u], rc: %d",
                    getName(), pArguments->_targetName.c_str(),
