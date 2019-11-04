@@ -35,13 +35,13 @@ function main()
 	checkResult( cl, null,null, expRecs, {id:1} );
 	cl.remove();
 	
-	//value值使用decimal,SEQUOIADBMAINSTREAM-5130,暂时屏蔽测试步骤
-	/*cl.insert(doc);
+	//value值使用decimal,SEQUOIADBMAINSTREAM-5130
+	cl.insert(doc);
 	value = {$decimal:"9223372036854775808"};
 	cl.update({$inc:{a:{Value:value}}});
-	expRecs = [{id:1,a:{$decimal:"9223372036854775809"}}, {id:2,a:null}, {id:3,a:"a"}, {id:4,a:{$decimal:"9223372036854775809"},b:1}]
+	expRecs = [{id:1,a:{$decimal:"9223372036854775809"}}, {id:2,a:null}, {id:3,a:"a"}, {id:4,a:{$decimal:"9223372036854775808"},b:1}];
 	checkResult( cl, null,null, expRecs, {id:1} );
-	cl.remove();*/
+	cl.remove();
 	
 	//value为null
 	invalidDataUpdateCheckResult( cl, {$inc:{a:{Value:null}}}, -6 );
