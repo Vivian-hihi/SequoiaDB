@@ -3111,6 +3111,12 @@
                            "file": "writeContent",
                            "cn": "writeContent()",
                            "en": "writeContent()"
+                        },
+                        {
+                           "id": 1572867150,
+                           "file": "truncate",
+                           "cn": "truncate()",
+                           "en": "truncate()"
                         }
                      ]
                   },
