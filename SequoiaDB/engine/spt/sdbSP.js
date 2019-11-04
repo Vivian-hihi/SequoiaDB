@@ -2698,19 +2698,26 @@ File.prototype.writeContent = function( content )
 File.prototype.truncate = function( size ) {
    if ( undefined != this._remote )
    {
-      if ( 'number' == typeof( size ) )
+      if ( undefined === size )
       {
-         this._remote._runCommand( "file truncate", {}, { "FID": this._FID },
-                                    { "Size": size } ) ;
+         this._remote._runCommand( "file truncate", {}, { "FID": this._FID } ) ;
       }
       else
       {
-         this._remote._runCommand( "file truncate", {}, { "FID": this._FID } ) ;
+         this._remote._runCommand( "file truncate", {}, { "FID": this._FID },
+                                             { "Size": size } ) ;
       }
    }
    else
    {
-      this._truncate( size ) ;
+      if ( undefined === size )
+      {
+         this._truncate() ;
+      }
+      else
+      {
+         this._truncate( size ) ;
+      }
    }
 }
 
