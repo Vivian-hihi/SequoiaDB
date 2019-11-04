@@ -10,7 +10,7 @@
 - MySQL引擎
   - 配置项 *sequoiadb_use_partition* 更名为 *sequoiadb_auto_partition* ；
   - 废弃配置项 *sequoiadb_optimizer_select_count* ；
-  - 新增配置项 *sdb_use_transaction*、 *sequoiadb_optimizer_options*；
+  - 新增配置项 *sequoiadb_use_transaction*、 *sequoiadb_optimizer_options*；
 - REST接口支持返回标准JSON格式；
 - 提供标准S3兼容的对象访问接口，实现“桶”和“对象”操作以及“多版本控制”；
 - 提供 SQL 化监控视图对数据库进行监控，可以使用SQL的各种能力灵活筛选和组合监控数据，提升监控的易用性；

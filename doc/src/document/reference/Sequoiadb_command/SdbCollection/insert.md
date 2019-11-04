@@ -47,7 +47,7 @@ Collection
 
  ```lang-json
  {
-		InsertedNum    : <INT32>  成功插入的记录数，包含替代和忽略的记录,
+		InsertedNum    : <INT32>  成功插入的记录数，不包含替代和忽略的记录,
 		DuplicatedNum  : <INT32>  因重复键冲突被忽略或替代的记录数
  }
  ```
