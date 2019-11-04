@@ -53,15 +53,16 @@ function insertSetFlag_ReturnOid( cl )
    cl.insert({a:1,b:1});
    
    // index key not conflict
-   var rc = cl.insert( {a:1,b:2}, SDB_INSERT_RETURN_ID );
-   if( null === rc )
+   var rc = cl.insert( {_id: 1, a: 1, b: 2}, SDB_INSERT_RETURN_ID );
+   if( 1 === rc.toObj()["_id"]["$oid"] )
    {
-      throw buildException( "checkReturnOid", null, "", "return oid", "  " + null );
+      throw new Error("expResult is 1, actResult is" + rc.toObj()["_id"]["$oid"]);
    } 
-   var rc = cl.insert( {a:1,b:3}, {ReturnOID:true} );
-   if( null === rc )
+
+   var rc = cl.insert( {_id: 2, a: 1, b: 3}, {ReturnOID: true} );
+   if( 2 === rc.toObj()["_id"]["$oid"] )
    {
-      throw buildException( "checkReturnOid", null, "", "return oid", "  " + null );
+      throw new Error("expResult is 2, actResult is" + rc.toObj()["_id"]["$oid"]);
    } 
    
    var rc = cl.insert( {a:1,b:4}, {ReturnOID:false} );
