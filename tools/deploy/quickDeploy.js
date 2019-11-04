@@ -98,31 +98,57 @@ else
 }
 
 // set global variable
-var DEPLOY_SEQUOIADB  = sdb ;
-var DEPLOY_MYSQL      = mysql ;
-var DEPLOY_POSTGRESQL = pg ;
-var LOCAL_CM_PORT     = cm ;
-var TMP_COORD_SVC     = 18800 ;
-var MY_HOSTNAME       = System.getHostName() ;
-var MYSQL_INSTALL_PATH= mysqlPath ;
-var PG_INSTALL_PATH   = pgPath ;
+var DEPLOY_SEQUOIADB       = sdb ;
+var DEPLOY_MYSQL           = mysql ;
+var DEPLOY_POSTGRESQL      = pg ;
+var LOCAL_CM_PORT          = cm ;
+var TMP_COORD_SVC          = 18800 ;
+var MY_HOSTNAME            = System.getHostName() ;
+var MYSQL_INSTALL_PATH     = mysqlPath ;
+var PG_INSTALL_PATH        = pgPath ;
+var TMP_COORD_INSTALL_PATH = "" ;
+
+var FIELD_SEQUOIADB_CATA_CONF  = "SEQUOIADB_CATA_CONF" ;
+var FIELD_SEQUOIADB_COORD_CONF = "SEQUOIADB_COORD_CONF" ;
+var FIELD_SEQUOIADB_DATA_CONF  = "SEQUOIADB_DATA_CONF" ;
+var FIELD_MYSQL_INSTALL_PATH   = "MYSQL_INSTALL_PATH" ;
+var FIELD_MYSQL_INSTANCE_CONF  = "MYSQL_INSTANCE_CONF" ;
+var FIELD_PG_INSTALL_PATH      = "PG_INSTALL_PATH" ;
+var FIELD_PG_INSTANCE_CONF     = "PG_INSTANCE_CONF" ;
 
 // run!
 main() ;
 
 function main()
 {
+   var nodesConf ;
+   var mysqlInfo ;
+   var pgInfo ;
+
    if ( DEPLOY_SEQUOIADB )
    {
-      deploySequoiadb() ;
+      nodesConf = checkSequoiadb() ;
    }
    if ( DEPLOY_MYSQL )
    {
-      deployMysql() ;
+      mysqlInfo = checkMysql() ;
    }
    if ( DEPLOY_POSTGRESQL )
    {
-      deployPostgresql() ;
+      pgInfo = checkPostgresql() ;
+   }
+
+   if ( DEPLOY_SEQUOIADB )
+   {
+      deploySequoiadb( nodesConf ) ;
+   }
+   if ( DEPLOY_MYSQL )
+   {
+      deployMysql( mysqlInfo ) ;
+   }
+   if ( DEPLOY_POSTGRESQL )
+   {
+      deployPostgresql( pgInfo ) ;
    }
 }
 
@@ -192,7 +218,6 @@ function getSqlInstallInfo( dbType, ignoreNotInstall, installPath )
 
    var dbTypeStr  = "SequoiaSQL-MySQL" ;
    var paraStr    = "--mysql and --mysqlPath" ;
-   var titleStr   = "\n************ Deploy SequoiaSQL-MySQL *****************" ;
    var systemFile = "sequoiasql-mysql" ;
    var systemDir  = "/etc/default/" ;
    if ( dbType == "pg" )
@@ -200,7 +225,6 @@ function getSqlInstallInfo( dbType, ignoreNotInstall, installPath )
       systemFile  = "sequoiasql-postgresql" ;
       dbTypeStr   = "SequoiaSQL-PostgreSQL" ;
       paraStr     = "--pg and --pgPath" ;
-      titleStr    = "\n************ Deploy SequoiaSQL-PostgreSQL ************" ;
    }
    else if ( dbType != "mysql" )
    {
@@ -217,7 +241,7 @@ function getSqlInstallInfo( dbType, ignoreNotInstall, installPath )
    {
       return ;
    }
-   println( titleStr ) ; // we should print tile here, in case print error below
+
    if ( bsonArr.size() == 0 )
    {
       println( "ERROR: This machine hasn't installed " + dbTypeStr + "!" ) ;
@@ -591,24 +615,21 @@ function createTmpCoord()
 {
    var oma = new Oma( MY_HOSTNAME, LOCAL_CM_PORT ) ;
 
-   var service = TMP_COORD_SVC ;
-   var installedPath = getSequoiadbInstallInfo( MY_HOSTNAME ).INSTALL_DIR ;
-
    try
    {
-      oma.createCoord( service, installedPath + "/database/coord/" + service ) ;
+      oma.createCoord( TMP_COORD_SVC, TMP_COORD_INSTALL_PATH ) ;
    }
    catch( e )
    {
       if ( e != -145 )  // -145: already exists, ignore error
       {
          println( "Unexpected error[" + e + "] when creating temp coord: " +
-                  "localhost:" + service + "!" ) ;
+                  "localhost:" + TMP_COORD_SVC + "!" ) ;
          throw e ;
       }
    }
 
-   oma.startNode( service ) ;
+   oma.startNode( TMP_COORD_SVC ) ;
 }
 
 function checkCataPrimary( db )
@@ -895,9 +916,9 @@ function UtilMap()
 }
 
 /**
- * Secial queue, it is a priority queue.
+ * Special queue, it is a priority queue.
  * The element which is ranked in front of the array has higher priority than
- * the element behind. If  want to lower the priority, use put2Tail().
+ * the element behind. If you want to lower the priority, use put2Tail().
  *
  * @function  add( "hostname1" )
  * @function  put2Tail( "hostname1" )
@@ -1134,21 +1155,120 @@ function checkUser( dbType, installInfo )
    }
 }
 
-function deploySequoiadb()
+function checkFilePath( filePath, hostname, expectExist )
 {
-   println( "\n************ Deploy SequoiaDB ************************" ) ;
+   try
+   {
+      var remote = new Remote( hostname, LOCAL_CM_PORT ) ;
+   }
+   catch( e )
+   {
+      println( "Unexpected error[" + e + "] when connect to host[" +
+               hostName + ":" + LOCAL_CM_PORT + "]!" ) ;
+      throw e ;
+   }
 
+   var isExist = remote.getFile().exist( filePath ) ;
+   if( expectExist && !isExist )
+   {
+      println( "The file[" + filePath + "] of the host[" + hostname +
+               "] doesn't exist" ) ;
+      throw "ERROR" ;
+   }
+
+   if( !expectExist && isExist )
+   {
+      println( "The file[" + filePath + "] of the host[" + hostname +
+               "] already exists" ) ;
+      throw "ERROR" ;
+   }
+}
+
+function checkPort( port, hostname )
+{
+   try
+   {
+      var remote = new Remote( hostname, LOCAL_CM_PORT ) ;
+   }
+   catch( e )
+   {
+      println( "Unexpected error[" + e + "] when connect to host["
+               + hostName + ":" + LOCAL_CM_PORT + "]" ) ;
+      throw e ;
+   }
+
+   if( !remote.getSystem().sniffPort( port ).toObj().Usable )
+   {
+      println( "The port[" + port + "] of the host[" + hostname +
+               "] has been used" ) ;
+      throw "ERROR" ;
+   }
+}
+
+function checkNodeConf( nodesConf )
+{
+   if ( nodesConf.length == 0 )
+   {
+      return ;
+   }
+
+   for ( var i in nodesConf )
+   {
+      var aNodeConf = nodesConf[i] ;
+      var dbHostname = aNodeConf[2] ;
+      var service = aNodeConf[3] ;
+      var dbPath = aNodeConf[4] ;
+      checkPort( service, dbHostname ) ;
+      checkFilePath( dbPath, dbHostname, false ) ;
+   }
+}
+
+/**
+ * Check and return sequoiadb nodes configuration: data configuration,
+ *                                                 coord configuration and
+ *                                                 cata configuration.
+ * The configuration include instance role, groupName, hostName,
+ *                           serviceName and dbPath
+ * @param  null
+ * @return jsonObj          sequoiadb nodes configuration
+ * {
+ *   "SEQUOIADB_DATA_CONF" :
+ *   [
+ *      [ data,group1,localhost,11820,/opt/sequoiadb/database/data/11820 ],
+ *      [ data,group2,localhost,11830,/opt/sequoiadb/database/data/11830 ],
+ *      ...
+ *   ]
+ *   "SEQUOIADB_COORD_CONF":
+ *   [
+ *      [ coord,SYSCoord,localhost,11810,/opt/sequoiadb/database/coord/11810 ],
+ *      ...
+ *   ]
+ *   "SEQUOIADB_CATA_CONF" :
+ *   [
+ *      [ catalog,SYSCatalogGroup,localhost,11800,/opt/sequoiadb/database/catalog/11800 ],
+ *      ...
+ *   ]
+ * }
+ */
+function checkSequoiadb()
+{
    // check it has installation or not
    var installInfo = getSequoiadbInstallInfo( MY_HOSTNAME ) ;
    if ( installInfo == undefined )
    {
       throw "ERROR" ;
    }
+   else
+   {
+      TMP_COORD_INSTALL_PATH = installInfo.INSTALL_DIR + "/database/coord/" +
+                               TMP_COORD_SVC ;
+   }
 
    // check user
    checkUser( "sequoiadb", installInfo ) ;
 
    // get node configure
+   var nodesConf = {} ;
    var catalogConf = [] ;
    var coordConf = [] ;
    var dataConf = [] ;
@@ -1183,20 +1303,41 @@ function deploySequoiadb()
       throw "ERROR" ;
    }
 
-   // create sequoiadb cluster
-   createTmpCoord() ;
+   // check sequoiadb cluster conf
+   checkPort( TMP_COORD_SVC, MY_HOSTNAME ) ;
+   checkFilePath( TMP_COORD_INSTALL_PATH, MY_HOSTNAME, false ) ;
 
-   createCatalog( catalogConf ) ;
+   checkNodeConf( catalogConf ) ;
+   checkNodeConf( coordConf ) ;
+   checkNodeConf( dataConf ) ;
 
-   createCoord( coordConf ) ;
+   nodesConf[FIELD_SEQUOIADB_CATA_CONF] = catalogConf ;
+   nodesConf[FIELD_SEQUOIADB_COORD_CONF] = coordConf ;
+   nodesConf[FIELD_SEQUOIADB_DATA_CONF] = dataConf ;
 
-   createData( dataConf ) ;
-
-   removeTmpCoord() ;
+   return nodesConf ;
 }
 
-function deployMysql()
+/**
+ * Check and return mysql info: mysql installation path and
+ *                              mysql instance configuration
+ *                              include instance name, port, databaseDir and
+ *                              coordAddr
+ * @param  null
+ * @return jsonObj          mysql info
+ * {
+ *   "MYSQL_INSTALL_PATH":  "/opt/sequoiasql/mysql",
+ *   "MYSQL_INSTANCE_CONF":
+ *   [
+ *      [ myinst1,3306,/opt/sequoiasql/mysql/database/3306,u1604-fangjiabin:11810 ],
+ *      [ myinst2,3307,/opt/sequoiasql/mysql/database/3307,u1604-fangjiabin:11810 ],
+ *      ...
+ *   ]
+ * }
+ */
+function checkMysql()
 {
+   var mysqlInfo = {} ;
    var ignoreNotInstall = !USER_SET_DEPLOY ;
 
    // check it has installation or not
@@ -1207,15 +1348,106 @@ function deployMysql()
       return ;
    }
    var installedPath = installInfo.INSTALL_DIR ;
+   mysqlInfo[FIELD_MYSQL_INSTALL_PATH] = installedPath ;
 
    // check user
    checkUser( "mysql", installInfo ) ;
 
-   var sqlCtl = installedPath + "/bin/sdb_sql_ctl" ;
-   var cmd = new Cmd() ;
-
    // get configure
    var allConf = getSqlConf( "mysql", installedPath ) ;
+
+   // check mysql instance conf
+   for ( var i in allConf )
+   {
+      var instanceConf = allConf[i] ;
+      var port = instanceConf[1] ;
+      var databaseDir = instanceConf[2] ;
+      checkPort( port, MY_HOSTNAME ) ;
+      checkFilePath( databaseDir, MY_HOSTNAME, false ) ;
+   }
+
+   mysqlInfo[FIELD_MYSQL_INSTANCE_CONF] = allConf ;
+
+   return mysqlInfo ;
+}
+
+/**
+ * Check and return pg info: pg installation path and pg instance configuration
+ *                           include instance name, port, databaseDir and
+ *                           coordAddr
+ * @param  null
+ * @return jsonObj       pg info
+ * {
+ *   "PG_INSTALL_PATH":  "/opt/sequoiasql/postgresql",
+ *   "PG_INSTANCE_CONF":
+ *   [
+ *      [ myinst1,5432,/opt/sequoiasql/postgresql/database/5432,u1604-fangjiabin:11810 ],
+ *      [ myinst2,5433,/opt/sequoiasql/postgresql/database/5433,u1604-fangjiabin:11810 ],
+ *      ...
+ *   ]
+ * }
+ */
+function checkPostgresql()
+{
+   var pgInfo = {} ;
+   var ignoreNotInstall = !USER_SET_DEPLOY ;
+
+   // check it has installation or not
+   var installInfo = getSqlInstallInfo( "pg", ignoreNotInstall,
+                                        PG_INSTALL_PATH ) ;
+   if ( installInfo == undefined && ignoreNotInstall )
+   {
+      return ;
+   }
+   var installedPath = installInfo.INSTALL_DIR ;
+   pgInfo[FIELD_PG_INSTALL_PATH] = installedPath ;
+
+   // check user
+   checkUser( "pg", installInfo ) ;
+
+   // get configure
+   var allConf = getSqlConf( "pg", installedPath ) ;
+
+   // check pg conf
+   for ( var i in allConf )
+   {
+      var instanceConf = allConf[i] ;
+      var port = instanceConf[1] ;
+      var databaseDir = instanceConf[2] ;
+      checkPort( port, MY_HOSTNAME ) ;
+      checkFilePath( databaseDir, MY_HOSTNAME, false ) ;
+   }
+
+   pgInfo[FIELD_PG_INSTANCE_CONF] = allConf ;
+
+   return pgInfo ;
+}
+
+function deploySequoiadb( nodesConf )
+{
+   println( "\n************ Deploy SequoiaDB ************************" ) ;
+
+   // get node configure
+   var catalogConf = nodesConf[FIELD_SEQUOIADB_CATA_CONF] ;
+   var coordConf = nodesConf[FIELD_SEQUOIADB_COORD_CONF] ;
+   var dataConf = nodesConf[FIELD_SEQUOIADB_DATA_CONF] ;
+
+   // create sequoiadb cluster
+   createTmpCoord() ;
+   createCatalog( catalogConf ) ;
+   createCoord( coordConf ) ;
+   createData( dataConf ) ;
+
+   removeTmpCoord() ;
+}
+
+function deployMysql( mysqlInfo )
+{
+   println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
+   var installedPath = mysqlInfo[FIELD_MYSQL_INSTALL_PATH] ;
+   var allConf = mysqlInfo[FIELD_MYSQL_INSTANCE_CONF] ;
+   var sqlCtl = installedPath + "/bin/sdb_sql_ctl" ;
+   var cmd = new Cmd() ;
 
    // create instance
    for ( var i in allConf )
@@ -1230,7 +1462,7 @@ function deployMysql()
       try
       {
          // add instance
-         var command = sqlCtl + " addinst "+ instanceName +" -D " +
+         var command = sqlCtl + " addinst " + instanceName + " -D " +
                        databaseDir + " -p " + port ;
          cmd.run( command ) ;
       }
@@ -1279,28 +1511,14 @@ function deployMysql()
    }
 }
 
-function deployPostgresql( ignoreNotInstall )
+function deployPostgresql( pgInfo )
 {
-   var ignoreNotInstall = !USER_SET_DEPLOY ;
-
-   // check it has installation or not
-   var installInfo = getSqlInstallInfo( "pg", ignoreNotInstall,
-                                        PG_INSTALL_PATH ) ;
-   if ( installInfo == undefined && ignoreNotInstall )
-   {
-      return ;
-   }
-   var installedPath = installInfo.INSTALL_DIR ;
-
-   // check user
-   checkUser( "pg", installInfo ) ;
-
+   println( "\n************ Deploy SequoiaSQL-PostgreSQL ************"  ) ;
+   var installedPath = pgInfo[FIELD_PG_INSTALL_PATH] ;
+   var allConf = pgInfo[FIELD_PG_INSTANCE_CONF] ;
    var sqlCtl = installedPath + "/bin/sdb_sql_ctl" ;
    var psql = installedPath + "/bin/psql" ;
    var cmd = new Cmd() ;
-
-   // get configure
-   var allConf = getSqlConf( "pg", installedPath ) ;
 
    // create instance
    var dbName = "foo" ;
