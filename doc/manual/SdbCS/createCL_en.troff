@@ -167,22 +167,17 @@ occur.
 The parameter \f[C]options\f[] haves one or more fields, please use comma(,) to
 separate.
 .IP \[bu] 2
+When creating collection space, user can specify \f[C]Domain\f[].
+When creating collection, using \f[C]Group\f[] parameter, the specified
+replication group must be in the domain; when no using \f[C]Group\f[] parameter,
+the collection will be created on any replication group in the domain.
+.IP \[bu] 2
+\f[C]AutoSplit\f[] parameter in createCL() has higher priority than
+\f[C]AutoSplit\f[] attribute in domain.
+.IP \[bu] 2
 AutoSplit must cooperate with hash partitioning.
 .IP \[bu] 2
 AutoSplit and Group cannot be set at the same time.
-.IP \[bu] 2
-If AutoSplit is not specified in a collection, the value of AutoSplit will come
-from domain.
-.IP \[bu] 2
-If AutoSplit is specified in a collection which is belong to a domain, the value
-of AutoSplit will cover the AutoSplit value of domain.
-.IP \[bu] 2
-If AutoSplit is specified in a collection which is not belong to any domain, the
-collection will be splitted into all groups of SYSDOMAIN.
-.IP \[bu] 2
-Group must exist in a domain, which contains a collection space, which has the
-group(All replica group belong to SYSDOMAIN, that is to say, a collection space
-can be distributed into any replica group if no specific group is given)
 .IP \[bu] 2
 Compression algorithm selection strategy: the snappy algorithm compresses data
 in units of a single record, and the internal data repeatability directly

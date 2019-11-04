@@ -39,7 +39,7 @@ belong to one and only one collection.
     3. `Partition` ( *Int32* ): Specify the number of hash slices, only valid when 
                                  `ShardingType` is "hash". The number of hash slices 
                                  should be power of 2 and in the range of [2\^3，2\^20],
-  			                     default to be 1024.
+                                 default to be 1024.
                                  
         Format: `Partition: <num>`
 
@@ -117,29 +117,16 @@ or not, default to be false.
 
     * The parameter `options` haves one or more fields, please use
       comma(,) to separate.
-   
-    *  AutoSplit must cooperate with hash partitioning.
 
-    *  AutoSplit and Group cannot be set at the same time.
+    * When creating collection space, user can specify `Domain`. When creating collection, using `Group` parameter, the specified replication group must be in the domain; when no using `Group` parameter, the collection will be created on any replication group in the domain.
+    
+    * `AutoSplit` parameter in createCL() has higher priority than `AutoSplit` attribute in domain.
+    
+    * AutoSplit must cooperate with hash partitioning.
 
-    *  If AutoSplit is not specified in a collection, the value
-       of AutoSplit will come from domain.
+    * AutoSplit and Group cannot be set at the same time.
 
-    *  If AutoSplit is specified in a collection which is belong to
-       a domain, the value of AutoSplit will cover the AutoSplit value
-       of domain.
-
-    *  If AutoSplit is specified in a collection which is not belong
-       to any domain, the collection will be splitted into all groups
-       of SYSDOMAIN.
-
-    *  Group must exist in a domain, which contains a collection
-       space, which has the group(All replica group belong to
-       SYSDOMAIN, that is to say, a collection space can be
-       distributed into any replica group if no specific group is
-       given)
-       
-    *  Compression algorithm selection strategy: the snappy algorithm compresses data in units of a single record, and the internal data repeatability directly affects the compression ratio. Therefore, when the internal data of the record is relatively high in repetition, such as the field name and field value of a record are similar, the snappy algorithm can be used to obtain good compression performance. If the internal data of record is very low in repetition, but the records have higher similarity, such as different records with the same field name, similar field values, etc., lzw compression is better.
+    * Compression algorithm selection strategy: the snappy algorithm compresses data in units of a single record, and the internal data repeatability directly affects the compression ratio. Therefore, when the internal data of the record is relatively high in repetition, such as the field name and field value of a record are similar, the snappy algorithm can be used to obtain good compression performance. If the internal data of record is very low in repetition, but the records have higher similarity, such as different records with the same field name, similar field values, etc., lzw compression is better.
 
 ##RETURN VALUE##
 
