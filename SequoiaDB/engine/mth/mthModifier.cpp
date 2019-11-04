@@ -277,6 +277,7 @@ namespace engine
                                                   maxEle, dollarNum ) ;
             PD_CHECK( NULL != incMe, SDB_OOM, error, PDERROR,
                       "Failed to new IncModifierElement:rc=%d", rc ) ;
+
             rc = incMe->calcDefaultResult( _strictDataMode ) ;
             if ( SDB_OK != rc )
             {
@@ -285,6 +286,7 @@ namespace engine
                        rc ) ;
                goto error ;
             }
+
             _modifierElements.push_back( incMe ) ;
          }
          else
@@ -3341,6 +3343,16 @@ namespace engine
          }
       }
 
+      if ( _minEle.type() == NumberDecimal )
+      {
+         _minDecimal = _minEle.numberDecimal() ;
+      }
+
+      if ( _maxEle.type() == NumberDecimal )
+      {
+         _maxDecimal = _maxEle.numberDecimal() ;
+      }
+
       // calculate default result
       if ( _default.isNumber() || _default.eoo() )
       {
@@ -3401,19 +3413,43 @@ namespace engine
 
       if ( _minEle.isNumber() )
       {
-         compRC = _minEle.woCompare( resultEle, FALSE ) ;
-         if ( compRC > 0 )
+         if ( (resultEle.type() == NumberInt || resultEle.type() == NumberLong)
+              && _minEle.type() == NumberDecimal )
          {
-            return FALSE ;
+            compRC = _minDecimal.compareLong( resultEle.numberLong() ) ;
+            if ( compRC > 0 )
+            {
+               return FALSE ;
+            }
+         }
+         else
+         {
+            compRC = _minEle.woCompare( resultEle, FALSE ) ;
+            if ( compRC > 0 )
+            {
+               return FALSE ;
+            }
          }
       }
 
       if ( _maxEle.isNumber() )
       {
-         compRC = _maxEle.woCompare( resultEle, FALSE ) ;
-         if ( compRC < 0 )
+         if ( (resultEle.type() == NumberInt || resultEle.type() == NumberLong)
+              && _maxEle.type() == NumberDecimal )
          {
-            return FALSE ;
+            compRC = _maxDecimal.compareLong( resultEle.numberLong() ) ;
+            if ( compRC < 0 )
+            {
+               return FALSE ;
+            }
+         }
+         else
+         {
+            compRC = _maxEle.woCompare( resultEle, FALSE ) ;
+            if ( compRC < 0 )
+            {
+               return FALSE ;
+            }
          }
       }
 

@@ -111,7 +111,11 @@ namespace engine
       BSONElement _valueEle ;
       BSONElement _default ;
       BSONElement _minEle ;
+      bsonDecimal _minDecimal ;
+
       BSONElement _maxEle ;
+      bsonDecimal _maxDecimal ;
+
       BSONObj _defaultResult ;
 
       _IncModifierElement( const BSONElement &e,

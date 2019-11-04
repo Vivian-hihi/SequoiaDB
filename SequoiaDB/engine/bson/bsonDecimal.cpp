@@ -116,7 +116,7 @@ namespace bson {
       sdb_decimal_set_zero( &_decimal ) ;
    }
 
-   BOOLEAN bsonDecimal::isZero()
+   BOOLEAN bsonDecimal::isZero() const
    {
       return sdb_decimal_is_zero( &_decimal ) ;
    }
@@ -171,6 +171,93 @@ namespace bson {
 
       *value = sdb_decimal_to_long( &_decimal ) ;
       return SDB_OK ;
+   }
+
+   INT32 bsonDecimal::_checkAndGetUint64( UINT64 &result ) const
+   {
+      INT32 rc = SDB_OK ;
+      static const int s_uint64DigitSize = 5 ;
+      static short s_uint64MaxValue[ s_uint64DigitSize ]
+                                             = {1844, 6744, 737, 955, 1615} ;
+
+      if ( isZero() )
+      {
+         result = 0 ;
+         goto done ;
+      }
+
+      if ( _decimal.sign == SDB_DECIMAL_POS && _decimal.dscale == 0
+           && _decimal.weight == _decimal.ndigits - 1
+           && _decimal.ndigits <= s_uint64DigitSize )
+      {
+         INT32 index = 0 ;
+         if ( _decimal.ndigits == s_uint64DigitSize )
+         {
+            while ( index < s_uint64DigitSize )
+            {
+               if ( s_uint64MaxValue[ index ] < _decimal.digits[ index ] )
+               {
+                  rc = SDB_VALUE_OVERFLOW ;
+                  goto error ;
+               }
+               else if ( s_uint64MaxValue[ index ] > _decimal.digits[ index ] )
+               {
+                  break ;
+               }
+
+               ++index ;
+            }
+         }
+
+         index = 0 ;
+         result = 0 ;
+         while ( index < _decimal.ndigits )
+         {
+            result = result * SDB_DECIMAL_NBASE + _decimal.digits[ index ] ;
+            ++index ;
+         }
+
+         goto done ;
+      }
+
+      rc = SDB_VALUE_OVERFLOW ;
+      goto error ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 bsonDecimal::compareLong( INT64 value ) const
+   {
+      UINT64 uLongValue = 0 ;
+      if ( _checkAndGetUint64( uLongValue ) == SDB_OK )
+      {
+         if ( value < 0 || uLongValue > (UINT64) value )
+         {
+            return 1 ;
+         }
+         else if ( uLongValue < (UINT64) value )
+         {
+            return -1 ;
+         }
+         else
+         {
+            return 0 ;
+         }
+      }
+      else
+      {
+         bsonDecimal decimal ;
+         INT32 rcTmp = decimal.fromLong( value ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            throw bsonDecimalException( rcTmp, "Failed to parse long value" ) ;
+         }
+
+         return compare( decimal ) ;
+      }
    }
 
    INT32 bsonDecimal::fromDouble( FLOAT64 value )
@@ -360,8 +447,7 @@ namespace bson {
       rc = decimal.fromInt( right ) ;
       if ( SDB_OK != rc )
       {
-         // always bigger than error
-         return 1 ;
+         throw bsonDecimalException( rc, "Failed to parse int value" ) ;
       }
 
       return compare( decimal ) ;

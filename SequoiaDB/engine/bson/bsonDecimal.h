@@ -53,7 +53,7 @@ namespace bson {
       INT32          init( INT32 precision, INT32 scale ) ;
 
       void           setZero() ;
-      BOOLEAN        isZero() ;
+      BOOLEAN        isZero() const ;
 
       void           setMin() ;
       BOOLEAN        isMin() ;
@@ -66,6 +66,7 @@ namespace bson {
 
       INT32          fromLong( INT64 value ) ;
       INT32          toLong( INT64 *value ) const ;
+      INT32          compareLong( INT64 value ) const ;
 
       INT32          fromDouble( FLOAT64 value ) ;
       INT32          toDouble( FLOAT64 *value ) const ;
@@ -119,6 +120,9 @@ namespace bson {
       INT32          getNdigit() const ;
       const INT16*   getDigits() const ;
       INT32          getSize() const ;
+
+   private:
+      INT32          _checkAndGetUint64( UINT64 &result ) const ;
 
    private:
       bson_decimal   _decimal ;
