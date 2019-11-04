@@ -1087,6 +1087,15 @@ namespace engine
       {
          rc = SDB_OK ;
       }
+      else if ( SDB_DMS_CS_UNIQUEID_CONFLICT == rc )
+      {
+         rc = _renameCSByCatalog( csName, csUniqueID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Rename collection space[%s] by "
+                    "catalog failed, rc: %d", sessionName(), csName, rc ) ;
+         }
+      }
       else if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "Session[%s]: Create collection space[%s] by "
@@ -1207,6 +1216,25 @@ namespace engine
          {
             rc = SDB_OK ;
          }
+         else if ( SDB_DMS_UNIQUEID_CONFLICT == rc )
+         {
+            rc = _renameCLByCatalog( clFullName, clUniqueID ) ;
+            if ( rc )
+            {
+               if ( NULL == pParent )
+               {
+                  PD_LOG( PDWARNING, "Session[%s]: "
+                          "Rename collection[%s] by catalog failed, rc: %d",
+                          sessionName(), clFullName, rc ) ;
+               }
+               else
+               {
+                  PD_LOG( PDWARNING, "Session[%s]: Rename sub-collection[%s] "
+                          "of main-collection[%s] by catalog failed, rc: %d",
+                          sessionName(), clFullName, pParent, rc ) ;
+               }
+            }
+         }
          else if ( SDB_OK != rc )
          {
             if ( NULL == pParent )
@@ -1217,7 +1245,7 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDWARNING, "Session[%s]: Create sub-collection[%] "
+               PD_LOG( PDWARNING, "Session[%s]: Create sub-collection[%s] "
                        "of main-collection[%s] by catalog failed, rc: %d",
                        sessionName(), clFullName, pParent, rc ) ;
             }
@@ -1239,6 +1267,235 @@ namespace engine
       }
 
    done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__RENAMECSBYC, "_clsShdSession::_renameCSByCatalog" )
+   INT32 _clsShdSession::_renameCSByCatalog( const CHAR* csName,
+                                             utilCSUniqueID csUniqueID )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__RENAMECSBYC ) ;
+
+      INT32 rc                   = SDB_OK ;
+      utilCSUniqueID tmpUniqueID = UTIL_UNIQUEID_NULL ;
+      dmsStorageUnitID suID      = DMS_INVALID_SUID ;
+      dmsStorageUnit *su         = NULL ;
+      INT64 contextID            = 0 ;
+      rtnContextRenameCS *pCtx   = NULL ;
+      CHAR csNameInData[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      rtnContextBuf buffObj ;
+
+      PD_CHECK( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid collection space[%s] unique id[%u]",
+                csName, csUniqueID ) ;
+
+      /// 1) get csName in data by UniqueID
+      rc = _pDmsCB->idToSUAndLock( csUniqueID, suID, &su, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to loop up su by cs unique id[%u], rc: %d",
+                   csUniqueID, rc ) ;
+
+      ossStrncpy( csNameInData, su->CSName(), DMS_COLLECTION_SPACE_NAME_SZ ) ;
+
+      _pDmsCB->suUnlock( suID, SHARED ) ;
+      suID = DMS_INVALID_SUID ;
+      su = NULL ;
+
+      PD_CHECK( 0 != ossStrcmp( csName, csNameInData ), SDB_OK, done, PDINFO,
+                "Collection space name[%s] is the same, don't need to rename",
+                csNameInData ) ;
+
+      /// 2) rename cs phase 1
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMECS, (rtnContext **)&pCtx,
+                                contextID, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR, "Failed to create context, "
+                   "rename collection space[%s] to[%s], rc: %d",
+                   csNameInData, csName, rc ) ;
+
+      rc = pCtx->open( csNameInData, csName, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR, "Failed to open context, "
+                   "rename collection space[%s] to[%s], rc: %d",
+                   csNameInData, csName, rc ) ;
+
+      // 3) check catalog again, in case that someone rename back
+      rc = _pShdMgr->rGetCSInfo( csName, tmpUniqueID ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get collection space[%s] from catalog, rc: %d",
+                   csName, rc ) ;
+
+      PD_CHECK( csUniqueID == tmpUniqueID,
+                SDB_DMS_CS_UNIQUEID_CONFLICT, error, PDERROR,
+                "Unexpected collection space[%s] unique id[%u], expect[%u]",
+                csName, tmpUniqueID, csUniqueID ) ;
+
+      /// 4) rename cs phase 2
+      rc = pCtx->getMore( -1, buffObj, _pEDUCB ) ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get more, "
+                   "rename collection space[%s] to[%s], rc: %d",
+                   csNameInData, csName, rc ) ;
+
+      PD_LOG( PDEVENT,
+              "Rename collection space[%s] to [%s] by catalog succeed",
+              csNameInData, csName ) ;
+
+   done:
+      if ( su )
+      {
+         _pDmsCB->suUnlock( suID, SHARED ) ;
+         suID = DMS_INVALID_SUID ;
+         su = NULL ;
+      }
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
+         contextID = -1 ;
+         pCtx = NULL ;
+      }
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__RENAMECSBYC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__RENAMECLBYC, "_clsShdSession::_renameCLByCatalog" )
+   INT32 _clsShdSession::_renameCLByCatalog( const CHAR* clFullName,
+                                             utilCLUniqueID clUniqueID )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__RENAMECLBYC ) ;
+
+      INT32 rc                   = SDB_OK ;
+      utilCSUniqueID csUniqueID  = utilGetCSUniqueID( clUniqueID ) ;
+      utilCLUniqueID tmpUniqueID = UTIL_UNIQUEID_NULL ;
+      dmsStorageUnitID suID      = DMS_INVALID_SUID ;
+      dmsStorageUnit *su         = NULL ;
+      INT64 contextID            = 0 ;
+      rtnContextRenameCL *pCtx   = NULL ;
+      dmsMBContext *pMBContext   = NULL ;
+      clsCatalogSet *pCatSet     = NULL ;
+      CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ]       = { 0 } ;
+      CHAR csNameInData[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      CHAR clName[ DMS_COLLECTION_NAME_SZ + 1 ]             = { 0 } ;
+      CHAR clNameInData[ DMS_COLLECTION_NAME_SZ + 1 ]       = { 0 } ;
+      rtnContextBuf buffObj ;
+
+      PD_CHECK( UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) &&
+                UTIL_IS_VALID_CSUNIQUEID( csUniqueID ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid collection[%s] unique id[%llu, %u]",
+                clFullName, clUniqueID, csUniqueID ) ;
+
+      /// 1) resolve cl name
+      rc = rtnResolveCollectionName( clFullName, ossStrlen( clFullName ),
+                                     csName, DMS_COLLECTION_SPACE_NAME_SZ,
+                                     clName, DMS_COLLECTION_NAME_SZ ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to resolve collection[%s], rc: %d",
+                   clFullName, rc) ;
+
+      /// 2) get csName clName in data by UniqueID
+      rc = _pDmsCB->idToSUAndLock( csUniqueID, suID, &su, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to loop up su by cs unique id[%u], rc: %d",
+                   csUniqueID, rc ) ;
+
+      rc = su->data()->getMBContextByID( &pMBContext, clUniqueID, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get mb context by cl unique id[%llu], rc: %d",
+                   clUniqueID, rc ) ;
+
+      ossStrncpy( csNameInData, su->CSName(), DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      ossStrncpy( clNameInData,
+                  pMBContext->mb()->_collectionName,
+                  DMS_COLLECTION_NAME_SZ ) ;
+
+      su->data()->releaseMBContext( pMBContext ) ;
+      pMBContext = NULL ;
+
+      _pDmsCB->suUnlock( suID, SHARED ) ;
+      suID = DMS_INVALID_SUID ;
+      su = NULL ;
+
+      PD_CHECK( 0 == ossStrcmp( csName, csNameInData ),
+                SDB_DMS_UNIQUEID_CONFLICT, error, PDERROR,
+                "Unexpected cs name[%s], expect[%s]",
+                csNameInData, csName ) ;
+      PD_CHECK( 0 != ossStrcmp( clName, clNameInData ),
+                SDB_OK, done, PDINFO,
+                "CL name[%s] is the same, don't need to rename",
+                clFullName ) ;
+
+      /// 3) rename cl phase 1
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMECL, (rtnContext **)&pCtx,
+                                contextID, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR, "Failed to create context, "
+                   "rename collection[%s.%s] to [%s.%s], rc: %d",
+                   csName, clNameInData, csName, clName, rc ) ;
+
+      rc = pCtx->open( csName, clNameInData, clName, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR, "Failed to open context, "
+                   "rename collection[%s.%s] to [%s.%s], rc: %d",
+                   csName, clNameInData, csName, clName, rc ) ;
+
+      /// 4) check catalog again, in case that someone rename back
+      _pCatAgent->lock_w() ;
+      _pCatAgent->clear( clFullName ) ;
+      _pCatAgent->release_w() ;
+
+      rc = _pShdMgr->getAndLockCataSet( clFullName, &pCatSet, TRUE ) ;
+      if ( SDB_OK == rc && pCatSet )
+      {
+         tmpUniqueID = pCatSet->clUniqueID() ;
+      }
+      _pShdMgr->unlockCataSet( pCatSet ) ;
+
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to update collection[%s]'s catalog info, rc: %d",
+                   clFullName, rc ) ;
+      PD_CHECK( clUniqueID == tmpUniqueID,
+                SDB_DMS_UNIQUEID_CONFLICT, error, PDERROR,
+                "Unexpected collection[%s] unique id[%u], expect[%u]",
+                clFullName, tmpUniqueID, clUniqueID ) ;
+
+      /// 5) rename cl phase 2
+      rc = pCtx->getMore( -1, buffObj, _pEDUCB ) ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get more, "
+                   "rename collection[%s.%s] to [%s.%s], rc: %d",
+                   csName, clNameInData, csName, clName, rc ) ;
+
+      PD_LOG( PDEVENT,
+              "Rename collection[%s.%s] to [%s.%s] by catalog succeed",
+              csName, clNameInData, csName, clName ) ;
+
+   done:
+      if ( pMBContext )
+      {
+         su->data()->releaseMBContext( pMBContext ) ;
+         pMBContext = NULL ;
+      }
+      if ( su )
+      {
+         _pDmsCB->suUnlock( suID, SHARED ) ;
+         suID = DMS_INVALID_SUID ;
+         su = NULL ;
+      }
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
+         contextID = -1 ;
+         pCtx = NULL ;
+      }
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__RENAMECLBYC, rc ) ;
       return rc ;
    error:
       goto done ;

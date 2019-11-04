@@ -2191,6 +2191,16 @@ namespace engine
       return rc ;
    }
 
+   /**
+    * Get and LOCK catalog cache, in case that someone clear this catalog cache.
+    * Used it with function unlockCataSet().
+    *
+    * @param(i) name          -- collection name
+    * @param(i) ppSet         -- point to catalog cache
+    * @param(i) noWithUpdate  -- whether update catalog if not found
+    * @param(i) waitMillSec   -- wait time for updating
+    * @param(o) pUpdated      -- whether catalog cache has been updated
+    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETANDLOCKCATSET, "_clsShardMgr::getAndLockCataSet" )
    INT32 _clsShardMgr::getAndLockCataSet( const CHAR * name,
                                           clsCatalogSet **ppSet,

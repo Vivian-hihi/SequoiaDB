@@ -1812,6 +1812,9 @@ namespace engine
       if ( SDB_OK == rc )
       {
          rc = SDB_DMS_CS_UNIQUEID_CONFLICT ;
+         PD_LOG ( PDERROR,
+                  "CS unique id[%u] already exists[name: %s], rc: %d",
+                  csUniqueID, cscb->_name, rc ) ;
          goto error ;
       }
       else if ( rc != SDB_DMS_CS_NOTEXIST )

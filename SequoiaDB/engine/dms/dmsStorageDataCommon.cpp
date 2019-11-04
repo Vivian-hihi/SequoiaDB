@@ -2098,10 +2098,18 @@ namespace engine
          rc = SDB_DMS_EXIST ;
          goto error ;
       }
-      if ( DMS_INVALID_MBID != _collectionIdLookup ( clUniqueID ) )
       {
-         rc = SDB_DMS_UNIQUEID_CONFLICT ;
-         goto error ;
+         UINT16 tmpMbID = DMS_INVALID_MBID ;
+         tmpMbID = _collectionIdLookup ( clUniqueID ) ;
+         if ( DMS_INVALID_MBID != tmpMbID )
+         {
+            const CHAR* clname = _dmsMME->_mbList[tmpMbID]._collectionName ;
+            rc = SDB_DMS_UNIQUEID_CONFLICT ;
+            PD_LOG ( PDERROR,
+                     "CL unique id[%llu] already exists[name: %s.%s], rc: %d",
+                     clUniqueID, getSuName(), clname, rc ) ;
+            goto error ;
+         }
       }
 
       if ( DMS_MME_SLOTS <= _dmsHeader->_numMB )
