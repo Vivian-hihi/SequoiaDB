@@ -331,9 +331,10 @@ namespace engine
 
       _options.clearFlag( FLG_QUERY_PARALLED ) ;
 
-      // Do a query, and get another subcontext.
+      // Do a query, and get another subcontext. Sorting is not required here.
+      // It will be done in outside sort context.
       rc = rtnQuery( _options.getCLFullName(), objList[1], objList[0],
-                     objList[2], objList[3], _options.getFlag(), eduCB,
+                     BSONObj(), objList[3], _options.getFlag(), eduCB,
                      0, -1, dmsCB, rtnCB, subContextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query data on collection[ %s ] failed[ %d ]",
                    _options.getCLFullName(), rc ) ;
@@ -347,6 +348,8 @@ namespace engine
       {
          SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
          rtnContext *dataContext = rtnCB->contextFind( subContextID, eduCB ) ;
+         SDB_ASSERT( RTN_CONTEXT_DATA == dataContext->getType(),
+                     "Context type is not RTN_CONTEXT_DATA" ) ;
          dataContext->setResultSetFilter( &_ridFilter ) ;
       }
 
