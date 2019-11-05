@@ -1473,7 +1473,9 @@ namespace seadapter
       SDB_ASSERT( !keySet.empty(), "Key set is empty") ;
 
       BSONObjBuilder builder ;
-      BOOLEAN found = FALSE ;
+      BOOLEAN found = FALSE ;    // Whether any string field(or string array)
+                                 // is found.
+
       try
       {
          if ( 1 == keySet.size() )
@@ -1498,6 +1500,7 @@ namespace seadapter
             // One of the index field is of type array. Resume the array from
             // the keys. Compare the elements of the first and second key. If
             // they are not the same, that's the array field.
+            BOOLEAN arrayFieldHit = FALSE ;
             BSONObjIterator itrFirst( *(keySet.begin()) ) ;
             BSONObjIterator itrSecond( *(++keySet.begin()) ) ;
 
@@ -1505,26 +1508,29 @@ namespace seadapter
             {
                BSONElement lNextEle = itrFirst.next() ;
                BSONElement rNextEle = itrSecond.next() ;
-               if ( found || 0 == lNextEle.woCompare( rNextEle, true) )
+               if ( arrayFieldHit || 0 == lNextEle.woCompare( rNextEle, true) )
                {
-                  // Same, it's not the array field. Only keep  string fields.
+                  // Same, it's not the array field. Only keep string fields.
                   if ( String != lNextEle.type() )
                   {
                      continue ;
                   }
                   builder.append( lNextEle ) ;
+                  if ( !found )
+                  {
+                     found = TRUE ;
+                  }
                }
                else
                {
-                  // Found the array field.
-                  if ( String != lNextEle.type() || String != rNextEle.type() )
+                  // The array field is found. If any element of the array field
+                  // is of non-string type, ignore the array.
+                  arrayFieldHit = TRUE ;
+                  if ( String == lNextEle.type() && String == rNextEle.type() )
                   {
-                     goto done ;
-                  }
-                  {
+                     BOOLEAN pureStrArray = TRUE ;
                      const CHAR *arrField = lNextEle.fieldName() ;
-                     BSONArrayBuilder arrBuilder(
-                        builder.subarrayStart( arrField ) ) ;
+                     BSONArrayBuilder arrBuilder ;
                      arrBuilder.append( lNextEle ) ;
                      arrBuilder.append( rNextEle ) ;
                      // Get the array field from all key record.
@@ -1536,14 +1542,21 @@ namespace seadapter
                         BSONElement ele = itr->getField( arrField ) ;
                         if ( String != ele.type() )
                         {
-                           goto done ;
+                           pureStrArray = FALSE ;
+                           break ;
                         }
-
                         arrBuilder.append( itr->getStringField( arrField ) ) ;
                         ++itr ;
                      }
-                     arrBuilder.done() ;
-                     found = TRUE ;
+                     if ( pureStrArray )
+                     {
+                        arrBuilder.doneFast() ;
+                        builder.append( arrField, arrBuilder.arr() ) ;
+                        if ( !found )
+                        {
+                           found = TRUE ;
+                        }
+                     }
                   }
                }
             }
