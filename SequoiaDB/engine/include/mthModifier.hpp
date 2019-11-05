@@ -245,6 +245,8 @@ namespace engine
       BOOLEAN        _ignoreTypeError ;
       BOOLEAN        _strictDataMode ;
 
+      INT32 _addToKeepSet( const CHAR *fieldName ) ;
+      INT32 _addToModifierVector( ModifierElement *element ) ;
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
       ModType _parseModType ( const CHAR *field ) ;

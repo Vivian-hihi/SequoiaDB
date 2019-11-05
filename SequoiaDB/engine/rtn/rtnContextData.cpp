@@ -1054,18 +1054,27 @@ namespace engine
       BSONElement ele ;
       segments.clear() ;
 
-      BSONObjIterator it ( obj ) ;
-      while ( it.more() )
+      try
       {
-         ele = it.next() ;
-         if ( NumberInt != ele.type() )
+         BSONObjIterator it ( obj ) ;
+         while ( it.more() )
          {
-            PD_LOG( PDWARNING, "Datablocks[%s] value type[%d] is not NumberInt",
-                    obj.toString().c_str(), ele.type() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            ele = it.next() ;
+            if ( NumberInt != ele.type() )
+            {
+               PD_LOG( PDWARNING, "Datablocks[%s] value type[%d] is not NumberInt",
+                       obj.toString().c_str(), ele.type() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            segments.push_back( ele.numberInt() ) ;
          }
-         segments.push_back( ele.numberInt() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to parse segments: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
    done:
@@ -1145,43 +1154,53 @@ namespace engine
       indexBlocks.clear() ;
       indexRIDs.clear() ;
 
-      BSONObjIterator it ( obj ) ;
-      while ( it.more() )
+      try
       {
-         ele = it.next() ;
-         if ( Object != ele.type() )
+         BSONObjIterator it ( obj ) ;
+         while ( it.more() )
          {
-            PD_LOG( PDWARNING, "Indexblocks[%s] value type[%d] is not Object",
-                    obj.toString().c_str(), ele.type() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            ele = it.next() ;
+            if ( Object != ele.type() )
+            {
+               PD_LOG( PDWARNING, "Indexblocks[%s] value type[%d] is not "
+                       "Object", obj.toString().c_str(), ele.type() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            indexObj = ele.embeddedObject() ;
+            // StartKey
+            rc = rtnGetObjElement( indexObj, FIELD_NAME_STARTKEY, startKey ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s] from obj[%s], "
+                         "rc: %d", FIELD_NAME_STARTKEY,
+                         indexObj.toString().c_str(), rc ) ;
+            // EndKey
+            rc = rtnGetObjElement( indexObj, FIELD_NAME_ENDKEY, endKey ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s] from obj[%s], "
+                         "rc: %d", FIELD_NAME_ENDKEY,
+                         indexObj.toString().c_str(), rc ) ;
+            // StartRID
+            rc = _parseRID( indexObj.getField( FIELD_NAME_STARTRID ),
+                            startRID ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to parse %s, rc: %d",
+                         FIELD_NAME_STARTRID, rc ) ;
+
+            // EndRID
+            rc = _parseRID( indexObj.getField( FIELD_NAME_ENDRID ), endRID ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to parse %s, rc: %d",
+                         FIELD_NAME_ENDRID, rc ) ;
+
+            indexBlocks.push_back( rtnNullKeyNameObj( startKey ).getOwned() ) ;
+            indexBlocks.push_back( rtnNullKeyNameObj( endKey ).getOwned() ) ;
+
+            indexRIDs.push_back( startRID ) ;
+            indexRIDs.push_back( endRID ) ;
          }
-         indexObj = ele.embeddedObject() ;
-         // StartKey
-         rc = rtnGetObjElement( indexObj, FIELD_NAME_STARTKEY, startKey ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s] from obj[%s], "
-                      "rc: %d", FIELD_NAME_STARTKEY,
-                      indexObj.toString().c_str(), rc ) ;
-         // EndKey
-         rc = rtnGetObjElement( indexObj, FIELD_NAME_ENDKEY, endKey ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s] from obj[%s], "
-                      "rc: %d", FIELD_NAME_ENDKEY,
-                      indexObj.toString().c_str(), rc ) ;
-         // StartRID
-         rc = _parseRID( indexObj.getField( FIELD_NAME_STARTRID ), startRID ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to parse %s, rc: %d",
-                      FIELD_NAME_STARTRID, rc ) ;
-
-         // EndRID
-         rc = _parseRID( indexObj.getField( FIELD_NAME_ENDRID ), endRID ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to parse %s, rc: %d",
-                      FIELD_NAME_ENDRID, rc ) ;
-
-         indexBlocks.push_back( rtnNullKeyNameObj( startKey ).getOwned() ) ;
-         indexBlocks.push_back( rtnNullKeyNameObj( endKey ).getOwned() ) ;
-
-         indexRIDs.push_back( startRID ) ;
-         indexRIDs.push_back( endRID ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to parse indexBlocks: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
       if ( indexBlocks.size() != indexRIDs.size() )

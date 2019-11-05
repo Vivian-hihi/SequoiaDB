@@ -135,6 +135,48 @@ namespace engine
 #define SET_ARRAY_POS_NAME    "pos"
 #define SET_ARRAY_OBJS_NAME   "objs"
 
+   INT32 _mthModifier::_addToKeepSet( const CHAR *fieldName )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         _keepKeys.insert( fieldName ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to add to keepKeys: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // Free element if failure
+   INT32 _mthModifier::_addToModifierVector( ModifierElement *element )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         _modifierElements.push_back( element ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to add to modiferElements: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      SAFE_OSS_DELETE( element ) ;
+      goto done ;
+   }
+
    /*
       _mthModifier implement
    */
@@ -221,7 +263,8 @@ namespace engine
       /// add to vector
       if ( KEEP == type )
       {
-         _keepKeys.insert( ele.fieldName() ) ;
+         rc = _addToKeepSet( ele.fieldName() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add to keep set:rc=%d", rc ) ;
       }
       else if ( INC == type )
       {
@@ -231,7 +274,9 @@ namespace engine
                                                                    dollarNum ) ;
             PD_CHECK( NULL != pMe, SDB_OOM, error, PDERROR,
                       "Failed to new IncModifierElement:rc=%d", rc ) ;
-            _modifierElements.push_back( pMe ) ;
+
+            rc = _addToModifierVector( pMe ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add modifier:rc=%d", rc ) ;
          }
          else if ( Object == ele.type() )
          {
@@ -287,7 +332,8 @@ namespace engine
                goto error ;
             }
 
-            _modifierElements.push_back( incMe ) ;
+            rc = _addToModifierVector( incMe ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add modifier:rc=%d", rc ) ;
          }
          else
          {
@@ -302,7 +348,9 @@ namespace engine
                                                             dollarNum ) ;
          PD_CHECK( NULL != me, SDB_OOM, error, PDERROR,
                    "Failed to new IncModifierElement:rc=%d", rc ) ;
-         _modifierElements.push_back( me ) ;
+
+         rc = _addToModifierVector( me ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add modifier:rc=%d", rc ) ;
       }
 
    done :
@@ -2196,7 +2244,9 @@ namespace engine
             if ( !_isReplaceID )
             {
                /// when not replace _id, keep the _id
-               _keepKeys.insert( DMS_ID_KEY_NAME ) ;
+               rc = _addToKeepSet( DMS_ID_KEY_NAME ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to add to keep set:rc=%d",
+                            rc ) ;
             }
 
             iter = _modifierElements.begin() ;

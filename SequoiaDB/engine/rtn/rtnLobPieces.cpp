@@ -305,8 +305,17 @@ namespace engine
 
       if ( _sections.empty() )
       {
-         _sections.push_back( pieces ) ;
-         goto done ;
+         try
+         {
+            _sections.push_back( pieces ) ;
+            goto done ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Failed to add pieces: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
 
       for ( UINT32 i = pieces.first ; i <= pieces.last ; i++ )
@@ -547,7 +556,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 _rtnLobPiecesInfo::readFrom( const bson::BSONArray& array )
    {
       INT32 rc = SDB_OK ;
