@@ -1026,8 +1026,9 @@ namespace engine
          }
       }
 
-      PD_LOG( PDERROR,  "Failed to run alter task [%s] on collection [%s], "
-              "rc: %d", task->getActionName(), collection, rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s] on "
+                   "collection [%s], rc: %d", task->getActionName(),
+                   collection, rc ) ;
 
    done :
       if ( SDB_OK == rc )
