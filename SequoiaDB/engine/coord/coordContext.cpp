@@ -853,6 +853,12 @@ namespace engine
 
       SDB_ASSERT( NULL != subCtx, "subCtx should be not null" ) ;
 
+      if ( -1 == subCtx->contextID() )
+      {
+         SDB_OSS_DEL subCtx ;
+         goto done ;
+      }
+
       try
       {
          coordSubContext* coordSubCtx = dynamic_cast<coordSubContext*>( subCtx ) ;
@@ -958,6 +964,12 @@ namespace engine
       if ( _numToReturn != 0 && !_hitEnd && _preRead )
       {
          rc = _send2EmptyNodes( cb ) ;
+      }
+
+      if ( !_hitEnd && _emptyContextMap.empty() &&
+           _orderedContextMap.empty() && _prepareContextMap.empty() )
+      {
+         _hitEnd = TRUE ;
       }
 
       return rc ;

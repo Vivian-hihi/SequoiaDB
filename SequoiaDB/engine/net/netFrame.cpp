@@ -1376,9 +1376,15 @@ namespace engine
 
    void _netFrame::closeListen ()
    {
-      if ( _acceptor.is_open() )
+      try
       {
-         _acceptor.close() ;
+         if ( _acceptor.is_open() )
+         {
+            _acceptor.close() ;
+         }
+      }
+      catch( ... )
+      {
       }
    }
 
