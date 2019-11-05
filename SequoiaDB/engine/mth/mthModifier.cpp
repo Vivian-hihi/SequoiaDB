@@ -329,6 +329,8 @@ namespace engine
       BSONObj objResult ;
       BSONElement resultEle ;
       BSONElement elt ;
+      BOOLEAN strictMode = _strictDataMode ;
+
       if ( me._isSimple )
       {
          elt = me._toModify ;
@@ -338,7 +340,13 @@ namespace engine
          elt = me._valueEle ;
       }
 
-      rc = mthModifierInc( in, elt, _strictDataMode, builder ) ;
+      if ( mthIsBiggerNumberType( me._minEle, in )
+           || mthIsBiggerNumberType( me._maxEle, in ) )
+      {
+         strictMode = FALSE ;
+      }
+
+      rc = mthModifierInc( in, elt, strictMode, builder ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to execute $inc:rc=%d", rc ) ;
@@ -3370,6 +3378,12 @@ namespace engine
             leftEle = _default ;
          }
 
+         if ( mthIsBiggerNumberType( _minEle, leftEle )
+                    || mthIsBiggerNumberType( _maxEle, leftEle ) )
+         {
+            strictMode = FALSE ;
+         }
+
          rc = mthModifierInc( leftEle, _valueEle, strictMode, builder ) ;
          if ( SDB_OK != rc )
          {
@@ -3456,7 +3470,32 @@ namespace engine
       return TRUE ;
    }
 
-   INT32 mthModifierInc( const BSONElement& existElement,
+   BOOLEAN mthIsBiggerNumberType( const BSONElement &left,
+                                  const BSONElement &right )
+   {
+      if ( left.isNumber() && right.isNumber() )
+      {
+         if ( left.type() == NumberDecimal && right.type() != NumberDecimal )
+         {
+            return TRUE ;
+         }
+         else if ( left.type() == NumberDouble
+                   && (right.type() == NumberInt || right.type() == NumberLong))
+         {
+            return TRUE ;
+         }
+         else if ( left.type() == NumberLong && right.type() == NumberInt )
+         {
+            return TRUE ;
+         }
+
+         return FALSE ;
+      }
+
+      return left.type() > right.type() ;
+   }
+
+   INT32 mthModifierInc( const BSONElement &existElement,
                          const BSONElement &incElement,BOOLEAN strictMode,
                          BSONObjBuilder &resBuilder )
    {

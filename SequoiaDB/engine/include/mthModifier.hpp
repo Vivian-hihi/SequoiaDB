@@ -475,10 +475,12 @@ namespace engine
       }
    }
 
+   BOOLEAN mthIsBiggerNumberType( const BSONElement &left,
+                                  const BSONElement &right ) ;
+
    INT32 mthModifierInc( const BSONElement& existElement,
                          const BSONElement &inc, BOOLEAN strictMode,
                          BSONObjBuilder &resBuilder ) ;
-
 }
 
 #endif //MTHMODIFIER_HPP_
