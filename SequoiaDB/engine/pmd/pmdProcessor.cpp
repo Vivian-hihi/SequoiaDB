@@ -1690,6 +1690,18 @@ namespace engine
                          opr.getName(), rc ) ;
             needRollback = opr.needRollback() ;
             rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+
+            /// rollback transaction
+            if ( eduCB()->isTransaction() )
+            {
+               INT32 rcTmp = doRollback() ;
+               if ( rcTmp )
+               {
+                  PD_LOG( PDERROR, "Rollback trans info failed, rc: %d",
+                          rcTmp ) ;
+                  rc = rcTmp ;
+               }
+            }
             break ;
          }
          case MSG_BS_MSG_REQ :
