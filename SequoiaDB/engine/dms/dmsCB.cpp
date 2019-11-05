@@ -213,6 +213,9 @@ namespace engine
          SDB_OSS_DEL _vecCSMutex[ i ] ;
          _vecCSMutex[ i ] = NULL ;
       }
+
+      _tempSUMgr.fini() ;
+
       return SDB_OK ;
    }
 
@@ -1032,18 +1035,34 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__GETCSLIST, "_SDB_DMSCB::_getCSList" )
-   void _SDB_DMSCB::_getCSList( vector<std::string> &csNameVec )
+   INT32 _SDB_DMSCB::_getCSList( ossPoolVector< ossPoolString > &csNameVec )
    {
       PD_TRACE_ENTRY( SDB__SDB_DMSCB__GETCSLIST ) ;
-      ossScopedLock lock( &_mutex, SHARED ) ;
 
+      INT32 rc = SDB_OK ;
+
+      ossScopedLock lock( &_mutex, SHARED ) ;
       for ( CSCB_MAP_CONST_ITER itr = _cscbNameMap.begin();
             itr != _cscbNameMap.end(); ++itr )
       {
-         csNameVec.push_back( std::string( itr->first ) ) ;
+         try
+         {
+            csNameVec.push_back( ossPoolString( itr->first ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Get collectionspaces list occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
       }
 
-      PD_TRACE_EXIT( SDB__SDB_DMSCB__GETCSLIST ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB__GETCSLIST, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_WRITABLE, "_SDB_DMSCB::writable" )
@@ -2515,14 +2534,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPCLSIMPLE, "_SDB_DMSCB::dumpInfo" )
-   void _SDB_DMSCB::dumpInfo( MON_CL_SIM_LIST &collectionList,
-                              BOOLEAN sys )
+   INT32 _SDB_DMSCB::dumpInfo( MON_CL_SIM_LIST &collectionList,
+                               BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPCLSIMPLE );
+      INT32 rc = SDB_OK ;
+      CSCB_MAP_CONST_ITER it ;
 
       ossScopedLock _lock(&_mutex, SHARED) ;
-
-      CSCB_MAP_CONST_ITER it ;
 
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
@@ -2542,25 +2561,38 @@ namespace engine
          {
             continue ;
          }
-         su->dumpInfo ( collectionList, sys ) ;
+         rc = su->dumpInfo ( collectionList, sys ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       } // for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPCLSIMPLE );
+
+   done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_DUMPCLSIMPLE, rc );
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPCSSIMPLE, "_SDB_DMSCB::dumpInfo" )
-   void _SDB_DMSCB::dumpInfo( MON_CS_SIM_LIST &csList,
-                              BOOLEAN sys, BOOLEAN dumpCL, BOOLEAN dumpIdx )
+   INT32 _SDB_DMSCB::dumpInfo( MON_CS_SIM_LIST &csList,
+                               BOOLEAN sys, BOOLEAN dumpCL, BOOLEAN dumpIdx )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
 
-      vector<string> csNameVec ;
+      ossPoolVector< ossPoolString > csNameVec ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
 
-      _getCSList( csNameVec ) ;
+      rc = _getCSList( csNameVec ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
-      for ( vector<string>::iterator itr = csNameVec.begin();
+      for ( ossPoolVector< ossPoolString >::iterator itr = csNameVec.begin();
             itr != csNameVec.end(); ++itr )
       {
          // As we do not take the cs metadata mutex here, so cs may have been
@@ -2585,23 +2617,42 @@ namespace engine
          }
 
          monCSSimple cs ;
-         su->dumpInfo( cs, sys, dumpCL, dumpIdx ) ;
-         csList.insert ( cs ) ;
+         rc = su->dumpInfo( cs, sys, dumpCL, dumpIdx ) ;
+         try
+         {
+            csList.insert ( cs ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Dump collectionspaces occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_OOM ;
+         }
+
          suUnlock( suID ) ;
+
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
+   done:
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DUMPCSSIMPLE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO, "_SDB_DMSCB::dumpInfo" )
-   void _SDB_DMSCB::dumpInfo ( MON_CL_LIST &collectionList,
-                               BOOLEAN sys )
+   INT32 _SDB_DMSCB::dumpInfo ( MON_CL_LIST &collectionList, BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPINFO );
 
-      ossScopedLock _lock(&_mutex, SHARED) ;
-
+      INT32 rc = SDB_OK ;
       CSCB_MAP_CONST_ITER it ;
+
+      ossScopedLock _lock(&_mutex, SHARED) ;
 
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
@@ -2621,20 +2672,30 @@ namespace engine
          {
             continue ;
          }
-         su->dumpInfo ( collectionList, sys ) ;
+         rc = su->dumpInfo ( collectionList, sys ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       } // for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO );
-   }  // void dumpInfo
+
+   done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_DUMPINFO, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO2, "_SDB_DMSCB::dumpInfo" )
-   void _SDB_DMSCB::dumpInfo ( MON_CS_LIST &csList,
-                               BOOLEAN sys )
+   INT32 _SDB_DMSCB::dumpInfo ( MON_CS_LIST &csList, BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPINFO2 );
 
-      ossScopedLock _lock(&_mutex, SHARED) ;
-
+      INT32 rc = SDB_OK ;
       CSCB_MAP_CONST_ITER it ;
+
+      ossScopedLock _lock(&_mutex, SHARED) ;
+      
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          dmsStorageUnit *su = NULL ;
@@ -2657,21 +2718,40 @@ namespace engine
             continue ;
          }
          monCollectionSpace cs ;
-         su->dumpInfo ( cs, sys ) ;
-         csList.insert ( cs ) ;
+         rc = su->dumpInfo ( cs, sys ) ;
+         try
+         {
+            csList.insert ( cs ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Dump collectionspaces occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_OOM ;
+         }
+
+         if ( rc )
+         {
+            goto error ;
+         }
       }
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO2 );
+
+   done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_DUMPINFO2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO3, "_SDB_DMSCB::dumpInfo" )
-   void _SDB_DMSCB::dumpInfo ( MON_SU_LIST &storageUnitList,
-                               BOOLEAN sys )
+   INT32 _SDB_DMSCB::dumpInfo ( MON_SU_LIST &storageUnitList, BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPINFO3 );
 
-      ossScopedLock _lock(&_mutex, SHARED) ;
-
+      INT32 rc = SDB_OK ;
       CSCB_MAP_CONST_ITER it ;
+
+      ossScopedLock _lock(&_mutex, SHARED) ;
 
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
@@ -2694,10 +2774,25 @@ namespace engine
 
          su->dumpInfo ( storageUnit ) ;
 
-         storageUnitList.insert( storageUnit ) ;
+         try
+         {
+            storageUnitList.insert( storageUnit ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Dump storages occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
       } // for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
-      PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO3 );
-   }  // void dumpInfo
+
+   done:
+      PD_TRACE_EXITRC( SDB__SDB_DMSCB_DUMPINFO3, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO4, "_SDB_DMSCB::dumpInfo" )
    void _SDB_DMSCB::dumpInfo ( INT64 &totalFileSize )

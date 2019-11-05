@@ -347,22 +347,22 @@ namespace engine
                                    BOOLEAN &lobFlag ) const ;
 
       public:
-         void     dumpInfo ( MON_CL_SIM_LIST &clList,
+         INT32    dumpInfo ( MON_CL_SIM_LIST &clList,
                              BOOLEAN sys = FALSE ) ;
          INT32    dumpInfo ( monCLSimple &collection,
                              dmsMBContext *context,
                              BOOLEAN dumpIdx = FALSE ) ;
-         void     dumpInfo ( MON_CL_SIM_VEC &clList,
+         INT32    dumpInfo ( MON_CL_SIM_VEC &clList,
                              BOOLEAN sys = FALSE,
                              BOOLEAN dumpIdx = FALSE ) ;
-         void     dumpInfo ( MON_CL_LIST &clList,
+         INT32    dumpInfo ( MON_CL_LIST &clList,
                              BOOLEAN sys = FALSE ) ;
          void     dumpInfo ( monStorageUnit &storageUnit ) ;
-         void     dumpInfo ( monCSSimple &collectionSpace,
+         INT32    dumpInfo ( monCSSimple &collectionSpace,
                              BOOLEAN sys = FALSE,
                              BOOLEAN dumpCL = FALSE,
                              BOOLEAN dumpIdx = FALSE ) ;
-         void     dumpInfo ( monCollectionSpace &collectionSpace,
+         INT32    dumpInfo ( monCollectionSpace &collectionSpace,
                              BOOLEAN sys = FALSE ) ;
 
          INT32    getSegExtents ( const CHAR *pName,

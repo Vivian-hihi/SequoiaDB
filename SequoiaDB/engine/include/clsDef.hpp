@@ -74,6 +74,8 @@ namespace engine
    #define CLS_DST_SESSION_NO_MSG_TIME          (300000) // 5 mins
    #define CLS_SRC_SESSION_NO_MSG_TIME          (10000)  // 10 secs
 
+   #define CLS_FS_MAX_BSON_SIZE                 ( 14 * 1024 * 1024 )
+
    enum CLS_SYNC_STATUS
    {
       CLS_SYNC_STATUS_NONE = 0,

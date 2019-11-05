@@ -1027,6 +1027,12 @@ namespace engine
                   hasRenameInfo = FALSE ;
                }
 
+               /// skip SYSTEMP file
+               if ( 0 == ossStrcmp( csName, SDB_DMSTEMP_NAME ) )
+               {
+                  continue ;
+               }
+
                storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                           UTIL_UNIQUEID_NULL,
                                                           sequence,

@@ -69,13 +69,17 @@ namespace engine
       // this function verify whether SYSTEMP collection space exist. If it
       // is not exist then create one. And then reset all temp collections
       INT32 init() ;
+      void  fini() ;
 
       INT32 release ( _dmsMBContext *&context ) ;
 
       INT32 reserve ( _dmsMBContext **ppContext, UINT64 eduID ) ;
 
    private:
-      INT32 _initTmpPath() ;
+      INT32       _cleanTmpPath() ;
+      void        _removeTmpSu() ;
+      INT32       _removeATmpFile( const CHAR *pPath,
+                                   const CHAR *pPosix ) ;
 
    } ;
    typedef class _dmsTempSUMgr dmsTempSUMgr ;

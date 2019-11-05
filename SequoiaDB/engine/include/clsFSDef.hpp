@@ -55,6 +55,7 @@ namespace engine
    #define CLS_FS_KEYOBJ                  "keyobj"
    #define CLS_FS_END_KEYOBJ              "endkeyobj"
    #define CLS_FS_NOMORE                  "nomore"
+   #define CLS_FS_SLICE                   "slice"
    #define CLS_FS_INDEXES                 "indexes"
    #define CLS_FS_FULLNAME                "fullname"
    #define CLS_FS_FULLNAMES               "fullnames"

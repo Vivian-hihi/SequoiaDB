@@ -151,8 +151,8 @@ namespace engine
 
          void              resetMon( EDUID eduID = PMD_INVALID_EDUID ) ;
          void              resetIOService() ;
-         void              dumpInfo( set<monEDUSimple> &info ) ;
-         void              dumpInfo( set<monEDUFull> &info ) ;
+         INT32             dumpInfo( set<monEDUSimple> &info ) ;
+         INT32             dumpInfo( set<monEDUFull> &info ) ;
 
 #if defined(SDB_ENGINE)
          INT32             beginDumpEDUTrans( EDUID eduID,

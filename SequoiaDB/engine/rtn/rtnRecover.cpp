@@ -53,6 +53,8 @@ namespace engine
 
    #define RTN_REBUILD_RESET_LSN       ( (UINT64)~0 )
 
+   #define RTN_REBUILD_MAX_LSN_DIFF    ( 32 * 1024 * 1024 )
+
    _rtnCLRebuilderBase::_rtnCLRebuilderBase( dmsStorageUnit *pSU,
                                              const CHAR *pCLShortName )
    {
@@ -1713,6 +1715,7 @@ namespace engine
    _rtnRecoverUnit::_rtnRecoverUnit()
    {
       _pSU = NULL ;
+      _maxLsn = DPS_INVALID_LSN_OFFSET ;
    }
 
    _rtnRecoverUnit::~_rtnRecoverUnit()
@@ -1762,6 +1765,12 @@ namespace engine
             /// add to map
             _clStatus[ clFullName ] = info ;
 
+            if ( DPS_INVALID_LSN_OFFSET == _maxLsn ||
+                 _maxLsn < info.maxLSN() )
+            {
+               _maxLsn = info.maxLSN() ;
+            }
+
             PD_LOG( PDINFO, "Collection[%s] commit status[DataFlag:%u, "
                     "DataLSN:%llu, IdxFlag:%u, IdxLSN:%llu, LobFlag:%u, "
                     "LobLSN:%llu]", clFullName.c_str(), info._dataCommitFlag,
@@ -1777,6 +1786,7 @@ namespace engine
    void _rtnRecoverUnit::release()
    {
       _pSU = NULL ;
+      _maxLsn = DPS_INVALID_LSN_OFFSET ;
       _clStatus.clear() ;
    }
 
@@ -2039,6 +2049,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasLock = FALSE ;
+      UINT64 maxLsn = DPS_INVALID_LSN_OFFSET ;
 
       if ( pmdGetStartup().isOK() )
       {
@@ -2083,7 +2094,11 @@ namespace engine
       }
 
       /// dump all collectionspace
-      dmsCB->dumpInfo( csList, TRUE, FALSE, FALSE ) ;
+      rc = dmsCB->dumpInfo( csList, TRUE, FALSE, FALSE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       totalCount = csList.size() ;
 
       for ( it = csList.begin() ; it != csList.end() ; ++it )
@@ -2109,6 +2124,12 @@ namespace engine
          rtnRecoverUnit recoverUnit ;
          recoverUnit.init( su ) ;
 
+         if ( DPS_INVALID_LSN_OFFSET == maxLsn ||
+              maxLsn < recoverUnit.getMaxLsn() )
+         {
+            maxLsn = recoverUnit.getMaxLsn() ;
+         }
+
          rc = _doOpr( cb, &recoverUnit, suID ) ;
          if ( DMS_INVALID_SUID != suID )
          {
@@ -2133,8 +2154,26 @@ namespace engine
       if ( dpsCB && _cleanDPS() )
       {
          DPS_LSN expectLSN = dpsCB->expectLsn() ;
-         if ( DPS_INVALID_LSN_OFFSET == expectLSN.offset ||
-              0 == expectLSN.offset )
+
+         if ( DPS_INVALID_LSN_OFFSET == expectLSN.offset )
+         {
+            expectLSN.offset = 0 ;
+         }
+
+         if ( DPS_INVALID_LSN_OFFSET != maxLsn &&
+              expectLSN.offset < maxLsn )
+         {
+            if ( maxLsn - expectLSN.offset < RTN_REBUILD_MAX_LSN_DIFF )
+            {
+               expectLSN.offset = maxLsn ;
+            }
+            else
+            {
+               expectLSN.offset += RTN_REBUILD_MAX_LSN_DIFF ;
+            }
+         }
+
+         if ( 0 == expectLSN.offset )
          {
             /// when rebuild, we can't move the dps to 0, because the new add
             /// node will sync from lsn 0

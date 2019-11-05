@@ -57,7 +57,7 @@ namespace engine
 {
    const UINT32 CLS_FS_TIMEOUT = 10000 ;
    const UINT32 CLS_SPLIT_DST_SYNC_TIME = 60 * OSS_ONE_SEC ;
-   const UINT32 CLS_FS_MAX_REPEAT_CNT = 120 * OSS_ONE_SEC / CLS_FS_TIMEOUT ;
+   const UINT32 CLS_FS_MAX_REPEAT_CNT = 180 * OSS_ONE_SEC / CLS_FS_TIMEOUT ;
 
    #define CHECK_REQUEST_ID(Header,id) \
       do { \
@@ -458,9 +458,30 @@ namespace engine
       return nDelNum ;
    }
 
-   UINT32 _clsDataDstBaseSession::_removeValidCLs( const vector< string > &validCLs )
+   INT32 _clsDataDstBaseSession::_removeValidCLs( const vector< string > &validCLs,
+                                                  UINT32 *pHasRemoved )
    {
-      UINT32 removedNum = 0 ;
+      INT32 rc = SDB_OK ;
+      UINT32 fullNameSize = _fullNames.size() ;
+      UINT32 removeNum = 0 ;
+
+      if ( fullNameSize > 200 && validCLs.size() > 100 )
+      {
+         rc = _removeValidCLsFast( validCLs, &removeNum ) ;
+         if ( rc )
+         {
+            if ( fullNameSize != _fullNames.size() )
+            {
+               /// _fullNames has changed, so should report error
+               goto error ;
+            }
+            else
+            {
+               /// ignore
+               rc = SDB_OK ;
+            }
+         }
+      }
 
       for ( UINT32 i = 0 ; i < validCLs.size() ; ++i )
       {
@@ -470,14 +491,77 @@ namespace engine
             if ( *it == validCLs[i] )
             {
                _fullNames.erase( it ) ;
-               ++removedNum ;
+               ++removeNum ;
                break ;
             }
             ++it ;
          }
       }
 
-      return removedNum ;
+      if ( pHasRemoved )
+      {
+         *pHasRemoved = removeNum ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsDataDstBaseSession::_removeValidCLsFast( const vector<string> &validCLs,
+                                                      UINT32 *pHasRemoved )
+   {
+      INT32 rc = SDB_OK ;
+      set<string> mapTmpValid ;
+      vector<string>::const_iterator it ;
+
+      if ( pHasRemoved )
+      {
+         *pHasRemoved = 0 ;
+      }
+
+      try
+      {
+         for ( it = validCLs.begin() ; it != validCLs.end() ; ++it )
+         {
+            mapTmpValid.insert( *it ) ;
+         }
+
+         vector<string> vecTmpNames ;
+
+         for ( it = _fullNames.begin() ; it != _fullNames.end() ; ++it )
+         {
+            /// Not found in valid cls
+            if ( mapTmpValid.count( *it ) == 0 )
+            {
+               vecTmpNames.push_back( *it ) ;
+            }
+            else if ( pHasRemoved )
+            {
+               ++( *pHasRemoved ) ;
+            }
+         }
+
+         _fullNames.clear() ;
+         for ( it = vecTmpNames.begin() ; it != vecTmpNames.end() ; ++it )
+         {
+            _fullNames.push_back( *it ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Build collection name vector occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_OOM ;
+
+         if ( pHasRemoved )
+         {
+            *pHasRemoved = 0 ;
+         }
+      }
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__RMCS, "_clsDataDstBaseSession::_removeCS" )
@@ -1381,6 +1465,8 @@ namespace engine
    {
       _repeatCount = CLS_FS_MAX_REPEAT_CNT ;
       _hasRegFullsyc = FALSE ;
+      _beginSlice = 1 ;
+      _beginRspSlice = 1 ;
    }
 
    _clsFSDstSession::~_clsFSDstSession()
@@ -1413,11 +1499,13 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSFSDS_HNDBGRES );
 
       MsgClsFSBeginRes *msg = ( MsgClsFSBeginRes * )header ;
-      _expectLSN = msg->lsn ;
       SDB_DPSCB *dpsCB = NULL ;
+      INT32 nomore = 1 ;
+      INT32 slice = 0 ;
+
       if ( CLS_FS_STATUS_BEGIN != _status )
       {
-         PD_LOG( PDWARNING, "Session[%s]: ignore msg. local statsus:",
+         PD_LOG( PDWARNING, "Session[%s]: ignore msg. local status:",
                  sessionName(), _status ) ;
          goto done ;
       }
@@ -1438,23 +1526,52 @@ namespace engine
          goto done ;
       }
 
+      _expectLSN = msg->lsn ;
       _selector.clearTime() ;
+
+      /// First time clear status
+      if ( 1 == _beginRspSlice )
+      {
+         _fullNames.clear() ;
+         _validCLs.clear() ;
+         _mapEmptyCS.clear() ;
+      }
+
       try
       {
          BSONObj dataObj( (const CHAR*)header + sizeof( MsgClsFSBeginRes ) ) ;
-         if ( SDB_OK != _extractBeginRspBody( dataObj ) )
+
+         if ( SDB_OK != _extractBeginRspBody( dataObj, nomore, slice ) )
          {
             PD_LOG( PDWARNING, "Session[%s]: Failed to extract body data, "
                     "disconnect session", sessionName() ) ;
             _disconnect() ;
             goto done ;
          }
+         else if ( slice != _beginRspSlice )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Begin response with slice[%u] "
+                    "is not expected[%u], disconnect session",
+                    sessionName(), slice, _beginRspSlice ) ;
+            _disconnect() ;
+            goto done ;
+         }
+
+         /// Expect next slice
+         ++_beginRspSlice ;
       }
       catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Session[%s]: Extract body data occur exception: %s",
                  sessionName(), e.what() ) ;
          _disconnect() ;
+         goto done ;
+      }
+
+      if ( nomore == 0 )
+      {
+         /// When nomore is 0, the reply is not complete
+         _timeout = 0 ;
          goto done ;
       }
 
@@ -1510,8 +1627,16 @@ namespace engine
             _disconnect () ;
             goto done ;
          }
+
          /// remove valid collections
-         _removeValidCLs( cleanner.getUDFValidCLs() ) ;
+         rc = _removeValidCLs( cleanner.getUDFValidCLs() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s]: Failed to remove valid "
+                    "collections, rc: %d", sessionName(), rc ) ;
+            _disconnect() ;
+            goto done ;
+         }
       }
 
       // create empty collection space
@@ -1537,6 +1662,8 @@ namespace engine
          }
          _mapEmptyCS.clear() ;
       }
+
+      /// begin next status
       _meta() ;
 
    done:
@@ -1580,7 +1707,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSFSDS__BEGIN ) ;
 
       ++_repeatCount ;
-      if ( _repeatCount >= CLS_FS_MAX_REPEAT_CNT )
+      if ( _repeatCount >= CLS_FS_MAX_REPEAT_CNT * _beginSlice )
       {
          MsgClsFSBegin msg ;
          msg.type = _dataSessionType() ;
@@ -1601,18 +1728,45 @@ namespace engine
             _sendTo( lastID, &disMsg ) ;
          }
 
-         BSONObj bodyObj ;
          /// send to new source node
-         if ( MSG_INVALID_ROUTEID != src.value &&
-              SDB_OK == _buildBegingBody( bodyObj ) )
+         if ( MSG_INVALID_ROUTEID != src.value )
          {
-            msg.header.messageLength += bodyObj.objsize() ;
-            msg.header.requestID = ++_requestID ;
-            if ( SDB_OK == _sendTo( src, &(msg.header),
-                                    (void*)bodyObj.objdata(),
-                                    (UINT32)bodyObj.objsize() ) )
+            INT32 rc = SDB_OK ;
+            BSONObj bodyObj ;
+            INT32 nomore = 0 ;
+            MON_CS_SIM_LIST csList ;
+
+            _beginSlice = 0 ;
+            _beginRspSlice = 1 ;
+            ++_requestID ;
+
+            while( 0 == nomore && SDB_OK == rc )
             {
-               /// send succeed, set _repeatCount = 0
+               ++_beginSlice ;
+               rc = _buildBegingBody( _beginSlice, bodyObj, csList, nomore ) ;
+               if ( SDB_OK == rc )
+               {
+                  msg.header.messageLength = sizeof( MsgClsFSBegin ) +
+                                             bodyObj.objsize() ;
+                  msg.header.requestID = _requestID ;
+
+                  rc = _sendTo( src, &(msg.header),
+                                (void*)bodyObj.objdata(),
+                                (UINT32)bodyObj.objsize() ) ;                  
+               }
+            }
+
+            /// Failed
+            if ( rc )
+            {
+               if ( _beginSlice != 1 )
+               {
+                  _disconnect() ;
+               }
+            }
+            /// Succeed
+            else
+            {
                _repeatCount = 0 ;
             }
             _timeout = 0 ;
@@ -1882,13 +2036,11 @@ namespace engine
       _timeout = 0 ;
    }
 
-   INT32 _clsFSDstSession::_extractBeginRspBody( const BSONObj &bodyObj )
+   INT32 _clsFSDstSession::_extractBeginRspBody( const BSONObj &bodyObj,
+                                                 INT32 &nomore,
+                                                 INT32 &slice )
    {
       INT32 rc = SDB_OK ;
-
-      _fullNames.clear() ;
-      _validCLs.clear() ;
-      _mapEmptyCS.clear() ;
 
       BSONElement ele ;
 
@@ -1897,6 +2049,42 @@ namespace engine
 
       try
       {
+         /// 1. get the slice
+         ele = bodyObj.getField( CLS_FS_SLICE ) ;
+         if ( ele.eoo() )
+         {
+            slice = 1 ; /// default is 1
+         }
+         else if ( ele.isNumber() )
+         {
+            slice = ele.numberInt() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Sesison[%s]: Failed to parse %s from "
+                    "obj[%s]", sessionName(), CLS_FS_SLICE,
+                    bodyObj.toString().c_str() ) ;
+            goto error ;
+         }
+
+         /// get nomore
+         ele = bodyObj.getField( CLS_FS_NOMORE ) ;
+         if ( ele.eoo() )
+         {
+            nomore = 1 ;
+         }
+         else if ( ele.isNumber() )
+         {
+            nomore = ele.numberInt() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Sesison[%s]: Failed to parse %s from "
+                    "obj[%s]", sessionName(), CLS_FS_NOMORE,
+                    bodyObj.toString().c_str() ) ;
+            goto error ;
+         }
+
          // 1. empty collection space
          ele = bodyObj.getField( CLS_FS_CSNAMES ) ;
          if ( Array != ele.type() )
@@ -1996,7 +2184,7 @@ namespace engine
          ele = bodyObj.getField( CLS_FS_FULLNAMES ) ;
          if ( Array != ele.type() )
          {
-            PD_LOG( PDWARNING, "Session[%s]: failed to parse collections "
+            PD_LOG( PDWARNING, "Session[%s]: Failed to parse collections "
                     "from obj[%s]", sessionName(),
                     bodyObj.toString().c_str() ) ;
             goto error ;
@@ -2023,6 +2211,7 @@ namespace engine
                           next.toString().c_str() ) ;
                   goto error ;
                }
+
                _fullNames.push_back( name.String() ) ;
             }
          }
@@ -2062,9 +2251,11 @@ namespace engine
                           next.toString().c_str() ) ;
                   goto error ;
                }
+
                _validCLs.push_back( name.String() ) ;
-               PD_LOG( PDEVENT, "Session[%s]: Collection[%s] is valid, don't "
-                       "need to full sync", sessionName(), name.valuestr() ) ;
+               PD_LOG( PDEVENT, "Session[%s]: Collection[%s] is valid, "
+                       "don't need to full sync", sessionName(),
+                       name.valuestr() ) ;
             }
          }
       }
@@ -2085,67 +2276,152 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsFSDstSession::_buildBegingBody( BSONObj &bodyObj )
+   INT32 _clsFSDstSession::_buildBegingBody( INT32 slice,
+                                             BSONObj &bodyObj,
+                                             MON_CS_SIM_LIST &csList,
+                                             INT32 &nomore )
    {
       INT32 rc = SDB_OK ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      MON_CS_SIM_LIST csList ;
       MON_CS_SIM_LIST::iterator it ;
+      UINT32 count = 0 ;
 
-      BSONObjBuilder builder ;
-      BSONArrayBuilder validCLBD( builder.subarrayStart( CLS_FS_VALIDCLS ) ) ;
-
-      dmsCB->dumpInfo( csList, TRUE, FALSE, FALSE ) ;
-
-      for ( it = csList.begin() ; it != csList.end() ; ++it )
+      /// The first slice, should to dump from dmsCB
+      if ( 1 == _beginSlice )
       {
-         const monCSSimple &csInfo = *it ;
-
-         if ( 0 == ossStrcmp( csInfo._name, SDB_DMSTEMP_NAME ) )
-         {
-            continue ;
-         }
-         dmsStorageUnitID suID = DMS_INVALID_SUID ;
-         dmsStorageUnit *su = NULL ;
-         rc = dmsCB->nameToSUAndLock( csInfo._name, suID, &su ) ;
+         csList.clear() ;
+         rc = dmsCB->dumpInfo( csList, TRUE, FALSE, FALSE ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to lock collectionspace[%s], rc: %d",
-                    csInfo._name, rc ) ;
             goto error ;
          }
-
-         rtnRecoverUnit recoverUnit ;
-         recoverUnit.init( su ) ;
-         MAP_SU_STATUS items ;
-         if ( 0 == recoverUnit.getValidCLItem( items ) )
-         {
-            dmsCB->suUnlock( suID ) ;
-            continue ;
-         }
-         MAP_SU_STATUS::iterator itCL = items.begin() ;
-         while( itCL != items.end() )
-         {
-            rtnRUInfo &info = itCL->second ;
-
-            BSONObjBuilder clBuild( validCLBD.subobjStart() ) ;
-            clBuild.append( CLS_FS_FULLNAME, itCL->first ) ;
-            clBuild.append( CLS_FS_COMMITFLAG,
-                            BSON_ARRAY( (INT32)info._dataCommitFlag <<
-                                        (INT32)info._idxCommitFlag <<
-                                        (INT32)info._lobCommitFlag ) ) ;
-            clBuild.append( CLS_FS_COMMITLSN,
-                            BSON_ARRAY( (INT64)info._dataCommitLSN <<
-                                        (INT64)info._idxCommitLSN <<
-                                        (INT64)info._lobCommitLSN ) ) ;
-            clBuild.done() ;
-            ++itCL ;
-         }
-         dmsCB->suUnlock( suID ) ;
       }
 
-      validCLBD.done() ;
-      bodyObj = builder.obj() ;
+      nomore = 1 ;
+
+      try
+      {
+         BSONObjBuilder builder( 65536 ) ;
+         builder.append( CLS_FS_NOMORE, nomore ) ;
+         builder.append( CLS_FS_SLICE, _beginSlice ) ;
+
+         it = csList.begin() ;
+         BSONArrayBuilder validCLBD( builder.subarrayStart( CLS_FS_VALIDCLS ) ) ;
+
+         while ( it != csList.end() )
+         {
+            const monCSSimple &csInfo = *it ;
+
+            if ( 0 == ossStrcmp( csInfo._name, SDB_DMSTEMP_NAME ) )
+            {
+               csList.erase( it++ ) ;
+               ++count ;
+               continue ;
+            }
+
+            dmsStorageUnitID suID = DMS_INVALID_SUID ;
+            dmsStorageUnit *su = NULL ;
+            rc = dmsCB->nameToSUAndLock( csInfo._name, suID, &su ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to lock collectionspace[%s], rc: %d",
+                       csInfo._name, rc ) ;
+               goto error ;
+            }
+
+            rtnRecoverUnit recoverUnit ;
+            recoverUnit.init( su ) ;
+            MAP_SU_STATUS items ;
+            if ( 0 == recoverUnit.getValidCLItem( items ) )
+            {
+               dmsCB->suUnlock( suID ) ;
+               csList.erase( it++ ) ;
+               ++count ;
+               continue ;
+            }
+
+            INT32 bufLen = builder.bb().len() ;
+            INT32 reservedLen = builder.bb().getReserveBytes() ;
+            if ( bufLen + reservedLen > CLS_FS_MAX_BSON_SIZE )
+            {
+               /// bson size over the limit
+               dmsCB->suUnlock( suID ) ;
+               break ;
+            }
+
+            try
+            {
+               MAP_SU_STATUS::iterator itCL = items.begin() ;
+               while( itCL != items.end() )
+               {
+                  rtnRUInfo &info = itCL->second ;
+
+                  BSONObjBuilder clBuild( validCLBD.subobjStart() ) ;
+                  clBuild.append( CLS_FS_FULLNAME, itCL->first ) ;
+
+                  BSONArrayBuilder subCommitFlag(
+                     clBuild.subarrayStart( CLS_FS_COMMITFLAG ) ) ;
+                  subCommitFlag.append( (INT32)info._dataCommitFlag ) ;
+                  subCommitFlag.append( (INT32)info._idxCommitFlag ) ;
+                  subCommitFlag.append( (INT32)info._lobCommitFlag ) ;
+                  subCommitFlag.done() ;
+
+                  BSONArrayBuilder subCommitLsn(
+                     clBuild.subarrayStart( CLS_FS_COMMITLSN ) ) ;
+                  subCommitLsn.append( (INT64)info._dataCommitLSN ) ;
+                  subCommitLsn.append( (INT64)info._idxCommitLSN ) ;
+                  subCommitLsn.append( (INT64)info._lobCommitLSN ) ;
+                  subCommitLsn.done() ;
+
+                  clBuild.done() ;
+
+                  ++itCL ;
+               }
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDWARNING, "Build collectionspace[%s]'s valid "
+                       "information occur exception: %s",
+                       csInfo._name, e.what() ) ;
+
+               /// restore bufLen and reservedLen
+               builder.bb().setlen( bufLen ) ;
+               builder.bb().setReserveBytes( reservedLen ) ;
+
+               dmsCB->suUnlock( suID ) ;
+               break ;
+            }
+
+            dmsCB->suUnlock( suID ) ;
+            csList.erase( it++ ) ;
+            ++count ;
+         }
+
+         validCLBD.done() ;
+         bodyObj = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Build valid collection's information occur "
+                 "exception: %s", e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      if ( !csList.empty() )
+      {
+         if ( 0 == count )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Session[%s]: Build begin request data failed, "
+                    "rc: %d", sessionName(), rc ) ;
+            goto error ;
+         }
+         /// change nomore to 0
+         nomore = 0 ;
+         BSONElement e = bodyObj.getField( CLS_FS_NOMORE ) ;
+         *(INT32*)e.value() = nomore ;
+      }
 
    done:
       return rc ;

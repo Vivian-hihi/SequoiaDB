@@ -345,12 +345,15 @@ namespace engine
 
          void        setAllInvalid() ;
 
+         UINT64      getMaxLsn() const { return _maxLsn ; }
+
       protected:
 
       private:
          MAP_SU_STATUS              _clStatus ;
 
          dmsStorageUnit             *_pSU ;
+         UINT64                     _maxLsn ;
 
    } ;
    typedef _rtnRecoverUnit rtnRecoverUnit ;

@@ -130,12 +130,8 @@ namespace bson {
 
         ~BSONObjBuilder() {
             if ( !_doneCalled && _b.buf() && _buf.getSize() == 0 ) {
-               try {
-                   _done();
-               } catch ( ... ) {
-                  _b.setlen( _offset ) ;
-                  _b.setReserveBytes( _orgReserve ) ;
-               }
+                _b.setlen( _offset ) ;
+                _b.setReserveBytes( _orgReserve ) ;
             }
         }
 

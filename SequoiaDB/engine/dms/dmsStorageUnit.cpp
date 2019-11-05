@@ -2686,37 +2686,57 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMVEC, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( MON_CL_SIM_VEC &clList,
-                                    BOOLEAN sys,
-                                    BOOLEAN dumpIdx )
+   INT32 _dmsStorageUnit::dumpInfo ( MON_CL_SIM_VEC &clList,
+                                     BOOLEAN sys,
+                                     BOOLEAN dumpIdx )
    {
       PD_TRACE_ENTRY( SDB__DMSSU_DUMPINFO_CLSIMVEC ) ;
+      INT32 rc = SDB_OK ;
+      dmsStorageData::COLNAME_MAP_IT it ;
 
-      // lock meta data
-      _pDataSu->_metadataLatch.get_shared() ;
-
-      dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
-      while ( it != _pDataSu->_collectionNameMap.end() )
+      /// Guard
       {
-         monCLSimple collection ;
+         ossScopedLock lock( &_pDataSu->_metadataLatch, SHARED ) ;
 
-         if ( !sys && dmsIsSysCLName( it->first ) )
+         it = _pDataSu->_collectionNameMap.begin() ;
+         while ( it != _pDataSu->_collectionNameMap.end() )
          {
+            monCLSimple collection ;
+
+            if ( !sys && dmsIsSysCLName( it->first ) )
+            {
+               ++it ;
+               continue ;
+            }
+
+            rc = _dumpCLInfo( collection, it->second ) ;
+            if ( SDB_OK == rc )
+            {
+               try
+               {
+                  clList.push_back ( collection ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Add collection information occur "
+                          "exception: %s", e.what() ) ;
+                  rc = SDB_OOM ;
+               }
+            }
+
+            if ( SDB_OOM == rc )
+            {
+               goto error ;
+            }
+            else
+            {
+               /// ignore error
+               rc = SDB_OK ;
+            }
+
             ++it ;
-            continue ;
          }
-
-         if ( SDB_OK == _dumpCLInfo( collection, it->second ) )
-         {
-            // add
-            clList.push_back ( collection ) ;
-         }
-
-         ++it ;
       }
-
-      // release meta lock
-      _pDataSu->_metadataLatch.release_shared() ;
 
       if ( dumpIdx )
       {
@@ -2724,8 +2744,12 @@ namespace engine
          MON_CL_SIM_VEC::iterator iter = clList.begin() ;
          while ( iter != clList.end() )
          {
-            if ( SDB_OK == getIndexes( iter->_clname,
-                                       iter->_idxList ) )
+            rc = getIndexes( iter->_clname, iter->_idxList ) ;
+            if ( SDB_OOM == rc )
+            {
+               goto error ;
+            }
+            else if ( SDB_OK == rc )
             {
                ++ iter ;
             }
@@ -2734,46 +2758,74 @@ namespace engine
                // Dump index with error, erase this collection from list
                // The collection may be dropped
                iter = clList.erase( iter ) ;
+               rc = SDB_OK ;
             }
          }
       }
 
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CLSIMVEC ) ;
+   done:
+      PD_TRACE_EXITRC ( SDB__DMSSU_DUMPINFO_CLSIMVEC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMLIST, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo( MON_CL_SIM_LIST &clList,
-                                   BOOLEAN sys )
+   INT32 _dmsStorageUnit::dumpInfo( MON_CL_SIM_LIST &clList,
+                                    BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CLSIMLIST ) ;
+      INT32 rc = SDB_OK ;
 
-      // lock meta
-      _pDataSu->_metadataLatch.get_shared() ;
-
-      dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
-      while ( it != _pDataSu->_collectionNameMap.end() )
+      dmsStorageData::COLNAME_MAP_IT it ;
+      /// Guard
       {
-         monCLSimple collection ;
+         ossScopedLock lock( &_pDataSu->_metadataLatch, SHARED) ;
 
-         if ( !sys && dmsIsSysCLName( it->first ) )
+         it = _pDataSu->_collectionNameMap.begin() ;
+         while ( it != _pDataSu->_collectionNameMap.end() )
          {
+            monCLSimple collection ;
+
+            if ( !sys && dmsIsSysCLName( it->first ) )
+            {
+               ++it ;
+               continue ;
+            }
+
+            rc = _dumpCLInfo( collection, it->second ) ;
+            if ( SDB_OK == rc )
+            {
+               try
+               {
+                  clList.insert ( collection ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Add collection information occur "
+                          "exception: %s", e.what() ) ;
+                  rc = SDB_OOM ;
+               }
+            }
+
+            if ( SDB_OOM == rc )
+            {
+               goto error ;
+            }
+            else if ( rc )
+            {
+               rc = SDB_OK ;  /// ignore other errors
+            }
+
             ++it ;
-            continue ;
          }
-
-         if ( SDB_OK == _dumpCLInfo( collection, it->second ) )
-         {
-            //add
-            clList.insert ( collection ) ;
-         }
-
-         ++it ;
       }
 
-      // release meta
-      _pDataSu->_metadataLatch.release_shared() ;
-
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CLSIMLIST ) ;
+   done:
+      PD_TRACE_EXITRC ( SDB__DMSSU_DUMPINFO_CLSIMLIST, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMPLE_CTX, "_dmsStorageUnit::dumpInfo" )
@@ -2801,7 +2853,11 @@ namespace engine
 
       if ( dumpIdx )
       {
-         getIndexes( context, collection._idxList ) ;
+         rc = getIndexes( context, collection._idxList ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
    done :
@@ -2816,37 +2872,60 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLLIST, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( MON_CL_LIST &clList,
-                                    BOOLEAN sys )
+   INT32 _dmsStorageUnit::dumpInfo ( MON_CL_LIST &clList,
+                                     BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CLLIST ) ;
-      // lock meta
-      _pDataSu->_metadataLatch.get_shared() ;
+      INT32 rc = SDB_OK ;
 
-      dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
-      while ( it != _pDataSu->_collectionNameMap.end() )
+      dmsStorageData::COLNAME_MAP_IT it ;
+      /// Guard
       {
-         monCollection collection ;
-
-         if ( !sys && dmsIsSysCLName( it->first ) )
+         ossScopedLock lock( &_pDataSu->_metadataLatch, SHARED ) ;
+         it = _pDataSu->_collectionNameMap.begin() ;
+         while ( it != _pDataSu->_collectionNameMap.end() )
          {
+            monCollection collection ;
+
+            if ( !sys && dmsIsSysCLName( it->first ) )
+            {
+               ++it ;
+               continue ;
+            }
+
+            rc = _dumpCLInfo( collection, it->second ) ;
+            if ( SDB_OK == rc )
+            {
+               try
+               {
+                  clList.insert ( collection ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Add collection information occur "
+                          "exception: %s", e.what() ) ;
+                  rc = SDB_OOM ;
+               }
+            }
+
+            if ( SDB_OOM == rc )
+            {
+               goto error ;
+            }
+            else if ( rc )
+            {
+               rc = SDB_OK ;  /// ignore other errors
+            }
+
             ++it ;
-            continue ;
          }
-
-         if ( SDB_OK == _dumpCLInfo( collection, it->second ) )
-         {
-            //add
-            clList.insert ( collection ) ;
-         }
-
-         ++it ;
       }
 
-      // release meta
-      _pDataSu->_metadataLatch.release_shared() ;
-
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CLLIST ) ;
+   done:
+      PD_TRACE_EXITRC ( SDB__DMSSU_DUMPINFO_CLLIST, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_SU, "_dmsStorageUnit::dumpInfo" )
@@ -2871,12 +2950,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CSSIM, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( monCSSimple &collectionSpace,
-                                    BOOLEAN sys,
-                                    BOOLEAN dumpCL,
-                                    BOOLEAN dumpIdx )
+   INT32 _dmsStorageUnit::dumpInfo ( monCSSimple &collectionSpace,
+                                     BOOLEAN sys,
+                                     BOOLEAN dumpCL,
+                                     BOOLEAN dumpIdx )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CSSIM ) ;
+      INT32 rc = SDB_OK ;
 
       collectionSpace.setName( CSName() ) ;
       collectionSpace._suID = CSID() ;
@@ -2885,18 +2965,19 @@ namespace engine
 
       if ( dumpCL )
       {
-         dumpInfo ( collectionSpace._clList, sys, dumpIdx ) ;
+         rc = dumpInfo ( collectionSpace._clList, sys, dumpIdx ) ;
       }
 
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CSSIM ) ;
+      PD_TRACE_EXITRC ( SDB__DMSSU_DUMPINFO_CSSIM, rc ) ;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CS, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( monCollectionSpace &collectionSpace,
-                                    BOOLEAN sys )
+   INT32 _dmsStorageUnit::dumpInfo ( monCollectionSpace &collectionSpace,
+                                     BOOLEAN sys )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CS ) ;
-
+      INT32 rc = SDB_OK ;
       dmsStorageUnitStat statInfo ;
 
       // get stat info
@@ -2938,9 +3019,10 @@ namespace engine
       collectionSpace._dirtyPage = cacheUnit()->dirtyPages() ;
       collectionSpace._type = type() ;
 
-      dumpInfo ( collectionSpace._collections, sys, FALSE ) ;
+      rc = dumpInfo ( collectionSpace._collections, sys, FALSE ) ;
 
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CS ) ;
+      PD_TRACE_EXITRC ( SDB__DMSSU_DUMPINFO_CS, rc ) ;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALSIZE, "_dmsStorageUnit::totalSize" )
@@ -3162,6 +3244,7 @@ namespace engine
       collection.setName( CSName(), mb->_collectionName ) ;
       collection._clUniqueID = mb->_clUniqueID ;
 
+      try
       {
          detailedInfo &info = collection.addDetails( CSSequence(),
                                                      mb->_numIndexes,
@@ -3201,6 +3284,13 @@ namespace engine
             info._lobCommitLSN = 0 ;
             info._lobIsValid = TRUE ;
          }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Build collection information occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
       }
 
    done :
@@ -3249,15 +3339,15 @@ namespace engine
       UINT32 indexID = 0 ;
       SDB_ASSERT( mb, "mb is invalid" ) ;
 
-      try
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
-         for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+         if ( DMS_INVALID_EXTENT == mb->_indexExtent[indexID] )
          {
-            if ( DMS_INVALID_EXTENT == mb->_indexExtent[indexID] )
-            {
-               break ;
-            }
+            break ;
+         }
 
+         try
+         {
             monIndex indexItem ;
             ixmIndexCB indexCB ( mb->_indexExtent[indexID], _pIndexSu, NULL ) ;
 
@@ -3280,12 +3370,13 @@ namespace engine
             // add
             resultIndexes.push_back ( indexItem ) ;
          }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Failed to get indexes: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Build index information occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_OOM ;
+            break ;
+         }
       }
 
    done:
@@ -3323,8 +3414,17 @@ namespace engine
             resultIndex._indexLID = indexCB.getLogicalID () ;
             resultIndex._version = indexCB.version () ;
             // copy the index def to it's owned buffer
-            resultIndex._indexDef = indexCB.getDef().copy () ;
-            rc = SDB_OK ;
+            try
+            {
+               resultIndex._indexDef = indexCB.getDef().copy () ;
+               rc = SDB_OK ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Copy index define occur exception: %s",
+                       e.what() ) ;
+               rc = SDB_OOM ;
+            }
             break ;
          }
       }

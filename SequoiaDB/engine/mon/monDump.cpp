@@ -2091,6 +2091,7 @@ namespace engine
                                    const BSONObj obj )
    {
       SDB_ASSERT( cb, "cb can't be NULL" ) ;
+      INT32 rc = SDB_OK ;
       _addInfoMask = addInfoMask ;
       _detail = isDetail ;
       _dumpCurrent = isCurrent ;
@@ -2105,7 +2106,11 @@ namespace engine
          }
          else
          {
-            cb->getEDUMgr()->dumpInfo( _setInfoSimple ) ;
+            rc = cb->getEDUMgr()->dumpInfo( _setInfoSimple ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
 
          _hitEnd = _setInfoSimple.empty() ? TRUE : FALSE ;
@@ -2120,12 +2125,19 @@ namespace engine
          }
          else
          {
-            cb->getEDUMgr()->dumpInfo( _setInfoDetail ) ;
+            rc = cb->getEDUMgr()->dumpInfo( _setInfoDetail ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
          _hitEnd = _setInfoDetail.empty() ? TRUE : FALSE ;
       }
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR* _monSessionFetcher::getName() const
@@ -2323,22 +2335,23 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
 
+      INT32 rc = SDB_OK ;
       _addInfoMask = addInfoMask ;
       _detail = isDetail ;
       _includeSys = isCurrent ;
 
       if ( !_detail )
       {
-         dmsCB->dumpInfo( _collectionList, _includeSys ) ;
+         rc = dmsCB->dumpInfo( _collectionList, _includeSys ) ;
          _hitEnd = _collectionList.empty() ? TRUE : FALSE ;
       }
       else
       {
-         dmsCB->dumpInfo( _collectionInfo, _includeSys ) ;
+         rc = dmsCB->dumpInfo( _collectionInfo, _includeSys ) ;
          _hitEnd = _collectionInfo.empty() ? TRUE : FALSE ;
       }
 
-      return SDB_OK ;
+      return rc ;
    }
 
    const CHAR* _monCollectionFetch::getName() const
@@ -2600,22 +2613,23 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
 
+      INT32 rc = SDB_OK ;
       _addInfoMask = addInfoMask ;
       _detail = isDetail ;
       _includeSys = isCurrent ;
 
       if ( !_detail )
       {
-         dmsCB->dumpInfo( _csList, _includeSys, FALSE, FALSE ) ;
+         rc = dmsCB->dumpInfo( _csList, _includeSys, FALSE, FALSE ) ;
          _hitEnd = _csList.empty() ? TRUE : FALSE ;
       }
       else
       {
-         dmsCB->dumpInfo( _csInfo, _includeSys ) ;
+         rc = dmsCB->dumpInfo( _csInfo, _includeSys ) ;
          _hitEnd = _csInfo.empty() ? TRUE : FALSE ;
       }
 
-      return SDB_OK ;
+      return rc ;
    }
 
    const CHAR* _monCollectionSpaceFetch::getName() const
@@ -3161,13 +3175,14 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_ASSERT( dmsCB, "DMSCB can't be NULL" ) ;
 
+      INT32 rc = SDB_OK ;
       _addInfoMask = addInfoMask ;
       _includeSys = isCurrent ;
 
-      dmsCB->dumpInfo( _suInfo, _includeSys ) ;
+      rc = dmsCB->dumpInfo( _suInfo, _includeSys ) ;
       _hitEnd = _suInfo.empty() ? TRUE : FALSE ;
 
-      return SDB_OK ;
+      return rc ;
    }
 
    const CHAR* _monStorageUnitFetch::getName() const

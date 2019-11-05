@@ -226,13 +226,26 @@ namespace engine
 
    protected:
       INT32 _extractBeginBody( const BSONObj &obj,
-                               MAP_SU_STATUS &validCLs ) ;
-      void  _processValidCLs(  MAP_SU_STATUS &validCLs ) ;
-      INT32 _constructBeginRspData( BSONObj &obj, MAP_SU_STATUS &validCLs ) ;
+                               MAP_SU_STATUS &validCLs,
+                               INT32 &nomore,
+                               INT32 &slice ) ;
+
+      INT32 _processValidCLs( MAP_SU_STATUS &validCLs ) ;
+
+      INT32 _constructBeginRspData( INT32 slice,
+                                    BSONObj &obj,
+                                    MON_CS_LIST &csList,
+                                    MON_CL_LIST &clList,
+                                    MAP_SU_STATUS &validCLs,
+                                    INT32 &nomore ) ;
+
       BOOLEAN _hasExternalData() const ;
 
    private:
       _dpsMessageBlock           _lsnSearchMB ;
+      INT32                      _lastRecvSlice ;
+      MAP_SU_STATUS              _validCLs ;
+
    } ;
    typedef class _clsFSSrcSession clsFSSrcSession ;
 

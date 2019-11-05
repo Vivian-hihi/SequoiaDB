@@ -64,33 +64,29 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSTMPSUMGR_INIT ) ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
 
       SDB_ASSERT ( _dmsCB, "dmsCB can't be NULL" ) ;
 
+      /*
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
       CHAR tempName[15] = {0} ;
       UINT16 collectionID = DMS_INVALID_MBID ;
+      */
 
       // exclusive lock temp cb. this function should be called during process
       // initialization, so it shouldn't be called in parallel by agents
       DMSSYSSUMGR_XLOCK
 
-      // first to load collection space
-      rc = rtnCollectionSpaceLock( SDB_DMSTEMP_NAME, _dmsCB, TRUE,
-                                   &_su, suID ) ;
-      if ( SDB_OK == rc )
+      // remove SYSTEM files
+      _removeTmpSu() ;
+
+      rc = _cleanTmpPath() ;
+      if ( SDB_OK != rc )
       {
-         _dmsCB->suUnlock( suID ) ;
-         suID = DMS_INVALID_CS ;
-         _su = NULL ;
-         // remove the temp collection space
-         _dmsCB->dropCollectionSpace( SDB_DMSTEMP_NAME, NULL, NULL ) ;
-      }
-      else if ( SDB_DMS_CS_NOTEXIST != rc )
-      {
-         PD_LOG( PDERROR, "Lock temp collection space failed, rc: %d", rc ) ;
+         goto error ;
       }
 
+      /*
       // create new systemp collection space
       rc = rtnCreateCollectionSpaceCommand ( SDB_DMSTEMP_NAME, NULL, _dmsCB,
                                              NULL, UTIL_UNIQUEID_NULL,
@@ -132,22 +128,25 @@ namespace engine
          SDB_ASSERT ( collectionID == i, "Invalid collectionID" ) ;
          _freeCollections.push( collectionID ) ;
       }
-
-      rc = _initTmpPath() ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      */
 
    done :
+      /*
       if ( DMS_INVALID_CS != suID )
       {
          _dmsCB->suUnlock ( suID ) ;
       }
+      */
       PD_TRACE_EXITRC ( SDB__DMSTMPSUMGR_INIT, rc );
       return rc ;
    error :
       goto done ;
+   }
+
+   void _dmsTempSUMgr::fini()
+   {
+      _removeTmpSu() ;
+      _cleanTmpPath() ;
    }
 
    // release a temp id, this function will first make sure the given tempID
@@ -219,7 +218,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsTempSUMgr::_initTmpPath()
+   INT32 _dmsTempSUMgr::_cleanTmpPath()
    {
       INT32 rc = SDB_OK ;
       const CHAR *path = pmdGetOptionCB()->getTmpPath() ;
@@ -233,14 +232,6 @@ namespace engine
             for ( fs::directory_iterator dir_iter(dbDir);
                   dir_iter != end_iter; ++dir_iter )
             {
-/*               if ( !fs::remove_all( *dir_iter ))
-               {
-                  PD_LOG( PDERROR, "failed to remove tmp file." ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-
-               }
-*/
                if ( !fs::is_directory(dir_iter->path() ))
                {
                   std::string filename = dir_iter->path().filename().string() ;
@@ -273,6 +264,49 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _dmsTempSUMgr::_removeTmpSu()
+   {
+      /// remove data file
+      _removeATmpFile( pmdGetOptionCB()->getDbPath(),
+                       DMS_DATA_SU_EXT_NAME ) ;
+      _removeATmpFile( pmdGetOptionCB()->getIndexPath(),
+                       DMS_INDEX_SU_EXT_NAME ) ;
+      _removeATmpFile( pmdGetOptionCB()->getLobPath(),
+                       DMS_LOB_DATA_SU_EXT_NAME ) ;
+      _removeATmpFile( pmdGetOptionCB()->getLobMetaPath(),
+                       DMS_LOB_META_SU_EXT_NAME ) ;
+   }
+
+   INT32 _dmsTempSUMgr::_removeATmpFile( const CHAR *pPath,
+                                         const CHAR *pPosix)
+   {
+      INT32 rc = SDB_OK ;
+      CHAR fileName[DMS_SU_FILENAME_SZ + 1] = { 0 } ;
+      CHAR fullPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      ossSnprintf( fileName, sizeof( fileName ), "%s.%d.%s",
+                   SDB_DMSTEMP_NAME, 1, pPosix ) ;
+
+      utilBuildFullPath( pPath, fileName, OSS_MAX_PATHSIZE, fullPath ) ;
+
+      rc = ossAccess( fullPath ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = ossDelete( fullPath ) ;
+      }
+
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDINFO, "Removed SYSTEMP file[%s]", fullPath ) ;
+      }
+      else if ( SDB_FE != rc )
+      {
+         PD_LOG( PDWARNING, "Remove SYSTEMP file[%s] failed, rc: %d",
+                 fullPath, rc ) ;
+      }
+      return rc ;
    }
 
 }

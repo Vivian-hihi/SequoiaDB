@@ -297,7 +297,7 @@ namespace engine
                                     SDB_DPSCB *dpsCB,
                                     BOOLEAN removeFile = TRUE ) ;
 
-      void _getCSList( vector<std::string> &csNameVec ) ;
+      INT32 _getCSList( ossPoolVector< ossPoolString > &csNameVec ) ;
 
       void _nullCSUniqueIDCntInc() ;
 
@@ -378,19 +378,19 @@ namespace engine
                                      _pmdEDUCB *cb,
                                      SDB_DPSCB *dpsCB ) ;
 
-      void dumpInfo ( MON_CL_SIM_LIST &collectionList,
-                      BOOLEAN sys = FALSE ) ;
-      void dumpInfo ( MON_CS_SIM_LIST &csList,
-                      BOOLEAN sys = FALSE,
-                      BOOLEAN dumpCL = FALSE,
-                      BOOLEAN dumpIdx = FALSE ) ;
+      INT32 dumpInfo ( MON_CL_SIM_LIST &collectionList,
+                       BOOLEAN sys = FALSE ) ;
+      INT32 dumpInfo ( MON_CS_SIM_LIST &csList,
+                       BOOLEAN sys = FALSE,
+                       BOOLEAN dumpCL = FALSE,
+                       BOOLEAN dumpIdx = FALSE ) ;
 
-      void dumpInfo ( MON_CL_LIST &collectionList,
-                      BOOLEAN sys = FALSE ) ;
-      void dumpInfo ( MON_CS_LIST &csList,
-                      BOOLEAN sys = FALSE ) ;
-      void dumpInfo ( MON_SU_LIST &storageUnitList,
-                      BOOLEAN sys = FALSE ) ;
+      INT32 dumpInfo ( MON_CL_LIST &collectionList,
+                       BOOLEAN sys = FALSE ) ;
+      INT32 dumpInfo ( MON_CS_LIST &csList,
+                       BOOLEAN sys = FALSE ) ;
+      INT32 dumpInfo ( MON_SU_LIST &storageUnitList,
+                       BOOLEAN sys = FALSE ) ;
 
       void dumpInfo ( INT64 &totalFileSize );
 

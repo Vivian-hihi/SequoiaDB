@@ -1384,12 +1384,27 @@ namespace engine
                  sessionName(), _curCollecitonName.c_str() ) ;
 
          _LSNlatch.get();
-         _mapOveredCLs[_curCollection] = 0 ;
+         try
+         {
+            _mapOveredCLs[_curCollection] = 0 ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Session[%s]: Add complete collection occur "
+                    "exception: %s", sessionName(), e.what() ) ;
+         }
          _reset() ;
          _LSNlatch.release() ;
 
-         _onNotifyOver( _curCollecitonName.c_str() ) ;
-
+         if ( rc )
+         {
+            _disconnect() ;
+         }
+         else
+         {
+            _onNotifyOver( _curCollecitonName.c_str() ) ;
+         }
          goto done ;
       }
 
@@ -1524,6 +1539,7 @@ namespace engine
    :_clsDataSrcBaseSession( sessionID, agent ),
     _lsnSearchMB( 1024 )
    {
+      _lastRecvSlice = 1 ;
    }
 
    _clsFSSrcSession::~_clsFSSrcSession()
@@ -1543,14 +1559,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSFSSS_HNDBEGIN, "_clsFSSrcSession::handleBegin" )
-   INT32 _clsFSSrcSession::handleBegin( NET_HANDLE handle,
-                                        MsgHeader* header )
+   INT32 _clsFSSrcSession::handleBegin( NET_HANDLE handle, MsgHeader* header )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSFSSS_HNDBEGIN );
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
 
-      MAP_SU_STATUS validCLs ;
+      INT32 nomore = 1 ;
+
       SDB_DPSCB *dpscb = pmdGetKRCB()->getDPSCB() ;
       MsgClsFSBeginRes msg ;
       msg.header.header.TID = header->TID ;
@@ -1577,13 +1593,20 @@ namespace engine
          goto done ;
       }
 
+      /// When the first begin slice, need to clear validCLs
+      if ( 1 == _lastRecvSlice )
+      {
+         _validCLs.clear() ;
+      }
+
       /// compatiable with old version( without obj )
       if ( (UINT32)(header->messageLength) > sizeof( MsgClsFSBegin ) )
       {
          try
          {
+            INT32 slice = 1 ;    /// default is 1
             BSONObj bodyObj( (const CHAR*)header + sizeof( MsgClsFSBegin ) ) ;
-            rc = _extractBeginBody( bodyObj, validCLs ) ;
+            rc = _extractBeginBody( bodyObj, _validCLs, nomore, slice ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Session[%s]: Extract request body data "
@@ -1591,6 +1614,17 @@ namespace engine
                _disconnect() ;
                goto done ;
             }
+            else if ( _lastRecvSlice != slice )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Begin request with slice[%u] "
+                       "is not expected[%u], disconnect session",
+                       sessionName(), slice, _lastRecvSlice ) ;
+               _disconnect() ;
+               goto done ;
+            }
+
+            /// Expect next slice
+            ++_lastRecvSlice ;
          }
          catch( std::exception &e )
          {
@@ -1602,15 +1636,27 @@ namespace engine
          }
       }
 
+      if ( nomore == 0 )
+      {
+         /// Begin request is not complete
+         goto done ;
+      }
+
       /// steps:
       /// begin
       /// loop: meta
       ///       indexes
       ///       loop: notify
       /// end
+
       {
          _reset() ;
          BSONObj obj ;
+         INT32 sendSlice = 1 ;
+         INT32 sendNomore = 1 ;
+         MON_CS_LIST csList ;
+         MON_CL_LIST clList ;
+         BOOLEAN needDisconnect = FALSE ;
 
          /// get expcect lsn
          _lsn = dpscb->expectLsn() ;
@@ -1629,7 +1675,14 @@ namespace engine
          _pRepl->syncMgr()->notifyFullSync( header->routeID ) ;
 
          /// process valid collections
-         _processValidCLs( validCLs ) ;
+         rc = _processValidCLs( _validCLs ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Process valid collections "
+                    "failed, rc: %d", sessionName(), rc ) ;
+            _disconnect() ;
+            goto done ;
+         }
 
          // New collections may be created when constructing the respond data.
          // So maybe they are not in the collection list in the respond message.
@@ -1638,18 +1691,45 @@ namespace engine
          // queue( in function notifyLSN ).
          _init =  TRUE ;
 
-         if ( SDB_OK != _constructBeginRspData( obj, validCLs ) )
+         sendNomore = 0 ;
+         sendSlice = 0 ;
+         _lastRecvSlice = 1 ;
+
+         while( 0 == sendNomore && SDB_OK == rc )
          {
-            PD_LOG ( PDWARNING, "Session[%s] construct begin response data "
-                     "failed", sessionName() ) ;
-            _disconnect() ;
-            _init = FALSE ;
-            goto done ;
+            ++sendSlice ;
+            needDisconnect = FALSE ;
+            rc = _constructBeginRspData( sendSlice, obj, csList, clList,
+                                         _validCLs, sendNomore ) ;
+            if ( rc )
+            {
+               needDisconnect = TRUE ;
+            }
+            else
+            {
+               msg.header.header.messageLength = sizeof( msg ) + obj.objsize() ;
+               rc = _agent->syncSend( handle, &(msg.header.header),
+                                      (void*)obj.objdata(),
+                                      obj.objsize() ) ;
+            }
          }
-         msg.header.header.messageLength = sizeof( msg ) + obj.objsize() ;
-         if ( SDB_OK == _agent->syncSend( handle, &(msg.header.header),
-                                          (void *)obj.objdata(),
-                                          obj.objsize() ) )
+
+         /// reset timeCounter
+         _timeCounter = 0 ;
+
+         /// Failed
+         if ( rc )
+         {
+            if ( sendSlice != 1 || needDisconnect )
+            {
+               _disconnect() ;
+            }
+            _mapOveredCLs.clear() ;
+            _validCLs.clear() ;
+            _init = FALSE ;
+         }
+         /// Succeed
+         else
          {
             PD_LOG( PDEVENT, "Session[%s]: Established the full sync session "
                     "with node[%s], Expect LSN:[%d:%lld]", sessionName(),
@@ -1673,14 +1753,11 @@ namespace engine
                _disconnect() ;
                goto done ;
             }
-            PD_LOG( PDEVENT, "Disable external data handler "
-                             "during full sync" ) ;
+
+            PD_LOG( PDEVENT, "Disable external data handler during "
+                    "full sync" ) ;
+
             _quit = FALSE ;
-         }
-         else
-         {
-            _mapOveredCLs.clear() ;
-            _init = FALSE ;
          }
       }
 
@@ -1958,56 +2035,138 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _clsFSSrcSession::_constructBeginRspData( BSONObj &obj,
-                                                   MAP_SU_STATUS &validCLs )
+   INT32 _clsFSSrcSession::_constructBeginRspData( INT32 slice,
+                                                   BSONObj &obj,
+                                                   MON_CS_LIST &csList,
+                                                   MON_CL_LIST &clList,
+                                                   MAP_SU_STATUS &validCLs,
+                                                   INT32 &nomore )
    {
       INT32 rc = SDB_OK ;
-      MON_CS_LIST csList ;
-      pmdGetKRCB()->getDMSCB()->dumpInfo( csList, TRUE ) ;
-      MON_CL_LIST collectionList ;
-      pmdGetKRCB()->getDMSCB()->dumpInfo( collectionList, TRUE ) ;
-      BSONObjBuilder b ;
+      UINT32 count = 0 ;
+
+      /// When the first, need to dump info from dmsCB
+      if ( 1 == slice )
+      {
+         rc = pmdGetKRCB()->getDMSCB()->dumpInfo( csList, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         rc = pmdGetKRCB()->getDMSCB()->dumpInfo( clList, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      nomore = 1 ;
 
       try
       {
+         BSONObjBuilder b( 65536 ) ;
+         /// reserved for CLS_FS_FULLNAMES and CLS_FS_VALIDCLS
+         b.bb().reserveBytes( 100 + 100 ) ;
+
+         b.append( CLS_FS_NOMORE, nomore ) ;
+         b.append( CLS_FS_SLICE, slice ) ;
+
          // empty space
-         BSONArrayBuilder csArrayBuilder ;
+         BSONArrayBuilder csArrayBD( b.subarrayStart( CLS_FS_CSNAMES ) ) ;
+
          MON_CS_LIST::iterator itCS = csList.begin() ;
-         for ( ; itCS != csList.end() ; ++itCS )
+         while( itCS != csList.end() )
          {
             if ( 0 == itCS->_collections.size() )
             {
-               csArrayBuilder.append( BSON( CLS_FS_CSNAME << itCS->_name <<
-                                            CLS_FS_PAGE_SIZE <<
-                                            itCS->_pageSize <<
-                                            CLS_FS_LOB_PAGE_SIZE <<
-                                            itCS->_lobPageSize <<
-                                            CLS_FS_CS_TYPE <<
-                                            itCS->_type <<
-                                            CLS_FS_CS_UNIQUEID <<
-                                            itCS->_csUniqueID ) ) ;
+               if ( b.bb().len() + b.bb().getReserveBytes() >
+                    CLS_FS_MAX_BSON_SIZE )
+               {
+                  break ;
+               }
+
+               try
+               {
+                  BSONObjBuilder subObj( csArrayBD.subobjStart() ) ;
+                  subObj.append( CLS_FS_CSNAME, itCS->_name ) ;
+                  subObj.append( CLS_FS_PAGE_SIZE, itCS->_pageSize ) ;
+                  subObj.append( CLS_FS_LOB_PAGE_SIZE, itCS->_lobPageSize ) ;
+                  subObj.append( CLS_FS_CS_TYPE, itCS->_type ) ;
+                  subObj.append( CLS_FS_CS_UNIQUEID, itCS->_csUniqueID ) ;
+                  subObj.done() ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG( PDWARNING, "Build collectionspace information "
+                          "occur exception: %s", e.what() ) ;
+                  break ;
+               }
             }
+            csList.erase( itCS++ ) ;
+            ++count ;
          }
-         b.appendArray( CLS_FS_CSNAMES, csArrayBuilder.arr() ) ;
+         csArrayBD.done() ;
 
          // collection list
-         BSONArrayBuilder clArrayBuilder ;
-         MON_CL_LIST::const_iterator itr = collectionList.begin() ;
-         for ( ; itr != collectionList.end(); itr++ )
+         b.bb().claimReservedBytes( 100 ) ;
+
+         BSONArrayBuilder clArrayBD( b.subarrayStart( CLS_FS_FULLNAMES ) ) ;
+         MON_CL_LIST::const_iterator itrCL = clList.begin() ;
+         while( itrCL != clList.end() )
          {
-            clArrayBuilder.append( BSON( CLS_FS_FULLNAME << itr->_name ) ) ;
+            if ( b.bb().len() + b.bb().getReserveBytes() >
+                 CLS_FS_MAX_BSON_SIZE )
+            {
+               break ;
+            }
+
+            try
+            {
+               BSONObjBuilder subObj( clArrayBD.subobjStart() ) ;
+               subObj.append( CLS_FS_FULLNAME, itrCL->_name ) ;
+               subObj.done() ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDWARNING, "Build collection name occur exception: %s",
+                       e.what() ) ;
+               break ;
+            }
+            clList.erase( itrCL++ ) ;
+            ++count ;
          }
-         b.appendArray( CLS_FS_FULLNAMES, clArrayBuilder.arr() ) ;
+         clArrayBD.done() ;
 
          /// valid collection list
-         BSONArrayBuilder validArrayBuilder ;
+         b.bb().claimReservedBytes( 100 ) ;
+
+         BSONArrayBuilder validArrayBD( b.subarrayStart( CLS_FS_VALIDCLS ) ) ;
          MAP_SU_STATUS::iterator itValid = validCLs.begin() ;
-         for ( ; itValid != validCLs.end() ; ++itValid )
+         while( itValid != validCLs.end() )
          {
-            validArrayBuilder.append( BSON( CLS_FS_FULLNAME <<
-                                            itValid->first ) ) ;
+            if ( b.bb().len() + b.bb().getReserveBytes() >
+                 CLS_FS_MAX_BSON_SIZE )
+            {
+               break ;
+            }
+
+            try
+            {
+               BSONObjBuilder subObj( validArrayBD.subobjStart() ) ;
+               subObj.append( CLS_FS_FULLNAME, itValid->first ) ;
+               subObj.done() ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDWARNING, "Build valid collection name occur "
+                       "exception: %s", e.what() ) ;
+               break ;
+            }
+            validCLs.erase( itValid++ ) ;
+            ++count ;
          }
-         b.appendArray( CLS_FS_VALIDCLS, validArrayBuilder.arr() ) ;
+         validArrayBD.done() ;
 
          obj = b.obj() ;
 
@@ -2020,6 +2179,22 @@ namespace engine
                  sessionName(), e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      if ( !csList.empty() || !clList.empty() || !validCLs.empty() )
+      {
+         if ( 0 == count )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Session[%s]: Build begin response data "
+                    "failed, rc: %d", sessionName(), rc ) ;
+            goto error ;
+         }
+
+         /// change nomore to 0
+         nomore = 0 ;
+         BSONElement e = obj.getField( CLS_FS_NOMORE ) ;
+         *(INT32*)e.value() = nomore ;
       }
 
    done:
@@ -2070,13 +2245,49 @@ namespace engine
    }
 
    INT32 _clsFSSrcSession::_extractBeginBody( const BSONObj &obj,
-                                              MAP_SU_STATUS &validCLs )
+                                              MAP_SU_STATUS &validCLs,
+                                              INT32 &nomore,
+                                              INT32 &slice )
    {
       INT32 rc = SDB_OK ;
       rtnRUInfo info ;
 
       try
       {
+         BSONElement e = obj.getField( CLS_FS_NOMORE ) ;
+         if ( e.eoo() )
+         {
+            nomore = 1 ;
+         }
+         else if ( e.isNumber() )
+         {
+            nomore = e.numberInt() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Session[%s]: Failed to parse %s form obj[%s]",
+                    sessionName(), CLS_FS_NOMORE, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         e = obj.getField( CLS_FS_SLICE ) ;
+         if ( e.eoo() )
+         {
+            slice = 1 ;    /// defaul is 1
+         }
+         else if ( e.isNumber() )
+         {
+            slice = e.numberInt() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Session[%s]: Failed to parse %s form obj[%s]",
+                    sessionName(), CLS_FS_SLICE, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
          BSONElement eleValidCL = obj.getField( CLS_FS_VALIDCLS ) ;
          if ( Array != eleValidCL.type() )
          {
@@ -2151,7 +2362,7 @@ namespace engine
       goto done ;
    }
 
-   void _clsFSSrcSession::_processValidCLs( MAP_SU_STATUS &validCLs )
+   INT32 _clsFSSrcSession::_processValidCLs( MAP_SU_STATUS &validCLs )
    {
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       dmsStorageUnit *su = NULL ;
@@ -2181,6 +2392,7 @@ namespace engine
                     "rc: %d, ignored this collection[%s]", sessionName(),
                     rc, it->first.c_str() ) ;
             validCLs.erase( it++ ) ;
+            rc = SDB_OK ;
             continue ;
          }
 
@@ -2193,6 +2405,7 @@ namespace engine
                     rc, it->first.c_str() ) ;
             dmsCB->suUnlock( suID ) ;
             validCLs.erase( it++ ) ;
+            rc = SDB_OK ;
             continue ;
          }
 
@@ -2229,13 +2442,32 @@ namespace engine
             curCollection = ossPack32To64 ( su->LogicalCSID(),
                                             pContext->clLID() ) ;
             /// add to complete list
-            _mapOveredCLs[curCollection] = 0 ;
+            try
+            {
+               _mapOveredCLs[curCollection] = 0 ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Add complete collection occur "
+                       "exception: %s", sessionName(), e.what() ) ;
+               rc = SDB_OOM ;
+            }
          }
 
          su->data()->releaseMBContext( pContext ) ;
          dmsCB->suUnlock( suID ) ;
          ++it ;
+
+         if ( rc )
+         {
+            goto error ;
+         }
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

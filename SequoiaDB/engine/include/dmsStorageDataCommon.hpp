@@ -1502,7 +1502,14 @@ namespace engine
       if ( _vecContext.size() < DMS_CONTEXT_MAX_SIZE )
       {
          pContext->_reset() ;
-         _vecContext.push_back( pContext ) ;
+         try
+         {
+            _vecContext.push_back( pContext ) ;
+         }
+         catch( ... )
+         {
+            SDB_OSS_DEL pContext ;
+         }
       }
       else
       {

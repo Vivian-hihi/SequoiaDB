@@ -184,12 +184,16 @@ namespace engine
          UINT32         _addCollection ( const CHAR *pCollectionName ) ;
          UINT32         _removeCollection ( const CHAR *pCollectionName ) ;
          vector<string> _removeCS ( const CHAR *pCSName ) ;
-         UINT32         _removeValidCLs( const vector<string> &validCLs ) ;
+         INT32          _removeValidCLs( const vector<string> &validCLs,
+                                         UINT32 *pHasRemoved = NULL ) ;
 
       private:
          INT32 _replayDoc( const MsgClsFSNotifyRes *msg ) ;
          INT32 _replayLog( const MsgClsFSNotifyRes *msg ) ;
          INT32 _replayLob( const MsgClsFSNotifyRes *msg ) ;
+
+         INT32          _removeValidCLsFast( const vector<string> &validCLs,
+                                             UINT32 *pHasRemoved = NULL ) ;
 
       protected:
          vector<string>       _fullNames ;
@@ -256,9 +260,12 @@ namespace engine
 
    protected:
       void              _pullTransLog ( DPS_LSN &begin ) ;
-      INT32             _extractBeginRspBody( const BSONObj &bodyObj ) ;
-      INT32             _buildBegingBody( BSONObj &bodyObj ) ;
-
+      INT32             _extractBeginRspBody( const BSONObj &bodyObj,
+                                              INT32 &nomore, INT32 &slice ) ;
+      INT32             _buildBegingBody( INT32 slice,
+                                          BSONObj &bodyObj,
+                                          MON_CS_SIM_LIST &csList,
+                                          INT32 &nomore ) ;
    protected:
       virtual void      _begin() ;
       virtual void      _end() ;
@@ -275,6 +282,9 @@ namespace engine
       vector<string>       _validCLs ;
       UINT32               _repeatCount ;
       BOOLEAN              _hasRegFullsyc ;
+
+      INT32                _beginSlice ;
+      INT32                _beginRspSlice ;
 
    } ;
 
