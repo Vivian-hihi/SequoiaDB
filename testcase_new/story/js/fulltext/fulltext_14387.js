@@ -19,36 +19,35 @@ function main()
    
    // insert
    var objs = new Array();
-   for(var i = 0; i < 20000; i++)
+   for(var i = 0; i < 5000; i++)
    {
-      objs.push({a: "test_14387 " + i, b :  i });
+      objs.push({a: "test_14387_A " + i, b :  i }); 
+      objs.push({a: "test_14387_B " + i, b :  i + 5000 }); 
+      objs.push({a: "test_14387_C " + i, b :  i + 10000 }); 
+      objs.push({a: "test_14387_D " + i, b :  i + 15000 }); 
    }
    dbcl.insert(objs);
 
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 20000);
    
    // match 0 record
-   var findNoneConf = {"$not": [{"b": {"$gte" : 0}}, {"":{"$Text":{"query":{"match":{"a" : "test_14387"}}}}}]}; 
+   var findNoneConf = {"$not": [{"b": {"$gte" : 0}}, {"":{"$Text":{"query":{"exists":{"field" : "a"}}}}}]}; 
    var actResult = dbOpr.findFromCL(dbcl, findNoneConf);
    var expResult = [];
    checkResult(expResult, actResult);
    println("---match 0 record---");
 
    // match some records
-   var findSomeConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14387"}}}}}]};
-   var actResult = dbOpr.findFromCL(dbcl, findSomeConf, {'a' : ''});
-   var expResult = dbOpr.findFromCL(dbcl, {"b": {"$lt" : 10000}}, {'a' : ''});
-   actResult.sort(compare("a"));
-   expResult.sort(compare("a"));
+   var findSomeConf = {"$not": [{"b": {"$gt" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14387_C"}}}}}]}; 
+   var actResult = dbOpr.findFromCL(dbcl, findSomeConf, {'a' : ''}, { _id : 1 });
+   var expResult = dbOpr.findFromCL(dbcl, {"$or": [{"$and" : [{"b": {"$gte" : 0}}, {"b": {"$lte" : 10000}}]}, {"b": {"$gte" : 15000}}]}, {'a' : ''}, { _id : 1 });
    checkResult(expResult, actResult);
    println("---match some records---");
    
    // match all records
-   var findAllConf = {"$not": [{"b": {"$et" : 0}}, {"":{"$Text":{"query":{"match_phrase":{"a" : "test_14387 2"}}}}}]};
-   var actResult = dbOpr.findFromCL(dbcl, findAllConf, {'a' : ''});
-   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''});
-   actResult.sort(compare("a"));
-   expResult.sort(compare("a"));
+   var findAllConf = {"$not": [{"b": {"$lt" : 5000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14387_D"}}}}}]};
+   var actResult = dbOpr.findFromCL(dbcl, findAllConf, {'a' : ''}, { _id : 1 });
+   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''}, { _id : 1 });
    checkResult(expResult, actResult); 
    println("---match all records---");
 

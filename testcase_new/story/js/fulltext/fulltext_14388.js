@@ -31,19 +31,20 @@ function main()
    var findNoneConf1 = {"$and":[{"$and":[{"b" : {"$lt" : 0}},{"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}]}; // and-and
    var findNoneConf2 = {"$and":[{"$not":[{"b" : {"$gte" : 0}},{"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}]}; // and-not, fulltext search under "$not"
    var findNoneConf3 = {"$and":[{"$not":[{"b" : {"$gte" : 0}},{"b" : {"$lte": 20000}}]}, {"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}; // and-not, fulltext search under "$and"
-   //var findNoneConf4 = {"$and":[{"$or":[{"b" : {"$gte" : 0}},{"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}]}; // and-or, fulltext search under "$or": bug #SEQUOIADBSTREAM-3389
+   var findNoneConf4 = {"$and":[{"$or":[{"b" : {"$gte" : 20000}},{"":{"$Text":{"query":{"match":{"a" : "test_14388_01"}}}}}]}]}; // and-or, fulltext search under "$or"
    var findNoneConf5 = {"$and":[{"$or":[{"b" : {"$lt" : 0}}]}, {"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}; // and-or, fulltext search under "$and"
    var actResult1 = dbOpr.findFromCL(dbcl, findNoneConf1);
    var actResult2 = dbOpr.findFromCL(dbcl, findNoneConf2);
    var actResult3 = dbOpr.findFromCL(dbcl, findNoneConf3);
+   var actResult4 = dbOpr.findFromCL(dbcl, findNoneConf4);
    var actResult5 = dbOpr.findFromCL(dbcl, findNoneConf5);
    var expResult = [];
    checkResult(expResult, actResult1);
    println("---match 0 record for $and-$and---");
    checkResult(expResult, actResult2);
-   println("---match 0 record for $and-$not---");
    checkResult(expResult, actResult3);
    println("---match 0 record for $and-$not---");
+   checkResult(expResult, actResult4);
    checkResult(expResult, actResult5);
    println("---match 0 record for $and-$or---");
 
@@ -52,20 +53,14 @@ function main()
    var findSomeConf2 = {"$and":[{"$not":[{"b" : {"$gte" : 10000}},{"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}]}; // and-not, fulltext search under "$not"
    var findSomeConf3 = {"$and":[{"$not":[{"b" : {"$gte" : 10000}},{"b" : {"$lte": 20000}}]}, {"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}; // and-not, fulltext search under "$and"
    var findSomeConf4 = {"$and":[{"$or":[{"b" : {"$lt" : 10000}}]}, {"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}; // and-or, fulltext search under "$and" 
-   var actResult1 = dbOpr.findFromCL(dbcl, findSomeConf1, {'a' : ''});
-   var actResult2 = dbOpr.findFromCL(dbcl, findSomeConf2, {'a' : ''});
-   var actResult3 = dbOpr.findFromCL(dbcl, findSomeConf3, {'a' : ''});
-   var actResult4 = dbOpr.findFromCL(dbcl, findSomeConf4, {'a' : ''});
-   var expResult = dbOpr.findFromCL(dbcl, {"b": {"$lt" : 10000}}, {'a' : ''});
-   actResult1.sort(compare("a"));
-   actResult2.sort(compare("a"));
-   actResult3.sort(compare("a"));
-   actResult4.sort(compare("a"));
-   expResult.sort(compare("a"));
+   var actResult1 = dbOpr.findFromCL(dbcl, findSomeConf1, {'a' : ''}, { _id : 1 });
+   var actResult2 = dbOpr.findFromCL(dbcl, findSomeConf2, {'a' : ''}, { _id : 1 });
+   var actResult3 = dbOpr.findFromCL(dbcl, findSomeConf3, {'a' : ''}, { _id : 1 });
+   var actResult4 = dbOpr.findFromCL(dbcl, findSomeConf4, {'a' : ''}, { _id : 1 });
+   var expResult = dbOpr.findFromCL(dbcl, {"b": {"$lt" : 10000}}, {'a' : ''}, { _id : 1 });
    checkResult(expResult, actResult1);
    println("---match some records for $and-$and---");
    checkResult(expResult, actResult2);
-   println("---match some records for $and-$not---");
    checkResult(expResult, actResult3);
    println("---match some records for $and-$not---");
    checkResult(expResult, actResult4);
@@ -76,20 +71,14 @@ function main()
    var findAllConf2 = {"$and":[{"$not":[{"b" : {"$gte" : 30000}},{"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}]}; //and-not, fulltext search under "$not"
    var findAllConf3 = {"$and":[{"$not":[{"b" : {"$gte" : 30000}},{"b" : {"$lte": 0}}]}, {"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}; // and-not, fulltext search under "$and"
    var findAllConf4 = {"$and":[{"$or":[{"b" : {"$gte" : 0}}]}, {"":{"$Text":{"query":{"match":{"a" : "test_14388"}}}}}]}; // and-or, fulltext search under "$and"
-   var actResult1 = dbOpr.findFromCL(dbcl, findAllConf1, {'a' : ''});
-   var actResult2 = dbOpr.findFromCL(dbcl, findAllConf2, {'a' : ''});
-   var actResult3 = dbOpr.findFromCL(dbcl, findAllConf3, {'a' : ''});
-   var actResult4 = dbOpr.findFromCL(dbcl, findAllConf4, {'a' : ''});
-   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''});
-   actResult1.sort(compare("a"));
-   actResult2.sort(compare("a"));
-   actResult3.sort(compare("a"));
-   actResult4.sort(compare("a"));
-   expResult.sort(compare("a"));
+   var actResult1 = dbOpr.findFromCL(dbcl, findAllConf1, {'a' : ''}, { _id : 1 });
+   var actResult2 = dbOpr.findFromCL(dbcl, findAllConf2, {'a' : ''}, { _id : 1 });
+   var actResult3 = dbOpr.findFromCL(dbcl, findAllConf3, {'a' : ''}, { _id : 1 });
+   var actResult4 = dbOpr.findFromCL(dbcl, findAllConf4, {'a' : ''}, { _id : 1 });
+   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''}, { _id : 1 });
    checkResult(expResult, actResult1);
    println("---match all records for $and-$and---");
    checkResult(expResult, actResult2);
-   println("---match all records for $and-$not---");
    checkResult(expResult, actResult3);
    println("---match all records for $and-$not---");
    checkResult(expResult, actResult4);

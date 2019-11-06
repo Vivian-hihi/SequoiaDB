@@ -36,19 +36,15 @@ function main()
 
    // match some records
    var findSomeConf = {"$and": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_14385"}}}}}]};
-   var actResult = dbOpr.findFromCL(dbcl, findSomeConf, {'a' : ''});
-   var expResult = dbOpr.findFromCL(dbcl, {"b": {"$gte" : 10000}}, {'a' : ''});
-   actResult.sort(compare("a"));
-   expResult.sort(compare("a"));
+   var actResult = dbOpr.findFromCL(dbcl, findSomeConf, {'a' : ''}, { _id : 1 });
+   var expResult = dbOpr.findFromCL(dbcl, {"b": {"$gte" : 10000}}, {'a' : ''}, { _id : 1 });
    checkResult(expResult, actResult);
    println("---match some records---");
    
    // match all records
    var findAllConf = {"$and": [{"b": {"$gte" : 0}}, {"":{"$Text":{"query":{"match":{"a" : "test_14385 2"}}}}}]};
-   var actResult = dbOpr.findFromCL(dbcl, findAllConf, {'a' : ''});
-   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''});
-   actResult.sort(compare("a"));
-   expResult.sort(compare("a"));
+   var actResult = dbOpr.findFromCL(dbcl, findAllConf, {'a' : ''}, { _id : 1 });
+   var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''}, { _id : 1 });
    checkResult(expResult, actResult); 
    println("---match all records---");
  
