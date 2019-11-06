@@ -490,6 +490,7 @@ namespace engine
             {
                instanceBuilder.append( _getInstanceStr( _specInstance ) ) ;
             }
+            instanceBuilder.doneFast() ;
          }
          switch ( _mode )
          {
