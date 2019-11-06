@@ -51,8 +51,7 @@ function main()
    var dbOpr = new DBOperator();
    
    // 检查ES数组是否同步
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 9);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 9);
    
    // 检查全文检索结果，match_all匹配
    var dbOpr = new DBOperator();
@@ -67,9 +66,8 @@ function main()
                        {a: ["crr1", { "$oid" : "123abcd00ef1235890238901"}], b: "kp", c: 6.006, d: { $decimal:"-555.666" }},
                        {a:[{ "$binary" : "qe91", "$type" : "1" }, { "$regex" : "^zzz", "$options" : "i" }, { "a" : "b" }, "abc"], b: "kx", c: {"a" : "b"}, d: null}
                       ];
-   //var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {_id:{"$include":0}}, {_id:1});
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkResult(expectResult, actResult);
+   var actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {_id:{"$include":0}}, {_id:1});
+   checkResult(expectResult, actResult);
    
    // 创建索引后，插入记录多于1个数组元素，插入报错
    try
@@ -107,11 +105,10 @@ function main()
    dbcl.insert(doc);
          
    // 检查ES数组是否同步
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkFullSyncToES(COMMCSNAME, clName, textIndexName, 18);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 18);
          
    // 检查全文检索结果，match_all匹配
-   //actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {_id:{"$include":0}}, {_id:1});
+   actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{query:{match_all:{}}}}}, {_id:{"$include":0}}, {_id:1});
    expectResult = [{a: ["brr1"], b: "abc"},
                    {a: ["brr1"], b : 3, c : 3.003, d : 6000000000},
                    {a: ["brr1","brr2"], b: { $decimal:"567.089" }, c:{ "$oid" : "123abcd00ef1235890233456" }, d: { "$regex" : "^opq", "$options" : "i" }},
@@ -131,11 +128,10 @@ function main()
                    {a: ["crr1", { "$oid" : "123abcd00ef1235890238901"}], b: "kp", c: 6.006, d: { $decimal:"-555.666" }},
                    {a:[{ "$binary" : "qe91", "$type" : "1" }, { "$regex" : "^zzz", "$options" : "i" }, { "a" : "b" }, "abc"], b: "kx", c: {"a" : "b"}, d: null}
                   ];
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkResult(expectResult, actResult);
+   checkResult(expectResult, actResult);
    
    // 检查全文检索结果，match匹配
-   //actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"opt"}}}}}, {_id:{"$include":0}}, {_id:1});
+   actResult = dbOpr.findFromCL(dbcl, {"":{"$Text":{query:{match:{a:"opt"}}}}}, {_id:{"$include":0}}, {_id:1});
    expectResult = [{a: 'opt', b : 5, c : 5.005, d : 5000000000},
                    {a: 'opt', b : { "$decimal": "111.222" }, c : {"$oid" : "123abcd00ef1235890238901"}, d : { "$binary": "re81", "$type": "1"}},
                    {a: 'opt', b : { "$date": "2019-11-01" }, c : { "$timestamp": "2019-11-01-13.14.26.124233" }, d : null},
@@ -145,8 +141,7 @@ function main()
                    {a: 'opt', b : { "$date": "2019-11-01" }, c : { "$timestamp": "2019-11-01-13.14.26.124233" }, d : null},
                    {a: 'opt', b : { "$regex": "^abc", "$options": "i" }, c : { "$minKey" : 1 }, d : { "$maxKey" : 1 }}
                   ];
-   // SEQUOIADBMAINSTREAM-4825，暂时不比较结果
-   //checkResult(expectResult, actResult);
+   checkResult(expectResult, actResult);
    
    // 删除集合中的所有记录，全文检索返回0条
    dbcl.remove();
