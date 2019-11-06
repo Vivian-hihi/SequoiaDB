@@ -166,7 +166,7 @@ namespace seadapter
       reply.flags = rc ;
       reply.header.messageLength += bodySize ;
       rc = _reply( &reply, handle, msgBody, bodySize ) ;
-      PD_RC_CHECK( rc, PDERROR, "Reply the message failed[ %d ]" ) ;
+      PD_RC_CHECK( rc, PDERROR, "Reply the message failed[%d]", rc ) ;
 
    done:
       return rc ;
@@ -226,12 +226,19 @@ namespace seadapter
 
             rc = context->open( pCollectionName, indexID, matcher, selector,
                                 orderBy, newHint, objBuff, eduCB ) ;
-            if ( rc )
+            if ( rc || context->eof() )
             {
-               if ( SDB_DMS_EOC != rc )
+               contextID = -1 ;
+               SDB_OSS_DEL context ;
+               context = NULL ;
+               if ( SDB_OK == rc )
                {
-                  PD_LOG_MSG( PDERROR, "Open context for rewrite query failed[ %d ]",
-                              rc ) ;
+                  goto done ;
+               }
+               else if ( SDB_DMS_EOC != rc )
+               {
+                  PD_LOG_MSG( PDERROR, "Open context for rewrite query "
+                              "failed[%d]", rc ) ;
                }
                goto error ;
             }
@@ -240,6 +247,11 @@ namespace seadapter
          }
          catch ( std::exception &e )
          {
+            if ( context )
+            {
+               SDB_OSS_DEL context ;
+               context = NULL ;
+            }
             PD_LOG_MSG( PDERROR, "Session[ %s ] create BSON objects for query "
                         "items failed: %s", sessionName(), e.what() ) ;
             rc = SDB_INVALIDARG ;
@@ -268,10 +280,6 @@ namespace seadapter
       }
       return rc ;
    error:
-      if ( context )
-      {
-         SDB_OSS_DEL context ;
-      }
       goto done ;
    }
 
@@ -289,30 +297,32 @@ namespace seadapter
       CTX_MAP_ITR itr = _ctxMap.find( contextID ) ;
       if ( _ctxMap.end() == itr )
       {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Context can not be found" ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG( PDERROR, "Context %lld does not exist", contextID ) ;
          goto error ;
       }
 
       context = itr->second ;
       rc = context->getMore( 1, objBuff ) ;
-      if ( rc )
+      if ( rc || context->eof() )
       {
-         if ( SDB_DMS_EOC != rc )
+         contextID = -1 ;
+         SDB_OSS_DEL context ;
+         _ctxMap.erase( itr ) ;
+         context = NULL ;
+         if ( rc )
          {
-            PD_LOG_MSG( PDERROR, "Get more rewrite query failed[ %d ]", rc ) ;
+            if ( SDB_DMS_EOC != rc )
+            {
+               PD_LOG_MSG( PDERROR, "Get more rewrite query failed[%d]", rc ) ;
+            }
+            goto error ;
          }
-         goto error ;
       }
 
    done:
       return rc ;
    error:
-      if ( itr != _ctxMap.end() )
-      {
-         SDB_OSS_DEL itr->second ;
-         _ctxMap.erase( itr ) ;
-      }
       goto done ;
    }
 

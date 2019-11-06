@@ -129,6 +129,11 @@ namespace seadapter
       goto done ;
    }
 
+   _seAdptContextBase::_seAdptContextBase()
+   : _hitEnd( TRUE )
+   {
+   }
+
    _seAdptContextQuery::_seAdptContextQuery()
    : _imContext( NULL ),
      _esFetcher( NULL )
@@ -170,6 +175,7 @@ namespace seadapter
       BOOLEAN validEmptyResult = FALSE ;
 
       objBuff.reset() ;
+      _hitEnd = FALSE ;
 
       rc = sdbGetSeAdapterCB()->getIdxMetaMgr()->
             getIMContext( &_imContext, indexID, SHARED ) ;
@@ -456,6 +462,11 @@ namespace seadapter
    INT32 _seAdptContextQuery::_getMore( utilCommObjBuff &result )
    {
       INT32 rc = SDB_OK ;
+      if ( eof() )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
 
       if ( !_esFetcher )
       {
@@ -471,7 +482,16 @@ namespace seadapter
       _imContext->pause() ;
       if ( rc )
       {
-         if ( SDB_DMS_EOC != rc )
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            if ( result.getObjNum() > 0 )
+            {
+               rc = SDB_OK ;
+               goto done ;
+            }
+         }
+         else
          {
             PD_LOG( PDERROR, "Fetch data from es failed[ %d ]", rc ) ;
          }
@@ -501,6 +521,7 @@ namespace seadapter
          {
             if ( SDB_DMS_EOC == rc )
             {
+               _hitEnd = TRUE ;
                if ( result.getObjNum() > 0 )
                {
                   rc = SDB_OK ;

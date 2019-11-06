@@ -51,7 +51,6 @@ namespace seadapter
    {
       SDB_ASSERT( index, "Index is NULL" ) ;
       SDB_ASSERT( type, "type is NULL" ) ;
-      _clt = NULL ;
       _index = std::string( index ) ;
       _type = std::string( type ) ;
       _size = 0 ;
@@ -60,10 +59,6 @@ namespace seadapter
 
    _utilESFetcher::~_utilESFetcher()
    {
-      if ( _clt )
-      {
-         _esCltMgr->releaseClient( _clt ) ;
-      }
    }
 
    INT32 _utilESFetcher::setCondition( const BSONObj &condObj )
@@ -154,11 +149,6 @@ namespace seadapter
             rc = SDB_DMS_EOC ;
             goto error ;
          }
-
-         // Only release the client immediately when succeed. If any error
-         // happened, the fetcher will be destroyed, so we keep the current
-         // client for destroy action, avoid getting it again.
-         _esCltMgr->releaseClient( client ) ;
       }
       else
       {
@@ -167,9 +157,12 @@ namespace seadapter
       }
 
    done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
       return rc ;
    error:
-      _clt = client ;
       goto done ;
    }
 
@@ -181,17 +174,23 @@ namespace seadapter
 
    _utilESScrollFetcher::~_utilESScrollFetcher()
    {
-      // Clean the scroll on es to free resource.
+      // User may stop fetching data at any time. Be sure to release the scroll
+      // resource on search engine.
       if ( !_scrollID.empty() )
       {
          INT32 rc = SDB_OK ;
-         if ( !_clt )
+         utilESClt *client = NULL ;
+         rc = _esCltMgr->getClient( client ) ;
+         if ( rc )
          {
-            rc = _esCltMgr->getClient( _clt ) ;
+            PD_LOG( PDERROR, "Get search engine client failed[%d]. Scroll [%s] "
+                    "is not cleaned on search engine. It will be cleaned when "
+                    "timeout", rc, _scrollID.c_str() ) ;
          }
-         if ( SDB_OK == rc )
+         else
          {
-            _clt->clearScroll( _scrollID ) ;
+            client->clearScroll( _scrollID ) ;
+            _esCltMgr->releaseClient( client ) ;
          }
       }
    }
@@ -263,15 +262,26 @@ namespace seadapter
          goto error ;
       }
 
-      // Only release the client immediately when succeed. If any error
-      // happened, the fetcher will be destroyed, so we keep the current
-      // client for destroy action, avoid getting it again.
-      _esCltMgr->releaseClient( client ) ;
-
    done:
+      if ( client )
+      {
+         _esCltMgr->releaseClient( client ) ;
+      }
       return rc ;
    error:
-      _clt = client ;
+      if ( !_scrollID.empty() )
+      {
+         if ( client )
+         {
+            client->clearScroll( _scrollID ) ;
+            _scrollID.clear() ;
+         }
+         else
+         {
+            PD_LOG( PDWARNING, "Scroll [%s] is not cleaned on search engine. "
+                    "It will be cleaned when timeout", _scrollID.c_str() ) ;
+         }
+      }
       goto done ;
    }
 }

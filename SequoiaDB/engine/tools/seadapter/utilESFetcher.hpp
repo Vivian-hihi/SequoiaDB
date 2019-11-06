@@ -68,7 +68,6 @@ namespace seadapter
          virtual INT32 fetch( utilCommObjBuff &result ) = 0 ;
 
       protected:
-         utilESClt     *_clt ;
          std::string    _index ;
          std::string    _type ;
          BSONObj        _query ;

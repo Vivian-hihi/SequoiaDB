@@ -277,6 +277,13 @@ namespace engine
 
       if ( getMore )
       {
+         if ( -1 == _remoteCtxID )
+         {
+            PD_LOG( PDDEBUG, "Hit the end of data on search engine" ) ;
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+
          rc = msgBuildGetMoreMsg( (CHAR **)&msg, &msgSize, numToReturn,
                                   _remoteCtxID, reqID, eduCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Build get more message failed[ %d ]", rc ) ;

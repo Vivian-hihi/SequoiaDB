@@ -157,6 +157,7 @@ namespace seadapter
 
    void _utilESCltMgr::releaseClient( utilESClt *&client )
    {
+      INT32 rc = SDB_OK ;
       utilESCltStat *stat = NULL ;
       if ( !client )
       {
@@ -167,8 +168,21 @@ namespace seadapter
       ossGetCurrentTime( stat->idleTime ) ;
 
       _latch.get() ;
-      _cltList.push_back( client ) ;
+      // Push may fail because of running out of memory. In that case, free the
+      // client directly.
+      rc = _cltList.push_back( client ) ;
+      if ( rc )
+      {
+         // Decrease the number of client in the protection of the lock.
+         --_number ;
+      }
       _latch.release() ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Release search engine client into cache "
+                 "failed[%d]", rc ) ;
+         SDB_OSS_DEL client ;
+      }
       client = NULL ;
 
    done:

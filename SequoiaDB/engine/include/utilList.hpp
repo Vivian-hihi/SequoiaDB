@@ -853,12 +853,22 @@ namespace engine
                rc = SDB_OOM ;
                goto error ;
             }
-            /// copy stack data to deque
-            for ( UINT32 i = 0 ; i < _eleSize ; ++i )
+            try
             {
-               _pList->push_back( _staticBuf[ i ] ) ;
+               /// copy stack data to deque
+               for ( UINT32 i = 0 ; i < _eleSize ; ++i )
+               {
+                  _pList->push_back( _staticBuf[ i ] ) ;
+               }
+               _eleSize = 0 ;
             }
-            _eleSize = 0 ;
+            catch( std::exception & )
+            {
+               delete _pList ;
+               _pList = NULL ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
          }
 
       done:

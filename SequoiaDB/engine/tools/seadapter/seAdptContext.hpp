@@ -90,7 +90,7 @@ namespace seadapter
    class _seAdptContextBase : public utilPooledObject
    {
    public:
-      _seAdptContextBase() {}
+      _seAdptContextBase() ;
       virtual ~_seAdptContextBase() {}
 
       virtual INT32 open( const CHAR *clName,
@@ -103,6 +103,14 @@ namespace seadapter
                           pmdEDUCB *eduCB ) = 0 ;
       // Prepare the selector, matcher, order by and hint in objBuff.
       virtual INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) = 0 ;
+
+      BOOLEAN eof() const
+      {
+         return _hitEnd ;
+      }
+
+   protected:
+      BOOLEAN _hitEnd ;
    } ;
    typedef _seAdptContextBase seAdptContextBase ;
 
