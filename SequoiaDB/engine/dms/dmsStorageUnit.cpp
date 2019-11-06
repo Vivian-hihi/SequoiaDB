@@ -3375,7 +3375,7 @@ namespace engine
             PD_LOG( PDERROR, "Build index information occur exception: %s",
                     e.what() ) ;
             rc = SDB_OOM ;
-            break ;
+            goto error ;
          }
       }
 
