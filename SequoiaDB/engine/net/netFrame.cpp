@@ -1374,7 +1374,7 @@ namespace engine
       return ;
    }
 
-   void _netFrame::closeListen ()
+   INT32 _netFrame::closeListen ()
    {
       try
       {
@@ -1383,9 +1383,14 @@ namespace engine
             _acceptor.close() ;
          }
       }
-      catch( ... )
+      catch( boost::system::system_error &e )
       {
+         PD_LOG ( PDERROR, "Close listen occur error: %s,%d",
+                  e.what(), e.code().value() ) ;
+         return SDB_NETWORK ;
       }
+
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__NETFRAME_CLOSE3, "_netFrame::close" )

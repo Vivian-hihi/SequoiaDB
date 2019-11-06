@@ -276,7 +276,7 @@ namespace engine
 
          void  close() ;
 
-         void  closeListen() ;
+         INT32 closeListen() ;
 
          void  handleMsg( NET_EH eh ) ;
 
