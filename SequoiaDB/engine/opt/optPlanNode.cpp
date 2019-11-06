@@ -370,6 +370,8 @@ namespace engine
          subBuilder.done() ;
       }
 
+      estimateBuilder.doneFast() ;
+
    done :
       PD_TRACE_EXITRC( SDB_OPTPLANNODE__TOBSONEST, rc ) ;
       return rc ;

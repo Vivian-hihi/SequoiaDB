@@ -9733,6 +9733,8 @@ do                                                            \
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
             }
+
+            componentBuilder.doneFast() ;
          }
          // append array element, field name: Breakpoint
          {
@@ -9745,6 +9747,7 @@ do                                                            \
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
             }
+            breakpointBuilder.doneFast() ;
          }
 
          // append array element, field name: Threads
@@ -9756,6 +9759,7 @@ do                                                            \
             {
                threadsBuilder.append( *itr ) ;
             }
+            threadsBuilder.doneFast() ;
          }
          query = queryBuilder.obj() ;
       }
