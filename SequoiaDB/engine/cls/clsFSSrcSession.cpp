@@ -2066,6 +2066,9 @@ namespace engine
       try
       {
          BSONObjBuilder b( 65536 ) ;
+         INT32 curLen = 0 ;
+         INT32 curReserved = 0 ;
+
          /// reserved for CLS_FS_FULLNAMES and CLS_FS_VALIDCLS
          b.bb().reserveBytes( 100 + 100 ) ;
 
@@ -2080,8 +2083,10 @@ namespace engine
          {
             if ( 0 == itCS->_collections.size() )
             {
-               if ( b.bb().len() + b.bb().getReserveBytes() >
-                    CLS_FS_MAX_BSON_SIZE )
+               curLen = b.bb().len() ;
+               curReserved = b.bb().getReserveBytes() ;
+
+               if ( curLen + curReserved > CLS_FS_MAX_BSON_SIZE )
                {
                   break ;
                }
@@ -2100,6 +2105,8 @@ namespace engine
                {
                   PD_LOG( PDWARNING, "Build collectionspace information "
                           "occur exception: %s", e.what() ) ;
+                  b.bb().setlen( curLen ) ;
+                  b.bb().setReserveBytes( curReserved ) ;
                   break ;
                }
             }
@@ -2115,8 +2122,10 @@ namespace engine
          MON_CL_LIST::const_iterator itrCL = clList.begin() ;
          while( itrCL != clList.end() )
          {
-            if ( b.bb().len() + b.bb().getReserveBytes() >
-                 CLS_FS_MAX_BSON_SIZE )
+            curLen = b.bb().len() ;
+            curReserved = b.bb().getReserveBytes() ;
+
+            if ( curLen + curReserved > CLS_FS_MAX_BSON_SIZE )
             {
                break ;
             }
@@ -2131,6 +2140,8 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Build collection name occur exception: %s",
                        e.what() ) ;
+               b.bb().setlen( curLen ) ;
+               b.bb().setReserveBytes( curReserved ) ;
                break ;
             }
             clList.erase( itrCL++ ) ;
@@ -2145,8 +2156,10 @@ namespace engine
          MAP_SU_STATUS::iterator itValid = validCLs.begin() ;
          while( itValid != validCLs.end() )
          {
-            if ( b.bb().len() + b.bb().getReserveBytes() >
-                 CLS_FS_MAX_BSON_SIZE )
+            curLen = b.bb().len() ;
+            curReserved = b.bb().getReserveBytes() ;
+
+            if ( curLen + curReserved > CLS_FS_MAX_BSON_SIZE )
             {
                break ;
             }
@@ -2161,6 +2174,8 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Build valid collection name occur "
                        "exception: %s", e.what() ) ;
+               b.bb().setlen( curLen ) ;
+               b.bb().setReserveBytes( curReserved ) ;
                break ;
             }
             validCLs.erase( itValid++ ) ;
