@@ -684,7 +684,7 @@ namespace engine
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _prefInstStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _prefInstModeStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
-         CHAR        _auditMaskStr[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _auditMaskStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _memDebugMaskStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _monGroupMaskStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          UINT32      _logFileSz ;
