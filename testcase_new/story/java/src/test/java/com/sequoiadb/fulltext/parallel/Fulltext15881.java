@@ -82,7 +82,7 @@ public class Fulltext15881 extends FullTestBase {
             this.checkAlterCLResults(false);
         }
 
-        this.checkIndexCommitLSN();
+        this.checkIndexCommitLSN(10);
     }
 
     @Override
@@ -138,10 +138,24 @@ public class Fulltext15881 extends FullTestBase {
         }
     }
 
-    private void checkIndexCommitLSN() {
+    private void checkIndexCommitLSN(int checkTimes) {
+        for (int i = 0; i < checkTimes; i++) {
+            if (checkIndexCommitLSN()) {
+                return;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Assert.fail("Fulltext15881 checkIndexCommitLSN timeout...");
+    }
+
+    private boolean checkIndexCommitLSN() {
         List<String> nodeAddress = CommLib.getNodeAddress(sdb, groupName);
         if (nodeAddress.size() < 2) {
-            return;
+            return true;
         }
 
         List<Long> LSNs = new ArrayList<>();
@@ -165,8 +179,12 @@ public class Fulltext15881 extends FullTestBase {
 
         for (int i = 0; i < LSNs.size(); i++) {
             if (i > 0) {
-                Assert.assertEquals(LSNs.get(i - 1), LSNs.get(i), "LSNs = " + LSNs);
+                if (!LSNs.get(i - 1).equals(LSNs.get(i))) {
+                    System.out.println("Fulltext15881: " + LSNs + " LSN[" + (i - 1) + "] not equal LSN[" + i + "]");
+                    return false;
+                }
             }
         }
+        return true;
     }
 }
