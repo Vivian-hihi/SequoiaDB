@@ -47,8 +47,7 @@
 #include "../bson/bson.h"
 #include "authCB.hpp"
 #include "utilStr.hpp"
-//#include "ossUtil.h"
-//#include "pd.hpp"
+#include "monClass.hpp"
 #include "msg.h"
 #include "omDef.hpp"
 
@@ -624,6 +623,10 @@ namespace engine
       if ( -1 != contextID )
       {
          rtnContext *pContext = _pRTNCB->contextFind( contextID ) ;
+         monClassQueryTmpData tmpData ;
+         tmpData = *(_pEDUCB->getMonAppCB()) ;
+         ossTick startTime ;
+         startTime.sample() ;
 
          while ( NULL != pContext )
          {
@@ -632,6 +635,21 @@ namespace engine
             {
                _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
                contextID = -1 ;
+               if ( _pEDUCB->getMonQueryCB() )
+               {
+                  monClassQuery *monQuery = _pEDUCB->getMonQueryCB() ;
+                  ossTick endTime ;
+                  endTime.sample() ;
+                  monQuery->responseTime += endTime - startTime ;
+                  monQuery->rowsReturned += contextBuff.recordNum() ;
+
+                  tmpData.diff(*(_pEDUCB->getMonAppCB())) ;
+                  monQuery->incMetrics(tmpData) ;
+                  pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
+
+                  _pEDUCB->setMonQueryCB( NULL ) ;
+               }
+
                if ( SDB_DMS_EOC != rc )
                {
                   PD_LOG_MSG( PDERROR, "getmore failed:rc=%d", rc ) ;
