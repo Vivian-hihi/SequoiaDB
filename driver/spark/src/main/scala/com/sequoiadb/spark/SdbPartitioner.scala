@@ -46,6 +46,11 @@ private class NodeInfo(val host: String, val port: Int, val group: String,
     override def toString: String = s"$host:$port{group: $group,instanceId: $instanceId, isPrimary: $isPrimary}"
 }
 
+private class BlockStatics(val totalBlockNum: Long, val minBlockNumPerSharding: Int,
+        val maxBlockNumPerSharding: Int) {
+    override def toString: String = s"totalBlockNum: $totalBlockNum,maxBlockNumInMeta: $maxBlockNumPerSharding,minBlockNumInMeta: $minBlockNumPerSharding"
+}
+
 private object SdbPartitioner extends Logging {
     def apply(config: SdbConfig, filter: SdbFilter): SdbPartitioner = {
         val mode = determinatePartitionMode(config, filter)
@@ -803,8 +808,32 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
 
         val queryMetas = getQueryMetas(groups, shardings)
 
+        val blockStatics = getBlockStatics(queryMetas)
+
+        logInfo(s"max partition num [${config.partitionMaxNum}]")
+        logInfo(s"get ${queryMetas.length} queryMetas, ${shardings.length} shardings, ${blockStatics.totalBlockNum} Blocks, minBlockNumPerSharding ${blockStatics.minBlockNumPerSharding}, maxBlockNumPerSharding ${blockStatics.maxBlockNumPerSharding}")
+
         var partitions: Array[SdbPartition] = null
         var blockNum = config.partitionBlockNum
+
+        // no need to adjust if config.partitionMaxNum is unlimited(config.partitionMaxNum == 0)
+        if (config.partitionMaxNum > 0) {
+            if (shardings.size >= config.partitionMaxNum) {
+            // parition number must be shardings.size at least. so set the max blockNum per sharding
+            var tmpBlockNum = blockStatics.maxBlockNumPerSharding
+            logInfo(s"adjust blockNum from ${blockNum} to ${tmpBlockNum}")
+            blockNum = tmpBlockNum
+            }
+            else {
+                // Math.ceil()
+                var tmpBlockNum = (blockStatics.totalBlockNum + config.partitionMaxNum - 1) / config.partitionMaxNum
+                if (tmpBlockNum > blockNum) {
+                    // default blockNum can't satisfy, adjust to a suitable number
+                    logInfo(s"adjust blockNum from ${blockNum} to ${tmpBlockNum}")
+                    blockNum = tmpBlockNum.toInt
+                }
+            }
+        }
 
         val breaker = new Breaks
         breaker.breakable {
@@ -817,13 +846,38 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
                 }
 
                 // partition num is satisfied or only one partition per sharding
-                if (partitions.length < config.partitionMaxNum ||
+                if (partitions.length <= config.partitionMaxNum ||
                     partitions.length == shardings.size) {
                     breaker.break()
                 }
+                // partitions.length >= config.partitionMaxNum
+                // still can't satisfy config.partitionMaxNum that means sharding's block number is not balance
 
-                // we should increase block num of each partition to decrease partition num
-                blockNum += 1
+                logInfo(s"need to adjust while blockNum=${blockNum},partition=${partitions.length},max partition=${config.partitionMaxNum}")
+                val prviousBlockNum = blockNum
+                if (config.partitionMaxNum > 0) {
+                    // decrease partitionNum(of cause increase the blockNum) from the max sharding
+                    // Math.ceil
+                    var partNumInMaxSharding = (blockStatics.maxBlockNumPerSharding + blockNum -1) / blockNum
+                    if ( partNumInMaxSharding > 1) {
+                        var expectPartNum = partNumInMaxSharding - 1
+
+                        // Math.ceil
+                        var newBLockNum = (blockStatics.maxBlockNumPerSharding + expectPartNum -1) / expectPartNum
+                        if (newBLockNum > blockNum) {
+                            logInfo(s"adjust blockNum from ${blockNum} to ${newBLockNum}")
+                            blockNum = newBLockNum
+                        }
+                    }
+                    // it's impossible partNumInMaxSharding == 1
+                    // see the previous branch: partitions.length == shardings.size
+                }
+
+                if (blockNum <= prviousBlockNum) {
+                    // just for safe code, couldn't be here
+                    logWarning(s"adjust blockNum from ${blockNum} to ${blockNum + 1}")
+                    blockNum += 1
+                }
             }
         }
 
@@ -856,6 +910,25 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
         }
 
         queryMetas.toArray
+    }
+
+    private def getBlockStatics(queryMetas: Array[QueryMeta])
+    : BlockStatics = {
+        var totalNum : Long = 0
+        var maxNum : Int = 0
+        var minNum : Int = Int.MaxValue
+        for (meta <- queryMetas) {
+            totalNum = totalNum + meta.datablocks.length
+            if (maxNum < meta.datablocks.length) {
+                maxNum = meta.datablocks.length
+            }
+
+            if (minNum > meta.datablocks.length) {
+                minNum = meta.datablocks.length
+            }
+        }
+
+        new BlockStatics(totalNum, minNum, maxNum)
     }
 
     private def generatePartitions(queryMetas: Array[QueryMeta],
