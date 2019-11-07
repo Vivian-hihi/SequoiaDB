@@ -43,11 +43,10 @@ function main()
    var actResult1 = dbOpr.findFromCL(dbcl, findSomeConf1, {'a' : ''}, { _id : 1 });
    var actResult2 = dbOpr.findFromCL(dbcl, findSomeConf2, {'a' : ''}, { _id : 1 });
    var expResult1 = dbOpr.findFromCL(dbcl, {"b": {"$gte" : 5000}}, {'a' : ''}, { _id : 1 });
-   var expResult2 = dbOpr.findFromCL(dbcl, {$or: [{"b": {"$lte" : 5000}}, {"b": {"gte" : 15000}}]}, {'a' : ''}, { _id : 1 });
-   // BUG SEQUOIADBMAINSTREAM-5159
-   //checkResult(expResult1, actResult1);
-   //checkResult(expResult2, actResult2);
-   //println("---match some records---");
+   var expResult2 = dbOpr.findFromCL(dbcl, {$or: [{"b": {"$lte" : 5000}}, {"b": {"$gte" : 15000}}]}, {'a' : ''}, { _id : 1 });
+   checkResult(expResult1, actResult1);
+   checkResult(expResult2, actResult2);
+   println("---match some records---");
    
    // match all records
    var findAllConf1 = {"$or": [{"b": {"$gt" : 0}}, {"":{"$Text":{"query":{"match":{"a" : "test_14386_A"}}}}}]};  // with intersection
@@ -55,10 +54,9 @@ function main()
    var actResult1 = dbOpr.findFromCL(dbcl, findAllConf1, {'a' : ''}, { _id : 1 });
    var actResult2 = dbOpr.findFromCL(dbcl, findAllConf2, {'a' : ''}, { _id : 1 });
    var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''}, { _id : 1 });
-   // BUG SEQUOIADBMAINSTREAM-5159
-   //checkResult(expResult, actResult1); 
-   //checkResult(expResult, actResult2); 
-   //println("---match all records---");
+   checkResult(expResult, actResult1); 
+   checkResult(expResult, actResult2); 
+   println("---match all records---");
  
    var dbOperator = new DBOperator();
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);

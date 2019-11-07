@@ -64,14 +64,13 @@ function main()
    var expResult2 = dbOpr.findFromCL(dbcl, {"$or": [{"b": {"$lt" : 5000}}, {"b": {"$gte" : 10000}}]}, {'a' : ''}, { _id : 1 });
    var expResult3 = dbOpr.findFromCL(dbcl, {"$and": [{"b": {"$gte" : 0}}, {"b": {"$lt" : 15000}}]}, {'a' : ''}, { _id : 1 });
    var expResult4 = dbOpr.findFromCL(dbcl, {"b": {"$gte" : 10000}}, {'a' : ''}, { _id : 1 });
-   //BUG SEQUOIADBMAINSTREAM-5159
-   //checkResult(expResult1, actResult1);
-   //println("---match some records for $or-$or---");
-   //checkResult(expResult2, actResult2);
-   //checkResult(expResult3, actResult3);
-   //println("---match some records for $or-$not---");
-   //checkResult(expResult4, actResult4);
-   //println("---match some records for $or-$and---");
+   checkResult(expResult1, actResult1);
+   println("---match some records for $or-$or---");
+   checkResult(expResult2, actResult2);
+   checkResult(expResult3, actResult3);
+   println("---match some records for $or-$not---");
+   checkResult(expResult4, actResult4);
+   println("---match some records for $or-$and---");
  
    // match all records
    var findAllConf1 = {"$or":[{"$or":[{"b":{"$gte" : 5000}},{"":{"$Text":{"query":{"match":{"a":"test_14389_A"}}}}}]}]}; // or-or
@@ -83,14 +82,13 @@ function main()
    var actResult3 = dbOpr.findFromCL(dbcl, findAllConf3, {'a' : ''}, { _id : 1 });
    var actResult4 = dbOpr.findFromCL(dbcl, findAllConf4, {'a' : ''}, { _id : 1 });
    var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''}, { _id : 1 });
-   //BUG SEQUOIADBMAINSTREAM-5159
-   //checkResult(expResult, actResult1);
-   //println("---match all records for $or-$or---");
-   //checkResult(expResult, actResult2);
-   //checkResult(expResult, actResult3);
-   //println("---match all records for $or-$not---");
-   //checkResult(expResult, actResult4);
-   //println("---match all records for $or-$and---");
+   checkResult(expResult, actResult1);
+   println("---match all records for $or-$or---");
+   checkResult(expResult, actResult2);
+   checkResult(expResult, actResult3);
+   println("---match all records for $or-$not---");
+   checkResult(expResult, actResult4);
+   println("---match all records for $or-$and---");
 
    var dbOperator = new DBOperator();
    var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);

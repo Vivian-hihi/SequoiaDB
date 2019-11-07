@@ -64,9 +64,8 @@ function main()
    var actResult2 = dbOpr.findFromCL(dbcl, findSomeConf2, {'a' : ''}, { _id : 1 });
    var expResult1 = dbOpr.findFromCL(dbcl, {"b": {"$lte" : 10000}}, {'a' : ''}, { _id : 1 });
    var expResult2 = dbOpr.findFromCL(dbcl, {"b": {"$lt" : 15000}}, {'a' : ''}, { _id : 1 });
-   // BUG #SEQUOIADBMAINSTREAM-5159
-   //checkResult(expResult1, actResult1);
-   //println("---match some records for $or-$or-$or---");
+   checkResult(expResult1, actResult1);
+   println("---match some records for $or-$or-$or---");
    checkResult(expResult2, actResult2);
    println("---match some records for $or-$and-$not---");
  
@@ -76,9 +75,8 @@ function main()
    var actResult1 = dbOpr.findFromCL(dbcl, findAllConf1, {'a' : ''}, { _id : 1 });
    var actResult2 = dbOpr.findFromCL(dbcl, findAllConf2, {'a' : ''}, { _id : 1 });
    var expResult = dbOpr.findFromCL(dbcl, null, {'a' : ''}, { _id : 1 });
-   // BUG #SEQUOIADBMAINSTREAM-5159
-//   checkResult(expResult, actResult1);
-//   println("---match all records for $or-$or-$or---");
+   checkResult(expResult, actResult1);
+   println("---match all records for $or-$or-$or---");
    checkResult(expResult, actResult2);
    println("---match all records for $or-$not-$and---");
 
