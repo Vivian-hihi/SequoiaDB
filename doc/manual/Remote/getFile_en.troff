@@ -45,7 +45,7 @@ T}@T{
 T}@T{
 file path
 T}@T{
-yes
+not
 T}
 T{
 2
@@ -91,6 +91,15 @@ files
 T}@T{
 T}
 .TE
+
+Note：
+.RE
+.PP
+If you want to execute the global method of the remote File class, you can leave
+the parameters blank.
+For more detial of the global method, you can execute the \[aq]File.help()\[aq]
+in the sdb shell to view.
+.RE
 .PP
 The optional values of the \[aq]mode\[aq] parameter are as follows：
 .PP

@@ -18,9 +18,13 @@ Create a file object remotely.
 
 | Name       | Type     | Default                               | Description        | Required or not |
 | ---------- | -------- | ------------------------------------- | ------------------ | -------- |
-| filepath   | string   | ---                                   | file path                      | yes      |
+| filepath   | string   | ---                                   | file path                      | not      |
 | permission | int      | 0700                                  | set permissions to open files  | not      |
 | mode       | int      | SDB_FILE_READWRITE \| SDB_FILE_CREATE | set the way to open files      | not      |
+
+>Note：
+
+>If you want to execute the global method of the remote File class, you can leave the parameters blank. For more detial of the global method, you can execute the 'File.help()' in the sdb shell to view.
 
 The optional values of the 'mode' parameter are as follows：
 
