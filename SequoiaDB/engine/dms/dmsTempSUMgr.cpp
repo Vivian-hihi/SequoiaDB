@@ -301,7 +301,7 @@ namespace engine
       {
          PD_LOG( PDINFO, "Removed SYSTEMP file[%s]", fullPath ) ;
       }
-      else if ( SDB_FE != rc )
+      else if ( SDB_FNE != rc )
       {
          PD_LOG( PDWARNING, "Remove SYSTEMP file[%s] failed, rc: %d",
                  fullPath, rc ) ;
