@@ -162,8 +162,10 @@ namespace replay
       submitIntervalEle = conf.getField( RPL_CONF_SUBMIT_INTERVAL ) ;
       if ( !submitIntervalEle.eoo() )
       {
-         PD_CHECK( submitIntervalEle.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                   "%s must be number format", RPL_CONF_SUBMIT_INTERVAL ) ;
+         PD_CHECK( submitIntervalEle.type() == NumberInt
+                   || submitIntervalEle.type() == NumberLong , SDB_INVALIDARG,
+                   error, PDERROR, "%s must be int or long format",
+                   RPL_CONF_SUBMIT_INTERVAL ) ;
 
          _submitInterval = submitIntervalEle.numberLong() ;
          PD_CHECK( _submitInterval > 0, SDB_INVALIDARG, error, PDERROR,
