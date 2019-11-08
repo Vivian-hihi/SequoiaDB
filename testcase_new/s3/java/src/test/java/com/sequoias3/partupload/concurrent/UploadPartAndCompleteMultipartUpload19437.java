@@ -1,16 +1,5 @@
 package com.sequoias3.partupload.concurrent;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.PartETag;
@@ -23,6 +12,16 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-19437:关闭分段检测开关，相同对象并发上传一个分段和完成分段上传
@@ -39,8 +38,7 @@ public class UploadPartAndCompleteMultipartUpload19437 extends S3TestBase {
                 new Object[] { 0 } };
     }
 
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 3;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String keyName = "/aa/object19437";
     private AmazonS3 s3Client = null;
     private File localPath = null;
@@ -82,13 +80,13 @@ public class UploadPartAndCompleteMultipartUpload19437 extends S3TestBase {
         if (!downfileMd5.equals(expMd5WithoutPart3) && !downfileMd5.equals(expMd5WithPart3)) {
             Assert.fail("actMd5 is :" + downfileMd5 + ", expMd5 is " + expMd5WithoutPart3 + " or " + expMd5WithPart3);
         }
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (actSuccessTests.get() == generateFirstPartSize().length) {
                 s3Client.deleteObject(S3TestBase.bucketName, keyName);
                 TestTools.LocalFile.removeFile(localPath);
             }

@@ -1,12 +1,23 @@
 package com.sequoias3.config;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.sequoias3.delimiter.DelimiterConfiguration;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.RestClient;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestRest;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.DelimiterUtils;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import com.sequoias3.user.UserCommDefind;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -28,18 +39,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.sequoias3.delimiter.DelimiterConfiguration;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestRest;
-import com.sequoias3.testcommon.TestTools;
-import com.sequoias3.testcommon.s3utils.DelimiterUtils;
-import com.sequoias3.testcommon.s3utils.ObjectUtils;
-import com.sequoias3.testcommon.s3utils.UserUtils;
-import com.sequoias3.user.UserCommDefind;
-
 /**
  * test content: 开启鉴权，执行对象管理操作 testlink-case: seqDB-18587
  * 
@@ -48,7 +47,7 @@ import com.sequoias3.user.UserCommDefind;
  * @version 1.00
  */
 public class CreateObject18587 extends S3TestBase {
-    @DataProvider(name = "authorizationProvider")
+    @DataProvider(name = "authorizationProvider",parallel = true)
     public Object[][] generateAuthorization() {
         return new Object[][] {
                 // test a : authorization 为version2版本
@@ -58,7 +57,7 @@ public class CreateObject18587 extends S3TestBase {
     }
 
     private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String userName = "user18587";
     private String roleName = "normal";
     private String[] objectNames = { "dir1?test18587_1", "dir1?Dir2?test18587_2", "?aa?bb?test18587_3",
@@ -98,13 +97,13 @@ public class CreateObject18587 extends S3TestBase {
         checkListObjV2WithDelimiter(ListBucketResultObj, expCommonPrefixes, expContentList);
 
         clearBucket(bucketName, authorization);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateAuthorization().length) {
                 UserUtils.deleteUser(userName);
             }
         } finally {

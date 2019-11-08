@@ -6,13 +6,13 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 /**
  * @Description seqDB-17297: create Region and specify set DataCLShardingType.
@@ -30,10 +30,9 @@ public class CreateRegion17297 extends S3TestBase {
                 new Object[] { "region17297c", "month", "bucket17297c" } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String key = "key17297";
     private AmazonS3 s3Client = null;
-    private int successConut = 0;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -53,19 +52,13 @@ public class CreateRegion17297 extends S3TestBase {
 
         // create object on region
         createObjectAndCheckResult(regionName, bucketName);
-
-        successConut++;
-        // after all 3 concurrent operations are successful,set runSuccess to
-        // true
-        if (successConut == 3) {
-            runSuccess = true;
-        }
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateRegion().length) {
                 CommLib.clearBucket(s3Client, "bucket17297a");
                 CommLib.clearBucket(s3Client, "bucket17297b");
                 CommLib.clearBucket(s3Client, "bucket17297c");

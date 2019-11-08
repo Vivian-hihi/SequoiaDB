@@ -1,15 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectResult;
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
@@ -18,6 +8,15 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-19305:不同桶复制对象
@@ -36,7 +35,7 @@ public class CopyObject19305 extends S3TestBase {
                 new Object[] { "/destKey/19305.txt" } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String keyName = "aa%maa/bb%object19305";
     private String bucketNameA = "bucket19305a";
     private String bucketNameB = "bucket19305b";
@@ -45,7 +44,6 @@ public class CopyObject19305 extends S3TestBase {
     private File localPath = null;
     private String filePath = null;
     private Date expModifiedTime;
-    private int successNum = 0;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -72,19 +70,13 @@ public class CopyObject19305 extends S3TestBase {
         checkObjectAttributeInfo(result, bucketNameB, destKeyName, expModifiedTime);
         checkObjectContent(bucketNameB, destKeyName);
         checkObjectContent(bucketNameA, keyName);
-
-        successNum++;
-        // all threads(2) execute successfully, then set runsuccess=true
-        if (successNum == 2) {
-            runSuccess = true;
-        }
-
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateKeyName().length) {
                 CommLib.clearBucket(s3Client, bucketNameA);
                 CommLib.clearBucket(s3Client, bucketNameB);
                 TestTools.LocalFile.removeFile(localPath);

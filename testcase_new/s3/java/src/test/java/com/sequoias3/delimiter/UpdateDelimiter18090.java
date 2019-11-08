@@ -1,18 +1,17 @@
 package com.sequoias3.delimiter;
 
-import java.util.List;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 设置分隔符，指定分隔符为多字符 testlink-case: seqDB-18090
@@ -22,7 +21,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  * @version 1.00
  */
 public class UpdateDelimiter18090 extends S3TestBase {
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket18090";
     private String userName = "user18090";
     private String roleName = "normal";
@@ -59,13 +58,13 @@ public class UpdateDelimiter18090 extends S3TestBase {
                 matchContentsList);
 
         CommLib.clearBucket(s3Client, bucketName);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == delimiterProvider().length) {
                 UserUtils.deleteUser(userName);
             }
         } finally {

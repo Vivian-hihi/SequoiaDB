@@ -1,13 +1,5 @@
 package com.sequoias3.object.serial;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
@@ -16,6 +8,13 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 桶中对象数量较大，查询对象元数据列表 testlink-case: seqDB-16517
@@ -38,7 +37,7 @@ public class GetObjectList16517 extends S3TestBase {
     private String keyName = "/dir";
     private List<String> expresultList = new ArrayList<String>();
     private AmazonS3 s3Client = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass(enabled = false)
     private void setUp() throws Exception {
@@ -68,12 +67,12 @@ public class GetObjectList16517 extends S3TestBase {
 
         ObjectUtils.checkListObjectsV2KeyName(objectSummaries, expresultList);
         expresultList.clear();
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass(enabled = false)
     private void tearDown() {
-        if (runSuccess) {
+        if (actSuccessTests.get() == generateObjectNumber().length) {
             CommLib.deleteAllObjectVersions(s3Client, bucketName);
             s3Client.deleteBucket(bucketName);
         }

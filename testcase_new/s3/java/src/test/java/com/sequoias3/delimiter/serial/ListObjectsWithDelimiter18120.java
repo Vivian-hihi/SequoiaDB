@@ -9,12 +9,6 @@ import com.sequoias3.delimiter.DelimiterConfiguration;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -22,6 +16,12 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-18120: To get a list of objects within a bucket.specify
@@ -31,7 +31,7 @@ import java.util.List;
  * @Date 2019.4.23
  */
 public class ListObjectsWithDelimiter18120 extends S3TestBase {
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket18120";
     private String encodingType = "utf-8";
     private AmazonS3 s3Client = null;
@@ -75,13 +75,13 @@ public class ListObjectsWithDelimiter18120 extends S3TestBase {
                 URLDecoder.decode(delimiter, encodingType));
         Assert.assertEquals(currDelimiter.getStatus(), "Normal");
         listObjectsAndCheckResult(delimiter, position);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
-    private void tearDown() {
+    private void tearDown() throws UnsupportedEncodingException {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generatePageSize().length) {
                 CommLib.clearBucket(s3Client, bucketName);
             }
         } finally {

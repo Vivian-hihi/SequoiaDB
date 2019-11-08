@@ -1,17 +1,17 @@
 package com.sequoias3.config;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 使用指定模式创建区域，带LobPageSize和RepliSize参数testlink-case: seqDB-18610
@@ -26,7 +26,7 @@ public class CreateRegion18610 extends S3TestBase {
         return new Object[][] { new Object[] { "4096", "" }, new Object[] { "", "3" }, new Object[] { "8192", "1" } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String regionName = "region18610";
     private AmazonS3 s3Client = null;
     private String[] csNames = { "metaCS18610", "dataCS18610" };
@@ -57,13 +57,13 @@ public class CreateRegion18610 extends S3TestBase {
             Assert.assertEquals(e.getErrorCode(), "ConflictRegionType");
         }
 
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateAuthorization().length) {
                 RegionUtils.dropCS(csNames);
             }
         } finally {

@@ -1,10 +1,23 @@
 package com.sequoias3.config;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.HeadBucketRequest;
+import com.amazonaws.services.s3.model.Owner;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.RestClient;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestRest;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.DelimiterUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import com.sequoias3.user.UserCommDefind;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -21,20 +34,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.HeadBucketRequest;
-import com.amazonaws.services.s3.model.Owner;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestRest;
-import com.sequoias3.testcommon.TestTools;
-import com.sequoias3.testcommon.s3utils.DelimiterUtils;
-import com.sequoias3.testcommon.s3utils.UserUtils;
-import com.sequoias3.user.UserCommDefind;
 
 /**
  * test content: 关闭鉴权，设置鉴权头部错误，上传对象 testlink-case: seqDB-18585
@@ -57,7 +56,7 @@ public class CreateObject18585 extends S3TestBase {
     }
 
     private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String userName = "user18585";
     private String roleName = "normal";
     private String keyName = "key18585";
@@ -100,13 +99,13 @@ public class CreateObject18585 extends S3TestBase {
         deleteBucket(bucketName, authorization);
         Assert.assertFalse(s3Client.doesBucketExist(bucketName));
 
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateAuthorization().length) {
                 UserUtils.deleteUser(userName);
             }
         } finally {

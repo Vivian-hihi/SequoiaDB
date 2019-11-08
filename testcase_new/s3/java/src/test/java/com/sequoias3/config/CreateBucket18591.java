@@ -29,7 +29,7 @@ import com.sequoias3.user.UserCommDefind;
 public class CreateBucket18591 extends S3TestBase {
     private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
 
-    @DataProvider(name = "authorizationProvider")
+    @DataProvider(name = "authorizationProvider",parallel = true)
     public Object[][] generateAuthorization() {
         return new Object[][] {
                 // test a : authorization 头部不存在

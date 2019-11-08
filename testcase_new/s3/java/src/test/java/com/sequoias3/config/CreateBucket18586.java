@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -60,7 +61,7 @@ public class CreateBucket18586 extends S3TestBase {
     }
 
     private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String userName = "user18586";
     private int keyNum = 5;
     private String roleName = "normal";
@@ -116,13 +117,13 @@ public class CreateBucket18586 extends S3TestBase {
         checkPutObjectResult(authorization, bucketName, contentList);
         clearBucket(authorization, bucketName);
         Assert.assertFalse(s3Client.doesBucketExist(bucketName));
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateAuthorization().length) {
                 UserUtils.deleteUser(userName);
                 RegionUtils.deleteRegion(regionName);
             }

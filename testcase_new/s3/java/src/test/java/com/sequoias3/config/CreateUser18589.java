@@ -1,5 +1,13 @@
 package com.sequoias3.config;
 
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestRest;
+import com.sequoias3.testcommon.s3utils.DelimiterUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import com.sequoias3.user.UserCommDefind;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.http.HttpMethod;
@@ -12,14 +20,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestRest;
-import com.sequoias3.testcommon.s3utils.DelimiterUtils;
-import com.sequoias3.testcommon.s3utils.UserUtils;
-import com.sequoias3.user.UserCommDefind;
 
 /**
  * test content: 开启鉴权，使用普通用户执行用户管理操作 testlink-case: seqDB-18589
@@ -39,7 +39,7 @@ public class CreateUser18589 extends S3TestBase {
     }
 
     private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String userName = "normaluser18589";
     private String roleName = "normal";
     private String[] accessKeys = null;
@@ -80,12 +80,12 @@ public class CreateUser18589 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "AccessDenied");
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
-        if (runSuccess) {
+        if ( actSuccessTests.get() == generateAuthorization().length) {
             UserUtils.deleteUser(userName);
         }
     }

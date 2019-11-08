@@ -1,16 +1,5 @@
 package com.sequoias3.partupload;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -23,6 +12,16 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content:withMetadata接口参数校验 testlink-case: seqDB-18807
@@ -56,7 +55,7 @@ public class WithObjectMetaData18807 extends S3TestBase {
     private File file = null;
     private String filePath = null;
     private AmazonS3 s3Client = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -75,7 +74,6 @@ public class WithObjectMetaData18807 extends S3TestBase {
 
     @Test(dataProvider = "legalMetadataProvider")
     public void testLegalMetaData(Map<String, String> meta) throws Exception {
-        runSuccess = false;
         InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucketName, keyName);
         ObjectMetadata userMetadata = new ObjectMetadata();
         userMetadata.setUserMetadata(meta);
@@ -98,12 +96,11 @@ public class WithObjectMetaData18807 extends S3TestBase {
                 Assert.fail("Metadata is wrong ! exp : " + expValue + ", but found : " + actValue);
             }
         }
-        runSuccess = true;
+       actSuccessTests.getAndIncrement();
     }
 
     @Test
     public void testIllegalMetaData() throws Exception {
-        runSuccess = false;
         InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(bucketName, keyName);
         ObjectMetadata metadata = new ObjectMetadata();
         Map<String, String> meta = new HashMap<>();
@@ -116,13 +113,13 @@ public class WithObjectMetaData18807 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorMessage(), "Your metadata headers exceed the maximum allowed metadata size.");
         }
-        runSuccess = true;
+       actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateMetadata().length + 1) {
                 CommLib.clearBucket(s3Client, bucketName);
             }
         } finally {

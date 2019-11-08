@@ -1,14 +1,5 @@
 package com.sequoias3.partupload;
 
-import java.io.File;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
@@ -19,6 +10,14 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: CompleteMultipartUploadRequest接口参数校验 testlink-case: seqDB-18811
@@ -41,7 +40,7 @@ public class CompleteMultipartUploadRequest18811 extends S3TestBase {
     private File localPath = null;
     private File file = null;
     private String filePath = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -68,6 +67,7 @@ public class CompleteMultipartUploadRequest18811 extends S3TestBase {
         String expMd5 = TestTools.getMD5(filePath);
         String downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
         Assert.assertEquals(downloadMd5, expMd5);
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -131,13 +131,13 @@ public class CompleteMultipartUploadRequest18811 extends S3TestBase {
             Assert.assertEquals(e.getMessage(),
                     "The part ETags parameter must be specified when completing a multipart upload");
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() ==  (generateKeyName().length + 1)) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

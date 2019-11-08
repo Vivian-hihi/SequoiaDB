@@ -1,12 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -18,6 +11,13 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: PutObjectRequest接口参数校验 testlink-case: seqDB-16478
@@ -58,7 +58,7 @@ public class TestPutObjectRequest16478 extends S3TestBase {
     private int fileSize = 1024 * 1024;
     private File localPath = null;
     private String filePath = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -78,6 +78,7 @@ public class TestPutObjectRequest16478 extends S3TestBase {
         String expMd5 = TestTools.getMD5(filePath);
         Assert.assertEquals(actMd5, expMd5, "md5 is wrong! the key name is : " + keyName);
         TestTools.LocalFile.removeFile(localPath);
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -123,13 +124,13 @@ public class TestPutObjectRequest16478 extends S3TestBase {
         } catch (SdkClientException e) {
             Assert.assertTrue(e.getMessage().contains("No such file or directory"), e.getMessage());
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == (generateKeyName().length + 1)) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

@@ -1,17 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
@@ -19,6 +7,17 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-16424: To get a list of objects within a bucket.specify
@@ -43,7 +42,7 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
                 new Object[] { "test、^`><{}[]#%\"~|_1", 5 }, };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket16424";
     private AmazonS3 s3Client = null;
     private int fileSize = 1024 * 10;
@@ -71,13 +70,13 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
     @Test(dataProvider = "listWithDelimiterProvider")
     public void testListObjects(String delimiter, int position) throws Exception {
         listObjectsAndCheckResult(delimiter, position);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generatePageSize().length) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

@@ -1,20 +1,19 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3Object;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-16341: object existence of delete tag, than create an
@@ -34,7 +33,7 @@ public class UpdateObjectWithVersion16341 extends S3TestBase {
                 new Object[] { "Suspended", "null" } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String key = "aa%bb%object16341";
     private String bucketName = "bucket16341";
     private AmazonS3 s3Client = null;
@@ -61,13 +60,13 @@ public class UpdateObjectWithVersion16341 extends S3TestBase {
         s3Client.deleteObject(bucketName, key);
         s3Client.putObject(bucketName, key, new File(filePath));
         checkCreateObjectReslut(bucketName, versionId);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generatePageSize().length) {
                 CommLib.deleteAllObjectVersions(s3Client, bucketName);
                 s3Client.deleteBucket(bucketName);
                 TestTools.LocalFile.removeFile(localPath);

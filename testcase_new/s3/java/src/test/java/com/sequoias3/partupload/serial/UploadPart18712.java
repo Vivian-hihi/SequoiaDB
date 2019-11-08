@@ -1,19 +1,5 @@
 package com.sequoias3.partupload.serial;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListPartsRequest;
@@ -27,6 +13,19 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 上传分段时指定分段长度较大 testlink-case: seqDB-18712
@@ -48,8 +47,7 @@ public class UploadPart18712 extends S3TestBase {
                 new Object[] { 5 * 1024 * 1024 * 1024L } };
     }
 
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 3;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket18712";
     private String keyName = "key18712";
     private String uploadId = "";
@@ -93,14 +91,13 @@ public class UploadPart18712 extends S3TestBase {
         String downloadMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
         Assert.assertEquals(downloadMd5, expMd5);
         TestTools.LocalFile.removeFile(localPath);
-
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (actSuccessTests.get() == generateObjectNumber().length) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

@@ -1,16 +1,5 @@
 package com.sequoias3.delimiter;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
@@ -19,6 +8,16 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 带prefix、Key-marker和delimiter查询对象版本列表 testlink-case: seqDB-18150
@@ -38,7 +37,7 @@ public class ListObjectVersionsWithDelimiter18150 extends S3TestBase {
     private int versionNum = 3;
     private MultiValueMap<String, String> versionsMap = new LinkedMultiValueMap<String, String>();
     private AmazonS3 s3Client = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @DataProvider(name = "keyMarKerProvider")
     public Object[][] generatePageSize() {
@@ -91,13 +90,13 @@ public class ListObjectVersionsWithDelimiter18150 extends S3TestBase {
         } else {
             ObjectUtils.checkListVSResults(versionList, expCommPrefixes, versionsMap);
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if ( actSuccessTests.get() == generatePageSize().length) {
                 CommLib.deleteAllObjectVersions(s3Client, bucketName);
                 s3Client.deleteBucket(bucketName);
             }

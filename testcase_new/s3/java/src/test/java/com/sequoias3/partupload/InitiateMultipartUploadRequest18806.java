@@ -1,11 +1,5 @@
 package com.sequoias3.partupload;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -14,6 +8,12 @@ import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content:InitiateMultipartUploadRequest接口参数校验 testlink-case: seqDB-18806
@@ -44,7 +44,7 @@ public class InitiateMultipartUploadRequest18806 extends S3TestBase {
 
     private String bucketName = "bucket18806";
     private AmazonS3 s3Client = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -59,6 +59,7 @@ public class InitiateMultipartUploadRequest18806 extends S3TestBase {
         InitiateMultipartUploadResult result = s3Client.initiateMultipartUpload(initRequest);
         String uploadId = result.getUploadId();
         Assert.assertNotEquals(uploadId, null);
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -98,13 +99,13 @@ public class InitiateMultipartUploadRequest18806 extends S3TestBase {
             Assert.assertEquals(e.getMessage(),
                     "The bucket name parameter must be specified when initiating a multipart upload");
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == (generateKeyName().length+1)) {
                 CommLib.clearBucket(s3Client, bucketName);
             }
         } finally {

@@ -1,14 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
@@ -17,6 +8,14 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-16355: get the object with range
@@ -41,7 +40,7 @@ public class GetObjectWithRange16355 extends S3TestBase {
                 new Object[] { 1024 * 1024 - 1, 1024 * 1024 - 1 }, };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String key = "aa/bb/object16355";
     private AmazonS3 s3Client = null;
     private int fileSize = 1024 * 1024;
@@ -66,13 +65,13 @@ public class GetObjectWithRange16355 extends S3TestBase {
     public void testGetObject(long start, long end) throws Exception {
         s3Client.putObject(S3TestBase.bucketName, key, new File(filePath));
         getObjectAndCheckResult(S3TestBase.bucketName, start, end);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generatePageSize().length) {
                 s3Client.deleteObject(S3TestBase.bucketName, key);
                 TestTools.LocalFile.removeFile(localPath);
             }

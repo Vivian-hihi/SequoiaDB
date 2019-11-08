@@ -1,17 +1,5 @@
 package com.sequoias3.partupload;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListPartsRequest;
@@ -21,6 +9,17 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-18733:带partnumberMarker查询分段列表
@@ -45,8 +44,7 @@ public class ListParts18733 extends S3TestBase {
                 new Object[] { partNumber + 1, new ArrayList<>() } };
     }
 
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 5;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private int partNumber = 5;
     private String bucketName = "bucket18733";
     private String keyName = "key18733";
@@ -88,13 +86,13 @@ public class ListParts18733 extends S3TestBase {
 
         // check the keyName
         Assert.assertEquals(actPartNumbersList, expPartNumbersList);
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (expRunSuccessNum == runSuccessNum) {
+            if (actSuccessTests.get() == generateObjectNumber() .length) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

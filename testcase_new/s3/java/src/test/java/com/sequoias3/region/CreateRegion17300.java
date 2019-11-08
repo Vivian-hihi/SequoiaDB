@@ -6,16 +6,15 @@ import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * @Description: seqDB-17300 :: 创建区域配置domain
@@ -29,7 +28,7 @@ public class CreateRegion17300 extends S3TestBase {
     private String[] domainNames = { "domain17300A", "domain17300B" };
     private String[] regionNames = { "region17300a", "region17300b", "region17300c", "region17300d" };
     private AmazonS3 s3Client = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -78,13 +77,13 @@ public class CreateRegion17300 extends S3TestBase {
         checkGetResult(result, expRegion, expBuckets);
         CommLib.clearBucket(s3Client, randomBucketName);
         RegionUtils.deleteRegion(regionName);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == rangeData().length) {
                 for (String domainName : domainNames) {
                     RegionUtils.dropDomain(domainName);
                 }

@@ -1,25 +1,5 @@
 package com.sequoias3.partupload.concurrent;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListPartsRequest;
 import com.amazonaws.services.s3.model.PartETag;
@@ -34,6 +14,25 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-18681:关闭检测开关，上传第一个partNumber被覆盖写
@@ -42,8 +41,7 @@ import com.sequoias3.testcommon.s3utils.PartUploadUtils;
  */
 
 public class UploadPart18681 extends S3TestBase {
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 4;    
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private File localPath;
     private String filePath1;
     private String filePath2;
@@ -142,7 +140,7 @@ public class UploadPart18681 extends S3TestBase {
                 "expFilePath = " + expFilePath);
         
         // clear
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
         TestTools.LocalFile.removeFile(filePath3);
         TestTools.LocalFile.removeFile(downloadPath);
     }
@@ -150,7 +148,7 @@ public class UploadPart18681 extends S3TestBase {
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (actSuccessTests.get() == generateFirstPartSize().length) {
                 for (String key : keys) {
                     s3Client.deleteObject(S3TestBase.bucketName, key);
                 }

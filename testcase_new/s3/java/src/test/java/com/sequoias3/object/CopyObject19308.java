@@ -1,14 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.CopyObjectResult;
@@ -18,6 +9,14 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-19308:不同桶指定versionId复制对象
@@ -36,7 +35,7 @@ public class CopyObject19308 extends S3TestBase {
                 new Object[] { hisVersionId, fileSize1, filePath1 } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String srcKeyName = "/object19308a";
     private String destKeyName = "/object19308b";
     private String srcBucketName = "bucket19308a";
@@ -76,21 +75,19 @@ public class CopyObject19308 extends S3TestBase {
 
     @Test(dataProvider = "copyObjectInfoProvider")
     public void testCopyObject(String versionId, int fileSize, String filePath) throws Exception {
-        runSuccess = false;
         CopyObjectRequest request = new CopyObjectRequest(srcBucketName, srcKeyName, currentVersionId, destBucketName,
                 destKeyName);
         CopyObjectResult result = s3Client.copyObject(request);
 
         checkObjectAttributeInfo(result, destBucketName, destKeyName, fileSize2, filePath2);
         checkObjectContent(destBucketName, destKeyName, filePath2);
-
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateCopyObjectInfo().length) {
                 CommLib.clearBucket(s3Client, srcBucketName);
                 CommLib.clearBucket(s3Client, destBucketName);
                 TestTools.LocalFile.removeFile(localPath);

@@ -1,16 +1,5 @@
 package com.sequoias3.privilege;
 
-import java.io.IOException;
-
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.HttpClientErrorException;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CanonicalGrantee;
@@ -23,6 +12,16 @@ import com.sequoias3.testcommon.TestRest;
 import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import com.sequoias3.user.UserCommDefind;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-19446: 同时使用两种或两种以上的方式配置桶acl
@@ -30,7 +29,7 @@ import com.sequoias3.user.UserCommDefind;
  * @Date 2019.09.20
  */
 public class SetBucketAcl19446 extends S3TestBase {
-    private int runSuccessNum = 0;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private int expRunSuccessNum = 4;
     private String bucketName = "bucket19446";
     private AmazonS3 s3Client = null;
@@ -92,13 +91,13 @@ public class SetBucketAcl19446 extends S3TestBase {
         }
 
         checkDefaultSettings();
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (actSuccessTests.get() == expRunSuccessNum) {
                 s3Client.deleteBucket(bucketName);
             }
         } finally {

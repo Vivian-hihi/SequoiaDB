@@ -1,16 +1,16 @@
 package com.sequoias3.region;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: PutRegion接口参数校验 testlink-case: seqDB-17352
@@ -53,7 +53,7 @@ public class TestPutRegion17352 extends S3TestBase {
     private String dataCSName = "dataCS17352";
     private String[] metaClNames = { "metaCL17352", "metaHistoryCL17352" };
     private String[] dataClName = { "dataCL17352" };
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -91,6 +91,7 @@ public class TestPutRegion17352 extends S3TestBase {
             checkShardingTypeMode(regionName, dataCSShardingType, dataCLShardingType);
         }
         RegionUtils.deleteRegion(regionName);
+        actSuccessTests.getAndIncrement();
     }
 
     @Test(dataProvider = "illegalRegionNameProvider")
@@ -103,6 +104,7 @@ public class TestPutRegion17352 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "InvalidRegionName");
         }
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -158,12 +160,12 @@ public class TestPutRegion17352 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorCode(), "InvalidShardingType");
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
-        if (runSuccess) {
+        if (actSuccessTests.get() == (generateRegionName().length + generateIllegalRegionName().length + 1) ) {
             try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
                 sdb.dropCollectionSpace(metaCSName);
                 sdb.dropCollectionSpace(dataCSName);

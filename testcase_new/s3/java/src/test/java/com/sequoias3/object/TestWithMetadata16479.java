@@ -1,15 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -21,6 +11,15 @@ import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: withMetadata接口参数校验 testlink-case: seqDB-16479
@@ -53,7 +52,7 @@ public class TestWithMetadata16479 extends S3TestBase {
     private int fileSize = 1024 * 1024;
     private File localPath = null;
     private String filePath = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -91,7 +90,7 @@ public class TestWithMetadata16479 extends S3TestBase {
             }
         }
 
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -110,12 +109,13 @@ public class TestWithMetadata16479 extends S3TestBase {
         } catch (AmazonS3Exception e) {
             Assert.assertEquals(e.getErrorMessage(), "Your metadata headers exceed the maximum allowed metadata size.");
         }
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if ( actSuccessTests.get() == (generateMetadata().length + 1)) {
                 CommLib.deleteAllObjectVersions(s3Client, bucketName);
                 s3Client.deleteBucket(bucketName);
                 TestTools.LocalFile.removeFile(localPath);

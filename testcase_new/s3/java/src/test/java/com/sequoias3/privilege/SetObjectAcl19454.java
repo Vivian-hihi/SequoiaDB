@@ -1,14 +1,5 @@
 package com.sequoias3.privilege;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.CanonicalGrantee;
@@ -24,6 +15,14 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PrivilegeUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-19454: 配置对象acl，被授权人包含非owner的用户
@@ -31,7 +30,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  * @Date 2019.09.23
  */
 public class SetObjectAcl19454 extends S3TestBase {
-    private int runSuccessNum = 0;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private int expRunSuccessNum = 13;
     private String bucketName = "bucket19454";
     private String keyName = "key19454";
@@ -101,7 +100,7 @@ public class SetObjectAcl19454 extends S3TestBase {
         ownerS3Client.setObjectAcl(bucketName, keyName, acl);
         PrivilegeUtils.checkSetObjectAclResult(ownerS3Client, bucketName, keyName, expGrant);
         getObjectByOtherUser();
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test(dataProvider = "grantProvider")
@@ -113,7 +112,7 @@ public class SetObjectAcl19454 extends S3TestBase {
             PrivilegeUtils.checkSetObjectAclResult(ownerS3Client, bucketName, keyName, expGrant);
             getObjectByOtherUser();
         }
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test(dataProvider = "grantProvider")
@@ -125,13 +124,13 @@ public class SetObjectAcl19454 extends S3TestBase {
             PrivilegeUtils.checkSetObjectAclResult(ownerS3Client, bucketName, keyName, expGrant);
             getObjectByOtherUser();
         }
-        runSuccessNum++;
+       actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (actSuccessTests.get() == expRunSuccessNum) {
                 CommLib.clearBucket(ownerS3Client, bucketName);
                 CommLib.clearUser(userName);
                 TestTools.LocalFile.removeFile(localPath);

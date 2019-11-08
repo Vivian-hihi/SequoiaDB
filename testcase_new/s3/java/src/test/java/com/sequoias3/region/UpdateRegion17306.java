@@ -3,6 +3,7 @@ package com.sequoias3.region;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,7 +19,7 @@ import org.testng.annotations.Test;
 public class UpdateRegion17306 extends S3TestBase {
     private String[] domainNames = { "domain17306A", "domain17306B" };
     private String[] regionNames = { "region17306a", "region17306b", "region17306c" };
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -70,12 +71,12 @@ public class UpdateRegion17306 extends S3TestBase {
             Assert.assertEquals(result.getRegion().getDataDomain(), upDataDomain);
             Assert.assertEquals(result.getRegion().getMetaDomain(), upMeatDomain);
         }
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
-        if (runSuccess) {
+        if (actSuccessTests.get() == rangeData().length) {
             for (String regionName : regionNames) {
                 RegionUtils.deleteRegion(regionName);
             }

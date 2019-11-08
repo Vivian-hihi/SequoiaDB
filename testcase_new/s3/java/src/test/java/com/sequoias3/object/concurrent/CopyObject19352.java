@@ -26,7 +26,6 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  * @version 1.00
  */
 public class CopyObject19352 extends S3TestBase {
-
     private boolean runSuccess = false;
     private String srcKeyName = "/SRC/bb%object19352";
     private String destKeyName = "/dest/bb/object19352";

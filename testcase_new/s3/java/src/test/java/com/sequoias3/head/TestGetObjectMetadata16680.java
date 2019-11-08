@@ -1,16 +1,5 @@
 package com.sequoias3.head;
 
-import java.io.File;
-
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoiadb.exception.BaseException;
@@ -19,6 +8,16 @@ import com.sequoias3.testcommon.RestClient;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.UserUtils;
+import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 不带versionId查询对象，指定匹配range范围 testlink-case: seqDB-16680
@@ -29,7 +28,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  */
 
 public class TestGetObjectMetadata16680 extends S3TestBase {
-    @DataProvider(name = "rangeProvider")
+    @DataProvider(name = "rangeProvider",parallel = true)
     public Object[][] generatePageSize() {
         return new Object[][] {
                 // the parameter : begin and end, fileSize is 1024 * 100
@@ -44,7 +43,7 @@ public class TestGetObjectMetadata16680 extends S3TestBase {
                 new Object[] { "203776", "203776", 0 } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket16680";
     private String userName = "user16680";
     private String roleName = "normal";
@@ -90,13 +89,13 @@ public class TestGetObjectMetadata16680 extends S3TestBase {
             getRespAndcheckMetadata(request, size);
         }
 
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generatePageSize().length) {
                 UserUtils.deleteUser(userName);
                 TestTools.LocalFile.removeFile(localPath);
             }

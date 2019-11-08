@@ -1,16 +1,5 @@
 package com.sequoias3.partupload;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.PartETag;
@@ -21,6 +10,16 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-18682:上传相同分段，其中分段长度不同
@@ -39,8 +38,7 @@ public class UploadPart18682 extends S3TestBase {
                 new Object[] { "/dir1/dir2/obj18682b.tar", 5 * 1024 * 1024, 2 * 1024 * 1024 } };
     }
 
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 2;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket18682";
     private AmazonS3 s3Client = null;
     private long fileSize = 10 * 1024 * 1024;
@@ -75,13 +73,13 @@ public class UploadPart18682 extends S3TestBase {
         long currentFileSize = partTwoOffset + newPartSize;
         PartUploadUtils.completeMultipartUpload(s3Client, bucketName, keyName, uploadId, partEtags);
         checkResult(keyName, currentFileSize);
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (expRunSuccessNum == runSuccessNum) {
+            if (actSuccessTests.get() == generateObjectNumber().length) {
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }

@@ -1,16 +1,5 @@
 package com.sequoias3.partupload;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
@@ -20,6 +9,16 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-18678: upload multiple parts,the length of the middle parts is inconsistent.
@@ -46,11 +45,10 @@ public class UploadPart18678 extends S3TestBase {
                         1024 * 1024 * 6 }, };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String keyName = "/aa/object18678";
     private AmazonS3 s3Client = null;
     private File localPath = null;
-    private int successConut = 0;
 
     @BeforeClass
     private void setUp() throws IOException {
@@ -69,18 +67,13 @@ public class UploadPart18678 extends S3TestBase {
 
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
-        // after all 3 concurrent operations are successful,set runSuccess to
-        // true
-        successConut++;
-        if (successConut == 3) {
-            runSuccess = true;
-        }
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generateFileSize().length) {
                 s3Client.deleteObject(S3TestBase.bucketName, keyName);
                 TestTools.LocalFile.removeFile(localPath);
             }

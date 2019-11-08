@@ -1,18 +1,5 @@
 package com.sequoias3.partupload;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -31,6 +18,18 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.PartUploadUtils;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: UploadPartRequest接口参数校验 testlink-case: seqDB-18808
@@ -60,8 +59,7 @@ public class UploadPartRequest18808 extends S3TestBase {
     private File localPath = null;
     private File file[] = new File[2];
     private String filePath[] = new String[2];
-    private int runSuccessNum = 0;
-    private int expRunSuccessNum = 8;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -87,7 +85,7 @@ public class UploadPartRequest18808 extends S3TestBase {
         s3Client = buildS3ClientUseExpectContinue();
         testLegalKeyName(keyName, partNumber, fileIndex);
         s3Client.shutdown();
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -95,14 +93,14 @@ public class UploadPartRequest18808 extends S3TestBase {
         s3Client = buildS3ClientUseExpectContinue();
         testIllLegalParameter();
         s3Client.shutdown();
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test(dataProvider = "legalKeyNameProvider")
     public void testNotUseExpectContinue1(String keyName, int partNumber, int fileIndex) throws Exception {
         s3Client = CommLib.buildS3Client();
         testLegalKeyName(keyName, partNumber, fileIndex);
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test
@@ -110,13 +108,13 @@ public class UploadPartRequest18808 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         testIllLegalParameter();
         s3Client.shutdown();
-        runSuccessNum++;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccessNum == expRunSuccessNum) {
+            if (actSuccessTests.get() == (generateKeyName().length*2+2)) {
                 s3Client = CommLib.buildS3Client();
                 CommLib.clearBucket(s3Client, bucketName);
                 TestTools.LocalFile.removeFile(localPath);

@@ -1,15 +1,5 @@
 package com.sequoias3.object;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
@@ -17,6 +7,15 @@ import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 带分隔符delimiter和maxkeys查询 testlink-case: seqDB-16393
@@ -44,7 +43,7 @@ public class GetObjectVersionList16393 extends S3TestBase {
     private List<String> expVersionsKeyName = new ArrayList<String>();
     private String content = "object16393";
     private AmazonS3 s3Client = null;
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -105,12 +104,12 @@ public class GetObjectVersionList16393 extends S3TestBase {
                 "the number of results returned by versions is wrong, act: " + actVersionsKeyName.toString() + ", exp: "
                         + expVersionsKeyName.toString());
 
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
-        if (runSuccess) {
+        if (actSuccessTests.get() == generateRemoveIndex().length) {
             CommLib.deleteAllObjectVersions(s3Client, bucketName);
             s3Client.deleteBucket(bucketName);
         }

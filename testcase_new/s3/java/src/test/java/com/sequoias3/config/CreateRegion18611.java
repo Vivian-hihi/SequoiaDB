@@ -1,16 +1,5 @@
 package com.sequoias3.config;
 
-import java.io.File;
-import java.util.Calendar;
-import java.util.Date;
-
-import org.springframework.web.client.HttpServerErrorException;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoiadb.base.DBCursor;
@@ -21,6 +10,16 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.web.client.HttpServerErrorException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * test content: 创建区域，LobPageSize和ReplSize参数校验 testlink-case: seqDB-18611
@@ -47,7 +46,7 @@ public class CreateRegion18611 extends S3TestBase {
                 new Object[] { "@%$&*", "3", "500" }, new Object[] { "65536", "$^%*%^", "500" } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket18611";
     private String key = "key18611";
     private String regionName = "region18611";
@@ -74,7 +73,6 @@ public class CreateRegion18611 extends S3TestBase {
     @Test(dataProvider = "LobPageSizeAndReplSizeProvider")
     public void testRegion(String dataLobPageSize, String dataReplSize, String expDataLobPageSize,
             String expDataReplSize) throws Exception {
-        runSuccess = false;
         Region region = new Region();
         region.withName(regionName).withDataLobPageSize(dataLobPageSize).withDataReplSize(dataReplSize);
         RegionUtils.putRegion(region);
@@ -86,13 +84,12 @@ public class CreateRegion18611 extends S3TestBase {
         checkRegion(expDataLobPageSize, expDataReplSize);
         CommLib.clearBucket(s3Client, bucketName);
         RegionUtils.deleteRegion(regionName);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @Test(dataProvider = "invalidLobPageSizeAndReplSizeProvider")
     public void testRegionWithInvalidValue(String dataLobPageSize, String dataReplSize, String errorCode)
             throws Exception {
-        runSuccess = false;
         Region region = new Region();
         region.withName(invalid_regionName).withDataLobPageSize(dataLobPageSize).withDataReplSize(dataReplSize);
         if (errorCode.equals("500")) {
@@ -110,14 +107,14 @@ public class CreateRegion18611 extends S3TestBase {
                 Assert.assertEquals(e.getErrorCode(), errorCode);
             }
         }
-
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == (LobPageSizeAndReplSize().length
+                + invalidLobPageSizeAndReplSize().length)) {
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {

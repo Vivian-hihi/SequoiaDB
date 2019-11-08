@@ -1,21 +1,20 @@
 package com.sequoias3.object;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-18573: To get a list by listObjectV1.specify matching
@@ -41,7 +40,7 @@ public class ListObjectsWithDelimiter18573 extends S3TestBase {
                 new Object[] { "test、^`><{}[]#%\"~|_1", 4 } };
     }
 
-    private boolean runSuccess = false;
+    private AtomicInteger actSuccessTests = new AtomicInteger(0);
     private String bucketName = "bucket18573";
     private AmazonS3 s3Client = null;
     private List<String> keyList = null;
@@ -60,13 +59,13 @@ public class ListObjectsWithDelimiter18573 extends S3TestBase {
     @Test(dataProvider = "listWithDelimiterProvider")
     public void testListObjects(String delimiter, int position) throws Exception {
         listObjectV1AndCheckResult(delimiter, position);
-        runSuccess = true;
+        actSuccessTests.getAndIncrement();
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            if (runSuccess) {
+            if (actSuccessTests.get() == generatePageSize().length) {
                 CommLib.clearBucket(s3Client, bucketName);
             }
         } finally {
