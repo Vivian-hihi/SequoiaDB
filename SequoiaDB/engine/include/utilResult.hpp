@@ -137,6 +137,8 @@ namespace engine
       const dmsRecordID&   getCurRID() const ;
       const dmsRecordID&   getPeerRID() const ;
 
+      BOOLEAN              isSameID() const ;
+
    protected:
       virtual void      _resetStat() ;
       virtual void      _resetInfo() ;

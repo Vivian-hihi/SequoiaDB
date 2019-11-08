@@ -49,6 +49,7 @@
 #include "rtnAlter.hpp"
 #include "utilCompressor.hpp"
 #include "mthModifier.hpp"
+#include "utilBsonHash.hpp"
 
 using namespace bson ;
 
@@ -62,44 +63,31 @@ namespace engine
                          _dpsLogWrapper *dpsCB,
                          BOOLEAN isRollBack ) ;
 
-   #define CLS_PARALLA_CHECK_LSNNUM_MIN_SPAN          ( 10000 )
+   #define CLS_PARALLA_MAX_PENDING_COUNT     ( 1024 )
 
    /*
       _clsCLParallaInfo implement
    */
    _clsCLParallaInfo::_clsCLParallaInfo()
    {
-      _lastInsertLSN = DPS_INVALID_LSN_OFFSET ;
-      _lastUpdateLSN = DPS_INVALID_LSN_OFFSET ;
-      _lastDelLSN = DPS_INVALID_LSN_OFFSET ;
-
-      _lastParallaType = CLS_PARALLA_NULL ;
-
-      _clearID() ;
+      _parallaType = CLS_PARALLA_NULL ;
+      _lastLSN = DPS_INVALID_LSN_OFFSET ;
+      _pendingLSN = DPS_INVALID_LSN_OFFSET ;
+      _pendingCount = 0 ;
    }
 
    _clsCLParallaInfo::~_clsCLParallaInfo()
    {
    }
 
-   void _clsCLParallaInfo::_clearID()
-   {
-      _lastInsertID = 0 ;
-      _lastDelID = 0 ;
-      _lastUpdateID = 0 ;
-      _idValue = 1 ;
-   }
-
-   INT32 _clsCLParallaInfo::waitLastLSN( _clsBucket *pBucket )
+   INT32 _clsCLParallaInfo::waitLastLSN( clsBucket *pBucket )
    {
       INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != pBucket, "bucket is invalid" ) ;
+
       DPS_LSN completeLSN = pBucket->completeLSN() ;
-      DPS_LSN_OFFSET maxLSN = DPS_INVALID_LSN_OFFSET ;
-
-      maxLSN = _max( _max( _lastInsertLSN, _lastUpdateLSN ),
-                     _lastDelLSN ) ;
-
-      while ( completeLSN.compareOffset( maxLSN ) <= 0 )
+      while ( completeLSN.compareOffset( _lastLSN ) <= 0 )
       {
          if ( CLS_BUCKET_NORMAL != pBucket->getStatus() ||
               pBucket->bucketSize() == 0 )
@@ -116,59 +104,16 @@ namespace engine
 
    BOOLEAN _clsCLParallaInfo::checkParalla( UINT16 type,
                                             DPS_LSN_OFFSET curLSN,
-                                            _clsBucket *pBucket ) const
+                                            clsBucket *pBucket ) const
    {
-      DPS_LSN completeLSN ;
-      DPS_LSN_OFFSET otherLSN = DPS_INVALID_LSN_OFFSET ;
-      UINT64 maxID = 0 ;
       BOOLEAN canRecParalla = FALSE ;
 
-      switch ( (INT32)type )
+      if ( _pendingCount == 0 &&
+          ( LOG_TYPE_DATA_INSERT == type ||
+            LOG_TYPE_DATA_UPDATE == type ||
+            LOG_TYPE_DATA_DELETE == type ) )
       {
-         case LOG_TYPE_DATA_INSERT :
-            otherLSN = _max( _lastDelLSN, _lastUpdateLSN ) ;
-            maxID = _lastDelID >= _lastUpdateID ? _lastDelID : _lastUpdateID ;
-
-            if ( DPS_INVALID_LSN_OFFSET == otherLSN || 0 == maxID ||
-                 ( CLS_PARALLA_REC == _lastParallaType &&
-                   _lastInsertID + 1 == _idValue ) )
-            {
-               canRecParalla = TRUE ;
-            }
-            else
-            {
-               completeLSN = pBucket->completeLSN() ;
-               if ( completeLSN.compareOffset( otherLSN ) > 0 &&
-                    _idValue - maxID >= CLS_PARALLA_CHECK_LSNNUM_MIN_SPAN )
-               {
-                  canRecParalla = TRUE ;
-               }
-            }
-            break ;
-         case LOG_TYPE_DATA_UPDATE :
-            break ;
-         case LOG_TYPE_DATA_DELETE :
-            otherLSN = _max( _lastInsertLSN, _lastUpdateLSN ) ;
-            maxID = _lastInsertID >= _lastUpdateID ?
-                    _lastInsertID : _lastUpdateID ;
-            if ( DPS_INVALID_LSN_OFFSET == otherLSN || 0 == maxID ||
-                 ( CLS_PARALLA_REC == _lastParallaType &&
-                   _lastDelLSN + 1 == _idValue ) )
-            {
-               canRecParalla = TRUE ;
-            }
-            else
-            {
-               completeLSN = pBucket->completeLSN() ;
-               if ( completeLSN.compareOffset( otherLSN ) > 0 &&
-                    _idValue - maxID >= CLS_PARALLA_CHECK_LSNNUM_MIN_SPAN )
-               {
-                  canRecParalla = TRUE ;
-               }
-            }
-            break ;
-         default :
-            break ;
+         canRecParalla = TRUE ;
       }
 
       return canRecParalla ;
@@ -178,55 +123,64 @@ namespace engine
                                           UINT16 type,
                                           DPS_LSN_OFFSET curLSN )
    {
-      _lastParallaType = parallaType ;
+      _parallaType = parallaType ;
+      _lastLSN = curLSN ;
 
-      if ( DPS_INVALID_LSN_OFFSET != _lastInsertLSN &&
-           _lastInsertLSN > curLSN )
+      // resolve pending when current LSN is larger than pending LSN
+      if ( _pendingCount > 0 &&
+           DPS_INVALID_LSN_OFFSET != _pendingLSN &&
+           DPS_INVALID_LSN_OFFSET != curLSN &&
+           _pendingLSN <= curLSN )
       {
-         _lastInsertLSN = curLSN ;
-      }
-      if ( DPS_INVALID_LSN_OFFSET != _lastUpdateLSN &&
-           _lastUpdateLSN > curLSN )
-      {
-         _lastUpdateLSN = curLSN ;
-      }
-      if ( DPS_INVALID_LSN_OFFSET != _lastDelLSN &&
-           _lastDelLSN > curLSN )
-      {
-         _lastDelLSN = curLSN ;
-      }
-
-      switch ( (INT32)type )
-      {
-         case LOG_TYPE_DATA_INSERT :
-            _lastInsertLSN = curLSN ;
-            _lastInsertID = _idValue++ ;
-            break ;
-         case LOG_TYPE_DATA_UPDATE :
-            _lastUpdateLSN = curLSN ;
-            _lastUpdateID = _idValue++ ;
-            break ;
-         case LOG_TYPE_DATA_DELETE :
-            _lastDelLSN = curLSN ;
-            _lastDelID = _idValue++ ;
-            break ;
-         default :
-            break ;
+         -- _pendingCount ;
+         if ( 0 == _pendingCount )
+         {
+            _pendingLSN = DPS_INVALID_LSN_OFFSET ;
+#if defined(_DEBUG)
+            PD_LOG( PDDEBUG, "Set collection %s not pending from LSN %llu",
+                    _collection.c_str(), curLSN ) ;
+#endif
+         }
       }
    }
 
    CLS_PARALLA_TYPE _clsCLParallaInfo::getLastParallaType() const
    {
-      return _lastParallaType ;
+      return _parallaType ;
    }
 
    BOOLEAN _clsCLParallaInfo::isParallaTypeSwitch( CLS_PARALLA_TYPE type ) const
    {
-      if ( CLS_PARALLA_NULL == _lastParallaType )
+      if ( CLS_PARALLA_NULL == _parallaType )
       {
          return FALSE ;
       }
-      return _lastParallaType != type ? TRUE : FALSE ;
+      return _parallaType != type ? TRUE : FALSE ;
+   }
+
+   void _clsCLParallaInfo::setPending( DPS_LSN_OFFSET lsn )
+   {
+      if ( DPS_INVALID_LSN_OFFSET == _pendingLSN )
+      {
+         _pendingLSN = lsn ;
+         _pendingCount = CLS_PARALLA_MAX_PENDING_COUNT ;
+      }
+      else if ( _pendingLSN < lsn )
+      {
+         // pending again
+         // NOTE: might not happen during CL parallel mode
+         _pendingLSN = lsn ;
+         _pendingCount += CLS_PARALLA_MAX_PENDING_COUNT ;
+      }
+      else
+      {
+         // might rollbacked
+         _pendingCount += CLS_PARALLA_MAX_PENDING_COUNT ;
+      }
+#if defined(_DEBUG)
+      PD_LOG( PDDEBUG, "Set collection %s pending from LSN %llu count %u",
+              _collection.c_str(), _pendingLSN, _pendingCount ) ;
+#endif
    }
 
    /*
@@ -260,109 +214,47 @@ namespace engine
       _dpsCB = NULL ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP_REPLYBUCKET, "_clsReplayer::replayByBucket" )
-   INT32 _clsReplayer::replayByBucket( dpsLogRecordHeader *recordHeader,
-                                       pmdEDUCB *eduCB, clsBucket *pBucket )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP__CALCBUCKETID, "_clsReplayer::_calcBucketID" )
+   INT32 _clsReplayer::_calcBucketID( dpsLogRecordHeader *recordHeader,
+                                      clsBucket *pBucket,
+                                      CLS_PARALLA_TYPE &parallaType,
+                                      UINT32 &bucketID,
+                                      UINT32 &clHash,
+                                      utilCLUniqueID &clUniqueID,
+                                      UINT32 &waitBucketID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREP_REPLYBUCKET ) ;
-      const CHAR *fullname = NULL ;
-      BSONObj obj ;
-      BSONElement idEle ;
-      const bson::OID *oidPtr = NULL ;
-      UINT32 sequence = 0 ;
-      BOOLEAN clParalla = FALSE ;
-      BOOLEAN recParalla = FALSE ;
-      BOOLEAN doSameOID = FALSE ;
-      clsCLParallaInfo *pInfo = NULL ;
-      UINT32 bucketID = ~0 ;
 
-      SDB_ASSERT( recordHeader && pBucket, "Invalid param" ) ;
-      try
-      {
+      PD_TRACE_ENTRY( SDB__CLSREP__CALCBUCKETID ) ;
+
+      SDB_ASSERT( NULL != recordHeader, "Record is invalid" ) ;
+      SDB_ASSERT( NULL != pBucket, "bucket is invalid" ) ;
+
+      bucketID = ~0 ;
+
       switch( recordHeader->_type )
       {
          case LOG_TYPE_DATA_INSERT :
-            clParalla = TRUE ;
-            doSameOID = TRUE ;
-            rc = dpsRecord2Insert( (CHAR *)recordHeader, &fullname, obj ) ;
-            break ;
          case LOG_TYPE_DATA_DELETE :
-            clParalla = TRUE ;
-            doSameOID = TRUE ;
-            rc = dpsRecord2Delete( (CHAR *)recordHeader, &fullname, obj ) ;
-            break ;
          case LOG_TYPE_DATA_UPDATE :
          {
-            BSONObj match ;     //old match
-            BSONObj oldObj ;
-            BSONObj newMatch ;
-            BSONObj modifier ;   //new change obj
-            UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
-            clParalla = TRUE ;
-            rc = dpsRecord2Update( (CHAR *)recordHeader, &fullname,
-                                   match, oldObj, newMatch, modifier, NULL,
-                                   NULL, NULL, &logWriteMod ) ;
-            if ( SDB_OK == rc &&
-                 0 == match.woCompare( newMatch, BSONObj(), false ) )
-            {
-               obj = match ;
-               doSameOID = TRUE ;
-            }
+            rc = _calcDataBucketID( recordHeader, pBucket, parallaType,
+                                    bucketID, clHash, clUniqueID,
+                                    waitBucketID ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to calculate bucket ID for "
+                         "DATA record type [%u] LSN [%llu], rc: %d",
+                         recordHeader->_type, recordHeader->_lsn, rc ) ;
             break ;
          }
          case LOG_TYPE_LOB_WRITE :
-         {
-            recParalla = TRUE ;
-            const CHAR *fullName = NULL ;
-            const bson::OID *oid = NULL ;
-            UINT32 offset = 0 ;
-            UINT32 len = 0 ;
-            UINT32 hash = 0 ;
-            const CHAR *data = NULL ;
-            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
-            rc = dpsRecord2LobW( (CHAR *)recordHeader,
-                                  &fullName, &oid,
-                                  sequence, offset,
-                                  len, hash, &data, page ) ;
-            oidPtr = oid ;
-            break ;
-         }
          case LOG_TYPE_LOB_UPDATE :
-         {
-            recParalla = TRUE ;
-            const CHAR *fullName = NULL ;
-            const bson::OID *oid = NULL ;
-            UINT32 offset = 0 ;
-            UINT32 len = 0 ;
-            UINT32 hash = 0 ;
-            const CHAR *data = NULL ;
-            UINT32 oldLen = 0 ;
-            const CHAR *oldData = NULL ;
-            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
-            rc = dpsRecord2LobU( (CHAR *)recordHeader,
-                                  &fullName, &oid,
-                                  sequence, offset,
-                                  len, hash, &data,
-                                  oldLen, &oldData, page ) ;
-            oidPtr = oid ;
-            break ;
-         }
          case LOG_TYPE_LOB_REMOVE :
          {
-            recParalla = TRUE ;
-            const CHAR *fullName = NULL ;
-            const bson::OID *oid = NULL ;
-            UINT32 offset = 0 ;
-            UINT32 len = 0 ;
-            UINT32 hash = 0 ;
-            const CHAR *data = NULL ;
-            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
-            rc = dpsRecord2LobRm( (CHAR *)recordHeader,
-                                  &fullName, &oid,
-                                  sequence, offset,
-                                  len, hash, &data, page ) ;
-            oidPtr = oid ;
+            parallaType = CLS_PARALLA_CL ;
+            rc = _calcLobBucketID( recordHeader, pBucket, bucketID ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to calculate bucket ID for "
+                         "LOB record type [%u] LSN [%llu], rc: %d",
+                         recordHeader->_type, recordHeader->_lsn, rc ) ;
             break ;
          }
          case LOG_TYPE_DUMMY :
@@ -372,128 +264,275 @@ namespace engine
             break ;
       }
 
+   done:
+      PD_TRACE_EXITRC( SDB__CLSREP__CALCBUCKETID, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP__CALCDATABUCKETID, "_clsReplayer::_calcDataBucketID" )
+   INT32 _clsReplayer::_calcDataBucketID( dpsLogRecordHeader *recordHeader,
+                                          clsBucket *pBucket,
+                                          CLS_PARALLA_TYPE &parallaType,
+                                          UINT32 &bucketID,
+                                          UINT32 &clHash,
+                                          utilCLUniqueID &clUniqueID,
+                                          UINT32 &waitBucketID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSREP__CALCDATABUCKETID ) ;
+
+      const CHAR *fullname = NULL ;
+      BSONObj curObj, waitObj ;
+
+      switch( recordHeader->_type )
+      {
+         case LOG_TYPE_DATA_INSERT :
+            parallaType = CLS_PARALLA_CL ;
+            rc = dpsRecord2Insert( (CHAR *)recordHeader, &fullname, curObj ) ;
+            break ;
+         case LOG_TYPE_DATA_DELETE :
+            parallaType = CLS_PARALLA_CL ;
+            rc = dpsRecord2Delete( (CHAR *)recordHeader, &fullname, curObj ) ;
+            break ;
+         case LOG_TYPE_DATA_UPDATE :
+         {
+            BSONObj oldObj ;
+            BSONObj modifier ;   //new change obj
+            parallaType = CLS_PARALLA_CL ;
+            rc = dpsRecord2Update( (CHAR *)recordHeader, &fullname,
+                                   curObj, oldObj, waitObj, modifier, NULL,
+                                   NULL, NULL, NULL ) ;
+            break ;
+         }
+         default :
+         {
+            SDB_ASSERT( FALSE, "Invalid DATA operator type" ) ;
+            PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
+                      "Invalid DATA operator type [%u] LSN [%llu]",
+                      recordHeader->_type, recordHeader->_lsn ) ;
+         }
+      }
+
       PD_RC_CHECK( rc, PDERROR, "Parse dps log[type: %d, lsn: %lld, len: %d]"
-                   "falied, rc: %d", recordHeader->_type,
+                   "failed, rc: %d", recordHeader->_type,
                    recordHeader->_lsn, recordHeader->_length, rc ) ;
 
-      /*
-         When collection paralla(clParalla) is true, but recParalla is false,
-         we should update clParalla to recParalla in bellow case:
-            1. unique index number <= 1 and no text index
-         or 2. only the simple operator as insert/delete
-      */
-      if ( clParalla )
+      if ( CLS_PARALLA_CL == parallaType )
       {
-         dmsStorageUnit *su = NULL ;
-         const CHAR *pShortName = NULL ;
-         dmsStorageUnitID suID = DMS_INVALID_SUID ;
-         CLS_PARALLA_TYPE parallaType = CLS_PARALLA_CL ;
-         INT32 rcTmp = SDB_OK ;
+         rc = _checkCLParalla( recordHeader, pBucket, fullname, clUniqueID,
+                               parallaType ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to check parallel for "
+                      "collection [%s], rc: %d", fullname, rc ) ;
+      }
 
-         rc = rtnResolveCollectionNameAndLock( fullname, _dmsCB, &su,
-                                               &pShortName, suID ) ;
-         if ( SDB_OK == rc )
-         {
-            // Currently parallel replaying on capped collection is forbidden,
-            // because we need to be sure the records are exactly the same with
-            // the ones on primary node, including their positions.
-            if ( DMS_STORAGE_CAPPED != su->type() )
-            {
-               dmsMBContext *mbContext = NULL ;
-               rc = su->data()->getMBContext( &mbContext, pShortName, SHARED ) ;
-               if ( SDB_OK == rc )
-               {
-                  pInfo = _getOrCreateInfo( mbContext->mb()->_clUniqueID ) ;
-                  if ( !pInfo )
-                  {
-                     rcTmp = SDB_OOM ;
-                     /// can't goto error
-                  }
-                  // For collection who has text indices, parallel replay should
-                  // also be forbidden. Otherwise, the records in the capped
-                  // collection will not be exactly the same.
-                  if ( !doSameOID || 0 != mbContext->mbStat()->_textIdxNum )
-                  {
-                     /// can't upgrade to recParalla
-                  }
-                  else if ( mbContext->mbStat()->_uniqueIdxNum <= 1 )
-                  {
-                     recParalla = TRUE ;
-                     parallaType = CLS_PARALLA_REC ;
-                  }
-                  else if ( pInfo && pInfo->checkParalla( recordHeader->_type,
-                                                          recordHeader->_lsn,
-                                                          pBucket ) )
-                  {
-                     recParalla = TRUE ;
-                     parallaType = CLS_PARALLA_REC ;
-                  }
-                  su->data()->releaseMBContext( mbContext ) ;
-               }
-            }
-            _dmsCB->suUnlock( suID, SHARED ) ;
-
-            /// when get or create clParallaInfo failed
-            if ( rcTmp )
-            {
-               rc = rcTmp ;
-               goto error ;
-            }
-            else if ( pInfo )
-            {
-               if ( pInfo->isParallaTypeSwitch( parallaType ) &&
-                    SDB_OK != ( rc = pInfo->waitLastLSN( pBucket ) ) )
-               {
-                  INT32 bucketStatus = (INT32)pBucket->getStatus() ;
-                  PD_LOG( PDWARNING, "Wait repl bucket empty failed, its "
-                          "status[%s(%d)] is error",
-                          clsGetReplBucketStatusDesp( bucketStatus ),
-                          bucketStatus ) ;
-                  goto error ;
-               }
-
-               /// update paralla info
-               pInfo->updateParalla( parallaType, recordHeader->_type,
-                                     recordHeader->_lsn ) ;
-            } // else if ( pInfo )
-         } // if ( SDB_OK == rc )
-      } // if ( clParalla )
-
-      if ( recParalla )
+      if ( CLS_PARALLA_REC == parallaType )
       {
-         idEle = obj.getField( DMS_ID_KEY_NAME ) ;
+         BSONElement idEle = curObj.getField( DMS_ID_KEY_NAME ) ;
          if ( !idEle.eoo() )
          {
-            bucketID = pBucket->calcIndex( idEle.value(),
-                                           idEle.valuesize() ) ;
-         }
-         else if ( NULL != oidPtr )
-         {
-            CHAR tmpData[ sizeof( *oidPtr ) + sizeof( sequence ) ] = { 0 } ;
-            ossMemcpy( tmpData, ( const CHAR * )( oidPtr->getData()),
-                       sizeof( *oidPtr ) ) ;
-            ossMemcpy( &tmpData[ sizeof( *oidPtr ) ], ( const CHAR* )&sequence,
-                       sizeof( sequence ) ) ;
-            bucketID = pBucket->calcIndex( tmpData, sizeof( tmpData ) ) ;
+            clHash = BSON_HASHER::hashStr( fullname ) ;
+            UINT32 valueHash = BSON_HASHER::hash( idEle.value(),
+                                                  idEle.valuesize() ) ;
+            valueHash = BSON_HASHER::hashCombine( clHash, valueHash ) ;
+            bucketID = pBucket->calcIndex( valueHash ) ;
+
+            // check if have wait object ( UPDATE's new matcher )
+            if ( waitObj.hasField( DMS_ID_KEY_NAME ) )
+            {
+               BSONElement waitEle = waitObj.getField( DMS_ID_KEY_NAME ) ;
+               if ( 0 != waitEle.woCompare( idEle, FALSE ) )
+               {
+                  // not the same OID
+                  UINT32 waitHash = BSON_HASHER::hash( waitEle.value(),
+                                                       waitEle.valuesize() ) ;
+                  waitHash = BSON_HASHER::hashCombine( clHash, waitHash ) ;
+                  waitBucketID = pBucket->calcIndex( waitHash ) ;
+               }
+            }
          }
       }
-      else if ( clParalla )
+      else if ( CLS_PARALLA_CL == parallaType )
       {
-         bucketID = pBucket->calcIndex( fullname, ossStrlen( fullname ) ) ;
+         clHash = BSON_HASHER::hashStr( fullname ) ;
+         bucketID = pBucket->calcIndex( clHash ) ;
       }
 
-      if ( (UINT32)~0 != bucketID )
+   done:
+      PD_TRACE_EXITRC( SDB__CLSREP__CALCDATABUCKETID, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP__CALCLOBBUCKETID, "_clsReplayer::_calcLobBucketID" )
+   INT32 _clsReplayer::_calcLobBucketID( dpsLogRecordHeader *recordHeader,
+                                         clsBucket *pBucket,
+                                         UINT32 &bucketID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSREP__CALCLOBBUCKETID ) ;
+
+      const CHAR *fullname = NULL ;
+      const OID *oid = NULL ;
+      UINT32 sequence = 0 ;
+
+      switch ( recordHeader->_type )
       {
-         rc = pBucket->pushData( bucketID, (CHAR *)recordHeader,
-                                 recordHeader->_length ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to push log to bucket, rc: %d",
-                      rc ) ;
+         case LOG_TYPE_LOB_WRITE :
+         {
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobW( (CHAR *)recordHeader,
+                                  &fullname, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            break ;
+         }
+         case LOG_TYPE_LOB_UPDATE :
+         {
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            UINT32 oldLen = 0 ;
+            const CHAR *oldData = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobU( (CHAR *)recordHeader,
+                                  &fullname, &oid,
+                                  sequence, offset,
+                                  len, hash, &data,
+                                  oldLen, &oldData, page ) ;
+            break ;
+         }
+         case LOG_TYPE_LOB_REMOVE :
+         {
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobRm( (CHAR *)recordHeader,
+                                  &fullname, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            break ;
+         }
+         default :
+         {
+            SDB_ASSERT( FALSE, "Invalid LOB operator type" ) ;
+            PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
+                      "Invalid LOB operator type [%u] LSN [%llu]",
+                      recordHeader->_type, recordHeader->_lsn ) ;
+         }
       }
-      else
+
+      PD_RC_CHECK( rc, PDERROR, "Parse dps log[type: %d, lsn: %lld, len: %d]"
+                   "failed, rc: %d", recordHeader->_type,
+                   recordHeader->_lsn, recordHeader->_length, rc ) ;
+
+      if ( NULL != oid )
       {
-         // wait bucket all complete and check status
-         rc = pBucket->waitEmptyWithCheck() ;
-         if ( rc )
+         CHAR tmpData[ sizeof( *oid ) + sizeof( sequence ) ] = { 0 } ;
+         ossMemcpy( tmpData, ( const CHAR * )( oid->getData()),
+                    sizeof( *oid ) ) ;
+         ossMemcpy( &tmpData[ sizeof( *oid ) ], ( const CHAR* )&sequence,
+                    sizeof( sequence ) ) ;
+         UINT32 valueHash = BSON_HASHER::hash( tmpData, sizeof( tmpData ) ) ;
+         bucketID = pBucket->calcIndex( valueHash ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__CLSREP__CALCLOBBUCKETID, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP__CHECKCLPARALLA, "_clsReplayer::_checkCLParalla" )
+   INT32 _clsReplayer::_checkCLParalla( dpsLogRecordHeader *recordHeader,
+                                        clsBucket *pBucket,
+                                        const CHAR *fullname,
+                                        utilCLUniqueID &clUniqueID,
+                                        CLS_PARALLA_TYPE &parallaType )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSREP__CHECKCLPARALLA ) ;
+
+      dmsStorageUnit *su = NULL ;
+      dmsMBContext *mbContext = NULL ;
+      const CHAR *pShortName = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      clsCLParallaInfo *pInfo = NULL ;
+
+      rc = rtnResolveCollectionNameAndLock( fullname, _dmsCB, &su, &pShortName,
+                                            suID ) ;
+      if ( SDB_OK != rc )
+      {
+         // ignore error
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      // Currently parallel replaying on capped collection is forbidden,
+      // because we need to be sure the records are exactly the same with
+      // the ones on primary node, including their positions.
+      if ( DMS_STORAGE_CAPPED == su->type() )
+      {
+         goto done ;
+      }
+
+      rc = su->data()->getMBContext( &mbContext, pShortName, -1 ) ;
+      if ( SDB_OK != rc )
+      {
+         // ignore error
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      clUniqueID = mbContext->mb()->_clUniqueID ;
+
+      pInfo = pBucket->getOrCreateInfo( fullname,
+                                        mbContext->mb()->_clUniqueID ) ;
+      PD_CHECK( NULL != pInfo, SDB_OOM, error, PDERROR,
+                "Failed to get collection parallel information for "
+                "collection [%s]", fullname ) ;
+
+      // For collection who has text indices, parallel replay should
+      // also be forbidden. Otherwise, the records in the capped
+      // collection will not be exactly the same.
+      if ( 0 != mbContext->mbStat()->_textIdxNum )
+      {
+         /// can't upgrade to recParalla
+      }
+      else if ( pInfo->checkParalla( recordHeader->_type,
+                                     recordHeader->_lsn,
+                                     pBucket ) )
+      {
+         parallaType = CLS_PARALLA_REC ;
+      }
+
+      su->data()->releaseMBContext( mbContext ) ;
+      mbContext = NULL ;
+
+      _dmsCB->suUnlock( suID, SHARED ) ;
+      suID = DMS_INVALID_SUID ;
+      su = NULL ;
+
+      if ( pInfo->isParallaTypeSwitch( parallaType ) )
+      {
+         rc = pInfo->waitLastLSN( pBucket ) ;
+         if ( SDB_OK != rc )
          {
             INT32 bucketStatus = (INT32)pBucket->getStatus() ;
             PD_LOG( PDWARNING, "Wait repl bucket empty failed, its "
@@ -502,29 +541,102 @@ namespace engine
                     bucketStatus ) ;
             goto error ;
          }
+      }
 
-         // judge lsn valid
-         if ( !pBucket->_expectLSN.invalid() &&
-              0 != pBucket->_expectLSN.compareOffset( recordHeader->_lsn ) )
+      /// update paralla info
+      pInfo->updateParalla( parallaType, recordHeader->_type,
+                            recordHeader->_lsn ) ;
+
+   done:
+      if ( NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( DMS_INVALID_SUID != suID )
+      {
+         _dmsCB->suUnlock( suID, SHARED ) ;
+      }
+      PD_TRACE_EXITRC( SDB__CLSREP__CHECKCLPARALLA, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP_REPLYBUCKET, "_clsReplayer::replayByBucket" )
+   INT32 _clsReplayer::replayByBucket( dpsLogRecordHeader *recordHeader,
+                                       pmdEDUCB *eduCB, clsBucket *pBucket )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__CLSREP_REPLYBUCKET ) ;
+
+      CLS_PARALLA_TYPE parallaType = CLS_PARALLA_NULL ;
+      UINT32 bucketID = ~0 ;
+      UINT32 clHash = 0 ;
+      utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
+      UINT32 waitBucketID = ~0 ;
+
+      SDB_ASSERT( NULL != recordHeader, "Record is invalid" ) ;
+      SDB_ASSERT( NULL != pBucket, "bucket is invalid" ) ;
+
+      try
+      {
+         rc = _calcBucketID( recordHeader, pBucket, parallaType, bucketID,
+                             clHash, clUniqueID, waitBucketID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to calculate bucket ID, "
+                      "rc: %d", rc ) ;
+
+         if ( (UINT32)~0 != bucketID )
          {
-            PD_LOG( PDWARNING, "Expect lsn[%lld], real complete lsn[%lld]",
-                    recordHeader->_lsn, pBucket->_expectLSN.offset ) ;
-            rc = SDB_CLS_REPLAY_LOG_FAILED ;
-            goto error ;
+            rc = pBucket->pushData( bucketID, (CHAR *)recordHeader,
+                                    recordHeader->_length, parallaType, clHash,
+                                    clUniqueID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to push log to bucket, rc: %d",
+                         rc ) ;
+            if ( (UINT32)~0 != waitBucketID && bucketID != waitBucketID )
+            {
+               rc = pBucket->pushWait( waitBucketID, recordHeader->_lsn ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to push wait to bucket, "
+                            "rc: %d", rc ) ;
+            }
          }
-
-         _clearParallaInfo() ;
-
-         rc = replay( recordHeader, eduCB ) ;
-         // re-calc complete lsn
-         if ( SDB_OK == rc && !pBucket->_expectLSN.invalid() )
+         else
          {
-            pBucket->_expectLSN.offset += recordHeader->_length ;
-            pBucket->_expectLSN.version = recordHeader->_version ;
+            // wait bucket all complete and check status
+            rc = pBucket->waitEmptyWithCheck() ;
+            if ( rc )
+            {
+               INT32 bucketStatus = (INT32)pBucket->getStatus() ;
+               PD_LOG( PDWARNING, "Wait repl bucket empty failed, its "
+                       "status[%s(%d)] is error",
+                       clsGetReplBucketStatusDesp( bucketStatus ),
+                       bucketStatus ) ;
+               goto error ;
+            }
+
+            // judge lsn valid
+            if ( !pBucket->_expectLSN.invalid() &&
+                 0 != pBucket->_expectLSN.compareOffset( recordHeader->_lsn ) )
+            {
+               PD_LOG( PDWARNING, "Expect lsn[%lld], real complete lsn[%lld]",
+                       recordHeader->_lsn, pBucket->_expectLSN.offset ) ;
+               rc = SDB_CLS_REPLAY_LOG_FAILED ;
+               goto error ;
+            }
+
+            pBucket->clearParallaInfo() ;
+
+            rc = replay( recordHeader, eduCB ) ;
+            // re-calc complete lsn
+            if ( SDB_OK == rc && !pBucket->_expectLSN.invalid() )
+            {
+               pBucket->_expectLSN.offset += recordHeader->_length ;
+               pBucket->_expectLSN.version = recordHeader->_version ;
+            }
          }
       }
-      }
-      catch (std::exception &e)
+      catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "received unexcepted error when parsing inner bson "
@@ -546,7 +658,7 @@ namespace engine
                  "data: %s] failed, rc: %d", recordHeader->_type,
                  recordHeader->_lsn, tmpBuff, rc ) ;
       }
-      PD_TRACE_EXITRC ( SDB__CLSREP_REPLYBUCKET, rc );
+      PD_TRACE_EXITRC ( SDB__CLSREP_REPLYBUCKET, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -556,7 +668,9 @@ namespace engine
    // bypass expensive optimizer to improve performance
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP_REPLAY, "_clsReplayer::replay" )
    INT32 _clsReplayer::replay( dpsLogRecordHeader *recordHeader,
-                               pmdEDUCB *eduCB, BOOLEAN incCount )
+                               pmdEDUCB *eduCB,
+                               BOOLEAN incMonCount,
+                               BOOLEAN ignoreDupKey )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREP_REPLAY );
@@ -573,6 +687,7 @@ namespace engine
       {
          case LOG_TYPE_DATA_INSERT :
          {
+            utilInsertResult insertResult ;
             const CHAR *fullname = NULL ;
             BSONObj obj ;
             rc = dpsRecord2Insert( (CHAR *)recordHeader,
@@ -582,15 +697,21 @@ namespace engine
             {
                goto error ;
             }
-            rc = rtnReplayInsert( fullname, obj, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
-            if ( SDB_OK == rc && incCount )
+            rc = rtnReplayInsert( fullname, obj, 0, eduCB, _dmsCB, _dpsCB, 1,
+                                  &insertResult ) ;
+            if ( SDB_OK == rc && incMonCount )
             {
                _monDBCB->monOperationCountInc ( MON_INSERT_REPL ) ;
             }
-            else if ( SDB_IXM_DUP_KEY == rc )
+            // ignore duplicated key in these case
+            // 1. ignore duplicated key by caller
+            // 2. conflict objects has the same OID
+            else if ( SDB_IXM_DUP_KEY == rc &&
+                      ( ignoreDupKey ||
+                        insertResult.isSameID() ) )
             {
                PD_LOG( PDINFO, "Record[%s] already exist when insert",
-                       obj.toString().c_str() ) ;
+                       obj.toPoolString().c_str() ) ;
                rc = SDB_OK ;
             }
             break ;
@@ -625,7 +746,7 @@ namespace engine
             {
                if ( upResult.updateNum() > 0 )
                {
-                  if ( incCount )
+                  if ( incMonCount )
                   {
                      _monDBCB->monOperationCountInc ( MON_UPDATE_REPL ) ;
                   }
@@ -635,6 +756,23 @@ namespace engine
                   SDB_ASSERT( upResult.updateNum() > 0,
                               "Updated number must > 0" ) ;
                }
+               else
+               {
+                  PD_LOG( PDDEBUG, "LSN [%llu] matcher %s updated 0 record on "
+                          "collection [%s]", recordHeader->_lsn,
+                          match.toPoolString().c_str(), fullname ) ;
+               }
+            }
+            // ignore duplicated key in REPLACE case
+            // 1. ignore duplicated key by caller
+            // 2. conflict objects has the same OID
+            else if ( SDB_IXM_DUP_KEY == rc &&
+                      DMS_LOG_WRITE_MOD_FULL == logWriteMod &&
+                      ( ignoreDupKey || upResult.isSameID() ) )
+            {
+               PD_LOG( PDINFO, "Record[%s] already exist when update",
+                       match.toPoolString().c_str() ) ;
+               rc = SDB_OK ;
             }
             break ;
          }
@@ -672,7 +810,7 @@ namespace engine
             {
                if ( delResult.deletedNum() > 0 )
                {
-                  if ( incCount )
+                  if ( incMonCount )
                   {
                      _monDBCB->monOperationCountInc ( MON_DELETE_REPL ) ;
                   }
@@ -681,6 +819,12 @@ namespace engine
                {
                   SDB_ASSERT( delResult.deletedNum() > 0,
                               "Deleted number must > 0" ) ;
+               }
+               else
+               {
+                  PD_LOG( PDDEBUG, "LSN [%llu] matcher %s deleted 0 record on "
+                          "collection [%s]", recordHeader->_lsn,
+                          obj.toPoolString().c_str(), fullname ) ;
                }
             }
             break ;
@@ -1835,25 +1979,6 @@ namespace engine
       return rtnWriteLob( fullName, oid, sequence,
                           offset, len, data, eduCB,
                           1, _dpsCB ) ;
-   }
-
-   clsCLParallaInfo* _clsReplayer::_getOrCreateInfo( utilCLUniqueID clUID )
-   {
-      try
-      {
-         clsCLParallaInfo &info = _mapParallaInfo[ clUID ] ;
-         return &info ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-      }
-      return NULL ;
-   }
-
-   void _clsReplayer::_clearParallaInfo()
-   {
-      _mapParallaInfo.clear() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREP__ROLEBACKTRANSINSERT, "_clsReplayer::_rollbackTransInsert" )

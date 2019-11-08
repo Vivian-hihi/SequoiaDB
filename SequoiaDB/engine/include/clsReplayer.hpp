@@ -90,43 +90,33 @@ namespace engine
 
          INT32             waitLastLSN( _clsBucket *pBucket ) ;
 
-      protected:
-         DPS_LSN_OFFSET       _max( DPS_LSN_OFFSET lsn1,
-                                    DPS_LSN_OFFSET lsn2 ) const
+         void              setPending( DPS_LSN_OFFSET lsn ) ;
+
+#if defined(_DEBUG)
+         void              setCollection( const CHAR *collection )
          {
-            DPS_LSN_OFFSET maxLSN = lsn1 ;
-            if ( DPS_INVALID_LSN_OFFSET == maxLSN ||
-                 ( DPS_INVALID_LSN_OFFSET != lsn2 && lsn2 > maxLSN ) )
-            {
-               maxLSN = lsn2 ;
-            }
-            return maxLSN ;
+            _collection.assign( collection ) ;
          }
-
-         void                 _clearID() ;
+#endif
 
       protected:
-         DPS_LSN_OFFSET       _lastInsertLSN ;
-         DPS_LSN_OFFSET       _lastDelLSN ;
-         DPS_LSN_OFFSET       _lastUpdateLSN ;
-
-         UINT64               _lastInsertID ;
-         UINT64               _lastDelID ;
-         UINT64               _lastUpdateID ;
-
-         CLS_PARALLA_TYPE     _lastParallaType ;
-         UINT64               _idValue ;
-
+         CLS_PARALLA_TYPE     _parallaType ;
+         DPS_LSN_OFFSET       _lastLSN ;
+         DPS_LSN_OFFSET       _pendingLSN ;
+         UINT32               _pendingCount ;
+#if defined(_DEBUG)
+         ossPoolString        _collection ;
+#endif
    } ;
+
    typedef _clsCLParallaInfo clsCLParallaInfo ;
+   typedef ossPoolMap<utilCLUniqueID, clsCLParallaInfo>  MAP_CL_PARALLAINFO ;
 
    /*
       _clsReplayer define
    */
    class _clsReplayer : public SDBObject
    {
-      typedef ossPoolMap<utilCLUniqueID, clsCLParallaInfo>  MAP_CL_PARALLAINFO ;
-
    public:
       _clsReplayer( BOOLEAN useDps = FALSE, BOOLEAN isReplSync = FALSE ) ;
       ~_clsReplayer() ;
@@ -136,8 +126,10 @@ namespace engine
       BOOLEAN isDPSEnabled () const { return _dpsCB ? TRUE : FALSE ; }
 
    public:
-      INT32 replay( dpsLogRecordHeader *recordHeader, _pmdEDUCB *eduCB,
-                    BOOLEAN incCount = TRUE ) ;
+      INT32 replay( dpsLogRecordHeader *recordHeader,
+                    pmdEDUCB *eduCB,
+                    BOOLEAN incMonCount = TRUE,
+                    BOOLEAN ignoreDupKey = TRUE ) ;
       INT32 replayByBucket( dpsLogRecordHeader *recordHeader,
                             _pmdEDUCB *eduCB, _clsBucket *pBucket ) ;
 
@@ -181,9 +173,6 @@ namespace engine
                              MAP_TRANS_PENDING_OBJ &mapPendingObj ) ;
 
    protected:
-      clsCLParallaInfo*    _getOrCreateInfo( utilCLUniqueID clUID ) ;
-      void                 _clearParallaInfo() ;
-
       // rollback INSERT DPS record
       INT32 _rollbackTransInsert( const dpsLogRecordHeader *recordHeader,
                                   pmdEDUCB *eduCB,
@@ -225,14 +214,39 @@ namespace engine
                           pmdEDUCB *eduCB,
                           bson::BSONObj &object ) ;
 
+      // helper function: calculate bucket ID
+      INT32 _calcBucketID( dpsLogRecordHeader *recordHeader,
+                           _clsBucket *pBucket,
+                           CLS_PARALLA_TYPE &parallaType,
+                           UINT32 &bucketID,
+                           UINT32 &clHash,
+                           utilCLUniqueID &clUniqueID,
+                           UINT32 &waitBucketID ) ;
+
+      INT32 _calcDataBucketID( dpsLogRecordHeader *recordHeader,
+                               _clsBucket *pBucket,
+                               CLS_PARALLA_TYPE &parallaType,
+                               UINT32 &bucketID,
+                               UINT32 &clHash,
+                               utilCLUniqueID &clUniqueID,
+                               UINT32 &waitBucketID ) ;
+
+      INT32 _calcLobBucketID( dpsLogRecordHeader *recordHeader,
+                              _clsBucket *pBucket,
+                              UINT32 &bucketID ) ;
+
+      INT32 _checkCLParalla( dpsLogRecordHeader *recordHeader,
+                             _clsBucket *pBucket,
+                             const CHAR *fullname,
+                             utilCLUniqueID &clUniqueID,
+                             CLS_PARALLA_TYPE &parallaType ) ;
+
    private:
       _SDB_DMSCB              *_dmsCB ;
       _dpsLogWrapper          *_dpsCB ;
       monDBCB                 *_monDBCB ;
 
       BOOLEAN                 _isReplSync ;
-
-      MAP_CL_PARALLAINFO      _mapParallaInfo ;
    } ;
    typedef class _clsReplayer clsReplayer ;
 }

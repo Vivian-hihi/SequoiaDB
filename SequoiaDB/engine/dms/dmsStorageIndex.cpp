@@ -1662,7 +1662,8 @@ namespace engine
       // insert (root split)
       ixmExtent rootidx ( indexCB->getRoot(), this ) ;
 
-      rc = rootidx.insert ( key, rid, order, dupAllowed,
+      rc = rootidx.insert ( key, rid, order,
+                            ( cb && cb->isDoRollback() ) ? TRUE : dupAllowed,
                             indexCB, pResult ) ;
       if ( rc )
       {
@@ -1878,6 +1879,7 @@ namespace engine
       BSONObjSet keySetNew ;
       BOOLEAN unique       = FALSE ;
       BOOLEAN found        = FALSE ;
+      BOOLEAN dupAllowed   = FALSE ;
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
       PD_TRACE_ENTRY( SDB__DMSSTORAGEINDEX__INDEXUPDATE );
@@ -1892,6 +1894,7 @@ namespace engine
       }
 
       unique = indexCB->unique() ;
+      dupAllowed = ( cb && cb->isDoRollback() ) ? TRUE : !unique,
 
       rc = indexCB->getKeysFromObject ( newObj, keySetNew ) ;
       if ( rc )
@@ -1976,7 +1979,7 @@ namespace engine
                // appear in the original list, let's add it
                ixmExtent rootidx ( indexCB->getRoot(), this ) ;
                ixmKeyOwned ko ((*itnew)) ;
-               rc = rootidx.insert ( ko, rid, order, !unique, indexCB,
+               rc = rootidx.insert ( ko, rid, order, dupAllowed, indexCB,
                                      pResult ) ;
                if ( rc )
                {
@@ -2048,7 +2051,7 @@ namespace engine
 #endif
             ixmExtent rootidx ( indexCB->getRoot(), this ) ;
             ixmKeyOwned ko ((*itnew)) ;
-            rc = rootidx.insert ( ko, rid, order, !unique, indexCB, pResult ) ;
+            rc = rootidx.insert ( ko, rid, order, dupAllowed, indexCB, pResult ) ;
             if ( rc )
             {
                // during rollback, since the previous change may half-way

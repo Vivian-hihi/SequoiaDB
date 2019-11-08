@@ -423,6 +423,29 @@ namespace engine
       }
    }
 
+   BOOLEAN utilWriteResult::isSameID() const
+   {
+      BOOLEAN sameID = FALSE ;
+
+      try
+      {
+         BSONElement curID = _curID.getField( DMS_ID_KEY_NAME ) ;
+         BSONElement peerID = _peerID.getField( DMS_ID_KEY_NAME ) ;
+         if ( !peerID.eoo() &&
+              !curID.eoo() &&
+              0 == curID.woCompare( peerID, FALSE ) )
+         {
+            sameID = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Compare ID occur exception: %s", e.what() ) ;
+      }
+
+      return sameID ;
+   }
+
    /*
       utilIdxDupErrAssit implement
    */

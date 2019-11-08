@@ -251,7 +251,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREPLAYINERT, "rtnReplayInsert" )
    INT32 rtnReplayInsert( const CHAR *pCollectionName, BSONObj &obj,
                           INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                          SDB_DPSCB *dpsCB, INT16 w )
+                          SDB_DPSCB *dpsCB, INT16 w,
+                          utilInsertResult *pResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNREPLAYINERT ) ;
@@ -299,7 +300,7 @@ namespace engine
          }
 
          rc = su->insertRecord( clShortName, obj, cb, dpsCB, TRUE,
-                                TRUE, NULL, position ) ;
+                                TRUE, NULL, position, pResult ) ;
          if ( rc )
          {
             if ( ( SDB_IXM_DUP_KEY == rc ) &&

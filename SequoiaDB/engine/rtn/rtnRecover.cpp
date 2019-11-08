@@ -2224,6 +2224,13 @@ namespace engine
       }
       return rc ;
    error:
+      if ( SDB_IXM_DUP_KEY == rc )
+      {
+         // when found duplicated keys, data are in error status
+         // move LSN to 0, so this node could not be PRIMARY again
+         PD_LOG( PDERROR, "Clean replica-logs with duplicated key error" ) ;
+         dpsCB->move( 0, 0 ) ;
+      }
       goto done ;
    }
 

@@ -36,7 +36,6 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
-#include "../bson/lib/md5.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
@@ -46,17 +45,51 @@ using namespace bson ;
 namespace engine
 {
 
+   // data
+   // length
+   // parallel type
+   // CL name hash
+   // CL unique ID
+   // wait LSN
+   // next pointer
+   #define CLS_BUCKET_NEW_LEN( len ) \
+      ( len + sizeof( UINT32 ) + \
+              sizeof( CLS_PARALLA_TYPE ) + \
+              sizeof( UINT32 ) + \
+              sizeof( utilCLUniqueID ) + \
+              sizeof( DPS_LSN_OFFSET ) + \
+              sizeof( ossValuePtr ) )
+
+   #define CLS_BUCKET_ORG_LEN( len ) \
+      ( len - sizeof( UINT32 ) - \
+              sizeof( CLS_PARALLA_TYPE ) - \
+              sizeof( UINT32 ) - \
+              sizeof( utilCLUniqueID ) - \
+              sizeof( DPS_LSN_OFFSET ) - \
+              sizeof( ossValuePtr ) )
+
    #define CLS_BUCKET_LEN_PTR( pData ) \
-      (UINT32*)((CHAR*)pData+((dpsLogRecordHeader*)pData)->_length)
+      (UINT32 *)( (CHAR *)pData + ( (dpsLogRecordHeader *)pData )->_length )
+
+   #define CLS_BUCKET_PARALLATYPE_PTR( pData ) \
+      (CLS_PARALLA_TYPE *)( (CHAR *)( CLS_BUCKET_LEN_PTR( pData ) ) + \
+                            sizeof( UINT32 ) )
+
+   #define CLS_BUCKET_CLHASH_PTR( pData ) \
+      (UINT32 *)( (CHAR *)( CLS_BUCKET_PARALLATYPE_PTR( pData ) ) + \
+                  sizeof( CLS_PARALLA_TYPE ) )
+
+   #define CLS_BUCKET_CLUNIQUEID_PTR( pData ) \
+      (utilCLUniqueID *)( (CHAR *)( CLS_BUCKET_CLHASH_PTR( pData ) ) + \
+                          sizeof( UINT32 ) )
+
+   #define CLS_BUCKET_WAITLSN_PTR( pData ) \
+      (DPS_LSN_OFFSET *)( (CHAR *)( CLS_BUCKET_CLUNIQUEID_PTR( pData ) ) + \
+                          sizeof( utilCLUniqueID ) )
 
    #define CLS_BUCKET_NEXT_PTR( pData ) \
-      (ossValuePtr*)((CHAR*)pData+((dpsLogRecordHeader*)pData)->_length+sizeof(UINT32))
-
-   #define CLS_BUCKET_SET_NEXT( pData, pNext ) \
-      *CLS_BUCKET_NEXT_PTR( pData ) = (ossValuePtr)pNext
-
-   #define CLS_BUCKET_GET_NEXT( pData ) \
-      (CHAR*)(*CLS_BUCKET_NEXT_PTR( pData ))
+      (ossValuePtr *)( (CHAR *)( CLS_BUCKET_WAITLSN_PTR( pData ) ) + \
+                       sizeof( DPS_LSN_OFFSET ) )
 
    #define CLS_BUCKET_GET_LEN( pData ) \
       *CLS_BUCKET_LEN_PTR( pData )
@@ -64,8 +97,35 @@ namespace engine
    #define CLS_BUCKET_SET_LEN( pData, len ) \
       *CLS_BUCKET_LEN_PTR( pData ) = len
 
-   #define CLS_BUCKET_NEW_LEN( len ) \
-      ( len + sizeof(UINT32) + sizeof(ossValuePtr) )
+   #define CLS_BUCKET_GET_PARALLATYPE( pData ) \
+      *CLS_BUCKET_PARALLATYPE_PTR( pData )
+
+   #define CLS_BUCKET_SET_PARALLATYPE( pData, type ) \
+      *CLS_BUCKET_PARALLATYPE_PTR( pData ) = type
+
+   #define CLS_BUCKET_GET_CLHASH( pData ) \
+      *CLS_BUCKET_CLHASH_PTR( pData )
+
+   #define CLS_BUCKET_SET_CLHASH( pData, hash ) \
+      *CLS_BUCKET_CLHASH_PTR( pData ) = hash
+
+   #define CLS_BUCKET_GET_CLUNIQUEID( pData ) \
+      *CLS_BUCKET_CLUNIQUEID_PTR( pData )
+
+   #define CLS_BUCKET_SET_CLUNIQUEID( pData, clUniqueID ) \
+      *CLS_BUCKET_CLUNIQUEID_PTR( pData ) = clUniqueID
+
+   #define CLS_BUCKET_GET_WAITLSN( pData ) \
+      *CLS_BUCKET_WAITLSN_PTR( pData )
+
+   #define CLS_BUCKET_SET_WAITLSN( pData, lsn ) \
+      *CLS_BUCKET_WAITLSN_PTR( pData ) = lsn ;
+
+   #define CLS_BUCKET_SET_NEXT( pData, pNext ) \
+      *CLS_BUCKET_NEXT_PTR( pData ) = (ossValuePtr)pNext
+
+   #define CLS_BUCKET_GET_NEXT( pData ) \
+      (CHAR*)(*CLS_BUCKET_NEXT_PTR( pData ))
 
    #define CLS_REPLSYNC_ONCE_NUM             (5)
 #if defined OSS_ARCH_64
@@ -115,13 +175,8 @@ namespace engine
       SDB_ASSERT( 0 == _number, "Must be empty" ) ;
    }
 
-   void _clsBucketUnit::push( CHAR *pData, UINT32 len )
+   void _clsBucketUnit::push( CHAR *pData )
    {
-      dpsLogRecordHeader *header = ( dpsLogRecordHeader* )pData ;
-
-      SDB_ASSERT( pData && len > sizeof(CHAR*), "pData can't be NULL" ) ;
-      SDB_ASSERT( header->_length + sizeof(CHAR*) <= len, "len error" ) ;
-
       if ( 0 == _number )
       {
          _pDataHeader = pData ;
@@ -134,7 +189,6 @@ namespace engine
       }
 
       CLS_BUCKET_SET_NEXT( pData, NULL ) ;
-      CLS_BUCKET_SET_LEN( pData, len ) ;
       ++_number ;
    }
 
@@ -187,6 +241,8 @@ namespace engine
 
       _emptyEvent.signal() ;
       _allEmptyEvent.signal() ;
+
+      _pendingCLUniqueID = UTIL_UNIQUEID_NULL ;
    }
 
    _clsBucket::~_clsBucket ()
@@ -337,6 +393,8 @@ namespace engine
       _status = CLS_BUCKET_NORMAL ;
       _submitRC = SDB_OK ;
 
+      _pendingCLUniqueID = UTIL_UNIQUEID_NULL ;
+
    done:
       return rc ;
    error:
@@ -370,6 +428,8 @@ namespace engine
          _expectLSN.version = DPS_INVALID_LSN_VERSION ;
       }
       _memPool.clear() ;
+
+      _pendingCLUniqueID = UTIL_UNIQUEID_NULL ;
    }
 
    void _clsBucket::close ()
@@ -377,27 +437,63 @@ namespace engine
       _status = CLS_BUCKET_CLOSED ;
    }
 
-   UINT32 _clsBucket::calcIndex( const CHAR * pData, UINT32 len )
+   UINT32 _clsBucket::calcIndex( UINT32 hashValue )
    {
-      if ( 0 == _bitSize )
-      {
-         return 0 ;
-      }
-
-      md5::md5digest digest ;
-      md5::md5( pData, len, digest ) ;
-      UINT32 hashValue = 0 ;
-      UINT32 i = 0 ;
-      while ( i++ < 4 )
-      {
-         hashValue |= ( (UINT32)digest[i-1] << ( 32 - 8 * i ) ) ;
-      }
       return (UINT32)( hashValue >> ( 32 - _bitSize ) ) ;
    }
 
-   INT32 _clsBucket::pushData( UINT32 index, CHAR * pData, UINT32 len )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET_PUSHWAIT, "_clsBucket::pushWait" )
+   INT32 _clsBucket::pushWait( UINT32 index, DPS_LSN_OFFSET waitLSN )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSBUCKET_PUSHWAIT ) ;
+
+      dpsLogRecordHeader header ;
+      header._type = LOG_TYPE_DUMMY ;
+      header._length = sizeof( dpsLogRecordHeader ) ;
+
+      clsReplayInfo info ;
+      info._pData = (CHAR *)( &header ) ;
+      info._len = CLS_BUCKET_NEW_LEN( header._length ) ;
+      info._waitLSN = waitLSN ;
+
+      rc = _checkAndPushData( index, info ) ;
+
+      PD_TRACE_EXITRC( SDB__CLSBUCKET_PUSHWAIT, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET_PUSHDATA, "_clsBucket::pushData" )
+   INT32 _clsBucket::pushData( UINT32 index, CHAR *pData, UINT32 len,
+                               CLS_PARALLA_TYPE parallaType,
+                               UINT32 clHash, utilCLUniqueID clUniqueID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSBUCKET_PUSHDATA ) ;
+
+      clsReplayInfo info ;
+      info._pData = pData ;
+      info._len = CLS_BUCKET_NEW_LEN( len ) ;
+      info._clHash = clHash ;
+      info._clUniqueID = clUniqueID ;
+      info._parallaType = parallaType ;
+
+      rc = _checkAndPushData( index, info ) ;
+
+      PD_TRACE_EXITRC( SDB__CLSBUCKET_PUSHDATA, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__CHECKANDPUSHDATA, "_clsBucket::_checkAndPushData" )
+   INT32 _clsBucket::_checkAndPushData( UINT32 index, clsReplayInfo &info )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSBUCKET__CHECKANDPUSHDATA ) ;
 
       // only use offset
       if ( DPS_INVALID_LSN_OFFSET == _expectLSN.offset )
@@ -417,14 +513,16 @@ namespace engine
       }
       else
       {
-         rc = _pushData( index, pData, len, TRUE, TRUE ) ;
+         rc = _pushData( index, info, TRUE, TRUE ) ;
       }
+
+      PD_TRACE_EXITRC( SDB__CLSBUCKET__CHECKANDPUSHDATA, rc ) ;
 
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__PUSHDATA, "_clsBucket::_pushData" )
-   INT32 _clsBucket::_pushData( UINT32 index, CHAR * pData, UINT32 len,
+   INT32 _clsBucket::_pushData( UINT32 index, clsReplayInfo &info,
                                 BOOLEAN incAllCount, BOOLEAN newMem )
    {
       INT32 rc = SDB_OK ;
@@ -452,21 +550,27 @@ namespace engine
             }
          }
          // prepare new data
-         pNewData = _memPool.alloc( CLS_BUCKET_NEW_LEN( len ), newLen ) ;
+         pNewData = _memPool.alloc( info._len, newLen ) ;
          if ( !pNewData )
          {
             PD_LOG( PDERROR, "Failed to alloc memory for log data, len: %d",
-                    len ) ;
+                    info._len ) ;
             rc = SDB_OOM ;
             goto error ;
          }
          // copy data
-         ossMemcpy( pNewData, pData, len ) ;
+         ossMemcpy( pNewData, info._pData, CLS_BUCKET_ORG_LEN( info._len ) ) ;
+
+         CLS_BUCKET_SET_LEN( pNewData, newLen ) ;
+         CLS_BUCKET_SET_PARALLATYPE( pNewData, info._parallaType ) ;
+         CLS_BUCKET_SET_CLHASH( pNewData, info._clHash ) ;
+         CLS_BUCKET_SET_CLUNIQUEID( pNewData, info._clUniqueID ) ;
+         CLS_BUCKET_SET_WAITLSN( pNewData, info._waitLSN ) ;
       }
       else
       {
-         pNewData = pData ;
-         newLen   = len ;
+         pNewData = info._pData ;
+         newLen   = info._len ;
       }
 
       // scoped lock to avoid exception
@@ -509,7 +613,7 @@ namespace engine
             }
          }
 
-         _dataBucket[ index ]->push( pNewData, newLen ) ;
+         _dataBucket[ index ]->push( pNewData ) ;
 
          {
             ossScopedRWLock counterLock( &_counterLock, EXCLUSIVE ) ;
@@ -547,10 +651,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET_POPDATA, "_clsBucket::popData" )
-   BOOLEAN _clsBucket::popData( UINT32 index, CHAR ** ppData, UINT32 &len )
+   BOOLEAN _clsBucket::popData( UINT32 index, clsReplayInfo &info )
    {
       BOOLEAN ret = FALSE ;
+
       PD_TRACE_ENTRY( SDB__CLSBUCKET_POPDATA ) ;
+
+      CHAR *pData ;
+      UINT32 len = 0 ;
 
       SDB_ASSERT( index < _bucketSize, "Index must less than bucket size" ) ;
       if ( index >= _bucketSize )
@@ -568,16 +676,23 @@ namespace engine
 
          while ( TRUE )
          {
-            ret = _dataBucket[ index ]->pop( ppData, len ) ;
+            ret = _dataBucket[ index ]->pop( &pData, len ) ;
             if ( ret )
             {
                if ( CLS_BUCKET_WAIT_ROLLBACK == _status )
                {
                   _totalCount.dec () ;
                   _allCount.dec() ;
-                  _memPool.release( *ppData, len ) ;
+                  _memPool.release( pData, len ) ;
                   continue ;
                }
+               info._pData = pData ;
+               info._len = len ;
+               info._unitID = index ;
+               info._parallaType = CLS_BUCKET_GET_PARALLATYPE( pData ) ;
+               info._clHash = CLS_BUCKET_GET_CLHASH( pData ) ;
+               info._clUniqueID = CLS_BUCKET_GET_CLUNIQUEID( pData ) ;
+               info._waitLSN = CLS_BUCKET_GET_WAITLSN( pData ) ;
             }
             break ;
          }
@@ -628,12 +743,32 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSBUCKET_WAITANDROLLBACK ) ;
 
       _emptyEvent.wait() ;
+
       if ( CLS_BUCKET_WAIT_ROLLBACK == _status )
       {
          rc = _submitRC ? _submitRC : SDB_CLS_REPLAY_LOG_FAILED ;
+
          _doRollback( num ) ;
+
          // wait
          _emptyEvent.wait() ;
+
+         // only set pending for duplicated key
+         if ( SDB_IXM_DUP_KEY == rc )
+         {
+            PD_LOG( PDEVENT, "Failed to replay in parallel, "
+                    "need resolve pending, expect LSN [%llu]",
+                    _expectLSN.offset ) ;
+            if ( UTIL_UNIQUEID_NULL != _pendingCLUniqueID )
+            {
+               setPending( _pendingCLUniqueID, _expectLSN.offset ) ;
+            }
+         }
+         else
+         {
+            _pendingCLUniqueID = UTIL_UNIQUEID_NULL ;
+         }
+
          _status = CLS_BUCKET_NORMAL ;
          _submitRC = SDB_OK ;
       }
@@ -679,7 +814,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSBUCKET__DOROLLBACK ) ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
 
-      map< DPS_LSN_OFFSET, clsCompleteInfo >::reverse_iterator rit ;
+      CLS_COMP_MAP::reverse_iterator rit ;
 
       if ( CLS_BUCKET_WAIT_ROLLBACK != getStatus() )
       {
@@ -699,7 +834,8 @@ namespace engine
          while ( rit != _completeMap.rend() )
          {
             ++num ;
-            clsCompleteInfo &info = rit->second ;
+            clsReplayInfo &info = rit->second ;
+            UINT32 unitID = info._unitID ;
 
             /// rollback trans info
             if ( pTransCB && pTransCB->isTransOn() &&
@@ -713,8 +849,21 @@ namespace engine
                }
             }
 
-            rc = _pushData( info._unitID, info._pData, info._len,
-                            FALSE, FALSE ) ;
+            // for record parallel mode, we use collection parallel mode
+            // to rollback INSERT/UPDATE/DELETE
+            if ( CLS_PARALLA_REC == info._parallaType )
+            {
+               dpsLogRecordHeader *header =
+                                    ( dpsLogRecordHeader * )( info._pData ) ;
+               if ( header->_type == LOG_TYPE_DATA_INSERT ||
+                    header->_type == LOG_TYPE_DATA_UPDATE ||
+                    header->_type == LOG_TYPE_DATA_DELETE )
+               {
+                  unitID = calcIndex( info._clHash ) ;
+               }
+            }
+
+            rc = _pushData( unitID, info, FALSE, FALSE ) ;
             if ( rc )
             {
                SDB_ASSERT( SDB_OK == rc, "Push complete log to "
@@ -828,7 +977,7 @@ namespace engine
       }
 
       incIdleAgent() ;
-      
+
       // scoped lock to avoid exception
       {
          ossScopedLock bucketLock( _latchBucket[ unitID ] ) ;
@@ -886,72 +1035,200 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__WAITLSN, "_clsBucket::_waitLSN" )
+   INT32 _clsBucket::_waitLSN( UINT32 unitID,
+                               clsReplayInfo &info )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSBUCKET__WAITLSN ) ;
+
+      DPS_LSN_OFFSET waitLSN = info._waitLSN ;
+
+      SDB_ASSERT( DPS_INVALID_LSN_OFFSET != waitLSN, "wait LSN is invalid" ) ;
+
+      PD_LOG( PDDEBUG, "Bucket [%u]: wait for LSN [%llu]", unitID, waitLSN ) ;
+
+      DPS_LSN expectLSN = completeLSN() ;
+      while ( expectLSN.compareOffset( waitLSN ) <= 0 )
+      {
+         // break when status changed or only myself is waiting
+         if ( CLS_BUCKET_NORMAL != _status ||
+              bucketSize() <= 1 )
+         {
+            break ;
+         }
+         // done in complete map
+         if ( _checkCompleted( waitLSN ) )
+         {
+            break ;
+         }
+         waitSubmit( CLS_REPL_RETRY_INTERVAL ) ;
+         expectLSN = completeLSN() ;
+      }
+
+      _allCount.dec() ;
+      _memPool.release( info._pData, info._len ) ;
+
+      PD_TRACE_EXITRC( SDB__CLSBUCKET__WAITLSN, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__REPLAY, "_clsBucket::_replay" )
+   INT32 _clsBucket::_replay( UINT32 unitID,
+                              pmdEDUCB *cb,
+                              clsReplayInfo &info,
+                              CLS_SUBMIT_RESULT &result )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSBUCKET__REPLAY ) ;
+
+      dpsLogRecordHeader *header = (dpsLogRecordHeader *)info._pData ;
+
+      SDB_ASSERT( NULL != header, "record is invalid" ) ;
+
+      BOOLEAN canRetry = TRUE ;
+
+   retry:
+      rc = _replayer->replay( header, cb, FALSE, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Replay LSN [%llu] encountered error: %d",
+                 header->_lsn, rc ) ;
+         SDB_ASSERT( ( SDB_OOM == rc ||
+                       SDB_NOSPC == rc ||
+                       SDB_IXM_DUP_KEY == rc ),
+                     "Unexpected error occurred" ) ;
+         if ( CLS_BUCKET_NORMAL == _status &&
+              SDB_IXM_DUP_KEY == rc &&
+              canRetry )
+         {
+            PD_LOG( PDDEBUG, "Bucket [%u]: failed to replay lsn [%llu], "
+                    "wait to resolve duplicated key", unitID, header->_lsn ) ;
+
+            // found a duplicated key issue
+            // wait complete LSN to reach this record, and retry
+            waitSubmit( CLS_REPL_RETRY_INTERVAL ) ;
+            if ( completeLSN().compareOffset( header->_lsn ) >= 0 )
+            {
+               // when meets expect LSN, do the last retry
+               canRetry = FALSE ;
+            }
+            goto retry ;
+         }
+         if ( CLS_BUCKET_WAIT_ROLLBACK != _status )
+         {
+            _status = CLS_BUCKET_WAIT_ROLLBACK ;
+            _submitRC = rc ;
+            if ( SDB_IXM_DUP_KEY == rc )
+            {
+               // set pending collection unique ID
+               _pendingCLUniqueID = info._clUniqueID ;
+               PD_LOG( PDEVENT, "Bucket [%u]: failed to replay lsn [%llu], "
+                       "need resolve duplicated key", unitID, header->_lsn ) ;
+            }
+         }
+         _allCount.dec() ;
+         _memPool.release( info._pData, info._len ) ;
+      }
+      else
+      {
+         _submitResult( header->_lsn, header->_version,
+                        header->_length, info, unitID, result ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__CLSBUCKET__REPLAY, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__ROLLBACK, "_clsBucket::_rollback" )
+   INT32 _clsBucket::_rollback( UINT32 unitID,
+                                pmdEDUCB *cb,
+                                clsReplayInfo &info )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSBUCKET__ROLLBACK ) ;
+
+      dpsLogRecordHeader *header = (dpsLogRecordHeader *)info._pData ;
+
+      SDB_ASSERT( NULL != header, "record is invalid" ) ;
+
+      PD_LOG( PDDEBUG, "Bucket [%u]: start to rollback lsn [%llu]",
+              unitID, header->_lsn ) ;
+
+      UINT32 retryTimes = 0 ;
+      while( TRUE )
+      {
+         rc = _replayer->rollback( header, cb ) ;
+         // in few cases, we could retry later
+         // OOM or No space
+         if ( ( SDB_OOM == rc ||
+                SDB_NOSPC == rc ) &&
+              ++retryTimes < CLS_REPL_MAX_ROLLBACK_TIMES )
+         {
+            ossSleep( CLS_REPL_RETRY_INTERVAL ) ;
+            continue ;
+         }
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDDEBUG, "Failed to rollback lsn [%llu], rc: %d",
+                    header->_lsn, rc ) ;
+         }
+         SDB_ASSERT( SDB_OK == rc, "Rollback dps log failed" ) ;
+         break ;
+      }
+
+      _allCount.dec() ;
+      _memPool.release( info._pData, info._len ) ;
+
+      PD_TRACE_EXITRC( SDB__CLSBUCKET__ROLLBACK, rc ) ;
+
+      return rc ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET_SUBMITDATA, "_clsBucket::submitData" )
    INT32 _clsBucket::submitData( UINT32 unitID, _pmdEDUCB *cb,
-                                 CHAR * pData, UINT32 len,
+                                 clsReplayInfo &info,
                                  CLS_SUBMIT_RESULT &result )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY( SDB__CLSBUCKET_SUBMITDATA ) ;
-      dpsLogRecordHeader *pHeader = (dpsLogRecordHeader*)pData ;
 
       if ( CLS_BUCKET_ROLLBACKING != _status )
       {
-         rc = _replayer->replay( pHeader, cb, FALSE ) ;
-         if ( rc )
+         if ( DPS_INVALID_LSN_OFFSET != info._waitLSN )
          {
-            PD_LOG( PDERROR, "replay encountered error: %d", rc );
-                    
-            SDB_ASSERT( SDB_OOM == rc || SDB_NOSPC == rc,
-                        "Unexpect error occured" ) ;
-            if ( CLS_BUCKET_WAIT_ROLLBACK != _status )
-            {
-               _status = CLS_BUCKET_WAIT_ROLLBACK ;
-               _submitRC = rc ;
-            }
-            _allCount.dec() ;
-            _memPool.release( pData, len ) ;
+            rc = _waitLSN( unitID, info ) ;
          }
          else
          {
-            _submitResult( pHeader->_lsn, pHeader->_version, pHeader->_length,
-                           pData, len, unitID, result ) ;
+            rc = _replay( unitID, cb, info, result ) ;
          }
       }
       else
       {
-         UINT32 retryTimes = 0 ;
-         while( TRUE )
-         {
-            rc = _replayer->rollback( pHeader, cb ) ;
-            if ( ( SDB_OOM == rc || SDB_NOSPC == rc ) &&
-                 ++retryTimes < CLS_REPL_MAX_ROLLBACK_TIMES )
-            {
-               ossSleep( CLS_REPL_RETRY_INTERVAL ) ;
-               continue ;
-            }
-            SDB_ASSERT( SDB_OK == rc, "Rollback dps log failed" ) ;
-            break ;
-         }
-         _allCount.dec() ;
-         _memPool.release( pData, len ) ;
+         rc = _rollback( unitID, cb, info ) ;
       }
 
       _totalCount.dec () ;
 
       PD_TRACE_EXITRC( SDB__CLSBUCKET_SUBMITDATA, rc ) ;
+
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__SUBMITRESULT, "_clsBucket::_submitResult" )
    void _clsBucket::_submitResult( DPS_LSN_OFFSET offset, DPS_LSN_VER version,
-                                   UINT32 lsnLen, CHAR *pData, UINT32 len,
+                                   UINT32 lsnLen, clsReplayInfo &info,
                                    UINT32 unitID, CLS_SUBMIT_RESULT &result )
    {
       PD_TRACE_ENTRY( SDB__CLSBUCKET__SUBMITRESULT ) ;
-      clsCompleteInfo info ;
-      info._len      = len ;
-      info._pData    = pData ;
+
       info._unitID   = unitID ;
 
       BOOLEAN releaseMem = FALSE ;
@@ -960,7 +1237,7 @@ namespace engine
       ossScopedLock lock( &_bucketLatch ) ;
 
       // increase repl counter
-      _incCount( pData ) ;
+      _incCount( info._pData ) ;
 
       // the first one
       if ( _expectLSN.compareOffset( offset ) >= 0 )
@@ -976,10 +1253,10 @@ namespace engine
          result = CLS_SUBMIT_EQ_EXPECT ;
          releaseMem = TRUE ;
 
-         map< UINT64, clsCompleteInfo >::iterator it = _completeMap.begin() ;
+         CLS_COMP_MAP::iterator it = _completeMap.begin() ;
          while ( it != _completeMap.end() )
          {
-            clsCompleteInfo &tmpInfo = it->second ;
+            clsReplayInfo &tmpInfo = it->second ;
             if ( _expectLSN.compareOffset( it->first ) >= 0 )
             {
                if ( 0 == _expectLSN.compareOffset( it->first ) )
@@ -996,7 +1273,7 @@ namespace engine
             }
             break ;
          }
-         _submitEvent.signal() ;
+         _submitEvent.signalAll() ;
          goto done ;
       }
 
@@ -1021,18 +1298,23 @@ namespace engine
    done:
       if ( releaseMem )
       {
-         _memPool.release( pData, len ) ;
+         _memPool.release( info._pData, info._len ) ;
          _allCount.dec() ;
       }
       PD_TRACE_EXIT( SDB__CLSBUCKET__SUBMITRESULT ) ;
       return ;
    }
 
+   BOOLEAN _clsBucket::hasPending()
+   {
+      return ( UTIL_UNIQUEID_NULL != _pendingCLUniqueID ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET_FORCECOMPLETE, "_clsBucket::forceCompleteAll" )
    INT32 _clsBucket::forceCompleteAll ()
    {
       PD_TRACE_ENTRY( SDB__CLSBUCKET_FORCECOMPLETE ) ;
-      map< UINT64, clsCompleteInfo >::iterator it ;
+      CLS_COMP_MAP::iterator it ;
 
       ossScopedLock lock( &_bucketLatch ) ;
 
@@ -1050,7 +1332,7 @@ namespace engine
       it = _completeMap.begin() ;
       while ( it != _completeMap.end() )
       {
-         clsCompleteInfo &tmpInfo = it->second ;
+         clsReplayInfo &tmpInfo = it->second ;
          dpsLogRecordHeader *pHeader = (dpsLogRecordHeader*)( tmpInfo._pData) ;
 
          /// Only normal to change _expectLSN
@@ -1069,7 +1351,7 @@ namespace engine
          ++it ;
       }
       _completeMap.clear() ;
-      _submitEvent.signal() ;
+      _submitEvent.signalAll() ;
 
       _allEmptyEvent.signalAll() ;
       _emptyEvent.signalAll() ;
@@ -1082,6 +1364,50 @@ namespace engine
    done:
       PD_TRACE_EXIT( SDB__CLSBUCKET_FORCECOMPLETE ) ;
       return SDB_OK ;
+   }
+
+   clsCLParallaInfo *_clsBucket::getOrCreateInfo( const CHAR *collection,
+                                                  utilCLUniqueID clUID )
+   {
+      clsCLParallaInfo *info = NULL ;
+
+      try
+      {
+#if defined(_DEBUG)
+         MAP_CL_PARALLAINFO::iterator iter = _mapParallaInfo.find( clUID ) ;
+         if ( iter == _mapParallaInfo.end() )
+         {
+            info = ( &_mapParallaInfo[ clUID ] ) ;
+            info->setCollection( collection ) ;
+         }
+         else
+         {
+            info = ( &_mapParallaInfo[ clUID ] ) ;
+         }
+#else
+         info = ( &_mapParallaInfo[ clUID ] ) ;
+#endif
+      }
+      catch ( exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      }
+
+      return info ;
+   }
+
+   void _clsBucket::setPending( utilCLUniqueID clUID, DPS_LSN_OFFSET lsn )
+   {
+      MAP_CL_PARALLAINFO::iterator iter = _mapParallaInfo.find( clUID ) ;
+      if ( iter != _mapParallaInfo.end() )
+      {
+         iter->second.setPending( lsn ) ;
+      }
+   }
+
+   void _clsBucket::clearParallaInfo()
+   {
+      _mapParallaInfo.clear() ;
    }
 
    /*
@@ -1123,13 +1449,13 @@ namespace engine
       pmdEDUMgr *eduMgr       = krcb->getEDUMgr() ;
 
       UINT32 unitID           = 0 ;
-      CHAR *pData             = NULL ;
-      UINT32 len              = 0 ;
       UINT32 number           = 0 ;
       CLS_SUBMIT_RESULT res   = CLS_SUBMIT_EQ_EXPECT ;
 
       while ( TRUE )
       {
+         clsReplayInfo info ;
+
          eduMgr->waitEDU( eduCB() ) ;
 
          rc = _pBucket->beginUnit( eduCB(), unitID, _timeout ) ;
@@ -1141,12 +1467,12 @@ namespace engine
          eduMgr->activateEDU( eduCB() ) ;
 
          number = 0 ;
-         while ( _pBucket->popData( unitID, &pData, len ) )
+         while ( _pBucket->popData( unitID, info ) )
          {
             ++number ;
             eduCB()->incEventCount() ;
 
-            _pBucket->submitData( unitID, eduCB(), pData, len, res ) ;
+            _pBucket->submitData( unitID, eduCB(), info, res ) ;
 
             if ( _pBucket->idleUnitCount() > 1 && CLS_SUBMIT_EQ_EXPECT != res )
             {

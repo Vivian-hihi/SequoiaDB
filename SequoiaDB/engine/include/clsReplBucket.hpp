@@ -79,7 +79,7 @@ namespace engine
 
          BOOLEAN  isEmpty () const { return 0 == _number ? TRUE : FALSE ; }
          UINT32   size () const { return _number ; }
-         void     push( CHAR *pData, UINT32 len ) ;
+         void     push( CHAR *pData ) ;
          BOOLEAN  pop( CHAR **ppData, UINT32 &len ) ;
 
          void     attach()
@@ -106,20 +106,30 @@ namespace engine
    /*
       _clsCompleteInfo define
    */
-   struct _clsCompleteInfo
+   struct _clsReplayInfo
    {
-      CHAR           *_pData ;
-      UINT32         _len ;
-      UINT32         _unitID ;
+      CHAR             *_pData ;
+      UINT32            _len ;
+      UINT32            _unitID ;
+      CLS_PARALLA_TYPE  _parallaType ;
+      UINT32            _clHash ;
+      utilCLUniqueID    _clUniqueID ;
+      DPS_LSN_OFFSET    _waitLSN ;
 
-      _clsCompleteInfo ()
+      _clsReplayInfo()
       {
-         _pData   = NULL ;
-         _len     = 0 ;
-         _unitID  = 0 ;
+         _pData         = NULL ;
+         _len           = 0 ;
+         _unitID        = 0 ;
+         _parallaType   = CLS_PARALLA_NULL ;
+         _clHash        = 0 ;
+         _clUniqueID    = UTIL_UNIQUEID_NULL ;
+         _waitLSN       = DPS_INVALID_LSN_OFFSET ;
       }
    } ;
-   typedef _clsCompleteInfo clsCompleteInfo ;
+   typedef _clsReplayInfo clsReplayInfo ;
+
+   typedef ossPoolMap< DPS_LSN_OFFSET, clsReplayInfo > CLS_COMP_MAP ;
 
    enum CLS_BUCKET_STATUS
    {
@@ -162,10 +172,13 @@ namespace engine
          void        close() ;
          void        fini () ;
 
-         UINT32      calcIndex( const CHAR *pData, UINT32 len ) ;
+         UINT32      calcIndex( UINT32 hashValue ) ;
 
-         INT32       pushData( UINT32 index, CHAR *pData, UINT32 len ) ;
-         BOOLEAN     popData( UINT32 index, CHAR **ppData, UINT32 &len ) ;
+         INT32       pushWait( UINT32 index, DPS_LSN_OFFSET waitLSN ) ;
+         INT32       pushData( UINT32 index, CHAR *pData, UINT32 len,
+                               CLS_PARALLA_TYPE parallaType,
+                               UINT32 clHash, utilCLUniqueID clUniqueID ) ;
+         BOOLEAN     popData( UINT32 index, clsReplayInfo &info ) ;
 
          INT32       waitQueEmpty( INT64 millisec = -1 ) ;
          INT32       waitEmpty( INT64 millisec = -1 ) ;
@@ -182,7 +195,7 @@ namespace engine
                                 INT64 millisec = -1 ) ;
          INT32       endUnit( _pmdEDUCB *cb, UINT32 unitID ) ;
          INT32       submitData( UINT32 unitID, _pmdEDUCB *cb,
-                                 CHAR *pData, UINT32 len,
+                                 clsReplayInfo &info,
                                  CLS_SUBMIT_RESULT &result ) ;
 
          void        incCurAgent() { _curAgentNum.inc() ; }
@@ -199,16 +212,40 @@ namespace engine
             return _expectLSN ;
          }
 
+         BOOLEAN     hasPending() ;
+
+         clsCLParallaInfo *getOrCreateInfo( const CHAR *collection,
+                                            utilCLUniqueID clUID ) ;
+         void        setPending( utilCLUniqueID clUID,
+                                 DPS_LSN_OFFSET lsn ) ;
+         void        clearParallaInfo() ;
+
       protected:
          void        _submitResult( DPS_LSN_OFFSET offset, DPS_LSN_VER version,
-                                    UINT32 lsnLen, CHAR *pData, UINT32 len,
+                                    UINT32 lsnLen, clsReplayInfo &info,
                                     UINT32 unitID, CLS_SUBMIT_RESULT &result ) ;
-         INT32       _pushData( UINT32 index, CHAR *pData, UINT32 len,
+         INT32       _checkAndPushData( UINT32 index, clsReplayInfo &info ) ;
+         INT32       _pushData( UINT32 index, clsReplayInfo &info,
                                 BOOLEAN incAllCount, BOOLEAN newMem ) ;
 
          void        _incCount( const CHAR *pData ) ;
 
          INT32       _doRollback( UINT32 &num ) ;
+
+         INT32       _waitLSN( UINT32 unitID,
+                               clsReplayInfo &info ) ;
+         INT32       _replay( UINT32 unitID,
+                              pmdEDUCB *cb,
+                              clsReplayInfo &info,
+                              CLS_SUBMIT_RESULT &result ) ;
+         INT32       _rollback( UINT32 unitID,
+                                pmdEDUCB *cb,
+                                clsReplayInfo &info ) ;
+         BOOLEAN     _checkCompleted( DPS_LSN_OFFSET offset )
+         {
+            ossScopedLock lock( &_bucketLatch ) ;
+            return ( _completeMap.find( offset ) != _completeMap.end() ) ;
+         }
 
       private:
          _dpsLogWrapper                   *_pDPSCB ;
@@ -237,14 +274,19 @@ namespace engine
          ossAtomic32                      _idleAgentNum ;
 
          // complete map
-         map< DPS_LSN_OFFSET, clsCompleteInfo >    _completeMap ;
-         DPS_LSN                                   _expectLSN ;
-         DPS_LSN_OFFSET                            _maxSubmitOffset ;
-         ossSpinXLatch                             _bucketLatch ;
+         CLS_COMP_MAP                     _completeMap ;
+         DPS_LSN                          _expectLSN ;
+         DPS_LSN_OFFSET                   _maxSubmitOffset ;
+         ossSpinXLatch                    _bucketLatch ;
 
          // result info for error
          INT32                            _submitRC ;
 
+         // duplicated key pending
+         utilCLUniqueID                   _pendingCLUniqueID ;
+
+         // parallel info
+         MAP_CL_PARALLAINFO               _mapParallaInfo ;
    } ;
    typedef _clsBucket clsBucket ;
 

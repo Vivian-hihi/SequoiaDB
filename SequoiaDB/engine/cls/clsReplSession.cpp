@@ -174,6 +174,7 @@ namespace engine
       if ( CLS_BUCKET_WAIT_ROLLBACK == _pReplBucket->getStatus() )
       {
          _pReplBucket->waitEmptyAndRollback() ;
+
          DPS_LSN expectLSN = _pReplBucket->completeLSN() ;
          INT32 rcTmp = _logger->move( expectLSN.offset, expectLSN.version ) ;
          if ( rcTmp )
@@ -942,13 +943,26 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__REPLG ) ;
 
       dpsLogRecordHeader *recordHeader = NULL ;
-      const CHAR *log = logs ;
-      num = 0 ;
+      const CHAR *log = NULL ;
       BOOLEAN needRollback = FALSE ;
       DPS_LSN expectLSN ;
+      DPS_LSN_OFFSET firstOffset = DPS_INVALID_LSN_OFFSET ;
+      BOOLEAN inRetry = FALSE ;
+      num = 0 ;
+
+   retry:
+      recordHeader = NULL ;
+      log = logs ;
+      needRollback = FALSE ;
+      expectLSN.reset() ;
+
+      rc = SDB_OK ;
+      rcTmp = SDB_OK ;
 
       while ( log < logs + len )
       {
+         BOOLEAN canSkip = FALSE ;
+
          if ( eduCB()->isInterrupted() )
          {
             PD_LOG ( PDEVENT, "Session[%s]: ReplayLog is interrupted",
@@ -959,14 +973,17 @@ namespace engine
          recordHeader = (dpsLogRecordHeader *)log ;
          needRollback = FALSE ;
 
-         PD_LOG( PDDEBUG, "Session[%s]: Replay record [lsn offset: %lld, "
-                 "version: %d, len:%d, preLsn:%lld]", sessionName(),
-                 recordHeader->_lsn, recordHeader->_version,
-                 recordHeader->_length, recordHeader->_preLsn ) ;
-
          expectLSN = _logger->expectLsn() ;
 
-         if ( expectLSN.compareOffset( recordHeader->_lsn ) > 0 )
+         canSkip = ( expectLSN.compareOffset( recordHeader->_lsn ) > 0 ) ;
+
+         if ( canSkip && inRetry )
+         {
+            // in retry, just skip
+            log += recordHeader->_length ;
+            continue ;
+         }
+         else if ( canSkip )
          {
             dpsLogRecordHeader *searchHeader = NULL ;
             DPS_LSN searchLSN ;
@@ -1028,10 +1045,22 @@ namespace engine
          }
 #endif
 
+         PD_LOG( PDDEBUG, "Session[%s]: Replay record [lsn offset: %lld, "
+                 "version: %d, len:%d, preLsn:%lld]", sessionName(),
+                 recordHeader->_lsn, recordHeader->_version,
+                 recordHeader->_length, recordHeader->_preLsn ) ;
+
+         if ( DPS_INVALID_LSN_OFFSET == firstOffset )
+         {
+            firstOffset = recordHeader->_lsn ;
+         }
+
          rc = _replay( recordHeader ) ;
          if ( SDB_OK != rc )
          {
-            SDB_ASSERT( SDB_OOM == rc || SDB_NOSPC == rc,
+            SDB_ASSERT( SDB_OOM == rc ||
+                        SDB_NOSPC == rc ||
+                        SDB_IXM_DUP_KEY == rc,
                         "Unexpect error occured" ) ;
             PD_LOG( PDERROR, "Session[%s]: Failed to replay log, rc: %d",
                     sessionName(), rc ) ;
@@ -1071,6 +1100,28 @@ namespace engine
          {
             PD_LOG( PDEVENT, "Session[%s]: Move lsn to[%u, %llu]",
                     sessionName(), completeLSN.version, completeLSN.offset ) ;
+         }
+
+         if ( _pReplBucket->hasPending() )
+         {
+            // if pending and some records have been replayed, retry again
+            if ( DPS_INVALID_LSN_OFFSET != firstOffset &&
+                 DPS_INVALID_LSN_OFFSET != completeLSN.offset &&
+                 completeLSN.offset > firstOffset )
+            {
+               PD_LOG( PDEVENT, "Session[%s]: retry resolve pending lsn "
+                       "[%u, %llu]", sessionName(), completeLSN.version,
+                       completeLSN.offset ) ;
+               inRetry = TRUE ;
+               firstOffset = DPS_INVALID_LSN_OFFSET ;
+               goto retry ;
+            }
+            else if ( 0 == num )
+            {
+               // at lease we try replay a pending LSN
+               // make sure will re-send sync request
+               num = 1 ;
+            }
          }
       }
       else if ( needRollback )
