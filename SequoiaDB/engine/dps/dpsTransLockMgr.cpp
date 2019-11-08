@@ -1354,6 +1354,10 @@ namespace engine
             // add new LRB header to the link
             _LockHdrBkt[ bktIdx ].lrbHdr = pLRBHdrNew;
 
+            // sample tick before adding to edulist or setting
+            // waiter info to make sure snapshot trans is correct.
+            pLRBNew->beginTick.sample() ;
+
             // add new LRB to EDU LRB list
             _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
 
@@ -1379,6 +1383,10 @@ namespace engine
             // at this time, pLRBHdr shall be the tail of LRB header list.
             // add the new LRB header to LRB Header list ;
             pLRBHdr->nextLRBHdr = pLRBHdrNew ;
+
+            // sample tick before adding to edulist or setting
+            // waiter info to make sure snapshot trans is correct.
+            pLRBNew->beginTick.sample() ;
 
             // add the new LRB to EDU LRB list
             _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
@@ -1520,6 +1528,10 @@ namespace engine
                   // add the new LRB to upgrade list
                   _addToLRBListTail( pLRBHdr->upgradeLRB, pLRBNew ) ;
 
+                  // sample tick before adding to edulist or setting
+                  // waiter info to make sure snapshot trans is correct.
+                  pLRBNew->beginTick.sample() ;
+
                   // set the wait info in dpsTxExectr
                   dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_UPGRADE,
                                               _lockMgrType ) ;
@@ -1616,6 +1628,10 @@ namespace engine
                // add it at the end of waiter list
                _addToLRBListTail( pLRBHdr->waiterLRB, pLRBNew ) ;
 
+               // sample tick before adding to edulist or setting
+               // waiter info to make sure snapshot trans is correct.
+               pLRBNew->beginTick.sample() ;
+
                // set the wait info in dpsTxExectr
                dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER,
                                            _lockMgrType ) ;
@@ -1670,6 +1686,10 @@ namespace engine
                      _addToLRBListHead( pLRBHdr->ownerLRB, pLRBNew ) ;
                   }
 
+                  // sample tick before adding to edulist or setting
+                  // waiter info to make sure snapshot trans is correct.
+                  pLRBNew->beginTick.sample() ;
+
                   // add the new LRB to EDU LRB list
                   _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
 
@@ -1705,6 +1725,10 @@ namespace engine
                            _addToLRBListHead( pLRBHdr->ownerLRB, pLRBNew ) ;
                         }
 
+                        // sample tick before adding to edulist or setting
+                        // waiter info to make sure snapshot trans is correct.
+                        pLRBNew->beginTick.sample() ;
+
                         // add the new LRB to EDU LRB list
                         _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
 
@@ -1721,8 +1745,13 @@ namespace engine
                // members in upgrade and waiter list, add it to waiter list
                if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
                {
+
                   // add to the end of waiter list
                   _addToLRBListTail( pLRBHdr->waiterLRB, pLRBNew ) ;
+
+                  // sample tick before adding to edulist or setting waiter info
+                  // to make sure snapshot trans is correct.
+                  pLRBNew->beginTick.sample() ;
 
                   // set the wait info in dpsTxExectr
                   dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER,
@@ -1801,7 +1830,10 @@ namespace engine
          // sample lock owning( first time ) or waiting timestamp ( ossTick )
          if ( ( DPS_TRANSLOCK_OP_MODE_TEST != opMode ) && pLRBNew )
          {
-            pLRBNew->beginTick.sample() ;
+            if ( !(BOOLEAN) (pLRBNew->beginTick) )
+            {
+               pLRBNew->beginTick.sample() ;
+            }
          }
       }
       if ( bFreeLRBHeader )
