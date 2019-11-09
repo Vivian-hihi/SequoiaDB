@@ -348,25 +348,16 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_OPEN, "_rtnExtDataOprCtx::open" )
    INT32 _rtnExtDataOprCtx::open( rtnExtDataProcessorMgr *processorMgr,
-                                  const CHAR *extName, const BSONObj &object,
-                                  pmdEDUCB *cb, const BSONObj *newObj,
+                                  const CHAR *extName, pmdEDUCB *cb,
                                   SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_OPEN ) ;
+
       rtnExtDataProcessor *processor = NULL ;
       SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
-      if ( DMS_EXTOPR_TYPE_UPDATE == _type && !newObj )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "New object is invalid for update" ) ;
-         goto error ;
-      }
 
       _processorMgr = processorMgr ;
-
       // Why add EXCLUSIVE lock here? To make sure of the right order of records
       // insertted into capped collection.
       // This lock cooperates with mb lock of original collection. It's taken
@@ -383,25 +374,20 @@ namespace engine
       }
 
       _appendProcessor( processor ) ;
-      switch ( _type )
+
       {
-      case DMS_EXTOPR_TYPE_INSERT:
-         rc = processor->processInsert( object, cb, dpscb ) ;
-         break ;
-      case DMS_EXTOPR_TYPE_DELETE:
-         rc = processor->processDelete( object, cb, dpscb ) ;
-         break ;
-      case DMS_EXTOPR_TYPE_UPDATE:
-         rc = processor->processUpdate( object, *newObj, cb, dpscb ) ;
-         break ;
-      default:
-         rc = SDB_SYS ;
+         BSONObj record = getOprRecord( (void *)processor ) ;
+         if ( record.isEmpty() )
+         {
+            // No operation data to insert into capped collection. The record
+            // will be skipped.
+            goto done ;
+         }
+         rc = processor->processDML( record, cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process data operation failed[%d]", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Process data operation failed[%d]. Type: %d",
-                   rc, _type ) ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX_OPEN, rc ) ;
       return rc ;
    error:
       goto done ;

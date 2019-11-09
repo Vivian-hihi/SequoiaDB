@@ -117,6 +117,13 @@ namespace engine
       SDB_DB_STATUS dbStatus = pmdGetKRCB()->getDBStatus() ;
       rtnExtContextBase *context = NULL ;
 
+      if ( !( DMS_EXTOPR_TYPE_INSERT == type ||
+              DMS_EXTOPR_TYPE_DELETE == type ||
+              DMS_EXTOPR_TYPE_UPDATE == type ) )
+      {
+         goto done ;
+      }
+
       // During rebuilding or full sync, the original collection and the capped
       // collection are processed seperately.
       if ( SDB_DB_REBUILDING == dbStatus || SDB_DB_FULLSYNC == dbStatus )
@@ -131,9 +138,15 @@ namespace engine
       // If the context is not in normal state, just ignore.
       if ( EXT_CTX_STAT_NORMAL == context->getStat() )
       {
-         rc = _check( type, csName, clName, idxName, object, objNew ) ;
+         ((rtnExtDataOprCtx *)context)->setOrigRecord( *object ) ;
+         if ( DMS_EXTOPR_TYPE_UPDATE == type )
+         {
+            ((rtnExtDataOprCtx *)context)->setNewRecord( *objNew ) ;
+         }
+
+         rc = _prepare( (rtnExtDataOprCtx *)context, csName, clName, idxName ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "External data process checking failed[ %d ]", rc ) ;
+                     "External data process checking failed[ %d ]", rc ) ;
       }
 
    done:
@@ -425,9 +438,9 @@ namespace engine
                   "Type not match") ;
 
       rc = static_cast<rtnExtDataOprCtx*>(context)->open( _edpMgr, extName,
-                                                          object, cb,
-                                                          NULL, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context for insert failed[ %d ]", rc ) ;
+                                                          cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Do external operation for insert failed[%d]",
+                   rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONINSERT, rc ) ;
@@ -473,9 +486,9 @@ namespace engine
                   "Type not match") ;
 
       rc = static_cast<rtnExtDataOprCtx*>(context)->open( _edpMgr, extName,
-                                                          object, cb,
-                                                          NULL, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context for delete failed[ %d ]", rc ) ;
+                                                          cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Do external operation for delete failed[%d]",
+                   rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONDELETE, rc ) ;
@@ -534,9 +547,9 @@ namespace engine
                   "Type not match") ;
 
       rc = static_cast<rtnExtDataOprCtx*>(context)->open( _edpMgr, extName,
-                                                          orignalObj, cb,
-                                                          &newObj, dpscb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context for update failed[ %d ]", rc ) ;
+                                                          cb, dpscb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Do external operation for update failed[%d]",
+                   rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONUPDATE, rc ) ;
@@ -831,16 +844,14 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER_CHECK, "_rtnExtDataHandler::_check" )
-   INT32 _rtnExtDataHandler::_check( DMS_EXTOPR_TYPE type,
-                                     const CHAR *csName,
-                                     const CHAR *clName,
-                                     const CHAR *idxName,
-                                     const BSONObj *object,
-                                     const BSONObj *objNew )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAHANDLER__PREPARE, "_rtnExtDataHandler::_prepare" )
+   INT32 _rtnExtDataHandler::_prepare( rtnExtDataOprCtx *context,
+                                       const CHAR *csName,
+                                       const CHAR *clName,
+                                       const CHAR *idxName )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_CHECK ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER__PREPARE ) ;
 
       std::vector<rtnExtDataProcessor *> processors ;
 
@@ -873,7 +884,7 @@ namespace engine
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
       {
-         rc = (*itr)->check( type, object, objNew ) ;
+         rc = (*itr)->prepare( context->getType(), (rtnExtOprData *)context ) ;
          PD_RC_CHECK( rc, PDERROR, "Processor check failed[ %d ]", rc ) ;
       }
 
@@ -882,7 +893,7 @@ namespace engine
       {
          _edpMgr->unlockProcessors( processors, SHARED ) ;
       }
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_CHECK, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER__PREPARE, rc ) ;
       return rc ;
    error:
       goto done ;

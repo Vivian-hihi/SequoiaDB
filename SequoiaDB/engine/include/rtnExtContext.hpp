@@ -42,6 +42,7 @@
 
 #include "oss.hpp"
 #include "dmsExtDataHandler.hpp"
+#include "rtnExtOprData.hpp"
 #include "rtnExtDataProcessor.hpp"
 #include "utilConcurrentMap.hpp"
 
@@ -173,7 +174,8 @@ namespace engine
    typedef _rtnExtRebuildIdxCtx rtnExtRebuildIdxCtx ;
 
    // Base class for insert/delete/update operations.
-   class _rtnExtDataOprCtx : public _rtnExtContextBase
+   class _rtnExtDataOprCtx : public _rtnExtContextBase,
+                             public _rtnExtOprData
    {
    public:
       _rtnExtDataOprCtx( DMS_EXTOPR_TYPE type ) ;
@@ -185,8 +187,7 @@ namespace engine
       }
 
       virtual INT32 open( rtnExtDataProcessorMgr *processorMgr,
-                          const CHAR *extName, const BSONObj &object,
-                          pmdEDUCB *cb, const BSONObj *newObj = NULL,
+                          const CHAR *extName, pmdEDUCB *cb,
                           SDB_DPSCB *dpscb = NULL ) ;
 
    private:

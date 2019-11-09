@@ -61,7 +61,6 @@ namespace engine
       ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       _needUpdateLSN = FALSE ;
-      _needOprRec = FALSE ;
       _freeSpace = 0 ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR__RTNEXTDATAPROCESSOR ) ;
    }
@@ -106,9 +105,6 @@ namespace engine
       _stat = RTN_EXT_PROCESSOR_INVALID ;
       _su = NULL ;
       _needUpdateLSN = FALSE ;
-      _keySet.clear() ;
-      _keySetNew.clear() ;
-      _needOprRec = FALSE ;
       _freeSpace = 0 ;
       _id = RTN_EXT_PROCESSOR_INVALID_ID ;
       _meta.reset() ;
@@ -187,213 +183,55 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_CHECK, "_rtnExtDataProcessor::check" )
-   INT32 _rtnExtDataProcessor::check( DMS_EXTOPR_TYPE type,
-                                      const BSONObj *object,
-                                      const BSONObj *objectNew )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPARE, "_rtnExtDataProcessor::prepare" )
+   INT32 _rtnExtDataProcessor::prepare( DMS_EXTOPR_TYPE oprType,
+                                        rtnExtOprData *oprData )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_CHECK ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPARE ) ;
 
-      // Only check for insert/delete/update when object is not empty.
-      if ( type > DMS_EXTOPR_TYPE_UPDATE || !object )
+      switch ( oprType )
       {
-         goto done ;
-      }
-
-      _keySet.clear() ;
-      _keySetNew.clear() ;
-      _needOprRec = FALSE ;
-
-      try
-      {
-         // Get the key set
-         BSONElement arrayEle ;
-         BOOLEAN canContinue = TRUE ;
-         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
-         rc = keygen.getKeys( *object, _keySet, &arrayEle, TRUE, TRUE ) ;
-         // Records may contain multiple arrays.
-         // If it's the old record, it should not have been indexed on ES. In
-         // that case, if keys can be gotten from new record, the new record
-         // should be indexed.
-         // If it's the new record, it should not be indexed. We ignore the
-         // multiple array of the old record, error will be returned when
-         // parsing the new record below.
-         if ( rc )
-         {
-            canContinue = ( SDB_IXM_MULTIPLE_ARRAY == rc &&
-                            ( DMS_EXTOPR_TYPE_UPDATE == type ||
-                              DMS_EXTOPR_TYPE_DELETE == type ) ) ;
-         }
-
-         if ( !canContinue )
-         {
-            PD_LOG( PDERROR, "Generate key from object[%] failed[%d]",
-                    object->toString().c_str(), rc ) ;
-            goto error ;
-         }
-
-         rc = SDB_OK ;
-         if ( DMS_EXTOPR_TYPE_UPDATE != type )
-         {
-            _needOprRec = ( _keySet.size() > 0 ) ;
-         }
-         else
-         {
-            SDB_ASSERT( objectNew, "New object is NULL" ) ;
-            // If it's update, need to get the new key set.
-            rc = keygen.getKeys( *objectNew, _keySetNew,
-                                 NULL, TRUE, TRUE ) ;
-            PD_RC_CHECK( rc, PDERROR, "Generate key from object[ %s ] "
-                         "failed[ %d ]", objectNew->toString().c_str(), rc ) ;
-
-            {
-               BSONObjSet::iterator origItr = _keySet.begin() ;
-               BSONObjSet::iterator newItr = _keySetNew.begin() ;
-
-               // There are only two scenarios that we do not insert operation
-               // record:
-               // 1. Both old and new records have no index field.
-               // 2. Both old and new records have index field(s) but they are the
-               //    same.
-               while ( origItr != _keySet.end() && newItr != _keySetNew.end() )
-               {
-                  if ( !( *origItr == *newItr ) )
-                  {
-                     break ;
-                  }
-                  ++origItr ;
-                  ++newItr ;
-               }
-
-               if ( ( origItr == _keySet.end() ) &&
-                    ( newItr == _keySetNew.end() )  )
-               {
-                  _needOprRec = FALSE ;
-               }
-               else
-               {
-                  _needOprRec = TRUE ;
-               }
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
+      case DMS_EXTOPR_TYPE_INSERT:
+         rc = _prepareInsert( oprData ) ;
+         break;
+      case DMS_EXTOPR_TYPE_DELETE:
+         rc = _prepareDelete( oprData ) ;
+         break ;
+      case DMS_EXTOPR_TYPE_UPDATE:
+         rc = _prepareUpdate( oprData ) ;
+         break ;
+      default:
+         SDB_ASSERT( FALSE, "Context type is wrong" ) ;
          rc = SDB_SYS ;
-         PD_LOG( PDERROR ,"Unexpected exception occurred: %s", e.what() ) ;
-         goto error ;
+         break ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Prepare external operation failed[%d]", rc ) ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_CHECK, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PREPARE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSINSERT, "_rtnExtDataProcessor::processInsert" )
-   INT32 _rtnExtDataProcessor::processInsert( const BSONObj &inputObj,
-                                              pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _rtnExtDataProcessor::processDML( BSONObj &oprRecord,
+                                           pmdEDUCB *cb, SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSINSERT ) ;
-      BSONObj recordObj ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      rc = _prepareInsert( inputObj, recordObj ) ;
-      PD_RC_CHECK( rc, PDERROR, "Prepare data for insert record[ %s ] "
-                   "failed[ %d ]", inputObj.toString().c_str(), rc ) ;
+      rc = _spaceCheck( oprRecord.objsize() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Space check failed[%d]", rc ) ;
 
-      if ( recordObj.isEmpty() )
-      {
-         goto done ;
-      }
-
-      rc = _spaceCheck( recordObj.objsize() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
-
-      rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
+      rc = rtnInsert( _cappedCLName, oprRecord, 1, 0,
                       cb, dmsCB, dpsCB, 1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record into collection[ %s ] "
-                   "failed[ %d ]", _cappedCLName, rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Insert operation record into collection[%s] "
+                   "failed[%d]", _cappedCLName, rc ) ;
 
       _needUpdateLSN = TRUE ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PROCESSINSERT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSDELETE, "_rtnExtDataProcessor::processDelete" )
-   INT32 _rtnExtDataProcessor::processDelete( const BSONObj &inputObj,
-                                              pmdEDUCB *cb, SDB_DPSCB *dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSDELETE ) ;
-      BSONObj recordObj ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-
-      rc = _prepareDelete( inputObj, recordObj ) ;
-      PD_RC_CHECK( rc, PDERROR, "Prepare data for delete record[ %s ] "
-                   "failed[ %d ]", inputObj.toString().c_str(), rc ) ;
-
-      if ( recordObj.isEmpty() )
-      {
-         goto done ;
-      }
-
-      rc = _spaceCheck( recordObj.objsize() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
-
-      rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
-                      cb, dmsCB, dpsCB, 1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record insert collection[ %s ] "
-                   "failed[ %d ]", _cappedCLName, rc ) ;
-
-      _needUpdateLSN = TRUE ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PROCESSDELETE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSUPDATE, "_rtnExtDataProcessor::processUpdate" )
-   INT32 _rtnExtDataProcessor::processUpdate( const BSONObj &originalObj,
-                                              const BSONObj &newObj,
-                                              pmdEDUCB *cb, SDB_DPSCB *dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSUPDATE ) ;
-      BSONObj recordObj ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-
-      rc = _prepareUpdate( originalObj, newObj, recordObj ) ;
-      PD_RC_CHECK( rc, PDERROR, "Prepare data for update record from[ %s ] "
-                   "to[ %s ] failed[ %d ]", originalObj.toString().c_str(),
-                   newObj.toString().c_str(), rc ) ;
-
-      if ( recordObj.isEmpty() )
-      {
-         goto done ;
-      }
-
-      rc = _spaceCheck( recordObj.objsize() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Space check failed[ %d ]", rc ) ;
-
-      rc = rtnInsert( _cappedCLName, recordObj, 1, 0,
-                      cb, dmsCB, dpsCB, 1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert record insert collection[ %s ] "
-                   "failed[ %d ]", _cappedCLName, rc ) ;
-
-      _needUpdateLSN = TRUE ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PROCESSUPDATE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -588,8 +426,8 @@ namespace engine
 
          context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
       }
-      _keySet.clear() ;
-      _keySetNew.clear() ;
+
+      _needUpdateLSN = FALSE ;
 
    done:
       if ( context )
@@ -608,8 +446,6 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_ABORT ) ;
       _needUpdateLSN = FALSE ;
-      _keySet.clear() ;
-      _keySetNew.clear() ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_ABORT ) ;
       return SDB_OK ;
    }
@@ -650,7 +486,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__GENRECORDBYKEYSET, "_rtnExtDataProcessor::_genRecordByKeySet" )
-   INT32 _rtnExtDataProcessor::_genRecordByKeySet( BSONObjSet keySet,
+   INT32 _rtnExtDataProcessor::_genRecordByKeySet( const BSONObjSet &keySet,
                                                    BSONObj &record )
    {
       INT32 rc = SDB_OK ;
@@ -722,8 +558,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
    INT32 _rtnExtDataProcessor::_prepareRecord( _rtnExtOprType oprType,
-                                               const BSONElement &idEle,
                                                BSONObj &recordObj,
+                                               const BSONObjSet *keySet,
+                                               const BSONElement &idEle,
                                                const BSONElement *newIdEle )
    {
       INT32 rc = SDB_OK ;
@@ -731,70 +568,50 @@ namespace engine
 
       try
       {
-         BSONObjSet keySet ;
-         BSONObjBuilder objBuilder ;
-         BOOLEAN needData = FALSE ;
-         switch ( oprType )
+         BSONObjBuilder builder ;
+
+         if ( RTN_EXT_INVALID == oprType )
          {
-         case RTN_EXT_INSERT:
-            needData = TRUE ;
-            keySet = _keySet ;
-            break ;
-         case RTN_EXT_UPDATE:
-            needData = TRUE ;
-            keySet = _keySetNew ;
-            break ;
-         case RTN_EXT_UPDATE_WITH_ID:
-            needData = TRUE ;
-            keySet = _keySetNew ;
-            if ( !newIdEle )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "New _id is invalid" ) ;
-               goto error ;
-            }
-            // Insert new _id if the _id field has been modified.
-            objBuilder.appendAs( *newIdEle, RTN_FIELD_NAME_RID_NEW ) ;
-            break ;
-         case RTN_EXT_INVALID:
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid operation type[%d]", oprType ) ;
+            PD_LOG( PDERROR, "Operation type is invalid[%d]", oprType ) ;
             goto error ;
-         default:
-            break ;
          }
 
          // Append operation type.
-         objBuilder.append( FIELD_NAME_TYPE, oprType ) ;
-         // Append the _id as _rid.
-         if ( !idEle.eoo() )
-         {
-            objBuilder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
-         }
+         builder.append( FIELD_NAME_TYPE, oprType ) ;
+         SDB_ASSERT( !idEle.eoo(), "OID is invalid" ) ;
+         // Append the original oid.
+         builder.appendAs( idEle, RTN_FIELD_NAME_RID ) ;
 
-         // 4. Append data if necessarry.
-         if ( needData )
+         // Add source data for the operation. Only these operation need the
+         // source data.
+         if ( RTN_EXT_INSERT == oprType || RTN_EXT_UPDATE == oprType ||
+              RTN_EXT_UPDATE_WITH_ID == oprType )
          {
             BSONObj record ;
-            if ( keySet.empty() )
+            if ( !keySet )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Key object is empty for operation type[%d]",
-                       oprType ) ;
+               PD_LOG( PDERROR, "Index key set is empty" ) ;
                goto error ;
             }
-            rc = _genRecordByKeySet( keySet, record ) ;
-            PD_RC_CHECK( rc, PDERROR, "Generate record by key set failed: %d",
-                         rc ) ;
-            objBuilder.append( RTN_FIELD_NAME_SOURCE, record ) ;
-         }
 
-         recordObj = objBuilder.obj() ;
+            rc = _genRecordByKeySet( *keySet, record ) ;
+            PD_RC_CHECK( rc, PDERROR, "Generate record by key set failed[%d]",
+                         rc ) ;
+            builder.append( RTN_FIELD_NAME_SOURCE, record ) ;
+
+            if ( RTN_EXT_UPDATE_WITH_ID == oprType )
+            {
+               builder.appendAs( *newIdEle, RTN_FIELD_NAME_RID_NEW ) ;
+            }
+         }
+         recordObj = builder.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( const std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
@@ -870,160 +687,261 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT, "_rtnExtDataProcessor::_prepareInsert" )
-   INT32 _rtnExtDataProcessor::_prepareInsert( const BSONObj &inputObj,
-                                               BSONObj &recordObj )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPAREINSERT, "_rtnExtDataProcessor::_prepareInsert" )
+   INT32 _rtnExtDataProcessor::_prepareInsert( rtnExtOprData *oprData )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__PREPAREINSERT ) ;
 
-      if ( !_needOprRec )
+      const BSONObj &origRecord = oprData->getOrigRecord() ;
+      if ( origRecord.isEmpty() )
       {
-         goto done ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Original record is not found in the context" ) ;
+         goto error ;
       }
 
       try
       {
-         BSONElement ele ;
-         if ( 0 == _keySet.size() )
+         BSONObjSet keySet ;
+         BSONElement arrayEle ;
+         BSONElement oidEle ;
+
+         // Record without field "_id" will be ignored in text index.
+         oidEle = origRecord.getField( DMS_ID_KEY_NAME ) ;
+         if ( oidEle.eoo() )
          {
-            // No index key in the record, skip.
+            PD_LOG( PDWARNING, "Record has no _id field, will not be indexed "
+                    "by text index: %s",
+                    origRecord.toString(false, true).c_str() ) ;
             goto done ;
          }
 
-         // Get the _id from the insert object.
-         ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( ele.eoo() )
          {
-            PD_LOG( PDERROR, "Text index can not be used if record has no _id "
-                    "field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+            BSONObj record ;
+            // Get index keys from the record. If none is there, the record will
+            // be ignored in text index.
+            ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
+            rc = keygen.getKeys( origRecord, keySet, &arrayEle, TRUE, TRUE ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Generate key from object[%s] failed[%d]",
+                       origRecord.toString(false, true).c_str(), rc ) ;
+               goto error ;
+            }
 
-         rc = _prepareRecord( RTN_EXT_INSERT, ele, recordObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]", rc ) ;
+            if ( 0 == keySet.size() )
+            {
+               goto done ;
+            }
+
+            rc = _prepareRecord( RTN_EXT_INSERT, record, &keySet, oidEle ) ;
+            PD_RC_CHECK( rc, PDERROR, "Prepare insert operation record "
+                         "failed[%d]. Original record: %s",
+                         rc, origRecord.toString(false, true).c_str() ) ;
+            rc = oprData->saveOprRecord( (void *)this, record, TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Set insert operation record in context "
+                         "failed[%d]", rc ) ;
+         }
       }
-      catch ( std::exception &e )
+      catch ( const std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PREPAREINSERT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__PREPAREINSERT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE, "_rtnExtDataProcessor::_prepareDelete" )
-   INT32 _rtnExtDataProcessor::_prepareDelete( const BSONObj &inputObj,
-                                               BSONObj &recordObj )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPAREDELETE, "_rtnExtDataProcessor::_prepareDelete" )
+   INT32 _rtnExtDataProcessor::_prepareDelete( rtnExtOprData *oprData )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__PREPAREDELETE ) ;
 
-      if ( !_needOprRec )
+      const BSONObj &origRecord = oprData->getOrigRecord() ;
+      if ( origRecord.isEmpty() )
       {
-         goto done ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Original record is not found in the context" ) ;
+         goto error ;
       }
 
       try
       {
-         BSONElement ele ;
-         if ( 0 == _keySet.size() )
+         BSONObjSet keySet ;
+         BSONElement arrayEle ;
+         BSONElement oidEle ;
+
+         oidEle = origRecord.getField( DMS_ID_KEY_NAME ) ;
+         if ( oidEle.eoo() )
          {
-            // No index key in the record, skip.
+            // No _id in the record. It should not have been indexed.
             goto done ;
          }
 
-         ele = inputObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( EOO == ele.type() )
          {
-            PD_LOG( PDERROR, "Text index can not be used if record has no _id "
-                  "field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+            BSONObj record ;
+            ixmIndexKeyGen keygen( _meta._idxKeyDef ) ;
+            rc = keygen.getKeys( origRecord, keySet, &arrayEle, FALSE, TRUE ) ;
+            if ( rc )
+            {
+               // The record which contains multiple fields of type array may be
+               // insertted before the text index is created. In that case, we
+               // should be sure it can be deleted.
+               if ( SDB_IXM_MULTIPLE_ARRAY != rc )
+               {
+                  PD_LOG( PDERROR, "Generate key from object[%s] failed[%d]",
+                          origRecord.toString(false, true).c_str(), rc ) ;
+                  goto error ;
+               }
+               rc = SDB_OK ;
+            }
+            else if ( 0 == keySet.size() )
+            {
+               // No index keys in the record. It should be skipped.
+               goto done ;
+            }
 
-         rc = _prepareRecord( RTN_EXT_DELETE, ele, recordObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Add operation record failed[ %d ]",
-                      rc ) ;
+            // For delete operation, only the operation type and oid are
+            // necessary.
+            rc = _prepareRecord( RTN_EXT_DELETE, record, NULL, oidEle ) ;
+            PD_RC_CHECK( rc, PDERROR, "Prepare delete operation record "
+                         "failed[%d]. Original record: %s",
+                         rc, origRecord.toString(false, true).c_str() ) ;
+            rc = oprData->saveOprRecord( (void *)this, record, TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Set insert operation record in context "
+                         "failed[%d]", rc ) ;
+         }
       }
-      catch ( std::exception &e )
+      catch ( const std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PREPAREDELETE, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__PREPAREDELETE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE, "_rtnExtDataProcessor::_prepareUpdate" )
-   INT32 _rtnExtDataProcessor::_prepareUpdate( const BSONObj &originalObj,
-                                               const BSONObj &newObj,
-                                               BSONObj &recordObj )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPAREUPDATE, "_rtnExtDataProcessor::_prepareUpdate" )
+   INT32 _rtnExtDataProcessor::_prepareUpdate( rtnExtOprData *oprData )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR__PREPAREUPDATE ) ;
+
+      const BSONObj &origRecord = oprData->getOrigRecord() ;
+      const BSONObj &newRecord = oprData->getNewRecord() ;
+      if ( origRecord.isEmpty() || newRecord.isEmpty() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Original or new record is not found in the "
+                 "context" ) ;
+         goto error ;
+      }
 
       try
       {
-         BOOLEAN idModified = FALSE ;
-         BSONElement idEle = originalObj.getField( DMS_ID_KEY_NAME ) ;
-         BSONElement idEleNew = newObj.getField( DMS_ID_KEY_NAME ) ;
-         if ( idEle.eoo() || idEleNew.eoo() )
+         BSONObjSet keySet ;
+         BSONObjSet keySetNew ;
+         BSONElement arrayEle ;
+         ixmIndexKeyGen keygen( _meta._idxKeyDef, GEN_OBJ_KEEP_FIELD_NAME ) ;
+         rc = keygen.getKeys( origRecord, keySet, &arrayEle, TRUE, TRUE ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "Text index can not be used if record has no "
-                             "_id field" ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            // The record which contains multiple fields of type array may be
+            // insertted before the text index is created. In that case, we
+            // should be sure it can be updated.
+            if ( SDB_IXM_MULTIPLE_ARRAY != rc )
+            {
+               PD_LOG( PDERROR, "Generate key from object[%s] failed[%d]",
+                       origRecord.toString(false, true).c_str(), rc ) ;
+               goto error ;
+            }
+            rc = SDB_OK ;
          }
 
-         if ( !idEle.valuesEqual( idEleNew ) )
+         // If the new record contains multiple arraies( included in the text
+         // index), report error.
+         rc = keygen.getKeys( newRecord, keySetNew, NULL, TRUE, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Generate key from object[%s] failed[%d]",
+                      newRecord.toString(false, true).c_str(), rc ) ;
          {
-            idModified = TRUE ;
-            _needOprRec = TRUE ;
-         }
+            BSONObj record ;
+            BSONElement oidEle ;
+            BSONElement oidEleNew ;
+            BOOLEAN idModified = FALSE ;
+            BOOLEAN hasIndexed = FALSE ;
+            BOOLEAN shouldIndex = FALSE ;
+            _rtnExtOprType oprType = RTN_EXT_UPDATE ;
 
-         if ( !_needOprRec )
-         {
-            goto done ;
-         }
+            oidEle = origRecord.getField( DMS_ID_KEY_NAME ) ;
+            oidEleNew = newRecord.getField( DMS_ID_KEY_NAME ) ;
+            idModified = oidEle.valuesEqual( oidEleNew ) ? FALSE : TRUE ;
 
-         if ( 0 == _keySetNew.size() )
-         {
-            rc = _prepareDelete( originalObj, recordObj ) ;
-            PD_RC_CHECK( rc, PDERROR, "Prepare for delete failed[ %d ]", rc ) ;
-            goto done ;
+            // Whether the old record has been indexed before.
+            hasIndexed = ( !oidEle.eoo() && keySet.size() > 0 ) ? TRUE : FALSE ;
+            // Whether the new record should be indexed this time.
+            shouldIndex = ( !oidEleNew.eoo() && keySetNew.size() > 0 ) ?
+                          TRUE : FALSE ;
+            if ( !( hasIndexed || shouldIndex ) ||
+                 ( !idModified && (keySet == keySetNew) ) )
+            {
+               goto done ;
+            }
+
+            if ( hasIndexed )
+            {
+               if ( shouldIndex )
+               {
+                  if ( idModified )
+                  {
+                     oprType = RTN_EXT_UPDATE_WITH_ID ;
+                  }
+               }
+               else
+               {
+                  oprType = RTN_EXT_DELETE ;
+               }
+            }
+            else if ( shouldIndex )
+            {
+               oprType = RTN_EXT_INSERT ;
+               oidEle = oidEleNew ;
+            }
+            else
+            {
+               goto done ;
+            }
+
+            rc = _prepareRecord( oprType, record, &keySetNew,
+                                 oidEle, &oidEleNew ) ;
+            PD_RC_CHECK( rc, PDERROR, "Prepare operation record failed[%d]. "
+                         "Original record: %s",
+                         rc, origRecord.toString(false, true).c_str() ) ;
+            rc = oprData->saveOprRecord( (void *)this, record, TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Set insert operation record in context "
+                         "failed[%d]", rc ) ;
          }
-         if ( idModified )
-         {
-            rc = _prepareRecord( RTN_EXT_UPDATE_WITH_ID, idEle, recordObj,
-                                 &idEleNew ) ;
-         }
-         else
-         {
-            rc = _prepareRecord( RTN_EXT_UPDATE, idEleNew, recordObj ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Add operation record failed[%d]", rc ) ;
       }
-      catch ( std::exception &e )
+      catch ( const std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PREPAREUPDATE, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR__PREPAREUPDATE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1146,7 +1064,7 @@ namespace engine
       BSONElement dummyEle = BSONElement() ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      rc = _prepareRecord( RTN_EXT_DUMMY, dummyEle, record ) ;
+      rc = _prepareRecord( RTN_EXT_DUMMY,  record, NULL, dummyEle ) ;
       PD_RC_CHECK( rc, PDERROR, "Prepare rebuild record failed[%d]", rc ) ;
 
       rc = rtnInsert( _cappedCLName, record, 1, 0, cb, dmsCB,

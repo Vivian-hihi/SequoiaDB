@@ -44,6 +44,7 @@
 #include "pmdEDU.hpp"
 #include "utilConcurrentMap.hpp"
 #include "rtnExtOprDef.hpp"
+#include "rtnExtOprData.hpp"
 #include "dmsStorageUnit.hpp"
 
 #define RTN_EXT_PROCESSOR_INVALID_ID   (-1)
@@ -139,15 +140,10 @@ namespace engine
 
       INT32 setTargetNames( const CHAR *extName ) ;
 
-      INT32 check( DMS_EXTOPR_TYPE type, const BSONObj *object,
-                   const BSONObj *objectNew ) ;
+      INT32 prepare( DMS_EXTOPR_TYPE oprType, rtnExtOprData *oprData ) ;
 
-      INT32 processInsert( const BSONObj &inputObj, pmdEDUCB *cb,
-                           SDB_DPSCB *dpsCB = NULL ) ;
-      INT32 processDelete( const BSONObj &inputObj, pmdEDUCB *cb,
-                           SDB_DPSCB *dpsCB = NULL ) ;
-      INT32 processUpdate( const BSONObj &originalObj, const BSONObj &newObj,
-                           pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
+      INT32 processDML( BSONObj &oprRecord, pmdEDUCB *cb,
+                        SDB_DPSCB *dpsCB = NULL ) ;
 
       INT32 processTruncate( pmdEDUCB *cb, BOOLEAN needChangeCLID,
                              SDB_DPSCB *dpsCB = NULL ) ;
@@ -176,15 +172,16 @@ namespace engine
        * slaves. If we write before the log DPS, the commit LSN will be newer
        * than that on the slave.
        */
-      INT32 _prepareInsert( const BSONObj &inputObj, BSONObj &recordObj ) ;
-      INT32 _prepareDelete( const BSONObj &inputObj, BSONObj &recordObj ) ;
-      INT32 _prepareUpdate( const BSONObj &originalObj, const BSONObj &newObj,
-                            BSONObj &recordObj ) ;
+      INT32 _prepareInsert( rtnExtOprData *oprData ) ;
+      INT32 _prepareDelete( rtnExtOprData *oprData ) ;
+      INT32 _prepareUpdate( rtnExtOprData *oprData ) ;
 
-      INT32 _genRecordByKeySet( BSONObjSet keySet, BSONObj &record ) ;
+      INT32 _genRecordByKeySet( const BSONObjSet &keySet, BSONObj &record ) ;
 
-      INT32 _prepareRecord( _rtnExtOprType oprType, const BSONElement &idEle,
+      INT32 _prepareRecord( _rtnExtOprType oprType,
                             BSONObj &recordObj,
+                            const BSONObjSet *keySet,
+                            const BSONElement &idEle,
                             const BSONElement *newIdEle = NULL ) ;
 
       const CHAR* _getExtCLShortName() const ;
@@ -204,9 +201,6 @@ namespace engine
       CHAR                 _cappedCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       CHAR                 _cappedCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
       BOOLEAN              _needUpdateLSN ;
-      BSONObjSet           _keySet ;
-      BSONObjSet           _keySetNew ;
-      BOOLEAN              _needOprRec ;
       UINT64               _freeSpace ;
    } ;
    typedef _rtnExtDataProcessor rtnExtDataProcessor ;

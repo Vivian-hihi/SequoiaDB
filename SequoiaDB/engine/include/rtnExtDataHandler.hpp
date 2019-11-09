@@ -139,9 +139,8 @@ namespace engine
 
       OSS_INLINE BOOLEAN _holdingType( DMS_EXTOPR_TYPE type ) const ;
 
-      INT32 _check( DMS_EXTOPR_TYPE type, const CHAR *csName,
-                    const CHAR *clName, const CHAR *idxName,
-                    const BSONObj *object, const BSONObj *objNew ) ;
+      INT32 _prepare( rtnExtDataOprCtx *context, const CHAR *csName,
+                      const CHAR *clName, const CHAR *idxName ) ;
 
       INT32 _getContext( DMS_EXTOPR_TYPE type, rtnExtContextBase *&ctx,
                          pmdEDUCB *cb ) ;
