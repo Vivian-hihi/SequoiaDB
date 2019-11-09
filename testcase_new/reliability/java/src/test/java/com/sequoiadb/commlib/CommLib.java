@@ -8,6 +8,7 @@ import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
@@ -458,8 +459,7 @@ public class CommLib {
      * compare node's data within the group
      * 
      * @param .......
-     * @param matcher,
-     *            matching condition for query
+     * @param matcher, matching condition for query
      */
     public void compareNodeData(Sequoiadb sdb, String rgName, String csName, String clName, BSONObject matcher) {
         Sequoiadb dataDB = null;
@@ -715,8 +715,7 @@ public class CommLib {
      * 3、切分和fillUpCL（SYSCAT.SYSCOLLECTIONS,128）并发;4、磁盘恢复，执行cl.delete(
      * "{deleteFlag:1}");5、结果检验. 步骤2是为了让步骤3的fillUpCL快速返回，以达到SYSCL无法写入记录与切分并发的目的
      * 
-     * @param cl
-     *            SYSCOLLECTIONS，SYSCOLLECTIONSPACES，SYSDOMAINS（不支持SYSNODES）
+     * @param cl SYSCOLLECTIONS，SYSCOLLECTIONSPACES，SYSDOMAINS（不支持SYSNODES）
      * @param recordSizeByte
      *            插入单条记录的大小(1024*1024Byte,512*1024Byte,1024Byte,512Byte,256Byte,
      *            128Byte)
@@ -766,5 +765,77 @@ public class CommLib {
             sb.append("SeedSeedSeedSeed");
         }
         return sb.toString();
+    }
+
+    /**
+     * 清理残留在data节点上的session和context
+     * 
+     * @author luweikang
+     * @param db
+     * @param csName
+     * @param clName
+     * @date 2019-11-08
+     * @throws Exception
+     */
+    public static void forceSession(Sequoiadb db, String csName, String clName) throws Exception {
+        if (csName == SdbTestBase.csName) {
+            if (clName == null || clName == "") {
+                throw new Exception("when cs name is " + SdbTestBase.csName + ", cl name can't be null");
+            }
+        }
+        String match = "Name\\:" + csName + "\\.";
+        if (clName != null) {
+            match += clName;
+        }
+        DBCursor snapshot = db.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE,
+                "{'$and':[{'GroupName': {'$ne': 'SYSCoord'}}, {'GroupName': {'$ne': 'SYSCatalogGroup'}}], 'IsPrimary': true, 'RawData': true}",
+                "{'NodeName': 1}", null);
+        while (snapshot.hasNext()) {
+            String nodeUrl = snapshot.getNext().get("NodeName").toString();
+            try (Sequoiadb dataConn = new Sequoiadb(nodeUrl, "", "")) {
+                DBCursor cur = dataConn.getSnapshot(Sequoiadb.SDB_SNAP_CONTEXTS,
+                        "{'Contexts': {'$elemMatch': {'Description': {'$regex': '" + match + "'}}}}",
+                        "{'SessionID': 1}", null);
+                while (cur.hasNext()) {
+                    long sessionId = (long) cur.getNext().get("SessionID");
+                    try {
+                        dataConn.forceSession(sessionId);
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -62) {
+                            throw e;
+                        }
+                    }
+                }
+                cur.close();
+            }
+        }
+        snapshot.close();
+    }
+
+    public static void cleanCS(Sequoiadb db, String csName) throws Exception {
+        if (db.isCollectionSpaceExist(csName)) {
+            try {
+                db.dropCollectionSpace(csName);
+            } catch (BaseException e) {
+                if (e.getErrorCode() == -147) {
+                    CommLib.forceSession(db, csName, null);
+                }
+                db.dropCollectionSpace(csName);
+            }
+        }
+    }
+
+    public static void cleanCL(Sequoiadb db, String csName, String clName) throws Exception {
+        CollectionSpace cs = db.getCollectionSpace(csName);
+        if (cs.isCollectionExist(clName)) {
+            try {
+                cs.dropCollection(clName);
+            } catch (BaseException e) {
+                if (e.getErrorCode() == -147) {
+                    CommLib.forceSession(db, csName, clName);
+                }
+                db.dropCollectionSpace(csName);
+            }
+        }
     }
 }

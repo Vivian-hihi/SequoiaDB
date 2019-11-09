@@ -122,11 +122,9 @@ public class Lob3476 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
-            if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
-            }
+            CommLib.cleanCS(sdb, csName);
         } finally {
             if (sdb != null) {
                 sdb.close();
