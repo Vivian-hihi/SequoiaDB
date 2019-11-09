@@ -7,14 +7,15 @@ main();
 function main()
 {		
 	try
-	{
-	   var clName = CHANGEDPREFIX + "_transaction6005";
-      if( !commIsTransEnabled(db) )
+	{  
+      var allGroupInfo = commGetGroups(db, true) 
+      if( 2 > allGroupInfo.length )
       {
-         println( "transaction is disabled" ) ;   
+         println("only one group.");
+         return;
       }
-      
-      var cl = splitCl(COMMCSNAME, clName ); 
+	   var clName = CHANGEDPREFIX + "_transaction6005";
+      var cl = splitCl(COMMCSNAME,clName, allGroupInfo);; 
       
       transOperation(cl)  
       
@@ -34,16 +35,10 @@ function main()
    }
 }
 
-function splitCl(csName,clName)
+function splitCl(csName,clName, allGroupInfo)
 {
-   var allGroupInfo = commGetGroups(db, true) 
-   if( !(1 < allGroupInfo.length) )
-   {
-      println("least two groups");
-      return;
-   }
    var cl = commCreateCLByOption(db, COMMCSNAME, clName, 
-                  {ShardingKey:{no:1}, ShardingType:"range",ReplSize:0}, true, true);
+                  {ShardingKey:{no:1}, ShardingType:"range"}, true, true);
                   
    var CLName = csName + "." + clName
    var srcGroupName = commGetCLGroups( db, CLName );  

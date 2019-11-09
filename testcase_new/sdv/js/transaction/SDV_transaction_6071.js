@@ -14,9 +14,10 @@ function main()
    
    try
    {
-      if( !commIsTransEnabled( db ) )
+      var allGroupInfo = commGetGroups(db, true) 
+      if( 2 > allGroupInfo.length )
       {
-         println( "transaction is disabled" );
+         println("only one group.");
          return;
       }
       
