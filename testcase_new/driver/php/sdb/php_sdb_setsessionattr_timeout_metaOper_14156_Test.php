@@ -240,9 +240,15 @@ class setSessionAttr1415602 extends PHPUnit_Framework_TestCase
    
    public static function tearDownAfterClass()
    {  
+      self::$db->close();
       if ( self::$skipTestCase == false )
       {
          echo "\n---Begin to clean env in the tearDownAfterClass.\n"; 
+         $err = self::$db -> connect( self::$address );
+         if ( $err['errno'] != 0 )
+         {
+            throw new Exception("failed to connect db, errno=".$err['errno']);
+         }
          
          echo "   Begin to dropCS[".self::$csName."] in the end.\n"; 
          $err = self::$db -> dropCS( self::$csName );  
