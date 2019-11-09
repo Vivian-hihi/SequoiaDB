@@ -81,6 +81,8 @@ namespace engine
          UINT32   size () const { return _number ; }
          void     push( CHAR *pData ) ;
          BOOLEAN  pop( CHAR **ppData, UINT32 &len ) ;
+         BOOLEAN  pop() ;
+         BOOLEAN  front( CHAR **ppData, UINT32 &len ) ;
 
          void     attach()
          {
@@ -232,8 +234,6 @@ namespace engine
 
          INT32       _doRollback( UINT32 &num ) ;
 
-         INT32       _waitLSN( UINT32 unitID,
-                               clsReplayInfo &info ) ;
          INT32       _replay( UINT32 unitID,
                               pmdEDUCB *cb,
                               clsReplayInfo &info,
@@ -244,7 +244,9 @@ namespace engine
          BOOLEAN     _checkCompleted( DPS_LSN_OFFSET offset )
          {
             ossScopedLock lock( &_bucketLatch ) ;
-            return ( _completeMap.find( offset ) != _completeMap.end() ) ;
+            // check both expect LSN or complete map
+            return ( _expectLSN.compareOffset( offset ) > 0 ||
+                     _completeMap.find( offset ) != _completeMap.end() ) ;
          }
 
       private:

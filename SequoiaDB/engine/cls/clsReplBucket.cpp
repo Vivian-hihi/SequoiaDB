@@ -222,6 +222,52 @@ namespace engine
       return ret ;
    }
 
+   BOOLEAN _clsBucketUnit::pop()
+   {
+      BOOLEAN ret = FALSE ;
+      CHAR *next = NULL ;
+
+      if ( 0 == _number )
+      {
+         goto done ;
+      }
+
+      next = CLS_BUCKET_GET_NEXT( _pDataHeader ) ;
+      --_number ;
+      ret = TRUE ;
+
+      if ( 0 == _number )
+      {
+         _pDataHeader = NULL ;
+         _pDataTail   = NULL ;
+      }
+      else
+      {
+         _pDataHeader = next ;
+      }
+
+   done:
+      return ret ;
+   }
+
+   BOOLEAN _clsBucketUnit::front( CHAR **ppData, UINT32 &len )
+   {
+      BOOLEAN ret = FALSE ;
+
+      if ( 0 == _number )
+      {
+         goto done ;
+      }
+
+      *ppData = _pDataHeader ;
+      len = CLS_BUCKET_GET_LEN( _pDataHeader ) ;
+
+      ret = TRUE ;
+
+   done:
+      return ret ;
+   }
+
    /*
       _clsBucket implement
    */
@@ -657,8 +703,9 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__CLSBUCKET_POPDATA ) ;
 
-      CHAR *pData ;
+      CHAR *pData = NULL ;
       UINT32 len = 0 ;
+      DPS_LSN_OFFSET waitOffset = DPS_INVALID_LSN_OFFSET ;
 
       SDB_ASSERT( index < _bucketSize, "Index must less than bucket size" ) ;
       if ( index >= _bucketSize )
@@ -676,23 +723,48 @@ namespace engine
 
          while ( TRUE )
          {
-            ret = _dataBucket[ index ]->pop( &pData, len ) ;
+            ret = _dataBucket[ index ]->front( &pData, len ) ;
             if ( ret )
             {
                if ( CLS_BUCKET_WAIT_ROLLBACK == _status )
                {
+                  // error happened, ignore remain data
+                  _dataBucket[ index ]->pop() ;
                   _totalCount.dec () ;
                   _allCount.dec() ;
                   _memPool.release( pData, len ) ;
                   continue ;
                }
-               info._pData = pData ;
-               info._len = len ;
-               info._unitID = index ;
-               info._parallaType = CLS_BUCKET_GET_PARALLATYPE( pData ) ;
-               info._clHash = CLS_BUCKET_GET_CLHASH( pData ) ;
-               info._clUniqueID = CLS_BUCKET_GET_CLUNIQUEID( pData ) ;
-               info._waitLSN = CLS_BUCKET_GET_WAITLSN( pData ) ;
+
+               waitOffset = CLS_BUCKET_GET_WAITLSN( pData ) ;
+               if ( DPS_INVALID_LSN_OFFSET != waitOffset )
+               {
+                  // need wait completed for given offset
+                  if ( _checkCompleted( waitOffset ) )
+                  {
+                     // wait done, pop from bucket and release
+                     PD_LOG( PDDEBUG, "Bucket [%u]: wait for LSN [%llu] done",
+                             index, waitOffset ) ;
+                     _dataBucket[ index ]->pop() ;
+                     _totalCount.dec() ;
+                     _allCount.dec() ;
+                     _memPool.release( pData, len ) ;
+                     continue ;
+                  }
+                  ret = FALSE ;
+               }
+               else
+               {
+                  // not wait operator, pop here
+                  _dataBucket[ index ]->pop() ;
+
+                  info._pData = pData ;
+                  info._len = len ;
+                  info._unitID = index ;
+                  info._parallaType = CLS_BUCKET_GET_PARALLATYPE( pData ) ;
+                  info._clHash = CLS_BUCKET_GET_CLHASH( pData ) ;
+                  info._clUniqueID = CLS_BUCKET_GET_CLUNIQUEID( pData ) ;
+               }
             }
             break ;
          }
@@ -1035,46 +1107,6 @@ namespace engine
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__WAITLSN, "_clsBucket::_waitLSN" )
-   INT32 _clsBucket::_waitLSN( UINT32 unitID,
-                               clsReplayInfo &info )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB__CLSBUCKET__WAITLSN ) ;
-
-      DPS_LSN_OFFSET waitLSN = info._waitLSN ;
-
-      SDB_ASSERT( DPS_INVALID_LSN_OFFSET != waitLSN, "wait LSN is invalid" ) ;
-
-      PD_LOG( PDDEBUG, "Bucket [%u]: wait for LSN [%llu]", unitID, waitLSN ) ;
-
-      DPS_LSN expectLSN = completeLSN() ;
-      while ( expectLSN.compareOffset( waitLSN ) <= 0 )
-      {
-         // break when status changed or only myself is waiting
-         if ( CLS_BUCKET_NORMAL != _status ||
-              bucketSize() <= 1 )
-         {
-            break ;
-         }
-         // done in complete map
-         if ( _checkCompleted( waitLSN ) )
-         {
-            break ;
-         }
-         waitSubmit( CLS_REPL_RETRY_INTERVAL ) ;
-         expectLSN = completeLSN() ;
-      }
-
-      _allCount.dec() ;
-      _memPool.release( info._pData, info._len ) ;
-
-      PD_TRACE_EXITRC( SDB__CLSBUCKET__WAITLSN, rc ) ;
-
-      return rc ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET__REPLAY, "_clsBucket::_replay" )
    INT32 _clsBucket::_replay( UINT32 unitID,
                               pmdEDUCB *cb,
@@ -1091,18 +1123,23 @@ namespace engine
 
       BOOLEAN canRetry = TRUE ;
 
+      // in record parallel mode, need capture duplicated key issues
+      BOOLEAN ignoreDupKey =
+                  ( CLS_PARALLA_REC == info._parallaType ) ? FALSE : TRUE ;
+
    retry:
-      rc = _replayer->replay( header, cb, FALSE, FALSE ) ;
+      rc = _replayer->replay( header, cb, FALSE, ignoreDupKey ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Replay LSN [%llu] encountered error: %d",
                  header->_lsn, rc ) ;
          SDB_ASSERT( ( SDB_OOM == rc ||
                        SDB_NOSPC == rc ||
-                       SDB_IXM_DUP_KEY == rc ),
+                       ( SDB_IXM_DUP_KEY == rc && !ignoreDupKey ) ),
                      "Unexpected error occurred" ) ;
          if ( CLS_BUCKET_NORMAL == _status &&
               SDB_IXM_DUP_KEY == rc &&
+              !ignoreDupKey &&
               canRetry )
          {
             PD_LOG( PDDEBUG, "Bucket [%u]: failed to replay lsn [%llu], "
@@ -1201,14 +1238,7 @@ namespace engine
 
       if ( CLS_BUCKET_ROLLBACKING != _status )
       {
-         if ( DPS_INVALID_LSN_OFFSET != info._waitLSN )
-         {
-            rc = _waitLSN( unitID, info ) ;
-         }
-         else
-         {
-            rc = _replay( unitID, cb, info, result ) ;
-         }
+         rc = _replay( unitID, cb, info, result ) ;
       }
       else
       {

@@ -596,6 +596,9 @@ namespace engine
                          rc ) ;
             if ( (UINT32)~0 != waitBucketID && bucketID != waitBucketID )
             {
+               PD_LOG( PDDEBUG, "Bucket [%u]: push wait for LSN [%llu] in "
+                       "bucket [%u]", waitBucketID, recordHeader->_lsn,
+                       bucketID ) ;
                rc = pBucket->pushWait( waitBucketID, recordHeader->_lsn ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to push wait to bucket, "
                             "rc: %d", rc ) ;

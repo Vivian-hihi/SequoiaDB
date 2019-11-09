@@ -981,6 +981,7 @@ namespace engine
          {
             // in retry, just skip
             log += recordHeader->_length ;
+            ++ num ;
             continue ;
          }
          else if ( canSkip )
@@ -1112,15 +1113,10 @@ namespace engine
                PD_LOG( PDEVENT, "Session[%s]: retry resolve pending lsn "
                        "[%u, %llu]", sessionName(), completeLSN.version,
                        completeLSN.offset ) ;
+               num = 0 ;
                inRetry = TRUE ;
                firstOffset = DPS_INVALID_LSN_OFFSET ;
                goto retry ;
-            }
-            else if ( 0 == num )
-            {
-               // at lease we try replay a pending LSN
-               // make sure will re-send sync request
-               num = 1 ;
             }
          }
       }
