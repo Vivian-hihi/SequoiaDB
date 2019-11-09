@@ -1249,7 +1249,8 @@ namespace engine
          }
 
       private:
-         pcrecpp::RE_Options _flags2options( const char* options ) ;
+         INT32 _flags2options( const char* options,
+                               pcrecpp::RE_Options &reOptions ) ;
          BOOLEAN _isPureWords( const char* regex, const char* options ) ;
 
       private:

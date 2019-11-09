@@ -4510,10 +4510,10 @@ namespace engine
       return TRUE ;
    }
 
-   pcrecpp::RE_Options _mthMatchOpNodeRegex::_flags2options(
-                                                          const char* options )
+   INT32 _mthMatchOpNodeRegex::_flags2options( const char* options,
+                                               pcrecpp::RE_Options &reOptions )
    {
-      pcrecpp::RE_Options reOptions ;
+      INT32 rc = SDB_OK ;
       reOptions.set_utf8( true ) ;
       while ( options && *options )
       {
@@ -4533,10 +4533,20 @@ namespace engine
          {
             reOptions.set_dotall( true ) ;
          }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Invalid options[%s]:rc=%d", options, rc ) ;
+            goto error ;
+         }
 
          options++ ;
       }
-      return reOptions ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    //use this to init _mthMatchOpNodeRegex.(not graceful here)
@@ -4544,6 +4554,7 @@ namespace engine
                                      const CHAR *options )
    {
       INT32 rc = SDB_OK ;
+      pcrecpp::RE_Options reOptions ;
       BSONObjBuilder builder ;
       rc = _fieldName.setFieldName( fieldName ) ;
       if ( SDB_OK != rc )
@@ -4568,12 +4579,16 @@ namespace engine
          _options = options ;
       }
 
+      rc = _flags2options( _options, reOptions ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse option[%s]:rc=%d", _options,
+                   rc ) ;
+
       builder.appendRegex( fieldName, _regex, _options ) ;
       _matchObj = builder.obj() ;
       _toMatch  = _matchObj.firstElement() ;
 
       _isSimpleMatch = _isPureWords( _regex, _options ) ;
-      _re.reset ( new RE(_regex, _flags2options( _options ) ) ) ;
+      _re.reset( new RE( _regex, reOptions ) ) ;
 
    done:
       return rc ;
