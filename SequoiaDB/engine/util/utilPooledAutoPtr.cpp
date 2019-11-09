@@ -37,9 +37,6 @@
 *******************************************************************************/
 
 #include "utilPooledAutoPtr.hpp"
-#include "utilMemBlockPool.hpp"
-#include "ossAtomicBase.hpp"
-#include "ossMem.hpp"
 
 namespace engine
 {
@@ -50,25 +47,49 @@ namespace engine
    _utilPooledAutoPtr::_utilPooledAutoPtr()
    {
       _ptr = NULL ;
+      _pRef = NULL ;
+      _allocType = ALLOC_TC ;
    }
 
-   _utilPooledAutoPtr::_utilPooledAutoPtr( CHAR *ptr )
+   _utilPooledAutoPtr::_utilPooledAutoPtr( CHAR *ptr, UTIL_ALLOC_TYPE type )
    {
-      _ptr = ptr ;
-      if ( _ptr )
+      _ptr = NULL ;
+      _pRef = NULL ;
+      _allocType = type ;
+      if ( _pRef )
       {
-         INT32 orgRef = ossFetchAndIncrement32( _refPtr() ) ;
-         SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
-         SDB_UNUSED( orgRef ) ;
+         /// create ref
+         if ( ALLOC_OSS == _allocType )
+         {
+            _pRef = ( INT32* )SDB_OSS_MALLOC( sizeof( INT32 ) ) ;
+         }
+         else if ( ALLOC_POOL == _allocType )
+         {
+            _pRef = ( INT32* )SDB_POOL_ALLOC( sizeof( INT32 ) ) ;
+         }
+         else
+         {
+            _pRef = ( INT32* )SDB_THREAD_ALLOC( sizeof( INT32 ) ) ;
+         }
+
+         if ( !_pRef )
+         {
+            throw std::bad_alloc() ;
+         }
+
+         *_pRef = 1 ;
+         _ptr = ptr ;
       }
    }
 
    _utilPooledAutoPtr::_utilPooledAutoPtr( const _utilPooledAutoPtr &rhs )
    {
       _ptr = rhs._ptr ;
+      _pRef = rhs._pRef ;
+      _allocType = rhs._allocType ;
       if ( _ptr )
       {
-         INT32 orgRef = ossFetchAndIncrement32( _refPtr() ) ;
+         INT32 orgRef = ossFetchAndIncrement32( _pRef ) ;
          SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
          SDB_UNUSED( orgRef ) ;
       }
@@ -83,9 +104,11 @@ namespace engine
    {
       release() ;
       _ptr = rhs._ptr ;
-      if ( _ptr )
+      _pRef = rhs._pRef ;
+      _allocType = rhs._allocType ;
+      if ( _pRef )
       {
-         INT32 orgRef = ossFetchAndIncrement32( _refPtr() ) ;
+         INT32 orgRef = ossFetchAndIncrement32( _pRef ) ;
          SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
          SDB_UNUSED( orgRef ) ;
       }
@@ -94,7 +117,8 @@ namespace engine
 
    _utilPooledAutoPtr _utilPooledAutoPtr::alloc( UINT32 size,
                                                  const CHAR *pFile,
-                                                 UINT32 line )
+                                                 UINT32 line,
+                                                 UTIL_ALLOC_TYPE type )
    {
       _utilPooledAutoPtr recordPtr ;
       if ( size > 0 )
@@ -102,11 +126,62 @@ namespace engine
          UINT32 realSZ = size + sizeof( INT32 ) ;
          CHAR *ptr = NULL ;
 
-         ptr = ( CHAR* )utilPoolAlloc( realSZ, pFile, line ) ;
+         if ( ALLOC_OSS == type )
+         {
+            ptr = ( CHAR* )ossMemAlloc( realSZ, pFile, line ) ;
+         }
+         else if ( ALLOC_POOL == type )
+         {
+            ptr = ( CHAR* )utilPoolAlloc( realSZ, pFile, line ) ;
+         }
+         else
+         {
+            ptr = ( CHAR* )utilThreadAlloc( realSZ, pFile, line ) ;
+         }
+
          if ( ptr )
          {
             *(INT32*)ptr = 1 ;
+            recordPtr._pRef = (INT32*)ptr ;
+            recordPtr._ptr = ptr + sizeof( INT32 ) ;
+            recordPtr._allocType = type ;
+         }
+      }
+      return recordPtr ;
+   }
+
+   _utilPooledAutoPtr _utilPooledAutoPtr::alloc( UINT32 size,
+                                                 UTIL_ALLOC_TYPE type )
+   {
+      return alloc( size, __FILE__, __LINE__, type ) ;
+   }
+
+   _utilPooledAutoPtr _utilPooledAutoPtr::make( CHAR *ptr,
+                                                UTIL_ALLOC_TYPE type )
+   {
+      _utilPooledAutoPtr recordPtr ;
+
+      if ( ptr )
+      {
+         /// create ref
+         if ( ALLOC_OSS == type )
+         {
+            recordPtr._pRef = ( INT32* )SDB_OSS_MALLOC( sizeof( INT32 ) ) ;
+         }
+         else if ( ALLOC_POOL == type )
+         {
+            recordPtr._pRef = ( INT32* )SDB_POOL_ALLOC( sizeof( INT32 ) ) ;
+         }
+         else
+         {
+            recordPtr._pRef = ( INT32* )SDB_THREAD_ALLOC( sizeof( INT32 ) ) ;
+         }
+
+         if ( recordPtr._pRef )
+         {
+            *(recordPtr._pRef) = 1 ;
             recordPtr._ptr = ptr ;
+            recordPtr._allocType = type ;
          }
       }
       return recordPtr ;
@@ -114,33 +189,57 @@ namespace engine
 
    CHAR* _utilPooledAutoPtr::get()
    {
-      return _ptr ? _ptr + sizeof( INT32 ) : NULL ;
+      return _ptr ;
    }
 
    const CHAR* _utilPooledAutoPtr::get() const
    {
-      return _ptr ? _ptr + sizeof( INT32 ) : NULL ;
+      return _ptr ;
    }
 
    INT32 _utilPooledAutoPtr::refCount() const
    {
-      return _ptr ? *((INT32*)_ptr) : 0 ;
-   }
-
-   INT32* _utilPooledAutoPtr::_refPtr()
-   {
-      return _ptr ? (INT32*)_ptr : NULL ;
+      return _pRef ? *_pRef : 0 ;
    }
 
    void _utilPooledAutoPtr::release()
    {
-      if ( _ptr )
+      if ( _pRef )
       {
-         INT32 orgRef = ossFetchAndDecrement32( _refPtr() ) ;
+         INT32 orgRef = ossFetchAndDecrement32( _pRef ) ;
          SDB_ASSERT( orgRef >= 1, "Ref is invlaid" ) ;
          if ( 1 == orgRef )
          {
-            SDB_POOL_FREE( _ptr ) ;
+            if ( _ptr - sizeof( INT32 ) == ( CHAR* )_pRef )
+            {
+               _ptr = NULL ;
+            }
+
+            if ( ALLOC_OSS == _allocType )
+            {
+               SDB_OSS_FREE( _pRef ) ;
+               if ( _ptr )
+               {
+                  SDB_OSS_FREE( _ptr ) ;
+               }
+            }
+            else if ( ALLOC_POOL == _allocType )
+            {
+               SDB_POOL_FREE( _pRef ) ;
+               if ( _ptr )
+               {
+                  SDB_POOL_FREE( _ptr ) ;
+               }
+            }
+            else
+            {
+               SDB_THREAD_FREE( _pRef ) ;
+               if ( _ptr )
+               {
+                  SDB_THREAD_FREE( _ptr ) ;
+               }
+            }
+            _pRef = NULL ;
             _ptr = NULL ;
          }
       }
