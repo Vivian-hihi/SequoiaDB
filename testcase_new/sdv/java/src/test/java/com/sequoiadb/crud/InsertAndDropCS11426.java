@@ -9,6 +9,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 import java.util.Date;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -32,6 +33,8 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection dbcl;
+    private int insertThNum = 20;
+    private AtomicInteger thCount = new AtomicInteger();
 
     @BeforeClass
     public void setup() {
@@ -46,7 +49,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     @Test
     public void test() throws InterruptedException {
         InsertTask insertTask = new InsertTask();
-        insertTask.start(20);
+        insertTask.start(insertThNum);
 
         // sleep random value to drop cs at different stages of insert
         int time = new Random().nextInt(1000);
@@ -54,15 +57,17 @@ public class InsertAndDropCS11426 extends SdbTestBase {
 
         // drop cs fail is -147, repeat drop cs again
         int eachSleepTime = 100;
-        int maxSleetTime = 90000;
-        int alreadySleepTime = 0;
         int errorNo = 0;
+        boolean breakFlag = false;
         do {
-            errorNo = dropCS(sdb);
+            if (thCount.get() == 20) {
+                breakFlag = true;
+            }
             Thread.sleep(eachSleepTime);
-            alreadySleepTime += eachSleepTime;
-            if (alreadySleepTime > maxSleetTime)
-                Assert.fail("drop cs fail exceeds maximum waiting time:" + alreadySleepTime);
+            errorNo = dropCS(sdb);
+            if (breakFlag) {
+                break;
+            }
         } while (errorNo == -147 || errorNo == -190);
         Assert.assertTrue(insertTask.isSuccess(), insertTask.getErrorMsg());
 
@@ -123,6 +128,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
                     Date now = new Date();
                     obj.put("date", now);
                     cl.insert(obj);
+
                 }
             } catch (BaseException e) {
                 if (e.getErrorCode() != -34 && e.getErrorCode() != -23 && e.getErrorCode() != -248
@@ -132,6 +138,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
             } finally {
                 if (db != null)
                     db.close();
+                thCount.incrementAndGet();
             }
         }
     }
