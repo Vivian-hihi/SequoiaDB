@@ -237,6 +237,12 @@ namespace engine
                 "Failed to check collection for sharding: "
                 "should not be capped" ) ;
 
+      PD_CHECK( 0LL == mbContext->mbStat()->_totalLobs ||
+                argument.isHashSharding(),
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Failed to check collection for sharding: "
+                "should be hash sharding for LOB data" ) ;
+
       mb = mbContext->mb() ;
       SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
 
