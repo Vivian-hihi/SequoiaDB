@@ -433,9 +433,25 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to [%s]: Failed to check AutoSplit, "
                       "rc: %d", _task->getActionName(), rc ) ;
 
-         // Could be only executed on one group
-         PD_CHECK( 1 == cataSet.groupCount(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                   "Failed to [%s]: should have one group", _task->getActionName() ) ;
+         if ( UTIL_CL_AUTOSPLIT_FIELD != argument.getArgumentMask() )
+         {
+            // Could be only executed on one group
+            PD_CHECK( 1 == cataSet.groupCount(),
+                      SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                      "Failed to [%s]: should have one group",
+                      _task->getActionName() ) ;
+         }
+         else
+         {
+            // either the same auto split value or only one group
+            PD_CHECK( ( ( cataSet.hasAutoSplit() &&
+                          cataSet.isAutoSplit() == argument.isAutoSplit() ) ||
+                        1 == cataSet.groupCount() ),
+                        SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                        "Failed to [%s]: should have one group",
+                        _task->getActionName() ) ;
+
+         }
          if ( cataSet.isSharding() )
          {
             PD_LOG( PDWARNING, "Sharding is already enabled" ) ;
@@ -1574,7 +1590,9 @@ namespace engine
 
          if ( argument.isAutoSplit() )
          {
-            PD_CHECK( argument.isHashSharding() && 1 == cataSet.groupCount(),
+            PD_CHECK( argument.isHashSharding() &&
+                      ( 1 == cataSet.groupCount() ||
+                        cataSet.isAutoSplit() ),
                       SDB_INVALIDARG, error, PDERROR,
                       "Failed to fill sharding argument: "
                       "AutoSplit should be used in hash sharding only" ) ;
