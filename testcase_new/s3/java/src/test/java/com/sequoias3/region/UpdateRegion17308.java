@@ -79,8 +79,8 @@ public class UpdateRegion17308 extends S3TestBase {
 
         // get cs and cl
         Date date = Calendar.getInstance().getTime();
-        String csName1 = RegionUtils.getDataCSName(regionName, dataCSShardingType, date);
-        String csName2 = RegionUtils.getDataCSName(regionName, upDataCSShardingType, date);
+        String csName1 = RegionUtils.getDataCSName(regionName, dataCSShardingType, date) + "_1";
+        String csName2 = RegionUtils.getDataCSName(regionName, upDataCSShardingType, date) + "_1";
         String clName1 = RegionUtils.getDataCLName(dataCLShardingType, date);
         String clName2 = RegionUtils.getDataCLName(upDataCLShardingType, date);
 

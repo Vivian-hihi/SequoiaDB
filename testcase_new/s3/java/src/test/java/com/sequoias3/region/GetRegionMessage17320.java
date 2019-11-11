@@ -7,13 +7,12 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.Date;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * test content: 获取区域信息 testlink-case: seqDB-17320
@@ -47,7 +46,8 @@ public class GetRegionMessage17320 extends S3TestBase {
         CommLib.clearBucket(s3Client, shmodeBucket);
 
         // delete data/meta cs
-        shardingDataCSName = RegionUtils.getDataCSName(shardingModeRegion.toLowerCase(), "quarter", new Date());
+        shardingDataCSName = RegionUtils.getDataCSName(shardingModeRegion.toLowerCase(),
+            "quarter", new Date()) + "_1";
         shardingMetaCSName = RegionUtils.getMetaCSName(shardingModeRegion.toLowerCase());
         sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
         if (sdb.isCollectionSpaceExist(shardingDataCSName)) {
@@ -130,9 +130,11 @@ public class GetRegionMessage17320 extends S3TestBase {
                 RegionUtils.dropDomain(metaDomain);
                 RegionUtils.deleteRegion(specifiedModeRegion);
                 RegionUtils.deleteRegion(shardingModeRegion);
-                sdb.close();
             }
         } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
             if (s3Client != null) {
                 s3Client.shutdown();
             }
