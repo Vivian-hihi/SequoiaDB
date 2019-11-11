@@ -563,6 +563,64 @@
         ]
       },
       {
+        "id": 1573442138,
+        "dir": "sequoias3",
+        "cn": "S3引擎",
+        "en": "S3 Engine",
+        "contents": [
+          {
+             "id": 1573442156,
+             "file": "overview",
+             "cn": "概述",
+             "en": "Overview"
+          },
+          {
+             "id": 1573442163,
+             "file": "setup",
+             "cn": "SequoiaS3 安装与配置",
+             "en": "SequoiaS3 Install and Deploy"
+          },
+          {
+             "id": 1573442392,
+             "dir": "restapi",
+             "cn": "Rest 接口",
+             "en": "Rest API",
+             "contents": [
+               {
+                 "id": 1573442403,
+                 "file": "restbuckets",
+                 "cn": "桶 API",
+                 "en": "Bucket API"          
+               },
+               {
+                 "id": 1573442410,
+                 "file": "restobjects",
+                 "cn": "对象 API",
+                 "en": "Object API"
+               },
+               {
+                 "id": 1573442471,
+                 "file": "restregions",
+                 "cn": "区域 API",
+                 "en": "Region API"
+               },
+               {
+                 "id": 1573442480,
+                 "file": "restusers",
+                 "cn": "用户 API",
+                 "en": "User API"
+               } 
+             ]
+          },
+          {
+             "id": 1573442682,
+             "file": "javaapi",
+             "cn": "Java 接口",
+             "en": "read and write"
+          }		  
+        ]
+      },
+      {
          "id": 1432190588,
          "dir": "infrastructure",
          "cn": "系统架构",
