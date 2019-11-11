@@ -146,7 +146,8 @@ public class Lob3476 extends SdbTestBase {
                     lob.close();
                 }
             } catch (BaseException e) {
-                if (e.getErrorCode() != -104 && e.getErrorCode() != -134 && e.getErrorCode() != -79) {
+                if (e.getErrorCode() != -104 && e.getErrorCode() != -134 && e.getErrorCode() != -79
+                        && e.getErrorCode() != -81) {
                     e.printStackTrace();
                     throw e;
                 }
