@@ -36,6 +36,7 @@ namespace SequoiaDB
         private IConnection connection;
         private bool ensureOID = true;
         internal bool isBigEndian = false;
+        internal bool isOldLobServer = true;
 
         //private readonly Logger logger = new Logger("DBCollection");
 
@@ -1616,24 +1617,119 @@ namespace SequoiaDB
          */
         public DBCursor ListLobs()
         {
+            return ListLobs(null, null, null, null, 0, -1);
+        }
+
+        internal bool IsEmptyObj(BsonDocument o)
+        {
+            if (null == o)
+            {
+                return true;
+            }
+            return o.ElementCount == 0 ? true : false;
+        }
+
+        /** \fn DBCursor ListLobs(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy,
+                                  BsonDocument hint, long skipRows, long returnRows)
+         * \brief List the lobs.
+         *  \param matcher
+         *            the matching rule, return all the lobs if null.
+         *  \param selector
+         *            the selective rule, return the whole lobs if null.
+         *  \param orderBy
+         *            the ordered rule, never sort if null.
+         *  \param hint
+         *            Specified options. e.g. {"ListPieces": 1} means get the detail piece info of lobs.
+         *  \param skipRows
+         *            skip the first skipRows lobs, never skip if this parameter is 0.
+         *  \param returnRows
+         *            return the specified amount of lobs, when returnRows is 0, return nothing, when 
+         *            returnRows is -1, return all the lobs.
+         * \retval DBCursor of lobs.
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         * \since v3.2.4
+         */
+        public DBCursor ListLobs(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy,
+                                 BsonDocument hint, long skipRows, long returnRows)
+        {
+            BsonDocument newHint = new BsonDocument();
+            if (hint != null)
+            {
+                newHint.Add(hint);
+            }
+            newHint.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+
+            if (!sdb.GetIsOldVersionLobServer())
+            {
+                BaseException savedError = null;
+                try
+                {
+                    isOldLobServer = false;
+                    DBCursor cursor = _ListLobs(matcher, selector, orderBy, newHint,
+                        skipRows, returnRows);
+                    return cursor;
+                }
+                catch (BaseException e)
+                {
+                    if (!isOldLobServer)
+                    {
+                        throw e;
+                    }
+                    savedError = e;
+                }
+
+                // before v3.2.4, no matcher/selector/orderBy/hint/skipRows/returnRows are offered.
+                // so, when these paraments are offered, the driver is at lest v3.2.4. We need to 
+                // re-check the remote server is older then v3.2.4 or not.
+                if (!IsEmptyObj(matcher) || !IsEmptyObj(selector) || !IsEmptyObj(orderBy) ||
+                    skipRows != 0 || returnRows != -1)
+                {
+                    try
+                    {
+                        isOldLobServer = false;
+                        DBCursor tmpCursor = _ListLobs(null, null, null, newHint, 0, -1);
+                        tmpCursor.Close();
+                        throw savedError;
+                    }
+                    catch (BaseException e)
+                    {
+                        if (!isOldLobServer)
+                        {
+                            throw e;
+                        }
+                    }
+                }
+                // deal with old version server. clName is in the query field
+                DBCursor cur = _ListLobs(newHint, null, null, null, 0, -1);
+                sdb.SetIsOldVersionLobServer(true);
+                return cur;
+            }
+            // deal with old version server. clName is in the query field
+            return _ListLobs(newHint, null, null, null, 0, -1);
+        }
+
+        internal DBCursor _ListLobs(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy,
+                                    BsonDocument hint, long skipRows, long returnRows)
+        {
             DBCursor cursor = null;
             // build command
             string command = SequoiadbConstants.ADMIN_PROMPT
                 + SequoiadbConstants.LIST_LOBS_CMD;
-            // build a bson to send
-            BsonDocument newObj = new BsonDocument();
-            newObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
             // run command
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtnSDBMessage = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
+            SDBMessage rtnSDBMessage = AdminCommand(command, matcher, selector, orderBy, hint, skipRows, returnRows, 0);
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
             {
-                int errCode = new BaseException("SDB_DMS_EOC").ErrorCode;
-                if (errCode == flags)
+                if (flags == new BaseException("SDB_INVALIDARG").ErrorCode)
                 {
-                    return cursor;
+                    isOldLobServer = true;
+                }
+                if (flags == new BaseException("SDB_DMS_EOC").ErrorCode)
+                {
+                    return null;
                 }
                 else
                 {
@@ -1644,6 +1740,37 @@ namespace SequoiaDB
             sdb.UpsertCache(collectionFullName);
             cursor = new DBCursor(rtnSDBMessage, this);
             return cursor;
+        }
+
+        /** \fn ObjectId CreateLobID(DateTime dt)
+         * \brief Create a lobID from server by using the user-provided DateTime.
+         * \param dt LobID's relative time.
+         * \return ObjectId object.
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public ObjectId CreateLobID(DateTime dt)
+        {
+            DBLob lob = new DBLob(this);
+            BsonDocument lobIdInfo = new BsonDocument();
+            if (dt != null)
+            {
+                String dateTimeString = dt.ToString("yyyy-MM-dd-HH.mm.ss");
+                lobIdInfo.Add(SequoiadbConstants.FIELD_LOB_CREATE_TIME, dateTimeString);
+            }
+            return lob.CreateObjectId(lobIdInfo);
+        }
+
+        /** \fn ObjectId CreateLobID()
+         * \brief Create a lobID from server by using the server's system time.
+         * \return ObjectId object.
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public ObjectId CreateLobID()
+        {
+            DBLob lob = new DBLob(this);
+            return lob.CreateObjectId(new BsonDocument());
         }
 
         /** \fn DBLob CreateLob()

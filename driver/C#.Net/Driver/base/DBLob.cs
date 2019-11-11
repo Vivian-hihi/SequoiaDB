@@ -428,7 +428,7 @@ namespace SequoiaDB
                 return;
             }
 
-            ByteBuffer request = _GenerateLockLobRequest(_contextID, offset, length);
+            ByteBuffer request = _GenerateLockLobRequest(offset, length);
             ByteBuffer respone = _SendAndReiveMessage(request);
 
             SDBMessage retInfo = SDBMessageHelper.ExtractReply(respone);
@@ -514,6 +514,61 @@ namespace SequoiaDB
         public bool IsEof()
         {
             return _currentOffset >= _lobSize;
+        }
+
+
+        internal ObjectId CreateObjectId(BsonDocument lobIdInfo)
+        {
+            if (lobIdInfo == null)
+            {
+                lobIdInfo = new BsonDocument();
+            }
+
+            // generate request
+            ByteBuffer request = _GenerateCreateLobIdRequest(lobIdInfo);
+
+            // send and receive message
+            ByteBuffer respone = _SendAndReiveMessage(request);
+
+            // extract info from the respone
+            SDBMessage retInfo = SDBMessageHelper.ExtractLobOpenReply(respone);
+
+            // check the respone opcode
+            if (retInfo.OperationCode != Operation.MSG_BS_LOB_CREATELOBID_RES)
+            {
+                throw new BaseException((int)Errors.errors.SDB_UNKNOWN_MESSAGE,
+                        string.Format("Receive Unexpected operation code: {0}", retInfo.OperationCode));
+            }
+
+            // check the result
+            int rc = retInfo.Flags;
+            if (rc != 0)
+            {
+                throw new BaseException(rc, retInfo.ErrorObject);
+            }
+            /// get lob's meta info returned from engine
+            List<BsonDocument> objList = retInfo.ObjectList;
+            if (objList.Count() != 1)
+            {
+                throw new BaseException((int)Errors.errors.SDB_NET_BROKEN_MSG,
+                    "expect 1 record, but get " + objList.Count() + "records");
+            }
+            BsonDocument obj = objList[0];
+            if (obj == null)
+            {
+                throw new BaseException((int)Errors.errors.SDB_SYS, "expect 1 record, but we get null");
+            }
+            // lob id
+            if (obj.Contains(SequoiadbConstants.FIELD_LOB_OID) && obj[SequoiadbConstants.FIELD_LOB_OID].IsObjectId)
+            {
+                ObjectId oid = obj[SequoiadbConstants.FIELD_LOB_OID].AsObjectId;
+                return oid;
+            }
+            else
+            {
+                throw new BaseException((int)Errors.errors.SDB_SYS, "the received data is not an ObjectId type.");
+            }
+     
         }
 
         /************************************** private methond **************************************/
@@ -866,199 +921,33 @@ namespace SequoiaDB
             return alignedLen;
         }
 
-        // TODO: need to put these functions to SDBMessageHelper.cs ?
+        private ByteBuffer _GenerateCreateLobIdRequest(BsonDocument meta)
+        {
+            /// open reg msg is |MsgOpLob|bsonobj|
+            return _GenerateLobRequest((int)Operation.MSG_BS_LOB_CREATELOBID_REQ, meta, 0);
+        }
+
         private ByteBuffer _GenerateOpenLobRequest(BsonDocument openLob, int flags)
         {
-            /*
-                /// open reg msg is |MsgOpLob|bsonobj|
-                struct _MsgHeader
-                {
-                   SINT32 messageLength ; // total message size, including this
-                   SINT32 opCode ;        // operation code
-                   UINT32 TID ;           // client thead id
-                   MsgRouteID routeID ;   // route id 8 bytes
-                   UINT64 requestID ;     // identifier for this message
-                } ;
-
-                typedef struct _MsgOpLob
-                {
-                   MsgHeader header ;
-                   INT32 version ;
-                   SINT16 w ;
-                   SINT16 padding ;
-                   SINT32 flags ;
-                   SINT64 contextID ;
-                   UINT32 bsonLen ;
-                } MsgOpLob ;
-             */
-            byte[] openLobBytes = openLob.ToBson();
-
-            // get the total length of buffer we need
-            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH +
-                Helper.RoundToMultipleXLength(openLobBytes.Length, 4);
-
-            // alloc buffer
-            ByteBuffer totalBuff = new ByteBuffer(totalLen);
-            if (_isBigEndian)
-            {
-                totalBuff.IsBigEndian = true;
-                // keep the openLobBytes save in big endian
-                SDBMessageHelper.BsonEndianConvert(openLobBytes, 0, openLobBytes.Length, true);
-            }
-
-            // MsgHeader
-            SDBMessageHelper.AddMsgHeader(totalBuff, totalLen, 
-                (int)Operation.MSG_BS_LOB_OPEN_REQ, SequoiadbConstants.ZERO_NODEID, 0);
-
-            // MsgOpLob
-            SDBMessageHelper.AddLobOpMsg(totalBuff,SequoiadbConstants.DEFAULT_VERSION,
-                SequoiadbConstants.DEFAULT_W,(short)0,flags,
-                SequoiadbConstants.DEFAULT_CONTEXTID,openLobBytes.Length);
-
-            // meta
-            SDBMessageHelper.AddBytesToByteBuffer(totalBuff, openLobBytes, 0, openLobBytes.Length, 4);
-
-            return totalBuff;
+            /// open reg msg is |MsgOpLob|bsonobj|
+            return _GenerateLobRequest((int)Operation.MSG_BS_LOB_OPEN_REQ, openLob, flags);
         }
 
         private ByteBuffer _GenerateCloseLobRequest()
         {
-            /*
-                /// close reg msg is |MsgOpLob|
-                struct _MsgHeader
-                {
-                   SINT32 messageLength ; // total message size, including this
-                   SINT32 opCode ;        // operation code
-                   UINT32 TID ;           // client thead id
-                   MsgRouteID routeID ;   // route id 8 bytes
-                   UINT64 requestID ;     // identifier for this message
-                } ;
-
-                typedef struct _MsgOpLob
-                {
-                   MsgHeader header ;
-                   INT32 version ;
-                   SINT16 w ;
-                   SINT16 padding ;
-                   SINT32 flags ;
-                   SINT64 contextID ;
-                   UINT32 bsonLen ;
-                } MsgOpLob ;
-             */
-            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH;
-
-            // add _MsgOpLob into buff with convert(db.endianConvert)
-            ByteBuffer buff = new ByteBuffer(SDBMessageHelper.MESSAGE_OPLOB_LENGTH);
-            buff.IsBigEndian = _isBigEndian;
-
-            // MsgHeader
-            SDBMessageHelper.AddMsgHeader(buff, totalLen,
-                    (int)Operation.MSG_BS_LOB_CLOSE_REQ,
-                    SequoiadbConstants.ZERO_NODEID, 0);
-
-            // MsgOpLob
-            SDBMessageHelper.AddLobOpMsg(buff, SequoiadbConstants.DEFAULT_VERSION,
-                    SequoiadbConstants.DEFAULT_W, (short)0,
-                    SequoiadbConstants.DEFAULT_FLAGS, _contextID, 0);
-            return buff;
+            return _GenerateLobRequest((int)Operation.MSG_BS_LOB_CLOSE_REQ, null, 0, _contextID);
         }
 
         private ByteBuffer _GenerateReadLobRequest(int length)
         {
-            /*
-                /// read req msg is |MsgOpLob|_MsgLobTuple|
-                struct _MsgHeader
-                {
-                   SINT32 messageLength ; // total message size, including this
-                   SINT32 opCode ;        // operation code
-                   UINT32 TID ;           // client thead id
-                   MsgRouteID routeID ;   // route id 8 bytes
-                   UINT64 requestID ;     // identifier for this message
-                } ;
-
-                typedef struct _MsgOpLob
-                {
-                   MsgHeader header ;
-                   INT32 version ;
-                   SINT16 w ;
-                   SINT16 padding ;
-                   SINT32 flags ;
-                   SINT64 contextID ;
-                   UINT32 bsonLen ;
-                } MsgOpLob ;
-
-                union _MsgLobTuple
-                {
-                   struct
-                   {
-                      UINT32 len ;
-                      UINT32 sequence ;
-                      SINT64 offset ;
-                   } columns ;
-
-                   CHAR data[16] ;
-                } ;
-             */
-            // total length of the message
-            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH
-                    + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH;
-
-            // new byte buffer
-            ByteBuffer buff = new ByteBuffer(totalLen);
-            buff.IsBigEndian = _isBigEndian;
-
-            // add MsgHeader
-            SDBMessageHelper.AddMsgHeader(buff, totalLen,
-                (int)Operation.MSG_BS_LOB_READ_REQ,
-                SequoiadbConstants.ZERO_NODEID, 0);
-
-            // add MsgOpLob
-            SDBMessageHelper.AddLobOpMsg(buff, SequoiadbConstants.DEFAULT_VERSION,
-                SequoiadbConstants.DEFAULT_W, (short)0,
-                SequoiadbConstants.DEFAULT_FLAGS, _contextID, 0);
-
-            // add MsgLobTuple
-            AddMsgTuple(buff, length, SDB_LOB_DEFAULT_SEQ, _currentOffset);
-
-            return buff;
+            /// read req msg is |MsgOpLob|_MsgLobTuple|
+            LobTuple lobTuple = new LobTuple(length, SDB_LOB_DEFAULT_SEQ, _currentOffset);
+            return _GenerateLobRequestWithTuple((int)Operation.MSG_BS_LOB_READ_REQ, lobTuple);
         }
 
         private ByteBuffer _GenerateWriteLobRequest(byte[] input, int off, int len, long lobOffset)
         {
-            /*
-                /// write req msg is |MsgOpLob|_MsgLobTuple|data|
-                struct _MsgHeader
-                {
-                   SINT32 messageLength ; // total message size, including this
-                   SINT32 opCode ;        // operation code
-                   UINT32 TID ;           // client thead id
-                   MsgRouteID routeID ;   // route id 8 bytes
-                   UINT64 requestID ;     // identifier for this message
-                } ;
-
-                typedef struct _MsgOpLob
-                {
-                   MsgHeader header ;
-                   INT32 version ;
-                   SINT16 w ;
-                   SINT16 padding ;
-                   SINT32 flags ;
-                   SINT64 contextID ;
-                   UINT32 bsonLen ;
-                } MsgOpLob ;
-
-                union _MsgLobTuple
-                {
-                   struct
-                   {
-                      UINT32 len ;
-                      UINT32 sequence ;
-                      SINT64 offset ;
-                   } columns ;
-
-                   CHAR data[16] ;
-                } ;
-             */
+            /// write req msg is |MsgOpLob|_MsgLobTuple|data|
             if (input == null)
             {
                 throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "input is null");
@@ -1067,94 +956,183 @@ namespace SequoiaDB
             {
                 throw new BaseException((int)Errors.errors.SDB_SYS, "off + len is more than input.length");
             }
-            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH
-                    + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH
-                    + Helper.RoundToMultipleXLength(len, 4);
+
+            LobTuple lobTuple = new LobTuple(len, SDB_LOB_DEFAULT_SEQ, lobOffset);
+            return _GenerateLobRequestWithTuple((int)Operation.MSG_BS_LOB_WRITE_REQ, lobTuple,
+                                                 input, off, len);
+        }
+
+        private ByteBuffer _GenerateLockLobRequest(long offset, long length)
+        {
+            /// lock lob reg msg is |MsgOpLob|bsonobj|
+            BsonDocument meta = new BsonDocument();
+            meta.Add(SequoiadbConstants.FIELD_LOB_OFFSET, offset);
+            meta.Add(SequoiadbConstants.FIELD_LOB_LENGTH, length);
+            return _GenerateLobRequest((int)Operation.MSG_BS_LOB_LOCK_REQ, meta, 0, _contextID);
+        }
+
+        class LobTuple
+        {
+            private int length;
+            private int sequence;
+            private long offset;
+
+            public LobTuple(int length, int sequence, long offset)
+            {
+                this.length = length;
+                this.sequence = sequence;
+                this.offset = offset;
+            }
+
+            public int Length
+            {
+                get
+                {
+                    return length;
+                }
+                set
+                {
+                    length = value;
+                }
+            }
+
+            public int Sequence
+            {
+                get
+                {
+                    return sequence;
+                }
+                set
+                {
+                    sequence = value;
+                }
+            }
+
+            public long Offset
+            {
+                get
+                {
+                    return offset;
+                }
+                set
+                {
+                    offset = value;
+                }
+            }
+        }
+
+        /// close reg msg is |MsgOpLob|
+        /// open reg msg is |MsgOpLob|bsonobj|
+        /// lock lob reg msg is |MsgOpLob|bsonobj|
+        /// remove lob reg msg is |MsgOpLob|bsonobj|
+        /// truncate lob reg msg is |MsgOpLob|bsonobj|
+        private ByteBuffer _GenerateLobRequest(int opType, BsonDocument meta, int flags, long contextID)
+        {
+            byte[] metaBytes = null;
+            // get the total length of buffer we need
+            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH;
+            if (meta != null && meta.ElementCount > 0)
+            {
+                metaBytes = meta.ToBson();
+                totalLen += Helper.RoundToMultipleXLength(metaBytes.Length, 4);
+            }
+           
+            // alloc buffer
+            ByteBuffer totalBuff = new ByteBuffer(totalLen);
+            if (_isBigEndian)
+            {
+                totalBuff.IsBigEndian = true;
+                // keep the metaBytes save in big endian
+                if (metaBytes != null)
+                {
+                    SDBMessageHelper.BsonEndianConvert(metaBytes, 0, metaBytes.Length, true);
+                }
+            }
+
+            // MsgHeader
+            SDBMessageHelper.AddMsgHeader(totalBuff, totalLen, opType, 
+                SequoiadbConstants.ZERO_NODEID, 0);
+
+            // MsgOpLob
+            SDBMessageHelper.AddLobOpMsg(totalBuff, SequoiadbConstants.DEFAULT_VERSION,
+                SequoiadbConstants.DEFAULT_W, (short)0, flags,
+                contextID, metaBytes == null ? 0 : metaBytes.Length);
+
+            // meta
+            if (metaBytes != null)
+            {
+                SDBMessageHelper.AddBytesToByteBuffer(totalBuff, metaBytes, 0, metaBytes.Length, 4);
+            }
+
+            return totalBuff;
+        }
+
+        private ByteBuffer _GenerateLobRequest(int opType, BsonDocument meta, int flags)
+        {
+            return _GenerateLobRequest(opType, meta, flags, SequoiadbConstants.DEFAULT_CONTEXTID);
+        }
+
+        private ByteBuffer _GenerateLobRequest(int opType, BsonDocument meta)
+        {
+            return _GenerateLobRequest(opType, meta, 0, SequoiadbConstants.DEFAULT_CONTEXTID);
+        }
+
+        /// read req msg is |MsgOpLob|_MsgLobTuple|
+        /// write req msg is |MsgOpLob|_MsgLobTuple|data|
+        private ByteBuffer _GenerateLobRequestWithTuple(int opType, LobTuple tuple, byte[] input, int off, int len)
+        {
+            // calculated the length
+            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH + 
+                           SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH;
+            if (input != null)
+            {
+                // TODO: test when len == 0 to see what will happen.
+                if (len < 0)
+                {
+                    throw new BaseException((int)Errors.errors.SDB_SYS, "len is less than 0");
+                }
+                if (off + len > input.Length)
+                {
+                    throw new BaseException((int)Errors.errors.SDB_SYS, "off + len is more than input.length");
+                }
+                totalLen += Helper.RoundToMultipleXLength(len, 4);
+            }
+
             // alloc ByteBuffer
             ByteBuffer totalBuf = new ByteBuffer(totalLen);
             totalBuf.IsBigEndian = _isBigEndian;
-            
+
             // MsgHeader
-            SDBMessageHelper.AddMsgHeader(totalBuf, totalLen,
-                    (int)Operation.MSG_BS_LOB_WRITE_REQ,
-                    SequoiadbConstants.ZERO_NODEID, 0);
+            SDBMessageHelper.AddMsgHeader(totalBuf, totalLen, opType, 
+                                          SequoiadbConstants.ZERO_NODEID, 0);
             // MsgOpLob
             SDBMessageHelper.AddLobOpMsg(totalBuf, SequoiadbConstants.DEFAULT_VERSION,
                     SequoiadbConstants.DEFAULT_W, (short)0,
                     SequoiadbConstants.DEFAULT_FLAGS, _contextID, 0);
 
             // MsgLobTuple
-            AddMsgTuple(totalBuf, len, SDB_LOB_DEFAULT_SEQ, lobOffset);
+            AddMsgTuple(totalBuf, tuple);
 
-            // lob data
-            SDBMessageHelper.AddBytesToByteBuffer(totalBuf, input, off, len, 4);
+            // put data
+            if (input != null && len > 0)
+            {
+                // append write lob data
+                SDBMessageHelper.AddBytesToByteBuffer(totalBuf, input, off, len, 4);
+            }
 
             return totalBuf;
         }
 
-        private ByteBuffer _GenerateLockLobRequest(long contextId, long offset, long length)
+        private ByteBuffer _GenerateLobRequestWithTuple(int opType, LobTuple tuple)
         {
-            /*
-                /// lock lob reg msg is |MsgOpLob|bsonobj|
-                struct _MsgHeader
-                {
-                   SINT32 messageLength ; // total message size, including this
-                   SINT32 opCode ;        // operation code
-                   UINT32 TID ;           // client thead id
-                   MsgRouteID routeID ;   // route id 8 bytes
-                   UINT64 requestID ;     // identifier for this message
-                } ;
-
-                typedef struct _MsgOpLob
-                {
-                   MsgHeader header ;
-                   INT32 version ;
-                   SINT16 w ;
-                   SINT16 padding ;
-                   SINT32 flags ;
-                   SINT64 contextID ;
-                   UINT32 bsonLen ;
-                } MsgOpLob ;
-             */
-            BsonDocument meta = new BsonDocument();
-            meta.Add(SequoiadbConstants.FIELD_LOB_OFFSET, offset);
-            meta.Add(SequoiadbConstants.FIELD_LOB_LENGTH, length);
-            byte[] metaInfoBytes = meta.ToBson();
-
-            // get the total length of buffer we need
-            int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH +
-                Helper.RoundToMultipleXLength(metaInfoBytes.Length, 4);
-
-            // alloc buffer
-            ByteBuffer totalBuff = new ByteBuffer(totalLen);
-            if (_isBigEndian)
-            {
-                totalBuff.IsBigEndian = true;
-                // keep the metaInfoBytes save in big endian
-                SDBMessageHelper.BsonEndianConvert(metaInfoBytes, 0, metaInfoBytes.Length, true);
-            }
-
-            // MsgHeader
-            SDBMessageHelper.AddMsgHeader(totalBuff, totalLen,
-                (int)Operation.MSG_BS_LOB_LOCK_REQ, SequoiadbConstants.ZERO_NODEID, 0);
-
-            // MsgOpLob
-            SDBMessageHelper.AddLobOpMsg(totalBuff, SequoiadbConstants.DEFAULT_VERSION,
-                SequoiadbConstants.DEFAULT_W, (short)0, SequoiadbConstants.DEFAULT_FLAGS,
-                contextId, metaInfoBytes.Length);
-
-            // meta
-            SDBMessageHelper.AddBytesToByteBuffer(totalBuff, metaInfoBytes, 0, metaInfoBytes.Length, 4);
-
-            return totalBuff;
+            return _GenerateLobRequestWithTuple(opType, tuple, null, 0, 0);
         }
 
-        private void AddMsgTuple(ByteBuffer buff, int length, int sequence,
-                                 long offset)
+        private void AddMsgTuple(ByteBuffer buff, LobTuple tuple)
         {
-            buff.PushInt(length);
-            buff.PushInt(sequence);
-            buff.PushLong(offset);
+            buff.PushInt(tuple.Length);
+            buff.PushInt(tuple.Sequence);
+            buff.PushLong(tuple.Offset);
         }
 
         private ByteBuffer _SendAndReiveMessage(ByteBuffer request)
