@@ -2842,12 +2842,14 @@ namespace engine
                   BSONObjBuilder bb( builder.subobjStart( pTmpFieldName ) ) ;
                   BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
                   rc = _replaceFieldObject( bis, p+1, newValue, bb ) ;
+                  bb.doneFast() ;
                }
                else if ( ele.type() == Array )
                {
                   BSONArrayBuilder ba( builder.subarrayStart( pTmpFieldName ) ) ;
                   BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
                   rc = _replaceFieldArray( bis, p+1, newValue, ba ) ;
+                  ba.doneFast() ;
                }
                else
                {
@@ -2925,12 +2927,14 @@ namespace engine
                   BSONObjBuilder bb( builder.subobjStart( pTmpFieldName ) ) ;
                   BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
                   rc = _replaceFieldObject( bis, p+1, newValue, bb ) ;
+                  bb.doneFast() ;
                }
                else if ( ele.type() == Array )
                {
                   BSONArrayBuilder ba( builder.subarrayStart( pTmpFieldName ) ) ;
                   BSONObjIteratorSorted bis( ele.embeddedObject() ) ;
                   rc = _replaceFieldArray( bis, p+1, newValue, ba ) ;
+                  ba.doneFast() ;
                }
                else
                {
