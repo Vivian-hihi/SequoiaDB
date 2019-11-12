@@ -102,7 +102,7 @@ public class CreateObject18105 extends S3TestBase {
 
         // check cs clear result
         Date date = Calendar.getInstance().getTime();
-        String datacsName = RegionUtils.getDataCSName(regionName, "year", date);
+        String datacsName = RegionUtils.getDataCSName(regionName, "year", date) + "_1";
         String metacsName = RegionUtils.getMetaCSName(regionName);
         Assert.assertFalse(RegionUtils.doesCSExist(datacsName));
         Assert.assertFalse(RegionUtils.doesCSExist(metacsName));

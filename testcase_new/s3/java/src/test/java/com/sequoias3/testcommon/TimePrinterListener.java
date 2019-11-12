@@ -1,14 +1,12 @@
 package com.sequoias3.testcommon;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.testng.ITestResult;
-import org.testng.TestListenerAdapter;
-
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import org.testng.ITestResult;
+import org.testng.TestListenerAdapter;
 
 /**
  * Created by laojingtang on 17-11-23.
@@ -29,9 +27,10 @@ public class TimePrinterListener extends TestListenerAdapter {
     public void onConfigurationFailure(ITestResult itr) {
         super.onConfigurationFailure(itr);
         Throwable throwable = itr.getThrowable();
-        if (throwable != null && throwable.getMessage().contains(errorCode)) {
+        if (throwable != null && throwable.getMessage() != null &&
+            throwable.getMessage().contains(errorCode)) {
             System.out.println(getCurTimeStr() + " " + itr.getTestClass().getRealClass().getName()
-                    + ":transaction snapshot:" + transSnapshot());
+                + ":transaction snapshot:" + transSnapshot());
         }
         if (itr.getMethod().isAfterClassConfiguration()) {
             printEndTime(itr);
@@ -64,7 +63,8 @@ public class TimePrinterListener extends TestListenerAdapter {
     public void onTestFailure(ITestResult tr) {
         super.onTestFailure(tr);
         Throwable throwable = tr.getThrowable();
-        if (throwable != null && throwable.getMessage().contains(errorCode)) {
+        if (throwable != null && throwable.getMessage() != null &&
+            throwable.getMessage().contains(errorCode)) {
             System.out.println(getCurTimeStr() + " " + tr.getTestClass().getRealClass().getName()
                     + ":transaction snapshot:" + transSnapshot());
         }

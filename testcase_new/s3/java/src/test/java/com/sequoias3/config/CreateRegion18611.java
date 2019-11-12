@@ -11,7 +11,6 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import java.io.File;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.web.client.HttpServerErrorException;
@@ -123,9 +122,8 @@ public class CreateRegion18611 extends S3TestBase {
     }
 
     private void checkRegion(String expDataLobPageSize, String expDataReplSize) throws Exception {
-        Date date = Calendar.getInstance().getTime();
-        String datacsName = RegionUtils.getDataCSName(regionName, "year", date);
-        String dataclName = RegionUtils.getDataCLName("quarter", date);
+        String datacsName = RegionUtils.getDataCSName(regionName, "year", new Date()) + "_1";
+        String dataclName = RegionUtils.getDataCLName("quarter", new Date());
         try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
             DBCursor csCursor = sdb.getSnapshot(5, "{'Name':'" + datacsName + "'}", "{'LobPageSize':{'$include':1}}",
                     null);
