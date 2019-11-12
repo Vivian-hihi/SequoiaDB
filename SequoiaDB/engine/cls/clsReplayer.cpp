@@ -690,6 +690,7 @@ namespace engine
       {
          case LOG_TYPE_DATA_INSERT :
          {
+            INT32 flag = 0 ;
             utilInsertResult insertResult ;
             const CHAR *fullname = NULL ;
             BSONObj obj ;
@@ -700,8 +701,16 @@ namespace engine
             {
                goto error ;
             }
-            rc = rtnReplayInsert( fullname, obj, 0, eduCB, _dmsCB, _dpsCB, 1,
-                                  &insertResult ) ;
+            if ( 0 == ossStrcmp( fullname, DMS_STAT_COLLECTION_CL_NAME ) ||
+                 0 == ossStrcmp( fullname, DMS_STAT_INDEX_CL_NAME ) )
+            {
+               // for statistics tables, replace directly to avoid duplicated
+               // key issue ( which might not be cleared by delayed or
+               // interrupted async index tasks )
+               OSS_BIT_SET( flag, FLG_INSERT_REPLACEONDUP ) ;
+            }
+            rc = rtnReplayInsert( fullname, obj, flag, eduCB, _dmsCB, _dpsCB,
+                                  1, &insertResult ) ;
             if ( SDB_OK == rc && incMonCount )
             {
                _monDBCB->monOperationCountInc ( MON_INSERT_REPL ) ;
@@ -717,6 +726,7 @@ namespace engine
                        obj.toPoolString().c_str() ) ;
                rc = SDB_OK ;
             }
+
             break ;
          }
          case LOG_TYPE_DATA_UPDATE :

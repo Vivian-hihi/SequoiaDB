@@ -52,9 +52,6 @@ namespace bson
 
 namespace engine
 {
-#define DMS_STAT_SPACE_NAME          "SYSSTAT"
-#define DMS_STAT_COLLECTION_CL_NAME  DMS_STAT_SPACE_NAME".SYSCOLLECTIONSTAT"
-#define DMS_STAT_INDEX_CL_NAME       DMS_STAT_SPACE_NAME".SYSINDEXSTAT"
 
 #define DMS_STAT_CL_IDX_NAME         "STATCLIDX"
 
@@ -932,17 +929,19 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONDROPIDX, "_dmsStatSUMgr::onDropIndex" )
-   INT32 _dmsStatSUMgr::onDropIndex ( IDmsEventHolder *pEventHolder,
-                                      IDmsSUCacheHolder *pCacheHolder,
-                                      const dmsEventCLItem &clItem,
-                                      const dmsEventIdxItem &idxItem,
-                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__ONIDXOPTR, "_dmsStatSUMgr::_onIndexOperator" )
+   INT32 _dmsStatSUMgr::_onIndexOperator ( IDmsEventHolder *pEventHolder,
+                                           IDmsSUCacheHolder *pCacheHolder,
+                                           const dmsEventCLItem &clItem,
+                                           const dmsEventIdxItem &idxItem,
+                                           pmdEDUCB *cb,
+                                           SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN needDelete = FALSE ;
 
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONDROPIDX ) ;
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__ONIDXOPTR ) ;
+
+      BOOLEAN needDelete = FALSE ;
 
       SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
@@ -983,9 +982,61 @@ namespace engine
 
          rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to delete index statistics "
-                      "when dropping index [%s.%s %s] , rc: %d", pCSName,
+                      "when operating on index [%s.%s %s] , rc: %d", pCSName,
                       pCLName, pIXName, rc ) ;
       }
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__ONIDXOPTR, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONCREATEIDX, "_dmsStatSUMgr::onCreateIndex" )
+   INT32 _dmsStatSUMgr::onCreateIndex ( IDmsEventHolder *pEventHolder,
+                                        IDmsSUCacheHolder *pCacheHolder,
+                                        const dmsEventCLItem &clItem,
+                                        const dmsEventIdxItem &idxItem,
+                                        pmdEDUCB *cb,
+                                        SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONCREATEIDX ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      rc = _onIndexOperator( pEventHolder, pCacheHolder, clItem, idxItem, cb,
+                             dpsCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to delete statistics when creating "
+                   "index, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONCREATEIDX, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONDROPIDX, "_dmsStatSUMgr::onDropIndex" )
+   INT32 _dmsStatSUMgr::onDropIndex ( IDmsEventHolder *pEventHolder,
+                                      IDmsSUCacheHolder *pCacheHolder,
+                                      const dmsEventCLItem &clItem,
+                                      const dmsEventIdxItem &idxItem,
+                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONDROPIDX ) ;
+
+      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+      rc = _onIndexOperator( pEventHolder, pCacheHolder, clItem, idxItem, cb,
+                             dpsCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to delete statistics when dropping "
+                   "index, rc: %d", rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONDROPIDX, rc ) ;

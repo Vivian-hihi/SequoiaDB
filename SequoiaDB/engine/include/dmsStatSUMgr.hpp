@@ -52,6 +52,10 @@ using namespace std ;
 namespace engine
 {
 
+   #define DMS_STAT_SPACE_NAME          "SYSSTAT"
+   #define DMS_STAT_COLLECTION_CL_NAME  DMS_STAT_SPACE_NAME".SYSCOLLECTIONSTAT"
+   #define DMS_STAT_INDEX_CL_NAME       DMS_STAT_SPACE_NAME".SYSINDEXSTAT"
+
    typedef _utilStringMap< dmsStatCache * > dmsStatCacheMap ;
 
    /*
@@ -155,6 +159,13 @@ namespace engine
                                   pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
 
+         virtual INT32 onCreateIndex ( IDmsEventHolder *pEventHolder,
+                                       IDmsSUCacheHolder *pCacheHolder,
+                                       const dmsEventCLItem &clItem,
+                                       const dmsEventIdxItem &idxItem,
+                                       pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB ) ;
+
          virtual INT32 onDropIndex ( IDmsEventHolder *pEventHolder,
                                      IDmsSUCacheHolder *pCacheHolder,
                                      const dmsEventCLItem &clItem,
@@ -230,6 +241,13 @@ namespace engine
                                  pmdEDUCB *cb,
                                  _SDB_DMSCB *dmsCB,
                                  _SDB_RTNCB *rtnCB ) ;
+
+         INT32 _onIndexOperator ( IDmsEventHolder *pEventHolder,
+                                  IDmsSUCacheHolder *pCacheHolder,
+                                  const dmsEventCLItem &clItem,
+                                  const dmsEventIdxItem &idxItem,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) ;
 
       protected :
          BOOLEAN _initialized ;
