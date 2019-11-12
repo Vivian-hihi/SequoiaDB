@@ -11,11 +11,10 @@ function main()
    commDropCL( db, COMMCSNAME, clName, true, true, "drop cl in the beginning." );
    var cl = commCreateCL( db, COMMCSNAME, clName);
    
-   //SEQUOIADBMAINSTREAM-4583
    //查询regex类型数据，$options值错误
-   /* try
+   try
    {
-      var rc = cl.find({regex:{$regex:"aaa",$options:1}}).toArray();
+      var rc = cl.find({regex:{$regex:"aaa", $options:1}}).toArray();
       throw "expect failure but succeed.";
    }
    catch ( e )
@@ -24,9 +23,9 @@ function main()
       {
          throw buildException("main()", e, "$options value is wrong", -6, e);
       }       
-   } */
+   } 
    
-   //查询regex类型数据，缺少$options
+   //查询regex类型数据，带非 $options 的其他参数
    try
    {
       var rc = cl.find({regex:{$regex:"aaa",a:"1"}}).toArray();
