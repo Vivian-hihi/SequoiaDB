@@ -144,7 +144,7 @@ function checkTruncateResult(filePath, fileName, expContent, isLocal)
    
 }
 
-function removeFile(filePath, ifLocal)
+function removeFile(filePath, isLocal)
 {
    if(isLocal)
    {
