@@ -3,7 +3,6 @@ package com.sequoias3.region.concurrent;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -12,17 +11,15 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * @Description seqDB-17339: concurrent remove region and create bucket on
@@ -40,7 +37,7 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
     private String roleName = "normal";
     private String[] accessKeys;
     private AmazonS3 s3Client = null;
-    private List<String> bucketNames = new ArrayList<String>();
+    private List<String> bucketNames = new ArrayList<>();
     private int fileSize = 1024 * 10;
     private File localPath = null;
     private String filePath = null;
@@ -117,7 +114,6 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
                     s3Client.createBucket(curBucketName, regionName);
                     bucketNames.add(curBucketName);
                 }
-
             } finally {
                 if (s3Client != null) {
                     s3Client.shutdown();
@@ -140,23 +136,16 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
     private void checkRemoveRegionResult(boolean doesExistRegion) throws Exception {
         boolean curDoesExistRegion = RegionUtils.headRegion(regionName);
         // check that the auto create cs have been deleted
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
-        Date date = new Date();
-        String year = sdf.format(date);
-        String metaCSName = "S3_" + regionName + "_MetaCS";
-        String dataCSName = "S3_" + regionName + "_DataCS_" + year;
+        String metaCSName = RegionUtils.getMetaCSName(regionName);
+        String dataCSName = RegionUtils.getDataCSName(regionName, "quarter", new Date()) + "_1";
         if (doesExistRegion) {
             Assert.assertTrue(curDoesExistRegion);
-            try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
-                Assert.assertTrue(sdb.isCollectionSpaceExist(metaCSName));
-                Assert.assertTrue(sdb.isCollectionSpaceExist(dataCSName));
-            }
+            Assert.assertTrue(RegionUtils.doesCSExist(metaCSName));
+            Assert.assertTrue(RegionUtils.doesCSExist(dataCSName));
         } else {
             Assert.assertFalse(curDoesExistRegion);
-            try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
-                Assert.assertFalse(sdb.isCollectionSpaceExist(metaCSName));
-                Assert.assertFalse(sdb.isCollectionSpaceExist(dataCSName));
-            }
+            Assert.assertFalse(RegionUtils.doesCSExist(metaCSName));
+            Assert.assertFalse(RegionUtils.doesCSExist(dataCSName));
         }
     }
 
@@ -181,7 +170,6 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
         } finally {
             s3Client.shutdown();
         }
-
     }
 
     private void createObjectAndCheckResult(AmazonS3 s3Client, String bucketName) throws Exception {
@@ -189,5 +177,4 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
         String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
         Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
     }
-
 }

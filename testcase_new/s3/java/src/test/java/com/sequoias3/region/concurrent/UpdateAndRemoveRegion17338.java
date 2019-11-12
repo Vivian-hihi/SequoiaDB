@@ -2,7 +2,6 @@ package com.sequoias3.region.concurrent;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -10,14 +9,12 @@ import com.sequoias3.testcommon.S3ThreadBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.io.File;
+import java.util.Date;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * @Description seqDB-17338: concurrent update region and remove region.
@@ -110,19 +107,10 @@ public class UpdateAndRemoveRegion17338 extends S3TestBase {
             createObjectAndCheckResult();
         } else {
             // check that the auto create cs have been deleted
-            SimpleDateFormat sdfYear = new SimpleDateFormat("yyyy");
-            SimpleDateFormat sdfMonth = new SimpleDateFormat("MM");
-            Date date = new Date();
-            String year = sdfYear.format(date);
-            String month = sdfMonth.format(date);
-            String metaCSName = "S3_" + regionName + "_MetaCS";
-            String dataCSNameByYear = "S3_" + regionName + "_DataCS_" + year;
-            String dataCSNameByMonth = "S3_" + regionName + "_DataCS_" + month;
-            try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
-                Assert.assertFalse(sdb.isCollectionSpaceExist(metaCSName));
-                Assert.assertFalse(sdb.isCollectionSpaceExist(dataCSNameByYear));
-                Assert.assertFalse(sdb.isCollectionSpaceExist(dataCSNameByMonth));
-            }
+            String metaCSName = RegionUtils.getMetaCSName(regionName);
+            String dataCSName = RegionUtils.getDataCSName(regionName, "quarter", new Date()) + "_1";
+            Assert.assertFalse(RegionUtils.doesCSExist(metaCSName));
+            Assert.assertFalse(RegionUtils.doesCSExist(dataCSName));
         }
     }
 
