@@ -516,6 +516,25 @@ public class TransUtils {
             }
         }
     }
+
+    public static void dropCS(Sequoiadb db, String csName) throws InterruptedException {
+        for (int i = 0; i < 30; i++) {
+            if (db.isCollectionSpaceExist(csName)) {
+                try {
+                    db.dropCollectionSpace(csName);
+                } catch (BaseException e) {
+                    if (e.getErrorCode() != -147) {
+                        throw e;
+                    }
+
+                }
+            } else {
+                break;
+            }
+            Thread.sleep(1000);
+        }
+
+    }
 }
 
 /**
