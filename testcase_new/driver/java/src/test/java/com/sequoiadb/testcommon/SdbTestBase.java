@@ -1,5 +1,6 @@
 package com.sequoiadb.testcommon;
-
+import java.io.IOException;
+import java.io.File;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import org.testng.Assert;
@@ -39,8 +40,20 @@ public class SdbTestBase {
 			db = new Sequoiadb(coordUrl, "", "");
 			boolean ret = createCommonCS(db);
 			Assert.assertTrue(ret);
-		}catch(BaseException e){
-			Assert.fail("connect " + coordUrl + ": " + e.getErrorCode());
+			File workDirFile = new File(workDir);
+			if (!workDirFile.exists()) {
+			    workDirFile.mkdir();
+			}
+			Runtime runtime = Runtime.getRuntime();
+			String command = "chown sdbadmin:sdbadmin_group "+workDirFile;
+			Process process = runtime.exec(command);
+			int exitValue = process.exitValue();
+			if(exitValue != 0) {
+			    Assert.fail("failed to exec : " + command);
+			}
+		}catch(BaseException | IOException e){
+		    e.printStackTrace();
+			Assert.fail("failed to initSuite");
 		}finally{
 			if (db != null){
 				db.disconnect();
@@ -80,3 +93,4 @@ public class SdbTestBase {
 	}
 	
 }
+
