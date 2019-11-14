@@ -65,15 +65,27 @@ function create(dbcl, options)
    try
    {
       dbcl.createAutoIncrement(options);
-      throw "create error!";
+      throw new Error( "create error!" );
    }catch(e)
    {
       if(e !== -6)
       {
-         throw e;
+         throw new Error(e);
       }
    }
    
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+;

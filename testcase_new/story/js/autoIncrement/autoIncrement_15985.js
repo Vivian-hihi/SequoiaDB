@@ -46,7 +46,7 @@ function main()
    {
       if(e !== -6)
       {
-         throw "insert error!";
+         throw new Error("insert error!");
       }
    }
    
@@ -66,14 +66,26 @@ function createAutoIncrement( dbcl, field )
    try
    {
       dbcl.createAutoIncrement( { Field : field } );   
-      throw "create autoIncrement error!";      
+      throw new Error( "create autoIncrement error!" );      
    }catch( e )
    {
       if( e !== -332 )
       {
-         throw e;
+         throw new Error(e);
       }          
    }
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+

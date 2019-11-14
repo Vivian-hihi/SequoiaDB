@@ -27,12 +27,12 @@ function main()
    try
    {
       dbcl.createAutoIncrement({ Field : "id3", Generated : "a" });
-      throw "create error!"
+      throw new Error( "create error!" );
    }catch(e)
    {
       if(e !== -6)
       {
-         throw e;
+         throw new Error(e);
       } 
    }
    
@@ -45,11 +45,11 @@ function main()
    {
       if( cur.length !== 3)
       {
-         throw buildException("main()", "autoIncrement field count is wrong", "compare", 3, cur.length);
+         throw new Error( "Expect is 3, but act is " + cur.length);
       }
       if( cur[i].Generated !== generated[i])
       {
-         throw buildException("main()", "Generated is wrong", "compare", cur[i].Generated, generated[i]);
+         throw new Error("cur[" + i + "].Generated is " + cur[i].Generated + ", but generated[" + i + "] is " + generated[i]);
       }   
    }
    
@@ -59,12 +59,12 @@ function main()
    try
    {
       dbcl.insert({ "q" : 2, "id1" : 2, "id2" : 5, "id3" : "f" });
-      throw "need error for insert";     
+      throw new Error( "need error for insert" );     
    }catch(e)
    {
       if(e !== -6)
       {
-         throw e;
+         throw new Error( e );
       }
    }
    
@@ -75,4 +75,15 @@ function main()
   
    commDropCL( db, COMMCSNAME, clName );
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}

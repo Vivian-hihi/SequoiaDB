@@ -48,15 +48,16 @@ function main(){
    
    // 通过本coord和其它coord插入记录查询，插入记录报错-325
    try{
-      for(var i in coordList){
+      for(var i in coordList)
+      {
          var dbcl = new Sdb(coordList[i]).getCS(COMMCSNAME).getCL(clName);
          var cur = dbcl.find().sort({"id1":1});
-		 expList = insertAndGetExpList(cl, 1, -1, (-100 - insertCount.count + 1), (100 + insertCount.count - 1), expList, insertCount);
+         expList = insertAndGetExpList(cl, 1, -1, (-100 - insertCount.count + 1), (100 + insertCount.count - 1), expList, insertCount);
          checkRec( cur, expList );
       }
    }catch(e){
       if(-325 !== e){
-         throw "INSERT ERROR EXPECT -325";
+         throw new Error( "INSERT ERROR EXPECT -325" );
       }
    }
    

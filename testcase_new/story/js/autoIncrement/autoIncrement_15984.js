@@ -20,16 +20,28 @@ function main()
    try
    {
       dbcl.createAutoIncrement( { Field : "id1" } );
-      throw "create autoIncrement error";      
+      throw new Error("create autoIncrement error");      
    }catch( e )
    {
       if( e !== -332 )
       {
-         throw e;
+         throw new Error(e);
       }          
    }
    
    commDropCL( db, COMMCSNAME, clName );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+;

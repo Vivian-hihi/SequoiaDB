@@ -37,12 +37,12 @@ function main()
    try
    {
       dbcl.setAttributes({ AutoIncrement : { Field : "id2" } });
-      throw "alter error!";
+      throw new Error("alter error!");
    }catch(e)
    {
       if(e !== -333)
       {
-         throw e;
+         throw new Error(e);
       }
    }
    
@@ -62,4 +62,16 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+

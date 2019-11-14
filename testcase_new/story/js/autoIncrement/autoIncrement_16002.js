@@ -59,15 +59,26 @@ function main()
    try
    {
       dbcl.createAutoIncrement({Field: fieldName, Increment:increment, CacheSize:cacheSize, AcquireSize:acquireSize, MinValue:minValue, MaxValue:maxValue, StartValue: startValue});
-      throw "NEED_CREATE_ERR";
+      throw new Error("NEED_CREATE_ERR");
    }catch(e)
    {
       if(-6 !== e)
       {
-         throw e;
+         throw new Error(e);
       }
    }
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}

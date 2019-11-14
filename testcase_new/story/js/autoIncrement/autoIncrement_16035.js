@@ -42,7 +42,7 @@ function main()
    var count = cursor.current().toObj().AutoIncrement.length;
    if( count !== 7)
    {
-      throw buildException("main()", "autoIncrement field count is wrong", "compare", 7, count);
+      throw new Error("Expect count is 7, but act count is " + count);
    }
    
    //check autoIncrement value
@@ -78,14 +78,26 @@ function create(dbcl, options)
    try
    {
       dbcl.createAutoIncrement(options);
-      throw "need_error";
+      throw new Error( "need_error" );
    }catch(e)
    {
       if(e !== -6)
       {
-         throw e;
+         throw new Error(e);
       }          
    }   
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+;

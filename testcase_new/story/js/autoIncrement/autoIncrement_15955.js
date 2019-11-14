@@ -75,7 +75,19 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main()
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+
 
 function insertOtherTypeDatas(dbcl, arr)
 {
@@ -84,13 +96,13 @@ function insertOtherTypeDatas(dbcl, arr)
       try
       {
          dbcl.insert(arr[i]);
-         throw "NEED_INSERT_ERR";
+         throw new Error( "NEED_INSERT_ERR" );
       }catch(e)
       {
          if(e !== -6)
          {
             println("err occor the " + i + "th record, record is :" + JSON.stringify(arr[i]));
-            throw e;
+            throw new Error(e);
          }
       }
       

@@ -2,7 +2,19 @@
 *@Description: seqDB-18623:反转自增队列方向，自增字段未使用时，使CurrentValue不在修改后的区间内
 *@Author     : 2019.07.18 yinzhen 
 **************************************/
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+;
 
 function main(){
    if(commIsStandalone( db ))
@@ -51,13 +63,21 @@ function main(){
 
 function insertAndGetExpList(cl, increment_1, increment_2, currentValue_1, currentValue_2, expList, insertCount)
 {
-   for(var i = 0; i < 3; i++){
-      cl.insert({a: i});
-	  currentValue_1 = currentValue_1 + increment_1;
-	  currentValue_2 = currentValue_2 + increment_2;
-      expList.push({a: i, id1: currentValue_1, id2: currentValue_2});
-	  insertCount.count++;
+   try
+   {
+      for(var i = 0; i < 3; i++)
+      {
+         cl.insert({a: i});
+	 currentValue_1 = currentValue_1 + increment_1;
+	 currentValue_2 = currentValue_2 + increment_2;
+         expList.push({a: i, id1: currentValue_1, id2: currentValue_2});
+	 insertCount.count++;
+      }
+      expList.sort(compare("id1"));
+      return expList;
    }
-   expList.sort(compare("id1"));
-   return expList;
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }

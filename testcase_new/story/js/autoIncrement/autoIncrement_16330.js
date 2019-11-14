@@ -71,9 +71,21 @@ function create(dbcl, options)
     {
        if(e !== -6)
        {
-           throw "create error!";
+           throw new Error(e);
        }
     }
 }
 
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw new Error(e) ;
+}
+;
