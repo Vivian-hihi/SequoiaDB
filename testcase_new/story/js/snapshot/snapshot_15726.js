@@ -1,5 +1,5 @@
 /***************************************************************************
-@Description : seqDB-15726:¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
+@Description : seqDB-15726:
 modify list : 2019-11-14  Chen siqin  Create
 ****************************************************************************/
 function main()
@@ -9,7 +9,7 @@ function main()
       return ;
    }
    
-   //cond¿¿¿¿¿¿
+   //condæŒ‡å®šä¸€ä¸ªæ¡ä»¶
    var count = 0;
    var cursor = db.snapshot( SDB_SNAP_CONFIGS, new SdbSnapshotOption().cond({role: "catalog"}));
    while( cursor.next() )
@@ -26,7 +26,7 @@ function main()
       throw new Error("count: " + count);
    }   
 
-   //cond¿¿¿¿¿¿
+   //condæŒ‡å®šå¤šä¸ªæ¡ä»¶
    count = 0;
    cursor = db.snapshot(SDB_SNAP_HEALTH,new SdbSnapshotOption().cond({$and:[{IsPrimary: true}, {ServiceStatus: true}]}));
    while( cursor.next() )
@@ -48,14 +48,14 @@ function main()
    }
 
    
-   //cond¿¿¿¿¿¿¿¿
+   //condæ¡ä»¶åŒ¹é…ä¸åˆ°è®°å½•
    cursor = db.snapshot( SDB_SNAP_CONFIGS,new SdbSnapshotOption().cond({"key": "value"}));
    while( cursor.next() )
    {
       throw new Error("Matched record!");
    } 
    
-   //sel¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
+   //selæŒ‡å®šå¤šä¸ªå­—æ®µåï¼ˆåŒ…å«ä¸å­˜åœ¨çš„å­—æ®µåï¼‰
    count = 0;
    cursor= db.snapshot(SDB_SNAP_HEALTH,new SdbSnapshotOption().sel({IsPrimary: 1, ServiceStatus: 1, ZXN: 1}));
    while( cursor.next() )
@@ -80,7 +80,7 @@ function main()
       throw new Error("count: " + count);
    }
 
-   //sort¿¿¿¿i
+   //sortæŒ‡å®šé™åº
    count = 0;
    var tmp = 66660;
    cursor = db.snapshot( SDB_SNAP_CONFIGS,new SdbSnapshotOption().sort({svcname: -1}));
@@ -100,7 +100,7 @@ function main()
    }
 
    
-   //sort¿¿¿¿
+   //sortå‡åº
    count = 0;
    tmp = 0;
    cursor = db.snapshot( SDB_SNAP_CONFIGS,new SdbSnapshotOption().sort({svcname: 1}));
@@ -120,7 +120,7 @@ function main()
    }
 
    
-   //skip¿¿¿¿¿¿
+   //skipä¸º0
    count = 0;
    cursor = db.snapshot( SDB_SNAP_SYSTEM, new SdbSnapshotOption().skip(0) );
    while( cursor.next() )
@@ -132,14 +132,14 @@ function main()
       throw new Error("count: " + count);
    }
    
-   //skip¿¿¿¿¿¿¿¿
+   
    cursor = db.snapshot( SDB_SNAP_SYSTEM, new SdbSnapshotOption().skip(1) );
    while( cursor.next() )
    {
       throw new Error("Skip failed!");
    }
    
-   //skip¿¿¿¿¿¿¿
+   
    count = 0;
    cursor = db.snapshot( SDB_SNAP_SYSTEM, new SdbSnapshotOption().skip(2) );
    while( cursor.next() )
@@ -151,14 +151,14 @@ function main()
       throw new Error("count: " + count);
    }
    
-   //limit¿¿0
+   //limit0
    cursor = db.snapshot( SDB_SNAP_SYSTEM, new SdbSnapshotOption().limit(0) );
    while( cursor.next() )
    {
       throw new Error("Limit failed!");
    }
    
-   //limit¿¿1
+   //limit1
    count = 0;
    cursor = db.snapshot( SDB_SNAP_SYSTEM, new SdbSnapshotOption().limit(1) );
    while( cursor.next() )
@@ -170,7 +170,7 @@ function main()
       throw new Error("count: " + count);
    }
    
-   //limit¿¿¿¿¿¿¿
+   //limit2
    count = 0;
    cursor = db.snapshot( SDB_SNAP_SYSTEM, new SdbSnapshotOption().limit(2) );
    while( cursor.next() )
@@ -182,7 +182,7 @@ function main()
       throw new Error("count: " + count);
    }
  
-   //options¿¿js¿¿¿¿¿¿flag¿¿¿¿¿¿¿¿
+   //options
    cursor = db.snapshot(SDB_SNAP_CONFIGS,new SdbSnapshotOption().options({"expand":false}));
    while( cursor.next() )
    {
