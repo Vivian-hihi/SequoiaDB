@@ -3,7 +3,6 @@
 *                seqDB-18655:固定集合中插入/pop/查询记录，集合快照信息验证
 *@auhor       : 赵育
 ******************************************************************************/
-var nodeNameMaster= [];
 function main()
 {
    if(commIsStandalone( db )){
@@ -20,6 +19,8 @@ function main()
    var dataGroupNames = getDataGroupNames();
    var groupName = dataGroupNames[0];
    var dbcl = commCreateCLByOption(db, csName, clName, {Capped:true, Size:1024, Compressed:false, Group:groupName});
+
+   var nodeNameMaster= [];
    var masterNode = db.getRG(groupName).getMaster();
    var hostName = masterNode.getHostName();
    var serviceName = masterNode.getServiceName();
@@ -30,15 +31,13 @@ function main()
    {
       doc.push({a:i,b:i,c:i});
    }
-   
    dbcl.insert(doc);
+
    var expStatistics = [{TotalDataRead:0,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:0,TotalRead:0,TotalWrite:1000,TotalTbScan:0,TotalIxScan:0}];
    checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
    
    var cursor = dbcl.find();
-   while(cursor.next())
-   {
-   }
+   while(cursor.next()){}
    cursor.close();
    var expStatistics = [{TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:0}];
    checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
@@ -53,4 +52,15 @@ function main()
    
    commDropCS( db, csName);
 }
-main();
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e ;
+}

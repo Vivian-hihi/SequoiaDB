@@ -1,6 +1,6 @@
-try
+function checkStatistics(clFullName, nodeNameMaster, expStatistics)
 {
-   function checkStatistics(clFullName, nodeNameMaster, expStatistics)
+   try
    {
       var actStatistics = getStatistics(clFullName, nodeNameMaster);
       for(var i=0; i<expStatistics.length; i++)
@@ -13,15 +13,15 @@ try
          }
       }
    }
-}
-catch(e)
-{
-   throw new Error(e);
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
 
-try
+function getStatistics(clFullName, nodeNameMaster)
 {
-   function getStatistics(clFullName, nodeNameMaster)
+   try
    {
       var cursor = db.snapshot(SDB_SNAP_COLLECTIONS, {Name: clFullName});
       var tmpArray = [];
@@ -68,15 +68,15 @@ try
       }
       return statArray;
    }
-}
-catch(e)
-{
-   throw new Error(e);
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
 
-try
+function getDataGroupNames()
 {
-   function getDataGroupNames()
+   try
    {
       var groups = commGetGroups( db, false, "", false, false, false );
       var dataGroupNames = [];
@@ -90,20 +90,40 @@ try
       }   
       return dataGroupNames; 
    }
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
-catch(e)
+
+function checkResult(actResult, expResult)
 {
-   throw new Error(e);
+   try
+   {
+      if(actResult.length !== expResult.length)
+      {
+         throw "expectResult.length is " + expResult.length + ", but actResult.length is " + actResult.length;
+      }
+      if(JSON.stringify(actResult) !== JSON.stringify(expResult))
+      {
+         throw "expectResult is " + JSON.stringify(expResult) + ", but actResult is " + JSON.stringify(actResult);
+      }
+   }
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
+
 
 /************************************
 *@Description: get a coord nod, a cata node, a data node
 *@author:      zhaoxiaoni
 *@createDate:  2019/10/21
 **************************************/
-try
+function getNodeAddresses()
 {
-   function getNodeAddresses()
+   try 
    {
       var cata = true;
       var data = true;
@@ -120,7 +140,10 @@ try
             var hostName = groupArray[i]["HostName"];
             var svcName = groupArray[i]["Service"][0]["Name"];
             var json = {"hostName": hostName, "svcName": svcName};
-            if(groupObj["Role"] === 1 && hostName != System.getHostName() && coord == true)
+            var remote = new Remote(COORDHOSTNAME, 11790);
+            var cmd = remote.getCmd();
+            var remoteHostName = cmd.run("hostname").split("\n")[0];
+            if(groupObj["Role"] === 1 && hostName != remoteHostName && coord == true)
             {
                nodeAddresses.push(json);
                coord = false;
@@ -142,15 +165,15 @@ try
       }
       return nodeAddresses;
    }
-}
-catch(e)
-{
-   throw new Error(e);
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
 
-try
+function stopNodes( nodeAddresses )
 {
-   function stopNodes( nodeAddresses )
+   try
    {
       var installDir = commGetInstallPath();
       command = installDir + "/bin/sdbstop -p ";
@@ -164,15 +187,15 @@ try
          cmd.run(command + svcName);
       } 
    }
-}
-catch(e)
-{
-   throw new Error(e);
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
 
-try
+function startNodes( nodeAddresses )
 {
-   function startNodes( nodeAddresses )
+   try
    {
       var installDir = commGetInstallPath();
       command = installDir + "/bin/sdbstart -p ";
@@ -186,8 +209,8 @@ try
          cmd.run(command + svcName);
       }
    }
-}
-catch(e) 
-{
-   throw new Error(e);
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }

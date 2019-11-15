@@ -3,13 +3,10 @@
 *               seqDB-18654:增删改查(表扫描/索引扫描)/切分记录，集合快照信息验证
 *@auhor       : 赵育
 ******************************************************************************/
-
-var clName ;
-var nodeNameMaster= [];
 function main()
 {
    if(commIsStandalone( db )){
-      println("------Deploy is standalone");
+      println("Deploy is standalone");
       return;
    }
       
@@ -19,11 +16,13 @@ function main()
    	return;
    }
 
+   var clName = COMMCLNAME + "_18654";
    var dataGroupNames = getDataGroupNames();
-   clName = COMMCLNAME + "_18654";
-   commDropCL(db, COMMCSNAME, clName, true, true);
    var groupName = dataGroupNames[0];
+   commDropCL(db, COMMCSNAME, clName, true, true);
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Compressed:false, Group:groupName} );
+   
+   var nodeNameMaster= [];
    var masterNode = db.getRG(groupName).getMaster();
    var hostName = masterNode.getHostName();
    var serviceName = masterNode.getServiceName();
@@ -34,24 +33,20 @@ function main()
    for(var i=0; i<1000; i++)
    {
       doc.push({a:i,b:i,c:i});
-   }
-   
+   } 
    dbcl.insert(doc);
+   
    var expStatistics = [{TotalDataRead:0,TotalDataWrite:1000,TotalIndexWrite:2000,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:0,TotalRead:0,TotalWrite:1000,TotalTbScan:0,TotalIxScan:0}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
    var cursor = dbcl.find().hint({"":"ab"});
-   while(cursor.next())
-   {
-   }
+   while(cursor.next()){}
    cursor.close();
    var expStatistics = [{TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:2000,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:0,TotalIxScan:1}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
    var cursor = dbcl.find().hint({"":null});
-   while(cursor.next())
-   {
-   }
+   while(cursor.next()){}
    cursor.close();
    var expStatistics = [{TotalDataRead:2000,TotalDataWrite:1000,TotalIndexWrite:2000,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:2000,TotalRead:2000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:1}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
@@ -73,6 +68,7 @@ function main()
    dbcl.alter({ShardingKey:{a:1}});
    
    dbcl.split(groupName, dataGroupNames[1], 50);
+
    var desmasterNode = db.getRG(dataGroupNames[1]).getMaster();
    var desHostName = desmasterNode.getHostName();
    var desServiceName = desmasterNode.getServiceName();
@@ -84,4 +80,16 @@ function main()
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }
-main();
+
+try
+{
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
+   {
+      println(e.stack) ;  
+   }
+   throw e;
+}
