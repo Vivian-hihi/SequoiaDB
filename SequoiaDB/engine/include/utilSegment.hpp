@@ -399,7 +399,7 @@ namespace engine
       // Description: Free all objects allocated in segments and the object
       //              index array, _list
       // Return     : none
-      // Dependency : this function shall be called just before destory,
+      // Dependency : this function shall be called just before destroy,
       //              the caller shall guarantee no other threads are accessing
       //              the objects.
       //

@@ -222,7 +222,7 @@ namespace engine
          ~_dmsDirtyList() ;
 
          INT32    init( UINT32 capacity ) ;
-         void     destory() ;
+         void     destroy() ;
          void     setSize( UINT32 size ) ;
 
          void     setDirty( UINT32 pos )

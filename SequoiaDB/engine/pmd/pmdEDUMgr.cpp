@@ -1177,7 +1177,7 @@ namespace engine
 
    BOOLEAN _pmdEDUMgr::forceDestory( pmdEDUCB *cb, UINT32 idleTime )
    {
-      BOOLEAN destoryed = FALSE ;
+      BOOLEAN destroyed = FALSE ;
 
       if ( idleTime <= PMD_EDU_IDLE_LOW_TIME ||
            PMD_EDU_CREATING == cb->getStatus() )
@@ -1205,7 +1205,7 @@ namespace engine
             goto done ;
          }
 
-         /// destory the edu
+         /// destroy the edu
          while ( TRUE )
          {
             if ( isNeedWaitDump )
@@ -1244,19 +1244,20 @@ namespace engine
             }
 
             _postDestoryEDU( cb ) ;
-            destoryed = TRUE ;
+
+            destroyed = TRUE ;
 
             break ;
          }
       }
 
    done:
-      if ( destoryed )
+      if ( destroyed )
       {
          pmdUndeclareEDUCB() ;
          SDB_OSS_DEL cb ;
       }
-      return destoryed ;
+      return destroyed ;
    }
 
    void _pmdEDUMgr::_postDestoryEDU( pmdEDUCB *cb )

@@ -53,7 +53,7 @@ typedef struct _hashTable
 
 INT32 hash_table_create_node( const CHAR *key, htbNode **node ) ;
 
-INT32 hash_table_destory_node( htbNode **node ) ;
+INT32 hash_table_destroy_node( htbNode **node ) ;
 
 INT32 hash_table_insert( hashTable *tb, htbNode *node ) ;
 

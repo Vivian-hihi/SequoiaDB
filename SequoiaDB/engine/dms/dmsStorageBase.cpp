@@ -83,7 +83,7 @@ namespace engine
 
    _dmsDirtyList::~_dmsDirtyList()
    {
-      destory() ;
+      destroy() ;
    }
 
    INT32 _dmsDirtyList::init( UINT32 capacity )
@@ -98,8 +98,8 @@ namespace engine
          cleanAll() ;
          goto done ;
       }
-      /// first destory
-      destory() ;
+      /// first destroy
+      destroy() ;
 
       arrayNum = ( capacity + 7 ) >> 3 ;
       _pData = ( CHAR* )SDB_OSS_MALLOC( arrayNum ) ;
@@ -118,7 +118,7 @@ namespace engine
       goto done ;
    }
 
-   void _dmsDirtyList::destory()
+   void _dmsDirtyList::destroy()
    {
       if ( _pData )
       {
@@ -404,7 +404,7 @@ namespace engine
                   "delete the object" ) ;
       closeStorage() ;
       _pStorageInfo = NULL ;
-      _dirtyList.destory() ;
+      _dirtyList.destroy() ;
    }
 
    BOOLEAN _dmsStorageBase::isClosed() const
