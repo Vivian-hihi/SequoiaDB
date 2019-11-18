@@ -1,3 +1,7 @@
+/*******************************************************************************
+@Description : 校验集合快照信息
+@Modify list : 2019-11-18 zhao xiaoni init
+*******************************************************************************/
 function checkStatistics(clFullName, nodeNameMaster, expStatistics)
 {
    try
@@ -19,6 +23,10 @@ function checkStatistics(clFullName, nodeNameMaster, expStatistics)
    }
 }
 
+/*******************************************************************************
+@Description : 获取集合快照信息
+@Modify list : 2019-11-18 zhao xiaoni init
+*******************************************************************************/
 function getStatistics(clFullName, nodeNameMaster)
 {
    try
@@ -74,6 +82,10 @@ function getStatistics(clFullName, nodeNameMaster)
    }
 }
 
+/*******************************************************************************
+@Description : 获取数据组名
+@Modify list : 2019-11-18 zhao xiaoni init
+*******************************************************************************/
 function getDataGroupNames()
 {
    try
@@ -96,6 +108,10 @@ function getDataGroupNames()
    }
 }
 
+/*******************************************************************************
+@Description : 校验实际结果与预期结果
+@Modify list : 2019-11-18 zhao xiaoni init
+*******************************************************************************/
 function checkResult(actResult, expResult)
 {
    try
@@ -171,6 +187,10 @@ function getNodeAddresses()
    }
 }
 
+/*******************************************************************************
+@Description : 停止节点
+@Modify list : 2019-11-18 zhao xiaoni init
+*******************************************************************************/
 function stopNodes( nodeAddresses )
 {
    try
@@ -193,6 +213,10 @@ function stopNodes( nodeAddresses )
    }
 }
 
+/*******************************************************************************
+@Description : 开启节点
+@Modify list : 2019-11-18 zhao xiaoni init
+*******************************************************************************/
 function startNodes( nodeAddresses )
 {
    try
