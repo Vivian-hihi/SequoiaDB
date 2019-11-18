@@ -25,7 +25,7 @@ function compare(name, minor) {
          }
          else 
          {
-            throw new Error("error");
+            throw "ERROR";
 
          }
       }
@@ -129,7 +129,7 @@ function checkRec( rc, expRecs )
       //check count
       if( actRecs.length !== expRecs.length )
       {
-         throw new Error("expect lenth is " + expRecs.length + ", but act length is " +  actRecs.length);
+         throw "expect lenth is " + expRecs.length + ", but act length is " +  actRecs.length;
       }
    
       //check every records every fields
@@ -143,7 +143,7 @@ function checkRec( rc, expRecs )
             {
                println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
                println("\nactual recs in cl= "+JSON.stringify(actRec)+"\n\nexpect recs= "+JSON.stringify(expRec));   		
-               throw new Error( "rec ERROR" );
+               throw "rec ERROR";
             }
    	 }
       }  
@@ -164,7 +164,7 @@ function checkRec( rc, expRecs )
             {
 	       println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
                println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec)); 		
-               throw new Error( "rec ERROR" );
+               throw "rec ERROR";
             }
    	}
       }
@@ -297,7 +297,7 @@ function checkAutoIncrementonCL(csName, clName, expArr)
       if(autoIncrementArr.length !== expArr.length)
       {
          println("act num:" + autoIncrementArr.length + "\nexp num:" + expArr.length);
-         throw new Error( "check_autoIncrement_num_err" );
+         throw "check_autoIncrement_num_err";
       }
       autoIncrementArr.sort(compare("Field"));
       expArr.sort(compare("Field"));
@@ -309,7 +309,7 @@ function checkAutoIncrementonCL(csName, clName, expArr)
          if(!isObjEqual(tmpActObj, tmpExpObj))
          {
             println("autoIncrementObj:" + JSON.stringify(tmpActObj) + "\nexpObj:" + JSON.stringify(tmpExpObj));
-            throw new Error( "check_autoIncrement_err" );
+            throw "check_autoIncrement_err";
          }
       }
    }catch(e)
@@ -351,7 +351,7 @@ function checkSequence(sequenceName, expObj)
       if(!isObjEqual(tmpActObj, tmpExpObj))
       {
          println("tmpActObj:" + JSON.stringify(tmpActObj) + "\ntmpExpObj:" + JSON.stringify(tmpExpObj));
-         throw new Error( "check_sequence_err" );
+         throw "check_sequence_err";
       }
    }
    catch(e)
@@ -376,7 +376,7 @@ function checkCountFromNode( groupName, csName, clName, expCount )
       if(parseInt(count) !== expCount )
       {
          println("expect count: " + expCount + "\nactual count:" + parseInt(count));
-         throw new Error( "data count err" );
+         throw "data count err";
       }
    }
    catch(e)
@@ -384,3 +384,77 @@ function checkCountFromNode( groupName, csName, clName, expCount )
       throw new Error(e);
    }
 }
+
+/*******************************************************************************
+@Description : 插入其他不支持类型的记录
+@return: 
+@Modify list : 2018-10-17 zhaoyu init
+*******************************************************************************/
+function insertOtherTypeDatas(dbcl, arr)
+{  
+   for(var i=0; i<arr.length; i++ )
+   {  
+      try
+      {  
+         dbcl.insert(arr[i]);
+         throw "NEED_INSERT_ERR";
+      }catch(e)
+      {  
+         if(e !== -6)
+         {  
+            println("err occor the " + i + "th record, record is :" + JSON.stringify(arr[i]));
+            throw new Error(e);
+         }
+      }
+   }
+}
+
+/*******************************************************************************
+@Description : 指定options参数为不支持类型创建自增字段
+@return: 
+@Modify list : 2018-10-17 zhaoyu init
+*******************************************************************************/
+function create(dbcl, options, isLegal)
+{
+   try
+   {
+      dbcl.createAutoIncrement(options);
+      if(!isLegal)
+      {
+         throw "NEED_ERROR";
+      }
+   }
+   catch(e)
+   {
+      if(!isLegal)
+      {
+         if(e !== -6)
+         {
+            throw new Error(e);
+         }
+      }
+      else
+      {
+         throw new Error(e);
+      }
+   }
+}
+
+/*******************************************************************************
+@Description : 插入数据并返回预期结果
+@return: 
+@Modify list : 2018-10-17 zhaoyu init
+*******************************************************************************/
+function insertAndGetExpList(cl, increment_1, increment_2, currentValue_1, currentValue_2, expList, insertCount)
+{
+   for(var i = 0; i < 3; i++){
+      cl.insert({a: i});
+      currentValue_1 = currentValue_1 + increment_1;
+      currentValue_2 = currentValue_2 + increment_2;
+      expList.push({a: i, id1: currentValue_1, id2: currentValue_2});
+      insertCount.count++;
+   }
+   expList.sort(compare("id1"));
+   return expList;
+}
+

@@ -17,21 +17,18 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
    //illegal Increment value
-   create(dbcl, {Field : "id1", Increment : -2147483648});
-   
-   create(dbcl, {Field : "id2", Increment : 2147483648});
-   
-   create(dbcl, {Field : "id3", Increment : 0});
-   
-   create(dbcl, {Field : "id4", Increment : {"$numberLong" : "-4223372036"}});
-   
-   create(dbcl, {Field : "id5", Increment : 123.456});
-   
-   create(dbcl, {Field : "id6", Increment : { $decimal:"123.456" }});
-   
-   create(dbcl, {Field : "id7", Increment : null});
-   
-   create(dbcl, {Field : "id8", Increment : true});
+   var options = [{Field: "id1", Increment: -2147483648}, 
+                  {Field: "id2", Increment: 2147483648}, 
+                  {Field: "id3", Increment: 0}, 
+                  {Field: "id4", Increment: {"$numberLong": "-4223372036"}}, 
+                  {Field: "id5", Increment: 123.456}, 
+                  {Field: "id6", Increment: { "$decimal": "123.456"}}, 
+                  {Field: "id7", Increment: null}, 
+                  {Field :"id8", Increment: true}];
+   for(var i = 0; i < options.length; i++)
+   {
+      create(dbcl, options[i], false);
+   }
    
    //legal Increment value
    dbcl.createAutoIncrement([{ Field : "a" },
@@ -67,22 +64,6 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, options)
-{
-   try
-   {
-      dbcl.createAutoIncrement(options);
-      throw new Error( "create autoIncrement error!" );
-   }catch(e)
-   {
-      if(e !== -6)
-      {
-         throw new Error(e);
-      }
-   }
-   
-}
-
 try
 {
    main();
@@ -93,6 +74,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e;
 }
-;

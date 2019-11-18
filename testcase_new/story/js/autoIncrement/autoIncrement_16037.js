@@ -26,13 +26,16 @@ function main()
                              { Field : "a9", StartValue : 2, MinValue : 2 },
                              { Field : "a10", StartValue : 10000, MaxValue : 10000 }]);
                              
-   create(dbcl, { Field : "a2", StartValue : 2, MinValue : 5 });
-                             
-   create(dbcl, { Field : "a3", StartValue : 20000, MaxValue : 10000 });
-   
-   create(dbcl, "id11", 123.4);
-   
-   create(dbcl, "id12", { $decimal:"123.456" });
+ 
+   //StartValue is illegal 
+   var options = [{Field: "a2", StartValue: 2, MinValue: 5}, 
+                  {Field: "a3", StartValue: 20000, MaxValue: 10000}, 
+                  {Field: "a11", StartValue: 123.4}, 
+                  {Field: "a12", StartValue: {"$decimal": "123.456"}}]; 
+   for(var i = 0; i < options.length; i++)
+   {
+      create(dbcl, options[i], false);
+   }
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
@@ -87,22 +90,6 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, options)
-{
-   try
-   {
-      dbcl.createAutoIncrement(options);
-      throw new Error( "create autoIncrement error!" );
-   }catch(e)
-   {
-      if(e !== -6)
-      {
-         throw new Error(e);
-      }
-   }
-   
-}
-
 try
 {
    main();
@@ -113,6 +100,6 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e;
 }
-;
+

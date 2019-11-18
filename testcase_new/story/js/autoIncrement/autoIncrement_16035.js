@@ -17,26 +17,19 @@ function main()
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, { AutoIncrement : { Field : "id1" } } );
    
    //illegal Field value
-   create(dbcl, null);
-   
-   create(dbcl, {Field : "$id2"});
-   
-   create(dbcl, {Field : " id3"});
-   
-   create(dbcl, {Field : 5});
+   var fields = [null, {Field : "$id2"}, {Field : " id3"}, {Field : 5}];
+   for(var i = 0; i < fields.length; i++)
+   {
+      create(dbcl, fields[i], false);
+   }
    
    //legal Field value
-   dbcl.createAutoIncrement({ Field : "id6" });
-   
-   dbcl.createAutoIncrement({ Field : "id$7" });
-   
-   dbcl.createAutoIncrement({ Field : "id 8" });
-   
-   //other
-   dbcl.createAutoIncrement({ Field : "id9" });
-   dbcl.createAutoIncrement({ Field : "id" });
-   dbcl.createAutoIncrement({ Field : "id99" });
-   
+   fields = [{ Field : "id6" }, { Field : "id$7" }, { Field : "id 8" }, { Field : "id9" }, { Field : "id" }, { Field : "id99" }];
+   for(var i = 0; i < fields.length; i++)
+   {  
+      create(dbcl, fields[i], true);
+   }  
+ 
    //check autoIncrement count
    var cursor = db.snapshot(8, { Name : COMMCSNAME + "." + clName });
    var count = cursor.current().toObj().AutoIncrement.length;
@@ -73,21 +66,6 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, options)
-{
-   try
-   {
-      dbcl.createAutoIncrement(options);
-      throw new Error( "need_error" );
-   }catch(e)
-   {
-      if(e !== -6)
-      {
-         throw new Error(e);
-      }          
-   }   
-}
-
 try
 {
    main();
@@ -98,6 +76,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e;
 }
-;

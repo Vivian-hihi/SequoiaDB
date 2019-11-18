@@ -85,28 +85,6 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e;
 }
 
-
-function insertOtherTypeDatas(dbcl, arr)
-{
-   for(var i=0; i<arr.length; i++ )
-   {
-      try
-      {
-         dbcl.insert(arr[i]);
-         throw new Error( "NEED_INSERT_ERR" );
-      }catch(e)
-      {
-         if(e !== -6)
-         {
-            println("err occor the " + i + "th record, record is :" + JSON.stringify(arr[i]));
-            throw new Error(e);
-         }
-      }
-      
-   }
-   
-   
-}

@@ -18,16 +18,16 @@ function main()
    
    dbcl.createAutoIncrement([{ Field : "a1", AcquireSize : 2147483647, CacheSize : 2147483647 },
                              { Field : "a2", AcquireSize : 2000, CacheSize : 2000 }]);
-   
-   create(dbcl, {Field : "a3", AcquireSize : -10000});
-   
-   create(dbcl, {Field : "a4", AcquireSize : 2147483648});
-   
-   create(dbcl, {Field : "a5", AcquireSize : 0});
-   
-   create(dbcl, {Field : "a6", AcquireSize : 123.4});
-   
-   create(dbcl, {Field : "a7", AcquireSize : { $decimal:"123.456" }});
+
+   var options = [{Field: "a3", AcquireSize: -10000}, 
+                  {Field: "a4", AcquireSize: 2147483648}, 
+                  {Field: "a5", AcquireSize: 0}, 
+                  {Field: "a6", AcquireSize: 123.4}, 
+                  {Field: "a7", AcquireSize: {"$decimal": "123.456"}}];
+   for(var i = 0; i < options.length; i++)
+   {
+      create(dbcl, options, false);
+   }   
    
    //check Sequence
    var clID = getCLID( COMMCSNAME, clName );
