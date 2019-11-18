@@ -26,9 +26,9 @@ function createCSAndCheckResult( csName, pageSize )
    //create cs;
    var dbcs = db.createCS( csName, options );
    
-   //create cl in the cs
+   //create cl in the cs, "ReplSize" need to set, avoid -264
    var clName = "cl4510";
-   dbcs.createCL( clName );
+   dbcs.createCL( clName, {"ReplSize": 0} );
    
    //check the options
    db.sync({"CollectionSpace": csName});

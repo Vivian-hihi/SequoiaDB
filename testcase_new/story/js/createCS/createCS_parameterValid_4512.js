@@ -23,12 +23,12 @@ function createCSAndCheckResult( csName, lobPageSize )
    println("\n---Begin to createCS. lobPageSize =" + lobPageSize );   
    
    var options = { LobPageSize : lobPageSize };
-   //create cs;
+   //create cs
    var dbcs = db.createCS( csName, options );
    
-   //create cl in the cs
+   //create cl in the cs, "ReplSize" need to set, avoid -264
    var clName = "cl4512";
-   dbcs.createCL( clName );
+   dbcs.createCL( clName, {"ReplSize": 0} );
    
    //check the options
    db.sync({"CollectionSpace": csName});
