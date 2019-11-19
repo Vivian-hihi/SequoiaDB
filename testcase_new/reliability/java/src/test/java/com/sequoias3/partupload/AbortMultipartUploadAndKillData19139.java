@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * @Description seqDB-19139 :取消分段上传过程中db端节点异常
  * @author wuyan
  * @version 1.00
- * @Description seqDB-19139 :取消分段上传过程中db端节点异常
  * @Date 2019.08.13
  */
 public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
@@ -125,7 +125,7 @@ public class AbortMultipartUploadAndKillData19139 extends S3TestBase {
                         }
                     } catch (AmazonS3Exception e) {
                         // e:0 Get connection failed.
-                        if (e.getStatusCode() != 0 && e.getStatusCode() == 500) {
+                        if (e.getStatusCode() != 0 && e.getStatusCode() != 500) {
                             throw new Exception(keyName, e);
                         }
                     }
