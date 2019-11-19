@@ -40,48 +40,23 @@ function getStatistics(fullName, nodeNames)
 {
    var cursor = db.snapshot(SDB_SNAP_COLLECTIONS, {Name: fullName});
    var tmpArray = [];
-   while(cursor.next())
+   var details = cursor.current().toObj().Details;
+   for(var i = 0; i < details.length; i++)
    {
-      var details = cursor.current().toObj().Details;
-      for(var k=0; k< details.length; k++)
+      var group = cursor.current().toObj().Details[i].Group;
+      for(var j = 0; j < nodeNames.length; j++)
       {
-         var group = cursor.current().toObj().Details[k].Group;
-         for(var i=0; i<group.length; i++)
+         for(var k = 0; k < group.length; k++)
          {
-            var tmpObj = {};
-            tmpObj.NodeName = group[i].NodeName;
-            tmpObj.TotalDataRead = group[i].TotalDataRead;
-            tmpObj.TotalIndexRead = group[i].TotalIndexRead;
-            tmpObj.TotalDataWrite = group[i].TotalDataWrite;
-            tmpObj.TotalIndexWrite = group[i].TotalIndexWrite;
-            tmpObj.TotalUpdate = group[i].TotalUpdate;
-            tmpObj.TotalDelete = group[i].TotalDelete;
-            tmpObj.TotalInsert = group[i].TotalInsert;
-            tmpObj.TotalSelect = group[i].TotalSelect;
-            tmpObj.TotalRead = group[i].TotalRead;
-            tmpObj.TotalWrite = group[i].TotalWrite;
-            tmpObj.TotalTbScan = group[i].TotalTbScan;
-            tmpObj.TotalIxScan = group[i].TotalIxScan;
-            tmpArray.push(tmpObj);
-         }
-      } 
-   }  
-      
-   var statArray = [];
-   for(var i = 0; i < nodeNames.length; i++)
-   {
-      for(var j = 0; j < tmpArray.length; j++)
-      {
-         var actObj = {};
-         if(nodeNames[i] == tmpArray[j].NodeName)
-         {
-            actObj = tmpArray[j]; 
-            statArray.push(actObj);
-            break;
+            if(group[k].NodeName === nodeNames[j])
+            {
+               tmpArray.push(group[k]);
+               break;
+            }
          }
       }
-   }
-   return statArray;
+   } 
+   return tmpArray;
 }
 
 /*******************************************************************************
