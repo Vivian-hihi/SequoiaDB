@@ -12,6 +12,7 @@ function main()
    
    var csName = COMMCSNAME + "_18655";
    var clName = COMMCLNAME + "_18655";
+   var fullName = csName + "." + clName;
    
    commDropCS( db, csName);
    commCreateCS( db, csName, false, "", {Capped:true});
@@ -20,11 +21,10 @@ function main()
    var groupName = dataGroupNames[0];
    var dbcl = commCreateCLByOption(db, csName, clName, {Capped:true, Size:1024, Compressed:false, Group:groupName});
 
-   var nodeNameMaster= [];
    var masterNode = db.getRG(groupName).getMaster();
    var hostName = masterNode.getHostName();
    var serviceName = masterNode.getServiceName();
-   nodeNameMaster.push(hostName + ":" + serviceName);
+   var nodeNames = [hostName + ":" + serviceName];
    
    var doc=[];
    for(var i=0; i<1000; i++)
@@ -33,23 +33,27 @@ function main()
    }
    dbcl.insert(doc);
 
-   var expStatistics = [{TotalDataRead:0,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:0,TotalRead:0,TotalWrite:1000,TotalTbScan:0,TotalIxScan:0}];
-   checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
+   var actStatistics = getStatistics(fullName, nodeNames);
+   var expStatistics = [{"TotalDataRead": 0, "TotalDataWrite": 1000, "TotalIndexWrite": 0, "TotalUpdate": 0, "TotalDelete": 0,"TotalInsert": 1000, "TotalSelect": 0, "TotalRead": 0, "TotalWrite": 1000, "TotalTbScan": 0, "TotalIxScan": 0, "NodeName": nodeNames[0]}];
+   checkStatistics(actStatistics, expStatistics);
    
    var cursor = dbcl.find();
    while(cursor.next()){}
    cursor.close();
-   var expStatistics = [{TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:0}];
-   checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
+   actStatistics = getStatistics(fullName, nodeNames);
+   expStatistics = [{"NodeName": nodeNames[0], TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:0}];
+   checkStatistics(actStatistics, expStatistics);
    
    dbcl.pop({LogicalID:0,Direction:-1})
-   var expStatistics = [{TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:0}];
-   checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
+   actStatistics = getStatistics(fullName, nodeNames);
+   expStatistics = [{"NodeName": nodeNames[0], TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:0}];
+   checkStatistics(actStatistics, expStatistics);
    
    db.resetSnapshot({Type:"collections"});
-   var expStatistics = [{TotalDataRead:0,TotalDataWrite:0,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:0,TotalSelect:0,TotalRead:0,TotalWrite:0,TotalTbScan:0,TotalIxScan:0}];
-   checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
-   
+   actStatistics = getStatistics(fullName, nodeNames);
+   expStatistics = [{"NodeName": nodeNames[0], TotalDataRead:0,TotalDataWrite:0,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:0,TotalSelect:0,TotalRead:0,TotalWrite:0,TotalTbScan:0,TotalIxScan:0}];
+   checkStatistics(actStatistics, expStatistics);
+  
    commDropCS( db, csName);
 }
 try

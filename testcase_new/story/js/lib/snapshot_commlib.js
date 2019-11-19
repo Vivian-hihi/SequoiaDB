@@ -2,20 +2,29 @@
 @Description : 校验集合快照信息
 @Modify list : 2019-11-18 zhao xiaoni init
 *******************************************************************************/
-function checkStatistics(clFullName, nodeNameMaster, expStatistics)
+function checkStatistics(actStatistics, expStatistics)
 {
    try
    {
-      var actStatistics = getStatistics(clFullName, nodeNameMaster);
-      for(var i=0; i<expStatistics.length; i++)
-      {
-         if(JSON.stringify(actStatistics).indexOf(JSON.stringify(expStatistics[i])) == -1)
+      println("Start to check statistics");
+      for(var i = 0; i < expStatistics.length; i++)
+      { 
+         for(var j = 0; j < actStatistics.length; j++)
          {
-            println("actStatistics:" + JSON.stringify(actStatistics));
-            println("expStatistics:" + JSON.stringify(expStatistics));
-            throw "ERR";
+            if(expStatistics[i].NodeName === actStatistics[j].NodeName)
+            {
+               for(var key in expStatistics[j])
+               {
+                  if(expStatistics[i][key] !== actStatistics[j][key])
+                  {
+                     throw "expect: " + expStatistics[j][key] + "\nact: " + actStatistics[j][key];
+                  }
+               }
+               break;
+            }
          }
       }
+      println("End to check statistics");
    }
    catch(e)
    {
@@ -24,62 +33,55 @@ function checkStatistics(clFullName, nodeNameMaster, expStatistics)
 }
 
 /*******************************************************************************
-@Description : 获取集合快照信息
+@Description : 获取指定节点的集合快照信息
 @Modify list : 2019-11-18 zhao xiaoni init
 *******************************************************************************/
-function getStatistics(clFullName, nodeNameMaster)
+function getStatistics(fullName, nodeNames)
 {
-   try
+   var cursor = db.snapshot(SDB_SNAP_COLLECTIONS, {Name: fullName});
+   var tmpArray = [];
+   while(cursor.next())
    {
-      var cursor = db.snapshot(SDB_SNAP_COLLECTIONS, {Name: clFullName});
-      var tmpArray = [];
-      while(cursor.next())
+      var details = cursor.current().toObj().Details;
+      for(var k=0; k< details.length; k++)
       {
-         var details = cursor.current().toObj().Details;
-         for(var k=0; k< details.length; k++)
+         var group = cursor.current().toObj().Details[k].Group;
+         for(var i=0; i<group.length; i++)
          {
-            var group = cursor.current().toObj().Details[k].Group;
-            for(var i=0; i<group.length; i++)
-            {
-               var tmpObj = {};
-               tmpObj.NodeName = group[i].NodeName;
-               tmpObj.TotalDataRead = group[i].TotalDataRead;
-               //事务transuserbs=true时，可能产生额外TotalIndexRead，不对该值进行比较
-               //tmpObj.TotalIndexRead = group[i].TotalIndexRead;
-               tmpObj.TotalDataWrite = group[i].TotalDataWrite;
-               tmpObj.TotalIndexWrite = group[i].TotalIndexWrite;
-               tmpObj.TotalUpdate = group[i].TotalUpdate;
-               tmpObj.TotalDelete = group[i].TotalDelete;
-               tmpObj.TotalInsert = group[i].TotalInsert;
-               tmpObj.TotalSelect = group[i].TotalSelect;
-               tmpObj.TotalRead = group[i].TotalRead;
-               tmpObj.TotalWrite = group[i].TotalWrite;
-               tmpObj.TotalTbScan = group[i].TotalTbScan;
-               tmpObj.TotalIxScan = group[i].TotalIxScan;
-               tmpArray.push(tmpObj);
-            }
-         } 
-      }  
-      var statArray = [];
-      for(var i=0; i<tmpArray.length; i++)
+            var tmpObj = {};
+            tmpObj.NodeName = group[i].NodeName;
+            tmpObj.TotalDataRead = group[i].TotalDataRead;
+            tmpObj.TotalIndexRead = group[i].TotalIndexRead;
+            tmpObj.TotalDataWrite = group[i].TotalDataWrite;
+            tmpObj.TotalIndexWrite = group[i].TotalIndexWrite;
+            tmpObj.TotalUpdate = group[i].TotalUpdate;
+            tmpObj.TotalDelete = group[i].TotalDelete;
+            tmpObj.TotalInsert = group[i].TotalInsert;
+            tmpObj.TotalSelect = group[i].TotalSelect;
+            tmpObj.TotalRead = group[i].TotalRead;
+            tmpObj.TotalWrite = group[i].TotalWrite;
+            tmpObj.TotalTbScan = group[i].TotalTbScan;
+            tmpObj.TotalIxScan = group[i].TotalIxScan;
+            tmpArray.push(tmpObj);
+         }
+      } 
+   }  
+      
+   var statArray = [];
+   for(var i = 0; i < nodeNames.length; i++)
+   {
+      for(var j = 0; j < tmpArray.length; j++)
       {
-         for(var j=0; j<nodeNameMaster.length; j++)
+         var actObj = {};
+         if(nodeNames[i] == tmpArray[j].NodeName)
          {
-            var actObj = {};
-            if(tmpArray[i].NodeName == nodeNameMaster[j])
-            {
-               delete tmpArray[i].NodeName;
-               actObj = tmpArray[i]; 
-               statArray.push(actObj);
-            }
+            actObj = tmpArray[j]; 
+            statArray.push(actObj);
+            break;
          }
       }
-      return statArray;
    }
-   catch(e)
-   {
-      throw new Error(e);
-   }
+   return statArray;
 }
 
 /*******************************************************************************

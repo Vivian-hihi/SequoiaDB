@@ -13,7 +13,7 @@ catch(e)
    {
       println(e.stack);
    }
-   throw new Error(e);
+   throw e;
 }
 
 function main()
@@ -37,14 +37,15 @@ function main()
    commDropCS( db, maincsName );
    commDropCS( db, subcsName1 );
    commDropCS( db, subcsName2 );
-   var maincl = db.createCS(maincsName).createCL(mainclName, {IsMainCL: true, ShardingKey: {a: 1}, ShardingType: "range", ReplSize: -1});
-   var subcl1 = db.createCS(subcsName1).createCL(subclName1, {ShardingKey: {a: 1}, ShardingType: "range", Partition: 1024, ReplSize: -1});
-   var subcl2 = db.createCS(subcsName2).createCL(subclName2, {ShardingKey: {a: 1}, ShardingType: "range", Partition: 1024, ReplSize: -1});
+   var groupName = commGetGroups(db)[0][0].GroupName;
+   var maincl = db.createCS(maincsName).createCL(mainclName, {IsMainCL: true, ShardingKey: {a: 1}, ShardingType: "range", Group: groupName});
+   var subcl1 = db.createCS(subcsName1).createCL(subclName1, {ShardingKey: {a: 1}, ShardingType: "range", Partition: 1024, Group: groupName});
+   var subcl2 = db.createCS(subcsName2).createCL(subclName2, {ShardingKey: {a: 1}, ShardingType: "range", Partition: 1024, Group: groupName});
    for(var i = 0; i < subFullName.length; i++)
    {
       maincl.attachCL(subFullName[i], {LowBound:{a: i*50}, UpBound: {a: (i+1)*50}});
    }
-
+ 
    for(var i = 0; i < 100; i++)
    {
       maincl.insert({a: i, b: i});
@@ -57,12 +58,17 @@ function main()
    }
  
    db.resetSnapshot({Type: "collections", Collection: maincsName + "." + mainclName});
-   
-   var expResult = {"TotalDataRead":0,"TotalIndexRead":0,"TotalDataWrite":0,"TotalIndexWrite":0,"TotalUpdate":0,"TotalDelete":0,"TotalInsert":0,"TotalSelect":0,"TotalRead":0,"TotalWrite":0,"TotalTbScan":0,"TotalIxScan":0};
-   
+
+   var masterNode = db.getRG(groupName).getMaster();
+   var hostName = masterNode.getHostName();
+   var serviceName = masterNode.getServiceName();
+   var nodeNames = [hostName + ":" + serviceName];
+
+   var expStatistics = [{"NodeName": nodeNames[0], "TotalDataRead": 0, "TotalIndexRead": 0, "TotalDataWrite": 0, "TotalIndexWrite": 0, "TotalUpdate": 0, "TotalDelete": 0, "TotalInsert": 0, "TotalSelect": 0, "TotalRead": 0, "TotalWrite": 0, "TotalTbScan": 0, "TotalIxScan": 0}];
    for(var i = 0; i < subFullName.length; i++)
    {
-      checkResult(db, subFullName[i], expResult);
+      var actStatistics = getStatistics(subFullName[i], nodeNames);
+      checkStatistics(actStatistics, expStatistics);
    }
    
    commDropCS( db, maincsName, false);   
