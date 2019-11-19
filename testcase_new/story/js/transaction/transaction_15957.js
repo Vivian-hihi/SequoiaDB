@@ -8,7 +8,7 @@ function main()
    if(commIsStandalone( db ))
    {
       println("Deploy is standalone");
-	  return;
+      return;
    }
    
    var clName1 = COMMCLNAME + "_15957_1"; 

@@ -25,7 +25,8 @@ function main()
    var oldcsName = COMMCSNAME+"_16105_old";
    var newcsName = COMMCSNAME+"_16105_new";
    var clName = CHANGEDPREFIX + "_16105_cl";
-   
+   commDropCS( db, oldcsName);
+   commDropCS( db, newcsName);
    var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "");
    var cl = commCreateCLByOption( db, oldcsName, clName, {}, false, false, "create CL in the begin");
    
@@ -57,7 +58,7 @@ function main()
    db.renameCS(oldcsName, newcsName);
    
    cl = db.getCS(newcsName).getCL(clName);
-   checkCLRecord(cl, {customerName: 'testTrans'}, 4);
+   checkCount( cl, 4, {customerName: 'testTrans'} );
    
    checkRenameCSResult(oldcsName, newcsName, 1);
    
@@ -65,10 +66,3 @@ function main()
    println("---end the test---");
 }
 
-function checkCLRecord( cl, cond, expNum )
-{
-   var actNum = cl.count(cond);
-   if(actNum != expNum){
-      throw new Error("expect record num: " + expNum + ",actual record num: " + actNum);
-   }
-}

@@ -2,12 +2,21 @@
 @discretion: there is a transaction operation on the cl1 ,than rename cl2,the cl1 and cl2 on the same cs
 @author£º2018-10-16 wuyan  Init
 ***************************************************************************** */
-main(db);
-function main(db)
+try
 {
-   try
+   main();
+}
+catch(e)
+{
+   if ( e.constructor === Error )
    {
-      if( !commIsTransEnabled( db ) )
+      println(e.stack) ;  
+   }
+   throw e ;
+}
+function main()
+{
+   if( !commIsTransEnabled( db ) )
       {
          println( "transaction is disabled" ) ; 
          return;  
@@ -20,47 +29,21 @@ function main(db)
       var newCLName1 = CHANGEDPREFIX + "_newrenameCL16071a";
       var clName2 = CHANGEDPREFIX + "_renameCL16071b";           
       var dbcs = commCreateCS( db, csName, false, "Failed to create CS.");    
-      commCreateCL( db, csName, clName1, 0, false, true, true ) ; 
-      var dbcl = commCreateCL( db, csName, clName2, 0, false, true, true ) ;          
+      commCreateCL( db, csName, clName1) ; 
+      var dbcl = commCreateCL( db, csName, clName2) ;          
    
       var dataNums = 100;
-      beginTrans( db );     
+      db.transBegin();     
       insertData( dbcl, dataNums ); 
    
-      renameCL( db, csName, clName1, newCLName1 );
+      dbcs.renameCL( clName1, newCLName1 );
          
-      commitTrans( db );     
+      db.transCommit();     
    
       checkRenameCLResult( csName, clName1, newCLName1 ); 
-      checkDatas( csName, clName2, dataNums );     
+      
+      checkCount( dbcl, dataNums );  
 
-      commDropCS( db, csName, true, "drop CS in the ending"); 
-   }
-   catch( e )
-   {
-      if ( e.constructor === Error )
-      {
-         println(e.stack) ;
-      }
-      throw e ;      
-   }   
-}
-
-function renameCL( db, csName, clName, newCLName )
-{
-   println( "---Begin to rename cl" ) ;
-   var dbcs = db.getCS( csName );
-   dbcs.renameCL( clName, newCLName );
-}
-
-function checkDatas( csName, newCLName, expRecordNums )
-{   
-   println("---Begin to check the records");
-   var dbcl = db.getCS( csName ).getCL( newCLName );
-   var count = dbcl.count();  
-   if( Number(count) !== Number(expRecordNums) )      
-   {
-      throw new Error("expect record num: " + expRecordNums + "actual record num: " + count);
-   } 
+      commDropCS( db, csName, true, "drop CS in the ending");    
 }
 

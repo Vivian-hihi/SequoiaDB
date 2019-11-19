@@ -27,7 +27,8 @@ function main()
    var newcs1Name = COMMCSNAME+"_16106_new";
    var clName1 = CHANGEDPREFIX + "_16106_cl11";
    var clName2 = CHANGEDPREFIX + "_16106_cl12";
-   
+   commDropCS( db, csName1);
+   commDropCS( db, csName2);
    var cs1 = commCreateCS( db, csName1, false, "create cs1 in begine", "");
    var cs2 = commCreateCS( db, csName2, false, "create cs1 in begine", "");
    var cl1 = commCreateCLByOption( db, csName1, clName1, {}, false, false, "create cl1 in the begin");
@@ -46,7 +47,7 @@ function main()
    println('---trans commit---');
    
    cl2 = db.getCS(newcs1Name).getCL(clName2);
-   checkcl1Record(cl1, {customerName: 'testTrans'}, 2);
+   checkCount( cl1, 2, {customerName: 'testTrans'} );
    
    checkRenameCSResult(csName2, newcs1Name, 1);
    
@@ -55,10 +56,3 @@ function main()
    println("---end the test---");
 }
 
-function checkcl1Record( cl1, cond, expNum )
-{
-   var actNum = cl1.count(cond);
-   if(actNum != expNum){
-      throw new Error("expect record num: " + expNum + ",actual record num: " + actNum);
-   }
-}
