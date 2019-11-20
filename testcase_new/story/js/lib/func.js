@@ -1801,3 +1801,5 @@ catch ( e )
    throw buildException( null, null, 
          "connect sdb " + COORDHOSTNAME + ":" + COORDSVCNAME, 0, e ) ;
 }
+
+commCreateCLByOption( db, COMMCSNAME, COMMDUMMYCLNAME, {ShardingType:'hash',ShardingKey:{_id:1}, AutoSplit:true}, true, true ) ;
