@@ -66,7 +66,7 @@ function main()
       try
       { 
          cl.insert( { "id1" : "a" + i } );
-         throw new Error("insert error!");
+         throw "insert error!";
       }catch(e)
       {
          if(e !== -6)
@@ -111,6 +111,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-

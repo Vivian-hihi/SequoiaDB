@@ -20,7 +20,7 @@ function main()
    try
    {
       dbcl.createAutoIncrement( { Field : "id1" } );
-      throw new Error("create autoIncrement error");      
+      throw "create autoIncrement error";      
    }catch( e )
    {
       if( e !== -332 )
@@ -42,6 +42,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-;

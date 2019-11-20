@@ -106,6 +106,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-;

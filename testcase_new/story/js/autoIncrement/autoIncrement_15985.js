@@ -42,11 +42,12 @@ function main()
    try
    {
       dbcl.insert({a : 1});  
+      throw "insert error!";
    }catch(e)
    {
       if(e !== -6)
       {
-         throw new Error("insert error!");
+         throw new Error(e);
       }
    }
    
@@ -66,7 +67,7 @@ function createAutoIncrement( dbcl, field )
    try
    {
       dbcl.createAutoIncrement( { Field : field } );   
-      throw new Error( "create autoIncrement error!" );      
+      throw "create autoIncrement error!";      
    }catch( e )
    {
       if( e !== -332 )
@@ -86,6 +87,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-

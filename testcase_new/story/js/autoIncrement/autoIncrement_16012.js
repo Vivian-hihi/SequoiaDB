@@ -37,7 +37,7 @@ function main()
    try
    {
       dbcl.setAttributes({ AutoIncrement : { Field : "id2" } });
-      throw new Error("alter error!");
+      throw "alter error!";
    }catch(e)
    {
       if(e !== -333)
@@ -72,6 +72,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-

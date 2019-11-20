@@ -26,7 +26,7 @@ function main()
                   {Field: "a7", CacheSize: {"$decimal": "123.456"}}];
    for(var i = 0; i < options.length; i++)
    {
-      create(dbcl, options, false);
+      create(dbcl, options[i], false);
    } 
    
    //check Sequence

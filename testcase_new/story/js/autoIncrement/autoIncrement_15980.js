@@ -64,7 +64,7 @@ function checkCurrentValue( db, csName, clName, fields )
          var startValue = cursor.current().toObj().StartValue
          if( currentValue !== startValue )
          {
-            throw new Error("currentValue is " + currentValue + ", but startValue is " + startValue);
+            throw "currentValue is " + currentValue + ", but startValue is " + startValue;
          }
       }
    }
@@ -84,6 +84,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-;

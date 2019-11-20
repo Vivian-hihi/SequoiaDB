@@ -95,7 +95,7 @@ function main()
    {
        if(e !== -325)
        {
-           throw e;
+           throw new Error(e);
        }
    }
    var rc = dbcl.find().sort( { "id1" : 1 } );
@@ -130,6 +130,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-;

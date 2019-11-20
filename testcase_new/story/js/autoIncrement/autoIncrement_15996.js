@@ -40,7 +40,7 @@ function createCL( clName, field )
    try
    {
       db.getCS(COMMCSNAME).createCL(clName, { AutoIncrement : [ { Field : "a.aa" }, { Field : field } ] });
-      throw new Error( "create autoIncrement error!" );
+      throw "create autoIncrement error!";
    }catch( e )
    {
       if( e !== -6 )
@@ -60,6 +60,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-;

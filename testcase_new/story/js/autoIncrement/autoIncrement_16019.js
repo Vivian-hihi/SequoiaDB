@@ -54,7 +54,7 @@ function main()
       try
       {
          cl.insert( { "a" : i, "b" : i } );
-         throw new Error("insert error!");
+         throw "insert error!";
       }catch(e)
       {
          if(e !== -325)
@@ -109,7 +109,7 @@ function main()
       try
       {
          cl.insert( { "a" : i, "b" : i } );
-         throw new Error("insert error");
+         throw "insert error";
       }catch(e)
       {
          if(e !== -325)
@@ -136,6 +136,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-

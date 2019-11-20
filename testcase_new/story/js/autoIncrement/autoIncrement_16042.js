@@ -27,7 +27,7 @@ function main()
    try
    {
       dbcl.createAutoIncrement({ Field : "id3", Generated : "a" });
-      throw new Error( "create error!" );
+      throw "create error!";
    }catch(e)
    {
       if(e !== -6)
@@ -59,7 +59,7 @@ function main()
    try
    {
       dbcl.insert({ "q" : 2, "id1" : 2, "id2" : 5, "id3" : "f" });
-      throw new Error( "need error for insert" );     
+      throw "need error for insert";     
    }catch(e)
    {
       if(e !== -6)
@@ -85,5 +85,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }

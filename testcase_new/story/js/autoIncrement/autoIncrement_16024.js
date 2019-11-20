@@ -94,6 +94,7 @@ function main()
    println("---check insert after alter generated success");
    commDropCL(db, COMMCSNAME, clName, true, true); 
 }
+
 try
 {
    main();
@@ -104,9 +105,8 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-
 
 function checkSnapshot8onCL(csName, clName)
 {
@@ -118,7 +118,7 @@ function checkSnapshot8onCL(csName, clName)
       if(shardingType !== "hash" || compressionType !== "lzw")
       {
          println("shardingType:" + shardingType + ",compressionType:" + compressionType + "\n");
-         throw new Error( "ALTER_CL_ERR" );
+         throw "ALTER_CL_ERR";
       }
    }
    catch(e)

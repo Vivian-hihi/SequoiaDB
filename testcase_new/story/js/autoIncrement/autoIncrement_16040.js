@@ -26,7 +26,7 @@ function main()
                   {Field: "a7", AcquireSize: {"$decimal": "123.456"}}];
    for(var i = 0; i < options.length; i++)
    {
-      create(dbcl, options, false);
+      create(dbcl, options[i], false);
    }   
    
    //check Sequence
@@ -60,22 +60,6 @@ function main()
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function create(dbcl, options)
-{
-   try
-   {
-      dbcl.createAutoIncrement(options);
-      throw new Error( "create error!" );
-   }catch(e)
-   {
-      if(e !== -6)
-      {
-         throw new Error(e);
-      }
-   }
-   
-}
-
 try
 {
    main();
@@ -86,6 +70,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
-;

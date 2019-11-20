@@ -91,4 +91,3 @@ function main(){
    
    commDropCL( db, COMMCSNAME, clName, true, true );
 }
-

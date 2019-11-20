@@ -22,7 +22,7 @@ function main()
                   {Field: "a10", MaxValue: {"$decimal": "123.456"}}];
    for(var i = 0; i < options.length; i++)
    {
-      create(dbcl, options, false);
+      create(dbcl, options[i], false);
    }   
 
    dbcl.createAutoIncrement([{Field: "a4", MaxValue: 5000},

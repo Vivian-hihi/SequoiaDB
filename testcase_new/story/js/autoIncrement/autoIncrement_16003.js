@@ -104,7 +104,7 @@ function main()
    try
    {
       dbcl.createAutoIncrement({Field: fieldName, Increment:increment, CacheSize:cacheSize, AcquireSize:acquireSize});
-      throw new Error("NEED_CREATE_ERR");
+      throw "NEED_CREATE_ERR";
    }catch(e)
    {
       if(-6 !== e)
@@ -125,5 +125,5 @@ catch(e)
    {
       println(e.stack) ;  
    }
-   throw new Error(e) ;
+   throw e ;
 }
