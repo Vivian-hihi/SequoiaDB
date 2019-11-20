@@ -7,6 +7,7 @@
 try
 {
    var filePath = WORKDIR + "/" + "file20261";
+   var tmpPath = WORKDIR + "/" + "tmpFile20261";
    main();
 }
 catch(e)
@@ -19,7 +20,11 @@ catch(e)
 }
 finally
 {
-   File.remove(filePath);
+   if( !commIsStandalone( db ) )
+   {
+      File.remove(filePath);
+      File.remove(tmpPath);
+   }
 }
 
 function main()
@@ -37,7 +42,7 @@ function main()
    var file = new File(filePath);
    file.write("test lob alter shardingType range");
    file.close();
-   cl.putLob(filePath);
+   var lobId = cl.putLob(filePath);
    
    //alters ShardingType
    try
@@ -79,6 +84,18 @@ function main()
    {
       throw new Error("check snapshot error, \nexpect: not shardingType, \nbut found: " + JSON.stringify(clInfo));
    }
+   
+   cl.getLob(lobId, tmpPath);
+   var expMD5 = File.md5(filePath);
+   var actMD5 = File.md5(tmpPath);
+   if( expMD5 != actMD5 )
+   {
+      throw new Error("check lob md5 failed: \nexp: " + expMD5 + ", \nact: " + actMD5);
+   }
+   
+   cl.deleteLob(lobId);
+   cl.setAttributes({ShardingKey: {a: 1}, ShardingType:"range"});
+   checkSnapshot( db, SDB_SNAP_CATALOG, COMMCSNAME, clName, "ShardingType", "range");
    
    //clean test-env
    commDropCL( db, COMMCSNAME, clName ) ;
