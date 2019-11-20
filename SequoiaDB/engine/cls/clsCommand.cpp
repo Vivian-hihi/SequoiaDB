@@ -779,7 +779,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to create alter job, rc: %d", rc ) ;
 
          rc = _alterJob->initialize( NULL, _getObjectType(), alterObject ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to initialize alter job, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to initialize alter job, rc: %d", rc ) ;
       }
       catch ( exception & e )
       {
@@ -826,7 +827,8 @@ namespace engine
 
             if ( task->testFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) )
             {
-               PD_LOG( PDWARNING, "Failed to execute task [%s]: the request should "
+               PD_LOG( PDWARNING,
+                       "Failed to execute task [%s]: the request should "
                        "from SHARD port", task->getActionName() ) ;
                if ( options->isIgnoreException() )
                {
@@ -866,7 +868,8 @@ namespace engine
 
          /// AUDIT
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), _getAuditType(), objectName, rc,
-                           "Option:%s", _alterJob->getJobObject().toString().c_str() ) ;
+                           "Option:%s",
+                           _alterJob->getJobObject().toString().c_str() ) ;
       }
       else
       {
@@ -885,7 +888,8 @@ namespace engine
          else
          {
             rc = _executeTask( objectName, task, options, cb, dmsCB, rtnCB, dpsCB, w ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to execute alter task [%s] on [%s], "
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to execute alter task [%s] on [%s], "
                          "rc: %d", task->getActionName(), objectName, rc ) ;
          }
 

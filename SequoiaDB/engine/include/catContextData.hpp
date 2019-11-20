@@ -453,21 +453,26 @@ namespace engine
       virtual INT32 _clearInternal(_pmdEDUCB * cb,INT16 w) ;
 
    protected :
-      INT32 _checkAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb ) ;
-      INT32 _executeAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb, INT16 w ) ;
-      INT32 _clearAlterTask ( const rtnAlterTask * task, _pmdEDUCB * cb, INT16 w ) ;
+      INT32 _checkAlterTask ( const rtnAlterTask * task,
+                              _pmdEDUCB * cb ) ;
+      INT32 _executeAlterTask ( const rtnAlterTask * task,
+                                _pmdEDUCB * cb,
+                                INT16 w ) ;
+      INT32 _clearAlterTask ( const rtnAlterTask * task,
+                              _pmdEDUCB * cb,
+                              INT16 w ) ;
       INT32 _addAlterTask ( const string & collection,
-                          const rtnAlterTask * task,
-                          catCtxAlterCLTask ** catTask,
-                          BOOLEAN pushExec ) ;
+                            const rtnAlterTask * task,
+                            catCtxAlterCLTask ** catTask,
+                            BOOLEAN pushExec ) ;
       INT32 _addAlterSubCLTask ( catCtxAlterCLTask * catTask,
-                               pmdEDUCB * cb,
-                               catCtxLockMgr & lockMgr,
-                               std::set< std::string > & collectionSet,
-                               std::vector< UINT32 > & groupList ) ;
+                                 pmdEDUCB * cb,
+                                 catCtxLockMgr & lockMgr,
+                                 std::set< std::string > & collectionSet,
+                                 std::vector< UINT32 > & groupList ) ;
       INT32 _addSequenceTask( const string & collection,
-                          const rtnAlterTask * task,
-                          catCtxTaskBase ** catAutoIncTask ) ;
+                              const rtnAlterTask * task,
+                              catCtxTaskBase ** catAutoIncTask ) ;
       INT32 _addCreateSeqenceTask( const string & collection,
                                    const rtnAlterTask * task,
                                    catCtxTaskBase ** catAutoIncTask ) ;

@@ -525,7 +525,8 @@ namespace engine
          else
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Failed to get field [%s]", FIELD_NAME_COMPRESSIONTYPE ) ;
+            PD_LOG( PDERROR,
+                    "Failed to get field [%s]", FIELD_NAME_COMPRESSIONTYPE ) ;
          }
          parsedArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) ;
       }
@@ -537,8 +538,9 @@ namespace engine
          if ( !_compressed && _compressorType != UTIL_COMPRESSOR_INVALID )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "[%s] and [%s] are conflicts", FIELD_NAME_COMPRESSED,
-                    FIELD_NAME_COMPRESSIONTYPE ) ;
+            PD_LOG( PDERROR,
+                    "[%s] and [%s] are conflicts",
+                    FIELD_NAME_COMPRESSED, FIELD_NAME_COMPRESSIONTYPE ) ;
             goto error ;
          }
       }
@@ -577,7 +579,8 @@ namespace engine
 
    void _rtnCLCompressArgument::setCompress ( UTIL_COMPRESSOR_TYPE compressorType )
    {
-      _compressed = ( compressorType == UTIL_COMPRESSOR_INVALID ) ? FALSE : TRUE ;
+      _compressed = ( compressorType == UTIL_COMPRESSOR_INVALID ) ? FALSE :
+                                                                    TRUE ;
       _compressorType = compressorType ;
       _compressorName = utilCompressType2String( compressorType ) ;
    }
@@ -648,7 +651,8 @@ namespace engine
          argElement = _argument.getField( FIELD_NAME_MAX ) ;
          PD_CHECK( argElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_MAX ) ;
-         PD_CHECK( argElement.numberLong() >= 0, SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( argElement.numberLong() >= 0,
+                   SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]: should be positive value",
                    FIELD_NAME_MAX ) ;
          _maxRec = (UINT64)argElement.numberLong() ;
@@ -834,7 +838,7 @@ namespace engine
    {
    }
 
-   rtnCLAutoincFieldArgument & _rtnCLAutoincFieldArgument::operator = 
+   rtnCLAutoincFieldArgument & _rtnCLAutoincFieldArgument::operator =
                               ( const rtnCLAutoincFieldArgument & argument )
    {
       _rtnAlterTaskArgument::operator =( argument ) ;
@@ -867,7 +871,8 @@ namespace engine
       if( _argument.hasField( FIELD_NAME_INCREMENT ) )
       {
          argElement = _argument.getField( FIELD_NAME_INCREMENT ) ;
-         PD_CHECK( NumberInt== argElement.type(), SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( NumberInt== argElement.type(),
+                   SDB_INVALIDARG, error, PDERROR,
                   "Failed to get field [%s]", FIELD_NAME_INCREMENT ) ;
          parsedArgumentMask( UTIL_CL_AUTOINC_INCREMENT_FIELD ) ;
       }
@@ -907,16 +912,18 @@ namespace engine
       if( _argument.hasField( FIELD_NAME_CACHE_SIZE ) )
       {
          argElement = _argument.getField( FIELD_NAME_CACHE_SIZE ) ;
-         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error,
-                   PDERROR, "Failed to get field [%s]", FIELD_NAME_CACHE_SIZE ) ;
+         PD_CHECK( NumberInt == argElement.type(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field [%s]", FIELD_NAME_CACHE_SIZE ) ;
          parsedArgumentMask( UTIL_CL_AUTOINC_CACHESIZE_FIELD ) ;
       }
 
       if( _argument.hasField( FIELD_NAME_ACQUIRE_SIZE ) )
       {
          argElement = _argument.getField( FIELD_NAME_ACQUIRE_SIZE ) ;
-         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error,
-                   PDERROR, "Failed to get field [%s]", FIELD_NAME_ACQUIRE_SIZE ) ;
+         PD_CHECK( NumberInt == argElement.type(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get field [%s]", FIELD_NAME_ACQUIRE_SIZE ) ;
          parsedArgumentMask( UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ) ;
       }
 
@@ -997,25 +1004,27 @@ namespace engine
                          _argument.toString(false,false).c_str(), rc  ) ;
                autoIncObject = e.Obj() ;
                PD_CHECK( autoIncObject.hasField( FIELD_NAME_AUTOINC_FIELD ),
-                         SDB_INVALIDARG, error, PDERROR, "Failed to get field[%s]",
-                         FIELD_NAME_AUTOINC_FIELD ) ;
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to get field[%s]", FIELD_NAME_AUTOINC_FIELD ) ;
 
                autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( autoIncObject ) ;
                PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
                          "Failed to allocate autoincrement field argument" ) ;
 
                rc = autoIncField->parseArgument() ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
-                            "rc: %d", rc ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to parse autoincrement argument, rc: %d",
+                            rc ) ;
                PD_CHECK( !autoIncField->testArgumentMask( UTIL_CL_AUTOINC_CURVALUE_FIELD ),
-                         SDB_INVALIDARG, error, PDERROR, "Option[%s] not support "
-                         "when create autoincrement field", FIELD_NAME_CURRENT_VALUE ) ;
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Option[%s] not support when create autoincrement "
+                         "field", FIELD_NAME_CURRENT_VALUE ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
             }
          }
          else if( ele.type() == Object )
          {
-            rtnCLAutoincFieldArgument *autoIncField = 
+            rtnCLAutoincFieldArgument *autoIncField =
                             SDB_OSS_NEW rtnCLAutoincFieldArgument( ele.Obj() ) ;
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
@@ -1025,7 +1034,7 @@ namespace engine
          else
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid argument[%s], rc:%d", 
+            PD_LOG( PDERROR, "Invalid argument[%s], rc:%d",
                     _argument.toString(false,false).c_str(), rc ) ;
          }
 
@@ -1096,9 +1105,10 @@ namespace engine
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement "
                          " argument, rc: %d", rc ) ;
-            PD_CHECK( autoIncField->getArgumentCount() == 1, SDB_INVALIDARG,
-                     error, PDERROR, "Failed to parse argument: contain unknown "
-                     "fields[%s]", _argument.toString( false, false ).c_str() ) ;
+            PD_CHECK( autoIncField->getArgumentCount() == 1,
+                      SDB_INVALIDARG, error, PDERROR,
+                      "Failed to parse argument: contain unknown fields[%s]",
+                      _argument.toString( false, false ).c_str() ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
          }
          else if( ele.type() == bson::Array )
@@ -1116,18 +1126,20 @@ namespace engine
                PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
                          "Failed to allocate autoincrement field argument" ) ;
                rc = autoIncField->parseArgument() ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
-                            "rc: %d", rc ) ;
-               PD_CHECK( autoIncField->getArgumentCount() == 1, SDB_INVALIDARG,
-                        error, PDERROR, "Failed to parse argument: contain unknown "
-                        "fields[%s]",  _argument.toString( false, false ).c_str() ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to parse autoincrement argument, rc: %d",
+                            rc ) ;
+               PD_CHECK( autoIncField->getArgumentCount() == 1,
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to parse argument: contain unknown fields[%s]",
+                         _argument.toString( false, false ).c_str() ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
             }
          }
          else
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid argument[%s], rc:%d", 
+            PD_LOG( PDERROR, "Invalid argument[%s], rc:%d",
                     _argument.toString(false,false).c_str(), rc ) ;
          }
 
@@ -1136,9 +1148,9 @@ namespace engine
       catch( std::exception& e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to parse arguments for drop autoincfieldtask[%s], "
-                 "exception=%s", _argument.toString( false, false ).c_str(),
-                 e.what() ) ;
+         PD_LOG( PDERROR, "Failed to parse arguments for "
+                 "drop autoincfieldtask[%s], exception=%s",
+                 _argument.toString( false, false ).c_str(), e.what() ) ;
          goto error ;
       }
 
@@ -1175,7 +1187,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCLENABLESHARDINGTASK_PARSEARG ) ;
 
       rc = _shardingArgument.parseArgument() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse sharding argument, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse sharding argument, rc: %d", rc ) ;
       parsedArgumentMask( _shardingArgument.getArgumentMask(),
                           _shardingArgument.getArgumentCount() ) ;
 
@@ -1235,7 +1248,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCLENABLECOMPRESSTASK_PARSEARG ) ;
 
       rc = _compressArgument.parseArgument() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse compression argument, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse compression argument, rc: %d", rc ) ;
 
       if ( !_compressArgument.isCompressed() )
       {
@@ -1313,7 +1327,8 @@ namespace engine
       rtnCLAutoincFieldArgument *autoIncField ;
 
       rc = _shardingArgument.parseArgument() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse sharding argument, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse sharding argument, rc: %d", rc ) ;
 
       if ( UTIL_ARG_FIELD_EMPTY != _shardingArgument.getArgumentMask() )
       {
@@ -1331,7 +1346,8 @@ namespace engine
                           _shardingArgument.getArgumentCount() ) ;
 
       rc = _compressArgument.parseArgument() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse compression argument, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse compression argument, rc: %d", rc ) ;
 
       if ( UTIL_ARG_FIELD_EMPTY != _compressArgument.getArgumentMask() )
       {
@@ -1342,7 +1358,8 @@ namespace engine
                           _compressArgument.getArgumentCount() ) ;
 
       rc = _extOptionArgument.parseArgument() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse capped argument, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse capped argument, rc: %d", rc ) ;
 
       if ( UTIL_ARG_FIELD_EMPTY != _extOptionArgument.getArgumentMask() )
       {
@@ -1355,14 +1372,15 @@ namespace engine
       if ( _argument.hasField( FIELD_NAME_AUTOINCREMENT ) )
       {
          argElement = _argument.getField( FIELD_NAME_AUTOINCREMENT ) ;
-         PD_CHECK( bson::Object == argElement.type() || bson::Array == argElement.type(),
+         PD_CHECK( bson::Object == argElement.type() ||
+                   bson::Array == argElement.type(),
                    SDB_INVALIDARG, error, PDERROR, "Failed to get field [%s]",
                    FIELD_NAME_AUTOINCREMENT ) ;
          if( bson::Object == argElement.type() )
          {
              PD_CHECK( argElement.Obj().hasField( FIELD_NAME_AUTOINC_FIELD ),
-                       SDB_INVALIDARG, error, PDERROR, "Failed to get field [%s]",
-                       FIELD_NAME_AUTOINCREMENT ) ;
+                       SDB_INVALIDARG, error, PDERROR,
+                       "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT ) ;
             autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( argElement.Obj() ) ;
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
@@ -1381,15 +1399,16 @@ namespace engine
                          "Invalid argument[%s], rc:%d",
                          _argument.toString(false,false).c_str(), rc  ) ;
                obj = e.Obj() ;
-               PD_CHECK( obj.hasField( FIELD_NAME_AUTOINC_FIELD ), SDB_INVALIDARG,
-                        error, PDERROR, "Failed to get field [%s]",
-                        FIELD_NAME_AUTOINCREMENT ) ;
+               PD_CHECK( obj.hasField( FIELD_NAME_AUTOINC_FIELD ),
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT );
                autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( obj ) ;
                PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
                          "Failed to allocate autoincrement field argument" ) ;
                rc = autoIncField->parseArgument() ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
-                            "rc: %d", rc ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to parse autoincrement argument, rc: %d",
+                            rc ) ;
 
                _autoIncFieldList.push_back( autoIncField ) ;
             }
@@ -1397,7 +1416,7 @@ namespace engine
          else
          {
             rc = SDB_INVALIDARG ;
-            PD_RC_CHECK( rc, PDERROR, "Invalid field argument[%s], rc: %d", 
+            PD_RC_CHECK( rc, PDERROR, "Invalid field argument[%s], rc: %d",
                         _argument.toString( false, false ).c_str(), rc ) ;
          }
          parsedArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ) ;
@@ -1410,7 +1429,8 @@ namespace engine
       {
          argElement = _argument.getField( FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
          PD_CHECK( Bool == argElement.type(), SDB_INVALIDARG, error, PDERROR,
-                   "Failed to get field [%s]", FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
+                   "Failed to get field [%s]",
+                   FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
          _autoRebalance = argElement.boolean() ;
          parsedArgumentMask( UTIL_CL_AUTOREBALANCE_FIELD ) ;
          setFlags( RTN_ALTER_TASK_FLAG_SHARDONLY ) ;
@@ -1428,7 +1448,8 @@ namespace engine
       if ( _argument.hasField( FIELD_NAME_W ) )
       {
          argElement = _argument.getField( FIELD_NAME_W ) ;
-         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( NumberInt == argElement.type(),
+                   SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_W ) ;
          _replSize = argElement.numberInt() ;
          if ( _replSize == 0 )
@@ -1676,7 +1697,8 @@ namespace engine
       if ( _argument.hasField( FIELD_NAME_PAGE_SIZE ) )
       {
          argElement = _argument.getField( FIELD_NAME_PAGE_SIZE ) ;
-         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( NumberInt == argElement.type(),
+                   SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_PAGE_SIZE ) ;
          if ( 0 != argElement.numberInt() )
          {
@@ -1698,7 +1720,8 @@ namespace engine
       if ( _argument.hasField( FIELD_NAME_LOB_PAGE_SIZE ) )
       {
          argElement = _argument.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
-         PD_CHECK( NumberInt == argElement.type(), SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( NumberInt == argElement.type(),
+                   SDB_INVALIDARG, error, PDERROR,
                    "Failed to get field [%s]", FIELD_NAME_LOB_PAGE_SIZE ) ;
          if ( 0 != argElement.numberInt() )
          {
@@ -1713,8 +1736,8 @@ namespace engine
                     _lobPageSize == DMS_PAGE_SIZE128K ||
                     _lobPageSize == DMS_PAGE_SIZE256K ||
                     _lobPageSize == DMS_PAGE_SIZE512K,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Failed to get field [%s]: %s must be 4K/8K/16K/32K/64K/128K/256K/512K",
+                    SDB_INVALIDARG, error, PDERROR, "Failed to get field "
+                    "[%s]: %s must be 4K/8K/16K/32K/64K/""128K/256K/512K",
                     FIELD_NAME_LOB_PAGE_SIZE, FIELD_NAME_LOB_PAGE_SIZE ) ;
          parsedArgumentMask( UTIL_CS_LOBPAGESIZE_FIELD ) ;
       }
@@ -1970,7 +1993,8 @@ namespace engine
       {
          argElement = _argument.getField( FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
          PD_CHECK( Bool == argElement.type(), SDB_INVALIDARG, error, PDERROR,
-                   "Failed to get field [%s]", FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
+                   "Failed to get field [%s]",
+                   FIELD_NAME_DOMAIN_AUTO_REBALANCE ) ;
          _autoRebalance = argElement.boolean() ;
          parsedArgumentMask( UTIL_DOMAIN_AUTOREBALANCE_FIELD ) ;
       }

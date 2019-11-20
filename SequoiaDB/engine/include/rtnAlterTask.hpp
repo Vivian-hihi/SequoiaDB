@@ -717,7 +717,8 @@ namespace engine
 
          OSS_INLINE BOOLEAN containCompressArgument () const
          {
-            return _compressArgument.getArgumentMask() != RTN_ALTER_TASK_FLAG_EMPTY ;
+            return _compressArgument.getArgumentMask() !=
+                                                RTN_ALTER_TASK_FLAG_EMPTY ;
          }
 
          OSS_INLINE const rtnCLCompressArgument & getCompressArgument () const
@@ -727,7 +728,8 @@ namespace engine
 
          OSS_INLINE BOOLEAN containExtOptionArgument () const
          {
-            return _extOptionArgument.getArgumentMask() != RTN_ALTER_TASK_FLAG_EMPTY ;
+            return _extOptionArgument.getArgumentMask() !=
+                                                RTN_ALTER_TASK_FLAG_EMPTY ;
          }
 
          OSS_INLINE const rtnCLExtOptionArgument & getExtOptionArgument () const

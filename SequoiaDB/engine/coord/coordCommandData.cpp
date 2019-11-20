@@ -693,7 +693,8 @@ namespace engine
       }
 
       rc = _buildPostTasks( _arguments.getPostTasks(), taskDesc ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build post task condition, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build post task condition, rc: %d", rc ) ;
 
       rc = msgBuildQueryMsg( &msgBuff, &msgSize, CAT_TASK_INFO_COLLECTION,
                              0, 0, 0, -1, &taskDesc, NULL, NULL, NULL,
@@ -2272,7 +2273,8 @@ namespace engine
          BSONElement group ;
          CoordGroupList groupList ;
 
-         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ), SDB_SYS, error, PDERROR,
+         PD_CHECK( iterTask->hasField( FIELD_NAME_TASKTYPE ),
+                   SDB_SYS, error, PDERROR,
                    "Faield to get task field[%s]", FIELD_NAME_TASKTYPE);
          ele = iterTask->getField( FIELD_NAME_TASKTYPE ) ;
          PD_CHECK( NumberInt == ele.type(), SDB_SYS, error, PDERROR,
@@ -2285,24 +2287,27 @@ namespace engine
             {
                group = iterTask->getField( FIELD_NAME_TARGETID ) ;
                PD_CHECK( NumberInt == group.type(), SDB_SYS, error, PDERROR,
-                         "Failed to parse task info [%s]: target id is not a integer",
-                         iterTask->toString().c_str() ) ;
+                         "Failed to parse task info [%s]: target id is not a "
+                         "integer", iterTask->toString().c_str() ) ;
 
                groupList[ group.Int() ] = group.Int() ;
 
-               rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
-                                      0, 0, 0, -1, &(*iterTask), NULL, NULL, NULL,
-                                      cb ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
+               rc = msgBuildQueryMsg( &msgBuff, &msgSize,
+                                      CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                      0, 0, 0, -1,
+                                      &(*iterTask), NULL, NULL, NULL, cb ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to build split message, rc: %d", rc ) ;
 
                msgHeader = (MsgHeader *)msgBuff ;
-               rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList, NULL, NULL ) ;
+               rc = executeOnCL( msgHeader, cb, name, FALSE, &groupList,
+                                 NULL, NULL ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to notify group [%d] to split "
                             "collection [%s], rc: %d", group.Int(), name, rc ) ;
                ele = iterTask->getField( FIELD_NAME_TASKID ) ;
                PD_CHECK( ele.isNumber(), SDB_SYS, error, PDERROR,
-                         "Failed to parse task info [%s]: task id is not a integer",
-                         iterTask->toString().c_str() ) ;
+                         "Failed to parse task info [%s]: task id is not a "
+                         "integer", iterTask->toString().c_str() ) ;
                taskId = ele.Long() ;
                arrBuilder.append( (INT64)( taskId ) ) ;
                needWait = TRUE ;
@@ -2313,16 +2318,17 @@ namespace engine
                const CHAR * seqName = NULL ;
                ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ ) ;
                PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
-                         "Failed to parse task[%s]: type of task sequence name is not a string",
-                         iterTask->toString().c_str() ) ;
+                         "Failed to parse task[%s]: type of task sequence name "
+                         "is not a string", iterTask->toString().c_str() ) ;
                seqName = ele.valuestr() ;
-               PD_CHECK( iterTask->hasField( FIELD_NAME_AUTOINC_SEQ_ID ), SDB_SYS, error, PDERROR,
+               PD_CHECK( iterTask->hasField( FIELD_NAME_AUTOINC_SEQ_ID ),
+                         SDB_SYS, error, PDERROR,
                          "Failed to get field[%s] on task[%s]",
                          iterTask->toString().c_str() ) ;
                ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ_ID ) ;
                PD_CHECK( ele.isNumber(), SDB_SYS, error, PDERROR,
-                         "Failed to parse task[%s]: type of sequence id is not a oid",
-                         iterTask->toString().c_str() ) ;
+                         "Failed to parse task[%s]: type of sequence id is not "
+                         "a oid", iterTask->toString().c_str() ) ;
                seqID = ele.Long() ;
                rc = coordSequenceInvalidateCache( seqName, seqID, cb );
                break ;
@@ -2330,7 +2336,8 @@ namespace engine
             default :
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Unkown post task type[%s]", iterTask->toString().c_str() ) ;
+               PD_LOG( PDERROR, "Unkown post task type[%s]",
+                       iterTask->toString().c_str() ) ;
                break ;
             }
          }
@@ -2397,8 +2404,10 @@ namespace engine
       INT64 contextID = -1 ;
       rtnContextBuf buf ;
 
-      rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
-                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL, cb ) ;
+      rc = msgBuildQueryMsg( &msgBuff, &msgSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                             0, 0, 0, -1,
+                             &taskDesc, NULL, NULL, NULL, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build query task, rc: %d", rc ) ;
 
       factory = coordGetFactory() ;
@@ -2446,9 +2455,12 @@ namespace engine
       try
       {
          BSONObj taskDesc = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
-         rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
-                                0, 0, 0, -1, &taskDesc, NULL, NULL, NULL, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
+         rc = msgBuildQueryMsg( &msgBuff, &msgSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                0, 0, 0, -1,
+                                &taskDesc, NULL, NULL, NULL, cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to build split message, rc: %d", rc ) ;
       }
       catch ( exception & e )
       {
@@ -2580,12 +2592,13 @@ namespace engine
 
          if ( NULL != sequenceName )
          {
-            tmpRC = coordSequenceInvalidateCache( sequenceName, sequenceID, cb ) ;
+            tmpRC = coordSequenceInvalidateCache( sequenceName, sequenceID,
+                                                  cb ) ;
             if ( SDB_OK != tmpRC )
             {
-               PD_LOG( PDWARNING, "Failed to call invalidate sequence cache [%s] "
-                       "of collection [%s], rc: %d", sequenceName, collection,
-                       tmpRC ) ;
+               PD_LOG( PDWARNING, "Failed to call invalidate sequence "
+                       "cache [%s] of collection [%s], rc: %d",
+                       sequenceName, collection, tmpRC ) ;
                if ( SDB_OK == rc )
                {
                   rc = tmpRC ;

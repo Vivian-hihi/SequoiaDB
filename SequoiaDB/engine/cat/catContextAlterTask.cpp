@@ -180,7 +180,7 @@ namespace engine
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
             const rtnCLEnableShardingTask * localTask =
-                        dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
+                     dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get task" ) ;
 
@@ -230,8 +230,9 @@ namespace engine
       {
          rc = catGetCLTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
                                        taskCount ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get task count of collection [%s], "
-                      "rc: %d", _dataName.c_str(), rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get task count of collection [%s], rc: %d",
+                      _dataName.c_str(), rc ) ;
 
          PD_CHECK( 0 == taskCount, SDB_OPERATION_CONFLICT, error, PDERROR,
                    "Failed to [%s]: should have no split tasks",
@@ -419,19 +420,22 @@ namespace engine
       {
          // Special case to alter sharding key of main-collection without any
          // sub-collections
-         PD_CHECK( 0 == cataSet.getItemNum(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                   "Failed to [%s]: Could not enable sharding in main-collection",
-                   _task->getActionName() ) ;
+         PD_CHECK( 0 == cataSet.getItemNum(),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to [%s]: Could not enable sharding in "
+                   "main-collection", _task->getActionName() ) ;
       }
       else
       {
-         PD_CHECK( !cataSet.isMainCL(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                   "Failed to [%s]: Could not enable sharding in main-collection",
-                   _task->getActionName() ) ;
+         PD_CHECK( !cataSet.isMainCL(),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to [%s]: Could not enable sharding in "
+                   "main-collection", _task->getActionName() ) ;
 
          rc = _checkAutoSplit( cataSet, argument, cb, lockMgr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to [%s]: Failed to check AutoSplit, "
-                      "rc: %d", _task->getActionName(), rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to [%s]: Failed to check AutoSplit, rc: %d",
+                      _task->getActionName(), rc ) ;
 
          if ( UTIL_CL_AUTOSPLIT_FIELD != argument.getArgumentMask() )
          {
@@ -478,8 +482,10 @@ namespace engine
       PD_CHECK( !cataSet.isMainCL(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                 "Failed to [%s]: Could not disable sharding in main-collection",
                 _task->getActionName() ) ;
-      PD_CHECK( 1 == cataSet.groupCount(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Failed to [%s]: should have one group", _task->getActionName() ) ;
+      PD_CHECK( 1 == cataSet.groupCount(),
+                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                "Failed to [%s]: should have one group",
+                _task->getActionName() ) ;
       PD_CHECK( !OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_CAPPED ),
                 SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                 "Failed to check [%s]: collection [%s] is capped",
@@ -508,8 +514,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB_CATCTXALTERCLTASK__CHKENABLECOMPRESS ) ;
 
       PD_CHECK( !cataSet.isMainCL(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Failed to [%s]: Could not enable compression in main-collection",
-                _task->getActionName() ) ;
+                "Failed to [%s]: Could not enable compression in "
+                "main-collection", _task->getActionName() ) ;
 
       PD_CHECK( !OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_CAPPED ),
                 SDB_OPTION_NOT_SUPPORT, error, PDERROR,
@@ -539,8 +545,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB_CATCTXALTERCLTASK__CHKDISABLECOMPRESS ) ;
 
       PD_CHECK( !cataSet.isMainCL(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Failed to [%s]: Could not disable compression in main-collection",
-                _task->getActionName() ) ;
+                "Failed to [%s]: Could not disable compression in "
+                "main-collection", _task->getActionName() ) ;
 
       PD_CHECK( !OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_CAPPED ),
                 SDB_OPTION_NOT_SUPPORT, error, PDERROR,
@@ -571,27 +577,30 @@ namespace engine
 
       const rtnCLSetAttributeTask * localTask =
                   dynamic_cast< const rtnCLSetAttributeTask * >( _task ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error,
+                PDERROR, "Failed to get task" ) ;
 
       if ( localTask->containShardingArgument() )
       {
          rc = _checkEnableShard( cataSet, localTask->getShardingArgument(),
                                  cb, lockMgr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check shard arguments, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check shard arguments, rc: %d", rc ) ;
       }
 
       if ( localTask->containCompressArgument() )
       {
          rc = _checkEnableCompress( cataSet, cb, lockMgr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check compress arguments, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check compress arguments, rc: %d", rc ) ;
       }
 
       if ( localTask->containExtOptionArgument() )
       {
          PD_CHECK( OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_CAPPED ),
                    SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                   "Failed to check capped arguments: collection [%s] is not capped",
-                   _dataName.c_str() ) ;
+                   "Failed to check capped arguments: collection [%s] is not "
+                   "capped", _dataName.c_str() ) ;
       }
 
       if ( localTask->testArgumentMask( UTIL_CL_AUTOIDXID_FIELD ) )
@@ -696,7 +705,8 @@ namespace engine
       autoIncFieldsList fieldList ;
       const rtnCLDropAutoincFieldTask* localTask =
                   dynamic_cast< const rtnCLDropAutoincFieldTask * >( _task ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error,
+                PDERROR, "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
                 "Failed to get autoinc argument" ) ;
       fieldList = localTask->getAutoincrementArgument() ;
@@ -755,7 +765,7 @@ namespace engine
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
             const rtnCLEnableShardingTask * localTask =
-                        dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
+                     dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get task" ) ;
 
@@ -786,8 +796,10 @@ namespace engine
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get enable compression task" ) ;
 
-            rc = _buildEnableCompressFields( cataSet, localTask->getCompressArgument(),
-                                             attribute, setBuilder, unsetBuilder ) ;
+            rc = _buildEnableCompressFields( cataSet,
+                                             localTask->getCompressArgument(),
+                                             attribute,
+                                             setBuilder, unsetBuilder ) ;
             break ;
          }
          case RTN_ALTER_CL_DISABLE_COMPRESS :
@@ -806,7 +818,7 @@ namespace engine
          {
             autoIncFieldsList fieldList ;
             const rtnCLCreateAutoincFieldTask* localTask =
-                        dynamic_cast< const rtnCLCreateAutoincFieldTask * >( _task ) ;
+                  dynamic_cast< const rtnCLCreateAutoincFieldTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get task" ) ;
             fieldList = localTask->getAutoincrementArgument() ;
@@ -820,7 +832,7 @@ namespace engine
          {
             autoIncFieldsList fieldList ;
             const rtnCLDropAutoincFieldTask* localTask =
-                        dynamic_cast< const rtnCLDropAutoincFieldTask * >( _task ) ;
+                   dynamic_cast< const rtnCLDropAutoincFieldTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get task" ) ;
             fieldList = localTask->getAutoincrementArgument() ;
@@ -947,7 +959,8 @@ namespace engine
             break ;
          }
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to build rollback fields, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build rollback fields, rc: %d", rc ) ;
 
       // The attribute is changed
       if ( attribute != cataSet.getAttribute() )
@@ -1002,7 +1015,7 @@ namespace engine
             clsCatalogSet::POSITION position = cataSet.getFirstItem() ;
             clsCatalogItem * cataItem = cataSet.getNextItem( position ) ;
 
-            PD_CHECK( NULL != cataItem && NULL == cataSet.getNextItem( position ),
+            PD_CHECK( cataItem && NULL == cataSet.getNextItem( position ),
                       SDB_SYS, error, PDERROR, "Failed to [%s]: should "
                       "have one group", _task->getActionName() ) ;
 
@@ -1012,7 +1025,8 @@ namespace engine
                                     cataItem->getGroupName() ) ;
             if ( argument.isHashSharding() )
             {
-               rc = catBuildInitHashBound( lowBound, upBound, argument.getPartition() ) ;
+               rc = catBuildInitHashBound( lowBound, upBound,
+                                           argument.getPartition() ) ;
             }
             else
             {
@@ -1020,8 +1034,8 @@ namespace engine
                rc = catBuildInitRangeBound( argument.getShardingKey(), order,
                                             lowBound, upBound ) ;
             }
-            PD_RC_CHECK( rc, PDWARNING, "Failed to build cata info bound, rc: %d",
-                         rc ) ;
+            PD_RC_CHECK( rc, PDWARNING,
+                         "Failed to build cata info bound, rc: %d", rc ) ;
 
             cataItemBuilder.append ( CAT_LOWBOUND_NAME, lowBound ) ;
             cataItemBuilder.append ( CAT_UPBOUND_NAME, upBound ) ;
@@ -1032,10 +1046,12 @@ namespace engine
          setBuilder.append( CAT_SHARDING_TYPE, argument.isHashSharding() ?
                                                FIELD_NAME_SHARDTYPE_HASH :
                                                FIELD_NAME_SHARDTYPE_RANGE ) ;
-         setBuilder.appendBool( CAT_ENSURE_SHDINDEX, argument.isEnsureShardingIndex() ) ;
+         setBuilder.appendBool( CAT_ENSURE_SHDINDEX,
+                                argument.isEnsureShardingIndex() ) ;
          if( argument.isHashSharding() )
          {
-            setBuilder.append( CAT_SHARDING_PARTITION, argument.getPartition() ) ;
+            setBuilder.append( CAT_SHARDING_PARTITION,
+                               argument.getPartition() ) ;
 
             /// optimize query on hash-sharding only sdb's version >= 1.12
             /// update version since 1.12.4
@@ -1045,9 +1061,10 @@ namespace engine
       else if ( argument.getArgumentMask() == UTIL_CL_SHDKEY_FIELD &&
                 cataSet.isMainCL() )
       {
-         PD_CHECK( 0 == cataSet.getItemNum(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                   "Failed to [%s]: Could not enable sharding in main-collection",
-                   _task->getActionName() ) ;
+         PD_CHECK( 0 == cataSet.getItemNum(),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to [%s]: Could not enable sharding in "
+                   "main-collection", _task->getActionName() ) ;
          setBuilder.append( CAT_SHARDINGKEY_NAME, argument.getShardingKey() ) ;
       }
       else if ( argument.getArgumentMask() != UTIL_CL_AUTOSPLIT_FIELD )
@@ -1151,8 +1168,10 @@ namespace engine
          {
             OSS_BIT_SET( attribute, DMS_MB_ATTR_COMPRESSED ) ;
 
-            setBuilder.append( CAT_COMPRESSIONTYPE, argument.getCompressorType() ) ;
-            setBuilder.append( FIELD_NAME_COMPRESSIONTYPE_DESC, argument.getCompressionName() ) ;
+            setBuilder.append( CAT_COMPRESSIONTYPE,
+                               argument.getCompressorType() ) ;
+            setBuilder.append( FIELD_NAME_COMPRESSIONTYPE_DESC,
+                               argument.getCompressionName() ) ;
          }
       }
       else
@@ -1215,8 +1234,8 @@ namespace engine
 
       PD_CHECK( OSS_BIT_TEST( cataSet.getAttribute(), DMS_MB_ATTR_CAPPED ),
                 SDB_INVALIDARG, error, PDERROR,
-                "Failed to check capped arguments: collection [%s] is not capped",
-                _dataName.c_str() ) ;
+                "Failed to check capped arguments: collection [%s] is not "
+                "capped", _dataName.c_str() ) ;
 
       if ( !cataSet.isMainCL() )
       {
@@ -1226,7 +1245,8 @@ namespace engine
          }
          if ( argument.testArgumentMask( UTIL_CL_MAXREC_FIELD ) )
          {
-            setBuilder.append( CAT_CL_MAX_RECNUM, (INT64)argument.getMaxRec() ) ;
+            setBuilder.append( CAT_CL_MAX_RECNUM,
+                               (INT64)argument.getMaxRec() ) ;
          }
          if ( argument.testArgumentMask( UTIL_CL_OVERWRITE_FIELD ) )
          {
@@ -1260,7 +1280,8 @@ namespace engine
 
       const rtnCLSetAttributeTask * localTask =
                   dynamic_cast< const rtnCLSetAttributeTask * >( _task ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error,
+                PDERROR, "Failed to get task" ) ;
 
       if ( localTask->containShardingArgument() )
       {
@@ -1274,11 +1295,13 @@ namespace engine
          _rollbackShardArgument.setArgumentMask( argument.getArgumentMask() ) ;
 
          rc = _fillShardingArgument( cataSet, argument ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to fill sharding arguments, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to fill sharding arguments, rc: %d", rc ) ;
 
          rc = _buildEnableShardFields( cataSet, argument, _postAutoSplit,
                                        attribute, setBuilder, unsetBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build sharding fields, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to build sharding fields, rc: %d", rc ) ;
       }
 
       if ( localTask->containCompressArgument() )
@@ -1289,12 +1312,15 @@ namespace engine
          {
             rc = _buildEnableCompressFields( cataSet, argument, attribute,
                                              setBuilder, unsetBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to build shard fields, rc: %d", rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to build shard fields, rc: %d", rc ) ;
          }
          else
          {
-            rc = _buildDisableCompressFields( cataSet, attribute, setBuilder, unsetBuilder ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to build shard fields, rc: %d", rc ) ;
+            rc = _buildDisableCompressFields( cataSet, attribute,
+                                              setBuilder, unsetBuilder ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to build shard fields, rc: %d", rc ) ;
          }
       }
 
@@ -1302,15 +1328,18 @@ namespace engine
       {
          rc = _buildExtOptionFields( cataSet, localTask->getExtOptionArgument(),
                                      attribute, setBuilder, unsetBuilder ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build capped fields, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to build capped fields, rc: %d", rc ) ;
       }
 
       if ( localTask->containAutoincArgument() && !_subCLOFMainCL )
       {
          autoIncFieldsList fieldList ;
          fieldList = localTask->getAutoincFieldArgument() ;
-         rc = _buildSetAutoincFields( cataSet, fieldList, setBuilder, unsetBuilder, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build set autoinc fields, rc: %d", rc ) ;
+         rc = _buildSetAutoincFields( cataSet, fieldList,
+                                      setBuilder, unsetBuilder, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to build set autoinc fields, rc: %d", rc ) ;
          _rollbackAutoIncFields = fieldList ;
       }
 
@@ -1345,7 +1374,8 @@ namespace engine
 
       if ( localTask->testArgumentMask( UTIL_CL_AUTOREBALANCE_FIELD ) )
       {
-         setBuilder.appendBool( CAT_DOMAIN_AUTO_REBALANCE, localTask->isAutoRebalance() ) ;
+         setBuilder.appendBool( CAT_DOMAIN_AUTO_REBALANCE,
+                                localTask->isAutoRebalance() ) ;
       }
 
    done :
@@ -1377,8 +1407,8 @@ namespace engine
          {
             const clsAutoIncItem *field = NULL ;
             fieldName = fieldList[i]->getFieldName() ;
-            PD_CHECK( fieldName, SDB_SYS, error, PDERROR, "Failed to get field "
-                      "name" ) ;
+            PD_CHECK( fieldName, SDB_SYS, error,
+                      PDERROR, "Failed to get field name" ) ;
             field = autoIncSet->find( fieldName ) ;
             PD_CHECK( NULL != field, SDB_AUTOINCREMENT_FIELD_NOT_EXIST,
                      error, PDERROR, "Field[%s] does not exist on "
@@ -1388,8 +1418,8 @@ namespace engine
                const CHAR *generated = NULL ;
                generated = field->generated() ;
                PD_CHECK( generated, SDB_SYS, error, PDERROR,
-                         "Invalid generated type[%d] in catalog sequence field[%s]",
-                         field->generatedType(), field->fieldName() ) ;
+                         "Invalid generated type[%d] in catalog sequence field"
+                         "[%s]", field->generatedType(), field->fieldName() ) ;
                if( generated &&
                    0 != ossStrcmp( generated, fieldList[i]->getGenerated() ) )
                {
@@ -1400,14 +1430,16 @@ namespace engine
                   newFieldBld.append( CAT_AUTOINC_GENERATED,
                                       fieldList[i]->getGenerated() ) ;
                   PD_CHECK( UTIL_SEQUENCEID_NULL != field->sequenceID(),
-                            SDB_SYS, error, PDERROR, "Catalog is invalid, failed "
-                            "to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
+                            SDB_SYS, error, PDERROR,
+                            "Catalog is invalid, failed to get field[%s]",
+                            FIELD_NAME_AUTOINC_SEQ_ID ) ;
                   newFieldBld.append( FIELD_NAME_AUTOINC_SEQ_ID,
                                       (INT64)field->sequenceID() ) ;
                   autoIncSet->erase( fieldName ) ;
                   rc = autoIncSet->insert( newFieldBld.obj() ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to insert autoinc field[%s], "
-                               "rc: %d", fieldName, rc ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Failed to insert autoinc field[%s], rc: %d",
+                               fieldName, rc ) ;
                   hasChanged = TRUE ;
                }
                if( addRbk )
@@ -1467,8 +1499,9 @@ namespace engine
             newFieldBld.append( FIELD_NAME_AUTOINC_SEQ, seqName ) ;
             newFieldBld.append( FIELD_NAME_AUTOINC_FIELD, fieldName ) ;
             hasSetGen = fieldList[i]->testArgumentMask( UTIL_CL_AUTOINC_GENERATED_FIELD ) ;
-            newFieldBld.append( CAT_AUTOINC_GENERATED,  hasSetGen ?
-                                fieldList[i]->getGenerated() : CAT_GENERATED_DEFAULT ) ;
+            newFieldBld.append( CAT_AUTOINC_GENERATED,
+                                hasSetGen ? fieldList[i]->getGenerated() :
+                                            CAT_GENERATED_DEFAULT ) ;
             ID = fieldList[i]->getID() ;
             PD_CHECK( ID != UTIL_SEQUENCEID_NULL, SDB_SYS, error, PDERROR,
                       "Failed to get field[%s]", FIELD_NAME_AUTOINC_SEQ_ID ) ;
@@ -1636,7 +1669,8 @@ namespace engine
             {
                const rtnCLEnableShardingTask * localTask =
                            dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
-               PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+               PD_CHECK( NULL != localTask, SDB_SYS, error,
+                         PDERROR, "Failed to get task" ) ;
 
                if ( cataSet.groupCount() == 1 &&
                     cataSet.isHashSharding() )
@@ -1681,7 +1715,7 @@ namespace engine
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
          {
             const rtnCLDropAutoincFieldTask* localTask =
-                        dynamic_cast< const rtnCLDropAutoincFieldTask * >( _task ) ;
+                    dynamic_cast< const rtnCLDropAutoincFieldTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get task" ) ;
             autoIncFieldsList fldList ;
@@ -1744,15 +1778,15 @@ namespace engine
          UINT32 endBound = totalBound ;
          UINT32 beginBound = totalBound - avgBound ;
 
-         for ( CAT_DOMAIN_GROUP_MAP::const_iterator iterGroup = dstGroups.begin() ;
-               iterGroup != dstGroups.end();
-               iterGroup ++ )
+         for ( CAT_DOMAIN_GROUP_MAP::const_iterator it = dstGroups.begin() ;
+               it != dstGroups.end();
+               it ++ )
          {
             BSONObj splitInfo ;
             UINT32 dstGroupID = CAT_INVALID_GROUPID ;
             INT32 version = 0 ;
             UINT64 taskID = CLS_INVALID_TASKID ;
-            const CHAR * dstGroup = iterGroup->first.c_str() ;
+            const CHAR * dstGroup = it->first.c_str() ;
 
             if ( 0 == ossStrcmp( srcGroup, dstGroup ) )
             {
@@ -1769,7 +1803,8 @@ namespace engine
             rc = catBuildHashSplitTask( collection, cataSet.clUniqueID(),
                                         srcGroup, dstGroup,
                                         beginBound, endBound, splitInfo ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to build split info, rc: %d", rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to build split info, rc: %d", rc ) ;
 
             rc = catSplitReady( splitInfo, taskID, FALSE, cb, w,
                                 dstGroupID, version ) ;
@@ -1784,7 +1819,8 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDINFO, "split range size: %d, do nothing.", dstGroups.size() ) ;
+         PD_LOG( PDINFO,
+                 "split range size: %d, do nothing.", dstGroups.size() ) ;
       }
 
    done :
@@ -1838,7 +1874,8 @@ namespace engine
             goto done ;
          }
          taskID = catCB->getCatlogueMgr()->assignTaskID() ;
-         PD_CHECK( taskID != CLS_INVALID_TASKID, SDB_INVALIDARG, error, PDERROR,
+         PD_CHECK( taskID != CLS_INVALID_TASKID,
+                   SDB_INVALIDARG, error, PDERROR,
                    "Invalid task ID for sequence task" ) ;
          seqName = field->sequenceName() ;
          bld.append( CAT_TASKID_NAME, (INT64)taskID ) ;
@@ -1951,8 +1988,9 @@ namespace engine
          }
          else
          {
-            PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s] from collection "
-                         "space [%s], rc: %d", CAT_DOMAIN_NAME, szSpace, rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get field [%s] from collection space [%s], "
+                         "rc: %d", CAT_DOMAIN_NAME, szSpace, rc ) ;
          }
       }
 
@@ -1969,17 +2007,18 @@ namespace engine
          if ( argument.testArgumentMask( UTIL_CL_SHDTYPE_FIELD ) )
          {
             // Altering to hash sharding
-            PD_CHECK( argument.isHashSharding(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                      "Failed to [%s]: enable AutoSplit should be hash sharding",
-                      _task->getActionName() ) ;
+            PD_CHECK( argument.isHashSharding(),
+                      SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                      "Failed to [%s]: enable AutoSplit should be hash "
+                      "sharding", _task->getActionName() ) ;
          }
          else
          {
             // Already hash sharding
             PD_CHECK( cataSet.isHashSharding() || argument.isHashSharding(),
                       SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                      "Failed to [%s]: enable AutoSplit should be hash sharding",
-                      _task->getActionName() ) ;
+                      "Failed to [%s]: enable AutoSplit should be hash "
+                      "sharding", _task->getActionName() ) ;
          }
 
          PD_LOG( PDDEBUG, "[%s] on collection [%s]: AutoSplit is set to TRUE",
@@ -2042,8 +2081,9 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_CATCTXALTERSEQUENCETASK_CHECK_INT ) ;
       const rtnCLSetAttributeTask * localTask =
-                        dynamic_cast< const rtnCLSetAttributeTask * >( getTask() ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+                   dynamic_cast< const rtnCLSetAttributeTask * >( getTask() ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error,
+                PDERROR, "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
                 "Failed to get autoinc argument" ) ;
       fldList = localTask->getAutoincFieldArgument() ;
@@ -2077,7 +2117,8 @@ namespace engine
 
       const rtnCLSetAttributeTask * localTask =
                    dynamic_cast< const rtnCLSetAttributeTask * >( getTask() ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error,
+                PDERROR, "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
                 "Failed to get autoinc argument" ) ;
 
@@ -2098,7 +2139,8 @@ namespace engine
          string seqName = catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ;
          BSONObj seqOpt = catBuildSequenceOptions( fldList[i]->getArgument(),
                                                    UTIL_SEQUENCEID_NULL,
-                                                   fldList[i]->getArgumentMask() ) ;
+                                                   fldList[i]->getArgumentMask()
+                                                 ) ;
 
          BSONObj oldOptions ;
          UINT32 alterMask = UTIL_ARG_FIELD_EMPTY ;
@@ -2164,8 +2206,9 @@ namespace engine
 
          // only rollback what had been changed by alter mask
          rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w, NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to alter sequence[%s] when rollback, "
-                      "rc: %d", seqName, rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to alter sequence[%s] when rollback, rc: %d",
+                      seqName, rc ) ;
       }
 
    done :
@@ -2219,15 +2262,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATESEQUENCETASK_CHECK_INT, "_catCtxCreateSequenceTask::_checkInternal" )
-   INT32 _catCtxCreateSequenceTask::_checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
+   INT32 _catCtxCreateSequenceTask::_checkInternal ( _pmdEDUCB *cb,
+                                                     catCtxLockMgr &lockMgr )
    {
       INT32 rc = SDB_OK ;
       autoIncFieldsList fldList ;
 
       PD_TRACE_ENTRY( SDB_CATCTXCREATESEQUENCETASK_CHECK_INT ) ;
       const rtnCLCreateAutoincFieldTask * localTask =
-                        dynamic_cast< const rtnCLCreateAutoincFieldTask * >( getSeqTask() ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
+           dynamic_cast< const rtnCLCreateAutoincFieldTask * >( getSeqTask() ) ;
+      PD_CHECK( NULL != localTask, SDB_SYS, error,
+                PDERROR, "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
                 "Failed to get autoinc argument" ) ;
 
@@ -2264,7 +2309,7 @@ namespace engine
       catSequenceManager *pSeqMgr = NULL ;
 
       const rtnCLCreateAutoincFieldTask * localTask =
-                dynamic_cast< const rtnCLCreateAutoincFieldTask * >( getSeqTask() ) ;
+           dynamic_cast< const rtnCLCreateAutoincFieldTask * >( getSeqTask() ) ;
       PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                 "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
@@ -2322,9 +2367,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATESEQUENCETASK_ROLLBACK_INT, "_catCtxCreateSequenceTask::_rollbackInternal" )
    INT32 _catCtxCreateSequenceTask::_rollbackInternal ( _pmdEDUCB *cb,
-                                                       SDB_DMSCB *pDmsCB,
-                                                       SDB_DPSCB *pDpsCB,
-                                                       INT16 w )
+                                                        SDB_DMSCB *pDmsCB,
+                                                        SDB_DPSCB *pDpsCB,
+                                                        INT16 w )
    {
       INT32 rc = SDB_OK ;
 
@@ -2376,14 +2421,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPSEQUENCETASK_CHECK_INT, "_catCtxDropSequenceTask::_checkInternal" )
-   INT32 _catCtxDropSequenceTask::_checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr )
+   INT32 _catCtxDropSequenceTask::_checkInternal ( _pmdEDUCB *cb,
+                                                   catCtxLockMgr &lockMgr )
    {
       INT32 rc = SDB_OK ;
       autoIncFieldsList fldList ;
 
       PD_TRACE_ENTRY( SDB_CATCTXDROPSEQUENCETASK_CHECK_INT ) ;
       const rtnCLDropAutoincFieldTask * localTask =
-                 dynamic_cast< const rtnCLDropAutoincFieldTask * >( getSeqTask() ) ;
+             dynamic_cast< const rtnCLDropAutoincFieldTask * >( getSeqTask() ) ;
       PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                 "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
@@ -2423,7 +2469,7 @@ namespace engine
       catSequenceManager *pSeqMgr = NULL ;
 
       const rtnCLDropAutoincFieldTask * localTask =
-                dynamic_cast< const rtnCLDropAutoincFieldTask * >( getSeqTask() ) ;
+             dynamic_cast< const rtnCLDropAutoincFieldTask * >( getSeqTask() ) ;
       PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                 "Failed to get task" ) ;
       PD_CHECK( localTask->containAutoincArgument(), SDB_SYS, error, PDERROR,
@@ -2482,9 +2528,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPSEQUENCETASK_ROLLBACK_INT, "_catCtxDropSequenceTask::_rollbackInternal" )
    INT32 _catCtxDropSequenceTask::_rollbackInternal ( _pmdEDUCB *cb,
-                                                       SDB_DMSCB *pDmsCB,
-                                                       SDB_DPSCB *pDpsCB,
-                                                       INT16 w )
+                                                      SDB_DMSCB *pDmsCB,
+                                                      SDB_DPSCB *pDpsCB,
+                                                      INT16 w )
    {
       INT32 rc = SDB_OK ;
 
@@ -2550,8 +2596,10 @@ namespace engine
       PD_TRACE_ENTRY( SDB_CATCTXALTERCSTASK_CHECK_INT ) ;
 
       // get collection-space
-      rc = catGetAndLockCollectionSpace( _dataName, _boData, cb, &lockMgr, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get the collection space [%s], rc: %d",
+      rc = catGetAndLockCollectionSpace( _dataName, _boData,
+                                         cb, &lockMgr, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get the collection space [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
 
       switch ( _task->getActionType() )
@@ -2661,7 +2709,8 @@ namespace engine
 
       rc = catUpdateCS( _dataName.c_str(), setObject, unsetObject, cb,
                         pDmsCB, pDpsCB, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update collection space [%s], rc: %d",
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to update collection space [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
 
    done :
@@ -2720,7 +2769,8 @@ namespace engine
       {
          const CHAR * domain = NULL ;
          BSONElement domainElement = _boData.getField( CAT_DOMAIN_NAME ) ;
-         PD_CHECK( String == domainElement.type(), SDB_CAT_CORRUPTION, error, PDERROR,
+         PD_CHECK( String == domainElement.type(),
+                   SDB_CAT_CORRUPTION, error, PDERROR,
                    "Failed to get domain" ) ;
          domain = domainElement.valuestr() ;
 
@@ -2808,12 +2858,14 @@ namespace engine
          // The new domain should contain all groups of current collection space
          const CHAR * domain = localTask->getDomain() ;
          rc = _checkDomainGroups( domain, cb, lockMgr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check domain groups, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check domain groups, rc: %d", rc ) ;
       }
       else
       {
          rc = _checkGroups( cb, lockMgr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check collection space [%s], rc: %d",
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check collection space [%s], rc: %d",
                       _dataName.c_str(), rc ) ;
       }
 
@@ -2821,7 +2873,8 @@ namespace engine
       {
          // The collection space should be empty
          rc = _checkEmptyCollectionSpace( cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check collection space [%s], rc: %d",
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check collection space [%s], rc: %d",
                       _dataName.c_str(), rc ) ;
       }
 
@@ -2829,8 +2882,8 @@ namespace engine
       {
          // The collection space should not have data
          PD_CHECK( 0 == _groups.size(), SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
-                   "Failed to check alter task [%s]: collection space [%s] is not empty",
-                   _task->getActionName(), _dataName.c_str() ) ;
+                   "Failed to check alter task [%s]: collection space [%s] is "
+                   "not empty", _task->getActionName(), _dataName.c_str() ) ;
       }
 
       if ( localTask->getArgumentMask() == UTIL_CS_DOMAIN_FIELD )
@@ -2937,11 +2990,13 @@ namespace engine
             const CHAR * collection = NULL ;
             BSONElement beCollection = iter.next() ;
             BSONObj boCollection ;
-            PD_CHECK( Object == beCollection.type(), SDB_CAT_CORRUPTION, error, PDERROR,
+            PD_CHECK( Object == beCollection.type(),
+                      SDB_CAT_CORRUPTION, error, PDERROR,
                       "Invalid collection record field type: %d",
                       beCollection.type() ) ;
             boCollection = beCollection.embeddedObject() ;
-            rc = rtnGetStringElement( boCollection, CAT_COLLECTION_NAME, &collection ) ;
+            rc = rtnGetStringElement( boCollection, CAT_COLLECTION_NAME,
+                                      &collection ) ;
             PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDERROR,
                       "Get field [%s] failed, rc: %d",
                       CAT_COLLECTION_NAME, rc ) ;
@@ -2950,7 +3005,8 @@ namespace engine
             clFullName += "." ;
             clFullName += collection ;
 
-            rc = catGetAndLockCollection( clFullName, boCollection, cb, NULL, SHARED ) ;
+            rc = catGetAndLockCollection( clFullName, boCollection,
+                                          cb, NULL, SHARED ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get the collection [%s]",
                          clFullName.c_str() ) ;
 
@@ -2999,7 +3055,8 @@ namespace engine
                 "Failed to get collections" ) ;
       boCollections = element.embeddedObject() ;
 
-      PD_CHECK( boCollections.nFields() == 0, SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
+      PD_CHECK( boCollections.nFields() == 0,
+                SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
                 "Failed to check collection space, the collection space is not "
                 "empty" ) ;
 
@@ -3053,11 +3110,13 @@ namespace engine
             }
             if ( localTask->testArgumentMask( UTIL_CS_PAGESIZE_FIELD ) )
             {
-               setBuilder.append( CAT_PAGE_SIZE_NAME, localTask->getPageSize() ) ;
+               setBuilder.append( CAT_PAGE_SIZE_NAME,
+                                  localTask->getPageSize() ) ;
             }
             if ( localTask->testArgumentMask( UTIL_CS_LOBPAGESIZE_FIELD ) )
             {
-               setBuilder.append( CAT_LOB_PAGE_SZ_NAME, localTask->getLobPageSize() ) ;
+               setBuilder.append( CAT_LOB_PAGE_SZ_NAME,
+                                  localTask->getLobPageSize() ) ;
             }
             if ( localTask->testArgumentMask( UTIL_CS_CAPPED_FIELD ) )
             {
@@ -3153,7 +3212,8 @@ namespace engine
 
       BOOLEAN checkGroups = _task->testArgumentMask( UTIL_DOMAIN_GROUPS_FIELD ) ;
 
-      rc = catGetAndLockDomain( _dataName.c_str(), _boData, cb, &lockMgr, EXCLUSIVE ) ;
+      rc = catGetAndLockDomain( _dataName.c_str(), _boData,
+                                cb, &lockMgr, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get domain [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
 
@@ -3250,15 +3310,18 @@ namespace engine
                dynamic_cast< const rtnDomainSetAttributeTask * >( _task ) ;
          if ( localTask->testArgumentMask( UTIL_DOMAIN_AUTOSPLIT_FIELD ) )
          {
-            builder.appendBool( CAT_DOMAIN_AUTO_SPLIT, localTask->isAutoSplit() ) ;
+            builder.appendBool( CAT_DOMAIN_AUTO_SPLIT,
+                                localTask->isAutoSplit() ) ;
          }
          if ( localTask->testArgumentMask( UTIL_DOMAIN_AUTOREBALANCE_FIELD ) )
          {
-            builder.appendBool( CAT_DOMAIN_AUTO_REBALANCE, localTask->isAutoRebalance() ) ;
+            builder.appendBool( CAT_DOMAIN_AUTO_REBALANCE,
+                                localTask->isAutoRebalance() ) ;
          }
       }
 
-      rc = catUpdateDomain( _dataName.c_str(), builder.obj(), cb, pDmsCB, pDpsCB, w ) ;
+      rc = catUpdateDomain( _dataName.c_str(), builder.obj(),
+                            cb, pDmsCB, pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update domain [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
 
@@ -3284,7 +3347,8 @@ namespace engine
       {
          const RTN_DOMAIN_GROUP_LIST & groups = localTask->getGroups() ;
 
-         PD_CHECK( groups.size() > 0, SDB_CAT_NO_NODEGROUP_INFO, error, PDERROR,
+         PD_CHECK( groups.size() > 0,
+                   SDB_CAT_NO_NODEGROUP_INFO, error, PDERROR,
                    "Failed to check groups: no group is specified" ) ;
 
          rc = _checkAddingGroups( localTask->getGroups(), cb ) ;
@@ -3318,11 +3382,13 @@ namespace engine
       {
          const RTN_DOMAIN_GROUP_LIST & groups = localTask->getGroups() ;
 
-         PD_CHECK( groups.size() > 0, SDB_CAT_NO_NODEGROUP_INFO, error, PDERROR,
+         PD_CHECK( groups.size() > 0,
+                   SDB_CAT_NO_NODEGROUP_INFO, error, PDERROR,
                    "Failed to check groups: no group is specified" ) ;
 
          rc = _checkRemovingGroups( localTask->getGroups(), cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check removing groups, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check removing groups, rc: %d", rc ) ;
       }
       else
       {
@@ -3356,10 +3422,12 @@ namespace engine
          _extractGroups( groups, addingGroups, removingGroups ) ;
 
          rc = _checkAddingGroups( addingGroups, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check adding groups, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check adding groups, rc: %d", rc ) ;
 
          rc = _checkRemovingGroups( removingGroups, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check removing groups, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check removing groups, rc: %d", rc ) ;
       }
       else
       {
@@ -3393,10 +3461,12 @@ namespace engine
          _extractGroups( groups, addingGroups, removingGroups ) ;
 
          rc = _checkAddingGroups( addingGroups, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check adding groups, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check adding groups, rc: %d", rc ) ;
 
          rc = _checkRemovingGroups( removingGroups, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check removing groups, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check removing groups, rc: %d", rc ) ;
       }
       else
       {
@@ -3440,7 +3510,8 @@ namespace engine
          PD_CHECK( CAT_INVALID_GROUPID != groupID,
                    SDB_CLS_NO_GROUP_INFO, error, PDERROR,
                    "Failed to check group [%s]: not exist", groupName ) ;
-         PD_CHECK( DATA_GROUP_ID_BEGIN <= groupID && DATA_GROUP_ID_END >= groupID,
+         PD_CHECK( DATA_GROUP_ID_BEGIN <= groupID &&
+                   DATA_GROUP_ID_END >= groupID,
                    SDB_CAT_IS_NOT_DATAGROUP, error, PDERROR,
                    "Failed to check group [%s]: not data group", groupName ) ;
 
@@ -3457,11 +3528,12 @@ namespace engine
          PD_CHECK( !catCB->isImageEnabled() ||
                    catCB->getCatDCMgr()->groupInImage( groupName ),
                    SDB_CAT_GROUP_HASNOT_IMAGE, error, PDWARNING,
-                   "Failed to check group [%s]: the group that has no image can't "
-                   "be as the collection's location when image is enabled",
+                   "Failed to check group [%s]: the group that has no image can"
+                   " not be as the collection's location when image is enabled",
                    groupName ) ;
 
-         _groupMap.insert( CAT_DOMAIN_GROUP_MAP::value_type( groupName, groupID ) ) ;
+         _groupMap.insert( CAT_DOMAIN_GROUP_MAP::value_type( groupName,
+                                                             groupID ) ) ;
       }
 
    done :
@@ -3509,27 +3581,28 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection spaces for "
                       "domain [%s], rc: %d", _dataName.c_str(), rc ) ;
 
-         for ( ossPoolList< string >::iterator iterCS = collectionSpaces.begin() ;
-               iterCS != collectionSpaces.end() ;
-               iterCS ++ )
+         for ( ossPoolList< string >::iterator itCS = collectionSpaces.begin() ;
+               itCS != collectionSpaces.end() ;
+               itCS ++ )
          {
             /// For each collection space:
             /// 1. Get groups from collections
             /// 2. Get groups under splitting tasks
-            const CHAR * collectionSpace = iterCS->c_str() ;
+            const CHAR * collectionSpace = itCS->c_str() ;
             rc = catGetCSGroups( collectionSpace, cb, occupiedGroups, FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get group list of collection "
                          "space [%s], rc: %d", collectionSpace, rc ) ;
             rc = catGetCSTaskGroups( collectionSpace, cb, occupiedGroups ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get splitting group list of "
-                         "collection space [%s]: rc: %d", collectionSpace, rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get splitting "
+                         "group list of collection space [%s]: rc: %d",
+                         collectionSpace, rc ) ;
          }
 
-         for ( ossPoolSet< UINT32 >::iterator iterGroup = removingGroups.begin() ;
-               iterGroup != removingGroups.end() ;
-               iterGroup ++ )
+         for ( ossPoolSet< UINT32 >::iterator itGroup = removingGroups.begin() ;
+               itGroup != removingGroups.end() ;
+               itGroup ++ )
          {
-            UINT32 groupID = ( *iterGroup ) ;
+            UINT32 groupID = ( *itGroup ) ;
             const CHAR * groupName = catCB->groupID2Name( groupID ) ;
 
             // The group should not be occupied

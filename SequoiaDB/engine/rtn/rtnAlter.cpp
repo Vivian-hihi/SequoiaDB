@@ -147,16 +147,17 @@ namespace engine
       BOOLEAN dropIndex = FALSE ;
       BOOLEAN createIndex = TRUE ;
       monIndex shardIndex ;
+      const BSONObj & shardingKey = argument.getShardingKey() ;
 
       rc = su->getIndex( mbContext, IXM_SHARD_KEY_NAME, shardIndex ) ;
       if ( SDB_OK == rc )
       {
-         if ( argument.getShardingKey().isEmpty() )
+         if ( shardingKey.isEmpty() )
          {
             dropIndex = TRUE ;
             createIndex = FALSE ;
          }
-         else if ( 0 == shardIndex.getKeyPattern().woCompare( argument.getShardingKey() ) )
+         else if ( 0 == shardIndex.getKeyPattern().woCompare( shardingKey ) )
          {
             dropIndex = FALSE ;
             createIndex = FALSE ;
@@ -188,7 +189,7 @@ namespace engine
 
       if ( argument.isEnsureShardingIndex() && createIndex )
       {
-         BSONObj indexDef = BSON( IXM_FIELD_NAME_KEY << argument.getShardingKey() <<
+         BSONObj indexDef = BSON( IXM_FIELD_NAME_KEY << shardingKey <<
                                   IXM_FIELD_NAME_NAME << IXM_SHARD_KEY_NAME <<
                                   IXM_V_FIELD << 0 ) ;
 
@@ -247,7 +248,8 @@ namespace engine
       SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
 
       rc = su->getIndexes( mbContext, indexes ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get index on collection [%s], rc: %d",
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get index on collection [%s], rc: %d",
                    collection, rc ) ;
 
       for ( MON_IDX_LIST::iterator iterIndex = indexes.begin() ;
@@ -331,8 +333,10 @@ namespace engine
            DMS_INVALID_EXTENT == mb->_dictExtentID )
       {
          /// Build the dictionary for LZW compression if needed
-         dmsCB->pushDictJob( dmsDictJob( su->CSID(), su->LogicalCSID(),
-                                         mbContext->mbID(), mbContext->clLID() ) ) ;
+         dmsCB->pushDictJob( dmsDictJob( su->CSID(),
+                                         su->LogicalCSID(),
+                                         mbContext->mbID(),
+                                         mbContext->clLID() ) ) ;
       }
 
    done :
@@ -361,9 +365,11 @@ namespace engine
          // 1. collection is no compressed
          // 2. altering the compressor type, and old type of collection is
          //    different
-         if ( !OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) ||
+         if ( !OSS_BIT_TEST( mbContext->mb()->_attributes,
+                             DMS_MB_ATTR_COMPRESSED ) ||
               ( argument.testArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) &&
-                mbContext->mb()->_compressorType != argument.getCompressorType() ) )
+                mbContext->mb()->_compressorType != argument.getCompressorType()
+              ) )
          {
             rc = _rtnCollectionSetCompress( collection,
                                             argument.getCompressorType(),
@@ -407,17 +413,19 @@ namespace engine
       dmsMB * mb = mbContext->mb() ;
       SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
 
-      const CHAR * collectionShortName = mb->_collectionName ;
+      const CHAR * clShortName = mb->_collectionName ;
 
-      rc = su->getCollectionExtOptions( collectionShortName, curExtOptions,
+      rc = su->getCollectionExtOptions( clShortName, curExtOptions,
                                         mbContext ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get extent options on collection [%s], "
-                   "rc: %d", collection, rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get extent options on collection [%s], rc: %d",
+                   collection, rc ) ;
 
       rc = optionArgument.toBSON( curExtOptions, extOptions ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to generate new ext options, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to generate new ext options, rc: %d", rc ) ;
 
-      rc = su->setCollectionExtOptions( collectionShortName, extOptions, mbContext ) ;
+      rc = su->setCollectionExtOptions( clShortName, extOptions, mbContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on collection [%s], "
                    "rc: %d", collection, rc ) ;
 
@@ -892,7 +900,7 @@ namespace engine
       dmsStorageUnit * su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
+      const CHAR * clShortName = NULL ;
       dmsMBContext * mbContext = NULL ;
 
       rc = dmsCB->writable( cb ) ;
@@ -900,11 +908,11 @@ namespace engine
       writable = TRUE ;
 
       rc = rtnResolveCollectionNameAndLock ( collection, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
+                                             &clShortName, suID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
                    collection, rc ) ;
 
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
+      rc = su->data()->getMBContext( &mbContext, clShortName, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
                    collection, rc ) ;
 

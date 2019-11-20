@@ -182,7 +182,8 @@ namespace engine
 
          logRecSize = record.alignedLen() ;
          rc = _transCB->reservedLogSpace( logRecSize, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to reserved log space (length=%u), rc: %d",
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to reserved log space (length=%u), rc: %d",
                       logRecSize, rc ) ;
 
          _reservedLogSpace = logRecSize ;
@@ -543,15 +544,16 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNALTERCLCTX__LOCKTRANS ) ;
 
       const CHAR * collection = _alterJob->getObjectName() ;
-      const CHAR * collectionShortName = NULL ;
+      const CHAR * clShortName = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
 
       rc = rtnResolveCollectionNameAndLock( collection, _dmsCB, &_su,
-                                            &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name and lock storage unit, "
+                                            &clShortName, suID ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to resolve collection name and lock storage unit, "
                    "rc: %d", rc ) ;
 
-      rc = _su->data()->getMBContext( &_mbContext, collectionShortName, EXCLUSIVE ) ;
+      rc = _su->data()->getMBContext( &_mbContext, clShortName, EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get mb context with exclusive lock, "
                    "rc: %d", rc ) ;
 
@@ -618,8 +620,9 @@ namespace engine
                 "Failed to get mbContext" ) ;
 
       rc = _su->canSetCollectionCompressor( _mbContext ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to check collection for setting compress, "
-                   "rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to check collection for setting compress, rc: %d",
+                   rc ) ;
 
    done :
       PD_TRACE_EXITRC( SDB__RTNALTERCLCTX__CHKCOMPRESS, rc ) ;

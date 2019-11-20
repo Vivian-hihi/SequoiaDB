@@ -202,7 +202,8 @@ namespace engine
          rtnAlterTaskSchema task( name, objectType, actionType, flags ) ;
          if ( task.isValid() )
          {
-            taskMap->insert( RTN_ALTER_TASK_MAP::value_type( task.getActionName(), task ) ) ;
+            taskMap->insert(
+               RTN_ALTER_TASK_MAP::value_type( task.getActionName(), task ) ) ;
          }
       }
    }
@@ -344,17 +345,21 @@ namespace engine
 
             PD_CHECK( jobElement.isNumber(), SDB_INVALIDARG, error, PDERROR,
                       "Invalid type of field [%s] from request object [%s]",
-                      FIELD_NAME_VERSION, _jobObject.toString( FALSE, TRUE ).c_str() ) ;
+                      FIELD_NAME_VERSION,
+                      _jobObject.toString( FALSE, TRUE ).c_str() ) ;
 
             _version = jobElement.Number() ;
-            PD_CHECK( SDB_ALTER_VERSION == _version, SDB_INVALIDARG, error, PDERROR,
+            PD_CHECK( SDB_ALTER_VERSION == _version,
+                      SDB_INVALIDARG, error, PDERROR,
                       "invalid version: %d", _version ) ;
 
             /// type
             jobElement = _jobObject.getField( FIELD_NAME_ALTER_TYPE ) ;
-            PD_CHECK( String == jobElement.type(), SDB_INVALIDARG, error, PDERROR,
+            PD_CHECK( String == jobElement.type(),
+                      SDB_INVALIDARG, error, PDERROR,
                       "invalid type of field [%s],request obj: %s",
-                       FIELD_NAME_ALTER_TYPE, _jobObject.toString( FALSE, TRUE ).c_str() ) ;
+                       FIELD_NAME_ALTER_TYPE,
+                       _jobObject.toString( FALSE, TRUE ).c_str() ) ;
 
             objectSchemaName = jobElement.valuestrsafe() ;
             _objectType = _getObjectType( objectSchemaName ) ;
@@ -364,9 +369,11 @@ namespace engine
 
             /// object name
             jobElement = _jobObject.getField( FIELD_NAME_NAME ) ;
-            PD_CHECK( String == jobElement.type(), SDB_INVALIDARG, error, PDERROR,
+            PD_CHECK( String == jobElement.type(),
+                      SDB_INVALIDARG, error, PDERROR,
                       "invalid type of field [%s],request obj: %s",
-                      FIELD_NAME_NAME, _jobObject.toString( FALSE, TRUE ).c_str() ) ;
+                      FIELD_NAME_NAME,
+                      _jobObject.toString( FALSE, TRUE ).c_str() ) ;
 
             _objectName = jobElement.valuestrsafe() ;
 
@@ -381,7 +388,8 @@ namespace engine
             jobElement = _jobObject.getField( FIELD_NAME_ALTER ) ;
             PD_CHECK( jobElement.isABSONObj(), SDB_INVALIDARG, error, PDERROR,
                       "invalid type of field [%s],request obj: %s",
-                      FIELD_NAME_ALTER, _jobObject.toString( FALSE, TRUE ).c_str() ) ;
+                      FIELD_NAME_ALTER,
+                      _jobObject.toString( FALSE, TRUE ).c_str() ) ;
 
             rc = _extractTasks( jobElement ) ;
             PD_RC_CHECK( rc, PDERROR, "failed to extract task list:%d", rc ) ;
@@ -425,7 +433,8 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__RTNALTERJOB__EXTRACTOPTIONS ) ;
 
-      _options.setIgnoreException( obj.getBoolField( FIELD_NAME_IGNORE_EXCEPTION ) ) ;
+      BOOLEAN igore = obj.getBoolField( FIELD_NAME_IGNORE_EXCEPTION ) ;
+      _options.setIgnoreException( igore ) ;
 
       PD_TRACE_EXIT( SDB__RTNALTERJOB__EXTRACTOPTIONS ) ;
    }
@@ -468,7 +477,8 @@ namespace engine
 
       BSONObj argumentObject ;
       const CHAR * taskName = taskObject.getStringField( FIELD_NAME_NAME ) ;
-      const rtnAlterTaskSchema & alterTask = rtnGetAlterTask( _objectType, taskName ) ;
+      const rtnAlterTaskSchema & alterTask = rtnGetAlterTask( _objectType,
+                                                              taskName ) ;
 
       PD_CHECK( alterTask.isValid(), SDB_INVALIDARG, error, PDERROR,
                 "Invalid alter task name: %s", taskName ) ;
@@ -516,22 +526,26 @@ namespace engine
          }
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
-            task = SDB_OSS_NEW rtnCLEnableShardingTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnCLEnableShardingTask( taskSchema,
+                                                        arguments ) ;
             break ;
          }
          case RTN_ALTER_CL_DISABLE_SHARDING :
          {
-            task = SDB_OSS_NEW rtnCLDisableShardingTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnCLDisableShardingTask( taskSchema,
+                                                         arguments ) ;
             break ;
          }
          case RTN_ALTER_CL_ENABLE_COMPRESS :
          {
-            task = SDB_OSS_NEW rtnCLEnableCompressTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnCLEnableCompressTask( taskSchema,
+                                                        arguments ) ;
             break ;
          }
          case RTN_ALTER_CL_DISABLE_COMPRESS :
          {
-            task = SDB_OSS_NEW rtnCLDisableCompressTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnCLDisableCompressTask( taskSchema,
+                                                         arguments ) ;
             break ;
          }
          case RTN_ALTER_CL_SET_ATTRIBUTES :
@@ -576,22 +590,26 @@ namespace engine
          }
          case RTN_ALTER_DOMAIN_REMOVE_GROUPS :
          {
-            task = SDB_OSS_NEW rtnDomainRemoveGroupTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnDomainRemoveGroupTask( taskSchema,
+                                                         arguments ) ;
             break ;
          }
          case RTN_ALTER_DOMAIN_SET_ATTRIBUTES :
          {
-            task = SDB_OSS_NEW rtnDomainSetAttributeTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnDomainSetAttributeTask( taskSchema,
+                                                          arguments ) ;
             break ;
          }
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
          {
-            task = SDB_OSS_NEW rtnCLCreateAutoincFieldTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnCLCreateAutoincFieldTask( taskSchema,
+                                                            arguments ) ;
             break ;
          }
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
          {
-            task = SDB_OSS_NEW rtnCLDropAutoincFieldTask( taskSchema, arguments ) ;
+            task = SDB_OSS_NEW rtnCLDropAutoincFieldTask( taskSchema,
+                                                          arguments ) ;
             break ;
          }
          default :
@@ -684,16 +702,16 @@ namespace engine
                   if ( _options.isIgnoreException() )
                   {
                      // Ignore errors
-                     PD_LOG( PDWARNING, "Ignore failure to extract alter task [%s], "
-                            "rc: %d", taskElement.toString( TRUE, TRUE).c_str(),
-                            rc ) ;
+                     PD_LOG( PDWARNING,
+                             "Ignore failure to extract alter task[%s], rc: %d",
+                             taskElement.toString( TRUE, TRUE).c_str(), rc ) ;
                      rc = SDB_OK ;
                   }
                   else
                   {
-                     PD_LOG( PDERROR, "Failed to extract alter task [%s], "
-                             "rc: %d", taskElement.toString( TRUE, TRUE).c_str(),
-                             rc ) ;
+                     PD_LOG( PDERROR,
+                             "Failed to extract alter task [%s], rc: %d",
+                             taskElement.toString( TRUE, TRUE).c_str(), rc ) ;
                      if ( _alterTasks.empty() )
                      {
                         // Failed to parse first task, report the error directly
@@ -780,7 +798,8 @@ namespace engine
       _ownedJob = FALSE ;
    }
 
-   void _rtnAlterJobHolder::setAlterJob ( rtnAlterJobHolder & holder, BOOLEAN getOwned )
+   void _rtnAlterJobHolder::setAlterJob ( rtnAlterJobHolder & holder,
+                                          BOOLEAN getOwned )
    {
       deleteAlterJob() ;
       _alterJob = holder._alterJob ;

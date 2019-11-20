@@ -1236,7 +1236,8 @@ namespace engine
 
       try
       {
-         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_SPACE_NAME, _targetName ) ;
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_SPACE_NAME,
+                                      _targetName ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
                       CAT_COLLECTION_SPACE_NAME, rc ) ;
 
@@ -1280,12 +1281,14 @@ namespace engine
       {
          const rtnAlterTask * task = NULL ;
 
-         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_OPTION_NOT_SUPPORT,
-                   error, PDERROR, "Failed to check alter job: should have only one task" ) ;
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to check alter job: should have only one task" ) ;
 
          task = _alterJob.getAlterTasks().front() ;
          rc = _checkAlterTask( task, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check alter collection space command [%s],"
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check alter collection space command [%s], "
                       "rc: %d", task->getActionName(), rc ) ;
 
          if ( task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
@@ -1658,7 +1661,8 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_ROLLBACK_INT ) ;
 
-      rc = catDropCLStep( _targetName, _version, TRUE, cb, _pDmsCB, _pDpsCB, w ) ;
+      rc = catDropCLStep( _targetName, _version, TRUE,
+                          cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to drop collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
@@ -2526,7 +2530,8 @@ namespace engine
 
       try
       {
-         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_NAME, _targetName ) ;
+         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_NAME,
+                                      _targetName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field [%s], rc: %d",
                       CAT_COLLECTION_NAME, rc ) ;
@@ -2573,13 +2578,15 @@ namespace engine
       {
          const rtnAlterTask * task = NULL ;
 
-         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_OPTION_NOT_SUPPORT,
-                   error, PDERROR, "Failed to check alter job: should have only one task" ) ;
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(),
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "Failed to check alter job: should have only one task" ) ;
 
          task = _alterJob.getAlterTasks().front() ;
          rc = _checkAlterTask( task, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check alter collection command [%s],"
-                      "rc: %d", task->getActionName(), rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to check alter collection command [%s], rc: %d",
+                      task->getActionName(), rc ) ;
 
          if ( task->testFlags( RTN_ALTER_TASK_FLAG_3PHASE ) )
          {
@@ -2618,13 +2625,15 @@ namespace engine
       {
          const rtnAlterTask * task = NULL ;
 
-         PD_CHECK( 1 == _alterJob.getAlterTasks().size(), SDB_SYS, error, PDERROR,
+         PD_CHECK( 1 == _alterJob.getAlterTasks().size(),
+                   SDB_SYS, error, PDERROR,
                    "Failed to check alter job: should have only one task" ) ;
 
          task = _alterJob.getAlterTasks().front() ;
          rc = _executeAlterTask( task, cb, w ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to execute alter collection command [%s],"
-                      "rc: %d", task->getActionName(), rc ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to execute alter collection command [%s], rc: %d",
+                      task->getActionName(), rc ) ;
       }
 
       PD_RC_CHECK( rc, PDERROR,
@@ -2796,7 +2805,8 @@ namespace engine
 
       for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
       {
-         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
+         catCtxAlterCLTask * task =
+                           dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
          if( task )
          {
             rc = task->startPostTasks( cb, _pDmsCB, _pDpsCB, w ) ;
@@ -2824,11 +2834,13 @@ namespace engine
 
       for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
       {
-         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
+         catCtxAlterCLTask * task =
+                           dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
          if( task )
          {
             rc = task->clearPostTasks( cb, w ) ;
-            PD_RC_CHECK( rc, PDWARNING, "Failed to remove post tasks, rc: %d", rc ) ;
+            PD_RC_CHECK( rc, PDWARNING,
+                         "Failed to remove post tasks, rc: %d", rc ) ;
          }
       }
 
@@ -2919,8 +2931,9 @@ namespace engine
                       "in main-collection", alterTask->getActionName() ) ;
 
             rc = cataSet.getSubCLList( subCLList );
-            PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
-                         "collection [%s], rc: %d", collectionName.c_str(), rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get sub-collection list of collection [%s],"
+                         " rc: %d", collectionName.c_str(), rc ) ;
 
             for ( vector< string >::iterator iterSubCL = subCLList.begin() ;
                   iterSubCL != subCLList.end() ;
@@ -2931,21 +2944,23 @@ namespace engine
                catCtxTaskBase * subCLAutoIncTask = NULL ;
 
                rc = _addAlterTask( subCLName, alterTask, &subCLTask, TRUE ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to add alter task [%s] on "
-                            "collection [%s], rc: %d", alterTask->getActionName(),
-                            subCLName.c_str(), rc ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to "
+                            "add alter task [%s] on collection [%s], rc: %d",
+                            alterTask->getActionName(), subCLName.c_str(), rc );
 
                if( subCLAutoIncTask )
                {
                   rc = subCLAutoIncTask->checkTask( cb, lockMgr ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
-                               "collection [%s], rc: %d", alterTask->getActionName(),
+                  PD_RC_CHECK( rc, PDERROR, "Failed to check "
+                               "alter task [%s] on collection [%s], rc: %d",
+                               alterTask->getActionName(),
                                subCLName.c_str(), rc ) ;
                }
 
                rc = subCLTask->checkTask( cb, lockMgr ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to check alter task [%s] on "
-                            "collection [%s], rc: %d", alterTask->getActionName(),
+               PD_RC_CHECK( rc, PDERROR, "Failed to check "
+                            "alter task [%s] on collection [%s], rc: %d",
+                            alterTask->getActionName(),
                             subCLName.c_str(), rc ) ;
 
                rc = catGetCollectionGroupSet( subCLTask->getDataObj(),
@@ -2961,8 +2976,9 @@ namespace engine
          else
          {
             rc = catGetCollectionGroupSet( catTask->getDataObj(), groupList ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get groups for collection [%s], "
-                         "rc: %d", collectionName.c_str(), rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get groups for collection [%s], rc: %d",
+                         collectionName.c_str(), rc ) ;
          }
 
          collectionSet.insert( collectionName ) ;
@@ -3015,7 +3031,7 @@ namespace engine
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          {
             const rtnCLSetAttributeTask *setTask =
-                              dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
+                        dynamic_cast< const rtnCLSetAttributeTask * >( task ) ;
             if( setTask->containAutoincArgument() )
             {
                rc = _addAlterSeqenceTask( collection, task, catAutoIncTask ) ;
@@ -3044,8 +3060,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDCRTSEQ_TASK, "_catCtxAlterCL::_addCreateSeqenceTask" )
    INT32 _catCtxAlterCL::_addCreateSeqenceTask( const string & collection,
-                                               const rtnAlterTask * task,
-                                               catCtxTaskBase ** catAutoIncTask )
+                                                const rtnAlterTask * task,
+                                                catCtxTaskBase ** catAutoIncTask )
    {
       INT32 rc = SDB_OK ;
 
@@ -3075,8 +3091,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCL_ADDDROPSEQ_TASK, "_catCtxAlterCL::_addDropSeqenceTask" )
    INT32 _catCtxAlterCL::_addDropSeqenceTask( const string & collection,
-                                               const rtnAlterTask * task,
-                                               catCtxTaskBase ** catAutoIncTask )
+                                              const rtnAlterTask * task,
+                                              catCtxTaskBase ** catAutoIncTask )
    {
       INT32 rc = SDB_OK ;
 
@@ -3147,7 +3163,8 @@ namespace engine
 
       for( UINT32 i = 0 ; i < _execTasks.size() ; i++ )
       {
-         catCtxAlterCLTask * task = dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
+         catCtxAlterCLTask * task =
+                           dynamic_cast<catCtxAlterCLTask *>( _execTasks[i] ) ;
          if( task )
          {
             if ( !task->getPostTasks().empty() )
@@ -3156,11 +3173,11 @@ namespace engine
                BSONObjBuilder replyBuilder ;
                BSONArrayBuilder taskBuilder( replyBuilder.subarrayStart( CAT_TASKID_NAME ) ) ;
                const ossPoolList< UINT64 > & postTasks = task->getPostTasks() ;
-               for ( ossPoolList<UINT64>::const_iterator iterTask = postTasks.begin() ;
-                     iterTask != postTasks.end() ;
-                     iterTask ++ )
+               for ( ossPoolList<UINT64>::const_iterator it = postTasks.begin();
+                     it != postTasks.end() ;
+                     it ++ )
                {
-                  taskBuilder.append( (INT64)( *iterTask ) ) ;
+                  taskBuilder.append( (INT64)( *it ) ) ;
                }
                taskBuilder.done() ;
 
