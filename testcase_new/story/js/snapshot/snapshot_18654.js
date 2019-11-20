@@ -12,8 +12,8 @@ function main()
       
    if (commGetGroupsNum(db) < 2)
    {
-   	println("Deploy is only one group!");
-   	return;
+      println("Deploy is only one group!");
+      return;
    }
 
    var clName = COMMCLNAME + "_18654";

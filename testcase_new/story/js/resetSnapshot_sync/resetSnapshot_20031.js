@@ -26,12 +26,13 @@ function main()
    
    var clName = "cl_20031";
    var indexName = "index_20031";
+   var replSize = 0;
    var indexDef = {a: 1};
    var fullName = COMMCSNAME + "." + clName;
    
    commDropCL( db, COMMCSNAME, clName );
    var groupName = commGetGroups(db)[0][0].GroupName;
-   var cl = commCreateCLByOption(db, COMMCSNAME, clName, {Group: groupName});
+   var cl = commCreateCLByOption(db, COMMCSNAME, clName, {Group: groupName, ReplSize: replSize});
    commCreateIndex( cl, indexName, indexDef, true );
 
    for(var i = 0; i < 100; i++)

@@ -38,25 +38,32 @@ function checkStatistics(actStatistics, expStatistics)
 *******************************************************************************/
 function getStatistics(fullName, nodeNames)
 {
-   var cursor = db.snapshot(SDB_SNAP_COLLECTIONS, {Name: fullName});
-   var tmpArray = [];
-   var details = cursor.current().toObj().Details;
-   for(var i = 0; i < details.length; i++)
+   try
    {
-      var group = cursor.current().toObj().Details[i].Group;
-      for(var j = 0; j < nodeNames.length; j++)
+      var cursor = db.snapshot(SDB_SNAP_COLLECTIONS, {Name: fullName});
+      var tmpArray = [];
+      var details = cursor.current().toObj().Details;
+      for(var i = 0; i < details.length; i++)
       {
-         for(var k = 0; k < group.length; k++)
+         var group = cursor.current().toObj().Details[i].Group;
+         for(var j = 0; j < nodeNames.length; j++)
          {
-            if(group[k].NodeName === nodeNames[j])
+            for(var k = 0; k < group.length; k++)
             {
-               tmpArray.push(group[k]);
-               break;
+               if(group[k].NodeName === nodeNames[j])
+               {
+                  tmpArray.push(group[k]);
+                  break;
+               }
             }
          }
-      }
-   } 
-   return tmpArray;
+      }  
+      return tmpArray;
+   }
+   catch(e)
+   {
+      throw new Error(e);
+   }
 }
 
 /*******************************************************************************
@@ -65,9 +72,9 @@ function getStatistics(fullName, nodeNames)
 *******************************************************************************/
 function getDataGroupNames()
 {
+   var groups = commGetGroups( db, false, "", false, false, false );
    try
    {
-      var groups = commGetGroups( db, false, "", false, false, false );
       var dataGroupNames = [];
       for(var i=0 ;i<groups.length;i++)
       {
@@ -170,9 +177,9 @@ function getNodeAddresses()
 *******************************************************************************/
 function stopNodes( nodeAddresses )
 {
+   var installDir = commGetInstallPath();
    try
    {
-      var installDir = commGetInstallPath();
       command = installDir + "/bin/sdbstop -p ";
    
       for(var i=0; i<nodeAddresses.length; i++)
@@ -196,9 +203,9 @@ function stopNodes( nodeAddresses )
 *******************************************************************************/
 function startNodes( nodeAddresses )
 {
+   var installDir = commGetInstallPath();
    try
    {
-      var installDir = commGetInstallPath();
       command = installDir + "/bin/sdbstart -p ";
       
       for(var i=0; i<nodeAddresses.length; i++)
