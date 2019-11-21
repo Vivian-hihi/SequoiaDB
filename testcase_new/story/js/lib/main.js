@@ -4,8 +4,8 @@
 *   2019-11-12 wenjing Wang  Init
 *******************************************************************************/
 
-var testConf = {ignoreStandAlone:false, ignoreOneDuplicatePerGroup:false,
-                ignoreOneGroup:false, clean:false} ;
+var testConf = {skipStandAlone:false, skipOneDuplicatePerGroup:false,
+                skipOneGroup:false, clean:false} ;
                 // csName: COMMCSNAME, csOpt:{PageSize:4096}} };
                 //clName:COMMCLNAME, clOpt:{AutoSplit:true} } ;
 
@@ -16,12 +16,12 @@ var oneGroup = 1 ;
 var nodeNum = 1;
 function checkEnv( db, testConf )
 {
-   if ( testConf.ignoreStandAlone && commIsStandalone( db ) )
+   if ( testConf.skipStandAlone && commIsStandalone( db ) )
    {
       throw new Error( "standalone" ) ;
    }
 
-   if ( testConf.ignoreOneGroup )
+   if ( testConf.skipOneGroup )
    {
       var groups = commGetGroups( db ) ;
       if ( groups.length === oneGroup )
@@ -30,7 +30,7 @@ function checkEnv( db, testConf )
       }
    }
 
-   if ( testConf.ignoreOneDuplicatePerGroup )
+   if ( testConf.skipOneDuplicatePerGroup )
    {
       if ( groups === undefined )
       {
