@@ -1,5 +1,17 @@
 package com.sequoiadb.split.brokennetwork;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -14,23 +26,11 @@ import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
-import org.bson.BSONObject;
-import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 
 /**
- * @FileName:SEQDB-2581 对range分区组进行百分比切分，切分时目标组主节点断网
+ * @FileName: seqDB-2581:对range分区组进行范围切分，切分时目标组主节点断网
  * @author huangqiaohui
  * @version 1.00
- *
  */
 
 public class NetSplit2581 extends SdbTestBase {
@@ -42,14 +42,18 @@ public class NetSplit2581 extends SdbTestBase {
     private boolean clearFlag = false;
     private String brokenNetHost;
     private boolean isSplitSuccess = false;
+    private int initRecsNum = 10000;
+    private int destRecsStart = 5000;
+    private int destRecsEnd = 35000;
+    private int totalRecsNum = destRecsEnd + 1000;
+    private int faultSuccRecsNum = 0;
 
     @BeforeClass()
     public void setUp() {
         Sequoiadb commSdb = null;
         try {
-            System.out.println(
-                    "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
-                            + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
+                    + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
             if (!groupMgr.checkBusiness(20)) {
@@ -63,9 +67,10 @@ public class NetSplit2581 extends SdbTestBase {
             System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = commSdb.getCollectionSpace(csName);
-            DBCollection cl = commCS.createCollection(clName, (BSONObject) JSON.parse(
-                    "{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
-            insertData(cl, 0, 4000);// 写入待切分的记录（1000普通记录，1000lob）
+            DBCollection cl = commCS.createCollection(clName, (BSONObject) JSON
+                    .parse("{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
+
+            insertData(cl, 0, initRecsNum);// 写入待切分的记录
 
             // 调整主机
             brokenNetHost = groupMgr.getGroupByName(destGroupName).getMaster().hostName();
@@ -73,12 +78,10 @@ public class NetSplit2581 extends SdbTestBase {
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
             System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
-        }
-        catch (ReliabilityException e) {
-            Assert.fail(this.getClass().getName() + " setUp error, error description:"
-                    + e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } catch (ReliabilityException e) {
+            Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+                    + Utils.getStackString(e));
+        } finally {
             if (commSdb != null) {
                 commSdb.close();
             }
@@ -89,6 +92,9 @@ public class NetSplit2581 extends SdbTestBase {
         for (int i = begin; i < end; i++) {
             BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
             cl.insert(obj);
+            if (i < destRecsEnd) {
+                faultSuccRecsNum = i;
+            }
         }
     }
 
@@ -107,31 +113,27 @@ public class NetSplit2581 extends SdbTestBase {
 
             // 最长等待2分钟的环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(600), true, "failed to restore business");
+            System.out.println("faultSuccRecsNum: " + faultSuccRecsNum + ", destRecsEnd: " + destRecsEnd);
 
             db = new Sequoiadb(connectUrl, "", "");
             db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 9000, 10000);
-
-            // 百分比切分覆盖
-            // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            // Assert.assertEquals(srcGroup.checkInspect(60), true);
-            // Assert.assertEquals(destGroup.checkInspect(60), true);
+            insertData(cl, faultSuccRecsNum + 1, totalRecsNum);
 
             if (isSplitSuccess) {
                 Utils.waitSplit(db, cl.getFullName());
-                checkGroupData(db, destGroupName, "{sk:{$gte:4000,$lt:9000}}", 5000);
-                checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:9000}},{sk:{$lt:4000}}]}", 5000);
+                checkGroupData(db, destGroupName, "{sk:{$gte:" + destRecsStart + ",$lt:" + destRecsEnd + "}}",
+                        destRecsEnd - destRecsStart);
+                checkGroupData(db, srcGroupName,
+                        "{$or:[{sk:{$lt:" + destRecsStart + "}},{sk:{$gte:" + destRecsEnd + "}}]}",
+                        totalRecsNum - (destRecsEnd - destRecsStart));
             }
-            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
+            Assert.assertEquals(cl.getCount(), totalRecsNum);
             clearFlag = true;
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             e.printStackTrace();
             Assert.fail(e.getMessage());
-        }
-        finally {
+        } finally {
             if (db != null) {
                 db.close();
             }
@@ -147,15 +149,12 @@ public class NetSplit2581 extends SdbTestBase {
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
             long macherCount = cl.getCount(macher);
             long count = cl.getCount();
-            Assert.assertEquals(macherCount == count && count == expectCount, true,
-                    destGroupName + " count:" + count + " macherCount:" + macherCount);
-            ;
-        }
-        catch (BaseException e) {
+            Assert.assertEquals(macherCount, count);
+            Assert.assertEquals(count, expectCount);
+        } catch (BaseException e) {
             e.printStackTrace();
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }
@@ -173,30 +172,27 @@ public class NetSplit2581 extends SdbTestBase {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
-        }
-        finally {
+        } finally {
             commSdb.close();
-            System.out.println(
-                    "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
-                            + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
+                    + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
 
     class Insert extends OperateTask {
         @Override
         public void exec() throws Exception {
-			  try{
-				  Sequoiadb db = new Sequoiadb(connectUrl, "", "");
-				  DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-				  insertData(cl, 4000, 9000);
-				  db.close();  
-			  }catch(BaseException e){
-				  System.out.println("insert have exception:" + e.getMessage());
-        	  }
-            
+            try {
+                Sequoiadb db = new Sequoiadb(connectUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                insertData(cl, initRecsNum, destRecsEnd);
+                db.close();
+            } catch (BaseException e) {
+                System.out.println("insert have exception:" + e.getMessage());
+            }
+
         }
     }
 
@@ -208,19 +204,16 @@ public class NetSplit2581 extends SdbTestBase {
                 sdb = new Sequoiadb(connectUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                try{
-                	cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:4000}"),
-                            (BSONObject) JSON.parse("{sk:9000}"));
+                try {
+                    cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:" + destRecsStart + "}"),
+                            (BSONObject) JSON.parse("{sk:" + destRecsEnd + "}"));
                     isSplitSuccess = true;
-                }
-                catch (BaseException e) {
+                } catch (BaseException e) {
                     System.out.println("split have exception:" + e.getMessage());
                 }
-            }
-            catch (BaseException e) {
-            	throw e;
-            }
-            finally {
+            } catch (BaseException e) {
+                throw e;
+            } finally {
                 if (sdb != null) {
                     sdb.close();
                 }
