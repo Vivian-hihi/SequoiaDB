@@ -4,12 +4,12 @@
 *   2019-11-12 wenjing Wang  Init
 *******************************************************************************/
 
-var testConf = {ignoreStandAlone:false, ignoreOneGroupOneNode:false,
-                ignoreOnlyGroup:false, clearEnv:false} ;
+var testConf = {ignoreStandAlone:false, ignoreOneDuplicatePerGroup:false,
+                ignoreOneGroup:false, clean:false} ;
                 // csName: COMMCSNAME, csOpt:{PageSize:4096}} };
                 //clName:COMMCLNAME, clOpt:{AutoSplit:true} } ;
 
-testConf.clearEnv = CLEARENVOFFAILED ;
+testConf.clean = CLEANFORFAIL ;
 var testPara = {} ;
 
 var oneGroup = 1 ;
@@ -21,16 +21,16 @@ function checkEnv( db, testConf )
       throw new Error( "standalone" ) ;
    }
 
-   if ( testConf.ignoreOnlyGroup )
+   if ( testConf.ignoreOneGroup )
    {
       var groups = commGetGroups( db ) ;
       if ( groups.length === oneGroup )
       {
-         throw new Error( "only one data group" ) ;
+         throw new Error( "one data group" ) ;
       }
    }
 
-   if ( testConf.ignoreOneGroupOneNode )
+   if ( testConf.ignoreOneDuplicatePerGroup )
    {
       if ( groups === undefined )
       {
@@ -47,7 +47,7 @@ function checkEnv( db, testConf )
 
       if ( i === groups.length )
       {
-         throw new Error( "one group one node" );
+         throw new Error( "one duplicate per group" );
       }
    }
 }
@@ -136,7 +136,7 @@ function commonTearDown( db, testConf, isExecSuccess )
 {
    if ( db !== undefined )
    {
-      if ( isExecSuccess || testConf.clearEnv )
+      if ( isExecSuccess || testConf.clean )
       {
          dropTestCL( db, testConf ) ;
          dropTestCS( db, testConf ) ;
@@ -167,8 +167,8 @@ function main()
       if( e.constructor === Error )
       {
          if ( e.message === "standalone" ||
-              e.message === "only one data group" ||
-              e.message === "one group one node" )
+              e.message === "one data group" ||
+              e.message === "one duplicate per group" )
          {
             return ;
          }

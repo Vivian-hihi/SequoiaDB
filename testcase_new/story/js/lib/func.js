@@ -22,6 +22,7 @@ if ( typeof(WORKDIR)   == "undefined" ) { WORKDIR   = "/tmp/jstest"; }
 if ( typeof(ESHOSTNAME) == "undefined" ) { ESHOSTNAME = 'localhost'; }
 if ( typeof(ESSVCNAME) == "undefined" ) { ESSVCNAME = '9200'; }
 if ( typeof(FULLTEXTPREFIX) == "undefined" ) { FULLTEXTPREFIX = ''; }
+if ( typeof(CLEANFORFAIL) == "undefined" ) { var CLEANFORFAIL=false; }
 
 var COMMCSNAME = CHANGEDPREFIX + "_cs" ;
 var COMMCLNAME = CHANGEDPREFIX + "_cl" ;
