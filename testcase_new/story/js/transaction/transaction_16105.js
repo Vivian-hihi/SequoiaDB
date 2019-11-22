@@ -17,7 +17,7 @@ catch(e)
    }
    throw e ;
 }
-;
+
 
 function main()
 {
