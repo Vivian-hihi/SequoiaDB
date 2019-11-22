@@ -1,49 +1,44 @@
 /* *****************************************************************************
-@discretion: there is a transaction operation on the cl1 ,than rename cl2,the cl1 and cl2 on the same cs
+@discretion: there is a transaction operation on the cl1, than rename cl2, the cl1 and cl2 on the same cs
 @author£º2018-10-16 wuyan  Init
 ***************************************************************************** */
 try
 {
    main();
 }
-catch(e)
+catch( e )
 {
-   if ( e.constructor === Error )
+   if( e.constructor === Error )
    {
-      println(e.stack) ;  
+      println( e.stack );
    }
-   throw e ;
+   throw e;
 }
 function main()
 {
-   if( !commIsTransEnabled( db ) )
-      {
-         println( "transaction is disabled" ) ; 
-         return;  
-      }
    
-      var csName = CHANGEDPREFIX + "_renamecs16071";
-      commDropCS( db, csName, true, "drop CS in the beginning"); 
+   var csName = CHANGEDPREFIX + "_renamecs16071";
+   commDropCS( db, csName, true, "drop CS in the beginning" );
    
-      var clName1 = CHANGEDPREFIX + "_renameCL16071a";
-      var newCLName1 = CHANGEDPREFIX + "_newrenameCL16071a";
-      var clName2 = CHANGEDPREFIX + "_renameCL16071b";           
-      var dbcs = commCreateCS( db, csName, false, "Failed to create CS.");    
-      commCreateCL( db, csName, clName1) ; 
-      var dbcl = commCreateCL( db, csName, clName2) ;          
+   var clName1 = CHANGEDPREFIX + "_renameCL16071a";
+   var newCLName1 = CHANGEDPREFIX + "_newrenameCL16071a";
+   var clName2 = CHANGEDPREFIX + "_renameCL16071b";
+   var dbcs = commCreateCS( db, csName, false, "Failed to create CS." );
+   commCreateCL( db, csName, clName1 );
+   var dbcl = commCreateCL( db, csName, clName2 );
    
-      var dataNums = 100;
-      db.transBegin();     
-      insertData( dbcl, dataNums ); 
+   var dataNums = 100;
+   db.transBegin();
+   insertData( dbcl, dataNums );
    
-      dbcs.renameCL( clName1, newCLName1 );
-         
-      db.transCommit();     
+   dbcs.renameCL( clName1, newCLName1 );
    
-      checkRenameCLResult( csName, clName1, newCLName1 ); 
-      
-      checkCount( dbcl, dataNums );  
-
-      commDropCS( db, csName, true, "drop CS in the ending");    
+   db.transCommit();
+   
+   checkRenameCLResult( csName, clName1, newCLName1 );
+   
+   checkCount( dbcl, dataNums );
+   
+   commDropCS( db, csName, true, "drop CS in the ending" );
 }
 
