@@ -22,7 +22,7 @@ function main()
    var dbcl2 = commCreateCLByOption( db, COMMCSNAME, clName2, {AutoIncrement:{Field:"id"}} );
    var doc = [];
    var expR = [];
-   for( var i=0; i < 100; i++ )
+   for( var i=0; i < 100; i++)
    {
       doc.push( {a:i} );
    }

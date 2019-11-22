@@ -34,7 +34,7 @@ function main()
    cl.insert( {"no":10086, customerName:"testTrans", "phone":13700010086, "openDate":1402990912105} );
    cl.insert( {"no":10000, customerName:"testTrans", "phone":13700010000, "openDate":1402990912106} );
    
-   for( var i=0; i < 10; i++ )
+   for( var i=0; i < 10; i++)
    {
       try
       {
