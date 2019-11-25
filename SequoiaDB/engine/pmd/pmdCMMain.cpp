@@ -44,6 +44,7 @@
 #include "pmd.hpp"
 #include "pmdProc.hpp"
 #include "utilPidFile.hpp"
+#include "pmdPipeManager.hpp"
 
 namespace engine
 {
@@ -246,26 +247,17 @@ namespace engine
       // 7. register agent cb
       PMD_REGISTER_CB( sdbGetOMAgentMgr() ) ;
 
-      // 8. init krcb
+      // 8. initialize pipe manager
+      rc = sdbGetSystemPipeManager()->init(
+                           sdbGetOMAgentOptions()->getCMServiceName(), TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to initialize pipe manager, "
+                   "rc: %d", rc ) ;
+
+      // 9. init krcb
       rc = krcb->init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init krcb, rc: %d", rc ) ;
 
-      {
-         EDUID agentEDU = PMD_INVALID_EDUID ;
-         pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
-         // Then start windows listener thread for "backdoor" listening
-         rc = eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
-                                 (void*)sdbGetOMAgentOptions()->getCMServiceName(),
-                                 &agentEDU ) ;
-         PD_RC_CHECK( rc, PDERROR, "Start PIPELISTENER failed, rc: %d",
-                      rc ) ;
-
-         rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait pipe listener to running "
-                      "failed, rc: %d", rc ) ;
-      }
-
-      // 9. change process name
+      // 10. change process name
 #if defined (_LINUX)
       {
          CHAR pmdProcessName [ OSS_RENAME_PROCESS_BUFFER_LEN + 1 ] = {0} ;

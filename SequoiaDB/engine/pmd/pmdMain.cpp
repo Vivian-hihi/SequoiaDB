@@ -49,6 +49,7 @@
 #include "rtnBackgroundJob.hpp"
 #include "pmdEnv.hpp"
 #include "pmdStartupHistoryLogger.hpp"
+#include "pmdPipeManager.hpp"
 
 using namespace std;
 using namespace bson;
@@ -271,7 +272,13 @@ namespace engine
          goto error ;
       }
 
-      // 8. init krcb
+      // 8. initialize pipe manager
+      rc = sdbGetSystemPipeManager()->init( pmdGetOptionCB()->getServiceAddr(),
+                                            TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to initialize pipe manager, "
+                   "rc: %d", rc ) ;
+
+      // 9. init krcb
       rc = krcb->init() ;
       if ( rc )
       {
@@ -279,7 +286,7 @@ namespace engine
          goto error ;
       }
 
-      // 9. post init
+      // 10. post init
       rc = _pmdPostInit() ;
       if ( rc )
       {
@@ -303,21 +310,6 @@ namespace engine
       else if ( startTimerCount >= PMD_START_WAIT_TIME )
       {
          PD_LOG( PDWARNING, "Start warning (timeout)" ) ;
-      }
-
-      {
-         EDUID agentEDU = PMD_INVALID_EDUID ;
-         pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
-         // Then start pipe listener for "fast status check" service
-         // Note this listener doesn't need to authenticate
-         // It's only valid for status check, not for any status change
-         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
-                            (void*)pmdGetOptionCB()->getServiceAddr(),
-                            &agentEDU ) ;
-
-         rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait pipe listener to running "
-                      "failed, rc: %d", rc ) ;
       }
 
 #if defined (_LINUX)

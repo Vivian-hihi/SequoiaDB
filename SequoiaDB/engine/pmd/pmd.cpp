@@ -42,6 +42,7 @@
 #include "ossVer.h"
 #include "pdTrace.hpp"
 #include "netFrame.hpp"
+#include "pmdPipeManager.hpp"
 
 namespace engine
 {
@@ -427,6 +428,14 @@ namespace engine
          }
       }
 
+      // start pipe manager
+      if ( sdbGetSystemPipeManager()->isInitialized() )
+      {
+         rc = sdbGetSystemPipeManager()->startEDU() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to start EDU for pipe listener, "
+                      "rc: %d", rc ) ;
+      }
+
       _isActive = TRUE ;
 
       _curTime.sample() ;
@@ -500,6 +509,12 @@ namespace engine
       /// fini cache manager
       _buffPool.fini() ;
       _syncMgr.fini() ;
+
+      if ( normalStop )
+      {
+         /// fini pipe manager
+         sdbGetSystemPipeManager()->fini() ;
+      }
 
       pmdUndeclareEDUCB() ;
 
