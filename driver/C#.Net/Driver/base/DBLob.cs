@@ -75,7 +75,8 @@ namespace SequoiaDB
     
         private const long SDB_LOB_DEFAULT_OFFSET  = -1;
         private const int SDB_LOB_DEFAULT_SEQ = 0;
-    
+
+        private Sequoiadb    _sdb = null;
         private DBCollection _cl = null;
         private IConnection  _connection = null;
         internal bool        _isBigEndian = false;
@@ -94,10 +95,12 @@ namespace SequoiaDB
         // when first open/create DBLob, sequoiadb return the contextID for the
         // further reading/writing/close
         private long         _contextID;
+        private bool         _isOldVersionLobServer;
 
         internal DBLob(DBCollection cl)
         {
             this._cl = cl;
+            this._sdb = cl.Sdb;
             this._connection = cl.CollSpace.SequoiaDB.Connection;
             this._isBigEndian = cl.isBigEndian;
             _id = ObjectId.Empty;
@@ -110,6 +113,12 @@ namespace SequoiaDB
             _isOpened = false;
             _seekWrite = false;
             _contextID = -1;
+            _isOldVersionLobServer = false;
+        }
+
+        bool IsEmptyOid(ObjectId objectId)
+        {
+            return (objectId == null || objectId == ObjectId.Empty) ? true : false;
         }
 
         /** \fn         Open( ObjectId id, int mode )
@@ -139,26 +148,62 @@ namespace SequoiaDB
             }
             if (mode == SDB_LOB_READ || mode == SDB_LOB_WRITE)
             {
-                if (id == ObjectId.Empty)
+                if (IsEmptyOid(id))
                 {
                     throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "id must be specify"
                     + " in mode:" + mode);
                 }
             }
-            // gen oid
             _id = id;
-            if (mode == SDB_LOB_CREATEONLY)
+            _mode = mode;
+            _currentOffset = 0;
+
+            // going to read and write lob
+            if (_mode != SDB_LOB_CREATEONLY)
             {
-                if (_id == ObjectId.Empty)
+                _Open();
+                _isOpened = true;
+                return;
+            }
+
+            // going to create lob
+            if (_sdb.GetIsOldVersionLobServer())
+            {
+                // deal with old version server. oid should be generated in client.
+                if (IsEmptyOid(_id))
                 {
                     _id = ObjectId.GenerateNewId();
                 }
+
+                _Open();
+                _isOpened = true;
+                return;
             }
-            // mode
-            _mode = mode;
-            _currentOffset = 0;
-            // open
+
+            // when it's not an old version or we don't known it's an old version or not
+            // let's try to create lob. If _open() set _isOldVersionLobServer to true,
+            // that means we are going to connect to old versionLob
+            try
+            {
+                _isOldVersionLobServer = false;
+                _Open();
+                _isOpened = true;
+                return;
+            }
+            catch (BaseException e)
+            {
+                if (!_isOldVersionLobServer)
+                {
+                    throw e;
+                }
+            }
+
+            // when we come here, _isOldVersionLobServer is true, and _id must be null.
+            // deal with old version server. oid should be generated in client.
+            _id = ObjectId.GenerateNewId();
+
             _Open();
+            _sdb.SetIsOldVersionLobServer(true);
             _isOpened = true;
         }
 
@@ -600,7 +645,10 @@ namespace SequoiaDB
             // add info into object
             BsonDocument openLob = new BsonDocument();
             openLob.Add(SequoiadbConstants.FIELD_COLLECTION, _cl.FullName);
-            openLob.Add(SequoiadbConstants.FIELD_LOB_OID, _id);
+            if (!IsEmptyOid(_id))
+            {
+                openLob.Add(SequoiadbConstants.FIELD_LOB_OID, _id);
+            }
             openLob.Add(SequoiadbConstants.FIELD_LOB_OPEN_MODE, _mode);
 
             // set return data flag
@@ -625,6 +673,15 @@ namespace SequoiaDB
 
             // check the result
             int rc = retInfo.Flags;
+            // when creating an lob, if client does not offer an 
+            // oid(_id is null or empty), the old engine(older than v3.2.4)
+            // will not creating one, instead, it will return -1.
+            // however, the new engine will create an oid, and return rc == 0.
+            if (rc == new BaseException("SDB_INVALIDARG").ErrorCode &&
+                IsEmptyOid(_id) && _mode == SDB_LOB_CREATEONLY)
+            {
+                _isOldVersionLobServer = true;
+            }
             if (rc != 0)
             {
                 throw new BaseException(rc, retInfo.ErrorObject);
@@ -640,6 +697,21 @@ namespace SequoiaDB
             if (obj == null)
             {
                 throw new BaseException((int)Errors.errors.SDB_SYS, "expect 1 record, but we get null");
+            }
+            // oid 
+            if ((_id == null || _id == ObjectId.Empty) &&
+                _mode == SDB_LOB_CREATEONLY &&
+                obj.Contains(SequoiadbConstants.FIELD_LOB_OID))
+            { 
+                if (obj[SequoiadbConstants.FIELD_LOB_OID].IsObjectId)
+                {
+                    _id = obj[SequoiadbConstants.FIELD_LOB_OID].AsObjectId;
+                }
+                else
+                {
+                    throw new BaseException((int)Errors.errors.SDB_INVALIDARG,
+                        "Invalid ObjectId type");
+                }
             }
             // lob size
             if (obj.Contains(SequoiadbConstants.FIELD_LOB_SIZE) && obj[SequoiadbConstants.FIELD_LOB_SIZE].IsInt64)

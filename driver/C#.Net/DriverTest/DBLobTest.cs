@@ -1260,6 +1260,19 @@ namespace DriverTest
         [TestMethod()]
         public void testListLob()
         {
+            BsonDocument mather = new BsonDocument();
+            BsonDocument selector = new BsonDocument();
+            selector.Add("Oid", "");
+            selector.Add("CreateTime", "");
+            BsonDocument orderBy = new BsonDocument();
+            BsonDocument hint = new BsonDocument();
+            DBCursor cursor = cl.ListLobs(mather, selector, orderBy, hint, 0, -1);
+            BsonDocument record = null;
+            while ((record = cursor.Next()) != null)
+            {
+                Console.WriteLine("lob is: " + record.ToString());
+            }
+
             String str = "1234567890";
             byte[] output = new byte[10];
             ObjectId oid_old = ObjectId.GenerateNewId();
@@ -1280,15 +1293,8 @@ namespace DriverTest
             lob_with_dt.Close();
             lob_no_dt.Close();
 
-            BsonDocument mather = new BsonDocument();
-            BsonDocument selector = new BsonDocument();
-            selector.Add("Oid", "");
-            selector.Add("CreateTime", "");
-            BsonDocument orderBy = new BsonDocument();
-            BsonDocument hint = new BsonDocument();
-
-            DBCursor cursor = cl.ListLobs(mather, selector, orderBy, hint, 0, -1);
-            BsonDocument record = null;
+            cursor = cl.ListLobs(mather, selector, orderBy, hint, 0, -1);
+            record = null;
             while ((record = cursor.Next()) != null)
             {
                 Console.WriteLine("lob is: " + record.ToString());

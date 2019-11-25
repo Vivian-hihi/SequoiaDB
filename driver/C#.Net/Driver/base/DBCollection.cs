@@ -77,6 +77,11 @@ namespace SequoiaDB
             get { return collSpace; }
         }
 
+        internal Sequoiadb Sdb
+        {
+            get { return sdb; }
+        }
+
         internal DBCollection(CollectionSpace cs, string name)
         {
             this.name = name;
