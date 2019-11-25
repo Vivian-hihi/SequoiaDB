@@ -7,12 +7,12 @@
 function main()
 {
    var groups = commGetGroups(db);
+   if ( groups.length < 2)
+   {  
+      return ;
+   }
    var groupName = groups[0][0].GroupName;
    var groupNodeNum = groups[0].length - 1 ;
-   if (commGetGroupsNum(db) < 2)
-   {
-      return ;
-   }  
 
    //cond+sel+skip+limit
    var sel = {"role": 1};
