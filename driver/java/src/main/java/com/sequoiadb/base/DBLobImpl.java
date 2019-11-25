@@ -120,7 +120,7 @@ class DBLobImpl implements DBLob {
         }
 
         if (mode == SDB_LOB_READ || mode == SDB_LOB_WRITE) {
-            if (null == id) {
+            if (id == null) {
                 throw new BaseException(SDBError.SDB_INVALIDARG,
                         "id must be specify" + " in mode:" + mode);
             }
@@ -136,9 +136,10 @@ class DBLobImpl implements DBLob {
             return;
         }
 
+        // going to create lob
         if (_sdb.getIsOldVersionLobServer()) {
-            // deal with old version server. oid is generated in client
-            if (null == _id) {
+            // deal with old version server. oid should be generated in client.
+            if (_id == null) {
                 _id = ObjectId.get();
             }
 
@@ -147,6 +148,9 @@ class DBLobImpl implements DBLob {
             return;
         }
 
+        // when it's not an old version or we don't known it's an old version or not
+        // let's try to create lob. If _open() set _isOldVersionLobServer to true,
+        // that means we are going to connect to old versionLob
         try {
             _isOldVersionLobServer = false;
             _open();
@@ -158,7 +162,8 @@ class DBLobImpl implements DBLob {
             }
         }
 
-        // deal with old version server. oid is generated in client
+        // when we come here, _isOldVersionLobServer is true, and _id must be null.
+        // deal with old version server. oid should be generated in client.
         _id = ObjectId.get();
 
         _open();
@@ -169,7 +174,7 @@ class DBLobImpl implements DBLob {
     private void _open() throws BaseException {
         BSONObject openLob = new BasicBSONObject();
         openLob.put(SdbConstants.FIELD_COLLECTION, _cl.getFullName());
-        if (null != _id) {
+        if (_id != null) {
             openLob.put(FIELD_NAME_LOB_OID, _id);
         }
         openLob.put(FIELD_NAME_LOB_OPEN_MODE, _mode);
@@ -178,7 +183,7 @@ class DBLobImpl implements DBLob {
 
         LobOpenRequest request = new LobOpenRequest(openLob, flags);
         LobOpenResponse response = _sdb.requestAndResponse(request, LobOpenResponse.class);
-        if (response.getFlag() == SDBError.SDB_INVALIDARG.getErrorCode() && null == _id
+        if (response.getFlag() == SDBError.SDB_INVALIDARG.getErrorCode() && _id == null
                 && _mode == SDB_LOB_CREATEONLY) {
             _isOldVersionLobServer = true;
         }
@@ -186,7 +191,7 @@ class DBLobImpl implements DBLob {
         _sdb.throwIfError(response, openLob);
 
         BSONObject obj = response.getMetaInfo();
-        if (null == _id && obj.containsField(FIELD_NAME_LOB_OID) && _mode == SDB_LOB_CREATEONLY) {
+        if (_id == null && obj.containsField(FIELD_NAME_LOB_OID) && _mode == SDB_LOB_CREATEONLY) {
             _id = (ObjectId) obj.get(FIELD_NAME_LOB_OID);
         }
         _lobSize = (Long) obj.get(FIELD_NAME_LOB_SIZE);

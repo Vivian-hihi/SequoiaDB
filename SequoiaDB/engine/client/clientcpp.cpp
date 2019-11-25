@@ -2821,6 +2821,12 @@ do                                                            \
          goto error ;
       }
 
+      // If user does not offer oid, we won't create one here.
+      // Because, we don't known whether the engine is new or old( 
+      // when the engine is older than v3.2.4, it's an old engine 
+      // which is not support sub cl for lob).
+      // When oid is null, the old engine will return -6, but the
+      // new engine will create one by using the new rule.
       if ( NULL != oid )
       {
          oidObj = *oid ;
