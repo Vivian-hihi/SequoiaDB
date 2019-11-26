@@ -909,7 +909,7 @@ INT32 _dpsDumper::_analysisMeta( map<UINT32, string > &mapFiles )
          ++it )
    {
       dpsFileMeta meta;
-      rc = _metaFilte( it->second.c_str(), it->first, meta ) ;
+      rc = _metaFilter( it->second.c_str(), it->first, meta ) ;
       if( rc && DPS_LOG_FILE_INVALID != rc )
       {
          LogError( "Failed to parse meta data of file:[%s], rc = %d",
@@ -1144,8 +1144,8 @@ done:
    return SDB_OK == rc ;
 }
 
-INT32 _dpsDumper::_metaFilte( const CHAR *filename, INT32 index,
-                              dpsFileMeta &meta )
+INT32 _dpsDumper::_metaFilter( const CHAR *filename, INT32 index,
+                               dpsFileMeta &meta )
 {
    SDB_ASSERT( filename, "filename cannot be NULL ") ;
 
