@@ -2167,6 +2167,20 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "onAddCollection operation failed: %d", rc ) ;
       mb->_mbOptExtentID = mbOptExtent ;
 
+      // lock mb context before release meta lock
+      rc = getMBContext( &context, newCollectionID, logicalID, logicalID,
+                         EXCLUSIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get mb[%u] context, rc: %d",
+                 newCollectionID, rc ) ;
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            newCollectionID = DMS_INVALID_MBID ;
+         }
+         goto error ;
+      }
+
       // write dps log
       if ( dpscb )
       {
@@ -2188,19 +2202,6 @@ namespace engine
          *collectionID = newCollectionID ;
       }
       dropDps = dpscb ;
-
-      // create dms cb context
-      rc = getMBContext( &context, newCollectionID, logicalID, logicalID, EXCLUSIVE ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get mb[%u] context, rc: %d",
-                 newCollectionID, rc ) ;
-         if ( SDB_DMS_NOTEXIST == rc )
-         {
-            newCollectionID = DMS_INVALID_MBID ;
-         }
-         goto error ;
-      }
 
       /// set compressor when snappy
       _setCompressor( context ) ;
