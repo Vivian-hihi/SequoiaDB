@@ -1363,7 +1363,7 @@ namespace engine
       rc = _sptSdb.isValid( &result ) ;
       if( SDB_OK != rc || FALSE == result )
       {
-         if( SDB_OK == rc )
+         if( FALSE == result )
          {
             rc = SDB_NOT_CONNECTED ;
          }
