@@ -5,7 +5,7 @@
 *******************************************************************************/
 
 var testConf = {skipStandAlone:false, skipOneDuplicatePerGroup:false,
-                skipOneGroup:false, clean:false} ;
+                skipOneGroup:false, clean:false, message:"", skip:false} ;
                 // csName: COMMCSNAME, csOpt:{PageSize:4096}} };
                 //clName:COMMCLNAME, clOpt:{AutoSplit:true} } ;
 
@@ -59,7 +59,7 @@ function createCommonCS( db )
 
 function createCommonCL( db )
 {
-   return commCreateCLByOption( db, COMMCSNAME, COMMCSNAME, {ShardingType:'hash',ShardingKey:{_id:1}, AutoSplit:true}, true, true ) ;
+   return commCreateCLByOption( db, COMMCSNAME, COMMCLNAME, {ShardingType:'hash',ShardingKey:{_id:1}, AutoSplit:true}, true, true ) ;
 }
 
 function createDummyCL( db )
@@ -88,7 +88,7 @@ function createTestCL( db, testConf )
    {
       if ( testConf.clName !== COMMCLNAME )
       {
-         commDropCL( db, testConf.csName, testConf.clName, true, true, message ) ;
+         commDropCL( db, testConf.csName, testConf.clName, true, true, testConf.message ) ;
       }
 
       if ( testConf.clOpt !== undefined )
@@ -97,7 +97,7 @@ function createTestCL( db, testConf )
       }
       else
       {
-         return commCreateCL( db, testConf.csName, testConf.clName ,true, true ) ;
+         return commCreateCL( db, testConf.csName, testConf.clName, 1, false, true, true ) ;
       }
    }
 }
@@ -117,7 +117,7 @@ function dropTestCL( db, testConf )
         testConf.clName !== COMMCLNAME &&
         testConf.csName === COMMCSNAME )
    {
-      commDropCL( db, testConf.csName, testConf.clName, true, true, message ) ;
+      commDropCL( db, testConf.csName, testConf.clName, true, true, testConf.message ) ;
    }
 }
 
@@ -156,7 +156,10 @@ function main()
       {
          if ( typeof(arguments[i]) === "function" )
          {
-            arguments[i]( testPara ) ;
+            if ( testConf.skip === false )
+            {
+               arguments[i]( testPara ) ;
+            }
          }
       }
 	  
