@@ -1684,16 +1684,22 @@ namespace SequoiaDB
                     savedError = e;
                 }
 
-                // before v3.2.4, no matcher/selector/orderBy/hint/skipRows/returnRows are offered.
-                // so, when these paraments are offered, the driver is at lest v3.2.4. We need to 
-                // re-check the remote server is older then v3.2.4 or not.
-                if (!IsEmptyObj(matcher) || !IsEmptyObj(selector) || !IsEmptyObj(orderBy) ||
+                // when we come here, we got rc == -6. there are two cases:
+                // case 1: having invalid paraments.
+                // case 2: the remote engine is older than v3.2.4.
+
+                // case 1: test having invalid paraments or not
+                // only when we have input paraments, we need to do this test.
+                if (!IsEmptyObj(matcher) || !IsEmptyObj(selector) || !IsEmptyObj(orderBy) || !IsEmptyObj(hint) ||
                     skipRows != 0 || returnRows != -1)
                 {
                     try
                     {
                         isOldLobServer = false;
-                        DBCursor tmpCursor = _ListLobs(null, null, null, newHint, 0, -1);
+                        BsonDocument tmpHint = new BsonDocument();
+                        tmpHint.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+                        // make sure no input paraments can affect this test
+                        DBCursor tmpCursor = _ListLobs(null, null, null, tmpHint, 0, -1);
                         tmpCursor.Close();
                         throw savedError;
                     }
@@ -1705,13 +1711,17 @@ namespace SequoiaDB
                         }
                     }
                 }
-                // deal with old version server. clName is in the query field
+                // case 2:
+                // when we come here, the remote engine must be an old engine.
                 DBCursor cur = _ListLobs(newHint, null, null, null, 0, -1);
                 sdb.SetIsOldVersionLobServer(true);
                 return cur;
             }
-            // deal with old version server. clName is in the query field
-            return _ListLobs(newHint, null, null, null, 0, -1);
+            else
+            {
+                // deal with old version engine. clName is in the query field
+                return _ListLobs(newHint, null, null, null, 0, -1);
+            }
         }
 
         internal DBCursor _ListLobs(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy,

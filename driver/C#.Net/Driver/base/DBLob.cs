@@ -166,7 +166,9 @@ namespace SequoiaDB
                 return;
             }
 
-            // going to create lob
+            // when _sdb tell us clearly that the remote engine is old(older than v3.2.4),
+            // we just need to create lob by the original way which we need to make
+            // sure _id is not empty.
             if (_sdb.GetIsOldVersionLobServer())
             {
                 // deal with old version server. oid should be generated in client.
@@ -180,9 +182,10 @@ namespace SequoiaDB
                 return;
             }
 
-            // when it's not an old version or we don't known it's an old version or not
-            // let's try to create lob. If _open() set _isOldVersionLobServer to true,
-            // that means we are going to connect to old versionLob
+            // however, when we come here, we still do not know whether the remote engine
+            // is old or not. we assume it is new, so we won't force _id must has value,
+            // for the new engine will create one when _id is null(while the old engine will not,
+            // and when _id is null, the old engine will return -6).
             try
             {
                 _isOldVersionLobServer = false;
@@ -198,10 +201,11 @@ namespace SequoiaDB
                 }
             }
 
-            // when we come here, _isOldVersionLobServer is true, and _id must be null.
-            // deal with old version server. oid should be generated in client.
+            // when we come here, we must had got an -6 error from the engine for
+            // not offering _id. so, _id must be null. and the remote engine must
+            // be an old engine, in this case, oid should be generated in client
+            // for the old engine.
             _id = ObjectId.GenerateNewId();
-
             _Open();
             _sdb.SetIsOldVersionLobServer(true);
             _isOpened = true;
@@ -561,7 +565,6 @@ namespace SequoiaDB
             return _currentOffset >= _lobSize;
         }
 
-
         internal ObjectId CreateObjectId(BsonDocument lobIdInfo)
         {
             if (lobIdInfo == null)
@@ -593,16 +596,12 @@ namespace SequoiaDB
             }
             /// get lob's meta info returned from engine
             List<BsonDocument> objList = retInfo.ObjectList;
-            if (objList.Count() != 1)
+            if (objList.Count() < 1)
             {
-                throw new BaseException((int)Errors.errors.SDB_NET_BROKEN_MSG,
-                    "expect 1 record, but get " + objList.Count() + "records");
+                throw new BaseException((int)Errors.errors.SDB_SYS,
+                    "expect a return obj to get oid, but we got null");
             }
             BsonDocument obj = objList[0];
-            if (obj == null)
-            {
-                throw new BaseException((int)Errors.errors.SDB_SYS, "expect 1 record, but we get null");
-            }
             // lob id
             if (obj.Contains(SequoiadbConstants.FIELD_LOB_OID) && obj[SequoiadbConstants.FIELD_LOB_OID].IsObjectId)
             {

@@ -130,13 +130,16 @@ class DBLobImpl implements DBLob {
         _currentOffset = 0;
         _id = id;
 
+        // going to read and write lob
         if (_mode != SDB_LOB_CREATEONLY) {
             _open();
             _isOpened = true;
             return;
         }
 
-        // going to create lob
+        // when _sdb tell us clearly that the remote engine is old(older than v3.2.4),
+        // we just need to create lob by the original way which we need to make
+        // sure _id is not empty.
         if (_sdb.getIsOldVersionLobServer()) {
             // deal with old version server. oid should be generated in client.
             if (_id == null) {
@@ -148,9 +151,10 @@ class DBLobImpl implements DBLob {
             return;
         }
 
-        // when it's not an old version or we don't known it's an old version or not
-        // let's try to create lob. If _open() set _isOldVersionLobServer to true,
-        // that means we are going to connect to old versionLob
+        // however, when we come here, we still do not know whether the remote engine
+        // is old or not. we assume it is new, so we won't force _id must has value,
+        // for the new engine will create one when _id is null(while the old engine will not,
+        // and when _id is null, the old engine will return -6).
         try {
             _isOldVersionLobServer = false;
             _open();
@@ -162,10 +166,11 @@ class DBLobImpl implements DBLob {
             }
         }
 
-        // when we come here, _isOldVersionLobServer is true, and _id must be null.
-        // deal with old version server. oid should be generated in client.
+        // when we come here, we must had got an -6 error from the engine for
+        // not offering _id. so, _id must be null. and the remote engine must
+        // be an old engine, in this case, oid should be generated in client
+        // for the old engine.
         _id = ObjectId.get();
-
         _open();
         _sdb.setIsOldVersionLobServer(true);
         _isOpened = true;
