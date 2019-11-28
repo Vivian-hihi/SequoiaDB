@@ -187,12 +187,28 @@ namespace engine
       return recordPtr ;
    }
 
-   CHAR* _utilPooledAutoPtr::get()
+   _utilPooledAutoPtr _utilPooledAutoPtr::makeRaw( CHAR *ptr,
+                                                   UTIL_ALLOC_TYPE type )
    {
-      return _ptr ;
+      _utilPooledAutoPtr recordPtr ;
+
+      if ( ptr )
+      {
+         recordPtr._ptr = ptr ;
+         recordPtr._pRef = (INT32 *)( ptr - sizeof( INT32 ) ) ;
+         recordPtr._allocType = type ;
+         if ( recordPtr._pRef )
+         {
+            INT32 orgRef = ossFetchAndIncrement32( recordPtr._pRef ) ;
+            SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
+            SDB_UNUSED( orgRef ) ;
+         }
+      }
+
+      return recordPtr ;
    }
 
-   const CHAR* _utilPooledAutoPtr::get() const
+   CHAR* _utilPooledAutoPtr::get() const
    {
       return _ptr ;
    }

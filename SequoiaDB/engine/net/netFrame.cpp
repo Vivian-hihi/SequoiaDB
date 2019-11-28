@@ -52,73 +52,9 @@ using namespace boost::asio::ip ;
 
 namespace engine
 {
-   #define NET_INNER_TIMER_INTERVAL       ( 2000 )
-   #define NET_DUMMY_TIMER_INTERVAL       ( 2147483647 )
 
    #define NET_IOPS_MIN_VALUE             ( 500 )
-   #define NET_IOPS_THRESHOLD             ( 5000)
-
-   /*
-      _netInnerTimeHandle implement
-   */
-   _netInnerTimeHandle::_netInnerTimeHandle( _netFrame *pFrame )
-   {
-      _pFrame = pFrame ;
-      _timeID = 0 ;
-      _dummyTimerID = 0 ;
-   }
-
-   _netInnerTimeHandle::~_netInnerTimeHandle()
-   {
-   }
-
-   void _netInnerTimeHandle::handleTimeout( const UINT32 &millisec,
-                                            const UINT32 &id )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( _timeID == id )
-      {
-         rc = _pFrame->listen( _hostName.c_str(), _svcName.c_str() ) ;
-         if ( SDB_OK == rc || SDB_NET_ALREADY_LISTENED == rc )
-         {
-            _pFrame->removeTimer( _timeID ) ;
-            PD_LOG( PDEVENT, "Restart listening on %s:%s succeed",
-                    _hostName.c_str(), _svcName.c_str() ) ;
-         }
-      }
-   }
-
-   void _netInnerTimeHandle::setInfo( const CHAR *pHostName,
-                                      const CHAR *pSvcName )
-   {
-      if ( _hostName.empty() )
-      {
-         _hostName = pHostName ;
-      }
-      if ( _svcName.empty() )
-      {
-         _svcName = pSvcName ;
-      }
-   }
-
-   void _netInnerTimeHandle::startTimer()
-   {
-      INT32 rc = _pFrame->addTimer( NET_INNER_TIMER_INTERVAL,
-                                    this, _timeID ) ;
-      if ( rc )
-      {
-         PD_LOG( PDSEVERE, "Restore listen error when open files upto "
-                 "limit, stop network, rc: %d", rc ) ;
-         _pFrame->stop() ;
-      }
-   }
-
-   INT32 _netInnerTimeHandle::startDummyTimer()
-   {
-      return _pFrame->addTimer( NET_DUMMY_TIMER_INTERVAL,
-                                this, _dummyTimerID ) ;
-   }
+   #define NET_IOPS_THRESHOLD             ( 5000 )
 
    /*
      _netEHSegment implement
@@ -143,6 +79,24 @@ namespace engine
    _netEHSegment::~_netEHSegment()
    {
       _vecEH.clear() ;
+   }
+
+   netEHSegPtr _netEHSegment::createShared( netFrame *pFrame,
+                                            UINT32 capacity,
+                                            const MsgRouteID &id )
+   {
+      netEHSegPtr segPtr ;
+
+      netEHSegPtr tmpPtr = netEHSegPtr::allocRaw( ALLOC_POOL ) ;
+      if ( NULL != tmpPtr.get() &&
+           NULL != new( tmpPtr.get() ) netEHSegment( pFrame,
+                                                     capacity,
+                                                     id ) )
+      {
+         segPtr = tmpPtr ;
+      }
+
+      return segPtr ;
    }
 
    // return an event handler to the caller
@@ -197,20 +151,20 @@ namespace engine
    {
       BOOLEAN ret = FALSE ;
 
-      _netEventHandler *pEH = NULL ;
       _mtx.get() ;
       if ( _vecEH.size() < _capacity )
       {
          /// create a new socket
-         pEH = SDB_OSS_NEW _netEventHandler( _pFrame->_getEvSuit( TRUE ),
-                                             _pFrame->_handle.inc() ) ;
-         if ( !pEH )
+         NET_EH tmpEH = netEventHandler::createShared(
+                                  _pFrame->_getEvSuit( TRUE ),
+                                  (NET_HANDLE)( _pFrame->_handle.inc() ) ) ;
+         if ( NULL == tmpEH.get() )
          {
             PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
             goto done ;
          }
 
-         eh = NET_EH(pEH) ;
+         eh = tmpEH ;
          eh->id( _id ) ;
          _vecEH.push_back(eh) ;
          ret = TRUE ;
@@ -269,16 +223,20 @@ namespace engine
       _netFrame implement
    */
    _netFrame::_netFrame( _netMsgHandler *handler, _netRoute *pRoute )
-   :_pRoute( pRoute ),
-    _mainSuitPtr( SDB_OSS_NEW netEventSuit( this ) ),
-    _handler( handler ),
-    _acceptor( _mainSuitPtr->getIOService() ),
-    _handle( 1 ),
-    _timerID( NET_INVALID_TIMER_ID ),
-    _netOut( 0 ),
-    _netIn( 0 ),
-    _innerTimeHandle( this ),
-    _suiteStopFlag( FALSE )
+   : _protocolMask( NET_FRAME_MASK_EMPTY ),
+     _pRoute( pRoute ),
+     // this might have bad-alloc issue in initialize phase
+     // but when this happens, the whole system might not be able
+     // to start at the beginning event the bad-alloc is handled
+     _mainSuitPtr( netEventSuit::createShared( this ) ),
+     _handler( handler ),
+     _acceptor( _mainSuitPtr->getIOService() ),
+     _handle( NET_HANDLE_BEGIN ),
+     _timerID( NET_INVALID_TIMER_ID ),
+     _netOut( 0 ),
+     _netIn( 0 ),
+     _restartTimer( this ),
+     _suiteStopFlag( FALSE )
    {
       _pThreadFunc = NULL ;
       _local.value = MSG_INVALID_ROUTEID ;
@@ -385,7 +343,7 @@ namespace engine
       INT32 retryCount = 0 ;
 
       /// start dummy timer
-      rc = _innerTimeHandle.startDummyTimer() ;
+      rc = _restartTimer.startDummyTimer() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Start dummy timer failed, rc: %d", rc ) ;
@@ -439,7 +397,7 @@ namespace engine
       _suiteStopFlag = TRUE ;
       _suiteMtx.release() ;
 
-      closeListen() ;
+      closeListen( NET_FRAME_MASK_ALL ) ;
       _mainSuitPtr->getIOService().stop() ;
       PD_TRACE_EXIT ( SDB__NETFRAME_STOP );
    }
@@ -528,22 +486,78 @@ namespace engine
          handle = itr->first ;
          _mtx.release_shared() ;
 
-         if ( eh->isNew() )
+         if ( NET_EVENT_HANDLER_TCP == eh->getHandlerType() )
          {
-            continue ;
-         }
+            // TCP event hander
+            if ( eh->isNew() )
+            {
+               // it is new (not connected), no need to check beat
+               continue ;
+            }
 
-         /// send msg
-         if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval &&
-              ( -1 == serviceType ||
-                serviceType == eh->id().columns.serviceID ) )
-         {
-            eh->mtx().get() ;
-            beat.requestID = eh->getAndIncMsgID() ;
-            eh->syncSend( (const void*)&beat, beat.messageLength ) ;
-            eh->syncLastBeatTick() ;
-            eh->mtx().release() ;
+            /// send msg if had not received message for a while
+            if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval &&
+                 ( -1 == serviceType ||
+                   serviceType == eh->id().columns.serviceID ) )
+            {
+               eh->sendBeat( &beat ) ;
+            }
          }
+         else if ( NET_EVENT_HANDLER_UDP == eh->getHandlerType() )
+         {
+            // UDP event hander
+            netUDPEventHandler *handler = (netUDPEventHandler *)( eh.get() ) ;
+            if ( !handler->isConnected() )
+            {
+               // it is closed, no need to check beat
+               // will be removed by netUDPClearTimer
+               continue ;
+            }
+            else if ( handler->isBeatTimeout( _beatInterval ) )
+            {
+               // beat timeout in few cases, see isBeatTimeout
+               // not received or send message for a while
+               handler->sendBeat( &beat ) ;
+            }
+         }
+         else
+         {
+            SDB_ASSERT( FALSE, "handler type is invalid" ) ;
+         }
+      }
+   }
+
+   void _netFrame::_handleHeartBeat( NET_EH eh, MsgHeader *message )
+   {
+      SDB_ASSERT( NULL != message, "message is invalid" ) ;
+      MsgOpReply reply ;
+      reply.header.messageLength = sizeof( MsgOpReply ) ;
+      reply.header.opCode = MSG_HEARTBEAT_RES ;
+      reply.header.requestID = message->requestID ;
+      reply.header.routeID.value = 0 ;
+      reply.header.TID = message->TID ;
+      reply.contextID = -1 ;
+      reply.numReturned = 0 ;
+      reply.startFrom = 0 ;
+      reply.flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
+
+      eh->mtx().get() ;
+      reply.header.routeID = _local ;
+      eh->syncSend( (const void*)&reply, reply.header.messageLength ) ;
+      eh->mtx().release() ;
+   }
+
+   void _netFrame::_handleHeartBeatRes( NET_EH eh, MsgHeader *message )
+   {
+      SDB_ASSERT( NULL != message, "message is invalid" ) ;
+      MsgOpReply *reply = (MsgOpReply *)message ;
+      if ( SDB_OK != reply->flags )
+      {
+         PD_LOG( PDERROR, "Connection[Handle:%d, Node:%s] is broken "
+                 "because of node is abnormal[%d]",
+                 eh->handle(), routeID2String( eh->id() ).c_str(),
+                 reply->flags ) ;
+         eh->close() ;
       }
    }
 
@@ -568,7 +582,8 @@ namespace engine
          handle = itr->first ;
          _mtx.release_shared() ;
 
-         if ( eh->isNew() )
+         if ( eh->isNew() ||
+              NET_EVENT_HANDLER_UDP == eh->getHandlerType() )
          {
             continue ;
          }
@@ -673,12 +688,56 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_LISTEN, "_netFrame::listen" )
    INT32 _netFrame::listen( const CHAR *hostName,
-                            const CHAR *serviceName )
+                            const CHAR *serviceName,
+                            UINT32 protocolMask,
+                            INetUDPMsgHandler *udpHandler,
+                            UINT32 udpBufferSize )
    {
       SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
       SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
+
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__NETFRAME_LISTEN );
+
+      PD_TRACE_ENTRY( SDB__NETFRAME_LISTEN ) ;
+
+      PD_CHECK( OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_TCP ) ||
+                OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_UDP ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Failed to listen, protocol mask [%d] is unknown",
+                protocolMask ) ;
+
+      if ( OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_TCP ) )
+      {
+         rc = _listenTCP( hostName, serviceName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to listen TCP for host %s "
+                      "service %s, rc: %d", hostName, serviceName, rc ) ;
+      }
+      if ( OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_UDP ) )
+      {
+         rc = _listenUDP( hostName, serviceName, udpHandler, udpBufferSize ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to listen UDP for host %s "
+                      "service %s, rc: %d", hostName, serviceName, rc ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__NETFRAME_LISTEN, rc ) ;
+      return rc ;
+
+   error:
+      closeListen( protocolMask ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__LISTENTCP, "_netFrame::_listenTCP" )
+   INT32 _netFrame::_listenTCP( const CHAR *hostName,
+                                const CHAR *serviceName )
+   {
+      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
+      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
+
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__NETFRAME__LISTENTCP ) ;
 
       if ( _acceptor.is_open() )
       {
@@ -689,38 +748,87 @@ namespace engine
       try
       {
          /// here we bind 0.0.0.0.
-         tcp::resolver::query query ( tcp::v4(), NET_LISTEN_HOST, serviceName ) ;
-         tcp::resolver resolver ( _mainSuitPtr->getIOService() ) ;
-         tcp::resolver::iterator itr = resolver.resolve ( query ) ;
-         ip::tcp::endpoint endpoint = *itr ;
+         tcp::resolver::query query( tcp::v4(), NET_LISTEN_HOST, serviceName ) ;
+         tcp::resolver resolver( _mainSuitPtr->getIOService() ) ;
+         tcp::resolver::iterator itr = resolver.resolve( query ) ;
+         tcp::endpoint endpoint = *itr ;
          _acceptor.open( endpoint.protocol() ) ;
          _acceptor.set_option(tcp::acceptor::reuse_address(TRUE)) ;
          _acceptor.bind( endpoint ) ;
          _acceptor.listen() ;
       }
-      catch ( boost::system::system_error &e )
+      catch ( boost::system::system_error & e )
       {
-         PD_LOG ( PDERROR, "Failed to listen on %s:%s, error:%s", hostName,
-                  serviceName, e.what() ) ;
+         PD_LOG ( PDERROR, "Failed to listen on %s:%s with TCP, error:%s",
+                  hostName, serviceName, e.what() ) ;
          rc = SDB_NET_CANNOT_LISTEN ;
          goto error ;
       }
-      /// set info
-      _innerTimeHandle.setInfo( hostName, serviceName ) ;
+
+      /// set restart info before we launch asynchronous accept
+      _restartTimer.setInfo( hostName, serviceName ) ;
 
       rc = _asyncAccept() ;
-      if ( rc )
+      PD_RC_CHECK( rc, PDERROR, "Failed to call async accept, rc: %d", rc ) ;
+
+      OSS_BIT_SET( _protocolMask, NET_FRAME_MASK_TCP ) ;
+      PD_LOG( PDDEBUG, "TCP listening on port %s", serviceName ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__NETFRAME__LISTENTCP, rc );
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__LISTENUDP, "_netFrame::_listenUDP" )
+   INT32 _netFrame::_listenUDP( const CHAR *hostName,
+                                const CHAR *serviceName,
+                                INetUDPMsgHandler *handler,
+                                UINT32 bufferSize )
+   {
+      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
+      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
+
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__NETFRAME__LISTENUDP ) ;
+
+      netUDPEndPoint localEndPoint ;
+
+      if ( NULL != _udpMainSuit.get() && _udpMainSuit->isOpened() )
       {
+         rc = SDB_NET_ALREADY_LISTENED ;
          goto error ;
       }
 
-      PD_LOG( PDDEBUG, "listening on port %s", serviceName ) ;
+      if ( NULL == _udpMainSuit.get() )
+      {
+         // only one UDP socket
+         NET_UDP_EV_SUIT suitPtr =
+                              netUDPEventSuit::createShared( this,
+                                                             _pRoute ) ;
+         PD_CHECK( NULL != suitPtr.get(), SDB_OOM, error, PDERROR,
+                   "Failed to allocate UDP event suit" ) ;
+
+         // swap to smart pointer
+         _udpMainSuit = suitPtr ;
+      }
+
+      rc = _udpMainSuit->listen( hostName, serviceName, handler, bufferSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to listen UDP on port %s, rc: %d",
+                   serviceName, rc ) ;
+
+      OSS_BIT_SET( _protocolMask, NET_FRAME_MASK_UDP ) ;
+      PD_LOG( PDDEBUG, "UDP listening on port [%s], buffer [%u]",
+              serviceName, bufferSize ) ;
 
    done:
-      PD_TRACE_EXITRC ( SDB__NETFRAME_LISTEN, rc );
+      PD_TRACE_EXITRC( SDB__NETFRAME__LISTENUDP, rc ) ;
       return rc ;
+
    error:
-      closeListen() ;
       goto done ;
    }
 
@@ -735,40 +843,39 @@ namespace engine
 
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNNCCONN );
-      _netEventHandler *ev = SDB_OSS_NEW _netEventHandler( _getEvSuit( TRUE ),
-                                                           _handle.inc() ) ;
-      if ( NULL == ev )
+
+      NET_EH eh = netEventHandler::createShared(
+                     _getEvSuit( TRUE ), (NET_HANDLE)( _handle.inc() ) ) ;
+      if ( NULL == eh.get() )
       {
          PD_LOG ( PDERROR, "Failed to malloc mem" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
+
+      rc = eh->syncConnect( hostName, serviceName ) ;
+      if ( SDB_OK != rc )
       {
-         NET_EH eh( ev ) ;
-         rc = eh->syncConnect( hostName, serviceName ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         eh->id( id ) ;
-         eh->asyncRead() ;
-
-         /// add to map
-         // addRoute will take latch inside the function
-         _addRoute(eh) ;
-         _mtx.get() ;
-         _opposite.insert( make_pair( eh->handle(), eh ) ) ;
-         _mtx.release() ;
-
-         if ( pHandle )
-         {
-            *pHandle = eh->handle() ;
-         }
-
-         // callback: handleConnect
-         _handler->handleConnect( eh->handle(), id, TRUE ) ;
+         goto error ;
       }
+
+      eh->id( id ) ;
+      eh->asyncRead() ;
+
+      /// add to map
+      // addRoute will take latch inside the function
+      _addRoute( eh ) ;
+      _mtx.get() ;
+      _opposite.insert( make_pair( eh->handle(), eh ) ) ;
+      _mtx.release() ;
+
+      if ( pHandle )
+      {
+         *pHandle = eh->handle() ;
+      }
+
+      // callback: handleConnect
+      _handler->handleConnect( eh->handle(), id, TRUE ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNNCCONN, rc );
@@ -890,16 +997,15 @@ namespace engine
          else
          {
             // create new netEHSegment
-            _netEHSegment *pSeg = SDB_OSS_NEW _netEHSegment( this ,
-                                                   _maxSockPerNode, id ) ;
-            if ( !pSeg)
+            ptr = netEHSegment::createShared( this, _maxSockPerNode, id ) ;
+            if ( NULL == ptr.get() )
             {
                rc = SDB_OOM ;
                PD_LOG( PDERROR, "Allocate netEHSegment failed" ) ;
                _mtx.release() ;
                goto error ;
             }
-            ptr = netEHSegPtr(pSeg) ;
+
             // insert the shared ptr into route table
             _route.insert( make_pair(id.value, ptr) ) ;
          }
@@ -983,35 +1089,20 @@ namespace engine
                   "handle should not be invalid" ) ;
       INT32 rc = SDB_OK ;
       MsgHeader *msgHeader = NULL ;
-      PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND2 );
-      NET_EH eh ;
-      MAP_EVENT_IT itr ;
-
-      _mtx.get_shared() ;
-      itr = _opposite.find( handle ) ;
-      if ( _opposite.end() == itr )
-      {
-         _mtx.release_shared() ;
-         rc = SDB_NET_INVALID_HANDLE ;
-         goto error ;
-      }
-      eh = itr->second ;
-      _mtx.release_shared() ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND2 ) ;
 
       msgHeader = ( MsgHeader * )header ;
       if ( MSG_INVALID_ROUTEID == msgHeader->routeID.value )
       {
          msgHeader->routeID = _local ;
       }
-      eh->mtx().get() ;
-      rc = eh->syncSend( msgHeader, msgHeader->messageLength ) ;
-      eh->mtx().release() ;
+
+      rc = syncSendRaw( handle, (const CHAR * )msgHeader,
+                        msgHeader->messageLength ) ;
       if ( SDB_OK != rc )
       {
-         eh->close() ;
          goto error ;
       }
-      _netOut.add( msgHeader->messageLength ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND2, rc );
@@ -1028,6 +1119,7 @@ namespace engine
       SDB_ASSERT( NET_INVALID_HANDLE != handle,
                   "handle should not be invalid" ) ;
       INT32 rc = SDB_OK ;
+
       NET_EH eh ;
       MAP_EVENT_IT itr ;
 
@@ -1050,6 +1142,7 @@ namespace engine
          eh->close() ;
          goto error ;
       }
+
       _netOut.add( buffSize ) ;
 
    done:
@@ -1068,6 +1161,7 @@ namespace engine
       SDB_ASSERT( NULL != body, "body should not be NULL") ;
       SDB_ASSERT( NET_INVALID_HANDLE != handle,
                   "handle should not be invalid" ) ;
+
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND3 );
       UINT32 headLen = header->messageLength - bodyLen ;
@@ -1084,6 +1178,9 @@ namespace engine
       }
       eh = itr->second ;
       _mtx.release_shared() ;
+
+      SDB_ASSERT( NET_EVENT_HANDLER_TCP == eh->getHandlerType(),
+                  "Should not use UDP socket to send multiple packets" ) ;
 
       if ( MSG_INVALID_ROUTEID == header->routeID.value )
       {
@@ -1147,6 +1244,9 @@ namespace engine
       }
       eh = itHandle->second ;
       _mtx.release_shared() ;
+
+      SDB_ASSERT( NET_EVENT_HANDLER_TCP == eh->getHandlerType(),
+                  "Should not use UDP socket to send multiple packets" ) ;
 
       eh->mtx().get() ;
       rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
@@ -1323,6 +1423,69 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSENDUDP, "_netFrame::syncSendUDP" )
+   INT32 _netFrame::syncSendUDP( const MsgRouteID &id,
+                                 void *header,
+                                 BOOLEAN needTest )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__NETFRAME_SYNCSENDUDP ) ;
+
+      BOOLEAN useUDP = TRUE ;
+      MsgHeader *message = (MsgHeader *)header ;
+      netUDPEndPoint endPoint ;
+      NET_EH eh ;
+
+      if ( NULL != _udpMainSuit.get() )
+      {
+         rc = _pRoute->route( id, endPoint, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to route [ group: %d, node: %d, "
+                      "service: %d ], rc: %d", id.columns.groupID,
+                      id.columns.nodeID, id.columns.serviceID, rc ) ;
+
+         PD_CHECK( NULL != _udpMainSuit.get() && _udpMainSuit->isOpened(),
+                   SDB_NET_INVALID_HANDLE, error, PDERROR,
+                   "Failed to send UDP message, UDP handle is invalid" ) ;
+
+         rc = _udpMainSuit->getEH( endPoint, id, eh ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get event handler, rc: %d", rc ) ;
+
+         if ( needTest )
+         {
+            SDB_ASSERT( NULL != eh.get() &&
+                        NET_EVENT_HANDLER_UDP == eh->getHandlerType(),
+                        "handler is invalid" ) ;
+            netUDPEventHandler *handler = (netUDPEventHandler *)eh.get() ;
+            if ( !handler->isRemoteValidated() )
+            {
+               useUDP = FALSE ;
+            }
+         }
+      }
+
+      if ( useUDP && NULL != eh.get() )
+      {
+         rc = eh->syncSend( message, message->messageLength ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to send message by UDP, rc: %d",
+                      rc ) ;
+      }
+      else
+      {
+         // UDP handler is not validated, use TCP handler to send
+         rc = syncSend( id, header, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to send message by TCP, rc: %d",
+                      rc ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__NETFRAME_SYNCSENDUDP, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
    // close all connections to one id(i.e. node)
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE, "_netFrame::close" )
    void _netFrame::close( const _MsgRouteID &id )
@@ -1374,23 +1537,33 @@ namespace engine
       return ;
    }
 
-   INT32 _netFrame::closeListen ()
+   INT32 _netFrame::closeListen( UINT32 protocolMask )
    {
+      INT32 rc = SDB_OK ;
+
       try
       {
-         if ( _acceptor.is_open() )
+         if ( OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_TCP ) &&
+              _acceptor.is_open() )
          {
             _acceptor.close() ;
+            OSS_BIT_CLEAR( _protocolMask, NET_FRAME_MASK_TCP ) ;
+         }
+         if ( OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_UDP ) &&
+              NULL != _udpMainSuit.get() )
+         {
+            _udpMainSuit->close() ;
+            OSS_BIT_CLEAR( _protocolMask, NET_FRAME_MASK_UDP ) ;
          }
       }
       catch( boost::system::system_error &e )
       {
          PD_LOG ( PDERROR, "Close listen occur error: %s,%d",
                   e.what(), e.code().value() ) ;
-         return SDB_NETWORK ;
+         rc = SDB_NETWORK ;
       }
 
-      return SDB_OK ;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__NETFRAME_CLOSE3, "_netFrame::close" )
@@ -1429,23 +1602,17 @@ namespace engine
                               UINT32 &timerid )
    {
       INT32 rc = SDB_OK ;
-      _netTimer *t = NULL ;
-      timerid = NET_INVALID_TIMER_ID ;
-      NET_TH timer ;
+
       PD_TRACE_ENTRY ( SDB__NETFRAME_ADDTIMER );
 
-      t = SDB_OSS_NEW _netTimer( millsec, ++_timerID,
-                                 _mainSuitPtr->getIOService(),
-                                 handler ) ;
-      if ( !t )
-      {
-         PD_LOG( PDERROR, "Allocate netTimer failed" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
+      timerid = NET_INVALID_TIMER_ID ;
 
-      timer = NET_TH( t ) ;
-      t = NULL ;
+      NET_TH timer = netTimer::createShared( millsec,
+                                              ++ _timerID,
+                                              _mainSuitPtr->getIOService(),
+                                              handler ) ;
+      PD_CHECK( NULL != timer.get(), SDB_OOM, error, PDERROR,
+                "Allocate netTimer failed" ) ;
 
       /// lock
       _mtx.get() ;
@@ -1457,10 +1624,6 @@ namespace engine
       timer->asyncWait() ;
 
    done:
-      if ( t )
-      {
-         SDB_OSS_DEL t ;
-      }
       PD_TRACE_EXITRC ( SDB__NETFRAME_ADDTIMER, rc );
       return rc ;
    error:
@@ -1500,33 +1663,11 @@ namespace engine
 
       if ( MSG_HEARTBEAT == pMsg->opCode )
       {
-         MsgOpReply reply ;
-         reply.header.messageLength = sizeof( MsgOpReply ) ;
-         reply.header.opCode = MSG_HEARTBEAT_RES ;
-         reply.header.requestID = pMsg->requestID ;
-         reply.header.routeID.value = 0 ;
-         reply.header.TID = pMsg->TID ;
-         reply.contextID = -1 ;
-         reply.numReturned = 0 ;
-         reply.startFrom = 0 ;
-         reply.flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
-
-         eh->mtx().get() ;
-         reply.header.routeID = _local ;
-         eh->syncSend( (const void*)&reply, reply.header.messageLength ) ;
-         eh->mtx().release() ;
+         _handleHeartBeat( eh, pMsg ) ;
       }
       else if ( MSG_HEARTBEAT_RES == pMsg->opCode )
       {
-         MsgOpReply *pReply = ( MsgOpReply* )pMsg ;
-         if ( SDB_OK != pReply->flags )
-         {
-            PD_LOG( PDERROR, "Connection[Handle:%d, Node:%s] is broken "
-                    "because of node is abnormal[%d]",
-                    eh->handle(), routeID2String( eh->id() ).c_str(),
-                    pReply->flags ) ;
-            eh->close() ;
-         }
+         _handleHeartBeatRes( eh, pMsg ) ;
       }
       else
       {
@@ -1572,15 +1713,16 @@ namespace engine
          else
          {
             // create new netEHSegment
-            _netEHSegment *pSeg = SDB_OSS_NEW _netEHSegment( this ,
-                                                   _maxSockPerNode, eh->id() ) ;
-            if ( !pSeg)
+            ptr = netEHSegment::createShared( this,
+                                              _maxSockPerNode,
+                                              eh->id() ) ;
+            if ( NULL == ptr.get() )
             {
                PD_LOG( PDERROR, "Allocate netEHSegment failed" ) ;
                _mtx.release() ;
                goto done ;
             }
-            ptr = netEHSegPtr(pSeg) ;
+
             // insert the shared ptr into route table
             _route.insert( make_pair(eh->id().value, ptr) ) ;
          }
@@ -1668,19 +1810,18 @@ namespace engine
          if ( _maxThreadNum > 0 && _vecEvSuit.size() < _maxThreadNum )
          {
             /// create new
-            netEventSuit *pSuit = SDB_OSS_NEW netEventSuit( this ) ;
-            if ( pSuit )
+            netEvSuitPtr suitPtr = netEventSuit::createShared( this ) ;
+            if ( NULL != suitPtr.get() )
             {
-               netEvSuitPtr tmpPtr = netEvSuitPtr( pSuit ) ;
                /// start thread
-               INT32 rc = _pThreadFunc( tmpPtr.get() ) ;
+               INT32 rc = _pThreadFunc( suitPtr.get() ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Call _pThreadFunc failed, rc: %d", rc ) ;
                   goto done ;
                }
 
-               ptr = tmpPtr ;
+               ptr = suitPtr ;
                _vecEvSuit.push_back( ptr ) ;
             }
          }
@@ -1709,32 +1850,27 @@ namespace engine
    INT32 _netFrame::_asyncAccept()
    {
       INT32 rc = SDB_OK ;
-      _netEventHandler *pEH = NULL ;
-      NET_EH eh ;
+
       PD_TRACE_ENTRY ( SDB__NETFRAME__ASYNCAPT ) ;
 
-      pEH = SDB_OSS_NEW _netEventHandler( _getEvSuit( TRUE ), _handle.inc() ) ;
-      if ( !pEH )
+      netEventHandler *pEH = NULL ;
+      NET_EH eh = netEventHandler::createShared(
+                        _getEvSuit( TRUE ), (NET_HANDLE)( _handle.inc() ) ) ;
+      if ( NULL == eh.get() )
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
          goto error ;
       }
 
-      eh = NET_EH( pEH ) ;
-      pEH = NULL ;
-
-      _acceptor.async_accept( eh->socket(),
+      pEH = (netEventHandler *)( eh.get() ) ;
+      _acceptor.async_accept( pEH->socket(),
                               boost::bind( &_netFrame::_acceptCallback,
                                            this,
                                            eh,
                                            boost::asio::placeholders::error ) ) ;
 
    done:
-      if ( pEH )
-      {
-         SDB_OSS_DEL pEH ;
-      }
       PD_TRACE_EXITRC( SDB__NETFRAME__ASYNCAPT, rc ) ;
       return rc ;
    error:
@@ -1755,10 +1891,10 @@ namespace engine
               boost::system::errc::too_many_files_open_in_system ==
               error.value() )
          {
-            closeListen() ;
+            closeListen( NET_FRAME_MASK_TCP ) ;
             PD_LOG( PDERROR, "Can not accept more connections because of "
                     "open files upto limits, restart listening" ) ;
-            _innerTimeHandle.startTimer() ;
+            _restartTimer.startTimer() ;
             pmdIncErrNum( SDB_TOO_MANY_OPEN_FD ) ;
          }
 
@@ -1787,8 +1923,11 @@ namespace engine
    void _netFrame::_erase( const NET_HANDLE &handle )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ERASE );
+      MsgRouteID removeUDPRouteID ;
       MAP_EVENT_IT itr ;
       MAP_ROUTE_IT routeItr ;
+
+      removeUDPRouteID.value = MSG_INVALID_ROUTEID ;
 
       _mtx.get() ;
       itr = _opposite.find( handle ) ;
@@ -1797,21 +1936,38 @@ namespace engine
          goto done ;
       }
 
-      routeItr = _route.find( itr->second->id().value ) ;
-      if ( routeItr != _route.end() )
+      if ( NET_EVENT_HANDLER_TCP == itr->second->getHandlerType() )
       {
-         routeItr->second->delEH( handle ) ;
-         /// when nobody used and is empty
-         if ( routeItr->second->isEmpty() &&
-              1 == routeItr->second.use_count() )
+         // TCP handler
+         routeItr = _route.find( itr->second->id().value ) ;
+         if ( routeItr != _route.end() )
          {
-            _route.erase(routeItr) ;
+            routeItr->second->delEH( handle ) ;
+            /// when nobody used and is empty
+            /// remove the route and also try to remove UDP event
+            /// handler
+            if ( routeItr->second->isEmpty() &&
+                 1 == routeItr->second.refCount() )
+            {
+               _route.erase(routeItr) ;
+               removeUDPRouteID.value = itr->second->id().value ;
+            }
          }
       }
+
       _opposite.erase( itr ) ;
 
    done:
       _mtx.release() ;
+
+      // if no TCP event handlers left for the given route
+      // also remove UDP event handler
+      if ( MSG_INVALID_ROUTEID != removeUDPRouteID.value &&
+           NULL != _udpMainSuit.get() )
+      {
+         _udpMainSuit->removeEH( removeUDPRouteID ) ;
+      }
+
       PD_TRACE_EXIT ( SDB__NETFRAME__ERASE );
    }
 
@@ -1878,4 +2034,3 @@ namespace engine
    }
 
 }
-

@@ -135,7 +135,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_LSTN, "_netRouteAgent::listen" )
-   INT32 _netRouteAgent::listen( const _MsgRouteID &id )
+   INT32 _netRouteAgent::listen( const _MsgRouteID &id,
+                                 UINT32 protocolMask,
+                                 INetUDPMsgHandler *udpHandler,
+                                 UINT32 udpBufferSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRTAG_LSTN );
@@ -152,7 +155,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _frame.listen( host, service ) ;
+      rc = _frame.listen( host, service, protocolMask, udpHandler,
+                          udpBufferSize ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -189,6 +193,31 @@ namespace engine
    done:
       PD_TRACE_EXITRC ( SDB__NETRTAG_SYNCSND, rc );
       return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSNDUDP, "_netRouteAgent::syncSendUDP" )
+   INT32 _netRouteAgent::syncSendUDP( const MsgRouteID &id,
+                                      void *header,
+                                      BOOLEAN needTest )
+   {
+      SDB_ASSERT( NULL != header, "should not be NULL" ) ;
+
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSNDUDP ) ;
+
+      rc = _frame.syncSendUDP( id, header, needTest ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__NETRTAG_SYNCSNDUDP, rc ) ;
+      return rc ;
+
    error:
       goto done ;
    }

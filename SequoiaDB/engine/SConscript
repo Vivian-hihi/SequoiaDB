@@ -606,7 +606,11 @@ aggrFiles = [
       ]
 
 netFiles = [
+      "net/netEventHandlerBase.cpp",
       "net/netEventHandler.cpp",
+      "net/netUDPEventHandler.cpp",
+      "net/netUDPEventSuit.cpp",
+      "net/netInnerTimer.cpp",
       "net/netEventSuit.cpp",
       "net/netFrame.cpp",
       "net/netRoute.cpp",

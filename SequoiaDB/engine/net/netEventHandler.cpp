@@ -52,33 +52,24 @@
 #endif
 
 using namespace boost::asio::ip ;
+using namespace std ;
 
 namespace engine
 {
    #define NET_SOCKET_SNDTIMEO         ( 2 )
-   #define NET_STAT_CLEAR_INTERVAL     ( 120 * OSS_ONE_SEC )
 
+   /*
+      _netEventHandler implement
+    */
    _netEventHandler::_netEventHandler( netEvSuitPtr evSuitPtr,
                                        const NET_HANDLE &handle )
-   : _sock( evSuitPtr->getIOService() ),
+   : netEventHandlerBase( evSuitPtr, handle ),
+     _sock( evSuitPtr->getIOService() ),
      _buf(NULL),
      _bufLen(0),
-     _state(NET_EVENT_HANDLER_STATE_HEADER),
-     _handle( handle )
+     _state(NET_EVENT_HANDLER_STATE_HEADER)
    {
-      _evSuitPtr     = evSuitPtr ;
-      _id.value      = MSG_INVALID_ROUTEID ;
-      _isConnected   = FALSE ;
-      _isNew         = TRUE ;
       _hasRecvMsg    = FALSE ;
-      _lastSendTick  = pmdGetDBTick() ;
-      _lastRecvTick  = pmdGetDBTick() ;
-      _lastBeatTick  = pmdGetDBTick() ;
-      _msgid         = 0 ;
-
-      _totalIOTimes  = 0 ;
-      _iops          = 0 ;
-      _lastStatTick  = _lastSendTick ;
 
       /// attach
       _evSuitPtr->addHandle( _handle ) ;
@@ -96,6 +87,21 @@ namespace engine
 
       /// detach
       _evSuitPtr->delHandle( _handle ) ;
+   }
+
+   NET_EH _netEventHandler::createShared( netEvSuitPtr evSuitPtr,
+                                          const NET_HANDLE &handle )
+   {
+      NET_EH eh ;
+
+      NET_TCP_EH tmpEH = NET_TCP_EH::allocRaw( ALLOC_POOL ) ;
+      if ( NULL != tmpEH.get() &&
+           NULL != new( tmpEH.get() ) netEventHandler( evSuitPtr, handle ) )
+      {
+         eh = NET_EH::makeRaw( tmpEH.get(), ALLOC_POOL ) ;
+      }
+
+      return eh ;
    }
 
    string _netEventHandler::localAddr() const
@@ -154,31 +160,6 @@ namespace engine
          PD_LOG( PDERROR, "get remote port occurred exception: %s", e.what() ) ;
       }
       return port ;
-   }
-
-   BOOLEAN _netEventHandler::isLocalConnection() const
-   {
-      return localAddr() == remoteAddr() ? TRUE : FALSE ;
-   }
-
-   void _netEventHandler::syncLastBeatTick()
-   {
-      _lastBeatTick = pmdGetDBTick() ;
-   }
-
-   void _netEventHandler::makeStat( UINT64 curTick )
-   {
-      UINT64 spanTime = pmdDBTickSpan2Time( curTick - _lastStatTick ) ;
-      if ( spanTime > 0 )
-      {
-         _iops = _totalIOTimes / spanTime ;
-
-         if ( spanTime >= NET_STAT_CLEAR_INTERVAL )
-         {
-            _lastStatTick = curTick ;
-            _totalIOTimes = 0 ;
-         }
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SETOPT, "_netEventHandler::setOpt" )
@@ -408,7 +389,7 @@ namespace engine
                         (CHAR*)&_header + sizeof(MsgSysInfoRequest),
                         sizeof(_MsgHeader) - sizeof(MsgSysInfoRequest) ),
                         boost::bind(&_netEventHandler::_readCallback,
-                                    shared_from_this(),
+                                    _getShared(),
                                     boost::asio::placeholders::error ) ) ;
          }
          // for MsgSysInfoRequest msg(12bytes)
@@ -416,14 +397,14 @@ namespace engine
          {
             async_read( _sock, buffer(&_header, sizeof(MsgSysInfoRequest)),
                         boost::bind(&_netEventHandler::_readCallback,
-                                    shared_from_this(),
+                                    _getShared(),
                                     boost::asio::placeholders::error )) ;
          }
          else
          {
             async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
                         boost::bind(&_netEventHandler::_readCallback,
-                                    shared_from_this(),
+                                    _getShared(),
                                     boost::asio::placeholders::error )) ;
          }
       }
@@ -446,7 +427,7 @@ namespace engine
                      (CHAR *)((ossValuePtr)_buf + sizeof(_MsgHeader)),
                      len - sizeof(_MsgHeader)),
                      boost::bind( &_netEventHandler::_readCallback,
-                                  shared_from_this(),
+                                  _getShared(),
                                   boost::asio::placeholders::error ) ) ;
       }
 
@@ -458,7 +439,7 @@ namespace engine
       {
          close() ;
       }
-      _evSuitPtr->getFrame()->handleClose( shared_from_this(), _id ) ;
+      _evSuitPtr->getFrame()->handleClose( _getSharedBase(), _id ) ;
       _evSuitPtr->getFrame()->_erase( handle() ) ;
       goto done ;
    }
@@ -594,7 +575,7 @@ namespace engine
             }
             _hasRecvMsg = TRUE ;
             ossMemcpy( _buf, &_header, sizeof( MsgSysInfoRequest ) ) ;
-            _evSuitPtr->getFrame()->handleMsg( shared_from_this() ) ;
+            _evSuitPtr->getFrame()->handleMsg( _getSharedBase() ) ;
             _state = NET_EVENT_HANDLER_STATE_HEADER ;
             asyncRead() ;
             goto done ;
@@ -627,7 +608,7 @@ namespace engine
                if ( MSG_INVALID_ROUTEID != _header.routeID.value )
                {
                   _id = _header.routeID ;
-                  _evSuitPtr->getFrame()->_addRoute( shared_from_this() ) ;
+                  _evSuitPtr->getFrame()->_addRoute( _getSharedBase() ) ;
                }
             }
 
@@ -645,7 +626,7 @@ namespace engine
                goto error_close ;
             }
             ossMemcpy( _buf, &_header, sizeof( _MsgHeader ) ) ;
-            _evSuitPtr->getFrame()->handleMsg( shared_from_this() ) ;
+            _evSuitPtr->getFrame()->handleMsg( _getSharedBase() ) ;
             _state = NET_EVENT_HANDLER_STATE_HEADER ;
             asyncRead() ;
             goto done ;
@@ -670,7 +651,7 @@ namespace engine
       }
       else
       {
-         _evSuitPtr->getFrame()->handleMsg( shared_from_this() ) ;
+         _evSuitPtr->getFrame()->handleMsg( _getSharedBase() ) ;
          _state = NET_EVENT_HANDLER_STATE_HEADER ;
          asyncRead() ;
       }
@@ -683,7 +664,7 @@ namespace engine
       {
          close() ;
       }
-      _evSuitPtr->getFrame()->handleClose( shared_from_this(), _id ) ;
+      _evSuitPtr->getFrame()->handleClose( _getSharedBase(), _id ) ;
       _evSuitPtr->getFrame()->_erase( handle() ) ;
       goto done ;
    }

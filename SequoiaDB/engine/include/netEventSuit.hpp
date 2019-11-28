@@ -65,8 +65,7 @@ namespace engine
    /*
       _netEventSuit define
    */
-   class _netEventSuit : public boost::enable_shared_from_this<_netEventSuit>,
-                         public _IIOService, public utilPooledObject
+   class _netEventSuit : public _IIOService, public utilPooledObject
    {
       public:
          typedef set<NET_HANDLE>                SET_HANDLE ;
@@ -75,6 +74,8 @@ namespace engine
       public:
          _netEventSuit( _netFrame *pFrame ) ;
          virtual ~_netEventSuit() ;
+
+         static netEvSuitPtr createShared( _netFrame *frame ) ;
 
          io_service&    getIOService() ;
          _netFrame*     getFrame() { return _pFrame ; }
@@ -96,6 +97,11 @@ namespace engine
       protected:
          void           _asyncWait() ;
          void           _timeoutCallback( const boost::system::error_code &error ) ;
+
+         OSS_INLINE netEvSuitPtr _getShared()
+         {
+            return netEvSuitPtr::makeRaw( this, ALLOC_POOL ) ;
+         }
 
       private:
 

@@ -41,11 +41,11 @@
 
 #include "core.hpp"
 #include <boost/asio/steady_timer.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include "oss.hpp"
 #include "netDef.hpp"
+#include "utilPooledAutoPtr.hpp"
 
 namespace engine
 {
@@ -65,8 +65,11 @@ namespace engine
    /*
       _netTimer define
    */
-   class _netTimer : public boost::enable_shared_from_this<_netTimer>,
-                     public SDBObject
+   class _netTimer ;
+   typedef _netTimer netTimer ;
+   typedef utilSharePtr<netTimer> NET_TH ;
+
+   class _netTimer : public SDBObject
    {
       public:
          _netTimer( UINT32 millisec,
@@ -83,6 +86,26 @@ namespace engine
 
          ~_netTimer()
          {
+         }
+
+         static OSS_INLINE NET_TH createShared( UINT32 millisec,
+                                                UINT32 id,
+                                                boost::asio::io_service &io,
+                                                _netTimeoutHandler *handler )
+         {
+            NET_TH th ;
+
+            NET_TH tmpTH = NET_TH::allocRaw( ALLOC_POOL ) ;
+            if ( NULL != tmpTH.get() &&
+                 NULL != new( tmpTH.get() ) netTimer( millisec,
+                                                      id,
+                                                      io,
+                                                      handler ) )
+            {
+               th = tmpTH ;
+            }
+
+            return th ;
          }
 
       public:
@@ -111,7 +134,7 @@ namespace engine
             {
                _timer.expires_from_now( boost::chrono::milliseconds(_millisec) ) ;
                _timer.async_wait( boost::bind( &_netTimer::timeoutCallback,
-                                               shared_from_this(),
+                                               _getShared(),
                                                boost::asio::placeholders::error ) ) ;
             }
          }
@@ -122,6 +145,12 @@ namespace engine
             _timer.cancel() ;
          }
 
+      protected:
+         OSS_INLINE NET_TH _getShared()
+         {
+            return NET_TH::makeRaw( this, ALLOC_POOL ) ;
+         }
+
       private:
          boost::asio::steady_timer  _timer;
          _netTimeoutHandler         *_handler ;
@@ -129,9 +158,7 @@ namespace engine
          UINT32                     _millisec ;
          BOOLEAN                    _actived ;
    } ;
-   typedef _netTimer netTimer ;
 
-   typedef boost::shared_ptr<_netTimer>         NET_TH ;
 }
 
 #endif // NETTIMER_HPP_

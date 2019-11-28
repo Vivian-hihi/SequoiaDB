@@ -70,10 +70,35 @@ namespace engine
         }
 
         virtual void    onStop() {}
-
    } ;
 
    typedef _netMsgHandler INetMsgHandler ;
+
+   /*
+      _netUDPMsgHandler define
+    */
+   class _netUDPMsgHandler : public _netMsgHandler
+   {
+   public:
+      _netUDPMsgHandler()
+      {
+      }
+
+     virtual ~_netUDPMsgHandler()
+     {
+     }
+
+   public:
+      virtual void onSendMsg( MsgHeader *header )
+      {
+      }
+
+      virtual void onReceiveMsg( MsgHeader *header )
+      {
+      }
+   } ;
+
+   typedef class _netUDPMsgHandler INetUDPMsgHandler ;
 
 }
 

@@ -105,7 +105,7 @@ namespace engine
 
          OSS_INLINE void closeListen()
          {
-            _frame.closeListen() ;
+            _frame.closeListen( NET_FRAME_MASK_ALL ) ;
          }
 
          OSS_INLINE void disconnectAll()
@@ -125,7 +125,10 @@ namespace engine
          }
 
       public:
-         INT32 listen( const _MsgRouteID &id ) ;
+         INT32 listen( const _MsgRouteID &id,
+                       UINT32 protocolMask = NET_FRAME_MASK_TCP,
+                       INetUDPMsgHandler *udpHandler = NULL,
+                       UINT32 udpBufferSize = NET_UDP_DEFAULT_BUFFER_SIZE ) ;
 
          INT32 syncConnect( const _MsgRouteID &id,
                             NET_HANDLE *pHandle = NULL ) ;
@@ -133,6 +136,10 @@ namespace engine
          INT32 syncSend( const _MsgRouteID &id,
                          void *header,
                          NET_HANDLE *pHandle = NULL ) ;
+
+         INT32 syncSendUDP( const MsgRouteID &id,
+                            void *header,
+                            BOOLEAN needTest = FALSE ) ;
 
          INT32 syncSend( const NET_HANDLE &handle,
                          void *header ) ;

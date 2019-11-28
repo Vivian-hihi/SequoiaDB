@@ -43,11 +43,16 @@
 #include "oss.hpp"
 #include "netDef.hpp"
 #include "ossLatch.hpp"
+#include "netMsgHandler.hpp"
 #include "netEventSuit.hpp"
 #include "netEventHandler.hpp"
+#include "netUDPEventSuit.hpp"
+#include "netUDPEventHandler.hpp"
+#include "netInnerTimer.hpp"
 #include "netTimer.hpp"
 #include "ossAtomic.hpp"
 #include "sdbInterface.hpp"
+#include "ossMemPool.hpp"
 
 #include <map>
 #include <vector>
@@ -55,48 +60,26 @@
 using namespace std ;
 namespace engine
 {
-   class _netMsgHandler ;
-   class _netFrame ;
-   class _netRoute ;
 
    typedef INT32 (*NET_START_THREAD_FUNC)( _netEventSuit *pSuit ) ;
 
-   /*
-      _netInnerTimeHandle define
-   */
-   class _netInnerTimeHandle : public _netTimeoutHandler
-   {
-      public:
-         _netInnerTimeHandle( _netFrame *pFrame ) ;
-         virtual ~_netInnerTimeHandle() ;
-
-         virtual void handleTimeout( const UINT32 &millisec,
-                                     const UINT32 &id ) ;
-
-      public:
-         void         setInfo( const CHAR *pHostName,
-                               const CHAR *pSvcName ) ;
-
-         void         startTimer() ;
-         INT32        startDummyTimer() ;
-
-      private:
-         _netFrame            *_pFrame ;
-         UINT32               _timeID ;
-         UINT32               _dummyTimerID ;
-         string               _hostName ;
-         string               _svcName ;
-   } ;
-   typedef _netInnerTimeHandle netInnerTimeHandle ;
-
    #define NET_HEARTBEAT_INTERVAL            ( 5000 )
    #define NET_MAKE_STAT_INTERVAL            ( 5000 )
+
+   #define NET_FRAME_MASK_EMPTY              ( 0x00000000 )
+   #define NET_FRAME_MASK_TCP                ( 0x00000001 )
+   #define NET_FRAME_MASK_UDP                ( 0x00000002 )
+   #define NET_FRAME_MASK_ALL                ( 0xffffffff )
 
    /*
      _netEHSegment define
      This class is only used by netFrame as the container/manager of
      netEventHandler
    */
+   class _netEHSegment ;
+   typedef class _netEHSegment netEHSegment ;
+   typedef utilSharePtr<netEHSegment> netEHSegPtr ;
+
    class _netEHSegment : public SDBObject
    {
       typedef vector<NET_EH> VEC_EH ;
@@ -105,8 +88,14 @@ namespace engine
       friend class _netFrame ;
 
       public:
-         _netEHSegment( _netFrame *pFrame, UINT32 capacity, const _MsgRouteID &id ) ;
+         _netEHSegment( _netFrame *pFrame,
+                        UINT32 capacity,
+                        const _MsgRouteID &id ) ;
          ~_netEHSegment() ;
+
+         static netEHSegPtr createShared( netFrame *pFrame,
+                                          UINT32 capacity,
+                                          const MsgRouteID &id ) ;
 
       public:
          INT32 getEH( NET_EH &eh ) ;
@@ -138,9 +127,6 @@ namespace engine
          VEC_EH                           _vecEH ; // EV handle list
    } ;
 
-   typedef boost::shared_ptr<_netEHSegment>  netEHSegPtr ;
-
-
    /*
       _netFrame define
    */
@@ -162,9 +148,12 @@ namespace engine
       typedef vector<NET_EH> VEC_EH ;
       typedef vector<NET_EH>::iterator VEC_EH_IT ;
 
-      friend class _netInnerTimeHandle ;
+      friend class _netRestartTimer ;
+      friend class _netUDPRestartTimer ;
       friend class _netEventHandler ;
       friend class _netEHSegment ;
+      friend class _netUDPEventHandler ;
+      friend class _netUDPEventSuit ;
 
       public:
          /// handler will not be freed by frame
@@ -188,6 +177,11 @@ namespace engine
             return _local ;
          }
 
+         OSS_INLINE io_service &getIOService()
+         {
+            return _mainSuitPtr->getIOService() ;
+         }
+
          void     setMaxSockPerNode( UINT32 maxSockPerNode ) ;
          void     setMaxSockPerThread( UINT32 maxSockPerThread ) ;
          void     setMaxThreadNum( UINT32 maxThreadNum ) ;
@@ -202,6 +196,10 @@ namespace engine
          void     onRunSuitStop( netEvSuitPtr evSuitPtr ) ;
          void     onSuitTimer( netEvSuitPtr evSuitPtr ) ;
          UINT32   getEvSuitSize() ;
+         OSS_INLINE netEvSuitPtr getMainSuit()
+         {
+            return _mainSuitPtr ;
+         }
 
       public:
          // return 0 if error happened
@@ -217,7 +215,10 @@ namespace engine
          NET_EH   getEventHandle( const NET_HANDLE &handle ) ;
 
          INT32    listen( const CHAR *hostName,
-                          const CHAR *serviceName ) ;
+                          const CHAR *serviceName,
+                          UINT32 protocolMask = NET_FRAME_MASK_TCP,
+                          INetUDPMsgHandler *udpHandler = NULL,
+                          UINT32 udpBufferSize = NET_UDP_DEFAULT_BUFFER_SIZE ) ;
 
          /// if call this func with same params for twice,
          /// will create two connections.
@@ -264,6 +265,10 @@ namespace engine
                           MsgHeader *header,
                           const netIOVec &iov ) ;
 
+         INT32 syncSendUDP( const MsgRouteID &id,
+                            void *header,
+                            BOOLEAN needTest ) ;
+
          /// frame will not release handler for ever
          INT32 addTimer( UINT32 millsec, _netTimeoutHandler *handler,
                          UINT32 &timerid );
@@ -276,7 +281,7 @@ namespace engine
 
          void  close() ;
 
-         INT32 closeListen() ;
+         INT32 closeListen ( UINT32 protocolMask = NET_FRAME_MASK_ALL ) ;
 
          void  handleMsg( NET_EH eh ) ;
 
@@ -288,6 +293,31 @@ namespace engine
 
          void  makeStat( UINT32 timeout ) ;
          void  setNetStartThreadFunc( NET_START_THREAD_FUNC pFunc ) ;
+
+         OSS_INLINE NET_UDP_EV_SUIT getUDPEventHandle()
+         {
+            return _udpMainSuit ;
+         }
+
+         OSS_INLINE UINT32 getProtocolMask() const
+         {
+            return _protocolMask ;
+         }
+
+         OSS_INLINE BOOLEAN listeningUDP() const
+         {
+            return OSS_BIT_TEST( _protocolMask, NET_FRAME_MASK_UDP ) ;
+         }
+
+         OSS_INLINE BOOLEAN listeningTCP() const
+         {
+            return OSS_BIT_TEST( _protocolMask, NET_FRAME_MASK_TCP ) ;
+         }
+
+         OSS_INLINE NET_HANDLE allocateHandler()
+         {
+            return (NET_HANDLE)( _handle.inc() ) ;
+         }
 
       protected:
          netEvSuitPtr      _getEvSuit( BOOLEAN needLock ) ;
@@ -301,6 +331,13 @@ namespace engine
 
          void              _addOpposite( NET_EH eh ) ;
 
+         INT32             _listenTCP( const CHAR *hostName,
+                                       const CHAR *serviceName ) ;
+         INT32             _listenUDP( const CHAR *hostName,
+                                       const CHAR *serviceName,
+                                       INetUDPMsgHandler *handler,
+                                       UINT32 bufferSize ) ;
+
       private:
          INT32    _asyncAccept() ;
          void     _acceptCallback( NET_EH eh,
@@ -311,10 +348,12 @@ namespace engine
          void     _addRoute( NET_EH eh ) ;
 
          void     _heartbeat( INT32 serviceType ) ;
-
+         void     _handleHeartBeat( NET_EH eh, MsgHeader *message ) ;
+         void     _handleHeartBeatRes( NET_EH eh, MsgHeader *message ) ;
          void     _checkBreak( UINT32 timeout, INT32 serviceType ) ;
 
       private:
+         UINT32                           _protocolMask ;
          _netRoute                        *_pRoute ;
          netEvSuitPtr                     _mainSuitPtr ;
          NET_START_THREAD_FUNC            _pThreadFunc ;
@@ -341,7 +380,7 @@ namespace engine
          UINT64                           _beatLastTick ;
          BOOLEAN                          _checkBeat ;
 
-         netInnerTimeHandle               _innerTimeHandle ;
+         netRestartTimer                  _restartTimer ;
 
          /// communicate shedule config info
          UINT32                           _statInterval ;
@@ -352,9 +391,10 @@ namespace engine
 
          ossRWMutex                       _suiteExitMutex ;
          BOOLEAN                          _suiteStopFlag ;
+
+         NET_UDP_EV_SUIT                  _udpMainSuit ;
    } ;
 
 }
 
 #endif
-

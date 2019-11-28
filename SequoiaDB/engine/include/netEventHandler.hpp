@@ -41,19 +41,11 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "netDef.hpp"
-#include "ossLatch.hpp"
-#include "ossAtomic.hpp"
-#include "utilPooledObject.hpp"
-
-#include <string>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/asio.hpp>
-using namespace boost::asio ;
-using namespace std ;
+#include "netEventHandlerBase.hpp"
 
 namespace engine
 {
+
    /*
       NET_EVENT_HANDLER_STATE define
    */
@@ -64,56 +56,25 @@ namespace engine
       NET_EVENT_HANDLER_STATE_BODY
    } ;
 
-   class _netEventSuit ;
-   typedef boost::shared_ptr<_netEventSuit>     netEvSuitPtr ;
-
    /*
       _netEventHandler define
-   */
-   class _netEventHandler :
-         public boost::enable_shared_from_this<_netEventHandler>,
-         public utilPooledObject
+    */
+   class _netEventHandler : public netEventHandlerBase
    {
       public:
          _netEventHandler( netEvSuitPtr evSuitPtr,
-                           const NET_HANDLE &handle  ) ;
-         ~_netEventHandler() ;
+                           const NET_HANDLE &handle ) ;
+         virtual ~_netEventHandler() ;
 
-         netEvSuitPtr getEVSuitPtr() const { return _evSuitPtr ; }
-
-         BOOLEAN  isConnected() const { return _isConnected ; }
-         BOOLEAN  isNew() const { return _isNew ; }
+         static NET_EH createShared( netEvSuitPtr evSuitPtr,
+                                     const NET_HANDLE &handle ) ;
 
       public:
-         OSS_INLINE void id( const _MsgRouteID &id )
-         {
-            _id = id ;
-         }
-         OSS_INLINE const _MsgRouteID &id()
-         {
-            return _id ;
-         }
-         OSS_INLINE UINT64 getAndIncMsgID( BOOLEAN inc = TRUE )
-         {
-            if ( inc )
-            {
-               return _msgid++ ;
-            }
-            return _msgid ;
-         }
          OSS_INLINE boost::asio::ip::tcp::socket &socket()
          {
             return _sock ;
          }
-         OSS_INLINE _ossSpinXLatch &mtx()
-         {
-            return _mtx ;
-         }
-         OSS_INLINE NET_HANDLE handle() const
-         {
-            return _handle ;
-         }
-         CHAR *msg()
+         virtual CHAR *msg()
          {
             return _buf ;
          }
@@ -122,65 +83,46 @@ namespace engine
             return _state ;
          }
 
-         void  close() ;
-
-         UINT64 getLastSendTick() const { return _lastSendTick ; }
-         UINT64 getLastRecvTick() const { return _lastRecvTick ; }
-         UINT64 getLastBeatTick() const { return _lastBeatTick ; }
-
-         UINT32 getIOPS() const { return _iops ; }
-
-         void   syncLastBeatTick() ;
-         void   makeStat( UINT64 curTick ) ;
+         virtual void  close() ;
 
       public:
-         void  asyncRead() ;
+         virtual void  asyncRead() ;
 
-         INT32 syncConnect( const CHAR *hostName,
-                            const CHAR *serviceName ) ;
+         virtual INT32 syncConnect( const CHAR *hostName,
+                                    const CHAR *serviceName ) ;
 
-         INT32 syncSend( const void *buf,
-                         UINT32 len ) ;
+         virtual INT32 syncSend( const void *buf,
+                                 UINT32 len ) ;
 
-         void  setOpt() ;
+         virtual void  setOpt() ;
 
-         string localAddr() const ;
-         string remoteAddr() const ;
-         UINT16 localPort() const ;
-         UINT16 remotePort() const ;
+         virtual std::string localAddr() const ;
+         virtual std::string remoteAddr() const ;
+         virtual UINT16 localPort() const ;
+         virtual UINT16 remotePort() const ;
 
-         BOOLEAN isLocalConnection() const ;
+         OSS_INLINE virtual NET_EVENT_HANDLER_TYPE getHandlerType() const
+         {
+            return NET_EVENT_HANDLER_TCP ;
+         }
 
-      private:
+      protected:
          void  _readCallback( const boost::system::error_code &error ) ;
          INT32 _allocateBuf( UINT32 len ) ;
 
-      private:
+         OSS_INLINE NET_TCP_EH _getShared()
+         {
+            return NET_TCP_EH::makeRaw( this, ALLOC_POOL ) ;
+         }
+
+      protected:
          boost::asio::ip::tcp::socket     _sock ;
-         _ossSpinXLatch                   _mtx ;
          _MsgHeader                       _header ;
          CHAR                             *_buf ;
          UINT32                           _bufLen ;
          NET_EVENT_HANDLER_STATE          _state ;
-         _MsgRouteID                      _id ;
-         netEvSuitPtr                     _evSuitPtr ;
-         NET_HANDLE                       _handle ;
-         volatile BOOLEAN                 _isConnected ;
-         volatile BOOLEAN                 _isNew ;
          BOOLEAN                          _hasRecvMsg ;
-         UINT64                           _lastSendTick ;
-         UINT64                           _lastRecvTick ;
-         UINT64                           _lastBeatTick ;
-         UINT64                           _msgid ;
-
-         UINT64                           _lastStatTick ;
-         UINT64                           _totalIOTimes ;
-         UINT32                           _iops ;     /// times/s
-
    } ;
-   typedef _netEventHandler netEventHandler ;
-
-   typedef boost::shared_ptr<_netEventHandler> NET_EH ;
 
 }
 

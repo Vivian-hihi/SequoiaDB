@@ -121,8 +121,12 @@ ossFiles = [
       ]
 
 netFiles = [
+      "net/netEventHandlerBase.cpp",
       "net/netEventHandler.cpp",
       "net/netEventSuit.cpp",
+      "net/netUDPEventHandler.cpp",
+      "net/netUDPEventSuit.cpp",
+      "net/netInnerTimer.cpp",
       "net/netFrame.cpp",
       "net/netRoute.cpp",
       "net/netRouteAgent.cpp"

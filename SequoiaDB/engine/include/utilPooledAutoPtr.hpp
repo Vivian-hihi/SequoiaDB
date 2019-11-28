@@ -85,12 +85,15 @@ namespace engine
          static _utilPooledAutoPtr make( CHAR *ptr,
                                          UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
+         // NOTICE: ptr must be created by utilPooledAutoPtr
+         static _utilPooledAutoPtr makeRaw( CHAR *ptr,
+                                            UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
+
       private:
          _utilPooledAutoPtr( CHAR *ptr, UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
       public:
-         CHAR*       get() ;
-         const CHAR* get() const ;
+         CHAR*       get() const ;
          INT32       refCount() const ;
          void        release() ;
 
@@ -129,12 +132,21 @@ namespace engine
 
          static utilSharePtr alloc( UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
+         static utilSharePtr allocRaw( const CHAR *pFile,
+                                       UINT32 line,
+                                       UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
+
+         static utilSharePtr allocRaw( UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
+
          static utilSharePtr make( T *ptr,
                                    UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
+         // NOTICE: ptr must be created by utilPooledAutoPtr
+         static utilSharePtr makeRaw( T *ptr,
+                                      UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
+
       public:
-         T*          get() { return _ptr ; }
-         const T*    get() const { return _ptr ; }
+         T*          get() const { return _ptr ; }
          INT32       refCount() const { return _pRef ? *_pRef : 0 ; }
          void        release() ;
 
@@ -264,6 +276,44 @@ namespace engine
    }
 
    template< typename T >
+   utilSharePtr<T> utilSharePtr<T>::allocRaw( const CHAR *pFile,
+                                              UINT32 line,
+                                              UTIL_ALLOC_TYPE type )
+   {
+      utilSharePtr<T> recordPtr ;
+      UINT32 realSZ = sizeof( T ) + sizeof( INT32 ) ;
+      CHAR *ptr = NULL ;
+
+      if ( ALLOC_OSS == type )
+      {
+         ptr = ( CHAR* )ossMemAlloc( realSZ, pFile, line ) ;
+      }
+      else if ( ALLOC_POOL == type )
+      {
+         ptr = ( CHAR* )utilPoolAlloc( realSZ, pFile, line ) ;
+      }
+      else
+      {
+         ptr = ( CHAR* )utilThreadAlloc( realSZ, pFile, line ) ;
+      }
+
+      if ( ptr )
+      {
+         *(INT32*)ptr = 1 ;
+         recordPtr._pRef = (INT32*)ptr ;
+         recordPtr._ptr = (T*)( ptr + sizeof( INT32 ) ) ;
+         recordPtr._allocType = type ;
+      }
+      return recordPtr ;
+   }
+
+   template< typename T >
+   utilSharePtr<T> utilSharePtr<T>::allocRaw( UTIL_ALLOC_TYPE type )
+   {
+      return allocRaw( __FILE__, __LINE__, type ) ;
+   }
+
+   template< typename T >
    utilSharePtr<T> utilSharePtr<T>::make( T *ptr,
                                           UTIL_ALLOC_TYPE type )
    {
@@ -292,6 +342,28 @@ namespace engine
             recordPtr._allocType = type ;
          }
       }
+      return recordPtr ;
+   }
+
+   template< typename T >
+   utilSharePtr<T> utilSharePtr<T>::makeRaw( T *ptr,
+                                             UTIL_ALLOC_TYPE type )
+   {
+      utilSharePtr<T> recordPtr ;
+
+      if ( ptr )
+      {
+         recordPtr._ptr = ptr ;
+         recordPtr._pRef = (INT32 *)( (CHAR *)ptr - sizeof( INT32 ) ) ;
+         recordPtr._allocType = type ;
+         if ( recordPtr._pRef )
+         {
+            INT32 orgRef = ossFetchAndIncrement32( recordPtr._pRef ) ;
+            SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
+            SDB_UNUSED( orgRef ) ;
+         }
+      }
+
       return recordPtr ;
    }
 
@@ -329,6 +401,20 @@ namespace engine
             _pRef = NULL ;
          }
       }
+   }
+
+   /*
+      get_pointer: used for boost bind
+    */
+   OSS_INLINE CHAR *get_pointer( const utilPooledAutoPtr & p )
+   {
+      return p.get() ;
+   }
+
+   template<class T>
+   OSS_INLINE T *get_pointer( const utilSharePtr<T> &p)
+   {
+       return p.get();
    }
 
 }

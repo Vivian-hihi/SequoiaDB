@@ -43,15 +43,22 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "ossSocket.hpp"
+#include "utilPooledObject.hpp"
+#include "ossMemPool.hpp"
 #include "msg.hpp"
+#include "utilPooledAutoPtr.hpp"
 #include <string>
 #include <vector>
+
+#include <boost/asio.hpp>
 
 namespace engine
 {
    typedef UINT32 NET_HANDLE ;
 
-   const NET_HANDLE NET_INVALID_HANDLE = 0 ;
+   const NET_HANDLE NET_INVALID_HANDLE = 0L ;
+
+   #define NET_HANDLE_BEGIN      ( 1 )
 
    typedef UINT32 NET_GROUP_ID ;
    typedef UINT32 NET_NODE_ID ;
@@ -59,6 +66,9 @@ namespace engine
 
    // invalid timer id
    #define NET_INVALID_TIMER_ID        ( 0 )
+
+   /// define listen host
+   #define NET_LISTEN_HOST          "0.0.0.0"
 
    /*
       _NET_NODE_STATUS define
@@ -79,10 +89,19 @@ namespace engine
    #define NET_NODE_FAULT_TIMEOUT            ( 600 )  /// second
    #define NET_NODE_FAULTUP_MIN_TIME         ( 3 )    /// second
 
+   // size of receive buffer for UDP socket
+   #define NET_UDP_SOCKET_BUFFER_SIZE        ( 1024 * 1024 )
+   // size of buffer for each UDP message
+   #define NET_UDP_DEFAULT_BUFFER_SIZE       ( 128 )
+
+   typedef boost::asio::ip::tcp::endpoint netTCPEndPoint ;
+   typedef boost::asio::ip::udp::endpoint netUDPEndPoint ;
+   typedef ossPoolMap< UINT64, netUDPEndPoint > NET_UDP_EP_MAP ;
+
    /*
       _netRouteNode define
    */
-   class _netRouteNode : public SDBObject
+   class _netRouteNode : public utilPooledObject
    {
    public :
       CHAR        _host[OSS_MAX_HOSTNAME+1] ;
@@ -108,7 +127,8 @@ namespace engine
       }
       _netRouteNode( const _netRouteNode &node )
       : _instanceID( node._instanceID ),
-        _status( NET_NODE_STAT_NORMAL )
+        _status( NET_NODE_STAT_NORMAL ),
+        _faultTime( node._faultTime )
       {
          SDB_ASSERT( (UINT64)&_status % 4 == 0,
                      "the addr of _status must be aligned 4 bytes!" );
@@ -117,7 +137,7 @@ namespace engine
          ossStrcpy( _host, node._host ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
          {
-            _service[i] = node._service[i];
+            _service[i] = node._service[i] ;
          }
       }
 
@@ -129,7 +149,7 @@ namespace engine
          ossStrcpy( _host, node._host ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
          {
-            _service[i] = node._service[i];
+            _service[i] = node._service[i] ;
          }
          _instanceID = node._instanceID ;
          return *this ;
@@ -186,6 +206,9 @@ namespace engine
 
    } ;
 
+   typedef class _netRouteNode netRouteNode ;
+   typedef ossPoolMap< UINT64, netRouteNode > NET_ROUTE_MAP ;
+
    /*
       _netIOV define
    */
@@ -221,6 +244,38 @@ namespace engine
 
    /// calc the netio vec len
    UINT32 netCalcIOVecSize( const netIOVec &ioVec ) ;
+
+   /*
+      predefines
+    */
+   class _netFrame ;
+   typedef class _netFrame netFrame ;
+
+   class _netRoute ;
+   typedef class _netRoute netRoute ;
+
+   // TCP event suit
+   class _netEventSuit ;
+   typedef utilSharePtr<_netEventSuit> netEvSuitPtr ;
+
+   // UDP event suit
+   class _netUDPEventSuit ;
+   typedef class _netUDPEventSuit netUDPEventSuit ;
+   typedef utilSharePtr< netUDPEventSuit > NET_UDP_EV_SUIT ;
+
+   class _netEventHandlerBase ;
+   typedef class _netEventHandlerBase netEventHandlerBase ;
+   typedef utilSharePtr< netEventHandlerBase > NET_EH ;
+
+   // TCP event handler
+   class _netEventHandler ;
+   typedef _netEventHandler netEventHandler ;
+   typedef utilSharePtr< netEventHandler > NET_TCP_EH ;
+
+   // UDP event handler
+   class _netUDPEventHandler ;
+   typedef class _netUDPEventHandler netUDPEventHandler ;
+   typedef utilSharePtr< netUDPEventHandler > NET_UDP_EH ;
 
 }
 

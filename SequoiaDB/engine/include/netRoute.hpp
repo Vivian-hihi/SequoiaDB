@@ -49,6 +49,7 @@ using namespace std ;
 
 namespace engine
 {
+
    class _netRoute : public SDBObject
    {
       public:
@@ -64,6 +65,10 @@ namespace engine
                       const CHAR* service,
                       MSG_ROUTE_SERVICE_TYPE type,
                       _MsgRouteID &id ) ;
+
+         INT32 route( const MsgRouteID &routeID,
+                      netUDPEndPoint &endPoint,
+                      BOOLEAN needCache = TRUE ) ;
 
          /// return err when update an existing node.
          INT32 update( const _MsgRouteID &id,
@@ -90,11 +95,30 @@ namespace engine
             return _local ;
          }
 
-      private:
-         map<UINT64, _netRouteNode> _route ;
-         _MsgRouteID _local ;
-         _ossSpinSLatch _mtx ;
-   };
+         static INT32 getUDPEndPoint( const CHAR *hostName,
+                                       const CHAR *serviceName,
+                                       netUDPEndPoint &endPoint ) ;
+         static INT32 getTCPEndPoint( const CHAR *hostName,
+                                      const CHAR *serviceName,
+                                      netTCPEndPoint &endPoint ) ;
+
+         void clearUDPRoute ( const MsgRouteID &routeID,
+                              BOOLEAN allServices ) ;
+
+      protected :
+         // in-lock
+         void _clearUDPRoute( const MsgRouteID &routeID,
+                              BOOLEAN allServices ) ;
+
+      protected :
+         NET_ROUTE_MAP     _route ;
+         NET_UDP_EP_MAP    _udpRoute ;
+         MsgRouteID        _local ;
+         ossSpinSLatch     _mtx ;
+   } ;
+
+   typedef class _netRoute netRoute ;
+
 }
 
 #endif

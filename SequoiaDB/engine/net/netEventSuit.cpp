@@ -63,6 +63,20 @@ namespace engine
       SDB_ASSERT( _active == FALSE, "Active must be FALSE" ) ;
    }
 
+   netEvSuitPtr _netEventSuit::createShared( _netFrame *frame )
+   {
+      netEvSuitPtr suitPtr ;
+
+      netEvSuitPtr tmpPtr = netEvSuitPtr::allocRaw( ALLOC_POOL ) ;
+      if ( NULL != tmpPtr.get() &&
+           NULL != new( tmpPtr.get() ) netEventSuit( frame ) )
+      {
+         suitPtr = tmpPtr ;
+      }
+
+      return suitPtr ;
+   }
+
    io_service& _netEventSuit::getIOService()
    {
       return _ioservice ;
@@ -112,7 +126,7 @@ namespace engine
       {
          _active = TRUE ;
          _attachEvent.signal() ;
-         _pFrame->onRunSuitStart( shared_from_this() ) ;
+         _pFrame->onRunSuitStart( _getShared() ) ;
          _asyncWait() ;
          _ioservice.run() ;
          _timer.cancel() ;
@@ -126,7 +140,7 @@ namespace engine
          }
       }
 
-      _pFrame->onRunSuitStop( shared_from_this() ) ;
+      _pFrame->onRunSuitStop( _getShared() ) ;
       _active = FALSE ;
       return rc ;
    }
@@ -162,7 +176,7 @@ namespace engine
 
             if ( _noAttachTimeout >= NET_EV_RUN_TIMEOUT )
             {
-               _pFrame->onSuitTimer( shared_from_this() ) ;
+               _pFrame->onSuitTimer( _getShared() ) ;
             }
          }
          else
