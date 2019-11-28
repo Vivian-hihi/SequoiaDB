@@ -25,7 +25,7 @@ Remote copy file.
 
 >Note:
 
->The specific format of parameters srcFile and dstFile are "ip:sdbcmPort@filepath",for example "192.168.20.71:11790@/opt/sequoiadb/file". The port refers to the port of the sdbcm.
+>The specific format of parameters srcFile and dstFile are "ip:sdbcmPort@filepath",for example "192.168.20.71:11790@/opt/sequoiadb/file". The port refers to the port of the sdbcm. If the ip and sdbcmport in the parameters srcFile and desFile refer to the client's ip and sdbcmport, you can ignore them. For example, "/opt/sequoiadb/file".
 
 ##RETURN VALUE##
 

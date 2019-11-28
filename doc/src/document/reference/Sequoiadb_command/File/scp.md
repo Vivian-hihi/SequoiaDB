@@ -21,7 +21,7 @@ File
 
 > Note : 
 
-> 参数 srcFile 和 desFile 具体格式为 “ip:sdbcmPort@filepath”，例如  “192.168.20.71:11790@/opt/sequoiadb/file”。注意端口号是指 sdbcm 的端口号。
+> 参数 srcFile 和 desFile 具体格式为 “ip:sdbcmPort@filepath”，例如  “192.168.20.71:11790@/opt/sequoiadb/file”。注意端口号是指 sdbcm 的端口号。如果参数 srcFile 和 desFile 中的 ip 和 sdbcmPort 指的是客户端本地的 ip 和 sdbcmport，可以省略，直接填写 filepath 即可，例如 “/opt/sequoiadb/file”。
 
 ##返回值##
 
