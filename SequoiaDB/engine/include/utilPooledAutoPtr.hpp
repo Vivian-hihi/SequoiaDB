@@ -132,10 +132,12 @@ namespace engine
 
          static utilSharePtr alloc( UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
+         // NOTICE: ptr must call construct after allocRaw
          static utilSharePtr allocRaw( const CHAR *pFile,
                                        UINT32 line,
                                        UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
+         // NOTICE: ptr must call construct after allocRaw
          static utilSharePtr allocRaw( UTIL_ALLOC_TYPE type = ALLOC_TC ) ;
 
          static utilSharePtr make( T *ptr,
