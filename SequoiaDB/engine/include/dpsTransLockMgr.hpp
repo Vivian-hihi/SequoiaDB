@@ -211,14 +211,6 @@ namespace engine
                               monTransLockCur &waitLock,
                               VEC_TRANSLOCKCUR  &eduLocks ) ;
 
-      // get LRB Header ( index and its pointer ) of a given lock from
-      // LRB Header bucket. Wrapper of _getLRBHdrByLockId
-      BOOLEAN getLRBHdrByLockId
-      (
-         const dpsTransLockId & lockId,
-         dpsTransLRBHeader *  & pLRBHdr
-      ) ;
-
       // query if the caller is holding a given lock retrun TRUE if it is,
       // FALSE if it isn't; and output owning lock mode and refCount
       // when returns TRUE.
@@ -247,19 +239,16 @@ namespace engine
       }
 
       // release/return a LRB Header to LRB Header manager
-      INT32 _releaseLRBHdr( dpsTransLRBHeader * hdrLRB ) ;
+      OSS_INLINE void _releaseLRBHdr( dpsTransLRBHeader * hdrLRB )
+      {
+         SDB_OSS_DEL hdrLRB ;
+      }
 
       // release/return a LRB to LRB manager
-      INT32 _releaseLRB( dpsTransLRB * lrb );
-
-      // search LRB list ( owner, waiter or upgrade list ) and find
-      // the one with given eduId
-      BOOLEAN _getLRBByEDUId
-      (
-         const EDUID     eduId,
-         dpsTransLRB *   lrbBegin,
-         dpsTransLRB * & pLRBEduId
-      ) ;
+      OSS_INLINE void _releaseLRB( dpsTransLRB * lrb )
+      {
+         SDB_OSS_DEL lrb ;
+      }
 
       // search the EDU LRB list and find the LRB associated with same lock Id
       dpsTransLRB * _getLRBFromEDULRBList
@@ -428,7 +417,10 @@ namespace engine
       ) ;
 
       // calculate the index to LRB Header bucket
-      UINT32 _getBucketNo( const dpsTransLockId &lockId );
+      UINT32 _getBucketNo( const dpsTransLockId &lockId )
+      {
+         return (UINT32)( lockId.lockIdHash() % _bktSlotMax ) ;
+      }
 
       // wakeup a lock waiting exectuor ( EDU )
       void _wakeUp( _dpsTransExecutor * dpsTxExectr ) ;

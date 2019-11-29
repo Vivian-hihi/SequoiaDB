@@ -56,12 +56,6 @@ namespace engine
    #define DPS_LOCKID_STRING_MAX_SIZE      ( 128 )
    #define DPS_TRANSLOCK_DUMP_SLICE_SIZE   ( 1000 )
 
-   dpsTransLRBHeader::dpsTransLRBHeader()
-   : nextLRBHdr(NULL), ownerLRB(NULL),
-     waiterLRB(NULL), upgradeLRB(NULL), bktIdx(DPS_LOCK_INVALID_BUCKET_SLOT)
-   {
-   }
-
    dpsTransLockManager::dpsTransLockManager( LOCKMGR_TYPE managerType )
    : _LockHdrBkt( NULL ),
      _bktSlotMax( 0 ) ,
@@ -140,86 +134,6 @@ namespace engine
    }
 
    //
-   // Description: release/return a LRB Header to LRB Header manager
-   // Function:    return a LRB Header to the LRB Header Manager
-   // Input:       the object ( LRB Header ) to the object arrays
-   // Output:      none
-   // Return:      SDB_OK or SDB_INVALIDARG when error
-   // Dependency:  the lock manager must be initialized
-   //
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR, "dpsTransLockManager::_releaseLRBHdr" )
-   OSS_INLINE INT32 dpsTransLockManager::_releaseLRBHdr
-   (
-      dpsTransLRBHeader * pLRBHdr
-   )
-   {
-#ifdef _DEBUG
-      PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR ) ;
-      SDB_ASSERT( pLRBHdr, "Invalid LRB Header pointer." ) ;
-#endif
-      if ( pLRBHdr )
-      {
-         // if extData hasn't been setup, isValid() will return FALSE
-         // and canRelease() will return TRUE
-         if ( pLRBHdr->extData.isValid() )
-         {
-            /// release check
-            SDB_ASSERT( pLRBHdr->extData.canRelease(),
-                        "Extend data can't be released" ) ;
-
-            /// release
-            if ( !pLRBHdr->extData.release() )
-            {
-               PD_LOG( PDWARNING,
-                       "Extend data[%llu] doesn't clear in LRBHdr[%s]",
-                       pLRBHdr->extData._data,
-                       pLRBHdr->lockId.toString().c_str() ) ;
-            }
-         }
-#ifdef _DEBUG
-         pLRBHdr->reset() ;
-#endif
-         SDB_OSS_DEL pLRBHdr ;
-      }
-
-#ifdef _DEBUG
-      PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR ) ;
-#endif
-      return SDB_OK ;
-   }
-
-
-   //
-   // Description: release/return a LRB to LRB manager
-   // Function:    return a LRB to the LRB Manager
-   // Input:       the object ( LRB ) to the object arrays
-   // Output:      none
-   // Return:      SDB_OK or SDB_INVALIDARG when error
-   // Dependency:  the lock manager must be initialized
-   //
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRB, "dpsTransLockManager::_releaseLRB" )
-   OSS_INLINE INT32 dpsTransLockManager::_releaseLRB( dpsTransLRB * pLRB )
-   {
-#ifdef _DEBUG
-      PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRB ) ;
-      SDB_ASSERT( pLRB, "Invalid LRB pointer." ) ;
-#endif
-      if ( pLRB )
-      {
-#ifdef _DEBUG
-         pLRB->reset() ;
-#endif
-         SDB_OSS_DEL pLRB ;
-      }
-
-#ifdef _DEBUG
-      PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__RELEASELRB ) ;
-#endif
-      return SDB_OK ;
-   }
-
    //
    // Description: search the LRB Header chain and find the one with same lockId
    // Function:    walk through LRB Header list/chain, find the one with same
@@ -254,85 +168,6 @@ namespace engine
             break ;
          }
          pLocal = pLocal->nextLRBHdr ;
-      }
-      return found ;
-   }
-
-
-   //
-   // Description: search the LRB Header chain and find the one with same lockId
-   // Function:    walk through LRB Header list/chain, find the one with same
-   //              lockId.  A wrapper function of _getLRBHdrByLockId
-   // Input:
-   //    lockId   -- lock Id
-   // Output:
-   //    pLRBHdr  -- the pointer of first LRB Header object matches
-   //                the lockId if it is found. If not, it shall be the
-   //                pointer of the last LRB Header object in the list
-   //
-   // Return:     true  -- found the LRB Header object with same lockId
-   //             false -- not found
-   // Dependency:  the lock bucket latch shall be acquired
-   //
-   BOOLEAN dpsTransLockManager::getLRBHdrByLockId
-   (
-      const dpsTransLockId & lockId,
-      dpsTransLRBHeader *  & pLRBHdr
-   )
-   {
-      BOOLEAN found = FALSE ;
-      if ( lockId.isValid() )
-      {
-         UINT32 bktIdx = _getBucketNo( lockId ) ;
-
-         pLRBHdr = _LockHdrBkt[ bktIdx ].lrbHdr ;
-         found   = _getLRBHdrByLockId( lockId, pLRBHdr ) ;
-         if ( ! found )
-         {
-            pLRBHdr = NULL ;
-         }
-      }
-      return found ;
-   }
-
-
-   //
-   // Description: search the LRB chain and find the one with given eduid
-   // Function:    walk through LRB list/chain, find the LRB with same eduId
-   // Input:
-   //    eduId    -- EDU Id.
-   //    lrbBegin -- the first LRB pointer in the chain( owner,
-   //                waiter or upgrade queue )
-   // Output:
-   //    pLRBEduId-- the pointer of first LRB object matches the eduId
-   //                if it is found. If not, it shall be the pointer of
-   //                the last LRB object in the list
-   // Return:
-   //    true  -- found the LRB object with the given eduId
-   //    false -- not found
-   // Dependency:  the lock bucket latch shall be acquired
-   //
-   BOOLEAN dpsTransLockManager::_getLRBByEDUId
-   (
-      const EDUID       eduId,
-      dpsTransLRB *     lrbBegin,
-      dpsTransLRB *   & pLRBEduId
-   )
-   {
-      BOOLEAN found = FALSE ;
-      dpsTransLRB *plrb = lrbBegin ;
-
-      pLRBEduId = NULL ;
-      while ( plrb )
-      {
-         if ( eduId == plrb->dpsTxExectr->getEDUID() )
-         {
-            pLRBEduId = plrb ;
-
-            found = TRUE ;
-            break ;
-         }
-         plrb = plrb->nextLRB ;
       }
       return found ;
    }
@@ -2755,24 +2590,6 @@ nextLock:
                  lockInfo.str().c_str() ) ;
       }
       return lockCount ;
-   }
-
-
-   //
-   // Description: calculate the index to LRB Header bucket
-   // Function: get the index number to the LRB Header bucket by hashing lockId
-   //
-   // Input:
-   //    lockId -- lock id
-   // Return:
-   //    index to the LRB Header bucket
-   //
-   UINT32 dpsTransLockManager::_getBucketNo
-   (
-      const dpsTransLockId &lockId
-   )
-   {
-      return (UINT32)( lockId.lockIdHash() % _bktSlotMax ) ;
    }
 
 

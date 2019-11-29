@@ -206,13 +206,32 @@ namespace engine
       dpsLRBExtData extData ;
 
    public :
-      dpsTransLRBHeader();
-
       dpsTransLRBHeader( dpsTransLockId lock, UINT32 _bktIdx )
       : nextLRBHdr(NULL), ownerLRB(NULL),
         waiterLRB(NULL), upgradeLRB(NULL),
         lockId(lock), bktIdx(_bktIdx)
       {
+      }
+
+      ~dpsTransLRBHeader()
+      {
+         // if extData hasn't been setup, isValid() will return FALSE
+         // and canRelease() will return TRUE
+         if ( extData.isValid() )
+         {
+            /// release check
+            SDB_ASSERT( extData.canRelease(),
+                        "Extend data can't be released" ) ;
+
+            /// release
+            if ( !extData.release() )
+            {
+               PD_LOG( PDWARNING,
+                       "Extend data[%llu] doesn't clear in LRBHdr[%s]",
+                       extData._data,
+                       lockId.toString().c_str() ) ;
+            }
+         }
       }
 
       void reset()
