@@ -2161,7 +2161,7 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
       }
       catch( e )
       {
-         if( 0 <= e )
+         if( 0 < e )
          {
             var result = getLastErrObj().toObj() ;
 
@@ -2175,9 +2175,20 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
             {
                this._strOut = getLastErrMsg() ;
             }
+
+            if( "" == this._strOut )
+            {
+               setLastErrMsg( "Run command(\"" + cmd +
+                              "\") return code is " + e ) ;
+            }
+            else
+            {
+               setLastErrMsg( this._strOut ) ;
+            }
          }
          throw e ;
       }
+
       retStr = this._strOut ;
    }
    else
