@@ -3,35 +3,39 @@
 *               TestLink : seqDB-13310:执行eval获取集合后插入查询数据
 *@auhor       : Liang XueWang
 ******************************************************************************/
-function main( db )
+function main()
 {
    if( commIsStandalone( db ) )
    {
-      println( "Run mode is standalone" ); 
-      return; 
+      println( "Run mode is standalone" ) ;
+      return ;
    }
    
-   var clName = CHANGEDPREFIX + "_cl13310"; 
-   commCreateCL( db, COMMCSNAME, clName ); 
+   var clName = CHANGEDPREFIX + "_cl13310" ;
+   commCreateCL( db, COMMCSNAME, clName ) ;
+    
+   var code = "db." + COMMCSNAME + "." + clName ;
+   var cl = db.eval( code ) ;
+   cl.insert( { a: 1 } ) ;
    
-   try
+   var value = cl.find( {}, {a: ""} ).next().toObj()["a"] ;
+   if( value !== 1 )
    {
-      var code = "db." + COMMCSNAME + "." + clName; 
-      var cl = db.eval( code ); 
-      cl.insert( { a: 1 } ); 
-   }
-   catch( e )
-   {
-      throw buildException( "main", e, "eval cl " + code, 0, e ); 
-   }
-   
-   var aVal = cl.find( {}, { a: "" } ).next().toObj()["a"]; 
-   if( aVal !== 1 )
-   {
-      throw buildException( "main", null, "check find result", 1, aVal ); 
-   }
-   
-   commDropCL( db, COMMCSNAME, clName ); 
+      throw new Error( "expect value is 1, but act value is " + value ) ;
+   } 
+    
+   commDropCL( db, COMMCSNAME, clName ) ;
 }
 
-main( db ); 
+try
+{
+   main() ;
+}
+catch( e )
+{
+   if(e.constructor === Error)
+   {
+      println(e.stack);
+   }
+   throw e;
+}
