@@ -533,7 +533,47 @@
                      "en": "attention"
                   }
                ]
-            }            
+            },
+            {
+               "id": 1575355389,
+               "dir": "sequoiasql_mariadb",
+               "cn": "MariaDB实例组件",
+               "en": "MariaDB_instance",
+               "contents": [
+                  {
+                     "id": 1575355401,
+                     "dir": "installation",
+                     "cn": "安装",
+                     "en": "Installation",
+                     "contents": [
+                        {
+                           "id": 1575355415,
+                           "file": "install_deploy",
+                           "cn": "安装部署",
+                           "en": "Install and Deploy"
+                        },
+                        {
+                           "id": 1575355422,
+                           "file": "upgrade",
+                           "cn": "升级",
+                           "en": "Upgrade guidance"
+                        },
+                        {
+                           "id": 1575355430,
+                           "file": "uninstall",
+                           "cn": "卸载",
+                           "en": "Develop"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1575355438,
+                     "file": "sequoiasql_mariadb",
+                     "cn": "sequoiasql-mariadb服务",
+                     "en": "service sequoiasql-mariadb"
+                  }
+               ]
+            }                        
         ]
       },
       {
