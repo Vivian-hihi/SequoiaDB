@@ -541,6 +541,12 @@
                "en": "MariaDB_instance",
                "contents": [
                   {
+                     "id": 1521595241,
+                     "file": "overview",
+                     "cn": "概述",
+                     "en": "Overview"
+                  },
+                  {
                      "id": 1575355401,
                      "dir": "installation",
                      "cn": "安装",
@@ -551,6 +557,12 @@
                            "file": "install_deploy",
                            "cn": "安装部署",
                            "en": "Install and Deploy"
+                        },
+                        {
+                           "id": 1572505575,
+                           "file": "ha",
+                           "cn": "高可用",
+                           "en": "High Availability"
                         },
                         {
                            "id": 1575355422,
@@ -564,16 +576,46 @@
                            "cn": "卸载",
                            "en": "Develop"
                         }
-                     ]
+                      ]  
                   },
+                  {
+                     "id": 1574045910,
+                     "file": "data_type",
+                     "cn": "数据类型映射表",
+                     "en": "data type map table"
+                  },                   
                   {
                      "id": 1575355438,
                      "file": "sequoiasql_mariadb",
                      "cn": "sequoiasql-mariadb服务",
                      "en": "service sequoiasql-mariadb"
+                  },                      
+                  {
+                     "id": 1521595283,
+                     "file": "connection",
+                     "cn": "使用",
+                     "en": "Connect"
+                  },
+                  {
+                     "id": 1566551297,
+                     "file": "config",
+                     "cn": "配置",
+                     "en": "Configuration"
+                  },
+                  {
+                     "id": 1555382544,
+                     "file": "error_code",
+                     "cn": "错误码",
+                     "en": "Error Code"
+                  },
+                  {
+                     "id": 1521595284,
+                     "file": "attention",
+                     "cn": "注意事项",
+                     "en": "attention"
                   }
                ]
-            }                        
+            }        
         ]
       },
       {
