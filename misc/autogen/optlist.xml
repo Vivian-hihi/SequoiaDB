@@ -2252,7 +2252,7 @@
       <long>mongroupmask</long>
       <description>
         <en>Monitor group mask, '|' delimited string in the format of 'groupname':'loglevel'. Valid groupname: slowQuery, all. Valid loglevel: off,basic,detail. Default is all:off. </en>
-        <cn>监控组掩码，默认为 all:off</cn>
+        <cn>监控组掩码，默认为“all:off”</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -2262,8 +2262,7 @@
         <en>This specifies the group of activities to monitor within sequoiaDB, along with the log level for each<fig></fig>
         group. Valid groups are slowQuery and all. loglevel can be off,basic or detail.
         </en>
-        <cn>用来详细调节巨山数据库不同监控组的监控级别。有效的组值为“slowQuery”或者”all”. 有效的日志级别可以为关
-“off”，基本“basic”或者详细“detail”</cn>
+        <cn>用于设置监控组的详细监控级别。有效的组值为“slowQuery”或者”all”。有效的日志级别可以为“off”，“basic”或者“detail”。</cn>
       </detail>
       <typeofweb>str</typeofweb>
       <hidden>false</hidden>
