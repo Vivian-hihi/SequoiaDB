@@ -537,6 +537,8 @@ public:
 
    UINT64         getFreeSize() ;
 
+   BOOLEAN        isTraceFile( const CHAR* filePath ) ;
+
 protected:
    INT32          _addBreakPoint( UINT64 breakPoint ) ;
    INT32          _addTidFilter( UINT32 tid ) ;

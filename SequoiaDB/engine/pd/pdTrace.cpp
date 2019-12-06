@@ -641,6 +641,63 @@ error :
    goto done ;
 }
 
+// This function can check trace file of the host
+// where the monitored node is located
+BOOLEAN _pdTraceCB::isTraceFile( const CHAR* filePath )
+{
+   INT32 rc = SDB_OK ;
+   CHAR pHeader[TRACECB_EYE_CATCHER_SIZE] = { '\0' } ;
+   SINT64 byteRead = 0 ;
+   OSSFILE traceFile ;
+   BOOLEAN isOpen = FALSE ;
+
+   if( NULL == filePath )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = ossOpen( filePath, OSS_READONLY | OSS_SHAREREAD, 0, traceFile ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Failed to open file[%s], rc: %d", filePath, rc ) ;
+      goto error ;
+   }
+   isOpen = TRUE ;
+
+   rc = ossReadN( &traceFile, TRACECB_EYE_CATCHER_SIZE,
+                  ( CHAR* )pHeader, byteRead ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Failed to read file[%s], rc: %d", filePath, rc ) ;
+      goto error ;
+   }
+
+   /// check eye TRACECB_EYE_CATCHER
+   if ( 0 != ossStrcmp( pHeader, TRACECB_EYE_CATCHER ) )
+   {
+      PD_LOG( PDERROR, "Invalid eye catcher" ) ;
+      rc = SDB_PD_TRACE_FILE_INVALID ;
+      goto error ;
+   }
+
+done :
+   if( isOpen )
+   {
+      ossClose( traceFile ) ;
+   }
+   if( SDB_OK == rc )
+   {
+      return TRUE ;
+   }
+   else
+   {
+      return FALSE ;
+   }
+error :
+   goto done ;
+}
+
 INT32 _pdTraceCB::dump( OSSFILE *outFile )
 {
    INT32 rc = SDB_OK ;

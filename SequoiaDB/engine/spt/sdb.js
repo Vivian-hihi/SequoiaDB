@@ -72,6 +72,10 @@ const SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
 const SDB_JSON_PARSE               = JSON.parse ;
 
+const CM_PORT        = "CM_PORT" ;
+const TMP_PATH       = "TMP_PATH" ;
+const TRACE_HOSTNAME = "TRACE_HOSTNAME"  ;
+
 // SdbQuery flags
 const SDB_FLG_QUERY_FORCE_HINT        = 0x00000080 ;
 const SDB_FLG_QUERY_PARALLED          = 0x00000100 ;
@@ -999,6 +1003,153 @@ Sdb.prototype.stopRG = function() {
          setLastErrMsg( rgName + ": " + getLastErrMsg() ) ;
          throw e ;
       }
+   }
+}
+
+Sdb.prototype._getTraceInfo = function()
+{
+   var path          = "" ;
+   var cmPort        = "" ;
+   var localIP       = "" ;
+   var traceInfo     = {} ;
+   var traceHostname = "" ;
+   var localHostname = "" ;
+
+   try
+   {
+      var retObj = this.snapshot( SDB_SNAP_CONFIGS, { "Global": false },
+                                  { "NodeName": 1,
+                                    "tmppath": 1 } ).next().toObj() ;
+   }
+   catch( e )
+   {
+      setLastErrMsg( getLastErrMsg() + " Failed to get trace info" ) ;
+      throw e ;
+   }
+
+   traceHostname = retObj.NodeName.split( ":" )[0] ;
+   localHostname = System.getHostName() ;
+   cmPort        = Oma.getAOmaSvcName( traceHostname ) ;
+   localIP       = System.getAHostMap( localHostname ) ;
+
+   // The format of the NodeName:
+   // 1. u1604-fngjiabin:50000
+   // 2. 192.168.20.71:50000
+   // 3. 127.0.0.1:50000
+   // 4. localhost:50000
+   if( traceHostname != localHostname && traceHostname != localIP &&
+       traceHostname != "127.0.0.1" && traceHostname != "localhost" )
+   {
+      path = retObj.tmppath + "tmp.dump" ;
+   }
+
+   traceInfo[CM_PORT]        = cmPort ;
+   traceInfo[TMP_PATH]       = path ;
+   traceInfo[TRACE_HOSTNAME] = traceHostname ;
+
+   return traceInfo ;
+}
+
+Sdb.prototype.traceOff = function()
+{
+   var path          = "" ;
+   var cmPort        = "" ;
+   var traceHostname = "" ;
+   var argumentsSize = arguments.length ;
+   var traceInfo ;
+
+   if( 1 == argumentsSize )
+   {
+      if( "string" != typeof( arguments[0] ) )
+      {
+         setLastErrMsg( "FileName must be string" ) ;
+         throw SDB_INVALIDARG ;
+      }
+   }
+
+   if( 2 == argumentsSize )
+   {
+      if( "boolean" != typeof( arguments[1] ) )
+      {
+         setLastErrMsg( "The second parameter must be bool" ) ;
+         throw SDB_INVALIDARG ;
+      }
+
+      if( arguments[1] )
+      {
+         traceInfo     = this._getTraceInfo() ;
+         path          = traceInfo.TMP_PATH ;
+         cmPort        = traceInfo.CM_PORT ;
+         traceHostname = traceInfo.TRACE_HOSTNAME ;
+      }
+   }
+
+   if( "" != path )
+   {
+      try
+      {
+         var remote = new Remote( traceHostname, cmPort ) ;
+      }
+      catch( e )
+      {
+         setLastErrMsg( getLastErrMsg() +
+                        ". You can check if there is a cm process " +
+                        "on the host[" + traceHostname + ":" + cmPort + "]. "
+                        + "\n" + "Or check whether the network is normal" ) ;
+         throw e ;
+      }
+
+      if( File.exist( arguments[0] ) )
+      {
+         if( File.getSize( arguments[0] ) < 2 )
+         {
+            setLastErrMsg( "The file[" + arguments[0] +
+                           "] exists. But it isn't trace file" ) ;
+            throw SDB_FE ;
+         }
+
+         var file = new File( arguments[0] ) ;
+         var eyeCatcher = file.read( 2 ) ;
+         if( "TB" != eyeCatcher )
+         {
+            setLastErrMsg( "The file[" + arguments[0] +
+                           "] is exist. But it isn't trace file" ) ;
+            throw SDB_PD_TRACE_FILE_INVALID ;
+         }
+      }
+
+      this._traceOff( path ) ;
+
+      try
+      {
+         var src = traceHostname + ":" + cmPort + "@" + path ;
+         var des = arguments[0] ;
+         File.scp( src, des, true, 0640 ) ;
+      }
+      catch( e )
+      {
+         setLastErrMsg( getLastErrMsg() +
+                        " Failed to scp. The tmp trace file is in " +
+                        traceHostname + ":" + path ) ;
+         throw e ;
+      }
+
+      try
+      {
+         var remote = new Remote( traceHostname, cmPort ) ;
+         var remoteFile = remote.getFile() ;
+         remoteFile.remove( path ) ;
+      }
+      catch( e )
+      {
+         setLastErrMsg( getLastErrMsg() +
+                        " Failed to remove tmp trace file" ) ;
+         throw e ;
+      }
+   }
+   else
+   {
+      this._traceOff( arguments[0] ) ;
    }
 }
 

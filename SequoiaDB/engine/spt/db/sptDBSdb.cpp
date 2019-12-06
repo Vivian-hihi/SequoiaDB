@@ -152,7 +152,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "execUpdate", execUpdate )
       JS_ADD_MEMBER_FUNC( "traceOn", traceOn )
       JS_ADD_MEMBER_FUNC( "traceResume", traceResume )
-      JS_ADD_MEMBER_FUNC( "traceOff", traceOff )
+      JS_ADD_MEMBER_FUNC( "_traceOff", traceOff )
       JS_ADD_MEMBER_FUNC( "traceStatus", traceStatus )
       JS_ADD_MEMBER_FUNC( "transBegin", transBegin )
       JS_ADD_MEMBER_FUNC( "transCommit", transCommit )

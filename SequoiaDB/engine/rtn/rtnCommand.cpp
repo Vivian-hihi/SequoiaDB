@@ -2992,7 +2992,6 @@ error:
             ossStrncpy( filePath, _pDumpFileName, OSS_MAX_PATHSIZE ) ;
          }
 
-
          //create dir
          ossStrncpy( path, filePath, OSS_MAX_PATHSIZE ) ;
          ptr = ossStrrchr( path, OSS_FILE_SEP_CHAR ) ;
@@ -3005,9 +3004,18 @@ error:
             }
          }
 
+         if( SDB_OK == ossAccess( filePath ) )
+         {
+            if( !traceCB->isTraceFile( filePath ) )
+            {
+               rc = SDB_FE ;
+               PD_LOG( PDERROR, "%s exists. But it isn't trace file",
+                       filePath ) ;
+               goto error ;
+            }
+         }
 
          /// open file
-
          rc = ossOpen( filePath, OSS_REPLACE|OSS_READWRITE,
                        OSS_DEFAULTFILE, outFile ) ;
          if ( rc )

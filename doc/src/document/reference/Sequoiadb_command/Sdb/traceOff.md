@@ -8,13 +8,20 @@ Sdb
 
 ##描述##
 
-关闭数据库引擎跟踪功能，并将跟踪情况导出二进制文件，如：/opt/sequoiadb/trace.dump
+关闭数据库引擎跟踪功能，并将跟踪情况以二进制文件的形式导出
 
 ##参数##
 
-| 参数名 		| 参数类型 	| 描述 				| 是否必填 	|
-| ------ 		| ------ 	| ------ 			| ------ 	|
-| dumpFile 		| string 	| dump 的文件名称； 如果指定文件为相对路径则存放于相应节点的 `diagpath` 中。 | 否 		|
+| 参数名       | 参数类型  | 默认值 | 描述                             | 是否必填  |
+| ------------ | --------- | ------ | -------------------------------- | --------- |
+| dumpFile     | string    | ---    | 二进制文件的文件名称             | 是        |
+| isDumpLocal  | bool      | false  | 是否把二进制文件保存到客户端本地 | 否        |
+
+> Note：
+
+> 1. 参数 dumpFile 可以填写为空字符串，表示关闭数据库引擎跟踪功能，但是不导出二进制文件。如果指定文件为相对路径则存放于相应节点的数据目录中的 `diagpath` 目录中；
+
+> 2. traceOff 生成的文件会默认保存在被监控节点所在的主机上。如果参数 isDumpLocal 设置为 true，文件会保存在客户端本地。
 
 ##返回值##
 
@@ -29,12 +36,12 @@ Sdb
 
 * 关闭数据库引擎跟踪 /opt/sequoiadb/trace.dump
 
-	```lang-javascript
-	> db.traceOff("/opt/sequoiadb/trace.dump")
-	```
+   ```lang-javascript
+   > db.traceOff( "/opt/sequoiadb/trace.dump" )
+   ```
 
 * 解析二进制文件可参考 [traceFmt()](reference/Sequoiadb_command/Global/traceFmt.md)
 
-	```lang-javascript
-	> traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
- 	```
+   ```lang-javascript
+   > traceFmt( 0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace_output" )
+   ```
