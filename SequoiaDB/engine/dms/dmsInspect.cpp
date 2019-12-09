@@ -1418,7 +1418,7 @@ namespace engine
       }
 
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           " Inspect Index Control Block Extent"
+                           " Inspect Index Control Block Extent:"
                            OSS_NEWLINE ) ;
 
       if ( extent->_eyeCatcher[0] != IXM_EXTENT_CB_EYECATCHER0 ||
@@ -1440,13 +1440,13 @@ namespace engine
       {
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Inspect Index Control Block Extent Done "
-                              "without Error" ) ;
+                              "without Error"OSS_NEWLINE ) ;
       }
       else
       {
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Inspect Index Control Block Extent Done "
-                              "with Error: %d", localErr ) ;
+                              "with Error: %d"OSS_NEWLINE, localErr ) ;
       }
       len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
       err += localErr ;

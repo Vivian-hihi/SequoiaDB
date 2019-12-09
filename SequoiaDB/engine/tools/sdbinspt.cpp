@@ -1976,7 +1976,6 @@ retry :
       }
       flushOutput ( gBuffer, len ) ;
       err += localErr ;
-      dumpPrintf ( OSS_NEWLINE ) ;
       indexRoots[i] = indexRoot ;
    }
 
