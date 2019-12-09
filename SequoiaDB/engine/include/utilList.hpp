@@ -40,6 +40,8 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 #include "ossMemPool.hpp"
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 using namespace std ;
 
@@ -945,6 +947,295 @@ namespace engine
       T                 _staticBuf[ stackSize ] ;
       ossPoolList<T>*   _pList ;
       UINT32            _eleSize ;
+   } ;
+
+#define UTIL_LIST_PARTITION_NUM 16
+
+   // A partitioned list which increases concurrency for parallel writes.
+   // Features:
+   //   - Has 16 partitions/sublists (default)
+   //   - Sychronization within each partition is self-contained.
+   //   - Modifier functions on each sublist are X latch protected
+   //   - Iterators are X latch protected by the iterator's current partition
+   //   - Ideal for a high ratio of writes vs reads
+   // Limitations:
+   //   - Due to the nature of the partitioning, iteration on the list will
+   //     be in random order (as opposed to insertion order)
+   //   - Each partition can only allow a single thread access
+   //   - External sychronization is needed for a snapshot view of the list.
+   // Caution:
+   //   - Sublist latches are obtained inside the iterator, so avoid having
+   //     stale iterators in the code.
+   //   - invalidate() can be called to release the sublist latch
+   template< typename T, typename LIST_TYPE, UINT32 (*PARTITION_FUNC)(),
+             UINT16 partitions = UTIL_LIST_PARTITION_NUM >
+   class _utilPartitionList : public SDBObject
+   {
+      friend class iterator ;
+      class latcher : public SDBObject
+      {
+      public :
+         latcher( _utilPartitionList * list, UINT16 listID )
+            : _list( list ), _listID( listID )
+         {
+            _list->_getLatch( _listID ) ;
+         }
+         ~latcher()
+         {
+            _list->_releaseLatch( _listID ) ;
+         }
+
+         _utilPartitionList *_list ;
+         UINT16 _listID ;
+      } ;
+   public:
+
+      class iterator
+      {
+      friend class _utilPartitionList ;
+         _utilPartitionList* _partList ; // Pointer pointing to partition list
+         UINT16 _curListID ;            // id of the sub list being traversed
+         LIST_TYPE* _curList ;          // Pointer to the sub list being traversed
+
+         boost::shared_ptr<latcher> _latchPtr ;
+         typename LIST_TYPE::iterator _itr ; // iterator for the sub list
+
+         // Construct an iterator from a sublist iterator.
+         iterator( _utilPartitionList * list, UINT16 listID,
+                   typename LIST_TYPE::iterator it )
+            : _partList( list ), _curListID( listID ), _curList( NULL ),
+              _itr( it )
+         {
+            if ( _curListID < partitions )
+            {
+               _curList = _partList->_getList( _curListID ) ;
+            }
+         }
+
+         iterator( _utilPartitionList * list )
+            : _partList( list ), _curListID( 0 ), _curList( NULL )
+         {
+            // To find the begin position of the iterator, we need to skip all
+            // empty sub lists until we find the first non empty sub list or
+            // hit the end of all sub lists.
+            while ( _curListID < partitions )
+            {
+               _curList = _partList->_getList( _curListID ) ;
+               _latchPtr.reset( SDB_OSS_NEW latcher( _partList, _curListID ) ) ;
+               if ( _curList->size() > 0 )
+               {
+                  _itr = _curList->begin() ;
+                  break ;
+               }
+               ++_curListID ;
+            }
+
+            // list is empty
+            if ( _curListID == partitions )
+            {
+               _latchPtr.reset() ;
+               _itr = _partList->_getList( _curListID )->end() ;
+            }
+         }
+
+      public:
+         iterator()
+            : _partList( NULL ), _curListID( 0 ), _curList( NULL )
+         {}
+         ~iterator()
+         {
+            _latchPtr.reset() ;
+         }
+
+         // assignment operator.
+         iterator& operator= ( const iterator& rhs )
+         {
+            // check self assignment
+            if ( this != &rhs )
+            {
+               _curList = rhs._curList ;
+               _curListID = rhs._curListID ;
+               _partList = rhs._partList ;
+               _itr = rhs._itr ;
+               // This assignment will either increase use count of the
+               // shared ptr or release shared ptr
+               _latchPtr = rhs._latchPtr ;
+            }
+            return *this ;
+         }
+
+         // Pre-increment
+         // Increment the itr of the current sub list, and move the itr to
+         // next sublist once it reaches the end of the current list.
+         // The latch of each sub list is obtained before get the first element
+         // and is released after reach the end, the caller is not responsible
+         // for obtaining any latch
+         iterator& operator++ ()
+         {
+            if ( ++_itr == _curList->end() )
+            {
+               while ( ++_curListID < partitions )
+               {
+                  _curList = _partList->_getList( _curListID ) ;
+                  _latchPtr.reset( SDB_OSS_NEW latcher( _partList, _curListID ) ) ;
+                  if ( _curList->size() > 0 )
+                  {
+                     _itr = _curList->begin() ;
+                     break ;
+                  }
+                  _itr = _curList->end() ;
+               }
+
+               // reach the end, set the iterator to the end
+               if ( _curListID == partitions )
+               {
+                  ( *this ) = _partList->end() ;
+               }
+            }
+            return *this;
+         }
+
+         iterator operator++ ( int ) // Post-increment
+         {
+            iterator tmp( *this ) ;
+            ++( *this ) ;
+            return tmp ;
+         }
+
+         BOOLEAN operator == ( const iterator& rhs ) const
+         {
+            return _itr == rhs._itr;
+         }
+
+         BOOLEAN operator != ( const iterator& rhs ) const
+         {
+            return _itr != rhs._itr ;
+         }
+
+         typename LIST_TYPE::reference operator* () const
+         {
+            return *_itr ;
+         }
+
+         typename LIST_TYPE::pointer operator-> () const
+         {
+            return &( *_itr ) ;
+         }
+
+         void invalidate()
+         {
+            _latchPtr.reset() ;
+         }
+      } ;
+
+   public:
+
+      _utilPartitionList()
+        : _listLen ( 0 ),
+          _endIt( this, partitions, _list[partitions].end() )
+      {
+      }
+
+      ~_utilPartitionList() {}
+
+      // return the begin iterator of this list
+      iterator begin()
+      {
+         return iterator( this ) ;
+      }
+      // return the end iterator of this list
+      iterator end()
+      {
+         return _endIt ;
+      }
+
+      // get size of the list
+      UINT32 size()
+      {
+         return _listLen.fetch() ;
+      }
+
+      // add obj into the list. It first find which list is should be
+      // put in.
+      void add( T *obj )
+      {
+         UINT16 i = PARTITION_FUNC() % partitions ;
+         _getLatch( i ) ;
+         _list[i].push_front( *obj ) ;
+         _releaseLatch( i ) ;
+         _listLen.inc() ;
+      }
+
+      iterator erase( iterator it )
+      {
+         it._itr = it._curList->erase(it._itr) ;
+         _listLen.dec() ;
+         // As erase moves the itr to next, the next node might be end.
+         // If it is the end of current sublist, then move to the begin
+         // of next non-empty list
+         if ( it._itr == it._curList->end() )
+         {
+            while ( ++it._curListID < partitions )
+            {
+               it._curList = _getList( it._curListID ) ;
+               it._latchPtr.reset( new latcher(this, it._curListID ) ) ;
+               if ( it._curList->size() > 0 )
+               {
+                  it._itr = it._curList->begin() ;
+                  break ;
+               }
+               it._itr = it._curList->end() ;
+            }
+
+            // reach the end, set the iterator to the end
+            if ( it._curListID == partitions )
+            {
+               return _endIt ;
+            }
+         }
+         return it ;
+      }
+
+   private:
+
+      // get pointer of sublist based on the id
+      LIST_TYPE* _getList( UINT16 id )
+      {
+         SDB_ASSERT( id < partitions + 1, "Invalid index" ) ;
+         return &( _list[id] ) ;
+      }
+
+      // get latch of sub list based on the id
+      void _getLatch ( UINT16 id )
+      {
+         SDB_ASSERT( id < partitions, "Invalid index" ) ;
+         _listLatch[id].get() ;
+      }
+
+      // release latch of sub list based on the id
+      void _releaseLatch( UINT16 id )
+      {
+         SDB_ASSERT( id < partitions, "Invalid index" ) ;
+         _listLatch[id].release() ;
+      }
+
+   private:
+      /* LATCHING PROTOCOL:
+       * ADD: The list will obtain/release latch of the sub list,
+       * which it will add to in x.
+       *
+       * SCAN: The list will obtain/release latch of the sub list,
+       * which it will scan in x.
+       *
+       * DELETE: The list will obtain/release latch of the sub list in x.
+       */
+      ossAtomic32 _listLen ;     // total # of the elements in the list
+      ossSpinXLatch _listLatch[partitions] ; // latch of each sub list
+
+      // array of sub lists. There is an extra sublist to represent the
+      // end iterator
+      LIST_TYPE _list[partitions + 1] ;
+      iterator _endIt ; // iterator representing the end
    } ;
 }
 

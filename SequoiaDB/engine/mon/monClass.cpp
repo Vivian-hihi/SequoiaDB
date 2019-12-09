@@ -61,6 +61,17 @@ MON_DATA_LEVEL monClassCreateCB[MON_CLASS_MAX] = {
    MON_DATA_LVL_DETAIL   // MON_CLASS_LOCK
 };
 
+UINT32 monGetTID()
+{
+   pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+   if ( cb )
+   {
+      return cb->getTID() ;
+   }
+
+   return ossGetCurrentThreadID() ;
+}
+
 /**
  * _monClass constructor
  */
@@ -92,9 +103,7 @@ void _monClassQueryTmpData::diff(_monAppCB &cb)
 }
 
 _monClassContainer::_monClassContainer ( MON_CLASS_TYPE type )
-   : _activeListLen( 0 ),
-     _archivedListLen( 0 ),
-     _archivedListMaxLen( pmdGetKRCB()->getOptionCB()->monHistEvent() ),
+   : _archivedListMaxLen( pmdGetKRCB()->getOptionCB()->monHistEvent() ),
      _numPendingArchive( 0 ),
      _numPendingDelete( 0 ),
      _curCollectionLvl( MON_DATA_LVL_NONE )
@@ -149,7 +158,7 @@ void _monClassContainer::_removeArchivedObj()
 
    if ( numToDelete > 0 )
    {
-     MONCLASS_LIST::iterator it = _archivedList.begin() ;
+      MONCLASS_LIST::iterator it = _archivedList.begin() ;
 
       while ( numToDelete > 0 )
       {
@@ -170,12 +179,9 @@ void _monClassContainer::_removeArchivedObj()
  */
 void _monClassContainer::_processPendingObj()
 {
-   getListLatch( EXCLUSIVE ) ;
    getArchiveLatch( EXCLUSIVE ) ;
-   getHeadLatch( EXCLUSIVE ) ;
 
-   BOOLEAN headLatchHeld = TRUE ;
-   MONCLASS_LIST::iterator it = _activeList.begin() ;
+   MON_PARTITION_LIST::iterator it = _activeList.begin() ;
 
    while ( it != _activeList.end() )
    {
@@ -183,7 +189,6 @@ void _monClassContainer::_processPendingObj()
       {
          monClass &obj = *it ;
          it = _activeList.erase(it) ;
-         _activeListLen.dec() ;
          _numPendingArchive.dec() ;
          _archivedList.push_back(obj) ;
       }
@@ -191,7 +196,6 @@ void _monClassContainer::_processPendingObj()
       {
          monClass &monClass = *it ;
          it = _activeList.erase(it) ;
-         _activeListLen.dec() ;
          SDB_OSS_DEL &monClass ;
          _numPendingDelete.dec() ;
       }
@@ -201,13 +205,7 @@ void _monClassContainer::_processPendingObj()
       }
    }
 
-   //TODO: fix this
-   if (headLatchHeld)
-   {
-      releaseHeadLatch( EXCLUSIVE ) ;
-   }
    releaseArchiveLatch( EXCLUSIVE ) ;
-   releaseListLatch( EXCLUSIVE ) ;
 }
 
 /**
@@ -276,40 +274,29 @@ BOOLEAN monNoArchive ( monClass *obj )
 
 void _monClassReadScanner::initScan()
 {
-   _container->getListLatch( SHARED ) ;
-   _hasListLatch = TRUE ;
-
-   if ( _listType == MON_CLASS_ARCHIVED_LIST )
+   if ( ( _listType == MON_CLASS_ACTIVE_LIST ) &&
+        ( _container->getActiveListLen() ) )
    {
-      _container->getArchiveLatch( SHARED ) ;
-      _hasArchiveLatch = TRUE ;
+      _itr = _container->begin( _listType ) ;
+      _endReached = ( _itr == _container->end( _listType ) ) ? TRUE : FALSE ;
    }
-
-   _container->getHeadLatch( SHARED ) ;
-   _hasHeadLatch = TRUE ;
-
-   _currentList = MON_CLASS_ACTIVE_LIST ;
-
-   // If reading active list, or (if reading archive list and
-   // there is pending archive in the active list)
-   if ( ( _listType == MON_CLASS_ACTIVE_LIST &&
-          _container->getActiveListLen() > 0 ) ||
-        _container->getNumPendingArchive() > 0 )
+   else if ( _listType == MON_CLASS_ARCHIVED_LIST )
    {
-      _itr = _container->begin( _currentList ) ;
-   }
-   else
-   {
-      if ( _listType == MON_CLASS_ARCHIVED_LIST &&
-           _container->getArchivedListLen() > 0 )
+      if ( _container->getArchivedListLen() ||
+           _container->getNumPendingArchive() )
       {
-         _currentList = MON_CLASS_ARCHIVED_LIST ;
-         _itr = _container->begin( _currentList ) ;
+         _container->getArchiveLatch( SHARED ) ;
+         _hasArchiveLatch = TRUE ;
+         _itr = _container->begin( _listType ) ;
       }
       else
       {
          _endReached = TRUE ;
       }
+   }
+   else
+   {
+      _endReached = TRUE ;
    }
    _initCalled = TRUE ;
 }
@@ -340,55 +327,18 @@ monClass* _monClassReadScanner::getNext()
       else
       {
          // Found a match, return
-         ret = &(*_itr) ;
-         _itr++ ;
+         ret = &( *_itr ) ;
+         ++_itr ;
          found = TRUE ;
       }
 
-      // Reached the end of the current list, move to the next list
-      // if there is one
-      if ( _itr == _container->end(_currentList) )
+      // Reached the end
+      if ( _itr == _container->end(_listType) )
       {
-         if ( _currentList == MON_CLASS_ACTIVE_LIST &&
-              _listType == MON_CLASS_ARCHIVED_LIST &&
-              _container->getArchivedListLen() > 0 )
-         {
-            _itr = _container->begin( MON_CLASS_ARCHIVED_LIST ) ;
-            _currentList = MON_CLASS_ARCHIVED_LIST ;
-         }
-         else
-         {
-            _endReached = TRUE ;
-         }
+         _endReached = TRUE ;
       }
-   }
-
-   // The headLatch is required when reading the first node of the active list.
-   // By the time we get here, it is guaranteed that we have already read the
-   // first node. So we can now release the headLatch.
-   if ( _hasHeadLatch )
-   {
-      _container->releaseHeadLatch(SHARED) ;
-      _hasHeadLatch = FALSE ;
    }
 
    return ret ;
 }
-
-void _monClassReadScanner::doneScan()
-{
-   if (_hasListLatch)
-   {
-      _container->releaseListLatch(SHARED) ;
-   }
-   if (_hasHeadLatch )
-   {
-      _container->releaseHeadLatch(SHARED) ;
-   }
-   if ( _hasArchiveLatch)
-   {
-      _container->releaseArchiveLatch(SHARED) ;
-   }
-}
-
 } // namespace engine

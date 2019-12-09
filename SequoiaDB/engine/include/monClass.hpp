@@ -45,6 +45,7 @@
 #include "monLatch.hpp"
 #include "ossAtomic.hpp"
 #include "ossUtil.hpp"
+#include "utilList.hpp"
 #include "msg.h"
 #include "pd.hpp"
 #include "../bson/bson.hpp"
@@ -320,7 +321,7 @@ public:
    //TODO: to be implemented
    virtual void reset() {}
 
-   void startLatchTimer() { _latchWaitTimer.sample() ; } 
+   void startLatchTimer() { _latchWaitTimer.sample() ; }
 
    void stopLatchTimer()
    {
@@ -347,6 +348,8 @@ class _monClassLatch : public monClassTemplate<_monClassLatch>
 {
 public:
    _monClassLatch ()
+      : xOwnerTID( 0 ), waiterTID( 0 ), latchID( MON_LATCH_ID_MAX ),
+        latchAddr( NULL ), numOwner( 0 ), lastSOwner( 0 )
    {
       _type = MON_CLASS_LATCH ;
    }
@@ -392,6 +395,7 @@ public:
         lockMode( DPS_TRANSLOCK_MAX )
    {
       _type = MON_CLASS_LOCK ;
+      waiterTID = 0 ;
    }
 
    static MON_CLASS_TYPE getType () { return MON_CLASS_LOCK ; }
@@ -410,88 +414,187 @@ public:
 
 typedef _monClassLock monClassLock ;
 
-
-/**
- * Forward iterator for class list
- */
-template <typename T>
-class listFwdIterator : public std::iterator<std::forward_iterator_tag,
-                                               T,
-                                               std::ptrdiff_t,
-                                               T*,
-                                               T& >
-{
-   typename T::iterator _itr;
-   typedef typename T::reference REFERENCE ;
-   typedef typename T::pointer POINTER ;
-
-public:
-   explicit listFwdIterator(typename T::iterator it)
-   {
-      _itr = it ;
-   }
-
-   listFwdIterator() {}
-
-   listFwdIterator& operator++ () // Pre-increment
-   {
-      _itr++ ;
-      return *this;
-   }
-
-   listFwdIterator operator++ (int) // Post-increment
-   {
-      listFwdIterator tmp(*this);
-      _itr++ ;
-      return tmp;
-   }
-
-   template<class OtherType>
-   bool operator == (const listFwdIterator<OtherType>& rhs) const
-   {
-      return _itr == rhs._itr;
-   }
-
-   template<class OtherType>
-   bool operator != (const listFwdIterator<OtherType>& rhs) const
-   {
-      return _itr != rhs._itr;
-   }
-
-   REFERENCE operator* () const
-   {
-      return *_itr;
-   }
-
-   POINTER operator-> () const
-   {
-      return &(*_itr);
-   }
-
-   operator listFwdIterator<const T>() const
-   {
-      return listFwdIterator<const T>(_itr);
-   }
-};
-
+UINT32 monGetTID() ;
 
 /**
  * _monClassContainer defines
  *
- * It is a container for a _monClass type.
- * Contains an active list and archived list.
+ * It is a container for a _monClass type. Contains an active list and
+ * archived list.
  * See below for latch protocol for these two lists.
  */
 class _monClassContainer : public utilPooledObject
 {
-friend class _monMonitorManager ;
+   friend class _monMonitorManager ;
 
-   typedef boost::intrusive::list< _monClass,
-                        boost::intrusive::base_hook<BaseHook> > MONCLASS_LIST ;
+   typedef boost::intrusive::list< _monClass, boost::intrusive::base_hook<BaseHook> > MONCLASS_LIST ;
+   typedef _utilPartitionList< monClass, MONCLASS_LIST, monGetTID > MON_PARTITION_LIST ;
 
 public:
-   typedef listFwdIterator<MONCLASS_LIST> iterator ;
-   typedef listFwdIterator<const MONCLASS_LIST> const_iterator ;
+   class iterator
+   {
+      friend class _monClassContainer ;
+      _monClassContainer* _container ; // Pointer to monClassContainer
+      MON_CLASS_LIST_TYPE _listType ; // which list this itr plan to scan
+      MON_CLASS_LIST_TYPE _curListType ;  // current type of the list it is scanning
+      MON_PARTITION_LIST::iterator _itr1 ; // active list iterator
+      MONCLASS_LIST::iterator _itr2 ; // archive list iterator
+
+      iterator( MON_PARTITION_LIST::iterator it )
+      {
+         _curListType = MON_CLASS_ACTIVE_LIST ;
+         _itr1 = it ;
+      }
+
+      iterator( MONCLASS_LIST::iterator it )
+      {
+         _curListType = MON_CLASS_ARCHIVED_LIST ;
+         _itr2 = it ;
+      }
+
+      // copy constructor
+      iterator( const _monClassContainer::iterator &obj )
+      {
+         (*this) = obj ;
+      }
+
+   public:
+      iterator() {}
+      ~iterator()
+      {
+      }
+      // By calling the constructor, the list type and the target container
+      // pointer has to be passed in to initialize the member inside the object
+      // Also the constructor decides which list to traverse and which
+      // iterator to be used based on the list type.
+      // If the list type is active list. _itr1 is used and _curlist is set to
+      // active list to indicate which list we are traversing
+      // If the list type is archived list. First check whether there is
+      // pending archive, if so _curlist is set to active list first
+      // and _itr1 is uesed to traverse first, after we done the active list
+      // we will switch to archived list in ++ operation
+      iterator( MON_CLASS_LIST_TYPE type, _monClassContainer* classContainer )
+         : _container( classContainer ), _listType( type )
+      {
+         if ( _listType == MON_CLASS_ARCHIVED_LIST )
+         {
+            if ( _container->getNumPendingArchive() > 0 )
+            {
+               _itr1 = _container->_activeList.begin() ;
+               // Since scan is paralle to delete, it is possible that
+               // when we get the itr, it already hit the end of active list
+               // if that happens, we need to switch to archived list
+               if ( _itr1 != _container->_activeList.end() )
+               {
+                  _curListType = MON_CLASS_ACTIVE_LIST ;
+               }
+               else
+               {
+                  _curListType = MON_CLASS_ARCHIVED_LIST ;
+                  _itr2 = _container-> _archivedList.begin() ;
+               }
+            }
+            else
+            {
+               _curListType = MON_CLASS_ARCHIVED_LIST ;
+               _itr2 = _container->_archivedList.begin() ;
+               _itr1 = _container->_activeList.end() ;
+            }
+         }
+         else
+         {
+            _curListType = MON_CLASS_ACTIVE_LIST ;
+            _itr1 = _container->_activeList.begin() ;
+            _itr2 = _container->_archivedList.end() ;
+         }
+      }
+
+      // increment the iterator of current list it is traversing
+      // if we hit the end of active list and is scan archived list
+      // switch to the begin of _archivedList
+      iterator& operator++ () // Pre-increment
+      {
+         if ( _curListType == MON_CLASS_ACTIVE_LIST )
+         {
+            SDB_ASSERT( _itr1 != _container->_activeList.end(),
+                        "end of active list has already been reached" ) ;
+
+            // Move to scan archive list if the end of active list is reached
+            if ( ++_itr1 == _container->_activeList.end() &&
+                _listType == MON_CLASS_ARCHIVED_LIST )
+            {
+               _curListType = MON_CLASS_ARCHIVED_LIST ;
+               _itr2 = _container-> _archivedList.begin() ;
+            }
+         }
+         else
+         {
+            SDB_ASSERT( _itr2 != _container->_archivedList.end(),
+                        "end of archived list has already been reached" ) ;
+            ++_itr2 ;
+         }
+         return *this;
+      }
+
+      iterator operator++ (int) // Post-increment
+      {
+         iterator tmp( *this ) ;
+         ++( *this ) ;
+         return tmp ;
+      }
+
+      BOOLEAN operator == (const iterator& rhs) const
+      {
+         if ( _curListType == rhs._curListType )
+         {
+            if ( _curListType == MON_CLASS_ACTIVE_LIST )
+            {
+               return _itr1 == rhs._itr1 ;
+            }
+            else
+            {
+               return _itr2 == rhs._itr2 ;
+            }
+         }
+         return FALSE ;
+      }
+
+      BOOLEAN operator != (const iterator& rhs) const
+      {
+         return operator==( rhs ) ? FALSE : TRUE ;
+      }
+
+      MONCLASS_LIST::reference operator* () const
+      {
+         return ( _curListType == MON_CLASS_ACTIVE_LIST ) ? *_itr1 : *_itr2 ;
+      }
+
+      MONCLASS_LIST::pointer operator-> () const
+      {
+         return ( _curListType == MON_CLASS_ACTIVE_LIST ) ? &(*_itr1) : &(*_itr2) ;
+      }
+   } ;
+
+   ~_monClassContainer ()
+   {
+      MON_PARTITION_LIST::iterator it = _activeList.begin() ;
+
+      while ( it != _activeList.end() )
+      {
+         monClass &obj = *it ;
+         it = _activeList.erase(it) ;
+         SDB_OSS_DEL &obj ;
+      }
+
+      MONCLASS_LIST::iterator it2 = _archivedList.begin() ;
+
+      while ( it2 != _archivedList.end() )
+      {
+         monClass &obj = *it2 ;
+         it2 = _archivedList.erase(it2) ;
+         SDB_OSS_DEL &obj ;
+      }
+   }
 
 private:
    _monClassContainer (MON_CLASS_TYPE type) ;
@@ -501,32 +604,19 @@ private:
    _monClassContainer( const _monClassContainer& other ) ;
 
    // a list of all the active objects
-   MONCLASS_LIST _activeList ;
-
-   // latch protecting the activeList
-   // Protocol is as follows:
-   // - Scanner gets the headLatch and latch in S. 
-   //   It releases the headLatch after making a copy of the list head.
-   // - Delete is async, and does not need any latch.
-   //   It simply marks the object as pending delete.
-   // - Add gets the headLatch in X, then add a node to the head of the list.
-   // - Real delete will be done by a background agent. 
-   //   It gets the headLatch in S and latch in X.
-   //   It releases the headLatch after processing the list head.
-   // - Latches should be acquired in this order: listLatch->archiveLatch->headLatch
-   ossSpinSLatch _activeListLatch ;
-   ossSpinSLatch _activeListHeadLatch ;
+   MON_PARTITION_LIST _activeList ;
 
    // a list of all the archived objects
    MONCLASS_LIST _archivedList ;
 
+   // Latch protecting the archived list. If active list and archived list must
+   // be accessed at the same time, get the archive latch before begin scanning
+   // the active list.
    ossSpinSLatch _archiveListLatch ;
 
-   ossAtomic32 _activeListLen ;       /**< number of elements in the active list */
    /**< number of elements in the archived list, protected by archivedListLatch */
-   UINT32 _archivedListLen ;
+   UINT32 _archivedListMaxLen ;
    /**< maximum number of elements allowed in the archived list */
-   UINT32 _archivedListMaxLen ; 
 
    /**< Number of pending archive objects in the active list */
    ossAtomic32 _numPendingArchive ;
@@ -537,11 +627,6 @@ private:
    MON_DATA_LEVEL _curCollectionLvl ; 
    /**< The minimum collection level when monClass objects will get created */
    MON_DATA_LEVEL _minOperationalLvl ;
-
-  /**
-    * function pointer to specify the archive rule
-    * @param obj the object to be archived
-    */
 
    archiveFunc _doArchive ;
 
@@ -556,41 +641,17 @@ private:
    void _removeArchivedObj() ;
 
 public:
-   UINT32 getActiveListLen() { return _activeListLen.fetch() ; }
 
    UINT32 getArchivedListLen() const { return _archivedList.size() ; }
 
-   void setMaxArchivedListLen( UINT32 size ) { _archivedListMaxLen = size ; }
+   UINT32 getActiveListLen() { return _activeList.size() ; }
 
+   void setMaxArchivedListLen( UINT32 size ) { _archivedListMaxLen = size ; }
    UINT32 getMaxArchivedListLen() const { return _archivedListMaxLen ; }
 
    UINT32 getNumPendingArchive() { return _numPendingArchive.fetch() ; }
 
    UINT32 getNumPendingDelete() { return _numPendingDelete.fetch() ; }
-
-   void getListLatch ( OSS_LATCH_MODE latchMode )
-   {
-      latchMode == EXCLUSIVE ? _activeListLatch.get()
-                             : _activeListLatch.get_shared() ;
-   }
-
-   void releaseListLatch ( OSS_LATCH_MODE latchMode )
-   {
-      latchMode == EXCLUSIVE ? _activeListLatch.release()
-                             : _activeListLatch.release_shared() ;
-   }
-
-   void getHeadLatch ( OSS_LATCH_MODE latchMode )
-   {
-      latchMode == EXCLUSIVE ? _activeListHeadLatch.get()
-                             : _activeListHeadLatch.get_shared() ;
-   }
-
-   void releaseHeadLatch ( OSS_LATCH_MODE latchMode )
-   {
-      latchMode == EXCLUSIVE ? _activeListHeadLatch.release()
-                             : _activeListHeadLatch.release_shared() ;
-   }
 
    void getArchiveLatch ( OSS_LATCH_MODE latchMode )
    {
@@ -629,13 +690,11 @@ public:
          if ( obj )
          {
             obj->dataLvl = getCollectionLvl() ;
-            ossScopedLock l( &_activeListHeadLatch, EXCLUSIVE ) ;
-            _activeList.push_front( *obj ) ;
-            _activeListLen.inc() ;
+            _activeList.add( obj ) ;
          }
          else
          {
-            //TODO dump error msg 
+            PD_LOG( PDERROR, "failed to allocate new monitor cb" ) ;
          }
       }
       return obj ;
@@ -655,13 +714,11 @@ public:
          if ( obj )
          {
             obj->dataLvl = getCollectionLvl() ;
-            ossScopedLock l( &_activeListHeadLatch, EXCLUSIVE ) ;
-            _activeList.push_front( *obj ) ;
-            _activeListLen.inc() ;
+            _activeList.add( obj ) ;
          }
          else
          {
-            //TODO dump error msg 
+            PD_LOG( PDERROR, "failed to allocate new monitor cb" ) ;
          }
       }
       return obj ;
@@ -677,7 +734,7 @@ public:
    /**
     * Return iterator to the first node of the list
 
-    * Dependency: appropriate latch has been taken
+    * Dependency: proper latches will been take care by iteraor
     * @param listType the type of list to read
     */
    iterator begin( MON_CLASS_LIST_TYPE listType )
@@ -688,10 +745,10 @@ public:
       switch ( listType )
       {
          case ( MON_CLASS_ARCHIVED_LIST ):
-            return iterator( _archivedList.begin() ) ;
+            return iterator( MON_CLASS_ARCHIVED_LIST, this ) ;
          case ( MON_CLASS_ACTIVE_LIST ):
          default:
-            return iterator( _activeList.begin() ) ;
+            return iterator( MON_CLASS_ACTIVE_LIST, this ) ;
       }
    }
 
@@ -719,34 +776,32 @@ class _monClassReadScanner : public utilPooledObject
 private:
    typedef _monClassContainer::iterator IT ;
 
-   _monClassContainer *_container ; /**< container for the type of monClass */
-   IT _itr ;                  /**< iterator pointing to current node */
+   monClassContainer *_container ; /**< container for the type of monClass */
+   IT _itr ;                       /**< iterator pointing to current node */
    MON_CLASS_LIST_TYPE _listType ; /**< Type of list to scan (active/archive) */
-   MON_CLASS_LIST_TYPE _currentList ; /**< The list currently being scanned */
-   BOOLEAN _initCalled ;        /**< Whether scan initialization has done */
-   BOOLEAN _hasHeadLatch ;      /**< Whether headLatch has been obtained */
-   BOOLEAN _hasListLatch ;      /**< Whether listLatch has been obtained */
-   BOOLEAN _hasArchiveLatch ;   /**< Whether archiveLatch has been obtained */
-   BOOLEAN _endReached ;           /**< Whether the scan has read all the nodes */
+   BOOLEAN _initCalled ;           /**< Whether scan initialization has done */
+   BOOLEAN _endReached ;         /**< Whether the scan has read all the nodes */
+   BOOLEAN _hasArchiveLatch ;      /**< Whether the archive latch was acquired */
 
    void initScan() ;
-   void doneScan() ;
 
 public:
-   _monClassReadScanner( monClassContainer *container, MON_CLASS_LIST_TYPE listType )
+   _monClassReadScanner( monClassContainer *container,
+                         MON_CLASS_LIST_TYPE listType )
      : _container( container ),
        _listType( listType ),
        _initCalled( FALSE ),
-       _hasHeadLatch( FALSE ),
-       _hasListLatch( FALSE ),
-       _hasArchiveLatch( FALSE ),
-       _endReached( FALSE )
+       _endReached( FALSE ),
+       _hasArchiveLatch( FALSE )
    {
    }
 
    ~_monClassReadScanner()
    {
-      doneScan() ;
+      if ( _hasArchiveLatch )
+      {
+         _container->releaseArchiveLatch( SHARED ) ;
+      }
    }
 
    /**
@@ -756,6 +811,7 @@ public:
 } ;
 
 typedef _monClassReadScanner monClassReadScanner ;
+
 } // namespace engine
 
 #endif //MONCLASS_HPP_
