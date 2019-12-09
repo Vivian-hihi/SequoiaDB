@@ -3691,35 +3691,42 @@ namespace engine
       try
       {
          boMatcher = BSONObj( pQuery ) ;
+         boHint = BSONObj( pHint ) ;
+
          rc = rtnGetObjElement( boMatcher, FIELD_NAME_INDEX, boIndex ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get object index, rc: %d", rc ) ;
 
          rc = rtnConvertIndexDef( boIndex ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to convert index definition" ) ;
 
-         if ( NULL != pHint )
+         if ( boMatcher.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
          {
-            boHint = BSONObj( pHint ) ;
-
-            if ( boHint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+            rc = rtnGetIntElement( boMatcher, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                                   sortBufferSize ) ;
+            if ( SDB_OK != rc )
             {
-               rc = rtnGetIntElement( boHint, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
-                                      sortBufferSize ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG ( PDERROR, "Failed to get index sort buffer, hint: %s",
-                           boHint.toString().c_str() ) ;
-                  goto error ;
-               }
-
-               if ( sortBufferSize < 0 )
-               {
-                  PD_LOG ( PDERROR, "invalid index sort buffer size: %d",
-                           sortBufferSize ) ;
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
+               PD_LOG ( PDERROR, "Failed to get index sort buffer, matcher: %s",
+                        boMatcher.toString().c_str() ) ;
+               goto error ;
             }
+         }
+         else if ( boHint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+         {
+            rc = rtnGetIntElement( boHint, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                                   sortBufferSize ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to get index sort buffer, hint: %s",
+                        boHint.toString().c_str() ) ;
+               goto error ;
+            }
+         }
+         if ( sortBufferSize < 0 )
+         {
+            PD_LOG ( PDERROR, "invalid index sort buffer size: %d",
+                     sortBufferSize ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
       }
       catch( std::exception &e )

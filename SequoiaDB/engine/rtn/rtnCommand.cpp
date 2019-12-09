@@ -991,11 +991,12 @@ namespace engine
                                  const CHAR * pMatcherBuff,
                                  const CHAR * pSelectBuff,
                                  const CHAR * pOrderByBuff,
-                                 const CHAR * pHintBuff)
+                                 const CHAR * pHintBuff )
    {
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_INIT ) ;
       BSONObj arg ( pMatcherBuff ) ;
       BSONObj hint ( pHintBuff ) ;
+      BOOLEAN hasSortBufSz = FALSE ;
 
       INT32 rc = rtnGetStringElement ( arg, FIELD_NAME_COLLECTION,
                                        &_collectionName ) ;
@@ -1027,8 +1028,21 @@ namespace engine
          goto error ;
       }
 
-      if ( hint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+      if ( arg.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
       {
+         hasSortBufSz = TRUE ;
+         rc = rtnGetIntElement( arg, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                                _sortBufferSize ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get index sort buffer, arg: %s",
+                     arg.toString().c_str() ) ;
+            goto error ;
+         }
+      }
+      else if ( hint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+      {
+         hasSortBufSz = TRUE ;
          rc = rtnGetIntElement( hint, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
                                 _sortBufferSize ) ;
          if ( SDB_OK != rc )
@@ -1037,15 +1051,16 @@ namespace engine
                      hint.toString().c_str() ) ;
             goto error ;
          }
-
-         if ( _sortBufferSize < 0 )
-         {
-            PD_LOG ( PDERROR, "invalid index sort buffer size: %d", _sortBufferSize ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
       }
-      else
+      if ( _sortBufferSize < 0 )
+      {
+         PD_LOG ( PDERROR, "invalid index sort buffer size: %d",
+                  _sortBufferSize ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !hasSortBufSz )
       {
          // For text index, the "sort buffer size" is actually used as the 'Size'
          // option for the corresponding capped collection.

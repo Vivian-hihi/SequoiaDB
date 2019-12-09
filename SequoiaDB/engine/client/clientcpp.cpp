@@ -1699,8 +1699,7 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       BSONObj indexObj ;
-      BSONObj newObj ;
-      BSONObj hintObj ;
+      BSONObj matcher, hint ;
 
       if ( _collectionFullName [0] == '\0' || !_connection ||
            !pIndexName )
@@ -1715,18 +1714,22 @@ do                                                            \
          goto error ;
       }
 
-      indexObj = BSON ( IXM_FIELD_NAME_KEY << indexDef <<
-                        IXM_FIELD_NAME_NAME << pIndexName <<
-                        IXM_FIELD_NAME_UNIQUE << (isUnique ? true : false) <<
-                        IXM_FIELD_NAME_ENFORCED << (isEnforced ? true : false) ) ;
+      indexObj = BSON( IXM_FIELD_NAME_KEY << indexDef <<
+                       IXM_FIELD_NAME_NAME << pIndexName <<
+                       IXM_FIELD_NAME_UNIQUE << (isUnique ? true : false) <<
+                       IXM_FIELD_NAME_ENFORCED << (isEnforced ? true : false)
+                     ) ;
 
-      newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
-                      FIELD_NAME_INDEX << indexObj ) ;
+      matcher = BSON( FIELD_NAME_COLLECTION << _collectionFullName <<
+                       FIELD_NAME_INDEX << indexObj <<
+                       IXM_FIELD_NAME_SORT_BUFFER_SIZE << sortBufferSize ) ;
 
-      hintObj = BSON ( IXM_FIELD_NAME_SORT_BUFFER_SIZE << sortBufferSize ) ;
+      // For Compatibility with older engine( version <3.4 ), keep sort buffer
+      // size in hint. After several versions, we can delete it.
+      hint = BSON( IXM_FIELD_NAME_SORT_BUFFER_SIZE << sortBufferSize ) ;
 
       rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
-                                     &newObj, NULL, NULL, &hintObj ) ;
+                                     &matcher, NULL, NULL, &hint ) ;
       /// ignore update result
       updateCachedObject( rc, _connection->_getCachedContainer(),
                           _collectionFullName ) ;
@@ -1746,8 +1749,8 @@ do                                                            \
                                             const BSONObj &options )
    {
       INT32 rc = SDB_OK ;
-      BSONObj hint, matcher ;
-      BSONObjBuilder indexBuild, sortBufBuild ;
+      BSONObj matcher, hint ;
+      BSONObjBuilder indexBuild, matchBuilder, hintBuilder ;
 
       if ( _collectionFullName [0] == '\0' || !_connection ||
            !pIndexName )
@@ -1759,8 +1762,11 @@ do                                                            \
       // for example, build below message:
       // macher: { Collection: "foo.bar",
       //           Index:{ key: {a:1}, name: 'aIdx', Unique: true,
-      //                   Enforced: true, NotNull: true } }
-      // hint:   { SortBufferSize: 1024 }
+      //                   Enforced: true, NotNull: true },
+      //           SortBufferSize: 1024 }
+      // hint: { SortBufferSize: 1024 }
+      // For Compatibility with older engine( version <3.4 ), keep sort buffer
+      // size in hint. After several versions, we can delete it.
 
       indexBuild.append( IXM_FIELD_NAME_KEY, indexDef ) ;
       indexBuild.append( IXM_FIELD_NAME_NAME, pIndexName ) ;
@@ -1773,7 +1779,8 @@ do                                                            \
             if ( 0 == ossStrcmp( e.fieldName(),
                                  IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
             {
-               sortBufBuild.append( e ) ;
+               matchBuilder.append( e ) ;
+               hintBuilder.append( e ) ;
             }
             else
             {
@@ -1782,9 +1789,11 @@ do                                                            \
          }
       }
 
-      matcher = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
-                       FIELD_NAME_INDEX << indexBuild.obj() ) ;
-      hint = sortBufBuild.obj() ;
+      matchBuilder.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+      matchBuilder.append( FIELD_NAME_INDEX, indexBuild.obj() ) ;
+      matcher = matchBuilder.obj() ;
+
+      hint = hintBuilder.obj() ;
 
       rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
                                      &matcher, NULL, NULL, &hint ) ;
