@@ -4,7 +4,7 @@ traceOff -  Turn off the database engine program tracking and export tracking re
 
 ##SYNOPSIS##
 
-***db.traceOff()***
+***db.traceOff( \<dumpFile\>, [isDumpLocal] )***
 
 ##CATEGORY##
 

@@ -9,7 +9,7 @@ traceOff \- Turn off the database engine program tracking and export tracking
 results to binary file.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.traceOff()\f[]\f[]
+\f[B]\f[I]db.traceOff( <dumpFile>, [isDumpLocal] )\f[]\f[]
 .SH CATEGORY
 .PP
 Sdb
