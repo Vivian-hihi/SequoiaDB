@@ -116,6 +116,7 @@ namespace engine
          }
 
       protected:
+         netEvSuitPtr                     _evSuitPtr ;
          boost::asio::ip::tcp::socket     _sock ;
          _MsgHeader                       _header ;
          CHAR                             *_buf ;

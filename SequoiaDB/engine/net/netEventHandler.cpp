@@ -63,7 +63,8 @@ namespace engine
     */
    _netEventHandler::_netEventHandler( netEvSuitPtr evSuitPtr,
                                        const NET_HANDLE &handle )
-   : netEventHandlerBase( evSuitPtr, handle ),
+   : netEventHandlerBase( handle ),
+     _evSuitPtr( evSuitPtr ),
      _sock( evSuitPtr->getIOService() ),
      _buf(NULL),
      _bufLen(0),

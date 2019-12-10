@@ -486,43 +486,21 @@ namespace engine
          handle = itr->first ;
          _mtx.release_shared() ;
 
-         if ( NET_EVENT_HANDLER_TCP == eh->getHandlerType() )
+         if ( eh->isNew() || !eh->isConnected() )
          {
-            // TCP event hander
-            if ( eh->isNew() )
-            {
-               // it is new (not connected), no need to check beat
-               continue ;
-            }
+            // it is new (not connected), no need to check beat
+            continue ;
+         }
 
-            /// send msg if had not received message for a while
-            if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval &&
-                 ( -1 == serviceType ||
-                   serviceType == eh->id().columns.serviceID ) )
-            {
-               eh->sendBeat( &beat ) ;
-            }
-         }
-         else if ( NET_EVENT_HANDLER_UDP == eh->getHandlerType() )
+         /// send msg if had not received message for a while
+         if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval &&
+              ( -1 == serviceType ||
+                serviceType == eh->id().columns.serviceID ) )
          {
-            // UDP event hander
-            netUDPEventHandler *handler = (netUDPEventHandler *)( eh.get() ) ;
-            if ( !handler->isConnected() )
-            {
-               // it is closed, no need to check beat
-               // will be removed by netUDPClearTimer
-               continue ;
-            }
-            else if ( handler->isBeatTimeout( _beatInterval ) )
-            {
-               // beat timeout in few cases, see isBeatTimeout
-               // not received or send message for a while
-               handler->sendBeat( &beat ) ;
-            }
-         }
-         else
-         {
-            SDB_ASSERT( FALSE, "handler type is invalid" ) ;
+            eh->mtx().get() ;
+            beat.requestID = eh->getAndIncMsgID() ;
+            eh->syncSend( &beat, beat.messageLength ) ;
+            eh->mtx().release() ;
          }
       }
    }
@@ -684,6 +662,20 @@ namespace engine
       _mtx.release_shared() ;
 
       return eh ;
+   }
+
+   NET_EVENT_HANDLER_TYPE _netFrame::getEventHandleType(
+                                                   const NET_HANDLE &handle )
+   {
+      NET_EVENT_HANDLER_TYPE type = NET_EVENT_HANDLER_UNKNOWN ;
+
+      NET_EH eh = getEventHandle( handle ) ;
+      if ( NULL != eh.get() )
+      {
+         type = eh->getHandlerType() ;
+      }
+
+      return type ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_LISTEN, "_netFrame::listen" )
@@ -1425,58 +1417,37 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSENDUDP, "_netFrame::syncSendUDP" )
    INT32 _netFrame::syncSendUDP( const MsgRouteID &id,
-                                 void *header,
-                                 BOOLEAN needTest )
+                                 void *header )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__NETFRAME_SYNCSENDUDP ) ;
 
-      BOOLEAN useUDP = TRUE ;
       MsgHeader *message = (MsgHeader *)header ;
       netUDPEndPoint endPoint ;
       NET_EH eh ;
 
-      if ( NULL != _udpMainSuit.get() )
-      {
-         rc = _pRoute->route( id, endPoint, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to route [ group: %d, node: %d, "
-                      "service: %d ], rc: %d", id.columns.groupID,
-                      id.columns.nodeID, id.columns.serviceID, rc ) ;
+      rc = _pRoute->route( id, endPoint, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to route [ group: %d, node: %d, "
+                   "service: %d ], rc: %d", id.columns.groupID,
+                   id.columns.nodeID, id.columns.serviceID, rc ) ;
 
-         PD_CHECK( NULL != _udpMainSuit.get() && _udpMainSuit->isOpened(),
-                   SDB_NET_INVALID_HANDLE, error, PDERROR,
-                   "Failed to send UDP message, UDP handle is invalid" ) ;
+      PD_CHECK( NULL != _udpMainSuit.get() && _udpMainSuit->isOpened(),
+                SDB_NET_INVALID_HANDLE, error, PDERROR,
+                "Failed to send UDP message, UDP handle is invalid" ) ;
 
-         rc = _udpMainSuit->getEH( endPoint, id, eh ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get event handler, rc: %d", rc ) ;
+      rc = _udpMainSuit->getEH( endPoint, id, eh ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get event handler, rc: %d", rc ) ;
 
-         if ( needTest )
-         {
-            SDB_ASSERT( NULL != eh.get() &&
-                        NET_EVENT_HANDLER_UDP == eh->getHandlerType(),
-                        "handler is invalid" ) ;
-            netUDPEventHandler *handler = (netUDPEventHandler *)eh.get() ;
-            if ( !handler->isRemoteValidated() )
-            {
-               useUDP = FALSE ;
-            }
-         }
-      }
+      PD_CHECK( NULL != eh.get() &&
+                NET_EVENT_HANDLER_UDP == eh->getHandlerType(),
+                SDB_NET_INVALID_HANDLE, error, PDERROR,
+                "Failed to send UDP message, UDP handler is invalid" ) ;
 
-      if ( useUDP && NULL != eh.get() )
-      {
-         rc = eh->syncSend( message, message->messageLength ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to send message by UDP, rc: %d",
-                      rc ) ;
-      }
-      else
-      {
-         // UDP handler is not validated, use TCP handler to send
-         rc = syncSend( id, header, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to send message by TCP, rc: %d",
-                      rc ) ;
-      }
+
+      rc = eh->syncSend( message, message->messageLength ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to send message by UDP, rc: %d",
+                   rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__NETFRAME_SYNCSENDUDP, rc ) ;

@@ -77,7 +77,11 @@ namespace engine
       void  close() ;
       void  asyncRead() ;
       INT32 syncBroadcast( const void *buf, UINT32 len ) ;
-      INT32 syncSend( const netUDPEndPoint &ep, const void *buf, UINT32 len ) ;
+
+      OSS_INLINE boost::asio::ip::udp::socket *getSocket()
+      {
+         return ( &_sock ) ;
+      }
 
       OSS_INLINE BOOLEAN isOpened()
       {
@@ -131,7 +135,7 @@ namespace engine
 
    protected:
       netFrame *                    _frame ;
-      INetUDPMsgHandler *            _handler ;
+      INetUDPMsgHandler *           _handler ;
       netRoute *                    _route ;
       netUDPRestartTimer            _restartTimer ;
       boost::asio::ip::udp::socket  _sock ;

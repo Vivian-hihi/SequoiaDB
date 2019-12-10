@@ -50,10 +50,6 @@
 namespace engine
 {
 
-   // remote testing status timeout at each 2 minutes
-   #define NET_UDP_REMOTE_TIMEOUT      ( 120 * OSS_ONE_SEC )
-   // after 5 times without receiving message, mark the UDP unavailable
-   #define NET_UDP_REMOTE_UNAVAILABLE  ( 5 )
    /*
       _netUDPEventHandler define
     */
@@ -90,32 +86,8 @@ namespace engine
       virtual UINT16 localPort() const ;
       virtual UINT16 remotePort() const ;
 
-      void readCallback( const MsgHeader *message ) ;
+      void readCallback( MsgHeader *message ) ;
       void setRouteID( const MsgRouteID &routeID ) ;
-
-      OSS_INLINE BOOLEAN isRemoteValidated()
-      {
-         return !_testRemote ;
-      }
-
-      OSS_INLINE BOOLEAN isRemoteUnavailable()
-      {
-         return _testRemoteCount > NET_UDP_REMOTE_UNAVAILABLE ;
-      }
-
-      OSS_INLINE void increaseRemoteTest()
-      {
-         _testRemote = ( ( ++ _testRemoteCount ) >
-                         NET_UDP_REMOTE_UNAVAILABLE ) ? TRUE : FALSE ;
-      }
-
-      OSS_INLINE void setRemoteValidated()
-      {
-         _testRemote = FALSE ;
-         _testRemoteCount = 0 ;
-      }
-
-      BOOLEAN isBeatTimeout( UINT32 beatInterval ) ;
 
    protected:
       OSS_INLINE NET_UDP_EH _getShared()
@@ -124,17 +96,8 @@ namespace engine
       }
 
    protected:
-      NET_UDP_EV_SUIT   _mainSuit ;
+      NET_UDP_EV_SUIT   _evSuitPtr ;
       netUDPEndPoint    _remoteEndPoint ;
-
-      // need test remote status, which might not support UDP
-      // 1. at the begining, send beat to test
-      // 2. if received UDP message, mark remote validated
-      // 3. if not received UDP message after 10 test beats, mark
-      //    remove unavailable
-      // 4. will re-test after 120 seconds
-      BOOLEAN           _testRemote ;
-      INT32             _testRemoteCount ;
    } ;
 
 }

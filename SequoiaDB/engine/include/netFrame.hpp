@@ -213,6 +213,7 @@ namespace engine
                                UINT32 beatInteval = 0 ) ;
 
          NET_EH   getEventHandle( const NET_HANDLE &handle ) ;
+         NET_EVENT_HANDLER_TYPE getEventHandleType( const NET_HANDLE &handle ) ;
 
          INT32    listen( const CHAR *hostName,
                           const CHAR *serviceName,
@@ -266,8 +267,7 @@ namespace engine
                           const netIOVec &iov ) ;
 
          INT32 syncSendUDP( const MsgRouteID &id,
-                            void *header,
-                            BOOLEAN needTest ) ;
+                            void *header ) ;
 
          /// frame will not release handler for ever
          INT32 addTimer( UINT32 millsec, _netTimeoutHandler *handler,
@@ -293,11 +293,6 @@ namespace engine
 
          void  makeStat( UINT32 timeout ) ;
          void  setNetStartThreadFunc( NET_START_THREAD_FUNC pFunc ) ;
-
-         OSS_INLINE NET_UDP_EV_SUIT getUDPEventHandle()
-         {
-            return _udpMainSuit ;
-         }
 
          OSS_INLINE UINT32 getProtocolMask() const
          {

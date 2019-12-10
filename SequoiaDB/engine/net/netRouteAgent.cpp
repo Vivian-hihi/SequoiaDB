@@ -199,8 +199,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSNDUDP, "_netRouteAgent::syncSendUDP" )
    INT32 _netRouteAgent::syncSendUDP( const MsgRouteID &id,
-                                      void *header,
-                                      BOOLEAN needTest )
+                                      void *header )
    {
       SDB_ASSERT( NULL != header, "should not be NULL" ) ;
 
@@ -208,7 +207,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSNDUDP ) ;
 
-      rc = _frame.syncSendUDP( id, header, needTest ) ;
+      rc = _frame.syncSendUDP( id, header ) ;
       if ( rc )
       {
          goto error ;

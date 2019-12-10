@@ -138,8 +138,7 @@ namespace engine
                          NET_HANDLE *pHandle = NULL ) ;
 
          INT32 syncSendUDP( const MsgRouteID &id,
-                            void *header,
-                            BOOLEAN needTest = FALSE ) ;
+                            void *header ) ;
 
          INT32 syncSend( const NET_HANDLE &handle,
                          void *header ) ;

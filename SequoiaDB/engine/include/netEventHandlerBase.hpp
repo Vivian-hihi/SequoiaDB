@@ -58,8 +58,9 @@ namespace engine
     */
    enum NET_EVENT_HANDLER_TYPE
    {
-      NET_EVENT_HANDLER_TCP = 0,
-      NET_EVENT_HANDLER_UDP
+      NET_EVENT_HANDLER_UNKNOWN  = 0,
+      NET_EVENT_HANDLER_TCP      = 1,
+      NET_EVENT_HANDLER_UDP      = 2
    } ;
 
    /*
@@ -68,8 +69,7 @@ namespace engine
    class _netEventHandlerBase : public utilPooledObject
    {
    public:
-      _netEventHandlerBase( netEvSuitPtr evSuitPtr,
-                            const NET_HANDLE &handle ) ;
+      _netEventHandlerBase( const NET_HANDLE &handle ) ;
       virtual ~_netEventHandlerBase() ;
 
    public:
@@ -110,11 +110,6 @@ namespace engine
       OSS_INLINE const MsgRouteID &id()
       {
          return _id ;
-      }
-
-      OSS_INLINE netEvSuitPtr getEVSuitPtr() const
-      {
-         return _evSuitPtr ;
       }
 
       OSS_INLINE UINT64 getLastSendTick() const
@@ -159,8 +154,6 @@ namespace engine
          return localAddr() == remoteAddr() ? TRUE : FALSE ;
       }
 
-      void sendBeat( MsgHeader *message ) ;
-
    protected:
       OSS_INLINE NET_EH _getSharedBase()
       {
@@ -171,7 +164,6 @@ namespace engine
       ossSpinXLatch           _mtx ;
       NET_HANDLE              _handle ;
       MsgRouteID              _id ;
-      netEvSuitPtr            _evSuitPtr ;
       volatile BOOLEAN        _isConnected ;
       volatile BOOLEAN        _isNew ;
       UINT64                  _msgid ;

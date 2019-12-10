@@ -163,81 +163,22 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETUDPEVENTSUIT_SYNCSSEND, "_netUDPEventSuit::syncSend" )
-   INT32 _netUDPEventSuit::syncSend( const netUDPEndPoint &ep,
-                                     const void *buf,
-                                     UINT32 len )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB__NETUDPEVENTSUIT_SYNCSSEND ) ;
-
-      UINT32 send = 0 ;
-
-      PD_CHECK( _sock.is_open(), SDB_NETWORK, error, PDERROR,
-                "Failed to send message, UDP socket is closed" ) ;
-
-      if ( NULL != _handler )
-      {
-         _handler->onSendMsg( (MsgHeader *)( buf ) ) ;
-      }
-
-      while ( TRUE )
-      {
-         try
-         {
-            send = _sock.send_to( buffer( buf, len ), ep ) ;
-         }
-         catch ( boost::system::system_error &e )
-         {
-            if ( e.code().value() == boost::system::errc::interrupted )
-            {
-               PD_LOG( PDDEBUG, "UDP connection send message interrupted: "
-                       "%s,%d", e.what(), e.code().value() ) ;
-               continue ;
-            }
-            if ( e.code().value() == boost::system::errc::timed_out ||
-                 e.code().value() == boost::system::errc::resource_unavailable_try_again )
-            {
-               PD_LOG( PDWARNING, "UDP connection send message timeout: %s:%d",
-                       e.what(), e.code().value() ) ;
-               continue ;
-            }
-
-            PD_LOG( PDERROR, "UDP connection send message failed: %s,%d",
-                    e.what(), e.code().value() ) ;
-            rc = SDB_NET_SEND_ERR ;
-            goto error ;
-         }
-
-         PD_CHECK( send == len, SDB_NET_SEND_ERR, error, PDERROR,
-                   "UDP connection send message failed, length is not "
-                   "matched: given %d sent %d", len, send ) ;
-
-         break ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB__NETUDPEVENTSUIT_SYNCSSEND, rc ) ;
-      return rc ;
-
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETUDPEVENTSUIT_HANDLEMSG, "_netUDPEventSuit::handleMsg" )
    void _netUDPEventSuit::handleMsg( NET_EH eh )
    {
       MsgHeader *message = (_MsgHeader *)eh->msg() ;
+
+      if ( NULL != _handler )
+      {
+         _handler->onReceiveMsg( eh->handle(), eh->id(), message ) ;
+      }
 
       // handle heart beats in net frame
       if ( NULL != _handler &&
            MSG_HEARTBEAT != message->opCode &&
            MSG_HEARTBEAT_RES != message->opCode )
       {
-         _handler->handleMsg( eh->handle(),
-                              (MsgHeader *)( eh->msg() ),
-                              eh->msg() ) ;
+         _handler->handleMsg( eh->handle(), message, eh->msg() ) ;
       }
       else
       {
@@ -455,11 +396,6 @@ namespace engine
          }
 
          goto error_close ;
-      }
-
-      if ( NULL != _handler )
-      {
-         _handler->onReceiveMsg( message ) ;
       }
 
       if ( SDB_OK == getEH( _remoteEndPoint, message->routeID, eh ) )

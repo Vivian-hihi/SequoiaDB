@@ -62,11 +62,9 @@ namespace engine
                                              const NET_HANDLE &handle,
                                              const MsgRouteID &routeID,
                                              const netUDPEndPoint &endPoint )
-   : _netEventHandlerBase( evSuit->getFrame()->getMainSuit(), handle ),
-     _mainSuit( evSuit ),
-     _remoteEndPoint( endPoint ),
-     _testRemote( TRUE ),
-     _testRemoteCount( 0 )
+   : _netEventHandlerBase( handle ),
+     _evSuitPtr( evSuit ),
+     _remoteEndPoint( endPoint )
    {
       setRouteID( routeID ) ;
 
@@ -106,7 +104,7 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__NETUDPEVNHND_SYNCCONNECT ) ;
 
-      PD_CHECK( NULL != _mainSuit.get() && _mainSuit->isOpened(),
+      PD_CHECK( NULL != _evSuitPtr.get() && _evSuitPtr->isOpened(),
                 SDB_NETWORK, error, PDERROR, "Failed to send UDP message to "
                 "%s:%s, UDP suit is not opened" ) ;
 
@@ -130,20 +128,71 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__NETUDPEVNHND_SYNCSEND ) ;
 
+      udp::socket * sock = NULL ;
+      UINT32 send = 0 ;
+
       PD_CHECK( _isConnected, SDB_NETWORK, error, PDWARNING,
-                "Failed to send message via UDP handle [%u], it is not valid",
-                _handle ) ;
+                "Failed to send message via UDP handle [%u], "
+                "it has been closed", _handle ) ;
+
+      PD_CHECK( NULL != _evSuitPtr.get(), SDB_NETWORK, error, PDWARNING,
+                "Failed to send message via UDP handle [%u], "
+                "suit is invalid", _handle ) ;
+
+      sock = _evSuitPtr->getSocket() ;
+      PD_CHECK( NULL != sock, SDB_NETWORK, error, PDWARNING,
+                "Failed to send message via UDP handle [%u], "
+                "socket is invalid", _handle ) ;
+
 
       /// not care send suc or failed
       _lastSendTick = pmdGetDBTick() ;
       ++_totalIOTimes ;
 
-      rc = _mainSuit->syncSend( _remoteEndPoint, buf, len ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to send message to %s via UDP "
-                   "handle [%u], rc: %d", routeID2String( _id ).c_str(),
-                   _handle, rc ) ;
+      PD_CHECK( sock->is_open(), SDB_NETWORK, error, PDERROR,
+                "Failed to send message, UDP socket is closed" ) ;
 
-      increaseRemoteTest() ;
+      if ( NULL != _evSuitPtr->getHandler() )
+      {
+         _evSuitPtr->getHandler()->onSendMsg( handle(),
+                                              id(),
+                                              (MsgHeader *)( buf ) ) ;
+      }
+
+      while ( TRUE )
+      {
+         try
+         {
+            send = sock->send_to( buffer( buf, len ), _remoteEndPoint ) ;
+         }
+         catch ( boost::system::system_error &e )
+         {
+            if ( e.code().value() == boost::system::errc::interrupted )
+            {
+               PD_LOG( PDDEBUG, "UDP connection send message interrupted: "
+                       "%s,%d", e.what(), e.code().value() ) ;
+               continue ;
+            }
+            if ( e.code().value() == boost::system::errc::timed_out ||
+                 e.code().value() == boost::system::errc::resource_unavailable_try_again )
+            {
+               PD_LOG( PDWARNING, "UDP connection send message timeout: %s:%d",
+                       e.what(), e.code().value() ) ;
+               continue ;
+            }
+
+            PD_LOG( PDERROR, "UDP connection send message failed: %s,%d",
+                    e.what(), e.code().value() ) ;
+            rc = SDB_NET_SEND_ERR ;
+            goto error ;
+         }
+
+         PD_CHECK( send == len, SDB_NET_SEND_ERR, error, PDERROR,
+                   "UDP connection send message failed, length is not "
+                   "matched: given %d sent %d", len, send ) ;
+
+         break ;
+      }
 
    done:
       PD_TRACE_EXITRC( SDB__NETUDPEVNHND_SYNCSEND, rc ) ;
@@ -170,14 +219,14 @@ namespace engine
 
    CHAR *_netUDPEventHandler::msg()
    {
-      return _mainSuit->getMessage() ;
+      return _evSuitPtr->getMessage() ;
    }
 
    string _netUDPEventHandler::localAddr() const
    {
       boost::system::error_code error ;
       string addr ;
-      netUDPEndPoint localEndPoint = _mainSuit->getLocalEndPoint() ;
+      netUDPEndPoint localEndPoint = _evSuitPtr->getLocalEndPoint() ;
       addr = localEndPoint.address().to_string( error ) ;
       if ( error )
       {
@@ -202,7 +251,7 @@ namespace engine
 
    UINT16 _netUDPEventHandler::localPort() const
    {
-      return _mainSuit->getLocalEndPoint().port() ;
+      return _evSuitPtr->getLocalEndPoint().port() ;
    }
 
    UINT16 _netUDPEventHandler::remotePort() const
@@ -210,7 +259,7 @@ namespace engine
       return _remoteEndPoint.port() ;
    }
 
-   void _netUDPEventHandler::readCallback( const MsgHeader *message )
+   void _netUDPEventHandler::readCallback( MsgHeader *message )
    {
       _lastRecvTick = pmdGetDBTick() ;
       _lastBeatTick = _lastRecvTick ;
@@ -226,10 +275,7 @@ namespace engine
          _isConnected = TRUE ;
       }
 
-      // received from remote, validate remote
-      setRemoteValidated() ;
-
-      _mainSuit->handleMsg( _getSharedBase() ) ;
+      _evSuitPtr->handleMsg( _getSharedBase() ) ;
    }
 
    void _netUDPEventHandler::setRouteID( const MsgRouteID &routeID )
@@ -239,24 +285,6 @@ namespace engine
       {
          id( routeID ) ;
       }
-   }
-
-   BOOLEAN _netUDPEventHandler::isBeatTimeout( UINT32 beatInterval )
-   {
-      if ( isRemoteValidated() )
-      {
-         // if remote is mark UDP validated, re-test after 120 seconds without
-         // message received
-         return pmdGetTickSpanTime( _lastRecvTick ) >= NET_UDP_REMOTE_TIMEOUT ;
-      }
-      else if ( isRemoteUnavailable() )
-      {
-         // if remote is mark UDP unavailable, re-test after 120 seconds
-         // NOTE: 120 seconds after last test beat send
-         return pmdGetTickSpanTime( _lastSendTick ) > NET_UDP_REMOTE_TIMEOUT ;
-      }
-      // under testing, use the default beat interval
-      return pmdGetTickSpanTime( _lastBeatTick ) >= beatInterval ;
    }
 
 }

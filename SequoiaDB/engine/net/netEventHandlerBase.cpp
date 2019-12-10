@@ -62,10 +62,8 @@ namespace engine
    /*
       _netEventHandlerBase implement
     */
-   _netEventHandlerBase::_netEventHandlerBase( netEvSuitPtr evSuitPtr,
-                                               const NET_HANDLE &handle )
+   _netEventHandlerBase::_netEventHandlerBase( const NET_HANDLE &handle )
    : _handle( handle ),
-     _evSuitPtr( evSuitPtr ),
      _isConnected( FALSE ),
      _isNew( TRUE ),
      _msgid( 0 ),
@@ -101,18 +99,6 @@ namespace engine
             _totalIOTimes = 0 ;
          }
       }
-   }
-
-   void _netEventHandlerBase::sendBeat( MsgHeader *message )
-   {
-      SDB_ASSERT( NULL != message, "message is invalid" ) ;
-
-      ossScopedLock lock( ( &_mtx ) ) ;
-
-      message->requestID = getAndIncMsgID() ;
-      syncSend( (const void *)message, message->messageLength ) ;
-
-      syncLastBeatTick() ;
    }
 
 }

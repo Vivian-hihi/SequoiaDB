@@ -89,11 +89,15 @@ namespace engine
      }
 
    public:
-      virtual void onSendMsg( MsgHeader *header )
+      virtual void onSendMsg( const NET_HANDLE &handle,
+                              const MsgRouteID &id,
+                              MsgHeader *header )
       {
       }
 
-      virtual void onReceiveMsg( MsgHeader *header )
+      virtual void onReceiveMsg( const NET_HANDLE &handle,
+                                 const MsgRouteID &id,
+                                 MsgHeader *header )
       {
       }
    } ;
