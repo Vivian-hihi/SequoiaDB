@@ -2754,7 +2754,7 @@ error :
 }
 
 INT32 clientBuildInterruptMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                                UINT64 reqID, BOOLEAN isSelf, 
+                                UINT64 reqID, BOOLEAN isSelf,
                                 BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
@@ -3347,6 +3347,25 @@ INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
    if( endianConvert )
    {
       clientEndianConvertHeader ( &msgOpMsg->header ) ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 clientBuildGetLobRTimeMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                 SINT32 flags, SINT16 w, SINT64 contextID,
+                                 UINT64 reqID, BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_BS_LOB_GETRTDETAIL_REQ, NULL,
+                           flags, w, contextID, reqID, NULL,
+                           NULL, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
    }
 done:
    return rc ;

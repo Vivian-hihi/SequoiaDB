@@ -473,11 +473,16 @@ namespace sdbclient
 
       virtual INT32 truncateLob( const bson::OID &oid, INT64 length ) ;
 
-      INT32 openLob( _sdbLob **lob, const bson::OID &oid,
-                     SDB_LOB_OPEN_MODE mode = SDB_LOB_READ ) ;
+      INT32 openLob( _sdbLob **lob, const bson::OID &oid, INT32 mode ) ;
 
       virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
                              SDB_LOB_OPEN_MODE mode = SDB_LOB_READ )
+      {
+         RELEASE_INNER_HANDLE( lob.pLob ) ;
+         return openLob( &lob.pLob, oid, mode ) ;
+      }
+
+      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid, INT32 mode )
       {
          RELEASE_INNER_HANDLE( lob.pLob ) ;
          return openLob( &lob.pLob, oid, mode ) ;
@@ -1042,7 +1047,6 @@ namespace sdbclient
       BOOLEAN                 _isOpen ;
       SINT64                  _contextID ;
       INT32                   _mode ;
-      BOOLEAN                 _seekWrite ;
       bson::OID                _oid ;
       UINT64                  _createTime ;
       UINT64                  _modificationTime ;
@@ -1107,6 +1111,8 @@ namespace sdbclient
       virtual bson::BSONArray getPiecesInfo() ;
 
       virtual BOOLEAN isEof() ;
+
+      virtual INT32 getRunTimeDetail( bson::BSONObj &detail ) ;
 
    } ;
 

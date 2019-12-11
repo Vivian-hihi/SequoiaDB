@@ -56,6 +56,21 @@ using namespace bson ;
 
 namespace sdbclient
 {
+   static BOOLEAN isLobReadOnlyMode( INT32 mode )
+   {
+      return ( mode == SDB_LOB_READ || mode == SDB_LOB_SHAREREAD ) ;
+   }
+
+   static BOOLEAN isLobReadWriteMode( INT32 mode )
+   {
+      return ( mode == ( SDB_LOB_SHAREREAD | SDB_LOB_WRITE ) ) ;
+   }
+
+   static BOOLEAN hasLobWriteMode( INT32 mode )
+   {
+      return ( mode == SDB_LOB_WRITE || isLobReadWriteMode( mode ) ) ;
+   }
+
    static ERROR_ON_REPLY_FUNC _sdbErrorOnReplyCallback = NULL ;
    static BOOLEAN _sdbIsSrand = FALSE ;
 #if defined (_LINUX) || defined (_AIX)
@@ -3070,7 +3085,7 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::openLob( _sdbLob **lob, const bson::OID &oid,
-                                      SDB_LOB_OPEN_MODE mode )
+                                      INT32 mode )
    {
       INT32 rc = SDB_OK ;
       INT32 flag = 0 ;
@@ -3085,9 +3100,8 @@ do                                                            \
          goto error ;
       }
 
-      if ( SDB_LOB_CREATEONLY != mode &&
-           SDB_LOB_READ != mode &&
-           SDB_LOB_WRITE != mode )
+      if ( SDB_LOB_CREATEONLY != mode && !isLobReadOnlyMode( mode ) &&
+           !hasLobWriteMode( mode) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -5767,7 +5781,6 @@ do                                                            \
    _isOpen( FALSE ),
    _contextID ( -1 ),
    _mode( -1 ),
-   _seekWrite( FALSE ),
    _createTime( -1 ),
    _modificationTime( -1 ),
    _lobSize( -1 ),
@@ -6217,10 +6230,18 @@ do                                                            \
          goto error ;
       }
 
-      if ( SDB_LOB_CREATEONLY != _mode && SDB_LOB_WRITE != _mode )
+      if ( SDB_LOB_CREATEONLY != _mode && !hasLobWriteMode( _mode ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      if (isLobReadWriteMode( _mode ) )
+      {
+         //clean the read cache
+         _cachedOffset = -1 ;
+         _cachedSize = 0 ;
+         _dataCache = NULL ;
       }
 
       if ( 0 == len )
@@ -6230,7 +6251,7 @@ do                                                            \
       // build msg
       do
       {
-         INT64 offset = _seekWrite ? _currentOffset : -1 ;
+         INT64 offset = _currentOffset ;
          UINT32 sendLen = maxSendLen <= len - totalLen ?
                           maxSendLen : len - totalLen ;
          rc = clientBuildWriteLobMsg( &_pSendBuffer, &_sendBufferSize,
@@ -6265,7 +6286,6 @@ do                                                            \
 
          _currentOffset += sendLen ;
          _lobSize = OSS_MAX( _lobSize, _currentOffset ) ;
-         _seekWrite = FALSE ;
       } while ( totalLen < len ) ;
 
    done:
@@ -6303,9 +6323,9 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      if ( SDB_LOB_READ != _mode &&
+      if ( !isLobReadOnlyMode( _mode) &&
            SDB_LOB_CREATEONLY != _mode &&
-           SDB_LOB_WRITE != _mode )
+           !hasLobWriteMode( _mode ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -6343,11 +6363,6 @@ do                                                            \
       {
          rc = SDB_INVALIDARG ;
          goto error ;
-      }
-
-      if ( SDB_LOB_CREATEONLY == _mode || SDB_LOB_WRITE == _mode )
-      {
-         _seekWrite = TRUE ;
       }
 
    done:
@@ -6389,7 +6404,7 @@ do                                                            \
          goto error ;
       }
 
-      if ( SDB_LOB_WRITE != _mode )
+      if ( !hasLobWriteMode( _mode ) && SDB_LOB_SHAREREAD != _mode )
       {
          goto done ;
       }
@@ -6525,6 +6540,82 @@ do                                                            \
    BOOLEAN _sdbLobImpl::isEof()
    {
       return _currentOffset >= _lobSize ;
+   }
+
+   INT32 _sdbLobImpl::getRunTimeDetail( bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      SINT64 contextID = -1 ;
+
+      // check
+      if ( !_connection && !_isOpen )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
+      if ( !_connection )
+      {
+         rc = SDB_NOT_CONNECTED ;
+         goto error;
+      }
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      if ( -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build msg
+      rc = clientBuildGetLobRTimeMsg( &_pSendBuffer, &_sendBufferSize,
+                                      0, 1, _contextID, 0,
+                                      _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg from engine
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+      locked = FALSE ;
+      _connection->unlock() ;
+
+      try
+      {
+         detail = BSONObj( _pReceiveBuffer + sizeof( MsgOpReply ) ) ;
+      }
+      catch ( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+   done:
+      if ( locked )
+      {
+         _connection->unlock() ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

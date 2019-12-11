@@ -101,8 +101,9 @@ namespace engine
    public:
       INT32 addSection( INT64 offset, INT64 length ) ;
 
-      BOOLEAN isTotalContain( INT64 offset, INT64 length,
-                              INT64 *continuousEnd = NULL ) ;
+      BOOLEAN isContain( INT64 offset, INT64 length,
+                         BOOLEAN mustFullContain = TRUE,
+                         INT64 *continuousEnd = NULL ) ;
 
       BOOLEAN isEmpty() const ;
 
@@ -198,6 +199,7 @@ namespace engine
 
    private:
       void _addSection( INT64 offset, INT64 length ) ;
+      void _saveContinuousEnd( INT64 *continuousEnd, INT64 end ) ;
 
    private:
       SECTION_MAP_TYPE _sectionMap ;

@@ -115,7 +115,8 @@ enum _SDB_LOB_OPEN_MODE
 {
    SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
    SDB_LOB_READ       = 0x00000004, /**< Open an existing lob to read */
-   SDB_LOB_WRITE      = 0x00000008  /**< Open an existing lob to write */
+   SDB_LOB_WRITE      = 0x00000008, /**< Open an existing lob to write */
+   SDB_LOB_SHAREREAD  = 0x00000040  /**< Open an existing lob to share read */
 } ;
 /** \typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE
     \brief The open mode.
@@ -517,6 +518,9 @@ namespace sdbclient
 
       virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
                              SDB_LOB_OPEN_MODE mode = SDB_LOB_READ ) = 0 ;
+
+      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid,
+                             INT32 mode ) = 0 ;
 
       virtual INT32 listLobs( sdbCursor &cursor,
                               const bson::BSONObj &condition = _sdbStaticObject,
@@ -1802,13 +1806,29 @@ namespace sdbclient
           \brief Open an existing large object for reading or writing.
           \param [in] oid The id of the large object
           \param [out] lob The large object to get
-          \param [in] lob open mode, should be SDB_LOB_READ or SDB_LOB_WRITE
+          \param [in] lob open mode, should be SDB_LOB_READ or SDB_LOB_WRITE or SDB_LOB_SHAREREAD
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
           \note Need to close lob to release resource, after opening a lob.
       */
       INT32 openLob( sdbLob &lob, const bson::OID &oid,
                      SDB_LOB_OPEN_MODE mode = SDB_LOB_READ )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->openLob( lob, oid, mode ) ;
+      }
+
+      /** \fn INT32 openLob( sdbLob &lob, const bson::OID &oid, INT32 mode )
+          \brief Open an existing large object for reading or writing.
+          \param [in] oid The id of the large object
+          \param [out] lob The large object to get
+          \param [in] lob open mode, should be SDB_LOB_READ or SDB_LOB_WRITE or SDB_LOB_SHAREREAD or SDB_LOB_WRITE | SDB_LOB_SHAREREAD
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+          \note Need to close lob to release resource, after opening a lob.
+      */
+      INT32 openLob( sdbLob &lob, const bson::OID &oid, INT32 mode )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
@@ -3720,6 +3740,8 @@ namespace sdbclient
 
       virtual BOOLEAN isEof() = 0 ;
 
+      virtual INT32 getRunTimeDetail( bson::BSONObj &detail ) = 0 ;
+
    } ;
 
    /** \class  sdbLob
@@ -3979,6 +4001,19 @@ namespace sdbclient
          if ( !pLob )
             return TRUE ;
          return pLob->isEof() ;
+      }
+
+      /** \fn INT32 getRunTimeDetail( bson::BSONObj &detail )
+          \brief Get the run time detail information of lob.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getRunTimeDetail( bson::BSONObj &detail )
+      {
+         if ( !pLob )
+            return -1 ;
+
+         return pLob->getRunTimeDetail( detail ) ;
       }
 
    } ;

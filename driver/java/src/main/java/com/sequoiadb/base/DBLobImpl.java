@@ -626,14 +626,8 @@ class DBLobImpl implements DBLob {
         _cachedOffset = -1;
         _cachedDataBuff = null;
 
-        if (_mode == DBLob.SDB_LOB_READ) {
-            // page align
-            alignedLen = _reviseReadLen(needRead);
-        }
-        else {
-            //DBLob.SDB_LOB_SHAREREAD, DBLob.SDB_LOB_SHAREREAD|DBLob.SDB_LOB_WRITE
-            alignedLen = len;
-        }
+        // page align
+        alignedLen = _reviseReadLen(needRead);
 
         LobReadRequest request = new LobReadRequest(_contextID, alignedLen, _currentOffset);
         LobReadResponse response = _sdb.requestAndResponse(request, LobReadResponse.class);

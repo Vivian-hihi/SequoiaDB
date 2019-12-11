@@ -68,6 +68,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, explain )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, putLob )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, getLob )
+   JS_MEMBER_FUNC_DEFINE( _sptDBCL, getLobRTimeDetail )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, deleteLob )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, listLobs )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, createLobID )
@@ -108,6 +109,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "explain", explain )
       JS_ADD_MEMBER_FUNC( "putLob", putLob )
       JS_ADD_MEMBER_FUNC( "getLob", getLob )
+      JS_ADD_MEMBER_FUNC( "getLobRuntimeDetail", getLobRTimeDetail )
       JS_ADD_MEMBER_FUNC( "deleteLob", deleteLob )
       JS_ADD_MEMBER_FUNC( "listLobs", listLobs )
       JS_ADD_MEMBER_FUNC( "createLobID", createLobID )
@@ -297,14 +299,14 @@ namespace engine
          BSONObj hintObj = hint.filterFieldsUndotted( filter, FALSE ) ;
          BSONObj modifyObj = hint.filterFieldsUndotted( filter, TRUE ) ;
          BSONObj modifyObjVal ;
-         string opType ; 
-         
+         string opType ;
+
          // get modify obj
          BSONElement ele = modifyObj.getField( FIELD_NAME_MODIFY ) ;
          if ( Object != ele.type() )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << 
+            detail = BSON( SPT_ERR <<
                            "$Modify in 'query and modify' should be an object" ) ;
             goto error ;
          }
@@ -314,10 +316,10 @@ namespace engine
          if ( String != ele.type() )
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << 
+            detail = BSON( SPT_ERR <<
                            "OP type in 'query and modify' should be a string" ) ;
             goto error ;
-         }   
+         }
          opType = ele.String() ;
          if ( FIELD_OP_VALUE_UPDATE == opType )
          {
@@ -328,7 +330,7 @@ namespace engine
             if ( Object != ele.type() )
             {
                rc = SDB_INVALIDARG ;
-               detail = BSON( SPT_ERR << 
+               detail = BSON( SPT_ERR <<
                               "'query and update' has no update rule" ) ;
                goto error ;
             }
@@ -338,9 +340,9 @@ namespace engine
             if ( Bool != ele.type() )
             {
                rc = SDB_INVALIDARG ;
-               detail = BSON( SPT_ERR << 
+               detail = BSON( SPT_ERR <<
                               "'query and update' does not specify returnNew" ) ;
-               goto error ;               
+               goto error ;
             }
             returnNew = ele.Bool() ;
             // get options
@@ -359,8 +361,8 @@ namespace engine
                }
             }
             // execute
-            rc = _cl.pCollection->queryAndUpdate( &pCursor, rule, cond, sel, 
-                                                  order, hintObj, numToSkip, 
+            rc = _cl.pCollection->queryAndUpdate( &pCursor, rule, cond, sel,
+                                                  order, hintObj, numToSkip,
                                                   numToRet, flags, returnNew ) ;
             if( SDB_OK != rc && SDB_DMS_EOC != rc )
             {
@@ -372,7 +374,7 @@ namespace engine
          else if ( FIELD_OP_VALUE_REMOVE == opType )
          {
             // execute
-            rc = _cl.pCollection->queryAndRemove( &pCursor, cond, sel, 
+            rc = _cl.pCollection->queryAndRemove( &pCursor, cond, sel,
                                                   order, hintObj,
                                                   numToSkip, numToRet, flags ) ;
             if( SDB_OK != rc && SDB_DMS_EOC != rc )
@@ -380,12 +382,12 @@ namespace engine
                detail = BSON( SPT_ERR <<
                               "Failed to query and remove in collection" ) ;
                goto error ;
-            }            
+            }
          }
          else
          {
             rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << 
+            detail = BSON( SPT_ERR <<
                            "invalid OP type for 'query and modify'" ) ;
             goto error ;
          }
@@ -1457,6 +1459,58 @@ namespace engine
       return rc ;
    error:
       SAFE_OSS_DELETE( pCursor ) ;
+      goto done ;
+   }
+
+   INT32 _sptDBCL::getLobRTimeDetail( const _sptArguments &arg,
+                                      _sptReturnVal &rval,
+                                      bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      string oidStr ;
+      sdbLob lob ;
+      BSONObjBuilder builder ;
+      bson::BSONObj lobRunTimeDetail ;
+
+      rc = arg.getString( 0, oidStr ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "Oid must be cofig" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Oid must be string" ) ;
+         goto error ;
+      }
+      if ( !utilIsValidOID( oidStr.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "Oid string invalid" ) ;
+         goto error ;
+      }
+
+      rc = _cl.openLob( lob, OID( oidStr ), SDB_LOB_SHAREREAD ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to open lob" ) ;
+         goto error ;
+      }
+
+      rc = lob.getRunTimeDetail( lobRunTimeDetail ) ;
+      if ( SDB_OK != rc )
+      {
+         lob.close() ;
+         detail = BSON( SPT_ERR << "Failed to get lob runtime detail" ) ;
+         goto error ;
+      }
+
+      lob.close() ;
+      rval.getReturnVal().setValue( lobRunTimeDetail ) ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

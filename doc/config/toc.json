@@ -2623,6 +2623,12 @@
                            "en": "getLob()"
                         },
                         {
+                           "id": 1575861253,
+                           "file": "getLobRuntimeDetail",
+                           "cn": "getLobRuntimeDetail()",
+                           "en": "getLobRuntimeDetail()"
+                        },
+                        {
                            "id": 1432190839,
                            "file": "insert",
                            "cn": "insert()",

@@ -2372,7 +2372,11 @@ public class DBCollection {
      * Open an existing lob with id.
      *
      * @param id   the lob's id.
-     * @param mode open mode: DBLob.SDB_LOB_READ for reading, DBLob.SDB_LOB_WRITE for writing.
+     * @param mode open mode: DBLob.SDB_LOB_READ for reading, DBLob.SDB_LOB_SHAREREAD for share reading,
+     *             DBLob.SDB_LOB_WRITE for writing, DBLob.SDB_LOB_SHAREREAD|DBLob.SDB_LOB_WRITE for both 
+     *             reading and writing. if one lob has been opened by DBLob.SDB_LOB_READ mode, it can't 
+     *             be opened by DBLob.SDB_LOB_WRITE mode; However, if one lob has been opened by 
+     *             DBLob.SDB_LOB_SHAREREAD mode, it can be opened by DBLob.SDB_LOB_WRITE mode
      * @return DBLob object
      * @throws BaseException If error happens..
      */

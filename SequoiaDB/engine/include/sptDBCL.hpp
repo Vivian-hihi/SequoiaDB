@@ -132,6 +132,10 @@ namespace engine
                     _sptReturnVal &rval,
                     bson::BSONObj &detail ) ;
 
+      INT32 getLobRTimeDetail( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
       INT32 deleteLob( const _sptArguments &arg,
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;

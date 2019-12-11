@@ -166,9 +166,19 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN _utilSectionMgr::isTotalContain( INT64 offset, INT64 length,
-                                            INT64 *continuousEnd )
+   void _utilSectionMgr::_saveContinuousEnd( INT64 *continuousEnd, INT64 end )
    {
+      if ( NULL != continuousEnd )
+      {
+         *continuousEnd = end ;
+      }
+   }
+
+   BOOLEAN _utilSectionMgr::isContain( INT64 offset, INT64 length,
+                                       BOOLEAN mustFullContain,
+                                       INT64 *continuousEnd )
+   {
+      BOOLEAN hasContained = FALSE ;
       SECTION_MAP_ITERATOR iter ;
       _utilSection newSection( offset, offset + length ) ;
       if ( _sectionMap.size() == 0 )
@@ -195,27 +205,44 @@ namespace engine
          {
             // iter [10, 20)
             // new  [0,30) or [0,5) or [0, 18)
-            return FALSE ;
+            break ;
          }
 
          if ( newSection.end() <= iter->second.end() )
          {
             // iter [10, 20)
             // new  [12, 18)
-            if ( NULL != continuousEnd )
-            {
-               *continuousEnd = iter->second.end() ;
-            }
+            // full contained, return here
+            _saveContinuousEnd( continuousEnd, iter->second.end() ) ;
             return TRUE ;
          }
 
          // iter [10, 20)
          // new  [12, 30)
+
+         // partitial contained
+         hasContained = TRUE ;
+         _saveContinuousEnd( continuousEnd, iter->second.end() ) ;
+
          // continue to check rest part [20, 30)
          newSection.setBegin( iter->second.end() ) ;
       }
 
-      return FALSE ;
+      if ( mustFullContain )
+      {
+         return FALSE ;
+      }
+      else
+      {
+         if ( hasContained )
+         {
+            // partitial contained
+            return TRUE ;
+         }
+
+         // contain nothing
+         return FALSE ;
+      }
    }
 
    BOOLEAN _utilSectionMgr::isEmpty() const

@@ -502,7 +502,7 @@ namespace engine
       {
          if ( !_sectionMgr.isEmpty() )
          {
-            if ( !_sectionMgr.isTotalContain( _offset, len ) )
+            if ( !_sectionMgr.isContain( _offset, len ) )
             {
                rc = SDB_INVALIDARG ;
                PD_LOG( PDERROR, "Section is not locked before write:"
@@ -646,7 +646,7 @@ namespace engine
       {
          if ( !_sectionMgr.isEmpty() )
          {
-            if ( !_sectionMgr.isTotalContain( _offset, len, &lockedEnd ) )
+            if ( !_sectionMgr.isContain( _offset, len, FALSE, &lockedEnd ) )
             {
                rc = SDB_INVALIDARG ;
                PD_LOG( PDERROR, "Section is not locked before write:"
@@ -794,7 +794,7 @@ namespace engine
          goto done ;
       }
 
-      if ( _sectionMgr.isTotalContain( offset, length ) )
+      if ( _sectionMgr.isContain( offset, length ) )
       {
          // already locked
          goto done ;
