@@ -113,6 +113,9 @@ namespace engine
       SERVICE_UNKNOWN                  /// node is abnormal(crashed)
    } ;
 
+   // after 5 times without receiving message, mark the UDP unavailable
+   #define CLS_UDP_UNAVAILABLE  ( 5 )
+
    /*
       _clsGroupBeat define
    */
@@ -174,12 +177,56 @@ namespace engine
       UINT32 deadtime ;
       UINT32 sendFailedTimes ;
 
+   protected:
+      // need test remote status, which might not support UDP
+      // 1. at the beginning, send beat both by UDP and TCP
+      // 2. if received UDP message, mark remote UDP supported
+      // 3. if not received UDP message after 5 test beats, mark remote
+      //    UDP unavailable
+      BOOLEAN _supportUDP ;
+      INT32   _testUDPCount ;
+
+   public:
       _clsSharingStatus()
       {
          timeout = 0 ;
          breakTime = 0 ;
          deadtime = 0 ;
          sendFailedTimes = 0 ;
+         resetUDP() ;
+      }
+
+      OSS_INLINE BOOLEAN isUDPSupported()
+      {
+         return _supportUDP ;
+      }
+
+      OSS_INLINE BOOLEAN isUDPUnavailable()
+      {
+         return _testUDPCount > CLS_UDP_UNAVAILABLE ;
+      }
+
+      OSS_INLINE void increaseUDPTest()
+      {
+         ++ _testUDPCount ;
+      }
+
+      OSS_INLINE void setUDPSupported()
+      {
+         _supportUDP = TRUE ;
+         _testUDPCount = 0 ;
+      }
+
+      OSS_INLINE void setUDPUnavailable()
+      {
+         _supportUDP = FALSE ;
+         _testUDPCount = CLS_UDP_UNAVAILABLE + 1 ;
+      }
+
+      OSS_INLINE void resetUDP()
+      {
+         _supportUDP = FALSE ;
+         _testUDPCount = 0 ;
       }
    } ;
 

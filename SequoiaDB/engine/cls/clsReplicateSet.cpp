@@ -405,7 +405,7 @@ namespace engine
            beat.beatID = 0 ;
            /// we alive the changed node here. if it is unnormal,
            /// break it out later.
-           _alive( itr->second._id ) ;
+           _alive( itr->second._id, FALSE ) ;
            PD_LOG( PDEVENT, "add node [%s:%s]",
                    itr->second._host, itr->second._service[0].c_str() ) ;
         }
@@ -680,7 +680,8 @@ namespace engine
          case MSG_CLS_BEAT_RES :
          {
             CLS_REPL_ACTIVE_CHECK( rc ) ;
-            rc = _handleSharingBeatRes( ( const _MsgClsBeatRes *)msg ) ;
+            rc = _handleSharingBeatRes( handle,
+                                        ( const _MsgClsBeatRes *)msg ) ;
             break ;
          }
          case MSG_CLS_BALLOT :
@@ -850,7 +851,7 @@ namespace engine
             msg.beat.syncStatus = clsSyncWindow( itr->second.beat.endLsn,
                                                  fBegin, mBegin, expectLSN ) ;
 
-            rc = _agent->syncSend( itr->second.beat.identity, &msg ) ;
+            rc = _sendSharingBeat( itr->second, &msg ) ;
             if ( SDB_OK == rc )
             {
                itr->second.sendFailedTimes = 0 ;
@@ -891,6 +892,47 @@ namespace engine
    done:
       PD_TRACE_EXIT ( SDB__CLSREPSET__SHRBEAT );
       return ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__SENDSHARINGBEAT, "_clsReplicateSet::_sendSharingBeat" )
+   INT32 _clsReplicateSet::_sendSharingBeat( _clsSharingStatus &status,
+                                             MsgClsBeat *message )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSREPSET__SENDSHARINGBEAT ) ;
+
+      /// use UDP to send message, but we need to test whether remote
+      /// supports UDP for backwards compatibility
+      if ( status.isUDPSupported() )
+      {
+         // UDP is marked supported
+         rc = _agent->syncSendUDP( status.beat.identity, message ) ;
+      }
+      else if ( status.isUDPUnavailable() )
+      {
+         // UDP is marked unavailable, use TCP directly
+         rc = _agent->syncSend( status.beat.identity, message ) ;
+      }
+      else
+      {
+         // UDP status is unknown, test UDP first, and then send with TCP
+         INT32 tmpRC = _agent->syncSendUDP( status.beat.identity, message ) ;
+         if ( SDB_OK != tmpRC )
+         {
+            status.setUDPUnavailable() ;
+         }
+         else
+         {
+            status.increaseUDPTest() ;
+         }
+
+         rc = _agent->syncSend( status.beat.identity, message ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__CLSREPSET__SENDSHARINGBEAT, rc ) ;
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__CHKBRK, "_clsReplicateSet::_checkBreak" )
@@ -946,6 +988,9 @@ namespace engine
                     itr->second->beat.identity.columns.nodeID ) ;
             itr->second->beat.beatID = CLS_BEATID_INVALID ;
             itr->second->beat.serviceStatus = SERVICE_UNKNOWN ;
+
+            // alive break, reset UDP support
+            itr->second->resetUDP() ;
 
             _sync.updateNodeStatus( itr->second->beat.identity, FALSE ) ;
 
@@ -1052,7 +1097,7 @@ namespace engine
          }
       }
       {
-         _alive( beat.identity ) ;
+         _alive( beat.identity, _isUDPHandle( handle ) ) ;
          _MsgClsBeatRes res ;
          res.header.header.requestID = msg->header.requestID ;
          res.identity = _info.local ;
@@ -1065,10 +1110,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsReplicateSet::_handleSharingBeatRes( const _MsgClsBeatRes *msg )
+   INT32 _clsReplicateSet::_handleSharingBeatRes( NET_HANDLE handle,
+                                                  const _MsgClsBeatRes *msg )
    {
       SDB_ASSERT( NULL != msg, "msg should not be NULL" ) ;
-      return _alive( msg->identity ) ;
+      return _alive( msg->identity, _isUDPHandle( handle ) ) ;
    }
 
    void _clsReplicateSet::setLastConsultTick( UINT64 tick )
@@ -1108,8 +1154,14 @@ namespace engine
       return rc ;
    }
 
+   BOOLEAN _clsReplicateSet::_isUDPHandle( NET_HANDLE handle )
+   {
+      return ( NET_EVENT_HANDLER_UDP ==
+                           _agent->getFrame()->getEventHandleType( handle ) ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET__ALIVE, "_clsReplicateSet::_alive" )
-   INT32 _clsReplicateSet::_alive( const _MsgRouteID &id )
+   INT32 _clsReplicateSet::_alive( const _MsgRouteID &id, BOOLEAN fromUDP )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSET__ALIVE );
@@ -1135,6 +1187,11 @@ namespace engine
       itr->second.breakTime = 0 ;
       itr->second.deadtime = 0 ;
       itr->second.sendFailedTimes = 0 ;
+
+      if ( fromUDP )
+      {
+         itr->second.setUDPSupported() ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__ALIVE, rc );

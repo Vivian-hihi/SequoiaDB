@@ -714,7 +714,9 @@ namespace engine
       // 2. create listen socket
       nodeID.columns.serviceID = _replServiceID ;
       _replNetRtAgent->updateRoute( nodeID, hostName, _replServiceName ) ;
-      rc = _replNetRtAgent->listen( nodeID ) ;
+      rc = _replNetRtAgent->listen( nodeID,
+                                    ( NET_FRAME_MASK_TCP |
+                                      NET_FRAME_MASK_UDP ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Create listen[Hostname:%s, ServiceName:%s] failed",

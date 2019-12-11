@@ -285,15 +285,21 @@ namespace engine
                              map<UINT64, _netRouteNode> &nodes,
                              BOOLEAN &changeStatus ) ;
 
-         INT32 _alive( const _MsgRouteID &id ) ;
+         BOOLEAN _isUDPHandle( NET_HANDLE handle ) ;
+
+         INT32 _alive( const _MsgRouteID &id, BOOLEAN fromUDP ) ;
 
          INT32 _handleSharingBeat( NET_HANDLE handle, const _MsgClsBeat *msg ) ;
 
-         INT32 _handleSharingBeatRes( const _MsgClsBeatRes *msg ) ;
+         INT32 _handleSharingBeatRes( NET_HANDLE handle,
+                                      const _MsgClsBeatRes *msg ) ;
 
          INT32 _handleGroupRes( const MsgCatGroupRes *msg ) ;
 
          void _sharingBeat() ;
+
+         INT32 _sendSharingBeat( _clsSharingStatus &status,
+                                 MsgClsBeat *message ) ;
 
          void _checkBreak( const UINT32 &millisec ) ;
 
