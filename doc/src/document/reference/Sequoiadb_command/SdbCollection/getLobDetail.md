@@ -1,5 +1,5 @@
 ## 语法##
-***db.collectionspace.collection.getLobRuntimeDetail\(\<oid\>\)***
+***db.collectionspace.collection.getLobDetail\(\<oid\>\)***
 
 获取集合中的大对象被读写访问的详细信息。
 
@@ -42,7 +42,7 @@
 * 列取 00005deb85c5350004743b09 的 lob 当前被访问的详细信息
 
    ```lang-javascript
-    > db.foo.bar.getLobRuntimeDetail('00005deb85c5350004743b09')
+    > db.foo.bar.getLobDetail('00005deb85c5350004743b09')
     {
       "Oid": "00005deb85c5350004743b09",
       "AccessInfo": {

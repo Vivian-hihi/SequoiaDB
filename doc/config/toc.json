@@ -2624,9 +2624,9 @@
                         },
                         {
                            "id": 1575861253,
-                           "file": "getLobRuntimeDetail",
-                           "cn": "getLobRuntimeDetail()",
-                           "en": "getLobRuntimeDetail()"
+                           "file": "getLobDetail",
+                           "cn": "getLobDetail()",
+                           "en": "getLobDetail()"
                         },
                         {
                            "id": 1432190839,

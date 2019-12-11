@@ -109,7 +109,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "explain", explain )
       JS_ADD_MEMBER_FUNC( "putLob", putLob )
       JS_ADD_MEMBER_FUNC( "getLob", getLob )
-      JS_ADD_MEMBER_FUNC( "getLobRuntimeDetail", getLobRTimeDetail )
+      JS_ADD_MEMBER_FUNC( "getLobDetail", getLobRTimeDetail )
       JS_ADD_MEMBER_FUNC( "deleteLob", deleteLob )
       JS_ADD_MEMBER_FUNC( "listLobs", listLobs )
       JS_ADD_MEMBER_FUNC( "createLobID", createLobID )
