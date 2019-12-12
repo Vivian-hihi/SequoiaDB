@@ -278,7 +278,7 @@ class DBLobImpl implements DBLob {
         if (!_isOpened) {
             return;
         }
-
+        _sdb.narrowBuff();
         LobCloseRequest request = new LobCloseRequest(_contextID);
         SdbReply response = _sdb.requestAndResponse(request);
         _sdb.throwIfError(response);
