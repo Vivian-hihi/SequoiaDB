@@ -4044,7 +4044,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
+      if ( !SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
       {
          rc = _calculateW( &replSize, &( header->w ), w ) ;
          if ( SDB_OK != rc )
