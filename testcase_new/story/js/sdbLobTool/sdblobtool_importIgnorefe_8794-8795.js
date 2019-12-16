@@ -44,7 +44,7 @@ function main ( db )
    // 首先创建包含相同大对象的导出集合COMMCLNAME和导入集合impCLNAME
    // 注意：同一个文件作为大对象putLob导入不同集合时OID不同，不是同一个大对象
    var lobfile = toolMakeLobfile();
-   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "create CL to export lob" );
+   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false, "create CL to export lob" );
    var lobNum = 1;
    toolPutLobs( expCl, lobfile, lobNum );
    cmd.run( "rm -rf " + lobfile );
@@ -56,7 +56,7 @@ function main ( db )
 
    Args["operation"] = "import";
    Args["collection"] = impFullCL;
-   commCreateCL( db, COMMCSNAME, impCLNAME, 0, true, true, false, "create CL in the beginning" );
+   commCreateCL( db, COMMCSNAME, impCLNAME, {}, true, false, "create CL in the beginning" );
    toolImport( Args );     // 首先将导出文件先导入集合一次，测试再次导入该文件的情况
 
    // 测试当--ignorefe = false时，报错 

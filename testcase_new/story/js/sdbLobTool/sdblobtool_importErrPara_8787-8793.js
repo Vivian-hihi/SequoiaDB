@@ -41,12 +41,12 @@ function main ( db )
 
    // 首先创建一个包含大对象的集合COMMCLNAME，和导入集合impCLNAME
    var lobfile = toolMakeLobfile();
-   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "create CL to export lob" );
+   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false, "create CL to export lob" );
    var lobNum = 1;
    toolPutLobs( expCl, lobfile, lobNum );
    cmd.run( "rm -rf " + lobfile );
 
-   var impCl = commCreateCL( db, COMMCSNAME, impCLNAME, 0, true, true, false, "create CL to import lob" );
+   var impCl = commCreateCL( db, COMMCSNAME, impCLNAME, {}, true, false, "create CL to import lob" );
 
    // 将COMMCLNAME中的大对象导出到文件
    Args["operation"] = "export";

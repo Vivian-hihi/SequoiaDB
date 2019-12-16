@@ -66,7 +66,7 @@ function main ( db )
    try
    {
       commCreateCS( db, CsName, true, "create testHashCS in the begining", { "Domain": domName } );
-      var srcCl = commCreateCLByOption( db, CsName, srcClName,
+      var srcCl = commCreateCL( db, CsName, srcClName,
          { "ShardingKey": { "OID": 1 }, "ShardingType": "hash", "Partition": 2048, ReplSize: 0 },
          true, true, true, "create source cl in the begining" );
 
@@ -82,7 +82,7 @@ function main ( db )
       lobdomain.alter( { Groups: [group[0], group[1], group[2]] } );
 
       // 新建目标集合
-      var dstCl = commCreateCLByOption( db, CsName, dstClName,
+      var dstCl = commCreateCL( db, CsName, dstClName,
          { "ShardingKey": { "OID": 1 }, "ShardingType": "hash", "Partition": 2048, ReplSize: 0 },
          true, true, true, "create destination CL in the beginning" );
 

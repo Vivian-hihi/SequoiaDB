@@ -44,7 +44,7 @@ function main ( db )
 
    // 首先创建包含大对象的源集合COMMCLNAME
    var lobfile = toolMakeLobfile();
-   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "create CL to export lob" );
+   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false, "create CL to export lob" );
    var lobNum = 1;
    toolPutLobs( expCl, lobfile, lobNum );
    cmd.run( "rm -rf " + lobfile );

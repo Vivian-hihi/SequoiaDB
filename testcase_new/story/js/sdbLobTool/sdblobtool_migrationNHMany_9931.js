@@ -46,13 +46,13 @@ function main ( db )
    {
       // 创建包含大对象的源集合（普通集合）
       var lobfile = toolMakeLobfile();
-      var srcCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false,
+      var srcCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false,
          "create normal source collection" );
       var lobNum = 5;
       var OID = toolPutLobs( srcCl, lobfile, lobNum );
 
       // 创建目标集合并迁移大对象（分区集合）
-      var dstCl = commCreateCLByOption( db, COMMCSNAME, dstClName,
+      var dstCl = commCreateCL( db, COMMCSNAME, dstClName,
          { ReplSize: 0, "ShardingKey": { "OID": 1 }, "ShardingType": "hash", "Partition": 2048 },
          true, true, true, "create hash destnation collection" );
       toolMigration( Args );

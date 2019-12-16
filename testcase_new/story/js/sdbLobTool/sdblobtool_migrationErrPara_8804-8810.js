@@ -44,13 +44,13 @@ function main ( db )
 
    // 首先创建包含大对象的源集合COMMCLNAME和目标集合impCLNAME
    var lobfile = toolMakeLobfile();
-   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "create CL to export lob" );
+   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false, "create CL to export lob" );
    var lobNum = 1;
    toolPutLobs( expCl, lobfile, lobNum );
    cmd.run( "rm -rf " + lobfile );
 
 
-   var impCl = commCreateCL( db, COMMCSNAME, impCLNAME, 0, true, true, false, "create CL to migrate lob from COMMCLNAME" );
+   var impCl = commCreateCL( db, COMMCSNAME, impCLNAME, {}, true, false, "create CL to migrate lob from COMMCLNAME" );
 
    var errParameter = {
       "hostname": "172.168.20.43", "svcname": "90000", "operation": "migra",

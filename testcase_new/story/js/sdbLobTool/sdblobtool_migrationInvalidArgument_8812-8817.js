@@ -44,7 +44,7 @@ function main ( db )
 
    // 创建包含大对象的集合COMMCLNAME作为源集合
    var lobfile = toolMakeLobfile();
-   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "create CL to export lob" );
+   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false, "create CL to export lob" );
    var lobNum = 1;
    toolPutLobs( expCl, lobfile, lobNum );
    cmd.run( "rm -rf " + lobfile );
@@ -54,7 +54,7 @@ function main ( db )
    var MigrationCmd = toolGetCmdstr( Args );
    var tmp = MigrationCmd;
 
-   commCreateCL( db, COMMCSNAME, impCLNAME, 0, true, true, false, "create destination CL in the beginning" );
+   commCreateCL( db, COMMCSNAME, impCLNAME, {}, true, false, "create destination CL in the beginning" );
 
    // 参数非法报错的错误码
    errCode = -6;

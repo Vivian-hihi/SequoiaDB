@@ -63,7 +63,7 @@ function main ( db )
    try
    {
       commCreateCS( db, CsName, true, "create testHashCS in the begining", { "Domain": domName } );
-      var expCl = commCreateCLByOption( db, CsName, expClName,
+      var expCl = commCreateCL( db, CsName, expClName,
          { ReplSize: 0, "ShardingKey": { "OID": 1 }, "ShardingType": "hash", "Partition": 2048 },
          true, true, true, "create export cl in the begining" );
 
@@ -83,7 +83,7 @@ function main ( db )
       lobdomain.alter( { Groups: [group[0], group[1], group[2]] } );
 
       // 新建导入集合，并将导出文件大对象导入该集合中
-      var impCl = commCreateCLByOption( db, CsName, impClName,
+      var impCl = commCreateCL( db, CsName, impClName,
          { ReplSize: 0, "ShardingKey": { "OID": 1 }, "ShardingType": "hash", "Partition": 2048 },
          true, false, true, "create import CL in the beginning" );
       Args["operation"] = "import";

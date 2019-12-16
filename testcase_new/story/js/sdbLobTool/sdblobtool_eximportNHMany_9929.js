@@ -46,7 +46,7 @@ function main ( db )
    {
       // 创建包含大对象的导出集合（普通集合）
       var lobfile = toolMakeLobfile();
-      var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false,
+      var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false,
          "create normal CL to export lob" );
       var lobNum = 5;
       var OID = toolPutLobs( expCl, lobfile, lobNum );
@@ -55,7 +55,7 @@ function main ( db )
       toolExport( Args );
 
       // 创建导入集合并将大对象导入（分区集合）
-      var impCl = commCreateCLByOption( db, COMMCSNAME, impClName,
+      var impCl = commCreateCL( db, COMMCSNAME, impClName,
          { ReplSize: 0, "ShardingKey": { "OID": 1 }, "ShardingType": "hash", "Partition": 2048 },
          true, true, true, "create hash cl to import lob" );
       Args["operation"] = "import";

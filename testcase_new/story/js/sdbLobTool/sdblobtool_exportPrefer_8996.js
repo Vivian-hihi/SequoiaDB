@@ -45,7 +45,7 @@ function main ( db )
 
    // 创建包含大对象的导出集合
    var lobfile = toolMakeLobfile();
-   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false, "create CL to export lob" );
+   var expCl = commCreateCL( db, COMMCSNAME, COMMCLNAME, {}, true, false, "create CL to export lob" );
    var lobNum = 1;
    var OID = toolPutLobs( expCl, lobfile, lobNum );
 
