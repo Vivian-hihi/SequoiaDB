@@ -281,7 +281,7 @@ namespace engine
       if ( mode == SDB_LOB_MODE_CREATEONLY && accessInfo->_createCount == 0 )
       {
          // create an exist lob
-         return SDB_FE ;
+         return SDB_LOB_IS_IN_USE ;
       }
 
       if ( accessInfo->_writeCount > 0 )
