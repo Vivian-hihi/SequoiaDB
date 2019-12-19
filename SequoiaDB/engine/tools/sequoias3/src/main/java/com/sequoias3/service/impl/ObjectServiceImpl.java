@@ -618,6 +618,18 @@ public class ObjectServiceImpl implements ObjectService {
                 return listObjectsResult;
             }
 
+            if (delimiter != null && delimiter.length() == 0) {
+                delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
+            }
+
+            if (startAfter != null && startAfter.length() == 0){
+                startAfter = null;
+            }
+
             String metaCsName = regionDao.getMetaCurCSName(region);
             String metaClName = regionDao.getMetaCurCLName(region);
 
@@ -742,6 +754,14 @@ public class ObjectServiceImpl implements ObjectService {
                 return listObjectsResult;
             }
 
+            if (delimiter != null && delimiter.length() == 0) {
+                delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
+            }
+
             String metaCsName = regionDao.getMetaCurCSName(region);
             String metaClName = regionDao.getMetaCurCLName(region);
 
@@ -836,6 +856,14 @@ public class ObjectServiceImpl implements ObjectService {
 
             if (maxKeys == 0) {
                 return listVersionsResult;
+            }
+            
+            if (delimiter != null && delimiter.length() == 0) {
+                delimiter = null;
+            }
+
+            if (prefix != null && prefix.length() == 0) {
+                prefix = null;
             }
 
             String metaCsName    = regionDao.getMetaCurCSName(region);
@@ -2101,6 +2129,11 @@ public class ObjectServiceImpl implements ObjectService {
                             logger.error("lob is in use.csName:{}, clName:{}, lobId:{}",
                                     deleteObject.getCsName(), deleteObject.getClName(),
                                     deleteObject.getLobId());
+                        }
+                        try {
+                            Thread.sleep(100L);
+                        } catch (Exception e2){
+                            logger.error("thread sleep fail.",e2);
                         }
                         continue;
                     }else {
