@@ -971,7 +971,6 @@ namespace engine
              UINT16 partitions = UTIL_LIST_PARTITION_NUM >
    class _utilPartitionList : public SDBObject
    {
-      friend class iterator ;
       class latcher : public SDBObject
       {
       public :
@@ -1196,7 +1195,7 @@ namespace engine
          return it ;
       }
 
-   private:
+   protected:
 
       // get pointer of sublist based on the id
       LIST_TYPE* _getList( UINT16 id )
@@ -1219,7 +1218,6 @@ namespace engine
          _listLatch[id].release() ;
       }
 
-   private:
       /* LATCHING PROTOCOL:
        * ADD: The list will obtain/release latch of the sub list,
        * which it will add to in x.
