@@ -76,7 +76,11 @@
    #define ossAtomicExchange8(pAddr,iNewValue) \
         __sync_lock_test_and_set((volatile CHAR*)pAddr, (CHAR)iNewValue )
 #else
-   #define ossYield() __asm__ __volatile__ ( "pause\n": : :"memory" )
+   #if defined (_ARMLIN64)
+      #define ossYield() __asm__ __volatile__ ( "yield": : :"memory" )
+   #else
+      #define ossYield() __asm__ __volatile__ ( "pause\n": : :"memory" )
+   #endif // #if defined (_ARMLIN64)
    static OSS_INLINE char ossAtomicExchange8( volatile char* pAddr, char iNewValue)
    {
       char result ;

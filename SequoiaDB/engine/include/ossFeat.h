@@ -69,12 +69,21 @@
 #elif defined(__linux__) && (defined(__PPC64__))
    #define _PPCLIN64
    #define _LINUX
+#elif defined(__linux__) && (defined(__aarch64__))
+   #define _ARMLIN64
+   #define _LINUX
 #endif
+
+
+#if defined(__aarch64__)
+   #define _ARM64
+#endif
+
 
 // architecture
 #if defined ( _WINDOWS32 ) || defined ( _LIN32 )
    #define OSS_ARCH_32
-#elif defined ( _WINDOWS64 ) || defined ( _LIN64 ) || defined ( _PPCLIN64 ) || defined ( _AIX )
+#elif defined ( _WINDOWS64 ) || defined ( _LIN64 ) || defined ( _PPCLIN64 ) || defined ( _AIX ) || defined ( _ARMLIN64 )
    #define OSS_ARCH_64
 #endif
 
@@ -86,6 +95,7 @@
 #define OSS_OSTYPE_AIX                 5
 #define OSS_OSTYPE_PPCLIN64LE          6
 #define OSS_OSTYPE_JVM                 7
+#define OSS_OSTYPE_ARMLIN64            8
 
 #if defined (_WINDOWS32)
 #define OSS_OSTYPE                     OSS_OSTYPE_WIN32
@@ -99,8 +109,9 @@
 #define OSS_OSTYPE                     OSS_OSTYPE_PPCLIN64
 #elif defined (_AIX)
 #define OSS_OSTYPE                     OSS_OSTYPE_AIX
+#elif defined (_ARMLIN64)
+#define OSS_OSTYPE                     OSS_OSTYPE_ARMLIN64
 #endif
-
 
 #if defined _LINUX
    #include <errno.h>

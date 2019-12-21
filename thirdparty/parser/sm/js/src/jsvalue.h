@@ -258,8 +258,13 @@ static JS_ALWAYS_INLINE JSBool
 JSVAL_SAME_TYPE_IMPL(jsval_layout lhs, jsval_layout rhs)
 {
     uint64 lbits = lhs.asBits, rbits = rhs.asBits;
+#if defined(__aarch64__)
+    return (lbits <= JSVAL_TAG_MAX_DOUBLE && rbits <= JSVAL_TAG_MAX_DOUBLE) ||
+           (((lbits ^ rbits) & 0xFFFF000000000000LL) == 0);
+#else
     return (lbits <= JSVAL_TAG_MAX_DOUBLE && rbits <= JSVAL_TAG_MAX_DOUBLE) ||
            (((lbits ^ rbits) & 0xFFFF800000000000LL) == 0);
+#endif
 }
 
 static JS_ALWAYS_INLINE jsval_layout

@@ -142,6 +142,12 @@ else
             else
                 OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/linux64/release
             endif
+        else ifeq ($(UNAME_P),aarch64)
+            ifeq ($(ver), debug)
+                OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/armlinux64/debug
+            else
+                OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/armlinux64/release
+            endif
         else
             ifeq ($(ver), debug)
                 OPENSSL_LIBRARY_PATH = $(OPENSSL_LIBRARY)/linux32/debug

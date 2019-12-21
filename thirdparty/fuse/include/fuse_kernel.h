@@ -62,10 +62,15 @@
 #define _LINUX_FUSE_H
 
 #include <sys/types.h>
-#define __u64 uint64_t
-#define __s64 int64_t
-#define __u32 uint32_t
-#define __s32 int32_t
+//#define __u64 uint64_t
+//#define __s64 int64_t
+//#define __u32 uint32_t
+//#define __s32 int32_t
+
+typedef unsigned long long __u64 ;
+typedef long long          __s64 ;
+typedef unsigned int       __u32 ;
+typedef int                __s32 ;
 
 /*
  * Version negotiation:

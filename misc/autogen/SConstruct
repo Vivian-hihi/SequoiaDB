@@ -40,6 +40,8 @@ def GuessArch():
         return 'ia64'
     elif id == 'amd64':
         return 'ia64'
+    elif id == 'aarch64':
+        return 'arm64'
     elif id == 'ppc64':
         return 'ppc64'
     elif id == 'ppc64le':

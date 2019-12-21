@@ -223,27 +223,40 @@ Linux64:
         perl
 
     Boost 1.60.0:
+        # for release build:
+        cd thirdparty/boost/
         chmod +x bootstrap.sh
         chmod +x ./tools/build/src/engine/build.sh
-        ./bootstrap.sh --prefix=./
+        ./bootstrap.sh --with-libraries=system,filesystem,thread,program_options,chrono --prefix=./
         ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
-        cp ./stage/lib/* ./lib/linux64   /* copy boost/stage/lib/* to boost/lib/linux64 */
+        cp ./stage/lib/* ./lib/linux64/release
+
+        # for debug build:
+        cd thirdparty/boost/
+        chmod +x bootstrap.sh
+        chmod +x ./tools/build/src/engine/build.sh
+        ./bootstrap.sh --with-libraries=system,filesystem,thread,program_options,chrono --prefix=./
+        ./bjam link=static threading=multi variant=debug address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
+        cp ./stage/lib/* ./lib/linux64/debug
 
     SpiderMonkey 1.8.5:
-        cd parser/sm/js/src
-        autoconf-2.13
+        # for release build:
+        cd thirdparty/parser/sm/js/src
+        autoconf2.13
         mkdir build-release
         cd build-release
-        ../configure --disable-methodjit
-        make
-        cd ..
+        ../configure --disable-methodjit --bindir=../../lib/linux64/bin --includedir=../../lib/linux64/include --libdir=../../lib/linux64/release
+        make -j 4
+        make install
+
+        # for debug build:
+        cd thirdparty/parser/sm/js/src
+        autoconf2.13
         mkdir build-debug
         cd build-debug
-        ../configure --enable-debug --disable-optimize --disable-methodjit
-        make
-        copy parser/sm/js/src/build-release/dist/include to parser/sm/js/include and
-        parser/sm/js/src/build-release/dist/lib to parser/sm/js/lib/linux64.
-        do same operation for build-debug
+        ../configure --enable-debug --disable-optimize --disable-methodjit --bindir=../../lib/linux64/bin --includedir=../../lib/linux64/include --libdir=../../lib/linux64/debug
+        make -j 4
+        make install
 
         Note:
             autoconf2.13 is required to compile this version of SpiderMonkey. If it's not
@@ -258,35 +271,217 @@ Linux64:
             autoconf2.13 --version
 
     OpenSSL 1.0.1c:
-        cd crypto/openssl-1.0.1c/
-        ./configure
-        make
-        copy libcrypto.a and libssl.a to crypto/openssl-1.0.1c/lib/linux64/
+        # for release build:
+        cd thirdparty/crypto/openssl-1.0.1c/
+        rm -rf stage
+        make clean
+        chmod +x ./config
+        ./config -fPIC
+        make -j 4
+        cp libcrypto.a lib/linux64/release
+        cp libssl.a ./lib/linux64/release
+        
+        # for debug build:
+        cd thirdparty/crypto/openssl-1.0.1c/
+        rm -rf stage 
+        make clean
+        chmod +x ./config
+        ./config -fPIC -d
+        make -j 4
+        cp libcrypto.a lib/linux64/debug
+        cp libssl.a ./lib/linux64/debug
 
     snappy 1.1.0:
-        cd snappy
+        # for release build:
+        cd thirdparty/snappy
+        scons --clean
         scons
+        cp stage/lib/libsnappy.a ./lib/linux64/release
+        
+        # for debug build:
+        cd thirdparty/snappy
+        scons --clean
+        scons --dd
+        cp stage/lib/libsnappy.a ./lib/linux64/debug
 
     lz4 1.7.1:
-        cd lz4
+        # for release build:
+        cd thirdparty/lz4
+        scons --clean
         scons
+        cp stage/lib/liblz4.a ./lib/linux64/release
+        
+        # for debug build:
+        cd thirdparty/lz4
+        scons --clean
+        scons --dd
+        cp stage/lib/liblz4.a ./lib/linux64/debug
 
     zlib 1.2.8:
-        cd zlib
-        ./configure
-        make
-        copy the following file to zlib\lib\linux64
-            libzlib.a
-    The second way to build:
-        cd zlib
+        # The first way to build:
+        # for release build:
+        cd thirdparty/zlib
+        scons --clean
         scons
+        cp stage/lib/libzlib.a ./lib/linux64/release/libzlib.a
+        
+        # for debug build:
+        cd thirdparty/zlib
+        scons --clean
+        scons --dd
+        cp stage/lib/libzlib.a ./lib/linux64/debug/libzlib.a
+        
+        # The second way to build:
+        cd zlib
+        chmod +x configure
+        ./configure
+        make -j 4
+        cp ./libz.a ./lib/linux64/release/libzlib.a
 
-    fuse 2.9.4
+    fuse 2.8.6
         cd fuse
+        chmod +x makeconf.sh
         ./makeconf.sh
         ./configure
-        make
+        make -j 4
+        sudo make install
+        whereis libfuse.a
+        cp ./lib/.libs/libfuse.a ./lib/linux64/release/libfuse.a
+        
+ARM64:
+    Building Prerequisites:
+        g++ 4.6.3
+        libstdc++ 6
+        Python 2.7.3
+        autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
+        scons
+        perl
+
+    Boost 1.60.0:
+        # for release build:
+        cd thirdparty/boost/
+        chmod +x bootstrap.sh
+        chmod +x ./tools/build/src/engine/build.sh
+        ./bootstrap.sh --with-libraries=system,filesystem,thread,program_options,chrono --prefix=./
+        ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC" architecture=arm
+        cp ./stage/lib/* ./lib/armlinux64/release
+
+        # for debug build:
+        cd thirdparty/boost/
+        chmod +x bootstrap.sh
+        chmod +x ./tools/build/src/engine/build.sh
+        ./bootstrap.sh --with-libraries=system,filesystem,thread,program_options,chrono --prefix=./
+        ./bjam link=static threading=multi variant=debug address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC" architecture=arm
+        cp ./stage/lib/* ./lib/armlinux64/debug
+
+    SpiderMonkey 1.8.5:
+        # for release build:
+        cd thirdparty/parser/sm/js/src
+        autoconf2.13
+        mkdir build-release
+        cd build-release
+        ../configure --disable-methodjit --bindir=../../lib/armlinux64/bin --includedir=../../lib/armlinux64/include --libdir=../../lib/armlinux64/release  --host=aarch64
+        make -j 4
         make install
+
+        # for debug build:
+        cd thirdparty/parser/sm/js/src
+        autoconf2.13
+        mkdir build-debug
+        cd build-debug
+        ../configure --enable-debug --disable-optimize --disable-methodjit --bindir=../../lib/armlinux64/bin --includedir=../../lib/armlinux64/include --libdir=../../lib/armlinux64/debug --host=aarch64
+        make -j 4
+        make install
+
+        Note:
+            autoconf2.13 is required to compile this version of SpiderMonkey. If it's not
+            installed in your system, you can compile and install it from source provided
+            by the sequoiadb repository. The source code path is tools/compile/autoconf-2.13.
+            Compile and install as follows:
+            cd autoconf-2.13
+            ./configure --program-suffix=2.13   # Be sure to use this version number
+            make
+            sudo make install
+            Then check if it's installed successfully:
+            autoconf2.13 --version
+
+    OpenSSL 1.0.1c:
+        # for release build:
+        cd thirdparty/crypto/openssl-1.0.1c/
+        rm -rf stage
+        make clean
+        chmod +x ./config
+        ./config -fPIC
+        make -j 4
+        cp libcrypto.a lib/armlinux64/release
+        cp libssl.a ./lib/armlinux64/release
+
+        # for debug build:
+        cd thirdparty/crypto/openssl-1.0.1c/
+        rm -rf stage
+        make clean
+        chmod +x ./config
+        ./config -fPIC -d
+        make -j 4
+        cp libcrypto.a lib/armlinux64/debug
+        cp libssl.a ./lib/armlinux64/debug
+
+    snappy 1.1.0:
+        # for release build:
+        cd thirdparty/snappy
+        scons --clean
+        scons
+        cp stage/lib/libsnappy.a ./lib/armlinux64/release
+
+        # for debug build:
+        cd thirdparty/snappy
+        scons --clean
+        scons --dd
+        cp stage/lib/libsnappy.a ./lib/armlinux64/debug
+
+    lz4 1.7.1:
+        # for release build:
+        cd thirdparty/lz4
+        scons --clean
+        scons
+        cp stage/lib/liblz4.a ./lib/armlinux64/release
+
+        # for debug build:
+        cd thirdparty/lz4
+        scons --clean
+        scons --dd
+        cp stage/lib/liblz4.a ./lib/armlinux64/debug
+
+    zlib 1.2.8:
+        # The first way to build:
+        # for release build:
+        cd thirdparty/zlib
+        scons --clean
+        scons
+        cp stage/lib/libzlib.a ./lib/armlinux64/release/libzlib.a
+
+        # for debug build:
+        cd thirdparty/zlib
+        scons --clean
+        scons --dd
+        cp stage/lib/libzlib.a ./lib/armlinux64/debug/libzlib.a
+
+        # The second way to build:
+        cd zlib
+        chmod +x configure
+        ./configure
+        make -j 4
+        cp ./libz.a ./lib/armlinux64/release/libzlib.a
+
+    fuse 2.8.6
+        cd fuse
+        chmod +x makeconf.sh
+        ./makeconf.sh
+        ./configure
+        make -j 4
+        sudo make install
+        whereis libfuse.a
+        cp ./lib/.libs/libfuse.a ./lib/armlinux64/release/libfuse.a
 
 PowerLinux64:
     Building Prerequisites:

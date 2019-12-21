@@ -194,14 +194,17 @@ if guess_os == "linux":
     platform = "linux"
     # GNU
     env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
-    # 64 bit linux
-    if guess_arch == "ia64" or guess_arch == "arm64":
-        linux64 = True
-        targetLibPath = "linux64"
     # in case for 32 bit linux or compiling 32 bit in 64 env
-    elif guess_arch == "ia32":
+    if guess_arch == "ia32":
         linux64 = False
         targetLibPath = "linux32"
+    # 64 bit linux
+    elif guess_arch == "ia64":
+        linux64 = True
+        targetLibPath = "linux64"
+    elif guess_arch == "arm64":
+        linux64 = True
+        targetLibPath = "armlinux64"
     # power pc linux
     elif guess_arch == "ppc64":
         linux64 = True

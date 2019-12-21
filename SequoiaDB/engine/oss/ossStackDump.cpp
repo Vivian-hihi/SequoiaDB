@@ -474,7 +474,39 @@ exit :
    PD_TRACE_EXIT ( SDB_OSSGETSYMBNFA );
 }
 
-#if defined ( _LIN64 )
+#if defined ( _ARMLIN64 )
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO0, "ossDumpRegistersInfo" )
+void ossDumpRegistersInfo( ossSignalContext pContext,
+                           ossPrimitiveFileOp *trapFile )
+{
+   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO0 );
+
+   if ( ( NULL != trapFile ) && trapFile->isValid() )
+   {
+      trapFile->Write ("Unable to dump registers in ARM"OSS_NEWLINE) ;
+   }
+
+   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO0 );
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST0, "ossDumpStackTrace" )
+void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
+{
+   PD_TRACE_ENTRY ( SDB_OSSDUMPST0 );
+   if ( ( NULL != trapFile ) && trapFile->isValid() )
+   {
+      ossDumpSystemTime ( trapFile ) ;
+      ossDumpDatabaseInfo ( trapFile ) ;
+      ossDumpSystemInfo( trapFile ) ;
+      trapFile->Write ("Unable to dump signals and registers in ARM"
+                       OSS_NEWLINE) ;
+   }
+   PD_TRACE_EXIT ( SDB_OSSDUMPST0 );
+}
+
+#elif defined ( _LIN64 )
+
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO, "ossDumpRegistersInfo" )
 void ossDumpRegistersInfo( ossSignalContext pContext,
@@ -616,8 +648,40 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
    }
    PD_TRACE_EXIT ( SDB_OSSDUMPST );
 }
+/*
+#elif defined ( _ARMLIN32 )
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO2, "ossDumpRegistersInfo" )
+void ossDumpRegistersInfo( ossSignalContext pContext,
+                           ossPrimitiveFileOp *trapFile )
+{
+   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO2 );
+
+   if ( ( NULL != trapFile ) && trapFile->isValid() )
+   {
+      trapFile->Write ("Unable to dump registers in ARM"OSS_NEWLINE) ;
+   }
+
+   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO2 );
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST2, "ossDumpStackTrace" )
+void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
+{
+   PD_TRACE_ENTRY ( SDB_OSSDUMPST2 );
+   if ( ( NULL != trapFile ) && trapFile->isValid() )
+   {
+      ossDumpSystemTime ( trapFile ) ;
+      ossDumpDatabaseInfo ( trapFile ) ;
+      ossDumpSystemInfo( trapFile ) ;
+      trapFile->Write ("Unable to dump signals and registers in ARM"
+                        OSS_NEWLINE) ;
+   }
+   PD_TRACE_EXIT ( SDB_OSSDUMPST2 );
+}
+*/
 #elif defined (_LIN32)
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO2, "ossDumpRegistersInfo" )
 void ossDumpRegistersInfo( ossSignalContext pContext,
                            ossPrimitiveFileOp * trapFile )

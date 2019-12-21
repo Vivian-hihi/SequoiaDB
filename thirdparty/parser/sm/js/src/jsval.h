@@ -66,7 +66,11 @@ JS_BEGIN_EXTERN_C
 #endif
 
 #if JS_BITS_PER_WORD == 64
+#if defined(__aarch64__)
+# define JSVAL_TAG_SHIFT 48
+#else
 # define JSVAL_TAG_SHIFT 47
+#endif
 #endif
 
 /*
@@ -135,7 +139,12 @@ JS_STATIC_ASSERT(sizeof(JSValueTag) == 4);
 /* Remember to propagate changes to the C defines below. */
 JS_ENUM_HEADER(JSValueTag, uint32)
 {
+#if defined(__aarch64__)
+    JSVAL_TAG_BLANK                = 0x1FFF0,
+    JSVAL_TAG_MAX_DOUBLE           = 0xFFF0,
+#else
     JSVAL_TAG_MAX_DOUBLE           = 0x1FFF0,
+#endif
     JSVAL_TAG_INT32                = JSVAL_TAG_MAX_DOUBLE | JSVAL_TYPE_INT32,
     JSVAL_TAG_UNDEFINED            = JSVAL_TAG_MAX_DOUBLE | JSVAL_TYPE_UNDEFINED,
     JSVAL_TAG_STRING               = JSVAL_TAG_MAX_DOUBLE | JSVAL_TYPE_STRING,
@@ -196,7 +205,12 @@ typedef uint32 JSValueTag;
 #elif JS_BITS_PER_WORD == 64
 
 typedef uint32 JSValueTag;
-#define JSVAL_TAG_MAX_DOUBLE         ((uint32)(0x1FFF0))
+#if defined(__aarch64__)
+    #define JSVAL_TAG_BLANK              ((uint32)(0x1FFF0)) 
+    #define JSVAL_TAG_MAX_DOUBLE         ((uint32)(0xFFF0))
+#else
+    #define JSVAL_TAG_MAX_DOUBLE         ((uint32)(0x1FFF0))
+#endif
 #define JSVAL_TAG_INT32              (uint32)(JSVAL_TAG_MAX_DOUBLE | JSVAL_TYPE_INT32)
 #define JSVAL_TAG_UNDEFINED          (uint32)(JSVAL_TAG_MAX_DOUBLE | JSVAL_TYPE_UNDEFINED)
 #define JSVAL_TAG_STRING             (uint32)(JSVAL_TAG_MAX_DOUBLE | JSVAL_TYPE_STRING)
@@ -236,8 +250,13 @@ typedef uint64 JSValueShiftedTag;
 
 #elif JS_BITS_PER_WORD == 64
 
-#define JSVAL_PAYLOAD_MASK           0x00007FFFFFFFFFFFLL
-#define JSVAL_TAG_MASK               0xFFFF800000000000LL
+#if defined(__aarch64__)
+    #define JSVAL_PAYLOAD_MASK           0x0000FFFFFFFFFFFFLL
+    #define JSVAL_TAG_MASK               0xFFFF000000000000LL
+#else
+    #define JSVAL_PAYLOAD_MASK           0x00007FFFFFFFFFFFLL
+    #define JSVAL_TAG_MASK               0xFFFF800000000000LL
+#endif
 #define JSVAL_TYPE_TO_TAG(type)      ((JSValueTag)(JSVAL_TAG_MAX_DOUBLE | (type)))
 #define JSVAL_TYPE_TO_SHIFTED_TAG(type) (((uint64)JSVAL_TYPE_TO_TAG(type)) << JSVAL_TAG_SHIFT)
 
@@ -297,8 +316,13 @@ typedef union jsval_layout
 #if (!defined(_WIN64) && defined(__cplusplus))
     /* MSVC does not pack these correctly :-( */
     struct {
+#if defined(__aarch64__)
+        uint64             payload47 : 48;
+        JSValueTag         tag : 16;
+#else
         uint64             payload47 : 47;
         JSValueTag         tag : 17;
+#endif
     } debugView;
 #endif
     struct {
@@ -339,8 +363,13 @@ typedef union jsval_layout
 {
     uint64 asBits;
     struct {
+#if defined(__aarch64__)
+        JSValueTag         tag : 16;
+        uint64             payload47 : 48;
+#else
         JSValueTag         tag : 17;
         uint64             payload47 : 47;
+#endif
     } debugView;
     struct {
         union {
@@ -530,7 +559,11 @@ static JS_ALWAYS_INLINE jsval_layout
 PRIVATE_PTR_TO_JSVAL_IMPL(void *ptr)
 {
     jsval_layout l;
+#if defined(__aarch64__)
+    JS_ASSERT(((uint64)ptr & 1) == 0);
+#else
     JS_ASSERT(((uint32)ptr & 1) == 0);
+#endif
     l.s.tag = (JSValueTag)0;
     l.s.payload.ptr = ptr;
     JS_ASSERT(JSVAL_IS_DOUBLE_IMPL(l));

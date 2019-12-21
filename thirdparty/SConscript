@@ -564,8 +564,10 @@ class FuseCompiler(CompilerBase):
         makeconf_exec = os.path.join(self.src_root, makeconf_file)
         config_exec = os.path.join(self.src_root, config_file)
         os.chmod(makeconf_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+        # let's generate the configure file first.
+        os.system(makeconf_exec)
+        # and then grant execution permission for configure file
         os.chmod(config_exec, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
-        self.append_cmd(makeconf_exec, '')
         self.append_cmd(config_exec, '')
         args = comm_build_opt + ' -j ' + str(comm_job_num)
         self.append_cmd('make ' + args)
@@ -605,6 +607,15 @@ if "win32" != guess_os:
     # components.append(spidermonkey_compiler)
     components.append(ssl_compiler)
 
+    if "arm64" == guess_arch:
+        # in arm64, we are going to build the lib when there have no
+        # pre-build libs for using
+        spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
+        components.append(spidermonkey_compiler)
+        if usefuse:
+            fuse_compiler = FuseCompiler('fuse')
+            components.append(fuse_compiler)
+
 if release:
     build_type = 'release'
 else:
@@ -612,8 +623,10 @@ else:
 
 comm_config_opt = ''
 comm_build_opt = ''
-# comm_job_num = int(GetOption('num_jobs'))
-comm_job_num = 1
+if "arm64" == guess_arch:
+    comm_job_num = int(GetOption('num_jobs'))
+else:
+    comm_job_num = 1
 
 g_silent = False
 if GetOption("silent"):

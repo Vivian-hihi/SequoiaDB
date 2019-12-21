@@ -206,6 +206,15 @@ if guess_os == "linux":
         boost_lib_dir = join(boost_lib_dir, 'linux64/release')
         env.Append( LIBPATH = boost_lib_dir )
         force64 = False
+    elif guess_arch == "arm64":
+        linux64 = True
+        nixLibPrefix = "lib64"
+        env.Append( EXTRALIBPATH="/usr/lib64" )
+        env.Append( EXTRALIBPATH="/lib64" )
+        # use project-related boost library
+        boost_lib_dir = join(boost_lib_dir, 'armlinux64/release')
+        env.Append( LIBPATH = boost_lib_dir )
+        force64 = False        
     elif guess_arch == "ppc64":
         linux64 = True
         nixLibPrefix = "lib64"

@@ -134,6 +134,8 @@ def GuessArch():
       return 'ia64'
    elif id == 'amd64':
       return 'ia64'
+   elif id == 'aarch64':
+      return 'arm64'
    elif id == 'ppc64':
       return 'ppc64'
    elif id == 'ppc64le':
@@ -226,6 +228,8 @@ def get_platform_dir():
             return "linux32"
         elif "ia64" == guess_arch:
             return "linux64"
+        elif "arm64" == guess_arch:
+            return "armlinux64"
         elif "ppc64" == guess_arch:
             return "ppclinux64"
         elif "ppc64le" == guess_arch:
@@ -430,10 +434,10 @@ usefuse = False
 if guess_os == 'linux' or guess_os == 'win32':
    usesm = True
 if guess_os == 'linux' or guess_os == 'win32':
-    if guess_arch == "ia64":
+    if guess_arch == "ia64" or guess_arch == "arm64":
         usemdocml = True
 if guess_os == 'linux':
-    if guess_arch == "ia64":
+    if guess_arch == "ia64" or guess_arch == "arm64":
         usefuse = True
 
 extraLibPlaces = []
@@ -504,6 +508,9 @@ if guess_os == "linux":
     elif guess_arch == "ia64":
         hdfsJniPath = join(java_dir,"jdk_linux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_linux64/include/linux")
+    elif guess_arch == "arm64":
+        hdfsJniPath = join(java_dir,"jdk8_armlinux64/include")
+        hdfsJniMdPath = join(java_dir,"jdk8_armlinux64/include/linux")
     elif guess_arch == "ppc64":
         hdfsJniPath = join(java_dir,"jdk_ppclinux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_ppclinux64/include/linux")
@@ -571,6 +578,10 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH="/lib" )
     # 64 bit linux
     elif guess_arch == "ia64":
+        linux64 = True
+        nixLibPrefix = "lib64"
+        env.Append( EXTRALIBPATH="/lib64" )
+    elif guess_arch == "arm64":
         linux64 = True
         nixLibPrefix = "lib64"
         env.Append( EXTRALIBPATH="/lib64" )
@@ -986,6 +997,7 @@ else:
       svnVer = os.popen( "svn info | grep Revision | awk '{print $2}'" ).read().replace("\n","")
       os.system( "sed 's/\$WCREV\$/" + svnVer + "/g' misc/autogen/ver_conf.h.in > misc/autogen/ver_conf.h" )
 
+print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
                          "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir", "snappy_lib_dir",
                          "sm_lib_dir", "mdocml_lib_dir", "fuse_lib_dir"], duplicate=False)
