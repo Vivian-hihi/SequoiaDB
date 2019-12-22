@@ -58,6 +58,8 @@
 #define DPS_DUMP_LSN_AHEAD "ahead"
 #define DPS_DUMP_LSN_BACK  "back"
 #define DPS_DUMP_LAST      "last"
+#define DPS_DUMP_REPAIRE   "repaire"
+#define DPS_DUMP_HELPFUL   "helpful"
 
 #define DPS_FILTER_ADD_OPTIONS_BEGIN( desc ) desc.add_options()
 #define DPS_FILTER_ADD_OPTIONS_END ;
@@ -76,6 +78,16 @@
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_OUTPUT,    ",o" ), boost::program_options::value< std::string >(), "specify output file or path, default: screen output" ) \
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of records to display before the lsn specified by -l/--lsn" ) \
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN_BACK,  ",b" ), boost::program_options::value< INT32 >(), "specify the number of records to display after the lsn specified by -l/--lsn" )
+
+#define DPS_DUMP_REPAIRE_DESP \
+   "repaire the dpsLogFile header info, like \n--repaire header:LogID=1,FirstLSNVer=1200\n"\
+   "-header support key:\n"\
+   "  LogID(u64)   FirstLSNVer(u32)   FirstLSNOffset(u64)\n"\
+
+//hidden options
+#define DPS_DUMP_HIDDEN_OPTIONS \
+   ( DPS_DUMP_HELPFUL, "help all configs" ) \
+   ( DPS_FILTER_COMMANDS_STRING(DPS_DUMP_REPAIRE, ",r"), boost::program_options::value<string>(), DPS_DUMP_REPAIRE_DESP )
 
 struct _dpsFileMeta : public SDBObject
 {
@@ -303,6 +315,8 @@ public:
 
    INT32 filte( dpsDumpFilter *filter, OSSFILE& out, const CHAR *filename ) ;
 
+   INT32 repaireHeader( const std::string &str ) ;
+
 public:
    virtual INT32 doDataExchange( engine::pmdCfgExchange *pEx ) ;
    virtual INT32 postLoaded( engine::PMD_CFG_STEP step ) ;
@@ -344,7 +358,6 @@ private:
    INT32 _seekToEnd( OSSFILE &in, INT64 &offset, const INT64 fileSize ) ;
    INT32 _seekToLsnMatched( OSSFILE &in, INT64 &offset,
                             const INT64 fileSize, INT32 &prevCount ) ;
-
 public:
    UINT16   opType ;
    INT32    lsnAhead ;

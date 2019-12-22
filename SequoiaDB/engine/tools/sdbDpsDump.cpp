@@ -46,7 +46,7 @@
 #include "dpsLogRecordDef.hpp"
 #include "ossPath.hpp"
 #include "utilCommon.hpp"
-
+#include <sstream>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -500,7 +500,6 @@ _dpsDumper::_dpsDumper()
   _filter( NULL ),
   _fileNum( 0 )
 {
-
 }
 
 _dpsDumper::~_dpsDumper()
@@ -518,12 +517,18 @@ INT32 _dpsDumper::initialize( INT32 argc, CHAR** argv,
                               po::variables_map &vm )
 {
    INT32 rc            = SDB_OK ;
+   po::options_description all ( "Command options" ) ;
 
    DPS_FILTER_ADD_OPTIONS_BEGIN( desc )
       FILTER_OPTIONS
    DPS_FILTER_ADD_OPTIONS_END
 
-   rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+   DPS_FILTER_ADD_OPTIONS_BEGIN ( all )
+      FILTER_OPTIONS
+      DPS_DUMP_HIDDEN_OPTIONS
+   DPS_FILTER_ADD_OPTIONS_END
+
+   rc = utilReadCommandLine( argc, argv, all, vm ) ;
    if ( SDB_OK != rc )
    {
       std::cout << "Failed to parse command line" << std::endl ;
@@ -541,6 +546,13 @@ INT32 _dpsDumper::initialize( INT32 argc, CHAR** argv,
    if( vm.count( DPS_DUMP_HELP ) )
    {
       displayArgs( desc ) ;
+      rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+
+   if( vm.count( DPS_DUMP_HELPFUL ) )
+   {
+      displayArgs( all ) ;
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }
@@ -592,6 +604,18 @@ INT32 _dpsDumper::process( const po::options_description &desc,
 {
    INT32 rc            = SDB_OK ;
    dpsDumpFilter *nextFilter = NULL ;
+   string repairStr ;
+
+   if( vm.count( DPS_DUMP_REPAIRE ) )
+   {
+      repairStr = vm[DPS_DUMP_REPAIRE].as<string>().c_str() ;
+      rc = repaireHeader( repairStr ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      goto done ;
+   }
 
    if( vm.count( DPS_DUMP_OUTPUT ) )
    {
@@ -707,6 +731,167 @@ INT32 _dpsDumper::_changeFileName()
       return SDB_INVALIDPATH;
    }
    return SDB_OK;
+}
+
+INT32 _dpsDumper::repaireHeader( const std::string &str )
+{
+   INT32  rc               = SDB_OK ;
+   BOOLEAN _isDir          = FALSE ;
+   dpsLogHeader *logHeader = NULL ;
+   BOOLEAN opened          = FALSE ;
+   UINT64 value            = 0 ;
+   INT64 fileSize          = 0 ;
+   INT64 len               = 0 ;
+   INT64 offset            = 0 ;
+   OSSFILE in ;
+   vector< pmdAddrPair > items ;
+   pmdOptionsCB opt ;
+   CHAR pLogHead[ DPS_LOG_HEAD_LEN + 1 ] = { 0 } ;
+   std::stringstream ss ;
+
+   LogEvent( "Repair file:[ %s ] begin", srcPath ) ;
+
+   const CHAR *pin = str.c_str() ;
+   CHAR *pos = (CHAR*)ossStrchr( pin, ':' ) ;
+   if ( NULL == pos )
+   {
+      ossPrintf( "repaire format must be: header:xx=y,dd=k"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+   }
+   *pos = 0 ;
+   if ( 0 != ossStrcasecmp( pin, "header" ) )
+   {
+      *pos = ':' ;
+      ossPrintf( "repaire only support for type header"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+   }
+   *pos = ':' ;
+
+   /// parse header member
+   rc = opt.parseAddressLine( pos + 1, items, ",", "=", 0 ) ;
+   if ( SDB_OK != rc )
+   {
+      ossPrintf( "Parse repaire value failed: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   if ( 0 == items.size() )
+   {
+      goto done ;
+   }
+
+   rc = isDir( srcPath, _isDir ) ;
+   if( SDB_FNE == rc || SDB_PERM == rc )
+   {
+      LogError( "Permission error or path not exist: %s", srcPath ) ;
+      goto error ;
+   }
+   if( SDB_OK != rc )
+   {
+      LogError( "Failed to get check whether %s is dir, rc = %d",
+                srcPath, rc ) ;
+      goto error ;
+   }
+
+   if( _isDir )
+   {
+      rc = SDB_INVALIDARG ;
+      LogError( "srcPath[%s] can't be directory", srcPath ) ;
+      goto error ;
+   }
+
+   rc = ossOpen( srcPath, OSS_DEFAULT | OSS_READWRITE,
+                 OSS_RU | OSS_RG, in ) ;
+   if( rc )
+   {
+      LogError( "Unable to open file[%s], rc = %d", srcPath, rc ) ;
+      goto error ;
+   }
+   opened = TRUE ;
+
+   rc = _checkLogFile( in, fileSize, srcPath );
+   if( rc )
+   {
+      goto error ;
+   }
+   SDB_ASSERT( fileSize > 0, "fileSize must be gt 0" ) ;
+
+   rc = _readLogHead( in, offset, fileSize, NULL, 0, pLogHead, len ) ;
+   if( rc && DPS_LOG_FILE_INVALID != rc )
+   {
+      LogEvent( "Read a invlid log file: %s", srcPath ) ;
+      goto error;
+   }
+
+   logHeader = (dpsLogHeader*)pLogHead ;
+
+   ss << "The header of file[" << srcPath << "] has been changed: " ;
+
+   for ( UINT32 i = 0 ; i < items.size() ; ++i )
+   {
+      pmdAddrPair &aItem = items[ i ] ;
+
+      /// must be nubmer
+      if ( !ossIsInteger( aItem._service ) )
+      {
+         ossPrintf( "Field[%s]'s value is not number[%s]"OSS_NEWLINE,
+                    aItem._host, aItem._service ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      value = ossAtoll( aItem._service ) ;
+
+      ss << endl ;
+
+      if ( 0 == ossStrcasecmp( aItem._host, "LogID" ) )
+      {
+         ss << "logID[" << logHeader->_logID << "]===>logID[" << value
+            << "]" ;
+         logHeader->_logID = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "FirstLSNVer" ) )
+      {
+         ss << "FirstLSNVer[" << logHeader->_firstLSN.version
+            << "]===>FirstLSNVer[" << value << "]" ;
+         logHeader->_firstLSN.version = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "FirstLSNOffset" ) )
+      {
+         ss << "firstLSNOffset[" << logHeader->_firstLSN.offset
+            << "]===>firstLSNOffset[" << value << "]" ;
+         logHeader->_firstLSN.offset = value ;
+      }
+      else
+      {
+         ossPrintf( "Unknow header key: %s"OSS_NEWLINE, aItem._host ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+
+   rc = ossSeek( &in, 0, OSS_SEEK_SET ) ;
+   if ( rc )
+   {
+      LogError( "Seek to %llu failed, rc: %d", 0, rc ) ;
+      goto error ;
+   }
+
+   rc = ossWriteN( &in, pLogHead, DPS_LOG_HEAD_LEN ) ;
+   if (SDB_OK != rc)
+   {
+      LogError( "Failed to write header to file[%s]", srcPath ) ;
+      goto error ;
+   }
+
+   LogEvent( "%s", ss.str().c_str() ) ;
+
+done:
+   if( opened )
+      ossClose( in ) ;
+   LogEvent( "Repair file:[ %s ] end", srcPath ) ;
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 _dpsDumper::dump()
@@ -874,7 +1059,9 @@ BOOLEAN _dpsDumper::_validCheck( const po::variables_map &vm )
       || vm.count( DPS_DUMP_LSN )
       || vm.count( DPS_DUMP_SOURCE )
       || vm.count( DPS_DUMP_OUTPUT )
-      || vm.count( DPS_DUMP_LAST ) )
+      || vm.count( DPS_DUMP_LAST )
+      || vm.count( DPS_DUMP_REPAIRE )
+      || vm.count( DPS_DUMP_HELPFUL ) )
    {
       valid = TRUE ;
    }
