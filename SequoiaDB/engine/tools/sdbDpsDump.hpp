@@ -59,7 +59,7 @@
 #define DPS_DUMP_LSN_BACK  "back"
 #define DPS_DUMP_LAST      "last"
 #define DPS_DUMP_REPAIRE   "repaire"
-#define DPS_DUMP_HELPFUL   "helpful"
+#define DPS_DUMP_HELPFULL  "helpfull"
 
 #define DPS_FILTER_ADD_OPTIONS_BEGIN( desc ) desc.add_options()
 #define DPS_FILTER_ADD_OPTIONS_END ;
@@ -86,7 +86,7 @@
 
 //hidden options
 #define DPS_DUMP_HIDDEN_OPTIONS \
-   ( DPS_DUMP_HELPFUL, "help all configs" ) \
+   ( DPS_DUMP_HELPFULL, "help all configs" ) \
    ( DPS_FILTER_COMMANDS_STRING(DPS_DUMP_REPAIRE, ",r"), boost::program_options::value<string>(), DPS_DUMP_REPAIRE_DESP )
 
 struct _dpsFileMeta : public SDBObject

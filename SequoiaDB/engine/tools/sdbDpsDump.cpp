@@ -550,7 +550,7 @@ INT32 _dpsDumper::initialize( INT32 argc, CHAR** argv,
       goto done ;
    }
 
-   if( vm.count( DPS_DUMP_HELPFUL ) )
+   if( vm.count( DPS_DUMP_HELPFULL ) )
    {
       displayArgs( all ) ;
       rc = SDB_PMD_HELP_ONLY ;
@@ -1061,7 +1061,7 @@ BOOLEAN _dpsDumper::_validCheck( const po::variables_map &vm )
       || vm.count( DPS_DUMP_OUTPUT )
       || vm.count( DPS_DUMP_LAST )
       || vm.count( DPS_DUMP_REPAIRE )
-      || vm.count( DPS_DUMP_HELPFUL ) )
+      || vm.count( DPS_DUMP_HELPFULL ) )
    {
       valid = TRUE ;
    }
