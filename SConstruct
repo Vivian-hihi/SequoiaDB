@@ -434,10 +434,10 @@ usefuse = False
 if guess_os == 'linux' or guess_os == 'win32':
    usesm = True
 if guess_os == 'linux' or guess_os == 'win32':
-    if guess_arch == "ia64" or guess_arch == "arm64":
+    if guess_arch == "ia64" or guess_arch == "arm64" or guess_arch == "ppc64le":
         usemdocml = True
 if guess_os == 'linux':
-    if guess_arch == "ia64" or guess_arch == "arm64":
+    if guess_arch == "ia64" or guess_arch == "arm64" or guess_arch == "ppc64le":
         usefuse = True
 
 extraLibPlaces = []
@@ -587,7 +587,7 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH="/lib64" )
     # power pc linux
     elif guess_arch == "ppc64":
-        linux64 = True
+        linux64 = False
         nixLibPrefix = "lib64"
         # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
