@@ -103,7 +103,7 @@ Collection Space
 
 > **Note:**
 
-> * 集合名限制请参考[限制](reference/Sequoiadb_limitation.md#索引)
+> * 集合名限制请参考[限制](reference/Sequoiadb_limitation.md)
 
 > * 当参数 `options` 内设置了多个参数时，需用英文半角的逗号","将各参数的取值隔开。
 
