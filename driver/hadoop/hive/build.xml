@@ -51,19 +51,26 @@
 			</else>
 		</if>
     
-      <if>
-         <equals arg1="${os_arch}" arg2="ppc64" />
-         <then>
-         	<property name="jdk.name" value="jdk_ppclinux64" />
-         </then>
-      </if>
-      
-      <if>
-         <equals arg1="${os_arch}" arg2="ppc64le" />
-         <then>
-         	<property name="jdk.name" value="jdk_ppclelinux64" />
-         </then>
-      </if>
+                <if>
+                        <equals arg1="${os_arch}" arg2="aarch64" />
+                        <then>
+                        	<property name="jdk.name" value="jdk8_armlinux64" />
+                        </then>
+                </if>
+
+                <if>
+                        <equals arg1="${os_arch}" arg2="ppc64" />
+                        <then>
+                        	<property name="jdk.name" value="jdk_ppclinux64" />
+                        </then>
+                </if>
+                
+                <if>
+                        <equals arg1="${os_arch}" arg2="ppc64le" />
+                        <then>
+                        	<property name="jdk.name" value="jdk_ppclelinux64" />
+                        </then>
+                </if>
     
 		<if>
 			<equals arg1="${os_arch}" arg2="amd64" />
