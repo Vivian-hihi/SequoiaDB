@@ -18,7 +18,7 @@ MariaDB 元数据同步工具的基本原理是 MariaDB 服务进程通过审计
 + 需要在每个 MariaDB 环境中部署审计插件及同步工具
 + MariaDB 实例服务器之间需要使用主机名互通
 + 支持同步 ALTER，CREATE，DECLARE，GRANT，REVOKE，FLUSH 操作，其它操作暂不支持
-+ 支持 python2.7 版本
++ 支持 python2.7+，不支持 python3 版本
 + 需要使用 SequoiaSQL-MariaDB 3.4 或以上版本
 
 ## 安装 ##
