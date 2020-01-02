@@ -682,11 +682,11 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 */
 #elif defined (_LIN32)
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO2, "ossDumpRegistersInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO3, "ossDumpRegistersInfo" )
 void ossDumpRegistersInfo( ossSignalContext pContext,
                            ossPrimitiveFileOp * trapFile )
 {
-   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO2 );
+   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO3 );
    greg_t * r ;
 
    if ( ( NULL != trapFile ) && trapFile->isValid() )
@@ -711,13 +711,13 @@ void ossDumpRegistersInfo( ossSignalContext pContext,
          trapFile->Write (OSS_NEWLINE"Unable to dump registers"OSS_NEWLINE) ;
       }
    }
-   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO2 );
+   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO3 );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST2, "ossDumpStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST3, "ossDumpStackTrace" )
 void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 {
-   PD_TRACE_ENTRY ( SDB_OSSDUMPST2 );
+   PD_TRACE_ENTRY ( SDB_OSSDUMPST3 );
    void *          syms[OSS_MAX_BACKTRACE_FRAMES_SUPPORTED] ;
    CHAR            mCode[OSS_MCODE_LEN] ;
    greg_t *        r   = ((ossSignalContext)scp)->uc_mcontext.gregs ;
@@ -776,7 +776,7 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
          }
       }
    }
-   PD_TRACE_EXIT ( SDB_OSSDUMPST2 );
+   PD_TRACE_EXIT ( SDB_OSSDUMPST3 );
 }
 #elif defined (_PPCLIN64)
 typedef unsigned long greg_t ;
@@ -839,11 +839,11 @@ typedef unsigned long greg_t ;
 #define PT_VSR0 150     /* each VSR reg occupies 2 slots in 64-bit */
 #define PT_VSR31 (PT_VSR0 + 2*31)
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO3, "ossDumpRegistersInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO4, "ossDumpRegistersInfo" )
 void ossDumpRegistersInfo( ossSignalContext pContext,
                            ossPrimitiveFileOp * trapFile )
 {
-   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO3 );
+   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO4 );
    greg_t * r ;
 
    if ( ( NULL != trapFile ) && trapFile->isValid() )
@@ -895,13 +895,13 @@ void ossDumpRegistersInfo( ossSignalContext pContext,
          trapFile->Write ("Unable to dump registers"OSS_NEWLINE) ;
       }
    }
-   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO3 );
+   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO4 );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST3, "ossDumpStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST4, "ossDumpStackTrace" )
 void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 {
-   PD_TRACE_ENTRY ( SDB_OSSDUMPST3 );
+   PD_TRACE_ENTRY ( SDB_OSSDUMPST4 );
    void *              syms[ OSS_MAX_BACKTRACE_FRAMES_SUPPORTED ] ;
    CHAR                mCode[ OSS_MCODE_LEN ] ;
    greg_t *            r   = ( ( ossSignalContext)scp )->uc_mcontext.gp_regs ;
@@ -997,7 +997,7 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
          }
       }
    }
-   PD_TRACE_EXIT ( SDB_OSSDUMPST3 );
+   PD_TRACE_EXIT ( SDB_OSSDUMPST4 );
 }
 #endif
 
