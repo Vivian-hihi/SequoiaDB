@@ -46,17 +46,17 @@ SequoiaDB 中有两类协调节点：
    ```
 >   **Note:**
 >
->   更详细的创建临时协调节点，请参考 [Oma.createCoord\(\)](reference/Sequoiadb_command/Oma/createCoord.md)
+>   创建临时协调节点，请参考 [Oma.createCoord()](reference/Sequoiadb_command/Oma/createCoord.md)
 
 
 ###创建协调节点组###
 
-在 Sdb Shell 中可以通过临时协调节点可以创建协调节点组：
+在 Sdb Shell 中可以通过临时协调节点创建协调节点组：
 
 1. 连接临时协调节点
 
    ```lang-javascript
-   > var db = new Sdb( 'sdbserver1', 18800 )
+   > var db = new Sdb( "localhost", 18800 )
    ```
 
 2. 创建协调节点组
@@ -69,20 +69,19 @@ SequoiaDB 中有两类协调节点：
 >
 >   协调节点组中的协调节点将会注册到编目节点中，并被集群管理。因此创建协调节点组前应先在集群中创建有效的编目节点。
 >
->   如何创建协调节点组和部署协调节点可以详细请参考 [集群模式](installation/deployment/command_installation/cluster.md)
+>   创建协调节点组和部署协调节点，请参考 [集群模式](installation/deployment/command_installation/cluster.md)
 >
->   更详细的创建协调节点组，请参考 [Sdb.createCoordRG\(\)](reference/Sequoiadb_command/Sdb/createCoordRG.md)
 
 ###新增协调节点###
 
-当集群规模扩大时，协调节点也需要随着规模的增加而进行增加。建议匹配时，一台物理节点，配置一个协调节点。
+当集群规模扩大时，协调节点也需要随着规模的增加而进行增加。建议匹配时，一个物理节点，配置一个协调节点。
 
-在 Sdb Shell 中可以通过现有的协调节点组添加新的协调节点（假设 sdbserver1 中已有协调节点或临时协调节点，现在向 sdbserver2 中添加新的协调节点）：
+在 Sdb Shell 中可以通过现有的协调节点组添加新的协调节点（假设有 sdbserver1 和 sdbserver2 两台服务器，且两台服务器处于同一个集群。sdbserver1 中已有协调节点（端口为11810）或临时协调节点（端口为18800），现在向 sdbserver2 中添加新的协调节点）：
 
-1. 连接 sdbserver1 的协调节点 11810
+1. 连接 sdbserver1 的临时协调节点
 
    ```lang-javascript
-   > var db = new Sdb( 'sdbserver1', 11810 )
+   > var db = new Sdb( 'sdbserver1', 18800 )
    ```
 
 2. 获取协调节点组
@@ -93,10 +92,9 @@ SequoiaDB 中有两类协调节点：
 
    >   **Note:**
    >
-   >   在 Sdb Shell 中也可以使用 (Sdb.getRG\(\))[reference/Sequoiadb_command/Sdb/getRG.md] 以 "SYSCoord" 为分>
-区组组名获取编目节点组。
+   >   在 Sdb Shell 中也可以使用 [Sdb.getCoordRG()](reference/Sequoiadb_command/Sdb/getCoordRG.md) 获取协调节点组。
 
-3. 在 sdbserver2 中新建协调节点 11810
+3. 在 sdbserver2 中新建协调节点
 
    ```lang-javascript
    > var node = rg.createNode( "sdbserver2", 11810, "/opt/sequoiadb/database/coord/11810" )
