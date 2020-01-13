@@ -1931,6 +1931,11 @@ namespace engine
                     PD_PACK_STRING("waitLock rc:"),
                     PD_PACK_INT( rc ) )  ;
 #endif
+         dpsTxExectr->getExecutor()->resetInfo( EDU_INFO_ERROR ) ;
+         dpsTxExectr->getExecutor()->printInfo( EDU_INFO_ERROR,
+                     "Acquire transaction lock(%s)(%s) failed",
+                     lockId.toString().c_str(),
+                     lockModeToString( requestLockMode ) ) ;
          goto postLockWaiting ;
       }
 
