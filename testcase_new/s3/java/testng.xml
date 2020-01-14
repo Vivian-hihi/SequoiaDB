@@ -61,13 +61,29 @@
     </test> 
     
     <!-- 串行运行用例 -->
-    <test name="largeobjects">  
-        <packages> 
+    <test name="largeobjects">
+        <groups>
+            <run>
+                <exclude name="datacsrange" />
+            </run>
+        </groups>
+        <packages>
             <package name="com.sequoias3.region" />
             <package name="com.sequoias3.region.concurrent" />
             <package name="com.sequoias3.object.serial" /> 
             <package name="com.sequoias3.delimiter.serial" /> 
             <package name="com.sequoias3.partupload.serial" />
+        </packages>
+    </test>
+
+    <test name="datacsrange" parallel="classes" thread-count="1">
+        <groups>
+            <run>
+                <include name="datacsrange" />
+            </run>
+        </groups>
+        <packages>
+            <package name="com.sequoias3.region" />
         </packages>
     </test>
     
