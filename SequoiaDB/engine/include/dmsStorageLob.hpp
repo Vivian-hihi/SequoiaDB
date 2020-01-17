@@ -38,7 +38,7 @@
 #include "dmsLobDef.hpp"
 #include "dmsStorageLobData.hpp"
 #include "dmsStorageData.hpp"
-#include "ossLatch.hpp"
+#include "monLatch.hpp"
 #include "utilCache.hpp"
 
 namespace engine
@@ -282,7 +282,7 @@ namespace engine
       CHAR                          _path[ OSS_MAX_PATHSIZE + 1 ] ;
       CHAR                          _metaPath[ OSS_MAX_PATHSIZE + 1 ] ;
       BOOLEAN                       _needDelayOpen ;
-      ossSpinXLatch                 _delayOpenLatch ;
+      monSpinXLatch                 _delayOpenLatch ;
 
       utilCacheUnit                 *_pCacheUnit ;
       IDataSyncManager              *_pSyncMgrTmp ;

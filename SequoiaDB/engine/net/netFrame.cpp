@@ -61,8 +61,9 @@ namespace engine
    */
    _netEHSegment::_netEHSegment( _netFrame *pFrame, UINT32 capacity, const _MsgRouteID &id )
     :_pFrame( pFrame ),
-    _id ( id ),
-    _index( 0 )
+     _id ( id ),
+     _index( 0 ),
+     _mtx( MON_LATCH_NETEHSEGMENT_MTX )
    {
       if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID ||
            id.columns.groupID < DATA_GROUP_ID_BEGIN ||
@@ -229,13 +230,16 @@ namespace engine
      // but when this happens, the whole system might not be able
      // to start at the beginning event the bad-alloc is handled
      _mainSuitPtr( netEventSuit::createShared( this ) ),
+     _suiteMtx( MON_LATCH_NETFRAME_SUITEMTX ),
      _handler( handler ),
+     _mtx( MON_LATCH_NETFRAME_MTX ),
      _acceptor( _mainSuitPtr->getIOService() ),
      _handle( NET_HANDLE_BEGIN ),
      _timerID( NET_INVALID_TIMER_ID ),
      _netOut( 0 ),
      _netIn( 0 ),
      _restartTimer( this ),
+     _suiteExitMutex( MON_LATCH_NETFRAME_SUITEEXITMUTEX ),
      _suiteStopFlag( FALSE )
    {
       _pThreadFunc = NULL ;

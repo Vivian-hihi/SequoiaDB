@@ -40,7 +40,6 @@
 #define PMDEDU_HPP__
 
 #include "sdbInterface.hpp"
-#include "ossLatch.hpp"
 #include "ossQueue.hpp"
 #include "ossMem.hpp"
 #include "ossSocket.hpp"
@@ -449,7 +448,7 @@ namespace engine
 
    private :
       _pmdEDUMgr     *_eduMgr ;
-      ossSpinSLatch  _mutex ;
+      monSpinSLatch  _mutex ;
       ossQueue<pmdEDUEvent> _queue ;
 
       EDU_STATUS     _status ;

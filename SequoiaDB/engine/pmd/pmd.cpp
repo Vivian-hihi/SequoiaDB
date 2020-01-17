@@ -100,6 +100,8 @@ namespace engine
       _pLightJobMgr   = NULL ;
       _timeCounter    = 0 ;
       _monTimeCounter = 0 ;
+
+      g_monMgrPtr = &_monMgr;
    }
 
    _SDB_KRCB::~_SDB_KRCB ()

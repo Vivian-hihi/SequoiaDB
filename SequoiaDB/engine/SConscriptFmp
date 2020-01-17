@@ -203,6 +203,9 @@ clientcppFiles = [
       "client/sdbDataSourceWorker.cpp"
       ]
 
+monFiles = [
+      "mon/monLatch.cpp"
+      ]
 #Client Driver
 fmpEnv.StaticLibrary('clientc', clientCFiles)
 fmpEnv.StaticLibrary('clientcpp', clientcppFiles)
@@ -221,9 +224,11 @@ fmpEnv.StaticLibrary('fmp', fmpFiles)
 #Scripting
 fmpEnv.StaticLibrary('spt', sptFiles)
 fmpEnv.StaticLibrary('ssh2', ssh2Files)
+#monLatch
+fmpEnv.StaticLibrary('mon', monFiles)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt", "ssh2"],
+      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt", "ssh2", "mon"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )

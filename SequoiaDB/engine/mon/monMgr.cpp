@@ -79,4 +79,6 @@ void _monMonitorManager::cleanup()
       }
    }
 }
+
+monMonitorManager *g_monMgrPtr = NULL;
 } // namespace engine

@@ -570,7 +570,8 @@ namespace engine
      _lastAccessTime( 0 ),
      _periodAccessCount( 0 ),
      _accessCount( 0 ),
-     _totalQueryTimeTick()
+     _totalQueryTimeTick(),
+     _latch( MON_LATCH_OPTCACHEDPLANACTIVITY_LATCH )
    {
    }
 
@@ -687,6 +688,7 @@ namespace engine
      _freeIndexEnd( 0 ),
      _pFreeActivityIDs( NULL ),
      _clearThread( 0 ),
+     _clearLock( MON_LATCH_OPTCACHEDPLANMONITOR_CLEARLOCK ),
      _activityNum( 0 ),
      _highWaterMark( 0 ),
      _lowWaterMark( 0 ),
@@ -994,6 +996,7 @@ namespace engine
    _optAccessPlanManager::_optAccessPlanManager ()
    : _optAccessPlanConfigHolder(),
      _mthMatchConfigHolder(),
+     _reinitLatch( MON_LATCH_OPTACCESSPLANMANAGER_REINITLATCH ),
      _planCache(),
      _monitor(),
      _clearJobEduID( PMD_INVALID_EDUID ),

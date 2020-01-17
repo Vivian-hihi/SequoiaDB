@@ -44,7 +44,7 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "dpsMessageBlock.hpp"
-#include "ossRWMutex.hpp"
+#include "monLatch.hpp"
 #include "dpsLogDef.hpp"
 #include <string>
 
@@ -58,7 +58,7 @@ namespace engine
    class _dpsLogPage : public SDBObject
    {
       private:
-         ossRWMutex _mtx;
+         monRWMutex _mtx;
          _dpsMessageBlock *_mb;
          UINT32 _pageNumber;
          INT8 _startPage;

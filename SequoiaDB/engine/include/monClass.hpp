@@ -51,6 +51,7 @@
 #include "../bson/bson.hpp"
 #include <boost/intrusive/list.hpp>
 #include <iterator>
+#include "monLatch.hpp"
 
 using namespace bson ;
 

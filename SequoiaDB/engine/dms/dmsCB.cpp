@@ -89,7 +89,9 @@ namespace engine
    */
 
    _SDB_DMSCB::_SDB_DMSCB()
-   :_writeCounter(0),
+   :_mutex( MON_LATCH_SDB_DMSCB_MUTEX ),
+    _stateMtx( MON_LATCH_DMSCB_STATEMTX ),
+    _writeCounter(0),
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
     _nullCSUniqueIDCnt( 0 ),

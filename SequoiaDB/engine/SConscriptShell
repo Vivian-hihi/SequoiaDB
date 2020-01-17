@@ -93,7 +93,8 @@ ossFiles = [
       "oss/ossVer.cpp",
       "oss/ossMem.cpp",
       "oss/ossSocket.cpp",
-      "oss/ossEvent.cpp"
+      "oss/ossEvent.cpp",
+      "oss/ossRWMutex.cpp"
       ]
 
 shellMain = [
@@ -201,6 +202,10 @@ pmdFiles = [
       "pmd/pmdOptionsMgr.cpp"
       ]
 
+monFiles = [
+      "mon/monLatch.cpp"
+      ]
+
 #Client Driver
 shellEnv.StaticLibrary('clientc', clientCFiles)
 shellEnv.StaticLibrary('clientcpp', clientcppFiles)
@@ -216,14 +221,16 @@ shellEnv.StaticLibrary('util', utilFiles)
 shellEnv.StaticLibrary('util2', util2Files)
 #Process Model
 shellEnv.StaticLibrary('pmd', pmdFiles)
+#MonLatch
+shellEnv.StaticLibrary('mon', monFiles)
 
 #Shell Executable
 #Shell Backend  Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util", "clientcpp", "clientc", "ssh2", "util2", "pmd"],
+      LIBDEPS=["spt","oss","pd","util", "clientcpp", "clientc", "ssh2", "util2", "pmd", "mon"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientcpp", "clientc", "ssh2", "util2", "pmd"],
+      LIBDEPS=["spt","oss","pd","util","clientcpp", "clientc", "ssh2", "util2", "pmd", "mon"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 shellEnv.Install( '#/bin', sdbbp )
 

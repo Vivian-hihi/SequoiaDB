@@ -42,7 +42,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "netDef.hpp"
-#include "ossLatch.hpp"
+#include "monLatch.hpp"
 #include "netMsgHandler.hpp"
 #include "netEventSuit.hpp"
 #include "netEventHandler.hpp"
@@ -123,7 +123,7 @@ namespace engine
          //total allowed items in the container, is based on config parameter
          UINT32                           _capacity ;
          ossAtomic32                      _index ; // point to a proper item
-         ossSpinSLatch                    _mtx ;
+         monSpinSLatch                    _mtx ;
          VEC_EH                           _vecEH ; // EV handle list
    } ;
 
@@ -353,7 +353,7 @@ namespace engine
          netEvSuitPtr                     _mainSuitPtr ;
          NET_START_THREAD_FUNC            _pThreadFunc ;
 
-         _ossSpinSLatch                   _suiteMtx ;
+         monSpinSLatch                    _suiteMtx ;
          VEC_EVSUIT                       _vecEvSuit ;
 
          MAP_ROUTE                        _route ;
@@ -363,7 +363,7 @@ namespace engine
 
          _netMsgHandler                   *_handler ;
          MsgRouteID                       _local ;
-         _ossSpinSLatch                   _mtx ;
+         monSpinSLatch                    _mtx ;
          boost::asio::ip::tcp::acceptor   _acceptor ;
          _ossAtomic32                     _handle ;
          UINT32                           _timerID;
@@ -384,7 +384,7 @@ namespace engine
          UINT32                           _maxSockPerThread ;  /// 0 for unlimited
          UINT32                           _maxThreadNum ;
 
-         ossRWMutex                       _suiteExitMutex ;
+         monRWMutex                       _suiteExitMutex ;
          BOOLEAN                          _suiteStopFlag ;
 
          NET_UDP_EV_SUIT                  _udpMainSuit ;

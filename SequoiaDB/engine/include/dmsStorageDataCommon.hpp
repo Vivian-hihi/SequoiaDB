@@ -620,7 +620,7 @@ namespace engine
       private:
          dmsMB             *_mb ;
          dmsMBStatInfo     *_mbStat ;
-         ossSpinSLatch     *_latch ;
+         monSpinSLatch     *_latch ;
          UINT32            _clLID ;
          UINT32            _startLID ;
          UINT16            _mbID ;
@@ -1237,9 +1237,9 @@ namespace engine
          // latch for each MB. For normal record SIUD, shared latches are
          // requested exclusive latch on mblock is only when changing
          // metadata (say add an extent into the MB, or create/drop the MB)
-         ossSpinSLatch                       _mblock [ DMS_MME_SLOTS ] ;
+         monSpinSLatch                       _mblock [ DMS_MME_SLOTS ] ;
          dmsMBStatInfo                       _mbStatInfo [ DMS_MME_SLOTS ] ;
-         ossSpinSLatch                       _metadataLatch ;
+         monSpinSLatch                       _metadataLatch ;
          COLNAME_MAP                         _collectionNameMap ;
          COLID_MAP                           _collectionIDMap ;
          UINT32                              _logicalCSID ;
@@ -1249,7 +1249,7 @@ namespace engine
          BOOLEAN                             _isCapped ;
 
          vector<dmsMBContext*>               _vecContext ;
-         ossSpinXLatch                       _latchContext ;
+         monSpinXLatch                       _latchContext ;
 
          _dmsStorageIndex                    *_pIdxSU ;
          _dmsStorageLob                      *_pLobSU ;

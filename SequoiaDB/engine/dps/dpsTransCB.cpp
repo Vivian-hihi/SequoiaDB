@@ -60,6 +60,7 @@ namespace engine
     _CBMapMutex( MON_LATCH_DPSTRANSCB_CBMAPMUTEX ),
     _lsnMapMutex( MON_LATCH_DPSTRANSCB_LSNMAPMUTEX ),
     _hisMutex( MON_LATCH_DPSTRANSCB_HISMUTEX ),
+    _maxFileSizeMutex( MON_LATCH_DPSTRANSCB_MAXFILESIZEMUTEX ),
     _reservedRBSpace( 0 ) ,
     _reservedSpace( 0 )
    {

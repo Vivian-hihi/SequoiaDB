@@ -34,7 +34,7 @@
 #define SCHED_TASK_MGR_HPP__
 
 #include "monCB.hpp"
-#include "ossLatch.hpp"
+#include "monLatch.hpp"
 #include "schedDef.hpp"
 #include <boost/shared_ptr.hpp>
 #include "ossMemPool.hpp"
@@ -86,7 +86,7 @@ namespace engine
       private:
          monSvcTaskInfoPtr                   _defaultPtr ;
          MAP_SVCTASKINFO_PTR                 _mapTaskInfo ;
-         ossSpinXLatch                       _latch ;
+         monSpinXLatch                       _latch ;
 
    } ;
    typedef _schedTaskMgr schedTaskMgr ;

@@ -42,6 +42,7 @@
 namespace engine
 {
    _dpsLogPage::_dpsLogPage()
+   :_mtx( MON_LATCH_DPSLOGPAGE_MTX )
    {
    //   _dpsLogPage( DPS_DEFAULT_PAGE_SIZE );
       // delete in destructor
@@ -55,6 +56,7 @@ namespace engine
    }
 
    _dpsLogPage::_dpsLogPage( UINT32 size )
+   :_mtx( MON_LATCH_DPSLOGPAGE_MTX )
    {
       // delete in destructor
       _mb = SDB_OSS_NEW _dpsMessageBlock( size );

@@ -44,7 +44,7 @@
 #include "oss.hpp"
 #include "ossMem.hpp"
 #include "dms.hpp"
-#include "ossLatch.hpp"
+#include "monLatch.hpp"
 #include "monDMS.hpp"
 #include "dmsTempSUMgr.hpp"
 #include "dmsStatSUMgr.hpp"
@@ -139,7 +139,7 @@ namespace engine
    class _SDB_DMSCB : public _IControlBlock
    {
    private :
-      ossSpinSLatch _mutex ;
+      monSpinSLatch _mutex ;
 
       struct cmp_cscb
       {
@@ -192,7 +192,7 @@ namespace engine
        */
       ossQueue<dmsDictJob>    _dictWaitQue ;
 
-      ossSpinXLatch           _stateMtx;
+      monSpinXLatch           _stateMtx;
       ossEvent                _blockEvent ;
       SINT64                  _writeCounter;
       UINT8                   _dmsCBState;

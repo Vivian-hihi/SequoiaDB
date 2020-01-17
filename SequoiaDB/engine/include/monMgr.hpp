@@ -218,5 +218,7 @@ private:
 } ;
 
 typedef _monMonitorManager monMonitorManager ;
+
+extern monMonitorManager *g_monMgrPtr;
 }
 #endif

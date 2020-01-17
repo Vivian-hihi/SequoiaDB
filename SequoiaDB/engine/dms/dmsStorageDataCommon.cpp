@@ -508,7 +508,9 @@ namespace engine
    _dmsStorageDataCommon::_dmsStorageDataCommon ( const CHAR *pSuFileName,
                                                   dmsStorageInfo *pInfo,
                                                   _IDmsEventHolder *pEventHolder )
-   :_dmsStorageBase( pSuFileName, pInfo )
+   :_dmsStorageBase( pSuFileName, pInfo ),
+    _metadataLatch( MON_LATCH_DMSSTORAGEDATACOMMON_METADATALATCH ),
+    _latchContext( MON_LATCH_DMSSDC_LATCHCONTEXT )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON ) ;
       _dmsMME           = NULL ;
@@ -520,6 +522,10 @@ namespace engine
       _pEventHolder     = pEventHolder ;
       _pExtDataHandler  = NULL ;
       _isCapped         = FALSE;
+      for ( UINT16 i = 0; i < DMS_MME_SLOTS; ++i )
+      {
+         _mblock[i] = monSpinSLatch( MON_LATCH_MBLOCK ) ;
+      }
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON ) ;
    }
 

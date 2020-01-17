@@ -42,6 +42,7 @@ namespace engine
       _schedTaskMgr implement
    */
    _schedTaskMgr::_schedTaskMgr()
+   :_latch( MON_LATCH_SCHEDTASKMGR_LATCH )
    {
    }
 

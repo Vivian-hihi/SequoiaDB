@@ -195,7 +195,7 @@ namespace engine
          optQueryActivity  _maxQueryActivity ;
          optQueryActivity  _minQueryActivity ;
 
-         ossSpinXLatch     _latch ;
+         monSpinXLatch     _latch ;
    } ;
 
    typedef class _optCachedPlanActivity optCachedPlanActivity ;
@@ -257,7 +257,7 @@ namespace engine
             return _cachedPlanCount.peek() ;
          }
 
-         OSS_INLINE ossRWMutex *getClearLock ()
+         OSS_INLINE monRWMutex *getClearLock ()
          {
             return &_clearLock ;
          }
@@ -288,7 +288,7 @@ namespace engine
          ossAtomic32 _clearThread ;
 
          // Mutex to protect clearing procedure
-         ossRWMutex _clearLock ;
+         monRWMutex _clearLock ;
 
          // Clear event to signal clear job
          ossEvent _clearEvent ;
@@ -552,7 +552,7 @@ namespace engine
          void  _stopClearJob () ;
 
       protected :
-         ossSpinXLatch           _reinitLatch ;
+         monSpinXLatch           _reinitLatch ;
          optAccessPlanCache      _planCache ;
          optCachedPlanMonitor    _monitor ;
          EDUID                   _clearJobEduID ;

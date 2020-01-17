@@ -44,7 +44,7 @@
 #include "oss.hpp"
 #include "ossAtomic.hpp"
 #include "dpsDef.hpp"
-#include "ossLatch.hpp"
+#include "monLatch.hpp"
 #include "dms.hpp"
 #include "dpsTransLockMgr.hpp"
 #include "dpsLogRecord.hpp"
@@ -502,7 +502,7 @@ namespace engine
       TRANS_LSN_ID_MAP  _hisLsnTrans ;
 
       BOOLEAN           _isNeedSyncTrans ;
-      ossSpinXLatch     _maxFileSizeMutex ;
+      monSpinXLatch     _maxFileSizeMutex ;
       UINT64            _logFileTotalSize ;
 
       // Largest two record size within the system, and the most recent LR LSN

@@ -70,6 +70,7 @@ namespace engine
     _segmentSize( 0 ),
     _dmsData( (dmsStorageData *)pDataSu ),      // TODO: temporary cast
     _data( lobdFileName, info->_enableSparse, info->_directIO ),
+    _delayOpenLatch( MON_LATCH_DMSSTORAGELOB_DELAYOPENLATCH ),
     _pCacheUnit( pCacheUnit ),
     _pSyncMgrTmp( NULL )
    {

@@ -102,6 +102,7 @@ void _monClassQueryTmpData::diff(_monAppCB &cb)
    indexWrite = cb.totalIndexWrite - indexWrite ;
 }
 
+
 _monClassContainer::_monClassContainer ( MON_CLASS_TYPE type )
    : _archivedListMaxLen( pmdGetKRCB()->getOptionCB()->monHistEvent() ),
      _numPendingArchive( 0 ),
