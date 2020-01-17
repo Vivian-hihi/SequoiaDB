@@ -1,19 +1,20 @@
-##使用方法##
+本章介绍通过 SequoiaFS 挂载目录到 SequoiaDB 数据库的方法。  
 
 ```lang-bash
-sequoiafs mountpoint [options]
+sequoiafs <mountpoint> -i [sdbserver:svcname] -l <collection> [options]
 ```
 
-该命令用以挂载目录mountpoint，mountpoint目录为本地创建用于挂载映射目标集合的目录，挂载之后mountpoint目录即和一普通文件系统目录一样，即可在mountpoint目录下进行常见的文件操作，如常见的创建子目录、创建文件、删除文件等linux系统命令，也可以通过常见的普通文件API接口对目录文件进行操作。
-     
-在本例中：远程DB节点表示SequoiaDB集群安装节点，FS节点表示通过SequoiaFS映射挂载目录的节点。   
+该命令将 Linux 下创建的 mountpoint 目录挂载到 SequoiaDB 上创建的 collection 集合中，挂载之后 mountpoint 目录的操作仍然和普通文件系统目录一样，可以在 mountpoint 目录下执行常见的创建子目录、创建文件、修改文件、删除文件等 Linux 系统命令，也可以通过常见的文件 API 接口对目录文件进行操作，此时所有的文件内容及目录结构都存储于 SequoiaDB 中。
 
-两者可以是相同节点也可以是不同节点，可以在一个FS节点上的不同目录下，映射挂载同一DB集群节点或不同DB集群节点，也可以在不同FS节点进行映射挂载同一DB集群节点。  
+SequoiaFS 可以和 SequoiaDB 部署在同一台主机上，也可以分别部署在不同主机上。 
+ 
+SequoiaFS 挂载的多个目录可以映射到相同 SequoiaDB 或不同 SequoiaDB上，映射到同一 SequoiaDB 时既可以映射到相同的集合中也可以映射到不同的集合中。  
 
-以下例子中DB节点为一常见普通集群，部署了一个coord、三个catalog和三个data节点，在FS节点上利用SequoiaFS挂载映射目录。
+当不同主机挂载的目录或者同一主机挂载的不同目录映射到同一个集合时，这些目录中看到的内容都是相同的。 
 
-####1、在DB节点上创建目标集合####
-首次启动时，需要在远程DB节点上创建映射的目标集合collection。后面挂载目录之后，mountpoint目录下的所有文件的实际内容会以lob的形式存放在该集合下。而所有文件的属性信息会分别存放在目录元数据集合和文件元数据集合中。
+##在 SequoiaDB 上创建目标集合##
+当前样例中，SequoiaDB 集群部署了一个协调节点、三个编目节点和三个数据节点。  
+首先创建待映射的集合空间 foo 和集合 bar，挂载目录之后，挂载目录下的所有文件的内容会以 lob 的形式存放在该集合下，挂载目录下所有子目录及文件的属性信息会分别存放在目录元数据集合和文件元数据集合中。
 
 ```lang-javascript
 $sdb
@@ -30,10 +31,10 @@ Takes 2.466226s.
 >  
 ```
 
-####2、在FS节点上创建挂载目录及配置文件####
-挂载目录mountpoint为FS节点上的目录，用以挂载映射远程DB节点的目标集合，所以需要在FS节点上创建该目录。
+##创建挂载目录及配置文件##
+在 SequoiaFS 所在服务器上创建一个目录 mountpoint，这是待挂载的目录。  
 
-启动SequoiaFS时可以指定从配置文件中读取配置参数，建议首次启动前创建配置文件并进行参数设置，配置文件及日志路径建议参考[配置文件规则](sequoiafs/usage/mount.md#配置文件及日志路径规则)进行设置，以防止出现多次映射时互相覆盖的情况。
+首次挂载前先创建配置文件路径及日志路径，配置文件及日志路径建议参考[配置文件及日志路径规则](sequoiafs/usage/mount.md#配置文件及日志路径规则)进行设置，以防止出现多次映射时互相覆盖的情况。
 
 ```lang-bash
 $mkdir -p /opt/sequoiadb/mountpoint
@@ -46,21 +47,19 @@ $mkdir -p /opt/sequoiafs/log/foo_bar/001/
 $touch /opt/sequoiafs/conf/foo_bar/001/sequoiafs.conf
 ```
 
-####3、挂载目录 ####
+##挂载目录 ##
 
-挂载目录时，除了目标集合collection外，还需要指定一系列参数，具体参数选项详情请查看[选项](sequoiafs/usage/mount.md#选项)。
-。
+挂载目录时，除了目标集合 collection 外，还需要指定一系列参数，具体参数选项详情请查看[选项](sequoiafs/usage/mount.md#选项)。
 
-通过-i或者--hosts进行指定远程DB节点（协调节点），一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在远程DB节点上的目录元数据集合及文件元数据集合中，而文件内容会以lob的形式存放在目标集合下。目录元数据集合和文件元数据集合可以分别通过-d(或--metadircollection)和-f（或--metafilecollection）在进行指定，也可以直接通过指定--autocreate默认生成，该例指定默认生成。
+通过 -i 或者 --hosts 指定 SequoiaDB 的协调节点地址，挂载之后，mountpoint 目录下的所有文件的属性信息会存放在 SequoiaDB 上的目录元数据集合及文件元数据集合中，文件内容会以 lob 大对象的形式存放在目标集合下。目录元数据集合和文件元数据集合可以分别通过 -d（或--metadircollection）和 -f（或--metafilecollection）在进行指定，也可以直接通过指定 --autocreate 默认生成。
 
 ```lang-bash
 $sequoiafs /opt/sequoiadb/mountpoint -i localhost:11810 -l foo.bar --autocreate -c /opt/sequoiafs/conf/foo_bar/001/ --diagpath  /opt/sequoiafs/log/foo_bar/001/ -o big_writes -o max_write=131072 -o max_read=131072
 ```
-这里除了SequoiaFS相关参数，还指定了FUSE的参数-o big_writes（开启大页写），具体参数详情可以参见[FUSE选项](sequoiafs/usage/mount.md#FUSE选项)。
+这里除了 SequoiaFS 相关参数，还指定了 FUSE 的参数 -o big_writes（开启大页写），具体参数详情可以参见[FUSE选项](sequoiafs/usage/mount.md#FUSE选项)。
  
-
-####4、查看挂载信息 ####
-####4.1 本地FS节点通过mount可以看到挂载信息####
+##查看挂载信息 ##
+###通过 mount 可以看到挂载信息###
 
 ```lang-bash
 $ mount
@@ -77,9 +76,9 @@ none on /run/lock type tmpfs (rw,noexec,nosuid,nodev,size=5242880)
 none on /run/shm type tmpfs (rw,nosuid,nodev)
 sequoiafs on /opt/sequoiadb/mountpoint type fuse.sequoiafs (rw,nosuid,nodev,user=sdbadmin)
 ```
-可以看到，/opt/sequoiadb/mountpoint已经通过sequoiafs已经挂载上了，文件系统类型为fuse.sequoiafs。
+可以看到，目录 /opt/sequoiadb/mountpoint 已经通过 sequoiafs 命令已经挂载上了，文件系统类型为 fuse.sequoiafs。
 
-####4.2 在DB节点可以查看相关信息####
+###在 SequoiaDB 节点可以查看相关信息###
 
 ```lang-javascript
 > var db = new Sdb("localhost", 11810) 
@@ -102,8 +101,11 @@ Takes 0.001705s.
 }
 ```
 
-对于每次mount，可以通过以上5张表查看相关信息，后续会介绍各表的作用，sequoiafs.maphistory为映射挂载历史信息表，记录历史挂载的关键数据信息。  
+对于每次 mount，可以通过以上5张表查看相关信息，下面介绍各表的作用。 
 
+foo.bar 表存储文件内容。
+
+sequoiafs.maphistory 为映射挂载历史信息表，记录历史挂载的关键数据信息。  
 
 ```lang-javascript
 >  db.sequoiafs.maphistory.find()
@@ -128,13 +130,14 @@ Takes 0.001705s.
 |SourceCL   | 目标映射集合名称         |
 |DirMetaCL  | 目录元数据集合名称       |
 |FileMetaCL | 文件元数据集合名称       |
-|Address    | FS节点地址               |
-|MountPoint | FS节点挂载时的目录       |
-sequoiafs.sequenceid为目录元数据中目录记录的id序列表，目的用于构造目录的唯一性。  
+|Address    | 挂载目录所在的主机地址   |
+|MountPoint | 挂载目录的全路径         |
 
-sequoiafs.bar_dir148139183721030和sequoiafs.bar_file148139183721030分别为目录和文件的元数据集合表，由于SequoiaFS启动挂载时指定了--autocreate，所以这里是默认生成的，用以记录FS挂载目录下的目录和文件信息。
+sequoiafs.sequenceid 为目录元数据中目录记录的id序列表，目的用于构造目录的唯一性。  
 
-####4.3 在FS节点挂载目录下创建文件和目录####
+sequoiafs.bar_dir148139183721030 和 sequoiafs.bar_file148139183721030 分别为目录和文件的元数据集合表，由于 SequoiaFS 启动挂载时指定了 --autocreate，所以这里是默认生成的，用以记录 SequoiaFS 挂载目录下的目录和文件信息。
+
+###挂载目录下创建文件和子目录###
 
 ```lang-bash
 $ cd /opt/sequoiadb/mountpoint/
@@ -146,7 +149,7 @@ $ mkdir testdir
 $ ls
 testdir  testfile
 ``` 
-上面我们在FS挂载目录下创建了文件testfile并写入'hello, this is a testfile!'，并创建了子目录testdir。在DB节点查看目录元数据集合，可以查到testdir目录元数据信息记录。
+上面我们在挂载目录下创建了文件 testfile 并写入'hello, this is a testfile!'，并创建了子目录 testdir。通过 SequoiaDB shell 查看目录元数据集合，可以查到testdir目录元数据信息记录。
 
 ```lang-javascript
 > db.sequoiafs.bar_dir148139183721030.find()
@@ -188,8 +191,7 @@ Takes 0.019212s.
 |AccessTime | 访问时间                 |长整数|
 |SymLink    | 软链接                  |字符串|
 
-
-DB节点查看文件元数据集合，可以查到testfile文件元数据信息记录。  
+通过 SequoiaDB shell 查看文件元数据集合，可以查到 testfile 文件元数据信息记录。  
 
 ```lang-javascript
 > db.sequoiafs.bar_file148139183721030.find()
@@ -228,6 +230,7 @@ Takes 0.010137s.
   "HasPiecesInfo": false
 }
 ```
+
 文件元数据信息具体含义如下：
 
 |记录名称   | 描述说明                |数据类型|
@@ -246,19 +249,19 @@ Takes 0.010137s.
 |AccessTime | 访问时间                |长整数|
 |SymLink    | 软链接                  |字符串|
 
-从上表可以看出，文件元数据和目录元数据大致相同，不同的是，文件实际对应着一个Lob文件（通过LobOid映射到该文件），以保存文件的实际内容。并且文件没有ID属性，因为文件只从属于某个目录，所以只需要PID属性。
+从上表可以看出，文件元数据和目录元数据大致相同，不同的是，文件实际对应着一个Lob 文件（通过 LobOid 映射到该文件），以保存文件的实际内容。并且文件没有 ID 属性，因为文件只从属于某个目录，所以只需要 PID 属性。
 
 >**注意**  
->以上5张表使用时，最好通过SequoiaFS映射目录进行操作，如果需要通过DB客户端进行操作时，变更元数据信息时，数据结构要符合以上表格中的各记录数据类型，否则FS文件系统会读取异常。
+>以上5张表虽然可以通过 SequoiaDB shell查看，但正常使用应通过 SequoiaFS 进行操作以保证数据的规范性和数据表之间数据的一致性，如果有必要的原因需要通过 SequoiaDB shell 变更元数据信息时，数据结构一定要符合以上表格中的各记录数据类型，否则 SequoiaFS 文件系统会读取异常。
 
-接下来，即可在/opt/sequoiadb/mountpoint/目录下进行一系列文件操作，如创建删除文件，写入读取文件以及修改文件属性等。
+接下来，即可在 /opt/sequoiadb/mountpoint/ 目录下进行一系列文件操作，如创建、删除、写入、读取文件以及修改文件属性等。
 
 >**说明**  
->关于系统命令，支持基于以上接口的一些常见系统命令如mkdir、vi、cp、rm、touch、cat、mv、ln、chown、chmod、truncate、tar等，超出以上接口之外的系统命令暂时不支持，如unzip压缩等命令。    
+>关于系统命令，支持基于以上接口的一些常见系统命令如 mkdir、vi、cp、rm、touch、cat、mv、ln、chown、chmod、truncate、tar 等，超出以上接口之外的系统命令暂时不支持，如 unzip 压缩等命令。    
 
  
-###选项###
-####通用选项####
+##选项##
+###通用选项###
 | 参数                 |缩写| 描述                                                                                   | 默认值          | 是否必填 | 
 |----------------------|----|----------------------------------------------------------------------------------------|-----------------|----------|  
 |--help                | -h | 显示帮助信息                                                                           |                 |          |  
@@ -280,13 +283,13 @@ Takes 0.010137s.
 |--autocreate          |    | 如果未显示指定文件和目录元数据集合全名，即未指定-d和-f，<br>则需要指定该选项进行自动生成 |               | 否       |  
 |mountpoint            |    | 指定映射集合的目标挂载目录                                                             |                 | 是       |  
   
-首次启动时，其中-l collection参数和mountpoint是必须指定的，collection为需要映射的目标集合名称，为目标SequoiaDB节点中创建的集合，需要提前在DB中创建好。
+首次启动时，其中 -l collection 参数和 mountpoint 是必须指定的，collection 为需要映射的目标集合名称，需要提前在 SequoiaDB 中创建好。
 
-目标SequoiaDB节点可以通过-i或者--hosts进行指定，一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在目标SequoiaDB节点上的目录元数据集合及文件元数据集合中，文件内容会以lob的形式存放在目标集合下。
+目标 SequoiaDB 可以通过 -i 或者 --hosts 进行指定，一旦挂载之后，mountpoint 目录下的所有文件的属性信息会存放在目标 SequoiaDB 上的目录元数据集合及文件元数据集合中，文件内容会以 lob 的形式存放在目标集合下。
 
-目录元数据集合和文件元数据分别可以通过-d(或--metadircollection)和-f（或--metafilecollection）在启动时进行指定，也可以直接通过指定--autocreate默认生成。手工创建时，需要为目录元数据集合创建一个强一致唯一索引，索引字段为 {Name:1, Pid:1}。为文件元数据集合创建两个强一致唯一索引，索引字段分别为 {Name:1, Pid:1} 和 {LobOid:1}。
+目录元数据集合和文件元数据分别可以通过 -d（或--metadircollection）和 -f（或--metafilecollection）在启动时进行指定，也可以直接通过指定 --autocreate 默认生成。手工创建时，需要为目录元数据集合创建一个强一致唯一索引，索引字段为 {Name:1, Pid:1}。为文件元数据集合创建两个强一致唯一索引，索引字段分别为 {Name:1, Pid:1} 和 {LobOid:1}。
 
-####FUSE选项####
+### FUSE 选项###
 | 参数                    | 描述  
 |-------------------------|-----------------------------------------
 |-d –o debug              | 启用调试输出（隐含-f选项）             |
@@ -325,13 +328,12 @@ Takes 0.010137s.
 |-o no_remote_lock        | 关闭远程文件锁                         |
     
 >**说明:**   
->1、sequoiafs对于fuse选项只需要关注allow_other、allow_root、large_read、max_read、max_write、big_writes等常见选项即可；   
->2、需要指定allow_other时，需要在/etc/fuse.conf配置中写入对应的配置项，如在/etc/fuse.conf插入一行"user_allow_other"，其他类似，具体可以查看fuse的使用方法；  
->3、初始化时最好带上参数-o big_writes和-o large_read, 指定大页读写以提升性能；   
+>1、sequoiafs 对于 fuse 选项只需要关注 allow_other、allow_root、large_read、max_read、max_write、big_writes 等常见选项即可   
+>2、需要指定 allow_other 时，需要在 /etc/fuse.conf 配置中写入对应的配置项，如在 /etc/fuse.conf 插入一行"user_allow_other"，其他类似，具体可以查看 fuse 的使用方法  
+>3、初始化时最好带上参数 -o big_writes和-o large_read, 指定大页读写以提升性能   
 
 ###配置文件及日志路径规则###
-因为SequoiaFS在同一个节点可以挂载映射同一套DB或者不同套DB的同一个目标集合或者不同目标集合，所以在创建配置文件及指定日志路径时，建议参考以下规则进行配置，以防止出现配置文件互相干扰覆盖或者日志文件互相覆盖的情况。     
-
+在一台服务器上，SequoiaFS 可以执行多次，将多个目录挂载映射到不同 SequoiaDB 或者相同 SequoiaDB 的同一个目标集合或者不同目标集合，所以在创建配置文件及指定日志路径时，建议参考以下规则进行配置，以防止出现配置文件互相干扰覆盖或者日志文件互相覆盖的情况。     
 配置文件路径及日志文件路径参考规则： 
 
 ```lang-bash
@@ -340,11 +342,11 @@ Takes 0.010137s.
 /opt/sequoiafs/conf/collection/002/sequoiafs.conf
 /opt/sequoiafs/log/collection/002/diaglog/sequoiafs.log 
 ```
-collection即SequoiaFS启动时指定的目标集合实际名称，001和002表示挂载映射次数，从而防止映射同一个目标映射集合时日志文件互相覆盖。
+collection 即 SequoiaFS 执行时指定的目标集合实际名称，001和002表示挂载映射次数，不同挂载目录对应不同的配置文件和日志文件，从而防止映射相同名称目标集合时日志文件互相覆盖。
 
 配置样本文件：  
 
-如果SequoiaFS是通过run包进行安装的，则可以从安装目录conf/samples/下拷贝配置文件样本sequoiafs.conf到指定的配置路径下。否则可以通过手工创建sequoiafs.conf，并根据需要写入以下配置内容，参数具体值根据实际情况写入，不进行配置的参数可以不用写入进配置文件中，以下为SequoiaFS配置文件样本内容：  
+如果 SequoiaFS 是通过 run 包进行安装的，则可以从安装目录 conf/samples/ 下拷贝配置文件样本 sequoiafs.conf 到指定的配置路径下。如果不是通过 run 包安装，则可以手工创建 sequoiafs.conf ，并根据需要写入以下配置内容，参数具体值根据实际情况写入，不进行配置的参数可以不用写入进配置文件中，以下为 SequoiaFS 配置文件样本内容：  
 
 ```lang-ini
 # Coord addr (hostname1:servicename1,hostname2:servicename2,...)
@@ -382,18 +384,17 @@ diagnum=20
 
 # Diagnostic log file path
 diagpath=
-
 ```
 
-###API接口###
-SequoiaFS现支持以下文件操作API：
+## API 接口##
+SequoiaFS 现支持以下文件操作 API：
 
 |接口函数   | 参数                     | 描述          
 |-----------|--------------------------|-----------------------------------------------------------------------------------------------------------
 |opendir()  | const char *name         | 打开目录文件                                                                                             |
 |readdir()  | DIR *dir                 | 读取目录文件                                                                                             |
 |closedir() | DIR *dir                 | 关闭目录文件                                                                                             |
-|open()     | const char *pathname     | 创建或打开一个文件，flags只支持O_RDONLY, O_WRONLY, O_CREATE, <br>其他报错。忽略可选参数mode，默认权限644。 |
+|open()     | const char *pathname     | 创建或打开一个文件，flags 只支持O_RDONLY, O_WRONLY, O_CREATE, <br>其他报错。忽略可选参数 mode，默认权限644。 |
 |           | int flags                |                                                                                                          |
 |           | [mode_t mode]            |                                                                                                          |
 |close()    | int fd                   | 关闭文件                                                                                                 |
@@ -414,9 +415,9 @@ SequoiaFS现支持以下文件操作API：
 |link()     | const char *oldpath      | 创建链接文件（硬链接）                                                                                   |
 |           | const char *newpath      |                                                                                                          |
 |unlink()   | const char * pathname    | 删除指定文件，如果该文件为最后的链接点，则文件会被删除。<br>如果为符号链接，则链接删除。                 |
-|symlink()  | const char *oldpath      | 创建符号链接文件, oldpath指定文件允许不存在。                                                            |
+|symlink()  | const char *oldpath      | 创建符号链接文件, oldpath 指定文件允许不存在。                                                            |
 |           | const char *newpath      |                                                                                                          |
-|truncate() | const char *pathname     | 截取文件内容，将path指定的文件大小改为参数length的大小，<br>如果原来文件比length大，则超过的部分会被删除。|
+|truncate() | const char *pathname     | 截取文件内容，将 path 指定的文件大小改为参数 length 的大小，<br>如果原来文件比 length 大，则超过的部分会被删除。|
 |           | off_t length             |                                                                                                          |
 |mkdir()    | const char *pathname     | 创建目录文件                                                                                             |
 |           | mode_t  mode             |                                                                                                          |
@@ -427,8 +428,8 @@ SequoiaFS现支持以下文件操作API：
 |           | mode_t mode              |
 
 
-###API使用实例###
-下面实例演示了通过API在mountpoint目录下简单地创建了一个testfile文件并写入testdata内容。  
+##API使用实例##
+下面实例演示了通过 API 在 mountpoint 目录下简单地创建了一个 testfile 文件并写入 testdata 内容。  
 
 ```lang-c++
 #include <stdio.h>
