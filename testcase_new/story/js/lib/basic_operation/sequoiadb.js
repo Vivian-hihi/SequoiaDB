@@ -467,6 +467,33 @@ function Sequoiadb ( hostname, svcname, username, password )
          }
       }
 
+   this.deleteConf = 
+      function( config, options )
+      {
+         if( options === undefined ) { options = {}; }
+         try
+         {
+            db.deleteConf( config, options );
+         }
+         catch( e )
+         {
+            throw new Error( e );
+         }
+      }
+
+   this.invalidateCache = 
+      function()
+      {
+         try
+         {
+            db.invalidateCache();
+         }
+         catch( e )
+         {
+            throw new Error( e );
+         }
+      }
+
    this.list =
       function( listType, cond, sel, sort )
       {
