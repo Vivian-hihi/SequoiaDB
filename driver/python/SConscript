@@ -216,9 +216,8 @@ else:
     act = []
     act.append("mv ./pysequoiadb/libsdb.so ./pysequoiadb/sdb.so")
     act.append("mv ./bson/libdecimal.so ./bson/bsondecimal.so")
-    act.append("tar -zcvf %s \
-               ./bson ./pysequoiadb ./setup.py ./version.py \
-               --exclude-vcs" % package_name)
+    act.append("tar --exclude-vcs -zcvf %s \
+               ./bson ./pysequoiadb ./setup.py ./version.py" % package_name)
     run = env.Command(target=None, source=base, action=act)
 env.Depends(run, base)
 env.AlwaysBuild(run)
