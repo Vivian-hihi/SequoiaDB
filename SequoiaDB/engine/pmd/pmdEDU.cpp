@@ -84,8 +84,8 @@ namespace engine
       _pmdEDUCB implement
    */
    _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, INT32 type )
-   :_dumpTransCount( 0 ),
-    _mutex( MON_LATCH_PMDEDUCB_MUTEX )
+   :_mutex( MON_LATCH_PMDEDUCB_MUTEX ),
+    _dumpTransCount( 0 )
 #if defined ( SDB_ENGINE )
     ,_transExecutor( this, pmdGetKRCB()->getMonMgr() )
 #endif // SDB_ENGINE

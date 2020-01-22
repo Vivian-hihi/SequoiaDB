@@ -193,8 +193,8 @@ public:
    MON_LATCH_IDENTIFIER latchID ;
    UINT32 xOwnerTID ;
    UINT32 lastSOwnerTID ;
-   INT32 numXOwner ;
    ossAtomic32 numSOwner ;
+   INT32 numXOwner;
 } ;
 
 class monRWMutex : public ossRWMutexBase
