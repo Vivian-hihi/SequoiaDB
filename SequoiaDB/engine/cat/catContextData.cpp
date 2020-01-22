@@ -351,8 +351,8 @@ namespace engine
 
          if ( cataSet.isMainCL() )
          {
-            std::vector< std::string > subCLLst;
-            std::vector< std::string >::iterator iterSubCL;
+            CLS_SUBCL_LIST subCLLst;
+            CLS_SUBCL_LIST_IT iterSubCL;
 
             rc = cataSet.getSubCLList( subCLLst );
             PD_RC_CHECK( rc, PDERROR,
@@ -506,8 +506,8 @@ namespace engine
 
          if ( cataSet.isMainCL() )
          {
-            std::vector< std::string > subCLLst ;
-            std::vector< std::string >::iterator iterSubCL ;
+            CLS_SUBCL_LIST subCLLst ;
+            CLS_SUBCL_LIST_IT iterSubCL ;
 
             rc = cataSet.getSubCLList( subCLLst );
             PD_RC_CHECK( rc, PDERROR,
@@ -861,8 +861,8 @@ namespace engine
 
          if ( cataSet.isMainCL() )
          {
-            std::vector< std::string > subCLLst;
-            std::vector< std::string >::iterator iterSubCL;
+            CLS_SUBCL_LIST subCLLst;
+            CLS_SUBCL_LIST_IT iterSubCL;
 
             rc = cataSet.getSubCLList( subCLLst );
             PD_RC_CHECK( rc, PDERROR,
@@ -2143,8 +2143,8 @@ namespace engine
          if ( cataSet.isMainCL() )
          {
             // For main-collection
-            std::vector< std::string > subCLLst;
-            std::vector< std::string >::iterator iterSubCL;
+            CLS_SUBCL_LIST subCLLst;
+            CLS_SUBCL_LIST_IT iterSubCL;
 
             rc = cataSet.getSubCLList( subCLLst );
             PD_RC_CHECK( rc, PDERROR,
@@ -2432,14 +2432,14 @@ namespace engine
 
          if ( cataSet.isMainCL() )
          {
-            vector< string > subCLList ;
-            vector< string >::iterator iterSubCL ;
+            CLS_SUBCL_LIST subCLList ;
+            CLS_SUBCL_LIST_IT iterSubCL ;
 
             rc = cataSet.getSubCLList( subCLList );
             PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
                          "collection[%s], rc: %d", _targetName.c_str(), rc ) ;
 
-            for ( vector< string >::iterator iterSubCL = subCLList.begin() ;
+            for ( iterSubCL = subCLList.begin() ;
                   iterSubCL != subCLList.end() ;
                   iterSubCL ++ )
             {
@@ -2921,9 +2921,9 @@ namespace engine
 
          if ( cataSet.isMainCL() )
          {
-            vector< string > subCLList ;
+            CLS_SUBCL_LIST subCLList ;
             const rtnAlterTask * alterTask = catTask->getTask() ;
-            vector< string >::iterator iterSubCL ;
+            CLS_SUBCL_LIST_IT iterSubCL ;
 
             PD_CHECK( alterTask->testFlags( RTN_ALTER_TASK_FLAG_MAINCLALLOW ),
                       SDB_OPTION_NOT_SUPPORT, error, PDERROR,
@@ -2935,7 +2935,7 @@ namespace engine
                          "Failed to get sub-collection list of collection [%s],"
                          " rc: %d", collectionName.c_str(), rc ) ;
 
-            for ( vector< string >::iterator iterSubCL = subCLList.begin() ;
+            for ( iterSubCL = subCLList.begin() ;
                   iterSubCL != subCLList.end() ;
                   iterSubCL ++ )
             {
