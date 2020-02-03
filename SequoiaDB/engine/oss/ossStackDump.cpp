@@ -46,6 +46,42 @@
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 
+// For power and arm systems, there are 31 general purpose registers. No macros
+// defined in their headers. So do it here.
+#if defined (_PPCLIN64) || defined (_ARMLIN64)
+#define REG_R0   0
+#define REG_R1   1
+#define REG_R2   2
+#define REG_R3   3
+#define REG_R4   4
+#define REG_R5   5
+#define REG_R6   6
+#define REG_R7   7
+#define REG_R8   8
+#define REG_R9   9
+#define REG_R10  10
+#define REG_R11  11
+#define REG_R12  12
+#define REG_R13  13
+#define REG_R14  14
+#define REG_R15  15
+#define REG_R16  16
+#define REG_R17  17
+#define REG_R18  18
+#define REG_R19  19
+#define REG_R20  20
+#define REG_R21  21
+#define REG_R22  22
+#define REG_R23  23
+#define REG_R24  24
+#define REG_R25  25
+#define REG_R26  26
+#define REG_R27  27
+#define REG_R28  28
+#define REG_R29  29
+#define REG_R30  30
+#endif /* (_PPCLIN64) || (_ARMLIN64) */
+
 #if defined (_LINUX)
 #include <sys/prctl.h>
 #include <dlfcn.h>
@@ -473,40 +509,157 @@ exit :
    }
    PD_TRACE_EXIT ( SDB_OSSGETSYMBNFA );
 }
-
 #if defined ( _ARMLIN64 )
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO0, "ossDumpRegistersInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO5, "ossDumpRegistersInfo" )
 void ossDumpRegistersInfo( ossSignalContext pContext,
-                           ossPrimitiveFileOp *trapFile )
+                           ossPrimitiveFileOp * trapFile )
 {
-   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO0 );
+   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO5 );
+   UINT64 *r = NULL ;
+   mcontext_t *mctx = &(pContext->uc_mcontext) ;
 
    if ( ( NULL != trapFile ) && trapFile->isValid() )
    {
-      trapFile->Write ("Unable to dump registers in ARM"OSS_NEWLINE) ;
+      if ( NULL != pContext )
+      {
+         // Ther are 31 general purpose register in arm.
+         // Register '31' is one of two registers depending on the instruction
+         // context:
+         // (1) For instructions dealing with the stack, it is the stack
+         //     pointer, named rsp
+         // (2) For all other instructions, it is a "zero" register, which
+         //     returns 0 when read and discards data when written -- named rzr
+         //     (xzr, wzr)
+         r = mctx->regs ;
+         trapFile->fWrite( "X0 0x%016lx   X1 0x%016lx  X2 0x%016lx  X3 0x%016lx"OSS_NEWLINE
+                           "X4 0x%016lx   X5 0x%016lx  X6 0x%016lx  X7 0x%016lx"OSS_NEWLINE
+                           "X8 0x%016lx   X9 0x%016lx  X10 0x%016lx X11 0x%016lx"OSS_NEWLINE
+                           "X12 0x%016lx  X13 0x%016lx X14 0x%016lx X15 0x%016lx"OSS_NEWLINE
+                           "X16 0x%016lx  X17 0x%016lx X18 0x%016lx X19 0x%016lx"OSS_NEWLINE
+                           "X20 0x%016lx  X21 0x%016lx X22 0x%016lx X23 0x%016lx"OSS_NEWLINE
+                           "X24 0x%016lx  X25 0x%016lx X26 0x%016lx X27 0x%016lx"OSS_NEWLINE
+                           "X28 0x%016lx  X29 0x%016lx X30 0x%016lx "OSS_NEWLINE
+                           "RSP/XZR 0x%016lx RIP 0x%016lx"OSS_NEWLINE,
+                           r[REG_R0],  r[REG_R1],  r[REG_R2],  r[REG_R3],
+                           r[REG_R4],  r[REG_R5],  r[REG_R6],  r[REG_R7],
+                           r[REG_R8],  r[REG_R9],  r[REG_R10], r[REG_R11],
+                           r[REG_R12], r[REG_R13], r[REG_R14], r[REG_R15],
+                           r[REG_R16], r[REG_R17], r[REG_R18], r[REG_R19],
+                           r[REG_R20], r[REG_R21], r[REG_R22], r[REG_R23],
+                           r[REG_R24], r[REG_R25], r[REG_R26], r[REG_R27],
+                           r[REG_R28], r[REG_R29], r[REG_R30],
+                           mctx->sp, mctx->pc ) ;
+      }
+      else
+      {
+         trapFile->Write ("Unable to dump registers"OSS_NEWLINE) ;
+      }
    }
-
-   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO0 );
+   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO5 );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST0, "ossDumpStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST5, "ossDumpStackTrace" )
 void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 {
-   PD_TRACE_ENTRY ( SDB_OSSDUMPST0 );
+   PD_TRACE_ENTRY ( SDB_OSSDUMPST5 );
+   void *syms[ OSS_MAX_BACKTRACE_FRAMES_SUPPORTED ] ;
+   CHAR  mCode[ OSS_MCODE_LEN ] ;
+   mcontext_t *mctx = &( ( ( ossSignalContext)scp )->uc_mcontext ) ;
+   UINT64 *rip = (UINT64 *)( mctx->pc ) ;
+   UINT64 * const rsp = (UINT64 *)( mctx->sp ) ;
+   Dl_info dlip ;
+
    if ( ( NULL != trapFile ) && trapFile->isValid() )
    {
+      // Dump date
       ossDumpSystemTime ( trapFile ) ;
+      // Dump database release
       ossDumpDatabaseInfo ( trapFile ) ;
+      // Dump system info
       ossDumpSystemInfo( trapFile ) ;
-      trapFile->Write ("Unable to dump signals and registers in ARM"
-                       OSS_NEWLINE) ;
+
+      // Dump signal info
+      ossDumpSigInfo( sigcode, trapFile  ) ;
+
+      // Dump register info
+      ossDumpRegistersInfo( ( ossSignalContext )scp, trapFile ) ;
+
+      // Dump the instructions at the point of failure.
+      trapFile->Write( OSS_NEWLINE "Point of failure:"OSS_NEWLINE ) ;
+      if ( NULL == sigcode )
+      {
+         trapFile->Write( "Unable to provide disassembly information for "
+                          "the point of faliure due to signal info pointer "
+                          "is NULL"OSS_NEWLINE ) ;
+      }
+      else
+      {
+         if ( sigcode->si_addr != rip )
+         {
+            // point of failure disassembly info
+            trapFile->fWrite( "0x"OSS_PRIXPTR " ", (UINT32_64)rip ) ;
+            ossFuncAddrToName( (void *)rip, trapFile ) ;
+            trapFile->fWrite( OSS_NEWLINE"0x"OSS_PRIXPTR " : %s",
+                              rip,
+                              ossMachineCode( *((UINT32*)rip), mCode ) );
+            trapFile->fWrite( "%s"OSS_NEWLINE,
+                              ossMachineCode( *((UINT32*)( rip+4 )),
+                                              mCode ) ) ;
+
+            // Dump stack frames from the point of failure to the bottom of
+            // the stack ( actually OSS_MAX_BACKTRACE_FRAMES_SUPPORTED maximum )
+            trapFile->Write(
+               OSS_NEWLINE"StackTrace:"OSS_NEWLINE
+               "-----Address----- ----Function name + Offset---"OSS_NEWLINE);
+            INT32 cnt = backtrace( syms, OSS_MAX_BACKTRACE_FRAMES_SUPPORTED ) ;
+            for ( INT32 i = 0 ; i < cnt ; i++ )
+            {
+               trapFile->fWrite( "0x"OSS_PRIXPTR " ", (UINT32_64)syms[i] ) ;
+               ossFuncAddrToName( syms[i], trapFile ) ;
+            }
+         }
+         else
+         {
+            // the signal address ( where falut occurred ) is equal to
+            // return address ( rip ) may imply the signal is caused
+            // by a call through a bad function pointer, or corrupted
+            // return address on the stack.
+
+            // attempt to use rsp here.
+            if ( dladdr( (void *)rsp, &dlip ) )
+            {
+               // point of failure disassembly info
+               trapFile->fWrite( OSS_NEWLINE"0x"OSS_PRIXPTR " : %s",
+                                 rsp,
+                                 ossMachineCode( *((UINT32*)rsp),
+                                                 mCode ) ) ;
+               trapFile->fWrite( "%s"OSS_NEWLINE,
+                                 ossMachineCode( *((UINT32*)(rsp+4)),
+                                                 mCode ) ) ;
+               trapFile->Write(
+                  OSS_NEWLINE"StackTrace:"OSS_NEWLINE
+                  "-----Address----- ----Function name + Offset---"OSS_NEWLINE);
+               trapFile->fWrite( "0x"OSS_PRIXPTR " [RSP]", rsp ) ;
+               ossFuncAddrToName( (void *)rsp, trapFile ) ;
+            }
+            else
+            {
+               trapFile->Write( "Signal address is equal to "
+                                "instruction pointer( rip )and the valid "
+                                "return address could not be determined."OSS_NEWLINE ) ;
+               trapFile->Write( OSS_NEWLINE"StackTrace:"OSS_NEWLINE
+                                "Unable to provide stack trace info due to "
+                                "above reason"OSS_NEWLINE ) ;
+            }
+            // another thought could be dump raw stack info for
+            // advanced users reference.
+         }
+      }
    }
-   PD_TRACE_EXIT ( SDB_OSSDUMPST0 );
+   PD_TRACE_EXIT ( SDB_OSSDUMPST5 );
 }
 
 #elif defined ( _LIN64 )
-
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO, "ossDumpRegistersInfo" )
 void ossDumpRegistersInfo( ossSignalContext pContext,
@@ -648,38 +801,7 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
    }
    PD_TRACE_EXIT ( SDB_OSSDUMPST );
 }
-/*
-#elif defined ( _ARMLIN32 )
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO2, "ossDumpRegistersInfo" )
-void ossDumpRegistersInfo( ossSignalContext pContext,
-                           ossPrimitiveFileOp *trapFile )
-{
-   PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO2 );
-
-   if ( ( NULL != trapFile ) && trapFile->isValid() )
-   {
-      trapFile->Write ("Unable to dump registers in ARM"OSS_NEWLINE) ;
-   }
-
-   PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO2 );
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST2, "ossDumpStackTrace" )
-void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
-{
-   PD_TRACE_ENTRY ( SDB_OSSDUMPST2 );
-   if ( ( NULL != trapFile ) && trapFile->isValid() )
-   {
-      ossDumpSystemTime ( trapFile ) ;
-      ossDumpDatabaseInfo ( trapFile ) ;
-      ossDumpSystemInfo( trapFile ) ;
-      trapFile->Write ("Unable to dump signals and registers in ARM"
-                        OSS_NEWLINE) ;
-   }
-   PD_TRACE_EXIT ( SDB_OSSDUMPST2 );
-}
-*/
 #elif defined (_LIN32)
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO3, "ossDumpRegistersInfo" )
@@ -780,39 +902,6 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 }
 #elif defined (_PPCLIN64)
 typedef unsigned long greg_t ;
-#define REG_R0   0
-#define REG_R1   1
-#define REG_R2   2
-#define REG_R3   3
-#define REG_R4   4
-#define REG_R5   5
-#define REG_R6   6
-#define REG_R7   7
-#define REG_R8   8
-#define REG_R9   9
-#define REG_R10  10
-#define REG_R11  11
-#define REG_R12  12
-#define REG_R13  13
-#define REG_R14  14
-#define REG_R15  15
-#define REG_R16  16
-#define REG_R17  17
-#define REG_R18  18
-#define REG_R19  19
-#define REG_R20  20
-#define REG_R21  21
-#define REG_R22  22
-#define REG_R23  23
-#define REG_R24  24
-#define REG_R25  25
-#define REG_R26  26
-#define REG_R27  27
-#define REG_R28  28
-#define REG_R29  29
-#define REG_R30  30
-#define REG_R31  31
-
 #define REG_NIP  32
 #define REG_MSR  33
 #define REG_ORIG_R3 34
