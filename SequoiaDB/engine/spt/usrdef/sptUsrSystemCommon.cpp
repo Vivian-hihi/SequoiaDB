@@ -669,7 +669,9 @@ namespace engine
       _ossCmdRunner runner ;
       string outStr ;
       BSONObjBuilder builder ;
-#if defined (_PPCLIN64)
+#if defined(_ARMLIN64)
+   #define CPU_CMD "cat /proc/cpuinfo | grep -E 'model name'"
+#elif defined (_PPCLIN64)
    #define CPU_CMD "cat /proc/cpuinfo | grep -E 'processor|cpu|clock|machine'"
 #else
    #define CPU_CMD "cat /proc/cpuinfo | grep -E 'model name|cpu MHz|cpu cores|physical id'"
@@ -3745,7 +3747,92 @@ namespace engine
 
 
 #if defined (_LINUX)
-   #if defined (_PPCLIN64)
+   #if defined (_ARMLIN64)
+   INT32 _sptUsrSystemCommon::_extractCpuInfo( const CHAR *buf,
+                                               BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 coreNum = 0 ;
+      string strModelName = "model name" ;
+      string modelName ;
+      vector<string> splited ;
+      vector<string>::iterator iter ;
+      BSONArrayBuilder arrBuilder ;
+
+      try
+      {
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\n" ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
+         goto error ;
+      }
+
+      for ( iter = splited.begin(); iter != splited.end(); )
+      {
+         if( iter->empty() )
+         {
+            iter = splited.erase( iter ) ;
+         }
+         else
+         {
+            ++iter ;
+         }
+      }
+
+      for ( iter = splited.begin(); iter != splited.end(); ++iter )
+      {
+         // *iter is in the format of "xxx : xx", so let's
+         // split it with ":"
+         vector<string> columns ;
+         vector<string>::iterator iter2 ;
+
+         try
+         {
+            boost::algorithm::split( columns, *iter, boost::is_any_of(":") ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
+            goto error ;
+         }
+
+         for ( iter2 = columns.begin(); iter2 != columns.end(); ++iter2 )
+         {
+            boost::algorithm::trim( *iter2 ) ;
+         }
+
+         if ( strModelName == columns.at( 0 ) )
+         {
+            if ( modelName.empty() )
+            {
+               modelName = columns.at( 1 ) ;
+            }
+         }
+         else
+         {
+            continue ;
+         }
+
+         ++coreNum ;
+      }
+
+      arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum <<
+                          CMD_USR_SYSTEM_INFO << modelName ) ;
+
+      builder.append( CMD_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   #elif defined (_PPCLIN64)
    INT32 _sptUsrSystemCommon::_extractCpuInfo( const CHAR *buf,
                                               BSONObjBuilder &builder )
    {
