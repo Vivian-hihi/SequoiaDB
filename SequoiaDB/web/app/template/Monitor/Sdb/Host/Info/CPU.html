@@ -52,7 +52,8 @@
                      <tr>
                         <td style="font-weight:bold;">{{autoLanguage("主频")}}</td>
                         <td>
-                           <div class="Ellipsis">{{CPUInfo['Freq']}}GHz</div>
+                           <div class="Ellipsis" ng-if="CPUInfo.Freq != '-'">{{CPUInfo['Freq']}}GHz</div>
+                           <div class="Ellipsis" ng-if="CPUInfo.Freq == '-'">{{CPUInfo['Freq']}}</div>
                         </td>
                      </tr>
                      <tr>

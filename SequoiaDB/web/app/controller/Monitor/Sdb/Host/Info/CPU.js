@@ -44,7 +44,15 @@
                if( hostInfo.length > 0 )
                {
                   $.each( hostInfo[0]['CPU'], function( index, cpuInfo ){
-                     cpuInfo['Freq'] = parseFloat( cpuInfo['Freq'].substr(0,4) ) ;
+                     if( typeof( cpuInfo['Freq'] ) == 'undefined' )
+                     {
+                        cpuInfo['Freq'] = '-' ;
+                     }
+                     else
+                     {
+                        cpuInfo['Freq'] = parseFloat( cpuInfo['Freq'].substr(0,4) ) ;
+                     }
+
                      //数据暂无，待补充
                      cpuInfo['L1Cache'] = '-' ;
                      cpuInfo['L2Cache'] = '-' ;
