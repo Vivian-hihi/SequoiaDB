@@ -362,12 +362,19 @@ function _getInstallInfo()
               File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
          {
             var cmd = new Cmd() ;
-            var result = cmd.run( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl', '--version' ) ;
+            var str = cmd.run( 'cat', config['INSTALL_DIR'] + '/version.info' ) ;
+            var lines = str.split( "\n" ) ;
+            var versionInfo = lines[0].split( ":" ) ;
 
-            result = result.replace( /[\r]/g, '' ) ;
-            result = result.replace( /[\n]/g, '' ) ;
+            if( versionInfo.length == 2 )
+            {
+               pkgInfo['Version'] = versionInfo[1].trim() ;
+            }
+            else
+            {
+               pkgInfo['Version'] = versionInfo[0].trim() ;
+            }
 
-            pkgInfo['Version'] = result ;
             pkgInfo['SdbUser'] = config['USER'] ;
             pkgInfo['Path']    = config['INSTALL_DIR'] ;
 
@@ -382,12 +389,19 @@ function _getInstallInfo()
               File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
          {
             var cmd = new Cmd() ;
-            var result = cmd.run( 'cat', config['INSTALL_DIR'] + '/version.info' ) ;
+            var str = cmd.run( 'cat', config['INSTALL_DIR'] + '/version.info' ) ;
+            var lines = str.split( "\n" ) ;
+            var versionInfo = lines[0].split( ":" ) ;
 
-            result = result.replace( /[\r]/g, '' ) ;
-            result = result.replace( /[\n]/g, '' ) ;
+            if( versionInfo.length == 2 )
+            {
+               pkgInfo['Version'] = versionInfo[1].trim() ;
+            }
+            else
+            {
+               pkgInfo['Version'] = versionInfo[0].trim() ;
+            }
 
-            pkgInfo['Version'] = result ;
             pkgInfo['SdbUser'] = config['USER'] ;
             pkgInfo['Path']    = config['INSTALL_DIR'] ;
 
