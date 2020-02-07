@@ -342,7 +342,6 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          else
          {
             bob.append( "ok", TRUE ) ;
-            bob.appendNull( "err" ) ;
          }
 
          _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
@@ -597,6 +596,21 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
        handled = TRUE ;
        fap::mongo::buildPingReplyMsg( _contextBuff ) ;
    }
+   else if ( OP_CMD_WHATSMYURI == parser.currentOption() )
+   {
+       handled = TRUE ;
+       fap::mongo::buildWhatsmyuriReplyMsg( buff ) ;
+   }
+   else if ( OP_CMD_BUILDINFO == parser.currentOption() )
+   {
+       handled = TRUE ;
+       fap::mongo::buildBuildinfoReplyMsg( buff ) ;
+   }
+   else if ( OP_CMD_GETLOG == parser.currentOption() )
+   {
+       handled = TRUE ;
+       fap::mongo::buildGetLogReplyMsg( buff ) ;
+   }
 
    if ( handled )
    {
@@ -710,7 +724,50 @@ void _mongoSession::_handleResponse( const INT32 opType,
       bob.appendElements( sdbRes ) ;
       bob.append( "ok", 1 ) ;
       buff = engine::rtnContextBuf( bob.obj() ) ;
-      _replyHeader.contextID = 0 ;
+      _replyHeader.contextID = -1 ;
+   }
+
+   if ( OP_CMD_AGGREGATE == opType )
+   {
+      // reply: { cursor: { firstBatch: [ {xxx}, {xxx} ], id:0, ns: "yt.test" },
+      //          ok: 1 }
+      INT32 len = buff.size() ;
+      const CHAR *pBody = buff.data() ;
+      INT32 offset = 0 ;
+      bson::BSONObjBuilder result ;
+      bson::BSONObjBuilder cursorBuilder ;
+
+      bson::BSONArrayBuilder sub( cursorBuilder.subarrayStart( "firstBatch" ) ) ;
+      while ( offset < len )
+      {
+         bson::BSONObj oneRecord ;
+         oneRecord.init( pBody + offset ) ;
+         offset += ossRoundUpToMultipleX( oneRecord.objsize(), 4 ) ;
+         sub.append( oneRecord ) ;
+      }
+      sub.done() ;
+
+      cursorBuilder.append( "ns", _converter.getParser().dataPacket().fullName.c_str() ) ;
+      cursorBuilder.append( "id", (long long)( _replyHeader.contextID + 1 ) ) ;
+
+      result.append( "cursor", cursorBuilder.obj() ) ;
+      result.append( "ok", 1 ) ;
+
+      buff = engine::rtnContextBuf( result.obj() ) ;
+      _replyHeader.contextID = -1 ;
+      _replyHeader.numReturned = 1 ;
+   }
+
+   if ( OP_INSERT == opType )
+   {
+      bson::BSONObjBuilder bob ;
+      bson::BSONObj sdbRes( buff.data() ) ;
+      bob.append( "ok", 1 ) ;
+      if ( sdbRes.hasField( "InsertedNum" ) )
+      {
+         bob.append( "n", sdbRes.getIntField( "InsertedNum" ) ) ;
+      }
+      buff = engine::rtnContextBuf( bob.obj() ) ;
    }
 
    if ( OP_REMOVE == opType )

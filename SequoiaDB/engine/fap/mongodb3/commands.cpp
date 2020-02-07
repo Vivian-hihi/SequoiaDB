@@ -68,6 +68,9 @@ DECLARE_COMMAND_VAR( deleteIndexes )
 DECLARE_COMMAND_VAR( listIndexes )
 DECLARE_COMMAND_VAR( getlasterror )
 DECLARE_COMMAND_VAR( ismaster )
+DECLARE_COMMAND_VAR( whatsmyuri )
+DECLARE_COMMAND_VAR( buildinfo )
+DECLARE_COMMAND_VAR( getLog )
 DECLARE_COMMAND_VAR( ping )
 DECLARE_COMMAND_VAR( logout )
 
@@ -1788,7 +1791,14 @@ INT32 deleteIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    {
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
-      packet.fullName += packet.all.getStringField( "dropIndexes" ) ;
+      if ( packet.all.hasField( "dropIndexes" ) )
+      {
+         packet.fullName += packet.all.getStringField( "dropIndexes" ) ;
+      }
+      else if ( packet.all.hasField( "deleteIndexes" ) )
+      {
+         packet.fullName += packet.all.getStringField( "deleteIndexes" ) ;
+      }
 
       bson::BSONObj obj, indexObj, empty ;
       indexObj = BSON( "" << packet.all.getStringField( "index" ) ) ;
@@ -1943,6 +1953,54 @@ INT32 ismasterCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 ismasterCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 whatsmyuriCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+INT32 whatsmyuriCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   parser.setCurrentOp( OP_CMD_WHATSMYURI ) ;
+   return SDB_OK ;
+}
+
+INT32 whatsmyuriCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 buildinfoCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+INT32 buildinfoCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   parser.setCurrentOp( OP_CMD_BUILDINFO ) ;
+   return SDB_OK ;
+}
+
+INT32 buildinfoCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 getLogCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+INT32 getLogCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   parser.setCurrentOp( OP_CMD_GETLOG ) ;
+   return SDB_OK ;
+}
+
+INT32 getLogCommand::doCommand( void *pData )
 {
    return SDB_OK ;
 }

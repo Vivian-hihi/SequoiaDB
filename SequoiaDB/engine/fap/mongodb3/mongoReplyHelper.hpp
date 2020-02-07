@@ -60,6 +60,12 @@ namespace fap
       void buildPingReplyMsg( engine::rtnContextBuf &buff ) ;
 
       void buildGetMoreMsg( msgBuffer &out ) ;
+
+      void buildWhatsmyuriReplyMsg( engine::rtnContextBuf &buff ) ;
+
+      void buildBuildinfoReplyMsg( engine::rtnContextBuf &buff ) ;
+
+      void buildGetLogReplyMsg( engine::rtnContextBuf &buff ) ;
    }
 }
 #endif

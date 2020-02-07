@@ -131,5 +131,40 @@ namespace fap
          getmore->contextID = -1 ;
          getmore->numToReturn = -1 ;
       }
+
+      void buildWhatsmyuriReplyMsg( engine::rtnContextBuf &buff )
+      {
+         bson::BSONObjBuilder bob ;
+         bob.append( "ok", 1 ) ;
+         bob.append( "errmsg", "" ) ;
+         bob.append( "code", 0 ) ;
+         bob.append( "you", "0.0.0.0:00000" ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+      }
+
+      void buildBuildinfoReplyMsg( engine::rtnContextBuf &buff )
+      {
+         bson::BSONObjBuilder bob ;
+         bob.append( "version", "3.4.23" ) ;
+         bson::BSONArrayBuilder sub( bob.subarrayStart( "versionArray" ) ) ;
+         sub.append( 3 ) ;
+         sub.append( 4 ) ;
+         sub.append( 23 ) ;
+         sub.append( 0 ) ;
+         sub.done() ;
+         bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
+         bob.append( "ok", 1 ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+      }
+
+      void buildGetLogReplyMsg( engine::rtnContextBuf &buff )
+      {
+         bson::BSONObjBuilder bob ;
+         bob.append( "totalLinesWritten", 0 ) ;
+         bson::BSONArrayBuilder sub( bob.subarrayStart( "log" ) ) ;
+         sub.done() ;
+         bob.append( "ok", 1 ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+      }
    }
 }
