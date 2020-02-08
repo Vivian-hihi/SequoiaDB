@@ -53,10 +53,7 @@ _monMonitorManager::_monMonitorManager()
 
 _monMonitorManager::~_monMonitorManager()
 {
-   for (int i = 0; i < MON_CLASS_MAX; i ++ )
-   {
-      SDB_OSS_DEL _monClass[i] ;
-   }
+   fini() ;
 }
 
 void _monMonitorManager::cleanup()
@@ -78,6 +75,15 @@ void _monMonitorManager::cleanup()
          curContainer->_removeArchivedObj() ;
       }
    }
+}
+
+INT32 _monMonitorManager::fini()
+{
+   for (int i = 0; i < MON_CLASS_MAX; i++ )
+   {
+      SDB_OSS_DEL _monClass[i] ;
+   }
+   return SDB_OK ;
 }
 
 monMonitorManager *g_monMgrPtr = NULL;

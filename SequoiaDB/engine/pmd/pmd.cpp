@@ -512,6 +512,7 @@ namespace engine
       _buffPool.fini() ;
       _syncMgr.fini() ;
 
+      _monMgr.fini() ;
       if ( normalStop )
       {
          /// fini pipe manager

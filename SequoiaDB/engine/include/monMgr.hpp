@@ -213,6 +213,8 @@ public:
     */
    void cleanup() ;
 
+   INT32 fini() ;
+
 private:
    ossPoolVector<monClassContainer*> _monClass;
 } ;
