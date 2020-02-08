@@ -135,6 +135,9 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     UNAME_P := $(shell uname -p)
+    ifeq ($(UNAME_P),unknown)
+        UNAME_P := $(shell arch)
+    endif
     ifeq ($(UNAME_S),Linux)
         ifeq ($(UNAME_P),x86_64)
             ifeq ($(ver), debug)
