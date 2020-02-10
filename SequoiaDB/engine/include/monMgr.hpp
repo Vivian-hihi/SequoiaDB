@@ -188,7 +188,7 @@ public:
     */
    void setHistEventSize( UINT32 size )
    {
-      for (int i = 0; i < MON_CLASS_MAX; i ++ )
+      for ( INT32 i = 0; i < MON_CLASS_MAX; i ++ )
       {
          _monClass[i]->setMaxArchivedListLen( size ) ;
       }
