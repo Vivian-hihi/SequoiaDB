@@ -37,16 +37,18 @@
 *******************************************************************************/
 
 #include "monMgr.hpp"
+#include "pd.hpp"
 
 namespace engine
 {
 _monMonitorManager::_monMonitorManager()
    : _monClass(MON_CLASS_MAX)
 {
-   for (int i = 0; i < MON_CLASS_MAX; i ++ )
+   for ( INT32 i = 0 ; i < MON_CLASS_MAX ; i ++ )
    {
       //TODO: create array of function pointers
       monClassContainer *list = SDB_OSS_NEW monClassContainer((MON_CLASS_TYPE)i) ;
+      SDB_ASSERT( list, "list is NULL" ) ;
       _monClass[i] = list ;
    }
 }
@@ -58,7 +60,7 @@ _monMonitorManager::~_monMonitorManager()
 
 void _monMonitorManager::cleanup()
 {
-   for (int i = 0; i < MON_CLASS_MAX; i++ )
+   for ( INT32 i = 0; i < MON_CLASS_MAX; i++ )
    {
       monClassContainer *curContainer = _monClass[i] ;
 
@@ -79,9 +81,13 @@ void _monMonitorManager::cleanup()
 
 INT32 _monMonitorManager::fini()
 {
-   for (int i = 0; i < MON_CLASS_MAX; i++ )
+   for ( INT32 i = 0; i < MON_CLASS_MAX; i++ )
    {
-      SDB_OSS_DEL _monClass[i] ;
+      if ( _monClass[i] )
+      {
+         SDB_OSS_DEL _monClass[i] ;
+         _monClass[i] = NULL ;
+      }
    }
    return SDB_OK ;
 }
