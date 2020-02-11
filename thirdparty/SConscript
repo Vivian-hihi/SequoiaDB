@@ -601,6 +601,12 @@ if "win32" != guess_os:
     # Auto compilation of boost, spider monkey and ssl is not supported on
     # windows for now.
     boost_compiler = BoostCompiler('boost')
+
+    # on x86, some hosts can not build sm lib for lacking some dependencies,
+    # so, we are not going to build sm lib on x86, and we use the pre-build 
+    # sm lib and include files.
+    # on arm, we can not build sm lib on uos(jira-5452), so we also use the 
+    # pre-build sm lib and include files.
     # spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
     ssl_compiler = SslCompiler('crypto/openssl-1.0.1c')
     components.append(boost_compiler)
@@ -610,8 +616,6 @@ if "win32" != guess_os:
     if "arm64" == guess_arch:
         # in arm64, we are going to build the lib when there have no
         # pre-build libs for using
-        spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
-        components.append(spidermonkey_compiler)
         if usefuse:
             fuse_compiler = FuseCompiler('fuse')
             components.append(fuse_compiler)

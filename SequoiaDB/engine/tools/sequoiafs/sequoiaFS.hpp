@@ -50,7 +50,7 @@
 #include "core.h"
 #include<fuse.h>
 #include<time.h>
-#include<linux/stat.h>
+//#include<linux/stat.h>
 #include "fuse_lowlevel.h"
 #include "ossUtil.h"
 #include "ossProc.hpp"
