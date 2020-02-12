@@ -15,11 +15,11 @@ Oma
 
 ##参数##
 
-* `hostname` ( *String*， *必填* )
+* `hostname` ( *String*， *选填* )
 
    目标sdbcm所在主机的主机名。
    
-* `svcname` ( *String*， *必填* )
+* `svcname` ( *Int | String*， *选填* )
 
    目标sdbcm所使用的端口号， 默认端口号为11790。
 

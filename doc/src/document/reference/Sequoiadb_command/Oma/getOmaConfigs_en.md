@@ -4,7 +4,7 @@ getOmaConfigs - Get the configuration information of sdbcm.
 
 ##SYNOPSIS##
 
-**Oma.getOmaConfigs()**
+**oma.getOmaConfigs()**
 
 ##CATEGORY##
 
@@ -16,7 +16,7 @@ Get the config information of sdbcm.
 
 ##PARAMETERS##
 
-* `svcname` ( *String*， *Optional* )
+* `confFile` ( *String*， *Optional* )
 
 	The configuration file of sdbcm, default to be the file of [getOmaConfigFile()](reference/Sequoiadb_command/Oma/getOmaConfigFile.md), when `confFile` is not specified.
 
@@ -40,7 +40,7 @@ Since v1.0.
 
 ##EXAMPLES##
 
-1. print the configuration information of sdbcm.
+1. print the confi information of sdbcm.
 
 	```lang-javascript
 	> Oma.getOmaConfigs()

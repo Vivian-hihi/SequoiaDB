@@ -15,11 +15,11 @@ Class for cluster management.
 
 ##DESCRIPTION##
 
-* `hostname` ( *String*， *Required* )
+* `hostname` ( *String*， *Optional* )
 
 	the hostname of the target sdbcm.
 
-* `svcname` ( *String*， *Required* )
+* `svcname` ( *Int | String*， *Optional* )
 
 	the port of the target sdbcm, default to be 11790.
 

@@ -22,7 +22,7 @@ Oma
 
 ##参数##
 
-* `svcname` ( *String*， *必填* )
+* `svcname` ( *Int | String*， *必填* )
 
 	节点端口号。
 
@@ -55,3 +55,4 @@ Oma
 	```lang-javascript
 	> var oma = new Oma( "localhost", 11790 )
 	> oma.setNodeConfigs( 11810, { svcname: "11810", dbpath: "/home/users/sequoiadb/trunk/11810", diaglevel: 3, clustername: "xxx", businessname: "yyy", role: "data", catalogaddr: "ubuntu1:11823, ubuntu2:11823" } )
+	```
