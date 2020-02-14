@@ -619,6 +619,12 @@ if "win32" != guess_os:
         if usefuse:
             fuse_compiler = FuseCompiler('fuse')
             components.append(fuse_compiler)
+	
+    if "ppc64le" == guess_arch:
+        # in ppc64le, we are going to build the lib when there have no
+        # pre-build libs for using
+        spidermonkey_compiler = SpiderMonkeyCompiler('parser/sm/js')
+        components.append(spidermonkey_compiler)
 
 if release:
     build_type = 'release'
