@@ -105,6 +105,7 @@ INT32 _mongoSession::run()
    CHAR *pBuff                  = NULL ;
    const CHAR *pBody            = NULL ;
    const CHAR *pInMsg           = NULL ;
+   INT32 orgOpCode              = 0 ;
    engine::monDBCB *mondbcb     = engine::pmdGetKRCB()->getMonDBCB() ;
 
    if ( !_pEDUCB )
@@ -202,6 +203,7 @@ INT32 _mongoSession::run()
             }
 
             pInMsg = _inBuffer.data() ;
+            orgOpCode = ((MsgHeader*)pInMsg)->opCode ;
             while ( NULL != pInMsg )
             {
                // process msg
@@ -209,6 +211,29 @@ INT32 _mongoSession::run()
                if ( SDB_OK == rc )
                {
                   _authed = TRUE ;
+               }
+               // auto create cs/cl
+               if ( SDB_DMS_CS_NOTEXIST == _replyHeader.flags )
+               {
+                  if ( SDB_OK == _autoCreateCS() )
+                  {
+                     ((MsgHeader*)pInMsg)->opCode = orgOpCode ;
+                     continue ;
+                  }
+               }
+               else if ( SDB_DMS_NOTEXIST == _replyHeader.flags )
+               {
+                  if ( OP_INSERT == _converter.getOpType() ||
+                       OP_ENSURE_INDEX == _converter.getOpType() ||
+                       ( OP_UPDATE == _converter.getOpType() &&
+                         ( ((MsgOpUpdate*)_inBuffer.data())->flags & FLG_UPDATE_UPSERT ) ) )
+                  {
+                     if ( SDB_OK == _autoCreateCL() )
+                     {
+                        ((MsgHeader*)pInMsg)->opCode = orgOpCode ;
+                        continue ;
+                     }
+                  }
                }
 
                rc = _converter.reConvert( _inBuffer, &_replyHeader ) ;
@@ -218,20 +243,18 @@ INT32 _mongoSession::run()
                }
                else
                {
-                  // when rc == SDB_OK && _inBuffer is not empty, shoul retry
-                  // to process msg
                   if ( !_inBuffer.empty() )
                   {
-                     _contextBuff.release() ;
-                     pInMsg = _inBuffer.data() ;
+                     continue ;
                   }
                   else
                   {
-                     // should exit while loop
+                     // exit while loop
                      pInMsg = NULL ;
                   }
                }
             }
+
          reply:
             _handleResponse( _converter.getOpType(), _contextBuff ) ;
             pBody = _contextBuff.data() ;
@@ -265,6 +288,98 @@ error:
    goto done ;
 }
 
+INT32 _mongoSession::_autoCreateCS()
+{
+   INT32 rc                = SDB_OK ;
+   MsgOpQuery *query       = NULL ;
+   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
+   const CHAR *cmdName     = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE ;
+   bson::BSONObj obj       = BSON( FIELD_NAME_NAME << packet.csName <<
+                                   FIELD_NAME_PAGE_SIZE << 65536 ) ;
+   bson::BSONObj empty ;
+
+   _tmpBuffer.zero() ;
+   _tmpBuffer.reverse( sizeof( MsgOpQuery ) ) ;
+   _tmpBuffer.advance( sizeof( MsgOpQuery ) - 4 ) ;
+
+   query = ( MsgOpQuery * )_tmpBuffer.data() ;
+   query->header.opCode = MSG_BS_QUERY_REQ ;
+   query->header.TID = 0 ;
+   query->header.routeID.value = 0 ;
+   query->header.requestID = 0 ;
+   query->version = 0 ;
+   query->w = 0 ;
+   query->padding = 0 ;
+   query->flags = 0 ;
+   query->numToSkip = 0 ;
+   query->numToReturn = -1 ;
+   query->nameLength = ossStrlen( cmdName ) ;
+
+   _tmpBuffer.write( cmdName, query->nameLength + 1, TRUE ) ;
+   _tmpBuffer.write( obj, TRUE ) ;
+   _tmpBuffer.write( empty, TRUE ) ;
+   _tmpBuffer.write( empty, TRUE ) ;
+   _tmpBuffer.write( empty, TRUE ) ;
+   _tmpBuffer.doneLen() ;
+
+   rc = _processMsg( (CHAR*)query ) ;
+
+   return rc ;
+}
+
+INT32 _mongoSession::_autoCreateCL()
+{
+   INT32 rc                = SDB_OK ;
+   MsgOpQuery *query       = NULL ;
+   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
+   const CHAR *cmdName     = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION ;
+   bson::BSONObj obj       = BSON( FIELD_NAME_NAME << packet.fullName.c_str() );
+   bson::BSONObj empty ;
+
+   while( TRUE )
+   {
+      _tmpBuffer.zero() ;
+      _tmpBuffer.reverse( sizeof( MsgOpQuery ) ) ;
+      _tmpBuffer.advance( sizeof( MsgOpQuery ) - 4 ) ;
+
+      query = ( MsgOpQuery * )_tmpBuffer.data() ;
+      query->header.opCode = MSG_BS_QUERY_REQ ;
+      query->header.TID = 0 ;
+      query->header.routeID.value = 0 ;
+      query->header.requestID = 0 ;
+      query->version = 0 ;
+      query->w = 0 ;
+      query->padding = 0 ;
+      query->flags = 0 ;
+      query->nameLength = ossStrlen( cmdName ) ;
+      query->numToSkip = 0 ;
+      query->numToReturn = -1 ;
+
+      _tmpBuffer.write( cmdName, query->nameLength + 1, TRUE ) ;
+      _tmpBuffer.write( obj, TRUE ) ;
+      _tmpBuffer.write( empty, TRUE ) ;
+      _tmpBuffer.write( empty, TRUE ) ;
+      _tmpBuffer.write( empty, TRUE ) ;
+      _tmpBuffer.doneLen() ;
+
+      rc = _processMsg( (CHAR*)query ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = _autoCreateCS() ;
+         if ( rc )
+         {
+            break ;
+         }
+      }
+      else
+      {
+         break ;
+      }
+   }
+
+   return rc ;
+}
+
 INT32 _mongoSession::_processMsg( const CHAR *pMsg )
 {
    INT32 rc  = SDB_OK ;
@@ -282,47 +397,47 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       goto error ;
    }
 
+   _contextBuff.release() ;
+   rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
+                                    _contextBuff, _replyHeader.contextID,
+                                    needReply,
+                                    needRollback,
+                                    retBuilder ) ;
+   _errorInfo = engine::utilGetErrorBson( rc,
+                _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
+   if ( SDB_OK != rc )
    {
-      rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
-                                       _contextBuff, _replyHeader.contextID,
-                                       needReply,
-                                       needRollback,
-                                       retBuilder ) ;
-      _errorInfo = engine::utilGetErrorBson( rc,
-                   _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
-      if ( SDB_OK != rc )
+      if ( needRollback )
       {
-         if ( needRollback )
-         {
-            PD_LOG( PDDEBUG, "Session rolling back operation "
-                    "(opCode=%d, rc=%d)", ((MsgHeader*)pMsg)->opCode, rc ) ;
+         PD_LOG( PDDEBUG, "Session rolling back operation "
+                 "(opCode=%d, rc=%d)", ((MsgHeader*)pMsg)->opCode, rc ) ;
 
-            INT32 rcTmp = getProcessor()->doRollback() ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Session failed to rollback trans "
-                       "info, rc: %d", rcTmp ) ;
-            }
-         }
-
-         tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
-         // build error msg
-         bob.append( "ok", FALSE ) ;
-         if ( SDB_IXM_DUP_KEY == tmp )
+         INT32 rcTmp = getProcessor()->doRollback() ;
+         if ( rcTmp )
          {
-            // for assert in testcase of c driver for mongodb
-            tmp = 11000 ;
+            PD_LOG( PDERROR, "Session failed to rollback trans "
+                    "info, rc: %d", rcTmp ) ;
          }
-         bob.append( "code",  tmp ) ;
-         bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-         bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-         _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
       }
-      bodyLen = _contextBuff.size() ;
-      _replyHeader.numReturned = _contextBuff.recordNum() ;
-      _replyHeader.startFrom = (INT32)_contextBuff.getStartFrom() ;
-      _replyHeader.flags = rc ;
+
+      tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
+      // build error msg
+      bob.append( "ok", FALSE ) ;
+      if ( SDB_IXM_DUP_KEY == tmp )
+      {
+         // for assert in testcase of c driver for mongodb
+         tmp = 11000 ;
+      }
+      bob.append( "code",  tmp ) ;
+      bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
    }
+
+   bodyLen = _contextBuff.size() ;
+   _replyHeader.numReturned = _contextBuff.recordNum() ;
+   _replyHeader.startFrom = (INT32)_contextBuff.getStartFrom() ;
+   _replyHeader.flags = rc ;
 
    // when msg is with $cmd, need to reply
    // so value of bodyLen cannot be 0
@@ -588,13 +703,13 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
    else if ( OP_CMD_NOT_SUPPORTED == parser.currentOption() )
    {
       handled = TRUE ;
-      fap::mongo::buildNotSupportReplyMsg( _contextBuff,
-                                packet.all.firstElementFieldName() ) ;
+      fap::mongo::buildNotSupportReplyMsg( buff,
+                                           packet.all.firstElementFieldName() );
    }
    else if ( OP_CMD_PING == parser.currentOption() )
    {
        handled = TRUE ;
-       fap::mongo::buildPingReplyMsg( _contextBuff ) ;
+       fap::mongo::buildPingReplyMsg( buff ) ;
    }
    else if ( OP_CMD_WHATSMYURI == parser.currentOption() )
    {
@@ -787,13 +902,30 @@ void _mongoSession::_handleResponse( const INT32 opType,
       bson::BSONObjBuilder bob ;
       bson::BSONObj sdbRes( buff.data() ) ;
       bob.append( "ok", 1 ) ;
-      if ( sdbRes.hasField( "UpdatedNum" ) &&
-           sdbRes.hasField( "ModifiedNum" ) &&
-           sdbRes.hasField( "InsertedNum" ) )
+      //n
+      if ( sdbRes.hasField( "InsertedNum" ) &&
+           sdbRes.getIntField( "InsertedNum" ) > 0 )
+      {
+         bob.append( "n", sdbRes.getIntField( "InsertedNum" ) ) ;
+      }
+      else if ( sdbRes.hasField( "UpdatedNum" ) )
       {
          bob.append( "n", sdbRes.getIntField( "UpdatedNum" ) ) ;
+      }
+      //nModified
+      if ( sdbRes.hasField( "ModifiedNum" ) )
+      {
          bob.append( "nModified", sdbRes.getIntField( "ModifiedNum" ) ) ;
-         bob.append( "nUpserted", sdbRes.getIntField( "InsertedNum" ) ) ;
+      }
+      //upserted
+      if ( sdbRes.hasField( "InsertedNum" ) )
+      {
+         bson::BSONArrayBuilder sub( bob.subarrayStart( "upserted" ) ) ;
+         for( INT32 i = 0 ; i < sdbRes.getIntField( "InsertedNum" ) ; i++ )
+         {
+            sub.append( BSON( "index" << i ) ) ;
+         }
+         sub.done() ;
       }
       buff = engine::rtnContextBuf( bob.obj() ) ;
    }

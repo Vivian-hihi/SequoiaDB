@@ -162,68 +162,6 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       goto done ;
    }
 
-   // create collection failed
-   if ( OP_CMD_CREATE == _parser.currentOption() )
-   {
-      // here mean mongo msg was converted to multi sdb msg
-      // like create collection command msg
-      // those msg convert to more than one sdb msg
-      // that time cs may be not existed, should skip the error
-      // and create collection space first
-      if ( SDB_OK != reply->flags && SDB_DMS_CS_NOTEXIST == reply->flags )
-      {
-         _parser.reparse() ;
-         cmd = cmdMgr->findCommand( "createCS" ) ;
-         if ( NULL != cmd )
-         {
-            rc = cmd->convert( _parser ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-            rc = cmd->buildMsg( _parser, out ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-            goto done ;
-         }
-      }
-      else
-      {
-         rc = reply->flags ;
-         goto error ;
-      }
-   }
-
-   // if is create collection space msg
-   if ( OP_CMD_CREATE_CS == _parser.currentOption() )
-   {
-      if ( SDB_OK != reply->flags && SDB_DMS_CS_EXIST != reply->flags )
-      {
-         rc = reply->flags ;
-         goto error ;
-      }
-
-      // then, try to create collection again
-      _parser.reparse() ;
-      cmd = cmdMgr->findCommand( "create" ) ;
-      if ( NULL != cmd )
-      {
-         rc = cmd->convert( _parser ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         rc = cmd->buildMsg( _parser, out ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         goto done ;
-      }
-   }
-
    // when not handled above, assigned the reply flags to rc for return
    rc = reply->flags ;
 

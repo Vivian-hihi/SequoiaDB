@@ -77,6 +77,8 @@ private:
    void  _resetBuffers() ;
    INT32 _setSeesionAttr() ;
    void  _handleResponse( const INT32 opType, engine::rtnContextBuf &buff ) ;
+   INT32 _autoCreateCS() ;
+   INT32 _autoCreateCL() ;
 
 private:
    mongoConverter          _converter ;
