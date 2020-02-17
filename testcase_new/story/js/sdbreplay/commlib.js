@@ -129,6 +129,9 @@ function execSdbReplay ( rtCmd, groupName, clNameArr, type, confPath, statusPath
    var clName = clNameArr[0].split( "." )[1];
    var lsCommand = "ls " + tmpFileDir + " | grep " + clName + " | grep csv";
    println( lsCommand );
+
+   //重放前对之前的操作进行刷盘
+   db.sync();
    while( true ) 
    {
       var rcSdbreplay = rtCmd.run( "cd " + tmpFileDir + "; " + command );
