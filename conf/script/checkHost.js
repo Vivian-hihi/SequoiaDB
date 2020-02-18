@@ -362,7 +362,7 @@ function _getInstallInfo()
               File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
          {
             var cmd = new Cmd() ;
-            var str = cmd.run( 'cat', config['INSTALL_DIR'] + '/version.info' ) ;
+            var str = cmd.run( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl', '--version' ) ;
             var lines = str.split( "\n" ) ;
             var versionInfo = lines[0].split( ":" ) ;
 

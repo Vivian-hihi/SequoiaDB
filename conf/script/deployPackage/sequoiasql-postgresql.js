@@ -429,7 +429,7 @@ function SendPackage( taskID )
 
 function _getVersion( hostName, user, pwd, sshPort, installPath )
 {
-   var cmd = 'cat ' + installPath + '/version.info' ;
+   var cmd = installPath + '/bin/sdb_sql_ctl --version' ;
    var version = "" ;
 
    try
