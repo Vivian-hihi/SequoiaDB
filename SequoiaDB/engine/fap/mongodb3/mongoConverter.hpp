@@ -64,7 +64,7 @@ public:
 
    const UINT32 getOpType()
    {
-      return _parser.currentOption() ;
+      return _parser.currentOperation() ;
    }
 
    msgParser& getParser()

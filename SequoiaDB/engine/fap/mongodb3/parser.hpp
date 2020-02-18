@@ -256,7 +256,7 @@ public:
       _currentOp = op ;
    }
 
-   UINT32 currentOption() const
+   UINT32 currentOperation() const
    {
       return _currentOp ;
    }

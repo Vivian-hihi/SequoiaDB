@@ -134,43 +134,41 @@ struct mongoMsgReply
 
 enum
 {
-   OP_INVALID = -1,
+   OP_INVALID           = -1,
 
-   OP_INSERT  = 0,
-   OP_REMOVE,
-   OP_UPDATE,
-   OP_QUERY,
-   OP_GETMORE,
-   OP_KILLCURSORS,
-   OP_ENSURE_INDEX,
+   OP_INSERT            = 0,
+   OP_REMOVE            = 1,
+   OP_UPDATE            = 2,
+   OP_QUERY             = 3,
+   OP_GETMORE           = 4,
+   OP_KILLCURSORS       = 5,
+   OP_ENSURE_INDEX      = 6,
+   OP_COMMAND_BEGIN     = 7,
+   OP_CMD_CREATE        = 8,     // create collection
+   OP_CMD_CREATE_CS     = 9,
+   OP_CMD_DROP          = 10,    // drop collection
+   OP_CMD_DROP_DATABASE = 11,
+   OP_CMD_GETLASTERROR  = 12,    // will not process msg
+   OP_CMD_DROP_INDEX    = 13,
+   OP_CMD_GET_INDEX     = 14,
+   OP_CMD_GET_CLS       = 15,
+   OP_CMD_COUNT         = 16,
+   OP_CMD_COUNT_MORE    = 17,    // it is obsolete
+   OP_CMD_AGGREGATE     = 18,
+   OP_CMD_DISTINCT      = 19,
+   OP_CMD_AUTH          = 20,
+   OP_CMD_GETNONCE      = 21,
+   OP_CMD_CRTUSER       = 22,
+   OP_CMD_DELUSER       = 23,
+   OP_CMD_LISTUSER      = 24,
+   OP_CMD_ISMASTER      = 25,
+   OP_CMD_PING          = 26,
+   OP_CMD_NOT_SUPPORTED = 27,
+   OP_CMD_WHATSMYURI    = 28,
+   OP_CMD_BUILDINFO     = 29,
+   OP_CMD_GETLOG        = 30,
 
-   OP_COMMAND_BEGIN,       // command begin
-   OP_CMD_CREATE,          // create collection, need special deal
-   OP_CMD_CREATE_CS,
-   OP_CMD_DROP,            // drop collection
-   OP_CMD_DROP_DATABASE,
-   OP_CMD_GETLASTERROR,    // will not process msg
-   OP_CMD_DROP_INDEX,
-   OP_CMD_GET_INDEX,
-   OP_CMD_GET_CLS,
-   OP_CMD_COUNT,
-   OP_CMD_COUNT_MORE,      // need special handle
-   OP_CMD_AGGREGATE,
-   OP_CMD_DISTINCT,
-   OP_CMD_AUTH,
-
-   // commands need not process yet
-   OP_CMD_GETNONCE,
-   OP_CMD_CRTUSER,
-   OP_CMD_DELUSER,
-   OP_CMD_LISTUSER,
-   OP_CMD_ISMASTER,
-   OP_CMD_PING,
-   OP_CMD_NOT_SUPPORTED,
-   OP_CMD_WHATSMYURI,
-   OP_CMD_BUILDINFO,
-   OP_CMD_GETLOG,
-   OP_COMMAND_END,
+   OP_COMMAND_END       = 127,
 };
 
 struct cursorStartFrom

@@ -55,7 +55,7 @@
 // implement for mongo processor
 _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
    : engine::pmdSession( fd ), _masterRead( FALSE ),
-     _authed( FALSE ), _resource( resource )
+     _resource( resource )
 {
 }
 
@@ -208,10 +208,7 @@ INT32 _mongoSession::run()
             {
                // process msg
                rc = _processMsg( pInMsg ) ;
-               if ( SDB_OK == rc )
-               {
-                  _authed = TRUE ;
-               }
+
                // auto create cs/cl
                if ( SDB_DMS_CS_NOTEXIST == _replyHeader.flags )
                {
@@ -241,17 +238,10 @@ INT32 _mongoSession::run()
                {
                   goto reply ;
                }
-               else
+               else if ( _inBuffer.empty() )
                {
-                  if ( !_inBuffer.empty() )
-                  {
-                     continue ;
-                  }
-                  else
-                  {
-                     // exit while loop
-                     pInMsg = NULL ;
-                  }
+                  // exit while loop
+                  pInMsg = NULL ;
                }
             }
 
@@ -383,7 +373,7 @@ INT32 _mongoSession::_autoCreateCL()
 INT32 _mongoSession::_processMsg( const CHAR *pMsg )
 {
    INT32 rc  = SDB_OK ;
-   INT32 tmp = SDB_OK ;
+   INT32 errCode = SDB_OK ;
    INT32 bodyLen = 0 ;
    BOOLEAN needReply = FALSE ;
    BOOLEAN needRollback = FALSE ;
@@ -420,15 +410,15 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          }
       }
 
-      tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
+      errCode = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
       // build error msg
       bob.append( "ok", FALSE ) ;
-      if ( SDB_IXM_DUP_KEY == tmp )
+      if ( SDB_IXM_DUP_KEY == errCode )
       {
          // for assert in testcase of c driver for mongodb
-         tmp = 11000 ;
+         errCode = 11000 ;
       }
-      bob.append( "code",  tmp ) ;
+      bob.append( "code",  errCode ) ;
       bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
       bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
       _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
@@ -445,12 +435,12 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    {
       if ( 0 == bodyLen )
       {
-         tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
+         errCode = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
          if ( SDB_OK != rc )
          {
             // build error msg
             bob.append( "ok", FALSE ) ;
-            bob.append( "code",  tmp ) ;
+            bob.append( "code",  errCode ) ;
             bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
             bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
          }
@@ -679,13 +669,13 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
    BOOLEAN handled = FALSE ;
    mongoDataPacket &packet = parser.dataPacket() ;
 
-   if ( OP_CMD_ISMASTER == parser.currentOption() )
+   if ( OP_CMD_ISMASTER == parser.currentOperation() )
    {
       handled = TRUE ;
       // build ismaster msg
       fap::mongo::buildIsMasterReplyMsg( resource, buff ) ;
    }
-   else if ( OP_CMD_GETNONCE == parser.currentOption() )
+   else if ( OP_CMD_GETNONCE == parser.currentOperation() )
    {
       handled = TRUE ;
       // build getnonce msg
@@ -694,34 +684,34 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
       buff = engine::rtnContextBuf( obj ) ;
       //fap::mongo::buildGetNonceReplyMsg( buff ) ;
    }
-   else if ( OP_CMD_GETLASTERROR == parser.currentOption() )
+   else if ( OP_CMD_GETLASTERROR == parser.currentOperation() )
    {
       handled = TRUE ;
       // build getlasterror msg
       fap::mongo::buildGetLastErrorReplyMsg( _errorInfo, buff ) ;
    }
-   else if ( OP_CMD_NOT_SUPPORTED == parser.currentOption() )
+   else if ( OP_CMD_NOT_SUPPORTED == parser.currentOperation() )
    {
       handled = TRUE ;
       fap::mongo::buildNotSupportReplyMsg( buff,
                                            packet.all.firstElementFieldName() );
    }
-   else if ( OP_CMD_PING == parser.currentOption() )
+   else if ( OP_CMD_PING == parser.currentOperation() )
    {
        handled = TRUE ;
        fap::mongo::buildPingReplyMsg( buff ) ;
    }
-   else if ( OP_CMD_WHATSMYURI == parser.currentOption() )
+   else if ( OP_CMD_WHATSMYURI == parser.currentOperation() )
    {
        handled = TRUE ;
        fap::mongo::buildWhatsmyuriReplyMsg( buff ) ;
    }
-   else if ( OP_CMD_BUILDINFO == parser.currentOption() )
+   else if ( OP_CMD_BUILDINFO == parser.currentOperation() )
    {
        handled = TRUE ;
        fap::mongo::buildBuildinfoReplyMsg( buff ) ;
    }
-   else if ( OP_CMD_GETLOG == parser.currentOption() )
+   else if ( OP_CMD_GETLOG == parser.currentOperation() )
    {
        handled = TRUE ;
        fap::mongo::buildGetLogReplyMsg( buff ) ;
@@ -746,29 +736,102 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
 void _mongoSession::_handleResponse( const INT32 opType,
                                      engine::rtnContextBuf &buff )
 {
+   bson::BSONObjBuilder bob ;
+   mongoDataPacket packet = _converter.getParser().dataPacket() ;
+
    if ( SDB_AUTH_AUTHORITY_FORBIDDEN == _replyHeader.flags )
    {
-      bson::BSONObjBuilder bob ;
-      bson::BSONObj obj( buff.data() ) ;
-      bob.append( "ok", obj.getIntField( "ok" ) ) ;
-      bob.append( "$err", obj.getStringField( "err" ) ) ;
-      bob.append( "code", obj.getIntField( "code" ) ) ;
+      bson::BSONObj resObj( buff.data() ) ;
+      bob.append( "ok", resObj.getIntField( "ok" ) ) ;
+      bob.append( "$err", resObj.getStringField( "err" ) ) ;
+      bob.append( "code", resObj.getIntField( "code" ) ) ;
       buff = engine::rtnContextBuf( bob.obj() ) ;
+      goto done ;
+   }
+   else if ( SDB_DMS_EOC == _replyHeader.flags )
+   {
+      buff = engine::rtnContextBuf() ;
+      _replyHeader.numReturned = 0 ;
+      _replyHeader.startFrom = _cursorStartFrom.startFrom ;
+      goto done ;
    }
 
-   if ( OP_CMD_COUNT_MORE == opType )
+   if ( OP_CMD_COUNT == opType && SDB_OK == _replyHeader.flags )
    {
-      bson::BSONObjBuilder bob ;
-      bson::BSONObj obj( buff.data() ) ;
-      bob.append( "n", obj.getIntField( "Total" ) ) ;
+      // reply: { n: 1 }
+      bson::BSONObj resObj( buff.data() ) ;
+      bob.append( "n", resObj.getIntField( "Total" ) ) ;
       buff = engine::rtnContextBuf( bob.obj() ) ;
       _replyHeader.contextID = -1 ;
       _replyHeader.startFrom = 0 ;
    }
-
-   if ( OP_CMD_GET_CLS == opType &&
-        SDB_DMS_EOC != _replyHeader.flags &&
-        _replyHeader.numReturned > 0 )
+   else if ( OP_CMD_DISTINCT == opType && SDB_OK == _replyHeader.flags )
+   {
+      // reply: { values: [ 1, 3, 4 ], ok: 1 }
+      bson::BSONObj resObj( buff.data() ) ;
+      bob.appendElements( resObj ) ;
+      bob.append( "ok", 1 ) ;
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+      _replyHeader.contextID = -1 ;
+   }
+   else if ( OP_INSERT == opType && SDB_OK == _replyHeader.flags )
+   {
+      // reply: { n: 1, ok: 1 }
+      bson::BSONObj resObj( buff.data() ) ;
+      bob.append( "ok", 1 ) ;
+      if ( resObj.hasField( "InsertedNum" ) )
+      {
+         bob.append( "n", resObj.getIntField( "InsertedNum" ) ) ;
+      }
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+   else if ( OP_REMOVE == opType && SDB_OK == _replyHeader.flags )
+   {
+      // reply: { n: 1, ok: 1 }
+      bson::BSONObj resObj( buff.data() ) ;
+      bob.append( "ok", 1 ) ;
+      if ( resObj.hasField( "DeletedNum" ) )
+      {
+         bob.append( "n", resObj.getIntField( "DeletedNum" ) ) ;
+      }
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+   else if ( OP_UPDATE == opType && SDB_OK == _replyHeader.flags )
+   {
+      // update reply: { ok: 1, n: 1, nModified: 1 }
+      // upsert reply: { ok: 1, n: 1, nModified: 0, upserted: [ { index: 0 } ] }
+      bson::BSONObj resObj( buff.data() ) ;
+      bob.append( "ok", 1 ) ;
+      //n
+      if ( resObj.hasField( "InsertedNum" ) &&
+           resObj.getIntField( "InsertedNum" ) > 0 )
+      {
+         bob.append( "n", resObj.getIntField( "InsertedNum" ) ) ;
+      }
+      else if ( resObj.hasField( "UpdatedNum" ) )
+      {
+         bob.append( "n", resObj.getIntField( "UpdatedNum" ) ) ;
+      }
+      //nModified
+      if ( resObj.hasField( "ModifiedNum" ) )
+      {
+         bob.append( "nModified", resObj.getIntField( "ModifiedNum" ) ) ;
+      }
+      //upserted
+      if ( resObj.hasField( "InsertedNum" ) )
+      {
+         bson::BSONArrayBuilder sub( bob.subarrayStart( "upserted" ) ) ;
+         for( INT32 i = 0 ; i < resObj.getIntField( "InsertedNum" ) ; i++ )
+         {
+            sub.append( BSON( "index" << i ) ) ;
+         }
+         sub.done() ;
+      }
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+   else if ( OP_CMD_GET_CLS == opType &&
+             SDB_DMS_EOC != _replyHeader.flags &&
+             _replyHeader.numReturned > 0 )
    {
       INT32 offset = 0 ;
       INT32 len = buff.size() ;
@@ -788,21 +851,16 @@ void _mongoSession::_handleResponse( const INT32 opType,
       engine::rtnContextBuf ctx( pBuffer, size, recordNum ) ;
       buff = ctx ;
    }
-
-   if ( OP_CMD_GET_INDEX == opType )
+   else if ( OP_CMD_GET_INDEX == opType && SDB_OK == _replyHeader.flags )
    {
-      INT32 rNum = buff.recordNum() ;
-      INT32 len = buff.size() ;
-      const CHAR *pBody = buff.data() ;
       INT32 offset = 0 ;
-
       _tmpBuffer.zero() ;
-      while ( offset < len )
+      while ( offset < buff.size() )
       {
-         bson::BSONObj mongoIdxObj, sdbIdxObj( pBody + offset ), sdbIdxDef ;
+         bson::BSONObj obj( buff.data() + offset ) ;
          bson::BSONObjBuilder builder ;
+         bson::BSONObj sdbIdxDef = obj.getObjectField( "IndexDef" ) ;
 
-         sdbIdxDef = sdbIdxObj.getObjectField( "IndexDef" ) ;
          builder.append( "v", sdbIdxDef.getIntField( "v" ) ) ;
          if ( sdbIdxDef.getBoolField( "unique" ) &&
               sdbIdxDef.getBoolField( "enforced" ) )
@@ -811,52 +869,28 @@ void _mongoSession::_handleResponse( const INT32 opType,
          }
          builder.append( "key", sdbIdxDef.getObjectField( "key" ) ) ;
          builder.append( "name", sdbIdxDef.getStringField( "name" ) ) ;
-         builder.append( "ns",
-                         _converter.getParser().dataPacket().fullName.c_str() ) ;
-         mongoIdxObj = builder.done() ;
+         builder.append( "ns", packet.fullName.c_str() ) ;
+         bson::BSONObj newObj = builder.done() ;
 
-         _tmpBuffer.write( mongoIdxObj.objdata(), mongoIdxObj.objsize(), TRUE ) ;
-         offset += ossRoundUpToMultipleX( sdbIdxObj.objsize(), 4 ) ;
+         _tmpBuffer.write( newObj.objdata(), newObj.objsize(), TRUE ) ;
+         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
       }
-      const CHAR *pBuffer = _tmpBuffer.data() ;
-      INT32 size = _tmpBuffer.size() ;
-      engine::rtnContextBuf ctx( pBuffer, size, rNum ) ;
-      buff = ctx ;
-   }
 
-   if ( SDB_DMS_EOC == _replyHeader.flags )
-   {
-      buff = engine::rtnContextBuf() ;
-      _replyHeader.numReturned = 0 ;
-      _replyHeader.startFrom = _cursorStartFrom.startFrom ;
+      buff = engine::rtnContextBuf( _tmpBuffer.data(), _tmpBuffer.size(),
+                                    buff.recordNum() ) ;
    }
-
-   if ( OP_CMD_DISTINCT == opType )
-   {
-      // reply: { values: [ 1, 3, 4 ], ok: 1 }
-      bson::BSONObjBuilder bob ;
-      bson::BSONObj sdbRes( buff.data() ) ;
-      bob.appendElements( sdbRes ) ;
-      bob.append( "ok", 1 ) ;
-      buff = engine::rtnContextBuf( bob.obj() ) ;
-      _replyHeader.contextID = -1 ;
-   }
-
-   if ( OP_CMD_AGGREGATE == opType )
+   else if ( OP_CMD_AGGREGATE == opType && SDB_OK == _replyHeader.flags )
    {
       // reply: { cursor: { firstBatch: [ {xxx}, {xxx} ], id:0, ns: "yt.test" },
       //          ok: 1 }
-      INT32 len = buff.size() ;
-      const CHAR *pBody = buff.data() ;
-      INT32 offset = 0 ;
-      bson::BSONObjBuilder result ;
+      bson::BSONObjBuilder resultBuilder ;
       bson::BSONObjBuilder cursorBuilder ;
 
       bson::BSONArrayBuilder sub( cursorBuilder.subarrayStart( "firstBatch" ) ) ;
-      while ( offset < len )
+      INT32 offset = 0 ;
+      while ( offset < buff.size() )
       {
-         bson::BSONObj oneRecord ;
-         oneRecord.init( pBody + offset ) ;
+         bson::BSONObj oneRecord( buff.data() + offset ) ;
          offset += ossRoundUpToMultipleX( oneRecord.objsize(), 4 ) ;
          sub.append( oneRecord ) ;
       }
@@ -865,70 +899,16 @@ void _mongoSession::_handleResponse( const INT32 opType,
       cursorBuilder.append( "ns", _converter.getParser().dataPacket().fullName.c_str() ) ;
       cursorBuilder.append( "id", (long long)( _replyHeader.contextID + 1 ) ) ;
 
-      result.append( "cursor", cursorBuilder.obj() ) ;
-      result.append( "ok", 1 ) ;
+      resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
+      resultBuilder.append( "ok", 1 ) ;
 
-      buff = engine::rtnContextBuf( result.obj() ) ;
+      buff = engine::rtnContextBuf( resultBuilder.obj() ) ;
       _replyHeader.contextID = -1 ;
       _replyHeader.numReturned = 1 ;
    }
 
-   if ( OP_INSERT == opType )
-   {
-      bson::BSONObjBuilder bob ;
-      bson::BSONObj sdbRes( buff.data() ) ;
-      bob.append( "ok", 1 ) ;
-      if ( sdbRes.hasField( "InsertedNum" ) )
-      {
-         bob.append( "n", sdbRes.getIntField( "InsertedNum" ) ) ;
-      }
-      buff = engine::rtnContextBuf( bob.obj() ) ;
-   }
-
-   if ( OP_REMOVE == opType )
-   {
-      bson::BSONObjBuilder bob ;
-      bson::BSONObj sdbRes( buff.data() ) ;
-      bob.append( "ok", 1 ) ;
-      if ( sdbRes.hasField( "DeletedNum" ) )
-      {
-         bob.append( "n", sdbRes.getIntField( "DeletedNum" ) ) ;
-      }
-      buff = engine::rtnContextBuf( bob.obj() ) ;
-   }
-
-   if ( OP_UPDATE == opType )
-   {
-      bson::BSONObjBuilder bob ;
-      bson::BSONObj sdbRes( buff.data() ) ;
-      bob.append( "ok", 1 ) ;
-      //n
-      if ( sdbRes.hasField( "InsertedNum" ) &&
-           sdbRes.getIntField( "InsertedNum" ) > 0 )
-      {
-         bob.append( "n", sdbRes.getIntField( "InsertedNum" ) ) ;
-      }
-      else if ( sdbRes.hasField( "UpdatedNum" ) )
-      {
-         bob.append( "n", sdbRes.getIntField( "UpdatedNum" ) ) ;
-      }
-      //nModified
-      if ( sdbRes.hasField( "ModifiedNum" ) )
-      {
-         bob.append( "nModified", sdbRes.getIntField( "ModifiedNum" ) ) ;
-      }
-      //upserted
-      if ( sdbRes.hasField( "InsertedNum" ) )
-      {
-         bson::BSONArrayBuilder sub( bob.subarrayStart( "upserted" ) ) ;
-         for( INT32 i = 0 ; i < sdbRes.getIntField( "InsertedNum" ) ; i++ )
-         {
-            sub.append( BSON( "index" << i ) ) ;
-         }
-         sub.done() ;
-      }
-      buff = engine::rtnContextBuf( bob.obj() ) ;
-   }
+done:
+   return ;
 }
 
 INT32 _mongoSession::_setSeesionAttr()

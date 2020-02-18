@@ -84,7 +84,6 @@ private:
    mongoConverter          _converter ;
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _masterRead ;
-   BOOLEAN                 _authed ;
    cursorStartFrom         _cursorStartFrom ;
    engine::rtnContextBuf   _contextBuff ;
    BSONObj                 _errorInfo ;

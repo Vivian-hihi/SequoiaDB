@@ -107,66 +107,34 @@ error:
 INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 {
    INT32 rc = SDB_OK ;
-   INT32 numToReturn = -1 ;
-   baseCommand *&cmd = _parser.command() ;
-   commandMgr *cmdMgr = commandMgr::instance() ;
-   if ( NULL == cmdMgr )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
+   UINT32 curOp = _parser.currentOperation() ;
 
-   if ( OP_CMD_GET_INDEX == _parser.currentOption() ||
-        OP_CMD_GET_CLS == _parser.currentOption() ||
-        OP_CMD_AGGREGATE == _parser.currentOption() ||
-        OP_CMD_DISTINCT == _parser.currentOption() )
+   if ( OP_CMD_COUNT    == curOp || OP_CMD_GET_INDEX == curOp ||
+        OP_CMD_GET_CLS  == curOp || OP_CMD_AGGREGATE == curOp ||
+        OP_CMD_DISTINCT == curOp )
    {
       if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
          goto done ;
       }
-      else
+      if ( 0 == reply->numReturned && -1 != reply->contextID )
       {
-         if ( 0 == reply->numReturned && -1 != reply->contextID )
-         {
-            out.zero() ;
-            fap::mongo::buildGetMoreMsg( out ) ;
-            MsgOpGetMore *msg = ( MsgOpGetMore *)out.data() ;
-            msg->header.requestID = reply->header.requestID ;
-            msg->contextID = reply->contextID ;
-            msg->numToReturn = -1 ;
-            goto done ;
-         }
+         out.zero() ;
+         fap::mongo::buildGetMoreMsg( out ) ;
+         MsgOpGetMore *msg = ( MsgOpGetMore *)out.data() ;
+         msg->header.requestID = reply->header.requestID ;
+         msg->contextID = reply->contextID ;
+         msg->numToReturn = -1 ;
+         goto done ;
       }
    }
 
    out.zero() ;
-
-   if ( OP_CMD_COUNT == _parser.currentOption() )
-   {
-      if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         goto done ;
-      }
-
-      numToReturn = 1 ;
-      _parser.setCurrentOp( OP_CMD_COUNT_MORE );
-
-      fap::mongo::buildGetMoreMsg( out ) ;
-      MsgOpGetMore *msg = ( MsgOpGetMore* )out.data() ;
-      msg->header.requestID = reply->header.requestID ;
-      msg->contextID = reply->contextID ;
-      msg->numToReturn = numToReturn ;
-      goto done ;
-   }
 
    // when not handled above, assigned the reply flags to rc for return
    rc = reply->flags ;
 
 done:
    return rc ;
-error:
-   goto done ;
 }
