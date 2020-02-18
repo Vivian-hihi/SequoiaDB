@@ -1,6 +1,6 @@
 #! /bin/sh
 
-SED="/usr/bin/sed"
+SED="/bin/sed"
 prefix="/opt/sequoiadb/tools/server/php"
 datarootdir="/opt/sequoiadb/tools/server/php/php"
 exec_prefix="${prefix}"
