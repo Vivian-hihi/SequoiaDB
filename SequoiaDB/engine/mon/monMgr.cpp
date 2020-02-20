@@ -55,10 +55,16 @@ _monMonitorManager::_monMonitorManager()
 
 _monMonitorManager::~_monMonitorManager()
 {
-   fini() ;
+   for ( INT32 i = 0; i < MON_CLASS_MAX; i++ )
+   {
+      if ( _monClass[i] )
+      {
+         SDB_OSS_DEL _monClass[i] ;
+      }
+   }
 }
 
-void _monMonitorManager::cleanup()
+void _monMonitorManager::relocate()
 {
    for ( INT32 i = 0; i < MON_CLASS_MAX; i++ )
    {
@@ -83,11 +89,7 @@ INT32 _monMonitorManager::fini()
 {
    for ( INT32 i = 0; i < MON_CLASS_MAX; i++ )
    {
-      if ( _monClass[i] )
-      {
-         SDB_OSS_DEL _monClass[i] ;
-         _monClass[i] = NULL ;
-      }
+      _monClass[i]->cleanup() ;
    }
    return SDB_OK ;
 }

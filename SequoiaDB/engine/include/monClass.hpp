@@ -424,7 +424,7 @@ UINT32 monGetTID() ;
  * archived list.
  * See below for latch protocol for these two lists.
  */
-class _monClassContainer : public utilPooledObject
+class _monClassContainer : public SDBObject
 {
    friend class _monMonitorManager ;
 
@@ -576,8 +576,12 @@ public:
       }
    } ;
 
-   ~_monClassContainer ()
+   INT32 cleanup()
    {
+
+      setMaxArchivedListLen( 0 ) ;
+      setMonitorLvl( MON_DATA_LVL_NONE ) ;
+
       MON_PARTITION_LIST::iterator it = _activeList.begin() ;
 
       while ( it != _activeList.end() )
@@ -595,6 +599,12 @@ public:
          it2 = _archivedList.erase(it2) ;
          SDB_OSS_DEL &obj ;
       }
+      return SDB_OK ;
+   }
+
+   ~_monClassContainer ()
+   {
+      cleanup() ;
    }
 
 private:
