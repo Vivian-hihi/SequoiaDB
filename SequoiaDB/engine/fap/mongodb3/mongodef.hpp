@@ -143,6 +143,7 @@ enum
    OP_GETMORE           = 4,
    OP_KILLCURSORS       = 5,
    OP_ENSURE_INDEX      = 6,
+
    OP_COMMAND_BEGIN     = 7,
    OP_CMD_CREATE        = 8,     // create collection
    OP_CMD_CREATE_CS     = 9,
@@ -151,7 +152,7 @@ enum
    OP_CMD_GETLASTERROR  = 12,    // will not process msg
    OP_CMD_DROP_INDEX    = 13,
    OP_CMD_GET_INDEX     = 14,
-   OP_CMD_GET_CLS       = 15,
+   OP_CMD_GET_CLS       = 15,    // list collections
    OP_CMD_COUNT         = 16,
    OP_CMD_COUNT_MORE    = 17,    // it is obsolete
    OP_CMD_AGGREGATE     = 18,
@@ -167,6 +168,8 @@ enum
    OP_CMD_WHATSMYURI    = 28,
    OP_CMD_BUILDINFO     = 29,
    OP_CMD_GETLOG        = 30,
+
+   OP_FIND              = 31,
 
    OP_COMMAND_END       = 127,
 };

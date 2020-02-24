@@ -431,7 +431,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
 
    // when msg is with $cmd, need to reply
    // so value of bodyLen cannot be 0
-   if ( packet.with( OPTION_CMD ) )
+   if ( packet.with( OPTION_CMD ) && OP_FIND != _converter.getOpType() )
    {
       if ( 0 == bodyLen )
       {
@@ -748,13 +748,6 @@ void _mongoSession::_handleResponse( const INT32 opType,
       buff = engine::rtnContextBuf( bob.obj() ) ;
       goto done ;
    }
-   else if ( SDB_DMS_EOC == _replyHeader.flags )
-   {
-      buff = engine::rtnContextBuf() ;
-      _replyHeader.numReturned = 0 ;
-      _replyHeader.startFrom = _cursorStartFrom.startFrom ;
-      goto done ;
-   }
 
    if ( OP_CMD_COUNT == opType && SDB_OK == _replyHeader.flags )
    {
@@ -829,48 +822,15 @@ void _mongoSession::_handleResponse( const INT32 opType,
       }
       buff = engine::rtnContextBuf( bob.obj() ) ;
    }
-   else if ( OP_CMD_GET_CLS == opType &&
-             SDB_DMS_EOC != _replyHeader.flags &&
-             _replyHeader.numReturned > 0 )
-   {
-      INT32 offset = 0 ;
-      INT32 len = buff.size() ;
-      const CHAR *pBody = buff.data() ;
-      INT32 recordNum = buff.recordNum() ;
-      bson::BSONObj obj, tmp ;
-      _tmpBuffer.zero() ;
-      while ( offset < len )
-      {
-         tmp.init( pBody + offset ) ;
-         obj = BSON( "name" << tmp.getStringField( "Name" ) ) ;
-         _tmpBuffer.write( obj.objdata(), obj.objsize(), TRUE ) ;
-         offset += ossRoundUpToMultipleX( tmp.objsize(), 4 ) ;
-      }
-      const CHAR *pBuffer = _tmpBuffer.data() ;
-      INT32 size = _tmpBuffer.size() ;
-      engine::rtnContextBuf ctx( pBuffer, size, recordNum ) ;
-      buff = ctx ;
-   }
-   else if ( OP_CMD_GET_INDEX == opType && SDB_OK == _replyHeader.flags )
+   else if ( OP_CMD_GET_INDEX == opType && packet.with( OPTION_IDX ) &&
+             SDB_OK == _replyHeader.flags )
    {
       INT32 offset = 0 ;
       _tmpBuffer.zero() ;
       while ( offset < buff.size() )
       {
          bson::BSONObj obj( buff.data() + offset ) ;
-         bson::BSONObjBuilder builder ;
-         bson::BSONObj sdbIdxDef = obj.getObjectField( "IndexDef" ) ;
-
-         builder.append( "v", sdbIdxDef.getIntField( "v" ) ) ;
-         if ( sdbIdxDef.getBoolField( "unique" ) &&
-              sdbIdxDef.getBoolField( "enforced" ) )
-         {
-            builder.append( "unique", true ) ;
-         }
-         builder.append( "key", sdbIdxDef.getObjectField( "key" ) ) ;
-         builder.append( "name", sdbIdxDef.getStringField( "name" ) ) ;
-         builder.append( "ns", packet.fullName.c_str() ) ;
-         bson::BSONObj newObj = builder.done() ;
+         bson::BSONObj newObj = _convertIndexObj( obj ) ;
 
          _tmpBuffer.write( newObj.objdata(), newObj.objsize(), TRUE ) ;
          offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
@@ -879,36 +839,187 @@ void _mongoSession::_handleResponse( const INT32 opType,
       buff = engine::rtnContextBuf( _tmpBuffer.data(), _tmpBuffer.size(),
                                     buff.recordNum() ) ;
    }
-   else if ( OP_CMD_AGGREGATE == opType && SDB_OK == _replyHeader.flags )
+   else if ( OP_FIND == opType        || OP_CMD_AGGREGATE == opType ||
+             OP_CMD_GET_CLS == opType || OP_CMD_GET_INDEX == opType )
    {
-      // reply: { cursor: { firstBatch: [ {xxx}, {xxx} ], id:0, ns: "yt.test" },
-      //          ok: 1 }
-      bson::BSONObjBuilder resultBuilder ;
-      bson::BSONObjBuilder cursorBuilder ;
-
-      bson::BSONArrayBuilder sub( cursorBuilder.subarrayStart( "firstBatch" ) ) ;
-      INT32 offset = 0 ;
-      while ( offset < buff.size() )
+      if ( packet.with( OPTION_CMD ) )
       {
-         bson::BSONObj oneRecord( buff.data() + offset ) ;
-         offset += ossRoundUpToMultipleX( oneRecord.objsize(), 4 ) ;
-         sub.append( oneRecord ) ;
+         if ( SDB_OK      == _replyHeader.flags ||
+              SDB_DMS_EOC == _replyHeader.flags )
+         {
+            _buildFirstBatch( buff ) ;
+         }
       }
-      sub.done() ;
-
-      cursorBuilder.append( "ns", _converter.getParser().dataPacket().fullName.c_str() ) ;
-      cursorBuilder.append( "id", (long long)( _replyHeader.contextID + 1 ) ) ;
-
-      resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
-      resultBuilder.append( "ok", 1 ) ;
-
-      buff = engine::rtnContextBuf( resultBuilder.obj() ) ;
-      _replyHeader.contextID = -1 ;
-      _replyHeader.numReturned = 1 ;
+      else
+      {
+         if ( SDB_DMS_EOC == _replyHeader.flags )
+         {
+            buff = engine::rtnContextBuf() ;
+            _replyHeader.numReturned = 0 ;
+            _replyHeader.startFrom = _cursorStartFrom.startFrom ;
+         }
+      }
+   }
+   else if ( OP_GETMORE == opType )
+   {
+      if ( packet.with( OPTION_CMD ) && dbQuery == packet.opCode )
+      {
+         if ( SDB_OK      == _replyHeader.flags ||
+              SDB_DMS_EOC == _replyHeader.flags )
+         {
+            _buildNextBatch( buff ) ;
+         }
+      }
+      else
+      {
+         if ( SDB_DMS_EOC == _replyHeader.flags )
+         {
+            buff = engine::rtnContextBuf() ;
+            _replyHeader.numReturned = 0 ;
+            _replyHeader.startFrom = _cursorStartFrom.startFrom ;
+         }
+      }
    }
 
 done:
    return ;
+}
+
+void _mongoSession::_buildFirstBatch( engine::rtnContextBuf &buff )
+{
+   // {xxx}, {xxx}... =>
+   // { cursor: { firstBatch: [ {xxx}, {xxx}... ], id: 0, ns: "foo.bar" },
+   //   ok: 1 }
+   mongoDataPacket packet = _converter.getParser().dataPacket() ;
+   bson::BSONObjBuilder resultBuilder ;
+   bson::BSONObjBuilder cursorBuilder ;
+
+   bson::BSONArrayBuilder arr( cursorBuilder.subarrayStart( "firstBatch" ) ) ;
+   INT32 offset = 0 ;
+   if ( SDB_DMS_EOC == _replyHeader.flags )
+   {
+      // do nothing
+   }
+   else
+   {
+      while ( offset < buff.size() )
+      {
+         bson::BSONObj obj( buff.data() + offset ) ;
+         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+
+         if ( OP_CMD_GET_INDEX == _converter.getOpType() &&
+              packet.with( OPTION_CMD ) )
+         {
+            bson::BSONObj newObj = _convertIndexObj(obj) ;
+            arr.append( newObj ) ;
+         }
+         else if ( OP_CMD_GET_CLS == _converter.getOpType() )
+         {
+            // { Name: "foo.bar" } => { name: "bar" }
+            const CHAR* clFullName = obj.getStringField( "Name" ) ;
+            const CHAR* dotPos = ossStrstr( clFullName, "." ) ;
+            bson::BSONObj newObj = BSON( "name" << dotPos + 1 ) ;
+            arr.append( newObj ) ;
+         }
+         else
+         {
+            arr.append( obj ) ;
+         }
+      }
+   }
+   arr.done() ;
+
+   if ( OP_CMD_GET_INDEX == _converter.getOpType() &&
+        packet.with( OPTION_CMD ) )
+   {
+      // index request: { listIndexes: "bar" }
+      // index reply:   { ... ns: "foo.$cmd.listIndexes.bar" ... }
+      std::string ns = packet.csName ;
+      ns += ".$cmd.listIndexes." ;
+      ns += packet.all.firstElement().valuestrsafe() ;
+      cursorBuilder.append( "ns", ns.c_str() ) ;
+   }
+   else if ( OP_CMD_GET_CLS == _converter.getOpType() )
+   {
+      // listCL reply:   { ... ns: "foo.$cmd.listCollections" ... }
+      string ns = _converter.getParser().dataPacket().csName ;
+      ns += ".$cmd.listCollections" ;
+      cursorBuilder.append( "ns", ns.c_str() ) ;
+   }
+   else
+   {
+      cursorBuilder.append( "ns", packet.fullName.c_str() ) ;
+   }
+
+   cursorBuilder.append( "id", (long long)( _replyHeader.contextID + 1 ) ) ;
+   resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
+   resultBuilder.append( "ok", 1 ) ;
+   buff = engine::rtnContextBuf( resultBuilder.obj() ) ;
+
+   _replyHeader.contextID = -1 ;
+   _replyHeader.numReturned = 1 ;
+}
+
+void _mongoSession::_buildNextBatch( engine::rtnContextBuf &buff )
+{
+   // {xxx}, {xxx}... =>
+   // { cursor: { nextBatch: [ {xxx}, {xxx}... ],
+   //             id: 0,
+   //             ns: "foo.$cmd.listIndexes.bar" },
+   //   ok: 1 }
+   mongoDataPacket packet = _converter.getParser().dataPacket() ;
+   bson::BSONObjBuilder resultBuilder ;
+   bson::BSONObjBuilder cursorBuilder ;
+
+   bson::BSONArrayBuilder arr( cursorBuilder.subarrayStart( "nextBatch" ) ) ;
+   INT32 offset = 0 ;
+   if ( SDB_DMS_EOC == _replyHeader.flags )
+   {
+      // do nothing
+   }
+   else
+   {
+      while ( offset < buff.size() )
+      {
+         bson::BSONObj obj( buff.data() + offset ) ;
+         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         arr.append( obj ) ;
+      }
+   }
+   arr.done() ;
+
+   // getMore request:
+   //  { getMore: <ctxID>, collection: "$cmd.listIndexes.bar" }
+   packet.fullName = packet.csName ;
+   packet.fullName += "." ;
+   packet.fullName += packet.all.getStringField( "collection" ) ;
+   cursorBuilder.append( "ns", packet.fullName.c_str() ) ;
+
+   cursorBuilder.append( "id", (long long)( _replyHeader.contextID + 1 ) ) ;
+   resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
+   resultBuilder.append( "ok", 1 ) ;
+   buff = engine::rtnContextBuf( resultBuilder.obj() ) ;
+
+   _replyHeader.contextID = -1 ;
+   _replyHeader.numReturned = 1 ;
+}
+
+BSONObj _mongoSession::_convertIndexObj( const BSONObj& sdbIdxFmt )
+{
+   bson::BSONObjBuilder builder ;
+   bson::BSONObj sdbIdxDef = sdbIdxFmt.getObjectField( "IndexDef" ) ;
+
+   builder.append( "v", sdbIdxDef.getIntField( "v" ) ) ;
+   if ( sdbIdxDef.getBoolField( "unique" ) &&
+        sdbIdxDef.getBoolField( "enforced" ) )
+   {
+      builder.append( "unique", true ) ;
+   }
+   builder.append( "key", sdbIdxDef.getObjectField( "key" ) ) ;
+   builder.append( "name", sdbIdxDef.getStringField( "name" ) ) ;
+   builder.append( "ns", _converter.getParser().dataPacket().fullName.c_str() ) ;
+
+   return builder.obj() ;
 }
 
 INT32 _mongoSession::_setSeesionAttr()

@@ -79,6 +79,9 @@ private:
    void  _handleResponse( const INT32 opType, engine::rtnContextBuf &buff ) ;
    INT32 _autoCreateCS() ;
    INT32 _autoCreateCL() ;
+   BSONObj _convertIndexObj( const BSONObj& sdbIdxFmt ) ;
+   void _buildFirstBatch( engine::rtnContextBuf &buff ) ;
+   void _buildNextBatch( engine::rtnContextBuf &buff ) ;
 
 private:
    mongoConverter          _converter ;

@@ -46,6 +46,7 @@ DECLARE_COMMAND_VAR( insert )
 DECLARE_COMMAND_VAR( delete )
 DECLARE_COMMAND_VAR( update )
 DECLARE_COMMAND_VAR( query )
+DECLARE_COMMAND_VAR( find )
 DECLARE_COMMAND_VAR( getMore )
 DECLARE_COMMAND_VAR( killCursors )
 DECLARE_COMMAND_VAR( distinct )
@@ -58,7 +59,7 @@ DECLARE_COMMAND_VAR( dropUser )
 DECLARE_COMMAND_VAR( listUsers )
 DECLARE_COMMAND_VAR( create )
 DECLARE_COMMAND_VAR( createCS )
-DECLARE_COMMAND_VAR( listCollection )
+DECLARE_COMMAND_VAR( listCollections )
 DECLARE_COMMAND_VAR( drop )
 DECLARE_COMMAND_VAR( count )
 DECLARE_COMMAND_VAR( aggregate )
@@ -591,7 +592,7 @@ INT32 queryCommand::convert( msgParser &parser )
       }
       else if ( packet.with( OPTION_CLS ) )
       {
-         cmd = commandMgr::instance()->findCommand( "listCollection" ) ;
+         cmd = commandMgr::instance()->findCommand( "listCollections" ) ;
       }
       else if ( packet.with( OPTION_USR ) )
       {
@@ -703,6 +704,83 @@ INT32 queryCommand::doCommand( void *pData )
    return SDB_OK ;
 }
 
+INT32 findCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+INT32 findCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   INT32 rc                = SDB_OK ;
+   MsgOpQuery *query       = NULL ;
+   mongoDataPacket &packet = parser.dataPacket() ;
+   bson::BSONObj cond, orderby, hint, selector ;
+
+   parser.setCurrentOp( OP_FIND ) ;
+   sdbMsg.reverse( sizeof( MsgOpQuery ) ) ;
+   sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
+
+   query = ( MsgOpQuery * )sdbMsg.data() ;
+   query->header.opCode = MSG_BS_QUERY_REQ ;
+   query->header.TID = 0 ;
+   query->header.routeID.value = 0 ;
+   query->header.requestID = packet.requestId ;
+   query->version = 0 ;
+   query->w = 0 ;
+   query->padding = 0 ;
+   query->flags = 0 ;
+   setQueryFlags( packet.reservedInt, query->flags ) ;
+   query->numToSkip = 0 ;
+   query->numToReturn = -1 ;
+   query->nameLength = packet.fullName.length() ;
+
+   if ( packet.all.hasField( "filter" ) )
+   {
+      cond = packet.all.getObjectField( "filter" ) ;
+   }
+   if ( packet.all.hasField( "sort" ) )
+   {
+      orderby = packet.all.getObjectField( "sort" ) ;
+   }
+   if ( packet.all.hasField( "projection" ) )
+   {
+      selector = packet.all.getObjectField( "projection" ) ;
+      if ( !selector.isEmpty() && !selector.hasField( "_id" ) )
+      {
+         BSONObjBuilder builder ;
+         builder.appendElements( selector ) ;
+         builder.append( "_id", 1 ) ;
+         selector = builder.obj() ;
+      }
+   }
+   if ( packet.all.hasField( "hint" ) )
+   {
+      hint = packet.all.getObjectField( "hint" ) ;
+   }
+   if ( packet.all.hasField( "limit" ) )
+   {
+      query->numToReturn = packet.all.getIntField( "limit" ) ;
+   }
+   if ( packet.all.hasField( "skip" ) )
+   {
+      query->numToSkip = packet.all.getIntField( "skip" ) ;
+   }
+
+   sdbMsg.write( packet.fullName.c_str(), query->nameLength + 1, TRUE ) ;
+   sdbMsg.write( cond, TRUE ) ;
+   sdbMsg.write( selector, TRUE ) ;
+   sdbMsg.write( orderby, TRUE ) ;
+   sdbMsg.write( hint, TRUE ) ;
+   sdbMsg.doneLen() ;
+
+   return rc ;
+}
+
+INT32 findCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
 INT32 getMoreCommand::convert( msgParser &parser )
 {
    return SDB_OK ;
@@ -725,16 +803,30 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    more->header.routeID.value = 0 ;
    more->header.requestID = packet.requestId ;
 
-   parser.readInt( sizeof( nToReturn ), ( CHAR * )&nToReturn ) ;
-   packet.nToReturn = nToReturn < 0 ? -nToReturn : nToReturn ;
-   if ( 0 == packet.nToReturn )
+   if ( packet.with( OPTION_CMD ) && dbQuery == packet.opCode )
    {
-      packet.nToReturn = -1 ;
+      // message from java driver 3.4
+      more->numToReturn = -1 ;
+
+      packet.fullName = packet.csName ;
+      packet.fullName += "." ;
+      packet.fullName += packet.all.getStringField( "collection" ) ;
+
+      more->contextID = packet.all.getField( "getMore" ).numberLong() - 1 ;
    }
-   more->numToReturn = packet.nToReturn ;
-   parser.readInt( sizeof( packet.cursorId ), ( CHAR * )&packet.cursorId ) ;
-   // match to sequoiadb contextID, need decrease 1
-   more->contextID = packet.cursorId - 1;
+   else
+   {
+      parser.readInt( sizeof( nToReturn ), ( CHAR * )&nToReturn ) ;
+      packet.nToReturn = nToReturn < 0 ? -nToReturn : nToReturn ;
+      if ( 0 == packet.nToReturn )
+      {
+         packet.nToReturn = -1 ;
+      }
+      more->numToReturn = packet.nToReturn ;
+      parser.readInt( sizeof( packet.cursorId ), ( CHAR * )&packet.cursorId ) ;
+      // match to sequoiadb contextID, need decrease 1
+      more->contextID = packet.cursorId - 1 ;
+   }
 
    sdbMsg.doneLen() ;
 
@@ -1200,12 +1292,12 @@ INT32 createCommand::doCommand( void *pData )
    return SDB_OK ;
 }
 
-INT32 listCollectionCommand::convert( msgParser &parser )
+INT32 listCollectionsCommand::convert( msgParser &parser )
 {
    return SDB_OK ;
 }
 
-INT32 listCollectionCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+INT32 listCollectionsCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
@@ -1229,40 +1321,39 @@ INT32 listCollectionCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    setQueryFlags( packet.reservedInt, query->flags ) ;
 
    query->nameLength = ossStrlen( cmdName ) ;
-   query->numToSkip = packet.nToSkip ;
-   query->numToReturn = packet.nToReturn ;
+   query->numToSkip = 0 ;
+   query->numToReturn = -1 ;
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
+
+   bson::BSONObj cond, selector, orderby, hint ;
+   if ( parser.more() )
    {
-      bson::BSONObj cond, selector, orderby, hint ;
-      if ( parser.more() )
-      {
-         parser.readNextObj( packet.fieldToReturn ) ;
-      }
-      selector = packet.fieldToReturn ;
-      cond = getQueryObj( packet.all ) ;
-      orderby = getSortObj( packet.all ) ;
-      hint = getHintObj( packet.all ) ;
-
-      query->numToSkip = getFieldInt( packet.all, "skip" ) ;
-      query->numToReturn = getFieldInt( packet.all, "limit" ) ;
-      if ( 0 == query->numToReturn )
-      {
-         query->numToReturn = -1 ;
-      }
-
-      sdbMsg.write( cond, TRUE ) ;
-      sdbMsg.write( selector, TRUE ) ;
-      sdbMsg.write( orderby, TRUE ) ;
-      sdbMsg.write( hint, TRUE ) ;
+      parser.readNextObj( packet.fieldToReturn ) ;
    }
+   selector = packet.fieldToReturn ;
+
+   // cond: { Name: { $gt: "foo.", $lt: "foo/" }, ... }
+   string lowBound = packet.csName ;
+   lowBound += "." ;
+   string upBound = packet.csName ;
+   upBound += "/" ;
+
+   BSONObjBuilder builder ;
+   builder.appendElements( packet.all.getObjectField( "filter" ) ) ;
+   builder.append( "Name", BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
+
+   sdbMsg.write( builder.obj(), TRUE ) ;
+   sdbMsg.write( selector, TRUE ) ;
+   sdbMsg.write( orderby, TRUE ) ;
+   sdbMsg.write( hint, TRUE ) ;
 
    sdbMsg.doneLen() ;
 
    return rc ;
 }
 
-INT32 listCollectionCommand::doCommand( void *pData )
+INT32 listCollectionsCommand::doCommand( void *pData )
 {
    return SDB_OK ;
 }
@@ -1361,27 +1452,35 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    packet.fullName += packet.all.getStringField( "count" ) ;
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
+
+   // command: db.bar.count( {a:1} ).hint( {b:1} )
+   // sdb msg: matcher: {a:1}
+   //          hint:    {Collection:"bar", Hint:{b:1}}
+   bson::BSONObj empty, hint ;
+   bson::BSONObj matcher = packet.all.getObjectField( "query" ) ;
+
+   if ( packet.all.hasField( "limit" ) )
    {
-      bson::BSONObj cond, obj, orderby, empty ;
-      cond = packet.all.getObjectField( "query" ) ;
-      obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
-
-      orderby = packet.all.getObjectField( "sort" ) ;
-      if ( packet.all.hasField( "limit" ) )
-      {
-         query->numToReturn = packet.all.getIntField( "limit" ) ;
-      }
-
-      if ( packet.all.hasField( "skip" ) )
-      {
-         query->numToSkip = packet.all.getIntField( "skip" ) ;
-      }
-
-      sdbMsg.write( cond, TRUE ) ;
-      sdbMsg.write( empty, TRUE ) ;
-      sdbMsg.write( empty, TRUE ) ;
-      sdbMsg.write( obj, TRUE ) ;
+      query->numToReturn = packet.all.getIntField( "limit" ) ;
    }
+   if ( packet.all.hasField( "skip" ) )
+   {
+      query->numToSkip = packet.all.getIntField( "skip" ) ;
+   }
+   if ( packet.all.hasField( "hint" ) )
+   {
+      hint = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() <<
+                   FIELD_NAME_HINT << packet.all.getObjectField( "hint" ) ) ;
+   }
+   else
+   {
+      hint = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
+   }
+
+   sdbMsg.write( matcher, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( hint, TRUE ) ;
 
    sdbMsg.doneLen() ;
 
@@ -1849,14 +1948,14 @@ INT32 listIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    setQueryFlags( packet.reservedInt, query->flags ) ;
 
    query->nameLength = ossStrlen( cmdName ) ;
-   query->numToSkip = packet.nToSkip ;
-   query->numToReturn = packet.nToReturn ;
-
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
 
    bson::BSONObj obj, cond, indexObj, empty ;
    if ( packet.with( OPTION_IDX ) )
    {
+      query->numToSkip = packet.nToSkip ;
+      query->numToReturn = packet.nToReturn ;
+
       cond = getQueryObj( packet.all ) ;
       if( !cond.isEmpty() )
       {
@@ -1880,15 +1979,14 @@ INT32 listIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    }
    else if ( packet.with( OPTION_CMD ) )
    {
-      rc = SDB_OPTION_NOT_SUPPORT ;
-      parser.setCurrentOp( OP_CMD_NOT_SUPPORTED ) ;
-      goto error ;
+      query->numToSkip = 0 ;
+      query->numToReturn = -1 ;
 
-      //packet.fullName = packet.csName ;
-      //packet.fullName += "." ;
-      //packet.fullName += packet.all.getStringField( "listIndexes" ) ;
+      packet.fullName = packet.csName ;
+      packet.fullName += "." ;
+      packet.fullName += packet.all.getStringField( "listIndexes" ) ;
 
-      //obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
+      obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
    }
 
    sdbMsg.write( indexObj, TRUE ) ;
@@ -1898,10 +1996,7 @@ INT32 listIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 listIndexesCommand::doCommand( void *pData )
