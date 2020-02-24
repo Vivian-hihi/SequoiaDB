@@ -150,6 +150,29 @@
      -> WHERE e.id=m.employee_id;
  MariaDB [company]> SELECT * FROM manager_view;
  ```
+## 支持的建表选项
+
+| 选项 | 默认值 | 描述 |
+| ---- | ------ | ---- |
+| AUTO_INCREMENT | 1 | 自增字段的起始值。默认为 1。注意，SequoiaDB 的自增字段不是严格递增，而是趋势递增的。详情可以参考 SequoiaDB [自增字段章节](data_model/auto_increment.md)。 |
+| CHARACTER SET | utf8mb4 | 字符数据的字符集。 |
+| COLLATE | utf8mb4_bin | 字符数据的比较规则。不支持忽略大小写的字符比较规则，字符比较对大小写敏感。 |
+| COMMENT | "" | 表备注信息。还可以通过它指定更多 SequoiaDB 引擎的选项，具体参考[自定义表配置](sql_engine/sequoiasql_mysql/config.md#自定义表配置)。 |
+| ENGINE | SEQUOIADB | 表存储引擎。**必须**为 SEQUOIADB 才能使用本分布式存储引擎。一般无需显式指定。 |
+
+例子：
+
++ 通过 COMMENT 创建压缩类型为 snappy 的表。
+
+ ```lang-sql
+ MariaDB [db]> CREATE TABLE t2 (id INT) COMMENT='sequoiadb:{ table_options: { CompressionType: "snappy" } }';
+ ```
+
++ 指定表自增字段起始值为 1000。
+
+ ```lang-sql
+ MariaDB [db]> CREATE TABLE tb (id INT AUTO_INCREMENT PRIMARY KEY) AUTO_INCREMENT=1000;
+ ```
 
 ## 在线修改 DDL
 
