@@ -1448,6 +1448,11 @@ namespace engine
                 SDB_NET_INVALID_HANDLE, error, PDERROR,
                 "Failed to send UDP message, UDP handler is invalid" ) ;
 
+      // set route ID if needed
+      if ( MSG_INVALID_ROUTEID == message->routeID.value )
+      {
+         message->routeID.value = _local.value ;
+      }
 
       rc = eh->syncSend( message, message->messageLength ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to send message by UDP, rc: %d",
