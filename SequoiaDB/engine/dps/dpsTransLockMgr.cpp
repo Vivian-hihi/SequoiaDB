@@ -2268,7 +2268,9 @@ namespace engine
             pLRBHdr->extData._onLockReleaseFunc( lockId,
                                                  pMyLRB->lockMode,
                                                  pMyLRB->refCounter,
-                                                 &(pLRBHdr->extData) ) ;
+                                                 &(pLRBHdr->extData),
+                                                 -1,
+                                                 FALSE ) ;
          }
       }
 
