@@ -351,8 +351,8 @@ env = Environment( BUILD_DIR=variantDir,
                    tools=["default", "gch", "mergelib" ],
                    PYSYSPLATFORM=os.sys.platform,
                    )
-if guess_os == "linux" and guess_arch == "arm64":
-    env.Replace( CXX=" g++ -std=c++98 " )
+if guess_os == "linux":
+    env.Append( CXXFLAGS=" -std=c++98 " )
 
 libdeps.setup_environment( env )
 
