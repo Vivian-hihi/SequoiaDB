@@ -42,6 +42,8 @@
 #include "../../bson/lib/md5.hpp"
 #include "msgDef.h"
 
+using namespace bson ;
+
 DECLARE_COMMAND_VAR( insert )
 DECLARE_COMMAND_VAR( delete )
 DECLARE_COMMAND_VAR( update )
@@ -81,6 +83,54 @@ void generateNonce( std::stringstream &ss )
    UINT64 ull = 0 ;
    ss.clear() ;
    ss << std::hex << ull ;
+}
+
+static void convertProjection( BSONObj &proj )
+{
+   BSONObjBuilder newBuilder ;
+   BOOLEAN hasId = FALSE ;
+   BOOLEAN addExclude = FALSE ;
+   BOOLEAN hasOperator = FALSE ;
+   BSONObjIterator i( proj ) ;
+
+   if ( proj.isEmpty() )
+   {
+      goto done ;
+   }
+
+   while ( i.more() )
+   {
+      BSONElement e = i.next() ;
+      if ( 0 == ossStrcmp( e.fieldName(), "_id" ) )
+      {
+         hasId = TRUE ;
+      }
+      if ( Object == e.type() && '$' == e.Obj().firstElementFieldName()[0] )
+      {
+         hasOperator = TRUE ;
+         newBuilder.append( e ) ;
+      }
+      else
+      {
+         // { b: 1 } => { b: { $include: 1 } }
+         newBuilder.append( e.fieldName(),
+                            BSON( "$include" << ( e.trueValue() ? 1 : 0 ) ) ) ;
+         if ( ! e.trueValue() )
+         {
+            addExclude = TRUE ;
+         }
+      }
+   }
+
+   if ( !hasOperator && !hasId && !addExclude )
+   {
+      newBuilder.append( "_id", BSON( "$include" << 1 ) ) ;
+   }
+
+   proj = newBuilder.obj() ;
+
+done:
+   return ;
 }
 
 /// implement of commands
@@ -673,13 +723,7 @@ INT32 queryCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       if ( parser.more() )
       {
          parser.readNextObj( packet.fieldToReturn ) ;
-         if ( !packet.fieldToReturn.hasField( "_id" ) )
-         {
-            BSONObjBuilder builder ;
-            builder.appendElements( packet.fieldToReturn ) ;
-            builder.append( "_id", 1 ) ;
-            packet.fieldToReturn = builder.obj() ;
-         }
+         convertProjection( packet.fieldToReturn ) ;
       }
 
       bson::BSONObj cond, orderby, hint ;
@@ -745,13 +789,7 @@ INT32 findCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    if ( packet.all.hasField( "projection" ) )
    {
       selector = packet.all.getObjectField( "projection" ) ;
-      if ( !selector.isEmpty() && !selector.hasField( "_id" ) )
-      {
-         BSONObjBuilder builder ;
-         builder.appendElements( selector ) ;
-         builder.append( "_id", 1 ) ;
-         selector = builder.obj() ;
-      }
+      convertProjection( selector ) ;
    }
    if ( packet.all.hasField( "hint" ) )
    {
