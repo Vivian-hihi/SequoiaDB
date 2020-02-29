@@ -61,6 +61,7 @@ DECLARE_COMMAND_VAR( dropUser )
 DECLARE_COMMAND_VAR( listUsers )
 DECLARE_COMMAND_VAR( create )
 DECLARE_COMMAND_VAR( createCS )
+DECLARE_COMMAND_VAR( listDatabases )
 DECLARE_COMMAND_VAR( listCollections )
 DECLARE_COMMAND_VAR( drop )
 DECLARE_COMMAND_VAR( count )
@@ -1326,6 +1327,56 @@ INT32 createCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 createCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 listDatabasesCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+INT32 listDatabasesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   INT32 rc                = SDB_OK ;
+   MsgOpQuery *query       = NULL ;
+   mongoDataPacket &packet = parser.dataPacket() ;
+   const CHAR *cmdName     = CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES ;
+
+   parser.setCurrentOp( OP_CMD_GET_DBS ) ;
+   sdbMsg.reverse( sizeof( MsgOpQuery ) ) ;
+   sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
+
+   query = ( MsgOpQuery * )sdbMsg.data() ;
+   query->header.opCode = MSG_BS_QUERY_REQ ;
+   query->header.TID = 0 ;
+   query->header.routeID.value = 0 ;
+   query->header.requestID = packet.requestId ;
+
+   query->version = 0 ;
+   query->w = 0 ;
+   query->padding = 0 ;
+   query->flags = 0 ;
+   setQueryFlags( packet.reservedInt, query->flags ) ;
+
+   query->nameLength = ossStrlen( cmdName ) ;
+   query->numToSkip = 0 ;
+   query->numToReturn = -1 ;
+
+   sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
+
+   bson::BSONObj empty ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+
+   sdbMsg.doneLen() ;
+
+   return rc ;
+}
+
+INT32 listDatabasesCommand::doCommand( void *pData )
 {
    return SDB_OK ;
 }

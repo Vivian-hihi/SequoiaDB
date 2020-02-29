@@ -109,9 +109,9 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
    INT32 rc = SDB_OK ;
    UINT32 curOp = _parser.currentOperation() ;
 
-   if ( OP_CMD_COUNT    == curOp || OP_CMD_GET_INDEX == curOp ||
-        OP_CMD_GET_CLS  == curOp || OP_CMD_AGGREGATE == curOp ||
-        OP_CMD_DISTINCT == curOp )
+   if ( OP_CMD_COUNT   == curOp || OP_CMD_GET_INDEX == curOp ||
+        OP_CMD_GET_CLS == curOp || OP_CMD_AGGREGATE == curOp ||
+        OP_CMD_GET_DBS == curOp || OP_CMD_DISTINCT == curOp )
    {
       if ( SDB_OK != reply->flags )
       {

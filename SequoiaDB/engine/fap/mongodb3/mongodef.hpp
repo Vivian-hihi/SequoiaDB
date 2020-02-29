@@ -168,8 +168,8 @@ enum
    OP_CMD_WHATSMYURI    = 28,
    OP_CMD_BUILDINFO     = 29,
    OP_CMD_GETLOG        = 30,
-
    OP_FIND              = 31,
+   OP_CMD_GET_DBS       = 32,    // list databases
 
    OP_COMMAND_END       = 127,
 };

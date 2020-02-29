@@ -822,6 +822,36 @@ void _mongoSession::_handleResponse( const INT32 opType,
       }
       buff = engine::rtnContextBuf( bob.obj() ) ;
    }
+   else if ( OP_CMD_GET_DBS == opType )
+   {
+      if ( SDB_OK == _replyHeader.flags )
+      {
+         bson::BSONArrayBuilder arr( bob.subarrayStart( "databases" ) ) ;
+         INT32 offset = 0 ;
+         while ( offset < buff.size() )
+         {
+            bson::BSONObj obj( buff.data() + offset ) ;
+            // { Name: "cs" } => { name: "cs" }
+            arr.append( BSON( "name" << obj.getStringField( "Name" ) ) ) ;
+            offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         }
+         arr.done() ;
+         bob.append( "ok", 1 ) ;
+
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+         _replyHeader.contextID = -1 ;
+         _replyHeader.numReturned = 1 ;
+      }
+      else if ( SDB_DMS_EOC == _replyHeader.flags )
+      {
+         bson::BSONArrayBuilder arr( bob.subarrayStart( "databases" ) ) ;
+         arr.done() ;
+         bob.append( "ok", 1 ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+         _replyHeader.contextID = -1 ;
+         _replyHeader.numReturned = 1 ;
+      }
+   }
    else if ( OP_CMD_GET_INDEX == opType && packet.with( OPTION_IDX ) &&
              SDB_OK == _replyHeader.flags )
    {
