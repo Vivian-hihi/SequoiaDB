@@ -1739,17 +1739,28 @@ INT32 distinctCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    std::string distinctfield = "$" ;
    distinctfield += packet.all.getStringField( "key" ) ;
 
-   // distinct("a") =>
+   // distinct( "a", { b: 1 } ) =>
+   // { $match: { b: 1 } },
    // { $group: { _id: "$a" } },
    // { $group: { _id: null, values: { $addtoset: "$a" } } }
-   bson::BSONObj group1, group2 ;
+   bson::BSONObj match, group1, group2 ;
    bson::BSONObjBuilder builder ;
+
+   if ( packet.all.hasField( "query" ) )
+   {
+      match = BSON( "$match" << packet.all.getField( "query" ) ) ;
+   }
+
    group1 = BSON( "$group" << BSON( "_id" << distinctfield ) ) ;
 
    builder.appendNull( "_id" ) ;
    builder.append( "values", BSON( "$addtoset" << distinctfield ) ) ;
    group2 = BSON( "$group" << builder.done() ) ;
 
+   if ( !match.isEmpty() )
+   {
+      sdbMsg.write( match, TRUE ) ;
+   }
    sdbMsg.write( group1, TRUE ) ;
    sdbMsg.write( group2, TRUE ) ;
    sdbMsg.doneLen() ;

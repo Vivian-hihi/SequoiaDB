@@ -758,14 +758,24 @@ void _mongoSession::_handleResponse( const INT32 opType,
       _replyHeader.contextID = -1 ;
       _replyHeader.startFrom = 0 ;
    }
-   else if ( OP_CMD_DISTINCT == opType && SDB_OK == _replyHeader.flags )
+   else if ( OP_CMD_DISTINCT == opType )
    {
       // reply: { values: [ 1, 3, 4 ], ok: 1 }
-      bson::BSONObj resObj( buff.data() ) ;
-      bob.appendElements( resObj ) ;
-      bob.append( "ok", 1 ) ;
-      buff = engine::rtnContextBuf( bob.obj() ) ;
-      _replyHeader.contextID = -1 ;
+      if ( SDB_OK == _replyHeader.flags )
+      {
+         bob.appendElements( BSONObj( buff.data() ) ) ;
+         bob.append( "ok", 1 ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+         _replyHeader.contextID = -1 ;
+      }
+      else if ( SDB_DMS_EOC == _replyHeader.flags )
+      {
+         bson::BSONArrayBuilder arr( bob.subarrayStart( "values" ) ) ;
+         arr.done() ;
+         bob.append( "ok", 1 ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+         _replyHeader.contextID = -1 ;
+      }
    }
    else if ( OP_INSERT == opType && SDB_OK == _replyHeader.flags )
    {
