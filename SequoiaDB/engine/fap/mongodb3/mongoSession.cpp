@@ -802,7 +802,8 @@ void _mongoSession::_handleResponse( const INT32 opType,
    else if ( OP_UPDATE == opType && SDB_OK == _replyHeader.flags )
    {
       // update reply: { ok: 1, n: 1, nModified: 1 }
-      // upsert reply: { ok: 1, n: 1, nModified: 0, upserted: [ { index: 0 } ] }
+      // upsert reply: { ok: 1, n: 1, nModified: 0,
+      //                 upserted: [ { index: 0, _id: xxx } ] }
       bson::BSONObj resObj( buff.data() ) ;
       bob.append( "ok", 1 ) ;
       //n
@@ -821,13 +822,12 @@ void _mongoSession::_handleResponse( const INT32 opType,
          bob.append( "nModified", resObj.getIntField( "ModifiedNum" ) ) ;
       }
       //upserted
-      if ( resObj.hasField( "InsertedNum" ) )
+      if ( resObj.hasField( "InsertedNum" ) &&
+           resObj.getIntField( "InsertedNum" ) > 0 )
       {
          bson::BSONArrayBuilder sub( bob.subarrayStart( "upserted" ) ) ;
-         for( INT32 i = 0 ; i < resObj.getIntField( "InsertedNum" ) ; i++ )
-         {
-            sub.append( BSON( "index" << i ) ) ;
-         }
+         sub.append( BSON( "index" << 0 <<
+                           "_id" << packet.dataInfo.getField( "_id" ) ) ) ;
          sub.done() ;
       }
       buff = engine::rtnContextBuf( bob.obj() ) ;

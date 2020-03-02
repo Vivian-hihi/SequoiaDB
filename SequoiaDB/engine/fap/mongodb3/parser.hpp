@@ -170,6 +170,7 @@ public:
    std::string fullName ;
    bson::BSONObj all ;
    bson::BSONObj fieldToReturn ;
+   bson::BSONObj dataInfo ;
 
    mongoDataPacket() : optionMask(0), msgLen(0), requestId(0), responseTo(0),
                        opCode(0), flags(0), version(0), reservedInt(0),

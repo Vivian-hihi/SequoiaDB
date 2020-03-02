@@ -507,6 +507,7 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    if ( packet.with( OPTION_CMD ) )
    {
+      // msg: { update:"test", updates: {[{ q:{}, u:{}, upsert:false }]} }
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
       packet.fullName += packet.all.getStringField( "update" ) ;
@@ -521,18 +522,14 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          goto error ;
       }
 
-      bson::BSONObj obj, subObj, cond, updator, hint ;
-      std::vector< bson::BSONElement > objList ;
-      std::vector< bson::BSONElement >::const_iterator cit ;
-      objList = e.Array() ;
-      cit = objList.begin() ;
+      std::vector< bson::BSONElement > objList = e.Array() ;
+      std::vector< bson::BSONElement >::const_iterator cit = objList.begin() ;
       while ( objList.end() != cit )
       {
-         subObj = (*cit).Obj() ;
-         obj = subObj.getObjectField( "q" ) ;
-         //cond = getQueryObj( obj ) ;
-         updator = subObj.getObjectField( "u" ) ;
-         hint = getHintObj( obj ) ;
+         bson::BSONObj obj = (*cit).Obj() ;
+         bson::BSONObj query = obj.getObjectField( "q" ) ;
+         bson::BSONObj updator = obj.getObjectField( "u" ) ;
+         bson::BSONObj hint = getHintObj( query ) ;
 
          if( updator.nFields() > 0 &&
              updator.firstElement().fieldName()[0] != '$' )
@@ -540,16 +537,60 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
             updator = BSON( "$replace" << updator ) ;
          }
 
-         if ( subObj.getBoolField( "multi" ) )
+         if ( obj.getBoolField( "multi" ) )
          {
             update->flags |= FLG_UPDATE_MULTIUPDATE ;
          }
-         if ( subObj.getBoolField( "upsert" ) )
+
+         if ( obj.getBoolField( "upsert" ) )
          {
             update->flags |= FLG_UPDATE_UPSERT ;
+            BOOLEAN hasId = FALSE ;
+
+            // has _id or not
+            BSONObjIterator i( updator ) ;
+            while ( i.more() )
+            {
+               BSONElement ele = i.next() ;
+               if ( ele.isABSONObj() )
+               {
+                  if ( ele.Obj().hasField( "_id" ) )
+                  {
+                     packet.dataInfo = BSON( "_id" <<
+                                             ele.Obj().getField( "_id" ) ) ;
+                     hasId = TRUE ;
+                     break ;
+                  }
+               }
+            }
+
+            // filter $setOnInsert
+            BSONObj setOnObj ;
+            if ( updator.hasField( "$setOnInsert" ) )
+            {
+               setOnObj = updator.getObjectField( "$setOnInsert" ) ;
+               updator = updator.filterFieldsUndotted(
+                                          BSON( "$setOnInsert" << 1 ), false ) ;
+            }
+
+            // add _id to $SetOnInsert if _id doesn't exist
+            if ( !hasId )
+            {
+               OID oid = OID::gen() ;
+               packet.dataInfo = BSON( "_id" << oid ) ;
+
+               bson::BSONObjBuilder bob ;
+               bob.append( "_id", oid ) ;
+               bob.appendElements( setOnObj ) ;
+               hint = BSON( FIELD_NAME_SET_ON_INSERT << bob.obj() ) ;
+            }
+            else
+            {
+               hint = BSON( FIELD_NAME_SET_ON_INSERT << setOnObj ) ;
+            }
          }
 
-         sdbMsg.write( obj, TRUE ) ;
+         sdbMsg.write( query, TRUE ) ;
          sdbMsg.write( updator, TRUE ) ;
          sdbMsg.write( hint, TRUE ) ;
          ++cit ;
