@@ -40,7 +40,7 @@ Since v1.0.
 
 ##EXAMPLES##
 
-1. print the confi information of sdbcm.
+1. print the configuration information of sdbcm.
 
 	```lang-javascript
 	> Oma.getOmaConfigs()
