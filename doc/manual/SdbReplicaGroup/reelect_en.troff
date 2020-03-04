@@ -5,16 +5,16 @@
 .hy
 .SH NAME
 .PP
-reelect \- Re\-elect the master node in the replica group.
+reelect \- Reelect the master node in the replica group.
 .SH SYNOPSIS
 .PP
 \f[B]rg.reelect([options])\f[]
 .SH CATEGORY
 .PP
-ReplicaGroup
+Replica Group
 .SH DESCRIPTION
 .PP
-Re\-elect the master node in the replica group.
+Reelect the master node in the replica group.
 .SH PARAMETERS
 .IP \[bu] 2
 \f[C]options\f[] ( \f[I]json object\f[])
@@ -22,7 +22,7 @@ Re\-elect the master node in the replica group.
 .PP
 Parameter collection, can be the following options:
 .IP "1." 3
-\f[C]Seconds\f[] ( \f[I]int\f[] ): Re\-election start in how many seconds.
+\f[C]Seconds\f[] ( \f[I]int\f[] ): Reelection start in how many seconds.
 .IP "2." 3
 \f[C]NodeID\f[] ( \f[I]int\f[] ): Node ID of the expected primary node.
 .IP "3." 3
@@ -33,15 +33,23 @@ node.
 .RE
 .PP
 \f[B]Note:\f[]
+.RS
 .IP "1." 3
-Returning timeout error means that the re\-election hasn\[aq]t completed during
+Returning timeout error means that the reelection hasn\[aq]t completed during
 the time we set.
-Using db.listReplicaGroups() to view the result.
+You can wait for several seconds until the catalog node asynchronous update
+complete, then using db.listReplicaGroups() to view the result.
+.RE
+.RS
 .IP "2." 3
-The re\-election can only be started when there is a master node in the replica
+The reelection can only be started when there is a master node in the replica
 group.
+.RE
+.RS
 .IP "3." 3
 When NodeID is used, will ignore HostName and ServiceName.
+.RE
+.RS
 .IP "4." 3
 When no specific NodeID or ServiceName is specified, if more than one node can
 be selected as the primary node, the matching rule of the election is : LSN of
@@ -49,9 +57,16 @@ the node > node weight > NodeID.
 The node with the largest LSN is selected.
 If LSN is consistent, the node with the largest weight value is selected, if the
 weight value is consistent, the node with the largest ID value is selected.
+.RE
+.RS
 .IP "5." 3
 The surviving nodes in a replication group need to account for at least half of
-the total number of nodes
+the total number of nodes.
+.RE
+.RS
+.IP "6." 3
+The specific description of the reelection can refer to the reelection mechanism
+.RE
 .SH RETURN VALUE
 .PP
 There is no return value.
@@ -144,7 +159,7 @@ getLastError() to get the error code.
 See troubleshooting for more detail.
 .SH EXAMPLES
 .IP "1." 3
-Conduct the re\-election in 60s with the group of \[aq]datagroup1\[aq]
+Conduct the reelection in 60s with the group of \[aq]datagroup1\[aq]
 .nf
 \f[C]
 >\ var\ rg\ =\ db.getRG("datagroup1")\ 

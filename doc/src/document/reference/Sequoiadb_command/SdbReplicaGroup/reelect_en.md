@@ -1,6 +1,6 @@
 ##NAME##
 
-reelect - Re-elect the master node in the replica group.
+reelect - Reelect the master node in the replica group.
 
 ##SYNOPSIS##
 
@@ -8,11 +8,11 @@ reelect - Re-elect the master node in the replica group.
 
 ##CATEGORY##
 
-ReplicaGroup
+Replica Group
 
 ##DESCRIPTION##
 
-Re-elect the master node in the replica group.
+Reelect the master node in the replica group.
 
 ##PARAMETERS##
 
@@ -20,7 +20,7 @@ Re-elect the master node in the replica group.
 
     Parameter collection, can be the following options:
 
-    1. `Seconds` ( *int* ): Re-election start in how many seconds.
+    1. `Seconds` ( *int* ): Reelection start in how many seconds.
 
     2. `NodeID` ( *int* ): Node ID of the expected primary node.
 
@@ -30,11 +30,18 @@ Re-elect the master node in the replica group.
 
 **Note:**
 
-1. Returning timeout error means that the re-election hasn't completed during the time we set. Using db.listReplicaGroups() to view the result.
-2. The re-election can only be started when there is a master node in the replica group.
-3. When NodeID is used, will ignore HostName and ServiceName.
-4. When no specific NodeID or ServiceName is specified, if more than one node can be selected as the primary node, the matching rule of the election is : LSN of the node > node weight > NodeID. The node with the largest LSN is selected. If LSN is consistent, the node with the largest weight value is selected, if the weight value is consistent, the node with the largest ID value is selected.
-5. The surviving nodes in a replication group need to account for at least half of the total number of nodes
+> 1. Returning timeout error means that the reelection hasn't completed during the time we set. You can wait for several seconds until the catalog node asynchronous update complete, then using [db.listReplicaGroups()](reference/Sequoiadb_command/Sdb/listReplicaGroups.md) to view the result.
+
+> 2. The reelection can only be started when there is a master node in the replica group.
+
+> 3. When NodeID is used, will ignore HostName and ServiceName.
+
+> 4. When no specific NodeID or ServiceName is specified, if more than one node can be selected as the primary node, the matching rule of the election is : LSN of the node > node weight > NodeID. The node with the largest LSN is selected. If LSN is consistent, the node with the largest weight value is selected, if the weight value is consistent, the node with the largest ID value is selected.
+
+> 5. The surviving nodes in a replication group need to account for at least half of the total number of nodes.
+
+> 6. The specific description of the reelection can refer to the [reelection mechanism](infrastructure/replication/vote.md)
+
 
 ##RETURN VALUE##
 
@@ -56,7 +63,7 @@ more detail.
 
 ##EXAMPLES##
 
-1. Conduct the re-election in 60s with the group of 'datagroup1'
+1. Conduct the reelection in 60s with the group of 'datagroup1'
 
 	```lang-javascript
 	> var rg = db.getRG("datagroup1") 
