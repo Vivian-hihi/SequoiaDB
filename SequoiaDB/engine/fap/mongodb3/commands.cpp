@@ -835,7 +835,7 @@ INT32 findCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    }
    if ( packet.all.hasField( "hint" ) )
    {
-      hint = packet.all.getObjectField( "hint" ) ;
+      hint = BSON( "" << packet.all.getStringField( "hint" ) ) ;
    }
    if ( packet.all.hasField( "limit" ) )
    {
@@ -1583,9 +1583,9 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
 
-   // command: db.bar.count( {a:1} ).hint( {b:1} )
+   // command: db.bar.count( {a:1}, {hint: "aIdx"} )
    // sdb msg: matcher: {a:1}
-   //          hint:    {Collection:"bar", Hint:{b:1}}
+   //          hint:    {Collection:"bar", Hint:{"":"aIdx"}}
    bson::BSONObj empty, hint ;
    bson::BSONObj matcher = packet.all.getObjectField( "query" ) ;
 
@@ -1599,8 +1599,10 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    }
    if ( packet.all.hasField( "hint" ) )
    {
-      hint = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() <<
-                   FIELD_NAME_HINT << packet.all.getObjectField( "hint" ) ) ;
+      hint = BSON( FIELD_NAME_COLLECTION <<
+                   packet.fullName.c_str() <<
+                   FIELD_NAME_HINT <<
+                   BSON( "" << packet.all.getStringField( "hint" ) ) ) ;
    }
    else
    {

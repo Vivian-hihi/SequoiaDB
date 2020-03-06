@@ -80,11 +80,25 @@ inline bson::BSONObj getHintObj( const bson::BSONObj &obj )
    bson::BSONObj hint ;
    if ( obj.hasField( "$hint" ) )
    {
-      hint = obj.getObjectField( "$hint" ) ;
+      if ( String == obj.getField( "$hint" ).type() )
+      {
+         hint = BSON( "" << obj.getStringField( "$hint" ) ) ;
+      }
+      else if ( obj.getField( "$hint" ).isABSONObj() )
+      {
+         hint = obj.getObjectField( "$hint" ) ;
+      }
    }
    else if ( obj.hasField( "hint" ) )
    {
-      hint = obj.getObjectField( "hint" ) ;
+      if ( String == obj.getField( "hint" ).type() )
+      {
+         hint = BSON( "" << obj.getStringField( "hint" ) ) ;
+      }
+      else if ( obj.getField( "hint" ).isABSONObj() )
+      {
+         hint = obj.getObjectField( "hint" ) ;
+      }
    }
 
    return hint ;
