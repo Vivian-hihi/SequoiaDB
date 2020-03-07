@@ -53,6 +53,25 @@
 
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
+
+static void unescapeDot( string& collectionName )
+{
+   string::size_type pos = 0 ;
+   while( TRUE )
+   {
+      pos = collectionName.find( "%2E", pos ) ;
+      if ( string::npos == pos )
+      {
+         break ;
+      }
+      else
+      {
+         collectionName.replace( pos, 3, "." ) ;
+         pos++ ;
+      }
+   }
+}
+
 _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
    : engine::pmdSession( fd ), _masterRead( FALSE ),
      _resource( resource )
@@ -957,8 +976,10 @@ void _mongoSession::_buildFirstBatch( engine::rtnContextBuf &buff )
          {
             // { Name: "foo.bar" } => { name: "bar" }
             const CHAR* clFullName = obj.getStringField( "Name" ) ;
-            const CHAR* dotPos = ossStrstr( clFullName, "." ) ;
-            bson::BSONObj newObj = BSON( "name" << dotPos + 1 ) ;
+            const CHAR* dotPos = ossStrstr( clFullName, "." ) + 1 ;
+            string clShortName = dotPos ;
+            unescapeDot( clShortName ) ;
+            bson::BSONObj newObj = BSON( "name" << clShortName.c_str() ) ;
             arr.append( newObj ) ;
          }
          else

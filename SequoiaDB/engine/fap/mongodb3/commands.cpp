@@ -134,6 +134,31 @@ done:
    return ;
 }
 
+static void escapeDot( string& collectionFullName )
+{
+   BOOLEAN firstLoop = TRUE ;
+   string::size_type pos = 0 ;
+   while( TRUE )
+   {
+      pos = collectionFullName.find( '.', pos ) ;
+      if ( string::npos == pos )
+      {
+         break ;
+      }
+      else if ( firstLoop )
+      {
+         pos++ ;
+         firstLoop = FALSE ;
+         continue ;
+      }
+      else
+      {
+         collectionFullName.replace( pos, 1, "%2E" ) ;
+         pos += 3 ;
+      }
+   }
+}
+
 /// implement of commands
 INT32 insertCommand::convert( msgParser &parser )
 {
@@ -235,6 +260,7 @@ INT32 insertCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
          goto done ;
       }
       packet.fullName += packet.all.getStringField( "insert" ) ;
+      escapeDot( packet.fullName ) ;
       insert->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), insert->nameLength + 1, TRUE ) ;
 
@@ -385,6 +411,7 @@ INT32 deleteCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          goto done ;
       }
       packet.fullName += packet.all.getStringField( "delete" ) ;
+      escapeDot( packet.fullName ) ;
       del->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), del->nameLength + 1, TRUE ) ;
 
@@ -727,6 +754,8 @@ INT32 queryCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
    mongoDataPacket &packet = parser.dataPacket() ;
+
+   escapeDot( packet.fullName ) ;
 
    parser.setCurrentOp( OP_QUERY ) ;
    sdbMsg.reverse( sizeof( MsgOpQuery ) ) ;
@@ -1523,6 +1552,7 @@ INT32 dropCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    packet.fullName = packet.csName ;
    packet.fullName += "." ;
    packet.fullName += packet.all.getStringField( "drop" ) ;
+   escapeDot( packet.fullName ) ;
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
 
