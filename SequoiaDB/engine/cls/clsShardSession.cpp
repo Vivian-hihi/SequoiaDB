@@ -411,8 +411,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( DPS_TRANS_WAIT_COMMIT == _pEDUCB->getTransStatus() &&
-           DPS_INVALID_LSN_OFFSET != _pEDUCB->getCurTransLsn() )
+      if ( DPS_INVALID_LSN_OFFSET == _pEDUCB->getCurTransLsn() )
+      {
+         // readonly transaction goes to rollback directly
+         goto rollback ;
+      }
+
+      if ( DPS_TRANS_WAIT_COMMIT == _pEDUCB->getTransStatus() )
       {
          DPS_LSN lsn ;
          _dpsMessageBlock mb ;
@@ -489,6 +494,13 @@ namespace engine
                goto done ;
             }
          }
+      }
+      else if ( DPS_TRANS_DOING == _pEDUCB->getTransStatus() )
+      {
+         _pEDUCB->setTransStatus( DPS_TRANS_DOING_INTERRUPT ) ;
+         sdbGetTransCB()->updateTransInfo( _pEDUCB->getTransID(),
+                                           _pEDUCB->getCurTransLsn(),
+                                           DPS_TRANS_DOING_INTERRUPT ) ;
       }
 
    rollback:
