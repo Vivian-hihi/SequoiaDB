@@ -1067,6 +1067,7 @@ void _mongoSession::_buildNextBatch( engine::rtnContextBuf &buff )
 
 BSONObj _mongoSession::_convertIndexObj( const BSONObj& sdbIdxFmt )
 {
+   mongoDataPacket& packet = _converter.getParser().dataPacket() ;
    bson::BSONObjBuilder builder ;
    bson::BSONObj sdbIdxDef = sdbIdxFmt.getObjectField( "IndexDef" ) ;
 
@@ -1078,7 +1079,8 @@ BSONObj _mongoSession::_convertIndexObj( const BSONObj& sdbIdxFmt )
    }
    builder.append( "key", sdbIdxDef.getObjectField( "key" ) ) ;
    builder.append( "name", sdbIdxDef.getStringField( "name" ) ) ;
-   builder.append( "ns", _converter.getParser().dataPacket().fullName.c_str() ) ;
+   unescapeDot( packet.fullName ) ;
+   builder.append( "ns", packet.fullName.c_str() ) ;
 
    return builder.obj() ;
 }

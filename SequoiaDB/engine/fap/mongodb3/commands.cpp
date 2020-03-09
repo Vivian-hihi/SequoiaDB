@@ -538,6 +538,7 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
       packet.fullName += packet.all.getStringField( "update" ) ;
+      escapeDot( packet.fullName ) ;
       update->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(),
                     packet.fullName.length() + 1, TRUE ) ;
@@ -1610,6 +1611,7 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    packet.fullName = packet.csName ;
    packet.fullName += "." ;
    packet.fullName += packet.all.getStringField( "count" ) ;
+   escapeDot( packet.fullName ) ;
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
 
@@ -1949,6 +1951,7 @@ INT32 createIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
       packet.fullName += packet.all.getStringField( "createIndexes" ) ;
+      escapeDot( packet.fullName ) ;
       bob.append( FIELD_NAME_COLLECTION, packet.fullName.c_str() ) ;
 
       e = packet.all.getField( "indexes" ) ;
@@ -2076,6 +2079,7 @@ INT32 deleteIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       {
          packet.fullName += packet.all.getStringField( "deleteIndexes" ) ;
       }
+      escapeDot( packet.fullName ) ;
 
       bson::BSONObj obj, indexObj, empty ;
       indexObj = BSON( "" << packet.all.getStringField( "index" ) ) ;
@@ -2163,6 +2167,7 @@ INT32 listIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
       packet.fullName += packet.all.getStringField( "listIndexes" ) ;
+      escapeDot( packet.fullName ) ;
 
       obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
    }
