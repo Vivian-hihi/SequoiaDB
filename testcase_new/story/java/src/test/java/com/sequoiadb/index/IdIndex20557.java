@@ -1,5 +1,7 @@
 package com.sequoiadb.index;
 
+import java.util.Date;
+
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -39,6 +41,7 @@ public class IdIndex20557 extends SdbTestBase {
             throw new SkipException( "Skip standAlone mode" );
         }
 
+        CommLib.clearCS( sdb, csName );
         cs = sdb.createCollectionSpace( csName );
     }
 
@@ -99,17 +102,22 @@ public class IdIndex20557 extends SdbTestBase {
                     "" )) {
                 CollectionSpace cs = db.getCollectionSpace( csName );
 
-                int retryTimes = 20;
                 boolean isCLExist = false;
-                while ( retryTimes > 0 ) {
+                long maxTimeout = 1 * 60 * 1000;
+                long currTime1 = new Date().getTime();
+                long currTime2 = new Date().getTime();
+                while ( ( currTime2 - currTime1 ) <= maxTimeout ) {
                     if ( cs.isCollectionExist( clName ) ) {
                         isCLExist = true;
                         break;
                     }
-                    retryTimes--;
+                    currTime2 = new Date().getTime();
                 }
                 if ( !isCLExist ) {
-                    throw new Exception( clName + " not exist" );
+                    throw new Exception( clName + " not exist, maxTimeout = "
+                            + maxTimeout + ", actTimeout = "
+                            + ( currTime2 - currTime1 ) + ", currTime2 = "
+                            + currTime2 + ", currTime1 = " + currTime1 );
                 }
 
                 DBCollection cl = cs.getCollection( clName );
