@@ -4349,10 +4349,11 @@ namespace engine
       builder.append( FIELD_NAME_QUERYTIMESPENT, responseTime ) ;
       builder.append( FIELD_NAME_RETURN_NUM, _queryCB->rowsReturned ) ;
 
+
       if ( SDB_ROLE_COORD == role )
       {
-         double nodeWaitTime ;
-         double msgSentTime ;
+         FLOAT64 nodeWaitTime ;
+         FLOAT64 msgSentTime ;
          _queryCB->remoteNodesResponseTime.convertToTime ( factor, seconds, microseconds ) ;
          nodeWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
@@ -4362,6 +4363,8 @@ namespace engine
          builder.append( FIELD_NAME_LASTOPINFO, _queryCB->queryText.c_str() ) ;
          builder.append( FIELD_NAME_MSG_SENT_TIME, msgSentTime ) ;
          builder.append( FIELD_NAME_NODEWAITTIME, nodeWaitTime ) ;
+         builder.append( FIELD_NAME_CLIENTINFO, _queryCB->clientInfo ) ;
+
          if ( _queryCB->nodes.size() > 0 )
          {
             builder.append( FIELD_NAME_RELATED_NODE, _queryCB->nodes ) ;

@@ -2086,7 +2086,6 @@ namespace engine
             }
          }
       }
-
    done:
       if ( pOpr )
       {
@@ -2112,6 +2111,7 @@ namespace engine
       monClassQueryTmpData tmpData ;
       tmpData = *(eduCB()->getMonAppCB()) ;
 
+      BSONObjBuilder clientInfoBuilder ;
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROMSG );
 
       if ( eduCB()->getMonQueryCB() == NULL )
@@ -2124,6 +2124,11 @@ namespace engine
             monQueryCB->sessionID = eduCB()->getID() ;
             monQueryCB->opCode = msg->opCode ;
             monQueryCB->tid = eduCB()->getTID() ;
+
+            clientInfoBuilder.append( FIELD_NAME_CLIENTTID, msg->TID ) ;
+            clientInfoBuilder.append( FIELD_NAME_CLIENTHOST,
+                                      getClient()->getFromIPAddr() ) ;
+            monQueryCB->clientInfo = clientInfoBuilder.obj() ;
 
             eduCB()->setMonQueryCB( monQueryCB ) ;
          }

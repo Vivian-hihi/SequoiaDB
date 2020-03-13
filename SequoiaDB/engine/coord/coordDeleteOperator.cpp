@@ -38,6 +38,7 @@
 #include "coordDeleteOperator.hpp"
 #include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
+#include "rtn.hpp"
 #include "rtnCommandDef.hpp"
 #include "coordUtil.hpp"
 #include "pdTrace.hpp"
@@ -76,7 +77,7 @@ namespace engine
    {
       _delResult.reset() ;
    }
- 
+
    //PD_TRACE_DECLARE_FUNCTION ( COORD_OPERATORDEL_EXE, "_coordDeleteOperator::execute" )
    INT32 _coordDeleteOperator::execute( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
@@ -111,8 +112,10 @@ namespace engine
       CHAR *pCollectionName = NULL ;
       CHAR *pDeletor = NULL ;
       CHAR *pHint = NULL ;
+
       rc = msgExtractDelete( (CHAR*)pMsg, &flag, &pCollectionName,
                              &pDeletor, &pHint ) ;
+
       if( rc )
       {
          PD_LOG( PDERROR,"Failed to parse delete request, rc: %d", rc ) ;
@@ -131,10 +134,22 @@ namespace engine
 
       try
       {
-         BSONObj hint( pHint ) ;
+         BSONObj hint = BSONObj (pHint) ;
+         BSONObjBuilder builder ;
+         BSONObj clientInfo ;
          BSONObj dummy ;
-
          boDeletor = BSONObj( pDeletor ) ;
+
+         if ( !hint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
+         {
+            rtnGetObjElement( hint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+            builder.appendElements( clientInfo ) ;
+            if ( cb->getMonQueryCB() )
+            {
+               builder.appendElements( cb->getMonQueryCB()->clientInfo ) ;
+               cb->getMonQueryCB()->clientInfo = builder.obj() ;
+            }
+         }
 
          rtnQueryOptions options( boDeletor, dummy, dummy, hint, pCollectionName,
                                   0, -1, oldFlag ) ;

@@ -38,6 +38,7 @@
 #include "coordUpdateOperator.hpp"
 #include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
+#include "rtn.hpp"
 #include "rtnCommandDef.hpp"
 #include "coordUtil.hpp"
 #include "mthModifier.hpp"
@@ -163,6 +164,19 @@ namespace engine
          boSelector = BSONObj( pSelector ) ;
          boHint = BSONObj( pHint ) ;
          boUpdator = BSONObj( pUpdator ) ;
+         BSONObjBuilder builder ;
+         BSONObj clientInfo ;
+
+         if ( !boHint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
+         {
+            rtnGetObjElement( boHint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+            builder.appendElements( clientInfo ) ;
+            if ( cb->getMonQueryCB() )
+            {
+               builder.appendElements( cb->getMonQueryCB()->clientInfo ) ;
+               cb->getMonQueryCB()->clientInfo = builder.obj() ;
+            }
+         }
 
          rtnQueryOptions options( boSelector, dummy, dummy, boHint, pCollectionName,
                                   0, -1, oldFlag ) ;

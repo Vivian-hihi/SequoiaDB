@@ -273,6 +273,7 @@ class _monClassQuery : public monClassTemplate<_monClassQuery>
 {
 public:
    UINT32                 tid ;  /**! TID of the EDU */
+   BSONObj         clientInfo ;  /**! Information of Client which connect to engine */
    ossPoolString         name ;  /**! The target object name of this query */
    SINT64        accessPlanID ;  /**! Access plan ID used by the query */
    UINT32              opCode ;  /**! Message opCode */
