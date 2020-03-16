@@ -112,7 +112,7 @@ namespace engine
       _compressBuffLen  = 0 ;
       _pUncompressBuff  = NULL ;
       _uncompressBuffLen= 0 ;
-      _isDoRollback     = FALSE ;
+      _isDoTransRollback= FALSE ;
       _pClientSock      = NULL ;
 
       _alignedMem       = NULL ;
@@ -609,7 +609,7 @@ namespace engine
       BOOLEAN ret = FALSE ;
 
       // mask interrupt while doing rollback
-      if ( !onlyFlag && _isDoRollback )
+      if ( !onlyFlag && _isDoTransRollback )
       {
          goto done;
       }
@@ -805,25 +805,6 @@ namespace engine
    INT64 _pmdEDUCB::getCurAutoTransCtxID() const
    {
       return _curAutoTransCtxID ;
-   }
-
-   BOOLEAN _pmdEDUCB::isTransRBPending() const
-   {
-      return DPS_TRANS_IS_RBPENDING( _curTransID ) ? TRUE : FALSE ;
-   }
-
-   void _pmdEDUCB::setTransRBPending()
-   {
-      SDB_ASSERT( DPS_TRANS_IS_ROLLBACK( _curTransID ),
-                  "Current transaction is not rollback" ) ;
-      DPS_TRANS_SET_RBPENDING( _curTransID ) ;
-   }
-
-   void _pmdEDUCB::clearTransRBPending()
-   {
-      SDB_ASSERT( DPS_TRANS_IS_ROLLBACK( _curTransID ),
-                  "Current transaction is not rollback" ) ;
-      DPS_TRANS_CLEAR_RBPENDING( _curTransID ) ;
    }
 
    void _pmdEDUCB::contextCopy( _pmdEDUCB::SET_CONTEXT &contextList )
