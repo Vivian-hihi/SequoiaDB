@@ -23,6 +23,17 @@ fapMongo3Files = [
       "fap/mongodb3/baseCommand.cpp",
       "fap/mongodb3/parser.cpp"
       ]
+      
+fapMongo4Files = [
+      "fap/mongodb4/commands.cpp",
+      "fap/mongodb4/mongoAccess.cpp",
+      "fap/mongodb4/mongoConverter.cpp",
+      "fap/mongodb4/mongoSession.cpp",
+      "fap/mongodb4/msgBuffer.cpp",
+      "fap/mongodb4/mongoReplyHelper.cpp",
+      "fap/mongodb4/baseCommand.cpp",
+      "fap/mongodb4/parser.cpp"
+      ]      
 
 rtnFiles = [
       "rtn/rtnContextBuff.cpp",
@@ -62,6 +73,8 @@ bsonFiles = [
 #fapmongo = fapEnv.SharedLibrary( 'fapmongo', [ bsonFiles, fapMongoFiles ] )
 fapmongo  = fapEnv.SharedLibrary( 'fapmongo',  [ fapMongoFiles ] )
 fapmongo3 = fapEnv.SharedLibrary( 'fapmongo3', [ fapMongo3Files ] )
+fapmongo4 = fapEnv.SharedLibrary( 'fapmongo4', [ fapMongo4Files ] )
 
 fapEnv.Install( '#/bin/fap', fapmongo )
 fapEnv.Install( '#/bin/fap', fapmongo3 )
+fapEnv.Install( '#/bin/fap', fapmongo4 )
