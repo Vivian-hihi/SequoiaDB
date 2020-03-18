@@ -49,7 +49,7 @@ SDB_SNAP_CATALOG
   "_id": {
     "$oid": "5e4245f9e86d05a0a03e69c8"
   },
-  "Name": "foo.bar",
+  "Name": "sample.employee",
   "UniqueID": 4294967297,
   "Version": 1,
   "Attribute": 1,
@@ -74,7 +74,7 @@ SDB_SNAP_CATALOG
   "_id": {
     "$oid": "5247a2bc60080822db1cfba2"
   },
-  "Name": "foo.bar",
+  "Name": "sample.employee",
   "UniqueID": 261993005057,
   "Version": 1,
   "Attribute": 0,
@@ -126,14 +126,14 @@ SDB_SNAP_CATALOG
   "_id": {
     "$oid": "5e426b88e86d05a0a03e69c9"
   }
-  "Name": "foo.bar",
+  "Name": "year_2019.month",
   "UniqueID": 4294967298,
   "Attribute": 1,
   "AttributeDesc": "Compressed",
   "CataInfo": [
     {
       "ID": 1,
-      "SubCLName": "foo.subcl",
+      "SubCLName": "year_2019.month_07",
       "LowBound": {
         "date": "20190701"
       },
