@@ -1,4 +1,4 @@
-﻿<!-- Configuration List                                                                     -->
+<!-- Configuration List                                                                     -->
 <!-- name: (required) the macro name that going to be generated in source code              -->
 <!-- long: (required) configure option ( long version )                                     -->
 <!-- short: (optional) configure option ( short version, one character )                    -->
@@ -1227,8 +1227,8 @@
       <name>FAP_OPTION_NAME</name>
       <long>fap</long>
       <description>
-         <en>Enable foreign access protocol.Module name 'fapmongo' and 'fapmongo3' is supportted</en>
-         <cn>开启第三方驱动接入.支持'fapmongo'、'fapmongo3'选项</cn>
+         <en>Enable foreign access protocol.Module name 'fapmongo2','fapmongo3' and 'fapmongo4' is supportted</en>
+         <cn>开启第三方驱动接入.支持'fapmongo2'、'fapmongo3'和'fapmongo4'选项</cn>
       </description>
      <hidden>true</hidden>
    </opt>
