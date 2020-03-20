@@ -898,6 +898,34 @@ void _mongoSession::_handleResponse( const INT32 opType,
       buff = engine::rtnContextBuf( _tmpBuffer.data(), _tmpBuffer.size(),
                                     buff.recordNum() ) ;
    }
+   else if ( OP_CMD_AGGREGATE == opType && !packet.all.hasField( "cursor" ) )
+   {
+      // reply: { result: [ {xxx}, {xxx}, ... ], ok: 1 }
+      if ( SDB_OK == _replyHeader.flags )
+      {
+         bson::BSONArrayBuilder arr( bob.subarrayStart( "result" ) ) ;
+         INT32 offset = 0 ;
+         while ( offset < buff.size() )
+         {
+            bson::BSONObj obj( buff.data() + offset ) ;
+            arr.append( obj ) ;
+            offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         }
+         arr.done() ;
+         bob.append( "ok", 1 ) ;
+
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+         _replyHeader.numReturned = 1 ;
+      }
+      else if ( SDB_DMS_EOC == _replyHeader.flags )
+      {
+         bob.append( "result", bson::BSONArray() ) ;
+         bob.append( "ok", 1 ) ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+         _replyHeader.contextID = -1 ;
+         _replyHeader.numReturned = 1 ;
+      }
+   }
    else if ( OP_FIND == opType        || OP_CMD_AGGREGATE == opType ||
              OP_CMD_GET_CLS == opType || OP_CMD_GET_INDEX == opType )
    {
