@@ -574,8 +574,8 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          bson::BSONObj updator = obj.getObjectField( "u" ) ;
          bson::BSONObj hint = getHintObj( query ) ;
 
-         if( updator.nFields() > 0 &&
-             updator.firstElement().fieldName()[0] != '$' )
+         if( 0 == updator.nFields() ||
+             updator.firstElementFieldName()[0] != '$' )
          {
             updator = BSON( "$replace" << updator ) ;
          }
@@ -614,6 +614,10 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
                setOnObj = updator.getObjectField( "$setOnInsert" ) ;
                updator = updator.filterFieldsUndotted(
                                           BSON( "$setOnInsert" << 1 ), false ) ;
+               if( 0 == updator.nFields() )
+               {
+                  updator = BSON( "$replace" << updator ) ;
+               }
             }
 
             // add _id to $SetOnInsert if _id doesn't exist
