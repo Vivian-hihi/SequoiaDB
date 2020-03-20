@@ -788,18 +788,15 @@ INT32 queryCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    query->flags = 0 ;
    setQueryFlags( packet.reservedInt, query->flags ) ;
    query->numToSkip = packet.nToSkip ;
-   query->numToReturn = packet.nToReturn ;
+   if ( packet.nToReturn < 1000 )
+   {
+      query->numToReturn = packet.nToReturn ;
+   }
+   else
+   {
+      query->numToReturn = -1 ;
+   }
    query->nameLength = packet.fullName.length() ;
-
-   if ( packet.all.hasField( "limit" ) )
-   {
-      query->numToReturn = packet.all.getIntField( "limit" ) ;
-   }
-
-   if ( packet.all.hasField( "skip" ) )
-   {
-      query->numToSkip = packet.all.getIntField( "skip" ) ;
-   }
 
    if ( packet.all.getBoolField( "$explain" ) )
    {
