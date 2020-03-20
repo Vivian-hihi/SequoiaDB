@@ -56,7 +56,7 @@ namespace fap
          bob.append( "maxWriteBatchSize", 1000 ) ;
          bob.append( "localTime", 100 ) ;
          bob.append( "maxWireVersion", 2 ) ;
-         bob.append( "minWireVersion", 2 ) ;
+         bob.append( "minWireVersion", 0 ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
