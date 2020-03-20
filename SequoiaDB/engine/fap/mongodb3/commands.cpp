@@ -90,7 +90,9 @@ static void convertProjection( BSONObj &proj )
 {
    BSONObjBuilder newBuilder ;
    BOOLEAN hasId = FALSE ;
+   BOOLEAN addInclude = FALSE ;
    BOOLEAN addExclude = FALSE ;
+   BOOLEAN addIdExclude = FALSE ;
    BOOLEAN hasOperator = FALSE ;
    BSONObjIterator i( proj ) ;
 
@@ -116,9 +118,17 @@ static void convertProjection( BSONObj &proj )
          // { b: 1 } => { b: { $include: 1 } }
          newBuilder.append( e.fieldName(),
                             BSON( "$include" << ( e.trueValue() ? 1 : 0 ) ) ) ;
-         if ( ! e.trueValue() )
+         if ( e.trueValue() )
+         {
+            addInclude = TRUE ;
+         }
+         else
          {
             addExclude = TRUE ;
+            if ( 0 == ossStrcmp( e.fieldName(), "_id" ) )
+            {
+               addIdExclude = TRUE ;
+            }
          }
       }
    }
@@ -129,6 +139,11 @@ static void convertProjection( BSONObj &proj )
    }
 
    proj = newBuilder.obj() ;
+
+   if ( addIdExclude && addInclude )
+   {
+      proj = proj.filterFieldsUndotted( BSON( "_id" << 1 ), false ) ;
+   }
 
 done:
    return ;
