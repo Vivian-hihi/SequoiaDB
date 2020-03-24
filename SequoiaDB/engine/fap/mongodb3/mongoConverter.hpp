@@ -62,7 +62,7 @@ public:
       return _bigEndian ;
    }
 
-   const UINT32 getOpType()
+   const INT32 getOpType()
    {
       return _parser.currentOperation() ;
    }
@@ -74,7 +74,9 @@ public:
 
    // virtual function for baseConverter
    virtual INT32 convert( msgBuffer &out ) ;
-   INT32 reConvert( msgBuffer &out, MsgOpReply *reply ) ;
+
+   INT32 convertReply( MsgOpReply &replyHeader,
+                       engine::rtnContextBuf &replyBuf ) ;
 
 private:
    BOOLEAN _bigEndian ;

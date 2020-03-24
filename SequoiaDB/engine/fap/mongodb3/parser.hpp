@@ -44,7 +44,7 @@
 inline bson::BSONObj getQueryObj( const bson::BSONObj &obj )
 {
    bson::BSONObj query ;
-   if ( obj.hasField( "$query") )
+   if ( obj.hasField( "$query" ) )
    {
       query = obj.getObjectField( "$query" ) ;
    }
@@ -104,24 +104,6 @@ inline bson::BSONObj getHintObj( const bson::BSONObj &obj )
    return hint ;
 }
 
-inline INT32 getFieldInt( const bson::BSONObj &obj, const CHAR *field )
-{
-   INT32 limit = 0 ;
-
-   if ( NULL == field )
-   {
-      goto done ;
-   }
-
-   if ( obj.hasField( field ) )
-   {
-      limit = obj.getIntField( field ) ;
-   }
-
-done:
-   return limit ;
-}
-
 inline void setQueryFlags( const INT32 reserved, SINT32 &flags)
 {
    flags |= FLG_QUERY_WITH_RETURNDATA ;
@@ -169,27 +151,22 @@ enum OPTION_MASK
 class mongoDataPacket : public SDBObject
 {
 public:
-   INT32  optionMask ;
-   INT32  msgLen ;
+   INT32 optionMask ;
+   INT32 msgLen ;
    INT32 requestId ;
    INT32 responseTo ;
-   SINT16 opCode ;
-   CHAR   flags ;
-   CHAR   version ;
-   INT32  reservedInt ;
-   INT32  nToSkip ;
-   INT32  nToReturn ;
-   UINT64 cursorId ;
+   INT32 opCode ;
+   INT32 reservedInt ;
+   INT32 nToSkip ;
+   INT32 nToReturn ;
    std::string csName ;
    std::string fullName ;
    bson::BSONObj all ;
-   bson::BSONObj fieldToReturn ;
    bson::BSONObj dataInfo ;
 
-   mongoDataPacket() : optionMask(0), msgLen(0), requestId(0), responseTo(0),
-                       opCode(0), flags(0), version(0), reservedInt(0),
-                       nToSkip( 0 ), nToReturn( 0 ), cursorId( 0 ),
-                       csName(""), fullName("")
+   mongoDataPacket()
+   : optionMask(0), msgLen(0), requestId(0), responseTo(0), opCode(0),
+     reservedInt(0), nToSkip(0), nToReturn(-1)
    {}
 
    BOOLEAN with( OPTION_MASK mask )
@@ -204,20 +181,14 @@ public:
       requestId = 0 ;
       responseTo = 0 ;
       opCode = 0 ;
-      flags = 0 ;
-      version = 0 ;
       reservedInt = 0 ;
       nToSkip = 0 ;
-      nToReturn = 0 ;
-      cursorId = 0 ;
+      nToReturn = -1 ;
       csName.clear() ;
       fullName.clear() ;
-      all = empty ;
-      fieldToReturn = empty ;
+      all = bson::BSONObj() ;
+      dataInfo = bson::BSONObj() ;
    }
-
-private:
-   bson::BSONObj empty ;
 } ;
 
 class baseCommand ;
@@ -266,12 +237,12 @@ public:
       return _dataPacket ;
    }
 
-   void setCurrentOp( UINT32 op )
+   void setCurrentOp( INT32 op )
    {
       _currentOp = op ;
    }
 
-   UINT32 currentOperation() const
+   INT32 currentOperation() const
    {
       return _currentOp ;
    }
@@ -281,15 +252,20 @@ public:
       _bigEndian = bigEndian ;
    }
 
-   baseCommand*& command()
+   baseCommand* command()
    {
       return _cmd ;
+   }
+
+   void setCommand( baseCommand* cmd )
+   {
+      _cmd = cmd ;
    }
 
 private:
    BOOLEAN _bigEndian ;
    UINT32 _offset ;
-   UINT32 _currentOp ;
+   INT32 _currentOp ;
    baseCommand *_cmd ;
    const CHAR  *_dataStart ;
    const CHAR  *_dataEnd ;

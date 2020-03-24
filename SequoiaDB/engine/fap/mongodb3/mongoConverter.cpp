@@ -43,31 +43,18 @@
 INT32 mongoConverter::convert( msgBuffer &out )
 {
    INT32 rc = SDB_OK ;
-   baseCommand *&cmd = _parser.command() ;
-   _parser.extractMsg( _msgdata, _msglen ) ;
-
-   // convert mongodb msg to sequoiadb msg
-   // for all kinds of requests available
+   baseCommand *cmd = NULL ;
    commandMgr *cmdMgr = commandMgr::instance() ;
+
    if ( NULL == cmdMgr )
    {
       rc = SDB_SYS ;
       goto error ;
    }
 
-   if ( dbInsert == _parser.dataPacket().opCode )
-   {
-      cmd = cmdMgr->findCommand( "insert" ) ;
-   }
-   else if ( dbDelete == _parser.dataPacket().opCode )
-   {
-      cmd = cmdMgr->findCommand( "delete" ) ;
-   }
-   else if ( dbUpdate == _parser.dataPacket().opCode )
-   {
-      cmd = cmdMgr->findCommand( "update" ) ;
-   }
-   else if ( dbQuery == _parser.dataPacket().opCode )
+   _parser.extractMsg( _msgdata, _msglen ) ;
+
+   if ( dbQuery == _parser.dataPacket().opCode )
    {
       cmd = cmdMgr->findCommand( "query" ) ;
    }
@@ -88,17 +75,23 @@ INT32 mongoConverter::convert( msgBuffer &out )
 
    try
    {
-      rc = cmd->convert( _parser ) ;
-      if ( SDB_OK != rc )
+      baseCommand* newCmd = NULL ;
+
+      rc = cmd->convert( _parser, &newCmd ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to convert command[%s], rc: %d",
+                   cmd->name(), rc ) ;
+      if ( newCmd )
       {
-         goto error ;
+         cmd = newCmd ;
       }
 
       rc = cmd->buildMsg( _parser, out ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build message for command[%s], rc: %d",
+                   cmd->name(), rc ) ;
+
+      _parser.setCommand( cmd ) ;
    }
    catch ( std::exception &e )
    {
@@ -113,37 +106,29 @@ error:
    goto done ;
 }
 
-INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
+INT32 mongoConverter::convertReply( MsgOpReply &replyHeader,
+                                    engine::rtnContextBuf &replyBuf )
 {
    INT32 rc = SDB_OK ;
-   UINT32 curOp = _parser.currentOperation() ;
+   baseCommand *cmd = _parser.command() ;
 
-   if ( OP_CMD_COUNT   == curOp || OP_CMD_GET_INDEX == curOp ||
-        OP_CMD_GET_CLS == curOp || OP_CMD_AGGREGATE == curOp ||
-        OP_CMD_GET_DBS == curOp || OP_CMD_DISTINCT == curOp )
+   try
    {
-      if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         goto done ;
-      }
-      if ( 0 == reply->numReturned && -1 != reply->contextID )
-      {
-         out.zero() ;
-         fap::mongo::buildGetMoreMsg( out ) ;
-         MsgOpGetMore *msg = ( MsgOpGetMore *)out.data() ;
-         msg->header.requestID = reply->header.requestID ;
-         msg->contextID = reply->contextID ;
-         msg->numToReturn = -1 ;
-         goto done ;
-      }
+      rc = cmd->handleReply( _parser, replyHeader, replyBuf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build response for command[%s], rc: %d",
+                   cmd->name(), rc ) ;
    }
-
-   out.zero() ;
-
-   // when not handled above, assigned the reply flags to rc for return
-   rc = reply->flags ;
+   catch ( std::exception &e )
+   {
+      PD_RC_CHECK( SDB_SYS, PDERROR,
+                   "Failed to process command: %s, exception occurred: %s",
+                   cmd->name(), e.what() ) ;
+   }
 
 done:
    return rc ;
+error:
+   goto done ;
 }
+

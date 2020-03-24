@@ -101,7 +101,7 @@ public:
       return _capacity ;
    }
 
-   void reverse( const UINT32 size )
+   void reserve( const UINT32 size )
    {
       if ( size < _capacity )
       {

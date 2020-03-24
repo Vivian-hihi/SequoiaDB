@@ -46,26 +46,15 @@ namespace fap
 {
    namespace mongo
    {
-      void buildIsMasterReplyMsg( engine::IResource *resource,
-                             engine::rtnContextBuf &buff ) ;
-
-      void buildGetNonceReplyMsg( engine::rtnContextBuf &buff ) ;
-
       void buildGetLastErrorReplyMsg( const bson::BSONObj &err,
-                                 engine::rtnContextBuf &buff ) ;
+                                      engine::rtnContextBuf &buff ) ;
 
       void buildNotSupportReplyMsg( engine::rtnContextBuf &buff,
                                     const char *cmdName ) ;
 
-      void buildPingReplyMsg( engine::rtnContextBuf &buff ) ;
-
-      void buildGetMoreMsg( msgBuffer &out ) ;
-
-      void buildWhatsmyuriReplyMsg( engine::rtnContextBuf &buff ) ;
-
-      void buildBuildinfoReplyMsg( engine::rtnContextBuf &buff ) ;
-
-      void buildGetLogReplyMsg( engine::rtnContextBuf &buff ) ;
+      void buildGetMoreMsg( msgBuffer &out,
+                            UINT64 requestID = 0,
+                            INT64 contextID = -1 ) ;
    }
 }
 #endif

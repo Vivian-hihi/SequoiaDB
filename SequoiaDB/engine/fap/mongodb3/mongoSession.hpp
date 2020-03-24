@@ -65,29 +65,23 @@ protected:
    virtual void  _onDetach() {}
 
 protected:
-   BOOLEAN _preProcessMsg( msgParser &parser,
-                           engine::IResource *resource,
-                           engine::rtnContextBuf &buff ) ;
+   BOOLEAN _preProcessMsg( msgParser &parser, engine::rtnContextBuf &buff ) ;
    INT32 _processMsg( const CHAR *pMsg ) ;
    INT32 _onMsgBegin( MsgHeader *msg ) ;
    INT32 _onMsgEnd( INT32 result, MsgHeader *msg ) ;
-   INT32 _reply( MsgOpReply *replyHeader, const CHAR *pBody, const INT32 len ) ;
+   INT32 _reply( MsgOpReply *replyHeader, const CHAR *pBody, INT32 bodyLen ) ;
 
 private:
    void  _resetBuffers() ;
    INT32 _setSeesionAttr() ;
-   void  _handleResponse( const INT32 opType, engine::rtnContextBuf &buff ) ;
    INT32 _autoCreateCS() ;
    INT32 _autoCreateCL() ;
-   BSONObj _convertIndexObj( const BSONObj& sdbIdxFmt ) ;
-   void _buildFirstBatch( engine::rtnContextBuf &buff ) ;
-   void _buildNextBatch( engine::rtnContextBuf &buff ) ;
+   BOOLEAN _needGetMore( INT32 opType ) ;
 
 private:
    mongoConverter          _converter ;
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _masterRead ;
-   cursorStartFrom         _cursorStartFrom ;
    engine::rtnContextBuf   _contextBuff ;
    BSONObj                 _errorInfo ;
 

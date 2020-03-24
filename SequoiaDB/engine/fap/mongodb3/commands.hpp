@@ -47,11 +47,15 @@ public:                                                              \
    clsName() : baseCommand( cmd, secondName )                        \
    {}                                                                \
                                                                      \
-   virtual INT32 convert( msgParser &parser ) ;                      \
+   virtual BOOLEAN needProcessByEngine() ;                           \
+                                                                     \
+   virtual INT32 convert( msgParser &parser, baseCommand** ppNewCmd ) ; \
                                                                      \
    virtual INT32 buildMsg( msgParser &parser, msgBuffer &sdbMsg ) ;  \
                                                                      \
-   virtual INT32 doCommand( void *pData = NULL ) ;                   \
+   virtual INT32 handleReply( msgParser &parser,                     \
+                              MsgOpReply& replyHeader,               \
+                              engine::rtnContextBuf &replyBuf ) ;    \
 } ;
 
 #define __DECLARE_COMMAND_VAR( commandClass, var )                \
@@ -73,19 +77,14 @@ DECLARE_COMMAND( insert )
 DECLARE_COMMAND( delete )
 DECLARE_COMMAND( update )
 DECLARE_COMMAND( query )
-DECLARE_COMMAND( find )
 DECLARE_COMMAND( getMore )
 DECLARE_COMMAND( killCursors )
 DECLARE_COMMAND( distinct )
 
 // other command
-DECLARE_COMMAND( getnonce )
-DECLARE_COMMAND( authenticate )
 DECLARE_COMMAND( createUser )
 DECLARE_COMMAND( dropUser )
-DECLARE_COMMAND( listUsers )
 DECLARE_COMMAND( create )
-DECLARE_COMMAND( createCS )
 DECLARE_COMMAND( listDatabases )
 DECLARE_COMMAND( listCollections )
 DECLARE_COMMAND( drop )

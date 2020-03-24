@@ -73,11 +73,6 @@ public:
       return SDB_OK ;
    }
 
-//    virtual INT32 reConvert( msgBuffer &out, const CHAR *cmdName )
-//    {
-//       return SDB_OK ;
-//    }
-
 protected:
    INT32   _msglen ;
    CHAR   *_msgdata ;

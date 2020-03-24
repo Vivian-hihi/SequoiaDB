@@ -42,13 +42,12 @@
 
 void msgParser::extractMsg( const CHAR *in, const INT32 inLen )
 {
-   INT32 nsLen = 0 ;
    const CHAR *ptr = NULL ;
-   const CHAR *dbName = NULL ;
+   const CHAR *fullCollectionName = NULL ;
+   INT32 nameLen = 0 ;
 
    if ( NULL != _dataStart )
    {
-      //_reset() ;
       _offset = 0 ;
       _currentOp = OP_INVALID ;
       _dataPacket.clear() ;
@@ -57,68 +56,39 @@ void msgParser::extractMsg( const CHAR *in, const INT32 inLen )
    _dataStart = in ;
    _dataEnd   = in + inLen ;
 
+   // extract header
    readInt( sizeof( INT32 ), (CHAR *)&_dataPacket.msgLen ) ;
    readInt( sizeof( INT32 ), (CHAR *)&_dataPacket.requestId ) ;
-   // skip responseTo
-   _dataPacket.responseTo = 0 ;
-   skipBytes( sizeof( _dataPacket.responseTo ) ) ;
-
-   readInt( sizeof( SINT16 ), (CHAR *)&_dataPacket.opCode ) ;
-
-   // skip flags and version
-   skipBytes( sizeof( CHAR ) * 2 ) ;
-   _dataPacket.flags = 0 ;
-   _dataPacket.version = 0 ;
+   readInt( sizeof( INT32 ), (CHAR *)&_dataPacket.responseTo ) ;
+   readInt( sizeof( INT32 ), (CHAR *)&_dataPacket.opCode ) ;
 
    readInt( sizeof( INT32 ), (CHAR *)&_dataPacket.reservedInt ) ;
-   dbName = _dataStart + _offset ;
 
    if ( dbKillCursors == _dataPacket.opCode )
    {
       goto done ;
    }
 
-   while ( *(dbName + nsLen ) )
+   // extract full collection name
+   fullCollectionName = _dataStart + _offset ;
+   while ( *(fullCollectionName + nameLen ) )
    {
-      ++nsLen ;
+      ++nameLen ;
    }
-   _offset += nsLen + 1 ;
+   _offset += nameLen + 1 ;
+   _dataPacket.fullName = fullCollectionName ;
 
-   ptr = ossStrstr( dbName, ".$cmd" ) ;
-   if ( NULL != ptr )
+   // resolve full collection name
+   ptr = ossStrstr( fullCollectionName, "." ) ;
+   if ( ptr )
+   {
+      _dataPacket.csName = _dataPacket.fullName.substr( 0,
+                                                  ptr - fullCollectionName ) ;
+   }
+   ptr = ossStrstr( fullCollectionName, ".$cmd" ) ;
+   if ( ptr )
    {
       _dataPacket.optionMask |= OPTION_CMD ;
-      _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
-   }
-
-   if ( NULL != ( ptr = ossStrstr( dbName, ".system.indexes" ) ) )
-   {
-      _dataPacket.optionMask |= OPTION_IDX ;
-      //_dataPacket.fullName = AUTH_USR_COLLECTION ;
-      _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
-   }
-   else if ( NULL != ( ptr = ossStrstr( dbName, ".system.users" ) ) )
-   {
-      _dataPacket.optionMask |= OPTION_USR ;
-      _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
-      //_dataPacket.fullName = AUTH_USR_COLLECTION ;
-   }
-   else if ( NULL != ( ptr = ossStrstr( dbName, ".system.namespaces" ) ) )
-   {
-      _dataPacket.optionMask |= OPTION_CLS ;
-      _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
-      //_dataPacket.fullName = CAT_COLLECTION_INFO_COLLECTION ;
-   }
-
-
-   if ( 0 == _dataPacket.optionMask )
-   {
-      _dataPacket.fullName = dbName ;
-      ptr = ossStrstr( dbName, ".") ;
-      if ( NULL != ptr )
-      {
-         _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
-      }
    }
 
 done:

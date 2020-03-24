@@ -108,13 +108,11 @@ enum authState
 #pragma pack(1)
 struct mongoMsgHeader
 {
-   INT32  msgLen ;
-   INT32  requestId ;
-   INT32  responseTo ;
-   SINT16 opCode ;
-   CHAR   flags ;
-   CHAR   version ;
-   INT32  reservedFlags ;
+   INT32 msgLen ;
+   INT32 requestId ;
+   INT32 responseTo ;
+   INT32 opCode ;
+   INT32 reservedFlags ;
 };
 #pragma pack()
 
@@ -143,41 +141,27 @@ enum
    OP_GETMORE           = 4,
    OP_KILLCURSORS       = 5,
    OP_ENSURE_INDEX      = 6,
-
-   OP_COMMAND_BEGIN     = 7,
-   OP_CMD_CREATE        = 8,     // create collection
-   OP_CMD_CREATE_CS     = 9,
-   OP_CMD_DROP          = 10,    // drop collection
-   OP_CMD_DROP_DATABASE = 11,
-   OP_CMD_GETLASTERROR  = 12,    // will not process msg
-   OP_CMD_DROP_INDEX    = 13,
-   OP_CMD_GET_INDEX     = 14,
-   OP_CMD_GET_CLS       = 15,    // list collections
-   OP_CMD_COUNT         = 16,
-   OP_CMD_COUNT_MORE    = 17,    // it is obsolete
-   OP_CMD_AGGREGATE     = 18,
-   OP_CMD_DISTINCT      = 19,
-   OP_CMD_AUTH          = 20,
-   OP_CMD_GETNONCE      = 21,
-   OP_CMD_CRTUSER       = 22,
-   OP_CMD_DELUSER       = 23,
-   OP_CMD_LISTUSER      = 24,
-   OP_CMD_ISMASTER      = 25,
-   OP_CMD_PING          = 26,
-   OP_CMD_NOT_SUPPORTED = 27,
-   OP_CMD_WHATSMYURI    = 28,
-   OP_CMD_BUILDINFO     = 29,
-   OP_CMD_GETLOG        = 30,
-   OP_FIND              = 31,
-   OP_CMD_GET_DBS       = 32,    // list databases
-
-   OP_COMMAND_END       = 127,
-};
-
-struct cursorStartFrom
-{
-   INT64 cursorId ;
-   INT32 startFrom ;
-};
+   OP_CMD_CREATE        = 7,     // create collection
+   OP_CMD_DROP          = 8,    // drop collection
+   OP_CMD_DROP_DATABASE = 9,
+   OP_CMD_GETLASTERROR  = 10,    // will not process msg
+   OP_CMD_DROP_INDEX    = 11,
+   OP_CMD_GET_INDEX     = 12,
+   OP_CMD_GET_CLS       = 13,    // list collections
+   OP_CMD_COUNT         = 14,
+   OP_CMD_AGGREGATE     = 15,
+   OP_CMD_DISTINCT      = 16,
+   OP_CMD_AUTH          = 17,
+   OP_CMD_CRTUSER       = 18,
+   OP_CMD_DELUSER       = 19,
+   OP_CMD_LISTUSER      = 20,
+   OP_CMD_ISMASTER      = 21,
+   OP_CMD_PING          = 22,
+   OP_CMD_NOT_SUPPORTED = 23,
+   OP_CMD_WHATSMYURI    = 24,
+   OP_CMD_BUILDINFO     = 25,
+   OP_CMD_GETLOG        = 26,
+   OP_CMD_GET_DBS       = 27,    // list databases
+} ;
 
 #endif

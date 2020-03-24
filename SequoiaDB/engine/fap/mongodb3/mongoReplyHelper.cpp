@@ -38,40 +38,10 @@
 #include "mongoReplyHelper.hpp"
 #include "sdbInterface.hpp"
 #include "../../bson/bson.hpp"
-#include "../../bson/lib/nonce.h"
 namespace fap
 {
    namespace mongo
    {
-      void buildIsMasterReplyMsg( engine::IResource *resource,
-                                  engine::rtnContextBuf &buff )
-      {
-         bson::BSONObjBuilder bob ;
-         bob.append( "ismaster", TRUE ) ;
-         bob.append("msg", "isdbgrid");
-         // build
-         // config at last
-         bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
-         bob.append( "maxMessageSizeBytes", SDB_MAX_MSG_LENGTH ) ;
-         bob.append( "maxWriteBatchSize", 1000 ) ;
-         bob.append( "localTime", 100 ) ;
-         bob.append( "maxWireVersion", 2 ) ;
-         bob.append( "minWireVersion", 0 ) ;
-         buff = engine::rtnContextBuf( bob.obj() ) ;
-      }
-
-      void buildGetNonceReplyMsg( engine::rtnContextBuf &buff )
-      {
-         bson::BSONObjBuilder bob ;
-         static Nonce::Security security ;
-         UINT64 nonce = security.getNonce() ;
-
-         std::stringstream ss ;
-         ss << std::hex << nonce ;
-         bob.append( "nonce", ss.str() ) ;
-         buff = engine::rtnContextBuf( bob.obj() ) ;
-      }
-
       void buildGetLastErrorReplyMsg( const bson::BSONObj &err,
                                       engine::rtnContextBuf &buff )
       {
@@ -106,65 +76,23 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildPingReplyMsg( engine::rtnContextBuf &buff )
-      {
-         bson::BSONObjBuilder bob;
-         bob.append( "ok", 1 );
-         buff = engine::rtnContextBuf( bob.obj() ) ;
-      }
-
-      void buildGetMoreMsg( msgBuffer &out )
+      void buildGetMoreMsg( msgBuffer &out, UINT64 requestID, INT64 contextID )
       {
          if ( !out.empty() )
          {
             out.zero() ;
          }
-         out.reverse( sizeof( MsgOpGetMore ) ) ;
+         out.reserve( sizeof( MsgOpGetMore ) ) ;
          out.advance( sizeof( MsgOpGetMore ) ) ;
 
          MsgOpGetMore *getmore = (MsgOpGetMore *)out.data() ;
          getmore->header.messageLength = sizeof( MsgOpGetMore ) ;
          getmore->header.opCode = MSG_BS_GETMORE_REQ ;
-         getmore->header.requestID = 0 ;
+         getmore->header.requestID = requestID ;
          getmore->header.routeID.value = 0 ;
          getmore->header.TID = 0 ;
-         getmore->contextID = -1 ;
+         getmore->contextID = contextID ;
          getmore->numToReturn = -1 ;
-      }
-
-      void buildWhatsmyuriReplyMsg( engine::rtnContextBuf &buff )
-      {
-         bson::BSONObjBuilder bob ;
-         bob.append( "ok", 1 ) ;
-         bob.append( "errmsg", "" ) ;
-         bob.append( "code", 0 ) ;
-         bob.append( "you", "0.0.0.0:00000" ) ;
-         buff = engine::rtnContextBuf( bob.obj() ) ;
-      }
-
-      void buildBuildinfoReplyMsg( engine::rtnContextBuf &buff )
-      {
-         bson::BSONObjBuilder bob ;
-         bob.append( "version", "3.4.23" ) ;
-         bson::BSONArrayBuilder sub( bob.subarrayStart( "versionArray" ) ) ;
-         sub.append( 3 ) ;
-         sub.append( 4 ) ;
-         sub.append( 23 ) ;
-         sub.append( 0 ) ;
-         sub.done() ;
-         bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
-         bob.append( "ok", 1 ) ;
-         buff = engine::rtnContextBuf( bob.obj() ) ;
-      }
-
-      void buildGetLogReplyMsg( engine::rtnContextBuf &buff )
-      {
-         bson::BSONObjBuilder bob ;
-         bob.append( "totalLinesWritten", 0 ) ;
-         bson::BSONArrayBuilder sub( bob.subarrayStart( "log" ) ) ;
-         sub.done() ;
-         bob.append( "ok", 1 ) ;
-         buff = engine::rtnContextBuf( bob.obj() ) ;
       }
    }
 }

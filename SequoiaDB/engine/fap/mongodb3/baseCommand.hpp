@@ -42,6 +42,7 @@
 #include "util.hpp"
 #include "mongodef.hpp"
 #include "parser.hpp"
+#include "rtnContextBuff.hpp"
 
 class baseCommand : public SDBObject
 {
@@ -55,7 +56,12 @@ public:
       return _name ;
    }
 
-   virtual INT32 convert( msgParser &parser )
+   virtual BOOLEAN needProcessByEngine()
+   {
+      return TRUE ;
+   }
+
+   virtual INT32 convert( msgParser &parser, baseCommand** ppNewCmd )
    {
       return SDB_OK ;
    }
@@ -65,7 +71,9 @@ public:
       return SDB_OK ;
    }
 
-   virtual INT32 doCommand( void *pData = NULL )
+   virtual INT32 handleReply( msgParser &parser,
+                              MsgOpReply &replyHeader,
+                              engine::rtnContextBuf &replyBuf )
    {
       return SDB_OK ;
    }
