@@ -100,10 +100,6 @@
    > node1.start()
    ```
 
->   **Note:**
->
->   部署编目节点，请参考 [集群模式](installation/deployment/command_installation/cluster.md)
-
 ###查看编目节点###
 
 在 Sdb Shell 中可以查看协调节点的列表：
