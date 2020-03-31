@@ -786,4 +786,19 @@ public class CommLib {
 
         return groupNames;
     }
+
+    /**
+     * 获取集群的全局事务及mvcc配置
+     * 
+     * @param db:db连接;role:节点角色，包括coord、catalog、data
+     * @return BSONObject 配置项
+     * @Author 赵育
+     * @Date 2020-03-31
+     */
+    public static BSONObject getTransConfig( Sequoiadb db, String role ) {
+        BSONObject transConfig = db.getSnapshot( Sequoiadb.SDB_SNAP_CONFIGS,
+                "{role:'" + role + "'}", "{globtranson:'',mvccon:''}", "" )
+                .getNext();
+        return transConfig;
+    }
 }
