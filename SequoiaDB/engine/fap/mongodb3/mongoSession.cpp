@@ -307,6 +307,23 @@ INT32 _mongoSession::_autoCreateCS()
 
    rc = _processMsg( (CHAR*)query ) ;
 
+   if ( SDB_OK == rc )
+   {
+      PD_LOG( PDEVENT,
+              "Session[%s]: Create collection space[%s] automatically",
+              sessionName(), packet.csName.c_str() ) ;
+   }
+   else
+   {
+      PD_LOG( PDWARNING,
+              "Session[%s]: failed to create collection space[%s] automatically"
+              ", rc: %d", sessionName(), packet.csName.c_str(), rc ) ;
+      if ( SDB_DMS_CS_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+   }
+
    return rc ;
 }
 
@@ -357,6 +374,23 @@ INT32 _mongoSession::_autoCreateCL()
       else
       {
          break ;
+      }
+   }
+
+   if ( SDB_OK == rc )
+   {
+      PD_LOG( PDEVENT,
+              "Session[%s]: Create collection[%s] automatically",
+              sessionName(), packet.fullName.c_str() ) ;
+   }
+   else
+   {
+      PD_LOG( PDWARNING,
+              "Session[%s]: failed to create collection[%s] automatically"
+              ", rc: %d", sessionName(), packet.fullName.c_str(), rc ) ;
+      if ( SDB_DMS_EXIST == rc )
+      {
+         rc = SDB_OK ;
       }
    }
 
