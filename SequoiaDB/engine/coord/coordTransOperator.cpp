@@ -36,6 +36,7 @@
 *******************************************************************************/
 
 #include "coordTransOperator.hpp"
+#include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
 #include "coordUtil.hpp"
 #include "rtnCommandDef.hpp"
@@ -763,6 +764,35 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       DPS_TRANS_ID curTransID = cb->getTransID() ;
+
+      const CHAR *pHint = NULL ;
+      rc = msgExtractTransCommit( (CHAR*)pMsg, &pHint ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse update request, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      if ( pHint )
+      {
+         try
+         {
+            BSONObj hint = BSONObj( pHint ) ;
+            BSONObj clientInfo ;
+
+            if ( cb->getMonQueryCB() && !hint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
+            {
+               rtnGetObjElement( hint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+               cb->getMonQueryCB()->clientInfo = clientInfo.getOwned() ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                         "Commit failed, received unexpected error: %s",
+                         e.what() ) ;
+         }
+      }
 
       // add last op info
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,

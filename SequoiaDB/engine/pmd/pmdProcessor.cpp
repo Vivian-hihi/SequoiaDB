@@ -2124,11 +2124,8 @@ namespace engine
             monQueryCB->sessionID = eduCB()->getID() ;
             monQueryCB->opCode = msg->opCode ;
             monQueryCB->tid = eduCB()->getTID() ;
-
-            clientInfoBuilder.append( FIELD_NAME_CLIENTTID, msg->TID ) ;
-            clientInfoBuilder.append( FIELD_NAME_CLIENTHOST,
-                                      getClient()->getFromIPAddr() ) ;
-            monQueryCB->clientInfo = clientInfoBuilder.obj() ;
+            monQueryCB->clientTID = msg->TID ;
+            monQueryCB->clientHost.assign(getClient()->getFromIPAddr()) ;
 
             eduCB()->setMonQueryCB( monQueryCB ) ;
          }

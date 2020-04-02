@@ -135,20 +135,14 @@ namespace engine
       try
       {
          BSONObj hint = BSONObj (pHint) ;
-         BSONObjBuilder builder ;
          BSONObj clientInfo ;
          BSONObj dummy ;
          boDeletor = BSONObj( pDeletor ) ;
 
-         if ( !hint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
+         if ( cb->getMonQueryCB() && !hint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
          {
             rtnGetObjElement( hint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
-            builder.appendElements( clientInfo ) ;
-            if ( cb->getMonQueryCB() )
-            {
-               builder.appendElements( cb->getMonQueryCB()->clientInfo ) ;
-               cb->getMonQueryCB()->clientInfo = builder.obj() ;
-            }
+            cb->getMonQueryCB()->clientInfo = clientInfo.getOwned() ;
          }
 
          rtnQueryOptions options( boDeletor, dummy, dummy, hint, pCollectionName,

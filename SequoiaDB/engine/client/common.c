@@ -1213,6 +1213,7 @@ INT32 clientBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *CollectionName, SINT32 flag,
                              UINT64 reqID,
                              bson *insertor,
+                             bson *hint,
                              BOOLEAN endianConvert )
 {
    INT32 rc             = SDB_OK ;
@@ -2389,15 +2390,42 @@ INT32 clientBuildInsertMsgCpp ( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *CollectionName,
                                 SINT32 flag, UINT64 reqID,
                                 const CHAR *insertor,
+                                const CHAR *hint,
                                 BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
    bson bi ;
+   bson bh ;
    bson_init ( &bi ) ;
+   bson_init ( &bh ) ;
    bson_init_finished_data ( &bi, insertor ) ;
+
+   if ( hint )
+   {
+      bson_init_finished_data ( &bh, hint ) ;
+   }
    rc = clientBuildInsertMsg ( ppBuffer, bufferSize, CollectionName, flag,
-                               reqID, &bi, endianConvert ) ;
+                               reqID, &bi, hint?&bh:NULL, endianConvert ) ;
    bson_destroy ( &bi ) ;
+   bson_destroy ( &bh ) ;
+   return rc ;
+}
+
+INT32 clientBuildTransactionCommitMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                          UINT64 reqID,
+                                          const CHAR *hint,
+                                          BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   bson bh ;
+   bson_init ( &bh ) ;
+   if ( hint )
+   {
+      bson_init_finished_data ( &bh, hint ) ;
+   }
+   rc = clientBuildTransactionCommitMsg ( ppBuffer, bufferSize,
+                                          reqID, hint?&bh:NULL, endianConvert ) ;
+   bson_destroy ( &bh ) ;
    return rc ;
 }
 
@@ -3157,12 +3185,23 @@ error:
 
 INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                        UINT64 reqID,
+                                       bson *hint,
                                        BOOLEAN endianConvert )
 {
+   bson emptyObj ;
    INT32 rc = SDB_OK ;
+   SINT32 offset = 0 ;
    MsgOpTransCommit *transCommitMsg = NULL ;
-   INT32 len = sizeof( MsgOpTransCommit ) +
-               ossRoundUpToMultipleX( 0, sizeof(ossValuePtr) ) ;
+   bson_init ( &emptyObj ) ;
+   bson_empty ( &emptyObj ) ;
+   if ( !hint )
+   {
+      hint = &emptyObj ;
+   }
+
+   INT32 len = ossRoundUpToMultipleX( sizeof( MsgOpTransCommit ), 4 ) +
+               ossRoundUpToMultipleX( bson_size(hint), 4 ) ;
+
    if ( len < 0 )
    {
       ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
@@ -3180,13 +3219,59 @@ INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
    transCommitMsg                       = ( MsgOpTransCommit *)( *ppBuffer ) ;
    transCommitMsg->header.requestID     = reqID ;
    transCommitMsg->header.opCode        = MSG_BS_TRANS_COMMIT_REQ ;
-   transCommitMsg->header.messageLength = sizeof( MsgOpTransBegin ) + 0 ;
+   transCommitMsg->header.messageLength = len ;
    transCommitMsg->header.routeID.value = 0 ;
    transCommitMsg->header.TID           = ossGetCurrentThreadID() ;
-   if( endianConvert )
+
+   offset = ossRoundUpToMultipleX( sizeof( MsgOpTransCommit ), 4 ) ;
+
+   if ( !endianConvert )
    {
-      clientEndianConvertHeader ( &transCommitMsg->header ) ;
+      ossMemcpy ( &((*ppBuffer)[offset]), bson_data(hint),
+                                          bson_size(hint));
+      offset += ossRoundUpToMultipleX( bson_size(hint), 4 ) ;
    }
+   else
+   {
+      bson newhint ;
+      off_t off = 0 ;
+      clientEndianConvertHeader ( &transCommitMsg->header ) ;
+      bson_init ( &newhint ) ;
+
+      rc = bson_copy ( &newhint, hint ) ;
+      if ( rc )
+      {
+         rc = SDB_INVALIDARG ;
+         goto endian_convert_done ;
+      }
+
+      off = 0 ;
+      if ( !bson_endian_convert ( (char*)bson_data(&newhint), &off, TRUE ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto endian_convert_done ;
+      }
+
+      ossMemcpy ( &((*ppBuffer)[offset]), bson_data(&newhint),
+                                          bson_size(hint));
+      offset += ossRoundUpToMultipleX( bson_size(hint), 4 ) ;
+
+endian_convert_done :
+      bson_destroy ( &newhint ) ;
+
+      if ( rc )
+      {
+         goto error ;
+      }
+   }
+   // sanity test
+   if ( offset != len )
+   {
+      ossPrintf ( "Invalid packet length"OSS_NEWLINE ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
 done:
    return rc ;
 error:

@@ -273,7 +273,9 @@ class _monClassQuery : public monClassTemplate<_monClassQuery>
 {
 public:
    UINT32                 tid ;  /**! TID of the EDU */
-   BSONObj         clientInfo ;  /**! Information of Client which connect to engine */
+   BSONObj         clientInfo ;  /**! Information of Client which connects to engine */
+   UINT32           clientTID ;  /**! OS TID of Client which connects to engine */
+   ossPoolString   clientHost ;  /**! Client IP */
    ossPoolString         name ;  /**! The target object name of this query */
    SINT64        accessPlanID ;  /**! Access plan ID used by the query */
    UINT32              opCode ;  /**! Message opCode */
@@ -298,7 +300,8 @@ public:
    ossTickDelta msgSentTime ;    /**! Time spent sending msgs to remote nodes */
 
    _monClassQuery ()
-     :  accessPlanID( -1 ),
+     :  clientTID( 0 ),
+        accessPlanID( -1 ),
         opCode( 0 ),
         sessionID( 0 ),
         dataRead( 0 ),

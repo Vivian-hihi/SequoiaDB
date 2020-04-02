@@ -229,6 +229,34 @@ error :
    goto done ;
 }
 
+INT32 msgExtractTransCommit ( const CHAR *pBuffer, const CHAR **ppHint )
+{
+   INT32 rc = SDB_OK ;
+   INT32 offset = 0 ;
+   INT32 length = 0 ;
+   MsgOpTransCommit *pCommit = (MsgOpTransCommit*)pBuffer ;
+   offset = ossRoundUpToMultipleX( sizeof( MsgOpTransCommit ), 4 );
+
+   if ( offset  < pCommit->header.messageLength && ppHint )
+   {
+      *ppHint  = &pBuffer[offset] ;
+      length = *((SINT32*)(&pBuffer[offset])) ;
+      MSG_CHECK_BSON_LENGTH( length ) ;
+      // the result may not exactly match because messageLength is 4 bytes aligned
+      if ( offset + length > pCommit->header.messageLength )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+
+done :
+   PD_TRACE_EXITRC ( SDB_MSGEXTRACTUP, rc );
+   return rc ;
+error :
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTUP, "msgExtractUpdate" )
 INT32 msgExtractUpdate ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppSelector, CHAR **ppUpdator, CHAR **ppHint )

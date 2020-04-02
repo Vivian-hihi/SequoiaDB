@@ -105,7 +105,13 @@ INT32 clientBuildInsertMsgCpp ( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *CollectionName,
                                 SINT32 flag, UINT64 reqID,
                                 const CHAR *insertor,
+                                const CHAR *hint,
                                 BOOLEAN endianConvert ) ;
+
+INT32 clientBuildTransactionCommitMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                          UINT64 reqID,
+                                          const CHAR *hint,
+                                          BOOLEAN endianConvert ) ;
 
 INT32 clientBuildQueryMsgCpp  ( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *CollectionName,
@@ -186,7 +192,14 @@ INT32 clientAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
 INT32 clientBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *CollectionName, SINT32 flag,
                              UINT64 reqID,
-                             bson *insertor, BOOLEAN endianConvert ) ;
+                             bson *insertor,
+                             bson *hint,
+                             BOOLEAN endianConvert ) ;
+
+INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                       UINT64 reqID,
+                                       bson *hint,
+                                       BOOLEAN endianConvert ) ;
 
 INT32 clientBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *CollectionName, SINT32 flag,
@@ -291,10 +304,6 @@ INT32 clientBuildAuthDelMsg( CHAR **ppBuffer, INT32 *bufferSize,
 INT32 clientBuildTransactionBegMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                     UINT64 reqID,
                                     BOOLEAN endianConvert ) ;
-
-INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                                       UINT64 reqID,
-                                       BOOLEAN endianConvert ) ;
 
 INT32 clientBuildTransactionRollbackMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                          UINT64 reqID,

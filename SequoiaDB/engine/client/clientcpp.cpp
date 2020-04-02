@@ -953,12 +953,12 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::_insert ( const BSONObj &obj,
+                                       const BSONObj &hint,
                                        INT32 flags,
                                        BSONObj &newObj,
                                        BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
-
       // make sure the object is initialized
       if ( _collectionFullName [0] == '\0' || !_connection )
       {
@@ -971,10 +971,13 @@ do                                                            \
       {
          goto error ;
       }
+
       rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                      _collectionFullName, flags, 0,
                                      newObj.objdata(),
+                                     hint.objdata(),
                                      _connection->_endianConvert ) ;
+
       if ( rc )
       {
          goto error ;
@@ -1007,7 +1010,7 @@ do                                                            \
 
       if ( NULL == id )
       {
-         rc = _insert( obj, 0, newObj ) ;
+         rc = _insert( obj, _sdbStaticObject, 0, newObj ) ;
          if ( rc )
          {
             goto error ;
@@ -1015,7 +1018,7 @@ do                                                            \
       }
       else
       {
-         rc = _insert( obj, FLG_INSERT_RETURN_OID, newObj ) ;
+         rc = _insert( obj, _sdbStaticObject, FLG_INSERT_RETURN_OID, newObj ) ;
          if ( rc )
          {
             goto error ;
@@ -1041,9 +1044,26 @@ do                                                            \
                                       bson::BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
+      rc = insert( obj, _sdbStaticObject, flags, pResult ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::insert ( const bson::BSONObj &obj,
+                                      const bson::BSONObj &hint,
+                                      INT32 flags,
+                                      bson::BSONObj *pResult )
+   {
+      INT32 rc = SDB_OK ;
       BSONObj newObj ;
 
-      rc = _insert( obj, flags, newObj, pResult ) ;
+      rc = _insert( obj, hint, flags, newObj, pResult ) ;
       if ( rc )
       {
          goto error ;
@@ -1063,6 +1083,23 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::insert ( std::vector<bson::BSONObj> &objs,
+                                      INT32 flags,
+                                      bson::BSONObj *pResult )
+   {
+      INT32 rc = SDB_OK ;
+      rc = insert( objs, _sdbStaticObject, flags, pResult ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sdbCollectionImpl::insert ( std::vector<bson::BSONObj> &objs,
+                                      const bson::BSONObj &hint,
                                       INT32 flags,
                                       bson::BSONObj *pResult )
    {
@@ -1110,6 +1147,7 @@ do                                                            \
             rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                            _collectionFullName, flags, 0,
                                            newObj.objdata(),
+                                           hint.objdata(),
                                            _connection->_endianConvert ) ;
          }
          else
@@ -1202,6 +1240,7 @@ do                                                            \
             rc = clientBuildInsertMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                            _collectionFullName, flags, 0,
                                            newObj.objdata(),
+                                           (CHAR *)NULL,
                                            _connection->_endianConvert ) ;
          }
          else
@@ -8581,7 +8620,7 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::transactionCommit()
+   INT32 _sdbImpl::transactionCommit( const bson::BSONObj &hint )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
@@ -8589,9 +8628,10 @@ do                                                            \
       lock () ;
       locked = TRUE ;
 
-      rc = clientBuildTransactionCommitMsg( &_pSendBuffer,
-                                            &_sendBufferSize, 0,
-                                            _endianConvert ) ;
+      rc = clientBuildTransactionCommitMsgCpp( &_pSendBuffer,
+                                               &_sendBufferSize, 0,
+                                               hint.objdata(),
+                                               _endianConvert ) ;
       if ( rc )
       {
          goto error ;

@@ -46,7 +46,6 @@
 #include "coordInsertOperator.hpp"
 #include "mthMatchTree.hpp"
 #include "mthModifier.hpp"
-#include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "ossUtil.hpp"
@@ -164,18 +163,12 @@ namespace engine
          boSelector = BSONObj( pSelector ) ;
          boHint = BSONObj( pHint ) ;
          boUpdator = BSONObj( pUpdator ) ;
-         BSONObjBuilder builder ;
          BSONObj clientInfo ;
 
-         if ( !boHint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
+         if ( cb->getMonQueryCB() && !boHint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
          {
             rtnGetObjElement( boHint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
-            builder.appendElements( clientInfo ) ;
-            if ( cb->getMonQueryCB() )
-            {
-               builder.appendElements( cb->getMonQueryCB()->clientInfo ) ;
-               cb->getMonQueryCB()->clientInfo = builder.obj() ;
-            }
+            cb->getMonQueryCB()->clientInfo = clientInfo.getOwned() ;
          }
 
          rtnQueryOptions options( boSelector, dummy, dummy, boHint, pCollectionName,

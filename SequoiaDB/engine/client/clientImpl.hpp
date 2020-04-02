@@ -199,6 +199,14 @@ namespace sdbclient
       INT32 insert ( const bson::BSONObj &obj,
                      INT32 flags,
                      bson::BSONObj *pResult = NULL ) ;
+      INT32 insert ( const bson::BSONObj &obj,
+                     const bson::BSONObj &hint,
+                     INT32 flags,
+                     bson::BSONObj *pResult = NULL ) ;
+      INT32 insert ( std::vector<bson::BSONObj> &objs,
+                     const bson::BSONObj &hint,
+                     INT32 flags = 0,
+                     bson::BSONObj *pResult = NULL ) ;
       INT32 insert ( std::vector<bson::BSONObj> &objs,
                      INT32 flags = 0,
                      bson::BSONObj *pResult = NULL ) ;
@@ -571,6 +579,7 @@ namespace sdbclient
                              BOOLEAN allowNullArgs ) ;
 
       INT32 _insert ( const BSONObj &obj,
+                      const BSONObj &hint,
                       INT32 flags,
                       BSONObj &newObj,
                       BSONObj *pResult = NULL ) ;
@@ -1490,7 +1499,7 @@ namespace sdbclient
 
       // transation
       INT32 transactionBegin() ;
-      INT32 transactionCommit() ;
+      INT32 transactionCommit( const bson::BSONObj &hint =  _sdbStaticObject ) ;
       INT32 transactionRollback() ;
 
       // flush config file

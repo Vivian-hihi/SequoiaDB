@@ -293,7 +293,15 @@ namespace sdbclient
       virtual INT32 insert ( const bson::BSONObj &obj,
                              INT32 flags,
                              bson::BSONObj *pResult = NULL ) = 0 ;
+      virtual INT32 insert ( const bson::BSONObj &obj,
+                             const bson::BSONObj &hint,
+                             INT32 flags,
+                             bson::BSONObj *pResult = NULL ) = 0 ;
       virtual INT32 insert ( std::vector<bson::BSONObj> &objs,
+                             INT32 flags = 0,
+                             bson::BSONObj *pResult = NULL ) = 0 ;
+      virtual INT32 insert ( std::vector<bson::BSONObj> &objs,
+                             const bson::BSONObj &hint,
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL ) = 0 ;
       virtual INT32 insert ( const bson::BSONObj objs[],
@@ -870,6 +878,60 @@ namespace sdbclient
          return pCollection->insert ( obj, flags, pResult ) ;
       }
 
+      /** \fn INT32 insert ( const bson::BSONObj &obj,
+                             const bson::BSONObj &hint,
+                             INT32 flags,
+                             bson::BSONObj *pResult = NULL )
+          \brief Insert a bson object into current collection.
+          \param [in] obj The bson object to be inserted.
+          \param [in] hint. Client and Query information. Default to be empty
+                            when not provided.
+          \param [in] flags The flag to control the behavior of inserting. The
+                            value of flag default to be 0, and it can choose
+                            the follow values:
+               <ul>
+               <li>
+               0:                    while 0 is set(default to be 0), database
+                                     will stop inserting when some records hit
+                                     index key duplicate error.
+               <li>
+               FLG_INSERT_CONTONDUP:
+                                     if some records hit index key duplicate
+                                     error, database will skip them and go on
+                                     inserting.
+               <li>
+               FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
+               <li>
+               FLG_INSERT_REPLACEONDUP:
+                                      if the record hit index key duplicate
+                                      error, database will replace the existing
+                                      record by the inserting new record.
+          \param [out] pResult The result of inserting. Can be NULL or a bson:
+               <ul>
+               <li> NULL:
+                     when this argument is NULL.
+               <li> empty bson: when this argument is not NULL but there is no
+                                result return.
+               <li> bson which contains the "_id" field:
+                     when flag "FLG_INSERT_RETURN_OID" is set, return the
+                     value of "_id" field of the inserted record.
+                     e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
+               </ul>
+
+
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
+      */
+      INT32 insert ( const bson::BSONObj &obj,
+                     const bson::BSONObj &hint,
+                     INT32 flags,
+                     bson::BSONObj *pResult = NULL )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->insert ( obj, hint, flags, pResult ) ;
+      }
+
       /** \fn INT32 insert ( std::vector<bson::BSONObj> &objs,
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL )
@@ -921,6 +983,63 @@ namespace sdbclient
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->insert( objs, flags, pResult ) ;
+      }
+
+      /** \fn INT32 insert ( std::vector<bson::BSONObj> &objs,
+                             const bson::BSONObj &hint,
+                             INT32 flags = 0,
+                             bson::BSONObj *pResult = NULL )
+          \brief Insert a bson object into current collection.
+          \param [in] objs The bson objects to be inserted.
+          \param [in] hint. Client and Query information. Default to be empty
+                            when not provided.
+          \param [in] flags The flag to control the behavior of inserting. The
+                            value of flag default to be 0, and it can choose
+                            the follow values:
+               <ul>
+               <li>
+               0:                    while 0 is set(default to be 0), database
+                                     will stop inserting when some records hit
+                                     index key duplicate error.
+               <li>
+               FLG_INSERT_CONTONDUP:
+                                     if some records hit index key duplicate
+                                     error, database will skip them and go on
+                                     inserting.
+               <li>
+               FLG_INSERT_RETURN_OID:
+                                     return the value of "_id" field in the record.
+               <li>
+               FLG_INSERT_REPLACEONDUP:
+                                     if the record hit index key duplicate
+                                     error, database will replace the existing
+                                     record by the inserting new record and then
+                                     go on inserting.
+
+          \param [out] pResult The result of inserting. Can be NULL or a bson:
+               <ul>
+               <li> NULL:
+                     when this argument is NULL.
+               <li> empty bson: when this argument is not NULL but there is no
+                                result return.
+               <li> bson which contains the field "_id":
+                     when flag "FLG_INSERT_RETURN_OID" is set, return all the
+                     values of "_id" field in a bson array.
+                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" },
+                                      { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
+               </ul>
+
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
+      */
+      INT32 insert ( std::vector<bson::BSONObj> &objs,
+                     const bson::BSONObj &hint,
+                     INT32 flags = 0,
+                     bson::BSONObj *pResult = NULL )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->insert( objs, hint, flags, pResult ) ;
       }
 
       /** \fn INT32 insert ( bson::BSONObj objs[],
@@ -4197,7 +4316,7 @@ namespace sdbclient
 
       virtual INT32 transactionBegin() = 0 ;
 
-      virtual INT32 transactionCommit() = 0 ;
+      virtual INT32 transactionCommit( const bson::BSONObj &hint = _sdbStaticObject ) = 0 ;
 
       virtual INT32 transactionRollback() = 0 ;
 
@@ -5378,16 +5497,18 @@ namespace sdbclient
          return pSDB->transactionBegin() ;
       }
 
-      /** \fn INT32 transactionCommit()
+      /** \fn INT32 transactionCommit( const bson::BSONObj &hint )
           \brief Transaction commit.
+          \param [in] hint Client and Query Information.
+                           Default to be empty when not provided.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 transactionCommit()
+      INT32 transactionCommit( const bson::BSONObj &hint = _sdbStaticObject )
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->transactionCommit() ;
+         return pSDB->transactionCommit( hint ) ;
       }
 
       /** \fn INT32 transactionRollback()

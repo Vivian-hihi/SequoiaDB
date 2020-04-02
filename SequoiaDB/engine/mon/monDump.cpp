@@ -4354,6 +4354,7 @@ namespace engine
       {
          FLOAT64 nodeWaitTime ;
          FLOAT64 msgSentTime ;
+         BSONObjBuilder clientInfoBuilder ;
          _queryCB->remoteNodesResponseTime.convertToTime ( factor, seconds, microseconds ) ;
          nodeWaitTime = (double)(seconds*1000) + ( (double)(microseconds) / 1000) ;
 
@@ -4363,7 +4364,10 @@ namespace engine
          builder.append( FIELD_NAME_LASTOPINFO, _queryCB->queryText.c_str() ) ;
          builder.append( FIELD_NAME_MSG_SENT_TIME, msgSentTime ) ;
          builder.append( FIELD_NAME_NODEWAITTIME, nodeWaitTime ) ;
-         builder.append( FIELD_NAME_CLIENTINFO, _queryCB->clientInfo ) ;
+         clientInfoBuilder.appendElements( _queryCB->clientInfo ) ;
+         clientInfoBuilder.append( FIELD_NAME_CLIENTTID, _queryCB->clientTID ) ;
+         clientInfoBuilder.append( FIELD_NAME_CLIENTHOST, _queryCB->clientHost.c_str() ) ;
+         builder.append( FIELD_NAME_CLIENTINFO, clientInfoBuilder.obj() ) ;
 
          if ( _queryCB->nodes.size() > 0 )
          {

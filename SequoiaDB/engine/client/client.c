@@ -6458,7 +6458,7 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
    }
    rc = clientBuildInsertMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                cs->_collectionFullName, flags, 0, obj,
-                               cs->_endianConvert ) ;
+                               NULL, cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -6585,7 +6585,7 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
       if ( 0 == count )
          rc = clientBuildInsertMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                      cs->_collectionFullName, flags, 0,
-                                     obj[count], cs->_endianConvert ) ;
+                                     obj[count], NULL, cs->_endianConvert ) ;
       else
          rc = clientAppendInsertMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                       obj[count], cs->_endianConvert ) ;
@@ -8241,7 +8241,8 @@ SDB_EXPORT INT32 sdbTransactionCommit( sdbConnectionHandle cHandle )
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = clientBuildTransactionCommitMsg( &connection->_pSendBuffer,
                                          &connection->_sendBufferSize,
-                                         0, connection->_endianConvert ) ;
+                                         0, NULL,
+                                         connection->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;

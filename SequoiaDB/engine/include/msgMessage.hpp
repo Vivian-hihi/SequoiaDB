@@ -126,6 +126,13 @@ OSS_INLINE BOOLEAN isTransWriteMsg( INT32 opCode, const MsgHeader *pMsg )
 }
 
 /*
+ * Extract Commit Message from pBuffer
+ * in pBuffer
+ * out ppHint
+ */
+INT32 msgExtractTransCommit ( const CHAR *pBuffer, const CHAR **ppHint ) ;
+
+/*
  * Create Update Message in ppBuffer
  * in/out ppBuffer
  * in/out bufferSize
