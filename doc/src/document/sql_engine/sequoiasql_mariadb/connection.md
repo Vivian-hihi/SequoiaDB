@@ -3,7 +3,7 @@
 
    默认的 SequoiaDB 连接地址为“localhost:11810”，可通过两种方式修改。例如，设置实例 myinst 连接地址为“sdbserver1:11810”和“sdbserver2:11810”。以下均为默认安装路径，用户根据实际情况修改。
    
-   + 通过`bin/sdb_sql_ctl`指定实例名修改
+   + 通过`bin/sdb_maria_ctl`指定实例名修改
 
       1.进入 MariaDB 安装目录。
 
@@ -14,7 +14,7 @@
       2.修改 SequoiaDB 连接地址。
 
       ```lang-bash
-      $ bin/sdb_sql_ctl chconf myinst --sdb-conn-addr=sdbserver1:11810,sdbserver2:11810
+      $ bin/sdb_maria_ctl chconf myinst --sdb-conn-addr=sdbserver1:11810,sdbserver2:11810
       Changing configure of instance myinst ...
       ok
       ```
@@ -38,7 +38,7 @@
 
        >   **Note:**
        >    
-       >   目前 sdb_sql_ctl 工具仅支持一些简单配置项的修改，建议用户采用配置文件的方式修改配置，修改方式同上。具体配置参考[引擎配置](sql_engine/sequoiasql_mariadb/config.md#引擎配置)章节。
+       >   目前 sdb_maria_ctl 工具仅支持一些简单配置项的修改，建议用户采用配置文件的方式修改配置，修改方式同上。具体配置参考[引擎配置](sql_engine/sequoiasql_mariadb/config.md#引擎配置)章节。
 
 + **登录 MariaDB shell** 
  

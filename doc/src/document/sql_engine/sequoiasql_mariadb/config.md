@@ -62,10 +62,10 @@ MariaDB [company]> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) 
 
     配置参数有三种修改方式。
 
-   + 使用工具 sdb_sql_ctl 修改配置
+   + 使用工具 sdb_maria_ctl 修改配置
 
    ```lang-bash
-   $ bin/sdb_sql_ctl chconf myinst --sdb-auto-partition=OFF
+   $ bin/sdb_maria_ctl chconf myinst --sdb-auto-partition=OFF
    ```
 
    + 修改实例数据目录下的配置文件 auto.cnf，在[mysqld]下添加/更改对应配置项。示例：
