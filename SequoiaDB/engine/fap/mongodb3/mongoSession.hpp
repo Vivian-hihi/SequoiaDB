@@ -69,7 +69,8 @@ protected:
    INT32 _processMsg( const CHAR *pMsg ) ;
    INT32 _onMsgBegin( MsgHeader *msg ) ;
    INT32 _onMsgEnd( INT32 result, MsgHeader *msg ) ;
-   INT32 _reply( MsgOpReply *replyHeader, const CHAR *pBody, INT32 bodyLen ) ;
+   INT32 _reply( mongoMsgReply &replyHeader,
+                 const CHAR *pBody, INT32 bodyLen ) ;
 
 private:
    void  _resetBuffers() ;

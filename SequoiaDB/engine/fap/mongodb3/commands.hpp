@@ -54,7 +54,8 @@ public:                                                              \
    virtual INT32 buildMsg( msgParser &parser, msgBuffer &sdbMsg ) ;  \
                                                                      \
    virtual INT32 handleReply( msgParser &parser,                     \
-                              MsgOpReply& replyHeader,               \
+                              INT32 errCode,                         \
+                              mongoMsgReply& replyHeader,            \
                               engine::rtnContextBuf &replyBuf ) ;    \
 } ;
 

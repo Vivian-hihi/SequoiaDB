@@ -87,20 +87,21 @@ enum queryOption
    QUERY_PARTIAL_RESULTS,
 } ;
 
-enum ResultFlag
+// Use these flags when replying messages to mongo client
+enum MONGO_REPLY_FLAG
 {
-   RESULT_CURSOR_NOT_FOUND   = 1,
-   RESULT_ERRSET             = 2,
-   RESULT_SHARD_CONFIG_STALE = 4,
-   RESULT_AWAIT_CAPABLE      = 8,
-};
+   MONGO_REPLY_FLAG_NONE               = 0,
 
-enum authState
-{
-   AUTH_NONE  = 0,
-   AUTH_NONCE = 1,
+   // returned, with zero results, when getMore is called but the cursor id
+   // is not valid at server.
+   MONGO_REPLY_FLAG_CURSOR_NOT_FOUND   = 1 << 0,
 
-   AUTH_FINISHED = 1 << 31,
+   // { $err: ... } is being returned
+   MONGO_REPLY_FLAG_QUERY_FAILURE      = 1 << 1,
+
+   MONGO_REPLY_FALG_SHARD_CONFIG_STALE = 1 << 2,
+
+   MONGO_REPLY_FALG_AWAIT_CAPABLE      = 1 << 3,
 } ;
 
 #define SDB_AUTH_SOURCE_FAP "fap-mongo"
@@ -126,6 +127,22 @@ struct mongoMsgReply
 };
 #pragma pack()
 
+/* The id of cursor, Mongo client name it "cusorId",
+ * Sequoiadb name it "contextId".
+ */
+#define MONGO_INVALID_CURSORID ( 0 )
+#define SDB_INVALID_CONTEXTID  ( -1 )
+
+/* Mongo cursorId: regards 0 as invalid value.
+ * Sequoiadb contextId: regards -1 as invalid value.
+ * In order to prevent the first context( contextId = 0 ) from being treated as
+ * invalid by Mongo client, we convert cursorId = contextId -1.
+ */
+#define MGCURSOID_TO_SDBCTXID( mongoCursorId ) \
+        ( mongoCursorId - 1 )
+#define SDBCTXID_TO_MGCURSOID( sdbCtxId ) \
+        ( sdbCtxId + 1 )
+
 #define CS_NAME_SIZE       DMS_COLLECTION_SPACE_NAME_SZ
 #define CL_FULL_NAME_SIZE  DMS_COLLECTION_SPACE_NAME_SZ +   \
                            DMS_COLLECTION_NAME_SZ + 1
@@ -142,9 +159,9 @@ enum
    OP_KILLCURSORS       = 5,
    OP_ENSURE_INDEX      = 6,
    OP_CMD_CREATE        = 7,     // create collection
-   OP_CMD_DROP          = 8,    // drop collection
+   OP_CMD_DROP          = 8,     // drop collection
    OP_CMD_DROP_DATABASE = 9,
-   OP_CMD_GETLASTERROR  = 10,    // will not process msg
+   OP_CMD_GETLASTERROR  = 10,
    OP_CMD_DROP_INDEX    = 11,
    OP_CMD_GET_INDEX     = 12,
    OP_CMD_GET_CLS       = 13,    // list collections

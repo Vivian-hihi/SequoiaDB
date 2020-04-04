@@ -75,7 +75,8 @@ public:
    // virtual function for baseConverter
    virtual INT32 convert( msgBuffer &out ) ;
 
-   INT32 convertReply( MsgOpReply &replyHeader,
+   INT32 convertReply( const MsgOpReply &replyFromEngine,
+                       mongoMsgReply &replyToMongo,
                        engine::rtnContextBuf &replyBuf ) ;
 
 private:

@@ -241,16 +241,17 @@ INT32 _mongoSession::run()
       }
 
    reply:
+      {
       // build response
-      rc = _converter.convertReply( _replyHeader, _contextBuff ) ;
+      mongoMsgReply replyToMongo ;
+      INT32 rcTmp = SDB_OK ;
+      rc = _converter.convertReply( _replyHeader, replyToMongo, _contextBuff ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Session[%s] failed to convert reply, rc: %d",
                    sessionName(), rc ) ;
 
       // send response
-      {
-      INT32 rcTmp = _reply( &_replyHeader, _contextBuff.data(),
-                            _contextBuff.size() ) ;
+      rcTmp = _reply( replyToMongo, _contextBuff.data(), _contextBuff.size() ) ;
       PD_RC_CHECK( rcTmp, PDERROR,
                    "Session[%s] failed to send response, rc: %d",
                    sessionName(), rcTmp ) ;
@@ -455,7 +456,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       bson::BSONObjBuilder bob ;
       bob.append( "ok", 0 ) ;
       bob.append( "code",  _errorInfo.getIntField( OP_ERRNOFIELD ) ) ;
-      bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD ) ) ;
       _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
       _replyHeader.numReturned = 1 ;
    }
@@ -504,13 +505,11 @@ INT32 _mongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )
    return SDB_OK ;
 }
 
-INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
+INT32 _mongoSession::_reply( mongoMsgReply &replyHeader,
                              const CHAR *pBody,
                              INT32 bodyLen )
 {
    INT32 rc = SDB_OK ;
-   mongoMsgReply mongoReply ;
-   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
 
    if ( OP_KILLCURSORS == _converter.getOpType() )
    {
@@ -518,16 +517,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       goto done;
    }
 
-   mongoReply.header.requestId = 0 ;
-   mongoReply.header.responseTo = packet.requestId ;
-   mongoReply.header.opCode = dbReply ;
-   mongoReply.header.reservedFlags = 0 ;
-
-   mongoReply.cursorId = replyHeader->contextID + 1 ;
-   mongoReply.startingFrom = replyHeader->startFrom ;
-   mongoReply.nReturned = replyHeader->numReturned ;
-
-   if ( mongoReply.nReturned > 1 )
+   if ( replyHeader.nReturned > 1 )
    {
       INT32 offset = 0 ;
       while ( offset < bodyLen )
@@ -539,9 +529,9 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       pBody = _outBuffer.data() ;
       bodyLen = _outBuffer.size() ;
    }
-   mongoReply.header.msgLen = sizeof( mongoMsgReply ) + bodyLen ;
+   replyHeader.header.msgLen = sizeof( mongoMsgReply ) + bodyLen ;
 
-   rc = sendData( (CHAR *)&mongoReply, sizeof( mongoMsgReply ) ) ;
+   rc = sendData( (CHAR *)&replyHeader, sizeof( mongoMsgReply ) ) ;
    PD_RC_CHECK( rc, PDERROR,
                 "Session[%s] failed to send response header, rc: %d",
                 sessionName(), rc ) ;

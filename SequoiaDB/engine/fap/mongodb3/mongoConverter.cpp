@@ -106,15 +106,26 @@ error:
    goto done ;
 }
 
-INT32 mongoConverter::convertReply( MsgOpReply &replyHeader,
+INT32 mongoConverter::convertReply( const MsgOpReply &replyFromEngine,
+                                    mongoMsgReply &replyToMongo,
                                     engine::rtnContextBuf &replyBuf )
 {
    INT32 rc = SDB_OK ;
    baseCommand *cmd = _parser.command() ;
 
+   replyToMongo.header.requestId = 0 ;
+   replyToMongo.header.responseTo = _parser.dataPacket().requestId ;
+   replyToMongo.header.opCode = dbReply ;
+   replyToMongo.header.reservedFlags = MONGO_REPLY_FLAG_NONE ;
+
+   replyToMongo.cursorId = SDBCTXID_TO_MGCURSOID( replyFromEngine.contextID ) ;
+   replyToMongo.startingFrom = replyFromEngine.startFrom ;
+   replyToMongo.nReturned = replyFromEngine.numReturned ;
+
    try
    {
-      rc = cmd->handleReply( _parser, replyHeader, replyBuf ) ;
+      rc = cmd->handleReply( _parser, replyFromEngine.flags,
+                             replyToMongo, replyBuf ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to build response for command[%s], rc: %d",
                    cmd->name(), rc ) ;

@@ -220,7 +220,8 @@ static void convertCollectionObj( BSONObj& collectionObj )
 }
 
 static void buildFirstBatch( msgParser &parser,
-                             MsgOpReply &replyHeader,
+                             INT32 errCode,
+                             mongoMsgReply &replyHeader,
                              engine::rtnContextBuf &replyBuf )
 {
    // {xxx}, {xxx}... =>
@@ -231,7 +232,7 @@ static void buildFirstBatch( msgParser &parser,
    BSONObjBuilder cursorBuilder ;
 
    BSONArrayBuilder arr( cursorBuilder.subarrayStart( "firstBatch" ) ) ;
-   if ( SDB_DMS_EOC == replyHeader.flags )
+   if ( SDB_DMS_EOC == errCode )
    {
       // do nothing
    }
@@ -273,20 +274,22 @@ static void buildFirstBatch( msgParser &parser,
    }
    else
    {
+      // real query reply:   { ... ns: "foo.bar" ... }
       cursorBuilder.append( "ns", packet.fullName.c_str() ) ;
    }
 
-   cursorBuilder.append( "id", (INT64)( replyHeader.contextID + 1 ) ) ;
+   cursorBuilder.append( "id", (INT64)replyHeader.cursorId ) ;
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
    resultBuilder.append( "ok", 1 ) ;
    replyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
 
-   replyHeader.contextID = -1 ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.cursorId = MONGO_INVALID_CURSORID ;
+   replyHeader.nReturned = 1 ;
 }
 
 static void buildNextBatch( msgParser &parser,
-                            MsgOpReply &replyHeader,
+                            INT32 errCode,
+                            mongoMsgReply &replyHeader,
                             engine::rtnContextBuf &replyBuf )
 {
    // {xxx}, {xxx}... =>
@@ -298,7 +301,7 @@ static void buildNextBatch( msgParser &parser,
 
    bson::BSONArrayBuilder arr( cursorBuilder.subarrayStart( "nextBatch" ) ) ;
    INT32 offset = 0 ;
-   if ( SDB_DMS_EOC == replyHeader.flags )
+   if ( SDB_DMS_EOC == errCode )
    {
       // do nothing
    }
@@ -313,18 +316,29 @@ static void buildNextBatch( msgParser &parser,
    }
    arr.done() ;
 
+   /* getMore message may come from three command:
+    * 1. listIndexes
+    *           request: { getMore: <>, collection: "$cmd.listIndexes.bar" }
+    *           reply:   { ... ns: "foo.$cmd.listIndexes.bar" ... }
+    * 2. listCL
+    *           request: { getMore: <>, collection: "$cmd.listCollections" }
+    *           reply:   { ... ns: "foo.$cmd.listCollections" ... }
+    * 3. real query
+    *           request: { getMore: <>, collection: bar" }
+    *           reply:   { ... ns: "foo.bar" ... }
+    */
    packet.fullName = packet.csName ;
    packet.fullName += "." ;
    packet.fullName += packet.all.getStringField( "collection" ) ;
    cursorBuilder.append( "ns", packet.fullName.c_str() ) ;
 
-   cursorBuilder.append( "id", (INT64)( replyHeader.contextID + 1 ) ) ;
+   cursorBuilder.append( "id", (INT64)replyHeader.cursorId ) ;
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
    resultBuilder.append( "ok", 1 ) ;
    replyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
 
-   replyHeader.contextID = -1 ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.cursorId = MONGO_INVALID_CURSORID ;
+   replyHeader.nReturned = 1 ;
 }
 
 /// implement of commands
@@ -396,10 +410,11 @@ error:
 }
 
 INT32 insertCommand::handleReply( msgParser &parser,
-                                  MsgOpReply &replyHeader,
+                                  INT32 errCode,
+                                  mongoMsgReply &replyHeader,
                                   engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       // reply: { n: 1, ok: 1 }
       BSONObj resObj( replyBuf.data() ) ;
@@ -486,10 +501,11 @@ error:
 }
 
 INT32 deleteCommand::handleReply( msgParser &parser,
-                                  MsgOpReply &replyHeader,
+                                  INT32 errCode,
+                                  mongoMsgReply &replyHeader,
                                   engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       // reply: { n: 1, ok: 1 }
       BSONObj resObj( replyBuf.data() ) ;
@@ -637,12 +653,13 @@ error:
 }
 
 INT32 updateCommand::handleReply( msgParser &parser,
-                                  MsgOpReply &replyHeader,
+                                  INT32 errCode,
+                                  mongoMsgReply &replyHeader,
                                   engine::rtnContextBuf &replyBuf )
 {
    mongoDataPacket& packet = parser.dataPacket() ;
 
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       // update reply: { ok: 1, n: 1, nModified: 1 }
       // upsert reply: { ok: 1, n: 1, nModified: 0,
@@ -800,9 +817,19 @@ INT32 queryCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 queryCommand::handleReply( msgParser &parser,
-                                 MsgOpReply &replyHeader,
+                                 INT32 errCode,
+                                 mongoMsgReply &replyHeader,
                                  engine::rtnContextBuf &replyBuf )
 {
+   if ( errCode != SDB_OK && errCode != SDB_DMS_EOC )
+   {
+      // reply: { $err: "xxx", code: 1234 }
+      BSONObj resObj( replyBuf.data() ) ;
+      BSONObj newObj = BSON( "$err" << resObj.getStringField( "errmsg" )<<
+                             "code" << resObj.getIntField( "code" ) ) ;
+      replyBuf = engine::rtnContextBuf( newObj ) ;
+      replyHeader.header.reservedFlags |= MONGO_REPLY_FLAG_QUERY_FAILURE ;
+   }
    return SDB_OK ;
 }
 
@@ -821,6 +848,7 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    INT32 rc                = SDB_OK ;
    MsgOpGetMore *more      = NULL ;
    mongoDataPacket &packet = parser.dataPacket() ;
+   INT64 cursorId          = MONGO_INVALID_CURSORID ;
 
    parser.setCurrentOp( OP_GETMORE ) ;
 
@@ -837,9 +865,10 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    {
       // get more for aggregate at spring data java driver 3.2+
       // mongo message:
-      // { getMore: <ctxID>, collection: "bar" }
+      // { getMore: <cursorID>, collection: "bar" }
+      cursorId = packet.all.getField( "getMore" ).numberLong() ;
+      more->contextID = MGCURSOID_TO_SDBCTXID( cursorId ) ;
       more->numToReturn = -1 ;
-      more->contextID = packet.all.getField( "getMore" ).numberLong() - 1 ;
    }
    else if ( dbGetMore == packet.opCode )
    {
@@ -850,8 +879,8 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       }
       more->numToReturn = packet.nToReturn ;
 
-      parser.readInt( sizeof( INT32 ), ( CHAR* )&more->contextID  ) ;
-      more->contextID -= 1 ; // match to sequoiadb contextID, need decrease 1
+      parser.readInt( sizeof( INT32 ), ( CHAR* )&cursorId  ) ;
+      more->contextID = MGCURSOID_TO_SDBCTXID( cursorId ) ;
    }
 
    sdbMsg.doneLen() ;
@@ -860,22 +889,28 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 getMoreCommand::handleReply( msgParser &parser,
-                                   MsgOpReply &replyHeader,
+                                   INT32 errCode,
+                                   mongoMsgReply &replyHeader,
                                    engine::rtnContextBuf &replyBuf )
 {
    mongoDataPacket& packet = parser.dataPacket() ;
 
+   if ( SDB_RTN_CONTEXT_NOTEXIST == errCode )
+   {
+      replyHeader.header.reservedFlags |= MONGO_REPLY_FLAG_CURSOR_NOT_FOUND ;
+      goto done ;
+   }
+
    if ( dbQuery == packet.opCode )
    {
-      if ( SDB_OK      == replyHeader.flags ||
-           SDB_DMS_EOC == replyHeader.flags )
+      if ( SDB_OK == errCode || SDB_DMS_EOC == errCode )
       {
-         buildNextBatch( parser, replyHeader, replyBuf ) ;
+         buildNextBatch( parser, errCode, replyHeader, replyBuf ) ;
       }
    }
    else if ( dbGetMore == packet.opCode )
    {
-      if ( SDB_OK == replyHeader.flags )
+      if ( SDB_OK == errCode )
       {
          msgBuffer tmpBuffer ;
          INT32 offset = 0 ;
@@ -907,13 +942,14 @@ INT32 getMoreCommand::handleReply( msgParser &parser,
                                               replyBuf.recordNum() ) ;
          }
       }
-      else if ( SDB_DMS_EOC == replyHeader.flags )
+      else if ( SDB_DMS_EOC == errCode )
       {
          replyBuf = engine::rtnContextBuf() ;
-         replyHeader.numReturned = 0 ;
+         replyHeader.nReturned = 0 ;
       }
    }
 
+done:
    return SDB_OK ;
 }
 
@@ -967,7 +1003,8 @@ INT32 killCursorsCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 killCursorsCommand::handleReply( msgParser &parser,
-                                       MsgOpReply &replyHeader,
+                                       INT32 errCode,
+                                       mongoMsgReply &replyHeader,
                                        engine::rtnContextBuf &replyBuf )
 {
    return SDB_OK ;
@@ -990,13 +1027,14 @@ INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
 }
 
 INT32 createUserCommand::handleReply( msgParser &parser,
-                                      MsgOpReply &replyHeader,
+                                      INT32 errCode,
+                                      mongoMsgReply &replyHeader,
                                       engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
 }
@@ -1018,13 +1056,14 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 dropUserCommand::handleReply( msgParser &parser,
-                                    MsgOpReply &replyHeader,
+                                    INT32 errCode,
+                                    mongoMsgReply &replyHeader,
                                     engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
 }
@@ -1082,13 +1121,14 @@ INT32 createCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 createCommand::handleReply( msgParser &parser,
-                                  MsgOpReply &replyHeader,
+                                  INT32 errCode,
+                                  mongoMsgReply &replyHeader,
                                   engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
 }
@@ -1145,12 +1185,13 @@ INT32 listDatabasesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 listDatabasesCommand::handleReply( msgParser &parser,
-                                        MsgOpReply &replyHeader,
-                                        engine::rtnContextBuf &replyBuf )
+                                         INT32 errCode,
+                                         mongoMsgReply &replyHeader,
+                                         engine::rtnContextBuf &replyBuf )
 {
    BSONObjBuilder bob ;
 
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       BSONArrayBuilder arr( bob.subarrayStart( "databases" ) ) ;
       INT32 offset = 0 ;
@@ -1165,16 +1206,16 @@ INT32 listDatabasesCommand::handleReply( msgParser &parser,
       bob.append( "ok", 1 ) ;
 
       replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-      replyHeader.contextID = -1 ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.cursorId = MONGO_INVALID_CURSORID ;
+      replyHeader.nReturned = 1 ;
    }
-   else if ( SDB_DMS_EOC == replyHeader.flags )
+   else if ( SDB_DMS_EOC == errCode )
    {
       bob.append( "databases", BSONArray() ) ;
       bob.append( "ok", 1 ) ;
       replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-      replyHeader.contextID = -1 ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.cursorId = MONGO_INVALID_CURSORID ;
+      replyHeader.nReturned = 1 ;
    }
 
    return SDB_OK ;
@@ -1241,13 +1282,15 @@ INT32 listCollectionsCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    return rc ;
 }
 
-INT32 listCollectionsCommand::handleReply( msgParser &parser, MsgOpReply &replyHeader,
-                                  engine::rtnContextBuf &replyBuf )
+INT32 listCollectionsCommand::handleReply( msgParser &parser,
+                                           INT32 errCode,
+                                           mongoMsgReply &replyHeader,
+                                           engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK      == replyHeader.flags ||
-        SDB_DMS_EOC == replyHeader.flags )
+   if ( SDB_OK      == errCode ||
+        SDB_DMS_EOC == errCode )
    {
-      buildFirstBatch( parser, replyHeader, replyBuf ) ;
+      buildFirstBatch( parser, errCode, replyHeader, replyBuf ) ;
    }
 
    return SDB_OK ;
@@ -1306,13 +1349,14 @@ INT32 dropCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 dropCommand::handleReply( msgParser &parser,
-                                MsgOpReply &replyHeader,
+                                INT32 errCode,
+                                mongoMsgReply &replyHeader,
                                 engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
 }
@@ -1395,10 +1439,11 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 countCommand::handleReply( msgParser &parser,
-                                 MsgOpReply &replyHeader,
+                                 INT32 errCode,
+                                 mongoMsgReply &replyHeader,
                                  engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       // reply: { n: 1, ok: 1 }
       BSONObj resObj( replyBuf.data() ) ;
@@ -1407,8 +1452,8 @@ INT32 countCommand::handleReply( msgParser &parser,
       bob.append( "n", resObj.getIntField( "Total" ) ) ;
       bob.append( "ok", 1 ) ;
       replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-      replyHeader.contextID = -1 ;
-      replyHeader.startFrom = 0 ;
+      replyHeader.cursorId = MONGO_INVALID_CURSORID ;
+      replyHeader.startingFrom = 0 ;
    }
 
    return SDB_OK ;
@@ -1539,7 +1584,8 @@ INT32 aggregateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 aggregateCommand::handleReply( msgParser &parser,
-                                     MsgOpReply &replyHeader,
+                                     INT32 errCode,
+                                     mongoMsgReply &replyHeader,
                                      engine::rtnContextBuf &replyBuf )
 {
    mongoDataPacket& packet = parser.dataPacket() ;
@@ -1547,16 +1593,16 @@ INT32 aggregateCommand::handleReply( msgParser &parser,
    if ( packet.all.hasField( "cursor" ) )
    {
       // aggregate at spring data java driver 3.2+
-      if ( SDB_OK      == replyHeader.flags ||
-           SDB_DMS_EOC == replyHeader.flags )
+      if ( SDB_OK      == errCode ||
+           SDB_DMS_EOC == errCode )
       {
-         buildFirstBatch( parser, replyHeader, replyBuf ) ;
+         buildFirstBatch( parser, errCode, replyHeader, replyBuf ) ;
       }
    }
    else
    {
       // reply: { result: [ {xxx}, {xxx}, ... ], ok: 1 }
-      if ( SDB_OK == replyHeader.flags )
+      if ( SDB_OK == errCode )
       {
          BSONObjBuilder bob ;
          BSONArrayBuilder arr( bob.subarrayStart( "result" ) ) ;
@@ -1571,16 +1617,16 @@ INT32 aggregateCommand::handleReply( msgParser &parser,
          bob.append( "ok", 1 ) ;
 
          replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-         replyHeader.numReturned = 1 ;
+         replyHeader.nReturned = 1 ;
       }
-      else if ( SDB_DMS_EOC == replyHeader.flags )
+      else if ( SDB_DMS_EOC == errCode )
       {
          BSONObjBuilder bob ;
          bob.append( "result", BSONArray() ) ;
          bob.append( "ok", 1 ) ;
          replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-         replyHeader.contextID = -1 ;
-         replyHeader.numReturned = 1 ;
+         replyHeader.cursorId = MONGO_INVALID_CURSORID ;
+         replyHeader.nReturned = 1 ;
       }
    }
 
@@ -1655,25 +1701,26 @@ INT32 distinctCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 distinctCommand::handleReply( msgParser &parser,
-                                    MsgOpReply &replyHeader,
+                                    INT32 errCode,
+                                    mongoMsgReply &replyHeader,
                                     engine::rtnContextBuf &replyBuf )
 {
    BSONObjBuilder bob ;
 
    // reply: { values: [ 1, 3, 4 ], ok: 1 }
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       bob.appendElements( BSONObj( replyBuf.data() ) ) ;
       bob.append( "ok", 1 ) ;
       replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-      replyHeader.contextID = -1 ;
+      replyHeader.cursorId = MONGO_INVALID_CURSORID ;
    }
-   else if ( SDB_DMS_EOC == replyHeader.flags )
+   else if ( SDB_DMS_EOC == errCode )
    {
       bob.append( "values", BSONArray() ) ;
       bob.append( "ok", 1 ) ;
       replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-      replyHeader.contextID = -1 ;
+      replyHeader.cursorId = MONGO_INVALID_CURSORID ;
    }
 
    return SDB_OK ;
@@ -1733,14 +1780,15 @@ INT32 dropDatabaseCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 dropDatabaseCommand::handleReply( msgParser &parser,
-                                        MsgOpReply &replyHeader,
+                                        INT32 errCode,
+                                        mongoMsgReply &replyHeader,
                                         engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK              == replyHeader.flags ||
-        SDB_DMS_CS_NOTEXIST == replyHeader.flags )
+   if ( SDB_OK              == errCode ||
+        SDB_DMS_CS_NOTEXIST == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
 
    return SDB_OK ;
@@ -1830,13 +1878,14 @@ error:
 }
 
 INT32 createIndexesCommand::handleReply( msgParser &parser,
-                                         MsgOpReply &replyHeader,
+                                         INT32 errCode,
+                                         mongoMsgReply &replyHeader,
                                          engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
 }
@@ -1901,13 +1950,14 @@ INT32 deleteIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 deleteIndexesCommand::handleReply( msgParser &parser,
-                                         MsgOpReply &replyHeader,
+                                         INT32 errCode,
+                                         mongoMsgReply &replyHeader,
                                          engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK == replyHeader.flags )
+   if ( SDB_OK == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-      replyHeader.numReturned = 1 ;
+      replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
 }
@@ -1975,13 +2025,14 @@ error:
 }
 
 INT32 listIndexesCommand::handleReply( msgParser &parser,
-                                       MsgOpReply &replyHeader,
+                                       INT32 errCode,
+                                       mongoMsgReply &replyHeader,
                                        engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK      == replyHeader.flags ||
-        SDB_DMS_EOC == replyHeader.flags )
+   if ( SDB_OK      == errCode ||
+        SDB_DMS_EOC == errCode )
    {
-      buildFirstBatch( parser, replyHeader, replyBuf ) ;
+      buildFirstBatch( parser, errCode, replyHeader, replyBuf ) ;
    }
 
    return SDB_OK ;
@@ -2004,7 +2055,8 @@ INT32 getlasterrorCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 getlasterrorCommand::handleReply( msgParser &parser,
-                                        MsgOpReply &replyHeader,
+                                        INT32 errCode,
+                                        mongoMsgReply &replyHeader,
                                         engine::rtnContextBuf &replyBuf )
 {
    // handle in _mongoSession::_preProcessMsg()
@@ -2028,11 +2080,12 @@ INT32 pingCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 pingCommand::handleReply( msgParser &parser,
-                                MsgOpReply &replyHeader,
+                                INT32 errCode,
+                                mongoMsgReply &replyHeader,
                                 engine::rtnContextBuf &replyBuf )
 {
    replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.nReturned = 1 ;
    return SDB_OK ;
 }
 
@@ -2053,7 +2106,8 @@ INT32 ismasterCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 ismasterCommand::handleReply( msgParser &parser,
-                                    MsgOpReply &replyHeader,
+                                    INT32 errCode,
+                                    mongoMsgReply &replyHeader,
                                     engine::rtnContextBuf &replyBuf )
 {
    BSONObjBuilder bob ;
@@ -2065,7 +2119,7 @@ INT32 ismasterCommand::handleReply( msgParser &parser,
    bob.append( "minWireVersion", 0 ) ;
    bob.append( "ok", 1 ) ;
    replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.nReturned = 1 ;
 
    return SDB_OK ;
 }
@@ -2087,14 +2141,15 @@ INT32 whatsmyuriCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 whatsmyuriCommand::handleReply( msgParser &parser,
-                                      MsgOpReply &replyHeader,
+                                      INT32 errCode,
+                                      mongoMsgReply &replyHeader,
                                       engine::rtnContextBuf &replyBuf )
 {
    bson::BSONObjBuilder bob ;
    bob.append( "ok", 1 ) ;
    bob.append( "you", "0.0.0.0:00000" ) ;
    replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.nReturned = 1 ;
 
    return SDB_OK ;
 }
@@ -2116,7 +2171,8 @@ INT32 buildinfoCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 buildinfoCommand::handleReply( msgParser &parser,
-                                     MsgOpReply &replyHeader,
+                                     INT32 errCode,
+                                     mongoMsgReply &replyHeader,
                                      engine::rtnContextBuf &replyBuf )
 {
    bson::BSONObjBuilder bob ;
@@ -2132,7 +2188,7 @@ INT32 buildinfoCommand::handleReply( msgParser &parser,
    bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
    bob.append( "ok", 1 ) ;
    replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.nReturned = 1 ;
 
    return SDB_OK ;
 }
@@ -2154,7 +2210,8 @@ INT32 getLogCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 getLogCommand::handleReply( msgParser &parser,
-                                  MsgOpReply &replyHeader,
+                                  INT32 errCode,
+                                  mongoMsgReply &replyHeader,
                                   engine::rtnContextBuf &replyBuf )
 {
    bson::BSONObjBuilder bob ;
@@ -2163,7 +2220,7 @@ INT32 getLogCommand::handleReply( msgParser &parser,
    sub.done() ;
    bob.append( "ok", 1 ) ;
    replyBuf = engine::rtnContextBuf( bob.obj() ) ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.nReturned = 1 ;
 
    return SDB_OK ;
 }
@@ -2185,10 +2242,11 @@ INT32 logoutCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 logoutCommand::handleReply( msgParser &parser,
-                                  MsgOpReply &replyHeader,
+                                  INT32 errCode,
+                                  mongoMsgReply &replyHeader,
                                   engine::rtnContextBuf &replyBuf )
 {
    replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-   replyHeader.numReturned = 1 ;
+   replyHeader.nReturned = 1 ;
    return SDB_OK ;
 }

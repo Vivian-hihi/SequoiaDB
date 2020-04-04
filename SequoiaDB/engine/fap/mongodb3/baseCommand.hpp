@@ -72,7 +72,8 @@ public:
    }
 
    virtual INT32 handleReply( msgParser &parser,
-                              MsgOpReply &replyHeader,
+                              INT32 errCode,
+                              mongoMsgReply &replyHeader,
                               engine::rtnContextBuf &replyBuf )
    {
       return SDB_OK ;
