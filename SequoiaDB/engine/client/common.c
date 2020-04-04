@@ -3191,6 +3191,7 @@ INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
    bson emptyObj ;
    INT32 rc = SDB_OK ;
    SINT32 offset = 0 ;
+   INT32 len = 0 ;
    MsgOpTransCommit *transCommitMsg = NULL ;
    bson_init ( &emptyObj ) ;
    bson_empty ( &emptyObj ) ;
@@ -3199,8 +3200,8 @@ INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
       hint = &emptyObj ;
    }
 
-   INT32 len = ossRoundUpToMultipleX( sizeof( MsgOpTransCommit ), 4 ) +
-               ossRoundUpToMultipleX( bson_size(hint), 4 ) ;
+   len = ossRoundUpToMultipleX( sizeof( MsgOpTransCommit ), 4 ) +
+         ossRoundUpToMultipleX( bson_size(hint), 4 ) ;
 
    if ( len < 0 )
    {
