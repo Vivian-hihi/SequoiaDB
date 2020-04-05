@@ -576,8 +576,9 @@ public class FullTextUtils {
                 }
             } else {
                 BSONObject indexInfo = ( BSONObject ) ( ( BSONObject ) masterCL
-                        .getIndexInfo( indexName ).removeField( "CreateTime" ) )
-                                .removeField( "RebuildTime" );
+                        .getIndexInfo( indexName ) );
+                indexInfo.removeField( "CreateTime" );
+                indexInfo.removeField( "RebuildTime" );
                 for ( String nodeName : nodeNames ) {
                     if ( masterNode.getNodeName().equals( nodeName ) ) {
                         continue;
@@ -593,10 +594,10 @@ public class FullTextUtils {
                                 + ", but slaveNode: " + nodeName
                                 + " not exists indexName: " + indexName );
                     }
-                    BSONObject checkIndexInfo = ( BSONObject ) ( ( BSONObject ) nodeCL
-                            .getIndexInfo( indexName )
-                            .removeField( "CreateTime" ) )
-                                    .removeField( "RebuildTime" );
+                    BSONObject checkIndexInfo = nodeCL
+                            .getIndexInfo( indexName );
+                    checkIndexInfo.removeField( "CreateTime" );
+                    checkIndexInfo.removeField( "RebuildTime" );
                     if ( !indexInfo.equals( checkIndexInfo ) ) {
                         throw new Exception( cl.getFullName()
                                 + " the index info is different, masterNode "
