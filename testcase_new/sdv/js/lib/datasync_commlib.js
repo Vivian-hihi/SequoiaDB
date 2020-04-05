@@ -573,7 +573,11 @@ replicaNode.prototype.getAllCS =
          while( cursor.next() )
          {
             var obj = cursor.current().toObj();
-            csSet.push( obj.Name );
+            //适配mvcc分支，RBS集合目前实现，只写主节点不写备节点，该集合空间不对主备一致性进行校验
+            if(obj.Name !== "SYSRBS")
+            {
+               csSet.push( obj.Name );
+            }
          }
       }
       catch( e )
@@ -599,7 +603,11 @@ replicaNode.prototype.getAllCL =
          while( cursor.next() )
          {
             var obj = cursor.current().toObj();
-            clSet.push( obj.Name );
+            //mvcc分支，RBS集合目前实现，只写主节点不写备节点，该集合空间下的集合不对主备一致性进行校验
+            if(obj.Name.split(".")[0] !== "SYSRBS")
+            {
+               clSet.push( obj.Name );
+            }
          }
       }
       catch( e )
