@@ -153,9 +153,9 @@ public:
 public:
    ossSpinXLatch latch ;
    MON_LATCH_IDENTIFIER latchID ;
+   UINT32 lastSOwnerTID ;
    UINT32 xOwnerTID ;
    INT32 numXOwner ;
-   UINT32 lastSOwnerTID ;
 } ;
 
 class monSpinSLatch : public ossSLatch
@@ -191,10 +191,10 @@ public:
 public:
    ossSpinSLatch latch ;
    MON_LATCH_IDENTIFIER latchID ;
-   UINT32 xOwnerTID ;
    UINT32 lastSOwnerTID ;
+   UINT32 xOwnerTID ;
    ossAtomic32 numSOwner ;
-   INT32 numXOwner;
+   INT32 numXOwner ;
 } ;
 
 class monRWMutex : public ossRWMutexBase

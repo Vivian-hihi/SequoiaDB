@@ -327,7 +327,9 @@ void _monGetSLatch(T* latchObj)
 }
 
 monSpinXLatch::monSpinXLatch( MON_LATCH_IDENTIFIER latchID )
-   : numXOwner( 0 )
+   : lastSOwnerTID( 0 ),
+     xOwnerTID( 0 ),
+     numXOwner( 0 )
 {
    this->latchID = latchID ;
 }
@@ -376,14 +378,18 @@ INT32 monSpinXLatch::getNumOwner()
  */
 
 monSpinSLatch::monSpinSLatch( MON_LATCH_IDENTIFIER latchID )
-   : numSOwner( 0 ),
+   : lastSOwnerTID ( 0 ),
+     xOwnerTID ( 0 ),
+     numSOwner( 0 ),
      numXOwner( 0 )
 {
    this->latchID = latchID ;
 }
 
 monSpinSLatch::monSpinSLatch()
-   : numSOwner( 0 ),
+   : lastSOwnerTID ( 0 ),
+     xOwnerTID ( 0 ),
+     numSOwner( 0 ),
      numXOwner( 0 )
 {
 }
@@ -462,6 +468,8 @@ INT32 monSpinSLatch::getNumOwner()
 
 monRWMutex::monRWMutex( MON_LATCH_IDENTIFIER latchID, UINT32 type )
 : mutex( type ),
+  lastSOwnerTID ( 0 ),
+  xOwnerTID ( 0 ),
   numSOwner( 0 ),
   numXOwner( 0 )
 {
