@@ -27,6 +27,9 @@ cd到php源码目录下，执行 make clean,然后执行 cp php.ini-production /etc/php.ini
 tar -jxvf php-5.4.13.tar.bz2 -C /opt/sequoiadb/tools/server
 cd /opt/sequoiadb/tools/server/php-5.4.13
 ./configure --prefix=/opt/sequoiadb/tools/server/php --with-libxml-dir=/opt/sequoiadb/tools/server/php/libxml2
+
+##ARM环境下, 编译之前, 检查 Makefile, 看看变量 EXTRA_LIBS 是否少了 -lpthread
+
 make && make install
 
 ##cp the php.ini to php build path

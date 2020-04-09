@@ -2137,7 +2137,7 @@
 #define PHP_BLOWFISH_CRYPT 1
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2020-02-18"
+#define PHP_BUILD_DATE "2020-04-09"
 
 /* Define if your system has fork/vfork/CreateProcess */
 #define PHP_CAN_SUPPORT_PROC_OPEN 1
@@ -2212,7 +2212,7 @@
 #define PHP_STD_DES_CRYPT 1
 
 /* uname -a output */
-#define PHP_UNAME "Linux df720-ft2000p-02 4.4.131-20190505.kylin.server-generic #kylin SMP Mon May 6 14:34:13 CST 2019 aarch64 aarch64 aarch64 GNU/Linux"
+#define PHP_UNAME "Linux df720-ft2000p-03 4.4.131-20190505.kylin.server-generic #kylin SMP Mon May 6 14:34:13 CST 2019 aarch64 aarch64 aarch64 GNU/Linux"
 
 /* Whether PHP has to use its own crypt_r for blowfish, des and ext des */
 #define PHP_USE_PHP_CRYPT_R 1
