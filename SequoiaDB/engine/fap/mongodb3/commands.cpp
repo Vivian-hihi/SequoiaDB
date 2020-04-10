@@ -575,21 +575,28 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       BSONObj query = obj.getObjectField( "q" ) ;
       BSONObj updator = obj.getObjectField( "u" ) ;
       BSONObj hint = getHintObj( query ) ;
+      BSONObj setOnObj ;
 
+      // set flag
+      if ( obj.getBoolField( "multi" ) )
+      {
+         update->flags |= FLG_UPDATE_MULTIUPDATE ;
+      }
+      if ( obj.getBoolField( "upsert" ) )
+      {
+         update->flags |= FLG_UPDATE_UPSERT ;
+      }
+
+      // if updator without operator, convert to $replace
       if( 0 == updator.nFields() ||
           updator.firstElementFieldName()[0] != '$' )
       {
          updator = BSON( "$replace" << updator ) ;
       }
 
-      if ( obj.getBoolField( "multi" ) )
+      // upsert operation requires _id to return
+      if ( update->flags & FLG_UPDATE_UPSERT )
       {
-         update->flags |= FLG_UPDATE_MULTIUPDATE ;
-      }
-
-      if ( obj.getBoolField( "upsert" ) )
-      {
-         update->flags |= FLG_UPDATE_UPSERT ;
          BOOLEAN hasId = FALSE ;
 
          // has _id or not
@@ -597,20 +604,15 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          while ( i.more() )
          {
             BSONElement ele = i.next() ;
-            if ( ele.isABSONObj() )
+            if ( ele.isABSONObj() && ele.Obj().hasField( "_id" ) )
             {
-               if ( ele.Obj().hasField( "_id" ) )
-               {
-                  packet.dataInfo = BSON( "_id" <<
-                                          ele.Obj().getField( "_id" ) ) ;
-                  hasId = TRUE ;
-                  break ;
-               }
+               packet.dataInfo = BSON( "_id" << ele.Obj().getField( "_id" ) ) ;
+               hasId = TRUE ;
+               break ;
             }
          }
 
          // filter $setOnInsert
-         BSONObj setOnObj ;
          if ( updator.hasField( "$setOnInsert" ) )
          {
             setOnObj = updator.getObjectField( "$setOnInsert" ) ;
@@ -618,7 +620,7 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
                                                     false ) ;
             if( 0 == updator.nFields() )
             {
-               updator = BSON( "$replace" << updator ) ;
+               updator = BSON( "$set" << BSONObj() ) ;
             }
          }
 
