@@ -1355,7 +1355,15 @@ INT32 dropCommand::handleReply( msgParser &parser,
 {
    if ( SDB_OK == errCode )
    {
-      replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+      const CHAR* clName = parser.dataPacket().fullName.c_str() ;
+      replyBuf = engine::rtnContextBuf( BSON( "ns" << clName <<
+                                              "ok" << 1 ) ) ;
+      replyHeader.nReturned = 1 ;
+   }
+   else if ( SDB_DMS_NOTEXIST == errCode )
+   {
+      replyBuf = engine::rtnContextBuf( BSON( "ok" << 0 <<
+                                              "errmsg" << "ns not found" ) ) ;
       replyHeader.nReturned = 1 ;
    }
    return SDB_OK ;
@@ -1784,8 +1792,14 @@ INT32 dropDatabaseCommand::handleReply( msgParser &parser,
                                         mongoMsgReply &replyHeader,
                                         engine::rtnContextBuf &replyBuf )
 {
-   if ( SDB_OK              == errCode ||
-        SDB_DMS_CS_NOTEXIST == errCode )
+   if ( SDB_OK == errCode )
+   {
+      const CHAR* csName = parser.dataPacket().csName.c_str() ;
+      replyBuf = engine::rtnContextBuf( BSON( "dropped" << csName <<
+                                              "ok" << 1 ) ) ;
+      replyHeader.nReturned = 1 ;
+   }
+   else if ( SDB_DMS_CS_NOTEXIST == errCode )
    {
       replyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
       replyHeader.nReturned = 1 ;
