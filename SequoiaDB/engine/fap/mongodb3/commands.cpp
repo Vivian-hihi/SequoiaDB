@@ -43,36 +43,6 @@
 
 using namespace bson ;
 
-DECLARE_COMMAND_VAR( insert )
-DECLARE_COMMAND_VAR( delete )
-DECLARE_COMMAND_VAR( update )
-DECLARE_COMMAND_VAR( query )
-DECLARE_COMMAND_VAR( getMore )
-DECLARE_COMMAND_VAR( killCursors )
-DECLARE_COMMAND_VAR( distinct )
-
-// other command
-DECLARE_COMMAND_VAR( createUser )
-DECLARE_COMMAND_VAR( dropUser )
-DECLARE_COMMAND_VAR( create )
-DECLARE_COMMAND_VAR( listDatabases )
-DECLARE_COMMAND_VAR( listCollections )
-DECLARE_COMMAND_VAR( drop )
-DECLARE_COMMAND_VAR( count )
-DECLARE_COMMAND_VAR( aggregate )
-DECLARE_COMMAND_VAR( dropDatabase )
-DECLARE_COMMAND_VAR( createIndexes )
-DECLARE_COMMAND_VAR( deleteIndexes )
-DECLARE_COMMAND_VAR( listIndexes )
-DECLARE_COMMAND_VAR( getlasterror )
-DECLARE_COMMAND_VAR( ismaster )
-DECLARE_COMMAND_VAR( whatsmyuri )
-DECLARE_COMMAND_VAR( buildinfo )
-DECLARE_COMMAND_VAR( getLog )
-DECLARE_COMMAND_VAR( ping )
-DECLARE_COMMAND_VAR( logout )
-
-
 static void convertProjection( BSONObj &proj )
 {
    BSONObjBuilder newBuilder ;
@@ -340,6 +310,123 @@ static void buildNextBatch( msgParser &parser,
    replyHeader.cursorId = MONGO_INVALID_CURSORID ;
    replyHeader.nReturned = 1 ;
 }
+
+static void convertAggrSumIfExist( const BSONElement& ele,
+                                   BSONObjBuilder& builder )
+{
+   if ( ele.isABSONObj() && ele.Obj().getIntField( "$sum" ) == 1 )
+   {
+      // { $group: { _id: ..., total: { $sum: 1 } } } =>
+      // { $group: { _id: ..., total: { $count: "$_id" } } }
+      builder.append( ele.fieldName(), BSON( "$count" << "$_id" ) ) ;
+   }
+   else
+   {
+      builder.append( ele ) ;
+   }
+}
+
+static void convertAggrGroup( const BSONObj& groupObj,
+                              std::vector<BSONObj>& newStageList )
+{
+   /* cl.aggregate( { $group: { _id: "$a" ) )
+    * MongoDB return { _id: <value of a> }, but SequoiaDB return all fields.
+    * So we should convert:
+    * { $group: { _id: "$a", total: { $sum: "$b" } } } ==>
+    * { $group: { _id: "$a", total: { $sum: "$b" }, tmp_id_field: "$a" } },
+    * { $project: { _id: "$tmp_id_field", total: 1 } }
+    */
+   if ( 0 != ossStrcmp( groupObj.firstElementFieldName(), "$group" ) )
+   {
+      return ;
+   }
+
+   BSONObj groupValue = groupObj.getObjectField( "$group" ) ;
+   const CHAR* idValue = groupValue.getStringField( "_id" ) ;
+
+   if ( '$' == idValue[0] )
+   {
+      BSONObjBuilder bobGroup, bobProj ;
+      BSONObjIterator itr( groupValue ) ;
+      while ( itr.more() )
+      {
+         BSONElement e = itr.next() ;
+         convertAggrSumIfExist( e, bobGroup ) ;
+         if ( 0 == ossStrcmp( e.fieldName(), "_id" ) )
+         {
+            bobProj.append( "_id", "$tmp_id_field" ) ;
+         }
+         else
+         {
+            bobProj.append( e.fieldName(), 1 ) ;
+         }
+      }
+      bobGroup.append( "tmp_id_field", idValue ) ;
+
+      newStageList.push_back( BSON( "$group" << bobGroup.obj() ) ) ;
+      newStageList.push_back( BSON( "$project" << bobProj.obj() ) ) ;
+   }
+   else
+   {
+      BSONObjBuilder bobGroup ;
+      BSONObjIterator itr( groupValue ) ;
+      while ( itr.more() )
+      {
+         BSONElement e = itr.next() ;
+         convertAggrSumIfExist( e, bobGroup ) ;
+      }
+      newStageList.push_back( BSON( "$group" << bobGroup.obj() ) ) ;
+   }
+}
+
+static void convertAggrProject( BSONObj& projectObj )
+{
+   /* MongoDB return _id field by default, but SequoiaDB doesn't return _id
+    * field by default. So we should convert:
+    * { $project: { a: 1 } }  ==> { $project: { id: 1, a: 1 } }
+    */
+   if ( 0 != ossStrcmp( projectObj.firstElementFieldName(), "$project" ) )
+   {
+      return ;
+   }
+
+   BSONObj projValue = projectObj.getObjectField( "$project" ) ;
+   BOOLEAN hasId = projValue.hasField( "_id" ) ;
+   if ( !hasId )
+   {
+      BSONObjBuilder builder ;
+      builder.append( "_id", 1 ) ;
+      builder.appendElements( projValue ) ;
+      projectObj = BSON( "$project" << builder.obj() ) ;
+   }
+}
+
+DECLARE_COMMAND_VAR( insert )
+DECLARE_COMMAND_VAR( delete )
+DECLARE_COMMAND_VAR( update )
+DECLARE_COMMAND_VAR( query )
+DECLARE_COMMAND_VAR( getMore )
+DECLARE_COMMAND_VAR( killCursors )
+DECLARE_COMMAND_VAR( distinct )
+DECLARE_COMMAND_VAR( createUser )
+DECLARE_COMMAND_VAR( dropUser )
+DECLARE_COMMAND_VAR( create )
+DECLARE_COMMAND_VAR( listDatabases )
+DECLARE_COMMAND_VAR( listCollections )
+DECLARE_COMMAND_VAR( drop )
+DECLARE_COMMAND_VAR( count )
+DECLARE_COMMAND_VAR( aggregate )
+DECLARE_COMMAND_VAR( dropDatabase )
+DECLARE_COMMAND_VAR( createIndexes )
+DECLARE_COMMAND_VAR( deleteIndexes )
+DECLARE_COMMAND_VAR( listIndexes )
+DECLARE_COMMAND_VAR( getlasterror )
+DECLARE_COMMAND_VAR( ismaster )
+DECLARE_COMMAND_VAR( whatsmyuri )
+DECLARE_COMMAND_VAR( buildinfo )
+DECLARE_COMMAND_VAR( getLog )
+DECLARE_COMMAND_VAR( ping )
+DECLARE_COMMAND_VAR( logout )
 
 /// implement of commands
 
@@ -1518,74 +1605,24 @@ INT32 aggregateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       }
 
       BSONObj oneStage = ele.Obj() ;
-      if ( 0 != ossStrcmp( oneStage.firstElement().fieldName(), "$group" ) )
+      if ( 0 == ossStrcmp( oneStage.firstElementFieldName(), "$project" ) )
       {
+         convertAggrProject( oneStage ) ;
          sdbMsg.write( oneStage, TRUE ) ;
-         continue ;
       }
-
-      BSONObj groupValue = oneStage.getObjectField( "$group" ) ;
-      const CHAR* idValue = groupValue.getStringField( "_id" ) ;
-      if ( '$' == idValue[0] )
+      else if ( 0 == ossStrcmp( oneStage.firstElementFieldName(), "$group" ) )
       {
-         // { $group: { _id: "$a", total: { $sum: "$b" } } } =>
-         // { $group: { _id: "$a", total: { $sum: "$b" }, tmp_id_field: "$a" } },
-         // { $project: { _id: "$tmp_id_field", total: 1 } }
-         BSONObjBuilder bobGroup, bobProj ;
-         BSONObj newGroup, newProject, obj ;
-
-         BSONObjIterator itr( groupValue ) ;
-         while ( itr.more() )
+         std::vector<BSONObj> newStageList ;
+         convertAggrGroup( oneStage, newStageList ) ;
+         for( std::vector<BSONObj>::iterator it = newStageList.begin() ;
+              it != newStageList.end() ; it++ )
          {
-            BSONElement e = itr.next() ;
-            if ( e.isABSONObj() && e.Obj().getIntField( "$sum" ) == 1 )
-            {
-               // { $group: { _id: null, total: { $sum: 1 } } } =>
-               // { $group: { _id: null, total: { $count: "$_id" } } }
-               bobGroup.append( e.fieldName(), BSON( "$count" << "$_id" ) ) ;
-            }
-            else
-            {
-               bobGroup.append( e ) ;
-            }
-            if ( 0 == ossStrcmp( e.fieldName(), "_id" ) )
-            {
-               bobProj.append( "_id", "$tmp_id_field" ) ;
-            }
-            else
-            {
-               bobProj.append( e.fieldName(), 1 ) ;
-            }
+            sdbMsg.write( *it, TRUE ) ;
          }
-         bobGroup.append( "tmp_id_field", idValue ) ;
-
-         newGroup = BSON( "$group" << bobGroup.done() ) ;
-         newProject = BSON( "$project" << bobProj.done() ) ;
-
-         sdbMsg.write( newGroup, TRUE ) ;
-         sdbMsg.write( newProject, TRUE ) ;
       }
       else
       {
-         BSONObjBuilder bobGroup ;
-         BSONObj newGroup ;
-         BSONObjIterator itr( groupValue ) ;
-         while ( itr.more() )
-         {
-            BSONElement e = itr.next() ;
-            if ( e.isABSONObj() && e.Obj().getIntField( "$sum" ) == 1 )
-            {
-               // { $group: { _id: null, total: { $sum: 1 } } } =>
-               // { $group: { _id: null, total: { $count: "$_id" } } }
-               bobGroup.append( e.fieldName(), BSON( "$count" << "$_id" ) ) ;
-            }
-            else
-            {
-               bobGroup.append( e ) ;
-            }
-         }
-         newGroup = BSON( "$group" << bobGroup.done() ) ;
-         sdbMsg.write( newGroup, TRUE ) ;
+         sdbMsg.write( oneStage, TRUE ) ;
       }
    }
    sdbMsg.doneLen() ;
