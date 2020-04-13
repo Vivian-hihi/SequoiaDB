@@ -769,7 +769,7 @@ namespace engine
       rc = msgExtractTransCommit( (CHAR*)pMsg, &pHint ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to parse update request, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to parse commit request, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -782,7 +782,9 @@ namespace engine
 
             if ( cb->getMonQueryCB() && !hint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
             {
-               rtnGetObjElement( hint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+               rc = rtnGetObjElement( hint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                            "$"FIELD_NAME_CLIENTINFO, rc ) ;
                cb->getMonQueryCB()->clientInfo = clientInfo.getOwned() ;
             }
          }

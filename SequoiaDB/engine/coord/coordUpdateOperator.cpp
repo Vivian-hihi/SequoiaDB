@@ -167,7 +167,9 @@ namespace engine
 
          if ( cb->getMonQueryCB() && !boHint.getField("$"FIELD_NAME_CLIENTINFO).eoo() )
          {
-            rtnGetObjElement( boHint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+            rc = rtnGetObjElement( boHint, "$"FIELD_NAME_CLIENTINFO, clientInfo ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s], rc: %d",
+                         "$"FIELD_NAME_CLIENTINFO, rc ) ;
             cb->getMonQueryCB()->clientInfo = clientInfo.getOwned() ;
          }
 
