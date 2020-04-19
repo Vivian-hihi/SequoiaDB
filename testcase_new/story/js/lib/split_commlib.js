@@ -3,6 +3,7 @@
 *@author : XiaoJun Hu 2014.6.17 init
 ******************************************************************************/
 import( "./basic_operation/sequoiadb.js" );
+import( "./main.js" );
 
 function insertData ( cl, insertNum )
 {
@@ -80,6 +81,92 @@ function checkHashDistribution ( groupNames, csName, clName, expRecsNum )
       {
          throw new Error( "expDiffVal = " + expDiffVal + ", actDiffVal = " + actDiffVal
             + ", totalRecsNum = " + actTotalRecsNum + ", groupNames = [" + groupNames + "], actRecsNumArr = [" + actRecsNumArr + "]" );
+      }
+   }
+}
+
+function checkHitDataGroups ( explainCursor, expDataGroups, isMainCL, expSubCLs )
+{
+   if( isMainCL === undefined ) { isMainCL = false; }
+   if( expSubCLs === undefined ) { expSubCLs = ""; }
+
+   // find.explain, check hit subCLs and data groups
+   var groupsInfo = [];
+   while( obj = explainCursor.next() )
+   {
+      var info = obj.toObj();
+      if( !isMainCL )
+      {
+         // normal cl, explain e.g::{"GroupName":"group1"}
+         groupsInfo.push( { "GroupName": info.GroupName } );
+      }
+      else
+      {
+         // main-sub cl, explain e.g:{"GroupName":"group1","SubCollections":[{"Name":"subcl1"},{"Name":"subcl2"}]}
+         var SubCollections = [];
+         for( var i = 0; i < info.SubCollections.length; i++ )
+         {
+            SubCollections.push( { "Name": info.SubCollections[i].Name } );
+         }
+         groupsInfo.push( { "GroupName": info.GroupName, "SubCollections": SubCollections } );
+      }
+   }
+   // sort
+   var commpare = function( obj1, obj2 )
+   {
+      var x = obj1.GroupName;
+      var y = obj2.GroupName;
+      if( x < y ) 
+      {
+         return -1;
+      }
+      else if( x > y )
+      {
+         return 1;
+      }
+      else 
+      {
+         return 0;
+      }
+   }
+   groupsInfo.sort( commpare );
+
+   // check hit dataGroups number
+   if( expDataGroups.length !== groupsInfo.length )
+   {
+      throw new Error( "expHitDataGroupNum: " + expDataGroups.length + ", actHitDataGroupNum:"
+         + groupsInfo.length + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
+   }
+
+   // check hit data Groups
+   for( var i = 0; i < groupsInfo.length; i++ )
+   {
+      if( expDataGroups[i] !== groupsInfo[i].GroupName )
+      {
+         throw new Error( "expDataGroup: " + expDataGroups[i] + ", actDataGroup:" + groupsInfo[i].GroupName
+            + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
+      }
+
+      // check hit subCLs
+      if( isMainCL )
+      {
+         // check hit subCLs number
+         if( expSubCLs.length !== groupsInfo.SubCollections.length )
+         {
+            throw new Error( "expSubCLsNum: " + expSubCLs.length + ", actSubCLsNum:"
+               + groupsInfo.SubCollections.length + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
+         }
+
+         // check hit subCLs
+         for( var j = 0; j < expSubCLs.length; j++ )
+         {
+            for( var j = 0; j < expSubCLs.length; j++ )
+               if( expSubCLs[j] !== groupsInfo.SubCollections[j].Name )
+               {
+                  throw new Error( "expSubCL: " + expSubCLs[j] + ", actSubCL:" + groupsInfo.SubCollections[j].Name
+                     + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
+               }
+         }
       }
    }
 }
