@@ -1975,10 +1975,13 @@ namespace engine
                goto error ;
             }
 
-            rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
-            if ( SDB_OK != rc )
+            if ( !OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
             {
-               goto error ;
+               rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
             }
 
             rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
@@ -2137,10 +2140,13 @@ namespace engine
                goto error ;
             }
 
-            rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
-            if ( SDB_OK != rc )
+            if ( !OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
             {
-               goto error ;
+               rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
             }
          }
 
@@ -4103,12 +4109,16 @@ namespace engine
             goto error ;
          }
 
-         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-         if ( SDB_OK != rc )
+         if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
          {
-            PD_LOG( PDWARNING, "Failed to check read secondary status, "
-                    "rc: %d", rc ) ;
-            goto error ;
+            rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY,
+                                          header->flags ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING, "Failed to check read secondary status, "
+                       "rc: %d", rc ) ;
+               goto error ;
+            }
          }
       }
 
@@ -4506,12 +4516,15 @@ namespace engine
          goto error ;
       }
 
-      rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-      if ( SDB_OK != rc )
+      if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
-         PD_LOG( PDWARNING, "Failed to check read secondary status, "
-                 "rc: %d", rc ) ;
-         goto error ;
+         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to check read secondary status, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
       }
 
       /// When split, use writingCB to prevent reading lob conflicted
@@ -4855,12 +4868,15 @@ namespace engine
          goto error ;
       }
 
-      rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-      if ( SDB_OK != rc )
+      if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
-         PD_LOG( PDWARNING, "Failed to check read secondary status, "
-                 "rc: %d", rc ) ;
-         goto error ;
+         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to check read secondary status, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
       }
 
       /// check catalog version
