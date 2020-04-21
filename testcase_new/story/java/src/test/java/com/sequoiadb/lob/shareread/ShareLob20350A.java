@@ -1,7 +1,5 @@
 package com.sequoiadb.lob.shareread;
 
-import java.util.Arrays;
-
 import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -19,25 +17,25 @@ import com.sequoiadb.lob.utils.LobSubUtils;
 import com.sequoiadb.lob.utils.RandomWriteLobUtil;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * @Description seqDB-20331 WRITE和SHARED_READ并发读写lob
+ * @Description seqDB-20350 WRITE和SHARED_READ|WRITE并发
  * @author luweikang
  * @Date 2019.8.26
  */
 
-public class ShareLob20331 extends SdbTestBase {
+public class ShareLob20350A extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
-    private Sequoiadb db3 = null;
     private CollectionSpace cs = null;
-    private String clName = "cl20331";
-    private String mainCLName = "mainCL20331";
-    private String subCLName = "subCL20331";
+    private String clName = "cl20350A";
+    private String mainCLName = "mainCL20350A";
+    private String subCLName = "subCL20350A";
     private int lobSize = 1024 * 100;
-    private byte[] expData = new byte[ lobSize ];
+    private byte[] lobBuff;
 
     @DataProvider(name = "clNameProvider", parallel = false)
     public Object[][] generateCLName() {
@@ -56,6 +54,7 @@ public class ShareLob20331 extends SdbTestBase {
             LobSubUtils.createMainCLAndAttachCL( sdb, SdbTestBase.csName,
                     mainCLName, subCLName );
         }
+        lobBuff = RandomWriteLobUtil.getRandomBytes( lobSize );
     }
 
     @Test(dataProvider = "clNameProvider")
@@ -65,55 +64,28 @@ public class ShareLob20331 extends SdbTestBase {
             throw new SkipException( "is standalone skip testcase!" );
         }
 
+        DBCollection cl = sdb.getCollectionSpace( SdbTestBase.csName )
+                .getCollection( clName );
+        ObjectId id = RandomWriteLobUtil.createAndWriteLob( cl, lobBuff );
+
         db1 = CommLib.getRandomSequoiadb();
         db2 = CommLib.getRandomSequoiadb();
-        db3 = CommLib.getRandomSequoiadb();
-
-        DBCollection dbcl = sdb.getCollectionSpace( SdbTestBase.csName )
-                .getCollection( clName );
-        byte[] lobBuff = RandomWriteLobUtil.lobBuff;
-        ObjectId id = RandomWriteLobUtil.createAndWriteLob( dbcl, lobBuff );
-
         DBCollection cl1 = db1.getCollectionSpace( SdbTestBase.csName )
                 .getCollection( clName );
         DBCollection cl2 = db2.getCollectionSpace( SdbTestBase.csName )
                 .getCollection( clName );
-        DBCollection cl3 = db3.getCollectionSpace( SdbTestBase.csName )
-                .getCollection( clName );
 
-        byte[] readLobBuff = new byte[ writeSize ];
-        DBLob lob1 = cl1.openLob( id, DBLob.SDB_LOB_WRITE );
-        DBLob lob2 = cl2.openLob( id, DBLob.SDB_LOB_SHAREREAD );
-        DBLob lob3 = cl3.openLob( id, DBLob.SDB_LOB_SHAREREAD );
+        WriteThread write = new WriteThread( cl1, id, DBLob.SDB_LOB_WRITE,
+                writeSize / 2, writeSize, writeLobBuff );
+        WriteThread shareWrite = new WriteThread( cl2, id,
+                DBLob.SDB_LOB_SHAREREAD | DBLob.SDB_LOB_WRITE, writeSize,
+                writeSize, writeLobBuff );
+        write.start();
+        shareWrite.start();
 
-        lob1.lockAndSeek( 1024 * 10, writeSize );
-        lob1.write( writeLobBuff );
-        expData = RandomWriteLobUtil.appendBuff( lobBuff, writeLobBuff,
-                1024 * 10 );
+        Assert.assertTrue( write.isSuccess(), write.getErrorMsg() );
+        Assert.assertTrue( shareWrite.isSuccess(), shareWrite.getErrorMsg() );
 
-        lob2.lockAndSeek( writeSize + 1024 * 10, writeSize );
-        lob2.read( readLobBuff );
-        byte[] expData1 = Arrays.copyOfRange( lobBuff, writeSize + 1024 * 10,
-                writeSize * 2 + 1024 * 10 );
-        RandomWriteLobUtil.assertByteArrayEqual( readLobBuff, expData1,
-                "lob data is wrong" );
-
-        try {
-            byte[] readData = new byte[ writeSize ];
-            lob3.lockAndSeek( 1024 * 8, writeSize );
-            lob3.read( readData );
-            Assert.fail( "there should be a lock conflict here." );
-        } catch ( BaseException e ) {
-            if ( e.getErrorCode() != -320 ) {
-                throw e;
-            }
-        }
-
-        lob1.close();
-        lob2.close();
-        lob3.close();
-
-        RandomWriteLobUtil.checkShareLobResult( dbcl, id, lobSize, expData );
     }
 
     @AfterClass
@@ -138,9 +110,42 @@ public class ShareLob20331 extends SdbTestBase {
             if ( db2 != null ) {
                 db2.close();
             }
-            if ( db3 != null ) {
-                db3.close();
+        }
+    }
+
+    private class WriteThread extends SdbThreadBase {
+
+        private DBCollection cl;
+        private ObjectId id;
+        private int mode;
+        private int begin;
+        private int length;
+        private byte[] writeLobBuff;
+
+        public WriteThread( DBCollection cl, ObjectId id, int mode, int begin,
+                int length, byte[] writeLobBuff ) {
+            this.cl = cl;
+            this.id = id;
+            this.mode = mode;
+            this.begin = begin;
+            this.length = length;
+            this.writeLobBuff = writeLobBuff;
+        }
+
+        @Override
+        public void exec() throws BaseException {
+            DBLob lob = cl.openLob( this.id, this.mode );
+            try {
+                lob.lockAndSeek( this.begin, this.length );
+                lob.write( writeLobBuff );
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -320 ) {
+                    throw e;
+                }
+            } finally {
+                lob.close();
             }
         }
     }
+
 }

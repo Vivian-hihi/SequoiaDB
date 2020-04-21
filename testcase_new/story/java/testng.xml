@@ -37,6 +37,7 @@
             <package name="com.sequoiadb.lob.basicoperation" />
             <package name="com.sequoiadb.lob.randomwrite" />
             <package name="com.sequoiadb.lob.subcl"/>
+            <package name="com.sequoiadb.lob.shareread"/>
             <package name="com.sequoiadb.numberlong"  />
             <package name="com.sequoiadb.datasource" />
             <package name="com.sequoiadb.index"/>

@@ -43,7 +43,7 @@ public class RandomWriteLobUtil {
     public static byte[] oneKbuff = getRandomBytes( 1024 );
     public static byte[] tenKbuff = getRandomBytes( 1024 * 10 );
     public static byte[] threeKbuff = getRandomBytes( 1024 * 3 );
-    public static byte[] thirtyKbuff = getRandomBytes( 1024 * 30 );
+    public static byte[] twentyKbuff = getRandomBytes( 1024 * 20 );
 
     public static DBCollection createCL( CollectionSpace cs, String clName,
             String option ) {

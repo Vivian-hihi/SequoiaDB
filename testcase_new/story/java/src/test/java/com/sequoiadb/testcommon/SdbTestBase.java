@@ -340,6 +340,7 @@ public class SdbTestBase {
             // sequoiadb.dropCollectionSpace(cappedCSName);
             // }
             // sdb.close() ;
+
         } catch ( BaseException e ) {
             e.printStackTrace();
         } finally {
