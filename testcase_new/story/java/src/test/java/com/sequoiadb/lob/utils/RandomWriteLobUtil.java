@@ -39,6 +39,12 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @version 1.00
  */
 public class RandomWriteLobUtil {
+    public static byte[] lobBuff = getRandomBytes( 1024 * 100 );
+    public static byte[] oneKbuff = getRandomBytes( 1024 );
+    public static byte[] tenKbuff = getRandomBytes( 1024 * 10 );
+    public static byte[] threeKbuff = getRandomBytes( 1024 * 3 );
+    public static byte[] thirtyKbuff = getRandomBytes( 1024 * 30 );
+
     public static DBCollection createCL( CollectionSpace cs, String clName,
             String option ) {
         DBCollection cl = null;
@@ -154,7 +160,8 @@ public class RandomWriteLobUtil {
 
     public static void assertByteArrayEqual( byte[] actual, byte[] expect,
             String msg ) {
-        if ( !Arrays.equals( actual, expect ) ) {
+        if ( !RandomWriteLobUtil.getMd5( actual )
+                .equals( RandomWriteLobUtil.getMd5( expect ) ) ) {
             String workDirPath = SdbTestBase.getWorkDir();
             File workDir = new File( workDirPath );
             if ( !workDir.isDirectory() )
@@ -195,6 +202,7 @@ public class RandomWriteLobUtil {
                 e.printStackTrace();
             }
         }
+
     }
 
     public static String getCallerName() {
@@ -425,5 +433,15 @@ public class RandomWriteLobUtil {
             return new Object[][] { { 1024 * 1024 }, { 1024 * 1024 * 10 },
                     { 1024 * 1024 * 100 } };
         }
+    }
+
+    public static void checkShareLobResult( DBCollection dbcl, ObjectId oid,
+            int lobSize, byte[] expData ) {
+        DBLob lob = dbcl.openLob( oid, DBLob.SDB_LOB_READ );
+        byte[] actData = new byte[ lobSize ];
+        lob.read( actData );
+        lob.close();
+        RandomWriteLobUtil.assertByteArrayEqual( actData, expData,
+                "lob data is wrong" );
     }
 }

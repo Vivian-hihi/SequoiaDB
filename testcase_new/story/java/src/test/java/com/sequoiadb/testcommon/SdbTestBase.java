@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +74,7 @@ public class SdbTestBase {
     private static final Map< String, BSONObject > node2Conf = new HashMap< String, BSONObject >();
     private static boolean istransactionOn = true;
     private static BasicBSONObject confObj = new BasicBSONObject();
+    public static List< String > coordUrls = new ArrayList< >();
 
     static {
         group2Conf.put( RU, new BasicBSONObject() );
@@ -177,11 +179,11 @@ public class SdbTestBase {
     @BeforeSuite(alwaysRun = true)
     public static void initSuite( String HOSTNAME, String SVCNAME,
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
-            String RSRVNODEDIR, String WORKDIR, @Optional("") String CONFTOOL,
+            String RSRVNODEDIR, String WORKDIR, @Optional("" ) String CONFTOOL,
             @Optional("false") String ENABLETRANSACTION,
             @Optional("localhost") String ESHOSTNAME,
             @Optional("9200") String ESSVCNAME,
-            @Optional("") String FULLTEXTPREFIX ) {
+            @Optional("") String FULLTEXTPREFIX) {
         System.out.println( "initSuite....." );
         hostName = HOSTNAME;
         serviceName = SVCNAME;
@@ -211,7 +213,8 @@ public class SdbTestBase {
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
                 sequoiadb.dropCollectionSpace( csName );
             }
-            CollectionSpace cs = sequoiadb.createCollectionSpace( csName );
+            CollectionSpace cs = sequoiadb.createCollectionSpace( csName,
+                    ( BSONObject ) JSON.parse( "{LobPageSize: 8192}" ) );
             cs.createCollection( reservedCL, ( BSONObject ) JSON
                     .parse( "{ShardingKey:{_id:1},AutoSplit:true}" ) );
             // add capped cs;
@@ -220,6 +223,7 @@ public class SdbTestBase {
             }
             sequoiadb.createCollectionSpace( cappedCSName,
                     ( BSONObject ) JSON.parse( "{Capped:true}" ) );
+            coordUrls = CommLib.getAllCoordUrls( sequoiadb );
 
             File workDirFile = new File( workDir );
             if ( !workDirFile.exists() ) {
@@ -336,7 +340,6 @@ public class SdbTestBase {
             // sequoiadb.dropCollectionSpace(cappedCSName);
             // }
             // sdb.close() ;
-
         } catch ( BaseException e ) {
             e.printStackTrace();
         } finally {
@@ -434,7 +437,7 @@ public class SdbTestBase {
 
     private static void addStaticConf( FileWriter confFile, BSONObject cataConf,
             BSONObject coordConf, BSONObject dataConf, BSONObject stdalnConf )
-            throws IOException {
+                    throws IOException {
         confFile.write( "catalogConf = " + cataConf + ";\n" );
         confFile.write( "coordConf = " + coordConf + ";\n" );
         confFile.write( "dataConf = " + dataConf + ";\n" );
@@ -444,7 +447,7 @@ public class SdbTestBase {
     private static void addDynConf( FileWriter confFile,
             BSONObject cataDynaConf, BSONObject coordDynaConf,
             BSONObject dataDynaConf, BSONObject stdalnDynaConf )
-            throws IOException {
+                    throws IOException {
         confFile.write( "catalogDynaConf = " + cataDynaConf + ";\n" );
         confFile.write( "coordDynaConf = " + coordDynaConf + ";\n" );
         confFile.write( "dataDynaConf = " + dataDynaConf + ";\n" );
