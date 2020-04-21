@@ -151,21 +151,20 @@ function checkHitDataGroups ( explainCursor, expDataGroups, isMainCL, expSubCLs 
       if( isMainCL )
       {
          // check hit subCLs number
-         if( expSubCLs.length !== groupsInfo.SubCollections.length )
+         if( expSubCLs[i].length !== groupsInfo[i].SubCollections.length )
          {
             throw new Error( "expSubCLsNum: " + expSubCLs.length + ", actSubCLsNum:"
-               + groupsInfo.SubCollections.length + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
+               + groupsInfo[i].SubCollections.length + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
          }
 
          // check hit subCLs
-         for( var j = 0; j < expSubCLs.length; j++ )
+         for( var j = 0; j < expSubCLs[i].length; j++ )
          {
-            for( var j = 0; j < expSubCLs.length; j++ )
-               if( expSubCLs[j] !== groupsInfo.SubCollections[j].Name )
-               {
-                  throw new Error( "expSubCL: " + expSubCLs[j] + ", actSubCL:" + groupsInfo.SubCollections[j].Name
-                     + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
-               }
+            if( expSubCLs[i][j] !== groupsInfo[i].SubCollections[j].Name )
+            {
+               throw new Error( "expSubCL: " + expSubCLs[i][j] + ", actSubCL:" + groupsInfo[i].SubCollections[j].Name
+                  + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
+            }
          }
       }
    }
