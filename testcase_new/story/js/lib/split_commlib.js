@@ -153,7 +153,7 @@ function checkHitDataGroups ( explainCursor, expDataGroups, isMainCL, expSubCLs 
          // check hit subCLs number
          if( expSubCLs[i].length !== groupsInfo[i].SubCollections.length )
          {
-            throw new Error( "expSubCLsNum: " + expSubCLs.length + ", actSubCLsNum:"
+            throw new Error( "expSubCLsNum: " + expSubCLs[i].length + ", actSubCLsNum:"
                + groupsInfo[i].SubCollections.length + ", actGroupsInfo: \n" + JSON.stringify( groupsInfo ) );
          }
 
