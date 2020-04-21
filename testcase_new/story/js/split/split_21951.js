@@ -3,80 +3,46 @@
 *@author ：2020-3-31 liyuanyue
 **************************************/
 testConf.skipStandAlone = true;
+testConf.skipOneGroup = true;
+
 main( test );
 
 function test ()
 {
-   if( commGetGroupsNum( db ) < 2 )
+   var dataGroupNames = commGetDataGroupNames( db );
+   var testcaseID = 21951;
+   var csName = "cs_" + testcaseID;
+   var mclName = "mcl_" + testcaseID;
+   var sclName1 = "scl_" + testcaseID + "_1";
+   var sclName2 = "scl_" + testcaseID + "_2";
+   var sclFullName1 = csName + "." + sclName1;
+   var sclFullName2 = csName + "." + sclName2;
+   var recsNum = 200;
+
+   commDropCS( db, csName );
+
+   var options = { ShardingKey: { a: 1 }, IsMainCL: true };
+   var mcl = commCreateCL( db, csName, mclName, options );
+   var options = { ShardingKey: { a: 1 }, Group: dataGroupNames[0] };
+   var scl1 = commCreateCL( db, csName, sclName1, options );
+   var scl2 = commCreateCL( db, csName, sclName2, options );
+   mcl.attachCL( sclFullName1, { LowBound: { a: 0 }, UpBound: { a: 100 } } );
+   mcl.attachCL( sclFullName2, { LowBound: { a: 100 }, UpBound: { a: 220 } } );
+
+   var docs = [];
+   for( var i = 0; i < recsNum; i++ )
    {
-      println( "---Least two groups" );
-      return;
+      docs.push( { a: i } );
    }
+   mcl.insert( docs );
 
-   var dataGroupName = commGetDataGroupNames( db );
+   // subCL split to multi group
+   scl1.split( dataGroupNames[0], dataGroupNames[1], { "a": 30 }, { "a": 60 } );
+   scl2.split( dataGroupNames[0], dataGroupNames[1], { "a": 130 }, { "a": 160 } );
 
-   var mCLName = CHANGEDPREFIX + "_split_m21951";
-   var sCLName1 = CHANGEDPREFIX + "_split_s21951_1";
-   var sCLName2 = CHANGEDPREFIX + "_split_s21951_2";
-   var sCLName3 = CHANGEDPREFIX + "_split_s21951_3";
-   var sCLName4 = CHANGEDPREFIX + "_split_s21951_4";
+   var findCond = { "a": { "$in": [20, 120] } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 20, 21 ).concat( docs.slice( 120, 121 ) ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]] );
 
-   commDropCL( db, COMMCSNAME, mCLName );
-   commDropCL( db, COMMCSNAME, sCLName1 );
-   commDropCL( db, COMMCSNAME, sCLName2 );
-   commDropCL( db, COMMCSNAME, sCLName3 );
-   commDropCL( db, COMMCSNAME, sCLName4 );
-
-   var options = { ShardingKey: { a: 1 }, ShardingType: "range", IsMainCL: true };
-   var mcl = commCreateCL( db, COMMCSNAME, mCLName, options );
-   var options = { ShardingKey: { a: 1 }, ShardingType: "hash", Group: dataGroupName[0] };
-   commCreateCL( db, COMMCSNAME, sCLName1, options );
-   var options = { ShardingKey: { a: 1 }, ShardingType: "hash", Group: dataGroupName[0] };
-   commCreateCL( db, COMMCSNAME, sCLName2, options );
-   var options = { ShardingKey: { a: 1 }, ShardingType: "hash", Group: dataGroupName[1] };
-   commCreateCL( db, COMMCSNAME, sCLName3, options );
-   var options = { ShardingKey: { a: 1 }, ShardingType: "hash", Group: dataGroupName[1] };
-   commCreateCL( db, COMMCSNAME, sCLName4, options );
-
-   mcl.attachCL( COMMCSNAME + "." + sCLName1, { LowBound: { a: 0 }, UpBound: { a: 10 } } );
-   mcl.attachCL( COMMCSNAME + "." + sCLName2, { LowBound: { a: 10 }, UpBound: { a: 20 } } );
-   mcl.attachCL( COMMCSNAME + "." + sCLName3, { LowBound: { a: 20 }, UpBound: { a: 30 } } );
-   mcl.attachCL( COMMCSNAME + "." + sCLName4, { LowBound: { a: 30 }, UpBound: { a: 40 } } );
-
-   for( var i = 0; i < 40; i++ )
-   {
-      mcl.insert( { a: i } );
-   }
-
-   // find
-   var cur = mcl.find( { a: { $lt: 20 } } );
-   var expResult = 20;
-   var actResult = 0;
-   while( cur.next() )
-   {
-      actResult++;
-   }
-   if( expResult != actResult )
-   {
-      throw new Error( "expected " + expResult + ",but actually " + actResult );
-   }
-
-   // explain
-   var explainResult = mcl.find( { a: { $lt: 20 } } ).explain( { Detail: true, Run: true } );
-   var actResult = explainResult.current().toObj().PlanPath.Run.ReturnNum;
-   if( expResult != actResult )
-   {
-      throw new Error( "expected " + expResult + ",but actually " + actResult );
-   }
-   var childOperators = explainResult.current().toObj().PlanPath.ChildOperators;
-   if( ( childOperators.length !== 1 ) || ( childOperators[0].GroupName !== dataGroupName[0] ) )
-   {
-      throw new Error( "explain PlanPath find GroupName error" );
-   }
-
-   commDropCL( db, COMMCSNAME, mCLName );
-   commDropCL( db, COMMCSNAME, sCLName1 );
-   commDropCL( db, COMMCSNAME, sCLName2 );
-   commDropCL( db, COMMCSNAME, sCLName3 );
-   commDropCL( db, COMMCSNAME, sCLName4 );
+   commDropCS( db, csName );
 }

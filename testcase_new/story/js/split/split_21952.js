@@ -13,31 +13,16 @@ function test ()
    commDropCL( db, COMMCSNAME, mCLName );
    commDropCL( db, COMMCSNAME, sCLName );
 
-   var options = { ShardingKey: { a: 1 }, ShardingType: "range", IsMainCL: true };
-   var mcl = commCreateCL( db, COMMCSNAME, mCLName, options );
-   var options = { ShardingKey: { a: 1 }, ShardingType: "hash" };
-   commCreateCL( db, COMMCSNAME, sCLName, options );
+   var mcl = commCreateCL( db, COMMCSNAME, mCLName, { ShardingKey: { a: 1 }, IsMainCL: true }, false );
+   commCreateCL( db, COMMCSNAME, sCLName, { ShardingKey: { a: 1 } }, false );
 
-   mcl.attachCL( COMMCSNAME + "." + sCLName, { LowBound: { a: 0 }, UpBound: { a: 200 } } );
+   mcl.attachCL( COMMCSNAME + "." + sCLName, { LowBound: { a: 0 }, UpBound: { a: 20 } } );
 
-   // insert
-   mcl.insert( { a: 1 } );
+   mcl.insert( { a: 5 } );
 
-   var cur = mcl.find( { a: 20 } );
-   if( cur.next() )
-   {
-      throw new Error( "find error" );
-   }
-
-   // expalin
-   var explainResult = mcl.find( { a: 20 } ).explain( { Detail: true, Run: true } );
-   var actRec = explainResult.current().toObj().PlanPath.Run.ReturnNum;
-   var expRec = 0;
-   if( actRec !== expRec )
-   {
-      throw new Error( "expected 0,but actually " + actRec );
-   }
+   var findCond = { "a": 200 };
+   commCompareResults( mcl.find( findCond ), [] );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), ['SYSCoord'] );
 
    commDropCL( db, COMMCSNAME, mCLName );
-   commDropCL( db, COMMCSNAME, sCLName );
 }

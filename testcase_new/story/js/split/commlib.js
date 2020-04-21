@@ -3,4 +3,3 @@
 *@author : XiaoNi Huang 2020.1.8
 ******************************************************************************/
 import( "../lib/split_commlib.js" );
-import( "../lib/main.js" );
