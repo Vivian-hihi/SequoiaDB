@@ -4,17 +4,23 @@
 
 | 需求项 | 最低配置                                                             | 推荐配置                                                              |
 |--------|----------------------------------------------------------------------|-----------------------------------------------------------------------|
-| CPU    |  x64（64 位 AMD64 或 Intel EM64T 处理器）                            | x64（64 位 AMD64 或 Intel EM64T 处理器），8 核或以上                  |
+| CPU    |  x64（64 位 AMD64 或 Intel EM64T 处理器）                            | x64（64 位 AMD64 或 Intel EM64T 处理器）、ARM（64 位处理器）      |
 | 磁盘   | 至少 20GB 可用空间                                                   | 500GB 或以上可用空间                                                  |
 | 内存   | 至少 1GB 物理内存                                                    | 32GB 或以上物理内存                                                   |
 | 网卡   | 至少 1 张 1000Mb/s 速率网卡                                          | 10000Mb/s 速率网卡                                                    |
 
+##受支持的硬件平台##
+
+| 硬件平台类型     | 硬件平台列表                                |
+|------------------|---------------------------------------------|
+| x86 架构     |- 通用 x86 硬件平台                          |
+| ARM64 架构   |- 华为 TaiShan 服务器（鲲鹏 920 处理器）<br> - 长城擎天服务器（飞腾 2000 处理器）<br> - 浪潮(IBM) Open Power <br>       |
 
 ##受支持的操作系统##
 
 | 系统类型       | 系统列表                                                   |
 |----------------|------------------------------------------------------------|
-| Linux          |- Red Hat Enterprise Linux (RHEL) 6<br> - Red Hat Enterprise Linux (RHEL) 7<br> - Red Hat Enterprise Linux (RHEL) 8<br> - SUSE Linux Enterprise Server (SLES) 11 Service Pack 1 <br>   - SUSE Linux Enterprise Server (SLES) 11 Service Pack 2 <br> 	- SUSE Linux Enterprise Server (SLES) 12 Service Pack 1 <br> 	- Ubuntu 12.x <br> - Ubuntu 14.x <br> - Ubuntu 16.x <br> - CentOS 6.x <br> - CentOS 7.x <br> - CentOS 8.x                                    |
+| Linux          |- Red Hat Enterprise Linux (RHEL) 6<br> - Red Hat Enterprise Linux (RHEL) 7<br> - Red Hat Enterprise Linux (RHEL) 8<br> - SUSE Linux Enterprise Server (SLES) 11 Service Pack 1 <br>   - SUSE Linux Enterprise Server (SLES) 11 Service Pack 2 <br> 	- SUSE Linux Enterprise Server (SLES) 12 Service Pack 1 <br> 	- Ubuntu 12.x <br> - Ubuntu 14.x <br> - Ubuntu 16.x <br> - CentOS 6.x <br> - CentOS 7.x <br> - CentOS 8.x <br> - 国产统信 UOS <br> - 深度 Deepin <br> - 中标麒麟 <br> - 银河麒麟 <br> - 华为 EulerOS <br> - 红旗 Linux                                |
 
 > **Note:**
 >
