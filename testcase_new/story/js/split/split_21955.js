@@ -14,11 +14,11 @@ function test ( arg )
       return;
    }
    dataGroupNames.sort();
+   dataGroupNames = dataGroupNames.slice( 0, 3 ); // for check
 
    var testcaseID = 21955;
-   var csName = CHANGEDPREFIX + "_cs_" + testcaseID;
+   var csName = COMMCSNAME;
    var clName = CHANGEDPREFIX + "_cl_" + testcaseID;
-   var clFullName = csName + "." + clName;
    var recsNum = 1000;
    // ready docs
    var docs = [];
@@ -28,7 +28,7 @@ function test ( arg )
    }
 
    // create cl   
-   commDropCS( db, csName, true );
+   commDropCL( db, csName, clName, true );
    var options = { "ShardingKey": { "a": 1 }, "ShardingType": "hash", "Partition": 1024, "Group": dataGroupNames[0] };
    var cl = commCreateCL( db, csName, clName, options, true );
 
@@ -70,7 +70,7 @@ function test ( arg )
       { "$and": [{ "a": { "$gte": 14 } }, { "a": { "$lte": 16 } }] }]
    };
    commCompareResults( cl.find( findCond ).sort( { "a": 1 } ), docs.slice( 14, 17 ) );
-   //checkHitDataGroups( cl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]] );
+   checkHitDataGroups( cl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]] );
 
    // $or + $et
    var findCond = { "$or": [{ "a": { "$et": 15 } }, { "a": { "$et": 16 } }] };
@@ -87,7 +87,7 @@ function test ( arg )
    commCompareResults( cl.find( findCond ).sort( { "a": 1 } ), docs.slice( 2, 3 ).concat( docs.slice( 16, 17 ) ) );
    checkHitDataGroups( cl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[2]] );
 
-   commDropCS( db, csName, false );
+   commDropCL( db, csName, clName, false );
 }
 
 function tmpDocs ( startNum, endNum )

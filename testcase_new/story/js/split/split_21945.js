@@ -14,11 +14,11 @@ function test ( arg )
       return;
    }
    dataGroupNames.sort();
+   dataGroupNames = dataGroupNames.slice( 0, 3 ); // for check
 
    var testcaseID = 21945;
-   var csName = CHANGEDPREFIX + "_cs_" + testcaseID;
+   var csName = COMMCSNAME;
    var clName = CHANGEDPREFIX + "_cl_" + testcaseID;
-   var clFullName = csName + "." + clName;
    var recsNum = 300;
    // ready docs
    var docs = [];
@@ -28,7 +28,7 @@ function test ( arg )
    }
 
    // create cl   
-   commDropCS( db, csName, true );
+   commDropCL( db, csName, clName, true );
    var options = { "ShardingKey": { "a": -1 }, "ShardingType": "range", "Group": dataGroupNames[0] };
    var cl = commCreateCL( db, csName, clName, options, true );
 
@@ -225,7 +225,7 @@ function test ( arg )
    commCompareResults( cl.find( findCond ).sort( { "a": 1 } ), othDocs.slice( 0, 1 ) );
    checkHitDataGroups( cl.find( findCond ).explain( { "Run": true } ), dataGroupNames );
 
-   commDropCS( db, csName, false );
+   commDropCL( db, csName, clName, false );
 }
 
 function tmpDocs ( startNum, endNum )
