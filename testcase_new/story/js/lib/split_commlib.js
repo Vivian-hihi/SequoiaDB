@@ -85,6 +85,17 @@ function checkHashDistribution ( groupNames, csName, clName, expRecsNum )
    }
 }
 
+/* *****************************************************************************
+@discription: 检查命中的数据组和子表
+@author: XiaoNi Huang
+@parameter
+   explainCursor: cursor，查询计划返回的游标
+   expDataGroups: groupNames，预期命中的数据组
+   isMainCL     : false / true, default false
+   expSubCLs    : subCL fullNames, 命中的子表，格式：[[组1的子表], [组2的子表], .......]
+      如：命中组1的子表1和组2的子表1、子表2，传入参数：
+      checkHitDataGroups ( explainCursor, [rg1, rg2], isMainCL, [ [subCL1], [subCL1, subCL2] ] )
+***************************************************************************** */
 function checkHitDataGroups ( explainCursor, expDataGroups, isMainCL, expSubCLs )
 {
    if( isMainCL === undefined ) { isMainCL = false; }
