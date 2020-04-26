@@ -11,7 +11,7 @@ function test ()
    var dataGroupNames = commGetDataGroupNames( db );
    dataGroupNames.sort();
    var testcaseID = 21949;
-   var csName = CHANGEDPREFIX + "_cs_" + testcaseID;
+   var csName = COMMCSNAME;
    var mclName = CHANGEDPREFIX + "_mcl_" + testcaseID;
    var sclName1 = CHANGEDPREFIX + "_scl_" + testcaseID + "_1";
    var sclName2 = CHANGEDPREFIX + "_scl_" + testcaseID + "_2";
@@ -19,14 +19,16 @@ function test ()
    var sclFullName2 = csName + "." + sclName2;
    var recsNum = 200;
 
-   commDropCS( db, csName );
+   commDropCL( db, csName, mclName );
+   commDropCL( db, csName, sclName1 );
+   commDropCL( db, csName, sclName2 );
 
    // ready main-sub cl
    var mclOptions = { "ShardingKey": { "a": 1 }, "IsMainCL": true };
-   var mcl = commCreateCL( db, csName, mclName, mclOptions );
+   var mcl = commCreateCL( db, csName, mclName, mclOptions, false );
    var sclOptions = { "ShardingKey": { "a": 1 }, "ShardingType": "range", "Group": dataGroupNames[0] };
-   var scl1 = commCreateCL( db, csName, sclName1, sclOptions );
-   var scl2 = commCreateCL( db, csName, sclName2, sclOptions );
+   var scl1 = commCreateCL( db, csName, sclName1, sclOptions, false );
+   var scl2 = commCreateCL( db, csName, sclName2, sclOptions, false );
    mcl.attachCL( sclFullName1, { "LowBound": { "a": { "$minKey": 1 } }, "UpBound": { "a": 100 } } );
    mcl.attachCL( sclFullName2, { "LowBound": { "a": 100 }, "UpBound": { "a": { "$maxKey": 1 } } } );
 
@@ -38,29 +40,30 @@ function test ()
    }
    mcl.insert( docs );
 
-   // subCL split to multi group
+   // scl1 [min,50) [50,max)
+   // scl2 [min,150) [150,max)
    scl1.split( dataGroupNames[0], dataGroupNames[1], 50 );
    scl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
 
    // $gt
-   var findCond = { "a": { "$gt": 150 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 151 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName2]] );
+   var findCond = { "a": { "$gt": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 101 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName2]] );
 
    // $lt
-   var findCond = { "a": { "$lt": 50 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 50 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]], true, [[sclFullName1]] );
+   var findCond = { "a": { "$lt": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 100 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName1], [sclFullName1]] );
 
    // $gte
-   var findCond = { "a": { "$gte": 150 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 150 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName2]] );
+   var findCond = { "a": { "$gte": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 100 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName2]] );
 
    // $lte
-   var findCond = { "a": { "$lte": 50 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 51 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName1], [sclFullName1]] );
+   var findCond = { "a": { "$lte": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 101 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName1]] );
 
    // $et
    var findCond = { "a": { "$et": 100 } };
@@ -68,22 +71,20 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]], true, [[sclFullName2]] );
 
    // $ne
-   var findCond = { "a": { "$ne": 0 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 1 ) );
+   var findCond = { "a": { "$ne": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 100 ).concat( docs.slice( 101 ) ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
    // $in
-   var findCond = { "a": { "$in": [50, 100] } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50, 51 ).concat( docs.slice( 100, 101 ) ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName1]] );
+   var findCond = { "a": { "$in": [100] } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 100, 101 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]], true, [[sclFullName2]] );
 
    // $nin
-   var findCond = { "a": { "$nin": [50, 100] } };
-   var tmpDocs = docs.concat();
-   tmpDocs.splice( 100, 1 );
-   tmpDocs.splice( 50, 1 );
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), tmpDocs );
+   var ninDocs = tmpDocs( 100, 200 );
+   var findCond = { "a": { "$nin": ninDocs } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 100 ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
@@ -98,12 +99,12 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), ['SYSCoord'] );
 
    // $and 子集包含
-   var findCond = { "$and": [{ "a": { "$in": [50, 100, 150] } }, { "a": { "$gt": 100 } }] };
+   var findCond = { "$and": [{ "a": { "$in": [150] } }, { "a": { "$gt": 100 } }] };
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 150, 151 ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName2]] );
 
    // $not 子集相交
-   var findCond = { "$not": [{ "a": { "$nin": [100, 150] } }, { "a": { "$isnull": 1 } }] };
+   var findCond = { "$not": [{ "a": { "$lt": 50 } }, { "a": { "$gt": 100 } }] };
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
@@ -137,55 +138,21 @@ function test ()
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 100 ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName1], [sclFullName1]] );
 
-   // 多个$and组合查询 子集相交
+   // 多个$and组合查询
    var findCond = { "$and": [{ "a": { "$gte": 50 } }, { "a": { "$lt": 100 } }, { "a": { $isnull: 0 } }] };
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50, 100 ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName1]] );
 
-   // 多个$and组合查询 子集相离 
-   var findCond = { "$and": [{ "a": { "$lte": 50 } }, { "a": { "$gt": 100 } }, { a: { $in: [70, 80, 90] } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), [] );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), ['SYSCoord'] );
-
-   // 多个$and组合查询 子集包含
-   var findCond = { "$and": [{ "a": { "$in": [20, 50, 100, 150] } }, { "a": { "$gt": 100 } }, { "a": { "$gte": 150 } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 150, 151 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName2]] );
-
-   // 多个$not组合查询 子集相交
-   var findCond = { "$not": [{ "a": { "$nin": [20, 50, 100, 150] } }, { "a": { "$gte": 50 } }, { "a": { "$isnull": 1 } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
-      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
-
-   // 多个$not组合查询 子集相离
+   // 多个$not组合查询
    var findCond = { "$not": [{ "a": { "$nin": [50, 100, 150] } }, { "a": { "$exists": 1 } }, { "a": { "$isnull": 0 } }] };
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50, 51 ).concat( docs.slice( 100, 101 ) ).concat( docs.slice( 150, 151 ) ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
-   // 多个$not组合查询 子集包含
-   var findCond = { "$not": [{ "a": { "$lt": 50 } }, { "a": { "$lte": 100 } }, { "a": { "$nin": [50, 100, 150] } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
-      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
-
-   // 多个$or组合查询 子集相交
-   var findCond = { "$or": [{ "a": { "$gte": 50 } }, { "a": { "$lt": 100 } }, { "a": { "$in": [100, 150] } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
-      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
-
-   // 多个$or组合查询 子集相离
-   var findCond = { "$or": [{ "a": { "$lt": 50 } }, { "a": { "$gte": 150 }, }, { "a": { "$in": [100] } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 50 ).concat( docs.slice( 100, 101 ) ).concat( docs.slice( 150 ) ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
-      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
-
-   // 多个$or组合查询 子集包含
-   var findCond = { "$or": [{ "a": { "$lte": 50 } }, { "a": { "$lt": 100 } }, { "a": { "$in": [0, 50, 60] } }] };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 100 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName1], [sclFullName1]] );
+   // 多个$or组合查询
+   var findCond = { "$or": [{ "a": { "$gte": 100 } }, { "a": { "$gt": 150 } }, { "a": { "$in": [100, 150] } }] };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 100 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName2]] );
 
    // $and + $or + $not组合查询
    var findCond = {
@@ -215,9 +182,9 @@ function test ()
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName2]] );
 
    // $all
-   var findCond = { "a": { "$all": [50] } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50, 51 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName1]] );
+   var findCond = { "a": { "$all": [100] } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 100, 101 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0]], true, [[sclFullName2]] );
 
    // $isnull 
    var findCond = { "a": { "$isnull": 0 } };
@@ -231,6 +198,12 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
+   // $mod
+   var findCond = { "a": { "$mod": [101, 100] } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 100, 101 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
+      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
+
    var arrDocs = [{ "a": [99] }, { "a": [100] }, { "a": [200] }];
    mcl.insert( arrDocs );
 
@@ -240,21 +213,15 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
-   // size
+   // $size
    var findCond = { "a": { "$size": 1, "$et": 1 } };
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), arrDocs );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
-   // type
+   // $type
    var findCond = { "a": { "$type": 1, "$et": 4 } };
    commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), arrDocs );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
-      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
-
-   // $mod
-   var findCond = { "a": { "$mod": [150, 10] } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 10, 11 ).concat( docs.slice( 160, 161 ) ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
@@ -282,5 +249,14 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
-   commDropCS( db, csName, false );
+   commDropCL( db, csName, mclName, false );
+}
+function tmpDocs ( startNum, endNum )
+{
+   var docs = [];
+   for( var i = startNum; i < endNum; i++ )
+   {
+      docs.push( i );
+   }
+   return docs;
 }

@@ -13,7 +13,7 @@ function test ()
    var dataGroupNames = commGetDataGroupNames( db );
    dataGroupNames.sort();
    var testcaseID = "21951_21952";
-   var csName = CHANGEDPREFIX + "_cs_" + testcaseID;
+   var csName = COMMCSNAME;
    var mclName = CHANGEDPREFIX + "_mcl_" + testcaseID;
    var sclName1 = CHANGEDPREFIX + "_scl_" + testcaseID + "_1";
    var sclName2 = CHANGEDPREFIX + "_scl_" + testcaseID + "_2";
@@ -21,13 +21,15 @@ function test ()
    var sclFullName2 = csName + "." + sclName2;
    var recsNum = 200;
 
-   commDropCS( db, csName );
+   commDropCL( db, csName, mclName );
+   commDropCL( db, csName, sclName1 );
+   commDropCL( db, csName, sclName2 );
 
    var options = { ShardingKey: { a: 1 }, IsMainCL: true };
-   var mcl = commCreateCL( db, csName, mclName, options );
+   var mcl = commCreateCL( db, csName, mclName, options, false );
    var options = { ShardingKey: { a: 1 }, ShardingType: "range", Group: dataGroupNames[0] };
-   var scl1 = commCreateCL( db, csName, sclName1, options );
-   var scl2 = commCreateCL( db, csName, sclName2, options );
+   var scl1 = commCreateCL( db, csName, sclName1, options, false );
+   var scl2 = commCreateCL( db, csName, sclName2, options, false );
    mcl.attachCL( sclFullName1, { LowBound: { a: 0 }, UpBound: { a: 100 } } );
    mcl.attachCL( sclFullName2, { LowBound: { a: 100 }, UpBound: { a: 200 } } );
 
@@ -38,18 +40,20 @@ function test ()
    }
    mcl.insert( docs );
 
-   scl1.split( dataGroupNames[0], dataGroupNames[1], 50 );
-   scl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
+   // scl1 [min,50) [50,max)
+   // scl2 [min,50) [50,max)
+   scl1.split( dataGroupNames[0], dataGroupNames[1], { "a": 50 }, { "a": { "$maxKey": 1 } } );
+   scl2.split( dataGroupNames[0], dataGroupNames[1], { "a": 50 }, { "a": { "$maxKey": 1 } } );
 
    // 主表查询命中多个子表且命中同一个数据组
-   var findCond = { "a": { "$in": [50, 100] } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50, 51 ).concat( docs.slice( 100, 101 ) ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName1]] );
+   var findCond = { "a": { "$in": [50, 150] } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 50, 51 ).concat( docs.slice( 150, 151 ) ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[1]], true, [[sclFullName2, sclFullName1]] );
 
    // 主表查询的数据未命中子表
    var findCond = { "a": 2000 };
    commCompareResults( mcl.find( findCond ), [] );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), ['SYSCoord'] );
 
-   commDropCS( db, csName, false );
+   commDropCL( db, csName, mclName, false );
 }

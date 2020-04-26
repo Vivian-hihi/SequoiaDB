@@ -11,7 +11,7 @@ function test ()
    var dataGroupNames = commGetDataGroupNames( db );
    dataGroupNames.sort();
    var testcaseID = 21950;
-   var csName = CHANGEDPREFIX + "_cs_" + testcaseID;
+   var csName = COMMCSNAME;
    var mclName = CHANGEDPREFIX + "_mcl_" + testcaseID;
    var sclName1 = CHANGEDPREFIX + "_scl_" + testcaseID + "_1";
    var sclName2 = CHANGEDPREFIX + "_scl_" + testcaseID + "_2";
@@ -19,14 +19,16 @@ function test ()
    var sclFullName2 = csName + "." + sclName2;
    var recsNum = 200;
 
-   commDropCS( db, csName );
+   commDropCL( db, csName, mclName );
+   commDropCL( db, csName, sclName1 );
+   commDropCL( db, csName, sclName2 );
 
    // ready main-sub cl
    var mclOptions = { "ShardingKey": { "a": 1, "b": -1 }, "IsMainCL": true };
-   var mcl = commCreateCL( db, csName, mclName, mclOptions );
+   var mcl = commCreateCL( db, csName, mclName, mclOptions, false );
    var sclOptions = { "ShardingKey": { "a": 1, "b": -1 }, "ShardingType": "range", "Group": dataGroupNames[0] };
-   var scl1 = commCreateCL( db, csName, sclName1, sclOptions );
-   var scl2 = commCreateCL( db, csName, sclName2, sclOptions );
+   var scl1 = commCreateCL( db, csName, sclName1, sclOptions, false );
+   var scl2 = commCreateCL( db, csName, sclName2, sclOptions, false );
    mcl.attachCL( sclFullName1, { "LowBound": { "a": { "$minKey": 1 }, "b": { "$maxKey": 1 } }, "UpBound": { "a": 100, "b": 100 } } );
    mcl.attachCL( sclFullName2, { "LowBound": { "a": 100, "b": 100 }, "UpBound": { "a": { "$maxKey": 1 }, "b": { "$minKey": 1 } } } );
 
@@ -38,7 +40,8 @@ function test ()
    }
    mcl.insert( docs );
 
-   // subCL split to multi group
+   // scl1 [min,50)[50,max)
+   // scl2 [min,150)[150,max)
    scl1.split( dataGroupNames[0], dataGroupNames[1], 50 );
    scl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
 
@@ -53,14 +56,14 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName1], [sclFullName1]] );
 
    // $gte
-   var findCond = { "a": { "$gte": 150 }, "b": { "$gte": 150 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 150 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName2]] );
+   var findCond = { "a": { "$gte": 100 }, "b": { "$gte": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 100 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName2, sclFullName1]] );
 
    // $lte
-   var findCond = { "a": { "$lte": 50 }, "b": { "$lte": 50 } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 51 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName1], [sclFullName1]] );
+   var findCond = { "a": { "$lte": 100 }, "b": { "$lte": 100 } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 101 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName1]] );
 
    // $et
    var findCond = { "a": { "$et": 100 }, "b": { "$et": 100 } };
@@ -79,12 +82,9 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } ), [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2], [sclFullName1]] );
 
    // $nin
-   var findCond = { "a": { "$nin": [50, 100, 150] }, "b": { "$nin": [50, 100, 150] } };
-   var tmpDocs = docs.concat();
-   tmpDocs.splice( 150, 1 );
-   tmpDocs.splice( 100, 1 );
-   tmpDocs.splice( 50, 1 );
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), tmpDocs );
+   var ninDocs = tmpDocs( 100, 200 );
+   var findCond = { "a": { "$nin": ninDocs }, "b": { "$nin": ninDocs } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 0, 100 ) );
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
@@ -164,12 +164,6 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
-   // $regex + $elemMatch
-   var findCond = { "c": { "$elemMatch": { "d": { "$regex": "test3[1-9]\d*", "$options": "i" } } } };
-   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), docs.slice( 31, 40 ) );
-   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
-      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
-
    // $and+$or+$not组合查询
    var findCond = {
       "$and": [{ "a": { "$gte": 50 }, "b": { "$gte": 50 } }
@@ -190,5 +184,23 @@ function test ()
    checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
       , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
 
-   commDropCS( db, csName, false );
+   var objDocs = [{ "a": { "a1": 1 } }, { "a": { "a1": 2 } }, { "a": { "a1": "test" } }];
+   mcl.insert( objDocs );
+
+   // $regex + $elemMatch
+   var findCond = { "a": { "$elemMatch": { "a1": { "$regex": "t.*t", "$options": "i" } } } };
+   commCompareResults( mcl.find( findCond ).sort( { "a": 1 } ), objDocs.slice( 2 ) );
+   checkHitDataGroups( mcl.find( findCond ).explain( { "Run": true } )
+      , [dataGroupNames[0], dataGroupNames[1]], true, [[sclFullName2, sclFullName1], [sclFullName2, sclFullName1]] );
+
+   commDropCL( db, csName, mclName, false );
+}
+function tmpDocs ( startNum, endNum )
+{
+   var docs = [];
+   for( var i = startNum; i < endNum; i++ )
+   {
+      docs.push( i );
+   }
+   return docs;
 }
