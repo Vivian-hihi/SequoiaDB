@@ -8,7 +8,7 @@ testConf.clName = COMMCLNAME + "_11353";
 
 main( test );
 
-function test ()
+function test (testPara)
 {
    var dbcl = testPara.testCL;
    dbcl.createIndex( "a", {a:1} );
