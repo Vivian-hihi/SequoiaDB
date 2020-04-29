@@ -4,84 +4,70 @@
 *@createdate:  2020.4.25
 *@testlinkCase: seqDB-11353
 **************************************/
+main( test );
 
-main();
-
-function main()
+function test ()
 {
    var clName = COMMCLNAME + "_11353";
-   commDropCL( db, COMMCSNAME, clName, true );
+   commDropCL( db, COMMCSNAME, clName );
    var dbcl   = commCreateCL( db, COMMCSNAME, clName );
-   dbcl.insert( [{_id:1, a:1, b:2, c:3}, {_id:2, a:2, b:3, c:1}, {_id:3, a:3, b:1, c:2}] );
-   dbcl.createIndex( "a",{a:1} );
-   var flag   = 0;
-   test( dbcl, flag );
-   db.analyze();
-   var flag   = 1;
-   test( dbcl, flag );
+   dbcl.createIndex( "a", {a:1} );
+ 
+   //使用非索引字段进行查询的查询条件
+   cond_non = { b: 1 };
+   //使用or进行查询的查询条件
+   cond_or = { $or:[{a:1}, {c:1}] };
+   //使用not进行查询的查询条件
+   cond_not = { $not:[{a:1}, {c:1}] };
+
+   //不计算IO代价
+   var docs=[];
+   for (var i = 0; i < 1000; i++ )
+   {
+      docs.push( { a:i } )
+   }
+   dbcl.insert( docs );
+   
+   for(var i  = 0; i <5; i++)
+   {
+      dbcl.update( { $inc:{ b:i } }, { a:i } );
+      dbcl.update( { $inc:{ c:-i } }, { a:i } )
+   }
+   testExplain( dbcl, cond_non, "", "tbscan" );
+   testExplain( dbcl, cond_or, "", "tbscan" );
+   testExplain( dbcl, cond_not, "", "tbscan" );
+   db.analyze()
+   testExplain( dbcl, cond_non, "", "tbscan" );
+   testExplain( dbcl, cond_or, "", "tbscan" );
+   testExplain( dbcl, cond_not, "", "tbscan" );
+   
+   //计算IO代价
+   //添加数据使数据页数大于optestcachesize（20）
+   var docs=[];
+   for (var i = 0; i < 50000; i++ )
+   {
+      docs.push( { d:i } )
+   }
+   dbcl.insert( docs );
+
+   testExplain( dbcl, cond_non, "", "tbscan" );
+   testExplain( dbcl, cond_or, "", "tbscan" );
+   testExplain( dbcl, cond_not, "", "tbscan" );
+   db.analyze()
+   testExplain( dbcl, cond_non, "", "tbscan" );
+   testExplain( dbcl, cond_or, "", "tbscan" );
+   testExplain( dbcl, cond_not, "", "tbscan" );
+  
    commDropCL( db, COMMCSNAME, clName );
 }
 
-function test( dbcl, flag )
+function testExplain( dbcl, cond, expIndexName, expScanType )
 {
-	 
-   var explainObj = dbcl.find( { b: 1 } ).explain().next().toObj();
-   var find       = "find( { b: 1 } )";
+   var explainObj = dbcl.find( cond ).explain().next().toObj();
    var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType; 
-   check( "", IndexName,find, flag );
-   check( "tbscan", ScanType,find, flag );
-
-   
-   var explainObj = dbcl.find( { b: 1 } ).hint( {"":"a"} ).explain().next().toObj();
-   var find       = "find( { b: 1 } ).hint({\"\":\"a\"})";
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType; 
-   check( "a", IndexName, find, flag );
-   check( "ixscan", ScanType, find, flag );
-  
-
-   var explainObj = dbcl.find( { $or:[{a:2}, {c:1}] } ).explain().next().toObj();
-   var find = "find( { $or:[{a:2},{c:1}] } )";
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType; 
-   check( "", IndexName, find, flag );
-   check( "tbscan", ScanType, find, flag );
-   
-   var explainObj = dbcl.find( { $or:[{a:2}, {c:1}] } ).hint( {"":"a"} ).explain().next().toObj();
-   var find       = "find( { $or:[{a:2},{c:1}] } ).hint( {\"\":\"a\"} )"; 
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType; 
-   check( "a", IndexName, find, flag );
-   check( "ixscan", ScanType, find, flag );
-   
-   var explainObj = dbcl.find( { $not:[{a:2}, {c:1}] } ).explain().next().toObj();
-   var find       = "find( { $not:[{a:2},{c:1}] } )";
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType; 
-   check( "", IndexName, find, flag );
-   check( "tbscan", ScanType, find, flag );
-   
-   var explainObj = dbcl.find( { $not:[{a:2}, {c:1}] } ).hint( {"":"a"} ).explain().next().toObj();
-   var find       = "find( { $not:[{a:2},{c:1}] } ).hint( {\"\":\"a\"} )";   
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType; 
-   check( "a", IndexName, find, flag );
-   check( "ixscan", ScanType, find, flag );
-}
-
-function check( expect, actual , a, flag )
-{
-   if( expect !== actual )
+   var ScanType   = explainObj.ScanType;
+   if(expIndexName!==IndexName || expScanType!==ScanType)
    {
-	  if( flag === 0 )
-	  {
-         println( a+" Error"+" before analyze()" );
-	  }
-	  else
-	  {
-	      println( a+" Error"+" after analyze()" );
-	  }
-      throw buildException( "check", "Error", check, expect, actual );
+      throw new Error("索引选择错误！")
    }
 }
