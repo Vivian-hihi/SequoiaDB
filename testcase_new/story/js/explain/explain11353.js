@@ -40,14 +40,12 @@ function test ()
    testExplain( conds, dbcl );
    db.analyze();
    testExplain( conds, dbcl );
-  
-   dropTestCS ( db, testConf );
 }
 
 function testExplain( conds, dbcl )
 {
    var indexName = "" ;
-   var scanType = "tbscan" ;
+   var scanType  = "tbscan" ;
    for ( var i = 0; i < conds.length; ++i )
    {
       checkExplain( dbcl, conds[i], indexName, scanType );
@@ -59,7 +57,7 @@ function checkExplain( dbcl, cond, expIndexName, expScanType )
    var explainObj = dbcl.find( cond ).explain().next().toObj();
    var IndexName  = explainObj.IndexName;
    var ScanType   = explainObj.ScanType;
-   if(expIndexName!==IndexName || expScanType!==ScanType)
+   if(expIndexName !== IndexName || expScanType !== ScanType)
    {
       throw new Error("索引选择错误！")
    }
