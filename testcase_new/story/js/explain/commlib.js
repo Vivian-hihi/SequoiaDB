@@ -4,4 +4,5 @@
 *@createdate:  2020.4.25
 *@testlinkCase: seqDB-11353
 **************************************/
+import( "../lib/basic_operation/sequoiadb.js" );
 import ("../lib/main.js");
