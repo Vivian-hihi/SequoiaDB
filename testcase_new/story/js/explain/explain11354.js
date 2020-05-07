@@ -13,9 +13,13 @@ function test(testPara)
    var dbcl = testPara.testCL;
    dbcl.createIndex( "a", {a:1}, true );
    dbcl.createIndex( "b", {b:-1}, true );
+   dbcl.createIndex( "ab", {a:1,b:1}, true );
 
    //设置查询条件,构造valA在mcv中存在统计信息的场景(不计算IO代价时,a以5为周期选入mcv中;计算IO代价时，a存入mcv的值为250，506，761)
-   var conds = [{ a: { $et: 250 } },{a: { $in: [ 250, 506 ] }},{a: { $all: [ 250 ] }},{a: { $exists: 0 } },{a: { $isnull: 1 } }  ];
+   var conds = [{ a: { $et: 250 } },{a: { $in: [ 250 ] }},{a: { $all: [ 506 ] }},{a: { $exists: 0 } },{a: { $isnull: 1 } }  ];
+   indexName = "a";
+   scanType  = "ixscan";
+   
    //不计算IO代价
    var docs=[];
    for (var i = 0; i < 1000; i++ )
@@ -23,9 +27,9 @@ function test(testPara)
        docs.push( { a:i, b:i, c:-i } )
    }
    dbcl.insert( docs );
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
    db.analyze();
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
 
    //计算IO代价
    //添加数据使数据页数大于optestcachesize（20）
@@ -35,28 +39,8 @@ function test(testPara)
       docs.push( { d:i } )
    }
    dbcl.insert( docs );
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
    db.analyze();
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
 }
 
-function testExplain( conds, dbcl )
-{
-   var indexName = "a" ;
-   var scanType  = "ixscan" ;
-   for ( var i = 0; i < conds.length; ++i )
-   {
-      checkExplain( dbcl, conds[i], indexName, scanType );
-   }
-}
-
-function checkExplain( dbcl, cond, expIndexName, expScanType )
-{
-   var explainObj = dbcl.find( cond ).explain().next().toObj();
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType;
-   if(expIndexName !== IndexName || expScanType !== ScanType)
-   {
-      throw new Error("索引选择错误！")
-   }
-}
