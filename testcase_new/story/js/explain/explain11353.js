@@ -15,7 +15,9 @@ function test (testPara)
  
    //设置查询条件
    var conds = [{b:1},{$or:[{a:1},{c:1}]},{$not:[{a:1},{c:1}]}];
-   
+   var indexName = "" ;
+   var scanType  = "tbscan" ;
+
    //不计算IO代价
    var docs=[];
    for (var i = 0; i < 1000; i++ )
@@ -24,9 +26,9 @@ function test (testPara)
    }
    dbcl.insert( docs );
    
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
    db.analyze();
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
    
    //计算IO代价
    //添加数据使数据页数大于optestcachesize（20）
@@ -37,28 +39,7 @@ function test (testPara)
    }
    dbcl.insert( docs );
 
-   testExplain( conds, dbcl );
+   testExplain( conds, dbcl, indexName, scanType );
    db.analyze();
-   testExplain( conds, dbcl );
-}
-
-function testExplain( conds, dbcl )
-{
-   var indexName = "" ;
-   var scanType  = "tbscan" ;
-   for ( var i = 0; i < conds.length; ++i )
-   {
-      checkExplain( dbcl, conds[i], indexName, scanType );
-   }
-}
-
-function checkExplain( dbcl, cond, expIndexName, expScanType )
-{
-   var explainObj = dbcl.find( cond ).explain().next().toObj();
-   var IndexName  = explainObj.IndexName;
-   var ScanType   = explainObj.ScanType;
-   if(expIndexName !== IndexName || expScanType !== ScanType)
-   {
-      throw new Error("索引选择错误！")
-   }
+   testExplain( conds, dbcl, indexName, scanType );
 }
