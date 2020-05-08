@@ -28,24 +28,18 @@ function test ()
    cl.insert( docs );
 
    // before
-   var cursor = cl.find( { "a": 1, "b": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = idxName1;
-   checkOptimalIndex( cursor, expIndex );
-
-   var cursor = cl.find( { "a": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = idxName1;
-   checkOptimalIndex( cursor, expIndex );
+   var cond = [{ "a": 1, "b": 1, "c": -1 }, { "a": 1, "c": -1 }];
+   var expIndexName = idxName1;
+   var expScanType = "ixscan";
+   testExplain( cl, cond, expIndexName, expScanType );
 
    db.analyze();
 
    // after
-   var cursor = cl.find( { "a": 1, "b": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = tbIdx;
-   checkOptimalIndex( cursor, expIndex );
-
-   var cursor = cl.find( { "a": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = tbIdx;
-   checkOptimalIndex( cursor, expIndex );
+   var cond = [{ "a": 1, "b": 1, "c": -1 }, { "a": 1, "c": -1 }];
+   var expIndexName = tbIdx;
+   var expScanType = "tbscan";
+   testExplain( cl, cond, expIndexName, expScanType );
 
    commDropCL( db, COMMCSNAME, clName, false );
 }

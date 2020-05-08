@@ -14,9 +14,13 @@ function testExplain ( conds, dbcl, indexName, scanType )
    }
 }
 
-function checkExplain ( dbcl, cond, expIndexName, expScanType )
+function checkExplain ( dbcl, cond, expIndexName, expScanType, sortCond )
 {
-   var explainObj = dbcl.find( cond ).explain().next().toObj();
+   if( sortCond == undefined )
+   {
+      sortCond = {};
+   }
+   var explainObj = dbcl.find( cond ).sort( sortCond ).explain().next().toObj();
    var IndexName = explainObj.IndexName;
    var ScanType = explainObj.ScanType;
    if( expIndexName !== IndexName || expScanType !== ScanType )

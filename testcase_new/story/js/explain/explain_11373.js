@@ -11,17 +11,17 @@ function test ()
 {
    var dataGroupNames = commGetDataGroupNames( db );
    var clName = CHANGEDPREFIX + "_11373";
-   var idxName1 = "index_abc_11373";
-   var idxName2 = "index_ab_11373";
-   var idxName3 = "index_a_11373";
+   var idxNamea = "index_a_11373";
+   var idxNameb = "index_b_11373";
+   var idxNamec = "index_c_11373";
 
    commDropCL( db, COMMCSNAME, clName );
 
    var cl = commCreateCL( db, COMMCSNAME, clName, { Group: dataGroupNames[0] }, false );
 
-   cl.createIndex( idxName1, { a: 1, b: 1, c: 1 } );
-   cl.createIndex( idxName2, { a: 1, b: -1 } );
-   cl.createIndex( idxName3, { a: 1 } );
+   cl.createIndex( idxNamea, { a: 1 } );
+   cl.createIndex( idxNameb, { b: -1 } );
+   cl.createIndex( idxNamec, { c: 1 } );
 
    // 生成随机数
    var rd = new commDataGenerator();
@@ -30,15 +30,23 @@ function test ()
 
    db.analyze();
 
-   // 验证是否加入候选计划
-   var cursor = cl.find( { "a": 1, "b": 1 } ).sort( { "a": 1 } ).explain( { Evaluate: true } );
-   var expCandidates = [idxName1, idxName2, idxName3];
-   checkCandidates( cursor, expCandidates );
+   var cond = { "a": { "$gt": 1 } };
+   var expIndexName = idxNameb;
+   var expScanType = "ixscan";
+   var sortCond = { "b": 1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
 
-   // 验证是否选择最优索引
-   var cursor = cl.find( { "a": 1, "b": 1, "c": 1 } ).sort( { "a": 1 } ).explain( { Evaluate: true } );
-   var expIndex = idxName1;
-   checkOptimalIndex( cursor, expIndex );
+   var cond = { "b": { "$gt": 1 } };
+   var expIndexName = idxNamec;
+   var expScanType = "ixscan";
+   var sortCond = { "c": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
+
+   var cond = { "c": { "$gt": 1 } };
+   var expIndexName = idxNamea;
+   var expScanType = "ixscan";
+   var sortCond = { "a": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
 
    commDropCL( db, COMMCSNAME, clName, false );
 }

@@ -30,18 +30,23 @@ function test ()
 
    db.analyze();
 
-   // 验证是否选择最优索引
-   var cursor = cl.find( { "a": 1, "b": 1, "c": 1 } ).sort( { "a": 1, "b": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = idxName1;
-   checkOptimalIndex( cursor, expIndex );
+   var cond = { "a": 1, "b": 1, "c": 1 };
+   var expIndexName = idxName1;
+   var expScanType = "ixscan";
+   var sortCond = { "a": 1, "b": 1, "c": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
 
-   var cursor = cl.find( { "a": 1, "b": 1 } ).sort( { "a": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = idxName2;
-   checkOptimalIndex( cursor, expIndex );
+   var cond = { "a": 1, "b": 1 };
+   var expIndexName = idxName2;
+   var expScanType = "ixscan";
+   var sortCond = { "a": 1, "c": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
 
-   var cursor = cl.find( { "b": 1, "c": 1 } ).sort( { "b": 1, "c": -1 } ).explain( { Evaluate: true } );
-   var expIndex = idxName3;
-   checkOptimalIndex( cursor, expIndex );
+   var cond = { "b": 1, "c": 1 };
+   var expIndexName = idxName3;
+   var expScanType = "ixscan";
+   var sortCond = { "b": 1, "c": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
 
    commDropCL( db, COMMCSNAME, clName, false );
 }
