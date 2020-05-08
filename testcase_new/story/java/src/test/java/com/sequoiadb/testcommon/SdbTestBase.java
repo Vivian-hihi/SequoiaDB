@@ -64,17 +64,19 @@ public class SdbTestBase {
     public static final String RS = "rs";
     public static final String RCAUTO = "rcauto";
     public static final String RCUSERBS = "rcuserbs";
+    public static final String TRANSREPLSIZE = "transreplsize";
 
     private static ConfigOptions options = new ConfigOptions();
     public static String testGroup = null;
     private static final int newIndexScanStep = 100;
+    private static final int transReplsize = 1;
     public static final int timeOutLen = 120;
     private static final Map< String, BSONObject > group2Conf = new HashMap< String, BSONObject >();
     private static final Map< String, AtomicInteger > group2Count = new HashMap< String, AtomicInteger >();
     private static final Map< String, BSONObject > node2Conf = new HashMap< String, BSONObject >();
     private static boolean istransactionOn = true;
     private static BasicBSONObject confObj = new BasicBSONObject();
-    public static List< String > coordUrls = new ArrayList< >();
+    public static List< String > coordUrls = new ArrayList<>();
 
     static {
         group2Conf.put( RU, new BasicBSONObject() );
@@ -85,6 +87,7 @@ public class SdbTestBase {
         group2Conf.get( RU ).put( TRANSAUTOCOMMIT, false );
         group2Conf.get( RU ).put( TRANSAUTOROLLBACK, true );
         group2Conf.get( RU ).put( TRANSUSERBS, true );
+        group2Conf.get( RU ).put( TRANSREPLSIZE, transReplsize );
 
         group2Conf.put( RC, new BasicBSONObject() );
         group2Conf.get( RC ).put( TRANSISOLATION, 1 );
@@ -94,6 +97,7 @@ public class SdbTestBase {
         group2Conf.get( RC ).put( TRANSAUTOCOMMIT, false );
         group2Conf.get( RC ).put( TRANSAUTOROLLBACK, true );
         group2Conf.get( RC ).put( TRANSUSERBS, true );
+        group2Conf.get( RC ).put( TRANSREPLSIZE, transReplsize );
 
         group2Conf.put( RCWAITLOCK, new BasicBSONObject() );
         group2Conf.get( RCWAITLOCK ).put( TRANSISOLATION, 1 );
@@ -103,6 +107,7 @@ public class SdbTestBase {
         group2Conf.get( RCWAITLOCK ).put( TRANSAUTOCOMMIT, false );
         group2Conf.get( RCWAITLOCK ).put( TRANSAUTOROLLBACK, true );
         group2Conf.get( RCWAITLOCK ).put( TRANSUSERBS, true );
+        group2Conf.get( RCWAITLOCK ).put( TRANSREPLSIZE, transReplsize );
 
         group2Conf.put( RS, new BasicBSONObject() );
         group2Conf.get( RS ).put( TRANSISOLATION, 2 );
@@ -112,6 +117,7 @@ public class SdbTestBase {
         group2Conf.get( RS ).put( TRANSAUTOCOMMIT, false );
         group2Conf.get( RS ).put( TRANSAUTOROLLBACK, true );
         group2Conf.get( RS ).put( TRANSUSERBS, true );
+        group2Conf.get( RS ).put( TRANSREPLSIZE, transReplsize );
 
         group2Conf.put( RCAUTO, new BasicBSONObject() );
         group2Conf.get( RCAUTO ).put( TRANSISOLATION, 1 );
@@ -121,6 +127,7 @@ public class SdbTestBase {
         group2Conf.get( RCAUTO ).put( TRANSAUTOCOMMIT, true );
         group2Conf.get( RCAUTO ).put( TRANSAUTOROLLBACK, false );
         group2Conf.get( RCAUTO ).put( TRANSUSERBS, true );
+        group2Conf.get( RCAUTO ).put( TRANSREPLSIZE, transReplsize );
 
         group2Conf.put( RCUSERBS, new BasicBSONObject() );
         group2Conf.get( RCUSERBS ).put( TRANSISOLATION, 1 );
@@ -130,6 +137,7 @@ public class SdbTestBase {
         group2Conf.get( RCUSERBS ).put( TRANSAUTOCOMMIT, false );
         group2Conf.get( RCUSERBS ).put( TRANSAUTOROLLBACK, true );
         group2Conf.get( RCUSERBS ).put( TRANSUSERBS, false );
+        group2Conf.get( RCUSERBS ).put( TRANSREPLSIZE, transReplsize );
 
         for ( String key : group2Conf.keySet() ) {
             group2Count.put( key, new AtomicInteger( 0 ) );
@@ -179,11 +187,11 @@ public class SdbTestBase {
     @BeforeSuite(alwaysRun = true)
     public static void initSuite( String HOSTNAME, String SVCNAME,
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
-            String RSRVNODEDIR, String WORKDIR, @Optional("" ) String CONFTOOL,
+            String RSRVNODEDIR, String WORKDIR, @Optional("") String CONFTOOL,
             @Optional("false") String ENABLETRANSACTION,
             @Optional("localhost") String ESHOSTNAME,
             @Optional("9200") String ESSVCNAME,
-            @Optional("") String FULLTEXTPREFIX) {
+            @Optional("") String FULLTEXTPREFIX ) {
         System.out.println( "initSuite....." );
         hostName = HOSTNAME;
         serviceName = SVCNAME;
@@ -438,7 +446,7 @@ public class SdbTestBase {
 
     private static void addStaticConf( FileWriter confFile, BSONObject cataConf,
             BSONObject coordConf, BSONObject dataConf, BSONObject stdalnConf )
-                    throws IOException {
+            throws IOException {
         confFile.write( "catalogConf = " + cataConf + ";\n" );
         confFile.write( "coordConf = " + coordConf + ";\n" );
         confFile.write( "dataConf = " + dataConf + ";\n" );
@@ -448,7 +456,7 @@ public class SdbTestBase {
     private static void addDynConf( FileWriter confFile,
             BSONObject cataDynaConf, BSONObject coordDynaConf,
             BSONObject dataDynaConf, BSONObject stdalnDynaConf )
-                    throws IOException {
+            throws IOException {
         confFile.write( "catalogDynaConf = " + cataDynaConf + ";\n" );
         confFile.write( "coordDynaConf = " + coordDynaConf + ";\n" );
         confFile.write( "dataDynaConf = " + dataDynaConf + ";\n" );
