@@ -215,6 +215,7 @@ struct section
 struct mongoOpMsgReply
 {
    mongoMsgHeader header ;
+   // If the first bit of flags is 0, we don't need to send checksum.
    INT32 flags ;
    CHAR sectionType ;
    // After sectionType, there are a body(BSONObj) or sequences(vector) and

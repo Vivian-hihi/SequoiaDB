@@ -703,12 +703,11 @@ INT32 _mongoSession::_replyOpMsg( MsgOpReply *replyHeader,
    bson::BSONObj objToSend ;
    mongoDataPacket &packet = _converter.getParser().dataPacket() ;
    mongoOpMsgReply msgReply ;
-   UINT32 checksum = 0 ;
 
    msgReply.header.requestId = 0 ;
    msgReply.header.responseTo = packet.requestId ;
    msgReply.header.opCode = packet.opCode ;
-   msgReply.flags = packet.flags ;
+   msgReply.flags = 0 ;
 
    msgReply.header.msgLen = sizeof( mongoOpMsgReply ) ;
 
@@ -718,16 +717,10 @@ INT32 _mongoSession::_replyOpMsg( MsgOpReply *replyHeader,
       objToSend.init( pBody ) ;
    }
    msgReply.header.msgLen += ( objToSend.objsize() ) ;
-   msgReply.header.msgLen += sizeof( checksum ) ;
 
    _outBuffer.zero() ;
    _outBuffer.write( (CHAR *)&msgReply, sizeof( mongoOpMsgReply ) ) ;
    _outBuffer.write( objToSend ) ;
-
-   checksum = getChecksum( _outBuffer.data(),
-                           msgReply.header.msgLen - sizeof( checksum ) ) ;
-
-   _outBuffer.write( (CHAR *)&checksum, sizeof( checksum ) ) ;
 
    rc = sendData( _outBuffer.data(), msgReply.header.msgLen ) ;
    if ( rc )

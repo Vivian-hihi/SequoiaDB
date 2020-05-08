@@ -44,7 +44,6 @@
 #include "../../bson/bson.hpp"
 #include <string>
 #include "../../bson/lib/md5.hpp"
-#include <boost/crc.hpp>
 
 class _baseConverter : public SDBObject
 {
@@ -99,15 +98,6 @@ inline BOOLEAN checkBigEndian()
    }
 
    return bigEndian ;
-}
-
-// use crc32c algorithm
-inline UINT32 getChecksum( const CHAR* statrPosition, UINT32 size )
-{
-   boost::crc_optimal<32,0x1EDC6F41,0xFFFFFFFF,0xFFFFFFFF,TRUE,TRUE>crc32c ;
-   crc32c.reset() ;
-   crc32c.process_bytes( statrPosition, size ) ;
-   return (UINT32)(crc32c.checksum()) ;
 }
 
 #endif
