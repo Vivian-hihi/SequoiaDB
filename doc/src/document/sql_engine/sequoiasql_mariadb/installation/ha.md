@@ -40,14 +40,26 @@ tools/
 配置审计插件之前，需要先完成 MariaDB 环境的搭建及实例启动，之后再重启 MariaDB 服务。所有的 MariaDB 环境都需要完成该插件配置。具体的配置步骤如下：
 
 + 切换到 SequoiaSQL-MariaDB 安装用户（默认为 sdbadmin）
-+ 在所有 MariaDB 实例上创建用于同步元数据的 MariaDB 用户，并授予所有权限，用户名与密码在所有实例上保持一致。注意：此处使用的密码 'sdbadmin' 仅为示例，请根据需要自行设置安全的密码
+
+    ```lang-bash
+    $ su - sdbadmin
+    $ cd /opt/sequoiasql/mariadb
+   ```
+
++ 登录 MariaDB shell，操作步骤可参考[使用](sql_engine/sequoiasql_mariadb/connection.md#使用)章节。在所有 MariaDB 实例上创建用于同步元数据的 MariaDB 用户，并授予所有权限，用户名与密码在所有实例上保持一致。注意：此处使用的密码 'sdbadmin' 仅为示例，请根据需要自行设置安全的密码
 
    ```sql
    MariaDB [(none)]> CREATE USER 'sdbadmin'@'%' IDENTIFIED BY 'sdbadmin';
    MariaDB [(none)]> GRANT all on *.* TO 'sdbadmin'@'%' with grant option;
    ```
 
-+ 修改 MariaDB 实例的配置文件（SequoiaSQL-MariaDB 实例的配置文件为数据路径下的 auto.cnf），在 mysqld 部分添加以下内容，审计日志文件路径请根据实际情况进行配置，并手动完成创建，如以下示例中的 auditlog 目录
++ 创建审计日志存储目录，如以下示例中的 auditlog 目录
+
+   ```lang-bash
+    $ mkdir database/auditlog
+   ```
+
++ 修改 MariaDB 实例的配置文件（SequoiaSQL-MariaDB 实例的配置文件为数据路径下的 auto.cnf），在 mysqld 部分添加以下内容
 
    ```config
    # 加载审计插件
