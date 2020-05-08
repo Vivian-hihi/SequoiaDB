@@ -445,8 +445,6 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          bob.append( FAP_FIELD_NAME_CODE,  errCode ) ;
          bob.append( FAP_FIELD_NAME_ERRMSG,
                      _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-         bob.append( FAP_FIELD_NAME_ERR,
-                     _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
          _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
       }
       bodyLen = _contextBuff.size() ;
@@ -470,13 +468,10 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          bob.append( FAP_FIELD_NAME_CODE,  errCode ) ;
          bob.append( FAP_FIELD_NAME_ERRMSG,
                      _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-         bob.append( FAP_FIELD_NAME_ERR,
-                     _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
       }
       else
       {
          bob.append( FAP_FIELD_NAME_OK, TRUE ) ;
-         bob.appendNull( FAP_FIELD_NAME_ERR ) ;
       }
 
       _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
@@ -639,8 +634,6 @@ INT32 _mongoSession::_replyOpQuery( MsgOpReply *replyHeader,
                bob.append( FAP_FIELD_NAME_OK,
                            0 == replyHeader->flags ? TRUE : FALSE ) ;
                bob.append( FAP_FIELD_NAME_CODE, replyHeader->flags ) ;
-               bob.append( FAP_FIELD_NAME_ERR,
-                           _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
                bob.appendElements( bsonBody ) ;
                objToSend = bob.obj() ;
                _outBuffer.write( objToSend ) ;

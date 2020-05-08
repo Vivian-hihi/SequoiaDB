@@ -54,7 +54,6 @@
 #define FAP_FIELD_NAME_OK                         "ok"
 #define FAP_FIELD_NAME_CODE                       "code"
 #define FAP_FIELD_NAME_ERRMSG                     "errmsg"
-#define FAP_FIELD_NAME_ERR                        "err"
 #define FAP_FIELD_NAME_DB                         "db"
 #define FAP_FIELD_NAME_COLLECTION                 "collection"
 #define FAP_FIELD_NAME_GROUP                      "group"

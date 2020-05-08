@@ -67,15 +67,12 @@ namespace fap
          if ( SDB_OK == rc )
          {
             bob.append( FAP_FIELD_NAME_OK, 1 ) ;
-            bob.appendNull( FAP_FIELD_NAME_ERR ) ;
          }
          if ( SDB_OK != rc && !err.isEmpty() )
          {
             bob.append( FAP_FIELD_NAME_OK, 0 ) ;
             bob.append( FAP_FIELD_NAME_CODE, rc ) ;
             bob.append( FAP_FIELD_NAME_ERRMSG,
-                        err.getStringField( OP_ERRDESP_FIELD) ) ;
-            bob.append( FAP_FIELD_NAME_ERR,
                         err.getStringField( OP_ERRDESP_FIELD) ) ;
          }
          buff = engine::rtnContextBuf( bob.obj() ) ;
@@ -90,7 +87,6 @@ namespace fap
          bob.append( FAP_FIELD_NAME_OK, 0 ) ;
          bob.append( FAP_FIELD_NAME_CODE, 59 ) ;
          bob.append( FAP_FIELD_NAME_ERRMSG, err.c_str() ) ;
-         bob.append( FAP_FIELD_NAME_ERR, err.c_str() ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
