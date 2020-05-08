@@ -18,8 +18,8 @@ function test ( testPara )
    //设置查询条件,构造valA在mcv中存在统计信息的场景
    //(不计算IO代价时,a以5为周期选入mcv中;计算IO代价时，a存入mcv的值为250，506，761,ab存入mcv的值为260，516，771)
    var conds = [{ a: { $et: 250 } }, { a: { $in: [250] } }, { a: { $all: [250] } }, { a: { $exists: 0 } }, { a: { $isnull: 1 } }];
-   var conds1 = [{ a: { $exists: 0 } }, { a: { $isnull: 1 } }];
-   var conds2 = [{ a: { $et: 250 } }, { a: { $in: [250] } }, { a: { $all: [250] } }];
+   var conds1 = [conds[3], conds[4]];
+   var conds2 = [conds[0], conds[1], conds[2]];
    var conds3 = [{ a: { $et: 260 } }, { a: { $in: [260] } }, { a: { $all: [260] } }];
    indexName = "a";
    indexName1 = "";
