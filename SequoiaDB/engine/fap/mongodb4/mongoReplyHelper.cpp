@@ -54,6 +54,7 @@ namespace fap
          bob.append( FAP_FIELD_NAME_LOCALTIME, 100 ) ;
          bob.append( FAP_FIELD_NAME_MAXWIREVERSION, FAP_MAX_WIRE_VERSION ) ;
          bob.append( FAP_FIELD_NAME_MINWIREVERSION, FAP_MIN_WIRE_VERSION ) ;
+         bob.append( FAP_FIELD_NAME_OK, 1 ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
@@ -146,6 +147,13 @@ namespace fap
          bson::BSONObjBuilder bob ;
          bob.append( FAP_FIELD_NAME_VERSION, FAP_MONGODB_VERSION ) ;
          bob.append( FAP_FIELD_NAME_OK, 1 ) ;
+         bson::BSONArrayBuilder sub(
+            bob.subarrayStart( FAP_FIELD_NAME_VERSIONARRAY ) ) ;
+         sub.append( 4 ) ;
+         sub.append( 2 ) ;
+         sub.append( 2 ) ;
+         sub.append( 0 ) ;
+         sub.done() ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 

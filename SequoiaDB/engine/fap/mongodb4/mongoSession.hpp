@@ -82,6 +82,10 @@ private:
    void  _formatConversion ( INT32 opType, BSONObj &obj ) ;
    INT32 _autoCreateCL() ;
    INT32 _autoCreateCS() ;
+   void  _buildFirstBatch( msgParser &parser, INT32 errCode,
+                           engine::rtnContextBuf &replyBuf ) ;
+   void  _buildNextBatch( msgParser &parser, INT32 errCode,
+                          engine::rtnContextBuf &replyBuf ) ;
 
 private:
    mongoConverter          _converter ;

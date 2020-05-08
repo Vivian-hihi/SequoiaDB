@@ -107,6 +107,7 @@
 #define FAP_FIELD_NAME_TOTALLINESWRITTEN          "totalLinesWritten"
 #define FAP_FIELD_NAME_LOG                        "log"
 #define FAP_FIELD_NAME_VERSION                    "version"
+#define FAP_FIELD_NAME_VERSIONARRAY               "versionArray"
 #define FAP_FIELD_NAME_VALUES                     "values"
 
 #define FAP_FIELD_VALUE_FAPMONGO                  "fap-mongo"

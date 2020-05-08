@@ -819,6 +819,7 @@ void _mongoSession::_handleResponse( const INT32 opType,
       bson::BSONObjBuilder bob ;
       bson::BSONObj obj( buff.data() ) ;
       bob.append( FAP_FIELD_NAME_N, obj.getIntField( FIELD_NAME_TOTAL ) ) ;
+      bob.append( FAP_FIELD_NAME_OK, 1 ) ;
       buff = engine::rtnContextBuf( bob.obj() ) ;
       _replyHeader.contextID = -1 ;
       _replyHeader.startFrom = 0 ;
@@ -887,49 +888,14 @@ void _mongoSession::_handleResponse( const INT32 opType,
              ( SDB_OK == _replyHeader.flags ||
                SDB_DMS_EOC == _replyHeader.flags ) )
    {
-      INT32 offset = 0 ;
-      bson::BSONObj batch ;
-      bson::BSONObj type ;
-      bson::BSONObjBuilder cursor ;
-      bson::BSONObjBuilder result ;
-
       if ( OP_GETMORE != opType )
       {
-         bson::BSONArrayBuilder sub(
-            result.subarrayStart( FAP_FIELD_NAME_FIRSTBATCH ) ) ;
-         while ( offset < buff.size() )
-         {
-            batch.init( buff.data() + offset ) ;
-            offset += ossRoundUpToMultipleX( batch.objsize(), 4 ) ;
-            _formatConversion( opType, batch ) ;
-            sub.append( batch ) ;
-         }
-         sub.done() ;
+         _buildFirstBatch( _converter.getParser(), _replyHeader.flags, buff ) ;
       }
       else
       {
-         bson::BSONArrayBuilder sub(
-            result.subarrayStart( FAP_FIELD_NAME_NEXTBATCH ) ) ;
-         if ( SDB_OK == _replyHeader.flags )
-         {
-            while ( offset < buff.size() )
-            {
-               batch.init( buff.data() + offset ) ;
-               offset += ossRoundUpToMultipleX( batch.objsize(), 4 ) ;
-               sub.append( batch ) ;
-            }
-         }
-         sub.done() ;
+         _buildNextBatch( _converter.getParser(), _replyHeader.flags, buff ) ;
       }
-
-      result.append( FAP_FIELD_NAME_NS,
-                     _converter.getParser().dataPacket().fullName.c_str() ) ;
-      result.append( FAP_FIELD_NAME_ID,
-                     (INT64)( _replyHeader.contextID + 1 ) ) ;
-
-      cursor.append( FAP_FIELD_NAME_CURSOR, result.obj() ) ;
-      cursor.append( FAP_FIELD_NAME_OK, 1 ) ;
-      buff = engine::rtnContextBuf( cursor.obj() ) ;
    }
 
    else if ( ( OP_INSERT == opType || OP_REMOVE == opType ||
@@ -1067,9 +1033,106 @@ void _mongoSession::_formatConversion ( INT32 opType, BSONObj &obj )
 
    else if ( OP_CMD_GET_CLS == opType )
    {
-      obj = BSON( FAP_FIELD_NAME_NAME <<
-                  obj.getStringField( FIELD_NAME_NAME ) <<
+      // { Name: "foo.bar" } => { name: "bar", type: "collection" }
+      const CHAR* clFullName = obj.getStringField( FIELD_NAME_NAME ) ;
+      const CHAR* clShortName = ossStrstr( clFullName, "." ) + 1 ;
+      obj = BSON( FAP_FIELD_NAME_NAME << clShortName <<
                   FAP_FIELD_NAME_TYPE << FAP_FIELD_NAME_COLLECTION ) ;
    }
+
+}
+
+void  _mongoSession::_buildFirstBatch( msgParser &parser, INT32 errCode,
+                                       engine::rtnContextBuf &replyBuf )
+{
+   // {xxx}, {xxx}... =>
+   // { cursor: { firstBatch: [ {xxx}, {xxx}... ], id: 0, ns: "foo.bar" },
+   //   ok: 1 }
+   mongoDataPacket packet = parser.dataPacket() ;
+   BSONObjBuilder resultBuilder ;
+   BSONObjBuilder cursorBuilder ;
+   INT32 opType = parser.currentOperation() ;
+   string ns ;
+
+   bson::BSONArrayBuilder arr(
+      cursorBuilder.subarrayStart( FAP_FIELD_NAME_FIRSTBATCH ) ) ;
+   if ( SDB_DMS_EOC == errCode )
+   {
+      // do nothing
+   }
+   else
+   {
+      INT32 offset = 0 ;
+      while ( offset < replyBuf.size() )
+      {
+         BSONObj obj( replyBuf.data() + offset ) ;
+         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         _formatConversion( opType, obj ) ;
+         arr.append( obj ) ;
+      }
+   }
+   arr.done() ;
+
+   if ( OP_CMD_GET_INDEX == opType )
+   {
+      // listIndexes reply:   { ... ns: "foo.$cmd.listIndexes.bar" ... }
+      ns = packet.csName ;
+      ns += ".$cmd.listIndexes." ;
+      ns += packet.clName ;
+   }
+   else if ( OP_CMD_GET_CLS == opType )
+   {
+      // listCL reply:   { ... ns: "foo.$cmd.listCollections" ... }
+      ns = packet.csName ;
+      ns += ".$cmd.listCollections" ;
+   }
+   else
+   {
+      // real query reply:   { ... ns: "foo.bar" ... }
+      ns = packet.fullName ;
+   }
+
+   cursorBuilder.append( FAP_FIELD_NAME_NS, ns.c_str() ) ;
+   cursorBuilder.append( FAP_FIELD_NAME_ID,
+                         (INT64)( _replyHeader.contextID + 1 ) ) ;
+   resultBuilder.append( FAP_FIELD_NAME_CURSOR, cursorBuilder.obj() ) ;
+   resultBuilder.append( FAP_FIELD_NAME_OK, 1 ) ;
+   replyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
+
+}
+
+void  _mongoSession::_buildNextBatch( msgParser &parser, INT32 errCode,
+                                      engine::rtnContextBuf &replyBuf )
+{
+   // {xxx}, {xxx}... =>
+   // { cursor: { nextBatch: [{xxx}, {xxx}...], id: 0, ns: "foo.bar" },
+   //   ok: 1 }
+   mongoDataPacket packet = parser.dataPacket() ;
+   bson::BSONObjBuilder resultBuilder ;
+   bson::BSONObjBuilder cursorBuilder ;
+
+   bson::BSONArrayBuilder arr( cursorBuilder.subarrayStart( "nextBatch" ) ) ;
+   INT32 offset = 0 ;
+   if ( SDB_DMS_EOC == errCode )
+   {
+      // do nothing
+   }
+   else
+   {
+      while ( offset < replyBuf.size() )
+      {
+         bson::BSONObj obj( replyBuf.data() + offset ) ;
+         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         arr.append( obj ) ;
+      }
+   }
+   arr.done() ;
+
+   cursorBuilder.append( FAP_FIELD_NAME_NS, packet.fullName.c_str() ) ;
+   cursorBuilder.append( FAP_FIELD_NAME_ID,
+                         (INT64)( _replyHeader.contextID + 1 ) ) ;
+   resultBuilder.append( FAP_FIELD_NAME_CURSOR, cursorBuilder.obj() ) ;
+   resultBuilder.append( FAP_FIELD_NAME_OK, 1 ) ;
+   replyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
 
 }
