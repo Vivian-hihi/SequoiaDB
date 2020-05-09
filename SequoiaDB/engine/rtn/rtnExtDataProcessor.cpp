@@ -215,10 +215,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSDML, "_rtnExtDataProcessor::processDML" )
    INT32 _rtnExtDataProcessor::processDML( BSONObj &oprRecord,
                                            pmdEDUCB *cb, SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSDML ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
       rc = _spaceCheck( oprRecord.objsize() ) ;
@@ -232,6 +234,7 @@ namespace engine
       _needUpdateLSN = TRUE ;
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PROCESSDML, rc ) ;
       return rc ;
    error:
       goto done ;

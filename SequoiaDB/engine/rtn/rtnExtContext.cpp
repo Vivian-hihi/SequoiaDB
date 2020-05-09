@@ -348,11 +348,13 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_OPEN, "_rtnExtDataOprCtx::open" )
    INT32 _rtnExtDataOprCtx::open( rtnExtDataProcessorMgr *processorMgr,
                                   const CHAR *extName, pmdEDUCB *cb,
                                   SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_OPEN ) ;
 
       rtnExtDataProcessor *processor = NULL ;
       SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
@@ -388,16 +390,17 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX_OPEN, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX_DONE, "_rtnExtDataOprCtx::_onDone" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAOPRCTX__ONDONE, "_rtnExtDataOprCtx::_onDone" )
    INT32 _rtnExtDataOprCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_DONE ) ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX__ONDONE ) ;
       for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end();
             ++itr )
       {
@@ -406,7 +409,7 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX_DONE, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAOPRCTX__ONDONE, rc ) ;
       return rc ;
    error:
       goto done ;
