@@ -22,11 +22,7 @@ function test ()
    cl.createIndex( idxNamea, { a: 1 } );
    cl.createIndex( idxNameb, { b: -1 } );
 
-   var field = "";
-   for( var i = 0; i < 1024 * 10; i++ )
-   {
-      field += "a";
-   }
+   var field = new Array( 1024 * 10 ).toString();
 
    try
    {
