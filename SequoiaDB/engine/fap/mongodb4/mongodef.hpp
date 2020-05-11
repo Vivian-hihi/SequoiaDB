@@ -87,7 +87,6 @@
 #define FAP_FIELD_NAME_TMP_ID_FIELD               "tmp_id_field"
 #define FAP_FIELD_NAME_INDEXES                    "indexes"
 #define FAP_FIELD_NAME_INDEX                      "index"
-#define FAP_FIELD_NAME_COMMITQUORUM               "commitQuorum"
 #define FAP_FIELD_NAME_KEY                        "key"
 #define FAP_FIELD_NAME_PAYLOAD                    "payload"
 #define FAP_FIELD_NAME_DONE                       "done"

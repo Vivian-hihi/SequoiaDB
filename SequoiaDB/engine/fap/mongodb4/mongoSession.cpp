@@ -1018,8 +1018,6 @@ void _mongoSession::_formatConversion ( INT32 opType, BSONObj &obj )
       {
          formatConversion.append( IXM_FIELD_NAME_UNIQUE,
                                   obj.getBoolField( IXM_FIELD_NAME_UNIQUE ) ) ;
-         formatConversion.append( IXM_FIELD_NAME_ENFORCED,
-                                  obj.getBoolField( IXM_FIELD_NAME_ENFORCED ) ) ;
       }
 
       formatConversion.append( IXM_FIELD_NAME_KEY,

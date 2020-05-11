@@ -1129,7 +1129,7 @@ INT32 createIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    mongoDataPacket &packet = parser.dataPacket() ;
    const CHAR *cmdName     = CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX ;
    bson::BSONObjBuilder bob, indexBob ;
-   bson::BSONObj indexesArr, indexes, commitQuorum, empty ;
+   bson::BSONObj indexesArr, indexes, empty ;
    bson::BSONObj::iterator indexesIter ;
    BOOLEAN enforced = FALSE ;
    BOOLEAN unique = FALSE ;
@@ -1162,11 +1162,6 @@ INT32 createIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          {
             indexesArr = document.getObjectField( FAP_FIELD_NAME_INDEXES ) ;
          }
-         if ( document.hasField( FAP_FIELD_NAME_COMMITQUORUM ) )
-         {
-            commitQuorum =
-               document.getObjectField( FAP_FIELD_NAME_COMMITQUORUM ) ;
-         }
       }
    }
 
@@ -1188,7 +1183,7 @@ INT32 createIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    indexBob.append( IXM_FIELD_NAME_NAME,
                     indexes.getStringField( IXM_FIELD_NAME_NAME ) ) ;
 
-   unique = commitQuorum.getBoolField( IXM_FIELD_NAME_UNIQUE ) ;
+   unique = indexes.getBoolField( IXM_FIELD_NAME_UNIQUE ) ;
    if ( unique )
    {
       enforced = TRUE ;
