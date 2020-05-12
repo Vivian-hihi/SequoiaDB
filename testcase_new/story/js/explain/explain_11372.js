@@ -26,7 +26,7 @@ function test ()
 
    // 生成随机数
    var rd = new commDataGenerator();
-   var value = rd.getRecords( 15000, "int", ["a", "b", "c"] );
+   var value = rd.getRecords( 11000, "int", ["a", "b", "c"] );
    cl.insert( value );
 
    db.analyze();
@@ -47,7 +47,7 @@ function test ()
    var expScanType = "ixscan";
    checkExplain( cl, cond, expIndexName, expScanType );
 
-   var value = rd.getRecords( 15000, "int", ["a", "b", "c"] );
+   var value = rd.getRecords( 11000, "int", ["a", "b", "c"] );
    cl.insert( value );
 
    db.analyze();

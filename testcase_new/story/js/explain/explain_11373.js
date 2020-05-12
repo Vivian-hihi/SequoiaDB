@@ -14,6 +14,7 @@ function test ()
    var idxNamea = "index_a_11373";
    var idxNameb = "index_b_11373";
    var idxNamec = "index_c_11373";
+   var tbIdx = "";
 
    commDropCL( db, COMMCSNAME, clName );
 
@@ -25,11 +26,12 @@ function test ()
 
    // 生成随机数
    var rd = new commDataGenerator();
-   var value = rd.getRecords( 3000, "int", ["a", "b", "c"] );
+   var value = rd.getRecords( 11000, "int", ["a", "b", "c"] );
    cl.insert( value );
 
    db.analyze();
 
+   // 不计算io代价
    var cond = { "a": { "$gt": 1 } };
    var expIndexName = idxNameb;
    var expScanType = "ixscan";
@@ -47,6 +49,31 @@ function test ()
    var expScanType = "ixscan";
    var sortCond = { "a": -1 };
    checkExplain( cl, cond, expIndexName, expScanType, sortCond );
+
+   var value = rd.getRecords( 11000, "int", ["a", "b", "c"] );
+   cl.insert( value );
+
+   db.analyze();
+
+   // 计算io代价
+   var cond = { "a": { "$gt": 1 } };
+   var expIndexName = tbIdx;
+   var expScanType = "tbscan";
+   var sortCond = { "b": 1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
+
+   var cond = { "b": { "$gt": 1 } };
+   var expIndexName = tbIdx;
+   var expScanType = "tbscan";
+   var sortCond = { "c": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
+
+   var cond = { "c": { "$gt": 1 } };
+   var expIndexName = tbIdx;
+   var expScanType = "tbscan";
+   var sortCond = { "a": -1 };
+   checkExplain( cl, cond, expIndexName, expScanType, sortCond );
+
 
    commDropCL( db, COMMCSNAME, clName, false );
 }

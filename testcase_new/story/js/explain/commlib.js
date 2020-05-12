@@ -14,13 +14,17 @@ function testExplain ( conds, dbcl, indexName, scanType )
    }
 }
 
-function checkExplain ( dbcl, cond, expIndexName, expScanType, sortCond )
+function checkExplain ( dbcl, cond, expIndexName, expScanType, sortCond, hintCond )
 {
    if( sortCond == undefined )
    {
       sortCond = {};
    }
-   var explainObj = dbcl.find( cond ).sort( sortCond ).explain().next().toObj();
+   if( hintCond == undefined )
+   {
+      hintCond = {};
+   }
+   var explainObj = dbcl.find( cond ).sort( sortCond ).hint( hintCond ).explain().next().toObj();
    var IndexName = explainObj.IndexName;
    var ScanType = explainObj.ScanType;
    if( expIndexName !== IndexName || expScanType !== ScanType )
