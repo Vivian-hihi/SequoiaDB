@@ -67,11 +67,19 @@ protected:
    virtual void  _onDetach() {}
 
 protected:
+   INT32 _processMsg( const CHAR *pMsg, const _mongoCommand *pCommand ) ;
    INT32 _processMsg( const CHAR *pMsg ) ;
    INT32 _onMsgBegin( MsgHeader *msg ) ;
    INT32 _onMsgEnd( INT32 result, MsgHeader *msg ) ;
-   INT32 _reply( INT32 errCode,
-                 _mongoCommand* pCommand,
+   INT32 _recvMsg( CHAR *&pMsg,
+                   BOOLEAN &recvFromEvent,
+                   engine::pmdEDUEvent &event ) ;
+   INT32 _recvFromSocket( CHAR *&pMsg, BOOLEAN &recvSomething ) ;
+   INT32 _buildResponse( _mongoCommand *pCommand,
+                         MsgOpReply &replyHeader,
+                         engine::rtnContextBuf &_contextBuff,
+                         CHAR *&pRes ) ;
+   INT32 _reply( _mongoCommand *pCommand,
                  MsgOpReply &replyHeader,
                  engine::rtnContextBuf &_contextBuff ) ;
 
@@ -80,7 +88,10 @@ private:
    INT32 _setSeesionAttr() ;
    INT32 _autoCreateCS( const CHAR *csName ) ;
    INT32 _autoCreateCL( const CHAR *clFullName ) ;
-   BOOLEAN _needGetMore( MONGO_CMD_TYPE commandType ) ;
+   BOOLEAN _isOwnedCursor( const _mongoCommand *pCommand,
+                           UINT64 &ownedEDUID ) ;
+   INT32 _manageCursor( const _mongoCommand *pCommand,
+                        const MsgOpReply &sdbReply ) ;
 
 private:
    MsgOpReply              _replyHeader ;
@@ -89,9 +100,11 @@ private:
    BSONObj                 _errorInfo ;
 
    msgBuffer               _inBuffer ;
-   msgBuffer               _outBuffer ;
    msgBuffer               _tmpBuffer ;
    engine::IResource      *_resource ;
+
+   std::set<INT64>         _cursorList ;
+   BOOLEAN                 _needWaitResponse ;
 } ;
 
 typedef _mongoSession mongoSession ;

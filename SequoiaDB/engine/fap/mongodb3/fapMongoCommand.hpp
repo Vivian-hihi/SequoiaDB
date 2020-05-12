@@ -398,7 +398,10 @@ class _mongoGetmoreCommand : public _mongoCommand
 
       virtual const CHAR* csName() const { return _csName.c_str() ; }
       virtual const CHAR* clFullName() const { return _clFullName.c_str() ; }
+
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+
+      INT64 cursorID() const { return _cursorID ; }
 
    private:
       INT32 _init( const _mongoGetmoreRequest *pReq ) ;
@@ -454,6 +457,7 @@ class _mongoKillCursorCommand : public _mongoCommand
       virtual const CHAR* csName() const          { return NULL ; }
       virtual const CHAR* clFullName() const      { return NULL ; }
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+      const vector<INT64>& cursorList() const     { return _cursorList ; }
 
    private:
       vector<INT64> _cursorList ;

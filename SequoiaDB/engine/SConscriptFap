@@ -18,7 +18,8 @@ fapMongo3Files = [
       "fap/mongodb3/mongoSession.cpp",
       "fap/mongodb3/msgBuffer.cpp",
       "fap/mongodb3/fapMongoMessage.cpp",
-      "fap/mongodb3/fapMongoCommand.cpp"
+      "fap/mongodb3/fapMongoCommand.cpp",
+      "fap/mongodb3/fapMongoCursor.cpp"
       ]
       
 fapMongo4Files = [

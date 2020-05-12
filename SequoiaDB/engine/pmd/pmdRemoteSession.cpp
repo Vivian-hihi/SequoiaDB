@@ -1152,7 +1152,41 @@ namespace engine
          }
          else
          {
-            gotEvent = _pEDUCB->waitEvent( event, timeout ) ;
+            INT64 waitTime = 0 ;
+            ossQueue< pmdEDUEvent > tmpQue ;
+            gotEvent = FALSE ;
+            timeout = timeout < 0 ? 0x7FFFFFFF : timeout ;
+
+            while ( !_pEDUCB->isInterrupted() )
+            {
+               waitTime = timeout < OSS_ONE_SEC ? timeout : OSS_ONE_SEC ;
+               if ( !_pEDUCB->waitEvent( event, waitTime ) )
+               {
+                  timeout -= waitTime ;
+                  if ( timeout <= 0 )
+                  {
+                     break ;
+                  }
+                  continue ;
+               }
+               if ( PMD_EDU_EVENT_MSG == event._eventType &&
+                    event._userData >> 63 == 1 )
+               {
+                  // If first bit of userdata is 1, it is mongo message,
+                  // just ignore it.
+                  tmpQue.push( event ) ;
+                  continue ;
+               }
+               gotEvent = TRUE ;
+               break ;
+            }
+
+            while ( !tmpQue.empty() )
+            {
+               pmdEDUEvent tmpData ;
+               tmpQue.try_pop( tmpData ) ;
+               _pEDUCB->postEvent( tmpData ) ;
+            }
          }
 
          // wait event
