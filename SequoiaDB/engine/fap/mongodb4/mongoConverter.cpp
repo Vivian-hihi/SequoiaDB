@@ -90,16 +90,25 @@ INT32 mongoConverter::convert( msgBuffer &out )
       goto error ;
    }
 
-   rc = cmd->convert( _parser ) ;
-   if ( SDB_OK != rc )
+   try
    {
-      goto error ;
-   }
+      rc = cmd->convert( _parser ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
 
-   rc = cmd->buildMsg( _parser, out ) ;
-   if ( SDB_OK != rc )
+      rc = cmd->buildMsg( _parser, out ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   }
+   catch ( std::exception &e )
    {
-      goto error ;
+      PD_RC_CHECK( SDB_SYS, PDERROR,
+                   "Failed to process command: %s, exception occurred: %s",
+                   cmd->name(), e.what() ) ;
    }
 
 done:

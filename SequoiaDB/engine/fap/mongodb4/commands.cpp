@@ -983,8 +983,14 @@ INT32 aggregateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    while ( it.more() )
    {
       bson::BSONElement ele = it.next() ;
-      bson::BSONObj oneStage = ele.Obj() ;
 
+      if ( ele.type() != Object )
+      {
+         sdbMsg.write( ele.rawdata(), ele.size(), TRUE ) ;
+         continue ;
+      }
+
+      bson::BSONObj oneStage = ele.Obj() ;
       if ( 0 != ossStrcmp( oneStage.firstElement().fieldName(), "$group" ) )
       {
          sdbMsg.write( oneStage, TRUE ) ;
