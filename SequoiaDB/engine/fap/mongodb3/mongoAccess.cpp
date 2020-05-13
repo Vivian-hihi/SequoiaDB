@@ -41,8 +41,11 @@
 #include "mongoSession.hpp"
 
 namespace engine {
-   PMD_EXPORT_ACCESSPROTOCOL_DLL( mongoAccess )
+   PMD_EXPORT_ACCESSPROTOCOL_DLL( fap::mongoAccess )
 }
+
+namespace fap
+{
 
 INT32 _mongoAccess::init( engine::IResource *pResource )
 {
@@ -109,4 +112,6 @@ void _mongoAccess::_release()
       // should not delete here, just make it point to nullptr
       _resource = NULL ;
    }
+}
+
 }

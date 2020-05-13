@@ -42,6 +42,9 @@
 #include "sdbInterface.hpp"
 #include "ossFeat.hpp"
 
+namespace fap
+{
+
 #define ACCESS_FOR_MONGODB_CLIENT "server for mongodb client"
 #define PORT_OFFSET 7
 
@@ -82,4 +85,5 @@ private:
 
 typedef _mongoAccess mongoAccess ;
 
+}
 #endif // _SDB_MONGO_ACCESS_HPP_

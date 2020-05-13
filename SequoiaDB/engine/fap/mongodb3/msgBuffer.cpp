@@ -36,7 +36,6 @@
 
 *******************************************************************************/
 #include "msgBuffer.hpp"
-#include "util.hpp"
 
 INT32 _msgBuffer::alloc( const UINT32 size )
 {

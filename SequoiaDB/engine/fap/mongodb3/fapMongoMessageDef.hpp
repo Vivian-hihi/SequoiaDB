@@ -16,7 +16,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = mongoConverter.hpp
+   Source File Name = fapMongoMessageDef.hpp
 
    Descriptive Name =
 
@@ -28,59 +28,31 @@
    Restrictions: N/A
 
    Change Activity:
-   defect Date        Who Description
-   ====== =========== === ==============================================
-          01/27/2015  LZ  Initial Draft
+   defect Date        Who     Description
+   ====== =========== ======= ==============================================
+          2020/04/21  Ting YU Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
-#ifndef _SDB_MONGO_CONVERTER_HPP_
-#define _SDB_MONGO_CONVERTER_HPP_
+#ifndef _SDB_MONGO_MESSAGE_DEF_HPP_
+#define _SDB_MONGO_MESSAGE_DEF_HPP_
 
-#include "util.hpp"
-#include "oss.hpp"
-#include "parser.hpp"
-#include "commands.hpp"
-#include "msg.hpp"
-
-class mongoConverter : public baseConverter
+namespace fap
 {
-public:
-   mongoConverter()
-   {
-      _bigEndian = checkBigEndian() ;
-      _parser.setEndian( _bigEndian ) ;
-   }
 
-   ~mongoConverter()
-   {
-   }
+const CHAR* const MONGO_DOT =                   "." ;
+const CHAR* const MONGO_FIELD_NAME_CMD =        ".$cmd" ;
+const CHAR* const MONGO_FIELD_NAME_DOCUMENTS =  "documents" ;
+const CHAR* const MONGO_FIELD_NAME_DELETES =    "deletes" ;
+const CHAR* const MONGO_FIELD_NAME_UPDATES =    "updates" ;
+const CHAR* const MONGO_FIELD_NAME_INDEXES =    "indexes" ;
+const CHAR* const MONGO_FIELD_NAME_INDEX =      "index" ;
+const CHAR* const MONGO_FIELD_NAME_CURSORS =    "cursors" ;
+const CHAR* const MONGO_FIELD_NAME_BATCHSIZE =  "batchSize" ;
+const CHAR* const MONGO_FIELD_NAME_COLLECTION = "collection" ;
+const CHAR* const MONGO_FIELD_VALUE_NODEJS =    "nodejs" ;
 
-   BOOLEAN isBigEndian() const
-   {
-      return _bigEndian ;
-   }
 
-   const INT32 getOpType()
-   {
-      return _parser.currentOperation() ;
-   }
-
-   msgParser& getParser()
-   {
-      return _parser ;
-   }
-
-   // virtual function for baseConverter
-   virtual INT32 convert( msgBuffer &out ) ;
-
-   INT32 convertReply( const MsgOpReply &replyFromEngine,
-                       mongoMsgReply &replyToMongo,
-                       engine::rtnContextBuf &replyBuf ) ;
-
-private:
-   BOOLEAN _bigEndian ;
-   msgParser _parser ;
-};
+}
 #endif

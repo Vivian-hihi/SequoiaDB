@@ -35,9 +35,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include "util.hpp"
-#include "mongodef.hpp"
-#include "mongoConverter.hpp"
 #include "mongoSession.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pmdEDU.hpp"
@@ -49,7 +46,46 @@
 #include "rtn.hpp"
 #include "pmd.hpp"
 #include "sdbInterface.hpp"
-#include "mongoReplyHelper.hpp"
+
+namespace fap
+{
+
+static BOOLEAN checkBigEndian()
+{
+   BOOLEAN bigEndian = FALSE ;
+   union
+   {
+      unsigned int i ;
+      unsigned char s[4] ;
+   } c ;
+
+   c.i = 0x12345678 ;
+   if ( 0x12 == c.s[0] )
+   {
+      bigEndian = TRUE ;
+   }
+
+   return bigEndian ;
+}
+
+static void buildGetMoreMsg( UINT64 requestID, INT64 contextID, msgBuffer &out )
+{
+   if ( !out.empty() )
+   {
+      out.zero() ;
+   }
+   out.reserve( sizeof( MsgOpGetMore ) ) ;
+   out.advance( sizeof( MsgOpGetMore ) ) ;
+
+   MsgOpGetMore *getmore = (MsgOpGetMore *)out.data() ;
+   getmore->header.messageLength = sizeof( MsgOpGetMore ) ;
+   getmore->header.opCode = MSG_BS_GETMORE_REQ ;
+   getmore->header.requestID = requestID ;
+   getmore->header.routeID.value = 0 ;
+   getmore->header.TID = 0 ;
+   getmore->contextID = contextID ;
+   getmore->numToReturn = -1 ;
+}
 
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
@@ -99,15 +135,15 @@ INT32 _mongoSession::run()
    INT32 rc                     = SDB_OK ;
    BOOLEAN bigEndian            = FALSE ;
    UINT32 msgSize               = 0 ;
-   // reservedFlag should not included in msg header len
-   UINT32 headerLen             = sizeof( mongoMsgHeader ) - sizeof( INT32 ) ;
+   UINT32 headerLen             = sizeof( mongoMsgHeader ) ;
    engine::pmdEDUMgr *pmdEDUMgr = NULL ;
    CHAR *pBuff                  = NULL ;
    const CHAR *pInMsg           = NULL ;
    INT32 orgOpCode              = 0 ;
    BOOLEAN hasBuildGetMore      = FALSE ;
-   INT32 opType                 = OP_INVALID ;
+   _mongoCommand* pCommand      = NULL ;
    engine::monDBCB *mondbcb     = engine::pmdGetKRCB()->getMonDBCB() ;
+   mongoSessionCtx sessCtx ;
 
    if ( !_pEDUCB )
    {
@@ -143,8 +179,7 @@ INT32 _mongoSession::run()
       {
          PD_LOG( PDERROR, "Session[%s] recv msg size[%d] is less than "
                  "mongoMsgHeader size[%d] or more than max msg size[%d]",
-                 sessionName(), msgSize, sizeof( mongoMsgHeader ),
-                 SDB_MAX_MSG_LENGTH ) ;
+                 sessionName(), msgSize, headerLen, SDB_MAX_MSG_LENGTH ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -167,17 +202,6 @@ INT32 _mongoSession::run()
       }
       pBuff[ msgSize ] = 0 ;
 
-      // convert message
-      _resetBuffers() ;
-      _converter.loadFrom( pBuff, msgSize ) ;
-
-      rc = _converter.convert( _inBuffer ) ;
-      PD_CHECK( SDB_OK == rc || SDB_OPTION_NOT_SUPPORT == rc,
-                rc, error, PDERROR,
-                "Session[%s] failed to convert message, rc: %d",
-                sessionName(), rc ) ;
-      opType = _converter.getOpType() ;
-
       // activate edu
       _pEDUCB->incEventCount() ;
       mondbcb->addReceiveNum() ;
@@ -187,12 +211,19 @@ INT32 _mongoSession::run()
                    "Session[%s] activate edu failed, rc: %d",
                    sessionName(), rc ) ;
 
-      // process message
-      if ( _preProcessMsg( _converter.getParser(), _contextBuff ) )
+      // convert message to command
+      _resetBuffers() ;
+      rc = mongoGetAndInitCommand( pBuff, &pCommand, sessCtx, _inBuffer ) ;
+      PD_CHECK( SDB_OK == rc, rc, reply, PDERROR,
+                "Session[%s] failed to get and init command, rc: %d",
+                sessionName(), rc ) ;
+
+      if ( !pCommand->needProcessByEngine() )
       {
          goto reply ;
       }
 
+      // process message
       pInMsg = _inBuffer.data() ;
       orgOpCode = ((MsgHeader*)pInMsg)->opCode ;
       hasBuildGetMore = FALSE ;
@@ -203,9 +234,9 @@ INT32 _mongoSession::run()
          // auto create cs/cl
          if ( SDB_DMS_CS_NOTEXIST == _replyHeader.flags )
          {
-            if ( OP_CMD_CREATE == opType )
+            if ( CMD_COLLECTION_CREATE == pCommand->type() )
             {
-               if ( SDB_OK == _autoCreateCS() )
+               if ( SDB_OK == _autoCreateCS( pCommand->csName() ) )
                {
                   ((MsgHeader*)pInMsg)->opCode = orgOpCode ;
                   continue ;
@@ -214,11 +245,12 @@ INT32 _mongoSession::run()
          }
          else if ( SDB_DMS_NOTEXIST == _replyHeader.flags )
          {
-            if ( OP_INSERT == opType || OP_ENSURE_INDEX == opType ||
-                 ( OP_UPDATE == opType &&
-                 ( ((MsgOpUpdate*)_inBuffer.data())->flags & FLG_UPDATE_UPSERT ) ) )
+            if ( CMD_INSERT == pCommand->type() ||
+                 CMD_INDEX_CREATE == pCommand->type() ||
+                 ( CMD_UPDATE == pCommand->type() &&
+                 ((_mongoUpdateCommand*)pCommand)->isUpsert()) )
             {
-               if ( SDB_OK == _autoCreateCL() )
+               if ( SDB_OK == _autoCreateCL( pCommand->clFullName() ) )
                {
                   ((MsgHeader*)pInMsg)->opCode = orgOpCode ;
                   continue ;
@@ -227,11 +259,10 @@ INT32 _mongoSession::run()
          }
          else if ( SDB_OK == _replyHeader.flags )
          {
-            if ( !hasBuildGetMore && _needGetMore( opType ) )
+            if ( !hasBuildGetMore && _needGetMore( pCommand->type() ) )
             {
-               fap::mongo::buildGetMoreMsg( _inBuffer,
-                                            _replyHeader.header.requestID,
-                                            _replyHeader.contextID ) ;
+               buildGetMoreMsg( _replyHeader.header.requestID,
+                                _replyHeader.contextID, _inBuffer ) ;
                hasBuildGetMore = TRUE ;
                continue ;
             }
@@ -240,22 +271,14 @@ INT32 _mongoSession::run()
          break ;
       }
 
+      // reply to mongo client
    reply:
-      {
-      // build response
-      mongoMsgReply replyToMongo ;
-      INT32 rcTmp = SDB_OK ;
-      rc = _converter.convertReply( _replyHeader, replyToMongo, _contextBuff ) ;
+      rc = _reply( rc, pCommand, _replyHeader, _contextBuff ) ;
       PD_RC_CHECK( rc, PDERROR,
-                   "Session[%s] failed to convert reply, rc: %d",
+                   "Session[%s] failed to reply, rc: %d",
                    sessionName(), rc ) ;
 
-      // send response
-      rcTmp = _reply( replyToMongo, _contextBuff.data(), _contextBuff.size() ) ;
-      PD_RC_CHECK( rcTmp, PDERROR,
-                   "Session[%s] failed to send response, rc: %d",
-                   sessionName(), rcTmp ) ;
-      }
+      mongoReleaseCommand( &pCommand ) ;
       _contextBuff.release() ;
 
       // wait edu
@@ -266,19 +289,22 @@ INT32 _mongoSession::run()
    }
 
 done:
+   if ( pCommand )
+   {
+      mongoReleaseCommand( &pCommand ) ;
+   }
    disconnect() ;
    return rc ;
 error:
    goto done ;
 }
 
-INT32 _mongoSession::_autoCreateCS()
+INT32 _mongoSession::_autoCreateCS( const CHAR* csName )
 {
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
-   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
    const CHAR *cmdName     = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE ;
-   bson::BSONObj obj       = BSON( FIELD_NAME_NAME << packet.csName <<
+   bson::BSONObj obj       = BSON( FIELD_NAME_NAME << csName <<
                                    FIELD_NAME_PAGE_SIZE << 65536 ) ;
    bson::BSONObj empty ;
 
@@ -312,13 +338,13 @@ INT32 _mongoSession::_autoCreateCS()
    {
       PD_LOG( PDEVENT,
               "Session[%s]: Create collection space[%s] automatically",
-              sessionName(), packet.csName.c_str() ) ;
+              sessionName(), csName ) ;
    }
    else
    {
       PD_LOG( PDWARNING,
               "Session[%s]: failed to create collection space[%s] automatically"
-              ", rc: %d", sessionName(), packet.csName.c_str(), rc ) ;
+              ", rc: %d", sessionName(), csName, rc ) ;
       if ( SDB_DMS_CS_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -328,13 +354,12 @@ INT32 _mongoSession::_autoCreateCS()
    return rc ;
 }
 
-INT32 _mongoSession::_autoCreateCL()
+INT32 _mongoSession::_autoCreateCL( const CHAR* clFullName )
 {
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
-   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
    const CHAR *cmdName     = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION ;
-   bson::BSONObj obj       = BSON( FIELD_NAME_NAME << packet.fullName.c_str() );
+   bson::BSONObj obj       = BSON( FIELD_NAME_NAME << clFullName );
    bson::BSONObj empty ;
 
    while( TRUE )
@@ -366,7 +391,9 @@ INT32 _mongoSession::_autoCreateCL()
       rc = _processMsg( (CHAR*)query ) ;
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
-         rc = _autoCreateCS() ;
+         string csName ;
+         csName.assign( clFullName, ossStrstr( clFullName, "." ) - clFullName ) ;
+         rc = _autoCreateCS( csName.c_str() ) ;
          if ( rc )
          {
             break ;
@@ -382,13 +409,13 @@ INT32 _mongoSession::_autoCreateCL()
    {
       PD_LOG( PDEVENT,
               "Session[%s]: Create collection[%s] automatically",
-              sessionName(), packet.fullName.c_str() ) ;
+              sessionName(), clFullName ) ;
    }
    else
    {
       PD_LOG( PDWARNING,
               "Session[%s]: failed to create collection[%s] automatically"
-              ", rc: %d", sessionName(), packet.fullName.c_str(), rc ) ;
+              ", rc: %d", sessionName(), clFullName, rc ) ;
       if ( SDB_DMS_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -398,14 +425,14 @@ INT32 _mongoSession::_autoCreateCL()
    return rc ;
 }
 
-BOOLEAN _mongoSession::_needGetMore( INT32 opType )
+BOOLEAN _mongoSession::_needGetMore( MONGO_CMD_TYPE opType )
 {
-   if ( OP_CMD_COUNT     == opType ||
-        OP_CMD_GET_INDEX == opType ||
-        OP_CMD_GET_CLS   == opType ||
-        OP_CMD_AGGREGATE == opType ||
-        OP_CMD_GET_DBS   == opType ||
-        OP_CMD_DISTINCT  == opType )
+   if ( CMD_COUNT           == opType ||
+        CMD_LIST_INDEX      == opType ||
+        CMD_LIST_COLLECTION == opType ||
+        CMD_AGGREGATE       == opType ||
+        CMD_LIST_DATABASE   == opType ||
+        CMD_DISTINCT        == opType )
    {
       if ( -1 != _replyHeader.contextID )
       {
@@ -505,89 +532,53 @@ INT32 _mongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )
    return SDB_OK ;
 }
 
-INT32 _mongoSession::_reply( mongoMsgReply &replyHeader,
-                             const CHAR *pBody,
-                             INT32 bodyLen )
+INT32 _mongoSession::_reply( INT32 errCode,
+                             _mongoCommand* pCommand,
+                             MsgOpReply &replyHeader,
+                             engine::rtnContextBuf &_contextBuff )
 {
    INT32 rc = SDB_OK ;
+   _mongoResponseBuffer headerBuf ;
 
-   if ( OP_KILLCURSORS == _converter.getOpType() )
+   // build response
+   if ( errCode )
    {
-      // should not reply any msg
-      goto done;
+      bson::BSONObjBuilder bob ;
+      bob.append( "ok", 0 ) ;
+      bob.append( "code",  errCode ) ;
+      bob.append( "errmsg", getErrDesp( errCode ) ) ;
+      _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
+      _replyHeader.numReturned = 1 ;
+      _replyHeader.flags = errCode ;
    }
 
-   if ( replyHeader.nReturned > 1 )
-   {
-      INT32 offset = 0 ;
-      while ( offset < bodyLen )
-      {
-         bson::BSONObj obj( pBody + offset ) ;
-         _outBuffer.write( obj.objdata(), obj.objsize() ) ;
-         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
-      }
-      pBody = _outBuffer.data() ;
-      bodyLen = _outBuffer.size() ;
-   }
-   replyHeader.header.msgLen = sizeof( mongoMsgReply ) + bodyLen ;
-
-   rc = sendData( (CHAR *)&replyHeader, sizeof( mongoMsgReply ) ) ;
+   rc = mongoPostRunCommand( pCommand, _replyHeader, _contextBuff, headerBuf ) ;
    PD_RC_CHECK( rc, PDERROR,
-                "Session[%s] failed to send response header, rc: %d",
+                "Session[%s] failed to build response, rc: %d",
                 sessionName(), rc ) ;
 
-   if ( pBody )
+   // send response
+   if ( headerBuf.usedSize > 0 )
    {
-      rc = sendData( pBody, bodyLen ) ;
+      INT32 rcTmp = SDB_OK ;
+      rcTmp = sendData( (CHAR *)&headerBuf, headerBuf.usedSize ) ;
       PD_RC_CHECK( rc, PDERROR,
-                   "Session[%s] failed to send response body, rc: %d",
-                   sessionName(), rc ) ;
+                   "Session[%s] failed to send response header, rc: %d",
+                   sessionName(), rcTmp ) ;
+
+      if ( _contextBuff.data() )
+      {
+         rcTmp = sendData( _contextBuff.data(), _contextBuff.size() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Session[%s] failed to send response body, rc: %d",
+                      sessionName(), rcTmp ) ;
+      }
    }
 
 done:
    return rc ;
 error:
    goto done ;
-}
-
-BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
-                                       engine::rtnContextBuf &buff )
-{
-   BOOLEAN handled = FALSE ;
-   mongoDataPacket &packet = parser.dataPacket() ;
-   baseCommand *cmd = parser.command() ;
-
-   if ( OP_CMD_GETLASTERROR == parser.currentOperation() )
-   {
-      handled = TRUE ;
-      fap::mongo::buildGetLastErrorReplyMsg( _errorInfo, buff ) ;
-   }
-   else if ( OP_CMD_NOT_SUPPORTED == parser.currentOperation() )
-   {
-      handled = TRUE ;
-      fap::mongo::buildNotSupportReplyMsg( buff,
-                                           packet.all.firstElementFieldName() );
-   }
-
-   if( !cmd->needProcessByEngine() )
-   {
-      handled = TRUE ;
-   }
-
-   if ( handled )
-   {
-      // make _relpyHeader
-      _replyHeader.contextID            = -1 ;
-      _replyHeader.numReturned          = 1 ;
-      _replyHeader.startFrom            = 0 ;
-      _replyHeader.header.opCode        = MAKE_REPLY_TYPE(packet.opCode) ;
-      _replyHeader.header.requestID     = packet.requestId ;
-      _replyHeader.header.TID           = 0 ;
-      _replyHeader.header.routeID.value = 0 ;
-      _replyHeader.flags                = SDB_OK ;
-   }
-
-   return handled ;
 }
 
 INT32 _mongoSession::_setSeesionAttr()
@@ -657,4 +648,6 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
 }

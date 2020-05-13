@@ -38,13 +38,15 @@
 #ifndef _SDB_MONGO_MSG_CONVERTER_HPP_
 #define _SDB_MONGO_MSG_CONVERTER_HPP_
 
-#include "util.hpp"
 #include "dpsLogWrapper.hpp"
 #include "rtnContextBuff.hpp"
 #include "pmdSession.hpp"
-#include "mongodef.hpp"
-#include "parser.hpp"
-#include "mongoConverter.hpp"
+#include "fapMongoMessage.hpp"
+#include "msgBuffer.hpp"
+#include "fapMongoCommand.hpp"
+
+namespace fap
+{
 
 /*
    _mongoSession define
@@ -65,22 +67,22 @@ protected:
    virtual void  _onDetach() {}
 
 protected:
-   BOOLEAN _preProcessMsg( msgParser &parser, engine::rtnContextBuf &buff ) ;
    INT32 _processMsg( const CHAR *pMsg ) ;
    INT32 _onMsgBegin( MsgHeader *msg ) ;
    INT32 _onMsgEnd( INT32 result, MsgHeader *msg ) ;
-   INT32 _reply( mongoMsgReply &replyHeader,
-                 const CHAR *pBody, INT32 bodyLen ) ;
+   INT32 _reply( INT32 errCode,
+                 _mongoCommand* pCommand,
+                 MsgOpReply &replyHeader,
+                 engine::rtnContextBuf &_contextBuff ) ;
 
 private:
    void  _resetBuffers() ;
    INT32 _setSeesionAttr() ;
-   INT32 _autoCreateCS() ;
-   INT32 _autoCreateCL() ;
-   BOOLEAN _needGetMore( INT32 opType ) ;
+   INT32 _autoCreateCS( const CHAR *csName ) ;
+   INT32 _autoCreateCL( const CHAR *clFullName ) ;
+   BOOLEAN _needGetMore( MONGO_CMD_TYPE commandType ) ;
 
 private:
-   mongoConverter          _converter ;
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _masterRead ;
    engine::rtnContextBuf   _contextBuff ;
@@ -94,4 +96,5 @@ private:
 
 typedef _mongoSession mongoSession ;
 
+}
 #endif // _SDB_MONGO_MSG_CONVERTER_HPP_

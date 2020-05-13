@@ -14,14 +14,11 @@ fapMongo2Files = [
       ]
 
 fapMongo3Files = [
-      "fap/mongodb3/commands.cpp",
       "fap/mongodb3/mongoAccess.cpp",
-      "fap/mongodb3/mongoConverter.cpp",
       "fap/mongodb3/mongoSession.cpp",
       "fap/mongodb3/msgBuffer.cpp",
-      "fap/mongodb3/mongoReplyHelper.cpp",
-      "fap/mongodb3/baseCommand.cpp",
-      "fap/mongodb3/parser.cpp"
+      "fap/mongodb3/fapMongoMessage.cpp",
+      "fap/mongodb3/fapMongoCommand.cpp"
       ]
       
 fapMongo4Files = [

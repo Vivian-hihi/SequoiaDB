@@ -38,20 +38,25 @@
 #ifndef _SDB_MONGO_DEFINITION_HPP_
 #define _SDB_MONGO_DEFINITION_HPP_
 
-#include "util.hpp"
 #include "../../bson/bson.hpp"
-#include "dms.hpp"
 
-enum mongoOption
+using namespace bson ;
+
+namespace fap
 {
-   dbReply       = 1,
-   dbMsg         = 1000,
-   dbUpdate      = 2001,
-   dbInsert      = 2002,
-   dbQuery       = 2004,
-   dbGetMore     = 2005,
-   dbDelete      = 2006,
-   dbKillCursors = 2007,
+
+enum MONGO_CLIENT_TYPE
+{
+   NODEJS_DRIVER = 1,
+   OTHER         = 2
+} ;
+
+struct mongoSessionCtx
+{
+   MONGO_CLIENT_TYPE client ;
+   BSONObj errorInfoObj ;
+
+   mongoSessionCtx() : client( OTHER ) {}
 } ;
 
 enum insertOption
@@ -87,45 +92,7 @@ enum queryOption
    QUERY_PARTIAL_RESULTS,
 } ;
 
-// Use these flags when replying messages to mongo client
-enum MONGO_REPLY_FLAG
-{
-   MONGO_REPLY_FLAG_NONE               = 0,
-
-   // returned, with zero results, when getMore is called but the cursor id
-   // is not valid at server.
-   MONGO_REPLY_FLAG_CURSOR_NOT_FOUND   = 1 << 0,
-
-   // { $err: ... } is being returned
-   MONGO_REPLY_FLAG_QUERY_FAILURE      = 1 << 1,
-
-   MONGO_REPLY_FALG_SHARD_CONFIG_STALE = 1 << 2,
-
-   MONGO_REPLY_FALG_AWAIT_CAPABLE      = 1 << 3,
-} ;
-
 #define SDB_AUTH_SOURCE_FAP "fap-mongo"
-
-#pragma pack(1)
-struct mongoMsgHeader
-{
-   INT32 msgLen ;
-   INT32 requestId ;
-   INT32 responseTo ;
-   INT32 opCode ;
-   INT32 reservedFlags ;
-};
-#pragma pack()
-
-#pragma pack(1)
-struct mongoMsgReply
-{
-   mongoMsgHeader header ;
-   SINT64 cursorId ;
-   INT32 startingFrom ;
-   INT32 nReturned ;
-};
-#pragma pack()
 
 /* The id of cursor, Mongo client name it "cusorId",
  * Sequoiadb name it "contextId".
@@ -147,38 +114,6 @@ struct mongoMsgReply
 #define CL_FULL_NAME_SIZE  DMS_COLLECTION_SPACE_NAME_SZ +   \
                            DMS_COLLECTION_NAME_SZ + 1
 
-enum
-{
-   OP_INVALID           = -1,
 
-   OP_INSERT            = 0,
-   OP_REMOVE            = 1,
-   OP_UPDATE            = 2,
-   OP_QUERY             = 3,
-   OP_GETMORE           = 4,
-   OP_KILLCURSORS       = 5,
-   OP_ENSURE_INDEX      = 6,
-   OP_CMD_CREATE        = 7,     // create collection
-   OP_CMD_DROP          = 8,     // drop collection
-   OP_CMD_DROP_DATABASE = 9,
-   OP_CMD_GETLASTERROR  = 10,
-   OP_CMD_DROP_INDEX    = 11,
-   OP_CMD_GET_INDEX     = 12,
-   OP_CMD_GET_CLS       = 13,    // list collections
-   OP_CMD_COUNT         = 14,
-   OP_CMD_AGGREGATE     = 15,
-   OP_CMD_DISTINCT      = 16,
-   OP_CMD_AUTH          = 17,
-   OP_CMD_CRTUSER       = 18,
-   OP_CMD_DELUSER       = 19,
-   OP_CMD_LISTUSER      = 20,
-   OP_CMD_ISMASTER      = 21,
-   OP_CMD_PING          = 22,
-   OP_CMD_NOT_SUPPORTED = 23,
-   OP_CMD_WHATSMYURI    = 24,
-   OP_CMD_BUILDINFO     = 25,
-   OP_CMD_GETLOG        = 26,
-   OP_CMD_GET_DBS       = 27,    // list databases
-} ;
-
+}
 #endif
