@@ -35,6 +35,9 @@ function test ()
    db.analyze();
 
    // 不计算io代价
+   var expNeedEvalIO = false;
+   checkNeedEvalIO( cl, expNeedEvalIO );
+
    // hint一个存在索引
    var cond = { "a": 1, "b": 1, "c": -1 };
    var expIndexName = tbIdx;
@@ -65,6 +68,9 @@ function test ()
    db.analyze();
 
    // 计算io代价
+   var expNeedEvalIO = true;
+   checkNeedEvalIO( cl, expNeedEvalIO );
+
    // hint一个存在索引
    var cond = { "a": 1, "b": 1, "c": -1 };
    var expIndexName = idxName2;

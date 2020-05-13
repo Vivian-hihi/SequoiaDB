@@ -32,6 +32,9 @@ function test ()
    db.analyze();
 
    // 不计算io代价
+   var expNeedEvalIO = false;
+   checkNeedEvalIO( cl, expNeedEvalIO );
+
    var cond = { "a": { "$gt": 1 } };
    var expIndexName = idxNameb;
    var expScanType = "ixscan";
@@ -56,6 +59,9 @@ function test ()
    db.analyze();
 
    // 计算io代价
+   var expNeedEvalIO = true;
+   checkNeedEvalIO( cl, expNeedEvalIO );
+
    var cond = { "a": { "$gt": 1 } };
    var expIndexName = tbIdx;
    var expScanType = "tbscan";

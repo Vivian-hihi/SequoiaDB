@@ -31,6 +31,9 @@ function test ()
    db.analyze();
 
    // 不计算 IO 代价
+   var expNeedEvalIO = false;
+   checkNeedEvalIO( cl, expNeedEvalIO );
+
    var cond = { "a": 1, "b": 1, "c": 1 };
    var expIndexName = idxName1;
    var expScanType = "ixscan";
@@ -55,6 +58,9 @@ function test ()
    db.analyze();
 
    // 计算 IO 代价
+   var expNeedEvalIO = true;
+   checkNeedEvalIO( cl, expNeedEvalIO );
+
    var cond = { "a": 1, "b": 1, "c": 1 };
    var expIndexName = idxName1;
    var expScanType = "ixscan";
