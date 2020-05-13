@@ -509,6 +509,12 @@
                      "en": "Connect"
                   },
                   {
+                     "id": 1589347299,
+                     "file": "partition",
+                     "cn": "分区",
+                     "en": "Partition"
+                  },
+                  {
                      "id": 1566551297,
                      "file": "config",
                      "cn": "配置",

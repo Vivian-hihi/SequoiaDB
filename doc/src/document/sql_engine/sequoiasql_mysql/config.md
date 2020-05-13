@@ -3,7 +3,7 @@
 在 MySQL 上创建表时，可以在其表选项 COMMENT 中通过指定关键词 "sequoiadb" ，并紧跟一 json 对象以传入自定义的表配置参数。格式如下：
 
 ```
-COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|false>] }"
+COMMENT [=] "[string,] sequoiadb:{ [table_options:{...}, partition_options:{...}, auto_partition:<true|false>] }"
 ```
  
 具体配置参数如下表:
@@ -12,6 +12,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 | ------ | --- | ------ | ------ |
 | string | string |用户自定义注释字符串 | 否 |
 | table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否 |
+| partition_options | json | 表的分区的属性。相当于分区的table_options参数。| 否 |
 | auto_partition | bool | 是否创建分区表。取值 false 则显式创建非分区表。| 否 |
 
 >**Note：**
@@ -21,35 +22,67 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 示例1：在 SequoiaDB 上创建根据时间进行范围切分的表。
 
 ```lang-sql
-mysql> CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY KEY(ts))
-    -> ENGINE=sequoiadb
-    -> COMMENT="Sharding table for example, sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
+CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY KEY(ts))
+ENGINE=sequoiadb
+COMMENT="Sharding table for example, sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
 ```
 示例2：在[引擎配置项](sql_engine/sequoiasql_mysql/config.md#引擎配置)sequoiadb_auto_partition为 ON 时，指定auto_partition为 false 显式创建普通表。
 
 ```lang-sql
-mysql> CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
-    -> ENGINE=sequoiadb 
-    -> COMMENT='sequoiadb:{ auto_partition: false }';
+CREATE TABLE employee(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
+ENGINE=sequoiadb 
+COMMENT='sequoiadb:{ auto_partition: false }';
 ```
 
 示例3：在 SequoiaDB 上创建压缩类型为'lzw'的表，通过alter table修改表压缩类型为'snappy'。
 
 ```lang-sql
-mysql> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
-    -> ENGINE=sequoiadb 
-    -> COMMENT="sequoiadb:{ auto_partition: true, table_options:{CompressionType : 'lzw'} }";
-Query OK, 0 rows affected (0.10 sec)
+CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
+ENGINE=sequoiadb 
+COMMENT="sequoiadb:{ auto_partition: true, table_options:{CompressionType : 'lzw'} }";
 
-mysql> alter table employee2 COMMENT="alter table of compress type,sequoiadb:{ auto_partition: true,
-    -> table_options:{CompressionType : 'snappy'} }";
-Query OK, 0 rows affected (0.15 sec)
-Records: 0  Duplicates: 0  Warnings: 0
+alter table employee2 COMMENT="alter table of compress type,sequoiadb:{ auto_partition: true,
+table_options:{CompressionType : 'snappy'} }";
 ``` 
    > **Note:** 
    >
    >alter table 支持修改表备注（COMMENT）中的自定义注释，以及更改或追加 table_options 中的配置项，不支持修改 auto_partition。
 
+示例4，为分区指定 hash 切片数 Partition 属性。通过 partition_options 指定，等价于为每个分区单独指定。以下两个语句效果完全一致。
+
+```lang-sql
+CREATE TABLE goods (
+    id INT NOT NULL,
+    produced_date DATE,
+    name VARCHAR(100),
+    company VARCHAR(100)
+)
+COMMENT 'sequoiadb:{ partition_options: { Partition: 8192 } }' 
+PARTITION BY RANGE COLUMNS (produced_date)
+SUBPARTITION BY KEY (id)
+SUBPARTITIONS 2 (
+    PARTITION p0 VALUES LESS THAN ('1990-01-01'),
+    PARTITION p1 VALUES LESS THAN ('2000-01-01'),
+    PARTITION p2 VALUES LESS THAN ('2010-01-01')
+);
+
+CREATE TABLE goods (
+    id INT NOT NULL,
+    produced_date DATE,
+    name VARCHAR(100),
+    company VARCHAR(100)
+)
+PARTITION BY RANGE COLUMNS (produced_date)
+SUBPARTITION BY KEY (id)
+SUBPARTITIONS 2 (
+    PARTITION p0 VALUES LESS THAN ('1990-01-01')
+        COMMENT 'sequoiadb:{ "table_options": { Partition: 8192 } }',
+    PARTITION p1 VALUES LESS THAN ('2000-01-01')
+        COMMENT 'sequoiadb:{ "table_options": { Partition: 8192 } }',
+    PARTITION p2 VALUES LESS THAN ('2010-01-01')
+        COMMENT 'sequoiadb:{ "table_options": { Partition: 8192 } }'
+);
+```
     
 ## 引擎配置
 + **配置项列表**
