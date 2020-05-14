@@ -7181,6 +7181,7 @@ do                                                            \
          if ( pTmp == NULL )
          {
             SDB_OSS_FREE ( pStr ) ;
+            rc = SDB_NET_CANNOT_CONNECT ;
             continue ;
          }
          *pTmp = 0 ;
