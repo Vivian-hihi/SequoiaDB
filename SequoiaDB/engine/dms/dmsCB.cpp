@@ -99,6 +99,7 @@ namespace engine
     _tempSUMgr( this ),
     _statSUMgr( this ),
     _rbsSUMgr( this ),
+    _localSUMgr( this ),
     _ixmKeySorterCreator( NULL )
    {
       for ( UINT32 i = 0 ; i< DMS_MAX_CS_NUM ; ++i )
@@ -170,6 +171,10 @@ namespace engine
          rc = _rbsSUMgr.init() ;
       }
 
+      rc = _localSUMgr.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init local su manager, rc: %d",
+                   rc ) ;
+
    done:
       return rc ;
    error:
@@ -201,6 +206,9 @@ namespace engine
 
    INT32 _SDB_DMSCB::fini ()
    {
+      _localSUMgr.fini() ;
+      _tempSUMgr.fini() ;
+
       _CSCBNameMapCleanup() ;
 
       for ( UINT32 i = 0 ; i < DMS_MAX_CS_NUM ; ++i )
@@ -216,8 +224,6 @@ namespace engine
          SDB_OSS_DEL _vecCSMutex[ i ] ;
          _vecCSMutex[ i ] = NULL ;
       }
-
-      _tempSUMgr.fini() ;
 
       return SDB_OK ;
    }
@@ -1073,6 +1079,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_WRITABLE );
+      BOOLEAN hasBlock = FALSE ;
 
       BOOLEAN locked = FALSE ;
 
@@ -1133,6 +1140,13 @@ namespace engine
                rc = SDB_APP_INTERRUPT ;
                break ;
             }
+
+            if ( !hasBlock )
+            {
+               cb->setBlock( EDU_BLOCK_DMS, "Waiting for dms writable" ) ;
+               hasBlock = TRUE ;
+            }
+
             rc = _blockEvent.wait( OSS_ONE_SEC ) ;
             if ( SDB_OK == rc )
             {
@@ -1145,6 +1159,10 @@ namespace engine
       if ( locked )
       {
          _stateMtx.release() ;
+      }
+      if ( hasBlock )
+      {
+         cb->unsetBlock() ;
       }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_WRITABLE, rc );
       return rc;
@@ -1181,6 +1199,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_BLOCKWRITE );
       INT32 timeSpent = 0 ; // milliseconds
+      BOOLEAN hasBlock = FALSE ;
 
       if ( cb && SDB_DB_NORMAL == byStatus &&
            DMS_LOCK_WHOLE == cb->getLockItem( SDB_LOCK_DMS )->getMode() )
@@ -1245,6 +1264,14 @@ namespace engine
          }
          else
          {
+            if ( cb )
+            {
+               hasBlock = TRUE ;
+               cb->setBlock( EDU_BLOCK_DMS, "" ) ;
+               cb->printInfo( EDU_INFO_DOING,
+                              "Waiting to block dms write(WriteCounter:%u)",
+                              _writeCounter ) ;
+            }
             _stateMtx.release();
             ossSleepmillis( DMS_CHANGESTATE_WAIT_LOOP ) ;
             timeSpent += DMS_CHANGESTATE_WAIT_LOOP ;
@@ -1252,6 +1279,10 @@ namespace engine
       }
 
    done:
+      if ( hasBlock )
+      {
+         cb->unsetBlock() ;
+      }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_BLOCKWRITE, rc );
       return rc ;
    }
@@ -1291,6 +1322,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_REGFULLSYNC );
+      BOOLEAN hasBlock = FALSE ;
 
    retry:
       /// Full-sync can't blockWrite, because create/drop index when
@@ -1309,6 +1341,11 @@ namespace engine
                rc = SDB_APP_INTERRUPT ;
                break ;
             }
+            if ( !hasBlock )
+            {
+               cb->setBlock( EDU_BLOCK_DMS, "Waiting for dms fullsync" ) ;
+               hasBlock = TRUE ;
+            }
             rc = _blockEvent.wait( OSS_ONE_SEC ) ;
             if ( SDB_OK == rc )
             {
@@ -1326,6 +1363,10 @@ namespace engine
          _stateMtx.release() ;
       }
 
+      if ( hasBlock )
+      {
+         cb->unsetBlock() ;
+      }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_REGFULLSYNC, rc );
       return rc ;
    }
@@ -2252,7 +2293,7 @@ namespace engine
       if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
-         rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
+         rc = pTransCB->transLockTryS( cb, csLID, DMS_INVALID_MBID,
                                        NULL, &lockConflict ) ;
          if ( rc )
          {
@@ -2903,6 +2944,11 @@ namespace engine
    _dmsRBSSUMgr *_SDB_DMSCB::getRBSSUMgr ()
    {
       return &_rbsSUMgr ;
+   }
+
+   dmsLocalSUMgr* _SDB_DMSCB::getLocalSUMgr()
+   {
+      return &_localSUMgr ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLRSUCACHES, "_SDB_DMSCB::clearSUCaches" )

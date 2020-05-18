@@ -1348,7 +1348,7 @@ namespace engine
                    "rename collection space[%s] to[%s], rc: %d",
                    csNameInData, csName, rc ) ;
 
-      rc = pCtx->open( csNameInData, csName, _pEDUCB );
+      rc = pCtx->open( csNameInData, csName, _pEDUCB, FALSE );
       PD_RC_CHECK( rc, PDERROR, "Failed to open context, "
                    "rename collection space[%s] to[%s], rc: %d",
                    csNameInData, csName, rc ) ;
@@ -1368,15 +1368,19 @@ namespace engine
       rc = pCtx->getMore( -1, buffObj, _pEDUCB ) ;
       if ( SDB_DMS_EOC == rc )
       {
+         PD_LOG( PDEVENT,
+                 "Rename collection space[%s] to [%s] by catalog succeed",
+                 csNameInData, csName ) ;
+         rc = SDB_OK ;
+      }
+      else if ( SDB_DMS_CS_NOTEXIST == rc ||
+                SDB_DPS_TRANS_LOCK_INCOMPATIBLE == rc )
+      {
          rc = SDB_OK ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get more, "
                    "rename collection space[%s] to[%s], rc: %d",
                    csNameInData, csName, rc ) ;
-
-      PD_LOG( PDEVENT,
-              "Rename collection space[%s] to [%s] by catalog succeed",
-              csNameInData, csName ) ;
 
    done:
       if ( su )
@@ -1471,7 +1475,7 @@ namespace engine
                    "rename collection[%s.%s] to [%s.%s], rc: %d",
                    csName, clNameInData, csName, clName, rc ) ;
 
-      rc = pCtx->open( csName, clNameInData, clName, _pEDUCB );
+      rc = pCtx->open( csName, clNameInData, clName, _pEDUCB, 1, FALSE );
       PD_RC_CHECK( rc, PDERROR, "Failed to open context, "
                    "rename collection[%s.%s] to [%s.%s], rc: %d",
                    csName, clNameInData, csName, clName, rc ) ;
@@ -1500,15 +1504,19 @@ namespace engine
       rc = pCtx->getMore( -1, buffObj, _pEDUCB ) ;
       if ( SDB_DMS_EOC == rc )
       {
+         PD_LOG( PDEVENT,
+                 "Rename collection[%s.%s] to [%s.%s] by catalog succeed",
+                 csName, clNameInData, csName, clName ) ;
+         rc = SDB_OK ;
+      }
+      else if ( SDB_DMS_NOTEXIST == rc ||
+                SDB_DPS_TRANS_LOCK_INCOMPATIBLE == rc )
+      {
          rc = SDB_OK ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get more, "
                    "rename collection[%s.%s] to [%s.%s], rc: %d",
                    csName, clNameInData, csName, clName, rc ) ;
-
-      PD_LOG( PDEVENT,
-              "Rename collection[%s.%s] to [%s.%s] by catalog succeed",
-              csName, clNameInData, csName, clName ) ;
 
    done:
       if ( pMBContext )
@@ -1775,8 +1783,13 @@ namespace engine
 
          if ( _isMainCL )
          {
-            rc = _insertToMainCL( insertor, recordNum, flags, w,
-                                  inResult );
+            rc = _insertToMainCL( insertor, recordNum, flags, w, TRUE,
+                                  inResult ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = _insertToMainCL( insertor, recordNum, flags, w, FALSE,
+                                     inResult ) ;
+            }
          }
          else
          {
@@ -2022,7 +2035,8 @@ namespace engine
             }
             else
             {
-               rc = _queryToMainCL( options, _pEDUCB, contextID, &pContext, w ) ;
+               rc = _queryToMainCL( options, _pEDUCB, contextID, &pContext,
+                                    w, needRollback ) ;
             }
 
             if ( rc )
@@ -2180,29 +2194,43 @@ namespace engine
                pCrtCL->setCLUniqueID( clUniqueID ) ;
             }
          }
-         else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
-                   CMD_DROP_COLLECTIONSPACE == pCommand->type() )
+         else if ( pCommand->spaceName() )
          {
             rc = _checkReplStatus() ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to check repl status:%d", rc ) ;
+               PD_LOG( PDERROR, "Failed to check repl status, rc: %d", rc ) ;
                goto error ;
             }
+            /// wait freezing window
+            if ( pCommand->writable() )
+            {
+               rc = _pFreezingWindow->waitForOpr( pCommand->spaceName(),
+                                                  _pEDUCB,
+                                                  _pEDUCB->isWritingDB() ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Wait freezing window for "
+                          "collectionspace(%s) failed, rc: %d",
+                          pCommand->spaceName(), rc ) ;
+                  goto error ;
+               }
+            }
          }
-         else if ( CMD_LOAD_COLLECTIONSPACE == pCommand->type() )
+
+         if ( CMD_LOAD_COLLECTIONSPACE == pCommand->type() )
          {
             _rtnLoadCollectionSpace *pLoadcs = (_rtnLoadCollectionSpace*)pCommand ;
             utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
             BSONObj clInfoObj ;
 
-            rc = _pShdMgr->rGetCSInfo( pLoadcs->csName(), csUniqueID,
+            rc = _pShdMgr->rGetCSInfo( pLoadcs->spaceName(), csUniqueID,
                                        NULL, NULL, NULL, &clInfoObj ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] unique "
                        "id from catalog failed, rc: %d", sessionName(),
-                       pLoadcs->csName(), rc ) ;
+                       pLoadcs->spaceName(), rc ) ;
                goto error ;
             }
 
@@ -2809,6 +2837,7 @@ namespace engine
 
    INT32 _clsShdSession::_insertToMainCL( BSONObj &objs, INT32 objNum,
                                           INT32 flags, INT16 w,
+                                          BOOLEAN onlyCheck,
                                           utilInsertResult &inResult )
    {
       INT32 rc = SDB_OK ;
@@ -2850,25 +2879,40 @@ namespace engine
             ++totalObjsNum;
             insertor = BSONObj( (CHAR *)pCurPos ) ;
 
-      retryInsert:
-            /// insert to sub collection
-            rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags,
-                             _pEDUCB, _pDmsCB, _pDpsCB, w,
-                             &inResult ) ;
-            if ( rc )
+            if ( onlyCheck )
             {
-               rc = _processSubCLResult( rc, pSubCLName, _pCollectionName ) ;
-               if ( SDB_OK == rc )
-               {
-                  goto retryInsert ;
-               }
+               rc = _pFreezingWindow->waitForOpr( pSubCLName, _pEDUCB,
+                                                  _pEDUCB->isWritingDB() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Wait freezing window for "
+                            "collection(%s) failed, rc: %d",
+                            pSubCLName, rc ) ;
             }
-            if( rc )
+            else
             {
-               PD_LOG( PDERROR, "Session[%s]: Failed to insert to "
-                       "sub-collection[%s] of main-collection[%s], rc: %d",
-                       sessionName(), pSubCLName, _pCollectionName, rc ) ;
-               goto error ;
+               while ( TRUE )
+               {
+                  /// insert to sub collection
+                  rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags,
+                                   _pEDUCB, _pDmsCB, _pDpsCB, w,
+                                   &inResult ) ;
+                  if ( rc )
+                  {
+                     rc = _processSubCLResult( rc, pSubCLName,
+                                               _pCollectionName ) ;
+                     if ( SDB_OK == rc )
+                     {
+                        continue ;
+                     }
+                  }
+                  break ;
+               }
+               if( rc )
+               {
+                  PD_LOG( PDERROR, "Session[%s]: Failed to insert to "
+                          "sub-collection[%s] of main-collection[%s], rc: %d",
+                          sessionName(), pSubCLName, _pCollectionName, rc ) ;
+                  goto error ;
+               }
             }
 
             /// continue next sub collection
@@ -3010,7 +3054,8 @@ namespace engine
                                          pmdEDUCB *cb,
                                          SINT64 &contextID,
                                          _rtnContextBase **ppContext,
-                                         INT16 w )
+                                         INT16 w,
+                                         BOOLEAN isWrite )
    {
       INT32 rc = SDB_OK ;
       CLS_SUBCL_LIST strSubCLList ;
@@ -3028,7 +3073,7 @@ namespace engine
                    "Failed to check order-key(rc=%d)", rc ) ;
 
       rc = _getSubCLList( options.getQuery(), options.getCLFullName(),
-                          boNewMatcher, strSubCLList ) ;
+                          isWrite, boNewMatcher, strSubCLList ) ;
       if ( rc != SDB_OK )
       {
          goto error;
@@ -3200,6 +3245,7 @@ namespace engine
 
    INT32 _clsShdSession::_getSubCLList( const BSONObj &matcher,
                                         const CHAR *pCollectionName,
+                                        BOOLEAN isWrite,
                                         BSONObj &boNewMatcher,
                                         CLS_SUBCL_LIST &strSubCLList )
    {
@@ -3223,7 +3269,18 @@ namespace engine
                   string strSubCLName = beSubCL.str();
                   if ( !strSubCLName.empty() )
                   {
-                     strSubCLList.push_back( strSubCLName );
+                     strSubCLList.push_back( strSubCLName ) ;
+
+                     /// wait for freezing window
+                     if ( isWrite )
+                     {
+                        rc = _pFreezingWindow->waitForOpr( strSubCLName.c_str(),
+                                                           _pEDUCB,
+                                                           _pEDUCB->isWritingDB() ) ;
+                        PD_RC_CHECK( rc, PDERROR, "Wait freezing window for "
+                                     "collection(%s) failed, rc: %d",
+                                     strSubCLName.c_str(), rc ) ;
+                     }
                   }
                }
             }
@@ -3243,7 +3300,7 @@ namespace engine
 
       if ( strSubCLList.empty() )
       {
-         rc = _getSubCLList( pCollectionName, strSubCLList ) ;
+         rc = _getSubCLList( pCollectionName, isWrite, strSubCLList ) ;
          if ( rc )
          {
             goto error ;
@@ -3260,6 +3317,7 @@ namespace engine
    }
 
    INT32 _clsShdSession::_getSubCLList( const CHAR *pCollectionName,
+                                        BOOLEAN isWrite,
                                         CLS_SUBCL_LIST &subCLList )
    {
       INT32 rc = SDB_OK ;
@@ -3318,6 +3376,15 @@ namespace engine
 
          /// push to list
          subCLList.push_back( *iter ) ;
+         if ( isWrite )
+         {
+            rc = _pFreezingWindow->waitForOpr( (*iter).c_str(), _pEDUCB,
+                                               _pEDUCB->isWritingDB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Wait freezing window for "
+                         "collection(%s) failed, rc: %d",
+                         (*iter).c_str(), rc ) ;
+         }
+
          ++iter ;
       }
 
@@ -3349,7 +3416,7 @@ namespace engine
       CLS_SUBCL_LIST strSubCLList ;
       CLS_SUBCL_LIST_IT iterSubCLSet ;
 
-      rc = _getSubCLList( options.getQuery(), options.getCLFullName(),
+      rc = _getSubCLList( options.getQuery(), options.getCLFullName(), TRUE,
                           boNewMatcher, strSubCLList ) ;
       if ( rc != SDB_OK )
       {
@@ -3419,7 +3486,7 @@ namespace engine
       CLS_SUBCL_LIST strSubCLList ;
       CLS_SUBCL_LIST_IT iterSubCLSet ;
 
-      rc = _getSubCLList( options.getQuery(), options.getCLFullName(),
+      rc = _getSubCLList( options.getQuery(), options.getCLFullName(), TRUE,
                           boNewMatcher, strSubCLList ) ;
       if ( rc != SDB_OK )
       {
@@ -3622,7 +3689,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
+      rc = _getSubCLList( boMatcher, pCollection, FALSE, boNewMatcher,
                           strSubCLList );
       PD_RC_CHECK( rc, PDERROR, "failed to get sub-collection list(rc=%d)",
                    rc );
@@ -3818,7 +3885,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
       lockDms = TRUE ;
 
-      rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
+      rc = _getSubCLList( boMatcher, pCollection, TRUE, boNewMatcher,
                           strSubCLList );
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list, rc: %d",
                    rc ) ;
@@ -3921,7 +3988,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
       lockDms = TRUE ;
 
-      rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
+      rc = _getSubCLList( boMatcher, pCollection, TRUE, boNewMatcher,
                           strSubCLList );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to get sub-collection list, rc: %d", rc ) ;
@@ -3994,7 +4061,7 @@ namespace engine
       contextID = -1 ;
       rtnContextDelMainCL *delContext = NULL ;
 
-      rc = _getSubCLList( pCollection, subCLLst ) ;
+      rc = _getSubCLList( pCollection, TRUE, subCLLst ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s]: Failed to get sub collection "
                    "list, rc: %d", sessionName(), rc ) ;
 
@@ -4916,7 +4983,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
       lockDms = TRUE ;
 
-      rc = _getSubCLList( fullName, subCLs ) ;
+      rc = _getSubCLList( fullName, TRUE, subCLs ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
                    "failed, rc: %d", sessionName(), rc ) ;
 
@@ -5015,7 +5082,7 @@ namespace engine
       const CHAR *pSubCLName = NULL ;
       CLS_SUBCL_LIST subCLs ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
-      rc = _getSubCLList( fullName, subCLs ) ;
+      rc = _getSubCLList( fullName, FALSE, subCLs ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
                    "failed, rc: %d", sessionName(), rc ) ;
       for ( CLS_SUBCL_LIST_IT itr =  subCLs.begin();
@@ -5067,7 +5134,8 @@ namespace engine
       lockDms = TRUE ;
 
       // Get sub-collection list
-      rc = _getSubCLList( matcher, collectionName, newMatcher, subCLList ) ;
+      rc = _getSubCLList( matcher, collectionName, TRUE,
+                          newMatcher, subCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
                    "collection [%s], rc: %d", collectionName, rc ) ;
 
@@ -5173,7 +5241,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
       lockDms = TRUE ;
 
-      rc = _getSubCLList( pMainCLName, strSubCLList ) ;
+      rc = _getSubCLList( pMainCLName, TRUE, strSubCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
                    "main-collection [%s], rc: %d", pMainCLName, rc ) ;
 
@@ -5262,7 +5330,7 @@ namespace engine
       CLS_SUBCL_LIST strSubCLList ;
       CLS_SUBCL_LIST_IT iterSubCL ;
 
-      rc = _getSubCLList( mainCLName, strSubCLList ) ;
+      rc = _getSubCLList( mainCLName, FALSE, strSubCLList ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
                    "main-collection [%s], rc: %d", mainCLName, rc ) ;
 
@@ -5314,6 +5382,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKPRIMARYSTATUS ) ;
       UINT32 waitTime = 0 ;
+      BOOLEAN hasBlock = FALSE ;
+
       while( TRUE )
       {
          rc = _pReplSet->primaryCheck( _pEDUCB ) ;
@@ -5342,6 +5412,12 @@ namespace engine
                    !_pEDUCB->isInterrupted() )
          {
             INT32 result = SDB_OK ;
+
+            if ( !hasBlock )
+            {
+               _pEDUCB->setBlock( EDU_BLOCK_PRIMARY, "Waiting for primary" ) ;
+               hasBlock = TRUE ;
+            }
             rc = _pReplSet->getFaultEvent()->wait( SHD_WAITTIME_INTERVAL,
                                                    &result ) ;
             if ( SDB_OK == rc && SDB_OK != result )
@@ -5360,6 +5436,10 @@ namespace engine
          }
       }
    done:
+      if ( hasBlock )
+      {
+         _pEDUCB->unsetBlock() ;
+      }
       PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKPRIMARYSTATUS, rc ) ;
       return rc ;
    error:
@@ -5372,6 +5452,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKRBSTATUS ) ;
       UINT32 waitTime = 0 ;
+      BOOLEAN hasBlock = FALSE ;
+
       while( TRUE )
       {
          if ( !pmdGetKRCB()->getTransCB()->isDoRollback() )
@@ -5386,6 +5468,12 @@ namespace engine
          else if ( waitTime < SHD_TRANSROLLBACK_WAITTIME &&
                    !_pEDUCB->isInterrupted() )
          {
+            if ( !hasBlock )
+            {
+               _pEDUCB->setBlock( EDU_BLOCK_TRANSROLLBACK,
+                                  "Waiting for transactions rollback" ) ;
+               hasBlock = TRUE ;
+            }
             ossSleep( SHD_WAITTIME_INTERVAL ) ;
             waitTime += SHD_WAITTIME_INTERVAL ;
             continue ;
@@ -5395,6 +5483,10 @@ namespace engine
          goto error ;
       }
    done:
+      if ( hasBlock )
+      {
+         _pEDUCB->unsetBlock() ;
+      }
       PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKRBSTATUS, rc ) ;
       return rc ;
    error:
@@ -5407,6 +5499,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKWRITESTATUS ) ;
 
+      BOOLEAN setWrite = FALSE ;
       clsDCBaseInfo *pInfo = _pShdMgr->getDCMgr()->getDCBaseInfo() ;
 
       /// dc data judge
@@ -5421,25 +5514,35 @@ namespace engine
          goto error ;
       }
 
+      /// First set writeDB, then check primary
+      if ( !_pEDUCB->isWritingDB() )
+      {
+         _pEDUCB->writingDB( TRUE ) ;
+         setWrite = TRUE ;
+      }
+
       rc = _checkPrimaryStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
+         PD_LOG( PDINFO, "Failed to check primary status, rc: %d", rc ) ;
          goto error ;
       }
 
       rc = _checkRollbackStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDINFO, "failed to check rollback status:%d", rc ) ;
+         PD_LOG( PDINFO, "Failed to check rollback status, rc: %d", rc ) ;
          goto error ;
       }
 
-      _pEDUCB->writingDB( TRUE ) ;
    done:
       PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKWRITESTATUS, rc ) ;
       return rc ;
    error:
+      if ( setWrite )
+      {
+         _pEDUCB->writingDB( FALSE ) ;
+      }
       goto done ;
    }
 
