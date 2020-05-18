@@ -32,15 +32,27 @@ function checkExplain ( dbcl, cond, expIndexName, expScanType, sortCond, hintCon
       throw new Error( "索引选择错误！" )
    }
 }
-/**
- * 是否期望IOCost
- */
 function checkNeedEvalIO ( cl, expNeedEvalIO )
 {
-   var actObj = cl.find().explain( { Evaluate: true } ).current().toObj();
-   var actNeedEvalIO = actObj.PlanPath.ChildOperators[0].Search.Input.NeedEvalIO;
-   if( actNeedEvalIO !== expNeedEvalIO )
+   if( commIsStandalone( db ) )
    {
-      throw new Error( "expect NeedEvalIO is " + expNeedEvalIO + ",but actually NeedEvalIO is " + actNeedEvalIO );
+      var actObj = cl.find().explain( { Evaluate: true } ).current().toObj();
+      var actNeedEvalIO = actObj.Search.Input.NeedEvalIO;
+      if( actNeedEvalIO !== expNeedEvalIO )
+      {
+         throw new Error( "expect NeedEvalIO is " + expNeedEvalIO + ",but actually NeedEvalIO is " + actNeedEvalIO );
+      }
    }
+   else
+   {
+      var actObj = cl.find().explain( { Evaluate: true } ).current().toObj();
+      var actNeedEvalIO = actObj.PlanPath.ChildOperators[0].Search.Input.NeedEvalIO;
+      if( actNeedEvalIO !== expNeedEvalIO )
+      {
+         throw new Error( "expect NeedEvalIO is " + expNeedEvalIO + ",but actually NeedEvalIO is " + actNeedEvalIO );
+      }
+   }
+
 }
+
+
