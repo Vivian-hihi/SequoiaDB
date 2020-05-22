@@ -98,7 +98,6 @@ namespace engine
     _nullCSUniqueIDCnt( 0 ),
     _tempSUMgr( this ),
     _statSUMgr( this ),
-    _rbsSUMgr( this ),
     _localSUMgr( this ),
     _ixmKeySorterCreator( NULL )
    {
@@ -162,13 +161,6 @@ namespace engine
          {
             _registerHandler( &_statSUMgr ) ;
          }
-      }
-
-      // 4. init Rollback Segment CS mgr
-      // check if MVCC is supported
-      if ( pmdGetOptionCB()->mvccOn() )
-      {
-         rc = _rbsSUMgr.init() ;
       }
 
       rc = _localSUMgr.init() ;
@@ -2939,11 +2931,6 @@ namespace engine
    dmsStatSUMgr *_SDB_DMSCB::getStatSUMgr ()
    {
       return &_statSUMgr ;
-   }
-
-   _dmsRBSSUMgr *_SDB_DMSCB::getRBSSUMgr ()
-   {
-      return &_rbsSUMgr ;
    }
 
    dmsLocalSUMgr* _SDB_DMSCB::getLocalSUMgr()
