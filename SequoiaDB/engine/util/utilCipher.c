@@ -401,11 +401,12 @@ INT32 utilCipherEncrypt( const CHAR *clearText, const CHAR *token,
    DES_key_schedule keySchedule ;
    const_DES_cblock inputText ;
    DES_cblock       outputText ;
-   CHAR             *result ;
+   CHAR             *result        = NULL ;
    UINT32           resultLen      = 0 ;
    UINT32           resultSize     = 0 ;
    INT32            copiedTokenLen = 0 ;
    UINT32           extraBits      = 0 ; // 8-byte aligned supplementary bits
+   UINT32           i              = 0 ;
 
    SDB_ASSERT( NULL != clearText, "clearText can't be NULL" ) ;
    SDB_ASSERT( NULL != cipherText, "cipherText can't be NULL" ) ;
@@ -452,7 +453,7 @@ INT32 utilCipherEncrypt( const CHAR *clearText, const CHAR *token,
    }
    ossMemset( result, 0, resultLen ) ;
 
-   for ( UINT32 i = 0; i < clearTextSize / BYTES_PER_TIME; i++ )
+   for ( i = 0; i < clearTextSize / BYTES_PER_TIME; i++ )
    {
       ossMemcpy( inputText, clearText + i * BYTES_PER_TIME, BYTES_PER_TIME ) ;
       DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_ENCRYPT ) ;
@@ -509,6 +510,8 @@ INT32 utilCipherDecrypt( const CHAR *cipherText, const CHAR *token,
    DES_cblock         outputText ;
    UINT32             posInClearText = 0 ;
    UINT32             clearTextSize = 0 ;
+   UINT32             i = 0 ;
+   UINT32             j = 0 ;
 
    if ( NULL == cipherText )
    {
@@ -555,15 +558,17 @@ INT32 utilCipherDecrypt( const CHAR *cipherText, const CHAR *token,
       goto error ;
    }
 
-   for ( UINT32 i = 0; i < passwdLen / BYTES_PER_TIME; i++ )
+   for ( i = 0; i < passwdLen / BYTES_PER_TIME; i++ )
    {
+
       ossMemcpy( inputText, passwd + i * BYTES_PER_TIME, BYTES_PER_TIME ) ;
       DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_DECRYPT ) ;
 
-      for ( UINT32 j = 0; j < BYTES_PER_TIME; j++ )
+      for ( j = 0; j < BYTES_PER_TIME; j++ )
       {
          _arrayAppendElement( clearText, clearTextSize,
-                              ( CHAR * )&outputText[j], 0, 1, &clearTextSize ) ;
+                              ( CHAR * )&outputText[j], 0, 1,
+                              &clearTextSize ) ;
       }
    }
 

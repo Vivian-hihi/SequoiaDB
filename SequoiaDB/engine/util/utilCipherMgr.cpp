@@ -324,7 +324,7 @@ namespace passwd
          rc = SDB_INVALIDARG ;
          PD_LOG ( PDERROR, "Invalid cipher file[%s]. The cipher text in the "
                   "file must be a hexadecimal character, rc: %d",
-                  filePath, rc ) ;
+                  filePath.c_str(), rc ) ;
          goto error ;
       }
 
