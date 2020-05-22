@@ -33,6 +33,7 @@
 #include "msgDef.h"
 #include "../client/client.h"
 #include "pd.hpp"
+#include <iostream>
 
 namespace import
 {
@@ -209,10 +210,11 @@ namespace import
                             _user.c_str(), _password.c_str(), &conn);
          }
 
-         if (SDB_OK != rc)
+         if ( SDB_OK != rc )
          {
-            PD_LOG(PDWARNING, "failed to connect to server %s:%s, rc=%d, usessl=%d",
-                   host.hostname.c_str(), host.svcname.c_str(), rc, _useSSL);
+            PD_LOG( PDWARNING, "Failed to connect to server %s:%s, usessl: %d, "
+                    "rc: %d", host.hostname.c_str(), host.svcname.c_str(),
+                    _useSSL, rc );
             rc = SDB_OK;
             continue;
          }
