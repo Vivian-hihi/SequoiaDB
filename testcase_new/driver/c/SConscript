@@ -84,6 +84,7 @@ testFiles = [
    [ "./lob/lobReadWhenWrite13432.cpp" ],
    [ "./lob/lobReadEmpty13433.cpp" ],
    [ "./lob/lobLock13435.cpp" ],
+   [ "./lob/lobCreateAndList_22190.cpp" ],
    [ "./lob/lobLockAndSeek13436.cpp" ],
    [ "./lob/lobLockCR14123.cpp" ],
    [ "./lob/lobModTime14129.cpp" ],
