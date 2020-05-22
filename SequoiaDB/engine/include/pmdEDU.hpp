@@ -419,6 +419,9 @@ namespace engine
       {
          _transExecutor.resetLogSpace();
       }
+
+      void     setOrgReplSize( INT16 replSize ) { _orgReplSize = replSize ; }
+      INT16    getOrgReplSize() const { return _orgReplSize ; }
    #endif // SDB_ENGINE
 
    protected:
@@ -507,6 +510,8 @@ namespace engine
 
       pmdTransExecutor        _transExecutor ;
       UINT32                  _confChangeID ;
+
+      INT16                   _orgReplSize ;
 
    #endif // SDB_ENGINE
 

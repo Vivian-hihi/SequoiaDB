@@ -39,6 +39,7 @@
 #include "pmdPipeManager.hpp"
 #include "pmd.hpp"
 #include "pmdDef.hpp"
+#include "pmdEnv.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -174,6 +175,13 @@ namespace engine
          UINT64 startTime = pmdGetStartTime() ;
          rc = nodePipe.writePipe( (const CHAR *)( &startTime ),
                                   sizeof( startTime ) ) ;
+      }
+      else if ( 0 == ossStrncmp( message, ENGINE_NPIPE_MSG_DOING,
+                                 sizeof( ENGINE_NPIPE_MSG_DOING ) ) )
+      {
+         CHAR doing[ PMD_DOING_STR_LEN + 1 ] = { 0 } ;
+         pmdGetDoing( doing, PMD_DOING_STR_LEN ) ;
+         rc = nodePipe.writePipe( doing, ossStrlen( doing ) + 1 ) ;
       }
       else
       {
