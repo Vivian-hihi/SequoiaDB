@@ -12,12 +12,12 @@
 #endif
 #include "client.h"
 
-#define HOST                  "localhost"
-#define SERVER                "11810" // for coord
-//#define HOST                  "192.168.30.77"
-//#define SERVER                "50000" // for coord
-#define SERVER1               "11800" // for catalog
-#define SERVER2               "20100" // for data
+//#define HOST                  "localhost"
+//#define SERVER                "11810" // for coord
+#define HOST                  "192.168.20.42"
+#define SERVER                "50000" // for coord
+#define SERVER1               "30000" // for catalog
+#define SERVER2               "20000" // for data
 #define USER                  ""
 #define PASSWD                ""
 #define USER1                 "sequoiadb"

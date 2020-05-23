@@ -12,7 +12,7 @@
 
 #define INDEX_NAME            "testIndex"
 
-#define GROUPNAME             "group1"
+#define GROUPNAME             "db1"
 #define GROUPNAME1            "testgroup1"
 #define GROUPNAME2            "testgroup2"
 #define GROUPNAME3            "testgroup3"
