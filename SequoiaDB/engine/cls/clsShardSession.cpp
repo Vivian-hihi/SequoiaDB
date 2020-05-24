@@ -996,13 +996,6 @@ namespace engine
          rc = SDB_SYS ;
       }
 
-      //Build reply message
-      _replyHeader.header.opCode = MAKE_REPLY_TYPE( opCode ) ;
-      _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;
-      _replyHeader.header.requestID = msg->requestID ;
-      _replyHeader.header.TID = msg->TID ;
-      _replyHeader.header.routeID.value = 0 ;
-
       /// auto-commit process
       if ( eduCB()->isAutoCommitTrans() )
       {
@@ -1120,6 +1113,13 @@ namespace engine
       }
       else
       {
+         //Build reply message
+         _replyHeader.header.opCode = MAKE_REPLY_TYPE( opCode ) ;
+         _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;
+         _replyHeader.header.requestID = msg->requestID ;
+         _replyHeader.header.TID = msg->TID ;
+         _replyHeader.header.routeID.value = 0 ;
+
          _replyHeader.header.messageLength += buffObj.size() ;
          _replyHeader.flags = rc ;
          _replyHeader.contextID = contextID ;
