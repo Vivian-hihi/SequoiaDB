@@ -355,6 +355,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAOPRCTX_OPEN ) ;
+      INT32 lockType = -1 ;
 
       rtnExtDataProcessor *processor = NULL ;
       SDB_ASSERT( processorMgr && extName, "Invalid argument" ) ;
@@ -366,10 +367,11 @@ namespace engine
       // inside the protection of the mb lock, and released after the mb lock
       // released(after writting dps log). So we need this lock to ensure the
       // write order.
-      rc = processorMgr->getProcessorByExtName( extName, EXCLUSIVE,
-                                                processor ) ;
+      lockType = cb->isDoRollback() ? -1 : EXCLUSIVE ;
+      rc = processorMgr->getProcessorByExtName( extName, lockType, processor ) ;
+
       PD_RC_CHECK( rc, PDERROR, "Get external processor failed[%d]", rc ) ;
-      _lockType = EXCLUSIVE ;
+      _lockType = lockType ;
       if ( !processor )
       {
          goto done ;
@@ -385,7 +387,7 @@ namespace engine
             // will be skipped.
             goto done ;
          }
-         rc = processor->processDML( record, cb, dpscb ) ;
+         rc = processor->processDML( record, cb, cb->isDoRollback(), dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Process data operation failed[%d]", rc ) ;
       }
 

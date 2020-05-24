@@ -216,8 +216,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSDML, "_rtnExtDataProcessor::processDML" )
-   INT32 _rtnExtDataProcessor::processDML( BSONObj &oprRecord,
-                                           pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _rtnExtDataProcessor::processDML( BSONObj &oprRecord, pmdEDUCB *cb,
+                                           BOOLEAN isRollback,
+                                           SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSDML ) ;
@@ -226,10 +227,21 @@ namespace engine
       rc = _spaceCheck( oprRecord.objsize() ) ;
       PD_RC_CHECK( rc, PDERROR, "Space check failed[%d]", rc ) ;
 
-      rc = rtnInsert( _cappedCLName, oprRecord, 1, 0,
-                      cb, dmsCB, dpsCB, 1 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Insert operation record into collection[%s] "
-                   "failed[%d]", _cappedCLName, rc ) ;
+      if ( isRollback )
+      {
+         PD_LOG( PDDEBUG, "In rollback progess, pop last record in capped "
+                          "collection: %s", _cappedCLName ) ;
+         rc = rtnPopCommand( _cappedCLName, 1, cb, dmsCB, dpsCB, 1, -1, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Pop last record from collection[%s] "
+                                   "failed: %d", _cappedCLName, rc ) ;
+      }
+      else
+      {
+         rc = rtnInsert( _cappedCLName, oprRecord, 1, 0,
+                         cb, dmsCB, dpsCB, 1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Insert operation record into collection[%s] "
+                                   "failed[%d]", _cappedCLName, rc ) ;
+      }
 
       _needUpdateLSN = TRUE ;
 
