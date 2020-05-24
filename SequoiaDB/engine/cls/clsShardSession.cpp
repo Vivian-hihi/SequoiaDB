@@ -996,6 +996,16 @@ namespace engine
          rc = SDB_SYS ;
       }
 
+      if ( rc )
+      {
+         pmdIncErrNum( rc ) ;
+      
+         if ( eduCB()->isWritingDB() )
+         {
+            ftReportErr( rc ) ;
+         }
+      }
+
       /// auto-commit process
       if ( eduCB()->isAutoCommitTrans() )
       {
@@ -1127,16 +1137,6 @@ namespace engine
          _replyHeader.startFrom = startFrom ;
 
          rc = _reply ( &_replyHeader, buffObj.data(), buffObj.size() ) ;
-
-         if ( _replyHeader.flags != SDB_OK )
-         {
-            pmdIncErrNum( _replyHeader.flags ) ;
-
-            if ( eduCB()->isWritingDB() )
-            {
-               ftReportErr( _replyHeader.flags ) ;
-            }
-         }
       }
 
    done:
