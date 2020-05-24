@@ -47,6 +47,7 @@
 #include "../bson/bson.h"
 #include "rtnCommandDef.hpp"
 #include "monClass.hpp"
+#include "dmsScanner.hpp"
 
 using namespace bson ;
 
@@ -130,6 +131,9 @@ namespace engine
                             BSONObjBuilder &ob ) ;
 
    INT32 monCollection2Obj ( const monCollection &full, UINT32 addInfoMask,
+                             BSONObjBuilder &ob ) ;
+
+   INT32 monBuildStatResult( BSONObj &stat, UINT32 addInfoMask,
                              BSONObjBuilder &ob ) ;
 
    /*
@@ -749,6 +753,45 @@ namespace engine
          BOOLEAN                 _isDetail ;
    } ;
    typedef _monLockWaitsFetch monLockWaitsFetch ;
+
+   /*
+      _monIndexStatsFetch define
+   */
+   class _monIndexStatsFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monIndexStatsFetch() ;
+         virtual ~_monIndexStatsFetch() ;
+
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR*  getName() const ;
+
+      public:
+         virtual INT32     fetch( BSONObj &obj ) ;
+
+      private:
+         typedef  ossPoolVector<CHAR *> IDX_STAT_LIST ;
+
+         INT32    _bulkFetch( IDX_STAT_LIST &result ) ;
+
+         void     _buildResult( BSONObj &stat, BSONObjBuilder &ob ) ;
+
+      private:
+         UINT32                  _addInfoMask ;
+         BOOLEAN                 _isDetail ;
+         dmsExtentID             _curExtentID ;
+         BOOLEAN                 _noMoreStat ;
+         IDX_STAT_LIST::iterator _pos ;
+         IDX_STAT_LIST           _statCache ;
+   } ;
+   typedef _monIndexStatsFetch monIndexStatsFetch ;
 }
 
 #endif //MONDUMP_HPP_

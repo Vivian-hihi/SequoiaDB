@@ -5120,6 +5120,7 @@ namespace sdbclient
               SDB_SNAP_CONFIGS          : Get snapshot of node configurations
               SDB_SNAP_SVCTASKS         : Get snapshot of service task
               SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
+              SDB_SNAP_INDEXSTATS       : Get the snapshot of index statistics
 
           \param [in] numToSkip Skip the first numToSkip documents, default is 0
           \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
@@ -5179,6 +5180,7 @@ namespace sdbclient
               SDB_SNAP_CONFIGS          : Get snapshot of node configurations
               SDB_SNAP_SVCTASKS         : Get snapshot of service task
               SDB_SNAP_SEQUENCES        : Get the snapshot of sequences
+              SDB_SNAP_INDEXSTATS       : Get the snapshot of index statistics
 
            \param [in] condition The matching rule, match all the documents if not provided.
            \param [in] select The selective rule, return the whole document if not provided.

@@ -521,4 +521,27 @@ namespace engine
    {
       return _getObjectFromHint( "$"FIELD_NAME_OPTIONS ) ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotIndexStats )
+
+   BSONObj _rtnSnapshotIndexStats::_getOptObj() const
+   {
+      return _getObjectFromHint( "$"FIELD_NAME_OPTIONS ) ;
+   }
+   BOOLEAN _rtnSnapshotIndexStats::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotIndexStatsInner )
+
+   BOOLEAN _rtnSnapshotIndexStatsInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   BSONObj _rtnSnapshotIndexStatsInner::_getOptObj() const
+   {
+      return _getObjectFromHint( "$"FIELD_NAME_OPTIONS ) ;
+   }
 }

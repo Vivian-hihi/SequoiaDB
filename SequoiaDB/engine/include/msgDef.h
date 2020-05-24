@@ -541,6 +541,13 @@
 #define FIELD_NAME_CURRENTID                 "CurrentID"
 #define FIELD_NAME_PEERID                    "PeerID"
 #define FIELD_NAME_CURRENT_FIELD             "CurrentField"
+#define FIELD_NAME_DISTINCT_VAL_NUM          "DistinctValNum"
+#define FIELD_NAME_VALUES                    "Values"
+#define FIELD_NAME_FRAC                      "Frac"
+#define FIELD_NAME_NULL_FRAC                 "NullFrac"
+#define FIELD_NAME_UNDEF_FRAC                "UndefFrac"
+#define FIELD_NAME_CREATE_TIME               "CreateTime"
+#define FIELD_NAME_KEY_PATTERN               "KeyPattern"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
@@ -648,6 +655,7 @@
 #define CMD_NAME_SNAPSHOT_QUERIES            "snapshot queries"
 #define CMD_NAME_SNAPSHOT_LATCHWAITS         "snapshot latchwaits"
 #define CMD_NAME_SNAPSHOT_LOCKWAITS          "snapshot lockwaits"
+#define CMD_NAME_SNAPSHOT_INDEXSTATS         "snapshot index statistics"
 #define CMD_NAME_TEST_COLLECTION             "test collection"
 #define CMD_NAME_TEST_COLLECTIONSPACE        "test collectionspace"
 #define CMD_NAME_CREATE_GROUP                "create group"
@@ -718,6 +726,7 @@
 #define CMD_NAME_SNAPSHOT_QUERIES_INTR       "SNAPSHOT_QUERIES"
 #define CMD_NAME_SNAPSHOT_LATCHWAITS_INTR    "SNAPSHOT_LATCHWAITS"
 #define CMD_NAME_SNAPSHOT_LOCKWAITS_INTR     "SNAPSHOT_LOCKWAITS"
+#define CMD_NAME_SNAPSHOT_INDEXSTATS_INTR    "SNAPSHOT_INDEXSTATS"
 
 #define CMD_NAME_LIST_COLLECTION_INTR        "LIST_CL"
 #define CMD_NAME_LIST_SPACE_INTR             "LIST_CS"

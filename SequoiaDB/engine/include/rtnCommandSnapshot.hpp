@@ -755,6 +755,45 @@ namespace engine
          virtual BOOLEAN _isCurrent() const ;
          virtual BSONObj _getOptObj() const ;
    } ;
+
+   class _rtnSnapshotIndexStats : public _rtnSnapshot
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotIndexStats()
+            : _rtnSnapshot( NAME_SNAPSHOT_INDEXSTATS,
+                            CMD_NAME_SNAPSHOT_INDEXSTATS_INTR,
+                            CMD_SNAPSHOT_INDEXSTATS,
+                            RTN_FETCH_INDEXSTATS,
+                            MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+         {}
+
+         virtual ~_rtnSnapshotIndexStats() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
+   } ;
+
+   class _rtnSnapshotIndexStatsInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotIndexStatsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_INDEXSTATS_INTR,
+                                 CMD_SNAPSHOT_INDEXSTATS,
+                                 RTN_FETCH_INDEXSTATS,
+                                 MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+         {}
+
+         virtual ~_rtnSnapshotIndexStatsInner() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+         virtual BSONObj _getOptObj() const ;
+   } ;
 }
 
 #endif //RTN_COMMAND_SNAPSHOT_HPP_

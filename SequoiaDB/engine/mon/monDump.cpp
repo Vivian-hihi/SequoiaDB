@@ -306,7 +306,7 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDWARNING, "Failed to append hostname and servicename, %s",
+         PD_LOG ( PDWARNING, "Failed to append system information, %s",
                   e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -1240,7 +1240,7 @@ namespace engine
             // add node info
             rc = monAppendSystemInfo( builder, MON_MASK_HOSTNAME|
                                       MON_MASK_SERVICE_NAME|MON_MASK_NODEID ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append system info failed, rc: %d",
+            PD_RC_CHECK( rc, PDERROR, "Failed to append system info, rc: %d",
                          rc ) ;
 
             builder.append( FIELD_NAME_SCANTYPE, VALUE_NAME_TBSCAN ) ;
@@ -1308,7 +1308,7 @@ namespace engine
             // add node info
             rc = monAppendSystemInfo( builder, MON_MASK_HOSTNAME|
                                       MON_MASK_SERVICE_NAME|MON_MASK_NODEID ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append system info failed, rc: %d",
+            PD_RC_CHECK( rc, PDERROR, "Failed to append system info, rc: %d",
                          rc ) ;
 
             builder.append( FIELD_NAME_SCANTYPE, VALUE_NAME_IXSCAN ) ;
@@ -1930,6 +1930,238 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 monBuildStatResult( BSONObj &stat, UINT32 addInfoMask, BSONObjBuilder &ob )
+   {
+      // Modify the following places to the original record:
+      // 1. Append system info( like "NodeName"... )
+      // 2. Ignore "_id"
+      // 3. Convert "CreateTime" from timestamp to string
+      // 4. Ignore the large orginal "MCV". Show it's features by fields:
+      // "DistinctValNum", "MaxValue", "MinValue", "NullFrac", "UndefFrac".
+
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasMCV = FALSE ;
+      INT64 *distinctValNum = NULL ;
+      INT32 keyFieldNum = 0 ;
+      INT32 i = 0 ;
+
+      try
+      {
+         monAppendSystemInfo( ob, addInfoMask ) ;
+
+         BSONObjIterator iter( stat ) ;
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+
+            if ( ossStrcmp( ele.fieldName(), DMS_STAT_IDX_MCV ) != 0 )
+            {
+               if ( 0 == ossStrcmp( ele.fieldName(), DMS_ID_KEY_NAME ) )
+               {
+                  continue ;
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_CREATE_TIME ) )
+               {
+                  ossTimestamp tm( ele.numberLong() ) ;
+                  CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+                  ossTimestampToString( tm, timestampStr ) ;
+                  ob.append( FIELD_NAME_CREATE_TIME, timestampStr ) ;
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_KEY_PATTERN ) )
+               {
+                  keyFieldNum = 0 ;
+                  BSONObjIterator keyIter( ele.embeddedObject() ) ;
+                  while ( keyIter.more() )
+                  {
+                     keyIter.next() ;
+                     ++keyFieldNum ;
+                  }
+                  ob.append( ele ) ;
+               }
+               else
+               {
+                  ob.append( ele ) ;
+               }
+               continue ;
+            }
+
+            // Convert field "MCV" as "DistinctValNum", "MaxValue", "MinValue",
+            // "NullFrac", "UndefFrac".
+            hasMCV = TRUE ;
+
+            INT32 nullFrac = 0 ;
+            INT32 undefFrac = 0 ;
+            BSONObj maxValue ;
+            BSONObj minValue ;
+
+            BSONObj mcv = ele.embeddedObject() ;
+            BSONElement valueEle = mcv.getField( FIELD_NAME_VALUES ) ;
+            SDB_ASSERT( Array == valueEle.type(), "Values of MCV must be array") ;
+            BSONElement fracEle = mcv.getField( FIELD_NAME_FRAC ) ;
+            SDB_ASSERT( Array == valueEle.type(), "Frac of MCV must be array") ;
+
+            BSONObjIterator valIter( valueEle.embeddedObject() ) ;
+            BSONElement val ;
+            BSONObjIterator fracIter( fracEle.embeddedObject() ) ;
+            BSONElement frac ;
+            BSONObj lastValue ;
+
+            // MCV is ordered. Just get the first/last one as min/max.
+            // Find the first not null element as MinValue, and get the null frac.
+            while ( valIter.more() )
+            {
+               val = valIter.next() ;
+               SDB_ASSERT( Object == val.type(), "Value of MCV must be object" ) ;
+               frac = fracIter.next() ;
+               SDB_ASSERT( NumberInt == frac.type(), "Frac of MCV must be INT32" ) ;
+
+               BOOLEAN isAllUndefined = TRUE ;
+               BOOLEAN isAllNull = TRUE ;
+
+               BSONObjIterator fieldIter( val.embeddedObject() ) ;
+               while ( fieldIter.more() )
+               {
+                  BSONElement fieldEle = fieldIter.next() ;
+                  if ( fieldEle.type() != Undefined )
+                  {
+                     isAllUndefined = FALSE ;
+                  }
+                  if ( fieldEle.type() != jstNULL )
+                  {
+                     isAllNull = FALSE ;
+                  }
+               }
+
+               if ( isAllUndefined )
+               {
+                  undefFrac = frac.numberInt() ;
+               }
+               if ( isAllNull )
+               {
+                  nullFrac = frac.numberInt() ;
+               }
+
+               if ( !isAllUndefined && !isAllNull )
+               {
+                  minValue = val.embeddedObject() ;
+                  lastValue = minValue ;
+                  break ;
+               }
+            }
+
+            // Count the distinct values.
+            SDB_ASSERT( keyFieldNum > 0, "Field num must exist here" ) ;
+            distinctValNum = (INT64 *) SDB_POOL_ALLOC( keyFieldNum * sizeof( INT64 ) ) ;
+            if ( !distinctValNum )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "No memory to allocate the array" ) ;
+               goto error ;
+            }
+            for ( i = 0 ; i < keyFieldNum ; ++i )
+            {
+               distinctValNum[i] = 1 ;
+            }
+
+            while ( valIter.more() )
+            {
+               val = valIter.next() ;
+               SDB_ASSERT( Object == val.type(), "Value of MCV must be object" ) ;
+               BSONObj currValue = val.embeddedObject() ;
+               i = 0 ;
+               BSONObjIterator currIter( currValue ) ;
+               BSONObjIterator lastIter( lastValue ) ;
+
+               while ( currIter.more() )
+               {
+                  BSONElement currEle = currIter.next() ;
+                  BSONElement lastEle = lastIter.next() ;
+                  if ( !( currEle == lastEle ) )
+                  {
+                     break ;
+                  }
+                  ++i ;
+               }
+
+               while ( i < keyFieldNum )
+               {
+                  ++distinctValNum[i] ;
+                  ++i ;
+               }
+
+               lastValue = currValue ;
+            }
+
+            if ( !minValue.isEmpty() ) // no MinValue means all samples are null.
+            {
+               maxValue = val.embeddedObject() ;
+            }
+
+            // Append fields to result
+            {
+               BSONArrayBuilder ab( ob.subarrayStart( FIELD_NAME_DISTINCT_VAL_NUM ) ) ;
+               for ( i = 0 ; i < keyFieldNum ; ++i )
+               {
+                  ab.append( distinctValNum[i] ) ;
+               }
+               ab.doneFast() ;
+            }
+
+            if ( !minValue.isEmpty() )
+            {
+               ob.append( FIELD_NAME_MIN_VALUE, minValue ) ;
+               ob.append( FIELD_NAME_MAX_VALUE, maxValue ) ;
+            }
+            else
+            {
+               ob.appendNull( FIELD_NAME_MIN_VALUE ) ;
+               ob.appendNull( FIELD_NAME_MAX_VALUE ) ;
+            }
+
+            ob.append( FIELD_NAME_NULL_FRAC, nullFrac ) ;
+            ob.append( FIELD_NAME_UNDEF_FRAC, undefFrac ) ;
+         }
+
+         // If no MCV, append an empty info.
+         if ( !hasMCV )
+         {
+            BSONArrayBuilder ab( ob.subarrayStart( FIELD_NAME_DISTINCT_VAL_NUM ) ) ;
+            SDB_ASSERT( keyFieldNum > 0, "Field num must exist here" ) ;
+            for ( i = 0 ; i < keyFieldNum ; ++i )
+            {
+               ab.append( 0 ) ;
+            }
+            ab.doneFast() ;
+
+            ob.appendNull( FIELD_NAME_MIN_VALUE ) ;
+            ob.appendNull( FIELD_NAME_MAX_VALUE ) ;
+            ob.append( FIELD_NAME_NULL_FRAC, 0 ) ;
+            ob.append( FIELD_NAME_UNDEF_FRAC, 0 ) ;
+         }
+      }
+      catch ( std::bad_alloc &ba )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "No memory to build statistics result: %e", ba.what() ) ;
+         goto error ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexcepted exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      if ( distinctValNum )
+      {
+         SDB_POOL_FREE( distinctValNum ) ;
+      }
+      return rc ;
+   error:
+      goto done;
    }
 
    /*
@@ -3845,7 +4077,7 @@ namespace engine
 
       try
       {
-	 _builder.reset();
+         _builder.reset();
          BSONObjBuilder ob( _builder ) ;
 
          /// add system info
@@ -4303,7 +4535,6 @@ namespace engine
 
          /// add system info
          monAppendSystemInfo( ob, _addInfoMask ) ;
-
          if ( !_isExpand )
          {
             mask |= PMD_CFG_MASK_SKIP_UNFIELD ;
@@ -4503,10 +4734,10 @@ namespace engine
    }
 
    INT32 _monQueriesFetch::init( pmdEDUCB *cb,
-                                  BOOLEAN isCurrent,
-                                  BOOLEAN isDetail,
-                                  UINT32 addInfoMask,
-                                  const BSONObj obj )
+                                 BOOLEAN isCurrent,
+                                 BOOLEAN isDetail,
+                                 UINT32 addInfoMask,
+                                 const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
 
@@ -4654,7 +4885,7 @@ namespace engine
 
    IMPLEMENT_FETCH_AUTO_REGISTER( _monLatchWaitsFetch )
    /*
-      _monQueriesFetch implement
+      _monLatchWaitsFetch implement
    */
    _monLatchWaitsFetch::_monLatchWaitsFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LATCHWAITS )
@@ -4803,7 +5034,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monLockWaitsFetch )
 
    /*
-      _monQueriesFetch implement
+      _monLockWaitsFetch implement
    */
    _monLockWaitsFetch::_monLockWaitsFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_LOCKWAITS )
@@ -4823,10 +5054,10 @@ namespace engine
    }
 
    INT32 _monLockWaitsFetch::init( pmdEDUCB *cb,
-                                    BOOLEAN isCurrent,
-                                    BOOLEAN isDetail,
-                                    UINT32 addInfoMask,
-                                    const BSONObj obj )
+                                   BOOLEAN isCurrent,
+                                   BOOLEAN isDetail,
+                                   UINT32 addInfoMask,
+                                   const BSONObj obj )
    {
       INT32 rc = SDB_OK ;
 
@@ -4927,5 +5158,210 @@ namespace engine
    error:
       goto done ;
    }
-}
 
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monIndexStatsFetch )
+   /*
+      _monIndexStatsFetch implement
+   */
+   _monIndexStatsFetch::_monIndexStatsFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_INDEXSTATS )
+   {
+      _addInfoMask = MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
+      _isDetail= TRUE ;
+      _pos = _statCache.end() ;
+   }
+
+   _monIndexStatsFetch::~_monIndexStatsFetch()
+   {
+      IDX_STAT_LIST::iterator iter ;
+      for ( iter = _statCache.begin() ; iter != _statCache.end() ; ++iter )
+      {
+         SDB_POOL_FREE( *iter ) ;
+      }
+      _statCache.clear() ;
+   }
+
+   INT32 _monIndexStatsFetch::init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj )
+   {
+      _isDetail = isDetail ;
+      _addInfoMask = addInfoMask ;
+      _hitEnd = FALSE ;
+      _curExtentID = DMS_INVALID_EXTENT ;
+      _noMoreStat = FALSE ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monIndexStatsFetch::getName() const
+   {
+      return CMD_NAME_SNAPSHOT_INDEXSTATS ;
+   }
+
+   // Read a bulk of statistics from SYSSTAT.SYSINDEXSTAT for once.
+   INT32 _monIndexStatsFetch::_bulkFetch( IDX_STAT_LIST &result )
+   {
+      int rc                           = SDB_OK ;
+      SDB_DMSCB *dmsCB                 = pmdGetKRCB()->getDMSCB() ;
+      pmdEDUCB *eduCB                  = pmdGetThreadEDUCB() ;
+      dmsStorageUnit *su               = NULL ;
+      dmsStorageUnitID suID            = DMS_INVALID_CS ;
+      dmsMBContext *mbContext          = NULL ;
+      const CHAR *pCollectionShortName = NULL ;
+      IDX_STAT_LIST::iterator iter ;
+      BSONObj obj ;
+      CHAR *buffer = NULL ;
+
+      if ( pmdGetDBRole() != SDB_ROLE_DATA || _noMoreStat )
+      {
+         rc = SDB_DMS_EOC ;
+         goto done ;
+      }
+
+      // Check whether SYSSTAT.SYSINDEXSTAT exists. If not, nothing to do.
+      rc = rtnResolveCollectionNameAndLock ( DMS_STAT_INDEX_CL_NAME, dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = SDB_DMS_EOC ;
+         goto done ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollectionShortName, rc ) ;
+
+      rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
+      if ( SDB_DMS_NOTEXIST == rc )
+      {
+         rc = SDB_DMS_EOC ;
+         goto done ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+
+      // Initialize _curExtentID
+      if ( DMS_INVALID_EXTENT == _curExtentID )
+      {
+         _curExtentID = mbContext->mb()->_firstExtentID ;
+         if ( DMS_INVALID_EXTENT == _curExtentID )
+         {
+            rc = SDB_DMS_EOC ;
+            goto done ;
+         }
+      }
+
+      for ( iter = result.begin() ; iter != result.end() ; ++iter )
+      {
+         SDB_POOL_FREE( *iter ) ;
+      }
+      result.clear() ;
+
+      // Scan a whole extent for once
+      try
+      {
+         dmsExtScanner scanner( su->data(), mbContext, NULL, _curExtentID,
+                                DMS_ACCESS_TYPE_FETCH, -1L, 0 ) ;
+         _mthRecordGenerator generator ;
+         dmsRecordID recordID ;
+         ossValuePtr recordDataPtr = 0 ;
+
+         while( SDB_OK == ( rc = scanner.advance( recordID, generator, eduCB ) ) )
+         {
+            generator.getDataPtr( recordDataPtr ) ;
+            BSONObj stat( (const CHAR*)recordDataPtr ) ;
+            _builder.reset();
+            BSONObjBuilder ob( _builder ) ;
+
+            rc = monBuildStatResult( stat, _addInfoMask, ob ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to build statistics result, rc: %d", rc ) ;
+            obj = ob.done() ;
+
+            buffer = (CHAR *) SDB_POOL_ALLOC( obj.objsize() ) ;
+            PD_CHECK( buffer, SDB_OOM, error, PDERROR,
+                      "Failed to allocate buffer to save result" ) ;
+
+            ossMemcpy( buffer, obj.objdata(), obj.objsize() ) ;
+            result.push_back( buffer ) ;
+            buffer = NULL ;
+         }
+
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            _curExtentID = scanner.nextExtentID() ;
+            if ( DMS_INVALID_EXTENT == _curExtentID ||
+                 SDB_DMS_EOC == scanner.stepToNextExtent() )
+            {
+               _noMoreStat = TRUE ;
+               goto done ;
+            }
+         }
+
+         PD_RC_CHECK( rc, PDERROR, "Failed to get next record, rc: %d", rc ) ;
+      }
+      catch ( std::bad_alloc )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "No memory to fetch index statistics" ) ;
+         goto error ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexcepted exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      if ( mbContext && mbContext->isMBLock() )
+      {
+         mbContext->mbUnlock() ;
+      }
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock ( suID ) ;
+      }
+      return rc ;
+   error:
+      if ( buffer )
+      {
+         SDB_POOL_FREE( buffer ) ;
+      }
+      for ( iter = result.begin() ; iter != result.end() ; ++iter )
+      {
+         SDB_POOL_FREE( *iter ) ;
+      }
+      result.clear() ;
+      goto done ;
+   }
+
+   INT32 _monIndexStatsFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _statCache.end() == _pos )
+      {
+         rc = _bulkFetch( _statCache ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            goto done ;
+         }
+         else if ( rc != SDB_OK )
+         {
+            PD_LOG( PDERROR, "Fail to fetch index statistics, rc: %d", rc ) ;
+            goto error ;
+         }
+         _pos = _statCache.begin() ;
+      }
+
+      obj = BSONObj( *_pos ) ;
+      ++_pos ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+}

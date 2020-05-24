@@ -1264,7 +1264,7 @@
                            "cn": "配置快照",
                            "en": "SDB_SNAP_CONFIGS"
                         },
-                  {
+                        {
                            "id": 1565839362,
                            "file": "SDB_SNAP_SVCTASKS",
                            "cn": "服务任务快照",
@@ -1275,6 +1275,12 @@
                            "file": "SDB_SNAP_SEQUENCES",
                            "cn": "序列快照",
                            "en": "SDB_SNAP_SEQUENCES"
+                        },
+                        {
+                           "id": 1592467466,
+                           "file": "SDB_SNAP_INDEXSTATS",
+                           "cn": "索引统计信息快照",
+                           "en": "SDB_SNAP_INDEXSTATS"
                         }
                      ]
                   },
@@ -4990,7 +4996,7 @@
                            "cn": "$SNAPSHOT_CONFIGS",
                            "en": "$SNAPSHOT_CONFIGS"
                         },
-                  {
+                        {
                            "id": 1565839923,
                            "file": "SNAPSHOT_SVCTASKS",
                            "cn": "$SNAPSHOT_SVCTASKS",
@@ -5001,6 +5007,12 @@
                            "file": "SNAPSHOT_SEQUENCES",
                            "cn": "$SNAPSHOT_SEQUENCES",
                            "en": "$SNAPSHOT_SEQUENCES"
+                        },
+                        {
+                           "id": 1592467466,
+                           "file": "SNAPSHOT_INDEXSTATS",
+                           "cn": "$SNAPSHOT_INDEXSTATS",
+                           "en": "$SNAPSHOT_INDEXSTATS"
                         },
                         {
                            "id": 1559282949,

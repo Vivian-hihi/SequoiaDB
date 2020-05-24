@@ -998,5 +998,37 @@ namespace engine
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotLockWaitsIntr,
                                       CMD_NAME_SNAPSHOT_LOCKWAITS_INTR,
                                       TRUE ) ;
+
+   /*
+    * _coordCMDSnapshotIndexStats implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotIndexStats,
+                                      CMD_NAME_SNAPSHOT_INDEXSTATS,
+                                      TRUE ) ;
+
+   _coordCMDSnapshotIndexStats::_coordCMDSnapshotIndexStats()
+   {
+   }
+
+   _coordCMDSnapshotIndexStats::~_coordCMDSnapshotIndexStats()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotIndexStats::getIntrCMDName()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_INDEXSTATS_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotIndexStats::getInnerAggrContent()
+   {
+      return COORD_SNAPSHOTIDXSTATS_INPUT ;
+   }
+
+   /*
+    * _coordCMDSnapshotIndexStatsIntr implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotIndexStatsIntr,
+                                      CMD_NAME_SNAPSHOT_INDEXSTATS_INTR,
+                                      TRUE ) ;
 }
 

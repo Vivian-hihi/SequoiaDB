@@ -558,9 +558,9 @@ namespace engine
        public:
           _coordCMDSnapshotQueries() ;
           virtual ~_coordCMDSnapshotQueries() ;
-      private:
-         virtual const CHAR *getIntrCMDName() ;
-         virtual const CHAR *getInnerAggrContent() ;
+       private:
+          virtual const CHAR *getIntrCMDName() ;
+          virtual const CHAR *getInnerAggrContent() ;
     } ;
     typedef _coordCMDSnapshotQueries coordCMDSnapshotQueries ;
 
@@ -586,9 +586,9 @@ namespace engine
       public:
          _coordCMDSnapshotLatchWaits() ;
          virtual ~_coordCMDSnapshotLatchWaits() ;
-     private:
-        virtual const CHAR *getIntrCMDName() ;
-        virtual const CHAR *getInnerAggrContent() ;
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+         virtual const CHAR *getInnerAggrContent() ;
    } ;
    typedef _coordCMDSnapshotLatchWaits coordCMDSnapshotLatchWaits ;
 
@@ -613,9 +613,9 @@ namespace engine
       public:
          _coordCMDSnapshotLockWaits() ;
          virtual ~_coordCMDSnapshotLockWaits() ;
-     private:
-        virtual const CHAR *getIntrCMDName() ;
-        virtual const CHAR *getInnerAggrContent() ;
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+         virtual const CHAR *getInnerAggrContent() ;
    } ;
    typedef _coordCMDSnapshotLockWaits coordCMDSnapshotLockWaits ;
 
@@ -630,6 +630,33 @@ namespace engine
          virtual ~_coordCMDSnapshotLockWaitsIntr() {}
    } ;
    typedef _coordCMDSnapshotLockWaitsIntr coordCMDSnapshotLockWaitsIntr ;
+
+   /*
+      _coordCMDSnapshotIndexStats define
+   */
+   class _coordCMDSnapshotIndexStats : public _coordCMDMonBase
+   {
+     COORD_DECLARE_CMD_AUTO_REGISTER() ;
+     public:
+        _coordCMDSnapshotIndexStats() ;
+        virtual ~_coordCMDSnapshotIndexStats() ;
+     private:
+        virtual const CHAR *getIntrCMDName() ;
+        virtual const CHAR *getInnerAggrContent() ;
+   } ;
+   typedef _coordCMDSnapshotIndexStats coordCMDSnapshotIndexStats ;
+
+   /*
+      _coordCMDSnapshotIndexStatsIntr define
+   */
+   class _coordCMDSnapshotIndexStatsIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDSnapshotIndexStatsIntr() {}
+         virtual ~_coordCMDSnapshotIndexStatsIntr() {}
+   } ;
+   typedef _coordCMDSnapshotIndexStatsIntr coordCMDSnapshotIndexStatsIntr ;
 
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__
