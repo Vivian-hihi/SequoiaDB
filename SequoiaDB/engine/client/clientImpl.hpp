@@ -1278,6 +1278,11 @@ namespace sdbclient
                       INT32 arrSize,
                       const CHAR *pUsrName,
                       const CHAR *pPasswd ) ;
+      INT32 connect ( const CHAR **pConnAddrs, 
+                      INT32 arrSize,
+                      const CHAR *pUsrName,
+                      const CHAR *pToken,
+                      const CHAR *pCipherFile ) ;
       void disconnect () ;
       BOOLEAN isConnected ()
       { return NULL != _sock ; }
