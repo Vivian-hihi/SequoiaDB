@@ -17,7 +17,7 @@ sdbpasswd 不需要与数据库连接。
 | --removeuser| -r   | 删除用户                                          | adduser/removeuser 必选其一 |
 | --password  | -p   | 用户密码，指定值则使用明文输入，不指定值则命令行提示输入，最大值 256 个字符 | 是 |
 | --token     | -t   | 对保存的密码指定加密口令以增强安全性，最大值 256 个字符 | 否 |
-| --file      | -f   | 指定加密文件用于密码的保存，默认当前用户目录下的 sequoiadb 目录 | 否 |
+| --file      | -f   | 指定加密文件用于密码的保存，默认为 ~/sequoiadb/passwd | 否 |
 
 ##用法##
 
