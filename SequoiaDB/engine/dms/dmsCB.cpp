@@ -121,6 +121,8 @@ namespace engine
 
    _SDB_DMSCB::~_SDB_DMSCB()
    {
+      // make sure dms control block is finalized
+      fini() ;
    }
 
    INT32 _SDB_DMSCB::init ()
@@ -213,8 +215,11 @@ namespace engine
       }
       for ( UINT32 i = 0 ; i < DMS_CS_MUTEX_BUCKET_SIZE ; ++i )
       {
-         SDB_OSS_DEL _vecCSMutex[ i ] ;
-         _vecCSMutex[ i ] = NULL ;
+         if ( _vecCSMutex[ i ] )
+         {
+            SDB_OSS_DEL _vecCSMutex[ i ] ;
+            _vecCSMutex[ i ] = NULL ;
+         }
       }
 
       return SDB_OK ;
