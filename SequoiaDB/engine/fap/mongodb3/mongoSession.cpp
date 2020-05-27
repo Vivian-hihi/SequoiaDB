@@ -165,10 +165,17 @@ INT32 _mongoSession::run()
 
       // convert mongo message to command
       _resetBuffers() ;
+      sessCtx.errorObj = _errorInfo ;
+
       rc = mongoGetAndInitCommand( pMsg, &pCommand, sessCtx, _inBuffer ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Session[%s] failed to get and init command, rc: %d",
-                sessionName(), rc ) ;
+      if ( rc )
+      {
+         rc = _reply( pCommand, pMsg, rc, sessCtx.errorObj ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Session[%s] failed to reply, rc: %d",
+                      sessionName(), rc ) ;
+         continue ;
+      }
 
       if ( !recvFromEvent )
       {
@@ -185,7 +192,7 @@ INT32 _mongoSession::run()
                _manageCursor( pCommand, _replyHeader ) ;
             }
 
-            rc = _reply( pCommand, _replyHeader, _contextBuff ) ;
+            rc = _reply( pCommand ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Session[%s] failed to reply, rc: %d",
                          sessionName(), rc ) ;
@@ -225,7 +232,7 @@ INT32 _mongoSession::run()
 
          // build response
          CHAR* pRes = NULL ;
-         rc = _buildResponse( pCommand, _replyHeader, _contextBuff, pRes ) ;
+         rc = _buildResponse( pCommand, pRes ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Session[%s] failed to build response, rc: %d",
                       sessionName(), rc ) ;
@@ -763,8 +770,6 @@ INT32 _mongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )
 }
 
 INT32 _mongoSession::_buildResponse( _mongoCommand *pCommand,
-                                     MsgOpReply &replyHeader,
-                                     engine::rtnContextBuf &_contextBuff,
                                      CHAR *&pRes )
 {
    INT32 rc = SDB_OK ;
@@ -790,9 +795,7 @@ error:
    goto done ;
 }
 
-INT32 _mongoSession::_reply( _mongoCommand *pCommand,
-                             MsgOpReply &replyHeader,
-                             engine::rtnContextBuf &_contextBuff )
+INT32 _mongoSession::_reply( _mongoCommand *pCommand )
 {
    INT32 rc = SDB_OK ;
    _mongoResponseBuffer headerBuf ;
@@ -801,6 +804,94 @@ INT32 _mongoSession::_reply( _mongoCommand *pCommand,
    PD_RC_CHECK( rc, PDERROR,
                 "Session[%s] failed to build response, rc: %d",
                 sessionName(), rc ) ;
+
+   // send response
+   if ( headerBuf.usedSize > 0 )
+   {
+      INT32 rcTmp = SDB_OK ;
+      rcTmp = sendData( (CHAR *)&headerBuf, headerBuf.usedSize ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Session[%s] failed to send response header, rc: %d",
+                   sessionName(), rcTmp ) ;
+
+      if ( _contextBuff.data() )
+      {
+         rcTmp = sendData( _contextBuff.data(), _contextBuff.size() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Session[%s] failed to send response body, rc: %d",
+                      sessionName(), rcTmp ) ;
+      }
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _mongoSession::_reply( _mongoCommand *pCommand, const CHAR* pMsg,
+                             INT32 errCode, const BSONObj &errObj )
+{
+   INT32 rc = SDB_OK ;
+   _mongoResponseBuffer headerBuf ;
+
+   SDB_ASSERT( errCode != SDB_OK, "Invalid error code" ) ;
+
+   if ( errObj.isEmpty() )
+   {
+      bson::BSONObjBuilder bob ;
+      bob.append( "ok", 0 ) ;
+      bob.append( "code",  errCode ) ;
+      bob.append( "errmsg", getErrDesp( errCode ) ) ;
+      _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
+      _replyHeader.numReturned = 1 ;
+      _replyHeader.flags = errCode ;
+   }
+   else
+   {
+      _contextBuff = engine::rtnContextBuf( errObj ) ;
+      _replyHeader.numReturned = 1 ;
+      _replyHeader.flags = errCode ;
+   }
+
+   if ( pCommand )
+   {
+      rc = mongoPostRunCommand( pCommand, _replyHeader,
+                                _contextBuff, headerBuf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Session[%s] failed to build response, rc: %d",
+                   sessionName(), rc ) ;
+   }
+   else
+   {
+      _mongoMessage mongoMsg ;
+      rc = mongoMsg.init( pMsg ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Session[%s] failed to init message, rc: %d",
+                   sessionName(), rc ) ;
+      if ( MONGO_OP_COMMAND == mongoMsg.opCode() )
+      {
+         BSONObj empty ;
+         BSONObj org( _contextBuff.data() ) ;
+         msgBuffer tmpBuffer ;
+         tmpBuffer.write( org.objdata(), org.objsize() ) ;
+         tmpBuffer.write( empty.objdata(), empty.objsize() ) ;
+         _contextBuff = rtnContextBuf( tmpBuffer.data(), tmpBuffer.size(), 2 ) ;
+
+         mongoCommandResponse res ;
+         res.header.msgLen = sizeof( mongoCommandResponse ) + _contextBuff.size() ;
+         res.header.responseTo = mongoMsg.requestID() ;
+         headerBuf.setData( (const CHAR*)&res, sizeof( res ) ) ;
+      }
+      else
+      {
+         mongoResponse res ;
+         res.header.msgLen = sizeof( mongoResponse ) + _contextBuff.size() ;
+         res.header.responseTo = mongoMsg.requestID() ;
+         res.nReturned = _contextBuff.recordNum() ;
+         headerBuf.setData( (const CHAR*)&res, sizeof( res ) ) ;
+      }
+   }
 
    // send response
    if ( headerBuf.usedSize > 0 )

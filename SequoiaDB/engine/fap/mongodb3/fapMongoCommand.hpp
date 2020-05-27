@@ -73,7 +73,7 @@ class _mongoCommand : public SDBObject
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) = 0 ;
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) = 0 ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) = 0 ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &bodyBuf,
@@ -159,7 +159,7 @@ class _mongoGlobalCommand : public _mongoCommand
       virtual const CHAR* name() const    = 0 ;
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) { return SDB_OK ; }
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) { return SDB_OK ; }
 
       virtual const CHAR* csName() const          { return NULL ; }
       virtual const CHAR* clFullName() const      { return NULL ; }
@@ -263,7 +263,7 @@ class _mongoInsertCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_INSERT ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_INSERT ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -281,7 +281,7 @@ class _mongoDeleteCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_DELETE ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_DELETE ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -299,7 +299,7 @@ class _mongoUpdateCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_UPDATE ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_UPDATE ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -325,7 +325,7 @@ class _mongoQueryCommand : public _mongoCommand
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -363,7 +363,7 @@ class _mongoFindCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_FIND ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_FIND ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -390,7 +390,7 @@ class _mongoGetmoreCommand : public _mongoCommand
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -448,7 +448,7 @@ class _mongoKillCursorCommand : public _mongoCommand
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -477,7 +477,7 @@ class _mongoCountCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_COUNT ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_COUNT ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -495,14 +495,15 @@ class _mongoAggregateCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_AGGREGATE ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_AGGREGATE ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
 
    private:
-      void _convertAggrProject( BSONObj& projectObj ) ;
+      INT32 _convertAggrProject( BSONObj& projectObj,
+                                 BSONObj& errorObj ) ;
       void _convertAggrSumIfExist( const BSONElement& ele,
                                    BSONObjBuilder& builder ) ;
       void _convertAggrGroup( const BSONObj& groupObj,
@@ -520,7 +521,7 @@ class _mongoDistinctCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_DISTINCT ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_DISTINCT ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -541,7 +542,7 @@ class _mongoCreateCLCommand : public _mongoCollectionCommand
          return MONGO_CMD_NAME_CREATE_COLLECTION ;
       }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -563,7 +564,7 @@ class _mongoDropCLCommand : public _mongoCollectionCommand
          return MONGO_CMD_NAME_DROP_COLLECTION ;
       }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -584,7 +585,7 @@ class _mongoListIdxCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_LIST_INDEX ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_LIST_INDEX ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -602,7 +603,7 @@ class _mongoCreateIdxCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_INDEX_CREATE ; }
       virtual const CHAR* name() const { return MONGO_CMD_NAME_CREATE_INDEX ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -620,7 +621,7 @@ class _mongoDropIdxCommand : public _mongoCollectionCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_INDEX_DROP ; }
       virtual const CHAR* name() const { return MONGO_CMD_NAME_DROP_INDEX ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
 
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
@@ -650,7 +651,7 @@ class _mongoDropDatabaseCommand : public _mongoDatabaseCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_DATABASE_DROP ; }
       virtual const CHAR* name() const { return MONGO_CMD_NAME_DROP_DATABASE ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
@@ -670,7 +671,7 @@ class _mongoListCollectionCommand : public _mongoDatabaseCommand
          return MONGO_CMD_NAME_LIST_COLLECTION ;
       }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
@@ -689,28 +690,12 @@ class _mongolistDatabaseCommand : public _mongoGlobalCommand
 
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
 
-      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
 } ;
 typedef _mongolistDatabaseCommand mongolistDatabaseCommand ;
-
-class _mongoWhatsMyUriCommand : public _mongoGlobalCommand
-{
-   MONGO_DECLARE_CMD_AUTO_REGISTER()
-   public:
-      _mongoWhatsMyUriCommand() {}
-      virtual ~_mongoWhatsMyUriCommand() {}
-
-      virtual MONGO_CMD_TYPE type() const { return CMD_WHATS_MY_URI ; }
-      virtual const CHAR* name() const { return MONGO_CMD_NAME_WHATS_MY_URI ; }
-
-      virtual INT32 buildReply( const MsgOpReply &sdbReply,
-                                engine::rtnContextBuf &replyBuf,
-                                _mongoResponseBuffer &resHeader ) ;
-} ;
-typedef _mongoWhatsMyUriCommand mongoWhatsMyUriCommand ;
 
 class _mongoGetLogCommand : public _mongoGlobalCommand
 {
@@ -749,9 +734,6 @@ class _mongoIsmasterCommand : public mongoIsMasterCommand
 {
    MONGO_DECLARE_CMD_AUTO_REGISTER()
    public:
-      _mongoIsmasterCommand() {}
-      virtual ~_mongoIsmasterCommand() {}
-
       virtual MONGO_CMD_TYPE type() const { return CMD_ISMASTER ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_ISMASTER ; }
 } ;
@@ -777,8 +759,6 @@ class _mongoBuildinfoCommand : public _mongoBuildInfoCommand
 {
    MONGO_DECLARE_CMD_AUTO_REGISTER()
    public:
-      _mongoBuildinfoCommand() {}
-      virtual ~_mongoBuildinfoCommand() {}
       virtual MONGO_CMD_TYPE type() const { return CMD_BUILDINFO ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_BUILDINFO ; }
 } ;
@@ -804,36 +784,52 @@ class _mongoGetLastErrorCommand : public _mongoGlobalCommand
 } ;
 typedef _mongoGetLastErrorCommand mongoGetLastErrorCommand ;
 
-class _mongoLogoutCommand : public _mongoGlobalCommand
+class _mongoDummyCommand : public _mongoGlobalCommand
 {
-   MONGO_DECLARE_CMD_AUTO_REGISTER()
    public:
-      _mongoLogoutCommand() {}
-      virtual ~_mongoLogoutCommand() {}
-
-      virtual MONGO_CMD_TYPE type() const { return CMD_LOGOUT ; }
-      virtual const CHAR* name() const    { return MONGO_CMD_NAME_LOGOUT ; }
-
+      _mongoDummyCommand() {}
+      virtual ~_mongoDummyCommand() {}
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
+} ;
+typedef _mongoDummyCommand mongoDummyCommand ;
+
+class _mongoWhatsMyUriCommand : public _mongoDummyCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      virtual MONGO_CMD_TYPE type() const { return CMD_WHATS_MY_URI ; }
+      virtual const CHAR* name() const    { return MONGO_CMD_NAME_WHATS_MY_URI ; }
+} ;
+typedef _mongoWhatsMyUriCommand mongoWhatsMyUriCommand ;
+
+class _mongoLogoutCommand : public _mongoDummyCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      virtual MONGO_CMD_TYPE type() const { return CMD_LOGOUT ; }
+      virtual const CHAR* name() const    { return MONGO_CMD_NAME_LOGOUT ; }
 } ;
 typedef _mongoLogoutCommand mongoLogoutCommand ;
 
-class _mongoGetReplStatCommand : public _mongoGlobalCommand
+class _mongoGetReplStatCommand : public _mongoDummyCommand
 {
    MONGO_DECLARE_CMD_AUTO_REGISTER()
    public:
-      _mongoGetReplStatCommand() {}
-      virtual ~_mongoGetReplStatCommand() {}
-
       virtual MONGO_CMD_TYPE type() const { return CMD_REPL_STAT ; }
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_REPL_STAT ; }
-
-      virtual INT32 buildReply( const MsgOpReply &sdbReply,
-                                engine::rtnContextBuf &replyBuf,
-                                _mongoResponseBuffer &resHeader ) ;
 } ;
 typedef _mongoGetReplStatCommand mongoGetReplStatCommand ;
+
+class _mongoGetCmdLineOptsCommand : public _mongoDummyCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      virtual MONGO_CMD_TYPE type() const { return CMD_GET_CMD_LINE ; }
+      virtual const CHAR* name() const    { return MONGO_CMD_NAME_GET_CMD_LINE ; }
+} ;
+typedef _mongoGetCmdLineOptsCommand mongoGetCmdLineOptsCommand ;
+
 }
 #endif

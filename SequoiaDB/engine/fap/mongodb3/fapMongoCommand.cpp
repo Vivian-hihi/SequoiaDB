@@ -536,9 +536,19 @@ static INT32 _mongoGetAndInitCommand( const CHAR *commandName,
    {
       // get command
       *ppCommand = getMongoCmdFactory()->create( commandName ) ;
-      PD_CHECK( *ppCommand, SDB_INVALIDARG, error, PDERROR,
-                "Unknown command name for mongo request: %s",
-                commandName ) ;
+      if ( NULL == *ppCommand )
+      {
+         rc = SDB_OPTION_NOT_SUPPORT ;
+
+         CHAR err[ 64 ] = {0} ;
+         ossSnprintf( err, 63, "Command '%s' is not supported", commandName ) ;
+         sessCtx.setError( rc, err ) ;
+
+         PD_LOG( PDERROR,
+                 "Unknown command name for mongo request: %s",
+                 commandName ) ;
+         goto error ;
+      }
 
       // init command
       rc = (*ppCommand)->init( pMsg, sessCtx ) ;
@@ -547,7 +557,7 @@ static INT32 _mongoGetAndInitCommand( const CHAR *commandName,
                    (*ppCommand)->name(), rc ) ;
 
       // build message
-      rc = (*ppCommand)->buildSdbMsg( sdbMsg ) ;
+      rc = (*ppCommand)->buildSdbMsg( sdbMsg, sessCtx ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to build sdb message for command[%s], rc: %d",
                    (*ppCommand)->name(), rc ) ;
@@ -1117,7 +1127,8 @@ void _mongoCollectionCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoInsertCommand)
-INT32 _mongoInsertCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoInsertCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                        mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -1192,12 +1203,13 @@ INT32 _mongoInsertCommand::buildReply( const MsgOpReply &sdbReply,
 
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDeleteCommand)
-INT32 _mongoDeleteCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoDeleteCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                        mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
-   INT32 rc                = SDB_OK ;
-   MsgOpDelete *del        = NULL ;
+   INT32 rc         = SDB_OK ;
+   MsgOpDelete *del = NULL ;
 
    sdbMsg.reserve( sizeof( MsgOpDelete ) ) ;
    sdbMsg.advance( sizeof( MsgOpDelete ) - 4 ) ;
@@ -1262,11 +1274,13 @@ INT32 _mongoDeleteCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoUpdateCommand)
-INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                        mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
    INT32 rc = SDB_OK ;
+   BOOLEAN updateMulti = FALSE ;
    MsgOpUpdate *update = NULL ;
    BSONObj query, updator, hint, setOnObj ;
 
@@ -1301,22 +1315,29 @@ INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg )
 
    query = updateObj.getObjectField( "q" ) ;
    updator = updateObj.getObjectField( "u" ) ;
+   updateMulti = updateObj.getBoolField( "multi" ) ;
+   _isUpsert = updateObj.getBoolField( "upsert" ) ;
 
    // set flag
-   if ( updateObj.getBoolField( "multi" ) )
+   if ( updateMulti )
    {
       update->flags |= FLG_UPDATE_MULTIUPDATE ;
    }
-   if ( updateObj.getBoolField( "upsert" ) )
+   if ( _isUpsert )
    {
       update->flags |= FLG_UPDATE_UPSERT ;
-      _isUpsert = TRUE ;
    }
 
    // if updator without operator, convert to $replace
    if( 0 == updator.nFields() ||
        updator.firstElementFieldName()[0] != '$' )
    {
+      if ( updateMulti )
+      {
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         ctx.setError( 9, "Multi update only works with $ operators" ) ;
+         goto error ;
+      }
       updator = BSON( "$replace" << updator ) ;
    }
 
@@ -1495,7 +1516,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoQueryCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoQueryCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                       mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -1671,7 +1693,7 @@ BSONObj _mongoQueryCommand::_getHintObj( const BSONObj &obj )
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoFindCommand)
-INT32 _mongoFindCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoFindCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -1949,7 +1971,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoGetmoreCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoGetmoreCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                         mongoSessionCtx &ctx )
 {
    MsgOpGetMore *more = NULL ;
 
@@ -2204,7 +2227,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoKillCursorCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoKillCursorCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                            mongoSessionCtx &ctx )
 {
    INT32 rc                = SDB_OK ;
    MsgOpKillContexts *kill = NULL ;
@@ -2264,7 +2288,7 @@ INT32 _mongoKillCursorCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoCountCommand)
-INT32 _mongoCountCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoCountCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -2414,29 +2438,75 @@ void _mongoAggregateCommand::_convertAggrGroup( const BSONObj& groupObj,
    }
 }
 
-void _mongoAggregateCommand::_convertAggrProject( BSONObj& projectObj )
+INT32 _mongoAggregateCommand::_convertAggrProject( BSONObj& projectObj,
+                                                   BSONObj& errorObj )
 {
-   /* MongoDB return _id field by default, but SequoiaDB doesn't return _id
-    * field by default. So we should convert:
-    * { $project: { a: 1 } }  ==> { $project: { id: 1, a: 1 } }
-    */
+   INT32 rc = SDB_OK ;
+
    if ( 0 != ossStrcmp( projectObj.firstElementFieldName(), "$project" ) )
    {
-      return ;
+      return rc ;
    }
 
+   /* MongoDB return _id field by default, but SequoiaDB doesn't return _id
+    * field by default. So we should convert:
+    * { $project: { a: 1 } }  ==>  { $project: { id: 1, a: 1 } }
+    *
+    * MongoDB support exclusion of fields, but SequoiaDB not support.
+    * { $project: { a: 0, b: 0 } } is not supported.
+    * { $project: { a: 1, _id: 0 } } is supported.
+    */
    BSONObj projValue = projectObj.getObjectField( "$project" ) ;
-   BOOLEAN hasId = projValue.hasField( "_id" ) ;
-   if ( !hasId )
+   BOOLEAN foundId = FALSE ;
+   BOOLEAN foundInclude = FALSE ;
+   BSONObjIterator i( projValue );
+
+   if ( projValue.isEmpty() )
+   {
+      goto done ;
+   }
+
+   while ( i.more() )
+   {
+      BSONElement e = i.next();
+      if ( !foundId && 0 == ossStrcmp( e.fieldName(), "_id" ) )
+      {
+         foundId = TRUE ;
+      }
+      if ( !foundInclude && e.trueValue() )
+      {
+         foundInclude = TRUE ;
+      }
+   }
+
+   if ( !foundInclude )
+   {
+      rc = SDB_OPTION_NOT_SUPPORT ;
+      BSONObjBuilder builder ;
+      builder.append( "ok", 0 ) ;
+      builder.append( "errmsg",
+                      "Exclusion fields is not supported" ) ;
+      builder.append( "code", rc ) ;
+      errorObj = builder.obj() ;
+      goto error ;
+   }
+
+   if ( !foundId )
    {
       BSONObjBuilder builder ;
       builder.append( "_id", 1 ) ;
       builder.appendElements( projValue ) ;
       projectObj = BSON( "$project" << builder.obj() ) ;
    }
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
-INT32 _mongoAggregateCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoAggregateCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                           mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -2474,7 +2544,11 @@ INT32 _mongoAggregateCommand::buildSdbMsg( msgBuffer &sdbMsg )
       BSONObj oneStage = ele.Obj() ;
       if ( 0 == ossStrcmp( oneStage.firstElementFieldName(), "$project" ) )
       {
-         _convertAggrProject( oneStage ) ;
+         rc = _convertAggrProject( oneStage, ctx.errorObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
          sdbMsg.write( oneStage, TRUE ) ;
       }
       else if ( 0 == ossStrcmp( oneStage.firstElementFieldName(), "$group" ) )
@@ -2494,7 +2568,10 @@ INT32 _mongoAggregateCommand::buildSdbMsg( msgBuffer &sdbMsg )
    }
    sdbMsg.doneLen() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoAggregateCommand::buildReply( const MsgOpReply &sdbReply,
@@ -2543,7 +2620,8 @@ INT32 _mongoAggregateCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDistinctCommand)
-INT32 _mongoDistinctCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoDistinctCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                          mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -2624,7 +2702,8 @@ INT32 _mongoDistinctCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoCreateCLCommand)
-INT32 _mongoCreateCLCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoCreateCLCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                          mongoSessionCtx &ctx )
 {
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
@@ -2674,7 +2753,7 @@ INT32 _mongoCreateCLCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDropCLCommand)
-INT32 _mongoDropCLCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoDropCLCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 {
    INT32 rc = SDB_OK ;
    MsgOpQuery *query = NULL ;
@@ -2731,7 +2810,8 @@ INT32 _mongoDropCLCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoListIdxCommand)
-INT32 _mongoListIdxCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoListIdxCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                         mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -2785,7 +2865,8 @@ INT32 _mongoListIdxCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoCreateIdxCommand)
-INT32 _mongoCreateIdxCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoCreateIdxCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                           mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -2871,7 +2952,8 @@ INT32 _mongoCreateIdxCommand::buildReply( const MsgOpReply &sdbReply,
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDeleteIdxCommand)
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDropIdxCommand)
-INT32 _mongoDropIdxCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoDropIdxCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                         mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -2931,7 +3013,8 @@ INT32 _mongoDropIdxCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDropDatabaseCommand)
-INT32 _mongoDropDatabaseCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoDropDatabaseCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                              mongoSessionCtx &ctx )
 {
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
@@ -2989,7 +3072,8 @@ INT32 _mongoDropDatabaseCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoListCollectionCommand)
-INT32 _mongoListCollectionCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongoListCollectionCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                                mongoSessionCtx &ctx )
 {
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
@@ -3052,7 +3136,8 @@ INT32 _mongoListCollectionCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongolistDatabaseCommand)
-INT32 _mongolistDatabaseCommand::buildSdbMsg( msgBuffer &sdbMsg )
+INT32 _mongolistDatabaseCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                              mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
@@ -3122,17 +3207,6 @@ INT32 _mongolistDatabaseCommand::buildReply( const MsgOpReply &sdbReply,
    return SDB_OK ;
 }
 
-MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoWhatsMyUriCommand)
-INT32 _mongoWhatsMyUriCommand::buildReply( const MsgOpReply &sdbReply,
-                                           engine::rtnContextBuf &bodyBuf,
-                                           _mongoResponseBuffer &headerBuf )
-{
-   bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-   _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
-
-   return SDB_OK ;
-}
-
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetLogCommand)
 INT32 _mongoGetLogCommand::buildReply( const MsgOpReply &sdbReply,
                                        engine::rtnContextBuf &bodyBuf,
@@ -3150,7 +3224,6 @@ INT32 _mongoGetLogCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoIsmasterCommand)
-
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoIsMasterCommand)
 INT32 _mongoIsMasterCommand::init( const _mongoMessage *pMsg,
                                    mongoSessionCtx &ctx )
@@ -3206,7 +3279,6 @@ INT32 _mongoIsMasterCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoBuildinfoCommand)
-
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoBuildInfoCommand)
 INT32 _mongoBuildInfoCommand::buildReply( const MsgOpReply &sdbReply,
                                           engine::rtnContextBuf &bodyBuf,
@@ -3235,7 +3307,7 @@ MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetLastErrorCommand)
 INT32 _mongoGetLastErrorCommand::init( const _mongoMessage *pMsg,
                                        mongoSessionCtx &ctx )
 {
-   _errorInfoObj = ctx.errorInfoObj.getOwned() ;
+   _errorInfoObj = ctx.errorObj.getOwned() ;
 
    return _mongoGlobalCommand::init( pMsg, ctx ) ;
 }
@@ -3245,17 +3317,26 @@ INT32 _mongoGetLastErrorCommand::buildReply( const MsgOpReply &sdbReply,
                                              _mongoResponseBuffer &headerBuf )
 {
    bson::BSONObjBuilder bob ;
-   if ( _errorInfoObj.hasField( OP_ERRNOFIELD ) )
+   INT32 errCode = SDB_OK ;
+
+   BSONElement ele = _errorInfoObj.getField( OP_ERRNOFIELD ) ;
+   if ( !ele.eoo() )
    {
-      bob.append( "ok", 0 ) ;
-      bob.append( "code",   _errorInfoObj.getIntField( OP_ERRNOFIELD ) ) ;
-      bob.append( "errmsg", _errorInfoObj.getStringField( OP_ERRDESP_FIELD ) ) ;
+      errCode = ele.numberInt() ;
    }
-   else
+
+   if ( SDB_OK == errCode )
    {
       bob.append( "ok", 1 ) ;
       bob.appendNull( "err" ) ;
    }
+   else
+   {
+      bob.append( "ok", 1 ) ;
+      bob.append( "code", errCode ) ;
+      bob.append( "err", _errorInfoObj.getStringField( OP_ERRDESP_FIELD ) ) ;
+   }
+
    bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -3263,24 +3344,19 @@ INT32 _mongoGetLastErrorCommand::buildReply( const MsgOpReply &sdbReply,
    return SDB_OK ;
 }
 
-MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoLogoutCommand)
-INT32 _mongoLogoutCommand::buildReply( const MsgOpReply &sdbReply,
-                                       engine::rtnContextBuf &bodyBuf,
-                                       _mongoResponseBuffer &headerBuf )
+INT32 _mongoDummyCommand::buildReply( const MsgOpReply &sdbReply,
+                                      engine::rtnContextBuf &bodyBuf,
+                                      _mongoResponseBuffer &headerBuf )
 {
    bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
+
    return SDB_OK ;
 }
 
+MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoWhatsMyUriCommand)
+MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoLogoutCommand)
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetReplStatCommand)
-INT32 _mongoGetReplStatCommand::buildReply( const MsgOpReply &sdbReply,
-                                            engine::rtnContextBuf &bodyBuf,
-                                            _mongoResponseBuffer &headerBuf )
-{
-   bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
-   _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
-   return SDB_OK ;
-}
+MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetCmdLineOptsCommand)
 
 }

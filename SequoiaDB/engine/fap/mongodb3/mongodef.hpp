@@ -54,9 +54,19 @@ enum MONGO_CLIENT_TYPE
 struct mongoSessionCtx
 {
    MONGO_CLIENT_TYPE client ;
-   BSONObj errorInfoObj ;
+   BSONObj errorObj ;
 
    mongoSessionCtx() : client( OTHER ) {}
+
+   void setError( INT32 errCode, const CHAR* err )
+   {
+      BSONObjBuilder builder ;
+      builder.append( "ok", 0 ) ;
+      builder.append( "errmsg", err ) ;
+      builder.append( "code", errCode ) ;
+      errorObj = builder.obj() ;
+   }
+
 } ;
 
 enum insertOption

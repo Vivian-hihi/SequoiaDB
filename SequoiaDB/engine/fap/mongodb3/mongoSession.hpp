@@ -76,12 +76,10 @@ protected:
                    engine::pmdEDUEvent &event ) ;
    INT32 _recvFromSocket( CHAR *&pMsg, BOOLEAN &recvSomething ) ;
    INT32 _buildResponse( _mongoCommand *pCommand,
-                         MsgOpReply &replyHeader,
-                         engine::rtnContextBuf &_contextBuff,
                          CHAR *&pRes ) ;
-   INT32 _reply( _mongoCommand *pCommand,
-                 MsgOpReply &replyHeader,
-                 engine::rtnContextBuf &_contextBuff ) ;
+   INT32 _reply( _mongoCommand *pCommand ) ;
+   INT32 _reply( _mongoCommand *pCommand, const CHAR* pMsg,
+                 INT32 errCode, const BSONObj &errObj ) ;
 
 private:
    void  _resetBuffers() ;

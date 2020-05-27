@@ -84,6 +84,7 @@ enum MONGO_CMD_TYPE
    CMD_GET_LOG          = 96,
    CMD_GET_LAST_ERROR   = 97,
    CMD_REPL_STAT        = 98,
+   CMD_GET_CMD_LINE     = 99,
 
    CMD_UNKNOWN          = 65535
 } ;
@@ -120,6 +121,6 @@ const CHAR* const MONGO_CMD_NAME_GET_LOG =           "getLog" ;
 const CHAR* const MONGO_CMD_NAME_PING =              "ping" ;
 const CHAR* const MONGO_CMD_NAME_LOGTOUT =           "logout" ;
 const CHAR* const MONGO_CMD_NAME_REPL_STAT =         "replSetGetStatus" ;
-
+const CHAR* const MONGO_CMD_NAME_GET_CMD_LINE =      "getCmdLineOpts" ;
 }
 #endif
