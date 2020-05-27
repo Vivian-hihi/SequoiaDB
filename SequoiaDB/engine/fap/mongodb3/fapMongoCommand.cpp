@@ -2036,7 +2036,6 @@ INT32 _mongoGetmoreCommand::_buildQueryReply( const MsgOpReply &sdbReply,
    {
       res.reservedFlags = MONGO_REPLY_FLAG_CURSOR_NOT_FOUND ;
    }
-   res.startingFrom = sdbReply.startFrom ;
    res.nReturned = bodyBuf.recordNum() ;
    headerBuf.setData( (const CHAR*)&res, sizeof( res ) ) ;
 
