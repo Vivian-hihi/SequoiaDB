@@ -24,7 +24,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Author chimanzhao
  * @Date 2020-05-19
  */
-public class explain14453 extends SdbTestBase {
+public class Explain14453 extends SdbTestBase {
 	private Sequoiadb sdb = null;
 	private CollectionSpace cs = null;
 	private DBCollection cl = null;
