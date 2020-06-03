@@ -85,7 +85,6 @@ public class explain14453 extends SdbTestBase {
 				for (int i = 0; i < EXECRECORDS; i++) {
 					cl = cs.getCollection(clName + "_" + i);
 					cl.insert(insertObjs);
-					System.out.println("analyze loopNum:" + i);
 					db.analyze();
 				}
 			}
@@ -97,7 +96,6 @@ public class explain14453 extends SdbTestBase {
 		public void exec() throws BaseException {
 			try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 				for (int i = 0; i < EXECRECORDS; i++) {
-					System.out.println("sync loopNum:" + i);
 					db.sync((BSONObject) JSON.parse("{ Block:true } "));
 				}
 			}
