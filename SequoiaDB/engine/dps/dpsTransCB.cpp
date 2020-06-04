@@ -1229,6 +1229,25 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_S,
+                                        FALSE,  // not preemptively test
+                                        pdpsTxResInfo,
+                                        callback );
+   }
+
+   INT32 dpsTransCB::transLockTestSPreempt( _pmdEDUCB *eduCB, UINT32 logicCSID,
+                                            UINT16 collectionID,
+                                            const dmsRecordID *recordID,
+                                            dpsTransRetInfo * pdpsTxResInfo,
+                                            _dpsITransLockCallback * callback )
+   {
+      if ( !_isOn )
+      {
+         return SDB_OK ;
+      }
+      dpsTransLockId lockId( logicCSID, collectionID, recordID );
+      return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
+                                        lockId, DPS_TRANSLOCK_S,
+                                        TRUE, // preemptively test
                                         pdpsTxResInfo,
                                         callback );
    }
@@ -1245,6 +1264,7 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_IS,
+                                        FALSE,  // not preemptively test
                                         pdpsTxResInfo );
    }
 
@@ -1261,6 +1281,7 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_X,
+                                        FALSE,  // not preemptively test
                                         pdpsTxResInfo,
                                         callback ) ;
    }
@@ -1279,6 +1300,7 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_U,
+                                        FALSE,  // not preemptively test
                                         pdpsTxResInfo,
                                         callback ) ;
    }
@@ -1296,6 +1318,7 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_IX,
+                                        FALSE,  // not preemptively test
                                         pdpsTxResInfo );
    }
 
