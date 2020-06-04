@@ -569,6 +569,20 @@ namespace engine
             }
          }
 
+         if ( ( DPS_TRANSLOCK_IX >= lockMode ) && foundIns )
+         {
+            // as the owner list is sorted on lockMode in
+            // descending order, when IS/IX lock request found
+            // the position to insert, no need to walk through
+            // rest of the list to search for incompatible,
+            // beause IX/IS lock is the lowest lock mode value,
+            // i.e., stays at the tail end of the owner list,
+            // if there is an incompatible one in the list,
+            // it must be found already since it has greater
+            // lock mode value than IX/IS lock
+            break ;
+         }
+
          // check if the requested lock mode is compatible other owners.
          // If not, remember the first incompatible one.
          if ( NULL == pLRBIncompatible )
