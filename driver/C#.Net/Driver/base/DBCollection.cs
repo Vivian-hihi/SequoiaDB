@@ -1820,12 +1820,14 @@ namespace SequoiaDB
          * \param mode Open mode:
          *              DBLob.SDB_LOB_READ for reading,
          *              DBLob.SDB_LOB_WRITE for writing.
+         *              DBLob.SDB_LOB_SHAREREAD for share read.
+         *              DBLob.SDB_LOB_SHAREREAD | DBLob.SDB_LOB_WRITE for both reading and writing
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
         public DBLob OpenLob(ObjectId id, int mode)
         {
-            if (mode != DBLob.SDB_LOB_READ && mode != DBLob.SDB_LOB_WRITE)
+            if (!DBLob.hasWriteMode(mode) && !DBLob.isReadOnlyMode(mode))
             {
                 throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "mode is unsupported: " + mode);
             }

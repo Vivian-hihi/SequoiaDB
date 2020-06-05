@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using SequoiaDB.Bson;
 using System.IO;
 using System.Collections;
+using System.Threading;
 using DriverTest.TestCommon;
 
 namespace DriverTest
@@ -1340,7 +1341,230 @@ namespace DriverTest
             //cl.OpenLob(id);
         }
 
+        [TestMethod()]
+        public void LobShareReadAndWriteModeTest()
+        {
 
+            DBLob newLob = cl.CreateLob();
+            ObjectId oid = newLob.GetID();
+            newLob.Close();
+
+            int mode = DBLob.SDB_LOB_SHAREREAD | DBLob.SDB_LOB_WRITE;
+
+            // case 1: test read and write mode
+
+            // setp 1: open lob with SDB_LOB_SHAREREAD mode
+            // setp 2: wirte data from lob head
+            // setp 3: seek to the lob head
+            // setp 4: read lob and check data
+
+            DBLob lob1 = cl.OpenLob(oid, mode);
+
+            byte[] writeByte1 = { 1, 2, 3, 4, 5 };
+            lob1.Write(writeByte1);
+
+            lob1.Seek(0, DBLob.SDB_LOB_SEEK_SET);
+
+            long actualLen1 = lob1.GetSize();
+            byte[] readByte1 = new byte[actualLen1];
+            lob1.Read(readByte1);
+            lob1.Close();
+
+            long expectLen1 = writeByte1.Length;
+
+            if (expectLen1 == actualLen1)
+            {
+                for (int i = 0; i < actualLen1; i++)
+                {
+                    Assert.AreEqual(writeByte1[i], readByte1[i]);
+                }
+            }
+            else
+            {
+                Assert.AreEqual(expectLen1, actualLen1);
+            }
+
+            // case 2: test read and write mode
+
+            // setp 1: open lob with SDB_LOB_SHAREREAD mode
+            // setp 2: write after read some data
+            // setp 3: seek to the lob head
+            // setp 4: read all data and check data
+
+            DBLob lob2 = cl.OpenLob(oid, mode);
+
+            int readLen = 2;
+            byte[] readByte2 = new byte[readLen];
+            lob2.Read(readByte2);
+
+            byte[] writeByte2 = { 6, 7, 8 };
+            lob2.Write(writeByte2);
+
+            lob2.Seek(0, DBLob.SDB_LOB_SEEK_SET);
+
+            long lobLen = lob2.GetSize();
+            byte[] actualData = new byte[lobLen];
+            lob2.Read(actualData);
+
+            byte[] expectData = { 1, 2, 6, 7, 8 };
+            long expectLen2 = expectData.Length;
+
+            if (expectLen2 == lobLen)
+            {
+                for (int i = 0; i < lobLen; i++)
+                {
+                    Assert.AreEqual(expectData[i], actualData[i]);
+                }
+            }
+            else
+            {
+                Assert.AreEqual(expectLen2, lobLen);
+            }
+        }
+
+        internal class ReadAndWriteThreadArg
+        {
+            public DBCollection cl;
+            public ObjectId oid;
+            public int offset;
+            public int tNum;
+            public int len;
+
+            internal ReadAndWriteThreadArg(DBCollection cl, ObjectId oid, int offset, int tNum, int len)
+            {
+                this.cl = cl;
+                this.oid = oid;
+                this.offset = offset;
+                this.tNum = tNum;
+                this.len = len;
+            }
+
+            public void ReadWriteConcurrent()
+            {
+                int mode = DBLob.SDB_LOB_SHAREREAD | DBLob.SDB_LOB_WRITE;
+                DBLob lob = cl.OpenLob(this.oid, mode);
+                try
+                {
+                    lob.LockAndSeek(this.offset, this.len);
+                }
+                catch
+                {
+                    Console.WriteLine("lockandseek error");
+                }
+                byte[] writeByte = new byte[len];
+                for (int i = 0; i < len; i++)
+                {
+                    writeByte[i] = (byte)(tNum * 2 + i);
+                }
+
+                byte[] readByte = new byte[len];
+                lob.Write(writeByte);
+
+                Thread.Sleep(10);
+
+                lob.Seek(this.offset, DBLob.SDB_LOB_SEEK_SET);
+                lob.Read(readByte);
+                lob.Close();
+
+                for (int i = 0; i < len; i++)
+                {
+                    Assert.AreEqual(writeByte[i], readByte[i]);
+                }
+            }
+
+        }
+
+        [TestMethod()]
+        public void LobReadAndWirteConcurrentTest()
+        {
+            // The test description:
+            // setp 1: create some thread
+            // setp 2: all threads open the same lob with read and write mode.
+            // setp 3: thread lock and seek lob
+            // setp 4: thread wirte lob
+            // setp 5: thread read data from lob
+            // setp 6: thread check read and write data
+            // setp 7: main thread check lob data
+
+            DBLob newLob = cl.CreateLob();
+            newLob.Close();
+            ObjectId oid = newLob.GetID();
+
+            int threadSum = 10;
+            int len = 2;
+            int offset = 0;
+
+            Thread[] threads = new Thread[threadSum];
+
+            for (int i = 0; i < threadSum; i++)
+            {
+                Sequoiadb db = new Sequoiadb(config.conf.Coord.Address);
+                db.Connect(config.conf.UserName, config.conf.Password);
+                DBCollection dbcl = db.GetCollecitonSpace(csName).GetCollection(cName);
+                ReadAndWriteThreadArg arg = new ReadAndWriteThreadArg(dbcl, oid, offset, i, len);
+                offset = offset + len;
+
+                threads[i] = new Thread(new ThreadStart(arg.ReadWriteConcurrent));
+            }
+
+            for (int i = 0; i < threadSum; i++)
+            {
+                threads[i].Start();
+            }
+
+            for (int i = 0; i < threadSum; i++)
+            {
+                threads[i].Join();
+            }
+
+            DBLob lob = cl.OpenLob(oid, DBLob.SDB_LOB_READ);
+            long lobLen = lob.GetSize();
+            byte[] data = new byte[lobLen];
+
+            lob.Read(data);
+
+            byte[] expectData = new byte[threadSum * len];
+            for (int i = 0; i < expectData.Length; i++)
+            {
+                expectData[i] = (byte)i;
+            }
+
+            if (lobLen == expectData.Length)
+            {
+                for (int i = 0; i < lobLen; i++)
+                {
+                    Assert.AreEqual(expectData[i], data[i]);
+                }
+            }
+            else
+            {
+                Assert.AreEqual(lobLen, expectData.Length);
+            }
+        }
+
+        [TestMethod()]
+        public void LobGetRunTimeDetailTest()
+        {
+            DBLob lob = cl.CreateLob();
+            byte[] writeByet = { 1, 2, 3 };
+            lob.Write(writeByet);
+            BsonDocument detail = lob.GetRunTimeDetail();
+            lob.Close();
+
+            BsonDocument accessInfo = (BsonDocument)detail.GetValue("AccessInfo");
+
+            // check detail
+            Assert.IsTrue(detail.Contains("Oid"));
+            Assert.IsTrue(detail.Contains("AccessInfo"));
+            Assert.IsTrue(detail.Contains("ContextID"));
+
+            Assert.IsTrue(accessInfo.Contains("RefCount"));
+            Assert.IsTrue(accessInfo.Contains("ReadCount"));
+            Assert.IsTrue(accessInfo.Contains("WriteCount"));
+            Assert.IsTrue(accessInfo.Contains("ShareReadCount"));
+            Assert.IsTrue(accessInfo.Contains("LockSections"));
+
+        }
 
     }
 }

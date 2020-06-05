@@ -20,7 +20,6 @@ namespace SequoiaDB
 {
     internal class SequoiadbConstants
     {
-        public const string OP_ERRNOFIELD = "errno";
         public const int OP_MAXNAMELENGTH = 255;
 
         public const int COLLECTION_SPACE_MAX_SIZE = 127;
@@ -289,6 +288,7 @@ namespace SequoiaDB
         MSG_BS_LOB_LOCK_REQ = 8007, MSG_BS_LOB_LOCK_RES = unchecked((int)(RES_FLAG | (uint)MSG_BS_LOB_LOCK_REQ)),
         MSG_BS_LOB_TRUNCATE_REQ = 8008, MSG_BS_LOB_TRUNCATE_RES = unchecked((int)(RES_FLAG | (uint)MSG_BS_LOB_TRUNCATE_REQ)),
         MSG_BS_LOB_CREATELOBID_REQ = 8009, MSG_BS_LOB_CREATELOBID_RES = unchecked((int)(RES_FLAG | (uint)MSG_BS_LOB_CREATELOBID_REQ)),
+        MSG_BS_LOB_GETRTDETAIL_REQ = 8010, MSG_BS_LOB_GETRTDETAIL_RES = unchecked((int)(RES_FLAG | (uint)MSG_BS_LOB_GETRTDETAIL_REQ)),
         MSG_NULL                  = 9999
     };
 
