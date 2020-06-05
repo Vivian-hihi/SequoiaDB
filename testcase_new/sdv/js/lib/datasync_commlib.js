@@ -898,7 +898,7 @@ replicaGroup.prototype.checkLSN =
          }
          else if( prevLsn !== obj.CompleteLSN && this.failedCound++ % 100 == 0 )
          {
-            println( prevSvc + "is LSN: " + prevLsn + obj.NodeName + " is LSN:" + CompleteLSN );
+            println( prevSvc + "is LSN: " + prevLsn + obj.NodeName + " is LSN:" + obj.CompleteLSN );
             return false;
          }
       }
