@@ -792,6 +792,18 @@ replicaGroup.prototype.create =
       }
    }
 
+replicaGroup.prototype.getSequoiadb =
+   function( )
+   {
+	   return this.db ;
+   }
+
+replicaGroup.prototype.getName =
+   function()
+   {
+      return this.name ;
+   }
+
 replicaGroup.prototype.drop =
    function()
    {
@@ -867,30 +879,31 @@ replicaGroup.prototype.checkResult =
 replicaGroup.prototype.checkLSN =
    function( group )
    {
+      var db = group.getSequoiadb();
+      var snapshotRes = db.snapshot(6, {RawData:1,"GroupName":group.getName()},{NodeName:"", CompleteLSN:"", CurrentLSN:"",IsPrimary:""},{IsPrimary:-1}) ;
+	  
       var prevLsn = 0;
       var prevSvc = "" ;
       if ( typeof(this.failedCound) === "undefined" )
       {
          this.failedCound = 0;
       }
-
-      for( var i = 0; i < group.size(); ++i )
+      while ( snapshotRes.next() )
       {
-         var node = group.getNodeByPos( i ) ;
-         var currentLsn = node.getCurrentLsn();
-         if( 0 === i )
+         var obj = snapshotRes.current().toObj() ;
+         if ( prevSvc === "" )
          {
-            prevLsn = currentLsn;
-            prevSvc = node.toString() ;
+            prevLsn = obj.CompleteLSN;
+            prevSvc = obj.NodeName;
          }
-         else if( prevLsn !== currentLsn && this.failedCound++ % 100 == 0 )
+         else if( prevLsn !== obj.CompleteLSN && this.failedCound++ % 100 == 0 )
          {
-            println( prevSvc + "is LSN: " + prevLsn + node.toString() + " is LSN:" + currentLsn );
+            println( prevSvc + "is LSN: " + prevLsn + obj.NodeName + " is LSN:" + CompleteLSN );
             return false;
          }
       }
+      
       this.failedCound = 0 ;
-
       return true;
    }
 
