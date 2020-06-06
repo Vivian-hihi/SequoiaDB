@@ -29,7 +29,6 @@ public class Explain14453 extends SdbTestBase {
 	private CollectionSpace cs = null;
 	private DBCollection cl = null;
 	private String clName = "cl_14453";
-	private static List<BSONObject> insertObjs = null;
 	private static int EXECRECORDS = 100;
 	private static int DATANUMBERS = 1000;
 
@@ -37,17 +36,13 @@ public class Explain14453 extends SdbTestBase {
 	public void setUp() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cs = sdb.getCollectionSpace(csName);
-		for (int i = 0; i < EXECRECORDS; i++) {
-			cs.createCollection(clName + "_" + i);
-		}
+		cl = cs.createCollection(clName);
 	}
 
 	@AfterClass
 	public void tearDown() {
 		try {
-			for (int i = 0; i < EXECRECORDS; i++) {
-				cs.dropCollection(clName + "_" + i);
-			}
+			cs.dropCollection(clName);
 		} finally {
 			if (sdb != null) {
 				sdb.close();
@@ -57,35 +52,37 @@ public class Explain14453 extends SdbTestBase {
 
 	@Test
 	public void test() {
-		insertObjs = new ArrayList<BSONObject>();
+		List<BSONObject> insertObjs = new ArrayList<BSONObject>();
 		for (int i = 0; i < DATANUMBERS; i++) {
 			insertObjs.add((BSONObject) JSON.parse("{a:" + i + ",b:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 					+ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 					+ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}"));
 		}
 
-		Analyze analyze = new Analyze();
+		AnalyzeAndInsert analyze = new AnalyzeAndInsert(insertObjs);
 		analyze.start();
 
 		Sync sync = new Sync();
 		sync.start();
 
-		analyze.join();
-		sync.join();
-
 		Assert.assertTrue(analyze.isSuccess(), analyze.getErrorMsg());
 		Assert.assertTrue(sync.isSuccess(), sync.getErrorMsg());
-
 	}
 
-	private class Analyze extends SdbThreadBase {
+	private class AnalyzeAndInsert extends SdbThreadBase {
+		List<BSONObject> insertObjs = null;
+
+		AnalyzeAndInsert(List<BSONObject> insertObjs) {
+			this.insertObjs = insertObjs;
+		}
+
 		@Override
 		public void exec() throws BaseException {
 			try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 				for (int i = 0; i < EXECRECORDS; i++) {
-					cl = cs.getCollection(clName + "_" + i);
 					cl.insert(insertObjs);
 					db.analyze();
+					cl.truncate();
 				}
 			}
 		}
