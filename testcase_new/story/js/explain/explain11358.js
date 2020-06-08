@@ -1,10 +1,10 @@
 /************************************
-*@Description: seqDB-11356: rtnPredicate为[valA, valA]，数据类型为不在mcv中统计的类型，数据均匀情况下的索引选择
+*@Description: seqDB-11358:rtnPredicate为[valA, valA]，数据类型为非bool型，数据均匀情况下的索引选择 
 *@author:      chimanzhao
-*@createdate:  2020.5.8
-*@testlinkCase: seqDB-11356
+*@createdate:  2020.5.12
+*@testlinkCase: seqDB-11358
 **************************************/
-testConf.clName = COMMCLNAME + "_11356";
+testConf.clName = COMMCLNAME + "_11358";
 
 main( test )
 
@@ -15,16 +15,18 @@ function test ( testPara )
    dbcl.createIndex( "b", { b: -1 } );
    dbcl.createIndex( "ab", { a: 1, b: 1 } );
 
-   //设置查询条件
-   var conds = [{ a: { age: 1 } }, { a: { $in: [{ age: 1 }] } }, { a: { $all: [{ age: 1 }] } }, { a: { age: { $exists: 0 } } }, { a: { age: { $isnull: 1 } } }];
-   indexName = "a";
-   scanType = "ixscan";
-
-   //不计算IO代价,构造数据类型不为在mcv中统计的类型，且数据均匀
+   var conds = [{ a: { $et: 1 } }, { a: { $in: [1] } }, { a: { $all: [1] } }, { a: { $exists: 0 } }, { a: { $isnull: 1 } }];
+   var conds1 = [conds[0], conds[1], conds[2]];
+   var conds2 = [conds[3], conds[4]];
+   var indexName = "a";
+   var scanType = "ixscan";
+   var indexName1 = "";
+   var scanType1 = "tbscan";
+   //不计算IO代价
    var docs = [];
    for( var i = 0; i < 1000; i++ )
    {
-      docs.push( { a: { age: i }, b: { age: -i } } )
+      docs.push( { a: i, b: i, c: -i } )
    }
    dbcl.insert( docs );
    testExplain( conds, dbcl, indexName, scanType );
@@ -36,6 +38,7 @@ function test ( testPara )
    testExplain( conds, dbcl, indexName, scanType );
 
    //计算IO代价
+   //添加数据使数据页数大于optestcachesize（20）
    var docs = [];
    for( var i = 0; i < 50000; i++ )
    {
@@ -48,6 +51,7 @@ function test ( testPara )
    var expNeedEvalIO = true;
    checkNeedEvalIO( dbcl, expNeedEvalIO );
 
-   testExplain( conds, dbcl, indexName, scanType );
+   testExplain( conds1, dbcl, indexName, scanType );
+   testExplain( conds2, dbcl, indexName1, scanType1 );
 }
 

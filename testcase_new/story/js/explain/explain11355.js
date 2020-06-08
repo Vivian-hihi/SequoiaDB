@@ -34,11 +34,14 @@ function test ( testPara )
    }
    dbcl.insert( docs );
    testExplain( conds, dbcl, indexName, scanType );
+
    db.analyze();
+   var expNeedEvalIO = false;
+   checkNeedEvalIO( dbcl, expNeedEvalIO );
+
    testExplain( conds, dbcl, indexName, scanType );
 
    //计算IO代价
-   //添加数据使数据页数大于optestcachesize（20）
    var docs = [];
    for( var i = 0; i < 50000; i++ )
    {
@@ -46,7 +49,11 @@ function test ( testPara )
    }
    dbcl.insert( docs );
    testExplain( conds, dbcl, indexName, scanType );
+
    db.analyze();
+   var expNeedEvalIO = true;
+   checkNeedEvalIO( dbcl, expNeedEvalIO );
+
    testExplain( conds1, dbcl, indexName1, scanType1 );
    testExplain( conds2, dbcl, indexName2, scanType );
    testExplain( conds3, dbcl, indexName, scanType );

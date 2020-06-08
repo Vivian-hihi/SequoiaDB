@@ -8,38 +8,45 @@ testConf.clName = COMMCLNAME + "_11353";
 
 main( test );
 
-function test (testPara)
+function test ( testPara )
 {
    var dbcl = testPara.testCL;
-   dbcl.createIndex( "a", {a:1} );
- 
+   dbcl.createIndex( "a", { a: 1 } );
+
    //设置查询条件
-   var conds = [{b:1},{$or:[{a:1},{c:1}]},{$not:[{a:1},{c:1}]}];
-   var indexName = "" ;
-   var scanType  = "tbscan" ;
+   var conds = [{ b: 1 }, { $or: [{ a: 1 }, { c: 1 }] }, { $not: [{ a: 1 }, { c: 1 }] }];
+   var indexName = "";
+   var scanType = "tbscan";
 
    //不计算IO代价
-   var docs=[];
-   for (var i = 0; i < 1000; i++ )
+   var docs = [];
+   for( var i = 0; i < 1000; i++ )
    {
-      docs.push( { a:i, b:i, c:-i } )
-   }
-   dbcl.insert( docs );
-   
-   testExplain( conds, dbcl, indexName, scanType );
-   db.analyze();
-   testExplain( conds, dbcl, indexName, scanType );
-   
-   //计算IO代价
-   //添加数据使数据页数大于optestcachesize（20）
-   var docs=[];
-   for (var i = 0; i < 50000; i++ )
-   {
-      docs.push( { d:i } )
+      docs.push( { a: i, b: i, c: -i } )
    }
    dbcl.insert( docs );
 
    testExplain( conds, dbcl, indexName, scanType );
+
    db.analyze();
+   var expNeedEvalIO = false;
+   checkNeedEvalIO( dbcl, expNeedEvalIO );
+
+   testExplain( conds, dbcl, indexName, scanType );
+
+   //计算IO代价
+   var docs = [];
+   for( var i = 0; i < 50000; i++ )
+   {
+      docs.push( { d: i } )
+   }
+   dbcl.insert( docs );
+
+   testExplain( conds, dbcl, indexName, scanType );
+
+   db.analyze();
+   var expNeedEvalIO = true;
+   checkNeedEvalIO( dbcl, expNeedEvalIO );
+
    testExplain( conds, dbcl, indexName, scanType );
 }
