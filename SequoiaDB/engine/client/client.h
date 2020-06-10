@@ -46,7 +46,8 @@ enum _SDB_LOB_OPEN_MODE
 {
    SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
    SDB_LOB_READ       = 0x00000004, /**< Open an existing lob to read */
-   SDB_LOB_WRITE      = 0x00000008  /**< Open an existing lob to write */
+   SDB_LOB_WRITE      = 0x00000008, /**< Open an existing lob to write */
+   SDB_LOB_SHAREREAD  = 0x00000040  /**< Open an existing lob to share read */
 } ;
 /** \typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE
     \brief The open mode.
@@ -3119,6 +3120,15 @@ SDB_EXPORT INT32 sdbListLobPieces1( sdbCollectionHandle cHandle,
                                    INT64 numToSkip,
                                    INT64 numToReturn,
                                    sdbCursorHandle *cursor ) ;
+
+/** \fn INT32 sdbGetRunTimeDetail( sdbLobHandle lobHandle, 
+                                   bson *detail )
+	\brief Get the run time detail information of lob.
+	\retval SDB_OK Operation Success
+	\retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetRunTimeDetail( sdbLobHandle lobHandle, 
+                                      bson *detail) ;
 
 
 /** \fn INT32 sdbReelect( sdbReplicaGroupHandle cHandle,

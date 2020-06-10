@@ -3,6 +3,7 @@
 #include "testcommon.h"
 #include "client.h"
 #include <iostream>
+#include <pthread.h>
 
 TEST(lob, lob_global_test)
 {
@@ -342,6 +343,7 @@ TEST(lob,lob_listLobs_test)
    INT64 numToReturn                 = -1 ;
    sdbCursorHandle cursor            = 0;
    sdbCursorHandle lobPiecesCursor   = 0;
+   sdbLobHandle lob                 = 0 ;
 
    
    // connect to database
@@ -354,6 +356,18 @@ TEST(lob,lob_listLobs_test)
                         &cl) ;
 
    ASSERT_EQ( SDB_OK, rc ) ;
+
+
+   // create lob;
+   for ( int i=0; i < 10; i++)
+   {
+      rc = sdbOpenLob(cl, NULL, SDB_LOB_CREATEONLY, &lob);
+      ASSERT_EQ( SDB_OK, rc ) ;
+
+      rc = sdbCloseLob( &lob );
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+   
 
    // case 1, without options. 
    rc = sdbListLobs(cl, &cursor);
@@ -638,3 +652,405 @@ TEST(lob,lob_primaryAndSubLob_test)
 
 }
 
+TEST(lob,lob_readAndWrite_mode_test)
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN eof = FALSE ;
+   // initialize the word environment
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // initialize local variables
+   sdbConnectionHandle db            = 0 ;
+   sdbCollectionHandle cl            = 0 ;
+   bson_oid_t oid ;
+   sdbLobHandle newLob               = 0 ;
+   sdbLobHandle lob1                 = 0 ;
+   sdbLobHandle lob2                 = 0 ;
+   sdbLobHandle lob3                 = 0 ;
+   sdbLobHandle lob4                 = 0 ;
+   sdbLobHandle lob5                 = 0 ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get collection
+   rc = getCollection ( db,
+                        COLLECTION_FULL_NAME,
+                        &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   rc = sdbOpenLob( cl, NULL, SDB_LOB_CREATEONLY, &newLob );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetLobId( newLob, &oid );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbCloseLob( &newLob);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+
+   INT32 mode = SDB_LOB_SHAREREAD | SDB_LOB_WRITE;
+   
+   // case 1: test read and write mode
+
+   // setp 1: open lob with SDB_LOB_SHAREREAD mode
+   // setp 2: wirte data from lob head
+   // setp 3: seek to the lob head 
+   // setp 4: read lob and check data
+
+   rc = sdbOpenLob( cl , &oid, mode, &lob1) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   UINT32 writelen1 = 5;
+   char writeBuf1[writelen1] = { 0 };
+
+   for(int i = 0; i < writelen1; i++)
+   {
+      writeBuf1[i] = 'a' + i;
+   }
+   
+   rc = sdbWriteLob( lob1, writeBuf1, writelen1);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbSeekLob( lob1, 0, SDB_LOB_SEEK_SET);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   SINT64 lobLen1;
+   rc = sdbGetLobSize( lob1, &lobLen1);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   char readBuf1[lobLen1] = { 0 };
+
+   UINT32 readLen;
+   rc = sdbReadLob( lob1, lobLen1, readBuf1, &readLen);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc =sdbCloseLob( &lob1 );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check data
+   for(int i = 0; i < lobLen1; i++)
+   {
+      ASSERT_EQ( writeBuf1[i], readBuf1[i] ) ;
+   }
+
+
+   // case 2: test read and write mode
+   
+   // setp 1: open lob with SDB_LOB_SHAREREAD mode
+   // setp 2: write after read some data 
+   // setp 3: seek to the lob head    
+   // setp 4: read all data and check data
+
+   rc = sdbOpenLob( cl , &oid, mode, &lob2) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   UINT32 lobLen2 = 3;
+   char readBuf2[lobLen2] = { 0 };
+
+   rc = sdbReadLob( lob2, lobLen2, readBuf2, &readLen);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   UINT32 writelen2 = 5;
+   char writeBuf2[writelen2] = { 0 };
+   for(int i = 0; i < writelen2; i++)
+   {
+      writeBuf2[i] = 'A' + i;
+   }
+
+   rc = sdbWriteLob( lob2, writeBuf2, writelen2);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbSeekLob( lob2, 0, SDB_LOB_SEEK_SET);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   SINT64 lobSize;
+   rc = sdbGetLobSize( lob2, &lobSize);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   char data[lobSize] = { 0 };
+   char expectData[lobSize] = { 0 };
+
+   for(int i = 0; i < lobSize; i++)
+   {
+      if( i < lobLen2)
+      { 
+         expectData[i] = readBuf2[i];
+      }
+      else
+      {
+         expectData[i] = writeBuf2[i - lobLen2];
+      }
+   }
+
+   rc = sdbReadLob( lob2, lobSize, data, &readLen);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbCloseLob( &lob2 );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check data
+   for(int i = 0; i < lobSize; i++)
+   {
+      ASSERT_EQ( data[i], expectData[i] ) ;
+   }
+
+
+   // case 3: open lob with read mode, then wirte data to lob
+
+   rc = sdbOpenLob( cl , &oid, SDB_LOB_READ , &lob3) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbWriteLob( lob3, writeBuf2, writelen2);
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+
+   rc = sdbCloseLob( &lob3 );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   
+   // case 4: open lob with write mode, then read data from lob
+
+   rc = sdbOpenLob( cl , &oid, SDB_LOB_WRITE , &lob4) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbReadLob( lob4, lobSize, data, &readLen);
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+
+   rc = sdbCloseLob( &lob4 );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+
+   // case 5: open lob with write mode, then read data from lob
+
+   rc = sdbOpenLob( cl , &oid, SDB_LOB_WRITE , &lob5) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbWriteLob( lob5, writeBuf2, writelen2);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetLobSize( lob5, &lobSize) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   rc = sdbReadLob( lob5, lobSize, data, &readLen);
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+
+   rc = sdbCloseLob( &lob5 );
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+
+   rc = sdbDropCollectionSpace( db, COLLECTION_SPACE_NAME);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // disconnect the connection
+   sdbDisconnect ( db ) ;
+   //release the local variables
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseConnection ( db ) ;
+
+}
+
+struct tArg
+{
+   sdbCollectionHandle cl ;
+   bson_oid_t oid;
+   INT64 offset ;
+   INT32 tNum;
+};
+
+void * readAndWriteLob( void * arg )
+{
+   struct tArg *data = (struct tArg *) arg;
+   
+   INT32 rc = SDB_OK ;
+   INT32 bufLen = 2;
+   sdbLobHandle lob = 0;
+   char readBuf[bufLen] = { 0 };
+   UINT32 readCount = 0;
+   
+   sdbCollectionHandle cl = data->cl;
+   bson_oid_t oid = data->oid;
+   INT64 offset = data->offset;
+   char writeBuf[bufLen] = { 'a' + data->tNum, 'A' + data->tNum };
+   
+   INT32 mode = SDB_LOB_SHAREREAD | SDB_LOB_WRITE;
+   
+   sdbOpenLob( cl, &oid, mode, &lob );
+   sdbLockAndSeekLob( lob, offset, bufLen);
+   sdbWriteLob( lob, writeBuf, bufLen);
+
+   sdbSeekLob( lob, offset, SDB_LOB_SEEK_SET);
+   sdbReadLob( lob, bufLen, readBuf, &readCount);
+
+   for(int i = 0; i < bufLen; i++)
+   {
+      if ( writeBuf[i] != readBuf[i] )
+      {
+         printf("Error :write data(%c) not equal read data(%c)\n",writeBuf[i], readBuf[i]);
+         break;
+      }
+   }
+
+   sdbCloseLob( &lob);
+   pthread_exit(NULL);
+}
+
+TEST(lob,lob_ReadAndWirte_concurrent_test)
+{
+
+   // The test description:
+   // setp 1: create some thread
+   // setp 2: all threads open the same lob with read and write mode.
+   // setp 3: thread lock and seek lob
+   // setp 4: thread wirte lob
+   // setp 5: thread read data from lob
+   // setp 6: thread check read and write data
+   // setp 7: main thread check lob data
+   
+   INT32 rc = SDB_OK ;
+   // initialize the word environment
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // initialize local variables
+   sdbConnectionHandle db            = 0 ;
+   sdbCollectionHandle cl            = 0 ;
+   bson_oid_t oid ;
+   sdbLobHandle newLob               = 0 ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get collection
+   rc = getCollection ( db,
+                        COLLECTION_FULL_NAME,
+                        &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   rc = sdbOpenLob( cl, NULL, SDB_LOB_CREATEONLY, &newLob );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetLobId( newLob, &oid );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbCloseLob( &newLob);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+
+   INT64 length = 2;   // each thread read/wirte length
+   INT64 offset = 0;
+   
+   INT32 tCount = 10;   // thread count
+   pthread_t thread[tCount];
+   
+   struct tArg arg[tCount];  // thread argments
+
+   // create thread
+   for(int i = 0; i < tCount; i++)
+   {
+       arg[i].cl = cl;
+       arg[i].oid = oid;
+       arg[i].offset = offset;
+       arg[i].tNum = i;
+       
+       offset = offset + length;
+   
+       int rtn_thread ;
+       rtn_thread = pthread_create(&thread[i], NULL, readAndWriteLob, (void *)&arg[i] );
+       if ( 0 != rtn_thread )
+       {
+           continue;
+       }
+   }
+
+   for(int i = 0; i < tCount; i++)
+   {
+       pthread_join(thread[i], NULL);
+   }
+
+   // main thread check lob data
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &newLob );
+   ASSERT_EQ( SDB_OK, rc ) ;
+   INT64 lobLen;
+
+   sdbGetLobSize(newLob, &lobLen);
+
+   UINT32 readCount = 0;
+   char actData[lobLen] = { 0 };
+   INT32 expLen = tCount * 2;
+   char expData[expLen] = { 0 };
+
+   int n = 0;
+   for( int i=0,j=0; i<expLen;)
+   {
+       expData[i] = 'a' + n;
+       expData[i + 1] = 'A' + n;
+       i = i + 2;
+       n++;
+   }
+   
+   rc = sdbReadLob( newLob, lobLen, actData, &readCount);
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbCloseLob( &newLob );
+   ASSERT_EQ( SDB_OK, rc ) ;
+      
+   for(int i = 0; i < expLen; i++)
+   {
+       ASSERT_EQ( expData[i], actData[i] ) ;
+   }
+
+
+   rc = sdbDropCollectionSpace( db, COLLECTION_SPACE_NAME);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // disconnect the connection
+   sdbDisconnect ( db ) ;
+   //release the local variables
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseConnection ( db ) ;
+}
+
+TEST(lob,sdbGetRunTimeDetail_test)
+{
+   INT32 rc = SDB_OK ;
+   // initialize the word environment
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // initialize local variables
+   sdbConnectionHandle db            = 0 ;
+   sdbCollectionHandle cl            = 0 ;
+   bson_oid_t oid ;
+   sdbLobHandle lob               = 0 ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get collection
+   rc = getCollection ( db,
+                        COLLECTION_FULL_NAME,
+                        &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   rc = sdbOpenLob( cl, NULL, SDB_LOB_CREATEONLY, &lob );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetLobId( lob, &oid );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson detail;
+   bson_init( &detail );
+   bson_finish( &detail );
+   rc = sdbGetRunTimeDetail( lob , &detail );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   printf("lob run time detail info:\n");
+   bson_print( &detail);
+
+   bson_destroy( &detail ) ;
+
+   rc = sdbCloseLob( &lob) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbDropCollectionSpace( db, COLLECTION_SPACE_NAME);
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // disconnect the connection
+   sdbDisconnect ( db ) ;
+   //release the local variables
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseConnection ( db ) ;
+}
