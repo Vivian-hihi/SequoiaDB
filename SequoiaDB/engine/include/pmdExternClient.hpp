@@ -39,7 +39,7 @@
 #include "ossSocket.hpp"
 #include "sdbInterface.hpp"
 #include "pmdDef.hpp"
-
+#include "../bson/bson.hpp"
 #include <string>
 
 using namespace std ;
@@ -65,7 +65,8 @@ namespace engine
          virtual SDB_CLIENT_TYPE clientType() const ;
          virtual const CHAR*     clientName() const ;
 
-         virtual INT32        authenticate( MsgHeader *pMsg ) ;
+         virtual INT32        authenticate( MsgHeader *pMsg,
+                                            const CHAR **authBuf = NULL ) ;
          virtual INT32        authenticate( const CHAR *username,
                                             const CHAR *password ) ;
          virtual void         logout() ;
@@ -93,12 +94,16 @@ namespace engine
       protected:
          void                 _makeName() ;
 
+      private:
+         INT32                _setAuthed( SINT32 opCode) ;
+
       protected:
          string               _username ;
          string               _password ;
          BOOLEAN              _isAuthed ;
          ossSocket*           _pSocket ;
          _pmdEDUCB*           _pEDUCB ;
+         bson::BSONObj        _authReturnedObj ; // object returned by authenticate
 
          UINT16               _localPort ;
          UINT16               _peerPort ;

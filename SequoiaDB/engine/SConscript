@@ -195,7 +195,8 @@ utilFiles = [
       "util/utilTypeCast.c",
       "util/utilLobID.cpp",
       "util/utilSectionMgr.cpp",
-      "util/utilCipher.c"
+      "util/utilCipher.c",
+      "util/utilAuthSCRAMSHA.cpp"
       ]
 
 rtnFiles = [

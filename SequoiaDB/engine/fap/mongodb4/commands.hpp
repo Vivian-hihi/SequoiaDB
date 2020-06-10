@@ -97,5 +97,9 @@ DECLARE_COMMAND( whatsmyuri )
 DECLARE_COMMAND_ALAIS( buildinfo, "buildInfo" )
 DECLARE_COMMAND( distinct )
 DECLARE_COMMAND( listDatabases )
+DECLARE_COMMAND( createUser )
+DECLARE_COMMAND( dropUser )
+DECLARE_COMMAND( saslStart )
+DECLARE_COMMAND( saslContinue )
 
 #endif

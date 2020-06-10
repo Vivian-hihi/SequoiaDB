@@ -64,14 +64,13 @@ namespace fap
 
       void buildGetMoreMsg( msgBuffer &out ) ;
 
-      void buildWhatsmyuriReplyMsg( engine::IResource *resource,
-                                    engine::rtnContextBuf &buff ) ;
+      void buildWhatsmyuriReplyMsg( engine::rtnContextBuf &buff ) ;
 
-      void buildGetLogReplyMsg( engine::IResource *resource,
-                                engine::rtnContextBuf &buff ) ;
+      void buildGetLogReplyMsg( engine::rtnContextBuf &buff ) ;
 
-      void buildBuildinfoReplyMsg( engine::IResource *resource,
-                                   engine::rtnContextBuf &buff ) ;
+      void buildBuildinfoReplyMsg( engine::rtnContextBuf &buff ) ;
+
+      void buildAuthStep3ReplyMsg( engine::rtnContextBuf &buff ) ;
 
    }
 }

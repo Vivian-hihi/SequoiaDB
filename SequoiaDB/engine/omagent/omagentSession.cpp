@@ -58,6 +58,7 @@ namespace engine
       // msg map or event map
       ON_MSG( MSG_CM_REMOTE, _onNodeMgrReq )
       ON_MSG( MSG_AUTH_VERIFY_REQ, _onAuth )
+      ON_MSG( MSG_AUTH_VERIFY1_REQ, _onAuth )
       ON_MSG( MSG_BS_QUERY_REQ, _onOMAgentReq )
    END_OBJ_MSG_MAP()
 

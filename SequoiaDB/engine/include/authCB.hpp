@@ -38,7 +38,9 @@
 #include "oss.hpp"
 #include "../bson/bson.h"
 #include "sdbInterface.hpp"
+#include "utilAuthSCRAMSHA.hpp"
 
+using namespace std ;
 using namespace bson ;
 
 namespace engine
@@ -70,17 +72,20 @@ namespace engine
                        BSONObj *pOutObj = NULL,
                        INT32 w = 1 ) ;
 
-      INT32 getUsrInfo( const string &user, _pmdEDUCB *cb, BSONObj &info ) ;
+      INT32 getUsrInfo( const CHAR *username, _pmdEDUCB *cb, BSONObj &info ) ;
 
-      INT32 updatePasswd( const string &user, const string &oldPasswd, 
+      INT32 updatePasswd( const string &user, const string &oldPasswd,
                           const string &newPasswd, _pmdEDUCB *cb ) ;
 
-      INT32 removeUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
+      INT32 removeUsr( const BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
 
-      INT32 authenticate( BSONObj &obj,
-                          _pmdEDUCB *cb,
-                          BOOLEAN chkPasswd = TRUE,
-                          BSONObj *pOutUserObj = NULL ) ;
+      INT32 md5Authenticate( const BSONObj &obj,
+                             _pmdEDUCB *cb,
+                             BSONObj *pOutUserObj = NULL ) ;
+
+      INT32 SCRAMSHAAuthenticate( const BSONObj &obj,
+                                  _pmdEDUCB *cb,
+                                  BSONObj &outUserObj ) ;
 
       INT32 needAuthenticate( _pmdEDUCB *cb, BOOLEAN &need ) ;
 
@@ -90,18 +95,48 @@ namespace engine
       }
 
    private:
-      INT32 _initAuthentication( _pmdEDUCB *cb ) ;
-      INT32 _createUsr( BSONObj &obj, _pmdEDUCB *cb,
-                        BSONObj *pOutObj = NULL,
-                        INT32 w = 1 ) ;
-      INT32 _valid( BSONObj &obj, BOOLEAN notEmpty ) ;
-      INT32 _validSource( BSONObj &obj, BOOLEAN chkPasswd ) ;
-      INT32 _validOptions( const BSONObj &options ) ;
+      INT32   _initAuthentication( _pmdEDUCB *cb ) ;
+      BSONObj _desensitization( const BSONObj &userObj ) ;
 
-      BSONObj _desensitization( const BSONObj &options ) ;
-
+      INT32   _buildUserInfo( const CHAR *username,
+                              const CHAR *passwdMd5,
+                              const CHAR *clearTextPasswd,
+                              const CHAR *source,
+                              const BSONObj &option,
+                              BSONObj &userInfo ) ;
+      INT32   _upgradeUserInfo( const CHAR *username, _pmdEDUCB *cb ) ;
+      INT32   _step1( const BSONObj &obj, _pmdEDUCB *cb,
+                      BSONObj &outUserObj ) ;
+      INT32   _step2( const BSONObj &obj, _pmdEDUCB *cb,
+                      BSONObj &outUserObj ) ;
+      INT32   _validOptions( const BSONObj &option ) ;
+      INT32   _parseMD5AuthMsgObj( const BSONObj &obj ) ;
+      INT32   _parseCrtUserMsgObj( const BSONObj &obj,
+                                   const CHAR **username,
+                                   const CHAR **passwd,
+                                   const CHAR **clearTextPasswd,
+                                   const CHAR **source,
+                                   BSONObj &option ) ;
+      INT32   _parseDelUserMsgObj( const BSONObj &obj,
+                                   const CHAR **username,
+                                   const CHAR **source ) ;
+      INT32   _parseStep1MsgObj( const BSONObj &obj,
+                                 const CHAR **username,
+                                 const CHAR **clientNonce,
+                                 INT32 &type ) ;
+      INT32   _parseStep2MsgObj( const BSONObj &obj,
+                                 const CHAR **username,
+                                 const CHAR **identify,
+                                 const CHAR **clientProof,
+                                 const CHAR **combineNonce,
+                                 INT32 &type ) ;
+      INT32   _parseUserObj( const BSONObj &obj, INT32 type,
+                             UINT32 &iterationCnt,
+                             const CHAR **salt,
+                             const CHAR **storedKey,
+                             const CHAR **serverKey ) ;
    private:
-      BOOLEAN _authEnabled ;
+      BOOLEAN     _authEnabled ;
    } ;
 
    typedef class _authCB SDB_AUTHCB ;

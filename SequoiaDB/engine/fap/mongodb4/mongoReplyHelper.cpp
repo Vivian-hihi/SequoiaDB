@@ -116,8 +116,7 @@ namespace fap
          getmore->numToReturn = -1 ;
       }
 
-      void buildWhatsmyuriReplyMsg( engine::IResource *resource,
-                                    engine::rtnContextBuf &buff )
+      void buildWhatsmyuriReplyMsg( engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
          bob.append( FAP_FIELD_NAME_OK, 1 ) ;
@@ -126,8 +125,7 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildGetLogReplyMsg( engine::IResource *resource,
-                                engine::rtnContextBuf &buff )
+      void buildGetLogReplyMsg( engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
          bson::BSONArrayBuilder sub( bob.subarrayStart( FAP_FIELD_NAME_LOG ) ) ;
@@ -137,8 +135,7 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildBuildinfoReplyMsg( engine::IResource *resource,
-                                   engine::rtnContextBuf &buff )
+      void buildBuildinfoReplyMsg( engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
          bob.append( FAP_FIELD_NAME_VERSION, FAP_MONGODB_VERSION ) ;
@@ -150,6 +147,25 @@ namespace fap
          sub.append( 2 ) ;
          sub.append( 0 ) ;
          sub.done() ;
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+      }
+
+      /** \fn buildAuthStep3ReplyMsg( engine::rtnContextBuf &buff )
+          \brief Build a response message for the third authentication of
+                 authentication.
+          \param [out] buff Message we will build.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      void buildAuthStep3ReplyMsg( engine::rtnContextBuf &buff )
+      {
+         bson::BSONObjBuilder bob ;
+         string payload = "" ;
+         bob.append( FAP_FIELD_NAME_DONE, true ) ;
+         bob.appendBinData( FAP_FIELD_NAME_PAYLOAD, payload.length(),
+                            bson::BinDataGeneral,
+                            payload.c_str() ) ;
+         bob.append( FAP_FIELD_NAME_OK, 1 ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 

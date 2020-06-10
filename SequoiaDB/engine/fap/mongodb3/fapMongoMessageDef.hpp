@@ -41,18 +41,39 @@
 namespace fap
 {
 
-const CHAR* const MONGO_DOT =                   "." ;
-const CHAR* const MONGO_FIELD_NAME_CMD =        ".$cmd" ;
-const CHAR* const MONGO_FIELD_NAME_DOCUMENTS =  "documents" ;
-const CHAR* const MONGO_FIELD_NAME_DELETES =    "deletes" ;
-const CHAR* const MONGO_FIELD_NAME_UPDATES =    "updates" ;
-const CHAR* const MONGO_FIELD_NAME_INDEXES =    "indexes" ;
-const CHAR* const MONGO_FIELD_NAME_INDEX =      "index" ;
-const CHAR* const MONGO_FIELD_NAME_CURSORS =    "cursors" ;
-const CHAR* const MONGO_FIELD_NAME_BATCHSIZE =  "batchSize" ;
-const CHAR* const MONGO_FIELD_NAME_COLLECTION = "collection" ;
-const CHAR* const MONGO_FIELD_VALUE_NODEJS =    "nodejs" ;
+#define FAP_MONGO_FIELD_NAME_CMD         ".$cmd"
+#define FAP_MONGO_FIELD_NAME_DOCUMENTS   "documents"
+#define FAP_MONGO_FIELD_NAME_DELETES     "deletes"
+#define FAP_MONGO_FIELD_NAME_UPDATES     "updates"
+#define FAP_MONGO_FIELD_NAME_INDEXES     "indexes"
+#define FAP_MONGO_FIELD_NAME_INDEX       "index"
+#define FAP_MONGO_FIELD_NAME_CURSORS     "cursors"
+#define FAP_MONGO_FIELD_NAME_BATCHSIZE   "batchSize"
+#define FAP_MONGO_FIELD_NAME_COLLECTION  "collection"
+#define FAP_MONGO_FIELD_VALUE_NODEJS     "nodejs"
 
+#define FAP_MONGO_EQUAL "="
+#define FAP_MONGO_COMMA ","
+#define FAP_MONGO_DOT   "."
 
+#define FAP_MONGO_FIELD_NAME_CODE   "code"
+#define FAP_MONGO_FIELD_NAME_ERRMSG "errmsg"
+#define FAP_MONGO_FIELD_NAME_OK     "ok"
+
+#define FAP_MONGO_FIELD_NAME_USER      "user"
+#define FAP_MONGO_FIELD_NAME_USERS     "users"
+#define FAP_MONGO_FIELD_NAME_PWD       "pwd"
+#define FAP_MONGO_FIELD_NAME_DIGESTPWD "digestPassword"
+#define FAP_MONGO_FIELD_NAME_PAYLOAD   "payload"
+#define FAP_MONGO_FIELD_NAME_DONE      "done"
+
+#define FAP_MONGO_SASL_MSG_RANDOM   "r"
+#define FAP_MONGO_SASL_MSG_SALT     "s"
+#define FAP_MONGO_SASL_MSG_ITERATE  "i"
+#define FAP_MONGO_SASL_MSG_USER     "n"
+#define FAP_MONGO_SASL_MSG_PROOF    "p"
+#define FAP_MONGO_SASL_MSG_CHANNEL  "c"
+#define FAP_MONGO_SASL_MSG_VALUE    "v"
+#define FAP_MONGO_SASL_MSG_ERROR    "e"
 }
 #endif

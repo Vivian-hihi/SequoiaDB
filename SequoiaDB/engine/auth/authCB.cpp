@@ -36,6 +36,7 @@
 #include "rtn.hpp"
 #include "authTrace.hpp"
 #include "pmdCB.hpp"
+#include "../bson/lib/md5.hpp"
 
 using namespace bson ;
 
@@ -77,17 +78,19 @@ namespace engine
       _authEnabled = pmdGetOptionCB()->authEnabled() ;
    }
 
-   BSONObj _authCB::_desensitization( const BSONObj &options )
+   BSONObj _authCB::_desensitization( const BSONObj &userObj )
    {
-      /// discard password
+      /// discard Password, SCRAM-SHA256, SCRAM-SHA1 fileds
       try
       {
-         BSONObjBuilder builder( options.objsize() ) ;
-         BSONObjIterator itr( options ) ;
+         BSONObjBuilder builder( userObj.objsize() ) ;
+         BSONObjIterator itr( userObj ) ;
          while ( itr.more() )
          {
             BSONElement e = itr.next() ;
-            if ( 0 == ossStrcmp( e.fieldName(), SDB_AUTH_PASSWD ) )
+            if ( 0 == ossStrcmp( e.fieldName(), SDB_AUTH_PASSWD ) ||
+                 0 == ossStrcmp( e.fieldName(), SDB_AUTH_SCRAMSHA256 ) ||
+                 0 == ossStrcmp( e.fieldName(), SDB_AUTH_SCRAMSHA1 ) )
             {
                continue ;
             }
@@ -100,31 +103,437 @@ namespace engine
          PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
       }
 
-      return options ;
+      return userObj ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
-   INT32 _authCB::authenticate( BSONObj &obj,
-                                _pmdEDUCB *cb,
-                                BOOLEAN chkPasswd,
-                                BSONObj *pOutUserObj )
+   /** \fn INT32 _step1( const BSONObj &obj,
+                         _pmdEDUCB *cb,
+                         BSONObj &outUserObj )
+       \brief The authentication using SCRAM-SHA256 is divided into two
+              certifications in total. This is the first certification.
+              In the first certification, the server needs to return
+              the SCRAM-SHA256 info corresponding to the user name sent by
+              the client.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [in] cb  Pmd EDU cb.
+       \param [out] outUserObj Bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__STEP1, "_authCB::_step1" )
+   INT32 _authCB::_step1( const BSONObj &obj, _pmdEDUCB *cb,
+                          BSONObj &outUserObj )
+   {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__STEP1 ) ;
+
+      INT32 rc = SDB_OK ;
+      INT32 type = 0 ;
+      const CHAR* username = NULL ;
+      const CHAR* clientNonce = NULL ;
+      const CHAR* scramFiledName = NULL ;
+      BSONObj userObj, scramObj ;
+      string serverNonce, combineNonce ;
+
+      try
+      {
+
+      // parse message
+      rc = _parseStep1MsgObj( obj, &username, &clientNonce, type ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Faild to parse step1 message, rc: %d",
+                   rc ) ;
+
+      // upgrade
+      rc = _upgradeUserInfo( username, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // get SCRAM-SHA obj from system collection, and check compatiable.
+      // If user exists before upgrade, then this user only support
+      // SDB_AUTH_TYPE_MD5_PWD
+      rc = getUsrInfo( username, cb, userObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get user info, rc: %d",
+                   rc ) ;
+
+      if ( SDB_AUTH_TYPE_EXTEND_PWD == type )
+      {
+         scramFiledName = SDB_AUTH_SCRAMSHA1 ;
+         rc = rtnGetObjElement( userObj, scramFiledName, scramObj ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_AUTH_INCOMPATIBLE ;
+            PD_LOG( PDERROR, "Authentication incompatible, "
+                    "user[%s] only support SCRAM-SHA-256(MD5)",
+                    username, rc ) ;
+            goto error ;
+         }
+         else
+         {
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get field[%s] from user info[%s], rc: %d",
+                         scramFiledName, userObj.toString().c_str(), rc ) ;
+         }
+      }
+      else
+      {
+         scramFiledName = SDB_AUTH_SCRAMSHA256 ;
+         rc = rtnGetObjElement( userObj, scramFiledName, scramObj ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get field[%s] from user info[%s], rc: %d",
+                      scramFiledName, userObj.toString().c_str(), rc ) ;
+      }
+
+      if ( SDB_AUTH_TYPE_TEXT_PWD == type )
+      {
+         if ( !scramObj.hasField( SDB_AUTH_STOREDKEYTEXT ) ||
+              !scramObj.hasField( SDB_AUTH_SERVERKEYTEXT ) )
+         {
+            rc = SDB_AUTH_INCOMPATIBLE ;
+            PD_LOG( PDERROR, "Authentication incompatible, "
+                    "user[%s] only support SCRAM-SHA-256(MD5)",
+                    username, rc ) ;
+            goto error ;
+         }
+      }
+
+      // build object to return
+      rc = utilAuthGenerateNonce( serverNonce, UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to generate nonce, rc: %d",
+                   rc ) ;
+
+      combineNonce = clientNonce ;
+      combineNonce += serverNonce ;
+
+      outUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
+                         SDB_AUTH_ITERATIONCOUNT <<
+                         scramObj.getField( SDB_AUTH_ITERATIONCOUNT ) <<
+                         SDB_AUTH_SALT <<
+                         scramObj.getField( SDB_AUTH_SALT ) <<
+                         SDB_AUTH_NONCE << combineNonce.c_str() ) ;
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__STEP1, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 _step2( const BSONObj &obj,
+                         _pmdEDUCB *cb,
+                         BSONObj &outUserObj )
+       \brief The authentication using SCRAM-SHA256 is divided into two
+              certifications in total. This is the second certification.
+              In the second certification, the server needs to check whether
+              the client's proof is legal. If it's legal, the server will return
+              the server's proof to the client.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [in] cb  Pmd EDU cb.
+       \param [out] outUserObj Bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__STEP2, "_authCB::_step2" )
+   INT32 _authCB::_step2( const BSONObj &obj, _pmdEDUCB *cb,
+                          BSONObj &outUserObj )
+   {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__STEP2 ) ;
+
+      INT32       rc            = SDB_OK ;
+      INT32       type          = 0 ;
+      UINT32      iterationCnt  = 0 ;
+      const CHAR* username      = NULL ;
+      const CHAR* identify      = NULL ;
+      const CHAR* salt          = NULL ;
+      const CHAR* storedKey     = NULL ;
+      const CHAR* serverKey     = NULL ;
+      const CHAR* clientProof   = NULL ;
+      const CHAR* combineNonce  = NULL ;
+      BOOLEAN     isClientProofValid = FALSE ;
+      BSONObj     userObj ;
+      string      serverProof ;
+
+      // parse message
+      rc = _parseStep2MsgObj( obj, &username, &identify, &clientProof,
+                              &combineNonce, type ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Faild to parse step2 message, rc: %d",
+                   rc ) ;
+
+      // get iteration count, salt, storeKey, serverKey from system collection
+      rc = getUsrInfo( username, cb, userObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Faild to get user info from system collection, rc: %d",
+                   rc ) ;
+
+      rc = _parseUserObj( userObj, type,
+                          iterationCnt, &salt, &storedKey, &serverKey ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Faild to parse user obj, rc: %d",
+                   rc ) ;
+
+      // verrify client proof
+      if ( SDB_AUTH_TYPE_EXTEND_PWD == type )
+      {
+         rc = utilAuthVerifyClientProof1( clientProof,
+                                          username, iterationCnt, salt,
+                                          combineNonce, identify, storedKey,
+                                          isClientProofValid ) ;
+      }
+      else
+      {
+         BOOLEAN fromSdb = SDB_AUTH_TYPE_MD5_PWD == type ? TRUE : FALSE ;
+         rc = utilAuthVerifyClientProof( clientProof,
+                                         username, iterationCnt, salt,
+                                         combineNonce, identify,
+                                         storedKey, fromSdb,
+                                         isClientProofValid ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Faild to verify client proof, rc: %d",
+                   rc ) ;
+
+      if ( FALSE == isClientProofValid )
+      {
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         PD_LOG( PDERROR, "Invalid client proof, rc: %d", rc ) ;
+         goto error ;
+      }
+
+
+      // build server proof
+      if ( SDB_AUTH_TYPE_EXTEND_PWD == type  )
+      {
+         rc = utilAuthCaculateServerProof1( username, iterationCnt, salt,
+                                            combineNonce, identify, serverKey,
+                                            serverProof ) ;
+      }
+      else
+      {
+         BOOLEAN fromSdb = SDB_AUTH_TYPE_MD5_PWD == type ? TRUE : FALSE ;
+         rc = utilAuthCaculateServerProof( username, iterationCnt, salt,
+                                           combineNonce, identify,
+                                           serverKey, fromSdb,
+                                           serverProof ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Faild to caculate server proof, rc: %d",
+                   rc ) ;
+
+      outUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+                         SDB_AUTH_PROOF << serverProof.c_str() ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__STEP2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _authCB::_parseUserObj( const BSONObj &obj, INT32 type,
+                                 UINT32 &iterationCnt,
+                                 const CHAR **salt,
+                                 const CHAR **storedKey,
+                                 const CHAR **serverKey )
    {
       INT32 rc = SDB_OK ;
-      BSONObj hint ;
-      BSONObj selector ;
-      BSONObj order ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      SINT64 contextID = -1 ;
-      rtnContextBuf buffObj ;
+      const CHAR* scramFieldName     = NULL ;
+      const CHAR* storedKeyFieldName = NULL ;
+      const CHAR* serverKeyFieldName = NULL ;
+      BOOLEAN hasItCnt     = FALSE ;
+      BOOLEAN hasSalt      = FALSE ;
+      BOOLEAN hasStoredKey = FALSE ;
+      BOOLEAN hasSvrKey    = FALSE ;
+      BSONObj scramObj ;
+
+      if ( SDB_AUTH_TYPE_MD5_PWD == type )
+      {
+         scramFieldName = SDB_AUTH_SCRAMSHA256 ;
+         storedKeyFieldName = SDB_AUTH_STOREDKEY ;
+         serverKeyFieldName = SDB_AUTH_SERVERKEY ;
+      }
+      else if ( SDB_AUTH_TYPE_TEXT_PWD == type )
+      {
+         scramFieldName = SDB_AUTH_SCRAMSHA256 ;
+         storedKeyFieldName = SDB_AUTH_STOREDKEYTEXT ;
+         serverKeyFieldName = SDB_AUTH_SERVERKEYTEXT ;
+      }
+      else if ( SDB_AUTH_TYPE_EXTEND_PWD == type )
+      {
+         scramFieldName = SDB_AUTH_SCRAMSHA1 ;
+         storedKeyFieldName = SDB_AUTH_STOREDKEYEXTEND ;
+         serverKeyFieldName = SDB_AUTH_SERVERKEYEXTEND ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      try
+      {
+
+      BSONObjIterator itr ;
+
+      rc = rtnGetObjElement( obj, scramFieldName, scramObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s] from obj[%s], rc: %d",
+                   scramFieldName, obj.toString().c_str(), rc ) ;
+
+      itr = BSONObjIterator( scramObj );
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next();
+         if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_ITERATIONCOUNT ) )
+         {
+            if ( ele.type() != NumberInt )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in obj[%s], rc: %d",
+                       ele.type(), SDB_AUTH_ITERATIONCOUNT,
+                       scramObj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            iterationCnt = (UINT32)ele.numberInt() ;
+            hasItCnt = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_SALT ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in obj[%s], rc: %d",
+                       ele.type(), SDB_AUTH_SALT,
+                       scramObj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( salt )
+            {
+               *salt = ele.valuestr() ;
+            }
+            hasSalt = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), storedKeyFieldName ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in obj[%s], rc: %d",
+                       ele.type(), storedKeyFieldName,
+                       scramObj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( storedKey )
+            {
+               *storedKey = ele.valuestr() ;
+            }
+            hasStoredKey = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), serverKeyFieldName ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in obj[%s], rc: %d",
+                       ele.type(), serverKeyFieldName,
+                       scramObj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( serverKey )
+            {
+               *serverKey = ele.valuestr() ;
+            }
+            hasSvrKey = TRUE ;
+         }
+      }
+
+      if ( !hasItCnt )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in obj[%s], rc: %d",
+                 SDB_AUTH_ITERATIONCOUNT, scramObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasSalt )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in obj[%s], rc: %d",
+                 SDB_AUTH_SALT, scramObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasStoredKey )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in obj[%s], rc: %d",
+                 storedKeyFieldName, scramObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasSvrKey )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in obj[%s], rc: %d",
+                 serverKeyFieldName, scramObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 SCRAMSHAAuthenticate( const BSONObj &obj,
+                                       _pmdEDUCB *cb,
+                                       BSONObj &outUserObj )
+       \brief Authentication using SCRAM-SHA256.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [in] cb  Pmd EDU cb.
+       \param [out] outUserObj Bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_SCRAMSHAAUTHENTICATE, "_authCB::SCRAMSHAAuthenticate" )
+   INT32 _authCB::SCRAMSHAAuthenticate( const BSONObj &obj,
+                                        _pmdEDUCB *cb,
+                                        BSONObj &outUserObj )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 step = 0 ;
       BOOLEAN need = TRUE ;
 
-      PD_TRACE_ENTRY ( SDB_AUTHCB_AUTHENTICATE ) ;
+      PD_TRACE_ENTRY ( SDB_AUTHCB_SCRAMSHAAUTHENTICATE ) ;
 
       rc = needAuthenticate( cb, need ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to check if need to authenticate, rc: %d",
+                 rc ) ;
          goto error ;
       }
       else if ( !need )
@@ -134,39 +543,113 @@ namespace engine
 
       try
       {
+         rc = rtnGetIntElement( obj, SDB_AUTH_STEP, step ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR,
+                    "Failed to get field[%s] from SCRAM-SHA auth msg[%s], "
+                    "rc: %d", SDB_AUTH_STEP, obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( SDB_AUTH_MSG_STEP1 == step )
+         {
+            rc = _step1( obj, cb, outUserObj ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+         else if ( SDB_AUTH_MSG_STEP2 == step )
+         {
+            rc = _step2( obj, cb, outUserObj ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB_SCRAMSHAAUTHENTICATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 md5Authenticate( const BSONObj &obj,
+                                  _pmdEDUCB *cb,
+                                  BSONObj *pOutUserObj )
+       \brief Authentication using MD5.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [in] cb  Pmd EDU cb.
+       \param [out] pOutUserObj Bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_MD5AUTHENTICATE, "_authCB::md5Authenticate" )
+   INT32 _authCB::md5Authenticate( const BSONObj &obj,
+                                   _pmdEDUCB *cb,
+                                   BSONObj *pOutUserObj )
+   {
+      INT32     rc        = SDB_OK ;
+      BOOLEAN   need      = TRUE ;
+      SINT64    contextID = -1 ;
+      SDB_DMSCB *dmsCB    = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB    = pmdGetKRCB()->getRTNCB() ;
+      BSONObj dummyObj ;
+      BSONObj hint ;
+      rtnContextBuf buffObj ;
+
+      PD_TRACE_ENTRY ( SDB_AUTHCB_MD5AUTHENTICATE ) ;
+
+      rc = needAuthenticate( cb, need ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to check if need to authenticate, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+      else if ( !need )
+      {
+         goto done ;
+      }
+
+      rc = _parseMD5AuthMsgObj( obj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse md5 auth msg, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
          hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
       }
       catch ( std::exception &e )
       {
-         // if exception happen, let's just continue
-         PD_LOG ( PDWARNING, "Failed to initialize hint: %s",
-                  e.what() ) ;
-      }
-
-      PD_LOG( PDDEBUG, "get authentication msg:[%s]",
-              obj.toString().c_str()) ;
-
-      if ( SDB_OK != _valid( obj, FALSE ) &&
-           SDB_OK != _validSource( obj, chkPasswd ) )
-      {
-         rc = SDB_INVALIDARG;
-         goto error ;
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
       }
 
       rc = rtnQuery( AUTH_USR_COLLECTION,
-                     selector, obj, order,
+                     dummyObj, obj, dummyObj,
                      hint, 0, cb, 0, -1, dmsCB,
                      rtnCB, contextID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to query:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to query, rc: %d",rc ) ;
          goto error ;
       }
 
       rc = rtnGetMore( contextID, -1, buffObj, cb, rtnCB ) ;
       if ( SDB_OK != rc && SDB_DMS_EOC != rc)
       {
-         PD_LOG( PDERROR, "failed to getmore:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to getmore, rc: %d",rc ) ;
          rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
          goto error ;
       }
@@ -192,9 +675,11 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "get more than one record, impossible" ) ;
          rc = SDB_SYS ;
+         PD_LOG( PDERROR, "It's impossible to get more than one record, rc: %d",
+                 rc ) ;
          SDB_ASSERT( FALSE, "impossible" ) ;
+         goto error ;
       }
 
    done:
@@ -202,60 +687,55 @@ namespace engine
       {
          rtnKillContexts( 1, &contextID, cb, rtnCB ) ;
       }
-      PD_TRACE_EXITRC ( SDB_AUTHCB_AUTHENTICATE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
-   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb,
-                             BSONObj *pOutObj, INT32 w )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_AUTHCB_CREATEUSR ) ;
-      rc = _createUsr( obj, cb, pOutObj, w ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_AUTHCB_CREATEUSR, rc ) ;
+      PD_TRACE_EXITRC ( SDB_AUTHCB_MD5AUTHENTICATE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_GETUSRINFO, "_authCB::getUsrInfo" )
-   INT32 _authCB::getUsrInfo( const string &user, _pmdEDUCB *cb, BSONObj &info )
+   INT32 _authCB::getUsrInfo( const CHAR *username, _pmdEDUCB *cb,
+                              BSONObj &info )
    {
       INT32 rc = SDB_OK ;
       SINT64 contextID = -1 ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       rtnContextBuf buffObj ;
-      BSONObj condition ;
-      BSONObj selector ;
-      BSONObj order ;
+      BSONObj dummyObj ;
+      BSONObj match ;
       BSONObj hint ;
 
       PD_TRACE_ENTRY ( SDB_AUTHCB_GETUSRINFO ) ;
 
-      condition = BSON( SDB_AUTH_USER << user ) ;
+      if ( NULL == username )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
-      rc = rtnQuery( AUTH_USR_COLLECTION, selector, condition, order, hint, 0,
-                     cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      try
+      {
+         match = BSON( SDB_AUTH_USER << username ) ;
+         hint  = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+      rc = rtnQuery( AUTH_USR_COLLECTION, dummyObj, match, dummyObj, hint,
+                     0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "failed to query:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to query, rc: %d",rc ) ;
          goto error ;
       }
 
       rc = rtnGetMore( contextID, -1, buffObj, cb, rtnCB ) ;
       if ( rc && SDB_DMS_EOC != rc)
       {
-         PD_LOG( PDERROR, "failed to getmore:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to getmore, rc: %d",rc ) ;
          rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
          goto error ;
       }
@@ -275,15 +755,20 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "get more than one record, impossible" ) ;
          rc = SDB_SYS ;
+         PD_LOG( PDERROR, "It's impossible to get more than one record, rc: %d",
+                 rc ) ;
          SDB_ASSERT( FALSE, "impossible" ) ;
+         goto error ;
       }
 
+      try
       {
-         BSONObj result( buffObj.data() ) ;
-
-         info = result.copy() ;
+         info = BSONObj( buffObj.data() ).getOwned() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
       }
 
    done:
@@ -297,35 +782,97 @@ namespace engine
       goto done ;
    }
 
-   INT32 _authCB::updatePasswd( const string &user, const string &oldPasswd, 
+   INT32 _authCB::updatePasswd( const string &user, const string &oldPasswd,
                                 const string &newPasswd, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       utilUpdateResult result ;
+      BSONObj updator, condition, dummyObj, hint ;
+      BSONObj userObj, scramObj ;
+      BSONElement ele ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+      BOOLEAN foundSalt = FALSE ;
+      BYTE salt[UTIL_AUTH_SCRAMSHA256_SALT_LEN] = { 0 } ;
+      string saltBase64, storedKey, serverKey, clientKey ;
+      BSONObjBuilder bob ;
 
-      BSONObj condition = BSON( SDB_AUTH_USER << user << SDB_AUTH_PASSWD
-                                << oldPasswd );
-      BSONObj tmp       = BSON( SDB_AUTH_PASSWD << newPasswd ) ;
-      BSONObj obj       = BSON( "$set" << tmp ) ;
+      try
       {
-         SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-         BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
-         rc = rtnUpdate( AUTH_USR_COLLECTION, condition, obj, hint,
-                         0, cb, dmsCB, dpsCB, 1, &result ) ;
-         if ( SDB_OK != rc )
+
+      // find salt from system collection, if find nothing, generate salt
+      rc = getUsrInfo( user.c_str(), cb, userObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get user[%s] info, rc: %d",
+                   user.c_str(), rc ) ;
+
+      ele = userObj.getField( SDB_AUTH_SCRAMSHA256 ) ;
+      if ( Object == ele.type() )
+      {
+         scramObj = ele.Obj() ;
+         ele = userObj.getField( SDB_AUTH_SALT ) ;
+         if ( String == ele.type() )
          {
-            PD_LOG( PDERROR, "failed to update passwd for %s in %s:rc=%d", 
-                    user.c_str(), AUTH_USR_COLLECTION, rc ) ;
-            goto error ;
+            foundSalt = TRUE ;
+            saltBase64 = ele.valuestr() ;
+            string saltDecode = base64::decode( saltBase64 ) ;
+            ossMemcpy( salt, saltDecode.c_str(), saltDecode.length() ) ;
          }
-         else if ( result.updateNum() <= 0 )
-         {
-            PD_LOG( PDERROR, "User name[%s] or password[%s] is error",
-                    user.c_str(), oldPasswd.c_str() ) ;
-            rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
-            goto error ;
-         }
+      }
+      if ( !foundSalt )
+      {
+         rc = utilAuthGenerateNonce( salt, UTIL_AUTH_SCRAMSHA256_SALT_LEN ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to generate nonce, rc: %d",
+                      rc ) ;
+         saltBase64 = base64::encode( (CHAR*)salt,
+                                      UTIL_AUTH_SCRAMSHA256_SALT_LEN ) ;
+      }
+
+      // generate storeKey, serverKey
+      rc = utilAuthCaculateKey( newPasswd.c_str(),
+                                salt, UTIL_AUTH_SCRAMSHA256_SALT_LEN,
+                                UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT,
+                                storedKey,
+                                serverKey,
+                                clientKey ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to caculate key, rc: %d",
+                   rc ) ;
+
+      // build scram-sha-256
+      bob.append( SDB_AUTH_ITERATIONCOUNT,
+                  UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT ) ;
+      bob.append( SDB_AUTH_SALT,      saltBase64.c_str() ) ;
+      bob.append( SDB_AUTH_STOREDKEY, storedKey.c_str() ) ;
+      bob.append( SDB_AUTH_SERVERKEY, serverKey.c_str() ) ;
+
+      // build updator, condition
+      updator = BSON( "$set" << BSON( SDB_AUTH_PASSWD << newPasswd <<
+                                      SDB_AUTH_SCRAMSHA256 << bob.obj() ) ) ;
+      condition = BSON( SDB_AUTH_USER << user <<
+                        SDB_AUTH_PASSWD << oldPasswd ) ;
+      hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+      rc = rtnUpdate( AUTH_USR_COLLECTION, condition, updator, hint,
+                      0, cb, dmsCB, dpsCB, 1, &result ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update user[%s]'s password in %s, "
+                 "rc: %d", user.c_str(), AUTH_USR_COLLECTION, rc ) ;
+         goto error ;
+      }
+      else if ( result.updateNum() <= 0 )
+      {
+         PD_LOG( PDERROR, "User name[%s] or password[%s] is error, rc: %d",
+                 user.c_str(), oldPasswd.c_str(), rc ) ;
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
       }
 
    done:
@@ -335,7 +882,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_REMOVEUSR, "_authCB::removeUsr" )
-   INT32 _authCB::removeUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
+   INT32 _authCB::removeUsr( const BSONObj &obj, _pmdEDUCB *cb, INT32 w )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_REMOVEUSR ) ;
@@ -343,26 +890,51 @@ namespace engine
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
+      BSONObj dummyObj ;
+      BSONObj match ;
       BSONObj hint ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj newObj = BSON( SDB_AUTH_USER 
-                             << obj.getStringField(SDB_AUTH_USER) ) ;
+      const CHAR *username = NULL ;
+      const CHAR *source   = NULL ;
       rtnContextBuf buffObj ;
 
+      rc = _parseDelUserMsgObj( obj, &username, &source ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse remove user msg, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+         if ( source )
+         {
+            match = BSON( SDB_AUTH_USER << username <<
+                          SDB_AUTH_SOURCE << source ) ;
+         }
+         else
+         {
+            match = BSON( SDB_AUTH_USER << username ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
       // firstly, we check the user is exist or not
-      rc = rtnQuery( AUTH_USR_COLLECTION, selector, newObj, order, hint,
-                     0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      rc = rtnQuery( AUTH_USR_COLLECTION, dummyObj, match, dummyObj,
+                     hint, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to query:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to query, rc: %d",rc ) ;
          goto error ;
       }
 
       rc = rtnGetMore( contextID, -1, buffObj, cb, rtnCB ) ;
       if ( SDB_OK != rc && SDB_DMS_EOC != rc)
       {
-         PD_LOG( PDERROR, "failed to getmore:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to getmore, rc: %d",rc ) ;
          rc = SDB_AUTH_USER_NOT_EXIST ;
          goto error ;
       }
@@ -382,32 +954,30 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "get more than one record, impossible" ) ;
          rc = SDB_SYS ;
+         PD_LOG( PDERROR, "It's impossible to get more than one record, rc: %d",
+                 rc ) ;
          SDB_ASSERT( FALSE, "impossible" ) ;
-         goto error;
+         goto error ;
       }
-         
-      {
-         // then, we check user name and password is correct or not
-         rc = authenticate( obj, cb, FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
 
-         // at last, we confirm eht user and password is correct
-         // now we remove the record from system collection
-         hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
-         rc = rtnDelete( AUTH_USR_COLLECTION,
-                         obj, hint,
-                         0, cb, dmsCB, dpsCB, w ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to remove usr from AUTH_USR_COLLECTION, "
-                    "rc: %d", rc ) ;
-            goto error ;
-         }
+      // then, we check user name and password is correct or not
+      rc = md5Authenticate( obj, cb ) ;// TODO YUTING fap need authenticate
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      // now we remove the record from system collection
+      rc = rtnDelete( AUTH_USR_COLLECTION,
+                      match, hint,
+                      0, cb, dmsCB, dpsCB, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR,
+                 "Failed to remove usr[%s] from %s, rc: %d",
+                 username, AUTH_USR_COLLECTION, rc ) ;
+         goto error ;
       }
 
    done:
@@ -454,7 +1024,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_AUTHCB_INITAUTH, rc ) ;
       return rc ;
    error:
-      PD_LOG( PDERROR, "failed to init authentication:%d", rc ) ;
+      PD_LOG( PDERROR, "Failed to init authentication, rc: %d", rc ) ;
       goto done ;
    }
 
@@ -480,14 +1050,15 @@ namespace engine
                                             &collection, suID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get AUTH_USR_COLLECTION:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get %s, rc: %d",
+                 AUTH_USR_COLLECTION, rc ) ;
          SDB_ASSERT( FALSE, "impossible" ) ;
          goto error ;
       }
       rc = su->countCollection ( collection, totalCount, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get count:%d",rc ) ;
+         PD_LOG( PDERROR, "Failed to get count, rc: %d",rc ) ;
          SDB_ASSERT( FALSE, "impossible" ) ;
          goto error ;
       }
@@ -505,30 +1076,224 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CREATEUSR, "_authCB::_createUsr" )
-   INT32 _authCB::_createUsr( BSONObj &obj, _pmdEDUCB *cb,
-                              BSONObj *pOutObj, INT32 w )
+   /** \fn INT32 _buildUserInfo( const CHAR* username,
+                                 const CHAR *passwdMd5,
+                                 const CHAR* clearTextPasswd,
+                                 const CHAR *source,
+                                 const BSONObj &option,
+                                 BSONObj &userInfo )
+       \brief Generate user info. Such as:
+              {
+                 User: xxx,
+                 Passwd: xxx,
+                 Options: {}
+                 SCRAM-SHA256:
+                 {
+                    "Salt": xxx,
+                    "IterationCount": xxx,
+                    "StoredKey": xxx,
+                    "StoredKeyText": xxx,
+                    "ServerKey": xxx,
+                    "ServerKeyText": xxx
+                 },
+                 SCRAM-SHA1:
+                 {
+                    "Salt": xxx,
+                    "IterationCount": xxx,
+                    "StoredKeyExtend": xxx,
+                    "ServerKeyExtend": xxx
+                 }
+              }
+       \param [in] username The user name.
+       \param [in] passwdMd5 The MD5 of the clear test password.
+       \param [in] clearTextPasswd The clear text password.
+       \param [in] source Extra field used by fap.
+       \param [in] option Option field which you can set audit mask.
+       \param [out] userInfo The user info we will generate.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__BUILDUSERINFO, "_authCB::_buildUserInfo" )
+   INT32 _authCB::_buildUserInfo( const CHAR *username,
+                                  const CHAR *passwdMd5,
+                                  const CHAR *clearTextPasswd,
+                                  const CHAR *source,
+                                  const BSONObj &option,
+                                  BSONObj &userInfo )
+   {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__BUILDUSERINFO ) ;
+
+      INT32 rc = SDB_OK ;
+      const CHAR* extendPasswd = NULL ;
+      string extendPwdStr ;
+      string salt1Base64, salt256Base64 ;
+      BYTE salt1[UTIL_AUTH_SCRAMSHA1_SALT_LEN] = { 0 } ;
+      BYTE salt256[UTIL_AUTH_SCRAMSHA256_SALT_LEN] = { 0 } ;
+      string serverKey,     clientKey,     storedKey ;
+      string serverKeyText, clientKeyText, storedKeyText ;
+      string serverKeyExt,  clientKeyExt,  storedKeyExt ;
+      BSONObjBuilder userInfoBob, ss256Bob, ss1Bob ;
+
+      SDB_ASSERT( username && passwdMd5,
+                  "username or password cannot be null" ) ;
+
+      try
+      {
+
+      // genreate extend password
+      if ( clearTextPasswd )
+      {
+         string tmp = username ;
+         tmp += ":mongo:" ;
+         tmp += clearTextPasswd ;
+         extendPwdStr = md5::md5simpledigest( tmp ) ;
+         extendPasswd = extendPwdStr.c_str() ;
+      }
+
+      // generate salt
+      if ( extendPasswd )
+      {
+         rc = utilAuthGenerateNonce( salt1, UTIL_AUTH_SCRAMSHA1_SALT_LEN ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to generate nonce for scram-sha-1, rc: %d",
+                      rc ) ;
+      }
+
+      rc = utilAuthGenerateNonce( salt256, UTIL_AUTH_SCRAMSHA256_SALT_LEN ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to generate nonce for scram-sha-256, rc: %d",
+                   rc ) ;
+
+      if ( extendPasswd )
+      {
+         salt1Base64 = base64::encode( (CHAR*)salt1,
+                                       UTIL_AUTH_SCRAMSHA1_SALT_LEN ) ;
+      }
+      salt256Base64 = base64::encode( (CHAR*)salt256,
+                                      UTIL_AUTH_SCRAMSHA256_SALT_LEN ) ;
+
+      // generate StoredKey, ServerKey and ClientKey
+      rc = utilAuthCaculateKey( passwdMd5,
+                                salt256, UTIL_AUTH_SCRAMSHA256_SALT_LEN,
+                                UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT,
+                                storedKey, serverKey, clientKey ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to caculate key by md5sum of password, rc: %d",
+                   rc ) ;
+
+      if ( clearTextPasswd )
+      {
+         rc = utilAuthCaculateKey( clearTextPasswd,
+                                   salt256, UTIL_AUTH_SCRAMSHA256_SALT_LEN,
+                                   UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT,
+                                   storedKeyText, serverKeyText, clientKeyText ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to caculate key by clear text password, rc: %d",
+                      rc ) ;
+      }
+      if ( extendPasswd )
+      {
+         rc = utilAuthCaculateKey1( extendPasswd,
+                                    salt1, UTIL_AUTH_SCRAMSHA1_SALT_LEN,
+                                    UTIL_AUTH_SCRAMSHA1_ITERATIONCOUNT,
+                                    storedKeyExt, serverKeyExt, clientKeyExt ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to caculate key by extend password, rc: %d",
+                      rc ) ;
+      }
+
+      // build "SCRAM-SHA256"
+      ss256Bob.append( SDB_AUTH_ITERATIONCOUNT,
+                       UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT ) ;
+      ss256Bob.append( SDB_AUTH_SALT,          salt256Base64.c_str() ) ;
+      ss256Bob.append( SDB_AUTH_STOREDKEY,     storedKey.c_str() ) ;
+      ss256Bob.append( SDB_AUTH_SERVERKEY,     serverKey.c_str() ) ;
+      if ( clearTextPasswd )
+      {
+         ss256Bob.append( SDB_AUTH_STOREDKEYTEXT, storedKeyText.c_str() ) ;
+         ss256Bob.append( SDB_AUTH_SERVERKEYTEXT, serverKeyText.c_str() ) ;
+      }
+
+      // build "SCRAM-SHA1"
+      if ( extendPasswd )
+      {
+         ss1Bob.append( SDB_AUTH_ITERATIONCOUNT,
+                        UTIL_AUTH_SCRAMSHA1_ITERATIONCOUNT ) ;
+         ss1Bob.append( SDB_AUTH_SALT,            salt1Base64.c_str() ) ;
+         ss1Bob.append( SDB_AUTH_STOREDKEYEXTEND, storedKeyExt.c_str() ) ;
+         ss1Bob.append( SDB_AUTH_SERVERKEYEXTEND, serverKeyExt.c_str() ) ;
+      }
+
+      // build user info object
+      userInfoBob.append( SDB_AUTH_USER, username ) ;
+      userInfoBob.append( SDB_AUTH_PASSWD, passwdMd5 ) ;
+      if ( source )
+      {
+         userInfoBob.append( SDB_AUTH_SOURCE, source ) ;
+      }
+      userInfoBob.append( FIELD_NAME_OPTIONS, option ) ;
+      userInfoBob.append( SDB_AUTH_SCRAMSHA256, ss256Bob.obj() ) ;
+      if ( extendPasswd )
+      {
+         userInfoBob.append( SDB_AUTH_SCRAMSHA1, ss1Bob.obj() ) ;
+      }
+      userInfo = userInfoBob.obj() ;
+
+      }
+      catch ( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__BUILDUSERINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
+   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb,
+                             BSONObj *pOutObj, INT32 w )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_AUTHCB__CREATEUSR ) ;
+      PD_TRACE_ENTRY ( SDB_AUTHCB_CREATEUSR ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+      const CHAR *username = NULL ;
+      const CHAR *passwd = NULL ;
+      const CHAR *clearTextPasswd = NULL ;
+      const CHAR *source = NULL ;
+      BSONObj option, userInfoObj, hint ;
 
-      if ( SDB_OK != _valid( obj, TRUE )  &&
-           SDB_OK != _validSource( obj, TRUE ) )
+      rc = _parseCrtUserMsgObj( obj, &username, &passwd, &clearTextPasswd,
+                                &source, option ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to parse create user msg, rc: %d",
+                   rc ) ;
+
+      rc = _buildUserInfo( username, passwd, clearTextPasswd,
+                           source, option,
+                           userInfoObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to generate SCRAM-SHA user info, rc: %d",
+                   rc ) ;
+
+      try
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
       }
 
       rc = rtnInsert( AUTH_USR_COLLECTION,
-                      obj, 1, 0, cb,
+                      userInfoObj, 1, 0, cb,
                       dmsCB, dpsCB, w ) ;
       if ( SDB_OK != rc && SDB_IXM_DUP_KEY != rc )
       {
-         BSONObj hint ;
-         rtnDelete( AUTH_USR_COLLECTION,
-                    obj, hint, 0, cb,
+         rtnDelete( AUTH_USR_COLLECTION, userInfoObj, hint, 0, cb,
                     dmsCB, dpsCB ) ;
          goto error ;
       }
@@ -539,86 +1304,24 @@ namespace engine
       }
       else if ( pOutObj )
       {
-         *pOutObj = _desensitization( obj ) ;
+         *pOutObj = _desensitization( userInfoObj ) ;
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB_AUTHCB__CREATEUSR, rc ) ;
+      PD_TRACE_EXITRC ( SDB_AUTHCB_CREATEUSR, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__VALID, "_authCB::_valid" )
-   INT32 _authCB::_valid( BSONObj &obj, BOOLEAN notEmpty )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_AUTHCB__VALID ) ;
-      BSONElement usr, passwd, option ;
-      INT32 fieldNum = 0 ;
-
-      if ( obj.isEmpty() )
-      {
-         goto error ;
-      }
-
-      usr = obj.getField( SDB_AUTH_USER ) ;
-      if ( String != usr.type() )
-      {
-         goto error ;
-      }
-      else if ( notEmpty && 0 == ossStrlen( usr.valuestr() ) )
-      {
-         goto error ;
-      }
-      ++fieldNum ;
-
-      passwd = obj.getField( SDB_AUTH_PASSWD ) ;
-      if ( String != passwd.type() )
-      {
-         goto error ;
-      }
-      else if ( notEmpty && 0 == ossStrlen( passwd.valuestr() ) )
-      {
-         goto error ;
-      }
-      ++fieldNum ;
-
-      option = obj.getField( FIELD_NAME_OPTIONS ) ;
-      if ( Object == option.type() )
-      {
-         ++fieldNum ;
-         rc = _validOptions( option.embeddedObject() ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-      else if ( !option.eoo() )
-      {
-         goto error ;
-      }
-
-      if ( fieldNum != obj.nFields() )
-      {
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_AUTHCB__VALID, rc ) ;
-      return rc ;
-   error:
-      rc = rc ? rc : SDB_INVALIDARG ;
-      PD_LOG( PDDEBUG, "invalid obj of the auth[%s]",
-              obj.toString().c_str() ) ;
-      goto done ;
-   }
-
-   INT32 _authCB::_validOptions( const BSONObj &options )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__VALIDOPTIONS, "_authCB::_validOptions" )
+   INT32 _authCB::_validOptions( const BSONObj &option )
    {
       INT32 rc = SDB_OK ;
 
-      BSONObjIterator itr( options ) ;
+      PD_TRACE_ENTRY ( SDB_AUTHCB__VALIDOPTIONS ) ;
+
+      BSONObjIterator itr( option ) ;
       while ( itr.more() )
       {
          BSONElement e = itr.next() ;
@@ -628,81 +1331,908 @@ namespace engine
             UINT32 mask = 0 ;
             if ( String != e.type() )
             {
-               PD_LOG( PDERROR, "Field[%s] is invalid in option[%s]",
-                       FIELD_NAME_AUDIT_MASK, options.toString().c_str() ) ;
                rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Field[%s] is invalid in option[%s], rc: %d",
+                       FIELD_NAME_AUDIT_MASK,
+                       option.toString().c_str(), rc ) ;
                goto error ;
             }
 
             rc = pdString2AuditMask( e.valuestr(), mask, TRUE ) ;
             if ( rc )
             {
-               PD_LOG( PDERROR, "Field[%s] is invalid in option[%s]",
-                       FIELD_NAME_AUDIT_MASK, options.toString().c_str() ) ;
+               PD_LOG( PDERROR, "Field[%s] is invalid in option[%s], rc: %d",
+                       FIELD_NAME_AUDIT_MASK,
+                       option.toString().c_str(), rc ) ;
                goto error ;
             }
          }
          else
          {
-            PD_LOG( PDERROR, "Invalid field[%s] in option[%s]",
-                    e.fieldName(), options.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Field[%s] is invalid in option[%s], rc: %d",
+                    e.fieldName(), option.toString().c_str(), rc ) ;
             goto error ;
          }
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__VALIDOPTIONS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _authCB::_validSource( BSONObj &obj, BOOLEAN chkPasswd )
+   /** \fn INT32 _authCB::_upgradeUserInfo( const CHAR *username,
+                                            _pmdEDUCB *cb )
+       \brief Upgrade user info. Because of new auth mechanism, SCRAM-SHA256,
+              we need to upgrade the user info in SYSAUTH.SYSUSRS. If the
+              record only has MD5 info, such as
+              {
+                 "User": xxx,
+                 "Passwd": xxx
+              }
+              Then we need to upgrade the record to
+              {
+                 "User": xxx,
+                 "Passwd": xxx,
+                 "SCRAM-SHA256":
+                 {
+                    "Salt": xxx,
+                    "IterationCount": xxx,
+                    "StoredKey": xxx,
+                    "ServerKey": xxx,
+                 }
+              }
+       \param [in] username Username.
+       \param [in] cb Pmd EDU cb.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__UPGRADEUSERINFO, "_authCB::_upgradeUserInfo" )
+   INT32 _authCB::_upgradeUserInfo( const CHAR *username, _pmdEDUCB *cb )
+   {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__UPGRADEUSERINFO ) ;
+
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      _dpsLogWrapper *dpsCB = pmdGetKRCB()->getDPSCB() ;
+      BYTE salt[UTIL_AUTH_SCRAMSHA256_SALT_LEN] = { 0 } ;
+      const CHAR *passwdMD5  = NULL ;
+      BSONObj matcher, dummyObj, updator, userObj ;
+      string serverKey, clientKey, storedKey ;
+
+      if ( NULL == username )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // check user info
+      rc = getUsrInfo( username, cb, userObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get user[%s] info, rc: %d",
+                   username, rc ) ;
+
+      if ( userObj.hasField( SDB_AUTH_SCRAMSHA256 ) )
+      {
+         goto done ;
+      }
+
+      rc = rtnGetStringElement( userObj, SDB_AUTH_PASSWD, &passwdMD5 ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s] from user obj[%s], rc: %d",
+                   SDB_AUTH_PASSWD, userObj.toString().c_str(), rc ) ;
+
+      // generate salte, storedKey, serverKey for SCRAM-SHA256
+      rc = utilAuthGenerateNonce( salt, UTIL_AUTH_SCRAMSHA256_SALT_LEN ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to generate nonce, rc: %d",
+                   rc ) ;
+
+      rc = utilAuthCaculateKey( passwdMD5,
+                                salt, UTIL_AUTH_SCRAMSHA256_SALT_LEN,
+                                UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT,
+                                storedKey,
+                                serverKey,
+                                clientKey ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to caculate key, rc: %d",
+                   rc ) ;
+
+      // build new user object
+      try
+      {
+         string saltBase64 = base64::encode( (CHAR*)salt, sizeof(salt) ) ;
+
+         BSONObjBuilder bob ;
+         bob.append( SDB_AUTH_ITERATIONCOUNT,
+                     UTIL_AUTH_SCRAMSHA256_ITERATIONCOUNT ) ;
+         bob.append( SDB_AUTH_SALT, saltBase64.c_str() ) ;
+         bob.append( SDB_AUTH_STOREDKEY, storedKey.c_str() ) ;
+         bob.append( SDB_AUTH_SERVERKEY, serverKey.c_str() ) ;
+         updator = BSON( "$set" << BSON( SDB_AUTH_SCRAMSHA256 << bob.obj() ) ) ;
+
+         matcher = BSON( SDB_AUTH_USER << username ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+      rc = rtnUpdate( AUTH_USR_COLLECTION, matcher, updator,
+                      dummyObj, 0, cb, dmsCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to update, matcher[%s] updator[%s] rc: %d",
+                   matcher.toString().c_str(), updator.toString().c_str(), rc ) ;
+
+      PD_LOG( PDEVENT, "Upgrade user[%s] info successfully", username ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_AUTHCB__UPGRADEUSERINFO, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /** \fn INT32 _authCB::_parseMD5AuthMsgObj( const BSONObj &obj )
+       \brief Parse the msg of authentication using MD5.
+       \param [in] obj Bson data in the message sent by the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__PARSEMD5AUTHMSGOBJ, "_authCB::_parseMD5AuthMsgObj" )
+   INT32 _authCB::_parseMD5AuthMsgObj( const BSONObj &obj )
+   {
+      INT32 rc             = SDB_OK ;
+      const CHAR *username = NULL ;
+      const CHAR *passwd   = NULL ;
+
+      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSEMD5AUTHMSGOBJ ) ;
+
+      try
+      {
+
+      BSONObjIterator itr( obj );
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next();
+         // check username
+         if ( ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) == 0 )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_USER, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            username = ele.valuestr() ;
+         }
+         // check passwd
+         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_PASSWD ) == 0 )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_PASSWD, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            passwd = ele.valuestr() ;
+         }
+         // check source
+         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_SOURCE ) == 0 )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_SOURCE, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Unknown field[%s] in md5 auth msg[%s], rc: %d",
+                    ele.fieldName(), obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL == username )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in md5 auth msg[%s], rc: %d",
+                 SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( NULL == passwd )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in md5 auth msg[%s], rc: %d",
+                 SDB_AUTH_PASSWD, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__PARSEMD5AUTHMSGOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 _authCB::_parseCrtUserMsgObj( const BSONObj &obj,
+                                               const CHAR **username,
+                                               const CHAR **passwd,
+                                               const CHAR **clearTextPasswd,
+                                               const CHAR **source,
+                                               BSONObj &option )
+       \brief Parse the msg of createing user.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [out] username User name.
+       \param [out] passwd Md5sum of clear text password.
+       \param [out] clearTextPasswd Clear text password.
+       \param [out] source Source.
+       \param [out] option Option.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__PARSECRTUSERMSGOBJ, "_authCB::_parseCrtUserMsgObj" )
+   INT32 _authCB::_parseCrtUserMsgObj( const BSONObj &obj,
+                                       const CHAR **username,
+                                       const CHAR **passwd,
+                                       const CHAR **clearTextPasswd,
+                                       const CHAR **source,
+                                       BSONObj &option )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_AUTHCB__VALID ) ;
-      BSONElement usr, source, pass ;
-      if ( obj.isEmpty() )
-      {
-         goto error ;
-      }
+      BOOLEAN hasUser = FALSE ;
+      BOOLEAN hasPwd  = FALSE ;
 
-      if ( !obj.hasField( SDB_AUTH_SOURCE ) )
-      {
-         goto error ;
-      }
+      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSECRTUSERMSGOBJ ) ;
 
-      source = obj.getField( SDB_AUTH_SOURCE ) ;
-      if ( source.eoo() || String != source.type() ||
-           ( source.String().empty() ) )
-      {
-         goto error ;
-      }
+      // we don't want to print 'obj' to diaglog, because 'obj' may has
+      // clear text password
 
-      usr = obj.getField( SDB_AUTH_USER ) ;
-      if ( usr.eoo() || String != usr.type() || ( usr.String().empty() ) )
+      try
       {
-         goto error ;
-      }
 
-      if ( chkPasswd )
+      BSONObjIterator itr( obj );
+      while ( itr.more() )
       {
-         pass = obj.getField( SDB_AUTH_PASSWD ) ;
-         if ( pass.eoo() || String != pass.type() || ( pass.String().empty() ) )
+         BSONElement ele = itr.next();
+         // check username
+         if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) )
          {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Field[%s] type[%d] is invalid, must be string, rc: %d",
+                       SDB_AUTH_USER, ele.type(), rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrlen( ele.valuestr() ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Username can't be empty when create user, rc: %d",
+                       rc ) ;
+               goto error ;
+            }
+            if ( username )
+            {
+               *username = ele.valuestr() ;
+            }
+            hasUser = TRUE ;
+         }
+         // check passwd
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_PASSWD ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Field[%s] type[%d] is invalid, must be string, rc: %d",
+                       SDB_AUTH_PASSWD, ele.type(), rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrlen( ele.valuestr() ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Md5sum of Password can't be empty in createUsr msg, "
+                       "rc: %d", rc ) ;
+               goto error ;
+            }
+            if ( passwd )
+            {
+               *passwd = ele.valuestr() ;
+            }
+            hasPwd = TRUE ;
+         }
+         // check cleartext passwd, it can be empty
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_TEXTPASSWD ) )
+         {
+            if ( ele.type() != String )
+            {
+               PD_LOG( PDERROR,
+                       "Field[%s] type[%d] is invalid, must be string, rc: %d",
+                       SDB_AUTH_TEXTPASSWD, ele.type(), rc ) ;
+               goto error ;
+            }
+            if ( clearTextPasswd )
+            {
+               *clearTextPasswd = ele.valuestr() ;
+            }
+         }
+         // check source
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_SOURCE ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Field[%s] type[%d] is invalid, must be string, rc: %d",
+                       SDB_AUTH_SOURCE, ele.type(), rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrlen( ele.valuestr() ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Source can't be empty when create user, rc: %d",
+                       rc ) ;
+               goto error ;
+            }
+            if ( source )
+            {
+               *source = ele.valuestr() ;
+            }
+         }
+         // check options
+         else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_OPTIONS ) )
+         {
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Field[%s] type[%d] is invalid, must be string, rc: %d",
+                       FIELD_NAME_OPTIONS, ele.type(), rc ) ;
+               goto error ;
+            }
+            option = ele.Obj() ;
+            if ( SDB_OK != _validOptions( option ) )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Unknown field[%s] in createUsr msg[%s], rc: %d",
+                    ele.fieldName(), obj.toString().c_str(), rc ) ;
             goto error ;
          }
       }
 
+      if ( !hasUser )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist when create user, rc: %d",
+                 SDB_AUTH_USER, rc ) ;
+         goto error ;
+      }
+      if ( !hasPwd )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist when create user, rc: %d",
+                 SDB_AUTH_PASSWD, rc ) ;
+         goto error ;
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
    done:
-      PD_TRACE_EXITRC( SDB_AUTHCB__VALID, rc ) ;
+      PD_TRACE_EXITRC ( SDB_AUTHCB__PARSECRTUSERMSGOBJ, rc ) ;
       return rc ;
    error:
-      rc = SDB_INVALIDARG ;
-      PD_LOG( PDDEBUG, "invalid obj of the auth[%s]",
-              obj.toString().c_str() ) ;
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__PARSESTEP1MSGOBJ, "_authCB::_parseStep1MsgObj" )
+   INT32 _authCB::_parseStep1MsgObj( const BSONObj &obj,
+                                     const CHAR **username,
+                                     const CHAR **clientNonce,
+                                     INT32 &type )
+   {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSESTEP1MSGOBJ ) ;
+
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasUser = FALSE ;
+      BOOLEAN hasNonce = FALSE ;
+      BOOLEAN hasType = FALSE ;
+
+      try
+      {
+
+      BSONObjIterator itr( obj );
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next();
+         if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_STEP ) )
+         {
+            if ( !ele.isNumber() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step1 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_STEP, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            // Field Step has beed parsed in _authCB::SCRAMSHAAuthenticate()
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step1 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( username )
+            {
+               *username = ele.valuestr() ;
+            }
+            hasUser = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_NONCE ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step1 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_NONCE, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( clientNonce )
+            {
+               *clientNonce = ele.valuestr() ;
+            }
+            hasNonce = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_TYPE ) )
+         {
+            if ( ele.type() != NumberInt )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step1 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_TYPE, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            type = ele.numberInt() ;
+            hasType = TRUE ;
+            if ( SDB_AUTH_TYPE_MD5_PWD    != type &&
+                 SDB_AUTH_TYPE_TEXT_PWD   != type &&
+                 SDB_AUTH_TYPE_EXTEND_PWD != type )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Filed[%s] value[%d] is invalid in step2 msg[%s], rc: %d",
+                       SDB_AUTH_TYPE, type, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Unknown field[%s] in auth step2 msg[%s], rc: %d",
+                    ele.fieldName(), obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( !hasUser )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step1 msg[%s], rc: %d",
+                 SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasNonce )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step1 msg[%s], rc: %d",
+                 SDB_AUTH_NONCE, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasType )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step1 msg[%s], rc: %d",
+                 SDB_AUTH_TYPE, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__PARSESTEP1MSGOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 _authCB::_parseStep2MsgObj( const BSONObj &obj,
+                                             const CHAR **username,
+                                             const CHAR **identify,
+                                             const CHAR **clientProof,
+                                             const CHAR **combineNonce,
+                                             INT32 &type )
+       \brief Parse the msg in the second step of authentication using
+              SCRAM-SHA256.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [out] username User name.
+       \param [out] identify Session identifier. When the client is C++ driver,
+                    its value is "C++_Session". When the client is C driver, its
+                    value is "C_Session".
+       \param [out] clientProof Client proof in base64 format.
+       \param [out] combineNonce Combine nonce in base64 format.
+       \param [out] type Type of original password.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__PARSESTEP2MSGOBJ, "_authCB::_parseStep2MsgObj" )
+   INT32 _authCB::_parseStep2MsgObj( const BSONObj &obj,
+                                     const CHAR **username,
+                                     const CHAR **identify,
+                                     const CHAR **clientProof,
+                                     const CHAR **combineNonce,
+                                     INT32 &type )
+   {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSESTEP2MSGOBJ ) ;
+
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasUser = FALSE ;
+      BOOLEAN hasIdentify = FALSE ;
+      BOOLEAN hasProof = FALSE ;
+      BOOLEAN hasNonce = FALSE ;
+      BOOLEAN hasType = FALSE ;
+
+      try
+      {
+
+      BSONObjIterator itr( obj );
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next();
+         if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_STEP ) )
+         {
+            if ( !ele.isNumber() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step2 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_STEP, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            // Field Step has beed parsed in _authCB::SCRAMSHAAuthenticate()
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step2 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( username )
+            {
+               *username = ele.valuestr() ;
+            }
+            hasUser = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_IDENTIFY ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step2 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_IDENTIFY, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( identify )
+            {
+               *identify = ele.valuestr() ;
+            }
+            hasIdentify = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_PROOF ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step2 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_PROOF, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrlen( ele.valuestr() ) )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Client proof can't be empty in auth step2 "
+                       "msg[%s], rc: %d", obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( clientProof )
+            {
+               *clientProof = ele.valuestr() ;
+            }
+            hasProof = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_NONCE ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step2 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_NONCE, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            if ( combineNonce )
+            {
+               *combineNonce = ele.valuestr() ;
+            }
+            hasNonce = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_TYPE ) )
+         {
+            if ( ele.type() != NumberInt )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in step2 msg[%s], rc: %d",
+                       ele.type(), SDB_AUTH_TYPE, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            type = ele.numberInt() ;
+            hasType = TRUE ;
+            if ( SDB_AUTH_TYPE_MD5_PWD    != type &&
+                 SDB_AUTH_TYPE_TEXT_PWD   != type &&
+                 SDB_AUTH_TYPE_EXTEND_PWD != type )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Filed[%s] value[%d] is invalid in step2 msg[%s], rc: %d",
+                       SDB_AUTH_TYPE, type, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Unknown field[%s] in auth step2 msg[%s], rc: %d",
+                    ele.fieldName(), obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( !hasUser )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step2 msg[%s], rc: %d",
+                 SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasIdentify )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step2 msg[%s], rc: %d",
+                 SDB_AUTH_IDENTIFY, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasProof )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step2 msg[%s], rc: %d",
+                 SDB_AUTH_PROOF, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasNonce )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step2 msg[%s], rc: %d",
+                 SDB_AUTH_NONCE, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasType )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in auth step2 msg[%s], rc: %d",
+                 SDB_AUTH_TYPE, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__PARSESTEP2MSGOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 _authCB::_parseDelUserMsgObj( const BSONObj &obj,
+                                               const CHAR **username,
+                                               const CHAR **source )
+       \brief Parse the msg of removing user.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [out] username User name.
+       \param [out] source The field that used by fap.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__PARSEDELUSERMSGOBJ, "_authCB::_parseDelUserMsgObj" )
+   INT32 _authCB::_parseDelUserMsgObj( const BSONObj &obj,
+                                       const CHAR **username,
+                                       const CHAR **source )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasUser = FALSE ;
+      BOOLEAN hasPwd = FALSE ;
+      BOOLEAN hasSource = FALSE ;
+
+      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSEDELUSERMSGOBJ ) ;
+
+      /*
+        The format of obj is as follows:
+        { User: xxx, Passwd: xxx }
+        { User: xxx, Source: xxx }  from fap-mongo2
+      */
+      try
+      {
+
+      BSONObjIterator itr( obj );
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next();
+         // check username
+         if ( ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) == 0 )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_USER, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            if ( username )
+            {
+               *username = ele.valuestr() ;
+            }
+            hasUser = TRUE ;
+         }
+         // check passwd
+         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_PASSWD ) == 0 )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_PASSWD, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            hasPwd = TRUE ;
+         }
+         // check source
+         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_SOURCE ) == 0 )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_SOURCE, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            if ( source )
+            {
+               *source = ele.valuestr() ;
+            }
+            hasSource = TRUE ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Unknown field[%s] in delUser msg[%s], rc: %d",
+                    ele.fieldName(), obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( !hasUser )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] doesn't exist in delUser msg[%s], rc: %d",
+                 SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !hasPwd && !hasSource )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,
+                 "Field[%s] and Field[%s] doesn't exist in delUser msg[%s], "
+                 "rc: %d", SDB_AUTH_PASSWD, SDB_AUTH_SOURCE,
+                 obj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_AUTHCB__PARSEDELUSERMSGOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
       get gloabl SDB_AUTHCB cb
    */

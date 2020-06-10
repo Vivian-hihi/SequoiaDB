@@ -54,15 +54,16 @@ struct _sdbConnectionStruct
    Node *_sockets ;
    hashTable *_tb ;
    bson *_attributeCache ;
-   // this pointer is used to point to the place of error object, no need to 
+   // this pointer is used to point to the place of error object, no need to
    // malloc and free
    const CHAR *_pErrObjBuf ;
-   INT32 _errObjBufSize ;
-
-   UINT64 reserveSpace1 ;
-   ossMutex _sockMutex ;
-
-   BOOLEAN _isOldVersionLobServer;
+   INT32       _errObjBufSize ;
+   UINT64      reserveSpace1 ;
+   ossMutex    _sockMutex ;
+   BOOLEAN     _isOldVersionLobServer;
+   // If the authVersion is 0, we use MD5 authentication.
+   // And if the authVersion is 1, we use SCRAM-SHA256 authentication.
+   INT32       _authVersion ;
 } ;
 typedef struct _sdbConnectionStruct sdbConnectionStruct ;
 

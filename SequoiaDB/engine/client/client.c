@@ -1067,7 +1067,7 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
 
    rc = clientExtractSysInfoReply ( (CHAR*)&reply,
                                     &(connection->_endianConvert),
-                                    NULL ) ;
+                                    NULL, &(connection->_authVersion) ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -2064,9 +2064,10 @@ static INT32 _sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
    }
 
    //build checking message
-   rc = clientBuildAuthMsg( &connection->_pSendBuffer,
-                            &connection->_sendBufferSize,
-                            pUsrName, md5, 0, connection->_endianConvert ) ;
+   rc = clientBuildAuthVer0Msg( &connection->_pSendBuffer,
+                                &connection->_sendBufferSize,
+                                pUsrName, md5, 0,
+                                connection->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -2768,8 +2769,9 @@ SDB_EXPORT INT32 sdbCreateUsr( sdbConnectionHandle cHandle,
    }
    rc = clientBuildAuthCrtMsg( &connection->_pSendBuffer,
                                &connection->_sendBufferSize,
-                               pUsrName, md5, NULL,
-                               0, connection->_endianConvert ) ;
+                               pUsrName, pPasswd, md5, NULL,
+                               0, connection->_endianConvert,
+                               connection->_authVersion ) ;
    if ( SDB_OK != rc )
    {
       goto error ;

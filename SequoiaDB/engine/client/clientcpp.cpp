@@ -44,6 +44,7 @@
 #include "fmpDef.hpp"
 #include "../bson/lib/md5.hpp"
 #include "utilCipher.hpp"
+#include "../bson/lib/base64.h"
 #include <string>
 #include <vector>
 #ifdef SDB_SSL
@@ -6721,6 +6722,7 @@ do                                                            \
    _receiveBufferSize ( 0 ),
    _useSSL ( useSSL ),
    _tb ( NULL ),
+   _authVersion( 0 ),
    _attributeCache ()
    {
       _pErrorBuf = NULL ;
@@ -7036,7 +7038,8 @@ do                                                            \
       {
          goto error ;
       }
-      rc = clientExtractSysInfoReply ( (CHAR*)pReply, &_endianConvert, NULL ) ;
+      rc = clientExtractSysInfoReply ( (CHAR*)pReply, &_endianConvert, NULL,
+                                       &_authVersion ) ;
       if ( rc )
       {
          goto error ;
@@ -7048,21 +7051,526 @@ do                                                            \
       goto done ;
    }
 
+   /** \fn INT32 _authVer0MsgProcess( const CHAR *pUsrName,
+                                      const CHAR *pPasswd )
+       \brief Build msg, send msg and extract msg when we use
+              MD5 authentication.
+       \param [in] pUsrName User name.
+       \param [in] pPasswd  User password.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _sdbImpl::_authVer0MsgProcess( const CHAR *pUsrName,
+                                        const CHAR *pPasswd )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      SINT64 contextID = -1 ;
+
+      rc = clientBuildAuthVer0Msg( &_pSendBuffer, &_sendBufferSize,
+                                   pUsrName, pPasswd, 0, _endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                          contextID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
+
+   done :
+      if ( locked )
+      {
+         unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /** \fn INT32 _step1( const CHAR *pUsrName,
+                         const CHAR *pPasswd,
+                         UINT32 &iterationCount,
+                         string &saltBase64,
+                         string &combineNonceBase64,
+                         BOOLEAN &needAuth )
+       \brief The authentication using SCRAM-SHA256 is divided into two
+              certifications in total. This is the first certification.
+              In the first certification, the client need to send username and
+              client's nonce to the server.
+       \param [in] pUsrName User name.
+       \param [in] pPasswd  User password.
+       \param [out] iterationCount Number of encryption iterations.
+       \param [out] saltBase64 Random salt in base64 format.
+       \param [out] combineNonceBase64 Combine string for clien nonce in base64
+                    and server nonce in base64.
+       \param [out] needAuth Whether we need to authenticate.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _sdbImpl::_step1( const CHAR *pUsrName, const CHAR *pPasswd,
+                           UINT32 &iterationCount,
+                           string &saltBase64,
+                           string &combineNonceBase64,
+                           BOOLEAN &needAuth )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 step = 0 ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN foundStep = FALSE ;
+      BOOLEAN foundSalt = FALSE ;
+      BOOLEAN foundIteration = FALSE ;
+      BOOLEAN foundNonce = FALSE ;
+      BSONObj result ;
+      string clientNonceBase64 ;
+      SINT64 contextID = -1 ;
+
+      if ( NULL == pUsrName || NULL == pPasswd )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = utilAuthGenerateNonce( clientNonceBase64,
+                                  UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = clientBuildAuthVer1Step1Msg( &_pSendBuffer, &_sendBufferSize,
+                                        pUsrName, 0, _endianConvert,
+                                        clientNonceBase64.c_str() ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                          contextID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
+
+      try
+      {
+         if ( NULL != _pResultBuf )
+         {
+            result = BSONObj( _pResultBuf ) ;
+         }
+      }
+      catch( std::exception )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      // When "auth" is false in catalog node configure file sdb.conf, or
+      // there is no user in SYSAUTH.SYSUSRS, the rc is SDB_OK and the result
+      // is empty. So we don't need to authenticate.
+      if ( SDB_OK == rc && result.isEmpty() )
+      {
+         needAuth = FALSE ;
+         goto done ;
+      }
+
+      try
+      {
+         BSONObjIterator itr = BSONObjIterator( result ) ;
+         while ( itr.more() )
+         {
+            BSONElement ele = itr.next();
+            if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_STEP ) )
+            {
+               if ( !ele.isNumber() )
+               {
+                  rc = SDB_INVALIDARG  ;
+                  goto error ;
+               }
+               step = ele.numberInt() ;
+               foundStep = TRUE ;
+               if ( SDB_AUTH_MSG_STEP1 != step )
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_SALT ) )
+
+            {
+               if ( ele.type() != String )
+               {
+                  rc = SDB_INVALIDARG  ;
+                  goto error ;
+               }
+               saltBase64 = ele.valuestr() ;
+               foundSalt = TRUE ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_ITERATIONCOUNT ) )
+            {
+               if ( !ele.isNumber() )
+               {
+                  rc = SDB_INVALIDARG  ;
+                  goto error ;
+               }
+               iterationCount = ele.numberInt() ;
+               foundIteration = TRUE ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_NONCE ) )
+            {
+               if ( ele.type() != String )
+               {
+                  rc = SDB_INVALIDARG  ;
+                  goto error ;
+               }
+               combineNonceBase64 = ele.valuestr() ;
+               foundNonce = TRUE ;
+            }
+         }
+      }
+      catch( std::exception )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !foundStep || !foundSalt || !foundIteration || !foundNonce )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      if ( locked )
+      {
+         unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /** \fn INT32 _step2( const CHAR *pUsrName,
+                         const CHAR *pPasswd,
+                         UINT32 iterationCount,
+                         const string &saltBase64,
+                         const string &combineNonceBase64,
+                         const string &clientProofBase64 )
+       \brief The authentication using SCRAM-SHA256 is divided into two
+              certifications in total. This is the second certification.
+              In the second certification, the client needs to send client'
+              proof to the server and check whether the server's proof is legal.
+       \param [in] pUsrName User name.
+       \param [in] pPasswd  User password.
+       \param [in] iterationCount Number of encryption iterations.
+       \param [in] saltBase64 Random salt in base64 format.
+       \param [in] combineNonceBase64 Combine string for clien nonce in base64
+                   and server nonce in base64.
+       \param [in] clientProofBase64 Client proof in base64 format.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _sdbImpl::_step2( const CHAR *pUsrName,
+                           const CHAR *pPasswd,
+                           UINT32 iterationCount,
+                           const string &saltBase64,
+                           const string &combineNonceBase64,
+                           const string &clientProofBase64 )
+   {
+      INT32   rc      = SDB_OK ;
+      BOOLEAN locked  = FALSE ;
+      BOOLEAN isValid = FALSE ;
+      BSONObj result ;
+      BYTE salt[UTIL_AUTH_SCRAMSHA256_SALT_LEN] = { 0 } ;
+      string storedKeyBase64 ;
+      string serverKeyBase64 ;
+      string clientKeyBase64 ;
+      const CHAR *serverProofBase64 = NULL ;
+      SINT64 contextID = -1 ;
+
+      rc = clientBuildAuthVer1Step2Msg( &_pSendBuffer, &_sendBufferSize,
+                                        pUsrName, 0, _endianConvert,
+                                        combineNonceBase64.c_str(),
+                                        clientProofBase64.c_str(),
+                                        SDB_AUTH_CPP_IDENTIFY ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                          contextID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
+
+      try
+      {
+         if ( NULL != _pResultBuf )
+         {
+            result = BSONObj( _pResultBuf ) ;
+         }
+
+         string saltDecode = base64::decode( string(saltBase64) ) ;
+         ossMemcpy( salt, saltDecode.c_str(), saltDecode.length() ) ;
+      }
+      catch( std::exception )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      try
+      {
+         BOOLEAN foundStep = FALSE ;
+         BOOLEAN foundProof = FALSE ;
+         INT32 step = 0 ;
+         BSONObjIterator itr = BSONObjIterator( result ) ;
+         while ( itr.more() )
+         {
+            BSONElement ele = itr.next();
+            if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_STEP ) )
+            {
+               if ( !ele.isNumber() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               step = ele.numberInt() ;
+               foundStep = TRUE ;
+               if ( SDB_AUTH_MSG_STEP2 != step )
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_PROOF ) )
+            {
+               if ( ele.type() != String )
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               serverProofBase64 = ele.valuestr() ;
+               foundProof = TRUE ;
+            }
+         }
+
+         if ( !foundStep || !foundProof )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = utilAuthCaculateKey( pPasswd, salt, sizeof(salt),
+                                iterationCount, storedKeyBase64,
+                                serverKeyBase64, clientKeyBase64 ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+
+      rc = utilAuthVerifyServerProof( serverProofBase64, pUsrName,
+                                      iterationCount, saltBase64.c_str(),
+                                      combineNonceBase64.c_str(),
+                                      SDB_AUTH_CPP_IDENTIFY,
+                                      serverKeyBase64.c_str(), TRUE,
+                                      isValid ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( !isValid )
+      {
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
+      }
+
+   done :
+      if ( locked )
+      {
+         unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /** \fn INT32 _authVer1MsgProcess( const CHAR *pUsrName,
+                                      const CHAR *pPasswd )
+       \brief Build msg, send msg and extract msg when we use
+              SCRAM-SHA256 authentication.
+       \param [in] pUsrName User name.
+       \param [in] pPasswd  User password.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _sdbImpl::_authVer1MsgProcess( const CHAR *pUsrName,
+                                        const CHAR *pPasswd )
+   {
+      INT32  rc = SDB_OK ;
+      string saltBase64 ;
+      string combineNonceBase64 ;
+      UINT32 iterationCount = 0 ;
+      BOOLEAN needDoAuth = TRUE ;
+      string clientProofBase64 ;
+
+      rc = _step1( pUsrName, pPasswd,
+                   iterationCount, saltBase64, combineNonceBase64,
+                   needDoAuth ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // If authentication is not required or there is no user in
+      // SYSAUTH.SYSUSRS, we don't need to process _step2.
+      if ( !needDoAuth )
+      {
+         goto done ;
+      }
+
+      rc = utilAuthCaculateClientProof( pPasswd, pUsrName,
+                                        iterationCount, saltBase64.c_str(),
+                                        combineNonceBase64.c_str(),
+                                        SDB_AUTH_CPP_IDENTIFY, TRUE,
+                                        clientProofBase64 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = _step2( pUsrName, pPasswd,
+                   iterationCount, saltBase64, combineNonceBase64,
+                   clientProofBase64 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /** \fn INT32 _authFmpMsgProcess( const CHAR *pUsrName,
+                                     const CHAR *pPasswd,
+                                     const CHAR *md5 )
+       \brief Build msg, send msg and extract msg when we use FMP.
+       \param [in] pUsrName User name.
+       \param [in] pPasswd  User password.
+       \param [in] md5 Md5sum of password.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _sdbImpl::_authFmpMsgProcess( const CHAR *pUsrName,
+                                       const CHAR *pPasswd,
+                                       const CHAR *md5 )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isRetry = FALSE ;
+      BOOLEAN locked = FALSE ;
+      SINT64 contextID = -1 ;
+
+   retry:
+      if ( isRetry || !isMd5String( pPasswd ) )
+      {
+         rc = clientBuildAuthVer0Msg( &_pSendBuffer, &_sendBufferSize,
+                                      pUsrName, md5, 0, _endianConvert ) ;
+      }
+      else
+      {
+         rc = clientBuildAuthVer0Msg( &_pSendBuffer, &_sendBufferSize,
+                                      pUsrName, 0 == md5[0] ? pPasswd : md5,
+                                      0, _endianConvert ) ;
+      }
+
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                          contextID ) ;
+      if ( rc )
+      {
+         if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc && 0 == md5[0] && !isRetry )
+         {
+            unlock() ;
+            locked = FALSE ;
+            isRetry = TRUE ;
+            goto retry ;
+         }
+         goto error ;
+      }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
+
+   done :
+      if ( locked )
+      {
+         unlock () ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _sdbImpl::connect ( const CHAR *pHostName,
                              UINT16 port,
                              const CHAR *pUsrName,
                              const CHAR *pPasswd )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
-      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] = { 0 } ;
-      SINT64 contextID = 0 ;
       const CHAR *pUN = "" ;
       const CHAR *pPW = "" ;
-
-#if defined( SDB_FMP )
-      BOOLEAN isRetry = FALSE ;
-#endif // SDB_FMP
+      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] = { 0 } ;
 
       if ( !pHostName || !*pHostName || port <= 0 || port > 65535 )
       {
@@ -7088,69 +7596,30 @@ do                                                            \
          goto error ;
       }
 
-#if !defined( SDB_FMP )
       rc = md5Encrypt( pPW, md5, SDB_MD5_DIGEST_LENGTH*2+1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
-      rc = clientBuildAuthMsg( &_pSendBuffer, &_sendBufferSize,
-                               pUN, md5, 0, _endianConvert ) ;
-#else
-   retry:
-      if ( isRetry || !isMd5String( pPW ) )
+#if !defined( SDB_FMP )
+      if ( _authVersion >= AUTH_SCRAM_SHA256 )
       {
-         rc = md5Encrypt( pPW, md5, SDB_MD5_DIGEST_LENGTH*2+1 ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-         rc = clientBuildAuthMsg( &_pSendBuffer, &_sendBufferSize,
-                                  pUN, md5, 0, _endianConvert ) ;
+         rc = _authVer1MsgProcess( pUN, md5 ) ;
       }
       else
       {
-         rc = clientBuildAuthMsg( &_pSendBuffer, &_sendBufferSize,
-                                  pUN, 0 == md5[0] ? pPW : md5,
-                                  0, _endianConvert ) ;
+         rc = _authVer0MsgProcess( pUN, md5 ) ;
       }
-#endif // SDB_FMP
-
+#else
+      rc = _authFmpMsgProcess( pUN, pPW, md5 ) ;
+#endif
       if ( rc )
       {
          goto error ;
       }
 
-      lock () ;
-      locked = TRUE ;
-      rc = _send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                          contextID ) ;
-      if ( rc )
-      {
-#if defined( SDB_FMP )
-         if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc && 0 == md5[0] && !isRetry )
-         {
-            unlock() ;
-            locked = FALSE ;
-            isRetry = TRUE ;
-            goto retry ;
-         }
-#endif // SDB_FMP
-         goto error ;
-      }
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
-      if ( locked )
-      {
-         unlock () ;
-      }
       return rc ;
    error :
       goto done ;
@@ -7326,8 +7795,8 @@ do                                                            \
       locked = TRUE ;
 
       rc = clientBuildAuthCrtMsgCpp( &_pSendBuffer, &_sendBufferSize,
-                                     pUsrName, md5, options.objdata(),
-                                     0, _endianConvert ) ;
+                                     pUsrName, pPasswd, md5, options.objdata(),
+                                     0, _endianConvert, _authVersion ) ;
       if ( rc )
       {
          goto error ;
@@ -7917,7 +8386,8 @@ do                                                            \
                 ( MSG_BS_INSERT_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
                   MSG_BS_UPDATE_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
                   MSG_BS_DELETE_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
-                  MSG_BS_SQL_RES == ((MsgHeader*)(*ppBuffer))->opCode ) )
+                  MSG_BS_SQL_RES == ((MsgHeader*)(*ppBuffer))->opCode ||
+                  MSG_AUTH_VERIFY1_RES == ((MsgHeader*)(*ppBuffer))->opCode ) )
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;

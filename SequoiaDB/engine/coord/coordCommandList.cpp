@@ -569,6 +569,14 @@ namespace engine
       idBuilder.append( "$include", 0 ) ;
       idBuilder.done() ;
 
+      BSONObjBuilder scramBuilder( builder.subobjStart( SDB_AUTH_SCRAMSHA256 ) ) ;
+      scramBuilder.append( "$include", 0 ) ;
+      scramBuilder.done() ;
+
+      BSONObjBuilder scram1Builder( builder.subobjStart( SDB_AUTH_SCRAMSHA1 ) ) ;
+      scram1Builder.append( "$include", 0 ) ;
+      scram1Builder.done() ;
+
       outSelector = queryOpt.getSelector() ;
       queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;

@@ -55,6 +55,7 @@
 
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
+
 _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
    : engine::pmdSession( fd ), _masterRead( FALSE ), _resource( resource )
 {
@@ -768,17 +769,22 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
    else if ( OP_CMD_WHATSMYURI == curOp )
    {
        handled = TRUE ;
-       fap::mongo::buildWhatsmyuriReplyMsg( resource, buff ) ;
+       fap::mongo::buildWhatsmyuriReplyMsg( buff ) ;
    }
    else if ( OP_CMD_GETLOG == curOp )
    {
       handled = TRUE ;
-      fap::mongo::buildGetLogReplyMsg( resource, buff ) ;
+      fap::mongo::buildGetLogReplyMsg( buff ) ;
    }
    else if ( OP_CMD_BUILDINFO == curOp )
    {
        handled = TRUE ;
-       fap::mongo::buildBuildinfoReplyMsg( resource, buff ) ;
+       fap::mongo::buildBuildinfoReplyMsg( buff ) ;
+   }
+   else if ( OP_CMD_AUTH_STEP3 == curOp )
+   {
+       handled = TRUE ;
+       fap::mongo::buildAuthStep3ReplyMsg( buff ) ;
    }
 
    if ( handled )
@@ -915,6 +921,70 @@ void _mongoSession::_handleResponse( const INT32 opType,
          bob.append( FAP_FIELD_NAME_N_UPSERTED,
                      returnNum.getIntField( FIELD_NAME_INSERT_NUM ) ) ;
       }
+
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+
+   else if ( OP_CMD_AUTH_STEP1 == opType && SDB_OK == _replyHeader.flags )
+   {
+      std::stringstream ss ;
+      std::string payload ;
+      bson::BSONObjBuilder bob ;
+      bson::BSONObj authStep1Reply( buff.data() ) ;
+      const CHAR* saltBase64 = NULL ;
+      UINT32 iterationCount = 0 ;
+      const CHAR* nonceBase64 = NULL ;
+
+      if ( authStep1Reply.isEmpty() )
+      {
+         bob.append( FAP_FIELD_NAME_CODE, SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
+         bob.append( FAP_FIELD_NAME_ERRMSG,
+                     getErrDesp( SDB_AUTH_AUTHORITY_FORBIDDEN ) ) ;
+         bob.append( FAP_FIELD_NAME_OK, 0 ) ;
+      }
+      else
+      {
+         saltBase64 = authStep1Reply.getStringField( SDB_AUTH_SALT ) ;
+         iterationCount = authStep1Reply.getIntField( SDB_AUTH_ITERATIONCOUNT ) ;
+         nonceBase64 = authStep1Reply.getStringField( SDB_AUTH_NONCE ) ;
+
+         ss << FAP_AUTH_REPLY_MSG_SYMBOL_RANDOM << FAP_UTIL_SYMBOL_EQUAL
+            << nonceBase64
+            << FAP_UTIL_SYMBOL_COMMA << FAP_AUTH_REPLY_MSG_SYMBOL_SALT
+            << FAP_UTIL_SYMBOL_EQUAL << saltBase64
+            << FAP_UTIL_SYMBOL_COMMA << FAP_AUTH_REPLY_MSG_SYMBOL_ITERATIONCOUNT
+            << FAP_UTIL_SYMBOL_EQUAL << iterationCount ;
+
+         payload = ss.str() ;
+         bob.append( FAP_FIELD_NAME_DONE, false ) ;
+         bob.append( FAP_FIELD_NAME_MECHANISM, SDB_AUTH_MECHANISM_SS256 ) ;
+         bob.appendBinData( FAP_FIELD_NAME_PAYLOAD, payload.length(),
+                            bson::BinDataGeneral,
+                            payload.c_str() ) ;
+         bob.append( FAP_FIELD_NAME_OK, 1 ) ;
+      }
+
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+
+   else if ( OP_CMD_AUTH_STEP2 == opType && SDB_OK == _replyHeader.flags )
+   {
+      std::stringstream ss ;
+      std::string payload ;
+      bson::BSONObjBuilder bob ;
+      bson::BSONObj authStep2Reply( buff.data() ) ;
+      const CHAR* serverProofBase64 =
+         authStep2Reply.getStringField( SDB_AUTH_PROOF ) ;
+
+      ss << FAP_AUTH_REPLY_MSG_SYMBOL_VALUE << FAP_UTIL_SYMBOL_EQUAL
+         << serverProofBase64 ;
+
+      payload = ss.str() ;
+      bob.append( FAP_FIELD_NAME_DONE, false ) ;
+      bob.appendBinData( FAP_FIELD_NAME_PAYLOAD, payload.length(),
+                         bson::BinDataGeneral,
+                         payload.c_str() ) ;
+      bob.append( FAP_FIELD_NAME_OK, 1 ) ;
 
       buff = engine::rtnContextBuf( bob.obj() ) ;
    }

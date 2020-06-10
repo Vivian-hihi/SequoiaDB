@@ -349,6 +349,8 @@ enum MSG_TYPE
    MSG_AUTH_CRTUSR_RES                 = MAKE_REPLY_TYPE(MSG_AUTH_CRTUSR_REQ),
    MSG_AUTH_DELUSR_REQ                 = 7002,
    MSG_AUTH_DELUSR_RES                 = MAKE_REPLY_TYPE(MSG_AUTH_DELUSR_REQ),
+   MSG_AUTH_VERIFY1_REQ                = 7003,
+   MSG_AUTH_VERIFY1_RES                = MAKE_REPLY_TYPE(MSG_AUTH_VERIFY1_REQ),
 
    MSG_LOB_BEGIN                       = 8000,
    MSG_BS_LOB_OPEN_REQ                 = 8001,
@@ -447,6 +449,12 @@ typedef union _MsgRouteID MsgRouteID ;
 #define MSG_SYSTEM_INFO_EYECATCHER           0xFFFEFDFC
 #define MSG_SYSTEM_INFO_EYECATCHER_REVERT    0xFCFDFEFF
 
+enum AUTH_VERSION
+{
+   AUTH_MD5 = 0,
+   AUTH_SCRAM_SHA256 = 1,
+} ;
+
 struct _MsgSysInfoHeader
 {
    SINT32 specialSysInfoLen ;
@@ -465,7 +473,8 @@ struct _MsgSysInfoReply
 {
    MsgSysInfoHeader header ;
    INT32            osType ;
-   CHAR             pad[112] ; // total 128 bytes for reply
+   INT32            authVersion ;
+   CHAR             pad[108] ; // total 128 bytes for reply
 } ;
 typedef struct _MsgSysInfoReply MsgSysInfoReply ;
 // end system info requests

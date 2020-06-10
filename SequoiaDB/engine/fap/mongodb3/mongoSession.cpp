@@ -661,7 +661,8 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg,
       {
          if ( CMD_COUNT     == cmdType || CMD_LIST_INDEX      == cmdType ||
               CMD_AGGREGATE == cmdType || CMD_LIST_COLLECTION == cmdType ||
-              CMD_DISTINCT  == cmdType || CMD_LIST_DATABASE   == cmdType )
+              CMD_DISTINCT  == cmdType || CMD_LIST_DATABASE   == cmdType ||
+              CMD_LIST_USER == cmdType )
          {
             if ( SDB_INVALID_CONTEXTID != _replyHeader.contextID &&
                  !hasBuildGetMore )

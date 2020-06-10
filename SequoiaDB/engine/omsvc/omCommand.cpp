@@ -379,7 +379,7 @@ namespace engine
       authBuilder.append( SDB_AUTH_USER, userName ) ;
       authBuilder.append( SDB_AUTH_PASSWD, passwd ) ;
       bsonAuth = authBuilder.obj() ;
-      rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
+      rc = sdbGetOMManager()->md5Authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
       {
          if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
@@ -1623,7 +1623,7 @@ namespace engine
 
       bsonAuth = BSON( SDB_AUTH_USER << user
                        << SDB_AUTH_PASSWD << oldPasswd ) ;
-      rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
+      rc = sdbGetOMManager()->md5Authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
       {
          if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )

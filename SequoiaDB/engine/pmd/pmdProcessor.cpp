@@ -117,6 +117,23 @@ namespace engine
       {
          rc = getClient()->authenticate( msg ) ;
       }
+      else if ( MSG_AUTH_VERIFY1_REQ == opCode )
+      {
+         const CHAR *authBuf = NULL ;
+         rc = getClient()->authenticate( msg, &authBuf ) ;
+         if ( SDB_OK == rc && NULL != authBuf )
+         {
+            try
+            {
+               contextBuff = rtnContextBuf( BSONObj( authBuf ) ) ;
+            }
+            catch ( std::exception &e )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "Unexpected error: %s", e.what() ) ;
+            }
+         }
+      }
       else if ( MSG_BS_INTERRUPTE == opCode )
       {
          rc = _onInterruptMsg( msg, getDPSCB() ) ;
@@ -1680,7 +1697,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROCOORDMSG ) ;
 
-      if ( MSG_AUTH_VERIFY_REQ == opCode )
+      if ( MSG_AUTH_VERIFY_REQ == opCode || MSG_AUTH_VERIFY1_REQ == opCode )
       {
          rc = SDB_COORD_UNKNOWN_OP_REQ ;
          goto done ;

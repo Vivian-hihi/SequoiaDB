@@ -80,7 +80,8 @@ clientCPPLibFiles = [
       "bson/base64.cpp",
       "bson/md5.c",
       "bson/nonce.cpp",
-      "bson/bsonDecimal.cpp"
+      "bson/bsonDecimal.cpp",
+      "util/utilAuthSCRAMSHA.cpp"
       ]
 
 
@@ -145,10 +146,10 @@ clientCppEnv.Install( '#/client/include/', "include/ossAtomicBase.hpp")
 clientCppEnv.Install( '#/client/include/', "include/ossVer.h")
 clientCppEnv.Install( '#/client/include/', "include/ossVer.hpp")
 clientCppEnv.Install( '#/client/include/', "include/ossVer_Autogen.h")
-
 clientCppEnv.Install( '#/client/include/', "include/core.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/ossFeat.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/ossTypes.hpp" )
+clientCppEnv.Install( '#/client/include/', "include/utilAuthSCRAMSHA.hpp" )
 clientCppEnv.Install( '#/client/include/', "util/fromjson.hpp" )
 clientCppEnv.Install( '#/client/include/', "util/json2rawbson.h" )
 clientCppEnv.Install( '#/client/include/bson', "bson/bsonassert.h" )

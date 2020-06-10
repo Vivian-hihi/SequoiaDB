@@ -114,7 +114,16 @@ namespace engine
       return _clientName ;
    }
 
-   INT32 _pmdInnerClient::authenticate( MsgHeader * pMsg )
+   /** \fn INT32 authenticate( MsgHeader *pMsg, const CHAR **authBuf )
+       \brief Authentication.
+       \param [in] pMsg The message sent by client.
+       \param [out] authBuf The bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _pmdInnerClient::authenticate( MsgHeader * pMsg,
+                                        const CHAR **authBuf )
    {
       INT32 rc = SDB_OK ;
       BSONObj authObj ;

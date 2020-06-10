@@ -55,6 +55,7 @@ struct mongoSessionCtx
 {
    MONGO_CLIENT_TYPE client ;
    BSONObj errorObj ;
+   string userName ;
 
    mongoSessionCtx() : client( OTHER ) {}
 

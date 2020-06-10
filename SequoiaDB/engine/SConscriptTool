@@ -237,7 +237,8 @@ utilFiles = [
       "util/utilTypeCast.c",
       "util/utilLobID.cpp",
       "util/utilIniParser.c",
-      "util/utilIniParserEx.cpp"
+      "util/utilIniParserEx.cpp",
+      "util/utilAuthSCRAMSHA.cpp"
       ]
 
 dpsFiles = [
@@ -388,7 +389,7 @@ clientCppFiles = [
       "bson/oid.cpp",
       "bson/base64.cpp",
       "bson/md5.c",
-      "bson/nonce.cpp",
+      "bson/nonce.cpp"
       ]
 
 ncursesFiles = [

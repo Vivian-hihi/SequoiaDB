@@ -537,8 +537,8 @@ INT32 connectSdb ()
       goto error ;
    }
 
-   rc = clientBuildAuthMsg( &_pSendBuffer, &_sendBufferSize,
-                            lUser, md5, 0, FALSE ) ;
+   rc = clientBuildAuthVer0Msg( &_pSendBuffer, &_sendBufferSize,
+                                lUser, md5, 0, FALSE ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to build auth msg, rc = %d", rc ) ;
@@ -784,8 +784,8 @@ INT32 main ( INT32 argc, CHAR **argv )
          sentSize = 0 ;
          totalSentSize = 0 ;
          while ( msgLen > totalSentSize )
-         {         
-            rc = clientSend ( s, _pSendBuffer + totalSentSize, 
+         {
+            rc = clientSend ( s, _pSendBuffer + totalSentSize,
                               msgLen - totalSentSize, &sentSize, -1 ) ;
             totalSentSize += sentSize ;
             if ( SDB_TIMEOUT == rc )

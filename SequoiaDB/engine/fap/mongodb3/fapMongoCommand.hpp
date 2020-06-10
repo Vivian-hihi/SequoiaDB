@@ -658,6 +658,127 @@ class _mongoDropDatabaseCommand : public _mongoDatabaseCommand
 } ;
 typedef _mongoDropDatabaseCommand mongoDropDatabaseCommand ;
 
+class _mongoCreateUserCommand : public _mongoGlobalCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _mongoCreateUserCommand() {}
+      virtual ~_mongoCreateUserCommand() {}
+
+      virtual MONGO_CMD_TYPE type() const { return CMD_USER_CREATE ; }
+      virtual const CHAR* name() const { return MONGO_CMD_NAME_CREATE_USER ; }
+
+      virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildReply( const MsgOpReply &sdbReply,
+                                engine::rtnContextBuf &replyBuf,
+                                _mongoResponseBuffer &resHeader ) ;
+
+      virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+
+   protected:
+      BSONObj _obj ;
+} ;
+typedef _mongoCreateUserCommand mongoCreateUserCommand ;
+
+class _mongoDropUserCommand : public _mongoGlobalCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _mongoDropUserCommand() {}
+      virtual ~_mongoDropUserCommand() {}
+
+      virtual MONGO_CMD_TYPE type() const { return CMD_USER_DROP ; }
+      virtual const CHAR* name() const { return MONGO_CMD_NAME_DROP_USER ; }
+
+      virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildReply( const MsgOpReply &sdbReply,
+                                engine::rtnContextBuf &replyBuf,
+                                _mongoResponseBuffer &resHeader ) ;
+
+      virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+
+   protected:
+      BSONObj _obj ;
+} ;
+typedef _mongoDropUserCommand mongoDropUserCommand ;
+
+class _mongoListUserCommand : public _mongoGlobalCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _mongoListUserCommand() {}
+      virtual ~_mongoListUserCommand() {}
+
+      virtual MONGO_CMD_TYPE type() const { return CMD_LIST_USER ; }
+      virtual const CHAR* name() const { return MONGO_CMD_NAME_USERS_INFO ; }
+
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildReply( const MsgOpReply &sdbReply,
+                                engine::rtnContextBuf &replyBuf,
+                                _mongoResponseBuffer &resHeader ) ;
+
+      virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+} ;
+typedef _mongoListUserCommand mongoListUserCommand ;
+
+class _mongoSaslStartCommand : public _mongoGlobalCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _mongoSaslStartCommand() {}
+      virtual ~_mongoSaslStartCommand() {}
+
+      virtual MONGO_CMD_TYPE type() const { return CMD_SASL_START ; }
+      virtual const CHAR* name() const { return MONGO_CMD_NAME_SASL_START ; }
+
+      virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildReply( const MsgOpReply &sdbReply,
+                                engine::rtnContextBuf &replyBuf,
+                                _mongoResponseBuffer &resHeader ) ;
+
+      virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+
+   protected:
+      BSONObj _obj ;
+} ;
+typedef _mongoSaslStartCommand mongoSaslStartCommand ;
+
+class _mongoSaslContinueCommand : public _mongoGlobalCommand
+{
+   enum MONGO_AUTH_STEP
+   {
+      MONGO_AUTH_STEP1,    // sasl start
+      MONGO_AUTH_STEP2,    // sasl continue
+      MONGO_AUTH_STEP3,    // sasl continue
+   } ;
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _mongoSaslContinueCommand() : _step( MONGO_AUTH_STEP2 ) {}
+      virtual ~_mongoSaslContinueCommand() {}
+
+      virtual MONGO_CMD_TYPE type() const { return CMD_SASL_CONTINUE ; }
+      virtual const CHAR* name() const { return MONGO_CMD_NAME_SASL_CONTINUE ; }
+
+      virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildReply( const MsgOpReply &sdbReply,
+                                engine::rtnContextBuf &replyBuf,
+                                _mongoResponseBuffer &resHeader ) ;
+
+      virtual BOOLEAN needProcessByEngine() const
+      {
+         return _step == MONGO_AUTH_STEP2 ? TRUE : FALSE ;
+      }
+
+   protected:
+      BSONObj _obj ;
+      MONGO_AUTH_STEP _step ;
+} ;
+typedef _mongoSaslContinueCommand mongoSaslContinueCommand ;
+
 class _mongoListCollectionCommand : public _mongoDatabaseCommand
 {
    MONGO_DECLARE_CMD_AUTO_REGISTER()
@@ -678,12 +799,12 @@ class _mongoListCollectionCommand : public _mongoDatabaseCommand
 } ;
 typedef _mongoListCollectionCommand mongoListCollectionCommand ;
 
-class _mongolistDatabaseCommand : public _mongoGlobalCommand
+class _mongoListDatabaseCommand : public _mongoGlobalCommand
 {
    MONGO_DECLARE_CMD_AUTO_REGISTER()
    public:
-      _mongolistDatabaseCommand() {}
-      virtual ~_mongolistDatabaseCommand() {}
+      _mongoListDatabaseCommand() {}
+      virtual ~_mongoListDatabaseCommand() {}
 
       virtual MONGO_CMD_TYPE type() const { return CMD_LIST_DATABASE ; }
       virtual const CHAR* name() const { return MONGO_CMD_NAME_LIST_DATABASE ; }
@@ -695,7 +816,7 @@ class _mongolistDatabaseCommand : public _mongoGlobalCommand
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
 } ;
-typedef _mongolistDatabaseCommand mongolistDatabaseCommand ;
+typedef _mongoListDatabaseCommand mongoListDatabaseCommand ;
 
 class _mongoGetLogCommand : public _mongoGlobalCommand
 {

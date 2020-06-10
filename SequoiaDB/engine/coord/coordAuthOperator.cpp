@@ -66,7 +66,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_AUTHOPR_EXEC ) ;
 
-      rc = forward( pMsg, cb, TRUE, contextID ) ;
+      rc = forward( pMsg, cb, TRUE, contextID, NULL, NULL, NULL, buf ) ;
       if ( rc )
       {
          goto error ;

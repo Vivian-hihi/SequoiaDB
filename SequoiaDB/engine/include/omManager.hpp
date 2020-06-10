@@ -74,8 +74,8 @@ namespace engine
    /*
       _omManager define
    */
-   class _omManager : public _pmdObjBase, public _IControlBlock, 
-                      public IEventHander 
+   class _omManager : public _pmdObjBase, public _IControlBlock,
+                      public IEventHander
    {
       DECLARE_OBJ_MSG_MAP()
 
@@ -119,13 +119,18 @@ namespace engine
 
          pmdRemoteSessionMgr* getRSManager() { return &_rsManager ; }
 
-         INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
+         INT32             md5Authenticate( const BSONObj &obj,
+                                            _pmdEDUCB *cb ) ;
+         INT32             SCRAMSHAAuthenticate( const BSONObj &obj,
+                                                 _pmdEDUCB *cb,
+                                                 BSONObj &outUserObj ) ;
+
          INT32             authUpdatePasswd( string user, string oldPasswd,
                                              string newPasswd, pmdEDUCB *cb ) ;
 
-         INT32             getBizHostInfo( const string &businessName, 
+         INT32             getBizHostInfo( const string &businessName,
                                            list <string> &hostsList ) ;
-         INT32             appendBizHostInfo( const string &businessName, 
+         INT32             appendBizHostInfo( const string &businessName,
                                               list <string> &hostsList ) ;
 
          string            getLocalAgentPort() ;
@@ -163,13 +168,13 @@ namespace engine
 
          void              _getOMVersion( string &version ) ;
 
-         INT32             _appendBusinessInfo( const string &businessName, 
-                                                const string &businessType, 
+         INT32             _appendBusinessInfo( const string &businessName,
+                                                const string &businessType,
                                                 const string &clusterName,
                                                 const string &deployMode ) ;
 
-         INT32             _getBussinessInfo( const string &businessName, 
-                                              string &businessType, 
+         INT32             _getBussinessInfo( const string &businessName,
+                                              string &businessType,
                                               string &clusterName,
                                               string &deployMode ) ;
 
@@ -199,21 +204,21 @@ namespace engine
 
          BOOLEAN           _isCommand( const CHAR *pCheckName ) ;
 
-         void              _sendResVector2Agent( NET_HANDLE handle, 
-                                                 MsgHeader *pSrcMsg, 
-                                                 INT32 flag, 
+         void              _sendResVector2Agent( NET_HANDLE handle,
+                                                 MsgHeader *pSrcMsg,
+                                                 INT32 flag,
                                                  vector < BSONObj > &objs,
                                                  INT64 contextID = -1 ) ;
 
-         void              _sendRes2Agent( NET_HANDLE handle, 
-                                           MsgHeader *pSrcMsg, 
+         void              _sendRes2Agent( NET_HANDLE handle,
+                                           MsgHeader *pSrcMsg,
                                            INT32 flag,
                                            const BSONObj &obj,
                                            INT64 contextID = -1 ) ;
 
-         void              _sendRes2Agent( NET_HANDLE handle, 
-                                           MsgHeader *pSrcMsg, 
-                                           INT32 flag, 
+         void              _sendRes2Agent( NET_HANDLE handle,
+                                           MsgHeader *pSrcMsg,
+                                           INT32 flag,
                                            const rtnContextBuf &buffObj,
                                            INT64 contextID = -1 ) ;
 
@@ -270,7 +275,7 @@ namespace engine
                                               INT64 &contextID,
                                               rtnContextBuf &buf ) ;
 
-         INT32             _onAgentUpdateTaskReq( NET_HANDLE handle, 
+         INT32             _onAgentUpdateTaskReq( NET_HANDLE handle,
                                                   MsgHeader *pMsg ) ;
 
       private:

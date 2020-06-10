@@ -661,11 +661,11 @@ namespace engine
       businessKey = OM_TASKINFO_FIELD_INFO"."OM_BSON_BUSINESS_NAME ;
       matcher = BSON( businessKey << businessName
                       << OM_TASKINFO_FIELD_STATUS << status ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint,
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to query business:rc=%d,matcher=%s", rc, 
+         PD_LOG( PDERROR, "Failed to query business:rc=%d,matcher=%s", rc,
                  matcher.toString().c_str() ) ;
          goto error ;
       }
@@ -699,7 +699,7 @@ namespace engine
       goto done ;
    }
 
-   
+
    INT64 omDatabaseTool::getTaskIdOfRunningHost( const string &hostName )
    {
       INT32 rc = SDB_OK ;
@@ -756,11 +756,11 @@ namespace engine
 
       matcher = BSON( OM_TASKINFO_FIELD_STATUS << status ) ;
 
-      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint,
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to query business:rc=%d,matcher=%s", rc, 
+         PD_LOG( PDERROR, "Failed to query business:rc=%d,matcher=%s", rc,
                  matcher.toString().c_str() ) ;
          goto error ;
       }
@@ -886,7 +886,7 @@ namespace engine
       builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
       builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
       builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, (UINT64)now * 1000, 0 ) ;
-   
+
       builder.appendElements( businessInfo ) ;
       buzRecord = builder.obj() ;
 
@@ -1018,7 +1018,7 @@ namespace engine
 
       matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
 
-      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint,
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
@@ -1041,7 +1041,7 @@ namespace engine
             }
 
             contextID = -1 ;
-            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d", 
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
                     OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
             goto error ;
          }
@@ -1110,7 +1110,7 @@ namespace engine
       BSONObj updator = BSON( "$replace" << newBusinessInfo ) ;
       BSONObj hint ;
       utilUpdateResult upResult ;
-   
+
       rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS, condition, updator, hint,
                       FLG_UPDATE_UPSERT,
                       _cb, &upResult ) ;
@@ -1135,7 +1135,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
       BSONObj hint ;
-   
+
       rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS, condition, hint, 0, _cb ) ;
       if ( rc )
       {
@@ -1143,7 +1143,7 @@ namespace engine
                  OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
          goto error ;
       }
-   
+
    done:
       return rc ;
    error:
@@ -2001,16 +2001,16 @@ namespace engine
                                 OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
       BSONObj selector ;
       BSONObj configure ;
-   
+
       rc = _getOneConfigure( condition, selector, configure ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to get configure info:rc=%d", rc ) ;
          goto error ;
       }
-   
+
       isExist = TRUE ;
-   
+
    done:
       return isExist ;
    error:
@@ -2045,7 +2045,7 @@ namespace engine
       rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, newConfigure, 1, 0, _cb );
       if ( rc )
       {
-         PD_LOG( PDERROR, "failed to store config into table:%s,rc=%d", 
+         PD_LOG( PDERROR, "failed to store config into table:%s,rc=%d",
                  OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
          goto error ;
       }
@@ -2095,7 +2095,7 @@ namespace engine
                               OM_BSON_FIELD_HOST_USER << "" <<
                               OM_BSON_FIELD_HOST_PASSWD << "" <<
                               OM_BSON_FIELD_HOST_SSHPORT << "" ) ;
-      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName
                                << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
       BSONObj updator ;
       BSONObj hint ;
@@ -2112,7 +2112,7 @@ namespace engine
                       0, _cb ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "failed to update config for %s in %s:rc=%d", 
+         PD_LOG( PDERROR, "failed to update config for %s in %s:rc=%d",
                  hostName.c_str(), OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
          goto error ;
       }
@@ -2127,7 +2127,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
-   
+
       rc = rtnDelete( OM_CS_DEPLOY_CL_CONFIGURE, condition, hint, 0, _cb ) ;
       if ( rc )
       {
@@ -2135,7 +2135,7 @@ namespace engine
                  OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
          goto error ;
       }
-   
+
    done:
       return rc ;
    error:
@@ -2236,7 +2236,7 @@ namespace engine
                rc = SDB_OK ;
                break ;
             }
-   
+
             contextID = -1 ;
             PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
                     OM_CS_DEPLOY_CL_BUSINESS_AUTH, rc ) ;
@@ -2584,18 +2584,18 @@ namespace engine
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj hostInfo ;
-   
+
       matcher = BSON( "$or" << BSON_ARRAY(
                               BSON( OM_HOST_FIELD_NAME << address ) <<
                               BSON( OM_HOST_FIELD_IP   << address ) ) <<
                       OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
-   
+
       rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
       if ( rc )
       {
          isExist = FALSE ;
       }
-   
+
       return isExist ;
    }
 
@@ -2712,7 +2712,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj condition ;
       BSONObj hint ;
-   
+
       condition = BSON( "$or" << BSON_ARRAY(
                               BSON( OM_HOST_FIELD_NAME << address ) <<
                               BSON( OM_HOST_FIELD_IP   << address ) ) <<
@@ -2936,7 +2936,7 @@ namespace engine
       builder.append( OM_RELATIONSHIP_FIELD_OPTIONS, options ) ;
       builder.appendTimestamp( OM_RELATIONSHIP_FIELD_CREATETIME,
                                (unsigned long long)now * 1000, 0 ) ;
-   
+
       record = builder.obj() ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_RELATIONSHIP, record, 1, 0, _cb ) ;
       if( rc )
@@ -3827,7 +3827,7 @@ namespace engine
       BSONObj obj ;
       BSONObjBuilder objBuilder ;
 
-      md5::md5( ( const void * )OM_DEFAULT_LOGIN_PASSWD, 
+      md5::md5( ( const void * )OM_DEFAULT_LOGIN_PASSWD,
                 ossStrlen( OM_DEFAULT_LOGIN_PASSWD ), digest ) ;
 
       objBuilder.append( SDB_AUTH_USER, OM_DEFAULT_LOGIN_USER ) ;
@@ -3905,7 +3905,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pAuthCB->getUsrInfo( user, _cb, info ) ;
+      rc = _pAuthCB->getUsrInfo( user.c_str(), _cb, info ) ;
       if ( rc )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
@@ -3921,17 +3921,17 @@ namespace engine
 
    void omAuthTool::generateRandomVisualString( CHAR* pPasswd, INT32 length )
    {
-   	for ( INT32 i = 0; i < length; )
+      for ( INT32 i = 0; i < length; )
       {
          CHAR character = rand() % 255 ;
 
          if ( ( character >= '0' && character <= '9' ) ||
               ( character >= 'a' && character <= 'z' ) )
          {
-   		   pPasswd[i] = character ;
+            pPasswd[i] = character ;
             ++i ;
          }
-   	}
+      }
    }
 
    omRestTool::omRestTool( ossSocket *socket, restAdaptor *pRestAdaptor,
@@ -4204,7 +4204,7 @@ namespace engine
       if( 1 != subSessionVec.size() )
       {
          rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected session size:size=%d", 
+         PD_LOG( PDERROR, "unexpected session size:size=%d",
                  subSessionVec.size() ) ;
          goto error ;
       }
@@ -4212,7 +4212,7 @@ namespace engine
       if( subSessionVec[0]->isDisconnect() )
       {
          rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
+         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d",
                 routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
          goto error ;
       }
@@ -4225,7 +4225,7 @@ namespace engine
          goto error ;
       }
 
-      rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
+      rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom,
                             &numReturned, objVec ) ;
       if( rc )
       {
@@ -4287,7 +4287,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       va_list vaList ;
-      
+
       va_start( vaList, pFormat ) ;
       rc = _parserArg( pFormat, vaList ) ;
       va_end( vaList ) ;
@@ -4367,7 +4367,7 @@ namespace engine
                                       pField ) ;
                   PD_LOG( PDERROR, _errorMsg.getError() ) ;
                   goto error ;
-               }   
+               }
 
                if ( value.length() > 0 )
                {
@@ -4517,4 +4517,4 @@ namespace engine
 
 
 }
- 
+

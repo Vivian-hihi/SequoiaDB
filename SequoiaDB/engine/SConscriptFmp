@@ -191,7 +191,8 @@ utilFiles = [
       "util/utilCipher.c",
       "util/utilTypeCast.c",
       "util/utilIniParser.c",
-      "util/utilIniParserEx.cpp"
+      "util/utilIniParserEx.cpp",
+      "util/utilAuthSCRAMSHA.cpp"
       ]
 
 clientCFiles = [
@@ -210,6 +211,7 @@ clientcppFiles = [
 monFiles = [
       "mon/monLatch.cpp"
       ]
+      
 #Client Driver
 fmpEnv.StaticLibrary('clientc', clientCFiles)
 fmpEnv.StaticLibrary('clientcpp', clientcppFiles)

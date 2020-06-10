@@ -172,6 +172,10 @@ public:
    bson::BSONObj all ;
    bson::BSONObj fieldToReturn ;
    std::vector<section> sections ;
+   // Only the first mongodb's certification will sent username to fap,
+   // But the first and second sequoiadb's certification, we all need to send
+   // username to catalog. So we should stored username in mongoDataPacket.
+   string userName ;
 
    mongoDataPacket() : optionMask(0), msgLen(0), requestId(0), responseTo(0),
                        opCode(0), flags(0), reservedInt(0),
@@ -203,6 +207,7 @@ public:
       all = empty ;
       fieldToReturn = empty ;
       sections.clear() ;
+      // Don't need to reset userName
    }
 
 private:

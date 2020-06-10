@@ -611,6 +611,7 @@
 #define CMD_NAME_LIST_DOMAINS                "list domains"
 #define CMD_NAME_LIST_CS_IN_DOMAIN           "list collectionspaces in domain"
 #define CMD_NAME_LIST_CL_IN_DOMAIN           "list collections in domain"
+#define CMD_NAME_LIST_USERS                  "list users"
 #define CMD_NAME_LIST_BACKUPS                "list backups"
 #define CMD_NAME_LIST_TASKS                  "list tasks"
 #define CMD_NAME_LIST_TRANSACTIONS           "list transactions"
@@ -686,7 +687,6 @@
 #define CMD_NAME_FORCE_STEP_UP               "force step up"
 #define CMD_NAME_JSON_LOAD                   "json load"
 #define CMD_NAME_TRUNCATE                    "truncate"
-#define CMD_NAME_LIST_USERS                  "list users"
 #define CMD_NAME_SYNC_DB                     "sync db"
 #define CMD_NAME_POP                         "pop"
 #define CMD_NAME_RELOAD_CONFIG               "reload config"
@@ -799,6 +799,39 @@
 #define SDB_AUTH_PASSWD                      "Passwd"
 #define SDB_AUTH_OLDPASSWD                   "OldPasswd"
 #define SDB_AUTH_SOURCE                      "Source"
+#define SDB_AUTH_TEXTPASSWD                  "TextPasswd"
+#define SDB_AUTH_EXTENDPASSWD                "ExtendPasswd"
+#define SDB_AUTH_SALT                        "Salt"
+#define SDB_AUTH_ITERATIONCOUNT              "IterationCount"
+#define SDB_AUTH_STOREDKEY                   "StoredKey"
+#define SDB_AUTH_STOREDKEYTEXT               "StoredKeyText"
+#define SDB_AUTH_STOREDKEYEXTEND             "StoredKeyExtend"
+#define SDB_AUTH_SERVERKEY                   "ServerKey"
+#define SDB_AUTH_SERVERKEYTEXT               "ServerKeyText"
+#define SDB_AUTH_SERVERKEYEXTEND             "ServerKeyExtend"
+#define SDB_AUTH_SCRAMSHA256                 "SCRAM-SHA256"
+#define SDB_AUTH_SCRAMSHA1                   "SCRAM-SHA1"
+#define SDB_AUTH_STEP                        "Step"
+#define SDB_AUTH_NONCE                       "Nonce"
+#define SDB_AUTH_IDENTIFY                    "Identify"
+#define SDB_AUTH_PROOF                       "Proof"
+#define SDB_AUTH_TYPE                        "Type"
+
+#define SDB_AUTH_MSG_STEP1                   1
+#define SDB_AUTH_MSG_STEP2                   2
+
+#define SDB_AUTH_CPP_IDENTIFY                "C++_Session"
+#define SDB_AUTH_C_IDENTIFY                  "C_Session"
+
+#define SDB_AUTH_MECHANISM_SS256             "SCRAM-SHA-256"
+#define SDB_AUTH_MECHANISM_MD5               "MD5"
+
+enum AUTH_TYPE
+{
+   SDB_AUTH_TYPE_MD5_PWD = 0,
+   SDB_AUTH_TYPE_TEXT_PWD,
+   SDB_AUTH_TYPE_EXTEND_PWD
+} ;
 
 #define SDB_LOB_OID_LEN                      16
 

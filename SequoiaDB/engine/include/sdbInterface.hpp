@@ -261,7 +261,9 @@ namespace engine
          virtual SDB_CLIENT_TYPE clientType() const = 0 ;
          virtual const CHAR*     clientName() const = 0 ;
 
-         virtual INT32        authenticate( MsgHeader *pMsg ) = 0 ;
+         virtual INT32        authenticate( MsgHeader *pMsg,
+                                            const CHAR **authBuf = NULL
+                                          ) = 0 ;
          virtual INT32        authenticate( const CHAR *username,
                                             const CHAR *password ) = 0 ;
          virtual void         logout() = 0 ;

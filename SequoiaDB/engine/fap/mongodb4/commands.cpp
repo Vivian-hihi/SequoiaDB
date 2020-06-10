@@ -42,11 +42,7 @@
 #include "msgDef.h"
 #include <vector>
 #include <string>
-#include <sstream>
-#include "../bson/lib/base64.h"
-#include "../../bson/lib/nonce.h"
-#include "openssl/hmac.h"
-#include "openssl/sha.h"
+#include "../bson/lib/md5.hpp"
 
 using namespace bson ;
 
@@ -78,6 +74,10 @@ DECLARE_COMMAND_VAR( buildinfo )
 DECLARE_COMMAND_VAR( getLog )
 DECLARE_COMMAND_VAR( listDatabases )
 DECLARE_COMMAND_VAR( distinct )
+DECLARE_COMMAND_VAR( createUser )
+DECLARE_COMMAND_VAR( dropUser )
+DECLARE_COMMAND_VAR( saslStart )
+DECLARE_COMMAND_VAR( saslContinue )
 
 void convertProjection( BSONObj &proj )
 {
@@ -609,8 +609,6 @@ INT32 listUsersCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
-   setQueryFlags( packet.reservedInt, query->flags ) ;
-
    query->nameLength = ossStrlen( cmdName ) ;
    query->numToSkip = packet.nToSkip ;
    query->numToReturn = packet.nToReturn ;
@@ -1818,8 +1816,6 @@ INT32 listDatabasesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
-   setQueryFlags( packet.reservedInt, query->flags ) ;
-
    query->nameLength = ossStrlen( cmdName ) ;
    query->numToSkip = 0 ;
    query->numToReturn = -1 ;
@@ -1842,5 +1838,287 @@ INT32 listDatabasesCommand::doCommand( void *pData )
    return SDB_OK ;
 }
 
+INT32 createUserCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
 
+/** \fn INT32 buildMsg( msgParser& parser, msgBuffer &sdbMsg )
+    \brief Build the create user message of SequoiaDB
+    \param [in] parser Parser object.
+    \param [out] sdbMsg The message we will build.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
+{
+   INT32 rc = SDB_OK ;
+   MsgAuthCrtUsr *user = NULL ;
+   mongoDataPacket &packet = parser.dataPacket() ;
+   bson::BSONObj obj ;
+   string pName = packet.clName ;
+   string pPasswd ;
+   string md5 ;
 
+   parser.setCurrentOp( OP_CMD_CRTUSER ) ;
+   sdbMsg.reverse( sizeof( MsgAuthCrtUsr ) ) ;
+   sdbMsg.advance( sizeof( MsgAuthCrtUsr ) ) ;
+
+   user = ( MsgAuthCrtUsr * )sdbMsg.data() ;
+   user->header.opCode = MSG_AUTH_CRTUSR_REQ ;
+   user->header.TID = 0 ;
+   user->header.routeID.value = 0 ;
+   user->header.requestID = packet.requestId ;
+
+   for ( UINT32 i = 0; i < packet.sections.size(); i++ )
+   {
+      for ( UINT32 j = 0; j < packet.sections[i].documents.size(); j++ )
+      {
+         bson::BSONObj document = packet.sections[i].documents[j] ;
+         if ( !document.hasField( FAP_CMD_ADMIN_PREFIX FAP_FIELD_NAME_DB ) )
+         {
+            continue ;
+         }
+         pPasswd = document.getStringField( FAP_FIELD_NAME_PWD ) ;
+      }
+   }
+
+   md5 = md5::md5simpledigest( pPasswd ) ;
+
+   obj = BSON( SDB_AUTH_USER << pName.c_str() <<
+               SDB_AUTH_PASSWD << md5.c_str() <<
+               SDB_AUTH_TEXTPASSWD << pPasswd.c_str() <<
+               SDB_AUTH_SOURCE << FAP_FIELD_VALUE_FAPMONGO ) ;
+   sdbMsg.write( obj, TRUE ) ;
+   sdbMsg.doneLen() ;
+
+   return rc ;
+}
+
+INT32 createUserCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 dropUserCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+/** \fn INT32 buildMsg( msgParser& parser, msgBuffer &sdbMsg )
+    \brief Build the drop user message of SequoiaDB
+    \param [in] parser Parser object.
+    \param [out] sdbMsg The message we will build.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   MsgAuthDelUsr *auth     = NULL ;
+   mongoDataPacket &packet = parser.dataPacket() ;
+   bson::BSONObj obj ;
+   const CHAR *pName = packet.clName.c_str() ;
+
+   parser.setCurrentOp( OP_CMD_DELUSER ) ;
+   sdbMsg.reverse( sizeof( MsgAuthDelUsr ) ) ;
+   sdbMsg.advance( sizeof( MsgAuthDelUsr ) ) ;
+
+   auth = ( MsgAuthDelUsr * )sdbMsg.data() ;
+   auth->header.opCode = MSG_AUTH_DELUSR_REQ ;
+   auth->header.TID = 0 ;
+   auth->header.routeID.value = 0 ;
+   auth->header.requestID = packet.requestId ;
+
+   obj = BSON( SDB_AUTH_USER << pName <<
+               SDB_AUTH_SOURCE << FAP_FIELD_VALUE_FAPMONGO ) ;
+
+   sdbMsg.write( obj, TRUE ) ;
+   sdbMsg.doneLen() ;
+
+   return SDB_OK ;
+}
+
+INT32 dropUserCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 saslStartCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+/** \fn INT32 buildMsg( msgParser& parser, msgBuffer &sdbMsg )
+    \brief Build the first authentication message of SequoiaDB
+    \param [in] parser Parser object.
+    \param [out] sdbMsg The message we will build.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 saslStartCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   INT32 rc                = SDB_OK ;
+   INT32 payloadLen        = 0 ;
+   MsgAuthentication *auth = NULL ;
+   mongoDataPacket &packet = parser.dataPacket() ;
+   CHAR *curStr            = NULL ;
+   CHAR *lastParsed        = NULL ;
+   const CHAR *payload     = NULL ;
+   CHAR payloadCpy[FAP_AUTH_MSG_PAYLOADD_MAX_SIZE] = { 0 } ;
+   const CHAR* nonce       = NULL ;
+   bson::BSONObj obj ;
+
+   parser.setCurrentOp( OP_CMD_AUTH_STEP1 ) ;
+
+   for ( UINT32 i = 0; i < packet.sections.size(); i++ )
+   {
+      for ( UINT32 j = 0; j < packet.sections[i].documents.size(); j++ )
+      {
+         bson::BSONObj document = packet.sections[i].documents[j] ;
+         if ( document.hasField( FAP_FIELD_NAME_PAYLOAD ) )
+         {
+            // eg: payload = "n,,n=admin,r=xxx"
+            payload = document.getField( FAP_FIELD_NAME_PAYLOAD ).binData(
+                      payloadLen );
+         }
+      }
+   }
+
+   if ( payloadLen <= 0 || payloadLen > FAP_AUTH_MSG_PAYLOADD_MAX_SIZE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   ossStrncpy( payloadCpy, payload, payloadLen ) ;
+   curStr = ossStrtok( payloadCpy, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
+
+   // get user name
+   curStr = ossStrtok( lastParsed, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
+   packet.userName = ( curStr + 2 ) ;
+
+   // get client nonce
+   curStr = ossStrtok( lastParsed, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
+   nonce = ( curStr + 2 ) ;
+
+   sdbMsg.reverse( sizeof( MsgAuthentication ) ) ;
+   sdbMsg.advance( sizeof( MsgAuthentication ) ) ;
+
+   auth = ( MsgAuthentication * ) sdbMsg.data() ;
+   auth->header.opCode = MSG_AUTH_VERIFY1_REQ ;
+   auth->header.TID = 0 ;
+   auth->header.routeID.value = 0 ;
+   auth->header.requestID = packet.requestId ;
+
+   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
+               SDB_AUTH_USER << packet.userName.c_str() <<
+               SDB_AUTH_NONCE << nonce <<
+               SDB_AUTH_TYPE << SDB_AUTH_TYPE_TEXT_PWD ) ;
+   sdbMsg.write( obj, TRUE ) ;
+
+   sdbMsg.doneLen() ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 saslStartCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 saslContinueCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+/** \fn INT32 buildMsg( msgParser& parser, msgBuffer &sdbMsg )
+    \brief Build the second authentication message of SequoiaDB
+    \param [in] parser Parser object.
+    \param [out] sdbMsg The message we will build.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 saslContinueCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   INT32 rc                       = SDB_OK ;
+   INT32 payloadLen               = 0 ;
+   MsgAuthentication *auth        = NULL ;
+   mongoDataPacket &packet        = parser.dataPacket() ;
+   CHAR  *curStr                  = NULL ;
+   CHAR  *lastParsed              = NULL ;
+   const CHAR *payload            = NULL ;
+   const CHAR *identify           = NULL ;
+   const CHAR *clientProofBase64  = NULL ;
+   const CHAR *combineNonceBase64 = NULL ;
+   CHAR payloadCpy[FAP_AUTH_MSG_PAYLOADD_MAX_SIZE] = { 0 } ;
+   bson::BSONObj obj ;
+
+   sdbMsg.reverse( sizeof( MsgAuthentication ) ) ;
+   sdbMsg.advance( sizeof( MsgAuthentication ) ) ;
+
+   auth = ( MsgAuthentication * ) sdbMsg.data() ;
+   auth->header.opCode = MSG_AUTH_VERIFY1_REQ ;
+   auth->header.TID = 0 ;
+   auth->header.routeID.value = 0 ;
+   auth->header.requestID = packet.requestId ;
+
+   for ( UINT32 i = 0; i < packet.sections.size(); i++ )
+   {
+      for ( UINT32 j = 0; j < packet.sections[i].documents.size(); j++ )
+      {
+         bson::BSONObj document = packet.sections[i].documents[j] ;
+         if ( document.hasField( FAP_FIELD_NAME_PAYLOAD ) )
+         {
+            payload = document.getField( FAP_FIELD_NAME_PAYLOAD ).binData(
+                      payloadLen );
+         }
+      }
+   }
+
+   if ( 0 == payloadLen )
+   {
+      // eg: payload = ""
+      parser.setCurrentOp( OP_CMD_AUTH_STEP3 ) ;
+   }
+   else
+   {
+      // eg: payload = "c=biws,r=xxxxxx,p=xxx"
+      parser.setCurrentOp( OP_CMD_AUTH_STEP2 ) ;
+
+      if ( payloadLen < 0 || payloadLen > FAP_AUTH_MSG_PAYLOADD_MAX_SIZE )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossStrncpy( payloadCpy, payload, payloadLen ) ;
+
+      curStr = ossStrtok( payloadCpy, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
+      identify = ( curStr + 2 ) ;
+      curStr = ossStrtok( lastParsed, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
+      combineNonceBase64 = ( curStr + 2 ) ;
+      curStr = ossStrtok( lastParsed, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
+      clientProofBase64 = ( curStr + 2 ) ;
+
+      obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+                  SDB_AUTH_USER << packet.userName <<
+                  SDB_AUTH_NONCE << combineNonceBase64 <<
+                  SDB_AUTH_IDENTIFY << identify <<
+                  SDB_AUTH_PROOF << clientProofBase64 <<
+                  SDB_AUTH_TYPE << SDB_AUTH_TYPE_TEXT_PWD ) ;
+   }
+
+   sdbMsg.write( obj, TRUE ) ;
+   sdbMsg.doneLen() ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 saslContinueCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}

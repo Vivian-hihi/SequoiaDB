@@ -2222,9 +2222,11 @@ error:
 
 INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *pUsrName,
+                             const CHAR *clearTextPasswd,
                              const CHAR *pPasswd,
                              const bson *options,
-                             UINT64 reqID, BOOLEAN endianConvert )
+                             UINT64 reqID, BOOLEAN endianConvert,
+                             INT32 authVersion )
 {
    INT32 rc = SDB_OK ;
    INT32 msgLen = 0 ;
@@ -2232,7 +2234,7 @@ INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
    INT32 bsonSize = 0 ;
    MsgAuthCrtUsr *msg ;
 
-   if ( NULL == pUsrName || NULL == pPasswd )
+   if ( NULL == pUsrName || NULL == pPasswd || NULL == clearTextPasswd )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -2251,6 +2253,17 @@ INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_DRIVER_BSON_ERROR ;
       goto error ;
    }
+
+   if ( authVersion >= AUTH_SCRAM_SHA256 )
+   {
+      rc = bson_append_string( &obj, SDB_AUTH_TEXTPASSWD, clearTextPasswd ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   }
+
    if ( options )
    {
       rc = bson_append_bson( &obj, FIELD_NAME_OPTIONS, options ) ;
@@ -2647,10 +2660,12 @@ error:
 
 INT32 clientBuildAuthCrtMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *pUsrName,
+                                const CHAR *clearTextPasswd,
                                 const CHAR *pPasswd,
                                 const CHAR *pOptions,
                                 UINT64 reqID,
-                                BOOLEAN endianConvert )
+                                BOOLEAN endianConvert,
+                                INT32 authVersion )
 {
    INT32 rc = SDB_OK ;
    bson options ;
@@ -2668,9 +2683,9 @@ INT32 clientBuildAuthCrtMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
    }
 
    rc = clientBuildAuthCrtMsg( ppBuffer, bufferSize,
-                               pUsrName, pPasswd,
+                               pUsrName, clearTextPasswd, pPasswd,
                                pOptions ? &options : NULL, reqID,
-                               endianConvert ) ;
+                               endianConvert, authVersion ) ;
    if ( rc )
    {
       goto error ;
@@ -2947,11 +2962,27 @@ error:
    goto done ;
 }
 
-INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *pUsrName,
-                          const CHAR *pPasswd,
-                          UINT64 reqID,
-                          BOOLEAN endianConvert )
+/** \fn INT32 clientBuildAuthVer0Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                      const CHAR *pUsrName,
+                                      const CHAR *pPasswd,
+                                      UINT64 reqID,
+                                      BOOLEAN endianConvert )
+    \brief Build auth msg when we use MD5 authentication.
+    \param [in] bufferSize Size of msg buffer.
+    \param [in] pUsrName User name.
+    \param [in] pPasswd User password.
+    \param [in] reqID Request ID.
+    \param [in] endianConvert If true, it's big endian. And if false, it's
+                little endian.
+    \param [out] ppBuffer Msg buffer.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 clientBuildAuthVer0Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const CHAR *pUsrName,
+                              const CHAR *pPasswd,
+                              UINT64 reqID,
+                              BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
    INT32 msgLen = 0 ;
@@ -2966,6 +2997,7 @@ INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
    }
 
    bson_init( &obj ) ;
+
    rc = bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
    if ( SDB_OK != rc )
    {
@@ -2973,6 +3005,134 @@ INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
       goto error ;
    }
    rc = bson_append_string( &obj, SDB_AUTH_PASSWD, pPasswd ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   bsonSize = bson_size( &obj ) ;
+   msgLen = sizeof( MsgAuthentication ) +
+            ossRoundUpToMultipleX( bsonSize, 4 ) ;
+   if ( msgLen < 0 )
+   {
+      ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = clientCheckBuffer ( ppBuffer, bufferSize, msgLen ) ;
+   if ( rc )
+   {
+      ossPrintf ( "Failed to check buffer, rc = %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   msg                       = ( MsgAuthentication * )(*ppBuffer) ;
+   msg->header.requestID     = reqID ;
+   msg->header.opCode        = MSG_AUTH_VERIFY_REQ ;
+   msg->header.messageLength = sizeof( MsgAuthentication ) + bsonSize ;
+   msg->header.routeID.value = 0 ;
+   msg->header.TID           = ossGetCurrentThreadID() ;
+   if ( !endianConvert )
+   {
+      ossMemcpy( *ppBuffer + sizeof(MsgAuthentication),
+                 bson_data( &obj ), bsonSize ) ;
+   }
+   else
+   {
+      bson newobj ;
+      off_t off = 0 ;
+      clientEndianConvertHeader ( &msg->header ) ;
+      bson_init ( &newobj ) ;
+      rc = bson_copy ( &newobj, &obj ) ;
+      if ( SDB_OK != rc )
+      {
+         bson_destroy ( &newobj ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !bson_endian_convert ( (CHAR*)bson_data ( &newobj ) , &off, TRUE ) )
+      {
+         bson_destroy ( &newobj ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      ossMemcpy( *ppBuffer + sizeof(MsgAuthentication),
+                 bson_data( &newobj ), bsonSize ) ;
+      bson_destroy ( &newobj ) ;
+   }
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+/** \fn INT32 clientBuildAuthVer1Step1Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                           const CHAR *pUsrName,
+                                           UINT64 reqID,
+                                           BOOLEAN endianConvert,
+                                           const CHAR *clientNonceBase64 )
+    \brief Build the first certification msg when we use SCRAM-SHA256
+           authentication.
+    \param [in] bufferSize Size of msg buffer.
+    \param [in] pUsrName User name.
+    \param [in] reqID Request ID.
+    \param [in] endianConvert If true, it's big endian. And if false, it's
+                little endian.
+    \param [in] clientNonceBase64 Client nonce in base64.
+    \param [out] ppBuffer Msg buffer.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 clientBuildAuthVer1Step1Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                   const CHAR *pUsrName,
+                                   UINT64 reqID,
+                                   BOOLEAN endianConvert,
+                                   const CHAR *clientNonceBase64 )
+{
+   INT32 rc = SDB_OK ;
+   INT32 msgLen = 0 ;
+   bson obj ;
+   INT32 bsonSize = 0 ;
+   MsgAuthentication *msg = NULL ;
+
+   bson_init( &obj ) ;
+
+   if ( NULL == pUsrName || NULL == clientNonceBase64 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = bson_append_int( &obj, SDB_AUTH_STEP, SDB_AUTH_MSG_STEP1 ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_NONCE, clientNonceBase64 ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_int( &obj, SDB_AUTH_TYPE, SDB_AUTH_TYPE_MD5_PWD ) ;
    if ( SDB_OK != rc )
    {
       rc = SDB_DRIVER_BSON_ERROR ;
@@ -3003,7 +3163,159 @@ INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
    msg                       = ( MsgAuthentication * )(*ppBuffer) ;
    msg->header.requestID     = reqID ;
-   msg->header.opCode        = MSG_AUTH_VERIFY_REQ ;
+   msg->header.opCode        = MSG_AUTH_VERIFY1_REQ ;
+   msg->header.messageLength = sizeof( MsgAuthentication ) + bsonSize ;
+   msg->header.routeID.value = 0 ;
+   msg->header.TID           = ossGetCurrentThreadID() ;
+   if ( !endianConvert )
+   {
+      ossMemcpy( *ppBuffer + sizeof(MsgAuthentication),
+                 bson_data( &obj ), bsonSize ) ;
+   }
+   else
+   {
+      bson newobj ;
+      off_t off = 0 ;
+      clientEndianConvertHeader ( &msg->header ) ;
+      bson_init ( &newobj ) ;
+      rc = bson_copy ( &newobj, &obj ) ;
+      if ( SDB_OK != rc )
+      {
+         bson_destroy ( &newobj ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !bson_endian_convert ( (CHAR*)bson_data ( &newobj ) , &off, TRUE ) )
+      {
+         bson_destroy ( &newobj ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      ossMemcpy( *ppBuffer + sizeof(MsgAuthentication),
+                 bson_data( &newobj ), bsonSize ) ;
+      bson_destroy ( &newobj ) ;
+   }
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+/** \fn INT32 clientBuildAuthVer1Step2Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                           const CHAR *pUsrName,
+                                           UINT64 reqID,
+                                           BOOLEAN endianConvert,
+                                           const CHAR *combineNonceBase64,
+                                           const CHAR *clientProofBase64,
+                                           const CHAR *identify )
+    \brief Build the first certification msg when we use SCRAM-SHA256
+           authentication.
+    \param [in] bufferSize Size of msg buffer.
+    \param [in] pUsrName User name.
+    \param [in] reqID Request ID.
+    \param [in] endianConvert If true, it's big endian. And if false, it's
+                little endian.
+    \param [in] combineNonceBase64 Combine string for clien nonce in base64 and
+                server nonce in base64.
+    \param [in] clientNonceBase64 Client nonce in base64.
+    \param [in] identify Session identifier. If the client is C++ driver,
+                its value is "C++_Session". If the client is C driver, its
+                value is "C_Session".
+    \param [out] ppBuffer Msg buffer.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+INT32 clientBuildAuthVer1Step2Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                   const CHAR *pUsrName,
+                                   UINT64 reqID,
+                                   BOOLEAN endianConvert,
+                                   const CHAR *combineNonceBase64,
+                                   const CHAR *clientProofBase64,
+                                   const CHAR *identify )
+{
+   INT32 rc = SDB_OK ;
+   INT32 msgLen = 0 ;
+   bson obj ;
+   INT32 bsonSize = 0 ;
+   MsgAuthentication *msg = NULL ;
+
+   bson_init( &obj ) ;
+
+   if ( NULL == pUsrName ||
+        NULL == combineNonceBase64 ||
+        NULL == clientProofBase64 ||
+        NULL == identify )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = bson_append_int( &obj, SDB_AUTH_STEP, SDB_AUTH_MSG_STEP2 ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_USER, pUsrName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_NONCE, combineNonceBase64 ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_IDENTIFY, identify ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_string( &obj, SDB_AUTH_PROOF, clientProofBase64 ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+   rc = bson_append_int( &obj, SDB_AUTH_TYPE, SDB_AUTH_TYPE_MD5_PWD ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   rc = bson_finish( &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
+
+   bsonSize = bson_size( &obj ) ;
+   msgLen = sizeof( MsgAuthentication ) +
+            ossRoundUpToMultipleX( bsonSize, 4 ) ;
+   if ( msgLen < 0 )
+   {
+      ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = clientCheckBuffer ( ppBuffer, bufferSize, msgLen ) ;
+   if ( rc )
+   {
+      ossPrintf ( "Failed to check buffer, rc = %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   msg                       = ( MsgAuthentication * )(*ppBuffer) ;
+   msg->header.requestID     = reqID ;
+   msg->header.opCode        = MSG_AUTH_VERIFY1_REQ ;
    msg->header.messageLength = sizeof( MsgAuthentication ) + bsonSize ;
    msg->header.routeID.value = 0 ;
    msg->header.TID           = ossGetCurrentThreadID() ;
@@ -3337,7 +3649,7 @@ error :
 }
 
 INT32 clientExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN *endianConvert,
-                                  INT32 *osType )
+                                  INT32 *osType, INT32 *authVersion )
 {
    INT32 rc = SDB_OK ;
    MsgSysInfoReply *reply = (MsgSysInfoReply*)pBuffer ;
@@ -3357,7 +3669,11 @@ INT32 clientExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN *endianConvert,
    }
    if ( osType )
    {
-      ossEndianConvertIf4(reply->osType, *osType, e ) ;
+      ossEndianConvertIf4( reply->osType, *osType, e ) ;
+   }
+   if ( authVersion )
+   {
+      ossEndianConvertIf4( reply->authVersion, *authVersion, e ) ;
    }
    if ( endianConvert )
    {

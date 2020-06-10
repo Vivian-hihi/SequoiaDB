@@ -21,6 +21,7 @@
 #include "ossSocket.hpp"
 #include <set>
 #include "ossUtil.hpp"
+#include "utilAuthSCRAMSHA.hpp"
 #if defined CLIENT_THREAD_SAFE
 #include "ossLatch.hpp"
 #endif
@@ -1166,6 +1167,9 @@ namespace sdbclient
       std::set<ossValuePtr>    _dataCenters ;
       std::set<ossValuePtr>    _lobs ;
       hashTable               *_tb ;
+      // If the authVersion is 0, we use MD5 authentication.
+      // And if the authVersion is 1, we use SCRAM-SHA256 authentication.
+      INT32                    _authVersion ;
       bson::BSONObj            _attributeCache ;
 
       const CHAR*              _pErrorBuf ;
@@ -1251,6 +1255,24 @@ namespace sdbclient
       BOOLEAN _getIsOldVersionLobServer() ;
       void _setIsOldVersionLobServer( BOOLEAN isOldVersionLobServer ) ;
 
+      INT32 _authVer0MsgProcess( const CHAR *pUsrName, const CHAR *pPasswd ) ;
+
+      INT32 _authVer1MsgProcess( const CHAR *pUsrName, const CHAR *pPasswd ) ;
+      INT32 _step1( const CHAR *pUsrName, const CHAR *pPasswd,
+                    UINT32 &iterationCount,
+                    string &saltBase64,
+                    string &combineNonceBase64,
+                    BOOLEAN &needAuth ) ;
+      INT32 _step2( const CHAR *pUsrName,
+                    const CHAR *pPasswd,
+                    UINT32 iterationCount,
+                    const string &saltBase64,
+                    const string &combineNonceBase64,
+                    const string &clientProofBase64 ) ;
+
+      INT32 _authFmpMsgProcess( const CHAR *pUsrName, const CHAR *pPasswd,
+                                const CHAR *md5 ) ;
+
       friend class _sdbCollectionSpaceImpl ;
       friend class _sdbCollectionImpl ;
       friend class _sdbCursorImpl ;
@@ -1283,6 +1305,7 @@ namespace sdbclient
                       const CHAR *pUsrName,
                       const CHAR *pToken,
                       const CHAR *pCipherFile ) ;
+      
       void disconnect () ;
       BOOLEAN isConnected ()
       { return NULL != _sock ; }

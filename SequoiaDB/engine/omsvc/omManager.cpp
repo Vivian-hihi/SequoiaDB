@@ -1279,17 +1279,59 @@ namespace engine
       }
    }
 
-   INT32 _omManager::authenticate( BSONObj &obj, pmdEDUCB *cb )
+   /** \fn INT32 _omManager::md5Authenticate( const BSONObj &obj, pmdEDUCB *cb )
+       \brief Authentication using MD5.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [in] cb  Pmd EDU cb.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _omManager::md5Authenticate( const BSONObj &obj, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
       if ( NULL == pAuthCB )
       {
-         SDB_ASSERT( FALSE, "auth cb can not be null" ) ;
+         SDB_ASSERT( FALSE, "Auth cb can not be null" ) ;
          goto done ;
       }
 
-      rc = pAuthCB->authenticate( obj, cb ) ;
+      rc = pAuthCB->md5Authenticate( obj, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 _omManager::SCRAMSHAAuthenticate( const BSONObj &obj,
+                                                   pmdEDUCB *cb,
+                                                   BSONObj *pOutUserObj )
+       \brief Authentication using SCRAM-SHA256.
+       \param [in] obj Bson data in the message sent by the client.
+       \param [in] cb  Pmd EDU cb.
+       \param [out] pOutUserObj Bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _omManager::SCRAMSHAAuthenticate( const BSONObj &obj,
+                                           _pmdEDUCB *cb,
+                                           BSONObj &outUserObj )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      if ( NULL == pAuthCB )
+      {
+         SDB_ASSERT( FALSE, "Auth cb can not be null" ) ;
+         goto done ;
+      }
+
+      rc = pAuthCB->SCRAMSHAAuthenticate( obj, cb, outUserObj ) ;
       if ( rc )
       {
          goto error ;

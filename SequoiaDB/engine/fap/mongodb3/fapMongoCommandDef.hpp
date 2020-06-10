@@ -71,9 +71,11 @@ enum MONGO_CMD_TYPE
 
    CMD_AUTHENTICATE     = 70,
    CMD_LOGOUT           = 71,
+   CMD_SASL_START       = 72,
+   CMD_SASL_CONTINUE    = 73,
 
    CMD_USER_CREATE      = 80,
-   CMD_USER_REMOVE      = 81,
+   CMD_USER_DROP        = 81,
 
    CMD_IS_MASTER        = 90,
    CMD_ISMASTER         = 91,
@@ -107,6 +109,9 @@ const CHAR* const MONGO_CMD_NAME_DELETE_INDEX =      "deleteIndexes" ;
 const CHAR* const MONGO_CMD_NAME_DROP_INDEX =        "dropIndexes" ;
 const CHAR* const MONGO_CMD_NAME_CREATE_USER =       "createUser" ;
 const CHAR* const MONGO_CMD_NAME_DROP_USER =         "dropUser" ;
+const CHAR* const MONGO_CMD_NAME_USERS_INFO =        "usersInfo" ;
+const CHAR* const MONGO_CMD_NAME_SASL_START =        "saslStart" ;
+const CHAR* const MONGO_CMD_NAME_SASL_CONTINUE =     "saslContinue" ;
 const CHAR* const MONGO_CMD_NAME_LOGOUT =            "logout" ;
 const CHAR* const MONGO_CMD_NAME_LIST_DATABASE =     "listDatabases" ;
 const CHAR* const MONGO_CMD_NAME_LIST_COLLECTION =   "listCollections" ;

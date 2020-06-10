@@ -125,12 +125,75 @@ namespace engine
       }
    }
 
-   INT32 _pmdExternClient::authenticate( MsgHeader *pMsg )
+   /** \fn INT32 _setAuthed( SINT32 opCode )
+       \brief Set authed.
+       \param [in] opCode Opcode.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _pmdExternClient::_setAuthed( SINT32 opCode )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 step = 0 ;
+
+      if ( MSG_AUTH_VERIFY_REQ == opCode )
+      {
+         _isAuthed = TRUE ;
+      }
+      else if ( MSG_AUTH_VERIFY1_REQ == opCode )
+      {
+         BSONElement ele ;
+
+         // When "auth" is false in catalog node configure file sdb.conf,
+         // returned object is empty. And we don't need to authenticate.
+         if ( _authReturnedObj.isEmpty() )
+         {
+            _isAuthed = TRUE ;
+            goto done ;
+         }
+
+         ele = _authReturnedObj.getField ( SDB_AUTH_STEP ) ;
+         if ( ele.isNumber() )
+         {
+            step = ele.numberInt() ;
+         }
+         else
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR,
+                    "Failed to get field[%s] from auth info[%s], rc: %d",
+                    SDB_AUTH_STEP, _authReturnedObj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( SDB_AUTH_MSG_STEP2 == step )
+         {
+            _isAuthed = TRUE ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /** \fn INT32 authenticate( MsgHeader *pMsg, const CHAR **authBuf )
+       \brief Authentication.
+       \param [in] pMsg The message sent by client.
+       \param [out] authBuf The bson data in the message we need to send to
+                    the client.
+       \retval SDB_OK Operation Success
+       \retval Others Operation Fail
+   */
+   INT32 _pmdExternClient::authenticate( MsgHeader *pMsg,
+                                         const CHAR **authBuf )
    {
 #if defined ( SDB_ENGINE )
       INT32 rc = SDB_OK ;
       BSONObj authObj ;
       BSONElement user, pass ;
+
       rc = extractAuthMsg( pMsg, authObj ) ;
       if ( rc )
       {
@@ -138,6 +201,7 @@ namespace engine
                  clientName(), rc ) ;
          goto error ;
       }
+
       user = authObj.getField( SDB_AUTH_USER ) ;
       pass = authObj.getField( SDB_AUTH_PASSWD ) ;
 
@@ -150,14 +214,37 @@ namespace engine
       }
       else if ( SDB_ROLE_OM == pmdGetDBRole() )
       {
-         rc = sdbGetOMManager()->authenticate( authObj, _pEDUCB ) ;
+         if ( MSG_AUTH_VERIFY_REQ == pMsg->opCode )
+         {
+            rc = sdbGetOMManager()->md5Authenticate( authObj, _pEDUCB ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
+                       "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
+               goto error ;
+            }
+         }
+         else if ( MSG_AUTH_VERIFY1_REQ == pMsg->opCode )
+         {
+            rc = sdbGetOMManager()->SCRAMSHAAuthenticate( authObj, _pEDUCB,
+                                                          _authReturnedObj ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
+                       "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
+               goto error ;
+            }
+            if ( authBuf )
+            {
+               *authBuf = _authReturnedObj.objdata() ;
+            }
+         }
+
+         rc = _setAuthed( pMsg->opCode ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
-                    "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
             goto error ;
          }
-         _isAuthed = TRUE ;
       }
       else if ( SDB_ROLE_COORD == pmdGetDBRole() )
       {
@@ -177,10 +264,33 @@ namespace engine
          }
 
          rc = opr.execute( pMsg, _pEDUCB, contextID, &buf ) ;
+
+         if ( MSG_AUTH_VERIFY1_REQ == pMsg->opCode && SDB_OK == rc )
+         {
+            rc = buf.nextObj( _authReturnedObj ) ;
+            if ( SDB_DMS_EOC == rc )
+            {
+               _authReturnedObj = BSONObj() ;
+               rc = SDB_OK ;
+            }
+            else if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to read bson obj from the reply, "
+                       "rc: %d", rc ) ;
+               goto error ;
+            }
+            _authReturnedObj = _authReturnedObj.getOwned() ;
+            if ( authBuf )
+            {
+               *authBuf = _authReturnedObj.objdata() ;
+            }
+         }
+
          // special handling for password verification when there is no
          // addrlist specified. Usually this happen when there is only
          // one coord node before creating the first catalog
-         if ( MSG_AUTH_VERIFY_REQ == pMsg->opCode &&
+         if ( ( MSG_AUTH_VERIFY_REQ == pMsg->opCode ||
+                MSG_AUTH_VERIFY1_REQ == pMsg->opCode ) &&
               SDB_CAT_NO_ADDR_LIST == rc )
          {
             rc = SDB_OK ;
@@ -194,7 +304,11 @@ namespace engine
          }
          else
          {
-            _isAuthed = TRUE ;
+            rc = _setAuthed( pMsg->opCode ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
       }
       else
@@ -220,15 +334,39 @@ namespace engine
             if ( NULL == pAuthRes )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "syncsend return ok but res is NULL" ) ;
+               PD_LOG( PDERROR, "Syncsend return ok but res is NULL" ) ;
                goto error ;
             }
             rc = MSG_GET_INNER_REPLY_RC(pAuthRes) ;
             replyHeader.flags = rc ;
             replyHeader.startFrom = MSG_GET_INNER_REPLY_STARTFROM(pAuthRes) ;
             ossMemcpy( &(replyHeader.header), pAuthRes, sizeof( MsgHeader ) ) ;
+
+            if ( MSG_AUTH_VERIFY1_REQ == pMsg->opCode && SDB_OK == rc &&
+                 pAuthRes->messageLength > (INT32)sizeof( MsgOpReply ) )
+            {
+               try
+               {
+                  const CHAR* data = (const CHAR*)pAuthRes + sizeof( MsgOpReply ) ;
+                  _authReturnedObj = BSONObj( data ).getOwned() ;
+                  if ( authBuf )
+                  {
+                     *authBuf = _authReturnedObj.objdata() ;
+                  }
+               }
+               catch( std::exception &e )
+               {
+                  rc = SDB_OOM ;
+                  PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+                  /// release recv msg before goto error
+                  SDB_OSS_FREE( pAuthRes ) ;
+                  pAuthRes = NULL ;
+                  goto error ;
+               }
+            }
+
             /// release recv msg
-            SDB_OSS_FREE( (BYTE*)pAuthRes ) ;
+            SDB_OSS_FREE( pAuthRes ) ;
             pAuthRes = NULL ;
 
             if ( SDB_CLS_NOT_PRIMARY == rc &&
@@ -259,7 +397,12 @@ namespace engine
             }
             else
             {
-               _isAuthed = TRUE ;
+               rc = _setAuthed( pMsg->opCode ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Failed to set authed, rc: %d", rc ) ;
+                  goto error ;
+               }
             }
             break ;
          }
@@ -282,15 +425,18 @@ namespace engine
          PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
                       szTmp, SDB_OK,
                       "User[UserName:%s, RemoteIP:%s, RemotePort:%u, "
-                      "LocalIP:%s, LocalPort:%u] login succeed",
+                      "LocalIP:%s, LocalPort:%u, AuthMechanism: %s] "
+                      "login succeed",
                       getUsername(), getPeerIPAddr(), getPeerPort(),
-                      getLocalIPAddr(), getLocalPort() ) ;
+                      getLocalIPAddr(), getLocalPort(),
+                      (MSG_AUTH_VERIFY1_REQ == pMsg->opCode)?
+                      (SDB_AUTH_MECHANISM_SS256):(SDB_AUTH_MECHANISM_MD5) ) ;
       }
       return rc ;
    error:
       if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
       {
-         _pEDUCB->printInfo( EDU_INFO_ERROR, "username or passwd is wrong" ) ;
+         _pEDUCB->printInfo( EDU_INFO_ERROR, "Username or passwd is wrong" ) ;
       }
       goto done ;
 #else
@@ -305,7 +451,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *pBuffer = NULL ;
       INT32 buffSize = 0 ;
-      
+
       rc = msgBuildAuthMsg( &pBuffer, &buffSize, username, password, 0 ) ;
       if ( rc )
       {

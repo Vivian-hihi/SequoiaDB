@@ -280,6 +280,7 @@ namespace engine
       reply.header.eyeCatcher             = MSG_SYSTEM_INFO_EYECATCHER ;
       reply.header.realMessageLength      = sizeof(MsgSysInfoReply) ;
       reply.osType                        = OSS_OSTYPE ;
+      reply.authVersion                   = AUTH_SCRAM_SHA256 ;
       ossMemset( reply.pad, 0, sizeof(reply.pad ) ) ;
 
       rc = msgExtractSysInfoRequest ( (CHAR*)msg, endianConvert ) ;

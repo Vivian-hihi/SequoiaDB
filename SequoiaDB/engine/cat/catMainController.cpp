@@ -1221,6 +1221,7 @@ namespace engine
             break ;
          }
       case MSG_AUTH_VERIFY_REQ :
+      case MSG_AUTH_VERIFY1_REQ :
          {
             rc = _processAuthenticate( handle, pMsg ) ;
             break ;
@@ -1468,7 +1469,14 @@ namespace engine
          goto error ;
       }
 
-      rc = _pAuthCB->authenticate( obj, _pEDUCB, TRUE, &retObj ) ;
+      if ( MSG_AUTH_VERIFY1_REQ == pMsg->opCode )
+      {
+         rc = _pAuthCB->SCRAMSHAAuthenticate( obj, _pEDUCB, retObj ) ;
+      }
+      else
+      {
+         rc = _pAuthCB->md5Authenticate( obj, _pEDUCB, &retObj ) ;
+      }
       if ( SDB_OK != rc )
       {
          goto error ;

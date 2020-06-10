@@ -174,9 +174,11 @@ INT32 clientBuildTruncateLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
 
 INT32 clientBuildAuthCrtMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *pUsrName,
+                                const CHAR *clearTextPasswd,
                                 const CHAR *pPasswd,
                                 const CHAR *pOptions,
-                                UINT64 reqID, BOOLEAN endianConvert ) ;
+                                UINT64 reqID, BOOLEAN endianConvert,
+                                INT32 authVersion ) ;
 
 #else // __cplusplus
 
@@ -260,9 +262,11 @@ INT32 clientBuildTruncateLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
 INT32 clientBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *pUsrName,
+                             const CHAR *clearTextPasswd,
                              const CHAR *pPasswd,
                              const bson *options,
-                             UINT64 reqID, BOOLEAN endianConvert ) ;
+                             UINT64 reqID, BOOLEAN endianConvert,
+                             INT32 authVersion ) ;
 
 #endif // __cplusplus
 
@@ -291,10 +295,24 @@ INT32 clientBuildSqlMsg( CHAR **ppBuffer, INT32 *bufferSize,
                          const CHAR *sql, UINT64 reqID,
                          BOOLEAN endianConvert ) ;
 
-INT32 clientBuildAuthMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *pUsrName,
-                          const CHAR *pPasswd,
-                          UINT64 reqID, BOOLEAN endianConvert ) ;
+INT32 clientBuildAuthVer0Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const CHAR *pUsrName,
+                              const CHAR *pPasswd,
+                              UINT64 reqID, BOOLEAN endianConvert ) ;
+
+INT32 clientBuildAuthVer1Step1Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                   const CHAR *pUsrName,
+                                   UINT64 reqID,
+                                   BOOLEAN endianConvert,
+                                   const CHAR *clientNonceBase64 ) ;
+
+INT32 clientBuildAuthVer1Step2Msg( CHAR **ppBuffer, INT32 *bufferSize,
+                                   const CHAR *pUsrName,
+                                   UINT64 reqID,
+                                   BOOLEAN endianConvert,
+                                   const CHAR *combineNonceBase64,
+                                   const CHAR *clientProofBase64,
+                                   const CHAR *identify ) ;
 
 INT32 clientBuildAuthDelMsg( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *pUsrName,
@@ -312,7 +330,7 @@ INT32 clientBuildTransactionRollbackMsg( CHAR **ppBuffer, INT32 *bufferSize,
 INT32 clientBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 
 INT32 clientExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN *endianConvert,
-                                  INT32 *osType ) ;
+                                  INT32 *osType, INT32 *authVersion ) ;
 
 INT32 clientValidateSql( const CHAR *sql, BOOLEAN isExec ) ;
 

@@ -51,6 +51,9 @@
 #define FAP_CMD_NAME_MSG                          "msg"
 
 #define FAP_CMD_ADMIN_PREFIX                      "$"
+#define FAP_UTIL_SYMBOL_COMMA                     ","
+#define FAP_UTIL_SYMBOL_EQUAL                     "="
+
 #define FAP_FIELD_NAME_OK                         "ok"
 #define FAP_FIELD_NAME_CODE                       "code"
 #define FAP_FIELD_NAME_ERRMSG                     "errmsg"
@@ -107,10 +110,20 @@
 #define FAP_FIELD_NAME_VERSION                    "version"
 #define FAP_FIELD_NAME_VERSIONARRAY               "versionArray"
 #define FAP_FIELD_NAME_VALUES                     "values"
+#define FAP_FIELD_NAME_SASLSUPPORTEDMECHS         "saslSupportedMechs"
+#define FAP_FIELD_NAME_ZERO                       "0"
+#define FAP_FIELD_NAME_MECHANISM                  "mechanism"
+
+#define FAP_AUTH_REPLY_MSG_SYMBOL_RANDOM          "r"
+#define FAP_AUTH_REPLY_MSG_SYMBOL_SALT            "s"
+#define FAP_AUTH_REPLY_MSG_SYMBOL_ITERATIONCOUNT  "i"
+#define FAP_AUTH_REPLY_MSG_SYMBOL_VALUE           "v"
 
 #define FAP_FIELD_VALUE_FAPMONGO                  "fap-mongo"
 
 #define FAP_MONGODB_VERSION                       "4.2.2"
+
+#define FAP_AUTH_MSG_PAYLOADD_MAX_SIZE            128
 
 enum mongoOption
 {
@@ -258,6 +271,11 @@ enum
    OP_CMD_BUILDINFO     = 25,
    OP_CMD_GETLOG        = 26,
    OP_CMD_GET_DBS       = 27,
+   OP_CMD_AUTH_STEP1    = 28,
+   OP_CMD_AUTH_STEP2    = 29,
+   OP_CMD_AUTH_STEP3    = 30,
+   OP_CMD_CRTUSER       = 31,
+   OP_CMD_DELUSER       = 32,
 };
 
 struct cursorStartFrom

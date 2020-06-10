@@ -1407,7 +1407,13 @@
                      "file": "network_security",
                      "cn": "网络安全",
                      "en": "Network Security"
-                  }
+                  },
+                  {
+                     "id": 1432190676,
+                     "file": "authentication_algorithm",
+                     "cn": "鉴权机制",
+                     "en": "Authentication Algorithm"
+                  }                  
                ]
             },
             {

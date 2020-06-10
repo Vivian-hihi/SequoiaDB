@@ -56,7 +56,7 @@ namespace engine
 
       private:
 
-         virtual void   _onSucReply( const MsgOpReply *pReply ) ;
+         virtual void         _onSucReply( const MsgOpReply *pReply ) ;
 
    } ;
    typedef _coordAuthOperator coordAuthOperator ;

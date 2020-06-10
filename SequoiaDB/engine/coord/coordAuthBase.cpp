@@ -60,7 +60,8 @@ namespace engine
                                   INT64 &contextID,
                                   const CHAR **ppUserName,
                                   const CHAR **ppPass,
-                                  BSONObj *pOptions )
+                                  BSONObj *pOptions,
+                                  rtnContextBuf *pBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_AUTHBASE_FORWARD ) ;
@@ -178,6 +179,27 @@ namespace engine
       if ( msgIsInnerOpReply( pReply ) )
       {
          _onSucReply( (const MsgOpReply*)pReply ) ;
+      }
+
+      if ( pBuf && ( pReply->messageLength > (INT32)sizeof( MsgOpReply ) ) )
+      {
+         try
+         {
+            BSONObj obj( (const CHAR*)pReply + sizeof( MsgOpReply ) ) ;
+            *pBuf = rtnContextBuf( obj ) ;
+            rc = pBuf->getOwned() ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to build user info buf, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
+            goto error ;
+         }
       }
 
     done:
