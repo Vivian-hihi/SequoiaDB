@@ -6234,11 +6234,12 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      if ( SDB_LOB_READ != _mode || -1 == _contextID )
+      
+      if ( (!isLobReadOnlyMode(_mode) && !isLobReadWriteMode(_mode)) || -1 == _contextID)
       {
          rc = SDB_INVALIDARG ;
          goto error ;
-      }
+      }   
 
       if ( 0 == len )
       {
@@ -6321,13 +6322,11 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
       if ( SDB_LOB_CREATEONLY != _mode && !hasLobWriteMode( _mode ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
       if (isLobReadWriteMode( _mode ) )
       {
          //clean the read cache

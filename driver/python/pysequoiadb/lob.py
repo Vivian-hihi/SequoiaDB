@@ -27,6 +27,16 @@ from pysequoiadb.error import (SDBTypeError, SDBSystemError,
 
 LOB_READ = int(0x00000004)
 LOB_WRITE = int(0x00000008)
+LOB_SHARE_READ = int(0x00000040)
+
+def is_read_only_mode(mode):
+    return mode == LOB_READ or mode == LOB_SHARE_READ
+
+def is_read_write_mode(mode):
+    return mode == (LOB_SHARE_READ | LOB_WRITE)
+
+def has_write_mode(mode):
+    return mode == LOB_WRITE or is_read_write_mode(mode)
 
 
 class lob(object):
@@ -204,3 +214,16 @@ class lob(object):
             return True
         else:
             return False
+
+    def get_run_time_detail(self):
+        """Get the run time detail information of lob.
+
+        Return Values:
+           Return detail of runtime information.
+        """
+        rc, detail_string = sdb.lob_get_run_time_detail(self._handle)
+        raise_if_error(rc, "Failed to get detail information of lob when run time")
+        detail_dict, size = bson._bson_to_dict(detail_string, dict, False,
+                                          bson.OLD_UUID_SUBTYPE, True)
+        return detail_dict
+

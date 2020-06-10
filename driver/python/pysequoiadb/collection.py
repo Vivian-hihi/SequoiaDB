@@ -25,7 +25,7 @@ from bson.objectid import ObjectId
 import pysequoiadb
 from bson.py3compat import (PY3, str_type, long_type)
 from pysequoiadb.cursor import cursor
-from pysequoiadb.lob import (lob, LOB_READ, LOB_WRITE)
+from pysequoiadb.lob import *
 from pysequoiadb.error import (SDBBaseError,
                                SDBTypeError,
                                SDBSystemError,
@@ -1239,8 +1239,10 @@ class collection(object):
            Name     Type                 Info:
            oid      str/bson.ObjectId    The specified oid
            mode     int                  The open mode:
-                                         lob.LOB_READ
-                                         lob.LOB_WRITE
+                                         lob.LOB_READ for reading.
+                                         lob.LOB_WRITE for writing.
+                                         lob.LOB_SHARE_READ for share reading.
+                                         lob.LOB_SHARE_READ | lob.LOB_WRITE for both reading and writing.
         Return values:
            a lob object
         Exceptions:
@@ -1258,8 +1260,8 @@ class collection(object):
 
         if not isinstance(mode, int):
             raise SDBTypeError("mode must be an instance of int")
-        if mode != LOB_READ and mode != LOB_WRITE:
-            raise SDBTypeError("mode must be lob.LOB_READ or lob.LOB_WRITE")
+        if not is_read_only_mode(mode) and not has_write_mode(mode):
+            raise SDBTypeError("mode is unsupported: " + mode)
 
         obj = lob()
         try:
@@ -1282,7 +1284,7 @@ class collection(object):
         Exceptions:
            pysequoiadb.error.SDBBaseError
         """
-        return self.open_lob(oid, LOB_READ)
+        return self.open_lob(oid, LOB_SHARE_READ)
 
     def remove_lob(self, oid):
         """remove lob.

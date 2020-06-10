@@ -2978,7 +2978,7 @@ __METHOD_IMP(cl_open_lob)
    }
    oid.init(str_id) ;
 
-   rc = cl->openLob(*lob, oid, (SDB_LOB_OPEN_MODE)mode) ;
+   rc = cl->openLob(*lob, oid, mode) ;
 
 done:
    return MAKE_RETURN_INT(rc) ;
@@ -4744,6 +4744,33 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(lob_get_run_time_detail)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob  *lob  = NULL ;
+   bson::BSONObj retObj ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->getRunTimeDetail(retObj) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return MAKE_RETURN_INT_PYBYTES_SIZE( rc, retObj.objdata(),
+      retObj.objsize() ) ;
+error:
+   goto done ;
+}
+
 ///< data center implement
 __METHOD_IMP(create_dc)
 {
@@ -5275,6 +5302,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"lob_get_create_time",             lob_get_create_time,             METH_VARARGS},
    {"lob_get_modification_time",       lob_get_modification_time,       METH_VARARGS},
    {"lob_is_eof",                      lob_is_eof,                      METH_VARARGS},
+   {"lob_get_run_time_detail",         lob_get_run_time_detail,         METH_VARARGS},
 
    /** data center */
    {"create_dc",                       create_dc,                       METH_VARARGS},
