@@ -3151,11 +3151,9 @@ INT32 _mongoCreateUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &
    }
    if ( FALSE == digestPasswd )
    {
-      rc = SDB_INVALIDARG ;
-      PD_LOG( PDERROR,
-              "Digest should be true, obj[%s], rc: %d",
-              _obj.toString().c_str(), rc ) ;
-      // TODO YUTING setError after bug5813 merged
+      rc = SDB_OPTION_NOT_SUPPORT ;
+      ctx.setError( rc, "'digestPasswd' should be true, "
+                        "use 'db.runCommand({createUser: ... })' instead" ) ;
       goto error ;
    }
 
@@ -3163,8 +3161,7 @@ INT32 _mongoCreateUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &
 
    obj = BSON( SDB_AUTH_USER << pUserName <<
                SDB_AUTH_PASSWD << md5PwdStr.c_str() <<
-               SDB_AUTH_TEXTPASSWD << pTextPasswd <<
-               SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+               SDB_AUTH_TEXTPASSWD << pTextPasswd ) ;
 
    sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
@@ -3236,8 +3233,9 @@ error:
 
 INT32 _mongoDropUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 {
-   INT32 rc                = SDB_OK ;
-   MsgAuthDelUsr *auth     = NULL ;
+   INT32 rc = SDB_OK ;
+   MsgAuthDelUsr *auth = NULL ;
+   BSONObj obj ;
 
    sdbMsg.reserve( sizeof( MsgAuthDelUsr ) ) ;
    sdbMsg.advance( sizeof( MsgAuthDelUsr ) ) ;
@@ -3249,12 +3247,26 @@ INT32 _mongoDropUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ct
    auth->header.requestID = _requestID ;
 
    // eg: { dropUser: "myuser" }
-   BSONObj obj = BSON( SDB_AUTH_USER << _obj.getStringField( name() ) <<
-                       SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+   const CHAR* userName = _obj.getStringField( name() ) ;
+   if ( 0 != ossStrcmp( userName, ctx.userName.c_str() ) )
+   {
+      rc = SDB_OPTION_NOT_SUPPORT ;
+      ctx.setError( rc, "Only current user can be dropped" ) ;
+      goto error ;
+   }
+
+   obj = BSON( SDB_AUTH_USER << userName <<
+               SDB_AUTH_NONCE << ctx.authInfo.nonce <<
+               SDB_AUTH_IDENTIFY << ctx.authInfo.identify <<
+               SDB_AUTH_PROOF << ctx.authInfo.clientProof <<
+               SDB_AUTH_TYPE << ctx.authInfo.type ) ;
    sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoDropUserCommand::buildReply( const MsgOpReply &sdbReply,
@@ -3644,6 +3656,10 @@ INT32 _mongoSaslContinueCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx
    sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
 
+   ctx.authInfo.nonce = nonce ;
+   ctx.authInfo.identify = channel ;
+   ctx.authInfo.clientProof = clientProof ;
+   ctx.authInfo.type = SDB_AUTH_TYPE_EXTEND_PWD ;
 done:
    return rc ;
 error:

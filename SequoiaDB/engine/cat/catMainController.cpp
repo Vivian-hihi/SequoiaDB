@@ -1471,7 +1471,7 @@ namespace engine
 
       if ( MSG_AUTH_VERIFY1_REQ == pMsg->opCode )
       {
-         rc = _pAuthCB->SCRAMSHAAuthenticate( obj, _pEDUCB, retObj ) ;
+         rc = _pAuthCB->SCRAMSHAAuthenticate( obj, _pEDUCB, &retObj ) ;
       }
       else
       {

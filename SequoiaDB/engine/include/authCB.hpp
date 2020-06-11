@@ -85,7 +85,7 @@ namespace engine
 
       INT32 SCRAMSHAAuthenticate( const BSONObj &obj,
                                   _pmdEDUCB *cb,
-                                  BSONObj &outUserObj ) ;
+                                  BSONObj *pOutUserObj = NULL ) ;
 
       INT32 needAuthenticate( _pmdEDUCB *cb, BOOLEAN &need ) ;
 
@@ -101,25 +101,27 @@ namespace engine
       INT32   _buildUserInfo( const CHAR *username,
                               const CHAR *passwdMd5,
                               const CHAR *clearTextPasswd,
-                              const CHAR *source,
                               const BSONObj &option,
                               BSONObj &userInfo ) ;
       INT32   _upgradeUserInfo( const CHAR *username, _pmdEDUCB *cb ) ;
       INT32   _step1( const BSONObj &obj, _pmdEDUCB *cb,
-                      BSONObj &outUserObj ) ;
+                      BSONObj *pOutUserObj = NULL ) ;
       INT32   _step2( const BSONObj &obj, _pmdEDUCB *cb,
-                      BSONObj &outUserObj ) ;
+                      BSONObj *pOutUserObj = NULL ) ;
       INT32   _validOptions( const BSONObj &option ) ;
       INT32   _parseMD5AuthMsgObj( const BSONObj &obj ) ;
       INT32   _parseCrtUserMsgObj( const BSONObj &obj,
                                    const CHAR **username,
                                    const CHAR **passwd,
                                    const CHAR **clearTextPasswd,
-                                   const CHAR **source,
                                    BSONObj &option ) ;
       INT32   _parseDelUserMsgObj( const BSONObj &obj,
                                    const CHAR **username,
-                                   const CHAR **source ) ;
+                                   const CHAR **passwd,
+                                   const CHAR **nonce,
+                                   const CHAR **identify,
+                                   const CHAR **clientProof,
+                                   INT32 &type ) ;
       INT32   _parseStep1MsgObj( const BSONObj &obj,
                                  const CHAR **username,
                                  const CHAR **clientNonce,

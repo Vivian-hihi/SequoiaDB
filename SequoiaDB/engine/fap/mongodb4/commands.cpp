@@ -1887,8 +1887,7 @@ INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
 
    obj = BSON( SDB_AUTH_USER << pName.c_str() <<
                SDB_AUTH_PASSWD << md5.c_str() <<
-               SDB_AUTH_TEXTPASSWD << pPasswd.c_str() <<
-               SDB_AUTH_SOURCE << FAP_FIELD_VALUE_FAPMONGO ) ;
+               SDB_AUTH_TEXTPASSWD << pPasswd.c_str() ) ;
    sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
 
@@ -1916,7 +1915,6 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
    MsgAuthDelUsr *auth     = NULL ;
    mongoDataPacket &packet = parser.dataPacket() ;
-   bson::BSONObj obj ;
    const CHAR *pName = packet.clName.c_str() ;
 
    parser.setCurrentOp( OP_CMD_DELUSER ) ;
@@ -1929,10 +1927,7 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    auth->header.routeID.value = 0 ;
    auth->header.requestID = packet.requestId ;
 
-   obj = BSON( SDB_AUTH_USER << pName <<
-               SDB_AUTH_SOURCE << FAP_FIELD_VALUE_FAPMONGO ) ;
-
-   sdbMsg.write( obj, TRUE ) ;
+   sdbMsg.write( BSON( SDB_AUTH_USER << pName ), TRUE ) ;
    sdbMsg.doneLen() ;
 
    return SDB_OK ;

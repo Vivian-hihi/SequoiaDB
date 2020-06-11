@@ -108,7 +108,7 @@ namespace engine
 
    /** \fn INT32 _step1( const BSONObj &obj,
                          _pmdEDUCB *cb,
-                         BSONObj &outUserObj )
+                         BSONObj *pOutUserObj )
        \brief The authentication using SCRAM-SHA256 is divided into two
               certifications in total. This is the first certification.
               In the first certification, the server needs to return
@@ -116,14 +116,14 @@ namespace engine
               the client.
        \param [in] obj Bson data in the message sent by the client.
        \param [in] cb  Pmd EDU cb.
-       \param [out] outUserObj Bson data in the message we need to send to
+       \param [out] pOutUserObj Bson data in the message we need to send to
                     the client.
        \retval SDB_OK Operation Success
        \retval Others Operation Fail
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__STEP1, "_authCB::_step1" )
    INT32 _authCB::_step1( const BSONObj &obj, _pmdEDUCB *cb,
-                          BSONObj &outUserObj )
+                          BSONObj *pOutUserObj )
    {
       PD_TRACE_ENTRY ( SDB_AUTHCB__STEP1 ) ;
 
@@ -213,13 +213,15 @@ namespace engine
       combineNonce = clientNonce ;
       combineNonce += serverNonce ;
 
-      // build object to return
-      outUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
-                         SDB_AUTH_ITERATIONCOUNT <<
-                         scramObj.getField( SDB_AUTH_ITERATIONCOUNT ) <<
-                         SDB_AUTH_SALT <<
-                         scramObj.getField( SDB_AUTH_SALT ) <<
-                         SDB_AUTH_NONCE << combineNonce.c_str() ) ;
+      if ( pOutUserObj )
+      {
+         *pOutUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
+                              SDB_AUTH_ITERATIONCOUNT <<
+                              scramObj.getField( SDB_AUTH_ITERATIONCOUNT ) <<
+                              SDB_AUTH_SALT <<
+                              scramObj.getField( SDB_AUTH_SALT ) <<
+                              SDB_AUTH_NONCE << combineNonce.c_str() ) ;
+      }
 
       }
       catch( std::exception &e )
@@ -236,7 +238,7 @@ namespace engine
 
    /** \fn INT32 _step2( const BSONObj &obj,
                          _pmdEDUCB *cb,
-                         BSONObj &outUserObj )
+                         BSONObj *pOutUserObj )
        \brief The authentication using SCRAM-SHA256 is divided into two
               certifications in total. This is the second certification.
               In the second certification, the server needs to check whether
@@ -244,14 +246,14 @@ namespace engine
               the server's proof to the client.
        \param [in] obj Bson data in the message sent by the client.
        \param [in] cb  Pmd EDU cb.
-       \param [out] outUserObj Bson data in the message we need to send to
+       \param [out] pOutUserObj Bson data in the message we need to send to
                     the client.
        \retval SDB_OK Operation Success
        \retval Others Operation Fail
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__STEP2, "_authCB::_step2" )
    INT32 _authCB::_step2( const BSONObj &obj, _pmdEDUCB *cb,
-                          BSONObj &outUserObj )
+                          BSONObj *pOutUserObj )
    {
       PD_TRACE_ENTRY ( SDB_AUTHCB__STEP2 ) ;
 
@@ -336,8 +338,11 @@ namespace engine
                    "Faild to caculate server proof, rc: %d",
                    rc ) ;
 
-      outUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
-                         SDB_AUTH_PROOF << serverProof.c_str() ) ;
+      if ( pOutUserObj )
+      {
+         *pOutUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+                              SDB_AUTH_PROOF << serverProof.c_str() ) ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB_AUTHCB__STEP2, rc ) ;
@@ -514,11 +519,11 @@ namespace engine
 
    /** \fn INT32 SCRAMSHAAuthenticate( const BSONObj &obj,
                                        _pmdEDUCB *cb,
-                                       BSONObj &outUserObj )
+                                       BSONObj *pOutUserObj )
        \brief Authentication using SCRAM-SHA256.
        \param [in] obj Bson data in the message sent by the client.
        \param [in] cb  Pmd EDU cb.
-       \param [out] outUserObj Bson data in the message we need to send to
+       \param [out] pOutUserObj Bson data in the message we need to send to
                     the client.
        \retval SDB_OK Operation Success
        \retval Others Operation Fail
@@ -526,7 +531,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_SCRAMSHAAUTHENTICATE, "_authCB::SCRAMSHAAuthenticate" )
    INT32 _authCB::SCRAMSHAAuthenticate( const BSONObj &obj,
                                         _pmdEDUCB *cb,
-                                        BSONObj &outUserObj )
+                                        BSONObj *pOutUserObj )
    {
       INT32 rc = SDB_OK ;
       INT32 step = 0 ;
@@ -559,7 +564,7 @@ namespace engine
 
          if ( SDB_AUTH_MSG_STEP1 == step )
          {
-            rc = _step1( obj, cb, outUserObj ) ;
+            rc = _step1( obj, cb, pOutUserObj ) ;
             if ( rc )
             {
                goto error ;
@@ -567,7 +572,7 @@ namespace engine
          }
          else if ( SDB_AUTH_MSG_STEP2 == step )
          {
-            rc = _step2( obj, cb, outUserObj ) ;
+            rc = _step2( obj, cb, pOutUserObj ) ;
             if ( rc )
             {
                goto error ;
@@ -891,18 +896,22 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_REMOVEUSR ) ;
+
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
-      BSONObj dummyObj ;
-      BSONObj match ;
-      BSONObj hint ;
+      BSONObj dummyObj, match, hint ;
       const CHAR *username = NULL ;
-      const CHAR *source   = NULL ;
+      const CHAR *password = NULL ;
+      const CHAR *nonce = NULL ;
+      const CHAR *identify = NULL ;
+      const CHAR *clientProof = NULL ;
+      INT32 type = 0 ;
       rtnContextBuf buffObj ;
 
-      rc = _parseDelUserMsgObj( obj, &username, &source ) ;
+      rc = _parseDelUserMsgObj( obj, &username, &password,
+                                &nonce, &identify, &clientProof, type ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to parse remove user msg, rc: %d", rc ) ;
@@ -912,15 +921,7 @@ namespace engine
       try
       {
          hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
-         if ( source )
-         {
-            match = BSON( SDB_AUTH_USER << username <<
-                          SDB_AUTH_SOURCE << source ) ;
-         }
-         else
-         {
-            match = BSON( SDB_AUTH_USER << username ) ;
-         }
+         match = BSON( SDB_AUTH_USER << username ) ;
       }
       catch ( std::exception &e )
       {
@@ -967,7 +968,22 @@ namespace engine
       }
 
       // then, we check user name and password is correct or not
-      rc = md5Authenticate( obj, cb ) ;// TODO YUTING fap need authenticate
+      if ( password )
+      {
+         BSONObj obj = BSON( SDB_AUTH_USER << username <<
+                             SDB_AUTH_PASSWD << password ) ;
+         rc = md5Authenticate( obj, cb ) ;
+      }
+      else
+      {
+         BSONObj obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+                             SDB_AUTH_USER << username <<
+                             SDB_AUTH_NONCE << nonce <<
+                             SDB_AUTH_IDENTIFY << identify <<
+                             SDB_AUTH_TYPE << type <<
+                             SDB_AUTH_PROOF << clientProof ) ;
+         rc = SCRAMSHAAuthenticate( obj, cb ) ;
+      }
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1084,7 +1100,6 @@ namespace engine
    /** \fn INT32 _buildUserInfo( const CHAR* username,
                                  const CHAR *passwdMd5,
                                  const CHAR* clearTextPasswd,
-                                 const CHAR *source,
                                  const BSONObj &option,
                                  BSONObj &userInfo )
        \brief Generate user info. Such as:
@@ -1112,7 +1127,6 @@ namespace engine
        \param [in] username The user name.
        \param [in] passwdMd5 The MD5 of the clear test password.
        \param [in] clearTextPasswd The clear text password.
-       \param [in] source Extra field used by fap.
        \param [in] option Option field which you can set audit mask.
        \param [out] userInfo The user info we will generate.
        \retval SDB_OK Operation Success
@@ -1122,7 +1136,6 @@ namespace engine
    INT32 _authCB::_buildUserInfo( const CHAR *username,
                                   const CHAR *passwdMd5,
                                   const CHAR *clearTextPasswd,
-                                  const CHAR *source,
                                   const BSONObj &option,
                                   BSONObj &userInfo )
    {
@@ -1232,10 +1245,6 @@ namespace engine
       // build user info object
       userInfoBob.append( SDB_AUTH_USER, username ) ;
       userInfoBob.append( SDB_AUTH_PASSWD, passwdMd5 ) ;
-      if ( source )
-      {
-         userInfoBob.append( SDB_AUTH_SOURCE, source ) ;
-      }
       userInfoBob.append( FIELD_NAME_OPTIONS, option ) ;
       userInfoBob.append( SDB_AUTH_SCRAMSHA256, ss256Bob.obj() ) ;
       if ( extendPasswd )
@@ -1268,17 +1277,15 @@ namespace engine
       const CHAR *username = NULL ;
       const CHAR *passwd = NULL ;
       const CHAR *clearTextPasswd = NULL ;
-      const CHAR *source = NULL ;
       BSONObj option, userInfoObj, hint ;
 
       rc = _parseCrtUserMsgObj( obj, &username, &passwd, &clearTextPasswd,
-                                &source, option ) ;
+                                option ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to parse create user msg, rc: %d",
                    rc ) ;
 
-      rc = _buildUserInfo( username, passwd, clearTextPasswd,
-                           source, option,
+      rc = _buildUserInfo( username, passwd, clearTextPasswd, option,
                            userInfoObj ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to generate SCRAM-SHA user info, rc: %d",
@@ -1528,18 +1535,6 @@ namespace engine
             }
             passwd = ele.valuestr() ;
          }
-         // check source
-         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_SOURCE ) == 0 )
-         {
-            if ( ele.type() != String )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR,
-                       "Invalid field[%s] type[%d] in obj[%s], must be String",
-                       SDB_AUTH_SOURCE, ele.type(), obj.toString().c_str() ) ;
-               goto error ;
-            }
-         }
          else
          {
             rc = SDB_INVALIDARG ;
@@ -1584,14 +1579,12 @@ namespace engine
                                                const CHAR **username,
                                                const CHAR **passwd,
                                                const CHAR **clearTextPasswd,
-                                               const CHAR **source,
                                                BSONObj &option )
        \brief Parse the msg of createing user.
        \param [in] obj Bson data in the message sent by the client.
        \param [out] username User name.
        \param [out] passwd Md5sum of clear text password.
        \param [out] clearTextPasswd Clear text password.
-       \param [out] source Source.
        \param [out] option Option.
        \retval SDB_OK Operation Success
        \retval Others Operation Fail
@@ -1601,7 +1594,6 @@ namespace engine
                                        const CHAR **username,
                                        const CHAR **passwd,
                                        const CHAR **clearTextPasswd,
-                                       const CHAR **source,
                                        BSONObj &option )
    {
       INT32 rc = SDB_OK ;
@@ -1683,30 +1675,6 @@ namespace engine
             if ( clearTextPasswd )
             {
                *clearTextPasswd = ele.valuestr() ;
-            }
-         }
-         // check source
-         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_SOURCE ) )
-         {
-            if ( ele.type() != String )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR,
-                       "Field[%s] type[%d] is invalid, must be string, rc: %d",
-                       SDB_AUTH_SOURCE, ele.type(), rc ) ;
-               goto error ;
-            }
-            if ( 0 == ossStrlen( ele.valuestr() ) )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR,
-                       "Source can't be empty when create user, rc: %d",
-                       rc ) ;
-               goto error ;
-            }
-            if ( source )
-            {
-               *source = ele.valuestr() ;
             }
          }
          // check options
@@ -2118,31 +2086,49 @@ namespace engine
 
    /** \fn INT32 _authCB::_parseDelUserMsgObj( const BSONObj &obj,
                                                const CHAR **username,
-                                               const CHAR **source )
+                                               const CHAR **passwd,
+                                               const CHAR **nonce,
+                                               const CHAR **identify,
+                                               const CHAR **clientProof,
+                                               INT32 &type )
        \brief Parse the msg of removing user.
        \param [in] obj Bson data in the message sent by the client.
        \param [out] username User name.
-       \param [out] source The field that used by fap.
+       \param [out] passwd User Password.
+       \param [out] nonce Combine nonce in base64 format.
+       \param [out] identify Session identifier. When the client is C++ driver,
+                    its value is "C++_Session". When the client is C driver, its
+                    value is "C_Session".
+       \param [out] clientProof Client proof in base64 format.
+       \param [out] type Type of original password.
        \retval SDB_OK Operation Success
        \retval Others Operation Fail
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__PARSEDELUSERMSGOBJ, "_authCB::_parseDelUserMsgObj" )
    INT32 _authCB::_parseDelUserMsgObj( const BSONObj &obj,
                                        const CHAR **username,
-                                       const CHAR **source )
+                                       const CHAR **passwd,
+                                       const CHAR **nonce,
+                                       const CHAR **identify,
+                                       const CHAR **clientProof,
+                                       INT32 &type )
    {
+      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSEDELUSERMSGOBJ ) ;
+
       INT32 rc = SDB_OK ;
       BOOLEAN hasUser = FALSE ;
       BOOLEAN hasPwd = FALSE ;
-      BOOLEAN hasSource = FALSE ;
+      BOOLEAN hasNonce = FALSE ;
+      BOOLEAN hasIdentify = FALSE ;
+      BOOLEAN hasType = FALSE ;
+      BOOLEAN hasProof = FALSE ;
 
-      PD_TRACE_ENTRY ( SDB_AUTHCB__PARSEDELUSERMSGOBJ ) ;
-
-      /*
-        The format of obj is as follows:
-        { User: xxx, Passwd: xxx }
-        { User: xxx, Source: xxx }  from fap-mongo2
-      */
+      /* There are 2 formats for deleting user:
+       * 1. from sequoiadb driver
+       *    { User: xxx, Passwd: xxx }
+       * 2. from fap-mongo
+       *    { User: xxx, Nonce: xxx, Identify: xxx, Proof: xx, Type: xxx }
+       */
       try
       {
 
@@ -2151,7 +2137,7 @@ namespace engine
       {
          BSONElement ele = itr.next();
          // check username
-         if ( ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) == 0 )
+         if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_USER ) )
          {
             if ( ele.type() != String )
             {
@@ -2168,7 +2154,7 @@ namespace engine
             hasUser = TRUE ;
          }
          // check passwd
-         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_PASSWD ) == 0 )
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_PASSWD ) )
          {
             if ( ele.type() != String )
             {
@@ -2178,24 +2164,84 @@ namespace engine
                        SDB_AUTH_PASSWD, ele.type(), obj.toString().c_str() ) ;
                goto error ;
             }
+            if ( passwd )
+            {
+               *passwd = ele.valuestr() ;
+            }
             hasPwd = TRUE ;
          }
-         // check source
-         else if ( ossStrcmp( ele.fieldName(), SDB_AUTH_SOURCE ) == 0 )
+         // check identify
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_IDENTIFY ) )
          {
             if ( ele.type() != String )
             {
                rc = SDB_INVALIDARG ;
                PD_LOG( PDERROR,
                        "Invalid field[%s] type[%d] in obj[%s], must be String",
-                       SDB_AUTH_SOURCE, ele.type(), obj.toString().c_str() ) ;
+                       SDB_AUTH_IDENTIFY, ele.type(), obj.toString().c_str() ) ;
                goto error ;
             }
-            if ( source )
+            if ( identify )
             {
-               *source = ele.valuestr() ;
+               *identify = ele.valuestr() ;
             }
-            hasSource = TRUE ;
+            hasIdentify = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_PROOF ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_PROOF, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            if ( clientProof )
+            {
+               *clientProof = ele.valuestr() ;
+            }
+            hasProof = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_NONCE ) )
+         {
+            if ( ele.type() != String )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid field[%s] type[%d] in obj[%s], must be String",
+                       SDB_AUTH_NONCE, ele.type(), obj.toString().c_str() ) ;
+               goto error ;
+            }
+            if ( nonce )
+            {
+               *nonce = ele.valuestr() ;
+            }
+            hasNonce = TRUE ;
+         }
+         else if ( 0 == ossStrcmp( ele.fieldName(), SDB_AUTH_TYPE ) )
+         {
+            if ( ele.type() != NumberInt )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Invalid type[%d] of field[%s] in obj[%s], rc: %d",
+                       ele.type(), SDB_AUTH_TYPE, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            type = ele.numberInt() ;
+            hasType = TRUE ;
+            if ( SDB_AUTH_TYPE_MD5_PWD    != type &&
+                 SDB_AUTH_TYPE_TEXT_PWD   != type &&
+                 SDB_AUTH_TYPE_EXTEND_PWD != type )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Filed[%s] value[%d] is invalid in obj[%s], rc: %d",
+                       SDB_AUTH_TYPE, type, obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+
          }
          else
          {
@@ -2215,14 +2261,31 @@ namespace engine
                  SDB_AUTH_USER, obj.toString().c_str(), rc ) ;
          goto error ;
       }
-      if ( !hasPwd && !hasSource )
+      if ( hasPwd )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR,
-                 "Field[%s] and Field[%s] doesn't exist in delUser msg[%s], "
-                 "rc: %d", SDB_AUTH_PASSWD, SDB_AUTH_SOURCE,
-                 obj.toString().c_str(), rc ) ;
-         goto error ;
+         if ( hasNonce || hasType || hasIdentify || hasProof )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Invalid delUser msg[%s], rc: %d",
+                    obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         if ( hasNonce && hasType && hasIdentify && hasProof )
+         {
+            // it is ok
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Invalid delUser msg[%s], rc: %d",
+                    obj.toString().c_str(), rc ) ;
+            goto error ;
+         }
       }
 
       }

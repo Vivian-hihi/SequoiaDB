@@ -798,7 +798,6 @@
 #define SDB_AUTH_USER                        "User"
 #define SDB_AUTH_PASSWD                      "Passwd"
 #define SDB_AUTH_OLDPASSWD                   "OldPasswd"
-#define SDB_AUTH_SOURCE                      "Source"
 #define SDB_AUTH_TEXTPASSWD                  "TextPasswd"
 #define SDB_AUTH_EXTENDPASSWD                "ExtendPasswd"
 #define SDB_AUTH_SALT                        "Salt"

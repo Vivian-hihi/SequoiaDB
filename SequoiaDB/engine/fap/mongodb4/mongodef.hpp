@@ -119,8 +119,6 @@
 #define FAP_AUTH_REPLY_MSG_SYMBOL_ITERATIONCOUNT  "i"
 #define FAP_AUTH_REPLY_MSG_SYMBOL_VALUE           "v"
 
-#define FAP_FIELD_VALUE_FAPMONGO                  "fap-mongo"
-
 #define FAP_MONGODB_VERSION                       "4.2.2"
 
 #define FAP_AUTH_MSG_PAYLOADD_MAX_SIZE            128

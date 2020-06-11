@@ -1331,7 +1331,7 @@ namespace engine
          goto done ;
       }
 
-      rc = pAuthCB->SCRAMSHAAuthenticate( obj, cb, outUserObj ) ;
+      rc = pAuthCB->SCRAMSHAAuthenticate( obj, cb, &outUserObj ) ;
       if ( rc )
       {
          goto error ;

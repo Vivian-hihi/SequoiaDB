@@ -51,11 +51,20 @@ enum MONGO_CLIENT_TYPE
    OTHER         = 2
 } ;
 
+struct mongoAuthInfo
+{
+   string nonce ;
+   string identify ;
+   string clientProof ;
+   INT32 type ;
+} ;
+
 struct mongoSessionCtx
 {
    MONGO_CLIENT_TYPE client ;
    BSONObj errorObj ;
    string userName ;
+   mongoAuthInfo authInfo ;
 
    mongoSessionCtx() : client( OTHER ) {}
 

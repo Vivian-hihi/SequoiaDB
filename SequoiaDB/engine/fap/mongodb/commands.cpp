@@ -835,13 +835,10 @@ INT32 authenticateCommand::buildMsg( msgParser &parser,  msgBuffer &sdbMsg )
    auth->header.routeID.value = 0 ;
    auth->header.requestID = packet.requestId ;
 
-   {
-      bson::BSONObj obj ;
-      obj = BSON( SDB_AUTH_USER << pUsername
-                  << SDB_AUTH_PASSWD << pKey
-                  << SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
-      sdbMsg.write( obj, TRUE ) ;
-   }
+   bson::BSONObj obj ;
+   obj = BSON( SDB_AUTH_USER << pUsername <<
+               SDB_AUTH_PASSWD << pKey ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    sdbMsg.doneLen() ;
 
@@ -931,8 +928,7 @@ INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
       md5_finish( &st, d ) ;
 
       obj = BSON( SDB_AUTH_USER << pName <<
-                  SDB_AUTH_PASSWD << md5::digestToString( d ).c_str() <<
-                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+                  SDB_AUTH_PASSWD << md5::digestToString( d ).c_str() ) ;
    }
 
    sdbMsg.write( obj, TRUE ) ;
@@ -996,13 +992,11 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          cond = subObj.getObjectField( "q" ) ;
          break ;
       }
-      obj = BSON( SDB_AUTH_USER << cond.getStringField( "user" ) <<
-                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+      obj = BSON( SDB_AUTH_USER << cond.getStringField( "user" ) ) ;
    }
    else if ( packet.with( OPTION_CMD ) )
    {
-      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "dropUser" ) <<
-                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "dropUser" ) ) ;
    }
    else
    {
@@ -1014,8 +1008,7 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
       parser.readNextObj( packet.all ) ;
 
-      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) <<
-                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) ) ;
    }
    sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
