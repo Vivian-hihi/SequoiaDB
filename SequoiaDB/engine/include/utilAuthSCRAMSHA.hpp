@@ -109,7 +109,6 @@ INT32 utilAuthCaculateServerProof1( const CHAR *username,
                                     string &serverProofBase64 ) ;
 
 INT32 utilAuthGenerateNonce( BYTE *nonce, UINT32 nonceLen ) ;
-INT32 utilAuthGenerateNonce( string &nonce, UINT32 nonceByteLen ) ;
 
 INT32 utilAuthVerifyClientProof( const CHAR *clientProofBase64,
                                  const CHAR *username,

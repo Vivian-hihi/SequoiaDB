@@ -134,6 +134,7 @@ namespace engine
       const CHAR* scramFiledName = NULL ;
       BSONObj userObj, scramObj ;
       string serverNonce, combineNonce ;
+      BYTE serverNonceByte[ UTIL_AUTH_SCRAMSHA_NONCE_LEN ] = { 0 } ;
 
       try
       {
@@ -200,15 +201,19 @@ namespace engine
          }
       }
 
-      // build object to return
-      rc = utilAuthGenerateNonce( serverNonce, UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
+      // generate nonce
+      rc = utilAuthGenerateNonce( serverNonceByte,
+                                  UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to generate nonce, rc: %d",
                    rc ) ;
+      serverNonce = base64::encode( (CHAR*)serverNonceByte,
+                                     UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
 
       combineNonce = clientNonce ;
       combineNonce += serverNonce ;
 
+      // build object to return
       outUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
                          SDB_AUTH_ITERATIONCOUNT <<
                          scramObj.getField( SDB_AUTH_ITERATIONCOUNT ) <<

@@ -403,7 +403,7 @@ INT32 utilAuthCaculateKey1( const CHAR *originalPassword,
       // StoredKey = SHA256( ClientKey )
       SHA1( clientKey, sizeof(clientKey), storedKey ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_SYS ;
       goto error ;
@@ -415,7 +415,7 @@ INT32 utilAuthCaculateKey1( const CHAR *originalPassword,
       storedKeyBase64 = base64::encode( (CHAR*)storedKey, sizeof(storedKey) ) ;
       clientKeyBase64 = base64::encode( (CHAR*)clientKey, sizeof(clientKey) ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_OOM ;
       goto error ;
@@ -726,7 +726,7 @@ INT32 utilAuthCaculateServerProof1( const CHAR *username,
       decodeStr = base64::decode( serverKeyBase64 ) ;
       ossMemcpy( serverKey, decodeStr.c_str(), decodeStr.length() ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_OOM ;
       goto error ;
@@ -747,7 +747,7 @@ INT32 utilAuthCaculateServerProof1( const CHAR *username,
             (BYTE*)(authMsg.c_str()), authMsg.length(),
             serverProof, NULL ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_SYS ;
       goto error ;
@@ -758,7 +758,7 @@ INT32 utilAuthCaculateServerProof1( const CHAR *username,
       serverProofBase64 = base64::encode( (CHAR*)serverProof,
                                           sizeof(serverProof) ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_OOM ;
       goto error ;
@@ -806,40 +806,6 @@ INT32 utilAuthGenerateNonce( BYTE *nonce, UINT32 nonceLen )
    catch( std::exception )
    {
       rc = SDB_SYS ;
-      goto error ;
-   }
-
-done:
-   return rc ;
-error:
-   goto done ;
-}
-
-/** \fn INT32 utilAuthGenerateNonce( string &nonce, UINT32 nonceLen )
-    \brief Generate a random string of the specified length .
-    \param [in] nonceLen Length of the random UINT8 string.
-    \param [out] nonce Random string.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-INT32 utilAuthGenerateNonce( string &nonce, UINT32 nonceByteLen )
-{
-   INT32 rc = SDB_OK ;
-   BYTE nonceByte[nonceByteLen] = { 0 } ;
-
-   rc = utilAuthGenerateNonce( nonceByte, nonceByteLen ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-
-   try
-   {
-      nonce = base64::encode( (CHAR*)nonceByte, nonceByteLen ) ;
-   }
-   catch( std::exception &e )
-   {
-      rc = SDB_OOM ;
       goto error ;
    }
 
@@ -1041,7 +1007,7 @@ INT32 utilAuthVerifyClientProof1( const CHAR *clientProofBase64,
       decodeStr = base64::decode( string(storedKeyBase64) ) ;
       ossMemcpy( innerStoredKey, decodeStr.c_str(), decodeStr.length() ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_OOM ;
       goto error ;
@@ -1071,7 +1037,7 @@ INT32 utilAuthVerifyClientProof1( const CHAR *clientProofBase64,
       // StoredKey = H( ClientKey )
       SHA1( clientKey, sizeof(clientKey), externStoredKey ) ;
    }
-   catch( std::exception &e )
+   catch( std::exception )
    {
       rc = SDB_SYS ;
       goto error ;

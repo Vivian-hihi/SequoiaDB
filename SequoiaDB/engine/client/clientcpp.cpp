@@ -6235,12 +6235,12 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      
+
       if ( (!isLobReadOnlyMode(_mode) && !isLobReadWriteMode(_mode)) || -1 == _contextID)
       {
          rc = SDB_INVALIDARG ;
          goto error ;
-      }   
+      }
 
       if ( 0 == len )
       {
@@ -7135,6 +7135,7 @@ do                                                            \
       BOOLEAN foundNonce = FALSE ;
       BSONObj result ;
       string clientNonceBase64 ;
+      BYTE clientNonce[ UTIL_AUTH_SCRAMSHA_NONCE_LEN ] = { 0 } ;
       SINT64 contextID = -1 ;
 
       if ( NULL == pUsrName || NULL == pPasswd )
@@ -7143,12 +7144,13 @@ do                                                            \
          goto error ;
       }
 
-      rc = utilAuthGenerateNonce( clientNonceBase64,
-                                  UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
+      rc = utilAuthGenerateNonce( clientNonce, UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
       if ( rc )
       {
          goto error ;
       }
+      clientNonceBase64 = base64::encode( (CHAR*)clientNonce,
+                                          UTIL_AUTH_SCRAMSHA_NONCE_LEN ) ;
 
       rc = clientBuildAuthVer1Step1Msg( &_pSendBuffer, &_sendBufferSize,
                                         pUsrName, 0, _endianConvert,
@@ -7689,7 +7691,7 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::connect ( const CHAR **pConnAddrs, 
+   INT32 _sdbImpl::connect ( const CHAR **pConnAddrs,
                              INT32 arrSize,
                              const CHAR *pUsrName,
                              const CHAR *pToken,
@@ -7721,7 +7723,7 @@ do                                                            \
          tmp_rc = utilDecryptUserCipher( pUsrName, pToken,
                                          pCipherFile, pUser, pPasswd ) ;
       }
-       
+
       // get host and port
       do
       {
@@ -7770,7 +7772,7 @@ do                                                            \
    error :
       goto done ;
    }
-   
+
    INT32 _sdbImpl::createUsr( const CHAR *pUsrName,
                               const CHAR *pPasswd,
                               const bson::BSONObj &options )
