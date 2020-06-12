@@ -12,7 +12,7 @@ COMMENT [=] "[string,] sequoiadb:{ [table_options:{...}, partition_options:{...}
 | ------ | --- | ------ | ------ |
 | string | string |用户自定义注释字符串 | 否 |
 | table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否 |
-| partition_options | json | 表的分区的属性。相当于分区的table_options参数。| 否 |
+| partition_options | json | 分区的属性。用于为 RANGE/LIST [分区表](sql_engine/sequoiasql_mysql/partition.md)的分区指定属性。内容参考 [SequoiaDB 集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否 |
 | auto_partition | bool | 是否创建分区表。取值 false 则显式创建非分区表。| 否 |
 
 >**Note：**
@@ -48,7 +48,7 @@ table_options:{CompressionType : 'snappy'} }";
    >
    >alter table 支持修改表备注（COMMENT）中的自定义注释，以及更改或追加 table_options 中的配置项，不支持修改 auto_partition。
 
-示例4，为分区指定 hash 切片数 Partition 属性。通过 partition_options 指定，等价于为每个分区单独指定。以下两个语句效果完全一致。
+示例4，为分区指定 hash 切片数 Partition 属性。注意，在表备注中指定 partition_options 等价于在每个分区备注中单独指定 partition_options。以下两个语句效果完全一致。
 
 ```lang-sql
 CREATE TABLE goods (
@@ -76,11 +76,11 @@ PARTITION BY RANGE COLUMNS (produced_date)
 SUBPARTITION BY KEY (id)
 SUBPARTITIONS 2 (
     PARTITION p0 VALUES LESS THAN ('1990-01-01')
-        COMMENT 'sequoiadb:{ "table_options": { Partition: 8192 } }',
+        COMMENT 'sequoiadb:{ "partition_options": { Partition: 8192 } }',
     PARTITION p1 VALUES LESS THAN ('2000-01-01')
-        COMMENT 'sequoiadb:{ "table_options": { Partition: 8192 } }',
+        COMMENT 'sequoiadb:{ "partition_options": { Partition: 8192 } }',
     PARTITION p2 VALUES LESS THAN ('2010-01-01')
-        COMMENT 'sequoiadb:{ "table_options": { Partition: 8192 } }'
+        COMMENT 'sequoiadb:{ "partition_options": { Partition: 8192 } }'
 );
 ```
     
