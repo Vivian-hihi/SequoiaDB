@@ -107,6 +107,7 @@
  ```lang-sql
  MariaDB [company]> CREATE TABLE employee(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), age INT);
  MariaDB [company]> CREATE TABLE manager(employee_id INT, department TEXT, INDEX id_idx(employee_id));
+ MariaDB [company]> CREATE TABLE triangle(sidea DOUBLE, sideb DOUBLE, sidec DOUBLE GENERATED ALWAYS AS (SQRT(sidea * sidea + sideb * sideb)));
  ```
 
 + **基本数据操作**

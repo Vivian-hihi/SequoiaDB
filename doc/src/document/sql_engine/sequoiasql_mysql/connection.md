@@ -104,6 +104,7 @@
  ```lang-sql
  mysql> CREATE TABLE employee(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), age INT);
  mysql> CREATE TABLE manager(employee_id INT, department TEXT, INDEX id_idx(employee_id));
+ mysql> CREATE TABLE triangle(sidea DOUBLE, sideb DOUBLE, sidec DOUBLE GENERATED ALWAYS AS (SQRT(sidea * sidea + sideb * sideb)));
  ```
 
 + **基本数据操作**
