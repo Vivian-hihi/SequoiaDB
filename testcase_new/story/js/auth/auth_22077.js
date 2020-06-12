@@ -4,7 +4,7 @@
 ******************************************************************************/
 testConf.skipStandAlone = true;
 
-main( test );
+//main( test );  jira-5621
 function test ()
 {
    var testcaseID = 22077;
