@@ -100,10 +100,8 @@ public class IndexKillNode22274 extends SdbTestBase {
                     "failed to restore business" );
 
             // check results
-            if ( !dataGroup.checkInspect( 1 ) ) {
-                Assert.fail(
-                        "data is different on " + dataGroup.getGroupName() );
-            }
+            Assert.assertTrue( dataGroup.checkInspect( 1 ),
+                    "data is different on " + dataGroup.getGroupName() );
 
             Assert.assertEquals(
                     cl1.getCount( new BasicBSONObject( "a",
