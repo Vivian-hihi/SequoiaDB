@@ -116,6 +116,7 @@ namespace engine
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
       optAccessPlanManager *apm        = NULL ;
+      BOOLEAN updateOne                = options.testFlag( FLG_UPDATE_ONE ) ;
       BOOLEAN writable                 = FALSE ;
       BOOLEAN strictDataMode           = FALSE ;
       dmsScanner *pScanner             = NULL ;
@@ -271,6 +272,11 @@ namespace engine
 
                execEndTime = krcb->getCurTime() ;
                monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
+
+               if ( updateOne && 1 == numUpdatedRecords )
+               {
+                  break ;
+               }
             }
 
             if ( SDB_DMS_EOC == rc )

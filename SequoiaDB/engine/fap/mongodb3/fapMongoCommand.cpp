@@ -1242,6 +1242,11 @@ INT32 _mongoDeleteCommand::buildSdbMsg( msgBuffer &sdbMsg,
              _obj.toString().c_str(), name() ) ;
    deleteObj = objList.firstElement().Obj() ;
 
+   if ( 1 == deleteObj.getIntField( "limit" ) )
+   {
+      del->flags |= FLG_DELETE_ONE ;
+   }
+
    sdbMsg.write( deleteObj.getObjectField( "q" ), TRUE ) ;
    sdbMsg.write( BSONObj(), TRUE ) ; // hint
 
@@ -1322,9 +1327,9 @@ INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg,
    _isUpsert = updateObj.getBoolField( "upsert" ) ;
 
    // set flag
-   if ( updateMulti )
+   if ( FALSE == updateMulti )
    {
-      update->flags |= FLG_UPDATE_MULTIUPDATE ;
+      update->flags |= FLG_UPDATE_ONE ;
    }
    if ( _isUpsert )
    {

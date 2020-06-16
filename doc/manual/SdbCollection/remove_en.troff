@@ -7,7 +7,7 @@
 remove \- Delete records from the current collection.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.collectionspace.collection.remove([cond],[hint])\f[]\f[]
+\f[B]\f[I]db.collectionspace.collection.remove([cond],[hint],[options])\f[]\f[]
 .SH CATEGORY
 .PP
 Collection
@@ -25,6 +25,20 @@ Delete records from the current collection.
 \fBhint (json object)\fR
 .br
        The same with the 'hint' in 'query.hint()'.
+.sp 2
+\fBoptions (Json object)\fR
+.br
+       Optional in delete.
+.sp 1
+       \fBJustOne (bool)\fR
+.br
+       Delete only one matched record.
+       Default value: false.
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  JustOne:true can't be used in multiple partitions or 
+   sub-collections.
 .SH "Examples"
 
 .sp 2

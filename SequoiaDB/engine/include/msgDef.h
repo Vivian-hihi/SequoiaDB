@@ -390,6 +390,7 @@
 #define FIELD_NAME_OP_REMOVE                 "Remove"
 #define FIELD_NAME_RETURNNEW                 "ReturnNew"
 #define FIELD_NAME_KEEP_SHARDING_KEY         "KeepShardingKey"
+#define FIELD_NAME_JUSTONE                   "JustOne"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"

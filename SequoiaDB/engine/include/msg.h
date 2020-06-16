@@ -512,7 +512,7 @@ typedef struct _MsgInternalReplyHeader MsgInternalReplyHeader ;
 // If set, the database will insert the supplied object into the collection if
 // no matching document is found.
 #define FLG_UPDATE_UPSERT           0x00000001
-#define FLG_UPDATE_MULTIUPDATE      0x00000002
+#define FLG_UPDATE_ONE              0x00000002
 #define FLG_UPDATE_RETURNNUM        0x00000004
 #define FLG_UPDATE_KEEP_SHARDINGKEY FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE
 // For Update, 3 BSON objects will be followed
@@ -619,7 +619,7 @@ struct _MsgOpGetMore
 typedef struct _MsgOpGetMore MsgOpGetMore ;
 
 // remove one row instead of all matching records
-#define FLG_DELETE_SINGLEREMOVE     0x00000001
+#define FLG_DELETE_ONE              0x00000002
 #define FLG_DELETE_RETURNNUM        0x00000004
 // take 2 BSON object
 // Selector + hint

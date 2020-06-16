@@ -179,6 +179,19 @@ namespace engine
       {
          goto done ;
       }
+      else if ( SDB_COORD_DELETE_MULTI_NODES == rcTmp && !cataSel.hasUpdated() )
+      {
+         rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update collection[%s]'s catalog info "
+                    "failed in update operator, rc: %d",
+                    pCollectionName, rc ) ;
+            goto error ;
+         }
+         _groupSession.getGroupCtrl()->incRetry() ;
+         goto retry ;
+      }
       else if ( checkRetryForCLOpr( rcTmp, &nokRC, cataSel, inMsg.msg(),
                                     cb, rc, &errNodeID, TRUE ) )
       {
@@ -241,6 +254,38 @@ namespace engine
       _vecBlock.clear() ;
    }
 
+   INT32 _coordDeleteOperator::_checkDeleteOne( coordSendMsgIn &inMsg,
+                                                coordSendOptions &options,
+                                                CoordGroupSubCLMap *grpSubCl )
+   {
+      MsgOpDelete *pMsg = (MsgOpDelete*)inMsg.msg() ;
+      INT32 rc = SDB_OK ;
+
+      if ( pMsg->flags & FLG_DELETE_ONE )
+      {
+         if ( ( options._groupLst.size() > 1 ) ||
+              ( grpSubCl && grpSubCl->size() >= 1 &&
+                grpSubCl->begin()->second.size() > 1 ) )
+         {
+            rc = SDB_COORD_DELETE_MULTI_NODES ;
+            PD_LOG( PDERROR, "Delete one can't be used "
+                    "in multiple nodes or sub-collections, rc: %d", rc ) ;
+         }
+
+      }
+
+      return rc ;
+   }
+
+   INT32 _coordDeleteOperator::_prepareCLOp( coordCataSel &cataSel,
+                                             coordSendMsgIn &inMsg,
+                                             coordSendOptions &options,
+                                             pmdEDUCB *cb,
+                                             coordProcessResult &result )
+   {
+      return _checkDeleteOne( inMsg, options, NULL ) ;
+   }
+
    INT32 _coordDeleteOperator::_prepareMainCLOp( coordCataSel &cataSel,
                                                  coordSendMsgIn &inMsg,
                                                  coordSendOptions &options,
@@ -257,6 +302,12 @@ namespace engine
 
       CoordGroupSubCLMap &grpSubCl = cataSel.getGroup2SubsMap() ;
       CoordGroupSubCLMap::iterator it ;
+
+      rc = _checkDeleteOne( inMsg, options, &grpSubCl ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       inMsg.data()->clear() ;
 
@@ -313,7 +364,7 @@ namespace engine
             // 3. hinter vec
             ioItem.iovBase = boHint.objdata() ;
             ioItem.iovLen = boHint.objsize() ;
-            iovec.push_back( ioItem ) ;         
+            iovec.push_back( ioItem ) ;
 
             ++it ;
          }

@@ -34,10 +34,15 @@ Update records in a collection.
 \fBoptions (Json object)\fR
 .br
        Optional in update.
-.sp 2
+.sp 1
        \fBKeepShardingKey (bool)\fR
 .br
        The sharding key in update rule is not filtered.
+       Default value: false.
+.sp 1
+       \fBJustOne (bool)\fR
+.br
+       Update only one matched record.
        Default value: false.
 .sp 2
 \fBNote: \fR
@@ -49,6 +54,9 @@ Update records in a collection.
    field is retained.
 .sp 2
    *  Sharding key is not allow to be updated.
+.sp 2
+   *  JustOne:true can't be used in multiple partitions or 
+   sub-collections.
 .SH "Examples"
 
 .sp 2

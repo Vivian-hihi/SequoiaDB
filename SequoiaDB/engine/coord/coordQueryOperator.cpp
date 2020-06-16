@@ -1080,6 +1080,20 @@ namespace engine
 
          goto done ;
       }
+      else if ( SDB_RTN_QUERYMODIFY_MULTI_NODES == rcTmp &&
+                !cataSel.hasUpdated() )
+      {
+         rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update collection[%s]'s catalog info "
+                    "failed in update operator, rc: %d",
+                    pCollectionName, rc ) ;
+            goto error ;
+         }
+         _groupSession.getGroupCtrl()->incRetry() ;
+         goto retry ;
+      }
       else if ( checkRetryForCLOpr( rcTmp, &nokRC, cataSel, inMsg.msg(),
                                     cb, rc, &errNodeID, TRUE ) )
       {

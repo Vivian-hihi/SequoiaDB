@@ -69,6 +69,12 @@ namespace engine
          virtual void               _prepareForTrans( pmdEDUCB *cb,
                                                       MsgHeader *pMsg ) ;
 
+         INT32                      _prepareCLOp( coordCataSel &cataSel,
+                                                  coordSendMsgIn &inMsg,
+                                                  coordSendOptions &options,
+                                                  pmdEDUCB *cb,
+                                                  coordProcessResult &result ) ;
+
          virtual INT32              _prepareMainCLOp( coordCataSel &cataSel,
                                                       coordSendMsgIn &inMsg,
                                                       coordSendOptions &options,
@@ -101,6 +107,10 @@ namespace engine
                            rtnContextBuf *buf ) ;
 
          void     _clearBlock( pmdEDUCB *cb ) ;
+
+         INT32    _checkUpdateOne( coordSendMsgIn &inMsg,
+                                   coordSendOptions &options,
+                                   CoordGroupSubCLMap *grpSubCl ) ;
 
       private:
          utilUpdateResult     _upResult ;

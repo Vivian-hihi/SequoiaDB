@@ -315,9 +315,9 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       }
    }
 
-   if ( multi )
+   if ( false == multi )
    {
-      update->flags |= FLG_UPDATE_MULTIUPDATE ;
+      update->flags |= FLG_UPDATE_ONE ;
    }
    if ( upsert )
    {

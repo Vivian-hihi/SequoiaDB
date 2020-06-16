@@ -354,7 +354,8 @@ namespace engine
                if( Bool != ele.type() )
                {
                   rc = SDB_INVALIDARG ;
-                  detail = BSON( SPT_ERR << "FIELD_NAME_KEEP_SHARDING_KEY must be bool in options" ) ;
+                  detail = BSON( SPT_ERR << FIELD_NAME_KEEP_SHARDING_KEY
+                                            " must be bool in options" ) ;
                   goto error ;
                }
                if( TRUE == ele.Bool() )
@@ -596,8 +597,9 @@ namespace engine
          BSONElement ele = options.getField( FIELD_NAME_KEEP_SHARDING_KEY ) ;
          if( Bool != ele.type() )
          {
-            detail = BSON( SPT_ERR <<
-                     "FIELD_NAME_KEEP_SHARDING_KEY must be bool in options" ) ;
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << FIELD_NAME_KEEP_SHARDING_KEY
+                                      " must be bool in options" ) ;
             goto error ;
          }
          if( TRUE == ele.Bool() )
@@ -605,7 +607,21 @@ namespace engine
             flags |= UPDATE_KEEP_SHARDINGKEY ;
          }
       }
-
+      if( options.hasField( FIELD_NAME_JUSTONE ) )
+      {
+         BSONElement ele = options.getField( FIELD_NAME_JUSTONE ) ;
+         if( Bool != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << FIELD_NAME_JUSTONE
+                                      " must be bool in options" ) ;
+            goto error ;
+         }
+         if( TRUE == ele.Bool() )
+         {
+            flags |= UPDATE_ONE ;
+         }
+      }
       flags |= UPDATE_RETURNNUM ;
       // Call cpp driver interface
       rc = _cl.update( rule, cond, hint, flags, &result ) ;
@@ -687,13 +703,14 @@ namespace engine
             goto error ;
          }
       }
-      if( TRUE == options.hasField( FIELD_NAME_KEEP_SHARDING_KEY ) )
+      if( options.hasField( FIELD_NAME_KEEP_SHARDING_KEY ) )
       {
          BSONElement ele = options.getField( FIELD_NAME_KEEP_SHARDING_KEY ) ;
          if( Bool != ele.type() )
          {
-            detail = BSON( SPT_ERR <<
-                     "FIELD_NAME_KEEP_SHARDING_KEY must be bool in options" ) ;
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << FIELD_NAME_KEEP_SHARDING_KEY
+                                      " must be bool in options" ) ;
             goto error ;
          }
          if( TRUE == ele.Bool() )
@@ -701,8 +718,23 @@ namespace engine
             flags |= FLG_UPDATE_KEEP_SHARDINGKEY ;
          }
       }
-
+      if( options.hasField( FIELD_NAME_JUSTONE ) )
+      {
+         BSONElement ele = options.getField( FIELD_NAME_JUSTONE ) ;
+         if( Bool != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << FIELD_NAME_JUSTONE
+                                      " must be bool in options" ) ;
+            goto error ;
+         }
+         if( TRUE == ele.Bool() )
+         {
+            flags |= FLG_UPDATE_ONE ;
+         }
+      }
       flags |= UPDATE_RETURNNUM ;
+
       rc = _cl.upsert( rule, cond, hint, setOnInsert, flags, &result ) ;
       if( SDB_OK != rc )
       {
@@ -728,8 +760,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj cond ;
       BSONObj hint ;
+      BSONObj options ;
       BSONObj result ;
+      INT32 flags = 0 ;
 
+      // get condition
       if( !arg.isNull( 0 ) )
       {
          rc = arg.getBsonobj( 0, cond ) ;
@@ -739,6 +774,7 @@ namespace engine
             goto error ;
          }
       }
+      // get hint
       if( !arg.isNull( 1 ) )
       {
          rc = arg.getBsonobj( 1, hint ) ;
@@ -748,7 +784,34 @@ namespace engine
             goto error ;
          }
       }
-      rc = _cl.del( cond, hint, FLG_DELETE_RETURNNUM, &result ) ;
+      // get options
+      if( !arg.isNull( 2 ) )
+      {
+         rc = arg.getBsonobj( 2, options ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            goto error ;
+         }
+      }
+      if( options.hasField( FIELD_NAME_JUSTONE ) )
+      {
+         BSONElement ele = options.getField( FIELD_NAME_JUSTONE ) ;
+         if( Bool != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << FIELD_NAME_JUSTONE
+                                      " must be bool in options" ) ;
+            goto error ;
+         }
+         if( TRUE == ele.Bool() )
+         {
+            flags |= FLG_DELETE_ONE ;
+         }
+      }
+      flags |= FLG_DELETE_RETURNNUM ;
+
+      rc = _cl.del( cond, hint, flags, &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to remove record" ) ;

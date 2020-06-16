@@ -103,9 +103,13 @@ do                                     \
 
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
 #define UPDATE_KEEP_SHARDINGKEY           QUERY_KEEP_SHARDINGKEY_IN_UPDATE
+/** The flag represent whether to update only one matched record or all matched records */
+#define UPDATE_ONE                        0x00000002
 /** The flag represent whether update return detail result */
 #define UPDATE_RETURNNUM                  0x00000004
 
+/** The flag represent whether to delete only one matched record or all matched records */
+#define FLG_DELETE_ONE                    0x00000002
 /** The flag represent whether update return detail result */
 #define FLG_DELETE_RETURNNUM              0x00000004
 
@@ -1184,9 +1188,10 @@ namespace sdbclient
                           using index "ageIndex" to scan data(index scan);
                           {"":null} means table scan. when hint is not provided,
                           database automatically match the optimal index to scan data
-          \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail
+          \param [in] flag The update flag, default to be 0. Please see the definition of follow flags for more detail
           \code
               UPDATE_KEEP_SHARDINGKEY
+              UPDATE_ONE
           \endcode
           \param [out] pResult The detail result for updating.
           \retval SDB_OK Operation Success
@@ -1221,9 +1226,10 @@ namespace sdbclient
                           {"":null} means table scan. when hint is not provided,
                           database automatically match the optimal index to scan data
           \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
-          \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail
+          \param [in] flag The upsert flag, default to be 0. Please see the definition of follow flags for more detail
           \code
               UPDATE_KEEP_SHARDINGKEY
+              UPDATE_ONE
           \endcode
           \param [out] pResult The detail result for upserting
           \retval SDB_OK Operation Success
@@ -1256,7 +1262,10 @@ namespace sdbclient
                           using index "ageIndex" to scan data(index scan);
                           {"":null} means table scan. when hint is not provided,
                           database automatically match the optimal index to scan data
-          \param [in] flag Reserved
+          \param [in] flag The delete flag, default to be 0
+          \code
+              FLG_DELETE_ONE
+          \endcode
           \param [out] pResult The detail result for deleting
           \retval SDB_OK Operation Success
           \retval Others Operation Fail

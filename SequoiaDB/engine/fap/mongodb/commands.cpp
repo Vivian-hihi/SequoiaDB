@@ -300,7 +300,7 @@ INT32 deleteCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    if ( packet.reservedInt & REMOVE_JUSTONE )
    {
-      del->flags |= FLG_DELETE_SINGLEREMOVE ;
+      del->flags |= FLG_DELETE_ONE ;
    }
 
    if ( packet.with( OPTION_CMD ) )
@@ -484,9 +484,9 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
             updator = BSON( "$replace" << updator ) ;
          }
 
-         if ( subObj.getBoolField( "multi" ) )
+         if ( false == subObj.getBoolField( "multi" ) )
          {
-            update->flags |= FLG_UPDATE_MULTIUPDATE ;
+            update->flags |= FLG_UPDATE_ONE ;
          }
          if ( subObj.getBoolField( "upsert" ) )
          {
@@ -516,9 +516,9 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       {
          update->flags |= FLG_UPDATE_UPSERT ;
       }
-      if ( packet.nToSkip & UPDATE_MULTI )
+      if ( ! ( packet.nToSkip & UPDATE_MULTI ) )
       {
-         update->flags |= FLG_UPDATE_MULTIUPDATE ;
+         update->flags |= FLG_UPDATE_ONE ;
       }
 
       bson::BSONObj cond, updator, hint ;

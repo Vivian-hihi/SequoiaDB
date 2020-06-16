@@ -67,6 +67,12 @@ namespace engine
          virtual void   _prepareForTrans( pmdEDUCB *cb,
                                           MsgHeader *pMsg ) ;
 
+         INT32          _prepareCLOp( coordCataSel &cataSel,
+                                      coordSendMsgIn &inMsg,
+                                      coordSendOptions &options,
+                                      pmdEDUCB *cb,
+                                      coordProcessResult &result ) ;
+
          virtual INT32  _prepareMainCLOp( coordCataSel &cataSel,
                                           coordSendMsgIn &inMsg,
                                           coordSendOptions &options,
@@ -89,6 +95,10 @@ namespace engine
                                           const CoordSubCLlist &subCLList ) ;
 
          void           _clearBlock( pmdEDUCB *cb ) ;
+
+         INT32          _checkDeleteOne( coordSendMsgIn &inMsg,
+                                         coordSendOptions &options,
+                                         CoordGroupSubCLMap *grpSubCl ) ;
 
       private:
          vector<CHAR*>           _vecBlock ;

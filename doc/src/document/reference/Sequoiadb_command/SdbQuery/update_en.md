@@ -20,7 +20,7 @@ Update the result set after the query.
 
 > 2. If update() is used with sort(), it must use an index when sorts on a single node.
 
-> 3. When update() is used with limit() and skip() in a cluster, it must ensure that the query conditions are executed on a single node or on a single child table.
+> 3. When update() is used with limit() and skip() in a cluster, it must ensure that the query conditions are executed on a single partition or on a single child table.
 
 ##PARAMETERS##
 

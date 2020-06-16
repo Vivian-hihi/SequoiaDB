@@ -114,6 +114,8 @@ namespace engine
       const CHAR *pCollectionShortName    = NULL ;
       dmsScanner *pScanner                = NULL ;
       BOOLEAN writable                    = FALSE ;
+      BOOLEAN deleteOne                   = options.testFlag( FLG_DELETE_ONE ) ;
+      UINT64 numDeletedRecords            = 0 ;
 
       optAccessPlanRuntime planRuntime ;
 
@@ -224,6 +226,8 @@ namespace engine
                                               pScanner->callbackHandler(),
                                               pScanner->recordInfo() ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
+
+               numDeletedRecords++ ;
                if ( pResult )
                {
                   pResult->incDeletedNum() ;
@@ -231,6 +235,11 @@ namespace engine
 
                execEndTime = krcb->getCurTime() ;
                monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
+
+               if ( deleteOne && 1 == numDeletedRecords )
+               {
+                  break ;
+               }
             }
 
             if ( SDB_DMS_EOC == rc )
@@ -388,7 +397,7 @@ namespace engine
             if ( !scanner )
             {
                rc = SDB_OOM ;
-               PD_RC_CHECK ( rc, PDERROR, 
+               PD_RC_CHECK ( rc, PDERROR,
                              "Unable to allocate memory for index scanner:" ) ;
             }
 

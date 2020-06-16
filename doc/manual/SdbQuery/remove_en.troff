@@ -30,7 +30,7 @@ node.
 .PP
 .IP "3." 3
 When remove is used with limit() and skip() in a cluster, it must ensure that
-the query conditions are executed on a single node or on a single child table.
+the query conditions are executed on a single partition or on a single child table.
 .RE
 .SH PARAMETERS
 .PP
