@@ -66,6 +66,7 @@ namespace fap
 #define FAP_MONGO_FIELD_NAME_DIGESTPWD "digestPassword"
 #define FAP_MONGO_FIELD_NAME_PAYLOAD   "payload"
 #define FAP_MONGO_FIELD_NAME_DONE      "done"
+#define FAP_MONGO_FIELD_NAME_CONVERID  "conversationId"
 
 #define FAP_MONGO_SASL_MSG_RANDOM   "r"
 #define FAP_MONGO_SASL_MSG_SALT     "s"

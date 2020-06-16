@@ -3488,6 +3488,7 @@ INT32 _mongoSaslStartCommand::buildReply( const MsgOpReply &sdbReply,
    string payload ;
    BSONObjBuilder bob ;
    BSONObj replyObj( bodyBuf.data() ) ;
+   BOOLEAN rebuildBuf = FALSE ;
 
    if ( replyObj.isEmpty() )
    {
@@ -3496,6 +3497,7 @@ INT32 _mongoSaslStartCommand::buildReply( const MsgOpReply &sdbReply,
       bob.append( FAP_MONGO_FIELD_NAME_ERRMSG,
                   "Authentication has been disabled, "
                   "you don't need to execute 'db.auth()' " ) ;
+      rebuildBuf = TRUE ;
    }
    else
    {
@@ -3516,12 +3518,15 @@ INT32 _mongoSaslStartCommand::buildReply( const MsgOpReply &sdbReply,
                             BinDataGeneral, payload.c_str() ) ;
          bob.append( FAP_MONGO_FIELD_NAME_DONE, false ) ;
          bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
+         bob.append( FAP_MONGO_FIELD_NAME_CONVERID, 1 ) ;
+         rebuildBuf = TRUE ;
       }
       else if ( SDB_AUTH_AUTHORITY_FORBIDDEN == sdbReply.flags )
       {
          bob.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
          bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
          bob.append( FAP_MONGO_FIELD_NAME_ERRMSG, "Authentication failed." ) ;
+         rebuildBuf = TRUE ;
       }
       else if ( SDB_AUTH_INCOMPATIBLE == sdbReply.flags )
       {
@@ -3529,10 +3534,16 @@ INT32 _mongoSaslStartCommand::buildReply( const MsgOpReply &sdbReply,
          bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
          bob.append( FAP_MONGO_FIELD_NAME_ERRMSG,
                      getErrDesp( SDB_AUTH_INCOMPATIBLE ) ) ;
+         rebuildBuf = TRUE ;
       }
    }
 
-   bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
+   if ( rebuildBuf )
+   {
+      // Only when rebuildBuf is true can set bodyBuf, otherwise the original
+      // content will be overwritten with empty bson.
+      bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
+   }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
 
@@ -3607,8 +3618,9 @@ INT32 _mongoSaslContinueCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   if( 0 == payloadLen )
+   if( 0 == payloadLen || 'v' == payload[0] )
    {
+      // step 3 format: { payload: "" } or { payload: "v=ServerSignature" }
       _step = MONGO_AUTH_STEP3 ;
       goto done ;
    }
@@ -3676,6 +3688,7 @@ INT32 _mongoSaslContinueCommand::buildReply( const MsgOpReply &sdbReply,
                                              _mongoResponseBuffer &headerBuf )
 {
    BSONObjBuilder bob ;
+   BOOLEAN rebuildBuf = FALSE ;
 
    if ( MONGO_AUTH_STEP2 == _step )
    {
@@ -3696,21 +3709,32 @@ INT32 _mongoSaslContinueCommand::buildReply( const MsgOpReply &sdbReply,
                             BinDataGeneral, payload.c_str() ) ;
          bob.append( FAP_MONGO_FIELD_NAME_DONE, false ) ;
          bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
+         bob.append( FAP_MONGO_FIELD_NAME_CONVERID, 1 ) ;
+         rebuildBuf = TRUE ;
       }
       else if ( SDB_AUTH_AUTHORITY_FORBIDDEN == sdbReply.flags )
       {
          bob.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
          bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
          bob.append( FAP_MONGO_FIELD_NAME_ERRMSG, "Authentication failed." ) ;
+         rebuildBuf = TRUE ;
       }
    }
    else if ( MONGO_AUTH_STEP3 == _step )
    {
+      bob.appendBinData( FAP_MONGO_FIELD_NAME_PAYLOAD, 0, BinDataGeneral, "" ) ;
       bob.append( FAP_MONGO_FIELD_NAME_DONE, true ) ;
       bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_CONVERID, 1 ) ;
+      rebuildBuf = TRUE ;
    }
 
-   bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
+   if ( rebuildBuf )
+   {
+      // Only when rebuildBuf is true can set bodyBuf, otherwise the original
+      // content will be overwritten with empty bson.
+      bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
+   }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
 

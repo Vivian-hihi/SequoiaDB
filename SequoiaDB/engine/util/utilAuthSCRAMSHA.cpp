@@ -33,6 +33,7 @@
 
 #include "utilAuthSCRAMSHA.hpp"
 #include "msgDef.h"
+#include "utilString.hpp"
 
 #define UITL_AUTH_SYMBOL_COLON               ":"
 #define UITL_AUTH_SYMBOL_COMMA               ","
@@ -69,22 +70,29 @@ static INT32 buildAuthMsg( const CHAR *username,
                            string &authMsg )
 {
    INT32 rc = SDB_OK ;
-   CHAR clientNonceBase64[ UTIL_AUTH_SCRAMSHA_NONCE_BASE64_LEN + 1 ] = { 0 } ;
-
+   engine::_utilString<> clientNonceBase64 ;
+   INT32 len = 0 ;
 
    if ( NULL == username           ||
         NULL == combineNonceBase64 ||
         NULL == saltBase64         ||
-        NULL == identify           ||
-        UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN != ossStrlen( combineNonceBase64 ) )
+        NULL == identify )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   ossStrncpy( clientNonceBase64,
-               combineNonceBase64,
-               UTIL_AUTH_SCRAMSHA_NONCE_BASE64_LEN ) ;
+   len = ossStrlen( combineNonceBase64 ) ;
+   if ( len <= UTIL_AUTH_SCRAMSHA_NONCE_BASE64_LEN )
+   {
+      // combineNonce = clientNonce(maybe 24 or 32 byte) + serverNonce(32byte)
+      // So lenght of combineNonce must greater than 32
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   clientNonceBase64.append( combineNonceBase64,
+                             len - UTIL_AUTH_SCRAMSHA_NONCE_BASE64_LEN ) ;
 
    // The format of authMsg is as follows:
    // "n=username,r=clientNonceBase64
@@ -96,7 +104,7 @@ static INT32 buildAuthMsg( const CHAR *username,
       stringstream ss ;
       ss << UITL_AUTH_MSG_SYMBOL_USERNAME UITL_AUTH_SYMBOL_EQUAL << username
          << UITL_AUTH_SYMBOL_COMMA
-         << UITL_AUTH_MSG_SYMBOL_RANDOM UITL_AUTH_SYMBOL_EQUAL << clientNonceBase64
+         << UITL_AUTH_MSG_SYMBOL_RANDOM UITL_AUTH_SYMBOL_EQUAL << clientNonceBase64.str()
          << UITL_AUTH_SYMBOL_COMMA
          << UITL_AUTH_MSG_SYMBOL_RANDOM UITL_AUTH_SYMBOL_EQUAL << combineNonceBase64
          << UITL_AUTH_SYMBOL_COMMA
@@ -714,7 +722,6 @@ INT32 utilAuthCaculateServerProof1( const CHAR *username,
         NULL == identify ||
         NULL == serverKeyBase64 ||
         UTIL_AUTH_SCRAMSHA1_SALT_BASE64_LEN  != ossStrlen(saltBase64) ||
-        UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN != ossStrlen(combineNonceBase64) ||
         UTIL_AUTH_SCRAMSHA1_HASH_BASE64_SIZE != ossStrlen(serverKeyBase64) )
    {
       rc = SDB_INVALIDARG ;
@@ -993,7 +1000,6 @@ INT32 utilAuthVerifyClientProof1( const CHAR *clientProofBase64,
         NULL == storedKeyBase64 ||
         UTIL_AUTH_SCRAMSHA1_HASH_BASE64_SIZE != ossStrlen(clientProofBase64) ||
         UTIL_AUTH_SCRAMSHA1_SALT_BASE64_LEN  != ossStrlen(saltBase64) ||
-        UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN != ossStrlen(combineNonceBase64) ||
         UTIL_AUTH_SCRAMSHA1_HASH_BASE64_SIZE != ossStrlen(storedKeyBase64) )
    {
       rc = SDB_INVALIDARG ;
