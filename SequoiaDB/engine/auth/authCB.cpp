@@ -215,7 +215,7 @@ namespace engine
 
       if ( pOutUserObj )
       {
-         *pOutUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
+         *pOutUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_1 <<
                               SDB_AUTH_ITERATIONCOUNT <<
                               scramObj.getField( SDB_AUTH_ITERATIONCOUNT ) <<
                               SDB_AUTH_SALT <<
@@ -267,9 +267,10 @@ namespace engine
       const CHAR* serverKey     = NULL ;
       const CHAR* clientProof   = NULL ;
       const CHAR* combineNonce  = NULL ;
+      const CHAR* md5Passwd     = NULL ;
       BOOLEAN     isClientProofValid = FALSE ;
       BSONObj     userObj ;
-      string      serverProof ;
+      string      serverProof, hashCode ;
 
       // parse message
       rc = _parseStep2MsgObj( obj, &username, &identify, &clientProof,
@@ -285,7 +286,8 @@ namespace engine
                    rc ) ;
 
       rc = _parseUserObj( userObj, type,
-                          iterationCnt, &salt, &storedKey, &serverKey ) ;
+                          iterationCnt, &salt, &storedKey, &serverKey,
+                          &md5Passwd ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Faild to parse user obj, rc: %d",
                    rc ) ;
@@ -338,10 +340,32 @@ namespace engine
                    "Faild to caculate server proof, rc: %d",
                    rc ) ;
 
+      // build object to return
       if ( pOutUserObj )
       {
-         *pOutUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
-                              SDB_AUTH_PROOF << serverProof.c_str() ) ;
+         INT32 pwdLen = ossStrlen( md5Passwd ) ;
+         INT32 nonceLen = ossStrlen( combineNonce ) ;
+         INT32 xorNum = pwdLen > nonceLen ? pwdLen : nonceLen ;
+         CHAR xorRes[ UTIL_AUTH_MD5SUM_LEN ] = { 0 } ;
+
+         PD_CHECK( UTIL_AUTH_MD5SUM_LEN == pwdLen,
+                   SDB_SYS, error, PDERROR,
+                   "Invalid password length[%d], expect: %d",
+                   pwdLen, UTIL_AUTH_MD5SUM_LEN ) ;
+
+         ossMemcpy( xorRes, md5Passwd, UTIL_AUTH_MD5SUM_LEN ) ;
+
+         for ( INT32 i = 0 ; i < xorNum ; i++ )
+         {
+            xorRes[ i % pwdLen ] =
+               xorRes[ i % pwdLen ] ^ combineNonce[ i % nonceLen ] ;
+         }
+
+         hashCode = base64::encode( xorRes, sizeof(xorRes) ) ;
+
+         *pOutUserObj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_2 <<
+                              SDB_AUTH_PROOF << serverProof.c_str() <<
+                              SDB_AUTH_HASHCODE << hashCode.c_str() ) ;
       }
 
    done:
@@ -355,7 +379,8 @@ namespace engine
                                  UINT32 &iterationCnt,
                                  const CHAR **salt,
                                  const CHAR **storedKey,
-                                 const CHAR **serverKey )
+                                 const CHAR **serverKey,
+                                 const CHAR **md5Passwd )
    {
       INT32 rc = SDB_OK ;
       const CHAR* scramFieldName     = NULL ;
@@ -505,6 +530,14 @@ namespace engine
          goto error ;
       }
 
+      if ( md5Passwd )
+      {
+         rc = rtnGetStringElement( obj, SDB_AUTH_PASSWD, md5Passwd ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get field[%s] from obj[%s], rc: %d",
+                      SDB_AUTH_PASSWD, obj.toString().c_str(), rc ) ;
+      }
+
       }
       catch( std::exception &e )
       {
@@ -562,7 +595,7 @@ namespace engine
             goto error ;
          }
 
-         if ( SDB_AUTH_MSG_STEP1 == step )
+         if ( SDB_AUTH_STEP_1 == step )
          {
             rc = _step1( obj, cb, pOutUserObj ) ;
             if ( rc )
@@ -570,7 +603,7 @@ namespace engine
                goto error ;
             }
          }
-         else if ( SDB_AUTH_MSG_STEP2 == step )
+         else if ( SDB_AUTH_STEP_2 == step )
          {
             rc = _step2( obj, cb, pOutUserObj ) ;
             if ( rc )
@@ -976,7 +1009,7 @@ namespace engine
       }
       else
       {
-         BSONObj obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+         BSONObj obj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_2 <<
                              SDB_AUTH_USER << username <<
                              SDB_AUTH_NONCE << nonce <<
                              SDB_AUTH_IDENTIFY << identify <<

@@ -41,6 +41,7 @@
 #include "pmdDef.hpp"
 #include "../bson/bson.hpp"
 #include <string>
+#include "utilAuthSCRAMSHA.hpp"
 
 using namespace std ;
 
@@ -93,9 +94,11 @@ namespace engine
 
       protected:
          void                 _makeName() ;
-
-      private:
-         INT32                _setAuthed( SINT32 opCode) ;
+         INT32                _processAuthRequestObj( const bson::BSONObj &reqObj,
+                                                      INT32 opCode,
+                                                      const CHAR **userName,
+                                                      const CHAR **password ) ;
+         INT32                _processAuthResponse( INT32 opCode ) ;
 
       protected:
          string               _username ;
@@ -104,6 +107,8 @@ namespace engine
          ossSocket*           _pSocket ;
          _pmdEDUCB*           _pEDUCB ;
          bson::BSONObj        _authReturnedObj ; // object returned by authenticate
+         BOOLEAN              _step1Done ;
+         CHAR                 _combineNonce[ UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN + 1 ] ;
 
          UINT16               _localPort ;
          UINT16               _peerPort ;

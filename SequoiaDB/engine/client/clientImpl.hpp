@@ -1270,9 +1270,6 @@ namespace sdbclient
                     const string &combineNonceBase64,
                     const string &clientProofBase64 ) ;
 
-      INT32 _authFmpMsgProcess( const CHAR *pUsrName, const CHAR *pPasswd,
-                                const CHAR *md5 ) ;
-
       friend class _sdbCollectionSpaceImpl ;
       friend class _sdbCollectionImpl ;
       friend class _sdbCursorImpl ;
@@ -1300,12 +1297,12 @@ namespace sdbclient
                       INT32 arrSize,
                       const CHAR *pUsrName,
                       const CHAR *pPasswd ) ;
-      INT32 connect ( const CHAR **pConnAddrs, 
+      INT32 connect ( const CHAR **pConnAddrs,
                       INT32 arrSize,
                       const CHAR *pUsrName,
                       const CHAR *pToken,
                       const CHAR *pCipherFile ) ;
-      
+
       void disconnect () ;
       BOOLEAN isConnected ()
       { return NULL != _sock ; }

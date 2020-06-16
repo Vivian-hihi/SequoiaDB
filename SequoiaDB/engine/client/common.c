@@ -3114,7 +3114,7 @@ INT32 clientBuildAuthVer1Step1Msg( CHAR **ppBuffer, INT32 *bufferSize,
       goto error ;
    }
 
-   rc = bson_append_int( &obj, SDB_AUTH_STEP, SDB_AUTH_MSG_STEP1 ) ;
+   rc = bson_append_int( &obj, SDB_AUTH_STEP, SDB_AUTH_STEP_1 ) ;
    if ( SDB_OK != rc )
    {
       rc = SDB_DRIVER_BSON_ERROR ;
@@ -3253,7 +3253,7 @@ INT32 clientBuildAuthVer1Step2Msg( CHAR **ppBuffer, INT32 *bufferSize,
       goto error ;
    }
 
-   rc = bson_append_int( &obj, SDB_AUTH_STEP, SDB_AUTH_MSG_STEP2 ) ;
+   rc = bson_append_int( &obj, SDB_AUTH_STEP, SDB_AUTH_STEP_2 ) ;
    if ( SDB_OK != rc )
    {
       rc = SDB_DRIVER_BSON_ERROR ;

@@ -3457,7 +3457,7 @@ INT32 _mongoSaslStartCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &c
    auth->header.routeID.value = 0 ;
    auth->header.requestID = _requestID ;
 
-   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
+   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_1 <<
                SDB_AUTH_USER << userName <<
                SDB_AUTH_NONCE << clientNonce <<
                SDB_AUTH_TYPE << SDB_AUTH_TYPE_EXTEND_PWD ) ;
@@ -3647,7 +3647,7 @@ INT32 _mongoSaslContinueCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx
    auth->header.routeID.value = 0 ;
    auth->header.requestID = _requestID ;
 
-   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_2 <<
                SDB_AUTH_USER << ctx.userName <<
                SDB_AUTH_NONCE << nonce <<
                SDB_AUTH_IDENTIFY << channel <<

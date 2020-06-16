@@ -120,6 +120,7 @@ const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
       case MSG_BS_AGGREGATE_REQ :
          return "AGGREGATE" ;
       case MSG_AUTH_VERIFY_REQ :
+      case MSG_AUTH_VERIFY1_REQ :
          return "LOGIN" ;
       case MSG_AUTH_CRTUSR_REQ :
          return "CREATE USER" ;
@@ -180,7 +181,7 @@ msgMsgFuncItem* msgGetExpand2StringFunc( const MsgHeader *pMsg )
          return &s_Entry[ i ] ;
       }
    }
-   return NULL ;   
+   return NULL ;
 }
 
 string msg2String( const MsgHeader *pMsg,

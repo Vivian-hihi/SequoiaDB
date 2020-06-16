@@ -815,14 +815,16 @@
 #define SDB_AUTH_IDENTIFY                    "Identify"
 #define SDB_AUTH_PROOF                       "Proof"
 #define SDB_AUTH_TYPE                        "Type"
+#define SDB_AUTH_HASHCODE                    "HashCode"
 
-#define SDB_AUTH_MSG_STEP1                   1
-#define SDB_AUTH_MSG_STEP2                   2
+#define SDB_AUTH_STEP_1                      1
+#define SDB_AUTH_STEP_2                      2
 
 #define SDB_AUTH_CPP_IDENTIFY                "C++_Session"
 #define SDB_AUTH_C_IDENTIFY                  "C_Session"
 
 #define SDB_AUTH_MECHANISM_SS256             "SCRAM-SHA-256"
+#define SDB_AUTH_MECHANISM_SS                "SCRAM-SHA"
 #define SDB_AUTH_MECHANISM_MD5               "MD5"
 
 enum AUTH_TYPE

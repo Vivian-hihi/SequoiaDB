@@ -59,6 +59,8 @@ using namespace std ;
 #define UTIL_AUTH_SCRAMSHA_NONCE_BASE64_LEN          32
 #define UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN         64
 
+#define UTIL_AUTH_MD5SUM_LEN                         32
+
 /*
 
 For a detailed introduction to the SCRAM-SHA256 authentication mechanism, please

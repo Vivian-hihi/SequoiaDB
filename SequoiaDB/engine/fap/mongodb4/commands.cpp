@@ -2004,7 +2004,7 @@ INT32 saslStartCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    auth->header.routeID.value = 0 ;
    auth->header.requestID = packet.requestId ;
 
-   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP1 <<
+   obj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_1 <<
                SDB_AUTH_USER << packet.userName.c_str() <<
                SDB_AUTH_NONCE << nonce <<
                SDB_AUTH_TYPE << SDB_AUTH_TYPE_TEXT_PWD ) ;
@@ -2096,7 +2096,7 @@ INT32 saslContinueCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       curStr = ossStrtok( lastParsed, FAP_UTIL_SYMBOL_COMMA, &lastParsed ) ;
       clientProofBase64 = ( curStr + 2 ) ;
 
-      obj = BSON( SDB_AUTH_STEP << SDB_AUTH_MSG_STEP2 <<
+      obj = BSON( SDB_AUTH_STEP << SDB_AUTH_STEP_2 <<
                   SDB_AUTH_USER << packet.userName <<
                   SDB_AUTH_NONCE << combineNonceBase64 <<
                   SDB_AUTH_IDENTIFY << identify <<

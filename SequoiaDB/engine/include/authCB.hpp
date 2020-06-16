@@ -136,7 +136,8 @@ namespace engine
                              UINT32 &iterationCnt,
                              const CHAR **salt,
                              const CHAR **storedKey,
-                             const CHAR **serverKey ) ;
+                             const CHAR **serverKey,
+                             const CHAR **md5Passwd ) ;
    private:
       BOOLEAN     _authEnabled ;
    } ;

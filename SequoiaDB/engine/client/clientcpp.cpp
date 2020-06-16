@@ -7213,7 +7213,7 @@ do                                                            \
                }
                step = ele.numberInt() ;
                foundStep = TRUE ;
-               if ( SDB_AUTH_MSG_STEP1 != step )
+               if ( SDB_AUTH_STEP_1 != step )
                {
                   rc = SDB_INVALIDARG ;
                   goto error ;
@@ -7372,7 +7372,7 @@ do                                                            \
                }
                step = ele.numberInt() ;
                foundStep = TRUE ;
-               if ( SDB_AUTH_MSG_STEP2 != step )
+               if ( SDB_AUTH_STEP_2 != step )
                {
                   rc = SDB_INVALIDARG ;
                   goto error ;
@@ -7494,76 +7494,6 @@ do                                                            \
       goto done ;
    }
 
-   /** \fn INT32 _authFmpMsgProcess( const CHAR *pUsrName,
-                                     const CHAR *pPasswd,
-                                     const CHAR *md5 )
-       \brief Build msg, send msg and extract msg when we use FMP.
-       \param [in] pUsrName User name.
-       \param [in] pPasswd  User password.
-       \param [in] md5 Md5sum of password.
-       \retval SDB_OK Operation Success
-       \retval Others Operation Fail
-   */
-   INT32 _sdbImpl::_authFmpMsgProcess( const CHAR *pUsrName,
-                                       const CHAR *pPasswd,
-                                       const CHAR *md5 )
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN isRetry = FALSE ;
-      BOOLEAN locked = FALSE ;
-      SINT64 contextID = -1 ;
-
-   retry:
-      if ( isRetry || !isMd5String( pPasswd ) )
-      {
-         rc = clientBuildAuthVer0Msg( &_pSendBuffer, &_sendBufferSize,
-                                      pUsrName, md5, 0, _endianConvert ) ;
-      }
-      else
-      {
-         rc = clientBuildAuthVer0Msg( &_pSendBuffer, &_sendBufferSize,
-                                      pUsrName, 0 == md5[0] ? pPasswd : md5,
-                                      0, _endianConvert ) ;
-      }
-
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      lock () ;
-      locked = TRUE ;
-      rc = _send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                          contextID ) ;
-      if ( rc )
-      {
-         if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc && 0 == md5[0] && !isRetry )
-         {
-            unlock() ;
-            locked = FALSE ;
-            isRetry = TRUE ;
-            goto retry ;
-         }
-         goto error ;
-      }
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
-
-   done :
-      if ( locked )
-      {
-         unlock () ;
-      }
-      return rc ;
-   error :
-      goto done ;
-   }
-
    INT32 _sdbImpl::connect ( const CHAR *pHostName,
                              UINT16 port,
                              const CHAR *pUsrName,
@@ -7573,6 +7503,10 @@ do                                                            \
       const CHAR *pUN = "" ;
       const CHAR *pPW = "" ;
       CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] = { 0 } ;
+
+#if defined( SDB_FMP )
+      BOOLEAN isRetry = FALSE ;
+#endif // SDB_FMP
 
       if ( !pHostName || !*pHostName || port <= 0 || port > 65535 )
       {
@@ -7598,13 +7532,13 @@ do                                                            \
          goto error ;
       }
 
+#if !defined( SDB_FMP )
       rc = md5Encrypt( pPW, md5, SDB_MD5_DIGEST_LENGTH*2+1 ) ;
       if ( rc )
       {
          goto error ;
       }
 
-#if !defined( SDB_FMP )
       if ( _authVersion >= AUTH_SCRAM_SHA256 )
       {
          rc = _authVer1MsgProcess( pUN, md5 ) ;
@@ -7614,8 +7548,36 @@ do                                                            \
          rc = _authVer0MsgProcess( pUN, md5 ) ;
       }
 #else
-      rc = _authFmpMsgProcess( pUN, pPW, md5 ) ;
-#endif
+   retry:
+      if ( !isRetry && isMd5String( pPW ) )
+      {
+         rc = _authVer0MsgProcess( pUN, pPW ) ;
+         if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
+         {
+            isRetry = TRUE ;
+            goto retry ;
+         }
+      }
+      else
+      {
+         rc = md5Encrypt( pPW, md5, SDB_MD5_DIGEST_LENGTH*2+1 ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         if ( _authVersion >= AUTH_SCRAM_SHA256 )
+         {
+            rc = _authVer1MsgProcess( pUN, md5 ) ;
+         }
+         else
+         {
+            rc = _authVer0MsgProcess( pUN, md5 ) ;
+         }
+      }
+
+#endif // SDB_FMP
+
       if ( rc )
       {
          goto error ;

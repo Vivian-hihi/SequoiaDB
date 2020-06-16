@@ -86,6 +86,9 @@ namespace engine
             ossIP2Str( _netFrame::getLocalAddress(), _fromIP, PMD_IPADDR_LEN ) ;
          }
 #endif // SDB_ENGINE
+
+         _step1Done = FALSE ;
+         ossMemset( _combineNonce, 0, sizeof( _combineNonce ) ) ;
       }
 
       _makeName() ;
@@ -125,16 +128,70 @@ namespace engine
       }
    }
 
-   /** \fn INT32 _setAuthed( SINT32 opCode )
-       \brief Set authed.
-       \param [in] opCode Opcode.
-       \retval SDB_OK Operation Success
-       \retval Others Operation Fail
-   */
-   INT32 _pmdExternClient::_setAuthed( SINT32 opCode )
+   INT32 _pmdExternClient::_processAuthRequestObj( const BSONObj &reqObj,
+                                                   INT32 opCode,
+                                                   const CHAR **userName,
+                                                   const CHAR **password )
    {
       INT32 rc = SDB_OK ;
-      INT32 step = 0 ;
+
+      try
+      {
+
+      *userName = reqObj.getStringField( SDB_AUTH_USER ) ;
+
+      if ( MSG_AUTH_VERIFY_REQ == opCode )
+      {
+         *password = reqObj.getStringField( SDB_AUTH_PASSWD ) ;
+      }
+      else if ( MSG_AUTH_VERIFY1_REQ == opCode )
+      {
+         *password = NULL ;
+
+         INT32 step = reqObj.getIntField( SDB_AUTH_STEP ) ;
+         if ( SDB_AUTH_STEP_2 == step )
+         {
+            if ( _step1Done )
+            {
+               _step1Done = FALSE ;
+
+               const CHAR* nonce = reqObj.getStringField( SDB_AUTH_NONCE ) ;
+               if ( 0 != ossStrcmp( nonce, _combineNonce ) )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "Combine nonce[%s] of auth step2 msg is "
+                          "different from step1, rc: %d", nonce, rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Authenticate step2 should be executed after "
+                       "step1, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdExternClient::_processAuthResponse( INT32 opCode )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
 
       if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
@@ -142,34 +199,76 @@ namespace engine
       }
       else if ( MSG_AUTH_VERIFY1_REQ == opCode )
       {
-         BSONElement ele ;
+         INT32 step = 0 ;
 
          // When "auth" is false in catalog node configure file sdb.conf,
-         // returned object is empty. And we don't need to authenticate.
+         // or no users in catalog, it returned empty object. And we don't
+         // need to authenticate.
          if ( _authReturnedObj.isEmpty() )
          {
             _isAuthed = TRUE ;
             goto done ;
          }
 
-         ele = _authReturnedObj.getField ( SDB_AUTH_STEP ) ;
-         if ( ele.isNumber() )
+         step = _authReturnedObj.getIntField( SDB_AUTH_STEP ) ;
+         if ( SDB_AUTH_STEP_1 == step )
          {
-            step = ele.numberInt() ;
-         }
-         else
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR,
-                    "Failed to get field[%s] from auth info[%s], rc: %d",
-                    SDB_AUTH_STEP, _authReturnedObj.toString().c_str(), rc ) ;
-            goto error ;
-         }
+            _step1Done = TRUE ;
 
-         if ( SDB_AUTH_MSG_STEP2 == step )
+            const CHAR* nonce = NULL ;
+            nonce = _authReturnedObj.getStringField( SDB_AUTH_NONCE ) ;
+
+            ossStrncpy( _combineNonce,
+                        nonce,
+                        UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN ) ;
+            _combineNonce[ UTIL_AUTH_SCRAMSHA_COMBINE_NONCE_LEN ] = 0 ;
+         }
+         else if ( SDB_AUTH_STEP_2 == step )
          {
             _isAuthed = TRUE ;
+
+            string hashCode ;
+            INT32 hashLen = 0 ;
+            INT32 nonceLen = 0 ;
+            INT32 xorNum = 0 ;
+            CHAR xorRes[ UTIL_AUTH_MD5SUM_LEN + 1 ] = { 0 } ;
+
+            // get hash code
+            BSONElement ele = _authReturnedObj.getField( SDB_AUTH_HASHCODE ) ;
+            PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
+                      "Invalid field[%s] type[%d] in obj[%s], rc: %d",
+                      SDB_AUTH_HASHCODE, ele.type(),
+                      _authReturnedObj.toString().c_str(), rc ) ;
+
+            hashCode = base64::decode( ele.valuestr() ) ;
+            hashLen = hashCode.length() ;
+            PD_CHECK( UTIL_AUTH_MD5SUM_LEN == hashLen,
+                      SDB_SYS, error, PDERROR,
+                      "Invalid field[%s] length[%d], expect: %d",
+                      SDB_AUTH_HASHCODE, hashLen, UTIL_AUTH_MD5SUM_LEN ) ;
+
+            // get md5sum of password
+            nonceLen = ossStrlen( _combineNonce ) ;
+            xorNum = hashLen > nonceLen ? hashLen : nonceLen ;
+            ossMemcpy( xorRes, hashCode.c_str(), UTIL_AUTH_MD5SUM_LEN ) ;
+
+            for ( INT32 i = xorNum - 1 ; i >= 0 ; i-- )
+            {
+               xorRes[ i % hashLen ] =
+                  xorRes[ i % hashLen ] ^ _combineNonce[ i % nonceLen ] ;
+            }
+            _password = xorRes ;
+
+            // don't return HashCode to client
+            _authReturnedObj = _authReturnedObj.filterFieldsUndotted(
+                                       BSON( SDB_AUTH_HASHCODE << 1 ), false ) ;
          }
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
       }
 
    done:
@@ -192,7 +291,8 @@ namespace engine
 #if defined ( SDB_ENGINE )
       INT32 rc = SDB_OK ;
       BSONObj authObj ;
-      BSONElement user, pass ;
+      const CHAR *userName = NULL ;
+      const CHAR *password = NULL ;
 
       rc = extractAuthMsg( pMsg, authObj ) ;
       if ( rc )
@@ -201,9 +301,14 @@ namespace engine
                  clientName(), rc ) ;
          goto error ;
       }
-
-      user = authObj.getField( SDB_AUTH_USER ) ;
-      pass = authObj.getField( SDB_AUTH_PASSWD ) ;
+      rc = _processAuthRequestObj( authObj, pMsg->opCode,
+                                   &userName, &password ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Client[%s] process auth request obj failed, rc: %d",
+                 clientName(), rc ) ;
+         goto error ;
+      }
 
       _isAuthed = FALSE ;
 
@@ -217,30 +322,19 @@ namespace engine
          if ( MSG_AUTH_VERIFY_REQ == pMsg->opCode )
          {
             rc = sdbGetOMManager()->md5Authenticate( authObj, _pEDUCB ) ;
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
-                       "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
-               goto error ;
-            }
          }
          else if ( MSG_AUTH_VERIFY1_REQ == pMsg->opCode )
          {
             rc = sdbGetOMManager()->SCRAMSHAAuthenticate( authObj, _pEDUCB,
                                                           _authReturnedObj ) ;
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
-                       "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
-               goto error ;
-            }
-            if ( authBuf )
-            {
-               *authBuf = _authReturnedObj.objdata() ;
-            }
          }
-
-         rc = _setAuthed( pMsg->opCode ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
+                    "rc: %d", clientName(), userName, rc ) ;
+            goto error ;
+         }
+         rc = _processAuthResponse( pMsg->opCode ) ;
          if ( rc )
          {
             goto error ;
@@ -280,10 +374,6 @@ namespace engine
                goto error ;
             }
             _authReturnedObj = _authReturnedObj.getOwned() ;
-            if ( authBuf )
-            {
-               *authBuf = _authReturnedObj.objdata() ;
-            }
          }
 
          // special handling for password verification when there is no
@@ -299,12 +389,12 @@ namespace engine
          else if ( rc )
          {
             PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
-                    "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
+                    "rc: %d", clientName(), userName, rc ) ;
             goto error ;
          }
          else
          {
-            rc = _setAuthed( pMsg->opCode ) ;
+            rc = _processAuthResponse( pMsg->opCode ) ;
             if ( rc )
             {
                goto error ;
@@ -349,10 +439,6 @@ namespace engine
                {
                   const CHAR* data = (const CHAR*)pAuthRes + sizeof( MsgOpReply ) ;
                   _authReturnedObj = BSONObj( data ).getOwned() ;
-                  if ( authBuf )
-                  {
-                     *authBuf = _authReturnedObj.objdata() ;
-                  }
                }
                catch( std::exception &e )
                {
@@ -392,15 +478,14 @@ namespace engine
             else if ( rc )
             {
                PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
-                       "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
+                       "rc: %d", clientName(), userName, rc ) ;
                goto error ;
             }
             else
             {
-               rc = _setAuthed( pMsg->opCode ) ;
+               rc = _processAuthResponse( pMsg->opCode ) ;
                if ( rc )
                {
-                  PD_LOG( PDERROR, "Failed to set authed, rc: %d", rc ) ;
                   goto error ;
                }
             }
@@ -409,12 +494,16 @@ namespace engine
       }
 
    done:
+      if ( SDB_OK == rc && authBuf )
+      {
+         *authBuf = _authReturnedObj.objdata() ;
+      }
       if ( SDB_OK == rc && _isAuthed )
       {
-         _username = user.valuestrsafe() ;
-         if ( !_username.empty() )
+         _username = userName ;
+         if ( !_username.empty() && password )
          {
-            _password = pass.valuestrsafe() ;
+            _password = password ;
          }
          _pEDUCB->setUserInfo( _username, _password ) ;
 
@@ -422,7 +511,7 @@ namespace engine
 
          CHAR szTmp[ 16 ] = { 0 } ;
          ossSnprintf( szTmp, sizeof(szTmp)-1, "%llu", _pEDUCB->getID() ) ;
-         PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
+         PD_AUDIT_OP( AUDIT_ACCESS, pMsg->opCode, AUDIT_OBJ_SESSION,
                       szTmp, SDB_OK,
                       "User[UserName:%s, RemoteIP:%s, RemotePort:%u, "
                       "LocalIP:%s, LocalPort:%u, AuthMechanism: %s] "
@@ -430,7 +519,7 @@ namespace engine
                       getUsername(), getPeerIPAddr(), getPeerPort(),
                       getLocalIPAddr(), getLocalPort(),
                       (MSG_AUTH_VERIFY1_REQ == pMsg->opCode)?
-                      (SDB_AUTH_MECHANISM_SS256):(SDB_AUTH_MECHANISM_MD5) ) ;
+                      (SDB_AUTH_MECHANISM_SS):(SDB_AUTH_MECHANISM_MD5) ) ;
       }
       return rc ;
    error:
