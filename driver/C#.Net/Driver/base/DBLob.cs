@@ -328,6 +328,11 @@ namespace SequoiaDB
             {
                 return 0;
             }
+
+            if (!isReadOnlyMode(_mode) && !isReadWriteMode(_mode))
+            {
+                throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "invalid mode for reading");
+            }
             return _Read(b, off, len);
         }
 
@@ -377,6 +382,11 @@ namespace SequoiaDB
             if (off + len > b.Length)
             {
                 throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "off + len is great than b.length");
+            }
+
+            if (SDB_LOB_CREATEONLY != _mode && !hasWriteMode(_mode))
+            {
+                throw new BaseException((int)Errors.errors.SDB_INVALIDARG, "invalid mode for writing");
             }
 
             if (isReadWriteMode(_mode))

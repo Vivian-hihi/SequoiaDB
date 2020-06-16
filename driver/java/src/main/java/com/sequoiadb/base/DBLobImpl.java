@@ -361,6 +361,10 @@ class DBLobImpl implements DBLob {
             throw new BaseException(SDBError.SDB_INVALIDARG, "off + len is great than b.length");
         }
 
+        if ( SDB_LOB_CREATEONLY != _mode && !hasWriteMode(_mode) ){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "invalid mode for writing");
+        }
+
         if (isReadWriteMode(_mode)) {
             //clean the read cache
             _cachedOffset = -1;
@@ -457,6 +461,11 @@ class DBLobImpl implements DBLob {
         if (b.length == 0) {
             return 0;
         }
+
+        if (!isReadOnlyMode(_mode) && !isReadWriteMode(_mode)){
+            throw new BaseException(SDBError.SDB_INVALIDARG, "invalid mode for reading");
+        }
+
         return _read(b, off, len);
     }
 

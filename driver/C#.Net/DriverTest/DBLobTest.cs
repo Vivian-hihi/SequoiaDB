@@ -1342,12 +1342,15 @@ namespace DriverTest
         }
 
         [TestMethod()]
-        public void LobShareReadAndWriteModeTest()
+        public void TestLobMode()
         {
 
-            DBLob newLob = cl.CreateLob();
-            ObjectId oid = newLob.GetID();
-            newLob.Close();
+            DBLob baseLob = cl.CreateLob();
+            ObjectId oid = baseLob.GetID();
+            baseLob.Close();
+
+            byte[] writeData = { 1, 2, 3 };
+            byte[] readData;
 
             int mode = DBLob.SDB_LOB_SHAREREAD | DBLob.SDB_LOB_WRITE;
 
@@ -1405,6 +1408,7 @@ namespace DriverTest
             long lobLen = lob2.GetSize();
             byte[] actualData = new byte[lobLen];
             lob2.Read(actualData);
+            lob2.Close();
 
             byte[] expectData = { 1, 2, 6, 7, 8 };
             long expectLen2 = expectData.Length;
@@ -1419,6 +1423,88 @@ namespace DriverTest
             else
             {
                 Assert.AreEqual(expectLen2, lobLen);
+            }
+
+            // case 3, write lob after create.
+            DBLob lob3 = cl.CreateLob();
+            try
+            {
+                lob3.Write(writeData);
+            }
+            catch(BaseException e)
+            {
+                Assert.AreEqual(0, e.ErrorCode);
+            }
+            finally
+            {
+                lob3.Close();
+            }
+
+            // case 4, read lob after create.
+            DBLob lob4 = cl.CreateLob();
+            try
+            {
+                readData = new byte[lob4.GetSize()];
+                lob4.Read(readData);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual((int)Errors.errors.SDB_INVALIDARG, e.ErrorCode);
+            }
+            finally
+            {
+                lob4.Close();
+            }
+
+            // case 5, open lob with read mode, write after read.
+            DBLob lob5 = cl.OpenLob(oid, DBLob.SDB_LOB_READ);
+            try
+            {
+                readData = new byte[lob5.GetSize()];
+                lob5.Read(readData);
+                lob5.Write(writeData);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual((int)Errors.errors.SDB_INVALIDARG, e.ErrorCode);
+            }
+            finally
+            {
+                lob5.Close();
+            }
+
+            // case 6, open lob with share mode, write after read.
+            DBLob lob6 = cl.OpenLob(oid, DBLob.SDB_LOB_SHAREREAD);
+            try
+            {
+                readData = new byte[lob6.GetSize()];
+                lob6.Read(readData);
+                lob6.Write(writeData);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual((int)Errors.errors.SDB_INVALIDARG, e.ErrorCode);
+            }
+            finally
+            {
+                lob6.Close();
+            }
+
+            // case 7, open lob with write mode, read after write.
+            DBLob lob7 = cl.OpenLob(oid, DBLob.SDB_LOB_WRITE);
+            try
+            {
+                lob7.Write(writeData);
+                readData = new byte[lob7.GetSize()];
+                lob7.Read(readData);
+            }
+            catch (BaseException e)
+            {
+                Assert.AreEqual((int)Errors.errors.SDB_INVALIDARG, e.ErrorCode);
+            }
+            finally
+            {
+                lob7.Close();
             }
         }
 
