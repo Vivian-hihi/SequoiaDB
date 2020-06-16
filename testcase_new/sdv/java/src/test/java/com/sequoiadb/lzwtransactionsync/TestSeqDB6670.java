@@ -67,7 +67,7 @@ public class TestSeqDB6670 extends SdbTestBase {
 
         // 取coord节点的全局事务及mvcc配置，加入到节点配置上，避免mvcc分支，事务执行报-6的错误
         BSONObject configure = new BasicBSONObject();
-        BSONObject transConfig = getTransConfig( sdb, "coord" );
+        BSONObject transConfig = getTransConfig( sdb, "data" );
         configure.putAll( transConfig );
         configure.put( "logfilenum", 5 );
         configure.put( "transactionon", true );
@@ -174,9 +174,10 @@ public class TestSeqDB6670 extends SdbTestBase {
     }
 
     public BSONObject getTransConfig( Sequoiadb db, String role ) {
-        BSONObject transConfig = db.getSnapshot( Sequoiadb.SDB_SNAP_CONFIGS,
-                "{role:'" + role + "'}", "{globtranson:'',mvccon:''}", "" )
-                .getNext();
+        DBCursor configCur = db.getSnapshot( Sequoiadb.SDB_SNAP_CONFIGS,
+                "{role:'" + role + "'}", "{globtranson:'',mvccon:''}", "" );
+        BSONObject transConfig = configCur.getNext();
+        configCur.close();
         return transConfig;
     }
 
