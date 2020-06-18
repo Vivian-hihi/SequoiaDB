@@ -61,7 +61,7 @@ public class CappedCLUtils {
             DBCursor cursor = cl.query( null, "{'_id':1}", "{'_id':1}", null );
 
             // 比较具体id值
-            BSONObject transConfig = CommLib.getTransConfig( db, "coord" );
+            BSONObject transConfig = CommLib.getTransConfig( db, "data" );
             int headLength;// 记录头，mvcc分支与master长度不一致
             if ( transConfig.get( "mvccon" ).equals( "TRUE" ) ) {
                 headLength = 67;
