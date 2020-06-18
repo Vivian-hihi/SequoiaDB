@@ -22,6 +22,7 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import com.sequoiadb.datasync.CreateCLTask ;
 
 import java.util.*;
 
@@ -87,7 +88,7 @@ public class CreateCL2942 extends SdbTestBase {
                     .getFaultMakeTask( dataSlvHost, 1, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
-            CreateCLTask cTask = new CreateCLTask( safeUrl );
+            CreateCLTask cTask = new CreateCLTask( clNameBase, clGroupName, CL_NUM  );
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );
@@ -125,43 +126,6 @@ public class CreateCL2942 extends SdbTestBase {
         } finally {
             if ( db != null ) {
                 db.close();
-            }
-        }
-    }
-
-    private class CreateCLTask extends OperateTask {
-        private String safeUrl = null;
-
-        public CreateCLTask( String safeUrl ) {
-            this.safeUrl = safeUrl;
-        }
-
-        @Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb( safeUrl, "", "" );
-                CollectionSpace commCS = db.getCollectionSpace( csName );
-                for ( int i = 0; i < CL_NUM; i++ ) {
-                    String clName = clNameBase + "_" + i;
-                    BSONObject option = ( BSONObject ) JSON
-                            .parse( "{ ShardingKey: { a: 1 },"
-                                    + "ShardingType: 'hash', "
-                                    + "Partition: 2048, " + "ReplSize: 2, "
-                                    + "Compressed: true, "
-                                    + "CompressionType: 'lzw',"
-                                    + "IsMainCL: false, " + "AutoSplit: false, "
-                                    + "Group: '" + clGroupName + "', "
-                                    + "AutoIndexId: true, "
-                                    + "EnsureShardingIndex: true }" );
-                    commCS.createCollection( clName, option );
-                }
-            } catch ( BaseException e ) {
-                throw e;
-            } finally {
-                if ( db != null ) {
-                    db.close();
-                }
             }
         }
     }

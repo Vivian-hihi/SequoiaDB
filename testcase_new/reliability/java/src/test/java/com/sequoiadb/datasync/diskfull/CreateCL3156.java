@@ -22,6 +22,7 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import com.sequoiadb.datasync.CreateCLTask;
 
 import java.util.*;
 
@@ -76,7 +77,7 @@ public class CreateCL3156 extends SdbTestBase {
             FaultMakeTask faultTask = DiskFull.getFaultMakeTask(
                     priNode.hostName(), priNode.dbPath(), 0, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CreateCLTask cTask = new CreateCLTask();
+            CreateCLTask cTask = new CreateCLTask(clNameBase, clGroupName, CL_NUM);
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );
@@ -114,40 +115,6 @@ public class CreateCL3156 extends SdbTestBase {
         } finally {
             if ( db != null ) {
                 db.close();
-            }
-        }
-    }
-
-    private class CreateCLTask extends OperateTask {
-        @Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                CollectionSpace commCS = db.getCollectionSpace( csName );
-                for ( int i = 0; i < CL_NUM; i++ ) {
-                    String clName = clNameBase + "_" + i;
-                    BSONObject option = ( BSONObject ) JSON
-                            .parse( "{ ShardingKey: { a: 1 },"
-                                    + "ShardingType: 'hash', "
-                                    + "Partition: 2048, " + "ReplSize: 2, "
-                                    + "Compressed: true, "
-                                    + "CompressionType: 'lzw',"
-                                    + "IsMainCL: false, " + "AutoSplit: false, "
-                                    + "Group: '" + clGroupName + "', "
-                                    + "AutoIndexId: true, "
-                                    + "EnsureShardingIndex: true }" );
-                    commCS.createCollection( clName, option );
-                }
-                // throw new ReliabilityException("disk full doesn't occur");
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -11 ) {
-                    throw e;
-                }
-            } finally {
-                if ( db != null ) {
-                    db.close();
-                }
             }
         }
     }

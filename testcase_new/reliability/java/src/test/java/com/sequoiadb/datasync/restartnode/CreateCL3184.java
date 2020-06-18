@@ -22,6 +22,7 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import com.sequoiadb.datasync.CreateCLTask;
 
 import java.util.*;
 
@@ -78,7 +79,7 @@ public class CreateCL3184 extends SdbTestBase {
             FaultMakeTask faultTask = NodeRestart.getFaultMakeTask( priNode, 1,
                     10 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CreateCLTask cTask = new CreateCLTask();
+            CreateCLTask cTask = new CreateCLTask(clNameBase, clGroupName, CL_NUM);
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );
@@ -116,36 +117,6 @@ public class CreateCL3184 extends SdbTestBase {
         } finally {
             if ( db != null ) {
                 db.close();
-            }
-        }
-    }
-
-    private class CreateCLTask extends OperateTask {
-        @Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-                CollectionSpace commCS = db.getCollectionSpace( csName );
-                for ( int i = 0; i < CL_NUM; i++ ) {
-                    String clName = clNameBase + "_" + i;
-                    BSONObject option = ( BSONObject ) JSON
-                            .parse( "{ ShardingKey: { a: 1 },"
-                                    + "ShardingType: 'hash', "
-                                    + "Partition: 2048, " + "ReplSize: 1, "
-                                    + "Compressed: true, "
-                                    + "CompressionType: 'lzw',"
-                                    + "IsMainCL: false, " + "AutoSplit: false, "
-                                    + "Group: '" + clGroupName + "', "
-                                    + "AutoIndexId: true, "
-                                    + "EnsureShardingIndex: true }" );
-                    commCS.createCollection( clName, option );
-                }
-            } catch ( BaseException e ) {
-            } finally {
-                if ( db != null ) {
-                    db.close();
-                }
             }
         }
     }

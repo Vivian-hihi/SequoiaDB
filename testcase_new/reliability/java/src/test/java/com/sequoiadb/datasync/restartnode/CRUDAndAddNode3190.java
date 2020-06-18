@@ -6,6 +6,8 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.datasync.Utils;
+import com.sequoiadb.datasync.CRUDTask;
+import com.sequoiadb.datasync.AddNodeTask;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
@@ -88,8 +90,8 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
             FaultMakeTask faultTask = NodeRestart.getFaultMakeTask( priNode, 1,
                     10 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CRUDTask cTask = new CRUDTask();
-            AddNodeTask aTask = new AddNodeTask();
+            CRUDTask cTask = new CRUDTask(clName);
+            AddNodeTask aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
             mgr.addTask( cTask );
             mgr.addTask( aTask );
             mgr.execute();
@@ -189,51 +191,5 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
         }
         ReplicaGroup clGroup = db.getReplicaGroup( clGroupName );
         clGroup.removeNode( randomHost, randomPort, ( BSONObject ) null );
-    }
-
-    private class CRUDTask extends OperateTask {
-        @Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( SdbTestBase.csName )
-                        .getCollection( clName );
-                int repeatTimes = 5000;
-                for ( int i = 0; i < repeatTimes; i++ ) {
-                    BSONObject rec = ( BSONObject ) JSON
-                            .parse( "{ a: " + i + " }" );
-                    cl.insert( rec );
-                    BSONObject modifier = ( BSONObject ) JSON
-                            .parse( "{ $set: { b: 1 } }" );
-                    cl.update( rec, modifier, null );
-                    cl.delete( rec );
-                }
-            } catch ( BaseException e ) {
-            } finally {
-                if ( db != null ) {
-                    db.close();
-                }
-            }
-        }
-    }
-
-    private class AddNodeTask extends OperateTask {
-        @Override
-        public void init() {
-            // 为了避免节点启动前就已经断网，在启动任务前启动节点
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            ReplicaGroup randomGroup = db.getReplicaGroup( clGroupName );
-            String nodePath = SdbTestBase.reservedDir + "/data/" + randomPort;
-            Node newNode = randomGroup.createNode( randomHost, randomPort,
-                    nodePath, ( BSONObject ) null );
-            newNode.start();
-            db.close();
-        }
-
-        @Override
-        public void exec() throws Exception {
-            // 同步正在后台进行...
-        }
     }
 }

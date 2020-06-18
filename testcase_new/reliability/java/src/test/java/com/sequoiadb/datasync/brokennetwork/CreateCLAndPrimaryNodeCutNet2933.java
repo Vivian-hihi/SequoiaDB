@@ -22,6 +22,7 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import com.sequoiadb.datasync.CreateCLTask;
 
 import java.util.*;
 
@@ -82,7 +83,7 @@ public class CreateCLAndPrimaryNodeCutNet2933 extends SdbTestBase {
             FaultMakeTask faultTask = BrokenNetwork
                     .getFaultMakeTask( brokenNetHost, 3, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CreateCLTask dTask = new CreateCLTask();
+            CreateCLTask dTask = new CreateCLTask(preCLName, clGroupName, CL_NUM);
             mgr.addTask( dTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );
@@ -120,33 +121,6 @@ public class CreateCLAndPrimaryNodeCutNet2933 extends SdbTestBase {
         } finally {
             if ( sdb != null ) {
                 sdb.close();
-            }
-        }
-    }
-
-    private class CreateCLTask extends OperateTask {
-        @Override
-        public void exec() throws Exception {
-            try ( Sequoiadb db = new Sequoiadb( connectUrl, "", "" )) {
-                CollectionSpace commCS = db
-                        .getCollectionSpace( SdbTestBase.csName );
-                for ( int i = 0; i < CL_NUM; i++ ) {
-                    String clName = preCLName + "_" + i;
-                    BSONObject option = ( BSONObject ) JSON
-                            .parse( "{ ShardingKey: { a: 1 },"
-                                    + "ShardingType: 'hash', "
-                                    + "Partition: 2048, " + "ReplSize: 2, "
-                                    + "Compressed: true, "
-                                    + "CompressionType: 'lzw',"
-                                    + "IsMainCL: false, " + "AutoSplit: false, "
-                                    + "Group: '" + clGroupName + "', "
-                                    + "AutoIndexId: true, "
-                                    + "EnsureShardingIndex: true }" );
-                    commCS.createCollection( clName, option );
-                    count++;
-                }
-            } catch ( BaseException e ) {
-                System.out.println( "the create cl error i is =" + count );
             }
         }
     }
