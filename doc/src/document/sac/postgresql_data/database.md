@@ -42,5 +42,5 @@
 > **Note:**  
 > 系统表不能删除。
 
-![删除数据表](sac/data_operation/PostgreSQL/drop_table.png)
+![删除数据表](sac/postgresql_data/database_5.png)
 
