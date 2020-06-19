@@ -62,7 +62,7 @@ public:
    _mongoCursorMgr() {}
    virtual ~_mongoCursorMgr() {}
 
-   const mongoCursorInfo* find( INT64 cursorID ) ;
+   BOOLEAN find( INT64 cursorID, mongoCursorInfo& info ) ;
    INT32 insert( const mongoCursorInfo& info ) ;
    void remove( INT64 cursorID ) ;
 

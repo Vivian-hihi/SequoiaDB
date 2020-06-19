@@ -39,9 +39,9 @@
 
 namespace fap
 {
-   const mongoCursorInfo* _mongoCursorMgr::find( INT64 cursorID )
+   BOOLEAN _mongoCursorMgr::find( INT64 cursorID, mongoCursorInfo& info )
    {
-      const mongoCursorInfo *pInfo = NULL ;
+      BOOLEAN foundOut = FALSE ;
 
       if ( cursorID != MONGO_INVALID_CURSORID )
       {
@@ -50,11 +50,12 @@ namespace fap
          CURSOR_MAP::map_const_iterator itr = bucket.find( cursorID ) ;
          if ( itr != bucket.end() )
          {
-            pInfo = &((*itr).second) ;
+            info = (*itr).second ;
+            foundOut = TRUE ;
          }
       }
 
-      return pInfo ;
+      return foundOut ;
    }
 
    INT32 _mongoCursorMgr::insert( const mongoCursorInfo& info )

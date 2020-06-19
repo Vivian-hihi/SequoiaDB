@@ -63,6 +63,7 @@ struct mongoSessionCtx
 {
    MONGO_CLIENT_TYPE client ;
    BSONObj errorObj ;
+   BSONObj lastErrorObj ;
    string userName ;
    mongoAuthInfo authInfo ;
 
@@ -75,6 +76,19 @@ struct mongoSessionCtx
       builder.append( "errmsg", err ) ;
       builder.append( "code", errCode ) ;
       errorObj = builder.obj() ;
+   }
+
+   void resetError( const BSONObj &engineErr )
+   {
+      if ( !errorObj.isEmpty() )
+      {
+         lastErrorObj = errorObj.getOwned() ;
+         errorObj = BSONObj() ;
+      }
+      else
+      {
+         lastErrorObj = engineErr.getOwned() ;
+      }
    }
 
 } ;

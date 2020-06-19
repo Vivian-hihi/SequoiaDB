@@ -2187,6 +2187,37 @@ INT32 _mongoKillCursorCommand::init( const _mongoMessage *pMsg,
       _isInitialized = TRUE ;
       _initMsgType = MONGO_KILL_CURSORS_MSG ;
    }
+   else if ( MONGO_QUERY_MSG == pMsg->type() )
+   {
+      const _mongoQueryRequest* pReq = (_mongoQueryRequest*)pMsg ;
+      BSONObj arr ;
+      BSONObj obj( pReq->query() ) ;
+
+      // check command name
+      const CHAR* commandName = obj.firstElementFieldName() ;
+      SDB_ASSERT( 0 == ossStrcmp( commandName, name() ),
+                  "Invalid command name" ) ;
+
+      // get cursorID list
+      rc = getArrayElement( obj, FAP_MONGO_FIELD_NAME_CURSORS, arr ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s], rc: %d",
+                   FAP_MONGO_FIELD_NAME_CURSORS, rc ) ;
+      {
+         BSONObjIterator it( arr ) ;
+         while ( it.more() )
+         {
+            BSONElement ele = it.next() ;
+            PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                      "Invalid object[%s] in mongo %s request",
+                      obj.toString().c_str(), name() ) ;
+            _cursorList.push_back( ele.numberLong() ) ;
+         }
+      }
+
+      _isInitialized = TRUE ;
+      _initMsgType = MONGO_QUERY_MSG ;
+   }
    else if ( MONGO_COMMAND_MSG == pMsg->type() )
    {
       const _mongoCommandRequest* pReq = (_mongoCommandRequest*)pMsg ;
@@ -2239,6 +2270,13 @@ INT32 _mongoKillCursorCommand::buildSdbMsg( msgBuffer &sdbMsg,
    INT32 rc                = SDB_OK ;
    MsgOpKillContexts *kill = NULL ;
 
+   if ( _cursorList.size() > 1 )
+   {
+      rc = SDB_OPTION_NOT_SUPPORT ;
+      ctx.setError( rc, "Killing two or more cursors is not supported " ) ;
+      goto error ;
+   }
+
    sdbMsg.reserve( sizeof( MsgOpKillContexts ) ) ;
    sdbMsg.advance( sizeof( MsgOpKillContexts ) - sizeof( SINT64 ) ) ;
 
@@ -2262,7 +2300,10 @@ INT32 _mongoKillCursorCommand::buildSdbMsg( msgBuffer &sdbMsg,
 
    sdbMsg.doneLen() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoKillCursorCommand::buildReply( const MsgOpReply &sdbReply,
@@ -2275,6 +2316,18 @@ INT32 _mongoKillCursorCommand::buildReply( const MsgOpReply &sdbReply,
    {
       // do not reply
       headerBuf.usedSize = 0 ;
+   }
+   else if ( MONGO_QUERY_MSG == _initMsgType )
+   {
+      if ( SDB_OK == sdbReply.flags )
+      {
+         bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+      }
+      mongoResponse res ;
+      res.header.msgLen = sizeof( mongoResponse ) + bodyBuf.size() ;
+      res.header.responseTo = _requestID ;
+      res.nReturned = bodyBuf.recordNum() ;
+      headerBuf.setData( (const CHAR*)&res, sizeof( res ) ) ;
    }
    else if ( MONGO_COMMAND_MSG == _initMsgType )
    {
@@ -3977,7 +4030,7 @@ MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetLastErrorCommand)
 INT32 _mongoGetLastErrorCommand::init( const _mongoMessage *pMsg,
                                        mongoSessionCtx &ctx )
 {
-   _errorInfoObj = ctx.errorObj.getOwned() ;
+   _errorInfoObj = ctx.lastErrorObj.getOwned() ;
 
    return _mongoGlobalCommand::init( pMsg, ctx ) ;
 }

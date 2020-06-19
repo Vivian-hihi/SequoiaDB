@@ -165,7 +165,7 @@ INT32 _mongoSession::run()
 
       // convert mongo message to command
       _resetBuffers() ;
-      sessCtx.errorObj = _errorInfo ;
+      sessCtx.resetError( _errorInfo ) ;
 
       rc = mongoGetAndInitCommand( pMsg, &pCommand, sessCtx, _inBuffer ) ;
       if ( rc )
@@ -412,20 +412,36 @@ BOOLEAN _mongoSession::_isOwnedCursor( const _mongoCommand *pCommand,
 {
    BOOLEAN isOwned = TRUE ;
    ownedEDUID = eduID() ;
+   INT64 cursorID = MONGO_INVALID_CURSORID ;
+   _mongoCursorMgr* cursorMgr = getMongoCursorMgr() ;
 
    if ( CMD_GETMORE == pCommand->type() )
    {
-      _mongoCursorMgr* cursorMgr = getMongoCursorMgr() ;
-      INT64 cursorID = ((_mongoGetmoreCommand*)pCommand)->cursorID() ;
+      cursorID = ((_mongoGetmoreCommand*)pCommand)->cursorID() ;
+   }
+   else if ( CMD_KILL_CURSORS == pCommand->type() )
+   {
+      _mongoKillCursorCommand* killCmd = (_mongoKillCursorCommand*)pCommand ;
+      // 'cusror.close()' send only one cursor.
+      // 'db.runCommand( { killCursors: "bar", cursors: [1,2,...] } )' may send
+      // multiple cursors, but we DON'T support it yet.
+      if ( killCmd->cursorList().size() > 0 )
+      {
+         cursorID = killCmd->cursorList().front() ;
+      }
+   }
 
+   if ( cursorID != MONGO_INVALID_CURSORID )
+   {
       // First look up the cursor from local list. If nothing is found, then
       // look up from cursor mgr. The local list is to reduce access cursor mgr.
       if ( _cursorList.find( cursorID ) == _cursorList.end() )
       {
-         const mongoCursorInfo* pCursorInfo = cursorMgr->find( cursorID ) ;
-         if ( pCursorInfo )
+         mongoCursorInfo cursorInfo ;
+         BOOLEAN foundOut = cursorMgr->find( cursorID, cursorInfo ) ;
+         if ( foundOut )
          {
-            ownedEDUID = pCursorInfo->EDUID ;
+            ownedEDUID = cursorInfo.EDUID ;
             isOwned = FALSE ;
          }
       }
@@ -855,7 +871,7 @@ INT32 _mongoSession::_reply( _mongoCommand *pCommand, const CHAR* pMsg,
       _replyHeader.flags = errCode ;
    }
 
-   if ( pCommand )
+   if ( pCommand && pCommand->isInitialized() )
    {
       rc = mongoPostRunCommand( pCommand, _replyHeader,
                                 _contextBuff, headerBuf ) ;

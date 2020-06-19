@@ -84,6 +84,7 @@ class _mongoCommand : public SDBObject
       virtual const CHAR* csName() const = 0 ;
       virtual const CHAR* clFullName() const = 0 ;
 
+      virtual BOOLEAN isInitialized() const = 0 ;
 } ;
 typedef _mongoCommand mongoCommand ;
 
@@ -164,6 +165,7 @@ class _mongoGlobalCommand : public _mongoCommand
       virtual const CHAR* csName() const          { return NULL ; }
       virtual const CHAR* clFullName() const      { return NULL ; }
       virtual BOOLEAN needProcessByEngine() const { return FALSE ; }
+      virtual BOOLEAN isInitialized() const       { return _isInitialized ; }
 
    protected:
       INT32 _buildReplyCommon( const MsgOpReply &sdbReply,
@@ -192,6 +194,7 @@ class _mongoDatabaseCommand : public _mongoCommand
 
       virtual const CHAR* csName() const     { return _csName.c_str() ; }
       virtual const CHAR* clFullName() const { return NULL ; }
+      virtual BOOLEAN isInitialized() const  { return _isInitialized ; }
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
 
@@ -228,6 +231,7 @@ class _mongoCollectionCommand : public _mongoCommand
       virtual const CHAR* csName() const { return _csName.c_str() ; }
       virtual const CHAR* clFullName() const { return _clFullName.c_str() ; }
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+      virtual BOOLEAN isInitialized() const       { return _isInitialized ; }
 
       virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
 
@@ -334,6 +338,7 @@ class _mongoQueryCommand : public _mongoCommand
       virtual const CHAR* csName() const          { return _csName.c_str() ; }
       virtual const CHAR* clFullName() const      { return _clFullName.c_str() ; }
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+      virtual BOOLEAN isInitialized() const       { return _isInitialized ; }
 
    private:
       BSONObj _getQueryObj( const BSONObj &obj ) ;
@@ -400,6 +405,7 @@ class _mongoGetmoreCommand : public _mongoCommand
       virtual const CHAR* clFullName() const { return _clFullName.c_str() ; }
 
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+      virtual BOOLEAN isInitialized() const       { return _isInitialized ; }
 
       INT64 cursorID() const { return _cursorID ; }
 
@@ -457,6 +463,7 @@ class _mongoKillCursorCommand : public _mongoCommand
       virtual const CHAR* csName() const          { return NULL ; }
       virtual const CHAR* clFullName() const      { return NULL ; }
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+      virtual BOOLEAN isInitialized() const       { return _isInitialized ; }
       const vector<INT64>& cursorList() const     { return _cursorList ; }
 
    private:
