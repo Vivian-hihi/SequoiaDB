@@ -87,7 +87,8 @@ private:
    INT32 _autoCreateCS( const CHAR *csName ) ;
    INT32 _autoCreateCL( const CHAR *clFullName ) ;
    BOOLEAN _isOwnedCursor( const _mongoCommand *pCommand,
-                           UINT64 &ownedEDUID ) ;
+                           UINT64 &ownedEDUID,
+                           BOOLEAN &needAuth ) ;
    INT32 _manageCursor( const _mongoCommand *pCommand,
                         const MsgOpReply &sdbReply ) ;
 
@@ -103,6 +104,8 @@ private:
 
    std::set<INT64>         _cursorList ;
    BOOLEAN                 _needWaitResponse ;
+
+   BOOLEAN                 _isAuthed ;
 } ;
 
 typedef _mongoSession mongoSession ;

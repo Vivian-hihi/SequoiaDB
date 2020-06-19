@@ -103,7 +103,7 @@ static void buildGetMoreMsg( UINT64 requestID, INT64 contextID, msgBuffer &out )
 
 _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
    : engine::pmdSession( fd ), _masterRead( FALSE ),
-     _resource( resource ), _needWaitResponse( FALSE )
+     _resource( resource ), _needWaitResponse( FALSE ), _isAuthed( FALSE )
 {
 }
 
@@ -182,14 +182,21 @@ INT32 _mongoSession::run()
          // receive message from socket, check this operation is owned by
          // current session or not
          UINT64 ownedEDUID = 0 ;
-         BOOLEAN isOwned = _isOwnedCursor( pCommand, ownedEDUID ) ;
+         BOOLEAN needAuth = FALSE ;
+         BOOLEAN isOwned = _isOwnedCursor( pCommand, ownedEDUID, needAuth ) ;
          if ( isOwned )
          {
+            // It is owned by current session, then process it
             if ( pCommand->needProcessByEngine() )
             {
                rc = _processMsg( _inBuffer.data(), pCommand ) ;
 
                _manageCursor( pCommand, _replyHeader ) ;
+
+               if ( CMD_SASL_CONTINUE == pCommand->type() && SDB_OK == rc )
+               {
+                  _isAuthed = TRUE ;
+               }
             }
 
             rc = _reply( pCommand ) ;
@@ -199,9 +206,22 @@ INT32 _mongoSession::run()
          }
          else
          {
+            // It is NOT owned by current session, then check authenticate and
             // post event to the thread which owned this cursor
             INT32 msgLen = ((mongoMsgHeader*)pMsg)->msgLen ;
             CHAR* pReq = NULL ;
+
+            if ( needAuth && !_isAuthed )
+            {
+               rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+               PD_LOG( PDERROR, "Not authorized to execute %s command, rc: %d",
+                       pCommand->name(), rc ) ;
+               rc = _reply( pCommand, pMsg, rc, BSONObj() ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Session[%s] failed to reply, rc: %d",
+                            sessionName(), rc ) ;
+               continue ;
+            }
 
             pmdEDUCB *cb = eduMgr->getEDUByID( ownedEDUID ) ;
             PD_CHECK( cb, SDB_SYS, error, PDERROR,
@@ -408,7 +428,8 @@ error:
 }
 
 BOOLEAN _mongoSession::_isOwnedCursor( const _mongoCommand *pCommand,
-                                       UINT64 &ownedEDUID )
+                                       UINT64 &ownedEDUID,
+                                       BOOLEAN &needAuth )
 {
    BOOLEAN isOwned = TRUE ;
    ownedEDUID = eduID() ;
@@ -442,6 +463,7 @@ BOOLEAN _mongoSession::_isOwnedCursor( const _mongoCommand *pCommand,
          if ( foundOut )
          {
             ownedEDUID = cursorInfo.EDUID ;
+            needAuth = cursorInfo.needAuth ;
             isOwned = FALSE ;
          }
       }
@@ -472,6 +494,7 @@ INT32 _mongoSession::_manageCursor( const _mongoCommand *pCommand,
             mongoCursorInfo cursorInfo ;
             cursorInfo.cursorID = cursorID ;
             cursorInfo.EDUID = eduID() ;
+            cursorInfo.needAuth = _isAuthed ;
             rc = cursorMgr->insert( cursorInfo ) ;
          }
          break ;

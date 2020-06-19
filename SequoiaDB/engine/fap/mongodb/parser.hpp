@@ -170,6 +170,8 @@ public:
    std::string fullName ;
    bson::BSONObj all ;
    bson::BSONObj fieldToReturn ;
+   std::string userName ;
+   std::string password ;
 
    mongoDataPacket() : optionMask(0), msgLen(0), requestId(0), responseTo(0),
                        opCode(0), flags(0), version(0), reservedInt(0),
@@ -199,6 +201,7 @@ public:
       fullName.clear() ;
       all = empty ;
       fieldToReturn = empty ;
+      // DON'T clear userName and password
    }
 
 private:

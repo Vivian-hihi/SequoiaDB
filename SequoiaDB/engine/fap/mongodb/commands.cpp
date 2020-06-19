@@ -842,6 +842,9 @@ INT32 authenticateCommand::buildMsg( msgParser &parser,  msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
+   packet.userName = pUsername ;
+   packet.password = pKey ;
+
    return rc ;
 }
 
@@ -955,6 +958,7 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    INT32 rc                = SDB_OK ;
    MsgAuthDelUsr *auth     = NULL ;
    mongoDataPacket &packet = parser.dataPacket() ;
+   const CHAR* pUserName   = NULL ;
 
    parser.setCurrentOp( OP_CMD_DELUSER ) ;
    sdbMsg.reverse( sizeof( MsgAuthDelUsr ) ) ;
@@ -971,7 +975,6 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       parser.readInt( sizeof( INT32 ), (CHAR *)&removeFlags ) ;
    }
 
-   bson::BSONObj obj ;
    if ( packet.with( OPTION_CMD ) && packet.with( OPTION_USR ) )
    {
       bson::BSONElement e = packet.all.getField( "deletes" ) ;
@@ -992,11 +995,11 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          cond = subObj.getObjectField( "q" ) ;
          break ;
       }
-      obj = BSON( SDB_AUTH_USER << cond.getStringField( "user" ) ) ;
+      pUserName = cond.getStringField( "user" ) ;
    }
    else if ( packet.with( OPTION_CMD ) )
    {
-      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "dropUser" ) ) ;
+      pUserName = packet.all.getStringField( "dropUser" ) ;
    }
    else
    {
@@ -1008,9 +1011,20 @@ INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
       parser.readNextObj( packet.all ) ;
 
-      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) ) ;
+      pUserName = packet.all.getStringField( "user" ) ;
    }
-   sdbMsg.write( obj, TRUE ) ;
+
+   if ( 0 != ossStrcmp( pUserName, packet.userName.c_str() ) )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG( PDERROR,
+              "Can not drop user[%s], only current user[%s] can be dropped",
+              pUserName, packet.userName.c_str() ) ;
+      goto error ;
+   }
+
+   sdbMsg.write( BSON( SDB_AUTH_USER << pUserName <<
+                       SDB_AUTH_PASSWD << packet.password.c_str() ), TRUE ) ;
    sdbMsg.doneLen() ;
 
 done:
