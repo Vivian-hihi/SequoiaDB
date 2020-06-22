@@ -96,8 +96,8 @@ public class Aggregate21930 extends MongodbTestBase {
             DBObject exp = list.get( k );
             Assert.assertEquals( act,
                     new BasicDBObject( "a", exp.get( "a" ) )
-                            .append( "d", exp.get( "d" ) ).append( "_id",
-                                    exp.get( "_id" ) ) );
+                            .append( "d", exp.get( "d" ) )
+                            .append( "_id", exp.get( "_id" ) ) );
             k++;
         }
         Assert.assertEquals( k, num );
@@ -119,54 +119,43 @@ public class Aggregate21930 extends MongodbTestBase {
         }
         Assert.assertEquals( k, num );
 
-        // （3）排除普通字段 TODO:SEQUOIADBMAINSTREAM-5813
-        // aggList = new ArrayList<>();
-        // aggList.add( new BasicDBObject( "$match",
-        // QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
-        // aggList.add( new BasicDBObject( "$project",
-        // new BasicBSONObject( "a", 0 ) ) );
-        // actResult = cl.aggregate( aggList ).results().iterator();
-        // k = 0;
-        // while ( actResult.hasNext() ) {
-        // DBObject act = actResult.next();
-        // DBObject exp = list.get( k );
-        // Assert.assertEquals( act,
-        // new BasicDBObject( "_id", exp.get( "_id" ) )
-        // .append( "b",exp.get( "b" ))
-        // .append( "c",exp.get( "c" ) )
-        // .append( "d",exp.get( "d" ) ) );
-        // k++;
-        // }
-        // Assert.assertEquals( k, num );
+        // （3）排除普通字段
 
-        // （4）排除_id字段
-        aggList = new ArrayList<>();
-        aggList.add( new BasicDBObject( "$match",
-                QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
-        aggList.add( new BasicDBObject( "$project",
-                new BasicBSONObject( "_id", 0 ) ) );
-        actResult = cl.aggregate( aggList ).results().iterator();
-        k = 0;
-        while ( actResult.hasNext() ) {
-            DBObject act = actResult.next();
-            DBObject exp = list.get( k );
-            Assert.assertEquals( act, new BasicBSONObject( "a", exp.get( "a" ) )
-                    .append( "b", exp.get( "b" ) ).append( "c", exp.get( "c" ) )
-                    .append( "d", exp.get( "d" ) )
-                    .append( "_id", exp.get( "_id" ) ) );
-            k++;
+        try {
+            aggList = new ArrayList<>();
+            aggList.add( new BasicDBObject( "$match",
+                    QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
+            aggList.add( new BasicDBObject( "$project",
+                    new BasicBSONObject( "a", 0 ) ) );
+            actResult = cl.aggregate( aggList ).results().iterator();
+            actResult = cl.aggregate( aggList ).results().iterator();
+            Assert.fail( "expect failed but act success!!!" );
+        } catch ( CommandFailureException e ) {
+            if ( e.getErrorCode() != -32 ) {
+                throw e;
+            }
         }
-        Assert.assertEquals( k, num );
-
+        // （4）排除_id字段
+        try {
+            aggList = new ArrayList<>();
+            aggList.add( new BasicDBObject( "$match",
+                    QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
+            aggList.add( new BasicDBObject( "$project",
+                    new BasicBSONObject( "_id", 0 ) ) );
+            actResult = cl.aggregate( aggList ).results().iterator();
+            Assert.fail( "expect failed but act success!!!" );
+        } catch ( CommandFailureException e ) {
+            if ( e.getErrorCode() != -32 ) {
+                throw e;
+            }
+        }
         // （5）选择普通字段和排除_id
         aggList = new ArrayList<>();
         aggList.add( new BasicDBObject( "$match",
                 QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
-        aggList.add(
-                new BasicDBObject( "$project",
-                        new BasicBSONObject( "_id", 0 ).append( "a", 1 )
-                                .append( "b", 1 ).append( "c", 1 ).append( "d",
-                                        1 ) ) );
+        aggList.add( new BasicDBObject( "$project",
+                new BasicBSONObject( "_id", 0 ).append( "a", 1 )
+                        .append( "b", 1 ).append( "c", 1 ).append( "d", 1 ) ) );
         actResult = cl.aggregate( aggList ).results().iterator();
         k = 0;
         while ( actResult.hasNext() ) {
@@ -179,24 +168,19 @@ public class Aggregate21930 extends MongodbTestBase {
         }
         Assert.assertEquals( k, num );
 
-        // （6）排除普通字段和排除_id TODO:SEQUOIADBMAINSTREAM-5813
-        // aggList = new ArrayList<>();
-        // aggList.add( new BasicDBObject( "$match",
-        // QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
-        // aggList.add(
-        // new BasicDBObject( "$project",
-        // new BasicBSONObject( "_id", 0 ).append( "a", 0 ) ) );
-        // actResult = cl.aggregate( aggList ).results().iterator();
-        // k = 0;
-        // while ( actResult.hasNext() ) {
-        // DBObject act = actResult.next();
-        // DBObject exp = list.get( k );
-        // Assert.assertEquals( act, new BasicBSONObject( "b", exp.get( "b" ) )
-        // .append( "c", exp.get( "c" ) )
-        // .append( "d", exp.get( "d" ) ) );
-        // k++;
-        // }
-        // Assert.assertEquals( k, num );
+        // （6）排除普通字段和排除_id
+        try {
+            aggList = new ArrayList<>();
+            aggList.add( new BasicDBObject( "$match",
+                    QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
+            aggList.add( new BasicDBObject( "$project",
+                    new BasicBSONObject( "_id", 0 ).append( "a", 0 ) ) );
+            actResult = cl.aggregate( aggList ).results().iterator();
+        } catch ( CommandFailureException e ) {
+            if ( e.getErrorCode() != -32 ) {
+                throw e;
+            }
+        }
 
         // （7）选择_id字段和选择普通字段
         aggList = new ArrayList<>();
@@ -221,11 +205,9 @@ public class Aggregate21930 extends MongodbTestBase {
         aggList = new ArrayList<>();
         aggList.add( new BasicDBObject( "$match",
                 QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
-        aggList.add(
-                new BasicDBObject( "$project",
-                        new BasicBSONObject( "_id", 1 ).append( "a", 1 )
-                                .append( "b", 1 ).append( "c", 1 ).append( "d",
-                                        1 ) ) );
+        aggList.add( new BasicDBObject( "$project",
+                new BasicBSONObject( "_id", 1 ).append( "a", 1 )
+                        .append( "b", 1 ).append( "c", 1 ).append( "d", 1 ) ) );
         aggList.add(
                 new BasicDBObject( "$sort", new BasicDBObject( "a", -1 ) ) );
         aggList.add( new BasicDBObject( "$skip", 1 ) );

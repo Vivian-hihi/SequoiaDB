@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.testng.Assert;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
@@ -32,6 +33,7 @@ import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
+import static com.mongodb.client.model.Projections.exclude;
 
 /**
  * @Description seqDB-21930:aggregate操作
@@ -102,32 +104,41 @@ public class Aggregate21930 extends MongodbTestBase {
                 .into( new ArrayList() );
         checkSelectResults( actResult, list, new String[] { "_id" } );
 
-
         // （4）排除_id字段
-        actResult = ( List< Document > ) cl
-                .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
-                        Aggregates.project( excludeId() ),
-                        Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                .into( new ArrayList() );
+        try {
+            actResult = ( List< Document > ) cl
+                    .aggregate(
+                            Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
+                                    Aggregates.project( excludeId() ),
+                                    Aggregates
+                                            .sort( Sorts.ascending( "a" ) ) ) )
+                    .into( new ArrayList() );
+            Assert.fail( "expect failed but act success!!!" );
+        } catch ( MongoCommandException e ) {
+            if ( e.getErrorCode() != -32 ) {
+                throw e;
+            }
+        }
         // sequoiadb和mongodb返回的结果不一致
         // Sequoiadb: [Document{{_id=5e9420a8cc4da963bc509c1c, a=0, b=0, c=[1,2,
         // 3], d=0}}
         // Mongodb：[Document{{a=0, b=0, c=[1, 2, 3], d=0}},
         // 跟开发确认不改
-        checkSelectResults( actResult, list,
-                new String[] { "_id", "a", "b", "c", "d" } );
 
         // （3）排除其它普通字段
-        // TODO：SEQUOIADBMAINSTREAM-5813
-        // actResult = ( List< Document > ) cl
-        // .aggregate(
-        // Arrays.asList( Aggregates.match( gte( "a", num / 2 ) ),
-        // Aggregates.project( exclude( "a", "b" ) ),
-        // Aggregates.sort( Sorts.ascending( "d" ) ) ) )
-        // .into( new ArrayList() );
-        // Assert.assertEquals( actResult.size(), num / 2 );
-        // checkSelectResults( actResult, list.subList( num / 2, num ),
-        // new String[] { "_id", "c", "d" } );
+        try {
+            actResult = ( List< Document > ) cl
+                    .aggregate( Arrays.asList(
+                            Aggregates.match( gte( "a", num / 2 ) ),
+                            Aggregates.project( exclude( "a", "b" ) ),
+                            Aggregates.sort( Sorts.ascending( "d" ) ) ) )
+                    .into( new ArrayList() );
+            Assert.fail( "expect failed but act success!!!" );
+        } catch ( MongoCommandException e ) {
+            if ( e.getErrorCode() != -32 ) {
+                throw e;
+            }
+        }
 
         // （5）选择普通字段和排除_id
         actResult = ( List< Document > ) cl
@@ -141,30 +152,31 @@ public class Aggregate21930 extends MongodbTestBase {
         checkSelectResults( actResult, list.subList( num / 2, num ),
                 new String[] { "a" } );
 
-        // （6）排除普通字段和排除_id
-        // TODO: SEQUOIADBMAINSTREAM-5813
-        // 返回了所有字段
-        // actResult = ( List< Document > ) cl
-        // .aggregate(
-        // Arrays.asList( Aggregates.match( gte( "a", num / 2 ) ),
-        // Aggregates.project( fields( exclude( "a", "b" ),
-        // excludeId() ) ),
-        // Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-        // .into( new ArrayList() );
-        // Assert.assertEquals( actResult.size(), num / 2 );
-        // System.out.println( "actResult = " + actResult.toString() );
-        // checkSelectResults( actResult, list.subList( num / 2, num ),
-        // new String[] { "c", "d" } );
-
+        // // （6）排除普通字段和排除_id
+        try {
+            actResult = ( List< Document > ) cl
+                    .aggregate( Arrays.asList(
+                            Aggregates.match( gte( "a", num / 2 ) ),
+                            Aggregates.project( fields( exclude( "a", "b" ),
+                                    excludeId() ) ),
+                            Aggregates.sort( Sorts.ascending( "a" ) ) ) )
+                    .into( new ArrayList() );
+            Assert.fail( "expect failed but act success!!!" );
+        } catch ( MongoCommandException e ) {
+            if ( e.getErrorCode() != -32 ) {
+                throw e;
+            }
+        }
         // （7）选择_id字段和选择普通字段
         actResult = ( List< Document > ) cl
                 .aggregate(
                         Arrays.asList( Aggregates.match( gte( "a", num / 2 ) ),
-                                Aggregates.project( fields( include( "_id","a","b" ) ) ),
+                                Aggregates.project(
+                                        fields( include( "_id", "a", "b" ) ) ),
                                 Aggregates.sort( Sorts.ascending( "a" ) ) ) )
                 .into( new ArrayList() );
         checkSelectResults( actResult, list.subList( num / 2, num ),
-                new String[] { "_id","a","b" } );
+                new String[] { "_id", "a", "b" } );
 
         // 带匹配符+选择符+sort+skip+limit
         actResult = ( List< Document > ) cl
@@ -305,16 +317,12 @@ public class Aggregate21930 extends MongodbTestBase {
         }
 
         // gte group first
-        System.out
-                .println(
-                        "agg = " + Arrays
-                                .asList( Aggregates.match( gte( "a", -1 ) ),
-                                        Aggregates.group( "$b",
-                                                Accumulators.first( "first_d",
-                                                        "$d" ) ),
-                                        Aggregates.sort(
-                                                Sorts.ascending( "first_d" ) ) )
-                                .toString() );
+        System.out.println( "agg = " + Arrays
+                .asList( Aggregates.match( gte( "a", -1 ) ),
+                        Aggregates.group( "$b",
+                                Accumulators.first( "first_d", "$d" ) ),
+                        Aggregates.sort( Sorts.ascending( "first_d" ) ) )
+                .toString() );
         actResult = ( List< Document > ) cl
                 .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
                         Aggregates.group( "$b",
