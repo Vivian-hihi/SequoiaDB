@@ -11,6 +11,8 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
+import org.testng.ITestResult;
+import org.testng.Reporter;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -59,7 +61,7 @@ public class CommLib {
      * @return dataGroupNames
      */
     public static ArrayList< String > getDataGroupNames( Sequoiadb sdb ) {
-        ArrayList< String > dataGroupNames = new ArrayList< >();
+        ArrayList< String > dataGroupNames = new ArrayList<>();
         try {
             dataGroupNames = sdb.getReplicaGroupNames();
             dataGroupNames.remove( "SYSCatalogGroup" );
@@ -80,7 +82,7 @@ public class CommLib {
      */
     public static List< String > getNodeAddress( Sequoiadb sdb,
             String rgName ) {
-        List< String > nodeAddrs = new ArrayList< >();
+        List< String > nodeAddrs = new ArrayList<>();
         try {
             ReplicaGroup tmpArray = sdb.getReplicaGroup( rgName );
             BasicBSONObject doc = ( BasicBSONObject ) tmpArray.getDetail();
@@ -110,7 +112,7 @@ public class CommLib {
      * @return csInfoOfCata
      */
     public static ArrayList< BSONObject > getCSInfoOfCatalog( Sequoiadb sdb ) {
-        ArrayList< BSONObject > csInfoOfCata = new ArrayList< >();
+        ArrayList< BSONObject > csInfoOfCata = new ArrayList<>();
         Sequoiadb cataDB = null;
         try {
             String nodeName = sdb.getReplicaGroup( "SYSCATALOG" ).getMaster()
@@ -239,7 +241,7 @@ public class CommLib {
                 int maxCnt = 20;
                 boolean checkSucc = false;
                 do {
-                    ArrayList< String > allNodeData = new ArrayList< String >();
+                    ArrayList< String > allNodeData = new ArrayList<>();
 
                     for ( int j = 0; j < nodeAddrs.size(); j++ ) {
                         Sequoiadb dataDB = new Sequoiadb( nodeAddrs.get( j ),
@@ -247,7 +249,7 @@ public class CommLib {
                         DBCursor cursor = dataDB.listCollections();
 
                         // get the data for each node
-                        ArrayList< BSONObject > oneNodeData = new ArrayList< BSONObject >();
+                        ArrayList< BSONObject > oneNodeData = new ArrayList<>();
                         while ( cursor.hasNext() ) {
                             BSONObject clList = cursor.getNext();
                             if ( clList.get( "Name" ).toString()
@@ -345,7 +347,7 @@ public class CommLib {
                     int maxCnt = 8;
                     boolean checkSucc = false;
                     do {
-                        ArrayList< String > allNodeData = new ArrayList< String >();
+                        ArrayList< String > allNodeData = new ArrayList<>();
                         for ( int j = 0; j < nodeAddrs.size(); j++ ) {
                             Sequoiadb dataDB = new Sequoiadb(
                                     nodeAddrs.get( j ), "", "" );
@@ -355,7 +357,7 @@ public class CommLib {
                                     .getCollectionSpace( tmpCSName )
                                     .getCollection( tmpCLName ).getIndexes();
                             // get the data for each node
-                            ArrayList< BSONObject > oneNodeData = new ArrayList< BSONObject >();
+                            ArrayList< BSONObject > oneNodeData = new ArrayList<>();
                             while ( cur.hasNext() ) {
                                 BSONObject idxList = cur.getNext();
                                 oneNodeData.add( idxList );
@@ -524,7 +526,7 @@ public class CommLib {
             int maxCnt = 15;
             boolean checkSucc = false;
             do {
-                ArrayList< String > allNodeData = new ArrayList< String >();
+                ArrayList< String > allNodeData = new ArrayList<>();
 
                 for ( int i = 0; i < nodeAdrrs.size(); ++i ) {
                     dataDB = new Sequoiadb( nodeAdrrs.get( i ), "", "" );
@@ -533,7 +535,7 @@ public class CommLib {
                     DBCursor cursor = clDB.query( matcher, null, null, null );
 
                     // get the data for each node
-                    ArrayList< BSONObject > oneNodeData = new ArrayList< BSONObject >();
+                    ArrayList< BSONObject > oneNodeData = new ArrayList<>();
                     while ( cursor.hasNext() ) {
                         BSONObject csInfo = cursor.getNext();
                         oneNodeData.add( csInfo );
@@ -748,7 +750,7 @@ public class CommLib {
      * @Date 2018-11-15
      */
     public static List< String > getCLGroups( DBCollection cl ) {
-        List< String > groupNames = new ArrayList< >();
+        List< String > groupNames = new ArrayList<>();
         Sequoiadb db = cl.getSequoiadb();
         if ( CommLib.isStandAlone( db ) ) {
             return groupNames;
@@ -768,7 +770,7 @@ public class CommLib {
         }
 
         // groupNames元素去重
-        HashSet< String > uniqueSet = new HashSet< String >( groupNames );
+        HashSet< String > uniqueSet = new HashSet<>( groupNames );
         groupNames.clear();
         groupNames.addAll( uniqueSet );
 
@@ -810,7 +812,7 @@ public class CommLib {
      * @return List
      */
     public static List< String > getAllCoordUrls( Sequoiadb db ) {
-        List< String > coordUrls = new ArrayList< >();
+        List< String > coordUrls = new ArrayList<>();
         DBCursor snapshot = db.getSnapshot( Sequoiadb.SDB_SNAP_HEALTH,
                 "{Role: 'coord'}", "{'NodeName': 1}", null );
         while ( snapshot.hasNext() ) {
@@ -835,6 +837,11 @@ public class CommLib {
         List< String > coordUrls = SdbTestBase.coordUrls;
         String coord = coordUrls
                 .get( new Random().nextInt( coordUrls.size() ) );
+
+        // 获取用例名
+        ITestResult testClassName = Reporter.getCurrentTestResult();
+        System.out.println(
+                testClassName.getTestClass().getName() + " coord:" + coord );
         return new Sequoiadb( coord, "", "" );
     }
 }
