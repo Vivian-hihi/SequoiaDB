@@ -2769,6 +2769,14 @@
             <cn>鉴权模式不兼容</cn>
          </description>
       </code>
+      
+      <code>
+         <name>SDB_DMS_UNQIUEID_UPGRADE</name>
+         <description>
+            <en>Upgrade for unique id is not finished</en>
+            <cn>UniqueID还未升级完成</cn>
+         </description>
+      </code>
 
       <code>
          <name>SDB_COORD_UPDATE_MULTI_NODES</name>
