@@ -25,7 +25,7 @@
         </spring-data-mongodb.version>
         <spring-data-commons.version>1.7.2.RELEASE
         </spring-data-commons.version>
-        <mongo-java-driver.version>2.14.2</mongo-java-driver.version>
+        <mongo-java-driver.version>${mongo-java-driver}</mongo-java-driver.version>
         <lombok.version>1.16.18</lombok.version>
         <aopalliance.version>1.0</aopalliance.version>
 
@@ -252,7 +252,7 @@
                 <configuration>
                     <reportsDirectory>${reportDir}</reportsDirectory>
                     <suiteXmlFiles>
-                        <file></file>
+                        <file>${xmlFileName}</file>
                     </suiteXmlFiles>
                     <forkMode>pertest</forkMode>
                     <argLine>-Xms1024m -Xmx1024m -Xss1m</argLine>

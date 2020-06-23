@@ -26,7 +26,7 @@
         </spring-data-mongodb.version>
         <spring-data-commons.version>1.13.10.RELEASE
         </spring-data-commons.version>
-        <mongo-java-driver.version>3.4.3</mongo-java-driver.version>
+        <mongo-java-driver.version>${mongo-java-driver}</mongo-java-driver.version>
         <lombok.version>1.16.18</lombok.version>
 
         <!-- jars properties -->
