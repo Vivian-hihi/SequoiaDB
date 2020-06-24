@@ -5,14 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.sequoiadb</groupId>
-    <artifactId>mongodb3test</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>fap3-java-mongo3</artifactId>
     <version>1.0-SNAPSHOT</version>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <jars.dir>${basedir}/jars-3</jars.dir>
+        <jars.dir>${basedir}/jars</jars.dir>
 
         <log4j.version>1.2.16</log4j.version>
         <org.slf4j.version>1.7.1</org.slf4j.version>

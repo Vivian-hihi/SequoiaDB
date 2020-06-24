@@ -8,11 +8,19 @@
         <listener class-name="com.mongodb.utils.TimePrinterListener"/>
     </listeners>
 
-    <test name="normaltest" parallel="classes" thread-count="1">
+    <test name="javatest" parallel="classes" thread-count="5">
 
         <packages>
-            <package name="com.mongodb.javatestv2"/>
-            <package name="com.mongodb.springtest"/>
+            <package name="com.mongodb.java"/>
+            <package name="com.mongodb.java.concurrent"/>
+        </packages>
+
+    </test>
+
+    <test name="springtest" parallel="classes" thread-count="5">
+
+        <packages>
+            <package name="com.mongodb.springdata"/>
         </packages>
 
     </test>
