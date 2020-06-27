@@ -44,12 +44,51 @@ using namespace bson ;
 
 namespace engine
 {
+   class _rtnDMSWritableAssist : public SDBObject
+   {
+   public:
+      _rtnDMSWritableAssist( _pmdEDUCB *cb )
+      {
+         _cb = cb ;
+         _isWriteDMS = FALSE ;
+      }
+
+      ~_rtnDMSWritableAssist()
+      {
+         if ( _isWriteDMS )
+         {
+            sdbGetDMSCB()->writeDown( _cb ) ;
+            _isWriteDMS = FALSE ;
+         }
+      }
+
+   public:
+      INT32 writable()
+      {
+         SDB_ASSERT( FALSE == _isWriteDMS, "WriteDMS must be FALSE" ) ;
+         INT32 rc = SDB_OK ;
+         _SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+
+         rc = dmsCB->writable( _cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+         _isWriteDMS= TRUE ;
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+      }
+
+   private:
+      BOOLEAN _isWriteDMS ;
+      _pmdEDUCB *_cb ;
+   } ;
+
    _rtnLocalLobStream::_rtnLocalLobStream()
    :_mbContext( NULL ),
     _su( NULL ),
     _dmsCB( NULL ),
     _accessInfo( NULL ),
-    _writeDMS( FALSE ),
     _hasLobPrivilege( FALSE )
    {
    }
@@ -78,11 +117,6 @@ namespace engine
          sdbGetDMSCB()->suUnlock ( _su->CSID() ) ;
          _su = NULL ;
       }
-      if ( _writeDMS )
-      {
-         _dmsCB->writeDown( cb ) ;
-         _writeDMS = FALSE ;
-      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__PREPARE, "_rtnLocalLobStream::_prepare" )
@@ -93,16 +127,12 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *clName = NULL ;
       _dmsCB = sdbGetDMSCB() ;
+      _rtnDMSWritableAssist dmsAssist( cb ) ;
 
       if ( !SDB_IS_LOBREADONLY_MODE( mode() ))
       {
-         rc = _dmsCB->writable( cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Database is not writable, rc = %d", rc ) ;
-            goto error ;
-         }
-         _writeDMS = TRUE ;
+         rc = dmsAssist.writable() ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       }
 
       rc = rtnResolveCollectionNameAndLock( getFullName(), _dmsCB,
@@ -488,17 +518,28 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
+      _rtnDMSWritableAssist dmsAssist( cb ) ;
       if ( SDB_LOB_MODE_CREATEONLY == _getMode() )
       {
+         rc = dmsAssist.writable() ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+
          rc = _write( tuple, cb ) ;
       }
       else if ( SDB_HAS_LOBWRITE_MODE(_getMode())
                 || SDB_LOB_MODE_TRUNCATE == _getMode() )
       {
+         rc = dmsAssist.writable() ;
+         PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+
          rc = _update( tuple, cb ) ;
       }
+
+   done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__COMPLETELOB, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnLocalLobStream::_getLobPageSize( INT32 &pageSize )
@@ -515,6 +556,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITE ) ;
       _dmsLobRecord record ;
+      _rtnDMSWritableAssist assist( cb ) ;
+
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
 
       record.set( &getOID(),
                   tuple.tuple.columns.sequence,
@@ -554,6 +599,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITEV ) ;
+      _rtnDMSWritableAssist assist( cb ) ;
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
 
       for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
             itr != tuples.end() ;
@@ -591,6 +639,10 @@ namespace engine
       dmsLobRecord record ;
       const MsgLobTuple &t = tuple.tuple ;
       CHAR* buf = NULL ;
+      _rtnDMSWritableAssist assist( cb ) ;
+
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
 
       record.set( &getOID(), t.columns.sequence, t.columns.offset,
                   t.columns.len, ( const CHAR * )tuple.data ) ;
@@ -726,6 +778,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__UPDATEV ) ;
 
+      _rtnDMSWritableAssist assist( cb ) ;
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+
       for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
             itr != tuples.end() ;
             ++itr )
@@ -857,7 +913,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ROLLBACK ) ;
       dmsLobRecord piece ;
+      _rtnDMSWritableAssist assist( cb ) ;
       INT32 num = _getSequence( curOffset() ) ;
+
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
 
       while ( 0 < num )
       {
@@ -890,8 +950,13 @@ namespace engine
    INT32 _rtnLocalLobStream::_queryAndInvalidateMetaData( _pmdEDUCB *cb,
                                                           _dmsLobMeta &meta )
    {
-      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__QUERYANDINVALIDATEMETADATA ) ;
+      INT32 rc = SDB_OK ;
+      _rtnDMSWritableAssist assist( cb ) ;
+
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+
       rc = rtnQueryAndInvalidateLob( getFullName(), getOID(),
                                      cb, 1, _getDPSCB(), meta,
                                      NULL, NULL, TRUE ) ;
@@ -1018,6 +1083,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__REMOVEV ) ;
       dmsLobRecord record ;
+      _rtnDMSWritableAssist assist( cb ) ;
+
+      rc = assist.writable() ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
 
       for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
             itr != tuples.end() ;
