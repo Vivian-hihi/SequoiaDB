@@ -21,6 +21,7 @@ Import("sm_lib_dir")
 Import("fuse_lib_dir")
 Import("usemdocml")
 Import("usefuse")
+Import("intel_decimal_lib_dir")
 
 
 ERROR = 1
@@ -204,7 +205,7 @@ class CompilerBase:
             if not os.path.exists(lib_path):
                 print_msg(INFO, "Library {} does not exist".format(lib_path))
                 return True
-
+                
         libs = sorted(libs,
                       key=lambda x: os.path.getmtime(os.path.join(arch_dir, x)),
                       reverse=True)
@@ -583,15 +584,45 @@ class FuseCompiler(CompilerBase):
         shutil.copy(os.path.join(self.src_root, 'lib/.libs/libfuse.a'),
                     self._get_lib_archive_dir())
 
+class IntelDecimalLibCompiler(CompilerBase):
+    def __init__(self, src_root):
+        CompilerBase.__init__(self, "intelDecimal", src_root)
+
+    def _get_lib_archive_dir(self):
+        return intel_decimal_lib_dir
+        
+    def _init_linux_cmds(self, arch):
+        self.append_cmd('cd LIBRARY && make clean') 
+        if debugBuild:
+           linux_debug_compile_args = "CC=gcc CFLAGS='-fPIC -g' CALL_BY_REF=0 GLOBAL_RND=0 GLOBAL_FLAGS=0 UNCHANGED_BINARY_FLAGS=0"
+           self.append_cmd('cd LIBRARY && make ' + linux_debug_compile_args) 
+        else:
+           linux_release_compile_args = "CC=gcc CFLAGS=-fPIC CALL_BY_REF=0 GLOBAL_RND=0 GLOBAL_FLAGS=0 UNCHANGED_BINARY_FLAGS=0"
+           self.append_cmd('cd LIBRARY && make ' + linux_release_compile_args) 
+        return 0
+        
+    def _get_lib_list(self):
+        libs = []
+        if 'linux' == self.platform:
+            libs = ['libbid.a']         
+        return libs
+
+    def archive(self):
+        if 'linux' == self.platform:
+           shutil.copy(os.path.join(self.src_root, 'LIBRARY/libbid.a'),
+                       self._get_lib_archive_dir())
+                    
 components = []
 
 snappy_compiler = SnappyCompiler('snappy')
 lz4_compiler = LZ4Compiler('lz4')
 zlib_compiler = ZlibCompiler('zlib')
+intelDecimal_compiler = IntelDecimalLibCompiler('intelDecimal')
 
 components.append(snappy_compiler)
 components.append(lz4_compiler)
 components.append(zlib_compiler)
+components.append(intelDecimal_compiler)
 
 if usemdocml:
     mdocml_compiler = MdocmlCompiler('mdocml')

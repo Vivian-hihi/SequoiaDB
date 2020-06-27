@@ -41,6 +41,7 @@
 #include "msgDef.hpp"
 #include "pd.hpp"
 #include "../bson/lib/md5.hpp"
+#include "fapMongoDecimal.hpp"
 
 using namespace bson ;
 
@@ -48,6 +49,7 @@ namespace fap
 {
 
 #define FAP_MONGO_PAYLOADD_MAX_SIZE 128
+#define FAP_MONGO_CLIENT_VERSION_STR_MAX_SIZE 128
 
 static INT32 getIntElement( const BSONObj &obj, const CHAR *fieldName,
                             INT32 &value )
@@ -283,6 +285,69 @@ static void convertCollectionObj( BSONObj& collectionObj )
    unescapeDot( clShortName ) ;
 
    collectionObj = BSON( "name" << clShortName.c_str() ) ;
+}
+
+static INT32 parseClientInfo( const CHAR* clientName,
+                              const CHAR* clientVerStr,
+                              mongoClientInfo &clientInfo )
+{
+   INT32 rc         = SDB_OK ;
+   INT32 i          = 0 ;
+   CHAR *curStr     = NULL ;
+   CHAR *lastParsed = NULL ;
+   CHAR clientVerStrCpy[FAP_MONGO_CLIENT_VERSION_STR_MAX_SIZE+1] = { 0 } ;
+
+   if ( NULL == clientName || NULL == clientVerStr )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( ossStrlen( clientVerStr ) < 0 ||
+        ossStrlen( clientVerStr ) > FAP_MONGO_CLIENT_VERSION_STR_MAX_SIZE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   ossStrncpy( clientVerStrCpy, clientVerStr, ossStrlen( clientVerStr ) ) ;
+
+   if ( 0 == ossStrcmp( clientName, FAP_MONGO_FIELD_VALUE_NODEJS ) )
+   {
+      clientInfo.type = NODEJS_DRIVER ;
+   }
+   else if ( 0 == ossStrcmp( clientName, FAP_MONGO_FIELD_VALUE_JAVA ) )
+   {
+      clientInfo.type = JAVA_DRIVER ;
+   }
+   else if ( 0 == ossStrcmp( clientName,
+                             FAP_MONGO_FIELD_VALUE_MONGOSHELL ) )
+   {
+      clientInfo.type = MONGO_SHELL ;
+   }
+
+   curStr = ossStrtok( clientVerStrCpy, ".", &lastParsed ) ;
+   while ( '\0' != curStr )
+   {
+      if( 0 == i )
+      {
+         clientInfo.version = ossAtoi( curStr ) ;
+      }
+      else if( 1 == i )
+      {
+         clientInfo.subVersion = ossAtoi( curStr ) ;
+      }
+      else if( 2 == i )
+      {
+         clientInfo.fixVersion = ossAtoi( curStr ) ;
+      }
+      curStr = ossStrtok( lastParsed, ".", &lastParsed ) ;
+      i++ ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 _mongoCmdFactory::_mongoCmdFactory ()
@@ -962,6 +1027,16 @@ INT32 _mongoCollectionCommand::init( const _mongoMessage *pMsg,
 
    _requestID = pMsg->requestID() ;
 
+   if ( needConvertDecimal() &&
+        mongoIsSupportDecimal( ctx.clientInfo ) )
+   {
+      BSONObjBuilder sdbMsgObjBob( _obj.objsize() ) ;
+      rc = mongoDecimal2SdbDecimal( _obj, sdbMsgObjBob ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to convert mongo msg to sdb msg: %d", rc ) ;
+      _obj = sdbMsgObjBob.obj() ;
+   }
+
 done:
    return rc ;
 error:
@@ -1077,24 +1152,28 @@ INT32 _mongoCollectionCommand::_buildReplyCommon( const MsgOpReply &sdbReply,
    return SDB_OK ;
 }
 
-void _mongoCollectionCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
-                                                engine::rtnContextBuf &bodyBuf )
+INT32 _mongoCollectionCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
+                                                 engine::rtnContextBuf &bodyBuf )
 {
    // {xxx}, {xxx}... =>
    // { cursor: { firstBatch: [ {xxx}, {xxx}... ], id: 0, ns: "foo.bar" },
    //   ok: 1 }
+   INT32 rc = SDB_OK ;
    BSONObjBuilder resultBuilder ;
    BSONObjBuilder cursorBuilder ;
 
    if ( SDB_OK != sdbReply.flags && SDB_DMS_EOC != sdbReply.flags )
    {
-      return ;
+      return SDB_OK ;
    }
 
    BSONArrayBuilder arr( cursorBuilder.subarrayStart( "firstBatch" ) ) ;
    if ( SDB_OK == sdbReply.flags )
    {
       INT32 offset = 0 ;
+      BSONObjBuilder decimalConvertBob ;
+      BOOLEAN hasDecimal = FALSE ;
+
       while ( offset < bodyBuf.size() )
       {
          BSONObj obj( bodyBuf.data() + offset ) ;
@@ -1103,8 +1182,25 @@ void _mongoCollectionCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
          if ( CMD_LIST_INDEX == type() )
          {
             convertIndexObj( obj, clFullName() ) ;
+            arr.append( obj ) ;
          }
-         arr.append( obj ) ;
+         else
+         {
+            rc = sdbDecimal2MongoDecimal( obj, decimalConvertBob, hasDecimal ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to convert sdb record to mongo record, "
+                         "rc: %d", rc ) ;
+
+            if ( hasDecimal )
+            {
+               arr.append( decimalConvertBob.done() ) ;
+               decimalConvertBob.reset() ;
+            }
+            else
+            {
+               arr.append( obj ) ;
+            }
+         }
       }
    }
    arr.done() ;
@@ -1127,6 +1223,11 @@ void _mongoCollectionCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
    resultBuilder.append( "ok", 1 ) ;
    bodyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoInsertCommand)
@@ -1167,7 +1268,7 @@ INT32 _mongoInsertCommand::buildSdbMsg( msgBuffer &sdbMsg,
          BSONElement ele = it.next() ;
          PD_CHECK( ele.type() == Object, SDB_INVALIDARG, error, PDERROR,
                    "Invalid object[%s] in mongo %s request",
-                   _obj.toString().c_str(), name() ) ;
+                   docList.toString().c_str(), name() ) ;
          sdbMsg.write( ele.Obj(), TRUE ) ;
       }
    }
@@ -1510,7 +1611,7 @@ INT32 _mongoQueryCommand::init( const _mongoMessage *pMsg,
    }
 
    // set client type
-   _client = ctx.client ;
+   _client = ctx.clientInfo.type ;
 
    _requestID = pMsg->requestID() ;
 
@@ -1725,7 +1826,7 @@ INT32 _mongoFindCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
    query->nameLength = _clFullName.length() ;
    sdbMsg.write( _clFullName.c_str(), query->nameLength + 1, TRUE ) ;
 
-   bson::BSONObj cond, orderby, hint, selector ;
+   BSONObj cond, orderby, hint, selector ;
    cond     = _obj.getObjectField( "filter" ) ;
    orderby  = _obj.getObjectField( "sort" ) ;
    selector = _obj.getObjectField( "projection" ) ;
@@ -1756,15 +1857,22 @@ INT32 _mongoFindCommand::buildReply( const MsgOpReply &sdbReply,
                                      engine::rtnContextBuf &bodyBuf,
                                      _mongoResponseBuffer &headerBuf )
 {
+   INT32 rc = SDB_OK ;
+
    if ( SDB_OK      == sdbReply.flags ||
         SDB_DMS_EOC == sdbReply.flags )
    {
-      _buildFirstBatch( sdbReply, bodyBuf ) ;
+      rc = _buildFirstBatch( sdbReply, bodyBuf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build first batch, rc: %d", rc ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetmoreCommand)
@@ -2053,12 +2161,16 @@ INT32 _mongoGetmoreCommand::_buildQueryReply( const MsgOpReply &sdbReply,
                                               engine::rtnContextBuf &bodyBuf,
                                               _mongoResponseBuffer &headerBuf )
 {
+   INT32 rc = SDB_OK ;
+   mongoResponse res ;
+
    if ( SDB_OK == sdbReply.flags || SDB_DMS_EOC == sdbReply.flags )
    {
-      _buildNextBatch( sdbReply, bodyBuf ) ;
+      rc = _buildNextBatch( sdbReply, bodyBuf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build next batch, rc: %d", rc ) ;
    }
 
-   mongoResponse res ;
    res.header.msgLen = sizeof( mongoResponse ) + bodyBuf.size() ;
    res.header.responseTo = _requestID ;
    if ( SDB_RTN_CONTEXT_NOTEXIST == sdbReply.flags )
@@ -2068,25 +2180,35 @@ INT32 _mongoGetmoreCommand::_buildQueryReply( const MsgOpReply &sdbReply,
    res.nReturned = bodyBuf.recordNum() ;
    headerBuf.setData( (const CHAR*)&res, sizeof( res ) ) ;
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoGetmoreCommand::_buildCommandReply( const MsgOpReply &sdbReply,
                                                 engine::rtnContextBuf &bodyBuf,
                                                 _mongoResponseBuffer &headerBuf )
 {
+   INT32 rc = SDB_OK ;
+   mongoCommandResponse res ;
+
    if ( SDB_OK == sdbReply.flags || SDB_DMS_EOC == sdbReply.flags )
    {
-      _buildNextBatch( sdbReply, bodyBuf ) ;
+      rc = _buildNextBatch( sdbReply, bodyBuf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build next batch, rc: %d", rc ) ;
    }
    appendEmptyObj2Buf( bodyBuf ) ;
 
-   mongoCommandResponse res ;
    res.header.msgLen = sizeof( mongoCommandResponse ) + bodyBuf.size() ;
    res.header.responseTo = _requestID ;
    headerBuf.setData( (const CHAR*)&res, sizeof( res ) ) ;
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoGetmoreCommand::buildReply( const MsgOpReply &sdbReply,
@@ -2111,22 +2233,26 @@ INT32 _mongoGetmoreCommand::buildReply( const MsgOpReply &sdbReply,
    return SDB_OK ;
 }
 
-void _mongoGetmoreCommand::_buildNextBatch( const MsgOpReply &sdbReply,
-                                            engine::rtnContextBuf &bodyBuf )
+INT32 _mongoGetmoreCommand::_buildNextBatch( const MsgOpReply &sdbReply,
+                                             engine::rtnContextBuf &bodyBuf )
 {
    // {xxx}, {xxx}... =>
    // { cursor: { nextBatch: [{xxx}, {xxx}...], id: 0, ns: "foo.bar" },
    //   ok: 1 }
+   INT32 rc = SDB_OK ;
    bson::BSONObjBuilder resultBuilder ;
    bson::BSONObjBuilder cursorBuilder ;
 
    if ( SDB_OK != sdbReply.flags && SDB_DMS_EOC != sdbReply.flags )
    {
-      return ;
+      return SDB_OK ;
    }
 
    bson::BSONArrayBuilder arr( cursorBuilder.subarrayStart( "nextBatch" ) ) ;
    INT32 offset = 0 ;
+   BSONObjBuilder decimalConvertBob ;
+   BOOLEAN hasDecimal = FALSE ;
+
    if ( SDB_OK == sdbReply.flags )
    {
       while ( offset < bodyBuf.size() )
@@ -2136,12 +2262,30 @@ void _mongoGetmoreCommand::_buildNextBatch( const MsgOpReply &sdbReply,
          if ( GETMORE_LISTINDEX == _type )
          {
             convertIndexObj( obj, _clFullName ) ;
+            arr.append( obj ) ;
          }
          else if ( GETMORE_LISTCOLLECTION == _type )
          {
             convertCollectionObj( obj ) ;
+            arr.append( obj ) ;
          }
-         arr.append( obj ) ;
+         else
+         {
+            rc = sdbDecimal2MongoDecimal( obj, decimalConvertBob, hasDecimal ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to convert sdb record to mongo record, "
+                         "rc: %d", rc ) ;
+
+            if ( hasDecimal )
+            {
+               arr.append( decimalConvertBob.done() ) ;
+               decimalConvertBob.reset() ;
+            }
+            else
+            {
+               arr.append( obj ) ;
+            }
+         }
       }
    }
    arr.done() ;
@@ -2162,6 +2306,11 @@ void _mongoGetmoreCommand::_buildNextBatch( const MsgOpReply &sdbReply,
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
    resultBuilder.append( "ok", 1 ) ;
    bodyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoKillCursorCommand)
@@ -2637,12 +2786,16 @@ INT32 _mongoAggregateCommand::buildReply( const MsgOpReply &sdbReply,
                                           engine::rtnContextBuf &bodyBuf,
                                           _mongoResponseBuffer &headerBuf )
 {
+   INT32 rc = SDB_OK ;
+
    if ( _obj.hasField( "cursor" ) )
    {
       if ( SDB_OK      == sdbReply.flags ||
            SDB_DMS_EOC == sdbReply.flags )
       {
-         _buildFirstBatch( sdbReply, bodyBuf ) ;
+         rc = _buildFirstBatch( sdbReply, bodyBuf ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to build first batch, rc: %d", rc ) ;
       }
 
       _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -2675,7 +2828,10 @@ INT32 _mongoAggregateCommand::buildReply( const MsgOpReply &sdbReply,
       _buildReplyCommon( sdbReply, bodyBuf, headerBuf, TRUE ) ;
    }
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDistinctCommand)
@@ -2912,15 +3068,22 @@ INT32 _mongoListIdxCommand::buildReply( const MsgOpReply &sdbReply,
                                         engine::rtnContextBuf &bodyBuf,
                                         _mongoResponseBuffer &headerBuf )
 {
+   INT32 rc = SDB_OK ;
+
    if ( SDB_OK      == sdbReply.flags ||
         SDB_DMS_EOC == sdbReply.flags )
    {
-      _buildFirstBatch( sdbReply, bodyBuf ) ;
+      rc = _buildFirstBatch( sdbReply, bodyBuf ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to build first batch, rc: %d", rc ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoCreateIdxCommand)
@@ -3959,7 +4122,7 @@ INT32 _mongoIsMasterCommand::init( const _mongoMessage *pMsg,
       goto error ;
    }
 
-   if ( MONGO_QUERY_MSG == pMsg->type() )
+   if ( MONGO_QUERY_MSG == pMsg->type() && !ctx.hasParsedClientInfo )
    {
       const _mongoQueryRequest* pReq = (_mongoQueryRequest*)pMsg ;
 
@@ -3968,11 +4131,14 @@ INT32 _mongoIsMasterCommand::init( const _mongoMessage *pMsg,
       {
          BSONObj clientObj = obj.getObjectField( "client" ) ;
          BSONObj driverObj = clientObj.getObjectField( "driver" ) ;
-         if ( 0 == ossStrcmp( driverObj.getStringField( "name" ),
-                              FAP_MONGO_FIELD_VALUE_NODEJS ) )
-         {
-            ctx.client = NODEJS_DRIVER ;
-         }
+         const CHAR* driverName   = driverObj.getStringField( "name" ) ;
+         const CHAR* driverVerStr = driverObj.getStringField( "version" ) ;
+
+         rc = parseClientInfo( driverName, driverVerStr, ctx.clientInfo ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to parse client info, rc: %d", rc ) ;
+
+         ctx.hasParsedClientInfo = TRUE ;
       }
    }
 

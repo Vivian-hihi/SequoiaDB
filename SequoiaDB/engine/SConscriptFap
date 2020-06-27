@@ -1,6 +1,7 @@
 import os
 
 Import("fapEnv")
+Import("intel_decimal_lib_dir")
 
 fapMongo2Files = [
       "fap/mongodb/commands.cpp",
@@ -19,7 +20,8 @@ fapMongo3Files = [
       "fap/mongodb3/msgBuffer.cpp",
       "fap/mongodb3/fapMongoMessage.cpp",
       "fap/mongodb3/fapMongoCommand.cpp",
-      "fap/mongodb3/fapMongoCursor.cpp"
+      "fap/mongodb3/fapMongoCursor.cpp",
+      "fap/mongodb3/fapMongoDecimal.cpp"
       ]
       
 #fapMongo4Files = [
@@ -33,9 +35,12 @@ fapMongo3Files = [
 #      "fap/mongodb4/parser.cpp"
 #      ]      
 
+intelDecimalLib = os.path.join( intel_decimal_lib_dir, 'libbid.a' )
+      
 fapmongo2 = fapEnv.SharedLibrary( 'fapmongo2', [ fapMongo2Files ] )
-fapmongo3 = fapEnv.SharedLibrary( 'fapmongo3', [ fapMongo3Files ] )
-#fapmongo4 = fapEnv.SharedLibrary( 'fapmongo4', [ fapMongo4Files ] )
+fapmongo3 = fapEnv.SharedLibrary( 'fapmongo3', [ fapMongo3Files, intelDecimalLib ] )
+#fapmongo4 = fapEnv.SharedLibrary( 'fapmongo4', [ fapMongo4Files, intelDecimalLib ] )
+
 
 fapEnv.Install( '#/bin/fap', fapmongo2 )
 fapEnv.Install( '#/bin/fap', fapmongo3 )

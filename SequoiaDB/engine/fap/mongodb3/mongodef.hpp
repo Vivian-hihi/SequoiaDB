@@ -48,7 +48,9 @@ namespace fap
 enum MONGO_CLIENT_TYPE
 {
    NODEJS_DRIVER = 1,
-   OTHER         = 2
+   JAVA_DRIVER   = 2,
+   MONGO_SHELL   = 3,
+   OTHER         = 255
 } ;
 
 struct mongoAuthInfo
@@ -59,15 +61,24 @@ struct mongoAuthInfo
    INT32 type ;
 } ;
 
+struct mongoClientInfo
+{
+   INT32 version ;
+   INT32 subVersion ;
+   INT32 fixVersion ;
+   MONGO_CLIENT_TYPE type ;
+} ;
+
 struct mongoSessionCtx
 {
-   MONGO_CLIENT_TYPE client ;
+   mongoClientInfo clientInfo ;
+   BOOLEAN hasParsedClientInfo ;
    BSONObj errorObj ;
    BSONObj lastErrorObj ;
    string userName ;
    mongoAuthInfo authInfo ;
 
-   mongoSessionCtx() : client( OTHER ) {}
+   mongoSessionCtx() : clientInfo(), hasParsedClientInfo( FALSE ) {}
 
    void setError( INT32 errCode, const CHAR* err )
    {
