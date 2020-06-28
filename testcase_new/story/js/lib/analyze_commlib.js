@@ -829,9 +829,14 @@ function getCommonAccessPlans ( db, findConf, selectorConf, sortConf )
 
       //获取快照信息
       var rc = db.snapshot( 11, findConf, selectorConf, sortConf ).toArray();
+      println( "rc.length:" + rc.length );
       for( var i = 0; i < rc.length; i++ )
       {
          var accessPlan = eval( "( " + rc[i] + " )" );
+         println( "i:" + i + ", NodeName:" + JSON.stringify( accessPlan.NodeName ) +
+            ", GroupName:" + JSON.stringify( accessPlan.GroupName ) +
+            ", IndexName:" + JSON.stringify( accessPlan.IndexName ) +
+            ", Query:" + JSON.stringify( accessPlan.Query ) );
          var accessPlanObj = {};
          for( var f in accessPlan )
          {
