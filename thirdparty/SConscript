@@ -592,7 +592,6 @@ class IntelDecimalLibCompiler(CompilerBase):
         return intel_decimal_lib_dir
         
     def _init_linux_cmds(self, arch):
-        self.append_cmd('cd LIBRARY && make clean') 
         if debugBuild:
            linux_debug_compile_args = "CC=gcc CFLAGS='-fPIC -g' CALL_BY_REF=0 GLOBAL_RND=0 GLOBAL_FLAGS=0 UNCHANGED_BINARY_FLAGS=0"
            self.append_cmd('cd LIBRARY && make ' + linux_debug_compile_args) 
@@ -600,18 +599,32 @@ class IntelDecimalLibCompiler(CompilerBase):
            linux_release_compile_args = "CC=gcc CFLAGS=-fPIC CALL_BY_REF=0 GLOBAL_RND=0 GLOBAL_FLAGS=0 UNCHANGED_BINARY_FLAGS=0"
            self.append_cmd('cd LIBRARY && make ' + linux_release_compile_args) 
         return 0
-        
+
+    def _init_win32_cmds(self, arch):
+        if debugBuild:
+           win32_debug_compile_args = "-fmakefile.mak CC=cl DBG=1 CALL_BY_REF=0 GLOBAL_RND=0 GLOBAL_FLAGS=0 UNCHANGED_BINARY_FLAGS=0"
+           self.append_cmd('cd LIBRARY && nmake ' + win32_debug_compile_args)
+        else:
+           win32_release_compile_args = "-fmakefile.mak CC=cl CALL_BY_REF=0 GLOBAL_RND=0 GLOBAL_FLAGS=0 UNCHANGED_BINARY_FLAGS=0"
+           self.append_cmd('cd LIBRARY && nmake ' + win32_release_compile_args)
+        return 0
+
     def _get_lib_list(self):
         libs = []
         if 'linux' == self.platform:
-            libs = ['libbid.a']         
+            libs = ['libbid.a']
+        elif 'win32' == self.platform:
+            libs = ['libbid.lib']
         return libs
 
     def archive(self):
         if 'linux' == self.platform:
            shutil.copy(os.path.join(self.src_root, 'LIBRARY/libbid.a'),
                        self._get_lib_archive_dir())
-                    
+        elif 'win32' == self.platform:
+           shutil.copy(os.path.join(self.src_root, 'LIBRARY/libbid.lib'),
+                       self._get_lib_archive_dir())
+ 
 components = []
 
 snappy_compiler = SnappyCompiler('snappy')
