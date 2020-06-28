@@ -38,8 +38,8 @@
 		<mkdir dir="${open.source.target.dir}" />
 
 		<exec executable="arch" outputproperty="os_arch" failonerror="true">
-         		<arg line="" />
-      		</exec>
+			<arg line="" />
+		</exec>
 		<echo message="os.name=${os.name}, os_arch=${os_arch}" />
 		<if>
 			<equals arg1="${os.name}" arg2="Linux" />
@@ -50,30 +50,33 @@
 				<property name="jdk.name.os" value="jdk_win" />
 			</else>
 		</if>
-    
-                <if>
-                        <equals arg1="${os_arch}" arg2="aarch64" />
-                        <then>
-                        	<property name="jdk.name" value="jdk8_armlinux64" />
-                        </then>
-                </if>
-
-                <if>
-                        <equals arg1="${os_arch}" arg2="ppc64" />
-                        <then>
-                        	<property name="jdk.name" value="jdk_ppclinux64" />
-                        </then>
-                </if>
-                
-                <if>
-                        <equals arg1="${os_arch}" arg2="ppc64le" />
-                        <then>
-                        	<property name="jdk.name" value="jdk_ppclelinux64" />
-                        </then>
-                </if>
-    
+		
 		<if>
-			<equals arg1="${os_arch}" arg2="amd64" />
+			<equals arg1="${os_arch}" arg2="aarch64" />
+			<then>
+				<property name="jdk.name" value="jdk8_armlinux64" />
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="${os_arch}" arg2="ppc64" />
+			<then>
+				<property name="jdk.name" value="jdk_ppclinux64" />
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="${os_arch}" arg2="ppc64le" />
+			<then>
+				<property name="jdk.name" value="jdk_ppclelinux64" />
+			</then>
+		</if>
+
+		<if>
+			<or>
+				<equals arg1="${os_arch}" arg2="x86_64" />
+				<equals arg1="${os_arch}" arg2="amd64" />
+			</or>
 			<then>
 				<property name="jdk.name" value="${jdk.name.os}64" />
 			</then>
