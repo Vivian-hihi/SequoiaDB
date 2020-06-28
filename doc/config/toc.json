@@ -471,6 +471,12 @@
                            "en": "Install and Deploy"
                         },
                         {
+                           "id": 1567070020,
+                           "file": "sequoiasql_mysql",
+                           "cn": "sequoiasql-mysql服务",
+                           "en": "service sequoiasql-mysql"
+                        },
+                        {
                            "id": 1572505575,
                            "file": "ha",
                            "cn": "高可用",
@@ -491,18 +497,6 @@
                      ]
                   },
                   {
-                     "id": 1574045910,
-                     "file": "data_type",
-                     "cn": "数据类型映射表",
-                     "en": "data type map table"
-                  },
-                  {
-                     "id": 1567070020,
-                     "file": "sequoiasql_mysql",
-                     "cn": "sequoiasql-mysql服务",
-                     "en": "service sequoiasql-mysql"
-                  },
-                  {
                      "id": 1521595283,
                      "file": "connection",
                      "cn": "使用",
@@ -520,6 +514,12 @@
                      "cn": "配置",
                      "en": "Configuration"
                   },
+                  {
+                     "id": 1574045910,
+                     "file": "data_type",
+                     "cn": "数据类型映射表",
+                     "en": "data type map table"
+                  },                              
                   {
                      "id": 1555382544,
                      "file": "error_code",
@@ -559,6 +559,12 @@
                            "en": "Install and Deploy"
                         },
                         {
+                           "id": 1575355438,
+                           "file": "sequoiasql_mariadb",
+                           "cn": "sequoiasql-mariadb服务",
+                           "en": "service sequoiasql-mariadb"
+                        }, 
+                        {
                            "id": 1972505575,
                            "file": "ha",
                            "cn": "高可用",
@@ -577,19 +583,7 @@
                            "en": "Develop"
                         }
                       ]  
-                  },
-                  {
-                     "id": 1974045910,
-                     "file": "data_type",
-                     "cn": "数据类型映射表",
-                     "en": "data type map table"
-                  },                   
-                  {
-                     "id": 1575355438,
-                     "file": "sequoiasql_mariadb",
-                     "cn": "sequoiasql-mariadb服务",
-                     "en": "service sequoiasql-mariadb"
-                  },                      
+                  },                                                  
                   {
                      "id": 1921595283,
                      "file": "connection",
@@ -602,6 +596,12 @@
                      "cn": "配置",
                      "en": "Configuration"
                   },
+                  {
+                     "id": 1974045910,
+                     "file": "data_type",
+                     "cn": "数据类型映射表",
+                     "en": "data type map table"
+                  },  
                   {
                      "id": 1955382544,
                      "file": "error_code",
