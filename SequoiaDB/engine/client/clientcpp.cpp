@@ -3759,6 +3759,59 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbCollectionImpl::getIndexStat ( const CHAR *pIndexName,
+                                            bson::BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint ;
+      sdbCursor cursor ;
+
+      if ( '\0' == _collectionFullName[0] || !_connection || !pIndexName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // { Collection: 'cl', Index: 'idx' }
+      {
+         BSONObjBuilder builder( 128 ) ;
+         builder.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         builder.append( FIELD_NAME_INDEX, pIndexName ) ;
+         hint = builder.obj() ;
+      }
+
+      rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_GET_INDEX_STAT,
+                                     NULL, NULL, NULL, &hint,
+                                     0, 0, 0, -1,
+                                     &cursor.pCursor ) ;
+
+      /// ignore update result
+      updateCachedObject( rc, _connection->_getCachedContainer(),
+                          _collectionFullName ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      ((_sdbCursorImpl*)cursor.pCursor)->_attachCollection ( this ) ;
+
+      rc = cursor.next( result, TRUE ) ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_IXM_STAT_NOTEXIST ;
+         goto error ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+   done:
+      cursor.close() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
     * _sdbNodeImpl
     * Sdb Node Implementation

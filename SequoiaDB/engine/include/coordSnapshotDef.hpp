@@ -268,34 +268,31 @@
 
 #define COORD_SNAPSHOTIDXSTATS_INPUT    "{$project:{\
                                                 Collection:1,\
-                                                CollectionSpace:1,\
                                                 Index:1,\
-                                                IsUnique:1,\
+                                                Unique:1,\
                                                 KeyPattern:1,\
                                                 GroupName:1,\
                                                 StatInfo:{\
                                                           NodeName:1,\
-                                                          CreateTime:1,\
-                                                          IndexLevels:1,\
-                                                          IndexPages:1,\
+                                                          TotalIndexLevels:1,\
+                                                          TotalIndexPages:1,\
                                                           DistinctValNum:1,\
                                                           MinValue:1,\
                                                           MaxValue:1,\
                                                           NullFrac:1,\
                                                           UndefFrac:1,\
                                                           SampleRecords:1,\
-                                                          TotalRecords:1}\
+                                                          TotalRecords:1,\
+                                                          StatTimestamp:1}\
                                                 }\
                                        }\n\
                                        {$group:{\
                                                 _id:{Collection:\"$Collection\",\
-                                                     CollectionSpace:\"$CollectionSpace\",\
                                                      Index:\"$Index\",\
                                                      GroupName:\"$GroupName\"},\
                                                 Collection:{$first:\"$Collection\"},\
-                                                CollectionSpace:{$first:\"$CollectionSpace\"},\
                                                 Index:{$first:\"$Index\"},\
-                                                IsUnique:{$first:\"$IsUnique\"},\
+                                                Unique:{$first:\"$Unique\"},\
                                                 KeyPattern:{$first:\"$KeyPattern\"},\
                                                 Group:{$push:\"$StatInfo\"},\
                                                 GroupName:{$first:\"$GroupName\"}\
@@ -303,27 +300,23 @@
                                        }\n\
                                        {$project:{\
                                                 Collection:1,\
-                                                CollectionSpace:1,\
                                                 Index:1,\
-                                                IsUnique:1,\
+                                                Unique:1,\
                                                 KeyPattern:1,\
                                                 StatInfo:{GroupName:1,Group:1}\
                                                 }\
                                        }\n\
                                        {$group:{\
                                                 _id:{Collection:\"$Collection\",\
-                                                     CollectionSpace:\"$CollectionSpace\",\
                                                      Index:\"$Index\"},\
                                                 Collection:{$first:\"$Collection\"},\
-                                                CollectionSpace:{$first:\"$CollectionSpace\"},\
                                                 Index:{$first:\"$Index\"},\
-                                                IsUnique:{$first:\"$IsUnique\"},\
+                                                Unique:{$first:\"$Unique\"},\
                                                 KeyPattern:{$first:\"$KeyPattern\"},\
                                                 StatInfo:{$push:\"$StatInfo\"},\
                                                 }\
                                        }\n\
                                        {$match:{$and:[{Collection:{$isnull:0}},\
-                                                      {CollectionSpace:{$isnull:0}},\
                                                       {Index:{$isnull:0}}]}}"
 
 

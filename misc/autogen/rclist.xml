@@ -2794,5 +2794,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_IXM_STAT_NOTEXIST</name>
+         <description>
+            <en>Index statistics do not exist</en>
+            <cn>索引统计信息不存在</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>

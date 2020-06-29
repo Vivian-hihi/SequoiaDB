@@ -58,6 +58,7 @@ namespace engine
 #define NAME_GET_DATABLOCKS                  CMD_NAME_GET_DATABLOCKS
 #define NAME_GET_QUERYMETA                   CMD_NAME_GET_QUERYMETA
 #define NAME_GET_CL_DETAIL                   CMD_NAME_GET_CL_DETAIL
+#define NAME_GET_INDEX_STAT                  CMD_NAME_GET_INDEX_STAT
 #define NAME_LIST_COLLECTIONS                CMD_NAME_LIST_COLLECTIONS
 #define NAME_LIST_COLLECTIONSPACES           CMD_NAME_LIST_COLLECTIONSPACES
 #define NAME_LIST_CONTEXTS                   CMD_NAME_LIST_CONTEXTS
@@ -179,6 +180,7 @@ namespace engine
       CMD_GET_QUERYMETA                      = 33,
       CMD_GET_DCINFO                         = 34,
       CMD_GET_CL_DETAIL                      = 35,
+      CMD_GET_INDEX_STAT                     = 36,
 
       CMD_LIST_COLLECTIONS                   = 40,
       CMD_LIST_COLLECTIONSPACES              = 41,

@@ -61,6 +61,10 @@ namespace engine
    #define DMS_STAT_IDX_INDEX                  "Index"
 
    #define DMS_STAT_IDX_MCV                    "MCV"
+   #define DMS_STAT_CREATE_TIME                "CreateTime"
+   #define DMS_STAT_IDX_INDEX_PAGES            "IndexPages"
+   #define DMS_STAT_IDX_LEVELS                 "IndexLevels"
+   #define DMS_STAT_IDX_IS_UNIQUE              "IsUnique"
 
    #define DMS_STAT_DEF_VERSION                ( 0 )
    #define DMS_STAT_DEF_AVG_NUM_FIELDS         ( 10 )

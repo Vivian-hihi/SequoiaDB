@@ -1962,10 +1962,15 @@ namespace engine
    {
       // Modify the following places to the original record:
       // 1. Append system info( like "NodeName"... )
-      // 2. Ignore "_id"
-      // 3. Convert "CreateTime" from timestamp to string
-      // 4. Ignore the large orginal "MCV". Show it's features by fields:
+      // 2. Ignore the large orginal "MCV". Show it's features by fields:
       // "DistinctValNum", "MaxValue", "MinValue", "NullFrac", "UndefFrac".
+      // 3. Rename some fields for interface unification:
+      //    "CreateTime" => "StatTimestamp";
+      //    "IsUnique" => "Unique";
+      //    "IndexPages" => "TotalIndexPages";
+      //    "IndexLevels" => "TotalIndexLevels";
+      //    "CollectionSpace" + "Collection" => "Collection";
+      // 4. Ignore "_id"
 
       INT32 rc = SDB_OK ;
       BOOLEAN hasMCV = FALSE ;
@@ -1975,6 +1980,9 @@ namespace engine
 
       try
       {
+         const CHAR *clName = NULL ;
+         const CHAR *csName = NULL ;
+         CHAR clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = {0} ;
          monAppendSystemInfo( ob, addInfoMask ) ;
 
          BSONObjIterator iter( stat ) ;
@@ -1988,14 +1996,40 @@ namespace engine
                {
                   continue ;
                }
-               else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_CREATE_TIME ) )
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         FIELD_NAME_COLLECTION ) )
+               {
+                  SDB_ASSERT( String == ele.type(), "cl name must be string" ) ;
+                  clName = ele.valuestrsafe() ;
+                  if ( clName && csName )
+                  {
+                     ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
+                                  csName, clName ) ;
+                     ob.append( FIELD_NAME_COLLECTION, clFullName ) ;
+                  }
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         FIELD_NAME_COLLECTIONSPACE ) )
+               {
+                  SDB_ASSERT( String == ele.type(), "cs name must be string" ) ;
+                  csName = ele.valuestrsafe() ;
+                  if ( clName && csName )
+                  {
+                     ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
+                                  csName, clName ) ;
+                     ob.append( FIELD_NAME_COLLECTION, clFullName ) ;
+                  }
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         DMS_STAT_CREATE_TIME ) )
                {
                   ossTimestamp tm( ele.numberLong() ) ;
                   CHAR timestampStr[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
                   ossTimestampToString( tm, timestampStr ) ;
-                  ob.append( FIELD_NAME_CREATE_TIME, timestampStr ) ;
+                  ob.append( FIELD_NAME_STAT_TIMESTAMP, timestampStr ) ;
                }
-               else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_KEY_PATTERN ) )
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         FIELD_NAME_KEY_PATTERN ) )
                {
                   keyFieldNum = 0 ;
                   BSONObjIterator keyIter( ele.embeddedObject() ) ;
@@ -2005,6 +2039,21 @@ namespace engine
                      ++keyFieldNum ;
                   }
                   ob.append( ele ) ;
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         DMS_STAT_IDX_IS_UNIQUE ) )
+               {
+                  ob.appendAs( ele, IXM_FIELD_NAME_UNIQUE1 ) ;
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         DMS_STAT_IDX_INDEX_PAGES ) )
+               {
+                  ob.appendAs( ele, FIELD_NAME_TOTAL_INDEX_PAGES ) ;
+               }
+               else if ( 0 == ossStrcmp( ele.fieldName(),
+                                         DMS_STAT_IDX_LEVELS ) )
+               {
+                  ob.appendAs( ele, FIELD_NAME_TOTAL_IDX_LEVELS ) ;
                }
                else
                {
@@ -2157,7 +2206,7 @@ namespace engine
             SDB_ASSERT( keyFieldNum > 0, "Field num must exist here" ) ;
             for ( i = 0 ; i < keyFieldNum ; ++i )
             {
-               ab.append( 0 ) ;
+               ab.append( 0LL ) ;
             }
             ab.doneFast() ;
 
@@ -2173,12 +2222,7 @@ namespace engine
          PD_LOG( PDERROR, "No memory to build statistics result: %e", ba.what() ) ;
          goto error ;
       }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexcepted exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
+
 
    done:
       if ( distinctValNum )

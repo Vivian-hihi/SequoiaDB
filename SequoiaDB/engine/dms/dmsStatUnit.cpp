@@ -46,8 +46,7 @@ using namespace bson ;
 namespace engine
 {
 
-   #define DMS_STAT_CREATE_TIME               FIELD_NAME_CREATE_TIME
-   #define DMS_STAT_SAMPLE_RECORDS            "SampleRecords"
+   #define DMS_STAT_SAMPLE_RECORDS            FIELD_NAME_SAMPLE_RECORDS
    #define DMS_STAT_TOTAL_RECORDS             FIELD_NAME_TOTAL_RECORDS
 
    #define DMS_STAT_FIELD_FRAC_NAME           FIELD_NAME_FRAC
@@ -57,9 +56,6 @@ namespace engine
    #define DMS_STAT_CL_AVG_NUM_FIELDS         "AvgNumFields"
 
    #define DMS_STAT_IDX_KEY_PATTERN           FIELD_NAME_KEY_PATTERN
-   #define DMS_STAT_IDX_INDEX_PAGES           "IndexPages"
-   #define DMS_STAT_IDX_LEVELS                "IndexLevels"
-   #define DMS_STAT_IDX_IS_UNIQUE             "IsUnique"
    #define DMS_STAT_IDX_DISTINCT_VALUES       "DistinctValues"
    #define DMS_STAT_IDX_NULL_FRAC             FIELD_NAME_NULL_FRAC
    #define DMS_STAT_IDX_UNDEF_FRAC            FIELD_NAME_UNDEF_FRAC

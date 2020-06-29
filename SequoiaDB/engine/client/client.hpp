@@ -588,25 +588,27 @@ namespace sdbclient
 
       virtual INT32 createAutoIncrement( const std::vector<bson::BSONObj> &options ) = 0;
 
-      virtual INT32 dropAutoIncrement( const CHAR* fieldName ) = 0;
+      virtual INT32 dropAutoIncrement( const CHAR *fieldName ) = 0;
 
       virtual INT32 dropAutoIncrement( const std::vector<const CHAR*> &fieldNames ) = 0;
 
       virtual INT32 pop ( const bson::BSONObj &option = _sdbStaticObject ) = 0 ;
 
-      virtual INT32 enableSharding ( const bson::BSONObj & options ) = 0 ;
+      virtual INT32 enableSharding ( const bson::BSONObj &options ) = 0 ;
 
       virtual INT32 disableSharding () = 0 ;
 
-      virtual INT32 enableCompression ( const bson::BSONObj & options = _sdbStaticObject ) = 0 ;
+      virtual INT32 enableCompression ( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
 
       virtual INT32 disableCompression () = 0 ;
 
-      virtual INT32 setAttributes ( const bson::BSONObj & options ) = 0 ;
+      virtual INT32 setAttributes ( const bson::BSONObj &options ) = 0 ;
 
       virtual INT32 getDetail ( _sdbCursor **cursor ) = 0 ;
 
       virtual INT32 getDetail ( sdbCursor &cursor ) = 0 ;
+
+      virtual INT32 getIndexStat ( const CHAR *pIndexName, bson::BSONObj &result ) = 0 ;
    } ;
 
    /** \class sdbCollection
@@ -2424,6 +2426,22 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          }
          return pCollection->getDetail( cursor ) ;
+      }
+
+      /* \fn INT32 getIndexStat ( const CHAR *pIndexName, bson::BSONObj &result )
+          \brief Get the statistics of the index.
+          \param [in] pIndexName The name of the index.
+          \param [out] result The statistics of index.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getIndexStat( const CHAR *pIndexName, bson::BSONObj &result )
+      {
+         if ( !pCollection)
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pCollection->getIndexStat( pIndexName, result ) ;
       }
    } ;
 

@@ -450,6 +450,109 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETINDEXSTAT, "rtnGetIndexStat" )
+   static INT32 rtnGetIndexStat( const rtnQueryOptions &options,
+                                 SDB_DMSCB *dmsCB,
+                                 _pmdEDUCB *cb,
+                                 SDB_RTNCB *rtnCB,
+                                 rtnContextDump *context )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNGETINDEXSTAT ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
+
+      rtnContextBase *pContextBase = NULL ;
+      rtnContextBuf buffObj ;
+      SINT64 queryContextID = -1 ;
+      BSONObj dummy ;
+
+      // Build the matcher to only query the target index statistics.
+      const CHAR *pCollection = options.getCLFullName() ;
+      CHAR strCollectionFullName [ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = {0} ;
+      ossStrncpy( strCollectionFullName, pCollection,
+                  sizeof( strCollectionFullName ) - 1 ) ;
+      CHAR *pDot = ossStrchr( strCollectionFullName, '.' ) ;
+      *pDot = '\0' ;
+      CHAR *pCollectionSpaceName = strCollectionFullName ;
+      CHAR *pCollectionShortName = pDot + 1 ;
+
+      BSONElement ele = options.getHint().getField( FIELD_NAME_INDEX ) ;
+      const CHAR *pIndexName = ele.valuestrsafe() ;
+
+      rtnQueryOptions queryOptions ;
+      queryOptions.setSelector( dummy ) ;
+      queryOptions.setOrderBy( dummy ) ;
+      queryOptions.setSkip( 0 ) ;
+      queryOptions.setLimit( -1 ) ;
+      queryOptions.setFlag( 0 ) ;
+      queryOptions.setCLFullName( DMS_STAT_INDEX_CL_NAME ) ;
+
+      try
+      {
+         // { CollectionSpace: <cs>, Collection: <cl>, Index: <idx> }
+         BSONObjBuilder queryOb( 128 ) ;
+         queryOb.append( FIELD_NAME_COLLECTIONSPACE, pCollectionSpaceName ) ;
+         queryOb.append( FIELD_NAME_COLLECTION, pCollectionShortName ) ;
+         queryOb.append( FIELD_NAME_INDEX, pIndexName ) ;
+         queryOptions.setQuery( queryOb.obj() ) ;
+         // { "": "STATIDXIDX" }
+         BSONObjBuilder hintOb( 32 ) ;
+         hintOb.append( "", DMS_STAT_IDX_IDX_NAME ) ;
+         queryOptions.setHint( hintOb.obj() ) ;
+      }
+      catch ( std::bad_alloc &ba )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "No memory to build BSON object" ) ;
+         goto error ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+
+      // Query from SYSSTAT.SYSINDEXSTAT. If no statistics, do nothing.
+      rc = rtnQuery ( queryOptions, cb, dmsCB, rtnCB, queryContextID,
+                      &pContextBase ) ;
+      if ( SDB_DMS_EOC == rc || SDB_DMS_CS_NOTEXIST == rc ||
+           SDB_DMS_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to query for index statistics. collection[%s], "
+                   "index[%s], rc: %d", pCollection, pIndexName, rc ) ;
+
+      while ( 0 == ( rc = rtnGetMore( queryContextID, -1, buffObj, cb, rtnCB ) ) )
+      {
+         BSONObj stat( buffObj.data() ) ;
+         BSONObjBuilder ob ;
+
+         rc = monBuildStatResult( stat, 0, ob ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build BSON object, rc: %d", rc ) ;
+
+         rc = context->monAppend( ob.obj() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add object to context, rc: %d",
+                      rc ) ;
+      }
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get more index statistics. collection[%s], "
+                   "index[%s], rc: %d", pCollection, pIndexName, rc ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_RTNGETINDEXSTAT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    static UINT32 _rtnIndexKeyNodeCount( dmsExtentID extentID,
                                         dmsStorageUnit *su,
                                         UINT32 deep )
@@ -1129,6 +1232,9 @@ namespace engine
             break ;
          case CMD_GET_CL_DETAIL :
             rc = rtnGetCollectionDetail( pCollectionName, dmsCB, context ) ;
+            break ;
+         case CMD_GET_INDEX_STAT :
+            rc = rtnGetIndexStat( options, dmsCB, cb, rtnCB, context ) ;
             break ;
          default :
             rc = SDB_INVALIDARG ;

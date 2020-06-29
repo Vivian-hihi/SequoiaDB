@@ -44,8 +44,14 @@
 #include "coordTrace.hpp"
 #include "clsMainCLMonAggregator.hpp"
 #include "monDump.hpp"
+#include "dmsStatUnit.hpp"
 
 using namespace bson ;
+
+namespace bson
+{
+   extern BSONObj staticNull ;
+}
 
 namespace engine
 {
@@ -434,8 +440,8 @@ namespace engine
    {
    }
 
-   INT32 _coordCMDGetDatablocks::generateResult( rtnContext * pContext,
-                                                 pmdEDUCB * cb )
+   INT32 _coordCMDGetDatablocks::generateResult( rtnContext *pContext,
+                                                 pmdEDUCB *cb )
    {
       // don't merge data, do nothing
       return SDB_OK ;
@@ -470,8 +476,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_GET_CL_DETAIL_GENRESULT, "_coordCMDGetCollectionDetail::generateResult" )
-   INT32 _coordCMDGetCollectionDetail::generateResult( rtnContext * pContext,
-                                                       pmdEDUCB * cb )
+   INT32 _coordCMDGetCollectionDetail::generateResult( rtnContext *pContext,
+                                                       pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( COORD_GET_CL_DETAIL_GENRESULT ) ;
@@ -487,7 +493,7 @@ namespace engine
       try
       {
          rtnContextBuf buffObj ;
-         CHAR clFullName[ DMS_COLLECTION_FULL_NAME_SZ ] = { 0 } ;
+         CHAR clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
          CHAR *separator = NULL ;
 
          if ( !_cataPtr->isMainCL() )
@@ -619,5 +625,419 @@ namespace engine
       goto done ;
    }
 
+   /*
+      Assistant structure to handle index statistics aggregation.
+   */
+   class _coordIndexStat : public utilPooledObject
+   {
+      public:
+         static INT32 merge( const _coordIndexStat &from, _coordIndexStat &to ) ;
+
+      public:
+         _coordIndexStat() ;
+
+         ~_coordIndexStat() {}
+
+         INT32 fromBSON( const bson::BSONObj &obj ) ;
+
+         INT32 toBSON( bson::BSONObj &obj ) ;
+
+         BOOLEAN inited()
+         {
+            return ( _index[0] != 0 ) ;
+         }
+
+         void setCollectionFullName( const CHAR *fullName ) ;
+
+      private:
+         CHAR           _collection[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+         CHAR           _index[ IXM_INDEX_NAME_SIZE + 1 ] ;
+         BOOLEAN        _isUnique ;
+         bson::BSONObj  _keyPattern ;
+         CHAR           _statTimestamp[ OSS_TIMESTAMP_STRING_LEN + 1 ] ;
+         UINT32         _indexLevels ;
+         UINT32         _indexPages ;
+         bson::BSONObj  _distinctValNum ;
+         bson::BSONObj  _minValue ;
+         bson::BSONObj  _maxValue ;
+         UINT64         _nullRecords ;
+         UINT64         _undefRecords ;
+         UINT64         _sampleRecords ;
+         UINT64         _totalRecords ;
+   } ;
+
+   _coordIndexStat::_coordIndexStat()
+   {
+      ossMemset( _collection, 0, sizeof( _collection ) ) ;
+      ossMemset( _index, 0, sizeof( _index ) ) ;
+      _isUnique = FALSE ;
+      ossMemset( _statTimestamp, 0, sizeof( _statTimestamp ) ) ;
+      _indexLevels = 0 ;
+      _indexPages = 0 ;
+      _nullRecords = 0 ;
+      _undefRecords = 0 ;
+      _sampleRecords = 0 ;
+      _totalRecords = 0 ;
+   }
+
+   void _coordIndexStat::setCollectionFullName( const CHAR *fullName )
+   {
+      ossStrncpy( _collection, fullName, sizeof( _collection ) ) ;
+   }
+
+   INT32 _coordIndexStat::fromBSON( const BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjIterator iter( obj ) ;
+      INT32 nullFrac = 0 ;
+      INT32 undefFrac = 0 ;
+
+      try
+      {
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_COLLECTION ) )
+            {
+               PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_COLLECTION "' must be string" ) ;
+               ossStrncpy( _collection, ele.valuestr(),
+                           sizeof( _collection ) - 1 ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_STAT_TIMESTAMP ) )
+            {
+               PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_STAT_TIMESTAMP "' must be string" ) ;
+               ossStrncpy( _statTimestamp, ele.valuestr(),
+                           sizeof( _statTimestamp ) - 1 ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEX ) )
+            {
+               PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_INDEX "' must be string" ) ;
+               ossStrncpy( _index, ele.valuestr(), sizeof( _index ) - 1 ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_TOTAL_IDX_LEVELS ) )
+            {
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_TOTAL_IDX_LEVELS "' must be number" ) ;
+               _indexLevels = ele.numberInt() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_TOTAL_INDEX_PAGES ) )
+            {
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_TOTAL_INDEX_PAGES "' must be number" ) ;
+               _indexPages = ele.numberInt() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), IXM_FIELD_NAME_UNIQUE1 ) )
+            {
+               PD_CHECK( Bool == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" IXM_FIELD_NAME_UNIQUE1 "' must be bool" ) ;
+               _isUnique = ele.boolean() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_KEY_PATTERN ) )
+            {
+               PD_CHECK( Object == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_KEY_PATTERN "' must be object" ) ;
+               _keyPattern = ele.embeddedObject().getOwned() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_SAMPLE_RECORDS ) )
+            {
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_SAMPLE_RECORDS "' must be number" ) ;
+               _sampleRecords = ele.numberLong() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_TOTAL_RECORDS ) )
+            {
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_TOTAL_RECORDS "' must be number" ) ;
+               _totalRecords = ele.numberLong() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_DISTINCT_VAL_NUM ) )
+            {
+               PD_CHECK( Array == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_DISTINCT_VAL_NUM "' must be array" ) ;
+               _distinctValNum = ele.embeddedObject().getOwned() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_MIN_VALUE ) )
+            {
+               if ( Object == ele.type() )
+               {
+                  _minValue = ele.embeddedObject().getOwned() ;
+               }
+               else if ( jstNULL == ele.type() )
+               {
+                  _minValue = staticNull ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "Field '" FIELD_NAME_MIN_VALUE "' must be "
+                          "object or null" ) ;
+                  goto error ;
+               }
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_MAX_VALUE ) )
+            {
+               if ( Object == ele.type() )
+               {
+                  _maxValue = ele.embeddedObject().getOwned() ;
+               }
+               else if ( jstNULL == ele.type() )
+               {
+                  _maxValue = staticNull ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "Field '" FIELD_NAME_MAX_VALUE "' must be "
+                          "object or null" ) ;
+                  goto error ;
+               }
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_NULL_FRAC ) )
+            {
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_NULL_FRAC "' must be number" ) ;
+               nullFrac = ele.numberInt() ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_UNDEF_FRAC ) )
+            {
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                         "Field '" FIELD_NAME_UNDEF_FRAC "' must be number" ) ;
+               undefFrac = ele.numberInt() ;
+            }
+         }
+      }
+      catch (std::exception &e)
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occured: %s", e.what() ) ;
+         goto error ;
+      }
+
+      _nullRecords = ( _sampleRecords * nullFrac ) / DMS_STAT_FRACTION_SCALE ;
+      _undefRecords = ( _sampleRecords * undefFrac ) / DMS_STAT_FRACTION_SCALE ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordIndexStat::toBSON( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append( FIELD_NAME_COLLECTION, _collection ) ;
+         ob.append( FIELD_NAME_INDEX, _index ) ;
+         ob.appendBool( IXM_FIELD_NAME_UNIQUE1, _isUnique ) ;
+         ob.append( FIELD_NAME_KEY_PATTERN, _keyPattern ) ;
+         ob.append( FIELD_NAME_TOTAL_IDX_LEVELS, _indexLevels ) ;
+         ob.append( FIELD_NAME_TOTAL_INDEX_PAGES, _indexPages ) ;
+         ob.appendArray( FIELD_NAME_DISTINCT_VAL_NUM, _distinctValNum ) ;
+
+         if ( !_minValue.equal( staticNull ) )
+         {
+            ob.append( FIELD_NAME_MIN_VALUE, _minValue ) ;
+         }
+         else
+         {
+            ob.appendNull( FIELD_NAME_MIN_VALUE ) ;
+         }
+
+         if ( !_maxValue.equal( staticNull ) )
+         {
+            ob.append( FIELD_NAME_MAX_VALUE, _maxValue ) ;
+         }
+         else
+         {
+            ob.appendNull( FIELD_NAME_MAX_VALUE ) ;
+         }
+
+         INT32 nullFrac =
+               ( _nullRecords * DMS_STAT_FRACTION_SCALE ) / _sampleRecords ;
+         ob.append( FIELD_NAME_NULL_FRAC, nullFrac ) ;
+         INT32 undefFrac =
+               ( _undefRecords * DMS_STAT_FRACTION_SCALE ) / _sampleRecords ;
+         ob.append( FIELD_NAME_UNDEF_FRAC, undefFrac ) ;
+
+         ob.append( FIELD_NAME_SAMPLE_RECORDS, ( INT64 )_sampleRecords ) ;
+         ob.append( FIELD_NAME_TOTAL_RECORDS, ( INT64 )_totalRecords ) ;
+         ob.append( FIELD_NAME_STAT_TIMESTAMP, _statTimestamp ) ;
+         obj = ob.obj() ;
+      }
+      catch ( std::bad_alloc &ba )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "No memory to build BSON object" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // Here we merge two statistics info into one. However, some field of it
+   // can't easily be counted. We'll choose the max or min instead.
+   INT32 _coordIndexStat::merge( const _coordIndexStat &from, _coordIndexStat &to )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         // For "Collection", "Unique", "KeyPattern" and
+         // "Index", they always be the same. Ignore them.
+         // For "GroupName" and "NodeName", they are useless. Ignore them.
+
+         // For "MaxValue" and "MinValue", we get the global max one and min one.
+         if ( from._maxValue > to._maxValue )
+         {
+            to._maxValue = from._maxValue.getOwned() ;
+         }
+         if ( !from._minValue.equal( staticNull ) &&
+              ( to._minValue.equal( staticNull ) ||
+                from._minValue < to._minValue ) )
+         {
+            to._minValue = from._minValue.getOwned() ;
+         }
+
+         // For "StatTimestamp", we get the newest one.
+         if ( ossStrcmp( from._statTimestamp, to._statTimestamp ) > 0 )
+         {
+            ossStrncpy( to._statTimestamp, from._statTimestamp,
+                        sizeof( to._statTimestamp ) - 1 ) ;
+         }
+
+         // For "TotalIndexLevels", we get the max one.
+         if ( from._indexLevels > to._indexLevels )
+         {
+            to._indexLevels = from._indexLevels ;
+         }
+
+         // For "NullFrac" and "UndefFrac", we count the total null records,
+         // and finally calculate the fraction again.
+         to._nullRecords += from._nullRecords ;
+         to._undefRecords += from._undefRecords ;
+
+         // For "TotalIndexPages", "SampleRecords", "TotalRecords", and
+         // "DistinctValNum", we count the total.
+         to._sampleRecords += from._sampleRecords ;
+         to._totalRecords += from._totalRecords ;
+         to._indexPages += from._indexPages ;
+         {
+            BSONObjIterator toIt( to._distinctValNum ) ;
+            BSONObjIterator fromIt( from._distinctValNum ) ;
+            while ( toIt.more() && fromIt.more() )
+            {
+               BSONElement toEle = toIt.next() ;
+               BSONElement fromEle = fromIt.next() ;
+               INT64 total = toEle.numberLong() + fromEle.numberLong() ;
+               SDB_ASSERT( toEle.type() == NumberLong,
+                           "DistinctValNum must be INT64" ) ;
+               INT64 *pNum = (INT64 *) const_cast<char *>( toEle.value() ) ;
+               *pNum = total ;
+            }
+         }
+      }
+      catch ( std::bad_alloc &ba )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "No memory to merge index statistics" ) ;
+         goto error ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occured: %e", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _coordCMDGetIndexStat implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDGetIndexStat,
+                                      CMD_NAME_GET_INDEX_STAT,
+                                      TRUE ) ;
+   _coordCMDGetIndexStat::_coordCMDGetIndexStat()
+   {
+   }
+
+   _coordCMDGetIndexStat::~_coordCMDGetIndexStat()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_GET_INDEX_STAT_GENRESULT, "_coordCMDGetIndexStat::generateResult" )
+   INT32 _coordCMDGetIndexStat::generateResult( rtnContext *pContext,
+                                                pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( COORD_GET_INDEX_STAT_GENRESULT ) ;
+
+      rtnContextBuf buffObj ;
+      _coordIndexStat resStat ;
+      BSONObj obj ;
+
+      // Aggregate all statistics into one.
+      while ( TRUE )
+      {
+         _coordIndexStat newStat ;
+         rc = pContext->getMore( 1, buffObj, cb ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get more detail, rc: %d", rc ) ;
+
+         {
+            BSONObj boTmp( buffObj.data() ) ;
+            rc = newStat.fromBSON( boTmp ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to initialize statistics "
+                         "from BSON, rc: %d", rc ) ;
+         }
+
+         if ( resStat.inited() )
+         {
+            rc = _coordIndexStat::merge( newStat, resStat ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to merge index statistics, "
+                         "rc: %d", rc ) ;
+         }
+         else
+         {
+            resStat = newStat ;
+         }
+      }
+
+      if ( !resStat.inited() ) // Nothing was returned.
+      {
+         goto done ;
+      }
+
+      if ( _cataPtr->isMainCL() )
+      {
+         resStat.setCollectionFullName( _cataPtr->getName() ) ;
+      }
+
+      rc = resStat.toBSON( obj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to convert index statistics to BSON, rc: %d", rc ) ;
+      rc = pContext->append( obj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to append cl detail to context, rc: %d", rc ) ;
+
+   done:
+      PD_TRACE_EXITRC ( COORD_GET_INDEX_STAT_GENRESULT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

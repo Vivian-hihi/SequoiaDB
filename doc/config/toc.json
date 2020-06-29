@@ -2723,6 +2723,12 @@
                            "en": "getIndex()"
                         },
                         {
+                           "id": 1595582798,
+                           "file": "getIndexStat",
+                           "cn": "getIndexStat()",
+                           "en": "getIndexStat()"
+                        },
+                        {
                            "id": 1432190838,
                            "file": "getLob",
                            "cn": "getLob()",

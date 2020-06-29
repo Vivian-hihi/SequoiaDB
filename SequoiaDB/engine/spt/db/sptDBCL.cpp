@@ -86,6 +86,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, disableCompression )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, setAttributes )
    JS_MEMBER_FUNC_DEFINE( _sptDBCL, getDetail )
+   JS_MEMBER_FUNC_DEFINE( _sptDBCL, getIndexStat )
 
    JS_BEGIN_MAPPING( _sptDBCL, SPT_CL_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
@@ -128,6 +129,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "setAttributes", setAttributes )
       JS_ADD_MEMBER_FUNC( "truncateLob", truncateLob )
       JS_ADD_MEMBER_FUNC( "getDetail", getDetail )
+      JS_ADD_MEMBER_FUNC( "getIndexStat", getIndexStat )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBCL::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBCL::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBCL::bsonToJSObj )
@@ -2583,6 +2585,38 @@ namespace engine
       return rc ;
    error:
       SAFE_OSS_DELETE( pCursor ) ;
+      goto done ;
+   }
+
+   INT32 _sptDBCL::getIndexStat( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      string indexName ;
+      bson::BSONObj result ;
+
+      rc = arg.getString( 0, indexName ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "indexName must be configured" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "indexName must be string" ) ;
+         goto error ;
+      }
+
+      rc = _cl.getIndexStat( indexName.c_str(), result ) ;
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      rval.getReturnVal().setValue( result ) ;
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

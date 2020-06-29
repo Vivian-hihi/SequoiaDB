@@ -550,8 +550,10 @@
 #define FIELD_NAME_FRAC                      "Frac"
 #define FIELD_NAME_NULL_FRAC                 "NullFrac"
 #define FIELD_NAME_UNDEF_FRAC                "UndefFrac"
-#define FIELD_NAME_CREATE_TIME               "CreateTime"
+#define FIELD_NAME_STAT_TIMESTAMP            "StatTimestamp"
 #define FIELD_NAME_KEY_PATTERN               "KeyPattern"
+#define FIELD_NAME_TOTAL_IDX_LEVELS          "TotalIndexLevels"
+#define FIELD_NAME_SAMPLE_RECORDS            "SampleRecords"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
@@ -712,6 +714,7 @@
 #define CMD_NAME_DELETE_CONFIG               "delete config"
 #define CMD_NAME_ANALYZE                     "analyze"
 #define CMD_NAME_GET_CL_DETAIL               "get collection detail"
+#define CMD_NAME_GET_INDEX_STAT              "get index statistic"
 
 #define CMD_NAME_SNAPSHOT_DATABASE_INTR      "SNAPSHOT_DB"
 #define CMD_NAME_SNAPSHOT_SYSTEM_INTR        "SNAPSHOT_SYSTEM"

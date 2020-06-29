@@ -3330,7 +3330,7 @@ SDB_EXPORT INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
-                                               const bson *options ) ;
+                                      const bson *options ) ;
 
 /** \fn INT32 sdbCLGetDetail ( sdbCollectionHandle cHandle,
                                sdbCursorHandle *handle )
@@ -3342,6 +3342,20 @@ SDB_EXPORT INT32 sdbCLSetAttributes ( sdbCollectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbCLGetDetail ( sdbCollectionHandle cHandle,
                                   sdbCursorHandle *handle ) ;
+
+/** \fn INT32 sdbCLGetIndexStat ( sdbCollectionHandle cHandle,
+                                  const CHAR *pIndexName,
+                                  bson *result )
+    \brief Get the statistics of the index.
+    \param [in] cHandle The collection handle
+    \param [in] pIndexName The name of index
+    \param [out] result The statistics of index
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCLGetIndexStat( sdbCollectionHandle cHandle,
+                                    const CHAR *pIndexName,
+                                    bson *result ) ;
 
 /* \fn INT32 sdbPop( sdbCollectionHandle cHandle, bson *options )
     \brief pop records from capped collection

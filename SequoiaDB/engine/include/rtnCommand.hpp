@@ -797,6 +797,23 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () ;
    };
 
+   class _rtnGetIndexStat : public _rtnGet
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnGetIndexStat () ;
+         virtual ~_rtnGetIndexStat () ;
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR * pMatcherBuff,
+                              const CHAR * pSelectBuff,
+                              const CHAR * pOrderByBuff,
+                              const CHAR * pHintBuff ) ;
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+   };
+
    /*
       Only in standalone
    */

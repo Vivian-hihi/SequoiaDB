@@ -3727,6 +3727,7 @@ namespace engine
       case CMD_GET_INDEXES:
       case CMD_LIST_LOB:
       case CMD_GET_CL_DETAIL:
+      case CMD_GET_INDEX_STAT:
          rc = _getOnMainCL( pCommandName, pCommand->collectionFullName(),
                             flags, numToSkip, numToReturn, pQuery, pField,
                             pOrderBy, pHint, w, contextID );

@@ -6063,8 +6063,6 @@ static INT32 _sdbGetIndexes ( sdbCollectionHandle cHandle,
                               sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
-   SINT64 contextID                = 0 ;
-   sdbCursorStruct *cursor         = NULL ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    BOOLEAN bsoninit                = FALSE ;
@@ -6098,65 +6096,33 @@ static INT32 _sdbGetIndexes ( sdbCollectionHandle cHandle,
                 cs->_collectionFullName, string ) ;
    BSON_FINISH ( newObj ) ;
 
-   rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              CMD_ADMIN_PREFIX CMD_NAME_GET_INDEXES,
-                              0, 0, -1, -1,
-                              pIndexName?&queryCond:NULL,
-                              NULL, NULL, &newObj, cs->_endianConvert ) ;
+   rc = _runCommand2( cs->_connection,
+                      &cs->_pSendBuffer, &cs->_sendBufferSize,
+                      &cs->_pReceiveBuffer, &cs->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_GET_INDEXES,
+                      0, 0, -1, -1,
+                      pIndexName ? &queryCond : NULL,
+                      NULL, NULL, &newObj,
+                      handle ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   // send and recv
-   rc = _sendAndRecv( cs->_connection, cs->_sock, (MsgHeader*)cs->_pSendBuffer,
-                      (MsgHeader**)&cs->_pReceiveBuffer,
-                      &cs->_receiveBufferSize,
-                      TRUE, cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // extract revc message
-   rc = _extract( cs->_connection,
-                  (MsgHeader*)cs->_pReceiveBuffer, cs->_receiveBufferSize,
-                  &contextID, cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // check return msg header
-   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
-                        cs->_connection ) ;
    rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
-   ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
-   INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
-   ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
-               sizeof(cursor->_collectionFullName) ) ;
-   // register cursor in connection
-   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // set output result
-   *handle                  = (sdbCursorHandle)cursor ;
 
 done :
    BSON_DESTROY( queryCond ) ;
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( cursor )
+   if ( SDB_INVALID_HANDLE != *handle )
    {
-      SDB_OSS_FREE ( cursor ) ;
+      sdbReleaseCursor ( *handle ) ;
    }
    SET_INVALID_HANDLE( handle ) ;
    goto done ;
@@ -12416,7 +12382,8 @@ SDB_EXPORT INT32 sdbCreateAutoIncrement( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   rc = _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj, FALSE ) ;
+   rc = _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_CRT_AUTOINC_FLD, &obj,
+                                     FALSE ) ;
 done:
    return rc ;
 error:
@@ -12426,7 +12393,8 @@ error:
 SDB_EXPORT INT32 sdbDropAutoIncrement( sdbCollectionHandle cHandle,
                                        const bson * options )
 {
-   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_AUTOINC_FLD, options, FALSE ) ;
+   return _sdbAlterCollectionInternal( cHandle, SDB_ALTER_CL_DROP_AUTOINC_FLD,
+                                       options, FALSE ) ;
 }
 
 SDB_EXPORT INT32 sdbCLSetAttributes( sdbCollectionHandle cHandle,
@@ -12439,8 +12407,6 @@ SDB_EXPORT INT32 sdbCLGetDetail( sdbCollectionHandle cHandle,
                                  sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
-   SINT64 contextID                = 0 ;
-   sdbCursorStruct *cursor         = NULL ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    BOOLEAN bsoninit                = FALSE ;
@@ -12465,68 +12431,113 @@ SDB_EXPORT INT32 sdbCLGetDetail( sdbCollectionHandle cHandle,
                 cs->_collectionFullName, string ) ;
    BSON_FINISH ( newObj ) ;
 
-   rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              CMD_ADMIN_PREFIX CMD_NAME_GET_CL_DETAIL,
-                              0, 0, -1, -1,
-                              NULL, NULL, NULL, &newObj, cs->_endianConvert ) ;
+   rc = _runCommand2( cs->_connection,
+                      &cs->_pSendBuffer, &cs->_sendBufferSize,
+                      &cs->_pReceiveBuffer, &cs->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_GET_CL_DETAIL,
+                      0, 0, -1, -1,
+                      NULL, NULL, NULL, &newObj,
+                      handle ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   // send and recv
-   rc = _sendAndRecv( cs->_connection, cs->_sock, (MsgHeader*)cs->_pSendBuffer,
-                      (MsgHeader**)&cs->_pReceiveBuffer,
-                      &cs->_receiveBufferSize,
-                      TRUE, cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // extract revc message
-   rc = _extract( cs->_connection,
-                  (MsgHeader*)cs->_pReceiveBuffer, cs->_receiveBufferSize,
-                  &contextID, cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // check return msg header
-   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
-                        cs->_connection ) ;
    rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
-   ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
-   INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
-   ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
-               sizeof(cursor->_collectionFullName) ) ;
-   // register cursor in connection
-   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   // set output result
-   *handle                  = (sdbCursorHandle)cursor ;
 
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( cursor )
+   if ( SDB_INVALID_HANDLE != *handle )
    {
-      SDB_OSS_FREE ( cursor ) ;
+      sdbReleaseCursor ( *handle ) ;
    }
    SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbCLGetIndexStat( sdbCollectionHandle cHandle,
+                                    const CHAR *pIndexName,
+                                    bson *result )
+{
+   INT32 rc                        = SDB_OK ;
+   sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   BOOLEAN bsoninit                = FALSE ;
+   bson hint ;
+
+   BSON_INIT( hint ) ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
+   if ( !result )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   if ( !cs->_collectionFullName[0] || !pIndexName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   // { Collection: 'cl', Index: 'idx' }
+   BSON_APPEND( hint, FIELD_NAME_COLLECTION,
+                cs->_collectionFullName, string ) ;
+   BSON_APPEND( hint, FIELD_NAME_INDEX, pIndexName, string ) ;
+   BSON_FINISH ( hint ) ;
+
+   rc = _runCommand2( cs->_connection,
+                      &cs->_pSendBuffer, &cs->_sendBufferSize,
+                      &cs->_pReceiveBuffer, &cs->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_GET_INDEX_STAT,
+                      0, 0, -1, -1,
+                      NULL, NULL, NULL, &hint,
+                      &cursor ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = updateCachedObject( rc, connection->_tb, cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   // check return cursor
+   if ( SDB_INVALID_HANDLE == cursor )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = sdbNext( cursor, result ) ;
+   if ( SDB_DMS_EOC == rc )
+   {
+      rc = SDB_IXM_STAT_NOTEXIST ;
+      goto error ;
+   }
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   BSON_DESTROY( hint ) ;
+   if ( SDB_INVALID_HANDLE != cursor )
+   {
+      sdbReleaseCursor( cursor ) ;
+   }
+   return rc ;
+error :
+   goto done ;
+}
 
 static INT32 _setDCName ( sdbDCHandle cHandle,
                           const CHAR *pClusterName,

@@ -574,6 +574,8 @@ namespace sdbclient
          return getDetail ( &cursor.pCursor ) ;
       }
 
+      INT32 getIndexStat ( const CHAR *pIndexName, bson::BSONObj &result ) ;
+
    private:
       INT32 _alterCollection1( const bson::BSONObj &options ) ;
       INT32 _alterCollection2( const bson::BSONObj &options ) ;

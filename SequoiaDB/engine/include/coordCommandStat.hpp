@@ -158,6 +158,21 @@ namespace engine
    } ;
    typedef _coordCMDGetCollectionDetail coordCMDGetCollectionDetail ;
 
+   /*
+      _coordCMDGetIndexStat define
+   */
+   class _coordCMDGetIndexStat : public _coordCMDStatisticsBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDGetIndexStat() ;
+         virtual ~_coordCMDGetIndexStat() ;
+      private :
+         virtual INT32 generateResult( rtnContext *pContext,
+                                       pmdEDUCB *cb ) ;
+   } ;
+   typedef _coordCMDGetIndexStat coordCMDGetIndexStat ;
+
 }
 
 #endif // COORD_COMMAND_STAT_HPP__
