@@ -80,7 +80,7 @@ public class Explain14453 extends SdbTestBase {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 for (int i = 0; i < EXECRECORDS; i++) {
                     cl.insert(insertObjs);
-                    db.analyze();
+                    db.analyze( (BSONObject)JSON.parse( "{ 'Collection': '" + csName + "." + clName + "' }" ) );
                     cl.truncate();
                 }
             }
