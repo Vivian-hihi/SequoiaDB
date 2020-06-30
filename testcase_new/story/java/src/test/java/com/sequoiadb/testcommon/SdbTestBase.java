@@ -309,7 +309,7 @@ public class SdbTestBase {
         }
     }
 
-    @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS })
+    @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS } )
     public static synchronized void initTestGroups() {
         if ( testGroup == null )
             return;
