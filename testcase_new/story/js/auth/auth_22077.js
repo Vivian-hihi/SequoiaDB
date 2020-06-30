@@ -4,50 +4,63 @@
 ******************************************************************************/
 testConf.skipStandAlone = true;
 
-//main( test );  jira-5621
+main( test );
 function test ()
 {
    var testcaseID = 22077;
    var user1 = CHANGEDPREFIX + "_auth_" + testcaseID + "_1";
    var user2 = CHANGEDPREFIX + "_auth_" + testcaseID + "_2";
-   var procName = 'testProce' + testcaseID;
-   var procFunc = 'testProce' + testcaseID + '()';
+   var procName1 = 'testProce' + testcaseID + 'A';
+   var procFunc1 = procName1 + '()';
+   var procName2 = 'testProce' + testcaseID + 'B';
+   var procFunc2 = procName2 + '("' + COORDHOSTNAME + '",' + COORDSVCNAME + ',"' + user1 + '","' + user1 + '")';
+
    // clean
    cleanUsers( user1, user2 );
-   cleanProcedure( procName );
+   cleanProcedure( procName1 );
+   cleanProcedure( procName2 );
 
    var sdb = new Sdb( COORDHOSTNAME, COORDSVCNAME );
 
    try
    {
-      // no auth user, create procedure 
-      sdb.createProcedure( function testProce22077 () { return db.list( 0 ); } );
-      var cursor = sdb.eval( procFunc );
+      // create procedure
+      // no auth user, create procedure by existing db
+      sdb.createProcedure( function testProce22077A () { return db.list( 0 ); } );
+      var cursor = sdb.eval( procFunc1 );
+      checkResults( cursor.size() );
+      // no auth user, create procedure by new db
+      sdb.createProcedure( function testProce22077B ( COORDHOSTNAME, COORDSVCNAME, user, password ) { var db2 = new Sdb( COORDHOSTNAME, COORDSVCNAME, user, password ); return db2.list( 0 ); } );
+      var cursor = sdb.eval( procFunc2 );
       checkResults( cursor.size() );
 
       // create user1
       sdb.createUsr( user1, user1 );
       // use old sdb
-      var cursor = sdb.eval( procFunc );
+      var cursor = sdb.eval( procFunc1 );
       checkResults( cursor.size() );
       // new db1 by user1
       var db1 = new Sdb( COORDHOSTNAME, COORDSVCNAME, user1, user1 );
       // use old sdb
-      var cursor = sdb.eval( procFunc );
+      var cursor = sdb.eval( procFunc1 );
+      checkResults( cursor.size() );
+      var cursor = sdb.eval( procFunc2 );
       checkResults( cursor.size() );
       // use db1      
-      var cursor = db1.eval( procFunc );
+      var cursor = db1.eval( procFunc1 );
+      checkResults( cursor.size() );
+      var cursor = sdb.eval( procFunc2 );
       checkResults( cursor.size() );
 
       // create user2
       sdb.createUsr( user2, user2 );
       // use db1
-      var cursor = db1.eval( procFunc );
+      var cursor = db1.eval( procFunc1 );
       checkResults( cursor.size() );
       // new db2 by user2
       var db2 = new Sdb( COORDHOSTNAME, COORDSVCNAME, user2, user2 );
       // use db2
-      var cursor = db2.eval( procFunc );
+      var cursor = db2.eval( procFunc1 );
       checkResults( cursor.size() );
 
       // drop user1
@@ -55,7 +68,7 @@ function test ()
       // use db1
       try
       {
-         db1.eval( procFunc );
+         db1.eval( procFunc1 );
       }
       catch( e )
       {
@@ -65,23 +78,25 @@ function test ()
          }
       }
       // use db2
-      var cursor = db2.eval( procFunc );
+      var cursor = db2.eval( procFunc1 );
       checkResults( cursor.size() );
 
       // drop all users
       sdb.dropUsr( user2, user2 );
       // use old sdb
-      var cursor = sdb.eval( procFunc );
+      var cursor = sdb.eval( procFunc1 );
       checkResults( cursor.size() );
       // use db1      
-      var cursor = db1.eval( procFunc );
+      var cursor = db1.eval( procFunc1 );
       checkResults( cursor.size() );
       // use db2
-      var cursor = db2.eval( procFunc );
+      var cursor = db2.eval( procFunc1 );
+      checkResults( cursor.size() );
+      var cursor = sdb.eval( procFunc2 );
       checkResults( cursor.size() );
 
       // clean
-      db.removeProcedure( procName );
+      db.removeProcedure( procName1 );
    }
    finally 
    {
