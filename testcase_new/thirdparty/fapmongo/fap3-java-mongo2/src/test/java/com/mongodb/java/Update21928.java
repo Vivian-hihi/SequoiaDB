@@ -357,7 +357,7 @@ public class Update21928 extends MongodbTestBase {
         DBCollection cl1 = db.createCollection( clName + "-test2",
                 new BasicDBObject() );
         WriteResult result5 = cl1.updateMulti( new BasicDBObject(),
-                new BasicDBObject( "a", 6 ) );
+                new BasicDBObject( "$set",new BasicDBObject( "a", 6 ) ));
         Assert.assertEquals( result5.isUpdateOfExisting(), false );
         Assert.assertEquals( result5.getN(), 0 );
         Assert.assertEquals( cl1.count(), 0 );
@@ -389,7 +389,7 @@ public class Update21928 extends MongodbTestBase {
         // 不存在记录，upsert为true更新记录
         DBObject query3 = QueryBuilder.start( "a" ).is( num - 1 ).get();
         DBObject update3 = new BasicDBObject( "a", num - 200 );
-        WriteResult result3 = cl.update( query3, update3, true, true );
+        WriteResult result3 = cl.update( query3, update3, true, false );
         DBObject check3 = QueryBuilder.start( "a" ).is( num - 200 ).get();
         Assert.assertFalse( result3.isUpdateOfExisting() );
         Assert.assertEquals( result3.getN(), 1 );
@@ -400,7 +400,7 @@ public class Update21928 extends MongodbTestBase {
         DBObject query4 = QueryBuilder.start( "a" ).is( num - 3 ).get();
         DBObject update4 = new BasicDBObject( "a", num - 300 );
 
-        WriteResult result4 = cl.update( query4, update4, true, true );
+        WriteResult result4 = cl.update( query4, update4, true, false );
         DBObject check4 = QueryBuilder.start( "a" ).is( num - 300 ).get();
         Assert.assertTrue( result4.isUpdateOfExisting() );
         Assert.assertEquals( result4.getN(), 1 );

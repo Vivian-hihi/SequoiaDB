@@ -363,9 +363,9 @@ public class Update21928 extends MongodbTestBase {
                 Entity.class, clName );
         Query check2 = new Query( Criteria.where( "age" ).is( num * 3 ) );
         Assert.assertTrue( result2.isUpdateOfExisting() );
-        Assert.assertEquals( result2.getN(), num / 3 );
-        Assert.assertEquals( mongoTemplate.count( query2, clName ), 0 );
-        Assert.assertEquals( mongoTemplate.count( check2, clName ), num / 3 );
+        Assert.assertEquals( result2.getN(), 1 );
+        Assert.assertEquals( mongoTemplate.count( query2, clName ), num / 3 -1 );
+        Assert.assertEquals( mongoTemplate.count( check2, clName ), 1 );
 
         // 匹配不到记录，upsert更新记录
         Query query3 = new Query( Criteria.where( "age" ).gte( num * 10 ) );

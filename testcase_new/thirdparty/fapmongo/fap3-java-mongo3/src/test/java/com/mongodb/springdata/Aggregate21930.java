@@ -116,14 +116,16 @@ public class Aggregate21930 extends MongodbTestBase {
         // 3], d=0}}
         // Mongodb：[Document{{a=0, b=0, c=[1, 2, 3], d=0}},
         // 跟开发确认不改
-        agg = Aggregation.newAggregation(
-                match( Criteria.where( "age" ).lt( num ) ),
-                project().andExclude( "_id" ) );
-        actResults = mongoTemplate.aggregate( agg, clName, Entity.class );
-        actList = actResults.getMappedResults();
-        Assert.assertEquals( actList.size(), list.size() );
-        for ( int i = 0; i < list.size(); i++ ) {
-            Assert.assertEquals( actList.get( i ), list.get( i ) );
+        try {
+            agg = Aggregation.newAggregation(
+                    match( Criteria.where( "age" ).lt( num ) ),
+                    project().andExclude( "_id" ) );
+            mongoTemplate.aggregate( agg, clName, Entity.class );
+            Assert.fail( "exp fail but act success" );
+        } catch ( InvalidDataAccessApiUsageException e ) {
+            if ( !e.getMessage().contains( "-32" )  ) {
+                throw e;
+            }
         }
 
         // （5）选择普通字段和排除_id

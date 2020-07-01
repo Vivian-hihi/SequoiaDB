@@ -404,17 +404,15 @@ public class Update21928 extends MongodbTestBase {
         prepare( clName );
         // 设置upsert更新记录
         // 存在记录，upsert更新记录
-        // 与mongodb表现不同，mongodb只会更新一条记录，不是bug
-        // 因为目前sequoiadb更新所有符合条件的记录
         Query query2 = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         Update update2 = new Update().set( "age", num * 3 );
         WriteResult result2 = mongoTemplate.upsert( query2, update2,
                 Entity.class, clName );
         Query check2 = new Query( Criteria.where( "age" ).is( num * 3 ) );
         Assert.assertTrue( result2.isUpdateOfExisting() );
-        Assert.assertEquals( result2.getN(), num / 3 );
-        Assert.assertEquals( mongoTemplate.count( query2, clName ), 0 );
-        Assert.assertEquals( mongoTemplate.count( check2, clName ), num / 3 );
+        Assert.assertEquals( result2.getN(), 1 );
+        Assert.assertEquals( mongoTemplate.count( query2, clName ), num / 3 - 1 );
+        Assert.assertEquals( mongoTemplate.count( check2, clName ), 1 );
 
         // 匹配不到记录，upsert更新记录
         Query query3 = new Query( Criteria.where( "age" ).gte( num * 10 ) );
