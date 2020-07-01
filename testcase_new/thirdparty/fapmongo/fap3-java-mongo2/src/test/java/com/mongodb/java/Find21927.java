@@ -231,6 +231,14 @@ public class Find21927 extends MongodbTestBase {
         actResult = cl.find( query ).skip( 1 ).limit( num * 2 ).sort( sort )
                 .hint( "inexistence" ).toArray();
         checkFindResult( actResult, list.subList( 1, num ) );
+        // limit为0
+        query = QueryBuilder.start( "a" ).lessThanEquals( num ).get();
+        actResult = cl.find( query ).limit( 0 ).toArray();
+        Assert.assertEquals( actResult, list );
+        //limit为-1
+        query = QueryBuilder.start( "a" ).lessThanEquals( num ).get();
+        actResult = cl.find( query ).limit( -1 ).toArray();
+        Assert.assertEquals( actResult, list.subList( 0 , 1) );
     }
 
     @Test

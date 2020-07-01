@@ -379,6 +379,16 @@ public class Find21927 extends MongodbTestBase {
                 .limit( num * 5 );
         actList = actFindIterable.into( new ArrayList< Document >() );
         Assert.assertEquals( actList.size(), 0 );
+        // limit为0
+        actFindIterable = cl.find( and( gte( "a", 0 ), lt( "a", num ) ) )
+                .limit( 0 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 0, num ) );
+        // limit为-1
+        actFindIterable = cl.find( and( gte( "a", 0 ), lt( "a", num ) ) )
+                .limit( -1 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 0 , 1) );
     }
 
     @Test
@@ -444,6 +454,38 @@ public class Find21927 extends MongodbTestBase {
                 }
             }
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void test8() {
+        FindIterable< Document > actFindIterable;
+        List< Document > actList;
+        // 带batchSize、limit查询
+        // batchSize小于limit的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .batchSize( 5 ).limit( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, 11 ) );
+        // batchSize等于limit的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .batchSize( 10 ).limit( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, 11 ) );
+        // batchSize大于limit的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .batchSize( 20 ).limit( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, 11 ) );
+        // 存在的字段，匹配不到记录，batchSize不为0
+        actFindIterable = cl.find( gt( "a", num ) ).batchSize( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList.size(), 0 );
+        // batchSize为0的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .batchSize( -1 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, num ) );
     }
 
     @AfterClass
