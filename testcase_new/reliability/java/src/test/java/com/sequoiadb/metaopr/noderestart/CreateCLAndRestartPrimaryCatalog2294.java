@@ -80,6 +80,7 @@ public class CreateCLAndRestartPrimaryCatalog2294 extends SdbTestBase {
                     "check LSN consistency fail" );
 
             // check result
+            count = cTask.getCreateNum() ;
             checkCreateCLResult();
             Utils.checkConsistency( groupMgr );
 

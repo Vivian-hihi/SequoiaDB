@@ -94,6 +94,7 @@ public class CreateCLAndPrimaryNodeCutNet2933 extends SdbTestBase {
                     "check LSN consistency fail" );
 
             // check result
+            count = dTask.getCreateNum();
             checkCreateCLResult();
 
             // check whether the cluster is normal and lsn consistency ,the

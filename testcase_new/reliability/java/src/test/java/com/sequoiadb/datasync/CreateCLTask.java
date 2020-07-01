@@ -23,6 +23,7 @@ public class CreateCLTask extends OperateTask {
     private int clNum = 500 ;
     private String namePrefix ;
     private String groupName = "";
+    private int count = 0 ;
     public CreateCLTask(String prefix, String groupName) {
         this.namePrefix = prefix ;
         this.groupName = groupName ;
@@ -41,7 +42,6 @@ public class CreateCLTask extends OperateTask {
     }
     @Override
     public void exec() throws Exception {
-        int count = 0 ;
         try ( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl , "", "" )) {
            BSONObject option = ( BSONObject ) JSON
                         .parse( "{ ShardingKey: { a: 1 },"
@@ -66,4 +66,7 @@ public class CreateCLTask extends OperateTask {
         }
     }
 
+    public int getCreateNum() {
+        return count;
+    }
 }

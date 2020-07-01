@@ -96,6 +96,7 @@ public class CreateCLAndKillPrimaryCatalog2280 extends SdbTestBase {
                     "check LSN consistency fail" );
 
             // check result
+            count = cTask.getCreateNum() ;
             checkCreateCLResult();
             Utils.checkConsistency( groupMgr );
 
