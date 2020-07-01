@@ -136,6 +136,20 @@ engine::SDB_SESSION_TYPE _mongoSession::sessionType() const
    return engine::SDB_SESSION_PROTOCOL ;
 }
 
+BOOLEAN _mongoSession::preProcess( pmdEDUEvent &event )
+{
+   BOOLEAN processed = FALSE ;
+
+   if ( PMD_EDU_EVENT_MSG == event._eventType &&
+        IS_MONGO_MSG( event._userData ) )
+   {
+      _tmpEventQue.push( event ) ;
+      processed = TRUE ;
+   }
+
+   return processed ;
+}
+
 INT32 _mongoSession::run()
 {
    INT32 rc  = SDB_OK ;
@@ -143,6 +157,11 @@ INT32 _mongoSession::run()
    _mongoCommand* pCommand = NULL ;
    pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
    mongoSessionCtx sessCtx ;
+   _pmdRemoteSessionSite *pSite = NULL ;
+
+   pSite = ( _pmdRemoteSessionSite* )(eduCB()->getRemoteSite()) ;
+   SDB_ASSERT( pSite, "site is null" ) ;
+   pSite->setMsgPreprocessor( this ) ;
 
    PD_CHECK( _pEDUCB, SDB_SYS, error, PDERROR,
              "_pEDUCB is null" ) ;
@@ -278,6 +297,7 @@ INT32 _mongoSession::run()
    }
 
 done:
+   pSite->setMsgPreprocessor( NULL ) ;
    if ( pCommand )
    {
       mongoReleaseCommand( &pCommand ) ;
@@ -345,6 +365,12 @@ INT32 _mongoSession::_recvMsg( CHAR *&pMsg,
    INT32 rc = SDB_OK ;
    queue<pmdEDUEvent> tmpEventQue ;
    BOOLEAN recvSomething = FALSE ;
+
+   while ( !_tmpEventQue.empty() )
+   {
+      _pEDUCB->postEvent( _tmpEventQue.front() ) ;
+      _tmpEventQue.pop() ;
+   }
 
   /* Wait message from socket for a short time, if receive nothing, then wait
    * for event. Loop util receive something.

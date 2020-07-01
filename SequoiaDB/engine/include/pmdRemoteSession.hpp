@@ -130,6 +130,18 @@ namespace engine
    typedef _IRemoteSiteHandle IRemoteSiteHandle ;
 
    /*
+      _IRemoteMsgPreprocessor define
+   */
+   class _IRemoteMsgPreprocessor
+   {
+      public:
+         _IRemoteMsgPreprocessor() {}
+         virtual ~_IRemoteMsgPreprocessor() {}
+         virtual BOOLEAN preProcess( pmdEDUEvent &event ) = 0 ;
+   } ;
+   typedef _IRemoteMsgPreprocessor IRemoteMsgPreprocessor ;
+
+   /*
       _IRemoteMgrHandle define
    */
    class _IRemoteMgrHandle : public SDBObject
@@ -475,6 +487,12 @@ namespace engine
          void setHandle( IRemoteSiteHandle *pHandle ) { _pHandler = pHandle ; }
          IRemoteSiteHandle* getHandle() { return _pHandler ; }
 
+         void setMsgPreprocessor( IRemoteMsgPreprocessor *pPreProcessor )
+         {
+            _pPreProcessor = pPreProcessor ;
+         }
+         IRemoteMsgPreprocessor* getPreprocessor() { return _pPreProcessor ; }
+
          void     interruptAllSubSession() ;
          void     disconnectAllSubSession() ;
 
@@ -517,6 +535,7 @@ namespace engine
          _pmdEDUCB            *_pEDUCB ;
          netRouteAgent        *_pAgent ;
          IRemoteSiteHandle    *_pHandler ;
+         IRemoteMsgPreprocessor *_pPreProcessor ;
 
          // last for free entry
          posAndNode           _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE + 1 ] ;

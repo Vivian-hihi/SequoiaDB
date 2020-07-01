@@ -1089,6 +1089,7 @@ namespace engine
       pmdSubSession *pSubSession    = NULL ;
       _sessionChange                = FALSE ;
       IRemoteSiteHandle *pSiteHandle= _pSite->getHandle() ;
+      IRemoteMsgPreprocessor *pPreProcessor = _pSite->getPreprocessor() ;
       BOOLEAN gotEvent              = FALSE ;
       monClassQuery *monQuery       = getEDUCB()->getMonQueryCB() ;
       _milliTimeout = _milliTimeoutHard ;
@@ -1152,41 +1153,7 @@ namespace engine
          }
          else
          {
-            INT64 waitTime = 0 ;
-            ossQueue< pmdEDUEvent > tmpQue ;
-            gotEvent = FALSE ;
-            timeout = timeout < 0 ? 0x7FFFFFFF : timeout ;
-
-            while ( !_pEDUCB->isInterrupted() )
-            {
-               waitTime = timeout < OSS_ONE_SEC ? timeout : OSS_ONE_SEC ;
-               if ( !_pEDUCB->waitEvent( event, waitTime ) )
-               {
-                  timeout -= waitTime ;
-                  if ( timeout <= 0 )
-                  {
-                     break ;
-                  }
-                  continue ;
-               }
-               if ( PMD_EDU_EVENT_MSG == event._eventType &&
-                    event._userData >> 63 == 1 )
-               {
-                  // If first bit of userdata is 1, it is mongo message,
-                  // just ignore it.
-                  tmpQue.push( event ) ;
-                  continue ;
-               }
-               gotEvent = TRUE ;
-               break ;
-            }
-
-            while ( !tmpQue.empty() )
-            {
-               pmdEDUEvent tmpData ;
-               tmpQue.try_pop( tmpData ) ;
-               _pEDUCB->postEvent( tmpData ) ;
-            }
+            gotEvent = _pEDUCB->waitEvent( event, timeout ) ;
          }
 
          // wait event
@@ -1234,6 +1201,11 @@ namespace engine
                   }
                }
             }
+            continue ;
+         }
+
+         if ( pPreProcessor && pPreProcessor->preProcess( event ) )
+         {
             continue ;
          }
 
@@ -1355,6 +1327,7 @@ namespace engine
       _pAgent = NULL ;
       _pLatch = NULL ;
       _pHandler = NULL ;
+      _pPreProcessor = NULL ;
 
       ossMemset( _assitNodeBuff, 0, sizeof( _assitNodeBuff ) ) ;
 

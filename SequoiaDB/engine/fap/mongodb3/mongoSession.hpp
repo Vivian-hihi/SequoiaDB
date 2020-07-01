@@ -44,6 +44,7 @@
 #include "fapMongoMessage.hpp"
 #include "msgBuffer.hpp"
 #include "fapMongoCommand.hpp"
+#include "pmdRemoteSession.hpp"
 
 namespace fap
 {
@@ -51,7 +52,7 @@ namespace fap
 /*
    _mongoSession define
 */
-class _mongoSession : public engine::pmdSession
+class _mongoSession : public engine::pmdSession, public engine::IRemoteMsgPreprocessor
 {
 public:
    _mongoSession( SOCKET fd, engine::IResource *resource ) ;
@@ -61,6 +62,8 @@ public:
    virtual engine::SDB_SESSION_TYPE sessionType() const ;
 
    virtual INT32 run() ;
+
+   virtual BOOLEAN preProcess( engine::pmdEDUEvent &event ) ;
 
 protected:
    virtual void  _onAttach() {}
@@ -106,6 +109,7 @@ private:
    BOOLEAN                 _needWaitResponse ;
 
    BOOLEAN                 _isAuthed ;
+   queue<engine::pmdEDUEvent> _tmpEventQue ;
 } ;
 
 typedef _mongoSession mongoSession ;
