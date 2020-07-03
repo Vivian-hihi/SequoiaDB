@@ -404,6 +404,7 @@ namespace fap
                }
                if ( !appendSucc )
                {
+                  rc = SDB_INVALIDARG ;
                   goto error ;
                }
 #endif
