@@ -97,6 +97,42 @@ namespace fap
       goto done ;
    }
 
+   static BOOLEAN hasMongoSpecialStr( const CHAR* decimalStr )
+   {
+      BOOLEAN has = FALSE ;
+      INT32 len = ossStrlen( decimalStr ) ;
+
+      if ( len == 4 && decimalStr[0] == '+' )
+      {
+         if ( ( decimalStr[1] == 'n' || decimalStr[1] == 'N' ) &&
+              ( decimalStr[2] == 'a' || decimalStr[2] == 'A' ) &&
+              ( decimalStr[3] == 'n' || decimalStr[3] == 'N' ) )
+         {
+            has = TRUE ;
+         }
+         else if ( ( decimalStr[1] == 'm' || decimalStr[1] == 'M' ) &&
+                 ( decimalStr[2] == 'i' || decimalStr[2] == 'I' ) &&
+                 ( decimalStr[3] == 'n' || decimalStr[3] == 'N' ) )
+         {
+            has = TRUE ;
+         }
+         else if ( ( decimalStr[1] == 'm' || decimalStr[1] == 'M' ) &&
+                 ( decimalStr[2] == 'a' || decimalStr[2] == 'A' ) &&
+                 ( decimalStr[3] == 'x' || decimalStr[3] == 'X' ) )
+         {
+            has = TRUE ;
+         }
+         else if ( ( decimalStr[1] == 'i' || decimalStr[1] == 'I' ) &&
+                 ( decimalStr[2] == 'n' || decimalStr[2] == 'N' ) &&
+                 ( decimalStr[3] == 'f' || decimalStr[3] == 'F' ) )
+         {
+            has = TRUE ;
+         }
+      }
+
+      return has ;
+   }
+
 #if defined( _ARMLIN64 )
    // ARM64 doesn't support decimal in fap
    INT32 sdbDecimal2MongoDecimal( const BSONObj &sdbRecord,
@@ -348,10 +384,28 @@ namespace fap
                UINT32 signalingFlags = 0 ;
                BID_UINT128 dec128 ;
                CHAR decimalStr[FAP_MONGO_DECIAML_STR_MAX_SIZE] = { 0 } ;
+               BOOLEAN appendSucc = FALSE ;
 
                ossMemcpy( &dec128, ele.value(), FAP_MONGO_DECIAMLOID_SIZE ) ;
                bid128_to_string( decimalStr, dec128, &signalingFlags ) ;
-               sdbMsgObjBob.appendDecimal( ele.fieldName(), decimalStr ) ;
+
+               if ( hasMongoSpecialStr( decimalStr ) )
+               {
+                  // if the decimalStr is +NaN, +Inf, +Max or
+                  // +Min( not case sensitive ), we should
+                  // append NaN instead of +NaN, Inf instead of +Inf...
+                  appendSucc = sdbMsgObjBob.appendDecimal( ele.fieldName(),
+                                                           decimalStr+1 ) ;
+               }
+               else
+               {
+                  appendSucc = sdbMsgObjBob.appendDecimal( ele.fieldName(),
+                                                           decimalStr ) ;
+               }
+               if ( !appendSucc )
+               {
+                  goto error ;
+               }
 #endif
             }
             else
@@ -418,11 +472,22 @@ namespace fap
                bsonDecimal decimalObj ;
                UINT32 signalingFlags = 0 ;
                BID_UINT128 dec128 ;
-               ossMemcpy( &dec128, ele.value(), FAP_MONGO_DECIAMLOID_SIZE ) ;
                CHAR decimalStr[FAP_MONGO_DECIAML_STR_MAX_SIZE] = { 0 } ;
+
+               ossMemcpy( &dec128, ele.value(), FAP_MONGO_DECIAMLOID_SIZE ) ;
                bid128_to_string( decimalStr, dec128, &signalingFlags ) ;
 
-               rc = decimalObj.fromString( decimalStr ) ;
+               if ( hasMongoSpecialStr( decimalStr ) )
+               {
+                  // if the decimalStr is +NaN, +Inf, +Max or
+                  // +Min( not case sensitive ), we should
+                  // append NaN instead of +NaN, Inf instead of +Inf...
+                  rc = decimalObj.fromString( decimalStr+1 ) ;
+               }
+               else
+               {
+                  rc = decimalObj.fromString( decimalStr ) ;
+               }
                if ( rc )
                {
                   goto error ;
