@@ -108,11 +108,16 @@
 |          | 说明                                     | 例子                                           |
 |----------|------------------------------------------|------------------------------------------------|
 | 请求头   | 同通用请求头                             |                                                |
-| 请求内容 | cmd: delete<br>name: 集合的全称（集合空间.集合）<br>deletor: 删除条件 | cmd=delete&name=foo.bar&deletor={"name":"hello"} |
+| 请求内容 | cmd: delete<br>name: 集合的全称（集合空间.集合）<br>deletor: 删除条件<br>flag: 标志位（可选参数，可不填） | cmd=delete&name=foo.bar&deletor={"name":"hello"}&flag=SDB_DELETE_ONE |
 | 说明     |                                          |                                                |
 | 响应头   | 同通用响应头                             |                                                |
 | 响应内容 | {<br>errno: 返回值，0表示成功，其他为失败<br>description: 失败时的错误描述<br>} | [{ "errno": 0 }] |
 | 说明     |                                          |                                                |
+
+> **Note:**  
+> flag 既支持字符串形式，也支持数值型。数值型包括十六进制（0x开头）、八进制（0开头）、十进制。  
+> 取值如下：  
+> SDB_DELETE_ONE(0x00000002)
 
 ##更新记录##
 
@@ -128,7 +133,8 @@
 > **Note:**  
 > flag既支持字符串形式，也支持数值型。数值型包括十六进制（0x开头）、八进制（0开头）、十进制。  
 > 取值如下：  
-> SDB_UPDATE_KEEP_SHARDINGKEY(0x00008000)
+> SDB_UPDATE_KEEP_SHARDINGKEY(0x00008000)  
+> SDB_UPDATE_ONE(0x00000002)
 
 ##更新或插入记录##
 
@@ -144,7 +150,8 @@
 > **Note:**  
 > flag既支持字符串形式，也支持数值型。数值型包括十六进制（0x开头）、八进制（0开头）、十进制。  
 > 取值如下：  
-> SDB_UPDATE_KEEP_SHARDINGKEY(0x00008000)
+> SDB_UPDATE_KEEP_SHARDINGKEY(0x00008000)  
+> SDB_UPDATE_ONE(0x00000002)
 
 ##获取记录数##
 

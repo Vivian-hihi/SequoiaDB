@@ -76,7 +76,7 @@ namespace engine
       util
    */
    // PD_TRACE_DECLARE_FUNCTION( SDB__UTILMSGFLAG, "utilMsgFlag" )
-   static INT32 utilMsgFlag( const string strFlag, INT32 &flag )
+   static INT32 utilMsgFlag( const string& strFlag, INT32 &flag )
    {
       PD_TRACE_ENTRY( SDB__UTILMSGFLAG ) ;
       INT32 rc = SDB_OK ;
@@ -103,6 +103,18 @@ namespace engine
                               REST_VALUE_FLAG_QUERY_KEEP_SK_IN_UPDATE ) )
          {
             flag |= FLG_QUERY_KEEP_SHARDINGKEY_IN_UPDATE ;
+            continue ;
+         }
+         if ( 0 == ossStrcmp( strSubFlag,
+                              REST_VALUE_FLAG_UPDATE_ONE ) )
+         {
+            flag |= FLG_UPDATE_ONE ;
+            continue ;
+         }
+         if ( 0 == ossStrcmp( strSubFlag,
+                              REST_VALUE_FLAG_DELETE_ONE ) )
+         {
+            flag |= FLG_DELETE_ONE ;
             continue ;
          }
          if ( 0 == ossStrcmp( strSubFlag,
@@ -1859,7 +1871,13 @@ namespace engine
       flagStr = request.getQuery( REST_KEY_NAME_FLAG ) ;
       if ( FALSE == flagStr.empty() )
       {
-         flag = ossAtoi( flagStr.c_str() ) ;
+         rc = utilMsgFlag( flagStr, flag ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s,"
+                        "value=%s", REST_KEY_NAME_FLAG, flagStr.c_str() ) ;
+            goto error ;
+         }
       }
 
       deletorStr = request.getQuery( REST_KEY_NAME_DELETOR ) ;
