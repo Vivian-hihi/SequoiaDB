@@ -786,6 +786,10 @@ namespace engine
       private:
          UINT32                  _addInfoMask ;
          BOOLEAN                 _isDetail ;
+         SDB_DMSCB              *_dmsCB ;
+         dmsStorageUnit         *_su ;
+         dmsStorageUnitID        _suID ;
+         dmsMBContext           *_mbContext ;
          dmsExtentID             _curExtentID ;
          BOOLEAN                 _noMoreStat ;
          IDX_STAT_LIST::iterator _pos ;

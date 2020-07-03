@@ -5174,11 +5174,25 @@ namespace engine
    _monIndexStatsFetch::~_monIndexStatsFetch()
    {
       IDX_STAT_LIST::iterator iter ;
+
       for ( iter = _statCache.begin() ; iter != _statCache.end() ; ++iter )
       {
          SDB_POOL_FREE( *iter ) ;
       }
       _statCache.clear() ;
+
+      if ( _mbContext )
+      {
+         if ( _mbContext->isMBLock() )
+         {
+            _mbContext->mbUnlock() ;
+         }
+         _su->data()->releaseMBContext( _mbContext ) ;
+      }
+      if ( DMS_INVALID_CS != _suID && _dmsCB )
+      {
+         _dmsCB->suUnlock( _suID ) ;
+      }
    }
 
    INT32 _monIndexStatsFetch::init( pmdEDUCB *cb,
@@ -5187,13 +5201,63 @@ namespace engine
                                     UINT32 addInfoMask,
                                     const BSONObj obj )
    {
-      _isDetail = isDetail ;
-      _addInfoMask = addInfoMask ;
-      _hitEnd = FALSE ;
-      _curExtentID = DMS_INVALID_EXTENT ;
-      _noMoreStat = FALSE ;
+      int rc = SDB_OK ;
+      const CHAR *pCollectionShortName = NULL ;
 
-      return SDB_OK ;
+      _dmsCB         = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( _dmsCB, "dmsCB's never NULL" ) ;
+      _su            = NULL ;
+      _suID          = DMS_INVALID_CS ;
+      _mbContext     = NULL ;
+      _isDetail      = isDetail ;
+      _addInfoMask   = addInfoMask ;
+      _hitEnd        = FALSE ;
+      _curExtentID   = DMS_INVALID_EXTENT ;
+      _noMoreStat    = FALSE ;
+
+      if ( pmdGetDBRole() != SDB_ROLE_DATA )
+      {
+         _hitEnd = TRUE ;
+         goto done ;
+      }
+
+      // Check whether SYSSTAT.SYSINDEXSTAT exists. If not, nothing to do.
+      rc = rtnResolveCollectionNameAndLock ( DMS_STAT_INDEX_CL_NAME, _dmsCB, &_su,
+                                             &pCollectionShortName, _suID, SHARED ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+         _hitEnd = TRUE ;
+         goto done ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollectionShortName, rc ) ;
+
+      rc = _su->data()->getMBContext( &_mbContext, pCollectionShortName, SHARED ) ;
+      if ( SDB_DMS_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+         _hitEnd = TRUE ;
+         goto done ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+
+      // Initialize _curExtentID
+      _curExtentID = _mbContext->mb()->_firstExtentID ;
+      if ( DMS_INVALID_EXTENT == _curExtentID )
+      {
+         _hitEnd = TRUE ;
+         goto done ;
+      }
+
+   done:
+      if ( _mbContext )
+      {
+         _mbContext->pause() ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR* _monIndexStatsFetch::getName() const
@@ -5204,64 +5268,23 @@ namespace engine
    // Read a bulk of statistics from SYSSTAT.SYSINDEXSTAT for once.
    INT32 _monIndexStatsFetch::_bulkFetch( IDX_STAT_LIST &result )
    {
-      int rc                           = SDB_OK ;
-      SDB_DMSCB *dmsCB                 = pmdGetKRCB()->getDMSCB() ;
-      pmdEDUCB *eduCB                  = pmdGetThreadEDUCB() ;
-      dmsStorageUnit *su               = NULL ;
-      dmsStorageUnitID suID            = DMS_INVALID_CS ;
-      dmsMBContext *mbContext          = NULL ;
-      const CHAR *pCollectionShortName = NULL ;
+      int rc            = SDB_OK ;
+      pmdEDUCB *eduCB   = pmdGetThreadEDUCB() ;
       IDX_STAT_LIST::iterator iter ;
       BSONObj obj ;
       CHAR *buffer = NULL ;
 
    retry:
-      if ( pmdGetDBRole() != SDB_ROLE_DATA || _noMoreStat )
+      if ( _noMoreStat )
       {
          rc = SDB_DMS_EOC ;
          goto done ;
       }
-
-      // Check whether SYSSTAT.SYSINDEXSTAT exists. If not, nothing to do.
-      rc = rtnResolveCollectionNameAndLock ( DMS_STAT_INDEX_CL_NAME, dmsCB, &su,
-                                             &pCollectionShortName, suID ) ;
-      if ( SDB_DMS_CS_NOTEXIST == rc )
-      {
-         rc = SDB_DMS_EOC ;
-         goto done ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                  pCollectionShortName, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
-      if ( SDB_DMS_NOTEXIST == rc )
-      {
-         rc = SDB_DMS_EOC ;
-         goto done ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
-
-      // Initialize _curExtentID
-      if ( DMS_INVALID_EXTENT == _curExtentID )
-      {
-         _curExtentID = mbContext->mb()->_firstExtentID ;
-         if ( DMS_INVALID_EXTENT == _curExtentID )
-         {
-            rc = SDB_DMS_EOC ;
-            goto done ;
-         }
-      }
-
-      for ( iter = result.begin() ; iter != result.end() ; ++iter )
-      {
-         SDB_POOL_FREE( *iter ) ;
-      }
-      result.clear() ;
 
       // Scan a whole extent for once
       try
       {
-         dmsExtScanner scanner( su->data(), mbContext, NULL, _curExtentID,
+         dmsExtScanner scanner( _su->data(), _mbContext, NULL, _curExtentID,
                                 DMS_ACCESS_TYPE_FETCH, -1L, 0 ) ;
          _mthRecordGenerator generator ;
          dmsRecordID recordID ;
@@ -5317,23 +5340,23 @@ namespace engine
       // If this extent is empty, try next extent.
       if ( SDB_OK == rc && result.empty() )
       {
+         if ( _mbContext->isMBLock() )
+         {
+            _mbContext->pause() ;
+         }
          goto retry ;
       }
    done:
-      if ( mbContext && mbContext->isMBLock() )
-      {
-         mbContext->mbUnlock() ;
-      }
-      if ( DMS_INVALID_CS != suID )
-      {
-         dmsCB->suUnlock ( suID ) ;
-      }
-      return rc ;
-   error:
       if ( buffer )
       {
          SDB_POOL_FREE( buffer ) ;
       }
+      if ( _mbContext->isMBLock() )
+      {
+         _mbContext->pause() ;
+      }
+      return rc ;
+   error:
       for ( iter = result.begin() ; iter != result.end() ; ++iter )
       {
          SDB_POOL_FREE( *iter ) ;
@@ -5345,9 +5368,16 @@ namespace engine
    INT32 _monIndexStatsFetch::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
+      IDX_STAT_LIST::iterator iter ;
 
       if ( _statCache.end() == _pos )
       {
+         for ( iter = _statCache.begin() ; iter != _statCache.end() ; ++iter )
+         {
+            SDB_POOL_FREE( *iter ) ;
+         }
+         _statCache.clear() ;
+
          rc = _bulkFetch( _statCache ) ;
          if ( SDB_DMS_EOC == rc )
          {
