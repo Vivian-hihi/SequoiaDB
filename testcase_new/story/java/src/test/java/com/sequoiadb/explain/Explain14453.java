@@ -31,14 +31,14 @@ public class Explain14453 extends SdbTestBase {
     private static int EXECRECORDS = 100;
     private static int DATANUMBERS = 1000;
 
-    @BeforeClass(enabled = false)
+    @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = sdb.getCollectionSpace(csName);
         cl = cs.createCollection(clName);
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass
     public void tearDown() {
         try {
             cs.dropCollection(clName);
@@ -49,7 +49,7 @@ public class Explain14453 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         List<BSONObject> insertObjs = new ArrayList<BSONObject>();
         for (int i = 0; i < DATANUMBERS; i++) {

@@ -33,7 +33,7 @@ public class Decimal9590 extends SdbTestBase {
     private String coordAddr;
     private String commCSName;
 
-    @BeforeClass(enabled = false)
+    @BeforeClass
     public void setUp() {
         this.coordAddr = SdbTestBase.coordUrl;
         this.commCSName = SdbTestBase.csName;
@@ -52,7 +52,7 @@ public class Decimal9590 extends SdbTestBase {
         }
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass
     public void tearDown() {
         try {
             if (cs.isCollectionExist(clName)) {
@@ -64,7 +64,7 @@ public class Decimal9590 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void testBigDecimalToDecimal() {
         BSONObject obj = null;
         try {
@@ -86,7 +86,7 @@ public class Decimal9590 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void testStringToDecimal() {
         BSONObject obj = null;
         try {
@@ -109,7 +109,7 @@ public class Decimal9590 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void testDecimalWithPrecision() {
         BSONObject obj = null;
         try {
