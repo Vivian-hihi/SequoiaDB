@@ -5215,6 +5215,7 @@ namespace engine
       BSONObj obj ;
       CHAR *buffer = NULL ;
 
+   retry:
       if ( pmdGetDBRole() != SDB_ROLE_DATA || _noMoreStat )
       {
          rc = SDB_DMS_EOC ;
@@ -5295,7 +5296,6 @@ namespace engine
                  SDB_DMS_EOC == scanner.stepToNextExtent() )
             {
                _noMoreStat = TRUE ;
-               goto done ;
             }
          }
 
@@ -5314,6 +5314,11 @@ namespace engine
          goto error ;
       }
 
+      // If this extent is empty, try next extent.
+      if ( SDB_OK == rc && result.empty() )
+      {
+         goto retry ;
+      }
    done:
       if ( mbContext && mbContext->isMBLock() )
       {
