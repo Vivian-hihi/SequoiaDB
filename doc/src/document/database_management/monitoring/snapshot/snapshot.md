@@ -21,6 +21,7 @@
 | [SDB_SNAP_QUERIES](database_management/monitoring/snapshot/SDB_SNAP_QUERIES.md) | 查询快照 | 查询快照列出当前数据库节点中查询信息 |
 | [SDB_SNAP_LOCKWAITS](database_management/monitoring/snapshot/SDB_SNAP_LOCKWAITS.md) | 锁等待快照 | 锁快照列出当前数据库节点中锁等待信息 |
 | [SDB_SNAP_LATCHWAITS](database_management/monitoring/snapshot/SDB_SNAP_LATCHWAITS.md) | 闩锁等待快照 | 闩锁快照列出当前数据库节点中闩锁等待信息 |
+| [SDB_SNAP_INDEXSTATS](database_management/monitoring/snapshot/SDB_SNAP_INDEXSTATS.md) | 索引统计信息快照 | 索引统计信息快照列出当前数据库的全部索引统计信息 |
 
 
 
