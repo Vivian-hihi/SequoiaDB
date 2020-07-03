@@ -40,8 +40,6 @@
 #define RTN_HPP_
 
 #include "core.hpp"
-#include "dms.hpp"
-#include "dmsCB.hpp"
 #include "rtnCB.hpp"
 #include "../bson/bson.h"
 #include "pmdEDU.hpp"
@@ -61,6 +59,8 @@ namespace engine
    class _dmsScanner ;
    class _rtnContextData ;
    class _rtnContextDump ;
+   class _SDB_DMSCB;
+   typedef _SDB_DMSCB SDB_DMSCB;
 
    INT32 rtnReallocBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                             INT32 newLength, INT32 alignmentSize ) ;

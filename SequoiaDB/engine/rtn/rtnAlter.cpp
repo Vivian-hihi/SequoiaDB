@@ -34,6 +34,7 @@
 #include "pd.hpp"
 #include "rtn.hpp"
 #include "rtnTrace.hpp"
+#include "dmsCB.hpp"
 #include "pdTrace.hpp"
 #include "pmdEDU.hpp"
 #include "dpsLogWrapper.hpp"

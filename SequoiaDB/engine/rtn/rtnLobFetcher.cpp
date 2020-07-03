@@ -33,6 +33,7 @@
 *******************************************************************************/
 
 #include "rtnLobFetcher.hpp"
+#include "dmsCB.hpp"
 #include "rtnTrace.hpp"
 
 namespace engine

@@ -45,7 +45,6 @@
 #include "monCB.hpp"
 #include "ossAtomic.hpp"
 #include "ossMemPool.hpp"
-#include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
 #include "mthSelector.hpp"
 #include "rtnContextBuff.hpp"
@@ -60,6 +59,11 @@ using namespace bson ;
 namespace engine
 {
    #define RTN_CONTEXT_GETNUM_ONCE              (1000)
+
+   class _pmdEDUCB ;
+   class _dmsStorageUnit ;
+   class _dmsMBContext ;
+   class _optAccessPlanRuntime ;
 
    /*
       RTN_CONTEXT_TYPE define
@@ -128,14 +132,6 @@ namespace engine
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
-
-   class _pmdEDUCB ;
-   class _dmsStorageUnit ;
-   class _SDB_DMSCB ;
-   class _dmsMBContext ;
-
-   class _optAccessPlanRuntime ;
-   typedef class _optAccessPlanRuntime optAccessPlanRuntime ;
 
    /*
       _rtnPrefWatcher define
@@ -356,12 +352,12 @@ namespace engine
          virtual BOOLEAN          isWrite() const { return FALSE ; }
          virtual BOOLEAN          needRollback() const { return FALSE ; }
 
-         virtual optAccessPlanRuntime * getPlanRuntime ()
+         virtual _optAccessPlanRuntime * getPlanRuntime ()
          {
             return NULL ;
          }
 
-         virtual const optAccessPlanRuntime * getPlanRuntime () const
+         virtual const _optAccessPlanRuntime * getPlanRuntime () const
          {
             return NULL ;
          }
@@ -570,7 +566,7 @@ namespace engine
       protected :
          void _deleteSubContext () ;
 
-         void _setSubContext ( rtnContext * subContext, pmdEDUCB * subCB ) ;
+         void _setSubContext ( rtnContext * subContext, _pmdEDUCB * subCB ) ;
 
          OSS_INLINE rtnContext * _getSubContext ()
          {
@@ -582,13 +578,13 @@ namespace engine
             return _subContext ;
          }
 
-         OSS_INLINE pmdEDUCB * _getSubContextCB ()
+         OSS_INLINE _pmdEDUCB * _getSubContextCB ()
          {
             return _subCB ;
          }
 
       protected :
-         pmdEDUCB *     _subCB ;
+         _pmdEDUCB *     _subCB ;
          rtnContext *   _subContext ;
          INT64          _subContextID ;
    } ;

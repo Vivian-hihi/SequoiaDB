@@ -38,6 +38,7 @@
 *******************************************************************************/
 #include "rtnExtDataProcessor.hpp"
 #include "rtn.hpp"
+#include "dmsCB.hpp"
 #include "rtnTrace.hpp"
 #include "dmsStorageDataCapped.hpp"
 

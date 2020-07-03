@@ -43,6 +43,7 @@
 #include "rtnTrace.hpp"
 #include "rtnCB.hpp"
 #include "rtn.hpp"
+#include "dmsCB.hpp"
 
 namespace engine
 {

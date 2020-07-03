@@ -39,6 +39,7 @@
 
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
+#include "dmsCB.hpp"
 #include "rtnRecover.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"

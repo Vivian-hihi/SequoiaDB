@@ -36,6 +36,7 @@
 
 #include "pmdEDU.hpp"
 #include "rtn.hpp"
+#include "dmsCB.hpp"
 #include "ossUtil.h"
 #include "dpsTransCB.hpp"
 

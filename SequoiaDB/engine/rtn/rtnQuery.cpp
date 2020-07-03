@@ -38,6 +38,7 @@
 *******************************************************************************/
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
+#include "dmsCB.hpp"
 #include "mthSelector.hpp"
 #include "optAPM.hpp"
 #include "rtnIXScannerFactory.hpp"

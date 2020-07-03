@@ -46,7 +46,8 @@ using namespace bson ;
 
 namespace engine
 {
-
+   class _SDB_DMSCB ;
+   typedef _SDB_DMSCB SDB_DMSCB;
    /*
       _catCtxAlterTask define
     */

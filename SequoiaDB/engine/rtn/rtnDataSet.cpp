@@ -36,6 +36,7 @@
 
 *******************************************************************************/
 
+#include "dmsCB.hpp"
 #include "rtnDataSet.hpp"
 #include "rtn.hpp"
 

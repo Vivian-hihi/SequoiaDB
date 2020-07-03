@@ -44,6 +44,7 @@
 #include "rtnContextData.hpp"
 #include "dmsStorageDataCapped.hpp"
 #include "dmsIndexBuilder.hpp"
+#include "dmsCB.hpp"
 
 using namespace bson ;
 

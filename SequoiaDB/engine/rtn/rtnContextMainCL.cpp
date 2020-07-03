@@ -38,6 +38,7 @@
 *******************************************************************************/
 #include "rtnContextMainCL.hpp"
 #include "rtn.hpp"
+#include "dmsCB.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 

@@ -38,6 +38,7 @@
 
 #include "dmsStatSUMgr.hpp"
 #include "dmsStorageUnit.hpp"
+#include "dmsCB.hpp"
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"

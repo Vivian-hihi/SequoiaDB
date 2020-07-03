@@ -39,6 +39,7 @@
 #include "rtnContextLob.hpp"
 #include "rtnTrace.hpp"
 #include "rtnLocalLobStream.hpp"
+#include "dmsCB.hpp"
 
 using namespace bson ;
 

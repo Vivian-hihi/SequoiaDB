@@ -41,6 +41,7 @@
 #include "optAPM.hpp"
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
+#include "dmsCB.hpp"
 #include "pdTrace.hpp"
 #include "optTrace.hpp"
 #include "pmd.hpp"

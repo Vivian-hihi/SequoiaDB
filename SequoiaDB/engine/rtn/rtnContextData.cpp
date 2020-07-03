@@ -42,6 +42,7 @@
 #include "rtnIXScannerFactory.hpp"
 #include "dpsTransLockCallback.hpp"
 #include "dmsScanner.hpp"
+#include "dmsCB.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dmsStorageDataCommon.hpp"
 #include "pdTrace.hpp"

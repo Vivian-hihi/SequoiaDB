@@ -44,6 +44,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "pmd.hpp"
+#include "dmsCB.hpp"
 #include "dmsRBSSUMgr.hpp"
 #include "dmsScanner.hpp"
 #include "dmsStorageDataCommon.hpp"

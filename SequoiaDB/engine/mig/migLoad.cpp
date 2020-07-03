@@ -43,6 +43,7 @@
 #include "pdTrace.hpp"
 #include "migTrace.hpp"
 #include "pmdEDUMgr.hpp"
+#include "dmsCB.hpp"
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
 #include "msgMessage.hpp"
