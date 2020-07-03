@@ -74,7 +74,6 @@ gen_good_uri (const char *username)
 static void
 test_mongoc_client_authenticate (void)
 {
-#if 0
    mongoc_collection_t *collection;
    mongoc_database_t *database;
    mongoc_client_t *client;
@@ -132,7 +131,6 @@ test_mongoc_client_authenticate (void)
 
    bson_free (username);
    bson_free (uri);
-#endif
 }
 
 static bool createUser(mongoc_client_t **client, char *username)
@@ -164,7 +162,6 @@ static bool dropUser(mongoc_client_t *client, char *username)
 static void
 test_mongoc_client_authenticate_failure (void)
 {
-#if 0   
    mongoc_collection_t *collection;
    mongoc_cursor_t *cursor;
    mongoc_client_t *initclient;
@@ -217,7 +214,6 @@ test_mongoc_client_authenticate_failure (void)
    mongoc_client_destroy(client);
    r = dropUser(initclient,username);
    ASSERT_CMPINT (r, ==, true);
-#endif
 }
 
 #if 0
