@@ -5166,9 +5166,14 @@ namespace engine
    _monIndexStatsFetch::_monIndexStatsFetch()
       : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ, RTN_FETCH_INDEXSTATS )
    {
-      _addInfoMask = MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
-      _isDetail= TRUE ;
-      _pos = _statCache.end() ;
+      _addInfoMask   = MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
+      _isDetail      = TRUE ;
+      _pos           = _statCache.end() ;
+      _su            = NULL ;
+      _suID          = DMS_INVALID_CS ;
+      _mbContext     = NULL ;
+      _curExtentID   = DMS_INVALID_EXTENT ;
+      _noMoreStat    = FALSE ;
    }
 
    _monIndexStatsFetch::~_monIndexStatsFetch()
@@ -5189,9 +5194,9 @@ namespace engine
          }
          _su->data()->releaseMBContext( _mbContext ) ;
       }
-      if ( DMS_INVALID_CS != _suID && _dmsCB )
+      if ( DMS_INVALID_CS != _suID )
       {
-         _dmsCB->suUnlock( _suID ) ;
+         pmdGetKRCB()->getDMSCB()->suUnlock( _suID ) ;
       }
    }
 
@@ -5203,17 +5208,12 @@ namespace engine
    {
       int rc = SDB_OK ;
       const CHAR *pCollectionShortName = NULL ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_ASSERT( dmsCB, "dmsCB's never NULL" ) ;
 
-      _dmsCB         = pmdGetKRCB()->getDMSCB() ;
-      SDB_ASSERT( _dmsCB, "dmsCB's never NULL" ) ;
-      _su            = NULL ;
-      _suID          = DMS_INVALID_CS ;
-      _mbContext     = NULL ;
       _isDetail      = isDetail ;
       _addInfoMask   = addInfoMask ;
       _hitEnd        = FALSE ;
-      _curExtentID   = DMS_INVALID_EXTENT ;
-      _noMoreStat    = FALSE ;
 
       if ( pmdGetDBRole() != SDB_ROLE_DATA )
       {
@@ -5222,7 +5222,7 @@ namespace engine
       }
 
       // Check whether SYSSTAT.SYSINDEXSTAT exists. If not, nothing to do.
-      rc = rtnResolveCollectionNameAndLock ( DMS_STAT_INDEX_CL_NAME, _dmsCB, &_su,
+      rc = rtnResolveCollectionNameAndLock ( DMS_STAT_INDEX_CL_NAME, dmsCB, &_su,
                                              &pCollectionShortName, _suID, SHARED ) ;
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
