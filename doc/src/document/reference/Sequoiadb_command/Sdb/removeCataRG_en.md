@@ -1,6 +1,6 @@
 ##NAME##
 
-removeCataRG - remove catalog replica group.
+removeCataRG - remove catalog replication group.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ Sdb
 
 ##DESCRIPTION##
 
-Remove catalog replica group, require that there is no data node and coord node information on the catalog replica group, remove catalog replica group will remove all catalog node in the replica group.
+Remove catalog replication group, require that there is no data node and coordination node information on the catalog replication group, remove catalog replication group will remove all catalog node in the replication group.
 
 ##PARAMETERS##
 
@@ -26,7 +26,7 @@ On error, exception will be thrown.
 
 ##ERRORS##
 
-When exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
+When exception occurs, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detail, please refer to the [Troubleshooting](troubleshooting/general/general_guide.md) manual.
 
 ##HISTORY##
 
@@ -34,7 +34,7 @@ Since v1.10
 
 ##EXAMPLES##
 
-* Remove catalog replica group.
+* Remove catalog replication group.
 
 	```lang-javascript
 	> db.removeCataRG()

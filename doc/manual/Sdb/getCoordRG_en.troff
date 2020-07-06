@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getCoordRG \- Get a reference to a coordinated replication group.
+getCoordRG \- Get a reference of coordination replication group.
 .SH SYNOPSIS
 .PP
 \f[B]db.getCoordRG()\f[]
@@ -13,7 +13,7 @@ getCoordRG \- Get a reference to a coordinated replication group.
 Sdb
 .SH DESCRIPTION
 .PP
-Get a reference to a coordinated replication group.
+Get a reference of coordination replication group.
 .SH RETURN VALUE
 .PP
 On success, return the reference of the replication group.
@@ -24,7 +24,7 @@ getLastError().
 For error handling, refer to the common troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Get a reference to a coordinated replication group.
+Get a reference of coordination replication group.
 .RS 2
 .IP
 .nf

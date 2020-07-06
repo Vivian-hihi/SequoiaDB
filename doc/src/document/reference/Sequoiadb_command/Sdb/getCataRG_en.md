@@ -1,6 +1,6 @@
 ##NAME##
 
-getCataRG - Get the reference of the catalog group.
+getCataRG - Get the reference of the catalog replication group.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ Sdb
 
 ##DESCRIPTION##
 
-Get the reference of the catalog group.
+Get the reference of the catalog replication group.
 
 ##PARAMETERS##
 
@@ -20,17 +20,17 @@ No parameters.
 
 ##RETURN VALUE##
 
-On success, return the reference of the catalog group.
+On success, return the reference of the catalog replication group.
 
 On error, exception will be thrown.
 
 ##ERRORS##
 
-When exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
+When exception occurs, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detail, please refer to the [Troubleshooting](troubleshooting/general/general_guide.md) manual.
 
 ##EXAMPLES##
 
-* Get the catalog group.
+* Get the catalog replication group.
 
 ```lang-javascript
 > var rg = db.getCataRG()

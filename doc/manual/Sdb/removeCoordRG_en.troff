@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-removeCoordRG \- Delete the coordinated replication group.
+removeCoordRG \- Delete the coordination replication group.
 .SH SYNOPSIS
 .PP
 \f[B]db.removeCoordRG()\f[]
@@ -13,12 +13,13 @@ removeCoordRG \- Delete the coordinated replication group.
 Sdb
 .SH DESCRIPTION
 .PP
-Delete the coordinated replication group in the database.
+Delete the coordination replication group in the database.
 In principle, all coordination nodes of the replication group will be deleted.
-but if the coordination nodes connected to the db object are deleted first
-during the deletion of these nodes, there may be some coordination nodes left
-unremoved, and Oma class needs to be used.
-The removeCoord method removes the left coordination node.
+However, if in the process of deleting these nodes, first delete the
+coordination nodes which connected to the db object, there may be some
+coordination nodes left unremoved.
+Need to use the \[aq]removeCoord\[aq] method of class \[aq]Oma\[aq] to remove
+the remaining coordination nodes.
 .SH RETURN VALUE
 .PP
 On success, return void.
@@ -29,7 +30,7 @@ getLastError().
 For error handling, refer to the common troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Delete the coordinated replication group.
+Delete the coordination replication group.
 .RS 2
 .IP
 .nf

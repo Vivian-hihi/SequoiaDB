@@ -1,6 +1,6 @@
 ##NAME##
 
-removeCoordRG - Delete the coordinated replication group.
+removeCoordRG - Delete the coordination replication group.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ Sdb
 
 ##DESCRIPTION##
 
-Delete the coordinated replication group in the database. In principle, all coordination nodes of the replication group will be deleted. but if the coordination nodes connected to the db object are deleted first during the deletion of these nodes, there may be some coordination nodes left unremoved, and Oma class needs to be used. The removeCoord method removes the left coordination node.
+Delete the coordination replication group in the database. In principle, all coordination nodes of the replication group will be deleted. However, if in the process of deleting these nodes, first delete the coordination nodes which connected to the db object, there may be some coordination nodes left unremoved. Need to use the 'removeCoord' method of class 'Oma' to remove the remaining coordination nodes.
 
 ##RETURN VALUE##
 
@@ -22,7 +22,7 @@ On error, exception will be thrown. Users can get the error message by [getLastE
 
 ##EXAMPLES##
 
-* Delete the coordinated replication group.
+* Delete the coordination replication group.
 
 	```lang-javascript
 	> db.removeCoordRG()

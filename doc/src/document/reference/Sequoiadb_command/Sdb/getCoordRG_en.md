@@ -1,6 +1,6 @@
 ##NAME##
 
-getCoordRG - Get a reference to a coordinated replication group.
+getCoordRG - Get a reference of coordination replication group.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ Sdb
 
 ##DESCRIPTION##
 
-Get a reference to a coordinated replication group.
+Get a reference of coordination replication group.
 
 ##RETURN VALUE##
 
@@ -22,7 +22,7 @@ On error, exception will be thrown. Users can get the error message by [getLastE
 
 ##EXAMPLES##
 
-* Get a reference to a coordinated replication group.
+* Get a reference of coordination replication group.
 
 	```lang-javascript
 	> var rg = db.getCoordRG()

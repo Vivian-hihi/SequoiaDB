@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-getCataRG \- Get the reference of the catalog group.
+getCataRG \- Get the reference of the catalog replication group.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.getCataRG()\f[]\f[]
@@ -13,23 +13,23 @@ getCataRG \- Get the reference of the catalog group.
 Sdb
 .SH DESCRIPTION
 .PP
-Get the reference of the catalog group.
+Get the reference of the catalog replication group.
 .SH PARAMETERS
 .PP
 No parameters.
 .SH RETURN VALUE
 .PP
-On success, return the reference of the catalog group.
+On success, return the reference of the catalog replication group.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
 .PP
-When exception happen, use getLastError() to get the error code and use
+When exception occurs, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
-For more detial, please reference to Troubleshooting.
+For more detail, please refer to the Troubleshooting manual.
 .SH EXAMPLES
 .IP \[bu] 2
-Get the catalog group.
+Get the catalog replication group.
 .IP
 .nf
 \f[C]

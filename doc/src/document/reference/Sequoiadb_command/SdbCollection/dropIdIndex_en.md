@@ -12,7 +12,7 @@ SdbCollection
 
 ##DESCRIPTION##
 
-Drop the $id index in the collection, and prohibit update and delete operations.
+Drop the $id index in the collection. And prohibit the operation of update or delete.
 
 ##RETURN VALUE##
 

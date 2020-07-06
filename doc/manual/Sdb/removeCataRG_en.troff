@@ -4,7 +4,7 @@
 .hy
 .SH NAME
 .PP
-removeCataRG \- remove catalog replica group.
+removeCataRG \- remove catalog replication group.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]db.removeCataRG()\f[]\f[]
@@ -13,9 +13,9 @@ removeCataRG \- remove catalog replica group.
 Sdb
 .SH DESCRIPTION
 .PP
-Remove catalog replica group, require that there is no data node and coord node
-information on the catalog replica group, remove catalog replica group will
-remove all catalog node in the replica group.
+Remove catalog replication group, require that there is no data node and
+coordination node information on the catalog replication group, remove catalog
+replication group will remove all catalog node in the replication group.
 .SH PARAMETERS
 .PP
 No parameters.
@@ -26,15 +26,15 @@ On success, no return value.
 On error, exception will be thrown.
 .SH ERRORS
 .PP
-When exception happen, use getLastError() to get the error code and use
+When exception occurs, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
-For more detial, please reference to Troubleshooting.
+For more detail, please refer to the Troubleshooting manual.
 .SH HISTORY
 .PP
 Since v1.10
 .SH EXAMPLES
 .IP \[bu] 2
-Remove catalog replica group.
+Remove catalog replication group.
 .RS 2
 .IP
 .nf
