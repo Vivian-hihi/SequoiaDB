@@ -51,9 +51,6 @@ namespace fap
 // It's based on IEEE 754-2008 standards.
 
 #define FAP_MONGO_BSON_DECIMALBID_TYPE   19
-// 42 = 1( mantissa sign ) + 34( mantissa ) + 1( 'E' or 'e' ) +
-//      1( exponent sign ) + 4( exponent ) + 1( '\0' )
-#define FAP_MONGO_DECIAML_STR_MAX_SIZE   42
 // decimal in BID encoding has 128 bits
 #define FAP_MONGO_DECIAMLOID_SIZE        16
 

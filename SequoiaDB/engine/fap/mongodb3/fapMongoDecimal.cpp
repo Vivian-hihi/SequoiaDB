@@ -44,11 +44,24 @@
 
 namespace fap
 {
-#define FAP_MONGO_CLIENT_VERSION_2      2
-#define FAP_MONGO_CLIENT_VERSION_3      3
-#define FAP_MONGO_CLIENT_SUBVERSION_2   2
-#define FAP_MONGO_CLIENT_SUBVERSION_4   4
-#define FAP_MONGO_CLIENT_FIXVERSION_12  12
+#define FAP_MONGO_CLIENT_VERSION_2       2
+#define FAP_MONGO_CLIENT_VERSION_3       3
+#define FAP_MONGO_CLIENT_SUBVERSION_2    2
+#define FAP_MONGO_CLIENT_SUBVERSION_4    4
+#define FAP_MONGO_CLIENT_FIXVERSION_12   12
+
+#define FAP_MONGO_PLUS                   "+"
+#define FAP_MONGO_MINUS_SIGN             "-"
+#define FAP_MONGO_SPECIAL_STR_LEN        4
+#define FAP_MONGO_MAX_OR_MIN_STR_LEN     3
+#define FAP_MONGO_MAX_STR                "Max"
+#define FAP_MONGO_MIN_STR                "Min"
+#define FAP_MONGO_INF_STR                "Inf"
+#define FAP_MONGO_NAN_STR                "Nan"
+
+// 42 = 1( mantissa sign ) + 34( mantissa ) + 1( 'E' or 'e' ) +
+//      1( exponent sign ) + 4( exponent ) + 1( '\0' )
+#define FAP_MONGO_DECIAML_STR_MAX_SIZE   42
 
    static INT32 isSdbRecordHasDecimal( const BSONObj &sdbRecord,
                                        BOOLEAN &hasDecimal )
@@ -100,37 +113,40 @@ namespace fap
    static BOOLEAN hasMongoSpecialStr( const CHAR* decimalStr )
    {
       BOOLEAN has = FALSE ;
-      INT32 len = ossStrlen( decimalStr ) ;
+      INT32   len = ossStrlen( decimalStr ) ;
 
-      if ( len == 4 && decimalStr[0] == '+' )
+      if ( FAP_MONGO_SPECIAL_STR_LEN == len )
       {
-         if ( ( decimalStr[1] == 'n' || decimalStr[1] == 'N' ) &&
-              ( decimalStr[2] == 'a' || decimalStr[2] == 'A' ) &&
-              ( decimalStr[3] == 'n' || decimalStr[3] == 'N' ) )
-         {
-            has = TRUE ;
-         }
-         else if ( ( decimalStr[1] == 'm' || decimalStr[1] == 'M' ) &&
-                 ( decimalStr[2] == 'i' || decimalStr[2] == 'I' ) &&
-                 ( decimalStr[3] == 'n' || decimalStr[3] == 'N' ) )
-         {
-            has = TRUE ;
-         }
-         else if ( ( decimalStr[1] == 'm' || decimalStr[1] == 'M' ) &&
-                 ( decimalStr[2] == 'a' || decimalStr[2] == 'A' ) &&
-                 ( decimalStr[3] == 'x' || decimalStr[3] == 'X' ) )
-         {
-            has = TRUE ;
-         }
-         else if ( ( decimalStr[1] == 'i' || decimalStr[1] == 'I' ) &&
-                 ( decimalStr[2] == 'n' || decimalStr[2] == 'N' ) &&
-                 ( decimalStr[3] == 'f' || decimalStr[3] == 'F' ) )
+         if ( ( 0 == ossStrcasecmp( decimalStr,
+                                    FAP_MONGO_PLUS FAP_MONGO_NAN_STR ) ) ||
+              ( 0 == ossStrcasecmp( decimalStr,
+                                    FAP_MONGO_PLUS FAP_MONGO_MIN_STR ) ) ||
+              ( 0 == ossStrcasecmp( decimalStr,
+                                    FAP_MONGO_PLUS FAP_MONGO_MAX_STR ) ) ||
+              ( 0 == ossStrcasecmp( decimalStr,
+                                    FAP_MONGO_PLUS FAP_MONGO_INF_STR ) ) )
          {
             has = TRUE ;
          }
       }
 
       return has ;
+   }
+
+   static void convertSdbMaxAndMin2Inf( string &decimalStr )
+   {
+      if ( FAP_MONGO_MAX_OR_MIN_STR_LEN == decimalStr.length() )
+      {
+         if ( 0 == ossStrcasecmp( decimalStr.c_str(), FAP_MONGO_MAX_STR ) )
+         {
+            decimalStr = FAP_MONGO_PLUS FAP_MONGO_INF_STR ;
+         }
+         else if ( 0 == ossStrcasecmp( decimalStr.c_str(),
+                                       FAP_MONGO_MIN_STR ) )
+         {
+            decimalStr = FAP_MONGO_MINUS_SIGN FAP_MONGO_INF_STR ;
+         }
+      }
    }
 
 #if defined( _ARMLIN64 )
@@ -227,15 +243,13 @@ namespace fap
             {
                UINT32 signalingFlags = 0 ;
                string value = ele.numberDecimal().toString() ;
-               CHAR   decimalStr[FAP_MONGO_DECIAML_STR_MAX_SIZE] = { 0 } ;
-               if ( value.length() > FAP_MONGO_DECIAML_STR_MAX_SIZE )
-               {
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-               ossMemcpy( decimalStr, value.c_str(), value.length() ) ;
-               BID_UINT128 dec128 = bid128_from_string( decimalStr, 0,
-                                                        &signalingFlags ) ;
+               BID_UINT128 dec128 ;
+
+               convertSdbMaxAndMin2Inf( value ) ;
+
+               dec128 = bid128_from_string(
+                        const_cast< CHAR* >( value.c_str() ), 0,
+                        &signalingFlags ) ;
 
                mongoRecordBob.bb().appendNum(
                                   (CHAR)FAP_MONGO_BSON_DECIMALBID_TYPE ) ;
@@ -303,15 +317,13 @@ namespace fap
             {
                UINT32 signalingFlags = 0 ;
                string value = ele.numberDecimal().toString() ;
-               CHAR   decimalStr[FAP_MONGO_DECIAML_STR_MAX_SIZE] = { 0 } ;
-               if ( value.length() > FAP_MONGO_DECIAML_STR_MAX_SIZE )
-               {
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-               ossMemcpy( decimalStr, value.c_str(), value.length() ) ;
-               BID_UINT128 dec128 = bid128_from_string( decimalStr, 0,
-                                                        &signalingFlags ) ;
+               BID_UINT128 dec128 ;
+
+               convertSdbMaxAndMin2Inf( value ) ;
+
+               dec128 = bid128_from_string(
+                        const_cast< CHAR* >( value.c_str() ), 0,
+                        &signalingFlags ) ;
 
                mongoRecordBb.appendNum( (CHAR)FAP_MONGO_BSON_DECIMALBID_TYPE ) ;
                mongoRecordBb.appendStr( ele.fieldName() );
