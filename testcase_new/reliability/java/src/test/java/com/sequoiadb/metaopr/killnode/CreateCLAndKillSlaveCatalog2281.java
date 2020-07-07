@@ -83,7 +83,7 @@ public class CreateCLAndKillSlaveCatalog2281 extends SdbTestBase {
             FaultMakeTask faultTask = KillNode.getFaultMakeTask(
                     priNode.hostName(), priNode.svcName(), 5 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CreateCLTask cTask = new CreateCLTask(preCLName, CL_NUM);
+            CreateCLTask cTask = new CreateCLTask(preCLName, CL_NUM, csName);
             mgr.addTask( cTask );
             mgr.execute();
 

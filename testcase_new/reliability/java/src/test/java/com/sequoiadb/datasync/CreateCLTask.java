@@ -24,6 +24,7 @@ public class CreateCLTask extends OperateTask {
     private String namePrefix ;
     private String groupName = "";
     private int count = 0 ;
+    private String csName ;
     public CreateCLTask(String prefix, String groupName) {
         this.namePrefix = prefix ;
         this.groupName = groupName ;
@@ -33,13 +34,23 @@ public class CreateCLTask extends OperateTask {
     {
        this.namePrefix = prefix ;
        this.clNum = clNum ;
+       this.csName = SdbTestBase.csName ;
+    }
+
+    public CreateCLTask(String prefix, int clNum, String csName )
+    {
+       this.namePrefix = prefix ;
+       this.clNum = clNum ;
+       this.csName = csName ;
     }
 
     public CreateCLTask(String prefix, String groupName, int clNum) {
         this.namePrefix = prefix ;
         this.groupName = groupName ;
         this.clNum = clNum ;
+        this.csName = SdbTestBase.csName ;
     }
+
     @Override
     public void exec() throws Exception {
         try ( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl , "", "" )) {
@@ -55,7 +66,7 @@ public class CreateCLTask extends OperateTask {
                                 + "EnsureShardingIndex: true }" );
 
             CollectionSpace commCS = db
-                    .getCollectionSpace( SdbTestBase.csName );
+                    .getCollectionSpace( this.csName );
             for ( int i = 0; i < clNum; i++ ) {
                 String clName = namePrefix + "_" + i;
                 commCS.createCollection( clName, option );
