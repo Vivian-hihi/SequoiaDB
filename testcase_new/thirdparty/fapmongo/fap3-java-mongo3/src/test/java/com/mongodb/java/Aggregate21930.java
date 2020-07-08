@@ -44,13 +44,12 @@ public class Aggregate21930 extends MongodbTestBase {
     private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21930v3";
-    private MongoCollection cl;
+    private MongoCollection< Document > cl;
     // 不能小于6
     private int num = 6;
     private List< Document > list;
 
     @BeforeClass
-    @SuppressWarnings("unchecked")
     public void setUp() throws UnknownHostException {
         client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
@@ -67,23 +66,22 @@ public class Aggregate21930 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test1() {
         List< Document > actResult;
         // 带匹配符
         // 匹配到记录
-        Collection result = cl
+        Collection< Document > result = cl
                 .aggregate( Arrays.asList(
                         Aggregates.match(
                                 Filters.and( lt( "a", num ), gte( "a", 0 ) ) ),
                         Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( result, list );
 
         // 匹配不到记录
         result = cl
                 .aggregate( Arrays.asList( Aggregates.match( lt( "a", -1 ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( result.size(), 0 );
 
         // 带匹配符+选择符进行聚集
@@ -92,7 +90,7 @@ public class Aggregate21930 extends MongodbTestBase {
                 .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
                         Aggregates.project( include( "a", "b" ) ),
                         Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         checkSelectResults( actResult, list, new String[] { "_id", "a", "b" } );
 
         // （2）选择_id字段
@@ -100,7 +98,7 @@ public class Aggregate21930 extends MongodbTestBase {
                 .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
                         Aggregates.project( include( "_id" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         checkSelectResults( actResult, list, new String[] { "_id" } );
 
         // （4）排除_id字段
@@ -111,7 +109,7 @@ public class Aggregate21930 extends MongodbTestBase {
                                     Aggregates.project( excludeId() ),
                                     Aggregates
                                             .sort( Sorts.ascending( "a" ) ) ) )
-                    .into( new ArrayList() );
+                    .into( new ArrayList< Document >() );
             Assert.fail( "expect failed but act success!!!" );
         } catch ( MongoCommandException e ) {
             if ( e.getErrorCode() != -32 ) {
@@ -131,7 +129,7 @@ public class Aggregate21930 extends MongodbTestBase {
                             Aggregates.match( gte( "a", num / 2 ) ),
                             Aggregates.project( exclude( "a", "b" ) ),
                             Aggregates.sort( Sorts.ascending( "d" ) ) ) )
-                    .into( new ArrayList() );
+                    .into( new ArrayList< Document >() );
             Assert.fail( "expect failed but act success!!!" );
         } catch ( MongoCommandException e ) {
             if ( e.getErrorCode() != -32 ) {
@@ -146,7 +144,7 @@ public class Aggregate21930 extends MongodbTestBase {
                                 Aggregates.project(
                                         fields( excludeId(), include( "a" ) ) ),
                                 Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), num / 2 );
         checkSelectResults( actResult, list.subList( num / 2, num ),
                 new String[] { "a" } );
@@ -159,7 +157,7 @@ public class Aggregate21930 extends MongodbTestBase {
                             Aggregates.project( fields( exclude( "a", "b" ),
                                     excludeId() ) ),
                             Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                    .into( new ArrayList() );
+                    .into( new ArrayList< Document >() );
             Assert.fail( "expect failed but act success!!!" );
         } catch ( MongoCommandException e ) {
             if ( e.getErrorCode() != -32 ) {
@@ -173,7 +171,7 @@ public class Aggregate21930 extends MongodbTestBase {
                                 Aggregates.project(
                                         fields( include( "_id", "a", "b" ) ) ),
                                 Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         checkSelectResults( actResult, list.subList( num / 2, num ),
                 new String[] { "_id", "a", "b" } );
 
@@ -185,7 +183,7 @@ public class Aggregate21930 extends MongodbTestBase {
                                 fields( excludeId(), include( "a" ) ) ),
                         Aggregates.sort( Sorts.ascending( "a" ) ),
                         Aggregates.skip( 1 ), Aggregates.limit( num / 2 ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), num / 2 - 1 );
         checkSelectResults( actResult, list.subList( num / 2 + 1, num ), "a" );
 
@@ -195,7 +193,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b" ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ),
                         Aggregates.skip( 1 ), Aggregates.limit( num / 2 ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 2 );
         for ( int i = 0; i < 2; i++ ) {
             Assert.assertEquals( actResult.get( i ).toString(),
@@ -204,7 +202,6 @@ public class Aggregate21930 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test2() {
         List< Document > actResult;
         // 带匹配符、分组、选择符、聚集符进行聚集
@@ -214,7 +211,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.avg( "avg_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "avg_d" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         int sum1 = 0;
         int count1 = 0;
@@ -238,7 +235,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.sum( "sum_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         int sum2 = 0;
         for ( int i = 0; i < actResult.size(); i++ ) {
@@ -260,7 +257,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.max( "max_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         int max3 = 0;
         for ( int i = 0; i < actResult.size(); i++ ) {
@@ -280,7 +277,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.min( "min_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         int min4 = 0;
         for ( int i = 0; i < actResult.size(); i++ ) {
@@ -301,7 +298,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.addToSet( "set_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         List< Integer > expList5 = new ArrayList<>();
         for ( int i = 0; i < actResult.size(); i++ ) {
@@ -327,7 +324,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.first( "first_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "first_d" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         for ( int i = 0; i < actResult.size(); i++ ) {
             Assert.assertEquals( actResult.get( i ),
@@ -341,7 +338,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.last( "last_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "last_d" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         System.out.println( "result7 = " + actResult.toString() );
         // Assert.assertEquals( result7.size(), 3 );
         // int last7 = 0;
@@ -362,7 +359,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.push( "push_d", "$d" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         List< Integer > expList8 = new ArrayList<>();
         for ( int i = 0; i < actResult.size(); i++ ) {
@@ -381,7 +378,6 @@ public class Aggregate21930 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test3() {
         List< Document > actResult;
         // 集合不存在数据，进行聚集
@@ -392,11 +388,11 @@ public class Aggregate21930 extends MongodbTestBase {
             db.getCollection( clName + "-test3" ).drop();
         }
         db.createCollection( clName1 );
-        MongoCollection cl1 = db.getCollection( clName1 );
+        MongoCollection< Document > cl1 = db.getCollection( clName1 );
         actResult = ( List< Document > ) cl1
                 .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 0 );
         cl1.drop();
 
@@ -404,14 +400,14 @@ public class Aggregate21930 extends MongodbTestBase {
         actResult = ( List< Document > ) cl
                 .aggregate( Collections
                         .singletonList( Aggregates.match( gte( "a1", -1 ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 0 );
 
         // 分组的字段不存在，进行聚集
         actResult = ( List< Document > ) cl
                 .aggregate( Collections.singletonList( Aggregates.group( "$b1",
                         Accumulators.push( "push_d", "$d" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 1 );
         List< Integer > expList3 = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
@@ -425,7 +421,7 @@ public class Aggregate21930 extends MongodbTestBase {
         actResult = ( List< Document > ) cl
                 .aggregate( Collections.singletonList(
                         Aggregates.project( include( "a1" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), num );
 
         // 聚集字段不存在
@@ -434,12 +430,11 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.group( "$b",
                                 Accumulators.push( "push_d", "$d1" ) ),
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     private void test4() {
         // 参数校验
         try {
@@ -447,7 +442,7 @@ public class Aggregate21930 extends MongodbTestBase {
                     Aggregates.group( "$b",
                             Accumulators.push( "push_d", "$d1" ) ),
                     Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
-                    .into( new ArrayList() );
+                    .into( new ArrayList< Document >() );
             Assert.fail( "exp fail but act success" );
         } catch ( MongoCommandException e ) {
             if ( e.getErrorCode() != -6 ) {

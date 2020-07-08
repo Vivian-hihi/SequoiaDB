@@ -21,7 +21,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.CommandFailureException;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.gridfs.GridFS;
@@ -143,7 +142,6 @@ public class GridFS22021 extends MongodbTestBase {
         InputStream inputStream = new ByteArrayInputStream( bytes );
 
         String fileName = filNameBase + "_test4";
-        gridFS.remove( new BasicDBObject( "filename", fileName ) );
         // 创建文件
         GridFSInputFile gfile = gridFS.createFile( inputStream, true );
         gfile.setFilename( fileName );
@@ -291,8 +289,8 @@ public class GridFS22021 extends MongodbTestBase {
         try {
             gfile1.save();
             Assert.fail( "exp fail but act success!!!" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -38 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-38" ) ) {
                 throw e;
             }
         }

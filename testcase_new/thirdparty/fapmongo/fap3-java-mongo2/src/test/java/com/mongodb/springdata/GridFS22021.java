@@ -212,13 +212,20 @@ public class GridFS22021 extends MongodbTestBase {
                 .and( "filename" ).is( fileName ) );
         GridFSDBFile file = gridFsTemplate2.findOne( query );
         String downloadPath = localPath + File.separator + UUID.randomUUID();
-        OutputStream outputStream = new FileOutputStream(
-                new File( downloadPath ) );
-        InputStream inputStream1 = file.getInputStream();
-        byte[] read_buf = new byte[ 1024 ];
-        int read_len;
-        while ( ( read_len = inputStream1.read( read_buf ) ) > -1 ) {
-            outputStream.write( read_buf, 0, read_len );
+        OutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream( new File( downloadPath ) );
+            InputStream inputStream1 = file.getInputStream();
+            byte[] read_buf = new byte[ 1024 ];
+            int read_len;
+            while ( ( read_len = inputStream1.read( read_buf ) ) > -1 ) {
+                outputStream.write( read_buf, 0, read_len );
+            }
+        } finally {
+            if ( outputStream != null ) {
+                outputStream.close();
+            }
+
         }
 
         // 检查

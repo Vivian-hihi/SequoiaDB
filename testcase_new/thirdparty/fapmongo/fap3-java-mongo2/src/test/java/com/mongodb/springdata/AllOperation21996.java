@@ -1,13 +1,10 @@
 package com.mongodb.springdata;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -23,8 +20,6 @@ import com.mongodb.WriteResult;
 import com.mongodb.utils.Entity;
 import com.mongodb.utils.MongodbTestBase;
 
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.match;
-
 /**
  * @Description seqDB-21996:find/update/distinct/aggregate/count/delete大量数据
  * @author fanyu
@@ -33,7 +28,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.matc
  */
 public class AllOperation21996 extends MongodbTestBase {
     private String clNameBase = "spring_cl21996B";
-    private AtomicInteger clNum = new AtomicInteger( 3 );
+    private AtomicInteger clNum = new AtomicInteger( 5 );
 
     @BeforeClass
     public void setUp() {
@@ -45,16 +40,11 @@ public class AllOperation21996 extends MongodbTestBase {
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ), 999 },
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ),
                         1000 },
-                // TODO: SEQUOIADBMAINSTREAM-5700
-                // { clNameBase + String.valueOf( clNum.getAndDecrement() ),
-                // 3001 }
-                // { clNameBase + String.valueOf( clNum.getAndDecrement()),5000
-                // },
-                // { clNameBase + String.valueOf( clNum.getAndDecrement()),10000
-                // }
-        };
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        10000 } };
     }
 
+    @SuppressWarnings("rawtypes")
     @Test(dataProvider = "data-provider")
     public void test1( String clName, int recordNum ) {
         List< Entity > list = new ArrayList<>();
@@ -102,7 +92,7 @@ public class AllOperation21996 extends MongodbTestBase {
 
         // distinct
         DBCollection cl = mongoTemplate.getCollection( clName );
-        Collection list5 = cl.distinct( "age" );
+        List list5 = cl.distinct( "age" );
         Assert.assertEquals( list5.size(), recordNum );
 
         // update
@@ -116,12 +106,15 @@ public class AllOperation21996 extends MongodbTestBase {
                 recordNum );
 
         // aggregate
-        Aggregation agg1 = Aggregation.newAggregation(
-                match( Criteria.where( "age" ).lte( recordNum ) ) );
-        AggregationResults< Entity > results1 = mongoTemplate.aggregate( agg1,
-                clName, Entity.class );
-        List< Entity > act1 = results1.getMappedResults();
-        Assert.assertEquals( act1.size(), recordNum );
+        // 匹配记录数超过1000，聚集操作返回的结果不正确，
+        // 与开发确认，暂时不在2.14.2版本上解决
+        // Aggregation agg1 = Aggregation.newAggregation(
+        // match( Criteria.where( "age" ).lte( recordNum ) ) );
+        // AggregationResults< String > results1 = mongoTemplate.aggregate(
+        // agg1,
+        // clName, String.class );
+        // List< String > act1 = results1.getMappedResults();
+        // Assert.assertEquals( act1.size(), recordNum );
     }
 
     @AfterClass

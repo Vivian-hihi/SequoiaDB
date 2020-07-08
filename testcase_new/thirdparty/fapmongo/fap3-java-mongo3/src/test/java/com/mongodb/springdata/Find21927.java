@@ -103,7 +103,7 @@ public class Find21927 extends MongodbTestBase {
 
         // $mode $all
         query = new Query( Criteria.where( "age" ).mod( 3, 0 ).and( "courses" )
-                .all( ( Entity.COURSES ) ) );
+                .all( Entity.COURSES.toString() ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         List< Entity > expList6 = new ArrayList<>();
         for ( Entity entity : list ) {
@@ -209,16 +209,16 @@ public class Find21927 extends MongodbTestBase {
         query.skip( 1 ).limit( num ).withHint( "name" + "-inexistences" );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list.subList( 1, num ) );
-        //limit为0
+        // limit为0
         query = new Query( Criteria.where( "age" ).lte( num ) );
         query.limit( 0 );
         actList = mongoTemplate.find( query, Entity.class, clName );
-        Assert.assertEquals( actList, list);
-        //limit为-1
+        Assert.assertEquals( actList, list );
+        // limit为-1
         query = new Query( Criteria.where( "age" ).lte( num ) );
         query.limit( -1 );
         actList = mongoTemplate.find( query, Entity.class, clName );
-        Assert.assertEquals( actList, list.subList( 0 , 1) );
+        Assert.assertEquals( actList, list.subList( 0, 1 ) );
     }
 
     @Test
@@ -427,8 +427,7 @@ public class Find21927 extends MongodbTestBase {
                 new ObjectId( list.get( 0 ).getId() ), Entity.class, clName );
         Assert.assertEquals( entity2, list.get( 0 ) );
     }
-    
-    
+
     @AfterClass
     public void tearDown( ITestContext context ) {
         dropCLByTestResult( context, this.toString(), mongoTemplate, clName );

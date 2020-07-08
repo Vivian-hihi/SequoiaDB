@@ -77,8 +77,8 @@ public class Count21931 extends MongodbTestBase {
 
         // 参数校验
         try {
-            long count = mongoTemplate.count( new Query( Criteria.where( "$gt" ).is( 1 ) ),
-                    clName );
+            long count = mongoTemplate.count(
+                    new Query( Criteria.where( "$gt" ).is( 1 ) ), clName );
             System.out.println( "count  = " + count );
             Assert.fail( "exp failed but act success!!!" );
         } catch ( UncategorizedMongoDbException e ) {

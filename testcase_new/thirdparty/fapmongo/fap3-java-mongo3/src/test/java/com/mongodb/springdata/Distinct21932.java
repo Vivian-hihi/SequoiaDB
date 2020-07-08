@@ -46,6 +46,7 @@ public class Distinct21932 extends MongodbTestBase {
 
     @Test
     public void test1() {
+        @SuppressWarnings("rawtypes")
         List distinctResult;
         // 不带条件去重
         DBCollection cl = mongoTemplate.getCollection( clName );

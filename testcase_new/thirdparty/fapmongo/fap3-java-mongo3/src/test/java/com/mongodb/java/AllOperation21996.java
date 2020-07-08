@@ -20,7 +20,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -41,8 +40,8 @@ import static com.mongodb.client.model.Filters.lte;
 public class AllOperation21996 extends MongodbTestBase {
     private MongoClient client;
     private MongoDatabase db;
-    private String clNameBase = "cl21996_";
-    private AtomicInteger clNum = new AtomicInteger( 3 );
+    private String clNameBase = "cl21996";
+    private AtomicInteger clNum = new AtomicInteger( 5 );
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
@@ -56,45 +55,47 @@ public class AllOperation21996 extends MongodbTestBase {
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ), 999 },
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ),
                         1000 },
-                // TODO: SEQUOIADBMAINSTREAM-5700
-                /*
-                 * { clNameBase + String.valueOf( clNum.getAndDecrement() ),
-                 * 1001 }
-                 */ };
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        3001 },
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        5000 },
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        10000 } };
     }
 
     @Test(dataProvider = "data-provider")
-    @SuppressWarnings("unchecked")
     public void test1( String clName, int recordNum ) {
         List< Document > list = new ArrayList<>();
         for ( int i = 0; i < recordNum; i++ ) {
-            list.add( new Document( "a", i ).append( "b", i ) );
+            list.add( new Document( "c1", "" + i ).append( "c2", "" + i )
+                    .append( "c3", "" + i ).append( "c4", "" + i )
+                    .append( "e", "aaaaaaaaaaaaaaaaaaaaaaaaaaa" ) );
         }
-        MongoCollection cl = db.getCollection( clName );
+        MongoCollection< Document > cl = db.getCollection( clName );
         cl.insertMany( list );
 
         // find
-        MongoCursor cursor1 = cl.find().sort( Sorts.ascending( "a" ) )
-                .iterator();
+        MongoCursor< Document > cursor1 = cl.find()
+                .sort( Sorts.ascending( "a" ) ).iterator();
         checkFindResult( cursor1, list );
         cursor1.close();
 
         // find limit 999
-        MongoCursor cursor2 = cl.find().limit( 999 )
+        MongoCursor< Document > cursor2 = cl.find().limit( 999 )
                 .sort( Sorts.ascending( "a" ) ).iterator();
         checkFindResult( cursor2,
                 list.subList( 0, Math.min( 999, recordNum ) ) );
         cursor2.close();
 
         // find limit 1000
-        MongoCursor cursor3 = cl.find().limit( 1000 )
+        MongoCursor< Document > cursor3 = cl.find().limit( 1000 )
                 .sort( Sorts.ascending( "a" ) ).iterator();
         checkFindResult( cursor3,
                 list.subList( 0, Math.min( 1000, recordNum ) ) );
         cursor3.close();
 
         // find limit 1001
-        MongoCursor cursor4 = cl.find().limit( 1001 )
+        MongoCursor< Document > cursor4 = cl.find().limit( 1001 )
                 .sort( Sorts.ascending( "a" ) ).iterator();
         checkFindResult( cursor4,
                 list.subList( 0, Math.min( 1001, recordNum ) ) );
@@ -107,8 +108,8 @@ public class AllOperation21996 extends MongodbTestBase {
                 recordNum - recordNum / 2 );
 
         // distinct
-        Collection list1 = cl.distinct( "a", Integer.class )
-                .into( new ArrayList() );
+        List< Object > list1 = cl.distinct( "a", Integer.class )
+                .into( new ArrayList<>() );
         Assert.assertEquals( list1.size(), recordNum );
 
         // update
@@ -120,16 +121,18 @@ public class AllOperation21996 extends MongodbTestBase {
         Assert.assertEquals( cl.count( eq( "b", recordNum ) ), recordNum );
 
         // aggregate
-        Collection result1 = cl
-                .aggregate( Arrays.asList(
-                        Aggregates.match( Filters.and( lt( "a", recordNum ),
-                                gte( "a", 0 ) ) ),
-                        Aggregates.sort( Sorts.ascending( "a" ) ) ) )
-                .into( new ArrayList() );
+        Collection< Document > result1 = cl
+                .aggregate(
+                        Arrays.asList(
+                                Aggregates.match( and( lt( "a", recordNum ),
+                                        gte( "a", 0 ) ) ),
+                                Aggregates.sort( Sorts.ascending( "a" ) ) ),
+                        Document.class )
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( result1.size(), recordNum );
     }
 
-    private void checkFindResult( MongoCursor cursor,
+    private void checkFindResult( MongoCursor< Document > cursor,
             List< Document > expList ) {
         int i = 0;
         while ( cursor.hasNext() ) {

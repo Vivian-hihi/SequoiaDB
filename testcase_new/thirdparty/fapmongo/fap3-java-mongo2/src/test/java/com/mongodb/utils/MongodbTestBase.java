@@ -39,7 +39,7 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
     public static MongoClient getClient( String hostname, int port,
             String username, String password ) throws UnknownHostException {
         MongoClientOptions opt = MongoClientOptions.builder().build();
-        MongoCredential credential = MongoCredential.createMongoCRCredential(
+        MongoCredential credential = MongoCredential.createScramSha1Credential(
                 username, dbName, password.toCharArray() );
         return new MongoClient( new ServerAddress( hostname, port ),
                 Arrays.asList( credential ), opt );
@@ -143,12 +143,13 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
     @BeforeSuite(alwaysRun = true)
     public void initSuite() throws UnknownHostException {
         logger.info( "begin init suite..." );
+        @SuppressWarnings("resource")
         ApplicationContext ctx = new ClassPathXmlApplicationContext(
                 "spring-mongodb-2x.xml" );
         config = ( Config ) ctx.getBean( "config" );
         logger.info( "config:" + config );
-        mongoClient = getClient( config.getHost(), config.getPort() );
         dbName = config.getDbName();
+        mongoClient = getClient( config.getHost(), config.getPort() );
         cleanEnv();
         logger.info( "end init suite..." );
     }

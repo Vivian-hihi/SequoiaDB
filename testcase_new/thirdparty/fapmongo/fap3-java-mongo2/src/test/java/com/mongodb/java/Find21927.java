@@ -235,10 +235,10 @@ public class Find21927 extends MongodbTestBase {
         query = QueryBuilder.start( "a" ).lessThanEquals( num ).get();
         actResult = cl.find( query ).limit( 0 ).toArray();
         Assert.assertEquals( actResult, list );
-        //limit为-1
+        // limit为-1
         query = QueryBuilder.start( "a" ).lessThanEquals( num ).get();
         actResult = cl.find( query ).limit( -1 ).toArray();
-        Assert.assertEquals( actResult, list.subList( 0 , 1) );
+        Assert.assertEquals( actResult, list.subList( 0, 1 ) );
     }
 
     @Test

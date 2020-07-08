@@ -32,6 +32,43 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
     public Config config;
 
     /**
+     * @Description: 初始化测试套
+     * @throws UnknownHostException
+     */
+    @BeforeSuite(alwaysRun = true)
+    public void initSuite() throws UnknownHostException {
+        logger.info( "begin init suite..." );
+        @SuppressWarnings("resource")
+        ApplicationContext ctx = new ClassPathXmlApplicationContext(
+                "spring-mongodb-3x1.xml" );
+        config = ( Config ) ctx.getBean( "config" );
+        logger.info( "config:" + config );
+        dbName = config.getDbName();
+        mongoClient = getClient( config.getHost(), config.getPort() );
+        cleanEnv();
+        logger.info( "end init suite..." );
+    }
+
+    /**
+     * @Description 结束测试套，如果有用例失败，不会清理环境； 如果用例全部执行成功，会清理环境
+     * @param context
+     *            testng上下文
+     * @throws Exception
+     */
+    @AfterSuite(alwaysRun = true)
+    public void finiSuite( ITestContext context ) throws Exception {
+        logger.info( "begin finish Suite..." );
+        try {
+            if ( context.getFailedTests().size() == 0 ) {
+                cleanEnv();
+            }
+        } finally {
+            mongoClient.close();
+        }
+        logger.info( "end finish Suite..." );
+    }
+
+    /**
      * @Description: 获取mongodb客户端
      * @param hostname
      *            主机名
@@ -60,6 +97,7 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
      * @return
      * @throws UnknownHostException
      */
+    @SuppressWarnings("deprecation")
     public static DB getDB( MongoClient client ) {
         return client.getDB( dbName );
     }
@@ -154,42 +192,6 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
                         .contains( classString ) ) {
             dropCL( mongoTemplate, clNames );
         }
-    }
-
-    /**
-     * @Description: 初始化测试套
-     * @throws UnknownHostException
-     */
-    @BeforeSuite(alwaysRun = true)
-    public void initSuite() throws UnknownHostException {
-        logger.info( "begin init suite..." );
-        ApplicationContext ctx = new ClassPathXmlApplicationContext(
-                "spring-mongodb-3x1.xml" );
-        config = ( Config ) ctx.getBean( "config" );
-        logger.info( "config:" + config );
-        mongoClient = getClient( config.getHost(), config.getPort() );
-        dbName = config.getDbName();
-        cleanEnv();
-        logger.info( "end init suite..." );
-    }
-
-    /**
-     * @Description 结束测试套，如果有用例失败，不会清理环境； 如果用例全部执行成功，会清理环境
-     * @param context
-     *            testng上下文
-     * @throws Exception
-     */
-    @AfterSuite(alwaysRun = true)
-    public void finiSuite( ITestContext context ) throws Exception {
-        logger.info( "begin finish Suite..." );
-        try {
-            if ( context.getFailedTests().size() == 0 ) {
-                cleanEnv();
-            }
-        } finally {
-            mongoClient.close();
-        }
-        logger.info( "end finish Suite..." );
     }
 
     /**

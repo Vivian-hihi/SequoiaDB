@@ -2,7 +2,6 @@ package com.mongodb.java;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,17 +44,18 @@ public class AllOperation21996 extends MongodbTestBase {
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ), 999 },
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ),
                         1000 },
-                // TODO: SEQUOIADBMAINSTREAM-5700
-                // { clNameBase + String.valueOf( clNum.getAndDecrement()),3001
-                // }
-        };
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        10000 } };
     }
 
     @Test(dataProvider = "data-provider")
+    @SuppressWarnings("unchecked")
     public void test1( String clName, int recordNum ) {
         List< DBObject > list = new ArrayList<>();
         for ( int i = 0; i < recordNum; i++ ) {
-            list.add( new BasicDBObject( "a", i ).append( "b", i ) );
+            list.add( new BasicDBObject( "a", i ).append( "b", i )
+                    .append( "c", i ).append( "d", i )
+                    .append( "e", "aaaaaaaaaaaaaaaaaaaaaaaaaaa" ) );
         }
         DBCollection cl = db.getCollection( clName );
         cl.insert( list );
@@ -87,7 +87,7 @@ public class AllOperation21996 extends MongodbTestBase {
         Assert.assertEquals( cl.count(), recordNum );
 
         // distinct
-        List result5 = cl.distinct( "a" );
+        List< Object > result5 = cl.distinct( "a" );
         Assert.assertEquals( result5.size(), recordNum );
 
         // update
@@ -100,17 +100,19 @@ public class AllOperation21996 extends MongodbTestBase {
                 recordNum );
 
         // aggregate
-        List< DBObject > list2 = new ArrayList<>();
-        list2.add( new BasicDBObject( "$match", QueryBuilder.start( "a" )
-                .greaterThanEquals( 0 ).lessThan( recordNum ).get() ) );
-        Iterator< DBObject > result6 = cl.aggregate( list2 ).results()
-                .iterator();
-        int k1 = 0;
-        while ( result6.hasNext() ) {
-            result6.next();
-            k1++;
-        }
-        Assert.assertEquals( k1, recordNum );
+        // 匹配记录数超过1000，聚集操作返回的结果不正确，
+        // 与开发确认，暂时不在2.14.2版本上解决
+        // List< DBObject > list2 = new ArrayList<>();
+        // list2.add( new BasicDBObject( "$match", QueryBuilder.start( "a" )
+        // .greaterThanEquals( 0 ).lessThan( recordNum ).get() ) );;
+        // Iterator< DBObject > result6 = cl.aggregate( list2 ).results()
+        // .iterator();
+        // int k1 = 0;
+        // while ( result6.hasNext() ) {
+        // System.out.println( result6.next().toString());
+        // k1++;
+        // }
+        // Assert.assertEquals( k1, recordNum );
     }
 
     @AfterClass

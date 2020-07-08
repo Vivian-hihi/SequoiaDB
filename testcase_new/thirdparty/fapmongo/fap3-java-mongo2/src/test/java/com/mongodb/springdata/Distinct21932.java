@@ -45,6 +45,7 @@ public class Distinct21932 extends MongodbTestBase {
     }
 
     @Test
+    @SuppressWarnings("rawtypes")
     public void test1() {
         List distinctResult;
         // 不带条件去重

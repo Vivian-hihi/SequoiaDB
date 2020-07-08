@@ -169,7 +169,7 @@ public class TestTools {
          */
         public static void readFile( String filePath, int size, int len,
                 String downloadPath )
-                throws FileNotFoundException, IOException {
+                        throws FileNotFoundException, IOException {
             RandomAccessFile raf = null;
             OutputStream fos = null;
             try {

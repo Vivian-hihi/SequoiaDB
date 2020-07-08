@@ -357,7 +357,7 @@ public class Update21928 extends MongodbTestBase {
         DBCollection cl1 = db.createCollection( clName + "-test2",
                 new BasicDBObject() );
         WriteResult result5 = cl1.updateMulti( new BasicDBObject(),
-                new BasicDBObject( "$set",new BasicDBObject( "a", 6 ) ));
+                new BasicDBObject( "$set", new BasicDBObject( "a", 6 ) ) );
         Assert.assertEquals( result5.isUpdateOfExisting(), false );
         Assert.assertEquals( result5.getN(), 0 );
         Assert.assertEquals( cl1.count(), 0 );

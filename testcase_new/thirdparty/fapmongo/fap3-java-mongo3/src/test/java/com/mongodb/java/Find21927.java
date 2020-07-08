@@ -45,13 +45,12 @@ public class Find21927 extends MongodbTestBase {
     private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21927v3";
-    private MongoCollection cl;
+    private MongoCollection< Document > cl;
     // 不能小于10
     private int num = 20;
     private List< Document > list;
 
     @BeforeClass
-    @SuppressWarnings("unchecked")
     public void setUp() throws UnknownHostException {
         client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
@@ -67,7 +66,6 @@ public class Find21927 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test1() {
         FindIterable< Document > actFindIterable;
         List< Document > actList;
@@ -313,7 +311,6 @@ public class Find21927 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test3() {
         FindIterable< Document > actFindIterable;
         List< Document > actList;
@@ -347,7 +344,6 @@ public class Find21927 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test4() {
         FindIterable< Document > actFindIterable;
         List< Document > actList;
@@ -388,7 +384,7 @@ public class Find21927 extends MongodbTestBase {
         actFindIterable = cl.find( and( gte( "a", 0 ), lt( "a", num ) ) )
                 .limit( -1 );
         actList = actFindIterable.into( new ArrayList< Document >() );
-        Assert.assertEquals( actList, list.subList( 0 , 1) );
+        Assert.assertEquals( actList, list.subList( 0, 1 ) );
     }
 
     @Test
@@ -403,7 +399,7 @@ public class Find21927 extends MongodbTestBase {
         // 集合不存在数据，进行查询
         String clName1 = clName + "_test6";
         db.createCollection( clName1 );
-        MongoCollection cl1 = db.getCollection( clName1 );
+        MongoCollection< Document > cl1 = db.getCollection( clName1 );
         actFindIterable = cl.find( and( gte( "a1", 0 ) ) );
         actList = actFindIterable.into( new ArrayList< Document >() );
         Assert.assertEquals( actList.size(), 0 );
@@ -457,7 +453,6 @@ public class Find21927 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test8() {
         FindIterable< Document > actFindIterable;
         List< Document > actList;

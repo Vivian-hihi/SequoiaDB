@@ -146,11 +146,9 @@ public class GridFS22081 extends MongodbTestBase {
 
     private class Update {
         private DBObject query;
-        private DBObject update;
 
         public Update( DBObject query, DBObject update ) {
             this.query = query;
-            this.update = update;
         }
 
         @ExecuteOrder(step = 1)

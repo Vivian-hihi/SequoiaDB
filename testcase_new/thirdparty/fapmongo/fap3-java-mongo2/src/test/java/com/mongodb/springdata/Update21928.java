@@ -177,8 +177,8 @@ public class Update21928 extends MongodbTestBase {
         update = new Update().pull( "courses", "english" );
         result = mongoTemplate.updateMulti( query, update, clName );
         Query check13A = new Query(
-                Criteria.where( "courses" ).all( Entity.COURSES ).and( "age" )
-                        .gte( 4 * num / 7 ).lt( 5 * num / 7 ) );
+                Criteria.where( "courses" ).all( Entity.COURSES.toString() )
+                        .and( "age" ).gte( 4 * num / 7 ).lt( 5 * num / 7 ) );
         Query check13B = new Query( Criteria.where( "courses" )
                 .all( Entity.COURSES[ 0 ], Entity.COURSES[ 1 ] ).and( "age" )
                 .gte( 4 * num / 7 ).lt( 5 * num / 7 ) );
@@ -260,8 +260,8 @@ public class Update21928 extends MongodbTestBase {
                         Criteria.where( "age" ).is( count.getAndIncrement() ) ),
                         new Update().set( "age", updateBaseValue ),
                         new BasicDBObject( "N", 1 )
-                                .append( "isUpdateOfExisting", false ).append(
-                                        "upsertId", null ),
+                                .append( "isUpdateOfExisting", false )
+                                .append( "upsertId", null ),
                         new Query(
                                 Criteria.where( "age" ).is( updateBaseValue ) ),
                         1 },
@@ -270,8 +270,8 @@ public class Update21928 extends MongodbTestBase {
                 { new Query( Criteria.where( "age" ).is( count.get() ) ),
                         new Update().set( "_id", 2 * updateBaseValue ),
                         new BasicDBObject( "N", 1 )
-                                .append( "isUpdateOfExisting", false ).append(
-                                        "upsertId", 2 * updateBaseValue ),
+                                .append( "isUpdateOfExisting", false )
+                                .append( "upsertId", 2 * updateBaseValue ),
                         new Query( Criteria.where( "age" )
                                 .is( count.getAndIncrement() ) ),
                         1 },
@@ -293,8 +293,8 @@ public class Update21928 extends MongodbTestBase {
                         Criteria.where( "age" ).is( count.getAndIncrement() ) ),
                         new Update().setOnInsert( "age", 4 * updateBaseValue ),
                         new BasicDBObject( "N", 1 )
-                                .append( "isUpdateOfExisting", false ).append(
-                                        "upsertId", null ),
+                                .append( "isUpdateOfExisting", false )
+                                .append( "upsertId", null ),
                         new Query( Criteria.where( "age" )
                                 .is( 4 * updateBaseValue ) ),
                         1 },
@@ -411,7 +411,8 @@ public class Update21928 extends MongodbTestBase {
         Query check2 = new Query( Criteria.where( "age" ).is( num * 3 ) );
         Assert.assertTrue( result2.isUpdateOfExisting() );
         Assert.assertEquals( result2.getN(), 1 );
-        Assert.assertEquals( mongoTemplate.count( query2, clName ), num / 3 - 1 );
+        Assert.assertEquals( mongoTemplate.count( query2, clName ),
+                num / 3 - 1 );
         Assert.assertEquals( mongoTemplate.count( check2, clName ), 1 );
 
         // 匹配不到记录，upsert更新记录

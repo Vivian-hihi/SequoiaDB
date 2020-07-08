@@ -95,6 +95,9 @@ public class AllOperation21878 extends MongodbTestBase {
                     .lessThan( ( i + 1 ) * threadNumPerOpera ).get();
             threadExec.addWorker( new Count( query2 ) );
 
+            // find
+            threadExec.addWorker( new Find( new BasicDBObject() ) );
+
             // aggregate
             List< DBObject > aggList = new ArrayList<>();
             aggList.add( new BasicDBObject( "$match", query2 ) );
@@ -137,8 +140,14 @@ public class AllOperation21878 extends MongodbTestBase {
         private void create() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            cl.createIndex( new BasicDBObject( keyAndName, 1 ), keyAndName,
-                    false );
+            try {
+                cl.createIndex( new BasicDBObject( keyAndName, 1 ), keyAndName,
+                        false );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -153,7 +162,13 @@ public class AllOperation21878 extends MongodbTestBase {
         private void create() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            cl.find( query );
+            try {
+                cl.find( query );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -168,7 +183,13 @@ public class AllOperation21878 extends MongodbTestBase {
         private void create() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            cl.dropIndex( name );
+            try {
+                cl.dropIndex( name );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -183,7 +204,13 @@ public class AllOperation21878 extends MongodbTestBase {
         private void insert() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            cl.insert( documentList );
+            try {
+                cl.insert( documentList );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -200,7 +227,13 @@ public class AllOperation21878 extends MongodbTestBase {
         private void upsert() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            cl.update( query, update, true, false );
+            try {
+                cl.update( query, update, true, false );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -217,8 +250,14 @@ public class AllOperation21878 extends MongodbTestBase {
         private void update() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            WriteResult result = cl.update( query, update, false, true );
-            totalUpateNum.getAndAdd( result.getN() );
+            try {
+                WriteResult result = cl.update( query, update, false, true );
+                totalUpateNum.getAndAdd( result.getN() );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -233,8 +272,14 @@ public class AllOperation21878 extends MongodbTestBase {
         private void delete() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            WriteResult result = cl.remove( query );
-            totalDelNum.getAndAdd( result.getN() );
+            try {
+                WriteResult result = cl.remove( query );
+                totalDelNum.getAndAdd( result.getN() );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -249,8 +294,14 @@ public class AllOperation21878 extends MongodbTestBase {
         private void count() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            long count = cl.count( query );
-            Assert.assertEquals( count, threadNumPerOpera );
+            try {
+                long count = cl.count( query );
+                Assert.assertEquals( count, threadNumPerOpera );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -270,13 +321,19 @@ public class AllOperation21878 extends MongodbTestBase {
         private void distinct() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            List< Integer > result = ( List< Integer > ) cl.distinct( filedName,
-                    query );
-            List< Integer > checkList = new ArrayList<>();
-            for ( int i = checkResult[ 0 ]; i < checkResult[ 1 ]; i++ ) {
-                checkList.add( i );
+            try {
+                List< Integer > result = ( List< Integer > ) cl
+                        .distinct( filedName, query );
+                List< Integer > checkList = new ArrayList<>();
+                for ( int i = checkResult[ 0 ]; i < checkResult[ 1 ]; i++ ) {
+                    checkList.add( i );
+                }
+                Assert.assertEquals( result, checkList );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
             }
-            Assert.assertEquals( result, checkList );
         }
     }
 
@@ -293,20 +350,25 @@ public class AllOperation21878 extends MongodbTestBase {
         private void aggregate() {
             DB db = MongodbTestBase.getDB( client );
             DBCollection cl = db.getCollection( clName );
-            Iterator< DBObject > actResult = cl.aggregate( agg ).results()
-                    .iterator();
-            ;
-            List< DBObject > checkList = new ArrayList<>();
-            for ( int i = checkResult[ 0 ]; i < checkResult[ 1 ]; i++ ) {
-                checkList.add( new BasicDBObject( "_id", i + "" )
-                        .append( "sum_c", ( double ) i ) );
+            try {
+                Iterator< DBObject > actResult = cl.aggregate( agg ).results()
+                        .iterator();
+                List< DBObject > checkList = new ArrayList<>();
+                for ( int i = checkResult[ 0 ]; i < checkResult[ 1 ]; i++ ) {
+                    checkList.add( new BasicDBObject( "_id", i + "" )
+                            .append( "sum_c", ( double ) i ) );
+                }
+                int k = 0;
+                while ( actResult.hasNext() ) {
+                    Assert.assertEquals( actResult.next(), checkList.get( k ) );
+                    k++;
+                }
+                Assert.assertEquals( k, checkList.size() );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "-48" ) ) {
+                    throw e;
+                }
             }
-            int k = 0;
-            while ( actResult.hasNext() ) {
-                Assert.assertEquals( actResult.next(), checkList.get( k ) );
-                k++;
-            }
-            Assert.assertEquals( k, checkList.size() );
         }
     }
 }

@@ -56,6 +56,7 @@ public class Aggregate21930 extends MongodbTestBase {
                 new Index().named( "name" ).on( "name", Sort.Direction.ASC ) );
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void test1() {
         Aggregation agg;
@@ -123,7 +124,7 @@ public class Aggregate21930 extends MongodbTestBase {
             mongoTemplate.aggregate( agg, clName, Entity.class );
             Assert.fail( "exp fail but act success" );
         } catch ( InvalidDataAccessApiUsageException e ) {
-            if ( !e.getMessage().contains( "-32" )  ) {
+            if ( !e.getMessage().contains( "-32" ) ) {
                 throw e;
             }
         }
@@ -145,25 +146,23 @@ public class Aggregate21930 extends MongodbTestBase {
         // （7）返回_id字段和选择的普通字段
         agg = Aggregation.newAggregation(
                 match( Criteria.where( "age" ).lt( num ) ),
-                project( "name", "sex", "age","_id" ));
+                project( "name", "sex", "age", "_id" ) );
         actResults = mongoTemplate.aggregate( agg, clName, Entity.class );
         actList = actResults.getMappedResults();
         for ( int i = 0; i < list.size(); i++ ) {
             Entity act = actList.get( i );
             Entity initexp = list.get( i );
-            Entity exp =  new Entity( initexp.getName(), initexp.getSex(),
-                    initexp.getAge(),0, null );
+            Entity exp = new Entity( initexp.getName(), initexp.getSex(),
+                    initexp.getAge(), 0, null );
             exp.setId( initexp.getId() );
-            Assert.assertEquals( act, exp);
+            Assert.assertEquals( act, exp );
         }
 
         // 带匹配符+选择符+sort+skip+limit
-        agg = Aggregation
-                .newAggregation( match( Criteria.where( "age" ).lt( num ) ),
-                        project( "name", "sex", "age", "grade", "courses",
-                                "_id" ),
-                        sort( Sort.Direction.ASC, "age" ), skip( 1 ),
-                        limit( num ) );
+        agg = Aggregation.newAggregation(
+                match( Criteria.where( "age" ).lt( num ) ),
+                project( "name", "sex", "age", "grade", "courses", "_id" ),
+                sort( Sort.Direction.ASC, "age" ), skip( 1 ), limit( num ) );
         actResults = mongoTemplate.aggregate( agg, clName, Entity.class );
         actList = actResults.getMappedResults();
         Assert.assertEquals( actList, list.subList( 1, num ) );
@@ -178,6 +177,7 @@ public class Aggregate21930 extends MongodbTestBase {
         Assert.assertEquals( actList.get( 0 ).getId(), "m" );
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void test2() {
         Aggregation agg;

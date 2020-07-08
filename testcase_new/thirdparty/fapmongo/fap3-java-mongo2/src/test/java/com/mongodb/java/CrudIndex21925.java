@@ -13,7 +13,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.CommandFailureException;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -46,7 +45,7 @@ public class CrudIndex21925 extends MongodbTestBase {
         // 创建集合
         DBCollection cl = db.createCollection( clName, new BasicDBObject() );
         // 用户未创建索引，列取索引，默认存在$id索引
-        List list = cl.getIndexInfo();
+        List< DBObject > list = cl.getIndexInfo();
         Assert.assertEquals( list.size(), 1, list.toString() );
         Assert.assertEquals( ( ( BSONObject ) list.get( 0 ) ).get( "name" ),
                 "$id" );
@@ -83,8 +82,8 @@ public class CrudIndex21925 extends MongodbTestBase {
             cl.createIndex( new BasicDBObject( "a", 1 ), indexNames1[ 0 ],
                     true );
             Assert.fail( "exp fail but act success!!!" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -247 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-247" ) ) {
                 throw e;
             }
         }
@@ -155,7 +154,7 @@ public class CrudIndex21925 extends MongodbTestBase {
             cl.update( new BasicDBObject( "a", 2 ), new BasicDBObject( "$set",
                     new BasicBSONObject( "a", 3 ).append( "e", 5 ) ) );
             Assert.fail( "exp fail but act success!!!" );
-        } catch ( CommandFailureException e ) {
+        } catch ( Exception e ) {
             if ( !e.getMessage().contains( "-38" ) ) {
                 throw e;
             }
@@ -168,7 +167,7 @@ public class CrudIndex21925 extends MongodbTestBase {
                             new BasicBSONObject( "a", 3 ).append( "e", 5 ) ),
                     true, false );
             Assert.fail( "exp fail but act success!!!" );
-        } catch ( CommandFailureException e ) {
+        } catch ( Exception e ) {
             if ( !e.getMessage().contains( "-38" ) ) {
                 throw e;
             }

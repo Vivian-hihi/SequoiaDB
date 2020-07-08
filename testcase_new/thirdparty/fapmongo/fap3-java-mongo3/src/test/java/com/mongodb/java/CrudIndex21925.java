@@ -50,7 +50,7 @@ public class CrudIndex21925 extends MongodbTestBase {
     @Test
     public void test() {
         db.createCollection( clName );
-        MongoCollection cl = db.getCollection( clName );
+        MongoCollection< Document > cl = db.getCollection( clName );
 
         // 创建index
         cl.createIndex( Indexes.ascending( indexNames[ 0 ] ),
@@ -75,7 +75,7 @@ public class CrudIndex21925 extends MongodbTestBase {
         // 增删改查记录
         crud( cl );
         // 列取index
-        MongoCursor cursor1 = cl.listIndexes().iterator();
+        MongoCursor< Document > cursor1 = cl.listIndexes().iterator();
         int i = 0;
         while ( cursor1.hasNext() ) {
             Document object = ( Document ) cursor1.next();
@@ -89,7 +89,7 @@ public class CrudIndex21925 extends MongodbTestBase {
         cursor1.close();
 
         // 删除index
-        MongoCursor cursor2 = cl.listIndexes().iterator();
+        MongoCursor< Document > cursor2 = cl.listIndexes().iterator();
         while ( cursor2.hasNext() ) {
             Document object = ( Document ) cursor2.next();
             if ( object.getString( "name" ) != null
@@ -98,12 +98,12 @@ public class CrudIndex21925 extends MongodbTestBase {
             }
         }
         Assert.assertEquals(
-                cl.listIndexes().into( new ArrayList< String >() ).size(), 1 );
+                cl.listIndexes().into( new ArrayList< Document >() ).size(),
+                1 );
         cursor2.close();
     }
 
-    @SuppressWarnings("unchecked")
-    private void crud( MongoCollection cl ) {
+    private void crud( MongoCollection< Document > cl ) {
         List< Document > list = new ArrayList<>();
         int num = 10;
         for ( int i = 0; i < num; i++ ) {
@@ -128,7 +128,7 @@ public class CrudIndex21925 extends MongodbTestBase {
         }
         // 查询
         List< Document > result = ( List< Document > ) cl.find()
-                .into( new ArrayList() );
+                .into( new ArrayList< Document >() );
         for ( int i = 0; i < result.size(); i++ ) {
             Document act = result.get( i );
             Document exp = list.get( i );

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.testng.Assert;
@@ -71,8 +70,9 @@ public class AutoCreateCSCL21998 extends MongodbTestBase {
         }
         threadExec.run();
         // 简单检查
-        MongoCollection cl = db.getCollection( clName );
-        Collection indexInfos = cl.listIndexes().into( new ArrayList() );
+        MongoCollection< Document > cl = db.getCollection( clName );
+        Collection< Document > indexInfos = cl.listIndexes()
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( indexInfos.size(), threadNum + 1,
                 indexInfos.toString() );
         Assert.assertEquals(
@@ -115,7 +115,7 @@ public class AutoCreateCSCL21998 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void create() {
             MongoDatabase db = client.getDatabase( dbName );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.createIndex( Indexes.ascending( keyAndName ),
                     new IndexOptions().unique( false ).name( keyAndName ) );
         }
@@ -131,7 +131,7 @@ public class AutoCreateCSCL21998 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void insert() {
             MongoDatabase db = client.getDatabase( dbName );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.insertMany( documentList );
         }
     }
@@ -148,7 +148,7 @@ public class AutoCreateCSCL21998 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void upsert() {
             MongoDatabase db = client.getDatabase( dbName );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.updateMany( query, update, new UpdateOptions().upsert( true ) );
         }
     }

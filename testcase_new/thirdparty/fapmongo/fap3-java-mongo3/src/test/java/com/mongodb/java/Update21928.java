@@ -47,7 +47,7 @@ public class Update21928 extends MongodbTestBase {
     private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21928v3";
-    private MongoCollection cl;
+    private MongoCollection< Document > cl;
     // 不能小于30
     private int num = 30;
     private List< Document > list;
@@ -229,7 +229,7 @@ public class Update21928 extends MongodbTestBase {
             db.getCollection( clName + "-test2" ).drop();
         }
         db.createCollection( clName + "-test2" );
-        MongoCollection cl1 = db.getCollection( clName + "-test2" );
+        MongoCollection< Document > cl1 = db.getCollection( clName + "-test2" );
         Bson query5 = Filters.and( gt( "a", 0 ) );
         Bson update5 = Updates.set( "a", -10 * num );
         UpdateResult result5 = cl1.updateMany( query5, update5 );

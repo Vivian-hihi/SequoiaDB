@@ -101,12 +101,12 @@ public class GridFS22055 extends MongodbTestBase {
         Assert.assertEquals( cl2.count(), 0 );
 
         // 删除集合名
-        for ( String clName : clNames ) {
+        for ( String clName : expClNames ) {
             db.getCollection( clName ).drop();
         }
         Set< String > clNames1 = db.getCollectionNames();
         Assert.assertFalse( clNames1.containsAll( Arrays.asList( expClNames ) ),
-                "clNames = " + clNames.toString() );
+                "clNames1 = " + clNames1.toString() );
     }
 
     @AfterClass

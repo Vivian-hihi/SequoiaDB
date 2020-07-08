@@ -1,7 +1,6 @@
 package com.mongodb.springdata;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,7 +31,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.matc
  */
 public class AllOperation21996 extends MongodbTestBase {
     private String clNameBase = "spring_cl21996B";
-    private AtomicInteger clNum = new AtomicInteger( 3 );
+    private AtomicInteger clNum = new AtomicInteger( 5 );
 
     @BeforeClass
     public void setUp() {
@@ -44,14 +43,12 @@ public class AllOperation21996 extends MongodbTestBase {
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ), 999 },
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ),
                         1000 },
-                // TODO: SEQUOIADBMAINSTREAM-5700
-                // { clNameBase + String.valueOf( clNum.getAndDecrement() ),
-                // 3001 }
-                // { clNameBase + String.valueOf( clNum.getAndDecrement()),5000
-                // },
-                // { clNameBase + String.valueOf( clNum.getAndDecrement()),10000
-                // }
-        };
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        3001 },
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        5000 },
+                { clNameBase + String.valueOf( clNum.getAndDecrement() ),
+                        10000 } };
     }
 
     @Test(dataProvider = "data-provider")
@@ -65,12 +62,14 @@ public class AllOperation21996 extends MongodbTestBase {
         mongoTemplate.insert( list, clName );
 
         // find
-        List< Entity > list1 = mongoTemplate.findAll( Entity.class, clName );
+        Query query = new Query( Criteria.where( "age" ).gt( -1 ) );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
+        List< Entity > list1 = mongoTemplate.find( query, Entity.class,
+                clName );
+        System.out.println( "Size = " + list1.size() );
         Assert.assertEquals( list1, list );
 
         // find limit 999
-        Query query = new Query( Criteria.where( "age" ).gt( -1 ) );
-        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         query.limit( 999 );
         List< Entity > list2 = mongoTemplate.find( query, Entity.class,
                 clName );
@@ -101,7 +100,8 @@ public class AllOperation21996 extends MongodbTestBase {
 
         // distinct
         DBCollection cl = mongoTemplate.getCollection( clName );
-        Collection list5 = cl.distinct( "age" );
+        @SuppressWarnings("unchecked")
+        List< Object > list5 = cl.distinct( "age" );
         Assert.assertEquals( list5.size(), recordNum );
 
         // update

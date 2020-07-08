@@ -141,12 +141,10 @@ public class Aggregate21930 extends MongodbTestBase {
         }
 
         // 带匹配符+选择符+sort+skip+limit
-        agg = Aggregation
-                .newAggregation( match( Criteria.where( "age" ).lt( num ) ),
-                        project( "name", "sex", "age", "grade", "courses",
-                                "_id" ),
-                        sort( Sort.Direction.ASC, "age" ), skip( 1 ),
-                        limit( num ) );
+        agg = Aggregation.newAggregation(
+                match( Criteria.where( "age" ).lt( num ) ),
+                project( "name", "sex", "age", "grade", "courses", "_id" ),
+                sort( Sort.Direction.ASC, "age" ), skip( 1 ), limit( num ) );
         actResults = mongoTemplate.aggregate( agg, clName, Entity.class );
         actList = actResults.getMappedResults();
         Assert.assertEquals( actList, list.subList( 1, num ) );

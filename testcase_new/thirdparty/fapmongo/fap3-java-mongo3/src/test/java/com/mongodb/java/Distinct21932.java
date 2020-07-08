@@ -35,13 +35,12 @@ public class Distinct21932 extends MongodbTestBase {
     private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21932v3";
-    private MongoCollection cl;
+    private MongoCollection< Document > cl;
     // 不能小于10
     private int num = 10;
     private List< Document > list;
 
     @BeforeClass
-    @SuppressWarnings("unchecked")
     public void setUp() throws UnknownHostException {
         client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
@@ -56,48 +55,50 @@ public class Distinct21932 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test1() {
         Bson query;
-        Collection actResult;
+        Collection< Integer > actResult;
         List< Integer > expList = Arrays.asList( 0, 1, 2 );
         // 不带条件去重
-        actResult = cl.distinct( "a", Integer.class ).into( new ArrayList() );
+        actResult = cl.distinct( "a", Integer.class )
+                .into( new ArrayList< Integer >() );
         Assert.assertEquals( actResult, expList );
 
         // 带条件去重
         // 匹配到记录
         query = Filters.and( gte( "d", 0 ), lt( "d", 2 ) );
         actResult = cl.distinct( "a", query, Integer.class )
-                .into( new ArrayList() );
+                .into( new ArrayList< Integer >() );
         List< Integer > expList2 = Arrays.asList( 0, 1 );
         Assert.assertEquals( actResult, expList2 );
 
         query = Filters.and( gte( "a", 0 ), lt( "a", num ) );
         actResult = cl.distinct( "a", query, Integer.class )
-                .into( new ArrayList() );
+                .into( new ArrayList< Integer >() );
         List< Integer > expList3 = Arrays.asList( 0, 1, 2 );
         Assert.assertEquals( actResult, expList3 );
 
         // 匹配不到记录
         query = Filters.and( lt( "a", 0 ) );
         actResult = cl.distinct( "a", query, Integer.class )
-                .into( new ArrayList() );
+                .into( new ArrayList< Integer >() );
         Assert.assertEquals( actResult.size(), 0, actResult.toString() );
 
         // 对不存在的字段去重
-        actResult = cl.distinct( "a1", Integer.class ).into( new ArrayList() );
+        actResult = cl.distinct( "a1", Integer.class )
+                .into( new ArrayList< Integer >() );
         Assert.assertEquals( actResult.size(), 0, actResult.toString() );
 
         // 集合不存在记录
         cl.deleteMany( new Document() );
-        actResult = cl.distinct( "a", Integer.class ).into( new ArrayList() );
+        actResult = cl.distinct( "a", Integer.class )
+                .into( new ArrayList< Integer >() );
         Assert.assertEquals( actResult.size(), 0, actResult.toString() );
 
         // 参数校验
         try {
             cl.distinct( "$", new Document( "$eq", 1 ), Integer.class )
-                    .into( new ArrayList() );
+                    .into( new ArrayList< Integer >() );
             Assert.fail( "exp failed but act success!!!" );
         } catch ( MongoCommandException e ) {
             if ( e.getErrorCode() != -6 ) {

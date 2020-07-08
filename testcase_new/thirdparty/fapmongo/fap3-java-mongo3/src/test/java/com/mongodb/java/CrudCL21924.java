@@ -100,7 +100,7 @@ public class CrudCL21924 extends MongodbTestBase {
         autoCreate( db, cl, clName );
     }
 
-    private void autoCreate( MongoDatabase db, MongoCollection cl,
+    private void autoCreate( MongoDatabase db, MongoCollection< Document > cl,
             String clName ) {
         // insert
         cl.insertOne( new Document( "a", 1 ) );

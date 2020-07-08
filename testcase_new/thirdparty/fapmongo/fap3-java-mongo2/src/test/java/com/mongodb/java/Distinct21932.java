@@ -13,7 +13,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.CommandFailureException;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -52,6 +51,7 @@ public class Distinct21932 extends MongodbTestBase {
         cl.createIndex( new BasicDBObject( "b", 1 ).append( "f", 1 ), "bf" );
     }
 
+    @SuppressWarnings("rawtypes")
     @Test
     public void test1() {
         BasicDBObject options;
@@ -97,8 +97,8 @@ public class Distinct21932 extends MongodbTestBase {
         try {
             cl.distinct( "a", new BasicDBObject( "$gt", 0 ) );
             Assert.fail( "exp fail but act success!!!" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -6 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-6" ) ) {
                 throw e;
             }
         }

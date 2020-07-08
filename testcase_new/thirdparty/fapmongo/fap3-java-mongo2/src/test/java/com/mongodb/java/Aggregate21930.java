@@ -16,7 +16,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.CommandFailureException;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -120,18 +119,16 @@ public class Aggregate21930 extends MongodbTestBase {
         Assert.assertEquals( k, num );
 
         // （3）排除普通字段
-
         try {
             aggList = new ArrayList<>();
             aggList.add( new BasicDBObject( "$match",
                     QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
             aggList.add( new BasicDBObject( "$project",
                     new BasicBSONObject( "a", 0 ) ) );
-            actResult = cl.aggregate( aggList ).results().iterator();
-            actResult = cl.aggregate( aggList ).results().iterator();
+            cl.aggregate( aggList ).results().iterator();
             Assert.fail( "expect failed but act success!!!" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -32 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-32" ) ) {
                 throw e;
             }
         }
@@ -142,13 +139,14 @@ public class Aggregate21930 extends MongodbTestBase {
                     QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
             aggList.add( new BasicDBObject( "$project",
                     new BasicBSONObject( "_id", 0 ) ) );
-            actResult = cl.aggregate( aggList ).results().iterator();
+            cl.aggregate( aggList ).results().iterator();
             Assert.fail( "expect failed but act success!!!" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -32 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-32" ) ) {
                 throw e;
             }
         }
+
         // （5）选择普通字段和排除_id
         aggList = new ArrayList<>();
         aggList.add( new BasicDBObject( "$match",
@@ -175,9 +173,10 @@ public class Aggregate21930 extends MongodbTestBase {
                     QueryBuilder.start( "a" ).greaterThan( -1 ).get() ) );
             aggList.add( new BasicDBObject( "$project",
                     new BasicBSONObject( "_id", 0 ).append( "a", 0 ) ) );
-            actResult = cl.aggregate( aggList ).results().iterator();
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -32 ) {
+            cl.aggregate( aggList ).results().iterator();
+            Assert.fail( "exp failed but act success!!!" );
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-32" ) ) {
                 throw e;
             }
         }
@@ -535,8 +534,8 @@ public class Aggregate21930 extends MongodbTestBase {
         try {
             cl.aggregate( list ).results().iterator();
             Assert.fail( "exp failed but act success!!!" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -6 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-6" ) ) {
                 throw e;
             }
         }

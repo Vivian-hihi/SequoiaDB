@@ -11,12 +11,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.CommandFailureException;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoCommandException;
 import com.mongodb.utils.MongodbTestBase;
 
 /**
@@ -92,8 +90,8 @@ public class Insert21926 extends MongodbTestBase {
         try {
             cl.insert( list.get( num / 2 ) );
             Assert.fail( "exp fail but act success" );
-        } catch ( MongoCommandException e ) {
-            if ( e.getErrorCode() != -38 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-38" ) ) {
                 throw e;
             }
         }
@@ -101,8 +99,8 @@ public class Insert21926 extends MongodbTestBase {
         try {
             cl.insert( list );
             Assert.fail( "exp fail but act success" );
-        } catch ( CommandFailureException e ) {
-            if ( e.getErrorCode() != -38 ) {
+        } catch ( Exception e ) {
+            if ( !e.getMessage().contains( "-38" ) ) {
                 throw e;
             }
         }

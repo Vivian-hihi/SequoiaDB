@@ -153,8 +153,8 @@ public class Update21928 extends MongodbTestBase {
         update = new Update().pull( "courses", "english" );
         result = mongoTemplate.updateMulti( query, update, clName );
         Query check13A = new Query(
-                Criteria.where( "courses" ).all( Entity.COURSES ).and( "age" )
-                        .gte( 4 * num / 7 ).lt( 5 * num / 7 ) );
+                Criteria.where( "courses" ).all( Entity.COURSES.toString() )
+                        .and( "age" ).gte( 4 * num / 7 ).lt( 5 * num / 7 ) );
         Query check13B = new Query( Criteria.where( "courses" )
                 .all( Entity.COURSES[ 0 ], Entity.COURSES[ 1 ] ).and( "age" )
                 .gte( 4 * num / 7 ).lt( 5 * num / 7 ) );
@@ -364,7 +364,8 @@ public class Update21928 extends MongodbTestBase {
         Query check2 = new Query( Criteria.where( "age" ).is( num * 3 ) );
         Assert.assertTrue( result2.isUpdateOfExisting() );
         Assert.assertEquals( result2.getN(), 1 );
-        Assert.assertEquals( mongoTemplate.count( query2, clName ), num / 3 -1 );
+        Assert.assertEquals( mongoTemplate.count( query2, clName ),
+                num / 3 - 1 );
         Assert.assertEquals( mongoTemplate.count( check2, clName ), 1 );
 
         // 匹配不到记录，upsert更新记录

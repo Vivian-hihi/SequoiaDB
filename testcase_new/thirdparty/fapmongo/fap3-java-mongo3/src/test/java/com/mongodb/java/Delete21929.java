@@ -35,13 +35,12 @@ public class Delete21929 extends MongodbTestBase {
     private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21929v3";
-    private MongoCollection cl;
+    private MongoCollection< Document > cl;
     // 不能小于10
     private int num = 10;
     private List< Document > list;
 
     @BeforeClass
-    @SuppressWarnings("unchecked")
     public void setUp() throws UnknownHostException {
         client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
@@ -56,7 +55,6 @@ public class Delete21929 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test1() {
         Bson query;
         DeleteResult result;

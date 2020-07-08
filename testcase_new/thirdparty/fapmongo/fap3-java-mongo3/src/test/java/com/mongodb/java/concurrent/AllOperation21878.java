@@ -52,7 +52,7 @@ public class AllOperation21878 extends MongodbTestBase {
     public void setUp() throws UnknownHostException {
         client = MongodbTestBase.getClient();
         MongoDatabase db = MongodbTestBase.getDataBase( client );
-        MongoCollection cl = db.getCollection( clName );
+        MongoCollection< Document > cl = db.getCollection( clName );
         cl.createIndex( Indexes.ascending( "a" ),
                 new IndexOptions().unique( false ).name( "a" ) );
         List< Document > list = new ArrayList<>();
@@ -77,6 +77,9 @@ public class AllOperation21878 extends MongodbTestBase {
                     new Document( "b1",
                             String.valueOf( threadNumPerOpera + i ) ) ) ) );
 
+            // find
+            threadExec.addWorker( new Find( new Document() ) );
+
             // upsert [threadNumPerOpera*threadNumPerOpera,
             threadExec.addWorker( new Upsert(
                     Filters.and( eq( "a2", i + threadNumPerOpera ) ),
@@ -90,15 +93,11 @@ public class AllOperation21878 extends MongodbTestBase {
 
             threadExec.addWorker( new Delete( query1 ) );
 
-            threadExec
-                    .addWorker( new Update( query1,
-                            Updates.combine(
-                                    Updates.set(
-                                            "a",
-                                            i + threadNumPerOpera
-                                                    * threadNumPerOpera ),
-                                    Updates.set( "e", i + threadNumPerOpera
-                                            * threadNumPerOpera ) ) ) );
+            threadExec.addWorker( new Update( query1, Updates.combine(
+                    Updates.set( "a",
+                            i + threadNumPerOpera * threadNumPerOpera ),
+                    Updates.set( "e",
+                            i + threadNumPerOpera * threadNumPerOpera ) ) ) );
 
             // count
             Bson query2 = Filters.and( gte( "c", i * threadNumPerOpera ),
@@ -120,7 +119,7 @@ public class AllOperation21878 extends MongodbTestBase {
 
         // 更新的个数 = threadNumPerOpera * threadNumPerOpera - totalDelNum.get()
         MongoDatabase db = MongodbTestBase.getDataBase( client );
-        MongoCollection cl = db.getCollection( clName );
+        MongoCollection< Document > cl = db.getCollection( clName );
         Bson query = Filters.and( Filters.exists( "e" ), gte( "e", -1 ) );
         Assert.assertEquals( cl.count( query ),
                 threadNumPerOpera * threadNumPerOpera - totalDelNum.get() );
@@ -141,7 +140,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void create() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.createIndex( Indexes.ascending( keyAndName ),
                     new IndexOptions().unique( false ).name( keyAndName ) );
         }
@@ -157,7 +156,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void create() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.find( query );
         }
     }
@@ -172,7 +171,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void create() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.dropIndex( name );
         }
     }
@@ -187,7 +186,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void insert() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.insertMany( documentList );
         }
     }
@@ -204,7 +203,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void upsert() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             cl.updateMany( query, update, new UpdateOptions().upsert( true ) );
         }
     }
@@ -221,7 +220,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void upsert() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             UpdateResult result = cl.updateMany( query, update,
                     new UpdateOptions().upsert( false ) );
             totalUpateNum.getAndAdd( result.getModifiedCount() );
@@ -238,7 +237,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void delete() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             DeleteResult result = cl.deleteMany( query );
             totalDelNum.getAndAdd( result.getDeletedCount() );
         }
@@ -254,7 +253,7 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void count() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             long count = cl.count( query );
             Assert.assertEquals( count, threadNumPerOpera );
         }
@@ -272,10 +271,9 @@ public class AllOperation21878 extends MongodbTestBase {
         }
 
         @ExecuteOrder(step = 1)
-        @SuppressWarnings("unchecked")
         private void distinct() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
+            MongoCollection< Document > cl = db.getCollection( clName );
             List< Integer > result = ( List< Integer > ) cl
                     .distinct( filedName, query, Integer.class )
                     .into( new ArrayList< Integer >() );
@@ -299,8 +297,9 @@ public class AllOperation21878 extends MongodbTestBase {
         @ExecuteOrder(step = 1)
         private void aggregate() {
             MongoDatabase db = MongodbTestBase.getDataBase( client );
-            MongoCollection cl = db.getCollection( clName );
-            Collection result = cl.aggregate( agg ).into( new ArrayList() );
+            MongoCollection< Document > cl = db.getCollection( clName );
+            Collection< Document > result = cl.aggregate( agg )
+                    .into( new ArrayList< Document >() );
             List< Document > checkList = new ArrayList<>();
             for ( int i = checkResult[ 0 ]; i < checkResult[ 1 ]; i++ ) {
                 checkList.add( new Document( "_id", i ).append( "sum_c",
