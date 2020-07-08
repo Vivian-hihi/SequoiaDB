@@ -1,4 +1,4 @@
-SequoiaSQL-MariaDB 的架构使集群中的多个 MariaDB 实例均为主机模式，都可对外提供读写服务。由于各实例的元数据均只存储在该实例本身，SequoiaSQL-MariaDB 提供了元数据同步工具，用来保证 MariaDB 服务的高可用。当一个 MariaDB 实例退出后，连接该实例的应用可以切换到其它实例，获得对等的读写服务。
+-SequoiaSQL-MariaDB 的架构使集群中的多个 MariaDB 实例均为主机模式，都可对外提供读写服务。由于各实例的元数据均只存储在该实例本身，SequoiaSQL-MariaDB 提供了元数据同步工具，用来保证 MariaDB 服务的高可用。当一个 MariaDB 实例退出后，连接该实例的应用可以切换到其它实例，获得对等的读写服务。
 
 ## MariaDB 元数据同步工具架构 ##
 MariaDB 元数据同步工具的基本原理是 MariaDB 服务进程通过审计插件输出审计日志，元数据同步工具从审计日志中提取 SQL 语句，连接到其它 MariaDB 实例执行，以达到元数据同步的目的。包含元数据同步工具的集群架构如下。
@@ -48,7 +48,7 @@ tools/
 
 + 登录 MariaDB shell，操作步骤可参考[使用](sql_engine/sequoiasql_mariadb/connection.md#使用)章节。在所有 MariaDB 实例上创建用于同步元数据的 MariaDB 用户，并授予所有权限，用户名与密码在所有实例上保持一致。注意：此处使用的密码 'sdbadmin' 仅为示例，请根据需要自行设置安全的密码
 
-   ```sql
+   ```lang-sql
    MariaDB [(none)]> CREATE USER 'sdbadmin'@'%' IDENTIFIED BY 'sdbadmin';
    MariaDB [(none)]> GRANT all on *.* TO 'sdbadmin'@'%' with grant option;
    ```
@@ -129,7 +129,7 @@ max_retry_times = 5
 ### 日志配置项 ###
 同步工具使用 python 的 logging 模块输出日志，配置文件为 log.config。如果是全新安装，开始该文件是不存在的，需要从 log.config.sample 拷贝。配置项如下（日志目录会自动创建）：
 
-```
+```config
 [loggers]
 keys=root,ddlLogger
 [handlers]
@@ -167,8 +167,8 @@ datefmt=
 ### 启动工具 ###
 在完成所有配置后，在各实例所在主机的 sdbadmin 用户下，执行以下命令在后台启动同步工具
 
-```config
-python /opt/sequoiasql/mariadb/tools/metaSync/meta_sync.py &
+```lang-bash
+$ python /opt/sequoiasql/mariadb/tools/metaSync/meta_sync.py &
 ```
 
 完成环境配置后，可通过在各实例进行少量 DDL 操作，进行简单的同步验证，验证完成后清理掉验证数据。
@@ -187,7 +187,7 @@ crontab -e
 工具在正常运行后，会在与 config 文件相同的目录下，创建名为 sync.stat 的文本文件，用于记录同步状态，以便工具在重启后，能接着之前的处理进度继续工作。
 状态文件的内容如下：
 
-```
+```config
 [status]
 # 最后扫描文件的审计日志文件的 inode
 file_inode = 4589549

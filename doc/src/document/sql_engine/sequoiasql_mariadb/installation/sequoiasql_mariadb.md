@@ -8,7 +8,7 @@
 
 ##数据库服务相关参数说明##
 
-以root用户登录目标机器
+以 root 用户登录目标机器
 
   - 启动服务，拉起守护进程 sequoiasql-mariadb-daemon 和相关数据库实例进程
 

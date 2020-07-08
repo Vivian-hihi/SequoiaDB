@@ -18,8 +18,7 @@
 
   1. 以root 用户登陆目标主机，解压 MariaDB 实例组件产品包，并为解压得到的 `sequoiasql-mariadb-3.4-linux_x86_64-enterprise-installer.run` 安装包赋可执行权限
 
-   ```shell
-   # tar -zxvf sequoiasql-mariadb-3.4-linux_x86_64-enterprise-installer.run
+   ```lang-bash
    # chmod u+x sequoiasql-mariadb-3.4-linux_x86_64-enterprise-installer.run
    ```
    
@@ -122,6 +121,8 @@
 
    ```lang-bash
    $ bin/sdb_maria_ctl listinst
+   ```
+   ```
    NAME      SQLDATA                                  SQLLOG
    myinst     /opt/sequoiasql/mariadb/database/6101/    /opt/sequoiasql/mariadb/myinst.log
    Total: 1
@@ -131,6 +132,8 @@
 
    ```lang-bash
    $ bin/sdb_maria_ctl start myinst
+   ```
+   ```
    Starting instance myinst ...
    ok (PID: 25174)
    ```
@@ -139,6 +142,8 @@
 
    ```lang-bash
    $ bin/sdb_maria_ctl status
+   ```
+   ```
    INSTANCE   PID        SVCNAME    SQLDATA                                 SQLLOG            
    myinst     25174      6101       /opt/sequoiasql/mariadb/database/6101/    /opt/sequoiasql/mariadb/myinst.log        
    Total: 1; Run: 1
@@ -148,6 +153,8 @@
 
 ```lang-bash
 $ bin/sdb_maria_ctl stop myinst
+```
+```
 Stoping instance myinst (PID: 25174) ...
 ok
 ```
@@ -160,6 +167,8 @@ ok
 
    ```lang-bash
    $ bin/sdb_maria_ctl addinst myinst -D database/6101/
+   ```
+   ```
    Adding instance myinst ...
    ok
    ```

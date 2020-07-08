@@ -6,7 +6,7 @@
 | CHARACTER SET | utf8mb4 | 字符数据的字符集。 |
 | COLLATE | utf8mb4_bin | 字符数据的比较规则。不支持忽略大小写的字符比较规则，字符比较对大小写敏感。 |
 | COMMENT | "" | 表备注信息。还可以通过它指定更多 SequoiaDB 引擎的选项，可参考[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置)。 |
-| ENGINE | SEQUOIADB | 表存储引擎。**必须** 指定为 SEQUOIADB 才能使用本分布式存储引擎，一般无需显式指定。 |
+| ENGINE | SEQUOIADB | 表存储引擎。必须指定为 SEQUOIADB 才能使用本分布式存储引擎，一般无需显式指定。 |
 
 **示例**：
 
@@ -44,15 +44,15 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 ```lang-sql
 MariaDB [company]> CREATE TABLE business_log(ts TIMESTAMP, level INT, content TEXT, PRIMARY KEY(ts))
-    -> ENGINE=sequoiadb
-    -> COMMENT="Sharding table for example, sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
+                   ENGINE=sequoiadb
+                   COMMENT="Sharding table for example, sequoiadb:{ table_options: { ShardingKey: { ts: 1 }, ShardingType: 'range' } }";
 ```
 - 在[引擎配置项](sql_engine/sequoiasql_mariadb/config.md#引擎配置) sequoiadb_auto_partition 为 ON 时，指定 auto_partition 为"false"显式创建普通表
 
 ```lang-sql
 MariaDB [company]> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) UNIQUE KEY)
-    -> ENGINE=sequoiadb 
-    -> COMMENT='sequoiadb:{ auto_partition: false }';
+                   ENGINE=sequoiadb 
+                   COMMENT='sequoiadb:{ auto_partition: false }';
 ```
 
 ## SequoiaDB引擎配置使用说明
@@ -238,7 +238,7 @@ MariaDB [company]> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) 
 
 - 通过实例数据目录下的配置文件 auto.cnf，在[mysqld]一栏添加/更改对应配置项
 
-   ```lang-ini
+   ```config
    sequoiadb_auto_partition=OFF
    ```
 
