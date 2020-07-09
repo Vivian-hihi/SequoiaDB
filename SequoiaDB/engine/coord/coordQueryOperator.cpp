@@ -1144,7 +1144,8 @@ namespace engine
       {
          BSONObjBuilder retBuilder ;
          utilWriteResult wrResult ;
-         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder ) ;
+         coordBuildErrorObj( _pResource, rc, cb, &nokRC, retBuilder,
+                             result._sucGroupLst.size() ) ;
          coordSetResultInfo( rc, nokRC, &wrResult ) ;
          wrResult.toBSON( retBuilder ) ;
 

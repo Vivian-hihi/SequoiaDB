@@ -596,6 +596,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
+      UINT32 sucNum = 0 ;
 
       pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
@@ -653,6 +654,10 @@ namespace engine
                     rcTmp ) ;
             nokRC[ pReply->header.routeID.value ] = coordErrorInfo( pReply ) ;
          }
+         else
+         {
+            ++sucNum ;
+         }
       }
 
       if ( rc )
@@ -666,7 +671,7 @@ namespace engine
       if ( ( rc && nokRC.size() > 0 ) && buf )
       {
          *buf = _rtnContextBuf( coordBuildErrorObj( _pResource, rc,
-                                                    cb, &nokRC ) ) ;
+                                                    cb, &nokRC, sucNum ) ) ;
       }
       goto done ;
    }
