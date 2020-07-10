@@ -984,6 +984,7 @@ namespace engine
 
       BSONElement ele ;
       BSONObj autoIncObject ;
+      rtnCLAutoincFieldArgument *autoIncField = NULL ;
 
       try
       {
@@ -997,7 +998,6 @@ namespace engine
             while( it.more() )
             {
                BSONElement e ;
-               rtnCLAutoincFieldArgument *autoIncField = NULL ;
                e = it.next() ;
                PD_CHECK( Object == e.type(), SDB_INVALIDARG, error, PDERROR,
                          "Invalid argument[%s], rc:%d",
@@ -1020,16 +1020,20 @@ namespace engine
                          "Option[%s] not support when create autoincrement "
                          "field", FIELD_NAME_CURRENT_VALUE ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
+               autoIncField = NULL;
             }
          }
          else if( ele.type() == Object )
          {
-            rtnCLAutoincFieldArgument *autoIncField =
-                            SDB_OSS_NEW rtnCLAutoincFieldArgument( ele.Obj() ) ;
+            autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( ele.Obj() ) ;
+            PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
+                      "Failed to allocate autoincrement field argument" ) ;
+
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
                          "rc: %d", rc ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
+            autoIncField = NULL;
          }
          else
          {
@@ -1054,6 +1058,7 @@ namespace engine
       return rc ;
 
    error :
+      SAFE_OSS_DELETE( autoIncField );
       goto done ;
    }
 
@@ -1110,6 +1115,7 @@ namespace engine
                       "Failed to parse argument: contain unknown fields[%s]",
                       _argument.toString( false, false ).c_str() ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
+            autoIncField = NULL;
          }
          else if( ele.type() == bson::Array )
          {
@@ -1118,6 +1124,7 @@ namespace engine
             {
                BSONElement field = it.next() ;
                BSONObjBuilder argbuilder ;
+
                PD_CHECK( field.type() == bson::String, SDB_INVALIDARG,
                         error, PDERROR, "Failed to get field [%s]",
                          FIELD_NAME_AUTOINCREMENT ) ;
@@ -1134,6 +1141,7 @@ namespace engine
                          "Failed to parse argument: contain unknown fields[%s]",
                          _argument.toString( false, false ).c_str() ) ;
                _autoIncFieldList.push_back( autoIncField ) ;
+               autoIncField = NULL;
             }
          }
          else
@@ -1159,6 +1167,7 @@ namespace engine
       return rc ;
 
    error :
+      SAFE_OSS_DELETE( autoIncField );
       goto done ;
 
    }
@@ -1324,7 +1333,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNALTERCLSETATTRTASK_PARSEARG ) ;
 
       BSONElement argElement ;
-      rtnCLAutoincFieldArgument *autoIncField ;
+      rtnCLAutoincFieldArgument *autoIncField = NULL;
 
       rc = _shardingArgument.parseArgument() ;
       PD_RC_CHECK( rc, PDERROR,
@@ -1382,10 +1391,14 @@ namespace engine
                        SDB_INVALIDARG, error, PDERROR,
                        "Failed to get field [%s]", FIELD_NAME_AUTOINCREMENT ) ;
             autoIncField = SDB_OSS_NEW rtnCLAutoincFieldArgument( argElement.Obj() ) ;
+            PD_CHECK( NULL != autoIncField, SDB_OOM, error, PDERROR,
+                      "Failed to allocate autoincrement field argument" ) ;
+
             rc = autoIncField->parseArgument() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse autoincrement argument, "
                          "rc: %d", rc ) ;
             _autoIncFieldList.push_back( autoIncField ) ;
+            autoIncField = NULL;
          }
          else if(bson::Array == argElement.type() )
          {
@@ -1411,6 +1424,7 @@ namespace engine
                             rc ) ;
 
                _autoIncFieldList.push_back( autoIncField ) ;
+               autoIncField = NULL;
             }
          }
          else
@@ -1518,6 +1532,7 @@ namespace engine
       return rc ;
 
    error :
+      SAFE_OSS_DELETE( autoIncField );
       goto done ;
    }
 
