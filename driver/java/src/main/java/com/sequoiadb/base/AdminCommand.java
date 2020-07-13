@@ -97,6 +97,7 @@ final class AdminCommand {
     final static String SNAP_CONFIGS = PREFIX + "snapshot configs";
     final static String SNAP_SVCTASKS = PREFIX + "snapshot service tasks";
     final static String SNAP_SEQUENCES = PREFIX + "snapshot sequences";
+    final static String SNAP_INDEXSTATS = PREFIX + "snapshot index statistics";
 
     final static String RESET_SNAPSHOT = PREFIX + "snapshot reset";
 

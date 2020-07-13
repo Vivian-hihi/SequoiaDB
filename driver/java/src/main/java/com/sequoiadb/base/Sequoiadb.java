@@ -123,6 +123,10 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_LIST_SEQUENCES = 15;
     public final static int SDB_LIST_USERS = 16;
     public final static int SDB_LIST_BACKUPS = 17 ;
+    //public final static int SDB_LIST_RESERVED1 = 18 ;
+    //public final static int SDB_LIST_RESERVED2 = 19 ;
+    //public final static int SDB_LIST_RESERVED3 = 20 ;
+    //public final static int SDB_LIST_RESERVED4 = 21 ;
     public final static int SDB_LIST_CL_IN_DOMAIN = 129;
     public final static int SDB_LIST_CS_IN_DOMAIN = 130;
 
@@ -142,6 +146,12 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_CONFIGS = 13;
     public final static int SDB_SNAP_SVCTASKS = 14;
     public final static int SDB_SNAP_SEQUENCES = 15;
+    //public final static int SDB_SNAP_RESERVED1 = 16;
+    //public final static int SDB_SNAP_RESERVED2 = 17;
+    //public final static int SDB_SNAP_QUERIES = 18;
+    //public final static int SDB_SNAP_LATCHWAITS = 19;
+    //public final static int SDB_SNAP_LOCKWAITS = 20;
+    public final static int SDB_SNAP_INDEXSTATS = 21;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -1293,7 +1303,8 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS : Get the snapshot of node configurations
      *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS : Get all the information of schedule task
-     *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                 <dt>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                 <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1340,7 +1351,8 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_HEALTH : Get the snapshot of node health detection
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS : Get the snapshot of node configurations
      *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS : Get all the information of schedule task
-     *                 <ds>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                 <dt>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                 <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1374,7 +1386,8 @@ public class Sequoiadb implements Closeable {
      *                   <dt>Sequoiadb.SDB_SNAP_HEALTH : Get the snapshot of node health detection
      *                   <dt>Sequoiadb.SDB_SNAP_CONFIGS : Get the snapshot of node configurations
      *                   <dt>Sequoiadb.SDB_SNAP_SVCTASKS : Get all the information of schedule task
-     *                   <ds>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                   <dt>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                   <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                   </dl>
      * @param matcher    the matching rule, match all the documents if null
      * @param selector   the selective rule, return the whole document if null
@@ -1445,6 +1458,8 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_SVCTASKS;
             case SDB_SNAP_SEQUENCES:
                 return AdminCommand.SNAP_SEQUENCES;
+            case SDB_SNAP_INDEXSTATS:
+                return AdminCommand.SNAP_INDEXSTATS;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG,
                         String.format("Invalid snapshot type: %d", snapType));
