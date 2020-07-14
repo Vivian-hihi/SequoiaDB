@@ -149,7 +149,15 @@ public class SdbSnapshotList {
         System.out.println("result of SDB_SNAP_SEQUENCES is: ");
         while(cursor.hasNext()){
             System.out.println(cursor.getNext());
-        }     
+        }
+
+        // 21
+        sdb.analyze();
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_INDEXSTATS, "", "", "");
+        System.out.println("result of SDB_SNAP_INDEXSTATS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
     }
 
     @Test
