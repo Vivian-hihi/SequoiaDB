@@ -675,6 +675,7 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
       protected:
          const CHAR           *_spaceName ;
+         BOOLEAN              _ensureEmpty ;
    };
 
    class _rtnDropIndex : public _rtnCommand

@@ -1263,7 +1263,7 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollectionspace)
 
    _rtnDropCollectionspace::_rtnDropCollectionspace ()
-   :_spaceName ( NULL )
+   :_spaceName ( NULL ), _ensureEmpty( FALSE )
    {
    }
 
@@ -1299,8 +1299,56 @@ namespace engine
                                          const CHAR * pHintBuff )
    {
       BSONObj arg ( pMatcherBuff ) ;
+      INT32 rc = SDB_OK ;
 
-      return rtnGetStringElement ( arg, FIELD_NAME_NAME, &_spaceName ) ;
+      try
+      {
+         BSONObjIterator iter( arg ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( 0 == ossStrcmp(ele.fieldName(), CAT_COLLECTION_SPACE_NAME) )
+            {
+               PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field type is not String, type: %d, obj: %s, rc: %d",
+                         ele.type(), arg.toString().c_str(), rc ) ;
+               _spaceName = ele.valuestr() ;
+            }
+            else if ( 0 == ossStrcmp(ele.fieldName(), CAT_ENSURE_CS_IS_EMPTY) )
+            {
+               PD_CHECK( Bool == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field type is not Bool, type: %d, obj: %s, rc: %d",
+                         ele.type(), arg.toString().c_str(), rc ) ;
+               _ensureEmpty = ele.Bool() ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Field name is unreconigzed, name: %s, obj: %s",
+                       ele.fieldName(), arg.toString().c_str() ) ;
+               goto error ;
+            }
+         }
+
+         if ( NULL == _spaceName || '\0' == _spaceName[0] )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Collection space can't be empty, obj: %s",
+                    arg.toString().c_str() ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPCS_DOIT, "_rtnDropCollectionspace::doit" )
@@ -1316,6 +1364,7 @@ namespace engine
       *pContextID = -1;
       if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
+         // ignore _ensureEmpty because it have been checked by catalog
          rtnContextDelCS *delContext = NULL;
          rc = rtnCB->contextNew( RTN_CONTEXT_DELCS,
                                  (rtnContext **)&delContext,
@@ -1328,7 +1377,8 @@ namespace engine
       }
       else
       {
-         rc = rtnDropCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB ) ;
+         rc = rtnDropCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB,
+                                              FALSE, _ensureEmpty ) ;
          /// AUDIT
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CS,
                            _spaceName, rc, "" ) ;

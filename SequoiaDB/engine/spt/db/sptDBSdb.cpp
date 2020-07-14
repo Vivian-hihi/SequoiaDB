@@ -783,6 +783,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string csName ;
+      BSONObj options ;
+
+      if( 1 != arg.argc() && 2 != arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "DropCS() can only specify one or two"
+                        " parameter" ) ;
+         goto error ;
+      }
 
       rc = arg.getString( 0, csName ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -796,14 +805,26 @@ namespace engine
          goto error ;
       }
 
-      if( arg.argc() > 1 )
+      if( 2 == arg.argc() )
       {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "DropCS() can only specify one parameter" ) ;
-         goto error ;
+         if( arg.isObject( 1 ) )
+         {
+            rc = arg.getBsonobj( 1, options ) ;
+            if( SDB_OK != rc )
+            {
+               detail = BSON( SPT_ERR << "Options should be obj" ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "The 2nd argument should be obj" ) ;
+            goto error ;
+         }
       }
 
-      rc = _sptSdb.dropCollectionSpace( csName.c_str() ) ;
+      rc = _sptSdb.dropCollectionSpace( csName.c_str(), options ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to drop CS" ) ;

@@ -196,6 +196,10 @@ namespace engine
                                   const std::string &subCLName,
                                   _catCtxUnlinkSubCLTask **ppCtx,
                                   BOOLEAN pushExec = TRUE ) ;
+
+   private:
+      /* ensure collectionspace is empty or not */
+      BOOLEAN _ensureEmpty ;
    } ;
 
    typedef class _catCtxDropCS catCtxDropCS ;

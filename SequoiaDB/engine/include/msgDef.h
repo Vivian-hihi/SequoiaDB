@@ -411,6 +411,8 @@
 #define FIELD_NAME_LOB_COMMITTED             "LobCommitted"
 #define FIELD_NAME_DIRTY_PAGE                "DirtyPage"
 
+#define FIELD_NAME_ENSURE_EMPTY              "EnsureEmpty"
+
 #define FIELD_NAME_PDLEVEL                   "PDLevel"
 #define FIELD_NAME_ASYNCHRONOUS              "asynchronous"
 #define FIELD_NAME_THREADNUM                 "threadNum"

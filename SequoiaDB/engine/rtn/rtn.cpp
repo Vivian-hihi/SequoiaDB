@@ -1164,7 +1164,8 @@ namespace engine
                                         SDB_DMSCB *dmsCB,
                                         SDB_DPSCB *dpsCB,
                                         BOOLEAN sysCall,
-                                        BOOLEAN dropFile )
+                                        BOOLEAN dropFile,
+                                        BOOLEAN ensureEmpty )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDELCSCOMMAND ) ;
@@ -1195,7 +1196,15 @@ namespace engine
 
       if ( dropFile )
       {
-         rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
+         if ( ensureEmpty )
+         {
+            rc = dmsCB->dropEmptyCollectionSpace( pCollectionSpace, cb,
+                                                  dpsCB ) ;
+         }
+         else
+         {
+            rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
+         }
       }
       else
       {

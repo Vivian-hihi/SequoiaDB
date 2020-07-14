@@ -4466,7 +4466,7 @@ namespace sdbclient
                               INT32 arrSize,
                               const CHAR *pUsrName,
                               const CHAR *pPasswd ) = 0 ;
-      virtual INT32 connect ( const CHAR **pConnAddrs, 
+      virtual INT32 connect ( const CHAR **pConnAddrs,
                               INT32 arrSize,
                               const CHAR *pUsrName,
                               const CHAR *pToken,
@@ -4567,8 +4567,10 @@ namespace sdbclient
                                             sdbCollectionSpace &cs
                                           ) = 0 ;
 
-      virtual INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName )
-            = 0 ;
+      virtual INT32 dropCollectionSpace (
+                               const CHAR *pCollectionSpaceName,
+                               const bson::BSONObj &options = _sdbStaticObject
+                                        ) = 0 ;
 
       virtual INT32 listCollectionSpaces ( _sdbCursor **result ) = 0 ;
 
@@ -4972,7 +4974,7 @@ namespace sdbclient
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 connect ( const CHAR **pConnAddrs, 
+      INT32 connect ( const CHAR **pConnAddrs,
                       INT32 arrSize,
                       const CHAR *pUsrName,
                       const CHAR *pToken,
@@ -5550,19 +5552,25 @@ namespace sdbclient
                                               options, cs ) ;
       }
 
-      /** \fn INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName )
+      /** \fn INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName, const bson::BSONObj &options )
           \brief Remove the specified collection space.
           \param [in] pCollectionSpaceName The name of collection space.
+          \param [in] options The options for dropping collection or NULL for not specified any options.
+                              Please reference <a href="http://doc.sequoiadb.com/cn/index-cat_id-1432190778-edition_id-@SDB_SYMBOL_VERSION">here</a>
+                              for more detail.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName )
+      INT32 dropCollectionSpace (
+                               const CHAR *pCollectionSpaceName,
+                               const bson::BSONObj &options = _sdbStaticObject )
       {
          if ( !pSDB )
          {
             return SDB_NOT_CONNECTED ;
          }
-         return pSDB->dropCollectionSpace ( pCollectionSpaceName ) ;
+
+         return pSDB->dropCollectionSpace ( pCollectionSpaceName, options ) ;
       }
 
       /** \fn INT32 listCollectionSpaces  ( _sdbCursor **result )

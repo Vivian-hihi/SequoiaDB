@@ -316,7 +316,8 @@ namespace engine
                                         SDB_DMSCB *dmsCB,
                                         SDB_DPSCB *dpsCB,
                                         BOOLEAN sysCall,
-                                        BOOLEAN dropFile ) ;
+                                        BOOLEAN dropFile,
+                                        BOOLEAN ensureEmpty = FALSE ) ;
 
    INT32 rtnUnloadCollectionSpace( const CHAR *pCollectionSpace,
                                    _pmdEDUCB *cb,
@@ -439,7 +440,8 @@ namespace engine
                                          _pmdEDUCB *cb,
                                          SDB_DMSCB *dmsCB,
                                          SDB_DPSCB *dpsCB,
-                                         BOOLEAN   sysCall = FALSE ) ;
+                                         BOOLEAN   sysCall = FALSE,
+                                         BOOLEAN   ensureEmpty = FALSE ) ;
 
    INT32 rtnDropCollectionSpaceP1 ( const CHAR *pCollectionSpace,
                                     _pmdEDUCB *cb,

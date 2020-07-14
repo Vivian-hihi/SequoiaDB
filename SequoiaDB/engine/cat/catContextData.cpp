@@ -623,6 +623,7 @@ namespace engine
       _executeAfterLock = FALSE ;
       _commitAfterExecute = FALSE ;
       _needRollback = FALSE ;
+      _ensureEmpty = FALSE ;
    }
 
    _catCtxDropCS::~_catCtxDropCS ()
@@ -642,11 +643,40 @@ namespace engine
 
       try
       {
-         rc = rtnGetSTDStringElement( _boQuery, CAT_COLLECTION_SPACE_NAME,
-                                      _targetName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get field [%s], rc: %d",
-                      CAT_COLLECTION_SPACE_NAME, rc ) ;
+         BSONObjIterator iter( _boQuery ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( 0 == ossStrcmp(ele.fieldName(), CAT_COLLECTION_SPACE_NAME) )
+            {
+               PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field type is not String, type: %d, obj: %s, rc: %d",
+                         ele.type(), _boQuery.toString().c_str(), rc ) ;
+               _targetName = ele.valuestr() ;
+            }
+            else if ( 0 == ossStrcmp(ele.fieldName(), CAT_ENSURE_CS_IS_EMPTY) )
+            {
+               PD_CHECK( Bool == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Field type is not Bool, type: %d, obj: %s, rc: %d",
+                         ele.type(), _boQuery.toString().c_str(), rc ) ;
+               _ensureEmpty = ele.Bool() ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Field name is unreconigzed, name: %s, obj: %s",
+                       ele.fieldName(), _boQuery.toString().c_str() ) ;
+               goto error ;
+            }
+         }
+
+         if ( _targetName.empty() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Collection space can't be empty, obj: %s",
+                    _boQuery.toString().c_str() ) ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -738,7 +768,6 @@ namespace engine
                                              _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-
       PD_TRACE_ENTRY ( SDB_CATCTXDROPCS_DROPCS_SUBTASK ) ;
 
       try
@@ -772,6 +801,14 @@ namespace engine
                clFullName = _targetName ;
                clFullName += "." ;
                clFullName += pCLName ;
+
+               if ( _ensureEmpty )
+               {
+                  rc = SDB_DMS_CS_NOT_EMPTY ;
+                  PD_LOG( PDWARNING, "Could not drop while collectionspace"
+                          " is not empty, rc: %d", rc ) ;
+                  goto error ;
+               }
 
                rc = _addDropCLTask( clFullName, -1, &pDropCLTask );
 

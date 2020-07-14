@@ -1445,7 +1445,9 @@ namespace sdbclient
                                         &cs.pCollectionSpace ) ;
       }
 
-      INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName ) ;
+      INT32 dropCollectionSpace (
+                             const CHAR *pCollectionSpaceName,
+                             const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 listCollectionSpaces ( _sdbCursor **result ) ;
 

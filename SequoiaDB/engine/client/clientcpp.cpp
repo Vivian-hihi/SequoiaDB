@@ -8758,9 +8758,11 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::dropCollectionSpace ( const CHAR *pCollectionSpaceName )
+   INT32 _sdbImpl::dropCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                         const bson::BSONObj &options )
    {
-      INT32 rc            = SDB_OK ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
       BSONObj newObj ;
 
       if ( !pCollectionSpaceName || !*pCollectionSpaceName ||
@@ -8769,7 +8771,23 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      newObj = BSON ( FIELD_NAME_NAME << pCollectionSpaceName ) ;
+
+      try
+      {
+         builder.append( FIELD_NAME_NAME, pCollectionSpaceName ) ;
+         if ( !options.isEmpty() )
+         {
+            builder.appendElements( options ) ;
+         }
+
+         newObj = builder.obj() ;
+      }
+      catch ( std::exception )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       rc = _runCommand ( CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTIONSPACE,
                          &newObj ) ;
       if ( rc )

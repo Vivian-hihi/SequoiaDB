@@ -1762,12 +1762,13 @@ namespace engine
                                          _pmdEDUCB *cb,
                                          SDB_DMSCB *dmsCB,
                                          SDB_DPSCB *dpsCB,
-                                         BOOLEAN   sysCall )
+                                         BOOLEAN   sysCall,
+                                         BOOLEAN   ensureEmpty )
    {
       PD_TRACE_ENTRY ( SDB_RTNDROPCSCOMMAND ) ;
       INT32 rc = rtnDelCollectionSpaceCommand( pCollectionSpace, cb,
                                                dmsCB, dpsCB, sysCall,
-                                               TRUE ) ;
+                                               TRUE, ensureEmpty ) ;
       if ( SDB_OK == rc )
       {
          PD_LOG( PDEVENT, "Drop collectionspace[%s] succeed",
