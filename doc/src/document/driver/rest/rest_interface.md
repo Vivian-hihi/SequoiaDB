@@ -248,6 +248,7 @@
 > accessplans  
 > health  
 > configs  
+> index statistics
 
 ##更新配置参数##
 
