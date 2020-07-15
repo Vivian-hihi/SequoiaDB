@@ -89,7 +89,7 @@ public class CRUD2946 extends SdbTestBase {
                     .getFaultMakeTask( dataSlvHost, 1, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
-            CRUDTask cTask = new CRUDTask( clName );
+            CRUDTask cTask = new CRUDTask( safeUrl, clName );
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );

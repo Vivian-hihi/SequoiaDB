@@ -15,7 +15,6 @@ import org.bson.util.JSON;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.datasync.OprLobTask;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.OperateTask;
@@ -26,19 +25,27 @@ public class CRUDTask extends OperateTask {
     
     private Sequoiadb db = null ;
     private DBCollection cl = null ;
+    private String coordUrl;
     public CRUDTask(String clName) {
         this.clName = clName ;
+        this.coordUrl = SdbTestBase.coordUrl ;
+    }
+    
+    public CRUDTask(String coordUrl, String clName) {
+        this.clName = clName ;
+        this.coordUrl = coordUrl ;
     }
     
     public CRUDTask(String clName,int repeatTimes) {
         this.clName = clName ;
         this.repeatTimes = repeatTimes ;
+        this.coordUrl = SdbTestBase.coordUrl ;
     }
     
     @Override
     public void exec() throws Exception {
         try {
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            db = new Sequoiadb( this.coordUrl, "", "" );
             cl = db.getCollectionSpace( SdbTestBase.csName )
                     .getCollection( clName );
             
@@ -53,7 +60,7 @@ public class CRUDTask extends OperateTask {
             }
         }catch(BaseException e) {
             //ignore
-        } 
+        }
     }
 
     @Override

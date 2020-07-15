@@ -48,7 +48,6 @@ public class WriteLobAndKillPrimaryNode3217 extends SdbTestBase {
     private String clGroupName = null;
     private Random random = new Random();
     private Stack< ObjectId > oids = new Stack< ObjectId >();
-    private int opreateLobNum = 0;
 
     @BeforeClass
     public void setUp() {
@@ -91,7 +90,7 @@ public class WriteLobAndKillPrimaryNode3217 extends SdbTestBase {
             // longest waiting time is 600S
             Assert.assertEquals( groupMgr.checkBusinessWithLSN( 600 ), true,
                     "checkBusinessWithLSN() occurs timeout" );
-
+           
             // check whether the lob is written before the fault
             checkLobBeforeTheFault();
 

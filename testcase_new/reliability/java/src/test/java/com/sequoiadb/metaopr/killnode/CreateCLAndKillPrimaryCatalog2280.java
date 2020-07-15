@@ -86,6 +86,8 @@ public class CreateCLAndKillPrimaryCatalog2280 extends SdbTestBase {
                     priNode.hostName(), priNode.svcName(), 5 );
             TaskMgr mgr = new TaskMgr( faultTask );
             CreateCLTask cTask = new CreateCLTask(preCLName, CL_NUM, csName);
+            cTask.setOption( ( BSONObject ) JSON.parse(
+                        "{ShardingKey:{no:1},ShardingType:'hash',Partition:4096}" ) );
             mgr.addTask( cTask );
             mgr.execute();
 

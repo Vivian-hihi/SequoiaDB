@@ -24,25 +24,38 @@ public class OprLobTask extends OperateTask {
     private String clName ;
     private int repeatTimes = 100 ;
     private Random rnd = new Random() ;
+    private int  opreateLobNum = 0; 
+    private String coordUrl ;
     public OprLobTask(String clName) {
         this.clName = clName ;
+        this.coordUrl = SdbTestBase.coordUrl ;
+    }
+    
+    public OprLobTask(String coordUrl, String clName) {
+        this.clName = clName ;
+        this.coordUrl = coordUrl ;
     }
     
     public OprLobTask(String clName, int repeatTimes) {
         this.clName = clName ;
         this.repeatTimes = repeatTimes ;
+        this.coordUrl = SdbTestBase.coordUrl ;
     }
     
+    public int getOperteNum() {
+        return opreateLobNum ;
+    }
     @Override
     public void exec() throws Exception {
-        int  opreateLobNum = 0; 
-        try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "",
+        
+        try ( Sequoiadb db = new Sequoiadb( this.coordUrl, "",
                 "" )) {
             DBCollection cl = db.getCollectionSpace( SdbTestBase.csName )
                     .getCollection( clName );
             int lobSize = rnd.nextInt( 1048576 );
             byte[] lobBytes = new byte[ lobSize ];
             rnd.nextBytes( lobBytes );
+            byte[] rLobBytes = new byte[ lobSize ];
             
             for ( int i = 0; i < repeatTimes; i++ ) {
                 DBLob wLob = null ;
@@ -56,7 +69,6 @@ public class OprLobTask extends OperateTask {
                     wLob = null ;
                     
                     rLob = cl.openLob( oid );
-                    byte[] rLobBytes = new byte[ lobSize ];
                     rLob.read( rLobBytes );
                 }finally {
                     if(wLob != null) {

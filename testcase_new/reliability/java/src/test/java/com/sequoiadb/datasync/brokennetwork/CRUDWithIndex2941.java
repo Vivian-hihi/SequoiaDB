@@ -101,7 +101,7 @@ public class CRUDWithIndex2941 extends SdbTestBase {
                     .getFaultMakeTask( dataPriHost, 1, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataPriHost );
-            CRUDTask cTask = new CRUDTask( clName );
+            CRUDTask cTask = new CRUDTask( safeUrl, clName );
             AddNodeTask aTask = new AddNodeTask( clGroupName, randomHost,
                     randomPort );
             mgr.addTask( cTask );

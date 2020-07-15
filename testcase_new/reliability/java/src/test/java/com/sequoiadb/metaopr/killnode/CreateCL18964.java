@@ -66,17 +66,16 @@ public class CreateCL18964 extends SdbTestBase {
     @Test
     public void test() {
         Sequoiadb db = null;
-        Sequoiadb db2 = null;
         try {
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             String hostname2 = CommLib.getSafeHost( db.getHost() );
-            db2 = new Sequoiadb( hostname2 + ":" + SdbTestBase.serviceName, "",
-                    "" );
-
+     
             FaultMakeTask faultTask = KillNode.getFaultMakeTask( hostname2,
                     SdbTestBase.serviceName, 5 );
             TaskMgr mgr = new TaskMgr( faultTask );
             CreateCLTask cTask = new CreateCLTask( clNameBase, CL_NUM );
+            cTask.setUrl( hostname2 + ":" + SdbTestBase.serviceName );
+            cTask.setOption( new BasicBSONObject( "Group", groupName ) );
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );
@@ -102,9 +101,6 @@ public class CreateCL18964 extends SdbTestBase {
         } finally {
             if ( db != null ) {
                 db.close();
-            }
-            if ( db2 != null && !db2.isClosed() ) {
-                db2.close();
             }
         }
     }

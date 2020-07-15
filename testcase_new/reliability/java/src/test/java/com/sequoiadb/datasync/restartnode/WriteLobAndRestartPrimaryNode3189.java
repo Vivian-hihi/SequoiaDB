@@ -49,7 +49,6 @@ public class WriteLobAndRestartPrimaryNode3189 extends SdbTestBase {
     private String clGroupName = null;
     private Random random = new Random();
     private Stack< ObjectId > oids = new Stack< ObjectId >();
-    private int opreateLobNum = 0;
 
     @BeforeClass
     public void setUp() {
@@ -87,7 +86,7 @@ public class WriteLobAndRestartPrimaryNode3189 extends SdbTestBase {
             mgr.addTask( oTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );
-
+            
             // check whether the cluster is normal and lsn consistency ,the
             // longest waiting time is 600S
             Assert.assertEquals( groupMgr.checkBusinessWithLSN( 600 ), true,

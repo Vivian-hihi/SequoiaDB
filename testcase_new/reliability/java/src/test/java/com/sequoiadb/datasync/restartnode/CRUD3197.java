@@ -80,7 +80,7 @@ public class CRUD3197 extends SdbTestBase {
             FaultMakeTask faultTask = NodeRestart.getFaultMakeTask( slvNode, 1,
                     10 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CRUDTask cTask = new CRUDTask( clName );
+            CRUDTask cTask = new CRUDTask( clName, 5000);
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );

@@ -90,7 +90,7 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
             FaultMakeTask faultTask = NodeRestart.getFaultMakeTask( priNode, 1,
                     10 );
             TaskMgr mgr = new TaskMgr( faultTask );
-            CRUDTask cTask = new CRUDTask(clName);
+            CRUDTask cTask = new CRUDTask(clName, 5000);
             AddNodeTask aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
             mgr.addTask( cTask );
             mgr.addTask( aTask );

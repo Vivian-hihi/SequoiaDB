@@ -92,7 +92,7 @@ public class OprLob2947 extends SdbTestBase {
                     .getFaultMakeTask( dataSlvHost, 0, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
-            OprLobTask oTask = new OprLobTask(clName);
+            OprLobTask oTask = new OprLobTask(safeUrl, clName);
             mgr.addTask( oTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );

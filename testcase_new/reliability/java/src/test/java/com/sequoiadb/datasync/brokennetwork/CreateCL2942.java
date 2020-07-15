@@ -89,6 +89,7 @@ public class CreateCL2942 extends SdbTestBase {
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
             CreateCLTask cTask = new CreateCLTask( clNameBase, clGroupName, CL_NUM  );
+            cTask.setUrl( safeUrl );
             mgr.addTask( cTask );
             mgr.execute();
             Assert.assertEquals( mgr.isAllSuccess(), true, mgr.getErrorMsg() );

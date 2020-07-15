@@ -102,7 +102,7 @@ public class OprLobAndAddNode2949 extends SdbTestBase {
                     .getFaultMakeTask( dataSlvHost, 0, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
-            OprLobTask oTask = new OprLobTask(clName);
+            OprLobTask oTask = new OprLobTask(safeUrl, clName);
             AddNodeTask aTask = new AddNodeTask( clGroupName, randomHost,
                     randomPort );
             mgr.addTask( oTask );

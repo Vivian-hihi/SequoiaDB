@@ -104,7 +104,7 @@ public class CRUDAndAddNode2959 extends SdbTestBase {
                     .getFaultMakeTask( randomHost, 1, 10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( randomHost );
-            CRUDTask cTask = new CRUDTask(clName );
+            CRUDTask cTask = new CRUDTask(safeUrl, clName );
             AddNodeTask aTask = new AddNodeTask( clGroupName, randomHost,
                     randomPort );
             mgr.addTask( cTask );
