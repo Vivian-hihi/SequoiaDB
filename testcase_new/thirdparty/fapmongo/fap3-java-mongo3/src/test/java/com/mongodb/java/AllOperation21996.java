@@ -67,8 +67,8 @@ public class AllOperation21996 extends MongodbTestBase {
     public void test1( String clName, int recordNum ) {
         List< Document > list = new ArrayList<>();
         for ( int i = 0; i < recordNum; i++ ) {
-            list.add( new Document( "c1", "" + i ).append( "c2", "" + i )
-                    .append( "c3", "" + i ).append( "c4", "" + i )
+            list.add( new Document( "a", i ).append( "b", i ).append( "c", i )
+                    .append( "d", i )
                     .append( "e", "aaaaaaaaaaaaaaaaaaaaaaaaaaa" ) );
         }
         MongoCollection< Document > cl = db.getCollection( clName );
