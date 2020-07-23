@@ -43,6 +43,7 @@
 #include "dpsLogWrapper.hpp"
 #include "dmsPageMap.hpp"
 #include "utilResult.hpp"
+#include "utilList.hpp"
 #include "dmsOprHandler.hpp"
 
 using namespace bson ;
@@ -60,6 +61,79 @@ namespace engine
 
    #define DMS_INDEXSU_EYECATCHER         "SDBIDX"
    #define DMS_INDEXSU_CUR_VERSION        1
+
+   class _dmsExtraRecord : public SDBObject
+   {
+   public:
+      _dmsExtraRecord( const CHAR *clName, BSONObj record, BOOLEAN isInsert )
+      {
+         _clName = clName ;
+         _record = record ;
+         _isInsert = isInsert ;
+      }
+
+      _dmsExtraRecord()
+      {
+         _isInsert = TRUE ;
+      }
+
+      ~_dmsExtraRecord()
+      {
+      }
+
+   public:
+      ossPoolString _clName ;
+      BSONObj _record ;
+      BOOLEAN _isInsert ;
+   } ;
+
+   typedef _utilList<_dmsExtraRecord> DMS_RECORD_VEC ;
+   class _dmsRecordContainer : public SDBObject
+   {
+   public:
+      _dmsRecordContainer()
+      {
+      }
+
+      ~_dmsRecordContainer()
+      {
+         _recordVec.clear() ;
+      }
+
+   public:
+      INT32 append( const CHAR *clName, const BSONObj &record,
+                    BOOLEAN isInsert = TRUE )
+      {
+         INT32 rc = SDB_OK ;
+         try
+         {
+            _dmsExtraRecord exRecord( clName, record.getOwned(), isInsert ) ;
+            rc = _recordVec.push_back( exRecord ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to push back record, rc: %d",
+                         rc ) ;
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to append record, exception: %s, rc: %d",
+                    e.what(), rc ) ;
+            goto error ;
+         }
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+      }
+
+      UINT32 getSize()
+      {
+         return _recordVec.size() ;
+      }
+
+   public:
+      DMS_RECORD_VEC _recordVec ;
+   } ;
 
    /*
       _dmsStorageIndex defined
@@ -120,7 +194,7 @@ namespace engine
          INT32    indexesUpdate ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &originalObj, BSONObj &newObj,
                                   const dmsRecordID &rid, _pmdEDUCB *cb,
-                                  BOOLEAN isRollback,
+                                  BOOLEAN isUndo,
                                   IDmsOprHandler *pOprHandle,
                                   utilWriteResult *pResult = NULL ) ;
 
@@ -128,7 +202,8 @@ namespace engine
          INT32    indexesDelete ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &inputObj, const dmsRecordID &rid,
                                   _pmdEDUCB *cb,
-                                  IDmsOprHandler *pOprHandle ) ;
+                                  IDmsOprHandler *pOprHandle,
+                                  BOOLEAN isUndo = FALSE ) ;
 
          INT32    truncateIndexes ( _dmsMBContext *context, _pmdEDUCB *cb ) ;
 
@@ -208,6 +283,39 @@ namespace engine
                                  _pmdEDUCB *cb,
                                  IDmsOprHandler *pOprHandle ) ;
 
+         INT32    _builderIndexRecord( ixmIndexCB *indexCB, const _ixmKey &key,
+                                       BSONObj &record ) ;
+
+         BOOLEAN  _needProcessIndex( ixmIndexCB &indexCB, dmsExtentID extLID ) ;
+
+         INT32    _collectGIDXRecord( ixmIndexCB &indexCB, const _ixmKey &key,
+                                      BOOLEAN isInsert,
+                                      _dmsRecordContainer &container ) ;
+
+         INT32    _submitGIDXRecords( _dmsMBContext *context,
+                                      _dmsRecordContainer &container,
+                                      _pmdEDUCB *cb ) ;
+
+         INT32    _globalIndexesDelete( _dmsMBContext *context,
+                                        dmsExtentID extLID,
+                                        BSONObj &inputObj,
+                                        _pmdEDUCB *cb ) ;
+
+         INT32    _globalIndexesUpdate( _dmsMBContext *context,
+                                        dmsExtentID extLID,
+                                        BSONObj &originalObj,
+                                        BSONObj &newObj,
+                                        _pmdEDUCB *cb,
+                                        utilWriteResult *pResult = NULL ) ;
+
+         INT32    _globalIndexesInsert( _dmsMBContext *context,
+                                        dmsExtentID extLID,
+                                        BSONObj &inputObj,
+                                        _pmdEDUCB *cb,
+                                        utilWriteResult *pResult = NULL ) ;
+
+         BOOLEAN  _needProcessGlobalIndex( _pmdEDUCB *cb ) ;
+
       private:
          virtual UINT64 _dataOffset() ;
          virtual const CHAR* _getEyeCatcher() const ;
@@ -243,7 +351,6 @@ namespace engine
       friend class _dmsIndexBuilder ;
    };
    typedef _dmsStorageIndex dmsStorageIndex ;
-
 }
 
 #endif //DMSSTORAGE_INDEX_HPP_

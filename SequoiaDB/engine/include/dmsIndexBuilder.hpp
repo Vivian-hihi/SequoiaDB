@@ -36,6 +36,7 @@
 #include "ixmKey.hpp"
 #include "dmsExtent.hpp"
 #include "dmsOprHandler.hpp"
+#include "clsRemoteOperator.hpp"
 
 namespace engine
 {
@@ -45,6 +46,9 @@ namespace engine
    class _pmdEDUCB ;
    class _ixmIndexCB ;
    class _dmsMBContext ;
+
+   // 10 ms
+   #define DMS_INDEX_WAITBLOCK_INTERVAL       ( 10 )
 
    /*
       _dmsDupKeyProcessor define
@@ -99,6 +103,7 @@ namespace engine
       INT32 _insertKey( ossValuePtr recordDataPtr, const dmsRecordID &rid, const Ordering& ordering ) ;
       INT32 _insertKey( const ixmKey &key, const dmsRecordID &rid, const Ordering& ordering ) ;
       INT32 _checkIndexAfterLock( INT32 lockType ) ;
+      INT32 _mbLockAndCheck( INT32 lockType ) ;
 
    private:
       INT32 _init() ;
@@ -119,6 +124,9 @@ namespace engine
       const dmsExtent*   _extent ;
       BOOLEAN            _unique ;
       BOOLEAN            _dropDups ;
+
+      IRemoteOperator    *_remoteOperator ;
+
       IDmsOprHandler     *_pOprHandler ;
       utilWriteResult    *_pResult ;
       bson::BufBuilder   _bufBuilder ;

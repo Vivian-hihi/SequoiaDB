@@ -257,7 +257,7 @@ namespace engine
                             std::set<UINT32> &checkedKeyIDs ) ;
 
       BOOLEAN needUniqueCheck () const
-      { return ( _uniqueCheck && _isUnique ) ; }
+      { return ( _uniqueCheck && _isSharding && _isUnique && !_isGlobal ) ; }
 
       const std::string &getIdxName () const { return _idxName ; }
 
@@ -266,6 +266,12 @@ namespace engine
       void disableUniqueCheck () { _uniqueCheck = FALSE ; }
 
       void enableUniqueCheck () { _uniqueCheck = TRUE ; }
+
+      /* global index relate */
+      BOOLEAN isGlobalIndex() { return _isGlobal ; }
+      const std::string &getGIDXCLName() { return _indexCLName ; }
+      const std::string &getCSDomain() { return _domain ; }
+      /***********************/
 
    protected :
       virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
@@ -285,7 +291,15 @@ namespace engine
       BSONObj _boIdx ;
       BSONObj _boIdxKey ;
       BOOLEAN _isUnique ;
+      BOOLEAN _isEnforced ;
+      BOOLEAN _isSharding ;
       BOOLEAN _uniqueCheck ;
+
+      BOOLEAN _isGlobal ;
+      BSONObj _gIndexInfo ;
+      BOOLEAN _hasAlterCata ;
+      std::string _indexCLName ;
+      std::string _domain ;
    } ;
 
    typedef class _catCtxCreateIdxTask catCtxCreateIdxTask ;
@@ -303,6 +317,12 @@ namespace engine
 
       const std::string &getIdxName () const { return _idxName ; }
 
+      /* global index relate */
+      BOOLEAN isGlobalIndex() { return _isGlobalIndex ; }
+      utilCLUniqueID getIndexCLUID() { return _indexCLUID ; }
+      const std::string &getIndexCLName() { return _indexCLName ; }
+      /***********************/
+
    protected :
       virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
 
@@ -314,6 +334,11 @@ namespace engine
    protected :
       std::string _idxName ;
       BSONObj _boIdx ;
+
+      BOOLEAN _isGlobalIndex ;
+      _clsCataGIndex _gIndexInfo ;
+      utilCLUniqueID _indexCLUID ;
+      std::string _indexCLName ;
    } ;
 
    typedef class _catCtxDropIdxTask catCtxDropIdxTask ;

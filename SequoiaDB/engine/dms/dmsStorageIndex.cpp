@@ -778,38 +778,6 @@ namespace engine
          rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
       }
-      else if ( 0 == ossStrcmp( IXM_ID_KEY_NAME, indexName ) &&
-                _pDataSu->isTransSupport() &&
-                NULL != cb )
-      {
-         if ( transCB->isTransOn() &&
-              cb->getTransExecutor()->useTransLock() )
-         {
-            // if transaction is on, need to get S lock of collection to
-            // avoid transactions have inserted/updated/deleted records
-            // ( including this session itself if it is in transaction )
-            // on the same collection ( if $id index is dropped, they won't
-            // be able to rollback )
-            dpsTransRetInfo lockConflict ;
-            rc = transCB->transLockTryS( cb, _pDataSu->_logicalCSID,
-                                         context->mbID(),  NULL,
-                                         &lockConflict ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to lock the collection, rc: %d"OSS_NEWLINE
-                         "Conflict( representative ):"OSS_NEWLINE
-                         "   EDUID:  %llu"OSS_NEWLINE
-                         "   TID:    %u"OSS_NEWLINE
-                         "   LockId: %s"OSS_NEWLINE
-                         "   Mode:   %s"OSS_NEWLINE,
-                         rc,
-                         lockConflict._eduID,
-                         lockConflict._tid,
-                         lockConflict._lockID.toString().c_str(),
-                         lockModeToString( lockConflict._lockType ) ) ;
-
-            lockedCL = TRUE ;
-         }
-      }
 
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
@@ -823,6 +791,39 @@ namespace engine
          if ( 0 == ossStrncmp ( indexName, indexCB.getName(),
                                 IXM_INDEX_NAME_SIZE ) )
          {
+            if ( _pDataSu->isTransSupport() && NULL != cb
+                 && ( 0 == ossStrcmp( IXM_ID_KEY_NAME, indexName )
+                      || indexCB.isGlobal() ) )
+            {
+               if ( transCB->isTransOn() &&
+                    cb->getTransExecutor()->useTransLock() )
+               {
+                  // if transaction is on, need to get S lock of collection to
+                  // avoid transactions have inserted/updated/deleted records
+                  // ( including this session itself if it is in transaction )
+                  // on the same collection ( if $id index is dropped, they won't
+                  // be able to rollback )
+                  dpsTransRetInfo lockConflict ;
+                  rc = transCB->transLockTryS( cb, _pDataSu->_logicalCSID,
+                                               context->mbID(),  NULL,
+                                               &lockConflict ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Failed to lock the collection, rc: %d"OSS_NEWLINE
+                               "Conflict( representative ):"OSS_NEWLINE
+                               "   EDUID:  %llu"OSS_NEWLINE
+                               "   TID:    %u"OSS_NEWLINE
+                               "   LockId: %s"OSS_NEWLINE
+                               "   Mode:   %s"OSS_NEWLINE,
+                               rc,
+                               lockConflict._eduID,
+                               lockConflict._tid,
+                               lockConflict._lockID.toString().c_str(),
+                               lockModeToString( lockConflict._lockType ) ) ;
+
+                  lockedCL = TRUE ;
+               }
+            }
+
             found = TRUE ;
 
             if ( _pDataSu->_pEventHolder )
@@ -1855,6 +1856,204 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageIndex::_builderIndexRecord( ixmIndexCB *indexCB,
+                                                const _ixmKey &key,
+                                                BSONObj &record )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+
+      try
+      {
+         rc = key.toRecord( indexCB->keyPattern(), builder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to builder index insertor:key=%s,"
+                      "pattern=%s,rc=%d", key.toString().c_str(),
+                      indexCB->keyPattern().toString().c_str(), rc ) ;
+
+         record = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to builder index insertor:key=%s,"
+                 "exception=%s,rc=%d", key.toString().c_str(), e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageIndex::_collectGIDXRecord( ixmIndexCB &indexCB,
+                                               const _ixmKey &key,
+                                               BOOLEAN isInsert,
+                                               _dmsRecordContainer &container )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj record ;
+      // TODO: linyoubin global index's operation must under the transaction
+      rc = _builderIndexRecord( &indexCB, key, record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build index record, key: %s,rc: %d",
+                   key.toString().c_str(), rc ) ;
+
+      rc = container.append( indexCB.getIndexCLName(), record, isInsert ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to append record, record: %s,rc: %d",
+                   record.toString().c_str(), rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // this function would pause context. caller must deal with the failure of
+   // resuming context
+   INT32 _dmsStorageIndex::_submitGIDXRecords( _dmsMBContext *context,
+                                               _dmsRecordContainer &container,
+                                               _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isPaused = FALSE ;
+
+      if ( container.getSize() > 0 )
+      {
+         BSONObj dummy ;
+         DMS_RECORD_VEC::iterator iterVec ;
+         IRemoteOperator *remoteOperator = NULL ;
+
+         rc = cb->getOrCreateRemoteOperator( &remoteOperator ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get remote operator, rc: %d",
+                      rc ) ;
+
+         // imply that index creating should be blocked.
+         context->mbStat()->_blockIndexCreatingCount++ ;
+         rc = context->pause() ;
+         if ( SDB_OK != rc )
+         {
+            // restore the counter
+            context->mbStat()->_blockIndexCreatingCount-- ;
+            PD_LOG( PDERROR, "Failed to pause context, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         isPaused = TRUE ;
+
+         iterVec = container._recordVec.begin() ;
+         while ( iterVec != container._recordVec.end() )
+         {
+            _dmsExtraRecord &extraRec = *iterVec ;
+            if ( extraRec._isInsert )
+            {
+               rc = remoteOperator->insert( extraRec._clName.c_str(),
+                                            extraRec._record, 0 ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to insert, cl: %s, "
+                            "insertor: %s, rc: %d", extraRec._clName.c_str(),
+                            extraRec._record.toString().c_str(), rc ) ;
+            }
+            else
+            {
+               rc = remoteOperator->remove( extraRec._clName.c_str(),
+                                            extraRec._record, dummy, 0 ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to delete, cl: %s, "
+                            "deletor: %s, rc: %d", extraRec._clName.c_str(),
+                            extraRec._record.toString().c_str(), rc ) ;
+            }
+
+            ++iterVec ;
+         }
+      }
+
+   done:
+      if ( isPaused )
+      {
+         INT32 rcTmp = context->resume() ;
+         if ( SDB_OK == rcTmp )
+         {
+            // restore the counter
+            context->mbStat()->_blockIndexCreatingCount-- ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to resume context, rc: %d", rc ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = rcTmp ;
+            }
+         }
+      }
+
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageIndex::_globalIndexesInsert( _dmsMBContext *context,
+                                                 dmsExtentID extLID,
+                                                 BSONObj &inputObj,
+                                                 _pmdEDUCB *cb,
+                                                 utilWriteResult *pResult )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 indexID = 0 ;
+      _dmsRecordContainer container ;
+
+      if ( !_needProcessGlobalIndex( cb ) )
+      {
+         goto done ;
+      }
+
+      // loops through all potential indexes for the record
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      {
+         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
+         {
+            break ;
+         }
+         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID], this,
+                              context ) ;
+         PD_CHECK ( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error,
+                    PDERROR, "Failed to init index" ) ;
+
+         if ( !indexCB.isGlobal() )
+         {
+            // only insert global index.
+            continue ;
+         }
+
+         if ( !_needProcessIndex( indexCB, extLID ) )
+         {
+            continue ;
+         }
+
+         {
+            BSONObjSet::iterator it ;
+            BSONObjSet keySet ;
+
+            rc = indexCB.getKeysFromObject ( inputObj, keySet ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to get keys from object %s",
+                          inputObj.toString().c_str() ) ;
+
+            for ( it = keySet.begin() ; it != keySet.end() ; ++it )
+            {
+               ixmKeyOwned ko ((*it)) ;
+               rc = _collectGIDXRecord( indexCB, ko, TRUE, container ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to collect index record, "
+                            "key: %s, rc: %d", ko.toString().c_str(), rc ) ;
+            }
+         }
+      }
+
+      rc = _submitGIDXRecords( context, container, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to submit global index, rc: %d", rc ) ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // caller is responsible to rollback the change if indexesInsert fail
    INT32 _dmsStorageIndex::indexesInsert( dmsMBContext *context,
                                           dmsExtentID extLID,
@@ -1878,6 +2077,11 @@ namespace engine
          goto error ;
       }
 
+      // do global index first.
+      rc = _globalIndexesInsert( context, extLID, inputObj, cb, pResult ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to delete global index, rc: %d",
+                   rc ) ;
+
       // loops through all potential indexes for the record
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
@@ -1890,18 +2094,11 @@ namespace engine
          PD_CHECK ( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error,
                     PDERROR, "Failed to init index" ) ;
 
-         // if index is 'IXM_INDEX_FLAG_CREATING', then judge extent LID
-         if ( IXM_INDEX_FLAG_CREATING == indexCB.getFlag() &&
-              extLID > indexCB.scanExtLID() )
+         if ( !_needProcessIndex( indexCB, extLID ) )
          {
             continue ;
          }
-         // only attempt to insert into normal and creating indexes
-         else if ( indexCB.getFlag() != IXM_INDEX_FLAG_NORMAL &&
-                   indexCB.getFlag() != IXM_INDEX_FLAG_CREATING )
-         {
-            continue ;
-         }
+
          unique = indexCB.unique() ;
          dropDups = indexCB.dropDups() ;
 
@@ -2077,6 +2274,7 @@ namespace engine
                {
                   goto done ;
                }
+
                itori++ ;
                continue ;
             }
@@ -2116,6 +2314,7 @@ namespace engine
                            rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
+
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
                itnew++ ;
                continue ;
@@ -2138,6 +2337,7 @@ namespace engine
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
+
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
             // during rollback, since the previous change may half-way
             // completed, there could be some keys that has not been
@@ -2147,6 +2347,7 @@ namespace engine
             {
                goto done ;
             }
+
             itori++ ;
          }
 
@@ -2187,6 +2388,7 @@ namespace engine
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
+
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
             itnew++ ;
          }
@@ -2194,6 +2396,126 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX__INDEXUPDATE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _dmsStorageIndex::_globalIndexesUpdate( _dmsMBContext *context,
+                                                 dmsExtentID extLID,
+                                                 BSONObj &originalObj,
+                                                 BSONObj &newObj,
+                                                 _pmdEDUCB *cb,
+                                                 utilWriteResult *pResult )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 indexID = 0 ;
+      _dmsRecordContainer container ;
+
+      if ( !_needProcessGlobalIndex( cb ) )
+      {
+         goto done ;
+      }
+
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      {
+         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
+         {
+            break ;
+         }
+
+         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID], this,
+                              context ) ;
+         PD_CHECK ( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error,
+                    PDERROR, "Failed to init index" ) ;
+         if ( !indexCB.isGlobal() )
+         {
+            // only update global index.
+            continue ;
+         }
+
+         if ( !_needProcessIndex( indexCB, extLID ) )
+         {
+            continue ;
+         }
+
+         {
+            BSONObjSet keySetOri ;
+            BSONObjSet keySetNew ;
+            rc = indexCB.getKeysFromObject( originalObj, keySetOri ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get keys from org object %s",
+                        originalObj.toString().c_str() ) ;
+
+            rc = indexCB.getKeysFromObject( newObj, keySetNew ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get keys from new object %s",
+                        newObj.toString().c_str() ) ;
+
+            {
+               BSONObjSet::iterator itori = keySetOri.begin() ;
+               BSONObjSet::iterator itnew = keySetNew.begin() ;
+               while ( keySetOri.end() != itori && keySetNew.end() != itnew )
+               {
+                  INT32 result = (*itori).woCompare( (*itnew), BSONObj(),
+                                                     FALSE ) ;
+                  if ( 0 == result )
+                  {
+                     // do nothing if they are same
+                     itori++ ;
+                     itnew++ ;
+                  }
+                  else if ( result < 0 )
+                  {
+                     ixmKeyOwned ko ((*itori)) ;
+                     rc = _collectGIDXRecord( indexCB, ko, FALSE, container ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
+                                  "record, key: %s, rc: %d",
+                                  ko.toString().c_str(), rc ) ;
+
+                     itori++ ;
+                  }
+                  else
+                  {
+                     ixmKeyOwned ko ((*itnew)) ;
+                     rc = _collectGIDXRecord( indexCB, ko, TRUE, container ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
+                                  "record, key: %s, rc: %d",
+                                  ko.toString().c_str(), rc ) ;
+
+                     itnew++ ;
+                  }
+               }
+
+               // delete reset of itori
+               while ( keySetOri.end() != itori )
+               {
+                  ixmKeyOwned ko ((*itori)) ;
+                  rc = _collectGIDXRecord( indexCB, ko, FALSE, container ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
+                                  "record, key: %s, rc: %d",
+                                  ko.toString().c_str(), rc ) ;
+
+                  itori++ ;
+               }
+
+               // insert rest of itnew
+               while ( keySetNew.end() != itnew )
+               {
+                  ixmKeyOwned ko ((*itnew)) ;
+                  rc = _collectGIDXRecord( indexCB, ko, TRUE, container ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
+                               "record, key: %s, rc: %d",
+                               ko.toString().c_str(), rc ) ;
+
+                  itnew++ ;
+               }
+            }
+         }
+      }
+
+      rc = _submitGIDXRecords( context, container, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to submit global index, rc: %d", rc ) ;
+
+   done :
       return rc ;
    error :
       goto done ;
@@ -2210,7 +2532,7 @@ namespace engine
                                           BSONObj &newObj,
                                           const dmsRecordID &rid,
                                           pmdEDUCB *cb,
-                                          BOOLEAN isRollback,
+                                          BOOLEAN isUndo,
                                           IDmsOprHandler *pOprHandle,
                                           utilWriteResult *pResult )
    {
@@ -2226,6 +2548,12 @@ namespace engine
          goto error ;
       }
 
+      // do global index first.
+      rc = _globalIndexesUpdate( context, extLID, originalObj, newObj,
+                                 cb, pResult ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update global index, rc: %d",
+                   rc ) ;
+
       for ( indexID=0; indexID < DMS_COLLECTION_MAX_INDEX; indexID++ )
       {
          if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
@@ -2238,14 +2566,7 @@ namespace engine
          PD_CHECK ( indexCB.isInitialized(), SDB_DMS_INIT_INDEX,
                     error, PDERROR, "Failed to init index" ) ;
 
-         if ( IXM_INDEX_FLAG_CREATING == indexCB.getFlag() &&
-              extLID > indexCB.scanExtLID() )
-         {
-            continue ;
-         }
-         // only attempt to insert into normal and creating indexes
-         else if ( indexCB.getFlag() != IXM_INDEX_FLAG_NORMAL &&
-                   indexCB.getFlag() != IXM_INDEX_FLAG_CREATING )
+         if ( !_needProcessIndex( indexCB, extLID ) )
          {
             continue ;
          }
@@ -2259,7 +2580,7 @@ namespace engine
          else
          {
             rc = _indexUpdate ( context, &indexCB, originalObj, newObj,
-                                rid, cb, isRollback, pOprHandle, pResult ) ;
+                                rid, cb, isUndo, pOprHandle, pResult ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to update obj(%s) index(%s), "
                           "rc: %d", newObj.toString().c_str(),
                           indexCB.getDef().toString().c_str(), rc ) ;
@@ -2281,7 +2602,7 @@ namespace engine
                itr != textIdxCBs.end(); ++itr )
          {
             rc = handler->onUpdate( itr->getExtDataName(), originalObj,
-                                    newObj, cb, isRollback ) ;
+                                    newObj, cb, isUndo ) ;
             PD_RC_CHECK( rc, PDERROR, "Update on text index failed[ %d ]",
                          rc ) ;
          }
@@ -2354,6 +2675,7 @@ namespace engine
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
+
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
          }
       }
@@ -2366,17 +2688,119 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageIndex::_globalIndexesDelete( _dmsMBContext *context,
+                                                 dmsExtentID extLID,
+                                                 BSONObj &inputObj,
+                                                 _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 indexID = 0 ;
+      _dmsRecordContainer container ;
+
+      if ( !_needProcessGlobalIndex( cb ) )
+      {
+         goto done ;
+      }
+
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      {
+         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
+         {
+            break ;
+         }
+
+         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID], this,
+                              context ) ;
+         PD_CHECK ( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error,
+                    PDERROR, "Failed to init index" ) ;
+         if ( !indexCB.isGlobal() )
+         {
+            // only delete global index.
+            continue ;
+         }
+
+         if ( !_needProcessIndex( indexCB, extLID ) )
+         {
+            continue ;
+         }
+
+         {
+            BSONObjSet::iterator iter ;
+            BSONObjSet keySet ;
+            rc = indexCB.getKeysFromObject ( inputObj, keySet ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get keys from object %s",
+                        inputObj.toString().c_str() ) ;
+
+            // go through each index in the set
+            for ( iter = keySet.begin() ; iter != keySet.end() ; iter++ )
+            {
+               ixmKeyOwned ko ((*iter)) ;
+               rc = _collectGIDXRecord( indexCB, ko, FALSE, container ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to collect index record, "
+                            "key: %s, rc: %d", ko.toString().c_str(), rc ) ;
+            }
+         }
+      }
+
+      rc = _submitGIDXRecords( context, container, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to submit global index, rc: %d", rc ) ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   BOOLEAN _dmsStorageIndex::_needProcessGlobalIndex( _pmdEDUCB *cb )
+   {
+      if ( !cb->isAffectGIndex() )
+      {
+         // no need to process global index
+         return FALSE ;
+      }
+
+      if ( DPS_TRANS_ROLLBACK == cb->getTransStatus() )
+      {
+         // no need to process global index in trans rollback locally.
+         // global index will be rollback by remote nodes's trans rollback
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   BOOLEAN _dmsStorageIndex::_needProcessIndex( ixmIndexCB &indexCB,
+                                                dmsExtentID extLID )
+   {
+      // if index is 'IXM_INDEX_FLAG_CREATING', then judge extent LID
+      if ( IXM_INDEX_FLAG_CREATING == indexCB.getFlag() &&
+           extLID > indexCB.scanExtLID() )
+      {
+         return FALSE ;
+      }
+      // only attempt to process normal and creating indexes
+      else if ( indexCB.getFlag() != IXM_INDEX_FLAG_NORMAL &&
+                indexCB.getFlag() != IXM_INDEX_FLAG_CREATING )
+      {
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
    // delete all indexes for an oject
    INT32 _dmsStorageIndex::indexesDelete( dmsMBContext *context,
                                           dmsExtentID extLID,
                                           BSONObj &inputObj,
                                           const dmsRecordID &rid,
                                           pmdEDUCB * cb,
-                                          IDmsOprHandler *pOprHandle )
+                                          IDmsOprHandler *pOprHandle,
+                                          BOOLEAN isUndo )
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
       vector<ixmIndexCB> textIdxCBs ;
+      INT32 rcGIndex               = SDB_OK ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -2384,6 +2808,23 @@ namespace engine
          PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]",
                  context->toString().c_str() ) ;
          goto error ;
+      }
+
+      // do global index first.
+      rc = _globalIndexesDelete( context, extLID, inputObj, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to delete global index, rc: %d", rc ) ;
+         if ( !isUndo || !context->isMBLock( EXCLUSIVE ) )
+         {
+            // context may be paused in _globalIndexesDelete, in this case we
+            // can't delete local index any more.
+            goto error ;
+         }
+         rcGIndex = rc ;
+         rc = SDB_OK ;
+         // in undo flow, let's continue to delete local index
+         // but we still return the return code.
       }
 
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
@@ -2401,14 +2842,8 @@ namespace engine
             rc = SDB_DMS_INIT_INDEX ;
             goto error ;
          }
-         if ( IXM_INDEX_FLAG_CREATING == indexCB.getFlag() &&
-              extLID > indexCB.scanExtLID() )
-         {
-            continue ;
-         }
-         // only attempt to insert into normal and creating indexes
-         else if ( indexCB.getFlag() != IXM_INDEX_FLAG_NORMAL &&
-                   indexCB.getFlag() != IXM_INDEX_FLAG_CREATING )
+
+         if ( !_needProcessIndex( indexCB, extLID ) )
          {
             continue ;
          }
@@ -2451,6 +2886,11 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Delete on text index failed[ %d ]",
                          rc ) ;
          }
+      }
+
+      if ( SDB_OK == rc )
+      {
+         rc = rcGIndex ;
       }
 
    done :
@@ -2663,5 +3103,6 @@ namespace engine
       }
    }
 }
+
 
 

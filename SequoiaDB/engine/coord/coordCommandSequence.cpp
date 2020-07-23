@@ -34,6 +34,7 @@
 #include "coordCommandSequence.hpp"
 #include "coordSequenceAgent.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "coordResource.hpp"
 #include "msgMessage.hpp"
 
@@ -169,7 +170,7 @@ namespace engine
                                                INT16 w,
                                                INT64 *pContextID )
    {
-      coordResource * resource = sdbGetCoordCB()->getResource() ;
+      coordResource * resource = sdbGetResourceContainer()->getResource() ;
       SDB_ASSERT( NULL != resource, "coord resource is invalid" ) ;
 
       coordSequenceAgent * sequenceAgent = resource->getSequenceAgent() ;

@@ -62,6 +62,7 @@ namespace engine
       _dropDups = FALSE ;
       _pOprHandler = NULL ;
       _pResult = NULL ;
+      _remoteOperator = NULL ;
    }
 
    _dmsIndexBuilder::~_dmsIndexBuilder()
@@ -69,11 +70,7 @@ namespace engine
       _suIndex = NULL ;
       _suData = NULL ;
       _mbContext = NULL ;
-      if ( NULL != _indexCB )
-      {
-         SDB_OSS_DEL( _indexCB ) ;
-         _indexCB = NULL ;
-      }
+      SAFE_DELETE( _indexCB ) ;
    }
 
    void _dmsIndexBuilder::setOprHandler( IDmsOprHandler *pOprHander )
@@ -95,7 +92,7 @@ namespace engine
       SDB_ASSERT( _mbContext != NULL, "_mbContext can't be NULL" ) ;
 
       // lock mb
-      rc = _mbContext->mbLock( EXCLUSIVE ) ;
+      rc = _mbLockAndCheck( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
       // make sure the extent is valid
@@ -158,6 +155,17 @@ namespace engine
       _unique = _indexCB->unique() ;
       _dropDups = _indexCB->dropDups() ;
 
+      if ( _indexCB->isGlobal() )
+      {
+         if ( _eduCB->isAffectGIndex() )
+         {
+            // only primary need to insert remote index
+            rc = _eduCB->getOrCreateRemoteOperator( &_remoteOperator ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get remote operator, rc: %d",
+                         rc ) ;
+         }
+      }
+
       rc = _onInit() ;
       if ( rc && SDB_DMS_EOC != rc )
       {
@@ -169,11 +177,7 @@ namespace engine
       _mbContext->mbUnlock() ;
       return rc ;
    error:
-      if ( NULL != _indexCB )
-      {
-         SDB_OSS_DEL( _indexCB ) ;
-         _indexCB = NULL ;
-      }
+      SAFE_DELETE( _indexCB ) ;
       goto done ;
    }
 
@@ -372,7 +376,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Insert index callback failed, rc: %d", rc ) ;
-            goto done ;
+            goto error ;
          }
       }
 
@@ -423,7 +427,27 @@ namespace engine
          {
             // for any other index insert error, let's return error
             PD_LOG ( PDERROR, "Failed to insert into index, rc: %d", rc ) ;
+            goto error ;
          }
+      }
+
+      if ( NULL != _remoteOperator )
+      {
+         // avoid primary change when creating global index
+         PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
+                   "Failed to insert global index due to primary change" ) ;
+
+         // insert index to remote index cl
+         BSONObj insertor ;
+         rc = _suIndex->_builderIndexRecord( _indexCB, key, insertor ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build index insertor:rc=%d",
+                      rc ) ;
+
+         rc = _remoteOperator->insert( _indexCB->getIndexCLName(), insertor,
+                                       0 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to insert to remote:cl=%s,"
+                      "insertor=%s,rc=%d", _indexCB->getIndexCLName(),
+                      insertor.toString().c_str(), rc ) ;
       }
 
    done:
@@ -451,6 +475,9 @@ namespace engine
          }
       }
       return rc ;
+
+   error:
+      goto done ;
    }
 
    INT32 _dmsIndexBuilder::_insertKey( ossValuePtr recordDataPtr,
@@ -483,11 +510,41 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsIndexBuilder::_mbLockAndCheck( INT32 lockType )
+   {
+      INT32 rc = SDB_OK ;
+
+      while ( TRUE )
+      {
+         rc = _mbContext->mbLock( lockType ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( _mbContext->mbStat()->_blockIndexCreatingCount > 0 )
+         {
+            // other operation need to block index creating
+            _mbContext->mbUnlock() ;
+            ossSleep( DMS_INDEX_WAITBLOCK_INTERVAL ) ;
+            continue ;
+         }
+
+         break ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _dmsIndexBuilder::_checkIndexAfterLock( INT32 lockType )
    {
       INT32 rc = SDB_OK ;
 
-      rc = _mbContext->mbLock( lockType ) ;
+      rc = _mbLockAndCheck( lockType ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "dms mb context lock failed, rc: %d", rc ) ;

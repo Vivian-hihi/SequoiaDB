@@ -25,7 +25,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          04/04/2014  Xu Jianhui  Initial Draft
+          05/12/2020  LYB  Initial Draft
 
    Last Changed =
 
@@ -36,141 +36,62 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "ossSocket.hpp"
 #include "sdbInterface.hpp"
-#include "pmdProcessorBase.hpp"
-#include "pmdExternClient.hpp"
-#include "schedTaskMgr.hpp"
-
-#include <string>
+#include "pmdIProcessor.hpp"
 
 namespace engine
 {
 
    class _pmdEDUCB ;
    class _dpsLogWrapper ;
-   class _pmdProcessor ;
-
-   #define PMD_RETBUILDER_DFT_SIZE              ( 96 )
-   /*
-      _pmdSession define
-   */
-   class _pmdSession : public _ISession
-   {
-      public:
-         _pmdSession( SOCKET fd ) ;
-         virtual ~_pmdSession() ;
-
-         virtual UINT64    identifyID() ;
-         virtual MsgRouteID identifyNID() ;
-         virtual UINT32    identifyTID() ;
-         virtual UINT64    identifyEDUID() ;
-
-         virtual void*     getSchedItemPtr() ;
-         virtual void      setSchedItemVer( INT32 ver ) ;
-
-         virtual void            clear() ;
-
-         virtual const CHAR*     sessionName() const ;
-         virtual IClient*        getClient() { return &_client ; }
-         virtual IProcessor*     getProcessor() ;
-
-         virtual INT32           run() = 0 ;
-
-      public:
-         UINT64      sessionID () const { return _eduID ; }
-         EDUID       eduID () const { return _eduID ; }
-         _pmdEDUCB*  eduCB () const { return _pEDUCB ; }
-         ossSocket*  socket () { return &_socket ; }
-
-         void        attach( _pmdEDUCB * cb ) ;
-         void        detach() ;
-
-         void        attachProcessor( _pmdProcessor *pProcessor ) ;
-         void        detachProcessor() ;
-
-         _dpsLogWrapper* getDPSCB() { return _pDPSCB ; }
-
-         CHAR*       getBuff( UINT32 len ) ;
-         INT32       getBuffLen () const { return _buffLen ; }
-
-         INT32       allocBuff( UINT32 len, CHAR **ppBuff,
-                                UINT32 *pRealSize = NULL ) ;
-         void        releaseBuff( CHAR *pBuff ) ;
-         INT32       reallocBuff( UINT32 len, CHAR **ppBuff,
-                                  UINT32 *pRealSize = NULL ) ;
-
-         void        disconnect() ;
-         INT32       sendData( const CHAR *pData, INT32 size,
-                               INT32 timeout = -1,
-                               BOOLEAN block = TRUE,
-                               INT32 *pSentLen = NULL,
-                               INT32 flags = 0 ) ;
-         INT32       recvData( CHAR *pData, INT32 size,
-                               INT32 timeout = -1,
-                               BOOLEAN block = TRUE,
-                               INT32 *pRecvLen = NULL,
-                               INT32 flags = 0 ) ;
-         INT32       sniffData( INT32 timeout = OSS_ONE_SEC ) ;
-
-      protected:
-         inline BOOLEAN _isAwaitingHandshake () const
-         {
-            return _awaitingHandshake ;
-         }
-
-         inline void   _setHandshakeReceived ()
-         {
-            _awaitingHandshake = FALSE ;
-         }
-
-      protected:
-
-         _pmdEDUCB                        *_pEDUCB ;
-         EDUID                            _eduID ;
-         ossSocket                        _socket ;
-         std::string                      _sessionName ;
-         pmdExternClient                  _client ;
-         _pmdProcessor                    *_processor ;
-         _dpsLogWrapper                   *_pDPSCB ;
-         BOOLEAN                          _awaitingHandshake ;
-
-         schedItem                        _infoItem ;
-
-      protected:
-         CHAR                             *_pBuff ;
-         UINT32                           _buffLen ;
-
-   } ;
-   typedef _pmdSession pmdSession ;
+   class _pmdProcessorBase ;
 
    /*
-      _pmdProcessor define
+      _pmdSessionBase define
    */
-   class _pmdProcessor : public _IProcessor
+   class _pmdSessionBase : public _ISession
    {
-      friend class _pmdSession ;
-      public:
-         _pmdProcessor() ;
-         virtual ~_pmdProcessor() ;
+   public:
+      _pmdSessionBase() ;
+      virtual ~_pmdSessionBase() ;
 
-         virtual ISession*             getSession() { return _pSession ; }
+   public:
+      virtual _pmdEDUCB*      eduCB () const = 0 ;
+      virtual EDUID           eduID () const = 0 ;
 
-      protected:
-         void     attachSession( pmdSession *pSession ) ;
-         void     detachSession() ;
+      virtual IProcessor*     getProcessor() ;
+      virtual _dpsLogWrapper* getDPSCB() { return NULL ; }
+      virtual void            attachProcessor( _pmdProcessorBase *pProcessor ) ;
+      virtual void            detachProcessor() ;
 
-         _dpsLogWrapper*   getDPSCB() ;
-         _IClient*         getClient() ;
-         _pmdEDUCB*        eduCB() ;
-         EDUID             eduID () const ;
-
-      protected:
-         pmdSession                 *_pSession ;
-
+   protected:
+      _pmdProcessorBase *_processor ;
    } ;
-   typedef _pmdProcessor pmdProcessor ;
 
+   typedef _pmdSessionBase pmdSessionBase ;
+
+   class _pmdProcessorBase : public _IProcessor
+   {
+   friend class _pmdSessionBase ;
+   public:
+      _pmdProcessorBase() ;
+      virtual ~_pmdProcessorBase() ;
+
+      virtual ISession* getSession() { return _pSession ; }
+
+   protected:
+      virtual void      _attachSession( pmdSessionBase *pSession ) ;
+      virtual void      _detachSession() ;
+
+      _dpsLogWrapper*   getDPSCB() ;
+      _IClient*         getClient() ;
+      _pmdEDUCB*        eduCB() ;
+      EDUID             eduID() const ;
+
+   protected:
+      pmdSessionBase*   _pSession ;
+   } ;
+   typedef _pmdProcessorBase pmdProcessorBase ;
 }
 
 #endif //PMD_SESSION_BASE_HPP_

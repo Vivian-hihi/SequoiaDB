@@ -35,6 +35,7 @@
 #include "omDef.hpp"
 #include "pmd.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "sdbIOmProxy.hpp"
 #include "rtn.hpp"
 #include "rtnCB.hpp"
@@ -53,10 +54,9 @@ namespace engine
    _coordOmStrategyAccessor::_coordOmStrategyAccessor( INT64 timeout )
    {
       pmdKRCB *krcb = pmdGetKRCB() ;
-      CoordCB *pCoord = krcb->getCoordCB() ;
       pmdOptionsCB *optionsCB = krcb->getOptionCB() ;
 
-      _pOmProxy = pCoord->getResource()->getOmProxy() ;
+      _pOmProxy = sdbGetResourceContainer()->getResource()->getOmProxy() ;
       _oprTimeout = timeout ;
 
       optionsCB->getFieldStr( PMD_OPTION_CLUSTER_NAME, _clsName, "" ) ;

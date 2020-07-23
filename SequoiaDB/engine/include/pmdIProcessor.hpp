@@ -16,7 +16,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = pmdProcessorBase.hpp
+   Source File Name = pmdIProcessor.hpp
 
    Dependencies: N/A
 
@@ -31,8 +31,8 @@
 
 *******************************************************************************/
 
-#ifndef PMD_PROCESSORBASE_HPP_
-#define PMD_PROCESSORBASE_HPP_
+#ifndef PMD_IPROCESSOR_HPP_
+#define PMD_IPROCESSOR_HPP_
 
 #include "oss.hpp"
 #include "msg.h"
@@ -51,7 +51,7 @@ namespace engine
       SDB_PROCESSOR_CATA,
       SDB_PROCESSOR_OM,
 
-      SDB_PROCESSOR_MAX         
+      SDB_PROCESSOR_MAX
    } ;
 
    /*
@@ -89,5 +89,5 @@ namespace engine
 
 }
 
-#endif /*PMD_PROCESSORBASE_HPP_*/
+#endif /*PMD_IPROCESSOR_HPP_*/
 

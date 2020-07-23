@@ -44,7 +44,7 @@ using namespace bson;
 
 namespace engine
 {
-   typedef struct _omNodeInfo 
+   typedef struct _omNodeInfo
    {
       string hostName ;
       string service ;
@@ -52,7 +52,7 @@ namespace engine
       string passwd ;
       INT32 preferedInstance ;
 
-      _omNodeInfo() 
+      _omNodeInfo()
       {
          hostName = "" ;
          service  = "" ;
@@ -72,14 +72,14 @@ namespace engine
 
    } omNodeInfo ;
 
-   class _omTransferProcessor : public pmdProcessor
+   class _omTransferProcessor : public pmdProcessorBase
    {
       public:
          _omTransferProcessor( list<_omNodeInfo> &nodeList ) ;
 
          virtual            ~_omTransferProcessor() ;
 
-          
+
 
       public:
          virtual INT32                 processMsg( MsgHeader *msg,
@@ -103,12 +103,12 @@ namespace engine
          virtual void                  _onDetach () ;
 
       protected:
-         void                          _clearRemoteSession( 
+         void                          _clearRemoteSession(
                                              pmdRemoteSessionMgr *rsManager,
                                              pmdRemoteSession *remoteSession ) ;
-         INT32                         _sendMsg2Target( 
-                                                     const omNodeInfo &nodeInfo, 
-                                                     MsgHeader *msg, 
+         INT32                         _sendMsg2Target(
+                                                     const omNodeInfo &nodeInfo,
+                                                     MsgHeader *msg,
                                                      omSdbConnector **connector,
                                                      MsgHeader **result ) ;
 

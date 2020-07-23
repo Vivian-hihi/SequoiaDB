@@ -1653,7 +1653,8 @@ INT32 msgBuildQueryCMDMsg ( CHAR ** ppBuffer,
                             const BSONObj & boSort,
                             const BSONObj & boHint,
                             UINT64 reqID,
-                            IExecutor * cb )
+                            IExecutor * cb,
+                            SINT64 numToReturn )
 {
    INT32 rc = SDB_OK ;
 
@@ -1690,7 +1691,7 @@ INT32 msgBuildQueryCMDMsg ( CHAR ** ppBuffer,
    pQuery->header.requestID      = reqID ;
    pQuery->header.opCode         = MSG_BS_QUERY_REQ ;
    pQuery->numToSkip             = 0 ;
-   pQuery->numToReturn           = 0 ;
+   pQuery->numToReturn           = numToReturn ;
    pQuery->header.messageLength  = packetLength ;
    pQuery->header.routeID.value  = 0 ;
    pQuery->header.TID            = ossGetCurrentThreadID() ;
@@ -1731,6 +1732,144 @@ done :
 
 error :
    msgReleaseBuffer( pBuffer, cb ) ;
+   goto done ;
+}
+
+INT32 msgBuildCreateCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                           const CHAR *CollectionSpaceName,
+                           const BSONObj &options, UINT64 reqID,
+                           engine::IExecutor *cb )
+{
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionSpaceName,
+                "Invalid input" ) ;
+   INT32 rc = SDB_OK ;
+   try
+   {
+      const BSONObj emptyObj ;
+      BSONObjBuilder builder ;
+      BSONObj query ;
+      builder.append( FIELD_NAME_NAME, CollectionSpaceName ) ;
+      builder.appendElements( options ) ;
+      query = builder.obj() ;
+      rc = msgBuildQueryCMDMsg(
+                            ppBuffer, bufferSize,
+                            CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE,
+                            query, emptyObj, emptyObj, emptyObj, reqID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to generate create cs request, "
+                   "cs: %s,rc: %d", CollectionSpaceName, rc ) ;
+   }
+   catch( std::exception &e )
+   {
+      PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 msgBuildTestCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                         const CHAR *CollectionSpaceName,
+                         UINT64 reqID, engine::IExecutor *cb )
+{
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionSpaceName,
+                "Invalid input" ) ;
+   INT32 rc = SDB_OK ;
+   try
+   {
+      const BSONObj emptyObj ;
+      BSONObj query = BSON( FIELD_NAME_NAME << CollectionSpaceName ) ;
+      rc = msgBuildQueryCMDMsg(
+                            ppBuffer, bufferSize,
+                            CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTIONSPACE,
+                            query, emptyObj, emptyObj, emptyObj, reqID, cb,
+                            -1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to generate test cs request, "
+                   "cs: %s,rc: %d", CollectionSpaceName, rc ) ;
+   }
+   catch( std::exception &e )
+   {
+      PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 msgBuildDropCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                         const CHAR *CollectionSpaceName, UINT64 reqID,
+                         IExecutor *cb )
+{
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionSpaceName,
+                "Invalid input" ) ;
+   const BSONObj emptyObj ;
+   INT32 rc = SDB_OK ;
+   BSONObj boQuery;
+   try
+   {
+      bson::BSONObjBuilder bobQuery;
+      bobQuery.append( FIELD_NAME_NAME, CollectionSpaceName );
+      boQuery = bobQuery.obj() ;
+   }
+   catch( exception &e )
+   {
+      rc = SDB_INVALIDARG;
+      PD_LOG( PDERROR, "occurred unexpected error:%s", e.what() );
+      goto error;
+   }
+
+   rc = msgBuildQueryCMDMsg( ppBuffer, bufferSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTIONSPACE,
+                             boQuery, emptyObj, emptyObj, emptyObj,
+                             reqID, cb ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to build query command, rc: %d", rc ) ;
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 msgBuildCreateCLMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                           const CHAR *CollectionName,
+                           const BSONObj &options, UINT64 reqID,
+                           engine::IExecutor *cb )
+{
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName,
+                "Invalid input" ) ;
+   INT32 rc = SDB_OK ;
+   try
+   {
+      const BSONObj emptyObj ;
+      BSONObjBuilder builder ;
+      BSONObj query ;
+      builder.append( FIELD_NAME_NAME, CollectionName ) ;
+      builder.appendElements( options ) ;
+      query = builder.obj() ;
+      rc = msgBuildQueryCMDMsg(
+                            ppBuffer, bufferSize,
+                            CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION,
+                            query, emptyObj, emptyObj, emptyObj, reqID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to generate create cl request, "
+                   "cl: %s,rc: %d", CollectionName, rc ) ;
+   }
+   catch( std::exception &e )
+   {
+      PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+done :
+   return rc ;
+error :
    goto done ;
 }
 

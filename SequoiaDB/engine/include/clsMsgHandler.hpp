@@ -56,7 +56,8 @@ namespace engine
 
       public:
          _shdMsgHandler( _pmdAsycSessionMgr *pSessionMgr,
-                         _schedTaskAdapterBase *pTaskAdapter = NULL ) ;
+                         _schedTaskAdapterBase *pTaskAdapter = NULL,
+                         _pmdRemoteSessionMgr *pRemoteSessionMgr = NULL ) ;
          virtual ~_shdMsgHandler();
 
          OSS_INLINE void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }

@@ -42,8 +42,9 @@ namespace engine
       _shdMsgHandler implement
    */
    _shdMsgHandler::_shdMsgHandler ( _pmdAsycSessionMgr *pSessionMgr,
-                                    _schedTaskAdapterBase *pTaskAdapter )
-      : _pmdAsyncMsgHandler ( pSessionMgr, pTaskAdapter )
+                                    _schedTaskAdapterBase *pTaskAdapter,
+                                    _pmdRemoteSessionMgr *pRemoteSessionMgr )
+      : _pmdAsyncMsgHandler ( pSessionMgr, pTaskAdapter, pRemoteSessionMgr )
    {
       _pShardCB = NULL ;
    }

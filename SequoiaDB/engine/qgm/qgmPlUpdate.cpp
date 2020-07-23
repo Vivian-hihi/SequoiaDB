@@ -42,6 +42,7 @@
 #include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "rtn.hpp"
 #include "coordUpdateOperator.hpp"
 #include "msgMessage.hpp"
@@ -122,12 +123,11 @@ namespace engine
       }
       else if ( SDB_ROLE_COORD == role )
       {
-         CoordCB *pCoord = krcb->getCoordCB() ;
          coordUpdateOperator opr ;
          INT64 contextID = -1 ;
          rtnContextBuf buff ;
 
-         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         rc = opr.init( sdbGetResourceContainer()->getResource(), eduCB ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",

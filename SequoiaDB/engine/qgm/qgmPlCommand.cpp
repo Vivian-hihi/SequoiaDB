@@ -43,6 +43,7 @@
 #include "rtnCB.hpp"
 #include "dpsLogWrapper.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "coordFactory.hpp"
 #include "coordTransOperator.hpp"
 #include "msgMessage.hpp"
@@ -211,7 +212,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMPLCOMMAND_EXECONCOORD ) ;
       INT32 rc = SDB_OK ;
 
-      CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
       coordCommandFactory *pFactory = coordGetFactory() ;
       coordOperator *pOpr = NULL ;
 
@@ -347,7 +347,7 @@ namespace engine
          transMsg.header.TID = 0 ;
          transMsg.header.routeID.value = 0 ;
 
-         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         rc = opr.init( sdbGetResourceContainer()->getResource(), eduCB ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
@@ -372,7 +372,7 @@ namespace engine
          transMsg.header.TID = 0 ;
          transMsg.header.routeID.value = 0 ;
 
-         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         rc = opr.init( sdbGetResourceContainer()->getResource(), eduCB ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
@@ -397,7 +397,7 @@ namespace engine
          transMsg.header.TID = 0 ;
          transMsg.header.routeID.value = 0 ;
 
-         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         rc = opr.init( sdbGetResourceContainer()->getResource(), eduCB ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
@@ -435,7 +435,7 @@ namespace engine
                     pCommand, rc ) ;
             goto error ;
          }
-         rc = pOpr->init( pCoord->getResource(), eduCB ) ;
+         rc = pOpr->init( sdbGetResourceContainer()->getResource(), eduCB ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",

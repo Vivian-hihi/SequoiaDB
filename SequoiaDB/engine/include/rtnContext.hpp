@@ -323,6 +323,14 @@ namespace engine
          void           setTransContext( BOOLEAN transCtx ) ;
          BOOLEAN        isTransContext() const ;
 
+         // if affect global index or not when queryAndModify
+         void           setIsAffectGIndex( BOOLEAN isAffect )
+         {
+            _isAffectGIndex = isAffect ;
+         }
+
+         BOOLEAN        isAffectGIndex() const { return _isAffectGIndex ; }
+
       // prefetch
       public:
          void     enablePrefetch ( _pmdEDUCB *cb,
@@ -469,6 +477,8 @@ namespace engine
          INT32                   _prepareMoreDataLimit ;
 
          BOOLEAN                 _isTransCtx ;
+
+         BOOLEAN                 _isAffectGIndex ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
    typedef _rtnContextBase rtnContext ;

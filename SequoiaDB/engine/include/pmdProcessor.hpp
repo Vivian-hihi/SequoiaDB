@@ -38,14 +38,14 @@
 #include "rtnCB.hpp"
 #include "dmsCB.hpp"
 #include "dpsLogWrapper.hpp"
-#include "pmdSessionBase.hpp"
+#include "pmdSession.hpp"
 
 namespace engine
 {
    /*
       _pmdDataProcessor define
    */
-   class _pmdDataProcessor : public _pmdProcessor
+   class _pmdDataProcessor : public _pmdProcessorBase
    {
       public:
          _pmdDataProcessor() ;

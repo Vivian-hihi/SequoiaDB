@@ -208,7 +208,9 @@ namespace engine
       dmsRecord *pOvfRecord        = NULL ;
       dmsRecordData newRecordData ;
 
-      BOOLEAN rollbackIndex        = FALSE ;
+      BOOLEAN needUndoIndex        = FALSE ;
+
+      _sdbRemoteOpCtrlAssist ctrlAssist( cb->getRemoteOpCtrl() ) ;
 
       SDB_ASSERT ( !recordData.isEmpty(), "recordData can't be empty" ) ;
 
@@ -277,7 +279,7 @@ namespace engine
                                          recordRW.getRecordID(),
                                          cb, FALSE, pHandler,
                                          pResult ) ;
-            rollbackIndex = TRUE ;
+            needUndoIndex = TRUE ;
             if ( rc )
             {
                PD_LOG ( PDWARNING, "Failed to update object(%s) index, rc: %d",
@@ -399,8 +401,9 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD, rc ) ;
       return rc ;
    error :
-      if( rollbackIndex )
+      if( needUndoIndex )
       {
+         ctrlAssist.switchToUndo() ;
          BSONObj oriObj( recordData.data() ) ;
          BSONObj newObj( newRecordData.orgData() ) ;
          // rollback the change on index by switching obj and oriObj
@@ -410,9 +413,18 @@ namespace engine
                                              cb, TRUE, NULL ) ;
          if ( rc1 )
          {
+            if ( !ctrlAssist.isUndoFinished() )
+            {
+               // undo is not finished
+               if ( SDB_OK == cb->getTransRC() )
+               {
+                  cb->setTransRC( rc ) ;
+               }
+            }
             PD_LOG ( PDERROR, "Failed to rollback update due to rc %d", rc1 ) ;
          }
       }
+
       goto done ;
    }
 
@@ -982,9 +994,10 @@ namespace engine
 
       if ( hasInsert )
       {
-         // we won't touch old verion if it's insert failure. 
+         // we won't touch old verion if it's insert failure.
          // No callback needed
-         rc = deleteRecord( context, rid, dataPtr, cb, dpscb, NULL ) ;
+         rc = deleteRecord( context, rid, dataPtr, cb, dpscb, NULL, NULL,
+                            TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to rollback, rc: %d", rc ) ;
       }
       else if ( rid.isValid() )

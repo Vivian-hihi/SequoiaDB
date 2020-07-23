@@ -40,6 +40,7 @@
 #include "coordContext.hpp"
 #include "pmd.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "coordUtil.hpp"
 #include "coordRemoteSession.hpp"
 #include "msgMessageFormat.hpp"
@@ -133,8 +134,7 @@ namespace engine
    {
       if ( rc && _nokRC.size() > 0 )
       {
-         CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
-         coordResource *pResource = pCoord->getResource() ;
+         coordResource *pResource = sdbGetResourceContainer()->getResource() ;
          buffObj = coordBuildErrorObj( pResource, rc, cb, &_nokRC ) ;
       }
    }
@@ -1543,7 +1543,7 @@ namespace engine
       coordCtrlParam ctrlParam ;
       CoordGroupList groupList ;
 
-      coordResource *pResource = pmdGetKRCB()->getCoordCB()->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
       ctrlParam._isGlobal = TRUE ;

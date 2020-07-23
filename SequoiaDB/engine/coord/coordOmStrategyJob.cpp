@@ -33,6 +33,7 @@
 #include "coordOmStrategyJob.hpp"
 #include "pmd.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "schedDef.hpp"
 
 namespace engine
@@ -82,9 +83,7 @@ namespace engine
 
    BOOLEAN _coordOmStrategyJob::isSystem() const
    {
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      CoordCB *pCoord = krcb->getCoordCB() ;
-      coordResource *pResource = pCoord->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
       CoordGroupInfoPtr omGroupPtr = pResource->getOmGroupInfo() ;
 
       return 0 == omGroupPtr->nodeCount() ? FALSE : TRUE ;
@@ -95,7 +94,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       CoordCB *pCoord = krcb->getCoordCB() ;
-      coordResource *pResource = pCoord->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
       coordOmStrategyAgent *pOmAgent = pResource->getOmStrategyAgent() ;
       CoordGroupInfoPtr omGroupPtr ;
       INT64 timeCount = 0 ;

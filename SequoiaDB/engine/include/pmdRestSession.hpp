@@ -34,12 +34,12 @@
 #ifndef PMD_REST_SESSION_HPP_
 #define PMD_REST_SESSION_HPP_
 
-#include "pmdSessionBase.hpp"
+#include "pmdSession.hpp"
 #include "restDefine.hpp"
 #include "restAdaptor.hpp"
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
-#include "pmdProcessorBase.hpp"
+#include "pmdIProcessor.hpp"
 #include "pmdEDU.hpp"
 #include <string>
 

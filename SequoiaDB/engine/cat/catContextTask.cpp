@@ -43,6 +43,8 @@
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _catCtxTaskBase::_catCtxTaskBase ()
@@ -546,7 +548,12 @@ namespace engine
       _idxName = idxName ;
       _boIdx = boIdx ;
       _isUnique = FALSE ;
+      _isEnforced = FALSE ;
+      _isSharding = FALSE ;
       _uniqueCheck = TRUE ;
+
+      _isGlobal = FALSE ;
+      _hasAlterCata = FALSE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATEIDXTASK_CHECK_INT, "_catCtxCreateIdxTask::_checkInternal" )
@@ -572,8 +579,33 @@ namespace engine
 
       try
       {
+         BSONElement element ;
+
          // index key obj shouldn't has more than 32 field
          bson::Ordering::make ( _boIdxKey ) ;
+
+         element = _boIdx.getField( IXM_UNIQUE_FIELD ) ;
+         if ( element.isBoolean() )
+         {
+            _isUnique = element.boolean() ;
+         }
+
+         element = _boIdx.getField( IXM_ISGLOBAL_FIELD ) ;
+         if ( element.isBoolean() )
+         {
+            _isGlobal = element.boolean() ;
+         }
+
+         element = _boIdx.getField( IXM_ENFORCED_FIELD ) ;
+         if ( element.isBoolean() )
+         {
+            _isEnforced = element.boolean() ;
+         }
+
+         //request can't contain globaloption now
+         element = _boIdx.getField( IXM_GLOBAL_OPTION_FIELD ) ;
+         PD_CHECK( element.eoo(), SDB_INVALIDARG, error, PDERROR,
+                   "GlobalOption can't be specified now:rc=%d", rc ) ;
       }
       catch( std::exception &e )
       {
@@ -591,15 +623,64 @@ namespace engine
 
       if ( cataSet.isSharding() )
       {
-         rc = rtnGetBooleanElement ( _boIdx, IXM_UNIQUE_FIELD, _isUnique ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
+         _isSharding = TRUE ;
+      }
+
+      if ( _isGlobal )
+      {
+         CHAR szCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = "" ;
+         UINT16 indexType = 0 ;
+         PD_CHECK( _ixmIndexCB::generateIndexType(_boIdx, indexType),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to parse indexType:index=%s,rc=%d",
+                   _boIdx.toString().c_str(), rc ) ;
+
+         PD_CHECK( !IXM_EXTENT_HAS_TYPE(IXM_EXTENT_TYPE_TEXT, indexType),
+                   SDB_INVALIDARG, error, PDERROR, "Global index can't support"
+                   " text index:indexType=%d,rc=%d", indexType, rc ) ;
+
+         PD_CHECK( !cataSet.isMainCL(), SDB_INVALIDARG, error, PDERROR,
+                   "MainCL(%s) could not create global index:rc=%d",
+                   _dataName.c_str(), rc ) ;
+
+         PD_CHECK( _isUnique, SDB_INVALIDARG, error, PDERROR,
+                   "Global index must be unique:index=%s,rc=%d",
+                   _boIdx.toString().c_str(), rc ) ;
+
+         PD_CHECK( _isEnforced, SDB_INVALIDARG, error, PDERROR,
+                   "Global index's enfored must be true:index=%s,rc=%d",
+                   _boIdx.toString().c_str(), rc ) ;
+
+         utilCLUniqueID clUID = cataSet.clUniqueID() ;
+         PD_CHECK( UTIL_IS_VALID_CLUNIQUEID( clUID ), SDB_INVALIDARG, error,
+                   PDERROR, "Invalid collection unqiueID(%llu):cl=%s,rc=%d",
+                   clUID, _dataName.c_str(), rc ) ;
+
+         utilCSUniqueID csUID = utilGetCSUniqueID( clUID ) ;
+         try
          {
-            _isUnique = FALSE ;
-            rc = SDB_OK ;
+            // _idxName => idxUID after SEQUOIADBMAINSTREAM-5079
+            stringstream ss ;
+            ss << IXM_GLOBAL_CS_PREFIX << csUID << "."
+               << IXM_GLOBAL_CL_PREFIX << clUID << "_" << _idxName ;
+            _indexCLName = ss.str() ;
          }
-         PD_RC_CHECK ( rc, PDWARNING,
-                       "Failed to get [%s] for index [%s], rc: %d",
-                       IXM_UNIQUE_FIELD, _boIdx.toString().c_str(), rc ) ;
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Occur exception:%s", e.what() ) ;
+            goto error ;
+         }
+
+         rc = rtnResolveCollectionSpaceName( _dataName.c_str(),
+                                             _dataName.length(), szCSName,
+                                             DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cs name:cl=%s,rc=%d",
+                      _dataName.c_str(), rc ) ;
+
+         rc = catGetCSDomain( szCSName, cb, _domain ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cs domain:cs=%s,rc=%d",
+                      szCSName, rc ) ;
       }
 
    done :
@@ -616,12 +697,52 @@ namespace engine
                                                   INT16 w )
    {
       PD_TRACE_ENTRY ( SDB_CATCTXCREATEIDXTASK_EXECUTE_INT ) ;
+      INT32 rc = SDB_OK ;
 
-      // Do nothing
+      if ( !_isGlobal )
+      {
+         goto done ;
+      }
 
+      try
+      {
+         utilCLUniqueID indexCLUID ;
+         BSONObj clObj ;
+         clsCatalogSet indexCLCatSet( _indexCLName.c_str() ) ;
+
+         rc = catGetCollection( _indexCLName, clObj, cb ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get catalog-info(%s):rc=%d",
+                      _indexCLName.c_str(), rc ) ;
+
+         rc = indexCLCatSet.updateCatSet( clObj ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to parse catalog-info(%s):rc=%d",
+                      _indexCLName.c_str(), rc ) ;
+
+         indexCLUID = indexCLCatSet.clUniqueID() ;
+         PD_CHECK( UTIL_IS_VALID_CLUNIQUEID( indexCLUID ), SDB_INVALIDARG,
+                   error, PDERROR, "Invalid collection unqiueID(%llu):"
+                   "cl=%s,rc=%d", indexCLUID, _indexCLName.c_str(), rc ) ;
+
+         _gIndexInfo = BSON( CAT_GIDX_INDEXNAME << _idxName
+                             << CAT_GIDX_CL_UNIQUEID
+                             << (long long)indexCLUID ) ;
+         rc = catAddGlobalIndexStep( _dataName, _gIndexInfo, cb, pDmsCB,
+                                     pDpsCB, w, &_hasAlterCata ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add global index(%s):rc=%d",
+                      _gIndexInfo.toString().c_str(), rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception:%s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
       PD_TRACE_EXIT ( SDB_CATCTXCREATEIDXTASK_EXECUTE_INT ) ;
-
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATEIDXTASK_ROLLBACK_INT, "_catCtxCreateIdxTask::_rollbackInternal" )
@@ -631,12 +752,22 @@ namespace engine
                                                   INT16 w )
    {
       PD_TRACE_ENTRY ( SDB_CATCTXCREATEIDXTASK_ROLLBACK_INT ) ;
+      INT32 rc = SDB_OK ;
 
-      // Do nothing
+      if ( _hasAlterCata )
+      {
+         rc = catDelGlobalIndexStep( _dataName, _gIndexInfo, cb, pDmsCB,
+                                     pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to delete global index(%s):rc=%d",
+                      _gIndexInfo.toString().c_str(), rc ) ;
+         _hasAlterCata = FALSE ;
+      }
 
+   done:
       PD_TRACE_EXIT ( SDB_CATCTXCREATEIDXTASK_ROLLBACK_INT ) ;
-
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATEIDXTASK_CHECKIDXKEY, "_catCtxCreateIdxTask::checkIndexKey" )
@@ -701,6 +832,8 @@ namespace engine
    : _catCtxDataTask ( clName )
    {
       _idxName = idxName ;
+      _isGlobalIndex = FALSE ;
+      _indexCLUID = UTIL_UNIQUEID_NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPIDXTASK_CHECK_INT, "_catCtxDropIdxTask::_checkInternal" )
@@ -710,12 +843,27 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY ( SDB_CATCTXDROPIDXTASK_CHECK_INT ) ;
+      clsCatalogSet cataSet( _dataName.c_str() );
 
       rc = catGetAndLockCollection( _dataName, _boData, cb,
                                     _needLocks ? &lockMgr : NULL, SHARED ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to get the collection [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
+
+      rc = cataSet.updateCatSet( _boData );
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to parse catalog info [%s], rc: %d",
+                   _boData.toString().c_str(), rc );
+
+      _isGlobalIndex = cataSet.getGlobalIndex( _idxName, _gIndexInfo ) ;
+      if ( _isGlobalIndex )
+      {
+         _indexCLUID = _gIndexInfo.getIndexCollectionUID() ;
+         rc = catGetCollectionNameByUID( _indexCLUID, _indexCLName, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get collection name:uid=%llu:"
+                      "rc=%d", _indexCLUID, rc ) ;
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXDROPIDXTASK_CHECK_INT, rc ) ;
@@ -731,12 +879,23 @@ namespace engine
                                                 INT16 w )
    {
       PD_TRACE_ENTRY ( SDB_CATCTXDROPIDXTASK_EXECUTE_INT ) ;
+      INT32 rc = SDB_OK ;
 
-      // Do nothing
+      if ( !_isGlobalIndex )
+      {
+         goto done ;
+      }
 
+      rc = catDelGlobalIndexByNameStep( _dataName, _idxName,
+                                        cb, pDmsCB, pDpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to delete global index:cl=%s,index=%s"
+                   ",rc=%d", _dataName.c_str(), _idxName.c_str(), rc ) ;
+
+   done:
       PD_TRACE_EXIT ( SDB_CATCTXDROPIDXTASK_EXECUTE_INT ) ;
-
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

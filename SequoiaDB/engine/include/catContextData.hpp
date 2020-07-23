@@ -149,6 +149,14 @@ namespace engine
       INT32 _addDropIdxTasks ( const std::string &clName,
                                const std::string &idxName,
                                _pmdEDUCB *cb ) ;
+
+   protected:
+      BOOLEAN _isGlobalIndex ;
+      utilCLUniqueID _indexCLUID ;
+
+      // create index
+      std::string _indexCLName ;
+      std::string _domain ;
    } ;
 
    /*
@@ -177,6 +185,8 @@ namespace engine
 
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
 
+      virtual INT32 _makeReply ( rtnContextBuf & buffObj ) ;
+
       INT32 _addDropCSTask ( const std::string &csName,
                              _catCtxDropCSTask **ppCtx,
                              BOOLEAN pushExec = TRUE ) ;
@@ -198,8 +208,13 @@ namespace engine
                                   BOOLEAN pushExec = TRUE ) ;
 
    private:
+      INT32 _addIndexCL( const BSONObj &clObj ) ;
+
+   private:
       /* ensure collectionspace is empty or not */
       BOOLEAN _ensureEmpty ;
+
+      CLS_GINDEX_LIST _globalIndexList ;
    } ;
 
    typedef class _catCtxDropCS catCtxDropCS ;
@@ -601,6 +616,9 @@ namespace engine
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
 
    protected :
+      virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
+
+   protected :
       std::string _idxName ;
       BSONObj _boIdx ;
    } ;
@@ -631,6 +649,9 @@ namespace engine
       virtual INT32 _parseQuery ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
+
+   protected :
+      virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 
    protected :
       std::string _idxName ;

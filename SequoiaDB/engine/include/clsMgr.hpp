@@ -135,7 +135,10 @@ namespace engine
          virtual void         _onSessionNew( pmdAsyncSession *pSession ) ;
 
       protected:
-         void                    _checkUnShardSessions( UINT32 interval ) ;
+         void                 _checkUnShardSessions( UINT32 interval ) ;
+
+      private:
+         BOOLEAN              _isSplitSessionMsg( UINT32 opCode ) ;
 
       protected:
          _clsMgr                 *_pClsMgr ;
@@ -195,6 +198,10 @@ namespace engine
    /*
       _clsMgr define
    */
+
+   class _coordSessionPropMgr ;
+   class _coordResource ;
+
    class _clsMgr : public _pmdObjBase, public _IControlBlock
    {
       friend class _clsShardSessionMgr ;
@@ -283,6 +290,7 @@ namespace engine
                                           pmdAsycSessionMgr *pSessionMgr ) ;
          INT32       _prepareTask () ;
          INT32       _addTaskInnerSession ( const CHAR *objdata ) ;
+         INT32       _initRemoteSession( _netRouteAgent *netRouteAgent ) ;
 
       //msg and event function
       protected:
@@ -314,6 +322,10 @@ namespace engine
          UINT64                        _regTimerID ;
          UINT32                        _regFailedTimes ;
          UINT64                        _oneSecTimerID ;
+
+         _coordSessionPropMgr          *_pSitePropMgr ;
+         _coordResource                *_pResource ;
+         _pmdRemoteSessionMgr          _remoteSessionMgr ;
 
          _schedTaskContanierMgr        *_pContainerMgr ;
          _schedTaskAdapterBase         *_pShardAdapter ;

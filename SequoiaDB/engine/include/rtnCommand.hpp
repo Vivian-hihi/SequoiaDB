@@ -623,6 +623,8 @@ namespace engine
          INT32                   _sortBufferSize ;
          BOOLEAN                 _textIdx ;
          utilWriteResult         _writeResult ;
+
+         BOOLEAN                 _isGlobal ;
    };
 
    class _rtnDropCollection : public _rtnCommand

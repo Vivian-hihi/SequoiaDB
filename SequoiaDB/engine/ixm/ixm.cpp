@@ -59,6 +59,8 @@ namespace engine
    {
       SDB_ASSERT ( pIndexSu, "index su can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__IXMINXCB1 );
+      _isGlobalIndex = FALSE;
+      _indexCLUID = UTIL_UNIQUEID_NULL ;
       _isInitialized = FALSE ;
       _pIndexSu = pIndexSu ;
       _pContext = context ;
@@ -80,6 +82,8 @@ namespace engine
       SDB_ASSERT ( pIndexSu, "index su can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__IXMINXCB2 );
 
+      _isGlobalIndex = FALSE;
+      _indexCLUID = UTIL_UNIQUEID_NULL ;
       ixmIndexCBExtent *pExtent = NULL ;
       _isInitialized = FALSE ;
       dmsExtRW extRW ;

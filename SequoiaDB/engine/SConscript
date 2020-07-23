@@ -71,9 +71,10 @@ pmdFiles = [
       "pmd/pmdEDU.cpp",
       "pmd/pmdTransExecutor.cpp",
       "pmd/pmdSessionBase.cpp",
+      "pmd/pmdSession.cpp",
+      "pmd/pmdLocalSession.cpp",
       "pmd/pmdExternClient.cpp",
       "pmd/pmdInnerClient.cpp",
-      "pmd/pmdSession.cpp",
       "pmd/pmdRemoteSession.cpp",
       "pmd/pmdAsyncSession.cpp",
       "pmd/pmdAsyncHandler.cpp",
@@ -464,7 +465,9 @@ clsFiles = [
       "cls/clsAutoIncItem.cpp",
       "cls/clsGTSAgent.cpp",
       "cls/clsAdapterJob.cpp",
-      "cls/clsMainCLMonAggregator.cpp"
+      "cls/clsMainCLMonAggregator.cpp",
+      "cls/clsRemoteOperator.cpp",
+      "cls/clsResourceContainer.cpp"
       ]
 
 dpsFiles = [

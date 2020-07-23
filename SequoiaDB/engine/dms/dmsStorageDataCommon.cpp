@@ -1625,6 +1625,7 @@ namespace engine
       context->mbStat()->_rcTotalRecords.init( 0 ) ;
       context->mbStat()->_totalDataLen = 0 ;
       context->mbStat()->_totalOrgDataLen = 0 ;
+      context->mbStat()->_blockIndexCreatingCount = 0 ;
 
       {
          dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(), NULL ) ;
@@ -2993,6 +2994,51 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageDataCommon::_insertIndexes( dmsMBContext *context,
+                                                dmsExtentID extLID,
+                                                BSONObj &inputObj,
+                                                const dmsRecordID &rid,
+                                                pmdEDUCB * cb,
+                                                IDmsOprHandler *pOprHandle,
+                                                utilWriteResult *insertResult )
+   {
+      INT32 rc = SDB_OK ;
+      // insert object's indexes
+      rc = _pIdxSU->indexesInsert( context, extLID, inputObj, rid, cb,
+                                   pOprHandle, insertResult ) ;
+      if ( rc )
+      {
+         if ( insertResult &&
+              insertResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
+         {
+            /// current id
+            if ( insertResult->getCurID().isEmpty() )
+            {
+               insertResult->setCurrentID( inputObj ) ;
+            }
+            /// peer id
+            if ( insertResult->getPeerID().isEmpty() &&
+                 insertResult->getPeerRID().isValid() )
+            {
+               BSONObj peerObj ;
+               if ( SDB_OK == fetch( context, insertResult->getPeerRID(),
+                                     peerObj, cb, FALSE ) )
+               {
+                  insertResult->setPeerID( peerObj ) ;
+               }
+            }
+         }
+
+         PD_LOG( PDERROR, "Failed to insert to index, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD, "_dmsStorageDataCommon::insertRecord" )
    INT32 _dmsStorageDataCommon::insertRecord ( dmsMBContext *context,
                                                const BSONObj &record,
@@ -3033,6 +3079,8 @@ namespace engine
       IDmsExtDataHandler * handler  = NULL ;
       BOOLEAN markInsert            = FALSE ;
       dmsTransLockCallback callback( pTransCB, cb ) ;
+
+      _sdbRemoteOpCtrlAssist ctrlAssist( cb->getRemoteOpCtrl() ) ;
 
       if ( !isTransSupport() )
       {
@@ -3337,37 +3385,10 @@ namespace engine
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INSERT, 1 ) ;
          _incWriteRecord() ;
 
-         // insert object's indexes
-         rc = _pIdxSU->indexesInsert( context, pExtent->_logicID,
-                                      insertObj, foundRID, cb,
-                                      dpscb ? &callback : NULL,
-                                      insertResult ) ;
-         if ( rc )
-         {
-            if ( insertResult &&
-                 insertResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
-            {
-               /// current id
-               if ( insertResult->getCurID().isEmpty() )
-               {
-                  insertResult->setCurrentID( insertObj ) ;
-               }
-               /// peer id
-               if ( insertResult->getPeerID().isEmpty() &&
-                    insertResult->getPeerRID().isValid() )
-               {
-                  BSONObj peerObj ;
-                  if ( SDB_OK == fetch( context, insertResult->getPeerRID(),
-                                        peerObj, cb, FALSE ) )
-                  {
-                     insertResult->setPeerID( peerObj ) ;
-                  }
-               }
-            }
-
-            PD_LOG( PDERROR, "Failed to insert to index, rc: %d", rc ) ;
-            goto error ;
-         }
+         rc = _insertIndexes( context, pExtent->_logicID, insertObj,
+                              foundRID, cb, dpscb ? &callback : NULL,
+                              insertResult ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to insert indexes, rc: %d", rc ) ;
       }
       catch( std::exception &e )
       {
@@ -3430,14 +3451,25 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD, rc ) ;
       return rc ;
    error:
+      ctrlAssist.switchToUndo() ;
       ( void )_onInsertFail( context, ( markInsert ? TRUE : hasInsert),
                              foundRID, dropDps,
                              (ossValuePtr)insertObj.objdata(),
                              cb ) ;
+      if ( !ctrlAssist.isUndoFinished() )
+      {
+         // undo is not finished
+         if (SDB_OK == cb->getTransRC() )
+         {
+            cb->setTransRC( rc ) ;
+         }
+      }
+
       if ( handler )
       {
          handler->abortOperation( DMS_EXTOPR_TYPE_INSERT, cb ) ;
       }
+
       goto done ;
    }
 
@@ -3456,7 +3488,8 @@ namespace engine
                                               pmdEDUCB *cb,
                                               SDB_DPSCB * dpscb,
                                               IDmsOprHandler *pHandler,
-                                              const dmsTransRecordInfo *pInfo )
+                                              const dmsTransRecordInfo *pInfo,
+                                              BOOLEAN isUndo )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD ) ;
@@ -3482,6 +3515,8 @@ namespace engine
       IDmsExtDataHandler *handler   = NULL ;
       BOOLEAN inTrans               = FALSE ;
       BOOLEAN hasWaitLock           = FALSE ;
+      _sdbRemoteCountAssist countAssist ;
+      BOOLEAN needSetTransRC        = FALSE ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -3666,15 +3701,37 @@ namespace engine
                   }
                }
 
+               countAssist.setCounts( cb->getRemoteSucCount(),
+                                      cb->getRemoteFailureCount() ) ;
                // then delete indexes. Note that the old version indexes
                // would be kept in the in memory tree under the cover
                rc = _pIdxSU->indexesDelete( context, pExtent->_logicID,
                                             delObject, recordID, cb,
-                                            dpscb ? pHandler : NULL ) ;
+                                            dpscb ? pHandler : NULL, isUndo ) ;
                if ( rc )
                {
-                  // if index delete fail, let's continue remove the record
                   PD_LOG ( PDERROR, "Failed to delete indexes, rc: %d",rc ) ;
+                  if ( !isUndo && countAssist.isPartialFailure(
+                                                 cb->getRemoteSucCount(),
+                                                 cb->getRemoteFailureCount() ) )
+                  {
+                     // in normal flow, paritial failure can't be resolved.
+                     // we should rollback this transaction to restore global
+                     // index
+                     needSetTransRC = TRUE ;
+                     goto error ;
+                  }
+
+                  if ( !context->isMBLock( EXCLUSIVE ) )
+                  {
+                     // context may be paused in _pIdxSU->indexesDelete
+                     PD_LOG( PDERROR, "context is paused[%s]",
+                             context->toString().c_str() ) ;
+                     goto error ;
+                  }
+                  // in undo flow, let's continue remove the record.
+
+                  // if local index delete fail, let's continue remove the record
                }
                context->mbStat()->_totalDataLen -= recordData.orgLen() ;
                context->mbStat()->_totalOrgDataLen -= recordData.len() ;
@@ -3693,6 +3750,7 @@ namespace engine
          {
             rc = _extentRemoveRecord( context, extRW, recordRW, cb,
                                       !isDeleting ) ;
+
             PD_RC_CHECK( rc, PDERROR, "Extent remove record failed, "
                          "rc: %d", rc ) ;
             if ( ovfRID.isValid() )
@@ -3787,6 +3845,10 @@ namespace engine
       if ( handler )
       {
          handler->abortOperation( DMS_EXTOPR_TYPE_DELETE, cb ) ;
+      }
+      if ( needSetTransRC && SDB_OK == cb->getTransRC() )
+      {
+         cb->setTransRC( rc ) ;
       }
       goto done ;
    }

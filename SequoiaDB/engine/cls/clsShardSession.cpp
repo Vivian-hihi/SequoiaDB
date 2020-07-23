@@ -662,6 +662,9 @@ namespace engine
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
+      // clear global index affect status
+      eduCB()->setIsAffectGIndex( FALSE ) ;
+
       if ( isDelayLogin() )
       {
          _login() ;
@@ -886,6 +889,13 @@ namespace engine
                break ;
          }
 
+         if ( SDB_OK != rc && _pEDUCB->isTransaction()
+              && SDB_OK != _pEDUCB->getTransRC() )
+         {
+            //if trans rc is not ok, we should not retry anymore.
+            break ;
+         }
+
          //Need to update catalog info
          // SDB_CLS_NO_CATALOG_INFO: between update and check, this cata
          // will be removed by others, so need to retry all the way
@@ -1020,21 +1030,22 @@ namespace engine
             BOOLEAN hasRollbacked = FALSE ;
 
             /// when coord catalog info is old, can't rollback, coord will retry
-            if ( inTrans &&
-                 ( isAutoCommit ||
-                   ( isNeedRollback && SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-                     _pEDUCB->getTransExecutor()->isTransAutoRollback() )
-                  )
-                )
+            if ( inTrans )
             {
-               PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
-                        opCode, rc ) ;
-               INT32 rcTmp = _rollbackTrans() ;
-               if ( rcTmp )
+               if ( ( isAutoCommit ||
+                      ( isNeedRollback && SDB_CLS_COORD_NODE_CAT_VER_OLD != rc
+                        && _pEDUCB->getTransExecutor()->isTransAutoRollback()) )
+                    || SDB_OK != _pEDUCB->getTransRC() )
                {
-                  PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
+                  PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
+                           opCode, rc ) ;
+                  INT32 rcTmp = _rollbackTrans() ;
+                  if ( rcTmp )
+                  {
+                     PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
+                  }
+                  hasRollbacked = TRUE ;
                }
-               hasRollbacked = TRUE ;
             }
 
             if ( SDB_APP_INTERRUPT == rc &&
@@ -1135,6 +1146,9 @@ namespace engine
       }
 
    done:
+      // clear global index affect status
+      eduCB()->setIsAffectGIndex( FALSE ) ;
+
       eduCB()->writingDB( FALSE ) ;
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONOPMSG, rc ) ;
@@ -1689,6 +1703,8 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->setIsAffectGIndex( TRUE ) ;
+
       rc = _checkCLStatusAndGetSth( pCollectionName, pUpdate->version,
                                     &_isMainCL, &replSize, mainCLName ) ;
       if ( SDB_OK != rc )
@@ -1807,6 +1823,8 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->setIsAffectGIndex( TRUE ) ;
+
       rc = _checkCLStatusAndGetSth( pCollectionName,
                                     pInsert->version,
                                     &_isMainCL, &replSize ) ;
@@ -1906,6 +1924,8 @@ namespace engine
          PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
+
+      _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pDelete->version,
                                     &_isMainCL, &replSize, mainCLName ) ;
@@ -2021,6 +2041,8 @@ namespace engine
                goto error ;
             }
 
+            _pEDUCB->setIsAffectGIndex( TRUE ) ;
+
             rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
                                           &_isMainCL, &replSize,
                                           mainCLName ) ;
@@ -2109,6 +2131,8 @@ namespace engine
             {
                pContext->setWriteInfo( _pDpsCB, w ) ;
             }
+
+            pContext->setIsAffectGIndex( _pEDUCB->isAffectGIndex() ) ;
 
             monQuery = pContext->getMonQueryCB() ;
 
@@ -2200,6 +2224,12 @@ namespace engine
             {
                PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
                goto error ;
+            }
+
+            if ( CMD_TRUNCATE == pCommand->type()
+                 || CMD_CREATE_INDEX == pCommand->type() )
+            {
+               _pEDUCB->setIsAffectGIndex( TRUE ) ;
             }
          }
          else
@@ -2686,36 +2716,81 @@ namespace engine
                                                 MsgHeader *msg,
                                                 utilUpdateResult &upResult )
    {
-      INT32 rc = _checkTransAutoCommit( msg ) ;
-      if ( SDB_OK == rc )
+      INT32 rc = SDB_OK ;
+
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _onUpdateReqMsg( handle, msg, upResult ) ;
+         goto error ;
       }
+
+      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
+                PDERROR, "Transaction is already failed, rc: %d",
+                _pEDUCB->getTransRC() ) ;
+
+      rc = _onUpdateReqMsg( handle, msg, upResult ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_onTransInsertReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
                                                 utilInsertResult &inResult )
    {
-      INT32 rc = _checkTransAutoCommit( msg ) ;
-      if ( SDB_OK == rc )
+      INT32 rc = SDB_OK ;
+
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _onInsertReqMsg( handle, msg, inResult ) ;
+         goto error ;
       }
+
+      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
+                PDERROR, "Transaction is already failed, rc: %d",
+                _pEDUCB->getTransRC() ) ;
+
+      rc = _onInsertReqMsg( handle, msg, inResult ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_onTransDeleteReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
                                                 utilDeleteResult &delResult )
    {
-      INT32 rc = _checkTransAutoCommit( msg ) ;
-      if ( SDB_OK == rc )
+      INT32 rc = SDB_OK ;
+
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _onDeleteReqMsg( handle, msg, delResult ) ;
+         goto error ;
       }
+
+      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
+                PDERROR, "Transaction is already failed, rc: %d",
+                _pEDUCB->getTransRC() ) ;
+
+      rc = _onDeleteReqMsg( handle, msg, delResult ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_onTransQueryReqMsg( NET_HANDLE handle,
@@ -2725,13 +2800,28 @@ namespace engine
                                               INT64 & contextID,
                                               BOOLEAN &needRollback )
    {
-      INT32 rc = _checkTransAutoCommit( msg ) ;
-      if ( SDB_OK == rc )
+      INT32 rc = SDB_OK ;
+
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
-                              contextID, needRollback, NULL ) ;
+         goto error ;
       }
+
+      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
+                PDERROR, "Transaction is already failed, rc: %d",
+                _pEDUCB->getTransRC() ) ;
+
+      rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
+                           contextID, needRollback, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    void _clsShdSession::_login()
@@ -3200,6 +3290,8 @@ namespace engine
 
          /// must set before open
          pContextMainCL->setWriteInfo( _pDpsCB, w ) ;
+
+         pContext->setIsAffectGIndex( cb->isAffectGIndex() ) ;
 
          rc = pContextMainCL->open( options, strSubCLList,
                                     includeShardingOrder, cb ) ;

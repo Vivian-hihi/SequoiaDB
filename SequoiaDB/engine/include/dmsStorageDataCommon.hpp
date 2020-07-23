@@ -51,12 +51,12 @@
 #include "utilInsertResult.hpp"
 #include "dmsOprHandler.hpp"
 #include "monCB.hpp"
+#include "sdbRemoteOperator.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
-
 #pragma pack(1)
    /*
       _IDToInsert define
@@ -393,6 +393,9 @@ namespace engine
       // runtime CRUD statistics monitor
       monCRUDCB _crudCB ;
 
+      // how many operators need to block index creating
+      UINT32      _blockIndexCreatingCount ;
+
       void reset()
       {
          _totalRecords           = 0 ;
@@ -424,6 +427,7 @@ namespace engine
          _lobIsCrash             = FALSE ;
          _rcTotalRecords.init( 0 ) ;
          _crudCB.reset() ;
+         _blockIndexCreatingCount = 0 ;
       }
 
       void updateLastLSN( UINT64 lsn, DMS_FILE_TYPE type )
@@ -933,7 +937,8 @@ namespace engine
                               _pmdEDUCB * cb,
                               SDB_DPSCB *dpscb,
                               IDmsOprHandler *pHandler = NULL,
-                              const dmsTransRecordInfo *pInfo = NULL ) ;
+                              const dmsTransRecordInfo *pInfo = NULL,
+                              BOOLEAN isUndo = FALSE ) ;
 
          // if updatedDataPtr = 0, will get from recordID
          // must hold mb exclusive lock
@@ -1063,7 +1068,8 @@ namespace engine
          virtual void _finalRecordSize( UINT32 &size,
                                         const dmsRecordData &recordData ) = 0 ;
 
-         virtual INT32 _onInsertFail( dmsMBContext *context, BOOLEAN hasInsert,
+         virtual INT32 _onInsertFail( dmsMBContext *context,
+                                      BOOLEAN hasInsert,
                                       dmsRecordID rid, SDB_DPSCB *dpscb,
                                       ossValuePtr dataPtr, _pmdEDUCB *cb ) = 0 ;
 
@@ -1086,8 +1092,6 @@ namespace engine
          virtual INT32  _onMarkHeaderInvalid( INT32 collectionID ) ;
 
          virtual UINT64 _getOldestWriteTick() const ;
-
-
 
       protected:
          OSS_INLINE const CHAR* _clFullName ( const CHAR *clName,
@@ -1163,6 +1167,14 @@ namespace engine
          UINT32         _getRecordDataLen( const dmsRecord *pRecord ) ;
 
          OSS_INLINE UINT32  _getFactor () const ;
+
+         INT32          _insertIndexes( dmsMBContext *context,
+                                        dmsExtentID extLID,
+                                        BSONObj &inputObj,
+                                        const dmsRecordID &rid,
+                                        pmdEDUCB * cb,
+                                        IDmsOprHandler *pOprHandle,
+                                        utilWriteResult *insertResult ) ;
 
       //private:
       protected:

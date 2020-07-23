@@ -183,6 +183,10 @@ namespace engine
                                      CoordCataInfoPtr &cataPtr,
                                      _pmdEDUCB *cb ) ;
 
+         INT32       updateCataInfoByCLUID( utilCLUniqueID clUID,
+                                            CoordCataInfoPtr &cataPtr,
+                                            _pmdEDUCB *cb ) ; ;
+
          INT32       getOrUpdateCataInfo( const CHAR *collectionName,
                                           CoordCataInfoPtr &cataPtr,
                                           _pmdEDUCB *cb ) ;
@@ -244,6 +248,13 @@ namespace engine
                                            CoordCataInfoPtr &cataPtr ) ;
 
          BSONObj     _buildOmGroupInfo() ;
+
+         INT32       _updateCataInfoByCLUID( utilCLUniqueID clUID,
+                                             CoordCataInfoPtr &cataPtr,
+                                             _pmdEDUCB *cb ) ;
+
+         INT32       _processCatalogReplyByCLUID( MsgHeader *pMsg,
+                                                  CoordCataInfoPtr &cataPtr ) ;
 
       private:
          MAP_GROUP_INFO                   _mapGroupInfo ;

@@ -2295,6 +2295,10 @@ namespace engine
             {
                builder.append( IXM_NOTNULL_FIELD, e.trueValue() ) ;
             }
+            else if ( 0 == ossStrcmp( e.fieldName(), IXM_ISGLOBAL_FIELD ) )
+            {
+               builder.append( IXM_ISGLOBAL_FIELD, e.trueValue() ) ;
+            }
             else
             {
                builder.append( e ) ;

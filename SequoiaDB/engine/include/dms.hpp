@@ -138,8 +138,8 @@ namespace engine
 #define SDB_DMSRBS_NAME            "SYSRBS"
 #define SDB_DMSRBS_FULLNAME        "SYSRBS.SYSRBS"
 #define DMS_RBS_NAME_PATTERN       "%s%04d"
-#define DMS_MAX_RBS_CL             DMS_MME_SLOTS 
-#define DMS_FIRST_RBS_CL           1 
+#define DMS_MAX_RBS_CL             DMS_MME_SLOTS
+#define DMS_FIRST_RBS_CL           1
 #define DMS_META_RBS_CL            0
 
 #define DMS_INDEX_SORT_BUFFER_MIN_SIZE     32
@@ -265,7 +265,7 @@ namespace engine
       do {(x)=DMS_MB_FLAG_LOAD_BUILD|DMS_MB_FLAG_LOAD|\
       DMS_MB_FLAG_USED;} while(0)
 
-#define DMS_MB_STATINFO_FLAG_TRUNCATED  0x00000001
+#define DMS_MB_STATINFO_FLAG_TRUNCATED             0x00000001
 
 #define DMS_MB_STATINFO_IS_TRUNCATED(x) \
       (0 != ((x) & DMS_MB_STATINFO_FLAG_TRUNCATED))

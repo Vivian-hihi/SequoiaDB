@@ -78,6 +78,25 @@ BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
    ( msgIsInnerOpReply(msg) ? sizeof(MsgOpReply) : \
                               sizeof(MsgInternalReplyHeader) )
 
+// _clsSplitSrcSession & _clsSplitDstSession
+OSS_INLINE BOOLEAN isSplitSessionMsg( UINT32 opCode )
+{
+   opCode = GET_REQUEST_TYPE( opCode ) ;
+   if ( opCode >= MSG_CAT_SPLIT_PREPARE_REQ
+        && opCode <= MSG_CAT_SPLIT_FINISH_REQ )
+   {
+      return TRUE ;
+   }
+
+   if ( opCode >= MSG_CLS_FULL_SYNC_BEGIN
+        && opCode <= MSG_CLS_FULL_SYNC_TRANS_REQ )
+   {
+      return TRUE ;
+   }
+
+   return FALSE ;
+}
+
 OSS_INLINE BOOLEAN isNoReplyMsg( INT32 opCode )
 {
    if ( MSG_CAT_GRP_CHANGE_NTY == opCode ||
@@ -321,7 +340,26 @@ INT32 msgBuildQueryCMDMsg ( CHAR ** ppBuffer,
                             const BSONObj & boSort,
                             const BSONObj & boHint,
                             UINT64 reqID,
-                            engine::IExecutor * cb ) ;
+                            engine::IExecutor * cb,
+                            SINT64 numToReturn = 0 ) ;
+
+INT32 msgBuildCreateCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                           const CHAR *CollectionSpaceName,
+                           const BSONObj &options, UINT64 reqID,
+                           engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildTestCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                         const CHAR *CollectionSpaceName,
+                         UINT64 reqID, engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildDropCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                         const CHAR *CollectionSpaceName, UINT64 reqID,
+                         engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildCreateCLMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                           const CHAR *CollectionName,
+                           const BSONObj &options, UINT64 reqID,
+                           engine::IExecutor *cb = NULL ) ;
 
 INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, UINT64 reqID,

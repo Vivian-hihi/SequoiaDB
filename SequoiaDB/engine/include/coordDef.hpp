@@ -318,6 +318,11 @@ namespace engine
          return _catlogSet.findLobSubCLNamesByMatcher( matcher, subCLList ) ;
       }
 
+      INT32 getGlobalIndexes( CLS_GINDEX_LIST &globalIndexes )
+      {
+         return _catlogSet.getGlobalIndexes( globalIndexes ) ;
+      }
+
    private:
       // if the catalogue-info is update, build a new one, don't modify the old
       _CoordCataInfo()

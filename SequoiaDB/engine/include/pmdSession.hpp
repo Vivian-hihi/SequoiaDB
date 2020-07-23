@@ -34,63 +34,109 @@
 #ifndef PMD_SESSION_HPP_
 #define PMD_SESSION_HPP_
 
+#include "core.hpp"
+#include "oss.hpp"
+#include "ossSocket.hpp"
 #include "pmdSessionBase.hpp"
-#include "msg.h"
-#include "pmdDef.hpp"
-#include "rtnContext.hpp"
+#include "pmdIProcessor.hpp"
+#include "pmdExternClient.hpp"
+#include "schedTaskMgr.hpp"
 
-#include <map>
-#include "../bson/bson.h"
-
-using namespace bson ;
+#include <string>
 
 namespace engine
 {
 
-   class _rtnContextBuf ;
+   class _pmdEDUCB ;
+   class _dpsLogWrapper ;
 
+   #define PMD_RETBUILDER_DFT_SIZE              ( 96 )
    /*
-      _pmdLocalSession define
+      _pmdSession define
    */
-   class _pmdLocalSession : public _pmdSession
+   class _pmdSession : public _pmdSessionBase
    {
       public:
-         _pmdLocalSession( SOCKET fd ) ;
-         virtual ~_pmdLocalSession () ;
+         _pmdSession( SOCKET fd ) ;
+         virtual ~_pmdSession() ;
 
-         virtual INT32     getServiceType() const ;
-         virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual UINT64    identifyID() ;
+         virtual MsgRouteID identifyNID() ;
+         virtual UINT32    identifyTID() ;
+         virtual UINT64    identifyEDUID() ;
 
-         virtual INT32     run() ;
+         virtual void*     getSchedItemPtr() ;
+         virtual void      setSchedItemVer( INT32 ver ) ;
+
+         virtual void            clear() ;
+
+         virtual const CHAR*     sessionName() const ;
+         virtual IClient*        getClient() { return &_client ; }
+
+         virtual _dpsLogWrapper* getDPSCB() { return _pDPSCB ; }
+         virtual _pmdEDUCB*      eduCB () const { return _pEDUCB ; }
+         virtual EDUID           eduID () const { return _eduID ; }
+
+         virtual INT32           run() = 0 ;
+
+      public:
+         UINT64      sessionID () const { return _eduID ; }
+         ossSocket*  socket () { return &_socket ; }
+
+         void        attach( _pmdEDUCB * cb ) ;
+         void        detach() ;
+
+         CHAR*       getBuff( UINT32 len ) ;
+         INT32       getBuffLen () const { return _buffLen ; }
+
+         INT32       allocBuff( UINT32 len, CHAR **ppBuff,
+                                UINT32 *pRealSize = NULL ) ;
+         void        releaseBuff( CHAR *pBuff ) ;
+         INT32       reallocBuff( UINT32 len, CHAR **ppBuff,
+                                  UINT32 *pRealSize = NULL ) ;
+
+         void        disconnect() ;
+         INT32       sendData( const CHAR *pData, INT32 size,
+                               INT32 timeout = -1,
+                               BOOLEAN block = TRUE,
+                               INT32 *pSentLen = NULL,
+                               INT32 flags = 0 ) ;
+         INT32       recvData( CHAR *pData, INT32 size,
+                               INT32 timeout = -1,
+                               BOOLEAN block = TRUE,
+                               INT32 *pRecvLen = NULL,
+                               INT32 flags = 0 ) ;
+         INT32       sniffData( INT32 timeout = OSS_ONE_SEC ) ;
 
       protected:
-         INT32          _processMsg( MsgHeader *msg ) ;
-         virtual INT32  _onMsgBegin( MsgHeader *msg ) ;
-         virtual void   _onMsgEnd( INT32 result, MsgHeader *msg ) ;
+         inline BOOLEAN _isAwaitingHandshake () const
+         {
+            return _awaitingHandshake ;
+         }
 
-         INT32          _recvSysInfoMsg( UINT32 msgSize, CHAR **ppBuff,
-                                         INT32 &buffLen ) ;
-         INT32          _processSysInfoRequest( const CHAR *msg ) ;
-
-         INT32          _reply( MsgOpReply* responseMsg, const CHAR *pBody,
-                                INT32 bodyLen ) ;
-
-      protected:
-         virtual void            _onAttach () ;
-         virtual void            _onDetach () ;
-
-      // message process functions
-      protected:
+         inline void   _setHandshakeReceived ()
+         {
+            _awaitingHandshake = FALSE ;
+         }
 
       protected:
-         MsgOpReply           _replyHeader ;
-         BOOLEAN              _needReply ;
 
-         BSONObj              _errorInfo ;
+         _pmdEDUCB                        *_pEDUCB ;
+         EDUID                            _eduID ;
+         ossSocket                        _socket ;
+         std::string                      _sessionName ;
+         pmdExternClient                  _client ;
+         _dpsLogWrapper                   *_pDPSCB ;
+         BOOLEAN                          _awaitingHandshake ;
+
+         schedItem                        _infoItem ;
+
+      protected:
+         CHAR                             *_pBuff ;
+         UINT32                           _buffLen ;
 
    } ;
-   typedef _pmdLocalSession pmdLocalSession ;
-
+   typedef _pmdSession pmdSession ;
 }
 
 #endif //PMD_SESSION_HPP_

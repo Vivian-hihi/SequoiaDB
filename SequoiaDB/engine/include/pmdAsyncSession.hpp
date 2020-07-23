@@ -43,6 +43,7 @@
 #include "ossAtomic.hpp"
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
+#include "pmdSessionBase.hpp"
 #include "pmdInnerClient.hpp"
 #include "schedTaskMgr.hpp"
 
@@ -143,7 +144,7 @@ namespace engine
    /*
       _pmdAsyncSession define
    */
-   class _pmdAsyncSession : public _pmdObjBase, public _ISession
+   class _pmdAsyncSession : public _pmdObjBase, public _pmdSessionBase
    {
       friend class _pmdAsycSessionMgr ;
       DECLARE_OBJ_MSG_MAP()
@@ -160,6 +161,8 @@ namespace engine
          virtual const CHAR*     sessionName() const ;
          virtual INT32           getServiceType() const ;
          virtual IClient*        getClient() { return &_client ; }
+         virtual EDUID           eduID () const ;
+         virtual pmdEDUCB*       eduCB () const ;
 
          virtual void*           getSchedItemPtr() ;
          virtual void            setSchedItemVer( INT32 ver ) ;
@@ -198,8 +201,6 @@ namespace engine
 
       public:
          UINT64      sessionID () const ;
-         EDUID       eduID () const ;
-         pmdEDUCB*   eduCB () const ;
          NET_HANDLE  netHandle () const ;
          BOOLEAN     isStartActive() ;
          pmdSessionMeta* getMeta() { return _pMeta ; }

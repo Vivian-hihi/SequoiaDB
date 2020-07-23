@@ -52,6 +52,10 @@
 #include "schedPrepareJob.hpp"
 #include "schedDispatchJob.hpp"
 #include "clsUniqueIDCheckJob.hpp"
+#include "coordResource.hpp"
+#include "coordRemoteSession.hpp"
+#include "pmdController.hpp"
+#include "clsResourceContainer.hpp"
 
 using namespace bson ;
 
@@ -128,19 +132,23 @@ namespace engine
       return sessionID ;
    }
 
+   BOOLEAN _clsShardSessionMgr::_isSplitSessionMsg( UINT32 opCode )
+   {
+      if ( 0 == opCode )
+      {
+         return TRUE ;
+      }
+
+      return isSplitSessionMsg( opCode ) ;
+   }
+
    SDB_SESSION_TYPE _clsShardSessionMgr::_prepareCreate( UINT64 sessionID,
                                                          INT32 startType,
                                                          INT32 opCode )
    {
       SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
-      UINT32 nodeID = 0 ;
-      UINT32 tid = 0 ;
 
-      ossUnpack32From64( sessionID, nodeID, tid ) ;
-      // if nodeID <= PMD_BASE_HANDLE_ID, that means the request come from
-      // the request from other nodes within the shard ( currently only
-      // split request uses this part )
-      if ( PMD_BASE_HANDLE_ID >= nodeID )
+      if ( _isSplitSessionMsg( (UINT32)opCode ) )
       {
          if ( PMD_SESSION_ACTIVE == startType )
          {
@@ -154,8 +162,6 @@ namespace engine
             sessionType = SDB_SESSION_SPLIT_SRC ;
          }
       }
-      // if nodeID > PMD_BASE_HANDLE_ID, that means the request come from
-      // coord
       else
       {
          sessionType = SDB_SESSION_SHARD ;
@@ -576,6 +582,43 @@ namespace engine
       return "CLSCB" ;
    }
 
+   INT32 _clsMgr::_initRemoteSession( _netRouteAgent *netRouteAgent )
+   {
+      INT32 rc = SDB_OK ;
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+
+      _pResource = SDB_OSS_NEW _coordResource() ;
+      PD_CHECK( NULL != _pResource, SDB_OOM, error, PDERROR,
+                "Failed to malloc _coordResource, rc: %d", rc ) ;
+
+      rc = _pResource->init( netRouteAgent, optCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Init resource failed, rc: %d", rc ) ;
+
+      // set userOwnQueen = TRUE to avoid bug like SEQUOIADBMAINSTREAM-4631
+      // _pSitePropMgr = SDB_OSS_NEW _coordSessionPropMgr( TRUE ) ;
+      _pSitePropMgr = SDB_OSS_NEW _coordSessionPropMgr() ;
+      PD_CHECK( NULL != _pSitePropMgr, SDB_OOM, error, PDERROR,
+                "Failed to malloc _coordSessionPropMgr, rc: %d", rc ) ;
+
+      _pSitePropMgr->setInstanceOption( optCB->getPrefInstStr(),
+                                        optCB->getPrefInstModeStr(),
+                                        optCB->isPreferedStrict(),
+                                        optCB->getPreferedPeriod(),
+                                        PREFER_INSTANCE_TYPE_MASTER ) ;
+      rc = _remoteSessionMgr.init( netRouteAgent, _pSitePropMgr ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Init session manager failed, rc: %d", rc ) ;
+
+      // set remote session manager to pmdController
+      sdbGetPMDController()->setRSManager( &_remoteSessionMgr ) ;
+
+      sdbGetResourceContainer()->setResource( _pResource ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsMgr::init ()
    {
       INT32 rc = SDB_OK ;
@@ -635,7 +678,8 @@ namespace engine
       }
 
       _shdMsgHandlerObj = SDB_OSS_NEW _shdMsgHandler( &_shardSessionMgr,
-                                                      _pShardAdapter ) ;
+                                                      _pShardAdapter,
+                                                      &_remoteSessionMgr ) ;
       if ( !_shdMsgHandlerObj )
       {
          PD_LOG( PDERROR, "Allocate shard message handler failed" ) ;
@@ -682,6 +726,9 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+
+      rc = _initRemoteSession( _shardNetRtAgent ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init remote session, rc: %d", rc ) ;
 
       _shdObj = SDB_OSS_NEW _clsShardMgr( _shardNetRtAgent ) ;
       if ( !_shdObj )
@@ -960,6 +1007,14 @@ namespace engine
       {
          _replObj->final() ;
       }
+
+      _remoteSessionMgr.fini() ;
+
+      if ( NULL != _pResource )
+      {
+         _pResource->fini() ;
+      }
+
       if ( _pShardAdapter )
       {
          _pShardAdapter->fini() ;
@@ -973,6 +1028,8 @@ namespace engine
       SAFE_OSS_DELETE( _replObj ) ;
       SAFE_OSS_DELETE( _shdObj ) ;
       SAFE_OSS_DELETE( _shardNetRtAgent ) ;
+      SAFE_OSS_DELETE( _pSitePropMgr ) ;
+      SAFE_OSS_DELETE( _pResource ) ;
       SAFE_OSS_DELETE( _replNetRtAgent ) ;
       SAFE_OSS_DELETE( _replTimerHandler ) ;
       SAFE_OSS_DELETE( _shdTimerHandler ) ;

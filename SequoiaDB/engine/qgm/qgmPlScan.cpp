@@ -43,6 +43,7 @@
 #include "rtnCB.hpp"
 #include "rtn.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "coordQueryOperator.hpp"
 #include "ossMem.hpp"
 #include "msgMessage.hpp"
@@ -277,11 +278,10 @@ namespace engine
       CHAR *qMsg = NULL ;
       BSONObj selector = _selector.selector() ;
 
-      CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
       coordQueryOperator opr ;
       rtnContextBuf buff ;
 
-      rc = opr.init( pCoord->getResource(), eduCB ) ;
+      rc = opr.init( sdbGetResourceContainer()->getResource(), eduCB ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",

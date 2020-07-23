@@ -173,11 +173,24 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT8 attr = 0 ;
 
+      IRemoteOperator *pRemoteOperator = NULL ;
+
       DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET firstTransLsn = DPS_INVALID_LSN_OFFSET ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
+
+      pRemoteOperator = cb->getRemoteOperator() ;
+      if ( NULL != pRemoteOperator )
+      {
+         rc = pRemoteOperator->transCommit() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to commit remote operator:rc=%d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
 
       curTransID = cb->getTransID() ;
       preTransLsn = cb->getCurTransLsn() ;
@@ -264,6 +277,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNTRANSROLLBACK ) ;
       SDB_ASSERT( cb, "cb can't be null" ) ;
       INT32 rc = SDB_OK;
+      IRemoteOperator *pRemoteOperator = NULL ;
       _dpsMessageBlock mb( DPS_MSG_BLOCK_DEF_LEN );
       DPS_LSN dpsLsn ;
       DPS_LSN_OFFSET curLsnOffset = DPS_INVALID_LSN_OFFSET ;
@@ -279,6 +293,17 @@ namespace engine
       curLsnOffset = cb->getCurTransLsn() ;
       transID = cb->getTransID() ;
       rollbackID = sdbGetTransCB()->getRollbackID( transID ) ;
+
+      pRemoteOperator = cb->getRemoteOperator() ;
+      if ( NULL != pRemoteOperator )
+      {
+         rc = pRemoteOperator->transRollback() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to commit remote operator:rc=%d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
 
       if ( DPS_INVALID_TRANS_ID == transID ||
            DPS_INVALID_LSN_OFFSET == curLsnOffset )

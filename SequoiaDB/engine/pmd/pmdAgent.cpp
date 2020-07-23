@@ -38,7 +38,7 @@
 
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
-#include "pmdSession.hpp"
+#include "pmdLocalSession.hpp"
 #include "pmdProcessor.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"

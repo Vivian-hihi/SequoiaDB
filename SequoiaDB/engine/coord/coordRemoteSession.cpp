@@ -43,6 +43,7 @@
 #include "dpsUtil.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "rtnRemoteMessenger.hpp"
 
 using namespace bson ;
 
@@ -432,6 +433,13 @@ namespace engine
    _coordSessionPropMgr::_coordSessionPropMgr()
    : _mapProps()
    {
+      _useOwnQueue = FALSE ;
+   }
+
+   _coordSessionPropMgr::_coordSessionPropMgr( BOOLEAN useOwnQueen )
+   : _mapProps()
+   {
+      _useOwnQueue = useOwnQueen ;
    }
 
    _coordSessionPropMgr::~_coordSessionPropMgr()
@@ -448,6 +456,15 @@ namespace engine
       propSite.setEduCB( cb ) ;
       propSite.setSite( pSite ) ;
       pSite->setUserData( (UINT64)&propSite ) ;
+
+      if ( _useOwnQueue )
+      {
+         _rtnRemoteSiteHandle *handler = SDB_OSS_NEW _rtnRemoteSiteHandle() ;
+         if ( NULL != handler )
+         {
+            pSite->setHandle( handler ) ;
+         }
+      }
    }
 
    void _coordSessionPropMgr::onUnreg( _pmdRemoteSessionSite *pSite,
@@ -462,6 +479,13 @@ namespace engine
          pSite->setUserData( 0 ) ;
       }
       _mapProps.erase( cb->getTID() ) ;
+      if ( _useOwnQueue )
+      {
+         rtnRemoteSiteHandle *handler =
+                                    (rtnRemoteSiteHandle *)pSite->getHandle() ;
+         SAFE_OSS_DELETE( handler ) ;
+         pSite->setHandle( NULL ) ;
+      }
    }
 
    coordSessionPropSite* _coordSessionPropMgr::getSite( _pmdEDUCB *cb )

@@ -55,7 +55,7 @@ namespace engine
    {
    }
 
-   void _omTransferProcessor::_clearRemoteSession( 
+   void _omTransferProcessor::_clearRemoteSession(
                                              pmdRemoteSessionMgr *rsManager,
                                              pmdRemoteSession *remoteSession )
    {
@@ -67,7 +67,7 @@ namespace engine
    }
 
    INT32 _omTransferProcessor::_sendMsg2Target( const omNodeInfo &nodeInfo,
-                                                MsgHeader *msg, 
+                                                MsgHeader *msg,
                                                 omSdbConnector **connector,
                                                 MsgHeader **result )
    {
@@ -83,20 +83,20 @@ namespace engine
          goto error ;
       }
 
-      rc = conn->init( nodeInfo.hostName, ossAtoi( nodeInfo.service.c_str() ), 
-                       nodeInfo.user, nodeInfo.passwd, 
+      rc = conn->init( nodeInfo.hostName, ossAtoi( nodeInfo.service.c_str() ),
+                       nodeInfo.user, nodeInfo.passwd,
                        nodeInfo.preferedInstance ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "initial the connection failed:host=%s,port=%s,rc=%d", 
+         PD_LOG( PDERROR, "initial the connection failed:host=%s,port=%s,rc=%d",
                  nodeInfo.hostName.c_str(), nodeInfo.service.c_str(), rc ) ;
          goto error ;
       }
 
       rc = conn->sendMessage( msg ) ;
       if ( SDB_OK != rc )
-      {  
-         PD_LOG( PDERROR, "send msg to target failed:host=%s,port=%s,rc=%d", 
+      {
+         PD_LOG( PDERROR, "send msg to target failed:host=%s,port=%s,rc=%d",
                  nodeInfo.hostName.c_str(), nodeInfo.service.c_str(), rc ) ;
          goto error ;
       }
@@ -237,12 +237,12 @@ namespace engine
 
    void _omTransferProcessor::attach( pmdSession *session )
    {
-      attachSession( session ) ;
+      _attachSession( session ) ;
    }
 
    void _omTransferProcessor::detach()
    {
-      detachSession() ;
+      _detachSession() ;
    }
 
    void _omTransferProcessor::_onAttach()

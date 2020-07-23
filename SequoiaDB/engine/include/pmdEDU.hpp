@@ -61,6 +61,7 @@
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
 #include "pmdTransExecutor.hpp"
+#include "clsRemoteOperator.hpp"
 #endif // SDB_ENGINE
 
 #include <string>
@@ -203,6 +204,9 @@ namespace engine
          void              unsetBlock() ;
          EDU_BLOCK_TYPE    getBlockType() const ;
          BOOLEAN           isBlocked() const ;
+
+         BOOLEAN           isAffectGIndex() const ;
+         void              setIsAffectGIndex( BOOLEAN isAffect ) ;
 
    public:
       _pmdEDUCB( _pmdEDUMgr *mgr, INT32 type ) ;
@@ -422,6 +426,15 @@ namespace engine
 
       void     setOrgReplSize( INT16 replSize ) { _orgReplSize = replSize ; }
       INT16    getOrgReplSize() const { return _orgReplSize ; }
+
+      // remote operator
+      UINT64            getRemoteSucCount() ;
+      UINT64            getRemoteFailureCount() ;
+
+      sdbRemoteOpCtrl*  getRemoteOpCtrl() ;
+      IRemoteOperator*  getRemoteOperator() ;
+      INT32             getOrCreateRemoteOperator(
+                                     IRemoteOperator **ppOperator ) ;
    #endif // SDB_ENGINE
 
    protected:
@@ -513,6 +526,9 @@ namespace engine
 
       INT16                   _orgReplSize ;
 
+      sdbRemoteOpCtrl         _remoteOpCtrl ;
+      IRemoteOperator         *_pRemoteOperator ;
+
    #endif // SDB_ENGINE
 
       /*
@@ -554,6 +570,8 @@ namespace engine
       INT64                   _curAutoTransCtxID ;
       utilMemListPool         *_pMemPool ;
       monClassQuery           *_monQueryCB ;
+
+      BOOLEAN                 _isAffectGIndex ;
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 

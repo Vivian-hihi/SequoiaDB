@@ -71,7 +71,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN, "_pmdAsyncSession::_pmdAsyncSession" )
    _pmdAsyncSession::_pmdAsyncSession( UINT64 sessionID )
-   :_pendingMsgNum( 0 ), _holdCount( 0 )
+   :_pmdSessionBase(), _pendingMsgNum( 0 ), _holdCount( 0 )
    {
       PD_TRACE_ENTRY ( SDB__PMDSN ) ;
       _lockFlag    = FALSE ;
@@ -1073,7 +1073,7 @@ namespace engine
             rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
+               PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]",
                         pSession->sessionName(), rc ) ;
                SDB_THREAD_FREE( pNewBuff ) ;
                SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;

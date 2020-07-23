@@ -40,6 +40,7 @@
    #include "omManager.hpp"
    #include "msgAuth.hpp"
    #include "coordCB.hpp"
+   #include "clsResourceContainer.hpp"
    #include "coordAuthOperator.hpp"
    #include "msgMessage.hpp"
    #include "netFrame.hpp"
@@ -345,8 +346,7 @@ namespace engine
          INT64 contextID = -1 ;
          rtnContextBuf buf ;
 
-         CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
-         coordResource *pResource = pCoordcb->getResource() ;
+         coordResource *pResource = sdbGetResourceContainer()->getResource() ;
 
          coordAuthOperator opr ;
          rc = opr.init( pResource, _pEDUCB ) ;

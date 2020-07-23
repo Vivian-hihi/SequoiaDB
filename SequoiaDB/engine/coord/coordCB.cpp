@@ -42,6 +42,7 @@
 #include "coordOmStrategyJob.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "clsResourceContainer.hpp"
 
 using namespace bson ;
 
@@ -82,11 +83,6 @@ namespace engine
       _pDpsCB    = NULL ;
       _pCollectionName = NULL ;
       _cmdCollectionName.clear() ;
-   }
-
-   coordResource* _CoordCB::getResource()
-   {
-      return &_resource ;
    }
 
    netRouteAgent* _CoordCB::getRouteAgent()
@@ -162,6 +158,8 @@ namespace engine
 
       // set remote session manager to pmdController
       sdbGetPMDController()->setRSManager( &_remoteSessionMgr ) ;
+
+      sdbGetResourceContainer()->setResource( &_resource ) ;
 
       // 3. create listen socket
       nodeID.columns.serviceID = _shardServiceID ;
@@ -1003,8 +1001,8 @@ retry :
       /// run command
       if ( CMD_INVALIDATE_CACHE == pCommand->type() )
       {
-         getResource()->invalidateCataInfo() ;
-         getResource()->invalidateGroupInfo() ;
+         sdbGetResourceContainer()->getResource()->invalidateCataInfo() ;
+         sdbGetResourceContainer()->getResource()->invalidateGroupInfo() ;
       }
       else
       {

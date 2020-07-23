@@ -80,6 +80,31 @@ namespace engine
    #define MON_DUMP_DFT_BUILDER_SZ  ( 1024 )
    #define MON_DUMP_BUFF_STAT_SZ    ( 128 )
 
+   static void monAddGlobalIndexInfo( const BSONObj &indexObj,
+                                      BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isGlobal = FALSE ;
+      rc = rtnGetBooleanElement( indexObj, IXM_FIELD_NAME_ISGLOBAL, isGlobal ) ;
+      if ( SDB_OK != rc )
+      {
+         // do not have global info
+         builder.appendBool( IXM_FIELD_NAME_ISGLOBAL, FALSE ) ;
+         return ;
+      }
+
+      if ( isGlobal )
+      {
+         builder.appendBool( IXM_FIELD_NAME_ISGLOBAL, TRUE ) ;
+         builder.append( IXM_FIELD_NAME_GLOBAL_OPTION,
+                      indexObj.getObjectField(IXM_FIELD_NAME_GLOBAL_OPTION) ) ;
+      }
+      else
+      {
+         builder.appendBool( IXM_FIELD_NAME_ISGLOBAL, FALSE ) ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONGETNODENAME, "monGetNodeName" )
    static CHAR *monGetNodeName ( CHAR *nodeName,
                                  UINT32 size,
@@ -980,6 +1005,7 @@ namespace engine
                         indexObj.getBoolField(IXM_ENFORCED_FIELD) ) ;
             ob.append ( IXM_NOTNULL_FIELD,
                         indexObj.getBoolField(IXM_NOTNULL_FIELD) ) ;
+            monAddGlobalIndexInfo( indexObj, ob ) ;
             BSONObj range = indexObj.getObjectField( IXM_2DRANGE_FIELD ) ;
             if ( !range.isEmpty() )
             {
@@ -3919,6 +3945,7 @@ namespace engine
                       indexObj.getBoolField( IXM_ENFORCED_FIELD ) ) ;
          sub.append ( IXM_NOTNULL_FIELD,
                       indexObj.getBoolField( IXM_NOTNULL_FIELD ) ) ;
+         monAddGlobalIndexInfo( indexObj, sub ) ;
          BSONObj range = indexObj.getObjectField( IXM_2DRANGE_FIELD ) ;
          if ( !range.isEmpty() )
          {

@@ -40,6 +40,7 @@
 #include "msgMessageFormat.hpp"
 #include "schedDef.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "coordResource.hpp"
 #include "msgMessage.hpp"
 #include "coordRemoteSession.hpp"
@@ -136,7 +137,7 @@ namespace engine
          {
             CHAR *pCopyData = ( CHAR* )pOldHeader ;
             UINT32 copyLen = pOldHeader->messageLength ;
-   
+
             if ( MSG_PACKET == pOldHeader->opCode )
             {
                pCopyData += sizeof( MsgHeader ) ;
@@ -673,7 +674,7 @@ namespace engine
                                                           UINT32 &nodeSiteVer )
    {
       INT32 rc = SDB_OK ;
-      coordResource *pResource = pmdGetKRCB()->getCoordCB()->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
       schedItem *pItem = NULL ;
       schedInfo *pInfo = NULL ;
 
@@ -700,7 +701,7 @@ namespace engine
          if ( SDB_OK == rc )
          {
             pInfo->fromBSON( ptr->toBSON( OM_STRATEGY_MASK_BASEINFO ), FALSE ) ;
-   
+
             if ( pItem->_ptr.get() &&
                  ( pItem->_ptr->getTaskID() != (UINT64)pInfo->getTaskID() ||
                    0 != ossStrcmp( pItem->_ptr->getTaskName(),
@@ -799,7 +800,7 @@ namespace engine
       pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
       if ( pSite->getNodeVer( nodeID.value, nodeSiteVer ) )
       {
-         ossUnpack32From64( nodeSiteVer, nodeSiteSchedVer, 
+         ossUnpack32From64( nodeSiteVer, nodeSiteSchedVer,
                             nodeSiteSessionVer ) ;
       }
 

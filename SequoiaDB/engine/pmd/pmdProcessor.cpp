@@ -59,13 +59,13 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-
+#include "clsResourceContainer.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
-   _pmdDataProcessor::_pmdDataProcessor()
+   _pmdDataProcessor::_pmdDataProcessor() : _pmdProcessorBase()
    {
       _pKrcb    = pmdGetKRCB() ;
       _pDMSCB   = _pKrcb->getDMSCB() ;
@@ -1692,8 +1692,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 opCode = msg->opCode ;
-      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
-      coordResource *pResource = pCoordCB->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
 
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROCOORDMSG ) ;
 
@@ -1980,7 +1979,7 @@ namespace engine
       coordResource *pResource = NULL ;
       coordCommandFactory *pFactory = NULL ;
       coordOperator *pOpr = NULL ;
-      pResource = pmdGetKRCB()->getCoordCB()->getResource() ;
+      pResource = sdbGetResourceContainer()->getResource() ;
 
       CHAR *pCollectionName            = NULL ;
       INT32 flag                       = 0 ;
@@ -2197,8 +2196,7 @@ namespace engine
    INT32 _pmdCoordProcessor::doRollback()
    {
       INT32 rc = SDB_OK ;
-      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
-      coordResource *pResource = pCoordCB->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
       DPS_TRANS_ID transID = eduCB()->getTransID() ;
 
       coordTransRollback rollbackOpr ;
@@ -2229,8 +2227,7 @@ namespace engine
    INT32 _pmdCoordProcessor::doCommit()
    {
       INT32 rc = SDB_OK ;
-      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
-      coordResource *pResource = pCoordCB->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
 
       INT64 contextID = -1 ;
       DPS_TRANS_ID transID = eduCB()->getTransID() ;
@@ -2270,8 +2267,7 @@ namespace engine
    INT32 _pmdCoordProcessor::_beginTrans( BOOLEAN isAutoCommit )
    {
       INT32 rc = SDB_OK ;
-      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
-      coordResource *pResource = pCoordCB->getResource() ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
 
       coordTransBegin oprBegin ;
       rc = oprBegin.init( pResource, eduCB() ) ;

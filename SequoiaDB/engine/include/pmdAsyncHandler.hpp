@@ -40,6 +40,9 @@
 #include "netMsgHandler.hpp"
 #include "pmdEDU.hpp"
 #include "schedTaskAdapterBase.hpp"
+#if defined ( SDB_ENGINE )
+#include "pmdRemoteSession.hpp"
+#endif
 
 namespace engine
 {
@@ -77,8 +80,14 @@ namespace engine
    class _pmdAsyncMsgHandler : public _netMsgHandler
    {
       public:
+   #if defined ( SDB_ENGINE )
+         _pmdAsyncMsgHandler( _pmdAsycSessionMgr *pSessionMgr,
+                              _schedTaskAdapterBase *pTaskAdapter = NULL,
+                              _pmdRemoteSessionMgr *pRemoteSessionMgr = NULL ) ;
+   #else
          _pmdAsyncMsgHandler( _pmdAsycSessionMgr *pSessionMgr,
                               _schedTaskAdapterBase *pTaskAdapter = NULL ) ;
+   #endif
          virtual ~_pmdAsyncMsgHandler () ;
 
          OSS_INLINE void attach( pmdEDUCB *cb ) { _pMgrEDUCB = cb; }
@@ -88,6 +97,10 @@ namespace engine
                                   const _MsgHeader *header,
                                   const CHAR *msg );
          virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
+
+         virtual void  handleConnect( const NET_HANDLE &handle,
+                                       _MsgRouteID id,
+                                       BOOLEAN isPositive ) ;
 
          virtual void  onStop() ;
 
@@ -120,6 +133,10 @@ namespace engine
          _pmdAsycSessionMgr      *_pSessionMgr ;
          _schedTaskAdapterBase   *_pTaskAdapter ;
          pmdEDUCB                *_pMgrEDUCB ;
+
+   #if defined ( SDB_ENGINE )
+         _pmdRemoteSessionMgr    *_pRemoteSessionMgr ;
+   #endif
 
    } ;
    typedef _pmdAsyncMsgHandler pmdAsyncMsgHandler ;

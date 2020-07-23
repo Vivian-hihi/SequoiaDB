@@ -42,8 +42,8 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "sdbInterface.hpp"
-#include "pmdSessionBase.hpp"
-#include "pmdProcessorBase.hpp"
+#include "pmdSession.hpp"
+#include "pmdIProcessor.hpp"
 
 namespace engine
 {

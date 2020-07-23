@@ -115,6 +115,8 @@
 #define FIELD_NAME_SUBOBJSNUM                "SubObjsNum"
 #define FIELD_NAME_SUBOBJSSIZE               "SubObjsSize"
 #define FIELD_NAME_ENSURE_SHDINDEX           "EnsureShardingIndex"
+#define FIELD_NAME_GLOBAL_INDEX              "GlobalIndex"
+#define FIELD_NAME_CL_UNIQUEID               "CLUniqueID"
 #define FIELD_NAME_SHARDTYPE                 "ShardingType"
 #define FIELD_NAME_SHARDTYPE_RANGE           "range"
 #define FIELD_NAME_SHARDTYPE_HASH            "hash"
@@ -593,6 +595,8 @@
 #define IXM_FIELD_NAME_SCAN_EXTLID           "ScanExtentLID"
 #define IXM_FIELD_NAME_SORT_BUFFER_SIZE      "SortBufferSize"
 #define IXM_FIELD_NAME_NOTNULL               "NotNull"
+#define IXM_FIELD_NAME_ISGLOBAL              "IsGlobal"
+#define IXM_FIELD_NAME_GLOBAL_OPTION         "GlobalOption"
 
 
 #define CMD_ADMIN_PREFIX                     "$"

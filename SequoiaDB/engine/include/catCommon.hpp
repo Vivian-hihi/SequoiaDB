@@ -191,6 +191,10 @@ namespace engine
                              BOOLEAN &isExist,
                              BSONObj &obj,
                              pmdEDUCB *cb ) ;
+
+   INT32 catGetCSDomain( const CHAR * pCollectionSpace, pmdEDUCB * cb,
+                         string &domain ) ;
+
    INT32 catGetDomainCSs ( const CHAR * domain, pmdEDUCB * cb,
                            ossPoolList< std::string > & collectionSpaces ) ;
 
@@ -296,6 +300,10 @@ namespace engine
    /* Get Collection */
    INT32 catGetCollection ( const string &clName, BSONObj &boCollection,
                             _pmdEDUCB *cb ) ;
+
+   /* Get collection's name by unique id */
+   INT32 catGetCollectionNameByUID( utilCLUniqueID clUID, string &clName,
+                                    _pmdEDUCB *cb ) ;
 
    /* Check whether collection is main collection */
    INT32 catCheckMainCollection ( const BSONObj &boCollection,
@@ -427,6 +435,24 @@ namespace engine
    INT32 catUnlinkCSStep ( const string &mainCLName, const string &csName,
                            _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                            INT16 w ) ;
+
+   /* add global index info */
+   INT32 catAddGlobalIndexStep ( const string &clName, BSONObj &gIndexInfo,
+                                 _pmdEDUCB *cb, SDB_DMSCB *pDmsCB,
+                                 SDB_DPSCB *pDpsCB, INT16 w,
+                                 BOOLEAN *isAltered = NULL ) ;
+
+   INT32 catDelGlobalIndexByNameStep ( const string &clName,
+                                       const string &indexName,
+                                       _pmdEDUCB *cb, SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB, INT16 w,
+                                       BOOLEAN *isAltered = NULL ) ;
+
+   /* delete global index info */
+   INT32 catDelGlobalIndexStep ( const string &clName, BSONObj &gIndexInfo,
+                                 _pmdEDUCB *cb, SDB_DMSCB *pDmsCB,
+                                 SDB_DPSCB *pDpsCB, INT16 w,
+                                 BOOLEAN *isAltered = NULL ) ;
 
    /* Check and build Collection record */
    INT32 catCheckAndBuildCataRecord ( const BSONObj &boCollection,

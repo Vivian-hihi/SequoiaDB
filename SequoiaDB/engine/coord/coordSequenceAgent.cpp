@@ -35,6 +35,7 @@
 #include "coordCommandSequence.hpp"
 #include "coordRemoteSession.hpp"
 #include "coordCB.hpp"
+#include "clsResourceContainer.hpp"
 #include "catGTSDef.hpp"
 #include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
@@ -936,7 +937,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to build sequence invalidate cache "
                    "msg, rc: %d", rc ) ;
 
-      rc = invalidator.init( sdbGetCoordCB()->getResource(), eduCB ) ;
+      rc = invalidator.init( sdbGetResourceContainer()->getResource(), eduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init sequence invalidate cache "
                  "command, rc: %d", rc ) ;
 

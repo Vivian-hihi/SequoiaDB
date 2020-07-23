@@ -354,6 +354,8 @@ namespace engine
       _isTransCtx          = FALSE ;
       _monQueryCB          = NULL ;
       _monCtxCB.setContextID( contextID ) ;
+
+      _isAffectGIndex      = FALSE ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -698,6 +700,13 @@ namespace engine
    INT32 _rtnContextBase::_prepareDataMonitor ( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN isSetAffect = FALSE ;
+
+      if ( isAffectGIndex() && NULL != cb && !cb->isAffectGIndex() )
+      {
+         cb->setIsAffectGIndex( TRUE ) ;
+         isSetAffect = TRUE ;
+      }
 
       if ( enabledMonContext() )
       {
@@ -712,6 +721,12 @@ namespace engine
       else
       {
          rc = _prepareData( cb ) ;
+      }
+
+      if ( isSetAffect )
+      {
+         cb->setIsAffectGIndex( FALSE ) ;
+         isSetAffect = FALSE ;
       }
 
       return rc ;

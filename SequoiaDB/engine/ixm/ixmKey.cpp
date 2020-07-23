@@ -43,6 +43,9 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "ixmTrace.hpp"
+
+using namespace bson ;
+
 namespace engine
 {
    // each field has a 1 byte prefix, including 8bits:
@@ -366,27 +369,55 @@ namespace engine
       return TRUE ;
    }
 
-   void _ixmKey::_toBson(BSONObjBuilder &b) const
+   void _ixmKey::_toBson(BSONObjBuilder &b, BSONObjIterator *keyIter ) const
    {
+      const CHAR *pFieldName = NULL ;
       const UINT8 *p = _keyData ;
       while ( TRUE )
       {
+         if ( NULL != keyIter )
+         {
+            if ( keyIter->more() )
+            {
+               pFieldName = keyIter->next().fieldName() ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Index key and value is not match" ) ;
+               throw pdGeneralException( "Index key and value is not match" ) ;
+            }
+         }
+         else
+         {
+            pFieldName = "" ;
+         }
+
          UINT8 bits = *p++ ;
          // type and cX and cY
          switch ( bits & 0x3F )
          {
-         case cminkey: b.appendMinKey("") ;      break ;
-         case cnull:   b.appendNull("") ;        break ;
-         case cundefined: b.appendUndefined("") ; break ;
-         case cfalse:  b.appendBool("", FALSE) ; break ;
-         case ctrue:   b.appendBool("", TRUE ) ; break ;
-         case cmaxkey: b.appendMaxKey("") ;      break ;
+         case cminkey: b.appendMinKey(pFieldName) ;      break ;
+         case cnull:   b.appendNull(pFieldName) ;        break ;
+         case cundefined: b.appendUndefined(pFieldName) ; break ;
+         case cfalse:  b.appendBool(pFieldName, FALSE) ; break ;
+         case ctrue:   b.appendBool(pFieldName, TRUE ) ; break ;
+         case cmaxkey: b.appendMaxKey(pFieldName) ;      break ;
          case cstring:
          {
+            const CHAR *pTmpFildName = pFieldName ;
             UINT8 len = *p++ ;
             BufBuilder &bb = b.bb() ;
             bb.appendNum((CHAR)String) ; // field type
+
+            // ***** fieldName *******
+            while ( '\0' != *pTmpFildName )
+            {
+               bb.appendUChar( *pTmpFildName ) ;
+               ++pTmpFildName ;
+            }
             bb.appendUChar(0) ;          // field name
+            // ***** fieldName *******
+
             bb.appendNum(len+1) ;        // string len
             bb.appendBuf(p, len) ;       // string text
             bb.appendUChar(0) ;          // '\0'
@@ -394,7 +425,7 @@ namespace engine
             break ;
          }
          case coid:
-            b.appendOID ( "", (OID*) p ) ;
+            b.appendOID ( pFieldName, (OID*) p ) ;
             p += sizeof(OID) ;
             break ;
          case cbindata:
@@ -405,25 +436,25 @@ namespace engine
             {
                subtype = (subtype & 0x07)|0x80 ;
             }
-            b.appendBinData ( "", len, (BinDataType)subtype, ++p ) ;
+            b.appendBinData ( pFieldName, len, (BinDataType)subtype, ++p ) ;
             p += len ;
             break ;
          }
          case cdate:
-            b.appendDate("", (Date_t&) *p) ;
+            b.appendDate(pFieldName, (Date_t&) *p) ;
             p += sizeof(Date_t) ;
             break ;
          case cdouble:
-            b.append("", (FLOAT64&) *p) ;
+            b.append(pFieldName, (FLOAT64&) *p) ;
             p += sizeof(FLOAT64) ;
             break ;
          case cint:
-            b.append("", static_cast<SINT32>((reinterpret_cast<const
+            b.append(pFieldName, static_cast<SINT32>((reinterpret_cast<const
                      PackedDouble&>(*p)).d)) ;
             p+=sizeof(FLOAT64) ;
             break ;
          case clong:
-            b.append("", static_cast<SINT64>((reinterpret_cast<const
+            b.append(pFieldName, static_cast<SINT64>((reinterpret_cast<const
                      PackedDouble&>(*p)).d)) ;
             p+=sizeof(FLOAT64) ;
             break ;
@@ -434,6 +465,15 @@ namespace engine
          }
          if ( (bits & cHASMORE) == 0 )
             break ;
+      }
+
+      if ( NULL != keyIter )
+      {
+         if ( keyIter->more() )
+         {
+            PD_LOG( PDERROR, "Index key and value is not match" ) ;
+            throw pdGeneralException( "Index key and value is not match" ) ;
+         }
       }
    }
 
@@ -457,6 +497,65 @@ namespace engine
          _toBson(b);
          return BSONObj(b.obj());
       }
+   }
+
+   INT32 _ixmKey::toRecord( const BSONObj keyPattern,
+                            BSONObjBuilder &resultBuilder ) const
+   {
+      INT32 rc = SDB_OK ;
+      if ( 0 == _keyData )
+      {
+         goto done ;
+      }
+
+      if ( isCompactFormat() )
+      {
+         try
+         {
+            BSONObjIterator iterKey( keyPattern ) ;
+            _toBson( resultBuilder, &iterKey ) ;
+            goto done ;
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Catch exception:%s", e.what() ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObj obj = _bson() ;
+         BSONObjIterator iterValue( obj ) ;
+         BSONObjIterator iterKey( keyPattern ) ;
+         while ( iterKey.more() && iterValue.more() )
+         {
+            BSONElement keyEle = iterKey.next() ;
+            BSONElement valueEle = iterValue.next() ;
+            resultBuilder.appendAs( valueEle, keyEle.fieldName() ) ;
+         }
+
+         if ( iterKey.more() || iterValue.more() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Index key and value is not match:key=%s,value=%s"
+                    ",rc=%d", keyPattern.toString().c_str(),
+                    toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Catch exception:%s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // convert a regular BSON object to key

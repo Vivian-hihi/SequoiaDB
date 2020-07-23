@@ -65,7 +65,7 @@ namespace engine
       // loop through each extent
       while ( DMS_INVALID_EXTENT != _currentExtentID )
       {
-         rc = _mbContext->mbLock( SHARED ) ;
+         rc = _mbLockAndCheck( SHARED ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
@@ -470,7 +470,7 @@ namespace engine
       // As we do not take any lock before this place, the cs/cl/index may have
       // been dropped already. So after taking the lock, we need to check again
       // if this is the original index.
-      rc = _mbContext->mbLock( EXCLUSIVE ) ;
+      rc = _mbLockAndCheck( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       mbLocked = TRUE ;
       for ( idxID = 0; idxID < DMS_COLLECTION_MAX_INDEX; ++idxID )

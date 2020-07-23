@@ -46,6 +46,7 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "coordSequenceAgent.hpp"
+#include "clsResourceContainer.hpp"
 
 using namespace bson;
 
@@ -228,6 +229,39 @@ namespace engine
 
       PD_TRACE_EXIT ( COORD_DATA2PHASE_DOAUDIT ) ;
       return SDB_OK ;
+   }
+
+   INT32 _coordDataCMD2Phase::_dropCL( const CHAR *clName, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 contextID = -1 ;
+      rtnContextBuf contextBuff ;
+      CHAR *pMsg = NULL ;
+      INT32 buffSize = 0 ;
+
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
+
+      _coordCMDDropCollection cmdDropCL ;
+      rc = cmdDropCL.init( pResource, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init drop cl ommand:rc=%d", rc ) ;
+
+      rc = msgBuildDropCLMsg( &pMsg, &buffSize, clName, 0, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build drop cl request:"
+                   "cl=%s,rc=%d", clName, rc ) ;
+
+      rc = cmdDropCL.execute( (MsgHeader *)pMsg, cb, contextID, &contextBuff ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to drop cl(%s):rc=%d",
+                   clName, rc ) ;
+      SDB_ASSERT( -1 == contextID, "contextID must be -1" ) ;
+
+   done:
+      if ( NULL != pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -1267,6 +1301,53 @@ namespace engine
    {
    }
 
+   INT32 _coordCMDTruncate::_truncateCL( const CHAR *clName, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 contextID = -1 ;
+      rtnContextBuf contextBuff ;
+      CHAR *pMsg = NULL ;
+      INT32 buffSize = 0 ;
+      BSONObj query ;
+      const CHAR *pCommand    = CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE ;
+      _coordCMDTruncate cmdTruncateCL ;
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_COLLECTION, clName ) ;
+         query = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pMsg, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build command, command: %s, rc: %d",
+                   pCommand, rc ) ;
+
+      rc = cmdTruncateCL.init( _pResource, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init drop cl ommand:rc=%d", rc ) ;
+
+      rc = cmdTruncateCL.execute( (MsgHeader *)pMsg, cb, contextID, &contextBuff ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to drop cl(%s):rc=%d",
+                   clName, rc ) ;
+      SDB_ASSERT( -1 == contextID, "contextID must be -1" ) ;
+
+   done:
+      if ( NULL != pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( COORD_TRUNCATE_EXE, "_coordCMDTruncate::execute" )
    INT32 _coordCMDTruncate::execute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
@@ -1279,6 +1360,10 @@ namespace engine
       BSONObj boQuery ;
       const CHAR *fullName = NULL ;
       CoordGroupList cataGrpLst ;
+      CoordCataInfoPtr cataPtr ;
+      CLS_GINDEX_LIST globalIndexes ;
+      CLS_GINDEX_LIST_ITER iter ;
+      coordCataSel cataSel ;
 
       rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
                             NULL, NULL, &option, NULL,
@@ -1320,12 +1405,54 @@ namespace engine
          goto error ;
       }
 
-      // remove cache of related sequences.
-      if ( getCataPtr().get() )
+      // force to update cata info before get global index
+      rc = cataSel.bind( _pResource, fullName, cb, TRUE, TRUE ) ;
+      if ( rc )
       {
-         rc = coordInvalidateSequenceCache( getCataPtr(), cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to invalidate sequence cache of "
-                      "cl[%s], rc: %d", fullName, rc ) ;
+         PD_LOG( PDERROR, "Get or update collection[%s]'s catalog info "
+                 "failed, rc: %d", fullName, rc ) ;
+         goto error ;
+      }
+
+      _cataPtr = cataSel.getCataPtr() ;
+
+      // remove cache of related sequences.
+      rc = coordInvalidateSequenceCache( getCataPtr(), cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to invalidate sequence cache of "
+                   "cl[%s], rc: %d", fullName, rc ) ;
+
+      // remove global index if any
+      rc = getCataPtr()->getGlobalIndexes( globalIndexes ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get global index, rc: %d", rc ) ;
+
+      for ( iter = globalIndexes.begin(); iter != globalIndexes.end() ;
+            ++iter )
+      {
+         CoordCataInfoPtr cataPtr ;
+         utilCLUniqueID clUID = iter->getIndexCollectionUID() ;
+         rc = _pResource->updateCataInfoByCLUID( clUID, cataPtr, cb ) ;
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to get cata info:clUID=%lld,rc=%d",
+                    clUID, rc ) ;
+            continue ;
+         }
+
+         rc = _truncateCL( cataPtr->getName(), cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to truncate cl:cl=%s,rc=%d",
+                    cataPtr->getName(), rc ) ;
+            continue ;
+         }
+
+         PD_LOG( PDEVENT, "Truncate index cl(%s) success", cataPtr->getName() ) ;
       }
 
    done:
@@ -1498,6 +1625,132 @@ namespace engine
                                                        INT32 bufSize,
                                                        pmdEDUCB *cb )
    {
+   }
+
+   INT32 _coordCMDDropCollectionSpace::_generateDataMsg (
+                                                MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                coordCMDArguments *pArgs,
+                                                const vector<BSONObj> &cataObjs,
+                                                CHAR **ppMsgBuf,
+                                                INT32 *pBufSize )
+   {
+      INT32 rc = SDB_OK ;
+      // { GlobalIndex:[ { CLUniqueID: 12345 } ], Group: [{}, {}]}
+      BSONObj obj ;
+      BSONObj gIndexObjs ;
+      BOOLEAN haveGlobalIndex = FALSE ;
+
+      PD_CHECK( cataObjs.size() == 1, SDB_INVALIDARG , error, PDERROR,
+                "Catalog objs size must be 1" ) ;
+
+      obj = cataObjs[0] ;
+
+      rc = rtnGetArrayElement( obj, CAT_GLOBAL_INDEX, gIndexObjs ) ;
+      if ( SDB_OK == rc )
+      {
+         haveGlobalIndex = TRUE ;
+      }
+      else if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         haveGlobalIndex = FALSE ;
+         rc = SDB_OK ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field(%s):obj=%s,rc=%d",
+                   CAT_GLOBAL_INDEX, obj.toString().c_str(), rc ) ;
+
+      if ( haveGlobalIndex )
+      {
+         BSONElement element ;
+         BSONObj gIndexInfo ;
+         BSONObjIterator indexIter( gIndexObjs ) ;
+         while ( indexIter.more() )
+         {
+            INT64 clUID ;
+            element = indexIter.next() ;
+            PD_CHECK( Object == element.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Element must be object:element=%s,rc=%d",
+                   element.toString().c_str(), rc ) ;
+
+            // { CLUniqueID: 12345 }
+            gIndexInfo = element.embeddedObject() ;
+            rc = rtnGetNumberLongElement( gIndexInfo, CAT_GIDX_CL_UNIQUEID,
+                                          clUID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get index cl name from "
+                         "index info(%s):rc=%d", gIndexInfo.toString().c_str(),
+                         rc ) ;
+
+            _indexCLList.push_back( (utilCLUniqueID)clUID ) ;
+         }
+      }
+
+      pMsg->opCode = MSG_BS_QUERY_REQ ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDDropCollectionSpace::_doOnDataGroup (
+                                              MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              rtnContextCoord **ppContext,
+                                              coordCMDArguments *pArgs,
+                                              const CoordGroupList &groupLst,
+                                              const vector<BSONObj> &cataObjs,
+                                              CoordGroupList &sucGroupLst )
+   {
+      INT32 rc = SDB_OK ;
+      UTIL_UNIQUE_LIST_ITER iter = _indexCLList.begin() ;
+      for ( iter = _indexCLList.begin(); iter != _indexCLList.end(); ++iter )
+      {
+         CoordCataInfoPtr cataPtr ;
+         rc = _pResource->updateCataInfoByCLUID( *iter, cataPtr, cb ) ;
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to get cata info:clUID=%lld,rc=%d",
+                    *iter, rc ) ;
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         rc = _dropCL( cataPtr->getName(), cb ) ;
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to drop cl:cl=%s,rc=%d",
+                    cataPtr->getName(), rc ) ;
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         PD_LOG( PDEVENT, "Drop index cl(%s) success", cataPtr->getName() ) ;
+      }
+
+      rc = _coordDataCMD2Phase::_doOnDataGroup( pMsg, cb, ppContext, pArgs,
+                                                groupLst, cataObjs,
+                                                sucGroupLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to do on data group:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_DROPCS_DOCOMPLETE, "_coordCMDDropCollectionSpace::_doComplete" )
@@ -2021,6 +2274,10 @@ namespace engine
                }
                _pResource->addCataInfo( cataPtr ) ;
                ((MsgOpQuery*)(*ppMsgBuf))->version = cataPtr->getVersion() ;
+
+               rc = cataPtr->getGlobalIndexes( _globalIndexes ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get global index info:"
+                            "rc=%d", rc ) ;
             }
          }
          catch ( std::exception &e )
@@ -2042,6 +2299,64 @@ namespace engine
          *ppMsgBuf = NULL ;
          *pBufSize = 0 ;
       }
+      goto done ;
+   }
+
+   INT32 _coordCMDDropCollection::_doOnDataGroup (
+                                                MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                rtnContextCoord **ppContext,
+                                                coordCMDArguments *pArgs,
+                                                const CoordGroupList &groupLst,
+                                                const vector<BSONObj> &cataObjs,
+                                                CoordGroupList &sucGroupLst )
+   {
+      INT32 rc = SDB_OK ;
+      CLS_GINDEX_LIST_ITER iter ;
+
+      for ( iter = _globalIndexes.begin(); iter != _globalIndexes.end() ;
+            ++iter )
+      {
+         CoordCataInfoPtr cataPtr ;
+         utilCLUniqueID clUID = iter->getIndexCollectionUID() ;
+         rc = _pResource->updateCataInfoByCLUID( clUID, cataPtr, cb ) ;
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to get cata info:clUID=%lld,rc=%d",
+                    clUID, rc ) ;
+            continue ;
+         }
+
+         rc = _dropCL( cataPtr->getName(), cb ) ;
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to drop cl:cl=%s,rc=%d",
+                    cataPtr->getName(), rc ) ;
+            continue ;
+         }
+
+         PD_LOG( PDEVENT, "Drop index cl(%s) success", cataPtr->getName() ) ;
+      }
+
+      rc = _coordDataCMD3Phase::_doOnDataGroup( pMsg, cb, ppContext, pArgs,
+                                                groupLst, cataObjs,
+                                                sucGroupLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to do on data group:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -4040,6 +4355,9 @@ namespace engine
                                       FALSE ) ;
    _coordCMDCreateIndex::_coordCMDCreateIndex()
    {
+      _isGlobalIndex = FALSE ;
+      _isIndexCSCreated = FALSE ;
+      _isIndexCLCreated = FALSE ;
    }
 
    _coordCMDCreateIndex::~_coordCMDCreateIndex()
@@ -4053,10 +4371,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_CRTIDX_PARSEMSG ) ;
 
+      CHAR *pHint = NULL ;
+
       try
       {
-         BSONObj boIndex ;
-
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION,
                                       pArgs->_targetName ) ;
          if ( rc )
@@ -4074,8 +4392,10 @@ namespace engine
             goto error ;
          }
 
+         _clName = pArgs->_targetName ;
+
          rc = rtnGetObjElement( pArgs->_boQuery, FIELD_NAME_INDEX,
-                                boIndex ) ;
+                                _boIndex ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
@@ -4085,7 +4405,7 @@ namespace engine
          }
 
          // get embedded index name
-         rc = rtnGetSTDStringElement( boIndex, IXM_FIELD_NAME_NAME,
+         rc = rtnGetSTDStringElement( _boIndex, IXM_FIELD_NAME_NAME,
                                       _indexName ) ;
          if ( rc )
          {
@@ -4100,6 +4420,19 @@ namespace engine
                     getName() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
+         }
+
+         PD_CHECK( !_boIndex.hasField( IXM_GLOBAL_OPTION_FIELD ), SDB_INVALIDARG,
+                   error, PDERROR, "Index(%s) contain invalid field(%s):rc=%d",
+                   _boIndex.toString().c_str(), IXM_GLOBAL_OPTION_FIELD, rc ) ;
+
+         rc = msgExtractQuery( (CHAR *)pMsg, NULL, NULL, NULL, NULL, NULL,
+                               NULL, NULL, &pHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse message for command[%s] failed, "
+                      "rc: %d", getName(), rc ) ;
+         if ( NULL != pHint )
+         {
+            _hint.init( pHint ) ;
          }
       }
       catch( std::exception &e )
@@ -4116,6 +4449,409 @@ namespace engine
       goto done ;
    }
 
+   INT32 _coordCMDCreateIndex::_generateCreateIndexReq( const CHAR *clName,
+                                                        const CHAR *indexName,
+                                                        const BSONObj &indexDef,
+                                                        BOOLEAN isUnique,
+                                                        BOOLEAN isEnforced,
+                                                        CHAR **ppMsgBuf,
+                                                        INT32 *pBufSize,
+                                                        pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj emptyObj ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObj query ;
+         builder.append( FIELD_NAME_COLLECTION, clName ) ;
+
+         BSONObjBuilder indexInfoBuilder(
+                              builder.subobjStart( FIELD_NAME_INDEX ) ) ;
+         indexInfoBuilder.append( IXM_FIELD_NAME_NAME, indexName ) ;
+         indexInfoBuilder.append( IXM_FIELD_NAME_KEY, indexDef ) ;
+         indexInfoBuilder.append( IXM_FIELD_NAME_UNIQUE, isUnique ) ;
+         indexInfoBuilder.append( IXM_FIELD_NAME_ENFORCED, isEnforced ) ;
+         indexInfoBuilder.done() ;
+
+         query = builder.obj() ;
+         rc = msgBuildQueryCMDMsg( ppMsgBuf, pBufSize,
+                               CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
+                               query, emptyObj, emptyObj, emptyObj,
+                               0, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create index request:"
+                      "cl=%s,index=%s,rc=%d", clName, query.toString().c_str(),
+                      rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDCreateIndex::_generateCreateCLReq( const CHAR *clName,
+                                                     const CHAR *shardingType,
+                                                     const BSONObj &shardingKey,
+                                                     CHAR **ppMsgBuf,
+                                                     INT32 *pBufSize,
+                                                     pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObj options ;
+         builder.append( FIELD_NAME_SHARDTYPE, shardingType ) ;
+         builder.append( FIELD_NAME_SHARDINGKEY, shardingKey ) ;
+         builder.appendBool( FIELD_NAME_ENSURE_SHDINDEX, FALSE ) ;
+         builder.appendBool( FIELD_NAME_DOMAIN_AUTO_SPLIT, TRUE ) ;
+         options = builder.obj() ;
+
+         rc = msgBuildCreateCLMsg( ppMsgBuf, pBufSize, clName, options,
+                                   0, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create cl request, "
+                      "cl: %s, rc: %d", clName, rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDCreateIndex::_generateCreateCSReq( const CHAR *csName,
+                                                     const CHAR *domain,
+                                                     CHAR **ppMsgBuf,
+                                                     INT32 *pBufSize,
+                                                     pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj options ;
+         if ( NULL != domain && '\0' != domain[0] )
+         {
+            options = BSON( FIELD_NAME_DOMAIN << domain ) ;
+         }
+
+         rc = msgBuildCreateCSMsg( ppMsgBuf, pBufSize, csName, options,
+                                   0, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create cs request, "
+                      "cs: %s, rc: %d", csName, rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+    INT32 _coordCMDCreateIndex::_generateCreateDataIdxReq(
+                                                    const CHAR *clName,
+                                                    const BSONObj &globalOption,
+                                                    CHAR **ppMsgBuf,
+                                                    INT32 *pBufSize,
+                                                    pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj emptyObj ;
+
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObj query ;
+         builder.append( FIELD_NAME_COLLECTION, clName ) ;
+
+         BSONObjBuilder indexDefBuilder(
+                              builder.subobjStart( FIELD_NAME_INDEX ) ) ;
+         BSONObjIterator iter( _boIndex ) ;
+         while ( iter.more() )
+         {
+            BSONElement e = iter.next() ;
+            if ( 0 != ossStrcmp(e.fieldName(), IXM_FIELD_NAME_GLOBAL_OPTION)
+                 && 0 != ossStrcmp(e.fieldName(), IXM_FIELD_NAME_ISGLOBAL) )
+            {
+               indexDefBuilder.append( e ) ;
+            }
+         }
+         indexDefBuilder.appendBool( IXM_FIELD_NAME_ISGLOBAL, TRUE ) ;
+         indexDefBuilder.append( IXM_FIELD_NAME_GLOBAL_OPTION, globalOption ) ;
+         indexDefBuilder.done() ;
+
+         query = builder.obj() ;
+         rc = msgBuildQueryCMDMsg( ppMsgBuf, pBufSize,
+                                   CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
+                                   query, emptyObj, emptyObj, _hint,
+                                   0, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create index request:"
+                      "cl=%s,index=%s,rc=%d", clName, query.toString().c_str(),
+                      rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDCreateIndex::_dropCS( const CHAR *csName, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 contextID = -1 ;
+      rtnContextBuf contextBuff ;
+      CHAR *pMsg = NULL ;
+      INT32 buffSize = 0 ;
+
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
+
+      _coordCMDDropCollectionSpace cmdDropCS ;
+      rc = cmdDropCS.init( pResource, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init drop cs ommand:rc=%d", rc ) ;
+
+      rc = msgBuildDropCSMsg( &pMsg, &buffSize, csName, 0, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build drop cs request:"
+                   "cs=%s,rc=%d", csName, rc ) ;
+
+      rc = cmdDropCS.execute( (MsgHeader *)pMsg, cb, contextID, &contextBuff ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to drop cs(%s):rc=%d",
+                   csName, rc ) ;
+      SDB_ASSERT( -1 == contextID, "contextID must be -1" ) ;
+
+   done:
+      if ( NULL != pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _coordCMDCreateIndex::_getEnforcedFlag( const BSONObj &indexObj )
+   {
+      BSONElement e = indexObj.getField( IXM_FIELD_NAME_ENFORCED ) ;
+      if ( !e.eoo() )
+      {
+         return e.trueValue() ;
+      }
+
+      e = indexObj.getField( IXM_FIELD_NAME_ENFORCED1 ) ;
+      if ( !e.eoo() )
+      {
+         return e.trueValue() ;
+      }
+
+      return FALSE ;
+   }
+
+   INT32 _coordCMDCreateIndex::_isCSExist( const CHAR *csName, pmdEDUCB *cb,
+                                             BOOLEAN &isExist )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pMsg = NULL ;
+      INT32 buffSize = 0 ;
+      INT64 contextID = -1 ;
+      rtnContextBuf contextBuff ;
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
+
+      _coordCMDTestCollectionSpace cmdTestCS ;
+      rc = cmdTestCS.init( pResource, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init test cs command, rc: %d", rc ) ;
+
+      rc = msgBuildTestCSMsg( &pMsg, &buffSize, csName, 0, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to generate test cs request, "
+                   "cs: %s, rc: %d", csName, rc ) ;
+
+      rc = cmdTestCS.execute( (MsgHeader *)pMsg, cb, contextID, &contextBuff ) ;
+      if ( SDB_OK == rc )
+      {
+         isExist = TRUE ;
+      }
+      else if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         isExist = FALSE ;
+         rc = SDB_OK ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to test cs(%s), rc: %d", csName, rc ) ;
+
+   done:
+      if ( NULL != pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   INT32 _coordCMDCreateIndex::_createGlobalIndexCL( pmdEDUCB *cb,
+                                                     utilCLUniqueID &clUID )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 contextID = -1 ;
+      rtnContextBuf contextBuff ;
+      CHAR *pMsg = NULL ;
+      INT32 buffSize = 0 ;
+      BOOLEAN isCSExist = FALSE ;
+      BSONObj indexDef ;
+
+      coordResource *pResource = sdbGetResourceContainer()->getResource() ;
+
+      // _boIndex have been checked by catalog
+      indexDef = _boIndex.getObjectField( IXM_FIELD_NAME_KEY ) ;
+
+      rc = _isCSExist( _indexCSName.c_str(), cb, isCSExist ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check cs's existence, cs: %s, "
+                   "rc: %d", _indexCSName.c_str(), rc ) ;
+
+      // create index's cs
+      if ( !isCSExist )
+      {
+         // create cs
+         _coordCMDCreateCollectionSpace cmdCreateCS ;
+         rc = cmdCreateCS.init( pResource, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init create cs command, rc: %d",
+                      rc ) ;
+
+         rc = _generateCreateCSReq( _indexCSName.c_str(), _domain.c_str(),
+                                    &pMsg, &buffSize, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create cs request, "
+                      "cs: %s, rc: %d", _indexCSName.c_str(), rc ) ;
+
+         rc = cmdCreateCS.execute( (MsgHeader *)pMsg, cb, contextID,
+                                   &contextBuff ) ;
+         if ( SDB_OK == rc )
+         {
+            _isIndexCSCreated = TRUE ;
+         }
+
+         if ( SDB_DMS_CS_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to create cs(%s):rc=%d",
+                      _indexCSName.c_str(), rc ) ;
+         SDB_ASSERT( -1 == contextID, "contextID must be -1" ) ;
+         msgReleaseBuffer( pMsg, cb ) ;
+         pMsg = NULL ;
+         contextBuff.release() ;
+      }
+
+      // create index's cl
+      {
+         CoordCataInfoPtr cataPtr ;
+         _coordCMDCreateCollection cmdCreateCL ;
+         rc = cmdCreateCL.init( pResource, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init create cl ommand:rc=%d",
+                      rc ) ;
+         // use data's index define as shardingkey
+         rc = _generateCreateCLReq( _indexCLName.c_str(), "hash", indexDef,
+                                    &pMsg, &buffSize, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create cl request:"
+                      "cl=%s,rc=%d", _indexCLName.c_str(), rc ) ;
+
+         rc = cmdCreateCL.execute( (MsgHeader *)pMsg, cb, contextID,
+                                   &contextBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create cl(%s):rc=%d",
+                      _indexCLName.c_str(), rc ) ;
+         SDB_ASSERT( -1 == contextID, "contextID must be -1" ) ;
+         _isIndexCLCreated = TRUE ;
+
+         msgReleaseBuffer( pMsg, cb ) ;
+         pMsg = NULL ;
+         contextBuff.release() ;
+
+         rc = _pResource->getOrUpdateCataInfo( _indexCLName.c_str(), cataPtr,
+                                               cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cata info:cl=%s,rc=%d",
+                      _indexCLName.c_str(), rc ) ;
+
+         clUID = cataPtr->clUniqueID() ;
+         PD_CHECK( UTIL_IS_VALID_CLUNIQUEID( clUID ), SDB_INVALIDARG, error,
+                   PDERROR, "Index name's uid is invalid:cl=%s,uid=%llu",
+                   _indexCLName.c_str(), clUID ) ;
+
+         PD_LOG( PDEVENT, "Create index cl(%s) success",
+                 _indexCLName.c_str() ) ;
+      }
+
+      // create index cl's index
+      {
+         BOOLEAN isEnforced = FALSE ;
+         _coordCMDCreateIndex cmdCreateIndex ;
+         rc = cmdCreateIndex.init( pResource, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init create index ommand:rc=%d",
+                      rc ) ;
+
+         isEnforced = _getEnforcedFlag( _boIndex ) ;
+
+         rc = _generateCreateIndexReq( _indexCLName.c_str(), _indexName.c_str(),
+                                       indexDef, TRUE, isEnforced, &pMsg,
+                                       &buffSize, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create index request:"
+                      "cl=%s,index=%s,rc=%d", _indexCLName.c_str(),
+                      indexDef.toString().c_str(), rc ) ;
+
+         rc = cmdCreateIndex.execute( (MsgHeader *)pMsg, cb, contextID,
+                                      &contextBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create index:cl=%s,index=%s,"
+                      "rc=%d", _indexCLName.c_str(),
+                      indexDef.toString().c_str(), rc ) ;
+         SDB_ASSERT( -1 == contextID, "contextID must be -1" ) ;
+
+         msgReleaseBuffer( pMsg, cb ) ;
+         pMsg = NULL ;
+         contextBuff.release() ;
+      }
+
+   done:
+      if ( NULL != pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      return rc ;
+   error:
+      if ( _isIndexCLCreated )
+      {
+         (void)_dropCL( _indexCLName.c_str(), cb ) ;
+         _isIndexCLCreated = FALSE ;
+      }
+
+      // we can't drop CS when _isIndexCSCreated = TRUE. in case other sessions
+      // use the same indexCSName.
+
+      goto done ;
+   }
+
    INT32 _coordCMDCreateIndex::_generateCataMsg( MsgHeader *pMsg,
                                                  pmdEDUCB *cb,
                                                  coordCMDArguments *pArgs,
@@ -4129,6 +4865,174 @@ namespace engine
    }
 
    void _coordCMDCreateIndex::_releaseCataMsg( CHAR *pMsgBuf,
+                                               INT32 bufSize,
+                                               pmdEDUCB *cb )
+   {
+   }
+
+   INT32 _coordCMDCreateIndex::_addCLUID( BSONObj &globalOptions,
+                                          utilCLUniqueID &clUID )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObjIterator iter( globalOptions ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( ossStrcmp( ele.fieldName(), CAT_GIDX_CL_UNIQUEID ) != 0 )
+            {
+               builder.append( ele ) ;
+            }
+         }
+
+         builder.append( CAT_GIDX_CL_UNIQUEID, (long long) clUID ) ;
+
+         globalOptions = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDCreateIndex::_doOnDataGroup ( MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                rtnContextCoord **ppContext,
+                                                coordCMDArguments *pArgs,
+                                                const CoordGroupList &groupLst,
+                                                const vector<BSONObj> &cataObjs,
+                                                CoordGroupList &sucGroupLst )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *myOwnMsg = NULL ;
+      INT32 myOwnMsgSize = 0 ;
+
+      if ( _isGlobalIndex )
+      {
+         CoordCataInfoPtr cataPtr ;
+         utilCLUniqueID indexCLUID = UTIL_UNIQUEID_NULL ;
+         // create index cl first
+         rc = _createGlobalIndexCL( cb, indexCLUID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create cl(%s):rc=%d",
+                      _indexCLName.c_str(), rc ) ;
+
+         rc = _addCLUID( _globalOptions, indexCLUID ) ;
+
+         // generate my own MsgHeader
+         rc = _generateCreateDataIdxReq( _clName.c_str(), _globalOptions,
+                                         &myOwnMsg, &myOwnMsgSize, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to generate create index message"
+                      ":rc=%d", rc ) ;
+
+         rc = _coordDataCMD2Phase::_doOnDataGroup( (MsgHeader *)myOwnMsg, cb,
+                                                   ppContext, pArgs,
+                                                   groupLst, cataObjs,
+                                                   sucGroupLst ) ;
+         // force to update cata info
+         _pResource->updateCataInfo( _clName.c_str(), cataPtr, cb ) ;
+      }
+      else
+      {
+         rc = _coordDataCMD2Phase::_doOnDataGroup( pMsg, cb, ppContext, pArgs,
+                                                   groupLst, cataObjs,
+                                                   sucGroupLst ) ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to do on data group:rc=%d", rc ) ;
+
+   done:
+      if ( NULL != myOwnMsg )
+      {
+         msgReleaseBuffer( myOwnMsg, cb ) ;
+      }
+
+      return rc ;
+   error:
+      if ( _isIndexCLCreated )
+      {
+         (void)_dropCL( _indexCLName.c_str(), cb ) ;
+         _isIndexCLCreated = FALSE ;
+      }
+
+      goto done ;
+   }
+
+   INT32 _coordCMDCreateIndex::_generateDataMsg (
+                                                MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                coordCMDArguments *pArgs,
+                                                const vector<BSONObj> &cataObjs,
+                                                CHAR **ppMsgBuf,
+                                                INT32 *pBufSize )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+
+      PD_CHECK( cataObjs.size() == 1, SDB_INVALIDARG , error, PDERROR,
+                "Catalog objs size must be 1" ) ;
+
+      obj = cataObjs[0] ;
+      rc = rtnGetBooleanElement( obj, IXM_ISGLOBAL_FIELD, _isGlobalIndex ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field(%s):obj=%s,rc=%d",
+                   IXM_ISGLOBAL_FIELD, obj.toString().c_str(), rc ) ;
+
+      if ( _isGlobalIndex )
+      {
+         // {IsGlobal: true, GlobalOption: {Collection: "GIDX_XX.YY" } }
+         CHAR szCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = "" ;
+         BSONElement optionEle = obj.getField( IXM_GLOBAL_OPTION_FIELD ) ;
+         PD_CHECK( Object == optionEle.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Option field(%s) must be Object:rc=%d",
+                   IXM_GLOBAL_OPTION_FIELD, rc ) ;
+
+         _globalOptions = optionEle.embeddedObject() ;
+         rc = rtnGetSTDStringElement( _globalOptions, CAT_COLLECTION,
+                                      _indexCLName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get index cl name from "
+                      "option(%s):rc=%d", _globalOptions.toString().c_str(),
+                      rc ) ;
+
+         rc = rtnResolveCollectionSpaceName( _indexCLName.c_str(),
+                                             _indexCLName.length(),
+                                             szCSName,
+                                             DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name(%s):rc=%d",
+                      _indexCLName.c_str(), rc ) ;
+         _indexCSName = szCSName ;
+
+         rc = rtnGetSTDStringElement( _globalOptions, CAT_DOMAIN_NAME,
+                                      _domain ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get domain from options(%s)"
+                      ":rc=%d", _globalOptions.toString().c_str(), rc ) ;
+      }
+
+      pMsg->opCode = MSG_BS_QUERY_REQ ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordCMDCreateIndex::_releaseDataMsg( CHAR *pMsgBuf,
                                                INT32 bufSize,
                                                pmdEDUCB *cb )
    {
@@ -4186,6 +5090,12 @@ namespace engine
       CoordCataInfoPtr cataPtr ;
       SET_RC ignoreRC ;
 
+      if ( _isIndexCLCreated )
+      {
+         (void)_dropCL( _indexCLName.c_str(), cb ) ;
+         _isIndexCLCreated = FALSE ;
+      }
+
       rc = _pResource->getOrUpdateCataInfo( pArgs->_targetName.c_str(),
                                             cataPtr, cb ) ;
       if ( rc )
@@ -4233,6 +5143,8 @@ namespace engine
                                       FALSE ) ;
    _coordCMDDropIndex::_coordCMDDropIndex()
    {
+      _isGlobalIndex = FALSE ;
+      _indexCLUID = UTIL_UNIQUEID_NULL ;
    }
 
    _coordCMDDropIndex::~_coordCMDDropIndex()
@@ -4296,6 +5208,134 @@ namespace engine
                                              INT32 bufSize,
                                              pmdEDUCB *cb )
    {
+   }
+
+   INT32 _coordCMDDropIndex::_doOnDataGroup ( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              rtnContextCoord **ppContext,
+                                              coordCMDArguments *pArgs,
+                                              const CoordGroupList &groupLst,
+                                              const vector<BSONObj> &cataObjs,
+                                              CoordGroupList &sucGroupLst )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _isGlobalIndex )
+      {
+         do
+         {
+            CoordCataInfoPtr cataPtr ;
+            rc = _pResource->updateCataInfoByCLUID( _indexCLUID, cataPtr, cb ) ;
+            if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING, "Failed to get cata info:clUID=%lld,rc=%d",
+                       _indexCLUID, rc ) ;
+               rc = SDB_OK ;
+               break ;
+            }
+
+            rc = _dropCL( cataPtr->getName(), cb ) ;
+            if ( SDB_DMS_NOTEXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to drop cl:cl=%s,rc=%d",
+                       cataPtr->getName(), rc ) ;
+               rc = SDB_OK ;
+               break ;
+            }
+
+            PD_LOG( PDEVENT, "Drop index cl(%s) success", cataPtr->getName() ) ;
+         } while ( FALSE ) ;
+      }
+
+      rc = _coordDataCMD2Phase::_doOnDataGroup( pMsg, cb, ppContext, pArgs,
+                                                groupLst, cataObjs,
+                                                sucGroupLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to do on data group:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDDropIndex::_generateDataMsg (
+                                                MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                coordCMDArguments *pArgs,
+                                                const vector<BSONObj> &cataObjs,
+                                                CHAR **ppMsgBuf,
+                                                INT32 *pBufSize )
+   {
+      INT32 rc = SDB_OK ;
+      // { GlobalIndex:[ { CLUniqueID: 12345 } ], Group: [{}, {}]}
+      BSONObj obj ;
+      BSONObj gIndexObjs ;
+
+      PD_CHECK( cataObjs.size() == 1, SDB_INVALIDARG , error, PDERROR,
+                "Catalog objs size must be 1" ) ;
+
+      obj = cataObjs[0] ;
+
+      rc = rtnGetArrayElement( obj, CAT_GLOBAL_INDEX, gIndexObjs ) ;
+      if ( SDB_OK == rc )
+      {
+         _isGlobalIndex = TRUE ;
+      }
+      else if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         _isGlobalIndex = FALSE ;
+         rc = SDB_OK ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field(%s):obj=%s,rc=%d",
+                   CAT_GLOBAL_INDEX, obj.toString().c_str(), rc ) ;
+
+      if ( _isGlobalIndex )
+      {
+         BSONElement element ;
+         BSONObj gIndexInfo ;
+         BSONObjIterator indexIter( gIndexObjs ) ;
+
+         PD_CHECK( indexIter.more(), SDB_INVALIDARG, error, PDERROR,
+                   "Must have one global index info:objs=%s,rc=%d",
+                   gIndexObjs.toString().c_str(), rc ) ;
+
+         element = indexIter.next() ;
+         PD_CHECK( Object == element.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Element must be object:element=%s,rc=%d",
+                   element.toString().c_str(), rc ) ;
+
+         // { CLUniqueID: 12345 }
+         gIndexInfo = element.embeddedObject() ;
+         rc = rtnGetNumberLongElement( gIndexInfo, CAT_GIDX_CL_UNIQUEID,
+                                       (INT64 &)_indexCLUID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get index cl name from "
+                      "index info(%s):rc=%d", gIndexInfo.toString().c_str(),
+                      rc ) ;
+
+         PD_CHECK( !indexIter.more(), SDB_INVALIDARG, error, PDERROR,
+                   "Must have only one global index info:objs=%s,rc=%d",
+                   gIndexObjs.toString().c_str(), rc ) ;
+      }
+
+      pMsg->opCode = MSG_BS_QUERY_REQ ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

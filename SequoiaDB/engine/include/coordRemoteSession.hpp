@@ -199,6 +199,7 @@ namespace engine
 
       public:
          _coordSessionPropMgr() ;
+         _coordSessionPropMgr( BOOLEAN userOwnQueen ) ;
          ~_coordSessionPropMgr() ;
 
          coordSessionPropSite * getSite( _pmdEDUCB *cb ) ;
@@ -211,6 +212,7 @@ namespace engine
 
       private:
          MAP_TID_2_PROP _mapProps ;
+         BOOLEAN _useOwnQueue ;
    } ;
 
    typedef _coordSessionPropMgr coordSessionPropMgr ;

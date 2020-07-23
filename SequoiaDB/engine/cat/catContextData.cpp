@@ -254,6 +254,8 @@ namespace engine
    _catCtxIndexMultiTask::_catCtxIndexMultiTask ( INT64 contextID, UINT64 eduID )
    : _catCtxDataMultiTaskBase( contextID, eduID )
    {
+      _isGlobalIndex = FALSE ;
+      _indexCLUID = UTIL_UNIQUEID_NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_CREATEIDX_TASK, "_catCtxIndexMultiTask::_addCreateIdxTask" )
@@ -477,6 +479,13 @@ namespace engine
       rc = catLockGroups( _groupList, cb, lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
 
+      _isGlobalIndex = pCreateIdxTask->isGlobalIndex() ;
+      if ( _isGlobalIndex )
+      {
+         _indexCLName = pCreateIdxTask->getGIDXCLName() ;
+         _domain = pCreateIdxTask->getCSDomain() ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXINDEX_CREATEIDX_TASKS, rc ) ;
       return rc ;
@@ -603,6 +612,12 @@ namespace engine
 
       rc = catLockGroups( _groupList, cb, lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
+
+      if ( pDropIdxTask->isGlobalIndex() )
+      {
+         _isGlobalIndex = TRUE ;
+         _indexCLUID = pDropIdxTask->getIndexCLUID() ;
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXINDEX_DROPIDX_TASKS, rc ) ;
@@ -763,6 +778,77 @@ namespace engine
       goto done ;
    }
 
+   INT32 _catCtxDropCS::_addIndexCL( const BSONObj &clObj )
+   {
+      INT32 rc = SDB_OK ;
+      _clsCataGIndexGroup indexes ;
+      rc = indexes.init( clObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse global index:rc=%d", rc ) ;
+
+      rc = indexes.getIndexes( _globalIndexList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add indexes:rc=%d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS__MAKEREPLY, "_catCtxDropCS::_makeReply" )
+   INT32 _catCtxDropCS::_makeReply ( rtnContextBuf & buffObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATCTXDROPCS__MAKEREPLY ) ;
+
+      try
+      {
+         if ( CAT_CONTEXT_READY == _status )
+         {
+            // send index's CLUID and grouplist to coord.
+            BSONObjBuilder retObjBuilder ;
+            if ( _globalIndexList.size() > 0 )
+            {
+               BSONArrayBuilder indexArrBuilder(
+                         retObjBuilder.subarrayStart(CAT_GLOBAL_INDEX) ) ;
+
+               CLS_GINDEX_LIST_ITER iter = _globalIndexList.begin() ;
+               while ( iter != _globalIndexList.end() )
+               {
+                  _clsCataGIndex &index = *iter ;
+                  indexArrBuilder.append( BSON(CAT_GIDX_CL_UNIQUEID <<
+                                       (INT64)index.getIndexCollectionUID()) ) ;
+
+                  ++iter ;
+               }
+               indexArrBuilder.done() ;
+            }
+
+            // send grouplist to coord
+            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+            buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+         }
+         else
+         {
+            // Send dummy object to keep one GetMore for one step.
+            BSONObj dummy ;
+            buffObj = rtnContextBuf( dummy.getOwned() ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_CATCTXDROPCS__MAKEREPLY, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS_DROPCS_SUBTASK, "_catCtxDropCS::_addDropCSSubTasks" )
    INT32 _catCtxDropCS::_addDropCSSubTasks ( _catCtxDropCSTask *pDropCSTask,
                                              _pmdEDUCB *cb )
@@ -825,6 +911,10 @@ namespace engine
                             "Failed to add sub-tasks for drop collection [%s], "
                             "rc: %d",
                             clFullName.c_str(), rc ) ;
+
+               rc = _addIndexCL( pDropCLTask->getDataObj() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to add global indexes:rc=%d",
+                            rc ) ;
             }
 
             PD_LOG ( PDDEBUG,
@@ -3716,7 +3806,8 @@ namespace engine
    _catCtxCreateIdx::_catCtxCreateIdx ( INT64 contextID, UINT64 eduID )
    : _catCtxIndexMultiTask( contextID, eduID )
    {
-      _executeAfterLock = TRUE ;
+      _executeAfterLock = FALSE ;
+      _commitAfterExecute = FALSE ;
       _needRollback = TRUE ;
    }
 
@@ -3788,6 +3879,58 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCREATEIDX__MAKEREPLY, "_catCtxCreateIdx::_makeReply" )
+   INT32 _catCtxCreateIdx::_makeReply ( rtnContextBuf & buffObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATCTXCREATEIDX__MAKEREPLY ) ;
+
+      try
+      {
+         if ( CAT_CONTEXT_READY == _status )
+         {
+            // send index's clname and grouplist to coord.
+            // coord will create the cl and index in phase1
+            BSONObjBuilder retObjBuilder ;
+            if ( _isGlobalIndex )
+            {
+               retObjBuilder.appendBool( IXM_ISGLOBAL_FIELD, TRUE ) ;
+               BSONObjBuilder globalOption(
+                         retObjBuilder.subobjStart(IXM_GLOBAL_OPTION_FIELD) ) ;
+               globalOption.append( CAT_COLLECTION, _indexCLName ) ;
+               if ( !_domain.empty() )
+               {
+                  globalOption.append( CAT_DOMAIN_NAME, _domain ) ;
+               }
+               globalOption.done() ;
+            }
+
+            // send grouplist to coord
+            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+            buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+         }
+         else
+         {
+            // Send dummy object to keep one GetMore for one step.
+            BSONObj dummy ;
+            buffObj = rtnContextBuf( dummy.getOwned() ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_CATCTXCREATEIDX__MAKEREPLY, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
    /*
     * _catCtxDropIdx implement
     */
@@ -3797,7 +3940,7 @@ namespace engine
    _catCtxDropIdx::_catCtxDropIdx ( INT64 contextID, UINT64 eduID )
    : _catCtxIndexMultiTask( contextID, eduID )
    {
-      _executeAfterLock = TRUE ;
+      _executeAfterLock = FALSE ;
       _needRollback = FALSE ;
    }
 
@@ -3876,4 +4019,48 @@ namespace engine
    error :
       goto done ;
    }
+
+   INT32 _catCtxDropIdx::_makeReply ( rtnContextBuf & buffObj )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         if ( CAT_CONTEXT_READY == _status )
+         {
+            // send index's clname and grouplist to coord.
+            // coord will create the cl and index in phase1
+            BSONObjBuilder retObjBuilder ;
+            if ( _isGlobalIndex )
+            {
+               BSONArrayBuilder indexArrayBuilder(
+                         retObjBuilder.subarrayStart(CAT_GLOBAL_INDEX) ) ;
+               indexArrayBuilder.append( BSON(CAT_GIDX_CL_UNIQUEID <<
+                                                         (INT64)_indexCLUID) ) ;
+               indexArrayBuilder.done() ;
+            }
+
+            // send grouplist to coord
+            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+            buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+         }
+         else
+         {
+            // Send dummy object to keep one GetMore for one step.
+            BSONObj dummy ;
+            buffObj = rtnContextBuf( dummy.getOwned() ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    }

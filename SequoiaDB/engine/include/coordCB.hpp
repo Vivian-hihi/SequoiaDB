@@ -84,7 +84,6 @@ namespace engine
          UINT32         setTimer( UINT32 milliSec ) ;
          void           killTimer( UINT32 timerID ) ;
 
-         coordResource* getResource() ;
          netRouteAgent* getRouteAgent() ;
          pmdRemoteSessionMgr* getRSManager() ;
 

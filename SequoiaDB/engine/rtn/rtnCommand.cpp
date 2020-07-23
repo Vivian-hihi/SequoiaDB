@@ -967,7 +967,8 @@ namespace engine
    _rtnCreateIndex::_rtnCreateIndex ()
    : _collectionName ( NULL ),
      _sortBufferSize ( SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ),
-     _textIdx( FALSE )
+     _textIdx( FALSE ),
+     _isGlobal( FALSE )
    {
    }
 
@@ -1038,6 +1039,14 @@ namespace engine
          goto error ;
       }
 
+      if ( _index.hasField( IXM_FIELD_NAME_ISGLOBAL ) )
+      {
+         rc = rtnGetBooleanElement( _index, IXM_FIELD_NAME_ISGLOBAL,
+                                    _isGlobal ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field(%s):index=%s,rc=%d",
+                      IXM_FIELD_NAME_ISGLOBAL, _index.toString().c_str(), rc ) ;
+      }
+
       if ( arg.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
       {
          hasSortBufSz = TRUE ;
@@ -1100,6 +1109,14 @@ namespace engine
       if ( _textIdx && ( CMD_SPACE_SERVICE_SHARD != getFromService() ) )
       {
          PD_LOG( PDERROR, "Text index is only supported in cluster" ) ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
+         goto error ;
+      }
+
+      // Currently only support global index in cluster.
+      if ( _isGlobal && ( CMD_SPACE_SERVICE_SHARD != getFromService() ) )
+      {
+         PD_LOG( PDERROR, "Global index is only supported in cluster" ) ;
          rc = SDB_OPERATION_INCOMPATIBLE ;
          goto error ;
       }

@@ -226,6 +226,10 @@ namespace engine
       // extent ID for the control block extent
       dmsExtentID _extentID ;
 
+      BOOLEAN _isGlobalIndex ;
+      utilCLUniqueID _indexCLUID ;
+      const CHAR * _indexCLName ;
+
       // Whether the given extent is a valid control block
       OSS_INLINE BOOLEAN _verify() const
       {
@@ -255,6 +259,46 @@ namespace engine
          {
             _infoObj = BSONObj( ((const CHAR*)_extent) +
                                 IXM_INDEX_CB_EXTENT_METADATA_SIZE ) ;
+
+            _isGlobalIndex = _infoObj.getBoolField( IXM_ISGLOBAL_FIELD ) ;
+            if ( _isGlobalIndex )
+            {
+               BSONObj globalOptions ;
+               BSONElement ele ;
+
+               ele = _infoObj.getField( IXM_GLOBAL_OPTION_FIELD ) ;
+               if ( Object != ele.type() )
+               {
+                  PD_LOG( PDERROR, "Invalid field(%s) of index(%s)",
+                          IXM_GLOBAL_OPTION_FIELD,
+                          _infoObj.toString().c_str() ) ;
+                  return ;
+               }
+
+               globalOptions = ele.embeddedObject() ;
+
+               ele = globalOptions.getField( FIELD_NAME_CL_UNIQUEID ) ;
+               if ( NumberLong != ele.type() )
+               {
+                  PD_LOG( PDERROR, "Invalid field(%s) of options(%s)",
+                          FIELD_NAME_CL_UNIQUEID,
+                          globalOptions.toString().c_str() ) ;
+                  return ;
+               }
+
+               _indexCLUID = (utilCLUniqueID) ele.numberLong() ;
+
+               ele = globalOptions.getField( FIELD_NAME_COLLECTION ) ;
+               if ( String != ele.type() )
+               {
+                  PD_LOG( PDERROR, "Invalid field(%s) of options(%s)",
+                          FIELD_NAME_COLLECTION,
+                          globalOptions.toString().c_str() ) ;
+                  return ;
+               }
+
+               _indexCLName = ele.valuestr() ;
+            }
          }
          catch ( std::exception &e )
          {
@@ -629,6 +673,36 @@ namespace engine
          {
             fieldCount ++ ;
          }
+         if ( obj.hasField( IXM_ISGLOBAL_FIELD) )
+         {
+            fieldCount++ ;
+         }
+         if ( obj.hasField(IXM_GLOBAL_OPTION_FIELD) )
+         {
+            BSONElement ele ;
+            BSONObj globalOptions ;
+
+            ele = obj.getField( IXM_GLOBAL_OPTION_FIELD ) ;
+            if ( Object != ele.type() )
+            {
+               PD_LOG( PDERROR, "Invalid field(%s) of index(%s):rc=%d",
+                       IXM_GLOBAL_OPTION_FIELD, obj.toString().c_str() ) ;
+               return FALSE ;
+            }
+
+            globalOptions = ele.embeddedObject() ;
+
+            ele = globalOptions.getField( FIELD_NAME_CL_UNIQUEID ) ;
+            if ( NumberLong != ele.type() )
+            {
+               PD_LOG( PDERROR, "Invalid field(%s) of options(%s):rc=%d",
+                       FIELD_NAME_CL_UNIQUEID,
+                       globalOptions.toString().c_str() ) ;
+               return FALSE ;
+            }
+
+            fieldCount++ ;
+         }
 //         return fieldCount == obj.nFields() ;
          // make sure no other fields, unless it is a geo index.
          if ( fieldCount != obj.nFields() )
@@ -651,6 +725,27 @@ namespace engine
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _infoObj[ IXM_UNIQUE_FIELD ].trueValue() ;
+      }
+
+      BOOLEAN isGlobal() const
+      {
+         SDB_ASSERT ( _isInitialized,
+                      "index details must be initialized first" ) ;
+         return _isGlobalIndex ;
+      }
+
+      utilCLUniqueID getIndexCLUID() const
+      {
+         SDB_ASSERT ( _isInitialized,
+                      "index details must be initialized first" ) ;
+         return _indexCLUID ;
+      }
+
+      const CHAR* getIndexCLName() const
+      {
+         SDB_ASSERT ( _isInitialized,
+                      "index details must be initialized first" ) ;
+         return _indexCLName ;
       }
 
       // get enforcement

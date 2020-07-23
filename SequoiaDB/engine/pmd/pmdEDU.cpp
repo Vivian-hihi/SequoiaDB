@@ -144,6 +144,8 @@ namespace engine
       _confChangeID     = 0 ;
 
       _orgReplSize      = 1 ;
+
+      _pRemoteOperator  = NULL ;
 #endif // SDB_ENGINE
 
       _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 ) ;
@@ -156,6 +158,8 @@ namespace engine
       _curAutoTransCtxID = -1 ;
       _pMemPool = NULL ;
       _monQueryCB = NULL ;
+
+      _isAffectGIndex = FALSE ;
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
@@ -201,6 +205,8 @@ namespace engine
 
 #if defined ( SDB_ENGINE )
       clearTransInfo() ;
+      SAFE_OSS_DELETE( _pRemoteOperator ) ;
+      _remoteOpCtrl.reset() ;
 #endif // SDB_ENGINE
 
       // release buff
@@ -256,6 +262,11 @@ namespace engine
 
    void _pmdEDUCB::detachSession()
    {
+#if defined ( SDB_ENGINE )
+      SAFE_OSS_DELETE( _pRemoteOperator ) ;
+      _remoteOpCtrl.reset() ;
+#endif // SDB_ENGINE
+
       ossScopedLock lock( &_mutex, EXCLUSIVE ) ;
       _pSession = NULL ;
    }
@@ -851,6 +862,16 @@ namespace engine
       return _curAutoTransCtxID ;
    }
 
+   BOOLEAN _pmdEDUCB::isAffectGIndex() const
+   {
+      return _isAffectGIndex ;
+   }
+
+   void _pmdEDUCB::setIsAffectGIndex( BOOLEAN isAffect )
+   {
+      _isAffectGIndex = isAffect ;
+   }
+
    BOOLEAN _pmdEDUCB::isTransRBPending() const
    {
       return DPS_TRANS_IS_RBPENDING( _curTransID ) ? TRUE : FALSE ;
@@ -1126,6 +1147,67 @@ namespace engine
    pmdTransExecutor* _pmdEDUCB::getTransExecutor()
    {
       return &_transExecutor ;
+   }
+
+   UINT64 _pmdEDUCB::getRemoteSucCount()
+   {
+      if ( NULL != _pRemoteOperator )
+      {
+         return _pRemoteOperator->getSucCount() ;
+      }
+
+      return 0 ;
+   }
+
+   UINT64 _pmdEDUCB::getRemoteFailureCount()
+   {
+      if ( NULL != _pRemoteOperator )
+      {
+         return _pRemoteOperator->getFailureCount() ;
+      }
+
+      return 0 ;
+   }
+
+   sdbRemoteOpCtrl* _pmdEDUCB::getRemoteOpCtrl()
+   {
+      return &_remoteOpCtrl ;
+   }
+
+   IRemoteOperator* _pmdEDUCB::getRemoteOperator()
+   {
+      return _pRemoteOperator ;
+   }
+
+   INT32 _pmdEDUCB::getOrCreateRemoteOperator( IRemoteOperator **ppOperator )
+   {
+      INT32 rc = SDB_OK ;
+      _clsRemoteOperator *tmp = NULL ;
+      if ( NULL != _pRemoteOperator )
+      {
+         *ppOperator = _pRemoteOperator ;
+         goto done ;
+      }
+
+      tmp = SDB_OSS_NEW _clsRemoteOperator() ;
+      PD_CHECK( NULL != tmp, SDB_OOM, error, PDERROR,
+                "Failed to malloc remote operator:rc=%d", rc ) ;
+
+      rc = tmp->init( this ) ;
+      if ( SDB_OK != rc )
+      {
+         SAFE_OSS_DELETE( tmp ) ;
+         PD_LOG( PDERROR, "Failed to begin transaction:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _pRemoteOperator = tmp ;
+      *ppOperator = _pRemoteOperator ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 #endif // SDB_ENGINE

@@ -116,9 +116,26 @@ namespace engine
    /*
       _pmdAsyncMsgHandler implement
    */
+
+   #if defined ( SDB_ENGINE )
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND, "_pmdAsyncMsgHandler::_pmdAsyncMsgHandler" )
-   _pmdAsyncMsgHandler::_pmdAsyncMsgHandler( _pmdAsycSessionMgr *pSessionMgr,
-                                             _schedTaskAdapterBase *pTaskAdapter )
+   _pmdAsyncMsgHandler::_pmdAsyncMsgHandler(
+                                       _pmdAsycSessionMgr *pSessionMgr,
+                                       _schedTaskAdapterBase *pTaskAdapter,
+                                       _pmdRemoteSessionMgr *pRemoteSessionMgr )
+   {
+      PD_TRACE_ENTRY ( SDB__PMDMSGHND ) ;
+      _pSessionMgr   = pSessionMgr ;
+      _pTaskAdapter  = pTaskAdapter ;
+      _pMgrEDUCB     = NULL ;
+
+      _pRemoteSessionMgr = pRemoteSessionMgr ;
+      PD_TRACE_EXIT ( SDB__PMDMSGHND ) ;
+   }
+   #else
+   _pmdAsyncMsgHandler::_pmdAsyncMsgHandler(
+                                       _pmdAsycSessionMgr *pSessionMgr,
+                                       _schedTaskAdapterBase *pTaskAdapter )
    {
       PD_TRACE_ENTRY ( SDB__PMDMSGHND ) ;
       _pSessionMgr   = pSessionMgr ;
@@ -126,6 +143,7 @@ namespace engine
       _pMgrEDUCB     = NULL ;
       PD_TRACE_EXIT ( SDB__PMDMSGHND ) ;
    }
+   #endif
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_DESC, "_pmdAsyncMsgHandler::~_pmdAsyncMsgHandler" )
    _pmdAsyncMsgHandler::~_pmdAsyncMsgHandler()
@@ -133,6 +151,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_DESC ) ;
       _pSessionMgr   = NULL ;
       _pMgrEDUCB     = NULL ;
+   #if defined ( SDB_ENGINE )
+      _pRemoteSessionMgr = NULL ;
+   #endif
       PD_TRACE_EXIT ( SDB__PMDMSGHND_DESC ) ;
    }
 
@@ -172,6 +193,22 @@ namespace engine
       }
       else if ( header->TID != 0 )
       {
+   #if defined ( SDB_ENGINE )
+         if ( NULL != _pRemoteSessionMgr )
+         {
+            if ( IS_REPLY_TYPE( header->opCode )
+                 && !isSplitSessionMsg( (UINT32)header->opCode ) )
+            {
+               PD_LOG( PDDEBUG, "Remote session msg opCode: %d",
+                       header->opCode ) ;
+               rc = _pRemoteSessionMgr->pushMessage( handle, header ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to handle remote msg, rc: %d",
+                            rc ) ;
+               goto done ;
+            }
+         }
+   #endif
+
          if ( _pTaskAdapter )
          {
             rc = _handleAdapterMsg( handle, header, msg ) ;
@@ -233,7 +270,25 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_HNDCLOSE ) ;
       PD_LOG ( PDINFO, "connection[handle:%d] closed", handle ) ;
       _pSessionMgr->handleSessionClose( handle ) ;
+   #if defined ( SDB_ENGINE )
+      if ( NULL != _pRemoteSessionMgr )
+      {
+         _pRemoteSessionMgr->handleClose( handle, id ) ;
+      }
+   #endif
       PD_TRACE_EXIT ( SDB__PMDMSGHND_HNDCLOSE ) ;
+   }
+
+   void _pmdAsyncMsgHandler::handleConnect( const NET_HANDLE &handle,
+                                            _MsgRouteID id,
+                                            BOOLEAN isPositive )
+   {
+   #if defined ( SDB_ENGINE )
+      if ( NULL != _pRemoteSessionMgr )
+      {
+         _pRemoteSessionMgr->handleConnect( handle, id, isPositive ) ;
+      }
+   #endif
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_ONSTOP, "_pmdAsyncMsgHandler::onStop" )

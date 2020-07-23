@@ -1379,6 +1379,68 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCSDOMAIN, "catGetCSDomain" )
+   INT32 catGetCSDomain( const CHAR * pCollectionSpace, pmdEDUCB * cb,
+                         string &domain )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATGETCSDOMAIN ) ;
+      BSONObj matcher ;
+      BSONObj dummyObj ;
+      SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
+      INT64 contextID = -1 ;
+
+      // Query
+      matcher = BSON( CAT_COLLECTION_SPACE_NAME << pCollectionSpace ) ;
+
+      rc = rtnQuery( CAT_COLLECTION_SPACE_COLLECTION, dummyObj, matcher,
+                     dummyObj, dummyObj, 0, cb, 0, -1, dmsCB, rtnCB,
+                     contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed:matcher=%s, "
+                   "rc=%d", CAT_COLLECTION_SPACE_COLLECTION,
+                   matcher.toString().c_str(), rc ) ;
+
+      // Get more
+      try
+      {
+         BSONObj obj ;
+         rtnContextBuf contextBuf ;
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cs info:cs=%s,rc=%d",
+                      pCollectionSpace, rc ) ;
+
+         obj = BSONObj( contextBuf.data() ) ;
+         rc = rtnGetSTDStringElement( obj, CAT_DOMAIN_NAME, domain ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get cs's domain:cs=%s,rc=%d",
+                      pCollectionSpace, rc ) ;
+      }
+      catch( exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to get cs's domain:cs=%s,exception=%s",
+                 pCollectionSpace, e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      if ( -1 != contextID )
+      {
+         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+      }
+
+      PD_TRACE_EXITRC ( SDB_CATGETCSDOMAIN, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINCSS, "catGetDomainCSs" )
    INT32 catGetDomainCSs ( const CHAR * domain, pmdEDUCB * cb,
                            ossPoolList< string > & collectionSpaces )
@@ -2808,6 +2870,32 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 catGetCollectionNameByUID( utilCLUniqueID clUID, string &clName,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj clInfo ;
+      BSONObj matcher = BSON( CAT_CL_UNIQUEID << (INT64) clUID ) ;
+      BSONObj dummyObj ;
+
+      PD_CHECK( UTIL_IS_VALID_CLUNIQUEID(clUID), SDB_INVALIDARG, error,
+                PDERROR, "Invalid cl uid(%llu)", clUID ) ;
+
+      rc = catGetOneObj( CAT_COLLECTION_INFO_COLLECTION, dummyObj, matcher,
+                         dummyObj, cb, clInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get obj(%s) from %s, rc: %d",
+                   matcher.toString().c_str(), CAT_COLLECTION_INFO_COLLECTION,
+                   rc ) ;
+
+      rc = rtnGetSTDStringElement( clInfo, CAT_CATALOGNAME_NAME, clName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field(%s):cl=%s,rc=%d",
+                   CAT_CATALOGNAME_NAME, clInfo.toString().c_str(), rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCOLLETION, "catGetCollection" )
    INT32 catGetCollection ( const string &clName, BSONObj &boCollection,
                             _pmdEDUCB *cb )
@@ -4057,6 +4145,180 @@ namespace engine
                    subCLName.c_str(), rc ) ;
    done :
       PD_TRACE_EXITRC ( SDB_CATUNLINKSUBCLSTEP, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATADDGLOBALINDEXSTEP, "catAddGlobalIndexStep" )
+   INT32 catAddGlobalIndexStep ( const string &clName, BSONObj &gIndexInfo,
+                                 _pmdEDUCB *cb, SDB_DMSCB *pDmsCB,
+                                 SDB_DPSCB *pDpsCB, INT16 w,
+                                 BOOLEAN *isAltered )
+   {
+      PD_TRACE_ENTRY ( SDB_CATADDGLOBALINDEXSTEP ) ;
+
+      INT32 rc = SDB_OK ;
+      _clsCataGIndex gIndex ;
+      BSONObj clObj ;
+      clsCatalogSet catSet( clName.c_str() ) ;
+
+      rc = gIndex.init( gIndexInfo ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to parse global index(%s):rc=%d",
+                   gIndexInfo.toString().c_str(), rc ) ;
+
+      rc = catGetCollection( clName, clObj, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get catalog-info(%s):rc=%d",
+                   clName.c_str(), rc ) ;
+
+      rc = catSet.updateCatSet( clObj ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to parse catalog-info(%s):rc=%d",
+                   clName.c_str(), rc ) ;
+
+      if ( catSet.isExistGlobalIndex( gIndex.getIndexName() ) )
+      {
+         // already exist, no need to update catalog
+         goto done ;
+      }
+
+      try
+      {
+         BSONObjBuilder gIDXBuilder ;
+         BSONObj gIDXBson ;
+         rc = catSet.addGlobalIndex( gIndex ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to add global index(%s) to collection(%s):rc=%d",
+                      gIndexInfo.toString().c_str(), clName.c_str(), rc ) ;
+
+         rc = catSet.toGlobalIndexBson( gIDXBuilder ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get global index bson of "
+                      "collection(%s):rc=%d", clName.c_str(), rc ) ;
+         gIDXBson = gIDXBuilder.obj() ;
+
+         // Update the catalog
+         rc = catUpdateCatalog( clName.c_str(), gIDXBson, BSONObj(), cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to update the catalog of "
+                      "collection(%s):indexes=%s,rc=%d", clName.c_str(),
+                      gIDXBson.toString().c_str(), rc ) ;
+
+         if ( NULL != isAltered )
+         {
+            *isAltered = TRUE ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Occur exception:%s", e.what() ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATADDGLOBALINDEXSTEP, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELGLOBALINDEXBYNAMESTEP, "catDelGlobalIndexByNameStep" )
+   INT32 catDelGlobalIndexByNameStep ( const string &clName,
+                                       const string &indexName,
+                                       _pmdEDUCB *cb, SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB, INT16 w,
+                                       BOOLEAN *isAltered )
+   {
+      PD_TRACE_ENTRY ( SDB_CATDELGLOBALINDEXBYNAMESTEP ) ;
+
+      INT32 rc = SDB_OK ;
+      BSONObj clObj ;
+      clsCatalogSet catSet( clName.c_str() ) ;
+
+      rc = catGetCollection( clName, clObj, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get catalog-info(%s):rc=%d",
+                   clName.c_str(), rc ) ;
+
+      rc = catSet.updateCatSet( clObj ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to parse catalog-info(%s):rc=%d",
+                   clName.c_str(), rc ) ;
+
+      if ( !catSet.isExistGlobalIndex( indexName ) )
+      {
+         // not exist, no need to update catalog
+         goto done ;
+      }
+
+      try
+      {
+         rc = catSet.delGlobalIndex( indexName ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to delete global index(%s) to collection(%s):rc=%d",
+                      indexName.c_str(), clName.c_str(), rc ) ;
+
+         if ( catSet.getGlobalIndexSize() > 0 )
+         {
+            BSONObjBuilder gIDXBuilder ;
+            BSONObj gIDXBson ;
+            rc = catSet.toGlobalIndexBson( gIDXBuilder ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to get global index bson of "
+                      "collection(%s):rc=%d", clName.c_str(), rc ) ;
+
+            gIDXBson = gIDXBuilder.obj() ;
+
+            rc = catUpdateCatalog( clName.c_str(), gIDXBson, BSONObj(),
+                                   cb, w ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to update the catalog of "
+                         "collection(%s):rc=%d", clName.c_str(), rc ) ;
+
+            if ( NULL != isAltered )
+            {
+               *isAltered = TRUE ;
+            }
+         }
+         else
+         {
+            BSONObj unsetValue = BSON( CAT_GLOBAL_INDEX << 1 ) ;
+            rc = catUpdateCatalog( clName.c_str(), BSONObj(), unsetValue,
+                                   cb, w ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to update the catalog of "
+                         "collection(%s):rc=%d", clName.c_str(), rc ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Occur exception:%s", e.what() ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATDELGLOBALINDEXBYNAMESTEP, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELGLOBALINDEXSTEP, "catDelGlobalIndexStep" )
+   INT32 catDelGlobalIndexStep ( const string &clName, BSONObj &gIndexInfo,
+                                 _pmdEDUCB *cb, SDB_DMSCB *pDmsCB,
+                                 SDB_DPSCB *pDpsCB, INT16 w,
+                                 BOOLEAN *isAltered )
+   {
+      PD_TRACE_ENTRY ( SDB_CATDELGLOBALINDEXSTEP ) ;
+
+      INT32 rc = SDB_OK ;
+      _clsCataGIndex gIndex ;
+      rc = gIndex.init( gIndexInfo ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to parse global index(%s):rc=%d",
+                   gIndexInfo.toString().c_str(), rc ) ;
+
+      rc = catDelGlobalIndexByNameStep( clName, gIndex.getIndexName(),
+                                        cb, pDmsCB, pDpsCB, w, isAltered ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to delete global index:cl=%s,index=%s"
+                   ",rc=%d", clName.c_str(), gIndex.getIndexName().c_str(),
+                   rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATDELGLOBALINDEXSTEP, rc ) ;
       return rc ;
    error :
       goto done ;
