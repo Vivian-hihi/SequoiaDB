@@ -2,11 +2,11 @@
 
 | 选项 | 默认值 | 描述 |
 | ---- | ------ | ---- |
-| AUTO_INCREMENT | 1 | 自增字段的起始值，默认值为 1。SequoiaDB 的自增字段不是严格递增，而是趋势递增，可参考 SequoiaDB [自增字段](data_model/auto_increment.md)章节。 |
-| CHARACTER SET | utf8mb4 | 字符数据的字符集。 |
-| COLLATE | utf8mb4_bin | 字符数据的比较规则。不支持忽略大小写的字符比较规则，字符比较对大小写敏感。 |
-| COMMENT | "" | 表备注信息。还可以通过它指定更多 SequoiaDB 引擎的选项，可参考[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置)。 |
-| ENGINE | SEQUOIADB | 表存储引擎。必须指定为 SEQUOIADB 才能使用本分布式存储引擎，一般无需显式指定。 |
+| AUTO_INCREMENT | 1 | 自增字段的起始值，SequoiaDB 的自增字段不是严格递增，而是趋势递增，可参考 SequoiaDB [自增字段](data_model/auto_increment.md)章节 |
+| CHARACTER SET | utf8mb4 | 字符数据的字符集 |
+| COLLATE | utf8mb4_bin | 字符数据的比较规则，不支持忽略大小写的字符比较规则，字符比较对大小写敏感 |
+| COMMENT | "" | 表备注信息，还可以通过它指定更多 SequoiaDB 引擎的选项，可参考[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置) |
+| ENGINE | SEQUOIADB | 表存储引擎，必须指定为 SEQUOIADB 才能使用本分布式存储引擎，一般无需显式指定 |
 
 **示例**：
 
@@ -61,7 +61,7 @@ MariaDB [company]> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) 
 
 **sequoiadb_conn_addr** 
 
-该参数可以配置 MariaDB 实例所连接的 SequoiaDB 存储集群，可以配置一个或多个协调节点的地址。使用多个时，地址之间要以逗号隔开。如“sdbserver1:11810,sdbserver2:11810”。在配置多个地址时，每次连接会从地址中随机随机选择。在 MariaDB 会话数很多时，压力会基本平均地分摊给每个协调节点。
+该参数可以配置 MariaDB 实例所连接的 SequoiaDB 存储集群，可以配置一个或多个协调节点的地址。使用多个时，地址之间要以逗号隔开。如 `sdbserver1:11810,sdbserver2:11810`。在配置多个地址时，每次连接会从地址中随机选择。在 MariaDB 会话数很多时，压力会基本平均地分摊给每个协调节点。
 
 + 类型：String
 + 默认值："localhost:11810"
@@ -106,7 +106,7 @@ MariaDB [company]> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) 
 
 该参数可以配置 MariaDB 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MariaDB 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
 
-如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置)中指定auto_partition为 false。
+如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置)中指定 auto_partition 为 false。
 
 + 类型：Boolean
 + 默认值：ON
@@ -236,7 +236,7 @@ MariaDB [company]> CREATE TABLE employee2(id INT PRIMARY KEY, name VARCHAR(128) 
    $ bin/sdb_maria_ctl chconf myinst --sdb-auto-partition=OFF
    ```
 
-- 通过实例数据目录下的配置文件 auto.cnf，在[mysqld]一栏添加/更改对应配置项
+- 通过实例数据目录下的配置文件 `auto.cnf`，在[mysqld]一栏添加/更改对应配置项
 
    ```config
    sequoiadb_auto_partition=OFF

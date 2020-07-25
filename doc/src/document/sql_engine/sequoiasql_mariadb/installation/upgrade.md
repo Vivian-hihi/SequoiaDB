@@ -6,12 +6,12 @@
 
 ##升级步骤##
 
-用户可使用 installmode 参数指定 upgrade 升级模式进行自动升级。以 sequoiasql-mariadb-3.4-linux_x86_64-enterprise-installer.run 为例，升级步骤如下：
+用户可使用 installmode 参数指定 upgrade 升级模式进行自动升级。以 `sequoiasql-mariadb-3.4-linux_x86_64-enterprise-installer.run` 为例，升级步骤如下：
 
 1. 使用文本模式指定升级参数进行升级
 
   ```lang-bash
-  # ./sequoiasql-mariadb-3.4-linux_x86_64-installer.run --mode text --installmode upgrade
+  # ./sequoiasql-mariadb-3.4-linux_x86_64-enterprise-installer.run --mode text --installmode upgrade
   ```
 
 2. 程序提示选择向导语言，输入2，选择中文
@@ -80,4 +80,8 @@
    ----------------------------------------------------------------------------
    安装程序已经完成安装 SequoiaSQL MariaDB Server 于你的电脑中.
    ```
+7. 查看当前版本
 
+   ```lang-bash
+   # /opt/sequoiasql/mariadb/bin/sdb_maria_ctl --version
+   ```

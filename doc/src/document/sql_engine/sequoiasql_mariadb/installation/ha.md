@@ -1,10 +1,10 @@
 -SequoiaSQL-MariaDB 的架构使集群中的多个 MariaDB 实例均为主机模式，都可对外提供读写服务。由于各实例的元数据均只存储在该实例本身，SequoiaSQL-MariaDB 提供了元数据同步工具，用来保证 MariaDB 服务的高可用。当一个 MariaDB 实例退出后，连接该实例的应用可以切换到其它实例，获得对等的读写服务。
 
-## MariaDB 元数据同步工具架构 ##
+## MariaDB元数据同步工具架构 ##
 MariaDB 元数据同步工具的基本原理是 MariaDB 服务进程通过审计插件输出审计日志，元数据同步工具从审计日志中提取 SQL 语句，连接到其它 MariaDB 实例执行，以达到元数据同步的目的。包含元数据同步工具的集群架构如下。
 ![](sql_engine/sequoiasql_mysql/meta_sync.jpg)
 
-在上图中，meta_sync 即同步工具进程，每一个 MariaDB 实例都有一个对应的同步工具在运行。它独立于 MariaDB 服务进程运行，对 MariaDB 的审计日志文件 server_audit.log 进行分析处理。由于用户的业务数据存储于底层的 SequoiaDB 数据库集群中，因此只要 MariaDB 层的元数据在各实例间完成同步，连接 MariaDB 实例的客户端就可以访问到一致的数据，这就为 MariaDB 服务提供了高可用能力。
+在上图中，meta_sync 即同步工具进程，每一个 MariaDB 实例都有一个对应的同步工具在运行。它独立于 MariaDB 服务进程运行，对 MariaDB 的审计日志文件 `server_audit.log` 进行分析处理。由于用户的业务数据存储于底层的 SequoiaDB 数据库集群中，因此只要 MariaDB 层的元数据在各实例间完成同步，连接 MariaDB 实例的客户端就可以访问到一致的数据，这就为 MariaDB 服务提供了高可用能力。
 
 ## 元数据同步工具适用范围 ##
 本工具需要与 SequoiSQL-MariaDB 配套使用，可完成常见 DDL、DCL 命令的同步。由于审计插件的特定限制，该工具的使用存在如下约束：
@@ -22,7 +22,7 @@ MariaDB 元数据同步工具的基本原理是 MariaDB 服务进程通过审计
 + 需要使用 SequoiaSQL-MariaDB 3.4 或以上版本
 
 ## 安装 ##
-MariaDB 元数据同步工具以 python 脚本的形式随 SequoiaSQL-MariaDB 的安装包一起发布，在安装 SequoiaSQL-MariaDB 的过程中会被一同安装，工具路径在 SequoiaSQL-MariaDB 安装路径下的 tools 目录下，目录结构如下：
+MariaDB 元数据同步工具以 python 脚本的形式随 SequoiaSQL-MariaDB 的安装包一起发布，在安装 SequoiaSQL-MariaDB 的过程中会被一同安装，工具路径在 SequoiaSQL-MariaDB 安装路径下的 `tools` 目录下，目录结构如下：
 
 ```shell
 tools/
@@ -34,7 +34,7 @@ tools/
     └── README.md
 ```
 
-其中，meta_sync.py 为同步工具主程序，config.sample 为工具配置文件样例，log.config.sample 为日志配置文件样例。SequoiaSQL-MariaDB 安装目录下，lib/plugin 中的动态库 server_audit.so 已经存在了，无需额外安装，只需检测下是否存在即可。
+其中，`meta_sync.py` 为同步工具主程序，`config.sample` 为工具配置文件样例，`log.config.sample` 为日志配置文件样例。SequoiaSQL-MariaDB 安装目录下，`lib/plugin` 中的动态库 `server_audit.so` 已经存在了，无需额外安装，只需检测下是否存在即可。
 
 ### 配置审计插件 ###
 配置审计插件之前，需要先完成 MariaDB 环境的搭建及实例启动，之后再重启 MariaDB 服务。所有的 MariaDB 环境都需要完成该插件配置。具体的配置步骤如下：
@@ -46,20 +46,20 @@ tools/
     $ cd /opt/sequoiasql/mariadb
    ```
 
-+ 登录 MariaDB shell，操作步骤可参考[使用](sql_engine/sequoiasql_mariadb/connection.md#使用)章节。在所有 MariaDB 实例上创建用于同步元数据的 MariaDB 用户，并授予所有权限，用户名与密码在所有实例上保持一致。注意：此处使用的密码 'sdbadmin' 仅为示例，请根据需要自行设置安全的密码
++ 登录 MariaDB Shell，操作步骤可参考[使用](sql_engine/sequoiasql_mariadb/connection.md#使用)章节。在所有 MariaDB 实例上创建用于同步元数据的 MariaDB 用户，并授予所有权限，用户名与密码在所有实例上保持一致。注意：此处使用的密码 'sdbadmin' 仅为示例，请根据需要自行设置安全的密码
 
    ```lang-sql
    MariaDB [(none)]> CREATE USER 'sdbadmin'@'%' IDENTIFIED BY 'sdbadmin';
    MariaDB [(none)]> GRANT all on *.* TO 'sdbadmin'@'%' with grant option;
    ```
 
-+ 创建审计日志存储目录，如以下示例中的 auditlog 目录
++ 创建审计日志存储目录，如以下示例中的 `auditlog` 目录
 
    ```lang-bash
     $ mkdir database/auditlog
    ```
 
-+ 修改 MariaDB 实例的配置文件（SequoiaSQL-MariaDB 实例的配置文件为数据路径下的 auto.cnf），在 mysqld 部分添加以下内容
++ 修改 MariaDB 实例的配置文件（SequoiaSQL-MariaDB 实例的配置文件为数据路径下的 `auto.cnf`），在 mysqld 部分添加以下内容
 
    ```config
    # 加载审计插件
@@ -88,14 +88,14 @@ tools/
    sdb_maria_ctl restart myinst
    ```
 
-+ 检查审计日志文件目录，确保生成了审计日志文件 server_audit.log
++ 检查审计日志文件目录，确保生成了审计日志文件 `server_audit.log`
 
 至此，即完成了元数据同步工具的环境配置。
 
 ## 使用 ##
 在完成安装后，还需要对其进行配置，包含工具的配置及日志的配置。以下各操作步骤也都要在 SequoiaSQL-MariaDB 安装用户（默认为 sdbadmin）下完成。
 ### 工具配置项 ###
-工具使用的配置文件名为 config。如果是全新安装，开始该文件是不存在的，需要从 config.sample 进行拷贝。如果是升级，则该文件应当已经存在。配置项如下：
+工具使用的配置文件名为 `config`。如果是全新安装，开始该文件是不存在的，需要从 `config.sample` 进行拷贝。如果是升级，则该文件应当已经存在。配置项如下：
 
 ```config
 [mysql]
@@ -127,7 +127,7 @@ max_retry_times = 5
 
 在该配置文件中，需要根据实际情况修改 [mysql] 下各配置的值，[execute] 下的各配置通常使用默认值即可。
 ### 日志配置项 ###
-同步工具使用 python 的 logging 模块输出日志，配置文件为 log.config。如果是全新安装，开始该文件是不存在的，需要从 log.config.sample 拷贝。配置项如下（日志目录会自动创建）：
+同步工具使用 python 的 logging 模块输出日志，配置文件为 `log.config`。如果是全新安装，开始该文件是不存在的，需要从 `log.config.sample` 拷贝。配置项如下（日志目录会自动创建）：
 
 ```config
 [loggers]
@@ -165,7 +165,7 @@ datefmt=
 通常情况下，该配置文件中的各配置项均使用默认值即可。
 
 ### 启动工具 ###
-在完成所有配置后，在各实例所在主机的 sdbadmin 用户下，执行以下命令在后台启动同步工具
+在完成所有配置后，在各实例所在主机的 'sdbadmin' 用户下，执行以下命令在后台启动同步工具
 
 ```lang-bash
 $ python /opt/sequoiasql/mariadb/tools/metaSync/meta_sync.py &
@@ -181,10 +181,10 @@ crontab -e
 */1 * * * * /usr/bin/python /opt/sequoiasql/mariadb/tools/metaSync/meta_sync.py >/dev/null 2>&1 &
 ```
 
-其中 /opt/sequoiasql/mariadb/tools/metaSync 为同步工具默认路径，/usr/bin/python 为系统 python 路径。如 SequoiaSQL-MariaDB 或 python 安装路径与默认值不同，请对应修改上述命令中的相关路径。配置完成后，观察同步脚本是否能定时被拉起。
+其中 `/opt/sequoiasql/mariadb/tools/metaSync` 为同步工具默认路径，`/usr/bin/python` 为系统 python 路径。如 SequoiaSQL-MariaDB 或 python 安装路径与默认值不同，请对应修改上述命令中的相关路径。配置完成后，观察同步脚本是否能定时被拉起。
 
 ### 状态文件 ###
-工具在正常运行后，会在与 config 文件相同的目录下，创建名为 sync.stat 的文本文件，用于记录同步状态，以便工具在重启后，能接着之前的处理进度继续工作。
+工具在正常运行后，会在与 `config` 文件相同的目录下，创建名为 `sync.stat` 的文本文件，用于记录同步状态，以便工具在重启后，能接着之前的处理进度继续工作。
 状态文件的内容如下：
 
 ```config

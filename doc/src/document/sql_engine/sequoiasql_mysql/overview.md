@@ -10,4 +10,4 @@ MySQL 5.7.24+
 
 
 
-SequoiaDB 巨杉数据库提供了一个互动体验 Demo，模拟数据库的实际使用环境。用户可以在预先设置好的环境中直接上手体验操作 MySQL shell，快速了解 SequoiaDB 语法协议级兼容 MySQL 和原生分布式架构等技术特性。[点此快速体验](http://www.sequoiadb.com/cn/university-demo)
+SequoiaDB 巨杉数据库提供了一个互动体验 Demo，模拟数据库的实际使用环境。用户可以在预先设置好的环境中直接上手体验操作 MySQL Shell，快速了解 SequoiaDB 语法协议级兼容 MySQL 和原生分布式架构等技术特性。[点此快速体验](http://www.sequoiadb.com/cn/university-demo)
