@@ -151,7 +151,7 @@ namespace engine
                                       optCB->getPrefInstModeStr(),
                                       optCB->isPreferedStrict(),
                                       optCB->getPreferedPeriod(),
-                                      PREFER_INSTANCE_TYPE_MASTER ) ;
+                                      PMD_PREFER_INSTANCE_TYPE_MASTER ) ;
 
       rc = _remoteSessionMgr.init( _pAgent, &_sitePropMgr ) ;
       PD_RC_CHECK ( rc, PDERROR, "Init session manager failed, rc: %d", rc ) ;
@@ -308,7 +308,7 @@ namespace engine
                                       optCB->getPrefInstModeStr(),
                                       optCB->isPreferedStrict(),
                                       optCB->getPreferedPeriod(),
-                                      PREFER_INSTANCE_TYPE_MASTER ) ;
+                                      PMD_PREFER_INSTANCE_TYPE_MASTER ) ;
    }
 
    void _CoordCB::attachCB( _pmdEDUCB *cb )
