@@ -323,6 +323,7 @@ const zend_function_entry lobFun[] = {
    PHP_ME( SequoiaLob, lock,          NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaLob, lockAndSeek,   NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaLob, isEof,         NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaLob, getRunTimeDetail, NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
@@ -637,6 +638,8 @@ PHP_MINIT_FUNCTION(sequoiadb)
    PHP_REGISTER_LONG_CONSTANT( "SDB_LOB_CREATEONLY", 0x00000001 ) ;
    PHP_REGISTER_LONG_CONSTANT( "SDB_LOB_READ",       0x00000004 ) ;
    PHP_REGISTER_LONG_CONSTANT( "SDB_LOB_WRITE",      0x00000008 ) ;
+   PHP_REGISTER_LONG_CONSTANT( "SDB_LOB_SHAREREAD",  0x00000040 ) ;
+
    //lob seek
    PHP_REGISTER_LONG_CONSTANT( "SDB_LOB_SET", 0 ) ;
    PHP_REGISTER_LONG_CONSTANT( "SDB_LOB_CUR", 1 ) ;

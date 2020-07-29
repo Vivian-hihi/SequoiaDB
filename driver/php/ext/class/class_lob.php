@@ -245,4 +245,26 @@ class SequoiaLob
     * @endcode
    */
    public function isEof(){}
+
+   /**
+    * Get the run time detail information of lob.
+    *
+    * @return Returns the run time detail information of lob, default return array.
+    *
+    * @retval array   record
+    * @retval string  record
+    *
+    * Example:
+    * @code
+    * $detail = $lobObj -> getRunTimeDetail() ;
+    * if ( empty( $detail ) )
+    * {
+    *    $err = $db -> getLastErrorMsg() ;
+    *    echo "Failed to get run time detail, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * var_dump( $detail ) ;
+    * @endcode
+   */
+   public function getRunTimeDetail(){}
 }

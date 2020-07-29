@@ -360,3 +360,33 @@ PHP_METHOD( SequoiaLob, isEof )
 
    RETVAL_BOOL( result ) ;
 }
+
+PHP_METHOD( SequoiaLob, getRunTimeDetail )
+{
+   INT32 rc = SDB_OK ;
+   zval *pThisObj   = getThis() ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   bson detail ;
+
+   bson_init( &detail ) ;
+
+   PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
+   PHP_READ_HANDLE( pThisObj, lob, sdbLobHandle,
+                    SDB_LOB_HANDLE_NAME, lobDesc ) ;
+
+   rc = sdbGetRunTimeDetail( lob, &detail ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+done:
+   PHP_RETURN_AUTO_RECORD( FALSE, pThisObj, (rc == SDB_OK ? FALSE : TRUE),
+                           detail ) ;
+   bson_destroy( &detail ) ;
+   return ;
+error:
+   PHP_SET_ERROR( FALSE, pThisObj, rc ) ;
+   goto done ;
+}

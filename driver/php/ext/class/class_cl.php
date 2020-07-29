@@ -67,6 +67,8 @@ class SequoiaCL
    define( "SDB_LOB_READ",                               0x00000004 ) ;
    /** Open an existing lob to write. */
    define( "SDB_LOB_WRITE",                              0x00000008 ) ;
+   /** Open an existing lob to share read. */
+   define( "SDB_LOB_SHAREREAD",                          0x00000040 ) ;
 
    /**
     * Drop collection.
@@ -1149,7 +1151,7 @@ class SequoiaCL
     *
     * @param $name the string argument. The index name.
     *
-    * @return Returns the information of index., default return array.
+    * @return Returns the information of index, default return array.
     *
     * @retval array   record
     * @retval string  record
@@ -1221,6 +1223,7 @@ class SequoiaCL
     *                                                    SDB_LOB_CREATEONLY
     *                                                    SDB_LOB_READ
     *                                                    SDB_LOB_WRITE
+    *                                                    SDB_LOB_SHAREREAD
     *                                                    @endcode
     *
     * @return Returns a new SequoiaLob object.

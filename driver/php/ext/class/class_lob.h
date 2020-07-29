@@ -31,5 +31,6 @@ PHP_METHOD( SequoiaLob, seek ) ;
 PHP_METHOD( SequoiaLob, lock ) ;
 PHP_METHOD( SequoiaLob, lockAndSeek ) ;
 PHP_METHOD( SequoiaLob, isEof ) ;
+PHP_METHOD( SequoiaLob, getRunTimeDetail ) ;
 
 #endif
