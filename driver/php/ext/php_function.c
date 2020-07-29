@@ -555,6 +555,8 @@ error:
    goto done ;
 }
 
+#define INT_MAX_NUM  (2147483647)
+#define INT_MIN_NUM  (-2147483648)
 INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
 {
    INT32 rc = SDB_OK ;
@@ -581,7 +583,27 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
          }
          break ;
       case IS_LONG:
-         rc = bson_append_int( pBson, pKey, Z_LVAL_P( pValue ) ) ;
+#ifdef __PHP7__
+         if ( sizeof( zend_long ) == 8 )
+#else
+         if ( sizeof( long ) == 8 )
+#endif
+         {
+            INT64 tmp = Z_LVAL_P( pValue ) ;
+
+            if ( tmp >= INT_MIN_NUM && tmp <= INT_MAX_NUM )
+            {
+               rc = bson_append_int( pBson, pKey, (INT32)tmp ) ;
+            }
+            else
+            {
+               rc = bson_append_long( pBson, pKey, tmp ) ;
+            }
+         }
+         else
+         {
+            rc = bson_append_int( pBson, pKey, Z_LVAL_P( pValue ) ) ;
+         }
          if( rc != BSON_OK )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
@@ -1079,23 +1101,41 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
          }
          break ;
       case BSON_LONG:
-         PHP_NEW_CLASS( pClass, pSequoiadbInt64 ) ;
-         pStrVal2 = (CHAR *)emalloc( 512 ) ;
-         if( !pStrVal2 )
+#ifdef __PHP7__
+         if ( sizeof( zend_long ) == 8 )
+#else
+         if ( sizeof( long ) == 8 )
+#endif
          {
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         ossMemset( pStrVal2, 0, 512 ) ;
-         ossSnprintf( pStrVal2, 512, "%lld", (UINT64)bson_iterator_long( &item ) ) ;
-         PHP_SAVE_VAR_STRING( pClass, "INT64", pStrVal2 ) ;
-         if( isObj )
-         {
-            add_assoc_zval( pArray, pKey, pClass ) ;
+            if( isObj )
+            {
+               add_assoc_long( pArray, pKey, bson_iterator_long( &item ) ) ;
+            }
+            else
+            {
+               add_next_index_long( pArray, bson_iterator_long( &item ) ) ;
+            }
          }
          else
          {
-            add_next_index_zval( pArray, pClass ) ;
+            PHP_NEW_CLASS( pClass, pSequoiadbInt64 ) ;
+            pStrVal2 = (CHAR *)emalloc( 512 ) ;
+            if( !pStrVal2 )
+            {
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            ossMemset( pStrVal2, 0, 512 ) ;
+            ossSnprintf( pStrVal2, 512, "%lld", (UINT64)bson_iterator_long( &item ) ) ;
+            PHP_SAVE_VAR_STRING( pClass, "INT64", pStrVal2 ) ;
+            if( isObj )
+            {
+               add_assoc_zval( pArray, pKey, pClass ) ;
+            }
+            else
+            {
+               add_next_index_zval( pArray, pClass ) ;
+            }
          }
          break ;
       case BSON_DOUBLE:

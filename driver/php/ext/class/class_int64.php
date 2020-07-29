@@ -20,7 +20,7 @@
  */
 
 /**
- * Class for create an object of the int64 type
+ * Class for create an object of the int64 type(Only when PHP does not support Int64)
  */
 class SequoiaINT64
 {
