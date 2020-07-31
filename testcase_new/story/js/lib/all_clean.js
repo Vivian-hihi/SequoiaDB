@@ -13,7 +13,6 @@ var db = new Sdb( COORDHOSTNAME, COORDSVCNAME );
 
 function main ( db )
 {
-   sleep( 1000 );
    // 1. check nodes
    var groups = commGetGroups( db, "", "", false );
    var errNodes = commCheckBusiness( groups, true );
@@ -45,9 +44,6 @@ function main ( db )
          println( "Drop " + cols[i].cs + " failed after all test-cases: " + e );
       }
    }
-
-   //3. drop capped cs
-   commDropCS( db, COMMCAPPEDCSNAME, true, "" )
 
 }
 
