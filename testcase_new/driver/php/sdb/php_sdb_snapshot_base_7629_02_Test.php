@@ -91,8 +91,16 @@ class snapshot762902 extends PHPUnit_Framework_TestCase
       }
 
       $record = $cursor -> current();
-      $this -> assertNotEmpty( $record["SessionID"] -> __toString() );
-      $this -> assertNotEmpty( $record["Contexts"][0]["ContextID"] -> __toString() );
+      if( is_object( $record["SessionID"] ) )
+      {
+         $this -> assertNotEmpty( $record["SessionID"] -> __toString() );
+         $this -> assertNotEmpty( $record["Contexts"][0]["ContextID"] -> __toString() );
+      }
+      else
+      {
+         $this -> assertNotEmpty( $record["SessionID"] );
+         $this -> assertNotEmpty( $record["Contexts"][0]["ContextID"] );
+      }
    }
 
    public function test_snapshotContextsCurrent()

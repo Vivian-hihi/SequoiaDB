@@ -194,7 +194,15 @@ class TestData17 extends PHPUnit_Framework_TestCase
          }
          else if( 6 <= $i && $i < count($expRecsArray) - 3 )
          {
-            $this -> assertEquals( $expResults, $actResults -> __toString() );
+            if( is_object( $actResults ) )
+            {
+               $actResults = $actResults -> __toString();
+            }
+            else
+            {
+               $expResults = $expResults -> __toString();
+            }
+            $this -> assertEquals( $expResults, $actResults );
          }
       }
       

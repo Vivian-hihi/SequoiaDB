@@ -137,14 +137,24 @@ class DataOperator09 extends BaseOperator
             //for special type
             else if( $i >= 6 && $i < count( $matchType ) )
             {
-               if( $tmpInfo['b'] -> __toString() !== $findRecsArray[$i]['b'] -> __toString() )
+               if( is_object($findRecsArray[$i]['b']) )
+               {
+                  $expResult = $tmpInfo['b'] -> __toString();
+                  $actResult = $findRecsArray[$i]['b'] -> __toString();
+               }
+               else
+               {
+                  $expResult = $tmpInfo['b'];
+                  $actResult = $findRecsArray[$i]['b'] ;
+               }
+               if( $expResult !== $actResult )
                {  
                   echo "\nFailed to compared records of special type.\n";
                   echo "Match type: ". $matchType[$i] ."\n";
                   echo "expect value of key[b]: \n";
-                  var_dump( $tmpInfo[$i]['b'] -> __toString() ) ."\n";
+                  var_dump( $expResult ) ."\n";
                   echo "actual value of key[b]: \n";
-                  var_dump( $findRecsArray[$i]['b'] -> __toString() ) ."\n";
+                  var_dump( $actResult ) ."\n";
                   
                   return false;
                }
@@ -258,7 +268,15 @@ class TestData09 extends PHPUnit_Framework_TestCase
          }
          else if( $i >= 6 && $i < count($expRecsArray) )
          {
-            $this -> assertEquals( $expResults, $actResults -> __toString() );
+            if( is_object( $actResults ) )
+            {
+               $actResults = $actResults -> __toString();
+            }
+            else
+            {
+               $expResults = $expResults -> __toString();
+            }
+            $this -> assertEquals( $expResults, $actResults );
          }
          
       }

@@ -104,8 +104,16 @@ class TestNumberLong03 extends PHPUnit_Framework_TestCase
       
       //maxValue when the value is greater than the maxValue
       //minValue when the value is less than the minValue
-      $this -> assertEquals( '-9223372036854775808', $recsArray[0]['a'] -> __toString() );
-      $this -> assertEquals( '9223372036854775807', $recsArray[0]['b'] -> __toString() );
+      if( is_object( $recsArray[0]['a'] ) )
+      {
+         $this -> assertEquals( '-9223372036854775808', $recsArray[0]['a'] -> __toString() );
+         $this -> assertEquals( '9223372036854775807', $recsArray[0]['b'] -> __toString() );
+      }
+      else
+      {
+         $this -> assertEquals( '-9223372036854775808', $recsArray[0]['a'] );
+         $this -> assertEquals( '9223372036854775807', $recsArray[0]['b'] );
+      }
    }
    
    function test_dropCL()

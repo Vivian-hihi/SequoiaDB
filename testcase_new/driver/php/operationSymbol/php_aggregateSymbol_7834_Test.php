@@ -141,8 +141,16 @@ class TestAggreSymbol extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 2, $tmpArray[0]['avg'] );
       $this -> assertEquals( 8, $tmpArray[1]['avg'] );
       //$cnt
-      $this -> assertEquals( "2", $tmpArray[0]['cnt'] -> __toString() );
-      $this -> assertEquals( "2", $tmpArray[1]['cnt'] -> __toString() );
+      if( is_object( $tmpArray[0]['cnt'] ) )
+      {
+         $this -> assertEquals( "2", $tmpArray[0]['cnt'] -> __toString() );
+         $this -> assertEquals( "2", $tmpArray[1]['cnt'] -> __toString() );
+      }
+      else
+      {
+         $this -> assertEquals( "2", $tmpArray[0]['cnt'] );
+         $this -> assertEquals( "2", $tmpArray[1]['cnt'] );   
+      }
       //$push
       $this -> assertEquals( 1, $tmpArray[0]['push'][0] );
       $this -> assertEquals( 3, $tmpArray[0]['push'][1] );

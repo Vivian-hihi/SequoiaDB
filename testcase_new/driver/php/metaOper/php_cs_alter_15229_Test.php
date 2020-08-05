@@ -185,8 +185,15 @@ class TestCS15229 extends PHPUnit_Framework_TestCase
 		//var_dump($clInfo);
       $this -> assertEquals( 0, self::$dbh -> getErrno() );
       $this -> assertEquals( self::$csName.'.'.self::$clName,  $clInfo['Name'] );
-      $this -> assertEquals( "2147483648", $clInfo["Size"] -> __toString() );
-      $this -> assertEquals( "10000", $clInfo["Max"] -> __toString() );
+      if( is_object( $clInfo["Size"] ) )
+      {
+         $this -> assertEquals( "2147483648", $clInfo["Size"] -> __toString() );
+         $this -> assertEquals( "10000", $clInfo["Max"] -> __toString() );
+      }
+      else{
+         $this -> assertEquals( "2147483648", $clInfo["Size"] );
+         $this -> assertEquals( "10000", $clInfo["Max"] );
+      }
       $this -> assertFalse(  $clInfo["OverWrite"] );
    }
    

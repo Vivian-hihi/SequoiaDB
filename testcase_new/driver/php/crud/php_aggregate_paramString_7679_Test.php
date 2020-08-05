@@ -123,10 +123,20 @@ class testAggregate02 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( -29, $errno );
       
       $this -> assertCount( 2, $recsArray );
-      $this -> assertEquals( '1',    $recsArray[0]['count'] -> __toString() );
       $this -> assertEquals( 'Aber', $recsArray[0]['name'] );
-      $this -> assertEquals( '2',    $recsArray[1]['count'] -> __toString() );
       $this -> assertEquals( 'Tom',  $recsArray[1]['name'] );
+      if( is_object($recsArray[0]['count']) )
+      {
+         $this -> assertEquals( '1', $recsArray[0]['count'] -> __toString() );
+         $this -> assertEquals( '2', $recsArray[1]['count'] -> __toString() );
+      }
+      else
+      {
+         $this -> assertEquals( '1', $recsArray[0]['count'] );
+         $this -> assertEquals( '2', $recsArray[1]['count'] );
+      }
+      
+      
    }
    
    function test_dropCL()
