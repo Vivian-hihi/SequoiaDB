@@ -70,11 +70,12 @@ function Sequoiadb ( hostname, svcname, username, password )
       }
 
    this.dropCS =
-      function( name )
+      function( name, options )
       {
+         if( options === undefined ) { options = {}; }
          try
          {
-            db.dropCS( name );
+            db.dropCS( name, options );
          }
          catch( e )
          {

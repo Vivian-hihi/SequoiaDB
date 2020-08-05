@@ -199,15 +199,16 @@ function commCreateCL ( db, csName, clName, optionObj, autoCreateCS, ignoreExist
    ignoreNotExist: default = true, value: true/false, 忽略不存在错误
    message: default = ""
 ***************************************************************************** */
-function commDropCS ( db, csName, ignoreNotExist, message )
+function commDropCS ( db, csName, ignoreNotExist, message, options )
 {
    ++funcCommDropCSTimes;
    if( ignoreNotExist == undefined ) { ignoreNotExist = true; }
    if( message == undefined ) { message = ""; }
+   if( options == undefined ) { options = {}; }
 
    try
    {
-      db.dropCS( csName );
+      db.dropCS( csName, options );
    }
    catch( e )
    {
