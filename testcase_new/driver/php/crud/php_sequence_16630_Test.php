@@ -87,13 +87,29 @@ class TestSequence16630 extends PHPUnit_Framework_TestCase
          throw new Exception( "select sequence error,is empty." );
       }
       $record  = $cursor -> next();
+      if( is_object( $record['Version'] ) )
+      {
+         $version = $record['Version'] -> __toString();
+         $currentValue = $record['CurrentValue'] -> __toString();
+         $startValue = $record['StartValue'] -> __toString();
+         $minValue = $record['MinValue'] -> __toString();
+         $maxValue = $record['MaxValue'] -> __toString();
+      }
+      else
+      {
+         $version = $record['Version'];
+         $currentValue = $record['CurrentValue'];
+         $startValue = $record['StartValue'];
+         $minValue = $record['MinValue'];
+         $maxValue = $record['MaxValue'];
+      }
       self::checkSnapshotValue( $record['Name'], self::$sequenceName );
       self::checkSnapshotValue( $record['Internal'], true );
-      self::checkSnapshotValue( $record['Version'] -> __toString(), '0');
-      self::checkSnapshotValue( intval( $record['CurrentValue'] -> __toString() ), 2048 );
-      self::checkSnapshotValue( intval( $record['StartValue'] -> __toString() ), 2048 );
-      self::checkSnapshotValue( intval( $record['MinValue'] -> __toString() ), 1024 );
-      self::checkSnapshotValue( intval( $record['MaxValue'] -> __toString() ), 4096 );
+      self::checkSnapshotValue( $version, '0');
+      self::checkSnapshotValue( intval( $currentValue ), 2048 );
+      self::checkSnapshotValue( intval( $startValue ), 2048 );
+      self::checkSnapshotValue( intval( $minValue ), 1024 );
+      self::checkSnapshotValue( intval( $maxValue ), 4096 );
       self::checkSnapshotValue( $record['Increment'], 1 );
       self::checkSnapshotValue( $record['CacheSize'], 1000 );
       self::checkSnapshotValue( $record['AcquireSize'], 1000 );

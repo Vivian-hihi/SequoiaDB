@@ -93,7 +93,11 @@ class TestSequence16652 extends PHPUnit_Framework_TestCase
          throw new Exception( "select sequence error,is empty." );
       }
       $actMaxValue = $cursor -> next()['MaxValue'];
-      if( $maxValue != intval($actMaxValue -> __toString() ) )
+      if( is_object( $actMaxValue ) )
+      {
+         $actMaxValue = $actMaxValue -> __toString();
+      }
+      if( $maxValue != intval($actMaxValue) )
       {
          throw new Exception( "check sequence maxValue, exp: ". $maxValue ." act: " . $actMaxValue );
       }

@@ -153,7 +153,16 @@ class TestSequence16628 extends PHPUnit_Framework_TestCase
       $times = 1;
       while( $record = $cursor -> next() )
       {
-         if( intval($record['a'] -> __toString()) != $times || intval($record['b'] -> __toString()) != $times )
+         if( is_object( $record['a'] ) )
+         {
+            $resultA = $record['a'] -> __toString();
+            $resultB = $record['b'] -> __toString();
+         }else
+         {
+            $resultA = $record['a'];
+            $resultB = $record['b'];
+         }
+         if( intval($resultA) != $times || intval($resultB) != $times )
          {
             throw new Exception( "check record error, exp: ". $times ." act: " ."a = ".$record['a'].", b = ".$record['b'] );
          }

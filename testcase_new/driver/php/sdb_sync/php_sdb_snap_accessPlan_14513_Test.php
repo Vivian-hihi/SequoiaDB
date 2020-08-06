@@ -43,12 +43,25 @@ class TestSnapAccessPlan14513 extends PHPUnit_Framework_TestCase
       $actRecs = array();
       while( $record = $cursor -> next() )
          array_push( $actRecs, $record );
-      $expRecs = array
-      (
-         array( 'MinTimeSpentQuery' => array( 'ReturnNum' => new SequoiaINT64( '100' ) ) ),
-         array( 'MinTimeSpentQuery' => array( 'ReturnNum' => new SequoiaINT64( '200' ) ) ),
-         array( 'MinTimeSpentQuery' => array( 'ReturnNum' => new SequoiaINT64( '500' ) ) )
-      );
+      if( is_object( $actRecs[0]['MinTimeSpentQuery']['ReturnNum'] ) )
+      {
+         $expRecs = array
+         (
+            array( 'MinTimeSpentQuery' => array( 'ReturnNum' => new SequoiaINT64( '100' ) ) ),
+            array( 'MinTimeSpentQuery' => array( 'ReturnNum' => new SequoiaINT64( '200' ) ) ),
+            array( 'MinTimeSpentQuery' => array( 'ReturnNum' => new SequoiaINT64( '500' ) ) )
+         );
+      }
+      else
+      {
+         $expRecs = array
+         (
+            array( 'MinTimeSpentQuery' => array( 'ReturnNum' => 100 ) ),
+            array( 'MinTimeSpentQuery' => array( 'ReturnNum' => 200 ) ),
+            array( 'MinTimeSpentQuery' => array( 'ReturnNum' => 500 ) )
+         );
+      }
+      
       self::checkArrayEqual( $expRecs, $actRecs );
    }
    

@@ -42,6 +42,10 @@ class GetSessionAttr19204 extends PHPUnit_Framework_TestCase
       try
       {
          $sessionAttr = self::$db -> getSessionAttr();
+         if( !is_object( $sessionAttr["Timeout"] ) )
+         {
+            self::$defaultAttr["Timeout"] = -1;
+         }
          if($sessionAttr != self::$defaultAttr)
          {
              throw new Exception("chech attr value error: \nexpAttr: " . json_encode(self::$defaultAttr) . "\nactAttr: " . json_encode($sessionAttr));
