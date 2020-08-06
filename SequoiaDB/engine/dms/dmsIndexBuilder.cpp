@@ -70,7 +70,7 @@ namespace engine
       _suIndex = NULL ;
       _suData = NULL ;
       _mbContext = NULL ;
-      SAFE_DELETE( _indexCB ) ;
+      SAFE_OSS_DELETE( _indexCB ) ;
    }
 
    void _dmsIndexBuilder::setOprHandler( IDmsOprHandler *pOprHander )
