@@ -7,10 +7,10 @@ main();
 
 function main ()
 {
-   var clName = "cl";
-   var cl = db.getCollection( clName );
-   cl.remove( {} );
+   var clName = "cl21993";
    var docsNum = 2100;
+   var cl = db.getCollection( clName );
+   cl.drop();
 
    // insert
    var docs = [];
@@ -22,6 +22,7 @@ function main ()
    assert.eq( JSON.stringify( rc ), ["{\"nInserted\":2100,\"nUpserted\":0,\"nMatched\":0,\"nModified\":0,\"nRemoved\":0}"] );
 
    // find
+   // find / cursor.limit
    // rc all
    var rc = cl.find().sort( { "_id": 1 } );
    checkResults( rc, docs );
@@ -32,17 +33,35 @@ function main ()
    var rc = cl.find( docs[0] );
    checkResults( rc, [docs[0]] );
 
-   var expDocsNum = 999
+   var expDocsNum = 999;
    var rc = cl.find().limit( expDocsNum ).sort( { "_id": 1 } );
    checkResults( rc, docs.slice( 0, expDocsNum ) );
 
-   var expDocsNum = 1000
+   var expDocsNum = 1000;
    var rc = cl.find().limit( expDocsNum ).sort( { "_id": 1 } );
    checkResults( rc, docs.slice( 0, expDocsNum ) );
 
-   expDocsNum = 1001;
+   var expDocsNum = 1001;
    var rc = cl.find().limit( expDocsNum ).sort( { "_id": 1 } );
    checkResults( rc, docs.slice( 0, expDocsNum ) );
+
+   // cursor.batchSize, batchSize = limit when version <= v3.0
+   var bs = 0;
+   var rc = cl.find().batchSize( bs ).sort( { "_id": 1 } );
+   checkResults( rc, docs );
+
+   var bs = 999;
+   var rc = cl.find().batchSize( bs ).sort( { "_id": 1 } );
+   checkResults( rc, docs.slice( 0, bs ) );
+
+   var bs = 1000;
+   var rc = cl.find().batchSize( bs ).sort( { "_id": 1 } );
+   checkResults( rc, docs.slice( 0, bs ) );
+
+   var bs = 1001;
+   var rc = cl.find().batchSize( bs ).sort( { "_id": 1 } );
+   checkResults( rc, docs.slice( 0, bs ) );
+
 
    // update
    expDocsNum = 2010
@@ -51,7 +70,7 @@ function main ()
    {
       expDocs.push( { "_id": i, "a": i, "b": 2 } );
    }
-   var rc = cl.update( { "a": { "$lt": expDocsNum } }, { "$inc": { "b": 1 } } );
+   var rc = cl.update( { "a": { "$lt": expDocsNum } }, { "$inc": { "b": 1 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": expDocsNum, "nUpserted": 0, "nModified": expDocsNum } );
    // check update
    var rc = cl.find( { "a": { "$lt": expDocsNum } } ).sort( { "_id": 1 } );
@@ -67,6 +86,7 @@ function main ()
 
    var rc = cl.find().sort( { "_id": 1 } );
    checkResults( rc, docs.slice( expDocsNum, docsNum ) );
+
 
    cl.drop();
 }

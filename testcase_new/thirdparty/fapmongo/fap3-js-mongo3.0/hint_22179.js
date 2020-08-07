@@ -28,17 +28,6 @@ function main ()
    var rc = cl.find( { "b": 1 } ).hint( "aIdx" );
    checkResults( rc, ["[{\"_id\":1,\"a\":1,\"b\":1}]"] );
 
-   // find.skip.limit
-   var rc = cl.find().skip( 1 ).limit( 2 );
-   checkResults( rc, ["[{\"_id\":2,\"a\":4,\"b\":2},{\"_id\":3,\"a\":3,\"b\":3}]"] );
-   // find.skip.limit.sort
-   var rc = cl.find().skip( 1 ).limit( 2 ).sort( { "a": 1 } );
-   checkResults( rc, ["[{\"_id\":4,\"a\":2,\"b\":4},{\"_id\":3,\"a\":3,\"b\":3}]"] );
-
-   // find.count
-   var rc = cl.find( { "a": { "$gt": 1 } } ).count();
-   assert.eq( rc, 3 );
-
    // count by hint, index exist
    var rc = cl.count( { "a": { "$gt": 1 } }, { "hint": "aIdx" } );
    assert.eq( rc, 3 );
