@@ -13,6 +13,7 @@
 *@author:      liyuanyue
 *@createdate:  2020.07.16
 ******************************************************************************/
+testConf.skipStandAlone=true;
 main( test );
 
 function test ()
