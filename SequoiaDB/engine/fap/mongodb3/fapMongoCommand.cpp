@@ -4153,12 +4153,13 @@ INT32 _mongoIsMasterCommand::buildReply( const MsgOpReply &sdbReply,
                                          _mongoResponseBuffer &headerBuf )
 {
    BSONObjBuilder bob ;
-   bob.append( "ismaster", TRUE ) ;
+   bob.appendBool( "ismaster", TRUE ) ;
    bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
    bob.append( "maxMessageSizeBytes", SDB_MAX_MSG_LENGTH ) ;
    bob.append( "maxWriteBatchSize", 1000 ) ;
    bob.append( "maxWireVersion", 4 ) ; // correspions to mongodb3.2
    bob.append( "minWireVersion", 0 ) ;
+   bob.append( "msg", "isdbgrid" ) ;
    bob.append( "ok", 1 ) ;
    bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
 
