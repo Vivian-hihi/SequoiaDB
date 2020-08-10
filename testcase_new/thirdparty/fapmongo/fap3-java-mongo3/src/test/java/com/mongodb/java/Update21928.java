@@ -16,7 +16,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -44,7 +43,6 @@ import static com.mongodb.client.model.Updates.setOnInsert;
  * @version 1.00
  */
 public class Update21928 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21928v3";
     private MongoCollection< Document > cl;
@@ -54,7 +52,6 @@ public class Update21928 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
         list = new CopyOnWriteArrayList<>();
         for ( int i = 0; i < num; i++ ) {

@@ -25,10 +25,13 @@ import com.mongodb.client.MongoDatabase;
 public class MongodbTestBase extends AbstractTestNGSpringContextTests {
     private static final Logger logger = Logger
             .getLogger( MongodbTestBase.class );
-    public static MongoClient mongoClient;
+    public static MongoClient client;
     public static String dbName;
+    public static MongoClient springMongoClient;
+    private Config springConfig;
     @Autowired
     public MongoTemplate mongoTemplate;
+    @Autowired
     public Config config;
 
     /**
@@ -37,16 +40,15 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
      */
     @BeforeSuite(alwaysRun = true)
     public void initSuite() throws UnknownHostException {
-        logger.info( "begin init suite..." );
         @SuppressWarnings("resource")
         ApplicationContext ctx = new ClassPathXmlApplicationContext(
                 "spring-mongodb-3x1.xml" );
-        config = ( Config ) ctx.getBean( "config" );
-        logger.info( "config:" + config );
-        dbName = config.getDbName();
-        mongoClient = getClient( config.getHost(), config.getPort() );
+        springConfig = ( Config ) ctx.getBean( "config" );
+        springMongoClient = ( MongoClient ) ctx.getBean( "mongo" );
+        dbName = springConfig.getJavaDBName();
+        client = getClient( springConfig.getUrls(),
+                springMongoClient.getMongoClientOptions() );
         cleanEnv();
-        logger.info( "end init suite..." );
     }
 
     /**
@@ -57,15 +59,15 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
      */
     @AfterSuite(alwaysRun = true)
     public void finiSuite( ITestContext context ) throws Exception {
-        logger.info( "begin finish Suite..." );
         try {
-            if ( context.getFailedTests().size() == 0 ) {
+            if ( context.getFailedTests().size() == 0
+                    && context.getSkippedTests().size() == 0 ) {
                 cleanEnv();
             }
         } finally {
-            mongoClient.close();
+            client.close();
+            springMongoClient.close();
         }
-        logger.info( "end finish Suite..." );
     }
 
     /**
@@ -79,8 +81,8 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
      */
     public static MongoClient getClient( String hostname, int port )
             throws UnknownHostException {
-        MongoClientOptions opt = MongoClientOptions.builder().build();
-        return new MongoClient( new ServerAddress( hostname, port ), opt );
+        return new MongoClient( new ServerAddress( hostname, port ),
+                springMongoClient.getMongoClientOptions() );
     }
 
     /**
@@ -88,8 +90,14 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
      * @return
      * @throws UnknownHostException
      */
-    public static MongoClient getClient() throws UnknownHostException {
-        return mongoClient;
+    public static MongoClient getClient( String[] urls,
+            MongoClientOptions options ) throws UnknownHostException {
+        List< ServerAddress > serverAddressList = new ArrayList<>();
+        for ( String url : urls ) {
+            serverAddressList.add( new ServerAddress( url.split( ":" )[ 0 ],
+                    Integer.parseInt( url.split( ":" )[ 1 ] ) ) );
+        }
+        return new MongoClient( serverAddressList, options );
     }
 
     /**
@@ -200,7 +208,8 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
      */
     public void cleanEnv() throws UnknownHostException {
         try {
-            MongoDatabase db = mongoClient.getDatabase( dbName );
+            MongoDatabase db = client
+                    .getDatabase( springConfig.getJavaDBName() );
             db.drop();
         } catch ( Exception e ) {
             e.printStackTrace();
@@ -208,7 +217,8 @@ public class MongodbTestBase extends AbstractTestNGSpringContextTests {
         }
 
         try {
-            MongoDatabase db = mongoClient.getDatabase( config.getDbname1() );
+            MongoDatabase db = springMongoClient
+                    .getDatabase( springConfig.getSpringDBName() );
             db.drop();
         } catch ( Exception e ) {
             e.printStackTrace();

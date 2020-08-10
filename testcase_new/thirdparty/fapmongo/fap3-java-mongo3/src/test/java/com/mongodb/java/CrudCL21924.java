@@ -14,7 +14,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -36,13 +35,11 @@ import static com.mongodb.client.model.Filters.eq;
  * @version 1.00
  */
 public class CrudCL21924 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String[] clNames = { "cl21924v3A", "cl21924v3B" };
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
     }
 

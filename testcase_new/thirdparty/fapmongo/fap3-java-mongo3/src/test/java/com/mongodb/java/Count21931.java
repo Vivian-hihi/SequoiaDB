@@ -13,7 +13,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -33,7 +32,6 @@ import static com.mongodb.client.model.Filters.lt;
  * @version 1.00
  */
 public class Count21931 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21931v3";
     private MongoCollection< Document > cl;
@@ -43,7 +41,6 @@ public class Count21931 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
         list = new CopyOnWriteArrayList<>();
         for ( int i = 0; i < num; i++ ) {

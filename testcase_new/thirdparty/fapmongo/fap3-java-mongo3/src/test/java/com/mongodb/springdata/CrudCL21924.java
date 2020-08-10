@@ -92,8 +92,8 @@ public class CrudCL21924 extends MongodbTestBase {
     public void test2() throws UnknownHostException {
         String dbName = "spring-db21924";
         String clName = "spring-cl21924test2";
-        MongoTemplate mongoTemplate = new MongoTemplate(
-                MongodbTestBase.getClient(), dbName );
+        MongoTemplate mongoTemplate = new MongoTemplate( springMongoClient,
+                dbName );
         // cs和cl都不存在，执行insert、upsert、createIndex、createCL 操作,创建cs和cl
         autoCreate( mongoTemplate, clName );
         // cs存在，cl不存在，执行insert、upsert、createIndex、createCL操作

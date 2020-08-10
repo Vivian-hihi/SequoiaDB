@@ -1,6 +1,7 @@
 package com.mongodb.springdata;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +41,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort
 public class Aggregate21930 extends MongodbTestBase {
     private String clName = "spring_cl21930";
     // 不能小于6
-    private int num = 6;
+    private int num = 50;
     private List< Entity > list;
 
     @BeforeClass
@@ -64,15 +65,17 @@ public class Aggregate21930 extends MongodbTestBase {
         List< Entity > actList;
         // 带匹配符
         // 匹配到记录
-        agg = Aggregation
-                .newAggregation( match( Criteria.where( "age" ).lte( num ) ) );
+        agg = Aggregation.newAggregation(
+                match( Criteria.where( "age" ).lte( num ) ),
+                sort( Sort.Direction.ASC, "age" ) );
         actResults = mongoTemplate.aggregate( agg, clName, Entity.class );
         actList = actResults.getMappedResults();
         Assert.assertEquals( actList, list );
 
         // 匹配不到记录
-        agg = Aggregation
-                .newAggregation( match( Criteria.where( "age" ).gt( num ) ) );
+        agg = Aggregation.newAggregation(
+                match( Criteria.where( "age" ).gt( num ) ),
+                sort( Sort.Direction.ASC, "age" ) );
         actResults = mongoTemplate.aggregate( agg, clName, Entity.class );
         actList = actResults.getMappedResults();
         Assert.assertEquals( actList.size(), 0 );
@@ -177,7 +180,7 @@ public class Aggregate21930 extends MongodbTestBase {
         Assert.assertEquals( actList.get( 0 ).getId(), "m" );
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({ "deprecation", "unchecked" })
     @Test
     public void test2() {
         Aggregation agg;
@@ -190,8 +193,8 @@ public class Aggregate21930 extends MongodbTestBase {
                 skip( 1 ), limit( 2 ) );
         actResults = mongoTemplate.aggregate( agg, clName,
                 BasicDBObject.class );
-        int sum1 = 0;
-        int count1 = 0;
+        double sum1 = 0;
+        double count1 = 0;
         for ( Entity entity : list ) {
             if ( entity.getSex().equals( "w" ) ) {
                 sum1 += entity.getAge();
@@ -200,7 +203,7 @@ public class Aggregate21930 extends MongodbTestBase {
         }
         Assert.assertEquals( actResults,
                 Collections.singletonList( new BasicDBObject( "_id", "w" )
-                        .append( "avg_age", ( double ) sum1 / count1 ) ) );
+                        .append( "avg_age", sum1 / count1 ) ) );
 
         // exists group avg sum sort
         agg = Aggregation.newAggregation(
@@ -211,7 +214,7 @@ public class Aggregate21930 extends MongodbTestBase {
         actResults = mongoTemplate.aggregate( agg, clName,
                 BasicDBObject.class );
         double sum2 = 0;
-        int total = 0;
+        double total = 0;
         for ( Entity entity : list ) {
             total += entity.getAge();
             if ( entity.getSex().equals( "w" ) ) {
@@ -274,12 +277,21 @@ public class Aggregate21930 extends MongodbTestBase {
                 match( Criteria.where( "age" ).exists( true ) ),
                 group( "sex" ).first( "$age" ).as( "first_age" ),
                 project( "_id", "first_age" ),
-                sort( Sort.Direction.ASC, "first_age" ), limit( 2 ) );
+                sort( Sort.Direction.ASC, "_id" ), limit( 2 ) );
         actResults = mongoTemplate.aggregate( agg, clName,
                 BasicDBObject.class );
-        Assert.assertEquals( actResults, Arrays.asList(
-                new BasicDBObject( "_id", "m" ).append( "first_age", 0 ),
-                new BasicDBObject( "_id", "w" ).append( "first_age", 1 ) ) );
+        List< BasicDBObject > bsonResults = actResults.getMappedResults();
+        Assert.assertEquals( bsonResults.get( 0 ).get( "_id" ), "m" );
+        Assert.assertEquals(
+                0 <= bsonResults.get( 0 ).getInt( "first_age" )
+                        && bsonResults.get( 0 ).getInt( "first_age" ) < num,
+                true );
+
+        Assert.assertEquals( bsonResults.get( 1 ).get( "_id" ), "w" );
+        Assert.assertEquals(
+                0 <= bsonResults.get( 1 ).getInt( "first_age" )
+                        && bsonResults.get( 1 ).getInt( "first_age" ) < num,
+                true );
 
         // exists group last
         // TODO:SEQUOIADBMAINSTREAM-5656
@@ -300,13 +312,31 @@ public class Aggregate21930 extends MongodbTestBase {
         agg = Aggregation.newAggregation(
                 match( Criteria.where( "age" ).exists( true ) ),
                 group( "sex" ).push( "$age" ).as( "push_age" ),
-                project( "_id", "push_age" ),
-                sort( Sort.Direction.ASC, "push_age" ), limit( 2 ) );
+                project( "_id", "push_age" ), sort( Sort.Direction.ASC, "_id" ),
+                limit( 2 ) );
         actResults = mongoTemplate.aggregate( agg, clName,
                 BasicDBObject.class );
-        Assert.assertEquals( actResults, Arrays.asList(
-                new BasicDBObject( "_id", "m" ).append( "push_age", set1 ),
-                new BasicDBObject( "_id", "w" ).append( "push_age", set2 ) ) );
+        List< BasicDBObject > pushResults = actResults.getMappedResults();
+        List< Integer > expPushList1 = new ArrayList<>();
+        List< Integer > expPushList2 = new ArrayList<>();
+        for ( Entity entity : list ) {
+            if ( entity.getSex().equals( "m" ) ) {
+                expPushList1.add( entity.getAge() );
+            } else {
+                expPushList2.add( entity.getAge() );
+            }
+        }
+        Assert.assertEquals( pushResults.get( 0 ).get( "_id" ), "m" );
+        List< Integer > actPushList1 = ( ArrayList< Integer > ) pushResults
+                .get( 0 ).get( "push_age" );
+        Collections.sort( actPushList1 );
+        Assert.assertEquals( actPushList1, expPushList1 );
+
+        Assert.assertEquals( pushResults.get( 1 ).get( "_id" ), "w" );
+        List< Integer > actPushList2 = ( ArrayList< Integer > ) pushResults
+                .get( 1 ).get( "push_age" );
+        Collections.sort( actPushList2 );
+        Assert.assertEquals( actPushList2, expPushList2 );
     }
 
     @Test
@@ -383,6 +413,8 @@ public class Aggregate21930 extends MongodbTestBase {
 
     @AfterClass
     public void tearDown( ITestContext context ) {
+        list.clear();
+        list = null;
         dropCLByTestResult( context, this.toString(), mongoTemplate, clName );
     }
 }

@@ -78,30 +78,6 @@ public class Authentication21934 extends MongodbTestBase {
             }
         }
 
-        // 查询用户
-        // 查询所有用户
-        CommandResult userInfos = mongoTemplate
-                .executeCommand( new BasicDBObject( "usersInfo", 1 ) );
-        System.out.println( "userInfos = " + userInfos.toString() );
-        List< BasicDBObject > users = ( List< BasicDBObject > ) userInfos
-                .get( "users" );
-        Assert.assertEquals( users,
-                Arrays.asList( new BasicDBObject( "user", username1 ),
-                        new BasicDBObject( "user", username2 ) ) );
-
-        // 查询单个用户
-        CommandResult userInfo = mongoTemplate
-                .executeCommand( new BasicDBObject( "usersInfo",
-                        Collections.singletonList(
-                                new BasicDBObject( "user", username1 )
-                                        .append( "db", dbName ) ) ) );
-        List< BasicDBObject > user = ( List< BasicDBObject > ) userInfos
-                .get( "users" );
-        System.out.println( "userInfo = " + userInfo + ",user = " + user );
-        // TODO:SEQUOIADBMAINSTREAM-5974
-        // Assert.assertEquals( user,
-        // Arrays.asList( new Document( "user", username1 ) ) );
-
         // 创建连接
         MongoCredential mongoCredential = MongoCredential
                 .createScramSha1Credential( username1, dbName,
@@ -119,21 +95,61 @@ public class Authentication21934 extends MongodbTestBase {
                 Collections.singletonList( mongoCredentia2 ), opt );
         MongoTemplate mongoTemplate3 = new MongoTemplate( client3, dbName );
 
-        // 创建集合
-        mongoTemplate.createCollection( clName );
+        // 查询用户
+        // 查询所有用户
+        try {
+            CommandResult userInfos = mongoTemplate
+                    .executeCommand( new BasicDBObject( "usersInfo", 1 ) );
+            System.out.println( "userInfos = " + userInfos.toString() );
+            List< BasicDBObject > users = ( List< BasicDBObject > ) userInfos
+                    .get( "users" );
+            Assert.assertEquals( users,
+                    Arrays.asList( new BasicDBObject( "user", username1 ),
+                            new BasicDBObject( "user", username2 ) ) );
+        } catch ( Exception e ) {
+            mongoTemplate2.executeCommand(
+                    new BasicDBObject( "dropUser", username1 ) );
+            mongoTemplate3.executeCommand(
+                    new BasicDBObject( "dropUser", username2 ) );
+            throw e;
+        }
 
-        // 增加/查询记录
-        mongoTemplate2.insert( list, clName );
-        List< Entity > actList = mongoTemplate2.findAll( Entity.class, clName );
-        Assert.assertEquals( actList, list );
+        // 查询单个用户
+        try {
+            CommandResult userInfo = mongoTemplate
+                    .executeCommand( new BasicDBObject( "usersInfo",
+                            Collections.singletonList(
+                                    new BasicDBObject( "user", username1 )
+                                            .append( "db", dbName ) ) ) );
+            List< BasicDBObject > user = ( List< BasicDBObject > ) userInfo
+                    .get( "users" );
+            System.out.println( "userInfo = " + userInfo + ",user = " + user );
+            // TODO:SEQUOIADBMAINSTREAM-5974
+            // Assert.assertEquals( user,
+            // Arrays.asList( new Document( "user", username1 ) ) );
+            // 创建集合
+            mongoTemplate.createCollection( clName );
 
-        // 删除记录
-        Criteria criteria = Criteria.where( "name" ).is( "a0" );
-        Query query = new Query( criteria );
-        Assert.assertEquals( mongoTemplate3.count( query, clName ), 1 );
-        WriteResult writeResult = mongoTemplate3.remove( query, clName );
-        Assert.assertEquals( writeResult.getN(), 1 );
-        Assert.assertEquals( mongoTemplate3.count( query, clName ), 0 );
+            // 增加/查询记录
+            mongoTemplate2.insert( list, clName );
+            List< Entity > actList = mongoTemplate2.findAll( Entity.class,
+                    clName );
+            Assert.assertEquals( actList, list );
+
+            // 删除记录
+            Criteria criteria = Criteria.where( "name" ).is( "a0" );
+            Query query = new Query( criteria );
+            Assert.assertEquals( mongoTemplate3.count( query, clName ), 1 );
+            WriteResult writeResult = mongoTemplate3.remove( query, clName );
+            Assert.assertEquals( writeResult.getN(), 1 );
+            Assert.assertEquals( mongoTemplate3.count( query, clName ), 0 );
+        } catch ( Exception e ) {
+            mongoTemplate2.executeCommand(
+                    new BasicDBObject( "dropUser", username1 ) );
+            mongoTemplate3.executeCommand(
+                    new BasicDBObject( "dropUser", username2 ) );
+            throw e;
+        }
 
         // 使用不存在的用户创建连接
         MongoCredential mongoCredentia4 = MongoCredential
@@ -198,5 +214,4 @@ public class Authentication21934 extends MongodbTestBase {
     @AfterClass
     public void tearDown( ITestContext context ) {
     }
-
 }

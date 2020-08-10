@@ -27,7 +27,7 @@ import com.mongodb.utils.MongodbTestBase;
 public class Count21931 extends MongodbTestBase {
     private String clName = "spring_cl21931";
     // 不能小于10
-    private int num = 10;
+    private int num = 30;
 
     @BeforeClass
     public void setUp() {

@@ -12,7 +12,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -28,13 +27,11 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class Insert21926 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String[] clNames = { "cl21926v3A", "cl21926v3B" };
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
     }
 

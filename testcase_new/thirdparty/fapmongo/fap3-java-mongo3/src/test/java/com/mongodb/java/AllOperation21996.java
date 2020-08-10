@@ -15,7 +15,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -38,14 +37,12 @@ import static com.mongodb.client.model.Filters.lte;
  * @version 1.00
  */
 public class AllOperation21996 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clNameBase = "cl21996";
     private AtomicInteger clNum = new AtomicInteger( 5 );
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
     }
 

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.testng.Assert;
@@ -12,7 +13,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -39,14 +39,12 @@ import static com.mongodb.client.model.Filters.lt;
  */
 public class AutoCreateCSCL21998 extends MongodbTestBase {
     private boolean runSuccess = false;
-    private MongoClient client;
     private String dbName = "db21998";
     private String clName = "cl21998";
     private MongoDatabase db;
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         if ( client.listDatabaseNames().into( new ArrayList<>() )
                 .contains( dbName ) ) {
             client.getDatabase( dbName ).drop();

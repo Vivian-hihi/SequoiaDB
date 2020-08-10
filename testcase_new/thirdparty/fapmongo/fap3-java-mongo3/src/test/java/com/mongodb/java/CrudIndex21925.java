@@ -14,7 +14,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -35,7 +34,6 @@ import com.mongodb.utils.MongodbTestBase;
  * @version:1.0
  */
 public class CrudIndex21925 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21925v3";
     private String[] indexNames = { "index21925A", "index21925B", "index21925C",
@@ -43,7 +41,6 @@ public class CrudIndex21925 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
     }
 

@@ -25,7 +25,7 @@ import com.mongodb.utils.MongodbTestBase;
 public class Delete21929 extends MongodbTestBase {
     private String clName = "spring_cl21929";
     // 不能小于10
-    private int num = 10;
+    private int num = 30;
     private List< Entity > list;
 
     @BeforeClass

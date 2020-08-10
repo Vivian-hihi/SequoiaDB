@@ -45,11 +45,6 @@ public class Authentication21934 extends MongodbTestBase {
 
     @BeforeClass
     public void setup() {
-        opt = MongoClientOptions.builder().build();
-        client1 = new MongoClient(
-                new ServerAddress( config.getHost(), config.getPort() ), opt );
-        client1.dropDatabase( dbName );
-        db1 = client1.getDatabase( dbName );
         list = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
             list.add( new Document( "a", i ).append( "b", "" + i )
@@ -62,6 +57,11 @@ public class Authentication21934 extends MongodbTestBase {
     @Test
     @SuppressWarnings({ "unchecked", "resource" })
     public void Test() {
+        opt = MongoClientOptions.builder().build();
+        client1 = new MongoClient(
+                new ServerAddress( config.getHost(), config.getPort() ), opt );
+        client1.dropDatabase( dbName );
+        db1 = client1.getDatabase( dbName );
         // 创建多个用户
         db1.runCommand( new Document( "createUser", username1 )
                 .append( "pwd", username1 )
@@ -81,27 +81,6 @@ public class Authentication21934 extends MongodbTestBase {
             }
         }
 
-        // 查询用户
-        // 查询所有用户
-        Document userInfos = db1.runCommand( new Document( "usersInfo", 1 ) );
-        List< Document > users = userInfos.get( "users", ArrayList.class );
-        Assert.assertEquals( users,
-                Arrays.asList( new Document( "user", username1 ),
-                        new Document( "user", username2 ) ) );
-        System.out.println( "users = " + users.toString() );
-        System.out.println( "userInfos = " + userInfos.toString() );
-
-        // 查询单个用户
-        Document userInfo = db1.runCommand( new Document( "usersInfo",
-                Collections.singletonList( new Document( "user", username1 )
-                        .append( "db", dbName ) ) ) );
-        System.out.println( "userInfo = " + userInfo.toString() );
-        // TODO:SEQUOIADBMAINSTREAM-5974
-        List< Document > user = userInfos.get( "users", ArrayList.class );
-        System.out.print( user );
-        // Assert.assertEquals( user,
-        // Collections.singletonList( new Document( "user", username1 ) ) );
-
         // 创建连接
         MongoCredential mongoCredential = MongoCredential
                 .createScramSha1Credential( username1, dbName,
@@ -116,76 +95,99 @@ public class Authentication21934 extends MongodbTestBase {
         MongoClient client3 = new MongoClient(
                 new ServerAddress( config.getHost(), config.getPort() ),
                 Collections.singletonList( mongoCredentia2 ), opt );
-
-        MongoDatabase db1 = client1.getDatabase( dbName );
-        // 创建集合
-        db1.createCollection( clName );
-
         MongoDatabase db2 = client2.getDatabase( dbName );
-        MongoCollection< Document > cl2 = db2.getCollection( clName );
-        // 增加/查询记录
-        cl2.insertMany( list );
-        List< Document > actList = cl2.find()
-                .into( new ArrayList< Document >() );
-        Assert.assertEquals( actList, list );
-
         MongoDatabase db3 = client3.getDatabase( dbName );
-        MongoCollection< Document > cl3 = db3.getCollection( clName );
-        // 删除记录
-        Bson query;
-        DeleteResult result;
-        // 删除记录
-        query = Filters.eq( "a", 0 );
-        Assert.assertEquals( cl3.count( query ), 1 );
-        result = cl3.deleteOne( query );
-        Assert.assertEquals( result.getDeletedCount(), 1 );
-        Assert.assertEquals( cl3.count( query ), 0 );
 
-        // 删除用户
-        db2.runCommand( new Document( "dropUser", username1 ) );
-        db3.runCommand( new Document( "dropUser", username2 ) );
-        // 重复删除用户
-        try {
-            db2.runCommand( new Document( "dropUser", username1 ) );
-            Assert.fail( "exp fail but success!" );
-        } catch ( MongoCommandException e ) {
-            if ( e.getErrorCode() != -300 ) {
-                throw e;
-            }
-        }
-
+        // 查询用户
         // 查询所有用户
-        Document userInfos1 = db2.runCommand( new Document( "usersInfo", 1 ) );
-        System.out.println( "userInfos = " + userInfos1.toString() );
-
-        // 删除集合
-        cl3.drop();
-
-        // 使用不存在的用户创建连接
-        MongoCredential mongoCredentia3 = MongoCredential
-                .createScramSha1Credential( "noexists", dbName,
-                        "noexists".toCharArray() );
-        MongoClient client4 = new MongoClient(
-                new ServerAddress( config.getHost(), config.getPort() ),
-                Collections.singletonList( mongoCredentia3 ), opt );
-        MongoDatabase db4 = client4.getDatabase( dbName );
-        MongoCollection< Document > cl4 = db4.getCollection( clName );
         try {
-            cl4.insertOne( new Document( "a", 1 ) );
-            Assert.fail( "exp fail but act success!!!" );
-        } catch ( Exception e ) {
-            if ( !e.getMessage().contains( "Exception authenticating" ) ) {
-                throw e;
-            }
-        }
-        db1.drop();
+            Document userInfos = db1
+                    .runCommand( new Document( "usersInfo", 1 ) );
+            List< Document > users = userInfos.get( "users", ArrayList.class );
+            Assert.assertEquals( users,
+                    Arrays.asList( new Document( "user", username1 ),
+                            new Document( "user", username2 ) ) );
 
-        client2.close();
-        client3.close();
+            // 查询单个用户
+            Document userInfo = db1.runCommand( new Document( "usersInfo",
+                    Collections.singletonList( new Document( "user", username1 )
+                            .append( "db", dbName ) ) ) );
+            System.out.println( "userInfo = " + userInfo.toString() );
+            // TODO:SEQUOIADBMAINSTREAM-5974
+            List< Document > user = userInfos.get( "users", ArrayList.class );
+            // Assert.assertEquals( user,
+            // Collections.singletonList( new Document( "user", username1 ) ) );
+            MongoDatabase db1 = client1.getDatabase( dbName );
+            // 创建集合
+            db1.createCollection( clName );
+            MongoCollection< Document > cl2 = db2.getCollection( clName );
+            // 增加/查询记录
+            cl2.insertMany( list );
+            List< Document > actList = cl2.find()
+                    .into( new ArrayList< Document >() );
+            Assert.assertEquals( actList, list );
+
+            MongoCollection< Document > cl3 = db3.getCollection( clName );
+            // 删除记录
+            Bson query;
+            DeleteResult result;
+            // 删除记录
+            query = Filters.eq( "a", 0 );
+            Assert.assertEquals( cl3.count( query ), 1 );
+            result = cl3.deleteOne( query );
+            Assert.assertEquals( result.getDeletedCount(), 1 );
+            Assert.assertEquals( cl3.count( query ), 0 );
+
+            // 删除用户
+            db2.runCommand( new Document( "dropUser", username1 ) );
+            db3.runCommand( new Document( "dropUser", username2 ) );
+            // 重复删除用户
+            try {
+                db2.runCommand( new Document( "dropUser", username1 ) );
+                Assert.fail( "exp fail but success!" );
+            } catch ( MongoCommandException e ) {
+                if ( e.getErrorCode() != -300 ) {
+                    throw e;
+                }
+            }
+
+            // 查询所有用户
+            Document userInfos1 = db2
+                    .runCommand( new Document( "usersInfo", 1 ) );
+            System.out.println( "userInfos = " + userInfos1.toString() );
+
+            // 删除集合
+            cl3.drop();
+
+            // 使用不存在的用户创建连接
+            MongoCredential mongoCredentia3 = MongoCredential
+                    .createScramSha1Credential( "noexists", dbName,
+                            "noexists".toCharArray() );
+            MongoClient client4 = new MongoClient(
+                    new ServerAddress( config.getHost(), config.getPort() ),
+                    Collections.singletonList( mongoCredentia3 ), opt );
+            MongoDatabase db4 = client4.getDatabase( dbName );
+            MongoCollection< Document > cl4 = db4.getCollection( clName );
+            try {
+                cl4.insertOne( new Document( "a", 1 ) );
+                Assert.fail( "exp fail but act success!!!" );
+            } catch ( Exception e ) {
+                if ( !e.getMessage().contains( "Exception authenticating" ) ) {
+                    throw e;
+                }
+            }
+            db1.drop();
+
+            client2.close();
+            client3.close();
+        } catch ( Exception e ) {
+            db2.runCommand( new Document( "dropUser", username1 ) );
+            db3.runCommand( new Document( "dropUser", username2 ) );
+            throw e;
+        }
     }
 
     @AfterClass
     public void tearDown( ITestContext context ) {
     }
-
 }

@@ -27,8 +27,8 @@ import com.mongodb.utils.MongodbTestBase;
 public class Update21928 extends MongodbTestBase {
     private String[] clNames = { "spring_cl21928_1", "spring_cl21928_2",
             "spring_cl21928_3", "spring_cl21928_4" };
-    // 不能小于30
-    private int num = 30;
+    // 7的倍数，不能小于30
+    private int num = 5 * 7;
 
     @BeforeClass
     public void setUp() {

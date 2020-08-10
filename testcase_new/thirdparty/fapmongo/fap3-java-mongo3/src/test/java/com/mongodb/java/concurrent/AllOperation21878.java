@@ -14,7 +14,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Accumulators;
@@ -42,7 +41,6 @@ import static com.mongodb.client.model.Filters.lt;
  * @version 1.00
  */
 public class AllOperation21878 extends MongodbTestBase {
-    private MongoClient client;
     private String clName = "cl21878";
     private int threadNumPerOpera = 5;
     private AtomicLong totalDelNum = new AtomicLong( 0 );
@@ -50,7 +48,6 @@ public class AllOperation21878 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         MongoDatabase db = MongodbTestBase.getDataBase( client );
         MongoCollection< Document > cl = db.getCollection( clName );
         cl.createIndex( Indexes.ascending( "a" ),

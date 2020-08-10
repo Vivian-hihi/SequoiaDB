@@ -15,7 +15,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -29,10 +28,10 @@ import com.mongodb.utils.MongodbTestBase;
 
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lt;
+import static com.mongodb.client.model.Projections.exclude;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
-import static com.mongodb.client.model.Projections.exclude;
 
 /**
  * @Description seqDB-21930:aggregate操作
@@ -41,17 +40,15 @@ import static com.mongodb.client.model.Projections.exclude;
  * @Date 2020/3/24
  */
 public class Aggregate21930 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21930v3";
     private MongoCollection< Document > cl;
     // 不能小于6
-    private int num = 6;
+    private int num = 50;
     private List< Document > list;
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
         list = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
@@ -201,6 +198,7 @@ public class Aggregate21930 extends MongodbTestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test2() {
         List< Document > actResult;
@@ -210,11 +208,11 @@ public class Aggregate21930 extends MongodbTestBase {
                 .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
                         Aggregates.group( "$b",
                                 Accumulators.avg( "avg_d", "$d" ) ),
-                        Aggregates.sort( Sorts.ascending( "avg_d" ) ) ) )
+                        Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
                 .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
-        int sum1 = 0;
-        int count1 = 0;
+        double sum1 = 0;
+        double count1 = 0;
         for ( int i = 0; i < actResult.size(); i++ ) {
             for ( int j = 0; j < num; j++ ) {
                 if ( j % 3 == i ) {
@@ -224,7 +222,7 @@ public class Aggregate21930 extends MongodbTestBase {
             }
             Assert.assertEquals( actResult.get( i ),
                     new Document( "_id", i + "" ).append( "avg_d",
-                            ( double ) sum1 / count1 ) );
+                            sum1 / count1 ) );
             count1 = 0;
             sum1 = 0;
         }
@@ -237,7 +235,7 @@ public class Aggregate21930 extends MongodbTestBase {
                         Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
                 .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
-        int sum2 = 0;
+        double sum2 = 0;
         for ( int i = 0; i < actResult.size(); i++ ) {
             for ( int j = 0; j < num; j++ ) {
                 if ( j % 3 == i ) {
@@ -246,8 +244,7 @@ public class Aggregate21930 extends MongodbTestBase {
             }
             // mongodb返回的sum 是整型， sequoiadb返回的是浮点型
             Assert.assertEquals( actResult.get( i ),
-                    new Document( "_id", i + "" ).append( "sum_d",
-                            ( double ) sum2 ) );
+                    new Document( "_id", i + "" ).append( "sum_d", sum2 ) );
             sum2 = 0;
         }
 
@@ -307,29 +304,30 @@ public class Aggregate21930 extends MongodbTestBase {
                     expList5.add( j );
                 }
             }
-            Assert.assertEquals( actResult.get( i ),
-                    new Document( "_id", i + "" ).append( "set_d", expList5 ) );
+            Assert.assertEquals( actResult.get( i ).get( "_id" ), i + "",
+                    actResult.toString() );
+            List< Integer > actSet = ( ArrayList< Integer > ) actResult.get( i )
+                    .get( "set_d" );
+            Collections.sort( actSet );
+            Assert.assertEquals( actSet, expList5, actResult.toString() );
             expList5.clear();
         }
 
         // gte group first
-        System.out.println( "agg = " + Arrays
-                .asList( Aggregates.match( gte( "a", -1 ) ),
-                        Aggregates.group( "$b",
-                                Accumulators.first( "first_d", "$d" ) ),
-                        Aggregates.sort( Sorts.ascending( "first_d" ) ) )
-                .toString() );
         actResult = ( List< Document > ) cl
                 .aggregate( Arrays.asList( Aggregates.match( gte( "a", -1 ) ),
                         Aggregates.group( "$b",
                                 Accumulators.first( "first_d", "$d" ) ),
-                        Aggregates.sort( Sorts.ascending( "first_d" ) ) ) )
+                        Aggregates.sort( Sorts.ascending( "_id" ) ) ) )
                 .into( new ArrayList< Document >() );
         Assert.assertEquals( actResult.size(), 3 );
         for ( int i = 0; i < actResult.size(); i++ ) {
-            Assert.assertEquals( actResult.get( i ),
-                    new Document( "_id", i + "" ).append( "first_d",
-                            i % actResult.size() ) );
+            Assert.assertEquals( actResult.get( i ).get( "_id" ), i + "",
+                    actResult.toString() );
+            Assert.assertEquals(
+                    0 <= actResult.get( i ).getInteger( "first_d" )
+                            && actResult.get( i ).getInteger( "first_d" ) < num,
+                    true, actResult.toString() );
         }
 
         // gte group last TODO:SEQUOIADBMAINSTREAM-5656
@@ -370,9 +368,12 @@ public class Aggregate21930 extends MongodbTestBase {
             }
             // mongodb的expList8是逆序排序， sequoiadb的expList8是正序排序
             // Collections.reverse( expList8 );
-            Assert.assertEquals( actResult.get( i ),
-                    new Document( "_id", i + "" ).append( "push_d",
-                            expList8 ) );
+            Assert.assertEquals( actResult.get( i ).get( "_id" ), i + "",
+                    actResult.toString() );
+            List< Integer > actPush = ( ArrayList< Integer > ) actResult
+                    .get( i ).get( "push_d" );
+            Collections.sort( actPush );
+            Assert.assertEquals( actPush, expList8, actResult.toString() );
             expList8.clear();
         }
     }

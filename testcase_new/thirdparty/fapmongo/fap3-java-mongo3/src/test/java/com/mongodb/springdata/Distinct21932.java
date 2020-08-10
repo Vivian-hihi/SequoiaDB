@@ -27,7 +27,7 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class Distinct21932 extends MongodbTestBase {
-    private int num = 10;
+    private int num = 40;
     private List< Entity > list;
     private String clName = "spring_cl21932";
 

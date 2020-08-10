@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +15,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -42,17 +42,15 @@ import static com.mongodb.client.model.Projections.include;
  * @version:1.0
  */
 public class Find21927 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clName = "cl21927v3";
     private MongoCollection< Document > cl;
-    // 不能小于10
-    private int num = 20;
+    // 3的倍数，不能小于10
+    private int num = 18;
     private List< Document > list;
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
         list = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
@@ -73,11 +71,23 @@ public class Find21927 extends MongodbTestBase {
         // 不带条件查询
         actFindIterable = cl.find().sort( new Document( "a", 1 ) );
         actList = actFindIterable.into( new ArrayList< Document >() );
+        Collections.sort( actList, new Comparator< Document >() {
+            @Override
+            public int compare( Document o1, Document o2 ) {
+                return o1.getInteger( "a" ) - o2.getInteger( "a" );
+            }
+        } );
         Assert.assertEquals( actList, list );
 
         // 带空Document对象查询
         actFindIterable = cl.find( new Document() );
         actList = actFindIterable.into( new ArrayList< Document >() );
+        Collections.sort( actList, new Comparator< Document >() {
+            @Override
+            public int compare( Document o1, Document o2 ) {
+                return o1.getInteger( "a" ) - o2.getInteger( "a" );
+            }
+        } );
         Assert.assertEquals( actList, list );
 
         // 带简单条件查询
@@ -87,7 +97,8 @@ public class Find21927 extends MongodbTestBase {
         Assert.assertEquals( actList.get( 0 ), list.get( 0 ) );
 
         // 带 and gte lt eq条件查询
-        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num / 3 ) ) );
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num / 3 ) ) )
+                .sort( Sorts.ascending( "a" ) );
         actList = actFindIterable.into( new ArrayList< Document >() );
         Assert.assertEquals( actList, list.subList( 1, num / 3 ) );
 
@@ -97,7 +108,8 @@ public class Find21927 extends MongodbTestBase {
                 .projection( new Document( "a", 1 ).append( "b", 1 )
                         .append( "c", 1 ).append( "d", 1 ).append( "e", 1 )
                         .append( "f", 1 ).append( "g", 1 ) );
-        actList = actFindIterable.into( new ArrayList< Document >() );
+        actList = actFindIterable.sort( Sorts.ascending( "a" ) )
+                .into( new ArrayList< Document >() );
         Assert.assertEquals( actList, list.subList( 2, 2 * num / 3 ) );
 
         // //带sort+projection查询
@@ -417,6 +429,46 @@ public class Find21927 extends MongodbTestBase {
         Assert.assertEquals( actList.get( 0 ), list.get( 0 ) );
     }
 
+    @Test
+    public void test8() {
+        FindIterable< Document > actFindIterable;
+        List< Document > actList;
+        // 带batchSize、limit查询
+        // batchSize小于limit的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .sort( Sorts.ascending( "a" ) ).batchSize( 5 ).limit( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, 11 ) );
+        // batchSize等于limit的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .sort( Sorts.ascending( "a" ) ).batchSize( 10 ).limit( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, 11 ) );
+        // batchSize大于limit的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .sort( Sorts.ascending( "a" ) ).batchSize( 20 ).limit( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, 11 ) );
+        // 存在的字段，匹配不到记录，batchSize不为0
+        actFindIterable = cl.find( gt( "a", num ) )
+                .sort( Sorts.ascending( "a" ) ).batchSize( 10 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList.size(), 0 );
+        // batchSize为0的场景
+        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+                .sort( Sorts.ascending( "a" ) ).batchSize( 0 );
+        actList = actFindIterable.into( new ArrayList< Document >() );
+        Assert.assertEquals( actList, list.subList( 1, num ) );
+
+        // batchSize为-1的场景
+        // TODO: SEQUOIADBMAINSTREAM-5977
+        // actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
+        // .sort( Sorts.ascending( "a" ) )
+        // .batchSize( -1 );
+        // actList = actFindIterable.into( new ArrayList< Document >() );
+        // Assert.assertEquals( actList, list.get( 0 ) );
+    }
+
     private void checkFindResult( List< Document > actList,
             List< Document > expList, String... includeFieldNames ) {
         if ( expList == null || expList.isEmpty() ) {
@@ -450,37 +502,6 @@ public class Find21927 extends MongodbTestBase {
                 }
             }
         }
-    }
-
-    @Test
-    public void test8() {
-        FindIterable< Document > actFindIterable;
-        List< Document > actList;
-        // 带batchSize、limit查询
-        // batchSize小于limit的场景
-        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
-                .batchSize( 5 ).limit( 10 );
-        actList = actFindIterable.into( new ArrayList< Document >() );
-        Assert.assertEquals( actList, list.subList( 1, 11 ) );
-        // batchSize等于limit的场景
-        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
-                .batchSize( 10 ).limit( 10 );
-        actList = actFindIterable.into( new ArrayList< Document >() );
-        Assert.assertEquals( actList, list.subList( 1, 11 ) );
-        // batchSize大于limit的场景
-        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
-                .batchSize( 20 ).limit( 10 );
-        actList = actFindIterable.into( new ArrayList< Document >() );
-        Assert.assertEquals( actList, list.subList( 1, 11 ) );
-        // 存在的字段，匹配不到记录，batchSize不为0
-        actFindIterable = cl.find( gt( "a", num ) ).batchSize( 10 );
-        actList = actFindIterable.into( new ArrayList< Document >() );
-        Assert.assertEquals( actList.size(), 0 );
-        // batchSize为0的场景
-        actFindIterable = cl.find( and( gte( "a", 1 ), lt( "a", num ) ) )
-                .batchSize( -1 );
-        actList = actFindIterable.into( new ArrayList< Document >() );
-        Assert.assertEquals( actList, list.subList( 1, num ) );
     }
 
     @AfterClass

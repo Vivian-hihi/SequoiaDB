@@ -32,7 +32,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -56,14 +55,12 @@ import static com.mongodb.client.model.Updates.set;
  * @Date 2020/7/3
  */
 public class AllDataType22419 extends MongodbTestBase {
-    private MongoClient client;
     private MongoDatabase db;
     private String clName1 = "cl22419A";
     private String clName2 = "cl22419B";
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDataBase( client );
     }
 
