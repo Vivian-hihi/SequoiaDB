@@ -5242,7 +5242,8 @@ namespace engine
       _addInfoMask   = addInfoMask ;
       _hitEnd        = FALSE ;
 
-      if ( pmdGetDBRole() != SDB_ROLE_DATA )
+      if ( pmdGetDBRole() != SDB_ROLE_DATA &&
+           pmdGetDBRole() != SDB_ROLE_STANDALONE )
       {
          _hitEnd = TRUE ;
          goto done ;
