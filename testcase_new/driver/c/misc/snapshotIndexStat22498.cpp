@@ -109,8 +109,7 @@ TEST_F( snapshotIndexStat22498, snapshotIndexStat )
 
    // get snapshot of indexstat
    bson_init( &matcher ) ;
-   bson_append_string( &matcher, "CollectionSpace", csName ) ;
-   bson_append_string( &matcher, "Collection", clName ) ;
+   bson_append_string( &matcher, "Collection", fullCLName ) ;
    bson_append_string( &matcher, "Index", indexName ) ;
    bson_finish( &matcher ) ;
    rc = sdbGetSnapshot( db, SDB_SNAP_INDEXSTATS, &matcher, NULL, NULL, &cursor ) ;
