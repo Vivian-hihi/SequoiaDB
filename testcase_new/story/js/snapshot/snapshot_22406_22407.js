@@ -24,8 +24,8 @@ function test( testPara )
    db.analyze( { "Collection": COMMCSNAME + "." + testConf.clName, "SampleNum": 200 } );
 
    var count = 0;
-   var expResult = { "IndexLevels": 1, "IndexPages": 1, "DistinctValNum": [ 1, 1, 1 ], "NullFrac": 5000, "UndefFrac": 5000, "SampleRecords": 200, "TotalRecords": 2000 };
-   var cursor = db.snapshot( SDB_SNAP_INDEXSTATS, { "CollectionSpace": COMMCSNAME, "Collection": testConf.clName, "Index": indexName } );
+   var expResult = { "TotalIndexLevels": 1, "TotalIndexPages": 1, "DistinctValNum": [ 1, 1, 1 ], "NullFrac": 5000, "UndefFrac": 5000, "SampleRecords": 200, "TotalRecords": 2000 };
+   var cursor = db.snapshot( SDB_SNAP_INDEXSTATS, { "Collection": COMMCSNAME + "." + testConf.clName, "Index": indexName } );
    while( cursor.next() )
    {
       count++;
@@ -36,7 +36,7 @@ function test( testPara )
          var node = group[i];
          //以下参数不进行比较
          delete( node.NodeName );
-         delete( node.CreateTime );
+         delete( node.StatTimestamp );
          delete( node.MinValue );
          delete( node.MaxValue );
          if( !commCompareObject( expResult, node ) )

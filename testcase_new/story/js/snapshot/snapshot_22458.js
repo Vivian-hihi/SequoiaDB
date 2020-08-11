@@ -39,10 +39,11 @@ function test()
       while( cursor.next() )
       {    
          var collection = cursor.current().toObj().Collection;
+         var clName = collection.split(".")[1].toString();
          var index = cursor.current().toObj().Index.toString();
-         if( clNames.indexOf( collection ) !== -1 && index !== "$id" )
+         if( clNames.indexOf( clName ) !== -1 && index !== "$id" )
          {
-            actResult.push( collection );
+            actResult.push( clName );
          }
       }
 
