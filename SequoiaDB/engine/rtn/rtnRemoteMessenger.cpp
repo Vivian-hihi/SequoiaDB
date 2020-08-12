@@ -195,7 +195,6 @@ namespace engine
       rc = _rsMgr.init( &_routeAgent, &_rMgrHandle ) ;
       PD_RC_CHECK( rc, PDERROR, "Init remote session manager failed[ %d ]",
                    rc ) ;
-      sdbGetPMDController()->setRSManager( &_rsMgr ) ;
    done:
       PD_TRACE_EXITRC( SDB__RTNREMOTEMESSENGER_INIT, rc ) ;
       return rc ;
