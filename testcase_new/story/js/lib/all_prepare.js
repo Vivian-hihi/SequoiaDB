@@ -21,7 +21,7 @@ function createDummyCollection ( db )
       }
       var sourceGroup = dataGroups[0][0]["GroupName"];
       var cl = commCreateCL( db, COMMCSNAME, COMMDUMMYCLNAME,
-         { Group: sourceGroup, ShardingKey: { a: 1 }, ShardingType: 'hash', Partition: 4096, AutoSplit: true },
+         { ShardingKey: { a: 1 }, ShardingType: 'hash', Partition: 4096, AutoSplit: true },
          true, true, "Create dummy collection" );
    }
 }
