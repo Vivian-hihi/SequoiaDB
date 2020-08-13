@@ -216,9 +216,9 @@ function dropTestCL ( db, testConf )
 function commonSetUp ( db, testConf )
 {
    checkEnv( db, testConf );
-   testPara.commonCS = createCommonCS( db );
-   testPara.commonCL = createCommonCL( db );
-   createDummyCL( db );
+   //  testPara.commonCS = createCommonCS( db );
+   // testPara.commonCL = createCommonCL( db );
+   // createDummyCL( db );
 
    testPara.testCS = createTestCS( db, testConf );
    testPara.testCL = createTestCL( db, testConf );
@@ -259,7 +259,7 @@ function main ()
    }
    catch( e )
    {
-      if( e.constructor === Error )
+      if( e instanceof Error )
       {
          if( e.message === "standalone" ||
             e.message === "one data group" ||
