@@ -54,13 +54,15 @@ namespace fap
 #define FAP_MONGO_FIELD_VALUE_MONGOSHELL "MongoDB Internal Client"
 #define FAP_MONGO_FIELD_VALUE_JAVA       "mongo-java-driver"
 
-#define FAP_MONGO_EQUAL "="
-#define FAP_MONGO_COMMA ","
-#define FAP_MONGO_DOT   "."
+#define FAP_MONGO_EQUAL  "="
+#define FAP_MONGO_COMMA  ","
+#define FAP_MONGO_DOT    "."
+#define FAP_MONGO_DOLLAR "$"
 
 #define FAP_MONGO_FIELD_NAME_CODE   "code"
 #define FAP_MONGO_FIELD_NAME_ERRMSG "errmsg"
 #define FAP_MONGO_FIELD_NAME_OK     "ok"
+#define FAP_MONGO_FIELD_NAME_ERR    "err"
 
 #define FAP_MONGO_FIELD_NAME_USER      "user"
 #define FAP_MONGO_FIELD_NAME_USERS     "users"

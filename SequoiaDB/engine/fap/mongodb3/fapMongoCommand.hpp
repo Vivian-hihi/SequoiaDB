@@ -920,6 +920,23 @@ class _mongoGetLastErrorCommand : public _mongoGlobalCommand
 } ;
 typedef _mongoGetLastErrorCommand mongoGetLastErrorCommand ;
 
+class _mongoLogoutCommand : public _mongoGlobalCommand
+{
+   MONGO_DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _mongoLogoutCommand() {}
+      virtual ~_mongoLogoutCommand() {}
+
+      virtual MONGO_CMD_TYPE type() const { return CMD_LOGOUT ; }
+      virtual const CHAR* name() const    { return MONGO_CMD_NAME_LOGOUT ; }
+
+      INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
+      virtual INT32 buildReply( const MsgOpReply &sdbReply,
+                                engine::rtnContextBuf &replyBuf,
+                                _mongoResponseBuffer &resHeader ) ;
+} ;
+typedef _mongoLogoutCommand mongoLogoutCommand ;
+
 class _mongoDummyCommand : public _mongoGlobalCommand
 {
    public:
@@ -939,15 +956,6 @@ class _mongoWhatsMyUriCommand : public _mongoDummyCommand
       virtual const CHAR* name() const    { return MONGO_CMD_NAME_WHATS_MY_URI ; }
 } ;
 typedef _mongoWhatsMyUriCommand mongoWhatsMyUriCommand ;
-
-class _mongoLogoutCommand : public _mongoDummyCommand
-{
-   MONGO_DECLARE_CMD_AUTO_REGISTER()
-   public:
-      virtual MONGO_CMD_TYPE type() const { return CMD_LOGOUT ; }
-      virtual const CHAR* name() const    { return MONGO_CMD_NAME_LOGOUT ; }
-} ;
-typedef _mongoLogoutCommand mongoLogoutCommand ;
 
 class _mongoGetReplStatCommand : public _mongoDummyCommand
 {

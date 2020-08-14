@@ -997,7 +997,7 @@ void _mongoDatabaseCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
 
    cursorBuilder.append( "id", SDBCTXID_TO_MGCURSOID( sdbReply.contextID ) ) ;
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
-   resultBuilder.append( "ok", 1 ) ;
+   resultBuilder.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
    bodyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
 }
 
@@ -1221,7 +1221,7 @@ INT32 _mongoCollectionCommand::_buildFirstBatch( const MsgOpReply &sdbReply,
 
    cursorBuilder.append( "id", SDBCTXID_TO_MGCURSOID( sdbReply.contextID ) ) ;
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
-   resultBuilder.append( "ok", 1 ) ;
+   resultBuilder.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
    bodyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
 
 done:
@@ -1291,7 +1291,7 @@ INT32 _mongoInsertCommand::buildReply( const MsgOpReply &sdbReply,
       BSONObj resObj( bodyBuf.data() ) ;
       BSONObjBuilder bob ;
 
-      bob.append( "ok", 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
       if ( resObj.hasField( "InsertedNum" ) )
       {
          bob.append( "n", resObj.getIntField( "InsertedNum" ) ) ;
@@ -1369,7 +1369,7 @@ INT32 _mongoDeleteCommand::buildReply( const MsgOpReply &sdbReply,
       BSONObj resObj( bodyBuf.data() ) ;
       BSONObjBuilder bob ;
 
-      bob.append( "ok", 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
       if ( resObj.hasField( "DeletedNum" ) )
       {
          bob.append( "n", resObj.getIntField( "DeletedNum" ) ) ;
@@ -1521,7 +1521,7 @@ INT32 _mongoUpdateCommand::buildReply( const MsgOpReply &sdbReply,
       BSONObj resObj( bodyBuf.data() ) ;
       BSONObjBuilder bob ;
 
-      bob.append( "ok", 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
 
       //n
       if ( resObj.hasField( "InsertedNum" ) &&
@@ -1714,8 +1714,11 @@ INT32 _mongoQueryCommand::buildReply( const MsgOpReply &sdbReply,
    {
       // reply: { $err: "xxx", code: 1234 }
       BSONObj resObj( bodyBuf.data() ) ;
-      BSONObj newObj = BSON( "$err" << resObj.getStringField( "errmsg" )<<
-                             "code" << resObj.getIntField( "code" ) ) ;
+      BSONObj newObj = BSON( FAP_MONGO_DOLLAR FAP_MONGO_FIELD_NAME_ERR <<
+                             resObj.getStringField(
+                             FAP_MONGO_FIELD_NAME_ERRMSG ) <<
+                             FAP_MONGO_FIELD_NAME_CODE <<
+                             resObj.getIntField( FAP_MONGO_FIELD_NAME_CODE ) ) ;
       bodyBuf = engine::rtnContextBuf( newObj ) ;
    }
 
@@ -2304,7 +2307,7 @@ INT32 _mongoGetmoreCommand::_buildNextBatch( const MsgOpReply &sdbReply,
    cursorBuilder.append( "ns", _clFullName.c_str() ) ;
    cursorBuilder.append( "id", SDBCTXID_TO_MGCURSOID( sdbReply.contextID ) ) ;
    resultBuilder.append( "cursor", cursorBuilder.obj() ) ;
-   resultBuilder.append( "ok", 1 ) ;
+   resultBuilder.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
    bodyBuf = engine::rtnContextBuf( resultBuilder.obj() ) ;
 
 done:
@@ -2470,7 +2473,8 @@ INT32 _mongoKillCursorCommand::buildReply( const MsgOpReply &sdbReply,
    {
       if ( SDB_OK == sdbReply.flags )
       {
-         bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+         bodyBuf = engine::rtnContextBuf(
+                   BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
       }
       mongoResponse res ;
       res.header.msgLen = sizeof( mongoResponse ) + bodyBuf.size() ;
@@ -2482,7 +2486,8 @@ INT32 _mongoKillCursorCommand::buildReply( const MsgOpReply &sdbReply,
    {
       if ( SDB_OK == sdbReply.flags )
       {
-         bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+         bodyBuf = engine::rtnContextBuf(
+                   BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
       }
       appendEmptyObj2Buf( bodyBuf ) ;
 
@@ -2568,7 +2573,7 @@ INT32 _mongoCountCommand::buildReply( const MsgOpReply &sdbReply,
       BSONObj resObj( bodyBuf.data() ) ;
       BSONObjBuilder bob ;
       bob.append( "n", resObj.getIntField( "Total" ) ) ;
-      bob.append( "ok", 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
       bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
    }
 
@@ -2691,10 +2696,10 @@ INT32 _mongoAggregateCommand::_convertAggrProject( BSONObj& projectObj,
    {
       rc = SDB_OPTION_NOT_SUPPORT ;
       BSONObjBuilder builder ;
-      builder.append( "ok", 0 ) ;
-      builder.append( "errmsg",
+      builder.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_ERRMSG,
                       "Exclusion fields is not supported" ) ;
-      builder.append( "code", rc ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_CODE, rc ) ;
       errorObj = builder.obj() ;
       goto error ;
    }
@@ -2815,14 +2820,15 @@ INT32 _mongoAggregateCommand::buildReply( const MsgOpReply &sdbReply,
             offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
          }
          arr.done() ;
-         bob.append( "ok", 1 ) ;
+         bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
 
          bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
       }
       else if ( SDB_DMS_EOC == sdbReply.flags )
       {
          bodyBuf = engine::rtnContextBuf( BSON( "result" << BSONArray() <<
-                                                "ok" << 1 ) ) ;
+                                                FAP_MONGO_FIELD_NAME_OK <<
+                                                1 ) ) ;
       }
 
       _buildReplyCommon( sdbReply, bodyBuf, headerBuf, TRUE ) ;
@@ -2902,13 +2908,13 @@ INT32 _mongoDistinctCommand::buildReply( const MsgOpReply &sdbReply,
    {
       BSONObjBuilder bob ;
       bob.appendElements( BSONObj( bodyBuf.data() ) ) ;
-      bob.append( "ok", 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
       bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
    }
    else if ( SDB_DMS_EOC == sdbReply.flags )
    {
       bodyBuf = engine::rtnContextBuf( BSON( "values" << BSONArray() <<
-                                             "ok" << 1 ) ) ;
+                                             FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -2959,7 +2965,7 @@ INT32 _mongoCreateCLCommand::buildReply( const MsgOpReply &sdbReply,
 {
    if ( SDB_OK == sdbReply.flags )
    {
-      bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+      bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -2968,7 +2974,8 @@ INT32 _mongoCreateCLCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoDropCLCommand)
-INT32 _mongoDropCLCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
+INT32 _mongoDropCLCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                        mongoSessionCtx &ctx )
 {
    INT32 rc = SDB_OK ;
    MsgOpQuery *query = NULL ;
@@ -3011,12 +3018,13 @@ INT32 _mongoDropCLCommand::buildReply( const MsgOpReply &sdbReply,
    if ( SDB_OK == sdbReply.flags )
    {
       bodyBuf = engine::rtnContextBuf( BSON( "ns" << _clFullName.c_str() <<
-                                              "ok" << 1 ) ) ;
+                                             FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
    else if ( SDB_DMS_NOTEXIST == sdbReply.flags )
    {
-      bodyBuf = engine::rtnContextBuf( BSON( "ok" << 0 <<
-                                              "errmsg" << "ns not found" ) ) ;
+      bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 0 <<
+                                             FAP_MONGO_FIELD_NAME_ERRMSG <<
+                                             "ns not found" ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -3163,7 +3171,7 @@ INT32 _mongoCreateIdxCommand::buildReply( const MsgOpReply &sdbReply,
 {
    if ( SDB_OK == sdbReply.flags )
    {
-      bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+      bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -3226,7 +3234,7 @@ INT32 _mongoDropIdxCommand::buildReply( const MsgOpReply &sdbReply,
 {
    if ( SDB_OK == sdbReply.flags )
    {
-      bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+      bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -3281,11 +3289,11 @@ INT32 _mongoDropDatabaseCommand::buildReply( const MsgOpReply &sdbReply,
    if ( SDB_OK == sdbReply.flags )
    {
       bodyBuf = engine::rtnContextBuf( BSON( "dropped" << _csName.c_str() <<
-                                              "ok" << 1 ) ) ;
+                                             FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
    else if ( SDB_DMS_CS_NOTEXIST == sdbReply.flags )
    {
-      bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+      bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -3339,7 +3347,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoCreateUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
+INT32 _mongoCreateUserCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                            mongoSessionCtx &ctx )
 {
    INT32 rc = SDB_OK ;
    MsgAuthCrtUsr *user = NULL ;
@@ -3374,7 +3383,7 @@ INT32 _mongoCreateUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &
    {
       rc = SDB_OPTION_NOT_SUPPORT ;
       ctx.setError( rc, "'digestPasswd' should be true, "
-                        "use 'db.runCommand({createUser: ... })' instead" ) ;
+                        "use 'db.runCommand( { createUser: ... } )' instead" ) ;
       goto error ;
    }
 
@@ -3452,7 +3461,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoDropUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
+INT32 _mongoDropUserCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                          mongoSessionCtx &ctx )
 {
    INT32 rc = SDB_OK ;
    MsgAuthDelUsr *auth = NULL ;
@@ -3504,7 +3514,8 @@ INT32 _mongoDropUserCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoListUserCommand)
-INT32 _mongoListUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
+INT32 _mongoListUserCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                          mongoSessionCtx &ctx )
 {
    INT32 rc            = SDB_OK ;
    MsgOpQuery *query   = NULL ;
@@ -3617,7 +3628,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoSaslStartCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
+INT32 _mongoSaslStartCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                           mongoSessionCtx &ctx )
 {
    INT32 rc = SDB_OK ;
    MsgAuthentication *auth = NULL ;
@@ -3812,7 +3824,8 @@ error:
    goto done ;
 }
 
-INT32 _mongoSaslContinueCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
+INT32 _mongoSaslContinueCommand::buildSdbMsg( msgBuffer &sdbMsg,
+                                              mongoSessionCtx &ctx )
 {
    INT32 rc = SDB_OK ;
    MsgAuthentication *auth = NULL ;
@@ -4078,14 +4091,14 @@ INT32 _mongoListDatabaseCommand::buildReply( const MsgOpReply &sdbReply,
          offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
       }
       arr.done() ;
-      bob.append( "ok", 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
 
       bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
    }
    else if ( SDB_DMS_EOC == sdbReply.flags )
    {
       bodyBuf = engine::rtnContextBuf( BSON( "databases" << BSONArray() <<
-                                             "ok" << 1 ) ) ;
+                                             FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -4101,7 +4114,7 @@ INT32 _mongoGetLogCommand::buildReply( const MsgOpReply &sdbReply,
    bson::BSONObjBuilder bob ;
    bob.append( "totalLinesWritten", 0 ) ;
    bob.append( "log", BSONArray() ) ;
-   bob.append( "ok", 1 ) ;
+   bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
    bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -4160,7 +4173,7 @@ INT32 _mongoIsMasterCommand::buildReply( const MsgOpReply &sdbReply,
    bob.append( "maxWireVersion", 4 ) ; // correspions to mongodb3.2
    bob.append( "minWireVersion", 0 ) ;
    bob.append( "msg", "isdbgrid" ) ;
-   bob.append( "ok", 1 ) ;
+   bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
    bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -4185,7 +4198,7 @@ INT32 _mongoBuildInfoCommand::buildReply( const MsgOpReply &sdbReply,
    sub.append( 0 ) ;
    sub.done() ;
    bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
-   bob.append( "ok", 1 ) ;
+   bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
    bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
@@ -4206,25 +4219,26 @@ INT32 _mongoGetLastErrorCommand::buildReply( const MsgOpReply &sdbReply,
                                              engine::rtnContextBuf &bodyBuf,
                                              _mongoResponseBuffer &headerBuf )
 {
+   INT32       errCode = SDB_OK ;
+   BSONElement codeEle = _errorInfoObj.getField( FAP_MONGO_FIELD_NAME_CODE ) ;
    bson::BSONObjBuilder bob ;
-   INT32 errCode = SDB_OK ;
 
-   BSONElement ele = _errorInfoObj.getField( OP_ERRNOFIELD ) ;
-   if ( !ele.eoo() )
+   if ( !codeEle.eoo() )
    {
-      errCode = ele.numberInt() ;
+      errCode = codeEle.numberInt() ;
    }
 
    if ( SDB_OK == errCode )
    {
-      bob.append( "ok", 1 ) ;
-      bob.appendNull( "err" ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
+      bob.appendNull( FAP_MONGO_FIELD_NAME_ERR ) ;
    }
    else
    {
-      bob.append( "ok", 1 ) ;
-      bob.append( "code", errCode ) ;
-      bob.append( "err", _errorInfoObj.getStringField( OP_ERRDESP_FIELD ) ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_CODE, errCode ) ;
+      bob.append( FAP_MONGO_FIELD_NAME_ERR,
+                  _errorInfoObj.getStringField( FAP_MONGO_FIELD_NAME_ERRMSG ) ) ;
    }
 
    bodyBuf = engine::rtnContextBuf( bob.obj() ) ;
@@ -4234,18 +4248,39 @@ INT32 _mongoGetLastErrorCommand::buildReply( const MsgOpReply &sdbReply,
    return SDB_OK ;
 }
 
+MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoLogoutCommand)
+INT32 _mongoLogoutCommand::init( const _mongoMessage *pMsg,
+                                 mongoSessionCtx &ctx )
+{
+   // errorObj indicates the error information of the current command. However,
+   // executing the logout command is always successful. So we need to reset
+   // errorObj to empty.
+   ctx.errorObj = BSONObj() ;
+
+   return _mongoGlobalCommand::init( pMsg, ctx ) ;
+}
+
+INT32 _mongoLogoutCommand::buildReply( const MsgOpReply &sdbReply,
+                                       engine::rtnContextBuf &bodyBuf,
+                                       _mongoResponseBuffer &headerBuf )
+{
+   bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
+   _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
+
+   return SDB_OK ;
+}
+
 INT32 _mongoDummyCommand::buildReply( const MsgOpReply &sdbReply,
                                       engine::rtnContextBuf &bodyBuf,
                                       _mongoResponseBuffer &headerBuf )
 {
-   bodyBuf = engine::rtnContextBuf( BSON( "ok" << 1 ) ) ;
+   bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
 
    return SDB_OK ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoWhatsMyUriCommand)
-MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoLogoutCommand)
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetReplStatCommand)
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoGetCmdLineOptsCommand)
 

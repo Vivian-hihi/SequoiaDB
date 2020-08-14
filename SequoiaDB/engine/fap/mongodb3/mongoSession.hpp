@@ -70,8 +70,9 @@ protected:
    virtual void  _onDetach() {}
 
 protected:
-   INT32 _processMsg( const CHAR *pMsg, const _mongoCommand *pCommand ) ;
-   INT32 _processMsg( const CHAR *pMsg ) ;
+   INT32 _processMsg( const CHAR *pMsg, const _mongoCommand *pCommand,
+                      BSONObj &errorObj ) ;
+   INT32 _processMsg( const CHAR *pMsg, BSONObj &errorObj ) ;
    INT32 _onMsgBegin( MsgHeader *msg ) ;
    INT32 _onMsgEnd( INT32 result, MsgHeader *msg ) ;
    INT32 _recvMsg( CHAR *&pMsg,
@@ -86,9 +87,8 @@ protected:
 
 private:
    void  _resetBuffers() ;
-   INT32 _setSeesionAttr() ;
-   INT32 _autoCreateCS( const CHAR *csName ) ;
-   INT32 _autoCreateCL( const CHAR *clFullName ) ;
+   INT32 _autoCreateCS( const CHAR *csName, BSONObj &errorObj ) ;
+   INT32 _autoCreateCL( const CHAR *clFullName, BSONObj &errorObj ) ;
    BOOLEAN _isOwnedCursor( const _mongoCommand *pCommand,
                            UINT64 &ownedEDUID,
                            BOOLEAN &needAuth ) ;
@@ -99,7 +99,6 @@ private:
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _masterRead ;
    engine::rtnContextBuf   _contextBuff ;
-   BSONObj                 _errorInfo ;
 
    msgBuffer               _inBuffer ;
    msgBuffer               _tmpBuffer ;

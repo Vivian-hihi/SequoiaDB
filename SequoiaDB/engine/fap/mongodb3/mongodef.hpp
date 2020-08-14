@@ -39,6 +39,7 @@
 #define _SDB_MONGO_DEFINITION_HPP_
 
 #include "../../bson/bson.hpp"
+#include "fapMongoMessageDef.hpp"
 
 using namespace bson ;
 
@@ -80,26 +81,47 @@ struct mongoSessionCtx
 
    mongoSessionCtx() : clientInfo(), hasParsedClientInfo( FALSE ) {}
 
-   void setError( INT32 errCode, const CHAR* err )
+   void setError( INT32 errCode, const CHAR* errMsg )
    {
       BSONObjBuilder builder ;
-      builder.append( "ok", 0 ) ;
-      builder.append( "errmsg", err ) ;
-      builder.append( "code", errCode ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_ERRMSG, errMsg ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_CODE, errCode ) ;
       errorObj = builder.obj() ;
    }
 
-   void resetError( const BSONObj &engineErr )
+   void resetError()
    {
-      if ( !errorObj.isEmpty() )
-      {
-         lastErrorObj = errorObj.getOwned() ;
-         errorObj = BSONObj() ;
-      }
-      else
-      {
-         lastErrorObj = engineErr.getOwned() ;
-      }
+      /*
+        errorObj can't reset to empty here.
+        After each command is executed( we call this command A command ),
+        the client will actively execute the isMater command.
+
+        eg: We reset errorObj to empty here.
+
+            1. If we fail to execute A command,
+               errorObj = { ok: 0, errmsg: Invalid Argument, code: -6 }
+            2. Before executing the isMaster command, we will call
+               resetError()
+               {
+                  // Now errorObj = { ok: 0, errmsg: Invalid Argument, code: -6 }
+                  lastErrorObj = errorObj.getOwned()
+                  Next we reset errorObj to empty
+               }
+            3. Executing the isMaster command, but the errorObj doesn't change.
+            4. Before executing the next command, we will call
+               resetError()
+               {
+                  // Now errorObj = BSONObj()
+                  lastErrorObj = errorObj.getOwned()
+                  Next we reset errorObj to empty
+               }
+
+            When we execute the getLastError command,
+            the result is always empty.
+            So we can't reset errorObj to empty here.
+      */
+      lastErrorObj = errorObj.getOwned() ;
    }
 
 } ;
