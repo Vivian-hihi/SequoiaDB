@@ -8,7 +8,7 @@
 
 * 不支持使用自增字段作为 LIST / RANGE 的分区字段；
 
-* 不支持 EXCHANGE PARTITION、CHECK PARTITION 和 REPAIR PARTITION 操作；
+* 不支持 EXCHANGE PARTITION 操作；
 
 * RANGE COLUMNS 有多个列时，不能指定分区操作。
 
