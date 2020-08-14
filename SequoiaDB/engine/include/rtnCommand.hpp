@@ -960,11 +960,8 @@ namespace engine
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) ;
-         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
       protected:
-         const CHAR        *_collectionName ;
+         const CHAR        *_objName ;
    };
 
    class _rtnTestCollection : public _rtnTest
@@ -978,6 +975,9 @@ namespace engine
          virtual const CHAR * collectionFullName () ;
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
    };
 
    class _rtnTestCollectionspace : public _rtnTest
@@ -990,6 +990,9 @@ namespace engine
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
    };
 
    class _rtnSetPDLevel : public _rtnCommand

@@ -931,6 +931,7 @@ namespace engine
       coordOperator *pOperator = NULL ;
       rtnContextBuf buffObj ;
       CHAR *pQuery = NULL ;
+      const CHAR *pCSName = NULL ;
 
       contextID = -1 ;
 
@@ -946,8 +947,8 @@ namespace engine
       {
          BSONObj objQuery( pQuery ) ;
          BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
-         if ( 0 == ossStrcmp( e.valuestrsafe(),
-                              CMD_ADMIN_PREFIX SYS_VIRTUAL_CS ) )
+         pCSName = e.valuestrsafe() ;
+         if ( 0 == ossStrcmp( pCSName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS ) )
          {
             goto done ;
          }
@@ -989,10 +990,12 @@ namespace engine
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_DMS_CS_NOTEXIST ;
+            PD_LOG ( PDWARNING, "Collection space[%s] doesn't exist",
+                     pCSName ) ;
          }
          else
          {
-            PD_LOG ( PDERROR, "getmore failed, rc: %d", rc ) ;
+            PD_LOG ( PDERROR, "Getmore failed, rc: %d", rc ) ;
          }
       }
 
@@ -1039,6 +1042,7 @@ namespace engine
       coordOperator *pOperator = NULL ;
       rtnContextBuf buffObj ;
       CHAR *pQuery = NULL ;
+      const CHAR *pCLName = NULL ;
 
       contextID                        = -1 ;
 
@@ -1054,8 +1058,8 @@ namespace engine
       {
          BSONObj objQuery( pQuery ) ;
          BSONElement e = objQuery.getField( FIELD_NAME_NAME ) ;
-         if ( 0 == ossStrcmp( e.valuestrsafe(),
-                              CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
+         pCLName = e.valuestrsafe() ;
+         if ( 0 == ossStrcmp( pCLName, CMD_ADMIN_PREFIX SYS_CL_SESSION_INFO ) )
          {
             goto done ;
          }
@@ -1096,6 +1100,7 @@ namespace engine
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_DMS_NOTEXIST ;
+            PD_LOG ( PDWARNING, "Collection[%s] doesn't exist", pCLName ) ;
          }
          else
          {
