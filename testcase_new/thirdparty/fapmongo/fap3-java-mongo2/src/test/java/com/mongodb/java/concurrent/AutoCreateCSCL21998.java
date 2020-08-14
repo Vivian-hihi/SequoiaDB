@@ -13,7 +13,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.QueryBuilder;
 import com.mongodb.utils.MongodbTestBase;
@@ -28,14 +27,12 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  */
 public class AutoCreateCSCL21998 extends MongodbTestBase {
     private boolean runSuccess = false;
-    private MongoClient client;
     private String dbName = "db21998";
     private String clName = "cl21998";
     private DB db;
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = client.getDB( dbName );
         db.dropDatabase();
     }

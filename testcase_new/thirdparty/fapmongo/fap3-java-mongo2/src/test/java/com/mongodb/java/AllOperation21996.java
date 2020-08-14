@@ -16,7 +16,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
 import com.mongodb.utils.MongodbTestBase;
 
@@ -27,14 +26,12 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class AllOperation21996 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String clNameBase = "cl21996c_";
     private AtomicInteger clNum = new AtomicInteger( 3 );
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
     }
 

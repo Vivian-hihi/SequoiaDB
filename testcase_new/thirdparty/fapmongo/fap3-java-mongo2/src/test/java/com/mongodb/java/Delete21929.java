@@ -15,7 +15,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
 import com.mongodb.WriteResult;
 import com.mongodb.utils.MongodbTestBase;
@@ -27,7 +26,6 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class Delete21929 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String clName = "cl21929";
     private DBCollection cl;
@@ -37,7 +35,6 @@ public class Delete21929 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
         list = new CopyOnWriteArrayList<>();
         for ( int i = 0; i < num; i++ ) {

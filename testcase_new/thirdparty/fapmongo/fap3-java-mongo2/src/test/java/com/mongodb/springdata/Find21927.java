@@ -1,6 +1,8 @@
 package com.mongodb.springdata;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
@@ -52,10 +54,22 @@ public class Find21927 extends MongodbTestBase {
         List< Entity > actList;
         // 不带条件查询
         actList = mongoTemplate.findAll( Entity.class, clName );
+        Collections.sort( actList, new Comparator< Entity >() {
+            @Override
+            public int compare( Entity o1, Entity o2 ) {
+                return o1.getAge() - o2.getAge();
+            }
+        } );
         Assert.assertEquals( actList, list );
 
         // 带空条件进行查询
         actList = mongoTemplate.find( new Query(), Entity.class, clName );
+        Collections.sort( actList, new Comparator< Entity >() {
+            @Override
+            public int compare( Entity o1, Entity o2 ) {
+                return o1.getAge() - o2.getAge();
+            }
+        } );
         Assert.assertEquals( actList, list );
     }
 
@@ -67,6 +81,7 @@ public class Find21927 extends MongodbTestBase {
         // and ne lt gt 查询
         query = new Query( Criteria.where( "age" ).lt( num ).gte( -1 )
                 .andOperator( Criteria.where( "name" ).ne( "k" ) ) );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list );
 
@@ -92,6 +107,7 @@ public class Find21927 extends MongodbTestBase {
         // $in、$exists查询
         query = new Query(
                 Criteria.where( "sex" ).exists( true ).in( "m", "w" ) );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list );
 
@@ -105,6 +121,7 @@ public class Find21927 extends MongodbTestBase {
         query = new Query( Criteria.where( "age" ).mod( 3, 0 ).and( "courses" )
                 .all( Entity.COURSES[ 0 ], Entity.COURSES[ 1 ],
                         Entity.COURSES[ 2 ] ) );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         List< Entity > expList6 = new ArrayList<>();
         for ( Entity entity : list ) {
@@ -117,6 +134,7 @@ public class Find21927 extends MongodbTestBase {
         // regex
         Pattern pattern = Pattern.compile( "a[0-3]" );
         query = new Query( Criteria.where( "name" ).regex( pattern ) );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list.subList( 0, 4 ) );
 
@@ -164,6 +182,12 @@ public class Find21927 extends MongodbTestBase {
         // 不存在的字段排序
         query = new Query().with( new Sort( Sort.Direction.ASC, "age1" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
+        Collections.sort( actList, new Comparator< Entity >() {
+            @Override
+            public int compare( Entity o1, Entity o2 ) {
+                return o1.getAge() - o2.getAge();
+            }
+        } );
         Assert.assertEquals( actList, list );
     }
 
@@ -189,6 +213,7 @@ public class Find21927 extends MongodbTestBase {
         // skip小于匹配数，limit大于匹配数
         query = new Query( Criteria.where( "age" ).lte( 2 * num / 3 ) );
         query.skip( num / 3 ).limit( num );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList,
                 list.subList( num / 3, 2 * num / 3 + 1 ) );
@@ -196,6 +221,7 @@ public class Find21927 extends MongodbTestBase {
         // 匹配的记录数是0，skip limit
         query = new Query( Criteria.where( "age" ).gt( num ) );
         query.skip( num / 3 ).limit( num );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList.size(), 0 );
         // 带匹配符、sort、limit、skip、hint查询
@@ -203,21 +229,25 @@ public class Find21927 extends MongodbTestBase {
         // 索引存在，hint使用索引名
         query = new Query( Criteria.where( "age" ).gt( -1 ).lt( num ) );
         query.skip( 1 ).limit( num ).withHint( "name" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list.subList( 1, num ) );
         // 索引不存在，hint使用索引名
         query = new Query( Criteria.where( "age" ).gt( -1 ).lt( num ) );
         query.skip( 1 ).limit( num ).withHint( "name" + "-inexistences" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list.subList( 1, num ) );
         // limit为0
         query = new Query( Criteria.where( "age" ).lte( num ) );
         query.limit( 0 );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list );
         // limit为-1
         query = new Query( Criteria.where( "age" ).lte( num ) );
         query.limit( -1 );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList, list );
     }
@@ -240,12 +270,14 @@ public class Find21927 extends MongodbTestBase {
         // 存在的字段,匹配不到记录，排除_id
         query = new Query( Criteria.where( "age" ).gt( num ) );
         query.fields().exclude( "_id" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         Assert.assertEquals( actList.size(), 0 );
 
         // 排除其它字段
         query = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         query.fields().exclude( "age" ).exclude( "sex" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         for ( int i = 0; i < num / 3; i++ ) {
             Entity expInit = list.get( i );
@@ -258,6 +290,7 @@ public class Find21927 extends MongodbTestBase {
         // 选择_id字段
         query = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         query.fields().include( "_id" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         for ( int i = 0; i < num / 3; i++ ) {
             Entity exp = new Entity();
@@ -267,6 +300,7 @@ public class Find21927 extends MongodbTestBase {
         // 选择其它字段
         query = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         query.fields().include( "name" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         for ( int i = 0; i < num / 3; i++ ) {
             Entity exp = new Entity();
@@ -278,6 +312,7 @@ public class Find21927 extends MongodbTestBase {
         // 选择其它字段和排除_id
         query = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         query.fields().include( "name" ).exclude( "_id" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         for ( int i = 0; i < num / 3; i++ ) {
             Entity exp = new Entity();
@@ -288,6 +323,7 @@ public class Find21927 extends MongodbTestBase {
         // 选择其它字段和选择_id
         query = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         query.fields().include( "name" ).include( "_id" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         for ( int i = 0; i < num / 3; i++ ) {
             Entity exp = new Entity();
@@ -300,6 +336,7 @@ public class Find21927 extends MongodbTestBase {
         query = new Query( Criteria.where( "age" ).lt( num / 3 ) );
         query.fields().exclude( "name" ).exclude( "_id" ).exclude( "sex" )
                 .exclude( "age" ).exclude( "courses" );
+        query.with( new Sort( Sort.Direction.ASC, "age" ) );
         actList = mongoTemplate.find( query, Entity.class, clName );
         for ( int i = 0; i < num / 3; i++ ) {
             Entity exp = new Entity();

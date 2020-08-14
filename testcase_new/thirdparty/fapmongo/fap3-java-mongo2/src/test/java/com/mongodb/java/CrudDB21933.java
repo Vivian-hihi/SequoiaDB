@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.MongoClient;
 import com.mongodb.utils.MongodbTestBase;
 
 /**
@@ -20,14 +19,12 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class CrudDB21933 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String dbName = "db21933";
     private String clName = "cl21933";
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = client.getDB( dbName );
     }
 

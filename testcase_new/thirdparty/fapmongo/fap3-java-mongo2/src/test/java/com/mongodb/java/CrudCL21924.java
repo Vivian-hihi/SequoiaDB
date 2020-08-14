@@ -18,7 +18,6 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.WriteResult;
 import com.mongodb.utils.MongodbTestBase;
@@ -30,13 +29,11 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class CrudCL21924 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String[] clNames = { "cl21924A", "cl21924B" };
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
     }
 

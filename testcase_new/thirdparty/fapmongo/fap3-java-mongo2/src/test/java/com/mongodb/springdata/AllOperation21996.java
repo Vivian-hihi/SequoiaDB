@@ -41,7 +41,7 @@ public class AllOperation21996 extends MongodbTestBase {
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ),
                         1000 },
                 { clNameBase + String.valueOf( clNum.getAndDecrement() ),
-                        10000 } };
+                        3000 } };
     }
 
     @SuppressWarnings("rawtypes")

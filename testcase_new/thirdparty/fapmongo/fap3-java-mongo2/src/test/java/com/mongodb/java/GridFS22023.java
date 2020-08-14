@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSInputFile;
@@ -29,7 +28,6 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class GridFS22023 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String fileNameBase = "fs22023";
     private String bucketName1 = "bucket22023A";
@@ -38,7 +36,6 @@ public class GridFS22023 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
         new Random().nextBytes( bytes );
     }

@@ -17,7 +17,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSInputFile;
 import com.mongodb.util.JSON;
@@ -30,7 +29,6 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class GridFS22055 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String bucketName = "bucket22055";
     private String[] expClNames = { bucketName + "." + "chunks",
@@ -38,7 +36,6 @@ public class GridFS22055 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
     }
 

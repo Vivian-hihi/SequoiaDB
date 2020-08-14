@@ -47,11 +47,6 @@ public class Authentication21934 extends MongodbTestBase {
 
     @BeforeClass
     public void setup() throws UnknownHostException {
-        opt = MongoClientOptions.builder().build();
-        client1 = new MongoClient(
-                new ServerAddress( config.getHost(), config.getPort() ), opt );
-        mongoTemplate = new MongoTemplate( client1, dbName );
-        mongoTemplate.getDb().dropDatabase();
         list = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
             list.add(
@@ -63,6 +58,11 @@ public class Authentication21934 extends MongodbTestBase {
     @Test
     @SuppressWarnings("unchecked")
     public void Test() throws UnknownHostException {
+        opt = MongoClientOptions.builder().build();
+        client1 = new MongoClient(
+                new ServerAddress( config.getHost(), config.getPort() ), opt );
+        mongoTemplate = new MongoTemplate( client1, dbName );
+        mongoTemplate.getDb().dropDatabase();
         // 创建多个用户
         mongoTemplate
                 .executeCommand( new BasicDBObject( "createUser", username1 )
@@ -105,7 +105,6 @@ public class Authentication21934 extends MongodbTestBase {
         // TODO:SEQUOIADBMAINSTREAM-5974
         List< BasicDBObject > user = ( List< BasicDBObject > ) userInfo
                 .get( "users" );
-        System.out.println( "user = " + user );
         // Assert.assertEquals( user,
         // Collections.singletonList( new Document( "user", username1 ) ) );
 

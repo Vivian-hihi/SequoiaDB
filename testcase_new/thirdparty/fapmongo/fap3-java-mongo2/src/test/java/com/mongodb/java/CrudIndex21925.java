@@ -17,7 +17,6 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.WriteResult;
 import com.mongodb.utils.MongodbTestBase;
@@ -30,13 +29,11 @@ import com.mongodb.utils.MongodbTestBase;
  */
 
 public class CrudIndex21925 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String clName = "cl21925";
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
     }
 

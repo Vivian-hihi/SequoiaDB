@@ -19,7 +19,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import com.mongodb.QueryBuilder;
 import com.mongodb.utils.MongodbTestBase;
@@ -31,7 +30,6 @@ import com.mongodb.utils.MongodbTestBase;
  * @version:1.0
  */
 public class Find21927 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String clName = "cl21927";
     private DBCollection cl;
@@ -41,7 +39,6 @@ public class Find21927 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
         list = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
@@ -233,11 +230,11 @@ public class Find21927 extends MongodbTestBase {
         checkFindResult( actResult, list.subList( 1, num ) );
         // limit为0
         query = QueryBuilder.start( "a" ).lessThanEquals( num ).get();
-        actResult = cl.find( query ).limit( 0 ).toArray();
+        actResult = cl.find( query ).limit( 0 ).sort( sort ).toArray();
         Assert.assertEquals( actResult, list );
         // limit为-1
         query = QueryBuilder.start( "a" ).lessThanEquals( num ).get();
-        actResult = cl.find( query ).limit( -1 ).toArray();
+        actResult = cl.find( query ).limit( -1 ).sort( sort ).toArray();
         Assert.assertEquals( actResult, list.subList( 0, 1 ) );
     }
 

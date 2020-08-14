@@ -19,7 +19,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
 import com.mongodb.utils.MongodbTestBase;
 
@@ -31,7 +30,7 @@ import com.mongodb.utils.MongodbTestBase;
  */
 
 public class Aggregate21930 extends MongodbTestBase {
-    private MongoClient client;
+
     private DB db;
     private String clName = "cl21930";
     private DBCollection cl;
@@ -41,7 +40,6 @@ public class Aggregate21930 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
         list = new ArrayList<>();
         for ( int i = 0; i < num; i++ ) {
@@ -283,7 +281,7 @@ public class Aggregate21930 extends MongodbTestBase {
                 new BasicDBObject( "$sort", new BasicBSONObject( "_id", 1 ) ) );
         actResult = cl.aggregate( aggList ).results().iterator();
         k = 0;
-        int sum9 = 0;
+        double sum9 = 0;
         while ( actResult.hasNext() ) {
             for ( int i = 0; i < num; i++ ) {
                 if ( i % 3 == k ) {
@@ -292,7 +290,7 @@ public class Aggregate21930 extends MongodbTestBase {
             }
             Assert.assertEquals( actResult.next(),
                     new BasicDBObject( "_id", k + "" ).append( "sum_d",
-                            ( double ) sum9 ) );
+                            sum9 ) );
             k++;
             sum9 = 0;
         }

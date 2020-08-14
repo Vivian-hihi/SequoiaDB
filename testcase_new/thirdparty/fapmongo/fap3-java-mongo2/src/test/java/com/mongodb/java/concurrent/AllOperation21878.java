@@ -18,7 +18,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
 import com.mongodb.WriteResult;
 import com.mongodb.utils.MongodbTestBase;
@@ -33,7 +32,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  */
 
 public class AllOperation21878 extends MongodbTestBase {
-    private MongoClient client;
     private String clName = "cl21878";
     private int threadNumPerOpera = 5;
     private AtomicLong totalDelNum = new AtomicLong( 0 );
@@ -41,7 +39,6 @@ public class AllOperation21878 extends MongodbTestBase {
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         DB db = MongodbTestBase.getDB( client );
         MongodbTestBase.dropCL( db, clName );
         DBCollection cl = db.getCollection( clName );

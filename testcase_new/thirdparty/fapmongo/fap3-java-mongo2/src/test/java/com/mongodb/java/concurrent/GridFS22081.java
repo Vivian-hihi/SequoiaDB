@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
@@ -33,7 +32,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @version 1.00
  */
 public class GridFS22081 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private File localPath;
     private String filNameBase = "fs22081";
@@ -48,7 +46,6 @@ public class GridFS22081 extends MongodbTestBase {
                 + File.separator + TestTools.getClassName() );
         TestTools.LocalFile.removeFile( localPath );
         TestTools.LocalFile.createDir( localPath.toString() );
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
         Set< String > clNames = db.getCollectionNames();
         for ( String clName : clNames ) {

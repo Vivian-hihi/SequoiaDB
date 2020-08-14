@@ -10,45 +10,39 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class Config {
-    private String host;
-    private Integer port;
-    private String dbname1;
-    private String dbname2;
+    private String multiUrl;
+    private String springDBName;
+    private String javaDBName;
     private String username;
     private String password;
 
-    public Config( String host, Integer port, String dbname1, String dbname2,
+    public Config( String multiUrl, String springDBName, String javaDBName,
             String username, String password ) {
-        this.host = host;
-        this.port = port;
-        this.dbname1 = dbname1;
-        this.dbname2 = dbname2;
+        this.multiUrl = multiUrl;
+        this.springDBName = springDBName;
+        this.javaDBName = javaDBName;
         this.username = username;
         this.password = password;
     }
 
     public void setDbname2( String dbname2 ) {
-        this.dbname2 = dbname2;
+        this.javaDBName = dbname2;
     }
 
-    public String getHost() {
-        return host;
+    public String getMultiUrl() {
+        return multiUrl;
     }
 
-    public void setHost( String host ) {
-        this.host = host;
+    public void setMultiUrl( String multiUrl ) {
+        this.multiUrl = multiUrl;
     }
 
-    public Integer getPort() {
-        return port;
+    public void setJavaDBName( String javaDBName ) {
+        this.javaDBName = javaDBName;
     }
 
-    public void setPort( Integer port ) {
-        this.port = port;
-    }
-
-    public String getDbName() {
-        return dbname2;
+    public String getJavaDBName() {
+        return javaDBName;
     }
 
     public String getUsername() {
@@ -67,19 +61,32 @@ public class Config {
         this.password = password;
     }
 
-    public String getDbname1() {
-        return dbname1;
+    public String getSpringDBName() {
+        return springDBName;
     }
 
-    public void setDbname1( String dbname1 ) {
-        this.dbname1 = dbname1;
+    public void setSpringDBName( String springDBName ) {
+        this.springDBName = springDBName;
+    }
+
+    public String getHost() {
+        return getMultiUrl().split( "," )[ 0 ].split( ":" )[ 0 ];
+    }
+
+    public Integer getPort() {
+        return Integer
+                .parseInt( getMultiUrl().split( "," )[ 0 ].split( ":" )[ 1 ] );
+    }
+
+    public String[] getUrls() {
+        return getMultiUrl().split( "," );
     }
 
     @Override
     public String toString() {
-        return "Config{" + "host='" + host + '\'' + ", port=" + port
-                + ", dbname1='" + dbname1 + '\'' + ", dbname2='" + dbname2
-                + '\'' + ", username='" + username + '\'' + ", password='"
-                + password + '\'' + '}';
+        return "Config{" + "multiUrl='" + multiUrl + '\'' + ", springDBName='"
+                + springDBName + '\'' + ", javaDBName='" + javaDBName + '\''
+                + ", username='" + username + '\'' + ", password='" + password
+                + '\'' + '}';
     }
 }

@@ -22,7 +22,6 @@ import org.testng.annotations.Test;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.MongoClient;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
@@ -36,7 +35,6 @@ import com.mongodb.utils.TestTools;
  * @version:1.0
  */
 public class GridFS22021 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private File localPath;
     private String filNameBase = "fs22021";
@@ -48,7 +46,6 @@ public class GridFS22021 extends MongodbTestBase {
                 + File.separator + TestTools.getClassName() );
         TestTools.LocalFile.removeFile( localPath );
         TestTools.LocalFile.createDir( localPath.toString() );
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
     }
 

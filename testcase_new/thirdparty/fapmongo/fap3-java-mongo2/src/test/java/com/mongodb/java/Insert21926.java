@@ -14,7 +14,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.utils.MongodbTestBase;
 
 /**
@@ -24,13 +23,11 @@ import com.mongodb.utils.MongodbTestBase;
  * @version 1.00
  */
 public class Insert21926 extends MongodbTestBase {
-    private MongoClient client;
     private DB db;
     private String[] clNames = { "cl21926A", "cl21926B" };
 
     @BeforeClass
     public void setUp() throws UnknownHostException {
-        client = MongodbTestBase.getClient();
         db = MongodbTestBase.getDB( client );
     }
 
