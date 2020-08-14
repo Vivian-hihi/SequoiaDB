@@ -13,11 +13,8 @@
     <context:property-placeholder location="classpath*:mongodb.properties"/>
     <context:component-scan base-package="com.mongodb.*"/>
 
-  <!--  <bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor"/>-->
-
     <!-- spring连接mongodb数据库的配置 -->
-    <mongo:mongo-client host="${mongodb.host}" port="${mongodb.port}"
-                        id="mongo">
+    <mongo:mongo-client replica-set="${mongodb.singleUrl}" id="mongo">
         <mongo:client-options
                 connections-per-host="${mongodb.connectionsPerHost}"
                 threads-allowed-to-block-for-connection-multiplier=
@@ -28,7 +25,7 @@
                 socket-timeout="${mongodb.socketTimeout}"/>
     </mongo:mongo-client>
 
-    <mongo:db-factory id="mongoDbFactory" dbname="${mongodb.dbname1}" mongo-ref="mongo"/>
+    <mongo:db-factory id="mongoDbFactory" dbname="${mongodb.springDBName}" mongo-ref="mongo"/>
 
     <!-- 只要使用这个调用相应的方法操作 -->
     <bean id="mongoTemplate"
@@ -36,11 +33,10 @@
         <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
     </bean>
 
-    <bean id="config" class="com.mongodb.utils.Config">
-        <constructor-arg name="host" value="${mongodb.host}"/>
-        <constructor-arg name="port" value="${mongodb.port}"/>
-        <constructor-arg name="dbname1" value="${mongodb.dbname1}"/>
-        <constructor-arg name="dbname2" value="${mongodb.dbname2}"/>
+    <bean id="config" class="com.mongodb.utils.Config" lazy-init="true">
+        <constructor-arg name="multiUrl" value="${mongodb.multiUrl}"/>
+        <constructor-arg name="springDBName" value="${mongodb.springDBName}"/>
+        <constructor-arg name="javaDBName" value="${mongodb.javaDBName}"/>
         <constructor-arg name="username" value="${mongodb.username}"/>
         <constructor-arg name="password"  value="${mongodb.password}"/>
     </bean>
