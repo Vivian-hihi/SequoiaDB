@@ -6120,11 +6120,11 @@ done :
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( SDB_INVALID_HANDLE != *handle )
+   if ( handle && SDB_INVALID_HANDLE != *handle )
    {
       sdbReleaseCursor ( *handle ) ;
+      SET_INVALID_HANDLE( handle ) ;
    }
-   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -12453,11 +12453,11 @@ done :
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( SDB_INVALID_HANDLE != *handle )
+   if ( handle && SDB_INVALID_HANDLE != *handle )
    {
       sdbReleaseCursor ( *handle ) ;
+      SET_INVALID_HANDLE( handle ) ;
    }
-   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
