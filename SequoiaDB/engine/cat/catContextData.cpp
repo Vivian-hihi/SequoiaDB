@@ -668,6 +668,14 @@ namespace engine
                          "Field type is not String, type: %d, obj: %s, rc: %d",
                          ele.type(), _boQuery.toString().c_str(), rc ) ;
                _targetName = ele.valuestr() ;
+
+               if ( _targetName.length() > DMS_SU_NAME_SZ )
+               {
+                  PD_LOG ( PDERROR, "Invalid length of collectionspace name: "
+                           "%s, rc: %d", _targetName.c_str(), rc ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
             }
             else if ( 0 == ossStrcmp(ele.fieldName(), CAT_ENSURE_CS_IS_EMPTY) )
             {
