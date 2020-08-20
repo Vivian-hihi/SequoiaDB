@@ -4,6 +4,27 @@
 *   2019-11-12 wenjing Wang  Init
 *******************************************************************************/
 
+/*
+入参配置项：
+testConf.skipStandAlone = true;                 跳过独立模式
+testConf.skipOneGroup = true;                   跳过只有一个组的环境
+testConf.skipOneDuplicatePerGroup = true;       跳过每组一个节点的环境
+testConf.useSrcGroup = true;                    存储创建的 cl 所在组
+testConf.useDstGroup = true;                    存储创建的 cl 不在的组
+testConf.csName  = COMMCSNAME + "_xxx";         指定框架创建的 cs 名
+testConf.csOpt = {};                            指定创建的 cs 配置项
+testConf.clName = COMMCLNAME = "_xxx";          指定框架创建的 cl 名
+testConf.clOpt = {};                            指定创建的 cl 配置项
+
+出参：
+function test(testPara) {}
+testPara.groups           获取数据组的信息，没有前置要求，可直接获取
+testPara.testCS           获取创建的 cs，需要指定 testConf.csName
+testPara.testCL           获取创建的 cl，需要指定 testConf.clName
+testPara.srcGroupName     获取创建的 cl 所在组，需要指定 testConf.clName,testConf.clOpt,testConf.useSrcGroup = true
+testPara.dstGroupNames    获取创建的 cl 不在的组，需要指定 testConf.clName,testConf.clOpt,testConf.useDstGroup = true
+*/
+
 var testConf = {
    skipStandAlone: false, skipOneDuplicatePerGroup: false,
    skipOneGroup: false, useSrcGroup: false, useDstGroup: false
@@ -27,7 +48,6 @@ function checkEnv ( db, testConf )
    testPara.groups = commGetGroups( db );
    if( testConf.skipOneGroup )
    {
-
       if( testPara.groups.length === oneGroup )
       {
          throw new Error( "one data group" );
@@ -174,7 +194,7 @@ function dropTestCS ( db, testConf )
    {
       commDropCS( db, testConf.csName, true );
 
-      if( testConf.skipStandAlone !== true &&  testConf.csOpt !== undefined && testConf.csOpt.Domain !== undefined )
+      if( testConf.skipStandAlone !== true && testConf.csOpt !== undefined && testConf.csOpt.Domain !== undefined )
       {
          commDropDomain( db, testConf.csOpt.Domain, true );
       }
