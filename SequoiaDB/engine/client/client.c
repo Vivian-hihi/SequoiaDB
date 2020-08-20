@@ -6071,13 +6071,16 @@ static INT32 _sdbGetIndexes ( sdbCollectionHandle cHandle,
 
    BSON_INIT( queryCond ) ;
    BSON_INIT( newObj ) ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   connection = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !handle )
    {
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
+   *handle = SDB_INVALID_HANDLE ;
+
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
    if ( !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
@@ -12413,13 +12416,16 @@ SDB_EXPORT INT32 sdbCLGetDetail( sdbCollectionHandle cHandle,
    bson newObj ;
 
    BSON_INIT( newObj ) ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   connection = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !handle )
    {
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
+   *handle = SDB_INVALID_HANDLE ;
+
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
    if ( !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
