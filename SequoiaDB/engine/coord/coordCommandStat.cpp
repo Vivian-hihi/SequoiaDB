@@ -856,11 +856,16 @@ namespace engine
             ob.appendNull( FIELD_NAME_MAX_VALUE ) ;
          }
 
-         INT32 nullFrac =
-               ( _nullRecords * DMS_STAT_FRACTION_SCALE ) / _sampleRecords ;
+         INT32 nullFrac = 0 ;
+         INT32 undefFrac = 0 ;
+         if ( _sampleRecords > 0 )
+         {
+            nullFrac =
+                  ( _nullRecords * DMS_STAT_FRACTION_SCALE ) / _sampleRecords ;
+            undefFrac =
+                  ( _undefRecords * DMS_STAT_FRACTION_SCALE ) / _sampleRecords ;
+         }
          ob.append( FIELD_NAME_NULL_FRAC, nullFrac ) ;
-         INT32 undefFrac =
-               ( _undefRecords * DMS_STAT_FRACTION_SCALE ) / _sampleRecords ;
          ob.append( FIELD_NAME_UNDEF_FRAC, undefFrac ) ;
 
          ob.append( FIELD_NAME_SAMPLE_RECORDS, ( INT64 )_sampleRecords ) ;
