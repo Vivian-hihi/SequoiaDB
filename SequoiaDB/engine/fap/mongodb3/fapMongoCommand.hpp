@@ -729,12 +729,19 @@ class _mongoListUserCommand : public _mongoGlobalCommand
       virtual MONGO_CMD_TYPE type() const { return CMD_LIST_USER ; }
       virtual const CHAR* name() const { return MONGO_CMD_NAME_USERS_INFO ; }
 
+      virtual INT32 init( const _mongoMessage *pMsg, mongoSessionCtx &ctx ) ;
       virtual INT32 buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx ) ;
       virtual INT32 buildReply( const MsgOpReply &sdbReply,
                                 engine::rtnContextBuf &replyBuf,
                                 _mongoResponseBuffer &resHeader ) ;
 
       virtual BOOLEAN needProcessByEngine() const { return TRUE ; }
+
+   private:
+      INT32 _getUsernames( vector<string> &usernames ) ;
+
+   protected:
+      BSONObj _obj ;
 } ;
 typedef _mongoListUserCommand mongoListUserCommand ;
 

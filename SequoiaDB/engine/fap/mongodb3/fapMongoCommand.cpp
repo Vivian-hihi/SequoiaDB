@@ -3653,8 +3653,117 @@ INT32 _mongoDropUserCommand::buildReply( const MsgOpReply &sdbReply,
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoListUserCommand)
-INT32 _mongoListUserCommand::buildSdbMsg( msgBuffer &sdbMsg,
-                                          mongoSessionCtx &ctx )
+INT32 _mongoListUserCommand::init( const _mongoMessage *pMsg,
+                                   mongoSessionCtx &ctx )
+{
+   SDB_ASSERT( !_isInitialized, "alreadby initialized" ) ;
+
+   INT32 rc = SDB_OK ;
+
+   if ( MONGO_QUERY_MSG == pMsg->type() )
+   {
+      const _mongoQueryRequest* pReq = (_mongoQueryRequest*)pMsg ;
+
+      _obj = BSONObj( pReq->query() ) ;
+      const CHAR* commandName = _obj.firstElementFieldName() ;
+      SDB_ASSERT( 0 == ossStrcmp( commandName, name() ),
+                  "Invalid command name" ) ;
+
+      _isInitialized = TRUE ;
+      _initMsgType = MONGO_QUERY_MSG ;
+   }
+   else if ( MONGO_COMMAND_MSG == pMsg->type() )
+   {
+      const _mongoCommandRequest* pReq = (_mongoCommandRequest*)pMsg ;
+
+      SDB_ASSERT( 0 == ossStrcmp( pReq->commandName(), name() ),
+                  "Invalid command name" ) ;
+
+      _obj = BSONObj( pReq->metadata() ) ;
+      _isInitialized = TRUE ;
+      _initMsgType = MONGO_COMMAND_MSG ;
+   }
+   else
+   {
+      PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                   "Unknown message type: %d",
+                   pMsg->type() ) ;
+   }
+
+   _requestID = pMsg->requestID() ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _mongoListUserCommand::_getUsernames( vector<string> &usernames )
+{
+   INT32       rc = SDB_OK ;
+   BSONElement usersInfoEle ;
+   BSONType    type ;
+
+   /*
+      The format of _obj is as follows:
+
+      1. if we execute getUsers(), its format is { usersInfo: 1 }
+
+      2. if we execute getUser( "admin" ), its format is { usersInfo: "admin" }
+
+      3. if we execute
+         runCommand( { usersInfo: [ { user: "admin", db: dbName }, ... ] } ),
+         its format is { usersInfo: [ { user: "admin", db: dbName }, ... ] }
+   */
+
+   try
+   {
+      usersInfoEle = _obj.getField( FAP_MONGO_FIELD_NAME_USERSINFO ) ;
+      type = usersInfoEle.type() ;
+
+      if ( String == type )
+      {
+         usernames.push_back( usersInfoEle.String() ) ;
+      }
+      else if ( NumberDouble == type || NumberInt == type )
+      {
+         goto done ;
+      }
+      else if ( Array == type )
+      {
+         vector<BSONElement> usernamesArr = usersInfoEle.Array() ;
+
+         for ( UINT32 i = 0; i < usernamesArr.size(); i++ )
+         {
+            BSONObj usernameObj = usernamesArr[i].Obj() ;
+            usernames.push_back(
+               usernameObj.getStringField( FAP_MONGO_FIELD_NAME_USER ) ) ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+   catch( std::bad_alloc )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   catch( std::exception )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _mongoListUserCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 {
    INT32 rc            = SDB_OK ;
    MsgOpQuery *query   = NULL ;
@@ -3691,17 +3800,45 @@ INT32 _mongoListUserCommand::buildReply( const MsgOpReply &sdbReply,
                                          engine::rtnContextBuf &bodyBuf,
                                          _mongoResponseBuffer &headerBuf )
 {
+   INT32 rc = SDB_OK ;
+
    if ( SDB_OK == sdbReply.flags )
    {
       BSONObjBuilder bob ;
       BSONArrayBuilder arr( bob.subarrayStart( FAP_MONGO_FIELD_NAME_USERS ) ) ;
-      INT32 offset = 0 ;
+      INT32   offset = 0 ;
+      BOOLEAN returnAllUsers = FALSE ;
+      vector<string> usernames ;
+
+      rc = _getUsernames( usernames ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get usernames, rc: %d", rc ) ;
+
+      if ( 0 == usernames.size() )
+      {
+         returnAllUsers = TRUE ;
+      }
+
       while ( offset < bodyBuf.size() )
       {
-         BSONObj obj( bodyBuf.data() + offset ) ;
          // { User: "myuser", ... } => { user: "myuser" }
-         arr.append( BSON( FAP_MONGO_FIELD_NAME_USER <<
-                           obj.getStringField( FIELD_NAME_USER ) ) ) ;
+         BSONObj obj( bodyBuf.data() + offset ) ;
+         const CHAR* user = obj.getStringField( FIELD_NAME_USER ) ;
+
+         if ( returnAllUsers )
+         {
+            arr.append( BSON( FAP_MONGO_FIELD_NAME_USER << user ) ) ;
+         }
+         else
+         {
+            for ( UINT32 i = 0; i < usernames.size(); i++ )
+            {
+               if ( 0 == ossStrcmp( usernames[i].c_str(), user ) )
+               {
+                  arr.append( BSON( FAP_MONGO_FIELD_NAME_USER << user ) ) ;
+               }
+            }
+         }
          offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
       }
       arr.done() ;
@@ -3718,7 +3855,10 @@ INT32 _mongoListUserCommand::buildReply( const MsgOpReply &sdbReply,
 
    _buildReplyCommon( sdbReply, bodyBuf, headerBuf ) ;
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 MONGO_IMPLEMENT_CMD_AUTO_REGISTER(_mongoSaslStartCommand)

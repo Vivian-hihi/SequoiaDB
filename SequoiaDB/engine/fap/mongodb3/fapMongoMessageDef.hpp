@@ -50,6 +50,8 @@ namespace fap
 #define FAP_MONGO_FIELD_NAME_CURSORS     "cursors"
 #define FAP_MONGO_FIELD_NAME_BATCHSIZE   "batchSize"
 #define FAP_MONGO_FIELD_NAME_COLLECTION  "collection"
+#define FAP_MONGO_FIELD_NAME_USERSINFO   "usersInfo"
+
 #define FAP_MONGO_FIELD_VALUE_NODEJS     "nodejs"
 #define FAP_MONGO_FIELD_VALUE_MONGOSHELL "MongoDB Internal Client"
 #define FAP_MONGO_FIELD_VALUE_JAVA       "mongo-java-driver"
