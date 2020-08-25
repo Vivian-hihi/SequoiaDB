@@ -80,5 +80,8 @@ namespace fap
 #define FAP_MONGO_SASL_MSG_CHANNEL  "c"
 #define FAP_MONGO_SASL_MSG_VALUE    "v"
 #define FAP_MONGO_SASL_MSG_ERROR    "e"
+
+#define FAP_MONGO_OPERATOR_EQ   "$eq"
+#define FAP_MONGO_OPERATOR_ET   "$et"
 }
 #endif

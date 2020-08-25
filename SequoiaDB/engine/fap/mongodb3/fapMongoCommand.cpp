@@ -350,6 +350,81 @@ error:
    goto done ;
 }
 
+template< typename T >
+static INT32 convertMongoOperator2Sdb( const BSONObj &matchConditonObj,
+                                       T &matchConditonBob )
+{
+   INT32  rc = SDB_OK ;
+
+   try
+   {
+      BSONObjIterator itr( matchConditonObj ) ;
+      while ( itr.more() )
+      {
+         BSONElement ele = itr.next() ;
+         const CHAR* fieldName = NULL ;
+
+         if ( 0 == ossStrcmp( ele.fieldName(), FAP_MONGO_OPERATOR_EQ ) )
+         {
+            // if the field name is "$eq", we should build the new field name
+            // named "$et"
+            fieldName = FAP_MONGO_OPERATOR_ET ;
+         }
+
+         if ( Object == ele.type() )
+         {
+            BSONObjBuilder subBob( matchConditonBob.subobjStart(
+                                   ( NULL == fieldName ) ?
+                                   ele.fieldName() : fieldName ) ) ;
+            rc = convertMongoOperator2Sdb( ele.Obj(), subBob ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            subBob.doneFast() ;
+         }
+         else if ( Array == ele.type() )
+         {
+            BSONArrayBuilder subBob( matchConditonBob.subarrayStart(
+                                     ( NULL == fieldName ) ?
+                                     ele.fieldName() : fieldName ) ) ;
+            rc = convertMongoOperator2Sdb( ele.Obj(), subBob ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            subBob.doneFast() ;
+         }
+         else
+         {
+            if ( NULL == fieldName )
+            {
+               matchConditonBob.append( ele ) ;
+            }
+            else
+            {
+               matchConditonBob.appendAs( ele, fieldName ) ;
+            }
+         }
+      }
+   }
+   catch( std::bad_alloc )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   catch( std::exception )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 _mongoCmdFactory::_mongoCmdFactory ()
 {
    _pCmdInfoRoot = NULL ;
@@ -1314,6 +1389,8 @@ INT32 _mongoDeleteCommand::buildSdbMsg( msgBuffer &sdbMsg,
 
    INT32 rc         = SDB_OK ;
    MsgOpDelete *del = NULL ;
+   BSONObj objList, deleteObj, qObj ;
+   BSONObjBuilder operatorBob ;
 
    sdbMsg.reserve( sizeof( MsgOpDelete ) ) ;
    sdbMsg.advance( sizeof( MsgOpDelete ) - 4 ) ;
@@ -1332,23 +1409,30 @@ INT32 _mongoDeleteCommand::buildSdbMsg( msgBuffer &sdbMsg,
    sdbMsg.write( _clFullName.c_str(), del->nameLength + 1, TRUE ) ;
 
    // { delete: "bar", deletes: [ { q: {xxx}, limit: 0 } ] }
-   BSONObj objList, deleteObj ;
    rc = getArrayElement( _obj, FAP_MONGO_FIELD_NAME_DELETES, objList ) ;
    PD_RC_CHECK( rc, PDERROR,
                 "Failed to get field[%s], rc: %d",
                 FAP_MONGO_FIELD_NAME_DELETES, rc ) ;
+
    PD_CHECK( 1 == objList.nFields() && Object == objList.firstElement().type(),
              SDB_INVALIDARG, error, PDERROR,
              "Invalid object[%s] in mongo %s request",
              _obj.toString().c_str(), name() ) ;
+
    deleteObj = objList.firstElement().Obj() ;
+   qObj = deleteObj.getObjectField( "q" ) ;
 
    if ( 1 == deleteObj.getIntField( "limit" ) )
    {
       del->flags |= FLG_DELETE_ONE ;
    }
 
-   sdbMsg.write( deleteObj.getObjectField( "q" ), TRUE ) ;
+   rc = convertMongoOperator2Sdb( qObj, operatorBob ) ;
+   PD_RC_CHECK( rc, PDERROR,
+                "Failed to convert mongo operator to sdb operator, rc: %d",
+                rc ) ;
+
+   sdbMsg.write( operatorBob.obj(), TRUE ) ;
    sdbMsg.write( BSONObj(), TRUE ) ; // hint
 
    sdbMsg.doneLen() ;
@@ -1391,7 +1475,8 @@ INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg,
    INT32 rc = SDB_OK ;
    BOOLEAN updateMulti = FALSE ;
    MsgOpUpdate *update = NULL ;
-   BSONObj query, updator, hint, setOnObj ;
+   BSONObj query, updator, hint, setOnObj, objList, updateObj ;
+   BSONObjBuilder operatorBob ;
 
    sdbMsg.reserve( sizeof( MsgOpUpdate ) ) ;
    sdbMsg.advance( sizeof( MsgOpUpdate ) - 4 ) ;
@@ -1411,21 +1496,21 @@ INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg,
 
    // { update: "bar",
    //   updates: [ { q: {xxx}, u: {xxx}, upsert: false, multi: true } ] }
-   BSONObj objList, updateObj ;
    rc = getArrayElement( _obj, FAP_MONGO_FIELD_NAME_UPDATES, objList ) ;
    PD_RC_CHECK( rc, PDERROR,
                 "Failed to get field[%s], rc: %d",
                 FAP_MONGO_FIELD_NAME_UPDATES, rc ) ;
+
    PD_CHECK( 1 == objList.nFields() && Object == objList.firstElement().type(),
              SDB_INVALIDARG, error, PDERROR,
              "Invalid object[%s] in mongo %s request",
              _obj.toString().c_str(), name() ) ;
-   updateObj = objList.firstElement().Obj() ;
 
-   query = updateObj.getObjectField( "q" ) ;
-   updator = updateObj.getObjectField( "u" ) ;
+   updateObj   = objList.firstElement().Obj() ;
+   query       = updateObj.getObjectField( "q" ) ;
+   updator     = updateObj.getObjectField( "u" ) ;
    updateMulti = updateObj.getBoolField( "multi" ) ;
-   _isUpsert = updateObj.getBoolField( "upsert" ) ;
+   _isUpsert   = updateObj.getBoolField( "upsert" ) ;
 
    // set flag
    if ( FALSE == updateMulti )
@@ -1497,7 +1582,12 @@ INT32 _mongoUpdateCommand::buildSdbMsg( msgBuffer &sdbMsg,
       }
    }
 
-   sdbMsg.write( query, TRUE ) ;
+   rc = convertMongoOperator2Sdb( query, operatorBob ) ;
+   PD_RC_CHECK( rc, PDERROR,
+                "Failed to convert mongo operator to sdb operator, rc: %d",
+                rc ) ;
+
+   sdbMsg.write( operatorBob.obj(), TRUE ) ;
    sdbMsg.write( updator, TRUE ) ;
    sdbMsg.write( hint, TRUE ) ;
 
@@ -1631,6 +1721,8 @@ INT32 _mongoQueryCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 
    INT32 rc                = SDB_OK ;
    MsgOpQuery *query       = NULL ;
+   BSONObj cond, orderby, hint ;
+   BSONObjBuilder operatorBob ;
 
    sdbMsg.reserve( sizeof( MsgOpQuery ) ) ;
    sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
@@ -1674,18 +1766,26 @@ INT32 _mongoQueryCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
    convertProjection( _selector ) ;
 
    // eg: cl.find( { $query: {a:1}, $orderby: {b:1}, $hint: "aIdx" } )
-   BSONObj cond    = _getQueryObj( _query ) ;
-   BSONObj orderby = _getSortObj( _query ) ;
-   BSONObj hint    = _getHintObj( _query ) ;
+   cond    = _getQueryObj( _query ) ;
+   orderby = _getSortObj( _query ) ;
+   hint    = _getHintObj( _query ) ;
 
-   sdbMsg.write( cond, TRUE ) ;
+   rc = convertMongoOperator2Sdb( cond, operatorBob ) ;
+   PD_RC_CHECK( rc, PDERROR,
+                "Failed to convert mongo operator to sdb operator, rc: %d",
+                rc ) ;
+
+   sdbMsg.write( operatorBob.obj(), TRUE ) ;
    sdbMsg.write( _selector, TRUE ) ;
    sdbMsg.write( orderby, TRUE ) ;
    sdbMsg.write( hint, TRUE ) ;
 
    sdbMsg.doneLen() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoQueryCommand::buildReply( const MsgOpReply &sdbReply,
@@ -1808,8 +1908,10 @@ INT32 _mongoFindCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
 {
    SDB_ASSERT ( _isInitialized, "must be initialized first" ) ;
 
-   INT32 rc                = SDB_OK ;
-   MsgOpQuery *query       = NULL ;
+   INT32      rc     = SDB_OK ;
+   MsgOpQuery *query = NULL ;
+   BSONObj cond, orderby, hint, selector ;
+   BSONObjBuilder operatorBob ;
 
    sdbMsg.reserve( sizeof( MsgOpQuery ) ) ;
    sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
@@ -1829,11 +1931,12 @@ INT32 _mongoFindCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
    query->nameLength = _clFullName.length() ;
    sdbMsg.write( _clFullName.c_str(), query->nameLength + 1, TRUE ) ;
 
-   BSONObj cond, orderby, hint, selector ;
    cond     = _obj.getObjectField( "filter" ) ;
    orderby  = _obj.getObjectField( "sort" ) ;
    selector = _obj.getObjectField( "projection" ) ;
+
    convertProjection( selector ) ;
+
    if ( _obj.hasField( "hint" ) )
    {
       hint = BSON( "" << _obj.getStringField( "hint" ) ) ;
@@ -1847,13 +1950,21 @@ INT32 _mongoFindCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
       query->numToSkip = _obj.getIntField( "skip" ) ;
    }
 
-   sdbMsg.write( cond, TRUE ) ;
+   rc = convertMongoOperator2Sdb( cond, operatorBob ) ;
+   PD_RC_CHECK( rc, PDERROR,
+                "Failed to convert mongo operator to sdb operator, rc: %d",
+                rc ) ;
+
+   sdbMsg.write( operatorBob.obj(), TRUE ) ;
    sdbMsg.write( selector, TRUE ) ;
    sdbMsg.write( orderby, TRUE ) ;
    sdbMsg.write( hint, TRUE ) ;
    sdbMsg.doneLen() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoFindCommand::buildReply( const MsgOpReply &sdbReply,
@@ -2508,6 +2619,8 @@ INT32 _mongoCountCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
    INT32 rc = SDB_OK ;
    MsgOpQuery *query = NULL ;
    const CHAR *cmdName = CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT ;
+   BSONObj empty, hint, matcher ;
+   BSONObjBuilder operatorBob ;
 
    sdbMsg.reserve( sizeof( MsgOpQuery ) ) ;
    sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
@@ -2539,8 +2652,7 @@ INT32 _mongoCountCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
    // mongo command: db.bar.count( { a: 1 }, { hint: "aIdx" } )
    // sdb msg: matcher: { a: 1 }
    //          hint:    { Collection: "bar", Hint: { "": "aIdx" } }
-   BSONObj empty, hint ;
-   BSONObj matcher = _obj.getObjectField( "query" ) ;
+   matcher = _obj.getObjectField( "query" ) ;
 
    if ( _obj.hasField( "hint" ) )
    {
@@ -2554,13 +2666,21 @@ INT32 _mongoCountCommand::buildSdbMsg( msgBuffer &sdbMsg, mongoSessionCtx &ctx )
       hint = BSON( FIELD_NAME_COLLECTION << _clFullName.c_str() ) ;
    }
 
-   sdbMsg.write( matcher, TRUE ) ;
+   rc = convertMongoOperator2Sdb( matcher, operatorBob ) ;
+   PD_RC_CHECK( rc, PDERROR,
+                "Failed to convert mongo operator to sdb operator, rc: %d",
+                rc ) ;
+
+   sdbMsg.write( operatorBob.obj(), TRUE ) ;
    sdbMsg.write( empty, TRUE ) ;
    sdbMsg.write( empty, TRUE ) ;
    sdbMsg.write( hint, TRUE ) ;
    sdbMsg.doneLen() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoCountCommand::buildReply( const MsgOpReply &sdbReply,
@@ -2774,6 +2894,17 @@ INT32 _mongoAggregateCommand::buildSdbMsg( msgBuffer &sdbMsg,
             sdbMsg.write( *it, TRUE ) ;
          }
       }
+      else if ( 0 == ossStrcmp( oneStage.firstElementFieldName(), "$match" ) )
+      {
+         BSONObjBuilder operatorBob ;
+
+         rc = convertMongoOperator2Sdb( oneStage, operatorBob ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to convert mongo operator to sdb operator, ",
+                      "rc: %d", rc ) ;
+
+         sdbMsg.write( operatorBob.obj(), TRUE ) ;
+      }
       else
       {
          sdbMsg.write( oneStage, TRUE ) ;
@@ -2849,7 +2980,10 @@ INT32 _mongoDistinctCommand::buildSdbMsg( msgBuffer &sdbMsg,
    /* mongo request:
     * { distinct: "bar", key: "a", query: { b: 1 } }
     */
+   INT32 rc = SDB_OK ;
    MsgOpAggregate *aggre   = NULL ;
+   BSONObj match, group1, group2 ;
+   BSONObjBuilder builder, operatorBob ;
 
    sdbMsg.reserve( sizeof( MsgOpAggregate ) ) ;
    sdbMsg.advance( sizeof( MsgOpAggregate ) - 4 ) ;
@@ -2874,9 +3008,6 @@ INT32 _mongoDistinctCommand::buildSdbMsg( msgBuffer &sdbMsg,
    // { $match: { b: 1 } },
    // { $group: { _id: "$a" } },
    // { $group: { _id: null, values: { $addtoset: "$a" } } }
-   BSONObj match, group1, group2 ;
-   BSONObjBuilder builder ;
-
    if ( _obj.hasField( "query" ) )
    {
       match = BSON( "$match" << _obj.getField( "query" ) ) ;
@@ -2890,13 +3021,21 @@ INT32 _mongoDistinctCommand::buildSdbMsg( msgBuffer &sdbMsg,
 
    if ( !match.isEmpty() )
    {
-      sdbMsg.write( match, TRUE ) ;
+      rc = convertMongoOperator2Sdb( match, operatorBob ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to convert mongo operator to sdb operator, rc: %d",
+                   rc ) ;
+      sdbMsg.write( operatorBob.obj(), TRUE ) ;
    }
+
    sdbMsg.write( group1, TRUE ) ;
    sdbMsg.write( group2, TRUE ) ;
    sdbMsg.doneLen() ;
 
-   return SDB_OK ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 _mongoDistinctCommand::buildReply( const MsgOpReply &sdbReply,
