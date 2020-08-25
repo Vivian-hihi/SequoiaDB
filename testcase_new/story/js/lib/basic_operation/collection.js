@@ -218,6 +218,20 @@ function Collection ( cl )
          return obj;
       }
 
+   this.getIndexStat =
+      function( name )
+      {
+         try
+         {
+            var obj = cl.getIndexStat( name );
+         }
+         catch( e )
+         {
+            throw new Error( e );
+         }
+         return obj;
+      }
+
    this.split =
       function( sourceGroup, targetGroup, condition, endcondition )
       {
