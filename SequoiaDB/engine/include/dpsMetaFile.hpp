@@ -100,7 +100,7 @@ namespace engine
       DPS_LSN_VER    _memBeginLsnVer ;
       UINT32         _reserved ;
       DPS_LSN_OFFSET _memBeginLsnOffset ;
-      // 48 == sizeof(_oldestLSNOffset)
+      // 48 == sizeof(_dpsMetaFileContent)
       CHAR           _padding [ DPS_METAFILE_CONTENT_LEN - 48 ] ;
 
       _dpsMetaFileContent ( DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET )
