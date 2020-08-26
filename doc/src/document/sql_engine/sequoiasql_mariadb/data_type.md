@@ -36,5 +36,5 @@ MariaDB 支持多种 SQL 数据类型：数值类型、Date 类型、Time 类型
 | ENUM       | Int          |                                              |
 | SET        | Int          |                                              |
 | JSON       | String       |                                              |
-| GEOMETRY   | 不支持       |                                              |
+| GEOMETRY   | Binary       | 不支持索引（spatial/non-spatial 索引）       |
 | NULL       | -            | 不存储                                       |
