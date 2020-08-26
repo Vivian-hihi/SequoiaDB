@@ -128,7 +128,7 @@ namespace engine
 
       void  reset()
       {
-         _oldestLSNOffset  = DPS_INVALID_FILE_SN ;
+         _oldestLSNOffset  = DPS_INVALID_LSN_OFFSET ;
          resetStatus() ;
       }
 
