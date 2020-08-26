@@ -151,6 +151,27 @@ public class SdbSnapshotList {
             System.out.println(cursor.getNext());
         }
 
+        // 18
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_QUERIES, "", "", "");
+        System.out.println("result of SDB_SNAP_QUERIES is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
+        // 19
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_LATCHWAITS, "", "", "");
+        System.out.println("result of SDB_SNAP_LATCHWAITS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
+        // 20
+        cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_LOCKWAITS, "", "", "");
+        System.out.println("result of SDB_SNAP_LOCKWAITS is: ");
+        while(cursor.hasNext()){
+            System.out.println(cursor.getNext());
+        }
+
         // 21
         sdb.analyze();
         cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_INDEXSTATS, "", "", "");

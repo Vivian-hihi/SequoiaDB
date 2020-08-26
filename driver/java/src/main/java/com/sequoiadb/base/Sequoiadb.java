@@ -148,9 +148,9 @@ public class Sequoiadb implements Closeable {
     public final static int SDB_SNAP_SEQUENCES = 15;
     //public final static int SDB_SNAP_RESERVED1 = 16;
     //public final static int SDB_SNAP_RESERVED2 = 17;
-    //public final static int SDB_SNAP_QUERIES = 18;
-    //public final static int SDB_SNAP_LATCHWAITS = 19;
-    //public final static int SDB_SNAP_LOCKWAITS = 20;
+    public final static int SDB_SNAP_QUERIES = 18;
+    public final static int SDB_SNAP_LATCHWAITS = 19;
+    public final static int SDB_SNAP_LOCKWAITS = 20;
     public final static int SDB_SNAP_INDEXSTATS = 21;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
@@ -1304,6 +1304,9 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS : Get the snapshot of node configurations
      *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS : Get all the information of schedule task
      *                 <dt>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                 <dt>Sequoiadb.SDB_SNAP_QUERIES : Get the snapshot of queries
+     *                 <dt>Sequoiadb.SDB_SNAP_LATCHWAITS : Get the snapshot of latch waits
+     *                 <dt>Sequoiadb.SDB_SNAP_LOCKWAITS : Get the snapshot of lock waits
      *                 <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
@@ -1352,6 +1355,9 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_CONFIGS : Get the snapshot of node configurations
      *                 <dt>Sequoiadb.SDB_SNAP_SVCTASKS : Get all the information of schedule task
      *                 <dt>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                 <dt>Sequoiadb.SDB_SNAP_QUERIES : Get the snapshot of queries
+     *                 <dt>Sequoiadb.SDB_SNAP_LATCHWAITS : Get the snapshot of latch waits
+     *                 <dt>Sequoiadb.SDB_SNAP_LOCKWAITS : Get the snapshot of lock waits
      *                 <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
@@ -1387,6 +1393,9 @@ public class Sequoiadb implements Closeable {
      *                   <dt>Sequoiadb.SDB_SNAP_CONFIGS : Get the snapshot of node configurations
      *                   <dt>Sequoiadb.SDB_SNAP_SVCTASKS : Get all the information of schedule task
      *                   <dt>Sequoiadb.SDB_SNAP_SEQUENCES : Get the snapshot of the sequence
+     *                   <dt>Sequoiadb.SDB_SNAP_QUERIES : Get the snapshot of queries
+     *                   <dt>Sequoiadb.SDB_SNAP_LATCHWAITS : Get the snapshot of latch waits
+     *                   <dt>Sequoiadb.SDB_SNAP_LOCKWAITS : Get the snapshot of lock waits
      *                   <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                   </dl>
      * @param matcher    the matching rule, match all the documents if null
@@ -1458,6 +1467,12 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_SVCTASKS;
             case SDB_SNAP_SEQUENCES:
                 return AdminCommand.SNAP_SEQUENCES;
+            case SDB_SNAP_QUERIES:
+                return AdminCommand.SNAP_QUERIES;
+            case SDB_SNAP_LATCHWAITS:
+                return AdminCommand.SNAP_LATCHWAITS;
+            case SDB_SNAP_LOCKWAITS:
+                return AdminCommand.SNAP_LOCKWAITS;
             case SDB_SNAP_INDEXSTATS:
                 return AdminCommand.SNAP_INDEXSTATS;
             default:
