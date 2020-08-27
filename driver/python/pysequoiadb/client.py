@@ -98,10 +98,9 @@ SDB_SNAP_SVCTASKS = 14
 SDB_SNAP_SEQUENCES = 15
 #SDB_SNAP_RESERVED1 = 16
 #SDB_SNAP_RESERVED2 = 17
-# Open comments after these snapshot type tests are successful.
-#SDB_SNAP_QUERIES = 18
-#SDB_SNAP_LATCHWAITS = 19
-#SDB_SNAP_LOCKWAITS = 20
+SDB_SNAP_QUERIES = 18
+SDB_SNAP_LATCHWAITS = 19
+SDB_SNAP_LOCKWAITS = 20
 SDB_SNAP_INDEXSTATS = 21
 
 SDB_SNAP_TYPE = [
@@ -121,9 +120,9 @@ SDB_SNAP_TYPE = [
     SDB_SNAP_CONFIGS,
     SDB_SNAP_SVCTASKS,
     SDB_SNAP_SEQUENCES,
-    #SDB_SNAP_QUERIES,
-    #SDB_SNAP_LATCHWAITS,
-    #SDB_SNAP_LOCKWAITS,
+    SDB_SNAP_QUERIES,
+    SDB_SNAP_LATCHWAITS,
+    SDB_SNAP_LOCKWAITS,
     SDB_SNAP_INDEXSTATS
 ]
 
@@ -562,6 +561,9 @@ class client(object):
                     SDB_SNAP_CONFIGS               : Get node configuration's snapshot
                     SDB_SNAP_SVCTASKS              : Get the snapshot of service tasks
                     SDB_SNAP_SEQUENCES             : Get the snapshot of sequences
+                    SDB_SNAP_QUERIES               : Get the snapshot of queries
+                    SDB_SNAP_LATCHWAITS            : Get the snapshot of latch waits
+                    SDB_SNAP_LOCKWAITS             : Get the snapshot of lock waits
                     SDB_SNAP_INDEXSTATS            : Get the snapshot of index statistics
         """
         if not isinstance(snap_type, int):
