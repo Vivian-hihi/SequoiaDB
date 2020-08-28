@@ -2,7 +2,6 @@
 @Description : seqDB-22650: 数据节点未生成SYSTAT.SYSINDEXSTAT时，获取索引统计信息 
 @Modify list : Zhao Xiaoni 2020/8/19
 ****************************************************************************/
-testConf.skipStandAlone = true;
 testConf.clName = "cl_22650";
 
 main( test );
