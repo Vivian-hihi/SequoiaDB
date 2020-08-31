@@ -3137,7 +3137,7 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
    INT64 pid = 0;
    BSONObj obj;
    string basePath;
-   SDB_LOB_OPEN_MODE mode = SDB_LOB_READ;
+   INT32 mode = SDB_LOB_SHAREREAD;
    CHAR *pathStr = NULL;
    lobHandle *lh = new lobHandle;
    BSONObj options;
@@ -3166,6 +3166,11 @@ INT32 sequoiaFS::open(const CHAR *path, struct fuse_file_info *fi)
    if(fi->flags & O_WRONLY)
    {
       mode = SDB_LOB_WRITE;
+   }
+
+   if(fi->flags & O_RDWR)
+   {
+      mode = (SDB_LOB_WRITE | SDB_LOB_SHAREREAD);
    }
 
    rc = db->getCollection(_sysFileMetaCLFullName.c_str(), *sysFileMetaCL);
@@ -3284,7 +3289,6 @@ error:
 INT32 sequoiaFS::read(const CHAR *path, CHAR *buf, size_t size, off_t offset ,
                       struct fuse_file_info *fi)
 {
-   sdb *db = NULL;
    sdbCollection cl;
    INT32 rc = SDB_OK;
    UINT32 readlen = 0;
@@ -3298,48 +3302,6 @@ INT32 sequoiaFS::read(const CHAR *path, CHAR *buf, size_t size, off_t offset ,
 
    lh = (lobHandle *)fi->fh;
    lob = (sdbLob *)lh->hLob;
-   db = lh->hSdb;
-
-   pthread_mutex_lock(&mutex);
-   it = _mapOpMode.find(fi->fh);
-   if( it != _mapOpMode.end())
-   {
-      if(it->second != 1)
-      {
-         rc = lob->close();
-         if(rc != SDB_OK)
-         {
-            PD_LOG(PDERROR, "Failed to close lob, error=%d", rc);
-            rc = -EIO;
-            pthread_mutex_unlock(&mutex);
-            goto error;
-         }
-
-         rc = db->getCollection(_collection.c_str(), cl);
-         if(SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to get collection, cl=%s, error=%d",
-                   _collection.c_str(), rc);
-            rc = -EIO;
-            pthread_mutex_unlock(&mutex);
-            goto error;
-         }
-
-         rc = cl.openLob(*lob, lh->oid, SDB_LOB_READ);
-         if(SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to open lob for file, name=%s, error=%d",
-                   path, rc);
-            rc = -EIO;
-            pthread_mutex_unlock(&mutex);
-            goto error;
-         }
-         lh->hLob = lob;
-         _mapOpMode.erase(it);
-         _mapOpMode.insert(std::pair<UINT64, INT8>(fi->fh, 1));
-      }
-   }
-   pthread_mutex_unlock(&mutex);
 
    pthread_mutex_lock(&lh->lock);
    rc = lob->seek(offset, SDB_LOB_SEEK_SET);
@@ -3380,7 +3342,6 @@ INT32 sequoiaFS::write(const CHAR *path,
                        off_t offset,
                        struct fuse_file_info *fi)
 {
-   sdb *db = NULL;
    sdbCollection cl;
    INT32 rc = SDB_OK;
    SINT64 lobSize = 0;
@@ -3398,49 +3359,7 @@ INT32 sequoiaFS::write(const CHAR *path,
 
    lh = (lobHandle *)fi->fh;
    lob = (sdbLob *)lh->hLob;
-   db = lh->hSdb;
    sysFileMetaCL = (sdbCollection *)lh->hSysFileMetaCL;
-
-   pthread_mutex_lock(&mutex);
-   it = _mapOpMode.find(fi->fh);
-   if( it != _mapOpMode.end())
-   {
-      if(it->second != 2)
-      {
-         rc = lob->close();
-         if(rc != SDB_OK)
-         {
-            PD_LOG(PDERROR, "Failed to close lob, error=%d", rc);
-            rc = -EIO;
-            pthread_mutex_unlock(&mutex);
-            goto error;
-         }
-
-         rc = db->getCollection(_collection.c_str(), cl);
-         if(SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to get collection, cl=%s, error=%d",
-                   _collection.c_str(), rc);
-            rc = -EIO;
-            pthread_mutex_unlock(&mutex);
-            goto error;
-         }
-
-         rc = cl.openLob(*lob, lh->oid, SDB_LOB_WRITE);
-         if(SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to open lob for file, name=%s, error=%d",
-                   path, rc);
-            rc = -EIO;
-            pthread_mutex_unlock(&mutex);
-            goto error;
-         }
-         lh->hLob = lob;
-         _mapOpMode.erase(it);
-         _mapOpMode.insert(std::pair<UINT64, INT8>(fi->fh, 2));
-      }
-   }
-   pthread_mutex_unlock(&mutex);
 
    //pthread_mutex_lock(&lh->lock);
    rc = lob->lockAndSeek(offset, size);
@@ -3533,9 +3452,10 @@ INT32 sequoiaFS::release(const CHAR *path, struct fuse_file_info *fi)
 done:
    delete lob;
    delete lh->hSysFileMetaCL;
+   pthread_mutex_destroy(&lh->lock);
    delete lh;
    releaseConnection(db);
-   pthread_mutex_destroy(&lh->lock);
+   
    return rc;
 
 error:
@@ -3876,6 +3796,7 @@ INT32 sequoiaFS::create(const CHAR *path,
    uid_t uid = getuid();
    gid_t gid = getgid();
    BSONObj options;
+   INT32 rwMode = SDB_LOB_WRITE;
 
    INIT_LOBHANDLE(lh);
    INIT_FILE_NODE(fileNode);
@@ -3975,8 +3896,13 @@ INT32 sequoiaFS::create(const CHAR *path,
       goto error;
    }
 
+   if(fi->flags & O_RDWR)
+   {
+      rwMode = (SDB_LOB_WRITE | SDB_LOB_SHAREREAD);
+   }
+
    //open lob according to the mode of open
-   rc = cl.openLob(*lob, oid, SDB_LOB_WRITE);
+   rc = cl.openLob(*lob, oid, rwMode);
    if(SDB_OK != rc)
    {
       PD_LOG(PDERROR, "Failed to open lob, error=%d", rc);
