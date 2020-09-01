@@ -38,7 +38,7 @@ function readyData ( imprtFile )
 
 function importData ( csName, clName, imprtFile )
 {
-   var imprtOption = "/opt/sequoiadb/" + 'bin/sdbimprt -s ' + COORDHOSTNAME + ' -p ' + COORDSVCNAME
+   var imprtOption = installDir + 'bin/sdbimprt -s ' + COORDHOSTNAME + ' -p ' + COORDSVCNAME
       + ' -c ' + csName + ' -l ' + clName
       + ' --file ' + imprtFile
       + ' --type csv --fields "num int,type string,v1 binary,v2 binary"'
