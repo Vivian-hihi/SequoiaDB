@@ -39,7 +39,6 @@
 #define RESTADAPTOR_HPP__
 #include "core.hpp"
 #include "oss.hpp"
-#include "msg.hpp"
 #include "../bson/bson.h"
 #include "ossUtil.hpp"
 #include "msgMessage.hpp"

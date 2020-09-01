@@ -46,6 +46,7 @@
 #include "pmdRemoteSession.hpp"
 #include "pmdRemoteMsgEventHandler.hpp"
 #include "ossMemPool.hpp"
+#include "msg.hpp"
 
 #include <vector>
 #include <string>

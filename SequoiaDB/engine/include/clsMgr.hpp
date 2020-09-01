@@ -54,6 +54,7 @@
 #include <deque>
 #include <vector>
 #include <string>
+#include "msg.hpp"
 
 using namespace bson ;
 

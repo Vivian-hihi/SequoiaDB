@@ -41,7 +41,6 @@
 #include "oss.h"
 #include "ossUtil.h"
 #include "ossMem.h"
-#include "msg.h"
 
 #define CSV_STR_UNDEFINED  "undefined"
 #define CSV_STR_MINKEY     "minKey"

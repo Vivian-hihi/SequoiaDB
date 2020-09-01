@@ -38,7 +38,6 @@
 #define SDB_I_OMPROXY_HPP__
 
 #include "rtnContextBuff.hpp"
-#include "msg.h"
 #include "pmdEDU.hpp"
 #include "rtnQueryOptions.hpp"
 #include <vector>

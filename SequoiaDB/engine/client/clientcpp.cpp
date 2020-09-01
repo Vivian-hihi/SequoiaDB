@@ -50,6 +50,7 @@
 #ifdef SDB_SSL
 #include "ossSSLWrapper.h"
 #endif
+#include "msg.hpp"
 
 using namespace std ;
 using namespace bson ;

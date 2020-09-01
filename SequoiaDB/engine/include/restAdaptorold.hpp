@@ -39,7 +39,6 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossSocket.hpp"
-#include "msg.hpp"
 #include "../bson/bson.h"
 #include "msgMessage.hpp"
 

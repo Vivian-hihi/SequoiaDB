@@ -41,7 +41,6 @@
 
 #include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
-#include "msg.h"
 
 using namespace bson ;
 

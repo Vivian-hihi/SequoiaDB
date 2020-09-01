@@ -46,7 +46,6 @@
 #include "pmdEDUMgr.hpp"
 #include "pd.hpp"
 #include "pmdOptionsMgr.hpp"
-#include "msg.h"
 #include "msgDef.hpp"
 #include "pmdEnv.hpp"
 #include "sdbInterface.hpp"

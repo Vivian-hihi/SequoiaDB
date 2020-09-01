@@ -38,7 +38,6 @@
 #ifndef CAT_EVENT_HANDLER_HPP_
 #define CAT_EVENT_HANDLER_HPP_
 
-#include "msg.hpp"
 #include "netMsgHandler.hpp"
 
 namespace engine

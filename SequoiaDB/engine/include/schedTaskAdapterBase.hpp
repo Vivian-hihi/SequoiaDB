@@ -33,7 +33,6 @@
 #ifndef SCHED_TASK_ADAPTER_BASE_HPP__
 #define SCHED_TASK_ADAPTER_BASE_HPP__
 
-#include "msg.h"
 #include "netDef.hpp"
 #include "schedDef.hpp"
 #include "pmdDef.hpp"

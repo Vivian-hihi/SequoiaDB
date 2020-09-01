@@ -42,7 +42,6 @@
 #include "oss.hpp"
 #include "parser.hpp"
 #include "commands.hpp"
-#include "msg.hpp"
 
 class mongoConverter : public baseConverter
 {

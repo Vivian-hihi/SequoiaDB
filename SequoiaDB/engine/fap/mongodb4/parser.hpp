@@ -38,7 +38,6 @@
 #ifndef _SDB_FAP_MONGO_PARSER_HPP_
 #define _SDB_FAP_MONGO_PARSER_HPP_
 
-#include "msg.hpp"
 #include "mongodef.hpp"
 #include <vector>
 

@@ -35,7 +35,6 @@
 #define PMD_IPROCESSOR_HPP_
 
 #include "oss.hpp"
-#include "msg.h"
 #include "sdbInterface.hpp"
 #include "rtnContextBuff.hpp"
 

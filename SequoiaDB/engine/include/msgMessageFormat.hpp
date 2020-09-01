@@ -39,7 +39,6 @@
 #ifndef MSGMESSAGE_FORMAT_HPP_
 #define MSGMESSAGE_FORMAT_HPP_
 
-#include "msg.hpp"
 #include "netDef.hpp"
 #include "../bson/bson.h"
 #include "../bson/oid.h"

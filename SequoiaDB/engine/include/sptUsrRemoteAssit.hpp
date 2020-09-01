@@ -35,7 +35,6 @@
 #ifndef SPT_USRREMOTE_ASSIT_HPP__
 #define SPT_USRREMOTE_ASSIT_HPP__
 
-#include "msg.h"
 #include "oss.hpp"
 #include "sptRemote.hpp"
 #include <string>

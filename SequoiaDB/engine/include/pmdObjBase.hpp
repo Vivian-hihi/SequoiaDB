@@ -41,7 +41,6 @@
 #include "pd.hpp"
 #include "pmdDef.hpp"
 #include "ossErr.h"
-#include "msg.h"
 #include "ossUtil.hpp"
 #include "netDef.hpp"
 

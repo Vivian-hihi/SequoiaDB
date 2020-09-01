@@ -40,7 +40,6 @@
 #define SEADPT_INDEX_STATE_HPP__
 
 #include "netDef.hpp"
-#include "msg.hpp"
 #include "pmdObjBase.hpp"
 #include "rtnExtOprDef.hpp"
 #include "../bson/bson.hpp"

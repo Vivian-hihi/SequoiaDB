@@ -35,7 +35,6 @@
 #define PMD_LOCAL_SESSION_HPP_
 
 #include "pmdSession.hpp"
-#include "msg.h"
 #include "pmdDef.hpp"
 #include "rtnContext.hpp"
 #include "../bson/bson.h"

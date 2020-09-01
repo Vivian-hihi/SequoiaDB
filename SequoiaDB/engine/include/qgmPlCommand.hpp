@@ -40,7 +40,6 @@
 #define QGMPLCOMMAND_HPP_
 
 #include "qgmPlan.hpp"
-#include "msg.h"
 #include "msgDef.h"
 #include "utilResult.hpp"
 

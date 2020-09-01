@@ -42,6 +42,7 @@
 #include "coordRemoteHandle.hpp"
 #include "rtnSessionProperty.hpp"
 #include "ossMemPool.hpp"
+#include "msg.hpp"
 
 using namespace bson ;
 

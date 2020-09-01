@@ -36,7 +36,6 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "msg.h"
 #include "pmdDef.hpp"
 #include "utilPooledObject.hpp"
 #include "sdbInterface.hpp"

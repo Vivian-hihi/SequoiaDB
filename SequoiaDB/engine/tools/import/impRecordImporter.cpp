@@ -34,6 +34,7 @@
 #include "pd.hpp"
 #include "msgDef.h"
 #include "../client/client_internal.h"
+#include "msg.hpp"
 
 #if defined( _LINUX ) || defined (_AIX)
 #include <arpa/inet.h>
