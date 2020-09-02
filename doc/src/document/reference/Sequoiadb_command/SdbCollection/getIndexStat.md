@@ -6,17 +6,23 @@ getIndexStat - 获取指定索引的统计信息
 
 **db.collectionspace.collection.getIndexStat\(\<index name\>\)**
 
+##类别##
+
+Collection
+
 ##描述##
 
 该函数用于获取当前集合中指定索引的统计信息。
 
 ##参数##
 
-+ index name ( String ): 被指定索引的名称
+* index name ( *string*， *必填* )
+
+被指定索引的名称。
 
 ##返回值##
 
-函数执行成功时，通过对象（Object）的方式返回汇总后的索引统计信息。返回的字段信息可参考[索引统计信息快照](database_management/monitoring/snapshot/SDB_SNAP_INDEXSTATS.md)。
+函数执行成功时，返回汇总后的索引统计信息，其类型为 BSONObj。返回的字段信息可参考[索引统计信息快照](database_management/monitoring/snapshot/SDB_SNAP_INDEXSTATS.md)。
 
 函数执行失败时，将抛异常并输出错误信息。
 
@@ -36,32 +42,37 @@ v3.4.2 及以上版本
 
 ##示例##
 
-* 获取集合 `sample.employee` 中 `ageIndex` 索引的统计信息
+* 获取集合 sample.employee 中 ageIndex 索引的统计信息
 
- ```lang-javascript
- > db.sample.employee.getIndexStat( "ageIndex" )
- {
-   "Collection": "sample.employee",
-   "Index": "ageIndex",
-   "Unique": false,
-   "KeyPattern": {
-     "age": 1
-   },
-   "TotalIndexLevels": 1,
-   "TotalIndexPages": 2,
-   "DistinctValNum": [
-     74
-   ],
-   "MinValue": {
-     "age": 18
-   },
-   "MaxValue": {
-     "age": 54
-   },
-   "NullFrac": 0,
-   "UndefFrac": 0,
-   "SampleRecords": 400,
-   "TotalRecords": 518,
-   "StatTimestamp": "2020-07-24-16.15.08.347000"
- }
- ```
+```lang-javascript
+> db.sample.employee.getIndexStat( "ageIndex" )
+```
+
+结果如下：
+
+```lang-text
+{
+  "Collection": "sample.employee",
+  "Index": "ageIndex",
+  "Unique": false,
+  "KeyPattern": {
+    "age": 1
+  },
+  "TotalIndexLevels": 1,
+  "TotalIndexPages": 2,
+  "DistinctValNum": [
+    74
+  ],
+  "MinValue": {
+    "age": 18
+  },
+  "MaxValue": {
+    "age": 54
+  },
+  "NullFrac": 0,
+  "UndefFrac": 0,
+  "SampleRecords": 400,
+  "TotalRecords": 518,
+  "StatTimestamp": "2020-07-24-16.15.08.347000"
+}
+```

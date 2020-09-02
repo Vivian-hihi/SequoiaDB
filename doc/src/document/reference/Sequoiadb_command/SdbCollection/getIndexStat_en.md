@@ -8,7 +8,7 @@ getIndexStat - get statistics of the specified index
 
 ##CATEGORY##
 
-SdbCollection
+Collection
 
 ##DESCRIPTION##
 
@@ -16,11 +16,13 @@ Get statistics of the specified index.
 
 ##PARAMETERS##
 
-+ index name ( String ): Name of the specified index
+* index name ( *String*, *Required* )
+
+Name of the specified index.
 
 ##RETURN VALUE##
 
-When the function executes successfully, it will return an aggregated statistics of the index through the object. Users can refer to [SDB_SNAP_INDEXSTATS](database_management/monitoring/snapshot/SDB_SNAP_INDEXSTATS.md) to get the returned field information.
+When the function executes successfully, it will return an aggregated statistics of the index through the BSONObj. Users can refer to [SDB_SNAP_INDEXSTATS](database_management/monitoring/snapshot/SDB_SNAP_INDEXSTATS.md) to get the returned field information.
 
 When the function fails, an exception will be thrown and an error message will be printed.
 
@@ -40,7 +42,7 @@ v3.4.2 and above
 
 ##EXAMPLES##
 
-* Get the statistics of index `ageIndex` of collection `sample.employee`.
+* Get the statistics of index ageIndex of collection sample.employee.
 
    ```
    > db.sample.employee.getIndexStat( "ageIndex" )

@@ -1,27 +1,53 @@
-##语法##
-***rg.getDetail()***
+##名称##
 
-获取当前分区组信息。
+getDetail - 获取分区组的信息
+
+##语法##
+
+**rg.getDetail()**
+
+##类别##
+
+Replica Group
+
+##描述##
+
+获取当前分区组的详细信息，分区组的详细信息可参考[分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)章节。
+
+##参数##
+
+无
 
 ##返回值##
 
-返回当前分区组详细信息，类型为 json 对象。
+函数执行成功时，返回当前分区组详细信息，其类型为 BSONObj。
+
+函数执行失败时，将抛异常并输出错误信息。
 
 ##错误##
 
-[错误码](reference/Sequoiadb_error_code.md)
+当异常抛出时，可以通过 [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) 获取错误信息或通过 [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) 获取错误码。更多错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+
+##版本##
+
+v1.10 及以上版本
 
 ##示例##
 
-获取 group1 分区组的详细信息，该分区组存在3个节点。字段信息解释可参考[分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)章节。
+获取 group1 分区组的详细信息，该分区组存在 1 个节点。
 
 ```lang-javascript
 > var rg = db.getRG("group1")
 > rg.getDetail()
+```
+
+结果如下：
+
+```lang-text
 {
   "Group": [
     {
-      "HostName": "hostname1",
+      "HostName": "localhost",
       "Status": 1,
       "dbpath": "/opt/sequoiadb/database/data/11830/",
       "Service": [
@@ -39,49 +65,9 @@
         }
       ],
       "NodeID": 1002
-    },
-    {
-      "HostName": "hostname2",
-      "Status": 1,
-      "dbpath": "/opt/sequoiadb/database/data/11840/",
-      "Service": [
-        {
-          "Type": 0,
-          "Name": "11840"
-        },
-        {
-          "Type": 1,
-          "Name": "11841"
-        },
-        {
-          "Type": 2,
-          "Name": "11842"
-        }
-      ],
-      "NodeID": 1004
-    },
-    {
-      "HostName": "hostname3",
-      "Status": 1,
-      "dbpath": "/opt/sequoiadb/database/data/11850/",
-      "Service": [
-        {
-          "Type": 0,
-          "Name": "11850"
-        },
-        {
-          "Type": 1,
-          "Name": "11851"
-        },
-        {
-          "Type": 2,
-          "Name": "11852"
-        }
-      ],
-      "NodeID": 1006
     }
   ],
-  "GroupID": 1002,
+  "GroupID": 1001,
   "GroupName": "group1",
   "PrimaryNode": 1004,
   "Role": 0,

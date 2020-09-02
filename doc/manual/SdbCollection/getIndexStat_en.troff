@@ -11,17 +11,19 @@ getIndexStat \- get statistics of the specified index
 \f[B]db.collectionspace.collection.getIndexStat(<index name>)\f[]
 .SH CATEGORY
 .PP
-SdbCollection
+Collection
 .SH DESCRIPTION
 .PP
 Get statistics of the specified index.
 .SH PARAMETERS
 .IP \[bu] 2
-index name ( String ): Name of the specified index
+index name ( \f[I]String\f[], \f[I]Required\f[] )
+.PP
+Name of the specified index.
 .SH RETURN VALUE
 .PP
 When the function executes successfully, it will return an aggregated statistics
-of the index through the object.
+of the index through the BSONObj.
 Users can refer to SDB_SNAP_INDEXSTATS to get the returned field information.
 .PP
 When the function fails, an exception will be thrown and an error message will
@@ -60,15 +62,15 @@ T{
 T}@T{
 T}@T{
 T}@T{
-analyzed2.Index
+analyzed; 2.Index
 T}@T{
-db.analyze()2.
+db.analyze(); 2.
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
-doesn\[aq]t exist
+doesn\[aq]t exist;
 T}@T{
 Check if the index
 T}
@@ -77,7 +79,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-exists
+exists;
 T}
 .TE
 .PP
@@ -89,7 +91,6 @@ For more details, refer to Troubleshooting.
 v3.4.2 and above
 .SH EXAMPLES
 .IP \[bu] 2
-Get the statistics of index \f[C]ageIndex\f[] of collection
-\f[C]sample.employee\f[].
+Get the statistics of index ageIndex of collection sample.employee.
 .PP
 \f[C]>\ db.sample.employee.getIndexStat(\ "ageIndex"\ )\f[]
