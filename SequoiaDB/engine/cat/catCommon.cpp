@@ -1971,10 +1971,10 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETMAXTASKID, "catGetMaxTaskID" )
-   INT64 catGetMaxTaskID( pmdEDUCB * cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETMAXTASKID, "catGetCurrentMaxTaskID" )
+   UINT64 catGetCurrentMaxTaskID( pmdEDUCB * cb )
    {
-      INT64 taskID            = CLS_INVALID_TASKID ;
+      UINT64 taskID           = CLS_INVALID_TASKID ;
       INT32 rc                = SDB_OK ;
       SINT64 contextID        = -1 ;
       pmdKRCB *pKRCB          = pmdGetKRCB() ;
@@ -2015,7 +2015,7 @@ namespace engine
                     CAT_TASKID_NAME, ele.type() ) ;
             goto error ;
          }
-         taskID = (INT64)ele.numberLong() ;
+         taskID = (UINT64)ele.numberLong() ;
       }
       catch ( std::exception &e )
       {
@@ -2565,6 +2565,95 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC( SDB_CATUPCSUID, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSETTASKHWM, "catSetTaskHWM" )
+   INT32 catSetTaskHWM( pmdEDUCB *cb, INT16 w, UINT64 taskHWM )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATSETTASKHWM ) ;
+
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      try
+      {
+
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj updator = BSON( "$set" <<
+                              BSON( FIELD_NAME_TASKHWM << (INT64)taskHWM ) );
+
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                      BSONObj(), 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Fail to update obj[%s] in collection[%s], rc: %d",
+                   updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+      }
+      catch ( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+   done :
+      PD_TRACE_EXITRC( SDB_CATSETTASKHWM, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   #define CAT_TASKID_MAX 0x7FFFFFFFFFFFFFFF
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKID, "catGetAndIncTaskID" )
+   INT32 catGetAndIncTaskID( pmdEDUCB *cb, INT16 w, UINT64& taskID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATGETTASKID ) ;
+
+      try
+      {
+
+      BSONObj dummy, result ;
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj updator ;
+
+      rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummy, matcher,
+                         dummy, cb, result ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to match obj[%s] from collection[%s], "
+                   "rc: %d", matcher.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+      BSONElement ele = result.getField( FIELD_NAME_TASKHWM ) ;
+      PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                "Failed to get field[%s], type: %d",
+                FIELD_NAME_TASKHWM, ele.type() );
+      taskID = ( UINT64 )ele.numberLong() + 1 ;
+
+      if ( taskID > CAT_TASKID_MAX )
+      {
+         taskID = 1 ;
+         PD_LOG( PDINFO,
+                 "TaskID reached maximun[%llu], start from %llu",
+                 CAT_TASKID_MAX, taskID ) ;
+      }
+
+      rc = catSetTaskHWM( cb, w, taskID ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to set task hwm, rc: %d",
+                   rc ) ;
+
+      }
+      catch ( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATGETTASKID, rc ) ;
       return rc ;
    error :
       goto done ;

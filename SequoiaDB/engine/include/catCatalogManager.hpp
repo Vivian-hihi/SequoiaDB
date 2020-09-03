@@ -222,9 +222,12 @@ namespace engine
 
       INT32 _assignGroup( vector< UINT32 > *pGoups, UINT32 &groupID ) ;
 
+      INT32 _checkTaskHWM() ;
+
       INT32 _checkAllCSCLUniqueID() ;
    private:
       INT16 _majoritySize() ;
+
       INT32 _setCSCLUniqueID( string csName, const BSONObj& boCollections,
                               UINT32 csUniqueID ) ;
 
@@ -233,8 +236,6 @@ namespace engine
       _SDB_DMSCB           *_pDmsCB;
       _dpsLogWrapper       *_pDpsCB;
       pmdEDUCB             *_pEduCB;
-      clsTaskMgr           _taskMgr ;
-
    } ;
 }
 

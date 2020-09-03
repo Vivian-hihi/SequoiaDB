@@ -236,7 +236,9 @@ namespace engine
    INT32 catGetTaskStatus( UINT64 taskID, INT32 &status, pmdEDUCB *cb ) ;
    INT32 catUpdateTaskStatus( UINT64 taskID, INT32 status, pmdEDUCB *cb,
                               INT16 w ) ;
-   INT64 catGetMaxTaskID( pmdEDUCB *cb ) ;
+   UINT64 catGetCurrentMaxTaskID( pmdEDUCB *cb ) ;
+   INT32 catGetAndIncTaskID( pmdEDUCB *cb, INT16 w, UINT64& taskID ) ;
+   INT32 catSetTaskHWM( pmdEDUCB *cb, INT16 w, UINT64 taskHWM ) ;
    INT32 catRemoveTask( BSONObj & match, BOOLEAN checkExist, pmdEDUCB * cb,
                         INT16 w ) ;
    INT32 catRemoveTask( UINT64 taskID, BOOLEAN checkExist, pmdEDUCB *cb,

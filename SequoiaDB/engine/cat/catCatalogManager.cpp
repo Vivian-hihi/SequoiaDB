@@ -75,9 +75,10 @@ namespace engine
          rc = _checkAllCSCLUniqueID() ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to check cs/cl unique id, rc: %d", rc ) ;
-      }
 
-      _taskMgr.setTaskID( catGetMaxTaskID( _pEduCB ) ) ;
+         rc = _checkTaskHWM() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check task hwm, rc: %d", rc ) ;
+      }
 
    done:
       return rc ;
@@ -788,6 +789,53 @@ namespace engine
                  utilClNameId2Str( clInfoList ).c_str() ) ;
       }
       PD_TRACE_EXITRC( SDB_CATALOGMGR__SETUID, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 catCatalogueManager::_checkTaskHWM()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj matcher = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+      BSONObj dummyObj, resultObj ;
+      UINT64 curTaskHWM = 0 ;
+
+      PD_LOG( PDDEBUG, "Begin checkTaskHWM" );
+
+      // If [TaskHWM] field doesn't exist, set it.
+      rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummyObj, matcher,
+                         dummyObj, _pEduCB, resultObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to query from %s, rc: %d",
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+
+      rc = rtnGetNumberLongElement( resultObj, FIELD_NAME_TASKHWM,
+                                    (INT64&)curTaskHWM ) ;
+      if ( SDB_OK == rc )
+      {
+         goto done ;
+      }
+      else if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         // set task hwm
+         UINT64 taskHWM = catGetCurrentMaxTaskID( _pEduCB ) ;
+
+         rc = catSetTaskHWM( _pEduCB, _majoritySize(), taskHWM ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to set task hwm, rc: %d",
+                      rc ) ;
+         PD_LOG( PDEVENT,
+                 "Set taskID high water mark to %llu",
+                 taskHWM ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Failed to get field[%s] from obj[%s], rc: %d",
+                 FIELD_NAME_TASKHWM, resultObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
       return rc ;
    error:
       goto done ;
@@ -1881,7 +1929,17 @@ namespace engine
 
    UINT64 catCatalogueManager::assignTaskID ()
    {
-      return _taskMgr.getTaskID() ;
-   }
+      INT32 rc = SDB_OK ;
+      UINT64 taskID = 0 ;
 
+      rc = catGetAndIncTaskID( _pEduCB, _majoritySize(), taskID ) ;
+      if ( rc )
+      {
+         return CLS_INVALID_TASKID ;
+      }
+      else
+      {
+         return taskID ;
+      }
+   }
 }
