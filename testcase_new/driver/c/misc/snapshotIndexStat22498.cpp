@@ -30,13 +30,6 @@ protected:
       cs = SDB_INVALID_HANDLE ;
       cl = SDB_INVALID_HANDLE ;
 
-      //BUG #SEQUOIADBMAINSTREAM-6104
-      if ( isStandalone( db ) ) 
-      {
-         printf( "Run mode is standalone\n" ) ; 
-         return ;
-      }
-
       // create cs cl
       rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ; 
       ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
@@ -78,7 +71,7 @@ protected:
    }
    void TearDown()
    {
-      if ( !isStandalone( db ) && shouldClear() ) 
+      if ( shouldClear() ) 
       {   
          INT32 rc = SDB_OK ;
          rc = sdbDropCollectionSpace( db, csName ) ; 
@@ -95,17 +88,10 @@ TEST_F( snapshotIndexStat22498, snapshotIndexStat )
 {
    INT32 rc = SDB_OK ;
 
-   if ( isStandalone( db ) ) 
-   {   
-      printf( "Run mode is standalone\n" ) ; 
-      return ;    
-   }   
-
    sdbCursorHandle cursor ;
    bson matcher ;
    bson obj ;
    bson subObj ;
-   bson isubObj ;
 
    // get snapshot of indexstat
    bson_init( &matcher ) ;
@@ -120,26 +106,38 @@ TEST_F( snapshotIndexStat22498, snapshotIndexStat )
    rc = sdbNext( cursor, &obj ) ; 
    ASSERT_EQ( SDB_OK, rc ) << "fail to next" ;
    bson_iterator it, subit ;
-   bson_find( &it, &obj, "StatInfo" ) ; 
-   bson_iterator_subiterator( &it, &subit ) ; 
-   while( bson_iterator_more( &subit ) ) 
-   {   
-      bson_init( &subObj ) ; 
-      bson_iterator_subobject( &subit, &subObj ) ; 
-      bson_iterator i1;
-      // check stat info
-      if ( BSON_STRING != bson_find( &i1, &subObj, "GroupName" ) 
-              || BSON_ARRAY != bson_find( &i1, &subObj, "Group" ) ) 
+
+   if ( isStandalone( db ) ) 
+   {  
+      if ( BSON_STRING == bson_find( &it, &obj, "GroupName" ) )
       {
-         isExpect = FALSE ;
-         break ;
+         isExpect = TRUE;
       }
-      else 
-      {
-         isExpect = TRUE ;
+   } 
+   else
+   {
+      bson_find( &it, &obj, "StatInfo" ) ;
+      bson_iterator_subiterator( &it, &subit ) ;
+      while( bson_iterator_more( &subit ) )
+      { 
+         bson_init( &subObj ) ;
+         bson_iterator_subobject( &subit, &subObj ) ;
+         bson_iterator i1;
+         // check stat info
+         if ( BSON_STRING != bson_find( &i1, &subObj, "GroupName" )
+               || BSON_ARRAY != bson_find( &i1, &subObj, "Group" ) )
+         {
+            isExpect = FALSE ;
+            break ;
+         }
+         else
+         {
+            isExpect = TRUE ;
+         }
+         bson_destroy( &subObj ) ;
+         bson_iterator_next( &subit ) ;
       }
-      bson_destroy( &subObj ) ; 
-      bson_iterator_next( &subit ) ;
+      bson_destroy( &subObj ) ;
    }
 
    if( !isExpect )
@@ -147,7 +145,6 @@ TEST_F( snapshotIndexStat22498, snapshotIndexStat )
       bson_print( &obj ) ;
    }
 
-   bson_destroy( &subObj ) ;
    bson_destroy( &obj ) ;
    bson_destroy( &matcher ) ;
    sdbReleaseCursor( cursor ) ;
