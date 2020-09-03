@@ -168,133 +168,148 @@ INT32 _mongoSession::run()
    PD_CHECK( FALSE == checkBigEndian(), SDB_SYS, error, PDERROR,
              "Big endian is not support" ) ;
 
-   while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
+   try
    {
-      _pEDUCB->resetInterrupt() ;
-      _pEDUCB->resetInfo( engine::EDU_INFO_ERROR ) ;
-      _pEDUCB->resetLsn() ;
-
-      // receive message
-      BOOLEAN recvFromEvent = FALSE ;
-      pmdEDUEvent event ;
-      rc = _recvMsg( pMsg, recvFromEvent, event ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Session[%s] recevie message failed, rc: %d",
-                   sessionName(), rc ) ;
-
-      // convert mongo message to command
-      _resetBuffers() ;
-      sessCtx.resetError() ;
-
-      rc = mongoGetAndInitCommand( pMsg, &pCommand, sessCtx, _inBuffer ) ;
-      if ( rc )
+      while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
-         rc = _reply( pCommand, pMsg, rc, sessCtx.errorObj ) ;
+         _pEDUCB->resetInterrupt() ;
+         _pEDUCB->resetInfo( engine::EDU_INFO_ERROR ) ;
+         _pEDUCB->resetLsn() ;
+
+         // receive message
+         BOOLEAN recvFromEvent = FALSE ;
+         pmdEDUEvent event ;
+         rc = _recvMsg( pMsg, recvFromEvent, event ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Session[%s] failed to reply, rc: %d",
+                      "Session[%s] recevie message failed, rc: %d",
                       sessionName(), rc ) ;
-         continue ;
-      }
 
-      if ( !recvFromEvent )
-      {
-         // receive message from socket, check this operation is owned by
-         // current session or not
-         UINT64 ownedEDUID = 0 ;
-         BOOLEAN needAuth = FALSE ;
-         BOOLEAN isOwned = _isOwnedCursor( pCommand, ownedEDUID, needAuth ) ;
-         if ( isOwned )
+         // convert mongo message to command
+         _resetBuffers() ;
+         sessCtx.resetError() ;
+
+         rc = mongoGetAndInitCommand( pMsg, &pCommand, sessCtx, _inBuffer ) ;
+         if ( rc )
          {
-            // It is owned by current session, then process it
-            if ( pCommand->needProcessByEngine() )
-            {
-               rc = _processMsg( _inBuffer.data(), pCommand,
-                                 sessCtx.errorObj ) ;
-
-               _manageCursor( pCommand, _replyHeader ) ;
-
-               if ( CMD_SASL_CONTINUE == pCommand->type() && SDB_OK == rc )
-               {
-                  _isAuthed = TRUE ;
-               }
-            }
-
-            rc = _reply( pCommand ) ;
+            rc = _reply( pCommand, pMsg, rc, sessCtx.errorObj ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Session[%s] failed to reply, rc: %d",
                          sessionName(), rc ) ;
+            continue ;
          }
-         else
-         {
-            // It is NOT owned by current session, then check authenticate and
-            // post event to the thread which owned this cursor
-            INT32 msgLen = ((mongoMsgHeader*)pMsg)->msgLen ;
-            CHAR* pReq = NULL ;
 
-            if ( needAuth && !_isAuthed )
+         if ( !recvFromEvent )
+         {
+            // receive message from socket, check this operation is owned by
+            // current session or not
+            UINT64 ownedEDUID = 0 ;
+            BOOLEAN needAuth = FALSE ;
+            BOOLEAN isOwned = _isOwnedCursor( pCommand, ownedEDUID, needAuth ) ;
+            if ( isOwned )
             {
-               rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
-               PD_LOG( PDERROR, "Not authorized to execute %s command, rc: %d",
-                       pCommand->name(), rc ) ;
-               rc = _reply( pCommand, pMsg, rc, BSONObj() ) ;
+               // It is owned by current session, then process it
+               if ( pCommand->needProcessByEngine() )
+               {
+                  rc = _processMsg( _inBuffer.data(), pCommand,
+                                    sessCtx.errorObj ) ;
+
+                  _manageCursor( pCommand, _replyHeader ) ;
+
+                  if ( CMD_SASL_CONTINUE == pCommand->type() && SDB_OK == rc )
+                  {
+                     _isAuthed = TRUE ;
+                  }
+               }
+
+               rc = _reply( pCommand ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Session[%s] failed to reply, rc: %d",
                             sessionName(), rc ) ;
-               continue ;
             }
+            else
+            {
+               // It is NOT owned by current session, then check authenticate
+               // and post event to the thread which owned this cursor
+               INT32 msgLen = ((mongoMsgHeader*)pMsg)->msgLen ;
+               CHAR* pReq = NULL ;
 
-            pmdEDUCB *cb = eduMgr->getEDUByID( ownedEDUID ) ;
+               if ( needAuth && !_isAuthed )
+               {
+                  rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+                  PD_LOG( PDERROR, "Not authorized to execute %s command, "
+                          "rc: %d", pCommand->name(), rc ) ;
+                  rc = _reply( pCommand, pMsg, rc, BSONObj() ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Session[%s] failed to reply, rc: %d",
+                               sessionName(), rc ) ;
+                  continue ;
+               }
+
+               pmdEDUCB *cb = eduMgr->getEDUByID( ownedEDUID ) ;
+               PD_CHECK( cb, SDB_SYS, error, PDERROR,
+                         "Session[%s] failed to get edu by [%llu], rc: %d",
+                         sessionName(), ownedEDUID, rc ) ;
+
+               pReq = (CHAR*)SDB_THREAD_ALLOC( msgLen ) ;
+               PD_CHECK( pReq, SDB_OOM, error, PDERROR, "Out of memory" ) ;
+               ossMemcpy( pReq, pMsg, msgLen ) ;
+
+               cb->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                           PMD_EDU_MEM_THREAD,
+                                           pReq,
+                                           SET_MONGO_MSG_FLAG( eduID() ) ) ) ;
+               PD_LOG( PDDEBUG, "edu[%llu] post mongo request to edu[%llu]",
+                       eduID(), ownedEDUID ) ;
+
+               // we need to wait for response event
+               _needWaitResponse = TRUE ;
+            }
+         }
+         else
+         {
+            // receive message from event, it must be GETMORE command
+            UINT64 sourceEDUID = UNSET_MONGO_MSG_FLAG( event._userData ) ;
+
+            rc = _processMsg( _inBuffer.data(), pCommand, sessCtx.errorObj ) ;
+
+            // build response
+            CHAR* pRes = NULL ;
+            rc = _buildResponse( pCommand, pRes ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Session[%s] failed to build response, rc: %d",
+                         sessionName(), rc ) ;
+
+            pmdEduEventRelease( event, NULL ) ;
+
+            // post respose to source edu
+            pmdEDUCB *cb = eduMgr->getEDUByID( sourceEDUID ) ;
             PD_CHECK( cb, SDB_SYS, error, PDERROR,
                       "Session[%s] failed to get edu by [%llu], rc: %d",
-                      sessionName(), ownedEDUID, rc ) ;
-
-            pReq = (CHAR*)SDB_THREAD_ALLOC( msgLen ) ;
-            PD_CHECK( pReq, SDB_OOM, error, PDERROR, "Out of memory" ) ;
-            ossMemcpy( pReq, pMsg, msgLen ) ;
+                      sessionName(), sourceEDUID, rc ) ;
 
             cb->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
                                         PMD_EDU_MEM_THREAD,
-                                        pReq,
-                                        SET_MONGO_MSG_FLAG( eduID() ) ) ) ;
-            PD_LOG( PDDEBUG, "edu[%llu] post mongo request to edu[%llu]",
-                    eduID(), ownedEDUID ) ;
-
-            // we need to wait for response event
-            _needWaitResponse = TRUE ;
+                                        pRes,
+                                        SET_MONGO_MSG_FLAG(eduID()) ) ) ;
+            PD_LOG( PDDEBUG, "edu[%llu] post mongo response to edu[%llu]",
+                    eduID(), sourceEDUID ) ;
          }
+
+         mongoReleaseCommand( &pCommand ) ;
+         _contextBuff.release() ;
       }
-      else
-      {
-         // receive message from event, it must be GETMORE command
-         UINT64 sourceEDUID = UNSET_MONGO_MSG_FLAG( event._userData ) ;
-
-         rc = _processMsg( _inBuffer.data(), pCommand, sessCtx.errorObj ) ;
-
-         // build response
-         CHAR* pRes = NULL ;
-         rc = _buildResponse( pCommand, pRes ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Session[%s] failed to build response, rc: %d",
-                      sessionName(), rc ) ;
-
-         pmdEduEventRelease( event, NULL ) ;
-
-         // post respose to source edu
-         pmdEDUCB *cb = eduMgr->getEDUByID( sourceEDUID ) ;
-         PD_CHECK( cb, SDB_SYS, error, PDERROR,
-                   "Session[%s] failed to get edu by [%llu], rc: %d",
-                   sessionName(), sourceEDUID, rc ) ;
-
-         cb->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                     PMD_EDU_MEM_THREAD,
-                                     pRes,
-                                     SET_MONGO_MSG_FLAG(eduID()) ) ) ;
-         PD_LOG( PDDEBUG, "edu[%llu] post mongo response to edu[%llu]",
-                 eduID(), sourceEDUID ) ;
-      }
-
-      mongoReleaseCommand( &pCommand ) ;
-      _contextBuff.release() ;
+   }
+   catch( std::bad_alloc &e )
+   {
+      rc = SDB_OOM ;
+      PD_LOG ( PDERROR, "Occur exception: %s, rc: %d", e.what(), rc ) ;
+      goto error ;
+   }
+   catch ( std::exception &e )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR, "Occur exception: %s, rc: %d", e.what(), rc ) ;
+      goto error ;
    }
 
 done:
