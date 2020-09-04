@@ -27,8 +27,6 @@ function main ()
    var csName = "cs19435";
    var clName = "cl19435";
    commDropCS( db, csName, true, "drop CS in the beginning" );
-   commRemoveProcedure( db, "insert19435" );
-   commRemoveProcedure( db, "delete19435" );
 
    var cl = commCreateCL( db, csName, clName );
 

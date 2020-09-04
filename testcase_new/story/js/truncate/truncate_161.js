@@ -56,7 +56,7 @@ function createCLAndPutLob ( srcGroup, csName, clName, pageSize )
       "ShardingKey": { "ID_Default": 1 }, "ShardingType": "hash", "Group": srcGroup
    };
 
-   var cl = commCreateCL( db, csName, clName, clOption, true, true, false, "create collection begin" );
+   var cl = commCreateCL( db, csName, clName, clOption, true, false, "create collection begin" );
 
    var lobNum = 4;
    var lobSize = pageSize * 4;

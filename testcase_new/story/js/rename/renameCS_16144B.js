@@ -28,7 +28,7 @@ function main ()
    var sourceGroup = groupNames[0][0];
    var targetGroup = groupNames[1][0];
 
-   var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "" );
+   var cs = commCreateCS( db, oldcsName, false, "create cs in begine" );
    var options = { ShardingType: "hash", ShardingKey: { a: 1 }, Group: sourceGroup }
    var cl = commCreateCL( db, oldcsName, clName, options, false, false, "create cl in the begin" );
 

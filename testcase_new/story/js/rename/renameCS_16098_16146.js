@@ -15,8 +15,8 @@ function main ()
    var notExitName = "notExitName_cs";
    var clName = CHANGEDPREFIX + "_cl_16098_16146";
 
-   commCreateCS( db, csname1, false, "create cs in begine", "" );
-   commCreateCS( db, csname2, false, "create cs in begine", "" );
+   commCreateCS( db, csname1, false, "create cs in begine" );
+   commCreateCS( db, csname2, false, "create cs in begine" );
 
    println( "---rename not exits cs---" );
    try

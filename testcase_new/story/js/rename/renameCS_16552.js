@@ -11,7 +11,7 @@ function main ()
 {
    var csName = COMMCSNAME + "_16552";
 
-   var cs = commCreateCS( db, csName, false, "create cs in begine", "" );
+   var cs = commCreateCS( db, csName, false, "create cs in begine" );
 
    // rename cs new name is begin with $
    checkNewCSName( db, csName, "$csName16552", -6 );

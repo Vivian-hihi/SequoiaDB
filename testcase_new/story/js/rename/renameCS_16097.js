@@ -30,7 +30,7 @@ function main ()
    var subclName2 = CHANGEDPREFIX + "_16097_subcl2";
 
    println( "---create main sub cl---" );
-   var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "" );
+   var cs = commCreateCS( db, oldcsName, false, "create cs in begine" );
    var cl = commCreateCL( db, oldcsName, clName, { ShardingKey: { a: 1 }, ShardingType: "range", ReplSize: 0, Compressed: true, IsMainCL: true }, false, false, "create CL in the begin" );
    var subcl1 = commCreateCL( db, oldcsName, subclName1, { ShardingKey: { no: 1 }, ShardingType: "range" }, false, false, "create CL in the begin" );
    var subcl2 = commCreateCL( db, oldcsName, subclName2, { ShardingKey: { no: 1 }, ShardingType: "hash" }, false, false, "create CL in the begin" );

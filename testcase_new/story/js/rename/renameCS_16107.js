@@ -21,7 +21,7 @@ function main ()
    var clName = CHANGEDPREFIX + "_16107_cl1";
    var procedureName = CHANGEDPREFIX + "_pro_16107";
 
-   var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "" );
+   var cs = commCreateCS( db, oldcsName, false, "create cs in begine" );
    var cl = commCreateCL( db, oldcsName, clName, {}, false, false, "create CL in the begin" );
 
    var str = "db.createProcedure(function " + procedureName + "(){var cl = db.getCS('" + oldcsName + "').getCL('" + clName + "'); " +

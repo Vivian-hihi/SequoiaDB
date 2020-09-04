@@ -24,7 +24,7 @@ function main ()
    var subCLName1 = CHANGEDPREFIX + "_16145A_subCL1";
    var subCLName2 = CHANGEDPREFIX + "_16145A_subCL2";
 
-   var cs = commCreateCS( db, oldcsName, false, "create cs in begine", "" );
+   var cs = commCreateCS( db, oldcsName, false, "create cs in begine" );
    var mainOptions = { ShardingType: 'range', ShardingKey: { a: 1 }, IsMainCL: true };
    var subOptions = { ShardingType: 'hash', ShardingKey: { a: 1 } };
    var mainCL = commCreateCL( db, oldcsName, mainCLName, mainOptions, false, false, "create MainCL in the begin" );

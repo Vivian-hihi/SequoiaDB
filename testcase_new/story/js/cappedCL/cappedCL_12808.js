@@ -25,7 +25,7 @@ function main ()
 	var dataDB = getDataDB( priNodeAddr );
 	println( 'dataDB: ' + dataDB );
 	//drop cl at priNode
-	commDropCL( dataDB, COMMCAPPEDCSNAME, clName, 'drop CL' );
+	commDropCL( dataDB, COMMCAPPEDCSNAME, clName );
 
 	//insert data with coord
 	var doc = [];

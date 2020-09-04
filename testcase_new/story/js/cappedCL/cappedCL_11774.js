@@ -55,7 +55,7 @@ function main ()
 	checkLogicalID( dbcl, null, null, sortConf, null, null, expectIDs );
 
 	//drop cl and createCL again
-	commDropCL( db, COMMCAPPEDCSNAME, clName, 'drop CL' );
+	commDropCL( db, COMMCAPPEDCSNAME, clName );
 	dbcl = commCreateCL( db, COMMCAPPEDCSNAME, clName, clOption, false, true );
 
 	//insert again  
