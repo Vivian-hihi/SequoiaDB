@@ -51,6 +51,7 @@ public class S3NodeWrapper {
                         + "/tools/sequoias3/sequoias3.sh start"
                         + "failed,stout= " + ssh.getStdout() );
             }
+            System.out.println( "---start status=" + status );
         } finally {
             if ( ssh != null ) {
                 ssh.disconnect();
@@ -91,7 +92,7 @@ public class S3NodeWrapper {
             String stdout;
             if ( ssh.getExitStatus() == 0 ) {
                 stdout = ssh.getStdout();
-                if ( stdout.contains( port ) ) {
+                if ( stdout.contains( "sequoias3" ) ) {
                     return true;
                 } else {
                     return false;
