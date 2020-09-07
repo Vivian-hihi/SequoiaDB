@@ -12,11 +12,13 @@
 
 - MariaDB 实例不支持在 BINARY、VARBINARY、TINYBLOB、BLOB、MEDIUMBLOB、LONGBLOB、JSON 和 GEOMETRY 类型的字段上创建索引。
 
+- MariaDB 实例不支持对接独立模式的 SequoiaDB。
+
 - 一个 MariaDB 实例节点仅可与一个 SequoiaDB 集群对接，不支持同时对接多个 SequoiaDB 集群。
 
 - VARCHAR 和 TEXT 在 SequoiaDB 上进行查询比较时不会忽略尾部空格，而 MariaDB 会忽略尾部空格，因此对于尾部含有空格的字符串，查询结果可能会不准确。
 
-- DDL操作不支持事务功能。
+- DDL 操作不支持事务功能。
 
 - 对于 LIMIT ROWS EXAMINED 语法，SequoiaDB 引擎不保证其运行结果与原生 MariaDB 一致。
 
