@@ -76,6 +76,10 @@ namespace SequoiaDB
         public const string CONFIGS = "configs";
         public const string SVCTASKS = "service tasks";
         public const string SEQUENCES = "sequences";
+        public const string QUERIES = "queries";
+        public const string LATCHWAITS = "latchwaits";
+        public const string LOCKWAITS = "lockwaits";
+        public const string INDEXSTATS = "index statistics";
         public const string USERS = "users";
         public const string BACKUPS = "backups";
         public const string CS_IN_DOMAIN = "collectionspaces in domain";

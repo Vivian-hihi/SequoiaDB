@@ -476,9 +476,66 @@ namespace DriverTest
                 {
                     Console.WriteLine(rec);
                 }
+                cursor.Close();
             }
 
+            // SDB_SNAP_QUERIES
+            {
+                cursor.Close();
+                cursor = null;
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_QUERIES, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_SNAP_QUERIES is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+                cursor.Close();
+            }
 
+            // SDB_SNAP_LATCHWAITS
+            {
+                cursor.Close();
+                cursor = null;
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_LATCHWAITS, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_SNAP_LATCHWAITS is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+                cursor.Close();
+            }
+
+            // SDB_SNAP_LOCKWAITS
+            {
+                cursor.Close();
+                cursor = null;
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_LOCKWAITS, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_SNAP_LOCKWAITS is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+                cursor.Close();
+            }
+
+            // indexstats
+            {
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_INDEXSTATS, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                Console.WriteLine("the result of SDB_SNAP_INDEXSTATS is: ");
+                BsonDocument rec = null;
+                while (null != (rec = cursor.Next()))
+                {
+                    Console.WriteLine(rec);
+                }
+                cursor.Close();
+            }
 
         }
 
