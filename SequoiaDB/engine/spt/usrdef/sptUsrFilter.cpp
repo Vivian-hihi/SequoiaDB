@@ -50,6 +50,7 @@ namespace engine
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_ADD_MEMBER_FUNC_WITHATTR( "_match", match, 0 )
       JS_ADD_STATIC_FUNC( "help", help )
+      JS_ADD_MEMBER_FUNC( "help", help )
    JS_MAPPING_END()
 
    _sptUsrFilter::_sptUsrFilter()

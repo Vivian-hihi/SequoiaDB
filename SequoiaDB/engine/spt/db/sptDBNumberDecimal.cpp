@@ -48,6 +48,7 @@ namespace engine
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_NUMBERDECIMAL_SPECIALOBJ_DECIMAL_FIELD )
       JS_ADD_STATIC_FUNC( "help", help )
+      JS_ADD_MEMBER_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBNumberDecimal::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBNumberDecimal::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBNumberDecimal::bsonToJSObj )

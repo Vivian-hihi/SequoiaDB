@@ -49,6 +49,7 @@ namespace engine
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBOptionBase::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBSnapshotOption::bsonToJSObj )
       JS_ADD_STATIC_FUNC( "help", help )
+      JS_ADD_MEMBER_FUNC( "help", help )
    JS_MAPPING_END()
 
    _sptDBSnapshotOption::_sptDBSnapshotOption()
