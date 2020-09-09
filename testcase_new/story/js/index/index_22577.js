@@ -35,7 +35,7 @@ function test ( testPara )
       var findCond   = condList[i][0];
       var sortCond   = condList[i][1];
       var expectList = condList[i][2];
-      for (var index in scanType)
+      for (var index in scanTypeList)
       {
          var scanType = scanTypeList[index];
          var expectResult = expectList[index];
