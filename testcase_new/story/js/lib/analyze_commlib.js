@@ -101,7 +101,7 @@ function getNodesInGroups ( db, groups )
          datas[i] = Array();
 
          var rg = db.getRG( groups[i] );
-         var rgDetail = eval( "( " + rg.getDetail() + " )" );
+         var rgDetail = eval( "( " + rg.getDetail().toArray()[0] + " )" );
          var nodesInGroup = rgDetail.Group;
          for( var j = 0; j < nodesInGroup.length; ++j )
          {
