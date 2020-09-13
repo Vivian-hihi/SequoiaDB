@@ -54,6 +54,8 @@ namespace engine
 
    #define CAT_WAIT_EDU_ATTACH_TIMEOUT       ( 60 * OSS_ONE_SEC )
 
+   #define CAT_TASK_RETRY_INTERVAL           ( 10000000 ) // 10s
+
    /*
       _catClearTaskJob define and implement
     */
@@ -79,7 +81,7 @@ namespace engine
                              UTIL_LJOB_DO_RESULT &result,
                              UINT64 &sleepTime )
          {
-            sleepTime = 1000000 ; // one second
+            sleepTime = CAT_TASK_RETRY_INTERVAL ;
             result = UTIL_LJOB_DO_FINISH ;
 
             // This is an async task, check primary first
@@ -94,7 +96,11 @@ namespace engine
                        "will retry" ) ;
                result = UTIL_LJOB_DO_CONT ;
             }
-            else if ( SDB_OK != rc )
+            else if ( SDB_CLS_NOT_PRIMARY == rc )
+            {
+               PD_LOG( PDINFO, "It is not primary, exit job[%s]", name() ) ;
+            }
+            else if ( rc )
             {
                PD_LOG( PDWARNING, "Failed to check primary, rc: %d", rc ) ;
             }
@@ -141,6 +147,94 @@ namespace engine
          {
             PD_LOG( PDDEBUG, "Submit catClearTaskJob[Type: %d] done",
                     taskType ) ;
+         }
+      }
+   }
+
+   /*
+      _catCleanupExpiredTaskJob define and implement
+    */
+   #define CAT_TASK_EXPIRED_TIME     ( 1800 )     // second, 30 min
+   #define CAT_CLEANUP_TASK_INTERVAL ( 600 * 1000000 ) // microsecond, 10 min
+
+   class _catCleanupExpiredTaskJob : public _utilLightJob
+   {
+      public :
+         _catCleanupExpiredTaskJob() : _utilLightJob() {}
+
+         virtual ~_catCleanupExpiredTaskJob () {}
+
+         virtual const CHAR* name() const
+         {
+            return "Catalog-Cleanup-Expired-Task-Job" ;
+         }
+
+         virtual INT32 doit( IExecutor *pExe, UTIL_LJOB_DO_RESULT &result,
+                             UINT64 &sleepTime )
+         {
+            sleepTime = CAT_CLEANUP_TASK_INTERVAL ;
+            result = UTIL_LJOB_DO_CONT ;
+
+            // This is an async task, check primary first
+            BOOLEAN isDelay = FALSE ;
+            INT32 rc = sdbGetCatalogueCB()->primaryCheck( (pmdEDUCB *)pExe,
+                                                          FALSE, isDelay ) ;
+            if ( SDB_DPS_TRANS_DOING_ROLLBACK == rc )
+            {
+               // let's retry after one second
+               PD_LOG( PDINFO, "Check primary during rollback, will retry" ) ;
+               sleepTime = CAT_TASK_RETRY_INTERVAL ;
+               result = UTIL_LJOB_DO_CONT ;
+            }
+            else if ( SDB_CLS_NOT_PRIMARY == rc )
+            {
+               PD_LOG( PDINFO, "It is not primary, exit job[%s]", name() ) ;
+               result = UTIL_LJOB_DO_FINISH ;
+            }
+            else if ( rc )
+            {
+               PD_LOG( PDWARNING, "Failed to check primary, rc: %d", rc ) ;
+            }
+            else
+            {
+               rc = catRemoveExpiredTasks( (pmdEDUCB *)pExe, 1,
+                                           CAT_TASK_EXPIRED_TIME ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDWARNING, "Failed to cleanup expired tasks, rc: %d",
+                          rc ) ;
+               }
+               else
+               {
+                  PD_LOG( PDINFO, "Job[%s] done", name() ) ;
+               }
+            }
+
+            return SDB_OK ;
+         }
+
+   } ;
+
+   typedef class _catCleanupExpiredTaskJob catCleanupExpiredTaskJob ;
+
+   static void _catStartCleanupExpiredTaskJob()
+   {
+      _catCleanupExpiredTaskJob *job = SDB_OSS_NEW _catCleanupExpiredTaskJob() ;
+      if ( NULL == job )
+      {
+         PD_LOG( PDWARNING, "Failed to allocate catCleanupExpiredTaskJob" ) ;
+      }
+      else
+      {
+         INT32 rc = job->submit( TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to submit job[%s], rc: %d",
+                    job->name(), rc ) ;
+         }
+         else
+         {
+            PD_LOG( PDDEBUG, "Submit job[%s] done", job->name() ) ;
          }
       }
    }
@@ -924,6 +1018,7 @@ namespace engine
          {
             _isActived = TRUE ;
             _catStartClearTaskJob( CLS_TASK_SEQUENCE ) ;
+            _catStartCleanupExpiredTaskJob() ;
          }
          else
          {

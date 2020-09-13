@@ -2139,6 +2139,98 @@ namespace engine
       return catRemoveTask( matcher, FALSE, cb, w ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRMEXPTASK, "catRemoveExpiredTasks" )
+   INT32 catRemoveExpiredTasks ( pmdEDUCB* cb, INT16 w, INT32 expirationTimeS )
+   {
+      PD_TRACE_ENTRY ( SDB_CATRMEXPTASK ) ;
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      INT64 contextID = -1 ;
+
+      try
+      {
+
+      // query tasks
+      BSONObj dummyObj ;
+      BSONObj matcher = BSON( CAT_STATUS_NAME << CLS_TASK_STATUS_FINISH ) ;
+      rc = rtnQuery( CAT_TASK_INFO_COLLECTION,
+                     dummyObj, matcher, dummyObj, dummyObj,
+                     0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to perform query, rc: %d", rc ) ;
+
+      // loop every task
+      while ( TRUE )
+      {
+         rtnContextBuf contextBuf ;
+         const CHAR* timeStr = NULL ;
+         UINT64 taskID = CLS_INVALID_TASKID ;
+
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            contextID = -1 ;
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to retreive record, rc: %d", rc ) ;
+
+         BSONObj obj( contextBuf.data() ) ;
+         rc = rtnGetStringElement( obj, FIELD_NAME_ENDTIMESTAMP, &timeStr ) ;
+         if ( rc )
+         {
+            // Before 3.4.1 version (include), split task hasn't EndTimestamp
+            if ( rc != SDB_FIELD_NOT_EXIST )
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to get field[%s] from obj[%s], rc: %d",
+                       FIELD_NAME_ENDTIMESTAMP, obj.toString().c_str(), rc ) ;
+            }
+            continue ;
+         }
+
+         rc = rtnGetNumberLongElement( obj, CAT_TASKID_NAME, (INT64&)taskID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed to get field[%s] from obj[%s], rc: %d",
+                     CAT_TASKID_NAME, obj.toString().c_str() , rc ) ;
+            continue ;
+         }
+
+         ossTimestamp endTS, curTS ;
+         ossStringToTimestamp( timeStr, endTS ) ;
+         ossGetCurrentTime( curTS ) ;
+         if ( curTS.time - endTS.time > expirationTimeS )
+         {
+            rc = catRemoveTask( taskID, FALSE, cb, w ) ;
+            if ( rc )
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to remove expired task[%llu], rc: %d",
+                       taskID, rc ) ;
+               continue ;
+            }
+         }
+      }
+
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR, "Exception occurred: %s", e.what() );
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete ( contextID, cb ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_CATRMEXPTASK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
                                   vector< UINT32 > &groups )
    {

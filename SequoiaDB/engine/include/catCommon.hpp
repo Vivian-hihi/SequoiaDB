@@ -247,6 +247,9 @@ namespace engine
    INT32 catRemoveSequenceTasks ( const CHAR * sequenceName, pmdEDUCB * cb,
                                   INT16 w ) ;
    INT32 catRemoveTasksByType ( CLS_TASK_TYPE type, pmdEDUCB * cb, INT16 w ) ;
+   INT32 catRemoveExpiredTasks ( pmdEDUCB * cb, INT16 w,
+                                 INT32 expirationTimeS ) ;
+
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
                                   vector< UINT32 > &groups ) ;
    INT32 catGetCSTaskGroups ( const CHAR * csName,
