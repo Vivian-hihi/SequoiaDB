@@ -1,1 +1,0 @@
-见[PostgreSQL-开发](connector/postgresql/development.md)

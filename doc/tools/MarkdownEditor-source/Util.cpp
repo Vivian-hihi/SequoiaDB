@@ -41,20 +41,25 @@ string Util::GetExePath(){
 
 
 
-string Util::Text2Md(const string& str, const string rootPath){
+string Util::Text2Md(const string& str, const string rootPath, int type){
 #define READ_UNIT 1024
 #define OUTPUT_UNIT 64
 	struct buf *ob;
+   struct buf *navOb;
 	struct sd_callbacks callbacks;
 	struct html_renderopt options;
 	struct sd_markdown *markdown;
 	int ret;
+   int navNum = 0 ;
 
 	ob = bufnew(OUTPUT_UNIT);
-	sdhtml_renderer(&callbacks, &options, 0, rootPath.c_str() );
-	markdown = sd_markdown_new(MKDEXT_NO_INTRA_EMPHASIS|MKDEXT_TABLES|MKDEXT_FENCED_CODE|MKDEXT_STRIKETHROUGH|MKDEXT_SUPERSCRIPT, 16, &callbacks, &options);
+   navOb = bufnew(OUTPUT_UNIT);
 
-	sd_markdown_render(ob, (const uint8_t*)(str.c_str()), str.size(), markdown);
+	sdhtml_renderer(&callbacks, &options, 0, rootPath.c_str(), navOb, &navNum );
+
+	markdown = sd_markdown_new(MKDEXT_NO_INTRA_EMPHASIS|MKDEXT_TABLES|MKDEXT_FENCED_CODE|MKDEXT_STRIKETHROUGH|MKDEXT_SUPERSCRIPT|MKDEXT_LAX_SPACING, 16, &callbacks, &options);
+
+	sd_markdown_render(ob, (const uint8_t*)(str.c_str()), str.size(), markdown, type);
 	//sd_markdown_render(ob, ib->data, ib->size, markdown);
 	sd_markdown_free(markdown);
 
@@ -63,11 +68,31 @@ string Util::Text2Md(const string& str, const string rootPath){
 	std::stringbuf sb;
 	sb.sputn((const char*)ob->data, ob->size);
 
-	/* cleanup */
-	bufrelease(ob);	
-	
-	
-	return sb.str();
+   string html = sb.str() ;
+
+   if( type == 1 || navNum <= 1 )
+   {
+      ReplaceAllStr( html, "<!--Nav Position-->", "" ) ;
+   }
+   else if( type == 2 )
+   {
+      /* 生成本页导航，现在取消了，但是代码先保留
+	  string nav( (const char*)navOb->data, navOb->size ) ;
+
+      nav = "<div style=\"border:1px solid #EEE;padding:10px;\"><span style=\"font-size:16px;font-weight:bold;\">本页导航</span><br/><ul>\n" + nav ;
+
+      nav += "</ul></div>\n" ;
+
+      ReplaceAllStr( html, "<!--Nav Position-->", nav ) ;
+	  */
+	   ReplaceAllStr(html, "<!--Nav Position-->", "");
+   }
+
+   /* cleanup */
+	bufrelease(ob);
+   bufrelease(navOb);
+
+   return html ;
 }
 
 const int MAX_BUFF = 102400;

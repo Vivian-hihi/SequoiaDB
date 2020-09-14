@@ -73,7 +73,7 @@
 #define SAC_PATH        "../../SequoiaDB/web/"
 #define DRIVER_PATH     "../../driver/"
 #define DOC_PATH        "../../doc/"
-#define DOCUMENT_PATH   DOC_PATH"src/document/"
+#define DOCUMENT_PATH   DOC_PATH"src/manual/"
 #define CLIENT_PATH     "../../client/"
 #define SAMPLES_PATH    "../../conf/samples/"
 

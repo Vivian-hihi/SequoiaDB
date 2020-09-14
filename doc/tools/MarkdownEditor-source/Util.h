@@ -7,7 +7,7 @@ class Util
 public:
 	Util(void);
 	~Util(void);
-	static string Text2Md(const string& str, const string rootPath);
+	static string Text2Md(const string& str, const string rootPath, int type);
 	static string GetFilePath(const string& strPathFile, bool linuxPath = false);
 	static string GetExePath();
 	static string ReadStringFile(LPCTSTR strFileName);

@@ -249,11 +249,70 @@ const string WWW_CSS = "\
 .code > ol > li:nth-child(2n+1){ background-color:#EEE; }\r\n\
 .code .alt { background-color:#EEE; color:inherit; }\r\n\
 .code .alt > span{ font-weight:bold; }\r\n\
+..tab-wrap{margin:40px 10px}.tab-wrap>ul{margin:0;padding:0;font-size:0}.tab-wrap>.tab-menu>li{font-size:16px;position:relative;background-color:#f2f2f2;border-top:1px solid #505050;border-bottom:1px solid #505050;border-right:1px solid #505050;display:inline-block;padding:20px 40px;cursor:pointer;z-index:0;font-weight:bold;color:#434343;top:1px}.tab-wrap>.tab-menu>li:first-of-type{border-left:1px solid #505050;border-radius:5px 0 0 0}.tab-wrap>.tab-menu>li:last-of-type{border-radius:0 5px 0 0}.tab-wrap>.tab-menu>li:hover{color:#464646}.tab-wrap>.tab-menu>li.active{background-color:#FFF;opacity:1;border-top:4px solid #333;padding:18px 40px 20px 40px;border-bottom:0;top:2px;color:#009}.tab-wrap>.tab-cont>div{border:1px solid #505050;box-sizing:border-box;width:100%;padding:25px;min-height:200px;display:none;border-radius:0 5px 5px 5px;box-shadow:rgba(0,0,0,0.2) 4px 4px 5px 0}.tab-wrap>.tab-cont>.active{display:block}\r\n\
+.tab-wrap>.tab-menu>.first-tab {border-left: 1px solid #505050;border-radius: 5px 0 0 0}\r\n\
 </style>\r\n\
 \r\n\
 <script style=\"text/javascript\">\r\n\
-   window.onload = function()\r\n\
+   function getElementsByClassName(node, className)\r\n\
    {\r\n\
+        var results = [],\r\n\
+        elems = node.getElementsByTagName(\"*\");\r\n\
+		for (var i = 0, len = elems.length; i < len; i++) {\r\n\
+			if (elems[i].className.indexOf(className) != -1) {\r\n\
+				results[results.length] = elems[i];\r\n\
+			}\r\n\
+		}\r\n\
+		return results;\r\n\
+	}\r\n\
+   function getChildByTagName( node, tag )\r\n\
+   {\r\n\
+	 var results = [];\r\n\
+	 var child = node.childNodes;\r\n\
+	 for (var i = 0; i < child.length; ++i)\r\n\
+	 {\r\n\
+	 	if (typeof(child[i].tagName) == 'string' &&\r\n\
+			child[i].tagName.toLowerCase() == tag.toLowerCase())\r\n\
+		{\r\n\
+			results.push(child[i]);\r\n\
+		}\r\n\
+	 }\r\n\
+	 return results;\r\n\
+   }\r\n\
+\r\n\
+	window.onload = function() {\r\n\
+		function initTabEvent(tabBox)\r\n\
+		{\r\n\
+			var contBox = getElementsByClassName(tabBox, 'tab-cont')[0];\r\n\
+			var ulBox = getChildByTagName( tabBox, 'ul' )[0] ;\r\n\
+			var liBoxes = getChildByTagName( ulBox, 'li' ) ;\r\n\
+			var divBoxes = getChildByTagName( contBox, 'div' ) ;\r\n\
+\r\n\
+			function onTabTitleClick()\r\n\
+			{\r\n\
+				for (var n = 0; n < liBoxes.length; n++)\r\n\
+				{\r\n\
+					liBoxes[n].className = n == 0 ? 'first-tab' : '';\r\n\
+					divBoxes[n].className = '';\r\n\
+				}\r\n\
+\r\n\
+				this.className = this.index == 0 ? 'active first-tab' : 'active';\r\n\
+				divBoxes[this.index].className = 'active';\r\n\
+			}\r\n\
+\r\n\
+			for (var i = 0; i < liBoxes.length; i++)\r\n\
+			{\r\n\
+				liBoxes[i].index = i;\r\n\
+				liBoxes[i].onclick = onTabTitleClick;\r\n\
+			}\r\n\
+		}\r\n\
+\r\n\
+		var tabBoxes = getElementsByClassName(document, 'tab-wrap');\r\n\
+		for (var i = 0; i < tabBoxes.length; ++i)\r\n\
+		{\r\n\
+			initTabEvent(tabBoxes[i]); \r\n\
+		}\r\n\
+		\r\n\
       function htmlEncode( str )\r\n\
       {\r\n\
           str = str + '' ;\r\n\
@@ -287,10 +346,6 @@ const string WWW_CSS = "\
       {\r\n\
          if( codeList[i] && codeList[i].parentNode )\r\n\
          {\r\n\
-            if( codeList[i].className != 'lang-javascript' )\r\n\
-            {\r\n\
-               continue ;\r\n\
-            }\r\n\
             codeList[i].style.display = 'none' ;\r\n\
             var str = htmlDecode( codeList[i].innerHTML ) ;\r\n\
             var strArr = str.split( String.fromCharCode( 10 ) ) ;\r\n\
@@ -332,7 +387,7 @@ string CMarkdownEditorView::GetMdHtml(const string& str){
       Util::ReplaceAllStr(strHtml,"{{2}}", WWW_CSS);
    }
 
-	string md = Util::Text2Md( str, rootPath );
+	string md = Util::Text2Md( str, rootPath, _type );
 	//md = replaceImgSrc(md, GetDocument()->getFilePath());
 	Util::ReplaceAllStr(strHtml, "{{1}}", md);
 	return strHtml;

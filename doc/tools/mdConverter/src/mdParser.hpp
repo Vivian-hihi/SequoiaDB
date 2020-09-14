@@ -31,9 +31,11 @@ public:
                string filePath,
                BOOLEAN isFullPath = TRUE,
                string convertMode = "normal",
+               BOOLEAN tabPage = TRUE,
+               BOOLEAN navPage = TRUE,
                map<string, INT32> *pFileMap = NULL,
                map<string, string> *pCnMap = NULL ) ;
-   INT32 parse( string mdContent, string &htmlContent ) ;
+   INT32 parse( string mdContent, string version, string &htmlContent ) ;
 } ;
 
 INT32 convertHtmlHeader( INT32 level,

@@ -13,6 +13,7 @@ static string _rootPath ;
 static string _localPath ;
 static string _htmlPath ;
 static string _cssFile ;
+static string _jsFile ;
 static string _language ;
 static BOOLEAN _fullHtml ;
 static BOOLEAN _fullPath ;
@@ -23,6 +24,9 @@ static string _mdPath ;
 static string _imgPath ;
 static string _mode ;
 static string _convertMode ;
+
+static BOOLEAN _tabPage ;
+static BOOLEAN _navPage ;
 
 static string _major ;
 static string _minor ;
@@ -262,12 +266,14 @@ INT32 check( options &opt )
    {
       cout << "Unknow mode." << endl ;
    }
+
    rc = opt.getOption( "u", fullHtml ) ;
    if( rc )
    {
       cout << "Failed to get -u options" << endl ;
       goto error ;
    }
+
    if( fullHtml == "true" )
    {
       _fullHtml = TRUE ;
@@ -276,6 +282,47 @@ INT32 check( options &opt )
    {
       _fullHtml = FALSE ;
    }
+
+   {
+      string tmp ;
+
+      rc = opt.getOption( "t", tmp ) ;
+      if( rc )
+      {
+         cout << "Failed to get -t options" << endl ;
+         goto error ;
+      }
+
+      if( tmp == "true" )
+      {
+         _tabPage = TRUE ;
+      }
+      else
+      {
+         _tabPage = FALSE ;
+      }
+   }
+
+   {
+      string tmp ;
+
+      rc = opt.getOption( "n", tmp ) ;
+      if( rc )
+      {
+         cout << "Failed to get -n options" << endl ;
+         goto error ;
+      }
+
+      if( tmp == "true" )
+      {
+         _navPage = TRUE ;
+      }
+      else
+      {
+         _navPage = FALSE ;
+      }
+   }
+
    rc = opt.getOption( "s", _cssFile ) ;
    if( rc )
    {
@@ -293,6 +340,27 @@ INT32 check( options &opt )
       if( rc )
       {
          cout << "File not exists, path: " << _cssFile << endl ;
+         goto error ;
+      }
+   }
+
+   rc = opt.getOption( "j", _jsFile ) ;
+   if( rc )
+   {
+      rc = SDB_OK ;
+   }
+   else
+   {
+      if( _fullHtml == FALSE )
+      {
+         cout << "include javascript, -u must TRUE" << endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      rc = fileIsExist( _jsFile ) ;
+      if( rc )
+      {
+         cout << "File not exists, path: " << _jsFile << endl ;
          goto error ;
       }
    }
@@ -512,6 +580,7 @@ INT32 parseCmd( options &opt, INT32 argc, CHAR *argv[] )
                                 "[file] Single file mode: specified the conversion of a file. " ) ;
    opt.setOptions( "u", "true", "Generates a complete HTML code, include the HTML header, default: true" ) ;
    opt.setOptions( "s", "", "Load css file path" ) ;
+   opt.setOptions( "j", "", "Load javascript file path" ) ;
    opt.setOptions( "l", "true", "Full path, default: true. use image and md link." ) ;
    opt.setOptions( "a", "cn", "Language, [cn] Simplified Chinese; [en] English." ) ;
    opt.setOptions( "d", "normal", "Conversion mode, default normal. "
@@ -521,10 +590,17 @@ INT32 parseCmd( options &opt, INT32 argc, CHAR *argv[] )
                                   "[offline] convert offline html document."
                                   "[single] convert single file url. "
                                   "[website] convert sequoiadb.com url. " ) ;
-   opt.setOptions( "", "", "Configuration mode:" ) ;
-   opt.setOptions( "c", "config/toc.json", "The JSON file path, default: doc/config/toc.json" ) ;
+
+   opt.setOptions( "", "", "Convert config:" ) ;
+   opt.setOptions( "t", "true", "Support tab page parsing, default: true" ) ;
+   opt.setOptions( "n", "false", "Auto generate intra-page navigation, default: true" ) ;
+
+   opt.setOptions( "", "", "Config mode:" ) ;
+   opt.setOptions( "c", "doc/config/toc.json", "The JSON file path, default: doc/config/toc.json" ) ;
+
    opt.setOptions( "", "", "Iteration mode:" ) ;
    opt.setOptions( "p", "src/document", "Converted folder path, default doc/src/document" ) ;
+
    opt.setOptions( "", "", "Single mode:" ) ;
    opt.setOptions( "f", "", "The specified the conversion of a file." ) ;
    opt.setOptions( "o", "", "Output html path, default doc/build/mid/xxx.html." ) ;
@@ -597,11 +673,44 @@ INT32 outputHtmlHeader()
          cout << "Failed to get file content, path: " << _cssFile << endl ;
          goto error ;
       }
-      html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"><style type=\"text/css\">" + cssContent + "</style></head><body>" ;
+
+      if( _jsFile.size() > 0 )
+      {
+         string jsContent ;
+
+         rc = file_get_contents( _jsFile, jsContent ) ;
+         if( rc )
+         {
+            cout << "Failed to get file content, path: " << _jsFile << endl ;
+            goto error ;
+         }
+
+         html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"><style type=\"text/css\">" + cssContent + "</style><script type=\"text/javascript\">" + jsContent + "</script></head><body>" ;
+      }
+      else
+      {
+         html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"><style type=\"text/css\">" + cssContent + "</style></head><body>" ;
+      }
    }
    else
    {
-      html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></head><body>" ;
+      if( _jsFile.size() > 0 )
+      {
+         string jsContent ;
+
+         rc = file_get_contents( _jsFile, jsContent ) ;
+         if( rc )
+         {
+            cout << "Failed to get file content, path: " << _jsFile << endl ;
+            goto error ;
+         }
+
+         html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"><script type=\"text/javascript\">" + jsContent + "</script></head><body>" ;
+      }
+      else
+      {
+         html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></head><body>" ;
+      }
    }
    rc = file_put_contents( outputPath, html ) ;
    if( rc )
@@ -637,10 +746,11 @@ INT32 parseMarkdown( string md, string &html, string path, INT32 level, string t
    INT32 rc = SDB_OK ;
    INT32 edition = atoi( _major.c_str() ) * 100 + atoi( _minor.c_str() ) ;
    mdParser parser ;
-   string cssContent ;
+   string version = _major + "." + _minor ;
 
    rc = parser.init( level, _rootPath, _mdPath, _imgPath, edition, path,
-                     _fullPath, _convertMode, &_fileMap, &_cnMap ) ;
+                     _fullPath, _convertMode, _tabPage, _navPage,
+                     &_fileMap, &_cnMap ) ;
    if( rc )
    {
       goto error ;
@@ -649,7 +759,7 @@ INT32 parseMarkdown( string md, string &html, string path, INT32 level, string t
    if( md.size() > 0 )
    {
       cout << "Convert file: " << path << endl ;
-      rc = parser.parse( md, html ) ;
+      rc = parser.parse( md, version, html ) ;
       if( rc )
       {
          goto error ;
@@ -659,6 +769,10 @@ INT32 parseMarkdown( string md, string &html, string path, INT32 level, string t
 
    if( _fullHtml && ( ( _convertMode != "single" && _convertMode != "word" ) || _mode == "file" ) )
    {
+      string cssContent ;
+      string jsContent ;
+      string tmp ;
+
       if( _cssFile.size() > 0 )
       {
          rc = file_get_contents( _cssFile, cssContent ) ;
@@ -667,26 +781,38 @@ INT32 parseMarkdown( string md, string &html, string path, INT32 level, string t
             cout << "Failed to get file content, path: " << _cssFile << endl ;
             goto error ;
          }
-         if( _convertMode == "chm" || _convertMode == "offline" )
-         {
-            html = "<html><head><title>" + title + "</title><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"><style type=\"text/css\">" + cssContent + "</style></head><body>" + html + " </body></html>" ;
-         }
-         else
-         {
-            html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"><style type=\"text/css\">" + cssContent + "</style></head><body>" + html + " </body></html>" ;
-         }
       }
-      else
+      
+      if( _jsFile.size() > 0 )
       {
-         if( _convertMode == "chm" || _convertMode == "offline" )
+         rc = file_get_contents( _jsFile, jsContent ) ;
+         if( rc )
          {
-            html = "<html><head><title>" + title + "</title><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></head><body>" + html + " </body></html>" ;
-         }
-         else
-         {
-            html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></head><body>" + html + " </body></html>" ;
+            cout << "Failed to get file content, path: " << _jsFile << endl ;
+            goto error ;
          }
       }
+
+      tmp = "<html><head>" ;
+
+      if( _convertMode == "chm" || _convertMode == "offline" )
+      {
+         tmp += "<title>" + title + "</title>" ;
+      }
+
+      tmp += "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">" ;
+
+      if( cssContent.size() > 0 )
+      {
+         tmp += "<style type=\"text/css\">" + cssContent + "</style>" ;
+      }
+
+      if( jsContent.size() > 0 )
+      {
+         tmp += "<script type=\"text/javascript\">" + jsContent + "</script>" ;
+      }
+
+      html = tmp + "</head><body>" + html + " </body></html>" ;
    }
 done:
    return rc ;
@@ -775,10 +901,12 @@ INT32 buildFileMap( CJSON_MACHINE *pMachine,
    else
    {
       INT32 id = -1 ;
+      BOOLEAN disable = FALSE ;
       string cnTitle ;
       string enTitle ;
       string file ;
       string dir ;
+
       while( cJsonIteratorMore( pIter ) )
       {
          cJsonType = cJsonIteratorType( pIter ) ;
@@ -853,11 +981,22 @@ INT32 buildFileMap( CJSON_MACHINE *pMachine,
                goto error ;
             }
          }
+         else if( key == "disable" )
+         {
+            if( cJsonType != CJSON_TRUE && cJsonType != CJSON_FALSE )
+            {
+               rc = SDB_SYS ;
+               cout << "disable field type must be bool." << endl ;
+               goto error ;
+            }
+            disable = cJsonIteratorBoolean( pIter ) ;
+         }
+         else if ( key == "top" )
+         {
+         }
          else
          {
-            rc = SDB_SYS ;
-            cout << key << " field not defined, id: " << id << endl ;
-            goto error ;
+            cout << "Warning: " << key << " field not defined, id: " << id << endl ;
          }
          cJsonIteratorNext( pIter ) ;
       }
@@ -879,12 +1018,19 @@ INT32 buildFileMap( CJSON_MACHINE *pMachine,
          cout << "en field must be defined." << endl ;
          goto error ;
       }
+
+      if( disable )
+      {
+         cout << "Warning: disable item, id: " << id << ", cn: " << cnTitle << endl ;
+         goto done ;
+      }
+
       if( file.size() > 0 )
       {
          if( dir.size() > 0 )
          {
             rc = SDB_SYS ;
-            cout << "file field can't be with dir field." << endl ;
+            cout << "file field can't be with dir field, id="<< id << endl ;
             goto error ;
          }
          if( pIterSub != NULL )
@@ -911,7 +1057,12 @@ INT32 buildFileMap( CJSON_MACHINE *pMachine,
             cout << "contents field must be defined. id = " << id << endl ;
             goto error ;
          }
-         subPath += dir + "." ;
+
+         subPath += dir ;
+
+         _fileMap.insert( map<string, INT32>::value_type( subPath, id ) ) ;
+
+         subPath += "." ;
          cnPath += cnTitle + "/" ;
          rc = buildFileMap( pMachine, pIterSub, FALSE, TRUE, subPath, cnPath, level + 1 ) ;
          if( rc )
@@ -978,6 +1129,54 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
    }
    else if( isArray == TRUE )
    {
+      if( _convertMode == "website" )
+      {
+         //readme专用
+         string filePath ;
+
+         if( _language == "cn" )
+         {
+            filePath = _rootPath + _mdPath + "/" + subPath + "Readme.md" ;
+         }
+         else
+         {
+            filePath = _rootPath + _mdPath + "/" + subPath + "Readme_" + _language + ".md" ;
+         }
+
+         rc = fileIsExist( filePath ) ;
+         if( rc == SDB_OK )
+         {
+            string mdContent ;
+            string html ;
+            string outputPath ;
+
+            rc = file_get_contents( filePath, mdContent ) ;
+            if( rc )
+            {
+               cout << "Failed to get readme content, path: " << filePath << endl ;
+               goto error ;
+            }
+
+            rc = parseMarkdown( mdContent, html, subPath + "Readme.md", level, "" ) ;
+            if( rc )
+            {
+               cout << "Failed to convert readme file, path: " << filePath << endl ;
+               goto error ;
+            }
+
+            outputPath = _htmlPath + "/" + subPath + "Readme.html" ;
+
+            rc = file_put_contents( outputPath, html, FALSE ) ;
+            if( rc )
+            {
+               cout << "Failed to put readme, path: " << outputPath << endl ;
+               goto error ;
+            }
+         }
+
+         rc = SDB_OK ;
+      }
+
       while( cJsonIteratorMore( pIter ) )
       {
          cJsonType = cJsonIteratorType( pIter ) ;
@@ -1010,10 +1209,12 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
    else
    {
       INT32 id = -1 ;
+      BOOLEAN disable = FALSE ;
       string cnTitle ;
       string enTitle ;
       string file ;
       string dir ;
+
       while( cJsonIteratorMore( pIter ) )
       {
          cJsonType = cJsonIteratorType( pIter ) ;
@@ -1088,11 +1289,22 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
                goto error ;
             }
          }
+         else if( key == "disable" )
+         {
+            if( cJsonType != CJSON_TRUE && cJsonType != CJSON_FALSE )
+            {
+               rc = SDB_SYS ;
+               cout << "disable field type must be bool." << endl ;
+               goto error ;
+            }
+            disable = cJsonIteratorBoolean( pIter ) ;
+         }
+         else if( key == "top" )
+         {
+         }
          else
          {
-            rc = SDB_SYS ;
-            cout << key << " field not defined, id: " << id << endl ;
-            goto error ;
+            cout << "Warning: " << key << " field not defined, id: " << id << endl ;
          }
          cJsonIteratorNext( pIter ) ;
       }
@@ -1114,6 +1326,13 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
          cout << "en field must be defined." << endl ;
          goto error ;
       }
+
+      if( disable )
+      {
+         cout << "Warning: disable item, id: " << id << ", cn: " << cnTitle << endl ;
+         goto done ;
+      }
+
       if( file.size() > 0 )
       {
          string filePath ;
@@ -1124,7 +1343,7 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
          if( dir.size() > 0 )
          {
             rc = SDB_SYS ;
-            cout << "file field can't be with dir field." << endl ;
+            cout << "file field can't be with dir field, id=" << id << endl ;
             goto error ;
          }
          if( pIterSub != NULL )
@@ -1158,13 +1377,7 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
          if( _convertMode == "single" || _convertMode == "word" )
          {
             outputPath = _htmlPath + "/build.html" ;
-            string htmlTitle ;
-            rc = convertHtmlHeader( level, subPath + file + ".md", cnTitle, htmlTitle ) ;
-            if( rc )
-            {
-               cout << "Failed to convert html header" << endl ;
-               goto error ;
-            }
+
             if( isFirstMd )
             {
                isFirstMd = FALSE ;
@@ -1179,11 +1392,24 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
                   goto error ;
                }
             }
-            rc = file_put_contents( outputPath, htmlTitle, TRUE ) ;
-            if( rc )
+
+            if( _convertMode == "word" )
             {
-               cout << "Failed to put file, path: " << outputPath << endl ;
-               goto error ;
+               string htmlTitle ;
+
+               rc = convertHtmlHeader( level, subPath + file + ".md", cnTitle, htmlTitle ) ;
+               if( rc )
+               {
+                  cout << "Failed to convert html header" << endl ;
+                  goto error ;
+               }
+
+               rc = file_put_contents( outputPath, htmlTitle, TRUE ) ;
+               if( rc )
+               {
+                  cout << "Failed to put file, path: " << outputPath << endl ;
+                  goto error ;
+               }
             }
          }
          else
@@ -1309,7 +1535,7 @@ INT32 execIterFiles( string path, string subPath )
          rc = mkdir( dirPath ) ;
          if( rc )
          {
-            cout << "5 Failed to create dir, path: " << dirPath << endl ;
+            cout << "Failed to create dir, path: " << dirPath << endl ;
             goto error ;
          }
          rc = execIterFiles( newPath, dirPath ) ;
@@ -1339,7 +1565,7 @@ INT32 execIterFiles( string path, string subPath )
             }
             if( mdContent.size() > 0 )
             {
-               rc = parseMarkdown( mdContent, html, subPath + "/" + fileName + ".md", 1 ) ;
+               rc = parseMarkdown( mdContent, html, subPath + "/" + (*iter).fileName, 1 ) ;
                if( rc )
                {
                   cout << "Failed to convert markdown file, path: " << filePath << endl ;

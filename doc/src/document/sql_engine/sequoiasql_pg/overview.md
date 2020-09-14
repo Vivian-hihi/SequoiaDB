@@ -1,1 +1,0 @@
-SequoiaDB支持创建PostgreSQL实例，完全兼容PostgreSQL语法，用户可以使用SQL语句访问SequoiaDB数据库，完成对数据的增、删、查、改及其他操作。

@@ -61,7 +61,7 @@ int
 sdhtml_is_tag(const uint8_t *tag_data, size_t tag_size, const char *tagname);
 
 extern void
-sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr, unsigned int render_flags, const char *pRootPath);
+sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr, unsigned int render_flags, const char *pRootPath, struct buf *ob, int *navNum);
 
 extern void
 sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr);

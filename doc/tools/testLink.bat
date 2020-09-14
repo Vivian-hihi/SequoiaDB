@@ -1,3 +1,3 @@
 @echo off
 
-mdConverter.exe -d website -l false > output.log
+mdConverter.exe -c ../config/toc.json -d chm -l false > output.log

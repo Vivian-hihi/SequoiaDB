@@ -38,7 +38,7 @@ if( addNewDir( $edition ) == FALSE )
    exit( 1 ) ;
 }
 
-if( insertDir( $edition, $config ) == FALSE )
+if( insertDir( $edition, $config, $root ) == FALSE )
 {
    exit( 1 ) ;
 }

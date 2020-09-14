@@ -174,7 +174,7 @@ if( $param['m'] == "doc" || $param['m'] == "pdf" )
       exit( 1 ) ;
    }
 
-   $pdf = "$root/tools/$mdConvert -v $major -e $minor -d single -s $root/tools/pdfConvertor/src/pdf.css" ;
+   $pdf = "$root/tools/$mdConvert -c ./config/toc.json -v $major -e $minor -d single -s $root/tools/pdfConvertor/src/pdf.css" ;
    if( execCmd( $pdf ) != 0 )
    {
       printLog( 'Failed to convert pdf middle file' ) ;
@@ -215,7 +215,7 @@ if( ( $param['m'] == "doc" || $param['m'] == "word" ) && $os == 'windows' )
       exit( 1 ) ;
    }
 
-   $word = "$root/tools/$mdConvert -v $major -e $minor -d word" ;
+   $word = "$root/tools/$mdConvert -c ./config/toc.json -v $major -e $minor -d word" ;
    if( execCmd( $word ) != 0 )
    {
       printLog( 'Failed to convert word middle file: '.$word ) ;
@@ -241,7 +241,7 @@ if( $param['m'] == "chm" && $os == 'windows' )
       exit( 1 ) ;
    }
 
-   $chm = "$root/tools/$mdConvert -v $major -e $minor -d chm -l false -s $root/tools/pdfConvertor/src/pdf.css" ;
+   $chm = "$root/tools/$mdConvert -c ./config/toc.json -v $major -e $minor -d chm -l false -s $root/tools/pdfConvertor/src/pdf.css" ;
    if( execCmd( $chm ) != 0 )
    {
       printLog( "Failed to convert chm middle file: $chm" ) ;
@@ -303,7 +303,7 @@ if( $param['m'] == "offline" && $os == 'windows' )
       exit( 1 ) ;
    }
 
-   $chm = "$root/tools/$mdConvert -v $major -e $minor -d offline -l false -s $root/tools/pdfConvertor/src/pdf.css" ;
+   $chm = "$root/tools/$mdConvert -c ./config/toc.json -v $major -e $minor -d offline -l false -s $root/tools/pdfConvertor/src/pdf.css" ;
    if( execCmd( $chm ) != 0 )
    {
       printLog( "Failed to convert offline middle file: $chm" ) ;
@@ -365,7 +365,7 @@ if( $param['m'] == "website" )
       exit( 1 ) ;
    }
 
-   $website = "$root/tools/$mdConvert -v $major -e $minor -d website -l false -u false" ;
+   $website = "$root/tools/$mdConvert -c ./config/toc.json -v $major -e $minor -d website -l false -u false" ;
    if( execCmd( $website ) != 0 )
    {
       printLog( 'Failed to convert website middle file: '.$website ) ;

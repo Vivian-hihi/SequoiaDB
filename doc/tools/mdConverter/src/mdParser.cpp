@@ -10,6 +10,8 @@ static CHAR *_pMarkdownPath ;
 static CHAR *_pImagePath ;
 static map<string, INT32> *_pFileMap ;
 static map<string, string> *_pCnMap ;
+static BOOLEAN _tabPage ;
+static BOOLEAN _navPage ;
 
 static BOOLEAN _isFullPath ;
 
@@ -19,6 +21,10 @@ static string _filePath ;
 static INT32 _edition ;
 
 static INT32 _level ;
+
+static INT32 _titleNum ;
+
+static struct buf *_pNavOb ;
 
 static void ReplaceAll( string &source, string oldStr, string newStr ) ;
 
@@ -47,6 +53,7 @@ static void parseHeader( struct buf *ob,
 mdParser::mdParser()
 {
    _pMarkdown = NULL ;
+   _pNavOb = NULL ;
 }
 
 mdParser::~mdParser()
@@ -81,6 +88,8 @@ INT32 mdParser::init( INT32 level,
                       string filePath,
                       BOOLEAN isFullPath,
                       string convertMode,
+                      BOOLEAN tabPage,
+                      BOOLEAN navPage,
                       map<string, INT32> *pFileMap,
                       map<string, string> *pCnMap )
 {
@@ -89,6 +98,8 @@ INT32 mdParser::init( INT32 level,
    string left( "/" ) ;
 
    _level = level ;
+
+   _titleNum = 0 ;
 
    ReplaceAll( rootPath, right, left ) ;
    ReplaceAll( mdPath, right, left ) ;
@@ -99,6 +110,8 @@ INT32 mdParser::init( INT32 level,
    _pImagePath    = strdup( imgPath.c_str() ) ;
    _isFullPath    = isFullPath ;
    _convertMode   = convertMode ;
+   _tabPage       = tabPage ;
+   _navPage       = navPage ;
    _pFileMap      = pFileMap ;
    _pCnMap        = pCnMap ;
    _edition       = edition ;
@@ -121,7 +134,8 @@ INT32 mdParser::init( INT32 level,
                                  MKDEXT_TABLES|
                                  MKDEXT_FENCED_CODE|
                                  MKDEXT_STRIKETHROUGH|
-                                 MKDEXT_SUPERSCRIPT,
+                                 MKDEXT_SUPERSCRIPT|
+                                 MKDEXT_LAX_SPACING,
                                  16,
                                  &_callbacks,
                                  &_options ) ;
@@ -137,7 +151,7 @@ error:
    goto done ;
 }
 
-INT32 mdParser::parse( string mdContent, string &htmlContent )
+INT32 mdParser::parse( string mdContent, string version, string &htmlContent )
 {
    INT32 rc = SDB_OK ;
    struct buf *pOb = NULL ;
@@ -148,6 +162,8 @@ INT32 mdParser::parse( string mdContent, string &htmlContent )
       goto error ;
    }
 
+   ReplaceAll( mdContent, "{version}", version ) ;
+
    pOb = bufnew( mdContent.size() * 1024 ) ;
    if( pOb == NULL )
    {
@@ -155,12 +171,45 @@ INT32 mdParser::parse( string mdContent, string &htmlContent )
       goto error ;
    }
 
-   sd_markdown_render( pOb, (const UINT8 *)(mdContent.c_str()), mdContent.size(), _pMarkdown ) ;
+   _pNavOb = bufnew( 1024 ) ;
+   if( _pNavOb == NULL )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   BUFPUTSL( _pNavOb, "<div style=\"border:1px solid #EEE;padding:10px;\"><span style=\"font-size:16px;font-weight:bold;\">本页导航</span><br/><ul>\n" );
+
+   sd_markdown_render( pOb, (const UINT8 *)(mdContent.c_str()), mdContent.size(), _pMarkdown, _tabPage ) ;
+
+   BUFPUTSL( _pNavOb, "</ul></div>\n" );
 
    htmlContent.insert( 0, (const CHAR *)pOb->data, 0, pOb->size ) ;
 
-   bufrelease( pOb ) ;
+   if ( _navPage )
+   {
+      string nav( (const char*)_pNavOb->data, _pNavOb->size ) ;
+
+      ReplaceAll( htmlContent, "<!--Nav Position-->", nav ) ;
+   }
+   else
+   {
+      ReplaceAll( htmlContent, "<!--Nav Position-->", "" ) ;
+   }
+
 done:
+
+   if ( _pNavOb )
+   {
+      bufrelease( _pNavOb ) ;
+      _pNavOb = NULL ;
+   }
+
+   if ( pOb )
+   {
+      bufrelease( pOb ) ;
+   }
+
    return rc ;
 error:
    goto done ;
@@ -264,7 +313,14 @@ static INT32 parseLink( struct buf *ob,
 
    if( link && link->size )
    {
+      string srcLink( (const char *)link->data, link->size ) ;
       string aLink( (const char *)link->data, link->size ) ;
+
+      if( aLink.find( "manual/" ) == 0 )
+      {
+         aLink = aLink.substr( 7 ) ;
+      }
+
       if( link->size >= 4 &&
           ( link->data[0] != 'h' ||
             link->data[1] != 't' ||
@@ -285,7 +341,7 @@ static INT32 parseLink( struct buf *ob,
                CHAR editionIdStr[30] ;
                if( _convertMode == "website" )
                {
-                  BUFPUTSL(ob, "/cn/index/Public/Home/document/");
+                  BUFPUTSL(ob, "__DOCUMENT__/");
                }
                else
                {
@@ -301,16 +357,55 @@ static INT32 parseLink( struct buf *ob,
          {
             if( _convertMode == "normal" )
             {
-               ReplaceAll( aLink, ".md", ".html" ) ;
-               if( _isFullPath )
+               string linkPath ;
+               string fullPath = _pRootPath ;
+
+               fullPath += _pMarkdownPath ;
+               if( aLink.find( "#" ) != aLink.npos )
                {
-                  bufput(ob, _pRootPath, strlen( _pRootPath ) ) ;
-                  BUFPUTSL(ob, "build/mid/");
+                  fullPath += aLink.substr( 0, aLink.find( "#" ) ) ;
                }
-               houdini_escape_href(ob, (const uint8_t *)aLink.c_str(), aLink.size() );
+               else
+               {
+                  fullPath += aLink ;
+               }
+
+               if( fileIsExist( fullPath ) )
+               {
+                  cout << "Warning unknow link: " << srcLink << endl ;
+               }
+               else
+               {
+                  ReplaceAll( aLink, ".md", ".html" ) ;
+                  if( _isFullPath )
+                  {
+                     bufput(ob, _pRootPath, strlen( _pRootPath ) ) ;
+                     BUFPUTSL(ob, "build/mid/");
+                  }
+                  houdini_escape_href(ob, (const uint8_t *)aLink.c_str(), aLink.size() );
+               }
             }
             else if( _convertMode == "chm" )
             {
+               {
+                  string fullPath = _pRootPath ;
+
+                  fullPath += _pMarkdownPath ;
+                  if( aLink.find( "#" ) != aLink.npos )
+                  {
+                     fullPath += aLink.substr( 0, aLink.find( "#" ) ) ;
+                  }
+                  else
+                  {
+                     fullPath += aLink ;
+                  }
+
+                  if( fileIsExist( fullPath ) )
+                  {
+                     cout << "Warning unknow link: " << srcLink << endl ;
+                  }
+               }
+
                string destPath ;
                string filename ;
 
@@ -320,7 +415,7 @@ static INT32 parseLink( struct buf *ob,
                ReplaceAll( destPath, "\\", "." ) ;
                ReplaceAll( filename, ".md", ".html" ) ;
                map<string, string>::iterator iter = _pCnMap->find( destPath ) ;
-               if( iter == _pCnMap->end() )
+               if( iter == _pCnMap->end() && filename != "Readme.html" )
                {
                   cout << "Warning link dest path Not find: " << aLink << endl ;
                }
@@ -344,7 +439,7 @@ static INT32 parseLink( struct buf *ob,
                ReplaceAll( destPath, "\\", "." ) ;
                ReplaceAll( filename, ".md", ".html" ) ;
                map<string, string>::iterator iter = _pCnMap->find( destPath ) ;
-               if( iter == _pCnMap->end() )
+               if( iter == _pCnMap->end() && filename != "Readme.html" )
                {
                   cout << "Warning link dest path Not find: " << aLink << endl ;
                }
@@ -377,7 +472,6 @@ static INT32 parseLink( struct buf *ob,
                }
                else
                {
-                  string old = aLink ;
                   string anchor ;
                   if( aLink.find( "#" ) != aLink.npos )
                   {
@@ -390,7 +484,7 @@ static INT32 parseLink( struct buf *ob,
                   map<string, INT32>::iterator iter = _pFileMap->find( aLink ) ;
                   if( iter == _pFileMap->end() )
                   {
-                     cout << "Warning Link Not find: " << old << endl ;
+                     cout << "Warning Link Not find: " << srcLink << endl ;
                   }
                   else
                   {
@@ -412,25 +506,42 @@ static INT32 parseLink( struct buf *ob,
             {
                if( aLink.find( ".html" ) != aLink.npos )
                {
-                  cout << "Warning unknow link: " << aLink << endl ;
+                  cout << "Warning unknow link: " << srcLink << endl ;
                   houdini_escape_href(ob, (const uint8_t *)aLink.c_str(), aLink.size() );
                }
                else
                {
-                  string old = aLink ;
                   string anchor ;
+                  string filename ;
+
                   if( aLink.find( "#" ) != aLink.npos )
                   {
                      anchor = aLink.substr( aLink.find( "#" ) + 1 ) ;
                      aLink = aLink.substr( 0, aLink.find( "#" ) ) ;
                      //cout << "anchor " << anchor << endl ;
                   }
+
+                  getFile( aLink, filename ) ;
+                  if( filename == "Readme.md" )
+                  {
+                     string destPath ;
+
+                     getPath( aLink, destPath ) ;
+
+                     if( destPath[destPath.length()-1] == '/' )
+                     {
+                        destPath = destPath.substr( 0, destPath.length() - 1 ) ;
+                     }
+
+                     aLink = destPath ;
+                  }
+
                   ReplaceAll( aLink, ".md", "" ) ;
                   ReplaceAll( aLink, "/", "." ) ;
                   map<string, INT32>::iterator iter = _pFileMap->find( aLink ) ;
                   if( iter == _pFileMap->end() )
                   {
-                     cout << "Warning Link Not find: " << old << endl ;
+                     cout << "Warning Link Not find: " << srcLink << endl ;
                   }
                   else
                   {
@@ -439,7 +550,7 @@ static INT32 parseLink( struct buf *ob,
                      sprintf( catIdStr, "%d", iter->second ) ;
                      sprintf( editionIdStr, "%d", _edition ) ;
                      //cout << "find: " << id << "   " << aLink << endl ;
-                     aLink = "/cn/SequoiaDB-cat_id-" ;
+                     aLink = "/cn/sequoiadb-cat_id-" ;
                      aLink += catIdStr ;
                      aLink += "-edition_id-" ;
                      aLink += editionIdStr ;
@@ -475,7 +586,7 @@ static INT32 parseLink( struct buf *ob,
    else
    {
       BUFPUTSL( ob, "\">" ) ;
-	  }
+   }
 
    if( content && content->size )
    {
@@ -495,7 +606,7 @@ static INT32 parseImage( struct buf *ob,
    if (!link || !link->size)
    {
       return 0 ;
-	  }
+   }
 
    BUFPUTSL( ob, "<div class=\"figure\" style=\"text-align:center;\"><img src=\"" ) ;
 
@@ -505,19 +616,34 @@ static INT32 parseImage( struct buf *ob,
       {
          string filename ;
          string imgData ;
-         string destPath( (const char *)link->data, link->size ) ;
-         string old = destPath ;
-         string imgPath( (const char *)link->data, link->size ) ;
+         string destPath ;
+         string imgPath ;
+         string srcPath( (const char *)link->data, link->size ) ;
+         string old( (const char *)link->data, link->size ) ;
          string imgLink( (const char *)link->data, link->size ) ;
+
+         if( old.find( "images/" ) == 0 )
+         {
+            old = old.substr( 7 ) ;
+         }
+
+         imgPath = old ;
+
          if( imgLink.find( "/" ) != imgLink.npos )
          {
             imgLink = imgLink.substr( imgLink.rfind( "/" ) + 1,
                                       imgLink.size() - imgLink.rfind( "/" ) - 1 ) ;
          }
+
          houdini_escape_href( ob, (const uint8_t *)imgLink.c_str(), imgLink.size() ) ;
          imgPath = "/" + imgPath ;
          imgPath = _pImagePath + imgPath ;
          imgPath = _pRootPath + imgPath ;
+
+         if( fileIsExist( imgPath ) != SDB_OK )
+         {
+            cout << "Warning image dest path Not find: " << srcPath << endl ;
+         }
 
          getPath( old, destPath ) ;
          getFile( old, filename ) ;
@@ -526,7 +652,7 @@ static INT32 parseImage( struct buf *ob,
          map<string, string>::iterator iter = _pCnMap->find( destPath ) ;
          if( iter == _pCnMap->end() )
          {
-            cout << "Warning image dest path Not find: " << old << endl ;
+            cout << "Warning image and document path are not the same: " << srcPath << endl ;
          }
          else
          {
@@ -536,13 +662,15 @@ static INT32 parseImage( struct buf *ob,
             destPath = _pRootPath + destPath + filename ;
             */
             
-            destPath = "build/mid/" + old ;
+            string imgDestPath = _pRootPath ;
+
+            imgDestPath += "build/mid/" + old ;
             
             //cout << "source: " << imgPath << endl ;
             //cout << "dest  : " << destPath << endl << endl ;
             
             file_get_contents( imgPath, imgData ) ;
-            file_put_contents( destPath, imgData ) ;
+            file_put_contents( imgDestPath, imgData ) ;
          }
       }
       else
@@ -554,14 +682,31 @@ static INT32 parseImage( struct buf *ob,
                                     link->data[2] != 't' ||
                                     link->data[3] != 'p' ) ) ) )
          {
-            if( _convertMode == "single" )
+            string destPath( (const char *)link->data, link->size ) ;
+            string fullPath = _pRootPath ;
+
+            if( destPath.find( "images/" ) == 0 )
             {
-               BUFPUTSL( ob, "file:///" ) ;
+               destPath = destPath.substr( 7 ) ;
             }
-            bufput( ob, _pRootPath, strlen( _pRootPath) ) ;
-            bufput( ob, _pImagePath, strlen( _pImagePath) ) ;
-            BUFPUTSL( ob, "/" ) ;
-            houdini_escape_href( ob, link->data, link->size ) ;
+
+            fullPath += _pImagePath ;
+            fullPath += destPath ;
+            
+            if( fileIsExist( fullPath ) )
+            {
+               cout << "Warning unknow img : " << destPath << endl
+                    << "full path : " << fullPath << endl ;
+            }
+            else
+            {
+               if( _convertMode == "single" )
+               {
+                  fullPath = "file:///" + fullPath ;
+               }
+
+               bufput( ob, fullPath.c_str(), fullPath.length() ) ;
+            }
          }
          else
          {
@@ -571,7 +716,13 @@ static INT32 parseImage( struct buf *ob,
                sprintf( editionIdStr, "%d", _edition ) ;
                string urlPath ;
                string aLink( (const char *)link->data, link->size ) ;
-               urlPath = "/cn/index/Public/Home/images/" ;
+
+               if( aLink.find( "images/" ) == 0 )
+               {
+                  aLink = aLink.substr( 7 ) ;
+               }
+
+               urlPath = "__DOC_IMG__/" ;
                urlPath += editionIdStr ;
                urlPath += "/" ;
                aLink = urlPath + aLink ;
@@ -673,6 +824,11 @@ static void parseHeader( struct buf *ob, const struct buf *text, int level, void
       bufputc(ob, '\n');
    }
 
+   if( level == 1 )
+   {
+      ++_titleNum ;
+   }
+
    if( _convertMode == "normal" || _convertMode == "website" || _convertMode == "chm" )
    {
       if( options->flags & HTML_TOC )
@@ -687,11 +843,34 @@ static void parseHeader( struct buf *ob, const struct buf *text, int level, void
       {
          bufprintf( ob, "<h%d>", level ) ;
       }
+
       if( text )
       {
          bufput( ob, text->data, text->size ) ;
+
+         if( level > 1 )
+         {
+            if( text->size > 0 )
+            {
+               BUFPUTSL( _pNavOb, "<li><a href=\"#" );
+
+               houdini_escape_href( _pNavOb, text->data, text->size );
+
+               BUFPUTSL( _pNavOb, "\">" );
+
+               bufput( _pNavOb, text->data, text->size ) ;
+
+               BUFPUTSL( _pNavOb, "</a></li>\n" );
+            }
+         }
       }
+
       bufprintf( ob, "</h%d>\n", level ) ;
+
+      if( level == 1 && _titleNum == 1 && ( _convertMode == "normal" || _convertMode == "website" ) )
+      {
+         BUFPUTSL( ob, "<!--Nav Position-->" );
+      }
    }
    else if( _convertMode == "single" )
    {
@@ -701,6 +880,17 @@ static void parseHeader( struct buf *ob, const struct buf *text, int level, void
       ReplaceAll( filePath, "/", "_" ) ;
       ReplaceAll( filePath, "#", "_" ) ;
       anchor = filePath + "_" + anchor ;
+
+      if( level == 1 )
+      {
+         bufprintf( ob, "<p id=\"" ) ;
+         houdini_escape_href( ob, (const uint8_t *)filePath.c_str(), filePath.size() ) ;
+         bufprintf( ob, "\" name=\"" ) ;
+         houdini_escape_href( ob, (const uint8_t *)filePath.c_str(), filePath.size() ) ;
+         bufprintf( ob, "\" class=\"subsection_header_%d\">", level ) ;
+         bufprintf( ob, "</p>\n" ) ;
+      }
+
       bufprintf( ob, "<p id=\"" ) ;
       houdini_escape_href( ob, (const uint8_t *)anchor.c_str(), anchor.size() ) ;
       bufprintf( ob, "\" name=\"" ) ;
@@ -738,6 +928,7 @@ static void parseHeader( struct buf *ob, const struct buf *text, int level, void
          bufprintf( ob, "</p>\n" ) ;
       }
    }
+
 }
 
 void ReplaceAll( string &source, string oldStr, string newStr )

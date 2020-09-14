@@ -263,27 +263,69 @@ rndr_link(struct buf *ob, const struct buf *link, const struct buf *title, const
 	return 1;
 }
 
+static int _listNum = 0;
+
 static void
-rndr_list(struct buf *ob, const struct buf *text, int flags, void *opaque)
+rndr_list(struct buf *ob, const struct buf *text, int flags, void *opaque, int mode )
 {
-	if (ob->size) bufputc(ob, '\n');
-	bufput(ob, flags & MKD_LIST_ORDERED ? "<ol>\n" : "<ul>\n", 5);
-	if (text) bufput(ob, text->data, text->size);
-	bufput(ob, flags & MKD_LIST_ORDERED ? "</ol>\n" : "</ul>\n", 6);
+   if( ob->size ) bufputc( ob, '\n' );
+
+   if( mode == 1 )
+   {
+      BUFPUTSL( ob, "<div class=\"tab-cont\">\n" );
+      if( text ) bufput( ob, text->data, text->size );
+      BUFPUTSL( ob, "</div>\n" );
+   }
+   else
+   {
+      bufput( ob, flags & MKD_LIST_ORDERED ? "<ol>\n" : "<ul>\n", 5 );
+      if( text ) bufput( ob, text->data, text->size );
+      bufput( ob, flags & MKD_LIST_ORDERED ? "</ol>\n" : "</ul>\n", 6 );
+   }
+   _listNum = 0 ;
 }
 
 static void
-rndr_listitem(struct buf *ob, const struct buf *text, int flags, void *opaque)
+rndr_listitem(struct buf *ob, const struct buf *text, int flags, void *opaque, int mode )
 {
-	BUFPUTSL(ob, "<li>");
-	if (text) {
-		size_t size = text->size;
-		while (size && text->data[size - 1] == '\n')
-			size--;
+   if( mode == 1 )
+   {
+      if( _listNum == 0 )
+      {
+         BUFPUTSL( ob, "<div class=\"active\">" );
+      }
+      else
+      {
+         BUFPUTSL( ob, "<div>" );
+      }
 
-		bufput(ob, text->data, size);
-	}
-	BUFPUTSL(ob, "</li>\n");
+      if( text )
+      {
+         size_t size = text->size;
+
+         while( size && text->data[size - 1] == '\n' )
+         {
+            size--;
+         }
+
+         bufput( ob, text->data, size );
+      }
+      BUFPUTSL( ob, "</div>" );
+   }
+   else
+   {
+      BUFPUTSL( ob, "<li>" );
+      if( text )
+      {
+         size_t size = text->size;
+         while( size && text->data[size - 1] == '\n' )
+            size--;
+
+         bufput( ob, text->data, size );
+      }
+      BUFPUTSL( ob, "</li>\n" );
+   }
+   ++_listNum ;
 }
 
 static void

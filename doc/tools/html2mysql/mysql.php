@@ -43,7 +43,7 @@ function addNewEdition( $id, $version )
    return true ;
 }
 
-function addNewDir( $id )
+function addNewDir( $version )
 {
    $db = mysqli_connect( "192.168.20.248:3306", "root", "sequoiadb", "cn_comm" ) ;
    if( mysqli_connect_errno() )
@@ -54,7 +54,7 @@ function addNewDir( $id )
 
    mysqli_query( $db, "set names utf8" ) ;
 
-   $sql = "CREATE TABLE IF NOT EXISTS `tp_dir$id` (`cat_id` int(11) NOT NULL AUTO_INCREMENT,`cat_img` varchar(200) DEFAULT NULL,`cat_name` varchar(255) NOT NULL DEFAULT '',`cat_en_name` varchar(60) DEFAULT NULL,`cat_type` tinyint(1) unsigned NOT NULL DEFAULT '1',`keywords` varchar(255) NOT NULL DEFAULT '',`cat_desc` varchar(255) NOT NULL DEFAULT '',`sort_order` tinyint(3) unsigned NOT NULL DEFAULT '50',`parent_id` int(11) unsigned NOT NULL DEFAULT '0',`content` text,`is_open` int(11) NOT NULL DEFAULT '1',PRIMARY KEY (`cat_id`),KEY `cat_type` (`cat_type`),KEY `sort_order` (`sort_order`),KEY `parent_id` (`parent_id`)) DEFAULT CHARSET=utf8" ;
+   $sql = "CREATE TABLE IF NOT EXISTS `tp_dir$version` (`cat_id` int(11) NOT NULL AUTO_INCREMENT,`cat_name` varchar(255) NOT NULL DEFAULT '',`sort_order` tinyint(3) unsigned NOT NULL DEFAULT '50',`parent_id` int(11) unsigned NOT NULL DEFAULT '0',`is_open` int(11) NOT NULL DEFAULT '1',`has_doc` tinyint(1) unsigned NOT NULL DEFAULT '0',`is_newtoc` tinyint(1) NOT NULL DEFAULT '0'  COMMENT '是否展示新目录', `next_cat` int(11) NOT NULL,PRIMARY KEY (`cat_id`),KEY `sort_order` (`sort_order`),KEY `parent_id` (`parent_id`)) DEFAULT CHARSET=utf8 ;" ;
    if( mysqli_query( $db, $sql ) == FALSE )
    {
       echo "Falied to create dir table\n" ;
@@ -62,9 +62,9 @@ function addNewDir( $id )
       mysqli_close( $db ) ;
       return false ;
    }
-   if( mysqli_query( $db, "truncate table `tp_dir$id`" ) == FALSE )
+   if( mysqli_query( $db, "truncate table `tp_dir$version`" ) == FALSE )
    {
-      echo "Falied to truncate table tp_dir$id\n" ;
+      echo "Falied to truncate table tp_dir$version\n" ;
       echo mysqli_error( $db )."\n" ;
       mysqli_close( $db ) ;
       return false ;
@@ -74,39 +74,113 @@ function addNewDir( $id )
    return true ;
 }
 
-function _insertDirRecord( $db, $id, $dir, $order, $parentId )
+function _findNextDoc( $config, $path )
 {
-   $sql = "INSERT INTO `tp_dir$id` (`cat_id`, `cat_img`, `cat_name`, `cat_en_name`, `cat_type`, `keywords`, `cat_desc`, `sort_order`, `parent_id`, `content`, `is_open`) VALUES(".$dir['id'].", NULL, '".$dir['cn']."', NULL, 1, '', '', $order, $parentId, NULL, 1)" ;
+   foreach( $config['contents'] as $index => $value )
+   {
+      if( array_key_exists( 'contents', $value ) && array_key_exists( 'dir', $value ) )
+      {
+         $readmeFile = $path ;
+         $nextPath   = _cat_path( $readmeFile, $value['dir'] ) ;
+         $readmeFile = _cat_path( $nextPath, "Readme.html" ) ;
+
+         echo "$readmeFile \r\n" ;
+
+         if( file_exists( $readmeFile ) && filesize( $readmeFile ) > 0 )
+         {
+            return $value['id'] ;
+         }
+         else
+         {
+            $next = _findNextDoc( $value, $nextPath ) ;
+            if( $next > 0 )
+            {
+               return $next ;
+            }
+         }
+      }
+      else if( !array_key_exists( 'contents', $value ) && array_key_exists( 'file', $value ) )
+      {
+         return $value['id'] ;
+      }
+   }
+
+   return 0 ;
+}
+
+function _insertDirRecord( $db, $id, $dir, $order, $parentId, $path )
+{
+   if( array_key_exists( 'disable', $dir ) && $dir['disable'] )
+   {
+      return true ;
+   }
+
+   $isNewToc = 0 ;
+   $next = 0 ;
+
+   if( array_key_exists( 'top', $dir ) && $dir['top'] === true )
+   {
+      $isNewToc = 1 ;
+   }
+
+   $hasDoc = 0 ;
+   if( array_key_exists( 'id', $dir ) &&  array_key_exists( 'dir', $dir ) && $dir['id'] > 10 )
+   {
+      $readmeFile = _cat_path( $path, "Readme.html" ) ;
+
+      if( file_exists( $readmeFile ) && filesize( $readmeFile ) > 0 )
+      {
+         $hasDoc = 1 ;
+      }
+      else if ( $isNewToc )
+      {
+         //没有readme 并且 指定了是 top
+         $next = _findNextDoc( $dir, _cat_path( $path, $dir['dir'] ) ) ;
+      }
+   }
+
+   $sql = "INSERT INTO `tp_dir$id` (`cat_id`, `cat_name`, `sort_order`, `parent_id`, `is_open`, `has_doc`, `is_newtoc`, `next_cat` ) VALUES(".$dir['id'].", '".$dir['cn']."', $order, $parentId, 1, $hasDoc, $isNewToc, $next)" ;
    if( mysqli_query( $db, $sql ) == FALSE )
    {
       echo "Falied to insert tp_dir$id record\n" ;
       echo mysqli_error( $db )."\n" ;
       return false ;
    }
+
+   return true ;
 }
 
-function _insertDirAll( $db, $id, $config, $order, $parentId )
+function _insertDirAll( $db, $id, $config, $order, $parentId, $path )
 {
-   if( _insertDirRecord( $db, $id, $config, $order, $parentId ) )
+   if( false == _insertDirRecord( $db, $id, $config, $order, $parentId, $path ) )
    {
-      echo "Failed to insert dir record, id = $config.id\n" ;
+      echo "Failed to insert dir record, id = ".$config['id']."\n" ;
       return false ;
    }
+
    if( array_key_exists( 'contents', $config ) )
    {
       foreach( $config['contents'] as $index => $value )
       {
-         if( _insertDirAll( $db, $id, $value, $index + 1, $config['id'] ) == FALSE )
+         $newPath = $path ;
+
+         if( array_key_exists( 'id', $value ) &&  array_key_exists( 'dir', $value ) )
          {
-            echo "Failed to insert dir record, id = $value.id\n" ;
+            $newPath = _cat_path( $newPath, $value['dir'] ) ;
+         }
+
+         if( _insertDirAll( $db, $id, $value, $index + 1, $config['id'], $newPath ) == FALSE )
+         {
+            echo "Failed to insert dir record, id = ".$value['id']."\n" ;
             return false ;
          }
       }
    }
+
    return true ;
 }
 
-function insertDir( $id, $config )
+function insertDir( $id, $config, $rootPath )
 {
    $config = array(
       "id" => 1, 
@@ -119,43 +193,6 @@ function insertDir( $id, $config )
             "en" => "document", 
             "contents" => $config['contents']
          ),
-         array(
-            "id" => 4, 
-            "cn" => "帮助FAQ", 
-            "en" => "FAQ", 
-            "contents" => array(
-               array(
-                  "id" => 1432191003,
-                  "cn" => "SequoiaDB基础",
-                  "en" => ""
-               ),
-               array(
-                  "id" => 1432191004,
-                  "cn" => "SequoiaDB操作",
-                  "en" => ""
-               ),
-               array(
-                  "id" => 1432191005,
-                  "cn" => "SequoiaDB分片",
-                  "en" => ""
-               ),
-               array(
-                  "id" => 1432191006,
-                  "cn" => "SequoiaDB集合分区",
-                  "en" => ""
-               ),
-               array(
-                  "id" => 1432191007,
-                  "cn" => "SequoiaDB运维",
-                  "en" => ""
-               ),
-               array(
-                  "id" => 1432191008,
-                  "cn" => "SequoiaDB问题诊断",
-                  "en" => ""
-               )
-            )
-         )
       )
    ) ;
    $db = mysqli_connect( "192.168.20.248:3306", "root", "sequoiadb", "cn_comm" ) ;
@@ -166,8 +203,11 @@ function insertDir( $id, $config )
    }
    
    mysqli_query( $db, "set names utf8" ) ;
+
+   $rootPath = _cat_path( $rootPath, "build" ) ;
+   $rootPath = _cat_path( $rootPath, "mid" ) ;
    
-   if( _insertDirAll( $db, $id, $config, 1, 0 ) == FALSE )
+   if( _insertDirAll( $db, $id, $config, 1, 0, $rootPath ) == FALSE )
    {
       echo "Failed to insert dir all\n" ;
       mysqli_close( $db ) ;
@@ -178,7 +218,7 @@ function insertDir( $id, $config )
    return true ;
 }
 
-function addNewDoc( $id )
+function addNewDoc( $version )
 {
    $db = mysqli_connect( "192.168.20.248:3306", "root", "sequoiadb", "cn_comm" ) ;
    if( mysqli_connect_errno() )
@@ -189,7 +229,7 @@ function addNewDoc( $id )
 
    mysqli_query( $db, "set names utf8" ) ;
 
-   $sql = "CREATE TABLE IF NOT EXISTS `tp_doc$id` (`article_id` int(11) unsigned NOT NULL AUTO_INCREMENT,`cat_id` int(11) NOT NULL DEFAULT '0',`title` varchar(150) DEFAULT NULL,`filetitle` varchar(100) DEFAULT NULL,`fileshort` varchar(200) NOT NULL,`content` longtext NOT NULL,`keywords` varchar(255) NOT NULL DEFAULT '',`is_open` tinyint(1) unsigned NOT NULL DEFAULT '1',`is_recommend` tinyint(1) NOT NULL DEFAULT '0',`add_time` int(10) unsigned NOT NULL DEFAULT '0',`file_url` varchar(255) NOT NULL DEFAULT '',`link` varchar(255) NOT NULL DEFAULT '',`description` varchar(255) DEFAULT NULL,`sort_order` int(8) NOT NULL DEFAULT '50',`short` text,`original_img` varchar(50) DEFAULT NULL,`thumb_img` varchar(50) DEFAULT NULL,`label` varchar(100) DEFAULT NULL,`is_link` tinyint(1) NOT NULL DEFAULT '1',`downocunt` int(11) NOT NULL DEFAULT '0',`article_url` text,`edition` int(11) NOT NULL DEFAULT '0',`subEdition` int(11) NOT NULL DEFAULT '1',PRIMARY KEY (`article_id`),KEY `cat_id` (`cat_id`)) DEFAULT CHARSET=utf8" ;
+   $sql = "CREATE TABLE IF NOT EXISTS `tp_doc$version` ( `article_id` int(11) unsigned NOT NULL AUTO_INCREMENT, `cat_id` int(11) NOT NULL DEFAULT '0', `title` varchar(150) DEFAULT NULL, `content` longtext NOT NULL, `is_open` tinyint(1) unsigned NOT NULL DEFAULT '1', `add_time` int(10) unsigned NOT NULL DEFAULT '0', `sort_order` int(8) NOT NULL DEFAULT '50', `edition` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`article_id`), KEY `cat_id` (`cat_id`)) DEFAULT CHARSET=utf8 ;" ;
    if( mysqli_query( $db, $sql ) == FALSE )
    {
       echo "Falied to create doc table\n" ;
@@ -197,9 +237,9 @@ function addNewDoc( $id )
       mysqli_close( $db ) ;
       return false ;
    }
-   if( mysqli_query( $db, "truncate table `tp_doc$id`" ) == FALSE )
+   if( mysqli_query( $db, "truncate table `tp_doc$version`" ) == FALSE )
    {
-      echo "Falied to truncate table tp_doc$id\n" ;
+      echo "Falied to truncate table tp_doc$version\n" ;
       echo mysqli_error( $db )."\n" ;
       mysqli_close( $db ) ;
       return false ;
@@ -209,25 +249,45 @@ function addNewDoc( $id )
    return true ;
 }
 
-function _insertDocAll( $db, $id, $config, $path )
+function _insertDocAll( $db, $version, $config, $path )
 {
    if( array_key_exists( 'contents', $config ) )
    {
       $newPath = $path ;
       if( array_key_exists( 'dir', $config ) )
       {
-         if( getOSInfo() == 'windows' )
+         $newPath = _cat_path( $path, $config['dir'] ) ;
+      }
+
+      //被禁用
+      if( array_key_exists( 'disable', $config ) && $config['disable'] === true )
+      {
+         return true ;
+      }
+
+      {
+         $readmeFile = _cat_path( $newPath, "Readme.html" ) ;
+
+         if( file_exists( $readmeFile ) && filesize( $readmeFile ) > 0 )
          {
-            $newPath = $path."\\".$config['dir'] ;
-         }
-         else
-         {
-            $newPath = $path."/".$config['dir'] ;
+            $readmeConfig = array(
+               "id"     =>  $config['id'],
+               "file"   =>  "Readme",
+               "cn"     =>  $config['cn'],
+               "en"     =>  $config['en'],
+            ) ;
+
+            if( _insertDocAll( $db, $version, $readmeConfig, $newPath ) == FALSE )
+            {
+               echo "Failed to insert dir record, id = ".$value['id']."\n" ;
+               return false ;
+            }
          }
       }
+
       foreach( $config['contents'] as $index => $value )
       {
-         if( _insertDocAll( $db, $id, $value, $newPath ) == FALSE )
+         if( _insertDocAll( $db, $version, $value, $newPath ) == FALSE )
          {
             echo "Failed to insert dir record, id = ".$value['id']."\n" ;
             return false ;
@@ -236,13 +296,11 @@ function _insertDocAll( $db, $id, $config, $path )
    }
    else
    {
-      if( getOSInfo() == 'windows' )
+      $path = _cat_path( $path, $config['file'].".html" ) ;
+
+      if( array_key_exists( 'disable', $config ) && $config['disable'] == true )
       {
-         $path = $path."\\".$config['file'].".html" ;
-      }
-      else
-      {
-         $path = $path."/".$config['file'].".html" ;
+         return true ;
       }
       if( file_exists( $path ) == FALSE )
       {
@@ -254,10 +312,11 @@ function _insertDocAll( $db, $id, $config, $path )
       $contents = file_get_contents( $path ) ;
       $title = mysqli_real_escape_string( $db, $title ) ;
       $contents = mysqli_real_escape_string( $db, $contents ) ;
-      $sql = "INSERT INTO `tp_doc$id` (`cat_id`, `title`, `fileshort`, `content`, `keywords`, `add_time`, `file_url`, `link`, `edition`) VALUES($catid, '$title', '', '$contents', '', '".time()."', '', '', $id)" ;
+
+      $sql = "INSERT INTO `tp_doc$version` (`cat_id`, `title`, `content`, `add_time`, `edition`) VALUES($catid, '$title', '$contents', '".time()."', $version)" ;
       if( mysqli_query( $db, $sql ) == FALSE )
       {
-         echo "Falied to insert tp_doc$id record\n" ;
+         echo "Falied to insert tp_doc$version record\n" ;
          echo mysqli_error( $db )."\n" ;
          return false ;
       }
@@ -265,7 +324,7 @@ function _insertDocAll( $db, $id, $config, $path )
    return true ;
 }
 
-function insertDoc( $id, $config, $root )
+function insertDoc( $version, $config, $root )
 {
    $db = mysqli_connect( "192.168.20.248:3306", "root", "sequoiadb", "cn_comm" ) ;
    if( mysqli_connect_errno() )
@@ -275,17 +334,12 @@ function insertDoc( $id, $config, $root )
    }
 
    mysqli_query( $db, "set names utf8" ) ;
-   
-   $rootPath = "" ;
-   if( getOSInfo() == 'windows' )
-   {
-      $rootPath = "$root\\build\\mid" ;
-   }
-   else
-   {
-      $rootPath = "$root/build/mid" ;
-   }
-   if( _insertDocAll( $db, $id, $config, $rootPath ) == FALSE )
+
+   $rootPath = $root ;
+   $rootPath = _cat_path( $rootPath, "build" ) ;
+   $rootPath = _cat_path( $rootPath, "mid" ) ;
+
+   if( _insertDocAll( $db, $version, $config, $rootPath ) == FALSE )
    {
       echo "Failed to insert dir all\n" ;
       mysqli_close( $db ) ;
@@ -294,4 +348,16 @@ function insertDoc( $id, $config, $root )
    
    mysqli_close( $db ) ;
    return true ;
+}
+
+function _cat_path( $path, $name )
+{
+   if( getOSInfo() == 'windows' )
+   {
+      return "$path\\$name" ;
+   }
+   else
+   {
+      return "$path/$name" ;
+   }
 }

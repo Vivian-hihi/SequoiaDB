@@ -46,7 +46,9 @@ function formatApiDoc( $path )
          }
          else
          {
-            if( pathinfo( $file )['extension'] == 'html' || pathinfo( $file )['extension'] == 'htm' )
+            $pathInfo = pathinfo( $file ) ;
+
+            if( array_key_exists( 'extension', $pathInfo ) && ( $pathInfo['extension'] == 'html' || $pathInfo['extension'] == 'htm' ) )
             {
                $contents = file_get_contents( $newPath ) ;
                if ( $contents === false )
