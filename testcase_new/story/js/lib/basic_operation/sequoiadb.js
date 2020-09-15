@@ -313,7 +313,7 @@ function Sequoiadb ( hostname, svcname, username, password )
       function( name, groups, options )
       {
          if( options === undefined ) { options = {}; }
-         if( groups === undefined ) { options = []; }
+         if( groups === undefined ) { groups = []; }
          try
          {
             var domain = db.createDomain( name, groups, options );
