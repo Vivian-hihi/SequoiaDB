@@ -237,12 +237,6 @@
                "en": "Aggregate"
             },
             {
-               "id": 1432190590,
-               "file": "transaction",
-               "cn": "事务",
-               "en": "Transaction"
-            },
-            {
                "id": 1432190615,
                "dir": "sharding",
                "cn": "数据分区",
@@ -271,12 +265,6 @@
                      "file": "sharding_index",
                      "cn": "分区索引",
                      "en": "Sharding Index"
-                  },
-                  {
-                     "id": 1432190619,
-                     "file": "background_task",
-                     "cn": "后台任务",
-                     "en": "Background Task"
                   },
                   {
                      "id": 1432190620,
@@ -769,7 +757,7 @@
              "file": "javaapi",
              "cn": "Java 接口",
              "en": "read and write"
-          }		  
+          } 
         ]
       },
       {
@@ -793,35 +781,49 @@
          "en": "Infrastructure",
          "contents": [
             {
-               "id": 1519649201,
-               "file": "overview",
-               "cn": "概述",
-               "en": "Overview"
-            },
-            {
-               "id": 1519655618,
-               "file": "sql_node",
-               "cn": "SQL节点",
-               "en": "SQL Node"
-            },
-            {
-               "id": 1432190632,
-               "file": "coord_node",
-               "cn": "协调节点",
-               "en": "Coord Node"
-            },
-            {
-               "id": 1432190635,
-               "dir": "catalog_node",
-               "cn": "编目节点",
-               "en": "Catalog Node",
+               "id": 1600137427,
+               "dir": "Node",
+               "cn": "节点",
+               "en": "Node",
                "contents": [
+                  {
+                     "id": 1432190632,
+                     "file": "coord_node",
+                     "cn": "协调节点",
+                     "en": "Coord Node"
+                  },
                   {
                      "id": 1519625790,
                      "file": "catalog_node",
-                     "cn": "概述",
-                     "en": "Overview"
+                     "cn": "编目节点",
+                     "en": "Catalog Node"
                   },
+                  {
+                     "id": 1432190640,
+                     "file": "data_node",
+                     "cn": "数据节点",
+                     "en": "Data Node"
+                  },
+                  {
+                     "id": 1519655618,
+                     "file": "sql_node",
+                     "cn": "SQL节点",
+                     "en": "SQL Node"
+                  },
+                  {
+                     "id": 1432190631,
+                     "file": "cm_node",
+                     "cn": "资源管理节点",
+                     "en": "CM Node"
+                  }
+               ]
+            },
+            {
+               "id": 1432190635,
+               "dir": "Catalog_Table",
+               "cn": "编目表",
+               "en": "Catalog Table",
+               "contents": [
                   {
                      "id": 1519625791,
                      "file": "SYSCOLLECTIONS",
@@ -873,18 +875,6 @@
                ]
             },
             {
-               "id": 1432190640,
-               "file": "data_node",
-               "cn": "数据节点",
-               "en": "Data Node"
-            },
-            {
-               "id": 1432190631,
-               "file": "sdbcm",
-               "cn": "资源管理节点",
-               "en": "CM Node"
-            },
-            {
                "id": 1432190645,
                "dir": "replication",
                "cn": "分区组",
@@ -917,16 +907,80 @@
                ]
             },
             {
-               "id": 1432190642,
-               "file": "background_task",
-               "cn": "后台任务",
-               "en": "Backgroud Task"
-            },
-            {
                "id": 1432190649,
                "file": "domain",
-               "cn": "域",
+               "cn": "数据域",
                "en": "Domain"
+            },
+            {
+               "id": 1432190590,
+               "dir": "Transactions",
+               "cn": "分布式事务",
+               "en": "Transactions",
+               "contents": [
+                  {
+                     "id": 1600139245,
+                     "file": "transaction_log",
+                     "cn": "事务日志",
+                     "en": "Transaction Log"
+                  },
+                  {
+                     "id": 1600139301,
+                     "file": "2pc",
+                     "cn": "二阶段提交",
+                     "en": "2pc"
+                  },
+                  {
+                     "id": 1600139496,
+                     "file": "isolation",
+                     "cn": "隔离级别",
+                     "en": "Isolation"
+                  },
+                  {
+                     "id": 1600139505,
+                     "file": "configurations",
+                     "cn": "事务配置",
+                     "en": "Configurations"
+                  }
+               ]
+            },
+            {
+               "id": 1600139959,
+               "dir": "Thread_Model",
+               "cn": "线程模型",
+               "en": "Thread Model",
+               "contents": [
+                  {
+                     "id": 1600139985,
+                     "file": "intro",
+                     "cn": "线程模型简介",
+                     "en": "Intro"
+                  },
+                  {
+                     "id": 1432190651,
+                     "file": "edu",
+                     "cn": "引擎调度单元",
+                     "en": "EDU"
+                  },
+                  {
+                     "id": 1600148613,
+                     "file": "session",
+                     "cn": "会话",
+                     "en": "Session"
+                  },
+                  {
+                     "id": 1432190642,
+                     "file": "background",
+                     "cn": "后台任务",
+                     "en": "Background"
+                  }
+               ]
+            },
+            {
+               "id": 1600155413,
+               "file": "compression_encryption",
+               "cn": "数据压缩",
+               "en": "Compression Encryption"
             }
          ]
       },
@@ -941,12 +995,6 @@
                "file": "sdbcm",
                "cn": "数据库服务",
                "en": "Database service"
-            },
-            {
-               "id": 1432190651,
-               "file": "EDU",
-               "cn": "引擎调度单元",
-               "en": "EDU"
             },
             {
               "id": 1577931587,

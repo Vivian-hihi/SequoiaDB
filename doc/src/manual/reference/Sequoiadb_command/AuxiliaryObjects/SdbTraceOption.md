@@ -88,7 +88,7 @@ conponent 参数的可选值如下表：
 | ------------ | --------------------- | -------- | ---------- | -------- |
 | threadType   | string / string array | ---      | 指定线类型 | 否       |
 
-threadType 参数的可选值详见[线程类型](database_management/EDU.md)
+threadType 参数的可选值详见[线程类型](manual/infrastructure/Thread_Model/edu.md) 
 
 > **Note：**
 

@@ -1,6 +1,6 @@
-##描述##
+﻿##描述##
 
-当前[事务](basic_operation/transaction.md)列表 SDB_LIST_TRANSACTIONS_CURRENT 列出当前会话在数据库中正在进行的事务信息。
+当前事务列表 SDB_LIST_TRANSACTIONS_CURRENT 列出当前会话在数据库中正在进行的事务信息。
 
 当前会话在每一个数据节点上正在进行的事务为一条记录（一般每个会话在每个数据节点上只有一个事务记录）。
 

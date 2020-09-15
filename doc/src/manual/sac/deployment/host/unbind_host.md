@@ -9,20 +9,20 @@
 
 1. 进入 **部署 - 主机** 页面。
 
-   ![解绑主机](sac/deployment/remove_host/unbind_host_1.png)
+   ![解绑主机](images/sac/deployment/host/unbind_host_1.png)
 
 2. 选择要解绑的主机，可以点击 **全选** 按钮选择全部。
 
-   ![解绑主机](sac/deployment/remove_host/unbind_host_2.png)
+   ![解绑主机](images/sac/deployment/host/unbind_host_2.png)
 
 3. 点击 **删除主机-解绑主机** 按钮。
 
-   ![解绑主机](sac/deployment/remove_host/unbind_host_3.png)
+   ![解绑主机](images/sac/deployment/host/unbind_host_3.png)
 
 4. 解绑完成，点击 **确定**。
 
-   ![解绑主机](sac/deployment/remove_host/unbind_host_4.png)
+   ![解绑主机](images/sac/deployment/host/unbind_host_4.png)
 
 5. 演示的三台主机都解绑了。
 
-   ![解绑主机](sac/deployment/remove_host/unbind_host_5.png)
+   ![解绑主机](images/sac/deployment/host/unbind_host_5.png)

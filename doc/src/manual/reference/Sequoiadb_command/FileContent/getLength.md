@@ -1,4 +1,4 @@
-##语法##
+﻿##语法##
 
 ***getLength()***
 
@@ -33,7 +33,7 @@ FileContent
   > var file = new File( "/opt/trunk/file.dump" )
   ```
 
-* 读取文件内容到 fileContent 对象中（详细可参考命令[File::readContent](reference/Sequoiadb_command/File/readContent)）；
+* 读取文件内容到 fileContent 对象中（详细可参考命令[File::readContent](manual/reference/Sequoiadb_command/File/readContent.md)）；
 
   ```lang-javascript
   > var content = file.readContent( 10000 )

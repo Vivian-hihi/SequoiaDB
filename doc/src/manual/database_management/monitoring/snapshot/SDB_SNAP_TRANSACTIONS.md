@@ -1,6 +1,6 @@
 ##描述##
 
-[事务](basic_operation/transaction.md)快照 SDB_SNAP_TRANSACTIONS 列出数据库中正在进行的事务信息。
+事务快照 SDB_SNAP_TRANSACTIONS 列出数据库中正在进行的事务信息。
 
 每一个数据节点上正在进行的每一个事务为一条记录。
 

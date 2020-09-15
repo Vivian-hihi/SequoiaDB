@@ -1,4 +1,4 @@
-##描述##
+﻿##描述##
 
 会话列表 SDB_LIST_SESSIONS 列出当前数据库节点中所有的用户与系统会话，每一个会话为一条记录。
 
@@ -14,7 +14,7 @@ SDB_LIST_SESSIONS
 | SessionID | 整型或长整型 | 会话 ID                                |
 | TID       | 整型         | 该会话所对应的系统线程 ID              |
 | Status    | 字符串       | 会话状态<br>- Creating：创建状态<br>- Running：运行状态<br>- Waiting：等待状态<br>- Idle：线程池待机状态<br>- Destroying：销毁状态 |
-| Type      | 字符串       | [EDU 类型](database_management/EDU.md) |
+| Type      | 字符串       | [EDU 类型](manual/infrastructure/Thread_Model/edu.md)  |
 | Name      | 字符串       | EDU 名，一般系统 EDU 名为空            |
 | RelatedID | 字符串       | 会话的内部标识                         |
 

@@ -18,7 +18,7 @@
 > - 请确保所有主机都设置了主机名，并且都设置了主机名/IP地址映射关系
 > - 请确保所有主机两两之间可通过主机名建立网络连接（如 ssh 主机名）
 
-1. 参照[Linux环境推荐配置](installation/system/linux_suggest_settings)调整 Linux 系统的环境配置
+1. 参照[Linux环境推荐配置](manual/installation/system/linux_suggest_settings.md)调整 Linux 系统的环境配置
 
 2. 以root 用户登陆目标主机，解压 SequoiaDB 巨杉数据库产品包，并为解压得到的 `sequoiadb-3.2-linux_x86_64-installer.run` 安装包赋可执行权限
 

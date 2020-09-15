@@ -18,7 +18,7 @@ Oma
 
 * `config` ( *Object*， *必填* )
 	
-	[sdbcm](infrastructure/sdbcm.md) 的配置信息。
+	[sdbcm](manual/infrastructure/Node/cm_node.md) 的配置信息。
 
 * `confFile` ( *String*， *选填* )
 
