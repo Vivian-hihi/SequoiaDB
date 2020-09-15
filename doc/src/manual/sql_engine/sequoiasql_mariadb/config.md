@@ -7,7 +7,7 @@
 | AUTO_INCREMENT | 1 | 自增字段的起始值，SequoiaDB 的自增字段不是严格递增，而是趋势递增，可参考 SequoiaDB [自增字段](data_model/auto_increment.md)章节 |
 | CHARACTER SET | utf8mb4 | 字符数据的字符集 |
 | COLLATE | utf8mb4_bin | 字符数据的比较规则，不支持忽略大小写的字符比较规则，字符比较对大小写敏感 |
-| COMMENT | "" | 表备注信息，还可以通过它指定更多 SequoiaDB 引擎的选项，可参考[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置) |
+| COMMENT | "" | 表备注信息，还可以指定更多 SequoiaDB 引擎的选项，可参考[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置) |
 | ENGINE | SEQUOIADB | 表存储引擎，必须指定为 SEQUOIADB 才能使用本分布式存储引擎，一般无需显式指定 |
 
 **示例**：
@@ -106,7 +106,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_auto_partition**
 
-该参数可以配置 MariaDB 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MariaDB 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
+该参数可以配置 MariaDB 是否使用自动分区功能。自动分区可以普遍提升 SequoiaDB 的性能。自动分区默认启动，启动时，在 MariaDB 上创建表将同步在 SequoiaDB 上创建对应的分区表（hash 分区，包含所有分区组）。自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
 
 如果开启自动分区后，部分表不希望被分区，可以在[自定义表配置](sql_engine/sequoiasql_mariadb/config.md#自定义表配置)中指定 auto_partition 为 false。
 
@@ -123,7 +123,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_replica_size**
 
-该参数可以配置表默认的写操作需同步的副本数。副本数多时，数据一致性强度高，但性能会有所下降；副本数少时，则反之。具体可参考 SequoiaDB 的创建集合的 [ReplSize 参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。
+该参数可以配置表默认的写操作需同步的副本数，取值范围为[-1,7]。副本数多时，数据一致性强度高，但性能会有所下降；副本数少时，则反之。具体可参考 SequoiaDB 创建集合的 [ReplSize 参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。
 
 + 类型：int32
 + 默认值：1
@@ -143,7 +143,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_bulk_insert_size**
 
-该参数可以配置 SequoiaDB 每次进行批量插入的记录数。在进行插入性能的调优时，可以根据实际适当调整这个值。
+该参数可以配置 SequoiaDB 每次进行批量插入的记录数，取值范围为[1,100000]。在进行插入性能的调优时，可以根据实际适当调整这个值。
 
 + 类型：int32
 + 默认值：2000
@@ -154,7 +154,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_selector_pushdown_threshold**
 
-该参数可以配置查询字段下压的触发阈值。查询字段不下压时，SequoiaDB 集群总是返回完整记录给 MariaDB，由 MariaDB 过滤有用字段，而在查询字段下压时，SequoiaDB 集群只返回 MariaDB 所需字段。在查询字段个数/表总字段个数的百分比小于等于该阈值时，查询字段下压，否则不下压。下压查询字段可以节省了网络传输，但同时也会增加 SequoiaDB 工作，可以根据实际适当调整。
+该参数可以配置查询字段下压的触发阈值，取值范围为[0,100]。查询字段不下压时，SequoiaDB 集群总是返回完整记录给 MariaDB，由 MariaDB 过滤有用字段；而在查询字段下压时，SequoiaDB 集群只返回 MariaDB 所需字段。在查询字段个数/表总字段个数的百分比小于等于该阈值时查询字段下压，否则不下压。下压查询字段可以节省了网络传输，但同时也会增加 SequoiaDB 工作，可以根据实际适当调整。
 
 + 类型：uint32
 + 默认值：30
@@ -163,10 +163,15 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_optimizer_options**
 
-该参数可以配置是否开启优化计数、更新、删除操作。direct_count 决定是否开启优化 SELECT COUNT(*) 行为。未优化时，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MariaDB 进行计数；开启优化时，SELECT COUNT(*) 会对接到 SequoiaDB 的 [SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md) 方法，由 SequoiaDB 进行计数。direct_delete 和 direct_update 开启后，在符合优化的场景下会直接下压 delete 和 update 语句到 SequoiaDB 执行，从而减少网络 IO。
-
+该参数可以配置是否开启优化操作。选项包括 direct_count, direct_delete, direct_update, direct_sort, direct_limit。<br>
+direct_count：将 count 语句直接下压到 SeuoiaDB 执行。优化前，SELECT COUNT(*) 会请求 SequoiaDB 返回表中的所有记录，由 MariaDB 进行计数；优化后，SELECT COUNT(*) 会对接到 SequoiaDB 的 [SdbCollection.count()](reference/Sequoiadb_command/SdbCollection/count.md) 方法，由 SequoiaDB 进行计数。<br>
+direct_update：将 update 语句直接下压到 SeuoiaDB 执行。优化前，MariaDB 会先查询匹配记录，然后逐条记录地下发更新请求。优化后，在符合条件的场景下，只需下发一次更新请求，从而减少网络 IO。<br>
+direct_delete：将 delete 语句直接下压到 SeuoiaDB 执行。原理与 direct_update 相似，可以减少网络IO。<br>
+direct_sort：将 order by 和 group by 直接下压到 SeuoiaDB 执行。优化前，排序操作在单个 MariaDB 实例上完成。优化后，排序操作由 SequoiaDB 完成。得益于 SequoiaDB 多节点并发排序的能力，性能可以得到提升。<br>
+direct_limit: 将 limit 和 offset 直接下压到 SequoiaDB 执行。优化前，SequoiaDB 需返回所有匹配记录，limit 和 offset 操作在 MariaDB 实例进行。优化后，在符合条件的场景下，SequoiaDB 只需返回 limit 指定的记录数。该选项与 direct_sort 结合使用，可以极大地提升分页查询效率。
+  
 + 类型：set
-+ 默认值："direct_count，direct_delete，direct_update"
++ 默认值："direct_count, direct_delete, direct_update, direct_sort, direct_limit"
 + 作用范围：Global, Session
 + 是否支持在线修改生效：是
 
@@ -174,7 +179,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_use_transaction**
 
-该参数可以配置事务功能。在业务无需事务功能时，可以将它设成 OFF，从而节省不必要的开销。
+该参数可以配置事务功能。在业务无需事务功能时，可设值为 OFF，从而节省不必要的开销。
 
 + 类型：boolean
 + 默认值：ON
@@ -209,7 +214,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_stats_sample_num**
 
-该参数可以指定抽样的记录个数，取值范围为 [100, 10000]，指定 0 表示缺省。该参数不能与 sequoiadb_stats_sample_percent 同时指定。
+该参数可以指定抽样的记录个数，取值范围为[100,10000]，指定 0 表示缺省。该参数不能与 sequoiadb_stats_sample_percent 同时指定。
 
 + 类型：int32
 + 默认值：200
@@ -218,7 +223,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_stats_sample_percent**
 
-该参数可以指定抽样的比例，取值范围为 [0.0, 100.0]，指定 0.0 表示缺省。表记录数和比例的乘积为抽样的记录数。个数会自动调整在 100~10000 之间（小于 100 调整为 100，大于 10000 调整为 10000）。该参数不能与 sequoiadb_stats_sample_num 同时指定。
+该参数可以指定抽样的比例，取值范围为[0.0,100.0]，指定 0.0 表示缺省。表记录数和比例的乘积为抽样的记录数。个数会自动调整在 100~10000 之间（小于 100 调整为 100，大于 10000 调整为 10000）。该参数不能与 sequoiadb_stats_sample_num 同时指定。
 
 + 类型：double
 + 默认值：0.0
@@ -227,7 +232,7 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 **sequoiadb_stats_cache**
 
-该参数可以配置是否加载 SequoiaDB 统计信息到 MySQL 缓存。统计信息缓存可以帮助生成更高效的访问计划，但会有少量的加载开销。关闭时，则使用默认规则生成访问计划，不使用统计信息。
+该参数可以配置是否加载 SequoiaDB 统计信息到 MariaDB 缓存。统计信息缓存可以帮助生成更高效的访问计划，但会有少量的加载开销。关闭时，则使用默认规则生成访问计划，不使用统计信息。
 
 + 类型：boolean
 + 默认值：ON
