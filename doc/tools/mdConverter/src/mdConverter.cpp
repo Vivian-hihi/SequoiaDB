@@ -1377,7 +1377,13 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
          if( _convertMode == "single" || _convertMode == "word" )
          {
             outputPath = _htmlPath + "/build.html" ;
-
+            string htmlTitle ;
+            rc = convertHtmlHeader( level, subPath + file + ".md", cnTitle, htmlTitle ) ;
+            if( rc )
+            {
+               cout << "Failed to convert html header" << endl ;
+               goto error ;
+            }
             if( isFirstMd )
             {
                isFirstMd = FALSE ;
@@ -1392,24 +1398,11 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
                   goto error ;
                }
             }
-
-            if( _convertMode == "word" )
+            rc = file_put_contents( outputPath, htmlTitle, TRUE ) ;
+            if( rc )
             {
-               string htmlTitle ;
-
-               rc = convertHtmlHeader( level, subPath + file + ".md", cnTitle, htmlTitle ) ;
-               if( rc )
-               {
-                  cout << "Failed to convert html header" << endl ;
-                  goto error ;
-               }
-
-               rc = file_put_contents( outputPath, htmlTitle, TRUE ) ;
-               if( rc )
-               {
-                  cout << "Failed to put file, path: " << outputPath << endl ;
-                  goto error ;
-               }
+               cout << "Failed to put file, path: " << outputPath << endl ;
+               goto error ;
             }
          }
          else
