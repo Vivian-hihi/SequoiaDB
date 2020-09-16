@@ -56,6 +56,12 @@ class SequoiaDB
    define( "SDB_SNAP_SVCTASKS",            14 ) ;
    /** Get the snapshot of sequences. */
    define( "SDB_SNAP_SEQUENCES",           15 ) ;
+   /** Get the snapshot of queries */
+   define( "SDB_SNAP_QUERIES",             18 ) ;
+   /** Get the snapshot of latch waits */
+   define( "SDB_SNAP_LATCHWAITS",          19 ) ;
+   /** Get the snapshot of lock waits */
+   define( "SDB_SNAP_LOCKWAITS",           20 ) ;
    /** Get the snapshot of index statistics */
    define( "SDB_SNAP_INDEXSTATS",          21 ) ;
 
@@ -137,9 +143,9 @@ class SequoiaDB
    /** Get the list of users. */
    define( "SDB_LIST_USERS",                    16 ) ;
    /** Get the list of the collections in specified domain. */
-   define( "SDB_LIST_CL_IN_DOMAIN",     129 ) ;
+   define( "SDB_LIST_CL_IN_DOMAIN",             129 ) ;
    /** Get the list of the collection spaces in specified domain. */
-   define( "SDB_LIST_CS_IN_DOMAIN",     130 ) ;
+   define( "SDB_LIST_CS_IN_DOMAIN",             130 ) ;
 
    /**
     * SequoiaDB class constructor.
@@ -660,6 +666,9 @@ class SequoiaDB
     *                   SDB_SNAP_CONFIGS               : Get the snapshot of node configurations
     *                   SDB_SNAP_SVCTASKS              : Get the snapshot of service tasks
     *                   SDB_SNAP_SEQUENCES             : Get the snapshot of sequences
+    *                   SDB_SNAP_QUERIES               : Get the snapshot of queries
+    *                   SDB_SNAP_LATCHWAITS            : Get the snapshot of latch waits
+    *                   SDB_SNAP_LOCKWAITS             : Get the snapshot of lock waits
     *                   SDB_SNAP_INDEXSTATS            : Get the snapshot of index statistics
     *                   @endcode
     *
