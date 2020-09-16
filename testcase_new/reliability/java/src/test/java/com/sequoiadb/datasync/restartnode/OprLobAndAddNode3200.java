@@ -48,6 +48,7 @@ public class OprLobAndAddNode3200 extends SdbTestBase {
     private String clGroupName = null;
     private String randomHost = null;
     private int randomPort;
+    private AddNodeTask aTask = null ;
 
     @BeforeClass
     public void setUp() {
@@ -95,7 +96,7 @@ public class OprLobAndAddNode3200 extends SdbTestBase {
                     10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             OprLobTask oTask = new OprLobTask(clName);
-            AddNodeTask aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
+            aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
             mgr.addTask( oTask );
             mgr.addTask( aTask );
             mgr.execute();
@@ -130,7 +131,7 @@ public class OprLobAndAddNode3200 extends SdbTestBase {
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             CollectionSpace cs = db.getCollectionSpace( csName );
             cs.dropCollection( clName );
-            removeNewNode( db );
+            aTask.removeNode();
         } catch ( BaseException e ) {
             Assert.fail(
                     e.getMessage() + "\r\n" + Utils.getKeyStack( e, this ) );
@@ -162,18 +163,5 @@ public class OprLobAndAddNode3200 extends SdbTestBase {
         }
     }
 
-    private void removeNewNode( Sequoiadb db ) {
-        try {
-            GroupWrapper clGroupWrapper = groupMgr
-                    .getGroupByName( clGroupName );
-            if ( clGroupWrapper.getMaster().svcName()
-                    .equals( "" + randomPort ) ) {
-                clGroupWrapper.changePrimary();
-            }
-        } catch ( ReliabilityException e ) {
-            e.printStackTrace();
-        }
-        ReplicaGroup clGroup = db.getReplicaGroup( clGroupName );
-        clGroup.removeNode( randomHost, randomPort, ( BSONObject ) null );
-    }
+    
 }

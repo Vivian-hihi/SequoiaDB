@@ -46,6 +46,7 @@ public class CRUDWithIndex3164 extends SdbTestBase {
     private String clGroupName = null;
     private String randomHost = null;
     private int randomPort;
+    private AddNodeTask aTask = null ;
 
     @BeforeClass
     public void setUp() {
@@ -92,7 +93,7 @@ public class CRUDWithIndex3164 extends SdbTestBase {
                     priNode.hostName(), priNode.dbPath(), 0, 10, null, 80 );
             TaskMgr mgr = new TaskMgr( faultTask );
             CRUDTask cTask = new CRUDTask( clName );
-            AddNodeTask aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
+            aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
             mgr.addTask( cTask );
             mgr.addTask( aTask );
             mgr.execute();
@@ -129,7 +130,7 @@ public class CRUDWithIndex3164 extends SdbTestBase {
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             CollectionSpace commCS = db.getCollectionSpace( csName );
             commCS.dropCollection( clName );
-            removeNewNode( db );
+            aTask.removeNode();
         } catch ( BaseException e ) {
             Assert.fail(
                     e.getMessage() + "\r\n" + Utils.getKeyStack( e, this ) );
@@ -153,20 +154,5 @@ public class CRUDWithIndex3164 extends SdbTestBase {
             BSONObject key = ( BSONObject ) JSON.parse( "{ a" + i + ": 1 }" );
             cl.createIndex( idxName, key, true, true, 8 );
         }
-    }
-
-    private void removeNewNode( Sequoiadb db ) {
-        try {
-            GroupWrapper clGroupWrapper = groupMgr
-                    .getGroupByName( clGroupName );
-            if ( clGroupWrapper.getMaster().svcName()
-                    .equals( "" + randomPort ) ) {
-                clGroupWrapper.changePrimary();
-            }
-        } catch ( ReliabilityException e ) {
-            e.printStackTrace();
-        }
-        ReplicaGroup clGroup = db.getReplicaGroup( clGroupName );
-        clGroup.removeNode( randomHost, randomPort, ( BSONObject ) null );
     }
 }

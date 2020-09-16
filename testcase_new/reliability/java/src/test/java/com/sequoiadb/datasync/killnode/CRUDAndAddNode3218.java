@@ -49,6 +49,7 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
     private GroupWrapper clGroupWrapper = null;
     private String randomHost ;
     private int randomPort ;
+    private AddNodeTask aTask = null ;
 
     @BeforeClass
     public void setUp() {
@@ -80,7 +81,8 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
                     priNode.hostName(), priNode.svcName(), 1 );
             taskMgr = new TaskMgr( faultTask );
             taskMgr.addTask( new CRUDTask(clName) );
-            taskMgr.addTask( new AddNodeTask(clGroupName, randomHost, randomPort) );
+            aTask = new AddNodeTask(clGroupName, randomHost, randomPort) ;
+            taskMgr.addTask( aTask );
             // 各个任务各自初始化
             taskMgr.init();
         } catch ( BaseException | ReliabilityException e ) {
@@ -128,7 +130,8 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             if ( runSuccess ) {
                 // 各个任务分别清理自己环境
                 taskMgr.fini();
-                removeNewNode( db );
+               
+                aTask.removeNode();
                 // 公用环境清理
                 CollectionSpace commCS = db.getCollectionSpace( csName );
                 commCS.dropCollection( clName );
@@ -160,19 +163,6 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             cl.insert( recs, DBCollection.FLG_INSERT_CONTONDUP );
         }
 
-        private void removeNewNode( Sequoiadb db ) {
-            try {
-                GroupWrapper clGroupWrapper = groupMgr
-                        .getGroupByName( clGroupName );
-                if ( clGroupWrapper.getMaster().svcName()
-                        .equals( "" + randomPort ) ) {
-                    clGroupWrapper.changePrimary();
-                }
-            } catch ( ReliabilityException e ) {
-                e.printStackTrace();
-            }
-            ReplicaGroup clGroup = db.getReplicaGroup( clGroupName );
-            clGroup.removeNode( randomHost, randomPort, ( BSONObject ) null );
-        }
+ 
     
 }

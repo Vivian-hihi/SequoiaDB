@@ -25,6 +25,7 @@ public class AddNodeTask extends OperateTask{
     private String nodeName ;
     private int nodePort ;
     private String hostName ;
+    private ReplicaGroup randomGroup ;
     
     public AddNodeTask( String groupName, String hostName, int nodePort ) {
         this.groupName = groupName ;
@@ -35,7 +36,7 @@ public class AddNodeTask extends OperateTask{
     @Override
     public void init() {
         db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        ReplicaGroup randomGroup = db.getReplicaGroup( groupName );
+        randomGroup = db.getReplicaGroup( groupName );
         String nodePath = SdbTestBase.reservedDir + "/data/" + nodePort;
         Node newNode = randomGroup.createNode( hostName, nodePort,
                 nodePath, ( BSONObject ) null );
@@ -84,5 +85,13 @@ public class AddNodeTask extends OperateTask{
         finally {
             db.close();
         }
+    }
+    public void removeNode() {
+        Node master = randomGroup.getMaster() ;
+        if ( master.getNodeName().equals( this.hostName + ":" + this.nodePort)){
+            randomGroup.reelect(null);
+        }
+            
+        randomGroup.removeNode( this.hostName, this.nodePort, null );
     }
 }

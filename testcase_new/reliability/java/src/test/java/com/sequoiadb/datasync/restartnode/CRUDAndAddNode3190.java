@@ -45,6 +45,7 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
     private String clGroupName = null;
     private String randomHost = null;
     private int randomPort = 0;
+    private AddNodeTask aTask = null ;
 
     @BeforeClass
     public void setUp() {
@@ -91,7 +92,7 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
                     10 );
             TaskMgr mgr = new TaskMgr( faultTask );
             CRUDTask cTask = new CRUDTask(clName, 5000);
-            AddNodeTask aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
+            aTask = new AddNodeTask(clGroupName, randomHost, randomPort);
             mgr.addTask( cTask );
             mgr.addTask( aTask );
             mgr.execute();
@@ -128,7 +129,7 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             CollectionSpace commCS = db.getCollectionSpace( csName );
             commCS.dropCollection( clName );
-            removeNewNode( db );
+            aTask.removeNode();
         } catch ( BaseException e ) {
             Assert.fail(
                     e.getMessage() + "\r\n" + Utils.getKeyStack( e, this ) );
@@ -178,18 +179,4 @@ public class CRUDAndAddNode3190 extends SdbTestBase {
         }
     }
 
-    private void removeNewNode( Sequoiadb db ) {
-        try {
-            GroupWrapper clGroupWrapper = groupMgr
-                    .getGroupByName( clGroupName );
-            if ( clGroupWrapper.getMaster().svcName()
-                    .equals( "" + randomPort ) ) {
-                clGroupWrapper.changePrimary();
-            }
-        } catch ( ReliabilityException e ) {
-            e.printStackTrace();
-        }
-        ReplicaGroup clGroup = db.getReplicaGroup( clGroupName );
-        clGroup.removeNode( randomHost, randomPort, ( BSONObject ) null );
-    }
 }

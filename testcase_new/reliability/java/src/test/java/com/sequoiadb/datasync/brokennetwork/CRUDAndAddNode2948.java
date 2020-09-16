@@ -49,7 +49,8 @@ public class CRUDAndAddNode2948 extends SdbTestBase {
     private int randomPort = 0;
     private GroupWrapper dataGroup = null;
     private String dataSlvHost = null;
-
+    private AddNodeTask aTask = null ;
+    
     @BeforeClass
     public void setUp() {
         Sequoiadb db = null;
@@ -103,7 +104,7 @@ public class CRUDAndAddNode2948 extends SdbTestBase {
             TaskMgr mgr = new TaskMgr( faultTask );
             String safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
             CRUDTask cTask = new CRUDTask(safeUrl, clName );
-            AddNodeTask aTask = new AddNodeTask( clGroupName, randomHost,
+            aTask = new AddNodeTask( clGroupName, randomHost,
                     randomPort );
             mgr.addTask( cTask );
             mgr.addTask( aTask );
@@ -141,7 +142,8 @@ public class CRUDAndAddNode2948 extends SdbTestBase {
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             CollectionSpace commCS = db.getCollectionSpace( csName );
             commCS.dropCollection( clName );
-            removeNewNode( db );
+           
+            aTask.removeNode();
         } catch ( BaseException e ) {
             Assert.fail(
                     e.getMessage() + "\r\n" + Utils.getKeyStack( e, this ) );
@@ -189,20 +191,5 @@ public class CRUDAndAddNode2948 extends SdbTestBase {
         if ( !Arrays.equals( rLobBytes, lobBytes ) ) {
             Assert.fail( "lob is different" );
         }
-    }
-
-    private void removeNewNode( Sequoiadb db ) {
-        try {
-            GroupWrapper clGroupWrapper = groupMgr
-                    .getGroupByName( clGroupName );
-            if ( clGroupWrapper.getMaster().svcName()
-                    .equals( "" + randomPort ) ) {
-                clGroupWrapper.changePrimary();
-            }
-        } catch ( ReliabilityException e ) {
-            e.printStackTrace();
-        }
-        ReplicaGroup clGroup = db.getReplicaGroup( clGroupName );
-        clGroup.removeNode( randomHost, randomPort, ( BSONObject ) null );
     }
 }
