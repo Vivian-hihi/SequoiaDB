@@ -985,6 +985,192 @@
          ]
       },
       {
+         "id": 1599717423,
+         "dir": "HA_DR",
+         "cn": "高可用与容灾",
+         "en": "HA_DR",
+         "contents":[
+            {
+               "id": 1599717733,
+               "file": "high_avaliability",
+               "cn": "高可用",
+               "en": "high avaliability"
+            },
+            {
+               "id": 1599718358,
+               "file": "disaster_recovery",
+               "cn": "容灾",
+               "en": "disaster recovery"
+            },
+            {
+               "id": 1599718510,
+               "file": "twodatacenter",
+               "cn": "同城双中心部署",
+               "en": "two center"
+            },
+            {
+               "id": 1599718691,
+               "file": "threedatacenter",
+               "cn": "同城三中心部署",
+               "en": "three center"
+            },
+            {
+               "id": 1599718797,
+               "file": "twocity_threedatacenter",
+               "cn": "两地三中心部署",
+               "en": "two city_three center"
+            },
+            {
+               "id": 1599719000,
+               "file": "threecity_fivedatacenter",
+               "cn": "三地五中心部署",
+               "en": "three city_five center"
+            },
+            {
+               "id": 1599719122,
+               "file": "disaster_recovery_tool",
+               "cn": "容灾工具",
+               "en": "disaster recovery tool"
+            }
+         ]
+      },
+      {
+         "id": 1599719430,
+         "dir": "Sharding_Management",
+         "cn": "分区管理",
+         "en": "Sharding Management",
+         "contents": [
+            {
+               "id": 1599722809,
+               "file": "balance",
+               "cn": "分区数据均衡",
+               "en": "Data Balance"
+            },
+            {
+               "id": 1599722936,
+               "file": "avoid_hot",
+               "cn": "避免热点数据",
+               "en": "Avoid Hot"
+            },
+            {
+               "id": 1599723035,
+               "file": "reliability",
+               "cn": "分区可靠性管理",
+               "en": "Reliability Management"
+            },
+            {
+               "id": 1599723164,
+               "file": "monitoring",
+               "cn": "分区性能监控",
+               "en": "Performance Monitoring"
+            }
+         ]
+      },
+      {
+         "id": 1599723347,
+         "dir": "Performance",
+         "cn": "性能调优",
+         "en": "Performance tuning",
+         "contents": [
+            {
+               "id": 1599723609,
+               "file": "basic_monitoring",
+               "cn": "单机性能监控",
+               "en": "Basic Monitoring"
+            },
+            {
+               "id": 1599723798,
+               "file": "cluster_monitoring",
+               "cn": "集群性能监控",
+               "en": "Cluster Monitoring"
+            },
+            {
+               "id": 1599724031,
+               "file": "bottleneck",
+               "cn": "性能瓶颈诊断",
+               "en": "Bottleneck Diagnosis"
+            }
+         ]
+      },
+      {
+         "id": 1599724271,
+         "dir": "Migration",
+         "cn": "数据迁移",
+         "en": "Data Migration",
+         "contents": [
+            {
+               "id": 1599724389,
+               "file": "csv_import",
+               "cn": "CSV数据文件导入",
+               "en": "CSV Import"
+            },
+            {
+               "id": 1599725672,
+               "file": "json_import",
+               "cn": "JSON数据文件导入",
+               "en": "JSON Import"
+            },
+            {
+               "id": 1599725749,
+               "file": "third_party_realtime",
+               "cn": "实时第三方数据复制",
+               "en": "Third Party Realtime"
+            },
+            {
+               "id": 1599725856,
+               "file": "export",
+               "cn": "数据导出",
+               "en": "Data Export"
+            }
+         ]
+      },
+      {
+         "id": 1599726271,
+         "dir": "Trace",
+         "cn": "流程跟踪",
+         "en": "Trace",
+         "contents": [
+            {
+               "id": 1599726357,
+               "file": "intro",
+               "cn": "trace原理",
+               "en": "Trace principle"
+            },
+            {
+               "id": 1599726450,
+               "file": "dump_format",
+               "cn": "trace收集与格式化工具",
+               "en": "Collection and formatting tools"
+            },
+            {
+               "id": 1599726788,
+               "file": "analyze",
+               "cn": "trace分析方法",
+               "en": "trace analysis"
+            }
+         ]
+      },
+      {
+         "id": 1599727016,
+         "dir": "CircuitBreaker",
+         "cn": "熔断机制",
+         "en": "Circuit Breaker",
+         "contents": [
+            {
+               "id": 1599727157,
+               "file": "connection_pool",
+               "cn": "连接池熔断机制",
+               "en": "Connection Pool"
+            },
+            {
+               "id": 1599727239,
+               "file": "replica_set",
+               "cn": "复制组熔断机制",
+               "en": "Replication"
+            }
+        ]
+      },
+      {
          "id": 1432190650,
          "dir": "database_management",
          "cn": "数据库管理",
@@ -1125,6 +1311,12 @@
                      "file": "sdbpasswd",
                      "cn": "数据库密码工具",
                      "en": "Database Password Tool"
+                  },
+                  {
+                     "id": 1599730475,
+                     "file": "split_merge",
+                     "cn": "容灾切换合并工具",
+                     "en": "Split Merge Tool"
                   }
                ]
             },
