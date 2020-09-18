@@ -49,49 +49,47 @@ public class AddNodeTask extends OperateTask{
         boolean isFullSync = false ;
         int totalTimeLen = 600 ;
         int alreadySleepLen = 0 ;
+  
+        do 
+        {
+            final String sRawdata = "rawdata" ;
+            final String sNodeName = "NodeName" ;
+            final String sStatus = "Status" ;
+            final String sFullSync = "FullSync" ;
+            BSONObject cond = new BasicBSONObject() ;
+            cond.put( sRawdata, true ) ;
+            cond.put( sNodeName, nodeName ) ;
         
-        try {
-            do 
+            BSONObject selector = new BasicBSONObject() ;
+            selector.put( sStatus, "" ) ;
+            DBCursor cursor = db.getSnapshot( Sequoiadb.SDB_SNAP_DATABASE, cond, selector, null ) ;
+            while( cursor.hasNext() ) 
             {
-                final String sRawdata = "rawdata" ;
-                final String sNodeName = "NodeName" ;
-                final String sStatus = "Status" ;
-                final String sFullSync = "FullSync" ;
-                BSONObject cond = new BasicBSONObject() ;
-                cond.put( sRawdata, true ) ;
-                cond.put( sNodeName, nodeName ) ;
-            
-                BSONObject selector = new BasicBSONObject() ;
-                selector.put( sStatus, "" ) ;
-                DBCursor cursor = db.getSnapshot( Sequoiadb.SDB_SNAP_DATABASE, cond, selector, null ) ;
-                while( cursor.hasNext() ) 
-                {
-                   BasicBSONObject ret = ( BasicBSONObject ) cursor.getNext() ;
-                   String status = ret.getString( sStatus ) ;
-                   if ( status.equals(sFullSync))
-                   {
-                       isFullSync = true ;
-                       Thread.sleep(1000);
-                       alreadySleepLen += 1;
-                   }
-                   else
-                   {
-                       isFullSync = false;
-                       
-                   }
-                }
-            }while( isFullSync && alreadySleepLen < totalTimeLen) ;
-        }
-        finally {
-            db.close();
-        }
+               BasicBSONObject ret = ( BasicBSONObject ) cursor.getNext() ;
+               String status = ret.getString( sStatus ) ;
+               if ( status.equals(sFullSync))
+               {
+                   isFullSync = true ;
+                   Thread.sleep(1000);
+                   alreadySleepLen += 1;
+               }
+               else
+               {
+                   isFullSync = false;
+                   
+               }
+            }
+        }while( isFullSync && alreadySleepLen < totalTimeLen) ;
+        
     }
     public void removeNode() {
+       
         Node master = randomGroup.getMaster() ;
         if ( master.getNodeName().equals( this.hostName + ":" + this.nodePort)){
             randomGroup.reelect(null);
         }
             
         randomGroup.removeNode( this.hostName, this.nodePort, null );
+        
     }
 }
