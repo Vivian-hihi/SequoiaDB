@@ -1512,6 +1512,14 @@ namespace engine
       PD_CHECK( _conflictCheck(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                 "Options conflict in alter option" ) ;
 
+      if ( pmdGetDBRole() == SDB_ROLE_STANDALONE &&
+           _argument.hasField( FIELD_NAME_AUTOINCREMENT ) ) {
+        PD_LOG( PDERROR, "Failed to get field [%s]: it is not supported yet",
+                FIELD_NAME_AUTOINCREMENT ) ;
+        rc = SDB_OPTION_NOT_SUPPORT ;
+        goto error ;
+      }
+
       // ReplSize, ShardingKey, Compressed, CompressType, StrictDataMode is
       // allowed in main-collection
       if ( !testArgumentMask( ~( UTIL_CL_REPLSIZE_FIELD |

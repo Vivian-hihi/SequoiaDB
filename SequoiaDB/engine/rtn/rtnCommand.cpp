@@ -775,6 +775,14 @@ namespace engine
          _extOptions = builder.obj() ;
       }
 
+      if ( pmdGetDBRole() == SDB_ROLE_STANDALONE &&
+           matcher.hasField( FIELD_NAME_AUTOINCREMENT ) ) {
+         PD_LOG( PDERROR,
+                 "AutoIncrement is not supported in standalone mode" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       rc = SDB_OK ;
    done :
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_INIT, rc ) ;
@@ -908,15 +916,15 @@ namespace engine
                                            const CHAR * pOrderByBuff,
                                            const CHAR * pHintBuff)
    {
-      BSONObj mather ( pMatcherBuff ) ;
-      INT32 rc = rtnGetIntElement ( mather, FIELD_NAME_PAGE_SIZE,
+      BSONObj matcher ( pMatcherBuff ) ;
+      INT32 rc = rtnGetIntElement ( matcher, FIELD_NAME_PAGE_SIZE,
                                     _pageSize ) ;
       if ( SDB_OK != rc )
       {
          _pageSize = DMS_PAGE_SIZE_DFT ;
       }
 
-      rc = rtnGetIntElement( mather, FIELD_NAME_LOB_PAGE_SIZE,
+      rc = rtnGetIntElement( matcher, FIELD_NAME_LOB_PAGE_SIZE,
                              _lobPageSize ) ;
       if ( SDB_OK != rc )
       {
@@ -924,7 +932,7 @@ namespace engine
       }
 
       BOOLEAN capped = FALSE ;
-      rc = rtnGetBooleanElement( mather, FIELD_NAME_CAPPED, capped ) ;
+      rc = rtnGetBooleanElement( matcher, FIELD_NAME_CAPPED, capped ) ;
       if ( SDB_OK == rc && capped  )
       {
          _storageType = DMS_STORAGE_CAPPED ;
@@ -934,7 +942,7 @@ namespace engine
          _storageType = DMS_STORAGE_NORMAL ;
       }
 
-      return rtnGetStringElement ( mather, FIELD_NAME_NAME, &_spaceName ) ;
+      return rtnGetStringElement ( matcher, FIELD_NAME_NAME, &_spaceName ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATECS_DOIT, "_rtnCreateCollectionspace::doit" )
