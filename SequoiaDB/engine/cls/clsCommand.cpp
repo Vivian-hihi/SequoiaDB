@@ -539,7 +539,7 @@ namespace engine
 
    #define CLS_REELECT_WAIT_TIME          ( 10000 )       /// 10 secs
    #define CLS_REELECT_WAIT_INTERVAL      ( 100 )         /// 100 ms
-   #define CLS_REELECT_SW_TIMEOUT         ( 10000 )       /// 15 secs
+   #define CLS_REELECT_SW_TIMEOUT         ( 10000 )       /// 10 secs
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREELECT_DOIT, "_rtnReelect::doit" )
    INT32 _rtnReelect::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
