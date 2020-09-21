@@ -552,7 +552,8 @@ catFiles = [
       "cat/catGTSMsgHandler.cpp",
       "cat/catGTSMsgJob.cpp",
       "cat/catSequence.cpp",
-      "cat/catSequenceManager.cpp"
+      "cat/catSequenceManager.cpp",
+      "cat/catCMDBase.cpp"
       ]
 
 coordFiles = [
