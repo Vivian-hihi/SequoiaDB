@@ -132,7 +132,7 @@ testFiles = [
    [ "./list/list19948.cpp" ],   # sync
    [ "./crud/query10404.cpp" ],
    [ "./cls/getCLDetail22183.cpp" ],
-   [ "./misc/snapshotIndexStat22498.cpp" ]
+   [ "./misc/snapshotIndexStat22498.cpp" ],
    [ "./list/listTest.cpp" ],
 #   [ "./crud/closeAllCursors20122.cpp" ]
 ]
