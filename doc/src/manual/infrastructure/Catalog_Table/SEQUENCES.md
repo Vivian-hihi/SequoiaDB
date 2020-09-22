@@ -11,15 +11,15 @@ SYSGTS.SEQUENCES 集合中包含了该集群中所有的自增字段信息。每
 |  字段名      |   类型  |    描述                                     |
 |--------------|---------|------------------------------------------   |
 | Name         | String  | 自增字段名                                  |
-| AcquireSize  | Int32   | 协调节点每次获取的序列值的数量，可参考 [AcquireSize](data_model/auto_increment.md)                            |
+| AcquireSize  | Int32   | 协调节点每次获取的序列值的数量，可参考 [AcquireSize][sequence]                            |
 | CacheSize    | Int32   | 编目节点每次缓存的序列值的数量，取值须大于0 |
-| CurrentValue | Int64   | 自增字段的当前值，可参考 [CurrentValue](data_model/auto_increment.md)                                         |
+| CurrentValue | Int64   | 自增字段的当前值，可参考 [CurrentValue][sequence]                                         |
 | Cycled       | Bool    | 序列值达到最大值或最小值时是否允许循环 <br> "true"：允许循环 <br> "false"：不允许循环                              | 
 | ID           | Int64   | 自增字段 ID
-| Increment    | Int32   | 自增字段每次增加的间隔，可参考 [Increment](data_model/auto_increment.md)                                         |
+| Increment    | Int32   | 自增字段每次增加的间隔，可参考 [Increment][sequence]                                         |
 | Initial      | Bool    | 序列是否已经分配过序列值 <br> "true"：未分配过序列值 <br> "false"：已分配过序列值                                      |
 | Internal     | Bool    | 自增字段由系统内部定义还是由用户定义 <br> "true"：系统内部定义 <br> "false"：用户定义（由用户定义的自增字段暂未开放）                             |
-| MaxValue     | Int64   | 自增字段的最大值，可参考 [MaxValue](data_model/auto_increment.md)                                         |
+| MaxValue     | Int64   | 自增字段的最大值，可参考 [MaxValue][sequence]                                         |
 | MinValue     | Int64   | 自增字段的最小值                            |
 | StartValue   | Int64   | 自增字段的起始值                            |
 | Version      | Int64   | 自增字段的版本号                            |
@@ -53,4 +53,8 @@ SYSGTS.SEQUENCES 集合中包含了该集群中所有的自增字段信息。每
 }
 ```
 
+
+[^_^]:
+     本文使用的所有引用和链接
+[sequence]:manual/infrastructure/Data_Model/sequence.md
 

@@ -1,6 +1,6 @@
 ##Python BSON 数据类型##
 
-目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看 [数据类型](data_model/datatype/datatype.md)一节。
+目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看 [数据类型](manual/infrastructure/Data_Model/data_type.md)一节。
 
 ##Python 构造 BSON 数据类型##
 对于一些特殊类型如对象 ID 类型，在构造 bson 数据时需要使用 Python 驱动中对应的类去构造，如对象 ID 类型对应着 ObjectId，特殊类详情请查看[Python API](api/Python/html/index.html)。以下为构造示例。

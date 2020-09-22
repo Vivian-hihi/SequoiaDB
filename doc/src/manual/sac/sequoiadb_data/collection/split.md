@@ -1,10 +1,9 @@
 
 > **数据切分相关文档：**  
-> 1. 分区类型 [点击查看](basic_operation/sharding/overview.md)  
-> 2. 分区键   [点击查看](basic_operation/sharding/shardingkey.md)  
-> 3. 分区集合 [点击查看](basic_operation/sharding/sharding_collection.md)  
-> 4. 分区索引 [点击查看](basic_operation/sharding/sharding_index.md)   
-> 5. 数据切分 [点击查看](basic_operation/sharding/data_split.md)
+>- [分区类型](manual/infrastructure/Sharding/architecture.md)  
+> - [分区键选择](manual/infrastructure/Sharding/sharding_keys.md)   
+> - [分区配置](manual/infrastructure/Sharding/config.md)   
+> - [多维分区](manual/infrastructure/Sharding/multi_dimension.md)
 
 
 1. 点击导航 **数据 - 分布式存储** 的名字，进入 **集合空间** 分页，创建 **statement** 的集合空间，集合空间创建可以参考 [创建集合空间文档](sac/sequoiadb_data/collection_space/create_cs.md)。

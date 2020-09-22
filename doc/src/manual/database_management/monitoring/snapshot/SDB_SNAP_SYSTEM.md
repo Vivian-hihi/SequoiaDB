@@ -15,7 +15,7 @@ SDB_SNAP_SYSTEM
 | ServiceName          | 字符串 | svcname 所指定的服务名，与 HostName 共同作为一个逻辑节点的标示 |
 | GroupName            | 字符串 | 该逻辑节点所属的分区组名，standalone 模式下，该字段为空字符串  |
 | IsPrimary            | 布尔   | 该节点是否为主节点，standalone 模式下，该字段为 false          |
-| ServiceStatus        | 布尔   | 是否为可提供服务状态。<br>一些特殊状态，例如 [全量同步](infrastructure/replication/replicate.md#全量同步) 会使该状态为 false |
+| ServiceStatus        | 布尔   | 是否为可提供服务状态。<br>一些特殊状态，例如 [全量同步][syn]会使该状态为 false |
 | Status               | 字符串 | 数据库状态：包括"Normal"、 "Shutdown"、"Rebuilding"、"FullSync"、"OfflineBackup"状态 |
 | BeginLSN.Offset      | 长整型 | 起始 LSN 的偏移                                                |
 | BeginLSN.Version     | 整型   | 起始 LSN 的版本号                                              |
@@ -63,7 +63,7 @@ SDB_SNAP_SYSTEM
 | Disk.FreeSpace      | 长整型 | 数据库路径空闲空间（单位：字节）                  |
 | ErrNodes.NodeName   | 字符串 | 返回异常节点名（主机名 + 端口）                   |
 | ErrNodes.GroupName  | 字符串 | 返回异常节点所属分区组名                          |
-| ErrNodes.Flag       | 整型   | 错误码，详细请参见：[错误码](reference/Sequoiadb_error_code.md) |
+| ErrNodes.Flag       | 整型   | 错误码，详细请参见：[错误码][Sequoiadb_error_code]|
 | ErrNodes.ErrInfo    | 字符串 | 返回节点出错信息                                  |
 
 > Note:
@@ -162,3 +162,9 @@ SDB_SNAP_SYSTEM
   ]
 }
 ```
+
+
+[^_^]:
+    本文使用的所有引用和链接
+[syn]:manual/infrastructure/Replication/architecture.md#数据复制
+[Sequoiadb_error_code]:reference/Sequoiadb_error_code.md

@@ -108,7 +108,7 @@
 
 [^_^]:
       本文使用的所有引用和链接
-[Replication]:manual/infrastructure/replication/overview.md
+[Replication]:manual/infrastructure/Replication/architecture.md
 [syscollctions]:manual/infrastructure/Catalog_Table/SYSCOLLECTIONS.md
 [syscollectionspaces]:manual/infrastructure/Catalog_Table/SYSCOLLECTIONSPACES.md
 [sysdomains]:manual/infrastructure/Catalog_Table/SYSDOMAINS.md

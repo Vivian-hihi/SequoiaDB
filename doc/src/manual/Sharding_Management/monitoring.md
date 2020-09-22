@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     分区性能监控
     作者：魏彰凯
     时间：20190531
@@ -262,7 +262,7 @@ Reason for exit : exit with no records different
 [^_^]:
     本文使用到的所有链接
     
-[sharding]:manual/basic_operation/sharding/overview.md
-[sharding_key]:manual/basic_operation/sharding/shardingkey.md
+[sharding]:manual/infrastructure/Sharding/Readme.md
+[sharding_key]:manual/infrastructure/Sharding/sharding_keys.md
 [consistency_check]:manual/database_management/tools/sdbinspect.md
 [sharding_balance]:manual/Sharding_Management/balance.md

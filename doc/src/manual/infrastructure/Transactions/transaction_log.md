@@ -112,5 +112,5 @@ SequoiaDB 巨杉数据库中的[事务日志][transaction_log]记录了事务对
 [^_^]:
     本文使用到的所有链接
 
-[transaction_log]: manual/infrastructure/replication/overview.md
+[transaction_log]: manual/infrastructure/Replication/architecture.md#事务日志replicalog
 [2pc]: manual/infrastructure/Transactions/2pc.md

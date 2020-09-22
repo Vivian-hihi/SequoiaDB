@@ -104,11 +104,11 @@
 
 [^_^]:
       本文使用的所有引用和链接
-[Replication]:manual/infrastructure/replication/overview.md
+[Replication]:manual/infrastructure/Replication/architecture.md
 [expand]:manual/installation/create_host.md
 [createRG]:manual/reference/Sequoiadb_command/Sdb/createRG.md
 [createNode]:manual/reference/Sequoiadb_command/SdbReplicaGroup/createNode.md
 [cluster_deployment]:manual/installation/deployment/command_installation/cluster.md
-[regular_bar]:manual/infrastructure/replication/replicate.md#全量同步
-[architecture]:manual/infrastructure/replication/replicate.md
+[regular_bar]:manual/database_management/database_configuration/special_configuration_modify/log_synchronization.md#全量同步
+[architecture]:manual/infrastructure/Replication/architecture.md
 [cluster_config]:manual/database_management/database_configuration/configuration_parameters.md

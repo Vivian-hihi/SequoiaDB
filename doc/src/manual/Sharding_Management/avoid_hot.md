@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     避免热点数据
     作者：魏彰凯
     时间：20191001
@@ -252,6 +252,6 @@
 [^_^]:
     本文使用到的所有链接
     
-[sharding_key]:manual/basic_operation/sharding/shardingkey.md
-[multi_dimension]:manual/basic_operation/sharding/overview.md
+[sharding_key]:manual/infrastructure/Sharding/sharding_keys.md
+[multi_dimension]:manual/infrastructure/Sharding/multi_dimension.md
 [db_snapshot]:manual/reference/Sequoiadb_command/Sdb/snapshot.md

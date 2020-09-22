@@ -193,186 +193,10 @@
                ]
             },
             {
-               "id": 1432190613,
-               "file": "indexes",
-               "cn": "索引",
-               "en": "Indexes"
-            },
-            {
-                "id": 1519293107,
-                "dir": "text_search",
-                "cn": "全文索引",
-                "en": "Text search",
-                "contents": [
-                    {
-                        "id": 1519293420,
-                        "file": "overview",
-                        "cn": "概述",
-                        "en": "Overview"
-                    },
-                    {
-                        "id": 1526030010,
-                        "file": "deploy",
-                        "cn": "全文检索环境部署",
-                        "en": "deploy"
-                    },
-                    {
-                        "id": 1519348573,
-                        "file": "sdbseadapter",
-                        "cn": "搜索引擎适配器",
-                        "en": "Search engine adapter"
-                    },
-                    {
-                        "id": 1519348584,
-                        "file": "text_search_grammer",
-                        "cn": "全文检索语法",
-                        "en": "Text search grammer"
-                    }
-                ]
-            },
-            {
                "id": 1432190614,
                "file": "aggregate",
                "cn": "聚集",
                "en": "Aggregate"
-            },
-            {
-               "id": 1432190615,
-               "dir": "sharding",
-               "cn": "数据分区",
-               "en": "Sharding",
-               "contents": [
-                  {
-                     "id": 1454575727,
-                     "file": "overview",
-                     "cn": "分区类型",
-                     "en": "Sharding Type"
-                  },
-                  {
-                     "id": 1432190616,
-                     "file": "shardingkey",
-                     "cn": "分区键",
-                     "en": "Sharding Key"
-                  },
-                  {
-                     "id": 1432190617,
-                     "file": "sharding_collection",
-                     "cn": "分区集合",
-                     "en": "Sharding Collection"
-                  },
-                  {
-                     "id": 1432190618,
-                     "file": "sharding_index",
-                     "cn": "分区索引",
-                     "en": "Sharding Index"
-                  },
-                  {
-                     "id": 1432190620,
-                     "file": "data_split",
-                     "cn": "数据切分",
-                     "en": "Data Splitting"
-                  }
-               ]
-            }
-         ]
-      },
-      {
-         "id": 1432190626,
-         "dir": "data_model",
-         "cn": "数据模型",
-         "en": "Data Model",
-         "contents": [
-            {
-               "id": 1432190589,
-               "file": "overview",
-               "cn": "概述",
-               "en": "Overview"
-            },
-            {
-               "id": 1432190627,
-               "file": "document",
-               "cn": "文档",
-               "en": "Document"
-            },
-            {
-               "id": 1519612298,
-               "dir": "datatype",
-               "cn": "数据类型",
-               "en": "Data Types",
-               "contents": [
-                  {
-                     "id": 1519612299,
-                     "file": "datatype",
-                     "cn": "数据类型概述",
-                     "en": "Data Types"
-                  },
-                  {
-                     "id": 1519612291,
-                     "file": "array",
-                     "cn": "数组",
-                     "en": "Array"
-                  },
-                  {
-                     "id": 1519612292,
-                     "file": "oid",
-                     "cn": "对象ID",
-                     "en": "OID"
-                  },
-                  {
-                     "id": 1519612293,
-                     "file": "date",
-                     "cn": "日期",
-                     "en": "Date"
-                  },
-                  {
-                     "id": 1519612294,
-                     "file": "timestamp",
-                     "cn": "时间戳",
-                     "en": "Timestamp"
-                  },
-                  {
-                     "id": 1519612295,
-                     "file": "binary",
-                     "cn": "二进制数据",
-                     "en": "Binary Data"
-                  },
-                  {
-                     "id": 1519612296,
-                     "file": "regex",
-                     "cn": "正则表达式",
-                     "en": "Regex"
-                  },
-                  {
-                     "id": 1519612297,
-                     "file": "decimal",
-                     "cn": "高精度数",
-                     "en": "Decimal"
-                  }
-               ]
-            },
-            {
-               "id": 1432190628,
-               "file": "collection",
-               "cn": "集合",
-               "en": "Collection"
-            },
-            {
-               "id": 1432190629,
-               "file": "collectionspace",
-               "cn": "集合空间",
-               "en": "CollectionSpace"
-            },
-            {
-               "id": 1432190630,
-               "file": "lob",
-               "cn": "大对象",
-               "en": "Large Object"
-            },
-            {
-               "id": 1541038339,
-               "file": "auto_increment",
-               "cn": "自增字段",
-               "en": "Auto-increment"
             }
          ]
       },
@@ -876,33 +700,77 @@
             },
             {
                "id": 1432190645,
-               "dir": "replication",
-               "cn": "分区组",
+               "dir": "Replication",
+               "cn": "复制组",
                "en": "Replication",
                "contents": [
                   {
                      "id": 1432190641,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1432190646,
-                     "file": "vote",
-                     "cn": "选举机制",
-                     "en": "Master Election"
-                  },
-                  {
-                     "id": 1432190647,
-                     "file": "replicate",
-                     "cn": "数据复制",
-                     "en": "Replicate"
+                     "file": "architecture",
+                     "cn": "复制组原理",
+                     "en": "Architecture"
                   },
                   {
                      "id": 1432190648,
-                     "file": "read_write",
-                     "cn": "读写分离",
-                     "en": "R/W Splitting"
+                     "file": "create",
+                     "cn": "部署复制组",
+                     "en": "Create"
+                  },
+                  {
+                     "id": 1432190646,
+                     "file": "election",
+                     "cn": "复制组选举",
+                     "en": "election"
+                  },
+                  {
+                     "id": 1432190647,
+                     "file": "primary_secondary_consistency",
+                     "cn": "主备一致性",
+                     "en": "Primary Secondary Consistency"
+                  },
+                  {
+                     "id": 1600677192,
+                     "file": "monitoring",
+                     "cn": "复制组监控",
+                     "en": "Monitoring"
+                  }
+               ]
+            },
+            {
+               "id": 1432190615,
+               "dir": "Sharding",
+               "cn": "分区",
+               "en": "Sharding",
+               "contents": [
+                  {
+                     "id": 1454575727,
+                     "file": "architecture",
+                     "cn": "分区原理",
+                     "en": "Architecture"
+                  },
+                  {
+                     "id": 1432190617,
+                     "file": "config",
+                     "cn": "分区配置",
+                     "en": "Config"
+                  },
+                  {
+                     "id": 1432190616,
+                     "file": "sharding_keys",
+                     "cn": "分区键选择",
+                     "en": "Sharding Keys"
+                  },
+                  {
+                     "id": 1432190618,
+                     "file": "multi_dimension",
+                     "cn": "多维分区",
+                     "en": "Multi Dimension"
+                  },
+                  {
+                     "id": 1432190620,
+                     "file": "example",
+                     "cn": "数据分区操作示例",
+                     "en": "Example"
                   }
                ]
             },
@@ -941,6 +809,68 @@
                      "file": "configurations",
                      "cn": "事务配置",
                      "en": "Configurations"
+                  }
+               ]
+            },
+            {
+               "id": 1432190626,
+               "dir": "Data_Model",
+               "cn": "数据模型",
+               "en": "Data Model",
+               "contents": [
+                  {
+                     "id": 1600678716,
+                     "file": "intro",
+                     "cn": "概述",
+                     "en": "Intro"
+                  },
+                  {
+                     "id": 1432190627,
+                     "file": "document",
+                     "cn": "文档记录",
+                     "en": "Document"
+                  },
+                  {
+                     "id": 1519612298,
+                     "file": "data_type",
+                     "cn": "数据类型",
+                     "en": "Data Types"
+                  },
+                  {
+                     "id": 1432190628,
+                     "file": "collection",
+                     "cn": "集合",
+                     "en": "Collection"
+                  },
+                  {
+                     "id": 1432190629,
+                     "file": "collection_space",
+                     "cn": "集合空间",
+                     "en": "CollectionSpace"
+                  },
+                  {
+                     "id": 1432190630,
+                     "file": "lob",
+                     "cn": "大对象",
+                     "en": "Large Object"
+                  },
+                  {
+                     "id": 1432190613,
+                     "file": "index",
+                     "cn": "索引",
+                     "en": "Index"
+                  },
+                  {
+                      "id": 1519293107,
+                      "file": "text_index",
+                      "cn": "全文索引",
+                      "en": "Text Index"
+                  },
+                  {
+                     "id": 1541038339,
+                     "file": "sequence",
+                     "cn": "序列",
+                     "en": "Sequence"
                   }
                ]
             },
@@ -1168,7 +1098,7 @@
                "cn": "复制组熔断机制",
                "en": "Replication"
             }
-        ]
+         ]
       },
       {
          "id": 1432190650,

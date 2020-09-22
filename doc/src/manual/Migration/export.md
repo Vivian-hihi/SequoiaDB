@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     数据导出
     作者：杨垚
     时间：20190424
@@ -259,5 +259,5 @@ Return 3 row(s).
 [sdbexprt]:manual/database_management/tools/sdbexprt.md
 [csv_data_type]:manual/database_management/tools/sdbimprt.md#csv_data_type
 [collection_space]:manual/data_model/collection_space.md
-[collection]:manual/data_model/collection.md
+[collection]:manual/infrastructure/Data_Model/collection.md
 [rfc4180]:https://www.rfc-editor.org/rfc/rfc4180.txt

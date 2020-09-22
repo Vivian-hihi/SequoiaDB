@@ -91,7 +91,7 @@ Collection Space
 
         例子：`AutoIncrement: { Field: "userID", Generated: "always" }`
 
-        * 参数详情请参考[自增字段介绍](data_model/auto_increment.md)
+        * 参数详情请参考[自增字段介绍](manual/infrastructure/Data_Model/sequence.md)
         
     14. `LobShardingKeyFormat` ( *String* )：指定大对象生成主分区集合切分键键值的格式。目前支持将大对象ID中的时间属性转换成如下字符串形式：
     

@@ -392,4 +392,4 @@ SequoiaDB 对于容灾处理提供了[容灾切换合并工具][split_merge]。�
 [1c3d_singlenode_down]:images/HA_DR/1c3d_singlenode_down.png
 [1c3d_singlecenter_down]:images/HA_DR/1c3d_singlecenter_down.png
 [split_merge]:manual/database_management/tools/split_merge.md
-[consistency]:manual/infrastructure/replication/read_write.md
+[consistency]:manual/infrastructure/Replication/primary_secondary_consistency.md

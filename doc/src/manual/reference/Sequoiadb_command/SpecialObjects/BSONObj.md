@@ -1,6 +1,6 @@
 BSON 对象。
 
-数据类型的介绍可参考[数据类型](data_model/datatype/datatype.md)。
+数据类型的介绍可参考[数据类型](manual/infrastructure/Data_Model/data_type.md)。
 
 ##语法##
 

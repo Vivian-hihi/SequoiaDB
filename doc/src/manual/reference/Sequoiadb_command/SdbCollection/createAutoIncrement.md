@@ -9,7 +9,7 @@
 | ------ | -------- | ---- | -------- |
 | option&#124;options | Json 对象 | 自增字段参数。option 是一个字段的参数，options 是多个字段的参数。 | 是 |
 
-option中的具体参数请参见[自增字段属性](data_model/auto_increment.md)
+option中的具体参数请参见[自增字段属性](manual/infrastructure/Data_Model/sequence.md)
 
 ##返回值##
 

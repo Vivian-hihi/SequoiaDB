@@ -1,4 +1,4 @@
-在 SequoiaDB 中，insert 操作是向集合中添加新的文档记录。我们可以使用[insert()](reference/Sequoiadb_command/SdbCollection/insert.md) 方法向 SequoiaDB 中的集合中添加记录。
+﻿在 SequoiaDB 中，insert 操作是向集合中添加新的文档记录。我们可以使用[insert()](reference/Sequoiadb_command/SdbCollection/insert.md) 方法向 SequoiaDB 中的集合中添加记录。
 
   >**Note:** 本文档的所有例子都是使用 SequoiaDB 的 shell 接口。
 
@@ -20,7 +20,7 @@ insert() 是向SequoiaDB 集合中插入记录的主要方法。
 
 ###插入第一个文档###
 
-如果[集合空间](data_model/collectionspace.md)和[集合](data_model/collection.md)不存在，可以使用如下命令进行创建集合空间和集合：
+如果[集合空间][collectionspace]和[集合][collection]不存在，可以使用如下命令进行创建集合空间和集合：
 
 ```lang-javascript
 > var db = new Sdb("localhost", 11810)
@@ -76,3 +76,8 @@ insert() 是向SequoiaDB 集合中插入记录的主要方法。
 ```lang-javascript
 > db.foo.bar.insert( [ { name: "Mike", age: 15 }, { _id: 20, name: "John", age: 25, phone: 123 } ] )
 ```
+
+[^_^]:
+      本文使用的所有链接和引用
+[collectionspace]:manual/infrastructure/Data_Model/collection_space.md
+[collection]:manual/infrastructure/Data_Model/collection.md

@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     分区数据均衡
     作者：魏彰凯
     时间：20190519
@@ -477,5 +477,5 @@ localhost:11810.test.nobalance_temp
     本文使用到的所有链接
     
 [sharding_domain]:manual/infrastructure/domain.md
-[sharding_key]:manual/basic_operation/sharding/shardingkey.md
+[sharding_key]:manual/infrastructure/Sharding/sharding_keys.md
 [db_snapshot]:reference/Sequoiadb_command/Sdb/snapshot.md
