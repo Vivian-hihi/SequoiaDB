@@ -686,9 +686,11 @@ namespace engine
       private:
          UINT32                  _addInfoMask ;
          BOOLEAN                 _viewArchive ;
-         monClassReadScanner    *_scanner ;
-         monClassQuery          *_queryCB ;
          BOOLEAN                 _isDetail ;
+         ossPoolVector<monClassQuery>
+                                 _cachedMonClassList ;
+         ossPoolVector<monClassQuery>::iterator
+                                 _itr ;
    } ;
    typedef _monQueriesFetch monQueriesFetch ;
 
@@ -717,9 +719,11 @@ namespace engine
       private:
          UINT32                  _addInfoMask ;
          BOOLEAN                 _viewArchive ;
-         monClassReadScanner    *_scanner ;
-         monClassLatch          *_latchCB ;
          BOOLEAN                 _isDetail ;
+         ossPoolVector<monClassLatch>
+                                 _cachedMonClassList ;
+         ossPoolVector<monClassLatch>::iterator
+                                 _itr ;
    } ;
    typedef _monLatchWaitsFetch monLatchWaitsFetch ;
 
@@ -748,9 +752,11 @@ namespace engine
       private:
          BOOLEAN                 _viewArchive ;
          UINT32                  _addInfoMask ;
-         monClassReadScanner    *_scanner ;
-         monClassLock           *_lockCB ;
          BOOLEAN                 _isDetail ;
+         ossPoolVector<monClassLock>
+                                 _cachedMonClassList ;
+         ossPoolVector<monClassLock>::iterator
+                                 _itr ;
    } ;
    typedef _monLockWaitsFetch monLockWaitsFetch ;
 
