@@ -166,6 +166,12 @@ namespace engine
          }
       }
 
+      // set key pattern to key generator
+      rc = _keyGen.setKeyPattern( _indexCB->keyPattern() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to set key pattern, rc: %d", rc ) ;
+
+      // WARNING: should not rewrite return code from _onInit()
+      // if SDB_DMS_EOC is returned, it will be processed with caller
       rc = _onInit() ;
       if ( rc && SDB_DMS_EOC != rc )
       {
@@ -341,7 +347,7 @@ namespace engine
       {
          BSONObj obj ( (CHAR*)recordDataPtr ) ;
 
-         rc = _indexCB->getKeysFromObject ( obj, keySet ) ;
+         rc = _keyGen.getKeys( obj, keySet ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to get keys from object %s",
                        obj.toString().c_str() ) ;
       }
