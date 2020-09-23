@@ -82,6 +82,10 @@
 #define REG_R30  30
 #endif /* (_PPCLIN64) || (_ARMLIN64) */
 
+#if defined (_PPCLIN64)
+#define REG_R31  31
+#endif
+
 #if defined (_LINUX)
 #include <sys/prctl.h>
 #include <dlfcn.h>
