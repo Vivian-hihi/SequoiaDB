@@ -645,6 +645,11 @@ static INT32 parseImage( struct buf *ob,
             cout << "Warning image dest path Not find: " << srcPath << endl ;
          }
 
+         if( !checkFilePath( imgPath, old ) )
+         {
+            cout << "Warning image document path and image file path are not the same: " << srcPath << endl ;
+         }
+
          getPath( old, destPath ) ;
          getFile( old, filename ) ;
          ReplaceAll( destPath, "/", "." ) ;

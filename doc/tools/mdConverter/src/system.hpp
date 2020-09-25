@@ -13,7 +13,8 @@ typedef struct
    string fileName ;
 } FileStruct ;
 
-
+BOOLEAN checkFilePath( string fullPath, string relativePath ) ;
+INT32 getRealPath( string path, string& fullPath ) ;
 INT32 getFiles( string path, vector<FileStruct> &fileList ) ;
 INT32 getLocalPath( string &path ) ;
 INT32 fileIsExist( string path ) ;

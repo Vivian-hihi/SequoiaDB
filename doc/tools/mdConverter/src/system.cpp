@@ -20,6 +20,104 @@
 #endif
 
 static void ReplaceAll( string &source, string oldStr, string newStr ) ;
+static void SplitString( const string& s, const string& c, vector<string>& v ) ;
+
+BOOLEAN checkFilePath( string fullPath, string relativePath )
+{
+   INT32 rc = SDB_OK ;
+   string newPath ;
+#ifdef WIN32
+
+   ReplaceAll( relativePath, "/", "\\" ) ;
+
+   if ( SDB_OK == getRealPath( fullPath, newPath ) )
+   {
+      string de = "\\" ;
+      string tmpPath = "" ;
+      vector<string> list ;
+      vector<string>::iterator iter ;
+
+      SplitString( newPath, "\\", list ) ;
+
+      for( iter = list.begin(); iter != list.end(); ++iter )
+      {
+         BOOLEAN exist = FALSE ;
+         string dirName = *iter ;
+         vector<FileStruct> fileList ;
+         vector<FileStruct>::iterator iter2 ;
+
+         if ( iter == list.begin() )
+         {
+            tmpPath = dirName ;
+            continue ;
+         }
+
+         rc = getFiles( tmpPath, fileList ) ;
+         if( rc )
+         {
+            return TRUE ;
+         }
+
+         for( iter2 = fileList.begin(); iter2 != fileList.end(); ++iter2 )
+         {
+            FileStruct info = *iter2 ;
+
+            if ( info.fileName == dirName )
+            {
+               exist = TRUE ;
+               break ;
+            }
+         }
+
+         if ( !exist )
+         {
+            return FALSE ;
+         }
+
+         tmpPath = tmpPath + "\\" + dirName ;
+      }
+
+      if( newPath.find( tmpPath.c_str() ) != newPath.npos )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+#endif //WIN32
+
+   return TRUE ;
+}
+
+INT32 getRealPath( string path, string& fullPath )
+{
+   INT32 rc = SDB_OK ;
+#ifdef WIN32
+   wchar_t wFileName[MAX_PATH] ;
+   wchar_t buffer[MAX_PATH] ;
+   CHAR tmp[MAX_PATH] ;
+
+   MultiByteToWideChar( CP_UTF8, 0, path.c_str(), -1, wFileName, MAX_PATH ) ;
+
+   memset( buffer, 0, MAX_PATH ) ;
+
+   int ret = GetFullPathName( (LPCTSTR)wFileName, MAX_PATH, buffer, NULL ) ;
+   if( !ret || ret > MAX_PATH )
+   {
+      rc = SDB_IO ;
+      goto error ;
+   }
+
+   WideCharToMultiByte( CP_ACP, 0, buffer, -1, tmp, MAX_PATH, NULL, NULL ) ;
+
+   fullPath = string( tmp ) ;
+
+#endif //WIN32
+done:
+   return rc ;
+error:
+   goto done ;
+}
 
 INT32 getFiles( string path, vector<FileStruct> &fileList )
 {
@@ -499,4 +597,20 @@ void ReplaceAll( string &source, string oldStr, string newStr )
       source.replace( nPos, oldStr.length(), newStr ) ;
       nPos += newStr.length() ;
    }
+}
+
+void SplitString( const string& s, const string& c, vector<string>& v )
+{
+  std::string::size_type pos1, pos2;
+  pos2 = s.find(c);
+  pos1 = 0;
+  while(std::string::npos != pos2)
+  {
+    v.push_back(s.substr(pos1, pos2-pos1));
+ 
+    pos1 = pos2 + c.size();
+    pos2 = s.find(c, pos1);
+  }
+  if(pos1 != s.length())
+    v.push_back(s.substr(pos1));
 }
