@@ -257,5 +257,5 @@ SDB_SNAP_DATABASE
 [^_^]:
      本文使用的所有链接和引用
 [syn]:manual/infrastructure/Replication/architecture.md#数据复制
-[backup]:database_management/backup_and_recovery/data_backup.md
+[backup]:manual/Backup_Recovery/regular_bar.md
 [Sequoiadb_error_code]:reference/Sequoiadb_error_code.md

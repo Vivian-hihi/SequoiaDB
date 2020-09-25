@@ -145,12 +145,6 @@
                "file": "compatibility",
                "cn": "版本兼容性",
                "en": "Compatibility"
-            },
-            {
-               "id": 1432190598,
-               "file": "uninstall",
-               "cn": "卸载",
-               "en": "Uninstall"
             }
          ]
       },
@@ -1023,6 +1017,70 @@
          ]
       },
       {
+         "id": 1513325500,
+         "dir": "Access_Plan",
+         "cn": "访问计划",
+         "en": "Query Access Plans",
+         "contents": [
+            {
+               "id": 1513325501,
+               "file": "intro",
+               "cn": "概述",
+               "en": "Intro"
+            },
+            {
+               "id": 1513325502,
+               "file": "cost_estimation",
+               "cn": "基于代价的访问计划评估",
+               "en": "Evaluate Access Plans"
+            },
+            {
+               "id": 1513325503,
+               "file": "explain",
+               "cn": "查看访问计划",
+               "en": "Explain"
+            },
+            {
+               "id": 1513325504,
+               "file": "cache",
+               "cn": "访问计划缓存",
+               "en": "Access Plan Cache"
+            },
+            {
+               "id": 1496923311,
+               "file": "statistics",
+               "cn": "统计信息",
+               "en": "Statistics"
+            }
+         ]
+      },
+      {
+         "id": 1432190663,
+         "dir": "Backup_Recovery",
+         "cn": "备份恢复",
+         "en": "Backup and Recovery",
+         "contents": [
+            {
+               "id": 1432190665,
+               "file": "intro",
+               "cn": "备份恢复原理",
+               "en": "Intro"
+            },
+            {
+               "id": 1432190664,
+               "file": "regular_bar",
+               "cn": "数据备份恢复",
+               "en": "Regular Bar"
+            },
+            {
+               "id": 1477552448,
+               "file": "log_archive",
+               "cn": "日志归档",
+               "en": "Log Archive"
+            }
+         ]
+      },
+      {
          "id": 1599724271,
          "dir": "Migration",
          "cn": "数据迁移",
@@ -1051,6 +1109,38 @@
                "file": "export",
                "cn": "数据导出",
                "en": "Data Export"
+            }
+         ]
+      },
+      {
+         "id": 1601022427,
+         "dir": "DiagLog",
+         "cn": "诊断日志",
+         "en": "DiagLog",
+         "contents": [
+            {
+               "id": 1601022434,
+               "file": "cm_log",
+               "cn": "集群管理诊断日志",
+               "en": "CM Log"
+            },
+            {
+               "id": 1601022440,
+               "file": "diaglog",
+               "cn": "数据库诊断日志",
+               "en": "DB Diaglog"
+            },
+            {
+               "id": 1601022446,
+               "file": "auditlog",
+               "cn": "审计日志",
+               "en": "Auditlog"
+            },
+            {
+               "id": 1601022452,
+               "file": "analyze_log",
+               "cn": "集群日志分析方法",
+               "en": "Analyze Log"
             }
          ]
       },
@@ -1099,6 +1189,38 @@
                "en": "Replication"
             }
          ]
+      },
+      {
+         "id": 1432190673,
+         "dir": "Security",
+         "cn": "安全",
+         "en": "Security",
+         "contents": [
+            {
+               "id": 1432190674,
+               "file": "system_security",
+               "cn": "数据库系统安全",
+               "en": "System Security"
+            },
+            {
+               "id": 1432190675,
+               "file": "network_security",
+               "cn": "网络安全",
+               "en": "Network Security"
+            }, 
+            {
+               "id": 1432190676,
+               "file": "authentication_algorithm",
+               "cn": "鉴权机制",
+               "en": "Authentication Algorithm"
+            }                  
+         ]
+      },
+      {
+         "id": 1432190598,
+         "file": "engine_uninstall",
+         "cn": "数据库引擎卸载",
+         "en": "Engine Uninstall"
       },
       {
          "id": 1432190650,
@@ -1167,8 +1289,8 @@
                         "en": "Log Synchronization"
                       }
                     ]
-                }
-              ]
+                 }
+               ]
             },          
             {
                "id": 1432190653,
@@ -1291,50 +1413,10 @@
                ]
             },
             {
-               "id": 1432190663,
-               "dir": "backup_and_recovery",
-               "cn": "备份恢复",
-               "en": "Backup and Recovery",
-               "contents": [
-                  {
-                     "id": 1432190664,
-                     "file": "data_backup",
-                     "cn": "数据备份",
-                     "en": "Data Backup"
-                  },
-                  {
-                     "id": 1432190665,
-                     "file": "check_the_backup_information",
-                     "cn": "查看备份信息",
-                     "en": "Check Backup Information"
-                  },
-                  {
-                     "id": 1432190666,
-                     "file": "data_recovery",
-                     "cn": "数据恢复",
-                     "en": "Data Recovery"
-                  }
-               ]
-            },
-            {
-               "id": 1477552372,
-               "dir": "log_archiving_replay",
-               "cn": "日志归档重放",
-               "en": "Log Archiving and Replay",
-               "contents": [
-                  {
-                     "id": 1477552448,
-                     "file": "log_archiving",
-                     "cn": "日志归档",
-                     "en": "Log Archiving"
-                  },
-                  {
-                     "id": 1477552503,
-                     "file": "log_replay",
-                     "cn": "日志重放",
-                     "en": "Log Replay"
-                  }
-               ]
+               "id": 1477552503,
+               "file": "log_replay",
+               "cn": "日志重放",
+               "en": "Log Replay"
             },
             {
                "id": 1432190667,
@@ -1554,7 +1636,7 @@
                            "cn": "当前事务列表",
                            "en": "SDB_LIST_TRANSACTIONS_CURRENT"
                         },
-                  {
+                        {
                            "id": 1565839437,
                            "file": "SDB_LIST_SVCTASKS",
                            "cn": "服务任务列表",
@@ -1591,172 +1673,6 @@
                      "file": "monitor_cluster",
                      "cn": "监控集群",
                      "en": "Monitor Cluster"
-                  }
-               ]
-            },
-            {
-               "id": 1432190673,
-               "dir": "security",
-               "cn": "安全",
-               "en": "Security",
-               "contents": [
-                  {
-                     "id": 1432190674,
-                     "file": "system_security",
-                     "cn": "数据库系统安全",
-                     "en": "System Security"
-                  },
-                  {
-                     "id": 1432190675,
-                     "file": "network_security",
-                     "cn": "网络安全",
-                     "en": "Network Security"
-                  },
-                  {
-                     "id": 1587027446,
-                     "file": "auditlog",
-                     "cn": "审计日志",
-                     "en": "auditlog"
-                  },                  
-                  {
-                     "id": 1432190676,
-                     "file": "authentication_algorithm",
-                     "cn": "鉴权机制",
-                     "en": "Authentication Algorithm"
-                  }                  
-               ]
-            },
-            {
-               "id": 1513325500,
-               "dir": "access_plans",
-               "cn": "查询访问计划",
-               "en": "Query Access Plans",
-               "contents": [
-                  {
-                     "id": 1513325501,
-                     "file": "access_plans",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1513325502,
-                     "dir": "search_paths",
-                     "cn": "基于代价的访问计划评估",
-                     "en": "Evaluate Access Plans",
-                     "contents": [
-                        {
-                           "id": 1516795220,
-                           "file": "overview",
-                           "cn": "概述",
-                           "en": "Overview"
-                        },
-                        {
-                           "id": 1516795221,
-                           "file": "search",
-                           "cn": "访问计划的搜索过程",
-                           "en": "Search Paths"
-                        },
-                        {
-                           "id": 1516795222,
-                           "file": "TBSCAN",
-                           "cn": "TBSCAN的推演公式",
-                           "en": "Evaluation of TBSCAN"
-                        },
-                        {
-                           "id": 1516795223,
-                           "file": "IXSCAN",
-                           "cn": "IXSCAN的推演公式",
-                           "en": "Evaluation of IXSCAN"
-                        },
-                        {
-                           "id": 1516795224,
-                           "file": "SORT",
-                           "cn": "SORT的推演公式",
-                           "en": "Evaluation of SORT"
-                        }
-                     ]
-                  },
-                  {
-                     "id": 1513325503,
-                     "dir": "detailed_access_plan",
-                     "cn": "查看访问计划",
-                     "en": "Explain Access Plans",
-                     "contents": [
-                        {
-                           "id": 1516787550,
-                           "file": "overview",
-                           "cn": "概述",
-                           "en": "Overview"
-                        },
-                        {
-                           "id": 1516787551,
-                           "file": "coord_plan",
-                           "cn": "协调节点的访问计划",
-                           "en": "Access Plan of Coord Node"
-                        },
-                        {
-                           "id": 1516787552,
-                           "file": "main_collection_plan",
-                           "cn": "主表的访问计划",
-                           "en": "Access Plan of Main-Collection"
-                        },
-                        {
-                           "id": 1516787553,
-                           "file": "collection_plan",
-                           "cn": "数据节点的访问计划",
-                           "en": "Access Plan of Data Node"
-                        },
-                        {
-                           "id": 1516787554,
-                           "file": "COORD_MERGE",
-                           "cn": "COORD-MERGE操作的信息",
-                           "en": "COORD-MERGE Operator"
-                        },
-                        {
-                           "id": 1516787555,
-                           "file": "MERGE",
-                           "cn": "MERGE操作的信息",
-                           "en": "MERGE Operator"
-                        },
-                        {
-                           "id": 1516787556,
-                           "file": "SORT",
-                           "cn": "SORT操作的信息",
-                           "en": "SORT Operator"
-                        },
-                        {
-                           "id": 1516787557,
-                           "file": "TBSCAN",
-                           "cn": "TBSCAN操作的信息",
-                           "en": "TBSCAN Operator"
-                        },
-                        {
-                           "id": 1516787558,
-                           "file": "IXSCAN",
-                           "cn": "IXSCAN操作的信息",
-                           "en": "IXSCAN Operator"
-                        }
-                     ]
-                  },
-                  {
-                     "id": 1513325504,
-                     "file": "plan_cache",
-                     "cn": "访问计划缓存",
-                     "en": "Access Plan Cache"
-                  }
-               ]
-            },
-            {
-               "id": 1496923310,
-               "dir": "statistics",
-               "cn": "统计信息",
-               "en": "Statistics",
-               "contents": [
-                  {
-                     "id": 1496923311,
-                     "file": "statistics",
-                     "cn": "统计信息",
-                     "en": "Statistics"
                   }
                ]
             }

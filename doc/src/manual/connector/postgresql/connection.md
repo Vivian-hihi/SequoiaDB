@@ -22,7 +22,7 @@
    > * preferedinstancemode：设置 preferedinstance 的选择模式，取值可参考 [preferedinstancemode](reference/Sequoiadb_command/Sdb/setSessionAttr.md)；
    > * sessiontimeout：设置会话超时时间 如：sessiontimeout '100'；
    > * transaction：设置 SequoiaDB 是否开启事务，默认为 off，开启为 on；
-   > * cipher：设置是否使用密文模式输入密码，默认为 off，开启为 on，关于密文模式的介绍，可参考[密码管理](database_management/security/system_security.md)；
+   > * cipher：设置是否使用密文模式输入密码，默认为 off，开启为 on，关于密文模式的介绍，可参考[密码管理](manual/Security/system_security.md)；
    > * token：设置加密令牌；
    > * cipherfile：设置密文文件路径，默认为 `~/sequoiadb/passwd`。
 
