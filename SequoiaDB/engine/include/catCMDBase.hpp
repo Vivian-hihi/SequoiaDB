@@ -96,7 +96,7 @@ namespace engine
 
    class _catCmdBuilder : public SDBObject
    {
-      typedef _utilStringMap< CAT_CMD_NEW_FUNC, 0 > MAP_COMMAND ;
+      typedef _utilStringMap< CAT_CMD_NEW_FUNC, 1 > MAP_COMMAND ;
       typedef MAP_COMMAND::iterator                 MAP_COMMAND_IT ;
       friend class _catCmdAssit ;
 
