@@ -65,6 +65,8 @@ namespace engine
       virtual BOOLEAN needRollback() const ;
 
       virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
+      virtual void    setClientVersion( INT32 version ) ;
+      virtual INT32   getCatalogVersion() const ;
 
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
@@ -87,6 +89,8 @@ namespace engine
       BOOLEAN _uniqIndex ;
 
       utilWriteResult   _wrResult ;
+      INT32   _clientVersion ;
+      INT32   _catalogVersion ;
 
    } ;
 

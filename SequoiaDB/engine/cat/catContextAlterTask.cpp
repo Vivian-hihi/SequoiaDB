@@ -218,6 +218,11 @@ namespace engine
             rc = _checkDropAutoIncField( cataSet, cb, lockMgr ) ;
             break ;
          }
+         case RTN_ALTER_CL_INC_VERSION:
+         {
+            rc = SDB_OK ;
+            break ;
+         }
          default :
          {
             rc = SDB_INVALIDARG ;
@@ -274,7 +279,9 @@ namespace engine
                    "task [%s] on collection [%s], rc: %d",
                    _task->getActionName(), _dataName.c_str(), rc ) ;
 
-      if ( !setObject.isEmpty() || !unsetObject.isEmpty() )
+      if (   !setObject.isEmpty()
+          || !unsetObject.isEmpty()
+          || (RTN_ALTER_CL_INC_VERSION == _task->getActionType()))
       {
          rc = catAlterCLStep( _dataName, setObject, unsetObject,
                               cb, pDmsCB, pDpsCB, w ) ;
@@ -833,6 +840,11 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to build fields, rc: %d", rc ) ;
             break ;
          }
+         case RTN_ALTER_CL_INC_VERSION:
+         {
+            rc = SDB_OK ;
+            break;
+         }
          default :
          {
             rc = SDB_INVALIDARG ;
@@ -944,6 +956,11 @@ namespace engine
                                                setBuilder, unsetBuilder ) ;
             }
             break ;
+         }
+         case RTN_ALTER_CL_INC_VERSION:
+         {
+            rc = SDB_OK ;
+            break;
          }
          default :
          {
@@ -1627,6 +1644,7 @@ namespace engine
          case RTN_ALTER_CL_DISABLE_COMPRESS :
          case RTN_ALTER_CL_DISABLE_SHARDING :
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         case RTN_ALTER_CL_INC_VERSION:
          {
             rc = SDB_OK ;
             break ;

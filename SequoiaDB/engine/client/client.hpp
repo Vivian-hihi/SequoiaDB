@@ -609,6 +609,9 @@ namespace sdbclient
       virtual INT32 getDetail ( sdbCursor &cursor ) = 0 ;
 
       virtual INT32 getIndexStat ( const CHAR *pIndexName, bson::BSONObj &result ) = 0 ;
+
+      virtual void setVersion( INT32 clVersion ) = 0;
+      virtual INT32 getVersion() = 0;
    } ;
 
    /** \class sdbCollection
@@ -2442,6 +2445,23 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          }
          return pCollection->getIndexStat( pIndexName, result ) ;
+      }
+
+	  /* \fn void setVersion ( INT32 clVersion )
+          \brief set version to collection.
+          \param [in] clVersion The collection version.
+      */
+      void setVersion( INT32 clVersion )
+      {
+          pCollection->setVersion( clVersion ) ;
+      }
+      /* \fn INT32 getVersion ()
+          \brief get version from collection.
+          \retval collection version.
+      */
+      INT32 getVersion()
+      {
+          return pCollection->getVersion() ;
       }
    } ;
 

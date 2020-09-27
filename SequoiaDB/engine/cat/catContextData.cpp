@@ -2871,7 +2871,8 @@ namespace engine
       actionType = task->getActionType() ;
 
       if( actionType != RTN_ALTER_CL_CREATE_AUTOINC_FLD &&
-          actionType != RTN_ALTER_CL_DROP_AUTOINC_FLD )
+          actionType != RTN_ALTER_CL_DROP_AUTOINC_FLD &&
+          actionType != RTN_ALTER_CL_INC_VERSION)
       {
          rc = _addAlterSubCLTask( catTask, cb, *lockMgr, collectionSet,
                                 _groupList ) ;

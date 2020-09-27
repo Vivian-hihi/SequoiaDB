@@ -229,6 +229,7 @@ namespace engine
 
       // fill default-reply(insert success)
       MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg ;
+      INT32 clientVer                  = pInsertMsg->version;
       INT32 oldFlag                    = pInsertMsg->flags ;
       pInsertMsg->flags               |= FLG_INSERT_RETURNNUM ;
       contextID                        = -1 ;
@@ -316,6 +317,10 @@ namespace engine
       pTmpInsertMsg->version = cataPtr->getVersion() ;
       pTmpInsertMsg->w = 0 ;
 
+      rc = checkCatVersion( cb,pCollectionName,clientVer,cataSel );
+      PD_CHECK( SDB_OK == rc, rc, error, PDWARNING,
+                "check cat version failed, rc: %d",rc );
+
       /// Do on collection
       rcTmp = doOpOnCL( cataSel, BSONObj(), inMsg, sendOpt, cb, result ) ;
       if ( SDB_OK == rcTmp && nokRC.empty() )
@@ -374,6 +379,11 @@ namespace engine
          if ( !retBuilder.isEmpty() )
          {
             *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
+
+         if( SDB_CLIENT_CATA_VER_OLD == rc )
+         {
+            buf->setStartFrom( cataSel.getCataPtr()->getVersion() ) ;
          }
       }
       msgReleaseBuffer( pNewMsg, cb ) ;

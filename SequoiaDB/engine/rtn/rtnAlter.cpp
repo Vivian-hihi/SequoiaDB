@@ -784,6 +784,7 @@ namespace engine
          case RTN_ALTER_CL_SET_ATTRIBUTES :
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         case RTN_ALTER_CL_INC_VERSION:
          {
             rc = rtnAlterCollection( name, task, options, cb, dpsCB, pResult ) ;
             break ;
@@ -869,6 +870,7 @@ namespace engine
          }
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         case RTN_ALTER_CL_INC_VERSION:
          {
             //TODO: data group should do nothing
             break ;
@@ -1035,6 +1037,7 @@ namespace engine
          }
          case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
          case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         case RTN_ALTER_CL_INC_VERSION:
          {
             //TODO: data group should do nothing
             break ;

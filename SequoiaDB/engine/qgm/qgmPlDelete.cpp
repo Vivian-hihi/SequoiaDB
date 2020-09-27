@@ -59,7 +59,9 @@ namespace engine
    _qgmPlDelete::_qgmPlDelete( const qgmDbAttr &collection,
                                _qgmConditionNode *condition )
    :_qgmPlan( QGM_PLAN_TYPE_DELETE, _qgmField() ),
-    _collection( collection )
+    _collection( collection ),
+    _clientVersion( CATALOG_INVALID_VERSION ),
+    _catalogVersion( CATALOG_INVALID_VERSION )
    {
       if ( NULL != condition )
       {
@@ -101,6 +103,16 @@ namespace engine
    void _qgmPlDelete::buildRetInfo( BSONObjBuilder &builder ) const
    {
       _delResult.toBSON( builder ) ;
+   }
+
+   void _qgmPlDelete::setClientVersion( INT32 version )
+   {
+      _clientVersion = version ;
+   }
+
+   INT32 _qgmPlDelete::getCatalogVersion() const
+   {
+      return _catalogVersion ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLDELETE__EXEC, "_qgmPlDelete::_execute" )
@@ -145,7 +157,15 @@ namespace engine
                     opr.getName(), rc ) ;
             goto error ;
          }
+
+         ((MsgOpDelete*)msg)->version = _clientVersion ;
+
          rc = opr.execute( (MsgHeader*)msg, eduCB, contextID, &buff ) ;
+
+         if( SDB_CLIENT_CATA_VER_OLD == rc )
+         {
+            _catalogVersion = buff.getStartFrom() ;
+         }
          /// update info
          _delResult.incDeletedNum( opr.getDeletedNum() ) ;
          if ( buff.recordNum() == 1 )

@@ -249,6 +249,8 @@ namespace engine
       PD_LOG( PDINFO, "Do complete phase done for command[%s, target:%s]",
               getName(), pArguments->_targetName.c_str() ) ;
 
+      _setVer2Context( buf );
+
    done :
       /************************************************************************
        * Phase Clean
@@ -351,6 +353,12 @@ namespace engine
    {
       return SDB_OK ;
    }
+
+   INT32 _coordCMD2Phase::_setVer2Context( rtnContextBuf *buf )
+   {
+      return SDB_OK ;
+   }
+
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_CMD2PHASE_DOONCATAGROUP, "_coordCMD2Phase::_doOnCataGroup" )
    INT32 _coordCMD2Phase::_doOnCataGroup ( MsgHeader *pMsg,

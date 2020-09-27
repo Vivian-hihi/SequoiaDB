@@ -112,6 +112,7 @@ namespace sdbclient
       CHAR                    *_pAppendOIDBuffer ;
       INT32                    _appendOIDBufferSize ;
       std::set<ossValuePtr>   _cursors ;
+      INT32                   _version ;
 
       CHAR _collectionSpaceName [ CLIENT_CS_NAMESZ+1 ] ;
       CHAR _collectionName      [ CLIENT_COLLECTION_NAMESZ+1 ] ;
@@ -576,6 +577,9 @@ namespace sdbclient
 
       INT32 getIndexStat ( const CHAR *pIndexName, bson::BSONObj &result ) ;
 
+      void  setVersion ( INT32 clVersion ) ;
+      INT32 getVersion () ;
+
    private:
       INT32 _alterCollection1( const bson::BSONObj &options ) ;
       INT32 _alterCollection2( const bson::BSONObj &options ) ;
@@ -588,6 +592,19 @@ namespace sdbclient
       INT32 _alterInternal ( const CHAR * taskName,
                              const bson::BSONObj * argument,
                              BOOLEAN allowNullArgs ) ;
+
+      INT32 _getRetVersion () ;
+
+      INT32 _runCommand ( const CHAR *pString,
+                          const BSONObj *arg1 = NULL,
+                          const BSONObj *arg2 = NULL,
+                          const BSONObj *arg3 = NULL,
+                          const BSONObj *arg4 = NULL,
+                          SINT32 flag = 0,
+                          UINT64 reqID = 0,
+                          SINT64 numToSkip = 0,
+                          SINT64 numToReturn = -1,
+                          _sdbCursor **ppCursor = NULL ) ;
 
       INT32 _insert ( const BSONObj &obj,
                       const BSONObj &hint,
@@ -829,6 +846,19 @@ namespace sdbclient
       {
          _connection = NULL ;
       }
+
+      INT32 _getRetVersion () ;
+
+      INT32 _runCommand ( const CHAR *pString,
+                          const BSONObj *arg1 = NULL,
+                          const BSONObj *arg2 = NULL,
+                          const BSONObj *arg3 = NULL,
+                          const BSONObj *arg4 = NULL,
+                          SINT32 flag = 0,
+                          UINT64 reqID = 0,
+                          SINT64 numToSkip = 0,
+                          SINT64 numToReturn = -1,
+                          _sdbCursor **ppCursor = NULL ) ;
 
       friend class _sdbImpl ;
 
@@ -1205,6 +1235,7 @@ namespace sdbclient
                           INT32 *size,
                           SINT64 contextID,
                           _sdbCursor **ppCursor ) ;
+      INT32 _getRetVersion () ;
 
       INT32 _runCommand ( const CHAR *pString,
                           const BSONObj *arg1 = NULL,

@@ -71,6 +71,8 @@ namespace engine
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const ;
       virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
+      virtual void    setClientVersion( INT32 version ) ;
+      virtual INT32   getCatalogVersion() const ;
 
    protected:
       INT32 _updateVCS( const CHAR *fullName,
@@ -92,6 +94,8 @@ namespace engine
       INT32       _flag ;
 
       utilUpdateResult     _upResult ;
+      INT32       _clientVersion ;
+      INT32       _catalogVersion ;
    } ;
 
    typedef class _qgmPlUpdate qgmPlUpdate ;

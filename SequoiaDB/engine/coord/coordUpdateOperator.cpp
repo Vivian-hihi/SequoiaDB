@@ -125,6 +125,7 @@ namespace engine
 
       // fill default-reply(update success)
       MsgOpUpdate *pUpdate             = (MsgOpUpdate *)pMsg ;
+      INT32 clientVer                  = pUpdate->version;
       INT32 oldFlag                    = pUpdate->flags ;
       pUpdate->flags                  |= FLG_UPDATE_RETURNNUM ;
       contextID                        = -1 ;
@@ -295,6 +296,10 @@ namespace engine
          }
          inMsg._pMsg = ( MsgHeader* )pNewUpdate ;
 
+         rc = checkCatVersion( cb,pCollectionName,clientVer,cataSel );
+         PD_CHECK( SDB_OK == rc, rc, error, PDWARNING,
+                   "check cat version failed, rc: %d",rc );
+
          rcTmp = doOpOnCL( cataSel, boSelector, inMsg, sendOpt, cb, result ) ;
       }while( FALSE ) ;
 
@@ -376,6 +381,11 @@ namespace engine
          if ( !retBuilder.isEmpty() )
          {
             *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
+
+         if( SDB_CLIENT_CATA_VER_OLD == rc )
+         {
+            buf->setStartFrom( cataSel.getCataPtr()->getVersion() ) ;
          }
       }
 

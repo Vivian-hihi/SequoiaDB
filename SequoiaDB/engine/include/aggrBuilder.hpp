@@ -83,7 +83,9 @@ namespace engine
                    const CHAR *pCLName,
                    const BSONObj &hint,
                    _pmdEDUCB *cb,
-                   SINT64 &contextID  ) ;
+                   SINT64 &contextID,
+                   INT32  clientVer = 0,
+                   INT32* pCataVer = NULL) ;
 
    private:
       INT32 buildTree( const BSONObj &objs,

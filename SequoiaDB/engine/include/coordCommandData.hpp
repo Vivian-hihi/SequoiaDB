@@ -119,6 +119,11 @@ namespace engine
          */
          virtual BOOLEAN _flagUseGrpLstInCoord () { return FALSE ; }
 
+         /*
+            set new collection version to buf
+         */
+         virtual INT32 _setVer2Context( rtnContextBuf *buf );
+
       protected:
          INT32 _dropCL( const CHAR *clName, pmdEDUCB *cb ) ;
    } ;

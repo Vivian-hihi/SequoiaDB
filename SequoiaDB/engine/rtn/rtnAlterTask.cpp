@@ -1173,6 +1173,21 @@ namespace engine
    }
 
    /*
+      _rtnCLIncVersionTask implement
+    */
+   _rtnCLIncVersionTask::_rtnCLIncVersionTask ( const rtnAlterTaskSchema & schema,
+                                                const BSONObj & argument )
+   : _rtnAlterCLTask( schema, argument )
+   {
+      SDB_ASSERT( RTN_ALTER_CL_INC_VERSION == schema.getActionType(),
+                  "schema is invalid" ) ;
+   }
+
+   _rtnCLIncVersionTask::~_rtnCLIncVersionTask ()
+   {
+   }
+
+   /*
       _rtnCLEnableShardingTask implement
     */
    _rtnCLEnableShardingTask::_rtnCLEnableShardingTask ( const rtnAlterTaskSchema & schema,

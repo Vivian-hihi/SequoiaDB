@@ -108,7 +108,9 @@ namespace engine
                              const CHAR *pCLName,
                              const BSONObj &hint,
                              _pmdEDUCB *cb,
-                             SINT64 &contextID )
+                             SINT64 &contextID,
+                             INT32  clientVer,
+                             INT32* pCataVer )
    {
       INT32 rc = SDB_OK;
       qgmOptiTreeNode *pOptiTree = NULL;
@@ -167,7 +169,15 @@ namespace engine
       containerOwnned = FALSE ;
 
       // 6.execute
+      pContainer->setClientVersion( clientVer ) ;
+
       rc = pContainer->execute( cb );
+
+      if( NULL != pCataVer )
+      {
+         *pCataVer = pContainer->getCatalogVersion() ;
+      }
+
       PD_RC_CHECK( rc, PDERROR, "execute failed(rc=%d)", rc );
 
       /// 7. set cur trans context id

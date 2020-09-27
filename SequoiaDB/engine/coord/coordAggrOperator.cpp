@@ -79,6 +79,8 @@ namespace engine
       INT32 count = 0 ;
       BSONObj objs ;
       INT32 flags = 0 ;
+      INT32 cataVer = 0;
+      BSONObj obj ;
 
       contextID = -1 ;
 
@@ -116,7 +118,21 @@ namespace engine
                              flags, flags ) ;
 
          rc = pAggrBuilder->build( objs, count, pCollectionName,
-                                   BSONObj(), cb, contextID ) ;
+                                   BSONObj(), cb, contextID,
+                                   ((MsgOpAggregate*)pMsg)->version,
+                                   &cataVer ) ;
+
+         if ( buf && CATALOG_INVALID_VERSION != cataVer )
+         {
+            // DDL operation return SDB_OK, no need to set error bson
+            if( ( SDB_CLIENT_CATA_VER_OLD == rc ) && ( 0 == buf->size() ) )
+            {
+                obj = utilGetErrorBson( rc, NULL, NULL ) ;
+               *buf = rtnContextBuf( obj ) ;
+            }
+
+            buf->setStartFrom( cataVer );
+         }
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DQL, pMsg->opCode, AUDIT_OBJ_CL,
                       pCollectionName, rc,

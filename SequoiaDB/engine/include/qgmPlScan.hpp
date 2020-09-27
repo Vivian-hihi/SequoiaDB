@@ -74,6 +74,9 @@ namespace engine
 
       virtual BOOLEAN canUseTrans() const ;
 
+      virtual void    setClientVersion( INT32 version ) ;
+      virtual INT32   getCatalogVersion() const ;
+
    protected:
       INT32 _executeOnData( _pmdEDUCB *eduCB ) ;
 
@@ -106,6 +109,9 @@ namespace engine
       SDB_RTNCB *_rtnCB ;
 
       _qgmConditionNode *_conditionNode ;
+
+      INT32   _clientVersion ;
+      INT32   _catalogVersion ;
    } ;
    typedef class _qgmPlScan qgmPlScan ;
 }

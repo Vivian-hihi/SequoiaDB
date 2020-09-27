@@ -57,6 +57,8 @@ namespace engine
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const { return TRUE ; }
       void buildRetInfo( BSONObjBuilder &builder ) const ;
+      virtual void    setClientVersion( INT32 version ) ;
+      virtual INT32   getCatalogVersion() const ;
 
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
@@ -75,6 +77,8 @@ namespace engine
       qgmDbAttr         _collection ;
       BSONObj           _condition ;
       utilDeleteResult  _delResult ;
+      INT32             _clientVersion ;
+      INT32             _catalogVersion ;
    } ;
 
    typedef class _qgmPlDelete qgmPlDelete ;

@@ -319,9 +319,17 @@ namespace engine
                                                BSONObj &outSelector )
    {
       BSONObjBuilder builder ;
+      BSONElement ele ;
+
       clName = CAT_COLLECTION_INFO_COLLECTION ;
-      builder.appendNull( CAT_COLLECTION_NAME ) ;
       outSelector = queryOpt.getSelector() ;
+
+      builder.appendNull( CAT_COLLECTION_NAME ) ;
+      ele = queryOpt.getSelector().getField( FIELD_NAME_VERSION ) ;
+      if( EOO != ele.type() )
+      {
+         builder.appendNull( FIELD_NAME_VERSION ) ;
+      }
       queryOpt.setSelector( builder.obj() ) ;
       return SDB_OK ;
    }

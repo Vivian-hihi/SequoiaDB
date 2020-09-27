@@ -74,7 +74,9 @@ namespace engine
    _return( numReturn ),
    _dmsCB( NULL ),
    _rtnCB( NULL ),
-   _conditionNode( NULL )
+   _conditionNode( NULL ),
+   _clientVersion( CATALOG_INVALID_VERSION ),
+   _catalogVersion( CATALOG_INVALID_VERSION )
    {
       pmdKRCB *krcb = pmdGetKRCB() ;
       _dbRole = krcb->getDBRole() ;
@@ -269,6 +271,16 @@ namespace engine
       goto done ;
    }
 
+   void _qgmPlScan::setClientVersion( INT32 version )
+   {
+      _clientVersion = version ;
+   }
+
+   INT32 _qgmPlScan::getCatalogVersion() const
+   {
+      return _catalogVersion ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONCOORD, "_qgmPlScan::_executeOnCoord" )
    INT32 _qgmPlScan::_executeOnCoord( _pmdEDUCB *eduCB )
    {
@@ -303,9 +315,16 @@ namespace engine
          goto error ;
       }
 
+      ((MsgOpQuery*)qMsg)->version = _clientVersion ;
+
       rc = opr.execute( (MsgHeader*)qMsg, eduCB, _contextID, &buff ) ;
       if ( rc )
       {
+         if( SDB_CLIENT_CATA_VER_OLD == rc )
+         {
+            _catalogVersion = buff.getStartFrom() ;
+         }
+
          if ( SDB_COORD_UNKNOWN_OP_REQ != rc )
          {
             PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",

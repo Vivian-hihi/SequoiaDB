@@ -92,6 +92,7 @@ namespace engine
       RTN_ALTER_DOMAIN_SET_ATTRIBUTES,
       RTN_ALTER_CL_CREATE_AUTOINC_FLD,
       RTN_ALTER_CL_DROP_AUTOINC_FLD,
+      RTN_ALTER_CL_INC_VERSION,
       RTN_ALTER_MAX_ACTION
    } ;
 
@@ -620,6 +621,19 @@ namespace engine
    } ;
 
    typedef class _rtnCLDropAutoincFieldTask rtnCLDropAutoincFieldTask ;
+
+   /*
+      _rtnCLIncVersionTask define
+    */
+   class _rtnCLIncVersionTask : public _rtnAlterCLTask
+   {
+      public :
+         _rtnCLIncVersionTask ( const rtnAlterTaskSchema & schema,
+                                 const bson::BSONObj & argument ) ;
+         virtual ~_rtnCLIncVersionTask () ;
+   } ;
+
+   typedef class _rtnCLIncVersionTask rtnCLIncVersionTask ;
 
    /*
       _rtnCLEnableShardingTask define

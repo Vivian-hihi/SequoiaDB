@@ -555,6 +555,8 @@
 #define FIELD_NAME_KEY_PATTERN               "KeyPattern"
 #define FIELD_NAME_TOTAL_IDX_LEVELS          "TotalIndexLevels"
 #define FIELD_NAME_SAMPLE_RECORDS            "SampleRecords"
+#define FIELD_NAME_CHECK_CLIENT_CATA_VERSION "CheckClientCataVersion"
+#define FIELD_NAME_SDB_VERSION               "Version"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
@@ -923,6 +925,7 @@ enum SDB_LOB_MODE
 #define SDB_ALTER_ACTION_SET        "set"
 #define SDB_ALTER_ACTION_REMOVE     "remove"
 #define SDB_ALTER_ACTION_SET_ATTR   "set attributes"
+#define SDB_ALTER_ACTION_INC_VER    "increase version"
 
 #define SDB_ALTER_DELIMITER         " "
 
@@ -971,6 +974,9 @@ enum SDB_LOB_MODE
 
 /// set attributes
 #define SDB_ALTER_CL_SET_ATTR          SDB_ALTER_ACTION_SET_ATTR
+
+/// increase version
+#define SDB_ALTER_CL_INC_VER           SDB_ALTER_ACTION_INC_VER
 
 /// alter collection space
 #define CMD_NAME_ALTER_COLLECTION_SPACE   "alter collectionspace"

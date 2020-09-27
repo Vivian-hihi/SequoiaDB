@@ -813,6 +813,7 @@ namespace engine
       sendOpt._pIgnoreRC = &ignoreRC ;
 
       MsgOpQuery *pQueryMsg   = ( MsgOpQuery* )pMsg ;
+      INT32 clientVer         = pQueryMsg->version;
       SDB_RTNCB *pRtncb       = pmdGetKRCB()->getRTNCB() ;
       CHAR *pNewMsg           = NULL ;
       INT32 newMsgSize        = 0 ;
@@ -1062,6 +1063,14 @@ namespace engine
          }
          pQueryMsg->version = cataSel.getCataPtr()->getVersion() ;
 
+         // if DQL not command should check version
+         if ( pCollectionName && CMD_ADMIN_PREFIX[0] != pCollectionName[0] )
+         {
+            rc = checkCatVersion( cb,pCollectionName,clientVer,cataSel );
+            PD_CHECK( SDB_OK == rc, rc, error, PDWARNING,
+                "check cat version failed, rc: %d",rc );
+         }
+
          rcTmp = doOpOnCL( cataSel, objQuery, inMsg, sendOpt, cb, result ) ;
       }while( FALSE ) ;
 
@@ -1123,6 +1132,11 @@ namespace engine
       }
       sendOpt._pIgnoreRC = pOldIgnoreRC ;
 
+      if( buf && ( SDB_CLIENT_CATA_VER_OLD == rc ) )
+      {
+         buf->setStartFrom( cataSel.getCataPtr()->getVersion() ) ;
+      }
+
       /// reset info
       _pContext = NULL ;
       _processRet = SDB_OK ;
@@ -1140,7 +1154,7 @@ namespace engine
          contextID = -1 ;
          *pContext = NULL ;
       }
-      if ( buf && nokRC.size() > 0 )
+      if ( buf && ( nokRC.size() > 0 || SDB_CLIENT_CATA_VER_OLD == rc ) )
       {
          BSONObjBuilder retBuilder ;
          utilWriteResult wrResult ;

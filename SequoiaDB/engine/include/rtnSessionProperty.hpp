@@ -250,6 +250,16 @@ namespace engine
             return _operationTimeout ;
          }
 
+         OSS_INLINE BOOLEAN isNeedCheckCatVer()
+         {
+            return _needCheckVer ;
+         }
+
+         OSS_INLINE void setNeedCheckCatVer(BOOLEAN checkVerFlag)
+         {
+            _needCheckVer =  checkVerFlag;
+         }
+
          INT32 parseProperty( const BSONObj &property ) ;
 
          BSONObj toBSON () const ;
@@ -269,6 +279,7 @@ namespace engine
       protected :
          rtnInstanceOption    _instanceOption ;
          INT64                _operationTimeout ;
+         BOOLEAN              _needCheckVer ;
    } ;
 
 }

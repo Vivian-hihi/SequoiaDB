@@ -102,6 +102,11 @@ namespace engine
                      RTN_ALTER_CL_DROP_ID_INDEX,
                      RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ;
 
+      /// Increase Version
+      _registerTask( SDB_ALTER_CL_INC_VER,
+                     RTN_ALTER_COLLECTION,
+                     RTN_ALTER_CL_INC_VERSION ) ;
+
       /// Drop AutoIncrement Field
       _registerTask( SDB_ALTER_CL_DROP_AUTOINC_FLD,
                      RTN_ALTER_COLLECTION,
@@ -613,6 +618,11 @@ namespace engine
             task = SDB_OSS_NEW rtnCLDropAutoincFieldTask( taskSchema,
                                                           arguments ) ;
             break ;
+         }
+         case RTN_ALTER_CL_INC_VERSION:
+         {
+            task = SDB_OSS_NEW rtnCLIncVersionTask( taskSchema, arguments ) ;
+            break;
          }
          default :
          {

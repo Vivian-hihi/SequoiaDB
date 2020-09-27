@@ -155,6 +155,23 @@ namespace engine
       }
    }
 
+   void _qgmPlanContainer::setClientVersion( INT32 version )
+   {
+      if ( _plan )
+      {
+         _plan->setClientVersion( version ) ;
+      }
+   }
+
+   INT32 _qgmPlanContainer::getCatalogVersion() const
+   {
+      if ( _plan )
+      {
+         return _plan->getCatalogVersion() ;
+      }
+      return CATALOG_INVALID_VERSION ;
+   }
+
    INT32 _qgmPlanContainer::fetch( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;

@@ -49,7 +49,7 @@
 #define MAX_CACHE_SLOT_NUMBER      1000
 #define CLINET_CS_NAME_SIZE        300
 
-static const INT32 clientDefaultVersion = 1 ;
+static const INT32 clientDefaultVersion = CATALOG_DEFAULT_VERSION ;
 static const INT16 clientDefaultW = 0 ;
 static const UINT64 clientDefaultRouteID = 0 ;
 static const SINT32 clientDefaultFlags = 0 ;
@@ -583,6 +583,11 @@ done:
 
 INT32 insertCachedObject( hashTable *tb, const CHAR *key )
 {
+   return insertCachedVersion( tb, key, clientDefaultVersion ) ;
+}
+
+INT32 insertCachedVersion( hashTable *tb, const CHAR *key, INT32 version )
+{
    INT32 rc       = SDB_OK ;
    htbNode *node  = NULL ;
    UINT64 curTime = 0 ;
@@ -617,6 +622,7 @@ INT32 insertCachedObject( hashTable *tb, const CHAR *key )
 
    curTime = (UINT64)time( NULL ) ;
    node->lastTime = curTime ;
+   node->version  = version;
 
    rc = hash_table_insert( tb, node ) ;
    if ( SDB_OK != rc )
@@ -666,11 +672,20 @@ error:
    goto done ;
 }
 
-BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key )
+BOOLEAN fetchCachedObject ( hashTable *tb, const CHAR *key )
+{
+   INT32 version = CATALOG_INVALID_VERSION ;
+
+   return fetchCachedVersion( tb,key,&version ) ;
+}
+
+BOOLEAN fetchCachedVersion( hashTable *tb, const CHAR *key,INT32* pVersion )
 {
    INT32 rc       = SDB_OK ;
    htbNode *node  = NULL ;
    UINT64 curTime = 0 ;
+
+   *pVersion  = CATALOG_INVALID_VERSION;
 
    if ( !cacheEnabled )
    {
@@ -698,7 +713,7 @@ BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key )
    curTime = (UINT64)time( NULL ) ;
    if ( NULL != node && curTime - node->lastTime < cachedTimeInterval )
    {
-
+      *pVersion = node->version ;
    }
    else
    {
@@ -712,6 +727,11 @@ error:
 }
 
 INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
+{
+   return updateCachedVersion( code, tb, key, clientDefaultVersion ) ;
+}
+
+INT32 updateCachedVersion( const INT32 code, hashTable *tb, const CHAR *key, INT32 version )
 {
    INT32 rc       = SDB_OK ;
    htbNode *node  = NULL ;
@@ -757,7 +777,7 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
       }
       removeCachedObject( tb, csName, TRUE ) ;
    }
-   else if ( SDB_OK == rc )
+   else if ( SDB_OK == rc || SDB_CLIENT_CATA_VER_OLD == rc )
    {
       pos = ossStrchr( key, '.' ) ;
       if ( NULL != pos )
@@ -777,12 +797,13 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
 
          if ( NULL == node )
          {
-            rc = insertCachedObject( tb, csName ) ;
+            rc = insertCachedVersion( tb, csName, version ) ;
          }
          else
          {
             curTime = (UINT64)time( NULL ) ;
             node->lastTime = curTime ;
+            node->version  = version ;
          }
       }
       // update collection in cache
@@ -794,12 +815,13 @@ INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key )
 
       if ( NULL == node )
       {
-         rc = insertCachedObject( tb, key ) ;
+         rc = insertCachedVersion( tb, key, version ) ;
       }
       else
       {
          curTime = (UINT64)time( NULL ) ;
          node->lastTime = curTime ;
+         node->version  = version ;
       }
    }
 

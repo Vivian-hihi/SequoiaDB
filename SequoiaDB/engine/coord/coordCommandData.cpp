@@ -231,6 +231,27 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _coordDataCMD2Phase::_setVer2Context( rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+
+      if( ! _flagDoOnCollection ())
+      {
+          goto done;
+      }
+
+      if( NULL == getCataPtr() )
+      {
+         goto error;
+      }
+
+      buf->setStartFrom(getCataPtr()->getVersion());
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _coordDataCMD2Phase::_dropCL( const CHAR *clName, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -1041,6 +1062,8 @@ namespace engine
       coordCommandFactory *pFactory = coordGetFactory() ;
       coordOperator *pOperator = NULL ;
       rtnContextBuf buffObj ;
+      BSONObj obj ;
+      BSONElement ele ;
       CHAR *pQuery = NULL ;
       const CHAR *pCLName = NULL ;
 
@@ -1105,6 +1128,15 @@ namespace engine
          else
          {
             PD_LOG ( PDERROR, "Getmore failed, rc: %d", rc ) ;
+         }
+      }
+      else
+      {
+         obj = BSONObj( buffObj.data() ) ;
+         ele = obj.getField( FIELD_NAME_VERSION ) ;
+         if( NumberInt == ele.type() || NumberLong == ele.type() )
+         {
+            buf->setStartFrom( ele.numberInt() ) ;
          }
       }
 

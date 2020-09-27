@@ -482,13 +482,15 @@ namespace engine
     */
    _rtnSessionProperty::_rtnSessionProperty ()
    : _instanceOption(),
-     _operationTimeout( RTN_SESSION_OPERATION_TIMEOUT_MAX )
+     _operationTimeout( RTN_SESSION_OPERATION_TIMEOUT_MAX ),
+     _needCheckVer( FALSE )
    {
    }
 
    _rtnSessionProperty::_rtnSessionProperty ( const rtnSessionProperty & property )
    : _instanceOption( property._instanceOption ),
-     _operationTimeout( property._operationTimeout )
+     _operationTimeout( property._operationTimeout ),
+     _needCheckVer( FALSE )
    {
    }
 
@@ -675,8 +677,10 @@ namespace engine
 
       INT64 operationTimeout = -1 ;
       rtnInstanceOption instanceOption = getInstanceOption() ;
+      BOOLEAN needCheckCatVer = FALSE;
 
       BOOLEAN gotInstance = FALSE ;
+      BOOLEAN gotNeedCheckCatVer = FALSE ;
       BOOLEAN gotOperationTimeout = FALSE ;
       dpsTransConfItem transConf ;
       const CHAR *pSource = NULL ;
@@ -830,6 +834,14 @@ namespace engine
                       FIELD_NAME_SOURCE ) ;
             pSource = field.valuestr() ;
          }
+         else if ( 0 == ossStrcasecmp( field.fieldName(), FIELD_NAME_CHECK_CLIENT_CATA_VERSION ) )
+         {
+            PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not boolean",
+                      FIELD_NAME_CHECK_CLIENT_CATA_VERSION ) ;
+            gotNeedCheckCatVer = TRUE;
+            needCheckCatVer    = field.boolean() ? TRUE : FALSE;
+         }
          else
          {
             PD_LOG( PDERROR, "Option [%s] is not supported in session property",
@@ -883,6 +895,10 @@ namespace engine
       if ( pSource )
       {
          _updateSource( pSource ) ;
+      }
+      if( gotNeedCheckCatVer )
+      {
+         setNeedCheckCatVer( needCheckCatVer );
       }
 
    done :

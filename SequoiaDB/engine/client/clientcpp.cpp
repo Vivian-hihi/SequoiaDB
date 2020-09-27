@@ -669,7 +669,8 @@ do                                                            \
    _pReceiveBuffer ( NULL ),
    _receiveBufferSize ( 0 ),
    _pAppendOIDBuffer ( NULL ),
-   _appendOIDBufferSize ( 0 )
+   _appendOIDBufferSize ( 0 ),
+   _version ( CATALOG_DEFAULT_VERSION )
    {
       _setName ( pCollectionFullName ) ;
    }
@@ -969,6 +970,69 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbCollectionImpl::_getRetVersion ()
+   {
+      INT32 version = CATALOG_INVALID_VERSION ;
+
+      if( NULL != _pReceiveBuffer )
+      {
+         version = ((MsgOpReply*)_pReceiveBuffer)->startFrom ;
+      }
+      return version ;
+   }
+
+   // dml operation can not call this func
+   INT32 _sdbCollectionImpl::_runCommand ( const CHAR *pString,
+                                           const BSONObj *arg1,
+                                           const BSONObj *arg2,
+                                           const BSONObj *arg3,
+                                           const BSONObj *arg4,
+                                           SINT32 flag,
+                                           UINT64 reqID,
+                                           SINT64 numToSkip,
+                                           SINT64 numToReturn,
+                                           _sdbCursor **ppCursor )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 version = CATALOG_INVALID_VERSION ;
+
+      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize, pString,
+                                    flag, reqID, numToSkip, numToReturn,
+                                    arg1 ? arg1->objdata() : NULL,
+                                    arg2 ? arg2->objdata() : NULL,
+                                    arg3 ? arg3->objdata() : NULL,
+                                    arg4 ? arg4->objdata() : NULL,
+                                    _connection->_endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
+                                      &_receiveBufferSize,
+                                      ppCursor, FALSE ) ;
+
+      version = _getRetVersion() ;
+
+      /// ignore update result
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, version) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // DDL operatrion if return SDB_OK and version is valid then need to set to collection
+      if( CATALOG_INVALID_VERSION != version)
+      {
+         setVersion( version );
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _sdbCollectionImpl::_insert ( const BSONObj &obj,
                                        const BSONObj &hint,
                                        INT32 flags,
@@ -1000,15 +1064,24 @@ do                                                            \
          goto error ;
       }
 
+      ossEndianConvertIf ( _version,((MsgOpInsert*)_pSendBuffer)->version,
+                           _connection->_endianConvert ) ;
+
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
       if ( pResult )
       {
          _connection->getLastResultObj( *pResult, FALSE ) ;
       }
+
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
       /// update, and ignore the update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1166,6 +1239,12 @@ do                                                            \
                                            newObj.objdata(),
                                            hint.objdata(),
                                            _connection->_endianConvert ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            ossEndianConvertIf ( _version,((MsgOpInsert*)_pSendBuffer)->version,
+                                 _connection->_endianConvert ) ;
          }
          else
          {
@@ -1187,9 +1266,16 @@ do                                                            \
       {
          _connection->getLastResultObj( *pResult, FALSE ) ;
       }
+
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
       /// update and ignore the update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
+
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1259,6 +1345,13 @@ do                                                            \
                                            newObj.objdata(),
                                            (CHAR *)NULL,
                                            _connection->_endianConvert ) ;
+            if ( rc )
+            {
+                goto error ;
+            }
+
+            ossEndianConvertIf ( _version,((MsgOpInsert*)_pSendBuffer)->version,
+                                 _connection->_endianConvert ) ;
          }
          else
          {
@@ -1280,9 +1373,16 @@ do                                                            \
       {
          _connection->getLastResultObj( *pResult, FALSE ) ;
       }
+
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
       /// update and ignore the update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
+
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1396,6 +1496,9 @@ do                                                            \
          goto error ;
       }
 
+      ossEndianConvertIf ( _version,((MsgOpUpdate*)_pSendBuffer)->version,
+                          _connection->_endianConvert ) ;
+
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
       /// get result
@@ -1403,10 +1506,17 @@ do                                                            \
       {
          _connection->getLastResultObj( *pResult, FALSE ) ;
       }
+
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
       /// update and ignore the update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
       if ( SDB_OK != rc )
+
       {
          goto error ;
       }
@@ -1440,15 +1550,24 @@ do                                                            \
          goto error ;
       }
 
+      ossEndianConvertIf ( _version, ((MsgOpDelete*)_pSendBuffer)->version,
+                          _connection->_endianConvert ) ;
+
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize ) ;
       if ( pResult )
       {
          _connection->getLastResultObj( *pResult, FALSE ) ;
       }
-      /// ignore the update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
+      /// update and ignore the update result
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1546,14 +1665,34 @@ do                                                            \
       newFlags |= FLG_QUERY_WITH_RETURNDATA ;
 
       // run command
-      rc = _connection->_runCommand( _collectionFullName,
-                                     &condition, &selected,
-                                     &orderBy, &hint,
-                                     newFlags, 0, numToSkip, numToReturn,
-                                     &pCursor ) ;
-      /// ignore the update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize, _collectionFullName,
+                                    newFlags, 0, numToSkip, numToReturn,
+                                    condition.objdata(),
+                                    selected.objdata(),
+                                    orderBy.objdata(),
+                                    hint.objdata(),
+                                    _connection->_endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      ossEndianConvertIf ( _version, ((MsgOpQuery*)_pSendBuffer)->version,
+                           _connection->_endianConvert ) ;
+
+      rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
+                                      &_receiveBufferSize,
+                                      &pCursor, FALSE ) ;
+
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
+      /// update, and ignore the update result
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
+
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -2362,6 +2501,13 @@ do                                                            \
                                             _collectionFullName,
                                             obj[count].objdata(),
                                             _connection->_endianConvert ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            ossEndianConvertIf ( _version,((MsgOpAggregate*)_pSendBuffer)->version,
+                                 _connection->_endianConvert ) ;
          }
          else
          {
@@ -2378,9 +2524,14 @@ do                                                            \
       rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
                                       &_receiveBufferSize,
                                       cursor ) ;
-      /// ignore update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
+      if( SDB_CLIENT_CATA_VER_OLD == rc &&
+          CATALOG_INVALID_VERSION != _getRetVersion())
+      {
+         setVersion( _getRetVersion() );
+      }
+      /// update and ignore the update result
+      updateCachedVersion( rc, _connection->_getCachedContainer(),
+                           _collectionFullName, _version);
       if ( rc )
       {
          goto error ;
@@ -2420,15 +2571,8 @@ do                                                            \
       ob.append ( FIELD_NAME_SUBCLNAME, subClFullName ) ;
       newObj = ob.obj() ;
 
-      rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL,
-                                     &newObj ) ;
-      /// ignore update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      rc = _runCommand( CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL,
+                        &newObj ) ;
 
    done:
       return rc ;
@@ -2459,15 +2603,8 @@ do                                                            \
       ob.appendElementsUnique( options ) ;
       newObj = ob.obj() ;
 
-      rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_LINK_CL,
-                                     &newObj ) ;
-      /// ignore update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      rc = _runCommand( CMD_ADMIN_PREFIX CMD_NAME_LINK_CL,
+                        &newObj ) ;
 
    done:
       return rc ;
@@ -2527,15 +2664,8 @@ do                                                            \
       }
 
       // run command
-      rc = _connection->_runCommand ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION,
-                                      &newObj ) ;
-      /// ignore update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      rc = _runCommand ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION,
+                         &newObj ) ;
 
    done :
       return rc ;
@@ -2568,15 +2698,8 @@ do                                                            \
          goto error ;
       }
       // run command
-      rc = _connection->_runCommand ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION,
-                                      &newObj ) ;
-      /// ignore update result
-      updateCachedObject( rc, _connection->_getCachedContainer(),
-                          _collectionFullName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      rc = _runCommand ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION,
+                         &newObj ) ;
 
    done :
       return rc ;
@@ -3813,6 +3936,16 @@ do                                                            \
       goto done ;
    }
 
+   void _sdbCollectionImpl::setVersion ( INT32 clVersion )
+   {
+      _version = clVersion;
+   }
+
+   INT32 _sdbCollectionImpl::getVersion ()
+   {
+      return _version;
+   }
+
    /*
     * _sdbNodeImpl
     * Sdb Node Implementation
@@ -4884,6 +5017,57 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbCollectionSpaceImpl::_getRetVersion ()
+   {
+      INT32 version = CATALOG_INVALID_VERSION ;
+
+      if( NULL != _pReceiveBuffer )
+      {
+         version = ((MsgOpReply*)_pReceiveBuffer)->startFrom ;
+      }
+      return version ;
+   }
+
+   INT32 _sdbCollectionSpaceImpl::_runCommand ( const CHAR *pString,
+                                           const BSONObj *arg1,
+                                           const BSONObj *arg2,
+                                           const BSONObj *arg3,
+                                           const BSONObj *arg4,
+                                           SINT32 flag,
+                                           UINT64 reqID,
+                                           SINT64 numToSkip,
+                                           SINT64 numToReturn,
+                                           _sdbCursor **ppCursor )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize, pString,
+                                    flag, reqID, numToSkip, numToReturn,
+                                    arg1 ? arg1->objdata() : NULL,
+                                    arg2 ? arg2->objdata() : NULL,
+                                    arg3 ? arg3->objdata() : NULL,
+                                    arg4 ? arg4->objdata() : NULL,
+                                    _connection->_endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = _connection->_sendAndRecv( _pSendBuffer, &_pReceiveBuffer,
+                                      &_receiveBufferSize,
+                                      ppCursor, FALSE ) ;
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _sdbCollectionSpaceImpl::_setName ( const CHAR *pCollectionSpaceName )
    {
       INT32 rc = SDB_OK ;
@@ -4949,7 +5133,11 @@ do                                                            \
                                                   _sdbCollection **collection )
    {
       INT32 rc            = SDB_OK ;
+      INT32 version       = CATALOG_INVALID_VERSION ;
       CHAR clFullName[ CLIENT_CL_FULLNAME_SZ + 1 ] = { 0 } ;
+      BSONObjBuilder builder ;
+      BSONObj query ;
+      BSONObj selector ;
 
       if ( !pCollectionName ||
            ossStrlen ( pCollectionName ) > CLIENT_COLLECTION_NAMESZ )
@@ -4966,16 +5154,18 @@ do                                                            \
       ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
                    _collectionSpaceName, pCollectionName ) ;
 
-      if ( fetchCachedObject( _connection->_getCachedContainer(),
-                              clFullName ) )
+      if ( fetchCachedVersion( _connection->_getCachedContainer(),
+                               clFullName, &version ) )
       {
          // DO NOTHING
       }
       else
       {
-         BSONObj newObj = BSON ( FIELD_NAME_NAME << clFullName ) ;
-         rc = _connection->_runCommand ( CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION,
-                                         &newObj ) ;
+         query     = BSON ( FIELD_NAME_NAME << clFullName ) ;
+         selector  = builder.appendNull( FIELD_NAME_VERSION ).obj() ;
+
+         rc = _runCommand ( CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION,
+                            &query , &selector ) ;
          if ( rc )
          {
             goto error ;
@@ -4985,8 +5175,10 @@ do                                                            \
             delete *collection ;
             *collection = NULL ;
          }
-         rc = insertCachedObject( _connection->_getCachedContainer(),
-                                  clFullName ) ;
+         version = _getRetVersion();
+
+         rc = insertCachedVersion( _connection->_getCachedContainer(),
+                                   clFullName, version ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -5000,6 +5192,7 @@ do                                                            \
       }
       ((sdbCollectionImpl*)*collection)->_setConnection ( _connection ) ;
       ((sdbCollectionImpl*)*collection)->_setName ( clFullName ) ;
+      ((sdbCollectionImpl*)*collection)->setVersion( version );
 
    done :
       return rc ;
@@ -5046,8 +5239,8 @@ do                                                            \
       ob.appendElementsUnique( options ) ;
       newObj = ob.obj () ;
 
-      rc = _connection->_runCommand ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION,
-                                      &newObj ) ;
+      rc = _runCommand ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION,
+                         &newObj ) ;
       if ( rc )
       {
          goto error ;
@@ -5065,10 +5258,11 @@ do                                                            \
       }
       ((sdbCollectionImpl*)*collection)->_setConnection ( _connection ) ;
       ((sdbCollectionImpl*)*collection)->_setName ( clFullName ) ;
+      ((sdbCollectionImpl*)*collection)->setVersion( _getRetVersion() ) ;
 
       /// ignore the result
-      insertCachedObject( _connection->_getCachedContainer(),
-                          clFullName ) ;
+      insertCachedVersion( _connection->_getCachedContainer(),
+                           clFullName, _getRetVersion() ) ;
 
    done :
       return rc ;
@@ -8433,6 +8627,17 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbImpl::_getRetVersion ()
+   {
+      INT32 version = CATALOG_INVALID_VERSION ;
+
+      if(NULL != _pReceiveBuffer )
+      {
+         version = ((MsgOpReply*)_pReceiveBuffer)->startFrom;
+      }
+      return version;
+   }
+
    INT32 _sdbImpl::_getRetInfo ( CHAR **ppBuffer, INT32 *size,
                                  SINT64 contextID,
                                  _sdbCursor **ppCursor )
@@ -8603,6 +8808,10 @@ do                                                            \
                                    _sdbCollection **collection )
    {
       INT32 rc            = SDB_OK ;
+      INT32 version       = CATALOG_INVALID_VERSION ;
+      BSONObjBuilder builder ;
+      BSONObj query ;
+      BSONObj selector ;
 
       if ( !pCollectionFullName || !*pCollectionFullName || !collection ||
            ossStrlen ( pCollectionFullName ) >
@@ -8612,22 +8821,24 @@ do                                                            \
          goto error ;
       }
 
-      if ( fetchCachedObject( _tb, pCollectionFullName ) )
+      if ( fetchCachedVersion( _tb, pCollectionFullName, &version ) )
       {
          // DO NOTHING
       }
       else
       {
-         BSONObj newObj ;
-         newObj = BSON ( FIELD_NAME_NAME << pCollectionFullName ) ;
+         query     = BSON ( FIELD_NAME_NAME << pCollectionFullName ) ;
+         selector  = builder.appendNull( FIELD_NAME_VERSION ).obj() ;
          rc = _runCommand ( CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION,
-                            &newObj ) ;
+                            &query, &selector ) ;
          if ( rc )
          {
             goto error ;
          }
 
-         rc = insertCachedObject( _tb, pCollectionFullName ) ;
+         version = _getRetVersion();
+
+         rc = insertCachedVersion( _tb, pCollectionFullName, version ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -8642,7 +8853,7 @@ do                                                            \
       }
       ((sdbCollectionImpl*)*collection)->_setConnection ( this ) ;
       ((sdbCollectionImpl*)*collection)->_setName ( pCollectionFullName ) ;
-
+      ((sdbCollectionImpl*)*collection)->setVersion( version ) ;
    done :
       return rc ;
    error :

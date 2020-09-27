@@ -208,6 +208,11 @@ namespace engine
 
          virtual BOOLEAN _allowInTransaction() const { return TRUE ; }
 
+         /*
+            set new collection version to buf
+         */
+         virtual INT32 _setVer2Context( rtnContextBuf *buf );
+
    } ;
    typedef _coordCMD2Phase coordCMD2Phase ;
 

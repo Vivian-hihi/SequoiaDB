@@ -43,6 +43,7 @@ typedef struct _htbNode
 {
    UINT64 lastTime ;
    CHAR *name ;
+   INT32 version ;
 } htbNode ;
 
 typedef struct _hashTable
@@ -67,11 +68,17 @@ INT32 hash_table_destroy( hashTable **tb ) ;
 
 INT32 insertCachedObject( hashTable *tb, const CHAR *key ) ;
 
+INT32 insertCachedVersion( hashTable *tb, const CHAR *key, INT32 version ) ;
+
 INT32 removeCachedObject( hashTable *tb, const CHAR *key, BOOLEAN dropCS ) ;
+
+BOOLEAN fetchCachedVersion( hashTable *tb, const CHAR *key,INT32 *pVersion ) ;
 
 BOOLEAN fetchCachedObject( hashTable *tb, const CHAR *key ) ;
 
 INT32 updateCachedObject( const INT32 code, hashTable *tb, const CHAR *key ) ;
+
+INT32 updateCachedVersion( const INT32 code, hashTable *tb, const CHAR *key, INT32 version ) ;
 
 INT32 initCacheStrategy( BOOLEAN enableCacheStrategy,
                          const UINT32 timeInterval ) ;

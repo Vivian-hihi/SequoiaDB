@@ -72,6 +72,8 @@ namespace engine
       _uniqIndex = uniqIndex ;
       _contextID = -1 ;
       _initialized = TRUE ;
+      _clientVersion  = CATALOG_INVALID_VERSION ;
+      _catalogVersion = CATALOG_INVALID_VERSION ;
       if ( !partition.isEmpty() )
       {
          _partition = partition ;
@@ -183,6 +185,16 @@ namespace engine
       {
          _wrResult.toBSON( builder ) ;
       }
+   }
+
+   void _qgmPlCommand::setClientVersion( INT32 version )
+   {
+      _clientVersion = version ;
+   }
+
+   INT32 _qgmPlCommand::getCatalogVersion() const
+   {
+      return _catalogVersion ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__EXEC, "_qgmPlCommand::_execute" )
@@ -450,6 +462,7 @@ namespace engine
          }
 
          rc = pOpr->execute( (MsgHeader*)msg, eduCB, _contextID, &buff ) ;
+
          if ( buff.recordNum() == 1 )
          {
             BSONObj tmpResult ;
@@ -463,6 +476,8 @@ namespace engine
                     pOpr->getName(), rc ) ;
             goto error ;
          }
+
+         _catalogVersion = buff.getStartFrom();
       }
 
    done:

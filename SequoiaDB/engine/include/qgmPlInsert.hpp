@@ -59,6 +59,8 @@ namespace engine
       virtual BOOLEAN needRollback() const ;
       virtual BOOLEAN canUseTrans() const { return TRUE ; }
       virtual void    buildRetInfo( BSONObjBuilder &builder ) const ;
+      virtual void    setClientVersion( INT32 version ) ;
+      virtual INT32   getCatalogVersion() const ;
 
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
@@ -84,6 +86,8 @@ namespace engine
       SDB_ROLE       _role ;
 
       utilInsertResult  _inResult ;
+      INT32             _clientVersion ;
+      INT32             _catalogVersion ;
    } ;
 
    typedef class _qgmPlInsert qgmPlInsert ;

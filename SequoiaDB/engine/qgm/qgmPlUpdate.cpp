@@ -62,7 +62,9 @@ namespace engine
    :_qgmPlan( QGM_PLAN_TYPE_UPDATE, _qgmField() ),
     _collection( collection ),
     _updater( modifer ),
-    _flag( flag )
+    _flag( flag ),
+    _clientVersion( CATALOG_INVALID_VERSION ),
+    _catalogVersion( CATALOG_INVALID_VERSION )
    {
       try
       {
@@ -96,6 +98,16 @@ namespace engine
    void _qgmPlUpdate::buildRetInfo( BSONObjBuilder &builder ) const
    {
       _upResult.toBSON( builder ) ;
+   }
+
+   void _qgmPlUpdate::setClientVersion( INT32 version )
+   {
+      _clientVersion = version ;
+   }
+
+   INT32 _qgmPlUpdate::getCatalogVersion() const
+   {
+      return _catalogVersion ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLUPDATE__EXEC, "_qgmPlUpdate::_execute" )
@@ -149,7 +161,14 @@ namespace engine
             goto error ;
          }
 
+         ((MsgOpUpdate*)pMsg)->version = _clientVersion ;
+
          rc = opr.execute( (MsgHeader*)pMsg, eduCB, contextID, &buff ) ;
+
+         if( SDB_CLIENT_CATA_VER_OLD == rc )
+         {
+            _catalogVersion = buff.getStartFrom() ;
+         }
          /// update info
          _upResult.incUpdatedNum( opr.getUpdatedNum() ) ;
          _upResult.incModifiedNum( opr.getModifiedNum() ) ;

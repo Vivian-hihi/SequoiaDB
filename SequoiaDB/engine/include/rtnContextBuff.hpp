@@ -158,6 +158,8 @@ namespace engine
 
          INT64       getStartFrom() const { return _startFrom ; }
 
+         void        setStartFrom(INT32 startFrom) { _startFrom = startFrom; }
+
       private:
          INT32                *_pBuffCounter ;
          ossRWMutex           *_pBuffLock ;

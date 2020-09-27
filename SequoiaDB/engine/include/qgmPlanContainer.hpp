@@ -97,6 +97,8 @@ namespace engine
       INT32 execute( _pmdEDUCB *cb ) ;
       BOOLEAN needRollback() const ;
       void    buildRetInfo( BSONObjBuilder &builder ) const ;
+      void    setClientVersion( INT32 version ) ;
+      INT32   getCatalogVersion() const ;
 
       INT32 fetch( BSONObj &obj ) ;
 

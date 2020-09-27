@@ -450,6 +450,77 @@ namespace engine
       return retry ;
    }
 
+   INT32 _coordOperator::checkCatVersion(pmdEDUCB *cb,
+                                         const char*pCollectionName,
+                                         INT32 clientVer,
+                                         coordCataSel& cataSel )
+   {
+      INT32 rc = SDB_OK;
+      INT32 coordVer = CATALOG_INVALID_VERSION ;
+
+      if( ! _groupSession.getPropSite()->isNeedCheckCatVer())
+      {
+         goto done;
+      }
+
+      if( CATALOG_INVALID_VERSION == clientVer )
+      {
+         // no need  check
+         goto done;
+      }
+
+      if( NULL == cataSel.getCataPtr())
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      coordVer = cataSel.getCataPtr()->getVersion() ;
+
+      if(clientVer == coordVer)
+      {
+         goto done;
+      }
+
+      if(!cataSel.hasUpdated())
+      {
+         PD_LOG( PDWARNING,"check cat version collection[%s]"
+                 " client version:%d not equal coord version:%d"
+                 " need update coord version from cata",
+                  pCollectionName,clientVer,coordVer);
+
+         rc = cataSel.updateCataInfo( pCollectionName, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update collection[%s]'s catalog info "
+                    "failed in check cat version, rc: %d",
+                    pCollectionName, rc ) ;
+            goto error ;
+         }
+         _groupSession.getGroupCtrl()->incRetry() ;
+
+         //check again
+         coordVer = cataSel.getCataPtr()->getVersion() ;
+         if(clientVer == coordVer)
+         {
+            goto done;
+         }
+      }
+
+      // version check failed
+      PD_LOG( PDWARNING,"check collection[%s] version failed"
+               " client version:%d not equal coord version:%d"
+               " need update coord version from cata",
+                pCollectionName,clientVer,coordVer);
+
+      rc = SDB_CLIENT_CATA_VER_OLD;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _coordOperator::_prepareCLOp( coordCataSel &cataSel,
                                        coordSendMsgIn &inMsg,
                                        coordSendOptions &options,

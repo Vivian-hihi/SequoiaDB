@@ -353,6 +353,11 @@ namespace engine
                                                   MsgRouteID *pNodeID = NULL,
                                                   BOOLEAN canUpdate = TRUE ) ;
 
+         INT32                checkCatVersion(pmdEDUCB *cb,
+                                              const char*pCollectionName,
+                                              INT32 clientVer,
+                                              coordCataSel& cataSel ) ;
+
       protected:
          void                 setReadOnly( BOOLEAN isReadOnly ) ;
          void                 setName( const string &name ) ;

@@ -147,6 +147,35 @@ namespace engine
       }
    }
 
+   void _qgmPlan::setClientVersion( INT32 version )
+   {
+      for ( UINT32 i = 0 ; i < _input.size() ; ++i )
+      {
+         _qgmPlan *pPlan = _input[i] ;
+         // only support one colleciton
+         pPlan->setClientVersion( version ) ;
+      }
+   }
+
+   INT32 _qgmPlan::getCatalogVersion() const
+   {
+      INT32 curPlanClVersion = CATALOG_INVALID_VERSION ;
+      INT32 latestClVersion = CATALOG_INVALID_VERSION ;
+
+      for ( UINT32 i = 0 ; i < _input.size() ; ++i )
+      {
+         const _qgmPlan *pPlan = _input[i] ;
+         curPlanClVersion = pPlan->getCatalogVersion() ;
+         if( curPlanClVersion > latestClVersion )
+         {
+           latestClVersion = curPlanClVersion ;
+         }
+      }
+      // only support one colleciton
+      // every plan may change the version,so return the latest
+      return latestClVersion ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLAN_EXECUTE, "_qgmPlan::execute" )
    INT32 _qgmPlan::execute( _pmdEDUCB *eduCB )
    {

@@ -64,7 +64,9 @@ namespace engine
                                const BSONObj &record )
    :_qgmPlan( QGM_PLAN_TYPE_INSERT, _qgmField() ),
     _insertor( record ),
-    _got( FALSE )
+    _got( FALSE ),
+    _clientVersion( CATALOG_INVALID_VERSION ),
+    _catalogVersion( CATALOG_INVALID_VERSION )
    {
       _fullName = collection.toString() ;
       _role = pmdGetKRCB()->getDBRole() ;
@@ -95,6 +97,17 @@ namespace engine
    void _qgmPlInsert::buildRetInfo( BSONObjBuilder &builder ) const
    {
       _inResult.toBSON( builder ) ;
+   }
+
+   
+   void _qgmPlInsert::setClientVersion( INT32 version )
+   {
+      _clientVersion = version ;
+   }
+
+   INT32 _qgmPlInsert::getCatalogVersion() const
+   {
+      return _catalogVersion ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLINSERT__NEXTRECORD, "_qgmPlInsert::_nextRecord" )
@@ -249,8 +262,15 @@ namespace engine
          {
             if ( SDB_ROLE_COORD == _role )
             {
+               (( MsgOpInsert* )pMsg)->version = _clientVersion ;
+
                rc = opr.execute ( (MsgHeader*)pMsg, eduCB,
                                   contextID, &buff ) ;
+
+               if( SDB_CLIENT_CATA_VER_OLD == rc )
+               {
+                  _catalogVersion = buff.getStartFrom() ;
+               }
 
                /// update info
                _inResult.incInsertedNum( opr.getInsertedNum() ) ;

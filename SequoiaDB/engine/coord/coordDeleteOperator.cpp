@@ -104,6 +104,7 @@ namespace engine
 
       // fill default-reply(delete success)
       MsgOpDelete *pDelMsg             = (MsgOpDelete *)pMsg ;
+      INT32 clientVer                  = pDelMsg->version;
       INT32 oldFlag                    = pDelMsg->flags ;
       pDelMsg->flags                  |= FLG_DELETE_RETURNNUM ;
       contextID                        = -1 ;
@@ -173,6 +174,11 @@ namespace engine
    retry:
       pDelMsg->version = cataSel.getCataPtr()->getVersion() ;
       pDelMsg->w = 0 ;
+
+      rc = checkCatVersion( cb,pCollectionName,clientVer,cataSel );
+      PD_CHECK( SDB_OK == rc, rc, error, PDWARNING,
+                "check cat version failed, rc: %d",rc );
+
       rcTmp = doOpOnCL( cataSel, boDeletor, inMsg, sendOpt, cb, result ) ;
 
       if ( SDB_OK == rcTmp && nokRC.empty() )
@@ -227,6 +233,11 @@ namespace engine
          if ( !retBuilder.isEmpty() )
          {
             *buf = rtnContextBuf( retBuilder.obj() ) ;
+         }
+
+         if( SDB_CLIENT_CATA_VER_OLD == rc )
+         {
+            buf->setStartFrom( cataSel.getCataPtr()->getVersion() ) ;
          }
       }
       PD_TRACE_EXITRC ( COORD_OPERATORDEL_EXE, rc ) ;
