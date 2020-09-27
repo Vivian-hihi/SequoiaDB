@@ -35,7 +35,7 @@ SequoiaDB 实现了 CBO，并且提供了灵活的执行计划缓存配置能力
 
 [^_^]:
     本文使用到的所有内部链接及引用。
-[statistics]:manual/Access_Plan/statistics.md
-[cost_estimation]:manual/Access_Plan/cost_estimation.md
-[explain]:manual/Access_Plan/explain.md
-[cache]:manual/Access_Plan/cache.md
+[statistics]:manual/Maintainance/Access_Plan/statistics.md
+[cost_estimation]:manual/Maintainance/Access_Plan/cost_estimation.md
+[explain]:manual/Maintainance/Access_Plan/explain.md
+[cache]:manual/Maintainance/Access_Plan/cache.md

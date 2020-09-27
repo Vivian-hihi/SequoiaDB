@@ -103,7 +103,7 @@ SCRAM-SHA-256 鉴权认证分为三个步骤。
 
 [^_^]:
      本文使用的所有引用和链接
-[network_security]:manual/Security/network_security.md
-[authStep1]:images/Security/authStep1.png
-[authStep2]:images/Security/authStep2.png
-[authStep3]:images/Security/authStep3.png
+[network_security]:manual/Maintainance/Security/network_security.md
+[authStep1]:images/Maintainance/Security/authStep1.png
+[authStep2]:images/Maintainance/Security/authStep2.png
+[authStep3]:images/Maintainance/Security/authStep3.png

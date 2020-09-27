@@ -41,7 +41,7 @@
 |svcname|-|SequoiaDB 的服务名（端口号）|String|-|dump 和 dumpheader 为 false，且 outputconf 未设置时时必填|
 |user|-|数据库用户|String|-|
 |password|-|数据库用户密码|String|-|如果不使用该参数指定密码，工具会通过交互式界面提示用户输入密码|
-|cipher|-|是否使用密文模式输入密码。关于密文模式的介绍，详细可参考[密码管理](manual/Security/system_security.md)|Bool|false，不使用密文模式输入密码|
+|cipher|-|是否使用密文模式输入密码。关于密文模式的介绍，详细可参考[密码管理](manual/Maintainance/Security/system_security.md)|Bool|false，不使用密文模式输入密码|
 |token|-|加密令牌|String|-|
 |cipherfile|-|密文文件路径|String|`~/sequoiadb/passwd`|
 |ssl|-|使用 SSL 连接|Bool|false，不使用 SSL 连接|

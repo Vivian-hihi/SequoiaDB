@@ -716,5 +716,5 @@
 [^_^]:
   本文用到的所有链接
 [queryExplain]:manual/reference/Sequoiadb_command/SdbQuery/explain.md
-[cost_estimation]:manual/Access_Plan/cost_estimation.md
-[explain]:manual/Access_Plan/explain.md#数据节点上的详细访问计划
+[cost_estimation]:manual/Maintainance/Access_Plan/cost_estimation.md
+[explain]:manual/Maintainance/Access_Plan/explain.md#数据节点上的详细访问计划

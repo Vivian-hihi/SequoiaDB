@@ -1,6 +1,6 @@
 ##描述##
 
-[索引统计信息](manual/Access_Plan/statistics.md)快照 SDB_SNAP_INDEXSTATS 列出当前数据库节点中所有的索引统计信息。每条索引为一条记录。
+[索引统计信息](manual/Maintainance/Access_Plan/statistics.md)快照 SDB_SNAP_INDEXSTATS 列出当前数据库节点中所有的索引统计信息。每条索引为一条记录。
 
 ##标示##
 

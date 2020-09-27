@@ -152,10 +152,10 @@ db.sample.employee.dropIndex('idIdx')
 [create_index]:manual/reference/Sequoiadb_command/SdbCollection/createIndex.md
 [limit]:manual/reference/sequoiadb_limitation.md
 [data_type]:manual/infrastructure/Data_Model/data_type.md
-[access_plan]:manual/Access_Plan/Readme.md
+[access_plan]:manual/Maintainance/Access_Plan/Readme.md
 [query_hint]:manual/reference/Sequoiadb_command/SdbQuery/hint.md
 [query_explain]:manual/reference/Sequoiadb_command/SdbQuery/explain.md
-[statistics]:manual/Access_Plan/statistics.md
+[statistics]:manual/Maintainance/Access_Plan/statistics.md
 [analyze]:manual/reference/Sequoiadb_command/Sdb/analyze.md
 [drop_index]:manual/reference/Sequoiadb_command/SdbCollection/dropIndex.md
 [picture1]:images/infrastructure/Data_Model/index_picture_1.png

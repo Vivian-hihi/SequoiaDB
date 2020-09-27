@@ -72,4 +72,4 @@
     本文使用到的所有链接及引用。
 [node_conf]:manual/database_management/database_configuration/configuration_parameters.md
 [repli_tool]:manual/database_management/log_replay.md
-[sdb_diaglog]:manual/DiagLog/diaglog.md
+[sdb_diaglog]:manual/Maintainance/DiagLog/diaglog.md

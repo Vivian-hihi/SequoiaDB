@@ -46,6 +46,6 @@
     本文使用到的所有链接。
     TODO: 待补充2+2+1的两地三中心架构说明。
 
-[twocity_threedatacenter]:images/HA_DR/twocity_threedatacenter.png
-[twodatacenter]:manual/HA_DR/twodatacenter.md
-[disaster_recovery]:manual/HA_DR/twodatacenter.md#灾难恢复
+[twocity_threedatacenter]:images/Maintainance/HA_DR/twocity_threedatacenter.png
+[twodatacenter]:manual/Maintainance/HA_DR/twodatacenter.md
+[disaster_recovery]:manual/Maintainance/HA_DR/twodatacenter.md#灾难恢复

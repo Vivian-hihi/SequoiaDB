@@ -45,7 +45,7 @@
 [^_^]:
     本文使用到的所有链接
 
-[threecity_fivedatacenter]:images/HA_DR/threecity_fivedatacenter.png
+[threecity_fivedatacenter]:images/Maintainance/HA_DR/threecity_fivedatacenter.png
 [split_merge]:manual/database_management/tools/split_merge.md
 [consistency]:manual/infrastructure/Replication/primary_secondary_consistency.md
-[threecity_fivedatacenter_usage]:manual/HA_DR/disaster_recovery_tool.md
+[threecity_fivedatacenter_usage]:manual/Maintainance/HA_DR/disaster_recovery_tool.md

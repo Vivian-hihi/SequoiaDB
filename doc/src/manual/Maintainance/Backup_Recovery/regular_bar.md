@@ -267,4 +267,4 @@
 [^_^]:
     本文使用到的所有链接及引用。
 [backup_help]:manual/reference/Sequoiadb_command/Sdb/backup.md
-[sdbrestore_tool]:manual/Backup_Recovery/regular_bar.md#数据恢复
+[sdbrestore_tool]:manual/Maintainance/Backup_Recovery/regular_bar.md#数据恢复

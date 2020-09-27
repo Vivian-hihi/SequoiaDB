@@ -72,5 +72,5 @@
 
 [^_^]:
      本文使用的所有引用和链接
-[statistics]:manual/Access_Plan/statistics.md
+[statistics]:manual/Maintainance/Access_Plan/statistics.md
 [explain]:manual/reference/Sequoiadb_command/SdbQuery/explain.md

@@ -121,4 +121,4 @@
 
 [^_^]:
     本文使用到的所有链接及引用。
-[HA_DR]:manual/HA_DR/disaster_recovery.md
+[HA_DR]:manual/Maintainance/HA_DR/disaster_recovery.md
