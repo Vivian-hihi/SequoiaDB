@@ -2,8 +2,6 @@
 *@Description:  检查base64解码并发执行会串改。原因：中间变量用了静态变量，会导致多线程并发不安全 
 *@Author:   2020-08-25 zhaohailin
 ************************************************************************/
-import( "../lib/basic_operation/sequoiadb.js" );
-import( "../lib/main.js" );
 var recsNum = 10000;
 testConf.csName = COMMCLNAME;
 testConf.clName = COMMCLNAME + "_22693";

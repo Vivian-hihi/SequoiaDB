@@ -8,44 +8,18 @@ main( test );
 
 function test( testPara )
 {
-   try
+   assert.tryThrow( -259, function()
    {
       testPara.testCL.getIndexStat();
-      throw "It should be error: -259";
-   }
-   catch( e ) 
-   {
-      if( e !== -259 )
-      {
-         throw new Error( e );
-      }
-   }
-
-   try
-   {
+   });
+   assert.tryThrow( -349, function()
+   {  
       testPara.testCL.getIndexStat( "indexName" );
-      throw "It should be error: -349";
-   }
-   catch( e )
-   {
-      if( e !== -349 )
-      {
-         throw new Error( e );
-      }
-   }   
-
-   try
-   {
+   });
+   assert.tryThrow( -6, function()
+   {  
       testPara.testCL.getIndexStat( { "indexName": 1 } );
-      throw "It should be error: -6";
-   }
-   catch( e )
-   {
-      if( e !== -6 )
-      {
-         throw new Error( e );
-      }
-   }
+   });
 }
 
 

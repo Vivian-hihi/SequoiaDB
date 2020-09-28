@@ -61,7 +61,7 @@ function test ()
    insertSameDatas( dbcl22, insertNum, sameValues );
 
    //获取主备节点
-   var db1 = new Sequoiadb( db );
+   var db1 = new Sdb( db );
    db1.setSessionAttr( { PreferedInstance: "m" } );
    var dbclPrimary11 = db1.getCS( csName1 ).getCL( clName1 );
    var dbclPrimary12 = db1.getCS( csName1 ).getCL( clName2 );
@@ -69,7 +69,7 @@ function test ()
    var dbclPrimary22 = db1.getCS( csName2 ).getCL( clName2 );
 
    //执行统计
-   db.analyze( db );
+   db.analyze( );
 
    //检查所有组主备是否一致
    checkConsistency( db, null, null, groups );

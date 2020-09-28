@@ -15,19 +15,10 @@ function test( testPara )
       records.push( { "a": i } );
    }
    testPara.testCL.insert( records );
-
-   try
+   assert.tryThrow( -349, function()
    {
       testPara.testCL.getIndexStat( "index_22650" ).toObj();
-      throw "It should be error: -349";
-   }
-   catch( e )
-   {
-      if( e != -349 )
-      {
-         throw new Error( e );
-      }
-   }
+   });
 }
 
 
