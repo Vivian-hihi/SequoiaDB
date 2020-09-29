@@ -51,8 +51,6 @@ function runCurl ( curlPara, expErrno )
    var curlInfo = resolveRtnInfo( rtnInfo );
    curlInfo["curlCommand"] = curlCommand;
 
-
-   println( "curlInfo.errno:" + curlInfo.errno );
    if( curlInfo.errno !== expErrno )
    {
       println( "\nreturn information: " + rtnInfo );

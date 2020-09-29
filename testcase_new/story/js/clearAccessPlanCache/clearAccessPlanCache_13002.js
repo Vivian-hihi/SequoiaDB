@@ -93,6 +93,9 @@ function test ( args )
    //子表1执行切分
    split( subcsName1, subclName1, srcGroupName, desGroupName, { a0: 2000 }, { a0: 4000 } );
 
+   //检查主备同步
+   checkConsistency( db, null, null, [srcGroupName, desGroupName] );
+
    //检查访问计划快照
    var tmp = [{ GroupName: srcGroupName, ScanType: "tbscan", IndexName: "" }];
    var expAccessPlan = tmp.concat( tmp );

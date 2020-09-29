@@ -4,6 +4,8 @@
 *@createdate:  2016.5.16
 **************************************/
 testConf.clName = COMMCLNAME + "_inc7983";
+main(test);
+
 function test(testPara)
 {
    //insert numberic data 
