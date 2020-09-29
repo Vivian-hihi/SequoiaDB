@@ -56,6 +56,8 @@ function main ()
    // repeat createCollection
    var rc = db.createCollection( clName );
    assert.eq( JSON.stringify( rc ), ["{\"ok\":0,\"code\":-22,\"errmsg\":\"Collection already exists\"}"] );
+   var rc = db.getLastError();
+   assert.eq( rc, "Collection already exists" );
 
 
    cl.drop();

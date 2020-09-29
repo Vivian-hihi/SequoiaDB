@@ -15,13 +15,10 @@ function main ()
    var docsNum = 100;
    var docs = insertDocs( cl, docsNum );
 
-   /*
-   // $eq  sdb -6, not support
+   // $eq
    var rc = cl.find( { "a": { "$eq": 0 } } );
-   checkResults ( rc, docs.slice( 0, 1 ) ); 
-   */
-
-   // $et  ---sdb grammar, mongo support $et
+   checkResults( rc, docs.slice( 0, 1 ) );
+   // $et
    var rc = cl.find( { "a": { "$et": 0 } } );
    checkResults( rc, docs.slice( 0, 1 ) );
 

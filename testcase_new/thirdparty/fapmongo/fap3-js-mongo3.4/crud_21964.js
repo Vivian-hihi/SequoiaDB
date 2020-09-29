@@ -43,9 +43,6 @@ function main ()
 
 
    // cl.updateMany(<filter>,<update>,{upsert:<boolean>,writeConcern:<document>,collation:<document>})
-   // cl.updateMany(<filter>,<update>), multi default true
-   // update multi records, sdb only support multi: true 
-   // mongo multi default false, only update first records, not bug
    var rc = cl.updateMany( { "a": { "$lt": 4 } }, { "$set": { "b": "test" } } );
    assert.eq( rc, { "acknowledged": true, "matchedCount": 3, "modifiedCount": 3 } );
 
@@ -57,8 +54,8 @@ function main ()
    var rc = cl.updateMany( { "_id": 2 }, { "$set": { "u3": 1 } }, { "writeConcern": { "j": true }, "collation": { "locale": "fr" } } );
    assert.eq( rc, { "acknowledged": true, "matchedCount": 1, "modifiedCount": 1 } );
 
-   // cl.update(<filter>,<update>}), filter empty
-   var rc = cl.update( {}, { "$set": { "u4": 1 } } );
+   // cl.update(<filter>,<update>})
+   var rc = cl.update( {}, { "$set": { "u4": 1 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 4, "nUpserted": 0, "nModified": 4 } );
 
    // check results

@@ -18,12 +18,23 @@ function main ()
 
    try
    {
-      // not any user, auth
+      // not any user
+      // getUser
+      var rc = db.getUser( "notExist" );
+      assert.eq( rc, null );
+
+      // getUsers
       var rc = db.getUsers();
       assert.eq( rc, [] );
+
+      // get usersInfo
+      var rc = db.runCommand( { "usersInfo": 1 } );
+      assert.eq( rc, { "users": [], "ok": 1 } );
+
+      // auth
+      // exec success, return Error: Authentication has been disabled. Because sdb return success. Not bug
       db.auth( users[0], pwds[0] );
-      var rc = db.getLastError();
-      //assert.eq( rc, "Authentication has been disabled" );  ---rc:null, ---SEQUOIADBMAINSTREAM-5952
+
 
       // createUser
       for( var i = 0; i < users.length; i++ )
@@ -48,22 +59,42 @@ function main ()
       }
       assert.eq( cl.count(), users.length );
 
-      // getUser / getUsers
-      /*  SEQUOIADBMAINSTREAM-5974
+
+      // exist multi users
+      // getUser
       var rc = db.getUser( users[1] );
-      assert.eq( rc, { "user" : users[1] } );
-      */
+      assert.eq( rc, { "user": users[1] } );
+
+      // getUsers
       var rc = db.getUsers();
       var expRc = [];
       for( var i = 0; i < users.length; i++ )
       {
          expRc.push( { "user": users[i] } );
       }
-      assert.eq( rc, expRc );
+      assert.eq( JSON.stringify( rc ), JSON.stringify( expRc ) );
+
+      // usersInfo
+      // get all info
+      var rc = db.runCommand( { "usersInfo": 1 } );
+      assert.eq( JSON.stringify( rc ), '{"users":' + JSON.stringify( expRc ) + ',"ok":1}' );
+      // get one info
+      var rc = db.runCommand( { "usersInfo": [{ "user": users[0] }] } );
+      assert.eq( JSON.stringify( rc ), '{"users":' + JSON.stringify( expRc.slice( 0, 1 ) ) + ',"ok":1}' );
+      // get more info
+      var rc = db.runCommand( { "usersInfo": [{ "user": users[0] }, { "user": users[1] }] } );
+      assert.eq( JSON.stringify( rc ), '{"users":' + JSON.stringify( expRc.slice( 0, 2 ) ) + ',"ok":1}' );
+      // user not exist      
+      var rc = db.runCommand( { "usersInfo": [{ "user": "notExist" }] } );
+      assert.eq( rc, { "users": [], "ok": 1 } );
+
 
       // user exist, create the user
       var rc = db.runCommand( { "createUser": users[0], "pwd": pwds[0], "roles": [] } );
       assert.eq( rc, { "ok": 0, "code": -295, "errmsg": "The specified user already exist" } );
+      var rc = db.getLastError();
+      assert.eq( rc, "The specified user already exist" );
+
 
       // drop the user
       db.auth( users[0], pwds[0] );
@@ -79,12 +110,15 @@ function main ()
       {
          assert.eq( e, 'Error: user specified is not exist or password is invalid' );
       }
+      var rc = db.getLastError();
+      assert.eq( rc, "user specified is not exist or password is invalid" );
 
       // createUser again after drop the user
       var rc = db.runCommand( { "createUser": users[0], "pwd": pwds[0], "roles": [] } );
       assert.eq( rc, { "ok": 1 } );
       var rc = db.getUser( users[0] );
-      //assert.eq( rc, { "user" : users[0] } );
+      assert.eq( rc, { "user": users[0] } );
+
 
       // password error
       var rc = db.auth( users[0], "errorPwd" );
@@ -107,4 +141,11 @@ function main ()
    }
 
    cl.drop();
+
+
+   // logout
+   var rc = db.logout();
+   assert.eq( rc, { "ok": 1 } );
+   var rc = db.getLastError();
+   assert.eq( rc, null );
 }

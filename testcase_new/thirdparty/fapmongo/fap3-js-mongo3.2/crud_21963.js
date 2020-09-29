@@ -22,6 +22,8 @@ function main ()
    // insert document
    var rc = cl.insert( docs[0] );
    assert.eq( rc, { "nInserted": 1 } );
+   var rc = db.getLastError();
+   assert.eq( rc, null );
 
    // insert []
    var rc = cl.insert( [] );
@@ -41,11 +43,9 @@ function main ()
 
 
    // cl.update(<filter>,<update>,{upsert:<boolean>,multi:<boolean>,writeConcern:<document>,collation:<document>})
-   // cl.update(<filter>,<update>), multi default true
-   // update multi records, sdb only support multi:true 
-   // mongo multi default false, only update first records, not bug
+   // cl.update(<filter>,<update>), multi default: false
    var rc = cl.update( { "a": { "$lt": 5 } }, { "$set": { "b": "test" } } );
-   assert.eq( rc, { "nMatched": 4, "nUpserted": 0, "nModified": 4 } );
+   assert.eq( rc, { "nMatched": 1, "nUpserted": 0, "nModified": 1 } );
 
    // cl.update(<filter>,<update>, {multi:true})
    var rc = cl.update( { "a": { "$exists": 1 } }, { "$set": { "u2": 1 } }, { "multi": true } );
@@ -57,27 +57,24 @@ function main ()
 
    // cl.update(<filter>,<update>}), filter empty
    var rc = cl.update( {}, { "$set": { "u4": 1 } } );
-   assert.eq( rc, { "nMatched": 5, "nUpserted": 0, "nModified": 5 } );
+   assert.eq( rc, { "nMatched": 1, "nUpserted": 0, "nModified": 1 } );
    // db.getLastError()
    var rc = db.getLastError();
    assert.eq( rc, null );
 
 
    // cl.update(<filter>,<update>}), filter empty, multi:true
-   try
+   var rc = cl.update( {}, { "b": "hello" }, { "multi": true } );
+   if( rc.toString().indexOf( "Multi update only works with $ operators" ) === -1 )
    {
-      cl.update( {}, { "b": "hello" }, { "multi": true } );
-      // SEQUOIADBMAINSTREAM-5952
-      //throw new Error( "expect fail but actual success." );
+      throw new Error( "check fail, rc: " + rc.toString() );
    }
-   catch( e )
-   {
-      assert.eq( e, '' );
-   }
+   var rc = db.getLastError();
+   assert.eq( rc, "Multi update only works with $ operators" );
 
    // check results
    var rc = cl.find().sort( { "a": 1 } );
-   var expDocs = "[{\"_id\":1,\"a\":1,\"b\":\"test\",\"u2\":1,\"u4\":1},{\"_id\":2,\"a\":2,\"b\":\"test\",\"u2\":1,\"u3\":1,\"u4\":1},{\"_id\":3,\"a\":3,\"b\":\"test\",\"u2\":1,\"u4\":1},{\"_id\":4,\"a\":4,\"b\":\"test\",\"u2\":1,\"u4\":1},{\"_id\":5,\"a\":5,\"b\":\"insert\",\"u2\":1,\"u4\":1}]";
+   var expDocs = "[{\"_id\":1,\"a\":1,\"b\":\"test\",\"u2\":1,\"u4\":1},{\"_id\":2,\"a\":2,\"b\":\"insert\",\"u2\":1,\"u3\":1},{\"_id\":3,\"a\":3,\"b\":\"insert\",\"u2\":1},{\"_id\":4,\"a\":4,\"b\":\"insert\",\"u2\":1},{\"_id\":5,\"a\":5,\"b\":\"insert\",\"u2\":1}]";
    checkResults( rc, expDocs );
 
 
@@ -86,7 +83,7 @@ function main ()
    var rc = cl.remove( { "_id": { "$lt": 4 } } );
    assert.eq( rc, { "nRemoved": 3 } );
    var rc = cl.find().sort( { "a": 1 } );
-   var expDocs = "[{\"_id\":4,\"a\":4,\"b\":\"test\",\"u2\":1,\"u4\":1},{\"_id\":5,\"a\":5,\"b\":\"insert\",\"u2\":1,\"u4\":1}]";
+   var expDocs = "[{\"_id\":4,\"a\":4,\"b\":\"insert\",\"u2\":1},{\"_id\":5,\"a\":5,\"b\":\"insert\",\"u2\":1}]";
    checkResults( rc, expDocs );
 
    // remove not exist doc

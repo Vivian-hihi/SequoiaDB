@@ -50,10 +50,14 @@ function main ()
    // drop normal index, by name
    var rc = cl.dropIndex( "bIdx" );
    assert.eq( JSON.stringify( rc ), ["{\"ok\":1}"] );
+   var rc = db.getLastError();
+   assert.eq( rc, null );
 
    // drop id index
    var rc = cl.dropIndex( "$id" );
    assert.eq( JSON.stringify( rc ), "{\"ok\":0,\"code\":-56,\"errmsg\":\"$id index can't be dropped\"}" );
+   var rc = db.getLastError();
+   assert.eq( rc, "$id index can't be dropped" );
 
    // getIndexes
    var rc = cl.getIndexes();

@@ -16,7 +16,7 @@ function main ()
    cl.insert( [{ "_id": 1, "a": 1, "b": 1 },
    { "_id": 2, "a": 2, "b": 1 },
    { "_id": 3, "a": 3, "b": 1 }] );
-   var rc = cl.update( { "a": { "$in": [1, 2] } }, { "$inc": { "b": 1, "c": 1 } } );
+   var rc = cl.update( { "a": { "$in": [1, 2] } }, { "$inc": { "b": 1, "c": 1 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 2, "nUpserted": 0, "nModified": 2 } );
    checkResults( cl.find(), "[{\"_id\":1,\"a\":1,\"b\":2,\"c\":1},{\"_id\":2,\"a\":2,\"b\":2,\"c\":1},{\"_id\":3,\"a\":3,\"b\":1}]" );
    cl.remove( {} );
@@ -26,7 +26,7 @@ function main ()
    cl.insert( [{ "_id": 1, "a": 1, "b": 1 },
    { "_id": 2, "a": 2, "b": 1 },
    { "_id": 3, "a": 3, "b": 1 }] );
-   var rc = cl.update( { "a": { "$in": [1, 2] } }, { "$set": { "b": "test", "c": 1 } } );
+   var rc = cl.update( { "a": { "$in": [1, 2] } }, { "$set": { "b": "test", "c": 1 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 2, "nUpserted": 0, "nModified": 2 } );
    checkResults( cl.find(), "[{\"_id\":1,\"a\":1,\"b\":\"test\",\"c\":1},{\"_id\":2,\"a\":2,\"b\":\"test\",\"c\":1},{\"_id\":3,\"a\":3,\"b\":1}]" );
    cl.remove( {} );
@@ -38,7 +38,7 @@ function main ()
    // $setOnInsert only support upsert:true, return fail while upsert:false
    try
    {
-      cl.update( { "a": 4 }, { "$setOnInsert": { "b": 4 } } );
+      cl.update( { "a": 4 }, { "$setOnInsert": { "b": 4 } }, { "multi": true } );
       //throw new Error("expect fail but actual success.");  ---not throw error
       
       //actual return: WriteResult({ "writeError" : { "code" : -6, "errmsg" : "Invalid Argument" } })
@@ -87,7 +87,7 @@ function main ()
    cl.insert( [{ "_id": 1, "a": 1, "b": 1 },
    { "_id": 2, "a": 2, "b": 2 },
    { "_id": 3, "a": 3, "b": 3 }] );
-   var rc = cl.update( { "a": { "$lte": 2 } }, { "$unset": { "b": 1, "c": 1 } } );
+   var rc = cl.update( { "a": { "$lte": 2 } }, { "$unset": { "b": 1, "c": 1 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 2, "nUpserted": 0, "nModified": 2 } );
    checkResults( cl.find(), "[{\"_id\":1,\"a\":1},{\"_id\":2,\"a\":2},{\"_id\":3,\"a\":3,\"b\":3}]" );
    cl.remove( {} );
@@ -98,12 +98,12 @@ function main ()
    { "_id": 2, "a": 2, "b": [1, 2], "c": [1, 2, 3, 4, 5] },
    { "_id": 3, "a": 3, "b": [1, 2], "c": [1, 2, 3, 4, 5] }];
    cl.insert( docs );
-   var rc = cl.update( { "a": { "$gt": 1 } }, { "$pop": { "b": 1, "c": 2 } } );
+   var rc = cl.update( { "a": { "$gt": 1 } }, { "$pop": { "b": 1, "c": 2 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 2, "nUpserted": 0, "nModified": 2 } );
    checkResults( cl.find(), "[{\"_id\":1,\"a\":1,\"b\":[1,2],\"c\":[1,2,3,4,5]},{\"_id\":2,\"a\":2,\"b\":[1],\"c\":[1,2,3]},{\"_id\":3,\"a\":3,\"b\":[1],\"c\":[1,2,3]}]" );
 
    // $pop: -1
-   var rc = cl.update( { "a": { "$gt": 1 } }, { "$pop": { "b": -1, "c": -2 } } );
+   var rc = cl.update( { "a": { "$gt": 1 } }, { "$pop": { "b": -1, "c": -2 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 2, "nUpserted": 0, "nModified": 2 } );
    var expRC = "[{\"_id\":1,\"a\":1,\"b\":[1,2],\"c\":[1,2,3,4,5]},{\"_id\":2,\"a\":2,\"b\":[],\"c\":[3]},{\"_id\":3,\"a\":3,\"b\":[],\"c\":[3]}]";
    checkResults( cl.find(), expRC );
@@ -137,7 +137,7 @@ function main ()
    { "_id": 3, "a": 3, "b": [1], "c": [1, 3, 4, 5] }];
    cl.insert( docs );
    // filed exist, cover: is not array, empty array, value not exist 
-   var rc = cl.update( {}, { "$pull": { "b": 1, "c": 2 } } );
+   var rc = cl.update( {}, { "$pull": { "b": 1, "c": 2 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 3, "nUpserted": 0, "nModified": 3 } );
    var expRC = '[{\"_id\":1,\"a\":1,\"b\":[],\"c\":[1,3,4,5]},{\"_id\":2,\"a\":2,\"b\":1,\"c\":[1,3,4,5]},{\"_id\":3,\"a\":3,\"b\":[],\"c\":[1,3,4,5]}]';
    checkResults( cl.find(), expRC );
@@ -156,7 +156,7 @@ function main ()
    { "_id": 3, "a": 3, "b": [1], "c": [1] }];
    cl.insert( docs );
    // filed exist, cover: is not array, empty array, value not exist 
-   var rc = cl.update( {}, { "$push": { "b": 1, "c": 2 } } );
+   var rc = cl.update( {}, { "$push": { "b": 1, "c": 2 } }, { "multi": true } );
    assert.eq( rc, { "nMatched": 3, "nUpserted": 0, "nModified": 3 } );
    var expRC = "[{\"_id\":1,\"a\":1,\"b\":[1],\"c\":[1,2]},{\"_id\":2,\"a\":2,\"b\":1,\"c\":[1,2]},{\"_id\":3,\"a\":3,\"b\":[1,1],\"c\":[1,2]}]";
    checkResults( cl.find(), expRC );
