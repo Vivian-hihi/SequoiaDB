@@ -8,6 +8,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.om.plugin.common.Crypto;
 import com.sequoiadb.om.plugin.config.SequoiaSQLConfig;
+import com.sequoiadb.util.SdbDecrypt;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -137,8 +138,17 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         if (cur.hasNext()) {
             BSONObject record = cur.getNext();
 
+            String passwd = (String) record.get("Passwd");
+
+            if (passwd.length() > 0) {
+                try {
+                    passwd = new SdbDecrypt().decryptPasswd(passwd, null);
+                } catch (BaseException e) {
+                }
+            }
+
             auth.setUser((String) record.get("User"));
-            auth.setPasswd((String) record.get("Passwd"));
+            auth.setPasswd(passwd);
             auth.setDefaultDb((String) record.get("DbName"));
         }
 
