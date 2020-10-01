@@ -46,3 +46,20 @@ vi nodejs-12.14.1/demo/package-lock.json
         ......
         "mongodb": "3.1.13",
         ......
+
+
+注意事项：
+必须在 demo 目录下执行用例
+
+
+【FAQ】
+问题1：执行 npm start 失败
+susesp1-2:/opt/nodejs-12.14.1/demo # ../bin/npm start
+/usr/bin/env: node: No such file or directory
+解决办法：
+对 /usr/bin/node 文件添加软连接，软连接地址为实际的 node 执行文件地址，如：
+/usr/bin # ln -s /opt/nodejs-12.14.1/bin/node node
+/usr/bin # ll node
+lrwxrwxrwx 1 root root 28 Sep 30 17:30 node -> /opt/nodejs-12.14.1/bin/node
+
+
