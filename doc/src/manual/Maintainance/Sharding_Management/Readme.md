@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     分区管理
     作者：魏彰凯
     时间：20190516
@@ -20,8 +20,8 @@
 [^_^]:
     本文使用到的所有链接
     
-[sharding_architecture]:manual/basic_operation/sharding/overview.md
-[sharding_balance]:manual/Sharding_Management/balance.md
-[sharding_avoid_hot]:manual/Sharding_Management/avoid_hot.md
-[sharding_reliability]:manual/Sharding_Management/reliability.md
-[sharding_monitoring]:manual/Sharding_Management/monitoring.md
+[sharding_architecture]:manual/infrastructure/Sharding/architecture.md
+[sharding_balance]:manual/Maintainance/Sharding_Management/balance.md
+[sharding_avoid_hot]:manual/Maintainance/Sharding_Management/avoid_hot.md
+[sharding_reliability]:manual/Maintainance/Sharding_Management/reliability.md
+[sharding_monitoring]:manual/Maintainance/Sharding_Management/monitoring.md

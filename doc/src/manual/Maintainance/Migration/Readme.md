@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     迁移
 
 为了方便与传统数据库在数据层进行对接，SequoiaDB 巨杉数据库提供多种数据导入及导出的方法，用户可以根据自身需求选择最合适的方案完成数据迁移。
@@ -15,7 +15,7 @@
 
 [^_^]:
      本文使用的所有引用和链接
-[csv_import]:manual/Migration/csv_import.md
-[json_import]:manual/Migration/json_import.md
-[third_party_realtime]:manual/Migration/third_party_realtime.md
-[export]:manual/Migration/export.md
+[csv_import]:manual/Maintainance/Migration/csv_import.md
+[json_import]:manual/Maintainance/Migration/json_import.md
+[third_party_realtime]:manual/Maintainance/Migration/third_party_realtime.md
+[export]:manual/Maintainance/Migration/export.md

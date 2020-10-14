@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     高可用与容灾
     作者：杨磊
     时间：20190521
@@ -23,10 +23,10 @@
 [^_^]:
     本文使用到的所有链接
 
-[high_avaliability]:manual/HA_DR/high_avaliability.md
-[disaster_recovery]:manual/HA_DR/disaster_recovery.md
-[twodatacenter]:manual/HA_DR/twodatacenter.md
-[threedatacenter]:manual/HA_DR/threedatacenter.md
-[twocity_threedatacenter]:manual/HA_DR/twocity_threedatacenter.md
-[threecity_fivedatacenter]:manual/HA_DR/threecity_fivedatacenter.md
-[disaster_recovery_tool]:manual/HA_DR/disaster_recovery_tool.md
+[high_avaliability]:manual/Maintainance/HA_DR/high_avaliability.md
+[disaster_recovery]:manual/Maintainance/HA_DR/disaster_recovery.md
+[twodatacenter]:manual/Maintainance/HA_DR/twodatacenter.md
+[threedatacenter]:manual/Maintainance/HA_DR/threedatacenter.md
+[twocity_threedatacenter]:manual/Maintainance/HA_DR/twocity_threedatacenter.md
+[threecity_fivedatacenter]:manual/Maintainance/HA_DR/threecity_fivedatacenter.md
+[disaster_recovery_tool]:manual/Maintainance/HA_DR/disaster_recovery_tool.md

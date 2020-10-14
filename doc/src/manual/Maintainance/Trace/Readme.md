@@ -1,4 +1,4 @@
-
+﻿
 trace 是 SequoiaDB 巨杉数据库提供的流程跟踪工具。
 
 - 开启 trace 后，会将当前操作流程涉及的函数间的调用关系组织成特定格式写入内存缓冲区中
@@ -22,8 +22,8 @@ trace 是 SequoiaDB 巨杉数据库提供的流程跟踪工具。
 
 [^_^]:
     本文使用到的所有链接及引用。
-[intro]:manual/Trace/intro.md
-[dump_format]:manual/Trace/dump_format.md
-[analyze]:manual/Trace/analyze.md
+[intro]:manual/Maintainance/Trace/intro.md
+[dump_format]:manual/Maintainance/Trace/dump_format.md
+[analyze]:manual/Maintainance/Trace/analyze.md
 
 

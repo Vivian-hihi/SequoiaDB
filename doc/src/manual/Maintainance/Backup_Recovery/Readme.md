@@ -1,4 +1,4 @@
-[^_^]:
+﻿[^_^]:
     备份恢复Readme
     作者：陈子川
     时间：20190301
@@ -32,6 +32,6 @@ SequoiaDB 巨杉数据库支持多种备份方法，其中包括:
 
 [^_^]:
     本文使用到的所有链接及引用。
-[regular_bar_all]:manual/Distributed_Engine/Maintainance/Backup_Recovery/regular_bar.md#全量备份
-[regular_bar_in]:manual/Distributed_Engine/Maintainance/Backup_Recovery/regular_bar.md#增量备份
-[log_archive]:manual/Distributed_Engine/Maintainance/Backup_Recovery/log_archive.md
+[regular_bar_all]:manual/Maintainance/Backup_Recovery/regular_bar.md#全量备份
+[regular_bar_in]:manual/Maintainance/Backup_Recovery/regular_bar.md#增量备份
+[log_archive]:manual/Maintainance/Backup_Recovery/log_archive.md

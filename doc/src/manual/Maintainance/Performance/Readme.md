@@ -1,4 +1,4 @@
-[^_^]: 
+﻿[^_^]: 
     单机性能监控
     作者：李元锴
     时间：20190425
@@ -18,6 +18,6 @@
 
 [^_^]:
      本文使用的所有引用和链接
-[basic_monitoring]:manual/Performance/basic_monitoring.md
-[cluster_monitoring]:manual/Performance/cluster_monitoring.md
-[bottleneck]:manual/Performance/bottleneck.md
+[basic_monitoring]:manual/Maintainance/Performance/basic_monitoring.md
+[cluster_monitoring]:manual/Maintainance/Performance/cluster_monitoring.md
+[bottleneck]:manual/Maintainance/Performance/bottleneck.md
