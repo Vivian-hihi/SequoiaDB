@@ -1176,6 +1176,44 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
 
          rc = SDB_OK ;
       }
+      else if( _convertMode == "chm" )
+      {
+         //readme专用
+         string filePath ;
+
+         if( _language == "cn" )
+         {
+            filePath = _rootPath + _mdPath + "/" + subPath + "Readme.md" ;
+         }
+         else
+         {
+            filePath = _rootPath + _mdPath + "/" + subPath + "Readme_" + _language + ".md" ;
+         }
+
+         rc = fileIsExist( filePath ) ;
+         if( rc == SDB_OK )
+         {
+            string mdContent ;
+            string html ;
+            string outputPath ;
+
+            rc = file_get_contents( filePath, mdContent ) ;
+            if( rc )
+            {
+               cout << "Failed to get readme content, path: " << filePath << endl ;
+               goto error ;
+            }
+
+            rc = parseMarkdown( mdContent, html, subPath + "Readme.md", level, "" ) ;
+            if( rc )
+            {
+               cout << "Failed to convert readme file, path: " << filePath << endl ;
+               goto error ;
+            }
+         }
+
+         rc = SDB_OK ;
+      }
 
       while( cJsonIteratorMore( pIter ) )
       {
