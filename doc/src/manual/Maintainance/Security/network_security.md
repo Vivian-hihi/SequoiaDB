@@ -78,7 +78,10 @@ SequoiaDB 在开启 SSL 后会自动创建证书，不需要用户指定。
 [php_driver]:manual/driver/php_driver/php_driver.md
 [rest]:manual/driver/rest/overview.md
 [secure]:manual/reference/Sequoiadb_command/SecureSdb.md
-[expert]:manual/database_management/tools/sdbexprt.md
-[imprt]:manual/database_management/tools/sdbimprt.md
-[lobtool]:manual/database_management/tools/sdblobtool.md
-[top]:manual/database_management/tools/sdbtop.md
+[expert]:manual/Maintainance/Mgmt_Tools
+/sdbexprt.md
+[imprt]:manual/Maintainance/Mgmt_Tools
+/sdbimprt.md
+[lobtool]:manual/Maintainance/Mgmt_Tools
+/sdblobtool.md
+[top]:manual/Maintainance/Monitoring/sdbtop.md

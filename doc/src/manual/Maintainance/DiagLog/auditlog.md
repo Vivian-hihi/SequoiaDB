@@ -185,5 +185,5 @@ db.dropUsr( "admin", "admin" )
 [invalidateCache]:manual/reference/Sequoiadb_command/Sdb/invalidateCache.md
 [updateConf]:manual/reference/Sequoiadb_command/Sdb/updateConf.md
 [createUsr]:manual/reference/Sequoiadb_command/Sdb/createUsr.md
-[SDB_LIST_USERS]:manual/database_management/monitoring/list/SDB_LIST_USERS.md
+[SDB_LIST_USERS]:manual/Maintainance/Monitoring/list/SDB_LIST_USERS.md
 [dropUsr]:manual/reference/Sequoiadb_command/Sdb/dropUsr.md

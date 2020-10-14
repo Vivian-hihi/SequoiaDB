@@ -78,4 +78,4 @@
 [^_^]:
     本文使用到的所有内部链接及引用
 [data_type]:manual/infrastructure/Data_Model/data_type.md
-[SDB_SNAP_ACCESSPLANS]:manual/database_management/monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md
+[SDB_SNAP_ACCESSPLANS]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md

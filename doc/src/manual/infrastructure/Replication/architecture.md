@@ -1,4 +1,4 @@
-﻿[^_^]:
+[^_^]:
     复制组原理
     作者：余婷
     时间：20190314
@@ -202,7 +202,7 @@ $ ls -l /opt/sequoiadb/database/data/11830/replicalog
     本文使用到的所有链接及引用
 [primary]: images/infrastructure/Replication/primary.png
 [replication]: images/infrastructure/Replication/replication.png
-[dpsdump]: manual/database_management/tools/sdbdpsdump.md
+[dpsdump]: manual/Maintainance/Mgmt_Tools/dpsdump.md
 [full_sync]:images/infrastructure/Replication/full_sync.png
 [create_cl]:manual/reference/Sequoiadb_command/SdbCS/createCL.md
 [session_attr]: manual/reference/Sequoiadb_command/Sdb/setSessionAttr.md

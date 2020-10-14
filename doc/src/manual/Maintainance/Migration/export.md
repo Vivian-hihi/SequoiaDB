@@ -1,4 +1,4 @@
-﻿[^_^]:
+[^_^]:
     数据导出
     作者：杨垚
     时间：20190424
@@ -255,9 +255,9 @@ Return 3 row(s).
     本文档使用到的链接或引用：
     TODO：待补充sdbimprt和sdbexprt工具的文档介绍的链接或引用
 
-[sdbimprt]:manual/database_management/tools/sdbimprt.md
-[sdbexprt]:manual/database_management/tools/sdbexprt.md
-[csv_data_type]:manual/database_management/tools/sdbimprt.md#csv_data_type
+[sdbimprt]:manual/Maintainance/Mgmt_Tools/sdbimprt.md
+[sdbexprt]:manual/Maintainance/Mgmt_Tools/sdbexprt.md
+[csv_data_type]:manual/Maintainance/Mgmt_Tools/sdbimprt.md#csv_data_type
 [collection_space]:manual/data_model/collection_space.md
 [collection]:manual/infrastructure/Data_Model/collection.md
 [rfc4180]:https://www.rfc-editor.org/rfc/rfc4180.txt

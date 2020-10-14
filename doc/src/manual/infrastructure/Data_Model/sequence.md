@@ -272,6 +272,6 @@ cl.setAttributes( { "AutoIncrement": { "Field": "ID", "StartValue": 1024 } } )
 [create_cl]:manual/reference/Sequoiadb_command/SdbCS/createCL.md
 [drop_autoincrement]:manual/reference/Sequoiadb_command/SdbCollection/dropAutoIncrement.md
 [cl_set_attributes]:manual/reference/Sequoiadb_command/SdbCollection/setAttributes.md
-[snapshot_sequence]:manual/database_management/monitoring/snapshot/SDB_SNAP_SEQUENCES.md
-[snapshot_catalog]:manual/database_management/monitoring/snapshot/SDB_SNAP_CATALOG.md
+[snapshot_sequence]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_SEQUENCES.md
+[snapshot_catalog]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_CATALOG.md
 [diagram]:images/infrastructure/Data_Model/sequence_diagram.png

@@ -344,6 +344,6 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 [config]:manual/sql_engine/sequoiasql_mariadb/config.md#自定义表配置
 [createCL]:manual/reference/Sequoiadb_command/SdbCS/createCL.md
 [config_engine]:manual/sql_engine/sequoiasql_mariadb/config.md#引擎配置
-[sdbpasswd]:manual/database_management/tools/sdbpasswd.md#引擎配置
+[sdbpasswd]:manual/Maintainance/Mgmt_Tools/sdbpasswd.md
 [count]:manual/reference/Sequoiadb_command/SdbCollection/count.md
 [sql_mode]:https://mariadb.com/kb/en/library/sql-mode/

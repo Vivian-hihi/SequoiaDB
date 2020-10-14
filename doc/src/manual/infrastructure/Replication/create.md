@@ -156,4 +156,4 @@
 [cluster_deploy]:manual/installation/deployment/command_installation/cluster.md
 [election]:manual/infrastructure/Replication/election.md
 [weight]:manual/database_management/database_configuration/configuration_parameters.md
-[SDB_LIST_GROUPS]:manual/database_management/monitoring/list/SDB_LIST_GROUPS.md
+[SDB_LIST_GROUPS]:manual/Maintainance/Monitoring/list/SDB_LIST_GROUPS.md

@@ -14,8 +14,8 @@
 | ---------- | -------- | --------------- | -------- |
 | name       | string   | 用户名          | 是       |
 | password   | string   | 密码            | 是       |
-| User       | object   | [User](reference/Sequoiadb_command/AuxiliaryObjects/User.md)对象       | 是       |
-| CipherUser | object   | [CipherUser](reference/Sequoiadb_command/AuxiliaryObjects/CipherUser.md)对象 | 是       |
+| User       | object   | [User](reference/Sequoiadb_command/AuxiliaryObjects/User.md) 对象       | 是       |
+| CipherUser | object   | [CipherUser](reference/Sequoiadb_command/AuxiliaryObjects/CipherUser.md) 对象 | 是       |
 
 ##返回值##
 
@@ -36,7 +36,7 @@
  > db.dropUsr( a )
  ```
 
-* 使用 CipherUser 对象删除用户名为 sdbadmin，密码为 sdbadmin 的用户（密文文件中必须存在用户名为 sdbadmin，密码为 sdbadmin 的用户信息，关于如何在密文文件中添加删除密文信息，详细可见[sdbpasswd](database_management/tools/sdbpasswd.md)）。
+* 使用 CipherUser 对象删除用户名为 sdbadmin，密码为 sdbadmin 的用户（密文文件中必须存在用户名为 sdbadmin，密码为 sdbadmin 的用户信息，关于如何在密文文件中添加删除密文信息，详细可见[sdbpasswd](manual/Maintainance/Mgmt_Tools/sdbpasswd.md)）。
 
  ```lang-javascript
  > var a = CipherUser( "sdbadmin" )

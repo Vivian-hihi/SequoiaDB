@@ -115,4 +115,4 @@
 [^_^]:
       本文使用的所有引用和链接
 [domain]:images/infrastructure/domain.png
-[SDB_SNAP_CATALOG]:manual/database_management/monitoring/snapshot/SDB_SNAP_CATALOG.md
+[SDB_SNAP_CATALOG]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_CATALOG.md

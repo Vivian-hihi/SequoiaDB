@@ -403,6 +403,6 @@ COMMENT [=] "[string,] sequoiadb:{ [table_options:{...}, partition_options:{...}
 [createCL]:manual/reference/Sequoiadb_command/SdbCS/createCL.md
 [partition]:manual/sql_engine/sequoiasql_mysql/partition.md
 [config_engine]:manual/sql_engine/sequoiasql_mysql/config.md#SequoiaDB引擎配置使用说明
-[sdbpasswd]:manual/database_management/tools/sdbpasswd.md#引擎配置
+[sdbpasswd]:manual/Maintainance/Mgmt_Tools/sdbpasswd.md
 [count]:manual/reference/Sequoiadb_command/SdbCollection/count.md
 [sql_mode]:https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html

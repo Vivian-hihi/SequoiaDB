@@ -243,4 +243,4 @@
 [^_^]:
      本文所有引用和链接
 [SNAPSHOT]: manual/reference/Sequoiadb_command/Sdb/snapshot.md
-[sdbtop]: manual/database_management/tools/sdbtop.md
+[sdbtop]: manual/Maintainance/Monitoring/sdbtop.md

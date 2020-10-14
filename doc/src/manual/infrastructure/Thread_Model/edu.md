@@ -70,4 +70,4 @@ EDU监控
 [^_^]:
     本文使用到的所有链接及引用
 [background]:manual/infrastructure/Thread_Model/background.md
-[snapshot_session]:manual/database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md
+[snapshot_session]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_SESSIONS.md

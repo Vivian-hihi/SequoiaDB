@@ -12,7 +12,7 @@ Replica Group
 
 ##描述##
 
-获取当前分区组的详细信息，分区组的详细信息可参考[分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)章节。
+获取当前分区组的详细信息，分区组的详细信息可参考[分区组列表](manual/Maintainance/Monitoring/list/SDB_LIST_GROUPS.md)章节。
 
 ##参数##
 

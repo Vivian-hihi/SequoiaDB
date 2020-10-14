@@ -93,7 +93,7 @@ sdb_mysql_ctl 是 MySQL 实例组件的管理工具。用户通过 sdb_mysql_ctl
 
 **修改实例的配置**
 
- 通过 sdb_mysql_ctl 可修改指定实例的 SequoiaDB 引擎配置，各配置项说明可参考 SequoiaDB [引擎配置](sql_engine/sequoiasql_mysql/config.md#引擎配置)
+ 通过 sdb_mysql_ctl 可修改指定实例的 SequoiaDB 引擎配置，各配置项说明可参考 SequoiaDB [引擎配置](sql_engine/sequoiasql_mysql/config.md)
  
  ```lang-text
  sdb_mysql_ctl chconf <INSTNAME> [-p PORT] [-e LEVEL] [-a MAX-CON]

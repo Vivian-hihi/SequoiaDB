@@ -785,4 +785,4 @@ SequoiaDB 巨杉数据库对于容灾处理提供了 split/merge 工具。split 
 [threedatacenter]:manual/Maintainance/HA_DR/threedatacenter.md
 [twocity_threedatacenter]:manual/Maintainance/HA_DR/twocity_threedatacenter.md
 [threecity_fivedatacenter]:manual/Maintainance/HA_DR/threecity_fivedatacenter.md
-[split_merge]:manual/database_management/tools/split_merge.md
+[split_merge]:manual/Maintainance/Mgmt_Tools/split_merge.md

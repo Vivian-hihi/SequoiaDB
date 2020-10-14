@@ -57,5 +57,5 @@ SequoiaDB 的 sdbimprt 工具支持并发导入单一的 JSON 数据文件和批
 [^_^]:
     本文使用到的所用链接或引用。TODO：待补充sdbimprt和sdbexprt工具的文档介绍的链接或引用
 
-[sdbimprt]:manual/database_management/tools/sdbimprt.md
-[sdbexprt]:manual/database_management/tools/sdbexprt.md
+[sdbimprt]:manual/Maintainance/Mgmt_Tools/sdbimprt.md
+[sdbexprt]:manual/Maintainance/Mgmt_Tools/sdbexprt.md

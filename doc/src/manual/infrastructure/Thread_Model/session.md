@@ -131,5 +131,5 @@
     本文使用到的所有链接及引用
 
 [setSessionAttr]:manual/reference/Sequoiadb_command/Sdb/setSessionAttr.md
-[snapshot_current_session]:manual/database_management/monitoring/snapshot/SDB_SNAP_SESSIONS_CURRENT.md
-[snapshot_session]:manual/database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md
+[snapshot_current_session]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_SESSIONS_CURRENT.md
+[snapshot_session]:manual/Maintainance/Monitoring/snapshot/SDB_SNAP_SESSIONS.md
