@@ -1129,92 +1129,6 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
    }
    else if( isArray == TRUE )
    {
-      if( _convertMode == "website" )
-      {
-         //readme专用
-         string filePath ;
-
-         if( _language == "cn" )
-         {
-            filePath = _rootPath + _mdPath + "/" + subPath + "Readme.md" ;
-         }
-         else
-         {
-            filePath = _rootPath + _mdPath + "/" + subPath + "Readme_" + _language + ".md" ;
-         }
-
-         rc = fileIsExist( filePath ) ;
-         if( rc == SDB_OK )
-         {
-            string mdContent ;
-            string html ;
-            string outputPath ;
-
-            rc = file_get_contents( filePath, mdContent ) ;
-            if( rc )
-            {
-               cout << "Failed to get readme content, path: " << filePath << endl ;
-               goto error ;
-            }
-
-            rc = parseMarkdown( mdContent, html, subPath + "Readme.md", level, "" ) ;
-            if( rc )
-            {
-               cout << "Failed to convert readme file, path: " << filePath << endl ;
-               goto error ;
-            }
-
-            outputPath = _htmlPath + "/" + subPath + "Readme.html" ;
-
-            rc = file_put_contents( outputPath, html, FALSE ) ;
-            if( rc )
-            {
-               cout << "Failed to put readme, path: " << outputPath << endl ;
-               goto error ;
-            }
-         }
-
-         rc = SDB_OK ;
-      }
-      else if( _convertMode == "chm" )
-      {
-         //readme专用
-         string filePath ;
-
-         if( _language == "cn" )
-         {
-            filePath = _rootPath + _mdPath + "/" + subPath + "Readme.md" ;
-         }
-         else
-         {
-            filePath = _rootPath + _mdPath + "/" + subPath + "Readme_" + _language + ".md" ;
-         }
-
-         rc = fileIsExist( filePath ) ;
-         if( rc == SDB_OK )
-         {
-            string mdContent ;
-            string html ;
-            string outputPath ;
-
-            rc = file_get_contents( filePath, mdContent ) ;
-            if( rc )
-            {
-               cout << "Failed to get readme content, path: " << filePath << endl ;
-               goto error ;
-            }
-
-            rc = parseMarkdown( mdContent, html, subPath + "Readme.md", level, "" ) ;
-            if( rc )
-            {
-               cout << "Failed to convert readme file, path: " << filePath << endl ;
-               goto error ;
-            }
-         }
-
-         rc = SDB_OK ;
-      }
-
       while( cJsonIteratorMore( pIter ) )
       {
          cJsonType = cJsonIteratorType( pIter ) ;
@@ -1466,6 +1380,8 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
       else
       {
          string dirPath ;
+         string readmeHtml ;
+
          if( dir.size() <= 0 )
          {
             rc = SDB_SYS ;
@@ -1480,6 +1396,7 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
          }
          cnPath += cnTitle + "/" ;
          subPath += dir + "/" ;
+
          if( _convertMode != "single" && _convertMode != "word" )
          {
             /*
@@ -1497,6 +1414,56 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
             {
                cout << "4 Failed to create dir, path: " << dirPath << endl ;
                goto error ;
+            }
+         }
+
+         {
+            //readme专用
+            string filePath ;
+
+            if( _language == "cn" )
+            {
+               filePath = _rootPath + _mdPath + "/" + subPath + "Readme.md" ;
+            }
+            else
+            {
+               filePath = _rootPath + _mdPath + "/" + subPath + "Readme_" + _language + ".md" ;
+            }
+
+            rc = fileIsExist( filePath ) ;
+            if( rc == SDB_OK )
+            {
+               string mdContent ;
+
+               rc = file_get_contents( filePath, mdContent ) ;
+               if( rc )
+               {
+                  cout << "Failed to get readme content, path: " << filePath << endl ;
+                  goto error ;
+               }
+
+               rc = parseMarkdown( mdContent, readmeHtml, subPath + "Readme.md", level, "" ) ;
+               if( rc )
+               {
+                  cout << "Failed to convert readme file, path: " << filePath << endl ;
+                  goto error ;
+               }
+            }
+         }
+
+         if( _convertMode != "single" && _convertMode != "word" )
+         {
+
+            if( readmeHtml.length() > 0 )
+            {
+               string outputPath = _htmlPath + "/" + subPath + "Readme.html" ;
+
+               rc = file_put_contents( outputPath, readmeHtml, FALSE ) ;
+               if( rc )
+               {
+                  cout << "Failed to put readme, path: " << outputPath << endl ;
+                  goto error ;
+               }
             }
          }
          else
@@ -1529,7 +1496,18 @@ INT32 execConfFiles( CJSON_MACHINE *pMachine,
                cout << "Failed to put file, path: " << outputPath << endl ;
                goto error ;
             }
+
+            if( readmeHtml.length() > 0 )
+            {
+               rc = file_put_contents( outputPath, readmeHtml, TRUE ) ;
+               if( rc )
+               {
+                  cout << "Failed to put file, path: " << outputPath << endl ;
+                  goto error ;
+               }
+            }
          }
+
          rc = execConfFiles( pMachine, pIterSub, FALSE, isFirstMd, TRUE, subPath, cnPath, level + 1 ) ;
          if( rc )
          {
