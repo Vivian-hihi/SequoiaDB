@@ -1,70 +1,36 @@
-﻿/************************************************************************
+/************************************************************************
 *@Description:   seqDB-8081:使用$isnull:0查询，目标字段存在且为null，不走索引查询
                  seqDB-8083:使用$isnull:0查询，目标字段存在且不为null
                  seqDB-8085:使用$isnull:0查询，目标字段不存在
 *@Author:  2016/5/20  xiaoni huang
+*@Modifier： 2020/08/11 Zixian Yan
 ************************************************************************/
-main();
+testConf.clName = COMMCLNAME + "_8081_8083_8085";
+main(test);
 
-function main ()
+function test ( testPara )
 {
-   try
-   {
-      var clName = COMMCLNAME + "_matches8081";
-      var cl = readyCL( clName );
+   var cl = testPara.testCL;
+   var data = [{ a: 0 },
+               { a: 1, b: null },
+               { a: 2, b: "" }]
 
-      insertRecs( cl );
-      var rc = findRecs( cl );
-      checkResult( rc );
+   cl.insert( data );
+   var expectation = [ { a: 2, b: "" } ];
+   var record = cl.find( { b: { $isnull: 0 } } ).sort( { a: 1 } );
+   checkRec( record, expectation );
 
-      cleanCL( clName );
-   }
-   catch( e )
-   {
-      throw e;
-   }
-}
+   cl.createIndex( "index_8081_8083_8085", { b: 1} );
 
-function insertRecs ( cl )
-{
-   println( "\n---Begin to insert records." );
+   cl.update( { $set: { a: 3 } }, {b: { $isnull: 1 } } );
+   cl.update( { $set: { a: 1 } }, {b: { $isnull: 0 } } );
 
-   cl.insert( [{ a: 0 },
-   { a: 1, b: null },
-   { a: 2, b: "" }] );
-}
+   var record1 = cl.find( { b: { $isnull: 1 } } ).sort( { a: 1 } );
+   var record2 = cl.find( { b: { $isnull: 0 } } ).sort( { a: 1 } );
 
-function findRecs ( cl )
-{
-   println( "\n---Begin to find records." );
+   var expectForOne = [ { a: 3 }, { a: 3, b: null } ];
+   var expectForTwo = [ { a: 1, b: "" } ];
 
-   var rc = cl.find( { b: { $isnull: 0 } } ).sort( { a: 1 } );
-
-   return rc;
-}
-
-function checkResult ( rc )
-{
-   println( "\n---Begin to check result." );
-
-   var findRtn = new Array();
-   while( tmpRecs = rc.next() ) 
-   {
-      findRtn.push( tmpRecs.toObj() );
-   }
-   //compare number
-   var expLen = 1;
-   if( findRtn.length !== expLen )
-   {
-      throw buildException( "checkResult", null, "[compare number]",
-         "[recsNum:" + expLen + "]",
-         "[recsNum:" + findRtn.length + "]" );
-   }
-   //compare records
-   if( findRtn[0]["b"] !== "" )
-   {
-      throw buildException( "checkResult", null, "[compare records]",
-         "[b:" + "" + "]",
-         "[b:" + findRtn[0]["b"] + "]" );
-   }
+   checkRec( record1, expectForOne );
+   checkRec( record2, expectForTwo );
 }
