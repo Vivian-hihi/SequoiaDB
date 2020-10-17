@@ -272,13 +272,17 @@ namespace engine
                                 BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class Timestamp : " << endl ;
+      ss << endl ;
+      ss << "   --Constructor methods for class \"Timestamp\" : " << endl ;
       ss << "   { \"$timestamp\": <time> }             " << endl ;
       ss << "   Timestamp( [time] )                    " << endl ;
-      ss << "   Timestamp( <second>, <microsecond> )   "
-         << "-- Data type: timestamp" << endl ;
-      ss << "--Static methods for class Timestamp : " << endl ;
-      ss << "--Instance methods for class Timestamp : " << endl ;
+      ss << "   Timestamp( <second>, <microsecond> )   " << endl ;
+      ss << "                              "
+         << "- Data type: timestamp" << endl ;
+      ss << endl ;
+      ss << "   --Static methods for class \"Timestamp\" : " << endl ;
+      ss << endl ;
+      ss << "   --Instance methods for class \"Timestamp\" : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

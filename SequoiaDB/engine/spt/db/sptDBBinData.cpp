@@ -346,12 +346,15 @@ namespace engine
                               BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class BinData : " << endl ;
+      ss << endl ;
+      ss << "   --Constructor methods for class \"BinData\" : " << endl ;
       ss << "   { \"$binary\": <data>, \"$type\": <type> }   " << endl ;
-      ss << "   BinData( <data>, <type> )                    "
-         << "-- Data type: binary data in base64 form" << endl ;
-      ss << "--Static methods for class BinData : " << endl ;
-      ss << "--Instance methods for class BinData : " << endl ;
+      ss << "   BinData( <data>, <type> )  "
+         << "- Data type: binary data in base64 form" << endl ;
+      ss << endl ;
+      ss << "   --Static methods for class \"BinData\" : " << endl ;
+      ss << endl ;
+      ss << "   --Instance methods for class \"BinData\" : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

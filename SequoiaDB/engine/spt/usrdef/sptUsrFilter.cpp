@@ -191,10 +191,15 @@ namespace engine
    {
 
       stringstream ss ;
-      ss << "_Filter functions:" << endl
-         << "var filter = new _Filter( filterObj )" << endl
-         << "   match( bsonArray )" << endl
-         << " Filter.help()" << endl ;
+      ss << endl ;
+      ss << "   --Constructor methods for class \"_Filter\" : " << endl ;
+      ss << "   var filter = new _Filter( filterObj )" << endl ;
+      ss << "                              "
+         << "- Create a _Filter object" << endl ;
+      ss << endl ;
+      ss << "   --Static methods for class \"_Filter\" : " << endl ;
+      ss << endl ;
+      ss << "   --Instance methods for class \"_Filter\" : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

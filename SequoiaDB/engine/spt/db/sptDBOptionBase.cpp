@@ -332,16 +332,20 @@ namespace engine
                                  BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class SdbOptionBase : " << endl ;
+      ss << endl ;
+      ss << "   --Constructor methods for class \"SdbOptionBase\" : " << endl ;
       ss << "   SdbOptionBase[.cond(<cond>)]" << endl ;
       ss << "                [.sel(<sel>)]" << endl ;
       ss << "                [.sort(<sort>)]" << endl ;
       ss << "                [.options(<options>)]" << endl ;
       ss << "                [.skip(<skipNum>)]" << endl ;
-      ss << "                [.limit(<retNum>)]   "
-         << "-- Create a SdbOptionBase object" << endl ;
-      ss << "--Static methods for class SdbOptionBase : " << endl ;
-      ss << "--Instance methods for class SdbOptionBase : " << endl ;
+      ss << "                [.limit(<retNum>)]   " << endl ;
+      ss << "                              "
+         << "- Create a SdbOptionBase object" << endl ;
+      ss << endl ;
+      ss << "   --Static methods for class \"SdbOptionBase\" : " << endl ;
+      ss << endl ;
+      ss << "   --Instance methods for class \"SdbOptionBase\" : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

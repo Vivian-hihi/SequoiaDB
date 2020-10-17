@@ -296,7 +296,8 @@ namespace engine
                                   BSONObj &detail )
    {
       stringstream ss ;
-      ss << "   --Constructor methods for class SdbTraceOption : " << endl ;
+      ss << endl ;
+      ss << "   --Constructor methods for class \"SdbTraceOption\" : " << endl ;
       ss << "   SdbTraceOption[.components( <component1>"
          << "[, component2, ... ] )]" << endl ;
       ss << "                 [.breakPoints( <breakPoint1>"
@@ -314,10 +315,14 @@ namespace engine
       ss << "                 [.functionNames( [ <functionName1>"
          << ", <functionName2>, ... ] ] )]" << endl ;
       ss << "                 [.threadTypes( [ <threadType1>"
-         << ", <threadType2>, ... ] ] )]  "
-         << "   -- Create a SdbTraceOption object" << endl ;
-      ss << "   --Static methods for class SdbTraceOption : " << endl ;
-      ss << "   --Instance methods for class SdbTraceOption : " << endl ;
+         << ", <threadType2>, ... ] ] )]" << endl ;
+      ss << endl ;
+      ss << "                              "
+         << "- Create a SdbTraceOption object" << endl ;
+      ss << endl ;
+      ss << "   --Static methods for class \"SdbTraceOption\" : " << endl ;
+      ss << endl ;
+      ss << "   --Instance methods for class \"SdbTraceOption\" : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

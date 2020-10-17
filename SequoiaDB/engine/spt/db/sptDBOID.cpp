@@ -207,12 +207,15 @@ namespace engine
                           BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class ObjectId : " << endl ;
-      ss << "   { \"$oid\": <data> }   " << endl ;
-      ss << "   ObjectId( [data] )     "
-         << "-- Data type: object id( OID )" << endl ;
-      ss << "--Static methods for class ObjectId : " << endl ;
-      ss << "--Instance methods for class ObjectId : " << endl ;
+      ss << endl ;
+      ss << "   --Constructor methods for class \"ObjectId\" : " << endl ;
+      ss << "   { \"$oid\": <data> }" << endl ;
+      ss << "   ObjectId( [data] )         "
+         << "- Data type: object id( OID )" << endl ;
+      ss << endl ;
+      ss << "   --Static methods for class \"ObjectId\" : " << endl ;
+      ss << endl ;
+      ss << "   --Instance methods for class \"ObjectId\" : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
