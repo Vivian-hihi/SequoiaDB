@@ -7,7 +7,7 @@ testConf.skipStandAlone = true;
 
 main( test );
 
-function test()
+function test ()
 {
    var clNames = [];
    for( var i = 0; i < 10; i++ )
@@ -16,9 +16,9 @@ function test()
       clNames.push( clName );
       var indexName = "index_22458_" + i;
       var indexDef = { "a.b.c": 1, "d.e.f": 1, "g.h.i": 1 };
-      commDropCL ( db, COMMCSNAME, clName );
-      var cl = commCreateCL ( db, COMMCSNAME, clName );
-      commCreateIndex ( cl, indexName, indexDef );
+      commDropCL( db, COMMCSNAME, clName );
+      var cl = commCreateCL( db, COMMCSNAME, clName );
+      commCreateIndex( cl, indexName, indexDef );
 
       var records = [];
       for( var j = 0; j < 1000; j++ )
@@ -31,15 +31,15 @@ function test()
 
    var expResult = [].concat( clNames );
    for( var i = 0; i < 10; i++ )
-   { 
+   {
       var actResult = [];
       commDropCL( db, COMMCSNAME, clNames[i] );
 
       var cursor = db.snapshot( SDB_SNAP_INDEXSTATS, { "NodeSelect": "master" } );
       while( cursor.next() )
-      {    
+      {
          var collection = cursor.current().toObj().Collection;
-         var clName = collection.split(".")[1].toString();
+         var clName = collection.split( "." )[1].toString();
          var index = cursor.current().toObj().Index.toString();
          if( clNames.indexOf( clName ) !== -1 && index !== "$id" )
          {
@@ -49,7 +49,7 @@ function test()
 
       expResult.shift();
       if( actResult.length !== expResult.length )
-      { 
+      {
          throw new Error( "expResult: " + expResult + ", actResult: " + actResult );
       }
    }

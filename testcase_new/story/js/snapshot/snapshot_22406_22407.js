@@ -8,11 +8,11 @@ testConf.clName = "cl_22406_22407";
 
 main( test );
 
-function test( testPara )
+function test ( testPara )
 {
    var indexName = "index_22406_22407";
    var indexDef = { "a.b.c": 1, "d.e.f": 1, "g.h.i": 1 };
-   commCreateIndex ( testPara.testCL, indexName, indexDef );
+   commCreateIndex( testPara.testCL, indexName, indexDef );
 
    var records = [];
    for( var i = 0; i < 1000; i++ )
@@ -24,7 +24,7 @@ function test( testPara )
    db.analyze( { "Collection": COMMCSNAME + "." + testConf.clName, "SampleNum": 200 } );
 
    var count = 0;
-   var expResult = { "TotalIndexLevels": 1, "TotalIndexPages": 1, "DistinctValNum": [ 1, 1, 1 ], "NullFrac": 5000, "UndefFrac": 5000, "SampleRecords": 200, "TotalRecords": 2000 };
+   var expResult = { "TotalIndexLevels": 1, "TotalIndexPages": 1, "DistinctValNum": [1, 1, 1], "NullFrac": 5000, "UndefFrac": 5000, "SampleRecords": 200, "TotalRecords": 2000 };
    var cursor = db.snapshot( SDB_SNAP_INDEXSTATS, { "Collection": COMMCSNAME + "." + testConf.clName, "Index": indexName } );
    while( cursor.next() )
    {
@@ -35,10 +35,10 @@ function test( testPara )
       {
          var node = group[i];
          //以下参数不进行比较
-         delete( node.NodeName );
-         delete( node.StatTimestamp );
-         delete( node.MinValue );
-         delete( node.MaxValue );
+         delete ( node.NodeName );
+         delete ( node.StatTimestamp );
+         delete ( node.MinValue );
+         delete ( node.MaxValue );
          if( !commCompareObject( expResult, node ) )
          {
             throw new Error( "\nExpected:\n" + JSON.stringify( expResult ) + "\nactual:\n" + JSON.stringify( node ) );

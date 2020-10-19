@@ -1,0 +1,24 @@
++++++++++++++++++++++++++++++++++++++++++++++++
+CMD: bin/sdb -e "var CHANGEDPREFIX='local_test'; var COORDSVCNAME='11810'; var COORDHOSTNAME='localhost';var ESSVCNAME='9200'; var ESHOSTNAME='localhost';var RSRVPORTBEGIN='26000';var RSRVPORTEND='27000'; var CATASVCNAME='11800'; var RSRVNODEDIR='/opt/sequoaidb/database/'; var UUID=24026; var UUNAME='s24026test'; var RUNRESULT=0; " -f "testcase_new/story/js/lib/func.js,testcase_new/story/js/lib/all_prepare.js"
+-----------------------------------------------
+
+===> snapshot_rlb/snapshot_19906.js                               [ Done ] 1(s)
+===> snapshot_rlb/snapshot_18263.js                               [ Done ] 0(s)
+===> snapshot_rlb/snapshot_19837.js                               [ Done ] 1(s)
+===> snapshot_rlb/snapshot_getDetail_22180.js                     [ Done ] 0(s)
+===> snapshot_rlb/snapshot_19918.js                               [ Done ] 1(s)
+===> snapshot_rlb/snapshot_19849.js                               [ Done ] 0(s)
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CMD: bin/sdb -e "var CHANGEDPREFIX='local_test'; var COORDSVCNAME='11810'; var COORDHOSTNAME='localhost';var ESSVCNAME='9200'; var ESHOSTNAME='localhost';var RSRVPORTBEGIN='26000';var RSRVPORTEND='27000'; var CATASVCNAME='11800'; var RSRVNODEDIR='/opt/sequoaidb/database/'; var UUID=24026; var UUNAME='s24026test'; var RUNRESULT=0; " -f "testcase_new/story/js/lib/func.js,testcase_new/story/js/lib/all_clean.js"
+--------------------------------------------------------
+
+***********************************************************
+                    ***test result*** 
+ begin time: 2020年 10月 19日 星期一 11:17:02 CST
+ end time  : 2020年 10月 19日 星期一 11:17:09 CST
+ use time  : 7(secs)
+ total     : 6
+ succeed   : 6
+ failed    : 0
+***********************************************************
