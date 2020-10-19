@@ -137,13 +137,13 @@ public class OMClient implements ApplicationListener<EmbeddedServletContainerIni
         DBCursor cur = cl.query(queryCondition, null, null, null);
         if (cur.hasNext()) {
             BSONObject record = cur.getNext();
-
             String passwd = (String) record.get("Passwd");
 
-            if (passwd.length() > 0) {
-                try {
+            if (record.containsField("Encryption") && passwd.length() > 0) {
+                Integer encryption = (Integer) record.get("Encryption");
+
+                if (encryption == 1) {
                     passwd = new SdbDecrypt().decryptPasswd(passwd, null);
-                } catch (BaseException e) {
                 }
             }
 
