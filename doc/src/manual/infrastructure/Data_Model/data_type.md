@@ -366,8 +366,8 @@ SequoiaDB 巨杉数据库采用存储与计算分离的模型。SequoiaDB 是数
 [data_type_regex]:manual/reference/Sequoiadb_command/SpecialObjects/Regex.md
 
 [data_mode_mysql_data_type_reference]:manual/sql_engine/sequoiasql_mysql/data_type.md
-[data_mode_postgresql_data_type_reference]:manual/sql_engine/sequoiasql_pg/SQL_to_Sequoiadb_mapping.md
-[data_mode_sparksql_data_type_reference]:manual/connector/spark/sparksql.md
+[data_mode_postgresql_data_type_reference]:manual/Database_Instance\Relational_Instance/PostgreSQL_Instance/SQL_to_Sequoiadb_mapping.md
+[data_mode_sparksql_data_type_reference]:manual/Database_Instance/Relational_Instance/SparkSQL_Instance/Operation/usage.md
 [data_mode_java_build_bson]:manual/driver/java_driver/java_bson_usage.md
 
 [data_mode_web_regex]:http://perldoc.perl.org/perlre.html

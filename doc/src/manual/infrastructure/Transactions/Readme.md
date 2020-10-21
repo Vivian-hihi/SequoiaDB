@@ -55,7 +55,7 @@ SequoiaDB 的[事务日志][transaction_log]记录了事务对数据库的所有
 
 事务操作
 ----
-事务操作可参考[SQL 应用开发的事务操作][sql_transactions]和[JSON 应用开发的事务操作][json_transactions]。
+事务操作可参考 [SQL 应用开发的事务操作][sql_transactions]和 JSON 应用开发的事务操作。
 
 SequoiaDB 事务支持的操作：
 
@@ -77,4 +77,3 @@ SequoiaDB 事务支持的操作：
 [2pc]: manual/infrastructure/Transactions/2pc.md
 [configurations]: manual/infrastructure/Transactions/configurations.md
 [sql_transactions]: manual/reference/SQL_grammar/statement/transaction.md
-[json_transactions]: manual/Database_Instance/Json_Instance/Development/JavaScript.md

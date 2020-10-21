@@ -264,5 +264,5 @@ Reason for exit : exit with no records different
     
 [sharding]:manual/infrastructure/Sharding/Readme.md
 [sharding_key]:manual/infrastructure/Sharding/sharding_keys.md
-[consistency_check]:manual/Maintainance/Mgmt_Tools/sdbinspect.md
+[consistency_check]:manual/Maintainance/Mgmt_Tools/consistency_check.md
 [sharding_balance]:manual/Maintainance/Sharding_Management/balance.md

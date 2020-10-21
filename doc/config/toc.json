@@ -183,250 +183,324 @@
          ]
       },
       {
-         "id": 1519627171,
-         "dir": "sql_engine",
-         "cn": "SQL引擎",
-         "en": "SQL Engine",
+         "id": 1603249367,
+         "dir": "Database_Instance",
+         "cn": "数据库实例",
+         "en": "Database Instance",
          "contents": [
             {
-               "id": 1519627277,
-               "dir": "sequoiasql_pg",
-               "cn": "PostgreSQL实例组件",
-               "en": "PostgreSQL_instance",
+               "id": 1519627171,
+               "dir": "Relational_Instance",
+               "cn": "关系型数据库实例",
+               "en": "Relational Instance",
                "contents": [
                   {
-                     "id": 1519627741,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1519627742,
-                     "dir": "install",
-                     "cn": "安装",
-                     "en": "Installation",
+                     "id": 1521595228,
+                     "dir": "MySQL_Instance",
+                     "cn": "MySQL实例",
+                     "en": "MySQL Instance",
                      "contents": [
                         {
-                           "id": 1519628019,
-                           "file": "install_deploy",
-                           "cn": "安装部署",
-                           "en": "Install and Deploy"
+                           "id": 1574045901,
+                           "dir": "Operation",
+                           "cn": "操作",
+                           "en": "Operation",
+                           "contents": [
+                              {
+                                 "id": 1521595270,
+                                 "file": "install_deploy",
+                                 "cn": "安装部署",
+                                 "en": "Install and Deploy"
+                              },  
+                              {
+                                 "id": 1521595283,
+                                 "file": "connection",
+                                 "cn": "使用",
+                                 "en": "Connection"
+                              },
+                              {
+                                 "id": 1566551297,
+                                 "file": "config",
+                                 "cn": "配置",
+                                 "en": "Configuration"
+                              },
+                              {
+                                 "id": 1572505575,
+                                 "file": "ha",
+                                 "cn": "高可用",
+                                 "en": "High Availability"
+                              },
+                              {
+                                 "id": 1595583537,
+                                 "file": "sdb_mysql_ctl",
+                                 "cn": "实例管理工具",
+                                 "en": "Instance management tool"
+                              },
+                              {
+                                 "id": 1589347299,
+                                 "file": "partition",
+                                 "cn": "分区",
+                                 "en": "Partition"
+                              },
+                              {
+                                 "id": 1574045910,
+                                 "file": "data_type",
+                                 "cn": "数据类型映射表",
+                                 "en": "data type map table"
+                              },
+                              {
+                                 "id": 1521595284,
+                                 "file": "attention",
+                                 "cn": "注意事项",
+                                 "en": "attention"
+                              },
+                              {
+                                 "id": 1555382544,
+                                 "file": "error_code",
+                                 "cn": "错误码",
+                                 "en": "Error Code"
+                              },
+                              {
+                                 "id": 1556198260,
+                                 "file": "upgrade",
+                                 "cn": "升级",
+                                 "en": "Upgrade"
+                              },
+                              {
+                                 "id": 1557737509,
+                                 "file": "uninstall",
+                                 "cn": "卸载",
+                                 "en": "Uninstall"
+                              }
+                           ]
                         },
                         {
-                           "id": 1519628020,
-                           "file": "connect",
-                           "cn": "连接",
-                           "en": "Connect"
+                           "id": 1595583528,
+                           "dir": "Development",
+                           "cn": "开发",
+                           "en": "Development",
+                           "contents": [
+                              {
+                                 "id": 1603248345,
+                                 "file": "engine_download",
+                                 "cn": "MySQL驱动下载",
+                                 "en": "Engine Download"
+                              },
+                              {
+                                 "id": 1603248355,
+                                 "file": "JDBC",
+                                 "cn": "JDBC驱动",
+                                 "en": "JDBC Engine"
+                              },
+                              {
+                                 "id": 1603248361,
+                                 "file": "ODBC",
+                                 "cn": "ODBC驱动",
+                                 "en": "ODBC Engine"
+                              }
+                           ]
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1575355389,
+                     "dir": "MariaDB_Instance",
+                     "cn": "MariaDB实例",
+                     "en": "MariaDB Instance",
+                     "contents": [
+                        {
+                           "id": 1575355401,
+                           "dir": "Operation",
+                           "cn": "操作",
+                           "en": "Operation",
+                           "contents": [
+                              {
+                                 "id": 1575355415,
+                                 "file": "install_deploy",
+                                 "cn": "安装部署",
+                                 "en": "Install and Deploy"
+                              },
+                              {
+                                 "id": 1921595283,
+                                 "file": "connection",
+                                 "cn": "使用",
+                                 "en": "Connection"
+                              },
+                              {
+                                 "id": 1966551297,
+                                 "file": "config",
+                                 "cn": "配置",
+                                 "en": "Configuration"
+                              },
+                              {
+                                 "id": 1972505575,
+                                 "file": "ha",
+                                 "cn": "高可用",
+                                 "en": "High Availability"
+                              },
+                              {
+                                 "id": 1595583874,
+                                 "file": "sdb_maria_ctl",
+                                 "cn": "实例管理工具",
+                                 "en": "Instance management tool"
+                              },
+                              {
+                                 "id": 1974045910,
+                                 "file": "data_type",
+                                 "cn": "数据类型映射表",
+                                 "en": "data type map table"
+                              },
+                              {
+                                 "id": 1921595284,
+                                 "file": "attention",
+                                 "cn": "注意事项",
+                                 "en": "attention"
+                              },
+                              {
+                                 "id": 1955382544,
+                                 "file": "error_code",
+                                 "cn": "错误码",
+                                 "en": "Error Code"
+                              },
+                              {
+                                 "id": 1575355422,
+                                 "file": "upgrade",
+                                 "cn": "升级",
+                                 "en": "Upgrade guidance"
+                              },
+                              {
+                                 "id": 1575355430,
+                                 "file": "uninstall",
+                                 "cn": "卸载",
+                                 "en": "Uninstall"
+                              }
+                           ]  
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1519627277,
+                     "dir": "PostgreSQL_Instance",
+                     "cn": "PostgreSQL实例",
+                     "en": "PostgreSQL Instance",
+                     "contents": [
+                        {
+                           "id": 1519627742,
+                           "dir": "Operation",
+                           "cn": "操作",
+                           "en": "Operation",
+                           "contents": [
+                              {
+                                 "id": 1519628019,
+                                 "file": "install_deploy",
+                                 "cn": "安装部署",
+                                 "en": "Install and Deploy"
+                              },
+                              {
+                                 "id": 1519628020,
+                                 "file": "connection",
+                                 "cn": "连接",
+                                 "en": "Connection"
+                              },
+                              {
+                                 "id": 1519627744,
+                                 "file": "SQL_to_Sequoiadb_mapping",
+                                 "cn": "SQL实例与JSON对象映射表",
+                                 "en": "Mapping Table from SQL to JSON"
+                              },
+                              {
+                                 "id": 1557737448,
+                                 "file": "uninstall",
+                                 "cn": "卸载",
+                                 "en": "Uninstall"
+                              }
+                           ]
                         },
                         {
                            "id": 1519628021,
-                           "file": "develop",
+                           "dir": "Development",
                            "cn": "开发",
-                           "en": "Develop"
-                        },
-                        {
-                           "id": 1557737448,
-                           "file": "uninstall",
-                           "cn": "卸载",
-                           "en": "Develop"
+                           "en": "Development",
+                           "contents": [
+                              {
+                                 "id": 1603248529,
+                                 "file": "engine_download",
+                                 "cn": "PostgreSQL驱动下载",
+                                 "en": "Engine Download"
+                              },
+                              {
+                                 "id": 1603248544,
+                                 "file": "JDBC",
+                                 "cn": "JDBC驱动",
+                                 "en": "JDBC Engine"
+                              },
+                              {
+                                 "id": 1603248551,
+                                 "file": "ODBC",
+                                 "cn": "ODBC驱动",
+                                 "en": "ODBC Engine"
+                              }
+                           ]
                         }
                      ]
                   },
                   {
-                     "id": 1519627744,
-                     "file": "SQL_to_Sequoiadb_mapping",
-                     "cn": "SQL实例 与 JSON对象映射表",
-                     "en": "Mapping Table from SQL to JSON"
+                     "id": 1432190710,
+                     "dir": "SparkSQL_Instance",
+                     "cn": "Spark实例",
+                     "en": "Spark Instance",
+                     "contents": [
+                        {
+                           "id": 1603248417,
+                           "dir": "Operation",
+                           "cn": "操作",
+                           "en": "Operation",
+                           "contents": [
+                              {
+                                 "id": 1432190711,
+                                 "file": "setup",
+                                 "cn": "安装部署",
+                                 "en": "Install and Deploy"
+                              },
+                              {
+                                 "id": 1432190587,
+                                 "file": "connection",
+                                 "cn": "连接",
+                                 "en": "Connection"
+                              },
+                              {
+                                 "id": 1432190712,
+                                 "file": "usage",
+                                 "cn": "使用",
+                                 "en": "Usage"
+                              }
+                           ]
+                        },
+                        {
+                           "id": 1603248440,
+                           "dir": "Development",
+                           "cn": "开发",
+                           "en": "Development",
+                           "contents": [
+                              {
+                                 "id": 1603248635,
+                                 "file": "engine_download",
+                                 "cn": "Spark驱动下载",
+                                 "en": "Engine Download"
+                              },
+                              {
+                                 "id": 1603248641,
+                                 "file": "JDBC",
+                                 "cn": "JDBC驱动",
+                                 "en": "JDBC Engine"
+                              }
+                           ]
+                        }
+                     ]
                   }
                ]
-            },
-            {
-               "id": 1521595228,
-               "dir": "sequoiasql_mysql",
-               "cn": "MySQL实例组件",
-               "en": "MySQL_instance",
-               "contents": [
-                  {
-                     "id": 1521595241,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1574045901,
-                     "dir": "installation",
-                     "cn": "安装",
-                     "en": "Installation",
-                     "contents": [
-                        {
-                           "id": 1521595270,
-                           "file": "install_deploy",
-                           "cn": "安装部署",
-                           "en": "Install and Deploy"
-                        },                   
-                        {
-                           "id": 1572505575,
-                           "file": "ha",
-                           "cn": "高可用",
-                           "en": "High Availability"
-                        },
-                        {
-                           "id": 1556198260,
-                           "file": "upgrade",
-                           "cn": "升级",
-                           "en": "Upgrade guidance"
-                        },
-                        {
-                           "id": 1557737509,
-                           "file": "uninstall",
-                           "cn": "卸载",
-                           "en": "Develop"
-                        }
-                     ]
-                  },
-                  {
-                     "id": 1521595283,
-                     "file": "connection",
-                     "cn": "使用",
-                     "en": "Connect"
-                  },
-                  {
-                     "id": 1589347299,
-                     "file": "partition",
-                     "cn": "分区",
-                     "en": "Partition"
-                  },
-                  {
-                     "id": 1566551297,
-                     "file": "config",
-                     "cn": "配置",
-                     "en": "Configuration"
-                  },
-                  {
-                     "id": 1595583528,
-                     "dir": "tools",
-                     "cn": "工具",
-                     "en": "Tools",
-                     "contents": [
-                        {
-                           "id": 1595583537,
-                           "file": "sdb_mysql_ctl",
-                           "cn": "实例管理工具",
-                           "en": "Instance management tool"
-                        }
-                     ]
-                  },
-                  {
-                     "id": 1574045910,
-                     "file": "data_type",
-                     "cn": "数据类型映射表",
-                     "en": "data type map table"
-                  },                              
-                  {
-                     "id": 1555382544,
-                     "file": "error_code",
-                     "cn": "错误码",
-                     "en": "Error Code"
-                  },
-                  {
-                     "id": 1521595284,
-                     "file": "attention",
-                     "cn": "注意事项",
-                     "en": "attention"
-                  }
-               ]
-            },
-            {
-               "id": 1575355389,
-               "dir": "sequoiasql_mariadb",
-               "cn": "MariaDB实例组件",
-               "en": "MariaDB_instance",
-               "contents": [
-                  {
-                     "id": 1921595241,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1575355401,
-                     "dir": "installation",
-                     "cn": "安装",
-                     "en": "Installation",
-                     "contents": [
-                        {
-                           "id": 1575355415,
-                           "file": "install_deploy",
-                           "cn": "安装部署",
-                           "en": "Install and Deploy"
-                        },
-                        {
-                           "id": 1972505575,
-                           "file": "ha",
-                           "cn": "高可用",
-                           "en": "High Availability"
-                        },
-                        {
-                           "id": 1575355422,
-                           "file": "upgrade",
-                           "cn": "升级",
-                           "en": "Upgrade guidance"
-                        },
-                        {
-                           "id": 1575355430,
-                           "file": "uninstall",
-                           "cn": "卸载",
-                           "en": "Develop"
-                        }
-                      ]  
-                  },                                                  
-                  {
-                     "id": 1921595283,
-                     "file": "connection",
-                     "cn": "使用",
-                     "en": "Connect"
-                  },
-                  {
-                     "id": 1966551297,
-                     "file": "config",
-                     "cn": "配置",
-                     "en": "Configuration"
-                  },
-                  {
-                     "id": 1595583867,
-                     "dir": "tools",
-                     "cn": "工具",
-                     "en": "Tools",
-                     "contents": [
-                        {
-                           "id": 1595583874,
-                           "file": "sdb_maria_ctl",
-                           "cn": "实例管理工具",
-                           "en": "Instance management tool"
-                        }
-                     ]
-                  },
-                  {
-                     "id": 1974045910,
-                     "file": "data_type",
-                     "cn": "数据类型映射表",
-                     "en": "data type map table"
-                  },  
-                  {
-                     "id": 1955382544,
-                     "file": "error_code",
-                     "cn": "错误码",
-                     "en": "Error Code"
-                  },
-                  {
-                     "id": 1921595284,
-                     "file": "attention",
-                     "cn": "注意事项",
-                     "en": "attention"
-                  }
-               ]
-            }        
-        ]
+            }
+         ]
       },
       {
         "id": 1525955869,
@@ -1767,64 +1841,6 @@
                      "file": "query_data",
                      "cn": "查询数据",
                      "en": "Query Data"
-                  }
-               ]
-            },
-            {
-               "id": 1432190710,
-               "dir": "spark",
-               "cn": "Spark实例组件",
-               "en": "Spark_instance",
-               "contents": [
-                  {
-                     "id": 1432190587,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1432190711,
-                     "file": "installation",
-                     "cn": "安装",
-                     "en": "Installation"
-                  },
-                  {
-                     "id": 1432190712,
-                     "file": "sparksql",
-                     "cn": "SparkSQL",
-                     "en": "SparkSQL"
-                  }
-               ]
-            },
-            {
-               "id": 1432190713,
-               "dir": "postgresql",
-               "cn": "PostgreSQL实例组件",
-               "en": "PostgreSQL_instance",
-               "contents": [
-                  {
-                     "id": 1432190586,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "Overview"
-                  },
-                  {
-                     "id": 1432190714,
-                     "file": "deployment",
-                     "cn": "部署",
-                     "en": "Deployment"
-                  },
-                  {
-                     "id": 1432190715,
-                     "file": "connection",
-                     "cn": "连接",
-                     "en": "Connection"
-                  },
-                  {
-                     "id": 1432190716,
-                     "file": "development",
-                     "cn": "开发",
-                     "en": "Development"
                   }
                ]
             }

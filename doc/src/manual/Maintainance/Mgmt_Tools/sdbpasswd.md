@@ -132,4 +132,4 @@ sdbpasswd 工具支持以下设置参数：
 [sdbtop]:manual/Maintainance/Monitoring/sdbtop.md
 [lobtools]:manual/Maintainance/Mgmt_Tools/lobtools.md
 [consistency_check]:manual/Maintainance/Mgmt_Tools/consistency_check.md
-[connection]:manual/connector/postgresql/connection.md
+[connection]:manual/Database_Instance/Relational_Instance/PostgreSQL_Instance/Operation/connection.md
