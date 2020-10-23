@@ -76,9 +76,9 @@ var tmpSdb = {
    waitTasks: Sdb.prototype.waitTasks
 };
 var funcSdb = Sdb;
-var funchelp = Sdb.help;
+var funcSdbhelp = Sdb.help;
 Sdb=function(){try{return funcSdb.apply( this, arguments ); } catch( e ) { commThrowError(e) } };
-Sdb.help = function(){try{ return funchelp.apply( this, arguments ); } catch( e ) { commThrowError(e) } };
+Sdb.help = function(){try{ return funcSdbhelp.apply( this, arguments ); } catch( e ) { commThrowError(e) } };
 Sdb.prototype._getTraceInfo=function(){try{return tmpSdb._getTraceInfo.apply(this,arguments);}catch(e){commThrowError(e);}};
 Sdb.prototype._resolveCS=function(){try{return tmpSdb._resolveCS.apply(this,arguments);}catch(e){commThrowError(e);}};
 Sdb.prototype._traceOff=function(){try{return tmpSdb._traceOff.apply(this,arguments);}catch(e){commThrowError(e);}};
