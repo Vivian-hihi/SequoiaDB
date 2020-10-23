@@ -574,7 +574,25 @@ PowerleLinux64:
             autoconf2.13 --version
 
     OpenSSL 1.1.1g:
-       not compile.
+        # for release build:
+        cd thirdparty/crypto/openssl-1.1.1g/
+        make clean
+        chmod +x ./config
+        ./config -fPIC
+        make -j 4
+        mkdir -p ./lib/ppclelinux64/release
+        cp libcrypto.a ./lib/ppclelinux64/release
+        cp libssl.a ./lib/ppclelinux64/release
+
+        # for debug build:
+        cd thirdparty/crypto/openssl-1.1.1g/
+        make clean
+        chmod +x ./config
+        ./config -fPIC -d
+        make -j 4
+        mkdir -p ./lib/ppclelinux64/debug
+        cp libcrypto.a ./lib/ppclelinux64/debug
+        cp libssl.a ./lib/ppclelinux64/debug
 
     snappy 1.1.0:
         cd snappy
