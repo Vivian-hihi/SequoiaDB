@@ -10,19 +10,14 @@ main( test );
 
 function test ( args )
 {
-   try
-   {
-      var cl = args.testCL;
-      var imprtFile = tmpFileDir + "testdata_22693.csv";
-      readyData( imprtFile );
-      importData( testConf.csName, testConf.clName, imprtFile );
-      checkCLData( cl );
-      cleanCL( testConf.csName, testConf.clName );
-   }
-   catch( e )
-   {
-      throw e;
-   }
+
+   var cl = args.testCL;
+   var imprtFile = tmpFileDir + "testdata_22693.csv";
+   readyData( imprtFile );
+   importData( testConf.csName, testConf.clName, imprtFile );
+   checkCLData( cl );
+   cleanCL( testConf.csName, testConf.clName );
+
 }
 function readyData ( imprtFile )
 {
@@ -42,7 +37,6 @@ function importData ( csName, clName, imprtFile )
       + ' --type csv --fields "num int,type string,v1 binary,v2 binary"'
       + ' --jobs 15 --parsers 15';
    var rc = cmd.run( imprtOption );
-   println( rc );
 }
 
 function checkCLData ( cl )
