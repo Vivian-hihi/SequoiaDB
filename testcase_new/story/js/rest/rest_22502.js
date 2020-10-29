@@ -9,47 +9,47 @@ if( !commIsStandalone( db ) )
 {
    var groupInfo = commGetGroups( db );
    var GROUPNAME = groupInfo[0][0]["GroupName"];
-   testConf.clOpt  = { Group: GROUPNAME };
+   testConf.clOpt = { Group: GROUPNAME };
 }
 var collection = testConf.csName + "." + testConf.clName;
-main ( test );
+main( test );
 
 function test ( testPara )
 {
    var cl = testPara.testCL;
    var indexName = "index_22502";
-   var data = [ {a: 1}, {a: 2} ];
+   var data = [{ a: 1 }, { a: 2 }];
 
    cl.insert( data );
    cl.createIndex( indexName, { a: 1 } );
    db.analyze( { Collection: collection, Index: indexName } );
 
-   var port =  parseInt(COORDSVCNAME) + 4;
-   var url  = "http://" + COORDHOSTNAME + ":" + port;
+   var port = parseInt( COORDSVCNAME ) + 4;
+   var url = "http://" + COORDHOSTNAME + ":" + port;
    if( !commIsStandalone( db ) )
    {
       // Query master node information
       var masterNode = db.getRG( GROUPNAME ).getMaster();
-      var filter = {"Collection": collection, "Index": indexName, "NodeName": ""+ masterNode +"" };
+      var filter = { "Collection": collection, "Index": indexName, "NodeName": "" + masterNode + "" };
 
    }
    else
    {
-      var filter = {"Collection": collection, "Index": indexName };
+      var filter = { "Collection": collection, "Index": indexName };
    }
 
    var condition = "'cmd=snapshot index statistics&filter=" + JSON.stringify( filter ) + "'";
    var cmd = new Cmd();
    var curl = "curl -X POST -i " + url + " -d " + condition + " -H  'Accept: application/json' 2>/dev/null";
-   var result = cmd.run(curl);
-   result = result.split("\n")[7];
-   result = JSON.parse(result);
+   var result = cmd.run( curl );
+   result = result.split( "\n" )[7];
+   result = JSON.parse( result );
 
    // Result Check
-   var errorInfo  = result[0];
-   if (errorInfo.errno != 0 )
+   var errorInfo = result[0];
+   if( errorInfo.errno != 0 )
    {
-      throw new Error ("Curl Command Failed!!!! msg = " + condition);
+      throw new Error( "Curl Command Failed!!!! msg = " + condition );
    }
 
    var detailInfo = result[1];
@@ -63,8 +63,8 @@ function test ( testPara )
       var maxValue = detailInfo.MaxValue.a;
       var minValue = detailInfo.MinValue.a;
    }
-   if ( maxValue != 2 || minValue != 1)
+   if( maxValue != 2 || minValue != 1 )
    {
-      throw new Error ("Failed!!!! Something go wrong! \nExpected Value      Actually Value\nMaxvalue: 2         MaxValue: "+ maxValue + "\nMinvalue: 1         MinValue: " + minValue);
+      throw new Error( "Failed!!!! Something go wrong! \nExpected Value      Actually Value\nMaxvalue: 2         MaxValue: " + maxValue + "\nMinvalue: 1         MinValue: " + minValue );
    }
 }
