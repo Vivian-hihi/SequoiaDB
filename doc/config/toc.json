@@ -193,6 +193,7 @@
                "dir": "Relational_Instance",
                "cn": "关系型数据库实例",
                "en": "Relational Instance",
+               "top": true,
                "contents": [
                   {
                      "id": 1521595228,
