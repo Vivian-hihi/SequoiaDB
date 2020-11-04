@@ -186,8 +186,8 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 
 + 类型：boolean
 + 默认值：ON
-+ 作用范围：Global
-+ 是否支持在线修改生效：否
++ 作用范围：Global，Session
++ 是否支持在线修改生效：是
 
 **sequoiadb_rollback_on_timeout** 
 
@@ -206,6 +206,15 @@ COMMENT [=] "[string,] sequoiadb:{ table_options:{...}[, auto_partition:<true|fa
 + 默认值：60
 + 取值范围：[0,3600]
 + 作用范围：Global,Session
++ 是否支持在线修改生效：是
+
+**sequoiadb_use_rollback_segments**
+
+该参数可以配置事务是否使用回滚段。
+
++ 类型：boolean
++ 默认值：ON
++ 作用范围：Global, Session
 + 是否支持在线修改生效：是
 
 ###配置统计信息分析###
