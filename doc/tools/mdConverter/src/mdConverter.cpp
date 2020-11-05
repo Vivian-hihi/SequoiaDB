@@ -1063,6 +1063,9 @@ INT32 buildFileMap( CJSON_MACHINE *pMachine,
          _fileMap.insert( map<string, INT32>::value_type( subPath, id ) ) ;
 
          subPath += "." ;
+
+         _cnMap.insert( map<string, string>::value_type( subPath, "Readme" ) ) ;
+
          cnPath += cnTitle + "/" ;
          rc = buildFileMap( pMachine, pIterSub, FALSE, TRUE, subPath, cnPath, level + 1 ) ;
          if( rc )

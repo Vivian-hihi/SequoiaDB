@@ -16,6 +16,15 @@ $apiList = array(
 ) ;
 
 $root = dirname( __FILE__ ).( getOSInfo() == 'linux' ? "/../.." : "\\..\\.." ) ;
+$toolPath = dirname( __FILE__ ).( getOSInfo() == 'linux' ? "/.." : "\\.." ) ;
+
+if( FALSE == buildMdConverter( $toolPath, getcwd() ) )
+{
+   printLog( "Failed to build mdConverter" ) ;
+   exit( 1 ) ;
+}
+
+printLog( "Build mdConverter success!" ) ;
 
 $path = getOSInfo() == 'linux' ? "$root/config/toc.json" : "$root\\config\\toc.json" ;
 

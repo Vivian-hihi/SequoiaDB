@@ -144,3 +144,46 @@ function iterDoxygenConfig( $path )
    }
    return $list ;
 }
+
+function buildMdConverter( $toolPath, $originPath )
+{
+   $mdConverterFile = getOSInfo() == 'linux' ? "linux_mdConverter" : "mdConverter.exe" ;
+   $mdConverterPath = $toolPath. DIRECTORY_SEPARATOR .$mdConverterFile ;
+
+   if( file_exists( $mdConverterPath ) )
+   {
+      @unlink( $mdConverterPath ) ;
+   }
+
+   $mdConverterSrc = $toolPath. DIRECTORY_SEPARATOR ."mdConverter" ;
+
+   if ( FALSE == chdir( $mdConverterSrc ) )
+   {
+      printLog( "Failed to chdir build path" ) ;
+      return FALSE ;
+   }
+
+   $mdConverterBuildFile = $mdConverterSrc. DIRECTORY_SEPARATOR .( getOSInfo() == 'linux' ? "build.sh" : "build.bat" ) ;
+
+   chmod( $mdConverterBuildFile, 0777 ) ;
+
+   if( execCmd( $mdConverterBuildFile ) != 0 )
+   {
+      printLog( "Failed to build mdConverter" ) ;
+      return FALSE ;
+   }
+
+   $mdConverterBuildPath = $mdConverterSrc. DIRECTORY_SEPARATOR ."build" ;
+   $mdConverterNewFile = $mdConverterBuildPath. DIRECTORY_SEPARATOR .( getOSInfo() == 'linux' ? "linux_mdConverter" : "mdConverter.exe" ) ;
+
+   copy( $mdConverterNewFile, $mdConverterPath ) ;
+   chmod( $mdConverterPath, 0777 ) ;
+
+   if ( FALSE == chdir( $originPath ) )
+   {
+      printLog( "Failed to restore work path" ) ;
+      return FALSE ;
+   }
+
+   return TRUE ;
+}
