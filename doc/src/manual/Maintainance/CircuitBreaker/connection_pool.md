@@ -77,5 +77,5 @@ SequoiaDB 连接池有效地提升了连接获取效率，并提供大量连接�
 
 
 [^_^]:
-[javaDriver]:manual/driver/java_driver/java_datasource_introduction.md
+[javaDriver]:manual/Database_Instance/Json_Instance/Development/java_driver/java_driver/java_datasource_introduction.md
 [coord]:manual/infrastructure/Node/coord_node.md
