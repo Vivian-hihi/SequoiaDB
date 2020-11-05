@@ -78,6 +78,10 @@ namespace engine
             }
             pmdEduEventRelease( event, cb ) ;
          }
+         else
+         {
+            cb->shrink() ;
+         }
 
          timeCount++ ;
 
