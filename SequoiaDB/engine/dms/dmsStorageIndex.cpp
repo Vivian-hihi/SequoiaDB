@@ -1011,6 +1011,24 @@ namespace engine
                   goto error ;
                }
             }
+
+            rc = extDataHandler->done( DMS_EXTOPR_TYPE_DROPIDX, cb ) ;
+            if ( rc )
+            {
+               // Report the error, but not go to error. Manually cleanup maybe
+               // needed.
+               PD_LOG( PDERROR, "External operation failed, rc: %d", rc ) ;
+            }
+
+            // Maybe we are deleting the index because of error when creating
+            // it. In that case, the _textIdxNum may have not increase. So we
+            // only need to decrease it when it's greater than 0.
+            if ( context->mbStat()->_textIdxNum > 0 )
+            {
+               SDB_ASSERT( 1 == context->mbStat()->_textIdxNum,
+                           "Only support 1 text index now" ) ;
+               context->mbStat()->_textIdxNum-- ;
+            }
          }
 
          callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
@@ -1053,26 +1071,6 @@ namespace engine
                      sizeof(dmsExtentID)*(DMS_COLLECTION_MAX_INDEX-indexID-1));
          context->mb()->_indexExtent[DMS_COLLECTION_MAX_INDEX-1] =
             DMS_INVALID_EXTENT ;
-         if ( extDataHandler )
-         {
-            rc = extDataHandler->done( DMS_EXTOPR_TYPE_DROPIDX, cb ) ;
-            if ( rc )
-            {
-               // Report the error, but not go to error. Manually cleanup maybe
-               // needed.
-               PD_LOG( PDERROR, "External operation failed, rc: %d", rc ) ;
-            }
-
-            // Maybe we are deleting the index because of error when creating it.
-            // In that case, the _textIdxNum may have not increase. So we only need
-            // to decrease it when it's greater than 0.
-            if ( context->mbStat()->_textIdxNum > 0 )
-            {
-               SDB_ASSERT( 1 == context->mbStat()->_textIdxNum,
-                           "Only support 1 text index now" ) ;
-               context->mbStat()->_textIdxNum-- ;
-            }
-         }
       }
 
       context->mb()->_numIndexes -- ;
@@ -1911,7 +1909,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to append record, record: %s,rc: %d",
                    record.toString().c_str(), rc ) ;
 
-   done:
+   done
+:
       return rc ;
    error:
       goto done ;
