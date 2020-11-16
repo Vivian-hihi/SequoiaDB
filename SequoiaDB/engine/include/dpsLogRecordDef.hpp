@@ -54,6 +54,8 @@ namespace engine
                                              // mapping to really trans lsn
       DPS_LOG_PUBLIC_FIRSTTRANS = 205,
       DPS_LOG_PUBLIC_TIME = 206
+
+      // 207 - 209 reserved for global transaction
    } ;
 
 /// number in public can not be used in definition !

@@ -8,15 +8,15 @@ main( test );
 
 function test( testPara )
 {
-   assert.tryThrow( -259, function()
+   assert.tryThrow( SDB_OUT_OF_BOUND, function()
    {
       testPara.testCL.getIndexStat();
    });
-   assert.tryThrow( -349, function()
+   assert.tryThrow( SDB_IXM_STAT_NOTEXIST, function()
    {  
       testPara.testCL.getIndexStat( "indexName" );
    });
-   assert.tryThrow( -6, function()
+   assert.tryThrow( SDB_INVALIDARG, function()
    {  
       testPara.testCL.getIndexStat( { "indexName": 1 } );
    });

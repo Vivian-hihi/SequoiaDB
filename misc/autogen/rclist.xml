@@ -2795,6 +2795,62 @@
       </code>
 
       <code>
+         <name>SDB_ERROR_RESERVED_349</name> <!-- STP_NOT_AVAILABLE -->
+         <description>
+            <en>Reserved</en> <!-- SequoiaDB Time Protocol node is not available -->
+            <cn>保留</cn> <!-- 时间服务不可用 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_350</name> <!-- STP_SYNC_FAILED -->
+         <description>
+            <en>Reserved</en> <!-- Serial Time Protocol node failed to synchronize -->
+            <cn>保留</cn> <!-- 时间服务同步失败 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_351</name> <!-- STP_TIME_AHEAD_AFTER_SYNC -->
+         <description>
+            <en>Reserved</en> <!-- Time of Serial Time Protocol node is ahead of the source after synchronization -->
+            <cn>保留</cn> <!-- 时间服务同步后本地时间太快 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_352</name> <!-- STP_SYNC_BUSY -->
+         <description>
+            <en>Reserved</en> <!-- Serial Time Protocol node is busy synchronizing -->
+            <cn>保留</cn> <!-- 时间服务正在同步 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_353</name> <!-- SDB_GLOB_TRANS_NOT_AVAILABLE -->
+         <description>
+            <en>Reserved</en> <!-- Global transaction is not available -->
+            <cn>保留</cn> <!-- 全局事务不可用 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_354</name> <!-- SDB_GLOB_LOWTRAN_UNKNOWN -->
+         <description>
+            <en>Reserved</en> <!-- Global LowTran is unknown -->
+            <cn>保留</cn> <!-- 全局事务最早正在执行的事务 ID 未知 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_355</name> <!-- SDB_GLOB_TRANS_NOT_SYNC -->
+         <description>
+            <en>Reserved</en> <!-- Global transaction times of nodes are not synchronized -->
+            <cn>保留</cn> <!-- 节点间的全局逻辑时间不同步 -->
+         </description>
+      </code>
+
+      <code>
          <name>SDB_IXM_STAT_NOTEXIST</name>
          <description>
             <en>Index statistics do not exist</en>

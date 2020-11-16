@@ -15,7 +15,7 @@ function test( testPara )
       records.push( { "a": i } );
    }
    testPara.testCL.insert( records );
-   assert.tryThrow( -349, function()
+   assert.tryThrow( SDB_IXM_STAT_NOTEXIST, function()
    {
       testPara.testCL.getIndexStat( "index_22650" ).toObj();
    });
