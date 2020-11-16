@@ -67,7 +67,7 @@ function insertData ( cl, type )
          dataArray.push( { "_id": 2, "key": { "b": 1 } } );
          break;
       default:
-         throw "unexpected type";
+         throw new Error("unexpected type");
          break;
    }
    cl.insert( dataArray );
