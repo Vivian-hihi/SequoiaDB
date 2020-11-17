@@ -126,7 +126,7 @@ function dropCSInvalidValue ( db, csName, option )
       throw new Error( "error,dropCS with " + JSON.stringify( option ) + " successed" );
    } catch( e )
    {
-      if( e.message != -6 )
+      if( e.message != SDB_INVALIDARG )
       {
          throw e;
       }
@@ -140,7 +140,7 @@ function dropCSCsNotEmpty ( db, csName, option )
       throw new Error( "error,cs contains cl dropCS with EnsureEmpty:true successed" );
    } catch( e )
    {
-      if( e.message != -275 )
+      if( e.message != SDB_DMS_CS_NOT_EMPTY )
       {
          throw e;
       }

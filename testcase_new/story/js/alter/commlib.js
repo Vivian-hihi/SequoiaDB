@@ -98,7 +98,7 @@ function getSplitGroup ( db, csName, clName )
 **************************************/
 function clSetAttributes ( cl, options )
 {
-   assert.tryThrow( -32, function()
+   assert.tryThrow( SDB_OPTION_NOT_SUPPORT, function()
    {
       cl.setAttributes( options );
    } );
@@ -172,7 +172,7 @@ function checkNotSplitResult ( csName, clName, srcGroupName, tarGroupName, expDa
    dataNode.close();
 
    var dataNode2 = new Sdb( db.getRG( tarGroupName ).getMaster() );
-   assert.tryThrow( -23, function()
+   assert.tryThrow( SDB_DMS_NOTEXIST, function()
    {
       dataNode2.getCS( csName ).getCL( clName );
    } );
