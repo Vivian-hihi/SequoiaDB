@@ -55,72 +55,79 @@ public class Authentication21934 extends MongodbTestBase {
     }
 
     @Test
-    @SuppressWarnings({ "unchecked", "resource" })
+    @SuppressWarnings({ "resource" })
     public void Test() {
-        opt = MongoClientOptions.builder().build();
-        client1 = new MongoClient(
-                new ServerAddress( config.getHost(), config.getPort() ), opt );
-        client1.dropDatabase( dbName );
-        db1 = client1.getDatabase( dbName );
-        // 创建多个用户
-        db1.runCommand( new Document( "createUser", username1 )
-                .append( "pwd", username1 )
-                .append( "roles", Collections.singletonList( "dbOwner" ) ) );
-        // 重复创建用户
+        List< MongoClient > clients = new ArrayList<>();
+        MongoDatabase db2 = null;
+        MongoDatabase db3 = null;
         try {
-            db1.runCommand( new Document( "createUser", username2 )
-                    .append( "pwd", username2 ).append( "roles",
+            opt = MongoClientOptions.builder().build();
+            client1 = new MongoClient(
+                    new ServerAddress( config.getHost(), config.getPort() ),
+                    opt );
+            clients.add( client1 );
+            client1.dropDatabase( dbName );
+            db1 = client1.getDatabase( dbName );
+
+            // 创建多个用户
+            db1.runCommand( new Document( "createUser", username1 )
+                    .append( "pwd", username1 ).append( "roles",
                             Collections.singletonList( "dbOwner" ) ) );
 
             db1.runCommand( new Document( "createUser", username2 )
                     .append( "pwd", username2 ).append( "roles",
                             Collections.singletonList( "dbOwner" ) ) );
-        } catch ( MongoCommandException e ) {
-            if ( e.getErrorCode() != -295 ) {
-                throw e;
+
+            // 重复创建用户
+            try {
+                db1.runCommand( new Document( "createUser", username2 )
+                        .append( "pwd", username2 ).append( "roles",
+                                Collections.singletonList( "dbOwner" ) ) );
+            } catch ( MongoCommandException e ) {
+                if ( e.getErrorCode() != -295 ) {
+                    throw e;
+                }
             }
-        }
 
-        // 创建连接
-        MongoCredential mongoCredential = MongoCredential
-                .createScramSha1Credential( username1, dbName,
-                        username1.toCharArray() );
-        MongoClient client2 = new MongoClient(
-                new ServerAddress( config.getHost(), config.getPort() ),
-                Collections.singletonList( mongoCredential ), opt );
+            // 创建连接
+            MongoCredential mongoCredential = MongoCredential
+                    .createScramSha1Credential( username1, dbName,
+                            username1.toCharArray() );
+            MongoClient client2 = new MongoClient(
+                    new ServerAddress( config.getHost(), config.getPort() ),
+                    Collections.singletonList( mongoCredential ), opt );
+            clients.add( client2 );
+            db2 = client2.getDatabase( dbName );
 
-        MongoCredential mongoCredentia2 = MongoCredential
-                .createScramSha1Credential( username2, dbName,
-                        username2.toCharArray() );
-        MongoClient client3 = new MongoClient(
-                new ServerAddress( config.getHost(), config.getPort() ),
-                Collections.singletonList( mongoCredentia2 ), opt );
-        MongoDatabase db2 = client2.getDatabase( dbName );
-        MongoDatabase db3 = client3.getDatabase( dbName );
+            MongoCredential mongoCredentia2 = MongoCredential
+                    .createScramSha1Credential( username2, dbName,
+                            username2.toCharArray() );
+            MongoClient client3 = new MongoClient(
+                    new ServerAddress( config.getHost(), config.getPort() ),
+                    Collections.singletonList( mongoCredentia2 ), opt );
+            clients.add( client3 );
+            db3 = client3.getDatabase( dbName );
 
-        // 查询用户
-        // 查询所有用户
-        try {
-            Document userInfos = db1
+            // 查询用户
+            // 查询所有用户
+            Document userInfo1 = db1
                     .runCommand( new Document( "usersInfo", 1 ) );
-            List< Document > users = userInfos.get( "users", ArrayList.class );
-            Assert.assertEquals( users,
+            Assert.assertEquals( userInfo1.get( "users", ArrayList.class ),
                     Arrays.asList( new Document( "user", username1 ),
                             new Document( "user", username2 ) ) );
 
             // 查询单个用户
-            Document userInfo = db1.runCommand( new Document( "usersInfo",
+            Document userInfo2 = db1.runCommand( new Document( "usersInfo",
                     Collections.singletonList( new Document( "user", username1 )
                             .append( "db", dbName ) ) ) );
-            System.out.println( "userInfo = " + userInfo.toString() );
-            // TODO:SEQUOIADBMAINSTREAM-5974
-            List< Document > user = userInfos.get( "users", ArrayList.class );
-            // Assert.assertEquals( user,
-            // Collections.singletonList( new Document( "user", username1 ) ) );
-            MongoDatabase db1 = client1.getDatabase( dbName );
+            Assert.assertEquals( userInfo2.get( "users", ArrayList.class ),
+                    Arrays.asList( new Document( "user", username1 ) ) );
+
+            // 业务操作
             // 创建集合
             db1.createCollection( clName );
             MongoCollection< Document > cl2 = db2.getCollection( clName );
+
             // 增加/查询记录
             cl2.insertMany( list );
             List< Document > actList = cl2.find()
@@ -128,9 +135,11 @@ public class Authentication21934 extends MongodbTestBase {
             Assert.assertEquals( actList, list );
 
             MongoCollection< Document > cl3 = db3.getCollection( clName );
+
             // 删除记录
             Bson query;
             DeleteResult result;
+
             // 删除记录
             query = Filters.eq( "a", 0 );
             Assert.assertEquals( cl3.count( query ), 1 );
@@ -141,6 +150,7 @@ public class Authentication21934 extends MongodbTestBase {
             // 删除用户
             db2.runCommand( new Document( "dropUser", username1 ) );
             db3.runCommand( new Document( "dropUser", username2 ) );
+
             // 重复删除用户
             try {
                 db2.runCommand( new Document( "dropUser", username1 ) );
@@ -152,20 +162,21 @@ public class Authentication21934 extends MongodbTestBase {
             }
 
             // 查询所有用户
-            Document userInfos1 = db2
+            Document userInfo3 = db2
                     .runCommand( new Document( "usersInfo", 1 ) );
-            System.out.println( "userInfos = " + userInfos1.toString() );
+            Assert.assertEquals( userInfo3.get( "users", ArrayList.class ),
+                    new ArrayList<>() );
 
             // 删除集合
             cl3.drop();
 
             // 使用不存在的用户创建连接
-            MongoCredential mongoCredentia3 = MongoCredential
+            MongoCredential mongoCredentia4 = MongoCredential
                     .createScramSha1Credential( "noexists", dbName,
                             "noexists".toCharArray() );
             MongoClient client4 = new MongoClient(
                     new ServerAddress( config.getHost(), config.getPort() ),
-                    Collections.singletonList( mongoCredentia3 ), opt );
+                    Collections.singletonList( mongoCredentia4 ), opt );
             MongoDatabase db4 = client4.getDatabase( dbName );
             MongoCollection< Document > cl4 = db4.getCollection( clName );
             try {
@@ -177,13 +188,33 @@ public class Authentication21934 extends MongodbTestBase {
                 }
             }
             db1.drop();
+        } finally {
+            // 不管用例执行结果如何，均删除创建的所有用户
+            try {
+                if ( db2 != null ) {
+                    db2.runCommand( new Document( "dropUser", username1 ) );
+                }
+            } catch ( Exception e ) {
+                // continue
+            }
+            try {
+                if ( db3 != null ) {
+                    db3.runCommand( new Document( "dropUser", username2 ) );
+                }
+            } catch ( Exception e ) {
+                // continue
+            }
 
-            client2.close();
-            client3.close();
-        } catch ( Exception e ) {
-            db2.runCommand( new Document( "dropUser", username1 ) );
-            db3.runCommand( new Document( "dropUser", username2 ) );
-            throw e;
+            // 关闭连接
+            for ( MongoClient client : clients ) {
+                try {
+                    if ( client != null ) {
+                        client.close();
+                    }
+                } catch ( Exception e ) {
+                    // continue
+                }
+            }
         }
     }
 
