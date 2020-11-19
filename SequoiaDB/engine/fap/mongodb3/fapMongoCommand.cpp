@@ -3159,7 +3159,8 @@ INT32 _mongoDropCLCommand::buildReply( const MsgOpReply &sdbReply,
       bodyBuf = engine::rtnContextBuf( BSON( "ns" << _clFullName.c_str() <<
                                              FAP_MONGO_FIELD_NAME_OK << 1 ) ) ;
    }
-   else if ( SDB_DMS_NOTEXIST == sdbReply.flags )
+   else if ( SDB_DMS_NOTEXIST == sdbReply.flags ||
+             SDB_DMS_CS_NOTEXIST == sdbReply.flags )
    {
       bodyBuf = engine::rtnContextBuf( BSON( FAP_MONGO_FIELD_NAME_OK << 0 <<
                                              FAP_MONGO_FIELD_NAME_ERRMSG <<

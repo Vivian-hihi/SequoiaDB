@@ -160,8 +160,11 @@ INT32 _mongoSession::run()
    _pmdRemoteSessionSite *pSite = NULL ;
 
    pSite = ( _pmdRemoteSessionSite* )(eduCB()->getRemoteSite()) ;
-   SDB_ASSERT( pSite, "site is null" ) ;
-   pSite->setMsgPreprocessor( this ) ;
+   // In standalone mode, pSite is NULL
+   if ( pSite )
+   {
+      pSite->setMsgPreprocessor( this ) ;
+   }
 
    PD_CHECK( _pEDUCB, SDB_SYS, error, PDERROR,
              "_pEDUCB is null" ) ;
@@ -313,7 +316,11 @@ INT32 _mongoSession::run()
    }
 
 done:
-   pSite->setMsgPreprocessor( NULL ) ;
+   // In standalone mode, pSite is NULL
+   if ( pSite )
+   {
+      pSite->setMsgPreprocessor( NULL ) ;
+   }
    if ( pCommand )
    {
       mongoReleaseCommand( &pCommand ) ;
@@ -717,7 +724,11 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg,
       // auto create cs/cl
       if ( SDB_DMS_CS_NOTEXIST == _replyHeader.flags )
       {
-         if ( CMD_COLLECTION_CREATE == cmdType )
+         if ( CMD_COLLECTION_CREATE == cmdType ||
+              CMD_INSERT == cmdType ||
+              CMD_INDEX_CREATE == cmdType ||
+              ( CMD_UPDATE == cmdType &&
+              ((_mongoUpdateCommand*)pCommand)->isUpsert()) )
          {
             if ( SDB_OK == _autoCreateCS( pCommand->csName(), errorObj ) )
             {
@@ -816,6 +827,13 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg, BSONObj &errorObj )
    else
    {
       errorObj = BSONObj() ;
+
+      // In standalone mode, we can get InsertedNum, DuplicatedNum, UpdatedNum,
+      // ModifiedNum and DeletedNum from retBuilder.obj().
+      if ( !retBuilder.isEmpty() && 0 == _contextBuff.size() )
+      {
+         _contextBuff = engine::rtnContextBuf( retBuilder.obj() ) ;
+      }
    }
 
    _onMsgEnd( rc, (MsgHeader *) pMsg ) ;
