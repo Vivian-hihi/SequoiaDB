@@ -41,6 +41,7 @@
 #include "clsUtil.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
+#include "pmd.hpp"
 
 using namespace boost::asio::ip ;
 
@@ -77,7 +78,15 @@ namespace engine
       {
          /// set des len with local value.
          ossMemset( host, 0, hostLen ) ;
-         ossStrncpy( host, itr->second._host, hostLen - 1 ) ;
+         if ( 0 == ossStrcmp( itr->second._host,
+                              pmdGetKRCB()->getHostName() ) )
+         {
+            ossStrncpy( host, OSS_LOOPBACK_IP, hostLen - 1 ) ;
+         }
+         else
+         {
+            ossStrncpy( host, itr->second._host, hostLen - 1 ) ;
+         }
          ossMemset( service, 0, svcLen ) ;
          ossStrncpy( service,
                      ((itr->second._service)[id.columns.serviceID]).c_str(),
