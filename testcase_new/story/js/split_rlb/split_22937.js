@@ -4,7 +4,7 @@
 @Athor : Zixian Yan 2020/10/24
 ******************************************************************************/
 testConf.clName = COMMCLNAME + "_22937";
-testConf.clOpt = { "ShardingKey": {"a": 1}, "ShardingType": "range" };
+testConf.clOpt = { "ShardingKey": { "a": 1 }, "ShardingType": "range" };
 testConf.useSrcGroup = true;
 testConf.useDstGroup = true;
 testConf.skipOneGroup;
@@ -17,9 +17,9 @@ function test ( testPara )
    var dstGroupNames = testPara.dstGroupNames;
 
    var data = [];
-   for (var i = 0; i < 100; i++)
+   for( var i = 0; i < 100; i++ )
    {
-      data.push( {"a": i} );
+      data.push( { "a": i } );
    }
    cl.insert( data );
 
@@ -31,14 +31,14 @@ function test ( testPara )
 
    var value_a = 5;
    var value_b = value_a + 5;
-   for(var i = 0; i < 3; i++)
+   for( var i = 0; i < 3; i++ )
    {
-      for (var pos = 0; pos < dstGroupNames.length; pos++)
+      for( var pos = 0; pos < dstGroupNames.length; pos++ )
       {
          var cursor = new Sdb( hostAndService ).SYSINFO.SYSDCBASE.find();
          var originalTaskID = cursor.current().toObj()["TaskHWM"];
 
-         if (value_b > data.length){ break; }
+         if( value_b > data.length ) { break; }
          cl.split( srcGroupName, dstGroupNames[pos], { "a": value_a }, { "a": value_b } );
 
          value_a = value_b + 5;
@@ -53,13 +53,17 @@ function test ( testPara )
             cataRG.start();
          }
 
+         // check business
+         commCheckBusiness( [CATALOG_GROUPNAME] );
+
+         // check results
          cursor = new Sdb( hostAndService ).SYSINFO.SYSDCBASE.find();
          var currentTaskID = cursor.current().toObj()["TaskHWM"];
 
-         var difference  = currentTaskID - originalTaskID;
-         if (difference != 1 )
+         var difference = currentTaskID - originalTaskID;
+         if( difference != 1 )
          {
-            throw new Error("Failed!!! TaskID has't increase 1 number\nTaskID before split:" + originalTaskID + "\nTaskID after split: " + currentTaskID);
+            throw new Error( "Failed!!! TaskID has't increase 1 number\nTaskID before split:" + originalTaskID + "\nTaskID after split: " + currentTaskID );
          }
 
       }
