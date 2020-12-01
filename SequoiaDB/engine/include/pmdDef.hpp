@@ -235,6 +235,9 @@ namespace engine
 
       EDU_TYPE_SUB_NET_AGENT,
 
+      EDU_TYPE_FS_MCS_NET_SERVICE,
+      EDU_TYPE_FS_MCS_NET_AGENT,
+      
       EDU_TYPE_UNKNOWN,
       EDU_TYPE_MAXIMUM = EDU_TYPE_UNKNOWN
    } ;

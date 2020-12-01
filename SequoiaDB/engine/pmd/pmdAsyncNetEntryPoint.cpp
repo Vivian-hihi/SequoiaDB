@@ -202,5 +202,13 @@ namespace engine
                           pmdAsyncNetSubEntryPoint,
                           "SubNetAgent" ) ;
 
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_FS_MCS_NET_SERVICE, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "FsMcsNetService" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_FS_MCS_NET_AGENT, TRUE,
+                          pmdAsyncNetEntryPoint,
+                          "FsMcsNetAgent" ) ;
+
 }
 
