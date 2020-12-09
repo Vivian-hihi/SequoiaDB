@@ -1,11 +1,10 @@
-
 SequoiaDB 巨杉数据库通过配置可以支持 SSL。SequoiaDB 客户端和 SequoiaDB 实例可以直接使用 SSL 加密连接。
 
 SequoiaDB支持
 ----
 若要使用 SSL 加密连接，需要 SequoiaDB 1.12 或更高版本。
 
-目前该特性仅限于 SequoiaDB 企业版，社区版暂不支持。 
+目前该特性仅限于 SequoiaDB 企业版，社区版暂不支持。
 
 客户端支持
 ----
