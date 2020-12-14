@@ -5,7 +5,7 @@ SequoiaDB支持
 ----
 若要使用 SSL 加密连接，需要 SequoiaDB 1.12 或更高版本。
 
-目前该特性仅限于 SequoiaDB 企业版，社区版暂不支持。
+目前该特性仅限于 SequoiaDB 企业版，社区版暂不支持。 
 
 客户端支持
 ----
@@ -80,5 +80,5 @@ SequoiaDB 在开启 SSL 后会自动创建证书，不需要用户指定。
 [secure]:manual/reference/Sequoiadb_command/SecureSdb.md
 [expert]:manual/Distributed_Engine/Maintainance/Mgmt_Tools/sdbexprt.md
 [imprt]:manual/Distributed_Engine/Maintainance/Mgmt_Tools/sdbimprt.md
-[lobtool]:manual/Distributed_Engine/Maintainance/Mgmt_Tools/sdblobtool.md
+[lobtool]:manual/Distributed_Engine/Maintainance/Mgmt_Tools/lobtools.md
 [top]:manual/Distributed_Engine/Maintainance/Monitoring/sdbtop.md
