@@ -3,8 +3,6 @@
                final whether the data is consistent 
 *@author:     wangwenjing
 **************************************/
-
-
 function main ()
 {
    try
@@ -32,7 +30,7 @@ function main ()
       cl.create( db, group.name );
       var pageSize = 64 * 1024;
       cl.insert( pageSize );
-      if( !group.checkResult( false, group.checkLSN ))
+      if( !group.checkResult( true, group.checkLSN ))
       {
          throw new Error( "data is not consistency" );
       }
