@@ -485,7 +485,8 @@ namespace engine
     */
    // default constructor
    _ixmIndexKeyGen::_ixmIndexKeyGen()
-   : _nFields( 0 ),
+   : _notArray( FALSE ),
+     _nFields( 0 ),
      _pKeyBuilder( NULL )
    {
    }
@@ -497,6 +498,7 @@ namespace engine
    {
       SDB_ASSERT ( indexCB, "details can't be NULL" ) ;
       _keyPattern = indexCB->keyPattern() ;
+      _notArray = indexCB->notArray() ;
       if ( SDB_OK != _init() )
       {
          PD_LOG( PDWARNING, "Failed to initialize key generator" ) ;
@@ -504,7 +506,8 @@ namespace engine
    }
    // create key generator from key
    _ixmIndexKeyGen::_ixmIndexKeyGen ( const BSONObj &keyDef )
-   : _nFields( 0 ),
+   : _notArray( FALSE ),
+     _nFields( 0 ),
      _pKeyBuilder( NULL )
    {
       try
@@ -825,6 +828,8 @@ namespace engine
          const CHAR *name = _keyFields[ i ].getName() ;
          SDB_ASSERT( '\0' != name[0], "can not be empty" ) ;
          BSONElement e = obj.getFieldDottedOrArray( name ) ;
+
+         // if key is a and obj is {a:{b:[1,2,3]}} then e.type is Object
          if ( EOO == e.type() )
          {
             // field not found
@@ -832,6 +837,11 @@ namespace engine
          }
          else if ( Array == e.type() )
          {
+            if( _notArray )
+            {
+               rc = SDB_IXM_KEY_NOT_SUPPORT_ARRAY ;
+               goto error ;
+            }
             // check if already found an array
             PD_CHECK( EOO == arrEle.type(), SDB_IXM_MULTIPLE_ARRAY, error,
                       PDERROR, "Failed to extract key for field [%s], "

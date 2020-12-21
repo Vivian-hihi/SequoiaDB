@@ -173,6 +173,9 @@ namespace engine
       // index key pattern
       BSONObj              _keyPattern ;
 
+      // if key fields support array
+      BOOLEAN              _notArray ;
+
       // number of fields
       UINT32               _nFields ;
       // list of parsed key fields
@@ -241,6 +244,11 @@ namespace engine
                       BOOLEAN ignoreUndefined = FALSE ) ;
 
       static BOOLEAN validateKeyDef ( const BSONObj &keyDef ) ;
+
+      void  setNotArray ( const BOOLEAN notArray )
+      {
+         _notArray = notArray ;
+      }
 
    protected:
       // disable copy

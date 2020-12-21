@@ -600,6 +600,7 @@
 #define IXM_FIELD_NAME_SCAN_EXTLID           "ScanExtentLID"
 #define IXM_FIELD_NAME_SORT_BUFFER_SIZE      "SortBufferSize"
 #define IXM_FIELD_NAME_NOTNULL               "NotNull"
+#define IXM_FIELD_NAME_NOTARRAY              "NotArray"
 #define IXM_FIELD_NAME_ISGLOBAL              "IsGlobal"
 #define IXM_FIELD_NAME_GLOBAL_OPTION         "GlobalOption"
 

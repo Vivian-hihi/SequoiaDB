@@ -1208,7 +1208,7 @@ namespace engine
       // NOTE: for sequoiadb upgrade, if the old data before upgrade
       //       contains invalid _id field, we could not report error,
       //       we need to allow update if _id field is not changed
-      BOOLEAN checkIDIndex = indexCB->isSysIndex() &&
+      BOOLEAN checkIDIndex = indexCB->isIDIndex() &&
                              !cb->isInTransRollback() &&
                              !cb->isDoRollback() ;
 
