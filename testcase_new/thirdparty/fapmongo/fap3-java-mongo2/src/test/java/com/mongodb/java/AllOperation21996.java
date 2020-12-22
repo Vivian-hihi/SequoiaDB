@@ -49,7 +49,7 @@ public class AllOperation21996 extends MongodbTestBase {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(dataProvider = "data-provider")
+    @Test(dataProvider = "data-provider", enabled = false) // jira-6529
     public void test( String clName, int recordNum )
             throws UnknownHostException {
         MongoClient client1 = null;
