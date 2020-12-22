@@ -102,7 +102,6 @@ namespace engine
       _extentID = extentID ;
       _pageSize = _pIndexSu->pageSize() ;
       _indexObjVersion = 0 ;
-      _indexCLName ;
       _name = NULL ;
       _unique = FALSE ;
       _enforced = FALSE ;
@@ -408,7 +407,16 @@ namespace engine
          }
 
          lValue = notArray() ;
-         rValue = defObj.getBoolField( IXM_NOTARRAY_FIELD ) ;
+         if( 0 == ossStrcmp( defObj.getStringField( IXM_NAME_FIELD ),
+                             IXM_ID_KEY_NAME ) )
+         {
+            rValue = TRUE ;
+         }
+         else
+         {
+            rValue = defObj.getBoolField( IXM_NOTARRAY_FIELD ) ;
+         }
+
          if( lValue != rValue )
          {
             rs = FALSE ;
