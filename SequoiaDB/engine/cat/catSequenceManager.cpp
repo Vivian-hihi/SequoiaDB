@@ -1340,7 +1340,9 @@ namespace engine
       INT64 contextID = -1 ;
       rtnQueryOptions options ;
       SDB_DMSCB* dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_DPSCB* dpsCB = pmdGetKRCB()->getDPSCB() ;
       SDB_RTNCB* rtnCB = pmdGetKRCB()->getRTNCB() ;
+      rtnContextBase *pContext = NULL ;
       rtnContextBuf contextBuf ;
 
       // Use queryAndRemove() to get the sequence id while removing the record
@@ -1367,12 +1369,17 @@ namespace engine
          options.setCLFullName( GTS_SEQUENCE_COLLECTION_NAME ) ;
 
          // 2. Do query and remove
-         rc = rtnQuery( options, eduCB, dmsCB, rtnCB, contextID ) ;
+         rc = rtnQuery( options, eduCB, dmsCB, rtnCB, contextID, &pContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to find sequence[%s], rc=%d",
                     name.c_str(), rc ) ;
             goto error ;
+         }
+
+         if ( pContext && pContext->isWrite() )
+         {
+            pContext->setWriteInfo( dpsCB, w ) ;
          }
 
          rc = rtnGetMore( contextID, 1, contextBuf, eduCB, rtnCB ) ;
@@ -1440,7 +1447,9 @@ namespace engine
       INT64 contextID = -1 ;
       rtnQueryOptions queryOptions ;
       SDB_DMSCB* dmsCB = pmdGetKRCB()->getDMSCB() ;
+      SDB_DPSCB* dpsCB = pmdGetKRCB()->getDPSCB() ;
       SDB_RTNCB* rtnCB = pmdGetKRCB()->getRTNCB() ;
+      rtnContextBase *pContext = NULL ;
       rtnContextBuf contextBuf ;
 
       // Use queryAndUpdate() to get the sequence id while updating the record
@@ -1471,12 +1480,17 @@ namespace engine
          queryOptions.setCLFullName( GTS_SEQUENCE_COLLECTION_NAME ) ;
 
          // 2. Do query and update
-         rc = rtnQuery( queryOptions, eduCB, dmsCB, rtnCB, contextID ) ;
+         rc = rtnQuery( queryOptions, eduCB, dmsCB, rtnCB, contextID, &pContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to find sequence[%s], rc=%d",
                     name.c_str(), rc ) ;
             goto error ;
+         }
+
+         if ( pContext && pContext->isWrite() )
+         {
+            pContext->setWriteInfo( dpsCB, w ) ;
          }
 
          rc = rtnGetMore( contextID, 1, contextBuf, eduCB, rtnCB ) ;
