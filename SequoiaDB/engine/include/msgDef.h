@@ -137,10 +137,12 @@
 #define FIELD_NAME_CACHE_SIZE                "CacheSize"
 #define FIELD_NAME_ACQUIRE_SIZE              "AcquireSize"
 #define FIELD_NAME_CYCLED                    "Cycled"
+#define FIELD_NAME_CYCLED_COUNT              "CycledCount"
 #define FIELD_NAME_INTERNAL                  "Internal"
 #define FIELD_NAME_INITIAL                   "Initial"
 #define FIELD_NAME_NEXT_VALUE                "NextValue"
 #define FIELD_NAME_EXPECT_VALUE              "ExpectValue"
+#define FIELD_NAME_FETCH_NUM                 "FetchNum"
 #define FIELD_NAME_MAJOR                     "Major"
 #define FIELD_NAME_MINOR                     "Minor"
 #define FIELD_NAME_FIX                       "Fix"
@@ -610,6 +612,9 @@
 #define CMD_NAME_CREATE_COLLECTION           "create collection"
 #define CMD_NAME_CREATE_COLLECTIONSPACE      "create collectionspace"
 #define CMD_NAME_CREATE_SEQUENCE             "create sequence"
+#define CMD_NAME_DROP_SEQUENCE               "drop sequence"
+#define CMD_NAME_ALTER_SEQUENCE              "alter sequence"
+#define CMD_NAME_GET_SEQ_CURR_VAL            "get sequence current value"
 #define CMD_NAME_CREATE_INDEX                "create index"
 #define CMD_NAME_CANCEL_TASK                 "cancel task"
 #define CMD_NAME_DROP_COLLECTION             "drop collection"
@@ -779,6 +784,9 @@
 #define CMD_VALUE_NAME_CHANGEPASSWD          "change passwd"
 #define CMD_VALUE_NAME_SETATTR               "set attributes"
 
+#define CMD_VALUE_NAME_SET_CURR_VALUE        "set current value"
+#define CMD_VALUE_NAME_RENAME                "rename"
+
 #define CLS_REPLSET_MAX_NODE_SIZE            7
 #define SDB_MAX_MSG_LENGTH                   ( 512 * 1024 * 1024 )
 
@@ -906,6 +914,7 @@ enum SDB_LOB_MODE
 #define SDB_CATALOG_DOMAIN    "domain"
 #define SDB_CATALOG_GROUP     "group"
 #define SDB_CATALOG_NODE      "node"
+#define SDB_CATALOG_SEQ       "sequence"
 #define SDB_CATALOG_UNKNOWN   "unknown"
 
 #define SDB_CATALOG_CL_ID_INDEX     "id index"
