@@ -348,7 +348,7 @@ namespace engine
             strictDataMode = TRUE ;
          }
          rc = _upsert( pCollectionName, boSelector, boUpdator, boHint,
-                       strictDataMode, cb, contextID, buf ) ;
+                       strictDataMode, cb, contextID, buf, clientVer ) ;
          if ( rc )
          {
             goto error ;
@@ -412,7 +412,8 @@ namespace engine
                                         BOOLEAN strictDataMode,
                                         pmdEDUCB *cb,
                                         INT64 &contextID,
-                                        rtnContextBuf *buf )
+                                        rtnContextBuf *buf,
+                                        INT32 clientVer )
    {
       INT32 rc = SDB_OK ;
 
@@ -488,6 +489,8 @@ namespace engine
             PD_LOG( PDERROR, "Build insert message failed, rc: %d", rc ) ;
             goto error ;
          }
+
+         ((MsgOpInsert*)pBuff)->version = clientVer ;
 
          rc = insertOpr.execute( (MsgHeader*)pBuff, cb, contextID, buf ) ;
          if ( rc )
