@@ -110,6 +110,7 @@ namespace engine
       SDB_SESSION_PROTOCOL,
       SDB_SESSION_SE_INDEX,
       SDB_SESSION_SE_AGENT,
+      SDB_SESSION_DUMMY,
       // Reserved
       SDB_SESSION_MAX
    } ;
