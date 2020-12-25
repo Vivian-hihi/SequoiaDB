@@ -2867,10 +2867,26 @@
       </code>
 
       <code>
-         <name>SDB_IXM_KEY_NOT_SUPPORT_ARRAY</name>
+         <name>SDB_ERROR_RESERVED_358</name> <!-- SDB_RESTORE_IN_PROGRESS -->
          <description>
-            <en>Any field of index key cannot be array</en>
-            <cn>索引键的任意一个字段都不允许为数组</cn>
+            <en>Reserved</en> <!-- Database in restore-in-progress state -->
+            <cn>保留</cn> <!-- 数据库处于恢复中状态 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_359</name> <!-- SDB_RESTORE_NOT_IN_PROGRESS -->
+         <description>
+            <en>Reserved</en> <!-- Database is not in restore-in-progress state -->
+            <cn>保留</cn> <!-- 数据库不处于恢复中状态 -->
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_ERROR_RESERVED_360</name> <!-- SDB_RESTORE_NO_CONSISTENT_PIT -->
+         <description>
+            <en>Reserved</en> <!-- No valid consistency point for point-in-time restore -->
+            <cn>保留</cn> <!-- 按时间还原没有一致的有效时间点 -->
          </description>
       </code>
 
@@ -2895,6 +2911,14 @@
          <description>
             <en>Out of sequence cache</en>
             <cn>超出序列缓存</cn>
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_IXM_KEY_NOT_SUPPORT_ARRAY</name>
+         <description>
+            <en>Any field of index key cannot be array</en>
+            <cn>索引键的任意一个字段都不允许为数组</cn>
          </description>
       </code>
 

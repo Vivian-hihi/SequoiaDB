@@ -299,9 +299,14 @@ namespace engine
       CMD_SNAPSHOT_LOCKWAITS                 = 255,
       CMD_SNAPSHOT_INDEXSTATS                = 256,
 
-      CMD_CREATE_SEQUENCE                    = 257,
-      CMD_DROP_SEQUENCE                      = 258,
-      CMD_ALTER_SEQUENCE                     = 259,
+      // reserved for CMD_RESTORE_*
+      // CMD_RESTORE_TO_TIME  = 257,
+      // CMD_RESTORE_ABORT    = 258,
+      // CMD_RESTORE_PREPARE  = 259,
+
+      CMD_CREATE_SEQUENCE                    = 260,
+      CMD_DROP_SEQUENCE                      = 261,
+      CMD_ALTER_SEQUENCE                     = 262,
       CMD_UNKNOW                             = 65535
    };
 
