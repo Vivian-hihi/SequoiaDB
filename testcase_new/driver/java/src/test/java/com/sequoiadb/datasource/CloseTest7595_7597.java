@@ -75,7 +75,7 @@ public class CloseTest7595_7597 extends DataSourceTestBase {
         try {
             if ( null != datasource ) {
                 datasource.getConnection();
-                Assert.fail("must throw exception!") ;
+                Assert.fail( "must throw exception!" );
             }
         } catch ( InterruptedException e ) {
             Assert.fail( e.getMessage() );
@@ -107,7 +107,7 @@ public class CloseTest7595_7597 extends DataSourceTestBase {
 
         try {
             datasource.getConnection();
-            Assert.fail("must throw exception!") ;
+            Assert.fail( "must throw exception!" );
         } catch ( InterruptedException e ) {
             Assert.fail( e.getMessage() );
         } catch ( BaseException e ) {
@@ -116,7 +116,7 @@ public class CloseTest7595_7597 extends DataSourceTestBase {
 
         try {
             datasource.releaseConnection( sdb );
-            Assert.fail("must throw exception!") ;
+            Assert.fail( "must throw exception!" );
         } catch ( BaseException e ) {
             judegeErrCode( "SDB_SYS", e.getErrorCode() );
         }
