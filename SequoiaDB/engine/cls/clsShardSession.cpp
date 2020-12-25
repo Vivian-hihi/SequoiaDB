@@ -2724,10 +2724,18 @@ namespace engine
          if ( _pEDUCB->getTransExecutor()->isTransAutoCommit() )
          {
             rc = _checkPrimaryStatus() ;
-            if ( SDB_OK == rc )
+            if ( SDB_OK != rc )
             {
-               rc = rtnTransBegin( _pEDUCB, TRUE ) ;
+               PD_LOG( PDINFO, "Failed to check primary status, rc: %d", rc ) ;
+               goto done ;
             }
+            rc = _checkRollbackStatus() ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDINFO, "Failed to check rollback status, rc: %d", rc ) ;
+               goto done ;
+            }
+            rc = rtnTransBegin( _pEDUCB, TRUE ) ;
          }
          else
          {
@@ -2735,6 +2743,7 @@ namespace engine
          }
       }
 
+   done:
       return rc ;
    }
 
