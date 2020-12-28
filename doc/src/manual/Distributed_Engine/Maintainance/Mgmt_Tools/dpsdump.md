@@ -93,7 +93,7 @@ sdbdpsdump --version | -v
  
 - **--transaction**  
 
- 指定事务ID，只解析和指定事务ID相关的日志
+ 指定事务ID，只解析和指定事务ID相关的日志。其中事务ID的格式为16进制格式，例如：--transaction 0x000400667d033b
 
 - **--source, -s**  
 

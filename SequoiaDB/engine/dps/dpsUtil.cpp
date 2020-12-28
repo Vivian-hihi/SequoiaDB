@@ -90,9 +90,9 @@ namespace engine
          if ( '0' == pStr[0] && ( 'x' == pStr[1] || 'X' == pStr[1] ) )
          {
             //16 base string
-            UINT64 nodeID = 0 ;
-            ossSscanf( pStr, "0x%04llx%010llx", &nodeID, &transID ) ;
-            transID = (nodeID << DPS_TRANSID_NODEID_POW) | transID ;
+            UINT32 nodeID = 0 ;
+            ossSscanf( pStr, "0x%04x%010llx", &nodeID, &transID ) ;
+            transID = (UINT64)nodeID << DPS_TRANSID_NODEID_POW | transID ;
             goto done ;
          }
       }
