@@ -35,8 +35,8 @@
     * 自增字段数值增长到自身类型最大值时，会报“序列值超出范围”错误且插入数据失败。
 
 
-[^_^]
+[^_^]:
      本文使用的所有引用和链接
 [config]:manual/Database_Instance/Relational_Instance/MariaDB_Instance/Operation/config.md
 [sequence]:manual/Distributed_Engine/Architecture/Data_Model/sequence.md#自增字段
-[setAttributes]:manual/reference/Sequoiadb_command/SdbCollection/setAttributes.md
+[setAttributes]:manual/Manual/Sequoiadb_Command/SdbCollection/setAttributes.md

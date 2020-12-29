@@ -115,4 +115,4 @@
 [^_^]:
       本文使用的所有引用和链接
 [domain]:images/Distributed_Engine/Architecture/domain.png
-[SDB_SNAP_CATALOG]:manual/Distributed_Engine/Maintainance/Monitoring/snapshot/SDB_SNAP_CATALOG.md
+[SDB_SNAP_CATALOG]:manual/Manual/Snapshot/SDB_SNAP_CATALOG.md
