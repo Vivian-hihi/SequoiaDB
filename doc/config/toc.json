@@ -2918,6 +2918,12 @@
                            "en": "getNextValue()"
                         },
                         {
+                           "id": 1606120788,
+                           "file": "restart",
+                           "cn": "restart()",
+                           "en": "restart()"
+                        },
+                        {
                            "id": 1606119778,
                            "file": "setAttributes",
                            "cn": "setAttributes()",

@@ -8,7 +8,7 @@ setCurrentValue - 设置序列的当前值
 
 ##描述##
 
-该函数用设置序列的当前值，从而调整序列的进度。与 [setAttributes()][setAttributes] 接口中设置 CurrentValue 属性不同，该函数不允许反向设置当前值。对于递增序列，当前值只能增大，不能减小；对于递减序列，则相反。这个特性可以避免序列生成重复的值。
+该函数用于设置序列的当前值，从而调整序列的进度。与 [setAttributes()][setAttributes] 接口中设置 CurrentValue 属性不同，该函数不允许反向设置当前值。对于递增序列，当前值只能增大，不能减小；对于递减序列，则相反。这个特性可以避免序列生成重复的值。
 
 ##参数##
 
@@ -76,4 +76,4 @@ v3.4.2 及以上版本
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [faq]:manual/faq.md
-[error_code]:manual/Manual/sequoiadb_error_code.md
+[error_code]:manual/Manual/Sequoiadb_error_code.md

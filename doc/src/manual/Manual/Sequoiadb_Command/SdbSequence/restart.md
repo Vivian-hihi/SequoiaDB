@@ -1,14 +1,14 @@
 ##名称##
 
-getNextValue - 获取序列的下一个值
+restart - 重置序列
 
 ##语法##
 
-**sequence.getNextValue\(\)**
+**sequence.restart\(\)**
 
 ##描述##
 
-该函数用于是获取当前序列的下一个值。通常该值能保证唯一，可以用于做 ID 标识等用途。
+当用户需要序列从起始值开始重新计数时，可以使用该函数重置序列。
 
 ##参数##
 
@@ -16,7 +16,7 @@ getNextValue - 获取序列的下一个值
 
 ##返回值##
 
-函数执行成功时，将以数值形式返回序列的下一个值。
+函数执行成功时，无返回值。
 
 函数执行失败时，将抛异常并输出错误信息。
 
@@ -30,10 +30,17 @@ v3.4.2 及以上版本
 
 ##示例##
 
-获取当前序列的下一个值
+重置当前值为 10 的序列
 
 ```lang-javascript
-> var sequence = db.createSequence("IDSequence")
+> sequence.getNextValue()
+10
+> sequence.restart()
+```
+
+重置后，序列值回到起始值 1
+
+```lang-javascript
 > sequence.getNextValue()
 1
 ```
