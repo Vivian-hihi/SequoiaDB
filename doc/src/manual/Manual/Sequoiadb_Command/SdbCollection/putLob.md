@@ -21,7 +21,7 @@
 成功返回oid，出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](manual/Manual/Sequoiadb_Command/Global/getLastError.md)获取错误信息码。
 ##错误##
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ## 示例##
 

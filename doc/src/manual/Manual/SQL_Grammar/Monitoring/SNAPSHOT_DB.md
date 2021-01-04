@@ -117,7 +117,7 @@ $SNAPSHOT_DB
 | replNetOut        | int64  | 数据同步平面端口发送的网络流量，单位为字节    |
 | ErrNodes.NodeName | string | 返回异常节点名，格式为主机名 + 端口           |
 | ErrNodes.GroupName| string | 返回异常节点所属分区组名                      |
-| ErrNodes.Flag     | int32  | 错误码，详细可参考[错误码][sequoiadb_error_code] |
+| ErrNodes.Flag     | int32  | 错误码，详细可参考[错误码][Sequoiadb_error_code] |
 | ErrNodes.ErrInfo  | string | 返回节点出错信息                              |
 
 > Note:
@@ -233,4 +233,4 @@ $SNAPSHOT_DB
     本文使用的所有引用及链接
 [architecture]:manual/Distributed_Engine/Architecture/Replication/architecture.md#全量同步
 [regular_bar]:manual/Distributed_Engine/Maintainance/Backup_Recovery/regular_bar.md
-[sequoiadb_error_code]:manual/Manual/sequoiadb_error_code.md
+[Sequoiadb_error_code]:manual/Manual/Sequoiadb_error_code.md

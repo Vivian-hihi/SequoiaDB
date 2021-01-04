@@ -21,7 +21,7 @@ Global
 
 ##返回值##
 
-返回 Int32 类型的[错误码](manual/Manual/sequoiadb_error_code.md)。其中0表示无错误，非0表示错误。
+返回 Int32 类型的[错误码](manual/Manual/Sequoiadb_error_code.md)。其中0表示无错误，非0表示错误。
 
 ##版本##
 

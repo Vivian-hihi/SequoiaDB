@@ -160,6 +160,6 @@ v1.12及以上版本。
 [sequence]:manual/Distributed_Engine/Architecture/Data_Model/sequence.md
 [createCL]:manual/Manual/Sequoiadb_Command/SdbCS/createCL.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
-[error_code]:manual/Manual/sequoiadb_error_code.md
+[error_code]:manual/Manual/Sequoiadb_error_code.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [faq]:manual/faq.md

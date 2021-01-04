@@ -20,7 +20,7 @@
 | ------ 		| ------ 		| ------					|
 | -31			| 上下文已关闭| 确认查询记录是否为0条	|
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ##示例##
 

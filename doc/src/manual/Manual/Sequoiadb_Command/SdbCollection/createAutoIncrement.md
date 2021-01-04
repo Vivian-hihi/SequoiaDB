@@ -18,7 +18,7 @@ option中的具体参数请参见[自增字段属性](manual/Distributed_Engine/
 
 ##错误##
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ## 示例##
 

@@ -25,7 +25,7 @@ Ssh
 
 
 
-常见错误可参考[错误码](manual/Manual/sequoiadb_error_code.md)。
+常见错误可参考[错误码](manual/Manual/Sequoiadb_error_code.md)。
 ##示例##
 
 * 使用 SSH 方式连接主机。

@@ -108,5 +108,5 @@ v1.12及以上版本。
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [faq]:manual/faq.md
-[Sequoiadb_error_code]:manual/Manual/sequoiadb_error_code.md
+[Sequoiadb_error_code]:manual/Manual/Sequoiadb_error_code.md
 [passwd]:manual/Distributed_Engine/Maintainance/Mgmt_Tools/sdbpasswd.md

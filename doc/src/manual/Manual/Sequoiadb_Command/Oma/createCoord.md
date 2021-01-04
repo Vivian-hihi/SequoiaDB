@@ -52,7 +52,7 @@ Oma
 | -145   | SDBCM_NODE_EXISTED | 节点已存在。| 检查节点是否存在。 |
 | -157   | SDB_CM_CONFIG_CONFLICTS | 节点配置冲突。 | 检查端口号及数据目录是否已经被使用。 |
 
-当异常抛出时，可以通过[getLastError()](manual/Manual/Sequoiadb_Command/Global/getLastError.md)获取[错误码](manual/Manual/sequoiadb_error_code.md)，
+当异常抛出时，可以通过[getLastError()](manual/Manual/Sequoiadb_Command/Global/getLastError.md)获取[错误码](manual/Manual/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md)获取错误信息。
 
 可以参考[常见错误处理指南](manual/faq.md)了解更多内容。

@@ -24,7 +24,7 @@
 关于错误处理可以参考[常见错误处理指南](manual/faq.md)。
 
 ##错误##
-常见错误可参考[错误码](manual/Manual/sequoiadb_error_code.md)。
+常见错误可参考[错误码](manual/Manual/Sequoiadb_error_code.md)。
 
 ##示例##
 

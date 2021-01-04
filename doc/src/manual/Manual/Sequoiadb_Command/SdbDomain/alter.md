@@ -38,7 +38,7 @@
 | -215   | 域已经在     | 使用listDomains()查看域是否存在 |
 | -256   | 域非空       | 使用listCollections()查看域是否存在集合 |
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ##示例##
 

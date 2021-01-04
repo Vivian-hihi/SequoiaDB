@@ -46,7 +46,7 @@ Oma
 | -6     | SDB_INVALIDARG | 非法输入参数。| 检查端口号和配置信息是否正确。 |
 | -259   | SDB_OUT_OF_BOUND | 未输入节点端口号或配置信息。| 输入节点端口号以及配置信息。 |
 
-当异常抛出时，可以通过[getLastError()](manual/Manual/Sequoiadb_Command/Global/getLastError.md)获取[错误码](manual/Manual/sequoiadb_error_code.md)，
+当异常抛出时，可以通过[getLastError()](manual/Manual/Sequoiadb_Command/Global/getLastError.md)获取[错误码](manual/Manual/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md)获取错误信息。
 可以参考[常见错误处理指南](manual/faq.md)了解更多内容。
 

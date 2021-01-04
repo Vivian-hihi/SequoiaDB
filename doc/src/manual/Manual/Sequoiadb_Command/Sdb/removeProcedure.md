@@ -19,7 +19,7 @@
 | ------ 		| ------ 		| ------										|
 | -233			| 存储过程不存在| 使用命令行[listProcedures()](manual/Manual/Sequoiadb_Command/Sdb/listProcedures.md) 确认存储过程名是否存在	|
 	
-其他错误可参考[错误码](manual/Manual/sequoiadb_error_code.md)。
+其他错误可参考[错误码](manual/Manual/Sequoiadb_error_code.md)。
 
 ##示例##
 

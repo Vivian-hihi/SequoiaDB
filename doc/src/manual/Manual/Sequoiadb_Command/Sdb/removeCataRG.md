@@ -25,7 +25,7 @@ Sdb
 
 ##错误##
 
-常见错误可参考[错误码][sequoiadb_error_code]。
+常见错误可参考[错误码][Sequoiadb_error_code]。
 
 ##版本##
 
@@ -45,4 +45,4 @@ v1.10及以上版本。
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [faq]:manual/faq.md
-[sequoiadb_error_code]:manual/Manual/sequoiadb_error_code.md
+[Sequoiadb_error_code]:manual/Manual/Sequoiadb_error_code.md

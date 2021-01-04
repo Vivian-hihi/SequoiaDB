@@ -32,7 +32,7 @@
 | -154   | 分区组不存在 | 使用列表查看分区组是否存在 |
 | -256   | 域非空       | 使用listCollections()查看域是否存在集合 |
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ##示例##
 

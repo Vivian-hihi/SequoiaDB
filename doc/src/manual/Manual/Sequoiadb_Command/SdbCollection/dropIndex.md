@@ -37,4 +37,4 @@
 [index]:manual/Distributed_Engine/Architecture/Data_Model/index.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
-[error_code]:manual/Manual/sequoiadb_error_code.md
+[error_code]:manual/Manual/Sequoiadb_error_code.md

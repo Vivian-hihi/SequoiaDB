@@ -19,7 +19,7 @@ Set the error number of last operation.
 
 * `error code` ( *Int32*， *Required* )
 
-	[error code](manual/Manual/sequoiadb_error_code.md)。
+	[error code](manual/Manual/Sequoiadb_error_code.md)。
 
 ##RETURN VALUE##
 

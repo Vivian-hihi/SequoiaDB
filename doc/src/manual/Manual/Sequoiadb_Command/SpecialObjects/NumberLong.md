@@ -39,7 +39,7 @@
 
 ##错误##
 
-错误信息记录在节点诊断日志（diaglog）中，可参考[错误码](manual/Manual/sequoiadb_error_code.md)。
+错误信息记录在节点诊断日志（diaglog）中，可参考[错误码](manual/Manual/Sequoiadb_error_code.md)。
 
 | 错误码 | 可能的原因  | 解决方法     |
 | ------ | ----------- | ------------ |

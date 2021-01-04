@@ -22,7 +22,7 @@
 
 ##错误##
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ##示例##
 

@@ -36,7 +36,7 @@ Collection Space
 
 常见异常如下：
 
-| [错误码](manual/Manual/sequoiadb_error_code.md)| 错误类型 | 描述 | 解决方法 |
+| [错误码](manual/Manual/Sequoiadb_error_code.md)| 错误类型 | 描述 | 解决方法 |
 | ------| ----------------------- | --- | ------ |
 | -23   | SDB_DMS_NOTEXIST | oldname对应的集合不存在。 | 对已存在的集合执行rename。 |
 | -22   | SDB_DMS_EXIST    | newname对应的集合已存在。 | newname设为不存在的名字。 |

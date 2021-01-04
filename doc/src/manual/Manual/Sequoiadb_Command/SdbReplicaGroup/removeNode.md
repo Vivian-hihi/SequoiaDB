@@ -30,7 +30,7 @@
 | -206   | 尝试删除主编目节点 | 只能删除备编目节点 |
 | -79    | 删除节点主机上的CM进程不存在，<br>或者主机宕机 | 如果需要强制删除，可以加入 { Enforced: true } 选项 |
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ## 示例##
 

@@ -80,6 +80,6 @@
 [limitation]:manual/Manual/sequoiadb_limitation.md#索引
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
-[error_code]:manual/Manual/sequoiadb_error_code.md
+[error_code]:manual/Manual/Sequoiadb_error_code.md
 [text_index]:manual/Distributed_Engine/Architecture/Data_Model/text_index.md
 [text_index]:manual/Distributed_Engine/Architecture/Data_Model/text_index.md

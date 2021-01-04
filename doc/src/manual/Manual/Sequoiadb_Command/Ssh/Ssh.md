@@ -30,7 +30,7 @@ Ssh
 
 
 
-常见错误可参考[错误码](manual/Manual/sequoiadb_error_code.md)。
+常见错误可参考[错误码](manual/Manual/Sequoiadb_error_code.md)。
 
 ##示例##
 

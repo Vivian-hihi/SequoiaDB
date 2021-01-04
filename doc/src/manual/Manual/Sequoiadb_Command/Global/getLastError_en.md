@@ -21,7 +21,7 @@ NULL.
 
 ##RETURN VALUE##
 
-An Int32 [error code](manual/Manual/sequoiadb_error_code.md).
+An Int32 [error code](manual/Manual/Sequoiadb_error_code.md).
 
 ##ERRORS##
 

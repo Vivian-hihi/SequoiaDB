@@ -18,7 +18,7 @@ truncate 会删除集合内所有数据（包括普通文档和 LOB 数据），
 
 ##错误##
 
-[错误码](manual/Manual/sequoiadb_error_code.md)
+[错误码](manual/Manual/Sequoiadb_error_code.md)
 
 ##示例##
 

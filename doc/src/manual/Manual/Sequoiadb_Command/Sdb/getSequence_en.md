@@ -55,4 +55,4 @@ Get the named sequence, and use the returned object to get the sequence next val
 [getLastErrMsg]:manual/reference/Sequoiadb_command/Global/getLastErrMsg.md
 [getLastError]:manual/reference/Sequoiadb_command/Global/getLastError.md
 [faq]:manual/faq.md
-[error_code]:manual/reference/sequoiadb_error_code.md
+[error_code]:manual/Manual/Sequoiadb_error_code.md
