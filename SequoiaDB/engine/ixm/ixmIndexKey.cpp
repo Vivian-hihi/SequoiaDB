@@ -486,6 +486,7 @@ namespace engine
    // default constructor
    _ixmIndexKeyGen::_ixmIndexKeyGen()
    : _notArray( FALSE ),
+     _isIDIndex( FALSE ),
      _nFields( 0 ),
      _pKeyBuilder( NULL )
    {
@@ -499,6 +500,7 @@ namespace engine
       SDB_ASSERT ( indexCB, "details can't be NULL" ) ;
       _keyPattern = indexCB->keyPattern() ;
       _notArray = indexCB->notArray() ;
+      _isIDIndex = indexCB->isIDIndex() ;
       if ( SDB_OK != _init() )
       {
          PD_LOG( PDWARNING, "Failed to initialize key generator" ) ;
@@ -507,6 +509,7 @@ namespace engine
    // create key generator from key
    _ixmIndexKeyGen::_ixmIndexKeyGen ( const BSONObj &keyDef )
    : _notArray( FALSE ),
+     _isIDIndex( FALSE ),
      _nFields( 0 ),
      _pKeyBuilder( NULL )
    {
@@ -837,7 +840,8 @@ namespace engine
          }
          else if ( Array == e.type() )
          {
-            if( _notArray )
+            // $id array check at _prepareInsertData/_extentUpdatedRecord
+            if( _notArray && !_isIDIndex )
             {
                rc = SDB_IXM_KEY_NOT_SUPPORT_ARRAY ;
                goto error ;

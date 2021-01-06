@@ -161,6 +161,8 @@ namespace engine
       _monQueryCB = NULL ;
 
       _isAffectGIndex = FALSE ;
+
+      _doReplay = FALSE ;
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
