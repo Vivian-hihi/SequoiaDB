@@ -805,12 +805,8 @@ namespace engine
                   // on the same collection ( if $id index is dropped, they won't
                   // be able to rollback )
                   dpsTransRetInfo lockConflict ;
-
-                  dpsTransScopedConf conf( cb->getTransExecutor() ) ;
-                  conf.setTransTimeout( OSS_ONE_SEC ) ;
-
-                  rc = transCB->transLockGetS( cb, _pDataSu->_logicalCSID,
-                                               context->mbID(), NULL, context,
+                  rc = transCB->transLockTryS( cb, _pDataSu->_logicalCSID,
+                                               context->mbID(),  NULL,
                                                &lockConflict ) ;
                   PD_RC_CHECK( rc, PDERROR,
                                "Failed to lock the collection, rc: %d"OSS_NEWLINE

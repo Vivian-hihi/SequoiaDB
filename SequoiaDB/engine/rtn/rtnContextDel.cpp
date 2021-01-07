@@ -271,13 +271,8 @@ namespace engine
          suID = DMS_INVALID_CS ;
          su = NULL ;
 
-         {
-            dpsTransScopedConf conf( cb->getTransExecutor() ) ;
-            conf.setTransTimeout( OSS_ONE_SEC ) ;
-
-            rc = _pTransCB->transLockGetX( cb, logicCSID, DMS_INVALID_MBID,
-                                           NULL, NULL, &lockConflict ) ;
-         }
+         rc = _pTransCB->transLockTryX( cb, logicCSID, DMS_INVALID_MBID,
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of CS(%s) failed(rc=%d)"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
@@ -404,14 +399,9 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
                       "rc: %d", pCollectionName, rc ) ;
 
-         {
-            dpsTransScopedConf conf( cb->getTransExecutor() ) ;
-            conf.setTransTimeout( OSS_ONE_SEC ) ;
-
-            rc = _pTransCB->transLockGetX( cb, _su->LogicalCSID(),
-                                           _mbContext->mbID(),
-                                           NULL, _mbContext, &lockConflict ) ;
-         }
+         rc = _pTransCB->transLockTryX( cb, _su->LogicalCSID(),
+                                        _mbContext->mbID(),
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection(%s) failed(rc=%d)"
                       OSS_NEWLINE
@@ -1222,12 +1212,8 @@ namespace engine
       if ( getDPSCB() )
       {
          dpsTransRetInfo lockConflict ;
-
-         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
-         conf.setTransTimeout( OSS_ONE_SEC ) ;
-
-         rc = _pTransCB->transLockGetS( cb, logicCSID, DMS_INVALID_MBID,
-                                        NULL, NULL, &lockConflict ) ;
+         rc = _pTransCB->transLockTryS( cb, logicCSID, DMS_INVALID_MBID,
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of CS[%s] failed, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
@@ -1653,11 +1639,8 @@ namespace engine
       {
          dpsTransRetInfo lockConflict ;
 
-         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
-         conf.setTransTimeout( OSS_ONE_SEC ) ;
-
-         rc = _pTransCB->transLockGetS( cb, _su->LogicalCSID(), mbID,
-                                        NULL, mbContext, &lockConflict ) ;
+         rc = _pTransCB->transLockTryS( cb, _su->LogicalCSID(), mbID,
+                                        NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection[%s] failed, rc: %d"
                       OSS_NEWLINE
