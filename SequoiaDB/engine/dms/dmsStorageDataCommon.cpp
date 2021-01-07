@@ -2417,8 +2417,12 @@ namespace engine
       if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
-         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
-                                       NULL, &lockConflict ) ;
+
+         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
+         conf.setTransTimeout( OSS_ONE_SEC ) ;
+
+         rc = pTransCB->transLockGetX( cb, _logicalCSID, context->mbID(),
+                                       NULL, context, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to lock the collection, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
@@ -2619,8 +2623,12 @@ namespace engine
       if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
-         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
-                                       NULL, &lockConflict ) ;
+
+         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
+         conf.setTransTimeout( OSS_ONE_SEC ) ;
+
+         rc = pTransCB->transLockGetX( cb, _logicalCSID, context->mbID(),
+                                       NULL, context, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to lock the collection, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
@@ -2940,8 +2948,12 @@ namespace engine
       if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
-         rc = pTransCB->transLockTryS( cb, _logicalCSID, mbID,
-                                       NULL, &lockConflict ) ;
+
+         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
+         conf.setTransTimeout( OSS_ONE_SEC ) ;
+
+         rc = pTransCB->transLockGetS( cb, _logicalCSID, mbID,
+                                       NULL, NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to lock the collection, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE

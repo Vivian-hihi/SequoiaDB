@@ -1945,8 +1945,12 @@ namespace engine
       if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
-         rc = pTransCB->transLockTryX( cb, csLID, DMS_INVALID_MBID,
-                                       NULL, &lockConflict ) ;
+
+         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
+         conf.setTransTimeout( OSS_ONE_SEC ) ;
+
+         rc = pTransCB->transLockGetX( cb, csLID, DMS_INVALID_MBID,
+                                       NULL, NULL, &lockConflict ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR,
@@ -2256,8 +2260,12 @@ namespace engine
       if ( cb && cb->getTransExecutor()->useTransLock() )
       {
          dpsTransRetInfo lockConflict ;
-         rc = pTransCB->transLockTryS( cb, csLID, DMS_INVALID_MBID,
-                                       NULL, &lockConflict ) ;
+
+         dpsTransScopedConf conf( cb->getTransExecutor() ) ;
+         conf.setTransTimeout( OSS_ONE_SEC ) ;
+
+         rc = pTransCB->transLockGetS( cb, csLID, DMS_INVALID_MBID,
+                                       NULL, NULL, &lockConflict ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR,
