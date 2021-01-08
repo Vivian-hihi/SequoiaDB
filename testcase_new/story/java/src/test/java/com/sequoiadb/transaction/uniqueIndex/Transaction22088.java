@@ -68,7 +68,7 @@ public class Transaction22088 extends SdbTestBase {
             cl.update( "", "{$set:{_id:[1,2,3]}}", "" );
             Assert.fail( "Need throw error -358" );
         } catch ( BaseException e ) {
-            Assert.assertEquals( e.getErrorCode(), SDBError.SDB_IXM_KEY_NOT_SUPPORT_ARRAY.getErrorCode() );
+            Assert.assertEquals( e.getErrorCode(), SDBError.SDB_INVALIDARG.getErrorCode() );
         }
 
         // 更新记录为_id字段为正则表达式类型
@@ -76,7 +76,7 @@ public class Transaction22088 extends SdbTestBase {
             cl.update( "", "{$set:{_id:{$regex:'a'}}}", "" );
             Assert.fail( "Need throw error -6." );
         } catch ( BaseException e ) {
-            Assert.assertEquals( e.getErrorCode(), -6 );
+            Assert.assertEquals( e.getErrorCode(), SDBError.SDB_INVALIDARG.getErrorCode() );
         }
 
     }
