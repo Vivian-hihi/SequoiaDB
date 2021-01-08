@@ -181,7 +181,8 @@ namespace engine
          INT32       pushWait( UINT32 index, DPS_LSN_OFFSET waitLSN ) ;
          INT32       pushData( UINT32 index, CHAR *pData, UINT32 len,
                                CLS_PARALLA_TYPE parallaType,
-                               UINT32 clHash, utilCLUniqueID clUniqueID ) ;
+                               UINT32 clHash, utilCLUniqueID clUniqueID,
+                               DPS_LSN_OFFSET waitLSN ) ;
          BOOLEAN     popData( UINT32 index, clsReplayInfo &info ) ;
 
          INT32       waitQueEmpty( INT64 millisec = -1 ) ;
@@ -226,6 +227,11 @@ namespace engine
 
          INT32       waitForIDLSNComp( DPS_LSN_OFFSET nidRecLSN ) ;
          INT32       waitForNIDLSNComp( DPS_LSN_OFFSET idRecLSN ) ;
+
+         void        resetUnqIdxLSN() ;
+         DPS_LSN_OFFSET checkUnqIdxWaitLSN(
+                                       const dpsUnqIdxHashArray &unqIdxHashArray,
+                                       DPS_LSN_OFFSET currentLSN ) ;
 
       protected:
          void        _submitResult( DPS_LSN_OFFSET offset, DPS_LSN_VER version,
@@ -298,6 +304,18 @@ namespace engine
 
          DPS_LSN_OFFSET                   _lastIDRecParaLSN ;
          DPS_LSN_OFFSET                   _lastNIDRecParaLSN ;
+
+         // LSN array for hash keys of the last replayed unique indexes
+         // re-hash to 4096
+         #define CLS_UNQIDX_HASH_SIZE  ( 4096 )
+         #define CLS_UNQIDX_HASH_MOD   ( (UINT16)( 0x0FFF ) )
+
+         DPS_LSN_OFFSET       _lastUnqIdxLSN[ CLS_UNQIDX_HASH_SIZE ] ;
+
+         // a bitmap to remember which hash key is already tested
+         typedef _utilStackBitmap< CLS_UNQIDX_HASH_SIZE > DPS_UNQIDX_BITMAP ;
+         DPS_UNQIDX_BITMAP    _unqIdxBitmap ;
+         DPS_LSN_OFFSET       _lastCompletedLSN ;
    } ;
    typedef _clsBucket clsBucket ;
 

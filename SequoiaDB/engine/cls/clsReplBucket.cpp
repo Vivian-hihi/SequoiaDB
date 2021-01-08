@@ -291,6 +291,8 @@ namespace engine
       _pendingCLUniqueID = UTIL_UNIQUEID_NULL ;
       _lastIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
       _lastNIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
+
+      resetUnqIdxLSN() ;
    }
 
    _clsBucket::~_clsBucket ()
@@ -447,6 +449,8 @@ namespace engine
       _lastIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
       _lastNIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
 
+      resetUnqIdxLSN() ;
+
    done:
       return rc ;
    error:
@@ -486,6 +490,8 @@ namespace engine
 
       _lastIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
       _lastNIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
+
+      resetUnqIdxLSN() ;
    }
 
    void _clsBucket::close ()
@@ -524,7 +530,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__CLSBUCKET_PUSHDATA, "_clsBucket::pushData" )
    INT32 _clsBucket::pushData( UINT32 index, CHAR *pData, UINT32 len,
                                CLS_PARALLA_TYPE parallaType,
-                               UINT32 clHash, utilCLUniqueID clUniqueID )
+                               UINT32 clHash, utilCLUniqueID clUniqueID,
+                               DPS_LSN_OFFSET waitLSN )
    {
       INT32 rc = SDB_OK ;
 
@@ -536,6 +543,7 @@ namespace engine
       info._clHash = clHash ;
       info._clUniqueID = clUniqueID ;
       info._parallaType = parallaType ;
+      info._waitLSN = waitLSN ;
 
       rc = _checkAndPushData( index, info ) ;
 
@@ -747,7 +755,8 @@ namespace engine
                }
 
                waitOffset = CLS_BUCKET_GET_WAITLSN( pData ) ;
-               if ( DPS_INVALID_LSN_OFFSET != waitOffset )
+               if ( DPS_INVALID_LSN_OFFSET != waitOffset &&
+                    CLS_BUCKET_NORMAL == _status )
                {
                   // need wait completed for given offset
                   if ( _checkCompleted( waitOffset ) )
@@ -755,19 +764,38 @@ namespace engine
                      // wait done, pop from bucket and release
                      PD_LOG( PDDEBUG, "Bucket [%u]: wait for LSN [%llu] done",
                              index, waitOffset ) ;
+
                      _dataBucket[ index ]->pop() ;
-                     _totalCount.dec() ;
-                     _allCount.dec() ;
-                     _memPool.release( pData, len ) ;
-                     continue ;
+
+                     if ( LOG_TYPE_DUMMY ==
+                           ( (dpsLogRecordHeader *)pData )->_type )
+                     {
+                        // dummy record, no need to process further
+                        // skip it
+                        _totalCount.dec() ;
+                        _allCount.dec() ;
+                        _memPool.release( pData, len ) ;
+                        continue ;
+                     }
+
+                     // otherwise, record should be replayed
+                     // need further process
                   }
-                  ret = FALSE ;
+                  else
+                  {
+                     // wait failed, should not pop this record
+                     ret = FALSE ;
+                  }
                }
                else
                {
                   // not wait operator, pop here
                   _dataBucket[ index ]->pop() ;
+               }
 
+               if ( ret )
+               {
+                  // record popped for further process
                   info._pData = pData ;
                   info._len = len ;
                   info._unitID = index ;
@@ -868,6 +896,9 @@ namespace engine
       {
          *pCompleteLsn = _expectLSN ;
       }
+
+      // parallel replay stopped
+      resetUnqIdxLSN() ;
 
       PD_TRACE_EXITRC( SDB__CLSBUCKET_WAITANDROLLBACK, rc ) ;
       return rc ;
@@ -1514,6 +1545,7 @@ namespace engine
 
    void _clsBucket::clearParallaInfo()
    {
+      resetUnqIdxLSN() ;
       _mapParallaInfo.clear() ;
       _lastIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
       _lastNIDRecParaLSN = DPS_INVALID_LSN_OFFSET ;
@@ -1586,6 +1618,75 @@ namespace engine
 
    done:
       return rc ;
+   }
+
+   void _clsBucket::resetUnqIdxLSN()
+   {
+      for ( UINT32 i = 0 ; i < CLS_UNQIDX_HASH_SIZE ; ++ i )
+      {
+         _lastUnqIdxLSN[ i ] = DPS_INVALID_LSN_OFFSET ;
+      }
+      _lastCompletedLSN = DPS_INVALID_LSN_OFFSET ;
+   }
+
+   DPS_LSN_OFFSET _clsBucket::checkUnqIdxWaitLSN( const dpsUnqIdxHashArray &unqIdxHashArray,
+                                                  DPS_LSN_OFFSET currentLSN )
+   {
+      DPS_LSN_OFFSET waitLSN = DPS_INVALID_LSN_OFFSET ;
+
+      // find the maximum LSN with the same hash values replayed
+      // by the previous records
+      // WARNING: should be called by dispatch thread of clsReplayer
+      if ( !unqIdxHashArray.empty() )
+      {
+         _unqIdxBitmap.resetBitmap() ;
+
+         UINT16 hashValue = 0 ;
+         dpsUnqIdxHashArray::iterator iter( unqIdxHashArray ) ;
+         while ( iter.next( hashValue ) )
+         {
+            if ( DPS_UNQIDX_INVALID_HASH != hashValue )
+            {
+               // rehash to 4096
+               hashValue &= CLS_UNQIDX_HASH_MOD ;
+
+               // due to rehash
+               if ( !_unqIdxBitmap.testBit( hashValue ) )
+               {
+                  // find for maximum wait LSN for all hash values
+                  if ( DPS_INVALID_LSN_OFFSET != _lastUnqIdxLSN[ hashValue ] &&
+                       ( DPS_INVALID_LSN_OFFSET == waitLSN ||
+                         waitLSN < _lastUnqIdxLSN[ hashValue ] ) )
+                  {
+                     waitLSN = _lastUnqIdxLSN[ hashValue ] ;
+                  }
+                  _lastUnqIdxLSN[ hashValue ] = currentLSN ;
+                  _unqIdxBitmap.setBit( hashValue ) ;
+               }
+            }
+         }
+      }
+
+      if ( DPS_INVALID_LSN_OFFSET != waitLSN )
+      {
+         // check if wait LSN already completed
+         if ( DPS_INVALID_LSN_OFFSET != _lastCompletedLSN &&
+              waitLSN <= _lastCompletedLSN )
+         {
+            waitLSN =  DPS_INVALID_LSN_OFFSET ;
+         }
+         else
+         {
+            _lastCompletedLSN = completeLSN( FALSE ).offset ;
+            if ( DPS_INVALID_LSN_OFFSET != _lastCompletedLSN  &&
+                 waitLSN <= _lastCompletedLSN )
+            {
+               waitLSN = DPS_INVALID_LSN_OFFSET ;
+            }
+         }
+      }
+
+      return waitLSN ;
    }
 
    /*

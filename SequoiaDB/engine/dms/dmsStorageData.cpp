@@ -200,7 +200,8 @@ namespace engine
                                                 const BSONObj &newObj,
                                                 _pmdEDUCB *cb,
                                                 IDmsOprHandler *pHandler,
-                                                utilUpdateResult *pResult )
+                                                utilUpdateResult *pResult,
+                                                dpsUnqIdxHashArray *pUnqIdxHashArray )
    {
       INT32 rc                     = SDB_OK ;
       UINT32 dmsRecordSize         = 0 ;
@@ -311,7 +312,7 @@ namespace engine
                                          oriObj, newObj,
                                          recordRW.getRecordID(),
                                          cb, FALSE, pHandler,
-                                         pResult ) ;
+                                         pResult, pUnqIdxHashArray ) ;
             needUndoIndex = TRUE ;
             if ( rc )
             {

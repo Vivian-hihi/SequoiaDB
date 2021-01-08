@@ -53,16 +53,18 @@ namespace engine
       DPS_LOG_PUBLIC_RELATED_TRANS = 204,    // only for rollback trans,
                                              // mapping to really trans lsn
       DPS_LOG_PUBLIC_FIRSTTRANS = 205,
-      DPS_LOG_PUBLIC_TIME = 206
+      DPS_LOG_PUBLIC_TIME = 206,
 
       // 207 - 209 reserved for global transaction
+
+      DPS_LOG_PUBLIC_UNQIDX_HASH_LIST = 210
    } ;
 
 /// number in public can not be used in definition !
 
    enum DPS_LOG_INSERT
    {
-      DPS_LOG_INSERT_OBJ = 1,
+      DPS_LOG_INSERT_OBJ = 1
    } ;
 
    enum DPS_LOG_UPDATE
@@ -78,7 +80,7 @@ namespace engine
 
    enum DPS_LOG_DELETE
    {
-      DPS_LOG_DELETE_OLDOBJ = 1,
+      DPS_LOG_DELETE_OLDOBJ = 1
    } ;
 
    enum DPS_LOG_POP

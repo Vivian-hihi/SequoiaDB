@@ -41,6 +41,7 @@
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 #include "dpsUtil.hpp"
+#include "ossUtil.hpp"
 
 namespace engine
 {
@@ -109,9 +110,134 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _dpsUnqIdxHashArray implement
+    */
+   INT32 _dpsUnqIdxHashArray::prepare( UINT32 unqIdxNum, UINT32 valueNumPerIdx )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( unqIdxNum > 0 )
+      {
+         UINT32 eleSize = unqIdxNum * valueNumPerIdx ;
+         rc = resize( eleSize ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed resize array for hash values, "
+                      "rc: %d", rc ) ;
+         // reserved 0 for all values
+         ossMemset( _dynamicBuf, DPS_UNQIDX_INVALID_HASH,
+                    eleSize * sizeof( UINT16 ) ) ;
+         _eleSize = eleSize ;
+         _curSize = 0 ;
+      }
+      else
+      {
+         // clear elements
+         _eleSize = 0 ;
+         _curSize = 0 ;
+      }
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   void _dpsUnqIdxHashArray::saveKey( const BSONObj &key )
+   {
+      if ( _curSize < _eleSize )
+      {
+         // value from 1 - 65535
+         _dynamicBuf[ _curSize ++ ] =
+               (UINT16)( ossHash( key.objdata(), key.objsize() ) %
+                                  DPS_UNQIDX_HASH_MODULE ) + 1 ;
+      }
+   }
+
+   INT32 _dpsUnqIdxHashArray::pushToRecord( dpsLogRecord &record ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _eleSize > 0 )
+      {
+         // we need push eleSize size of elements which have been
+         // reserved in prepare()
+         rc = record.push( DPS_LOG_PUBLIC_UNQIDX_HASH_LIST,
+                           _eleSize * sizeof( UINT16 ),
+                           (CHAR *)_dynamicBuf ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push unique index hash values, "
+                      "rc: %d", rc ) ;
+      }
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   INT32 _dpsUnqIdxHashArray::parseFromRecord( const dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+
+      dpsLogRecord::iterator itr ;
+
+      // clear before parse
+      _eleSize = 0 ;
+      _curSize = 0 ;
+
+      itr = record.find( DPS_LOG_PUBLIC_UNQIDX_HASH_LIST ) ;
+      if ( !itr.valid() )
+      {
+         goto done ;
+      }
+
+      if ( itr.len() > 0 )
+      {
+         UINT32 eleSize = itr.len() / sizeof( UINT16 ) ;
+         SDB_ASSERT( eleSize * sizeof( UINT16 ) == itr.len(),
+                     "size of hash list is invalid" ) ;
+
+         // make sure the space
+         rc = resize( eleSize ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to resize hash list to [%u] "
+                      "elements, rc: %d", rc ) ;
+         // copy from record
+         ossMemcpy( _dynamicBuf, itr.value(), itr.len() ) ;
+         _eleSize = eleSize ;
+         _curSize = _eleSize ;
+      }
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
+   }
+
+   ossPoolString _dpsUnqIdxHashArray::toString() const
+   {
+      StringBuilder ss ;
+      if ( !empty() )
+      {
+         UINT16 hashValue = 0 ;
+         iterator iter( *this ) ;
+         while ( iter.next( hashValue ) )
+         {
+            if ( ss.len() > 0 )
+            {
+               ss << "," ;
+            }
+            ss << hashValue ;
+         }
+      }
+      return ss.poolStr() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_INSERT2RECORD, "dpsInsert2Record" )
    INT32 dpsInsert2Record( const CHAR *fullName,
                            const BSONObj &obj,
+                           const dpsUnqIdxHashArray *pUnqIdxHashArray,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -149,6 +275,14 @@ namespace engine
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
+      // push unique index hash values if needed
+      if ( NULL != pUnqIdxHashArray )
+      {
+         rc = pUnqIdxHashArray->pushToRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add unique index hash values, "
+                      "rc: %d", rc ) ;
+      }
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_INSERT2RECORD, rc ) ;
@@ -161,7 +295,8 @@ namespace engine
    INT32 dpsRecord2Insert( const CHAR *logRecord,
                            const CHAR **fullName,
                            BSONObj &obj,
-                           UINT64 *microSeconds )
+                           UINT64 *microSeconds,
+                           dpsUnqIdxHashArray *pUnqIdxHashArray )
    {
       PD_TRACE_ENTRY( SDB_DPS_INSERT2RECORD ) ;
       INT32 rc = SDB_OK ;
@@ -202,6 +337,14 @@ namespace engine
          }
       }
 
+      // parse unique index hash values if needed
+      if ( NULL != pUnqIdxHashArray )
+      {
+         rc = pUnqIdxHashArray->parseFromRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse unique index hash values, "
+                      "rc: %d", rc ) ;
+      }
+
       *fullName = itrFullName.value() ;
       obj = BSONObj( itrObj.value() ) ;
       }
@@ -220,6 +363,7 @@ namespace engine
                            const BSONObj &newObj,
                            const BSONObj &oldShardingKey,
                            const BSONObj &newShardingKey,
+                           const dpsUnqIdxHashArray *pUnqIdxHashArray,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -323,6 +467,14 @@ namespace engine
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
+      // push unique index hash values if needed
+      if ( NULL != pUnqIdxHashArray )
+      {
+         rc = pUnqIdxHashArray->pushToRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add unique index hash values, "
+                      "rc: %d", rc ) ;
+      }
+
       header._length = record.alignedLen() ;
 
    done:
@@ -342,7 +494,8 @@ namespace engine
                            BSONObj *oldShardingKey,
                            BSONObj *newShardingKey,
                            UINT64 *microSeconds,
-                           UINT32 *writeMod )
+                           UINT32 *writeMod,
+                           dpsUnqIdxHashArray *pUnqIdxHashArray )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
       SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
@@ -460,6 +613,14 @@ namespace engine
          }
       }
 
+      // parse unique index hash values if needed
+      if ( NULL != pUnqIdxHashArray )
+      {
+         rc = pUnqIdxHashArray->parseFromRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse unique index hash values, "
+                      "rc: %d", rc ) ;
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2UPDATE, rc ) ;
       return rc ;
@@ -470,6 +631,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_DELETE2RECORD, "dpsDelete2Record" )
    INT32 dpsDelete2Record( const CHAR *fullName,
                            const BSONObj &oldObj,
+                           const dpsUnqIdxHashArray *pUnqIdxHashArray,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -508,6 +670,14 @@ namespace engine
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
+      // push unique index hash values if needed
+      if ( NULL != pUnqIdxHashArray )
+      {
+         rc = pUnqIdxHashArray->pushToRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add unique index hash values, "
+                      "rc: %d", rc ) ;
+      }
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_DELETE2RECORD, rc ) ;
@@ -520,7 +690,8 @@ namespace engine
    INT32 dpsRecord2Delete( const CHAR *logRecord,
                            const CHAR **fullName,
                            BSONObj &oldObj,
-                           UINT64 *microSeconds )
+                           UINT64 *microSeconds,
+                           dpsUnqIdxHashArray *pUnqIdxHashArray )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2DELETE ) ;
       INT32 rc = SDB_OK ;
@@ -559,6 +730,14 @@ namespace engine
          {
             *microSeconds = *( UINT64 *) itrTime.value() ;
          }
+      }
+
+      // parse unique index hash values if needed
+      if ( NULL != pUnqIdxHashArray )
+      {
+         rc = pUnqIdxHashArray->parseFromRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse unique index hash values, "
+                      "rc: %d", rc ) ;
       }
 
       *fullName = itrFullName.value() ;

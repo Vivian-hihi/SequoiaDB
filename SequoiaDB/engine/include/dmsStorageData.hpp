@@ -170,7 +170,8 @@ namespace engine
                                    const BSONObj &newObj,
                                    _pmdEDUCB *cb,
                                    IDmsOprHandler *pHandler,
-                                   utilUpdateResult *pResult ) ;
+                                   utilUpdateResult *pResult,
+                                   dpsUnqIdxHashArray *pUnqIdxHashArray ) ;
 
    } ;
    typedef _dmsStorageData dmsStorageData ;

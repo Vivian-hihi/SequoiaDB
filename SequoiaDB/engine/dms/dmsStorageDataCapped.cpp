@@ -1191,7 +1191,8 @@ namespace engine
                                                       const BSONObj &newObj,
                                                       pmdEDUCB *cb,
                                                       IDmsOprHandler *pHandler,
-                                                      utilUpdateResult *pResult )
+                                                      utilUpdateResult *pResult,
+                                                      dpsUnqIdxHashArray *pUnqIdxHashArray )
    {
       SDB_ASSERT( FALSE, "Should not be here" ) ;
       return SDB_OPERATION_INCOMPATIBLE ;
