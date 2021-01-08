@@ -30,7 +30,7 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
  添加一个 myinst 的实例，指定数据库存储路径为 `database/3306/`，指定密码为 123456
  
  ```lang-bash
- $ sdb_maria_ctl  addinst myinst -D database/3306/ -l database/3306/myinst.log --print -p 3306 -f database/3306/myinst.pid -s database/myinst.sock -w 123456 
+ $ sdb_maria_ctl  addinst myinst -D database/3306/ -l database/3306/myinst.log --print -p 3306 -f database/3306/myinst.pid -s database/3306/myinst.sock -w 123456 
  ```
  
  * 启动实例
