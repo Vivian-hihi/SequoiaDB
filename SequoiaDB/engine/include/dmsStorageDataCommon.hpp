@@ -724,6 +724,8 @@ namespace engine
          void              setNothrow( BOOLEAN nothrow ) ;
          BOOLEAN           isNothrow() const ;
 
+         BOOLEAN           isDirectMem() const { return _isDirectMem ; }
+
          dmsRecordID       getRecordID() const { return _rid ; }
 
          /*
