@@ -1,4 +1,4 @@
-本文档主要介绍如何获取驱动开发包和配置开发环境。
+﻿本文档主要介绍如何获取驱动开发包和配置开发环境。
 
 ##获取驱动开发包##
 
@@ -42,7 +42,7 @@
      使用 `lib` 目录下的 `libstaticsdbc.a` 静态库，g++ 编译参数形式如：
 
      ```lang-bash
-     $ g++ main.cpp -o test -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/ -lstaticsdbcpp –lm -lpthread -ldl
+     $ g++ main.cpp -o test -I &lt;path&gt;/sdbdriver/include -L &lt;path&gt;/sdbdriver/lib/ -lstaticsdbcpp -lm -lpthread -ldl
      ```
 
 * Windows
