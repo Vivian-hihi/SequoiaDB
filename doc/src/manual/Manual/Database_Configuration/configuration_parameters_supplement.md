@@ -39,6 +39,6 @@ svcname=50000
 
 [^_^]:
      本文使用的所有引用及链接
-[updateConf()]:manual/Manual/Sequoiadb_command/Sdb/updateConf.md
-[deleteConf()]:manual/Manual/Sequoiadb_command/Sdb/deleteConf.md
-[reloadConf()]:manual/Manual/Sequoiadb_command/Sdb/reloadConf.md
+[updateConf()]:manual/Manual/Sequoiadb_Command/Sdb/updateConf.md
+[deleteConf()]:manual/Manual/Sequoiadb_Command/Sdb/deleteConf.md
+[reloadConf()]:manual/Manual/Sequoiadb_Command/Sdb/reloadConf.md
