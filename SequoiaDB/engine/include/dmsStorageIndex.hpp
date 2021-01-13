@@ -200,7 +200,8 @@ namespace engine
                                   BOOLEAN isUndo,
                                   IDmsOprHandler *pOprHandle,
                                   utilWriteResult *pResult = NULL,
-                                  dpsUnqIdxHashArray *pUnqIdxHashArray = NULL ) ;
+                                  dpsUnqIdxHashArray *pNewUnqIdxHashArray = NULL,
+                                  dpsUnqIdxHashArray *pOldUnqIdxHashArray = NULL ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesDelete ( _dmsMBContext *context, dmsExtentID extLID,
@@ -284,7 +285,8 @@ namespace engine
                                  BOOLEAN isRollback,
                                  IDmsOprHandler *pOprHandle,
                                  utilWriteResult *pResult = NULL,
-                                 dpsUnqIdxHashArray *pUnqIdxHashArray = NULL ) ;
+                                 dpsUnqIdxHashArray *pUnqIdxHashArray = NULL,
+                                 dpsUnqIdxHashArray *pOldUnqIdxHashArray = NULL ) ;
 
          INT32    _indexDelete ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &inputObj, const dmsRecordID &rid,

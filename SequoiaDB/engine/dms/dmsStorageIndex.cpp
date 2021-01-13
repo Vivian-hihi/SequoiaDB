@@ -2196,7 +2196,8 @@ namespace engine
                                          BOOLEAN isRollback,
                                          IDmsOprHandler *pOprHandle,
                                          utilWriteResult *pResult,
-                                         dpsUnqIdxHashArray *pUnqIdxHashArray )
+                                         dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                                         dpsUnqIdxHashArray *pOldUnqIdxHashArray )
    {
       INT32 rc             = SDB_OK ;
       BSONObjSet keySetOri ;
@@ -2305,13 +2306,13 @@ namespace engine
 
                // save key as hash values in unique index bitmap
                // which will be used to replay in secondary nodes
-               if ( NULL != pUnqIdxHashArray &&
+               if ( NULL != pOldUnqIdxHashArray &&
                     !oldHashSaved &&
                     indexCB->unique() &&
                     !indexCB->isIDIndex() &&
                     ( !oriAllUndefined || indexCB->enforced() ) )
                {
-                  pUnqIdxHashArray->saveKey( *itori ) ;
+                  pOldUnqIdxHashArray->saveKey( *itori ) ;
                   oldHashSaved = TRUE ;
                }
 
@@ -2367,13 +2368,13 @@ namespace engine
 
                // save key as hash values in unique index bitmap
                // which will be used to replay in secondary nodes
-               if ( NULL != pUnqIdxHashArray &&
+               if ( NULL != pNewUnqIdxHashArray &&
                     !newHashSaved &&
                     indexCB->unique() &&
                     !indexCB->isIDIndex() &&
                     ( !newAllUndefined || indexCB->enforced() ) )
                {
-                  pUnqIdxHashArray->saveKey( *itnew ) ;
+                  pNewUnqIdxHashArray->saveKey( *itnew ) ;
                   newHashSaved = TRUE ;
                }
 
@@ -2402,13 +2403,13 @@ namespace engine
 
             // save key as hash values in unique index bitmap
             // which will be used to replay in secondary nodes
-            if ( NULL != pUnqIdxHashArray &&
+            if ( NULL != pOldUnqIdxHashArray &&
                  !oldHashSaved &&
                  indexCB->unique() &&
                  !indexCB->isIDIndex() &&
                  ( !oriAllUndefined || indexCB->enforced() ) )
             {
-               pUnqIdxHashArray->saveKey( *itori ) ;
+               pOldUnqIdxHashArray->saveKey( *itori ) ;
                oldHashSaved = TRUE ;
             }
 
@@ -2465,13 +2466,13 @@ namespace engine
 
             // save key as hash values in unique index bitmap
             // which will be used to replay in secondary nodes
-            if ( NULL != pUnqIdxHashArray &&
+            if ( NULL != pNewUnqIdxHashArray &&
                  !newHashSaved &&
                  indexCB->unique() &&
                  !indexCB->isIDIndex() &&
                  ( !newAllUndefined || indexCB->enforced() ) )
             {
-               pUnqIdxHashArray->saveKey( *itnew ) ;
+               pNewUnqIdxHashArray->saveKey( *itnew ) ;
                newHashSaved = TRUE ;
             }
 
@@ -2621,7 +2622,8 @@ namespace engine
                                           BOOLEAN isUndo,
                                           IDmsOprHandler *pOprHandle,
                                           utilWriteResult *pResult,
-                                          dpsUnqIdxHashArray *pUnqIdxHashArray )
+                                          dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                                          dpsUnqIdxHashArray *pOldUnqIdxHashArray )
    {
       INT32 rc                     = SDB_OK ;
       INT32 indexID                = 0 ;
@@ -2668,7 +2670,7 @@ namespace engine
          {
             rc = _indexUpdate ( context, &indexCB, originalObj, newObj,
                                 rid, cb, isUndo, pOprHandle, pResult,
-                                pUnqIdxHashArray ) ;
+                                pNewUnqIdxHashArray, pOldUnqIdxHashArray ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to update obj(%s) index(%s), "
                           "rc: %d", newObj.toString().c_str(),
                           indexCB.getDef().toString().c_str(), rc ) ;

@@ -1071,7 +1071,8 @@ namespace engine
                                              _pmdEDUCB *cb,
                                              IDmsOprHandler *pHandler,
                                              utilUpdateResult *pResult,
-                                             dpsUnqIdxHashArray *pUnqIdxHashArray ) = 0 ;
+                                             dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                                             dpsUnqIdxHashArray *pOldUnqIdxHashArray ) = 0 ;
 
          virtual INT32 _extentRemoveRecord( dmsMBContext *context,
                                             dmsExtRW &extRW,

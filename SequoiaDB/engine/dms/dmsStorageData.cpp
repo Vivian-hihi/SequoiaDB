@@ -201,7 +201,8 @@ namespace engine
                                                 _pmdEDUCB *cb,
                                                 IDmsOprHandler *pHandler,
                                                 utilUpdateResult *pResult,
-                                                dpsUnqIdxHashArray *pUnqIdxHashArray )
+                                                dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                                                dpsUnqIdxHashArray *pOldUnqIdxHashArray )
    {
       INT32 rc                     = SDB_OK ;
       UINT32 dmsRecordSize         = 0 ;
@@ -312,7 +313,9 @@ namespace engine
                                          oriObj, newObj,
                                          recordRW.getRecordID(),
                                          cb, FALSE, pHandler,
-                                         pResult, pUnqIdxHashArray ) ;
+                                         pResult,
+                                         pNewUnqIdxHashArray,
+                                         pOldUnqIdxHashArray ) ;
             needUndoIndex = TRUE ;
             if ( rc )
             {

@@ -47,6 +47,7 @@
 #include "rtnBackgroundJob.hpp"
 #include "dpsLogDef.hpp"
 #include "clsReplayer.hpp"
+#include "utilCircularQueue.hpp"
 
 #include <vector>
 
@@ -230,8 +231,11 @@ namespace engine
 
          void        resetUnqIdxLSN() ;
          DPS_LSN_OFFSET checkUnqIdxWaitLSN(
-                                       const dpsUnqIdxHashArray &unqIdxHashArray,
-                                       DPS_LSN_OFFSET currentLSN ) ;
+                                       dpsUnqIdxHashArray &newUnqIdxHashArray,
+                                       dpsUnqIdxHashArray &oldUnqIdxHashArray,
+                                       DPS_LSN_OFFSET currentLSN,
+                                       UINT32 clHash,
+                                       UINT32 bucketID ) ;
 
       protected:
          void        _submitResult( DPS_LSN_OFFSET offset, DPS_LSN_VER version,
@@ -254,11 +258,25 @@ namespace engine
                                 clsReplayInfo &info ) ;
          BOOLEAN     _checkCompleted( DPS_LSN_OFFSET offset )
          {
-            ossScopedLock lock( &_bucketLatch ) ;
+            ossScopedLock lock( &_bucketLatch, SHARED ) ;
             // check both expect LSN or complete map
             return ( _expectLSN.compareOffset( offset ) > 0 ||
                      _completeMap.find( offset ) != _completeMap.end() ) ;
          }
+
+         static void _checkUnqIdxWaitLSN( dpsUnqIdxHashArray &unqIdxHashArray,
+                                          DPS_LSN_OFFSET currentLSN,
+                                          UINT32 clHash,
+                                          UINT32 bucketID,
+                                          DPS_LSN_OFFSET &waitLSN,
+                                          utilBitmap &unqIdxBitmap,
+                                          DPS_LSN_OFFSET *checkLSN,
+                                          INT16 *checkBucket ) ;
+         static void _saveUnqIdxWaitLSN( dpsUnqIdxHashArray &unqIdxHashArray,
+                                         DPS_LSN_OFFSET currentLSN,
+                                         UINT32 bucketID,
+                                         DPS_LSN_OFFSET *saveLSN,
+                                         INT16 *saveBucket ) ;
 
       private:
          _dpsLogWrapper                   *_pDPSCB ;
@@ -281,7 +299,15 @@ namespace engine
          ossEvent                         _emptyEvent ;
          ossEvent                         _allEmptyEvent ;
          ossEvent                         _submitEvent ;
-         ossQueue< UINT32 >               _ntyQueue ;
+
+         typedef _utilCircularBuffer< UINT32 >  CLS_BUCKET_QUEUE_BUFFER ;
+         typedef _utilCircularQueue< UINT32 >   CLS_BUCKET_QUEUE_CONTAINER ;
+         typedef ossQueue< UINT32, CLS_BUCKET_QUEUE_CONTAINER >
+                                                CLS_BUCKET_QUEUE ;
+
+
+         CLS_BUCKET_QUEUE_BUFFER          _queueBuffer ;
+         CLS_BUCKET_QUEUE *               _ntyQueue ;
 
          ossAtomic32                      _curAgentNum ;
          ossAtomic32                      _idleAgentNum ;
@@ -291,7 +317,7 @@ namespace engine
          CLS_COMP_MAP                     _completeMap ;
          DPS_LSN                          _expectLSN ;
          DPS_LSN_OFFSET                   _maxSubmitOffset ;
-         ossSpinXLatch                    _bucketLatch ;
+         ossSpinSLatch                    _bucketLatch ;
 
          // result info for error
          INT32                            _submitRC ;
@@ -305,16 +331,16 @@ namespace engine
          DPS_LSN_OFFSET                   _lastIDRecParaLSN ;
          DPS_LSN_OFFSET                   _lastNIDRecParaLSN ;
 
-         // LSN array for hash keys of the last replayed unique indexes
-         // re-hash to 4096
-         #define CLS_UNQIDX_HASH_SIZE  ( 4096 )
-         #define CLS_UNQIDX_HASH_MOD   ( (UINT16)( 0x0FFF ) )
-
-         DPS_LSN_OFFSET       _lastUnqIdxLSN[ CLS_UNQIDX_HASH_SIZE ] ;
+         UINT32               _lastUnqIdxSize ;
+         DPS_LSN_OFFSET *     _lastNewUnqIdxLSN ;
+         INT16 *              _lastNewUnqIdxBkt ;
+         DPS_LSN_OFFSET *     _lastOldUnqIdxLSN ;
+         INT16 *              _lastOldUnqIdxBkt ;
 
          // a bitmap to remember which hash key is already tested
-         typedef _utilStackBitmap< CLS_UNQIDX_HASH_SIZE > DPS_UNQIDX_BITMAP ;
-         DPS_UNQIDX_BITMAP    _unqIdxBitmap ;
+         utilBitmap           _unqIdxBitmap ;
+
+         // cache for last completed LSN
          DPS_LSN_OFFSET       _lastCompletedLSN ;
    } ;
    typedef _clsBucket clsBucket ;

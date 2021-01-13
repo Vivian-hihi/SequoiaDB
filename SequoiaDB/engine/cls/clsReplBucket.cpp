@@ -39,6 +39,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "utilBsonHash.hpp"
 
 using namespace bson ;
 
@@ -136,6 +137,11 @@ namespace engine
 
    #define CLS_REPL_MAX_ROLLBACK_TIMES       ( 10 )
    #define CLS_REPL_RETRY_INTERVAL           ( 100 )
+
+   // LSN array for hash keys of the last replayed unique indexes will be
+   // combined with collection hash value and re-hash to 0 - 65535
+   #define CLS_UNQIDX_HASH_SIZE  ( 65536 )
+   #define CLS_UNQIDX_HASH_MOD   ( (UINT16)( 0xFFFF ) )
 
    /*
       Tool functions
@@ -273,7 +279,14 @@ namespace engine
    */
    _clsBucket::_clsBucket ()
    :_totalCount( 0 ), _idleUnitCount( 0 ), _allCount( 0 ),
-    _curAgentNum( 0 ), _idleAgentNum( 0 ), _waitAgentNum( 0 )
+    _curAgentNum( 0 ), _idleAgentNum( 0 ), _waitAgentNum( 0 ),
+    _lastUnqIdxSize( 0 ),
+    _lastNewUnqIdxLSN( NULL ),
+    _lastNewUnqIdxBkt( NULL ),
+    _lastOldUnqIdxLSN( NULL ),
+    _lastOldUnqIdxBkt( NULL ),
+    _unqIdxBitmap( 0 ),
+    _lastCompletedLSN( DPS_INVALID_LSN_OFFSET )
    {
       _pDPSCB     = NULL ;
       _pMonDBCB   = NULL ;
@@ -353,7 +366,7 @@ namespace engine
 
       // scoped lock to avoid exception
       {
-         ossScopedLock lock( &_bucketLatch ) ;
+         ossScopedLock lock( &_bucketLatch, SHARED ) ;
          completeMapSize = (INT32)_completeMap.size() ;
          if ( completeMapSize > 0 )
          {
@@ -438,6 +451,47 @@ namespace engine
          ++index ;
       }
 
+      PD_CHECK( _queueBuffer.initBuffer( _bucketSize ),
+                SDB_OOM, error, PDERROR, "Failed to allocate queue buffer "
+                "for notify queue [%u]", _bucketSize ) ;
+      _ntyQueue =
+            SDB_OSS_NEW CLS_BUCKET_QUEUE(
+                  CLS_BUCKET_QUEUE_CONTAINER( &_queueBuffer ) ) ;
+      PD_CHECK( NULL != _ntyQueue, SDB_OOM, error, PDERROR,
+                "Failed to allocate notify queue" ) ;
+
+      _lastNewUnqIdxLSN =
+            (DPS_LSN_OFFSET *)( SDB_OSS_MALLOC( sizeof( DPS_LSN_OFFSET * ) *
+                                                CLS_UNQIDX_HASH_SIZE ) ) ;
+      PD_CHECK( NULL != _lastNewUnqIdxLSN, SDB_OOM, error, PDERROR,
+                "Failed allocate array for last LSN for new unique index "
+                "hash values" ) ;
+      _lastNewUnqIdxBkt =
+            (INT16 *)( SDB_OSS_MALLOC( sizeof( INT16 * ) *
+                                       CLS_UNQIDX_HASH_SIZE ) ) ;
+      PD_CHECK( NULL != _lastNewUnqIdxBkt, SDB_OOM, error, PDERROR,
+                "Failed allocate array for last bucket for new unique index "
+                "hash values" ) ;
+      _lastOldUnqIdxLSN =
+            (DPS_LSN_OFFSET *)( SDB_OSS_MALLOC( sizeof( DPS_LSN_OFFSET ) *
+                                                CLS_UNQIDX_HASH_SIZE ) ) ;
+      PD_CHECK( NULL != _lastOldUnqIdxLSN, SDB_OOM, error, PDERROR,
+                "Failed allocate array for last LSN for old unique index "
+                "hash values" ) ;
+      _lastOldUnqIdxBkt =
+            (INT16 *)( SDB_OSS_MALLOC( sizeof( INT16 * ) *
+                                       CLS_UNQIDX_HASH_SIZE ) ) ;
+      PD_CHECK( NULL != _lastOldUnqIdxBkt, SDB_OOM, error, PDERROR,
+                "Failed allocate array for last bucket for old unique index "
+                "hash values" ) ;
+
+      _unqIdxBitmap.resize( CLS_UNQIDX_HASH_SIZE ) ;
+      PD_CHECK( CLS_UNQIDX_HASH_SIZE == _unqIdxBitmap.getSize(),
+                SDB_OOM, error, PDERROR, "Failed to allocate bitmap for "
+                "unique index hash values" ) ;
+
+      _lastUnqIdxSize = CLS_UNQIDX_HASH_SIZE ;
+
       _waitAgentNum.init( 0 ) ;
       _emptyEvent.signal() ;
       _allEmptyEvent.signal() ;
@@ -461,6 +515,15 @@ namespace engine
 
    void _clsBucket::fini ()
    {
+      SAFE_OSS_FREE( _lastNewUnqIdxLSN ) ;
+      SAFE_OSS_FREE( _lastNewUnqIdxBkt ) ;
+      SAFE_OSS_FREE( _lastOldUnqIdxLSN ) ;
+      SAFE_OSS_FREE( _lastOldUnqIdxBkt ) ;
+      _lastUnqIdxSize = 0 ;
+
+      SAFE_OSS_DELETE( _ntyQueue ) ;
+      _queueBuffer.finiBuffer() ;
+
       _memPool.final() ;
    }
 
@@ -694,7 +757,7 @@ namespace engine
          if ( !_dataBucket[ index ]->isAttached() &&
               !_dataBucket[ index ]->isInQue() )
          {
-            _ntyQueue.push( index ) ;
+            _ntyQueue->push( index ) ;
             _dataBucket[ index ]->pushToQue() ;
          }
          else
@@ -1022,7 +1085,7 @@ namespace engine
             goto error ;
          }
 
-         if ( !_ntyQueue.timed_wait_and_pop( unitID, OSS_ONE_SEC ) )
+         if ( !_ntyQueue->timed_wait_and_pop( unitID, OSS_ONE_SEC ) )
          {
             /// when in wait rollback, unit can't quit by timeout
             if ( CLS_BUCKET_WAIT_ROLLBACK == _status )
@@ -1074,6 +1137,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSBUCKET_ENDUNIT ) ;
 
+      BOOLEAN pushedBack = FALSE ;
+
       SDB_ASSERT( unitID < _bucketSize, "unitID must less bucket size" ) ;
       if ( unitID >= _bucketSize )
       {
@@ -1093,14 +1158,19 @@ namespace engine
 
          if ( !_dataBucket[ unitID ]->isEmpty() )
          {
-            _ntyQueue.push( unitID ) ;
+            _ntyQueue->push( unitID ) ;
             _dataBucket[ unitID ]->pushToQue() ;
 
             _idleUnitCount.inc() ;
+
+            pushedBack = TRUE ;
          }
       }
 
       // scoped lock to avoid exception
+      // if the unit is pushed back, it means the unit is not empty
+      // so the counters can not be 0
+      if ( !pushedBack )
       {
          ossScopedRWLock counterLock( &_counterLock, SHARED ) ;
          if ( _totalCount.compare( 0 ) )
@@ -1411,7 +1481,7 @@ namespace engine
 
    DPS_LSN _clsBucket::completeLSN ( BOOLEAN withRetEvent )
    {
-      ossScopedLock lock( &_bucketLatch ) ;
+      ossScopedLock lock( &_bucketLatch, SHARED ) ;
       if ( withRetEvent )
       {
          _submitEvent.reset() ;
@@ -1427,10 +1497,10 @@ namespace engine
 
       while( i++ < retryTimes )
       {
-         if ( _bucketLatch.try_get() )
+         if ( _bucketLatch.try_get_shared() )
          {
             expectLsn = _expectLSN ;
-            _bucketLatch.release() ;
+            _bucketLatch.release_shared() ;
             if ( pDirty )
             {
                *pDirty = FALSE ;
@@ -1622,49 +1692,62 @@ namespace engine
 
    void _clsBucket::resetUnqIdxLSN()
    {
-      for ( UINT32 i = 0 ; i < CLS_UNQIDX_HASH_SIZE ; ++ i )
+      if ( _lastUnqIdxSize > 0 )
       {
-         _lastUnqIdxLSN[ i ] = DPS_INVALID_LSN_OFFSET ;
+         for ( UINT32 i = 0 ; i < _lastUnqIdxSize ; ++ i )
+         {
+            _lastNewUnqIdxLSN[ i ] = DPS_INVALID_LSN_OFFSET ;
+            _lastNewUnqIdxBkt[ i ] = -1 ;
+            _lastOldUnqIdxLSN[ i ] = DPS_INVALID_LSN_OFFSET ;
+            _lastOldUnqIdxBkt[ i ] = -1 ;
+         }
       }
       _lastCompletedLSN = DPS_INVALID_LSN_OFFSET ;
    }
 
-   DPS_LSN_OFFSET _clsBucket::checkUnqIdxWaitLSN( const dpsUnqIdxHashArray &unqIdxHashArray,
-                                                  DPS_LSN_OFFSET currentLSN )
+   DPS_LSN_OFFSET _clsBucket::checkUnqIdxWaitLSN(
+                                    dpsUnqIdxHashArray &newUnqIdxHashArray,
+                                    dpsUnqIdxHashArray &oldUnqIdxHashArray,
+                                    DPS_LSN_OFFSET currentLSN,
+                                    UINT32 clHash,
+                                    UINT32 bucketID )
    {
       DPS_LSN_OFFSET waitLSN = DPS_INVALID_LSN_OFFSET ;
 
       // find the maximum LSN with the same hash values replayed
       // by the previous records
       // WARNING: should be called by dispatch thread of clsReplayer
-      if ( !unqIdxHashArray.empty() )
+      if ( !newUnqIdxHashArray.empty() )
       {
-         _unqIdxBitmap.resetBitmap() ;
-
-         UINT16 hashValue = 0 ;
-         dpsUnqIdxHashArray::iterator iter( unqIdxHashArray ) ;
-         while ( iter.next( hashValue ) )
-         {
-            if ( DPS_UNQIDX_INVALID_HASH != hashValue )
-            {
-               // rehash to 4096
-               hashValue &= CLS_UNQIDX_HASH_MOD ;
-
-               // due to rehash
-               if ( !_unqIdxBitmap.testBit( hashValue ) )
-               {
-                  // find for maximum wait LSN for all hash values
-                  if ( DPS_INVALID_LSN_OFFSET != _lastUnqIdxLSN[ hashValue ] &&
-                       ( DPS_INVALID_LSN_OFFSET == waitLSN ||
-                         waitLSN < _lastUnqIdxLSN[ hashValue ] ) )
-                  {
-                     waitLSN = _lastUnqIdxLSN[ hashValue ] ;
-                  }
-                  _lastUnqIdxLSN[ hashValue ] = currentLSN ;
-                  _unqIdxBitmap.setBit( hashValue ) ;
-               }
-            }
-         }
+         _checkUnqIdxWaitLSN( newUnqIdxHashArray,
+                              currentLSN,
+                              clHash,
+                              bucketID,
+                              waitLSN,
+                              _unqIdxBitmap,
+                              _lastOldUnqIdxLSN,
+                              _lastOldUnqIdxBkt ) ;
+      }
+      if ( !oldUnqIdxHashArray.empty() )
+      {
+         _checkUnqIdxWaitLSN( oldUnqIdxHashArray,
+                              currentLSN,
+                              clHash,
+                              bucketID,
+                              waitLSN,
+                              _unqIdxBitmap,
+                              _lastNewUnqIdxLSN,
+                              _lastNewUnqIdxBkt ) ;
+      }
+      if ( newUnqIdxHashArray.getCurSize() > 0 )
+      {
+         _saveUnqIdxWaitLSN( newUnqIdxHashArray, currentLSN, bucketID,
+                             _lastNewUnqIdxLSN, _lastNewUnqIdxBkt ) ;
+      }
+      if ( oldUnqIdxHashArray.getCurSize() > 0 )
+      {
+         _saveUnqIdxWaitLSN( oldUnqIdxHashArray, currentLSN, bucketID,
+                             _lastOldUnqIdxLSN, _lastOldUnqIdxBkt ) ;
       }
 
       if ( DPS_INVALID_LSN_OFFSET != waitLSN )
@@ -1687,6 +1770,74 @@ namespace engine
       }
 
       return waitLSN ;
+   }
+
+   void _clsBucket::_checkUnqIdxWaitLSN( dpsUnqIdxHashArray &unqIdxHashArray,
+                                         DPS_LSN_OFFSET currentLSN,
+                                         UINT32 clHash,
+                                         UINT32 bucketID,
+                                         DPS_LSN_OFFSET &waitLSN,
+                                         utilBitmap &unqIdxBitmap,
+                                         DPS_LSN_OFFSET *checkLSN,
+                                         INT16 *checkBucket )
+   {
+      SDB_ASSERT( NULL != checkLSN, "check LSN is invalid" ) ;
+      SDB_ASSERT( NULL != checkBucket, "check bucket is invalid" ) ;
+
+      UINT32 index = 0 ;
+
+      unqIdxBitmap.resetBitmap() ;
+
+      for ( index = 0 ; index < unqIdxHashArray.size() ; ++ index )
+      {
+         UINT16 hashValue = unqIdxHashArray[ index ] ;
+         if ( DPS_UNQIDX_INVALID_HASH != hashValue )
+         {
+            UINT32 reHashValue =
+                  BSON_HASHER::hashCombine( clHash, (UINT32)hashValue ) ;
+            reHashValue &= CLS_UNQIDX_HASH_MOD ;
+            unqIdxHashArray[ index ] = (UINT16)reHashValue ;
+
+            if ( !unqIdxBitmap.testBit( reHashValue ) )
+            {
+               // find for maximum wait LSN for all hash values
+               // NOTE: if last value is pushed to the same bucket,
+               //       no need to wait
+               INT16 checkBucketID = checkBucket[ reHashValue ] ;
+               DPS_LSN_OFFSET checkOffset = checkLSN[ reHashValue ] ;
+               if ( (INT16)bucketID != checkBucketID &&
+                    DPS_INVALID_LSN_OFFSET != checkOffset &&
+                    ( DPS_INVALID_LSN_OFFSET == waitLSN ||
+                      waitLSN < checkOffset ) )
+               {
+                  waitLSN = checkOffset ;
+               }
+               unqIdxBitmap.setBit( reHashValue ) ;
+            }
+         }
+         else
+         {
+            break ;
+         }
+      }
+
+      unqIdxHashArray.setCurSize( index ) ;
+   }
+
+   void _clsBucket::_saveUnqIdxWaitLSN( dpsUnqIdxHashArray &unqIdxHashArray,
+                                        DPS_LSN_OFFSET currentLSN,
+                                        UINT32 bucketID,
+                                        DPS_LSN_OFFSET *saveLSN,
+                                        INT16 *saveBucket )
+   {
+      for ( UINT32 index = 0 ;
+            index < unqIdxHashArray.getCurSize() ;
+            ++ index )
+      {
+         UINT16 hashValue = unqIdxHashArray[ index ] ;
+         saveLSN[ hashValue ] = currentLSN ;
+         saveBucket[ hashValue ] = (INT16)bucketID ;
+      }
    }
 
    /*

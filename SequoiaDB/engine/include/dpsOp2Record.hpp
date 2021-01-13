@@ -75,7 +75,8 @@ namespace engine
    public:
       _dpsUnqIdxHashArray()
       : _utilArray< UINT16 >( 0 ),
-        _curSize( 0 )
+        _curSize( 0 ),
+        _isNew( FALSE )
       {
       }
 
@@ -83,15 +84,32 @@ namespace engine
       {
       }
 
-      INT32 prepare( UINT32 unqIdxNum, UINT32 valueNumPerIdx ) ;
+      INT32 prepare( UINT32 unqIdxNum, BOOLEAN isNew ) ;
       void saveKey( const bson::BSONObj &key ) ;
       INT32 pushToRecord( dpsLogRecord &record ) const ;
-      INT32 parseFromRecord( const dpsLogRecord &record ) ;
+      INT32 parseFromRecord( const dpsLogRecord &record, BOOLEAN isNew ) ;
 
       ossPoolString toString() const ;
 
+      OSS_INLINE UINT32 getCurSize() const
+      {
+         return _curSize ;
+      }
+
+      OSS_INLINE void setCurSize( UINT32 curSize )
+      {
+         SDB_ASSERT( _curSize <= _eleSize, "size is not matched" ) ;
+         _curSize = curSize ;
+      }
+
+      OSS_INLINE BOOLEAN isNew() const
+      {
+         return _isNew ;
+      }
+
    protected:
       UINT32 _curSize ;
+      BOOLEAN _isNew ;
    } ;
 
    typedef class _dpsUnqIdxHashArray dpsUnqIdxHashArray ;
@@ -120,7 +138,8 @@ namespace engine
                            const BSONObj &newObj,
                            const BSONObj &oldShardingKey,
                            const BSONObj &newShardingKey,
-                           const dpsUnqIdxHashArray *pUnqIdxHashArray,
+                           const dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                           const dpsUnqIdxHashArray *pOldUnqIdxHashArray,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -137,7 +156,8 @@ namespace engine
                            BSONObj *newShardingKey = NULL,
                            UINT64 *microSeconds = NULL,
                            UINT32 *writeMod = NULL,
-                           dpsUnqIdxHashArray *pUnqIdxHashArray = NULL ) ;
+                           dpsUnqIdxHashArray *pNewUnqIdxHashArray = NULL,
+                           dpsUnqIdxHashArray *pOldUnqIdxHashArray = NULL ) ;
 
    INT32 dpsDelete2Record( const CHAR *fullName,
                            const BSONObj &oldObj,

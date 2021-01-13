@@ -113,20 +113,20 @@ namespace engine
    /*
       _dpsUnqIdxHashArray implement
     */
-   INT32 _dpsUnqIdxHashArray::prepare( UINT32 unqIdxNum, UINT32 valueNumPerIdx )
+   INT32 _dpsUnqIdxHashArray::prepare( UINT32 unqIdxNum,
+                                       BOOLEAN isNew )
    {
       INT32 rc = SDB_OK ;
 
       if ( unqIdxNum > 0 )
       {
-         UINT32 eleSize = unqIdxNum * valueNumPerIdx ;
-         rc = resize( eleSize ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed resize array for hash values, "
-                      "rc: %d", rc ) ;
+         rc = resize( unqIdxNum ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed resize array for hash values "
+                      "with %u, rc: %d", unqIdxNum, rc ) ;
          // reserved 0 for all values
          ossMemset( _dynamicBuf, DPS_UNQIDX_INVALID_HASH,
-                    eleSize * sizeof( UINT16 ) ) ;
-         _eleSize = eleSize ;
+                    unqIdxNum * sizeof( UINT16 ) ) ;
+         _eleSize = unqIdxNum ;
          _curSize = 0 ;
       }
       else
@@ -135,6 +135,8 @@ namespace engine
          _eleSize = 0 ;
          _curSize = 0 ;
       }
+
+      _isNew = isNew ;
 
    done:
       return rc ;
@@ -162,7 +164,9 @@ namespace engine
       {
          // we need push eleSize size of elements which have been
          // reserved in prepare()
-         rc = record.push( DPS_LOG_PUBLIC_UNQIDX_HASH_LIST,
+         rc = record.push( _isNew ?
+                                 DPS_LOG_PUBLIC_NEW_UNQIDX_HASH :
+                                 DPS_LOG_PUBLIC_OLD_UNQIDX_HASH,
                            _eleSize * sizeof( UINT16 ),
                            (CHAR *)_dynamicBuf ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to push unique index hash values, "
@@ -176,7 +180,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dpsUnqIdxHashArray::parseFromRecord( const dpsLogRecord &record )
+   INT32 _dpsUnqIdxHashArray::parseFromRecord( const dpsLogRecord &record,
+                                               BOOLEAN isNew )
    {
       INT32 rc = SDB_OK ;
 
@@ -186,7 +191,8 @@ namespace engine
       _eleSize = 0 ;
       _curSize = 0 ;
 
-      itr = record.find( DPS_LOG_PUBLIC_UNQIDX_HASH_LIST ) ;
+      itr = record.find( isNew ? DPS_LOG_PUBLIC_NEW_UNQIDX_HASH :
+                                 DPS_LOG_PUBLIC_OLD_UNQIDX_HASH ) ;
       if ( !itr.valid() )
       {
          goto done ;
@@ -206,6 +212,8 @@ namespace engine
          ossMemcpy( _dynamicBuf, itr.value(), itr.len() ) ;
          _eleSize = eleSize ;
          _curSize = _eleSize ;
+
+         _isNew = isNew ;
       }
 
    done:
@@ -340,7 +348,7 @@ namespace engine
       // parse unique index hash values if needed
       if ( NULL != pUnqIdxHashArray )
       {
-         rc = pUnqIdxHashArray->parseFromRecord( record ) ;
+         rc = pUnqIdxHashArray->parseFromRecord( record, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse unique index hash values, "
                       "rc: %d", rc ) ;
       }
@@ -363,7 +371,8 @@ namespace engine
                            const BSONObj &newObj,
                            const BSONObj &oldShardingKey,
                            const BSONObj &newShardingKey,
-                           const dpsUnqIdxHashArray *pUnqIdxHashArray,
+                           const dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                           const dpsUnqIdxHashArray *pOldUnqIdxHashArray,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
@@ -468,11 +477,17 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       // push unique index hash values if needed
-      if ( NULL != pUnqIdxHashArray )
+      if ( NULL != pNewUnqIdxHashArray )
       {
-         rc = pUnqIdxHashArray->pushToRecord( record ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to add unique index hash values, "
-                      "rc: %d", rc ) ;
+         rc = pNewUnqIdxHashArray->pushToRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add new unique index "
+                      "hash values, rc: %d", rc ) ;
+      }
+      if ( NULL != pOldUnqIdxHashArray )
+      {
+         rc = pOldUnqIdxHashArray->pushToRecord( record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to add old unique index "
+                      "hash values, rc: %d", rc ) ;
       }
 
       header._length = record.alignedLen() ;
@@ -495,7 +510,8 @@ namespace engine
                            BSONObj *newShardingKey,
                            UINT64 *microSeconds,
                            UINT32 *writeMod,
-                           dpsUnqIdxHashArray *pUnqIdxHashArray )
+                           dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                           dpsUnqIdxHashArray *pOldUnqIdxHashArray )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
       SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
@@ -614,11 +630,17 @@ namespace engine
       }
 
       // parse unique index hash values if needed
-      if ( NULL != pUnqIdxHashArray )
+      if ( NULL != pNewUnqIdxHashArray )
       {
-         rc = pUnqIdxHashArray->parseFromRecord( record ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to parse unique index hash values, "
-                      "rc: %d", rc ) ;
+         rc = pNewUnqIdxHashArray->parseFromRecord( record, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse new unique index "
+                      "hash values, rc: %d", rc ) ;
+      }
+      if ( NULL != pOldUnqIdxHashArray )
+      {
+         rc = pOldUnqIdxHashArray->parseFromRecord( record, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse old unique index "
+                      "hash values, rc: %d", rc ) ;
       }
 
    done:
@@ -735,7 +757,7 @@ namespace engine
       // parse unique index hash values if needed
       if ( NULL != pUnqIdxHashArray )
       {
-         rc = pUnqIdxHashArray->parseFromRecord( record ) ;
+         rc = pUnqIdxHashArray->parseFromRecord( record, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse unique index hash values, "
                       "rc: %d", rc ) ;
       }

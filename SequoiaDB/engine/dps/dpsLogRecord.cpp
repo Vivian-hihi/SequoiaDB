@@ -475,11 +475,11 @@ namespace engine
                goto done ;
             }
 
-            unqIdxHashArray.parseFromRecord( *this ) ;
+            unqIdxHashArray.parseFromRecord( *this, TRUE ) ;
             if ( !unqIdxHashArray.empty() )
             {
                len += ossSnprintf( outBuf + len, outSize - len,
-                                   " UnqIdxHashVals : %s"OSS_NEWLINE,
+                                   " NewUnqIdxHash : %s"OSS_NEWLINE,
                                    unqIdxHashArray.toString().c_str() ) ;
             }
 
@@ -487,7 +487,7 @@ namespace engine
          }
          case LOG_TYPE_DATA_UPDATE :
          {
-            dpsUnqIdxHashArray unqIdxHashArray ;
+            dpsUnqIdxHashArray newUnqIdxHashArray, oldUnqIdxHashArray ;
 
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " Type   : %s(%d)"OSS_NEWLINE,
@@ -600,12 +600,20 @@ namespace engine
                goto done ;
             }
 
-            unqIdxHashArray.parseFromRecord( *this ) ;
-            if ( !unqIdxHashArray.empty() )
+            newUnqIdxHashArray.parseFromRecord( *this, TRUE ) ;
+            if ( !newUnqIdxHashArray.empty() )
             {
                len += ossSnprintf( outBuf + len, outSize - len,
-                                   " UnqIdxHashVals : %s"OSS_NEWLINE,
-                                   unqIdxHashArray.toString().c_str() ) ;
+                                   " NewUnqIdxHash : %s"OSS_NEWLINE,
+                                   newUnqIdxHashArray.toString().c_str() ) ;
+            }
+
+            oldUnqIdxHashArray.parseFromRecord( *this, FALSE ) ;
+            if ( !oldUnqIdxHashArray.empty() )
+            {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                   " OldUnqIdxHash : %s"OSS_NEWLINE,
+                                   oldUnqIdxHashArray.toString().c_str() ) ;
             }
 
             break ;
@@ -651,11 +659,11 @@ namespace engine
                goto done ;
             }
 
-            unqIdxHashArray.parseFromRecord( *this ) ;
+            unqIdxHashArray.parseFromRecord( *this, FALSE ) ;
             if ( !unqIdxHashArray.empty() )
             {
                len += ossSnprintf( outBuf + len, outSize - len,
-                                   " UnqIdxHashVals : %s"OSS_NEWLINE,
+                                   " OldUnqIdxHash : %s"OSS_NEWLINE,
                                    unqIdxHashArray.toString().c_str() ) ;
             }
 

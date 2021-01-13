@@ -308,19 +308,19 @@ namespace engine
 
       const CHAR *fullname = NULL ;
       BSONObj curObj, waitObj ;
-      dpsUnqIdxHashArray unqIdxHashArray ;
+      dpsUnqIdxHashArray newUnqIdxHashArray, oldUnqIdxHashArray ;
 
       switch( recordHeader->_type )
       {
          case LOG_TYPE_DATA_INSERT :
             parallaType = CLS_PARALLA_CL ;
             rc = dpsRecord2Insert( (CHAR *)recordHeader, &fullname, curObj,
-                                   NULL, &unqIdxHashArray ) ;
+                                   NULL, &newUnqIdxHashArray ) ;
             break ;
          case LOG_TYPE_DATA_DELETE :
             parallaType = CLS_PARALLA_CL ;
             rc = dpsRecord2Delete( (CHAR *)recordHeader, &fullname, curObj,
-                                   NULL, &unqIdxHashArray ) ;
+                                   NULL, &oldUnqIdxHashArray ) ;
             break ;
          case LOG_TYPE_DATA_UPDATE :
          {
@@ -329,7 +329,9 @@ namespace engine
             parallaType = CLS_PARALLA_CL ;
             rc = dpsRecord2Update( (CHAR *)recordHeader, &fullname,
                                    curObj, oldObj, waitObj, modifier, NULL,
-                                   NULL, NULL, NULL, &unqIdxHashArray ) ;
+                                   NULL, NULL, NULL,
+                                   &newUnqIdxHashArray,
+                                   &oldUnqIdxHashArray ) ;
             break ;
          }
          default :
@@ -379,11 +381,12 @@ namespace engine
             }
          }
 
-         if ( !unqIdxHashArray.empty() )
-         {
-            waitLSN = pBucket->checkUnqIdxWaitLSN( unqIdxHashArray,
-                                                   recordHeader->_lsn ) ;
-         }
+         // check for unique index values
+         waitLSN = pBucket->checkUnqIdxWaitLSN( newUnqIdxHashArray,
+                                                oldUnqIdxHashArray,
+                                                recordHeader->_lsn,
+                                                clHash,
+                                                bucketID ) ;
       }
       else if ( CLS_PARALLA_CL == parallaType )
       {

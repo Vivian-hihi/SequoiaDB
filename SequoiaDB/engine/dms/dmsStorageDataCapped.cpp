@@ -1192,7 +1192,8 @@ namespace engine
                                                       pmdEDUCB *cb,
                                                       IDmsOprHandler *pHandler,
                                                       utilUpdateResult *pResult,
-                                                      dpsUnqIdxHashArray *pUnqIdxHashArray )
+                                                      dpsUnqIdxHashArray *pNewUnqIdxHashArray,
+                                                      dpsUnqIdxHashArray *pOldUnqIdxHashArray )
    {
       SDB_ASSERT( FALSE, "Should not be here" ) ;
       return SDB_OPERATION_INCOMPATIBLE ;

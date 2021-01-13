@@ -3294,7 +3294,7 @@ namespace engine
                //       have $id index, the secondary nodes will not replay
                //       in parallel, so it can without hash array
                rc = unqIdxHashArray.prepare(
-                                 context->mbStat()->_uniqueIdxNum - 1, 1 ) ;
+                                 context->mbStat()->_uniqueIdxNum - 1, TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to prepare hash list for "
                             "unique index [%u], rc: %d",
                             context->mbStat()->_uniqueIdxNum, rc ) ;
@@ -3765,7 +3765,7 @@ namespace engine
                      // NOTE: for delete, it can not without $id index, so we
                      //       can exclude one $id unique index
                      rc = unqIdxHashArray.prepare(
-                           context->mbStat()->_uniqueIdxNum - 1, 1 ) ;
+                           context->mbStat()->_uniqueIdxNum - 1, FALSE ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to prepare hash "
                                   "list for unique index [%u], rc: %d",
                                   context->mbStat()->_uniqueIdxNum, rc ) ;
@@ -3988,8 +3988,9 @@ namespace engine
       UINT32 textIdxNum = 0 ;
       IDmsExtDataHandler *handler = NULL ;
 
-      dpsUnqIdxHashArray unqIdxHashArray ;
-      dpsUnqIdxHashArray *pUnqIdxHashArray = NULL ;
+      dpsUnqIdxHashArray newUnqIdxHashArray, oldUnqIdxHashArray ;
+      dpsUnqIdxHashArray *pNewUnqIdxHashArray = NULL ;
+      dpsUnqIdxHashArray *pOldUnqIdxHashArray = NULL ;
 
       rc = _operationPermChk( DMS_ACCESS_TYPE_UPDATE ) ;
       PD_RC_CHECK( rc, PDERROR,
@@ -4149,19 +4150,26 @@ namespace engine
                   // each unique index ( except for $id index )
                   // NOTE: for update, it can not without $id index, so we can
                   //       exclude one $id unique index
-                  rc = unqIdxHashArray.prepare(
-                        context->mbStat()->_uniqueIdxNum - 1, 2 ) ;
+                  rc = newUnqIdxHashArray.prepare(
+                        context->mbStat()->_uniqueIdxNum - 1, TRUE ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to prepare hash list for "
-                               "unique index [%u], rc: %d",
+                               "new unique index [%u], rc: %d",
                                context->mbStat()->_uniqueIdxNum, rc ) ;
-                  pUnqIdxHashArray = &unqIdxHashArray ;
+                  rc = oldUnqIdxHashArray.prepare(
+                        context->mbStat()->_uniqueIdxNum - 1, FALSE ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to prepare hash list for "
+                               "old unique index [%u], rc: %d",
+                               context->mbStat()->_uniqueIdxNum, rc ) ;
+                  pNewUnqIdxHashArray = &newUnqIdxHashArray ;
+                  pOldUnqIdxHashArray = &oldUnqIdxHashArray ;
                }
 
                // reserved log-size
                rc = dpsUpdate2Record( fullName,
                                       oldMatch, oldChg, newMatch, newChg,
                                       oldShardingKey, newShardingKey,
-                                      pUnqIdxHashArray, transID, preTransLsn,
+                                      pNewUnqIdxHashArray, pOldUnqIdxHashArray,
+                                      transID, preTransLsn,
                                       relatedLSN, pWriteMod, record ) ;
 
                if ( SDB_OK != rc )
@@ -4188,7 +4196,9 @@ namespace engine
             rc = _extentUpdatedRecord( context, extRW, recordRW,
                                        recordData, newobj, cb,
                                        dpscb ? pHandler : NULL,
-                                       pResult, pUnqIdxHashArray ) ;
+                                       pResult,
+                                       pNewUnqIdxHashArray,
+                                       pOldUnqIdxHashArray ) ;
             if ( rc )
             {
                if ( pResult && pResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )
