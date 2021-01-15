@@ -4904,9 +4904,15 @@ namespace engine
                       rc ) ;
 
          builder.append( FIELD_NAME_STARTTIMESTAMP, timestamp ) ;
-
-         ossTimestampToString ( endTS, timestamp ) ;
-         builder.append( FIELD_NAME_ENDTIMESTAMP, timestamp ) ;
+         if ( endTS.time != 0 )
+         {
+            ossTimestampToString ( endTS, timestamp ) ;
+            builder.append( FIELD_NAME_ENDTIMESTAMP, timestamp ) ;
+         }
+         else
+         {
+            builder.append( FIELD_NAME_ENDTIMESTAMP, VALUE_NAME_EMPTYENDTIMESTAMP ) ;
+         }
          builder.append( FIELD_NAME_TID, _itr->tid ) ;
          //FIXME: PASSING IN FALSE AS DEFAULT
          builder.append( FIELD_NAME_OPTYPE,
