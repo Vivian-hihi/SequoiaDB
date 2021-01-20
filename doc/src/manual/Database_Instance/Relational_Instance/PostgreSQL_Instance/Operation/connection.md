@@ -29,7 +29,7 @@
 
     >**Note:**
     >
-    > 详细参数说明可参考 [SequoiaDB 连接参数说明][connectpara]。
+    > 详细参数说明可参考 [关联 SequoiaDB 连接参数说明][connectpara]。
 
 5. 关联 SequoiaDB 集合空间与集合
 
@@ -40,7 +40,7 @@
     >**Note:**
     >
     > - 在 PostgreSQL 中建立相应的映射表关联 SequoiaDB 集合时，需要确保映射表的字段名与集合的字段名大小写一致，且映射表的字段类型与集合的字段类型一致；否则，将查询不到相关数据。
-    > - 详细参数说明可参考 [关联 SequoiaDB 的集合空间与集合参数说明][collectionpara]。
+    > - 详细参数说明可参考 [关联 SequoiaDB 集合空间与集合参数说明][collectionpara]。
 
 6. 更新表的统计信息
 
@@ -260,5 +260,5 @@ $ bin/psql -p 5432 sample
 
 [preferedinstance]:manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md
 [system_security]:manual/Distributed_Engine/Maintainance/Security/system_security.md
-[connectpara]:manual/Database_Instance/Relational_Instance/PostgreSQL_Instance/Operation/connection.md#SequoiaDB连接参数说明
-[collectionpara]:manual/Database_Instance/Relational_Instance/PostgreSQL_Instance/Operation/connection.md#关联SequoiaDB的集合空间与集合参数说明
+[connectpara]:manual/Database_Instance/Relational_Instance/PostgreSQL_Instance/Operation/connection.md#关联SequoiaDB连接参数说明
+[collectionpara]:manual/Database_Instance/Relational_Instance/PostgreSQL_Instance/Operation/connection.md#关联SequoiaDB集合空间与集合参数说明
