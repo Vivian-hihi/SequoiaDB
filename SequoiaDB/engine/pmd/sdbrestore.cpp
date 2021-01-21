@@ -94,7 +94,6 @@ namespace engine
       ( PMD_COMMANDS_STRING (RS_BK_NAME, ",n"), boost::program_options::value<string>(), "backup name" ) \
       ( PMD_COMMANDS_STRING (RS_BK_ACTION, ",a"), boost::program_options::value<string>(), "action(restore/list/getconfig/offlinebuild), default is restore" ) \
       ( PMD_COMMANDS_STRING (PMD_OPTION_DIAGLEVEL, ",v"), boost::program_options::value<int>(), "diag level,default:3,value range:[0-5]" ) \
-      ( PMD_COMMANDS_STRING (RS_BK_SKIP_CONF, ",s"), boost::program_options::value<string>(), "deprecated" ) \
       ( RS_BK_IS_SELF, boost::program_options::value<string>(),          "whether restore self node(true/false),default is true" ) \
       ( PMD_OPTION_DBPATH, boost::program_options::value<string>(),      "override database path" )                    \
       ( PMD_OPTION_IDXPATH, boost::program_options::value<string>(),     "override index path" )                       \
@@ -118,39 +117,6 @@ namespace engine
 
    #define RS_BK_ACTION_NAME_LEN          (20)
 
-
-   BSONObj updateCfgWithCmdOpts( const BSONObj &obj )
-   {
-      BSONObjBuilder builder ;
-      BSONObjIterator it( obj ) ;
-      while ( it.more() )
-      {
-         BSONElement ele = it.next () ;
-
-         if ( 0 == ossStrcmp( ele.fieldName(), PMD_OPTION_DBPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_IDXPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_LOGPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_LOBPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_LOBMETAPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_ARCHIVE_PATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_CONFPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_DIAGLOGPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_AUDITLOGPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_BKUPPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_WWWPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_DMS_TMPBLKPATH ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_SVCNAME ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_REPLNAME ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_SHARDNAME ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_CATANAME ) ||
-              0 == ossStrcmp( ele.fieldName(), PMD_OPTION_RESTNAME ) )
-         {
-            continue ;
-         }
-         builder.append( ele ) ;
-      }
-      return builder.obj() ;
-   }
 
    /*
       Tool functions :
@@ -383,6 +349,8 @@ namespace engine
       {
          // default
          confPath = pmdGetOptionCB()->getConfPath() ;
+         PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
+                  "Using default confPath [%s]", confPath ) ;
       }
 
       BOOLEAN useConfFromFile = TRUE ;
@@ -678,6 +646,7 @@ namespace engine
          goto error ;
       }
 
+      // load the existing configuration (from path or backup file)
       rc = getBaseConf( optMgr, restoreLogger.getConf(), baseConf ) ;
       if ( rc )
       {
@@ -685,9 +654,8 @@ namespace engine
          goto error ;
       }
 
-      // restore configs and update with command line args
-      rc = krcb->getOptionCB()->restore(
-          updateCfgWithCmdOpts( baseConf ), &(optMgr._vm) );
+      // load the remaining default configuration parameters
+      rc = krcb->getOptionCB()->restore( baseConf, &(optMgr._vm) );
       if ( rc )
       {
          std::cerr << "Init option cb failed: " << rc << std::endl ;
