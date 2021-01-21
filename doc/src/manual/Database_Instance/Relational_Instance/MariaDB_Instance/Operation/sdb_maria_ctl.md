@@ -11,6 +11,8 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
 | -f | 指定 pid 文件，默认为数据库储存路径下的 `mysqld.pid` | 否 |
 | -s | 指定 mysqld.sock 文件，默认为数据库储存路径下的 `mysqld.sock` | 否 |
 | -w | 指定本地连接 root 用户的密码 | 否 |
+| -g | 指定要加入的实例组名，默认为空 | 否 |
+| -k | 指定实例组用户密码的密钥，默认为空 | 否 |
 | -a | 客户端最大连接数，默认为 1024 | 否 |
 | -e | 错误日志级别，默认为 3 | 否 |
 | -v | 输出版本信息 | 否 |
@@ -25,7 +27,7 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
 
  * 创建实例
 
- sdb_maria_ctl  addinst \<INSTNAME\> \<-D DATADIR\> [-l LOGFILE] [--print] [-p PORT] [-f PIDFILE] [-s SOCKETFILE] [-w PASSWORD]
+ sdb_maria_ctl  addinst \<INSTNAME\> \<-D DATADIR\> [-l LOGFILE] [--print] [-p PORT] [-f PIDFILE] [-s SOCKETFILE] [-w PASSWORD] [-g INST_GROUP_NAME] [-k INST_GROUP_KEY]
  
  添加一个 myinst 的实例，指定数据库存储路径为 `/opt/sequoiasql/mariadb/database/3306/`，指定密码为 123456
  
@@ -90,19 +92,45 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
    ```lang-bash
    $ sdb_maria_ctl  stopall
    ```
+ 
+ * 创建一个实例并加入实例组
+
+   sdb_mysql_ctl addinst \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+
+   ```lang-bash
+   $ bin/sdb_sql_ctl addinst instance_name -D database/3306/ -l database/myinst.log --print -p 3306 -g group_name -k instance_group_key
+   ```
+
+ * 已有实例加入实例组
+
+   sdb_mysql_ctl join \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+
+   ```lang-bash
+   $ bin/sdb_sql_ctl join instance_name -g group_name -k instance_group_key
+   ```
+
+ * 从实例组中移除实例
+
+   sdb_mysql_ctl leave \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+
+   ```lang-bash
+   $ bin/sdb_sql_ctl leave instance_name -g group_name -k instance_group_key
+   ```
 
 **修改实例的配置**
 
- 用户可通过 sdb_maria_ctl  指定实例名修改所有 SequoiaDB 引擎配置，各配置项说明可参考 SequoiaDB [引擎配置][config]。
+ 用户可通过 sdb_maria_ctl  指定实例名修改所有 SequoiaDB 引擎配置，各配置项说明可参考 SequoiaDB [引擎配置][config]。实例组功能的使用及相关配置项可参考[实例组][instance_group]。
  
  ```lang-text
- sdb_maria_ctl  chconf <INSTNAME> [-p PORT] [-e LEVEL] [-a MAX-CON]
+ sdb_maria_ctl chconf <INSTNAME> [-p PORT] [-e LEVEL] [-a MAX-CON]
                       [--sdb-conn-addr=ADDR] [--sdb-user=USER] [--sdb-passwd=PASSWD] [--sdb-auto-partition=BOOL] [--sdb-use-bulk-insert=BOOL]
                       [--sdb-bulk-insert-size=SIZE] [--sdb-use-autocommit=BOOL] 
                       [--sdb-debug-log=BOOL] [--sdb-token=TOKEN] [--sdb-cipherfile=PATH] [--sdb-error-level=ENUM] [--sdb-replica-size=SIZE]
                       [--sdb-use-transaction=BOOL] [--sdb-optimizer-options=SET]
                       [--sdb-rollback-on-timeout=BOOL] [--sdb-execute-only-in-mysql=BOOL]
                       [--sdb-selector-pushdown-threshold=THRESHOLD] [--sdb-alter-table-overhead-threshold=THRESHOLD]
+                      [--sdb-lock-wait-timeout=TIMEOUT] [--sdb-use-rollback-segments=BOOL] [--sdb-stats-mode=MODE] [--sdb-stats-sample-num=NUM]
+                      [--sdb-stats-sample-percent=DOUBLE] [--sdb-stats-cache=BOOL] [--inst-group-name=NAME] [--inst-group-key=KEY]
  ``` 
 
 **示例**
@@ -117,3 +145,4 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
 [^_^]:
      本文使用的所有引用和链接
 [config]:manual/Database_Instance/Relational_Instance/MariaDB_Instance/Operation/config.md#SequoiaDB引擎配置使用说明
+[instance_group]:manual/Database_Instance/Relational_Instance/MariaDB_Instance/Operation/instance_group.md
