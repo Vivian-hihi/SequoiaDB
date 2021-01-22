@@ -153,4 +153,4 @@ ok
 [^_^]:
      本文使用的所有引用和链接
 [config]:manual/Database_Instance/Relational_Instance/MySQL_Instance/Operation/config.md#SequoiaDB引擎配置使用说明
-[instance_group]manual/Database_Instance/Relational_Instance/MySQL_Instance/Operation/instance_group.md
+[instance_group]:manual/Database_Instance/Relational_Instance/MySQL_Instance/Operation/instance_group.md
