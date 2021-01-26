@@ -99,8 +99,7 @@ backupTestCase11673.prototype.tearDown =
 
    }
 
-main( test );
-
+/**main( test );**/
 function test ()
 {
    if( commIsStandalone( db ) )
