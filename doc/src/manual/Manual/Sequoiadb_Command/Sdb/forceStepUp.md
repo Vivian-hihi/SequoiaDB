@@ -12,25 +12,27 @@ Sdb
 
 ##描述##
 
-该函数用于在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。
-**请谨慎使用该命令！**
+该函数用于在一个不具备选举条件的复制组中，将备节点强制升级为主节点。如果升级后的主节点 LSN 比原主节点 LSN 小，则会导致之前已成功的操作回滚，因此需谨慎使用该命令。
+
+>**Note:**
+>
+> 目前仅支持在编目复制组中强制升主。
 
 ##参数##
 
-|参数名    |类型        |描述         |是否必填|
-|--------- |----------- |------------ |----------|
-|options   |object      |参数集合   |否|
+| 参数名 | 类型 | 描述 | 是否必填 |
+| ------ | ---- | ---- | -------- |
+|options   |object      |参数集合     |否|
 
-**options 选项**
+options 选项：
 
-|参数名    |类型      |描述                           |默认值|
-|--------- |---------- |------------------------------ |--------|
-|Seconds   |number     |强制升级为主节点的持续时间   |120|
+| 参数名 | 类型 | 描述 | 默认值 |
+| ------ | ---- | ---- | -------- |
+|Seconds   |number      |强制升级为主节点的持续时间   |120|
 
 > **Note:**
 >
-> * 目前仅在 catalog 组中开放此功能。
-> * 目标复制组中不能存在主节点，且其他节点的 LSN 不能比目标节点的 LSN 大。
+> * 目标复制组中不能存在主节点，且其他节点的 LSN 不能比目标节点的 LSN 大。需获取节点 LSN 信息可参考[节点健康检测快照][SDB_SNAP_HEALTH]。
 > * 当持续时间到期，所有节点会重新按照选举规则进行选举。
 > * 如果创建了用户，无法直接连接 catalog 节点。可以先修改 catalog 节点的配置文件中的 auth 参数，配置 auth=false 关闭 catalog 的鉴权功能，重启集群后再进行操作。
 
@@ -46,7 +48,7 @@ Sdb
 
 ##版本##
 
-v2.0 及以上版本
+v3.4 及以上版本
 
 ##示例##
 
@@ -61,5 +63,5 @@ v2.0 及以上版本
      本文使用的所有引用及链接
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
-[error_guide]:manual/FAQ/faq_sdb.md
+[faq]:manual/FAQ/faq_sdb.md
 [error_code]:manual/Manual/Sequoiadb_error_code.md

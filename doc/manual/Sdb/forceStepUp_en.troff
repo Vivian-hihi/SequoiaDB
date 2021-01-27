@@ -14,9 +14,17 @@ forceStepUp \- force the standby node to be upgraded to the primary node
 Sdb
 .SH DESCRIPTION
 .PP
-This function is used to force a standby node to be upgraded to the primary node
-in a replication group that does not meet the election conditions.
-Please use this command with caution.
+This function is used to forcibly promote the standby node to the primary node
+in a replication group that is not eligible for election.
+If the LSN of the upgraded primary node is smaller than the LSN of the original
+primary node, the previously successful operation will be rolled back, so use
+this command with caution.
+.RS
+.PP
+\f[B]Note:\f[]
+.PP
+Currently, only forced promotion in a catalog replication group is supported.
+.RE
 .SH PARAMETERS
 .PP
 .TS
@@ -27,7 +35,7 @@ T{
 T}@T{
 Name
 T}@T{
-type
+Type
 T}@T{
 Description
 T}@T{
@@ -41,13 +49,13 @@ options
 T}@T{
 object
 T}@T{
-Parameter set.
+parameter set
 T}@T{
 not
 T}
 .TE
 .PP
-options:
+options 选项：
 .PP
 .TS
 tab(@);
@@ -57,11 +65,11 @@ T{
 T}@T{
 Name
 T}@T{
-type
+Type
 T}@T{
 Description
 T}@T{
-Default
+Defaults
 T}
 _
 T{
@@ -71,7 +79,7 @@ Seconds
 T}@T{
 number
 T}@T{
-Duration of mandatory
+Duration of forced
 T}@T{
 120
 T}
@@ -79,7 +87,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
-upgrade to primary node.
+promotion to master.
 T}@T{
 T}
 .TE
@@ -87,19 +95,19 @@ T}
 .PP
 \f[B]Note:\f[]
 .IP \[bu] 2
-This function is currently only available in the catalog group.
-.IP \[bu] 2
 The primary node cannot exist in the target replication group, and the LSN of
 other nodes cannot be greater than the LSN of the target node.
+To obtain the node LSN information, please refer to [Node Health Detection
+Snapshot][SDB_SNAP_HEALTH].
 .IP \[bu] 2
-When the duration expires, all nodes will reelect according to the election
+When the duration expires, all nodes will re\-elect according to the election
 rules.
 .IP \[bu] 2
-If a user is created, the catalog node cannot be directly connected.
-Users can first modify the auth parameter in the configuration file of the
-catalog node, and configure auth=false to turn off the authentication function
-of catalog.
-Then restart the cluster before proceeding.
+If a user is created, it is not possible to connect directly to the catalog
+node.
+Users can modify the auth parameter in the configuration file of the catalog
+node first, configure auth=false to disable the authentication function of the
+catalog, and restart the cluster before proceeding.
 .RE
 .SH RETURN VALUE
 .PP
@@ -114,11 +122,11 @@ getLastError() to get the error code.
 For more details, refer to Troubleshooting.
 .SH VERSION
 .PP
-v2.0 and above
+v3.4 and above
 .SH EXAMPLES
 .PP
-Connect catalog node \f[C]hostname1:30000\f[] and force it to be promoted to
-primary node for 300s.
+Connect to the catalog node (hostname1:30000) and force it to be promoted to the
+master for 300s.
 .IP
 .nf
 \f[C]

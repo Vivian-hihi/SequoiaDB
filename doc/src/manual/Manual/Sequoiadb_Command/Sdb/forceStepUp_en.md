@@ -12,26 +12,29 @@ Sdb
 
 ##DESCRIPTION##
 
-This function is used to force a standby node to be upgraded to the primary node in a replication group that does not meet the election conditions. Please use this command with caution.
+This function is used to forcibly promote the standby node to the primary node in a replication group that is not eligible for election. If the LSN of the upgraded primary node is smaller than the LSN of the original primary node, the previously successful operation will be rolled back, so use this command with caution.
+
+>**Note:**
+>
+> Currently, only forced promotion in a catalog replication group is supported.
 
 ##PARAMETERS##
 
-|Name      |type        |Description  |Required or not |
-|--------- |----------- |------------ |----------|
-|options   |object      |Parameter set.   | not |
+| Name | Type| Description | Required or not |
+| ---- | --- | ----------- | --------------- |
+| options |object | parameter set | not |
 
-options:
+options 选项：
 
-|Name    |type      |Description                           |Default|
-|--------- |---------- |------------------------------ |--------|
-|Seconds   |number     |Duration of mandatory upgrade to primary node.   |120|
+| Name | Type| Description | Defaults |
+| ---- | --- | ----------- | --------------- |
+|Seconds   |number      | Duration of forced promotion to master. |120|
 
 > **Note:**
 >
-> * This function is currently only available in the catalog group.
-> * The primary node cannot exist in the target replication group, and the LSN of other nodes cannot be greater than the LSN of the target node.
-> * When the duration expires, all nodes will reelect according to the election rules.
-> * If a user is created, the catalog node cannot be directly connected. Users can first modify the auth parameter in the configuration file of the catalog node, and configure auth=false to turn off the authentication function of catalog. Then restart the cluster before proceeding.
+> * The primary node cannot exist in the target replication group, and the LSN of other nodes cannot be greater than the LSN of the target node. To obtain the node LSN information, please refer to [Node Health Detection Snapshot][SDB_SNAP_HEALTH].
+> * When the duration expires, all nodes will re-elect according to the election rules.
+> * If a user is created, it is not possible to connect directly to the catalog node. Users can modify the auth parameter in the configuration file of the catalog node first, configure auth=false to disable the authentication function of the catalog, and restart the cluster before proceeding.
 
 ##RETURN VALUE##
 
@@ -45,20 +48,19 @@ When the exception happens, use [getLastErrMsg()][getLastErrMsg] to get the erro
 
 ##VERSION##
 
-v2.0 and above
+v3.4 and above
 
 ##EXAMPLES##
 
-Connect catalog node `hostname1:30000` and force it to be promoted to primary node for 300s.
+Connect to the catalog node (hostname1:30000) and force it to be promoted to the master for 300s.
 
 ```lang-javascript
 > var db = new Sdb("hostname1", 30000)
 > db.forceStepUp({Seconds: 300})
 ```
 
-
 [^_^]:
-   links
+     Links
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [faq]:manual/FAQ/faq_sdb.md
