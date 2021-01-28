@@ -27,45 +27,45 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
 
  * 创建实例
 
- sdb_maria_ctl  addinst \<INSTNAME\> \<-D DATADIR\> [-l LOGFILE] [--print] [-p PORT] [-f PIDFILE] [-s SOCKETFILE] [-w PASSWORD] [-g INST_GROUP_NAME] [-k INST_GROUP_KEY]
+   sdb_maria_ctl  addinst \<INSTNAME\> \<-D DATADIR\> [-l LOGFILE] [--print] [-p PORT] [-f PIDFILE] [-s SOCKETFILE] [-w PASSWORD] [-g INST_GROUP_NAME] [-k INST_GROUP_KEY]
  
- 添加一个 myinst 的实例，指定数据库存储路径为 `/opt/sequoiasql/mariadb/database/3306/`，指定密码为 123456
+   添加一个 myinst 的实例，指定数据库存储路径为 `/opt/sequoiasql/mariadb/database/3306/`，指定密码为 123456
  
- ```lang-bash
- $ sdb_maria_ctl  addinst myinst -D /opt/sequoiasql/mariadb/database/3306/ -l /opt/sequoiasql/mariadb/database/myinst.log --print -p 3306 -f /opt/sequoiasql/mariadb/database/myinst.pid -s /opt/sequoiasql/mariadb/database/myinst.sock -w 123456
- ```
+   ```lang-bash
+   $ sdb_maria_ctl  addinst myinst -D /opt/sequoiasql/mariadb/database/3306/ -l /opt/sequoiasql/mariadb/database/myinst.log --print -p 3306 -f /opt/sequoiasql/mariadb/database/myinst.pid -s /opt/sequoiasql/mariadb/database/myinst.sock -w 123456
+   ```
  
  * 启动实例
 
- sdb_maria_ctl  start \<INSTNAME\> [--print]
+   sdb_maria_ctl  start \<INSTNAME\> [--print]
  
- ```lang-bash
- $ sdb_maria_ctl  start myinst
- ```
+   ```lang-bash
+   $ sdb_maria_ctl  start myinst
+   ```
  
  * 查看实例状态
  
- sdb_maria_ctl  status [INSTNAME]
+   sdb_maria_ctl  status [INSTNAME]
  
- ```lang-bash 
- $ sdb_maria_ctl  status myinst
- ```
+   ```lang-bash 
+   $ sdb_maria_ctl  status myinst
+   ```
  
  * 重启实例
  
- sdb_maria_ctl  restart \<INSTNAME\>
+   sdb_maria_ctl  restart \<INSTNAME\>
  
- ```lang-bash
- $ sdb_maria_ctl  restart myinst
- ```
+   ```lang-bash
+   $ sdb_maria_ctl  restart myinst
+   ```
 
  * 停止实例
  
- sdb_maria_ctl  stop \<INSTNAME\>  [--print]
+   sdb_maria_ctl  stop \<INSTNAME\>  [--print]
  
- ```lang-bash
- $ sdb_maria_ctl  stop myinst 
- ```
+   ```lang-bash
+   $ sdb_maria_ctl  stop myinst 
+   ```
  
  * 删除实例
 
@@ -93,28 +93,44 @@ sdb_maria_ctl 是 MariaDB 实例组件的管理工具。用户通过 sdb_maria_c
    $ sdb_maria_ctl  stopall
    ```
  
- * 创建一个实例并加入实例组
+ * 创建一个实例并加入[实例组][instance_group]
 
-   sdb_mysql_ctl addinst \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+   sdb_maria_ctl  addinst \<INSTNAME\> \<-D DATADIR\> [-l LOGFILE] [--print] [-p PORT] [-f PIDFILE] [-s SOCKETFILE] [-w PASSWORD] [-g INST_GROUP_NAME] [-k INST_GROUP_KEY]
+
+   先初始化一个名为“sql_group”实例组
 
    ```lang-bash
-   $ bin/sdb_sql_ctl addinst instance_name -D database/3306/ -l database/myinst.log --print -p 3306 -g group_name -k instance_group_key
+   $ ha_inst_group_init sql_group
+   ```
+
+   > **Note：**
+   >
+   > ha_inst_group_init 的使用可参考[实例组][instance_group]。
+
+   创建一个名为“inst1”的 MariaDB 实例并加入 sql_group 实例组
+
+   ```lang-bash
+   $ sdb_maria_ctl addinst inst1  -D /opt/sequoiasql/mariadb/database/3309 -p 3309 -g sql_group
    ```
 
  * 已有实例加入实例组
 
-   sdb_mysql_ctl join \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+   sdb_maria_ctl join \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+
+   将 inst2 实例加入到实例组
 
    ```lang-bash
-   $ bin/sdb_sql_ctl join instance_name -g group_name -k instance_group_key
+   $ sdb_maria_ctl join inst2 -g sql_group
    ```
 
  * 从实例组中移除实例
 
-   sdb_mysql_ctl leave \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+   sdb_maria_ctl leave \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+
+   从 sql_group 实例组中移除 inst2 实例
 
    ```lang-bash
-   $ bin/sdb_sql_ctl leave instance_name -g group_name -k instance_group_key
+   $ sdb_maria_ctl leave inst2 -g sql_group
    ```
 
 **修改实例的配置**

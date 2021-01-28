@@ -93,28 +93,44 @@ sdb_mysql_ctl 是 MySQL 实例组件的管理工具。用户通过 sdb_mysql_ctl
    $ sdb_mysql_ctl stopall
    ```
 
- * 创建一个实例并加入实例组
+ * 创建一个实例并加入[实例组][instance_group]
 
-   sdb_mysql_ctl addinst \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
+   sdb_mysql_ctl  addinst \<INSTNAME\> \<-D DATADIR\> [-l LOGFILE] [--print] [-p PORT] [-f PIDFILE] [-s SOCKETFILE] [-w PASSWORD] [-g INST_GROUP_NAME] [-k INST_GROUP_KEY]
+
+   先初始化一个名为“sql_group”实例组
 
    ```lang-bash
-   $ bin/sdb_sql_ctl addinst instance_name -D database/3306/ -l database/myinst.log --print -p 3306 -g group_name -k instance_group_key
+   $ ha_inst_group_init sql_group
+   ```
+
+   > **Note：**
+   >
+   > ha_inst_group_init 的使用可参考[实例组][instance_group]。
+
+   创建一个名为“inst1”的 MySQL 实例并加入 sql_group 实例组
+
+   ```lang-bash
+   $ sdb_mysql_ctl addinst inst1  -D /opt/sequoiasql/mysql/database/3306 -p 3306 -g sql_group
    ```
 
  * 已有实例加入实例组
 
    sdb_mysql_ctl join \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
 
+   将 inst2 实例加入到 sql_group 实例组
+
    ```lang-bash
-   $ bin/sdb_sql_ctl join instance_name -g group_name -k instance_group_key
+   $ sdb_mysql_ctl join inst2 -g sql_group
    ```
 
  * 从实例组中移除实例
- 
+
    sdb_mysql_ctl leave \<INSTANCE\> \<-g INST_GROUP_NAME\> [-k INST_GROUP_KEY] [--force]
- 
+
+   从 sql_group 实例组中移除 inst2 实例
+
    ```lang-bash
-   $ bin/sdb_sql_ctl leave instance_name -g group_name -k instance_group_key
+   $ sdb_mysql_ctl leave inst2 -g sql_group
    ```
 
 **修改实例的配置**
