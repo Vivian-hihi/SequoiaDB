@@ -52,6 +52,8 @@ SequoiaDB 集群要求
 
 为保障多节点查询匹配和监控信息的准确性，用户在使用 SequoiaPerf 监控 SequoiaDB 集群时，需要在集群所包含的所有服务器中使用 NTP 同步时钟。
 
+同时SequoiaPerf使用时序数据库来记录并保留各种事件和监控数据，为保证时序数据库中信息的连续性和准确性，部署SequoiaPerf的服务器也要求使用NTP与SequoiaDB集群服务器同步时钟。
+
 [^_^]:
     本文使用的所有引用及链接
 [cluster]:manual/Deployment/cluster_deployement.md
