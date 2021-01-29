@@ -34,70 +34,117 @@
    Please select the installation language
    [1] English - English
    [2] Simplified Chinese - 简体中文
-   Please choose an option [1] : 1
+   Please choose an option [1] : 2
    ```
 
-3. 提示指定 SequoiaPerf 安装路径，按回车，选择默认安装路径 `/opt/sequoiaperf`；输入路径后按回车表示选择自定义路径
+3. 显示安装协议，输入回车，忽略阅读并同意协议; 输入2后回车则表示查看协议详细内容
 
    ```lang-text
    ----------------------------------------------------------------------------
-   Welcome to the SequoiaPerf Server Setup Wizard.
+   由BitRock InstallBuilder评估本所建立
    
+   欢迎来到 SequoiaPerf Server 安装程序
+  
    ----------------------------------------------------------------------------
-   Please specify the directory where SequoiaPerf Server will be installed.
+   重要信息：请仔细阅读
    
-   Installation Directory [/opt/sequoiaperf]: 
+   下面提供了两个许可协议。
 
-4. 提示是否强制安装，按回车，选择不强制安装；输入y后按回车则表示选择强制安装
+
+   
+   1. SequoiaPerf 评估程序的最终用户许可协议
+   2. SequoiaPerf 最终用户许可协议
+  
+   如果被许可方为了生产性使用目的（而不是为了评估、测试、试用“先试后买”或演示）获得本程序，单击下面的“接受”按钮即表示被许可方接受 SequoiaPerf 最终用户许可协议，且不作任何修改。
+   
+   如果被许可方为了评估、测试、试用“先试后买”或演示（统称为“评估”）目的获得本程序：单击下面的“接受”按钮即表示被许可方同时接受（i）SequoiaPerf 评估程序的最终用户许可协议（“评估许可”），且不作任何修改；和（ii）SequoiaPerf 最终用户程序许可协议（SELA），且不作任何修改。
+   
+   在被许可方的评估期间将适用“评估许可”。
+   
+   如果被许可方通过签署采购协议在评估之后选择保留本程序（或者获得附加的本程序副本供评估之后使用），SequoiaPerf 评估程序的最终用户许可协议将自动适用。
+   
+   “评估许可”和 SequoiaPerf 最终用户许可协议不能同时有效；两者之间不能互相修改，并且彼此独立。
+
+   这两个许可协议中每个协议的完整文本如下。
+
+   评估程序的最终用户许可协议
+   
+   
+   
+   [1] 同意以上协议: 了解更多的协议内容，可以在安装后查看协议文件
+   [2] 查看详细的协议内容
+   请选择一个选项 [1] : 
+   ```
+
+4. 提示配置时间同步服务,输入回车，继续安装; 输入n按回车则退出安装
+   
+   ```lang-text
+   ----------------------------------------------------------------------------
+   请确认部署 SequoiaPerf 的服务器与 SequoiaDB 集群的服务器已配置时间同步服务
+   
+   是否继续安装[Y/n]
+   ```
+
+   >**Note:**
+   >
+   > 本机未安装 SequoiaDB 时会有以下提示，输入 y 继续安装，否则退出安装
+   >
+   > `----------------------------------------------------------------------------`
+   >
+   > 检测到本机未安装 SequoiaDB，可能会导致 SequoiaPerf 无法正常使用
+   >
+   > 是否继续安装 [y/N]: y
+   
+5. 提示指定 SequoiaPerf 安装路径，按回车，选择默认安装路径 `/opt/sequoiaperf`；输入路径后按回车表示选择自定义路径
 
    ```lang-text
    ----------------------------------------------------------------------------
-   Do you want to force the install? SequoiaPerf may not run properly.
+   请指定 SequoiaPerf Server 将会被安装到的目录
    
-   Force Installation when SDB doesn't exist [y/N]: y
+   安装目录 [/opt/sequoiaperf]: 
    ```
 
-5. 提示配置 Linux 用户名和用户组，该用户名用于运行 SequoiaPerf 服务，按回车，选择创建默认的用户名（sdbadmin）和用户组（sdbadmin_group）；输入用户名和用户组后按回车表示选择自定义的用户名和用户组
+6. 提示配置 Linux 用户名和用户组，该用户名用于运行 SequoiaPerf 服务，按回车，选择创建默认的用户名（sdbadmin）和用户组（sdbadmin_group）；输入用户名和用户组后按回车表示选择自定义的用户名和用户组
 
    ```lang-text
    ----------------------------------------------------------------------------
-   Configure user information
+   数据库管理用户配置
    
-   Please enter the desired username groupname and password
+   配置用于启动 SequoiaPerf 的用户名、用户组和密码
    
-   User Name [sdbadmin]: 
+   用户名 [sdbadmin]: 
    
-   Group Name [sdbadmin_group]: 
+   用户组 [sdbadmin_group]: 
    ```
 
-6. 提示配置刚才创建的 Linux 用户密码，按回车，选择使用默认密码（sdbadmin）；输入密码后按回车则表示选择自定义密码
+7. 提示配置刚才创建的 Linux 用户密码，按回车，选择使用默认密码（sdbadmin）；输入密码后按回车则表示选择自定义密码
 
    ```lang-text
-   Password [********] :
-   Re-enter [********] :
+   密码 [********] :
+   确认密码 [********] :
    ```
 
-7. 按回车，确认继续
+8. 按回车，确认继续
 
    ```lang-text
    ----------------------------------------------------------------------------
-   Setup is now ready to begin installing SequoiaPerf Server on your computer.
+   设定现在已经准备将 SequoiaDB Server 安装到您的电脑.
    
-   Do you want to continue? [Y/n]: Y
+   您确定要继续? [Y/n]:
    ```
 
-8. 安装完成
+9. 安装完成
   
    ```lang-text
    ----------------------------------------------------------------------------
-   Please wait while Setup installs SequoiaPerf Server on your computer.
+   正在安装 SequoiaPerf Server 于您的电脑中，请稍候.
    
     Installing
     0% ______________ 50% ______________ 100%
     #########################################
    
    ----------------------------------------------------------------------------
-   Setup has finished installing SequoiaPerf Server on your computer.
+   安装程序已经完成安装 SequoiaPerf Server 于你的电脑中.
    ```
 
 
