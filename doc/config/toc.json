@@ -2017,7 +2017,7 @@
                   },
                   {
                      "id": 1611539811,
-                     "file": " sequoiaperf_alert_overview_page",
+                     "file": "sequoiaperf_alert_overview_page",
                      "cn": "告警概览",
                      "en": "Alert Overview"
                   }
@@ -2077,9 +2077,9 @@
                   },
                   {
                      "id": 1611540757,
-                     "file": "sdb_perf_tool",
+                     "file": "sdb_perf_archive",
                      "cn": "归档管理工具",
-                     "en": "Backup Management Tool"
+                     "en": "Archive Management Tool"
                   }
                ]
             },
