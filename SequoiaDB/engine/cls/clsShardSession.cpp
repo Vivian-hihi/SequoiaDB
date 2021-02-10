@@ -1679,6 +1679,7 @@ namespace engine
       INT16 w = 0 ;
       INT16 clientW = pUpdate->w ;
       INT16 replSize = 0 ;
+      BOOLEAN repairCheck = FALSE ;
 
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pMatcherBuffer, &pUpdatorBuffer, &pHintBuffer );
@@ -1724,11 +1725,16 @@ namespace engine
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pUpdate->version,
-                                    &_isMainCL, &replSize, mainCLName ) ;
+                                    &_isMainCL, &replSize, mainCLName, NULL,
+                                    &repairCheck ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
+      PD_LOG_MSG_CHECK( FALSE == repairCheck, SDB_OPERATION_INCOMPATIBLE,
+                        error, PDERROR, "collection(%s) is in repair check "
+                        "status, rc: %d", pCollectionName, rc ) ;
 
       rc = _calculateW( &replSize, &clientW, w ) ;
       if ( SDB_OK != rc )
@@ -1812,6 +1818,7 @@ namespace engine
       INT16 w = 0 ;
       INT16 clientW = pInsert->w ;
       INT16 replSize = 0 ;
+      BOOLEAN repairCheck = FALSE ;
 
       rc = msgExtractInsert ( (CHAR*)msg,  &flags, &pCollectionName,
                               &pInsertorBuffer, recordNum ) ;
@@ -1845,11 +1852,16 @@ namespace engine
 
       rc = _checkCLStatusAndGetSth( pCollectionName,
                                     pInsert->version,
-                                    &_isMainCL, &replSize ) ;
+                                    &_isMainCL, &replSize, NULL, NULL,
+                                    &repairCheck ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
+      PD_LOG_MSG_CHECK( FALSE == repairCheck, SDB_OPERATION_INCOMPATIBLE,
+                        error, PDERROR, "collection(%s) is in repair check "
+                        "status, rc: %d", pCollectionName, rc ) ;
 
       rc = _calculateW( &replSize, &clientW, w ) ;
       if ( SDB_OK != rc )
@@ -1923,6 +1935,7 @@ namespace engine
       INT16 w = 0 ;
       INT16 clientW = pDelete->w ;
       INT16 replSize = 0 ;
+      BOOLEAN repairCheck = FALSE ;
 
       rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName,
                               &pMatcherBuffer, &pHintBuffer ) ;
@@ -1946,11 +1959,16 @@ namespace engine
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pDelete->version,
-                                    &_isMainCL, &replSize, mainCLName ) ;
+                                    &_isMainCL, &replSize, mainCLName, NULL,
+                                    &repairCheck ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
+      PD_LOG_MSG_CHECK( FALSE == repairCheck, SDB_OPERATION_INCOMPATIBLE,
+                        error, PDERROR, "collection(%s) is in repair check "
+                        "status, rc: %d", pCollectionName, rc ) ;
 
       rc = _calculateW( &replSize, &clientW, w ) ;
       if ( SDB_OK != rc )
@@ -2051,6 +2069,7 @@ namespace engine
 
          if ( flags & FLG_QUERY_MODIFY )
          {
+            BOOLEAN repairCheck = FALSE ;
             needRollback = TRUE ;
             rc = _checkWriteStatus() ;
             if ( SDB_OK != rc )
@@ -2063,11 +2082,15 @@ namespace engine
 
             rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
                                           &_isMainCL, &replSize,
-                                          mainCLName ) ;
+                                          mainCLName, NULL, &repairCheck ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
+
+            PD_LOG_MSG_CHECK( FALSE == repairCheck, SDB_OPERATION_INCOMPATIBLE,
+                              error, PDERROR, "collection(%s) is in repair "
+                              "check status, rc: %d", pCollectionName, rc ) ;
 
             rc = _calculateW( &replSize, &clientW, w ) ;
             if ( SDB_OK != rc )
@@ -5972,7 +5995,8 @@ namespace engine
                                                   BOOLEAN *isMainCL,
                                                   INT16 *w,
                                                   CHAR *mainCLName,
-                                                  utilCLUniqueID *clUniqueID )
+                                                  utilCLUniqueID *clUniqueID,
+                                                  BOOLEAN *repairCheck )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CHECKCLSANDGET ) ;
@@ -6006,7 +6030,7 @@ namespace engine
       }
 
       rc = _checkCLVersion( name, version, isMainCL, w, mainCLName,
-                            clUniqueID ) ;
+                            clUniqueID, repairCheck ) ;
       if ( rc )
       {
          goto error ;
@@ -6078,7 +6102,8 @@ namespace engine
                                           BOOLEAN *isMainCL,
                                           INT16 *w,
                                           CHAR *mainCLName,
-                                          utilCLUniqueID *clUniqueID )
+                                          utilCLUniqueID *clUniqueID,
+                                          BOOLEAN *repairCheck )
    {
       INT32 rc = SDB_OK ;
 
@@ -6112,6 +6137,10 @@ namespace engine
          {
             *w = 1 ;
          }
+         if ( NULL != repairCheck )
+         {
+            *repairCheck = FALSE ;
+         }
          goto done ;
       }
 
@@ -6136,6 +6165,10 @@ namespace engine
       {
          ossStrncpy( mainCLName, set->getMainCLName().c_str(),
                      DMS_COLLECTION_FULL_NAME_SZ ) ;
+      }
+      if ( NULL != repairCheck )
+      {
+         *repairCheck = set->isRepairCheck() ;
       }
       _pCatAgent->release_r () ;
       agentLocked = FALSE ;
