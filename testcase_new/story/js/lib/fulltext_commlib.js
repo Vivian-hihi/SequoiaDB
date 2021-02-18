@@ -391,10 +391,6 @@ function checkCountInES ( esIndexNames, expectCount )
          doTimes += 1;
       }
 
-      if( isSync )
-      {
-         break;
-      }
    }
 
    if( !isSync )
