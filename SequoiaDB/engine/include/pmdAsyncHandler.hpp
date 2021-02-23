@@ -98,9 +98,9 @@ namespace engine
                                   const CHAR *msg );
          virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
 
-         virtual void  handleConnect( const NET_HANDLE &handle,
-                                       _MsgRouteID id,
-                                       BOOLEAN isPositive ) ;
+         virtual INT32 handleConnect( const NET_HANDLE &handle,
+                                      _MsgRouteID id,
+                                      BOOLEAN isPositive ) ;
 
          virtual void  onStop() ;
 

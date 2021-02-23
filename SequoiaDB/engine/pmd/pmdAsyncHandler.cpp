@@ -280,7 +280,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDMSGHND_HNDCLOSE ) ;
    }
 
-   void _pmdAsyncMsgHandler::handleConnect( const NET_HANDLE &handle,
+   INT32 _pmdAsyncMsgHandler::handleConnect( const NET_HANDLE &handle,
                                             _MsgRouteID id,
                                             BOOLEAN isPositive )
    {
