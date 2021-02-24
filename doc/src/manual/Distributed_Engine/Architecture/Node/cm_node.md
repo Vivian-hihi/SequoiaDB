@@ -12,21 +12,52 @@ sdbcm 操作
   在数据库安装目录的 `conf` 子目录下，有一个 `sdbcm.conf` 的配置文件，该文件给出了启动 sdbcm 时的配置信息，如下所示：
 
 
- | 参数                  | 描述        | 示例                        |
- |-----------------------|-------------|-----------------------------|
- | defaultPort           | sdbcm 的默认监听端口 | defaultPort=11790  |
- | <hostname>_Port | 物理主机 hostname 上 sdbcm 的监听端口，若在该配置文件中找不到对应主机的参数，sdbcm 会以 defaultPort 启动；若 defaultPort 不存在，则 sdbcm 以默认端口 11790 启动                                    | &lt;hostname&gt;_Port=11790 |
- | RestartCount          | 重启次数，即定义 sdbcm 对节点的最大重启次数；该参数不存在时默认值为 -1，即不断重启                  | RestartCount=5              |
- | RestartInterval       | 重启间隔，即定义 sdbcm 的最大重启间隔，默认值为 0，即不考虑重启间隔，单位为分钟；该参数与 RestartCount 结合定义了重启间隔内 sdbcm 对节点的最大重启次数，超出时则不再重启     | RestartInterval=0           |
- | DiagLevel             | 指定诊断日志打印级别，SequoiaDB 中诊断日志从 0~5 分别代表：SEVERE、ERROR、EVENT、WARNING、INFO、DEBUG；如果不指定，则默认为 WARNING | DiagLevel=3 |
- | AutoStart             | sdbcm 启动时是否自动拉起其他节点进程，如果不指定则默认为 false，即不自动拉起其他节点进程    | AutoStart=TRUE |
- | EnableWatch           | 是否监控节点，即是否重启异常节点，如果不指定则默认为TRUE，即监控节点 | EnableWatch=TRUE |
+  | 参数                  | 描述        | 示例                        |
+  |-----------------------|-------------|-----------------------------|
+  | defaultPort           | sdbcm 的默认监听端口 | defaultPort=11790  |
+  | <hostname>_Port | 物理主机 hostname 上 sdbcm 的监听端口，若在该配置文件中找不到对应主机的参数，sdbcm 会以 defaultPort 启动；若 defaultPort 不存在，则 sdbcm 以默认端口 11790 启动                                    | &lt;hostname&gt;_Port=11790 |
+  | RestartCount          | 重启次数，即定义 sdbcm 对节点的最大重启次数；该参数不存在时默认值为 -1，即不断重启                  | RestartCount=5              |
+  | RestartInterval       | 重启间隔，即定义 sdbcm 的最大重启间隔，默认值为 0，即不考虑重启间隔，单位为分钟；该参数与 RestartCount 结合定义了重启间隔内 sdbcm 对节点的最大重启次数，超出时则不再重启     | RestartInterval=0           |
+  | DiagLevel             | 指定诊断日志打印级别，SequoiaDB 中诊断日志从 0~5 分别代表：SEVERE、ERROR、EVENT、WARNING、INFO、DEBUG；如果不指定，则默认为 WARNING | DiagLevel=3 |
+  | AutoStart             | sdbcm 启动时是否自动拉起其他节点进程，如果不指定则默认为 false，即不自动拉起其他节点进程    | AutoStart=TRUE |
+  | EnableWatch           | 是否监控节点，即是否重启异常节点，如果不指定则默认为TRUE，即监控节点 | EnableWatch=TRUE |
 
 - 启动 sdbcm
 
-  运行 `sdbcmart` 命令可以启动 sdbcm
+  运行 `sdbcmart` 命令可以启动 sdbcm，sdbcmart 命令参数说明如下：
+
+  | 参数           | 缩写 | 描述                        |
+  |----------------|----- |-----------------------------|
+  | --help         | -h   | 显示帮助信息 |
+  | -version       |      | 显示版本号   |
+  | --ignoreulimit | -i   | 跳过 ulimit 检查，当用户没有权限修改 ulimit 时使用 |
 
 - 关闭 sdbcm
 
-  运行 `sdbcmtop` 命令可以关闭 sdbcm
+  运行 `sdbcmtop` 命令可以关闭 sdbcm，sdbcmtop 命令参数说明如下：
+
+  | 参数           | 缩写 | 描述         |
+  |----------------|------|--------------|
+  | --help         | -h   | 显示帮助信息 |
+  | -version       |      | 显示版本号   |
+
+示例
+----
+
+- 启动 sdbcm
+
+  ```lang-bash
+  $ sdbcmart
+  Success: sdbcmd is already started (21606)
+  ```
+
+- 关闭 sdbcm
+
+  ```lang-bash
+  $ sdbcmtop
+  Terminating process 21608: sdbcm(11790)
+  DONE
+  Successful to stop sdbcm
+  ```
+
 
