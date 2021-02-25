@@ -24,38 +24,29 @@ sdbcm 操作
 
 - 启动 sdbcm
 
-  运行 `sdbcmart` 命令可以启动 sdbcm，sdbcmart 命令参数说明如下：
-
-  | 参数           | 缩写 | 描述                        |
-  |----------------|----- |-----------------------------|
-  | --help         | -h   | 显示帮助信息 |
-  | -version       |      | 显示版本号   |
-  | --ignoreulimit | -i   | 跳过 ulimit 检查，当用户没有权限修改 ulimit 时使用 |
-
-- 关闭 sdbcm
-
-  运行 `sdbcmtop` 命令可以关闭 sdbcm，sdbcmtop 命令参数说明如下：
-
-  | 参数           | 缩写 | 描述         |
-  |----------------|------|--------------|
-  | --help         | -h   | 显示帮助信息 |
-  | -version       |      | 显示版本号   |
-
-示例
-----
-
-- 启动 sdbcm
+  运行 `sdbcmart` 命令可以启动 sdbcm
 
   ```lang-bash
   $ sdbcmart
-  Success: sdbcmd is already started (21606)
+  Success: sdbcmd is already started (1078)
+  ```
+
+  检查 sdbcm 进程
+
+  ```lang-bash
+  $ ps -elf | grep sdbcm
+  0 S sdbadmin  1078     1  0  80   0 -  6595 hrtime 16:49 pts/0    00:00:00 sdbcmd
+  0 S sdbadmin  1080     1  0  80   0 - 124902 hrtime 16:49 pts/0   00:00:00 sdbcm(11790)
+  0 S sdbadmin  1107 28749  0  80   0 -  3669 pipe_w 16:59 pts/0    00:00:00 grep --color=auto sdbcm
   ```
 
 - 关闭 sdbcm
 
+  运行 `sdbcmtop` 命令可以关闭 sdbcm
+
   ```lang-bash
   $ sdbcmtop
-  Terminating process 21608: sdbcm(11790)
+  Terminating process 1080: sdbcm(11790)
   DONE
   Successful to stop sdbcm
   ```
