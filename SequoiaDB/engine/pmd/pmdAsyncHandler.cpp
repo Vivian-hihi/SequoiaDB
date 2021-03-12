@@ -290,6 +290,7 @@ namespace engine
          _pRemoteSessionMgr->handleConnect( handle, id, isPositive ) ;
       }
    #endif
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_ONSTOP, "_pmdAsyncMsgHandler::onStop" )
