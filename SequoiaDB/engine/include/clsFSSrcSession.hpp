@@ -312,7 +312,7 @@ namespace engine
          BOOLEAN                          _hasEndRange ;
          UINT32                           _partitionBit ;
 
-         UINT64                           _taskID ;
+         UINT32                           _locationID ;
          UINT64                           _ntyOverTime ;
          DPS_LSN_OFFSET                   _lastEndNtyOffset ;
          BOOLEAN                          _getLastEndNtyOffset ;

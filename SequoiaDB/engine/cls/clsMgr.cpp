@@ -1558,7 +1558,7 @@ namespace engine
    INT32 _clsMgr::stopTask( UINT64 taskID )
    {
       ossScopedLock lock ( &_clsLatch, SHARED ) ;
-      map< UINT64, UINT64 >::iterator it = _mapTaskID.find( taskID ) ;
+      map< UINT64, UINT32 >::iterator it = _mapTaskID.find( taskID ) ;
       if ( it != _mapTaskID.end() )
       {
          _taskMgr.stopTask( it->second ) ;
@@ -1566,11 +1566,18 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _clsMgr::addTask( UINT64 taskID, UINT32 locationID )
+   {
+      ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
+      _mapTaskID[ taskID ] = locationID ;
+      return SDB_OK ;
+   }
+
    // remove the task from local
    INT32 _clsMgr::removeTask( UINT64 taskID )
    {
       ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
-      map< UINT64, UINT64 >::iterator it = _mapTaskID.find( taskID ) ;
+      map< UINT64, UINT32 >::iterator it = _mapTaskID.find( taskID ) ;
       if ( it != _mapTaskID.end() )
       {
          _mapTaskID.erase( it ) ;
@@ -1735,9 +1742,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR__ADDTSKINSN );
-      INT32 jobType = CLS_TASK_UNKNOW ;
+      INT32 jobType = CLS_TASK_UNKNOWN ;
       _clsSplitTask *pTask = NULL ;
-      UINT32 tid = 0 ;
+      UINT32 locationID = CLS_INVALID_LOCATIONID ;
       INT32 type = CLS_SHARD ;
       UINT64 taskID = CLS_INVALID_TASKID ;
 
@@ -1749,6 +1756,11 @@ namespace engine
                     "Field[%s] invalid in task[%s]", CAT_TASKTYPE_NAME,
                     resultObj.toString().c_str() ) ;
          jobType = ele.numberInt () ;
+
+         rc = rtnGetNumberLongElement( resultObj, FIELD_NAME_TASKID,
+                                       (INT64&) taskID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Field[%s] invalid in task[%s]",
+                      FIELD_NAME_TASKID, resultObj.toString().c_str() ) ;
       }
       catch ( std::exception &e )
       {
@@ -1760,7 +1772,6 @@ namespace engine
       switch ( jobType )
       {
          case CLS_TASK_SPLIT :
-            taskID = _taskMgr.getTaskID() ;
             // memory will be freed in clsTaskMgr destructor
             pTask = SDB_OSS_NEW _clsSplitTask ( taskID ) ;
             type = CLS_SHARD ;
@@ -1791,7 +1802,8 @@ namespace engine
       }
 
       //add to taskMgr, the task will delete in taskMgr whether suc or failed
-      rc = _taskMgr.addTask( pTask, taskID ) ;
+      locationID = _taskMgr.getLocationID() ;
+      rc = _taskMgr.addTask( pTask, locationID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to add task, rc = %d", rc ) ;
@@ -1799,13 +1811,10 @@ namespace engine
          goto error ;
       }
 
-      _clsLatch.get() ;
-      _mapTaskID[ pTask->taskID() ] = taskID ;
-      _clsLatch.release() ;
+      addTask( pTask->taskID(), locationID ) ;
 
       //start inner session
-      tid = (UINT32)taskID ;
-      rc = startInnerSession ( type, tid, (void *)pTask ) ;
+      rc = startInnerSession ( type, locationID, (void *)pTask ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to start inner session, rc = %d",
