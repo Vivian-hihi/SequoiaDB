@@ -1224,6 +1224,7 @@ namespace engine
 #endif // SDB_ENGINE
 
    static OSS_THREAD_LOCAL _pmdEDUCB *__eduCB ;
+   extern OSS_THREAD_LOCAL IExecutor *__executor ;
 
    _pmdEDUCB *pmdGetThreadEDUCB ()
    {
@@ -1232,12 +1233,14 @@ namespace engine
 
    _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p )
    {
+      __executor = p ;
       __eduCB = p ;
       return __eduCB ;
    }
 
    void pmdUndeclareEDUCB ()
    {
+      __executor = NULL ;
       __eduCB = NULL ;
    }
 
