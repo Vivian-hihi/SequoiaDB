@@ -7,15 +7,15 @@
 arrayAccess \- 将结果集保存到数组中并获取指定下标的记录
 .SH 语法
 .PP
-\f[B]cursor.arrayAccess( <index> )\f[]
+\f[B]cursor.arrayAccess(<index>)\f[]
 .PP
-\f[B]cursor[ <index> ]\f[]
+\f[B]cursor[<index>]\f[]
 .SH 类别
 .PP
 SdbCursor
 .SH 描述
 .PP
-该函数用于先将结果集保存到数组中，然后获取指定下标的记录，下标从 0 开始。
+该函数用于从保存结果集的数组中，获取指定下标的记录。
 .SH 参数
 .IP \[bu] 2
 \f[C]index\f[] ( \f[I]Number\f[]， \f[I]必填\f[] )
@@ -25,8 +25,7 @@ SdbCursor
 .RE
 .SH 返回值
 .PP
-函数执行成功时，将返回一个 String
-类型的对象。通过该对象获取查询结果的详细信息列表。
+函数执行成功时，将返回一条 String 类型的记录。
 .PP
 函数执行失败时，将抛异常并输出错误信息。
 .SH 错误

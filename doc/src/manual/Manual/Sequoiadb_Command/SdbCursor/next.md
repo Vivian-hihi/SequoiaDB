@@ -39,24 +39,23 @@ v3.0 及以上版本
 
 ## 示例
 
-* 选择集合 employee 下 age 大于8的记录，返回当前游标指向的下一条记录
+选择集合 employee 下 age 大于8的记录，返回当前游标指向的下一条记录
 
- ```lang-javascript
-> var cur = db.sample.employee.find( { age: { $gt: 8 } } )
-> var obj = cur.next;
-> if(obj == null){
-          println("No record!");
-  }else{
-          println("Record is:" + obj);
+```lang-javascript
+> var cur = db.sample.employee.find({age:{$gt:8}})
+> var obj = cur.next();
+> if (obj == null) {
+      println ("No record!");
+  } else {
+        println ("Record is:" + obj);
+    }
+  Record is:{
+    "_id":{
+      "$oid": "60470a4db354306ff89cd355"
+    },
+  "a": 9
   }
-   Record is:{
-   "_id": {
-       "$oid": "60470a4db354306ff89cd355"
-   },
-   "a": 9
-   }
-   Takes 0.003188s.
- ```
+```
 
 [^_^]:
      本文使用的所有引用及链接
