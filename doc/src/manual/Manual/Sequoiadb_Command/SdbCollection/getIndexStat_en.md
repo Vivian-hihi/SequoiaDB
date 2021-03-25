@@ -52,4 +52,4 @@ v3.4.2 and above
      本文使用的所有引用及链接
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
-[faq]:manual/faq.md
+[faq]:manual/FAQ/faq_sdb.md

@@ -154,5 +154,5 @@ v1.0 及以上版本。
      本文使用的所有引用及链接
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
-[error_guide]:manual/faq.md
+[error_guide]:manual/FAQ/faq_sdb.md
 [auto-increment]:manual/Distributed_Engine/Architecture/Data_Model/sequence.md

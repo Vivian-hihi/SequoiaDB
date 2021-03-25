@@ -84,5 +84,5 @@ v3.4.2 及以上版本
 [analyze]:manual/Manual/Sequoiadb_Command/Sdb/analyze.md
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
-[faq]:manual/faq.md
+[faq]:manual/FAQ/faq_sdb.md
 [SDB_SNAP_INDEXSTATS]:manual/Manual/Snapshot/SDB_SNAP_INDEXSTATS.md
