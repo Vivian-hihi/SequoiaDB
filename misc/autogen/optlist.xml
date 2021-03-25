@@ -2362,7 +2362,6 @@
              ● "NOSPC": Insufficient disk space<fig></fig>
              ● "DEADSYNC": Node data is out of sync<fig></fig>
              ● "SLOWNODE": Node data synchronization is too slow<fig></fig>
-             ● "TRANSERR": Node transaction exception<fig></fig>
              ● "ALL": Turn on all fault tolerance processing<fig></fig>
              ● "NONE": Turn off all fault tolerance processing
          </en>
@@ -2370,7 +2369,6 @@
              ● "NOSPC"：磁盘空间不足<fig></fig>
              ● "DEADSYNC"：节点数据不同步<fig></fig>
              ● "SLOWNODE"：节点数据同步过慢<fig></fig>
-             ● "TRANSERR"：节点事务异常<fig></fig>
              ● "ALL"：开启所有容错处理<fig></fig>
              ● "NONE"：关闭所有容错处理
          </cn>
