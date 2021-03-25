@@ -2350,22 +2350,8 @@
       <name>PMD_OPTION_FT_MASK</name>
       <long>ftmask</long>
       <description>
-         <en>Specify the mask for enabling fault tolerance processing, the default value is "NOSPC|DEADSYNC"，and the values are as follows:<fig></fig>
-             ● "NOSPC": Insufficient disk space<fig></fig>
-             ● "DEADSYNC": Node data is out of sync<fig></fig>
-             ● "SLOWNODE": Node data synchronization is too slow<fig></fig>
-             ● "TRANSERR": Node transaction exception<fig></fig>
-             ● "ALL": Turn on all fault tolerance processing<fig></fig>
-             ● "NONE": Turn off all fault tolerance processing
-         </en>
-         <cn>指定开启容错处理的掩码，默认值为"NOSPC|DEADSYNC"，取值如下：<fig></fig>
-             ● "NOSPC"：磁盘空间不足<fig></fig>
-             ● "DEADSYNC"：节点数据不同步<fig></fig>
-             ● "SLOWNODE"：节点数据同步过慢<fig></fig>
-             ● "TRANSERR"：节点事务异常<fig></fig>
-             ● "ALL"：开启所有容错处理<fig></fig>
-             ● "NONE"：关闭所有容错处理
-         </cn>
+         <en>Fault-tolerant mask,default:NOSPC|DEADSYNC,value list: NOSPC,DEADSYNC,SLOWNODE, use '|' join multiple values, ALL enable all mask, NONE disable all mask</en>
+         <cn>容错掩码,默认值:NOSPC|DEADSYNC,取值列表为: NOSPC,DEADSYNC,SLOWNODE, 使用'|'连接多个取值, ALL取值表示开启所有, NONE关闭全部</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
