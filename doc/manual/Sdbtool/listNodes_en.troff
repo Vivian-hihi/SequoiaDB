@@ -5,16 +5,16 @@
 .hy
 .SH NAME
 .PP
-listNodes \- Display node information.
+listNodes \- Enumerate node information
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]Sdbtool.listNodes( [options], [filter], [rootPath] )\f[]\f[]
+\f[B]Sdbtool.listNodes( [options], [filter] )\f[]
 .SH CATEGORY
 .PP
 Sdbtool
 .SH DESCRIPTION
 .PP
-Display node information.
+This function is used to enumerate node information.
 .SH PARAMETERS
 .PP
 .TS
@@ -39,7 +39,7 @@ T{
 T}@T{
 options
 T}@T{
-JSON
+object
 T}@T{
 display information
 T}@T{
@@ -85,7 +85,7 @@ T{
 T}@T{
 filter
 T}@T{
-JSON
+object
 T}@T{
 display all information
 T}@T{
@@ -99,28 +99,6 @@ T}@T{
 T}@T{
 by default
 T}@T{
-T}@T{
-T}
-T{
-3
-T}@T{
-rootPath
-T}@T{
-JSON
-T}@T{
-system configuration
-T}@T{
-specify the
-T}@T{
-not
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-filepath
-T}@T{
-configuration file path
 T}@T{
 T}
 .TE
@@ -153,7 +131,7 @@ string
 T}@T{
 db
 T}@T{
-{ type: "all" }
+{ type: "all" }{
 T}@T{
 display information
 T}
@@ -162,7 +140,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ type: "db" }
+type: "db" }{ type:
 T}@T{
 about all nodes
 T}
@@ -171,7 +149,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ type: "om" }
+"om" }{ type: "cm"
 T}@T{
 display information
 T}
@@ -180,7 +158,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ type: "cm" }
+}
 T}@T{
 about data nodes,
 T}
@@ -190,7 +168,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-coordination nodes 
+coordination nodes and
 T}
 T{
 T}@T{
@@ -198,7 +176,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-and catalog nodes
+catalog nodes
 T}
 T{
 T}@T{
@@ -241,7 +219,7 @@ string
 T}@T{
 run
 T}@T{
-{ mode: "run" }
+{ mode: "run" }{
 T}@T{
 display infomation
 T}
@@ -250,7 +228,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ mode: "local" }
+mode: "local" }
 T}@T{
 about running nodes
 T}
@@ -287,7 +265,7 @@ string
 T}@T{
 \-\-\-
 T}@T{
-{ role: "data" }
+{ role: "data" }{
 T}@T{
 display infomation
 T}
@@ -296,7 +274,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ role: "coord" }
+role: "coord" }{
 T}@T{
 about data nodes
 T}
@@ -305,7 +283,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ role: "catalog" }
+role: "catalog" }{
 T}@T{
 display infomation
 T}
@@ -314,16 +292,15 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ role: "standalone" }
+role: "standalone" }
 T}@T{
-about coordination nodes
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ role: "om" }
+>{ role: "om" }{
 T}@T{
 display infomation
 T}
@@ -332,7 +309,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ role: "cm" }
+role: "cm" }
 T}@T{
 about catalog nodes
 T}
@@ -350,7 +327,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-about standalone nodes
+about standalone nodes<
 T}
 T{
 T}@T{
@@ -358,7 +335,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-display infomation
+br>display infomation
 T}
 T{
 T}@T{
@@ -418,7 +395,7 @@ T{
 T}@T{
 showalone
 T}@T{
-bool
+boolean
 T}@T{
 false
 T}@T{
@@ -456,11 +433,11 @@ T{
 T}@T{
 expand
 T}@T{
-bool
+boolean
 T}@T{
 false
 T}@T{
-{ expand: true }
+{ expand: true }{
 T}@T{
 whether to display
 T}
@@ -469,7 +446,7 @@ T}@T{
 T}@T{
 T}@T{
 T}@T{
-{ expand: false }
+expand: false }
 T}@T{
 detailed extended
 T}
@@ -482,35 +459,38 @@ T}@T{
 configuration
 T}
 .TE
-
-Note:
-.RE
-.IP "1." 3
+.RS
+.PP
+\f[B]Note:\f[]
+.IP \[bu] 2
 Cm node has a standalone startup mode.
 In addition to the current cm node, you can also start a cm node as a temporary
 cm node in standalone mode(start the cm node to specify the standalone
 parameter) and the cm node\[aq]s default survival time is 5 minutes.
-.RE
-.IP "2." 3
+.IP \[bu] 2
 When specifying multiple svcnames, you can separate the svcnames with ",".
-.RE
-.IP "3." 3
+.IP \[bu] 2
 The optional parameter filterObj supports the AND, the OR, the NOT and exact
 matching of some fields in the result, and the result set is filtered.
 .RE
 .SH RETURN VALUE
 .PP
-On success, return rearch result set.
+When the function executes successfully, it will return a detailed list of
+collections through the cursor.
 .PP
-On error, exception will be thrown.
+When the function fails, an exception will be thrown and an error message will
+be printed.
 .SH ERRORS
 .PP
-when exception happen, use getLastError() to get the error code and use
-getLastErrMsg() to get error message.
-For more detial, please reference to Troubleshooting.
+When the exception happens，use getLastErrMsg() to get the error message or use
+getLastError() to get the error code.
+For more details, refer to Troubleshooting.
+.SH VERSION
+.PP
+v3.2 and above
 .SH EXAMPLES
 .IP \[bu] 2
-Display node information.
+Display node information
 .IP
 .nf
 \f[C]

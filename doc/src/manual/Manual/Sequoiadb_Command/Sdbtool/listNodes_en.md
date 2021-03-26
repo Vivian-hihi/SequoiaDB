@@ -1,11 +1,11 @@
 
 ##NAME##
 
-listNodes - Display node information.
+listNodes - Enumerate node information
 
 ##SYNOPSIS##
 
-***Sdbtool.listNodes( [options], [filter], [rootPath] )***
+**Sdbtool.listNodes( [options], [filter] )**
 
 ##CATEGORY##
 
@@ -13,15 +13,14 @@ Sdbtool
 
 ##DESCRIPTION##
 
-Display node information.
+This function is used to enumerate node information.
 
 ##PARAMETERS##
 
 | Name     | Type     | Default | Description | Required or not |
 | -------- | -------- | ------- | ----------- | --------------- |
-| options  | JSON     | display information about data nodes, coordination nodes and catalog nodes by default | display specified type node | not |
-| filter   | JSON     | display all information by default | Filtered conditions | not |
-| rootPath | JSON     | system configuration filepath | specify the configuration file path | not |
+| options  | object     | display information about data nodes, coordination nodes and catalog nodes by default | display specified type node | not |
+| filter   | object     | display all information by default | Filtered conditions | not |
 
 The detail description of 'options' parameter is as follow:
 
@@ -31,30 +30,32 @@ The detail description of 'options' parameter is as follow:
 | mode       | string | run | { mode: "run" }<br>{ mode: "local" } | display infomation about running nodes<br>display infomation about local nodes whether run or not | 
 | role       | string | --- | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | display infomation about data nodes<br>display infomation about coord nodes<br>display infomation about catalog nodes<br>display infomation about standalone nodes<br>display infomation about om node<br>display infomation about cm node |
 | svcname    | string | --- | { svcname: "11790" } | display node information of the specified port | 
-| showalone  | bool   | false | { showalone: true }<br>{ showalone: false } | whether to diplay information about the cm node started in standalone mode |
-| expand     | bool   | false | { expand: true }<br>{ expand: false } | whether to display detailed extended configuration |
+| showalone  | boolean   | false | { showalone: true }<br>{ showalone: false } | whether to diplay information about the cm node started in standalone mode |
+| expand     | boolean   | false | { expand: true }<br>{ expand: false } | whether to display detailed extended configuration |
 
->Note:
-
->1. Cm node has a standalone startup mode. In addition to the current cm node, you can also start a cm node as a temporary cm node in standalone mode(start the cm node to specify the standalone parameter) and the cm node's default survival time is 5 minutes. 
-
->2. When specifying multiple svcnames, you can separate the svcnames with ",".
-
->3. The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
+   >**Note:**
+   >
+   > - Cm node has a standalone startup mode. In addition to the current cm node, you can also start a cm node as a temporary cm node in standalone mode(start the cm node to specify the standalone parameter) and the cm node's default survival time is 5 minutes. 
+   > - When specifying multiple svcnames, you can separate the svcnames with ",".
+   > - The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
 ##RETURN VALUE##
 
-On success, return rearch result set.
+When the function executes successfully, it will return a detailed list of collections through the cursor.
 
-On error, exception will be thrown.
+When the function fails, an exception will be thrown and an error message will be printed.
 
 ##ERRORS##
 
-when exception happen, use [getLastError()](manual/Manual/Sequoiadb_command/Global/getLastError.md) to get the [error code](manual/Manual/Sequoiadb_error_code.md)  and use [getLastErrMsg()](manual/Manual/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](manual/Manual/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](manual/FAQ/faq_sdb.md).
+When the exception happens，use [getLastErrMsg()][getLastErrMsg] to get the error message or use [getLastError()][getLastError] to get the error code. For more details, refer to [Troubleshooting][error_guide].
+
+##VERSION##
+
+v3.2 and above
 
 ##EXAMPLES##
 
-* Display node information.
+* Display node information
 
 ```lang-javascript
 > Sdbtool.listNodes( { type: "all", mode: "local", role: "data", svcname: "20000, 40000" } )
@@ -104,3 +105,9 @@ when exception happen, use [getLastError()](manual/Manual/Sequoiadb_command/Glob
   "dbpath": "/opt/trunk/database/40000/"
 }
 ```
+
+[^_^]:
+     Links
+[getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
+[getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
+[error_guide]:manual/faq.md
