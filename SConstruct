@@ -276,6 +276,9 @@ add_option( "fap", "foreign access protocol", 0, False )
 #enterprise options
 add_option( "enterprise", "build enterprise sequoiadb ( with SSL )", 0, False )
 
+#index story development options
+add_option( "indexdev", "index story development", 0, False )
+
 #gprof option
 add_option("gprof", "enable gprofile for sequoiadb", 0, False)
 
@@ -399,6 +402,7 @@ if guess_os == "win32":
 else:
     hasFap = has_option("fap")
 hasEnterprise = has_option("enterprise")
+hasIndexDev = has_option("indexdev")
 hasGProf = has_option("gprof")
 hasSSL = False
 
@@ -406,6 +410,10 @@ hasSSL = False
 if hasEnterprise:
    hasSSL = True
    env.Append( CPPDEFINES=[ "SDB_ENTERPRISE" ] )
+
+# build index story development edition
+if hasIndexDev:
+   env.Append( CPPDEFINES=[ "SDB_INDEX_DEVELOPMENT" ] )
 
 # if everything are set, let's set everything to true
 if hasAll:
