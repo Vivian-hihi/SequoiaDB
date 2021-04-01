@@ -397,8 +397,6 @@ function checkDiskIO ( info, result, cmd )
          for( var j = 0; j < result.length; j++ )
          {
             var fs = readlink( cmd, disks[i].Filesystem );
-
-
             if( fs === "/dev/" + result[j].diskName ||
                fs === result[j].diskName )
             {
@@ -431,8 +429,6 @@ function readlink ( cmd, fs )
    }
    catch( e )
    {
-
-
       if( e.message == 1 ) return fs;
       else
       {
