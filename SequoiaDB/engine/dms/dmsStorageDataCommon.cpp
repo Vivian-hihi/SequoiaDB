@@ -2208,6 +2208,7 @@ namespace engine
                    "Invalid meta extent[%d]", mbExExtent ) ;
          mbExtent->init( mbExSize, newCollectionID, segNum ) ;
          mb->_mbExExtentID = mbExExtent ;
+         // reset to avoid duplicated release
          mbExExtent = DMS_INVALID_EXTENT ;
       }
 
@@ -2215,6 +2216,8 @@ namespace engine
                              optExtSize, newCollectionID ) ;
       PD_RC_CHECK( rc, PDERROR, "onAddCollection operation failed: %d", rc ) ;
       mb->_mbOptExtentID = mbOptExtent ;
+      // reset to avoid duplicated release
+      mbOptExtent = DMS_INVALID_EXTENT ;
 
       // lock mb context before release meta lock
       rc = getMBContext( &context, newCollectionID, logicalID, logicalID,
