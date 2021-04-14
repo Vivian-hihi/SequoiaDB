@@ -27,6 +27,7 @@ class TestAuth24073( utils.TestBase ):
       self.result = self.db.command( { "usersInfo": 1 } )
       self.assertEqual( self.result, {'users': [], 'ok': 1.0} )
          
+   ''' jira-6980
    def test_user_auth( self ):
       self.result = self.db.command("createUser","admin", pwd="admin",roles=["read"])
       self.assertEqual( self.result, {'ok': 1} )      
@@ -35,7 +36,6 @@ class TestAuth24073( utils.TestBase ):
       self.assertEqual( self.result, {'users': [], 'ok': 1.0} )
    
 
-      ''' jira-6980
       # createUser
       result = db.command("createUser","admin",pwd="admin",roles=["read"])
       print( result )
@@ -57,4 +57,4 @@ class TestAuth24073( utils.TestBase ):
       result = db.command("dropUser","admin")
       print( result )
       assert result == {'users': [], 'ok': 1.0}
-      '''
+   '''
