@@ -3626,6 +3626,10 @@ namespace engine
                    "main-collection [%s] has no sub-collection!",
                    pCollectionName ) ;
       }
+      else if ( subCLList.empty() )
+      {
+         goto done ;
+      }
 
       // check write status is needed
       if ( isWrite )
