@@ -1,4 +1,4 @@
-package com.sequoiadb.explain;
+package com.sequoiadb.explain.serial;
 
 import java.util.ArrayList;
 import java.util.List;
