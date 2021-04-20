@@ -1900,9 +1900,9 @@ namespace engine
          }
       }
 
-      if ( configObj.hasField( "Group" ) )
+      if ( configObj.hasField( "additionGroup" ) )
       {
-         if ( String != configObj.getField( "Group" ).type() )
+         if ( String != configObj.getField( "additionGroup" ).type() )
          {
             rc = SDB_INVALIDARG ;
             err = "Group must be string" ;
@@ -1910,7 +1910,7 @@ namespace engine
          }
          else
          {
-            cmd << " -G " << configObj.getStringField( "Group" ) ;
+            cmd << " -G " << configObj.getStringField( "additionGroup" ) ;
          }
       }
 
@@ -2134,9 +2134,9 @@ namespace engine
          }
       }
 
-      if ( configObj.hasField( "Group" ) )
+      if ( configObj.hasField( "additionGroup" ) )
       {
-         if ( String != configObj.getField( "Group" ).type() )
+         if ( String != configObj.getField( "additionGroup" ).type() )
          {
             rc = SDB_INVALIDARG ;
             err = "Group must be string" ;
@@ -2145,7 +2145,7 @@ namespace engine
          else
          {
             cmd << " -G "
-                << configObj.getStringField( "Group" ) ;
+                << configObj.getStringField( "additionGroup" ) ;
 
 
             if ( TRUE == configObj.getBoolField( "isAppend" ) )

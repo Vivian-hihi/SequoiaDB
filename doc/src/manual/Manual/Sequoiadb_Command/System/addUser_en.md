@@ -1,51 +1,79 @@
 
-##NAME##
+## NAME
 
-addUser - Add a system user
+addUser - add an operating system user
 
-##SYNOPSIS##
+## SYNOPSIS
 
-***System.addUser( \<users\> )***
+**System.addUser(\<users\>)**
 
-##CATEGORY##
+## CATEGORY
 
 System
 
-##DESCRIPTION##
+## DESCRIPTION
 
-Add a system user
+This function is used to add an operating system user.
 
-##PARAMETERS##
+## PARAMETERS
 
-| Name      | Type     | Default | Description         | Required or not |
-| ------- | -------- | ------------ | ---------------- | -------- |
-| users | JSON   | ---    |  user information  | yes   |
+users ( *object, required* )
 
-The detail description of 'users' parameter is as follow:
+The user's attributes can be set through the users parameter:
 
-| Attributes | Type    | Required or not | Format  | Description         |
-| ---------- | ------- |---------------- | ------- | ---------------- |
-| name    | string |   yes  | { "name": newUser }     | user name  |
-| group    | string |  not   | { "group": groupname }     | user group name  |
+- name ( *string* ): User name. This parameter is required.
 
-**Note:**
+    Format: `name: "username"`
 
-The group parameter must be an existing user group. If not specified, a user group with the same name as the name parameter is created by default.
+- group ( *string* ): Specify user group.
 
-##RETURN VALUE##
+    This parameter must be specified as an existing user group. If not specified, a user group with the same name as the parameter name will be created by default.
 
-On success, return void.
+    Format: `group: "groupName"`
 
-On error, exception will be thrown.
+- additionGroup ( *string* ): Specify additional groups.
 
-##ERRORS##
+    This parameter must be specified as an existing user group.
 
-when exception happen, use [getLastError()](manual/Manual/Sequoiadb_command/Global/getLastError.md) to get the [error code](manual/Manual/Sequoiadb_error_code.md)  and use [getLastErrMsg()](manual/Manual/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](manual/Manual/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](manual/FAQ/faq_sdb.md).
+    Format: `additionGroup: "groupName"`
 
-##EXAMPLES##
+- createDir ( *boolean* ): Whether to create a user directory, the default is false.
 
-* Add a user
+    Format: `createDir: true`
+
+- dir ( *string* ): Specify the user directory, which takes effect only when the parameter createDir is true.
+
+    This parameter cannot specify an existing directory. If not specified, a directory with the same name as the parameter name will be created in the `/home` directory as the user directory.
+
+    Format: `dir: "userHomeDir"`
+
+## RETURN VALUE
+
+When the function executes successfully, there is no return value.
+
+When the function fails, an exception will be thrown and an error message will be printed.
+
+## ERRORS
+
+When the exception happens，use [getLastErrMsg()][getLastErrMsg] to get the error message or use [getLastError()][getLastError] to get the [error code][error_code]. For more details, refer to [Troubleshooting][faq].
+
+## VERSION
+
+v3.2 and above
+
+## EXAMPLES
+
+Add a new system user named "newUser". Specify the user group as root, and create a user directory `/home/newUser`.
 
 ```lang-javascript
-> System.addUser( { "name": "newUser", "group": "root" } )
+> System.addUser({name: "newUser", group: "root", createDir: true, dir: "/home/newUser"})
 ```
+
+
+
+[^_^]:
+    links
+[getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
+[getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
+[error_code]:manual/Manual/Sequoiadb_error_code.md
+[faq]:manual/FAQ/faq_sdb.md
