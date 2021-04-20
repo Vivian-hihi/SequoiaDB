@@ -432,15 +432,23 @@ COMMENT [=] "[string,] sequoiadb:{ [table_options:{...}, partition_options:{...}
 
 ## MySQL常用系统配置
 
-| 参数名                 | 类型   | 动态生效 | 动态范围   | 默认值  | 说明 |
+| 参数名                  | 类型   | 动态生效  | 动态范围    | 默认值   | 说明 |
 | ---------------------- | ----   | -------- | ---------- | ------- | ---- |
 | max_connections        | int32  | Yes | Global          | 1024    | 客户端最大连接数 |
 | max_prepared_stmt_count| int32  | Yes | Global          | 128000  | 最大预编译语句数 |
-| sql_mode               | set    | Yes | Global,Session | STRICT_TRANS_TABLES,<br>ERROR_FOR_DIVISION_BY_ZERO,<br>NO_AUTO_CREATE_USER,<br>NO_ENGINE_SUBSTITUTION | SQL 模式，取值意义可参考 [MySQL SQL 模式][sql_mode] |
-| character_set_server   | string | Yes | Global,Session | utf8mb4 | 默认字符集 |
-| collation_server       | string | Yes | Global,Session | utf8mb4_bin | 默认校对集 |
-| default_storage_engine | string | Yes | Global,Session | SequoiaDB | 默认存储引擎 |
+| sql_mode               | set    | Yes | Global,Session  | STRICT_TRANS_TABLES,<br>ERROR_FOR_DIVISION_BY_ZERO,<br>NO_AUTO_CREATE_USER,<br>NO_ENGINE_SUBSTITUTION | SQL 模式，取值意义可参考 [MySQL SQL 模式][sql_mode] |
+| character_set_server   | string | Yes | Global,Session  | utf8mb4 | 默认字符集 |
+| collation_server       | string | Yes | Global,Session  | utf8mb4_bin | 默认校对集 |
+| default_storage_engine | string | Yes | Global,Session  | SequoiaDB | 默认存储引擎 |
 | lower_case_table_names | int32  | No  | Global          | 0       | 表名大小写策略，取 0 时，大小写敏感；取 1 时，所有表名均以小写存储；取 2 时，表名以原样存储，但以小写进行比较 |
+| transaction_isolation  | enum   | Yes | Global,Session  | REPEATABLE-READ | 事务隔离级别 |
+
+**transaction_isolation**
+
+该参数可以配置 MySQL 实例的事务隔离级别，具体参数含义和取值可参考 [MySQL 事务隔离级别配置][trans_isolation]。
+MySQL 实例会话会自动读取该配置值，设置连接到 SequoiaDB 的会话属性，来保证两者事务隔离级别的一致。
+3.2.x/3.4.x 系列 SequoiaDB 版本不支持 RR 隔离级别，因此，如果 MySQL 实例配置为 REPEATABLE-READ 隔离级别，
+连接到 SequoiaDB 的会话会自动降级到 READ-COMMITTED 事务隔离级别。
 
 > **Note:**
 >
@@ -459,3 +467,4 @@ COMMENT [=] "[string,] sequoiadb:{ [table_options:{...}, partition_options:{...}
 [count]:manual/Manual/Sequoiadb_Command/SdbCollection/count.md
 [setSessionAttr]:manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md
 [sql_mode]:https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html
+[trans_isolation]:https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html
