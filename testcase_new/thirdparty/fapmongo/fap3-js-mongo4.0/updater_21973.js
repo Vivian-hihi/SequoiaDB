@@ -59,11 +59,12 @@ function main ()
    var rc = cl.update( { "$or": [{ "_id": 11 }, { "a": 12 }] }, { "$set": { "b": 11 } }, { "upsert": true } );
    assert.eq( JSON.stringify( rc ).indexOf( '"nMatched": 0, "nUpserted": 1, "nModified": 0, "_id": ObjectId' ), -1 );
    checkResults( cl.find( {}, { "_id": 0 } ), "[{\"a\":1,\"b\":2,\"c\":1},{\"a\":2,\"b\":\"test\",\"c\":1},{\"a\":3,\"b\":1},{\"a\":7},{\"b\":11}]" );
+   cl.remove( { "b": 11 } )
 
    // upsert: true, matcher is object
    var rc = cl.update( { "_id": MaxKey() }, { "$set": { "b": 13 } }, { "upsert": true } );
    assert.eq( JSON.stringify( rc ).indexOf( '"nMatched": 0, "nUpserted": 1, "nModified": 0, "_id": ObjectId' ), -1 );
-   checkResults( cl.find( {}, { "_id": 0 } ), "[{\"a\":1,\"b\":2,\"c\":1},{\"a\":2,\"b\":\"test\",\"c\":1},{\"a\":3,\"b\":1},{\"a\":7},{\"b\":11},{\"b\":13}]" );
+   checkResults( cl.find( {} ), "[{\"_id\":1,\"a\":1,\"b\":2,\"c\":1},{\"_id\":2,\"a\":2,\"b\":\"test\",\"c\":1},{\"_id\":3,\"a\":3,\"b\":1},{\"_id\":7,\"a\":7},{\"_id\":{\"$maxKey\":1},\"b\":13}]" );
 
    cl.remove( {} );
 

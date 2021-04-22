@@ -59,11 +59,12 @@ function main ()
    var rc = cl.update( { "$or": [{ "_id": 11 }, { "a": 12 }] }, { "$set": { "b": 11 } }, { "upsert": true } );
    assert.eq( JSON.stringify( rc ).indexOf( '"nMatched": 0, "nUpserted": 1, "nModified": 0, "_id": ObjectId' ), -1 );
    checkResults( cl.find( {}, { "_id": 0 } ), "[{\"a\":1,\"b\":2,\"c\":1},{\"a\":2,\"b\":\"test\",\"c\":1},{\"a\":3,\"b\":1},{\"a\":7},{\"b\":11}]" );
+   cl.remove( { "b": 11 } )
 
    // upsert: true, matcher is object
    var rc = cl.update( { "_id": MaxKey() }, { "$set": { "b": 13 } }, { "upsert": true } );
    assert.eq( JSON.stringify( rc ).indexOf( '"nMatched": 0, "nUpserted": 1, "nModified": 0, "_id": ObjectId' ), -1 );
-   checkResults( cl.find( {}, { "_id": 0 } ), "[{\"a\":1,\"b\":2,\"c\":1},{\"a\":2,\"b\":\"test\",\"c\":1},{\"a\":3,\"b\":1},{\"a\":7},{\"b\":11},{\"b\":13}]" );
+   checkResults( cl.find( {} ), "[{\"_id\":1,\"a\":1,\"b\":2,\"c\":1},{\"_id\":2,\"a\":2,\"b\":\"test\",\"c\":1},{\"_id\":3,\"a\":3,\"b\":1},{\"_id\":7,\"a\":7},{\"_id\":{},\"b\":13}]" );
 
    cl.remove( {} );
 
@@ -107,15 +108,15 @@ function main ()
    var rc = cl.update( { "_id": 2 }, { "$set": { "a": 2 }, "$inc": { "b": 2 }, "$setOnInsert": { "c": 2 } }, { "upsert": true } );
    assert.eq( rc.nUpserted, 1 );
    // check results
-   var rc = cl.find();
-   checkResults( rc, ["[{\"_id\":1,\"a\":1,\"b\":1},{\"_id\":2,\"a\":2,\"b\":2,\"c\":2}]"] );
+   var rc = cl.find( {}, { "_id": 0, "a": 1, "b": 1, "c": 1 } );
+   checkResults( rc, "[{\"a\":1,\"b\":1},{\"a\":2,\"b\":2,\"c\":2}]" );
 
    // doc exist, upsert:true
    var rc = cl.update( { "a": 1 }, { "$set": { "a": 3 }, "$inc": { "b": 3 }, "$setOnInsert": { "notExist": 3 } }, { "upsert": true } );
    assert.eq( rc, { "nMatched": 1, "nUpserted": 0, "nModified": 1 } );
    // check results
-   var rc = cl.find( {}, { "_id": 0, "a": 1, "b": 1, "c": 1 } );
-   checkResults( rc, "[{\"a\":3,\"b\":4},{\"a\":2,\"b\":2,\"c\":2}]" );
+   var rc = cl.find( {} );
+   checkResults( rc, "[{\"_id\":1,\"a\":3,\"b\":4},{\"_id\":2,\"a\":2,\"b\":2,\"c\":2}]" );
    cl.remove( {} );
 
 
