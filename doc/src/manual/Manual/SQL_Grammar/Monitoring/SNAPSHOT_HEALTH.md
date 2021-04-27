@@ -139,4 +139,4 @@ $SNAPSHOT_HEALTH
 [^_^]:
     本文使用的所有引用及链接
 [architecture]:manual/Distributed_Engine/Architecture/Replication/architecture.md#全量同步
-[regular_bar]:manual/Distributed_Engine/Maintainance/Backup_Recovery/regular_bar.md
+[regular_bar]:manual/Distributed_Engine/Maintainance/Backup_Recovery/data_backup.md
