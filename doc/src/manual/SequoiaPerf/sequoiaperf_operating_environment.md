@@ -4,7 +4,7 @@
 资源
 ----
 
-每个 SequoiaPerf 实例均需要 8GB 的内存和 2GB 的磁盘，对于部署了[时间序列节点][stp]的数据库可以只需要 1GB 的磁盘。
+每个 SequoiaPerf 实例均需要 8GB 的内存和 2GB 的磁盘。
 
 环境要求
 ----
@@ -56,5 +56,5 @@ SequoiaDB 集群要求
 
 [^_^]:
     本文使用的所有引用及链接
-[cluster]:manual/Deployment/cluster_deployement.md
-[stp]:manual/Distributed_Engine/Architecture/Stp/Readme.md
+[cluster]:manual/Deployment/cluster_deployment.md
+

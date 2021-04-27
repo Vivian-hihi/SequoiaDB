@@ -77,4 +77,4 @@
 
 [^_^]:
     本文使用的所有引用及链接
-[tool]:manual/SequoiaPerf/sdb_perf_ctl.md
+[tool]:manual/SequoiaPerf/Tools/sdb_perf_ctl.md
