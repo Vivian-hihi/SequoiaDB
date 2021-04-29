@@ -1886,31 +1886,31 @@ namespace engine
          }
       }
 
-      if ( configObj.hasField( "group" ) )
+      if ( configObj.hasField( "gid" ) )
       {
-         if ( String != configObj.getField( "group" ).type() )
+         if ( String != configObj.getField( "gid" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "group must be string" ;
+            err = "gid must be string" ;
             goto error ;
          }
          else
          {
-            cmd << " -g " << configObj.getStringField( "group" ) ;
+            cmd << " -g " << configObj.getStringField( "gid" ) ;
          }
       }
 
-      if ( configObj.hasField( "additionGroup" ) )
+      if ( configObj.hasField( "groups" ) )
       {
-         if ( String != configObj.getField( "additionGroup" ).type() )
+         if ( String != configObj.getField( "groups" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "Group must be string" ;
+            err = "groups must be string" ;
             goto error ;
          }
          else
          {
-            cmd << " -G " << configObj.getStringField( "additionGroup" ) ;
+            cmd << " -G " << configObj.getStringField( "groups" ) ;
          }
       }
 
@@ -2119,33 +2119,33 @@ namespace engine
          }
       }
 
-      if ( configObj.hasField( "group" ) )
+      if ( configObj.hasField( "gid" ) )
       {
-         if ( String != configObj.getField( "group" ).type() )
+         if ( String != configObj.getField( "gid" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "group must be string" ;
+            err = "gid must be string" ;
             goto error ;
          }
          else
          {
             cmd << " -g "
-                << configObj.getStringField( "group" ) ;
+                << configObj.getStringField( "gid" ) ;
          }
       }
 
-      if ( configObj.hasField( "additionGroup" ) )
+      if ( configObj.hasField( "groups" ) )
       {
-         if ( String != configObj.getField( "additionGroup" ).type() )
+         if ( String != configObj.getField( "groups" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            err = "Group must be string" ;
+            err = "groups must be string" ;
             goto error ;
          }
          else
          {
             cmd << " -G "
-                << configObj.getStringField( "additionGroup" ) ;
+                << configObj.getStringField( "groups" ) ;
 
 
             if ( TRUE == configObj.getBoolField( "isAppend" ) )
