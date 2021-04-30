@@ -1,21 +1,21 @@
 
-## NAME
+##NAME##
 
 addUser - add an operating system user
 
-## SYNOPSIS
+##SYNOPSIS##
 
 **System.addUser(\<users\>)**
 
-## CATEGORY
+##CATEGORY##
 
 System
 
-## DESCRIPTION
+##DESCRIPTION##
 
 This function is used to add an operating system user.
 
-## PARAMETERS
+##PARAMETERS##
 
 users ( *object, required* )
 
@@ -47,21 +47,21 @@ The user's attributes can be set through the users parameter:
 
     Format: `dir: "userHomeDir"`
 
-## RETURN VALUE
+##RETURN VALUE##
 
 When the function executes successfully, there is no return value.
 
 When the function fails, an exception will be thrown and an error message will be printed.
 
-## ERRORS
+##ERRORS##
 
 When the exception happens，use [getLastErrMsg()][getLastErrMsg] to get the error message or use [getLastError()][getLastError] to get the [error code][error_code]. For more details, refer to [Troubleshooting][faq].
 
-## VERSION
+##VERSION##
 
 v3.2 and above
 
-## EXAMPLES
+##EXAMPLES##
 
 Add a new system user named "newUser". Specify the user group as root, and create a user directory `/home/newUser`.
 

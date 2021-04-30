@@ -1,21 +1,21 @@
 
-## NAME
+##NAME##
 
 setUserConfigs - set the configuration of operating system user
 
-## SYNOPSIS
+##SYNOPSIS##
 
 **System.setUserConfigs(\<options\>)**
 
-## CATEGORY
+##CATEGORY##
 
 System
 
-## DESCRIPTION
+##DESCRIPTION##
 
 This function is used to modify the user group, additional group, user directory and other configurations of the operating system user.
 
-## PARAMETERS
+##PARAMETERS##
 
 options ( *object, required* )
 
@@ -55,17 +55,17 @@ The user's attributes can be modified through the options parameter:
 
     Format: `dir: "userHomeDir"`
 
-## RETURN VALUE
+##RETURN VALUE##
 
 When the function executes successfully, there is no return value.
 
 When the function fails, an exception will be thrown and an error message will be printed.
 
-## ERRORS
+##ERRORS##
 
 When the exception happens，use [getLastErrMsg()][getLastErrMsg] to get the error message or use [getLastError()][getLastError] to get the [error code][error_code]. For more details, refer to [Troubleshooting][faq].
 
-## EXAMPLES
+##EXAMPLES##
 
 Modify the home directory of user `newUser` in the specified user group.
 
