@@ -2092,10 +2092,34 @@
                      "en" : "SequoiaDB Slowquery Overview"
                   },
                   {
+                     "id": 1619481934,
+                     "file": "sequoiaperf_sdb_slowquery_detail_page",
+                     "cn" : "SequoiaDB慢查询监控详情",
+                     "en" : "SequoiaDB Slowquery Detail"
+                  },
+                  {
+                     "id": 1619481957,
+                     "file": "sequoiaperf_sdb_slowquery_datanode_detail_page",
+                     "cn" : "SequoiaDB慢查询对应的数据节点详情",
+                     "en" : "SequoiaDB Slowquery Datanode Detail"
+                  },
+                  {
+                     "id": 1619482385,
+                     "file": "sequoiaperf_sdb_slowquery_accessplan_page",
+                     "cn" : "SequoiaDB慢查询对应的访问计划详情",
+                     "en" : "SequoiaDB Slowquery AccessPlan"
+                  },
+                  {
                      "id": 1611540436,
                      "file": "sequoiaperf_sql_slowquery_overview_page",
                      "cn": "SQL慢查询监控概览",
                      "en": "SQL Slowquery Overview"
+                  },
+                  {
+                     "id": 1619483552,
+                     "file": "sequoiaperf_sql_slowquery_detail_page",
+                     "cn": "SQL慢查询监控详情",
+                     "en": "SQL Slowquery Detail"
                   }
                ]
             },
