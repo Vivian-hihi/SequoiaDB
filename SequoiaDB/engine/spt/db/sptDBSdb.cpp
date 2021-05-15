@@ -63,7 +63,7 @@ using sdbclient::_sdbCursor ;
 using sdbclient::_sdbDataCenter ;
 using sdbclient::_sdbDomain ;
 using sdbclient::_sdbSequence ;
-using sdbclient::_sdbDataSource ;
+using sdbclient::sdbDataSource ;
 
 namespace engine
 {
@@ -3213,7 +3213,7 @@ namespace engine
       const CHAR *passwdPtr = NULL ;
       const CHAR *typePtr = NULL ;
       const BSONObj *optionPtr = NULL ;
-      _sdbDataSource *pDS = NULL ;
+      sdbDataSource ds ;
       sptDBDataSource *sptDS = NULL ;
 
       // Only the data source name and address list are required all the time.
@@ -3291,21 +3291,21 @@ namespace engine
          }
       }
 
-      rc = _sptSdb.createDataSource( dsName.c_str(), address.c_str(),
-                                     userPtr, passwdPtr, typePtr,
-                                     optionPtr, &pDS ) ;
+      rc = _sptSdb.createDataSource( ds, dsName.c_str(), address.c_str(),
+                                     userPtr, passwdPtr, typePtr, optionPtr ) ;
       if ( rc )
       {
          detail = BSON( SPT_ERR << "Failed to create data source" ) ;
          goto error ;
       }
 
-      sptDS = SDB_OSS_NEW sptDBDataSource( pDS ) ;
+      sptDS = SDB_OSS_NEW sptDBDataSource( ds.pDataSource ) ;
       if ( !sptDS )
       {
          rc = SDB_OOM ;
          detail = BSON( SPT_ERR << "Failed to new sptDBDatasource obj" ) ;
       }
+
       rc = rval.setUsrObjectVal< sptDBDataSource >( sptDS ) ;
       if ( rc )
       {
@@ -3313,7 +3313,8 @@ namespace engine
          goto error ;
       }
       rval.addReturnValProperty( SPT_DS_NAME_FIELD )
-         ->setValue( pDS->getDSName() ) ;
+         ->setValue( ds.pDataSource->getName() ) ;
+      ds.pDataSource = NULL ;
 
    done:
       return rc ;
@@ -3322,9 +3323,9 @@ namespace engine
       {
          SDB_OSS_DEL sptDS ;
          sptDS = NULL ;
-         pDS = NULL ;
+         ds.pDataSource = NULL ;
       }
-      SAFE_OSS_DELETE( pDS ) ;
+      SAFE_OSS_DELETE( ds.pDataSource ) ;
       goto done ;
    }
 
@@ -3365,7 +3366,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string name ;
-      _sdbDataSource *pDataSource = NULL ;
+      sdbDataSource ds ;
       sptDBDataSource *sptDS = NULL ;
       rc = arg.getString( 0, name ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -3378,21 +3379,21 @@ namespace engine
          detail = BSON( SPT_ERR << "Name must be string" ) ;
          goto error ;
       }
-      rc = _sptSdb.getDataSource( name.c_str(), &pDataSource ) ;
+      rc = _sptSdb.getDataSource( name.c_str(), ds ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to get data source" ) ;
          goto error ;
       }
 
-      sptDS = SDB_OSS_NEW sptDBDataSource( pDataSource ) ;
+      sptDS = SDB_OSS_NEW sptDBDataSource( ds.pDataSource ) ;
       if ( !sptDS )
       {
          rc = SDB_OOM ;
          detail = BSON( SPT_ERR << "Failed to new spt data source obj" ) ;
          goto error ;
       }
-      pDataSource = NULL ;
+      ds.pDataSource = NULL ;
 
       rc = rval.setUsrObjectVal< sptDBDataSource >( sptDS ) ;
       if ( SDB_OK != rc )
@@ -3404,7 +3405,7 @@ namespace engine
    done:
       return rc ;
    error:
-      SAFE_OSS_DELETE( pDataSource ) ;
+      SAFE_OSS_DELETE( ds.pDataSource ) ;
       SAFE_OSS_DELETE( sptDS ) ;
       goto done ;
    }
@@ -3415,7 +3416,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT32 argNum = arg.argc() ;
-      _sdbCursor *pCursor = NULL ;
+      sdbCursor cursor ;
       BSONObj cond ;
       BSONObj sel ;
       BSONObj order ;
@@ -3457,13 +3458,14 @@ namespace engine
             }
          }
       }
-      rc = _sptSdb.listDataSources( &pCursor, cond, sel, order, hint ) ;
+      rc = _sptSdb.listDataSources( cursor, cond, sel, order, hint ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to list data sources" ) ;
          goto error ;
       }
-      SPT_SET_CURSOR_TO_RETURNVAL( pCursor ) ;
+      SPT_SET_CURSOR_TO_RETURNVAL( cursor.pCursor ) ;
+      cursor.pCursor = NULL ;
 
    done:
       return rc ;
