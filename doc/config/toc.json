@@ -2146,7 +2146,7 @@
             {
                "id": 1611541105,
                "file": "sequoiaperf_alertmanager_configuration",
-               "cn": "告警消息接受",
+               "cn": "告警消息接收",
                "en": "Alertmanager Configuration"
             },
             {
