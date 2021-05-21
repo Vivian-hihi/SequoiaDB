@@ -201,7 +201,8 @@ utilFiles = [
       "util/utilSectionMgr.cpp",
       "util/utilCipher.c",
       "util/utilAuthSCRAMSHA.cpp",
-      "util/utilAddress.cpp"
+      "util/utilAddress.cpp",
+      "util/utilDataSource.cpp"
       ]
 
 rtnFiles = [

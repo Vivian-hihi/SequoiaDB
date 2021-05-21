@@ -272,7 +272,7 @@ namespace engine
             else if ( 0 == ossStrcmp( fieldName, FIELD_NAME_ERRORCTLLEVEL ) )
             {
                PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
-                         "Type of field[%s] is not boolean, rc: %d",
+                         "Type of field[%s] is not string, rc: %d",
                          fieldName, rc ) ;
                if ( 0 == ossStrcasecmp( e.valuestr(), VALUE_NAME_HIGH ) )
                {
@@ -290,6 +290,22 @@ namespace engine
                   goto error ;
                }
             }
+            else if ( 0 == ossStrcmp( fieldName,
+                                      FIELD_NAME_TRANS_PROPAGATE_MODE ) )
+            {
+               PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                         "Type of field[%s] is not string, rc: %d",
+                         fieldName, rc ) ;
+               _dsInfo._transPropagateMode =
+                  sdbDSTransModeFromDesc( e.valuestr() ) ;
+               if ( DS_TRANS_PROPAGATE_INVALID == _dsInfo._transPropagateMode )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "Transaction propagate mode value[%s] "
+                              "is invalid[%d]", e.valuestr(), rc ) ;
+                  goto error ;
+               }
+            }
             else
             {
                rc = SDB_OPTION_NOT_SUPPORT ;
@@ -302,7 +318,7 @@ namespace engine
          {
             _dsInfo._type = VALUE_NAME_SEQUOIADB ;
          }
-         else if ( 0 != ossStrcmp( _dsInfo._type, VALUE_NAME_SEQUOIADB ) )
+         else if ( 0 != ossStrcasecmp( _dsInfo._type, VALUE_NAME_SEQUOIADB ) )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG_MSG( PDERROR, "The type of data source can only be \'%s\': "
@@ -701,6 +717,7 @@ namespace engine
                else if ( 0 == ossStrcmp( fieldName, FIELD_NAME_DSVERSION ) )
                {
                   PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                            "Type of field[%s] is not string, rc: %d",
                             fieldName, rc );
                   currEle = currentMeta.getField( FIELD_NAME_DSVERSION ) ;
                   if ( 0 != ossStrcmp( currEle.valuestr(), e.valuestr() ) )
@@ -711,6 +728,7 @@ namespace engine
                else if ( 0 == ossStrcmp( fieldName, FIELD_NAME_ACCESSMODE ) )
                {
                   PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                            "Type of field[%s] is not string, rc: %d",
                             fieldName, rc ) ;
                   INT32 accessMode = DS_ACCESS_DEFAULT ;
                   const CHAR *desc = NULL ;
@@ -737,6 +755,7 @@ namespace engine
                else if ( 0 == ossStrcmp( fieldName, FIELD_NAME_ERRORCTLLEVEL ) )
                {
                   PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                            "Type of field[%s] is not string, rc: %d",
                             fieldName, rc ) ;
                   if ( 0 == ossStrcasecmp( e.valuestr(), VALUE_NAME_HIGH ) )
                   {
@@ -754,6 +773,33 @@ namespace engine
                      PD_LOG_MSG( PDERROR, "Error control level value[%s] is "
                                           "invalid[%d]", e.valuestr(), rc ) ;
                      goto error ;
+                  }
+               }
+               else if ( 0 == ossStrcmp( fieldName,
+                                         FIELD_NAME_TRANS_PROPAGATE_MODE ) )
+               {
+                  PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                            "Type of field[%s] is not string, rc: %d",
+                            fieldName, rc ) ;
+                  SDB_DS_TRANS_PROPAGATE_MODE mode =
+                     sdbDSTransModeFromDesc( e.valuestr() ) ;
+                  if ( DS_TRANS_PROPAGATE_INVALID == mode )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG_MSG( PDERROR, "Transaction propagate mode value[%s]"
+                                 " is invalid[%d]", e.valuestr(), rc ) ;
+                  }
+
+                  currEle = currentMeta.getField( FIELD_NAME_TRANS_PROPAGATE_MODE ) ;
+                  // For data source of old version, there is no
+                  // "TransPropagateMode" field in the meta data. After altering
+                  // the field, it will be added into the metadata record.
+                  if ( currEle.eoo() || ( currEle.Int() != mode ) )
+                  {
+                     _optionBuilder.append( FIELD_NAME_TRANS_PROPAGATE_MODE,
+                                            mode ) ;
+                     _optionBuilder.append( FIELD_NAME_TRANS_PROPAGATE_MODE_DESC,
+                                            sdbDSTransModeDesc( mode ) ) ;
                   }
                }
                else
