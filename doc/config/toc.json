@@ -5620,12 +5620,6 @@
                "en": "Snapshot",
                "contents": [
                   {
-                     "id": 1479173710,
-                     "file": "snapshot",
-                     "cn": "快照类型",
-                     "en": "Snapshot Types"
-                  },
-                  {
                      "id": 1479173711,
                      "file": "SDB_SNAP_CONTEXTS",
                      "cn": "上下文快照",
@@ -5753,12 +5747,6 @@
                "cn": "数据库列表",
                "en": "List",
                "contents": [
-                  {
-                     "id": 1479173730,
-                     "file": "list",
-                     "cn": "列表类型",
-                     "en": "List Types"
-                  },
                   {
                      "id": 1479173731,
                      "file": "SDB_LIST_CONTEXTS",
