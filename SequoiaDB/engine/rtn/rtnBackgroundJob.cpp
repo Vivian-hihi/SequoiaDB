@@ -426,7 +426,7 @@ namespace engine
       _rtnCleanupIdxStatusJob implement
    */
 
-   #define RTN_CLEAN_IDXSTAT_INTERVAL ( 3600 * 1000000L ) // us, 1 hours
+   #define RTN_CLEAN_IDXSTAT_INTERVAL ( (UINT64)3600 * 1000000L ) // us, 1 hours
 
    const CHAR* _rtnCleanupIdxStatusJob::name () const
    {
