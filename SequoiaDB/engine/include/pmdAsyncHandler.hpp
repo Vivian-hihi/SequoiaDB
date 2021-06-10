@@ -102,6 +102,8 @@ namespace engine
                                       _MsgRouteID id,
                                       BOOLEAN isPositive ) ;
 
+         virtual void  onPrepareStop() ;
+
          virtual void  onStop() ;
 
       protected:
