@@ -2262,6 +2262,7 @@ namespace engine
                     pMsg->messageLength, IS_REPLY_TYPE(pMsg->opCode),
                     GET_REQUEST_TYPE(pMsg->opCode), pMsg->TID,
                     pMsg->requestID, routeID2String(pMsg->routeID).c_str() ) ;
+            rc = SDB_OOM ;
          }
       }
       else
