@@ -1,7 +1,7 @@
 /******************************************************************************
- * @Description   : seqDB-24153:源集群设置会话访问属性，单值指定preferedinstance存在的同时设置PreferedStrict
+ * @Description   : seqDB-24263:源集群设置会话访问属性，指定preferedinstance和preferedInstanceMode
  * @Author        : Wu Yan
- * @CreateTime    : 2021.06.07
+ * @CreateTime    : 2021.05.06
  * @LastEditTime  : 2021.06.07
  * @LastEditors   : Wu Yan
  ******************************************************************************/
@@ -10,19 +10,24 @@ main( test );
 
 function test ()
 {
-   var dataSrcName = "datasrc24153";
-   var clName = CHANGEDPREFIX + "_datasource24153";
-   var srcCSName = "datasrcCS_24153";
-   var csNameA = "DS_24153A";
-   var csNameB = "DS_24153B";
+   var dataSrcName = "datasrc24263";
+   var clName = CHANGEDPREFIX + "_datasource24263";
+   var srcCSName = "datasrcCS_24263";
+   var csNameA = "DS_24263A";
+   var csNameB = "DS_24263B";
    commDropCS( datasrcDB, srcCSName );
    clearDataSource( [csNameA, csNameB], dataSrcName );
    commCreateCS( datasrcDB, srcCSName );
-   var groups = commGetGroups( datasrcDB );
+   var groups = commGetGroups( datasrcDB );   
    var groupName = groups[0][0].GroupName;
+   if( groups[0][0].Length < 3 )
+   {
+      println("---At least three nodes in the group")
+      return;
+   }
    commCreateCL( datasrcDB, srcCSName, clName, { ShardingKey: { a: 1 }, ReplSize: 0, Group: groupName } );
-   db.createDataSource( dataSrcName, datasrcUrl, userName, passwd );
 
+   db.createDataSource( dataSrcName, datasrcUrl, userName, passwd );
    //集合空间级映射
    var csA = db.createCS( csNameA, { DataSource: dataSrcName, Mapping: srcCSName } );
    var dbclA = csA.getCL( clName );
@@ -35,46 +40,42 @@ function test ()
    try
    {
       //数据源集群上配置节点instanceId
-      var instanceid = [9, 8, 10];
+      var instanceid = [7, 8, 10];
+      var nodes = [];
       for( var i = 0; i < instanceid.length; i++ )
       {
          var hostName = groups[0][i + 1].HostName;
          var svcName = groups[0][i + 1].svcname;
          updateConf( datasrcDB, { instanceid: instanceid[i] }, { NodeName: hostName + ":" + svcName }, SDB_RTN_CONF_NOT_TAKE_EFFECT );
+         nodes.push( hostName + ":" + svcName );
       }
       datasrcDB.getRG( groupName ).stop();
       datasrcDB.getRG( groupName ).start();
       commCheckBusinessStatus( datasrcDB );
       datasrcDB.invalidateCache();
 
-      //设置PreferedStrict: true，指定instanceId节点异常
-      var optionsA = { PreferedInstance: instanceid[1], PreferedStrict: true };
+      //设置PreferedInstanceMode: ordered,默认访问第一个instanceid对应节点
+      var optionsA = { PreferedInstance: [instanceid[0], instanceid[1], instanceid[2]], PreferedInstanceMode: "ordered" };
       db.setSessionAttr( optionsA );
-      datasrcDB.getRG( groupName ).getNode( groups[0][2].HostName, groups[0][2].svcname ).stop();
-      assert.tryThrow( [SDB_CLS_NODE_BSFAULT], function() 
-      {
-         dbclA.find().explain();
-      } );
+      var expAccessNodes = [ nodes[0] ];
+      setSessionAndcheckAccessNodes( dbclA, expAccessNodes, optionsA );
+      setSessionAndcheckAccessNodes( dbclB, expAccessNodes, optionsA );
+      
+      //停止第一个instanceid对应节点，按顺序访问第二个节点
+      datasrcDB.getRG( groupName ).getNode( groups[0][1].HostName, groups[0][1].svcname ).stop();
+      var expAccessNodes = [ nodes[1] ];
+      findAndCheckAccessNodes( dbclA, expAccessNodes );
+      findAndCheckAccessNodes( dbclB, expAccessNodes );
 
-      assert.tryThrow( [SDB_CLS_NODE_BSFAULT], function() 
-      {
-         dbclB.find().explain();
-      } );
-      checkMasterNodeExist( datasrcDB, groupName );
-
-      //设置PreferedStrict: false，指定instanceId节点不存在时走其它节点
-      var optionsB = { PreferedInstance: instanceid[1], PreferedStrict: false };
-      var masterNode = datasrcDB.getRG( groupName ).getMaster().toString();
-      var expAccessNodes = [groups[0][1].HostName + ":" + groups[0][1].svcname, groups[0][3].HostName + ":" + groups[0][3].svcname];
-      setSessionAndcheckAccessNodes( dbclA, expAccessNodes, optionsB );
-      setSessionAndcheckAccessNodes( dbclB, expAccessNodes, optionsB );
-
-      //设置PreferedStrict: false，指定instanceId节点存在时访问对应节点
-      datasrcDB.getRG( groupName ).getNode( groups[0][2].HostName, groups[0][2].svcname ).start();
+      datasrcDB.getRG( groupName ).getNode( groups[0][1].HostName, groups[0][1].svcname ).start();
       commCheckBusinessStatus( datasrcDB );
-      expAccessNodes = [groups[0][2].HostName + ":" + groups[0][2].svcname];
-      setSessionAndcheckAccessNodes( dbclA, expAccessNodes, optionsA );
-      setSessionAndcheckAccessNodes( dbclA, expAccessNodes, optionsA );
+
+      //设置设置PreferedInstanceMode: random,随机访问节点      
+      var optionsB = { PreferedInstance: [instanceid[0], instanceid[1]], PreferedInstanceMode: "random" };
+      var expAccessNodes = [nodes[1], nodes[2]];
+      setSessionAndcheckAccessNodes( dbclA, expAccessNodes, optionsB );
+      setSessionAndcheckAccessNodes( dbclB, expAccessNodes, optionsB );   
+      
    }
    finally
    {
