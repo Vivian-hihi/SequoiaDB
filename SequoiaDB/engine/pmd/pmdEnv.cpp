@@ -738,4 +738,8 @@ namespace engine
       return __executor ;
    }
 
+   INT64 pmdGetSysPageSize()
+   {
+      return pmdGetSysInfo()->_sysPageSize ;
+   }
 }
