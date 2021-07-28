@@ -142,6 +142,8 @@ def GuessArch():
       return 'ppc64'
    elif id == 'ppc64le':
       return 'ppc64le'
+   elif id == 'sw_64':
+      return 'alpha64'
    else:
       return None
 
@@ -236,6 +238,8 @@ def get_platform_dir():
             return "ppclinux64"
         elif "ppc64le" == guess_arch:
             return "ppclelinux64"
+        elif "alpha64" == guess_arch:
+            return "alphalinux64"
     elif "win32" == guess_os:
         if "ia64" == guess_arch:
             return "win64"
@@ -448,10 +452,10 @@ usefuse = False
 if guess_os == 'linux' or guess_os == 'win32':
    usesm = True
 if guess_os == 'linux' or guess_os == 'win32':
-    if guess_arch == "ia64" or guess_arch == "arm64" or guess_arch == "ppc64le":
+    if guess_arch == "ia64" or guess_arch == "arm64" or guess_arch == "ppc64le" or guess_arch == "alpha64":
         usemdocml = True
 if guess_os == 'linux':
-    if guess_arch == "ia64" or guess_arch == "arm64" or guess_arch == "ppc64le":
+    if guess_arch == "ia64" or guess_arch == "arm64" or guess_arch == "ppc64le" or guess_arch == "alpha64":
         usefuse = True
 
 extraLibPlaces = []
@@ -531,6 +535,9 @@ if guess_os == "linux":
     elif guess_arch == "ppc64le":
         hdfsJniPath = join(java_dir,"jdk_ppclelinux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_ppclelinux64/include/linux")
+    elif guess_arch == "alpha64":
+        hdfsJniPath = join(java_dir,"jdk8_alphalinux64/include")
+        hdfsJniMdPath = join(java_dir,"jdk8_alphalinux64/include/linux")
 elif guess_os == "win32":
     if guess_arch == "ia32":
         hdfsJniPath = join(java_dir,"jdk_win32/include")
@@ -612,6 +619,12 @@ if guess_os == "linux":
         nixLibPrefix = "lib64"
         env.Append( CPPDEFINES=[ "SDB_LITTLE_ENDIAN" ] )
         env.Append( EXTRALIBPATH="/lib64" )
+    elif guess_arch == "alpha64":
+        linux64 = True
+        nixLibPrefix = "lib64"
+        env.Append( CPPDEFINES=[ "SDB_LITTLE_ENDIAN" ] )
+        env.Append( EXTRALIBPATH="/lib64" )
+        env.Append( CPPFLAGS=" -mieee " )
 
     # Building for mysqld without linking openssl in c/c++ client.
     # Or there will be two same openssl symbol existing in one mysqld program 
