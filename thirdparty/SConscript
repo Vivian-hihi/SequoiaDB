@@ -344,7 +344,7 @@ class SpiderMonkeyCompiler(CompilerBase):
             if 'ia32' == self.arch or 'ia64' == self.arch or 'arm64' == self.arch:
                 config_args = '--disable-methodjit'
             elif 'ppc64le' == self.arch:
-                config_args = 'ppc64le
+                config_args = 'ppc64le'
             elif 'arm64' == self.arch:
                 config_args += ' --host=aarch64'
             if debugBuild:
