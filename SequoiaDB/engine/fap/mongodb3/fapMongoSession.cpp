@@ -245,10 +245,12 @@ INT32 _mongoSession::_processClientMsg( const CHAR* pMsg,
    INT32 rc = SDB_OK ;
    mongoCursorInfo cursorInfo ;
    BOOLEAN needNext = FALSE ;
+   BOOLEAN needReply = TRUE ;
    isOwned = TRUE ;
 
    if ( NULL == pMsg )
    {
+      needReply = FALSE ;
       goto done ;
    }
 
@@ -280,10 +282,6 @@ next:
       {
          goto next ;
       }
-
-      rc = _reply( pCommand, pMsg, rc, sessCtx.errorObj ) ;
-      PD_LOG( PDERROR, "Session[%s] failed to reply, rc: %d",
-              sessionName(), rc ) ;
    }
    else
    {
@@ -291,14 +289,21 @@ next:
       PD_RC_CHECK( rc, PDERROR,
                    "Session[%s] failed to process non-owned client "
                    "msg, rc: %d", sessionName(), rc ) ;
+      needReply = FALSE ;
    }
 
 done:
+   if ( needReply )
+   {
+      rc = _reply( pCommand, pMsg, rc, sessCtx.errorObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Session[%s] failed to reply, rc: %d",
+                 sessionName(), rc ) ;
+      }
+   }
    return rc ;
 error:
-   rc = _reply( pCommand, pMsg, rc, sessCtx.errorObj ) ;
-   PD_LOG( PDERROR, "Session[%s] failed to reply, rc: %d",
-           sessionName(), rc ) ;
    goto done ;
 }
 
