@@ -1567,8 +1567,9 @@ INT32 _mongoSession::_reply( _mongoCommand *pCommand, const CHAR* pMsg,
            "command: %s, clFullName: %s, eduID: %llu ] done",
            ossGetCurrentThreadID(),
            sessionName(),
-           (pCommand)->name() ? (pCommand)->name() : "",
-           (pCommand)->clFullName() ? (pCommand)->clFullName() : "",
+           pCommand ? ( (pCommand)->name() ? (pCommand)->name() : "" ) : "",
+           pCommand ? ( (pCommand)->clFullName() ?
+           (pCommand)->clFullName() : "" ) : "",
            eduID() ) ;
 
    // send response
