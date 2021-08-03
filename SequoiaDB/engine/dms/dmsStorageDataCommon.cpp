@@ -4201,7 +4201,8 @@ namespace engine
                                        dpscb ? pHandler : NULL,
                                        pResult,
                                        pNewUnqIdxHashArray,
-                                       pOldUnqIdxHashArray ) ;
+                                       pOldUnqIdxHashArray,
+                                       modifier.getIdxHashBitmap() ) ;
             if ( rc )
             {
                if ( pResult && pResult->isMaskEnabled( UTIL_RESULT_MASK_ID ) )

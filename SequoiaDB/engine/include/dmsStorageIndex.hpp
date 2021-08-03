@@ -196,9 +196,11 @@ namespace engine
          // Caller must hold mb exclusive lock
          INT32    indexesUpdate ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &originalObj, BSONObj &newObj,
-                                  const dmsRecordID &rid, _pmdEDUCB *cb,
+                                  const dmsRecordID &rid,
+                                  _pmdEDUCB *cb,
                                   BOOLEAN isUndo,
                                   IDmsOprHandler *pOprHandle,
+                                  const ixmIdxHashBitmap &idxHashBitmap,
                                   utilWriteResult *pResult = NULL,
                                   dpsUnqIdxHashArray *pNewUnqIdxHashArray = NULL,
                                   dpsUnqIdxHashArray *pOldUnqIdxHashArray = NULL ) ;
@@ -326,6 +328,8 @@ namespace engine
                                         utilWriteResult *pResult = NULL ) ;
 
          BOOLEAN  _needProcessGlobalIndex( _pmdEDUCB *cb ) ;
+         BOOLEAN  _needUpdateIndexes( _dmsMBContext *context,
+                                      const ixmIdxHashBitmap &idxHashBitmap ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
