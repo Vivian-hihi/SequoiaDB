@@ -2946,6 +2946,13 @@ namespace engine
                BSONElement e = iter.next() ;
                context->mbStat()->setIdxHash( indexID, e.fieldName() ) ;
             }
+            // for text index, we need to consider change of oid
+            // NOTE: oid will be stored in ES
+            if ( IXM_EXTENT_HAS_TYPE( indexCB.getIndexType(),
+                                      IXM_EXTENT_TYPE_TEXT ) )
+            {
+               context->mbStat()->setIdxHash( indexID, DMS_ID_KEY_NAME ) ;
+            }
          }
       }
 
