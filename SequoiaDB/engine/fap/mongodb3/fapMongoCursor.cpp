@@ -73,10 +73,7 @@ namespace fap
          }
          catch( std::exception &e )
          {
-            rc = ossException2RC( &e ) ;
-            PD_LOG( PDERROR, "An exception occurred when inserting cursor "
-                    "info: %s, rc: %d", e.what(), rc ) ;
-            goto error ;
+            PD_RC_CHECK( SDB_OOM, PDERROR, "Exception occurred: %s", e.what() ) ;
          }
       }
 
