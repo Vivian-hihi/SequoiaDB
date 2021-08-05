@@ -176,6 +176,14 @@ namespace engine
 
    typedef class _mthSliceIterator mthSliceIterator ;
 
+   struct mthStrcasecmp
+   {
+      BOOLEAN operator() ( const CHAR* a, const CHAR* b )
+      {
+         return ossStrcasecmp( a, b ) < 0 ;
+      }
+   } ;
+
    BOOLEAN mthIsNumber1( const bson::BSONElement &ele ) ;
    BOOLEAN mthIsValidLen( INT32 length ) ;
 

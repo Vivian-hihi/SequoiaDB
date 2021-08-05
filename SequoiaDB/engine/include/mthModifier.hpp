@@ -83,8 +83,30 @@ namespace engine
       KEEP,
       SETARRAY,
 
-      UNKNOW
+      UNKNOWN
    } ;
+
+#define MTH_MODIFIER_INC           "$inc"
+#define MTH_MODIFIER_SET           "$set"
+#define MTH_MODIFIER_PUSH          "$push"
+#define MTH_MODIFIER_PUSH_ALL      "$push_all"
+#define MTH_MODIFIER_PULL          "$pull"
+#define MTH_MODIFIER_PULL_BY       "$pull_by"
+#define MTH_MODIFIER_PULL_ALL      "$pull_all"
+#define MTH_MODIFIER_PULL_ALL_BY   "$pull_all_by"
+#define MTH_MODIFIER_POP           "$pop"
+#define MTH_MODIFIER_UNSET         "$unset"
+#define MTH_MODIFIER_BITNOT        "$bitnot"
+#define MTH_MODIFIER_BITXOR        "$bitxor"
+#define MTH_MODIFIER_BITAND        "$bitand"
+#define MTH_MODIFIER_BITOR         "$bitor"
+#define MTH_MODIFIER_BIT           "$bit"
+#define MTH_MODIFIER_ADDTOSET      "$addtoset"
+#define MTH_MODIFIER_RENAME        "$rename"
+#define MTH_MODIFIER_NULLOPR       "$null"
+#define MTH_MODIFIER_REPLACE       "$replace"
+#define MTH_MODIFIER_KEEP          "$keep"
+#define MTH_MODIFIER_SETARRAY      "$setarray"
 
    /*
       _ModifierElement define
@@ -234,6 +256,20 @@ namespace engine
 
    #define MTH_MODIFIER_FIELD_OPR_BIT              0x00000001
    #define MTH_MODIFIER_RECORD_OPR_BIT             0x00000002
+
+   class _mthModifierOpMap : public SDBObject
+   {
+      public:
+         _mthModifierOpMap() ;
+         ~_mthModifierOpMap() {}
+
+         ModType find( const CHAR* modifierName ) ;
+
+      private:
+         typedef map< const CHAR*, INT32, mthStrcasecmp > MODIFIER_MAP ;
+         MODIFIER_MAP _modifiersMap ;
+   } ;
+   typedef _mthModifierOpMap mthModifierOpMap ;
 
    /*
       _mthModifier define

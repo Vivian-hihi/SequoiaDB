@@ -135,6 +135,50 @@ namespace engine
 #define SET_ARRAY_POS_NAME    "pos"
 #define SET_ARRAY_OBJS_NAME   "objs"
 
+   static _mthModifierOpMap modifierOpMap ;
+
+   _mthModifierOpMap::_mthModifierOpMap()
+   {
+      _modifiersMap[ MTH_MODIFIER_INC ] = INC ;
+      _modifiersMap[ MTH_MODIFIER_SET ] = SET ;
+      _modifiersMap[ MTH_MODIFIER_PUSH ] = PUSH ;
+      _modifiersMap[ MTH_MODIFIER_PUSH_ALL ] = PUSH_ALL ;
+      _modifiersMap[ MTH_MODIFIER_PULL ] = PULL ;
+      _modifiersMap[ MTH_MODIFIER_PULL_BY ] = PULL_BY ;
+      _modifiersMap[ MTH_MODIFIER_PULL_ALL ] = PULL_ALL ;
+      _modifiersMap[ MTH_MODIFIER_PULL_ALL_BY ] = PULL_ALL_BY ;
+      _modifiersMap[ MTH_MODIFIER_PULL_ALL_BY ] = PULL_ALL_BY ;
+      _modifiersMap[ MTH_MODIFIER_POP ] =  POP ;
+      _modifiersMap[ MTH_MODIFIER_UNSET ] =  UNSET ;
+      _modifiersMap[ MTH_MODIFIER_BITNOT ] = BITNOT ;
+      _modifiersMap[ MTH_MODIFIER_BITXOR ] = BITXOR ;
+      _modifiersMap[ MTH_MODIFIER_BITAND ] = BITAND ;
+      _modifiersMap[ MTH_MODIFIER_BITOR ] = BITOR ;
+      _modifiersMap[ MTH_MODIFIER_BIT ] = BIT ;
+      _modifiersMap[ MTH_MODIFIER_ADDTOSET ] = ADDTOSET ;
+      _modifiersMap[ MTH_MODIFIER_RENAME ] = RENAME ;
+      _modifiersMap[ MTH_MODIFIER_NULLOPR ] = NULLOPR ;
+      _modifiersMap[ MTH_MODIFIER_REPLACE ] = REPLACE ;
+      _modifiersMap[ MTH_MODIFIER_KEEP ] = KEEP ;
+      _modifiersMap[ MTH_MODIFIER_SETARRAY ] = SETARRAY ;
+   }
+
+   ModType _mthModifierOpMap::find( const CHAR * modifierName )
+   {
+      SDB_ASSERT ( modifierName, "modifierName can't be NULL " ) ;
+
+      MODIFIER_MAP::iterator iter ;
+      iter = _modifiersMap.find( modifierName ) ;
+      if ( iter != _modifiersMap.end() )
+      {
+         return (ModType)iter->second ;
+      }
+      else
+      {
+         return UNKNOWN ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDFELEMENT_ANALYZEMODIFYELE, "_ModifierElement::analyzeModifyEle" )
    INT32 _ModifierElement::analyzeModifyEle()
    {
@@ -951,7 +995,7 @@ namespace engine
          goto done ;
       }
       {
-         ModType type = UNKNOW ;
+         ModType type = UNKNOWN ;
          BSONObjIterator it ( me._toModify.embeddedObject () ) ;
          INT32 x = in.numberInt () ;
          INT64 y = in.numberLong () ;
@@ -971,9 +1015,9 @@ namespace engine
                oprName += e.fieldName () ;
                type = _parseModType ( oprName.c_str() ) ;
             }
-            if ( UNKNOW == type )
+            if ( UNKNOWN == type )
             {
-               PD_LOG_MSG ( PDERROR, "unknow bit operator, %s",
+               PD_LOG_MSG ( PDERROR, "unknown bit operator, %s",
                             e.toString( TRUE ).c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto done ;
@@ -1155,7 +1199,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPBITMDF22 );
-      ModType type = UNKNOW ;
+      ModType type = UNKNOWN ;
       BSONObjIterator it ( me._toModify.embeddedObject () ) ;
       INT32 x = in ;
       INT64 y = (INT64)in ;
@@ -1177,9 +1221,9 @@ namespace engine
             oprName += e.fieldName () ;
             type = _parseModType ( oprName.c_str() ) ;
          }
-         if ( UNKNOW == type )
+         if ( UNKNOWN == type )
          {
-            PD_LOG_MSG ( PDERROR, "unknow bit operator, %s",
+            PD_LOG_MSG ( PDERROR, "unknown bit operator, %s",
                          e.toString( TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto done ;
@@ -1734,166 +1778,7 @@ namespace engine
    }
    ModType _mthModifier::_parseModType ( const CHAR * field )
    {
-      SDB_ASSERT ( field, "field can't be NULL " ) ;
-
-      if ( MTH_OPERATOR_EYECATCHER == field[0] )
-      {
-         if ( field[1] == 'a' )
-         {
-            if ( field[2] == 'd' && field[3] == 'd' &&
-                 field[4] == 't' && field[5] == 'o' &&
-                 field[6] == 's' && field[7] == 'e' &&
-                 field[8] == 't' && field[9] == 0 )
-            {
-               return ADDTOSET ;
-            }
-         }
-         else if ( field[1] == 'b' )
-         {
-            if ( field[2] == 'i' && field[3] == 't' )
-            {
-               if ( field[4] == 0 )
-               {
-                  return BIT ;
-               }
-               else if ( field[4]=='a'&&field[5]=='n'&&
-                         field[6]=='d'&&field[7]==0 )
-               {
-                  return BITAND ;
-               }
-               else if ( field[4]=='o'&&field[5]=='r'&&
-                         field[6]==0 )
-               {
-                  return BITOR ;
-               }
-               else if ( field[4]=='n'&&field[5]=='o'&&
-                         field[6]=='t'&&field[7]==0 )
-               {
-                  return BITNOT ;
-               }
-               else if ( field[4]=='x'&&field[5]=='o'&&
-                         field[6]=='r'&&field[7]==0 )
-               {
-                  return BITXOR ;
-               }
-            }
-         }
-         else if ( field[1] == 'i' )
-         {
-            if ( field[2] == 'n' && field[3] == 'c' &&
-                 field[4] == 0 )
-            {
-               return INC ;
-            }
-         }
-         else if ( field[1] == 'k' )
-         {
-            if ( field[2] == 'e' && field[3] == 'e' &&
-                 field[4] == 'p' && field[5] == 0 )
-            {
-               return KEEP ;
-            }
-         }
-         else if ( field[1] == 'p' )
-         {
-            if ( field[2] == 'u' )
-            {
-               if ( field[3] == 'l' && field[4] == 'l' )
-               {
-                  if ( field[5] == 0 )
-                  {
-                     return PULL ;
-                  }
-                  else if ( field[5]=='_'&&field[6]=='b'&&
-                            field[7]=='y'&&field[8]=='\0' )
-                  {
-                     return PULL_BY ;
-                  }
-                  else if ( field[5]=='_'&&field[6]=='a'&&
-                            field[7]=='l'&&field[8]=='l'&&
-                            field[9]==0 )
-                  {
-                     return PULL_ALL ;
-                  }
-                  else if ( field[9]=='_'&&field[10]=='b'&&
-                            field[11]=='y'&&field[12]=='\0' )
-                  {
-                     return PULL_ALL_BY ;
-                  }
-               }
-               else if ( field[3]=='s' && field[4] == 'h' )
-               {
-                  if ( field[5] == 0 )
-                  {
-                     return PUSH ;
-                  }
-                  else if ( field[5]=='_'&&field[6]=='a'&&
-                            field[7]=='l'&&field[8]=='l'&&
-                            field[9]==0 )
-                  {
-                     return PUSH_ALL ;
-                  }
-               }
-            } //u
-            else if (field[2] == 'o' )
-            {
-               if ( field[3] == 'p' && field[4] == 0 )
-               {
-                  return POP ;
-               }
-            }
-         }// p
-         else if ( field[1] == 'r' )
-         {
-            if ( field[2] == 'e' && field[3] == 'n' &&
-                 field[4] == 'a' && field[5] == 'm' &&
-                 field[6] == 'e' && field[7] == 0 )
-            {
-               return RENAME ;
-            }
-            else if ( field[2] == 'e' && field[3] == 'p' &&
-                      field[4] == 'l' && field[5] == 'a' &&
-                      field[6] == 'c' && field[7] == 'e' && field[8] == 0 )
-            {
-               return REPLACE ;
-            }
-         } // r
-         else if ( field[1] == 's' )
-         {
-            if ( field[2] == 'e' && field[3] == 't' )
-            {
-               if ( field[4] == 0 )
-               {
-                  return SET ;
-               }
-               else if ( field[4] == 'a' && field[5] == 'r' &&
-                         field[6] == 'r' && field[7] == 'a' &&
-                         field[8] == 'y' && field[9] == 0 )
-               {
-                  return SETARRAY ;
-               }
-            }
-         }
-         else if ( field[1] == 'u' )
-         {
-            if ( field[2] == 'n' && field[3] == 's' &&
-                 field[4] == 'e' && field[5] == 't' &&
-                 field[6] == 0 )
-            {
-               return UNSET ;
-            }
-         }
-         else if ( field[ 1 ] == 'n' )
-         {
-            if ( field[2] == 'u' && field[3] == 'l' &&
-                 field[4] == 'l' && field[5] == 0 )
-            {
-               return NULLOPR ;
-            }
-         }
-      }
-
-      return UNKNOW ;
+      return modifierOpMap.find( field ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__PARSEINCSIMPLE, "_mthModifier::_parseIncSimple" )
@@ -2106,7 +1991,7 @@ namespace engine
       SDB_ASSERT ( ele.type() != Undefined, "Undefined element type" ) ;
       // get field name first
       ModType type = _parseModType( ele.fieldName () ) ;
-      if ( UNKNOW == type )
+      if ( UNKNOWN == type )
       {
          PD_LOG_MSG ( PDERROR, "Updator operator[%s] error", ele.fieldName () ) ;
          rc = SDB_INVALIDARG ;
@@ -3175,7 +3060,7 @@ namespace engine
          const CHAR *pDotR = ossStrrchr( *ppRoot, '.' ) ;
          UINT32 pos = pDotR ? ( pDotR - *ppRoot + 1 ) : 0 ;
          _utilString<> newNameStr ;
-         
+
          newNameStr.append( *ppRoot, pos ) ;
          newNameStr.append( me->_toModify.valuestr(),
                             ossStrlen( me->_toModify.valuestr() ) ) ;
