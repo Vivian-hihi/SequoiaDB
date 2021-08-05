@@ -45,6 +45,7 @@
 #include "qgmParamTable.hpp"
 #include "qgmPlanContainer.hpp"
 #include "sdbInterface.hpp"
+#include "mthCommon.hpp"
 #include <map>
 #include <vector>
 
@@ -59,7 +60,7 @@ namespace engine
                aggrParser *pObj = SDB_OSS_NEW parserClass();\
                _parserMap.insert( AGGR_PARSER_MAP::value_type(parserName, pObj));}
 
-   typedef std::map< std::string, aggrParser* > AGGR_PARSER_MAP;
+   typedef std::map< const CHAR*, aggrParser*, mthStrcasecmp > AGGR_PARSER_MAP;
 
    /*
       aggrBuilder define

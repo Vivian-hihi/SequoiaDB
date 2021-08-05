@@ -88,7 +88,7 @@ namespace engine
       EN_MATCH_OP_FUNC_TYPE   getMatchNodeType( const CHAR *opStr ) ;
 
    private:
-      typedef map< ossPoolString, mthMatchOpMapping* >   MTH_OPSTRMAP ;
+      typedef map< const CHAR*, mthMatchOpMapping*, mthStrcasecmp >   MTH_OPSTRMAP ;
       MTH_OPSTRMAP _opstrMap ;
    } ;
 
