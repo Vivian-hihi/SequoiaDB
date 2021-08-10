@@ -74,7 +74,9 @@ namespace engine
                     INetUDPMsgHandler *handler,
                     UINT32 bufferSize ) ;
       void  setOptions() ;
+      // WARNING: close UDP listen is not thread safe
       void  close() ;
+      void  shutdown() ;
       void  asyncRead() ;
       INT32 syncBroadcast( const void *buf, UINT32 len ) ;
 

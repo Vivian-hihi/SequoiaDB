@@ -763,7 +763,7 @@ namespace engine
       }
 
       // 2. stop listen
-      _netAgent.closeListen() ;
+      _netAgent.shutdownListen() ;
 
       // 3. stop io
       _netAgent.stop() ;
