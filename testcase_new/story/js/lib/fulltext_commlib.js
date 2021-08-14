@@ -953,6 +953,7 @@ function isMasterNodeExist ( groupName )
    {
       throw new Error( "Check group has master node timeout" );
    }
+   return curMaster;
 }
 
 /* *****************************************************************************
