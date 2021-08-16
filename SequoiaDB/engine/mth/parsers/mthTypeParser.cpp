@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = mthIncludeParser.cpp
+   Source File Name = mthTypeParser.cpp
 
    Descriptive Name =
 
@@ -24,63 +24,64 @@
    Restrictions: N/A
 
    Change Activity:
-   defect Date        Who Description
-   ====== =========== === ==============================================
-          15/01/2015  YW  Initial Draft
+   defect Date        Who         Description
+   ====== =========== =========== ==============================================
+          07/21/2021  fangjiabin  Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 
-#include "mthIncludeParser.hpp"
+#include "mthTypeParser.hpp"
 #include "pdTrace.hpp"
 #include "pd.hpp"
 #include "mthTrace.hpp"
 #include "mthDef.hpp"
 #include "mthSActionFunc.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
-   _mthIncludeParser::_mthIncludeParser()
+   _mthTypeParser::_mthTypeParser()
    {
-      _name = MTH_S_INCLUDE ;
+      _name = MTH_S_TYPE ;
    }
 
-   _mthIncludeParser::~_mthIncludeParser()
-   {
+   _mthTypeParser::~_mthTypeParser() {}
 
-   }
-
-   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHINCLUDEPARSER_PARSE, "_mthIncludeParser::parse" )
-   INT32 _mthIncludeParser::parse( const bson::BSONElement &e,
-                                   _mthSAction &action ) const
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHTYPEPARSER_PARSE, "_mthTypeParser::parse" )
+   INT32 _mthTypeParser::parse( const bson::BSONElement &e,
+                                _mthSAction &action ) const
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__MTHINCLUDEPARSER_PARSE ) ;
-      SDB_ASSERT( !e.eoo(), "can not be eoo" ) ;
+      PD_TRACE_ENTRY(SDB__MTHTYPEPARSER_PARSE ) ;
 
-      if ( !e.isNumber() )
+      if ( !e.isNumber() || ( e.numberInt() != 1 && e.numberInt() != 2 ) )
       {
-         PD_LOG( PDERROR, "invalid element type[%d]", e.type() ) ;
          rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "invalid element:e=%s",
+                      e.toString().c_str() ) ;
+      }
+
+      action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
+      action.setFunc( &mthTypeBuild, &mthTypeGet ) ;
+      action.setName( _name.c_str() ) ;
+
+      try
+      {
+         action.setArg( BSON( "arg1" << e.numberInt() ) ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = ossException2RC( &e ) ;
+         PD_LOG( PDERROR, "An exception occurred when set the arg of "
+                 "$type: %s, rc: %d", e.what(), rc ) ;
          goto error ;
       }
 
-      action.setName( _name.c_str() ) ;
-
-      if ( 0 == e.numberLong() )
-      {
-         action.setAttribute( MTH_S_ATTR_EXCLUDE ) ;
-      }
-      else
-      {
-         action.setAttribute( MTH_S_ATTR_INCLUDE ) ;
-         action.setFunc( &mthIncludeBuild,
-                         &mthIncludeGet ) ;
-      }
-
    done:
-      PD_TRACE_EXITRC( SDB__MTHINCLUDEPARSER_PARSE, rc ) ;
+      PD_TRACE_EXITRC( SDB__MTHTYPEPARSER_PARSE, rc ) ;
       return rc ;
    error:
       goto done ;

@@ -48,15 +48,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__MTHSUBSTRPARSER_PARSE ) ;
       INT32 begin = 0 ;
       INT32 limit = -1 ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
 
       if ( e.isNumber() && 0 <=  e.numberInt())
       {
@@ -133,15 +124,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHSTRLENPARSER_PARSE ) ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( e.eoo() )
       {
          PD_LOG( PDERROR, "invalid element" ) ;
@@ -172,15 +155,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHLOWERPARSER_PARSE ) ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( e.eoo() )
       {
          PD_LOG( PDERROR, "invalid element" ) ;
@@ -211,15 +186,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHUPPERPARSER_PARSE ) ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( e.eoo() )
       {
          PD_LOG( PDERROR, "invalid element" ) ;
@@ -251,15 +218,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHTRIMPARSER_PARSE ) ;
 
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
       if ( e.eoo() )
       {
          PD_LOG( PDERROR, "invalid element" ) ;
@@ -291,15 +249,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHLTRIMPARSER_PARSE ) ;
 
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
       if ( e.eoo() )
       {
          PD_LOG( PDERROR, "invalid element" ) ;
@@ -331,15 +280,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHRTRIMPARSER_PARSE ) ;
 
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
       if ( e.eoo() )
       {
          PD_LOG( PDERROR, "invalid element" ) ;

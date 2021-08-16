@@ -62,15 +62,6 @@ namespace engine
       BSONObjBuilder builder ;
       INT32 begin = 0 ;
       INT32 limit = -1 ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
 
       if ( e.isNumber() )
       {

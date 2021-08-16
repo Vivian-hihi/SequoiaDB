@@ -54,15 +54,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHCASTPARSER_PARSE ) ;
       BSONType castType = EOO ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
 
       if ( String == e.type() )
       {
@@ -71,7 +62,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "invalid cast type:%s", e.valuestr () ) ;
             goto error ;
-         } 
+         }
       }
       else if ( !e.isNumber() )
       {

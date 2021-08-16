@@ -46,15 +46,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHABSPARSER_PARSE ) ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
 
       if ( e.eoo() )
       {
@@ -86,15 +77,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHCEILINGPARSER_PARSE ) ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
 
       if ( e.eoo() )
       {
@@ -126,15 +108,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHFLOORPARSER_PARSE ) ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
 
       if ( e.eoo() )
       {
@@ -167,15 +140,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHMODPARSER_PARSE ) ;
       BSONObjBuilder builder ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( !e.isNumber() ||
            0 == e.Number() )
       {
@@ -205,15 +170,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHADDPARSER_PARSE ) ;
       BSONObjBuilder builder ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( !e.isNumber() )
       {
          PD_LOG( PDERROR, "invalid element:%s",
@@ -242,15 +199,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSUBTRACTPARSER_PARSE ) ;
       BSONObjBuilder builder ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( !e.isNumber() )
       {
          PD_LOG( PDERROR, "invalid element:%s",
@@ -280,15 +229,7 @@ namespace engine
        INT32 rc = SDB_OK ;
        PD_TRACE_ENTRY( SDB__MTHSUBTRACTPARSER_PARSE ) ;
        BSONObjBuilder builder ;
-#if defined (_DEBUG)
-       if ( 0 != _name.compare( e.fieldName() ) )
-       {
-          PD_LOG( PDERROR, "field name[%s] is not valid",
-                  e.fieldName() ) ;
-          rc = SDB_INVALIDARG ;
-          goto error ;
-       }
-#endif
+
        if ( !e.isNumber() )
        {
           PD_LOG( PDERROR, "invalid element:%s",
@@ -318,15 +259,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSUBTRACTPARSER_PARSE ) ;
       BSONObjBuilder builder ;
-#if defined (_DEBUG)
-      if ( 0 != _name.compare( e.fieldName() ) )
-      {
-         PD_LOG( PDERROR, "field name[%s] is not valid",
-                 e.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-#endif
+
       if ( !e.isNumber() || mthIsZero(e) )
       {
          PD_LOG( PDERROR, "invalid element:%s",

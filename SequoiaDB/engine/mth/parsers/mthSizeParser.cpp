@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   Source File Name = mthIncludeParser.cpp
+   Source File Name = mthSizeParser.cpp
 
    Descriptive Name =
 
@@ -24,63 +24,51 @@
    Restrictions: N/A
 
    Change Activity:
-   defect Date        Who Description
-   ====== =========== === ==============================================
-          15/01/2015  YW  Initial Draft
+   defect Date        Who         Description
+   ====== =========== =========== ==============================================
+          07/21/2021  fangjiabin  Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 
-#include "mthIncludeParser.hpp"
+#include "mthSizeParser.hpp"
 #include "pdTrace.hpp"
 #include "pd.hpp"
 #include "mthTrace.hpp"
 #include "mthDef.hpp"
 #include "mthSActionFunc.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
-   _mthIncludeParser::_mthIncludeParser()
+   _mthSizeParser::_mthSizeParser()
    {
-      _name = MTH_S_INCLUDE ;
+      _name = MTH_S_SIZE ;
    }
 
-   _mthIncludeParser::~_mthIncludeParser()
-   {
+   _mthSizeParser::~_mthSizeParser() {}
 
-   }
-
-   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHINCLUDEPARSER_PARSE, "_mthIncludeParser::parse" )
-   INT32 _mthIncludeParser::parse( const bson::BSONElement &e,
-                                   _mthSAction &action ) const
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSIZEPARSER_PARSE, "_mthSizeParser::parse" )
+   INT32 _mthSizeParser::parse( const bson::BSONElement &e,
+                                _mthSAction &action ) const
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__MTHINCLUDEPARSER_PARSE ) ;
-      SDB_ASSERT( !e.eoo(), "can not be eoo" ) ;
+      PD_TRACE_ENTRY(SDB__MTHSIZEPARSER_PARSE ) ;
 
-      if ( !e.isNumber() )
+      if ( !mthIsNumber1( e ) )
       {
-         PD_LOG( PDERROR, "invalid element type[%d]", e.type() ) ;
          rc = SDB_INVALIDARG ;
-         goto error ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
       }
 
+      action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
+      action.setFunc( &mthSizeBuild, &mthSizeGet ) ;
       action.setName( _name.c_str() ) ;
 
-      if ( 0 == e.numberLong() )
-      {
-         action.setAttribute( MTH_S_ATTR_EXCLUDE ) ;
-      }
-      else
-      {
-         action.setAttribute( MTH_S_ATTR_INCLUDE ) ;
-         action.setFunc( &mthIncludeBuild,
-                         &mthIncludeGet ) ;
-      }
-
    done:
-      PD_TRACE_EXITRC( SDB__MTHINCLUDEPARSER_PARSE, rc ) ;
+      PD_TRACE_EXITRC( SDB__MTHSIZEPARSER_PARSE, rc ) ;
       return rc ;
    error:
       goto done ;
