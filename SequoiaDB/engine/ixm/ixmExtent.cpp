@@ -1282,35 +1282,48 @@ namespace engine
                ixmRecordID tmpIdxRID ;
                dmsRecordID tmpRID ;
                BOOLEAN tmpFound = FALSE ;
- 
-               rc = root.exists( key, order, indexCB, tmpFound, tmpIdxRID, tmpRID ) ;
+
+               rc = root.exists( key, order, indexCB, tmpFound, tmpIdxRID,
+                                 tmpRID ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to locate key %s to find "
                             "duplicated keys, rc: %d", key.toString().c_str(),
                             rc ) ;
                if ( tmpFound )
                {
-#ifdef _DEBUG
-                  PD_LOG ( PDWARNING, "Duplicate key is detected with rid(%d, %d), "
-                           "page:%d, keynode:%d, insert rid:(%d, %d)",
-                           tmpRID._extent, tmpRID._offset, tmpIdxRID._extent,
-                           tmpIdxRID._slot, rid._extent, rid._offset ) ;
-#else
-                  PD_LOG ( PDINFO, "Duplicate key is detected with rid(%d, %d), "
-                           "page:%d, keynode:%d, insert rid:(%d, %d)",
-                           tmpRID._extent, tmpRID._offset, tmpIdxRID._extent,
-                           tmpIdxRID._slot, rid._extent, rid._offset ) ;
-#endif
-                  if ( pResult )
+                  if ( tmpRID == rid )
                   {
-                     pResult->setCurRID( rid ) ;
-                     pResult->setPeerRID( tmpRID ) ;
+                     PD_LOG ( PDINFO, "same key + rid is already in index" ) ;
+                     // have same key/rid point to same record
+                     rc = SDB_IXM_IDENTICAL_KEY ;
                   }
-                  rc = SDB_IXM_DUP_KEY ;
+                  else
+                  {
+#ifdef _DEBUG
+                     PD_LOG ( PDWARNING, "Duplicate key is detected with "
+                              "rid(%d, %d), page:%d, keynode:%d, "
+                              "insert rid:(%d, %d)", tmpRID._extent,
+                              tmpRID._offset, tmpIdxRID._extent,
+                              tmpIdxRID._slot, rid._extent, rid._offset ) ;
+#else
+                     PD_LOG ( PDINFO, "Duplicate key is detected with "
+                              "rid(%d, %d), page:%d, keynode:%d, "
+                              "insert rid:(%d, %d)", tmpRID._extent,
+                              tmpRID._offset, tmpIdxRID._extent,
+                              tmpIdxRID._slot, rid._extent, rid._offset ) ;
+#endif
+                     if ( pResult )
+                     {
+                        pResult->setCurRID( rid ) ;
+                        pResult->setPeerRID( tmpRID ) ;
+                     }
+                     rc = SDB_IXM_DUP_KEY ;
+                  }
                   goto error ;
                }
+
+               // we have mblatch, so check once is enough
+               dupChecked = TRUE ;
             }
-            // we have mblatch, so check once is enough
-            dupChecked = TRUE ;
          }
       }
 
@@ -2048,7 +2061,7 @@ namespace engine
             result = ixmKey(extent.getKeyData(indexrid._slot)).woEqual(key) ;
             if ( result )
             {
-               idxRID = indexrid ; 
+               idxRID = indexrid ;
                rid = kn->_rid ;
             }
             goto done ;
