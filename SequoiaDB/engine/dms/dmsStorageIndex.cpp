@@ -219,6 +219,10 @@ namespace engine
                   {
                      _pDataSu->_mbStatInfo[i]._uniqueIdxNum++ ;
                   }
+                  if ( indexCB.isGlobal() )
+                  {
+                     _pDataSu->_mbStatInfo[ i ]._globIdxNum ++ ;
+                  }
                }
             }
          }
@@ -1059,6 +1063,10 @@ namespace engine
          {
             context->mbStat()->_uniqueIdxNum-- ;
          }
+         if ( indexCB.isGlobal() )
+         {
+            context->mbStat()->_globIdxNum -- ;
+         }
 
          // release index control block extent
          rc = releaseExtent ( context->mb()->_indexExtent[indexID], TRUE ) ;
@@ -1227,6 +1235,10 @@ namespace engine
          if ( indexCB.unique() )
          {
             context->mbStat()->_uniqueIdxNum++ ;
+         }
+         if ( indexCB.isGlobal() )
+         {
+            context->mbStat()->_globIdxNum ++ ;
          }
       }
 
@@ -2033,7 +2045,7 @@ namespace engine
       INT32 indexID = 0 ;
       _dmsRecordContainer container ;
 
-      if ( !_needProcessGlobalIndex( cb ) )
+      if ( !_needProcessGlobalIndex( context, cb ) )
       {
          goto done ;
       }
@@ -2501,13 +2513,14 @@ namespace engine
                                                  BSONObj &originalObj,
                                                  BSONObj &newObj,
                                                  _pmdEDUCB *cb,
+                                                 const ixmIdxHashBitmap &idxHashBitmap,
                                                  utilWriteResult *pResult )
    {
       INT32 rc = SDB_OK ;
       INT32 indexID = 0 ;
       _dmsRecordContainer container ;
 
-      if ( !_needProcessGlobalIndex( cb ) )
+      if ( !_needProcessGlobalIndex( context, cb ) )
       {
          goto done ;
       }
@@ -2529,7 +2542,8 @@ namespace engine
             continue ;
          }
 
-         if ( !_needProcessIndex( indexCB, extLID ) )
+         if ( !_needProcessIndex( indexCB, extLID ) ||
+              !context->mbStat()->testIdxHash( indexID, idxHashBitmap ) )
          {
             continue ;
          }
@@ -2655,7 +2669,7 @@ namespace engine
 
       // do global index first.
       rc = _globalIndexesUpdate( context, extLID, originalObj, newObj,
-                                 cb, pResult ) ;
+                                 cb, idxHashBitmap, pResult ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update global index, rc: %d",
                    rc ) ;
 
@@ -2821,7 +2835,7 @@ namespace engine
       INT32 indexID = 0 ;
       _dmsRecordContainer container ;
 
-      if ( !_needProcessGlobalIndex( cb ) )
+      if ( !_needProcessGlobalIndex( context, cb ) )
       {
          goto done ;
       }
@@ -2875,8 +2889,20 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN _dmsStorageIndex::_needProcessGlobalIndex( _pmdEDUCB *cb )
+   BOOLEAN _dmsStorageIndex::_needProcessGlobalIndex( _dmsMBContext *context,
+                                                      _pmdEDUCB *cb )
    {
+      SDB_ASSERT( NULL != context,
+                  "metadata block context is invalid" ) ;
+      SDB_ASSERT( context->isMBLock(),
+                  "metadata block context should be locked" ) ;
+
+      if ( 0 == context->mbStat()->_globIdxNum )
+      {
+         // no global index
+         return FALSE ;
+      }
+
       if ( !cb->isAffectGIndex() )
       {
          // no need to process global index
