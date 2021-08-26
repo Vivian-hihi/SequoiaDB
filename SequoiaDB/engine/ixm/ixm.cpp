@@ -435,7 +435,7 @@ namespace engine
          goto error ;
       }
 
-      SET_NAME_EXT_DATA_INITED() ;
+      SET_GLOB_INDEX_INITED() ;
 
    done:
       return rc ;
