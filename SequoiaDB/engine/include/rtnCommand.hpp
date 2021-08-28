@@ -1676,7 +1676,6 @@ namespace engine
       const CHAR *      _ixname ;
       rtnAnalyzeParam   _param ;
    } ;
-
 }
 
 const UINT32 pdGetTraceFunctionListNum();

@@ -3877,4 +3877,3 @@ SDB_EXPORT INT32 sdbSeqRestart( sdbSequenceHandle sHandle,
 
 SDB_EXTERN_C_END
 #endif
-
