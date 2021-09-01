@@ -65,6 +65,7 @@ namespace engine
             }
             else if ( PMD_EDU_EVENT_ACTIVE == event._eventType )
             {
+               UINT64 doRollbackID = event._userData ;
                rc = SDB_OK ;
                if ( pTransCB->getEventHandler() )
                {
@@ -73,7 +74,7 @@ namespace engine
 
                if ( SDB_OK == rc )
                {
-                  rc = rtnTransRollbackAll( cb ) ;
+                  rc = rtnTransRollbackAll( cb, doRollbackID ) ;
                }
             }
             pmdEduEventRelease( event, cb ) ;

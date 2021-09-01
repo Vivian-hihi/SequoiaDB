@@ -69,6 +69,7 @@ namespace engine
       _TransIDH16          = 0;
       _isOn                = FALSE ;
       _doRollback          = FALSE ;
+      _doRollbackID        = 1 ;
       _isNeedSyncTrans     = TRUE ;
       _logFileTotalSize    = 0 ;
       _transLockMgr        = NULL ;
@@ -272,7 +273,7 @@ namespace engine
       {
          if ( SDB_EVT_OCCUR_AFTER == occurType )
          {
-            stopRollbackTask() ;
+            stopRollbackTask( 0 ) ;
             termAllTrans() ;
          }
       }
@@ -363,8 +364,11 @@ namespace engine
       eduID = pEduMgr->getSystemEDU( EDU_TYPE_DPSROLLBACK ) ;
       if ( PMD_INVALID_EDUID != eduID )
       {
-         rc = pEduMgr->postEDUPost( eduID, PMD_EDU_EVENT_ACTIVE,
-                                    PMD_EDU_MEM_NONE, NULL ) ;
+         rc = pEduMgr->postEDUPost( eduID,
+                                    PMD_EDU_EVENT_ACTIVE,
+                                    PMD_EDU_MEM_NONE,
+                                    NULL,
+                                    _doRollbackID ) ;
       }
       else
       {
@@ -379,10 +383,21 @@ namespace engine
       return rc ;
    }
 
-   INT32 dpsTransCB::stopRollbackTask()
+   INT32 dpsTransCB::stopRollbackTask( UINT64 doRollbackID )
    {
-      _doRollback = FALSE ;
-      _rollbackEvent.signalAll() ;
+      // only the same rollback ID can stop the task
+      // or doRollback ID is 0, which means force to stop
+      if ( 0 == doRollbackID || _doRollbackID == doRollbackID )
+      {
+         _doRollback = FALSE ;
+         _rollbackEvent.signalAll() ;
+
+         // if force to stop, increase the rollback ID
+         if ( 0 == doRollbackID )
+         {
+            ++ _doRollbackID ;
+         }
+      }
       return SDB_OK ;
    }
 
