@@ -488,6 +488,8 @@ namespace engine
                planBuilder.appendBool( OPT_FIELD_USE_EXT_SORT,
                                        pPlan->sortRequired() ) ;
 
+               // no need to set abbrev with explain options, the plan with
+               // large size string will not be cached
                pPlan->toBSON( planBuilder ) ;
 
                if ( NULL != _pMonitor )
@@ -1259,10 +1261,10 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_GETAP, "_optAccessPlanManager::getAccessPlan" )
    INT32 _optAccessPlanManager::getAccessPlan ( const rtnQueryOptions &options,
-                                                BOOLEAN keepSearchPaths,
                                                 dmsStorageUnit *su,
                                                 dmsMBContext *mbContext,
-                                                optAccessPlanRuntime &planRuntime )
+                                                optAccessPlanRuntime &planRuntime,
+                                                const rtnExplainOptions *expOptions )
    {
       INT32 rc = SDB_OK ;
 
@@ -1281,7 +1283,7 @@ namespace engine
       if ( isInitialized() &&
            _cacheLevel >= OPT_PLAN_PARAMETERIZED &&
            NULL != options.getMainCLName() &&
-           !keepSearchPaths )
+           ( NULL == expOptions || !expOptions->isNeedSearch() ) )
       {
          dmsCachedPlanMgr *pCachedPlanMgr = su->getCachedPlanMgr() ;
          if ( NULL == pCachedPlanMgr ||
@@ -1308,8 +1310,8 @@ namespace engine
       {
          // If cache is not initialized, or it not from main-collection, or the
          // cache level is too low, get or create normal plan
-         rc = _getCLAccessPlan( options, keepSearchPaths, su, mbContext,
-                                planRuntime ) ;
+         rc = _getCLAccessPlan( options, su, mbContext, planRuntime,
+                                expOptions ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                       "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
       }
@@ -1321,6 +1323,12 @@ namespace engine
                  planRuntime.getPlan()->toString().c_str() ) ;
       }
 #endif
+
+      // set explain options
+      if ( NULL != expOptions )
+      {
+         planRuntime.setExplainOptions( expOptions ) ;
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_OPTAPM_GETAP, rc ) ;
@@ -1343,8 +1351,8 @@ namespace engine
       SDB_ASSERT( su, "su is invalid" ) ;
       SDB_ASSERT( mbContext, "mbContext is invalid" ) ;
 
-      rc = _getCLAccessPlan( options, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
-                             planRuntime ) ;
+      rc = _getCLAccessPlan( options, OPT_PLAN_NOCACHE, su, mbContext,
+                             planRuntime, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                    "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
 
@@ -1722,10 +1730,10 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__GETCLAP, "_optAccessPlanManager::_getCLAccessPlan" )
    INT32 _optAccessPlanManager::_getCLAccessPlan ( const rtnQueryOptions &options,
-                                                   BOOLEAN keepSearchPaths,
                                                    dmsStorageUnit *su,
                                                    dmsMBContext *mbContext,
-                                                   optAccessPlanRuntime &planRuntime )
+                                                   optAccessPlanRuntime &planRuntime,
+                                                   const rtnExplainOptions *expOptions )
    {
       INT32 rc = SDB_OK ;
 
@@ -1736,7 +1744,7 @@ namespace engine
 
       OPT_PLAN_CACHE_LEVEL cacheLevel = _cacheLevel ;
 
-      if ( keepSearchPaths )
+      if ( NULL != expOptions && expOptions->isNeedSearch() )
       {
          cacheLevel = OPT_PLAN_NOCACHE ;
       }
@@ -1755,8 +1763,8 @@ namespace engine
          }
       }
 
-      rc = _getCLAccessPlan( options, cacheLevel, keepSearchPaths, su,
-                             mbContext, planRuntime ) ;
+      rc = _getCLAccessPlan( options, cacheLevel, su, mbContext, planRuntime,
+                             expOptions ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                    "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
 
@@ -1771,10 +1779,10 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM__GETCLAP_LEVEL, "_optAccessPlanManager::_getCLAccessPlan" )
    INT32 _optAccessPlanManager::_getCLAccessPlan ( const rtnQueryOptions &options,
                                                    OPT_PLAN_CACHE_LEVEL cacheLevel,
-                                                   BOOLEAN keepSearchPaths,
                                                    dmsStorageUnit *su,
                                                    dmsMBContext *mbContext,
-                                                   optAccessPlanRuntime &planRuntime )
+                                                   optAccessPlanRuntime &planRuntime,
+                                                   const rtnExplainOptions *expOptions )
    {
       INT32 rc = SDB_OK ;
 
@@ -1789,10 +1797,10 @@ namespace engine
       optAccessPlanKey planKey( options, cacheLevel ) ;
 
       optAccessPlanHelper planHelper( cacheLevel, getPlanConfig(),
-                                      getMatchConfig(), keepSearchPaths ) ;
+                                      getMatchConfig(), expOptions ) ;
       BOOLEAN needCache = ( isInitialized() &&
                             cacheLevel > OPT_PLAN_NOCACHE &&
-                            !keepSearchPaths ) ;
+                            !planHelper.isKeepPaths() ) ;
 
       planRuntime.reset() ;
 
@@ -1929,7 +1937,7 @@ namespace engine
       {
          // The sub-collection is not validated to use main-collection plans,
          // generate a general plan for it
-         rc = _getCLAccessPlan( options, FALSE, su, mbContext, planRuntime ) ;
+         rc = _getCLAccessPlan( options, su, mbContext, planRuntime, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                       "query [ %s ], rc: %d", options.toString().c_str(), rc ) ;
       }
@@ -2232,6 +2240,11 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM__CACHEAP ) ;
 
+      if ( !pPlan->canCache() )
+      {
+         goto done ;
+      }
+
       cached = _planCache.addPlan( pPlan ) ;
       if ( cached )
       {
@@ -2258,8 +2271,8 @@ namespace engine
          }
       }
 
+   done:
       PD_TRACE_EXIT( SDB_OPTAPM__CACHEAP ) ;
-
       return cached ;
    }
 
@@ -2301,8 +2314,8 @@ namespace engine
          goto done ;
       }
 
-      rc = _getCLAccessPlan( planKey, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
-                             planRuntime ) ;
+      rc = _getCLAccessPlan( planKey, OPT_PLAN_NOCACHE, su, mbContext,
+                             planRuntime, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for with "
                    "query [ %s ], rc: %d", planKey.toString().c_str(), rc ) ;
 
@@ -2388,8 +2401,8 @@ namespace engine
 
       // Generate the sub-collection plan
       // Specify the cache level, APM is not allowed to adjust it
-      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
-                             planRuntime ) ;
+      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, su, mbContext,
+                             planRuntime, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for "
                    "sub-collection with query [ %s ], rc: %d",
                    subOptions.toString().c_str(), rc ) ;
@@ -2461,8 +2474,8 @@ namespace engine
       }
 
       // Specify the cache level, APM is not allowed to adjust it
-      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, FALSE, su, mbContext,
-                             planRuntime ) ;
+      rc = _getCLAccessPlan( subOptions, OPT_PLAN_NOCACHE, su, mbContext,
+                             planRuntime, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get access plan for "
                    "sub-collection with query [ %s ], rc: %d",
                    subOptions.toString().c_str(), rc ) ;
@@ -2524,7 +2537,7 @@ namespace engine
                       "rc: %d", rc ) ;
 
          // Create a general plan for sub-collection
-         rc = _getCLAccessPlan( subOptions, FALSE, su, mbContext, planRuntime ) ;
+         rc = _getCLAccessPlan( subOptions, su, mbContext, planRuntime, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get collection access plan for "
                       "query [ %s ], rc: %d", subOptions.toString().c_str(),
                       rc ) ;
