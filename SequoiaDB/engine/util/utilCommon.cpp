@@ -534,7 +534,8 @@ namespace engine
 
    void utilBuildErrorBson( BSONObjBuilder &builder,
                             INT32 flags, const CHAR *detail,
-                            BOOLEAN *pRollback )
+                            BOOLEAN *pRollback,
+                            INT32 transRC )
    {
       // check flags
       if ( flags < -SDB_MAX_ERROR || flags > SDB_MAX_WARNING )
@@ -561,6 +562,10 @@ namespace engine
             builder.appendBool ( FIELD_NAME_ROLLBACK,
                                  *pRollback ? TRUE : FALSE ) ;
          }
+         if ( SDB_OK != transRC )
+         {
+            builder.append( FIELD_NAME_TRANS_RC, transRC ) ;
+         }
       }
       catch( std::exception &e )
       {
@@ -569,7 +574,7 @@ namespace engine
    }
 
    BSONObj utilGetErrorBson( INT32 flags, const CHAR *detail,
-                             BOOLEAN *pRollback )
+                             BOOLEAN *pRollback, INT32 transRC )
    {
       static BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
       static BOOLEAN _init = FALSE ;
@@ -619,6 +624,10 @@ namespace engine
          if ( pRollback )
          {
             bb.appendBool ( FIELD_NAME_ROLLBACK, *pRollback ? TRUE : FALSE ) ;
+         }
+         if ( SDB_OK != transRC )
+         {
+            bb.append( FIELD_NAME_TRANS_RC, transRC ) ;
          }
          return bb.obj() ;
       }

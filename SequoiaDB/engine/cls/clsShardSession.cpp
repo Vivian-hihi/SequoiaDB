@@ -1049,6 +1049,7 @@ namespace engine
          {
             BOOLEAN inTrans = _pEDUCB->isTransaction() ;
             BOOLEAN hasRollbacked = FALSE ;
+            INT32 transRC = _pEDUCB->getTransRC() ;
 
             /// when coord catalog info is old, can't rollback, coord will retry
             if ( inTrans )
@@ -1056,7 +1057,7 @@ namespace engine
                if ( ( isAutoCommit ||
                       ( isNeedRollback && SDB_CLS_COORD_NODE_CAT_VER_OLD != rc
                         && _pEDUCB->getTransExecutor()->isTransAutoRollback()) )
-                    || SDB_OK != _pEDUCB->getTransRC() )
+                    || SDB_OK != transRC )
                {
                   PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
                            opCode, rc ) ;
@@ -1081,7 +1082,8 @@ namespace engine
             {
                utilBuildErrorBson( _retBuilder, rc,
                                    _pEDUCB->getInfo( EDU_INFO_ERROR ),
-                                   inTrans ? &hasRollbacked : NULL ) ;
+                                   inTrans ? &hasRollbacked : NULL,
+                                   inTrans ? transRC : SDB_OK ) ;
                _errorInfo = _retBuilder.done() ;
                buffObj = rtnContextBuf( _errorInfo ) ;
             }
@@ -1097,12 +1099,19 @@ namespace engine
                while( itr.more() )
                {
                   BSONElement e = itr.next() ;
-                  if ( 0 != ossStrcmp( FIELD_NAME_ROLLBACK, e.fieldName() ) )
+                  if ( 0 != ossStrcmp( FIELD_NAME_ROLLBACK, e.fieldName() ) &&
+                       0 != ossStrcmp( FIELD_NAME_TRANS_RC, e.fieldName() ) )
                   {
                      errorBuilder.append( e ) ;
                   }
                }
                errorBuilder.appendBool( FIELD_NAME_ROLLBACK, hasRollbacked ) ;
+
+               if ( SDB_OK != transRC )
+               {
+                  errorBuilder.append( FIELD_NAME_TRANS_RC, transRC ) ;
+               }
+
                _errorInfo = errorBuilder.obj() ;
                buffObj = rtnContextBuf( _errorInfo ) ;
             }
@@ -2721,17 +2730,22 @@ namespace engine
 
    INT32 _clsShdSession::_onTransCommitMsg( NET_HANDLE handle, MsgHeader *msg )
    {
+      INT32 rc = SDB_OK ;
+
       CHAR tmpID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
       CHAR tmpAttr[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
 
       if ( !_pReplSet->primaryIsMe() )
       {
-         return SDB_CLS_NOT_PRIMARY ;
+         rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
       }
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
       {
-         return SDB_DPS_TRANS_NO_TRANS ;
+         rc = SDB_DPS_TRANS_NO_TRANS ;
+         goto error ;
       }
+
       dpsTransIDToString( eduCB()->getTransID(),
                           tmpID, DPS_TRANS_STR_LEN ) ;
       dpsTransIDAttrToString( eduCB()->getTransID(),
@@ -2739,7 +2753,15 @@ namespace engine
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
                           "TransactionID: %s(%s)", tmpID, tmpAttr ) ;
-      return rtnTransCommit( _pEDUCB, _pDpsCB ) ;
+
+      rc = rtnTransCommit( _pEDUCB, _pDpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to commit transaction, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_onTransRollbackMsg( NET_HANDLE handle, MsgHeader *msg )
@@ -2860,10 +2882,6 @@ namespace engine
          goto error ;
       }
 
-      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
-                PDERROR, "Transaction is already failed, rc: %d",
-                _pEDUCB->getTransRC() ) ;
-
       rc = _onUpdateReqMsg( handle, msg, upResult ) ;
       if ( SDB_OK != rc )
       {
@@ -2887,10 +2905,6 @@ namespace engine
          goto error ;
       }
 
-      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
-                PDERROR, "Transaction is already failed, rc: %d",
-                _pEDUCB->getTransRC() ) ;
-
       rc = _onInsertReqMsg( handle, msg, inResult ) ;
       if ( SDB_OK != rc )
       {
@@ -2913,10 +2927,6 @@ namespace engine
       {
          goto error ;
       }
-
-      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
-                PDERROR, "Transaction is already failed, rc: %d",
-                _pEDUCB->getTransRC() ) ;
 
       rc = _onDeleteReqMsg( handle, msg, delResult ) ;
       if ( SDB_OK != rc )
@@ -2943,10 +2953,6 @@ namespace engine
       {
          goto error ;
       }
-
-      PD_CHECK( SDB_OK == _pEDUCB->getTransRC(), _pEDUCB->getTransRC(), error,
-                PDERROR, "Transaction is already failed, rc: %d",
-                _pEDUCB->getTransRC() ) ;
 
       rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
                            contextID, needRollback, NULL ) ;
