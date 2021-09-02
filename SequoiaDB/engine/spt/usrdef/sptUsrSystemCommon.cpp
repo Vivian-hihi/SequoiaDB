@@ -1882,7 +1882,7 @@ namespace engine
          }
          else
          {
-            cmd << " -p \'" << configObj.getStringField( "passwd" ) << "\'" ;
+            cmd << " -p " << configObj.getStringField( "passwd" ) ;
          }
       }
 
@@ -2118,7 +2118,8 @@ namespace engine
          }
          else
          {
-            cmd << " -p \'" << configObj.getStringField( "passwd" ) << "\'" ;
+            cmd << " -p "
+                << configObj.getStringField( "passwd" ) ;
          }
       }
 
