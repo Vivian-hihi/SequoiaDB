@@ -160,6 +160,8 @@ public class Sequoiadb implements Closeable {
     //public final static int SDB_SNAP_RESERVED3 = 22;
     public final static int SDB_SNAP_TASKS = 23;
     public final static int SDB_SNAP_INDEXES = 24;
+    public final static int SDB_SNAP_TRANSWAITS = 25;
+    public final static int SDB_SNAP_TRANSDEADLOCK = 26;
 
     public final static int FMP_FUNC_TYPE_INVALID = -1;
     public final static int FMP_FUNC_TYPE_JS = 0;
@@ -1345,6 +1347,8 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                 <dt>Sequoiadb.SDB_SNAP_TASKS : Get the snapshot of tasks
      *                 <dt>Sequoiadb.SDB_SNAP_INDEXES : Get the snapshot of indexes
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSWAITS : Get the snapshot of transaction waits
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSDEADLOCK : Get the snapshot of transaction deadlock
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1398,6 +1402,8 @@ public class Sequoiadb implements Closeable {
      *                 <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                 <dt>Sequoiadb.SDB_SNAP_TASKS : Get the snapshot of tasks
      *                 <dt>Sequoiadb.SDB_SNAP_INDEXES : Get the snapshot of indexes
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSWAITS : Get the snapshot of transaction waits
+     *                 <dt>Sequoiadb.SDB_SNAP_TRANSDEADLOCK : Get the snapshot of transaction deadlock
      *                 </dl>
      * @param matcher  the matching rule, match all the documents if null
      * @param selector the selective rule, return the whole document if null
@@ -1438,6 +1444,8 @@ public class Sequoiadb implements Closeable {
      *                   <dt>Sequoiadb.SDB_SNAP_INDEXSTATS : Get the snapshot of index statistics
      *                   <dt>Sequoiadb.SDB_SNAP_TASKS : Get the snapshot of tasks
      *                   <dt>Sequoiadb.SDB_SNAP_INDEXES : Get the snapshot of indexes
+     *                   <dt>Sequoiadb.SDB_SNAP_TRANSWAITS : Get the snapshot of transaction waits
+     *                   <dt>Sequoiadb.SDB_SNAP_TRANSDEADLOCK : Get the snapshot of transaction deadlock
      *                   </dl>
      * @param matcher    the matching rule, match all the documents if null
      * @param selector   the selective rule, return the whole document if null
@@ -1520,6 +1528,10 @@ public class Sequoiadb implements Closeable {
                 return AdminCommand.SNAP_TASKS;
             case SDB_SNAP_INDEXES:
                 return AdminCommand.SNAP_INDEXES;
+            case SDB_SNAP_TRANSWAITS:
+                return AdminCommand.SNAP_TRANSWAITS;
+            case SDB_SNAP_TRANSDEADLOCK:
+                return AdminCommand.SNAP_TRANSDEADLOCK;
             default:
                 throw new BaseException(SDBError.SDB_INVALIDARG,
                         String.format("Invalid snapshot type: %d", snapType));
