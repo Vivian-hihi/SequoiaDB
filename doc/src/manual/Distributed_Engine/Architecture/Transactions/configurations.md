@@ -181,9 +181,8 @@
 
 [^_^]:
     本文使用到的所有链接
-
-[cluster_config]: manual/Manual/Database_Configuration/configuration_parameters.md
-[isolation]: manual/Distributed_Engine/Architecture/Transactions/isolation.md
-[update_conf]: manual/Manual/Sequoiadb_Command/Sdb/updateConf.md
-[set_session_attr]: manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md
+[cluster_config]:manual/Distributed_Engine/Maintainance/Database_Configuration/configuration_parameters.md
+[isolation]:manual/Distributed_Engine/Architecture/Transactions/isolation.md
+[update_conf]:manual/Manual/Sequoiadb_Command/Sdb/updateConf.md
+[set_session_attr]:manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md
 [get_session_attr]:manual/Manual/Sequoiadb_Command/Sdb/getSessionAttr.md

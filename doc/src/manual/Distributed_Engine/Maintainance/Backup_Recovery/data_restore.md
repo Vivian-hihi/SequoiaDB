@@ -145,4 +145,4 @@ sdbrestore 工具的配置参数可用于配置备份文件的相关恢复路径
 [^_^]:
     本文使用的所有引用及链接
 [listBackup]:manual/Manual/Sequoiadb_Command/Sdb/listBackup.md
-[configuration]:manual/Manual/Database_Configuration/configuration_parameters.md
+[configuration]:manual/Distributed_Engine/Maintainance/Database_Configuration/configuration_parameters.md
