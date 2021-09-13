@@ -3,7 +3,7 @@
 
 @Author      : xiaozhenfan
 @CreateTime  : 2021.9.2
-@LastEditTime: 2021.9.3
+@LastEditTime: 2021.9.11
 @LastEditors : xiaozhenfan
 ******************************************************************************/
 testConf.clName = COMMCLNAME +"_24338";
@@ -23,5 +23,13 @@ function test ( para )
    if (afterCount - prevCount != diff)
    {
        throw new Error("expect :" + diff + " real :" + (afterCount - prevCount)) ;
+   }
+   var prevList = afterCount ;
+   db.list(SDB_SNAP_SESSIONS_CURRENT).next();
+   cursor = db.snapshot(SDB_SNAP_SESSIONS_CURRENT, {}, {ProcessEventCount: ""}) ;
+   var afterList = cursor.next().toObj().ProcessEventCount ;
+   if (afterList - prevList != diff)
+   {
+       throw new Error("expect :" + diff + " real :" + (afterList - prevList)) ;
    }
 }
