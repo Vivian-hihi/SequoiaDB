@@ -4420,12 +4420,6 @@
                      ]
                   },
                   {
-                     "id": 1482314609,
-                     "file": "location",
-                     "cn": "命令位置参数",
-                     "en": "location"
-                  },
-                  {
                      "id": 1552489109,
                      "dir": "AuxiliaryObjects",
                      "cn": "辅助类型对象",
@@ -4542,6 +4536,12 @@
                            "en": "Timestamp"
                         }
                      ]
+                  },
+                  {
+                     "id": 1482314609,
+                     "file": "location",
+                     "cn": "命令位置参数",
+                     "en": "location"
                   }
                ]
             },
