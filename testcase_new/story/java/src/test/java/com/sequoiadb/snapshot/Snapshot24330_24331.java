@@ -20,11 +20,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @Description: seqDB-24330/seqDB-24331:在 data 节点上检测简单死锁，并使用 forceSession() 解除死锁
+ * @Description: seqDB-24330 : 在 data 节点上检测简单死锁 seqDB-24331 在 data 节点上使用 forceSession() 解除死锁
  * @Author Yang Qincheng
  * @Date 2021.09.02
  */
-public class Snapshot24331 extends SdbTestBase {
+public class Snapshot24330_24331 extends SdbTestBase {
     private Sequoiadb db;
     private Sequoiadb dataNode = null;
     private final String clName1 = "cl_24331_A";
