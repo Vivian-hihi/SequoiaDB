@@ -1,4 +1,4 @@
-索引文件存储在 indexpath 指定的路径下。indexpath 的值默认与 dbpath 相同。如果需要修改 indexpath 的值，建议修改为 ssd 盘下的目录路径。下面以节点"sdbserver1:11820"为例，介绍修改 indexpath 的详细步骤：
+索引文件存储在 indexpath 指定的路径下。indexpath 的值默认与 dbpath 相同。如果需要修改 indexpath 的值，建议修改为 ssd 盘下的目录路径。下面以节点"sdbserver1:11820"、索引文件存储原路径 `/opt/sequoiadb/database/data/11820` 为例，介绍修改 indexpath 的详细步骤：
 
 1. 停止节点 11820
 
@@ -14,7 +14,7 @@
     $ chmod 755 /data/ssd1/sequoiadb/index/11820
     ```
 
-3. 切换至原路径（默认为 `/opt/sequoiadb/database/data/11820`）
+3. 切换至原路径
 
     ```lang-bash
     $ cd /opt/sequoiadb/database/data/11820

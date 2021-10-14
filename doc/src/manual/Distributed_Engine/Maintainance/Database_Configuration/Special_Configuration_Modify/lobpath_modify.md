@@ -1,4 +1,4 @@
-大对象数据文件存储在 lobpath 指定的路径下。lobpath 的值默认与 dbpath 相同。下面以节点"sdbserver1:11820"为例，介绍修改 lobpath 的详细步骤：
+大对象数据文件存储在 lobpath 指定的路径下。lobpath 的值默认与 dbpath 相同。下面以节点"sdbserver1:11820"、大对象数据文件存储原路径 `/opt/sequoiadb/database/data/11820` 为例，介绍修改 lobpath 的详细步骤：
 
 1. 停止节点 11820
 
@@ -14,7 +14,7 @@
     $ chmod 755 /data/disk1/sequoiadb/lob/11820
     ```
 
-3. 切换至原路径（默认为 `/opt/sequoiadb/database/data/11820`）
+3. 切换至原路径
 
     ```lang-bash
     $ cd /opt/sequoiadb/database/data/11820
