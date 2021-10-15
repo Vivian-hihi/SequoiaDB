@@ -438,7 +438,6 @@ namespace sdbclient
                      // release lock1
                      _connMutex.release() ;
                      conn = pConn ;
-                     _strategy->sync( pConn, ADDBUSYCONN ) ;
                      isGet = TRUE ;
                   }
                   else
@@ -507,7 +506,6 @@ namespace sdbclient
                   }
                   _idleList.push_back( tmp ) ;
                   _idleSize.inc() ;
-                  _strategy->sync( tmp, ADDIDLECONN ) ;
                }
             }
          } // secondly check _isEnabled
@@ -520,7 +518,6 @@ namespace sdbclient
       }
       return ;
    release :
-      _strategy->sync( tmp, DELBUSYCONN ) ;
       if ( tmp )
       {
          tmp->disconnect() ;
@@ -555,8 +552,6 @@ namespace sdbclient
          // release lock1
          _busySize.inc() ;
          _connMutex.release() ;
-         // update strategy
-         _strategy->sync( pConn, ADDBUSYCONN ) ;
       }
 
       // if check valid
@@ -578,8 +573,6 @@ namespace sdbclient
             }
             // release lock2
             _connMutex.release() ;
-            // update strategy
-            _strategy->sync( pConn, DELBUSYCONN ) ;
             if ( pConn )
             {
                pConn->disconnect() ;
@@ -632,8 +625,10 @@ namespace sdbclient
          _strategy = SDB_OSS_NEW sdbConnPoolLocalStrategy() ;
          break ;
       case CONNPOOL_STY_BALANCE:
-         _strategy = SDB_OSS_NEW sdbConnPoolBalanceStrategy() ;
+         // balance strategy has been deprecated
+         _strategy = SDB_OSS_NEW sdbConnPoolSerialStrategy() ;
          break ;
+
       }
       if (NULL == _strategy)
       {
@@ -862,7 +857,6 @@ namespace sdbclient
       {
          _idleList.push_back( conn ) ;
          _idleSize.inc() ;
-         _strategy->syncAddNewConn( conn, coord ) ;
          ret = TRUE ;
       }
       _connMutex.release() ;
@@ -896,7 +890,6 @@ namespace sdbclient
             _destroyList.pop_front() ;
             if ( conn )
             {
-               _strategy->sync( conn, DELIDLECONN ) ;
                conn->disconnect() ;
                SAFE_OSS_DELETE( conn ) ;
             }
