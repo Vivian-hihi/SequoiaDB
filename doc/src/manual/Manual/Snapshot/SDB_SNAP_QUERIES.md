@@ -14,7 +14,7 @@ SDB_SNAP_QUERIES
 
 | 字段名                 | 类型     | 描述                                                |
 | ---------------------- | -------- | --------------------------------------------------- |
-| NodeName               | string   | 节点名，节点名，格式为\<hostname\>:\<servicename\>  |
+| NodeName               | string   | 节点名，格式为\<hostname\>:\<servicename\>  |
 | NodeID                 | bson array | 节点的 ID，格式为[<分区组 ID>,<节点 ID>]          |
 | StartTimestamp         | string   | 查询开始时间                                        |
 | EndTimestamp           | string   | 查询结束时间                                        |
@@ -183,4 +183,4 @@ SDB_SNAP_QUERIES
 [^_^]:
     本文使用的所有引用及链接
 [SnapshotOption]:manual/Manual/Sequoiadb_Command/AuxiliaryObjects/SdbSnapshotOption.md
-[configuration]:manual/Distributed_Engine/Maintainance/Database_Configuration/configuration_parameters.md
+[configuration]:manual/Distributed_Engine/Maintainance/Database_Configuration/parameter_instructions.md
