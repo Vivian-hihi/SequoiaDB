@@ -156,6 +156,37 @@ namespace engine
       PD_TRACE_EXIT( SDB_OPTAPCACHES_RMPLAN ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_RSPLANACT, "_optAccessPlanCache::resetCachedPlanActivity" )
+   void _optAccessPlanCache::resetCachedPlanActivity( optAccessPlan *pPlan,
+                                                      INT32 lockType )
+   {
+      PD_TRACE_ENTRY( SDB_OPTAPCACHES_RSPLANACT ) ;
+
+      if ( SHARED == lockType )
+      {
+         _pMonitor->getClearLock()->lock_r() ;
+      }
+      else if ( EXCLUSIVE == lockType )
+      {
+         _pMonitor->getClearLock()->lock_w() ;
+      }
+
+      // We need to reset the activity ID to check if
+      // someone else is also deleting this plan
+      _pMonitor->resetActivity( pPlan->resetActivityID() ) ;
+
+      if ( SHARED == lockType )
+      {
+         _pMonitor->getClearLock()->release_r() ;
+      }
+      else if ( EXCLUSIVE == lockType )
+      {
+         _pMonitor->getClearLock()->release_w() ;
+      }
+
+      PD_TRACE_EXIT( SDB_OPTAPCACHES_RSPLANACT ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPCACHES_INVALIDSUPLANS, "_optAccessPlanCache::invalidateSUPlans" )
    void _optAccessPlanCache::invalidateSUPlans ( dmsCachedPlanMgr *pCachedPlanMgr,
                                                  UINT32 suLID )
@@ -584,6 +615,7 @@ namespace engine
 
    _optCachedPlanActivity::~_optCachedPlanActivity ()
    {
+      _clearPlan() ;
    }
 
    void _optCachedPlanActivity::clear ()
@@ -597,7 +629,7 @@ namespace engine
       _totalQueryTimeTick.clear() ;
       _maxQueryActivity.reset() ;
       _minQueryActivity.reset() ;
-      _pPlan = NULL ;
+      _clearPlan() ;
    }
 
    void _optCachedPlanActivity::setPlan ( optAccessPlan *pPlan,
@@ -606,8 +638,8 @@ namespace engine
       // Lock the mutex to exclude setting query activities
       ossScopedLock lock( &_latch ) ;
 
-      _pPlan = pPlan ;
       _lastAccessTime = timestamp ;
+      _setPlan( pPlan ) ;
       _periodAccessCount = 0 ;
       _accessCount = 0 ;
       _totalQueryTimeTick.clear() ;
@@ -2265,7 +2297,7 @@ namespace engine
             // dropCL didn't
             if ( !pPlan->isCached() )
             {
-               _monitor.resetActivity( pPlan->resetActivityID() ) ;
+               _planCache.resetCachedPlanActivity( pPlan, SHARED ) ;
                cached = FALSE ;
             }
          }
