@@ -1,4 +1,4 @@
-大对象元数据文件存储在 lobmetapath 指定的路径下。lobmetapath 的值默认与 lobpath 相同。下面以节点"sdbserver1:11820"、大对象元数据文件存储原路径 `/opt/sequoiadb/database/data/11820` 为例，介绍修改 lobmetapath 的详细步骤：
+大对象元数据文件存储在 lobmetapath 指定的路径下。lobmetapath 的值默认与 lobpath 相同。下面以节点"sdbserver1:11820"（其大对象元数据文件存储原路径为 `/opt/sequoiadb/database/data/11820`）为例，介绍修改 lobmetapath 的详细步骤：
 
 1. 停止节点 11820
 
