@@ -33,8 +33,6 @@ protected:
    }
    void TearDown()
    {
-      INT32 rc = ds.disable() ;
-      ASSERT_EQ( SDB_OK, rc ) << "fail to disable connectionpool" ;
       ds.close() ;
    }
 } ;
@@ -49,8 +47,6 @@ TEST_F( timeTest9499, checkIntervalLong9499 )
    conf.setCheckIntervalInfo( 3000, 0 ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
 
    while( vec.size() <= conf.getMaxIdleCount() )
    {
@@ -81,8 +77,6 @@ TEST_F( timeTest9499, checkIntervalShort9500 )
    conf.setCheckIntervalInfo( 3000, 0 ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
 
    // get connection more than max idle connection num 20
    while( vec.size() <= conf.getMaxIdleCount()+10 )
@@ -112,8 +106,6 @@ TEST_F( timeTest9499, keepAliveTimoutZero9503 )
    conf.setCheckIntervalInfo( 3000, 0 ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
 
    rc = ds.getConnection( conn ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get connection from connectionpool" ;
@@ -137,8 +129,6 @@ TEST_F( timeTest9499, keepAliveTimoutNotZero9504 )
    conf.setCheckIntervalInfo( 3000, 6000 ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
 
    rc = ds.getConnection( conn ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get connection from connectionpool" ;
@@ -164,8 +154,6 @@ TEST_F( timeTest9499, keepAliveTimoutNotZeroAgain9504 )
    conf.setCheckIntervalInfo( 3000, 9000 ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
 
    // get connection and check idle conn num
    rc = ds.getConnection( conn ) ;
@@ -212,8 +200,6 @@ TEST_F( timeTest9499, trueTest9501 )
    conf.setSyncCoordInterval( false ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
    
    // get connection
    rc = ds.getConnection( conn ) ;
@@ -305,8 +291,6 @@ TEST_F( timeTest9499, falseTest9502 )
    conf.setSyncCoordInterval( false ) ;
    rc = ds.init( url, conf ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
 
    // get connection
    rc = ds.getConnection( conn ) ;

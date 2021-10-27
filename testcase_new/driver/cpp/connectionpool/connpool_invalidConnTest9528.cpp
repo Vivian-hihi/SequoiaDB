@@ -23,8 +23,6 @@ protected:
    }
    void TearDown()
    {
-      INT32 rc = ds.disable() ;
-      ASSERT_EQ( SDB_OK, rc ) << "fail to disable connectionpool" ;
       ds.close() ;
    }
 } ;
@@ -39,8 +37,6 @@ TEST_F( invalidArgTest9528, url9528 )
    string urlWrong = "something:00000" ;
    rc = ds.init( urlWrong, conf ) ;
 	ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
-   rc = ds.enable() ;
-	ASSERT_EQ( SDB_OK, rc ) << "fail to enable connectionpool" ;
    
    // get connection
    rc = ds.getConnection( conn ) ;
