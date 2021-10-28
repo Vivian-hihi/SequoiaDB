@@ -40,5 +40,5 @@ TEST_F( invalidArgTest9528, url9528 )
    
    // get connection
    rc = ds.getConnection( conn ) ;
-	ASSERT_EQ( SDB_DS_NO_REACHABLE_COORD, rc ) << "fail to test get connection with not exist url" ;
+	ASSERT_EQ( SDB_CLIENT_CONNPOOL_NO_REACHABLE_COORD, rc ) << "fail to test get connection with not exist url" ;
 }

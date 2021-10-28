@@ -227,7 +227,7 @@ TEST_F( threadTest9535, enableDisable9544 )
 
 	sdb *conn = NULL ;
    rc = ds.getConnection( conn ) ;
-	ASSERT_EQ( SDB_DS_NOT_ENABLE, rc ) << "fail to test get connection" ;
+	ASSERT_EQ( SDB_CLIENT_CONNPOOL_NOT_ENABLE, rc ) << "fail to test get connection" ;
 }
 
 /* 问题单1945,enable与close并发,core
@@ -251,7 +251,7 @@ TEST_F( threadTest9535, enableClose9545 )
 
 	sdb *conn = NULL ;
    rc = ds.getConnection( conn ) ;
-	ASSERT_EQ( SDB_DS_NOT_ENABLE, rc ) << "fail to test get connection" ;
+	ASSERT_EQ( SDB_CONNPOOL_NOT_ENABLE, rc ) << "fail to test get connection" ;
 }
 */
 

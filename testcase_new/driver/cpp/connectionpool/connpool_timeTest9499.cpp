@@ -252,7 +252,7 @@ TEST_F( timeTest9499, trueTest9501 )
    ASSERT_EQ( SDB_NET_CANNOT_CONNECT, rc ) << "fail to check connect after stop node" ;
    ASSERT_EQ( 0, conn->isValid() ) << "fail to check conn invalid after stop node" ;
    rc = ds.getConnection( conn ) ;
-   ASSERT_EQ( SDB_DS_NO_REACHABLE_COORD, rc ) << "fail to test get connection after stop node" ;
+   ASSERT_EQ( SDB_CLIENT_CONNPOOL_NO_REACHABLE_COORD, rc ) << "fail to test get connection after stop node" ;
 
    // start node and get connection
    rc = node.start() ;
@@ -260,7 +260,7 @@ TEST_F( timeTest9499, trueTest9501 )
    rc = tmp.connect( hostName, svcName ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to check connect after start node" ;
    rc = ds.getConnection( conn ) ;
-   while( rc == SDB_DS_NO_REACHABLE_COORD )
+   while( rc == SDB_CLIENT_CONNPOOL_NO_REACHABLE_COORD )
    {
       ossSleep( 1000 ) ;
       rc = ds.getConnection( conn ) ;
