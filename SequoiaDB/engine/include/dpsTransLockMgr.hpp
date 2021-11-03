@@ -43,6 +43,7 @@
 #include "dpsTransLRB.hpp"
 #include "dpsTransLockDef.hpp"
 #include "dpsTransDef.hpp"
+#include "dpsUtil.hpp"
 #include "monDps.hpp"
 #include "ossAtomic.hpp"
 #include "ossRWMutex.hpp"
@@ -237,6 +238,13 @@ namespace engine
          DPS_TRANS_WAIT_SET   & waitInfoSet
       ) ;
 
+      INT32 getIncompTrans
+      (
+         const dpsTransLockId &     lockID,
+         const DPS_TRANSLOCK_TYPE   lockMode,
+         DPS_TRANS_ID_SET &         incompTrans
+      ) ;
+
    private:
       // Latch for normal lock operation ( acquire, tryAcquire,
       // testAcquire, release, releaseAll, hasWait etc on ) :
@@ -290,6 +298,19 @@ namespace engine
          dpsTransLRB     *       & pLRBIncompatible
       ) ;
 
+      INT32 _getIncompTrans
+      (
+         const dpsTransLRBHeader *  pLRBHdr,
+         const DPS_TRANSLOCK_TYPE   lockMode,
+         DPS_TRANS_ID_SET &         incompTrans
+      ) ;
+
+      INT32 _getIncompTrans
+      (
+         const dpsTransLRB *        pLRBBegin,
+         const DPS_TRANSLOCK_TYPE   lockMode,
+         DPS_TRANS_ID_SET &         incompTrans
+      ) ;
 
       // add a LRB at the end of the queue ( waiter or upgrade list )
       void _addToLRBListTail
