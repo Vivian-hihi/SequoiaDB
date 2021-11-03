@@ -16,12 +16,13 @@
 
 package com.sequoiadb.spark
 
-import java.io.File
+import java.io.{File, FileInputStream}
 import com.sequoiadb.net.ConfigOptions
 import org.bson.BSONObject
 import org.bson.util.JSON
-import com.sequoiadb.util.{ SdbDecrypt, SdbDecryptUserInfo }
+import com.sequoiadb.util.{SdbDecrypt, SdbDecryptUserInfo}
 
+import java.util.Properties
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -359,6 +360,8 @@ object SdbConfig {
     val AutoSplit = "autosplit"
     val Group = "group"
 
+    val ConfigPath = "configpath"
+
     // compatible with old edition option
     val ScanType = "scantype" // auto/ixscan/tbscan
 
@@ -433,7 +436,8 @@ object SdbConfig {
         ReplicaSize,
         CompressionType,
         AutoSplit,
-        Group)
+        Group,
+        ConfigPath)
 
     val RequiredProperties = List(
         Host,
@@ -476,7 +480,34 @@ object SdbConfig {
     val DefaultAutoSplit = false
     val DefaultGroup = ""
 
-    def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
+    val DefaultConfigPath = ""
+
+    def apply(parameters: Map[String, String]): SdbConfig = {
+        val configPath = parameters.getOrElse(SdbConfig.ConfigPath, "")
+        var newParameters: Map[String, String] = parameters
+
+        // 1. CHECK IF USES config file
+        if (configPath != "") {
+            val properties = new Properties()
+            properties.load(new FileInputStream(configPath))
+
+            val options = properties.propertyNames()
+            while (options.hasMoreElements) {
+                val optionName = options.nextElement().asInstanceOf[String]
+                // 2. VALIDATE OPTIONS that config in file
+                if (!SdbConfig.AllProperties.contains(optionName)) {
+                    throw new SdbException(s"unsupported option: $optionName, please check!")
+                }
+                // 3. Do not overwrite, options
+                if (!parameters.contains(optionName)) {
+                    newParameters += (optionName -> properties.getProperty(optionName))
+                }
+            }
+        }
+
+        // 4. use new parameters to generate SdbConfig, it can be from file or CLI
+        new SdbConfig(newParameters)
+    }
 
     private[spark] val SdbConnectionOptions: ConfigOptions = {
         val opt = new ConfigOptions()
