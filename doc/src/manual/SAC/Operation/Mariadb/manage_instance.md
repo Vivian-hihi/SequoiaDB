@@ -1,17 +1,16 @@
-本文档主要介绍 MariaDB 实例的修改配置、同步配置、设置鉴权及重启实例操作。
+本文档主要介绍 MariaDB 实例的修改配置、同步配置及设置鉴权操作。
 
-修改配置
-----
+##修改配置##
 
 用户通过左侧导航【配置】选择 MariaDB 实例点击进入配置页面，可以查看当前服务的配置以及对配置进行在线修改。
 ![配置][mariadb_config_1]
 
-### 多项修改配置 
+###多项修改配置###
 
 点击 **修改配置** 按钮，根据需要修改配置项，修改完毕后点击 **确定** 按钮完成修改
 ![查看配置][mariadb_config_3]
 
-### 单项修改配置  
+###单项修改配置###
 
 1. 通过表格中的筛选框查找需要修改的配置项
 ![修改配置][mariadb_config_4]  
@@ -22,7 +21,7 @@
 3. 修改完成
 ![修改配置][mariadb_config_6]
 
-## 同步配置
+##同步配置##
 
 同步配置可以把 MariaDB 数据库实例配置同步到 SAC 中。
 
@@ -38,13 +37,13 @@
 
    ![同步配置][sync_3]
 
-## 设置鉴权
+##设置鉴权##
 
-用户可以通过 MariaDB Shell 或 SAC 设置鉴权。
+用户可以通过 MariaDB 客户端或 SAC 设置鉴权。
 
-- 通过 MariaDB Shell 设置鉴权
+- 通过 MariaDB 客户端设置鉴权
 
-   1. 进入 MariaDB Shell
+   1. 进入 MariaDB 客户端
 
      ```lang-bash
      $ /opt/sequoiasql/mariadb/bin/mariadb -h 127.0.0.1 -P 3306 -u root
@@ -82,19 +81,7 @@
 
      ![设置鉴权][auth_3]
 
-## 重启实例
 
-1. 进入【部署页面】->【数据库实例】页面，点击【实例操作】->【重启实例】按钮
-
-   ![重启弹窗][restart_1]
-
-2. 选择需要重启的数据库实例，点击 **确定** 按钮
-
-   ![重启弹窗][restart_2]
-
-3. 重启完成
-
-   ![重启完成][restart_4]
 
 
 
@@ -111,6 +98,3 @@
 [auth_1]:images/SAC/Operation/Mariadb/mariadb_base_9.png
 [auth_2]:images/SAC/Operation/Mariadb/mariadb_base_10.png
 [auth_3]:images/SAC/Operation/Mariadb/mariadb_base_11.png
-[restart_1]:images/SAC/Operation/Mariadb/mariadb_base_12.png
-[restart_2]:images/SAC/Operation/Mariadb/mariadb_base_13.png
-[restart_4]:images/SAC/Operation/Mariadb/mariadb_base_14.png
