@@ -134,7 +134,7 @@ TEST_F( connPoolAuthTest24537, authFailureWithMismatchedUser24539 )
    sdb* con = NULL ;
    BOOLEAN ret = FALSE;
 
-   pool.updateAuthInfo("sequoiadb", "/sdbadmin/sequoiadb/passwd", "") ;
+   pool.updateAuthInfo("sequoiadb", "/home/sdbadmin/sequoiadb/passwd", "") ;
    
    rc = pool.getConnection( con ) ;
    ASSERT_EQ( SDB_AUTH_AUTHORITY_FORBIDDEN, rc ) << "fail to get connection from connectionpool" ;
@@ -174,7 +174,7 @@ TEST_F( connPoolAuthTest24537, authFailureWithErrCipherFile24540 )
    pool.updateAuthInfo("sdbadmin", "/sdbadmin/sequoiadb/passwd", "sdbadmin") ;
 
    rc = pool.getConnection( con ) ;
-   ASSERT_EQ( SDB_AUTH_AUTHORITY_FORBIDDEN, rc ) << "fail to get connection from connectionpool" ;
+   ASSERT_EQ( SDB_FNE, rc ) << "fail to get connection from connectionpool" ;
    
    if ( conn != NULL )
    {

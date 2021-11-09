@@ -150,6 +150,6 @@ TEST_F( connPoolAuthTest24439, authFailureWithErrCipherFile24442 )
    ASSERT_EQ( SDB_OK, rc ) << "fail to init connectionpool" ;
 
    rc = pool.getConnection( conn ) ;
-   ASSERT_EQ( SDB_AUTH_AUTHORITY_FORBIDDEN, rc ) << "fail to get connection from connectionpool" ;
+   ASSERT_EQ( SDB_FNE, rc ) << "fail to get connection from connectionpool" ;
 
 }

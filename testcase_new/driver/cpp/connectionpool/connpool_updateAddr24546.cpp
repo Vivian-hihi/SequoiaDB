@@ -56,10 +56,10 @@ TEST_F( connPoolUpdateAddr24546, containOldAddr24546 )
    BOOLEAN ret = FALSE ;
    sdb* conn2;
    
-   addrs.push_back("r520-9:11810") ;
+   addrs.push_back("localhost:50000") ;
 
    rc = pool.updateAddress(addrs) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to update AuthInfo" ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to update address" ;
    
    rc = pool.getConnection( conn2 ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get connection from connectionpool" ;
