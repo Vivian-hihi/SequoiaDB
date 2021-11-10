@@ -41,7 +41,7 @@
    >
    > - 用户可以根据实际情况调整上述配置参数，如用户名、密码等。
    >
-   > - 密码文件的使用，请参考[密码管理工具](manual/Distributed_Engine/Maintainance/Mgmt_Tools/)
+   > - 密码文件的使用，请参考[密码管理工具](manual/Distributed_Engine/Maintainance/Mgmt_Tools/sdbpasswd.md)
 
 * 创建集合空间和集合
   
