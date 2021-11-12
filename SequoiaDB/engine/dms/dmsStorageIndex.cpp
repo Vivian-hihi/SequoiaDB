@@ -1087,7 +1087,7 @@ namespace engine
       }
 
       context->mb()->_numIndexes -- ;
-      context->mbStat()->unsetIdxHash( indexID ) ;
+      context->mbStat()->resetIdxHashFrom( indexID ) ;
 
       // log it
       if ( dpscb )
@@ -1246,7 +1246,7 @@ namespace engine
       context->mb()->_indexExtent[indexID] = metaExtentID ;
       context->mb()->_numIndexes ++ ;
       context->mb()->_indexHWCount++ ;
-      context->mbStat()->unsetIdxHash( indexID ) ;
+      context->mbStat()->resetIdxHashFrom( indexID ) ;
 
       // create index callback
       if ( _pDataSu->_pEventHolder )
@@ -1500,7 +1500,7 @@ namespace engine
          context->mb()->_numIndexes++ ;
          context->mb()->_indexHWCount++ ;
          context->mbStat()->_textIdxNum++ ;
-         context->mbStat()->unsetIdxHash( indexID ) ;
+         context->mbStat()->resetIdxHashFrom( indexID ) ;
 
          rc = handler->onCrtTextIdx( context, getSuName(), indexCB, cb, NULL ) ;
          if ( rc )
@@ -2982,6 +2982,10 @@ namespace engine
                context->mbStat()->mergeIdxHash( indexID ) ;
                continue ;
             }
+
+            // we need re-calculate hash values for current index
+            // reset index bitmap fields first
+            context->mbStat()->resetIdxHashAt( indexID ) ;
 
             ixmIndexCB indexCB( context->mb()->_indexExtent[ indexID ], this,
                                 context ) ;

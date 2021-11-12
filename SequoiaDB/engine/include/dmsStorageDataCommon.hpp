@@ -400,7 +400,7 @@ namespace engine
 
       // bitmap to indicate index fields
       ixmIdxHashBitmap _clIdxHashBitmap ;
-      ixmIdxHashBitmap _idxHashBitmaps[ IXM_IDX_HASH_MAX_INDEX_NUM ] ;
+      ixmIdxHashArray  _idxHashFields[ IXM_IDX_HASH_MAX_INDEX_NUM ] ;
 
       void reset()
       {
@@ -438,7 +438,7 @@ namespace engine
          _clIdxHashBitmap.resetBitmap() ;
          for ( UINT32 i = 0 ; i < IXM_IDX_HASH_MAX_INDEX_NUM ; ++ i )
          {
-            _idxHashBitmaps[ i ].resetBitmap() ;
+            _idxHashFields[ i ].reset() ;
          }
       }
 
@@ -527,32 +527,28 @@ namespace engine
          _clIdxHashBitmap.setBit( bitIndex ) ;
          if ( indexID < IXM_IDX_HASH_MAX_INDEX_NUM )
          {
-            _idxHashBitmaps[ indexID ].setBit( bitIndex ) ;
+            _idxHashFields[ indexID ].setField( bitIndex ) ;
          }
       }
 
-      void unsetIdxHash( INT32 indexID )
+      // reset index hash fields from given index
+      void resetIdxHashFrom( INT32 indexID )
       {
          SDB_ASSERT( indexID >= 0 && indexID < DMS_COLLECTION_MAX_INDEX,
                      "invalid index ID" ) ;
          _clIdxHashBitmap.resetBitmap() ;
-         // move bitmaps after index ID forward
+         // reset bitmaps after given index ID
          for ( UINT32 i = indexID ; i < IXM_IDX_HASH_MAX_INDEX_NUM ; ++ i )
          {
-            if ( i + 1 < IXM_IDX_HASH_MAX_INDEX_NUM &&
-                 !_idxHashBitmaps[ i + 1 ].isEmpty() )
-            {
-               _idxHashBitmaps[ i ].setBitmap( _idxHashBitmaps[ i + 1 ] ) ;
-            }
-            else
-            {
-               if ( !_idxHashBitmaps[ i ].isEmpty() )
-               {
-                  _idxHashBitmaps[ i ].resetBitmap() ;
-               }
-               break ;
-            }
+            _idxHashFields[ i ].reset() ;
          }
+      }
+
+      void resetIdxHashAt( INT32 indexID )
+      {
+         SDB_ASSERT( indexID >= 0 && indexID < DMS_COLLECTION_MAX_INDEX,
+                     "invalid index ID" ) ;
+         _idxHashFields[ indexID ].reset() ;
       }
 
       void mergeIdxHash( INT32 indexID )
@@ -561,7 +557,7 @@ namespace engine
                      "invalid index ID" ) ;
          if ( indexID < IXM_IDX_HASH_MAX_INDEX_NUM )
          {
-            _clIdxHashBitmap.unionBitmap( _idxHashBitmaps[ indexID ] ) ;
+            _idxHashFields[ indexID ].mergeToBitmap( _clIdxHashBitmap ) ;
          }
       }
 
@@ -576,7 +572,7 @@ namespace engine
                      "invalid index ID" ) ;
          if ( indexID < IXM_IDX_HASH_MAX_INDEX_NUM )
          {
-            return _idxHashBitmaps[ indexID ].hasIntersaction( idxHash ) ;
+            return _idxHashFields[ indexID ].testBitmap( idxHash ) ;
          }
          return TRUE ;
       }
@@ -592,7 +588,7 @@ namespace engine
                      "invalid index ID" ) ;
          if ( indexID < IXM_IDX_HASH_MAX_INDEX_NUM )
          {
-            return !( _idxHashBitmaps[ indexID ].isEmpty() ) ;
+            return _idxHashFields[ indexID ].isValid() ;
          }
          // for indexes after first 8 ones, always not ready
          return FALSE ;
