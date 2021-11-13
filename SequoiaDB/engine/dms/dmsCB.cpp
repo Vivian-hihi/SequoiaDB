@@ -1784,7 +1784,7 @@ namespace engine
       INT32 type = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       _SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
-      utilCSUniqueID csUniqueID = su->CSUniqueID() ;
+      utilCSUniqueID csUniqueID = 0 ;
 
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
 
@@ -1794,6 +1794,7 @@ namespace engine
          goto error ;
       }
 
+      csUniqueID = su->CSUniqueID() ;
       pageSize = su->getPageSize() ;
       lobPageSz = su->getLobPageSize() ;
       type = su->type() ;
