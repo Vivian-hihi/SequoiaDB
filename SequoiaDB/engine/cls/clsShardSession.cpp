@@ -665,9 +665,7 @@ namespace engine
       SINT64 contextID = -1 ;
       INT32 startFrom = 0 ;
       rtnContextBuf buffObj ;
-      _pCollectionName = NULL ;
       _clVersion = 0 ;
-      _cmdCollectionName.clear() ;
       _isMainCL        = FALSE ;
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE ;
@@ -676,6 +674,8 @@ namespace engine
       ossTick startTime ;
       monClassQueryTmpData tmpData ;
       tmpData = *(eduCB()->getMonAppCB()) ;
+
+      _clearCollectionName() ;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
@@ -1425,7 +1425,7 @@ namespace engine
       dmsStorageUnitID suID      = DMS_INVALID_SUID ;
       dmsStorageUnit *su         = NULL ;
       INT64 contextID            = 0 ;
-      rtnContextRenameCS *pCtx   = NULL ;
+      rtnContextRenameCS::sharePtr pCtx ;
       CHAR csNameInData[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
       rtnContextBuf buffObj ;
 
@@ -1451,7 +1451,7 @@ namespace engine
                 csNameInData ) ;
 
       /// 2) rename cs phase 1
-      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMECS, (rtnContext **)&pCtx,
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMECS, pCtx,
                                 contextID, _pEDUCB );
       PD_RC_CHECK( rc, PDERROR, "Failed to create context, "
                    "rename collection space[%s] to[%s], rc: %d",
@@ -1502,7 +1502,6 @@ namespace engine
       {
          _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
          contextID = -1 ;
-         pCtx = NULL ;
       }
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__RENAMECSBYC, rc ) ;
       return rc ;
@@ -1522,7 +1521,7 @@ namespace engine
       dmsStorageUnitID suID      = DMS_INVALID_SUID ;
       dmsStorageUnit *su         = NULL ;
       INT64 contextID            = 0 ;
-      rtnContextRenameCL *pCtx   = NULL ;
+      rtnContextRenameCL::sharePtr pCtx ;
       dmsMBContext *pMBContext   = NULL ;
       clsCatalogSet *pCatSet     = NULL ;
       CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ]       = { 0 } ;
@@ -1578,7 +1577,7 @@ namespace engine
                 clFullName ) ;
 
       /// 3) rename cl phase 1
-      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMECL, (rtnContext **)&pCtx,
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMECL, pCtx,
                                 contextID, _pEDUCB );
       PD_RC_CHECK( rc, PDERROR, "Failed to create context, "
                    "rename collection[%s.%s] to [%s.%s], rc: %d",
@@ -1643,7 +1642,6 @@ namespace engine
       {
          _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
          contextID = -1 ;
-         pCtx = NULL ;
       }
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__RENAMECLBYC, rc ) ;
       return rc ;
@@ -2085,7 +2083,7 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
-         rtnContextBase *pContext = NULL ;
+         rtnContextPtr pContext ;
          _pCollectionName = pCollectionName ;
 
          if ( flags & FLG_QUERY_MODIFY )
@@ -2206,7 +2204,7 @@ namespace engine
             }
 
             // query with return data
-            if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
+            if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && pContext )
             {
                rc = pContext->getMore( -1, buffObj, _pEDUCB ) ;
                if ( rc || pContext->eof() )
@@ -2238,8 +2236,7 @@ namespace engine
       }
       else
       {
-         _pCollectionName = NULL ;
-         _cmdCollectionName.clear() ;
+         _clearCollectionName() ;
 
          rc = rtnParserCommand( pCollectionName, &pCommand ) ;
 
@@ -2264,8 +2261,7 @@ namespace engine
 
          if ( NULL != pCommand->collectionFullName() )
          {
-            _cmdCollectionName.assign( pCommand->collectionFullName() ) ;
-            _pCollectionName = _cmdCollectionName.c_str() ;
+            _copyCollectionName( pCommand->collectionFullName() ) ;
          }
 
          MON_SAVE_CMD_DETAIL( _pEDUCB->getMonAppCB(), pCommand->type(),
@@ -2430,8 +2426,10 @@ namespace engine
             else if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) &&
                       ( -1 != contextID ) )
             {
-               rtnContext *context = _pRtnCB->contextFind ( contextID, _pEDUCB ) ;
-               if ( context )
+               rtnContextPtr context ;
+               if ( SDB_OK == _pRtnCB->contextFind( contextID,
+                                                    context,
+                                                    _pEDUCB ) )
                {
                   rc = context->getMore( -1, buffObj, _pEDUCB ) ;
                   if ( rc || context->eof() )
@@ -2501,7 +2499,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONGETMOREREQMSG ) ;
       INT32 numToRead = 0 ;
-      rtnContext *pContext = NULL ;
+      rtnContextPtr pContext ;
 
       rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
       if ( SDB_OK != rc )
@@ -2519,11 +2517,10 @@ namespace engine
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ; */
 
-      pContext = _pRtnCB->contextFind ( contextID, eduCB() ) ;
-      if ( !pContext )
+      rc = _pRtnCB->contextFind ( contextID, pContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID, rc ) ;
          goto error ;
       }
       needRollback = pContext->needRollback() ;
@@ -3399,7 +3396,7 @@ namespace engine
    INT32 _clsShdSession::_queryToMainCL( rtnQueryOptions &options,
                                          pmdEDUCB *cb,
                                          SINT64 &contextID,
-                                         _rtnContextBase **ppContext,
+                                         rtnContextPtr *ppContext,
                                          INT16 w,
                                          BOOLEAN isWrite )
    {
@@ -3408,7 +3405,7 @@ namespace engine
       BSONObj boNewMatcher ;
       INT32 includeShardingOrder = 0 ;
       SINT64 tmpContextID = -1 ;
-      rtnContext * pContext = NULL ;
+      rtnContextPtr pContext ;
 
       SDB_ASSERT( options.getCLFullName(), "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" ) ;
@@ -3430,32 +3427,30 @@ namespace engine
 
       if ( options.testFlag( FLG_QUERY_EXPLAIN ) )
       {
-         rtnContextMainCLExplain *pContextMainCL = NULL ;
+         rtnContextMainCLExplain::sharePtr pContextMainCL ;
 
          rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL_EXP,
-                                   (rtnContext **)&pContextMainCL,
+                                   pContextMainCL,
                                    tmpContextID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create new main-collection "
                       "explain context, rc: %d", rc ) ;
-
-         pContext = pContextMainCL ;
 
          rc = pContextMainCL->open( options, strSubCLList,
                                     0 != includeShardingOrder, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open main-collection context, "
                       "rc: %d", rc ) ;
+
+         pContext = pContextMainCL ;
       }
       else
       {
-         rtnContextMainCL *pContextMainCL = NULL ;
+         rtnContextMainCL::sharePtr pContextMainCL ;
 
          rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL,
-                                   (rtnContext **)&pContextMainCL,
+                                   pContextMainCL,
                                    tmpContextID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create new main-collection "
                       "context, rc: %d", rc ) ;
-
-         pContext = pContextMainCL ;
 
          if ( options.canPrepareMore() )
          {
@@ -3465,7 +3460,7 @@ namespace engine
          /// must set before open
          pContextMainCL->setWriteInfo( _pDpsCB, w ) ;
 
-         pContext->setIsAffectGIndex( cb->isAffectGIndex() ) ;
+         pContextMainCL->setIsAffectGIndex( cb->isAffectGIndex() ) ;
 
          rc = pContextMainCL->open( options, strSubCLList,
                                     0 != includeShardingOrder, cb ) ;
@@ -3478,7 +3473,7 @@ namespace engine
             BSONElement e = options.getHint().getField( FIELD_NAME_POSITION ) ;
             if ( Object == e.type() )
             {
-               rc = pContext->locate( e.embeddedObject(), cb ) ;
+               rc = pContextMainCL->locate( e.embeddedObject(), cb ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Do context locate failed, rc: %d", rc ) ;
@@ -3498,6 +3493,8 @@ namespace engine
             rc = ossException2RC( &e ) ;
             goto error ;
          }
+
+         pContext = pContextMainCL ;
       }
 
       // Get start timestamp
@@ -3512,7 +3509,6 @@ namespace engine
          *ppContext = pContext ;
       }
       tmpContextID = -1 ;
-      pContext = NULL ;
 
    done :
       return rc ;
@@ -4183,7 +4179,7 @@ namespace engine
       CLS_SUBCL_LIST strSubCLList ;
       CLS_SUBCL_LIST_IT iterSubCLSet ;
       BSONObj boNewMatcher ;
-      rtnContextMainCL *pContextMainCL = NULL ;
+      rtnContextMainCL::sharePtr pContextMainCL ;
       BSONObj boMatcher ;
       BSONObj orderBy ;
       BSONObj boEmpty ;
@@ -4239,7 +4235,7 @@ namespace engine
       }
 
       rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL,
-                                (rtnContext **)&pContextMainCL,
+                                pContextMainCL,
                                 contextID, _pEDUCB );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to create new main-collection context(rc=%d)",
@@ -4589,14 +4585,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       CLS_SUBCL_LIST subCLLst ;
       contextID = -1 ;
-      rtnContextDelMainCL *delContext = NULL ;
+      rtnContextDelMainCL::sharePtr delContext ;
 
       rc = _getAndChkAllSubCL( pCollection, TRUE, subCLLst ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s]: Failed to get sub collection "
                    "list, rc: %d", sessionName(), rc ) ;
 
       rc = _pRtnCB->contextNew( RTN_CONTEXT_DELMAINCL,
-                                (rtnContext **)&delContext,
+                                delContext,
                                 contextID, _pEDUCB );
       PD_RC_CHECK( rc, PDERROR, "Failed to create context, drop "
                    "main collection[%s] failed, rc: %d", pCollection,
@@ -4618,10 +4614,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       contextID = -1 ;
-      rtnContextRenameMainCL *renameContext = NULL ;
+      rtnContextRenameMainCL::sharePtr renameContext ;
 
       rc = _pRtnCB->contextNew( RTN_CONTEXT_RENAMEMAINCL,
-                                (rtnContext **)&renameContext,
+                                renameContext,
                                 contextID, _pEDUCB );
       PD_RC_CHECK( rc, PDERROR, "Failed to create context, rename "
                    "main collection[%s] failed, rc: %d", pCollection,
@@ -4657,7 +4653,7 @@ namespace engine
       INT16 replSize = 0 ;
       const CHAR *pData = NULL ;
       UINT32 dataLen = 0 ;
-      _rtnContextShdOfLob *context = NULL ;
+      _rtnContextShdOfLob::sharePtr context ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
       rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
@@ -4745,7 +4741,7 @@ namespace engine
       }
 
       rc = rtnCB->contextNew( RTN_CONTEXT_SHARD_OF_LOB,
-                              (rtnContext**)(&context),
+                              context,
                               contextID, _pEDUCB ) ;
       if ( SDB_OK != rc )
       {
@@ -4787,8 +4783,7 @@ namespace engine
       const MsgLobTuple *curTuple = NULL ;
       UINT32 tupleNum = 0 ;
       const CHAR *data = NULL ;
-      rtnContext *context = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       INT16 w = 0 ;
       INT16 wWhenOpen = 0 ;
@@ -4803,29 +4798,22 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist", header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid type of context:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextShdOfLob * )context ;
-      _pCollectionName = lobContext->getFullName() ;
+      _copyCollectionName( lobContext->getFullName() ) ;
       wWhenOpen = lobContext->getW() ;
 
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "ContextID:%lld, CollectionName:%s, TupleSize:%u",
-                          header->contextID, _pCollectionName, tSize ) ;
+                          header->contextID, lobContext->getFullName(), tSize ) ;
 
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
@@ -4895,17 +4883,17 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( NULL != context &&
+      if ( lobContext &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _pCollectionName = NULL ;
+         _clearCollectionName() ;
          // do not delete main shard context
-         if ( NULL == lobContext || !lobContext->isMainShard() )
+         if ( !lobContext->isMainShard() )
          {
-            rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+            rtnCB->contextDelete( lobContext->contextID(), _pEDUCB ) ;
          }
       }
       goto done ;
@@ -4915,8 +4903,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
-      rtnContext *context = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       INT64 offset = 0 ;
       INT64 length = -1 ;
@@ -4928,29 +4915,21 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextShdOfLob * )context ;
-      _pCollectionName = lobContext->getFullName() ;
+      _copyCollectionName( lobContext->getFullName() ) ;
 
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "ContextID:%lld, Collection:%s",
-                          header->contextID, _pCollectionName ) ;
+                          header->contextID, lobContext->getFullName() ) ;
 
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
@@ -4967,16 +4946,6 @@ namespace engine
          goto error ;
       }
 
-      /// do not check version coz we will not
-      ///  change any thing except close the context.
-      lobContext = ( rtnContextShdOfLob * )context ;
-
-      // add last op info
-      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
-                          "ContextID:%lld, Collection:%s",
-                          header->contextID,
-                          lobContext->getFullName() ) ;
-
       rc = lobContext->lock( _pEDUCB, offset, length ) ;
       if ( SDB_OK != rc )
       {
@@ -4987,17 +4956,17 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( NULL != context &&
+      if ( lobContext &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _pCollectionName = NULL ;
+         _clearCollectionName() ;
          // do not delete main shard context
-         if ( NULL == lobContext || !lobContext->isMainShard() )
+         if ( !lobContext->isMainShard() )
          {
-            rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+            rtnCB->contextDelete( lobContext->contextID(), _pEDUCB ) ;
          }
       }
       goto done ;
@@ -5007,8 +4976,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
-      rtnContext *context = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
       rc = msgExtractCloseLobRequest( ( const CHAR * )msg, &header ) ;
@@ -5018,25 +4986,17 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto done ;
-      }
-
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
       }
 
       /// do not check version coz we will not
       ///  change any thing except close the context.
-      lobContext = ( rtnContextShdOfLob * )context ;
 
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
@@ -5052,9 +5012,9 @@ namespace engine
       }
 
    done:
-      if ( NULL != context )
+      if ( lobContext )
       {
-         rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+         rtnCB->contextDelete ( lobContext->contextID(), _pEDUCB ) ;
       }
       return rc ;
    error:
@@ -5066,8 +5026,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
-      rtnContext *context = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       const MsgLobTuple *tuple = NULL ;
       UINT32 tuplesSize = 0 ;
@@ -5083,24 +5042,16 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextShdOfLob * )context ;
-      _pCollectionName = lobContext->getFullName() ;
+      _copyCollectionName( lobContext->getFullName() ) ;
 
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
@@ -5150,17 +5101,17 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( NULL != context &&
+      if ( lobContext &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _pCollectionName = NULL ;
+         _clearCollectionName() ;
          // do not delete main shard context
-         if ( NULL == lobContext || !lobContext->isMainShard() )
+         if ( !lobContext->isMainShard() )
          {
-            rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+            rtnCB->contextDelete ( lobContext->contextID(), _pEDUCB ) ;
          }
       }
       goto done ;
@@ -5170,8 +5121,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
-      rtnContext *context = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       const MsgLobTuple *begin = NULL ;
       UINT32 tuplesSize = 0 ;
@@ -5188,24 +5138,16 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextShdOfLob * )context ;
-      _pCollectionName = lobContext->getFullName() ;
+      _copyCollectionName( lobContext->getFullName() ) ;
       wWhenOpen = lobContext->getW() ;
 
       // add last op info
@@ -5274,17 +5216,17 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( NULL != context &&
+      if ( lobContext &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _pCollectionName = NULL ;
+         _clearCollectionName() ;
          // do not delete main shard context
-         if ( NULL == lobContext || !lobContext->isMainShard() )
+         if ( !lobContext->isMainShard() )
          {
-            rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+            rtnCB->contextDelete ( lobContext->contextID(), _pEDUCB ) ;
          }
       }
       goto done ;
@@ -5300,8 +5242,7 @@ namespace engine
       const MsgLobTuple *curTuple = NULL ;
       UINT32 tupleNum = 0 ;
       const CHAR *data = NULL ;
-      rtnContext *context = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       INT16 w = 0 ;
       INT16 wWhenOpen = 0 ;
@@ -5315,23 +5256,16 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist", header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid type of context:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextShdOfLob * )context ;
-      _pCollectionName = lobContext->getFullName() ;
+      _copyCollectionName( lobContext->getFullName() ) ;
       wWhenOpen = lobContext->getW() ;
 
       // add last op info
@@ -5401,17 +5335,17 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( NULL != context &&
+      if ( lobContext &&
            SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_DATA_NODE_CAT_VER_OLD != rc &&
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _pCollectionName = NULL ;
+         _clearCollectionName() ;
          // do not delete main shard context
-         if ( NULL == lobContext || !lobContext->isMainShard() )
+         if ( !lobContext->isMainShard() )
          {
-            rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+            rtnCB->contextDelete( lobContext->contextID(), _pEDUCB ) ;
          }
       }
       goto done ;
@@ -5423,8 +5357,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
-      rtnContextShdOfLob *lobContext = NULL ;
-      rtnContext *context = NULL ;
+      rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       BSONObj detail ;
 
@@ -5435,23 +5368,15 @@ namespace engine
          goto error ;
       }
 
-      context = rtnCB->contextFind ( header->contextID, eduCB() ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( header->contextID, RTN_CONTEXT_SHARD_OF_LOB,
+                                lobContext, eduCB() ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "context %lld does not exist",
-                  header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "context %lld does not exist, rc: %d",
+                  header->contextID, rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
 
       // add last op info

@@ -216,11 +216,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNOPENLOB ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
       rc = rtnCB->contextNew( RTN_CONTEXT_LOB,
-                              (rtnContext**)(&lobContext),
+                              lobContext,
                               contextID, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -228,7 +228,7 @@ namespace engine
          goto error ;
       }
 
-      SDB_ASSERT( NULL != lobContext, "can not be null" ) ;
+      SDB_ASSERT( lobContext, "can not be null" ) ;
       rc = lobContext->open( lob, flags, cb, dpsCB, pStream ) ;
       /// when called open function, the pStream has been take over
       pStream = NULL ;
@@ -280,26 +280,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNREADLOB ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContextBuf contextBuf ;
-      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID,
+                  rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
-                 ", contextID:%lld", context->getType(), contextID ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextLob * )context ;
       rc = lobContext->read( len, offset, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -332,7 +323,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNREADLOB, rc ) ;
       return rc ;
    error:
-      if ( SDB_EOF != rc && context )
+      if ( SDB_EOF != rc && lobContext )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
@@ -349,20 +340,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNWRITELOB ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( contextID, lobContext, cb ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID,
+                  rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_LOB != context->getType() )
+      if ( RTN_CONTEXT_LOB != lobContext->getType() )
       {
          PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
-                 ", contextID:%lld", context->getType(), contextID ) ;
+                 ", contextID:%lld", lobContext->getType(), contextID ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -374,7 +365,6 @@ namespace engine
          goto error ;
       }
 
-      lobContext = ( rtnContextLob * )context ;
       rc = lobContext->write( len, buf, lobOffset, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -390,7 +380,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNWRITELOB, rc ) ;
       return rc ;
    error:
-      if ( -1 != contextID && context )
+      if ( -1 != contextID && lobContext )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
@@ -406,21 +396,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCKLOB ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
-      }
-
-      if ( RTN_CONTEXT_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
-                 ", contextID:%lld", context->getType(), contextID ) ;
-         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID,
+                  rc ) ;
          goto error ;
       }
 
@@ -432,7 +414,6 @@ namespace engine
          goto error ;
       }
 
-      lobContext = ( rtnContextLob * )context ;
       rc = lobContext->lock( cb, offset, length ) ;
       if ( SDB_OK != rc )
       {
@@ -457,26 +438,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNGETLOBRTDETAIL ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       BSONObj detail ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID,
+                  rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
-                 ", contextID:%lld", context->getType(), contextID ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextLob * )context ;
       rc = lobContext->getRTDetail( cb, detail ) ;
       if ( SDB_OK != rc )
       {
@@ -507,24 +479,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCLOSELOB ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
+      if ( SDB_OK != rc )
       {
-         /// context has been closed.
+         if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
+         {
+            /// context has been closed.
+            rc = SDB_OK ;
+         }
          goto done ;
       }
-
-      if ( RTN_CONTEXT_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
-                 ", contextID:%lld", context->getType(), contextID ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextLob * )context ;
 
       rc = lobContext->close( cb ) ;
       if ( SDB_OK != rc )
@@ -555,7 +521,7 @@ namespace engine
       }
 
    done:
-      if ( context )
+      if ( lobContext )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
@@ -734,25 +700,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA ) ;
-      rtnContextLob *lobContext = NULL ;
+      rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      rtnContext *context = rtnCB->contextFind ( contextID, cb ) ;
-      if ( NULL == context )
+      rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID,
+                  rc ) ;
          goto error ;
       }
 
-      if ( RTN_CONTEXT_LOB != context->getType() )
-      {
-         PD_LOG( PDERROR, "It is not a lob context, invalid context type:%d"
-                 ", contextID:%lld", context->getType(), contextID ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      lobContext = ( rtnContextLob * )context ;
       rc = lobContext->getLobMetaData( meta ) ;
       if ( SDB_OK != rc )
       {
@@ -767,7 +724,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNGETLOBMETADATA, rc ) ;
       return rc ;
    error:
-      if ( context )
+      if ( lobContext )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
