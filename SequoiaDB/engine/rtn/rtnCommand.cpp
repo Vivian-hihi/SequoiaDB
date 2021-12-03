@@ -4315,7 +4315,7 @@ error:
    {
       if ( _cb )
       {
-         _cb->getTransExecutor()->updateByMask( *pTransConf ) ;
+         _cb->updateTransConfByMask( *pTransConf ) ;
       }
    }
 
