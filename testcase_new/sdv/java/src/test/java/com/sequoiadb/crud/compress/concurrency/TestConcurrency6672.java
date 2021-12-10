@@ -159,7 +159,7 @@ public class TestConcurrency6672 extends SdbTestBase {
                     // do query
                     BSONObject qryMatcher = new BasicBSONObject();
                     qryMatcher.put( "a", 6000 + i );
-                    cl.query( qryMatcher, null, null, null );
+                    cl.query( qryMatcher, null, null, null ).close();
                 }
             } catch ( BaseException e ) {
                 throw e;
