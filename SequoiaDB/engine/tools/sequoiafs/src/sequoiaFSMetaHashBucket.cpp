@@ -145,24 +145,20 @@ void sequoiaFSMetaHashBucket::add(UINT32 key, dirMetaNode* node )
          if(cur->meta.pid() == node->meta.pid()
                && !ossStrncmp(cur->meta.name(), node->meta.name(), OSS_MAX_NAMESIZE))
          {
-            SDB_ASSERT( FALSE, "dup node" ) ; //TODO:异常场景下，要释放old或者new
-         }//TOOD:加一个debug宏，在debug版本做检查是否有冲突，release版本不用做检查，
-         //无论debug还是release都从链表头加起
+            SDB_ASSERT( FALSE, "dup node" ) ;
+         }
 
          cur = cur->bucketNext;  
       }
-   #endif
 
-   cur = _buckets[ hashKey ].hashHead;
+      cur = _buckets[ hashKey ].hashHead;
+   #endif
 
    cur->bucketPre = node;
    node->bucketNext = cur;
 
    _buckets[ hashKey ].hashHead = node;
-/*
-   cur->bucketNext = node; 
-   node->bucketPre = cur;
-*/
+
 done:
    return;
 }
