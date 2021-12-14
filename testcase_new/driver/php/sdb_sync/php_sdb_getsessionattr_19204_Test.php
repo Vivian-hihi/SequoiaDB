@@ -47,7 +47,7 @@ class GetSessionAttr19204 extends PHPUnit_Framework_TestCase
          {
             self::$defaultAttr["Timeout"] = -1;
          }
-         if( !globalParameter::contain( $sessionAttr, self::$defaultAttr ) )
+         if( !globalParameter::compareArray( $sessionAttr, self::$defaultAttr ) )
          {
             throw new Exception("chech attr value error: \nexpAttr: " . json_encode(self::$defaultAttr) . "\nactAttr: " . json_encode($sessionAttr));
          }
@@ -57,7 +57,7 @@ class GetSessionAttr19204 extends PHPUnit_Framework_TestCase
          
          self::$defaultAttr['TransIsolation'] = 2;
          $sessionAttr = self::$db -> getSessionAttr();
-         if( !globalParameter::contain( $sessionAttr, self::$defaultAttr ) )
+         if( !globalParameter::compareArray( $sessionAttr, self::$defaultAttr ) )
          {
             throw new Exception("chech attr value error: \nexpAttr: " . json_encode(self::$defaultAttr) . "\nactAttr: " . json_encode($sessionAttr));
          }
@@ -66,14 +66,14 @@ class GetSessionAttr19204 extends PHPUnit_Framework_TestCase
          $this -> assertEquals( 0, self::$db -> getError()['errno'] );
          
          $sessionAttr = self::$db -> getSessionAttr();
-         if( !globalParameter::contain( $sessionAttr, self::$defaultAttr ) )
+         if( !globalParameter::compareArray( $sessionAttr, self::$defaultAttr ) )
          {
             throw new Exception("chech attr value error: \nexpAttr: " . json_encode(self::$defaultAttr) . "\nactAttr: " . json_encode($sessionAttr));
          }
          
          self::$defaultAttr['TransTimeout'] = 120;
          $sessionAttr = self::$db -> getSessionAttr(false);
-         if( !globalParameter::contain( $sessionAttr, self::$defaultAttr ) )
+         if( !globalParameter::compareArray( $sessionAttr, self::$defaultAttr ) )
          {
             throw new Exception("chech attr value error: \nexpAttr: " . json_encode(self::$defaultAttr) . "\nactAttr: " . json_encode($sessionAttr));
          }
