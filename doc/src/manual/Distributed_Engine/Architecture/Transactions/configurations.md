@@ -116,7 +116,7 @@
 | TransRCCount | 会话事务是否使用读已提交来处理 count() 查询。 | TransRCCount : true |
 | TransMaxLockNum | 事务在一个数据节点上最多可以持有的记录锁个数。 | TransMaxLockNum : 10000 |
 | TransAllowLockEscalation | 事务持有的记录锁个数超过参数 transmaxlocknum 的值后，是否允许锁升级。 | TransAllowLockEscalation : true |
-| TransMaxLogSpaceRatio | 事务在一个数据节点上可以使用的最大日志空间比例(%)。 | TransMaxLockSpaceRatio : 50 |
+| TransMaxLogSpaceRatio | 事务在一个数据节点上可以使用的最大日志空间比例(%)。 | TransMaxLogSpaceRatio : 50 |
 
 >**Note：**
 >

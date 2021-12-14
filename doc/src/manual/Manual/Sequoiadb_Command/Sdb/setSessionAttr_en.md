@@ -99,7 +99,7 @@ The attributes of the session can be set through the options parameter:
 
 - TransMaxLogSpaceRatio ( *number* ): Maximum ratio of log space can be used by a transaction on a data node.
 
-    Format: `TransMaxLockSpaceRatio : 50`
+    Format: `TransMaxLogSpaceRatio : 50`
 
 
 > **Note:**

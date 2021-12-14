@@ -99,7 +99,7 @@ options（ *object，必填* ）
 
 - TransMaxLogSpaceRatio（ *number* ）：会话事务在一个数据节点上可以使用的最大日志空间比例(%)
 
-    格式：`TransMaxLockSpaceRatio : 50`
+    格式：`TransMaxLogSpaceRatio : 50`
 
 > **Note:**
 >

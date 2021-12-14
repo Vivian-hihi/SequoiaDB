@@ -157,7 +157,7 @@ TransMaxLogSpaceRatio ( \f[I]number\f[] ): Maximum ratio of log space can be
 used by a transaction on a data node.
 .RS 2
 .PP
-Format: \f[C]TransMaxLockSpaceRatio: 50\f[]
+Format: \f[C]TransMaxLogSpaceRatio: 50\f[]
 .RE
 .RS
 .PP
