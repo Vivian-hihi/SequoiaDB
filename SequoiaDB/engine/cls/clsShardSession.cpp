@@ -4148,7 +4148,7 @@ namespace engine
       /// wait for sync
       if ( writable && w > 1 )
       {
-         rc = _pDpsCB->completeOpr( eduCB(), w ) ;
+         _pDpsCB->completeOpr( eduCB(), w ) ;
       }
 
    done:

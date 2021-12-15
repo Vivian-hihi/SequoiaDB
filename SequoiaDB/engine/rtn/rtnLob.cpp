@@ -250,7 +250,7 @@ namespace engine
 
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:
@@ -791,7 +791,7 @@ namespace engine
       lobEnv.oprDone() ;
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:
@@ -839,7 +839,7 @@ namespace engine
 
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:
@@ -888,7 +888,7 @@ namespace engine
 
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:
@@ -930,7 +930,7 @@ namespace engine
 
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:
@@ -1066,7 +1066,7 @@ namespace engine
 
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:
@@ -1182,7 +1182,7 @@ namespace engine
 
       if ( NULL != dpsCB )
       {
-         rc = dpsCB->completeOpr( cb, w ) ;
+         dpsCB->completeOpr( cb, w ) ;
       }
 
    done:

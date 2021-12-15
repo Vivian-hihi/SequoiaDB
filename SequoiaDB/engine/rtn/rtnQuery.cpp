@@ -108,7 +108,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETMORE1 ) ;
-      SDB_DPSCB *dpsCB = NULL ;
+
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
@@ -117,8 +117,6 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      dpsCB = pContext->getDPSCB() ;
 
       if ( pContext->isWrite() )
       {
@@ -131,14 +129,6 @@ namespace engine
          if ( SDB_DMS_EOC == rc )
          {
             PD_LOG( PDDEBUG, "Hit end of context" ) ;
-            if ( pContext->isWrite() && dpsCB && pContext->getW() > 1 )
-            {
-               INT32 rc1 = dpsCB->completeOpr( cb, pContext->getW() ) ;
-               if ( rc1 )
-               {
-                  rc = rc1 ;
-               }
-            }
             goto error ;
          }
          PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",
@@ -149,9 +139,9 @@ namespace engine
       }
 
       /// wait for sync
-      if ( pContext->isWrite() && dpsCB && pContext->getW() > 1 )
+      if ( pContext->isWrite() && pContext->getDPSCB() && pContext->getW() > 1 )
       {
-         rc = dpsCB->completeOpr( cb, pContext->getW() ) ;
+         pContext->getDPSCB()->completeOpr( cb, pContext->getW() ) ;
       }
 
    done :
