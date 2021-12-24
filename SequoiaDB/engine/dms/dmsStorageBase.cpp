@@ -1365,6 +1365,7 @@ namespace engine
       pHeader->_commitLsn  = ~0 ;
       pHeader->_commitTime = 0 ;
       pHeader->_csUniqueID = _pStorageInfo->_csUniqueID ;
+      pHeader->_idxInnerHWM = 0 ;
    }
 
    INT32 _dmsStorageBase::_checkPageSize( dmsStorageUnitHeader * pHeader )

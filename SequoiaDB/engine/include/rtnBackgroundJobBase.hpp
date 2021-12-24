@@ -81,6 +81,8 @@ namespace engine
       // cls adapter jobs
       RTN_JOB_CLS_ADAPTER_TEXT_INDEX = 29,
 
+      RTN_JOB_TASKINFO_UPDATE        = 30, // update task info in cata and data
+
       RTN_JOB_MAX
    } ;
 
@@ -148,6 +150,7 @@ namespace engine
 
          INT32 waitAttach ( INT64 millsec = -1 ) ;
          INT32 waitDetach ( INT64 millsec = -1 ) ;
+         void  onDone () ;
 
       public:
          virtual RTN_JOB_TYPE type () const = 0 ;
@@ -162,6 +165,7 @@ namespace engine
       protected:
          virtual void _onAttach() ;
          virtual void _onDetach() ;
+         virtual void _onDone() ;
 
       private:
          ossEvent             _evtIn ;

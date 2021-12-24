@@ -37,6 +37,7 @@
 #include "dmsExtent.hpp"
 #include "dmsOprHandler.hpp"
 #include "clsRemoteOperator.hpp"
+#include "dmsTaskStatus.hpp"
 
 namespace engine
 {
@@ -83,7 +84,8 @@ namespace engine
                         _pmdEDUCB* eduCB,
                         dmsExtentID indexExtentID,
                         dmsExtentID indexLogicID,
-                        dmsDupKeyProcessor *dkProcessor ) ;
+                        dmsDupKeyProcessor *dkProcessor,
+                        dmsIdxTaskStatus* pIdxStatus = NULL ) ;
       virtual ~_dmsIndexBuilder() ;
       INT32 build() ;
 
@@ -131,6 +133,7 @@ namespace engine
       utilWriteResult    *_pResult ;
       bson::BufBuilder   _bufBuilder ;
       dmsDupKeyProcessor *_dkProcessor ;
+      dmsIdxTaskStatus* _pIdxStatus ;
 
       // index key generator
       ixmIndexKeyGen     _keyGen ;
@@ -146,7 +149,9 @@ namespace engine
                                                UINT16 indexType,
                                                IDmsOprHandler *pOprHandler,
                                                utilWriteResult *pResult,
-                                               dmsDupKeyProcessor *dkProcessor ) ;
+                                               dmsDupKeyProcessor *dkProcessor,
+                                               dmsIdxTaskStatus* pIdxStatus = NULL
+                                             ) ;
 
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;

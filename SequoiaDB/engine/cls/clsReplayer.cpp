@@ -60,9 +60,9 @@ namespace engine
 
    static BSONObj s_replayHint = BSON( "" << IXM_ID_KEY_NAME ) ;
 
-   INT32 startIndexJob ( RTN_JOB_TYPE type,
-                         const dpsLogRecordHeader *recordHeader,
-                         _dpsLogWrapper *dpsCB,
+   INT32 startIndexJob ( RTN_JOB_TYPE type, const CHAR *collection,
+                         const BSONObj &index, const BSONObj &option,
+                         DPS_LSN_OFFSET lsn, _dpsLogWrapper *dpsCB,
                          BOOLEAN isRollBack ) ;
 
    // default pending count for duplicated key issue
@@ -1050,8 +1050,8 @@ namespace engine
                PD_LOG( PDWARNING, "Collection space[%s] already exist when "
                        "create", cs ) ;
 
-               rc = _dmsCB->changeUniqueID( cs, csUniqueID, BSONObj(),
-                                            eduCB, _dpsCB ) ;
+               rc = _dmsCB->changeUniqueID( cs, csUniqueID, BSONObj(), TRUE,
+                                            NULL, FALSE, eduCB, _dpsCB ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR,
@@ -1094,15 +1094,26 @@ namespace engine
             utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
-            BSONObj extOptions ;
+            BSONObj extOptions, idIdxDef ;
             string cs ;
             utilCSUniqueID csUniqID = UTIL_UNIQUEID_NULL ;
+            BSONObj *pExtOpt = NULL ;
+            BSONObj *pIdIdxDef = NULL ;
 
             rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, clUniqueID,
-                                  attribute, compType, extOptions ) ;
+                                  attribute, compType, extOptions, idIdxDef ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
+            }
+
+            if ( !extOptions.isEmpty() )
+            {
+               pExtOpt = &extOptions ;
+            }
+            if ( !idIdxDef.isEmpty() )
+            {
+               pIdIdxDef = &idIdxDef ;
             }
 
             cs = dmsGetCSNameFromFullName( cl ) ;
@@ -1111,9 +1122,8 @@ namespace engine
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
                                              _dpsCB, clUniqueID,
                                              (UTIL_COMPRESSOR_TYPE)compType,
-                                             0, TRUE,
-                                             ( extOptions.isEmpty() ?
-                                               NULL : &extOptions ) ) ;
+                                             0, TRUE, pExtOpt,
+                                             pIdIdxDef, FALSE ) ;
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
@@ -1124,7 +1134,12 @@ namespace engine
                               dmsGetCLShortNameFromFullName( cl ).c_str() <<
                               FIELD_NAME_UNIQUEID <<
                               (INT64)clUniqueID ) ;
-               rc = _dmsCB->changeUniqueID( cs.c_str(), csUniqID, clArr.arr(),
+               ossPoolVector<BSONObj> indexVec ;
+               indexVec.push_back( BSON( FIELD_NAME_COLLECTION << cl <<
+                                         IXM_FIELD_NAME_INDEX_DEF << idIdxDef ) ) ;
+               rc = _dmsCB->changeUniqueID( cs.c_str(), csUniqID,
+                                            clArr.arr(), FALSE,
+                                            &indexVec, TRUE,
                                             eduCB, _dpsCB ) ;
                if ( rc )
                {
@@ -1141,6 +1156,10 @@ namespace engine
             const CHAR *cl = NULL ;
             rc = dpsRecord2CLDel( (CHAR *)recordHeader,
                                    &cl ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
             rc = rtnDropCollectionCommand( cl, eduCB, _dmsCB, _dpsCB ) ;
             if ( SDB_DMS_NOTEXIST == rc )
             {
@@ -1151,16 +1170,30 @@ namespace engine
          }
          case LOG_TYPE_IX_CRT :
          {
+            const CHAR *cl = NULL ;
+            BSONObj index, option ;
+            rc = dpsRecord2IXCrt( (CHAR *)recordHeader, &cl, index, option ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
             /// rebuild the index can be very time-consuming.
             /// we create a sub thread to handle it.
-            startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader,
-                            _dpsCB, FALSE ) ;
+            startIndexJob( RTN_JOB_CREATE_INDEX, cl, index, option,
+                           recordHeader->_lsn, _dpsCB, FALSE ) ;
             break ;
          }
          case LOG_TYPE_IX_DELETE :
          {
-            startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader,
-                            _dpsCB, FALSE ) ;
+            const CHAR *cl = NULL ;
+            BSONObj index, option ;
+            rc = dpsRecord2IXDel( (CHAR *)recordHeader, &cl, index, option ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            startIndexJob( RTN_JOB_DROP_INDEX, cl, index, option,
+                           recordHeader->_lsn, _dpsCB, FALSE ) ;
             break ;
          }
          case LOG_TYPE_CL_RENAME :
@@ -1738,7 +1771,7 @@ namespace engine
             if ( !modifier.isEmpty() )
             {
                rc = rtnUpdate( fullname, newMatch, modifier, s_replayHint,
-                               0, eduCB, _dmsCB, _dpsCB, 1, NULL,
+                               0, eduCB, _dmsCB, _dpsCB, 1, &upResult,
                                NULL, logWriteMod ) ;
                if ( SDB_OK == rc )
                {
@@ -1817,10 +1850,10 @@ namespace engine
             utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
-            BSONObj extOptions ;
+            BSONObj extOptions, idIdxDef ;
             rc = dpsRecord2CLCrt( (const CHAR *)recordHeader,
                                   &fullname, clUniqueID,
-                                  attribute, compType, extOptions ) ;
+                                  attribute, compType, extOptions, idIdxDef ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1842,14 +1875,28 @@ namespace engine
          }
          case LOG_TYPE_IX_CRT :
          {
-            startIndexJob ( RTN_JOB_DROP_INDEX, recordHeader,
-                            _dpsCB, TRUE ) ;
+            const CHAR *cl = NULL ;
+            BSONObj index, option ;
+            rc = dpsRecord2IXCrt( (CHAR *)recordHeader, &cl, index, option ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            startIndexJob( RTN_JOB_DROP_INDEX, cl, index, option,
+                           recordHeader->_lsn, _dpsCB, TRUE ) ;
             break ;
          }
          case LOG_TYPE_IX_DELETE :
          {
-            startIndexJob ( RTN_JOB_CREATE_INDEX, recordHeader,
-                            _dpsCB, TRUE ) ;
+            const CHAR *cl = NULL ;
+            BSONObj index, option ;
+            rc = dpsRecord2IXDel( (CHAR *)recordHeader, &cl, index, option ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            startIndexJob( RTN_JOB_CREATE_INDEX, cl, index, option,
+                           recordHeader->_lsn, _dpsCB, TRUE ) ;
             break ;
          }
          case LOG_TYPE_CL_RENAME :
@@ -1911,7 +1958,7 @@ namespace engine
          {
             const CHAR * csname = NULL ;
             utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
-            BSONObj clInfoObj, emptyObj ;
+            BSONObj clInfoObj ;
 
             rc = dpsRecord2AddUniqueID( (CHAR *)recordHeader, &csname,
                                          csUniqueID, clInfoObj ) ;
@@ -2154,7 +2201,8 @@ namespace engine
                                             UINT32 attributes,
                                             _pmdEDUCB *eduCB,
                                             UTIL_COMPRESSOR_TYPE compType,
-                                            const BSONObj *extOptions )
+                                            const BSONObj *extOptions,
+                                            const BSONObj *idIdxDef )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       INT32 rc = SDB_OK ;
@@ -2180,7 +2228,8 @@ namespace engine
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
                                           _dmsCB, _dpsCB, clUniqueID, compType,
-                                          0, TRUE, extOptions ) ;
+                                          0, TRUE, extOptions,
+                                          idIdxDef, FALSE ) ;
       }
 
       if ( rc )
@@ -2196,7 +2245,9 @@ namespace engine
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       INT32 rc = rtnCreateIndexCommand( collection, index, eduCB,
-                                        _dmsCB, _dpsCB, TRUE ) ;
+                                        _dmsCB, _dpsCB, TRUE,
+                                        SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE,
+                                        NULL, NULL, FALSE ) ;
       if ( rc )
       {
          ftReportErr( rc ) ;
@@ -3028,54 +3079,52 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTINXJOB, "startIndexJob" )
-   INT32 startIndexJob ( RTN_JOB_TYPE type,
-                         const dpsLogRecordHeader *recordHeader,
-                         _dpsLogWrapper *dpsCB,
+   INT32 startIndexJob ( RTN_JOB_TYPE type, const CHAR *collection,
+                         const BSONObj &index, const BSONObj &option,
+                         DPS_LSN_OFFSET lsn, _dpsLogWrapper *dpsCB,
                          BOOLEAN isRollBack )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_STARTINXJOB );
-      const CHAR *fullname = NULL ;
-      BSONObj index ;
-      std::string indexName ;
+      PD_TRACE_ENTRY ( SDB_STARTINXJOB ) ;
+
       rtnIndexJob *indexJob = NULL ;
-      clsCatalogSet *pCatSet = NULL ;
       BOOLEAN useSync = FALSE ;
+      UINT64 taskID = DMS_INVALID_TASKID ;
+      UINT64 mainTaskID = DMS_INVALID_TASKID ;
+      INT32 sortBufSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ;
 
-      if ( LOG_TYPE_IX_CRT != recordHeader->_type &&
-           LOG_TYPE_IX_DELETE != recordHeader->_type )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else if ( LOG_TYPE_IX_CRT == recordHeader->_type )
-      {
-         rc = dpsRecord2IXCrt( (CHAR *)recordHeader,
-                               &fullname,
-                               index ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-      }
-      else
-      {
-         rc = dpsRecord2IXDel( (CHAR *)recordHeader,
-                               &fullname,
-                               index ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-      }
+      // extract option
+      rc = rtnGetIntElement( option, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                             sortBufSize ) ;
+      rc = SDB_FIELD_NOT_EXIST == rc ? SDB_OK : rc ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s] from option[%s], rc: %d",
+                   IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                   option.toString().c_str(), rc ) ;
 
+      rc = rtnGetNumberLongElement( option, FIELD_NAME_TASKID,
+                                    (INT64&)taskID ) ;
+      rc = SDB_FIELD_NOT_EXIST == rc ? SDB_OK : rc ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s] from option[%s], rc: %d",
+                   FIELD_NAME_TASKID, option.toString().c_str(), rc ) ;
+
+      rc = rtnGetNumberLongElement( option, FIELD_NAME_MAIN_TASKID,
+                                    (INT64&)mainTaskID ) ;
+      rc = SDB_FIELD_NOT_EXIST == rc ? SDB_OK : rc ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get field[%s] from option[%s], rc: %d",
+                   FIELD_NAME_MAIN_TASKID, option.toString().c_str(), rc ) ;
+
+      // check use sync
       if ( pmdGetKRCB()->isRestore() || _isTextIdx( index ) )
       {
          useSync = TRUE ;
       }
       else
       {
-         sdbGetShardCB()->getAndLockCataSet( fullname, &pCatSet, TRUE ) ;
+         clsCatalogSet *pCatSet = NULL ;
+         sdbGetShardCB()->getAndLockCataSet( collection, &pCatSet, TRUE ) ;
          if ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() )
          {
             useSync = TRUE ;
@@ -3083,10 +3132,10 @@ namespace engine
          sdbGetShardCB()->unlockCataSet( pCatSet ) ;
       }
 
-      indexJob = SDB_OSS_NEW rtnIndexJob( type, fullname,
-                                          index, dpsCB,
-                                          recordHeader->_lsn,
-                                          isRollBack ) ;
+      // init job
+      indexJob = SDB_OSS_NEW rtnIndexJob( type, collection, index,
+                                          dpsCB, lsn, isRollBack, sortBufSize,
+                                          taskID, mainTaskID ) ;
       if ( NULL == indexJob )
       {
          PD_LOG ( PDERROR, "Failed to alloc memory for indexJob" ) ;
@@ -3094,7 +3143,7 @@ namespace engine
          goto error ;
       }
 
-      rc = indexJob->init () ;
+      rc = indexJob->init() ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Index job[%s] init failed, rc = %d",
@@ -3102,8 +3151,7 @@ namespace engine
          goto error ;
       }
 
-      indexName = indexJob->getIndexName() ;
-      /// When is $id or useSync
+      // do job
       if ( useSync ||
            0 == ossStrcmp( indexJob->getIndexName(), IXM_ID_KEY_NAME ) )
       {
@@ -3123,15 +3171,15 @@ namespace engine
          /// When create index, should wait the index has created into
          /// meta data
          if ( PMD_INVALID_EDUID != jobEduID &&
-              LOG_TYPE_IX_CRT == recordHeader->_type )
+              RTN_JOB_CREATE_INDEX == type )
          {
             BOOLEAN indexExist = FALSE ;
 
             while ( NULL != rtnGetJobMgr()->findJob( jobEduID ) )
             {
                /// when index job is running
-               if ( SDB_OK != rtnIndexJob::checkIndexExist( fullname,
-                                                            indexName.c_str(),
+               if ( SDB_OK != rtnIndexJob::checkIndexExist( collection,
+                                                            indexJob->getIndexName(),
                                                             indexExist ) ||
                     TRUE == indexExist )
                {
