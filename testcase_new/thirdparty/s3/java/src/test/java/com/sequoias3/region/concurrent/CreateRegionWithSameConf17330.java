@@ -79,7 +79,7 @@ public class CreateRegionWithSameConf17330 extends S3TestBase {
         actSuccessTests.getAndIncrement();
     }
 
-    @Test(dependsOnMethods = "testRegion")
+    @Test(dependsOnMethods = "testRegion",enabled = false)
     public void checkResult() throws Exception {
         ListRegionsResult result = regionClient.listRegions();
         List< String > listRegions = result.getRegions();
