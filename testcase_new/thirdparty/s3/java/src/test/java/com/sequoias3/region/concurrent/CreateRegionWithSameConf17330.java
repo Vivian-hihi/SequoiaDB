@@ -61,7 +61,8 @@ public class CreateRegionWithSameConf17330 extends S3TestBase {
         RegionUtils.clearRegion( regionClient, regionName );
     }
 
-    @Test(threadPoolSize = 100, invocationCount = 100)
+    //http://jira.web:8080/browse/SEQUOIADBMAINSTREAM-7863
+    @Test(threadPoolSize = 100, invocationCount = 100,enabled = false)
     public void testRegion() throws Exception {
         String metaLocation = csNames[ 0 ] + "." + metaclNames[ 0 ];
         String metaHisLocation = csNames[ 0 ] + "." + metaclNames[ 1 ];
