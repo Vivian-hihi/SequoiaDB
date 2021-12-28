@@ -16,6 +16,7 @@ class spareRGTest extends PHPUnit_Framework_TestCase
    private static $group ;
    private static $node;
    private static $skipTestCase = false;
+   private static $sign = false;
 
    public static function setUpBeforeClass()
    {
@@ -143,6 +144,12 @@ class spareRGTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($err, -6);
 
       $err = self::$group->attachNode($node, $options);
+      // 报错-13，无法获取日志，错误无法定位，添加条件对节点进行保留
+      if ($err != 0 )
+      {
+         self::$sign = true;
+      }
+
       $this->assertEquals($err, 0) ;
       $this->assertEquals($nodeNum+1, self::$group->getNodeNum());
       $node = self::$group->getNode($node->getName());
@@ -152,12 +159,12 @@ class spareRGTest extends PHPUnit_Framework_TestCase
 
    public static function tearDownAfterClass()
    {
-      if (isset(self::$groupMgr) == true) 
+      if (isset(self::$groupMgr) == true && !self::$sign) 
       {
          $err = self::$groupMgr->removeGroup("SYSSpare");
       }
 
-      if (isset(self::$group) == true && isset(self::$node) == true)
+      if (isset(self::$group) == true && isset(self::$node) == true  && !self::$sign)
       {
          $err = self::$group->removeNode(self::$node->getHostName(), self::$node->getServiceName()) ;
       }
