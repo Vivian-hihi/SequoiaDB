@@ -202,7 +202,9 @@ utilFiles = [
       "util/utilCipher.c",
       "util/utilAuthSCRAMSHA.cpp",
       "util/utilAddress.cpp",
-      "util/utilDataSource.cpp"
+      "util/utilDataSource.cpp",
+      "util/utilRecycleItem.cpp",
+      "util/utilRecycleBinConf.cpp"
       ]
 
 rtnFiles = [
@@ -298,7 +300,8 @@ rtnFiles = [
       "rtn/rtnLocalTaskMgr.cpp",
       "rtn/rtnLocalTaskFactory.cpp",
       "rtn/rtnLocalTask.cpp",
-      "rtn/rtnDetectDeadlock.cpp"
+      "rtn/rtnDetectDeadlock.cpp",
+      "rtn/rtnRecycleBinManager.cpp"
       ]
 
 msgFiles = [
@@ -479,7 +482,8 @@ clsFiles = [
       "cls/clsMainCLMonAggregator.cpp",
       "cls/clsRemoteOperator.cpp",
       "cls/clsResourceContainer.cpp",
-      "cls/clsIndexJob.cpp"
+      "cls/clsIndexJob.cpp",
+      "cls/clsRecycleBinManager.cpp"
       ]
 
 dpsFiles = [
@@ -567,7 +571,9 @@ catFiles = [
       "cat/catSequenceManager.cpp",
       "cat/catCMDBase.cpp",
       "cat/catCommand.cpp",
-      "cat/catTask.cpp"
+      "cat/catTask.cpp",
+      "cat/catCommandRecycleBin.cpp",
+      "cat/catRecycleBinManager.cpp"
       ]
 
 coordFiles = [
@@ -608,6 +614,7 @@ coordFiles = [
       "coord/coordCommandDC.cpp",
       "coord/coordCommandList.cpp",
       "coord/coordCommandSnapshot.cpp",
+      "coord/coordCommandRecycleBin.cpp",
       "coord/coordSqlOperator.cpp",
       "coord/coordLobStream.cpp",
       "coord/coordLobOperator.cpp",
