@@ -151,6 +151,7 @@ TEST_F(listTest, sdbGetList_SDB_LIST_COLLECTIONS_AND_COLLECTIONSPACES_22063)
    bson_append_string( &matcher, "Name", fullCLName ) ;
    bson_finish( &matcher ) ;
    bson expectObj ;
+   bson_init( &expectObj ) ;
    rc = bson_copy( &expectObj, &matcher ) ;
    ASSERT_EQ( BSON_OK, rc ) ;
    checkListResult( SDB_LIST_COLLECTIONS, &matcher, &expectObj ) ;
