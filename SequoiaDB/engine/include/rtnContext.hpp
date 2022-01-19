@@ -375,9 +375,14 @@ namespace engine
             return DMS_INVALID_LOGICCSID ;
          }
 
-         virtual BOOLEAN needTimeout() const
+         BOOLEAN needTimeout() const
          {
-            return TRUE ;
+            return _needTimeout ;
+         }
+
+         void disableTimeout()
+         {
+            _needTimeout = FALSE ;
          }
 
          UINT64 getLastProcessTick() const
@@ -569,7 +574,9 @@ namespace engine
 
          BOOLEAN                 _isAffectGIndex ;
 
+         // OSS_UINT64_MAX means disable timeout checking
          UINT64                  _lastProcessTick ;
+         BOOLEAN                 _needTimeout ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
    typedef _rtnContextBase rtnContext ;
