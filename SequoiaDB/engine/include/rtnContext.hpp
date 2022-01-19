@@ -574,8 +574,9 @@ namespace engine
 
          BOOLEAN                 _isAffectGIndex ;
 
-         // OSS_UINT64_MAX means disable timeout checking
+         // last tick after open, get-more or advance
          UINT64                  _lastProcessTick ;
+         // indicates whether to check timeout
          BOOLEAN                 _needTimeout ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
