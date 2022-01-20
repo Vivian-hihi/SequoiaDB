@@ -1788,10 +1788,6 @@ namespace engine
 
       indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
 
-      rc = _checkForCrtTextIdx( context, index ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check for creating text index failed[%d]",
-                   rc ) ;
-
       rc = _allocateIdxID( context, indexName, index, indexID ) ;
       if ( SDB_IXM_REDEF == rc && ( addUIDIfNotExist ||
            index.hasField( FIELD_NAME_UNIQUEID ) ) )
@@ -1802,6 +1798,10 @@ namespace engine
                       ", rc: %d", rc1 ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Allocate index id failed: %d", rc ) ;
+
+      rc = _checkForCrtTextIdx( context, index ) ;
+      PD_RC_CHECK( rc, PDERROR, "Check for creating text index failed[%d]",
+                   rc ) ;
 
       if ( NULL == _pDataSu->getExtDataHandler() )
       {
