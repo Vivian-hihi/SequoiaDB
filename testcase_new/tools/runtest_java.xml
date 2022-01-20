@@ -17,7 +17,18 @@
    </taskdef>
    
    <target name="main_target">
-
+      <if>
+         <isset property="remoteuser"/>
+         <else>
+            <var name="remoteuser" value="root" />
+         </else>
+      </if>
+	  <if>
+         <isset property="remotepassword"/>
+         <else>
+            <var name="remotepassword" value="jenkins" />
+         </else>
+      </if>
       <switch value="${TESTCASE_TYPE}">
          <case value="driver_java">             
             <property name="testcase_dir" value="${basedir}/../../testcase_new/driver/java"/>
@@ -281,9 +292,11 @@
       <attribute name="s3clientdir"/>
       <attribute name="dshostname"/>
       <attribute name="dssvcname"/>
+      <attribute name="remoteuser"/>
+      <attribute name="remotepassword"/>
       <sequential>
          <hostinfo prefix="host" />
-         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DthreadexecutorDir=${CI_WORK_DIR}/testcase/tools -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DS3HOSTNAME=${host.ADDR4} -DS3SVCNAME=${s3svcname} -Ds3client=@{s3client} -Ds3clientDir=@{s3clientdir} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} -DFULLTEXTPREFIX=${IDXPREFIX} -DDSHOSTNAME=@{dshostname} -DDSSVCNAME=@{dssvcname}"/>
+         <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DthreadexecutorDir=${CI_WORK_DIR}/testcase/tools -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DS3HOSTNAME=${host.ADDR4} -DS3SVCNAME=${s3svcname} -Ds3client=@{s3client} -Ds3clientDir=@{s3clientdir} -DREMOTEUSER=@{remoteuser} -DREMOTEPASSWORD=@{remotepassword} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} -DFULLTEXTPREFIX=${IDXPREFIX} -DDSHOSTNAME=@{dshostname} -DDSSVCNAME=@{dssvcname}"/>
          <echo message="cmd : mvn ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
             <arg line="${cmd}" />
