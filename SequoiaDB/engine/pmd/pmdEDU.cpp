@@ -1075,7 +1075,7 @@ namespace engine
    void _pmdEDUCB::enableCheckUrgentEvent()
    {
 #if defined ( SDB_ENGINE )
-      _needCheckUrgentQueue = FALSE ;
+      _needCheckUrgentQueue = TRUE ;
 #endif
    }
 
