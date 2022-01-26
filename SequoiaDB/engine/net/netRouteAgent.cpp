@@ -137,7 +137,6 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_LSTN, "_netRouteAgent::listen" )
    INT32 _netRouteAgent::listen( const _MsgRouteID &id,
                                  UINT32 protocolMask,
-                                 INetUDPMsgHandler *udpHandler,
                                  UINT32 udpBufferSize )
    {
       INT32 rc = SDB_OK ;
@@ -155,8 +154,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _frame.listen( host, service, protocolMask, udpHandler,
-                          udpBufferSize ) ;
+      rc = _frame.listen( host, service, protocolMask, udpBufferSize ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

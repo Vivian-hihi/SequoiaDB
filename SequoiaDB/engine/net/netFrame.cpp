@@ -819,7 +819,6 @@ namespace engine
    INT32 _netFrame::listen( const CHAR *hostName,
                             const CHAR *serviceName,
                             UINT32 protocolMask,
-                            INetUDPMsgHandler *udpHandler,
                             UINT32 udpBufferSize )
    {
       SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
@@ -843,7 +842,7 @@ namespace engine
       }
       if ( OSS_BIT_TEST( protocolMask, NET_FRAME_MASK_UDP ) )
       {
-         rc = _listenUDP( hostName, serviceName, udpHandler, udpBufferSize ) ;
+         rc = _listenUDP( hostName, serviceName, udpBufferSize ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to listen UDP for host %s "
                       "service %s, rc: %d", hostName, serviceName, rc ) ;
       }
@@ -914,7 +913,6 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__LISTENUDP, "_netFrame::_listenUDP" )
    INT32 _netFrame::_listenUDP( const CHAR *hostName,
                                 const CHAR *serviceName,
-                                INetUDPMsgHandler *handler,
                                 UINT32 bufferSize )
    {
       SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
@@ -945,7 +943,7 @@ namespace engine
          _udpMainSuit = suitPtr ;
       }
 
-      rc = _udpMainSuit->listen( hostName, serviceName, handler, bufferSize ) ;
+      rc = _udpMainSuit->listen( hostName, serviceName, bufferSize ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to listen UDP on port %s, rc: %d",
                    serviceName, rc ) ;
 

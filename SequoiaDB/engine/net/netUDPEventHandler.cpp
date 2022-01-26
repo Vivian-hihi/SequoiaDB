@@ -152,13 +152,6 @@ namespace engine
       PD_CHECK( sock->is_open(), SDB_NETWORK, error, PDERROR,
                 "Failed to send message, UDP socket is closed" ) ;
 
-      if ( NULL != _evSuitPtr->getHandler() )
-      {
-         _evSuitPtr->getHandler()->onSendMsg( handle(),
-                                              id(),
-                                              (MsgHeader *)( buf ) ) ;
-      }
-
       while ( TRUE )
       {
          try

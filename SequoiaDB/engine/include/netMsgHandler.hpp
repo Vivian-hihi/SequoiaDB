@@ -77,37 +77,6 @@ namespace engine
 
    typedef _netMsgHandler INetMsgHandler ;
 
-   /*
-      _netUDPMsgHandler define
-    */
-   class _netUDPMsgHandler : public _netMsgHandler
-   {
-   public:
-      _netUDPMsgHandler()
-      {
-      }
-
-     virtual ~_netUDPMsgHandler()
-     {
-     }
-
-   public:
-      virtual void onSendMsg( const NET_HANDLE &handle,
-                              const MsgRouteID &id,
-                              MsgHeader *header )
-      {
-      }
-
-      virtual void onReceiveMsg( const NET_HANDLE &handle,
-                                 const MsgRouteID &id,
-                                 MsgHeader *header )
-      {
-      }
-   } ;
-
-   typedef class _netUDPMsgHandler INetUDPMsgHandler ;
-
 }
 
 #endif // NETMSGHANDLER_HPP_
-

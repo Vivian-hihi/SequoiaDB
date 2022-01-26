@@ -220,7 +220,6 @@ namespace engine
          INT32    listen( const CHAR *hostName,
                           const CHAR *serviceName,
                           UINT32 protocolMask = NET_FRAME_MASK_TCP,
-                          INetUDPMsgHandler *udpHandler = NULL,
                           UINT32 udpBufferSize = NET_UDP_DEFAULT_BUFFER_SIZE ) ;
 
          /// if call this func with same params for twice,
@@ -334,7 +333,6 @@ namespace engine
                                        const CHAR *serviceName ) ;
          INT32             _listenUDP( const CHAR *hostName,
                                        const CHAR *serviceName,
-                                       INetUDPMsgHandler *handler,
                                        UINT32 bufferSize ) ;
 
       private:

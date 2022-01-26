@@ -71,7 +71,6 @@ namespace engine
    public:
       INT32 listen( const CHAR *hostName,
                     const CHAR *serviceName,
-                    INetUDPMsgHandler *handler,
                     UINT32 bufferSize ) ;
       void  setOptions() ;
       // WARNING: close UDP listen is not thread safe
@@ -105,11 +104,6 @@ namespace engine
          return _localEndPoint ;
       }
 
-      OSS_INLINE INetUDPMsgHandler *getHandler()
-      {
-         return _handler ;
-      }
-
       void  handleMsg( NET_EH eh ) ;
       INT32 getEH( const netUDPEndPoint &endPoint,
                    const MsgRouteID &routeID,
@@ -137,7 +131,6 @@ namespace engine
 
    protected:
       netFrame *                    _frame ;
-      INetUDPMsgHandler *           _handler ;
       netRoute *                    _route ;
       netUDPRestartTimer            _restartTimer ;
       boost::asio::ip::udp::socket  _sock ;
