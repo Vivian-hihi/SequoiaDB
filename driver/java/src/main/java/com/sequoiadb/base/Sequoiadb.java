@@ -2432,7 +2432,7 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * Create a sequence with default options.
+     * Create a sequence.
      *
      * @param seqName The name of sequence
      * @return A sequence object of creation
@@ -2442,7 +2442,7 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * Create a sequence with default options.
+     * Create a sequence with the specified options.
      *
      * @param seqName The name of sequence
      * @param options The options specified by user, details as bellow:
