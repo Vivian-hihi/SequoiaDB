@@ -309,7 +309,7 @@ getLastError() to get the error code.
 For more details, refer to Troubleshooting.
 .SH VERSION
 .PP
-v3.2 and above
+v3.4 and above
 .SH EXAMPLES
 .IP \[bu] 2
 Set session priority to get data from the "primary" database instance first.

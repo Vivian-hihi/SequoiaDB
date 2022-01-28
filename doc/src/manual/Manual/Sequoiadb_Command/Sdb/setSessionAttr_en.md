@@ -148,7 +148,7 @@ When the exception happens, use [getLastErrMsg()][getLastErrMsg] to get the erro
 
 ##VERSION##
 
-v3.2 and above
+v3.4 and above
 
 ##EXAMPLES##
 
