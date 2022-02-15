@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Random;
 
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.testcommon.CommLib;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -42,6 +44,9 @@ public class IndexConsistent23967 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "---Skip testCase on standalone." );
+        }
         cs = sdb.getCollectionSpace( SdbTestBase.csName );
         if ( cs.isCollectionExist( clName ) ) {
             cs.dropCollection( clName );

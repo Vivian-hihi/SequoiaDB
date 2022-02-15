@@ -42,7 +42,7 @@ public class IndexConsistent23961 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) || CommLib.OneGroupMode( sdb ) ) {
+        if ( CommLib.isStandAlone( sdb )  ) {
             throw new SkipException(
                     "---Skip testCase.Current environment less than tow groups! " );
         }
@@ -51,16 +51,11 @@ public class IndexConsistent23961 extends SdbTestBase {
             cs.dropCollection( clName );
         }
 
-        ArrayList< String > groupNames = CommLib.getDataGroupNames( sdb );
-        srcGroupName = groupNames.get( 0 );
-        destGroupName = groupNames.get( 1 );
         BasicBSONObject options = new BasicBSONObject();
         BasicBSONObject keyValue = new BasicBSONObject();
         keyValue.put( "no", 1 );
         options.put( "ShardingKey", keyValue );
-        options.put( "Group", srcGroupName );
         cl = cs.createCollection( clName, options );
-        cl.split( srcGroupName, destGroupName, 50 );
         IndexUtils.insertData( cl, recsNum );
     }
 

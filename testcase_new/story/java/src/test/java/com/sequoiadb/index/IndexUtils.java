@@ -44,7 +44,7 @@ public class IndexUtils {
     public static ArrayList< BSONObject > insertData( DBCollection dbcl,
             int recordNum, int length ) {
         ArrayList< BSONObject > insertRecord = new ArrayList< BSONObject >();
-        int batchNum = 10000;
+        int batchNum = 5000;
         if ( recordNum < batchNum ) {
             batchNum = recordNum;
         }
@@ -52,8 +52,8 @@ public class IndexUtils {
 
         for ( int i = 0; i < recordNum / batchNum; i++ ) {
             List< BSONObject > batchRecords = new ArrayList< BSONObject >();
-            String stringValue = getRandomString( length );
             for ( int j = 0; j < batchNum; j++ ) {
+                String stringValue = getRandomString( length );
                 int value = count++;
                 BSONObject obj = new BasicBSONObject();
                 obj.put( "testa", stringValue );
@@ -72,7 +72,7 @@ public class IndexUtils {
 
     public static ArrayList< BSONObject > insertData( DBCollection dbcl,
             int recordNum ) {
-        return insertData( dbcl, recordNum, 1024 );
+        return insertData( dbcl, recordNum, 512 );
     }
 
     public static void checkRecords( DBCollection dbcl,
