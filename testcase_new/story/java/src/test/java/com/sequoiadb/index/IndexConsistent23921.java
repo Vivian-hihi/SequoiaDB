@@ -3,7 +3,6 @@ package com.sequoiadb.index;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.sequoiadb.base.ConfigOptions;
 import com.sequoiadb.testcommon.CommLib;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -108,8 +107,8 @@ public class IndexConsistent23921 extends SdbTestBase {
                 cl.createIndex( indexName, "{testno:1}", false, false );
                 isSuccessCount++;
             } catch ( BaseException e ) {
-                if ( e.getErrorType() != SDBError.SDB_CLS_MUTEX_TASK_EXIST
-                        .getErrorType() ) {
+                if ( e.getErrorCode() != SDBError.SDB_IXM_CREATING
+                        .getErrorCode() ) {
                     throw e;
                 }
             }

@@ -117,8 +117,8 @@ public class IndexConsistent23922 extends SdbTestBase {
                         .getCollection( mainclName );
                 cl.createIndex( indexName, "{no:1,testno:1}", true, false );
             } catch ( BaseException e ) {
-                if ( e.getErrorType() != SDBError.SDB_CLS_MUTEX_TASK_EXIST
-                        .getErrorType() ) {
+                if ( e.getErrorCode() != SDBError.SDB_IXM_CREATING
+                        .getErrorCode() ) {
                     throw e;
                 }
             }

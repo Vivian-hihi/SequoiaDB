@@ -73,8 +73,8 @@ public class IndexConsistent23927 extends SdbTestBase {
 
         // 只有一个copyIndex任务执行成功
         IndexUtils.checkRecords( maincl, insertRecords, "", "" );
-        IndexUtils.checkIndexTask( sdb, "Create index", SdbTestBase.csName, subclName1,
-                indexName );
+        IndexUtils.checkIndexTask( sdb, "Create index", SdbTestBase.csName,
+                subclName1, indexName );
         IndexUtils.checkIndexConsistent( sdb, SdbTestBase.csName, subclName1,
                 indexName, true );
         IndexUtils.checkIndexConsistent( sdb, SdbTestBase.csName, subclName2,
@@ -109,8 +109,8 @@ public class IndexConsistent23927 extends SdbTestBase {
                         .getCollection( mainclName );
                 cl.copyIndex( SdbTestBase.csName + "." + subclName, indexName );
             } catch ( BaseException e ) {
-                if ( e.getErrorType() != SDBError.SDB_CLS_MUTEX_TASK_EXIST
-                        .getErrorType() ) {
+                if ( e.getErrorCode() != SDBError.SDB_IXM_CREATING
+                        .getErrorCode() ) {
                     throw e;
                 }
             }

@@ -70,7 +70,7 @@ public class IndexConsistent23923 extends SdbTestBase {
             // 主表创建索引失败，子表创建索引成功
             Assert.assertEquals( createSubCLIndex.getRetCode(), 0 );
             Assert.assertEquals( createMainCLIndex.getRetCode(),
-                    SDBError.SDB_CLS_MUTEX_TASK_EXIST.getErrorCode() );
+                    SDBError.SDB_IXM_CREATING.getErrorCode() );
             IndexUtils.checkIndexConsistent( sdb, SdbTestBase.csName,
                     subclName1, indexName, true );
             IndexUtils.checkIndexConsistent( sdb, SdbTestBase.csName,
@@ -80,7 +80,7 @@ public class IndexConsistent23923 extends SdbTestBase {
             // 子表创建索引失败，主表创建索引成功
             Assert.assertEquals( createMainCLIndex.getRetCode(), 0 );
             Assert.assertEquals( createSubCLIndex.getRetCode(),
-                    SDBError.SDB_CLS_MUTEX_TASK_EXIST.getErrorCode() );
+                    SDBError.SDB_IXM_CREATING.getErrorCode() );
             IndexUtils.checkIndexConsistent( sdb, SdbTestBase.csName,
                     subclName1, indexName, true );
             IndexUtils.checkIndexConsistent( sdb, SdbTestBase.csName,
