@@ -1,9 +1,6 @@
 package com.sequoiadb.index;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
@@ -49,7 +46,6 @@ public class IndexUtils {
             batchNum = recordNum;
         }
         int count = 0;
-
         for ( int i = 0; i < recordNum / batchNum; i++ ) {
             List< BSONObject > batchRecords = new ArrayList< BSONObject >();
             for ( int j = 0; j < batchNum; j++ ) {
@@ -72,7 +68,7 @@ public class IndexUtils {
 
     public static ArrayList< BSONObject > insertData( DBCollection dbcl,
             int recordNum ) {
-        return insertData( dbcl, recordNum, 512 );
+        return insertData( dbcl, recordNum, 50 );
     }
 
     public static void checkRecords( DBCollection dbcl,
@@ -233,7 +229,6 @@ public class IndexUtils {
                         Assert.assertEquals( indexDef, expIndexDef );
                     }
                 }
-
             }
         } else {
             List< String > clNodes = getClNodes( sdb, csName, clName );
