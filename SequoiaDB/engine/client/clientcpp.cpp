@@ -4916,8 +4916,10 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       _sdbNodeImpl *pNode = NULL ;
-
-      if ( !node || !primaryData || !*primaryData )
+      // primaryData is pointed to bson data, it's not a normal
+      // string, so we can't use '!*primaryData' to check it is
+      // an empty string or not
+      if ( !node || !primaryData )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
