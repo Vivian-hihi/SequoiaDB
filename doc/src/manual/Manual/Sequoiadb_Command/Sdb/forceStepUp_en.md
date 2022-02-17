@@ -12,29 +12,23 @@ Sdb
 
 ##DESCRIPTION##
 
-This function is used to forcibly promote the standby node to the primary node in a replication group that is not eligible for election. If the LSN of the upgraded primary node is smaller than the LSN of the original primary node, the previously successful operation will be rolled back, so use this command with caution.
+This function is used to forcibly promote the standby node to the primary node in a replication group that is not eligible for election. Before upgrading, make sure that the LSN of the target node is the maximum value in the group. If a node with a smaller LSN is forcibly promoted to master, data will be rolled back. Users can obtain node LSN information through [Node Health Detection Snapshot][SDB_SNAP_HEALTH].
 
 >**Note:**
 >
-> Currently, only forced promotion in a catalog replication group is supported.
+> This function is only supported in catalog replication groups.
 
 ##PARAMETERS##
 
-| Name | Type| Description | Required or not |
-| ---- | --- | ----------- | --------------- |
-| options |object | parameter set | not |
+options ( *object, optional* )
 
-options 选项：
+Modify the duration of the primary node through the parameter "options":
 
-| Name | Type| Description | Defaults |
-| ---- | --- | ----------- | --------------- |
-|Seconds   |number      | Duration of forced promotion to master. |120|
+- Seconds ( *number* ): The duration of the forced upgrade to the master node, in seconds, the default value is 120.
 
-> **Note:**
->
-> * The primary node cannot exist in the target replication group, and the LSN of other nodes cannot be greater than the LSN of the target node. To obtain the node LSN information, please refer to [Node Health Detection Snapshot][SDB_SNAP_HEALTH].
-> * When the duration expires, all nodes will re-elect according to the election rules.
-> * If a user is created, it is not possible to connect directly to the catalog node. Users can modify the auth parameter in the configuration file of the catalog node first, configure auth=false to disable the authentication function of the catalog, and restart the cluster before proceeding.
+    When the specified time is exceeded, the replication group will be re-elected according to the election rule.
+
+    Format: `Seconds: 300`
 
 ##RETURN VALUE##
 
@@ -52,12 +46,22 @@ v3.4 and above
 
 ##EXAMPLES##
 
-Connect to the catalog node (hostname1:30000) and force it to be promoted to the master for 300s.
+1. Connect to catalog node 11800.
 
-```lang-javascript
-> var db = new Sdb("hostname1", 30000)
-> db.forceStepUp({Seconds: 300})
-```
+    ```lang-javascript
+    > var cata = new Sdb("localhost", 30000)
+    ```
+
+    >**Note:**
+    >
+    > If the catalog node cannot be connected, the node parameter "auth" needs to be configured to false. For the configurationmethod, can refer to [Parameter Configuration][parameter].
+
+2. Forcibly promote catalog node 11800 to master with a specified duration of 300 seconds.
+
+    ```lang-javascript
+    > cata.forceStepUp({Seconds: 300})
+    ```
+
 
 [^_^]:
      Links
@@ -65,3 +69,5 @@ Connect to the catalog node (hostname1:30000) and force it to be promoted to the
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [faq]:manual/FAQ/faq_sdb.md
 [error_code]:manual/Manual/Sequoiadb_error_code.md
+[SDB_SNAP_HEALTH]:manual/Manual/Snapshot/SDB_SNAP_HEALTH.md
+[parameter]:manual/Distributed_Engine/Maintainance/Database_Configuration/configuration_parameters.md
