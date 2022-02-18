@@ -999,7 +999,6 @@
       <default>M</default>
       <hidden>true</hidden>
    </opt>
-   </opt>
 
    <opt>
       <name>PMD_OPTION_PREFERREDINST_MODE</name>
@@ -1070,7 +1069,6 @@
              In v3.4.5 and above, this parameter has been renamed. The users of lower versions should use preferedstrict</en>
          <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferredinstance 指定的ID中选取，默认为false。<fig></fig>
              该参数在 v3.4.5 及以上版本中已更名，低版本的用户仍需使用原参数 preferedstrict。</cn>
-      </detail>
       </detail>
       <typeofweb>boolean</typeofweb>
       <default>false</default>
