@@ -464,6 +464,10 @@ namespace engine
       rc = pEDUMgr->waitUntil( eduID, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait CATNET active failed, rc: %d", rc ) ;
 
+      rc = _recycleBinMgr.active() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to active recycle bin manager, "
+                   "rc: %d", rc ) ;
+
    done:
       return rc ;
    error:
@@ -495,6 +499,7 @@ namespace engine
       _catlogueMgr.fini() ;
       _catGTSMgr.fini() ;
       _catMainCtrl.fini() ;
+      _recycleBinMgr.fini() ;
 
       // unregister event handle
       pmdGetKRCB()->unregEventHandler( this ) ;
