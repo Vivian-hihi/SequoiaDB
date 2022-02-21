@@ -537,7 +537,7 @@ class collection(object):
             oid = doc.get("_id")
             return self.upsert({"$set": doc}, condition={"_id": oid})
         else:
-            return self.insert(doc)
+            return self.insert_with_flag(doc)
 
     def delete(self, **kwargs):
         """Delete the matching documents in current collection.
