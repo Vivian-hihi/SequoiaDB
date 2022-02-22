@@ -294,6 +294,8 @@ do                                                            \
 
    void _sdbBase::_unregHandle( ossValuePtr ptr )
    {
+      // when we coredump from here, please check wether _connection
+      // had been destroyed or not
       if ( _connection )
       {
          _connection->_unregisterHandle( _type, ptr ) ;
@@ -8709,6 +8711,7 @@ do                                                            \
 
    _sdbImpl::~_sdbImpl ()
    {
+      _removeObjects() ;
       if ( NULL != _tb )
       {
          releaseHashTable( &_tb ) ;
@@ -8727,10 +8730,14 @@ do                                                            \
       }
    }
 
+   /**
+    * remove the connection handle in the associated objects
+    */
    void _sdbImpl::_removeObjects ()
    {
       std::set<ossValuePtr> copySet ;
       std::set<ossValuePtr>::iterator it ;
+
       // remove handles
       // when we remove element in the set, we should copy the set first,
       // and then traverse the copy, for we need to remove elements in the
@@ -8807,14 +8814,13 @@ do                                                            \
    void _sdbImpl::_disconnect ()
    {
       INT32 rc = SDB_OK ;
+
+      // when network error happen, _sock will be deleted and set to NULL
       if ( _sock )
       {
          CHAR buffer [ sizeof ( MsgOpDisconnect ) ] ;
          CHAR *pBuffer = &buffer[0] ;
          INT32 bufferSize = sizeof ( buffer ) ;
-
-         // remove local associated objects
-         _removeObjects() ;
 
          // send disconnect msg to engine
          rc = clientBuildDisconnectMsg ( &pBuffer, &bufferSize, 0,
