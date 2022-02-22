@@ -1669,9 +1669,8 @@ namespace engine
 
    void _coordResource::removeCataInfo( const CHAR *collectionName )
    {
-      _cataMutex.get() ;
+      ossScopedLock _lock( &_cataMutex, EXCLUSIVE ) ;
       _mapCataInfo.erase( collectionName ) ;
-      _cataMutex.release() ;
    }
 
    void _coordResource::removeCataInfoWithMain( const CHAR *collectionName )
@@ -1728,17 +1727,13 @@ namespace engine
       clsCatalogSet *pCatSet = NULL ;
       const CHAR *pCLName = NULL ;
       MAP_CATA_INFO_IT it ;
-      BOOLEAN locked = FALSE ;
+      ossScopedLock _lock( &_cataMutex, EXCLUSIVE ) ;
 
       if ( !csName || !( *csName ) )
       {
          goto done ;
       }
       len = ossStrlen( csName ) ;
-
-      _cataMutex.get() ;
-      locked = TRUE ;
-
       it = _mapCataInfo.begin() ;
 
       while( it != _mapCataInfo.end() )
@@ -1769,21 +1764,17 @@ namespace engine
       }
 
    done:
-      if ( locked )
-      {
-         _cataMutex.release() ;
-      }
       return ;
    }
 
    void _coordResource::addCataInfo( CoordCataInfoPtr &cataPtr )
    {
-      _cataMutex.get() ;
+      ossScopedLock _lock( &_cataMutex, EXCLUSIVE ) ;
+
       /// need to erase it first, because replace the name(it->first) is used
       /// the old cataPtr's name ptr, will occur exception
       _mapCataInfo.erase( cataPtr->getName() ) ;
       _mapCataInfo[ cataPtr->getName() ] = cataPtr ;
-      _cataMutex.release() ;
    }
 
    UINT32 _coordResource::checkAndRemoveCataInfoBySub( const CHAR *collectionName )
@@ -1838,7 +1829,8 @@ namespace engine
 
    void _coordResource::invalidateCataInfo( const CHAR *clFullName )
    {
-      _cataMutex.get() ;
+      ossScopedLock _lock( &_nodeMutex, EXCLUSIVE ) ;
+
       if ( clFullName )
       {
          _mapCataInfo.erase( clFullName ) ;
@@ -1847,7 +1839,6 @@ namespace engine
       {
          _mapCataInfo.clear() ;
       }
-      _cataMutex.release() ;
    }
 
    void _coordResource::invalidateGroupInfo( UINT64 identify )
