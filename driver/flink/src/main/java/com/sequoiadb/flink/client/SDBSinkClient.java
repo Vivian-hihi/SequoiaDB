@@ -250,7 +250,7 @@ public class SDBSinkClient implements SDBClient {
         if (domain != null) {
             options.put(SDBConstant.DOMAIN, domain);
         }
-        return getClient().createCollectionSpace(collectionSpace);
+        return getClient().createCollectionSpace(collectionSpace, options);
 
     }
     /*
