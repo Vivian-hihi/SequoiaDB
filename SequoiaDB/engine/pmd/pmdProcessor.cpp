@@ -98,7 +98,11 @@ namespace engine
 
       needRollback = FALSE ;
 
-      if ( eduCB()->getMonQueryCB() == NULL )
+      // When this is a GETMORE operation following another operation,
+      // the context of the original operation already had the monQuery.
+      // The cb will set the monQuery with the monQuery from the original
+      // context when we find the original context later on.
+      if ( eduCB()->getMonQueryCB() == NULL && MSG_BS_GETMORE_REQ != opCode)
       {
          monQuery = pmdGetKRCB()->getMonMgr()->
                     registerMonitorObject<monClassQuery>() ;
@@ -289,9 +293,8 @@ namespace engine
          if ( !monQuery->anchorToContext )
          {
             pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
-
-            eduCB()->setMonQueryCB( NULL ) ;
          }
+         eduCB()->setMonQueryCB( NULL ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB_PMDDATAPROC_PROMSG, rc ) ;
@@ -1035,6 +1038,7 @@ namespace engine
          goto error ;
       }
 
+      eduCB()->setMonQueryCB( pContext->getMonQueryCB() ) ;
       needRollback = pContext->needRollback() ;
 
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRTNCB ) ;
@@ -2221,7 +2225,11 @@ namespace engine
       BSONObjBuilder clientInfoBuilder ;
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROMSG );
 
-      if ( eduCB()->getMonQueryCB() == NULL )
+      // When this is a GETMORE operation following another operation,
+      // the context of the original operation already had the monQuery.
+      // The cb will set the monQuery with the monQuery from the original
+      // context when we find the original context later on.
+      if ( eduCB()->getMonQueryCB() == NULL && MSG_BS_GETMORE_REQ != msg->opCode )
       {
          monQueryCB = pmdGetKRCB()->getMonMgr()->
                       registerMonitorObject<monClassQuery>() ;
@@ -2263,8 +2271,8 @@ namespace engine
             if ( !monQueryCB->anchorToContext )
             {
                pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQueryCB ) ;
-               eduCB()->setMonQueryCB( NULL ) ;
             }
+            eduCB()->setMonQueryCB( NULL ) ;
          }
       }
 
