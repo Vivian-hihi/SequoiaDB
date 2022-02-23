@@ -4593,7 +4593,7 @@ namespace engine
       lockDms = TRUE ;
 
       // task check
-      rc = sdbGetClsCB()->startIdxTaskCheck( taskID, TRUE ) ;
+      rc = sdbGetClsCB()->startIdxTaskCheck( taskID, TRUE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to start task check, rc: %d",
                    rc ) ;
@@ -4832,7 +4832,7 @@ namespace engine
       lockDms = TRUE ;
 
       // task check
-      rc = sdbGetClsCB()->startIdxTaskCheck( taskID, TRUE ) ;
+      rc = sdbGetClsCB()->startIdxTaskCheck( taskID, TRUE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to start task check, rc: %d",
                    rc ) ;
@@ -5049,7 +5049,7 @@ namespace engine
       lockDms = TRUE ;
 
       // task check
-      rc = sdbGetClsCB()->startIdxTaskCheck( taskID, TRUE ) ;
+      rc = sdbGetClsCB()->startIdxTaskCheck( taskID, TRUE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to start task check, rc: %d",
                    rc ) ;
