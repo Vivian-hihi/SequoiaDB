@@ -6538,7 +6538,7 @@ namespace engine
       {
          rc = _checkPrimaryStatus() ;
          // check return code
-         if ( SDB_OK == rc && _pReplSet->groupSize() > 1 )
+         if ( SDB_OK == rc )
          {
             rc = SDB_CLS_NOT_SECONDARY ;
          }
