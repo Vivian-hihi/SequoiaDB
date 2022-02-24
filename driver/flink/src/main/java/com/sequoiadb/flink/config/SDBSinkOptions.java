@@ -116,7 +116,7 @@ public class SDBSinkOptions extends SDBClientOptions {
         + ", domain=" + domain 
         + ", group=" + group 
         + ", ignoreNullField=" + ignoreNullField
-        + ", indempotent=" + indempotent 
+        + ", idempotent=" + idempotent 
         + ", maxBulkFillTime=" + maxBulkFillTime 
         + ", pageSize=" + pageSize
         + ", replSize=" + replSize 
