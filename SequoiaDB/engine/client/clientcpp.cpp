@@ -540,6 +540,11 @@ do                                                            \
          }
          goto error ;
       }
+      else if ( -1 == contextID )
+      {
+         // early closed
+         _contextID = -1 ;
+      }
 
    done :
       if ( locked )

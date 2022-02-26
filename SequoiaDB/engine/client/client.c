@@ -1062,6 +1062,11 @@ static INT32 _readNextBuffer ( sdbCursorHandle cursor )
       }
       goto error ;
    }
+   else if ( -1 == lcontextID )
+   {
+      // early closed
+      pCursor->_contextID = -1 ;
+   }
 
 done :
    return rc ;

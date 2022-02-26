@@ -2743,7 +2743,24 @@ namespace engine
                numToRead ) ; */
 
       rc = _pRtnCB->contextFind ( contextID, pContext, eduCB() ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
+      {
+         // check if closed earlier, if so, it may send from a backward client
+         if ( eduCB()->closedContextDelete( contextID ) )
+         {
+            PD_LOG( PDINFO, "Context %lld had been closed earlier",
+                    contextID ) ;
+            rc = SDB_DMS_EOC ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Context %lld does not exist", contextID ) ;
+            rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         }
+         contextID = -1 ;
+         goto error ;
+      }
+      else if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID, rc ) ;
          goto error ;
@@ -2769,6 +2786,15 @@ namespace engine
       }
 
       startingPos = ( INT32 )buffObj.getStartFrom() ;
+      if ( pContext->eof() )
+      {
+         _pRtnCB->contextDelete( contextID, eduCB() ) ;
+
+         // save into closed contexts for client backward compatibility
+         eduCB()->closedContextInsert( contextID ) ;
+
+         contextID = -1 ;
+      }
 
    done:
       if ( SDB_DMS_EOC == rc )
@@ -2779,6 +2805,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONGETMOREREQMSG, rc ) ;
       return rc ;
    error:
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete( contextID, eduCB() ) ;
+      }
       goto done ;
    }
 
@@ -2905,6 +2935,8 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
          }
+
+         _pEDUCB->closedContextClear() ;
       }
 
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONINRPTMSG ) ;

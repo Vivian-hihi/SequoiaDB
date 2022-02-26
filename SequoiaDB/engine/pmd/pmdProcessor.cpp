@@ -1031,9 +1031,25 @@ namespace engine
                getSession()->sessionName(), contextID, numToRead ) ; */
 
       rc = _pRTNCB->contextFind ( contextID, pContext, eduCB() ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
       {
-         PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID,
+         // check if closed earlier, if so, it may send from a backward client
+         if ( eduCB()->closedContextDelete( contextID ) )
+         {
+            PD_LOG( PDINFO, "Context %lld had been closed earlier",
+                    contextID ) ;
+            rc = SDB_DMS_EOC ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Context %lld does not exist", contextID ) ;
+         }
+         contextID = -1 ;
+         goto error ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to find context %lld, rc: %d", contextID,
                   rc ) ;
          goto error ;
       }
@@ -1047,10 +1063,19 @@ namespace engine
          contextID = -1 ;
          goto error ;
       }
-      else if ( pContext->eof() &&
-                contextID == eduCB()->getCurAutoTransCtxID() )
+      else if ( pContext->eof() )
       {
-         eduCB()->setCurAutoTransCtxID( -1 ) ;
+         // early close to save get-more round-trips
+         if ( contextID == eduCB()->getCurAutoTransCtxID() )
+         {
+            eduCB()->setCurAutoTransCtxID( -1 ) ;
+         }
+         _pRTNCB->contextDelete( contextID, eduCB() ) ;
+
+         // save into closed contexts for client backward compatibility
+         eduCB()->closedContextInsert( contextID ) ;
+
+         contextID = -1 ;
       }
 
    done:
@@ -1061,6 +1086,10 @@ namespace engine
 
       return rc ;
    error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete( contextID, eduCB() ) ;
+      }
       goto done ;
    }
 
@@ -1658,6 +1687,8 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
       }
+
+      eduCB()->closedContextClear() ;
 
       return SDB_OK ;
    }

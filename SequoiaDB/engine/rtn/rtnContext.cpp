@@ -925,6 +925,8 @@ namespace engine
       }
       else if ( eof() && isEmpty() )
       {
+         _monCtxCB.monReturnInc( 1, 0 ) ;
+
          rc = SDB_DMS_EOC ;
          _isOpened = FALSE ;
          goto error ;
