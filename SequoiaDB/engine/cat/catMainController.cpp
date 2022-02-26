@@ -992,6 +992,7 @@ namespace engine
       pReply->header.TID           = pGetMore->header.TID ;
       pReply->header.routeID.value = 0 ;
       pReply->header.requestID     = pGetMore->header.requestID ;
+      pReply->header.globalID      = pGetMore->header.globalID ;
       pReply->contextID            = pGetMore->contextID ;
       pReply->startFrom            = (INT32)buffObj.getStartFrom() ;
       pReply->numReturned          = buffObj.recordNum() ;
@@ -1100,6 +1101,7 @@ namespace engine
       msgReply.header.requestID = pReq->header.requestID;
       msgReply.header.routeID.value = 0;
       msgReply.header.TID = pReq->header.TID;
+      msgReply.header.globalID = pReq->header.globalID ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_KILLCONTEXT ) ;
       do
@@ -1236,10 +1238,11 @@ namespace engine
          // send reply
          MsgOpReply replyHeader ;
          replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-         replyHeader.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode );
-         replyHeader.header.TID = pMsg->TID;
-         replyHeader.header.routeID.value = 0;
-         replyHeader.header.requestID = pMsg->requestID;
+         replyHeader.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
+         replyHeader.header.TID = pMsg->TID ;
+         replyHeader.header.routeID.value = 0 ;
+         replyHeader.header.requestID = pMsg->requestID ;
+         replyHeader.header.globalID = pMsg->globalID ;
          replyHeader.contextID = contextID ;
          replyHeader.flags = rc ;
          replyHeader.startFrom = 0 ;
@@ -1422,6 +1425,7 @@ namespace engine
          msgReply.header.TID = pMsgHeader->TID;
          msgReply.header.routeID.value = 0;
          msgReply.header.requestID = pMsgHeader->requestID;
+         msgReply.header.globalID = pMsgHeader->globalID ;
          msgReply.contextID = contextID ;
          msgReply.startFrom = (INT32)buffObj.getStartFrom() ;
          msgReply.numReturned = buffObj.recordNum() ;
@@ -1609,6 +1613,7 @@ namespace engine
             reply.header.requestID = pMsg->requestID ;
             reply.header.routeID.value = 0 ;
             reply.header.TID = pMsg->TID ;
+            reply.header.globalID = pMsg->globalID ;
             reply.flags = rc ;
             reply.contextID = -1 ;
             reply.numReturned = 1 ;
@@ -1650,6 +1655,7 @@ namespace engine
       reply.header.requestID        = pMsg->requestID;
       reply.header.routeID.value    = 0 ;
       reply.header.TID              = pMsg->TID ;
+      reply.header.globalID         = pMsg->globalID ;
 
       _pCatCB->incPacketLevel() ;
 
@@ -1703,6 +1709,7 @@ namespace engine
       reply.header.requestID = pMsg->requestID ;
       reply.header.routeID.value = 0 ;
       reply.header.TID = pMsg->TID ;
+      reply.header.globalID = pMsg->globalID ;
       reply.contextID = -1 ;
       reply.flags = SDB_OK ;
       reply.numReturned = 0 ;
@@ -1778,6 +1785,7 @@ namespace engine
       reply.header.requestID = pMsg->requestID ;
       reply.header.routeID.value = 0 ;
       reply.header.TID = pMsg->TID ;
+      reply.header.globalID = pMsg->globalID ;
       reply.contextID = -1 ;
       reply.flags = SDB_OK ;
       reply.numReturned = 0 ;
@@ -1857,6 +1865,7 @@ namespace engine
       reply.header.requestID = pMsg->requestID ;
       reply.header.routeID.value = 0 ;
       reply.header.TID = pMsg->TID ;
+      reply.header.globalID = pMsg->globalID ;
       reply.contextID = -1 ;
       reply.flags = SDB_OK ;
       reply.numReturned = 0 ;
@@ -1927,6 +1936,7 @@ namespace engine
       reply.header.requestID        = pMsgReq->header.requestID;
       reply.header.routeID.value    = 0 ;
       reply.header.TID              = pMsgReq->header.TID ;
+      reply.header.globalID         = pMsgReq->header.globalID ;
 
       /// check wether the route id is right
       MsgRouteID localRouteID       = _pCatCB->netWork()->localID() ;

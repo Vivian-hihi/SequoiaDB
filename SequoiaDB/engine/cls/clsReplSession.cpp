@@ -806,7 +806,7 @@ namespace engine
             MsgClsNodeStatusNotify ntyMsg ;
             ntyMsg.status = SDB_DB_FULLSYNC ;
             if ( SDB_OK == routeAgent()->syncSend( primaryID,
-                                                   (void*)&ntyMsg ) )
+                                                   (MsgHeader *)&ntyMsg ) )
             {
                hasSend = TRUE ;
             }
@@ -905,7 +905,7 @@ namespace engine
          }
 
          msg.identity = routeAgent()->localID() ;
-         rc = routeAgent()->syncSend( _syncSrc, &msg ) ;
+         rc = routeAgent()->syncSend( _syncSrc, (MsgHeader *)&msg ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Session[%s]: Send sync req to [node: %d, "
@@ -981,7 +981,7 @@ namespace engine
             }
          }
 
-         rc = routeAgent()->syncSend( _syncSrc, &msg ) ;
+         rc = routeAgent()->syncSend( _syncSrc, (MsgHeader *)&msg ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Session[%s]: Send consult req to [node: %d, "
@@ -1516,7 +1516,7 @@ namespace engine
          {
             res.hashValue = ossHash( _mb.offset(0), _mb.length() ) ;
          }
-         routeAgent()->syncSend( handle, &res ) ;
+         routeAgent()->syncSend( handle, (MsgHeader *)&res ) ;
       }
       PD_TRACE_EXIT ( SDB__CLSSRCREPSN_HNDCSTREQ );
       return SDB_OK ;
@@ -1590,7 +1590,7 @@ namespace engine
                  sessionName(), req->next.offset, req->next.version,
                  fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
          msg.header.res = SDB_CLS_SYNC_FAILED ;
-         routeAgent()->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, (MsgHeader *)&msg ) ;
          rc = SDB_CLS_SYNC_FAILED ;
          goto done ;
       }
@@ -1634,14 +1634,14 @@ namespace engine
 
          if ( needSend )
          {
-            routeAgent()->syncSend( handle, &msg ) ;
+            routeAgent()->syncSend( handle, (MsgHeader *)&msg ) ;
          }
          goto done ;
       }
       else if ( 0 == req->needData )
       {
          msg.header.res = SDB_OK ;
-         routeAgent()->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, (MsgHeader *)&msg ) ;
          goto done ;
       }
       else
@@ -1673,7 +1673,7 @@ namespace engine
          PD_LOG( PDWARNING, "Session[%s]: Can not find [ver:%d, "
                  "offset:%lld]", sessionName(), search.version,
                  search.offset ) ;
-         routeAgent()->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, (MsgHeader *)&msg ) ;
       }
 
    done:

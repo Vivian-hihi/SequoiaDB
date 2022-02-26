@@ -199,8 +199,12 @@ INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pUpdate->header.requestID     = reqID ;
    pUpdate->header.opCode        = MSG_BS_UPDATE_REQ ;
    pUpdate->header.messageLength = packetLength ;
+   pUpdate->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pUpdate->header.version       = SDB_PROTOCOL_VER_2 ;
+   pUpdate->header.flags         = 0 ;
    pUpdate->header.routeID.value = 0 ;
    pUpdate->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pUpdate->header.reserve, 0, sizeof(pUpdate->header.reserve) ) ;
    // copy collection name
    ossStrncpy ( pUpdate->name, CollectionName, pUpdate->nameLength ) ;
    pUpdate->name[pUpdate->nameLength] = 0 ;
@@ -394,8 +398,12 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pInsert->header.requestID     = reqID ;
    pInsert->header.opCode        = MSG_BS_INSERT_REQ ;
    pInsert->header.messageLength = packetLength ;
+   pInsert->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pInsert->header.version       = SDB_PROTOCOL_VER_2 ;
+   pInsert->header.flags         = 0 ;
    pInsert->header.routeID.value = 0 ;
    pInsert->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pInsert->header.reserve, 0, sizeof(pInsert->header.reserve) ) ;
    // copy collection name
    ossStrncpy ( pInsert->name, CollectionName, pInsert->nameLength ) ;
    pInsert->name[pInsert->nameLength]=0 ;
@@ -491,8 +499,12 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pInsert->header.requestID     = reqID ;
    pInsert->header.opCode        = MSG_BS_INSERT_REQ ;
    pInsert->header.messageLength = packetLength ;
+   pInsert->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pInsert->header.version       = SDB_PROTOCOL_VER_2 ;
+   pInsert->header.flags         = 0 ;
    pInsert->header.routeID.value = 0 ;
    pInsert->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pInsert->header.reserve, 0, sizeof(pInsert->header.reserve) ) ;
    // copy collection name
    ossStrncpy ( pInsert->name, CollectionName, pInsert->nameLength ) ;
    pInsert->name[pInsert->nameLength]=0 ;
@@ -688,8 +700,12 @@ INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    pQuery->numToSkip             = numToSkip ;
    pQuery->numToReturn           = numToReturn ;
    pQuery->header.messageLength  = packetLength ;
+   pQuery->header.eye            = MSG_COMM_EYE_DEFAULT ;
+   pQuery->header.version        = SDB_PROTOCOL_VER_2 ;
+   pQuery->header.flags          = FLAG_RESULT_DETAIL | FLAG_PROCESS_DETAIL ;
    pQuery->header.routeID.value  = 0 ;
    pQuery->header.TID            = ossGetCurrentThreadID() ;
+   ossMemset( pQuery->header.reserve, 0, sizeof(pQuery->header.reserve) ) ;
    // copy collection name
    ossStrncpy ( pQuery->name, CollectionName, pQuery->nameLength ) ;
    pQuery->name[pQuery->nameLength]=0 ;
@@ -879,8 +895,12 @@ INT32 msgBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pGetMore->numToReturn          = numToReturn ;
    pGetMore->contextID            = contextID ;
    pGetMore->header.messageLength = packetLength ;
+   pGetMore->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pGetMore->header.version       = SDB_PROTOCOL_VER_2 ;
+   pGetMore->header.flags         = 0 ;
    pGetMore->header.routeID.value = 0 ;
    pGetMore->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pGetMore->header.reserve, 0, sizeof(pGetMore->header.reserve) ) ;
 done :
    PD_TRACE_EXITRC ( SDB_MSGBLDGETMOREMSG, rc );
    return rc ;
@@ -911,10 +931,14 @@ void msgFillGetMoreMsg ( MsgOpGetMore &getMoreMsg, const UINT32 tid,
 {
    PD_TRACE_ENTRY ( SDB_MSGFILLGETMOREMSG );
    getMoreMsg.header.messageLength = sizeof( MsgOpGetMore );
+   getMoreMsg.header.eye = MSG_COMM_EYE_DEFAULT ;
+   getMoreMsg.header.version = SDB_PROTOCOL_VER_2 ;
+   getMoreMsg.header.flags = 0 ;
    getMoreMsg.header.opCode = MSG_BS_GETMORE_REQ;
    getMoreMsg.header.TID = tid;
    getMoreMsg.header.routeID.value = 0;
    getMoreMsg.header.requestID = reqID;
+   ossMemset( getMoreMsg.header.reserve, 0, sizeof(getMoreMsg.header.reserve) ) ;
    getMoreMsg.contextID = contextID;
    getMoreMsg.numToReturn = numToReturn;
    PD_TRACE_EXIT ( SDB_MSGFILLGETMOREMSG );
@@ -1114,8 +1138,12 @@ INT32 msgBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pDelete->header.requestID     = reqID ;
    pDelete->header.opCode        = MSG_BS_DELETE_REQ ;
    pDelete->header.messageLength = packetLength ;
+   pDelete->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pDelete->header.version       = SDB_PROTOCOL_VER_2 ;
+   pDelete->header.flags         = 0 ;
    pDelete->header.routeID.value = 0 ;
    pDelete->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pDelete->header.reserve, 0, sizeof(pDelete->header.reserve) ) ;
    // copy collection name
    ossStrncpy ( pDelete->name, CollectionName, pDelete->nameLength ) ;
    pDelete->name[pDelete->nameLength]=0 ;
@@ -1248,9 +1276,13 @@ INT32 msgBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pKC->header.requestID     = reqID ;
    pKC->header.opCode        = MSG_BS_KILL_CONTEXT_REQ ;
    pKC->header.messageLength = packetLength ;
+   pKC->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pKC->header.version       = SDB_PROTOCOL_VER_2 ;
+   pKC->header.flags         = 0 ;
    pKC->numContexts          = numContexts ;
    pKC->header.routeID.value = 0 ;
    pKC->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pKC->header.reserve, 0, sizeof(pKC->header.reserve) ) ;
    // copy collection name
    ossMemcpy ( (CHAR*)(&pKC->contextIDs[0]), (CHAR*)pContextIDs,
                sizeof(SINT64)*pKC->numContexts ) ;
@@ -1328,8 +1360,12 @@ INT32 msgBuildMsgMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pMsg->header.requestID     = reqID ;
    pMsg->header.opCode        = MSG_BS_MSG_REQ ;
    pMsg->header.messageLength = packetLength ;
+   pMsg->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pMsg->header.version       = SDB_PROTOCOL_VER_2 ;
+   pMsg->header.flags         = 0 ;
    pMsg->header.routeID.value = 0 ;
    pMsg->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pMsg->header.reserve, 0, sizeof(pMsg->header.reserve) ) ;
    // copy collection name
    ossStrncpy ( pMsg->msg, pMsgStr, msgLen ) ;
    pMsg->msg[msgLen] = 0 ;
@@ -1416,8 +1452,12 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
    pReply->header.requestID     = reqID ;
    pReply->header.opCode        = MAKE_REPLY_TYPE(opCode);
    pReply->header.messageLength = packetLength ;
+   pReply->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pReply->header.version       = SDB_PROTOCOL_VER_2 ;
+   pReply->header.flags         = 0 ;
    pReply->header.routeID.value = 0 ;
    pReply->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pReply->header.reserve, 0, sizeof(pReply->header.reserve) ) ;
 done :
    PD_TRACE_EXITRC ( SDB_MSGBLDREPLYMSG, rc );
    return rc ;
@@ -1463,8 +1503,12 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
    pReply->header.requestID     = reqID ;
    pReply->header.opCode        = MAKE_REPLY_TYPE(opCode);
    pReply->header.messageLength = packetLength ;
+   pReply->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pReply->header.version       = SDB_PROTOCOL_VER_2 ;
+   pReply->header.flags         = 0 ;
    pReply->header.routeID.value = 0 ;
    pReply->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pReply->header.reserve, 0, sizeof(pReply->header.reserve) ) ;
    if ( numReturned != 0 )
    {
       offset = ossAlign4 ( sizeof ( MsgOpReply ) ) ;
@@ -1570,8 +1614,13 @@ INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pDisconnect->header.requestID     = reqID ;
    pDisconnect->header.opCode        = MSG_BS_DISCONNECT ;
    pDisconnect->header.messageLength = packetLength ;
+   pDisconnect->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pDisconnect->header.version       = SDB_PROTOCOL_VER_2 ;
+   pDisconnect->header.flags         = 0 ;
    pDisconnect->header.routeID.value = 0 ;
    pDisconnect->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pDisconnect->header.reserve, 0,
+              sizeof(pDisconnect->header.reserve) ) ;
 done :
    PD_TRACE_EXITRC ( SDB_MSGBLDDISCONNMSG, rc );
    return rc ;
@@ -1595,7 +1644,12 @@ void msgBuildReplyMsgHeader ( MsgOpReply &replyHeader, SINT32 packetLength,
    replyHeader.header.requestID     = reqID ;
    replyHeader.header.opCode        = MAKE_REPLY_TYPE(opCode);
    replyHeader.header.messageLength = packetLength ;
+   replyHeader.header.eye           = MSG_COMM_EYE_DEFAULT ;
+   replyHeader.header.version       = SDB_PROTOCOL_VER_2 ;
+   replyHeader.header.flags         = 0 ;
    replyHeader.header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( replyHeader.header.reserve, 0,
+              sizeof(replyHeader.header.reserve) ) ;
    PD_TRACE_EXIT ( SDB_MSGBLDREPLYMSGHD );
 }
 
@@ -1608,7 +1662,12 @@ void msgBuildDisconnectMsg ( MsgOpDisconnect &disconnectHeader,
    disconnectHeader.header.routeID       = routeID ;
    disconnectHeader.header.opCode        = MSG_BS_DISCONNECT ;
    disconnectHeader.header.messageLength = sizeof(MsgOpDisconnect) ;
+   disconnectHeader.header.eye           = MSG_COMM_EYE_DEFAULT ;
+   disconnectHeader.header.version       = SDB_PROTOCOL_VER_2 ;
+   disconnectHeader.header.flags         = 0 ;
    disconnectHeader.header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( disconnectHeader.header.reserve, 0,
+              sizeof(disconnectHeader.header.reserve) ) ;
    PD_TRACE_EXIT ( SDB_MSGBLDDISCONNMSG2 );
 }
 
@@ -1738,10 +1797,15 @@ INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize,
    }
    pCMRequest = (MsgCMRequest*) (*ppBuffer) ;
    pCMRequest->header.messageLength = packetLength ;
+   pCMRequest->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pCMRequest->header.version       = SDB_PROTOCOL_VER_2 ;
+   pCMRequest->header.flags         = 0 ;
    pCMRequest->header.requestID     = 0 ;
    pCMRequest->header.opCode        = MSG_CM_REMOTE ;
    pCMRequest->header.routeID.value = 0 ;
    pCMRequest->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( pCMRequest->header.reserve, 0,
+              sizeof(pCMRequest->header.reserve) ) ;
    pCMRequest->remoCode             = remoCode ;
    // write arguments
    ossMemcpy ( &((*ppBuffer)[offset]), arg1->objdata(), arg1->objsize() ) ;
@@ -1901,8 +1965,12 @@ INT32 msgBuildQueryCMDMsg ( CHAR ** ppBuffer,
    pQuery->numToSkip             = 0 ;
    pQuery->numToReturn           = numToReturn ;
    pQuery->header.messageLength  = packetLength ;
+   pQuery->header.eye            = MSG_COMM_EYE_DEFAULT ;
+   pQuery->header.version        = SDB_PROTOCOL_VER_2 ;
+   pQuery->header.flags          = 0 ;
    pQuery->header.routeID.value  = 0 ;
    pQuery->header.TID            = ossGetCurrentThreadID() ;
+   ossMemset( pQuery->header.reserve, 0, sizeof(pQuery->header.reserve) ) ;
 
    // copy collection name
    ossStrncpy ( pQuery->name, commandName, commandNameLength ) ;
@@ -2454,8 +2522,12 @@ INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
    pMsg = (MsgOpTransCommitPre *)(*ppBuffer);
    pMsg->header.messageLength = packetLength;
+   pMsg->header.eye = MSG_COMM_EYE_DEFAULT ;
+   pMsg->header.version = SDB_PROTOCOL_VER_2 ;
+   pMsg->header.flags = 0 ;
    pMsg->header.opCode = MSG_BS_TRANS_COMMITPRE_REQ;
    pMsg->header.routeID.value = 0;
+   ossMemset( pMsg->header.reserve, 0, sizeof(pMsg->header.reserve) ) ;
 
 done:
    return rc ;
@@ -2476,8 +2548,12 @@ INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
    pMsg = (MsgOpTransCommit *)(*ppBuffer);
    pMsg->header.messageLength = packetLength;
+   pMsg->header.eye = MSG_COMM_EYE_DEFAULT ;
+   pMsg->header.version = SDB_PROTOCOL_VER_2 ;
+   pMsg->header.flags = 0 ;
    pMsg->header.opCode = MSG_BS_TRANS_COMMIT_REQ;
    pMsg->header.routeID.value = 0;
+   ossMemset( pMsg->header.reserve, 0, sizeof(pMsg->header.reserve) ) ;
 
 done:
    return rc;
@@ -2498,8 +2574,12 @@ INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
    pMsg = (MsgOpTransRollback *)(*ppBuffer);
    pMsg->header.messageLength = packetLength;
+   pMsg->header.eye = MSG_COMM_EYE_DEFAULT ;
+   pMsg->header.version = SDB_PROTOCOL_VER_2 ;
+   pMsg->header.flags = 0 ;
    pMsg->header.opCode = MSG_BS_TRANS_ROLLBACK_REQ;
    pMsg->header.routeID.value = 0;
+   ossMemset( pMsg->header.reserve, 0, sizeof(pMsg->header.reserve) ) ;
 
 done:
    return rc;
@@ -2585,7 +2665,12 @@ INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize,
    reply->version                            = version ;
    reply->subVersion                         = subVersion ;
    reply->fixVersion                         = fixVersion ;
-   ossMemset( reply->pad, 0, sizeof(reply->pad ) ) ;
+   ossMemset( reply->pad, 0, sizeof( reply->pad ) ) ;
+
+   reply->myHash =
+      ossHash( (const CHAR *)reply,
+               INT32(sizeof(MsgSysInfoReply) - sizeof(reply->myHash) ) ) ;
+
 done :
    PD_TRACE_EXITRC ( SDB_MSGBUILDSYSINFOREPLY, rc ) ;
    return rc ;
@@ -2595,7 +2680,7 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSYSINFOREPLY, "msgExtractSysInfoReply" )
 INT32 msgExtractSysInfoReply ( const CHAR *pBuffer, BOOLEAN &endianConvert,
-                               INT32 *osType )
+                               INT32 *osType, SDB_PROTOCOL_VERSION *protocolVer )
 {
    SDB_ASSERT ( NULL != pBuffer, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
@@ -2621,6 +2706,16 @@ INT32 msgExtractSysInfoReply ( const CHAR *pBuffer, BOOLEAN &endianConvert,
    if ( osType )
    {
       ossEndianConvertIf4(reply->osType, *osType, endianConvert ) ;
+   }
+   if ( protocolVer )
+   {
+      UINT32 expectHash = 0 ;
+      UINT32 actualHash =
+         ossHash( (const CHAR *)reply,
+                  INT32( sizeof(MsgSysInfoReply) - sizeof(reply->myHash) ) ) ;
+      ossEndianConvertIf4( reply->myHash, expectHash, endianConvert ) ;
+      *protocolVer = ( actualHash == expectHash ) ?
+         SDB_PROTOCOL_VER_2 : SDB_PROTOCOL_VER_1 ;
    }
 done :
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTSYSINFOREPLY, rc ) ;
