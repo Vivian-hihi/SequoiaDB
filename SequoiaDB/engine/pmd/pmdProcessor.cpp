@@ -274,7 +274,7 @@ namespace engine
                        msg->TID, msg->routeID.columns.groupID,
                        msg->routeID.columns.nodeID,
                        msg->routeID.columns.serviceID, msg->requestID ) ;
-               rc = SDB_INVALIDARG ;
+               rc = SDB_UNKNOWN_MESSAGE ;
                break ;
          }
       }
