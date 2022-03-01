@@ -229,6 +229,12 @@ namespace seadapter
                           BSONObj &finalRecord ) ;
 
       INT32 _genRecordByKeySet( BSONObjSet keySet, BSONObj &record ) ;
+
+      /**
+       * @brief Finish the full sync mode, and switch to incremental sync.
+       */
+      INT32 _finish() ;
+
    private:
       _STEP _step ;
       INT32 _clVersion ;

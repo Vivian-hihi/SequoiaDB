@@ -942,6 +942,13 @@ namespace seadapter
       }
       case QUERY_DATA:
       {
+         if ( -1 == contextID )
+         {
+            rc = _finish() ;
+            PD_RC_CHECK( rc, PDERROR, "Finish full index sync failed[%d]",
+                         rc ) ;
+            goto done ;
+         }
          rc = _getMore( contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Send getmore request to data node "
                                    "failed[%d]", rc ) ;
@@ -988,10 +995,9 @@ namespace seadapter
       {
          if ( SDB_DMS_EOC == flag )
          {
-            rc = _updateProgress( 0 ) ;
-            PD_RC_CHECK( rc, PDERROR, "Update indexing progress failed[%d]",
+            rc = _finish() ;
+            PD_RC_CHECK( rc, PDERROR, "Finish full index sync failed[%d]",
                          rc ) ;
-            _session->triggerStateTransition( INCREMENT_INDEX ) ;
             goto done ;
          }
          else if ( SDB_OK != flag )
@@ -1049,6 +1055,15 @@ namespace seadapter
          rc = seAssist->bulkFinish() ;
          PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk failed[%d]",
                       rc ) ;
+
+         if ( -1 == contextID )
+         {
+            rc = _finish() ;
+            PD_RC_CHECK( rc, PDERROR, "Finish full index sync failed[%d]",
+                         rc ) ;
+            goto done ;
+         }
+
          rc = _getMore( contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Send getmore request to data node "
                                    "failed[%d]", rc ) ;
@@ -1698,6 +1713,21 @@ namespace seadapter
       goto done ;
    }
 
+   INT32 _seAdptFullIndexState::_finish()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _updateProgress( 0 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update indexing progress failed[%d]",
+                   rc ) ;
+      _session->triggerStateTransition( INCREMENT_INDEX ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    _seAdptIncIndexState::_seAdptIncIndexState( _seAdptIndexSession *session )
    : _seAdptIndexerState( session ),
      _step( QUERY_DATA ),
@@ -1742,6 +1772,13 @@ namespace seadapter
                                                  vector<BSONObj> &resultSet )
    {
       INT32 rc = SDB_OK ;
+
+      if ( -1 == contextID )
+      {
+         _step = QUERY_DATA ;
+         _timeout = 0 ;
+         goto done ;
+      }
 
       switch ( _step )
       {
@@ -1843,6 +1880,12 @@ namespace seadapter
             rc = _cleanData() ;
             PD_RC_CHECK( rc, PDERROR, "Send clean data request failed[%d]",
                          rc ) ;
+            goto done ;
+         }
+         else if ( -1 == contextID )
+         {
+            _timeout = 0 ;
+            _step = QUERY_DATA ;
             goto done ;
          }
          else
