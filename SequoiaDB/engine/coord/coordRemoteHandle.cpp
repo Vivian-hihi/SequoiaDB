@@ -911,7 +911,9 @@ namespace engine
          while ( itr.more() )
          {
             BSONElement ele = itr.next() ;
-            if ( 0 == ossStrcmp( FIELD_NAME_PREFERED_INSTANCE,
+            if ( 0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE_LEGACY,
+                                 ele.fieldName() ) ||
+                 0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE,
                                  ele.fieldName() ) )
             {
                builder.append( ele ) ;
@@ -935,7 +937,9 @@ namespace engine
             while ( tmpItr.more() )
             {
                BSONElement tmpEle = tmpItr.next() ;
-               if ( 0 == ossStrcmp( FIELD_NAME_PREFERED_INSTANCE,
+               if ( 0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE_LEGACY,
+                                    tmpEle.fieldName() ) ||
+                    0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE,
                                     tmpEle.fieldName() ) )
                {
                   tmpBuilder.append( tmpEle ) ;
@@ -1077,11 +1081,15 @@ namespace engine
    {
       SDB_ASSERT( attrName, "Attribute name is null" ) ;
 
-      return ( 0 == ossStrcmp( FIELD_NAME_PREFERED_INSTANCE_MODE, attrName ) ||
-               0 == ossStrcmp( FIELD_NAME_PREFERED_STRICT, attrName ) ||
-               0 == ossStrcmp( FIELD_NAME_PREFERED_PERIOD, attrName ) ||
+      return ( 0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE_MODE_LEGACY, attrName ) ||
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE_MODE, attrName ) ||
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_STRICT_LEGACY, attrName ) ||
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_STRICT, attrName ) ||
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_PERIOD_LEGACY, attrName ) ||
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_PERIOD, attrName ) ||
                0 == ossStrcmp( FIELD_NAME_TIMEOUT, attrName ) ||
-               0 == ossStrcmp( FIELD_NAME_PREFERED_INSTANCE, attrName ) ) ;
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE_LEGACY, attrName ) ||
+               0 == ossStrcmp( FIELD_NAME_PREFERRED_INSTANCE, attrName ) ) ;
    }
 
    INT32 _coordRemoteHandlerBase::onSend( _pmdRemoteSession *pSession,
