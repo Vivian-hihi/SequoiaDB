@@ -1,6 +1,7 @@
 package com.sequoiadb.index;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -71,7 +72,6 @@ public class IndexConsistent23927 extends SdbTestBase {
 
         es.run();
 
-        // 只有一个copyIndex任务执行成功
         IndexUtils.checkRecords( maincl, insertRecords, "", "" );
         IndexUtils.checkIndexTask( sdb, "Create index", SdbTestBase.csName,
                 subclName1, indexName );
@@ -85,8 +85,8 @@ public class IndexConsistent23927 extends SdbTestBase {
         indexNames.add( indexName );
         List< String > subclNames = new ArrayList<>();
         subclNames.add( SdbTestBase.csName + "." + subclName1 );
-        IndexUtils.checkCopyTask( sdb, SdbTestBase.csName, mainclName,
-                indexNames, subclNames );
+        checkCopyTask( sdb, SdbTestBase.csName, mainclName, indexNames,
+                subclNames );
         runSuccess = true;
     }
 
@@ -179,5 +179,50 @@ public class IndexConsistent23927 extends SdbTestBase {
             }
         }
         explainCursor.close();
+    }
+
+    // 只有一个copyIndex任务执行成功,可能出现串行重复copyindex产生空任务，校验忽略空任务
+    private void checkCopyTask( Sequoiadb db, String csName, String mainclName,
+            List< String > indexNames, List< String > subclNames ) {
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put( "Name", csName + '.' + mainclName );
+        matcher.put( "TaskTypeDesc", "Copy index" );
+        matcher.put( "SucceededSubTasks", 1 );
+        DBCursor cursor = db.listTasks( matcher, null, null, null );
+        BSONObject taskInfo = new BasicBSONObject();
+        int taskNum = 0;
+        while ( cursor.hasNext() ) {
+            taskInfo = cursor.getNext();
+            taskNum++;
+        }
+        cursor.close();
+
+        // 校验索引名
+        List< String > actIndexNames = ( List< String > ) taskInfo
+                .get( "IndexNames" );
+        Collections.sort( actIndexNames );
+        Collections.sort( indexNames );
+        Assert.assertEquals( actIndexNames, indexNames,
+                "actTaskInfo= " + taskInfo );
+
+        // 校验结果状态码和结果码
+        int actResultCode = ( int ) taskInfo.get( "ResultCode" );
+        int expCode = 0;
+        Assert.assertEquals( actResultCode, expCode,
+                "actTaskInfo= " + taskInfo );
+
+        int status = 9;
+        int actStatus = ( int ) taskInfo.get( "Status" );
+        Assert.assertEquals( actStatus, status, "actTaskInfo= " + taskInfo );
+
+        // 校验copy子表信息
+        List< String > actSubCLNames = ( List< String > ) taskInfo
+                .get( "CopyTo" );
+        Collections.sort( actSubCLNames );
+        Collections.sort( subclNames );
+        Assert.assertEquals( actSubCLNames, subclNames );
+
+        Assert.assertEquals( taskNum, 1,
+                "copy index task num should be 1!" + taskInfo );
     }
 }
