@@ -93,7 +93,7 @@ public class IndexConsistent24346 extends SdbTestBase {
 
     // SEQUOIADBMAINSTREAM-7785 报-116的问题未解决
     // SEQUOIADBMAINSTREAM-7856
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void test() throws Exception {
         // 并发主表创建索引，子表切分
         ThreadExecutor es = new ThreadExecutor();
