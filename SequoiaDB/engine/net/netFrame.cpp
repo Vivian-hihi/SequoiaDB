@@ -736,18 +736,23 @@ namespace engine
       reply.startFrom = 0 ;
       reply.flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
 
-      eh->mtx().get() ;
-      reply.header.routeID = _local ;
-      convertor = eh->getOutMsgConvertor() ;
-      if ( convertor )
+      // try to get lock of event handle
+      // if failed, means someone is using the handle to send data
+      // which can be just instead of heart beat
+      if ( eh->mtx().try_get() )
       {
-         _syncSendCompatible( eh, (MsgHeader *)&reply ) ;
+         reply.header.routeID = _local ;
+         convertor = eh->getOutMsgConvertor() ;
+         if ( convertor )
+         {
+            _syncSendCompatible( eh, (MsgHeader *)&reply ) ;
+         }
+         else
+         {
+            eh->syncSendRaw( &reply, reply.header.messageLength ) ;
+         }
+         eh->mtx().release() ;
       }
-      else
-      {
-         eh->syncSendRaw( &reply, reply.header.messageLength ) ;
-      }
-      eh->mtx().release() ;
    }
 
    void _netFrame::_handleHeartBeatRes( NET_EH eh, MsgHeader *message )
