@@ -40,6 +40,7 @@
 #include "msg.h"
 #include "catGTSMsgHandler.hpp"
 #include "catSequenceManager.hpp"
+#include "catEventHandler.hpp"
 
 namespace engine
 {
@@ -47,7 +48,8 @@ namespace engine
    class _SDB_DMSCB ;
    class sdbCatalogueCB ;
 
-   class _catGTSManager: public SDBObject
+   class _catGTSManager: public SDBObject,
+                         public _catEventHandler
    {
    private:
       // disallow copy and assign
@@ -68,6 +70,9 @@ namespace engine
 
       INT32 handleMsg( const NET_HANDLE& handle, const MsgHeader* msg ) ;
 
+      virtual const CHAR *getHandlerName() { return "catGTSManager" ; }
+      virtual INT32 onUpgrade( UINT32 version ) ;
+
    public:
       OSS_INLINE _catSequenceManager* getSequenceMgr()
       {
@@ -81,6 +86,10 @@ namespace engine
                               _pmdEDUCB* cb ) ;
       INT32 _createSysCollection ( const CHAR* clFullName,
                                    _pmdEDUCB* cb ) ;
+
+      // add collection unique ID to sequence
+      // upgrade from 3.6 / 5.0.3
+      INT32 _checkAndUpgradeSequenceCLUID() ;
 
    private:
       _SDB_DMSCB*          _dmsCB ;

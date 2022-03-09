@@ -100,6 +100,7 @@ namespace engine
 
          BOOLEAN        hasCSUniqueHWM() const { return _hasCsUniqueHWM ; }
          utilCSUniqueID getCSUniqueHWM() const { return _csUniqueHWM ; }
+         UINT32         getCATVersion() const { return _catVersion ; }
 
          const CHAR*    getClusterName() const ;
          const CHAR*    getBusinessName() const ;
@@ -141,6 +142,7 @@ namespace engine
          BOOLEAN        _readonly ;
          BOOLEAN        _hasCsUniqueHWM ;
          utilCSUniqueID _csUniqueHWM ;
+         UINT32         _catVersion ;
 
          string         _imageClusterName ;
          string         _imageBusinessName ;
