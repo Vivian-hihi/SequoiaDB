@@ -518,6 +518,7 @@ namespace engine
 
       _lastProcessTick     = pmdGetDBTick() ;
       _needTimeout         = TRUE ;
+      _needCloseOnEOF      = FALSE ;
    }
 
    _rtnContextBase::~_rtnContextBase()

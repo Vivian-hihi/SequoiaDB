@@ -1566,9 +1566,6 @@ namespace engine
             continue ;
          }
          rtnCB->contextDelete ( pContextIDs[i], cb ) ;
-
-         // check if closed earlier, if so, it may send from a backward client
-         cb->closedContextDelete( pContextIDs[i] ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNKILLCONTEXTS, rc );
       return rc ;

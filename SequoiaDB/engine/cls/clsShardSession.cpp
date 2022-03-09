@@ -2353,6 +2353,10 @@ namespace engine
             }
 
             // query with return data
+            if ( ( flags & FLG_QUERY_CLOSE_EOF_CTX ) && pContext )
+            {
+               pContext->enableCloseOnEOF() ;
+            }
             if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && pContext )
             {
                rc = pContext->getMore( -1, buffObj, _pEDUCB ) ;
@@ -2561,7 +2565,8 @@ namespace engine
             {
                buffObj = pCommand->getBuff() ;
             }
-            else if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) &&
+            else if ( ( ( flags & FLG_QUERY_WITH_RETURNDATA ) ||
+                        ( flags & FLG_QUERY_CLOSE_EOF_CTX ) ) &&
                       ( -1 != contextID ) )
             {
                rtnContextPtr context ;
@@ -2569,21 +2574,28 @@ namespace engine
                                                     context,
                                                     _pEDUCB ) )
                {
-                  rc = context->getMore( -1, buffObj, _pEDUCB ) ;
-                  if ( rc || context->eof() )
+                  if ( flags & FLG_QUERY_CLOSE_EOF_CTX )
                   {
-                     _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
-                     contextID = -1 ;
+                     context->enableCloseOnEOF() ;
                   }
-                  startingPos = ( INT32 )buffObj.getStartFrom() ;
-                  if ( SDB_DMS_EOC == rc )
+                  if ( flags & FLG_QUERY_WITH_RETURNDATA )
                   {
-                     rc = SDB_OK ;
-                  }
-                  else if ( rc )
-                  {
-                     PD_LOG( PDERROR, "Failed to get more, rc: %d", rc ) ;
-                     goto error ;
+                     rc = context->getMore( -1, buffObj, _pEDUCB ) ;
+                     if ( rc || context->eof() )
+                     {
+                        _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
+                        contextID = -1 ;
+                     }
+                     startingPos = ( INT32 )buffObj.getStartFrom() ;
+                     if ( SDB_DMS_EOC == rc )
+                     {
+                        rc = SDB_OK ;
+                     }
+                     else if ( rc )
+                     {
+                        PD_LOG( PDERROR, "Failed to get more, rc: %d", rc ) ;
+                        goto error ;
+                     }
                   }
                }
                else
@@ -2743,24 +2755,7 @@ namespace engine
                numToRead ) ; */
 
       rc = _pRtnCB->contextFind ( contextID, pContext, eduCB() ) ;
-      if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
-      {
-         // check if closed earlier, if so, it may send from a backward client
-         if ( eduCB()->closedContextDelete( contextID ) )
-         {
-            PD_LOG( PDINFO, "Context %lld had been closed earlier",
-                    contextID ) ;
-            rc = SDB_DMS_EOC ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "Context %lld does not exist", contextID ) ;
-            rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         }
-         contextID = -1 ;
-         goto error ;
-      }
-      else if ( SDB_OK != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Context %lld does not exist, rc: %d", contextID, rc ) ;
          goto error ;
@@ -2786,13 +2781,9 @@ namespace engine
       }
 
       startingPos = ( INT32 )buffObj.getStartFrom() ;
-      if ( pContext->eof() )
+      if ( pContext->eof() && pContext->needCloseOnEOF() )
       {
          _pRtnCB->contextDelete( contextID, eduCB() ) ;
-
-         // save into closed contexts for client backward compatibility
-         eduCB()->closedContextInsert( contextID ) ;
-
          contextID = -1 ;
       }
 
@@ -2935,8 +2926,6 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
          }
-
-         _pEDUCB->closedContextClear() ;
       }
 
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONINRPTMSG ) ;

@@ -53,7 +53,6 @@
 #include "monEDU.hpp"
 #include "utilUniqueID.hpp"
 #include "utilMemListPool.hpp"
-#include "utilSet.hpp"
 #include "ossMemPool.hpp"
 #include "monClass.hpp"
 
@@ -193,12 +192,6 @@ namespace engine
          virtual INT64     contextPeek() ;
          virtual BOOLEAN   contextFind( INT64 contextID ) ;
          virtual UINT32    contextNum() ;
-
-         // interface for early closed contexts
-         BOOLEAN           closedContextInsert( INT64 contextID ) ;
-         BOOLEAN           closedContextDelete( INT64 contextID ) ;
-         BOOLEAN           closedContextFind( INT64 contextID ) ;
-         void              closedContextClear() ;
 
          /*
             Log config
@@ -761,10 +754,6 @@ namespace engine
       BOOLEAN                 _isAffectGIndex ;
 
       BOOLEAN                 _doReplay ;
-
-      #define _PMD_CLOSED_CTX_NUM ( 10 )
-      typedef _utilList< INT64, _PMD_CLOSED_CTX_NUM > _PMD_CLOSED_CTX_LIST ;
-      _PMD_CLOSED_CTX_LIST     _closedCtxList ;
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 

@@ -238,8 +238,6 @@ namespace engine
          _pMemPool->clear() ;
          _pMemPool->setName( "PoolIdle" ) ;
       }
-
-      closedContextClear() ;
    }
 
    void _pmdEDUCB::shrink()
@@ -877,50 +875,6 @@ namespace engine
       ossScopedLock _lock(
             pmdGetThreadEDUCB() == this ? NULL : &_mutex, SHARED ) ;
       return _contextList.size() ;
-   }
-
-   BOOLEAN _pmdEDUCB::closedContextInsert( INT64 contextID )
-   {
-      if ( _PMD_CLOSED_CTX_NUM == _closedCtxList.size() )
-      {
-         _closedCtxList.pop_front() ;
-      }
-      _closedCtxList.push_back( contextID ) ;
-      return TRUE ;
-   }
-
-   BOOLEAN _pmdEDUCB::closedContextDelete( INT64 contextID )
-   {
-      for ( _PMD_CLOSED_CTX_LIST::iterator iter = _closedCtxList.begin() ;
-            iter != _closedCtxList.end() ;
-            ++ iter )
-      {
-         if ( *iter == contextID )
-         {
-            _closedCtxList.erase( iter ) ;
-            return TRUE ;
-         }
-      }
-      return FALSE ;
-   }
-
-   BOOLEAN _pmdEDUCB::closedContextFind( INT64 contextID )
-   {
-      for ( _PMD_CLOSED_CTX_LIST::iterator iter = _closedCtxList.begin() ;
-            iter != _closedCtxList.end() ;
-            ++ iter )
-      {
-         if ( *iter == contextID )
-         {
-            return TRUE ;
-         }
-      }
-      return FALSE ;
-   }
-
-   void _pmdEDUCB::closedContextClear()
-   {
-      _closedCtxList.clear() ;
    }
 
    BOOLEAN _pmdEDUCB::isLogTimeOn() const

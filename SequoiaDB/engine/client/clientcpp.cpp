@@ -1769,6 +1769,7 @@ do                                                            \
       // try to set flag to be find one
       newFlags |= FLG_QUERY_WITH_RETURNDATA ;
       newFlags |= QUERY_PREPARE_MORE ;
+      newFlags |= FLG_QUERY_CLOSE_EOF_CTX ;
 
       // run command
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize, _collectionFullName,
@@ -10004,8 +10005,8 @@ do                                                            \
       }
 
       rc = _runCommand( p, &condition, &selector, &orderBy, &hint,
-                        FLG_QUERY_WITH_RETURNDATA, 0, numToSkip, numToReturn,
-                        result ) ;
+                        FLG_QUERY_WITH_RETURNDATA | FLG_QUERY_CLOSE_EOF_CTX, 0,
+                        numToSkip, numToReturn, result ) ;
       if ( rc )
       {
          goto error ;
@@ -10124,8 +10125,8 @@ do                                                            \
       }
 
       rc = _runCommand( p, &condition, &selector, &orderBy, &hint,
-                        FLG_QUERY_WITH_RETURNDATA, 0, numToSkip, numToReturn,
-                        result ) ;
+                        FLG_QUERY_WITH_RETURNDATA | FLG_QUERY_CLOSE_EOF_CTX, 0,
+                        numToSkip, numToReturn, result ) ;
       if ( rc )
       {
          goto error ;
