@@ -70,7 +70,7 @@ namespace engine
 
       typedef std::map<UINT32, string>    GRP_ID_MAP;
       typedef std::map<UINT16, UINT16>    NODE_ID_MAP;
-      typedef ossPoolVector<_catEventHandler *> VEC_EVENT_HANDLER ;
+      typedef std::vector<_catEventHandler *> VEC_EVENT_HANDLER ;
 
       public:
          sdbCatalogueCB() ;
