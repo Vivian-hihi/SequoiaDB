@@ -1532,7 +1532,8 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollection)
    _rtnRenameCollection::_rtnRenameCollection ()
-      :_clShortName ( NULL ), _newCLShortName ( NULL ), _csName( NULL )
+      :_clShortName ( NULL ), _newCLShortName ( NULL ), _csName( NULL ),
+       _mainCLName( NULL )
    {
    }
 
@@ -1558,6 +1559,11 @@ namespace engine
    const CHAR *_rtnRenameCollection::collectionFullName ()
    {
       return _fullCollectionName.c_str() ;
+   }
+
+   void _rtnRenameCollection::setMainCLName ( const CHAR *mainCL )
+   {
+      _mainCLName = mainCL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECL_INIT, "_rtnRenameCollection::init" )
@@ -1646,7 +1652,7 @@ namespace engine
                       rc );
 
          rc = renameContext->open( _csName, _clShortName, _newCLShortName,
-                                   cb, w );
+                                   _mainCLName, cb, w );
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to open context, rename cl failed, rc: %d)",
                       rc );

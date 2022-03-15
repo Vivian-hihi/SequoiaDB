@@ -106,10 +106,11 @@ namespace engine
        _retBuilder( SHD_RET_BUILDER_DFT_SIZE )
    {
       PD_TRACE_ENTRY ( SDB__CLSSDSESS__CLSSHDSESS ) ;
-      _pCollectionName  = NULL ;
-      _clVersion        = 0 ;
-      _isMainCL         = FALSE ;
-      _hasUpdateCataInfo= FALSE ;
+      _pCollectionName      = NULL ;
+      _pCollectionSpaceName = NULL ;
+      _clVersion            = 0 ;
+      _isMainCL             = FALSE ;
+      _hasUpdateCataInfo    = FALSE ;
       pmdKRCB *pKRCB = pmdGetKRCB () ;
       _pReplSet  = sdbGetReplCB () ;
       _pShdMgr   = sdbGetShardCB () ;
@@ -144,6 +145,7 @@ namespace engine
       _pRtnCB    = NULL ;
       _pDpsCB    = NULL ;
       _pCollectionName = NULL ;
+      _pCollectionSpaceName = NULL ;
       _clVersion = 0 ;
       _cmdCollectionName.clear() ;
    }
@@ -674,7 +676,7 @@ namespace engine
       monClassQueryTmpData tmpData ;
       tmpData = *(eduCB()->getMonAppCB()) ;
 
-      _clearCollectionName() ;
+      _clearCollectionAndSpaceName() ;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
@@ -1272,6 +1274,7 @@ namespace engine
       BSONObjBuilder builder ;
       ossPoolVector<BSONObj> indexList ;
       ossPoolVector<BSONObj>::iterator itIdx ;
+      CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
 
       /// update collection's catalog info
    retry:
@@ -1311,6 +1314,12 @@ namespace engine
       if ( isMainCL )
       {
          set->getSubCLList( subCLList ) ;
+      }
+
+      if ( !set->getMainCLName().empty() )
+      {
+         ossStrncpy( mainCLName, set->getMainCLName().c_str(),
+                     DMS_COLLECTION_FULL_NAME_SZ ) ;
       }
 
       _pCatAgent->release_r() ;
@@ -1383,7 +1392,8 @@ namespace engine
          }
          else if ( SDB_DMS_UNIQUEID_CONFLICT == rc )
          {
-            rc = _renameCLByCatalog( clFullName, clUniqueID ) ;
+            rc = _renameCLByCatalog( clFullName, clUniqueID,
+                                     mainCLName[0] == 0 ? NULL : mainCLName ) ;
             if ( rc )
             {
                if ( NULL == pParent )
@@ -1660,7 +1670,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__RENAMECLBYC, "_clsShdSession::_renameCLByCatalog" )
    INT32 _clsShdSession::_renameCLByCatalog( const CHAR* clFullName,
-                                             utilCLUniqueID clUniqueID )
+                                             utilCLUniqueID clUniqueID,
+                                             const CHAR* mainCLFullName )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__RENAMECLBYC ) ;
 
@@ -1732,7 +1743,8 @@ namespace engine
                    "rename collection[%s.%s] to [%s.%s], rc: %d",
                    csName, clNameInData, csName, clName, rc ) ;
 
-      rc = pCtx->open( csName, clNameInData, clName, _pEDUCB, 1, FALSE );
+      rc = pCtx->open( csName, clNameInData, clName, mainCLFullName,
+                       _pEDUCB, 1, FALSE );
       PD_RC_CHECK( rc, PDERROR, "Failed to open context, "
                    "rename collection[%s.%s] to [%s.%s], rc: %d",
                    csName, clNameInData, csName, clName, rc ) ;
@@ -2389,7 +2401,7 @@ namespace engine
       }
       else
       {
-         _clearCollectionName() ;
+         _clearCollectionAndSpaceName() ;
 
          rc = rtnParserCommand( pCollectionName, &pCommand ) ;
 
@@ -2415,6 +2427,10 @@ namespace engine
          if ( NULL != pCommand->collectionFullName() )
          {
             _copyCollectionName( pCommand->collectionFullName() ) ;
+         }
+         else if ( NULL != pCommand->spaceName() )
+         {
+            _pCollectionSpaceName = pCommand->spaceName() ;
          }
 
          MON_SAVE_CMD_DETAIL( _pEDUCB->getMonAppCB(), pCommand->type(),
@@ -5400,7 +5416,7 @@ namespace engine
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _clearCollectionName() ;
+         _clearCollectionAndSpaceName() ;
          // do not delete main shard context
          if ( !lobContext->isMainShard() )
          {
@@ -5473,7 +5489,7 @@ namespace engine
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _clearCollectionName() ;
+         _clearCollectionAndSpaceName() ;
          // do not delete main shard context
          if ( !lobContext->isMainShard() )
          {
@@ -5589,7 +5605,7 @@ namespace engine
 
       /// When split, use writingCB to prevent reading lob conflicted
       /// with clean job
-      eduCB()->writingDB( TRUE ) ;
+      eduCB()->writingDB( TRUE, lobContext->getFullName() ) ;
 
       /// check catalog version
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
@@ -5618,7 +5634,7 @@ namespace engine
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _clearCollectionName() ;
+         _clearCollectionAndSpaceName() ;
          // do not delete main shard context
          if ( !lobContext->isMainShard() )
          {
@@ -5733,7 +5749,7 @@ namespace engine
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _clearCollectionName() ;
+         _clearCollectionAndSpaceName() ;
          // do not delete main shard context
          if ( !lobContext->isMainShard() )
          {
@@ -5852,7 +5868,7 @@ namespace engine
            SDB_CLS_NO_CATALOG_INFO != rc )
       {
          // Do not re-create
-         _clearCollectionName() ;
+         _clearCollectionAndSpaceName() ;
          // do not delete main shard context
          if ( !lobContext->isMainShard() )
          {
@@ -6500,8 +6516,15 @@ namespace engine
       /// First set writeDB, then check primary
       if ( !_pEDUCB->isWritingDB() )
       {
-         _pEDUCB->writingDB( TRUE ) ;
          setWrite = TRUE ;
+      }
+      if ( _pCollectionName )
+      {
+         _pEDUCB->writingDB( TRUE, _pCollectionName ) ;
+      }
+      else
+      {
+         _pEDUCB->writingDB( TRUE, _pCollectionSpaceName ) ;
       }
 
       // Some write command can be executed on slave node
