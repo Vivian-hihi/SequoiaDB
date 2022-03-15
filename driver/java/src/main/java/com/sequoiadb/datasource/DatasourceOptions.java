@@ -16,8 +16,6 @@
 
 package com.sequoiadb.datasource;
 
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.options.InsertOption;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
