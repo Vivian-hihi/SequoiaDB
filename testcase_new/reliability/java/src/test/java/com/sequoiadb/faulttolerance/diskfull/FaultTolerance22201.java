@@ -66,7 +66,7 @@ public class FaultTolerance22201 extends SdbTestBase {
         return new Object[][] { { "NOSPC", 2, 10 }, { "DEADSYNC", 2, 10 } };
     }
 
-    @Test(dataProvider = "circuitBreaker",enabled = false)
+    @Test(dataProvider = "circuitBreaker")
     public void test( String ftmask, int ftlevel, int ftfusingtimeout )
             throws Exception {
         BasicBSONObject configs = new BasicBSONObject( "ftmask", ftmask )
