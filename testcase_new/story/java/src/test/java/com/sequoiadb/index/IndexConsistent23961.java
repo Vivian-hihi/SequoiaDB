@@ -35,14 +35,12 @@ public class IndexConsistent23961 extends SdbTestBase {
     private CollectionSpace cs;
     private DBCollection cl;
     private String clName = "cl_Index23961";
-    private String srcGroupName;
-    private String destGroupName;
     private int recsNum = 50000;
 
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb )  ) {
+        if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException(
                     "---Skip testCase.Current environment less than tow groups! " );
         }
@@ -59,7 +57,8 @@ public class IndexConsistent23961 extends SdbTestBase {
         IndexUtils.insertData( cl, recsNum );
     }
 
-    @Test
+    // http://jira.web:8080/browse/SEQUOIADBMAINSTREAM-8140
+    @Test(enabled = false)
     public void test() throws Exception {
         String indexName = "testindex23961";
         ThreadExecutor es = new ThreadExecutor();

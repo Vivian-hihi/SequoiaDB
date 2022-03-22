@@ -117,8 +117,10 @@ public class IndexConsistent23922 extends SdbTestBase {
                         .getCollection( mainclName );
                 cl.createIndex( indexName, "{no:1,testno:1}", true, false );
             } catch ( BaseException e ) {
+                //如果未并发执行，则会报错SDB_IXM_REDEF
                 if ( e.getErrorCode() != SDBError.SDB_IXM_CREATING
-                        .getErrorCode() ) {
+                        .getErrorCode() && e.getErrorCode() != SDBError.SDB_IXM_REDEF
+                        .getErrorCode()) {
                     throw e;
                 }
             }

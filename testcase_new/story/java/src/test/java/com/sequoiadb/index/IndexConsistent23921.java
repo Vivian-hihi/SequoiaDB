@@ -108,7 +108,9 @@ public class IndexConsistent23921 extends SdbTestBase {
                 isSuccessCount++;
             } catch ( BaseException e ) {
                 if ( e.getErrorCode() != SDBError.SDB_IXM_CREATING
-                        .getErrorCode() ) {
+                        .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_IXM_REDEF
+                                .getErrorCode() ) {
                     throw e;
                 }
             }

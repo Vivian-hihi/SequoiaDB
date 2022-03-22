@@ -104,6 +104,8 @@ public class IndexConsistent23936 extends SdbTestBase {
         } else if ( dropIndex.getRetCode() == SDBError.SDB_IXM_NOTEXIST
                 .getErrorCode()
                 || dropIndex.getRetCode() == SDBError.SDB_CLS_MUTEX_TASK_EXIST
+                        .getErrorCode()
+                || dropIndex.getRetCode() == SDBError.SDB_IXM_CREATING
                         .getErrorCode() ) {
             IndexUtils.checkIndexConsistent( sdb, csName, subCLName1, idxName,
                     true );
