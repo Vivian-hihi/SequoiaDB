@@ -1555,23 +1555,29 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONDROPCS, "_optAccessPlanManager::onDropCS" )
-   INT32 _optAccessPlanManager::onDropCS ( IDmsEventHolder *pEventHolder,
+   INT32 _optAccessPlanManager::onDropCS ( SDB_EVENT_OCCUR_TYPE type,
+                                           IDmsEventHolder *pEventHolder,
                                            IDmsSUCacheHolder *pCacheHolder,
+                                           const dmsEventSUItem &suItem,
+                                           dmsDropCSOptions *options,
                                            pmdEDUCB *cb,
-                                           SDB_DPSCB *dpsCB )
+                                           SDB_DPSCB *dpsCB)
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_OPTAPM_ONDROPCS ) ;
 
-      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
-
-      if ( pCacheHolder && isInitialized() )
+      if ( SDB_EVT_OCCUR_AFTER == type )
       {
-         _invalidSUPlans( pCacheHolder ) ;
+         SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-         // Run invalidation again to clear main-collection plans
-         invalidateSUPlans( pCacheHolder->getCSName() ) ;
+         if ( pCacheHolder && isInitialized() )
+         {
+            _invalidSUPlans( pCacheHolder ) ;
+
+            // Run invalidation again to clear main-collection plans
+            invalidateSUPlans( pCacheHolder->getCSName() ) ;
+         }
       }
 
       PD_TRACE_EXITRC( SDB_OPTAPM_ONDROPCS, rc ) ;
@@ -1604,10 +1610,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONTRUNCATECL, "_optAccessPlanManager::onTruncateCL" )
-   INT32 _optAccessPlanManager::onTruncateCL ( IDmsEventHolder *pEventHolder,
+   INT32 _optAccessPlanManager::onTruncateCL ( SDB_EVENT_OCCUR_TYPE type,
+                                               IDmsEventHolder *pEventHolder,
                                                IDmsSUCacheHolder *pCacheHolder,
                                                const dmsEventCLItem &clItem,
-                                               UINT32 newCLLID,
+                                               dmsTruncCLOptions *options,
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpsCB )
    {
@@ -1615,11 +1622,14 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM_ONTRUNCATECL ) ;
 
-      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
-
-      if ( pCacheHolder && isInitialized() )
+      if ( SDB_EVT_OCCUR_AFTER == type )
       {
-         _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
+         SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+         if ( pCacheHolder && isInitialized() )
+         {
+            _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
+         }
       }
 
       PD_TRACE_EXITRC( SDB_OPTAPM_ONTRUNCATECL, rc ) ;
@@ -1628,9 +1638,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTAPM_ONDROPCL, "_optAccessPlanManager::onDropCL" )
-   INT32 _optAccessPlanManager::onDropCL ( IDmsEventHolder *pEventHolder,
+   INT32 _optAccessPlanManager::onDropCL ( SDB_EVENT_OCCUR_TYPE type,
+                                           IDmsEventHolder *pEventHolder,
                                            IDmsSUCacheHolder *pCacheHolder,
                                            const dmsEventCLItem &clItem,
+                                           dmsDropCLOptions *options,
                                            pmdEDUCB *cb,
                                            SDB_DPSCB *dpsCB )
    {
@@ -1638,11 +1650,14 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OPTAPM_ONDROPCL ) ;
 
-      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
-
-      if ( pCacheHolder && isInitialized() )
+      if ( SDB_EVT_OCCUR_AFTER == type )
       {
-         _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
+         SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+
+         if ( pCacheHolder && isInitialized() )
+         {
+            _invalidCLPlans( pCacheHolder, clItem._mbID, clItem._clLID ) ;
+         }
       }
 
       PD_TRACE_EXITRC( SDB_OPTAPM_ONDROPCL, rc ) ;

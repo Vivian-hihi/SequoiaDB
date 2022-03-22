@@ -1045,6 +1045,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSDEL2RECORD, "dpsCSDel2Record" )
    INT32 dpsCSDel2Record( const CHAR *csName,
+                          bson::BSONObj *boOptions,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CSDEL2RECORD ) ;
@@ -1062,6 +1063,15 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != boOptions && !( boOptions->isEmpty() ) )
+      {
+         rc = record.push( DPS_LOG_CSDEL_OPTIONS,
+                           boOptions->objsize(),
+                           boOptions->objdata() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push drop collection space "
+                      "options, rc: %d", rc ) ;
+      }
+
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
@@ -1075,7 +1085,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2CSDEL, "dpsRecord2CSDel" )
    INT32 dpsRecord2CSDel( const CHAR *logRecord,
-                          const CHAR **csName )
+                          const CHAR **csName,
+                          bson::BSONObj *boOptions )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CSDEL ) ;
       INT32 rc = SDB_OK ;
@@ -1100,6 +1111,31 @@ namespace engine
 
       *csName = itrCsName.value() ;
       }
+
+      if ( NULL != boOptions )
+      {
+         dpsLogRecord::iterator itrOptions =
+               record.find( DPS_LOG_CSDEL_OPTIONS ) ;
+         try
+         {
+            if ( itrOptions.valid() )
+            {
+               *boOptions = BSONObj( itrOptions.value() ) ;
+            }
+            else
+            {
+               *boOptions = BSONObj() ;
+            }
+         }
+         catch ( exception &e )
+         {
+            PD_LOG( PDERROR, "Failed to get options, occur exception %s",
+                    e.what() ) ;
+            rc = ossException2RC( &e ) ;
+            goto error ;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2CSDEL, rc ) ;
       return rc ;
@@ -1376,6 +1412,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLDEL2RECORD, "dpsCLDel2Record" )
    INT32 dpsCLDel2Record( const CHAR *fullName,
+                          bson::BSONObj *boOptions,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CLDEL2RECORD ) ;
@@ -1393,6 +1430,15 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != boOptions && !( boOptions->isEmpty() ) )
+      {
+         rc = record.push( DPS_LOG_CLDEL_OPTIONS,
+                           boOptions->objsize(),
+                           boOptions->objdata() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push drop collection options, "
+                      "rc: %d", rc ) ;
+      }
+
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
@@ -1406,7 +1452,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CLDEL, "dpsRecord2CLDel" )
    INT32 dpsRecord2CLDel( const CHAR *logRecord,
-                          const CHAR **fullName )
+                          const CHAR **fullName,
+                          BSONObj *boOptions )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLDEL ) ;
       INT32 rc = SDB_OK ;
@@ -1430,6 +1477,30 @@ namespace engine
       }
 
       *fullName = itrFullName.value() ;
+      }
+
+      if ( NULL != boOptions )
+      {
+         dpsLogRecord::iterator itrOptions =
+               record.find( DPS_LOG_CLDEL_OPTIONS ) ;
+         try
+         {
+            if ( itrOptions.valid() )
+            {
+               *boOptions = BSONObj( itrOptions.value() ) ;
+            }
+            else
+            {
+               *boOptions = BSONObj() ;
+            }
+         }
+         catch ( exception &e )
+         {
+            PD_LOG( PDERROR, "Failed to get options, occur exception %s",
+                    e.what() ) ;
+            rc = ossException2RC( &e ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -1749,6 +1820,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_CLTRUNC2RECORD, "dpsCLTrunc2Record" )
    INT32 dpsCLTrunc2Record( const CHAR *fullName,
+                            BSONObj *boOptions,
                             dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CLTRUNC2RECORD ) ;
@@ -1766,6 +1838,15 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != boOptions && !( boOptions->isEmpty() ) )
+      {
+         rc = record.push( DPS_LOG_CLTRUNC_OPTIONS,
+                           boOptions->objsize(),
+                           boOptions->objdata() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push drop collection options, "
+                      "rc: %d", rc ) ;
+      }
+
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
@@ -1778,7 +1859,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CLTRUNC, "dpsRecord2CLTrunc" )
-   INT32 dpsRecord2CLTrunc( const CHAR * logRecord, const CHAR ** fullName )
+   INT32 dpsRecord2CLTrunc( const CHAR * logRecord,
+                            const CHAR ** fullName,
+                            BSONObj *boOptions )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLTRUNC ) ;
       INT32 rc = SDB_OK ;
@@ -1801,6 +1884,30 @@ namespace engine
             goto error ;
          }
          *fullName = itrCLName.value() ;
+      }
+
+      if ( NULL != boOptions )
+      {
+         dpsLogRecord::iterator itrOptions =
+               record.find( DPS_LOG_CLTRUNC_OPTIONS ) ;
+         try
+         {
+            if ( itrOptions.valid() )
+            {
+               *boOptions = BSONObj( itrOptions.value() ) ;
+            }
+            else
+            {
+               *boOptions = BSONObj() ;
+            }
+         }
+         catch ( exception &e )
+         {
+            PD_LOG( PDERROR, "Failed to get options, occur exception %s",
+                    e.what() ) ;
+            rc = ossException2RC( &e ) ;
+            goto error ;
+         }
       }
 
    done:

@@ -42,9 +42,11 @@
 #include "dpsLogRecord.hpp"
 #include "../bson/bson.h"
 #include "dmsLobDef.hpp"
+#include "dmsEventHandler.hpp"
 #include "utilCompressor.hpp"
 #include "utilBitmap.hpp"
 #include "utilArray.hpp"
+#include "utilRecycleItem.hpp"
 
 using namespace bson ;
 
@@ -113,6 +115,51 @@ namespace engine
    } ;
 
    typedef class _dpsUnqIdxHashArray dpsUnqIdxHashArray ;
+
+   /*
+      _dpsRecycleInfo define
+    */
+   typedef struct _dpsRecycleInfo
+   {
+   public:
+      _dpsRecycleInfo()
+      {
+         _originName = NULL ;
+         _originID = 0 ;
+         _recycleName = NULL ;
+         _recycleID = 0 ;
+         _type = 0 ;
+         _opType = 0 ;
+      }
+
+      _dpsRecycleInfo( const utilRecycleItem &item )
+      {
+         _originName = item.getOriginName() ;
+         _originID = item.getOriginID() ;
+         _recycleName = item.getRecycleName() ;
+         _recycleID = item.getRecycleID() ;
+         _type = (UINT8)( item.getType() ) ;
+         _opType = (UINT8)( item.getOpType() ) ;
+      }
+
+      void toRecycleItem( utilRecycleItem &item )
+      {
+         item.setOriginName( _originName ) ;
+         item.setOriginID( _originID ) ;
+         item.setRecycleName( _recycleName ) ;
+         item.setRecycleID( _recycleID ) ;
+         item.setType( (UTIL_RECYCLE_TYPE)_type ) ;
+         item.setOpType( (UTIL_RECYCLE_OPTYPE)_opType ) ;
+      }
+
+   public:
+      const CHAR * _originName ;
+      UINT64       _originID ;
+      const CHAR * _recycleName ;
+      UINT64       _recycleID ;
+      UINT8        _type ;
+      UINT8        _opType ;
+   } dpsRecycleInfo ;
 
    /// warning: any value can not be value-passed. and, the value's life scope
    /// must be held until dpsLogRecord really copied
@@ -201,10 +248,12 @@ namespace engine
                           INT32 &type ) ;
 
    INT32 dpsCSDel2Record( const CHAR *csName,
+                          bson::BSONObj *boOptions,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CSDel( const CHAR *logRecord,
-                          const CHAR **csName ) ;
+                          const CHAR **csName,
+                          bson::BSONObj *boOptions = NULL ) ;
 
    INT32 dpsCSRename2Record( const CHAR *csName,
                              const CHAR *newCSName,
@@ -231,10 +280,12 @@ namespace engine
                           BSONObj &idIdxDef ) ;
 
    INT32 dpsCLDel2Record( const CHAR *fullName,
+                          bson::BSONObj *boOptions,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CLDel( const CHAR *logRecord,
-                          const CHAR **fullName ) ;
+                          const CHAR **fullName,
+                          bson::BSONObj *boOptions = NULL ) ;
 
    INT32 dpsIXCrt2Record( const CHAR *fullName,
                           const BSONObj &index,
@@ -267,10 +318,12 @@ namespace engine
                              const CHAR **clNewName ) ;
 
    INT32 dpsCLTrunc2Record( const CHAR *fullName,
+                            bson::BSONObj *boOptions,
                             dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CLTrunc( const CHAR *logRecord,
-                            const CHAR **fullName ) ;
+                            const CHAR **fullName,
+                            bson::BSONObj *boOptions = NULL ) ;
 
    const CHAR*  dpsTSCommitAttr2String ( UINT8 attr ) ;
 

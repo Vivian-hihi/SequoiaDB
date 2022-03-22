@@ -213,6 +213,8 @@ namespace engine
 
       dmsPageMappingDispatcher   _pageMapDispatcher ;
 
+      DMS_HANDLER_LIST           _handlers ;
+
    private:
       void  _logCSCBNameMap () ;
 
@@ -280,6 +282,7 @@ namespace engine
                                       _pmdEDUCB *cb,
                                       SDB_DPSCB *dpsCB ) ;
       INT32 _CSCBNameRemoveP2 ( const CHAR *pName,
+                                dmsDropCSOptions *options,
                                 _pmdEDUCB *cb,
                                 SDB_DPSCB *dpsCB,
                                 SDB_DMS_CSCB *&pCSCB ) ;
@@ -288,7 +291,8 @@ namespace engine
 
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
-                                  BOOLEAN onlyEmpty ) ;
+                                  BOOLEAN onlyEmpty,
+                                  dmsDropCSOptions *options = NULL ) ;
 
       INT32 _delCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB,
@@ -299,15 +303,14 @@ namespace engine
 
       INT32 _delCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB,
-                                    BOOLEAN removeFile = TRUE ) ;
+                                    BOOLEAN removeFile = TRUE,
+                                    dmsDropCSOptions *options = NULL ) ;
 
       INT32 _getCSList( ossPoolVector< ossPoolString > &csNameVec ) ;
 
       void _nullCSUniqueIDCntInc() ;
 
       void _nullCSUniqueIDCntDec() ;
-
-      void _registerHandler ( _IDmsEventHandler *pHandler) ;
 
       INT32 _changeIndexUniqueID( _dmsStorageUnit* su,
                                   const ossPoolVector<ossPoolString>& changedClVec,
@@ -367,7 +370,8 @@ namespace engine
                                  _dmsStorageUnit *su, _pmdEDUCB *cb,
                                  SDB_DPSCB *dpsCB, BOOLEAN isCreate ) ;
       INT32 dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
-                                  SDB_DPSCB *dpsCB ) ;
+                                  SDB_DPSCB *dpsCB,
+                                  dmsDropCSOptions *options = NULL ) ;
       INT32 dropEmptyCollectionSpace( const CHAR *pName, _pmdEDUCB *cb,
                                       SDB_DPSCB *dpsCB ) ;
       INT32 unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb ) ;
@@ -388,7 +392,7 @@ namespace engine
                                      const CHAR *pNewName,
                                      _pmdEDUCB *cb,
                                      SDB_DPSCB *dpsCB ) ;
-
+      INT32 restoreCollectionSpace( const CHAR *pName ) ;
       INT32 dumpInfo ( MON_CL_SIM_LIST &collectionList,
                        BOOLEAN sys = FALSE ) ;
       INT32 dumpInfo ( MON_CS_SIM_LIST &csList,
@@ -430,7 +434,8 @@ namespace engine
                                           SDB_DPSCB *dpsCB );
 
       INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB ) ;
+                                    SDB_DPSCB *dpsCB,
+                                    dmsDropCSOptions *options = NULL ) ;
 
       BOOLEAN dispatchDictJob( dmsDictJob &job ) ;
       void pushDictJob( dmsDictJob job ) ;
@@ -485,6 +490,9 @@ namespace engine
       void clearAllCRUDCB () ;
       INT32 clearSUCRUDCB ( const CHAR * collectionSpace ) ;
       INT32 clearMBCRUDCB ( const CHAR * collection ) ;
+
+      INT32 regHandler ( _IDmsEventHandler *pHandler ) ;
+      void unregHandler ( _IDmsEventHandler *pHandler ) ;
    } ;
    typedef class _SDB_DMSCB SDB_DMSCB ;
 
