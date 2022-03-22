@@ -86,8 +86,7 @@ public class IndexStandalone24398 extends SdbTestBase {
     public void tearDown() {
         try {
             if ( runSuccess ) {
-                // cs.dropCollection( clName );
-                // cs.dropCollection( clName );
+                cs.dropCollection( clName );
             }
         } finally {
             sdb.close();

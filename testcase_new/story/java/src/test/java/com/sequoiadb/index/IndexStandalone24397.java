@@ -74,7 +74,8 @@ public class IndexStandalone24397 extends SdbTestBase {
         es.run();
 
         // check results
-        checkIndexOnNodes( sdb, SdbTestBase.csName, clName, indexNames );
+        IndexUtils.checkStandaloneIndexOnNode( sdb, SdbTestBase.csName, clName,
+                indexNames, indexStandaloneNodeName, false );
         IndexUtils.checkRecords( cl, insertRecords, "", "" );
         runSuccess = true;
     }
@@ -153,24 +154,5 @@ public class IndexStandalone24397 extends SdbTestBase {
         dbcl.createIndex( indexName3, indexKeys3, indexAttr, option );
         indexNames.add( indexName3 );
         return indexNames;
-    }
-
-    private void checkIndexOnNodes( Sequoiadb db, String csName, String clName,
-            List< String > indexNames ) {
-        List< BasicBSONObject > nodes = CommLib.getCLNodes( db, csName,
-                clName );
-        for ( BasicBSONObject node : nodes ) {
-            String nodeUrl = node.getString( "hostName" ) + ":"
-                    + node.getString( "svcName" );
-            try ( Sequoiadb data = new Sequoiadb( nodeUrl, "", "" )) {
-                DBCollection dbcl = CommLib.getCL( data, csName, clName );
-                for ( int i = 0; i < indexNames.size(); i++ ) {
-                    String indexName = indexNames.get( i );
-                    boolean isExistIndex = dbcl.isIndexExist( indexName );
-                    Assert.assertFalse( isExistIndex,
-                            indexName + " should not be in " + nodeUrl );
-                }
-            }
-        }
     }
 }
