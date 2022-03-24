@@ -181,6 +181,13 @@ namespace engine
    } ;
    typedef _rtnPrefWatcher rtnPrefWatcher ;
 
+   class _rtnContextValidator: public _utilPooledObject
+   {
+   public:
+      virtual  INT32 validate( const BSONObj &record ) = 0 ;
+      virtual ~_rtnContextValidator() { }
+   } ;
+
    class _rtnContextStoreBuf: public _utilPooledObject
    {
    public:
@@ -188,7 +195,8 @@ namespace engine
       ~_rtnContextStoreBuf() ;
 
    public:
-      INT32    append( const BSONObj &obj ) ;
+      INT32    append( const BSONObj &obj, 
+                       const BSONObj *orgObj = NULL ) ;
       INT32    pushFront( const BSONObj &obj ) ;
       INT32    pushFronts( const CHAR *objBuf,
                            INT32 len,
@@ -205,6 +213,8 @@ namespace engine
       INT32    pop( UINT32 num = 1 ) ;
 
       void     release() ;
+
+      void     setContextValidator( _rtnContextValidator *contextValidator ) ;
 
    public:
       OSS_INLINE void      enableCountMode() { _countOnly = TRUE ; }
@@ -254,13 +264,14 @@ namespace engine
       INT32    _readOffset ;
       INT32    _writeOffset ;
       BOOLEAN  _countOnly ;
+      _rtnContextValidator *_contextValidator ;
    } ;
    typedef _rtnContextStoreBuf rtnContextStoreBuf ;
 
    /*
       _rtnContextBase define
    */
-   class _rtnContextBase : public _utilPooledObject
+   class _rtnContextBase : public _rtnContextValidator
    {
       friend class _rtnContextParaData ;
       friend class _rtnExplainBase ;
@@ -287,7 +298,8 @@ namespace engine
             return _selector ;
          }
 
-         INT32    append( const BSONObj &result ) ;
+         INT32    append( const BSONObj &result,
+                          const BSONObj *orgResult = NULL ) ;
          INT32    appendObjs( const CHAR *pObjBuff,
                               INT32 len,
                               INT32 num,
@@ -467,6 +479,12 @@ namespace engine
          {
          }
 
+         virtual INT32 validate ( const BSONObj &record )
+         {
+            // Do nothing
+            return 0;
+         }
+
       protected:
          virtual INT32     _prepareData( _pmdEDUCB *cb ) = 0 ;
          virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
@@ -481,7 +499,8 @@ namespace engine
          {
             return SDB_OPTION_NOT_SUPPORT ;
          }
-         virtual INT32     _getAdvanceOrderby( BSONObj &orderby ) const
+         virtual INT32     _getAdvanceOrderby( BSONObj &orderby, 
+                                               BOOLEAN isRange = FALSE ) const
          {
             return SDB_OPTION_NOT_SUPPORT ;
          }
@@ -492,6 +511,11 @@ namespace engine
          INT32             _prepareDataMonitor ( _pmdEDUCB *cb ) ;
          INT32             _getBuffer( INT32 maxNumToReturn,
                                        rtnContextBuf& buf ) ;
+
+         virtual INT32 _prepareDoAdvance ( _pmdEDUCB *cb )
+         {
+            return SDB_OPTION_NOT_SUPPORT; 
+         }
 
       protected:
          OSS_INLINE void _empty () ;
