@@ -2080,19 +2080,27 @@ error :
 }
 
 INT32 msgBuildDropCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                         const CHAR *CollectionSpaceName, UINT64 reqID,
+                         const CHAR *CollectionSpaceName,
+                         BOOLEAN skipRecycleBin,
+                         BOOLEAN ignoreLock,
+                         UINT64 reqID,
                          IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionSpaceName,
                 "Invalid input" ) ;
    const BSONObj emptyObj ;
    INT32 rc = SDB_OK ;
-   BSONObj boQuery;
+   BSONObj boQuery, boHint ;
    try
    {
-      bson::BSONObjBuilder bobQuery;
-      bobQuery.append( FIELD_NAME_NAME, CollectionSpaceName );
+      BSONObjBuilder bobQuery;
+      bobQuery.append( FIELD_NAME_NAME, CollectionSpaceName ) ;
+      bobQuery.appendBool( FIELD_NAME_SKIPRECYCLEBIN, skipRecycleBin ) ;
       boQuery = bobQuery.obj() ;
+
+      BSONObjBuilder bobHint ;
+      bobHint.appendBool( FIELD_NAME_IGNORE_LOCK, ignoreLock ) ;
+      boHint = bobHint.obj() ;
    }
    catch( exception &e )
    {
@@ -2103,7 +2111,7 @@ INT32 msgBuildDropCSMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
    rc = msgBuildQueryCMDMsg( ppBuffer, bufferSize,
                              CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTIONSPACE,
-                             boQuery, emptyObj, emptyObj, emptyObj,
+                             boQuery, emptyObj, emptyObj, boHint,
                              reqID, cb ) ;
    PD_RC_CHECK( rc, PDERROR, "Failed to build query command, rc: %d", rc ) ;
 
@@ -2152,7 +2160,7 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPCLMSG, "msgBuildDropCLMsg" )
 INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName,
-                          BOOLEAN useRecycleBin,
+                          BOOLEAN skipRecycleBin,
                           BOOLEAN ignoreLock,
                           UINT64 reqID,
                           IExecutor *cb )
@@ -2168,10 +2176,7 @@ INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    {
       bson::BSONObjBuilder bobQuery;
       bobQuery.append( FIELD_NAME_NAME, CollectionName ) ;
-      if ( !useRecycleBin )
-      {
-         bobQuery.appendBool( FIELD_NAME_SKIPRECYCLEBIN, TRUE ) ;
-      }
+      bobQuery.appendBool( FIELD_NAME_SKIPRECYCLEBIN, skipRecycleBin ) ;
       boQuery = bobQuery.obj() ;
 
       BSONObjBuilder bobHint ;
@@ -2204,7 +2209,7 @@ error :
 INT32 msgBuildTruncateCLMsg( CHAR **ppBuffer,
                              INT32 *bufferSize,
                              const CHAR *CollectionName,
-                             BOOLEAN useRecycleBin,
+                             BOOLEAN skipRecycleBin,
                              BOOLEAN ignoreLock,
                              UINT64 reqID,
                              IExecutor *cb )
@@ -2223,10 +2228,7 @@ INT32 msgBuildTruncateCLMsg( CHAR **ppBuffer,
    {
       BSONObjBuilder bobQuery ;
       bobQuery.append( FIELD_NAME_COLLECTION, CollectionName ) ;
-      if ( !useRecycleBin )
-      {
-         bobQuery.appendBool( FIELD_NAME_SKIPRECYCLEBIN, TRUE ) ;
-      }
+      bobQuery.appendBool( FIELD_NAME_SKIPRECYCLEBIN, skipRecycleBin ) ;
       boQuery = bobQuery.obj() ;
 
       BSONObjBuilder bobHint ;
