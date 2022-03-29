@@ -1,6 +1,7 @@
 package com.sequoiadb.index;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -166,15 +167,25 @@ public class IndexConsistent24302 extends SdbTestBase {
     private static ArrayList< BSONObject > insertData( DBCollection dbcl,
             int recordNum ) {
         ArrayList< BSONObject > insertRecord = new ArrayList< BSONObject >();
-        for ( int i = 0; i < recordNum; i++ ) {
-            BSONObject obj = new BasicBSONObject();
-            obj.put( "a", i );
-            for ( int j = 0; j < 20; j++ ) {
-                obj.put( "a" + j, i );
+        int batchNum = 5000;
+        int batchs = recordNum / batchNum;
+        int count = 0;
+        for ( int i = 0; i < batchs; i++ ) {
+            List< BSONObject > batchRecords = new ArrayList< BSONObject >();
+            for ( int j = 0; j < batchNum; j++ ) {
+                int value = count++;
+                BSONObject obj = new BasicBSONObject();
+                obj.put( "a", value );
+                for ( int k = 0; k < 20; k++ ) {
+                    obj.put( "a" + k, value );
+                }
+                batchRecords.add( obj );
             }
-            insertRecord.add( obj );
+            dbcl.insert( batchRecords );
+            insertRecord.addAll( batchRecords );
+            batchRecords.clear();
         }
-        dbcl.insert( insertRecord );
         return insertRecord;
+
     }
 }
