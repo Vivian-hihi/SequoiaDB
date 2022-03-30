@@ -215,7 +215,6 @@ namespace engine
       {
          _pIdxStatus->setTotalRecNum(
             _suData->getMBStatInfo( _mbContext->mbID() )->_totalRecords ) ;
-
          _pIdxStatus->resetPcsedRecNum() ;
       }
 

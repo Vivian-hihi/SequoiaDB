@@ -303,7 +303,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMINXCB_TRUNC, "_ixmIndexCB::truncate" )
    INT32 _ixmIndexCB::truncate ( BOOLEAN removeRoot, UINT16 indexFlag,
-                                 UINT64 *pDelKeyCnt )
+                                 ossAtomic64* pDelKeyCnt )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMINXCB_TRUNC );
@@ -332,7 +332,7 @@ namespace engine
             }
             if ( pDelKeyCnt )
             {
-               (*pDelKeyCnt) += keyCnt ;
+               pDelKeyCnt->add( keyCnt ) ;
             }
          }
       }
