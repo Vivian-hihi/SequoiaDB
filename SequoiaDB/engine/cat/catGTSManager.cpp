@@ -93,14 +93,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      if ( NULL != _catCB )
+      {
+         _catCB->unregEventHandler( this ) ;
+      }
+
       rc = _msgHandler.fini();
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to finalize GTS msg handler, rc=%d", rc ) ;
          goto error ;
       }
-
-      _catCB->unregEventHandler( this ) ;
 
    done:
       return rc ;
