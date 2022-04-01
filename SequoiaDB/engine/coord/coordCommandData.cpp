@@ -5212,8 +5212,6 @@ namespace engine
             objBD.append( FIELD_NAME_DETAIL, detail ) ;
             objBD.done() ;
          }
-
-         arrayBD.done() ;
       }
       catch( std::exception &e )
       {
@@ -5424,6 +5422,7 @@ namespace engine
          {
             goto error ;
          }
+         arrayBD.done() ;
 
          builder.append( FIELD_NAME_TASKID, (INT64)taskID ) ;
          builder.append( FIELD_NAME_RESULTCODE, resultCode ) ;
