@@ -81,6 +81,7 @@ testFiles = [
    [ "./crud/bulkInsert12540_12666.cpp" ],
    [ "./crud/setSessionAttr12538.cpp" ],
    [ "./crud/upsert12541.cpp" ],
+   [ "./crud/cudtest26312_4.cpp" ],
    #[ "./crud/upsertShardingKey12637.cpp" ],
    [ "./crud/truncate12667.cpp" ],
    [ "./crud/queryOne12542.cpp" ],
