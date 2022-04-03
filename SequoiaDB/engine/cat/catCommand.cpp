@@ -2981,13 +2981,6 @@ namespace engine
          goto error ;
       }
 
-      // lock collection, create/drop index and rename cs/cl are mutually
-      // exclusive
-      PD_CHECK( lockMgr.tryLockCollection( _pCollection, SHARED ),
-                SDB_LOCK_FAILED, error, PDERROR,
-                "Failed to lock collection[%s], rc: %d",
-                _pCollection, rc ) ;
-
       // check index exist, and build tasks
       if ( _pCataSet->isMainCL() )
       {
@@ -3036,6 +3029,13 @@ namespace engine
       {
          goto error ;
       }
+
+      // lock collection, create/drop index and rename cs/cl are mutually
+      // exclusive
+      PD_CHECK( lockMgr.tryLockCollection( _pCollection, SHARED ),
+                SDB_LOCK_FAILED, error, PDERROR,
+                "Failed to lock collection[%s], rc: %d",
+                _pCollection, rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB_CATCMDDROPIDX_CHK, rc ) ;

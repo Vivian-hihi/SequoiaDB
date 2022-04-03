@@ -6287,6 +6287,12 @@ namespace engine
       }
 
    done:
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDDEBUG, "Index[%s:%s] has standalone index: %d, "
+                 "has old version index: %d",
+                 _pCollection, indexName, hasStandaloneIdx, hasOldVersionIdx ) ;
+      }
       if ( contextID != -1 )
       {
          rtnCB->contextDelete( contextID, cb ) ;
