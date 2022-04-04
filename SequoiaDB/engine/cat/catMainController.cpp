@@ -1227,6 +1227,7 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to init command[%s], rc: %d",
                     pCommand->name(), rc ) ;
+      _pEDUCB->setCurProcessName( pCommand->getProcessName() ) ;
 
       rc = pCommand->doit( _pEDUCB, ctxBuff, contextID ) ;
       PD_RC_CHECK ( rc, PDERROR,
@@ -1487,6 +1488,8 @@ namespace engine
 
       _isDelayed = FALSE ;
 
+      _pEDUCB->clearProcessInfo() ;
+
       if ( MSG_PACKET == msg->opCode )
       {
          rc = _processPacketMsg( handle, msg ) ;
@@ -1517,6 +1520,8 @@ namespace engine
 
          _pCatCB->onEndCommand( msg, rc ) ;
       }
+
+      _pEDUCB->clearProcessInfo() ;
 
       return rc ;
    }

@@ -219,6 +219,25 @@ namespace engine
       rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
+      const CHAR *pCollectionName = NULL ;
+
+      try
+      {
+         BSONElement ele = lob.getField( FIELD_NAME_COLLECTION ) ;
+         PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "can not find collection name in lob[%s]",
+                   lob.toString( FALSE, TRUE ).c_str() ) ;
+         pCollectionName = ele.valuestr() ;
+      }
+      catch ( exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to get field [%s], occur exception %s",
+                 FIELD_NAME_COLLECTION, e.what() ) ;
+         rc = ossException2RC( &e ) ;
+         goto error ;
+      }
+      cb->setCurProcessName( pCollectionName ) ;
+
       rc = rtnCB->contextNew( RTN_CONTEXT_LOB,
                               lobContext,
                               contextID, cb ) ;
@@ -283,6 +302,9 @@ namespace engine
       rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContextBuf contextBuf ;
+
+      cb->setCurrentContextID( contextID ) ;
+
       rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -290,6 +312,8 @@ namespace engine
                   rc ) ;
          goto error ;
       }
+
+      cb->setCurProcessName( lobContext->getProcessName() ) ;
 
       rc = lobContext->read( len, offset, cb ) ;
       if ( SDB_OK != rc )
@@ -342,6 +366,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNWRITELOB ) ;
       rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+
+      cb->setCurrentContextID( contextID ) ;
+
       rc = rtnCB->contextFind ( contextID, lobContext, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -357,6 +384,8 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      cb->setCurProcessName( lobContext->getProcessName() ) ;
 
       if ( lobOffset < -1 )
       {
@@ -398,6 +427,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOCKLOB ) ;
       rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+
+      cb->setCurrentContextID( contextID ) ;
+
       rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -405,6 +437,8 @@ namespace engine
                   rc ) ;
          goto error ;
       }
+
+      cb->setCurProcessName( lobContext->getProcessName() ) ;
 
       if ( offset < 0 || length < -1 )
       {
@@ -441,6 +475,9 @@ namespace engine
       rtnContextLob::sharePtr lobContext ;
       BSONObj detail ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+
+      cb->setCurrentContextID( contextID ) ;
+
       rc = rtnCB->contextFind( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -448,6 +485,8 @@ namespace engine
                   rc ) ;
          goto error ;
       }
+
+      cb->setCurProcessName( lobContext->getProcessName() ) ;
 
       rc = lobContext->getRTDetail( cb, detail ) ;
       if ( SDB_OK != rc )
@@ -481,6 +520,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCLOSELOB ) ;
       rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+
+      cb->setCurrentContextID( contextID ) ;
+
       rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -491,6 +533,8 @@ namespace engine
          }
          goto done ;
       }
+
+      cb->setCurProcessName( lobContext->getProcessName() ) ;
 
       rc = lobContext->close( cb ) ;
       if ( SDB_OK != rc )
@@ -702,6 +746,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA ) ;
       rtnContextLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+
+      cb->setCurrentContextID( contextID ) ;
+
       rc = rtnCB->contextFind ( contextID, RTN_CONTEXT_LOB, lobContext, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -709,6 +756,8 @@ namespace engine
                   rc ) ;
          goto error ;
       }
+
+      cb->setCurProcessName( lobContext->getProcessName() ) ;
 
       rc = lobContext->getLobMetaData( meta ) ;
       if ( SDB_OK != rc )

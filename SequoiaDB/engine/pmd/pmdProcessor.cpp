@@ -524,6 +524,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract update message failed, "
                    "rc: %d", getSession()->sessionName(), rc ) ;
 
+      eduCB()->setCurProcessName( pCollectionName ) ;
       MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       /// When update virtual cs
@@ -619,6 +620,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
 
+      eduCB()->setCurProcessName( pCollectionName ) ;
       MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       if ( (flag & FLG_INSERT_CONTONDUP) && (flag & FLG_INSERT_REPLACEONDUP) )
@@ -736,6 +738,8 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
+         eduCB()->setCurProcessName( pCollectionName ) ;
+
          /// check auto-commit
          rc = _checkTransAutoCommit( msg, ( flags & FLG_QUERY_MODIFY ) ?
                                           TRUE : FALSE ) ;
@@ -849,6 +853,15 @@ namespace engine
             goto error ;
          }
 
+         if ( NULL != pCommand->collectionFullName() )
+         {
+            eduCB()->setCurProcessName( pCommand->collectionFullName() ) ;
+         }
+         else if ( NULL != pCommand->spaceName() )
+         {
+            eduCB()->setCurProcessName( pCommand->spaceName() ) ;
+         }
+
          MON_SAVE_CMD_DETAIL( eduCB()->getMonAppCB(), pCommand->type(),
                               "Command:%s, Collection:%s, Match:%s, "
                               "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
@@ -939,6 +952,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
 
+      eduCB()->setCurProcessName( pCollectionName ) ;
       MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       /// When delete virtual cs
@@ -1288,6 +1302,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace aggr msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
 
+      eduCB()->setCurProcessName( pCollectionName ) ;
       MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
       try
