@@ -884,6 +884,9 @@ namespace engine
       _monDataSetFetch() ;
       virtual ~_monDataSetFetch() ;
 
+      /*
+          Use isCurrent for isIncludeSystem
+       */
       virtual INT32 init( pmdEDUCB *cb,
                           BOOLEAN isCurrent,
                           BOOLEAN isDetail,
