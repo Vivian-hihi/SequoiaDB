@@ -1,10 +1,16 @@
 /******************************************************************************
+ * @Description   : 
+ * @Author        : Zhang Yanan
+ * @CreateTime    : 2022.03.10
+ * @LastEditTime  : 2022.04.05
+ * @LastEditors   : Zhang Yanan
+ ******************************************************************************/
+/******************************************************************************
  * @Description : seqDB-14836:删除run级别配置，且配置参数不存在conf文件中
  * @author      : Lu weikang
  * @date        ：2018.3.30
  ******************************************************************************/
 testConf.skipStandAlone = true;
-testConf.skipTest = true; // SEQUOIADBMAINSTREAM-8093
 main( test );
 
 function test ()
