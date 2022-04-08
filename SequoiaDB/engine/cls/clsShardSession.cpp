@@ -2273,20 +2273,22 @@ namespace engine
          }
          else
          {
-            rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version ) ;
-            if ( SDB_OK != rc )
+            rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
+            if ( rc )
             {
                goto error ;
             }
 
-            if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
-            {
-               rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
-            }
-            else
+            if ( !OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
             {
                rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
             }
+
+            rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -2448,6 +2450,23 @@ namespace engine
                _pEDUCB->setIsAffectGIndex( TRUE ) ;
             }
          }
+         else
+         {
+            rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            if ( !OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
+            {
+               rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+            }
+         }
 
          //check cata
          if ( pCommand->collectionFullName() )
@@ -2498,22 +2517,6 @@ namespace engine
                           pCommand->spaceName(), rc ) ;
                   goto error ;
                }
-            }
-         }
-
-         if ( !pCommand->writable () )
-         {
-            if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
-            {
-               rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
-            }
-            else
-            {
-               rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
-            }
-            if ( SDB_OK != rc )
-            {
-               goto error ;
             }
          }
 
@@ -5269,6 +5272,27 @@ namespace engine
             goto error ;
          }
       }
+      else
+      {
+         rc = _checkPrimaryWhenRead( FLG_LOBREAD_PRIMARY, header->flags ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
+         {
+            rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY,
+                                          header->flags ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING, "Failed to check read secondary status, "
+                       "rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+      }
 
       rc = _checkCLStatusAndGetSth( fullName.valuestr(),
                                     header->version,
@@ -5277,24 +5301,6 @@ namespace engine
       if ( SDB_OK != rc )
       {
          goto error ;
-      }
-
-      if ( SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
-      {
-         if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
-         {
-            rc = _checkPrimaryWhenRead( FLG_LOBREAD_PRIMARY, header->flags ) ;
-         }
-         else
-         {
-            rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY,
-                                          header->flags ) ;
-         }
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
-            goto error ;
-         }
       }
 
       if ( !SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
@@ -5636,6 +5642,24 @@ namespace engine
                           header->contextID, lobContext->getFullName(),
                           tuplesSize ) ;
 
+      rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
+      {
+         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to check read secondary status, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
       /// When split, use writingCB to prevent reading lob conflicted
       /// with clean job
       eduCB()->writingDB( TRUE ) ;
@@ -5645,20 +5669,6 @@ namespace engine
                                     header->version ) ;
       if ( SDB_OK != rc )
       {
-         goto error ;
-      }
-
-      if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
-      {
-         rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
-      }
-      else
-      {
-         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-      }
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
          goto error ;
       }
 
@@ -5961,26 +5971,29 @@ namespace engine
                           "ContextID:%lld, Collection:%s",
                           header->contextID, lobContext->getFullName() ) ;
 
+      rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
+      {
+         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to check read secondary status, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
       /// check catalog version
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
                                     header->version ) ;
       if ( SDB_OK != rc )
       {
-         goto error ;
-      }
-
-      if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
-      {
-         rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
-
-      }
-      else
-      {
-         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-      }
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
          goto error ;
       }
 
