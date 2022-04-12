@@ -1892,17 +1892,11 @@ namespace engine
          }
       }
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pUpdate->version,
-                                    &replSize, NULL, &repairCheck ) ;
+                                    CL_OP_WRITE, &replSize, NULL,
+                                    &repairCheck ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -2017,17 +2011,11 @@ namespace engine
 
       _setCollectionName( pCollectionName ) ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName,
                                     pInsert->version,
+                                    CL_OP_WRITE,
                                     &replSize, NULL, &repairCheck ) ;
       if ( SDB_OK != rc )
       {
@@ -2123,16 +2111,10 @@ namespace engine
 
       MONQUERY_SET_NAME( eduCB(), pCollectionName ) ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pDelete->version,
+                                    CL_OP_WRITE,
                                     &replSize, NULL, &repairCheck ) ;
       if ( SDB_OK != rc )
       {
@@ -2243,17 +2225,11 @@ namespace engine
          {
             BOOLEAN repairCheck = FALSE ;
             needRollback = TRUE ;
-            rc = _checkWriteStatus() ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-               goto error ;
-            }
 
             _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
             rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
-                                          &replSize, NULL,
+                                          CL_OP_WRITE, &replSize, NULL,
                                           &repairCheck ) ;
             if ( SDB_OK != rc )
             {
@@ -2273,22 +2249,18 @@ namespace engine
          }
          else
          {
-            rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
-            if ( rc )
+            enum CL_OP_TYPE opType = CL_OP_READ_ON_ANY ;
+            if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
             {
-               goto error ;
+               opType = CL_OP_READ_ON_PRY ;
+            }
+            else if ( OSS_BIT_TEST( flags, FLG_QUERY_SECONDARY ) )
+            {
+               opType = CL_OP_READ_ON_SND ;
             }
 
-            if ( !OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
-            {
-               rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
-               if ( SDB_OK != rc )
-               {
-                  goto error ;
-               }
-            }
-
-            rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version ) ;
+            rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
+                                          opType ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -2437,43 +2409,41 @@ namespace engine
 
          if ( pCommand->writable () )
          {
-            rc = _checkWriteStatus() ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-               goto error ;
-            }
-
             if ( CMD_TRUNCATE == pCommand->type()
                  || CMD_CREATE_INDEX == pCommand->type() )
             {
                _pEDUCB->setIsAffectGIndex( TRUE ) ;
             }
          }
-         else
-         {
-            rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
-            if ( rc )
-            {
-               goto error ;
-            }
 
-            if ( !OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
-            {
-               rc = _checkSecondaryWhenRead( FLG_QUERY_SECONDARY, flags ) ;
-               if ( SDB_OK != rc )
-               {
-                  goto error ;
-               }
-            }
-         }
-
-         //check cata
+         //check node status and cata
          if ( pCommand->collectionFullName() )
          {
+            enum CL_OP_TYPE opType = CL_OP_UNKNOWN ;
+
+            if ( pCommand->writable() )
+            {
+               opType = CL_OP_WRITE ;
+            }
+            else
+            {
+               if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
+               {
+                  opType = CL_OP_READ_ON_PRY ;
+               }
+               else if ( OSS_BIT_TEST( flags, FLG_QUERY_SECONDARY ) )
+               {
+                  opType = CL_OP_READ_ON_SND ;
+               }
+               else
+               {
+                  opType = CL_OP_READ_ON_ANY ;
+               }
+            }
+
             rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
-                                          pQuery->version, &replSize,
-                                          &clUniqueID ) ;
+                                          pQuery->version, opType,
+                                          &replSize, &clUniqueID ) ;
 
             if ( SDB_OK != rc )
             {
@@ -2496,7 +2466,39 @@ namespace engine
                pCrtCL->setCLUniqueID( clUniqueID ) ;
             }
          }
-         else if ( pCommand->spaceName() )
+         else
+         {
+            if ( pCommand->writable() )
+            {
+               rc = _checkWriteStatus() ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
+               {
+                  rc = _checkPrimaryWhenRead() ;
+               }
+               else if ( OSS_BIT_TEST( flags, FLG_QUERY_SECONDARY ) )
+               {
+                  rc = _checkSecondaryWhenRead() ;
+               }
+               else
+               {
+                  rc = SDB_OK ;
+               }
+               if ( rc )
+               {
+                  goto error ;
+               }
+            }
+         }
+
+         if ( pCommand->spaceName() )
          {
             rc = _checkReplStatus() ;
             if ( SDB_OK != rc )
@@ -5233,6 +5235,7 @@ namespace engine
       UINT32 dataLen = 0 ;
       _rtnContextShdOfLob::sharePtr context ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      enum CL_OP_TYPE opType = CL_OP_UNKNOWN ;
 
       rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
       if ( SDB_OK != rc )
@@ -5265,38 +5268,26 @@ namespace engine
 
       if ( !SDB_IS_LOBREADONLY_MODE( mode.Int() ) )
       {
-         rc = _checkWriteStatus() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-            goto error ;
-         }
+         opType = CL_OP_WRITE ;
       }
       else
       {
-         rc = _checkPrimaryWhenRead( FLG_LOBREAD_PRIMARY, header->flags ) ;
-         if ( rc )
+         if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
          {
-            PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
-            goto error ;
+            opType = CL_OP_READ_ON_PRY ;
          }
-
-         if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
+         else if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_SECONDARY ) )
          {
-            rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY,
-                                          header->flags ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING, "Failed to check read secondary status, "
-                       "rc: %d", rc ) ;
-               goto error ;
-            }
+            opType = CL_OP_READ_ON_SND ;
+         }
+         else
+         {
+            opType = CL_OP_READ_ON_ANY ;
          }
       }
 
-      rc = _checkCLStatusAndGetSth( fullName.valuestr(),
-                                    header->version,
-                                    &replSize ) ;
+      rc = _checkCLStatusAndGetSth( fullName.valuestr(), header->version,
+                                    opType, &replSize ) ;
 
       if ( SDB_OK != rc )
       {
@@ -5394,15 +5385,8 @@ namespace engine
                           "ContextID:%lld, CollectionName:%s, TupleSize:%u",
                           header->contextID, lobContext->getFullName(), tSize ) ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version ) ;
+                                    header->version, CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5511,15 +5495,8 @@ namespace engine
                           "ContextID:%lld, Collection:%s",
                           header->contextID, lobContext->getFullName() ) ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version ) ;
+                                    header->version, CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5614,6 +5591,7 @@ namespace engine
       bson::BSONObj meta ;
       const CHAR *data = NULL ;
       UINT32 read = 0 ;
+      enum CL_OP_TYPE opType = CL_OP_READ_ON_ANY ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg,
                                  &header, meta, &tuple, &tuplesSize ) ;
@@ -5642,22 +5620,13 @@ namespace engine
                           header->contextID, lobContext->getFullName(),
                           tuplesSize ) ;
 
-      rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
-      if ( SDB_OK != rc )
+      if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
-         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
-         goto error ;
+         opType = CL_OP_READ_ON_PRY ;
       }
-
-      if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
+      else if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_SECONDARY ) )
       {
-         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Failed to check read secondary status, "
-                    "rc: %d", rc ) ;
-            goto error ;
-         }
+         opType = CL_OP_READ_ON_SND ;
       }
 
       /// When split, use writingCB to prevent reading lob conflicted
@@ -5666,7 +5635,7 @@ namespace engine
 
       /// check catalog version
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version ) ;
+                                    header->version, opType ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5741,15 +5710,8 @@ namespace engine
                           header->contextID, lobContext->getFullName(),
                           tuplesSize ) ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version ) ;
+                                    header->version, CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5859,15 +5821,8 @@ namespace engine
                           "ContextID:%lld, Collection:%s, TupleSize:%u",
                           header->contextID, lobContext->getFullName(), tSize ) ;
 
-      rc = _checkWriteStatus() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
-         goto error ;
-      }
-
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version ) ;
+                                    header->version, CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5945,6 +5900,7 @@ namespace engine
       rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       BSONObj detail ;
+      enum CL_OP_TYPE opType = CL_OP_READ_ON_ANY ;
 
       rc = msgExtractGetLobRTDetailRequest( ( const CHAR * )msg, &header ) ;
       if ( SDB_OK != rc )
@@ -5971,27 +5927,18 @@ namespace engine
                           "ContextID:%lld, Collection:%s",
                           header->contextID, lobContext->getFullName() ) ;
 
-      rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
-      if ( SDB_OK != rc )
+      if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
-         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
-         goto error ;
+         opType = CL_OP_READ_ON_PRY ;
       }
-
-      if ( !OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
+      else if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_SECONDARY ) )
       {
-         rc = _checkSecondaryWhenRead( FLG_LOBREAD_SECONDARY, header->flags ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Failed to check read secondary status, "
-                    "rc: %d", rc ) ;
-            goto error ;
-         }
+         opType = CL_OP_READ_ON_SND ;
       }
 
       /// check catalog version
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version ) ;
+                                    header->version, opType ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -6603,18 +6550,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKPRIMARYWHENREAD, "_clsShdSession::_checkPrimaryWhenRead" )
-   INT32 _clsShdSession::_checkPrimaryWhenRead( INT32 flag, INT32 reqFlag )
+   INT32 _clsShdSession::_checkPrimaryWhenRead()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKPRIMARYWHENREAD ) ;
-      if ( flag & reqFlag )
+      rc = _checkPrimaryStatus() ;
+      if ( SDB_OK != rc )
       {
-         rc = _checkPrimaryStatus() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
+         goto error ;
       }
    done:
       PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKPRIMARYWHENREAD, rc ) ;
@@ -6624,29 +6568,26 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKSECONDARYWHENREAD, "_clsShdSession::_checkSecondaryWhenRead" )
-   INT32 _clsShdSession::_checkSecondaryWhenRead( INT32 flag, INT32 reqFlag )
+   INT32 _clsShdSession::_checkSecondaryWhenRead()
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKSECONDARYWHENREAD ) ;
 
-      if ( flag & reqFlag )
+      rc = _checkPrimaryStatus() ;
+      // check return code
+      if ( SDB_OK == rc )
       {
-         rc = _checkPrimaryStatus() ;
-         // check return code
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_CLS_NOT_SECONDARY ;
-         }
-         else if ( SDB_CLS_NOT_PRIMARY == rc )
-         {
-            rc = SDB_OK ;
-         }
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDINFO, "Failed to check secondary status, rc: %d", rc ) ;
-            goto error ;
-         }
+         rc = SDB_CLS_NOT_SECONDARY ;
+      }
+      else if ( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         rc = SDB_OK ;
+      }
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDINFO, "Failed to check secondary status, rc: %d", rc ) ;
+         goto error ;
       }
 
    done:
@@ -6687,14 +6628,47 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CHECKCLSANDGET, "_clsShdSession::_checkCLStatusAndGetSth" )
    INT32 _clsShdSession::_checkCLStatusAndGetSth( const CHAR *name,
                                                   INT32 version,
+                                                  CL_OP_TYPE opType,
                                                   INT16 *w,
                                                   utilCLUniqueID *clUniqueID,
                                                   BOOLEAN *repairCheck )
    {
       INT32 rc = SDB_OK ;
+      INT32 preCheckRC = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CHECKCLSANDGET ) ;
 
       CHAR mainCLName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
+
+      switch ( opType )
+      {
+         case CL_OP_WRITE:
+         {
+            preCheckRC = _checkWriteStatus() ;
+            break ;
+         }
+         case CL_OP_READ_ON_PRY:
+         {
+            preCheckRC = _checkPrimaryWhenRead() ;
+            break ;
+         }
+         case CL_OP_READ_ON_SND:
+         {
+            preCheckRC = _checkSecondaryWhenRead() ;
+            break ;
+         }
+         default: break ;
+      }
+
+      if ( SDB_OK != preCheckRC )
+      {
+         PD_LOG( PDWARNING, "failed to check node status: %d", preCheckRC ) ;
+         // Don't goto error before cl version was checked.
+         // Because when cl version was old, this data group may be irrelevant,
+         // and the node status will be irrelevant, too.
+         // But node status should be checked before cl version was
+         // checked, the checking node status may cost many time(for reelection)
+         // so that cl version was changed again.
+      }
 
       rc = _checkReplStatus() ;
       if ( SDB_OK != rc )
@@ -6728,6 +6702,12 @@ namespace engine
                             clUniqueID, repairCheck ) ;
       if ( rc )
       {
+         goto error ;
+      }
+
+      if ( preCheckRC )
+      {
+         rc = preCheckRC ;
          goto error ;
       }
 
