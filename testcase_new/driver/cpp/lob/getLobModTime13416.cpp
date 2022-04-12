@@ -70,10 +70,11 @@ TEST_F( getLobModTime13416, lobWrite )
    createTime = lob.getCreateTime() ;
    initModTime = lob.getModificationTime() ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   EXPECT_LT( createTime, initModTime ) 
+   EXPECT_LE( createTime, initModTime ) 
          << "wrong modification time after init" ;
 
    // modify lob
+   usleep(1000);
    rc = lob.getOid( oid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = cl.openLob( lob, oid, SDB_LOB_WRITE ) ;
