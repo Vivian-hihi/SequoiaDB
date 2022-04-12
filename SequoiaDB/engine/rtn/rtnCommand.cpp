@@ -5269,7 +5269,7 @@ error:
                goto error ;
             }
          }
-         else if ( SDB_RECYCLE_ITEMNOTEXISTS == rc )
+         else if ( SDB_RECYCLE_ITEM_NOTEXIST == rc )
          {
             // it may from main-collection recycle item, check if we can
             // find sub-collection recycle items by the same recycle ID
@@ -5280,7 +5280,7 @@ error:
             PD_RC_CHECK( rc, PDERROR, "Failed to get sub recycle items [%s], "
                          "rc: %d", _recycleItemName, rc ) ;
             PD_CHECK( !recycleItems.empty(),
-                      SDB_RECYCLE_ITEMNOTEXISTS, error, PDERROR,
+                      SDB_RECYCLE_ITEM_NOTEXIST, error, PDERROR,
                       "Failed to found recycle item [%s]", _recycleItemName ) ;
          }
          else
