@@ -460,6 +460,9 @@ namespace engine
                pRecord->setNormal() ;
             }
             /// sub the remove data info
+            //if the record has compresssed,the orgLen mean the record size
+            //in DB,len mean the uncompress size. So when we substract the
+            //size,we should swap them.
             context->mbStat()->_totalDataLen -= recordData.orgLen() ;
             context->mbStat()->_totalOrgDataLen -= recordData.len() ;
             context->mbStat()->_totalDataLen += newRecordData.len() ;
@@ -471,6 +474,9 @@ namespace engine
             pOvfRecord->setData( newRecordData ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
             /// sub the remove data info
+            //if the record has compresssed,the orgLen mean the record size
+            //in DB,len mean the uncompress size. So when we substract the
+            //size,we should swap them.
             context->mbStat()->_totalDataLen -= recordData.orgLen() ;
             context->mbStat()->_totalOrgDataLen -= recordData.len() ;
             context->mbStat()->_totalDataLen += newRecordData.len() ;
@@ -536,6 +542,9 @@ namespace engine
             }
 
             /// sub the remove data info
+            //if the record has compresssed,the orgLen mean the record size
+            //in DB,len mean the uncompress size. So when we substract the
+            //size,we should swap them.
             context->mbStat()->_totalDataLen -= recordData.orgLen() ;
             context->mbStat()->_totalOrgDataLen -= recordData.len() ;
          }

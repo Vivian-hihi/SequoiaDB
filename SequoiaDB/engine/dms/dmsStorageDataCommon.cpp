@@ -4004,6 +4004,8 @@ namespace engine
             ++( pWRExtent->_recCount ) ;
             _increaseMBStat( context->mb()->_clUniqueID,
                              &( _mbStatInfo[ context->mbID() ] ), cb ) ;
+            context->mbStat()->_totalDataLen += recordData.len() ;
+            context->mbStat()->_totalOrgDataLen += recordData.orgLen() ;
 
 #if defined (_DEBUG)
             PD_LOG( PDDEBUG, "Mark insert for record (extent: %d; offset: %d) "
@@ -4485,6 +4487,10 @@ namespace engine
 
                   // if local index delete fail, let's continue remove the record
                }
+               //here when we sub the remove data info,
+               //if the record has compresssed,the orgLen mean the record size
+               //in DB,len mean the uncompress size. So when we substract the
+               //size,we should swap them.
                context->mbStat()->_totalDataLen -= recordData.orgLen() ;
                context->mbStat()->_totalOrgDataLen -= recordData.len() ;
             }
