@@ -1895,7 +1895,7 @@ namespace engine
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pUpdate->version,
-                                    CL_OP_WRITE, &replSize, NULL,
+                                    CLS_CL_OP_WRITE, &replSize, NULL,
                                     &repairCheck ) ;
       if ( SDB_OK != rc )
       {
@@ -2015,7 +2015,7 @@ namespace engine
 
       rc = _checkCLStatusAndGetSth( pCollectionName,
                                     pInsert->version,
-                                    CL_OP_WRITE,
+                                    CLS_CL_OP_WRITE,
                                     &replSize, NULL, &repairCheck ) ;
       if ( SDB_OK != rc )
       {
@@ -2114,7 +2114,7 @@ namespace engine
       _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
       rc = _checkCLStatusAndGetSth( pCollectionName, pDelete->version,
-                                    CL_OP_WRITE,
+                                    CLS_CL_OP_WRITE,
                                     &replSize, NULL, &repairCheck ) ;
       if ( SDB_OK != rc )
       {
@@ -2229,7 +2229,7 @@ namespace engine
             _pEDUCB->setIsAffectGIndex( TRUE ) ;
 
             rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
-                                          CL_OP_WRITE, &replSize, NULL,
+                                          CLS_CL_OP_WRITE, &replSize, NULL,
                                           &repairCheck ) ;
             if ( SDB_OK != rc )
             {
@@ -2249,14 +2249,14 @@ namespace engine
          }
          else
          {
-            enum CL_OP_TYPE opType = CL_OP_READ_ON_ANY ;
+            enum CLS_CL_OP_TYPE opType = CLS_CL_OP_READ_ON_ANY ;
             if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
             {
-               opType = CL_OP_READ_ON_PRY ;
+               opType = CLS_CL_OP_READ_ON_PRY ;
             }
             else if ( OSS_BIT_TEST( flags, FLG_QUERY_SECONDARY ) )
             {
-               opType = CL_OP_READ_ON_SND ;
+               opType = CLS_CL_OP_READ_ON_SND ;
             }
 
             rc = _checkCLStatusAndGetSth( pCollectionName, pQuery->version,
@@ -2419,25 +2419,25 @@ namespace engine
          //check node status and cata
          if ( pCommand->collectionFullName() )
          {
-            enum CL_OP_TYPE opType = CL_OP_UNKNOWN ;
+            enum CLS_CL_OP_TYPE opType = CLS_CL_OP_UNKNOWN ;
 
             if ( pCommand->writable() )
             {
-               opType = CL_OP_WRITE ;
+               opType = CLS_CL_OP_WRITE ;
             }
             else
             {
                if ( OSS_BIT_TEST( flags, FLG_QUERY_PRIMARY ) )
                {
-                  opType = CL_OP_READ_ON_PRY ;
+                  opType = CLS_CL_OP_READ_ON_PRY ;
                }
                else if ( OSS_BIT_TEST( flags, FLG_QUERY_SECONDARY ) )
                {
-                  opType = CL_OP_READ_ON_SND ;
+                  opType = CLS_CL_OP_READ_ON_SND ;
                }
                else
                {
-                  opType = CL_OP_READ_ON_ANY ;
+                  opType = CLS_CL_OP_READ_ON_ANY ;
                }
             }
 
@@ -5261,7 +5261,7 @@ namespace engine
       UINT32 dataLen = 0 ;
       _rtnContextShdOfLob::sharePtr context ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      enum CL_OP_TYPE opType = CL_OP_UNKNOWN ;
+      enum CLS_CL_OP_TYPE opType = CLS_CL_OP_UNKNOWN ;
 
       rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
       if ( SDB_OK != rc )
@@ -5326,21 +5326,21 @@ namespace engine
 
       if ( !SDB_IS_LOBREADONLY_MODE( mode ) )
       {
-         opType = CL_OP_WRITE ;
+         opType = CLS_CL_OP_WRITE ;
       }
       else
       {
          if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
          {
-            opType = CL_OP_READ_ON_PRY ;
+            opType = CLS_CL_OP_READ_ON_PRY ;
          }
          else if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_SECONDARY ) )
          {
-            opType = CL_OP_READ_ON_SND ;
+            opType = CLS_CL_OP_READ_ON_SND ;
          }
          else
          {
-            opType = CL_OP_READ_ON_ANY ;
+            opType = CLS_CL_OP_READ_ON_ANY ;
          }
       }
 
@@ -5457,7 +5457,7 @@ namespace engine
                           header->contextID, lobContext->getFullName(), tSize ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version, CL_OP_WRITE ) ;
+                                    header->version, CLS_CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5580,7 +5580,7 @@ namespace engine
                           header->contextID, lobContext->getFullName() ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version, CL_OP_WRITE ) ;
+                                    header->version, CLS_CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5694,7 +5694,7 @@ namespace engine
       bson::BSONObj meta ;
       const CHAR *data = NULL ;
       UINT32 read = 0 ;
-      enum CL_OP_TYPE opType = CL_OP_READ_ON_ANY ;
+      enum CLS_CL_OP_TYPE opType = CLS_CL_OP_READ_ON_ANY ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg,
                                  &header, meta, &tuple, &tuplesSize ) ;
@@ -5725,11 +5725,11 @@ namespace engine
 
       if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
-         opType = CL_OP_READ_ON_PRY ;
+         opType = CLS_CL_OP_READ_ON_PRY ;
       }
       else if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_SECONDARY ) )
       {
-         opType = CL_OP_READ_ON_SND ;
+         opType = CLS_CL_OP_READ_ON_SND ;
       }
 
       /// When split, use writingCB to prevent reading lob conflicted
@@ -5827,7 +5827,7 @@ namespace engine
                           tuplesSize ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version, CL_OP_WRITE ) ;
+                                    header->version, CLS_CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -5951,7 +5951,7 @@ namespace engine
                           header->contextID, lobContext->getFullName(), tSize ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
-                                    header->version, CL_OP_WRITE ) ;
+                                    header->version, CLS_CL_OP_WRITE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -6042,7 +6042,7 @@ namespace engine
       rtnContextShdOfLob::sharePtr lobContext ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       BSONObj detail ;
-      enum CL_OP_TYPE opType = CL_OP_READ_ON_ANY ;
+      enum CLS_CL_OP_TYPE opType = CLS_CL_OP_READ_ON_ANY ;
 
       rc = msgExtractGetLobRTDetailRequest( ( const CHAR * )msg, &header ) ;
       if ( SDB_OK != rc )
@@ -6071,11 +6071,11 @@ namespace engine
 
       if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
-         opType = CL_OP_READ_ON_PRY ;
+         opType = CLS_CL_OP_READ_ON_PRY ;
       }
       else if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_SECONDARY ) )
       {
-         opType = CL_OP_READ_ON_SND ;
+         opType = CLS_CL_OP_READ_ON_SND ;
       }
 
       /// check catalog version
@@ -6783,7 +6783,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CHECKCLSANDGET, "_clsShdSession::_checkCLStatusAndGetSth" )
    INT32 _clsShdSession::_checkCLStatusAndGetSth( const CHAR *name,
                                                   INT32 version,
-                                                  CL_OP_TYPE opType,
+                                                  CLS_CL_OP_TYPE opType,
                                                   INT16 *w,
                                                   utilCLUniqueID *clUniqueID,
                                                   BOOLEAN *repairCheck )
@@ -6796,17 +6796,17 @@ namespace engine
 
       switch ( opType )
       {
-         case CL_OP_WRITE:
+         case CLS_CL_OP_WRITE:
          {
             preCheckRC = _checkWriteStatus() ;
             break ;
          }
-         case CL_OP_READ_ON_PRY:
+         case CLS_CL_OP_READ_ON_PRY:
          {
             preCheckRC = _checkPrimaryWhenRead() ;
             break ;
          }
-         case CL_OP_READ_ON_SND:
+         case CLS_CL_OP_READ_ON_SND:
          {
             preCheckRC = _checkSecondaryWhenRead() ;
             break ;
