@@ -440,7 +440,7 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Failed to call clean drop collection space"
                        "event in handle [%s],rc: %d",
-                       pHandler->getName(), rc ) ;
+                       pHandler->getName(), tmpRC ) ;
             }
          }
       }
@@ -701,7 +701,7 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Failed to call clean truncate collection "
                        "event in handle [%s],rc: %d",
-                       pHandler->getName(), rc ) ;
+                       pHandler->getName(), tmpRC ) ;
             }
          }
       }
@@ -859,7 +859,7 @@ namespace engine
             {
                PD_LOG( PDWARNING, "Failed to call clean drop collection "
                        "event in handle [%s],rc: %d",
-                       pHandler->getName(), rc ) ;
+                       pHandler->getName(), tmpRC ) ;
             }
          }
       }
@@ -1773,7 +1773,7 @@ namespace engine
          if ( rcTmp )
          {
             PD_LOG( PDWARNING, "Failed to remove cs data file[%s] in "
-                    "rollback, rc: %d", _pDataSu->getSuFileName(), rc ) ;
+                    "rollback, rc: %d", _pDataSu->getSuFileName(), rcTmp ) ;
          }
       }
       goto done ;
@@ -1783,7 +1783,7 @@ namespace engine
          if ( rcTmp )
          {
             PD_LOG( PDWARNING, "Failed to remove cs idnex file[%s] in "
-                    "rollback, rc: %d", _pIndexSu->getSuFileName(), rc ) ;
+                    "rollback, rc: %d", _pIndexSu->getSuFileName(), rcTmp ) ;
          }
       }
       goto rmdata ;
@@ -4382,7 +4382,7 @@ namespace engine
          if ( rcTmp )
          {
             PD_LOG( PDWARNING, "Sync file[%s] failed, rc: %d",
-                    _pLobSu->getSuFileName(), rc ) ;
+                    _pLobSu->getSuFileName(), rcTmp ) ;
             /// not go to error
             rc = rc ? rc : rcTmp ;
          }
@@ -4396,7 +4396,7 @@ namespace engine
          if ( rcTmp )
          {
             PD_LOG( PDWARNING, "Sync file[%s] failed, rc: %d",
-                    _pLobSu->getSuFileName(), rc ) ;
+                    _pLobSu->getSuFileName(), rcTmp ) ;
             /// not go to error
             rc = rc ? rc : rcTmp ;
          }
@@ -4411,7 +4411,7 @@ namespace engine
          if ( rcTmp )
          {
             PD_LOG( PDWARNING, "Sync file[%s] failed, rc: %d",
-                    _pLobSu->getSuFileName(), rc ) ;
+                    _pLobSu->getSuFileName(), rcTmp ) ;
             /// not go to error
             rc = rc ? rc : rcTmp ;
          }
