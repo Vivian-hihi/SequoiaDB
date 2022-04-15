@@ -1425,6 +1425,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       utilIdxInnerID inID = 0 ;
 
+      BOOLEAN isStandalone = FALSE ;
+
       if ( ossAtomicFetch32( &_pDataSu->_dmsHeader->_idxInnerHWM ) >=
                                                          UTIL_IDXINNERID_MAX )
       {
@@ -1447,8 +1449,14 @@ namespace engine
          goto error ;
       }
 
+      // for user collections, the index is standalone
+      if ( !( _pDataSu->isSysSU() ) )
+      {
+         isStandalone = TRUE ;
+      }
+
       uniqID = utilBuildIdxUniqueID( _pDataSu->_dmsHeader->_csUniqueID,
-                                     inID, TRUE ) ;
+                                     inID, isStandalone ) ;
 
    done:
       return rc ;
