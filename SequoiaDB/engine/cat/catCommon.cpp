@@ -5668,7 +5668,8 @@ namespace engine
    INT32 catLockGroups ( const CAT_GROUP_SET &groupIDSet,
                          _pmdEDUCB *cb,
                          catCtxLockMgr &lockMgr,
-                         OSS_LATCH_MODE mode )
+                         OSS_LATCH_MODE mode,
+                         BOOLEAN ignoreNonExist )
    {
       INT32 rc = SDB_OK ;
 
@@ -5689,6 +5690,11 @@ namespace engine
          }
 
          rc = catGroupID2Name( groupID, groupName, cb ) ;
+         if ( SDB_CLS_GRP_NOT_EXIST == rc && ignoreNonExist )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to convert group id [%d] to group name, rc: %d",
                       groupID, rc ) ;
