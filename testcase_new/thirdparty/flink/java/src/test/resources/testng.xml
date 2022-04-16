@@ -1,0 +1,33 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<!--this xml is for ci, please don't modify it-->
+<!--testcase for function test, which can be excuted concurrently-->
+
+<suite name="mysql" verbose="1" parallel="classes" thread-count="5">
+    <!--sequoiadb集群coord地址，可配置多个-->
+    <parameter name="COORDS" value="${COORDS}"/>
+    <!--sequoiadb集群username-->
+    <parameter name="USERNAME" value="${USERNAME}"/>
+    <!--sequoiadb集群password-->
+    <parameter name="PASSWORD" value="${PASSWORD}"/>
+    <!--mysql地址-->
+    <parameter name="MYSQLADDRESS" value="${MYSQLURL}"/>
+    <!--Mysql远程用户名-->
+    <parameter name="MYSQLUSERNAME" value="${MYSQLUSERNAME}"/>
+    <!--Mysql远程用户密码-->
+    <parameter name="MYSQLPASSWORD" value="${MYSQLPASSWORD}"/>
+
+    <listeners>
+        <listener class-name="com.sequoiadb.testcommon.Listener.TimePrinterListener"/>
+    </listeners>
+
+    <test name="normaltest" parallel="classes">
+        <packages>
+            <package name="com.sequoiadb.concurrent"/>
+            <package name="com.sequoiadb.ddl"/>
+            <package name="com.sequoiadb.dml"/>
+            <package name="com.sequoiadb.option"/>
+        </packages>
+    </test>
+
+</suite>
+    
