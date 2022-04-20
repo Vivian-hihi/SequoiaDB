@@ -1028,7 +1028,7 @@ namespace engine
          /// flush mme
          INT32          flushMME( BOOLEAN sync = FALSE ) ;
 
-         BOOLEAN        isTransSupport() const ;
+         BOOLEAN        isTransSupport( dmsMBContext *context ) const ;
 
       public:
 

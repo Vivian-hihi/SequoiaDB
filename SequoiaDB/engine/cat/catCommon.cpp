@@ -6709,6 +6709,13 @@ namespace engine
             clInfo._strictDataMode = eleTmp.boolean() ;
             fieldMask |= UTIL_CL_STRICTDATAMODE_FIELD ;
          }
+         // no trans flag
+         else if ( ossStrcmp( eleTmp.fieldName(),
+                              CAT_NOTRANS ) == 0 )
+         {
+            clInfo._noTrans = eleTmp.boolean() ;
+            fieldMask |= UTIL_CL_NOTRANS_FIELD ;
+         }
          // group specified
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
                                    CAT_GROUP_NAME ) )
@@ -6933,6 +6940,10 @@ namespace engine
                       ( UTIL_CL_OVERWRITE_FIELD & fieldMask ) ),
                    SDB_INVALIDARG, error, PDWARNING,
                    "can not set Capped|Max|Size on main collection" ) ;
+         // no-trans is not supported yet
+         PD_CHECK( !clInfo._noTrans,
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "can not set no-trans on main collection" ) ;
       }
 
       if ( clInfo._autoSplit || clInfo._autoRebalance )
@@ -7034,6 +7045,11 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+
+         // no-trans is not supported yet
+         PD_CHECK( !clInfo._noTrans,
+                   SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                   "can not set no-trans on capped collection" ) ;
       }
 
       if ( clInfo._lobShardingKeyFormat != NULL )
@@ -7254,6 +7270,10 @@ namespace engine
       if ( ( mask & UTIL_CL_STRICTDATAMODE_FIELD ) && clInfo._strictDataMode )
       {
          attribute |= DMS_MB_ATTR_STRICTDATAMODE ;
+      }
+      if ( ( mask & UTIL_CL_NOTRANS_FIELD ) && clInfo._noTrans )
+      {
+         attribute |= DMS_MB_ATTR_NOTRANS ;
       }
       mbAttr2String( attribute, szAttr, sizeof( szAttr ) - 1 ) ;
 

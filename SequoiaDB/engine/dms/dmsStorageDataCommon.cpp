@@ -188,6 +188,8 @@ namespace engine
    #define DMS_MB_ATTR_NOIDINDEX_STR                         "NoIDIndex"
    #define DMS_MB_ATTR_CAPPED_STR                            "Capped"
    #define DMS_MB_ATTR_STRICTDATAMODE_STR                    "StrictDataMode"
+   #define DMS_MB_ATTR_NOTRANS_STR                           "NoTrans"
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MBATTR2STRING, "mbAttr2String" )
    void mbAttr2String( UINT32 attributes, CHAR * pBuffer, INT32 bufSize )
    {
@@ -214,6 +216,11 @@ namespace engine
       {
          appendFlagString( pBuffer, bufSize, DMS_MB_ATTR_STRICTDATAMODE_STR ) ;
          OSS_BIT_CLEAR( attributes, DMS_MB_ATTR_STRICTDATAMODE ) ;
+      }
+      if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_NOTRANS ) )
+      {
+         appendFlagString( pBuffer, bufSize, DMS_MB_ATTR_NOTRANS_STR ) ;
+         OSS_BIT_CLEAR( attributes, DMS_MB_ATTR_NOTRANS ) ;
       }
 
       // Test other bits
@@ -731,9 +738,15 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON_SYNCMEMTOMMAP ) ;
    }
 
-   BOOLEAN _dmsStorageDataCommon::isTransSupport() const
+   BOOLEAN _dmsStorageDataCommon::isTransSupport( dmsMBContext *context ) const
    {
       if ( DMS_STORAGE_CAPPED == getStorageType() || !_transSupport )
+      {
+         return FALSE ;
+      }
+      else if ( ( NULL != context ) &&
+                ( OSS_BIT_TEST( context->mb()->_attributes,
+                                DMS_MB_ATTR_NOTRANS ) ) )
       {
          return FALSE ;
       }
@@ -3788,7 +3801,7 @@ namespace engine
       dpsUnqIdxHashArray unqIdxHashArray ;
       dpsUnqIdxHashArray *pUnqIdxHashArray = NULL ;
 
-      if ( !isTransSupport() )
+      if ( !isTransSupport( context ) )
       {
          transID = DPS_INVALID_TRANS_ID ;
          preTransLsn = DPS_INVALID_LSN_OFFSET ;
@@ -3957,7 +3970,7 @@ namespace engine
             rc = SDB_DMS_INCOMPATIBLE_MODE ;
             goto error ;
          }
-         else if ( isTransSupport() &&
+         else if ( isTransSupport( context ) &&
                    OSS_BIT_TEST( context->mb()->_attributes,
                                  DMS_MB_ATTR_NOIDINDEX ) &&
                    cb->isTransaction() &&
@@ -4044,7 +4057,7 @@ namespace engine
             // NOTE: we still need transaction locks during rollback
             // the insert record to rollback delete operation may insert
             // to a new place
-            if ( isTransSupport() &&
+            if ( isTransSupport( context ) &&
                  NULL != cb &&
                  cb->getTransExecutor()->useTransLock() )
             {
@@ -4116,7 +4129,7 @@ namespace engine
                                insertObj.toString().c_str() ) ;
 
          /// enable trans
-         if ( isTransSupport() )
+         if ( isTransSupport( context ) )
          {
             info.enableTrans() ;
          }
@@ -4253,7 +4266,7 @@ namespace engine
       }
 #endif //_DEBUG
 
-      if ( !isTransSupport() )
+      if ( !isTransSupport( context ) )
       {
          transID = DPS_INVALID_TRANS_ID ;
          preLsn = DPS_INVALID_LSN_OFFSET ;
@@ -4558,7 +4571,7 @@ namespace engine
             /// ignore the error
          }
 
-         if ( isTransSupport() )
+         if ( isTransSupport( context ) )
          {
             info.enableTrans() ;
          }
@@ -4655,7 +4668,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !isTransSupport() )
+      if ( !isTransSupport( context ) )
       {
          transID = DPS_INVALID_TRANS_ID ;
          preTransLsn = DPS_INVALID_LSN_OFFSET ;
@@ -4926,7 +4939,7 @@ namespace engine
                                newMatch.toString().c_str(),
                                newChg.toString().c_str() ) ;
 
-         if ( isTransSupport() )
+         if ( isTransSupport( context ) )
          {
             info.enableTrans() ;
          }
