@@ -843,6 +843,8 @@ namespace engine
          {
             _unregBlockCL( origFullName, recyFullName, blockID ) ;
          }
+         options->_localTaskID = 0 ;
+         options->_blockOpID = 0 ;
       }
 
       PD_TRACE_EXITRC( SDB__CLSRECYBINMGR_ONCLEANTRUNCCL, rc ) ;
@@ -1054,6 +1056,8 @@ namespace engine
          {
             _unregBlockCL( origFullName, recyFullName, blockID ) ;
          }
+         options->_localTaskID = 0 ;
+         options->_blockOpID = 0 ;
       }
 
       PD_TRACE_EXITRC( SDB__CLSRECYBINMGR_ONCLEANDROPCL, rc ) ;
@@ -1247,6 +1251,8 @@ namespace engine
          {
             _unregBlockCS( originName, recycleName, blockID ) ;
          }
+         options->_localTaskID = 0 ;
+         options->_blockOpID = 0 ;
       }
 
       PD_TRACE_EXITRC( SDB__CLSRECYBINMGR_ONCLEANDROPCS, rc ) ;
