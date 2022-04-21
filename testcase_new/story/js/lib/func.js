@@ -2102,6 +2102,10 @@ function commCheckIndexConsistent ( db, csname, clname, idxname, isExist )
                   }
                   break;
                }
+               if( actIndex.toObj().IndexFlag != "Normal" )
+               {
+                  break;
+               }
                if( expIndex == null )
                {
                   expIndex = actIndex;
