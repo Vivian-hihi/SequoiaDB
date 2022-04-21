@@ -71,14 +71,14 @@ namespace import
 
       INT32 _bulkInsert( PageInfo* pageInfo, SINT32 flag ) ;
 
-      INT32 _send( const CHAR *pMsg, INT32 len ) ;
+      INT32 _send( const CHAR *pMsg, INT32 len, BOOLEAN isHeader = TRUE ) ;
 
       INT32 _recv() ;
 
       INT32 _extract() ;
 
       INT32 _setSessionAttr() ;
-      
+
       INT32 _getLastResultObj( bson *result ) ;
 
    private:
@@ -111,6 +111,10 @@ namespace import
       string   _clname ;
 
       INT32    _batchSize ;
+
+      _sdbMsgConvertor* _msgConvertor ;
+      INT16             _peerProtocolVersion ;
+
    } ;
 }
 
