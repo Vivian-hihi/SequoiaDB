@@ -22,12 +22,13 @@ create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequ
 
 | 名称     | 类型      | 默认值  | 描述 | 是否必填|
 | ---------| --------- | -------- |-------|--------|
-|host|string|-|SequoiaDB 协调节点/独立节点地址，多个地址以","分隔，例如："server1:11810,server2:11810"|是|
+|host|string|-|SequoiaDB 协调节点地址，多个地址以","分隔，例如："server1:11810,server2:11810"|是|
 |collectionspace|string|-|集合空间名称|是|
 |collection|string|-|集合名称（不包含集合空间名称）|是|
 |username|string|""|用户名|否|
 |passwordtype|string|"cleartext"|密码类型，取值如下：<br>"cleartext"：表示参数 password 为明文密码<br>"file"：表示参数 password 为密码文件路径|否|
 |password|string|""|用户名对应的密码|否|
+|connecttimeout|int32|1000|连接 SequoiaDB 节点超时时间（单位：ms） |否|
 |samplingratio|double|1|schema 采样率，取值范围为(0, 1.0]|否|
 |samplingnum|int64|1000|schema 采样数量（每个分区），取值大于 0|否|
 |samplingwithid|boolean|FALSE|schema 采样时是否带 _id 字段，取值为 true 或 false  |否|
