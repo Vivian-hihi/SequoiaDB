@@ -5,10 +5,7 @@ import com.sequoiadb.testcommon.FlinkTestBase;
 import com.sequoiadb.testcommon.utils.Commlib;
 import com.sequoiadb.testcommon.utils.SDBAttribute;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.TableDescriptor;
-import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -38,8 +35,9 @@ public class CreateTable25263_25265_25267 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
-        schema = Schema.newBuilder().column( "a", "int" )
-                .column( "b", "varchar(50)" ).build();
+        schema = Schema.newBuilder().column( "a", DataTypes.INT().notNull() )
+                .column( "b", DataTypes.VARCHAR( 50 ) ).primaryKey( "a" )
+                .build();
     }
 
     @Test
@@ -89,6 +87,7 @@ public class CreateTable25263_25265_25267 extends FlinkTestBase {
                 .option( SDBAttribute.collectionspace, csName )
                 .option( SDBAttribute.collection, clName )
                 .option( SDBAttribute.username, FlinkTestBase.username )
-                .option( SDBAttribute.password, FlinkTestBase.password ).build();
+                .option( SDBAttribute.password, FlinkTestBase.password )
+                .build();
     }
 }

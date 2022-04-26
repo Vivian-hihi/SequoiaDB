@@ -10,6 +10,7 @@ import com.sequoiadb.testcommon.utils.Commlib;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -41,6 +42,8 @@ public class CreateTable25337 extends FlinkTestBase {
         Commlib.dropCS( sdb, csName );
         CollectionSpace cs = sdb.createCollectionSpace( csName );
         cl = cs.createCollection( clName );
+        cl.createIndex( "primarykey", new BasicBSONObject( filed_int, 1 ), true,
+                false );
     }
 
     @Test
@@ -72,17 +75,19 @@ public class CreateTable25337 extends FlinkTestBase {
         private void run() throws Exception {
             StreamExecutionEnvironment env = StreamExecutionEnvironment
                     .getExecutionEnvironment();
-            StreamTableEnvironment tableEnv = StreamTableEnvironment.create( env );
+            StreamTableEnvironment tableEnv = StreamTableEnvironment
+                    .create( env );
             Schema schema = Schema.newBuilder()
-                    .column( filed_int, DataTypes.INT() )
-                    .column( filed_String, DataTypes.STRING() ).build();
+                    .column( filed_int, DataTypes.INT().notNull() )
+                    .column( filed_String, DataTypes.STRING() )
+                    .primaryKey( filed_int ).build();
             TableDescriptor tableDescriptor = Commlib
                     .createTableDescriptor( schema, csName, clName );
             tableEnv.createTable( tableName, tableDescriptor );
             // 创建datagen表
-            tableEnv.executeSql( "CREATE TABLE datagen (\n" + " f_sequence INT,\n"
-                    + " f_random_str STRING\n" + ") WITH (\n"
-                    + " 'connector' = 'datagen',\n"
+            tableEnv.executeSql( "CREATE TABLE datagen (\n"
+                    + " f_sequence INT,\n" + " f_random_str STRING\n"
+                    + ") WITH (\n" + " 'connector' = 'datagen',\n"
                     + " 'rows-per-second'='100',\n"
                     + " 'fields.f_sequence.kind'='sequence',\n"
                     + " 'fields.f_sequence.start'='1',\n"

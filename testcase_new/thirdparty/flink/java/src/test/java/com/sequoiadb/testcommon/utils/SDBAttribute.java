@@ -26,5 +26,5 @@ public class SDBAttribute {
     public static final String group = "group";
     public static final String parallelism = "parallelism";
     public static final String maxbulkfilltime = "maxbulkfilltime";
-    public static final String transactionon = "transactionon";
+    public static final String overwrite = "overwrite";
 }

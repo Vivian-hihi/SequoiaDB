@@ -8,6 +8,7 @@ import com.sequoiadb.testcommon.utils.Commlib;
 import com.sequoiadb.testcommon.warpper.StreamTableEnvWarpper;
 import com.sequoiadb.testcommon.warpper.TableResultWarpper;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.bson.BasicBSONObject;
@@ -19,8 +20,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 /**
- * @descreption seqDB-25318:使用ORDER BY给查询结果排序
- *              seqDB-25319:使用LIMIT、FETCH限制返回结果
+ * @descreption seqDB-25318:使用ORDER BY给查询结果排序 seqDB-25319:使用LIMIT、FETCH限制返回结果
  *              seqDB-25320:使用OFFSET偏移读
  * @author YiPan
  * @date 2022/3/1
@@ -42,7 +42,8 @@ public class CreateTable25318_25319_25320 extends FlinkTestBase {
 
     @BeforeClass
     public void setUp() throws SQLException, ClassNotFoundException {
-        tableEnvWarpper = StreamTableEnvWarpper.create();
+        tableEnvWarpper = StreamTableEnvWarpper
+                .create( RuntimeExecutionMode.BATCH );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         Commlib.dropCS( sdb, csName );
@@ -50,9 +51,9 @@ public class CreateTable25318_25319_25320 extends FlinkTestBase {
         cs.createCollection( clName );
         datacl = cs.createCollection( dataClName );
         schema = Schema.newBuilder().column( "name", DataTypes.VARCHAR( 10 ) )
-                .column( "age", DataTypes.INT() )
-                .column( "ts", DataTypes.TIMESTAMP( 3 ) )
-                .watermark( "ts", "ts" ).build();
+                .column( "age", DataTypes.INT().notNull() )
+                .column( "ts", DataTypes.TIMESTAMP( 3 ) ).primaryKey( "age" )
+                .build();
         tableEnvWarpper.createTable( tableName, schema, csName, clName );
     }
 
@@ -60,17 +61,17 @@ public class CreateTable25318_25319_25320 extends FlinkTestBase {
     public void test() throws Exception {
         insertData();
         // 根据age降序，limit = 20
-        tableEnvWarpper.assertTableDataWithSql( "select * from " + tableName
-                + " order by ts,age desc limit 20 " );
+        tableEnvWarpper.assertTableDataWithSql(
+                "select * from " + tableName + " order by age desc limit 20 " );
         // 根据age升序，limit = 50
-        tableEnvWarpper.assertTableDataWithSql( "select * from " + tableName
-                + " order by ts,age asc limit 50 " );
+        tableEnvWarpper.assertTableDataWithSql(
+                "select * from " + tableName + " order by age asc limit 50 " );
         // 根name降序，offset = 10, fetch = 5
         tableEnvWarpper.assertTableDataWithSql( "select * from " + tableName
-                + " order by ts,name desc offset 10 rows fetch next 5 rows only" );
+                + " order by name desc offset 10 rows fetch next 5 rows only" );
         // 根name升序，offset = 20, fetch = 10
         tableEnvWarpper.assertTableDataWithSql( "select * from " + tableName
-                + " order by ts,name asc offset 20 rows fetch next 10 rows only" );
+                + " order by name asc offset 20 rows fetch next 10 rows only" );
     }
 
     private void insertData() throws Exception {
@@ -80,10 +81,11 @@ public class CreateTable25318_25319_25320 extends FlinkTestBase {
             bson.put( "name", RandomStringUtils.randomAlphanumeric( 10 ) );
             bson.put( "age", i );
             bson.put( "ts", new Timestamp( System.currentTimeMillis() ) );
-            datacl.insert( bson );
+            datacl.insertRecord( bson );
         }
         // 在公共库default_database下创建数据表，映射sdb数据集合
-        StreamTableEnvironment tableEnv = tableEnvWarpper.getStreamTableEnvironment();
+        StreamTableEnvironment tableEnv = tableEnvWarpper
+                .getStreamTableEnvironment();
         TableDescriptor tableDescriptor = Commlib.createTableDescriptor( schema,
                 csName, dataClName );
         tableEnv.useDatabase( "default_database" );

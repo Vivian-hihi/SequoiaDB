@@ -80,17 +80,20 @@ public class CreateTable25336 extends FlinkTestBase {
         private void run() throws Exception {
             StreamExecutionEnvironment env = StreamExecutionEnvironment
                     .getExecutionEnvironment();
-            StreamTableEnvironment tableEnv = StreamTableEnvironment.create( env );
+            StreamTableEnvironment tableEnv = StreamTableEnvironment
+                    .create( env );
             Schema schema = Schema.newBuilder()
-                    .column( filed_int, DataTypes.INT() )
-                    .column( filed_String, DataTypes.STRING() ).build();
+                    .column( filed_int, DataTypes.INT().notNull() )
+                    .column( filed_String, DataTypes.STRING() )
+                    .primaryKey( filed_int ).build();
             TableDescriptor tableDescriptor = Commlib
                     .createTableDescriptor( schema, csName, clName );
             tableEnv.createTable( tableName, tableDescriptor );
             String sql = "insert into %s  values(%d,'%s')";
-            TableResult tableResult = tableEnv.executeSql(String.format(sql, tableName,
-                    bson.get(filed_int), bson.get(filed_String)));
-            Commlib.waitJobFinish(tableResult);
+            TableResult tableResult = tableEnv
+                    .executeSql( String.format( sql, tableName,
+                            bson.get( filed_int ), bson.get( filed_String ) ) );
+            Commlib.waitJobFinish( tableResult );
         }
     }
 
@@ -102,9 +105,10 @@ public class CreateTable25336 extends FlinkTestBase {
                 cs.createCollection( clName );
             } catch ( BaseException e ) {
                 String errorType = e.getErrorType();
-                if ( errorType.equals( SDBError.SDB_DMS_CS_EXIST.getErrorType() )
-                        || errorType
-                                .equals( SDBError.SDB_DMS_EXIST.getErrorType() ) ) {
+                if ( errorType
+                        .equals( SDBError.SDB_DMS_CS_EXIST.getErrorType() )
+                        || errorType.equals(
+                                SDBError.SDB_DMS_EXIST.getErrorType() ) ) {
                     return;
                 }
                 throw e;

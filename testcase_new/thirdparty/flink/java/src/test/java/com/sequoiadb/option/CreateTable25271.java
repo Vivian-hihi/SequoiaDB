@@ -91,7 +91,7 @@ public class CreateTable25271 extends FlinkTestBase {
         BasicBSONObject bson = new BasicBSONObject();
         bson.put( filed_A, data_A );
         bson.put( filed_B, data_B );
-        cl.insert( bson );
+        cl.insertRecord( bson );
     }
 
     private TableDescriptor createTableDescriptor( Schema schema,

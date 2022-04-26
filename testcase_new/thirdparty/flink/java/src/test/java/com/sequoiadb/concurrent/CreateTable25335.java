@@ -52,20 +52,10 @@ public class CreateTable25335 extends FlinkTestBase {
         Commlib.dropCS( sdb, csName );
         CollectionSpace cs = sdb.createCollectionSpace( csName );
         cl = cs.createCollection( clName );
+        cl.createIndex( "primarykey", new BasicBSONObject( filed_int, 1 ), true,
+                false );
         dataCl = cs.createCollection( dataClName );
         DataClInsertdData();
-    }
-
-    private void DataClInsertdData() {
-        for ( int i = 0; i < recordNum / 2; i++ ) {
-            BSONObject record = new BasicBSONObject();
-            String data_string = RandomStringUtils.randomAlphanumeric( 10 );
-            record.put( filed_int, i );
-            record.put( filed_String, data_string );
-            dataCl.insert( record );
-            record.removeField( "_id" );
-            flinkInsert.add( record );
-        }
     }
 
     @Test
@@ -108,10 +98,12 @@ public class CreateTable25335 extends FlinkTestBase {
         private void run() throws Exception {
             StreamExecutionEnvironment env = StreamExecutionEnvironment
                     .getExecutionEnvironment();
-            StreamTableEnvironment tableEnv = StreamTableEnvironment.create( env );
+            StreamTableEnvironment tableEnv = StreamTableEnvironment
+                    .create( env );
             Schema schema = Schema.newBuilder()
-                    .column( filed_int, DataTypes.INT() )
-                    .column( filed_String, DataTypes.STRING() ).build();
+                    .column( filed_int, DataTypes.INT().notNull() )
+                    .column( filed_String, DataTypes.STRING() )
+                    .primaryKey( filed_int ).build();
             TableDescriptor table = Commlib.createTableDescriptor( schema,
                     csName, clName );
             TableDescriptor dataTable = Commlib.createTableDescriptor( schema,
@@ -127,7 +119,7 @@ public class CreateTable25335 extends FlinkTestBase {
     private class InsertIntoSdb {
         @ExecuteOrder(step = 1)
         private void run() {
-            for ( int i = 0; i < recordNum / 2; i++ ) {
+            for ( int i = recordNum / 2; i < recordNum; i++ ) {
                 BSONObject record = new BasicBSONObject();
                 String data_string = RandomStringUtils.randomAlphanumeric( 10 );
                 record.put( filed_int, i );
@@ -136,6 +128,18 @@ public class CreateTable25335 extends FlinkTestBase {
                 record.removeField( "_id" );
                 sdbInsert.add( record );
             }
+        }
+    }
+
+    private void DataClInsertdData() {
+        for ( int i = 0; i < recordNum / 2; i++ ) {
+            BSONObject record = new BasicBSONObject();
+            String data_string = RandomStringUtils.randomAlphanumeric( 10 );
+            record.put( filed_int, i );
+            record.put( filed_String, data_string );
+            dataCl.insert( record );
+            record.removeField( "_id" );
+            flinkInsert.add( record );
         }
     }
 }

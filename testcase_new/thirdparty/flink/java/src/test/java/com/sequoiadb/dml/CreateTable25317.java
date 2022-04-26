@@ -36,12 +36,9 @@ public class CreateTable25317 extends FlinkTestBase {
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         Commlib.dropCS( sdb, csName );
-        CollectionSpace cs = sdb.createCollectionSpace( csName );
-        cs.createCollection( clNameA );
-        cs.createCollection( clNameB );
         Schema schema = Schema.newBuilder()
-                .column( "name", DataTypes.VARCHAR( 10 ) )
-                .column( "age", DataTypes.INT() ).build();
+                .column( "name", DataTypes.VARCHAR( 10 ).notNull() )
+                .column( "age", DataTypes.INT() ).primaryKey( "name" ).build();
         tableEnvWarpper.createTable( tableNameA, schema, csName, clNameA );
         tableEnvWarpper.createTable( tableNameB, schema, csName, clNameB );
     }

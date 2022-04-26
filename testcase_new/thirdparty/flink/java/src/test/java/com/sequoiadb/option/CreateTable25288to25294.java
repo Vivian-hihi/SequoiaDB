@@ -135,7 +135,8 @@ public class CreateTable25288to25294 extends FlinkTestBase {
 
     private void createTable() throws Exception {
         Schema schema = Schema.newBuilder()
-                .column( filed_A, DataTypes.STRING() ).build();
+                .column( filed_A, DataTypes.STRING().notNull() )
+                .primaryKey( filed_A ).build();
         TableDescriptor.Builder option = Commlib.createBaseTableOption( schema,
                 csName, clName );
         TableDescriptor tableDescriptor = option

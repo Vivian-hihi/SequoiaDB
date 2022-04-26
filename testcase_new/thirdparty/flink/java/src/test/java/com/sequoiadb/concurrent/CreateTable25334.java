@@ -1,6 +1,7 @@
 package com.sequoiadb.concurrent;
 
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -15,9 +16,12 @@ import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
+import org.bson.BasicBSONObject;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.Optional;
 
 /**
  * @descreption seqDB-25334:并发插入和查询数据
@@ -42,13 +46,17 @@ public class CreateTable25334 extends FlinkTestBase {
     public void setUp() {
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
-        Schema schema = Schema.newBuilder().column( filed_int, DataTypes.INT() )
-                .column( filed_String, DataTypes.STRING() ).build();
+        Schema schema = Schema.newBuilder()
+                .column( filed_int, DataTypes.INT().notNull() )
+                .column( filed_String, DataTypes.STRING() )
+                .primaryKey( filed_int ).build();
         tableDescriptor = Commlib.createTableDescriptor( schema, csName,
                 clName );
         Commlib.dropCS( sdb, csName );
         CollectionSpace cs = sdb.createCollectionSpace( csName );
-        cs.createCollection( clName );
+        DBCollection cl = cs.createCollection( clName );
+        cl.createIndex( "primarykey", new BasicBSONObject( filed_int, 1 ), true,
+                false );
     }
 
     @Test
@@ -74,7 +82,8 @@ public class CreateTable25334 extends FlinkTestBase {
         private void run() {
             StreamExecutionEnvironment env = StreamExecutionEnvironment
                     .getExecutionEnvironment();
-            StreamTableEnvironment tableEnv = StreamTableEnvironment.create( env );
+            StreamTableEnvironment tableEnv = StreamTableEnvironment
+                    .create( env );
             tableEnv.createTable( tableName, tableDescriptor );
             // 创建datagen表构建流式数据
             tableEnv.executeSql( "CREATE TABLE datagen (\n"
@@ -96,7 +105,8 @@ public class CreateTable25334 extends FlinkTestBase {
         private void run() throws Exception {
             StreamExecutionEnvironment env = StreamExecutionEnvironment
                     .getExecutionEnvironment();
-            StreamTableEnvironment tableEnv = StreamTableEnvironment.create( env );
+            StreamTableEnvironment tableEnv = StreamTableEnvironment
+                    .create( env );
             tableEnv.createTable( tableName, tableDescriptor );
             int times = 0;
             while ( true ) {

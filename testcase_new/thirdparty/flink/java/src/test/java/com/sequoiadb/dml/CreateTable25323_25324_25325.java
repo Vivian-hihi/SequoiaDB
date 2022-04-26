@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 
 import java.sql.SQLException;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * @descreption seqDB-25323:使用GROUP BY对查询结果分组 seqDB-25324:使用WHERE关键字指定运算符
@@ -48,10 +49,12 @@ public class CreateTable25323_25324_25325 extends FlinkTestBase {
         CollectionSpace cs = sdb.createCollectionSpace( csName );
         cs.createCollection( clName );
         datacl = cs.createCollection( dataClName );
-        schema = Schema.newBuilder().column( "name", DataTypes.VARCHAR( 10 ) )
+        schema = Schema.newBuilder()
+                .column( "name", DataTypes.VARCHAR( 36 ).notNull() )
                 .column( "age", DataTypes.INT() )
                 .column( "clazz", DataTypes.VARCHAR( 50 ) )
-                .column( "sex", DataTypes.VARCHAR( 50 ) ).build();
+                .column( "sex", DataTypes.VARCHAR( 50 ) ).primaryKey( "name" )
+                .build();
         tableEnvWarpper.createTable( tableName, schema, csName, clName );
     }
 
@@ -63,11 +66,13 @@ public class CreateTable25323_25324_25325 extends FlinkTestBase {
                 "select clazz,count(clazz) from " + tableName
                         + " group by clazz" );
         // group by rollup
-        tableEnvWarpper.assertTableDataNoOrderWithSql( "select clazz,sex,age from "
-                + tableName + " group by rollup( clazz,sex,age )" );
+        tableEnvWarpper
+                .assertTableDataNoOrderWithSql( "select clazz,sex,age from "
+                        + tableName + " group by rollup( clazz,sex,age )" );
         // group by cube
-        tableEnvWarpper.assertTableDataNoOrderWithSql( "select clazz,sex,age from "
-                + tableName + " group by cube( clazz,sex,age )" );
+        tableEnvWarpper
+                .assertTableDataNoOrderWithSql( "select clazz,sex,age from "
+                        + tableName + " group by cube( clazz,sex,age )" );
         // group by grouping sets
         tableEnvWarpper.assertTableDataNoOrderWithSql(
                 "select clazz,sex,age from " + tableName
@@ -108,14 +113,15 @@ public class CreateTable25323_25324_25325 extends FlinkTestBase {
         // 构造一个存有数据的集合用于插入数据
         for ( int i = 0; i < 50; i++ ) {
             BasicBSONObject bson = new BasicBSONObject();
-            bson.put( "name", RandomStringUtils.randomAlphanumeric( 10 ) );
+            bson.put( "name", UUID.randomUUID() );
             bson.put( "age", ages[ random.nextInt( ages.length ) ] );
             bson.put( "clazz", clazzs[ random.nextInt( clazzs.length ) ] );
             bson.put( "sex", sexs[ random.nextInt( sexs.length ) ] );
             datacl.insert( bson );
         }
         // 在公共库default_database下创建数据表，映射sdb数据集合
-        StreamTableEnvironment tableEnv = tableEnvWarpper.getStreamTableEnvironment();
+        StreamTableEnvironment tableEnv = tableEnvWarpper
+                .getStreamTableEnvironment();
         TableDescriptor tableDescriptor = Commlib.createTableDescriptor( schema,
                 csName, dataClName );
         tableEnv.useDatabase( "default_database" );

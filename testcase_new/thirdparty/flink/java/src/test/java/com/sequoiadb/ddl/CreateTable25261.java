@@ -21,6 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * @descreption seqDB-25261:创建SDB映射表，指定映射参数
@@ -56,16 +57,20 @@ public class CreateTable25261 extends FlinkTestBase {
         }
         CollectionSpace cs = sdb.createCollectionSpace( csName );
         cl = cs.createCollection( clName );
+        cl.createIndex( "primarykey", new BasicBSONObject( filed_String, 1 ),
+                true, false );
         insertData();
-        schema = Schema.newBuilder().column( filed_String, DataTypes.STRING() )
-                .column( filed_int, DataTypes.INT() ).build();
+        schema = Schema.newBuilder()
+                .column( filed_String, DataTypes.STRING().notNull() )
+                .column( filed_int, DataTypes.INT() ).primaryKey( filed_String )
+                .build();
     }
 
     @Test
     public void test() throws Exception {
-        //随机插入或者查询
+        // 随机插入或者查询
         String[] sqls = new String[] { "select * from %s",
-                "insert into %s values('abc',123)" };
+                "insert into %s values('" + UUID.randomUUID() + "',123)" };
         Random random = new Random();
 
         // with指定单个支持的key,value参数

@@ -46,15 +46,18 @@ public class CreateTable25272 extends FlinkTestBase {
             sdb.dropCollectionSpace( csName );
         }
         CollectionSpace cs = sdb.createCollectionSpace( csName );
-        cs.createCollection( clName );
+        DBCollection cl = cs.createCollection( clName );
+        cl.createIndex( "primarykey", new BasicBSONObject( filed_A, 1 ), true,
+                false );
     }
 
     @Test
     public void test() throws Exception {
         // flink创建表
         Schema schema = Schema.newBuilder()
-                .column( filed_A, DataTypes.STRING() )
-                .column( filed_B, DataTypes.INT() ).build();
+                .column( filed_A, DataTypes.STRING().notNull() )
+                .column( filed_B, DataTypes.INT() ).primaryKey( filed_A )
+                .build();
         TableDescriptor tableDescriptor = Commlib.createTableDescriptor( schema,
                 csName, clName );
         tableEnv.createTable( tableNameBase, tableDescriptor );

@@ -50,8 +50,9 @@ public class CreateTable25326 extends FlinkTestBase {
             sdb.dropCollectionSpace( csName );
         }
         cs = sdb.createCollectionSpace( csName );
-        schema = Schema.newBuilder().column( "name", DataTypes.VARCHAR( 10 ) )
-                .column( "age", DataTypes.INT() ).build();
+        schema = Schema.newBuilder()
+                .column( "name", DataTypes.VARCHAR( 10 ).notNull() )
+                .column( "age", DataTypes.INT() ).primaryKey( "name" ).build();
         TableDescriptor table_A = Commlib.createTableDescriptor( schema, csName,
                 clName_A );
         tableEnv.createTable( tableNameA, table_A );
@@ -74,10 +75,10 @@ public class CreateTable25326 extends FlinkTestBase {
         Assert.assertTrue( cs.isCollectionExist( clName_B ) );
 
         // 验证表数据相同
-        ArrayList< Row > result_A = Commlib.collectToArrayList(
-                tableEnv.executeSql( "select * from " + tableNameA ).collect() );
-        ArrayList< Row > result_B = Commlib.collectToArrayList(
-                tableEnv.executeSql( "select * from " + tableNameB ).collect() );
+        ArrayList< Row > result_A = Commlib.collectToArrayList( tableEnv
+                .executeSql( "select * from " + tableNameA ).collect() );
+        ArrayList< Row > result_B = Commlib.collectToArrayList( tableEnv
+                .executeSql( "select * from " + tableNameB ).collect() );
         Assert.assertEqualsNoOrder( result_B.toArray(), result_A.toArray() );
     }
 
@@ -87,7 +88,7 @@ public class CreateTable25326 extends FlinkTestBase {
             BasicBSONObject record = new BasicBSONObject();
             record.put( "name", RandomStringUtils.randomAlphanumeric( 5 ) );
             record.put( "age", i );
-            cl.insert( record );
+            cl.insertRecord( record );
         }
     }
 

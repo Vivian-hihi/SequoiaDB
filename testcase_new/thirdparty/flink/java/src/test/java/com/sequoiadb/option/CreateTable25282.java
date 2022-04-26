@@ -33,6 +33,7 @@ public class CreateTable25282 extends FlinkTestBase {
     private final String clName_B = "cl_25282_B";
     private final String filed_A = "test_a";
     private final String filed_B = "test_b";
+    private final String filed_PK = "test_pk";
     private final String tableName_A = "tb_25278_A";
     private final String tableName_B = "tb_25278_B";
     private final String ignorenullfield = "true";
@@ -51,8 +52,10 @@ public class CreateTable25282 extends FlinkTestBase {
     @Test
     public void test() throws Exception {
         Schema schema = Schema.newBuilder()
+                .column( filed_PK, DataTypes.INT().notNull() )
                 .column( filed_A, DataTypes.STRING() )
-                .column( filed_B, DataTypes.INT() ).build();
+                .column( filed_B, DataTypes.INT() ).primaryKey( filed_PK )
+                .build();
         tableEnv.createTable( tableName_A,
                 createTableDescriptor( schema, csName, clName_A ) );
         tableEnv.createTable( tableName_B,
@@ -66,6 +69,7 @@ public class CreateTable25282 extends FlinkTestBase {
                 .getCollection( clName_B );
         BSONObject result = cl.queryOne();
         result.removeField( "_id" );
+        result.removeField( filed_PK );
         Assert.assertTrue( result.isEmpty() );
     }
 
@@ -89,6 +93,9 @@ public class CreateTable25282 extends FlinkTestBase {
     private void insertNullData() {
         CollectionSpace cs = sdb.createCollectionSpace( csName );
         DBCollection cl = cs.createCollection( clName_A );
-        cl.insert( new BasicBSONObject( filed_A, null ) );
+        BasicBSONObject record = new BasicBSONObject();
+        record.put( filed_PK, 1 );
+        record.put( filed_A, null );
+        cl.insertRecord( record );
     }
 }

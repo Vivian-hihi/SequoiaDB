@@ -53,8 +53,9 @@ public class CreateTable25273_25295 extends FlinkTestBase {
     public void test() throws Exception {
         // flink创建表
         Schema schema = Schema.newBuilder()
-                .column( filed_A, DataTypes.STRING() )
-                .column( filed_B, DataTypes.INT() ).build();
+                .column( filed_A, DataTypes.STRING().notNull() )
+                .column( filed_B, DataTypes.INT() ).primaryKey( filed_A )
+                .build();
         TableDescriptor tableDescriptor = Commlib.createTableDescriptor( schema,
                 csName, clName );
         tableEnv.createTable( tableNameBase, tableDescriptor );
@@ -84,7 +85,7 @@ public class CreateTable25273_25295 extends FlinkTestBase {
             if ( options.get( "ReplSize" ) != null ) {
                 Assert.assertEquals( options.get( "ReplSize" ), 1 );
             }
-        }finally {
+        } finally {
             snap_catalog.close();
         }
 
@@ -93,7 +94,7 @@ public class CreateTable25273_25295 extends FlinkTestBase {
         try {
             BSONObject options = snap_cs.getNext();
             Assert.assertEquals( options.get( "PageSize" ), 65536 );
-        }finally {
+        } finally {
             snap_cs.close();
         }
     }

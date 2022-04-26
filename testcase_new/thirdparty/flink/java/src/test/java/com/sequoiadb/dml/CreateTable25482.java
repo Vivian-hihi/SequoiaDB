@@ -10,6 +10,7 @@ import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
+import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -19,6 +20,8 @@ import org.testng.annotations.Test;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @descreption seqDB-25482:使用INSERT INTO SELECT插入空数据至空表中
@@ -37,6 +40,7 @@ public class CreateTable25482 extends FlinkTestBase {
     private final String clName_B = "cl_25482_B";
     private final String filed_A = "test_A";
     private final String filed_B = "test_B";
+    private final String filed_pk = "test_pk";
     private Sequoiadb sdb;
     private CollectionSpace cs;
 
@@ -71,8 +75,9 @@ public class CreateTable25482 extends FlinkTestBase {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create( env );
 
         Schema schema = Schema.newBuilder()
+                .column( filed_pk, DataTypes.INT().notNull() )
                 .column( filed_A, DataTypes.VARCHAR( 10 ) )
-                .column( filed_B, dataType ).build();
+                .column( filed_B, dataType ).primaryKey( filed_pk ).build();
         TableDescriptor tableDesc_data = Commlib.createTableDescriptor( schema,
                 csName, clName_A );
         TableDescriptor tableDesc_null = Commlib.createTableDescriptor( schema,
@@ -99,9 +104,15 @@ public class CreateTable25482 extends FlinkTestBase {
 
     private void insertData() {
         DBCollection cl = cs.createCollection( clName_A );
-        cl.insert( new BasicBSONObject( filed_A, null ) );
-        cl.insert( new BasicBSONObject( filed_B, null ) );
-        cl.insert( new BasicBSONObject( filed_A, "" ) );
-        cl.insert( new BasicBSONObject( filed_A, "null" ) );
+        List< BSONObject > records = new ArrayList<>();
+        records.add( new BasicBSONObject( filed_A, null ) );
+        records.add( new BasicBSONObject( filed_B, null ) );
+        records.add( new BasicBSONObject( filed_A, "" ) );
+        records.add( new BasicBSONObject( filed_A, "null" ) );
+        for ( int i = 0; i < records.size(); i++ ) {
+            BSONObject record = records.get( i );
+            record.put( filed_pk, i );
+            cl.insertRecord( record );
+        }
     }
 }

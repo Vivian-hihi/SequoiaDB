@@ -4,6 +4,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.FlinkTestBase;
 import com.sequoiadb.testcommon.utils.JDBCAttribute;
 import com.sequoiadb.testcommon.utils.SDBAttribute;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableDescriptor;
@@ -21,13 +22,15 @@ public class StreamTableEnvWarpperImpl extends FlinkTestBase
     private StreamTableEnvironment tableEnv;
     private String mysqlUrl;
 
-    public StreamTableEnvWarpperImpl() {
+    public StreamTableEnvWarpperImpl( RuntimeExecutionMode mode ) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
+        env.setRuntimeMode( mode );
         tableEnv = StreamTableEnvironment.create( env );
         mysqlUrl = String.format(
                 "jdbc:mysql://%s?user=%s&password=%s&useUnicode=true&useSSL=false&characterEncoding=utf-8&autoReconnect=true",
-                FlinkTestBase.getMysqlAddress(), FlinkTestBase.getMysqlUsername(),
+                FlinkTestBase.getMysqlAddress(),
+                FlinkTestBase.getMysqlUsername(),
                 FlinkTestBase.getMysqlPassword() );
         createFlinkDatabase();
     }
@@ -140,7 +143,8 @@ public class StreamTableEnvWarpperImpl extends FlinkTestBase
                 .option( SDBAttribute.collectionspace, mappingCSName )
                 .option( SDBAttribute.collection, mappingClName )
                 .option( SDBAttribute.username, FlinkTestBase.username )
-                .option( SDBAttribute.password, FlinkTestBase.password ).build();
+                .option( SDBAttribute.password, FlinkTestBase.password )
+                .build();
     }
 
     private TableDescriptor createJDBCTableDescriptor( Schema schema,

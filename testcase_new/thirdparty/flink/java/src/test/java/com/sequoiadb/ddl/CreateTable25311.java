@@ -45,8 +45,9 @@ public class CreateTable25311 extends FlinkTestBase {
                 FlinkTestBase.password );
         Commlib.dropCS( sdb, csName );
         Schema schema = Schema.newBuilder()
-                .column( filed_A, DataTypes.STRING() )
-                .column( filed_B, DataTypes.INT() ).build();
+                .column( filed_A, DataTypes.STRING().notNull() )
+                .column( filed_B, DataTypes.INT() ).primaryKey( filed_A )
+                .build();
         TableDescriptor tableDescriptor = Commlib.createTableDescriptor( schema,
                 csName, clName );
         tableEnv.createTable( tableName, tableDescriptor );
@@ -68,12 +69,13 @@ public class CreateTable25311 extends FlinkTestBase {
             }
         }
 
-        tableEnv.executeSql( "alter table " + tableName + " set ('"
-                + SDBAttribute.hosts + "'='" + FlinkTestBase.getCoords() + "')" );
+        tableEnv.executeSql(
+                "alter table " + tableName + " set ('" + SDBAttribute.hosts
+                        + "'='" + FlinkTestBase.getCoords() + "')" );
         tableEnv.executeSql( "insert into " + tableName + " values('" + data_A
                 + "'," + data_B + ")" );
-        ArrayList<Row> rows = Commlib.collectToArrayList( tableEnv
-                .executeSql( "select * from " + tableName ).collect() );
+        ArrayList< Row > rows = Commlib.collectToArrayList(
+                tableEnv.executeSql( "select * from " + tableName ).collect() );
         Assert.assertEquals( rows.size(), 1 );
     }
 
