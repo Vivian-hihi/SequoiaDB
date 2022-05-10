@@ -283,6 +283,7 @@
                      <echo message="cmd : ${cmd} in dir ${casedir}"/>
                      <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
                         <arg line="${cmd}" />
+                        <env key="JAVA_HOME" path="${JAVA8_HOME}" />
                      </exec>
                   </then>
                </if>
@@ -311,6 +312,7 @@
          <echo message="cmd : mvn ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
             <arg line="${cmd}" />
+            <env key="JAVA_HOME" path="${JAVA8_HOME}" />
          </exec>
 
       </sequential>
@@ -347,6 +349,7 @@
          <echo message="cmd : ${cmd} in dir ${casedir}"/>
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" >
             <arg line="${cmd}" />
+            <env key="JAVA_HOME" path="${JAVA8_HOME}" />
          </exec>
       </sequential>
    </macrodef>
