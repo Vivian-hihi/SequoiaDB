@@ -71,9 +71,9 @@ namespace engine
    }
 
    #define PMD_REST_SESSION_SNIFF_TIMEOUT    ( 10 * OSS_ONE_SEC )
-   #define PMD_REST_CS_NAME_SZ               127 
+   #define PMD_REST_CS_NAME_SZ               127
    #define PMD_REST_SQL_COMMON_LEN           127
-   #define PMD_REST_SQL_MAX_LEN              ( PMD_REST_SQL_COMMON_LEN + PMD_REST_CS_NAME_SZ )            
+   #define PMD_REST_SQL_MAX_LEN              ( PMD_REST_SQL_COMMON_LEN + PMD_REST_CS_NAME_SZ )
    /*
       util
    */
@@ -243,6 +243,7 @@ namespace engine
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          _pEDUCB->resetLsn() ;
+         pdClearLastError() ;
 
          rc = request.init() ;
          if ( rc )
@@ -934,10 +935,10 @@ namespace engine
                               &RestToMSGTransfer::_convertDropAutoIncrement },
 
          { CMD_NAME_GET_COUNT,   &RestToMSGTransfer::_convertGetCount },
-         
+
          { CMD_NAME_GET_DOMAIN_NAME,
                                  &RestToMSGTransfer::_convertGetDomainName },
-                     
+
          { CMD_NAME_LIST_GROUPS, &RestToMSGTransfer::_convertListGroups },
          { REST_CMD_NAME_START_GROUP,
                                  &RestToMSGTransfer::_convertStartGroup },
@@ -982,7 +983,7 @@ namespace engine
          { REST_CMD_NAME_LISTINDEXES,
                                  &RestToMSGTransfer::_convertListIndexes },
 //         { CMD_NAME_LIST_CL_IN_DOMAIN, &RestToMSGTransfer::_convertQuery },
-         { CMD_NAME_LIST_CL_IN_COLLECTIONSPACE, 
+         { CMD_NAME_LIST_CL_IN_COLLECTIONSPACE,
                                &RestToMSGTransfer::_convertListCLInCollectionsSpace },
          { CMD_NAME_SNAPSHOT_CONTEXTS,
                                  &RestToMSGTransfer::_convertSnapshotContext },
@@ -3665,7 +3666,7 @@ namespace engine
       try
       {
          BSONObjBuilder builder ;
-         BSONObjBuilder subBuilder ( builder.subobjStart( FIELD_NAME_NAME ) ) ; 
+         BSONObjBuilder subBuilder ( builder.subobjStart( FIELD_NAME_NAME ) ) ;
          subBuilder.append( "$gt", lowBound ) ;
          subBuilder.append( "$lt", upBound ) ;
          subBuilder.doneFast() ;
