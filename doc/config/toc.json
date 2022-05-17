@@ -1591,6 +1591,12 @@
                            "file": "upgrade_index",
                            "cn": "索引升级工具",
                            "en": "Upgrade Index Tool"
+                        },
+                        {
+                           "id": 1599730477,
+                           "file": "sdbsecuretool",
+                           "cn": "数据安全处理工具",
+                           "en": "Secure Tool"
                         }
                      ]
                   },
