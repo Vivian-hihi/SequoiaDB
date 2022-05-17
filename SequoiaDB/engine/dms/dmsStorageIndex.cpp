@@ -49,6 +49,7 @@
 #include "dmsTrace.hpp"
 #include "dmsIndexBuilder.hpp"
 #include "dmsTransLockCallback.hpp"
+#include "pdSecure.hpp"
 
 using namespace bson ;
 
@@ -2205,7 +2206,7 @@ namespace engine
          }
 
          PD_LOG ( PDERROR, "Failed to insert index, key[%s], rid[%d:%d], rc: %d",
-                  key.toString( FALSE, TRUE ).c_str(), rid._extent,
+                  PD_SECURE_STR(key.toString(FALSE, TRUE)), rid._extent,
                   rid._offset, rc ) ;
          goto error ;
       }
@@ -2235,7 +2236,7 @@ namespace engine
 
       rc = indexCB->getKeysFromObject ( inputObj, keySet, &allUndefined ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to get keys from object %s",
-                    inputObj.toString().c_str() ) ;
+                    PD_SECURE_OBJ( inputObj ) ) ;
       {
          BSONObjSet::iterator it ;
          Ordering order = Ordering::make( indexCB->keyPattern() ) ;
@@ -2271,7 +2272,7 @@ namespace engine
                   pResult->setCurrentID( inputObj ) ;
                }
                PD_LOG ( PDERROR, "Insert index key(%s) with rid(%d, %d) "
-                        "failed, rc: %d", it->toString().c_str(),
+                        "failed, rc: %d", PD_SECURE_OBJ( *it ),
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
@@ -2307,16 +2308,17 @@ namespace engine
       {
          rc = key.toRecord( indexCB->keyPattern(), builder ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to builder index insertor:key=%s,"
-                      "pattern=%s,rc=%d", key.toString().c_str(),
-                      indexCB->keyPattern().toString().c_str(), rc ) ;
+                      "pattern=%s,rc=%d", PD_SECURE_STR( key.toString() ),
+                      PD_SECURE_OBJ( indexCB->keyPattern() ), rc ) ;
 
          record = builder.obj() ;
       }
       catch ( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to builder index insertor:key=%s,"
-                 "exception=%s,rc=%d", key.toString().c_str(), e.what(), rc ) ;
+         PD_LOG( PDERROR,
+                 "Failed to builder index insertor: key=%s,exception=%s,rc=%d",
+                 PD_SECURE_STR( key.toString() ), e.what(), rc ) ;
          goto error ;
       }
 
@@ -2335,12 +2337,12 @@ namespace engine
       BSONObj record ;
       // TODO: linyoubin global index's operation must under the transaction
       rc = _builderIndexRecord( &indexCB, key, record ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to build index record, key: %s,rc: %d",
-                   key.toString().c_str(), rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build index record, key: %s, rc: %d",
+                   PD_SECURE_STR( key.toString() ), rc ) ;
 
       rc = container.append( indexCB.getIndexCLName(), record, isInsert ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to append record, record: %s,rc: %d",
-                   record.toString().c_str(), rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to append record, record: %s, rc: %d",
+                   PD_SECURE_OBJ( record ), rc ) ;
 
    done
 :
@@ -2391,7 +2393,7 @@ namespace engine
                                             extraRec._record, 0 ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to insert, cl: %s, "
                             "insertor: %s, rc: %d", extraRec._clName.c_str(),
-                            extraRec._record.toString().c_str(), rc ) ;
+                            PD_SECURE_OBJ( extraRec._record ), rc ) ;
             }
             else
             {
@@ -2399,7 +2401,7 @@ namespace engine
                                             extraRec._record, dummy, 0 ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to delete, cl: %s, "
                             "deletor: %s, rc: %d", extraRec._clName.c_str(),
-                            extraRec._record.toString().c_str(), rc ) ;
+                            PD_SECURE_OBJ( extraRec._record ), rc ) ;
             }
 
             ++iterVec ;
@@ -2481,14 +2483,15 @@ namespace engine
 
             rc = indexCB.getKeysFromObject ( inputObj, keySet ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to get keys from object %s",
-                          inputObj.toString().c_str() ) ;
+                          PD_SECURE_OBJ( inputObj ) ) ;
 
             for ( it = keySet.begin() ; it != keySet.end() ; ++it )
             {
                ixmKeyOwned ko ((*it)) ;
                rc = _collectGIDXRecord( indexCB, ko, TRUE, container ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to collect index record, "
-                            "key: %s, rc: %d", ko.toString().c_str(), rc ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to collect index record, key: %s, rc: %d",
+                            PD_SECURE_STR( ko.toString() ), rc ) ;
             }
          }
       }
@@ -2563,7 +2566,7 @@ namespace engine
             rc = _indexInsert ( context, &indexCB, inputObj, rid, cb, !unique,
                                 dropDups, pOprHandle, pResult, pUnqIdxHashArray ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to insert object(%s) index(%s), "
-                          "rc: %d", inputObj.toString().c_str(),
+                          "rc: %d", PD_SECURE_OBJ( inputObj ),
                           indexCB.getDef().toString().c_str(), rc ) ;
          }
       }
@@ -2639,7 +2642,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get keys from org object %s",
-                  originalObj.toString().c_str() ) ;
+                  PD_SECURE_OBJ( originalObj ) ) ;
          goto error ;
       }
 
@@ -2660,7 +2663,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get keys from new object %s",
-                  newObj.toString().c_str() ) ;
+                  PD_SECURE_OBJ( newObj ) ) ;
          goto error ;
       }
 
@@ -2721,7 +2724,7 @@ namespace engine
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Delete index key(%s) with rid(%d, %d) "
-                           "failed, rc: %d", (*itori).toString().c_str(),
+                           "failed, rc: %d", PD_SECURE_OBJ( *itori ),
                            rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
@@ -2783,7 +2786,7 @@ namespace engine
                   }
 
                   PD_LOG ( PDERROR, "Failed to insert index(%s) with "
-                           "rid(%d, %d), rc: %d", (*itnew).toString().c_str(),
+                           "rid(%d, %d), rc: %d", PD_SECURE_OBJ( *itnew ),
                            rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
@@ -2818,7 +2821,7 @@ namespace engine
             if ( rc )
             {
                PD_LOG ( PDERROR, "Delete index key(%s) with rid(%d, %d) "
-                        "failed, rc: %d", (*itori).toString().c_str(),
+                        "failed, rc: %d", PD_SECURE_OBJ( *itori ),
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
@@ -2881,7 +2884,7 @@ namespace engine
                }
 
                PD_LOG ( PDERROR, "Failed to insert index(%s) with "
-                        "rid(%d, %d), rc: %d", (*itnew).toString().c_str(),
+                        "rid(%d, %d), rc: %d", PD_SECURE_OBJ( *itnew ),
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
@@ -2962,11 +2965,11 @@ namespace engine
             BSONObjSet keySetNew ;
             rc = indexCB.getKeysFromObject( originalObj, keySetOri ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get keys from org object %s",
-                        originalObj.toString().c_str() ) ;
+                         PD_SECURE_OBJ( originalObj ) ) ;
 
             rc = indexCB.getKeysFromObject( newObj, keySetNew ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get keys from new object %s",
-                        newObj.toString().c_str() ) ;
+                         PD_SECURE_OBJ( newObj ) ) ;
 
             {
                BSONObjSet::iterator itori = keySetOri.begin() ;
@@ -2987,7 +2990,7 @@ namespace engine
                      rc = _collectGIDXRecord( indexCB, ko, FALSE, container ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
                                   "record, key: %s, rc: %d",
-                                  ko.toString().c_str(), rc ) ;
+                                  PD_SECURE_STR( ko.toString() ), rc ) ;
 
                      itori++ ;
                   }
@@ -2997,7 +3000,7 @@ namespace engine
                      rc = _collectGIDXRecord( indexCB, ko, TRUE, container ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
                                   "record, key: %s, rc: %d",
-                                  ko.toString().c_str(), rc ) ;
+                                  PD_SECURE_STR( ko.toString() ), rc ) ;
 
                      itnew++ ;
                   }
@@ -3010,7 +3013,7 @@ namespace engine
                   rc = _collectGIDXRecord( indexCB, ko, FALSE, container ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
                                   "record, key: %s, rc: %d",
-                                  ko.toString().c_str(), rc ) ;
+                                  PD_SECURE_STR( ko.toString() ), rc ) ;
 
                   itori++ ;
                }
@@ -3022,7 +3025,7 @@ namespace engine
                   rc = _collectGIDXRecord( indexCB, ko, TRUE, container ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to collect index "
                                "record, key: %s, rc: %d",
-                               ko.toString().c_str(), rc ) ;
+                               PD_SECURE_STR( ko.toString() ), rc ) ;
 
                   itnew++ ;
                }
@@ -3112,7 +3115,7 @@ namespace engine
                                 rid, cb, isUndo, pOprHandle, pResult,
                                 pNewUnqIdxHashArray, pOldUnqIdxHashArray ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to update obj(%s) index(%s), "
-                          "rc: %d", newObj.toString().c_str(),
+                          "rc: %d", PD_SECURE_OBJ( newObj ),
                           indexCB.getDef().toString().c_str(), rc ) ;
          }
       }
@@ -3170,7 +3173,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get keys from object %s",
-                  inputObj.toString().c_str() ) ;
+                  PD_SECURE_OBJ( inputObj ) ) ;
          goto error ;
       }
 
@@ -3206,7 +3209,7 @@ namespace engine
             if ( rc )
             {
                PD_LOG ( PDERROR, "Delete index key(%s) with rid(%d, %d) "
-                        "failed, rc: %d", it->toString().c_str(),
+                        "failed, rc: %d", PD_SECURE_OBJ( *it ),
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
@@ -3283,15 +3286,16 @@ namespace engine
             BSONObjSet keySet ;
             rc = indexCB.getKeysFromObject ( inputObj, keySet ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get keys from object %s",
-                        inputObj.toString().c_str() ) ;
+                         PD_SECURE_OBJ( inputObj ) ) ;
 
             // go through each index in the set
             for ( iter = keySet.begin() ; iter != keySet.end() ; iter++ )
             {
                ixmKeyOwned ko ((*iter)) ;
                rc = _collectGIDXRecord( indexCB, ko, FALSE, container ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to collect index record, "
-                            "key: %s, rc: %d", ko.toString().c_str(), rc ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to collect index record, key: %s, rc: %d",
+                            PD_SECURE_STR( ko.toString() ), rc ) ;
             }
          }
       }
@@ -3479,7 +3483,7 @@ namespace engine
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to delete object(%s) index(%s), "
-                        "rc: %d", inputObj.toString().c_str(),
+                        "rc: %d", PD_SECURE_OBJ( inputObj ),
                         indexCB.getDef().toString().c_str(), rc ) ;
                goto error ;
             }

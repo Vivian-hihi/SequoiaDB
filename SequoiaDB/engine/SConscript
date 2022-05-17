@@ -205,7 +205,8 @@ utilFiles = [
       "util/utilDataSource.cpp",
       "util/utilRecycleItem.cpp",
       "util/utilRecycleBinConf.cpp",
-      "util/utilRecycleReturnInfo.cpp"
+      "util/utilRecycleReturnInfo.cpp",
+      "util/utilSecure.cpp"
       ]
 
 rtnFiles = [
