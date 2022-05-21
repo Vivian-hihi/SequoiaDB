@@ -1942,7 +1942,7 @@ namespace engine
          {
             UINT32 num = 0 ;
             BOOLEAN used = FALSE ;
-            UINT32 maxExtID = curExtentID + pLobSU->segmentPages() ;
+            UINT32 maxExtID = curExtentID + pLobSU->dataSegmentPages() ;
             while ( curExtentID < maxExtID )
             {
                rc = _nextThinCopyInfo( pLobSU, curExtentID, maxExtID,
