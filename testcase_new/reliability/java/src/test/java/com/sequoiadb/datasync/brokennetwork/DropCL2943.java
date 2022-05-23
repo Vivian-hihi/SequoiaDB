@@ -62,12 +62,13 @@ public class DropCL2943 extends SdbTestBase {
             String cataPriHost = cataGroup.getMaster().hostName();
             dataGroup = groupMgr.getGroupByName( clGroupName );
             dataSlvHost = dataGroup.getSlave().hostName();
+            int dataPort = dataGroup.getSlave().getPort();
             if ( cataPriHost.equals( dataSlvHost )
                     && !cataGroup.changePrimary() ) {
                 throw new SkipException(
                         cataGroup.getGroupName() + " reelect fail" );
             }
-            System.out.println("fault node:" + dataSlvHost + ":" + dataGroup.getPort());
+            System.out.println("fault node:" + dataSlvHost + ":" + dataPort);
             safeUrl = CommLib.getSafeCoordUrl( dataSlvHost );
             db = new Sequoiadb( safeUrl, "", "" );
             createCLs( db );
