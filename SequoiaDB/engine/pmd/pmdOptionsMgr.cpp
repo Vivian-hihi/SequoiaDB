@@ -2019,6 +2019,7 @@ done:
       _transMaxLogSpaceRatio = DPS_TRANS_MAXLOGSPACERATIO_DFT ;
 
       _detectDisk = TRUE ;
+      _diagSecureOn = TRUE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2566,6 +2567,10 @@ done:
       // --detectdisk
       rdxBooleanS( pEX, PMD_OPTION_DETECT_DISK, _detectDisk,
                    FALSE, PMD_CFG_CHANGE_RUN, TRUE, TRUE ) ;
+
+      // --diagsecureon
+      rdxBooleanS( pEX, PMD_OPTION_DIAG_SECURE_ON, _diagSecureOn,
+                   FALSE, PMD_CFG_CHANGE_RUN, TRUE, FALSE ) ;
 
       // end map
 
