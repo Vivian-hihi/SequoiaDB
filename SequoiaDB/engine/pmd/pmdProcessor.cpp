@@ -905,7 +905,8 @@ namespace engine
          {
             pContext->enableCloseOnEOF() ;
          }
-         if ( flags & FLG_QUERY_WITH_RETURNDATA )
+         if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) &&
+              0 == buffObj.recordNum() )
          {
             rc = pContext->getMore( -1, buffObj, eduCB() ) ;
             if ( rc || pContext->eof() )
@@ -2222,7 +2223,8 @@ namespace engine
          {
             pContext->enableCloseOnEOF() ;
          }
-         if ( flag & FLG_QUERY_WITH_RETURNDATA )
+         if ( ( flag & FLG_QUERY_WITH_RETURNDATA ) &&
+              0 == buffObj.recordNum() )
          {
             rc = pContext->getMore( -1, buffObj, eduCB() ) ;
             if ( rc || pContext->eof() )
