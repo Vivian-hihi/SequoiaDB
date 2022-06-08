@@ -1956,7 +1956,7 @@ namespace engine
       goto done ;
    }
 
-   static BOOLEAN _rtnCheckExcludeSelector ( const BSONElement & original )
+   BOOLEAN rtnCheckExcludeSelector ( const BSONElement & original )
    {
       BOOLEAN hasExclude = FALSE ;
       if ( Object == original.type() )
@@ -2038,7 +2038,7 @@ namespace engine
 
                if ( EOO != select.type() )
                {
-                  if ( _rtnCheckExcludeSelector( select ) )
+                  if ( rtnCheckExcludeSelector( select ) )
                   {
                      needReset = TRUE ;
                      builder.reset() ;
@@ -2052,7 +2052,7 @@ namespace engine
                }
             }
          }
-         else if ( _rtnCheckExcludeSelector( select ) )
+         else if ( rtnCheckExcludeSelector( select ) )
          {
             needReset = TRUE ;
             builder.reset() ;

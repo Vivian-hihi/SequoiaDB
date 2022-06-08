@@ -744,6 +744,8 @@ namespace engine
                             dmsExtentID expectedIndexLID,
                             dmsStorageUnit *su,
                             dmsMBContext *mbContext ) ;
+
+   BOOLEAN rtnCheckExcludeSelector ( const BSONElement & original ) ;
 }
 
 #endif
