@@ -2,7 +2,7 @@
  * @Description   : seqDB-26597:游标advance，IndexValue指定嵌套字段
  * @Author        : liuli
  * @CreateTime    : 2022.06.02
- * @LastEditTime  : 2022.06.02
+ * @LastEditTime  : 2022.06.08
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_26597";
@@ -38,7 +38,11 @@ function test ( args )
    // IndexValue指定非嵌套字段{ "a": { "b": 300 } }
    var cursor = cl.find( {}, { "_id": { "$include": 0 } } ).sort( { "a.b": 1 } ).hint( { "": indexName } );
    cursor.next();
-   cursor._cursor.advance( { "IndexValue": { "a": { "b": 300 } }, "Type": 1, "PrefixNum": 1 } );
+   assert.tryThrow( SDB_INVALIDARG, function()
+   {
+      cursor._cursor.advance( { "IndexValue": { "a": { "b": 300 } }, "Type": 1, "PrefixNum": 1 } );
+   } );
+   var expResult = { a: { b: 1, c: 1 } };
    assert.equal( cursor.next().toObj(), expResult );
 
    cursor.close();
