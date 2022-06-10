@@ -48,7 +48,6 @@ public class CreateTable25318_25319_25320 extends FlinkTestBase {
                 FlinkTestBase.password );
         Commlib.dropCS( sdb, csName );
         CollectionSpace cs = sdb.createCollectionSpace( csName );
-        cs.createCollection( clName );
         datacl = cs.createCollection( dataClName );
         schema = Schema.newBuilder().column( "name", DataTypes.VARCHAR( 10 ) )
                 .column( "age", DataTypes.INT().notNull() )

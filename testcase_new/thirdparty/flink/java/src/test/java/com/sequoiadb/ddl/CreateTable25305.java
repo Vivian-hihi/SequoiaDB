@@ -23,6 +23,8 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
 
 /**
  * @descreption seqDB-25305:创建SDB映射表，objectid类型转换
@@ -48,6 +50,7 @@ public class CreateTable25305 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
+        tableEnv.getConfig().setLocalTimeZone( ZoneId.systemDefault() );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         if ( sdb.isCollectionSpaceExist( csName ) ) {
@@ -163,10 +166,10 @@ public class CreateTable25305 extends FlinkTestBase {
     public void toTIMESTAMP() throws Exception {
         String tableName = ConversionUtils.initTableName( tableNameBase,
                 DataTypes.TIMESTAMP() );
-        createTable( tableName, DataTypes.TIMESTAMP(), filed_ObjectId );
+        createTable( tableName, DataTypes.TIMESTAMP_LTZ(), filed_ObjectId );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
         Assert.assertEquals( row.getField( filed_ObjectId ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
+                Instant.ofEpochMilli( 0 ) );
     }
 
     public void toBOOLEAN() throws Exception {

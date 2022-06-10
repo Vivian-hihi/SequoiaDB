@@ -20,7 +20,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 
 /**
@@ -49,6 +50,7 @@ public class CreateTable25301 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
+        tableEnv.getConfig().setLocalTimeZone( ZoneId.systemDefault() );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         if ( sdb.isCollectionSpaceExist( csName ) ) {
@@ -122,12 +124,13 @@ public class CreateTable25301 extends FlinkTestBase {
     public void toTIMESTAMP() throws Exception {
         String tableName = ConversionUtils.initTableName( tableNameBase,
                 DataTypes.TIMESTAMP() );
-        createTable( tableName, DataTypes.TIMESTAMP(), filed_max, filed_min );
+        createTable( tableName, DataTypes.TIMESTAMP_LTZ(), filed_max,
+                filed_min );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
         Assert.assertEquals( row.getField( filed_min ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
+                Instant.ofEpochMilli( 0 ) );
         Assert.assertEquals( row.getField( filed_max ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
+                Instant.ofEpochMilli( 0 ) );
     }
 
     public void toBOOLEAN() throws Exception {
@@ -144,8 +147,8 @@ public class CreateTable25301 extends FlinkTestBase {
                 DataTypes.DECIMAL( 38, 14 ) );
         createTable( tableName, DataTypes.DECIMAL( 38, 14 ), filed_max,
                 filed_min );
-        ArrayList< Row > rows = Commlib.collectToArrayList( tableEnv
-                .executeSql( "select * from " + tableName ).collect() );
+        ArrayList< Row > rows = Commlib.collectToArrayList(
+                tableEnv.executeSql( "select * from " + tableName ).collect() );
         Assert.assertEquals( rows.size(), 1 );
     }
 

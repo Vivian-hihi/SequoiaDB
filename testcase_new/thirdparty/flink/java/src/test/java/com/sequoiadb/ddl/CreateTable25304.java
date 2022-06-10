@@ -23,6 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 /**
  * @descreption seqDB-25304:创建SDB映射表，string类型非数值字符串转换
@@ -52,6 +55,7 @@ public class CreateTable25304 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
+        tableEnv.getConfig().setLocalTimeZone( ZoneId.systemDefault() );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         if ( sdb.isCollectionSpaceExist( csName ) ) {
@@ -95,7 +99,7 @@ public class CreateTable25304 extends FlinkTestBase {
                     dataTypes[ i ] );
             createTable( tableName, dataTypes[ i ], filed_string );
             Row row = ConversionUtils.queryOne( tableEnv, tableName );
-            Assert.assertNull(row.getField(filed_string));
+            Assert.assertNull( row.getField( filed_string ) );
         }
     }
 
@@ -113,15 +117,16 @@ public class CreateTable25304 extends FlinkTestBase {
     public void toTIMESTAMP() throws Exception {
         String tableName = ConversionUtils.initTableName( tableNameBase,
                 DataTypes.TIMESTAMP() );
-        createTable( tableName, DataTypes.TIMESTAMP(), filed_string,
+        createTable( tableName, DataTypes.TIMESTAMP_LTZ(), filed_string,
                 filed_date );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
         Assert.assertEquals( row.getField( filed_string ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
-        // 插入的时间类型只精确到秒，需要格式化再校验
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss" );
-        Assert.assertEquals( row.getField( filed_date ).toString(),
-                sdf.format( new Timestamp( data_date ) ) );
+                Instant.ofEpochMilli( 0 ) );
+        Assert.assertEquals(
+                ( ( Instant ) row.getField( filed_date ) )
+                        .truncatedTo( ChronoUnit.SECONDS ),
+                Instant.ofEpochMilli( data_date )
+                        .truncatedTo( ChronoUnit.SECONDS ) );
     }
 
     public void toBOOLEAN() throws Exception {
@@ -138,7 +143,7 @@ public class CreateTable25304 extends FlinkTestBase {
                 DataTypes.DECIMAL( 38, 14 ) );
         createTable( tableName, DataTypes.DECIMAL( 38, 14 ), filed_string );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
-        Assert.assertNull(row.getField(filed_string));
+        Assert.assertNull( row.getField( filed_string ) );
     }
 
     private void toCHAR() throws Exception {

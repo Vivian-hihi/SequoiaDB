@@ -7,6 +7,7 @@ import com.sequoiadb.testcommon.FlinkTestBase;
 import com.sequoiadb.testcommon.utils.Commlib;
 import com.sequoiadb.testcommon.utils.ConversionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
@@ -25,8 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 /**
  * @descreption seqDB-25303:创建SDB映射表，string类型数值字符串转换
@@ -62,6 +66,7 @@ public class CreateTable25303 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
+        tableEnv.getConfig().setLocalTimeZone( ZoneId.systemDefault() );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         if ( sdb.isCollectionSpaceExist( csName ) ) {
@@ -128,17 +133,16 @@ public class CreateTable25303 extends FlinkTestBase {
     public void toTIMESTAMP() throws Exception {
         String tableName = ConversionUtils.initTableName( tableNameBase,
                 DataTypes.TIMESTAMP() );
-        createTable( tableName, DataTypes.TIMESTAMP(), filed_b, filed_time );
+        createTable( tableName, DataTypes.TIMESTAMP_LTZ(), filed_b,
+                filed_time );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
         Assert.assertEquals( row.getField( filed_b ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
-        DateTimeFormatter dtf = DateTimeFormatter
-                .ofPattern( "yyyy-MM-dd'T'HH:mm:ss" );
-        LocalDateTime expectLocalDateTime = ConversionUtils
-                .getLocalDateTime( new Timestamp( data_time ) );
-        // 时间格式不一样，需要格式化后转String校验
-        Assert.assertEquals( row.getField( filed_time ).toString(),
-                dtf.format( expectLocalDateTime ) );
+                Instant.ofEpochMilli( 0 ) );
+        Assert.assertEquals(
+                ( ( Instant ) row.getField( filed_time ) )
+                        .truncatedTo( ChronoUnit.SECONDS ),
+                Instant.ofEpochMilli( data_time )
+                        .truncatedTo( ChronoUnit.SECONDS ) );
     }
 
     public void toBOOLEAN() throws Exception {

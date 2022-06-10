@@ -21,4 +21,6 @@ sdb-connector-connector-${version}.jar 	//sequoiadb连接器依赖
 sequoiadb-driver-{version}.jar        	//sequoiadb驱动依赖    
 ```
 
+5.xml中配置了用例并发执行时，请确保flink有和并发度（默认5）匹配的taskManager数
+
 

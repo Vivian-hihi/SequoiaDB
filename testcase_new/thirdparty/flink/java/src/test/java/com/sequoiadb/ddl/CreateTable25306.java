@@ -21,6 +21,8 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
@@ -49,6 +51,7 @@ public class CreateTable25306 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
+        tableEnv.getConfig().setLocalTimeZone( ZoneId.systemDefault() );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         if ( sdb.isCollectionSpaceExist( csName ) ) {
@@ -113,13 +116,13 @@ public class CreateTable25306 extends FlinkTestBase {
     public void toTIMESTAMP() throws Exception {
         String tableName = ConversionUtils.initTableName( tableNameBase,
                 DataTypes.TIMESTAMP() );
-        createTable( tableName, DataTypes.TIMESTAMP(), filed_true,
+        createTable( tableName, DataTypes.TIMESTAMP_LTZ(), filed_true,
                 filed_false );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
         Assert.assertEquals( row.getField( filed_true ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
+                Instant.ofEpochMilli( 0 ) );
         Assert.assertEquals( row.getField( filed_false ),
-                ConversionUtils.getLocalDateTime( new Timestamp( 0 ) ) );
+                Instant.ofEpochMilli( 0 ) );
     }
 
     public void toBOOLEAN() throws Exception {

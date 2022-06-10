@@ -7,9 +7,7 @@ import com.sequoiadb.testcommon.FlinkTestBase;
 import com.sequoiadb.testcommon.utils.Commlib;
 import com.sequoiadb.testcommon.utils.ConversionUtils;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
@@ -20,7 +18,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -55,6 +54,7 @@ public class CreateTable25299 extends FlinkTestBase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
         tableEnv = StreamTableEnvironment.create( env );
+        tableEnv.getConfig().setLocalTimeZone( ZoneId.systemDefault() );
         sdb = new Sequoiadb( FlinkTestBase.getCoord(), FlinkTestBase.username,
                 FlinkTestBase.password );
         if ( sdb.isCollectionSpaceExist( csName ) ) {
@@ -134,12 +134,13 @@ public class CreateTable25299 extends FlinkTestBase {
     public void toTIMESTAMP() throws Exception {
         String tableName = ConversionUtils.initTableName( tableNameBase,
                 DataTypes.TIMESTAMP() );
-        createTable( tableName, DataTypes.TIMESTAMP(), filed_zero, filed_test );
+        createTable( tableName, DataTypes.TIMESTAMP_LTZ(), filed_zero,
+                filed_test );
         Row row = ConversionUtils.queryOne( tableEnv, tableName );
-        Assert.assertEquals( row.getField( filed_zero ), ConversionUtils
-                .getLocalDateTime( new Timestamp( data_zero ) ) );
-        Assert.assertEquals( row.getField( filed_test ), ConversionUtils
-                .getLocalDateTime( new Timestamp( data_test ) ) );
+        Assert.assertEquals( row.getField( filed_zero ),
+                Instant.ofEpochMilli( data_zero ) );
+        Assert.assertEquals( row.getField( filed_test ),
+                Instant.ofEpochMilli( data_test ) );
     }
 
     public void toBOOLEAN() throws Exception {

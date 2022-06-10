@@ -61,6 +61,7 @@ public class CreateTable25334 extends FlinkTestBase {
 
     @Test
     public void test() throws Exception {
+        // Insert执行较慢，并发框架超时时间根据本地环境动态调整
         ThreadExecutor t = new ThreadExecutor();
         t.addWorker( new Select() );
         t.addWorker( new Insert() );
@@ -101,7 +102,7 @@ public class CreateTable25334 extends FlinkTestBase {
     }
 
     private class Select {
-        @ExecuteOrder(step = 1)
+        @ExecuteOrder(step = 2)
         private void run() throws Exception {
             StreamExecutionEnvironment env = StreamExecutionEnvironment
                     .getExecutionEnvironment();
