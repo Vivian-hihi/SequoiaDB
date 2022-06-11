@@ -200,7 +200,7 @@ namespace engine
       ~_rtnContextStoreBuf() ;
 
    public:
-      INT32    append( const BSONObj &obj,
+      INT32    append( const BSONObj &obj, 
                        const BSONObj *orgObj = NULL ) ;
       INT32    pushFront( const BSONObj &obj ) ;
       INT32    pushFronts( const CHAR *objBuf,
@@ -520,7 +520,7 @@ namespace engine
          {
             return SDB_OPTION_NOT_SUPPORT ;
          }
-         virtual INT32     _getAdvanceOrderby( BSONObj &orderby,
+         virtual INT32     _getAdvanceOrderby( BSONObj &orderby, 
                                                BOOLEAN isRange = FALSE ) const
          {
             return SDB_OPTION_NOT_SUPPORT ;
@@ -535,7 +535,7 @@ namespace engine
 
          virtual INT32 _prepareDoAdvance ( _pmdEDUCB *cb )
          {
-            return SDB_OPTION_NOT_SUPPORT;
+            return SDB_OPTION_NOT_SUPPORT; 
          }
 
       protected:
@@ -587,18 +587,6 @@ namespace engine
                                BOOLEAN compreFieldName,
                                UINT32 keyNum,
                                const BSONObj &keyPattern = BSONObj() ) ;
-
-      private:
-         INT32    _checkIndexValue( const BSONObj &selPattern,
-                                    const BSONObj &orderby,
-                                    INT32 prefixNum,
-                                    const BSONObj &indexValue ) ;
-
-         INT32    _checkIndexValueAndSel( const BSONObj &selPattern,
-                                          const BSONObj &indexValue ) ;
-         INT32    _checkIndexValueAndOrderby( const BSONObj &orderby,
-                                              INT32 prefixNum,
-                                              const BSONObj &indexValue ) ;
 
       protected:
          monContextCB            _monCtxCB ;
