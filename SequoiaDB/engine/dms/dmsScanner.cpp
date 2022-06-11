@@ -38,6 +38,7 @@
 *******************************************************************************/
 
 #include "dmsScanner.hpp"
+#include "dmsOprHandler.hpp"
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageDataCommon.hpp"
 #include "rtnIXScanner.hpp"
@@ -93,7 +94,8 @@ namespace engine
    */
    _dmsScanner::_dmsScanner( dmsStorageDataCommon *su, dmsMBContext *context,
                              mthMatchRuntime *matchRuntime,
-                             DMS_ACCESS_TYPE accessType )
+                             DMS_ACCESS_TYPE accessType,
+                             IDmsOprHandler *opHandler )
    {
       SDB_ASSERT( su, "storage data can't be NULL" ) ;
       SDB_ASSERT( context, "context can't be NULL" ) ;
@@ -110,6 +112,8 @@ namespace engine
       {
          _mbLockType = EXCLUSIVE ;
       }
+
+      _opHandler = opHandler ;
    }
 
    _dmsScanner::~_dmsScanner()
@@ -142,9 +146,12 @@ namespace engine
                                            DMS_ACCESS_TYPE accessType,
                                            INT64 maxRecords,
                                            INT64 skipNum,
-                                           INT32 flag )
+                                           INT32 flag,
+                                           IDmsOprHandler *handler )
    :_dmsScanner( su, context, matchRuntime, accessType ),
-    _curRecordPtr( NULL ), _scannerContext( this )
+    _curRecordPtr( NULL ),
+    _scannerContext( this ),
+    _callback( handler )
    {
       _maxRecords          = maxRecords ;
       _skipNum             = skipNum ;
@@ -394,9 +401,10 @@ namespace engine
                                    DMS_ACCESS_TYPE accessType,
                                    INT64 maxRecords,
                                    INT64 skipNum,
-                                   INT32 flag )
+                                   INT32 flag,
+                                   IDmsOprHandler *handler )
    : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, lastExtentID,
-                         accessType, maxRecords, skipNum, flag )
+                         accessType, maxRecords, skipNum, flag, handler )
    {
    }
 
@@ -920,9 +928,10 @@ namespace engine
                                                DMS_ACCESS_TYPE accessType,
                                                INT64 maxRecords,
                                                INT64 skipNum,
-                                               INT32 flag )
+                                               INT32 flag,
+                                               IDmsOprHandler *handler )
    : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, lastExtentID,
-                         accessType, maxRecords, skipNum, flag )
+                         accessType, maxRecords, skipNum, flag, handler )
    {
       _maxRecords = maxRecords ;
       _skipNum = skipNum ;
@@ -1279,8 +1288,9 @@ namespace engine
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
                                  INT64 skipNum,
-                                 INT32 flag )
-   :_dmsScanner( su, context, matchRuntime, accessType ),
+                                 INT32 flag,
+                                 IDmsOprHandler *opHandler )
+   :_dmsScanner( su, context, matchRuntime, accessType, opHandler ),
     _scannerContext( this )
    {
       _extScanner    = NULL ;
@@ -1360,7 +1370,8 @@ namespace engine
                                                     _accessType,
                                                     _maxRecords,
                                                     _skipNum,
-                                                    _flag ) ;
+                                                    _flag,
+                                                    _opHandler  ) ;
       if ( !_extScanner )
       {
          PD_LOG( PDERROR, "Create extent scanner failed" ) ;
@@ -1554,9 +1565,12 @@ namespace engine
                                        DMS_ACCESS_TYPE accessType,
                                        INT64 maxRecords,
                                        INT64 skipNum,
-                                       INT32 flag )
-   :_dmsScanner( su, context, matchRuntime, accessType ),
-    _curRecordPtr( NULL ), _ixScannerContext( this, scanner )
+                                       INT32 flag,
+                                       IDmsOprHandler *opHandler )
+   :_dmsScanner( su, context, matchRuntime, accessType, opHandler ),
+    _curRecordPtr( NULL ),
+    _callback( opHandler ),
+    _ixScannerContext( this, scanner )
    {
       _maxRecords          = maxRecords ;
       _skipNum             = skipNum ;
@@ -2708,10 +2722,11 @@ namespace engine
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
                                  INT64 skipNum,
-                                 INT32 flag )
-   :_dmsScanner( su, context, matchRuntime, accessType ),
+                                 INT32 flag,
+                                 IDmsOprHandler *opHandler )
+   :_dmsScanner( su, context, matchRuntime, accessType, opHandler ),
     _secScanner( su, context, matchRuntime, scanner, accessType, maxRecords,
-                 skipNum, flag ),
+                 skipNum, flag, opHandler ),
     _ixScannerContext( this, scanner )
    {
       _scanner       = scanner ;
@@ -2956,7 +2971,8 @@ namespace engine
                                                      DMS_ACCESS_TYPE accessType,
                                                      INT64 maxRecords,
                                                      INT64 skipNum,
-                                                     INT32 flag )
+                                                     INT32 flag,
+                                                     IDmsOprHandler *opHandler )
    {
       dmsExtScannerBase* scanner = NULL ;
 
@@ -2969,7 +2985,8 @@ namespace engine
                                                     accessType,
                                                     maxRecords,
                                                     skipNum,
-                                                    flag ) ;
+                                                    flag,
+                                                    opHandler ) ;
       }
       else
       {
@@ -2980,7 +2997,8 @@ namespace engine
                                               accessType,
                                               maxRecords,
                                               skipNum,
-                                              flag ) ;
+                                              flag,
+                                              opHandler ) ;
       }
 
       if ( !scanner )

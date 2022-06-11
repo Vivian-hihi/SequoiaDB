@@ -51,6 +51,7 @@
 #include "rtnTrace.hpp"
 #include "rtnExtDataHandler.hpp"
 #include "rtnIXScannerFactory.hpp"
+#include "dmsOprHandler.hpp"
 
 namespace fs = boost::filesystem ;
 namespace engine
@@ -1842,7 +1843,8 @@ namespace engine
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
                            dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType )
+                           DMS_ACCESS_TYPE accessType,
+                           IRtnOprHandler *opHandler )
    {
       INT32 rc = SDB_OK ;
 
@@ -1903,7 +1905,7 @@ namespace engine
 
       *ppScanner = SDB_OSS_NEW dmsIXScanner( su->data(), mbContext,
                                              matchRuntime, scanner, TRUE,
-                                             accessType, -1, 0, 0 ) ;
+                                             accessType, -1, 0, 0, opHandler ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms ixscanner" ) ;
@@ -1929,7 +1931,8 @@ namespace engine
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
                            dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType )
+                           DMS_ACCESS_TYPE accessType,
+                           IRtnOprHandler *opHandler )
    {
       INT32 rc                 = SDB_OK ;
       mthMatchRuntime *matchRuntime = planRuntime->getMatchRuntime() ;
@@ -1942,7 +1945,7 @@ namespace engine
 
       *ppScanner = SDB_OSS_NEW dmsTBScanner( su->data(), mbContext,
                                              matchRuntime, accessType,
-                                             -1, 0, 0 ) ;
+                                             -1, 0, 0, opHandler ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms tbscanner" ) ;

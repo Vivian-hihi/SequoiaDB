@@ -63,10 +63,11 @@ namespace engine
                                 public _IDmsOprHandler
    {
    public:
-      dmsTransLockCallback() ;
+      dmsTransLockCallback( IDmsOprHandler *handler = NULL ) ;
 
       dmsTransLockCallback( dpsTransCB *transCB,
-                            _pmdEDUCB  *eduCB ) ;
+                            _pmdEDUCB  *eduCB,
+                            IDmsOprHandler *handler = NULL ) ;
 
       void     clearStatus() ;
 
@@ -251,7 +252,7 @@ namespace engine
       oldVersionUnitPtr    _unitPtr ;
 
       dmsTransRecordInfo   _recordInfo ;
-
+      IDmsOprHandler      *_opHandler ;
    } ;
 
 }
