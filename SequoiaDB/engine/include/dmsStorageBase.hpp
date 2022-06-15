@@ -554,6 +554,8 @@ namespace engine
 
          virtual void   _onRestore() {}
 
+         virtual BOOLEAN _canRecreateNew() { return FALSE ; }
+
       protected:
          virtual INT32 _extendSegments( UINT32 numSeg ) ;
 
