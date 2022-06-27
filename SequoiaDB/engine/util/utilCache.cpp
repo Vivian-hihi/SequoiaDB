@@ -1837,12 +1837,6 @@ namespace engine
          {
             readPage = TRUE ;
          }
-         else if ( offset + len <= _pPage->start() ||
-                   _pPage->length() <= offset )
-         {
-            /// read from file
-            readPage = FALSE ;
-         }
          else if ( _pPage->isDirty() )
          {
             /// load the data
@@ -1870,6 +1864,11 @@ namespace engine
                }
             }
             readPage = TRUE ;
+         }
+         else
+         {
+            /// read from file
+            readPage = FALSE ;
          }
       }
 
