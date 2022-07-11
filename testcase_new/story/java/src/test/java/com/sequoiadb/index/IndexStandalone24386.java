@@ -112,14 +112,16 @@ public class IndexStandalone24386 extends SdbTestBase {
                 cl.createIndex( indexName, indexKeys, indexAttr, option );
             } catch ( BaseException e ) {
                 // 部分节点创建索引成功部分节点创建索引失败（如cs正在被删除创建失败），则报错为-264
-                if ( e.getErrorType() != SDBError.SDB_DMS_CS_NOTEXIST
-                        .getErrorType()
-                        && e.getErrorType() != SDBError.SDB_DMS_NOTEXIST
-                                .getErrorType()
-                        && e.getErrorType() != SDBError.SDB_DMS_CS_DELETING
-                                .getErrorType()
-                        && e.getErrorType() != SDBError.SDB_COORD_NOT_ALL_DONE
-                                .getErrorType() ) {
+                if ( e.getErrorCode() != SDBError.SDB_DMS_CS_NOTEXIST
+                        .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_DMS_NOTEXIST
+                                .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_DMS_CS_DELETING
+                                .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_COORD_NOT_ALL_DONE
+                                .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_DMS_SCANNER_INTERRUPT
+                                .getErrorCode() ) {
                     throw e;
                 }
             }
