@@ -29,7 +29,7 @@ public class TestLob26642 extends SdbTestBase {
     private String clName = "cl_26642";
     private int lobSize = 200;
     private int writeSize = 20;
-    byte[] lobBuff;
+    private byte[] lobBuff;
 
     @BeforeClass
     public void setup() {
