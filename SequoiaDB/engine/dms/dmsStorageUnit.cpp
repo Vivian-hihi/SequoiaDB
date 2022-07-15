@@ -1366,7 +1366,7 @@ namespace engine
                {
                   _pSUCaches[ type ] = SDB_OSS_NEW dmsStatCache( this ) ;
                }
-               else 
+               else
                {
                   needCreate = FALSE ;
 
@@ -1390,7 +1390,8 @@ namespace engine
          }
          else if ( needCreate )
          {
-            PD_LOG( PDWARNING, "Failed to create cache unit [%u] for CS %s", type, getCSName() ) ;
+            PD_LOG( PDWARNING, "Failed to create cache unit [%u] for CS %s",
+                    type, getCSName() ) ;
          }
       }
 
