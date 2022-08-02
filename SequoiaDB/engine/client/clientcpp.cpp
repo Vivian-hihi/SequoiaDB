@@ -10290,6 +10290,12 @@ do                                                            \
       if ( _authVersion >= AUTH_SCRAM_SHA256 )
       {
          rc = _authVer1MsgProcess( pUN, md5 ) ;
+         // During rolling upgrade, the old version of catalog node
+         // does not support the SAH256 algorithm.
+         if ( SDB_UNKNOWN_MESSAGE == rc )
+         {
+            rc = _authVer0MsgProcess( pUN, md5 ) ;
+         }
       }
       else
       {
@@ -10317,6 +10323,12 @@ do                                                            \
          if ( _authVersion >= AUTH_SCRAM_SHA256 )
          {
             rc = _authVer1MsgProcess( pUN, md5 ) ;
+            // During rolling upgrade, the old version of catalog node
+            // does not recognize the SAH256
+            if ( SDB_UNKNOWN_MESSAGE == rc )
+            {
+               rc = _authVer0MsgProcess( pUN, md5 ) ;
+            }
          }
          else
          {
