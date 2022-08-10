@@ -1215,8 +1215,8 @@ namespace engine
          }
          else
          {
-            // make sure the handle is erased
-            _erase( eh->handle() ) ;
+            // make sure the handle is erased from route
+            _eraseRoute( eh ) ;
 
             rc = SDB_NETWORK ;
          }
