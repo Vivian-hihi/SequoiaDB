@@ -78,7 +78,7 @@ namespace engine
       {                                                              \
          try {                                                       \
             _pMonAppCB_->setLastOpType( opType ) ;                   \
-            _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;              \
+            _pMonAppCB_->setUnknownCmdType() ;                        \
             _pMonAppCB_->saveLastOpDetail( format,                   \
                                            ##__VA_ARGS__ ) ;         \
          } catch( ... ) {}                                           \
@@ -115,7 +115,7 @@ namespace engine
       {                                                              \
          try {                                                       \
             _pMonAppCB_->setLastOpType( msg->opCode ) ;              \
-            _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;              \
+            _pMonAppCB_->setUnknownCmdType() ;                        \
             _pMonAppCB_->saveLastOpQuery( msg, options ) ;           \
          } catch( ... ) {}                                           \
       }                                                              \
@@ -1234,6 +1234,7 @@ namespace engine
       void endOperator() ;
       void setLastOpType( INT32 opType ) ;
       void setLastCmdType( INT32 cmdType ) ;
+      void setUnknownCmdType() ;
       void opTimeSpentInc( ossTickDelta delta );
       const CHAR * getLastOpDetail() ;
       void saveLastOpQuery( const MsgHeader *message,
