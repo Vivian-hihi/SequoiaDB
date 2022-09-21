@@ -2193,6 +2193,8 @@ namespace engine
                                     SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                     INT16 w , INT64 *pContextID )
    {
+      pdSetShieldRC( SDB_DMS_NOTEXIST ) ;
+      pdSetShieldRC( SDB_DMS_CS_NOTEXIST ) ;
       return rtnTestCollectionCommand ( _objName, dmsCB ) ;
    }
 
@@ -2219,6 +2221,7 @@ namespace engine
                                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                          INT16 w , INT64 *pContextID )
    {
+      pdSetShieldRC( SDB_DMS_CS_NOTEXIST ) ;
       return rtnTestCollectionSpaceCommand ( _objName, dmsCB ) ;
    }
 
