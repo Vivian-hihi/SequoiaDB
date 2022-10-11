@@ -326,6 +326,7 @@ namespace engine
       void        interrupt ( BOOLEAN onlySelf = FALSE,
                               INT32 interruptRC = SDB_APP_INTERRUPT ) ;
       void        resetInterrupt () ;
+      void        disconnect () ;
       void        resetDisconnect () ;
       BOOLEAN     isOnlySelfWhenInterrupt() const ;
       INT32       getInterruptRC() const ;
@@ -684,7 +685,6 @@ namespace engine
 
       CHAR*    _getBuffInfo ( EDU_INFO_TYPE type, UINT32 &size ) ;
 
-      void     disconnect () ;
       void     force () ;
 
    private:
