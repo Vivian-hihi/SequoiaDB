@@ -1389,6 +1389,9 @@ namespace engine
       context->mb()->_numIndexes -- ;
       context->mbStat()->resetIdxHashFrom( indexID ) ;
 
+      // on metadata updated
+      _pDataSu->_onMBUpdated( context->mbID() ) ;
+
       // log it
       if ( dpscb )
       {
@@ -1637,6 +1640,9 @@ namespace engine
       context->mb()->_numIndexes ++ ;
       context->mb()->_indexHWCount++ ;
       context->mbStat()->resetIdxHashFrom( indexID ) ;
+
+      // on metadata updated
+      _pDataSu->_onMBUpdated( context->mbID() ) ;
 
       // create index callback
       if ( _pDataSu->_pEventHolder )
@@ -1902,6 +1908,9 @@ namespace engine
          context->mb()->_indexHWCount++ ;
          context->mbStat()->_textIdxNum++ ;
          context->mbStat()->resetIdxHashFrom( indexID ) ;
+
+         // on metadata updated
+         _pDataSu->_onMBUpdated( context->mbID() ) ;
 
          rc = handler->onCrtTextIdx( context, getSuName(), indexCB, cb, NULL ) ;
          if ( rc )
