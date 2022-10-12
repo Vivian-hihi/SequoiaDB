@@ -2490,7 +2490,7 @@ error:
          {
             BSONElement ele = iter.next() ;
             const CHAR *srcFieldName = ele.fieldName() ;
-            INT32 rc = utilStrToLower( srcFieldName, lowerFieldName ) ;
+            rc = utilStrToLower( srcFieldName, lowerFieldName ) ;
             if ( rc )
             {
                goto error ;
@@ -2633,7 +2633,7 @@ error:
          {
             BSONElement ele = itr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
-            INT32 rc = utilStrToLower( fieldName, lowerFieldName ) ;
+            rc = utilStrToLower( fieldName, lowerFieldName ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to convert fieldName to lowercase, rc: %d", rc ) ;
@@ -2646,7 +2646,7 @@ error:
                SDB_OSS_FREE( lowerFieldName ) ;
                lowerFieldName = NULL ;
             }
-            
+
             if ( *aliasName &&
                  !_newCfgObj.hasField( aliasName ) )
             {
