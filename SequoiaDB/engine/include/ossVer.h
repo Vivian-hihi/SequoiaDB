@@ -88,7 +88,7 @@
 #ifdef SDB_ENTERPRISE
 
    #ifdef _DEBUG
-      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise-Debug)"
+      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise Debug CGB)"
    #else
       #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise)"
    #endif // _DEBUG
@@ -96,7 +96,7 @@
 #else
 
    #ifdef _DEBUG
-      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Debug)"
+      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Debug CGB)"
    #else
       #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT
    #endif // _DEBUG
