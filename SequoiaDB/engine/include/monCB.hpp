@@ -91,7 +91,7 @@ namespace engine
       {                                                              \
          try {                                                       \
             _pMonAppCB_->setLastOpType( 0 ) ;                        \
-            _pMonAppCB_->setUnknownCmdType() ;                       \
+            _pMonAppCB_->setLastCmdType( CMD_UNKNOW ) ;              \
             _pMonAppCB_->clearLastOpDetail() ;                       \
          } catch ( ...) {}                                           \
       }                                                              \
