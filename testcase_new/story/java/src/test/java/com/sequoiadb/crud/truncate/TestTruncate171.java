@@ -112,6 +112,8 @@ public class TestTruncate171 extends SdbTestBase {
                 if ( e.getErrorCode() != SDBError.SDB_DMS_TRUNCATED
                         .getErrorCode()
                         && e.getErrorCode() != SDBError.SDB_LOCK_FAILED
+                                .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_TASK_HAS_CANCELED
                                 .getErrorCode() ) {
                     throw e;
                 }
