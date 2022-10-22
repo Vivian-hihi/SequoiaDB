@@ -21,7 +21,7 @@ import java.io.Serializable;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
-public class SDBOptions implements Serializable {
+public class SDBConfigOptions implements Serializable {
 
     // sdb
     public static final ConfigOption<String> HOSTS =
@@ -66,12 +66,16 @@ public class SDBOptions implements Serializable {
     public static final ConfigOption<String> COMPRESSION_TYPE =
             ConfigOptions.key("compressiontype").stringType().defaultValue("lzw");
     public static final ConfigOption<String> GROUP = ConfigOptions.key("group").stringType().noDefaultValue();
-    public static final ConfigOption<Boolean> AUTO_SPLIT =
-            ConfigOptions.key("autosplit").booleanType().defaultValue(false);
+    public static final ConfigOption<Boolean> AUTO_PARTITION =
+            ConfigOptions.key("autopartition").booleanType().defaultValue(true);
     public static final ConfigOption<Integer> SINK_PARALLELISM =
             ConfigOptions.key("parallelism").intType().defaultValue(1);
     public static final ConfigOption<Long> MAX_BULK_FILL_TIME =
             ConfigOptions.key("maxbulkfilltime").longType().defaultValue(300L);
     public static final ConfigOption<Boolean> OVERWRITE =
             ConfigOptions.key("overwrite").booleanType().defaultValue(true);
+
+    public static final ConfigOption<String> WRITE_MODE =
+            ConfigOptions.key("writemode").stringType().defaultValue("append-only");
+
 }

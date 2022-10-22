@@ -14,12 +14,13 @@
  * limitations under the License.
 */
 
-package com.sequoiadb.flink.util;
+package com.sequoiadb.flink.common.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -27,7 +28,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.flink.config.SDBSourceOptions;
-import com.sequoiadb.flink.constant.SDBConstant;
+import com.sequoiadb.flink.common.constant.SDBConstant;
 import com.sequoiadb.flink.source.strategy.NodeInfo;
 import com.sequoiadb.flink.source.strategy.ShardingInfo;
 
@@ -114,7 +115,9 @@ public class SDBInfoUtil {
     }
 
     public static List<ShardingInfo> getShardingInfos(Sequoiadb sdb,
-                                                      SDBSourceOptions sourceOptions) {
+                                                      SDBSourceOptions sourceOptions,
+                                                      BSONObject matcher,
+                                                      BSONObject selector) {
         List<ShardingInfo> shardingInfos = new ArrayList<>();
 
         DBCursor cursor = null;
@@ -122,7 +125,7 @@ public class SDBInfoUtil {
             DBCollection cl = sdb.getCollectionSpace(sourceOptions.getCollectionSpace())
                     .getCollection(sourceOptions.getCollection());
 
-            cursor = cl.explain(null, null, null, null,
+            cursor = cl.explain(matcher, selector, null, null,
                     0, -1, 0, null);
 
             while (cursor.hasNext()) {
@@ -218,6 +221,13 @@ public class SDBInfoUtil {
         }
 
         return abnormalNodes;
+    }
+
+    public static boolean containValidation(BSONObject bsonObject1, BSONObject bsonObject2){
+        Set<String> keySet1 = bsonObject1.keySet();
+        Set<String> keySet2 = bsonObject2.keySet();
+
+        return keySet1.containsAll(keySet2);
     }
 
 }

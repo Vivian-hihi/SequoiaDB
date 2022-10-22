@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sequoiadb.flink.constant;
+package com.sequoiadb.flink.common.constant;
 
 public class SDBConstant {
 
@@ -44,18 +44,48 @@ public class SDBConstant {
 
     public static final String ERR_NODES = "ErrNodes";
 
-    public static final String DATA_BLOCKS= "Datablocks";
+    public static final String DATA_BLOCKS = "Datablocks";
 
     public static final String TRANS_MAX_LOCK_NUM = "TransMaxLockNum";
     public static final String PAGE_SIZE = "PageSize";
     public static final String DOMAIN = "Domain";
+
     public static final String SHARDING_KEY = "ShardingKey";
     public static final String SHARDING_TYPE = "ShardingType";
+    public static final String HASH_SHARDING_TYPE = "hash";
+
     public static final String REPL_SIZE = "ReplSize";
     public static final String COMPRESSION_TYPE = "CompressionType";
     public static final String AUTO_SPLIT = "AutoSplit";
-    
+    public static final String ENSURE_SHARDING_INDEX = "EnsureShardingIndex";
+
     public static final String INDEX_DEF = "IndexDef";
     public static final String UNIQUE = "unique";
     public static final String KEY = "key";
+
+    public static final String INDEX_UNIQUE = "Unique";
+    public static final String INDEX_NOT_NULL = "NotNull";
+
+    // BSON Matcher Type
+    public static final String AND = "$and";
+    public static final String OR = "$or";
+    public static final String IN = "$in";
+    public static final String NIN = "$nin";
+    public static final String NOT = "$not";
+    public static final String GT = "$gt";
+    public static final String GTE = "$gte";
+    public static final String LT = "$lt";
+    public static final String LTE = "$lte";
+    public static final String ET = "$et";
+    public static final String NE = "$ne";
+    public static final String IS_NULL = "$isnull";
+
+    public static final String IN_MERGE = "in";
+    public static final String NIN_MERGE = "nin";
+
+
+    //Lookup
+    public static final String INDEX_DEF_KEY_NAME = "name";
+
+    public static final String SDB_ID_INDEX = "$id";
 }
