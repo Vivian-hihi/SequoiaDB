@@ -16,6 +16,7 @@
 
 package com.sequoiadb.flink.table;
 
+import com.sequoiadb.flink.common.client.SDBCollectionProvider;
 import com.sequoiadb.flink.common.exception.SDBException;
 import com.sequoiadb.flink.config.SDBSinkOptions;
 import com.sequoiadb.flink.serde.SDBDataConverter;
@@ -80,6 +81,9 @@ public class SDBDynamicTableSink implements DynamicTableSink {
             UniqueConstraint uc = schema.getPrimaryKey().get();
             sinkOptions.setUpsertKey(uc.getColumns()
                     .toArray(new String[0]));
+
+            //create collectionspace,collection and index if not exist.
+            SDBCollectionProvider.ensureCollectionSpaceWithCollection(sinkOptions);
         }
 
         if (APPEND_ONLY.equals(sinkOptions.getWriteMode())) {
