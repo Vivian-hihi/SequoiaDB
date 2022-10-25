@@ -132,6 +132,8 @@ public class CGBCanalJsonDecodingFormat implements DecodingFormat<Deserializatio
                 DataTypes.STRING().nullable(),
                 DataTypes.FIELD("__db", DataTypes.STRING()),
                 new MetadataConverter() {
+                    private static final long serialVersionUID = 1L;
+
                     @Override
                     public Object convert(GenericRowData row, int pos) {
                         return row.getString(pos);
@@ -151,18 +153,16 @@ public class CGBCanalJsonDecodingFormat implements DecodingFormat<Deserializatio
                     }
                 }),
 
-        EVENT_TIMESTAMP(
-                "$event-timestamp",
-                DataTypes.TIMESTAMP(3).nullable(),
-                DataTypes.FIELD("__version", DataTypes.STRING()),
+        EXTRA_ROW_KIND(
+                "$extra-row-kind",
+                DataTypes.INT().nullable(),
+                DataTypes.FIELD("__type", DataTypes.INT()),
                 new MetadataConverter() {
+                    private static final long serialVersionUID = 1L;
+
                     @Override
                     public Object convert(GenericRowData row, int pos) {
-                        if (row.isNullAt(pos)) {
-                            return null;
-                        }
-                        return TimestampData.fromEpochMillis(
-                                Long.parseLong(row.getString(pos).toString()));
+                        return row.getString(pos);
                     }
                 }),
         ;

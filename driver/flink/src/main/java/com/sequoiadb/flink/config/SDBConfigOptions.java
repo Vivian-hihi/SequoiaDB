@@ -78,4 +78,26 @@ public class SDBConfigOptions implements Serializable {
     public static final ConfigOption<String> WRITE_MODE =
             ConfigOptions.key("writemode").stringType().defaultValue("append-only");
 
+    public static final ConfigOption<Boolean> SINK_RETRACT_PARTITIONED_SOURCE =
+            ConfigOptions
+                    .key("sink.retract.partitioned-source")
+                    .booleanType()
+                    .defaultValue(false)
+                    .withDescription("whether upstreaming source is multi-partitioned or not.");
+
+    public static final ConfigOption<String> SINK_RETRACT_EVENT_TS_FIELD_NAME =
+            ConfigOptions
+                    .key("sink.retract.event-ts-field-name")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("In retract mode, user must specify event timestamp " +
+                            "from business fields to ensure changelog order");
+
+    public static final ConfigOption<Integer> SINK_RETRACT_STATE_TTL =
+            ConfigOptions
+                    .key("sink.retract.state-ttl")
+                    .intType()
+                    .defaultValue(1)
+                    .withDescription("Time To Live in retract mode, used for state cleanup periodically.");
+
 }

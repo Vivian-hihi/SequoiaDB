@@ -17,6 +17,7 @@
 package com.sequoiadb.flink.format.json.cgb;
 
 import com.sequoiadb.flink.common.exception.SDBException;
+import com.sequoiadb.flink.common.metadata.ExtraRowKind;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.formats.common.TimestampFormat;
@@ -76,6 +77,8 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final int erkPos;
+
     public CGBCanalJsonDeserializationSchema(
             DataType physicalDataType,
             List<ReadableMetadata> requestedMetadata,
@@ -117,6 +120,9 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
             }
             upsertKeyPositions[i] = pos;
         }
+
+        this.erkPos = requestedMetadata
+                .indexOf(ReadableMetadata.EXTRA_ROW_KIND);
     }
 
     private static RowType createJsonRowType(
@@ -219,15 +225,31 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
 
     private void emitRow(GenericRowData rootRow,
             GenericRowData before, GenericRowData after, Collector<RowData> out) throws IOException {
-        GenericRowData producedAfter = convertToFinalRow(rootRow, after);
+        GenericRowData producedAft = convertToFinalRow(rootRow, after);
 
+        // if it has primary key changes, split changelog into UPDATE_PK_BEF, UPDATE_PK_AFT
         if (before != null && hasPriKeyChanges(before)) {
             fillPriKeyInBefore(before, after);
-            GenericRowData producedBefore = convertToFinalRow(rootRow, before);
-            out.collect(producedBefore);
+            GenericRowData producedBef = convertToFinalRow(rootRow, before);
+
+            /**
+             * Set $extra-row-kind if metadata has been defined (erkPos == -1 means
+             * It hasn't been defined).
+             *
+             * Currently, $extra-row-kind is only provided to the
+             * {@link com.sequoiadb.flink.sink.writer.SDBPartitionedSinkWriter} for use, and upstream
+             * does not need to check if it is defined.
+             */
+            if (erkPos != -1) {
+                final int physicalArity = before.getArity();
+                producedBef.setField(physicalArity + erkPos, ExtraRowKind.UPDATE_PK_BEF);
+                producedAft.setField(physicalArity + erkPos, ExtraRowKind.UPDATE_PK_AFT);
+            }
+
+            out.collect(producedBef);
         }
 
-        out.collect(producedAfter);
+        out.collect(producedAft);
     }
 
     private GenericRowData convertToFinalRow(GenericRowData rootRow, GenericRowData physicalRow) {

@@ -20,6 +20,7 @@ import com.sequoiadb.flink.common.client.SDBCollectionProvider;
 import com.sequoiadb.flink.common.exception.SDBException;
 import com.sequoiadb.flink.config.SDBSinkOptions;
 import com.sequoiadb.flink.serde.SDBDataConverter;
+import com.sequoiadb.flink.sink.SDBPartitionedSink;
 import com.sequoiadb.flink.sink.SDBRetractSink;
 import com.sequoiadb.flink.sink.SDBSink;
 import com.sequoiadb.flink.sink.SDBUpsertSink;
@@ -90,6 +91,10 @@ public class SDBDynamicTableSink implements DynamicTableSink {
             return SinkProvider.of(
                     new SDBSink<>(sinkOptions, converter), sinkOptions.getSinkParallelism());
         } else if (RETRACT.equals(sinkOptions.getWriteMode())) {
+            if (sinkOptions.isPartitionedSource()) {
+                return SinkProvider.of(new SDBPartitionedSink(converter, sinkOptions),
+                        sinkOptions.getSinkParallelism());
+            }
             return SinkProvider.of(
                     new SDBRetractSink(converter, sinkOptions),
                     sinkOptions.getSinkParallelism());

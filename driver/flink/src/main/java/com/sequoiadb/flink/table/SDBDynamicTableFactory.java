@@ -27,6 +27,7 @@ import com.sequoiadb.flink.config.SDBSourceOptions;
 
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ReadableConfig;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.UniqueConstraint;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
@@ -80,6 +81,9 @@ public class SDBDynamicTableFactory implements DynamicTableSourceFactory, Dynami
         OPTIONAL_OPTIONS.add(SDBConfigOptions.OVERWRITE);
         OPTIONAL_OPTIONS.add(SDBConfigOptions.MAX_BULK_FILL_TIME);
         OPTIONAL_OPTIONS.add(SDBConfigOptions.WRITE_MODE);
+        OPTIONAL_OPTIONS.add(SDBConfigOptions.SINK_RETRACT_PARTITIONED_SOURCE);
+        OPTIONAL_OPTIONS.add(SDBConfigOptions.SINK_RETRACT_EVENT_TS_FIELD_NAME);
+        OPTIONAL_OPTIONS.add(SDBConfigOptions.SINK_RETRACT_STATE_TTL);
     }
 
     @Override
