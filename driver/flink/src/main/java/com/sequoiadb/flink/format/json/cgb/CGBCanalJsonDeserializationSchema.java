@@ -37,8 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.sequoiadb.flink.format.json.cgb.CGBCanalJsonDecodingFormat.ReadableMetadata;
@@ -49,6 +51,11 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
 
     private static final long serialVersionUID = 1L;
 
+    private static final Set<String> SUPPORTED_CHANGELOG_PARTITION_POLICIES = new HashSet<>();
+
+    private static final String P_BY_BEF = "p-by-bef";
+    private static final String P_BY_AFT = "p-by-aft";
+
     // supported op type
     private static final String OP_INSERT = "INSERT";
     private static final String OP_UPDATE = "UPDATE";
@@ -57,6 +64,11 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
     // cgb technical field
     private static final String TYPE = "__type";
     private static final String BEFORE = "__before";
+
+    static {
+        SUPPORTED_CHANGELOG_PARTITION_POLICIES.add(P_BY_BEF);
+        SUPPORTED_CHANGELOG_PARTITION_POLICIES.add(P_BY_AFT);
+    }
 
     /** The deserializer to deserialize CGB Canal JSON data. */
     private final JsonRowDataDeserializationSchema jsonDeserializer;
@@ -71,6 +83,7 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
 
     private final boolean ignoreParseErrors;
     private final int[] upsertKeyPositions;
+    private final String cPartitionPolicy;
 
     private final RowType jsonRowType;
     private final DataType physicalDataType;
@@ -85,7 +98,8 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
             TypeInformation<RowData> producedTypeInfo,
             boolean ignoreParseErrors,
             TimestampFormat timestampFormat,
-            String[] upsertKey) {
+            String[] upsertKey,
+            String cPartitionPolicy) {
         this.jsonRowType = createJsonRowType(physicalDataType, requestedMetadata);
         this.physicalDataType = physicalDataType;
         this.jsonDeserializer =
@@ -119,6 +133,13 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
                                 physicalRowType));
             }
             upsertKeyPositions[i] = pos;
+        }
+
+        this.cPartitionPolicy = cPartitionPolicy;
+        if (!SUPPORTED_CHANGELOG_PARTITION_POLICIES.contains(cPartitionPolicy)) {
+            throw new SDBException(
+                    String.format("unrecognized changelog partition policy: %s",
+                            cPartitionPolicy));
         }
 
         this.erkPos = requestedMetadata
@@ -242,8 +263,20 @@ public class CGBCanalJsonDeserializationSchema implements DeserializationSchema<
              */
             if (erkPos != -1) {
                 final int physicalArity = before.getArity();
-                producedBef.setField(physicalArity + erkPos, ExtraRowKind.UPDATE_PK_BEF);
-                producedAft.setField(physicalArity + erkPos, ExtraRowKind.UPDATE_PK_AFT);
+                producedBef.setField(physicalArity + erkPos, ExtraRowKind.UPDATE_PK_BEF.getCode());
+                producedAft.setField(physicalArity + erkPos, ExtraRowKind.UPDATE_PK_AFT.getCode());
+
+                if (P_BY_AFT.equals(cPartitionPolicy)) {
+                    // if update changelog is partitioned by primary-keys in after field,
+                    // UPDATE_PK_AFT is still in current pipeline, turn into a INSERT op.
+                    producedAft.setRowKind(RowKind.INSERT);
+                    producedAft.setField(physicalArity + erkPos, ExtraRowKind.INSERT.getCode());
+                } else if (P_BY_BEF.equals(cPartitionPolicy)) {
+                    // if update changelog is partitioned by primary-keys in before field,
+                    // UPDATE_PK_BEF is still in current pipeline, turn into an DELETE op.
+                    producedBef.setRowKind(RowKind.DELETE);
+                    producedBef.setField(physicalArity + erkPos, ExtraRowKind.DELETE.getCode());
+                }
             }
 
             out.collect(producedBef);
