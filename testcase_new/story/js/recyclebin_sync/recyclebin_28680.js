@@ -5,6 +5,7 @@
  * @LastEditTime  : 2022.11.15
  * @LastEditors   : Xu Mingxing
  ******************************************************************************/
+testConf.skipStandAlone = true;
 main( test );
 
 function test ()
