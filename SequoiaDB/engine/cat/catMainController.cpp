@@ -1078,6 +1078,7 @@ namespace engine
       reply.header.TID             = pMsg->TID ;
       reply.header.routeID.value   = 0 ;
       reply.header.requestID       = pMsg->requestID ;
+      reply.header.globalID        = pMsg->globalID ;
       reply.contextID              = contextID ;
       reply.startFrom              = 0 ;
       reply.numReturned            = 0 ;
