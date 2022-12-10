@@ -63,7 +63,8 @@ ossFiles = [
       "oss/ossVer.cpp",
       "oss/ossMem.cpp",
       "oss/ossDynamicLoad.cpp",
-      "oss/ossHdfs.cpp"
+      "oss/ossHdfs.cpp",
+      "oss/ossTimeZone.cpp"
       ]
 
 pmdFiles = [
@@ -822,6 +823,9 @@ ossTestFiles = [
 ossTimeTestFiles = [
       "test/oss/ossTimeTest.cpp"
 ]
+ossTimeZoneTestFiles = [
+      "test/oss/ossTimeZoneTest.cpp"
+]
 ixmgenTestFiles = [
       "test/ixmgen/generator.cpp"
       ]
@@ -962,6 +966,7 @@ env.StaticLibrary('omsvc', omsvcFiles)
 clstest = env.Object('clstest', gtestMainFile)
 osstest = env.Object('osstest', gtestMainFile)
 ossTimeTest = env.Object('ossTimeTest', gtestMainFile)
+ossTimeZoneTest = env.Object('ossTimeZoneTest', gtestMainFile)
 ixmgentest = env.Object('ixmgentest', gtestMainFile)
 rtncontexttest = env.Object('rtncontexttest', gtestMainFile)
 mthtest = env.Object('mthtest', gtestMainFile)
@@ -1072,6 +1077,9 @@ if hasTestcase:
    ossTimeTest = env.Program("ossTimeTest", [ ossTimeTestFiles, ossTimeTest ],
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
+   ossTimeZoneTest = env.Program("ossTimeZoneTest", [ ossTimeZoneTestFiles, ossTimeZoneTest ],
+          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
    ixmgenTest = env.Program("ixmgenTest", [ ixmgenTestFiles, ixmgentest ],
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -1147,6 +1155,7 @@ if hasTestcase:
    env.Install( '#/tests', clsTest )
    env.Install( '#/tests', ossTest )
    env.Install( '#/tests', ossTimeTest )
+   env.Install( '#/tests', ossTimeZoneTest )
    env.Install( '#/tests', ixmgenTest )
    env.Install( '#/tests', idxHashTest )
    env.Install( '#/tests', rtnContextTest )
