@@ -2222,12 +2222,13 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name %s, rc: %d",
                    pName, rc ) ;
 
+      _clFullName( pName, fullName, sizeof(fullName) ) ;
+
       // calc the reserve dps size
       if ( dpscb )
       {
-         rc = dpsCLCrt2Record( _clFullName(pName, fullName, sizeof(fullName)),
-                               clUniqueID, attributes, compressionType,
-                               extOptions, pIdIdxDef, record ) ;
+         rc = dpsCLCrt2Record( fullName, clUniqueID, attributes,
+                               compressionType, extOptions, pIdIdxDef, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
          rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -2412,6 +2413,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLcrt record to log, "
                       "rc = %d", rc ) ;
       }
+      else if ( NULL != cb )
+      {
+         cb->setDataExInfo( fullName, _logicalCSID, logicalID,
+                            DMS_INVALID_EXTENT ) ;
+      }
 
       // release meta lock
       if ( metalocked )
@@ -2539,6 +2545,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name %s, rc: %d",
                    pName, rc ) ;
 
+      _clFullName( pName, fullName, sizeof(fullName) ) ;
+
       // calc the reserve dps size
       if ( dpscb )
       {
@@ -2553,8 +2561,7 @@ namespace engine
             boOptions = &( options->_boOptions ) ;
          }
 
-         rc = dpsCLDel2Record( _clFullName(pName, fullName, sizeof(fullName)),
-                               boOptions, record ) ;
+         rc = dpsCLDel2Record( fullName, boOptions, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
          rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -2714,6 +2721,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLDel record to log, rc: "
                       "%d", rc ) ;
       }
+      else if ( NULL != cb )
+      {
+         cb->setDataExInfo( fullName, _logicalCSID, context->clLID(),
+                            DMS_INVALID_EXTENT ) ;
+      }
 
    done:
       if ( metalocked )
@@ -2778,6 +2790,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name %s, rc: %d",
                    pName, rc ) ;
 
+       _clFullName( pName, fullName, sizeof(fullName) ) ;
+
       // calc the reserve dps size
       if ( dpscb )
       {
@@ -2792,8 +2806,7 @@ namespace engine
             boOptions = &( options->_boOptions ) ;
          }
 
-         rc = dpsCLTrunc2Record( _clFullName(pName, fullName, sizeof(fullName)),
-                                 boOptions, record ) ;
+         rc = dpsCLTrunc2Record( fullName, boOptions, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
          rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -2961,6 +2974,8 @@ namespace engine
       else if ( cb->getLsnCount() > 0 )
       {
          context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_ALL ) ;
+         cb->setDataExInfo( fullName, logicalID(), oldCLID,
+                            DMS_INVALID_EXTENT ) ;
       }
 
    done:
@@ -3137,6 +3152,7 @@ namespace engine
       BOOLEAN isTransLocked   = FALSE ;
       UINT16  mbID            = DMS_INVALID_MBID ;
       UINT32  clLID           = DMS_INVALID_CLID ;
+      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
 
       PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_RENAMECOLLECTION,
                   PD_PACK_STRING ( oldName ),
@@ -3244,6 +3260,12 @@ namespace engine
                        clLID, DMS_INVALID_EXTENT ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert clrename to log, rc = %d",
                       rc ) ;
+      }
+      else if ( NULL != cb )
+      {
+         _clFullName( newName, fullName, sizeof(fullName) ) ;
+         cb->setDataExInfo( fullName, _logicalCSID, clLID,
+                            DMS_INVALID_EXTENT ) ;
       }
 
       if ( _pEventHolder )
@@ -3618,6 +3640,7 @@ namespace engine
       UINT16 recyMBID = DMS_INVALID_MBID ;
       utilCLUniqueID newUniqueID = UTIL_UNIQUEID_NULL ;
       UINT32 newStartLID = DMS_INVALID_CLID ;
+      CHAR fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = {0} ;
 
       PD_LOG( PDDEBUG, "Start return collection [origin: %s.%s, "
               "recycle %s.%s]", getSuName(), originName, getSuName(),
@@ -3713,6 +3736,9 @@ namespace engine
       else if ( cb->getLsnCount() > 0 )
       {
          mbContext->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_ALL ) ;
+         _clFullName( originName, fullName, sizeof(fullName) ) ;
+         cb->setDataExInfo( fullName, logicalID(), mbContext->clLID(),
+                            DMS_INVALID_EXTENT ) ;
       }
 
       if ( NULL != mbContext )
@@ -3975,12 +4001,12 @@ namespace engine
             _finalRecordSize( dmsRecordSize, recordData ) ;
          }
 
+         _clFullName( context->mb()->_collectionName, fullName,
+                         sizeof(fullName) ) ;
+
          // calc log reserve
          if ( dpscb )
          {
-            _clFullName( context->mb()->_collectionName, fullName,
-                         sizeof(fullName) ) ;
-
             if ( ( !cb->isInTransRollback() ) &&
                  ( !OSS_BIT_TEST( context->mb()->_attributes,
                                   DMS_MB_ATTR_NOIDINDEX ) ) &&
@@ -4227,6 +4253,8 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
                                                    cb->isDoRollback() ) ;
+         cb->setDataExInfo( fullName, logicalID(), context->clLID(),
+                            pExtent->_logicID ) ;
       }
 
       if ( handler )
@@ -4474,6 +4502,9 @@ namespace engine
                   }
                }
 
+               _clFullName( context->mb()->_collectionName, fullName,
+                            sizeof(fullName) ) ;
+
                // first to reserve dps
                if ( NULL != dpscb )
                {
@@ -4491,9 +4522,6 @@ namespace engine
                         goto error ;
                      }
                   }
-
-                  _clFullName( context->mb()->_collectionName, fullName,
-                               sizeof(fullName) ) ;
 
                   if ( ( !cb->isInTransRollback() ) &&
                        ( context->mbStat()->_uniqueIdxNum > 1 ) )
@@ -4667,6 +4695,8 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
                                                    cb->isDoRollback() ) ;
+         cb->setDataExInfo( fullName, logicalID(), context->clLID(),
+                            pExtent->_logicID ) ;
       }
 
       if ( handler )
@@ -4881,11 +4911,11 @@ namespace engine
                }
             }
 
+            _clFullName( context->mb()->_collectionName, fullName,
+                         sizeof(fullName) ) ;
+
             if ( NULL != dpscb )
             {
-               _clFullName( context->mb()->_collectionName, fullName,
-                            sizeof(fullName) ) ;
-
                if ( ( !cb->isInTransRollback() ) &&
                     ( context->mbStat()->_uniqueIdxNum > 1 ) )
                {
@@ -5031,6 +5061,8 @@ namespace engine
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
                                                    cb->isDoRollback() ) ;
+         cb->setDataExInfo( fullName, logicalID(), context->clLID(),
+                            pExtent->_logicID ) ;
       }
 
       if ( handler )
