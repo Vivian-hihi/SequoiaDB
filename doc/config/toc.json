@@ -3209,6 +3209,12 @@
                            "en": "findOne()"
                         },
                         {
+                           "id": 1671182872,
+                           "file": "getCollectionStat",
+                           "cn": "getCollectionStat()",
+                           "en": "getCollectionStat()"
+                        },
+                        {
                            "id": 1586250289,
                            "file": "getDetail",
                            "cn": "getDetail()",
