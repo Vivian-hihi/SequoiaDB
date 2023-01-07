@@ -57,8 +57,10 @@ public class SubCL10186 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            MetaDataUtils.clearCL( sdb, csName, clName );
-            MetaDataUtils.clearCS( sdb, csName );
+            // 问题单SEQUOIADBMAINSTREAM-8528未修改3.6-cgb分支，此处与master不一致
+            if ( sdb.isCollectionSpaceExist( csName ) ) {
+                sdb.dropCollectionSpace( csName );
+            }
         } finally {
             if ( sdb != null ) {
                 sdb.close();
