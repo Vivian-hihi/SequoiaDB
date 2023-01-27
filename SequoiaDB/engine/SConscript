@@ -205,7 +205,8 @@ utilFiles = [
       "util/utilRecycleItem.cpp",
       "util/utilRecycleBinConf.cpp",
       "util/utilRecycleReturnInfo.cpp",
-      "util/utilSecure.cpp"
+      "util/utilSecure.cpp",
+      "util/utilLocation.cpp"
       ]
 
 rtnFiles = [
@@ -819,6 +820,9 @@ clsTestFiles = [
 ossTestFiles = [
       "test/oss/ossHashFloatTest.cpp"
       ]
+utilLocationTestFiles = [
+      "test/util/utilLocationTest.cpp"
+]
 ossTimeTestFiles = [
       "test/oss/ossTimeTest.cpp"
 ]
@@ -964,6 +968,7 @@ env.StaticLibrary('omsvc', omsvcFiles)
 #cataloguetest = env.Object('cataloguetest', gtestMainFile)
 clstest = env.Object('clstest', gtestMainFile)
 osstest = env.Object('osstest', gtestMainFile)
+utilLocationTest = env.Object('utilLocationTest',gtestMainFile)
 ossTimeTest = env.Object('ossTimeTest', gtestMainFile)
 ossTimeZoneTest = env.Object('ossTimeZoneTest', gtestMainFile)
 ixmgentest = env.Object('ixmgentest', gtestMainFile)
@@ -1073,6 +1078,9 @@ if hasTestcase:
    ossTest = env.Program("ossTest", [ ossTestFiles, osstest],
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
+   utilLocationTest = env.Program("utilLocationTest", [ utilLocationTestFiles, utilLocationTest ],
+          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
    ossTimeTest = env.Program("ossTimeTest", [ ossTimeTestFiles, ossTimeTest ],
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -1153,6 +1161,7 @@ if hasTestcase:
 #   env.Install( '#/tests', npipeClientTest )
    env.Install( '#/tests', clsTest )
    env.Install( '#/tests', ossTest )
+   env.Install( '#/tests', utilLocationTest )
    env.Install( '#/tests', ossTimeTest )
    env.Install( '#/tests', ossTimeZoneTest )
    env.Install( '#/tests', ixmgenTest )
