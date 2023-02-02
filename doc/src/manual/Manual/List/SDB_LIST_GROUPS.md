@@ -34,6 +34,7 @@ SDB_LIST_GROUPS
 | GroupName          | string     | 复制组名称                                            |
 | Locations.Location | string     | 复制组中节点的位置信息  |
 | Locations.LocationID | int32    | 复制组中节点的位置信息 ID |
+| Locations.PrimaryNode | int32    | 复制组中位置集的主节点 ID |
 | PrimaryNode        | int32      | 主节点 ID                                           |
 | Role               | int32      | 复制组角色，取值如下：<br>0：数据节点<br>1：协调节点<br>2：编目节点 |
 | Status             | string     | 复制组状态，取值如下：<br>1：已激活<br>0：未激活<br>不存在：未激活分区组            |
@@ -85,7 +86,8 @@ SDB_LIST_GROUPS
   "Locations": [
     {
       "Location": "GuangZhou",
-      "LocationID": 1
+      "LocationID": 1,
+      "PrimaryNode": 1
     }
   ],
   "PrimaryNode": 1,

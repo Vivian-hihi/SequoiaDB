@@ -31,6 +31,8 @@ SDB_SNAP_SYSTEM
 | ServiceName          | string    | 数据库的服务名                                                 |
 | GroupName            | string    | 该逻辑节点所属的复制组名，standalone 模式下该字段为空字符串    |
 | IsPrimary            | boolean   | 是否为主节点，standalone 模式下该字段为 false                  |
+| Location              | string    | 节点的位置信息，该字段为空时表示未设置位置属性                  |
+| IsLocationPrimary     | boolean   | 是否为位置集主节点                                              |
 | ServiceStatus        | boolean   | 是否为可提供服务状态 <br>一些特殊状态，例如[全量同步][replicate_url]时，服务状态为 false |
 | Status               | string    | 数据库状态，如：Normal、Shutdown、Rebuilding、FullSync、OfflineBackup |
 | BeginLSN.Offset      | int64 | 起始 LSN 的偏移                                                |
@@ -101,6 +103,8 @@ SDB_SNAP_SYSTEM
      "ServiceName": "11820",
      "GroupName": "group1",
      "IsPrimary": false,
+     "Location": "GuangZhou",
+     "IsLocationPrimary": false,
      "ServiceStatus": true,
      "Status": "Normal",
      "BeginLSN": {
