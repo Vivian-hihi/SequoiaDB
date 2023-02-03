@@ -867,23 +867,35 @@ public class SequoiadbDatasource {
                     break;
                 }
             } // while(true)
+
             // when we can't get connection, try to report error
             if (connItem == null) {
                 // make some debug info
-                String detail = _getDataSourceSnapshot();
-                // when the last connItem is hold by background creating thread,
-                // and it failed to create the last connection, let's report network error
-                if (getNormalAddrNum() == 0 && getUsedConnNum() < _dsOpt.getMaxCount()) {
-                    BaseException exception = _getLastException();
-                    String errMsg = "get connection failed, no available address for connection, " + detail;
-                    if (exception != null) {
-                        throw new BaseException(SDBError.SDB_NETWORK, errMsg, exception);
-                    } else {
-                        throw new BaseException(SDBError.SDB_NETWORK, errMsg);
+                String threadInfo = String.format("[thread id: %d]", Thread.currentThread().getId());
+                String itemSnap = getConnItemSnapshot();
+                String connSnap = getConnPoolSnapshot();
+                String addressSnap = getAddressSnapshot();
+                String detail = threadInfo + ", " + itemSnap + ", " + connSnap + ", " + addressSnap;
+
+                String errMsg;
+                // Check whether the connection pool is full
+                if (getUsedConnNum() < _dsOpt.getMaxCount()) {
+                    // If background creating thread fail to create the last connection, let's report network error
+                    if (getNormalAddrNum() == 0) {
+                        BaseException exception = _getLastException();
+                        errMsg = "Get connection failed, no available address for connection, ";
+                        if (exception != null) {
+                            throw new BaseException(SDBError.SDB_NETWORK, errMsg + detail, exception);
+                        } else {
+                            throw new BaseException(SDBError.SDB_NETWORK, errMsg + detail);
+                        }
                     }
+
+                    errMsg = "Get connection timeout, ";
+                    throw new BaseException(SDBError.SDB_TIMEOUT, errMsg + detail);
                 } else {
-                    throw new BaseException(SDBError.SDB_DRIVER_DS_RUNOUT,
-                            "the pool has run out of connections, " + detail);
+                    errMsg = "The pool has run out of connections, ";
+                    throw new BaseException(SDBError.SDB_DRIVER_DS_RUNOUT, errMsg + detail);
                 }
             } else {
                 // insert the itemInfo and connection to used pool
@@ -1384,15 +1396,8 @@ public class SequoiadbDatasource {
     }
 
     private String _getDataSourceSnapshot() {
-        String snapshot = String.format("[thread id: %d], total item: %d, idle item: %d, used item: %d, " +
-                        "idle connections: %d, used connections: %d, " +
-                        "normal addresses: %d, abnormal addresses: %d, local addresses: %d",
-                Thread.currentThread().getId(),
-                _connItemMgr.getCapacity(), _connItemMgr.getIdleItemNum(), _connItemMgr.getUsedItemNum(),
-                _idleConnPool != null ? _idleConnPool.count() : null,
-                _usedConnPool != null ? _usedConnPool.count() : null,
-                getNormalAddrNum(), getAbnormalAddrNum(), getLocalAddrNum());
-        return snapshot;
+        String threadInfo = String.format("[thread id: %d]", Thread.currentThread().getId());
+        return threadInfo + ", " + getConnItemSnapshot() + ", " + getConnPoolSnapshot() + ", " + getAddressSnapshot();
     }
 
     private void _setLastException(BaseException e) {
@@ -1663,6 +1668,23 @@ public class SequoiadbDatasource {
         // 2. connectTimeout, used to create connection, without updating
         // 3. socketTimeout, used for I/O socket read operations, need updating
         sdb.getConnProxy().setSoTimeout(config.getSocketTimeout());
+    }
+
+    private String getConnItemSnapshot() {
+        ConnItemInfo itemInfo = _connItemMgr.getConnItemInfo();
+        return String.format("total item: %d, idle item: %d, used item: %d", itemInfo.capacity,
+                itemInfo.idleItemSize, itemInfo.usedItemSize);
+    }
+
+    private String getConnPoolSnapshot() {
+        return String.format("use connections: %d, idle connections: %d",
+                _usedConnPool != null ? _usedConnPool.count() : null,
+                _idleConnPool != null ? _idleConnPool.count() : null);
+    }
+
+    private String getAddressSnapshot() {
+        return String.format("normal address: %d, abnormal address: %d, local address: %d",
+                _normalAddrs.size(), _abnormalAddrs.size(), _localAddrs.size());
     }
 }
 
