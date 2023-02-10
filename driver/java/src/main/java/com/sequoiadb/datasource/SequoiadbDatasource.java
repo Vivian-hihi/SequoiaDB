@@ -131,17 +131,17 @@ public class SequoiadbDatasource {
                 while (!Thread.interrupted()) {
                     Sequoiadb sdb = _destroyConnQueue.take();
                     try {
-                        sdb.disconnect();
+                        sdb.close();
                     } catch (BaseException e) {
                         continue;
                     }
                 }
             } catch (InterruptedException e) {
                 try {
-                    Sequoiadb[] arr = (Sequoiadb[]) _destroyConnQueue.toArray();
+                    Sequoiadb[] arr = _destroyConnQueue.toArray(new Sequoiadb[0]);
                     for (Sequoiadb db : arr) {
                         try {
-                            db.disconnect();
+                            db.close();
                         } catch (Exception ex) {
                         }
                     }
@@ -223,16 +223,19 @@ public class SequoiadbDatasource {
                 String addr = "";
                 while (abnormalAddrSetItr.hasNext()) {
                     addr = abnormalAddrSetItr.next();
+                    Sequoiadb sdb = null;
                     try {
-                        @SuppressWarnings("unused")
-                        Sequoiadb sdb = new Sequoiadb(addr, _username, _password, _abnormalNwOpt);
-                        try {
-                            sdb.disconnect();
-                        } catch (Exception e) {
-                            // do nothing
-                        }
+                        sdb = new Sequoiadb(addr, _username, _password, _abnormalNwOpt);
                     } catch (Exception e) {
                         continue;
+                    } finally {
+                        if ( sdb != null ) {
+                            try {
+                                sdb.close();
+                            } catch (Exception e) {
+                                // do nothing
+                            }
+                        }
                     }
                     abnormalAddrSetItr.remove();
                     // add address to normal address set
@@ -506,7 +509,7 @@ public class SequoiadbDatasource {
             if (_hasClosed) {
                 throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
             }
-            if (null == url || "" == url) {
+            if (url == null || url.equals( "" ) ) {
                 throw new BaseException(SDBError.SDB_INVALIDARG, "coord address can't be empty or null");
             }
             // parse coord address to the format "192.168.20.165:11810"
@@ -1552,7 +1555,7 @@ public class SequoiadbDatasource {
                 obj = new ConcreteLocalStrategy();
                 break;
             default:
-                break;
+                throw new BaseException(SDBError.SDB_INVALIDARG, "invalid connection strategy: " + strategy);
         }
         return obj;
     }
