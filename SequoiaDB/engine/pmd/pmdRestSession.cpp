@@ -1744,7 +1744,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to build insertor with OID, "
                     "occur exception: %s", e.what() ) ;
-            rc = SDB_SYS ;
+            rc = SDB_DRIVER_BSON_ERROR ;
             goto error ;
          }
       }
@@ -1900,7 +1900,7 @@ namespace engine
             {
                PD_LOG_MSG ( PDERROR, "Failed to create BSON object: %s",
                         e.what() ) ;
-               rc = SDB_SYS ;
+               rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
             }
          }
@@ -2579,7 +2579,7 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -2739,7 +2739,7 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -2816,7 +2816,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -2867,7 +2867,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -2930,7 +2930,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -2993,7 +2993,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -3319,7 +3319,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -3370,7 +3370,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -3451,7 +3451,7 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -3530,7 +3530,7 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -4254,7 +4254,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -4387,7 +4387,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -4457,7 +4457,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -4528,7 +4528,7 @@ namespace engine
       catch( std::exception &e )
       {
          PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
