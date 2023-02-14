@@ -179,7 +179,6 @@ namespace engine
       totalLobWrite             = rhs.totalLobWrite ;
       totalLobTruncate          = rhs.totalLobTruncate ;
       totalLobAddressing        = rhs.totalLobAddressing ;
-
       receiveNum                = rhs.receiveNum ;
 
       replUpdate                = rhs.replUpdate ;

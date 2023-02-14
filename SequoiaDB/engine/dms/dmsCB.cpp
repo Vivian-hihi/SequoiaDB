@@ -118,6 +118,7 @@ namespace engine
     _tempSUMgr( this ),
     _statSUMgr( this ),
     _localSUMgr( this ),
+    _statMgr(),
     _ixmKeySorterCreator( NULL ),
     _scannerCheckerCreator( NULL )
    {
@@ -3472,6 +3473,11 @@ namespace engine
    dmsLocalSUMgr* _SDB_DMSCB::getLocalSUMgr()
    {
       return &_localSUMgr ;
+   }
+
+   dmsDataStatMgr* _SDB_DMSCB::getStatMgr()
+   {
+      return &_statMgr ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLRSUCACHES, "_SDB_DMSCB::clearSUCaches" )

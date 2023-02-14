@@ -101,6 +101,7 @@ namespace engine
       INT32 open( const CHAR *path,
                   const CHAR *metaPath,
                   IDataSyncManager *pSyncMgr,
+                  IDataStatManager *pStatMgr,
                   BOOLEAN createNew ) ;
 
       void  removeStorageFiles() ;
@@ -329,6 +330,7 @@ namespace engine
 
       utilCacheUnit                 *_pCacheUnit ;
       IDataSyncManager              *_pSyncMgrTmp ;
+      IDataStatManager              *_pStatMgrTmp ;
 
       vector< ossSpinSLatch* >      _vecBucketLacth ;
 
