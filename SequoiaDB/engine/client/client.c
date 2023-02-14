@@ -6531,6 +6531,10 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+
+   // Inform coord or data nodes that the '_id' field is included in the record.
+   flags |= FLG_INSERT_HAS_ID_FIELD ;
+
    flags |= FLG_INSERT_RETURNNUM ;
    rc = clientBuildInsertMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                cs->_collectionFullName, flags, 0, obj,
@@ -6647,6 +6651,10 @@ SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
       }
    }
    flags |= FLG_INSERT_RETURNNUM ;
+
+   // Inform coord or data nodes that the '_id' field is included in records.
+   flags |= FLG_INSERT_HAS_ID_FIELD ;
+
    for ( count = 0; count < num; ++count )
    {
       if ( !obj[count] )
