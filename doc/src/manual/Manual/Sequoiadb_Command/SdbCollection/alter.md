@@ -28,6 +28,18 @@ options ( *object，必填* )
 
     格式：`ReplSize: <number>`
 
+- ConsistencyStrategy（ *number* ）：[同步一致性][consistency_strategy]策略
+
+    该参数用于指定数据同步优先选择的节点，默认值为 3。
+
+    取值如下：
+
+    - 1：节点优先策略
+    - 2：位置多数派优先策略
+    - 3：主位置多数派优先策略
+
+    格式：`ConsistencyStrategy: 3`
+
 - ShardingKey ( *object* )：分区键，取值为 1 或 -1，表示正向或逆向排序
 
     - 已有的 ShardingKey 会被修改成新的 ShardingKey。
@@ -156,3 +168,4 @@ v1.12 及以上版本
 [error_code]:manual/Manual/Sequoiadb_error_code.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [faq]:manual/FAQ/faq_sdb.md
+[consistency_strategy]:manual/Distributed_Engine/Architecture/Replication/consistency_strategy.md

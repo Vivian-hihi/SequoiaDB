@@ -30,8 +30,21 @@ Modify the collection properties through the options parameter:
 
 - ShardingKey ( *object* ): Sharding key, the value is 1 or -1, indicating forward or backward sorting.
 
-    - The existing "ShardingKey" will be modified to a new "ShardingKey".
-    - The collection can only exist in one data group, or the collection is the main table without mounting sub-tables.
+- ConsistencyStrategy ( *number* ): [Synchronization consistency][consistency_strategy] strategy.
+
+    This parameter is used to set the preferred node for data synchronization, the default value is 3.
+
+    The values are as follows:
+
+    - 1: Node priority strategy.
+    - 2: Position majority first strategy.
+    - 3: Main position majority first strategy.
+
+    Format：`ConsistencyStrategy: 3`
+
+- ShardingKey ( *object* ): Sharding key, and the value is 1 or -1, indicating f orward or reverse sorting.
+
+    "ShardingKey" can be modified when the collection only exists in one data group, or the collection does not have subcollections mounted.
 
     Format: `ShardingKey: {<field1>: <1|-1>, [<field2>: <1|-1>, ...]}`
 
@@ -152,3 +165,4 @@ v1.12 and above
 [error_code]:manual/Manual/Sequoiadb_error_code.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [faq]:manual/FAQ/faq_sdb.md
+[consistency_strategy]:manual/Distributed_Engine/Architecture/Replication/consistency_strategy.md

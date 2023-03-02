@@ -57,7 +57,19 @@ This function is used to create a collection in the specified collection space. 
 
         Format: `ReplSize: 0`
 
-    - Compressed ( *boolean* ): Whether to enable the data compression function, and the default value is "true", enable the data compression function.
+    - ConsistencyStrategy ( *number* ): [Synchronization consistency][consistency_strategy] strategy.
+
+        This parameter is used to set the preferred node for data synchronization, the default value is 3.
+
+        The values are as follows:
+
+        - 1: Node priority strategy.
+        - 2: Position majority first strategy.
+        - 3: Main position majority first strategy.
+
+        Format：`ConsistencyStrategy: 3`
+
+    - Compressed ( *boolean* ): Whether to enable the data compression function, and the default value is "true", which means that the data compression function is enable.
 
         Format: `Compressed: false`
 
@@ -228,3 +240,4 @@ v1.0 and above
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [faq]:manual/FAQ/faq_sdb.md
 [error_code]:manual/Manual/Sequoiadb_error_code.md
+[consistency_strategy]:manual/Distributed_Engine/Architecture/Replication/consistency_strategy.md
