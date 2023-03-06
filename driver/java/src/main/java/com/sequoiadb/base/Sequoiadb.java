@@ -76,6 +76,9 @@ public class Sequoiadb implements Closeable {
     private int closeAllCursorMark = 0;
     private SdbAuthVersion authVersion = SdbAuthVersion.SDB_AUTH_MD5;
 
+    private final int MAX_USERNAME_LENGTH = 256;
+    private final int MAX_PASSWORD_LENGTH = 256;
+
     /**
      * specified the package size of the collections in current collection space to be 4K
      */
@@ -802,6 +805,9 @@ public class Sequoiadb implements Closeable {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
 
+        if (username.length() > MAX_USERNAME_LENGTH || password.length() > MAX_PASSWORD_LENGTH) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "Exceeds username or password maximum length");
+        }
         AuthRequest request = new CreateUserRequest(username, password, authVersion, options);
         SdbReply response = requestAndResponse(request);
         throwIfError(response, username);
