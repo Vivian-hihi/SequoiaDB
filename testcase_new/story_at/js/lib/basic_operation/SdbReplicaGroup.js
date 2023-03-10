@@ -12,6 +12,8 @@ if ( tmpSdbReplicaGroup == undefined )
       help: SdbReplicaGroup.prototype.help,
       reelect: SdbReplicaGroup.prototype.reelect,
       removeNode: SdbReplicaGroup.prototype.removeNode,
+      setActiveLocation: SdbReplicaGroup.prototype.setActiveLocation,
+      setAttributes: SdbReplicaGroup.prototype.setAttributes,
       start: SdbReplicaGroup.prototype.start,
       stop: SdbReplicaGroup.prototype.stop,
       toString: SdbReplicaGroup.prototype.toString
@@ -32,6 +34,8 @@ SdbReplicaGroup.prototype.getSlave=function(){try{return tmpSdbReplicaGroup.getS
 SdbReplicaGroup.prototype.help=function(){try{return tmpSdbReplicaGroup.help.apply(this,arguments);}catch(e){throw new Error(e);}};
 SdbReplicaGroup.prototype.reelect=function(){try{return tmpSdbReplicaGroup.reelect.apply(this,arguments);}catch(e){throw new Error(e);}};
 SdbReplicaGroup.prototype.removeNode=function(){try{return tmpSdbReplicaGroup.removeNode.apply(this,arguments);}catch(e){throw new Error(e);}};
+SdbReplicaGroup.prototype.setActiveLocation=function(){try{return tmpSdbReplicaGroup.setActiveLocation.apply(this,arguments);}catch(e){throw new Error(e);}};
+SdbReplicaGroup.prototype.setAttributes=function(){try{return tmpSdbReplicaGroup.setAttributes.apply(this,arguments);}catch(e){throw new Error(e);}};
 SdbReplicaGroup.prototype.start=function(){try{return tmpSdbReplicaGroup.start.apply(this,arguments);}catch(e){throw new Error(e);}};
 SdbReplicaGroup.prototype.stop=function(){try{return tmpSdbReplicaGroup.stop.apply(this,arguments);}catch(e){throw new Error(e);}};
 SdbReplicaGroup.prototype.toString=function(){try{return tmpSdbReplicaGroup.toString.apply(this,arguments);}catch(e){throw new Error(e);}};

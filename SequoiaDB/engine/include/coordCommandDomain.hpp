@@ -122,6 +122,14 @@ namespace engine
 
          // Not a collection command
          virtual BOOLEAN _flagDoOnCollection () { return FALSE ; }
+
+         virtual INT32 _doOnDataGroup ( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        rtnContextCoord::sharePtr *ppContext,
+                                        coordCMDArguments *pArgs,
+                                        const CoordGroupList &groupLst,
+                                        const vector<BSONObj> &cataObjs,
+                                        CoordGroupList &sucGroupLst ) ;
    } ;
 
    typedef _coordCMDAlterDomain coordCMDAlterDomain ;

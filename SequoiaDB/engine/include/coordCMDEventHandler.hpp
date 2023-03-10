@@ -206,6 +206,10 @@ namespace engine
                                const CHAR* groupName,
                                pmdEDUCB *cb ) ;
 
+      INT32 notify2NodesByGroups( coordResource *pResource,
+                                  const CoordGroupList &groupLst,
+                                  pmdEDUCB *cb ) ;
+
       INT32 notify2AllNodes( coordResource *pResource,
                              BOOLEAN exceptSelf,
                              pmdEDUCB *cb ) ;
