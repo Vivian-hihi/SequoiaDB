@@ -109,6 +109,13 @@ public class TestUpsert30382 extends SdbTestBase {
         ArrayList<BSONObject> expRecord = new ArrayList<>();
         ArrayList<BSONObject> actRecord = new ArrayList<>();
         expRecord.add( insertData );
+        if( num == 1 ) {
+            expRecord.clear();
+            BasicBSONObject targetInsert = new BasicBSONObject();
+            targetInsert.put( "c", 1 );
+            targetInsert.put( "b", 1 );
+            expRecord.add( targetInsert );
+        }
         DBCursor cursor = cl.query();
         while( cursor.hasNext() ){
             BSONObject record = cursor.getNext();
