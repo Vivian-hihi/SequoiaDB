@@ -1172,15 +1172,6 @@ function restartAllHostNode( hostnameArr ) {
                finishNumber++ ;
             }
          }
-         else
-         {
-            var cmdInfo = listProc[ 0 ].toObj()[ "cmd" ];
-            // Ignore zombie process
-            if ( undefined != cmdInfo && cmdInfo.indexOf( "<defunct>" ) != -1 ) {
-                finishFlagArr[ j ] = true ;
-                finishNumber++ ;
-            }
-         }
       }
       sleep( 500 ) ;
    }
