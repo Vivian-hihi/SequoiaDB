@@ -2460,7 +2460,7 @@ namespace engine
                rc = buf.nextObj( obj ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to get object from result, "
                             "rc: %d", rc ) ;
-               objList.push_back( obj ) ;
+               objList.push_back( obj.getOwned() ) ;
             }
             catch ( exception &e )
             {
