@@ -192,9 +192,10 @@ public class SequoiadbDatasource {
                     int destroyCount = _idleConnPool.count() - _dsOpt.getMaxIdleCount();
                     _reduceIdleConnections(destroyCount);
                 }
-                // when the number of idle connections in the pool is less than the minIdleCount,
-                // we are going to create some connections
-                if (_idleConnPool.count() < _dsOpt.getMinIdleCount()) {
+                // when the number of idle connections in the pool is less than the average of minIdleCount
+                // and maxIdleCount, we are going to create some connections
+                int avgCount = (_dsOpt.getMinIdleCount() + _dsOpt.getMaxIdleCount()) / 2;
+                if (_idleConnPool.count() < avgCount) {
                     synchronized (_createConnSignal) {
                         _createConnSignal.notify();
                     }
@@ -1200,7 +1201,6 @@ public class SequoiadbDatasource {
         if (newOpt == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "the offering datasource options can't be null");
         }
-
         int deltaIncCount = newOpt.getDeltaIncCount();
         int maxIdleCount = newOpt.getMaxIdleCount();
         int minIdleCount = newOpt.getMinIdleCount();
@@ -1439,8 +1439,10 @@ public class SequoiadbDatasource {
 
     private void _createConnections() {
         int createNum = _dsOpt.getDeltaIncCount() ;
+        int count = 0;
+        int avgCount = (_dsOpt.getMinIdleCount() + _dsOpt.getMaxIdleCount()) / 2;
 
-        while (createNum > 0 && _idleConnPool.count() < _dsOpt.getMinIdleCount()) {
+        while (createNum > 0 && _idleConnPool.count() < avgCount) {
             // never let "sdb" defined out of current scope
             Sequoiadb sdb = null;
             String addr = null;
