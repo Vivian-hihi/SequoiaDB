@@ -42,6 +42,7 @@ public class DatasourceOptions implements Cloneable {
     private int _keepAliveTimeout = 0 * 60 * 1000; // 0 min
     private int _checkInterval = 1 * 60 * 1000; // 1 min
     private int _syncCoordInterval = 0; // 0 min
+    private int syncLocationInterval = 60 * 1000; // 60s
     private boolean _validateConnection = false;
     private ConnectStrategy _connectStrategy = ConnectStrategy.SERIAL;
     private List<Object> _preferredInstance = null;
@@ -149,6 +150,21 @@ public class DatasourceOptions implements Cloneable {
         } else {
             _syncCoordInterval = syncCoordInterval;
         }
+    }
+
+    /**
+     * Set the interval for updating coord's location information in milliseconds. It takes effect only after
+     * location is set for the connection pool.
+     *
+     * @param syncLocationInterval The interval for updating coord's location information, can't be less than 0,
+     *                             default to be 60000ms
+     * @throws BaseException If error happens.
+     */
+    public void setSyncLocationInterval(int syncLocationInterval) {
+        if (syncLocationInterval < 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "syncLocationInterval can't be less than 0");
+        }
+        this.syncLocationInterval = syncLocationInterval;
     }
 
     /**
@@ -344,6 +360,14 @@ public class DatasourceOptions implements Cloneable {
      */
     public int getSyncCoordInterval() {
         return _syncCoordInterval;
+    }
+
+    /**
+     * Get the interval for updating coord's location information in milliseconds.
+     * @return The interval
+     */
+    public int getSyncLocationInterval() {
+        return syncLocationInterval;
     }
 
     /**
@@ -733,6 +757,7 @@ public class DatasourceOptions implements Cloneable {
                 ", cacheLimit: " + _cacheLimit +
                 ", checkInterval: " + _checkInterval +
                 ", syncCoordInterval: " + _syncCoordInterval +
+                ", syncLocationInterval: " + syncLocationInterval +
                 ", validateConnection: " + _validateConnection +
                 ", connectStrategy: " + _connectStrategy +
                 ", preferredInstance: " + _preferredInstance +
