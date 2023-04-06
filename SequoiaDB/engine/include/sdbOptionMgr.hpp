@@ -58,8 +58,12 @@
       ("shell,s", po::value< string >(),                          \
        "if the -s option is present, "                            \
        "then commands are read from <string>")                    \
-       ("charset,c", po::value< string >(),                       \
-       "charset of client, avaliable value: 'UTF8', 'GB18030'")
-
+      ("charset,c", po::value< string >(),                        \
+       "charset of client, avaliable value: 'UTF8', 'GB18030'")   \
+      ("runtime-size", po::value< UINT32 >(),                     \
+       "the memory size for the JS_NewRuntime instance, in "      \
+       "megabytes. If the "                                       \
+       "provided value is less than 64, the value will be set to "\
+       "64")
 
 #define SDB_ADD_PARAM_OPTIONS_END ;
