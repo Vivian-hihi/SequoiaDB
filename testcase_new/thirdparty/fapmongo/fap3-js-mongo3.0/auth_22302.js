@@ -72,11 +72,12 @@ function main ()
       {
          expRc.push( { "user": users[i] } );
       }
-      assert.eq( JSON.stringify( rc ), JSON.stringify( expRc ) );
+      assert.eq( JSON.stringify( rc.sort( sortBy( "user" ) ) ), JSON.stringify( expRc ) );
 
       // usersInfo
       // get all info
       var rc = db.runCommand( { "usersInfo": 1 } );
+      rc["users"] = rc["users"].sort( sortBy( "user" ) );
       assert.eq( JSON.stringify( rc ), '{"users":' + JSON.stringify( expRc ) + ',"ok":1}' );
       // get one info
       var rc = db.runCommand( { "usersInfo": [{ "user": users[0] }] } );
@@ -148,4 +149,12 @@ function main ()
    assert.eq( rc, { "ok": 1 } );
    var rc = db.getLastError();
    assert.eq( rc, null );
+}
+
+function sortBy ( field )
+{
+   return function( a, b )
+   {
+      return a[field] > b[field];
+   }
 }
