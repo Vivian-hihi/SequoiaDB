@@ -662,8 +662,7 @@ namespace engine
          }
          else if ( 0 == itr->second->beat.endLsn.offset ||
                    0 != itr->second->beat.getFTConfirmStat() ||
-                   SERVICE_NORMAL != itr->second->beat.serviceStatus ||
-                   CLS_NODE_RUNNING != itr->second->beat.nodeRunStat )
+                   SERVICE_NORMAL != itr->second->beat.serviceStatus )
          {
             continue ;
          }
