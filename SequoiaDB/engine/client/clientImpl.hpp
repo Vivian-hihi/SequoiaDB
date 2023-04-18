@@ -940,6 +940,10 @@ namespace sdbclient
 
       INT32 setAttributes ( const BSONObj & options = _sdbStaticObject ) ;
 
+      INT32 startCriticalMode( const BSONObj & options = _sdbStaticObject ) ;
+
+      INT32 stopCriticalMode() ;
+
    protected:
       INT32 _innerAlter ( const CHAR * taskName,
                           const BSONObj * pOptions,

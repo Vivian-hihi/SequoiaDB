@@ -1219,7 +1219,15 @@ namespace engine
       if ( primary && SDB_EVT_OCCUR_BEFORE == type )
       {
          // inc dps log version
-         sdbGetDPSCB()->incVersion() ;
+         if ( getReplCB()->isInCriticalMode() && getReplCB()->isInEnforcedGrpMode() )
+         {
+            sdbGetDPSCB()->incVersion( DPS_INC_VER_CRITICAL ) ;
+         }
+         else
+         {
+            sdbGetDPSCB()->incVersion( DPS_INC_VER_DFT ) ;
+         }
+
          // start namecheck
          if ( SDB_ROLE_DATA == pmdGetDBRole() )
          {
@@ -1259,6 +1267,14 @@ namespace engine
 
                // start query task
                startAllTaskCheck() ;
+            }
+
+            clsVoteMachine *vote = getReplCB()->voteMachine() ;
+            // Start critical mode monitor
+            if ( CLS_GROUP_MODE_CRITICAL == getReplCB()->getGrpMode().mode &&
+                 ! vote->isTmpGrpMode() )
+            {
+               vote->startCriticalModeMonitor() ;
             }
          }
          else
