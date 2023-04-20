@@ -86,6 +86,7 @@ public class Sequoiadb implements Closeable {
     private final static int DEFAULT_BUFF_LENGTH = 512;
     private ByteBuffer requestBuffer = null;
     private SdbProtocolVersion protocolVersion = SdbProtocolVersion.SDB_PROTOCOL_VERSION_INVALID;
+    private int closeAllCursorMark = 0;
 
     /**
      * specified the package size of the collections in current collection space to be 4K
@@ -2135,6 +2136,7 @@ public class Sequoiadb implements Closeable {
      * @throws BaseException If error happens.
      */
     public void closeAllCursors() throws BaseException {
+        closeAllCursorMark++;
         interrupt();
     }
 
@@ -2944,6 +2946,10 @@ public class Sequoiadb implements Closeable {
             }
         }
         return result;
+    }
+
+    int getCloseAllCursorMark() {
+        return closeAllCursorMark;
     }
 
     private SysInfoResponse receiveSysInfoResponse() {
