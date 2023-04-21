@@ -172,10 +172,5 @@ v2.10 及以上版本
 [getLastError]:manual/Manual/Sequoiadb_Command/Global/getLastError.md
 [error_code]:manual/Manual/Sequoiadb_error_code.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
-<<<<<<< HEAD
 [faq]:manual/FAQ/faq_sdb.md
-=======
-[faq]:manual/FAQ/faq_sdb.md
-[date_compression]:manual/Distributed_Engine/Architecture/compression_encryption.md
-[consistency_strategy]:manual/Distributed_Engine/Architecture/Replication/consistency_strategy.md
->>>>>>> f0334fd... SEQUOIADBMAINSTREAM-8746 add consistency strategy doc
+[consistency_strategy]:manual/Distributed_Engine/Architecture/Location/consistency_strategy.md

@@ -165,4 +165,5 @@ v1.12 and above
 [error_code]:manual/Manual/Sequoiadb_error_code.md
 [getLastErrMsg]:manual/Manual/Sequoiadb_Command/Global/getLastErrMsg.md
 [faq]:manual/FAQ/faq_sdb.md
-[consistency_strategy]:manual/Distributed_Engine/Architecture/Replication/consistency_strategy.md
+[date_compression]:manual/Distributed_Engine/Architecture/compression_encryption.md
+[consistency_strategy]:manual/Distributed_Engine/Architecture/Location/consistency_strategy.md
