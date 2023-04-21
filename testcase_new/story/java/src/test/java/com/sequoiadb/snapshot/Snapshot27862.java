@@ -16,12 +16,12 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
+ * @version 1.10
  * @Description seqDB-27862:SDB_LOB_SHAREREAD|WRITE模式写数据
  * @Author liuli
  * @Date 2022.09.29
  * @UpdateAuthor liuli
  * @UpdateDate 2022.09.29
- * @version 1.10
  */
 public class Snapshot27862 extends SdbTestBase {
 
@@ -36,7 +36,7 @@ public class Snapshot27862 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = Sequoiadb.builder().serverAddress( SdbTestBase.coordUrl ).build();
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "is standalone skip testcase" );
         }
