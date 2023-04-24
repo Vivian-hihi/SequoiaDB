@@ -48,10 +48,7 @@ public class IdleCountTest {
         dsOpt.setMaxIdleCount(max);
         dsOpt.setCheckInterval(500); // 500ms
 
-        SequoiadbDatasource ds = SequoiadbDatasource.builder()
-                .serverAddress(Constants.COOR_NODE_CONN)
-                .datasourceOptions(dsOpt)
-                .build();
+        SequoiadbDatasource ds = new SequoiadbDatasource(Constants.COOR_NODE_CONN, "", "", dsOpt);
         try {
             checkIdleCount(ds, dsOpt);
         } finally {
@@ -66,10 +63,7 @@ public class IdleCountTest {
         dsOpt.setCheckInterval(500);
         dsOpt.setMinIdleCount(0);
         dsOpt.setMaxIdleCount(20);
-        SequoiadbDatasource ds = SequoiadbDatasource.builder()
-                .serverAddress(Constants.COOR_NODE_CONN)
-                .datasourceOptions(dsOpt)
-                .build();
+        SequoiadbDatasource ds = new SequoiadbDatasource(Constants.COOR_NODE_CONN, "", "", dsOpt);
         try {
             // min = 0, max = 20
             checkIdleCount(ds, dsOpt);
