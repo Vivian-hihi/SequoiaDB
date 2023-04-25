@@ -2938,9 +2938,9 @@ namespace engine
             }
             _decTotalGroups() ;
 
-            _mapGroupInfo.erase( itGroup ) ;
             _changedMask |= CLS_IDX_MASK_PULL_GROUP ;
             _pullGroupName = curGroupInfo.groupName ;
+            _mapGroupInfo.erase( itGroup ) ;
          }
          else
          {
