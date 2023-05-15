@@ -45,6 +45,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "clsAdapterJob.hpp"
+#include "clsResourceContainer.hpp"
 
 using namespace bson ;
 
@@ -1624,6 +1625,9 @@ namespace engine
                     "group info", primary ) ;
          }
       }
+
+      // Clear cata nodes vector, so that it will reload from optCB
+      sdbGetResourceContainer()->getResource()->getCataGroupInfo()->resetGroup() ;
 
    done:
       // signal all threads that's wait for catalog update

@@ -4288,6 +4288,11 @@ namespace engine
       return rc ;
    }
 
+   void _clsGroupItem::resetGroup()
+   {
+      _clear() ;
+   }
+
    void _clsGroupItem::_clear ()
    {
       _vecNodes.clear () ;
