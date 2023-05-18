@@ -1154,6 +1154,13 @@ namespace engine
             goto error ;
          }
 
+         rc = _logger->checkSeondarySyncControl( recordHeader->_length, eduCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Check sync control failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
          PD_LOG( PDDEBUG, "Session[%s]: Replay record [lsn offset: %lld, "
                  "version: %d, len:%d, preLsn:%lld]", sessionName(),
                  recordHeader->_lsn, recordHeader->_version,
