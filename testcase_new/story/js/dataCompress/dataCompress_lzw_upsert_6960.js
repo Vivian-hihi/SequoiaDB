@@ -24,6 +24,9 @@ function test ( testPara )
    insertRecs( cl, insertRecsNum );
    cl.upsert( { $unset: { dtest: "abcdefg890abcdefg890abcdefg890" } } );
 
+   // 等待字典构建
+   waitDictionary( db, csName, clName );
+
    // 检查结果，检查组内每个节点数据正确性
    checkLzwAttributeByDataNode( rgName, csName, clName, false );
    checkRecsByDataNode( rgName, csName, clName, insertRecsNum, checkRecsNum );
