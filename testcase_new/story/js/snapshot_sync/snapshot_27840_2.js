@@ -2,7 +2,7 @@
  * @Description   : seqDB-27840 不跳过回收站，删除CL，CS在group下还存在CL
  * @Author        : HuangHaimei
  * @CreateTime    : 2022.10.28
- * @LastEditTime  : 2023.04.14
+ * @LastEditTime  : 2023.05.30
  * @LastEditors   : HuangHaimei
  ******************************************************************************/
 testConf.csName = COMMCSNAME + "_27840_2";
@@ -66,18 +66,18 @@ function test ( testPara )
    checkSnapshot( cursor, dataBastInfoRawData, lobPages );
 
    // 查看集合空间快照并校验结果，聚合结果
-   // csInfo[0]["TotalLobPut"] -= 1;
-   // csInfo[0]["TotalLobWriteSize"] -= fileSize;
-   // csInfo[0]["TotalLobWrite"] -= lobPages;
-   // csInfo[0]["TotalLobAddressing"] -= lobPages;
-   // csInfo[0]["TotalLobs"] -= 1 * nodeNum1;
-   // csInfo[0]["TotalLobPages"] -= lobPages * nodeNum1;
-   // csInfo[0]["TotalLobSize"] -= fileSize * nodeNum1;
-   // csInfo[0]["TotalValidLobSize"] -= fileSize * nodeNum1;
-   // csInfo[0]["LobUsageRate"] = csInfo[0]["TotalValidLobSize"] / csInfo[0]["TotalUsedLobSpace"];
-   // csInfo[0]["FreeLobSpace"] = csInfo[0]["LobCapacity"] - csInfo[0]["TotalUsedLobSpace"];
-   // csInfo[0]["FreeLobSize"] = csInfo[0]["FreeLobSpace"];
-   // csInfo[0]["AvgLobSize"] = csInfo[0]["TotalValidLobSize"] / ( nodeNum1 + nodeNum2 );
+   csInfo[0]["TotalLobPut"] -= 1;
+   csInfo[0]["TotalLobWriteSize"] -= fileSize;
+   csInfo[0]["TotalLobWrite"] -= lobPages;
+   csInfo[0]["TotalLobAddressing"] -= lobPages;
+   csInfo[0]["TotalLobs"] -= 1 * nodeNum1;
+   csInfo[0]["TotalLobPages"] -= lobPages * nodeNum1;
+   csInfo[0]["TotalLobSize"] -= fileSize * nodeNum1;
+   csInfo[0]["TotalValidLobSize"] -= fileSize * nodeNum1;
+   csInfo[0]["LobUsageRate"] = csInfo[0]["TotalValidLobSize"] / csInfo[0]["TotalUsedLobSpace"];
+   csInfo[0]["FreeLobSpace"] = csInfo[0]["LobCapacity"] - csInfo[0]["TotalUsedLobSpace"];
+   csInfo[0]["FreeLobSize"] = csInfo[0]["FreeLobSpace"];
+   csInfo[0]["AvgLobSize"] = csInfo[0]["TotalValidLobSize"] / ( nodeNum1 + nodeNum2 );
    var cursor = db.snapshot( SDB_SNAP_COLLECTIONSPACES, { Name: csName } );
    checkSnapshot( cursor, csInfo, lobPages );
 

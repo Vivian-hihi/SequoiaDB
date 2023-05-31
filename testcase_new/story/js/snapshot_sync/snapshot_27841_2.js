@@ -2,7 +2,7 @@
  * @Description   : seqDB-27841:不跳过回收站，删除CL，是CS中group下最后一个CL
  * @Author        : HuangHaimei
  * @CreateTime    : 2022.10.28
- * @LastEditTime  : 2023.04.14
+ * @LastEditTime  : 2023.05.30
  * @LastEditors   : HuangHaimei
  ******************************************************************************/
 testConf.csName = COMMCSNAME + "_27841_2";
@@ -74,21 +74,20 @@ function test ( testPara )
    checkSnapshot( cursor, dataBastInfoRawData, lobPages );
 
    // 查看集合空间快照并校验结果，聚合结果
-   // csInfo[0]["TotalLobPut"] -= 1;
-   // csInfo[0]["TotalLobWriteSize"] -= fileSize;
-   // csInfo[0]["TotalLobWrite"] -= lobPages;
-   // csInfo[0]["TotalLobAddressing"] -= lobPages;
-   // csInfo[0]["UsedLobSpaceRatio"] = 0;
-   // // csInfo[0]["TotalUsedLobSpace"] = lobPageSize * lobPages * 2 * nodeNum2;
-   // csInfo[0]["TotalLobs"] -= 1 * nodeNum;
-   // csInfo[0]["TotalLobPages"] -= lobPages * nodeNum;
-   // csInfo[0]["TotalLobSize"] -= fileSize * nodeNum;
-   // csInfo[0]["TotalValidLobSize"] -= fileSize * nodeNum;
-   // csInfo[0]["LobUsageRate"] = csInfo[0]["TotalValidLobSize"] / csInfo[0]["TotalUsedLobSpace"];
-   // csInfo[0]["UsedLobSpaceRatio"] = Math.floor( csInfo[0]["TotalUsedLobSpace"] / csInfo[0]["LobCapacity"] * 100 ) / 100;
-   // csInfo[0]["FreeLobSpace"] = csInfo[0]["LobCapacity"] - csInfo[0]["TotalUsedLobSpace"];
-   // csInfo[0]["FreeLobSize"] = csInfo[0]["FreeLobSpace"];
-   // csInfo[0]["AvgLobSize"] = csInfo[0]["TotalValidLobSize"] / nodeNum2 / 2;
+   csInfo[0]["TotalLobPut"] -= 1;
+   csInfo[0]["TotalLobWriteSize"] -= fileSize;
+   csInfo[0]["TotalLobWrite"] -= lobPages;
+   csInfo[0]["TotalLobAddressing"] -= lobPages;
+   csInfo[0]["UsedLobSpaceRatio"] = 0;
+   csInfo[0]["TotalLobs"] -= 1 * nodeNum;
+   csInfo[0]["TotalLobPages"] -= lobPages * nodeNum;
+   csInfo[0]["TotalLobSize"] -= fileSize * nodeNum;
+   csInfo[0]["TotalValidLobSize"] -= fileSize * nodeNum;
+   csInfo[0]["LobUsageRate"] = csInfo[0]["TotalValidLobSize"] / csInfo[0]["TotalUsedLobSpace"];
+   csInfo[0]["UsedLobSpaceRatio"] = Math.floor( csInfo[0]["TotalUsedLobSpace"] / csInfo[0]["LobCapacity"] * 100 ) / 100;
+   csInfo[0]["FreeLobSpace"] = csInfo[0]["LobCapacity"] - csInfo[0]["TotalUsedLobSpace"];
+   csInfo[0]["FreeLobSize"] = csInfo[0]["FreeLobSpace"];
+   csInfo[0]["AvgLobSize"] = csInfo[0]["TotalValidLobSize"] / nodeNum2 / 2;
    csInfo[0]["MaxLobCapacity"] += ( lobmSize + lobdSize ) * nodeNum;
    var cursor = db.snapshot( SDB_SNAP_COLLECTIONSPACES, { Name: csName } );
    checkSnapshot( cursor, csInfo, lobPages );
