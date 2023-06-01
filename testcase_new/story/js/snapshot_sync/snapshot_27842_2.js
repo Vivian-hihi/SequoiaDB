@@ -2,7 +2,7 @@
  * @Description   : seqDB-27842:CL执行truncate,不跳过回收站
  * @Author        : HuangHaimei
  * @CreateTime    : 2022.10.27
- * @LastEditTime  : 2023.04.14
+ * @LastEditTime  : 2023.06.01
  * @LastEditors   : HuangHaimei
  ******************************************************************************/
 testConf.csName = COMMCSNAME + "_27842_2";
@@ -57,11 +57,12 @@ function test ( testPara )
    checkSnapshot( cursor, dataBastInfo, lobPages );
 
    // 查看集合空间快照并校验结果，聚合结果
-   csInfo[0]["TotalLobPut"] += lobs;
-   csInfo[0]["TotalLobWriteSize"] += 20275200;
-   csInfo[0]["TotalLobWrite"] += lobs;
-   csInfo[0]["TotalLobAddressing"] += lobs;
-
+   csInfo[0]["TotalLobs"] = 0;
+   csInfo[0]["TotalLobPages"] = 0;
+   csInfo[0]["TotalLobSize"] = 0;
+   csInfo[0]["TotalValidLobSize"] = 0;
+   csInfo[0]["LobUsageRate"] = 0;
+   csInfo[0]["AvgLobSize"] = 0;
    var cursor = db.snapshot( SDB_SNAP_COLLECTIONSPACES, { Name: testConf.csName } );
    checkSnapshot( cursor, csInfo, lobPages );
 
