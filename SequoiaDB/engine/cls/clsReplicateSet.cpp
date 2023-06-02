@@ -803,7 +803,7 @@ namespace engine
               FALSE == nodeItr->second._isActive ||
               nodeItr->second._locationID != _locationInfo.localLocationID )
          {
-            ossScopedRWLock( &_locationInfo.mtx, EXCLUSIVE ) ;
+            ossScopedRWLock lock( &_locationInfo.mtx, EXCLUSIVE ) ;
             if ( tmp.value == _locationInfo.primary.value )
             {
                _locationInfo.primary.value = 0 ;
@@ -865,7 +865,7 @@ namespace engine
          if ( ( MSG_INVALID_LOCATIONID != locationID ) && ( ! location.empty() ) )
          {
             {
-               ossScopedRWLock( &_locationInfo.mtx, EXCLUSIVE ) ;
+               ossScopedRWLock lock( &_locationInfo.mtx, EXCLUSIVE ) ;
                _locationInfo.localLocationID = locationID ;
                _locationInfo.localLocation = location ;
             }
@@ -891,7 +891,7 @@ namespace engine
                _locationVote.force( CLS_ELECTION_STATUS_SEC ) ;
 
                {
-                  ossScopedRWLock( &_locationInfo.mtx, EXCLUSIVE ) ;
+                  ossScopedRWLock lock( &_locationInfo.mtx, EXCLUSIVE ) ;
                   _locationInfo.resetInfo() ;
                   _locationInfo.localLocationID = locationID ;
                   _locationInfo.localLocation = location ;
@@ -909,7 +909,7 @@ namespace engine
             _locationVote.force( CLS_ELECTION_STATUS_SEC ) ;
 
             {
-               ossScopedRWLock( &_locationInfo.mtx, EXCLUSIVE ) ;
+               ossScopedRWLock lock( &_locationInfo.mtx, EXCLUSIVE ) ;
                _locationInfo.resetInfo() ;
             }
 
@@ -970,7 +970,7 @@ namespace engine
 
       // Update locationInfo map
       {
-         ossScopedRWLock( &_info.mtx, EXCLUSIVE ) ;
+         ossScopedRWLock lock( &_info.mtx, EXCLUSIVE ) ;
          _info.locationInfoMap.swap( locationInfoMap ) ;
       }
 
