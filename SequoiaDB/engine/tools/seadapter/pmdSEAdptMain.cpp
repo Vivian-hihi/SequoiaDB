@@ -172,7 +172,7 @@ namespace seadapter
       }
       else if ( rc )
       {
-         ossPrintf( "Failed resolving arguments(error=%d), exit"OSS_NEWLINE,
+         ossPrintf( "Failed resolving arguments(error=%d), exit" OSS_NEWLINE,
                     rc ) ;
          goto error ;
       }
@@ -180,7 +180,7 @@ namespace seadapter
       rc = buildDialogPath( dialogPath, OSS_MAX_PATHSIZE + 1 ) ;
       if ( rc )
       {
-         ossPrintf( "Failed to build dialog path(error=%d), exit"OSS_NEWLINE,
+         ossPrintf( "Failed to build dialog path(error=%d), exit" OSS_NEWLINE,
                     rc ) ;
          goto error ;
       }
@@ -219,7 +219,7 @@ namespace seadapter
       if ( rc )
       {
          ossPrintf( "Failed to build dialog path failed(error=%d), "
-                    "exit"OSS_NEWLINE, rc ) ;
+                    "exit" OSS_NEWLINE, rc ) ;
          goto error ;
       }
 

@@ -1062,7 +1062,7 @@ namespace exprt
          _dir = _get<string>(OPTION_DIRNAME) ;
          if ( _dir.empty() )
          {
-            _dir = "."OSS_FILE_SEP ;
+            _dir = "." OSS_FILE_SEP ;
          }
          else if( OSS_FILE_SEP_CHAR != _dir[ _dir.size() - 1 ] )
          {
