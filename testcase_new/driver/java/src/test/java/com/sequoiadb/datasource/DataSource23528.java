@@ -67,8 +67,7 @@ public class DataSource23528 extends SdbTestBase {
         dsOpt.setMaxIdleCount( max );
         dsOpt.setCheckInterval( 500 ); // 500ms
 
-        SequoiadbDatasource ds = SequoiadbDatasource.builder()
-                .serverAddress( addr ).datasourceOptions( dsOpt ).build();
+        SequoiadbDatasource ds = new SequoiadbDatasource( addr, "", "", dsOpt );
         try {
             checkIdleCount( ds, dsOpt );
         } finally {
@@ -116,8 +115,7 @@ public class DataSource23528 extends SdbTestBase {
         dsOpt.setCheckInterval( 500 );
         dsOpt.setMinIdleCount( 0 );
         dsOpt.setMaxIdleCount( 20 );
-        SequoiadbDatasource ds = SequoiadbDatasource.builder()
-                .serverAddress( addr ).datasourceOptions( dsOpt ).build();
+        SequoiadbDatasource ds = new SequoiadbDatasource( addr, "", "", dsOpt );
         try {
             // min = 0, max = 20
             checkIdleCount( ds, dsOpt );
