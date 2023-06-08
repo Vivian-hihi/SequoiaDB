@@ -47,8 +47,9 @@
 #define SDB_ENGINE_VERSION_1           1
 #define SDB_ENGINE_VERSION_2           2
 #define SDB_ENGINE_VERSION_3           3
+#define SDB_ENGINE_VERSION_5           5
 
-#define SDB_ENGINE_VERISON_CURRENT     SDB_ENGINE_VERSION_3
+#define SDB_ENGINE_VERISON_CURRENT     SDB_ENGINE_VERSION_5
 
 /*
  *    SequoiaDB Engine Subversion
@@ -88,7 +89,7 @@
 #ifdef SDB_ENTERPRISE
 
    #ifdef _DEBUG
-      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise Debug CGB)"
+      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise Debug)"
    #else
       #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise)"
    #endif // _DEBUG
@@ -96,7 +97,7 @@
 #else
 
    #ifdef _DEBUG
-      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Debug CGB)"
+      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Debug)"
    #else
       #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT
    #endif // _DEBUG
