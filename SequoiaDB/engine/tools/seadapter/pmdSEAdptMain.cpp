@@ -193,14 +193,14 @@ namespace seadapter
                            SEADPT_LOCK_FILE_NAME ) ;
          if ( rc )
          {
-            ossPrintf( "Build path for lock file failed[%d]"OSS_NEWLINE, rc ) ;
+            ossPrintf( "Build path for lock file failed[%d]" OSS_NEWLINE, rc ) ;
             goto error ;
          }
 
          rc = procMutex.init( "sdbseadapter", (void *)lockFilePath ) ;
          if ( rc )
          {
-            ossPrintf( "Init process mutex failed[ %d ]"OSS_NEWLINE, rc ) ;
+            ossPrintf( "Init process mutex failed[ %d ]" OSS_NEWLINE, rc ) ;
             goto error ;
          }
 
