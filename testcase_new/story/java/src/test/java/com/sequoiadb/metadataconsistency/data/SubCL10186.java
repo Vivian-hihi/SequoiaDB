@@ -22,7 +22,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
  * TestLink: seqDB-10186: concurrency[attachCL]
- * 
+ * seqDB-29793:同时自动清理回收站中CL项目和所属CS项目(用例测试点在此用例可以覆盖)
  * @author xiaoni huang init
  * @Date 2016.10.11
  */
@@ -57,10 +57,8 @@ public class SubCL10186 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            // 问题单SEQUOIADBMAINSTREAM-8528未修改3.6-cgb分支，此处与master不一致
-            if ( sdb.isCollectionSpaceExist( csName ) ) {
-                sdb.dropCollectionSpace( csName );
-            }
+            MetaDataUtils.clearCL( sdb, csName, clName );
+            MetaDataUtils.clearCS( sdb, csName );
         } finally {
             if ( sdb != null ) {
                 sdb.close();
