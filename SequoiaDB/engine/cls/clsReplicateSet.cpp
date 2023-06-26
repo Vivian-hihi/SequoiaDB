@@ -132,6 +132,7 @@ namespace engine
       _shutdownWaitTimeout = 0 ;
       _fusingTimeout = 0 ;
       _isAllNodeFatal = FALSE ;
+      _remoteLocationConsistency = TRUE ;
    }
 
    _clsReplicateSet::~_clsReplicateSet()
@@ -403,6 +404,7 @@ namespace engine
       _fusingTimeout = pmdGetOptionCB()->ftFusingTimeout() * OSS_ONE_SEC ;
       _shutdownWaitTimeout = pmdGetOptionCB()->shutdownWaitTimeout() *
                              OSS_ONE_SEC ;
+      _remoteLocationConsistency = pmdGetOptionCB()->isRemoteLocationConsistency() ;
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET_INIT, rc );
@@ -535,6 +537,7 @@ namespace engine
       _fusingTimeout = pmdGetOptionCB()->ftFusingTimeout() * OSS_ONE_SEC ;
       _shutdownWaitTimeout = pmdGetOptionCB()->shutdownWaitTimeout() *
                              OSS_ONE_SEC ;
+      _remoteLocationConsistency = pmdGetOptionCB()->isRemoteLocationConsistency() ;
    }
 
    void _clsReplicateSet::ntyPrimaryChange( BOOLEAN primary,

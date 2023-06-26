@@ -2036,6 +2036,8 @@ done:
 
       _statMCVLimit = PMD_DFT_STAT_MCV_LIMIT ;
 
+      _remoteLocationConsistency = TRUE ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2612,6 +2614,10 @@ done:
       rdxUInt( pEX, PMD_OPTION_STAT_MCV_LIMIT, _statMCVLimit, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_DFT_STAT_MCV_LIMIT, TRUE ) ;
       rdvMinMax( pEX, _statMCVLimit, 0, PMD_MAX_STAT_MCV_LIMIT, TRUE ) ;
+
+      // --remotelocationconsistency
+      rdxBooleanS( pEX, PMD_OPTION_REMOTE_LOCATION_CONSISTENCY, _remoteLocationConsistency, FALSE,
+                   PMD_CFG_CHANGE_RUN, TRUE, TRUE ) ;
 
       // end map
 
