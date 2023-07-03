@@ -1,4 +1,4 @@
-/******************************************** 
+/********************************************
 @description : createUser / getUser / getUsers / auth / dropUser
 @testcase    : seqDB-22302
 @author      : XiaoNi Huang 2020-02-24
@@ -86,7 +86,7 @@ function main ()
       var rc = db.runCommand( { "usersInfo": [{ "user": users[0] }, { "user": users[1] }] } );
       rc["users"].sort( sortBy( "user" ) );
       assert.eq( rc, { "users": expRc.slice( 0, 2 ), "ok": 1 } );
-      // user not exist      
+      // user not exist
       var rc = db.runCommand( { "usersInfo": [{ "user": "notExist" }] } );
       assert.eq( rc, { "users": [], "ok": 1 } );
 
@@ -131,7 +131,7 @@ function main ()
       var rc = db.auth( users[0], "errorPwd" );
       assert.eq( rc, 0 );
       var rc = db.getLastError();
-      assert.eq( rc, "Authority is forbidden" );
+      assert.eq( rc, "Authentication failed." );
    }
    finally
    {
