@@ -724,6 +724,14 @@ monFiles = [
       "mon/monLatch.cpp"
     ]
 
+sdbRevertFiles = [
+      "tools/revert/lobMetaMgr.cpp",
+      "tools/revert/logProcessor.cpp",
+      "tools/revert/revertCommon.cpp",
+      "tools/revert/revertOptions.cpp",
+      "tools/revert/sdbrevert.cpp",
+      ]
+
 #PCRE
 toolEnv.StaticLibrary('pcre', pcreFiles)
 #cls
@@ -827,6 +835,10 @@ sdbpasswd = toolEnv.Program("sdbpasswd", sdbPasswdFiles,
 sdbsecuretool = toolEnv.Program("sdbsecuretool", sdbSecureFiles,
          LIBDEPS=["pd", "oss", "bson", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbrevert = toolEnv.Program("sdbrevert", sdbRevertFiles,
+          LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd","pcre"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
          
 if linux:
    sdbtop = toolEnv.Program("sdbtop", sdbtopMain,
@@ -900,3 +912,4 @@ if linux64:
 if linux64:
    toolEnv.Install('#/tools/sequoiafs/bin', sequoiamcs)
 toolEnv.Install( '#/bin', sdbseadapter )
+toolEnv.Install( '#/bin', sdbrevert )
