@@ -1625,6 +1625,12 @@
                            "file": "sdbsecuretool",
                            "cn": "数据安全处理工具",
                            "en": "Secure Tool"
+                        },
+                        {
+                           "id": 1687863476,
+                           "file": "sdbrevert",
+                           "cn": "数据恢复工具",
+                           "en": "Revert Tool"
                         }
                      ]
                   },
