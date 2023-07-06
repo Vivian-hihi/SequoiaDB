@@ -2327,6 +2327,7 @@ sequoiadb
 │   │   └── test.c
 │   ├── script
 │   │   ├── generate_version_file.sh
+│   │   ├── install_file_changes.sh
 │   │   └── service_control.sh
 │   ├── sdbaudit
 │   │   ├── conf
