@@ -712,6 +712,7 @@ namespace engine
          OSS_INLINE UINT32 getMetaCacheLWM() const { return _metacachelwm ; }
          OSS_INLINE UINT32 getStatMCVLimit() const { return _statMCVLimit ; }
          OSS_INLINE BOOLEAN isRemoteLocationConsistency() const { return _remoteLocationConsistency ; }
+         OSS_INLINE BOOLEAN isConsultRollbackLogOn() const { return _consultRollbackLogOn ; }
 
 #ifdef SDB_ENTERPRISE
 
@@ -861,6 +862,7 @@ namespace engine
 
          UINT32      _statMCVLimit ;
          BOOLEAN     _remoteLocationConsistency ;
+         BOOLEAN     _consultRollbackLogOn ;
 
 #ifdef SDB_ENTERPRISE
 
