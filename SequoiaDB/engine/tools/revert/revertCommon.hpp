@@ -66,6 +66,8 @@ namespace sdbrevert
 
    #define SDB_REVERT_PARAM_DELIMITER       ','
 
+   #define SDB_REVERT_MAX_TIME              "2037-12-31-23:59:59"
+
    class logFileMgr : public SDBObject
    {
       public:

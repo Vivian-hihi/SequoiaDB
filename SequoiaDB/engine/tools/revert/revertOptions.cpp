@@ -86,7 +86,7 @@ namespace sdbrevert
    #define SDB_REVERT_EXPLAIN_DATA_TYPE         "the type of data that needs to be reverted, the value is 'doc', 'lob', 'all', default is 'all'"
    #define SDB_REVERT_EXPLAIN_MATCHER           "conditions for filtering data, json formate. eg: { \"_id\": 1 }"
    #define SDB_REVERT_EXPLAIN_START_TIME        "start time to revert data, format: YYYY-MM-DD-HH:mm:ss, default is 1970-01-01-00:00:00"
-   #define SDB_REVERT_EXPLAIN_END_TIME          "end time to revert data, format: YYYY-MM-DD-HH:mm:ss, default is current time"
+   #define SDB_REVERT_EXPLAIN_END_TIME          "end time to revert data, format: YYYY-MM-DD-HH:mm:ss, default is 2037-12-31-23:59:59"
    #define SDB_REVERT_EXPLAIN_START_LSN         "start lsn to revert data, default is 0"
    #define SDB_REVERT_EXPLAIN_END_LSN           "end lsn to revert data"
    #define SDB_REVERT_EXPLAIN_OUTPUT_CL         "temporary collection to hold reverted data"
@@ -107,7 +107,7 @@ namespace sdbrevert
       _useSSL      = FALSE ;
       _dataType    = SDB_REVERT_ALL ;
       _startTime   = 0 ;  // 1970-01-01
-      _endTime     = time( NULL ) ;  // current time
+      _endTime     = 0 ;
       _startLSN    = 0 ;
       _endLSN      = OSS_UINT64_MAX ;
       _label       = "" ;
@@ -377,6 +377,18 @@ namespace sdbrevert
             cerr << "Invalid argument: '--" << SDB_REVERT_OPTION_END_TIME
                  << "', format= " << "YYYY-MM-DD-HH:mm:ss"
                  << ", value= " << tmpStr << endl ;
+            goto error ;
+         }
+      }
+      else
+      {
+         tmpStr = SDB_REVERT_MAX_TIME ;
+         rc = engine::utilStr2TimeT( tmpStr.c_str(), _endTime, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            cerr << "Error default value=" << SDB_REVERT_MAX_TIME
+                 << " for " << SDB_REVERT_OPTION_END_TIME << endl ;
             goto error ;
          }
       }
