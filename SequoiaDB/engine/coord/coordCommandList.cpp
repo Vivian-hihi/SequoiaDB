@@ -1348,4 +1348,19 @@ namespace engine
       return SDB_OK ;
    }
 
+   /*
+      _coordCMDListGroupModeIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDListGroupModeIntr,
+                                      CMD_NAME_LIST_GROUPMODES_INTR,
+                                      TRUE ) ;
+
+   _coordCMDListGroupModeIntr::_coordCMDListGroupModeIntr()
+   {
+   }
+
+   _coordCMDListGroupModeIntr::~_coordCMDListGroupModeIntr()
+   {
+   }
+
 }

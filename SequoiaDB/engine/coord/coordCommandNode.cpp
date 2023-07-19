@@ -3365,7 +3365,9 @@ namespace engine
 
       if ( 0 == ossStrcmp( CMD_VALUE_NAME_SET_ACTIVE_LOCATION, _pActionName ) ||
            0 == ossStrcmp( CMD_VALUE_NAME_STOP_CRITICAL_MODE, _pActionName ) ||
-           0 == ossStrcmp( CMD_VALUE_NAME_SET_ATTRIBUTES, _pActionName ) )
+           0 == ossStrcmp( CMD_VALUE_NAME_SET_ATTRIBUTES, _pActionName ) ||
+           0 == ossStrcmp( CMD_VALUE_NAME_START_MAINTENANCE_MODE, _pActionName ) ||
+           0 == ossStrcmp( CMD_VALUE_NAME_STOP_MAINTENANCE_MODE, _pActionName ) )
       {
          // do nothing
       }
@@ -3398,7 +3400,9 @@ namespace engine
       if ( 0 == ossStrcmp( CMD_VALUE_NAME_SET_ACTIVE_LOCATION, _pActionName ) ||
            0 == ossStrcmp( CMD_VALUE_NAME_STOP_CRITICAL_MODE, _pActionName ) ||
            0 == ossStrcmp( CMD_VALUE_NAME_START_CRITICAL_MODE, _pActionName ) ||
-           0 == ossStrcmp( CMD_VALUE_NAME_SET_ATTRIBUTES, _pActionName ) )
+           0 == ossStrcmp( CMD_VALUE_NAME_SET_ATTRIBUTES, _pActionName ) ||
+           0 == ossStrcmp( CMD_VALUE_NAME_START_MAINTENANCE_MODE, _pActionName ) ||
+           0 == ossStrcmp( CMD_VALUE_NAME_STOP_MAINTENANCE_MODE, _pActionName ) )
       {
          coordNodeCMDHelper helper ;
 

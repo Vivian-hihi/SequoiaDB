@@ -538,6 +538,7 @@ namespace engine
       ON_MSG ( MSG_CAT_QUERY_TASK_RSP, _onCatQueryTaskRes )
       ON_EVENT( PMD_EDU_EVENT_STEP_DOWN, _onStepDown )
       ON_EVENT( PMD_EDU_EVENT_STEP_UP, _onStepUp )
+      ON_EVENT( PMD_EDU_EVENT_UPDATE_GRPMODE, _onGroupModeUpdate )
       //ON_EVENT FUCTION MAP
    END_OBJ_MSG_MAP()
 
@@ -1275,6 +1276,10 @@ namespace engine
                  ! vote->isTmpGrpMode() )
             {
                vote->startCriticalModeMonitor() ;
+            }
+            else if ( CLS_GROUP_MODE_MAINTENANCE == getReplCB()->getGrpMode() )
+            {
+               vote->startMaintenanceModeMonitor() ;
             }
          }
          else
@@ -2893,6 +2898,11 @@ namespace engine
    }
 
    INT32 _clsMgr::_onStepUp( pmdEDUEvent *event )
+   {
+      return sdbGetReplCB()->dispatchEvent( event ) ;
+   }
+
+   INT32 _clsMgr::_onGroupModeUpdate( pmdEDUEvent *event )
    {
       return sdbGetReplCB()->dispatchEvent( event ) ;
    }
