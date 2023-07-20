@@ -816,10 +816,14 @@ sequoiadb
 │       │   ├── start_en.troff
 │       │   ├── stopCriticalMode_cn.troff
 │       │   ├── stopCriticalMode_en.troff
+│       │   ├── startMaintenanceMode_cn.troff
+│       │   ├── startMaintenanceMode_en.troff
 │       │   ├── stop_cn.troff
 │       │   ├── stopCriticalMode_cn.troff
 │       │   ├── stopCriticalMode_en.troff
-│       │   └── stop_en.troff
+│       │   ├── stop_en.troff
+│       │   ├── stopMaintenanceMode_cn.troff
+│       │   └── stopMaintenanceMode_en.troff
 │       ├── SdbSequence
 │       │   ├── fetch_cn.troff
 │       │   ├── fetch_en.troff
