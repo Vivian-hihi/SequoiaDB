@@ -2,7 +2,7 @@
  * @Description   : seqDB-32316:恢复时指定--label
  * @Author        : liuli
  * @CreateTime    : 2023.07.11
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_32316_" + generateRandomString( 5 );
@@ -36,8 +36,7 @@ function test ( testPara )
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32316_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 恢复时指定--label为""
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );

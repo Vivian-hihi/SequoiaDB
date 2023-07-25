@@ -2,7 +2,7 @@
  * @Description   : seqDB-32322:恢复分区表删除数据
  * @Author        : liuli
  * @CreateTime    : 2023.07.12
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_32322_" + generateRandomString( 5 );
@@ -61,8 +61,7 @@ function test ( testPara )
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32322_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 同时指定原组合目标组恢复所有删除的记录
    var installDir = commGetRemoteInstallPath( nodeInfo.HostName, CMSVCNAME );

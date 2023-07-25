@@ -2,7 +2,7 @@
  * @Description   : seqDB-32323:主表删除数据进行恢复
  * @Author        : liuli
  * @CreateTime    : 2023.07.12
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.skipStandAlone = true;
@@ -53,8 +53,7 @@ function test ()
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32322_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 指定主表恢复数据
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );

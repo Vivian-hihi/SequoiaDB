@@ -4,7 +4,7 @@
  *                : seqDB-32304:使用--copherfile指定鉴权
  * @Author        : liuli
  * @CreateTime    : 2023.07.11
- * @LastEditTime  : 2023.07.13
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_32302_32303_32304_" + generateRandomString( 5 );
@@ -45,8 +45,7 @@ function test ( testPara )
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32302_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 未设置鉴权，指定鉴权信息
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );
@@ -93,6 +92,7 @@ function test ( testPara )
    var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
       + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
       + " --svcname " + COORDSVCNAME + " --cipherfile " + cipherfile1;
+   // 指定命令错误，返回退出码127
    assert.tryThrow( 127, function()
    {
       cmd.run( command );
@@ -116,6 +116,7 @@ function test ( testPara )
       var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
          + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
          + " --svcname " + COORDSVCNAME + " --user noneuser_32302" + " --password " + password;
+      // 鉴权失败，返回退出码8
       assert.tryThrow( 8, function()
       {
          cmd.run( command );
@@ -125,6 +126,7 @@ function test ( testPara )
       var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
          + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
          + " --svcname " + COORDSVCNAME + " --user " + user + " --password none_32302";
+      // 鉴权失败，返回退出码8
       assert.tryThrow( 8, function()
       {
          cmd.run( command );
@@ -152,6 +154,7 @@ function test ( testPara )
       var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
          + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
          + " --svcname " + COORDSVCNAME + " --user noneuser_32302" + " --cipherfile " + cipherfile3;
+      // 鉴权失败，返回退出码8
       assert.tryThrow( 8, function()
       {
          cmd.run( command );
@@ -161,6 +164,7 @@ function test ( testPara )
       var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
          + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
          + " --svcname " + COORDSVCNAME + " --cipherfile " + cipherfile2 + " --token " + "token_32302";
+      // 指定命令错误，返回退出码127
       assert.tryThrow( 127, function()
       {
          cmd.run( command );
@@ -170,6 +174,7 @@ function test ( testPara )
       var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
          + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
          + " --svcname " + COORDSVCNAME + " --cipherfile " + cipherfile2;
+      // 指定命令错误，返回退出码127
       assert.tryThrow( 127, function()
       {
          cmd.run( command );

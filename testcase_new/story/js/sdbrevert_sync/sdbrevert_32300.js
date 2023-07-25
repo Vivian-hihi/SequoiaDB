@@ -2,9 +2,10 @@
  * @Description   : seqDB-32300:使用--hostname和--svcname指定连接地址
  * @Author        : liuli
  * @CreateTime    : 2023.07.07
- * @LastEditTime  : 2023.07.13
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
+// 集合名称增加5个字符的随机字符串，防止在重复执行用例时恢复到前一次执行用例删除的数据
 testConf.clName = COMMCLNAME + "_32300_" + generateRandomString( 5 );
 testConf.useSrcGroup = true;
 testConf.skipStandAlone = true;
@@ -36,8 +37,7 @@ function test ( testPara )
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32300_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // --hostname和--svcname为正确地址
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );
@@ -58,6 +58,7 @@ function test ( testPara )
       + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + "host_32300"
       + " --svcname " + "32300";
 
+   // 连接地址不可用，返回退出码135
    assert.tryThrow( 135, function()
    {
       cmd.run( command );

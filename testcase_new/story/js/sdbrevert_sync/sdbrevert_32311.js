@@ -2,7 +2,7 @@
  * @Description   : seqDB-32311:使用--datatype指定恢复数据类型
  * @Author        : liuli
  * @CreateTime    : 2023.07.11
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_32311_" + generateRandomString( 5 );
@@ -45,8 +45,7 @@ function test ( testPara )
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32311_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 不指定--datatype
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );
@@ -110,6 +109,7 @@ function test ( testPara )
    var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
       + replicalogPath + " --output " + COMMCSNAME + "." + clNameTmp + " --hostname " + COORDHOSTNAME
       + " --svcname " + COORDSVCNAME + " --datatype none";
+   // 指定命令错误，返回退出码127
    assert.tryThrow( 127, function()
    {
       cmd.run( command );

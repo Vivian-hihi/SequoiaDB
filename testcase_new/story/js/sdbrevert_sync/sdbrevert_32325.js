@@ -2,10 +2,10 @@
  * @Description   : seqDB-32325:集合rename后恢复数据
  * @Author        : liuli
  * @CreateTime    : 2023.07.12
- * @LastEditTime  : 2023.07.13
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
-testConf.clName = COMMCLNAME + "_32321_" + generateRandomString( 5 );
+testConf.clName = COMMCLNAME + "_32325_" + generateRandomString( 5 );
 testConf.useSrcGroup = true;
 testConf.skipStandAlone = true;
 
@@ -14,7 +14,7 @@ main( test );
 function test ( testPara )
 {
    var srcGroupName = testPara.srcGroupName;
-   var clName = "cl_32321_" + generateRandomString( 5 );
+   var clName = "cl_32325_" + generateRandomString( 5 );
    var dbcs = testPara.testCS;
    var dbcl = testPara.testCL;
 
@@ -48,9 +48,8 @@ function test ( testPara )
    var cmd = remoteObj.getCmd();
 
    // 创建临时集合用于恢复数据
-   var clNameTmp = "cl_32321_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var clNameTmp = "cl_32325_tmp";
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 指定集合原始名称恢复记录
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );

@@ -2,7 +2,7 @@
  * @Description   : seqDB-32312:使用--matcher指定匹配条件
  * @Author        : liuli
  * @CreateTime    : 2023.07.11
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_32312_" + generateRandomString( 5 );
@@ -39,8 +39,7 @@ function test ( testPara )
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32312_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 指定--matcher可以匹配部分记录
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );

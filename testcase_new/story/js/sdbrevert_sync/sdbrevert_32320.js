@@ -2,7 +2,7 @@
  * @Description   : seqDB-32320:使用恢复工具指定参数有误
  * @Author        : liuli
  * @CreateTime    : 2023.07.11
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.clName = COMMCLNAME + "_32320_" + generateRandomString( 5 );
@@ -39,6 +39,7 @@ function test ( testPara )
    var command = installDir + "/bin/sdbrevert --logpath " + replicalogPath + " --output " + COMMCSNAME + "." + testConf.clName +
       " --hostname " + COORDHOSTNAME + " --svcname " + COORDSVCNAME;
 
+   // 指定命令错误，返回退出码127
    assert.tryThrow( 127, function()
    {
       cmd.run( command );
@@ -47,6 +48,7 @@ function test ( testPara )
    // 恢复时不指定--logpath
    var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName +
       " --output " + COMMCSNAME + "." + testConf.clName + " --hostname " + COORDHOSTNAME + " --svcname " + COORDSVCNAME;
+   // 指定命令错误，返回退出码127
    assert.tryThrow( 127, function()
    {
       cmd.run( command );
@@ -55,6 +57,7 @@ function test ( testPara )
    // 恢复时不指定--output
    var command = installDir + "/bin/sdbrevert --targetcl " + COMMCSNAME + "." + testConf.clName + " --logpath "
       + replicalogPath + " --hostname " + COORDHOSTNAME + " --svcname " + COORDSVCNAME;
+   // 指定命令错误，返回退出码127
    assert.tryThrow( 127, function()
    {
       cmd.run( command );
@@ -62,6 +65,7 @@ function test ( testPara )
 
    // 指定非法参数
    var command = installDir + "/bin/sdbrevert --none ";
+   // 指定命令错误，返回退出码127
    assert.tryThrow( 127, function()
    {
       cmd.run( command );

@@ -2,7 +2,7 @@
  * @Description   : seqDB-32306:使用--targetcl指定需要恢复的集合
  * @Author        : liuli
  * @CreateTime    : 2023.07.07
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.skipStandAlone = true;
@@ -27,8 +27,7 @@ function test ()
 
    // 创建临时集合用于恢复数据
    var clNameTmp = "cl_32306_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 指定恢复集合在同步日志中不存在
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );

@@ -2,10 +2,10 @@
  * @Description   : seqDB-32324:恢复已删除集合的数据
  * @Author        : liuli
  * @CreateTime    : 2023.07.12
- * @LastEditTime  : 2023.07.14
+ * @LastEditTime  : 2023.07.25
  * @LastEditors   : liuli
  ******************************************************************************/
-testConf.clName = COMMCLNAME + "_32321_" + generateRandomString( 5 );
+testConf.clName = COMMCLNAME + "_32324_" + generateRandomString( 5 );
 testConf.useSrcGroup = true;
 testConf.skipStandAlone = true;
 
@@ -42,9 +42,8 @@ function test ( testPara )
    var cmd = remoteObj.getCmd();
 
    // 创建临时集合用于恢复数据
-   var clNameTmp = "cl_32321_tmp";
-   commDropCL( db, COMMCSNAME, clNameTmp );
-   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp );
+   var clNameTmp = "cl_32324_tmp";
+   var tmpCL = commCreateCL( db, COMMCSNAME, clNameTmp, {}, true, true );
 
    // 恢复所有删除的记录
    var installDir = commGetRemoteInstallPath( hostName, CMSVCNAME );
