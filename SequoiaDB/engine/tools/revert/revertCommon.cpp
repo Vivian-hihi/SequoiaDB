@@ -35,6 +35,7 @@
 #include "dpsMetaFile.hpp"
 #include "ossUtil.hpp"
 #include "ossFile.hpp"
+#include "utilStr.hpp"
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include <sstream>
@@ -44,15 +45,6 @@ using namespace engine ;
 
 namespace sdbrevert
 {
-   static BOOLEAN _hasPrefix( const string &str, const string &prefix )
-   {
-      if ( str.length() < prefix.length() ) {
-         return FALSE ;
-      }
-
-      return ( str.find( prefix ) == 0 ) ;
-   }
-
    static INT32 _listLogFile( const string &filePath, logFileMgr &logFileMgr )
    {
       INT32 rc = SDB_OK ;
@@ -66,6 +58,21 @@ namespace sdbrevert
 
       if ( fs::is_regular_file( filePath ) )
       {
+         // sikp sequoiadbLog.mate
+         if ( isReplicalogMeta( filePath ) )
+         {
+            goto done ;
+         }
+
+         // not support archivelog.<FileId>.m
+         if ( isArchivelogM( filePath ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Not support archivelog.<FileId>.m, file[%s], rc= %d",
+                    filePath.c_str(), rc ) ;
+            goto error ;
+         }
+
          if ( isArchivelog( filePath ) || isReplicalog( filePath ) )
          {
             logFileMgr.push( filePath ) ;
@@ -91,6 +98,19 @@ namespace sdbrevert
             }
 
             path = dirIter->path().string() ;
+            // sikp sequoiadbLog.mate
+            if ( isReplicalogMeta( path ) )
+            {
+               continue ;
+            }
+
+            // skip archivelog.<FileId>.m
+            if ( isArchivelogM( path ) )
+            {
+               PD_LOG( PDINFO, "Skip archivelog.<FileId>.m, file[%s]", filePath.c_str() ) ;
+               continue ;
+            }
+
             if ( isArchivelog( path ) || isReplicalog( path ) )
             {
                logFileMgr.push( path ) ;
@@ -132,13 +152,24 @@ namespace sdbrevert
    BOOLEAN isArchivelog( const string &filePath )
    {
       string fileName = ossFile::getFileName( filePath ) ;
-      return _hasPrefix( fileName, SDB_REVERT_ARCHIVELOG_PREFIX ) ;
+      return utilStrStartsWith( fileName, SDB_REVERT_ARCHIVELOG_PREFIX ) ;
+   }
+
+   BOOLEAN isArchivelogM( const string &filePath )
+   {
+      if ( !isArchivelog( filePath ) )
+      {
+         return FALSE ;
+      }
+
+      string fileName = ossFile::getFileName( filePath ) ;
+      return utilStrEndsWith( fileName, SDB_REVERT_ARCHIVELOG_M_SUFFIX ) ;
    }
 
    BOOLEAN isReplicalog( const string &filePath )
    {
       string fileName = ossFile::getFileName( filePath ) ;
-      return _hasPrefix( fileName, SDB_REVERT_REPLICALOG_PREFIX ) ;
+      return utilStrStartsWith( fileName, SDB_REVERT_REPLICALOG_PREFIX ) ;
    }
 
    BOOLEAN isReplicalogMeta( const string &filePath )

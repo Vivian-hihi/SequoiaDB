@@ -233,12 +233,6 @@ namespace sdbrevert
       }
       else if ( isReplicalog( filePath ) )
       {
-         // sikp sequoiadbLog.mate
-         if ( isReplicalogMeta( filePath ) )
-         {
-            goto done ;
-         }
-
          rc = _revertReplicalogFile( filePath ) ;
          if ( SDB_OK != rc )
          {

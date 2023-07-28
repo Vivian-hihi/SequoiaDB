@@ -36,6 +36,8 @@
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
 #include "dpsDef.hpp"
+#include "dpsLogFileMgr.hpp"
+#include "dpsArchiveFile.hpp"
 #include "../bson/bson.hpp"
 #include <vector>
 #include <string>
@@ -45,8 +47,9 @@ using namespace std ;
 namespace sdbrevert
 {
    #define SDB_REVERT_LOG                   "sdbrevert.log"
-   #define SDB_REVERT_ARCHIVELOG_PREFIX     "archivelog."
-   #define SDB_REVERT_REPLICALOG_PREFIX     "sequoiadbLog."
+   #define SDB_REVERT_ARCHIVELOG_PREFIX     DPS_ARCHIVE_FILE_PREFIX
+   #define SDB_REVERT_REPLICALOG_PREFIX     DPS_LOG_FILE_PREFIX
+   #define SDB_REVERT_ARCHIVELOG_M_SUFFIX   ".m"
    #define SDB_REVERT_TMP_ARCHIVELOG_SUFFIX ".tmp"
    #define SDB_REVERT_REPLICALOG_META       DPS_METAFILE_NAME
 
@@ -134,6 +137,8 @@ namespace sdbrevert
 
 
    BOOLEAN isArchivelog( const string &filePath ) ;
+
+   BOOLEAN isArchivelogM( const string &filePath ) ;
 
    BOOLEAN isReplicalog( const string &filePath ) ;
 
