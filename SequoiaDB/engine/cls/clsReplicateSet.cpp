@@ -893,6 +893,7 @@ namespace engine
             if ( locationID != _locationInfo.localLocationID )
             {
                _locationVote.force( CLS_ELECTION_STATUS_SEC ) ;
+               locationReelectionDone() ;
 
                {
                   ossScopedRWLock lock( &_locationInfo.mtx, EXCLUSIVE ) ;
@@ -911,6 +912,7 @@ namespace engine
          else
          {
             _locationVote.force( CLS_ELECTION_STATUS_SEC ) ;
+            locationReelectionDone() ;
 
             {
                ossScopedRWLock lock( &_locationInfo.mtx, EXCLUSIVE ) ;
