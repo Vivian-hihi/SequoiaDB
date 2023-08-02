@@ -564,6 +564,7 @@
 #define FIELD_NAME_FREELOGSPACE              "freeLogSpace"
 #define FIELD_NAME_VSIZE                     "vsize"
 #define FIELD_NAME_RSS                       "rss"
+#define FIELD_NAME_MEM_SHARED                "MemShared"
 #define FIELD_NAME_FAULT                     "fault"
 #define FIELD_NAME_SVC_NETIN                 "svcNetIn"
 #define FIELD_NAME_SVC_NETOUT                "svcNetOut"
@@ -658,6 +659,9 @@
 #define FIELD_NAME_MODIFIED_NUM              "ModifiedNum"
 #define FIELD_NAME_DELETE_NUM                "DeletedNum"
 #define FIELD_NAME_MEMPOOL_SIZE              "MemPoolSize"
+#define FIELD_NAME_MEMPOOL_FREE              "MemPoolFree"
+#define FIELD_NAME_MEMPOOL_USED              "MemPoolUsed"
+#define FIELD_NAME_MEMPOOL_MAX_OOLSZ         "MemPoolMaxOOLSize"
 #define FIELD_NAME_CUR_RBS_CL                "CurRBSCL"
 #define FIELD_NAME_LAST_FREE_RBS_CL          "LastFreeRBSCL"
 #define FIELD_NAME_LATCH_WAIT_TIME           "LatchWaitTime"
@@ -780,6 +784,13 @@
 #define FIELD_NAME_RENAME_CS                 "RenameCS"
 #define FIELD_NAME_RENAME_CL                 "RenameCL"
 #define FIELD_NAME_CHANGEUID_CL              "ChangeUIDCL"
+
+
+// for role
+#define FIELD_NAME_PRIVILEGES                "Privileges"
+#define FIELD_NAME_ROLES                     "Roles"
+#define FIELD_NAME_RESOURCE                  "Resource"
+#define FIELD_NAME_ACTIONS                   "Actions"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
@@ -935,6 +946,7 @@
 #define CMD_NAME_UPDATE_CONFIG               "update config"
 #define CMD_NAME_DELETE_CONFIG               "delete config"
 #define CMD_NAME_ANALYZE                     "analyze"
+#define CMD_NAME_MEM_TRIM                    "mem trim"
 #define CMD_NAME_GET_CL_DETAIL               "get collection detail"
 #define CMD_NAME_GET_CL_STAT                 "get collection statistic"
 #define CMD_NAME_GET_INDEX_STAT              "get index statistic"
@@ -1350,5 +1362,20 @@ enum SDB_CONSISTENCY_STRATEGY
 
 /// set attributes
 #define SDB_ALTER_GROUP_SET_ATTR             SDB_ALTER_ACTION_SET_ATTR
+
+// rbac
+#define CMD_NAME_CREATE_ROLE "create role"
+#define CMD_NAME_DROP_ROLE "drop role"
+#define CMD_NAME_GET_ROLE "get role"
+#define CMD_NAME_LIST_ROLES "list roles"
+#define CMD_NAME_UPDATE_ROLE "update role"
+#define CMD_NAME_GRANT_PRIVILEGES "grant privileges"
+#define CMD_NAME_REVOKE_PRIVILEGES "revoke privileges"
+#define CMD_NAME_GRANT_ROLES_TO_ROLE "grant roles to role"
+#define CMD_NAME_REVOKE_ROLES_FROM_ROLE "revoke roles from role"
+#define CMD_NAME_GET_USER "get user"
+#define CMD_NAME_GRANT_ROLES_TO_USER "grant roles to user"
+#define CMD_NAME_REVOKE_ROLES_FROM_USER "revoke roles from user"
+#define CMD_NAME_INVALIDATE_USER_CACHE "invalidate user cache"
 
 #endif // MSGDEF_H__

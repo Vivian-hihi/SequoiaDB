@@ -816,6 +816,9 @@ namespace engine
          goto error ;
       }
 
+      rc = _checkPrivileges( cb, csname, clname );
+      PD_RC_CHECK( rc, PDERROR, "Failed to check privileges, rc: %d", rc );
+
       if ( NULL != csname )
       {
          rc = _getCSGrps( csname, cb, ctrlParam ) ;
@@ -844,4 +847,109 @@ namespace engine
    error :
       goto done ;
    }
+
+   INT32 _coordCMDAnalyze::_checkPrivileges( pmdEDUCB *cb, const CHAR *csname, const CHAR *clname )
+   {
+      INT32 rc = SDB_OK;
+      SDB_ASSERT( !( csname && clname ), "can not be true at the same time" );
+      if ( cb->getSession()->privilegeCheckEnabled() )
+      {
+         authActionSet actions;
+         actions.addAction( ACTION_TYPE_analyze );
+         boost::shared_ptr< authResource > res;
+         if ( csname )
+         {
+            res = authResource::forCS( csname );
+            
+         }
+         else if ( clname )
+         {
+            if ( !authResource::isExactName( clname ) )
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG( PDERROR, "Invalid collection full name: %s", clname );
+               goto error;
+            }
+            res = authResource::forExact( clname );
+         }
+         else
+         {
+            res = authResource::forNonSystem();
+         }
+         if ( !res )
+         {
+            rc = SDB_OOM;
+            PD_LOG( PDERROR, "Failed to allocate authResource" );
+            goto error;
+         }
+         rc = cb->getSession()->checkPrivilegesForActionsOnResource( res, actions );
+         PD_RC_CHECK( rc, PDERROR, "Failed to check privileges, rc: %d", rc );
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   /*
+      _coordCMDInvalidateUserCache implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDInvalidateUserCache,
+                                      CMD_NAME_INVALIDATE_USER_CACHE,
+                                      TRUE ) ;
+   _coordCMDInvalidateUserCache::_coordCMDInvalidateUserCache()
+   {
+   }
+
+   _coordCMDInvalidateUserCache::~_coordCMDInvalidateUserCache()
+   {
+   }
+
+   void _coordCMDInvalidateUserCache::_preSet( pmdEDUCB * cb,
+                                               coordCtrlParam & ctrlParam )
+   {
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+   }
+
+   UINT32 _coordCMDInvalidateUserCache::_getControlMask() const
+   {
+      return COORD_CTRL_MASK_ALL ;
+   }
+
+   /*
+      _coordCMDMemTrim implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDMemTrim,
+                                      CMD_NAME_MEM_TRIM,
+                                      TRUE ) ;
+   _coordCMDMemTrim::_coordCMDMemTrim()
+   {
+   }
+
+   _coordCMDMemTrim::~_coordCMDMemTrim()
+   {
+   }
+
+   INT32 _coordCMDMemTrim::_onLocalMode( INT32 flag )
+   {
+      return SDB_COORD_UNKNOWN_OP_REQ ;
+   }
+
+   void _coordCMDMemTrim::_preSet( pmdEDUCB * cb,
+                                   coordCtrlParam & ctrlParam )
+   {
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+   }
+
+   UINT32 _coordCMDMemTrim::_getControlMask() const
+   {
+      return COORD_CTRL_MASK_ALL ;
+   }
+
 }
+

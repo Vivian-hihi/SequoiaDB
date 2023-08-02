@@ -894,12 +894,14 @@ namespace sdbclient
       INT32 createNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
                          const CHAR *pDatabasePath,
-                         std::map<std::string,std::string> &config ) ;
+                         std::map<std::string,std::string> &config,
+                         _sdbNode **ppNode = NULL ) ;
 
       INT32 createNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
                          const CHAR *pDatabasePath,
-                         const bson::BSONObj &options = _sdbStaticObject ) ;
+                         const bson::BSONObj &options = _sdbStaticObject,
+                         _sdbNode **ppNode = NULL ) ;
 
       // remove the specified node in current replica group
       INT32 removeNode ( const CHAR *pHostName,
@@ -2114,6 +2116,9 @@ namespace sdbclient
       INT32 setPDLevel( INT32 level,
                         const bson::BSONObj &options = _sdbStaticObject ) ;
 
+      INT32 memTrim( const CHAR *maskStr = "",
+                     const bson::BSONObj &options = _sdbStaticObject ) ;
+
       INT32 msg( const CHAR* msg ) ;
 
       INT32 loadCS( const CHAR* csName,
@@ -2199,6 +2204,33 @@ namespace sdbclient
                              const bson::BSONObj &selector = _sdbStaticObject,
                              const bson::BSONObj &orderBy = _sdbStaticObject,
                              const bson::BSONObj &hint = _sdbStaticObject ) ;
+
+      INT32 createRole( const bson::BSONObj &role );
+
+      INT32 dropRole( const CHAR *pRoleName );
+
+      INT32 getRole( const CHAR *pRoleName, const bson::BSONObj &options, bson::BSONObj &role );
+
+      INT32 listRoles( _sdbCursor **result, const bson::BSONObj &options );
+
+      INT32 updateRole( const CHAR *pRoleName, const bson::BSONObj &role );
+
+      INT32 grantPrivilegesToRole( const CHAR *pRoleName, const bson::BSONObj &privileges );
+
+      INT32 revokePrivilegesFromRole( const CHAR *pRoleName, const bson::BSONObj &privileges );
+
+      INT32 grantRolesToRole( const CHAR *pRoleName, const bson::BSONObj &roles );
+
+      INT32 revokeRolesFromRole( const CHAR *pRoleName, const bson::BSONObj &roles );
+
+      INT32 grantRolesToUser( const CHAR *pUsrName, const bson::BSONObj &roles );
+
+      INT32 revokeRolesFromUser( const CHAR *pUsrName, const bson::BSONObj &roles );
+
+      INT32 getUser( const CHAR *pUserName, const bson::BSONObj &options, bson::BSONObj &user );
+
+      INT32 invalidateUserCache( const CHAR *pUserName = NULL,
+                                 const bson::BSONObj &options = _sdbStaticObject );
    } ;
    typedef class _sdbImpl sdbImpl ;
 

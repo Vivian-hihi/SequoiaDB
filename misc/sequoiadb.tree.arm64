@@ -443,6 +443,8 @@ sequoiadb
 │       │   ├── createProcedure_en.troff
 │       │   ├── createRG_cn.troff
 │       │   ├── createRG_en.troff
+│       │   ├── createRole_cn.troff
+│       │   ├── createRole_en.troff
 │       │   ├── createSequence_cn.troff
 │       │   ├── createSequence_en.troff
 │       │   ├── createSpareRG_cn.troff
@@ -457,6 +459,8 @@ sequoiadb
 │       │   ├── dropDataSource_en.troff
 │       │   ├── dropDomain_cn.troff
 │       │   ├── dropDomain_en.troff
+│       │   ├── dropRole_cn.troff
+│       │   ├── dropRole_en.troff
 │       │   ├── dropSequence_cn.troff
 │       │   ├── dropSequence_en.troff
 │       │   ├── dropUsr_cn.troff
@@ -487,6 +491,8 @@ sequoiadb
 │       │   ├── getRecycleBin_en.troff
 │       │   ├── getRG_cn.troff
 │       │   ├── getRG_en.troff
+│       │   ├── getRole_cn.troff
+│       │   ├── getRole_en.troff
 │       │   ├── getSequence_cn.troff
 │       │   ├── getSequence_en.troff
 │       │   ├── getSessionAttr_cn.troff
@@ -495,8 +501,18 @@ sequoiadb
 │       │   ├── getSpareRG_en.troff
 │       │   ├── getTask_cn.troff
 │       │   ├── getTask_en.troff
+│       │   ├── getUser_cn.troff
+│       │   ├── getUser_en.troff
+│       │   ├── grantPrivilegesToRole_cn.troff
+│       │   ├── grantPrivilegesToRole_en.troff
+│       │   ├── grantRolesToRole_cn.troff
+│       │   ├── grantRolesToRole_en.troff
+│       │   ├── grantRolesToUser_cn.troff
+│       │   ├── grantRolesToUser_en.troff
 │       │   ├── invalidateCache_cn.troff
 │       │   ├── invalidateCache_en.troff
+│       │   ├── invalidateUserCache_cn.troff
+│       │   ├── invalidateUserCache_en.troff
 │       │   ├── listBackup_cn.troff
 │       │   ├── listBackup_en.troff
 │       │   ├── list_cn.troff
@@ -513,10 +529,14 @@ sequoiadb
 │       │   ├── listProcedures_en.troff
 │       │   ├── listReplicaGroups_cn.troff
 │       │   ├── listReplicaGroups_en.troff
+│       │   ├── listRoles_cn.troff
+│       │   ├── listRoles_en.troff
 │       │   ├── listSequences_cn.troff
 │       │   ├── listSequences_en.troff
 │       │   ├── listTasks_cn.troff
 │       │   ├── listTasks_en.troff
+│       │   ├── memTrim_cn.troff
+│       │   ├── memTrim_en.troff
 │       │   ├── reloadConf_cn.troff
 │       │   ├── reloadConf_en.troff
 │       │   ├── removeBackup_cn.troff
@@ -537,6 +557,12 @@ sequoiadb
 │       │   ├── renameSequence_en.troff
 │       │   ├── resetSnapshot_cn.troff
 │       │   ├── resetSnapshot_en.troff
+│       │   ├── revokePrivilegesFromRole_cn.troff
+│       │   ├── revokePrivilegesFromRole_en.troff
+│       │   ├── revokeRolesFromRole_cn.troff
+│       │   ├── revokeRolesFromRole_en.troff
+│       │   ├── revokeRolesFromUser_cn.troff
+│       │   ├── revokeRolesFromUser_en.troff
 │       │   ├── Sdb_cn.troff
 │       │   ├── Sdb_en.troff
 │       │   ├── setPDLevel_cn.troff
@@ -567,6 +593,8 @@ sequoiadb
 │       │   ├── transRollback_en.troff
 │       │   ├── updateConf_cn.troff
 │       │   ├── updateConf_en.troff
+│       │   ├── updateRole_cn.troff
+│       │   ├── updateRole_en.troff
 │       │   ├── waitTasks_cn.troff
 │       │   └── waitTasks_en.troff
 │       ├── SdbCollection

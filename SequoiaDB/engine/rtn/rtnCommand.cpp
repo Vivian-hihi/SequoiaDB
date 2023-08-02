@@ -411,6 +411,18 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnAlterSequence)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListDataSources)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetRecycleBinDetail)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDCreateRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDDropRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDGetRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDListRoles)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDUpdateRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDGrantPrivilegesToRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDRevokePrivilegesFromRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDGrantRolesToRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDRevokeRolesFromRole)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDGetUser)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDGrantRolesToUser)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnCMDRevokeRolesFromUser)
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnBackup)
    _rtnBackup::_rtnBackup ()
@@ -5072,6 +5084,9 @@ error:
 
       PD_TRACE_ENTRY( SDB__RTNANALYZE_DOIT ) ;
 
+      rc = _checkPrivileges( cb );
+      PD_RC_CHECK( rc, PDERROR, "Failed to check privileges, rc: %d", rc ) ;
+
       rc = rtnAnalyze( _csname, _clname, _ixname, _param,
                        cb, dmsCB, rtnCB, dpsCB ) ;
 
@@ -5092,6 +5107,57 @@ error:
 
    error :
       goto done ;
+   }
+
+   INT32 _rtnAnalyze::_checkPrivileges ( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( cb->getSession()->privilegeCheckEnabled() )
+      {
+         authActionSet actions;
+         actions.addAction( ACTION_TYPE_analyze );
+         boost::shared_ptr<authResource> res;
+         if( _csname )
+         {
+            res = authResource::forCS( _csname );
+            if ( !res )
+            {
+               rc = SDB_OOM;
+               PD_LOG( PDERROR, "Failed to allocate authResource for collection space: %s",
+                       _csname );
+               goto error;
+            }
+         }
+         else if ( _clname )
+         {
+            if ( !authResource::isExactName( _clname ) )
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG( PDERROR, "Invalid collection full name: %s", _clname );
+               goto error;
+            }
+            res = authResource::forExact( _clname );
+            if ( !res )
+            {
+               rc = SDB_OOM;
+               PD_LOG( PDERROR, "Failed to allocate authResource for collection space: %s",
+                       _csname );
+               goto error;
+            }
+
+         }
+         else
+         {
+            res = authResource::forNonSystem();
+         }
+         rc = cb->getSession()->checkPrivilegesForActionsOnResource( res, actions );
+         PD_RC_CHECK( rc, PDERROR, "Failed to check privileges, rc: %d", rc );
+      }
+   
+   done:
+      return rc;
+   error:
+      goto done;
    }
 
    /*
@@ -5726,6 +5792,205 @@ error:
    RTN_COMMAND_TYPE _rtnCMDReturnRecycleBinItemToName::type()
    {
       return CMD_RETURN_RECYCLEBIN_ITEM_TO_NAME ;
+   }
+
+   /*
+      _rtnCMDInvalidateUserCache implement
+   */
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnCMDInvalidateUserCache )
+
+   _rtnCMDInvalidateUserCache::_rtnCMDInvalidateUserCache()
+   {
+   }
+
+   _rtnCMDInvalidateUserCache::~_rtnCMDInvalidateUserCache()
+   {
+   }
+
+   const CHAR *_rtnCMDInvalidateUserCache::name()
+   {
+      return NAME_INVALIDATE_USER_CACHE ;
+   }
+
+   RTN_COMMAND_TYPE _rtnCMDInvalidateUserCache::type()
+   {
+      return CMD_INVALIDATE_USER_CACHE ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNCMDINVALIDATEUSERCACHE_INIT, "_rtnCMDInvalidateUserCache::init" )
+   INT32 _rtnCMDInvalidateUserCache::init( INT32 flags,
+                                           INT64 numToSkip,
+                                           INT64 numToReturn,
+                                           const CHAR *pMatcherBuff,
+                                           const CHAR *pSelectBuff,
+                                           const CHAR *pOrderByBuff,
+                                           const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNCMDINVALIDATEUSERCACHE_INIT ) ;
+
+      try
+      {
+         BSONObj query( pMatcherBuff ) ;
+
+         BSONElement ele = query.getField( FIELD_NAME_USER ) ;
+         if ( String == ele.type() )
+         {
+            _userName = ele.poolString() ;
+         }
+      }
+      catch ( exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to initialize command, occur exception %s",
+                 e.what() ) ;
+         rc = ossException2RC( &e ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCMDINVALIDATEUSERCACHE_INIT, rc ) ;
+      return rc ;
+   error:
+      goto done;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNCMDINVALIDATEUSERCACHE_DOIT, "_rtnCMDInvalidateUserCache::doit" )
+   INT32 _rtnCMDInvalidateUserCache::doit( _pmdEDUCB *cb,
+                                           SDB_DMSCB *dmsCB,
+                                           SDB_RTNCB *rtnCB,
+                                           SDB_DPSCB *dpsCB,
+                                           INT16 w,
+                                           INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNCMDINVALIDATEUSERCACHE_DOIT ) ;
+
+      SDB_ASSERT( cb, "cb is invalid" ) ;
+      SDB_ASSERT( rtnCB, "rtnCB is invalid" ) ;
+
+      *pContextID = -1 ;
+
+      if ( _userName.empty() )
+      {
+         rtnCB->getUserCacheMgr()->clear();
+      }
+      else
+      {
+         rtnCB->getUserCacheMgr()->remove( _userName );
+      }
+      
+      PD_TRACE_EXITRC( SDB__RTNCMDINVALIDATEUSERCACHE_DOIT, rc ) ;
+      return rc ;
+   }
+
+   /*
+      _rtnMemTrim implement
+   */
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnMemTrim )
+   _rtnMemTrim::_rtnMemTrim()
+   {
+      _mask = 0 ;
+   }
+
+   _rtnMemTrim::~_rtnMemTrim()
+   {
+   }
+
+   INT32 _rtnMemTrim::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                            const CHAR *pMatcherBuff, const CHAR *pSelectBuff,
+                            const CHAR *pOrderByBuff,const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj matcher( pMatcherBuff ) ;
+         BSONElement ele = matcher.getField( FIELD_NAME_MASK ) ;
+         if ( ele.eoo() )
+         {
+            _mask = OSS_MEMDEBUG_MASK_OSSMALLOC ;
+         }
+         else if ( String != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Param[%s] must be string(OSS|POOL|TC...)",
+                        FIELD_NAME_MASK ) ;
+            goto error ;
+         }
+
+         if ( '\0' == ele.valuestr()[0] )
+         {
+            _mask = OSS_MEMDEBUG_MASK_OSSMALLOC ;
+         }
+         else if ( !ossString2MemDebugMask( ele.valuestr(), _mask ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Param[%s] must be 'OSS' or 'OSS|POOL|TC...'",
+                        FIELD_NAME_MASK ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = ossException2RC( &e ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnMemTrim::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB, _SDB_RTNCB *rtnCB,
+                            _dpsLogWrapper *dpsCB, INT16 w, INT64 *pContextID )
+   {
+      BOOLEAN needSleep = FALSE ;
+
+      if ( _mask & OSS_MEMDEBUG_MASK_THREADALLOC )
+      {
+         pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
+         pMgr->killByThreadID( OSS_MEM_TRIM_SIGNAL_INTERNAL ) ;
+         /// shink self thread
+         utilShrinkThreadMemPool( TRUE ) ;
+         needSleep = TRUE ;
+      }
+
+      if ( _mask & OSS_MEMDEBUG_MASK_POOLALLOC )
+      {
+         if ( needSleep )
+         {
+            needSleep = FALSE ;
+            /// wait other thread to trim memory
+            ossSleep( OSS_ONE_SEC ) ;
+         }
+         /// trim mempool
+         utilGetGlobalMemPool()->shrink( TRUE ) ;
+      }
+
+      if ( _mask & OSS_MEMDEBUG_MASK_OSSMALLOC )
+      {
+         if ( needSleep )
+         {
+            needSleep = FALSE ;
+            /// wait other thread to trim memory
+            ossSleep( 2 * OSS_ONE_SEC ) ;
+         }
+         /// trim system
+         if ( 1 == ossMemTrim() )
+         {
+            PD_LOG( PDEVENT, "Has trimmed some memory" ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "Has trimmed none memory" ) ;
+         }
+      }
+
+      return SDB_OK ;
    }
 
 }

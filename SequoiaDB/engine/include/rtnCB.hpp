@@ -58,6 +58,7 @@
 #include "rtnIxmKeySorter.hpp"
 #include "rtnScannerChecker.hpp"
 #include "dmsTaskStatus.hpp"
+#include "rtnUserCache.hpp"
 
 #define RTN_INIT_TEXT_INDEX_VERSION    -1
 
@@ -100,6 +101,8 @@ namespace engine
 
       rtnIxmKeySorterCreator    _sorterCreator ;
       rtnScannerCheckerCreator  _checkerCreator ;
+
+      rtnUserCache _userCache;
 
    public:
       virtual void contextDelete( INT64 contextID, IExecutor *pExe ) ;
@@ -264,6 +267,11 @@ namespace engine
       OSS_INLINE dmsTaskStatusMgr* getTaskStatusMgr()
       {
          return &_taskStatusMgr ;
+      }
+
+      OSS_INLINE rtnUserCache* getUserCacheMgr()
+      {
+         return &_userCache;
       }
 
       INT32   addUnloadCS( const CHAR* csName ) ;

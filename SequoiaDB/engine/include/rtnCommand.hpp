@@ -1635,6 +1635,9 @@ namespace engine
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
 
+   private:
+      INT32 _checkPrivileges ( _pmdEDUCB *cb ) ;
+
    private :
       const CHAR *      _csname ;
       const CHAR *      _clname ;
@@ -1873,6 +1876,248 @@ namespace engine
    } ;
 
    typedef class _rtnCMDReturnRecycleBinItemToName rtnCMDReturnRecycleBinItemToName ;
+
+   /*
+      _rtnCMDInvalidateUserCache define
+   */
+   class _rtnCMDInvalidateUserCache : public _rtnCommand
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnCMDInvalidateUserCache() ;
+      virtual ~_rtnCMDInvalidateUserCache() ;
+
+      virtual BOOLEAN writable()
+      {
+         return FALSE ;
+      }
+
+      virtual INT32 init( INT32 flags,
+                          INT64 numToSkip,
+                          INT64 numToReturn,
+                          const CHAR *pMatcherBuff,
+                          const CHAR *pSelectBuff,
+                          const CHAR *pOrderByBuff,
+                          const CHAR *pHintBuff ) ;
+      virtual INT32 doit( _pmdEDUCB *cb,
+                          _SDB_DMSCB *dmsCB,
+                          _SDB_RTNCB *rtnCB,
+                          _dpsLogWrapper *dpsCB,
+                          INT16 w = 1,
+                          INT64 *pContextID = NULL ) ;
+
+      virtual const CHAR *name() ;
+      virtual RTN_COMMAND_TYPE type() ;
+
+   private:
+      ossPoolString _userName;
+   } ;
+   typedef class _rtnCMDInvalidateUserCache rtnCMDInvalidateUserCache ;
+
+   /*
+      _rtnCMDCreateRole define
+   */
+   class _rtnCMDCreateRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDCreateRole () {}
+         virtual ~_rtnCMDCreateRole () {}
+         virtual const CHAR * name () { return NAME_CREATE_ROLE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_ROLE ; }
+   } ;
+   typedef class _rtnCMDCreateRole rtnCMDCreateRole ;
+
+   /*
+      _rtnCMDDropRole define
+   */
+   class _rtnCMDDropRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDDropRole () {}
+         virtual ~_rtnCMDDropRole () {}
+         virtual const CHAR * name () { return NAME_DROP_ROLE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_DROP_ROLE ; }
+   } ;
+   typedef class _rtnCMDDropRole rtnCMDDropRole ;
+
+   /*
+      _rtnCMDGetRole define
+   */
+   class _rtnCMDGetRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDGetRole () {}
+         virtual ~_rtnCMDGetRole () {}
+         virtual const CHAR * name () { return NAME_GET_ROLE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_GET_ROLE ; }
+   } ;
+   typedef class _rtnCMDGetRole rtnCMDGetRole ;
+
+   /*
+      _rtnCMDListRoles define
+   */
+   class _rtnCMDListRoles : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDListRoles () {}
+         virtual ~_rtnCMDListRoles () {}
+         virtual const CHAR * name () { return NAME_LIST_ROLES ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_LIST_ROLES ; }
+   } ;
+   typedef class _rtnCMDListRoles rtnCMDListRoles ;
+
+   /*
+      _rtnCMDUpdateRole define
+   */
+   class _rtnCMDUpdateRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDUpdateRole () {}
+         virtual ~_rtnCMDUpdateRole () {}
+         virtual const CHAR * name () { return NAME_UPDATE_ROLE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_UPDATE_ROLE ; }
+   } ;
+   typedef class _rtnCMDUpdateRole rtnCMDUpdateRole ;
+
+   /*
+      _rtnCMDGrantPrivilegesToRole define
+   */
+   class _rtnCMDGrantPrivilegesToRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDGrantPrivilegesToRole () {}
+         virtual ~_rtnCMDGrantPrivilegesToRole () {}
+         virtual const CHAR * name () { return NAME_GRANT_PRIVILEGES ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_GRANT_PRIVILEGES ; }
+   } ;
+   typedef class _rtnCMDGrantPrivilegesToRole rtnCMDGrantPrivilegesToRole ;
+
+   /*
+      _rtnCMDRevokePrivilegesFromRole define
+   */
+   class _rtnCMDRevokePrivilegesFromRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDRevokePrivilegesFromRole () {}
+         virtual ~_rtnCMDRevokePrivilegesFromRole () {}
+         virtual const CHAR * name () { return NAME_REVOKE_PRIVILEGES ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_REVOKE_PRIVILEGES ; }
+   } ;
+   typedef class _rtnCMDRevokePrivilegesFromRole rtnCMDRevokePrivilegesFromRole ;
+
+   /*
+      _rtnCMDGrantRolesToRole define
+   */
+   class _rtnCMDGrantRolesToRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDGrantRolesToRole () {}
+         virtual ~_rtnCMDGrantRolesToRole () {}
+         virtual const CHAR * name () { return NAME_GRANT_ROLES_TO_ROLE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_GRANT_ROLES_TO_ROLE ; }
+   } ;
+   typedef class _rtnCMDGrantRolesToRole rtnCMDGrantRolesToRole ;
+
+   /*
+      _rtnCMDRevokeRolesFromRole define
+   */
+   class _rtnCMDRevokeRolesFromRole : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDRevokeRolesFromRole () {}
+         virtual ~_rtnCMDRevokeRolesFromRole () {}
+         virtual const CHAR * name () { return NAME_REVOKE_ROLES_FROM_ROLE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_REVOKE_ROLES_FROM_ROLE ; }
+   } ;
+   typedef class _rtnCMDRevokeRolesFromRole rtnCMDRevokeRolesFromRole ;
+
+   /*
+      _rtnCMDGetUser define
+   */
+   class _rtnCMDGetUser : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDGetUser () {}
+         virtual ~_rtnCMDGetUser () {}
+         virtual const CHAR * name () { return NAME_GET_USER ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_GET_USER ; }
+   } ;
+   typedef class _rtnCMDGetUser rtnCMDGetUser ;
+
+   /*
+      _rtnCMDGrantRolesToUser define
+   */
+   class _rtnCMDGrantRolesToUser : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDGrantRolesToUser () {}
+         virtual ~_rtnCMDGrantRolesToUser () {}
+         virtual const CHAR * name () { return NAME_GRANT_ROLES_TO_USER ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_GRANT_ROLES_TO_USER ; }
+   } ;
+   typedef class _rtnCMDGrantRolesToUser rtnCMDGrantRolesToUser ;
+
+   /*
+      _rtnCMDRevokeRolesFromUser define
+   */
+   class _rtnCMDRevokeRolesFromUser : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnCMDRevokeRolesFromUser () {}
+         virtual ~_rtnCMDRevokeRolesFromUser () {}
+         virtual const CHAR * name () { return NAME_REVOKE_ROLES_FROM_USER ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_REVOKE_ROLES_FROM_USER ; }
+   } ;
+   typedef class _rtnCMDRevokeRolesFromUser rtnCMDRevokeRolesFromUser ;
+
+   /*
+      _rtnMemTrim define
+   */
+   class _rtnMemTrim : public _rtnCommand
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+      public:
+         _rtnMemTrim() ;
+         virtual ~_rtnMemTrim() ;
+
+      public:
+         virtual const CHAR * name () { return NAME_MEM_TRIM ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_MEM_TRIM ; }
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL ) ;
+      private:
+         UINT32      _mask ;
+   } ;
 
 }
 

@@ -55,24 +55,48 @@ namespace engine
 
    INT32 _authCB::init ()
    {
+      INT32 rc = SDB_OK ;
       _authEnabled = pmdGetOptionCB()->authEnabled() ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-      return _initAuthentication( cb ) ;
+
+      rc = _initAuthentication( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init authentication, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = _roleMgr.init() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init role manager, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
    }
 
    INT32 _authCB::active ()
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      if ( SDB_ROLE_OM != pmdGetDBRole() )
+      {
+         rc = _roleMgr.active() ;
+      }
+      return rc ;
    }
 
    INT32 _authCB::deactive ()
    {
-      return SDB_OK ;
+      return _roleMgr.deactive() ;
    }
 
    INT32 _authCB::fini ()
    {
-      return SDB_OK ;
+      return _roleMgr.fini() ;
    }
 
    void _authCB::onConfigChange()
@@ -1093,6 +1117,25 @@ namespace engine
          }
       }
 
+      rc = rtnTestAndCreateCL( AUTH_ROLE_COLLECTION, cb, dmsCB, NULL, TRUE );
+      if ( rc )
+      {
+         goto error;
+      }
+      {
+         BSONObjBuilder builder;
+         builder.append( IXM_FIELD_NAME_KEY, BSON( AUTH_FIELD_NAME_ROLENAME << 1 ) );
+         builder.append( IXM_FIELD_NAME_NAME, AUTH_ROLE_INDEX_NAME );
+         builder.appendBool( IXM_FIELD_NAME_UNIQUE, TRUE );
+         BSONObj indexDef = builder.done();
+
+         rc = rtnTestAndCreateIndex( AUTH_ROLE_COLLECTION, indexDef, cb, dmsCB, NULL, TRUE );
+         if ( SDB_OK != rc )
+         {
+            goto error;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB_AUTHCB_INITAUTH, rc ) ;
       return rc ;
@@ -1297,7 +1340,41 @@ namespace engine
       // build user info object
       userInfoBob.append( SDB_AUTH_USER, username ) ;
       userInfoBob.append( SDB_AUTH_PASSWD, passwdMd5 ) ;
-      userInfoBob.append( FIELD_NAME_OPTIONS, option ) ;
+      {
+         ossPoolSet< ossPoolString > roles;
+         BSONObjBuilder optionsBuilder;
+         for ( BSONObjIterator it( option ); it.more(); )
+         {
+            BSONElement ele = it.next() ;
+            if ( 0 == ossStrcmp( FIELD_NAME_ROLES, ele.fieldName() ) )
+            {
+               BSONObj rolesArray = ele.Obj() ;
+               for ( BSONObjIterator it( rolesArray ); it.more(); )
+               {
+                  roles.insert( it.next().poolString() ) ;
+               }
+            }
+            else if ( 0 == ossStrcmp( FIELD_NAME_ROLE, ele.fieldName() ) )
+            {
+               ossPoolString role = authGetBuiltinRoleFromOldRole( ele.valuestr() ) ;
+               if ( !role.empty() )
+               {
+                  roles.insert( role ) ;
+               }
+            }
+            else
+            {
+               optionsBuilder.append( ele ) ;
+            }
+         }
+         BSONArrayBuilder rolesBuilder ;
+         for ( ossPoolSet< ossPoolString >::iterator it = roles.begin(); it != roles.end(); ++it )
+         {
+            rolesBuilder.append( *it ) ;
+         }
+         userInfoBob.append( FIELD_NAME_ROLES, rolesBuilder.arr() );
+         userInfoBob.append( FIELD_NAME_OPTIONS, optionsBuilder.obj() );
+      }
       userInfoBob.append( SDB_AUTH_SCRAMSHA256, ss256Bob.obj() ) ;
       if ( extendPasswd )
       {
@@ -1335,9 +1412,6 @@ namespace engine
                                 option ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to parse create user msg, rc: %d",
-                   rc ) ;
-      rc = _checkCrtUserOption( option, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check creating user option failed, rc: %d",
                    rc ) ;
 
       rc = _buildUserInfo( username, passwd, clearTextPasswd, option,
@@ -1427,19 +1501,45 @@ namespace engine
                goto error ;
             }
          }
+         else if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_ROLES ) )
+         {
+            if ( Array != e.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Field[%s] is invalid in option[%s], rc: %d", FIELD_NAME_ROLES,
+                           option.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            for ( BSONObjIterator it( e.Obj() ); it.more(); )
+            {
+               BSONElement ele = it.next() ;
+               if ( bson::String != ele.type() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "Role in field[%s] must be string, rc: %d", FIELD_NAME_ROLES,
+                              rc ) ;
+                  goto error ;
+               }
+               if ( !_roleMgr.hasRole( ele.valuestr() ) )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "Role[%s] not exist, rc: %d", ele.valuestrsafe(), rc ) ;
+                  goto error ;
+               }
+            }
+         }
          else if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_ROLE ) )
          {
             if ( String != e.type() )
             {
                rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "Field[%s] is invalid in option[%s], rc: %d",
-                           FIELD_NAME_ROLE, option.toString().c_str(), rc ) ;
+               PD_LOG_MSG( PDERROR, "Field[%s] is invalid in option[%s], rc: %d", FIELD_NAME_ROLE,
+                           option.toString().c_str(), rc ) ;
                goto error ;
             }
             else
             {
-               if ( AUTH_INVALID_ROLE_ID ==
-                    authGetBuiltinRoleID( e.valuestrsafe() ) )
+               if ( AUTH_INVALID_ROLE_ID == oldRole::authGetBuiltinRoleID( e.valuestrsafe() ) )
                {
                   rc = SDB_INVALIDARG ;
                   PD_LOG_MSG( PDERROR, "Role %s is invalid when creating a user, rc: %d",
@@ -1808,14 +1908,6 @@ namespace engine
                  "Field[%s] doesn't exist when create user, rc: %d",
                  SDB_AUTH_PASSWD, rc ) ;
          goto error ;
-      }
-
-      if ( !option.hasField( FIELD_NAME_ROLE ) )
-      {
-         BSONObj newOpt ;
-         rc = _rebuildUserOption( option, newOpt ) ;
-         PD_RC_CHECK( rc, PDERROR, "Rebuild user option failed, rc: %d", rc ) ;
-         option = newOpt ;
       }
 
       }
@@ -2436,83 +2528,81 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__REBUILDUSEROPTION, "_authCB::_rebuildUserOption" )
-   INT32 _authCB::_rebuildUserOption( const BSONObj &oldOpt, BSONObj &newOpt )
+   INT32 _authCB::_isUserRoot( const CHAR *username, _pmdEDUCB *cb, BOOLEAN *result )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_AUTHCB__REBUILDUSEROPTION ) ;
+      SDB_ASSERT( username && cb && result, "can not be nullptr" ) ;
+      *result = FALSE;
+      BSONObj userObj;
+
+      rc = getUsrInfo( username, cb, userObj ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to get user[%s] info, rc: %d",
+                   username, rc ) ;
 
       try
       {
-         BSONObjBuilder builder( oldOpt.objsize() + 32 ) ;
-         builder.appendElements( oldOpt ) ;
-         builder.append( FIELD_NAME_ROLE, VALUE_NAME_ADMIN ) ;
-         newOpt = builder.obj() ;
+         BSONObj options = userObj.getObjectField( FIELD_NAME_OPTIONS ) ;
+         BSONElement role = options.getField( FIELD_NAME_ROLE ) ;
+         if ( 0 == ossStrcmp( VALUE_NAME_ADMIN, role.valuestrsafe() ) )
+         {
+            *result = TRUE ;
+            goto done ;
+         }
+
+         BSONObj roles = userObj.getObjectField( FIELD_NAME_ROLES ) ;
+         for ( BSONObjIterator it( roles ); it.more(); )
+         {
+            BSONElement ele = it.next() ;
+            if ( 0 == ossStrcmp( AUTH_ROLE_ROOT, ele.valuestrsafe() ) )
+            {
+               *result = TRUE ;
+               goto done ;
+            }
+         }
       }
       catch ( std::exception &e )
       {
          rc = ossException2RC( &e ) ;
-         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          goto error ;
       }
 
    done:
-      PD_TRACE_EXITRC( SDB_AUTHCB__REBUILDUSEROPTION, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CHECKCRTUSEROPTION, "_authCB::_checkCrtUserOption" )
-   INT32 _authCB::_checkCrtUserOption( const BSONObj &option, _pmdEDUCB *cb )
+   // Check if any user(not me) of role _root exists.
+   // Query matcher:
+   // {
+   //   "$and": [
+   //      { "User": { "$ne": username } },
+   //      { "$or": [ { "Roles": "_root" }, { "Options.Role": "admin" } } ]
+   //   ]
+   // }
+   BSONObj buildQueryConditionForRemoveUser( const CHAR *username )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_AUTHCB__CHECKCRTUSEROPTION ) ;
-
-      // The first user of the database should always be role of admin.
-      try
-      {
-         const CHAR *roleName = option.getStringField( FIELD_NAME_ROLE ) ;
-         UINT32 roleID = authGetBuiltinRoleID( roleName ) ;
-         if ( AUTH_ROLE_ADMIN == roleID )
-         {
-            goto done ;
-         }
-         else if ( AUTH_ROLE_MONITOR == roleID )
-         {
-            INT64 count = 0 ;
-            rtnQueryOptions queryOption ;
-
-            queryOption.setCLFullName( AUTH_USR_COLLECTION ) ;
-            rc = rtnGetCount( queryOption, pmdGetKRCB()->getDMSCB(), cb,
-                              pmdGetKRCB()->getRTNCB(), &count ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get user number failed, rc: %d", rc ) ;
-            if ( 0 == count )
-            {
-               rc = SDB_OPERATION_DENIED ;
-               PD_LOG_MSG( PDERROR, "The first user of the database should be "
-                           "role of admin, rc: %d", rc ) ;
-               goto error ;
-            }
-         }
-         else
-         {
-            // The option has been checked in the parsing phase.
-            SDB_ASSERT( FALSE, "The role is invalid" ) ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = ossException2RC( &e ) ;
-         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB_AUTHCB__CHECKCRTUSEROPTION, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      BSONObjBuilder builder;
+      BSONArrayBuilder andBuilder( builder.subarrayStart( "$and" ) );
+      BSONObjBuilder userBuilder( andBuilder.subobjStart() );
+      BSONObjBuilder neBuilder( userBuilder.subobjStart( FIELD_NAME_USER ) );
+      neBuilder.append( "$ne", username );
+      neBuilder.doneFast();
+      userBuilder.doneFast();
+      BSONObjBuilder orObjBuilder( andBuilder.subobjStart() );
+      BSONArrayBuilder orArrayBuilder( orObjBuilder.subarrayStart( "$or" ) );
+      BSONObjBuilder rolesBuilder( orArrayBuilder.subobjStart() );
+      rolesBuilder.append( FIELD_NAME_ROLES, AUTH_ROLE_ROOT );
+      rolesBuilder.doneFast();
+      BSONObjBuilder optionsBuilder( orArrayBuilder.subobjStart() );
+      optionsBuilder.append( FIELD_NAME_OPTIONS "." FIELD_NAME_ROLE, VALUE_NAME_ADMIN );
+      optionsBuilder.doneFast();
+      orArrayBuilder.doneFast();
+      orObjBuilder.doneFast();
+      andBuilder.doneFast();
+      return builder.obj();
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CHECKREMOVEUSER, "_authCB::_checkRemoveUser" )
@@ -2528,6 +2618,7 @@ namespace engine
 
          INT64 count = 0 ;
          rtnQueryOptions queryOption ;
+         BOOLEAN isRoot = FALSE;
          SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
          SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
@@ -2541,21 +2632,16 @@ namespace engine
             goto done ;
          }
 
-         {
-            // Check if any user(not me) of role admin exists.
-            // Query matcher:
-            // {
-            //   "$and": [
-            //      { "User": { "$ne": username } },
-            //      { "Options.Role": "admin" }
-            //   ]
-            // }
+         // If the user to delete is granted _root or admin (old version) role,
+         // ensure that there is another user which granted _root or admin.
+         rc = _isUserRoot( username, cb, &isRoot ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to determine whether the user[%s] is %s, rc: %d",
+                      username, AUTH_ROLE_ROOT, rc );
 
-            BSONObj query =
-               BSON( "$and" << BSON_ARRAY(
-                  BSON( FIELD_NAME_USER << BSON( "$ne" << username ) ) <<
-                  BSON( FIELD_NAME_OPTIONS"."FIELD_NAME_ROLE <<
-                        VALUE_NAME_ADMIN ) ) ) ;
+         if ( isRoot )
+         {
+            // Check if any user(not me) of role _root exists.
+            BSONObj query = buildQueryConditionForRemoveUser( username );
 
             queryOption.setQuery( query ) ;
             rc = rtnGetCount( queryOption, dmsCB, cb, rtnCB, &count ) ;
@@ -2564,8 +2650,8 @@ namespace engine
             if ( 0 == count )
             {
                rc = SDB_OPERATION_DENIED ;
-               PD_LOG_MSG( PDERROR, "Only users of role monitor remain after "
-                           "removing this user, rc: %d", rc ) ;
+               PD_LOG_MSG( PDERROR, "Only users without %s role remain after "
+                           "removing this user, rc: %d", AUTH_ROLE_ROOT, rc ) ;
                goto error ;
             }
          }

@@ -3866,6 +3866,7 @@ namespace engine
       goto done ;
    }
 
+
    INT32 _coordCMDLinkCollection::_generateCataMsg ( MsgHeader *pMsg,
                                                      pmdEDUCB *cb,
                                                      coordCMDArguments *pArgs,

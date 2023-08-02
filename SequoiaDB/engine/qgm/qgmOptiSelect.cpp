@@ -50,6 +50,8 @@
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 #include "qgmHintDef.hpp"
+#include "auth.hpp"
+#include "boost/exception/diagnostic_information.hpp"
 
 using namespace bson ;
 
@@ -1161,5 +1163,49 @@ namespace engine
       }
 
       return r ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__CHECKPRIVILEGES, "_qgmOptiSelect::_checkPrivileges" )
+   INT32 _qgmOptiSelect::_checkPrivileges( ISession *session ) const
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY( SDB__QGMOPTISELECT__CHECKPRIVILEGES );
+      if ( !session->privilegeCheckEnabled() )
+      {
+         goto done;
+      }
+
+      // pass the privilege check if select from a nested select statement
+      if ( _from )
+      {
+         goto done;
+      }
+
+      // example: select * from $LIST_CS. The collection name is $LIST_CS.
+      // We need to check privileges for $LIST_CS like a command
+      if ( _collection.value.attr().begin() &&
+           0 == ossStrncmp( CMD_ADMIN_PREFIX, _collection.value.attr().begin(),
+                            ossStrlen( CMD_ADMIN_PREFIX ) ) )
+      {
+         ossPoolString cmdName = _collection.value.toString();
+         rc = session->checkPrivilegesForCmd( cmdName.c_str() + 1, NULL, NULL,
+                                              NULL, NULL );
+         PD_RC_CHECK( rc, PDERROR, "Failed to check privileges for command: %s",
+                      cmdName.c_str() + 1 );
+      }
+      else
+      {
+         authActionSet actions;
+         actions.addAction( ACTION_TYPE_find );
+         rc = session->checkPrivilegesForActionsOnExact( _collection.value.toString().c_str(),
+                                                         actions );
+         PD_RC_CHECK( rc, PDERROR, "Failed to check privileges" );
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__QGMOPTISELECT__CHECKPRIVILEGES, rc );
+      return rc;
+   error:
+      goto done;
    }
 }

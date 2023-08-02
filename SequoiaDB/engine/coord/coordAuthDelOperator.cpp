@@ -35,6 +35,8 @@
 #include "msgMessageFormat.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
+#include "auth.hpp"
+#include "rtnCB.hpp"
 
 namespace engine
 {
@@ -70,6 +72,14 @@ namespace engine
       const CHAR *pUserName = NULL ;
       const CHAR *pPass = NULL ;
 
+      if ( cb->getSession()->privilegeCheckEnabled() )
+      {
+         authActionSet actions;
+         actions.addAction( ACTION_TYPE_dropUsr );
+         rc = cb->getSession()->checkPrivilegesForActionsOnCluster( actions );
+         PD_RC_CHECK( rc, PDERROR, "Failed to check privileges" );
+      }
+
       rc = forward( pMsg, cb, FALSE, contextID, &pUserName, &pPass, NULL, buf ) ;
       if ( pUserName )
       {
@@ -84,6 +94,10 @@ namespace engine
       else if ( 0 == ossStrcmp( pUserName, cb->getUserName() ) )
       {
          cb->setUserInfo( "", "" ) ;
+      }
+      if ( pUserName )
+      {
+         sdbGetRTNCB()->getUserCacheMgr()->remove( pUserName ) ;
       }
 
    done:

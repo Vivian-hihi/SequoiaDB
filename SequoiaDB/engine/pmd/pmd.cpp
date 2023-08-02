@@ -43,11 +43,12 @@
 #include "pdTrace.hpp"
 #include "netFrame.hpp"
 #include "pmdPipeManager.hpp"
+#include "auth.hpp"
 
 namespace engine
 {
 
-   #define PMD_MEM_SHRINK_TIMER_INTERVAL        ( 120000 )     // ms
+   #define PMD_MEM_SHRINK_TIMER_INTERVAL        ( 60000 )      // ms
    #define PMD_MONITOR_CLEANUP_INTERVAL         ( 2000 )       // ms
    #define PMD_PRINT_SHIELDINFO_INTERVAL        ( 3600 * OSS_ONE_SEC )
 
@@ -344,6 +345,10 @@ namespace engine
          goto error ;
       }
 
+      #ifdef SDB_ENGINE
+      authInitBuiltinRolePrivileges();
+      #endif
+
       _pLightJobMgr = SDB_OSS_NEW pmdLightJobMgr() ;
       if ( !_pLightJobMgr )
       {
@@ -606,7 +611,7 @@ namespace engine
       }
 
       utilGetGlobalMemPool()->setMaxSize( 0 ) ;
-      utilGetGlobalMemPool()->shrink() ;
+      utilGetGlobalMemPool()->shrink( TRUE ) ;
 
       if ( ossGetTrapExceptionPath() )
       {
@@ -667,6 +672,13 @@ namespace engine
                             _optioncb.memDebugVerify(),
                             _optioncb.memDebugDetail(),
                             _optioncb.memDebugMask() ) ;
+
+      // update sys mem info
+      ossSetSysMemInfo( _optioncb.getMemMXFast(),
+                        _optioncb.getMemTrimThreshold(),
+                        _optioncb.getMemMmapThreshold(),
+                        _optioncb.getMemMmapMax(),
+                        _optioncb.getMemTopPad() ) ;
 
       // Reconfig all registered cbs
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
