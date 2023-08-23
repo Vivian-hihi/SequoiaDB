@@ -427,8 +427,10 @@ namespace engine
 
    // get transaction ID from record
    INT32 dpsGetTransIDFromRecord( const CHAR *logRecord,
+                                  BOOLEAN isRequired,
                                   DPS_TRANS_ID &transID ) ;
    INT32 dpsGetTransIDFromRecord( const dpsLogRecord &record,
+                                  BOOLEAN isRequired,
                                   DPS_TRANS_ID &transID ) ;
 
 }

@@ -379,7 +379,8 @@ namespace engine
       // for verbose dump
       if ( DPS_DMP_OPT_FORMATTED & options )
       {
-         dpsLogRecord::iterator itrTransID, itrTransLsn, itrTransRel ;
+         DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
+         dpsLogRecord::iterator itrTransLsn, itrTransRel ;
          dpsLogRecord::iterator itrTime ;
          dpsFlags2String( _head._flags, tmpStr, DPS_RECORD_FLAGS_STATUS_LEN ) ;
 
@@ -425,7 +426,7 @@ namespace engine
                                  timeStr ) ;
          }
 
-         itrTransID = this->find( DPS_LOG_PUBLIC_TRANSID ) ;
+         dpsGetTransIDFromRecord( *this, FALSE, transID ) ;
          itrTransLsn = this->find( DPS_LOG_PUBLIC_PRETRANS ) ;
          itrTransRel = this->find( DPS_LOG_PUBLIC_RELATED_TRANS ) ;
 
@@ -1235,7 +1236,7 @@ namespace engine
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "COMMIT", LOG_TYPE_TS_COMMIT ) ;
             dpsLogRecord::iterator itr ;
-             if ( !itrTransID.valid() )
+             if ( DPS_INVALID_TRANS_ID == transID )
              {
                len += ossSnprintf ( outBuf + len, outSize - len,
                                     "*ERROR* : %s"OSS_NEWLINE,
@@ -1310,7 +1311,7 @@ namespace engine
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "ROLLBACK", LOG_TYPE_TS_ROLLBACK ) ;
-             if ( !itrTransID.valid() )
+             if ( DPS_INVALID_TRANS_ID == transID )
              {
                len += ossSnprintf ( outBuf + len, outSize - len,
                                     "*ERROR* : %s"OSS_NEWLINE,
@@ -1803,11 +1804,10 @@ namespace engine
          }
          }
 
-         if ( itrTransID.valid() )
+         if ( DPS_INVALID_TRANS_ID != transID )
          {
             CHAR tmpID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
             CHAR tmpAttr[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
-            DPS_TRANS_ID transID = *((DPS_TRANS_ID *)itrTransID.value()) ;
 
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " TransID : %s"OSS_NEWLINE

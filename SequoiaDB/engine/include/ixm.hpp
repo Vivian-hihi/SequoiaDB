@@ -872,6 +872,15 @@ namespace engine
             fieldCount++ ;
          }
 
+         if ( obj.hasField( IXM_CREATETIME_FIELD ) )
+         {
+            fieldCount++ ;
+         }
+         if ( obj.hasField( IXM_REBUILDTIME_FIELD ) )
+         {
+            fieldCount++ ;
+         }
+
          // make sure no other fields, unless it is a geo index.
          if ( fieldCount != obj.nFields() )
          {

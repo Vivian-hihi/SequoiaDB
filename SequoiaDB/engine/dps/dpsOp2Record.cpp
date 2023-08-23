@@ -1937,13 +1937,10 @@ namespace engine
       }
 
       {
-         dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
-         if ( !itr.valid() )
-         {
-            PD_LOG( PDERROR, "Failed to find tag transid in record" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+         dpsLogRecord::iterator itr ;
+
+         rc = dpsGetTransIDFromRecord( record, TRUE, transID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get transaction ID, rc: %d", rc ) ;
 
          transID = *((DPS_TRANS_ID *)itr.value()) ;
 
@@ -3385,6 +3382,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_GETTRANSIDFROMEREC, "dpsGetTransIDFromRecord" )
    INT32 dpsGetTransIDFromRecord( const CHAR* logRecord,
+                                  BOOLEAN isRequired,
                                   DPS_TRANS_ID &transID )
    {
       INT32 rc = SDB_OK ;
@@ -3399,7 +3397,7 @@ namespace engine
       rc = record.load( logRecord ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to load record, rc: %d", rc ) ;
 
-      rc = dpsGetTransIDFromRecord( record, transID ) ;
+      rc = dpsGetTransIDFromRecord( record, isRequired, transID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get transaction ID, rc: %d", rc ) ;
 
    done:
@@ -3412,23 +3410,46 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_GETTRANSIDFROMEREC_REC, "dpsGetTransIDFromRecord" )
    INT32 dpsGetTransIDFromRecord( const dpsLogRecord &record,
+                                  BOOLEAN isRequired,
                                   DPS_TRANS_ID &transID )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__DPS_GETTRANSIDFROMEREC_REC ) ;
 
-      transID = DPS_INVALID_TRANS_ID ;
-
       dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
       if ( itr.valid() )
       {
-         transID = *( (DPS_TRANS_ID *)itr.value() ) ;
+         DPS_TRANS_ID tmpTransID = *( (DPS_TRANS_ID *)( itr.value() ) ) ;
+         itr = record.find( DPS_LOG_PUBLIC_TRANSID_NODEID ) ;
+         if ( itr.valid() )
+         {
+            DPS_TRANSID_NODEID nodeID = *( (DPS_TRANSID_NODEID *)( itr.value() ) ) ;
+            dpsTransID_v1 transIDV1( tmpTransID, nodeID ) ;
+            transID = dpsTransIDDowngrade( transIDV1 ) ;
+         }
+         else
+         {
+            transID = tmpTransID ;
+         }
+      }
+      else
+      {
+         transID = DPS_INVALID_TRANS_ID ;
+         if ( isRequired )
+         {
+            PD_LOG( PDERROR, "Failed to find tag transid in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
 
+   done:
       PD_TRACE_EXITRC( SDB__DPS_GETTRANSIDFROMEREC_REC, rc ) ;
-
       return rc ;
+
+   error:
+      goto done ;
    }
 
 }
