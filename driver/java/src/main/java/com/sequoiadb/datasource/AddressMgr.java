@@ -18,8 +18,8 @@ package com.sequoiadb.datasource;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-//import com.sequoiadb.log.Log;
-//import com.sequoiadb.log.LogFactory;
+import com.sequoiadb.log.Log;
+import com.sequoiadb.log.LogFactory;
 
 
 import java.net.*;
@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class AddressMgr {
     private final static String ADDRESS_SEPARATOR = ":";
-//    private final static Log log = LogFactory.getLog(AddressMgr.class);
+    private final static Log log = LogFactory.getLog(AddressMgr.class);
 
     private final List<ServerAddress> normalList;
     private final List<ServerAddress> abnormalList;
@@ -142,10 +142,10 @@ class AddressMgr {
             serAddr.setLocal(isLocalAddress(address));
 
             if (normalList.contains(serAddr) || abnormalList.contains(serAddr)) {
-//                log.info(String.format("Already exist address: %s", address));
+                log.info(String.format("Already exist address: %s", address));
             } else {
                 normalList.add(serAddr);
-//                log.info(String.format("Add address: %s", address));
+                log.info(String.format("Add address: %s", address));
             }
         } finally {
             lock.unlock();
@@ -260,10 +260,10 @@ class AddressMgr {
             this.abnormalList.removeAll(decList);
             this.normalList.addAll(incList);
 
-//            if (incList.size() > 0 || decList.size() > 0) {
-//                log.info(String.format("update address success, increase address: %s, decrease address: %s",
-//                        incList, decList));
-//            }
+            if (incList.size() > 0 || decList.size() > 0) {
+                log.info(String.format("update address success, increase address: %s, decrease address: %s",
+                        incList, decList));
+            }
             return decList;
         } finally {
             lock.unlock();
