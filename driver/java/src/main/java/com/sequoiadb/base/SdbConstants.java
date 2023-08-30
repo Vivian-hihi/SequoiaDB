@@ -71,6 +71,7 @@ final class SdbConstants {
     final static String SDB_ALTER_SET_DOMAIN = "set domain";
     final static String SDB_ALTER_REMOVE_DOMAIN = "remove domain";
     final static String SDB_ALTER_ENABLE_CAPPED = "enable capped";
+    final static String SDB_ALTER_SET_LOCATION = "set location";
     final static String SDB_ALTER_DISABLE_CAPPED = "disable capped";
     final static String SDB_ALTER_ADD_GROUPS = "add groups";
     final static String SDB_ALTER_SET_GROUPS = "set groups";
@@ -151,4 +152,7 @@ final class SdbConstants {
     final static String SEQ_OPT_SET_CURR_VALUE = "set current value";
     final static String SEQ_OPT_RENAME = "rename";
     final static String SEQ_OPT_RESTART = "restart";
+
+    final static String NODE_LOCATION = "Location";
+    final static String NODE_SET_LOCATION = "set location";
 }
