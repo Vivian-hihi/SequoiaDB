@@ -51,6 +51,7 @@ The result is as follow:
 .nf
 \f[C]
 {
+  "ActiveLocation": "GuangZhou",
   "Group": [
     {
       "HostName": "localhost",

@@ -151,7 +151,7 @@ ShardingKey 等时有效。
 AutoIndexId ( \f[I]Bool\f[] )：标识是否创建 $id 索引，默认值是 true
 .RS 2
 .PP
-格式：\f[C]AutoIndexId:\ true\ |\ false\f[]
+格式：\f[C]AutoIndexId: true | false\f[]
 .RS
 .PP
 \f[B]Note:\f[]

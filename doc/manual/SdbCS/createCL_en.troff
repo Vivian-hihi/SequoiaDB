@@ -105,7 +105,8 @@ Format：\f[C]ConsistencyStrategy: 3\f[]
 .RE
 .IP \[bu] 2
 Compressed ( \f[I]boolean\f[] ): Whether to enable the data compression
-function, and the default value is "true", enable the data compression function.
+function, and the default value is "true", which means that the data compression
+function is enable.
 .RS 2
 .PP
 Format: \f[C]Compressed: false\f[]

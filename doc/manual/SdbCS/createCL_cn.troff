@@ -92,7 +92,7 @@ ConsistencyStrategy（ \f[I]number\f[] ）：同步一致性策略
 .RE
 .IP \[bu] 2
 Compressed（ \f[I]boolean\f[] ）：是否开启数据压缩功能，默认值为
-true，开启数据压缩功能
+true，表示开启数据压缩功能
 .RS 2
 .PP
 格式：\f[C]Compressed: false\f[]
@@ -144,8 +144,8 @@ Group（ \f[I]string\f[] ）：所属复制组
 格式：\f[C]Group: "group1"\f[]
 .RE
 .IP \[bu] 2
-AutoIndexId（ \f[I]boolean\f[] ）：是否根据字段 _id 自动创建名为 "$id"
-的唯一索引，默认值为 true，自动创建
+AutoIndexId（ \f[I]boolean\f[] ）：是否根据字段 _id
+自动创建名为"$id"的唯一索引，默认值为 true，表示自动创建
 .RS 2
 .PP
 格式：\f[C]AutoIndexId: false\f[]
