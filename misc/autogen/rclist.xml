@@ -3267,26 +3267,26 @@
       </code>
 
       <code>
-         <name>SDB_ERROR_RESERVED_408</name> <!--Not used-->
+         <name>SDB_AUTH_ROLE_EXIST</name>
          <description>
-            <en>Reserved</en> <!--Not used-->
-            <cn>保留</cn> <!--Not used-->
+            <en>Role already exists</en>
+            <cn>角色已存在</cn>
          </description>
       </code>
 
       <code>
-         <name>SDB_ERROR_RESERVED_409</name> <!--Not used-->
+         <name>SDB_AUTH_ROLE_NOT_EXIST</name>
          <description>
-            <en>Reserved</en> <!--Not used-->
-            <cn>保留</cn> <!--Not used-->
+            <en>Role does not exist</en>
+            <cn>角色不存在</cn>
          </description>
       </code>
 
       <code>
-         <name>SDB_ERROR_RESERVED_410</name> <!--Not used-->
+         <name>SDB_AUTH_ROLE_CYCLE_DETECTED</name>
          <description>
-            <en>Reserved</en> <!--Not used-->
-            <cn>保留</cn> <!--Not used-->
+            <en>The cycle of the role inheritance detected</en>
+            <cn>角色继承关系中存在环</cn>
          </description>
       </code>
 
