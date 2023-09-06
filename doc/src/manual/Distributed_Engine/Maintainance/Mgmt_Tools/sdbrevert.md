@@ -80,6 +80,26 @@ sdbrevert 执行完成后，会返回如下信息：
 | Reverted lob pieces num | 恢复被删除的 lob 分片数量              |
 | Revert failed log file  | 恢复失败的 lob 文件                    |
 
+##使用示例##
+
+从 11820 节点的 replicalog 中恢复 sample.employee 的记录、lob 数据至 revertCS.revertCL 集合
+
+```lang-shell
+sdbrevert --hosts localhost:11810 --targetcl sample.employee --logpath ./database/data/11820/replicalog/ --output revertCS.revertCL
+```
+
+恢复指定 oid 的记录数据。特殊字符 "$" 需要转义处理
+
+```lang-shell
+sdbrevert --hosts localhost:11810 --targetcl sample.employee --logpath ./database/data/11820/replicalog/ --output revertCS.revertCL --matcher "{'_id': {'\$oid': '649aad16936f54aba362ff61'}}" --datatype doc
+```
+
+恢复指定 oid 的 lob 数据。oid 中的 key 与记录数据一样是 "_id"
+
+```lang-shell
+sdbrevert --hosts localhost:11810 --targetcl sample.employee --logpath ./database/data/11820/replicalog/ --output revertCS.revertCL --matcher "{'_id': {'\$oid': '0000649aebfb3600042dd1e0'}}" --datatype lob
+```
+
 
 ##恢复数据至正式集合##
 
