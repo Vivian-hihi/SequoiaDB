@@ -210,6 +210,12 @@
                                  "en": "Audit Log"
                               },
                               {
+                                 "id":1694416493,
+                                 "file": "sdb_permission_conf",
+                                 "cn": "SequoiaDB权限配置",
+                                 "en": "SequoiaDB permissions configuration"
+                              },
+                              {
                                  "id": 1556198260,
                                  "file": "upgrade",
                                  "cn": "升级",
