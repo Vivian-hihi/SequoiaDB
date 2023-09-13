@@ -4402,7 +4402,8 @@ namespace engine
       {
          if ( locationID == itr->second._locationID )
          {
-            itr->second._primary.columns.nodeID = primaryID.columns.nodeID ;
+            itr->second._primary.columns.groupID = primaryID.columns.groupID ;
+            itr->second._primary.columns.nodeID = primaryID.columns.nodeID ;        
             break ;
          }
       }
