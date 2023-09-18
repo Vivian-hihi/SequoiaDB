@@ -30,6 +30,7 @@ import com.sequoiadb.base.result.DeleteResult;
 import com.sequoiadb.base.result.InsertResult;
 import com.sequoiadb.base.result.UpdateResult;
 import com.sequoiadb.util.Helper;
+import com.sequoiadb.util.SdbSecureUtil;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -350,7 +351,9 @@ public class DBCollection {
         // build and send message
         InsertRequest request = new InsertRequest( collectionFullName, record, flag );
         SdbReply response = sequoiadb.requestAndResponse( request );
-        sequoiadb.throwIfError(response, record);
+
+        String securityInfo = SdbSecureUtil.toSecurityStr(record, sequoiadb.getInfoEncryption());
+        sequoiadb.throwIfError(response, "inserted data = " + securityInfo);
         sequoiadb.upsertCache(collectionFullName);
         // get result
         BSONObject result = response.getReturnData();
@@ -768,7 +771,8 @@ public class DBCollection {
         DeleteRequest request = new DeleteRequest( collectionFullName, matcher, hint, flag );
         SdbReply response = sequoiadb.requestAndResponse( request );
         if ( response.getFlag() != 0 ) {
-            String msg = "matcher = " + matcher + ", hint = " + hint + ", flag = " + flag;
+            String matcherInfo = SdbSecureUtil.toSecurityStr(matcher, sequoiadb.getInfoEncryption());
+            String msg = "matcher = " + matcherInfo + ", hint = " + hint + ", flag = " + flag;
             sequoiadb.throwIfError( response, msg );
         }
         sequoiadb.upsertCache( collectionFullName );
@@ -1326,7 +1330,9 @@ public class DBCollection {
             if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                String msg = "matcher = " + matcher + ", selector = " + selector + ", orderBy = "
+                String matcherInfo = SdbSecureUtil.toSecurityStr(matcher, sequoiadb.getInfoEncryption());
+
+                String msg = "matcher = " + matcherInfo + ", selector = " + selector + ", orderBy = "
                         + orderBy + ", hint = " + hint + ", skipRows = " + skipRows
                         + ", returnRows = " + returnRows + ", flags = " + flags;
                 sequoiadb.throwIfError(response, msg);
@@ -2067,7 +2073,9 @@ public class DBCollection {
         SdbReply response = sequoiadb.requestAndResponse(request);
 
         if (response.getFlag() != 0) {
-            String msg = "condition = " + matcher + ", hint = " + hint;
+            String matcherInfo = SdbSecureUtil.toSecurityStr(matcher, sequoiadb.getInfoEncryption());
+
+            String msg = "matcher = " + matcherInfo + ", hint = " + hint;
             sequoiadb.throwIfError(response, msg);
         }
 
@@ -2648,7 +2656,10 @@ public class DBCollection {
         SdbReply response = sequoiadb.requestAndResponse( request );
 
         if ( response.getFlag() != 0 ) {
-            String msg = "matcher = " + matcher + ", modifier = " + modifier + ", hint = " + hint + ", flag = " + flag;
+            String matcherInfo = SdbSecureUtil.toSecurityStr(matcher, sequoiadb.getInfoEncryption());
+            String modifierInfo = SdbSecureUtil.toSecurityStr(modifier, sequoiadb.getInfoEncryption());
+
+            String msg = "matcher = " + matcherInfo + ", modifier = " + modifierInfo + ", hint = " + hint + ", flag = " + flag;
             sequoiadb.throwIfError( response, msg );
         }
         sequoiadb.upsertCache( collectionFullName );
