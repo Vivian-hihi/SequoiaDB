@@ -69,7 +69,7 @@ getLastErrMsg() or getLastError() to get the error code.
 For more error handling, you can refer to the Common Error Handling Guide.
 .SH VERSION
 .PP
-v7.0 and above
+v5.8 and above
 .SH EXAMPLE
 .PP
 Delete the role named \f[C]foo_developer\f[] in the cluster.

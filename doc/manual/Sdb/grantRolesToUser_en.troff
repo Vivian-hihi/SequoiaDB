@@ -117,7 +117,7 @@ getLastErrMsg() or the error code using getLastError().
 For more error handling, refer to the Common Error Handling Guide.
 .SH VERSION
 .PP
-v7.0 and above
+v5.8 and above
 .SH EXAMPLES
 .PP
 Add built\-in roles and custom roles to the user \f[C]user1\f[] in the cluster.

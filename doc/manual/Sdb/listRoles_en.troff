@@ -110,7 +110,7 @@ getLastErrMsg() or the error code using getLastError().
 For more error handling, refer to the Common Error Handling Guide.
 .SH VERSION
 .PP
-v7.0 and above
+v5.8 and above
 .SH EXAMPLES
 .IP \[bu] 2
 Print all custom roles in the cluster, without enabling the

@@ -38,7 +38,7 @@ When an exception is thrown, you can retrieve the error message through [getLast
 
 ## VERSION ##
 
-v7.0 and above
+v5.8 and above
 
 ## EXAMPLE ##
 

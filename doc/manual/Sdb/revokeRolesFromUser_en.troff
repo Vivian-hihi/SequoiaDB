@@ -117,7 +117,7 @@ getLastErrMsg() or the error code using getLastError().
 For more error handling, refer to the Common Error Handling Guide.
 .SH VERSION
 .PP
-v7.0 and above
+v5.8 and above
 .SH EXAMPLES
 .PP
 In the cluster, revoke built\-in roles and custom roles from the user named
