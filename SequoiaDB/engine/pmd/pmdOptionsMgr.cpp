@@ -2046,6 +2046,8 @@ done:
 
       _remoteLocationConsistency = TRUE ;
       _consultRollbackLogOn = TRUE ;
+      _privilegeCheckEnabled = FALSE ;
+      _userCacheInterval = PMD_DFT_USER_CACHE_INTERVAL ;
 
       _memMXFast = PMD_DFT_MEM_MXFAST ;
       _memTrimThreshold = PMD_DFT_MEM_TRIM_THRESHOLD ;
