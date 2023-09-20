@@ -576,7 +576,7 @@ namespace engine
          UINT32 logFileSz = logMgr->getLogFileSz() ;
          UINT32 logFileNum = logMgr->getLogFileNum() ;
 
-         logFile = logMgr->getLogFile( curFileId ) ;
+         logFile = logMgr->getLogFileByLogicalID( curFileId ) ;
          if ( NULL == logFile )
          {
             SDB_ASSERT( FALSE, "logFile can't be NULL" ) ;
