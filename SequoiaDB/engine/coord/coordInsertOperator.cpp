@@ -813,7 +813,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to get the groupid for obj[%s] from "
-                    "catalog info[%s], rc: %d", insertObj.toString().c_str(),
+                    "catalog info[%s], rc: %d", PD_SECURE_OBJ(insertObj),
                     cataInfo->toBSON().toString().c_str(), rc ) ;
             goto error ;
          }
@@ -1073,7 +1073,7 @@ namespace engine
          {
             PD_LOG( PDWARNING, "Couldn't find the match[%s] sub-collection "
                     "in cl's(%s) catalog info[%s], rc: %d",
-                    insertObj.toString().c_str(), cataInfo->getName(),
+                    PD_SECURE_OBJ(insertObj), cataInfo->getName(),
                     cataInfo->toBSON().toString().c_str(),
                     rc ) ;
             goto error ;
@@ -1094,7 +1094,7 @@ namespace engine
          {
             PD_LOG( PDWARNING, "Couldn't find the match[%s] catalog of "
                     "sub-collection(%s), rc: %d",
-                    insertObj.toString().c_str(),
+                    PD_SECURE_OBJ(insertObj),
                     subClCataInfo->toBSON().toString().c_str(),
                     rc ) ;
             goto error ;
