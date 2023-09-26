@@ -162,7 +162,7 @@ getLastError() to get the error code.
 For more details, refer to Troubleshooting.
 .SH VERSION
 .PP
-v7.2.2 and above
+v5.8 and above
 .SH EXAMPLES
 .PP
 Start Maintenance mode in replication group "group1".

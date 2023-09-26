@@ -57,7 +57,7 @@ getLastError() to get the error code.
 For more details, refer to Troubleshooting.
 .SH VERSION
 .PP
-v7.2.2 and above
+v5.8 and above
 .SH EXAMPLES
 .PP
 Stop Maintenance mode for all nodes in replication group "group1".
@@ -65,7 +65,7 @@ Stop Maintenance mode for all nodes in replication group "group1".
 .nf
 \f[C]
 > var rg = db.getRG("group1")
-> rg.stopCriticalMode()
+> rg.stopMaintenanceMode()
 \f[]
 .fi
 .PP

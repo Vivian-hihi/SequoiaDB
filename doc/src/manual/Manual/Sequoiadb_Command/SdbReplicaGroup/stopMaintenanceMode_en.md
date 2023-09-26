@@ -49,7 +49,7 @@ When the exception happens, use [getLastErrMsg()][getLastErrMsg] to get the erro
 
 ##VERSION##
 
-v7.2.2 and above
+v5.8 and above
 
 ##EXAMPLES##
 
@@ -57,7 +57,7 @@ Stop Maintenance mode for all nodes in replication group "group1".
 
 ```lang-javascript
 > var rg = db.getRG("group1")
-> rg.stopCriticalMode()
+> rg.stopMaintenanceMode()
 ```
 
 Stop Maintenance mode for the nodes with GuangZhou Location in replication group "group1".

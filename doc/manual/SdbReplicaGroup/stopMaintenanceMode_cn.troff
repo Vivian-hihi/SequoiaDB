@@ -55,7 +55,7 @@ Maintenance 模式。
 获取错误码。更多错误处理可以参考常见错误处理指南。
 .SH 版本
 .PP
-v7.2.2 及以上版本
+v5.8 及以上版本
 .SH 示例
 .PP
 在复制组 group1 中停止所有节点的 Maintenance 模式
