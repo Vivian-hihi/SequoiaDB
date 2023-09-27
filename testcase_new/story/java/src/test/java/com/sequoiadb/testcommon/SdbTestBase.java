@@ -44,12 +44,17 @@ public class SdbTestBase {
     protected static String reservedDir;
     protected static String workDir;
     private static String confToolScript;
+    public static String backupPath;
     public static String rootPwd;
+    public static String remoteUser;
+    public static String remotePwd;
     private static String enableTransaction;
     private static Sequoiadb sequoiadb = null;
     public static String esHostName;
     public static String esServiceName;
     public static String cappedCSName;
+    public static String expandGroupName;
+    public static int expandNodeNum;
     public static String reservedCL = "java_dummy";
 
     private static final String TRANSACTIONON = "transactionon";
@@ -79,6 +84,9 @@ public class SdbTestBase {
     public static final String MAXITEMNUM = "MaxItemNum";
     public static final String MAXVERSIONNUM = "MaxVersionNum";
     public static final String AUTODROP = "AutoDrop";
+    public static final String LOCATION = "location";
+    public static ArrayList< String > expandGroupNames = new ArrayList<>();
+    public static ArrayList< BasicBSONObject > expandNodeInfos = null;
     public static final String RBAC = "rbac";
     public static final String rootUserName = "rootUserName";
     public static final String rootUserPassword = "rootUserPassword";
@@ -223,7 +231,8 @@ public class SdbTestBase {
     }
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
-            "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "CONFTOOL",
+            "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER",
+            "REMOTEPASSWD", "BACKUPTMPNODELOGPATH", "CONFTOOL",
             "ENABLETRANSACTION", "ESHOSTNAME", "ESSVCNAME", "FULLTEXTPREFIX",
             "DSHOSTNAME", "DSSVCNAME" })
     @BeforeSuite(alwaysRun = true)
@@ -231,6 +240,9 @@ public class SdbTestBase {
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR,
             @Optional("sequoiadb") String ROOTPASSWD,
+            @Optional("sdbadmin") String REMOTEUSER,
+            @Optional("Admin@1024") String REMOTEPASSWD,
+            @Optional("${BACKUPTMPNODELOGPATH}") String BACKUPTMPNODELOGPATH,
             @Optional("") String CONFTOOL,
             @Optional("false") String ENABLETRANSACTION,
             @Optional("localhost") String ESHOSTNAME,
@@ -245,13 +257,17 @@ public class SdbTestBase {
         esServiceName = ESSVCNAME;
         csName = COMMCSNAME;
         cappedCSName = COMMCSNAME + "_capped";
+        expandGroupName = COMMCSNAME + "_group";
         reservedPortBegin = RSRVPORTBEGIN;
         reservedPortEnd = RSRVPORTEND;
         reservedDir = RSRVNODEDIR;
         workDir = WORKDIR;
         coordUrl = HOSTNAME + ":" + SVCNAME;
         rootPwd = ROOTPASSWD;
+        remoteUser = REMOTEUSER;
+        remotePwd = REMOTEPASSWD;
         confToolScript = CONFTOOL;
+        backupPath = BACKUPTMPNODELOGPATH;
         enableTransaction = ENABLETRANSACTION;
         FullTextUtils.setFulltextPrefix( FULLTEXTPREFIX );
         dsHostName = DSHOSTNAME;
@@ -375,15 +391,35 @@ public class SdbTestBase {
         }
     }
 
+    @Parameters({ "EXPANDNODENUM" })
     @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS,
-            LOCKESCALATION, RECYCLEBIN, RBAC })
-    public static synchronized void initTestGroups() throws Exception {
+            LOCKESCALATION, RECYCLEBIN, LOCATION, RBAC })
+    public static synchronized void initTestGroups(
+            @Optional("0") int EXPANDNODENUM ) throws Exception {
         if ( testGroup == null ) {
             return;
         } else if ( testGroup.equals( RECYCLEBIN ) ) {
             // 修改回收站属性为默认属性
             getRecycleBinAttr();
             modifyRecycleBinAttr( recycleBinAttr.get( RECYCLEBINDEFAULTATTR ) );
+        }
+        // 对需要扩容的测试用例创建一个复制组，并创建节点
+        if ( testGroup.equals( LOCATION ) ) {
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "",
+                    options )) {
+                expandNodeNum = EXPANDNODENUM;
+                if ( sdb.isReplicaGroupExist( expandGroupName ) ) {
+                    sdb.getReplicaGroup( expandGroupName ).start();
+                } else {
+                    sdb.createReplicaGroup( expandGroupName );
+                }
+                expandGroupNames.add( expandGroupName );
+                expandNodeInfos = CommLib.createNode( sdb, expandGroupName,
+                        expandNodeNum );
+                // 扩容完成后校验LSN一致
+                CommLib.waitGroupSelectPrimaryNode( sdb, expandGroupName, 60 );
+                CommLib.isLSNConsistency( sdb, SdbTestBase.expandGroupName );
+            }
         }
         System.out.println( "init " + testGroup + " Groups..........." );
         modifyNodeConf( group2Conf.get( testGroup ), null );
@@ -405,9 +441,11 @@ public class SdbTestBase {
         }
     }
 
+    @Parameters({ "EXPANDNODENUM" })
     @AfterTest(groups = { RC, RU, RCWAITLOCK, RS, RCAUTO, RCUSERBS,
-            LOCKESCALATION, RECYCLEBIN, RBAC }, alwaysRun = true)
-    public static synchronized void finiTestGroups() throws Exception {
+            LOCKESCALATION, RECYCLEBIN, LOCATION, RBAC }, alwaysRun = true)
+    public static synchronized void finiTestGroups(
+            @Optional("0") int EXPANDNODENUM ) throws Exception {
         if ( testGroup == null ) {
             return;
         } else if ( testGroup.equals( RBAC ) ) {
@@ -421,6 +459,36 @@ public class SdbTestBase {
         } else if ( testGroup.equals( RECYCLEBIN ) ) {
             // 执行完用例后将回收站配置改为执行用例前配置
             modifyRecycleBinAttr( recycleBinAttr.get( RECYCLEBINUSERATTR ) );
+        }
+        // 移除增加的复制组
+        if ( testGroup.equals( LOCATION ) ) {
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "",
+                    options )) {
+                for ( String expandGroupName : expandGroupNames ) {
+                    CommLib.isLSNConsistency( sdb, expandGroupName );
+                    System.out.println( "backupPath -- " + backupPath );
+                    System.out.println( "backupPath.equals -- "
+                            + ( !backupPath.equals( "" ) ) );
+                    if ( !"${BACKUPTMPNODELOGPATH}".equals( backupPath ) ) {
+                        String backupPathFull = backupPath + "/" + LOCATION
+                                + EXPANDNODENUM;
+                        System.out.println(
+                                "backupPathFull -- " + backupPathFull );
+                        BasicBSONObject matcher = new BasicBSONObject(
+                                "GroupName", expandGroupName );
+                        String user = "root";
+                        try {
+                            CommLib.copyNodeLogs( sdb, matcher, user,
+                                    SdbTestBase.rootPwd, backupPathFull );
+                        } catch ( Exception e ) {
+                            e.printStackTrace();
+                            throw new RuntimeException( e );
+                        }
+                    }
+                    CommLib.cleanUpCSInGroup( sdb, expandGroupName );
+                    sdb.removeReplicaGroup( expandGroupName );
+                }
+            }
         }
         System.out.println( "fini " + testGroup + " Groups..........." );
         for ( String key : node2Conf.keySet() ) {
