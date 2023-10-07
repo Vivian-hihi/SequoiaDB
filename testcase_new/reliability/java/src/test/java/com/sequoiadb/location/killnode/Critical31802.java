@@ -138,11 +138,14 @@ public class Critical31802 extends SdbTestBase {
 
         for ( int i = 0; i < replSizes.length; i++ ) {
             DBCollection dbcl = dbcs.getCollection( clName + i );
-            dbcl.truncate();
-            List< BSONObject > batchRecords = CommLib.insertData( dbcl,
-                    recordNum );
-            BasicBSONObject orderBy = new BasicBSONObject( "a", 1 );
-            CommLib.checkRecords( dbcl, batchRecords, orderBy );
+            // 超过半数节点恢复后解除Critical模式，ReplSize为0的集合插入数据可能会失败
+            if ( i != 0 ) {
+                dbcl.truncate();
+                List< BSONObject > batchRecords = CommLib.insertData( dbcl,
+                        recordNum );
+                BasicBSONObject orderBy = new BasicBSONObject( "a", 1 );
+                CommLib.checkRecords( dbcl, batchRecords, orderBy );
+            }
         }
 
         // 等待集群恢复正常
