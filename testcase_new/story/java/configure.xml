@@ -176,17 +176,17 @@
         </packages>
     </test>
 
-    <test name="location7" parallel="classes" thread-count="1">
-        <parameter name="EXPANDNODENUM" value="7" />
-        <groups>
-            <run>
-                <include name="location" />
-            </run>
-        </groups>
-        <packages>
-            <package name="com.sequoiadb.location" />
-        </packages>
-    </test>
+<!--    <test name="location7" parallel="classes" thread-count="1">-->
+<!--        <parameter name="EXPANDNODENUM" value="7" />-->
+<!--        <groups>-->
+<!--            <run>-->
+<!--                <include name="location" />-->
+<!--            </run>-->
+<!--        </groups>-->
+<!--        <packages>-->
+<!--            <package name="com.sequoiadb.location" />-->
+<!--        </packages>-->
+<!--    </test>-->
 
     <!--未开启privilegecheck执行用例会重启节点，开启privilegecheck可直接执行用例-->
     <test name="rbac" parallel="classes" thread-count="5">

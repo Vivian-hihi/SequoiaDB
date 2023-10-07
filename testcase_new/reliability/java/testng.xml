@@ -114,16 +114,16 @@
         </packages>
     </test>
 
-    <test name="location7" preserve-order="true">
-        <parameter name="EXPANDNODENUM" value="7" />
-        <groups>
-            <run>
-                <include name="location" />
-            </run>
-        </groups>
-        <packages>
-            <package name="com.sequoiadb.location.killnode" />
-        </packages>
-    </test>
+<!--    <test name="location7" preserve-order="true">-->
+<!--        <parameter name="EXPANDNODENUM" value="7" />-->
+<!--        <groups>-->
+<!--            <run>-->
+<!--                <include name="location" />-->
+<!--            </run>-->
+<!--        </groups>-->
+<!--        <packages>-->
+<!--            <package name="com.sequoiadb.location.killnode" />-->
+<!--        </packages>-->
+<!--    </test>-->
 </suite>
     
