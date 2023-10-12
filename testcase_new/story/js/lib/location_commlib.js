@@ -308,7 +308,6 @@ function getGroupMasterNodeName ( db, groups )
    return masterNodeName;
 }
 
-
 /************************************************************************
 *@Description: 校验复制组中ActiveLocation字段
 *@input: db            
@@ -412,6 +411,41 @@ function checkStartCriticalMode ( db, groupName, properties )
       assert.equal( actGroupMode, groupMode );
       assert.equal( actProperties, properties );
    }
+   cursor.close();
+}
+
+/************************************************************************
+*@Description: 校验启动Maintenance模式
+*@input: groupName      指定的group
+         properties     校验的节点信息
+**************************************************************************/
+function checkGroupNodeInMaintenanceMode ( db, groupName, nodeNames )
+{
+   var groupMode = "maintenance";
+   var actNodeName = [];
+   var masterNode = db.getRG( groupName ).getMaster();
+   var masterNodeName = masterNode.getHostName() + ":" + masterNode.getServiceName();
+
+   var cursor = db.list( SDB_LIST_GROUPMODES, { GroupName: groupName } );
+   var groupModeInfo = cursor.next().toObj();
+   if( groupModeInfo == null )
+   {
+      assert.faild( "groupMode is not exist" );
+   }
+
+   var actGroupMode = groupModeInfo["GroupMode"];
+   var actProperties = groupModeInfo["Properties"];
+   for( var i in actProperties )
+   {
+      if( actProperties[i]["NodeName"] != masterNodeName )
+      {
+         actNodeName.push( actProperties[i]["NodeName"] );
+      }
+   }
+
+   assert.equal( actGroupMode, groupMode );
+   assert.equal( actNodeName.sort(), nodeNames.sort() );
+
    cursor.close();
 }
 
