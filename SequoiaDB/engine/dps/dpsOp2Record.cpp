@@ -1942,8 +1942,6 @@ namespace engine
          rc = dpsGetTransIDFromRecord( record, TRUE, transID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get transaction ID, rc: %d", rc ) ;
 
-         transID = *((DPS_TRANS_ID *)itr.value()) ;
-
          itr = record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
          if ( itr.valid() )
          {
