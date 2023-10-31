@@ -2,7 +2,7 @@
  * @Description   : seqDB-31761:超过MaxKeepTime节点未恢复，自动停止Critical模式
  * @Author        : tangtao
  * @CreateTime    : 2023.05.24
- * @LastEditTime  : 2023.10.12
+ * @LastEditTime  : 2023.10.31
  * @LastEditors   : liuli
  ******************************************************************************/
 testConf.skipStandAlone = true;
@@ -19,6 +19,14 @@ function test ( args )
 
    // 获取group中的备节点
    var slaveNodes = getGroupSlaveNodeName( db, srcGroup );
+
+   // 获取sharingbreak
+   var cursor = db.snapshot( SDB_SNAP_CONFIGS, { GroupName: srcGroup }, { sharingbreak: 1 } );
+   var actSharingbreak = cursor.current().toObj().sharingbreak;
+   println( "actSharingbreak: " + actSharingbreak );
+
+   // 修改sharingbreak为默认值
+   db.deleteConf( { sharingbreak: 1 } );
 
    // 获取主节点
    var rg = db.getRG( srcGroup );
@@ -68,5 +76,6 @@ function test ( args )
    {
       rg.start();
       commCheckBusinessStatus( db );
+      db.updateConf( { sharingbreak: actSharingbreak } );
    }
 }

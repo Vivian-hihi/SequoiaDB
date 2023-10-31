@@ -21,6 +21,14 @@ function test ( args )
    // 获取group中的备节点
    var slaveNodes = getGroupSlaveNodeName( db, srcGroup );
 
+   // 获取sharingbreak
+   var cursor = db.snapshot( SDB_SNAP_CONFIGS, { GroupName: srcGroup }, { sharingbreak: 1 } );
+   var actSharingbreak = cursor.current().toObj().sharingbreak;
+   println( "actSharingbreak: " + actSharingbreak );
+
+   // 修改sharingbreak为默认值
+   db.deleteConf( { sharingbreak: 1 } );
+
    // 获取主节点
    var rg = db.getRG( srcGroup );
    var masterNode = rg.getMaster();
@@ -79,5 +87,6 @@ function test ( args )
       rg.start();
       commCheckBusinessStatus( db );
       commDropCL( db, testConf.csName, clName, true, true );
+      db.updateConf( { sharingbreak: actSharingbreak } );
    }
 }
