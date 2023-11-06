@@ -77,8 +77,8 @@ namespace engine
                                       const dpsTransLRBHeader *pLRBHeader,
                                       dpsLRBExtData *pExtData ) = 0 ;
 
-      virtual void afterLockEscalated( const dpsTransLockId &lockId,
-                                       DPS_TRANSLOCK_OP_MODE_TYPE opMode ) = 0 ;
+      virtual INT32 afterLockEscalated( const dpsTransLockId &lockId,
+                                        DPS_TRANSLOCK_OP_MODE_TYPE opMode ) = 0 ;
 
    } ;
 

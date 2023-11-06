@@ -661,6 +661,20 @@ namespace engine
       }
    }
 
+   BOOLEAN _rtnMergeIXScanner::isTypeEnabled( IXScannerType type ) const
+   {
+      BOOLEAN isEnabled = FALSE ;
+      if ( _leftType == type )
+      {
+         isEnabled = _leftEnabled ;
+      }
+      else if ( _rightType == type )
+      {
+         isEnabled = _rightEnabled ;
+      }
+      return isEnabled ;
+   }
+
    INT32 _rtnMergeIXScanner::getLockModeByType( IXScannerType type ) const
    {
       if ( _leftType == type && _leftIXScanner )

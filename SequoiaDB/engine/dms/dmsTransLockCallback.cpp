@@ -788,14 +788,58 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSTRANSLOCKCALLBACK_AFTERLOCKESCALATED, "dmsTransLockCallback::afterLockEscalated" )
-   void dmsTransLockCallback::afterLockEscalated( const dpsTransLockId &lockId,
-                                                  DPS_TRANSLOCK_OP_MODE_TYPE opMode )
+   INT32 dmsTransLockCallback::afterLockEscalated( const dpsTransLockId &lockId,
+                                                   DPS_TRANSLOCK_OP_MODE_TYPE opMode )
    {
+      INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY( SDB_DMSTRANSLOCKCALLBACK_AFTERLOCKESCALATED ) ;
 
       _recordInfo._transLockEscalated = TRUE ;
 
-      PD_TRACE_EXIT( SDB_DMSTRANSLOCKCALLBACK_AFTERLOCKESCALATED ) ;
+      if ( _pScanner &&
+           _latchedIdxLid != DMS_INVALID_EXTENT )
+      {
+         // we are lock escalated now, we should see the disk records
+         // if current RID is from memory tree, we should skip it
+         if ( SCANNER_TYPE_MEM_TREE == _pScanner->getCurScanType() )
+         {
+            _skipRecord = TRUE ;
+            _oldVer = NULL ;
+            _pScanner->removeDuplicatRID( dmsRecordID( lockId.extentID(),
+                                                       lockId.offset() ) ) ;
+         }
+
+         if ( _pScanner->isTypeEnabled( SCANNER_TYPE_MEM_TREE ) )
+         {
+            BOOLEAN isCursorSame = FALSE ;
+
+            // pause scanner to disabled memory index scanner
+            rc = _pScanner->pauseScan() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to pause scanner, rc: %d", rc ) ;
+
+            _pScanner->disableByType( SCANNER_TYPE_MEM_TREE ) ;
+
+            rc = _pScanner->resumeScan( &isCursorSame ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to resume scanner, rc: %d", rc ) ;
+
+            if ( !isCursorSame && !_skipRecord )
+            {
+               // cursor changed after resume, skip record
+               _skipRecord = TRUE ;
+               _oldVer = NULL ;
+               _pScanner->removeDuplicatRID( dmsRecordID( lockId.extentID(),
+                                                          lockId.offset() ) ) ;
+            }
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_DMSTRANSLOCKCALLBACK_AFTERLOCKESCALATED, rc ) ;
+      return rc ;
+
+   error:
+      goto done ;
    }
 
    // Description

@@ -161,6 +161,7 @@ namespace engine
       virtual IXScannerType   getType() const = 0 ;
       virtual IXScannerType   getCurScanType() const = 0 ;
       virtual void            disableByType( IXScannerType type ) = 0 ;
+      virtual BOOLEAN         isTypeEnabled( IXScannerType type ) const = 0 ;
       /*
          return : -1, SHARED or EXCLUSIVE
       */

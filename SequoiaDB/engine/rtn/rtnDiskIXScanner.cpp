@@ -79,6 +79,11 @@ namespace engine
       /// do nothing
    }
 
+   BOOLEAN _rtnDiskIXScanner::isTypeEnabled( IXScannerType type ) const
+   {
+      return type == SCANNER_TYPE_DISK ? TRUE : FALSE ;
+   }
+
    INT32 _rtnDiskIXScanner::getLockModeByType( IXScannerType type ) const
    {
       return -1 ;

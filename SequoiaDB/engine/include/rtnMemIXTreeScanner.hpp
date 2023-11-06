@@ -81,6 +81,7 @@ namespace engine
       virtual IXScannerType   getType() const ;
       virtual IXScannerType   getCurScanType() const ;
       virtual void            disableByType( IXScannerType type ) ;
+      virtual BOOLEAN         isTypeEnabled( IXScannerType type ) const ;
       virtual INT32           getLockModeByType( IXScannerType type ) const ;
 
       virtual const BSONObj*  getCurKeyObj() const { return &_curKeyObj ; }

@@ -2155,8 +2155,14 @@ namespace engine
             // invoke callback if needed
             if ( NULL != callback )
             {
-               callback->afterLockEscalated( lockId,
-                                             DPS_TRANSLOCK_OP_MODE_ACQUIRE ) ;
+               rc = callback->afterLockEscalated( lockId,
+                                                  DPS_TRANSLOCK_OP_MODE_ACQUIRE ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to invoke lock callback, rc: %d",
+                          rc ) ;
+                  goto error ;
+               }
             }
             _addRefIfOwned( dpsTxExectr, lockId ) ;
             // if requesting lock in current level is covered by upper lock,
@@ -3155,8 +3161,14 @@ nextLock:
             // invoke callback if needed
             if ( NULL != callback )
             {
-               callback->afterLockEscalated( lockId,
-                                             DPS_TRANSLOCK_OP_MODE_TRY ) ;
+               rc = callback->afterLockEscalated( lockId,
+                                                  DPS_TRANSLOCK_OP_MODE_TRY ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to invoke lock callback, rc: %d",
+                          rc ) ;
+                  goto error ;
+               }
             }
             _addRefIfOwned( dpsTxExectr, lockId ) ;
             // if requesting lock in current level is covered by upper lock,

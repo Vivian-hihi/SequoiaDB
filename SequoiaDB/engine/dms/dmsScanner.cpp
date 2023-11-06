@@ -1854,7 +1854,8 @@ namespace engine
       }
 
       _scanner->setReadonly( isReadOnly() ) ;
-      if ( DPS_TRANSLOCK_MAX == _recordLock )
+      if ( DPS_TRANSLOCK_MAX == _recordLock ||
+           cb->getTransExecutor()->isLockEscalated( LOCKMGR_TRANS_LOCK ) )
       {
          _scanner->disableByType( SCANNER_TYPE_MEM_TREE ) ;
       }

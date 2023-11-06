@@ -101,6 +101,11 @@ namespace engine
       /// do nothing
    }
 
+   BOOLEAN _rtnMemIXTreeScanner::isTypeEnabled( IXScannerType type ) const
+   {
+      return type == SCANNER_TYPE_MEM_TREE ? TRUE : FALSE ;
+   }
+
    INT32 _rtnMemIXTreeScanner::getLockModeByType( IXScannerType type ) const
    {
       if ( type == SCANNER_TYPE_MEM_TREE && _treeLatchHeld )
