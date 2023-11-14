@@ -773,6 +773,8 @@ namespace engine
    : _contextID( -1 ),
      _dataRead( 0 ),
      _indexRead( 0 ),
+     _dataWrite( 0 ),
+     _indexWrite( 0 ),
      _lobRead( 0 ),
      _lobWrite( 0 ),
      _lobTruncate( 0 ),
@@ -790,6 +792,8 @@ namespace engine
    : _contextID( monCtxCB._contextID ),
      _dataRead( monCtxCB._dataRead ),
      _indexRead( monCtxCB._indexRead ),
+     _dataWrite( monCtxCB._dataWrite ),
+     _indexWrite( monCtxCB._indexWrite ),
      _lobRead( monCtxCB._lobRead ),
      _lobWrite( monCtxCB._lobWrite ),
      _lobTruncate( monCtxCB._lobTruncate ),
@@ -812,6 +816,8 @@ namespace engine
       _contextID     = -1 ;
       _dataRead      = 0 ;
       _indexRead     = 0 ;
+      _dataWrite     = 0 ;
+      _indexWrite    = 0 ;
       _lobRead       = 0 ;
       _lobWrite      = 0 ;
       _lobTruncate   = 0 ;
@@ -829,6 +835,8 @@ namespace engine
       _contextID        = monCtxCB._contextID ;
       _dataRead         = monCtxCB._dataRead ;
       _indexRead        = monCtxCB._indexRead ;
+      _dataWrite        = monCtxCB._dataWrite ;
+      _indexWrite       = monCtxCB._indexWrite ;
       _lobRead          = monCtxCB._lobRead ;
       _lobWrite         = monCtxCB._lobWrite ;
       _lobTruncate      = monCtxCB._lobTruncate ;
@@ -856,6 +864,12 @@ namespace engine
             break ;
          case MON_INDEX_READ :
             monIndexReadInc( delta ) ;
+            break ;
+         case MON_DATA_WRITE :
+            monDataWriteInc( delta ) ;
+            break ;
+         case MON_INDEX_WRITE :
+            monIndexWriteInc( delta ) ;
             break ;
          case MON_LOB_READ :
             monLobReadInc( delta ) ;

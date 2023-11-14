@@ -1289,6 +1289,16 @@ namespace engine
             return _indexRead ;
          }
 
+         OSS_INLINE UINT64 getDataWrite () const
+         {
+            return _dataWrite ;
+         }
+
+         OSS_INLINE UINT64 getIndexWrite () const
+         {
+            return _indexWrite ;
+         }
+
          OSS_INLINE UINT64 getLobRead() const
          {
             return _lobRead ;
@@ -1376,6 +1386,16 @@ namespace engine
             _indexRead += delta ;
          }
 
+         OSS_INLINE void monDataWriteInc ( UINT64 delta )
+         {
+            _dataWrite += delta ;
+         }
+
+         OSS_INLINE void monIndexWriteInc ( UINT64 delta )
+         {
+            _indexWrite += delta ;
+         }
+
          OSS_INLINE void monLobReadInc( UINT64 delta )
          {
             _lobRead += delta ;
@@ -1441,6 +1461,8 @@ namespace engine
          INT64          _contextID ;
          UINT64         _dataRead ;
          UINT64         _indexRead ;
+         UINT64         _dataWrite ;
+         UINT64         _indexWrite ;
          UINT64         _lobRead ;
          UINT64         _lobWrite ;
          UINT64         _lobTruncate ;

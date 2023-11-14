@@ -1031,6 +1031,8 @@ namespace engine
       {
          UINT64 startDataRead = cb->getMonAppCB()->totalDataRead ;
          UINT64 startIndexRead = cb->getMonAppCB()->totalIndexRead ;
+         UINT64 startDataWrite = cb->getMonAppCB()->totalDataWrite ;
+         UINT64 startIndexWrite = cb->getMonAppCB()->totalIndexWrite ;
 
          pdLogShield logShield ;
          logShield.addRC( SDB_IXM_ADVANCE_EOC ) ;
@@ -1077,6 +1079,10 @@ namespace engine
                                    startDataRead ) ;
          _monCtxCB.monIndexReadInc( cb->getMonAppCB()->totalIndexRead -
                                     startIndexRead ) ;
+         _monCtxCB.monDataWriteInc( cb->getMonAppCB()->totalDataWrite -
+                                    startDataWrite ) ;
+         _monCtxCB.monIndexWriteInc( cb->getMonAppCB()->totalIndexWrite -
+                                     startIndexWrite ) ;
       }
 
       // if not empty, get current data

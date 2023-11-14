@@ -200,6 +200,10 @@ namespace engine
 
       try
       {
+         UINT64 startDataRead = 0,
+                startIndexRead = 0,
+                startDataWrite = 0,
+                startIndexWrite = 0 ;
          apm = rtnCB->getAPM() ;
          SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
@@ -242,6 +246,10 @@ retry:
          if ( NULL != cb )
          {
             cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
+            startDataRead = cb->getMonAppCB()->totalDataRead ;
+            startIndexRead = cb->getMonAppCB()->totalIndexRead ;
+            startDataWrite = cb->getMonAppCB()->totalDataWrite ;
+            startIndexWrite = cb->getMonAppCB()->totalIndexWrite ;
          }
 
          // update
@@ -400,6 +408,18 @@ retry:
 
             execEndTime = krcb->getCurTime() ;
             monCtxCB.monExecuteTimeInc( execStartTime, execEndTime ) ;
+         }
+
+         if ( NULL != cb )
+         {
+            monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead -
+                                     startDataRead ) ;
+            monCtxCB.monIndexReadInc( cb->getMonAppCB()->totalIndexRead -
+                                      startIndexRead ) ;
+            monCtxCB.monDataWriteInc( cb->getMonAppCB()->totalDataWrite -
+                                      startDataWrite ) ;
+            monCtxCB.monIndexWriteInc( cb->getMonAppCB()->totalIndexWrite -
+                                       startIndexWrite ) ;
          }
 
          planRuntime.setQueryActivity( MON_UPDATE, monCtxCB, returnOptions,
