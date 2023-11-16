@@ -839,7 +839,7 @@ namespace engine
       // Special case for unique index, could be one of the totalRecords
       if ( _isUnique && numEqualKeys == _numKeys )
       {
-         predSelectivity = _totalFrac ;
+         predSelectivity = OSS_MIN( _totalFrac, DMS_STAT_PRED_EQ_DEF_SELECTIVITY ) ;
          scanSelectivity = predSelectivity ;
          goto done ;
       }
