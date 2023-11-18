@@ -1110,7 +1110,8 @@ namespace engine
                                        OPT_PLAN_CACHE_LEVEL cacheLevel,
                                        UINT32 sortBufferSize,
                                        INT32 optCostThreshold,
-                                       BOOLEAN enableMixCmp )
+                                       BOOLEAN enableMixCmp,
+                                       INT32 planCacheMainCLThreshold )
    {
       INT32 rc = SDB_OK ;
 
@@ -1123,6 +1124,7 @@ namespace engine
 
       setSortBufferSize( sortBufferSize ) ;
       setOptCostThreshold( optCostThreshold ) ;
+      setPlanCacheMainCLThreshold( planCacheMainCLThreshold ) ;
 
       // Always update mix-compare mode
       setMthEnableMixCmp( enableMixCmp ) ;
@@ -1181,7 +1183,8 @@ namespace engine
                                          OPT_PLAN_CACHE_LEVEL cacheLevel,
                                          UINT32 sortBufferSize,
                                          INT32 optCostThreshold,
-                                         BOOLEAN enableMixCmp )
+                                         BOOLEAN enableMixCmp,
+                                         INT32 planCacheMainCLThreshold )
    {
       INT32 rc = SDB_OK ;
 
@@ -1198,7 +1201,8 @@ namespace engine
               cacheLevel != _cacheLevel ||
               sortBufferSize != getSortBufferSizeMB() ||
               optCostThreshold != getOptCostThreshold() ||
-              enableMixCmp != mthEnabledMixCmp() )
+              enableMixCmp != mthEnabledMixCmp() ||
+              planCacheMainCLThreshold != getPlanCacheMainCLThreshold() )
          {
             if ( 0 == bucketNum ||
                  OPT_PLAN_NOCACHE == cacheLevel )
@@ -1214,6 +1218,7 @@ namespace engine
                setSortBufferSize( sortBufferSize ) ;
                setOptCostThreshold( optCostThreshold ) ;
                setMthEnableMixCmp( enableMixCmp ) ;
+               setPlanCacheMainCLThreshold( planCacheMainCLThreshold ) ;
 
                sdbGetDMSCB()->clearSUCaches( DMS_EVENT_MASK_PLAN ) ;
 
@@ -1241,7 +1246,7 @@ namespace engine
 
                // Initialize the cache again with new value of bucketNum
                rc = init( bucketNum, cacheLevel, sortBufferSize,
-                          optCostThreshold, enableMixCmp ) ;
+                          optCostThreshold, enableMixCmp, planCacheMainCLThreshold ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan "
                             "manager, rc: %d", rc ) ;
             }
@@ -1250,7 +1255,7 @@ namespace engine
       else
       {
          rc = init( bucketNum, cacheLevel, sortBufferSize,
-                    optCostThreshold, enableMixCmp ) ;
+                    optCostThreshold, enableMixCmp, planCacheMainCLThreshold ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to initialize access plan manager, "
                       "rc: %d", rc ) ;
       }
@@ -1311,14 +1316,22 @@ namespace engine
       // 2. parameterized plan is enabled
       // 3. main-collection name is given
       // 4. path-searching is disabled
+      // not use main-collection plan in below cases
+      // - plan cache is not initialized
+      //  collection is marked main-collection plan invalidated
+      // - main-collection plan cache threshold is not enabled
+      // - collection's data page number is less then main-collection plan cache threshold
       if ( isInitialized() &&
            _cacheLevel >= OPT_PLAN_PARAMETERIZED &&
            NULL != options.getMainCLName() &&
            ( NULL == expOptions || !expOptions->isNeedSearch() ) )
       {
          dmsCachedPlanMgr *pCachedPlanMgr = su->getCachedPlanMgr() ;
+         INT32 mainCLThreshold = getPlanConfig()._planCacheMainThreshold ;
          if ( NULL == pCachedPlanMgr ||
-              pCachedPlanMgr->testMainCLInvalidBitmap( mbContext->mbID() ) )
+              pCachedPlanMgr->testMainCLInvalidBitmap( mbContext->mbID() ) ||
+              mainCLThreshold < 0 ||
+              mbContext->mbStat()->_totalDataPages < (UINT32)( mainCLThreshold ) )
          {
             // The sub-collection is not validated to use main-collection plans,
             // generate a general plan for it
