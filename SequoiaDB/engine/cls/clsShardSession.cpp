@@ -7041,7 +7041,7 @@ namespace engine
       if ( _pEDUCB->isTransaction() &&
            DPS_INVALID_LSN_OFFSET == _pEDUCB->getCurTransLsn() )
       {
-         if ( w > 1 )
+         if ( w >= 1 )
          {
             INT16 transReplSize = pmdGetOptionCB()->transReplSize() ;
             if ( transReplSize <= 0 )
