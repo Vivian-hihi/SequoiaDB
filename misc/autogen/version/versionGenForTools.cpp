@@ -146,7 +146,7 @@ void versionGenForTools::_buildVersion( char *version, char *release,
    otm = localtime ( &tt ) ;
 
    utilSnprintf( time, VERSION_BUFFER_SIZE - 1,
-                 "%s\""SDB_ENGINE_BUILD_FORMAT"\"",
+                 "%s\"" SDB_ENGINE_BUILD_FORMAT "\"",
                  REPLACE_BUILD_TIME,
                  otm->tm_year + 1900,
                  otm->tm_mon + 1,

@@ -5,8 +5,8 @@
 
 // xml file
 #define RC_FILENAME        "rclist.xml"
-#define RC_FILE_PATH       "./"RC_FILENAME
-#define RC_DESC_PATH       "sequoiadb/misc/autogen/"RC_FILENAME
+#define RC_FILE_PATH       "./" RC_FILENAME
+#define RC_DESC_PATH       "sequoiadb/misc/autogen/" RC_FILENAME
 
 struct RCInfo
 {
