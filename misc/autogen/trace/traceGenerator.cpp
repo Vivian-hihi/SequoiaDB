@@ -431,7 +431,7 @@ int traceGenerator::_checkTraceEntryAndExit( const string &content,
            exitPos >= pos ||
            funcInfo.alias != exitName )
       {
-         printLog( PD_WARNING ) << "Warning: " TRACE_EXIT_NAME" not found"
+         printLog( PD_WARNING ) << "Warning: "TRACE_EXIT_NAME" not found"
                                 << ", path = " << path
                                 << ", name = " << funcInfo.alias
                                 << ", func = " << funcInfo.func << endl ;
@@ -443,7 +443,7 @@ int traceGenerator::_checkTraceEntryAndExit( const string &content,
            entryPos >= pos ||
            funcInfo.alias != entryName )
       {
-         printLog( PD_WARNING ) << "Warning: " TRACE_ENTRY_NAME" not found"
+         printLog( PD_WARNING ) << "Warning: "TRACE_ENTRY_NAME" not found"
                                 << ", path = " << path
                                 << ", name = " << funcInfo.alias
                                 << ", func = " << funcInfo.func << endl ;
@@ -453,7 +453,7 @@ int traceGenerator::_checkTraceEntryAndExit( const string &content,
              exitPos != string::npos && exitPos < pos &&
              entryPos > exitPos )
    {
-      printLog( PD_WARNING ) << "Warning: invalid " TRACE_ENTRY_NAME" and " TRACE_EXIT_NAME
+      printLog( PD_WARNING ) << "Warning: invalid "TRACE_ENTRY_NAME" and "TRACE_EXIT_NAME
                              << ", path = " << path
                              << ", name = " << funcInfo.alias
                              << ", func = " << funcInfo.func << endl ;

@@ -6,8 +6,8 @@
 
 // xml file
 #define OPTLIST_FILENAME      "optlist.xml"
-#define OPTLIST_FILE_PATH     "./" OPTLIST_FILENAME
-#define OPTLIST_DESC_PATH     "sequoiadb/misc/autogen/" OPTLIST_FILENAME
+#define OPTLIST_FILE_PATH     "./"OPTLIST_FILENAME
+#define OPTLIST_DESC_PATH     "sequoiadb/misc/autogen/"OPTLIST_FILENAME
 
 typedef struct _optionEle
 {
