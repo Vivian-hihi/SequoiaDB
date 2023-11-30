@@ -373,11 +373,7 @@ if needCompileDb:
     env.CompileDb()
 
 if guess_os == "linux":
-   env.Append( CXXFLAGS=" -std=c++11 " )
-   # Ignore warnings caused by the C++11 standard in debug version,
-   # 'template<class> class std::auto_ptr' is deprecated.
-   if debugBuild:
-      env.Append( CXXFLAGS=" -Wno-deprecated-declarations " )
+    env.Append( CXXFLAGS=" -std=c++11 " )
 
 libdeps.setup_environment( env )
 
