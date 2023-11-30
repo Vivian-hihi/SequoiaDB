@@ -338,19 +338,12 @@ class ICU4CCompiler(CompilerBase):
         self.append_cmd('scons', args)
         return 0
 
-    def _init_win32_cmds(self, arch):
-        args = comm_build_opt + ' -j ' + str(comm_job_num)
-        if debugBuild:
-            args += ' --dd'
-        self.append_cmd('scons', args)
-        return 0
-
     def _get_lib_list(self):
         libs = []
         if 'linux' == self.platform:
             libs = ['libicucommon.a', 'libicui18n.a', 'libicudata.a']
         elif 'win32' == self.platform:
-            libs = ['libicucommon.lib', 'libicui18n.lib', 'libicudata.lib']
+            libs = None
         return libs
 
 
@@ -368,17 +361,12 @@ class ICU4CDataCompiler(CompilerBase):
         self.append_cmd('cp lib/libicudata.a . ')
         return 0
 
-    def _init_win32_cmds(self, arch):
-        args = " MSYS/MSVC --enable-static=yes --enable-shared=no "
-        self.append_cmd('./runConfigureICU', args)
-        return 0
-
     def _get_lib_list(self):
         libs = []
         if 'linux' == self.platform:
             libs = ['libicudata.a']
         elif 'win32' == self.platform:
-            libs = ['libicudata.lib']
+            libs = None
         return libs
 
 
