@@ -2655,7 +2655,7 @@ INT32 clientBuildSeqFetchMsg( CHAR **ppBuffer, INT32 *bufferSize,
    MsgOpQuery *pQuery = NULL ;
    bson_init( &obj ) ;
 
-   rc = bson_append_string( &obj, FIELD_NAME_NAME, seqName ) ;
+   rc = bson_append_string_without_check( &obj, FIELD_NAME_NAME, seqName ) ;
    if ( SDB_OK != rc )
    {
       rc = SDB_DRIVER_BSON_ERROR ;

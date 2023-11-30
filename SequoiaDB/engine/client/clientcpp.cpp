@@ -34,11 +34,15 @@
    Last Changed =
 
 *******************************************************************************/
+#include "charsetDef.hpp"
+#include "charsetUtils.hpp"
 #include "clientImpl.hpp"
 #include "common.h"
+#include "ossErr.h"
 #include "ossMem.hpp"
 #include "msgCatalogDef.h"
 #include "msgDef.h"
+#include "ossTypes.h"
 #include "pmdOptions.h"
 #include "pd.hpp"
 #include "fmpDef.hpp"
@@ -9542,6 +9546,8 @@ do                                                            \
       ossGetCurrentTime(_lastAliveTime) ;
 
       _isOldVersionLobServer = FALSE ;
+      _clientCharset = engine::CHARSET_UTF8 ;
+      _resultsCharset = engine::CHARSET_UTF8 ;
    }
 
    _sdbImpl::~_sdbImpl ()
@@ -10570,6 +10576,177 @@ do                                                            \
    done :
       return rc ;
    error :
+      goto done ;
+   }
+
+   const CHAR *_sdbImpl::_charsetSerializer( engine::Charset charset )
+   {
+      if ( charset == engine::CHARSET_UTF8 )
+      {
+         return CHARSET_NAME_UTF8 ;
+      }
+
+      if ( charset == engine::CHARSET_GB18030 )
+      {
+         return CHARSET_NAME_GB18030 ;
+      }
+      return "" ;
+   }
+
+   engine::Charset _sdbImpl::_charsetParse( const CHAR *charset )
+   {
+      if ( 0 == strcasecmp( charset, CHARSET_NAME_UTF8) )
+      {
+         return engine::CHARSET_UTF8 ;
+      }
+
+      if ( 0 == strcasecmp( charset , CHARSET_NAME_GB18030) )
+      {
+         return engine::CHARSET_GB18030 ;
+      }
+
+      return engine::CHARSET_UNKNOWN ;
+   }
+
+
+   INT32 _sdbImpl::setCharsets ( const CHAR *charset )
+   {
+      INT32 rc = SDB_OK ;
+      engine::Charset cs = _charsetParse( charset ) ;
+      if ( engine::CHARSET_UNKNOWN == cs )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !isConnected() )
+      {
+         goto done ;
+      }
+
+      // Set server side charsets
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObj options ;
+         builder.append( FIELD_NAME_CLIENT_CHARSET, charset ) ;
+         builder.append( FIELD_NAME_RESULTS_CHARSET, charset ) ;
+         options = builder.obj() ;
+         rc  = setSessionAttr( options ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      catch( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   done:
+      if ( SDB_OK == rc )
+      {
+         _clientCharset = cs ;
+         _resultsCharset = cs ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _sdbImpl::getClientCharset ()
+   {
+      return _charsetSerializer( _clientCharset ) ;
+   }
+
+   INT32 _sdbImpl::setClientCharset ( const CHAR *charset )
+   {
+      INT32 rc = SDB_OK ;
+      engine::Charset cs = _charsetParse( charset ) ;
+      if ( engine::CHARSET_UNKNOWN == cs )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !isConnected() )
+      {
+         goto done ;
+      }
+
+      // Set server side 'ClientCharset'
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObj options ;
+         builder.append( FIELD_NAME_CLIENT_CHARSET, charset ) ;
+         options = builder.obj() ;
+         rc  = setSessionAttr( options ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      catch( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   done:
+      if ( SDB_OK == rc )
+      {
+         _clientCharset = cs ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* _sdbImpl::getResultsCharset ()
+   {
+      return _charsetSerializer( _resultsCharset ) ;
+   }
+
+   INT32 _sdbImpl::setResultsCharset ( const CHAR *charset )
+   {
+      INT32 rc = SDB_OK ;
+      engine::Charset cs = _charsetParse( charset ) ;
+      if ( engine::CHARSET_UNKNOWN == cs )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !isConnected() )
+      {
+         goto done ;
+      }
+
+      // Set server side 'ResultsCharset'
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObj options ;
+         builder.append( FIELD_NAME_RESULTS_CHARSET, charset ) ;
+         options = builder.obj() ;
+         rc  = setSessionAttr( options ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      catch( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   done:
+      if ( SDB_OK == rc )
+      {
+         _resultsCharset = cs ;
+      }
+      return rc ;
+   error:
       goto done ;
    }
 

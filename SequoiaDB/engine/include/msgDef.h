@@ -560,6 +560,8 @@
 #define FIELD_NAME_IS_LOC_PRIMARY            "IsLocationPrimary"
 #define FIELD_NAME_CONSISTENCY_STRATEGY      "ConsistencyStrategy"
 #define FIELD_NAME_GROUP_ACTIVE_LOCATION     "ActiveLocation"
+#define FIELD_NAME_CLIENT_CHARSET            "ClientCharset"
+#define FIELD_NAME_RESULTS_CHARSET           "ResultsCharset"
 
 #define FIELD_NAME_FREELOGSPACE              "freeLogSpace"
 #define FIELD_NAME_VSIZE                     "vsize"

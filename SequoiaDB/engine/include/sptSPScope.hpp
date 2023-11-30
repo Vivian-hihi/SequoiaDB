@@ -134,6 +134,26 @@ namespace engine
 
       virtual string getObjClassName( const void *pObj ) ;
 
+      virtual string getClientCharset()
+      {
+         return _clientCharset ;
+      }
+
+      virtual void setClientCharset( std::string charset )
+      {
+         _clientCharset = charset ;
+      }
+
+      virtual string getResultsCharset()
+      {
+         return _resultsCharset ;
+      }
+
+      virtual void setResultsCharset( std::string charset )
+      {
+         _resultsCharset = charset ;
+      }
+
    private:
       virtual INT32 _loadUsrDefObj( _sptObjDesc *desc ) ;
 
@@ -156,6 +176,8 @@ namespace engine
       JSObject *_global ;
       sptSPResultVal _rval ;
       MAP_NAME_2_PROTOTYPE _mapName2Proto ;
+      std::string _clientCharset ;
+      std::string _resultsCharset ;
 
    } ;
    typedef class _sptSPScope sptSPScope ;

@@ -1050,11 +1050,11 @@
    </opt>
 
    <opt>
-      <name>PMD_OPTION_PREFERREDINST_STRICT</name>
-      <long>preferredstrict</long>
+      <name>PMD_OPTION_CLIENT_CHARSET</name>
+      <long>clientcharset</long>
       <description>
-         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified IDs by preferredinstance.Default is false.</en>
-         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferredinstance 指定的ID中选取，默认为false。</cn>
+         <en>The mode to choose query instance when multiple prefered instances are found. Could be 'random' or 'ordered'. Default is 'random'.</en>
+         <cn>指定当多个实例符合 preferedinstance 的条件时的选择模式。可选值有 'random' 和 'ordered'。默认值是 'random'。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -1065,10 +1065,56 @@
          <cn>新连接生效</cn>
       </reloadstrategy>
       <detail>
-         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified IDs by preferredinstance.Default is false.<fig></fig>
-             In v3.4.5 and above, this parameter has been renamed. The users of lower versions should use preferedstrict</en>
-         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferredinstance 指定的ID中选取，默认为false。<fig></fig>
-             该参数在 v3.4.5 及以上版本中已更名，低版本的用户仍需使用原参数 preferedstrict。</cn>
+         <en>Specify the selection mode when multiple instance meet the conditions of preferedinstance. For more details can refer to [setSessionAttr()](manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md).</en>
+         <cn>指定当多个实例符合 preferedinstance 的条件时的选择模式，更多内容可参考 [setSessionAttr()](manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md)。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+      <default>UTF8</default>
+      <hidden>false</hidden>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_RESULTS_CHARSET</name>
+      <long>resultscharset</long>
+      <description>
+         <en>Indicate charset of client system.</en>
+         <cn>指示客户端系统的字符集，默认值为 UTF8。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon new connection</en>
+         <cn>新连接生效</cn>
+      </reloadstrategy>
+      <detail>
+         <en>Tell SequoiaDB server the client system charset, so SequoiaDB can convert charset of input query if client charset is different from SequoiaDB server charset.</en>
+         <cn>指示客户端的字符集，若客户端字符集输入数据字符集与服务器端不一致，则服务器端将用户输入的数据转换为 SequoiaDB 支持的 UTF8 格式数据。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+      <default>UTF8</default>
+      <hidden>false</hidden>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_PREFERREDINST_STRICT</name>
+      <long>preferredstrict</long>
+      <description>
+         <en>Charset of query results.</en>
+         <cn>指示服务器端返回给客户端数据的字符集。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon new connection</en>
+         <cn>新连接生效</cn>
+      </reloadstrategy>
+      <detail>
+         <en>Charset of query results.</en>
+         <cn>指示服务器端返回给客户端数据的字符集。</cn>
       </detail>
       <typeofweb>boolean</typeofweb>
       <default>false</default>

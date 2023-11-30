@@ -32,6 +32,19 @@
 *******************************************************************************/
 
 #include "pmdLocalSession.hpp"
+#include "charsetDef.hpp"
+#include "charsetICUConvertor.hpp"
+#include "msg.h"
+#include "msgDef.h"
+#include "msgMessage.hpp"
+#include "coordRemoteSession.hpp"
+#include "charsetConvertorInterface.hpp"
+#include "charsetConvertorFactory.hpp"
+#include "ossErr.h"
+#include "ossSignal.hpp"
+#include "ossTypes.h"
+#include "ossTypes.hpp"
+#include "pd.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEnv.hpp"
 #include "msgMessage.hpp"
@@ -829,8 +842,10 @@ namespace engine
       const CHAR *pBody = NULL ;
       INT32 bodyLen     = 0 ;
       rtnContextBuf contextBuff ;
+      rtnContextBuf outReply ;
       INT32 opCode      = msg->opCode ;
       BOOLEAN hasException = FALSE ;
+      MsgHeader *convertedMsg = NULL ;
 
       BOOLEAN needRollback = FALSE ;
       BOOLEAN isAutoCommit = FALSE ;
@@ -842,8 +857,44 @@ namespace engine
 
       UINT64 bTime = ossGetCurrentMicroseconds() ;
 
+      // convert message charset
+      charsetConvertorInterface *inConvertor = NULL ;
+      charsetConvertorInterface *outConvertor = NULL ;
+
+      Charset clientCharset, resultsCharset ;
+      bool replyConverted = FALSE ;
+      static const Charset systemCharset = CHARSET_UTF8 ;
+
+      // prepare input and output convertor
+      {
+         rc = _getClientCharset( clientCharset ) ;
+         SDB_ASSERT(SDB_OK == rc, "ClientCharset is not valid" ) ;
+
+         rc = _getResultsCharset( resultsCharset ) ;
+         SDB_ASSERT(SDB_OK == rc, "ResultsCharset is not valid" ) ;
+
+         inConvertor = charsetConvertorFactory::get( clientCharset,
+                                                     systemCharset ) ;
+         outConvertor = charsetConvertorFactory::get( systemCharset,
+                                                      resultsCharset ) ;
+      }
+      // convert input message
+      if ( inConvertor )
+      {
+         rc = _convertMsg( msg, &convertedMsg, inConvertor ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] failed to convert charset "
+                    "of input message , rc: %d", sessionName(), rc ) ;
+         }
+         if ( NULL != convertedMsg && SDB_OK == rc )
+         {
+            msg = convertedMsg ;
+         }
+      }
+
       // prepare
-      rc = _onMsgBegin( msg ) ;
+      _onMsgBegin( msg ) ;
       if ( SDB_OK == rc )
       {
          if ( MSG_BS_TRANS_COMMIT_REQ == msg->opCode )
@@ -933,13 +984,33 @@ namespace engine
                SDB_ASSERT( 1 == _replyHeader.numReturned,
                            "Record number must be 1" ) ;
 
-               BSONObj errObj( pBody ) ;
-               retBuilder.appendElements( errObj ) ;
+               BSONObj errObj( pBody ), convertedErrObj ;
+               if ( outConvertor && !replyConverted )
+               {
+                  INT32 tmpRC = outConvertor->convert( errObj,
+                                                       convertedErrObj ) ;
+                  if ( tmpRC )
+                  {
+                     // Just report convert failed error message if rc is not SDB_OK
+                     PD_LOG( PDERROR, "Session[%s] failed to convert "
+                             "error message , rc: %d", sessionName(), rc ) ;
+                  }
+                  else
+                  {
+                     retBuilder.appendElements( convertedErrObj ) ;
+                  }
+               }
+               else
+               {
+                  retBuilder.appendElements( errObj ) ;
+               }
                _errorInfo = retBuilder.obj() ;
                pBody = _errorInfo.objdata() ;
                bodyLen = (INT32)_errorInfo.objsize() ;
                _replyHeader.numReturned = 1 ;
             }
+            // there is no need to convert charset of error info if bodyLen is 0
+            replyConverted = TRUE ;
          }
          /// succeed and has result info
          else if ( !retBuilder.isEmpty() && 0 == bodyLen )
@@ -948,6 +1019,33 @@ namespace engine
             pBody = _errorInfo.objdata() ;
             bodyLen = (INT32)_errorInfo.objsize() ;
             _replyHeader.numReturned = 1 ;
+         }
+
+         // convert reply body
+         if ( outConvertor && pBody && bodyLen && !replyConverted )
+         {
+            // do not convert OpenLob reply message
+            // because it maybe not a BSON sequences
+            if ( MSG_BS_LOB_OPEN_REQ != opCode &&
+                 MSG_BS_LOB_READ_REQ != opCode )
+            {
+               rtnContextBuf inReply( pBody, bodyLen,
+                                      _replyHeader.numReturned ) ;
+               INT32 tmpRC = _convertReplyBody( inReply, outReply,
+                                                outConvertor ) ;
+               if ( tmpRC )
+               {
+                  PD_LOG( PDERROR, "Session[%s] failed to convert charset "
+                        "of reply body, rc: %d, tmpRC: %d",
+                        sessionName(), rc, tmpRC ) ;
+                  rc = tmpRC ;
+               }
+               else if ( outReply.size() )
+               {
+                  pBody = outReply.data() ;
+                  bodyLen = outReply.size() ;
+               }
+            }
          }
 
          // fill the return opCode
@@ -972,6 +1070,12 @@ namespace engine
 
       // end
       _onMsgEnd( rc, msg ) ;
+
+      // release converted msg buffer
+      if ( inConvertor && convertedMsg )
+      {
+         msgReleaseBuffer( (CHAR *) convertedMsg, eduCB() );
+      }
 
       UINT64 eTime = ossGetCurrentMicroseconds() ;
       if ( eTime > bTime )
@@ -1087,6 +1191,772 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_PMDLOCALSN__REPLYINNORMALMODE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_convertReplyBody(
+      rtnContextBuf &inReply, rtnContextBuf &outReply,
+      charsetConvertorInterface *convertor )
+   {
+      INT32 rc = SDB_OK;
+      vector<BSONObj> replyBSONObjs;
+      UINT32 bodyLength = 0, bodyOffset = 0;
+      CHAR *buff = NULL;
+      try
+      {
+         // convert body charset
+         while ( !inReply.eof() )
+         {
+            BSONObj reply, convertedReply ;
+            rc = inReply.nextObj( reply ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get obj from obj buf, rc: %d",
+                         rc ) ;
+
+            rc = convertor->convert( reply, convertedReply ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert reply BSONObj, rc: %d",
+                         rc ) ;
+
+            replyBSONObjs.push_back( convertedReply ) ;
+            bodyLength += ossAlign4( (UINT32)convertedReply.objsize() ) ;
+         }
+
+         // build new body
+         buff = ( CHAR* ) SDB_OSS_MALLOC( bodyLength ) ;
+         PD_CHECK( buff, SDB_OOM, error, PDERROR,
+                   " Out of memory while rebuilding reply body") ;
+
+         ossMemset( buff, 0, bodyLength );
+         for ( UINT32 i = 0 ; i < replyBSONObjs.size() ; i++ )
+         {
+            BSONObj obj = replyBSONObjs[i] ;
+            ossMemcpy( (CHAR*)&(buff[bodyOffset]),
+                       obj.objdata(),  obj.objsize() ) ;
+            bodyOffset += ossAlign4( obj.objsize() ) ;
+         }
+
+         {
+            rtnContextBuf tmpCtxBuf( buff, bodyLength, replyBSONObjs.size() ) ;
+            outReply = tmpCtxBuf;
+         }
+      }
+      catch ( exception &e )
+      {
+         rc = ossException2RC( &e ) ;
+         PD_LOG( PDERROR, "Failed to convert reply object, occur exception %s, "
+                 "rc: %d", e.what(), rc ) ;
+         goto error ;
+      }
+   done:
+     return rc ;
+   error:
+     goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_CONVERTMSG, "_pmdLocalSession::_convertMsg" )
+   INT32 _pmdLocalSession::_convertMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_CONVERTMSG ) ;
+      INT32 rc = SDB_OK;
+      INT32 opCode = in->opCode ;
+      pmdEDUCB *edu = eduCB() ;
+
+      // shield to avoid calling check urgent event during
+      // communicating messages with other nodes
+      pmdUrgentEventShield _shield( edu ) ;
+      switch ( opCode )
+      {
+         case MSG_BS_MSG_REQ:
+            break;
+         case MSG_BS_INSERT_REQ:
+         {
+            rc = _rebuildInsertMsg( in, out, convertor );
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert insert message "
+                         "charset, rc: %d", rc ) ;
+            break;
+         }
+         case MSG_BS_UPDATE_REQ:
+         {
+            rc = _rebuildUpdateMsg( in, out, convertor );
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert update message "
+                         "charset, rc: %d", rc ) ;
+            break;
+         }
+         case MSG_BS_SQL_REQ:
+         {
+            rc = _rebuildSQLMsg( in, out, convertor );
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert SQL message "
+                         "charset, rc: %d", rc ) ;
+            break;
+         }
+         case MSG_BS_DELETE_REQ:
+         {
+            rc = _rebuildDeleteMsg( in, out, convertor );
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert delete message "
+                         "charset, rc: %d", rc ) ;
+            break;
+         }
+         case MSG_BS_AGGREGATE_REQ:
+         {
+            rc = _rebuildAggrMsg( in, out, convertor );
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert aggrgate message "
+                         "charset, rc: %d", rc ) ;
+            break;
+         }
+         case MSG_BS_QUERY_REQ:
+         {
+            rc = _rebuildQueryMsg(in, out, convertor);
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert query message "
+                         "charset, rc: %d", rc ) ;
+            break;
+         }
+         case MSG_BS_TRANS_BEGIN_REQ:
+         case MSG_BS_TRANS_COMMIT_REQ:
+         case MSG_BS_TRANS_ROLLBACK_REQ:
+         case MSG_BS_INTERRUPTE:
+         case MSG_BS_LOB_WRITE_REQ:
+         case MSG_BS_LOB_READ_REQ:
+         case MSG_BS_LOB_LOCK_REQ:
+         case MSG_BS_LOB_CLOSE_REQ:
+         case MSG_BS_LOB_GETRTDETAIL_REQ:
+         {
+            break ;
+         }
+         case MSG_BS_LOB_OPEN_REQ:
+         {
+            rc = _rebuildOpenLobMsg( in, out, convertor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of open Lob "
+                         "message, rc: %d", rc ) ;
+            break ;
+         }
+         case MSG_BS_LOB_REMOVE_REQ:
+         {
+            rc = _rebuildRemoveLobMsg( in, out, convertor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of remove Lob "
+                         "message, rc: %d", rc ) ;
+            break ;
+         }
+         case MSG_BS_LOB_TRUNCATE_REQ:
+         {
+            rc = _rebuildTruncateLobMsg( in, out, convertor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of truncate Lob "
+                         "message, rc: %d", rc ) ;
+            break ;
+         }
+         case MSG_BS_LOB_CREATELOBID_REQ:
+         {
+            rc = _rebuildCreateLobIDMsg( in, out, convertor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of "
+                         "create Lob ID message, rc: %d", rc ) ;
+            break ;
+         }
+         case MSG_AUTH_CRTUSR_REQ:
+         case MSG_AUTH_DELUSR_REQ:
+            break ;
+         case MSG_BS_SEQUENCE_FETCH_REQ:
+         {
+            rc = _rebuildFetchSeqMsg( in, out, convertor ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to convert fetch sequence "
+                         "message charset, rc: %d", rc ) ;
+            break;
+         }
+         default:
+            break;
+      }
+
+      if ( out && (*out) )
+      {
+         // keep following fields same with original message
+         (*out)->eye = in->eye ;
+         (*out)->globalID = in->globalID ;
+         (*out)->version = in->version ;
+         (*out)->routeID = in->routeID ;
+         (*out)->TID = in->TID ;
+         (*out)->opCode = in->opCode ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_CONVERTMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDINSERTEMSG, "_pmdLocalSession::_rebuildInsertMsg" )
+   INT32 _pmdLocalSession::_rebuildInsertMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDINSERTEMSG ) ;
+      INT32 rc = SDB_OK;
+      INT32 flag = 0 ;
+      const CHAR *pCollectionName = NULL ;
+      const CHAR *pInsertor = NULL ;
+      const CHAR *pHint = NULL ;
+      INT32 count = 0 ;
+      std::string convertedCollectionName ;
+
+      // extract msg
+      rc = msgExtractInsert( (CHAR*)in, &flag,
+                             &pCollectionName, &pInsertor, count, &pHint ) ;
+      PD_RC_CHECK(rc, PDERROR, "Failed to extract insert message, rc: %d", rc);
+
+      // convert charset for collection name
+      rc = convertor->convert( StringData(pCollectionName),
+                               convertedCollectionName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert charset for "
+                   "collection name, rc: %d", rc ) ;
+
+      // build new message with converted BSONObj and collection name
+      for ( INT32 i = 0 ; i < count ; i++ )
+      {
+         INT32 bufLen = 0 ;
+         BSONObj currentObj( pInsertor ) ;
+         BSONObj convertedObj ;
+
+         rc = convertor->convert( currentObj, convertedObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert charset for BSONObj "
+                      "to be inserted ,rc: %d", rc ) ;
+
+         if ( 0 == i )
+         {
+            rc = msgBuildInsertMsg( (CHAR **)out, &bufLen,
+                                    convertedCollectionName.c_str(),
+                                    flag, in->requestID,
+                                    &convertedObj, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to append first converted "
+                         "BSONObj to insert msg, rc: %d", rc ) ;
+         }
+         else
+         {
+             rc = msgAppendInsertMsg( (CHAR **)out, &bufLen,
+                                      &convertedObj, eduCB() ) ;
+             PD_RC_CHECK( rc, PDERROR, "Failed to append converted BSONObj to "
+                          "insert msg, rc: %d", rc ) ;
+         }
+         pInsertor += ossAlign4( currentObj.objsize() ) ;
+      }
+
+      // append hint if exists
+      if ( pHint )
+      {
+         INT32 bufLen = 0 ;
+         BSONObj hint( pHint ) ;
+         BSONObj convertedHint ;
+         rc = convertor->convert( hint, convertedHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of hint "
+                      "for insert message, rc: %d", rc ) ;
+
+         rc = msgAppendHint2InsertMsg( (CHAR **)out, &bufLen,
+                                       &convertedHint, eduCB() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to append converted hint to "
+                      "insert msg, rc: %d", rc ) ;
+      }
+   done:
+     PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDINSERTEMSG, rc ) ;
+     return rc ;
+   error:
+     goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDUPDATEMSG, "_pmdLocalSession::_rebuildUpdateMsg" )
+   INT32 _pmdLocalSession::_rebuildUpdateMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDUPDATEMSG ) ;
+      INT32 rc    = SDB_OK ;
+      INT32 flag = 0 ;
+      const CHAR *pCollectionName = NULL ;
+      const CHAR *pSelectorBuffer = NULL ;
+      const CHAR *pUpdatorBuffer  = NULL ;
+      const CHAR *pHintBuffer     = NULL ;
+      std::string convertedCollectionName ;
+      BSONObj convertedSelector ;
+      BSONObj convertedUpdator ;
+      BSONObj convertedHint ;
+      INT32 bufLen = 0 ;
+
+      // extract msg
+      rc = msgExtractUpdate( (const CHAR*)in, &flag, &pCollectionName,
+                             &pSelectorBuffer, &pUpdatorBuffer,
+                             &pHintBuffer );
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract update message failed, "
+                   "rc: %d", sessionName(), rc ) ;
+
+      // convert charset for strings in message
+      {
+         BSONObj selector( pSelectorBuffer ) ;
+         BSONObj updator( pUpdatorBuffer ) ;
+         BSONObj hint( pHintBuffer ) ;
+
+         rc = convertor->convert( StringData(pCollectionName),
+                                  convertedCollectionName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert collection name, "
+                      "rc: %d", rc ) ;
+
+         rc = convertor->convert( selector, convertedSelector ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert selector charset, "
+                     "rc: %d", rc ) ;
+
+         rc = convertor->convert( updator, convertedUpdator ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert updator charset, "
+                      "rc: %d", rc ) ;
+
+         rc = convertor->convert( hint, convertedHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert hint charset, "
+                     "rc: %d", rc ) ;
+      }
+
+      // rebuild message
+      rc = msgBuildUpdateMsg( (CHAR **)out, &bufLen,
+                              convertedCollectionName.c_str(),
+                              flag, in->requestID, &convertedSelector,
+                              &convertedUpdator,
+                              &convertedHint, eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild update message, rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDUPDATEMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDSQLMSG, "_pmdLocalSession::_rebuildSQLMsg" )
+   INT32 _pmdLocalSession::_rebuildSQLMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDSQLMSG ) ;
+      INT32 rc          = SDB_OK ;
+      const CHAR *sql   = NULL ;
+      std::string convertedSQL ;
+      INT32 bufLen = 0 ;
+
+      rc = msgExtractSql( (const CHAR*)in, &sql ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extract delete msg in "
+                   "Session[%s], rc: %d", sessionName(), rc ) ;
+
+      rc = convertor->convert( StringData(sql), convertedSQL );
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of SQL statement" ) ;
+
+      rc = msgBuildSQL( (CHAR **) out, &bufLen,
+                        convertedSQL.c_str(), in->requestID, eduCB() ) ;
+      PD_RC_CHECK(rc, PDERROR, "Failed to build SQL, rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDSQLMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDDELMSG, "_pmdLocalSession::_rebuildDeleteMsg" )
+   INT32 _pmdLocalSession::_rebuildDeleteMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDDELMSG ) ;
+      INT32 rc    = SDB_OK ;
+      INT32 flag = 0 ;
+      const CHAR *pCollectionName = NULL ;
+      const CHAR *pDeletorBuffer  = NULL ;
+      const CHAR *pHintBuffer     = NULL ;
+      BSONObj convertedDeletor, convertedHint ;
+      std::string convertedCollectionName ;
+      INT32 bufLen = 0 ;
+
+      // extract msg
+      rc = msgExtractDelete ( (const CHAR *)in , &flag, &pCollectionName,
+                              &pDeletorBuffer, &pHintBuffer ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      // convert charset for strings in message
+      {
+         BSONObj deletor( pDeletorBuffer ) ;
+         BSONObj hint( pHintBuffer ) ;
+
+         rc = convertor->convert( StringData(pCollectionName),
+                                  convertedCollectionName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert charset for collection "
+                     "name, rc: %d", rc ) ;
+
+         rc = convertor->convert( deletor, convertedDeletor ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert charset for "
+                      "deletor, rc: %d", rc ) ;
+
+         rc = convertor->convert( hint, convertedHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert charset for "
+                      "hint, rc: %d", rc ) ;
+      }
+
+      // rebuild message
+      rc = msgBuildDeleteMsg( (CHAR **)out, &bufLen,
+                              convertedCollectionName.c_str(),
+                              flag, in->requestID, &convertedDeletor,
+                              &convertedHint, eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild delete message, rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDDELMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDAGGRMSG, "_pmdLocalSession::_rebuildAggrMsg" )
+   INT32 _pmdLocalSession::_rebuildAggrMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDAGGRMSG ) ;
+      INT32 rc    = SDB_OK ;
+      const CHAR *pObjs = NULL, *pCurr = NULL ;
+      INT32 count = 0 ;
+      INT32 flag = 0 ;
+      const CHAR *pCollectionName = NULL ;
+      std::string convertedCollectionName ;
+      INT32 bufLen = 0 ;
+      UINT32 offset = 0;
+
+      // extract collection name and body in message
+      rc = msgExtractAggrRequest( (const CHAR*)in, &pCollectionName,
+                                  &pObjs, count, &flag ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract aggr msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      // convert collection name
+      rc = convertor->convert( StringData(pCollectionName),
+                               convertedCollectionName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert collection name, "
+                   "rc: %d", rc ) ;
+
+      // convert charset for strings in message
+      for ( INT32 i = 0 ; i < count ; i++ )
+      {
+         pCurr = &pObjs[offset] ;
+         BSONObj currObj(pCurr), convertedObj;
+
+         // convert BSONObj in message
+         rc = convertor->convert( currObj, convertedObj );
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert aggr message body, "
+                      "rc: %d", rc ) ;
+         if ( 0 == i )
+         {
+            rc = msgBuildAggrMsg( (CHAR **)out, &bufLen,
+                                  convertedCollectionName.c_str(),
+                                  flag, in->requestID, &convertedObj,
+                                  eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to rebuild aggr message, "
+                         "rc: %d", rc ) ;
+         }
+         else
+         {
+            rc = msgAppendAggrMsg( (CHAR **)out, &bufLen,
+                                   &convertedObj, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to append aggr object, "
+                         "rc: %d", rc ) ;
+         }
+         offset += ossAlign4( currObj.objsize() );
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDAGGRMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDQUERYRMSG, "_pmdLocalSession::_rebuildQueryMsg" )
+   INT32 _pmdLocalSession::_rebuildQueryMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDQUERYRMSG ) ;
+      INT32 rc                      = SDB_OK ;
+      const CHAR *pCollectionName   = NULL ;
+      const CHAR *pQueryBuff        = NULL ;
+      const CHAR *pFieldSelector    = NULL ;
+      const CHAR *pOrderByBuffer    = NULL ;
+      const CHAR *pHintBuffer       = NULL ;
+      INT32 flag              = 0 ;
+      INT64 numToSkip         = -1 ;
+      INT64 numToReturn       = -1 ;
+      INT32 bufLen = 0 ;
+      BSONObj convertedQuery, convertedSelector;
+      BSONObj convertedOrder, convertedHint ;
+      std::string convertedCollectionName ;
+
+      // extract msg
+      rc = msgExtractQuery ( (const CHAR *)in, &flag, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQueryBuff,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Extract query msg failed[rc:%d]", rc ) ;
+
+      // convert charset for strings in message
+      {
+         BSONObj query( pQueryBuff) ;
+         BSONObj selector( pFieldSelector ) ;
+         BSONObj order( pOrderByBuffer ) ;
+         BSONObj hint( pHintBuffer ) ;
+         // convert collection name
+         rc = convertor->convert( StringData(pCollectionName),
+                                  convertedCollectionName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert collection name, "
+                      "rc: %d", rc ) ;
+
+         // convert BSONObj in message
+         rc = convertor->convert( query, convertedQuery ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert "
+                      "query charset, rc: %d", rc ) ;
+
+         rc = convertor->convert( selector, convertedSelector) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert selector "
+                      "charset, rc: %d", rc ) ;
+
+         rc = convertor->convert( order, convertedOrder ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert order "
+                      "charset, rc: %d", rc ) ;
+
+         rc = convertor->convert( hint, convertedHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert "
+                      "hint charset, rc: %d", rc ) ;
+      }
+
+      // rebuild new message
+      rc = msgBuildQueryMsg( (CHAR **)out, &bufLen,
+                             convertedCollectionName.c_str(),
+                             flag, in->requestID, numToSkip, numToReturn,
+                             &convertedQuery, &convertedSelector,
+                             &convertedOrder, &convertedHint, eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild charset for query message,"
+                   "rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDQUERYRMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDOPENLOBMSG, "_pmdLocalSession::_rebuildOpenLobMsg" )
+   INT32 _pmdLocalSession::_rebuildOpenLobMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDOPENLOBMSG ) ;
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj, convertedObj ;
+      INT32 bufLen = 0 ;
+
+      rc = msgExtractOpenLobRequest( (const CHAR *)in, &header, obj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to extract open lob request" ) ;
+
+      rc = convertor->convert( obj, convertedObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of metadata in lob, "
+                   "rc: %d", rc ) ;
+
+      rc = msgBuildOpenLobMsg( (CHAR **)(out), &bufLen, &convertedObj,
+                               header->flags, header->w, header->contextID,
+                               header->header.requestID, eduCB() ) ;
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild open lob message, "
+                   "rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDOPENLOBMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDREMOVELOBMSG, "_pmdLocalSession::_rebuildRemoveLobMsg" )
+   INT32 _pmdLocalSession::_rebuildRemoveLobMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDREMOVELOBMSG ) ;
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj, convertedObj ;
+      INT32 bufLen = 0 ;
+
+      rc = msgExtractRemoveLobRequest( (const CHAR *)in, &header, obj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to extract remove lob request" ) ;
+
+      rc = convertor->convert( obj, convertedObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of metadata in lob, "
+                   "rc: %d", rc ) ;
+
+      rc = msgBuildRemoveLobMsg( (CHAR **)(out), &bufLen, &convertedObj,
+                                 header->flags, header->w, header->contextID,
+                                 header->header.requestID, eduCB() ) ;
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild remove lob message, "
+                   "rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDREMOVELOBMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDTRUNCATELOBMSG, "_pmdLocalSession::_rebuildTruncateLobMsg" )
+   INT32 _pmdLocalSession::_rebuildTruncateLobMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDTRUNCATELOBMSG ) ;
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj, convertedObj ;
+      INT32 bufLen = 0 ;
+
+      rc = msgExtractTruncateLobRequest( (const CHAR *)in, &header, obj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to extract truncate lob request" ) ;
+
+      rc = convertor->convert( obj, convertedObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of metadata in lob, "
+                   "rc: %d", rc ) ;
+
+      rc = msgBuildTruncateLobMsg( (CHAR **)(out), &bufLen, &convertedObj,
+                                   header->flags, header->w, header->contextID,
+                                   header->header.requestID, eduCB() ) ;
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild truncate lob message, "
+                   "rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDTRUNCATELOBMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDCREATELOBIDMSG, "_pmdLocalSession::_rebuildCreateLobIDMsg" )
+   INT32 _pmdLocalSession::_rebuildCreateLobIDMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDCREATELOBIDMSG ) ;
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj, convertedObj ;
+      INT32 bufLen = 0 ;
+
+      rc = msgExtractCreateLobIDRequest( (const CHAR *)in, &header, obj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to extract create lob ID request" ) ;
+
+      rc = convertor->convert( obj, convertedObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to convert charset of metadata in lob, "
+                   "rc: %d", rc ) ;
+
+      rc = msgBuildCreateLobIDMsg( (CHAR **)(out), &bufLen, &convertedObj,
+                                   header->flags, header->w, header->contextID,
+                                   header->header.requestID, eduCB() ) ;
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild create lob ID message, "
+                   "rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDCREATELOBIDMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSESSION_REBUILDFETCHSEQMSG, "_pmdLocalSession::_rebuildFetchSeqMsg" )
+   INT32 _pmdLocalSession::_rebuildFetchSeqMsg(
+      const MsgHeader *in, MsgHeader **out,
+      charsetConvertorInterface *convertor )
+   {
+      PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_REBUILDFETCHSEQMSG ) ;
+      INT32 rc                      = SDB_OK ;
+      const CHAR *pCollectionName   = NULL ;
+      const CHAR *pQueryBuff        = NULL ;
+      const CHAR *pFieldSelector    = NULL ;
+      const CHAR *pOrderByBuffer    = NULL ;
+      const CHAR *pHintBuffer       = NULL ;
+      INT32 flag              = 0 ;
+      INT64 numToSkip         = -1 ;
+      INT64 numToReturn       = -1 ;
+      INT32 bufLen = 0 ;
+      BSONObj convertedQuery ;
+
+      // extract msg
+      rc = msgExtractQuery ( (const CHAR *)in, &flag, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQueryBuff,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Extract query msg failed[rc:%d]", rc ) ;
+
+      // convert charset for strings in message
+      {
+         BSONObj query( pQueryBuff) ;
+         // convert BSONObj in message
+         rc = convertor->convert( query, convertedQuery ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert "
+                      "query charset, rc: %d", rc ) ;
+      }
+
+      // rebuild new message
+      rc = msgBuildQueryMsg( (CHAR **)out, &bufLen,
+                             "", flag, in->requestID, numToSkip, numToReturn,
+                             &convertedQuery, NULL, NULL, NULL, eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to rebuild charset for "
+                   "fetching sequence message, rc: %d", rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_PMDLOCALSESSION_REBUILDFETCHSEQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_getClientCharset( Charset &clientCharset )
+   {
+      INT32 rc = SDB_OK ;
+      coordSessionPropSite *pPropSite = NULL ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      pmdEDUCB *cb = eduCB();
+
+      clientCharset = getClient()->getClientCharset() ;
+      // use session property if remote site exists
+      pSite = ( pmdRemoteSessionSite* ) cb->getRemoteSite() ;
+      if ( pSite )
+      {
+         pPropSite = ( coordSessionPropSite* ) pSite->getUserData() ;
+         PD_CHECK( NULL != pPropSite, SDB_SYS, error, PDERROR,
+                   "Session's prop site is NULL" ) ;
+         clientCharset = pPropSite->getClientCharset();
+      }
+      PD_CHECK( clientCharset != CHARSET_UNKNOWN, SDB_SYS, error,
+                PDERROR, "Unknown charset" ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_getResultsCharset( Charset &resultsCharset )
+   {
+      INT32 rc = SDB_OK ;
+      coordSessionPropSite *pPropSite = NULL ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      pmdEDUCB *cb = eduCB();
+
+      resultsCharset = getClient()->getResultsCharset() ;
+      pSite = ( pmdRemoteSessionSite* ) cb->getRemoteSite() ;
+      // use session property if remote site exists
+      if ( pSite )
+      {
+         pPropSite = ( coordSessionPropSite* ) pSite->getUserData() ;
+         PD_CHECK( NULL != pPropSite, SDB_SYS, error, PDERROR,
+                   "Session's prop site is NULL" ) ;
+         resultsCharset = pPropSite->getResultsCharset() ;
+      }
+      PD_CHECK( resultsCharset != CHARSET_UNKNOWN, SDB_SYS, error,
+                PDERROR, "Unknown charset" ) ;
+   done:
       return rc ;
    error:
       goto done ;

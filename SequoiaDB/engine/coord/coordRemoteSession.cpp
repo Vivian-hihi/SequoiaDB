@@ -44,6 +44,7 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "rtnRemoteMessenger.hpp"
+#include "charsetUtils.hpp"
 
 using namespace bson ;
 
@@ -208,6 +209,20 @@ namespace engine
             /// ignore
             PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
          }
+      }
+
+      // append charset properties
+      try
+      {
+         const StringData clientCharset = charsetSerializer( _clientCharset ) ;
+         const StringData resultsCharset = charsetSerializer( _resultsCharset ) ;
+         builder.append( FIELD_NAME_CLIENT_CHARSET, clientCharset.data() ) ;
+         builder.append( FIELD_NAME_RESULTS_CHARSET, resultsCharset.data() ) ;
+      }
+      catch( std::exception &e )
+      {
+         /// ignore
+         PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
       }
    }
 

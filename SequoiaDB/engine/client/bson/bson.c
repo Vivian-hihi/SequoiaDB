@@ -1988,6 +1988,18 @@ SDB_EXPORT int bson_append_string( bson *b, const char *name, const char *value 
     return bson_append_string_base( b, name, value, strlen ( value ), BSON_STRING );
 }
 
+SDB_EXPORT int bson_append_string_without_check(bson *b, const char *name,
+                                                const char *value) {
+  int sl = strlen ( value ) + 1;
+  if (bson_append_estart(b, BSON_STRING, name, 4 + sl) == BSON_ERROR) {
+    return BSON_ERROR;
+  }
+  bson_append32(b, &sl);
+  bson_append(b, value, sl - 1);
+  bson_append(b, "\0", 1);
+  return BSON_OK;
+}
+
 SDB_EXPORT int bson_append_symbol( bson *b, const char *name, const char *value ) {
     return bson_append_string_base( b, name, value, strlen ( value ), BSON_SYMBOL );
 }

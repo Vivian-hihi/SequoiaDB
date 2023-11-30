@@ -45,6 +45,7 @@
 #include "utilAuthSCRAMSHA.hpp"
 #include "authDef.hpp"
 #include "authAccessControlList.hpp"
+#include "charsetDef.hpp"
 
 using namespace std ;
 
@@ -133,6 +134,26 @@ namespace engine
             return _roleID ;
          }
 
+         virtual Charset getClientCharset()
+         {
+            return _clientCharset ;
+         }
+
+         virtual void  setClientCharset( Charset charset )
+         {
+            _clientCharset = charset ;
+         }
+
+         virtual Charset getResultsCharset()
+         {
+            return _resultsCharset ;
+         }
+
+         virtual void  setResultsCharset( Charset charset )
+         {
+            _resultsCharset = charset ;
+         }
+
       public:
          ossSocket*           getSocket() { return _pSocket ; }
 
@@ -170,6 +191,8 @@ namespace engine
          SDB_PROTOCOL_VERSION _protocolVer ;
 
          const MsgHeader *    _inMsg ;
+         Charset              _clientCharset ;
+         Charset              _resultsCharset ;
    } ;
    typedef _pmdExternClient pmdExternClient ;
 

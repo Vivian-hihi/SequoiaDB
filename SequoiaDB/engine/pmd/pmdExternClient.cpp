@@ -34,6 +34,7 @@
 
 #include "pmdExternClient.hpp"
 #include "authDef.hpp"
+#include "charsetDef.hpp"
 #include "pmdEDU.hpp"
 
 #if defined ( SDB_ENGINE )
@@ -73,6 +74,8 @@ namespace engine
       _localPort     = 0 ;
       _peerPort      = 0 ;
       _inMsg         = NULL ;
+      _clientCharset = CHARSET_UTF8 ;
+      _resultsCharset = CHARSET_UTF8 ;
       _protocolVer   = SDB_PROTOCOL_VER_INVALID ;
       ossMemset( _localIP, 0, sizeof( _localIP ) ) ;
       ossMemset( _peerIP, 0, sizeof( _peerIP ) ) ;

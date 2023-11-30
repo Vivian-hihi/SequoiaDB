@@ -257,6 +257,7 @@ namespace engine
       string  username ;
       string  passwd ;
       string  objectName ;
+      sptPrivateData *privateData = NULL ;
 
       if ( arg.argc() > 3 )
       {
@@ -406,6 +407,26 @@ namespace engine
          goto error ;
       }
 
+      // set client charset and results charset
+      privateData = arg.getPrivateData() ;
+      if ( privateData && privateData->getScope() )
+      {
+         sptScope* scope = privateData->getScope() ;
+         std::string clientCharset = scope->getResultsCharset() ;
+         std::string resultsCharset = scope->getResultsCharset() ;
+         BSONObj options ;
+         BSONObjBuilder builder ;
+         builder.append( FIELD_NAME_CLIENT_CHARSET, clientCharset ) ;
+         builder.append( FIELD_NAME_RESULTS_CHARSET, resultsCharset ) ;
+         options = builder.obj() ;
+         rc = _sptSdb.setSessionAttr( options ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to set client charset" ) ;
+            _sptSdb.disconnect() ;
+            goto error ;
+         }
+      }
       _user = username ;
       _passwd = passwd ;
       rval.addSelfProperty( "_host" )->setValue( hostname ) ;

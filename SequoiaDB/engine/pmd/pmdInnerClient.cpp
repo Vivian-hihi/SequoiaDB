@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "pmdInnerClient.hpp"
+#include "charsetDef.hpp"
 #include "netRouteAgent.hpp"
 #include "pmdEDU.hpp"
 #include "msgDef.hpp"
@@ -58,6 +59,8 @@ namespace engine
       _peerPort      = 0 ;
       _fromPort      = 0 ;
       _inMsg         = NULL ;
+      _clientCharset = CHARSET_UTF8 ;
+      _resultsCharset = CHARSET_UTF8 ;
       ossMemset( _localIP, 0, sizeof( _localIP ) ) ;
       ossMemset( _peerIP, 0, sizeof( _peerIP ) ) ;
       ossMemset( _fromIP, 0, sizeof( _fromIP ) ) ;

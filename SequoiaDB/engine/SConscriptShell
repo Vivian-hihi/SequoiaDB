@@ -221,6 +221,12 @@ monFiles = [
       "mon/monLatch.cpp"
       ]
 
+charsetFiles = [
+      "charset/charsetConvertorFactory.cpp",
+      "charset/charsetICUConvertor.cpp",
+      "charset/charsetUtils.cpp",
+]
+
 #Client Driver
 shellEnv.StaticLibrary('clientc', clientCFiles)
 shellEnv.StaticLibrary('clientcpp', clientcppFiles)
@@ -238,14 +244,31 @@ shellEnv.StaticLibrary('util2', util2Files)
 shellEnv.StaticLibrary('pmd', pmdFiles)
 #MonLatch
 shellEnv.StaticLibrary('mon', monFiles)
+# Same with ICU4C library
+shellEnv.Append(
+    CPPDEFINES=[
+        ('UCONFIG_NO_BREAK_ITERATION', 1),
+        ('UCONFIG_NO_FORMATTING', 1),
+        ('UCONFIG_NO_TRANSLITERATION', 1),
+        ('UCONFIG_NO_REGULAR_EXPRESSIONS', 1),
+        ('U_CHARSET_IS_UTF8', 1),
+        ('U_DISABLE_RENAMING', 1),
+        ('U_STATIC_IMPLEMENTATION', 1),
+        ('U_USING_ICU_NAMESPACE', 0),
+    ],
+)
+#charset
+charsetEnv = shellEnv.Clone()
+charsetEnv.StaticLibrary('charset', charsetFiles)
+
 
 #Shell Executable
 #Shell Backend  Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util", "clientcpp", "clientc", "ssh2", "util2", "pmd", "mon"],
+      LIBDEPS=["spt","oss","pd","util", "clientcpp", "clientc", "ssh2", "util2", "pmd", "mon", "charset"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientcpp", "clientc", "ssh2", "util2", "pmd", "mon"],
+      LIBDEPS=["spt","oss","pd","util","clientcpp", "clientc", "ssh2", "util2", "pmd", "mon", "charset"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 shellEnv.Install( '#/bin', sdbbp )
 

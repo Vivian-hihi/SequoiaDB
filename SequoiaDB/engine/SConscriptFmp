@@ -3,6 +3,7 @@
 import os
 
 Import("fmpEnv")
+Import("guess_os")
 
 bsonFiles = [
       "bson/bsonobj.cpp",
@@ -221,6 +222,12 @@ monFiles = [
       "mon/monLatch.cpp"
       ]
 
+charsetFiles = [
+      "charset/charsetConvertorFactory.cpp",
+      "charset/charsetICUConvertor.cpp",
+      "charset/charsetUtils.cpp",
+]
+
 #Client Driver
 fmpEnv.StaticLibrary('clientc', clientCFiles)
 fmpEnv.StaticLibrary('clientcpp', clientcppFiles)
@@ -242,8 +249,25 @@ fmpEnv.StaticLibrary('ssh2', ssh2Files)
 #monLatch
 fmpEnv.StaticLibrary('mon', monFiles)
 
+# Same with ICU4C library
+fmpEnv.Append(
+    CPPDEFINES=[
+        ('UCONFIG_NO_BREAK_ITERATION', 1),
+        ('UCONFIG_NO_FORMATTING', 1),
+        ('UCONFIG_NO_TRANSLITERATION', 1),
+        ('UCONFIG_NO_REGULAR_EXPRESSIONS', 1),
+        ('U_CHARSET_IS_UTF8', 1),
+        ('U_DISABLE_RENAMING', 1),
+        ('U_STATIC_IMPLEMENTATION', 1),
+        ('U_USING_ICU_NAMESPACE', 0),
+    ],
+)
+#charset
+charsetEnv = fmpEnv.Clone()
+charsetEnv.StaticLibrary('charset', charsetFiles)
+
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt", "ssh2", "mon"],
+      LIBDEPS=["oss","pd","util","clientc","clientcpp","fmp","bson","pmd", "spt", "ssh2", "mon", "charset"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )

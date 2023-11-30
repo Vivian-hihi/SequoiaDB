@@ -672,6 +672,8 @@ namespace engine
          OSS_INLINE UINT32 getPlanCacheLevel() const { return _planCacheLevel ; }
          OSS_INLINE const CHAR * getPrefInstStr () const { return _prefInstStr ; }
          OSS_INLINE const CHAR * getPrefInstModeStr () const { return _prefInstModeStr ; }
+         OSS_INLINE const CHAR * getClientCharsetStr () const { return _clientCharsetStr ; }
+         OSS_INLINE const CHAR * getResultsCharsetStr () const { return _resultsCharsetStr ; }
          OSS_INLINE BOOLEAN isPreferredStrict() const { return _preferredStrict ; }
          OSS_INLINE INT32 getPreferredPeriod() const { return _preferredPeriod ; }
          OSS_INLINE const CHAR * getPrefConstraint() const { return _prefConstraint; }
@@ -760,6 +762,8 @@ namespace engine
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _prefInstStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _prefInstModeStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
+         CHAR        _clientCharsetStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
+         CHAR        _resultsCharsetStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
          CHAR        _prefConstraint[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _auditMaskStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;
          CHAR        _ftMaskStr[ PMD_MAX_LONG_STR_LEN + 1 ] ;

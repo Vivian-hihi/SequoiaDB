@@ -39,6 +39,7 @@
 #include "sdbInterface.hpp"
 #include "pmdDef.hpp"
 #include "netDef.hpp"
+#include "charsetDef.hpp"
 
 #include <string>
 
@@ -129,6 +130,26 @@ namespace engine
             return _roleID ;
          }
 
+         virtual Charset getClientCharset()
+         {
+            return _clientCharset ;
+         }
+
+         virtual void  setClientCharset( Charset charset )
+         {
+            _clientCharset = charset ;
+         }
+
+         virtual Charset getResultsCharset()
+         {
+            return _resultsCharset ;
+         }
+
+         virtual void  setResultsCharset( Charset charset )
+         {
+            _resultsCharset = charset ;
+         }
+
    public:
       _netRouteAgent*      getNetAgent() { return _pRTAgent ; }
 
@@ -154,6 +175,8 @@ namespace engine
          UINT16               _fromPort ;
 
          const MsgHeader *    _inMsg ;
+         Charset              _clientCharset ;
+         Charset              _resultsCharset ;
    } ;
    typedef _pmdInnerClient pmdInnerClient ;
 

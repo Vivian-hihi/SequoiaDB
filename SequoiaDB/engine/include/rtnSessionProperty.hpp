@@ -42,6 +42,7 @@
 #include "ossMemPool.hpp"
 #include "../bson/bson.h"
 #include "pmdOptionsParse.hpp"
+#include "charsetDef.hpp"
 
 using namespace bson ;
 
@@ -303,6 +304,29 @@ namespace engine
 
          BSONObj toBSON () const ;
 
+         INT32 parseClientCharset ( const CHAR * clientCharset ) ;
+         INT32 parseResultsCharset ( const CHAR * resultsCharset ) ;
+
+         OSS_INLINE Charset getClientCharset() const
+         {
+            return _clientCharset ;
+         }
+
+         OSS_INLINE void setClientCharset( Charset clientCharset )
+         {
+            _clientCharset = clientCharset;
+         }
+
+         OSS_INLINE void setResultsCharset( Charset resultsCharset )
+         {
+            _resultsCharset = resultsCharset;
+         }
+
+         OSS_INLINE Charset getResultsCharset() const
+         {
+            return _resultsCharset ;
+         }
+
       protected :
          INT32 _parsePropertyV0 ( const bson::BSONObj & property ) ;
          INT32 _parsePropertyV1 ( const bson::BSONObj & property ) ;
@@ -320,6 +344,8 @@ namespace engine
          INT64                _operationTimeout ;
          BOOLEAN              _needCheckVer ;
          UINT32               _version ; // Version of the session property.
+         Charset              _clientCharset ;
+         Charset              _resultsCharset ;
    } ;
 
 }

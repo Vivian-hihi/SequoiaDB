@@ -975,6 +975,26 @@ namespace bson {
             return *this;
         }
 
+        BSONArrayBuilder& appendCode(const StringData& code) {
+            _b.appendCode(num(), code);
+            return *this;
+        }
+
+        BSONArrayBuilder& appendSymbol(const StringData& symbol) {
+            _b.appendSymbol(num(), symbol);
+            return *this;
+        }
+
+        BSONArrayBuilder& appendRegex(StringData regex, StringData options = "") {
+            _b.appendRegex(num(), regex, options);
+            return *this;
+        }
+
+        BSONArrayBuilder& appendCodeWScope(StringData code, const BSONObj& scope) {
+            _b.appendCodeWScope(num(), code, scope);
+            return *this;
+        }
+
         BSONArrayBuilder &appendEx( const BSONElement &e,
                                     const BSONObjBuilderOption &option )
         {

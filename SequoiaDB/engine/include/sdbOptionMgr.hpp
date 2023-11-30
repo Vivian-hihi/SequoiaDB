@@ -57,7 +57,9 @@
        "\"var varname=\'varvalue\'\")")                           \
       ("shell,s", po::value< string >(),                          \
        "if the -s option is present, "                            \
-       "then commands are read from <string>")
+       "then commands are read from <string>")                    \
+       ("charset,c", po::value< string >(),                       \
+       "charset of client, avaliable value: 'UTF8', 'GB18030'")
 
 
 #define SDB_ADD_PARAM_OPTIONS_END ;

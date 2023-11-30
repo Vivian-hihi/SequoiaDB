@@ -253,6 +253,10 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                            const BSONObj *insertor,
                            engine::IExecutor *cb = NULL ) ;
 
+INT32 msgAppendHint2InsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                const BSONObj *hint,
+                                engine::IExecutor *cb = NULL ) ;
+
 /*
  * Extract Insert Message from pBuffer
  * in pBuffer
@@ -385,6 +389,8 @@ INT32 msgBuildQuerySpaceReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
                                  const BSONObj *hint,
                                  engine::IExecutor *cb = NULL ) ;
 
+INT32 msgBuildSQL( CHAR **ppBuffer, INT32 *bufferSize,
+                   const CHAR *sql, UINT64 reqID, engine::IExecutor *cb ) ;
 
 INT32 msgExtractSql( const CHAR *pBuffer, const CHAR **sql ) ;
 
@@ -515,9 +521,57 @@ INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize,
 INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                  engine::IExecutor *cb = NULL ) ;
 
+INT32 msgBuildAggrMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                        const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
+                        const BSONObj *obj, engine::IExecutor *cb );
+
+INT32 msgAppendAggrMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                         const BSONObj *obj, engine::IExecutor *cb ) ;
+
 INT32 msgExtractAggrRequest ( const CHAR *pBuffer, const CHAR **ppCollectionName,
                               const CHAR **ppObjs, INT32 &count,
                               INT32 *pFlags = NULL ) ;
+
+INT32 msgBuildAuthCrtMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                          const CHAR *pUsrName,
+                          const CHAR *clearTextPasswd,
+                          const CHAR *pPasswd,
+                          const BSONObj *options,
+                          UINT64 reqID,
+                          INT32 authVersion, engine::IExecutor *cb = NULL ) ;
+
+INT32 msgExtractAuthCrtMsg( const CHAR *pBuffer,
+                            const CHAR **pAuthObj,
+                            UINT64 &reqID ) ;
+
+INT32 msgBuildAuthDelMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                          const CHAR *pUsrName,
+                          const CHAR *pPasswd,
+                          UINT64 reqID, engine::IExecutor *cb = NULL ) ;
+
+INT32 msgExtractAuthDelMsg( const CHAR *pBuffer,
+                            const CHAR **pAuthObj,
+                            UINT64 &reqID) ;
+
+INT32 msgBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                          const BSONObj *meta, SINT32 flags, SINT16 w,
+                          SINT64 contextID, UINT64 reqID,
+                          engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildCreateLobIDMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const BSONObj *meta, SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                            const BSONObj *meta, SINT32 flags, SINT16 w,
+                            SINT64 contextID, UINT64 reqID,
+                            engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildTruncateLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const BSONObj *meta, SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              engine::IExecutor *cb = NULL ) ;
 
 INT32 msgExtractLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
                             bson::BSONObj &meta, const MsgLobTuple **tuples,

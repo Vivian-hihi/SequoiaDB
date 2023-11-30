@@ -34,6 +34,7 @@
 
 *******************************************************************************/
 
+#include "charsetConvertorFactory.hpp"
 #include "sdbOptionMgr.hpp"
 #include "ossProc.hpp"
 #include "utilLinenoiseWrapper.hpp"
@@ -56,6 +57,7 @@
 #include "sptContainer.hpp"
 #include "ossSignal.hpp"
 #include <boost/thread/thread.hpp>
+#include <strings.h>
 #if defined (_WINDOWS)
 #include <windows.h>
 #else
@@ -78,6 +80,7 @@ using namespace engine ;
 #define SDB_OPTION_EVAL         "eval"
 #define SDB_OPTION_SHELL        "shell"
 #define ELSE_STATEMENT          "else{}"
+#define SDB_OPTION_CLIENT_CHARSET      "charset"
 
 #if defined (_WINDOWS)
    #define SDB_PB_PROGRAM_NAME  "sdbbp.exe"
@@ -112,6 +115,7 @@ struct ArgInfo
    string       cmd ; // available in front-end mode
    string       variable ; // variable
    string       language ; // language, can be "en" or "cn"
+   string       clientCharset ; // charset of client
 } ;
 
 void printUsage()
@@ -185,6 +189,22 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
 
    SDB_ASSERT ( argv , "Invalid argument" ) ;
    SDB_ASSERT ( argc >= 1 , "Argc must be >= 1" ) ;
+
+   argInfo.clientCharset = CHARSET_NAME_UTF8 ;
+   if ( vm.count( SDB_OPTION_CLIENT_CHARSET ) )
+   {
+      string clientCharset = vm[SDB_OPTION_CLIENT_CHARSET].as<string>() ;
+      argInfo.clientCharset = clientCharset ;
+      // check if value is correct
+      if ( strcasecmp( clientCharset.c_str(), CHARSET_NAME_UTF8 ) &&
+           strcasecmp( clientCharset.c_str(), CHARSET_NAME_GB18030 ) )
+      {
+         rc = SDB_INVALIDARG ;
+         std::cout << display << std::endl ;
+         goto error ;
+      }
+      argc -= 2 ;
+   }
 
    argInfo.program = (string)( argv[0] ) ;
    argInfo.language = SPT_LANG_EN ;
@@ -1145,6 +1165,8 @@ int main ( int argc , CHAR **argv )
 
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
 
+   charsetConvertorFactory::init() ;
+
    rc = container.init() ;
    if ( rc )
    {
@@ -1168,6 +1190,8 @@ int main ( int argc , CHAR **argv )
       goto error ;
    }
 
+   scope->setClientCharset( argInfo.clientCharset ) ;
+   scope->setResultsCharset( argInfo.clientCharset ) ;
    switch ( argInfo.mode )
    {
    case INTERACTIVE_MODE :
@@ -1193,6 +1217,7 @@ done :
    {
       container.releaseScope( scope ) ;
    }
+   charsetConvertorFactory::deinit() ;
    container.fini() ;
    PD_TRACE_EXITRC ( SDB_SDB_MAIN, rc );
 

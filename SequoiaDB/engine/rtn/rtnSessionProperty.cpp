@@ -35,6 +35,10 @@
 *******************************************************************************/
 
 #include "rtnSessionProperty.hpp"
+#include "charsetConvertorFactory.hpp"
+#include "charsetConvertorInterface.hpp"
+#include "charsetDef.hpp"
+#include "charsetUtils.hpp"
 #include "dpsTransExecutor.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
@@ -576,7 +580,9 @@ namespace engine
    : _instanceOption(),
      _operationTimeout( RTN_SESSION_OPERATION_TIMEOUT_MAX ),
      _needCheckVer( FALSE ),
-     _version( 1 )
+     _version( 1 ),
+     _clientCharset( CHARSET_UTF8 ),
+     _resultsCharset( CHARSET_UTF8 )
    {
    }
 
@@ -584,7 +590,9 @@ namespace engine
    : _instanceOption( property._instanceOption ),
      _operationTimeout( property._operationTimeout ),
      _needCheckVer( FALSE ),
-     _version( 1 )
+     _version( 1 ),
+     _clientCharset( CHARSET_UTF8 ),
+     _resultsCharset( CHARSET_UTF8 )
    {
    }
 
@@ -685,6 +693,37 @@ namespace engine
 
       return builder.obj() ;
    }
+
+   INT32 _rtnSessionProperty::parseClientCharset( const CHAR *clientCharset )
+   {
+      INT32 rc = SDB_OK;
+      Charset charset = charsetParse(StringData(clientCharset) );
+      PD_CHECK( charset != CHARSET_UNKNOWN,
+                SDB_INVALIDARG, error, PDWARNING,
+                "Failed to parse client charset: "
+                "unknown input string [%s]", clientCharset ) ;
+      _clientCharset = charset;
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnSessionProperty::parseResultsCharset( const CHAR *resultsCharset )
+   {
+      INT32 rc = SDB_OK;
+      Charset charset = charsetParse(StringData( resultsCharset ) );
+      PD_CHECK( charset != CHARSET_UNKNOWN,
+                SDB_INVALIDARG, error, PDWARNING,
+                "Failed to parse results charset: "
+                "unknown input string [%s]", resultsCharset ) ;
+      _resultsCharset = charset;
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
 
    //PD_TRACE_DECLARE_FUNCTION( SDB__RTNSESSPROP__PARSEPROPV0, "_rtnSessionProperty::_parsePropertyV0" )
    INT32 _rtnSessionProperty::_parsePropertyV0 ( const BSONObj & property )
@@ -1018,6 +1057,60 @@ namespace engine
                               field.fieldName() ) ;
             gotNeedCheckCatVer = TRUE;
             needCheckCatVer    = field.boolean() ? TRUE : FALSE;
+         }
+         else if (0 == ossStrcasecmp( field.fieldName(),
+                                      FIELD_NAME_CLIENT_CHARSET) )
+         {
+            Charset systemCharset = CHARSET_UTF8 ;
+            Charset charset = charsetParse(StringData(field.valuestrsafe()) ) ;
+            PD_CHECK( charset != CHARSET_UNKNOWN,
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Failed to parse client charset: "
+                      "unknown input string [%s]", field.valuestrsafe() ) ;
+            if ( systemCharset != charset )
+            {
+               charsetConvertorInterface *convertor = 
+                  charsetConvertorFactory::get( charset, systemCharset ) ;
+               PD_CHECK( convertor, SDB_INVALIDARG, error, PDWARNING,
+                         "Unable to get charset convertor, "
+                         "please check if $ICU_DATA is set" ) ;
+            }
+
+            /// ClientCharset
+            PD_LOG_MSG_CHECK( String == field.type(), SDB_INVALIDARG, error,
+                              PDERROR, "Field [%s] should be a string",
+                              field.fieldName() ) ;
+
+            rc = parseClientCharset( field.valuestrsafe() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse client charset, "
+                         "rc: %d", rc ) ;
+         }
+         else if (0 == ossStrcasecmp( field.fieldName(),
+                                      FIELD_NAME_RESULTS_CHARSET) )
+         {
+            Charset systemCharset = CHARSET_UTF8 ;
+            Charset charset = charsetParse(StringData(field.valuestrsafe()) ) ;
+            PD_CHECK( charset != CHARSET_UNKNOWN,
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Failed to parse results charset: "
+                      "unknown input string [%s]", field.valuestrsafe() ) ;
+            if ( systemCharset != charset )
+            {
+               charsetConvertorInterface *convertor =
+                  charsetConvertorFactory::get( systemCharset, charset ) ;
+               PD_CHECK( convertor, SDB_INVALIDARG, error, PDWARNING,
+                         "Unable to get charset convertor, "
+                         "please check if $ICU_DATA is set" ) ;
+            }
+
+            /// ResultsCharset
+            PD_LOG_MSG_CHECK( String == field.type(), SDB_INVALIDARG, error,
+                              PDERROR, "Field [%s] should be a string",
+                              field.fieldName() ) ;
+
+            rc = parseResultsCharset( field.valuestrsafe() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse results charset, "
+                         "rc: %d", rc ) ;
          }
          else
          {

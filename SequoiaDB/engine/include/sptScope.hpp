@@ -144,6 +144,14 @@ namespace engine
 
       virtual string getObjClassName( const void *pObj ) = 0 ;
 
+      virtual string getClientCharset() = 0 ;
+
+      virtual void setClientCharset( std::string charset ) = 0 ;
+
+      virtual string getResultsCharset() = 0 ;
+
+      virtual void setResultsCharset( std::string charset ) = 0 ;
+
    public:
       INT32          loadUsrDefObj( _sptObjDesc *desc ) ;
 

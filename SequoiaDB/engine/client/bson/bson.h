@@ -934,6 +934,12 @@ SDB_EXPORT int bson_append_double( bson *b, const char *name, const double d );
 SDB_EXPORT int bson_append_string( bson *b, const char *name, const char *str );
 
 /**
+ * Append a string to a bson without checking if string code is UTF8.
+*/
+SDB_EXPORT int bson_append_string_without_check(bson *b, const char *name,
+                                                const char *value);
+
+/**
  * Append len bytes of a string to a bson.
  *
  * @param b the bson to append to.

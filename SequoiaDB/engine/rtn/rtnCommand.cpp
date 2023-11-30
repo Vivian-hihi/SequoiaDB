@@ -53,6 +53,7 @@
 #include "utilCompressor.hpp"
 #include "msgMessageFormat.hpp"
 #include "clsRecycleBinJob.hpp"
+#include "charsetUtils.hpp"
 
 #if defined (_DEBUG)
 // for qgmDebugQuery function
@@ -4279,6 +4280,29 @@ error:
                PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
             }
          }
+
+         // append charset properties
+         try
+         {
+            IClient *client = _cb->getSession()->getClient() ;
+            Charset clientCharset = client->getClientCharset() ;
+            Charset resultsCharset = client->getResultsCharset() ;
+            const StringData clientCS = charsetSerializer( clientCharset ) ;
+            const StringData resultsCS = charsetSerializer( resultsCharset ) ;
+            if ( !builder.hasField( StringData(FIELD_NAME_CLIENT_CHARSET)) )
+            {
+               builder.append( FIELD_NAME_CLIENT_CHARSET, clientCS.data() ) ;
+            }
+            if ( !builder.hasField( StringData(FIELD_NAME_RESULTS_CHARSET)) )
+            {
+               builder.append( FIELD_NAME_RESULTS_CHARSET, resultsCS.data() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            /// ignore
+            PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+         }
       }
    }
 
@@ -4358,6 +4382,24 @@ error:
          rc = sessionProp.parseProperty( property ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse session property, "
                       "rc: %d", rc ) ;
+
+         // set charset properties
+         if ( property.hasField(FIELD_NAME_CLIENT_CHARSET) )
+         {
+            const char *charsetStr =
+               property.getStringField( FIELD_NAME_CLIENT_CHARSET ) ;
+            Charset charset = charsetParse( StringData(charsetStr) );
+            IClient *client = cb->getSession()->getClient() ;
+            client->setClientCharset( charset ) ;
+         }
+         if ( property.hasField(FIELD_NAME_RESULTS_CHARSET) )
+         {
+            const char *charsetStr =
+               property.getStringField( FIELD_NAME_RESULTS_CHARSET ) ;
+            Charset charset = charsetParse( StringData(charsetStr) );
+            IClient *client = cb->getSession()->getClient() ;
+            client->setResultsCharset( charset ) ;
+         }
       }
       catch ( std::exception &e )
       {

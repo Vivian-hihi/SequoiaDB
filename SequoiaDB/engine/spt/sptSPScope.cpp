@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "sptSPScope.hpp"
+#include "charsetDef.hpp"
 #include "sptObjDesc.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
@@ -312,7 +313,9 @@ namespace engine
    */
    _sptSPScope::_sptSPScope()
    :_runtime( NULL ),
-    _context( NULL )
+    _context( NULL ),
+    _clientCharset( CHARSET_NAME_UTF8 ),
+    _resultsCharset( CHARSET_NAME_UTF8 )
    {
    }
 

@@ -35,6 +35,8 @@ engine_dir = join(db_dir,'engine')
 thirdparty_dir = join(root_dir, 'thirdparty')
 boost_dir = join(thirdparty_dir, 'boost')
 boost_lib_dir = join(boost_dir, 'lib')
+icu4c_dir = join(thirdparty_dir, 'icu4c')
+icu4c_lib_dir = join(icu4c_dir, 'source')
 parser_dir = join(thirdparty_dir, 'parser' )
 sm_dir = join(parser_dir, 'sm')
 js_dir = join(sm_dir, 'js')
@@ -527,6 +529,7 @@ def findVersion( root , choices ):
 env.Append(
 CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),
          join(ssl_dir,'include'),join(lz4_dir,'include'),join(zlib_dir,'./'),
+         join(icu4c_lib_dir, "common"),join(icu4c_lib_dir, "i18n"),
          join(snappy_dir,'include'),join(gtest_dir,'include'),
          pcre_dir, boost_dir, ssh2_dir] )
 
@@ -543,7 +546,7 @@ if guess_os is not None:
     snappy_lib_dir = join(snappy_lib_dir, platform_dir, build_dir)
     intel_decimal_lib_dir = join(intel_decimal_lib_dir, platform_dir, build_dir)
     env.Append(EXTRALIBPATH=[boost_lib_dir, ssl_lib_dir, zlib_lib_dir,
-                             lz4_lib_dir, snappy_lib_dir, intel_decimal_lib_dir])
+                             lz4_lib_dir, snappy_lib_dir, intel_decimal_lib_dir, icu4c_lib_dir])
     # use project-related spidermonkey library
     if usesm:
         env.Append(CPPPATH=join(sm_lib_dir, platform_dir, 'include'))
@@ -607,9 +610,9 @@ if guess_os == "linux":
     # Or there will be two same openssl symbol existing in one mysqld program
     # in case of mysqld building openssl in.
     if hasNoLinkSSL == False:
-        env.Append(LIBS=['ssl', 'crypto', 'lz4', 'zlib', 'snappy'])
+        env.Append(LIBS=['ssl', 'crypto', 'lz4', 'zlib', 'snappy', 'icui18n', 'icucommon', 'icudata'])
     else:
-        env.Append(LIBS=['lz4', 'zlib', 'snappy'])
+        env.Append(LIBS=['lz4', 'zlib', 'snappy', 'icui18n', 'icucommon', 'icudata'])
 
     ssllib_file = join(ssl_lib_dir, 'libcrypto.a')
     ssllib_file1 = join(ssl_lib_dir, 'libssl.a')
@@ -629,6 +632,9 @@ if guess_os == "linux":
     zlib_lib = join(zlib_lib_dir, 'libzlib.a')
     lz4_lib = join(lz4_lib_dir, 'liblz4.a')
     snappy_lib = join(snappy_lib_dir, 'libsnappy.a')
+    icu_data_lib = join(icu4c_lib_dir, 'libicudata.a')
+    icu_common_lib = join(icu4c_lib_dir, 'libicucommon.a')
+    icu_i18n_lib = join(icu4c_lib_dir, 'libicui18n.a')
 
     nix = True
 
@@ -663,6 +669,9 @@ elif guess_os == "win32":
     zlib_lib = join(zlib_lib_dir, 'libzlib.lib')
     lz4_lib = join(lz4_lib_dir, 'liblz4.lib')
     snappy_lib = join(snappy_lib_dir, 'libsnappy.lib')
+    icu_data_lib = join(icu4c_lib_dir, 'libicudata.lib')
+    icu_common_lib = join(icu4c_lib_dir, 'libicucommon.lib')
+    icu_i18n_lib = join(icu4c_lib_dir, 'libicui18n.lib')
 
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
@@ -755,6 +764,9 @@ elif guess_os == 'aix':
    zlib_lib = join(zlib_lib_dir, 'libzlib.a')
    lz4_lib = join(lz4_lib_dir, 'liblz4.a')
    snappy_lib = join(snappy_lib_dir, 'libsnappy.a')
+   icu_data_lib = join(icu4c_lib_dir, 'libicudata.a')
+   icu_common_lib = join(icu4c_lib_dir, 'libicucommon.a')
+   icu_i18n_lib = join(icu4c_lib_dir, 'libicui18n.a')
 else:
     platform_valid = False
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
@@ -971,11 +983,17 @@ Export("debugBuild")
 Export("cov")
 Export("boost_lib_dir")
 Export("intel_decimal_lib_dir")
+Export("icu4c_lib_dir")
+Export("icu_data_lib")
+Export("icu_common_lib")
+Export("icu_i18n_lib")
+
 
 print("Begin to build thirdparty...")
 thirdpartyEnv.SConscript('thirdparty/SConscript', exports=["boost_lib_dir",
                          "ssl_lib_dir", "zlib_lib_dir", "lz4_lib_dir", "snappy_lib_dir",
-                         "sm_lib_dir", "mdocml_lib_dir", "fuse_lib_dir", "intel_decimal_lib_dir"], duplicate=False)
+                         "sm_lib_dir", "mdocml_lib_dir", "fuse_lib_dir", "intel_decimal_lib_dir", "icu_data_lib",
+                         "icu_common_lib", "icu_i18n_lib"], duplicate=False)
 
 if not has_option("noautogen"):
    language = get_option ( "language" )

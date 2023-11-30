@@ -23,8 +23,10 @@
 
 #ifndef CLIENT_HPP__
 #define CLIENT_HPP__
+#include "charsetDef.hpp"
 #include "core.hpp"
 #include "clientDef.h"
+#include "ossTypes.h"
 #if defined (SDB_ENGINE) || defined (SDB_CLIENT)
 #include "../bson/bson.h"
 #include "../util/fromjson.hpp"
@@ -5881,6 +5883,14 @@ namespace sdbclient
                               const CHAR *pUsrName,
                               const CHAR *pToken,
                               const CHAR *pCipherFile ) = 0 ;
+
+      virtual INT32 setCharsets( const CHAR *charset ) = 0 ;
+
+      virtual const CHAR* getClientCharset() = 0 ;
+      virtual INT32 setClientCharset( const CHAR *charset ) = 0 ;
+
+      virtual const CHAR* getResultsCharset() = 0 ;
+      virtual INT32 setResultsCharset( const CHAR *charset ) = 0 ;
 
       virtual void disconnect () = 0 ;
 

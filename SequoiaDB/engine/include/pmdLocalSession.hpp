@@ -34,6 +34,9 @@
 #ifndef PMD_LOCAL_SESSION_HPP_
 #define PMD_LOCAL_SESSION_HPP_
 
+#include "charsetConvertorInterface.hpp"
+#include "msg.h"
+#include "ossTypes.h"
 #include "pmdSession.hpp"
 #include "pmdDef.hpp"
 #include "rtnContext.hpp"
@@ -108,6 +111,51 @@ namespace engine
 
       private:
          void _saveOrSetMsgGlobalID( MsgHeader *pMsg ) ;
+
+         // Build a new Message according to input MessageHeader and convertor
+         INT32 _convertMsg( const MsgHeader *in, MsgHeader **out,
+                            charsetConvertorInterface *convertor ) ;
+
+         INT32 _convertReplyBody( rtnContextBuf &inReply,
+                                  rtnContextBuf &outReply,
+                                  charsetConvertorInterface *convertor ) ;
+
+         INT32 _getClientCharset( Charset &clientCharset ) ;
+
+         INT32 _getResultsCharset( Charset &resultsCharset ) ;
+
+         INT32 _rebuildInsertMsg( const MsgHeader *in, MsgHeader **out,
+                                  charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildUpdateMsg( const MsgHeader *in, MsgHeader **out,
+                                  charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildSQLMsg( const MsgHeader *in, MsgHeader **out,
+                               charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildDeleteMsg( const MsgHeader *in, MsgHeader **out,
+                                  charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildAggrMsg( const MsgHeader *in, MsgHeader **out,
+                                charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildQueryMsg( const MsgHeader *in, MsgHeader **out,
+                                 charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildOpenLobMsg( const MsgHeader *in, MsgHeader **out,
+                                   charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildRemoveLobMsg( const MsgHeader *in, MsgHeader **out,
+                                     charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildTruncateLobMsg( const MsgHeader *in, MsgHeader **out,
+                                       charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildCreateLobIDMsg( const MsgHeader *in, MsgHeader **out,
+                                       charsetConvertorInterface *convertor ) ;
+
+         INT32 _rebuildFetchSeqMsg( const MsgHeader *in, MsgHeader **out,
+                                    charsetConvertorInterface *convertor ) ;
 
       protected:
          MsgOpReply           _replyHeader ;

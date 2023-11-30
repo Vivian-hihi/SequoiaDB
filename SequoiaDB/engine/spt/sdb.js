@@ -1020,6 +1020,18 @@ Sdb.prototype.getTask = function( id ) {
    return obj ;
 }
 
+Sdb.prototype.setClientCharset = function( charset)  {
+   this.setSessionAttr( { "ClientCharset": charset} ) ;
+}
+
+Sdb.prototype.setResultsCharset = function( charset ) {
+   this.setSessionAttr( { "ResultsCharset": charset} ) ;
+}
+
+Sdb.prototype.setCharsets = function( charset ) {
+   this.setSessionAttr( { "ClientCharset": charset, "ResultsCharset": charset} ) ;
+}
+
 Sdb.prototype._resolveCS = function(csName) {
    if( !this.hasOwnProperty( csName ) )
    {

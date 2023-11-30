@@ -37,6 +37,9 @@
 *******************************************************************************/
 #include "core.hpp"
 #include "msgMessage.hpp"
+#include "ossErr.h"
+#include "ossTypes.h"
+#include "ossTypes.hpp"
 #include "pd.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
@@ -47,6 +50,7 @@
 #include "../bson/lib/md5.hpp"
 #include <stddef.h>
 #include "ossVer.hpp"
+#include "sdbInterface.hpp"
 
 using namespace engine ;
 using namespace bson ;
@@ -552,6 +556,7 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
       goto error ;
    }
+   pInsert = (MsgOpInsert*)(*ppBuffer) ;
    // now the buffer is large enough
    pInsert = (MsgOpInsert*)(*ppBuffer) ;
    pInsert->header.messageLength = packetLength ;
@@ -569,6 +574,49 @@ done :
 error :
    goto done ;
 }
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGAPPENDHINT2INSERTMSG, "msgAppendHint2InsertMsg" )
+INT32 msgAppendHint2InsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                const BSONObj *hint, IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGAPPENDHINT2INSERTMSG ) ;
+
+   INT32 packetLength = 0 ;
+   INT32 offset = 0 ;
+   INT32 nextOffset = 0 ;
+   INT32 hintSize = hint->objsize() ;
+   MsgOpInsert *pInsert = (MsgOpInsert *)(*ppBuffer) ;
+   offset = pInsert->header.messageLength ;
+   offset = ossAlign4( offset ) ;
+
+   packetLength = offset + MSG_HINT_MARK_LEN + ossAlign4( hintSize ) ;
+   PD_CHECK( packetLength >= 0, SDB_INVALIDARG, error, PDERROR,
+             "Packet size overflow" ) ;
+
+   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength, cb ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to check buffer, rc: %d", rc ) ;
+
+   pInsert = (MsgOpInsert *)(*ppBuffer) ;
+   pInsert->header.messageLength = packetLength ;
+
+   // Append prefix marking for insert: 4 bytes of value 0.
+   ossMemset( &(*ppBuffer)[offset], 0, MSG_HINT_MARK_LEN ) ;
+   offset += MSG_HINT_MARK_LEN ;
+
+   ossMemcpy( &(*ppBuffer)[offset], hint->objdata(), hintSize ) ;
+   nextOffset = offset + ossRoundUpToMultipleX( hintSize, 4 ) ;
+
+   // sanity test
+   PD_CHECK( nextOffset == packetLength, SDB_INVALIDARG, error, PDERROR,
+             "Invalid packet length" ) ;
+done:
+   PD_TRACE_EXITRC ( SDB_MSGAPPENDHINT2INSERTMSG, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTINSERT, "msgExtractInsert" )
 INT32 msgExtractInsert ( const CHAR *pBuffer, INT32 *pflag,
@@ -2629,6 +2677,40 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSQL, "msgBuildSQL" )
+INT32 msgBuildSQL( CHAR **ppBuffer, INT32 *bufferSize,
+                   const CHAR *sql, UINT64 reqID, IExecutor *cb )
+{
+   PD_TRACE_ENTRY( SDB_MSGBUILDSQL ) ;
+   INT32 rc = SDB_OK ;
+   MsgOpSql *sqlMsg = NULL ;
+   INT32 sqlLen = ossStrlen( sql ) + 1 ;
+
+   INT32 len = sizeof( MsgOpSql ) +
+               ossRoundUpToMultipleX( sqlLen, sizeof(ossValuePtr) ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, len, cb ) ;
+   PD_RC_CHECK(rc, PDERROR, "Failed to check buffer") ;
+
+   sqlMsg                       = ( MsgOpSql *)( *ppBuffer ) ;
+   sqlMsg->header.requestID     = reqID ;
+   sqlMsg->header.opCode        = MSG_BS_SQL_REQ ;
+   sqlMsg->header.messageLength = sizeof( MsgOpSql ) + sqlLen ;
+   sqlMsg->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   sqlMsg->header.version       = SDB_PROTOCOL_VER_2 ;
+   sqlMsg->header.flags         = 0 ;
+   sqlMsg->header.routeID.value = 0 ;
+   sqlMsg->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( &(sqlMsg->header.globalID), 0, sizeof(sqlMsg->header.globalID) ) ;
+   ossMemset( sqlMsg->header.reserve, 0, sizeof(sqlMsg->header.reserve) ) ;
+   ossMemcpy( *ppBuffer + sizeof( MsgOpSql ),
+              sql, sqlLen ) ;
+done:
+   PD_TRACE_EXITRC( SDB_MSGBUILDSQL, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSQL, "msgExtractSql" )
 INT32 msgExtractSql( const CHAR *pBuffer, const CHAR **sql )
 {
@@ -3018,6 +3100,101 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDAGGRMSG, "msgBuildAggrMsg" )
+INT32 msgBuildAggrMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                        const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
+                        const BSONObj *obj, IExecutor *cb )
+{
+   PD_TRACE_ENTRY ( SDB_MSGBUILDAGGRMSG ) ;
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
+                obj, "Invalid input" ) ;
+   INT32 rc             = SDB_OK ;
+   INT32 nameLength     = 0;
+   PD_TRACE1 ( SDB_MSGBUILDAGGRMSG, PD_PACK_STRING(CollectionName) );
+   MsgOpAggregate *pAggr   = NULL ;
+   INT32 offset         = 0 ;
+   INT32 packetLength = ossAlign4( offsetof(MsgOpAggregate, name) +
+                                   ossStrlen ( CollectionName ) + 1 ) +
+                        ossAlign4( obj->objsize() ) ;
+   PD_TRACE1 ( SDB_MSGBUILDAGGRMSG, PD_PACK_INT(packetLength) ) ;
+   PD_CHECK( packetLength >= 0, SDB_INVALIDARG, error, PDERROR,
+             "Packet size overflow" ) ;
+
+   nameLength = ossStrlen( CollectionName );
+
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
+   PD_RC_CHECK(rc, PDERROR, "Failed to check buffer") ;
+
+   // now the buffer is large enough
+   pAggr = (MsgOpAggregate*)(*ppBuffer) ;
+   pAggr->nameLength = nameLength ;
+   pAggr->header.requestID     = reqID ;
+   pAggr->header.opCode        = MSG_BS_AGGREGATE_REQ ;
+   pAggr->header.messageLength = packetLength ;
+   pAggr->header.eye           = MSG_COMM_EYE_DEFAULT ;
+   pAggr->header.version       = SDB_PROTOCOL_VER_2 ;
+   pAggr->header.flags         = flag ;
+   pAggr->header.routeID.value = 0 ;
+   pAggr->header.TID           = ossGetCurrentThreadID() ;
+   ossMemset( &(pAggr->header.globalID), 0, sizeof(pAggr->header.globalID) ) ;
+   ossMemset( pAggr->header.reserve, 0, sizeof(pAggr->header.reserve) ) ;
+   // copy collection name
+   ossStrncpy ( pAggr->name, CollectionName, nameLength ) ;
+   pAggr->name[nameLength] = 0 ;
+   // get the offset of the first bson obj
+   offset = ossAlign4( offsetof(MsgOpAggregate, name) + nameLength + 1 ) ;
+   ossMemcpy ( &((*ppBuffer)[offset]), obj->objdata(), obj->objsize());
+   offset += ossAlign4( obj->objsize() ) ;
+
+   // sanity test
+   PD_CHECK( offset == packetLength, SDB_SYS, error, PDERROR,
+             "Invalid packet length" ) ;
+done :
+   PD_TRACE_EXITRC ( SDB_MSGBUILDAGGRMSG, rc ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGAPPENDAGGRMSG, "msgAppendAggrMsg" )
+INT32 msgAppendAggrMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                         const BSONObj *obj, IExecutor *cb )
+{
+   INT32 rc             = SDB_OK ;
+   SDB_ASSERT ( ppBuffer && bufferSize && obj, "Invalid input" ) ;
+   PD_TRACE_ENTRY ( SDB_MSGAPPENDAGGRMSG );
+   MsgOpAggregate *pAggr   = (MsgOpAggregate*)(*ppBuffer) ;
+   // make sure the it's a valid aggr request
+   SDB_ASSERT ( pAggr->header.messageLength &&
+                MSG_BS_AGGREGATE_REQ ==  pAggr->header.opCode &&
+                ossIsAligned4 ( pAggr->header.messageLength ),
+                "Invalid messageLength" ) ;
+   INT32 offset         = pAggr->header.messageLength ;
+   INT32 packetLength   = offset + ossAlign4( obj->objsize() ) ;
+
+   PD_TRACE1 ( SDB_MSGAPPENDAGGRMSG, PD_PACK_INT(packetLength) ) ;
+   PD_CHECK( packetLength >= 0, SDB_INVALIDARG, error, PDERROR,
+             "Packet size overflow" ) ;
+
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
+   PD_RC_CHECK(rc, PDERROR, "Failed to check buffer") ;
+
+   // now the buffer is large enough
+   pAggr   = (MsgOpAggregate*)(*ppBuffer) ;
+   pAggr->header.messageLength = packetLength ;
+   ossMemcpy ( &((*ppBuffer)[offset]), obj->objdata(), obj->objsize());
+   offset += ossAlign4( obj->objsize() ) ;
+
+   // sanity test
+   PD_CHECK( offset == packetLength, SDB_SYS, error, PDERROR,
+             "Invalid packet length" ) ;
+done :
+   PD_TRACE_EXITRC ( SDB_MSGAPPENDAGGRMSG, rc ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTAGGRREQ, "msgExtractAggrRequest" )
 INT32 msgExtractAggrRequest ( const CHAR *pBuffer, const CHAR **ppCollectionName,
                               const CHAR **ppObjs, INT32 &count,
@@ -3084,6 +3261,175 @@ INT32 msgExtractAggrRequest ( const CHAR *pBuffer, const CHAR **ppCollectionName
 done:
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTAGGRREQ, rc ) ;
    return rc;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDLOBMSG, "msgBuildLobMsg" )
+INT32 msgBuildLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                      INT32 msgType, const BSONObj *meta,
+                      SINT32 flags, SINT16 w, SINT64 contextID,
+                      UINT64 reqID, const SINT64 *lobOffset,
+                      const UINT32 *len, const CHAR *data, IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGBUILDLOBMSG ) ;
+
+   SINT32 packetLength  = 0 ;
+   MsgOpLob *msg        = NULL ;
+   SINT32 offset        = 0 ;
+   UINT32 bsonLen       = 0 ;
+   MsgLobTuple *tuple   = NULL ;
+
+   packetLength = sizeof( MsgOpLob ) ;
+
+   if ( meta )
+   {
+      bsonLen = meta->objsize() ;
+      packetLength += ossAlign4( bsonLen ) ;
+   }
+
+   if ( lobOffset && len )
+   {
+      packetLength += sizeof( MsgLobTuple ) ;
+   }
+
+   if ( data )
+   {
+      packetLength += ossAlign4( *len ) ;
+   }
+
+   PD_CHECK( packetLength >= 0 , SDB_INVALIDARG, error, PDERROR,
+             "Packet size overflow" ) ;
+
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
+   PD_CHECK( rc == SDB_OK, rc, error, PDERROR,
+             "Failed to check buffer, rc=%d ", rc ) ;
+
+   msg = ( MsgOpLob * )( *ppBuffer ) ;
+   msg->flags = flags ;
+   msg->version = CATALOG_DEFAULT_VERSION;
+   msg->w = w ;
+   msg->padding = 0;
+   msg->contextID = contextID ;
+   msg->bsonLen = bsonLen ;
+
+   msg->header.requestID = reqID ;
+   msg->header.opCode = msgType ;
+   msg->header.messageLength = packetLength ;
+   msg->header.eye = MSG_COMM_EYE_DEFAULT ;
+   msg->header.version = SDB_PROTOCOL_VER_2 ;
+   msg->header.flags = flags ;
+   msg->header.routeID.value = 0 ;
+   msg->header.TID = ossGetCurrentThreadID() ;
+   ossMemset( &(msg->header.globalID), 0, sizeof(msg->header.globalID) ) ;
+   ossMemset( msg->header.reserve, 0, sizeof(msg->header.reserve) ) ;
+
+   offset = sizeof( MsgOpLob ) ;
+
+   if ( meta )
+   {
+      ossMemcpy( *ppBuffer + offset, meta->objdata(), bsonLen ) ;
+      offset += ossAlign4( bsonLen ) ;
+   }
+
+   if ( lobOffset && len )
+   {
+      tuple = ( MsgLobTuple * )(*ppBuffer + offset) ;
+      tuple->columns.len = *len ;
+      tuple->columns.offset = *lobOffset ;
+      offset += sizeof( MsgLobTuple ) ;
+   }
+
+   if ( data )
+   {
+      ossMemcpy( *ppBuffer + offset, data, *len ) ;
+      offset += ossAlign4( *len ) ;
+   }
+
+done:
+   PD_TRACE_EXITRC ( SDB_MSGBUILDLOBMSG, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDOPENLOBMSG, "msgBuildOpenLobMsg" )
+INT32 msgBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                          const BSONObj *meta, SINT32 flags, SINT16 w,
+                          SINT64 contextID, UINT64 reqID, IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGBUILDOPENLOBMSG ) ;
+   rc = msgBuildLobMsg( ppBuffer, bufferSize,
+                        MSG_BS_LOB_OPEN_REQ, meta,
+                        flags, w, contextID, reqID, NULL,
+                        NULL, NULL, cb ) ;
+   PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+             "Failed to build open Lob message, rc=%d", rc ) ;
+done:
+   PD_TRACE_EXITRC ( SDB_MSGBUILDOPENLOBMSG, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDCREATELOBMSG, "msgBuildCreateLobIDMsg" )
+INT32 msgBuildCreateLobIDMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const BSONObj *meta, SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID, IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGBUILDCREATELOBMSG ) ;
+   rc = msgBuildLobMsg( ppBuffer, bufferSize,
+                        MSG_BS_LOB_CREATELOBID_REQ, meta,
+                        flags, w, contextID, reqID, NULL,
+                        NULL, NULL, cb ) ;
+   PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+             "Failed to build create Lob message, rc=%d", rc ) ;
+done:
+   PD_TRACE_EXITRC ( SDB_MSGBUILDCREATELOBMSG, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDREMOVELOBMSG, "msgBuildRemoveLobMsg" )
+INT32 msgBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                            const BSONObj *meta, SINT32 flags, SINT16 w,
+                            SINT64 contextID, UINT64 reqID, IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGBUILDREMOVELOBMSG ) ;
+   rc = msgBuildLobMsg( ppBuffer, bufferSize,
+                        MSG_BS_LOB_REMOVE_REQ, meta,
+                        flags, w, contextID, reqID,
+                        NULL, NULL, NULL, cb ) ;
+   PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+             "Failed to build remove Lob message, rc=%d", rc ) ;
+done:
+   PD_TRACE_EXITRC ( SDB_MSGBUILDREMOVELOBMSG, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDTRUNCATELOBMSG, "msgBuildTruncateLobMsg" )
+INT32 msgBuildTruncateLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const BSONObj *meta, SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID, IExecutor *cb )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGBUILDTRUNCATELOBMSG ) ;
+   rc = msgBuildLobMsg( ppBuffer, bufferSize,
+                        MSG_BS_LOB_TRUNCATE_REQ, meta,
+                        flags, w, contextID, reqID,
+                        NULL, NULL, NULL, cb ) ;
+   PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+             "Failed to build TRUNCATE Lob message, rc=%d", rc ) ;
+done:
+   PD_TRACE_EXITRC ( SDB_MSGBUILDTRUNCATELOBMSG, rc ) ;
+   return rc ;
 error:
    goto done ;
 }

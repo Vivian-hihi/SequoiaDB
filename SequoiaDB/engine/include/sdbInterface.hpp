@@ -39,6 +39,7 @@
 #ifndef SDB_INTERFACE_HPP__
 #define SDB_INTERFACE_HPP__
 
+#include "charsetDef.hpp"
 #include "core.hpp"
 #include "oss.hpp"
 #include "msg.h"
@@ -295,6 +296,12 @@ namespace engine
 
          virtual BOOLEAN      privCheckEnabled() const = 0 ;
          virtual UINT32       getRoleID() const = 0 ;
+
+         virtual Charset      getClientCharset() = 0 ;
+         virtual void         setClientCharset(Charset charset) = 0 ;
+
+         virtual Charset      getResultsCharset() = 0 ;
+         virtual void         setResultsCharset(Charset charset) = 0 ;
    } ;
    typedef _IClient IClient ;
 

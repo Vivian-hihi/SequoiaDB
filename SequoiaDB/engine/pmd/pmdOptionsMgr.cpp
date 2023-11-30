@@ -36,6 +36,7 @@
 *******************************************************************************/
 
 #include "pmdOptionsMgr.hpp"
+#include "charsetUtils.hpp"
 #include "pd.hpp"
 #include "utilCommon.hpp"
 #include "utilStr.hpp"
@@ -55,6 +56,7 @@
 #include "rtnContextDef.hpp"
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
+#include "charsetDef.hpp"
 #include <vector>
 #include <boost/algorithm/string.hpp>
 
@@ -1915,6 +1917,8 @@ done:
       ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _prefInstStr, 0, PMD_MAX_LONG_STR_LEN + 1 ) ;
       ossMemset( _prefInstModeStr, 0, PMD_MAX_SHORT_STR_LEN + 1 ) ;
+      ossMemset( _clientCharsetStr, 0, PMD_MAX_SHORT_STR_LEN + 1 ) ;
+      ossMemset( _resultsCharsetStr, 0, PMD_MAX_SHORT_STR_LEN + 1 ) ;
       ossMemset( _prefConstraint, 0, sizeof( _prefConstraint ) ) ;
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
@@ -2243,6 +2247,14 @@ done:
       rdxString( pEX, PMD_OPTION_PREFINST_MODE, _prefInstModeStr,
                  sizeof( _prefInstModeStr ), FALSE, PMD_CFG_CHANGE_RUN,
                  PMD_DFT_PREFINST_MODE ) ;
+      // --clientcharset
+      rdxString( pEX, PMD_OPTION_CLIENT_CHARSET, _resultsCharsetStr,
+                 sizeof( _clientCharsetStr ), FALSE, PMD_CFG_CHANGE_RUN,
+                 CHARSET_NAME_UTF8 ) ;
+      // --resultscharset
+      rdxString( pEX, PMD_OPTION_RESULTS_CHARSET, _resultsCharsetStr,
+                 sizeof( _resultsCharsetStr ), FALSE, PMD_CFG_CHANGE_RUN,
+                 CHARSET_NAME_UTF8 ) ;
       rdxString( pEX, PMD_OPTION_PREFERREDINST_MODE, _prefInstModeStr,
                  sizeof( _prefInstModeStr ), FALSE, PMD_CFG_CHANGE_RUN,
                  _prefInstModeStr ) ;
@@ -2836,6 +2848,32 @@ done:
          ossStrncpy( _prefInstModeStr, PMD_DFT_PREFINST_MODE,
                      sizeof( _prefInstModeStr ) ) ;
          _invalidConfNum++ ;
+      }
+
+      // client charset
+      {
+         Charset charset = charsetParse(_clientCharsetStr);
+         if ( CHARSET_UNKNOWN == charset )
+         {
+            std::cerr << PMD_OPTION_CLIENT_CHARSET << " value error, use default"
+                      << endl ;
+            ossStrncpy( _clientCharsetStr, CHARSET_NAME_UTF8,
+                        sizeof( _clientCharsetStr ) ) ;
+            _invalidConfNum++ ;
+         }
+      }
+
+      // results charset
+      {
+         Charset charset = charsetParse(_resultsCharsetStr);
+         if ( CHARSET_UNKNOWN == charset )
+         {
+            std::cerr << PMD_OPTION_RESULTS_CHARSET << " value error, use default"
+                      << endl ;
+            ossStrncpy( _resultsCharsetStr, CHARSET_NAME_UTF8,
+                        sizeof( _resultsCharsetStr ) ) ;
+            _invalidConfNum++ ;
+         }
       }
 
       rc = pmdParsePreferConstraintStr( _prefConstraint, constraint ) ;

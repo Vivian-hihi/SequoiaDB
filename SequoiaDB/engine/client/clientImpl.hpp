@@ -15,11 +15,13 @@
 *******************************************************************************/
 #ifndef CLIENTIMPL_HPP__
 #define CLIENTIMPL_HPP__
+#include "charsetDef.hpp"
 #include "core.hpp"
 #include "client.hpp"
 #include "common.h"
 #include "ossSocket.hpp"
 #include <set>
+#include "ossTypes.h"
 #include "ossUtil.hpp"
 #include "utilAuthSCRAMSHA.hpp"
 #include "ossLatch.hpp"
@@ -1578,6 +1580,8 @@ namespace sdbclient
       ossTimestamp             _lastAliveTime ;
 
       BOOLEAN                  _isOldVersionLobServer ;
+      engine::Charset          _clientCharset ;
+      engine::Charset          _resultsCharset ;
 
       void _disconnect () ;
       void _removeObjects() ;
@@ -1657,6 +1661,10 @@ namespace sdbclient
                     const string &combineNonceBase64,
                     const string &clientProofBase64 ) ;
 
+      const CHAR* _charsetSerializer( engine::Charset charset) ;
+
+      engine::Charset _charsetParse( const CHAR *charset ) ;
+
       friend class _sdbBase ;
       friend class _sdbCollectionSpaceImpl ;
       friend class _sdbCollectionImpl ;
@@ -1693,6 +1701,14 @@ namespace sdbclient
                       const CHAR *pUsrName,
                       const CHAR *pToken,
                       const CHAR *pCipherFile ) ;
+
+      INT32 setCharsets( const CHAR *charset ) ;
+
+      const CHAR* getClientCharset() ;
+      INT32 setClientCharset( const CHAR *charset ) ;
+
+      const CHAR* getResultsCharset() ;
+      INT32 setResultsCharset( const CHAR *charset ) ;
 
       void disconnect () ;
       BOOLEAN isConnected ()

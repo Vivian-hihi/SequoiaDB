@@ -51,6 +51,7 @@
 #include "pmdEnv.hpp"
 #include "pmdStartupHistoryLogger.hpp"
 #include "pmdPipeManager.hpp"
+#include "charsetConvertorFactory.hpp"
 
 using namespace std;
 using namespace bson;
@@ -243,6 +244,9 @@ namespace engine
                "Start sequoiadb(%s) [%s]...",
                pmdGetOptionCB()->krcbRole(), verText ) ;
 
+      // Init charset convertor
+      charsetConvertorFactory::init() ;
+
       // 3. printf all configs
       {
          BSONObj confObj ;
@@ -362,6 +366,7 @@ namespace engine
 
    done :
       PMD_SHUTDOWN_DB( rc ) ;
+      charsetConvertorFactory::deinit() ;
       pmdSetQuit() ;
       krcb->destroy () ;
       rc = krcb->getShutdownCode() ;
