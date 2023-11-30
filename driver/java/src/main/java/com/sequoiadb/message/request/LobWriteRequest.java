@@ -25,10 +25,10 @@ import java.nio.ByteBuffer;
 
 public class LobWriteRequest extends LobRequest {
     private static final int FIXED_LENGTH = 96; // LOB_HEADER_LENGTH + 16
-    private int bufLen;
+    private final int bufLen;
     private static final int sequence = 0;
-    private long offset;
-    private ByteBuffer buffer;
+    private final long offset;
+    private final ByteBuffer buffer;
 
     public LobWriteRequest(long contextId, byte[] buf, int off, int len, long lobOffset) {
         opCode = MsgOpCode.LOB_WRITE_REQ;
@@ -49,12 +49,17 @@ public class LobWriteRequest extends LobRequest {
     }
 
     @Override
-    protected void encodeLobBody(ByteBuffer out) {
+    protected void writeLobBody(ByteBuffer out) {
         out.putInt(bufLen);
         out.putInt(sequence);
         out.putLong(offset);
         out.put(buffer);
         int paddingSize = Helper.alignedSize(bufLen) - bufLen;
         Helper.fillZero(out, paddingSize);
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        // no data
     }
 }

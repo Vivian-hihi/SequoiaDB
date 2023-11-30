@@ -35,4 +35,5 @@ public interface BSONDecoder {
 
     public int decode( InputStream in , BSONCallback callback ) throws IOException;
 
+    void setCharset(String charset);
 }

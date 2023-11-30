@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 public class KillContextRequest extends SdbRequest {
     private final static int FIXED_LENGTH = 64;
     private final static int reserved = 0;
-    private long[] contextIds;
+    private final long[] contextIds;
 
     public KillContextRequest(long[] contextIds) {
         opCode = MsgOpCode.KILL_CONTEXT_REQ;
@@ -40,11 +40,16 @@ public class KillContextRequest extends SdbRequest {
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
+    protected void writeMsgBody(ByteBuffer out) {
         out.putInt(reserved);
         out.putInt(contextIds.length);
         for (long contextId : contextIds) {
             out.putLong(contextId);
         }
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        // no data
     }
 }

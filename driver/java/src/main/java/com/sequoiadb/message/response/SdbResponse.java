@@ -39,7 +39,7 @@ public abstract class SdbResponse extends SdbMsgHeader implements Response {
     }
 
     @Override
-    public void decode( ByteBuffer in, SdbProtocolVersion version ) {
+    public void decode(ByteBuffer in, SdbProtocolVersion version, String charset) {
         switch ( version ) {
             case SDB_PROTOCOL_VERSION_V1:
                 decodeMsgHeaderV1( in );
@@ -51,7 +51,7 @@ public abstract class SdbResponse extends SdbMsgHeader implements Response {
                 throw new BaseException( SDBError.SDB_NET_BROKEN_MSG,
                         "Message protocol version error!" );
         }
-        decodeBody(in, version);
+        decodeBody(in, version, charset);
     }
 
     protected void decodeMsgHeaderV1(ByteBuffer in) {
@@ -77,5 +77,5 @@ public abstract class SdbResponse extends SdbMsgHeader implements Response {
         }
     }
 
-    protected abstract void decodeBody(ByteBuffer in, SdbProtocolVersion version);
+    protected abstract void decodeBody(ByteBuffer in, SdbProtocolVersion version, String charset);
 }

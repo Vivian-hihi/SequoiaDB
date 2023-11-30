@@ -11,8 +11,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class SequenceFetchRequest extends SdbRequest {
-    private static final byte[] EMPTY_BSON_BYTES = Helper.encodeBSONObj(new BasicBSONObject());
-    private static final int ALIGNED_EMPTY_BSON_LENGTH = Helper.alignedSize(EMPTY_BSON_BYTES.length);
     private static final int FIXED_LENGTH = 88;
     private static final int version = 1;
     private static final short w = 0;
@@ -25,6 +23,8 @@ public class SequenceFetchRequest extends SdbRequest {
     private byte[] selectorBytes;
     private byte[] orderBytes;
     private byte[] hintBytes;
+    private final String collectionName;
+    private final BSONObject matcher;
 
     public SequenceFetchRequest(BSONObject matcher) {
         opCode = MsgOpCode.MSG_BS_SEQUENCE_FETCH_REQ;
@@ -33,9 +33,14 @@ public class SequenceFetchRequest extends SdbRequest {
         this.flag = 0;
         this.skipNum = 0;
         this.returnedNum = -1;
+        this.collectionName = "";
+        this.matcher = matcher;
+    }
 
+    @Override
+    protected void encodeWithCharset(String charset) {
         try {
-            this.clNameBytes = "".getBytes(Helper.ENCODING_TYPE);
+            this.clNameBytes = this.collectionName.getBytes(charset);
             length += Helper.alignedSize(this.clNameBytes.length + 1);
         }catch (UnsupportedEncodingException e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
@@ -45,7 +50,7 @@ public class SequenceFetchRequest extends SdbRequest {
             matcherBytes = EMPTY_BSON_BYTES.clone();
             length += ALIGNED_EMPTY_BSON_LENGTH;
         } else {
-            matcherBytes = Helper.encodeBSONObj(matcher);
+            matcherBytes = Helper.encodeBSONObj(matcher, charset);
             length += Helper.alignedSize(matcherBytes.length);
         }
 
@@ -60,7 +65,7 @@ public class SequenceFetchRequest extends SdbRequest {
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
+    protected void writeMsgBody(ByteBuffer out) {
         out.putInt(version);
         out.putShort(w);
         out.putShort(padding);
@@ -73,9 +78,9 @@ public class SequenceFetchRequest extends SdbRequest {
         int length = clNameBytes.length + 1;
         int paddingLen = Helper.alignedSize(length) - length;
         Helper.fillZero(out, paddingLen);
-        encodeBSONBytes(matcherBytes, out);
-        encodeBSONBytes(selectorBytes, out);
-        encodeBSONBytes(orderBytes, out);
-        encodeBSONBytes(hintBytes, out);
+        writeBSONBytes(matcherBytes, out);
+        writeBSONBytes(selectorBytes, out);
+        writeBSONBytes(orderBytes, out);
+        writeBSONBytes(hintBytes, out);
     }
 }

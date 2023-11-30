@@ -101,7 +101,7 @@ public class TestInsert extends SingleCSCLTestCase {
                     obj = cursor.getNext();
                 } else {
                     byte[] bytes = cursor.getNextRaw();
-                    obj = Helper.decodeBSONBytes(bytes);
+                    obj = Helper.decodeBSONBytes(bytes, null);
                 }
                 res.add(obj);
 

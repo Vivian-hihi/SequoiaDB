@@ -25,24 +25,28 @@ import java.nio.ByteBuffer;
 
 public class MessageRequest extends SdbRequest {
     private byte[] messageBytes;
+    private final String msg;
 
     public MessageRequest(String message) {
         length = HEADER_LENGTH;
         opCode = MsgOpCode.MSG_REQ;
+        this.msg = message == null ? "" : message;
+    }
 
+    @Override
+    protected void writeMsgBody(ByteBuffer out) {
+        out.put(messageBytes);
+        out.put((byte) 0); // end of string
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
         try {
-            message = message == null ? "" : message;
-            this.messageBytes = message.getBytes("UTF-8");
+            this.messageBytes = this.msg.getBytes(charset);
         } catch (UnsupportedEncodingException e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
 
         length += this.messageBytes.length + 1;
-    }
-
-    @Override
-    protected void encodeBody(ByteBuffer out) {
-        out.put(messageBytes);
-        out.put((byte) 0); // end of string
     }
 }

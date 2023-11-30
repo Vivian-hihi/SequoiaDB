@@ -25,22 +25,27 @@ import java.nio.ByteBuffer;
 
 public class SQLRequest extends SdbRequest {
     private byte[] sqlBytes;
+    private final String sql;
 
     public SQLRequest(String sql) {
         opCode = MsgOpCode.SQL_REQ;
+        this.sql = sql;
+    }
 
+    @Override
+    protected void writeMsgBody(ByteBuffer out) {
+        out.put(sqlBytes);
+        out.put((byte) 0);
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
         try {
-            this.sqlBytes = sql.getBytes("UTF-8");
+            this.sqlBytes = sql.getBytes(charset);
         } catch (Exception e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
 
         length += sqlBytes.length + 1;
-    }
-
-    @Override
-    protected void encodeBody(ByteBuffer out) {
-        out.put(sqlBytes);
-        out.put((byte) 0);
     }
 }

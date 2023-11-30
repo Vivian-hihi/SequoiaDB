@@ -41,7 +41,12 @@ public class SysInfoRequest extends SysInfoHeader implements Request {
     }
 
     @Override
-    public void encode( ByteBuffer out, SdbProtocolVersion version ) {
+    public void encode(SdbProtocolVersion version, String charset) {
+        // do nothing
+    }
+
+    @Override
+    public void writeBuffer(ByteBuffer out, SdbProtocolVersion version) {
         out.putInt(SYS_INFO_SPECIAL_LEN);
         out.putInt(SYS_INFO_EYE_CATCHER);
         out.putInt(HEADER_LENGTH);

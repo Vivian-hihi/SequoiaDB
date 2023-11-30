@@ -30,7 +30,12 @@ public class InterruptRequest extends SdbRequest {
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
+    protected void writeMsgBody(ByteBuffer out) {
         // no body
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        // no data
     }
 }

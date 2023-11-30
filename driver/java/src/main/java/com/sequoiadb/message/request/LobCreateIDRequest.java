@@ -10,6 +10,7 @@ import com.sequoiadb.util.Helper;
 
 public class LobCreateIDRequest extends LobRequest {
     private byte[] bsonBytes;
+    private final BSONObject obj;
 
     public LobCreateIDRequest(BSONObject obj) {
         opCode = MsgOpCode.LOB_CREATEID_REQ;
@@ -17,14 +18,18 @@ public class LobCreateIDRequest extends LobRequest {
         if (obj == null) {
             obj = new BasicBSONObject();
         }
-
-        bsonBytes = Helper.encodeBSONObj(obj);
-        bsonLength = bsonBytes.length;
-        length += Helper.alignedSize(bsonBytes.length);
+        this.obj = obj;
     }
 
     @Override
-    protected void encodeLobBody(ByteBuffer out) {
-        encodeBSONBytes(bsonBytes, out);
+    protected void writeLobBody(ByteBuffer out) {
+        writeBSONBytes(bsonBytes, out);
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        bsonBytes = Helper.encodeBSONObj(obj, charset);
+        bsonLength = bsonBytes.length;
+        length += Helper.alignedSize(bsonBytes.length);
     }
 }

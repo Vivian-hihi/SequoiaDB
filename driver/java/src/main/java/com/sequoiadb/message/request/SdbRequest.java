@@ -16,11 +16,13 @@
 
 package com.sequoiadb.message.request;
 
+import com.sequoiadb.base.ClientCharsetEnum;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.SdbMsgHeader;
 import com.sequoiadb.message.SdbProtocolVersion;
 import com.sequoiadb.util.Helper;
+import org.bson.BasicBSONObject;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -28,6 +30,10 @@ import java.nio.ByteOrder;
 import static com.sequoiadb.util.Helper.bsonEndianConvert;
 
 public abstract class SdbRequest extends SdbMsgHeader implements Request {
+
+    protected static final byte[] EMPTY_BSON_BYTES = Helper.encodeBSONObj(new BasicBSONObject(), Helper.ENCODING_TYPE);
+    protected static final int ALIGNED_EMPTY_BSON_LENGTH = Helper.alignedSize(EMPTY_BSON_BYTES.length);
+
     protected SdbRequest() {
         length = HEADER_LENGTH;
     }
@@ -48,22 +54,38 @@ public abstract class SdbRequest extends SdbMsgHeader implements Request {
     }
 
     @Override
-    public void encode( ByteBuffer out, SdbProtocolVersion version ) {
-        switch ( version ) {
+    public void encode(SdbProtocolVersion version, String charset) {
+        switch (version) {
             case SDB_PROTOCOL_VERSION_V1:
-                encodeMsgHeaderV1( out );
+                // old version only support UTF-8
+                encodeWithCharset(ClientCharsetEnum.UTF_8.getName());
                 break;
             case SDB_PROTOCOL_VERSION_V2:
-                encodeMsgHeaderV2( out );
+                encodeWithCharset(charset);
                 break;
             default:
-                throw new BaseException( SDBError.SDB_NET_BROKEN_MSG,
-                        "Message protocol version error!" );
+                throw new BaseException(SDBError.SDB_NET_BROKEN_MSG,
+                        "Message protocol version error!");
         }
-        encodeBody(out);
     }
 
-    protected void encodeMsgHeaderV1(ByteBuffer out) {
+    @Override
+    public void writeBuffer(ByteBuffer out, SdbProtocolVersion version) {
+        switch (version) {
+            case SDB_PROTOCOL_VERSION_V1:
+                writeMsgHeaderV1(out);
+                break;
+            case SDB_PROTOCOL_VERSION_V2:
+                writeMsgHeaderV2(out);
+                break;
+            default:
+                throw new BaseException(SDBError.SDB_NET_BROKEN_MSG,
+                        "Message protocol version error!");
+        }
+        writeMsgBody(out);
+    }
+
+    protected void writeMsgHeaderV1(ByteBuffer out) {
         int len = length - HEADER_LENGTH + HEADER_LENGTH_V1;
         out.limit( len );
         out.putInt(len);
@@ -73,7 +95,7 @@ public abstract class SdbRequest extends SdbMsgHeader implements Request {
         out.putLong(requestId);
     }
 
-    protected void encodeMsgHeaderV2(ByteBuffer out) {
+    protected void writeMsgHeaderV2(ByteBuffer out) {
         out.putInt( length );
         out.putInt( eye );
         out.putInt( tid );
@@ -86,9 +108,11 @@ public abstract class SdbRequest extends SdbMsgHeader implements Request {
         out.put( reserve );
     }
 
-    protected abstract void encodeBody(ByteBuffer out);
+    protected abstract void writeMsgBody(ByteBuffer out);
 
-    protected static void encodeBSONBytes(byte[] objBytes, ByteBuffer out) {
+    protected abstract void encodeWithCharset(String charset);
+
+    protected static void writeBSONBytes(byte[] objBytes, ByteBuffer out) {
         if (out.order() == ByteOrder.BIG_ENDIAN) {
             bsonEndianConvert(objBytes, 0, objBytes.length, true);
         }

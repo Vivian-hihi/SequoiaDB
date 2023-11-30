@@ -86,18 +86,34 @@ public final class Helper {
     }
 
     public static byte[] encodeBSONObj(BSONObject obj) {
-        return encodeBSONObj(obj, null);
+        return encodeBSONObj(obj, null, null);
+    }
+
+    public static byte[] encodeBSONObj(BSONObject obj, String charset) {
+        return encodeBSONObj(obj, null, charset);
     }
 
     public static byte[] encodeBSONObj(BSONObject obj, BSONObject extendObj) {
-        return BSON.encode(obj, extendObj);
+        return BSON.encode(obj, extendObj, null);
+    }
+
+    public static byte[] encodeBSONObj(BSONObject obj, BSONObject extendObj, String charset) {
+        return BSON.encode(obj, extendObj, charset);
     }
 
     public static BSONObject decodeBSONBytes(byte[] bytes) {
-        return BSON.decode(bytes);
+        return BSON.decode(bytes, null);
+    }
+
+    public static BSONObject decodeBSONBytes(byte[] bytes, String charset) {
+        return BSON.decode(bytes, charset);
     }
 
     public static BSONObject decodeBSONObject(ByteBuffer in) {
+        return decodeBSONObject(in, null);
+    }
+    
+    public static BSONObject decodeBSONObject(ByteBuffer in, String charset) {
         int position = in.position();
         int length = in.getInt(position);
 
@@ -105,7 +121,7 @@ public final class Helper {
             bsonEndianConvert(in.array(), position, length, false);
         }
 
-        BSONObject obj = BSON.decode(in.array(), position);
+        BSONObject obj = BSON.decode(in.array(), position, charset);
 
         if (length < in.remaining()) {
             int alignedSize = alignedSize(length);

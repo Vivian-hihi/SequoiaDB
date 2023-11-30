@@ -42,6 +42,8 @@ public class InsertRequest extends SdbRequest {
     private byte[] clNameBytes;
     private List<byte[]> docsBytes;
     private Object oid;
+    private final String collectionName;
+    private Object data;
 
     private InsertRequest(String collectionName) {
         opCode = MsgOpCode.INSERT_REQ;
@@ -50,24 +52,77 @@ public class InsertRequest extends SdbRequest {
         if (collectionName == null || collectionName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "Collection name is null or empty");
         }
-
-        try {
-            this.clNameBytes = collectionName.getBytes(Helper.ENCODING_TYPE);
-            length += Helper.alignedSize(this.clNameBytes.length + 1);
-        }catch (UnsupportedEncodingException e) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, e);
-        }
+        this.collectionName = collectionName;
     }
 
     public InsertRequest(String collectionName, BSONObject doc, int flag) {
         this(collectionName);
-
-        BSONObject extendObj = null;
         this.flag = flag;
 
         if (doc == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "doc is null");
         }
+        this.data = doc;
+
+        // Inform coord or data nodes that the '_id' field is included in the record.
+        this.flag |= MsgConstants.FLG_INSERT_HAS_ID_FIELD;
+    }
+
+    public InsertRequest(String collectionName, List<BSONObject> docs, int flag) {
+        this(collectionName);
+        this.flag = flag;
+
+        if (docs == null || docs.size() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "docs is null or empty");
+        }
+
+        this.data = docs;
+        // Inform coord or data nodes that the '_id' field is included in records.
+        this.flag |= MsgConstants.FLG_INSERT_HAS_ID_FIELD;
+    }
+
+    public Object getOIDValue() {
+        return oid;
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        try {
+            this.clNameBytes = collectionName.getBytes(charset);
+            length += Helper.alignedSize(this.clNameBytes.length + 1);
+        }catch (UnsupportedEncodingException e) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, e);
+        }
+
+        if (data instanceof BSONObject) {
+            encodeOne(charset);
+        } else if (data instanceof List){
+            encodeMany(charset);
+        } else {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "error data type");
+        }
+    }
+
+    @Override
+    protected void writeMsgBody(ByteBuffer out) {
+        out.putInt(version);
+        out.putShort(w);
+        out.putShort(padding);
+        out.putInt(flag);
+        out.putInt(clNameBytes.length);
+        out.put(clNameBytes);
+        out.put((byte) 0); // end of string
+        int length = clNameBytes.length + 1;
+        int paddingLen = Helper.alignedSize(length) - length;
+        Helper.fillZero(out, paddingLen);
+        for (byte[] docBytes : docsBytes) {
+            writeBSONBytes(docBytes, out);
+        }
+    }
+
+    private void encodeOne(String charset) {
+        BSONObject doc = (BSONObject) data;
+        BSONObject extendObj = null;
 
         Object objId = doc.get(OID);
         if (objId == null) {
@@ -81,27 +136,17 @@ public class InsertRequest extends SdbRequest {
                 doc.put(OID, objId);
             }
         }
-        docsBytes = new ArrayList<byte[]>(1);
-        byte[] docBytes = Helper.encodeBSONObj(doc, extendObj);
+
+        byte[] docBytes = Helper.encodeBSONObj(doc, extendObj, charset);
+        docsBytes = new ArrayList<>(1);
         docsBytes.add(docBytes);
         length += Helper.alignedSize(docBytes.length);
-        
-        // Inform coord or data nodes that the '_id' field is included in the record.
-        this.flag |= MsgConstants.FLG_INSERT_HAS_ID_FIELD;
     }
 
-    public InsertRequest(String collectionName, List<BSONObject> docs, int flag) {
-        this(collectionName);
+    private void encodeMany(String charset) {
+        List<BSONObject> docs = (List<BSONObject>)data;
+        this.docsBytes = new ArrayList<>(docs.size());
 
-        this.flag = flag;
-
-        if (docs == null || docs.size() == 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "docs is null or empty");
-        }
-        if ((flag & InsertOption.FLG_INSERT_RETURN_OID) != 0) {
-            oid = new BasicBSONList();
-        }
-        docsBytes = new ArrayList<byte[]>(docs.size());
         int index = 0;
         BasicBSONObject extendObj = new BasicBSONObject();
         for (BSONObject doc : docs) {
@@ -111,6 +156,9 @@ public class InsertRequest extends SdbRequest {
                 extendObj.put(OID, objId);
             }
             if ((flag & InsertOption.FLG_INSERT_RETURN_OID) != 0) {
+                if (oid == null) {
+                    oid = new BasicBSONList();
+                }
                 ((BasicBSONList) oid).put(index++, objId);
             }
             // Compatible with previous behavior
@@ -118,34 +166,10 @@ public class InsertRequest extends SdbRequest {
                 doc.put(OID, objId);
             }
 
-            byte[] docBytes = Helper.encodeBSONObj(doc, extendObj);
+            byte[] docBytes = Helper.encodeBSONObj(doc, extendObj, charset);
             extendObj.clear();
             docsBytes.add(docBytes);
             length += Helper.alignedSize(docBytes.length);
-        }
-
-        // Inform coord or data nodes that the '_id' field is included in records.
-        this.flag |= MsgConstants.FLG_INSERT_HAS_ID_FIELD;
-    }
-
-    public Object getOIDValue() {
-        return oid;
-    }
-
-    @Override
-    protected void encodeBody(ByteBuffer out) {
-        out.putInt(version);
-        out.putShort(w);
-        out.putShort(padding);
-        out.putInt(flag);
-        out.putInt(clNameBytes.length);
-        out.put(clNameBytes);
-        out.put((byte) 0); // end of string
-        int length = clNameBytes.length + 1;
-        int paddingLen = Helper.alignedSize(length) - length;
-        Helper.fillZero(out, paddingLen);
-        for (byte[] docBytes : docsBytes) {
-            encodeBSONBytes(docBytes, out);
         }
     }
 }

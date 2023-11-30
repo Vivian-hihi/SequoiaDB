@@ -1,5 +1,3 @@
-// BSONEncoder.java
-
 /**
  *      Copyright (C) 2008 10gen Inc.
  *
@@ -18,6 +16,7 @@
 
 package org.bson;
 
+import static java.lang.String.format;
 import static org.bson.BSON.ARRAY;
 import static org.bson.BSON.BINARY;
 import static org.bson.BSON.BOOLEAN;
@@ -44,6 +43,7 @@ import static org.bson.BSON.UNDEFINED;
 import static org.bson.BSON.NUMBER_DECIMAL;
 import static org.bson.BSON.regexFlags;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.nio.Buffer;
@@ -71,9 +71,16 @@ import org.bson.util.DateInterceptUtil;
 public class BasicBSONEncoder implements BSONEncoder {
 
 	static final boolean DEBUG = false;
+
+	private String charset;
 	
 	public BasicBSONEncoder() {
+		charset = null;
+	}
 
+	@Override
+	public void setCharset(String charset) {
+		this.charset = charset;
 	}
 
 	//@Override
@@ -131,7 +138,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 	 */
 	//@Override
 	public int putObject(BSONObject o) {
-		return putObject(null, o, null);
+		return putObject(o, null);
 	}
 
 	public int putObject(BSONObject o, BSONObject extendObj) {
@@ -371,7 +378,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 		int temp = _buf.getPosition();
 		_buf.writeInt(0);
 		_putValueString(code.getCode());
-		putObject(code.getScope());
+		putObject(code.getScope(), null);
 		_buf.writeInt(temp, _buf.getPosition() - temp);
 	}
 
@@ -507,10 +514,31 @@ public class BasicBSONEncoder implements BSONEncoder {
 		b.limit(b.capacity());
 	}
 
+	protected int _put(String str) {
+		if (charset == null || charset.isEmpty() || charset.equals("UTF-8")) {
+			return _putStrWithUTF8(str);
+		} else {
+			return _putStrWithCharset(str, charset);
+		}
+	}
+
+	protected int _putStrWithCharset(final String str, final String charset) {
+		try {
+			byte[] data = str.getBytes(charset);
+			_buf.write(data);
+
+			_buf.write((byte) 0);
+			return data.length + 1;
+		} catch (UnsupportedEncodingException e) {
+			throw new BSONException(format("conversion encoding failed, data=%s, charset=%s, detail=%s", str, charset,
+					e.getMessage()));
+		}
+	}
+
 	/**
 	 * puts as utf-8 string
 	 */
-	protected int _put(String str) {
+	protected int _putStrWithUTF8(String str) {
 
 		final int len = str.length();
 		int total = 0;
@@ -544,18 +572,6 @@ public class BasicBSONEncoder implements BSONEncoder {
 		_buf.write((byte) 0);
 		total++;
 		return total;
-	}
-
-	public void writeInt(int x) {
-		_buf.writeInt(x);
-	}
-
-	public void writeLong(long x) {
-		_buf.writeLong(x);
-	}
-
-	public void writeCString(String s) {
-		_put(s);
 	}
 
 	protected OutputBuffer _buf;

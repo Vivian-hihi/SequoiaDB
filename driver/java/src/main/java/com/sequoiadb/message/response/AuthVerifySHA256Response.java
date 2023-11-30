@@ -27,9 +27,9 @@ public class AuthVerifySHA256Response extends CommonResponse {
     BSONObject data = null;
 
     @Override
-    protected void decodeData(ByteBuffer in) {
+    protected void decodeData(ByteBuffer in, String charset) {
         if (flag == 0 && in.hasRemaining()) {
-            ResultSet resultSet = new ResultSet(in, returnedNum);
+            ResultSet resultSet = new ResultSet(in, returnedNum, charset);
             data = resultSet.getNext();
         }
     }

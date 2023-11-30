@@ -28,4 +28,6 @@ public interface BSONEncoder {
     public void done();
 
     void set( OutputBuffer out );
+
+    void setCharset(String charset);
 }

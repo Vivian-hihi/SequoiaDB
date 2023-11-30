@@ -29,8 +29,6 @@ public class RemoveUserRequest extends AuthRequest {
         obj.put(MsgConstants.AUTH_PASSWD, md5Pwd);
 
         opCode = MsgOpCode.AUTH_DELETE_USER_REQ;
-
-        bsonBytes = Helper.encodeBSONObj(obj);
-        length += Helper.alignedSize(bsonBytes.length);
+        this.obj = obj;
     }
 }

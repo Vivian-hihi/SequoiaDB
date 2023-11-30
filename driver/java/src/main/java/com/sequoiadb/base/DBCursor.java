@@ -156,7 +156,7 @@ public class DBCursor implements Closeable {
         }
 
         if (currentRaw != null) {
-            currentObj = Helper.decodeBSONBytes(currentRaw);
+            currentObj = Helper.decodeBSONBytes(currentRaw, sequoiadb.getRespCharset());
             return currentObj;
         }
 

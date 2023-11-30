@@ -302,4 +302,52 @@ public class CLInsert {
         Assert.assertTrue( result3_1.equals( result3_2 ) );
         Assert.assertEquals( result3_1.hashCode(), result3_2.hashCode() );
     }
+
+    @Test
+    public void insertWithoutOidTest() {
+        InsertOption option = new InsertOption();
+        option.setFlag(InsertOption.FLG_INSERT_RETURN_OID);
+
+        // case 1: no return oid flag
+        BSONObject data1 = new BasicBSONObject();
+        data1.put("b", 1);
+        InsertResult result1 = cl.insertRecord(data1);
+        Assert.assertEquals(1, result1.getInsertNum());
+        Assert.assertNull(data1.get("_id"));
+
+        // case 2: return oid flag
+        BSONObject data2 = new BasicBSONObject();
+        data2.put("b", 2);
+
+        InsertResult result2 = cl.insertRecord(data2, option);
+        Assert.assertEquals(1, result2.getInsertNum());
+        Assert.assertNotNull(data2.get("_id"));
+        Assert.assertEquals(result2.getOid(), data2.get("_id"));
+
+        // case 3: bulk insert, no return oid flag
+        List<BSONObject> dataList = new ArrayList<>();
+        BSONObject o1 = new BasicBSONObject("b", 3);
+        BSONObject o2 = new BasicBSONObject("b", 4);
+        dataList.add(o1);
+        dataList.add(o2);
+
+        InsertResult result3 = cl.bulkInsert(dataList);
+        Assert.assertEquals(dataList.size(), result3.getInsertNum());
+        Object oid1 = o1.get("_id");
+        Object oid2 = o2.get("_id");
+        Assert.assertNotNull(oid1);
+        Assert.assertNotNull(oid2);
+
+        // case 4: bulk insert, return oid flag
+        o1.removeField("_id");
+        o2.removeField("_id");
+
+        InsertResult result4 = cl.bulkInsert(dataList, option);
+        Assert.assertEquals(dataList.size(), result4.getInsertNum());
+        List<Object> oidList = result4.getOidList();
+        oid1 = o1.get("_id");
+        oid2 = o2.get("_id");
+        Assert.assertTrue(oidList.contains(oid1));
+        Assert.assertTrue(oidList.contains(oid2));
+    }
 }

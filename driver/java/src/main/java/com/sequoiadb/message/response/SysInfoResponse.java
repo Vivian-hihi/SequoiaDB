@@ -43,7 +43,6 @@ public class SysInfoResponse extends SysInfoHeader implements Response {
     // Fingerprint of the reply message. Actually part of the md5 value.
     private byte fingerprint[] = new byte[4];
 
-
     private ByteOrder byteOrder;
     private SdbProtocolVersion peerProtocolVersion = SdbProtocolVersion.SDB_PROTOCOL_VERSION_INVALID;
 
@@ -78,7 +77,7 @@ public class SysInfoResponse extends SysInfoHeader implements Response {
     }
 
     @Override
-    public void decode(ByteBuffer in, SdbProtocolVersion protocolVersion) {
+    public void decode(ByteBuffer in, SdbProtocolVersion protocolVersion, String charset) {
         // Java platform is BIG_ENDIAN
         in.order(ByteOrder.BIG_ENDIAN);
         specialSysInfoLen = in.getInt();

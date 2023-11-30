@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
+import static java.lang.String.format;
 import static org.bson.BSON.*;
 
 /**
@@ -32,13 +33,24 @@ import static org.bson.BSON.*;
  */
 public class NewBSONDecoder implements BSONDecoder {
 
+    private String charset;
+
+    public NewBSONDecoder() {
+        charset = null;
+    }
+
+    @Override
+    public void setCharset(String charset) {
+        this.charset = charset;
+    }
+
     //@Override
     public BSONObject readObject(final byte [] pData) {
         _length = pData.length;
         final BasicBSONCallback c = new BasicBSONCallback();
         _decode(pData, 0, c);
         return (BSONObject)c.get();
-   }
+    }
 
     @Override
     public BSONObject readObject(byte[] b, int offset) {
@@ -95,38 +107,55 @@ public class NewBSONDecoder implements BSONDecoder {
         return _decode(_data, 0, pCallback);
     }
 
-    private final void _decode() {
+    private void _decode() {
         _callback.objectStart();
         while (decodeElement());
         _callback.objectDone();
     }
 
-    private final String readCstr() {
+    private String readCstr() {
         int length = 0;
+        boolean isDefault = charset == null || charset.isEmpty();
+
         final int offset = _pos;
 
         while (_data[_pos++] != 0) length++;
 
         try {
-            return new String(_data, offset, length, DEFAULT_ENCODING);
-        } catch (final UnsupportedEncodingException uee) {
-            return new String(_data, offset, length);
+            if (isDefault) {
+                return new String(_data, offset, length, DEFAULT_ENCODING);
+            } else {
+                return new String(_data, offset, length, charset);
+            }
+        } catch (final UnsupportedEncodingException e) {
+            if (isDefault) {
+                return new String(_data, offset, length);
+            } else {
+                throw new BSONException(format("unsupported encoding, charset=%s, detail=%s", charset,
+                        e.getMessage()));
+            }
         }
     }
 
-    private final String readUtf8Str() {
+    private String readValueStr() {
         final int length = Bits.readInt(_data, _pos);
         _pos += 4;
 
         if (length <= 0 || length > MAX_STRING) throw new BSONException("String invalid - corruption");
 
         try {
-            final String str = new String(_data, _pos, (length - 1), DEFAULT_ENCODING);
+            String str;
+            if (charset == null || charset.isEmpty()) {
+                str = new String(_data, _pos, (length - 1), DEFAULT_ENCODING);
+            } else {
+                str = new String(_data, _pos, (length - 1), charset);
+            }
             _pos += length;
             return str;
 
-        } catch (final UnsupportedEncodingException uee) {
-            throw new BSONException("What is in the db", uee);
+        } catch (final UnsupportedEncodingException e) {
+            throw new BSONException(format("unsupported encoding, charset=%s, detail=%s", charset,
+                    e.getMessage()));
         }
     }
 
@@ -244,11 +273,11 @@ public class NewBSONDecoder implements BSONDecoder {
             }
 
             case SYMBOL: {
-                _callback.gotSymbol(name, readUtf8Str());
+                _callback.gotSymbol(name, readValueStr());
                 return true;
             }
             case STRING: {
-                _callback.gotString(name, readUtf8Str());
+                _callback.gotString(name, readValueStr());
                 return true;
             }
 
@@ -305,13 +334,13 @@ public class NewBSONDecoder implements BSONDecoder {
             }
 
             case CODE: {
-                _callback.gotCode(name, readUtf8Str());
+                _callback.gotCode(name, readValueStr());
                 return true;
             }
 
             case CODE_W_SCOPE: {
                 _pos += 4;
-                _callback.gotCodeWScope(name, readUtf8Str(), _readBasicObject());
+                _callback.gotCodeWScope(name, readValueStr(), _readBasicObject());
                 return true;
             }
 
@@ -383,4 +412,3 @@ public class NewBSONDecoder implements BSONDecoder {
     private int _pos = 0;
     private BSONCallback _callback;
 }
-

@@ -29,7 +29,7 @@ public class AuthVerifyMD5Request extends AuthRequest {
         BSONObject obj = new BasicBSONObject();
         obj.put(MsgConstants.AUTH_USER, userName);
         obj.put(MsgConstants.AUTH_PASSWD, md5Pwd);
-        bsonBytes = Helper.encodeBSONObj(obj);
-        length += Helper.alignedSize(bsonBytes.length);
+
+        this.obj = obj;
     }
 }

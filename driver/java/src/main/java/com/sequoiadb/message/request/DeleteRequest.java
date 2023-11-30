@@ -16,28 +16,27 @@
 
 package com.sequoiadb.message.request;
 
-import com.sequoiadb.base.options.DeleteOption;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
 import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class DeleteRequest extends SdbRequest {
     private static final int FIXED_LENGTH = 72;
-    private static final byte[] EMPTY_BSON_BYTES = Helper.encodeBSONObj(new BasicBSONObject());
-    private static final int ALIGNED_EMPTY_BSON_LENGTH = Helper.alignedSize(EMPTY_BSON_BYTES.length);
     private static final int version = 1;
     private static final short w = 0;
     private static final short padding = 0;
-    private int flag = 0;
+    private final int flag;
     private byte[] clNameBytes;
     private byte[] matcherBytes;
     private byte[] hintBytes;
+    private final String collectionName;
+    private final BSONObject matcher;
+    private final BSONObject hint;
 
     public DeleteRequest(String collectionName, BSONObject matcher, BSONObject hint, int flag) {
         opCode = MsgOpCode.DELETE_REQ;
@@ -46,9 +45,16 @@ public class DeleteRequest extends SdbRequest {
         if (collectionName == null || collectionName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "Collection name is null or empty");
         }
+        this.collectionName = collectionName;
+        this.matcher = matcher;
+        this.hint = hint;
+        this.flag = flag;
+    }
 
+    @Override
+    protected void encodeWithCharset(String charset) {
         try {
-            this.clNameBytes = collectionName.getBytes(Helper.ENCODING_TYPE);
+            this.clNameBytes = collectionName.getBytes(charset);
             length += Helper.alignedSize(this.clNameBytes.length + 1);
         }catch (UnsupportedEncodingException e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
@@ -58,7 +64,7 @@ public class DeleteRequest extends SdbRequest {
             matcherBytes = EMPTY_BSON_BYTES.clone();
             length += ALIGNED_EMPTY_BSON_LENGTH;
         } else {
-            matcherBytes = Helper.encodeBSONObj(matcher);
+            matcherBytes = Helper.encodeBSONObj(matcher, charset);
             length += Helper.alignedSize(matcherBytes.length);
         }
 
@@ -66,14 +72,13 @@ public class DeleteRequest extends SdbRequest {
             hintBytes = EMPTY_BSON_BYTES.clone();
             length += ALIGNED_EMPTY_BSON_LENGTH;
         } else {
-            hintBytes = Helper.encodeBSONObj(hint);
+            hintBytes = Helper.encodeBSONObj(hint, charset);
             length += Helper.alignedSize(hintBytes.length);
         }
-        this.flag = flag;
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
+    protected void writeMsgBody(ByteBuffer out) {
         out.putInt(version);
         out.putShort(w);
         out.putShort(padding);
@@ -84,7 +89,7 @@ public class DeleteRequest extends SdbRequest {
         int length = clNameBytes.length + 1;
         int paddingLen = Helper.alignedSize(length) - length;
         Helper.fillZero(out, paddingLen);
-        encodeBSONBytes(matcherBytes, out);
-        encodeBSONBytes(hintBytes, out);
+        writeBSONBytes(matcherBytes, out);
+        writeBSONBytes(hintBytes, out);
     }
 }

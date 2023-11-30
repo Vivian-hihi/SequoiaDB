@@ -32,12 +32,12 @@ public abstract class LobRequest extends SdbRequest {
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
-        encodeLobHeader(out);
-        encodeLobBody(out);
+    protected void writeMsgBody(ByteBuffer out) {
+        writeLobHeader(out);
+        writeLobBody(out);
     }
 
-    protected void encodeLobHeader(ByteBuffer out) {
+    protected void writeLobHeader(ByteBuffer out) {
         out.putInt(version);
         out.putShort(w);
         out.putShort(padding);
@@ -46,5 +46,7 @@ public abstract class LobRequest extends SdbRequest {
         out.putInt(bsonLength);
     }
 
-    protected abstract void encodeLobBody(ByteBuffer out);
+    protected abstract void writeLobBody(ByteBuffer out);
+
+    protected abstract void encodeWithCharset(String charset);
 }

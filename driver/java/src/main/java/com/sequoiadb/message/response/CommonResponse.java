@@ -16,6 +16,7 @@
 
 package com.sequoiadb.message.response;
 
+import com.sequoiadb.base.ClientCharsetEnum;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.SdbProtocolVersion;
@@ -62,13 +63,14 @@ public abstract class CommonResponse extends SdbResponse {
     }
 
     @Override
-    protected void decodeBody(ByteBuffer in, SdbProtocolVersion version) {
+    protected void decodeBody(ByteBuffer in, SdbProtocolVersion version, String charset) {
         switch ( version ) {
             case SDB_PROTOCOL_VERSION_V1:
-                decodeCommonBodyV1( in );
+                // old version only support UTF-8
+                decodeCommonBodyV1( in, ClientCharsetEnum.UTF_8.getName());
                 break;
             case SDB_PROTOCOL_VERSION_V2:
-                decodeCommonBodyV2( in );
+                decodeCommonBodyV2( in, charset);
                 break;
             default:
                 throw new BaseException( SDBError.SDB_NET_BROKEN_MSG,
@@ -76,21 +78,21 @@ public abstract class CommonResponse extends SdbResponse {
         }
     }
 
-    private void decodeCommonBodyV1(ByteBuffer in) {
+    private void decodeCommonBodyV1(ByteBuffer in, String charset) {
         contextId = in.getLong();
         flag = in.getInt();
         startFrom = in.getInt();
         returnedNum = in.getInt();
         if (flag == 0) {
-            decodeData(in);
+            decodeData(in, charset);
         } else {
             if (in.hasRemaining()) {
-                errorObj = Helper.decodeBSONObject(in);
+                errorObj = Helper.decodeBSONObject(in, charset);
             }
         }
     }
 
-    private void decodeCommonBodyV2(ByteBuffer in) {
+    private void decodeCommonBodyV2(ByteBuffer in, String charset) {
         contextId = in.getLong();
         flag = in.getInt();
         startFrom = in.getInt();
@@ -98,10 +100,10 @@ public abstract class CommonResponse extends SdbResponse {
         returnedMask = in.getInt();
         dataLen = in.getInt();
         if (flag == 0) {
-            decodeData(in);
+            decodeData(in, charset);
         } else {
             if (in.hasRemaining()) {
-                errorObj = Helper.decodeBSONObject(in);
+                errorObj = Helper.decodeBSONObject(in, charset);
             }
         }
         decodeTailContent();
@@ -112,5 +114,5 @@ public abstract class CommonResponse extends SdbResponse {
         // temporarily not resolved.
     }
 
-    protected abstract void decodeData(ByteBuffer in);
+    protected abstract void decodeData(ByteBuffer in, String charset);
 }

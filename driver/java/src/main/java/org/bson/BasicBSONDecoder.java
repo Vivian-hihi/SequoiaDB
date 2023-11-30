@@ -28,6 +28,13 @@ import org.bson.types.ObjectId;
  * Basic implementation of BSONDecoder interface that creates BasicBSONObject instances
  */
 public class BasicBSONDecoder implements BSONDecoder {
+
+    @Override
+    public void setCharset(String charset) {
+        // not used, so not supported yet.
+        throw new UnsupportedOperationException( "Not supported yet." );
+    }
+
     @Override
     public BSONObject readObject( byte[] b ){
         try {

@@ -18,12 +18,10 @@
 
 package org.bson;
 
-import com.sequoiadb.base.ClientOptions;
 import org.bson.types.*;
 import org.bson.util.ClassMap;
 
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
@@ -402,8 +400,6 @@ public class BSON {
     static ClassMap<List<Transformer>> _decodingHooks =
             new ClassMap<List<Transformer>>();
 
-    static protected Charset _utf8 = Charset.forName("UTF-8");
-
     // ----- static encode/_decode -----
 
     /**
@@ -417,7 +413,13 @@ public class BSON {
 
     // Internal use
     public static byte[] encode(BSONObject o, BSONObject extendObj) {
+        return encode(o, extendObj, null);
+    }
+
+    // Internal use
+    public static byte[] encode(BSONObject o, BSONObject extendObj, String charset) {
         BSONEncoder e = _staticEncoder.get();
+        e.setCharset(charset);
         try {
             return e.encode(o, extendObj);
         } finally {
@@ -431,7 +433,12 @@ public class BSON {
      * @return a BSONObject instance.
      */
     public static BSONObject decode(byte[] b) {
+        return decode(b, null);
+    }
+
+    public static BSONObject decode(byte[] b, String charset) {
         BSONDecoder d = _staticDecoder.get();
+        d.setCharset(charset);
         return d.readObject(b);
     }
 
@@ -443,7 +450,12 @@ public class BSON {
      *
      */
     public static BSONObject decode(byte[] b, int offset) {
+        return decode(b, offset, null);
+    }
+
+    public static BSONObject decode(byte[] b, int offset, String charset) {
         BSONDecoder d = _staticDecoder.get();
+        d.setCharset(charset);
         return d.readObject(b, offset);
     }
 

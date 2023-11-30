@@ -27,6 +27,7 @@ public class LobLockRequest extends LobRequest {
     private static final String FIELD_NAME_OFFSET = "Offset";
     private static final String FIELD_NAME_LENGTH = "Length";
     private byte[] bsonBytes;
+    private final BSONObject obj;
 
     public LobLockRequest(long contextId, long offset, long length) {
         opCode = MsgOpCode.LOB_LOCK_REQ;
@@ -36,14 +37,18 @@ public class LobLockRequest extends LobRequest {
         BSONObject obj = new BasicBSONObject();
         obj.put(FIELD_NAME_OFFSET, offset);
         obj.put(FIELD_NAME_LENGTH, length);
-
-        bsonBytes = Helper.encodeBSONObj(obj);
-        bsonLength = bsonBytes.length;
-        this.length += Helper.alignedSize(bsonBytes.length);
+        this.obj = obj;
     }
 
     @Override
-    protected void encodeLobBody(ByteBuffer out) {
-        encodeBSONBytes(bsonBytes, out);
+    protected void writeLobBody(ByteBuffer out) {
+        writeBSONBytes(bsonBytes, out);
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        bsonBytes = Helper.encodeBSONObj(obj, charset);
+        bsonLength = bsonBytes.length;
+        this.length += Helper.alignedSize(bsonBytes.length);
     }
 }

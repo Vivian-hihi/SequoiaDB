@@ -32,9 +32,11 @@ public class AggregateRequest extends SdbRequest {
     private static final int version = 1;
     private static final short w = 0;
     private static final short padding = 0;
-    private int flag = 0;
+    private final int flag;
     private byte[] clNameBytes;
     private List<byte[]> objsBytes;
+    private final String collectionName;
+    private final List<BSONObject>  objects;
 
     public AggregateRequest(String collectionName, List<BSONObject> objects, int flag) {
         opCode = MsgOpCode.AGGREGATE_REQ;
@@ -43,30 +45,35 @@ public class AggregateRequest extends SdbRequest {
         if (collectionName == null || collectionName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "Collection name is null or empty");
         }
+        this.collectionName = collectionName;
 
         if (objects == null || objects.size() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "Aggregate objects is null or empty");
         }
-
-        try {
-            this.clNameBytes = collectionName.getBytes(Helper.ENCODING_TYPE);
-            length += Helper.alignedSize(this.clNameBytes.length + 1);
-        }catch (UnsupportedEncodingException e) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, e);
-        }
-
-        objsBytes = new ArrayList<byte[]>(objects.size());
-        for (BSONObject obj : objects) {
-            byte[] objBytes = Helper.encodeBSONObj(obj);
-            objsBytes.add(objBytes);
-            length += Helper.alignedSize(objBytes.length);
-        }
+        this.objects = objects;
 
         this.flag = flag;
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
+    protected void encodeWithCharset(String charset) {
+        try {
+            this.clNameBytes = collectionName.getBytes(charset);
+            length += Helper.alignedSize(this.clNameBytes.length + 1);
+        }catch (UnsupportedEncodingException e) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, e);
+        }
+
+        objsBytes = new ArrayList<>(objects.size());
+        for (BSONObject obj : objects) {
+            byte[] objBytes = Helper.encodeBSONObj(obj, charset);
+            objsBytes.add(objBytes);
+            length += Helper.alignedSize(objBytes.length);
+        }
+    }
+
+    @Override
+    protected void writeMsgBody(ByteBuffer out) {
         out.putInt(version);
         out.putShort(w);
         out.putShort(padding);
@@ -78,7 +85,7 @@ public class AggregateRequest extends SdbRequest {
         int paddingLen = Helper.alignedSize(length) - length;
         Helper.fillZero(out, paddingLen);
         for (byte[] docBytes : objsBytes) {
-            encodeBSONBytes(docBytes, out);
+            writeBSONBytes(docBytes, out);
         }
     }
 }

@@ -22,8 +22,8 @@ import java.nio.ByteBuffer;
 
 public class GetMoreRequest extends SdbRequest {
     private static final int LENGTH = 68;
-    private long contextId;
-    private int returnedNum;
+    private final long contextId;
+    private final int returnedNum;
 
     public GetMoreRequest(long contextId, int returnedNum) {
         opCode = MsgOpCode.GET_MORE_REQ;
@@ -33,8 +33,13 @@ public class GetMoreRequest extends SdbRequest {
     }
 
     @Override
-    protected void encodeBody(ByteBuffer out) {
+    protected void writeMsgBody(ByteBuffer out) {
         out.putLong(contextId);
         out.putInt(returnedNum);
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        // no data
     }
 }

@@ -16,14 +16,24 @@
 
 package com.sequoiadb.message.request;
 
+import com.sequoiadb.util.Helper;
+import org.bson.BSONObject;
+
 import java.nio.ByteBuffer;
 
 public abstract class AuthRequest extends SdbRequest {
 
     protected byte[] bsonBytes;
+    protected BSONObject obj;
 
     @Override
-    public void encodeBody(ByteBuffer out) {
-        encodeBSONBytes(bsonBytes, out);
+    protected void encodeWithCharset(String charset) {
+        bsonBytes = Helper.encodeBSONObj(obj, charset);
+        length += Helper.alignedSize(bsonBytes.length);
+    }
+
+    @Override
+    public void writeMsgBody(ByteBuffer out) {
+        writeBSONBytes(bsonBytes, out);
     }
 }

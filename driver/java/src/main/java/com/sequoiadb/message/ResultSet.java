@@ -28,10 +28,12 @@ public final class ResultSet {
     private final ByteBuffer buffer;
     private final int num;
     private int index;
+    private final String charset;
 
-    public ResultSet(ByteBuffer buffer, int num) {
+    public ResultSet(ByteBuffer buffer, int num, String charset) {
         this.buffer = buffer;
         this.num = num;
+        this.charset = charset;
     }
 
     public final int getNum() {
@@ -49,7 +51,7 @@ public final class ResultSet {
     public BSONObject getNext() {
         if (hasNext()) {
             index++;
-            return Helper.decodeBSONObject(buffer);
+            return Helper.decodeBSONObject(buffer, charset);
         } else {
             return null;
         }

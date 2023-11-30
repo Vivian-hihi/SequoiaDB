@@ -24,9 +24,7 @@ public class AuthVerifySHA256Request extends AuthRequest {
 
     private AuthVerifySHA256Request(BSONObject obj) {
         opCode = MsgOpCode.AUTH_VERIFY1_REQ;
-
-        bsonBytes = Helper.encodeBSONObj(obj);
-        length += Helper.alignedSize(bsonBytes.length);
+        this.obj = obj;
     }
 
     public static AuthVerifySHA256Request step1(String userName,
@@ -50,5 +48,4 @@ public class AuthVerifySHA256Request extends AuthRequest {
         obj.put(MsgConstants.AUTH_TYPE, MsgConstants.AUTH_TYPE_MD5_PWD);
         return new AuthVerifySHA256Request(obj);
     }
-
 }

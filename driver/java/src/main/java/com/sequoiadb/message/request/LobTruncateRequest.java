@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 
 public class LobTruncateRequest extends LobRequest {
     private byte[] bsonBytes;
+    private final BSONObject obj;
 
     public LobTruncateRequest(BSONObject obj) {
         opCode = MsgOpCode.LOB_TRUNCATE_REQ;
@@ -33,14 +34,18 @@ public class LobTruncateRequest extends LobRequest {
         if (obj == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "obj is null");
         }
-
-        bsonBytes = Helper.encodeBSONObj(obj);
-        bsonLength = bsonBytes.length;
-        length += Helper.alignedSize(bsonBytes.length);
+        this.obj = obj;
     }
 
     @Override
-    protected void encodeLobBody(ByteBuffer out) {
-        encodeBSONBytes(bsonBytes, out);
+    protected void writeLobBody(ByteBuffer out) {
+        writeBSONBytes(bsonBytes, out);
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        bsonBytes = Helper.encodeBSONObj(obj, charset);
+        bsonLength = bsonBytes.length;
+        length += Helper.alignedSize(bsonBytes.length);
     }
 }

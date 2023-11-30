@@ -37,8 +37,6 @@ public class CreateUserRequest extends AuthRequest {
         }
 
         opCode = MsgOpCode.AUTH_CREATE_USER_REQ;
-
-        bsonBytes = Helper.encodeBSONObj(obj);
-        length += Helper.alignedSize(bsonBytes.length);
+        this.obj = obj;
     }
 }

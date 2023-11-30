@@ -25,5 +25,5 @@ import java.nio.ByteBuffer;
  * @since 2.9
  */
 public interface Response extends Msg {
-    void decode(ByteBuffer in, SdbProtocolVersion protocolVersion);
+    void decode(ByteBuffer in, SdbProtocolVersion protocolVersion, String charset);
 }

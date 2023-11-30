@@ -75,6 +75,7 @@ public class Sequoiadb implements Closeable {
     private SdbProtocolVersion protocolVersion = SdbProtocolVersion.SDB_PROTOCOL_VERSION_INVALID;
     private int closeAllCursorMark = 0;
     private SdbAuthVersion authVersion = SdbAuthVersion.SDB_AUTH_MD5;
+    private ConfigOptions netConfig;
 
     private final int MAX_USERNAME_LENGTH = 256;
     private final int MAX_PASSWORD_LENGTH = 256;
@@ -624,12 +625,14 @@ public class Sequoiadb implements Closeable {
             options = new ConfigOptions();
         }
 
+        netConfig = options;
         socketAddress = new InetSocketAddress(host, port);
         connection = new TCPConnection(socketAddress, options);
         connection.connect();
 
         connProxy = new ConnectionProxy(connection);
 
+        // system information use default charset: UTF-8
         SysInfoResponse sysInfoResponse = getSysInfo();
         byteOrder = sysInfoResponse.byteOrder();
         protocolVersion = sysInfoResponse.getPeerProtocolVersion();
@@ -638,6 +641,9 @@ public class Sequoiadb implements Closeable {
         authenticate(username, password, authVersion);
         this.userName = username;
         this.password = password;
+
+        // set client charset
+        setClientCharset();
     }
 
     private void init(String connString, String username, String password, ConfigOptions options) {
@@ -768,6 +774,32 @@ public class Sequoiadb implements Closeable {
         byte[] expectServerProof = authProof.getServerProof();
         if (!Arrays.equals(actualServerProof, expectServerProof)) {
             throw new BaseException(SDBError.SDB_AUTH_AUTHORITY_FORBIDDEN);
+        }
+    }
+
+    private void setClientCharset() {
+        ClientCharset charset = netConfig.getCharset();
+        if (charset == null) {
+            return;
+        }
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put(SdbConstants.FIELD_CLIENT_CHARSET, convertCharsetName(charset.getClientCharset()));
+        obj.put(SdbConstants.FIELD_RESULT_CHARSET, convertCharsetName(charset.getResultsCharset()));
+
+        try {
+            setSessionAttr(obj);
+        } catch (BaseException e) {
+            throw new BaseException(SDBError.SDB_SYS, "Failed to set charset: " + charset, e);
+        }
+    }
+
+    // Java charset name to SDB charset name
+    private String convertCharsetName(ClientCharsetEnum charset) {
+        if (charset == ClientCharsetEnum.UTF_8) {
+            return "UTF8";
+        } else {
+            return charset.getName();
         }
     }
 
@@ -3424,11 +3456,27 @@ public class Sequoiadb implements Closeable {
         return closeAllCursorMark;
     }
 
+    private void sendSysInfoRequest() {
+        SysInfoRequest request = new SysInfoRequest();
+        // system not need to set charset
+        request.encode(null, null);
+        resetRequestBuff(request.length());
+        request.setRequestId(getNextRequestId());
+        request.writeBuffer(requestBuffer, null);
+
+        if (!isClosed()) {
+            // no need to set currentCacheSize here, for only command message use sendRequest
+            connection.send(requestBuffer);
+        } else {
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
+        }
+    }
+
     private SysInfoResponse receiveSysInfoResponse() {
         SysInfoResponse response = new SysInfoResponse();
         byte[] lengthBytes = connection.receive(response.length());
         ByteBuffer buffer = ByteBuffer.wrap(lengthBytes);
-        response.decode(buffer, null);
+        response.decode(buffer, null, null);
         return response;
     }
 
@@ -3462,9 +3510,10 @@ public class Sequoiadb implements Closeable {
     }
 
     private ByteBuffer encodeRequest(Request request) {
+        request.encode(protocolVersion, getReqCharset());
         resetRequestBuff(request.length());
         request.setRequestId(getNextRequestId());
-        request.encode(requestBuffer, protocolVersion);
+        request.writeBuffer(requestBuffer, protocolVersion);
         return requestBuffer;
     }
 
@@ -3485,7 +3534,7 @@ public class Sequoiadb implements Closeable {
         } catch (Exception e) {
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
-        response.decode(buffer, protocolVersion);
+        response.decode(buffer, protocolVersion, getRespCharset());
         return response;
     }
 
@@ -3578,7 +3627,7 @@ public class Sequoiadb implements Closeable {
     }
 
     private SysInfoResponse getSysInfo() {
-        sendRequest(new SysInfoRequest());
+        sendSysInfoRequest();
         return receiveSysInfoResponse();
     }
 
@@ -3639,6 +3688,24 @@ public class Sequoiadb implements Closeable {
      */
     public ConnectionProxy getConnProxy(){
         return connProxy;
+    }
+
+    protected String getReqCharset() {
+        ClientCharset charset = netConfig.getCharset();
+        if (charset == null) {
+            return ClientCharsetEnum.UTF_8.getName();
+        }
+
+        return charset.getClientCharset().getName();
+    }
+
+    protected String getRespCharset() {
+        ClientCharset charset = netConfig.getCharset();
+        if (charset == null) {
+            return ClientCharsetEnum.UTF_8.getName();
+        }
+
+        return charset.getResultsCharset().getName();
     }
 
     /**

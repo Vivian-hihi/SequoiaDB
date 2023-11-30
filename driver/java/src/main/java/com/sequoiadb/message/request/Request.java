@@ -27,5 +27,7 @@ import java.nio.ByteBuffer;
 public interface Request extends Msg {
     void setRequestId(long requestId);
 
-    void encode( ByteBuffer out, SdbProtocolVersion version );
+    void encode(SdbProtocolVersion version, String charset);
+
+    void writeBuffer(ByteBuffer out, SdbProtocolVersion version);
 }

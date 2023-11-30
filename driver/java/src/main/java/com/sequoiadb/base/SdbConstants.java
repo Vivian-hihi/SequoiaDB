@@ -168,4 +168,7 @@ final class SdbConstants {
     final static String FIELD_NAME_ROLE = "Role";
     final static String FIELD_NAME_PRIVILEGES = "Privileges";
     final static String FIELD_NAME_ROLES = "Roles";
+
+    final static String FIELD_CLIENT_CHARSET = "ClientCharset";
+    final static String FIELD_RESULT_CHARSET = "ResultsCharset";
 }

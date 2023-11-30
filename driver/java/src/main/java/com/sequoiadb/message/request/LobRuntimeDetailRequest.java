@@ -12,7 +12,12 @@ public class LobRuntimeDetailRequest extends LobRequest {
     }
 
     @Override
-    protected void encodeLobBody(ByteBuffer out) {
+    protected void writeLobBody(ByteBuffer out) {
         // no lob body
+    }
+
+    @Override
+    protected void encodeWithCharset(String charset) {
+        // no data
     }
 }

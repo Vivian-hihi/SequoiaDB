@@ -19,6 +19,8 @@ package com.sequoiadb.base;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 
+import java.util.Objects;
+
 /**
  * Database Connection Configuration Option
  */
@@ -29,6 +31,7 @@ public class ConfigOptions implements Cloneable {
     private boolean socketKeepAlive = true;
     private boolean useNagle = false;
     private boolean useSSL = false;
+    private ClientCharset charset = null;
 
     /**
      * Set the max auto connect retry time in milliseconds. Default to be 15,000ms.
@@ -158,12 +161,60 @@ public class ConfigOptions implements Cloneable {
     }
 
     /**
+     * Get the client charset.
+     *
+     * @return the client charset
+     */
+    public ClientCharset getCharset() {
+        return charset;
+    }
+
+    /**
+     * Set client charset.
+     *
+     * @param charset an instance of {@link ClientCharset}
+     */
+    public void setCharset(ClientCharset charset) {
+        this.charset = charset;
+    }
+
+    /**
      * Clone the current options.
      *
      * @since 3.4.3
      */
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ConfigOptions that = (ConfigOptions) o;
+
+        return Objects.equals(maxAutoConnectRetryTime, that.maxAutoConnectRetryTime)
+                && Objects.equals(connectTimeout, that.connectTimeout)
+                && Objects.equals(socketTimeout, that.socketTimeout)
+                && Objects.equals(socketKeepAlive, that.socketKeepAlive)
+                && Objects.equals(useNagle, that.useNagle)
+                && Objects.equals(useSSL, that.useSSL)
+                && Objects.equals(charset, that.charset);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maxAutoConnectRetryTime,
+                connectTimeout,
+                socketTimeout,
+                socketKeepAlive,
+                useNagle,
+                useSSL,
+                charset);
     }
 
     @Override
@@ -174,7 +225,8 @@ public class ConfigOptions implements Cloneable {
                 ", socketTimeout: " + socketTimeout +
                 ", socketKeepAlive: " + socketKeepAlive +
                 ", useNagle: " + useNagle +
-                ", useSSL: " + useSSL
+                ", useSSL: " + useSSL +
+                ", charset: " + charset
                 + " }";
     }
 }
