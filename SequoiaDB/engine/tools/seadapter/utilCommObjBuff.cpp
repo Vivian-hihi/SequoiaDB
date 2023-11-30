@@ -36,13 +36,13 @@
    Last Changed =
 
 *******************************************************************************/
-#include "ossMem.hpp"
-#include "ossUtil.hpp"
-#include "utilCommObjBuff.hpp"
-
 #ifdef _DEBUG
 #include <iostream>
 #endif /* _DEBUG */
+
+#include "ossMem.hpp"
+#include "ossUtil.hpp"
+#include "utilCommObjBuff.hpp"
 
 namespace seadapter
 {

@@ -39,6 +39,8 @@
 #ifndef CONSISTENCY_INSPECT_HPP__
 #define CONSISTENCY_INSPECT_HPP__
 
+// system
+#include <iostream>
 // local project
 #include "pmdOptionsMgr.hpp"
 #include "dms.hpp"
@@ -46,8 +48,6 @@
 // third party
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
-// system
-#include <iostream>
 
 // macro for debug
 #ifdef _DEBUG
