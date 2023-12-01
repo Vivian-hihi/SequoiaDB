@@ -1014,6 +1014,7 @@ sequoiadb
 │   │       ├── hex.h
 │   │       ├── misc.h
 │   │       └── optime.h
+│   ├── charsetDef.hpp
 │   ├── cJSON_ext.h
 │   ├── cJSON.h
 │   ├── clientDef.h
