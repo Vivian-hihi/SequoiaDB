@@ -32,7 +32,10 @@
 *******************************************************************************/
 
 #include "sptSPScope.hpp"
+#include "charsetConvertorFactory.hpp"
+#include "charsetConvertorInterface.hpp"
 #include "charsetDef.hpp"
+#include "charsetUtils.hpp"
 #include "sptObjDesc.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
@@ -744,6 +747,16 @@ namespace engine
 
          if ( !strPrint.empty() )
          {
+            string tmpStr = strPrint ;
+            // Convert results with spidermonkey charset(UTF8)
+            // to results with client charset
+            Charset clientCharset = charsetParse( _clientCharset ) ;
+            charsetConvertorInterface *cnv =
+               charsetConvertorFactory::get( CHARSET_UTF8, clientCharset ) ;
+            if ( cnv && (rc = cnv->convert( tmpStr, strPrint )) )
+            {
+               goto error ;
+            }
             ossPrintf( "%s"OSS_NEWLINE, strPrint.c_str() ) ;
          }
       }

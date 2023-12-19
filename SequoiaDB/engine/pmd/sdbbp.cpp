@@ -34,6 +34,7 @@
 
 *******************************************************************************/
 
+#include "ossTypes.h"
 #include "pd.hpp"
 #include "ossMem.hpp"
 #include "ossPrimitiveFileOp.hpp"
@@ -46,6 +47,8 @@
 #include "utilPipe.hpp"
 #include "sptContainer.hpp"
 #include "ossSignal.hpp"
+#include "charsetConvertorFactory.hpp"
+#include "charsetUtils.hpp"
 #if defined (_WINDOWS)
 #include <windows.h>
 #include <io.h>
@@ -238,6 +241,7 @@ INT32 enterDaemonMode ( sptScope *scope ,
 {
    INT32    rc         = SDB_OK ;
    CHAR *   code       = NULL ;
+   const CHAR *   tmpCode    = NULL ;
    BOOLEAN  isexit     = FALSE ;
    INT32    fd         = -1 ;
    INT32    hOutFd     = -1 ;
@@ -250,6 +254,10 @@ INT32 enterDaemonMode ( sptScope *scope ,
    boost::thread writeTh ;
    BOOLEAN hasCrtWriteThread = FALSE ;
    BYTE cZero = 0 ;
+   // Use to convert query string to UTF8 encoded string because only
+   // UTF8 is supported in spidermonkey
+   charsetConvertorInterface *inDataConvertor = NULL ;
+   string query ;
 
    PD_TRACE_ENTRY ( SDB_ENTERDAEMONMODE );
 
@@ -320,6 +328,20 @@ INT32 enterDaemonMode ( sptScope *scope ,
       rc = readFromPipe ( f2bPipe , &code )  ;
       SH_VERIFY_RC
 
+      // Convert charset of input query
+      {
+         query = code ;
+         Charset clientCharset = charsetParse( scope->getClientCharset() );
+         inDataConvertor = charsetConvertorFactory::get( clientCharset,
+                                                         CHARSET_UTF8 ) ;
+         if ( inDataConvertor )
+         {
+            rc = inDataConvertor->convert( StringData(code), query ) ;
+            SH_VERIFY_RC
+         }
+         tmpCode = query.c_str() ;
+      }
+
       rc = ossDisconnectNamedPipe ( f2bPipe ) ;
       SH_VERIFY_RC
 
@@ -351,11 +373,11 @@ INT32 enterDaemonMode ( sptScope *scope ,
          goto error ;
       }
 
-      if ( ossStrcmp ( CMD_QUIT , code ) == 0 )
+      if ( ossStrcmp ( CMD_QUIT , tmpCode ) == 0 )
          isexit = TRUE ;
 
       if ( ! isexit )
-         scope->eval( code, ossStrlen( code ), "(sdbbp)", 1,
+         scope->eval( tmpCode, ossStrlen( tmpCode ), "(sdbbp)", 1,
                       SPT_EVAL_FLAG_PRINT, NULL ) ;
       SAFE_OSS_FREE ( code ) ;
 
@@ -424,6 +446,7 @@ int main ( int argc , const char * argv[] )
    engine::sptContainer container ;
    engine::sptScope *scope = NULL ;
 
+   charsetConvertorFactory::init() ;
    // redirect stdout to log file, so, when we printf error info,
    // thay will be redirected to log file
    if ( ! freopen ( SDB_BP_LOG_FILE , "a" , stdout ) )
@@ -482,6 +505,7 @@ done :
    {
       container.releaseScope( scope ) ;
    }
+   charsetConvertorFactory::deinit() ;
    container.fini() ;
    PD_TRACE_EXITRC ( SDB_SDBBP_MAIN, rc );
    return rc ;

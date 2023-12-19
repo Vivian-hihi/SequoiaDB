@@ -739,7 +739,7 @@ JS_MAPPING_END()
       string fullPath ;
       sptScope *pScope = NULL ;
       string err ;
-      string content ;
+      string content, tmpContent ;
       const sptResultVal *pResultVal = NULL ;
       CHAR realPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
@@ -809,6 +809,30 @@ JS_MAPPING_END()
                            ( "Failed to read file content, filename: " + filename ) ) ;
             goto error ;
          }
+
+         // Convert charset of specified file data in batch mode for sdb shell
+         if ( arg.getInputDataConvertor() )
+         {
+            charsetConvertorInterface *cnv = arg.getInputDataConvertor() ;
+            rc = cnv->convert( StringData(buf), tmpContent ) ;
+            /// free buf after getting converted buf
+            SDB_OSS_FREE( buf ) ;
+            if ( rc )
+            {
+               detail = BSON( SPT_ERR <<
+                  ( "Failed to convert charset of file data, filename: "
+                  + filename ) ) ;
+               goto error ;
+            }
+         }
+         else // No need to convert
+         {
+            tmpContent = buf ;
+            SDB_OSS_FREE( buf ) ;
+         }
+         /// set buf to converted buf
+         buf = (CHAR *) tmpContent.c_str() ;
+
          // skip BOM (notepad auto add flag for UTF-8)
          if ( readLen >= 3 && (UINT8)buf[0] == 0xEF &&
               (UINT8)buf[1] == 0xBB && (UINT8)buf[2] == 0xBF )
@@ -819,9 +843,6 @@ JS_MAPPING_END()
          {
             content = buf ;
          }
-         /// free buf
-         SDB_OSS_FREE( buf ) ;
-         buf = NULL ;
       }
 
       pScope->addJSFileNameToList( fullPath ) ;

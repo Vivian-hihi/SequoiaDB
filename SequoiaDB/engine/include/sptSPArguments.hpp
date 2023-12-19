@@ -34,6 +34,7 @@
 #ifndef SPT_SPARGUMENTS_HPP_
 #define SPT_SPARGUMENTS_HPP_
 
+#include "charsetConvertorInterface.hpp"
 #include "sptArguments.hpp"
 #include "jsapi.h"
 
@@ -77,6 +78,12 @@ namespace engine
 
       virtual sptPrivateData* getPrivateData() const ;
 
+      virtual charsetConvertorInterface*
+         getInputDataConvertor() const ;
+
+      virtual charsetConvertorInterface*
+         getOutputDataConvertor() const ;
+
       virtual UINT32 argc() const
       {
          return _argc ;
@@ -101,6 +108,10 @@ namespace engine
 
    private:
       jsval *_getValAtPos( UINT32 pos ) const ;
+      template<typename T>
+         INT32 _convert(const T &in, T &out) const ;
+      template<typename T>
+         INT32 _convertArray(const vector< T > &in, vector< T > &out) const ;
 
    private:
       JSContext         *_context ;
@@ -108,6 +119,8 @@ namespace engine
       jsval             *_vp ;
       mutable string    _errMsg ;
       sptObject         *_pObject ;
+      charsetConvertorInterface *_inputConvertor ;
+      charsetConvertorInterface *_outputConvertor ;
    } ;
 }
 

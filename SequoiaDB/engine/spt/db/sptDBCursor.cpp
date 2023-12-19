@@ -147,6 +147,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj record ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( _finishRead )
       {
          goto done ;
@@ -180,6 +181,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj record ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( _finishRead )
       {
          goto done ;

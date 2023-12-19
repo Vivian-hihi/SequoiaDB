@@ -115,6 +115,7 @@ namespace engine
       _sdbNode *pNode = NULL ;
       INT32 nodeID = -1 ;
       rc = _rg.getMaster( &pNode ) ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to get master" ) ;
@@ -150,6 +151,7 @@ namespace engine
       _sdbNode *pNode = NULL ;
       vector< INT32 > posVec ;
       INT32 nodeID = -1 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( 0 < arg.argc() && 7 >= arg.argc() )
       {
@@ -260,6 +262,7 @@ namespace engine
       BSONObj configs ;
       _sdbNode *pNode = NULL ;
       INT32 nodeID = -1 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, hostname ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -393,6 +396,7 @@ namespace engine
       string svcname ;
       string dbPath ;
       BSONObj configs ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( arg.argc() == 1 )
       {

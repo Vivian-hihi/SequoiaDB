@@ -112,6 +112,7 @@ namespace engine
       BSONObj options ;
       _sdbCollection *pCL = NULL ;
       sptDBCL *sptCL = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, clName ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -217,6 +218,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string clName ;
 
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, clName ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -248,6 +250,7 @@ namespace engine
       string oldName ;
       string newName ;
       BSONObj options ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, oldName ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -442,6 +445,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR result[ CLIENT_DOMAIN_NAMESZ + 1 ] = { '\0' } ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = _cs.getDomainName( result, CLIENT_DOMAIN_NAMESZ ) ;
       if ( SDB_OK != rc )

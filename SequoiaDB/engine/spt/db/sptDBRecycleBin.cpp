@@ -108,6 +108,7 @@ namespace engine
                                       bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       BSONObj retObj ;
       rc = _recycleBin.getDetail( retObj ) ;
@@ -445,6 +446,7 @@ namespace engine
 
       BSONObj cond ;
       SINT64 count = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getBsonobj( 0, cond, FALSE ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -628,6 +630,7 @@ namespace engine
 
       string recycleName ;
       BSONObj options, result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, recycleName, TRUE ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -677,6 +680,7 @@ namespace engine
 
       string recycleName, returnName ;
       BSONObj options, result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, recycleName, TRUE ) ;
       if( SDB_OUT_OF_BOUND == rc )

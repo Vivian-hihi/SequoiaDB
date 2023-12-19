@@ -34,6 +34,7 @@
 #ifndef SPT_RETURNVAL_HPP_
 #define SPT_RETURNVAL_HPP_
 
+#include "charsetConvertorInterface.hpp"
 #include "core.hpp"
 #include "oss.hpp"
 #include "sptProperty.hpp"
@@ -85,6 +86,12 @@ namespace engine
          return _val.assignUsrObject< T >( value ) ;
       }
 
+      void setConvertor( charsetConvertorInterface *convertor)
+      {
+         _convertor = convertor ;
+         _val.setConvertor( _convertor ) ;
+      }
+
    private:
       /// Return val. If the val's field name is not empty, will
       /// add this val to self as property with the name
@@ -97,6 +104,9 @@ namespace engine
       /// properties of self. Will ignored the item its name is empty.
       SPT_PROPERTIES    _selfProperties ;
 
+      /// convertor used to convert returned data from sdb server
+      /// to spidermonkey, if data is not from sdb server, set it to NULL
+      charsetConvertorInterface *_convertor ;
    } ;
 
    typedef class _sptReturnVal sptReturnVal ;

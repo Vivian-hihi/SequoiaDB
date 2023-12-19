@@ -34,6 +34,7 @@
 #ifndef SPT_ARGUMENTS_HPP_
 #define SPT_ARGUMENTS_HPP_
 
+#include "charsetConvertorInterface.hpp"
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.hpp"
@@ -84,6 +85,12 @@ namespace engine
       virtual INT32 getBoolean( UINT32 pos, BOOLEAN &value,
                                 BOOLEAN strict = TRUE ) const = 0 ;
       virtual sptPrivateData* getPrivateData() const = 0 ;
+
+      virtual charsetConvertorInterface*
+         getInputDataConvertor() const = 0 ;
+
+      virtual charsetConvertorInterface*
+         getOutputDataConvertor() const = 0 ;
 
       virtual UINT32 argc() const = 0 ;
 

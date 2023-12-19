@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "sptProperty.hpp"
+#include "ossTypes.h"
 #include "pd.hpp"
 #include "ossUtil.hpp"
 #include "sptBsonobj.hpp"
@@ -50,6 +51,7 @@ namespace engine
       _attr = SPT_PROP_DEFAULT ;
       _deleted = FALSE ;
       _backwardProp = NULL ;
+      _convertor = NULL ;
    }
 
    void _sptProperty::clear()
@@ -337,6 +339,7 @@ namespace engine
       }
 
       _sptProperty *add = SDB_OSS_NEW _sptProperty() ;
+      add->setConvertor( _convertor ) ;
       if ( add )
       {
          _array.push_back( add ) ;
@@ -348,6 +351,7 @@ namespace engine
                                            UINT32 attr )
    {
       _sptProperty *add = SDB_OSS_NEW _sptProperty() ;
+      add->setConvertor( _convertor ) ;
       if ( add )
       {
          add->setName( name ) ;
@@ -361,6 +365,7 @@ namespace engine
                                        UINT32 attr )
    {
       _backwardProp = SDB_OSS_NEW _sptProperty() ;
+      _backwardProp->setConvertor( _convertor ) ;
       if ( _backwardProp )
       {
          _backwardProp->setName( name ) ;

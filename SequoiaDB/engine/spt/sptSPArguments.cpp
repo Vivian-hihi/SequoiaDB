@@ -32,6 +32,12 @@
 *******************************************************************************/
 
 #include "sptSPArguments.hpp"
+#include "charsetConvertorFactory.hpp"
+#include "charsetConvertorInterface.hpp"
+#include "charsetDef.hpp"
+#include "charsetUtils.hpp"
+#include "ossErr.h"
+#include "ossTypes.h"
 #include "sptSPDef.hpp"
 #include "pd.hpp"
 #include "sptConvertor.hpp"
@@ -39,6 +45,7 @@
 #include "sptSPVal.hpp"
 #include "sptSPObject.hpp"
 #include "sptDBNumberLong.hpp"
+#include <cstddef>
 
 using namespace bson ;
 
@@ -49,13 +56,36 @@ namespace engine
    :_context(context),
     _argc(argc),
     _vp(vp),
-    _pObject( NULL )
+    _pObject( NULL ),
+    _inputConvertor( NULL ),
+    _outputConvertor( NULL )
    {
       SDB_ASSERT( NULL != _context && NULL != _vp, "can not be NULL" ) ;
       if ( pObj )
       {
          _pObject = SDB_OSS_NEW sptSPObject( _context, pObj ) ;
          SDB_ASSERT( _pObject, "Alloc out-of-memory" ) ;
+      }
+
+      sptPrivateData *privateData = NULL ;
+      privateData = getPrivateData() ;
+      if ( privateData && privateData->getScope() )
+      {
+         sptScope* scope = privateData->getScope() ;
+         std::string clientCharset = scope->getResultsCharset() ;
+         Charset clientCS = charsetParse( clientCharset ) ;
+         _inputConvertor = charsetConvertorFactory::get( clientCS,
+                                                         CHARSET_UTF8 ) ;
+         if ( clientCS != CHARSET_UTF8 && NULL == _inputConvertor )
+         {
+            SDB_ASSERT( 0, "Failed to get input data charset convertor" ) ;
+         }
+         _outputConvertor = charsetConvertorFactory::get( CHARSET_UTF8,
+                                                          clientCS ) ;
+         if ( clientCS != CHARSET_UTF8 && NULL == _outputConvertor )
+         {
+            SDB_ASSERT( 0, "Failed to get output data charset convertor" ) ;
+         }
       }
    }
 
@@ -77,6 +107,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       sptSPVal spVal ;
       jsval *val = NULL ;
+      std::string convertedStr ;
 
       _errMsg.clear() ;
 
@@ -107,10 +138,16 @@ namespace engine
          }
       }
 
-      rc = spVal.toString( value ) ;
+      rc = spVal.toString( convertedStr ) ;
       if ( rc )
       {
          _errMsg = "Failed to convert a jsval to string" ;
+         goto error ;
+      }
+
+      rc = _convert( convertedStr, value ) ;
+      if ( rc )
+      {
          goto error ;
       }
 
@@ -124,6 +161,51 @@ namespace engine
    jsval *_sptSPArguments::_getValAtPos( UINT32 pos ) const
    {
       return JS_ARGV( _context, _vp ) + pos ;
+   }
+
+   template<typename T>
+   INT32 _sptSPArguments::_convert( const T &in, T &out ) const
+   {
+      INT32 rc  = SDB_OK ;
+      if ( _outputConvertor )
+      {
+         rc = _outputConvertor->convert(in, out) ;
+         if ( rc )
+         {
+            _errMsg = "Failed to convert charset for string or BSON" ;
+            goto error ;
+         }
+      }
+      else if ( NULL == _outputConvertor ) // No need to convert
+      {
+         out = in ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   template<typename T>
+   INT32 _sptSPArguments::_convertArray( const vector< T > &in,
+                                         vector< T > &out) const
+   {
+      INT32 rc = SDB_OK ;
+      // Convert charset for string or BSONObj
+      for ( size_t i = 0; i < in.size(); i++ )
+      {
+         T convertedObj ;
+         rc = _convert< T > (in[i], convertedObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         out.push_back( convertedObj ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptSPArguments::getBsonobj( UINT32 pos,
@@ -174,10 +256,17 @@ namespace engine
       }
       else
       {
-         rc = convertor.toBson( &spVal, value ) ;
+         bson::BSONObj obj;
+         rc = convertor.toBson( &spVal, obj ) ;
          if ( SDB_OK != rc )
          {
             _errMsg = convertor.getErrMsg() ;
+            goto error ;
+         }
+
+         rc = _convert< BSONObj > ( obj, value ) ;
+         if ( rc )
+         {
             goto error ;
          }
       }
@@ -195,6 +284,7 @@ namespace engine
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
       sptConvertor convertor( _context, strict ) ;
+      vector< bson::BSONObj > convertedObjs ;
 
       _errMsg.clear() ;
 
@@ -227,13 +317,18 @@ namespace engine
          goto error ;
       }
 
-      rc = convertor.toObjArray( jsObj, value ) ;
+      rc = convertor.toObjArray( jsObj, convertedObjs ) ;
       if ( SDB_OK != rc )
       {
          _errMsg = convertor.getErrMsg() ;
          goto error ;
       }
 
+      rc = _convertArray( convertedObjs, value ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -247,6 +342,7 @@ namespace engine
       JSObject *jsObj = NULL ;
       jsval *val = NULL ;
       sptConvertor convertor( _context, strict ) ;
+      vector< string > convertedStr ;
 
       _errMsg.clear() ;
 
@@ -279,13 +375,18 @@ namespace engine
          goto error ;
       }
 
-      rc = convertor.toStrArray( jsObj, value ) ;
+      rc = convertor.toStrArray( jsObj, convertedStr ) ;
       if ( SDB_OK != rc )
       {
          _errMsg = convertor.getErrMsg() ;
          goto error ;
       }
 
+      rc = _convertArray( convertedStr, value ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -406,6 +507,20 @@ namespace engine
    sptPrivateData* _sptSPArguments::getPrivateData( ) const
    {
       return ( sptPrivateData* )JS_GetContextPrivate( _context ) ;
+   }
+
+   // Charset convertor used to convert data from sdb server to
+   // spidermonkey, Charset of output data from spidermonkey is UTF8
+   charsetConvertorInterface* _sptSPArguments::getInputDataConvertor() const
+   {
+      return _inputConvertor ;
+   }
+
+   // Charset convertor used to convert data from spidermonkey to
+   // sdb server, Charset of output data from spidermonkey is UTF8
+   charsetConvertorInterface* _sptSPArguments::getOutputDataConvertor() const
+   {
+      return _outputConvertor ;
    }
 
    BOOLEAN _sptSPArguments::isString( UINT32 pos ) const

@@ -545,6 +545,7 @@ namespace engine
       BSONObj record ;
       BSONObj hint ;
       BSONObj result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getBsonobj( 0, record ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -602,6 +603,7 @@ namespace engine
       BSONObj options ;
       BSONObj result ;
       INT32 flags = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       // Get rule
       if( !arg.isVoid( 0 ) && !arg.isNull( 0 ) )
       {
@@ -711,6 +713,7 @@ namespace engine
       BSONObj options ;
       BSONObj result ;
       INT32 flags = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getBsonobj( 0, rule ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -820,6 +823,7 @@ namespace engine
       BSONObj options ;
       BSONObj result ;
       INT32 flags = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       // get condition
       if( !arg.isNull( 0 ) )
@@ -923,6 +927,7 @@ namespace engine
       BSONObj cond ;
       BSONObj hint ;
       SINT64 count = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getBsonobj( 0, cond, FALSE ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -1181,6 +1186,7 @@ namespace engine
                               _sptReturnVal &rval,
                               bson::BSONObj &detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _dropIndex( arg, rval, detail, FALSE ) ;
    }
 
@@ -1188,6 +1194,7 @@ namespace engine
                                    _sptReturnVal &rval,
                                    bson::BSONObj &detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _dropIndex( arg, rval, detail, TRUE ) ;
    }
 
@@ -1257,6 +1264,7 @@ namespace engine
                               _sptReturnVal &rval,
                               bson::BSONObj &detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _copyIndex( arg, rval, detail, FALSE ) ;
    }
 
@@ -1264,6 +1272,7 @@ namespace engine
                                    _sptReturnVal &rval,
                                    bson::BSONObj &detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _copyIndex( arg, rval, detail, TRUE ) ;
    }
 
@@ -1276,6 +1285,7 @@ namespace engine
       vector< BSONObj > objVec ;
       BSONObj hint ;
       BSONObj result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getArray( 0, objVec ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1415,6 +1425,7 @@ namespace engine
       string sourceName ;
       string targetName ;
       SINT64 taskID = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, sourceName ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1804,6 +1815,7 @@ namespace engine
       sdbLob lob ;
       BSONObjBuilder builder ;
       bson::BSONObj lobRunTimeDetail ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, oidStr ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1860,6 +1872,7 @@ namespace engine
       INT64 readSize = 0 ;
       CHAR *buf = NULL ;
       sdbLob lob ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, filePath ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -1983,6 +1996,7 @@ namespace engine
       UINT64 createTime = 0 ;
       CHAR *buf = NULL ;
       BSONObjBuilder builder ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, oidStr ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -2219,6 +2233,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       OID oid ;
       string timestamp ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if ( arg.argc() > 1 )
       {
@@ -2908,6 +2923,7 @@ namespace engine
       string indexName ;
       bson::BSONObj result ;
       BOOLEAN statDetail = FALSE ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, indexName ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -2950,6 +2966,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       bson::BSONObj result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = _cl.getCollectionStat( result ) ;
       if( SDB_OK != rc )

@@ -34,6 +34,7 @@
 #ifndef SPT_PROPERTY_HPP_
 #define SPT_PROPERTY_HPP_
 
+#include "charsetConvertorInterface.hpp"
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
@@ -112,19 +113,57 @@ namespace engine
       }
       void  setValue( const std::string &value )
       {
-         assignString( value.c_str() ) ;
+         string tmpStr = value ;
+         if ( _convertor )
+         {
+            _convertor->convert( value, tmpStr ) ;
+         }
+         assignString( tmpStr.c_str() ) ;
+
       }
       void  setValue( const CHAR *value )
       {
-         assignString( value ) ;
+         string tmpStr = value ;
+         if ( _convertor )
+         {
+            _convertor->convert( StringData(value), tmpStr ) ;
+         }
+         assignString( tmpStr.c_str() ) ;
       }
       void  setValue( const bson::BSONObj &value )
       {
-         assignBsonobj( value ) ;
+         bson::BSONObj tmpObj = value.copy() ;
+         if ( _convertor )
+         {
+            _convertor->convert(value, tmpObj) ;
+         }
+         assignBsonobj( tmpObj ) ;
       }
       void  setValue( const std::vector< bson::BSONObj > &value )
       {
-         assignBsonArray( value ) ;
+         INT32 tmpRC = SDB_OK ;
+         vector< bson::BSONObj > tmpObjs ;
+         if ( _convertor )
+         {
+            bson::BSONObj tmpObj ;
+            for ( size_t i = 0 ; i < value.size() ; i++ )
+            {
+               tmpRC = _convertor->convert(value[i], tmpObj) ;
+               if ( tmpRC )
+               {
+                  break ;
+               }
+               tmpObjs.push_back( tmpObj ) ;
+            }
+         }
+         if ( SDB_OK == tmpRC )
+         {
+            assignBsonArray( tmpObjs ) ;
+         }
+         else
+         {
+            assignBsonArray( value ) ;
+         }
       }
       void  setNull()
       {
@@ -132,7 +171,12 @@ namespace engine
       }
       void  setJSCode( const CHAR *codeStr )
       {
-         assignJSCode( codeStr ) ;
+         string tmpStr = codeStr ;
+         if ( _convertor )
+         {
+            _convertor->convert( StringData(codeStr), tmpStr ) ;
+         }
+         assignString( tmpStr.c_str() ) ;
       }
 
       template< typename T >
@@ -160,7 +204,17 @@ namespace engine
 
       void  setName( const std::string &name )
       {
-         _name = name ;
+         string tmpStr = name ;
+         if ( _convertor )
+         {
+            _convertor->convert( name, tmpStr ) ;
+         }
+         _name = tmpStr ;
+      }
+
+      void setConvertor( charsetConvertorInterface *convertor )
+      {
+         _convertor = convertor ;
       }
 
    public:
@@ -352,6 +406,7 @@ namespace engine
       /// Forbidden
       _sptProperty( const _sptProperty &other ) ;
       _sptProperty &operator=(const _sptProperty &other) ;
+      charsetConvertorInterface *_convertor ;
 
    } ;
    typedef class _sptProperty sptProperty ;

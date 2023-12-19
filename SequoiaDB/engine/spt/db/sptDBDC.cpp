@@ -321,6 +321,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj retObj ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = _dc.getDetail( retObj ) ;
       if( SDB_OK != rc )
       {

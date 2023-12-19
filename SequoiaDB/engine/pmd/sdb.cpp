@@ -35,8 +35,14 @@
 *******************************************************************************/
 
 #include "charsetConvertorFactory.hpp"
+#include "charsetConvertorInterface.hpp"
+#include "charsetUtils.hpp"
+#include "charsetDef.hpp"
+#include "ossErr.h"
+#include "ossTypes.h"
 #include "sdbOptionMgr.hpp"
 #include "ossProc.hpp"
+#include "sptSPVal.hpp"
 #include "utilLinenoiseWrapper.hpp"
 #include "pd.hpp"
 #include "ossPrimitiveFileOp.hpp"
@@ -58,6 +64,7 @@
 #include "ossSignal.hpp"
 #include <boost/thread/thread.hpp>
 #include <strings.h>
+
 #if defined (_WINDOWS)
 #include <windows.h>
 #else
@@ -95,6 +102,10 @@ namespace po = boost::program_options ;
 po::options_description display ( "Command options" ) ;
 po::positional_options_description destd ;
 po::variables_map vm ;
+
+// Use to convert query string to UTF8 encoded string because only
+// UTF8 is supported in spidermonkey
+charsetConvertorInterface *inDataConvertor = NULL ;
 
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
@@ -375,13 +386,15 @@ error :
 INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
 {
    INT32    rc          = SDB_OK ;
-   CHAR *   code        = NULL ;
+   const CHAR *   code  = NULL ;
    INT64 sec            = 0 ;
    INT64 microSec       = 0 ;
    INT64 tkTime         = 0 ;
    ossTimestamp tmBegin ;
    ossTimestamp tmEnd ;
    string history ;
+   string UTF8Code;
+   CHAR *   tmpCode     = NULL ;
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
@@ -403,8 +416,19 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
    while ( TRUE )
    {
       // code is freed in loop_next: or at the end of this function
-      if ( ! getNextCommand ( "> ", &code ) )
+      if ( ! getNextCommand ( "> ", &tmpCode ) )
          break ;
+      code = tmpCode ;
+      UTF8Code = tmpCode ;
+      rc = SDB_OK ;
+      // Build UTF8 query for spidermonkey
+      if ( inDataConvertor )
+      {
+         rc = inDataConvertor->convert( StringData(code), UTF8Code ) ;
+      }
+      if ( rc )
+         goto loop_next ;
+      code = UTF8Code.c_str() ;
 
       if ( !code || '\0' == code[0] )
          goto loop_next ;
@@ -456,10 +480,10 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
       ossPrintf ( "Takes %lld.%06llds."OSS_NEWLINE , sec, microSec ) ;
 
    loop_next :
-         SAFE_OSS_FREE ( code ) ;
+         SAFE_OSS_FREE ( tmpCode ) ;
    }
 
-   SAFE_OSS_FREE ( code ) ;
+   SAFE_OSS_FREE ( tmpCode ) ;
    PD_TRACE_EXITRC ( SDB_ENTERINTATVMODE, rc );
    return rc ;
 }
@@ -1192,6 +1216,14 @@ int main ( int argc , CHAR **argv )
 
    scope->setClientCharset( argInfo.clientCharset ) ;
    scope->setResultsCharset( argInfo.clientCharset ) ;
+
+   // Init charset convertor for input data
+   {
+      Charset clientCharset = charsetParse( argInfo.clientCharset );
+      inDataConvertor = charsetConvertorFactory::get( clientCharset,
+                                                      CHARSET_UTF8 ) ;
+   }
+
    switch ( argInfo.mode )
    {
    case INTERACTIVE_MODE :

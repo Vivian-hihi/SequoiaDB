@@ -44,6 +44,7 @@ namespace engine
 
    _sptReturnVal::_sptReturnVal()
    {
+      _convertor = NULL ;
    }
 
    _sptReturnVal::~_sptReturnVal()
@@ -67,6 +68,7 @@ namespace engine
                                                      UINT32 attr )
    {
       sptProperty *add = SDB_OSS_NEW sptProperty() ;
+      add->setConvertor( _convertor ) ;
       if ( add )
       {
          add->setName( name ) ;
@@ -80,6 +82,7 @@ namespace engine
                                                 UINT32 attr )
    {
       sptProperty *add = SDB_OSS_NEW sptProperty() ;
+      add->setConvertor( _convertor ) ;
       if ( add )
       {
          add->setName( name ) ;

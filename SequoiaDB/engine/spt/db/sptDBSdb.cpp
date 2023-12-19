@@ -31,6 +31,9 @@
 *******************************************************************************/
 
 #include "sptDBSdb.hpp"
+#include "msgDef.h"
+#include "ossErr.h"
+#include "ossTypes.h"
 #include "sptDBCursor.hpp"
 #include "sptDBRG.hpp"
 #include "sptDBDC.hpp"
@@ -485,8 +488,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string csName ;
-
       rc = arg.getString( 0, csName ) ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "CollectionSpace name must be config" ) ;
@@ -514,6 +517,7 @@ namespace engine
                            bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( arg.argc() < 1 )
       {
          rc = SDB_OUT_OF_BOUND ;
@@ -570,6 +574,7 @@ namespace engine
       _sdbDataCenter *pDC = NULL ;
       sptDBDC *sptDC = NULL ;
       rc = _sptSdb.getDC( &pDC ) ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to get datacenter" ) ;
@@ -612,6 +617,7 @@ namespace engine
 
       _sdbRecycleBin *pRecycleBin = NULL ;
       sptDBRecycleBin *sptRecycleBin = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = _sptSdb.getRecycleBin( &pRecycleBin ) ;
       if( SDB_OK != rc )
@@ -658,6 +664,7 @@ namespace engine
       string csName ;
       BSONObjBuilder optionsBuilder ;
       INT32 pageSize = SDB_PAGESIZE_DEFAULT ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       if( 1 != arg.argc() && 2 != arg.argc() )
       {
          rc = SDB_INVALIDARG ;
@@ -750,6 +757,7 @@ namespace engine
       string rgName ;
       _sdbReplicaGroup *pRG = NULL ;
       sptDBRG *sptRG = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, rgName ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -805,6 +813,7 @@ namespace engine
       string svcname ;
       string dbPath ;
       BSONObj config ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, hostname ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -900,6 +909,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string csName ;
       BSONObj options ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( 1 != arg.argc() && 2 != arg.argc() )
       {
@@ -1591,6 +1601,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string sql ;
       BSONObj result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, sql ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -2006,6 +2017,7 @@ namespace engine
       SDB_SPD_RES_TYPE valueType = SDB_SPD_RES_TYPE_MAX ;
       BSONObj errMsg ;
       BSONObj nextRecord ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, code, FALSE ) ;
       if( SDB_OK != rc )
@@ -2435,6 +2447,29 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to set session attr" ) ;
          goto error ;
       }
+
+      {
+         // update charset info in scope
+         sptPrivateData *privateData = NULL ;
+         privateData = arg.getPrivateData() ;
+         if ( privateData && privateData->getScope() )
+         {
+            sptScope* scope = privateData->getScope() ;
+            const CHAR *fieldName = NULL ;
+            if ( options.hasField( FIELD_NAME_CLIENT_CHARSET ) )
+            {
+               fieldName = options.getStringField( FIELD_NAME_CLIENT_CHARSET ) ;
+               scope->setClientCharset( fieldName ) ;
+            }
+
+            if ( options.hasField( FIELD_NAME_RESULTS_CHARSET ) )
+            {
+               fieldName = options.getStringField( FIELD_NAME_RESULTS_CHARSET ) ;
+               scope->setResultsCharset( fieldName ) ;
+            }
+         }
+      }
+
    done:
       return rc ;
    error:
@@ -2480,6 +2515,7 @@ namespace engine
       BSONArray bsArray ;
       BSONObj options ;
       BSONObjBuilder builder ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, domainName ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -2556,6 +2592,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string name ;
       _sdbDomain *pDomain = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, name ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -2926,6 +2963,7 @@ namespace engine
       string oldName ;
       string newName ;
       BSONObj options ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, oldName ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
@@ -3115,6 +3153,7 @@ namespace engine
       BSONObj options ;
       _sdbSequence *pSequence = NULL ;
       sptDBSequence *pSptSequence = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( arg.argc() < 1 )
       {
@@ -3192,6 +3231,7 @@ namespace engine
       string seqName ;
       _sdbSequence *pSequence = NULL ;
       sptDBSequence *pSptSequence = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( arg.argc() < 1 )
       {
@@ -3360,6 +3400,7 @@ namespace engine
       const BSONObj *optionPtr = NULL ;
       sdbDataSource ds ;
       sptDBDataSource *sptDS = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       // Only the data source name and address list are required all the time.
       if ( arg.argc() < 2 )
@@ -3513,6 +3554,7 @@ namespace engine
       string name ;
       sdbDataSource ds ;
       sptDBDataSource *sptDS = NULL ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = arg.getString( 0, name ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {

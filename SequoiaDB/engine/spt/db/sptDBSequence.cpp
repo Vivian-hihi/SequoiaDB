@@ -120,6 +120,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SINT64 value = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( arg.argc() > 0 )
       {
@@ -146,6 +147,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SINT64 value = 0 ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( arg.argc() > 0 )
       {
@@ -220,6 +222,7 @@ namespace engine
       INT32 increment = 0 ;
       bson::BSONObjBuilder builder( 64 ) ;
       bson::BSONObj result ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if( arg.argc() < 1 )
       {
