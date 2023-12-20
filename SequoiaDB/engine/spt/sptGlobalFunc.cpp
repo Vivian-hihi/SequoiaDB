@@ -333,7 +333,7 @@ JS_MAPPING_END()
                                      BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-
+      sptHelp::getInstance().setConvertor( arg.getOutputDataConvertor() ) ;
       if ( arg.argc() == 0 )
       {
          rc = sptHelp::getInstance().displayGlobalMethod() ;

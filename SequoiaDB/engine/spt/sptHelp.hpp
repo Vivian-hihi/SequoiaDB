@@ -37,6 +37,7 @@
 #ifndef SPTHELP_HPP__
 #define SPTHELP_HPP__
 
+#include "charsetConvertorInterface.hpp"
 #include "sptClassMetaInfo.hpp"
 
 namespace engine
@@ -63,7 +64,8 @@ namespace engine
       INT32                       displayMethod( const string &className,
                                                  BOOLEAN isInstance ) ;
       INT32                       displayGlobalMethod() ;
-      
+
+      void                        setConvertor( charsetConvertorInterface *cnv ) ;
    private:
       INT32                       _displayConstructorMethod( const string &className,
                                           const vector<sptFuncMetaInfo> &input ) ;
@@ -86,6 +88,7 @@ namespace engine
    private:
       static string               _lang ;
       sptClassMetaInfo            _meta ;
+      charsetConvertorInterface   *_convertor ;
    } ;
    typedef class _sptHelp sptHelp ;
 

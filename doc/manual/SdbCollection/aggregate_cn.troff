@@ -8,7 +8,7 @@
 aggregate \- 计算集合中数据的聚合值
 .SH 语法
 .PP
-\f[B]db.collectionspace.collection.aggregate( <subOp1>，[subOp2]，... )\f[]
+\f[B]db.collectionspace.collection.aggregate( <subOp1>, [subOp2], ... )\f[]
 .SH 类别
 .PP
 SdbCollection

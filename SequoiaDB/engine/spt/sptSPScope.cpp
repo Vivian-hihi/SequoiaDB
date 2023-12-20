@@ -110,6 +110,7 @@ namespace engine
       jsClassName.assign( pStr ) ;
       JS_free( cx, pStr ) ;
    
+      sptHelp::getInstance().setConvertor( arg.getOutputDataConvertor() );
       // display method or manpage
       if ( arg.argc() == 0 )
       {

@@ -301,6 +301,11 @@ namespace engine
 #endif // if defined ( SDB_SHELL )
    }
 
+   void _sptHelp::setConvertor( charsetConvertorInterface *cnv)
+   {
+      _convertor = cnv ;
+   }
+
    INT32 _sptHelp::_displayConstructorMethod( const string &className,
                                           const vector<sptFuncMetaInfo> &input )
    {
@@ -500,7 +505,27 @@ namespace engine
       }
       else
       {
-         sdbSplitWords( brief, SPT_BRIEF_SIZE, output ) ;
+         vector<string> UTF8Output ;
+         sdbSplitWords( brief, SPT_BRIEF_SIZE, UTF8Output ) ;
+         if ( _convertor  )
+         {
+            for ( size_t i = 0; i < UTF8Output.size(); i++ )
+            {
+               string clientStr ;
+               rc = _convertor->convert( UTF8Output[i], clientStr ) ;
+               if ( rc )
+               {
+                  ossPrintf( "Failed to convert charset of manual, %s:%d"OSS_NEWLINE,
+                              __FILE__, __LINE__ ) ;
+                  goto error ;
+               }
+               output.push_back( clientStr ) ;
+            }
+         }
+         else
+         {
+            output.swap( UTF8Output ) ;
+         }
       }
 
    done :

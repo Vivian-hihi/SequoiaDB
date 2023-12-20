@@ -8,7 +8,7 @@
 aggregate \- Calculate the aggregate value of the data in the collection
 .SH SYNOPSIS
 .PP
-\f[B]db.collectionspace.collection.aggregate( <subOp1>，[subOp2]，... )\f[]
+\f[B]db.collectionspace.collection.aggregate( <subOp1>, [subOp2], ... )\f[]
 .SH CATEGORY
 .PP
 Collection
