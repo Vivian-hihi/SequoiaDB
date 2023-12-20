@@ -36,6 +36,7 @@
 
 #ifndef __LINENOISE_H
 #define __LINENOISE_H
+#include <string>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +48,11 @@ typedef struct linenoiseCompletions {
   char **cvec;
   char *fill ;
 } linenoiseCompletions;
+
+typedef int (*cmdConvertorCallback) (const std::string &in, std::string &out) ;
+
+void setInConvertor( cmdConvertorCallback convertor ) ;
+void setOutConvertor( cmdConvertorCallback convertor ) ;
 
 typedef void(linenoiseCompletionCallback)(const char *, linenoiseCompletions *);
 void linenoiseSetCompletionCallback(linenoiseCompletionCallback *);

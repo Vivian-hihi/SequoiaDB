@@ -107,6 +107,8 @@ po::variables_map vm ;
 // UTF8 is supported in spidermonkey
 charsetConvertorInterface *inDataConvertor = NULL ;
 
+charsetConvertorInterface *outDataConvertor = NULL ;
+
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
@@ -135,6 +137,28 @@ void printUsage()
    ossPrintf ( "   ./sdb (Interactive mode)"OSS_NEWLINE ) ;
    ossPrintf ( "   ./sdb -f <FILE> (Batch mode), eg: ./sdb -e \"var v = \'123\'\" -f example.js"OSS_NEWLINE ) ;
    ossPrintf ( "   ./sdb -s <CMD> (Front end mode), eg: ./sdb -s \"var db = new Sdb(\'localhost\', 11810)\""OSS_NEWLINE ) ;
+}
+
+int UTF8ToClientCnvCallback (const std::string &in, std::string &out)
+{
+   INT32 rc  = SDB_OK ;
+   out = in ;
+   if ( outDataConvertor )
+   {
+      rc = outDataConvertor->convert( in, out ) ;
+   }
+   return rc ;
+}
+
+int clientToUTF8CnvCallback ( const std::string &in, std::string &out )
+{
+   INT32 rc  = SDB_OK ;
+   out = in ;
+   if ( inDataConvertor )
+   {
+      rc = inDataConvertor->convert( in, out ) ;
+   }
+   return rc ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PARSEARGUMENTS, "parseArguments" )
@@ -399,6 +423,9 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
 
+   setInConvertor( UTF8ToClientCnvCallback ) ;
+   setOutConvertor( clientToUTF8CnvCallback ) ;
+
    // set language for dispaly help info
    sptHelp::setLanguage( lang ) ;
    // set sdb defined can continue get next line function
@@ -467,8 +494,8 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
 
       if ( sdbIsNeedSaveHistory() )
       {
-         linenoiseHistoryAdd ( code ) ;
-         g_lnBuilder.addCmd( code ) ;
+         linenoiseHistoryAdd ( tmpCode ) ;
+         g_lnBuilder.addCmd( tmpCode ) ;
       }
 
       ossGetCurrentTime ( tmEnd ) ;
@@ -1222,6 +1249,13 @@ int main ( int argc , CHAR **argv )
       Charset clientCharset = charsetParse( argInfo.clientCharset );
       inDataConvertor = charsetConvertorFactory::get( clientCharset,
                                                       CHARSET_UTF8 ) ;
+   }
+
+   // Init charset convertor for output data
+   {
+      Charset clientCharset = charsetParse( argInfo.clientCharset );
+      outDataConvertor = charsetConvertorFactory::get( CHARSET_UTF8,
+                                                       clientCharset ) ;
    }
 
    switch ( argInfo.mode )

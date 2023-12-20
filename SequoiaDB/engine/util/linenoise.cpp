@@ -91,6 +91,7 @@
  *
  */
 
+#include <string>
 #ifdef _UNICODE
 #undef _UNICODE
 #endif
@@ -148,6 +149,10 @@ static int atexit_registered = 0; /* Register atexit just 1 time. */
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 int history_len = 0;
 static char **history = NULL;
+// Command cache to history command file convertor
+static cmdConvertorCallback clientToUTF8Cnv = NULL;
+// History command file to command cache convertor
+static cmdConvertorCallback UTF8ToClientCnv = NULL;
 
 /*
 * echo Char = 0, echo original content
@@ -175,6 +180,19 @@ struct linenoiseState
     int history_index;  /* The history index we are currently editing. */
     bool remove_col;   /* Whether the refresh operation is remove colour or not */
 };
+
+// The charset of command history file is UTF8
+// command history file to command cache convertor
+void setInConvertor( cmdConvertorCallback convertor )
+{
+    UTF8ToClientCnv = convertor;
+}
+
+// command cache to command history file convertor
+void setOutConvertor( cmdConvertorCallback convertor )
+{
+    clientToUTF8Cnv = convertor;
+}
 
 typedef int ( *CharacterDispatchRoutine ) ( struct linenoiseState *, char ) ;
 
@@ -2761,7 +2779,15 @@ int ret = 0;
         goto error;
     }
     for (j = 0; j < history_len; j++)
-        fprintf(fp,"%s\n",history[j]);
+    {
+        // Save historical command as UTF8 encoded data
+        std::string tmpHistory = history[j];
+        if (clientToUTF8Cnv)
+        {
+            clientToUTF8Cnv(history[j], tmpHistory);
+        }
+        fprintf(fp,"%s\n",tmpHistory.c_str());
+    }
     fclose(fp);
 done:
     PD_TRACE_EXIT ( SDB_LNHISTORYSAVE );
@@ -2796,7 +2822,16 @@ int linenoiseHistoryLoad(const char *filename)
         p = strchr(buf,'\r');
         if (!p) p = strchr(buf,'\n');
         if (p) *p = '\0';
-        linenoiseHistoryAdd(buf);
+
+        // Convert historical commands to data in the encoding format
+        // specified by the client
+        std::string tmpStr = p;
+        if (UTF8ToClientCnv)
+        {
+            UTF8ToClientCnv(buf, tmpStr);
+        }
+
+        linenoiseHistoryAdd(tmpStr.c_str());
     }
     fclose(fp);
 done:
