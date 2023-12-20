@@ -4378,27 +4378,23 @@ error:
          BSONObj property( _pMatchBuff ) ;
          _rtnLocalSessionProp sessionProp ;
          sessionProp.bindEDU( cb ) ;
+         sessionProp.setClientCharset( CHARSET_UNKNOWN ) ;
+         sessionProp.setResultsCharset( CHARSET_UNKNOWN ) ;
 
          rc = sessionProp.parseProperty( property ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse session property, "
                       "rc: %d", rc ) ;
 
          // set charset properties
-         if ( property.hasField(FIELD_NAME_CLIENT_CHARSET) )
+         if ( CHARSET_UNKNOWN != sessionProp.getClientCharset() )
          {
-            const char *charsetStr =
-               property.getStringField( FIELD_NAME_CLIENT_CHARSET ) ;
-            Charset charset = charsetParse( StringData(charsetStr) );
             IClient *client = cb->getSession()->getClient() ;
-            client->setClientCharset( charset ) ;
+            client->setClientCharset( sessionProp.getClientCharset() ) ;
          }
-         if ( property.hasField(FIELD_NAME_RESULTS_CHARSET) )
+         if ( CHARSET_UNKNOWN != sessionProp.getResultsCharset() )
          {
-            const char *charsetStr =
-               property.getStringField( FIELD_NAME_RESULTS_CHARSET ) ;
-            Charset charset = charsetParse( StringData(charsetStr) );
             IClient *client = cb->getSession()->getClient() ;
-            client->setResultsCharset( charset ) ;
+            client->setResultsCharset( sessionProp.getResultsCharset() ) ;
          }
       }
       catch ( std::exception &e )
