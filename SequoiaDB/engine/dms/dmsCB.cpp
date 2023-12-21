@@ -1044,7 +1044,7 @@ namespace engine
       }
       else if ( NULL != cb )
       {
-         cb->setDataExInfo( pName, ~0, DMS_INVALID_EXTENT, csLID ) ;
+         cb->setDataExInfo( pName, csLID, ~0, DMS_INVALID_EXTENT ) ;
       }
 
    done :
