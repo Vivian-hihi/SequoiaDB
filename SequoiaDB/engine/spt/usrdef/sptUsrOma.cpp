@@ -217,6 +217,7 @@ namespace engine
                                   _sptReturnVal & rval,
                                   BSONObj & detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _createNode( arg, rval, detail, SDB_ROLE_COORD_STR ) ;
    }
 
@@ -315,6 +316,7 @@ namespace engine
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _createNode( arg, rval, detail, SDB_ROLE_STANDALONE_STR ) ;
    }
 
@@ -400,6 +402,7 @@ namespace engine
                                _sptReturnVal & rval,
                                BSONObj & detail )
    {
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       return _createNode( arg, rval, detail, SDB_ROLE_OM_STR ) ;
    }
 
@@ -505,6 +508,7 @@ namespace engine
       BSONObj mergeObj ;
       BSONObj recvObj ;
       string command ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       // merge arg
       rc = _mergeArg( arg, detail, command, &mergeObj ) ;
@@ -754,6 +758,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj retObj ;
       string err ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = _sptUsrOmaCommon::getOmaInstallInfo( retObj, err ) ;
       if( SDB_OK != rc )
@@ -775,6 +780,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string err ;
       string retStr ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
       rc = _sptUsrOmaCommon::getOmaInstallFile( retStr, err ) ;
       if( SDB_OK != rc )
       {
@@ -795,6 +801,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string confFile ;
       string err ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = _sptUsrOmaCommon::getOmaConfigFile( confFile, err ) ;
       if ( SDB_OK != rc )
@@ -818,6 +825,7 @@ namespace engine
       BSONObj conf ;
       BSONObjBuilder argBuilder ;
       string err ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if ( arg.argc() > 0 )
       {
@@ -853,6 +861,7 @@ namespace engine
       BSONObj conf ;
       BSONObjBuilder argBuilder ;
       string err ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, confFile ) ;
       if ( rc )
@@ -1005,6 +1014,7 @@ namespace engine
       BSONObjBuilder argBuilder ;
       string err ;
       string svcName ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       rc = arg.getString( 0, hostname ) ;
       if ( rc == SDB_OUT_OF_BOUND )

@@ -186,6 +186,7 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj recvObj ;
       string command ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       // get command
       rc = arg.getString( 0, command ) ;

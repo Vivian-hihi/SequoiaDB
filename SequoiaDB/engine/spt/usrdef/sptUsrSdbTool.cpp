@@ -95,6 +95,7 @@ namespace engine
       CHAR rootPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR localPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       vector< BSONObj > vecObj ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if ( arg.argc() > 0 )
       {

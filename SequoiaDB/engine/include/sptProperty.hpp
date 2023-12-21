@@ -155,10 +155,14 @@ namespace engine
                }
                tmpObjs.push_back( tmpObj ) ;
             }
-         }
-         if ( SDB_OK == tmpRC )
-         {
-            assignBsonArray( tmpObjs ) ;
+            if ( SDB_OK == tmpRC )
+            {
+               assignBsonArray( tmpObjs ) ;
+            }
+            else
+            {
+               assignBsonArray( value ) ;
+            }
          }
          else
          {
