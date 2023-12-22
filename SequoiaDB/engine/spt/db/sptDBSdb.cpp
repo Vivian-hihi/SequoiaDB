@@ -31,6 +31,7 @@
 *******************************************************************************/
 
 #include "sptDBSdb.hpp"
+#include "charsetDef.hpp"
 #include "msgDef.h"
 #include "ossErr.h"
 #include "ossTypes.h"
@@ -416,18 +417,22 @@ namespace engine
       {
          sptScope* scope = privateData->getScope() ;
          std::string clientCharset = scope->getResultsCharset() ;
-         std::string resultsCharset = scope->getResultsCharset() ;
-         BSONObj options ;
-         BSONObjBuilder builder ;
-         builder.append( FIELD_NAME_CLIENT_CHARSET, clientCharset ) ;
-         builder.append( FIELD_NAME_RESULTS_CHARSET, resultsCharset ) ;
-         options = builder.obj() ;
-         rc = _sptSdb.setSessionAttr( options ) ;
-         if( SDB_OK != rc )
+         // clientCharset and resultsCharset are the same for now
+         if ( clientCharset != CHARSET_NAME_UTF8 )
          {
-            detail = BSON( SPT_ERR << "Failed to set client charset" ) ;
-            _sptSdb.disconnect() ;
-            goto error ;
+            std::string resultsCharset = scope->getResultsCharset() ;
+            BSONObj options ;
+            BSONObjBuilder builder ;
+            builder.append( FIELD_NAME_CLIENT_CHARSET, clientCharset ) ;
+            builder.append( FIELD_NAME_RESULTS_CHARSET, resultsCharset ) ;
+            options = builder.obj() ;
+            rc = _sptSdb.setSessionAttr( options ) ;
+            if( SDB_OK != rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to set client charset" ) ;
+               _sptSdb.disconnect() ;
+               goto error ;
+            }
          }
       }
       _user = username ;
