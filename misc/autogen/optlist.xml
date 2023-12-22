@@ -1065,8 +1065,8 @@
          <cn>新连接生效</cn>
       </reloadstrategy>
       <detail>
-         <en>Specify the selection mode when multiple instance meet the conditions of preferedinstance. For more details can refer to [setSessionAttr()](manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md).</en>
-         <cn>指定当多个实例符合 preferedinstance 的条件时的选择模式，更多内容可参考 [setSessionAttr()](manual/Manual/Sequoiadb_Command/Sdb/setSessionAttr.md)。</cn>
+         <en>Tell SequoiaDB server charset of client, and the server will convert the user-entered query into UTF8-encoded query supported by the server based on this parameter.</en>
+         <cn>指示客户端的字符集，服务器会根据该字符集将用户输入的查询转换为服务器端支持的 UTF8 编码的查询。</cn>
       </detail>
       <typeofweb>str</typeofweb>
       <default>UTF8</default>
@@ -1089,8 +1089,8 @@
          <cn>新连接生效</cn>
       </reloadstrategy>
       <detail>
-         <en>Tell SequoiaDB server the client system charset, so SequoiaDB can convert charset of input query if client charset is different from SequoiaDB server charset.</en>
-         <cn>指示客户端的字符集，若客户端字符集输入数据字符集与服务器端不一致，则服务器端将用户输入的数据转换为 SequoiaDB 支持的 UTF8 格式数据。</cn>
+         <en>Tell SequoiaDB server charset of query result set, and the server will convert the final query results into data encoded in this charset and return it to the client.</en>
+         <cn>指示返回给客户端数据的字符集，服务器会将最终的查询结果转换为该字符集编码的数据并返回给客户端。</cn>
       </detail>
       <typeofweb>str</typeofweb>
       <default>UTF8</default>
