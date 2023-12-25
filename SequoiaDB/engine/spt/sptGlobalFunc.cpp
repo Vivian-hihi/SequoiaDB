@@ -158,6 +158,7 @@ JS_MAPPING_END()
                                           BSONObj &detail )
    {
       const CHAR *pObjData = sdbGetErrorObj() ;
+      rval.setConvertor( arg.getInputDataConvertor() ) ;
 
       if ( pObjData )
       {
