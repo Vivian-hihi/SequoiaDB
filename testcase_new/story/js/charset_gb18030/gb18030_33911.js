@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行序列操作
+*@Description: seqDB-33911 设置字符集为GB18030，执行序列操作
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33911
+*@createDate:  2023.12.16
 **************************************/
 testConf.skipStandAlone = true;
 main( test );
@@ -17,8 +16,21 @@ function test ()
 
    // rename sequence
    db.renameSequence( sequenceName, newSequenceName );
-   var result = db.listSequences().current().toObj();
-   assert.equal( result.Name, newSequenceName );
+   var cursor = db.listSequences();
+   var sequenceNames = [];
+   while( cursor.next() )
+   {
+      sequenceNames.push( cursor.current().toObj().Name );
+   }
+   cursor.close();
+   assert.tryThrow( SDB_SEQUENCE_NOT_EXIST, function()
+   {
+      db.getSequence( sequenceName );
+   } );
+   if( sequenceNames.indexOf( newSequenceName ) < 0 )
+   {
+      throw new Error( "rename sequence failed" );
+   }
 
    var seq = db.getSequence( newSequenceName );
    // check sequence

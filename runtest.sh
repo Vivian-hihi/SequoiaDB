@@ -139,6 +139,9 @@ function runJSFile()
 
    result=0
    lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var REMOTEUSER='${remoteuser}';var REMOTEPASSWD='${remotepasswd}';var ESSVCNAME='${essvcname}'; var ESHOSTNAME='${eshostname}';var DSSVCNAME='${dssvcname}'; var DSHOSTNAME='${dshostname}';var RSRVPORTBEGIN='${rsrvportbegin}';var RSRVPORTEND='${rsrvportend}'; var CATASVCNAME='$catasvcname'; var RSRVNODEDIR='$rsrvnodedir'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$file\""
+   if [[ $file == *"charset_gb18030"* ]]; then
+      lastCmdStr+=" -c GB18030"
+   fi
 #   runresult=0
    if [ $printOut -eq 1 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"

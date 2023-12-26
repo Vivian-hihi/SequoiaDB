@@ -1,8 +1,7 @@
 /************************************
-*@Description: 通过sdb方法设置字符集
+*@Description: seqDB-33902 通过sdb方法设置字符集
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33902
+*@createDate:  2023.12.16
 **************************************/
 
 main( test );
@@ -17,7 +16,8 @@ function test ()
       assert.equal( actResultsCharset, resultsCharset, "check resultsChatset failed,expect " + resultsCharset + " but actually " + actResultsCharset );
    }
 
-   // check default charset
+   // reset the default charset
+   db.setCharsets( "UTF8" )
    checkCharset( "UTF8", "UTF8" );
 
    // set charset by setCharsets()

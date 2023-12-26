@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行lob操作
+*@Description: seqDB-33912 设置字符集为GB18030，执行lob操作
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33912
+*@createDate:  2023.12.16
 **************************************/
 
 main( test );
@@ -35,6 +34,7 @@ function test ()
       var oid = cursor.current().toObj();
       oids.push( oid.Oid.$oid );
    }
+   cursor.close();
    if( oids.indexOf( lob1 ) == -1 || oids.indexOf( lob2 ) == -1 || oids.indexOf( lob3 ) == -1 )
    {
       throw new Error( "check listLobs failed,oids: " + oids );

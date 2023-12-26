@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行库表操作
+*@Description: seqDB-33903 设置字符集为GB18030，执行库表操作
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33903
+*@createDate:  2023.12.16
 **************************************/
 import( "../lib/rename_commlib.js" );
 

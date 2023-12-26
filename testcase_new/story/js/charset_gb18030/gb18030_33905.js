@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行dcl操作
+*@Description: seqDB-33905 设置字符集为GB18030，执行dcl操作
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33905
+*@createDate:  2023.12.16
 **************************************/
 testConf.skipStandAlone = true;
 main( test );

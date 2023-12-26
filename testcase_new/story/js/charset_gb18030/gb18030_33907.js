@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行数据切分
+*@Description: seqDB-33907 设置字符集为GB18030，执行数据切分
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33907
+*@createDate:  2023.12.16
 **************************************/
 
 testConf.skipStandAlone = true;

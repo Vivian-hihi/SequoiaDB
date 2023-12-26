@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，插入查询压缩数据
+*@Description: seqDB-33909 设置字符集为GB18030，插入查询压缩数据
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33909
+*@createDate:  2023.12.16
 **************************************/
 
 main( test );

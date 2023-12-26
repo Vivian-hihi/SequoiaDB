@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行集合挂载
+*@Description: seqDB-33908 设置字符集为GB18030，执行集合挂载
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33908
+*@createDate:  2023.12.16
 **************************************/
 testConf.skipStandAlone = true;
 main( test );

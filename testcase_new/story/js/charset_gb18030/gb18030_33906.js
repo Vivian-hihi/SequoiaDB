@@ -1,8 +1,7 @@
 /************************************
-*@Description: 设置字符集为GB18030，执行DML语句
+*@Description: seqDB-33906 设置字符集为GB18030，执行DML语句
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33906
+*@createDate:  2023.12.16
 **************************************/
 
 main( test );

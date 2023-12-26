@@ -1,8 +1,7 @@
 /************************************
-*@Description: GB18030全量字符集测试
+*@Description: seqDB-33914 GB18030全量字符集测试
 *@author:      chenzejia
-*@createdate:  2023.12.16
-*@testlinkCase:seqDB-33914
+*@createDate:  2023.12.16
 **************************************/
 import( "./libs/grade1.js" );
 import( "./libs/grade2.js" );
@@ -76,9 +75,14 @@ function test_ddl ( db, test_data, rate )
          var cl = commCreateCL( db, csName, clName, {}, false );
          // create index
          commCreateIndex( cl, indexName, { a: 1 } );
-         // insert and check
+         // insert data and check
          cl.insert( test_data );
          commCompareResults( cl.find(), test_data, false );
+         // find with index
+         var idx = random_number( test_data );
+         var cursor = cl.find( { a: test_data[idx].a, _id: idx - 1 } ).hint( { "": indexName } );
+         var expected = [test_data[idx]];
+         commCompareResults( cursor, expected, false );
          // drop index
          commDropIndex( cl, indexName );
          assert.tryThrow( SDB_IXM_NOTEXIST, function()
