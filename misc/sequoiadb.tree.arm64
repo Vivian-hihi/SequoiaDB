@@ -977,8 +977,6 @@ sequoiadb
 │           ├── sniffPort_en.troff
 │           ├── type_cn.troff
 │           └── type_en.troff
-├── flink
-│   └── sdb-flink-connector-${SYS_VERSION}.jar
 ├── include
 │   ├── base64c.h
 │   ├── bson
@@ -2115,9 +2113,6 @@ sequoiadb
 │           └── update.py
 ├── sdbcm.service
 ├── sequoiadb
-├── spark
-│   ├── spark-sequoiadb_2.11-${SYS_VERSION}.jar
-│   └── spark-sequoiadb_3.0-${SYS_VERSION}.jar
 ├── tools
 │   ├── crontask
 │   │   ├── dataRebalance.js

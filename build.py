@@ -251,7 +251,7 @@ def package_db(opt_mgr, ver):
    dirs = ['bin', 'conf/samples', 'conf/local', 'conf/log', 'doc', 'include', 'java/jdk',
             'lib', 'license', 'packet', 'postgresql', 'python', 'samples', 'tools/server/php',
             'tools/sequoias3', 'tools/sequoias3/java', 'tools/sequoiafs', 'tools/upgrade', 'web',
-            'www', 'spark', 'flink', 'plugins', 'plugins/SequoiaSQL', 'lib/phplib', 'CSharp',
+            'www', 'plugins', 'plugins/SequoiaSQL', 'lib/phplib', 'CSharp',
             'tools/script']
    for dir in dirs:
       os.makedirs(os.path.join(install_dir, dir))
@@ -289,9 +289,9 @@ def package_db(opt_mgr, ver):
    copy_file(os.path.join(ROOT_DIR, 'java/openJDK-8u292'), os.path.join(install_dir, 'java/jdk'))
    copy_file(os.path.join(ROOT_DIR, 'tools/sdbmemcheck'), os.path.join(install_dir, 'tools'))
    copy_file(os.path.join(ROOT_DIR, 'conf/*.conf'), os.path.join(install_dir, 'conf'))
-   copy_file(os.path.join(ROOT_DIR, 'driver/spark/target/*.jar'), os.path.join(install_dir, 'spark'))
-   copy_file(os.path.join(ROOT_DIR, 'driver/spark-3.0/target/*.jar'), os.path.join(install_dir, 'spark'))
-   copy_file(os.path.join(ROOT_DIR, 'driver/flink/target/sdb-flink-connector-*.jar'), os.path.join(install_dir, 'flink'))
+   # copy_file(os.path.join(ROOT_DIR, 'driver/spark/target/*.jar'), os.path.join(install_dir, 'spark'))
+   # copy_file(os.path.join(ROOT_DIR, 'driver/spark-3.0/target/*.jar'), os.path.join(install_dir, 'spark'))
+   # copy_file(os.path.join(ROOT_DIR, 'driver/flink/target/sdb-flink-connector-*.jar'), os.path.join(install_dir, 'flink'))
    copy_file(os.path.join(ROOT_DIR, 'tools/om_plugins/sequoiasql/source/target/*jar'), os.path.join(install_dir, 'plugins/SequoiaSQL/bin'))
    copy_file(os.path.join(ROOT_DIR, 'SequoiaDB/engine/tools/sequoias3/target/sequoia*.jar'), os.path.join(install_dir, 'tools/sequoias3'))
    copy_file(os.path.join(ROOT_DIR, 'SequoiaDB/engine/tools/sequoias3/sequoias3.sh'), os.path.join(install_dir, 'tools/sequoias3'))
@@ -427,13 +427,13 @@ def package_all_driver(opt_mgr, ver):
    install_dir = os.path.join(opt_mgr.get_install_dir(), 'driver')
    remove_file(install_dir)
    os.makedirs(install_dir)
-   dirs = ['C#', 'C&CPP', 'Java', 'PHP', 'Postgresql', 'Python', 'Spark', 'Flink']
+   dirs = ['C#', 'C&CPP', 'Java', 'PHP', 'Postgresql', 'Python']
    for dir in dirs:
       os.makedirs(os.path.join(install_dir, dir))
    copy_file(os.path.join(ROOT_DIR, 'driver/C#.Net/build/release/sequoiadb.dll'), os.path.join(install_dir, 'C#'))
-   copy_file(os.path.join(ROOT_DIR, 'driver/spark/target/*.jar'), os.path.join(install_dir, 'Spark'))
-   copy_file(os.path.join(ROOT_DIR, 'driver/spark-3.0/target/*.jar'), os.path.join(install_dir, 'Spark'))
-   copy_file(os.path.join(ROOT_DIR, 'driver/flink/target/sdb-flink-connector-*.jar'), os.path.join(install_dir, 'Flink'))
+   # copy_file(os.path.join(ROOT_DIR, 'driver/spark/target/*.jar'), os.path.join(install_dir, 'Spark'))
+   # copy_file(os.path.join(ROOT_DIR, 'driver/spark-3.0/target/*.jar'), os.path.join(install_dir, 'Spark'))
+   # copy_file(os.path.join(ROOT_DIR, 'driver/flink/target/sdb-flink-connector-*.jar'), os.path.join(install_dir, 'Flink'))
    copy_file(os.path.join(ROOT_DIR, 'driver/java/target/sequoiadb*.jar'), os.path.join(install_dir, 'Java'))
    if opt_mgr.get_debug():
       copy_file(os.path.join(ROOT_DIR, 'driver/php/build/dd/*.so'), os.path.join(install_dir, 'PHP'))
@@ -459,7 +459,7 @@ def package_driver(opt_mgr, ver):
    print_log('Begine package each driver')
    # already have driver in install dir, let rename each driver and make tar
    file_suffix = '-{}-linux_{}'.format(ver.get_version(), OS_ARCH)
-   dirs = ['C#', 'C&CPP', 'Java', 'PHP', 'Postgresql', 'Python', 'Spark', 'Flink']
+   dirs = ['C#', 'C&CPP', 'Java', 'PHP', 'Postgresql', 'Python']
    driver_dir = os.path.join(opt_mgr.get_install_dir(), 'driver')
    for dir in dirs:
       file_name = dir + file_suffix

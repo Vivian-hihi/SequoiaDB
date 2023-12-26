@@ -134,9 +134,9 @@ class CompileBaseModuleMgr:
       self.compile_pg_connector()
       self.compile_om_plugin(db_version)
       self.compile_s3(db_version)
-      self.compile_spark(db_version)
-      self.compile_spark3(db_version)
-      self.compile_flink(db_version)
+      # self.compile_spark(db_version)
+      # self.compile_spark3(db_version)
+      # self.compile_flink(db_version)
 
    def compile_pg_connector(self):
       print_log('Begine compile postgresql connector')
