@@ -44,6 +44,7 @@ public class GB18030Utils {
         while ( query.hasNext() ) {
             result.add( query.getNext() );
         }
+        query.close();
         Assert.assertEquals( result, data, "the " + cl.getName()
                 + " query result is not equal to the insert data" );
     }

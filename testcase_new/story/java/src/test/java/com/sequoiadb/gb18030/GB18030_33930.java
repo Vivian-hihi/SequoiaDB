@@ -62,6 +62,7 @@ public class GB18030_33930 extends SdbTestBase {
         cl.removeLob( id );
         try {
             cl.openLob( id );
+            Assert.fail( "remove lob failed");
         } catch ( BaseException e ) {
             Assert.assertEquals( e.getErrorCode(),
                     SDBError.SDB_FNE.getErrorCode(), "remove lob failed" );
