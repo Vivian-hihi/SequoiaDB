@@ -31,6 +31,7 @@
 *******************************************************************************/
 
 #include "sptDBSdb.hpp"
+#include "charsetConvertorInterface.hpp"
 #include "charsetDef.hpp"
 #include "msgDef.h"
 #include "ossErr.h"
@@ -3915,7 +3916,8 @@ namespace engine
          INT32 rc = SDB_OK ;
          string roleName ;
          BSONObj options ;
-         BSONObj role;
+         BSONObj role, convertedRole ;
+         charsetConvertorInterface *cnv = arg.getInputDataConvertor() ;
          sptBsonobj * sptResult = NULL ;
          rc = arg.getString( 0, roleName ) ;
          if( SDB_OUT_OF_BOUND == rc )
@@ -3944,6 +3946,17 @@ namespace engine
          {
             detail = BSON( SPT_ERR << "Failed to get role" ) ;
             goto error ;
+         }
+
+         if ( cnv )
+         {
+            rc = cnv->convert( role, convertedRole ) ;
+            if ( SDB_OK != rc )
+            {
+               detail = BSON( SPT_ERR << "Failed to convert role charset" ) ;
+               goto error ;
+            }
+            role = convertedRole ;
          }
 
          sptResult = SDB_OSS_NEW sptBsonobj( role );
