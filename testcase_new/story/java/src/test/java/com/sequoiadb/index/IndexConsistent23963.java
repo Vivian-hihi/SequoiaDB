@@ -140,8 +140,10 @@ public class IndexConsistent23963 extends SdbTestBase {
                         .getCollection( clName );
                 cl.dropIndex( indexName );
             } catch ( BaseException e ) {
-                if ( e.getErrorType() != SDBError.SDB_DMS_TRUNCATED
-                        .getErrorType() ) {
+                if ( e.getErrorCode() != SDBError.SDB_DMS_TRUNCATED
+                        .getErrorCode()
+                        && e.getErrorCode() != SDBError.SDB_LOCK_FAILED
+                                .getErrorCode() ) {
                     throw e;
                 }
                 saveResult( e.getErrorCode(), e );
