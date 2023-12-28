@@ -977,6 +977,25 @@ namespace engine
                _errorInfo = retBuilder.obj() ;
                pBody = _errorInfo.objdata() ;
                bodyLen = (INT32)_errorInfo.objsize() ;
+               BSONObj convertedErrObj ;
+               if ( outConvertor && !replyConverted )
+               {
+                  INT32 tmpRC = outConvertor->convert( _errorInfo,
+                                                       convertedErrObj ) ;
+                  if ( tmpRC )
+                  {
+                     // Just report convert failed error message if rc is not SDB_OK
+                     PD_LOG( PDERROR, "Session[%s] failed to convert "
+                             "error message , rc: %d", sessionName(), rc ) ;
+                  }
+                  else
+                  {
+                     // Set converted error message
+                     _errorInfo = convertedErrObj ;
+                     pBody = _errorInfo.objdata() ;
+                     bodyLen = (INT32)_errorInfo.objsize() ;
+                  }
+               }
                _replyHeader.numReturned = 1 ;
             }
             else
@@ -1009,7 +1028,6 @@ namespace engine
                bodyLen = (INT32)_errorInfo.objsize() ;
                _replyHeader.numReturned = 1 ;
             }
-            // there is no need to convert charset of error info if bodyLen is 0
             replyConverted = TRUE ;
          }
          /// succeed and has result info
