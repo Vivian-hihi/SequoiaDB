@@ -3,7 +3,8 @@
 *@author:      chenzejia
 *@createDate:  2023.12.16
 **************************************/
-
+// SEQUOIADBMAINSTREAM-10052
+testConf.skipStandAlone = true;
 main( test );
 function test ()
 {
@@ -23,7 +24,9 @@ function test ()
       cl.insert( [{ age: 1, name: "zhangsan" }, { age: 1, name: "lisi" }] )
    } );
    var errObj = getLastErrObj().toObj();
-   assert.equal( errObj.ErrNodes[0].ErrInfo.IndexName, indexName, "indexName display not expected" );
+   if(!commIsStandalone(db)){
+      assert.equal( errObj.ErrNodes[0].ErrInfo.IndexName, indexName, "indexName display not expected" );
+   }
    assert.equal( errObj.IndexName, indexName, "indexName display not expected" );
 
    commDropCS( db, csName );

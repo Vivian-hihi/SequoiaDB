@@ -10,7 +10,8 @@ function test ()
    db.setCharsets( "GB18030" );
    var csName = "≤‚ ‘ø’º‰_33912";
    var clName = "ºØ∫œ_33912";
-   var basePath = "testcase_new/story/js/charset_gb18030/libs/";
+   
+   var basePath = getBasePath();
    var lob1Path = basePath + "grade1.js";
    var lob2Path = basePath + "grade2.js";
    var lob3Path = basePath + "grade3.js";
@@ -62,4 +63,17 @@ function test ()
 
    cmd.run( "rm -f " + getLobPath1 + " " + getLobPath2 + " " + getLobPath3 );
    commDropCS( db, csName );
+}
+
+function getBasePath(){
+   if( typeof ( TESTCASEDIR ) == "undefined" ) 
+   {
+      var testCaseDir = './testcase_new/story/js/charset_gb18030/libs/';
+   }
+   else
+   {
+      //TESTCASEDIR default: .../testcase/story/js/charset_gb18030
+      var testCaseDir = TESTCASEDIR + '/libs/';
+   }
+   return testCaseDir;
 }
