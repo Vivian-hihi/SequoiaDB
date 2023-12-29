@@ -1601,7 +1601,7 @@ namespace engine
                PD_CHECK ( e.type() == Object, SDB_INVALIDARG, error, PDERROR,
                           "Field[%s] invalid in task[%s]",
                           FIELD_NAME_RESULTINFO, obj.toString().c_str() ) ;
-               resultInfo = e.embeddedObject() ;
+               resultInfo = e.embeddedObject().copy() ;
             }
             else if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_OPINFO ) )
             {
