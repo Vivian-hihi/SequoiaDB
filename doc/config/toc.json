@@ -3093,6 +3093,24 @@
                            "en": "deleteConf()"
                         },
                         {
+                           "id": 1703843362,
+                           "file": "setCharsets",
+                           "cn": "setCharsets()",
+                           "en": "setCharsets()"
+                        },
+                        {
+                           "id": 1703843377,
+                           "file": "setClientCharset",
+                           "cn": "setClientCharset()",
+                           "en": "setClientCharset()"
+                        },
+                        {
+                           "id": 1703843388,
+                           "file": "setResultsCharset",
+                           "cn": "setResultsCharset()",
+                           "en": "setResultsCharset()"
+                        },
+                        {
                            "id": 1432190808,
                            "file": "setSessionAttr",
                            "cn": "setSessionAttr()",

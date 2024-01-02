@@ -567,6 +567,12 @@ sequoiadb
 │       │   ├── Sdb_en.troff
 │       │   ├── setPDLevel_cn.troff
 │       │   ├── setPDLevel_en.troff
+│       │   ├── setCharsets_cn.troff
+│       │   ├── setCharsets_en.troff
+│       │   ├── setClientCharset_cn.troff
+│       │   ├── setClientCharset_en.troff
+│       │   ├── setResultsCharset_cn.troff
+│       │   ├── setResultsCharset_en.troff
 │       │   ├── setSessionAttr_cn.troff
 │       │   ├── setSessionAttr_en.troff
 │       │   ├── snapshot_cn.troff
