@@ -35,6 +35,7 @@
 
 *******************************************************************************/
 #include "charsetICUConvertor.hpp"
+#include "charsetConvertorInterface.hpp"
 #include "ossErr.h"
 #include "ossTypes.h"
 #include "pd.hpp"
@@ -46,6 +47,7 @@
 #include <memory>
 #include "charsetUtils.hpp"
 #include "../bson/bson.h"
+#include "utilMemListPool.hpp"
 
 namespace engine
 {
@@ -96,6 +98,35 @@ namespace engine
                                        inConv, outConv) ) ;
    }
 
+   charsetConvertorInterface* charsetICUConvertor::make_clone()
+   {
+      Charset inCharset = getInCharset() ;
+      Charset outCharset = getOutCharset() ;
+      UErrorCode err = U_ZERO_ERROR ;
+      UConverter *inConv = NULL, *outConv = NULL;
+
+      inConv = ucnv_safeClone( _inConverter, NULL, NULL, &err ) ;
+      if ( NULL == inConv )
+      {
+         StringData in = charsetSerializer( getInCharset() ) ;
+         PD_LOG( PDERROR, "Failed to clone in convertor for '%s'"
+                 ", error: %s", in.data(), u_errorName(err) ) ;
+         return NULL ;
+      }
+
+      outConv = ucnv_safeClone( _outConverter, NULL, NULL, &err ) ;
+      if ( NULL == outConv )
+      {
+         StringData out = charsetSerializer( getOutCharset() ) ;
+         PD_LOG( PDERROR, "Failed to clone out convertor for '%s'"
+                 ", error: %s", out.data(), u_errorName( err) ) ;
+         ucnv_close( inConv ) ;
+         return NULL ;
+      }
+      return (new charsetICUConvertor( inCharset, outCharset,
+                                       inConv, outConv) ) ;
+   }
+
    charsetICUConvertor::~charsetICUConvertor()
    {
       if ( _inConverter )
@@ -138,29 +169,9 @@ namespace engine
       UErrorCode err = U_ZERO_ERROR ;
       const char* originInBuffer = inBuffer ;
       char* originOutBuffer = outBuffer ;
-      UConverter *inConv = NULL, *outConv = NULL;
 
-      inConv = ucnv_safeClone( _inConverter, NULL, NULL, &err ) ;
-      if ( NULL == inConv )
-      {
-         StringData in = charsetSerializer( getInCharset() ) ;
-         PD_LOG( PDERROR, "Failed to clone in convertor for '%s'"
-                 ", error: %s", in.data(), u_errorName(err) ) ;
-         return SDB_OOM ;
-      }
-
-      outConv = ucnv_safeClone( _outConverter, NULL, NULL, &err ) ;
-      if ( NULL == outConv )
-      {
-         StringData out = charsetSerializer( getOutCharset() ) ;
-         PD_LOG( PDERROR, "Failed to clone out convertor for '%s'"
-                 ", error: %s", out.data(), u_errorName( err) ) ;
-         ucnv_close( inConv ) ;
-         return SDB_OOM ;
-      }
-
-      ucnv_convertEx( outConv,
-                      inConv,
+      ucnv_convertEx( _outConverter,
+                      _inConverter,
                       &outBuffer,
                       outBuffer + outSize,
                       &inBuffer,
@@ -187,8 +198,6 @@ namespace engine
          convertedInSize = inBuffer - originInBuffer ;
          convertedOutSize = outBuffer - originOutBuffer ;
       }
-      ucnv_close( inConv ) ;
-      ucnv_close( outConv ) ;
       return rc ;
    }
 
@@ -218,7 +227,7 @@ namespace engine
          return SDB_OK ;
       }
       int convertedInSize = 0, convertedOutSize = 0;
-      char *buff =  (CHAR*) SDB_OSS_MALLOC ( inStrLen * _estimateMaxSize ) ;
+      char *buff =  (CHAR*) SDB_THREAD_ALLOC ( inStrLen * _estimateMaxSize ) ;
       if ( NULL == buff )
       {
          return SDB_OOM ;
@@ -237,7 +246,7 @@ namespace engine
 
       if ( buff )
       {
-         SDB_OSS_FREE( buff ) ;
+         SDB_THREAD_FREE( buff ) ;
       }
       return rc ;
    }

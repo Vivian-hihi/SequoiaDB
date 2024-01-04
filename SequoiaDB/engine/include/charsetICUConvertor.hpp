@@ -61,6 +61,8 @@ namespace engine
       static charsetConvertorInterface*
          make( Charset inCharset, Charset outCharset ) ;
 
+      charsetConvertorInterface* make_clone() ;
+
       virtual ~charsetICUConvertor() ;
       virtual INT32 convertToBuffer( const char* inBuffer,
                                      int inSize,

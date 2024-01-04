@@ -56,9 +56,7 @@ namespace engine
    :_context(context),
     _argc(argc),
     _vp(vp),
-    _pObject( NULL ),
-    _inputConvertor( NULL ),
-    _outputConvertor( NULL )
+    _pObject( NULL )
    {
       SDB_ASSERT( NULL != _context && NULL != _vp, "can not be NULL" ) ;
       if ( pObj )
@@ -513,14 +511,14 @@ namespace engine
    // spidermonkey, Charset of output data from spidermonkey is UTF8
    charsetConvertorInterface* _sptSPArguments::getInputDataConvertor() const
    {
-      return _inputConvertor ;
+      return _inputConvertor.get() ;
    }
 
    // Charset convertor used to convert data from spidermonkey to
    // sdb server, Charset of output data from spidermonkey is UTF8
    charsetConvertorInterface* _sptSPArguments::getOutputDataConvertor() const
    {
-      return _outputConvertor ;
+      return _outputConvertor.get() ;
    }
 
    BOOLEAN _sptSPArguments::isString( UINT32 pos ) const

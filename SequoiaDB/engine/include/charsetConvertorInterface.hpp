@@ -59,6 +59,11 @@ namespace engine
       
       virtual ~charsetConvertorInterface() {}
 
+      virtual charsetConvertorInterface* make_clone()
+      { 
+         return NULL ; 
+      }
+
       virtual INT32 convert( const std::string& inString, 
                              std::string& outString ) const = 0 ;
       virtual INT32 convert( const StringData& inString,

@@ -52,8 +52,8 @@ namespace engine
    public:
       static void init() ;
       static void deinit() ;
-      static charsetConvertorInterface* get( Charset inCharset,
-                                             Charset outCharset ) ;
+      static boost::movelib::unique_ptr<charsetConvertorInterface>
+         get( Charset inCharset, Charset outCharset ) ;
 
    protected:
       static charsetConvertorInterface*

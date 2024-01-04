@@ -42,6 +42,7 @@
 #include "rtnContext.hpp"
 #include "../bson/bson.h"
 #include "msgConvertor.hpp"
+#include "boost/move/unique_ptr.hpp"
 
 using namespace bson ;
 
@@ -167,6 +168,9 @@ namespace engine
          IMsgConvertor        *_outMsgConvertor ;  // For reply to client.
 
          boost::shared_ptr<const authAccessControlList> _acl;
+         boost::movelib::unique_ptr<charsetConvertorInterface> _inConvertor ;
+         boost::movelib::unique_ptr<charsetConvertorInterface> _outConvertor ;
+
    } ;
    typedef _pmdLocalSession pmdLocalSession ;
 

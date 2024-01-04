@@ -35,6 +35,7 @@
 *******************************************************************************/
 
 #include "rtnSessionProperty.hpp"
+#include "boost/move/unique_ptr.hpp"
 #include "charsetConvertorFactory.hpp"
 #include "charsetConvertorInterface.hpp"
 #include "charsetDef.hpp"
@@ -1069,7 +1070,7 @@ namespace engine
                       "unknown input string [%s]", field.valuestrsafe() ) ;
             if ( systemCharset != charset )
             {
-               charsetConvertorInterface *convertor = 
+               boost::movelib::unique_ptr<charsetConvertorInterface> convertor =
                   charsetConvertorFactory::get( charset, systemCharset ) ;
                PD_CHECK( convertor, SDB_INVALIDARG, error, PDWARNING,
                          "Unable to get charset convertor, "
@@ -1096,7 +1097,7 @@ namespace engine
                       "unknown input string [%s]", field.valuestrsafe() ) ;
             if ( systemCharset != charset )
             {
-               charsetConvertorInterface *convertor =
+               boost::movelib::unique_ptr<charsetConvertorInterface> convertor =
                   charsetConvertorFactory::get( systemCharset, charset ) ;
                PD_CHECK( convertor, SDB_INVALIDARG, error, PDWARNING,
                          "Unable to get charset convertor, "

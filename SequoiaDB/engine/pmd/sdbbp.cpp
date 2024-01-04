@@ -49,6 +49,7 @@
 #include "ossSignal.hpp"
 #include "charsetConvertorFactory.hpp"
 #include "charsetUtils.hpp"
+#include "boost/move/unique_ptr.hpp"
 #if defined (_WINDOWS)
 #include <windows.h>
 #include <io.h>
@@ -256,7 +257,7 @@ INT32 enterDaemonMode ( sptScope *scope ,
    BYTE cZero = 0 ;
    // Use to convert query string to UTF8 encoded string because only
    // UTF8 is supported in spidermonkey
-   charsetConvertorInterface *inDataConvertor = NULL ;
+   boost::movelib::unique_ptr<charsetConvertorInterface> inDataConvertor ;
    string query ;
 
    PD_TRACE_ENTRY ( SDB_ENTERDAEMONMODE );

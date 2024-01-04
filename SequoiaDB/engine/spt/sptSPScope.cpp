@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "sptSPScope.hpp"
+#include "boost/move/unique_ptr.hpp"
 #include "charsetConvertorFactory.hpp"
 #include "charsetConvertorInterface.hpp"
 #include "charsetDef.hpp"
@@ -752,7 +753,7 @@ namespace engine
             // Convert results with spidermonkey charset(UTF8)
             // to results with client charset
             Charset clientCharset = charsetParse( _clientCharset ) ;
-            charsetConvertorInterface *cnv =
+            boost::movelib::unique_ptr<charsetConvertorInterface> cnv =
                charsetConvertorFactory::get( CHARSET_UTF8, clientCharset ) ;
             if ( cnv && (rc = cnv->convert( tmpStr, strPrint )) )
             {

@@ -35,6 +35,7 @@
 
 *******************************************************************************/
 #include "charsetConvertorFactory.hpp"
+#include "boost/move/unique_ptr.hpp"
 #include "charsetDef.hpp"
 #include "charsetICUConvertor.hpp"
 #include "charsetUtils.hpp"
@@ -94,8 +95,8 @@ namespace engine
    }
 
    // Get charset convertor
-   charsetConvertorInterface* charsetConvertorFactory::get( Charset inCharset,
-                                                            Charset outCharset )
+   boost::movelib::unique_ptr<charsetConvertorInterface>
+      charsetConvertorFactory::get( Charset inCharset, Charset outCharset )
    {
       uint32_t in = static_cast<uint32_t>(inCharset) ;
       uint32_t out = static_cast<uint32_t>(outCharset) ;
@@ -103,7 +104,12 @@ namespace engine
                   "Invalid input charset number" ) ;
       SDB_ASSERT( out < CHARSET_SUPPORTED_CHARSET_NUM,
                   "Invalid output charset number" ) ;
-      return convertors[in][out] ;
+      charsetConvertorInterface *cnv = NULL;
+      if ( convertors[in][out] )
+      {
+         cnv = convertors[in][out]->make_clone() ;
+      }
+      return boost::movelib::unique_ptr< charsetConvertorInterface > ( cnv ) ;
    }
 
    // Build charset convertor

@@ -37,6 +37,7 @@
 #include "charsetConvertorInterface.hpp"
 #include "sptArguments.hpp"
 #include "jsapi.h"
+#include "boost/move/unique_ptr.hpp"
 
 namespace engine
 {
@@ -119,8 +120,8 @@ namespace engine
       jsval             *_vp ;
       mutable string    _errMsg ;
       sptObject         *_pObject ;
-      charsetConvertorInterface *_inputConvertor ;
-      charsetConvertorInterface *_outputConvertor ;
+      boost::movelib::unique_ptr<charsetConvertorInterface> _inputConvertor ;
+      boost::movelib::unique_ptr<charsetConvertorInterface> _outputConvertor ;
    } ;
 }
 

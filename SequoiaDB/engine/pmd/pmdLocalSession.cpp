@@ -856,11 +856,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG ) ;
 
       UINT64 bTime = ossGetCurrentMicroseconds() ;
-
-      // convert message charset
-      charsetConvertorInterface *inConvertor = NULL ;
-      charsetConvertorInterface *outConvertor = NULL ;
-
       Charset clientCharset, resultsCharset ;
       bool replyConverted = FALSE ;
       static const Charset systemCharset = CHARSET_UTF8 ;
@@ -873,15 +868,21 @@ namespace engine
          rc = _getResultsCharset( resultsCharset ) ;
          SDB_ASSERT(SDB_OK == rc, "ResultsCharset is not valid" ) ;
 
-         inConvertor = charsetConvertorFactory::get( clientCharset,
-                                                     systemCharset ) ;
-         outConvertor = charsetConvertorFactory::get( systemCharset,
-                                                      resultsCharset ) ;
+         if ( !_inConvertor )
+         {
+            _inConvertor = charsetConvertorFactory::get( clientCharset,
+                                                         systemCharset ) ;
+         }
+         if ( !_outConvertor )
+         {
+            _outConvertor = charsetConvertorFactory::get( systemCharset,
+                                                          resultsCharset ) ;
+         }
       }
       // convert input message
-      if ( inConvertor )
+      if ( _inConvertor )
       {
-         rc = _convertMsg( msg, &convertedMsg, inConvertor ) ;
+         rc = _convertMsg( msg, &convertedMsg, _inConvertor.get() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Session[%s] failed to convert charset "
@@ -978,9 +979,9 @@ namespace engine
                pBody = _errorInfo.objdata() ;
                bodyLen = (INT32)_errorInfo.objsize() ;
                BSONObj convertedErrObj ;
-               if ( outConvertor && !replyConverted )
+               if ( _outConvertor && !replyConverted )
                {
-                  INT32 tmpRC = outConvertor->convert( _errorInfo,
+                  INT32 tmpRC = _outConvertor->convert( _errorInfo,
                                                        convertedErrObj ) ;
                   if ( tmpRC )
                   {
@@ -1004,9 +1005,9 @@ namespace engine
                            "Record number must be 1" ) ;
 
                BSONObj errObj( pBody ), convertedErrObj ;
-               if ( outConvertor && !replyConverted )
+               if ( _outConvertor && !replyConverted )
                {
-                  INT32 tmpRC = outConvertor->convert( errObj,
+                  INT32 tmpRC = _outConvertor->convert( errObj,
                                                        convertedErrObj ) ;
                   if ( tmpRC )
                   {
@@ -1040,7 +1041,7 @@ namespace engine
          }
 
          // convert reply body
-         if ( outConvertor && pBody && bodyLen && !replyConverted )
+         if ( _outConvertor && pBody && bodyLen && !replyConverted )
          {
             // do not convert OpenLob reply message
             // because it maybe not a BSON sequences
@@ -1050,7 +1051,7 @@ namespace engine
                rtnContextBuf inReply( pBody, bodyLen,
                                       _replyHeader.numReturned ) ;
                INT32 tmpRC = _convertReplyBody( inReply, outReply,
-                                                outConvertor ) ;
+                                                _outConvertor.get() ) ;
                if ( tmpRC )
                {
                   PD_LOG( PDERROR, "Session[%s] failed to convert charset "
@@ -1090,7 +1091,7 @@ namespace engine
       _onMsgEnd( rc, msg ) ;
 
       // release converted msg buffer
-      if ( inConvertor && convertedMsg )
+      if ( _inConvertor && convertedMsg )
       {
          msgReleaseBuffer( (CHAR *) convertedMsg, eduCB() );
       }

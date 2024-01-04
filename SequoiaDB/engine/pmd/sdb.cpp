@@ -62,6 +62,7 @@
 #include "utilPipe.hpp"
 #include "sptContainer.hpp"
 #include "ossSignal.hpp"
+#include "boost/move/unique_ptr.hpp"
 #include <boost/thread/thread.hpp>
 #include <strings.h>
 
@@ -105,9 +106,9 @@ po::variables_map vm ;
 
 // Use to convert query string to UTF8 encoded string because only
 // UTF8 is supported in spidermonkey
-charsetConvertorInterface *inDataConvertor = NULL ;
+boost::movelib::unique_ptr<charsetConvertorInterface> inDataConvertor ;
 
-charsetConvertorInterface *outDataConvertor = NULL ;
+boost::movelib::unique_ptr<charsetConvertorInterface> outDataConvertor ;
 
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
