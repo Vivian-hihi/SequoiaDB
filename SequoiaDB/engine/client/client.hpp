@@ -6507,6 +6507,79 @@ namespace sdbclient
                                  pUsrName, pToken, pCipherFile ) ;
       }
 
+      /** \fn setCharsets( const CHAR *charset )
+          \brief Set charset for client and query results.
+          \param [in] charset The charset of client and result
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 setCharsets( const CHAR *charset )
+      {
+         if ( !pSDB )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pSDB->setCharsets( charset ) ;
+      }
+
+      /** \fn getClientCharset()
+          \brief Get client charset.
+          \retval UTF8 or GB18030 Operation Success
+          \retval Others Operation Fail
+      */
+      const CHAR* getClientCharset()
+      {
+         if ( !pSDB )
+         {
+            return "" ;
+         }
+         return pSDB->getClientCharset() ;
+      }
+
+      /** \fn setClientCharset( const CHAR *charset )
+          \brief Set charset for client.
+          \param [in] charset The charset of client
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 setClientCharset( const CHAR *charset )
+      {
+         if ( !pSDB )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pSDB->setClientCharset( charset ) ;
+      }
+
+      /** \fn getResultsCharset()
+          \brief Get query results charset.
+          \retval UTF8 or GB18030 Operation Success
+          \retval Others Operation Fail
+      */
+      const CHAR* getResultsCharset()
+      {
+         if ( !pSDB )
+         {
+            return "" ;
+         }
+         return pSDB->getResultsCharset() ;
+      }
+
+      /** \fn setResultsCharset( const CHAR *charset )
+          \brief Set charset for query results.
+          \param [in] charset The charset of query results
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 setResultsCharset( const CHAR *charset )
+      {
+         if ( !pSDB )
+         {
+            return SDB_NOT_CONNECTED ;
+         }
+         return pSDB->setResultsCharset( charset ) ;
+      }
+
       /** \fn UINT64 getDbStartTime ()
           \brief Get sequoiadb start time.
           \retval Sequoiadb start time

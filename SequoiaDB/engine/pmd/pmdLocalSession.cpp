@@ -1241,7 +1241,7 @@ namespace engine
          }
 
          // build new body
-         buff = ( CHAR* ) SDB_OSS_MALLOC( bodyLength ) ;
+         buff = ( CHAR* ) SDB_THREAD_ALLOC( bodyLength ) ;
          PD_CHECK( buff, SDB_OOM, error, PDERROR,
                    " Out of memory while rebuilding reply body") ;
 
