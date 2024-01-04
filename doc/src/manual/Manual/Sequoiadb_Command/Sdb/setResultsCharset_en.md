@@ -18,7 +18,7 @@ This function is used to set character set for result set.
 
 charset (*string, required*)
 
-Specifies the character set name of the result set.
+Specifies the character set name of the result set. The optional value of this parameter is UTF8 or GB18030, which is not case sensitive.
 
 ## RETURN VALUE ##
 

@@ -18,7 +18,7 @@ This function is used to set character set for client and result set.
 
 charset (*string, required*)
 
-Specifies the character set name of the client and result set.
+Specifies the character set name of the client and result set. The optional value of this parameter is UTF8 or GB18030, which is not case sensitive.
 
 ## RETURN VALUE ##
 

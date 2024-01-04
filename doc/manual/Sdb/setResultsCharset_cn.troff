@@ -19,7 +19,8 @@ Sdb
 .PP
 charset （ \f[I]string，必填\f[] ）
 .PP
-通过 charset 指定用户需要设置的字符集
+通过 charset
+指定用户需要设置的字符集。参数的可选值为：UTF8、GB18030，大小写不敏感。
 .SH 返回值
 .PP
 函数执行成功时，无返回值。

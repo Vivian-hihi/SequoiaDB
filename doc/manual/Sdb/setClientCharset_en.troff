@@ -20,6 +20,8 @@ This function is used to set character set for client.
 charset (\f[I]string, required\f[])
 .PP
 Specifies the character set name of the client.
+The optional value of this parameter is UTF8 or GB18030, which is not case
+sensitive.
 .SH RETURN VALUE
 .PP
 There is no return value when the function is executed successfully.
