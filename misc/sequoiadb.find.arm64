@@ -1,4 +1,4 @@
-sequoiadb/
+sequoiadb
 sequoiadb/lib
 sequoiadb/lib/phplib
 sequoiadb/lib/phplib/libsdbphp-5.4.6.so
