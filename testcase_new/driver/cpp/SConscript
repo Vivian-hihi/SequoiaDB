@@ -211,7 +211,8 @@ testFiles = [
    [ "./lob/lobIsEof15671.cpp" ],
    [ "./list/listtest_19946.cpp" ],
    # [ "./datasource/DataSource24224.cpp" ],
-   #[ "./sdb/errobj_17385.cpp"]
+   #[ "./sdb/errobj_17385.cpp"],
+   ["./gb18030/gb18030_33945.cpp"]
 ]
 
 def getFileName( filePath ):
