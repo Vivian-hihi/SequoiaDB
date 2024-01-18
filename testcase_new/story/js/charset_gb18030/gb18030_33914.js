@@ -3,10 +3,10 @@
 *@author:      chenzejia
 *@createDate:  2023.12.16
 **************************************/
-import( "./libs/grade1.js" );
-import( "./libs/grade2.js" );
-import( "./libs/grade3.js" );
-import( "./libs/gb18030_data.js" );
+import( "./libs/grade1.json" );
+import( "./libs/grade2.json" );
+import( "./libs/grade3.json" );
+import( "./libs/gb18030_data.json" );
 
 main( test );
 function test ()

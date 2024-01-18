@@ -12,12 +12,12 @@ function test ()
    var clName = "¼¯ºÏ_33912";
    
    var basePath = getBasePath();
-   var lob1Path = basePath + "grade1.js";
-   var lob2Path = basePath + "grade2.js";
-   var lob3Path = basePath + "grade3.js";
-   var getLobPath1 = basePath + "lob1.js";
-   var getLobPath2 = basePath + "lob2.js";
-   var getLobPath3 = basePath + "lob3.js";
+   var lob1Path = basePath + "grade1.json";
+   var lob2Path = basePath + "grade2.json";
+   var lob3Path = basePath + "grade3.json";
+   var getLobPath1 = basePath + "lob1.json";
+   var getLobPath2 = basePath + "lob2.json";
+   var getLobPath3 = basePath + "lob3.json";
 
    commDropCL( db, csName, clName );
    var cl = commCreateCL( db, csName, clName );
