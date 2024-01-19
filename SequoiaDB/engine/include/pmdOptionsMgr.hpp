@@ -733,6 +733,9 @@ namespace engine
          OSS_INLINE INT32  getMemMmapMax() const { return _memMmapMax ; }
          OSS_INLINE INT32  getMemTopPad() const { return _memTopPad ; }
 
+         OSS_INLINE UINT32 getNetTimeout() const { return _netTimeout ; }
+         OSS_INLINE UINT32 getNetTimeoutRetryTimes() const { return _netTimeoutRetryTimes ; }
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -896,6 +899,9 @@ namespace engine
          INT32       _memMmapThreshold ;
          INT32       _memMmapMax ;
          INT32       _memTopPad ;
+
+         UINT32      _netTimeout ;
+         UINT32      _netTimeoutRetryTimes ;
 
 #ifdef SDB_ENTERPRISE
 
