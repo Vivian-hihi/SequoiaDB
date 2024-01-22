@@ -71,6 +71,14 @@ namespace engine
    /// define listen host
    #define NET_LISTEN_HOST          "0.0.0.0"
 
+   enum NET_COMPRESSOR
+   {
+      DEF_COMPRESSOR = 0,
+      LZ4_COMPRESSOR = 1,
+   } ;
+
+   #define NET_COMPRESSOR_STR_LZ4   "lz4"
+
    /*
       _NET_NODE_STATUS define
    */

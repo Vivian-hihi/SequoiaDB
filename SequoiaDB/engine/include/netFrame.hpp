@@ -435,6 +435,10 @@ namespace engine
 
          INT64 netOut() ;
 
+         const _netCompressionMonitorInfo& netCompressMonInfo() ;
+
+         void  setNetCompressor( NET_COMPRESSOR netCompressor ) ;
+
          void  makeStat( UINT32 timeout ) ;
          void  setNetStartThreadFunc( NET_START_THREAD_FUNC pFunc ) ;
 
@@ -523,6 +527,7 @@ namespace engine
          UINT32                           _timerID;
          ossAtomicSigned64                _netOut;
          ossAtomicSigned64                _netIn;
+         _netCompressionMonitorInfo       _netCompressInfo ;
 
          UINT32                           _beatInterval ;
          UINT32                           _beatPassiveInterval ;
@@ -546,6 +551,8 @@ namespace engine
          NET_UDP_EV_SUIT                  _udpMainSuit ;
 
          UINT32                           _netTimeout ;
+         
+         NET_COMPRESSOR                   _netCompressor ;
    } ;
 
 }

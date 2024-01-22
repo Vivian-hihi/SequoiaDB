@@ -90,10 +90,18 @@ $SNAPSHOT_DB
 | svcNetOut             | int64  | 本地服务端口发送的网络流量，单位为字节                                        |
 | shardNetIn            | int64  | shard 平面端口收到的网络流量，单位为字节                                       |
 | shardNetOut           | int64  | shard 平面端口发送的网络流量，单位为字节                                       |
+| shardUncompressed     | int64     | shard 平面端口消息压缩前的总长度，单位为字节                    |
+| shardCompressed       | int64     | shard 平面端口消息压缩后的总长度，单位为字节                    |
+| shardUncompressedCount| int64     | shard 平面端口消息总个数                                        |
+| shardCompressedCount  | int64     | shard 平面端口压缩成功的消息总个数                              |
 | replNetIn             | int64  | 数据同步平面端口收到的网络流量，单位为字节                                     |
 | replNetOut            | int64  | 数据同步平面端口发送的网络流量，单位为字节                                     |
 | cataNetMsgOutCount    | int64  | cata平面端口发送消息的总个数                                     |
 | cataNetMsgTimeoutCount| int64  | cata平面端口消息发送超时的总个数                                 |
+| replUncompressed      | int64     | 数据同步平面端口消息压缩前的总长度，单位为字节                  |
+| replCompressed        | int64     | 数据同步平面端口消息压缩后的总长度，单位为字节                  |
+| replUncompressedCount | int64     | 数据同步平面端口消息总个数                                      |
+| replCompressedCount   | int64     | 数据同步平面端口压缩成功的消息总个数                            |
 | SchdlrType            | int32  | 资源调度类型，取值如下：<br>0：没有开启资源调度<br>1：开启了 FIFO资 源调度 <br>2：开启了优先级资源调度<br>3：开启了基于容器的优先级资源调度                                     |
 | SchdlrTypeDesp        | string | 资源调度类型描述，取值：NONE、FIFO、PRIORITY、CONTAINER                  |
 | Run                   | int32  | 当前正在运行的任务数量                                                          |
@@ -208,8 +216,16 @@ $SNAPSHOT_DB
   "svcNetOut": 0,
   "shardNetIn": 11188,
   "shardNetOut": 102525,
+  "shardUncompressed": 15036126,
+  "shardCompressed": 4051857,
+  "shardUncompressedCount": 20056,
+  "shardCompressedCount": 20013,
   "replNetIn": 0,
   "replNetOut": 0,
+  "replUncompressed": 38035936,
+  "replCompressed": 16396306,
+  "replUncompressedCount": 140482,
+  "replCompressedCount": 20000 
   "SchdlrType": 0,
   "cataNetMsgOutCount": 623,
   "cataNetMsgTimeoutCount": 0,

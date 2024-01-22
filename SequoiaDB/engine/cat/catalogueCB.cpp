@@ -382,6 +382,7 @@ namespace engine
          goto error ;
       }
       _pNetWork->getFrame()->setNetTimeout( pmdGetOptionCB()->getNetTimeout() ) ;
+      _pNetWork->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
 
       // 3. member objs init
       rc = _catMainCtrl.init() ;
@@ -538,6 +539,7 @@ namespace engine
                pmdGetOptionCB()->getOprTimeout() ) ;
          _pNetWork->getFrame()->setNetTimeout(
                pmdGetOptionCB()->getNetTimeout() ) ;
+         _pNetWork->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
       }
 
       _catMainCtrl.setNetTimeoutRetryTimes( pmdGetOptionCB()->getNetTimeoutRetryTimes() ) ;

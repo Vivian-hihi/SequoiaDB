@@ -81,6 +81,14 @@
                                                 replNetOut:{$sum:\"$replNetOut\"},\
                                                 cataNetMsgOutCount:{$sum:\"$cataNetMsgOutCount\"},\
                                                 cataNetMsgTimeoutCount:{$sum:\"$cataNetMsgTimeoutCount\"},\
+                                                shardUncompressed:{$sum:\"$shardUncompressed\"},\
+                                                shardCompressed:{$sum:\"$shardCompressed\"},\
+                                                shardUncompressedCount:{$sum:\"$shardUncompressedCount\"},\
+                                                shardCompressedCount:{$sum:\"$shardCompressedCount\"},\
+                                                replUncompressed:{$sum:\"$replUncompressed\"},\
+                                                replCompressed:{$sum:\"$replCompressed\"},\
+                                                replUncompressedCount:{$sum:\"$replUncompressedCount\"},\
+                                                replCompressedCount:{$sum:\"$replCompressedCount\"},\
                                                 MemPoolSize:{$sum:\"$MemPoolSize\"},\
                                                 MemPoolFree:{$sum:\"$MemPoolFree\"},\
                                                 MemPoolUsed:{$sum:\"$MemPoolUsed\"},\

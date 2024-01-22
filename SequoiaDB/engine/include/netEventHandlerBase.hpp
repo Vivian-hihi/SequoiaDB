@@ -40,6 +40,7 @@
 #define NET_EVENT_HANDLER_BASE_HPP_
 
 #include "core.hpp"
+#include "netCompressor.hpp"
 #include "oss.hpp"
 #include "netDef.hpp"
 #include "ossLatch.hpp"
@@ -142,6 +143,9 @@ namespace engine
       IMsgConvertor *getInMsgConvertor() ;
       IMsgConvertor *getOutMsgConvertor() ;
 
+      _netMsgCompressor *getCompressor( NET_COMPRESSOR netCompressor ) ;
+      _netMsgCompressor *getDecompressor() ;
+
       virtual NET_EVENT_HANDLER_TYPE getHandlerType() const = 0 ;
       virtual INT32 syncConnect( const CHAR *hostName,
                                  const CHAR *serviceName ) = 0 ;
@@ -173,6 +177,11 @@ namespace engine
       virtual BOOLEAN isSuitStopped() const = 0 ;
 
       virtual BOOLEAN select( UINT32 timeout ) = 0 ;
+      
+      OSS_INLINE SDB_PROTOCOL_VERSION getPeerVersion() const
+      {
+         return _peerVersion ;
+      }
 
    protected:
       OSS_INLINE NET_EH _getSharedBase()
@@ -198,6 +207,8 @@ namespace engine
       SDB_PROTOCOL_VERSION    _peerVersion ;
       IMsgConvertor           *_inMsgConvertor ;
       IMsgConvertor           *_outMsgConvertor ;
+      _netMsgCompressor       *_compressor ;
+      _netMsgCompressor       *_decompressor ;
    } ;
 
 }

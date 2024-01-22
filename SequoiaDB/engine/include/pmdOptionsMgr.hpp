@@ -49,6 +49,7 @@
 #include "sdbInterface.hpp"
 #include "ossMemPool.hpp"
 #include "pmdOptionsParse.hpp"
+#include "netDef.hpp"
 
 #include <string>
 #include <iostream>
@@ -64,6 +65,8 @@ namespace engine
    #define PMD_MAX_LONG_STR_LEN        ( 256 )
    #define PMD_MAX_SHORT_STR_LEN       ( 32 )
    #define PMD_MAX_LOGMOD_STR_LEN      ( 32 )
+
+   #define PMD_NET_COMPRESSOR_MAX_STR_LENGTH   ( 6 )
 
    enum PMD_CFG_STEP
    {
@@ -735,6 +738,8 @@ namespace engine
 
          OSS_INLINE UINT32 getNetTimeout() const { return _netTimeout ; }
          OSS_INLINE UINT32 getNetTimeoutRetryTimes() const { return _netTimeoutRetryTimes ; }
+         
+         OSS_INLINE NET_COMPRESSOR getNetCompressor () const { return _netCompressor ; }
 
 #ifdef SDB_ENTERPRISE
 
@@ -902,6 +907,9 @@ namespace engine
 
          UINT32      _netTimeout ;
          UINT32      _netTimeoutRetryTimes ;
+
+         CHAR           _netCompressorStr[ PMD_NET_COMPRESSOR_MAX_STR_LENGTH + 1 ] ;
+         NET_COMPRESSOR _netCompressor ;
 
 #ifdef SDB_ENTERPRISE
 

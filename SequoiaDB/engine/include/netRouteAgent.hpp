@@ -185,6 +185,8 @@ namespace engine
 
          INT64 netOut() ;
 
+         const _netCompressionMonitorInfo& netCompressMonInfo() ;
+
       private:
          _netFrame _frame ;
          _netRoute _route ;

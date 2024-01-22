@@ -2391,6 +2391,11 @@ namespace engine
       return _agent->netOut() ;
    }
 
+   const _netCompressionMonitorInfo& _clsReplicateSet::netCompressMonInfo()
+   {
+      return _agent->netCompressMonInfo() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET_REELECT, "_clsReplicateSet::reelect" )
    INT32 _clsReplicateSet::reelect( CLS_REELECTION_LEVEL lvl,
                                     INT32 seconds,

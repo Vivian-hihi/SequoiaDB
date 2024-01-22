@@ -2064,6 +2064,9 @@ done:
 
       _netTimeout = 0 ;
       _netTimeoutRetryTimes = PMD_NET_TIMEOUT_RETRY_TIMES ;
+      
+      ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
+      _netCompressor = DEF_COMPRESSOR ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2703,6 +2706,11 @@ done:
       // _nettimeoutretrytime
       rdxUInt( pEX, PMD_OPTION_NET_TIMEOUT_RETRY_TIMES, _netTimeoutRetryTimes, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_NET_TIMEOUT_RETRY_TIMES, TRUE ) ;
+      
+      // --netcompressor
+      rdxString( pEX, PMD_OPTION_NET_COMPRESSOR, _netCompressorStr,
+                 sizeof (_netCompressorStr), FALSE, PMD_CFG_CHANGE_RUN,
+                 "" ) ;
 
       // end map
 
@@ -3240,6 +3248,22 @@ done:
       {
          // avoid the value is too small
          _maxSessionContextNum = RTN_MAX_SESS_CTX_NUM_MIN ;
+      }
+
+      if ( 0 == ossStrcasecmp( NET_COMPRESSOR_STR_LZ4, _netCompressorStr ) )
+      {
+         _netCompressor = LZ4_COMPRESSOR ;
+      }
+      else if ( 0 == ossStrcasecmp( "", _netCompressorStr ) )
+      {
+         _netCompressor = DEF_COMPRESSOR ;
+      }
+      else
+      {
+         std::cerr << PMD_OPTION_NET_COMPRESSOR << " value error, use default" << std::endl ;
+         ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
+         _netCompressor = DEF_COMPRESSOR ;
+         _invalidConfNum++ ;
       }
 
    done:

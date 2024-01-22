@@ -133,7 +133,8 @@ netFiles = [
       "net/netInnerTimer.cpp",
       "net/netFrame.cpp",
       "net/netRoute.cpp",
-      "net/netRouteAgent.cpp"
+      "net/netRouteAgent.cpp",
+      "net/netCompressor.cpp"
       ]
 
 pdFiles = [
@@ -249,7 +250,8 @@ utilFiles = [
       "util/base64.cpp",
       "util/utilSecure.cpp",
       "util/utilTool.cpp",
-      "util/utilLocation.cpp"
+      "util/utilLocation.cpp",
+      "util/utilCompressorLZ4.cpp"
       ]
 
 dpsFiles = [
@@ -857,7 +859,7 @@ sdblobtool = toolEnv.Program("sdblobtool", sdbLobToolMain,
 sdbpasswd = toolEnv.Program("sdbpasswd", sdbPasswdFiles,
          LIBDEPS=["pd","oss", "bson", "util", "miglob","clientcpp","mon", "charset"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
-         
+
 sdbsecuretool = toolEnv.Program("sdbsecuretool", sdbSecureFiles,
          LIBDEPS=["pd", "oss", "bson", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -865,7 +867,7 @@ sdbsecuretool = toolEnv.Program("sdbsecuretool", sdbSecureFiles,
 sdbrevert = toolEnv.Program("sdbrevert", sdbRevertFiles,
           LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd","pcre", "charset"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
-         
+
 if linux:
    sdbtop = toolEnv.Program("sdbtop", sdbtopMain,
             LIBDEPS=["mig","oss","pd","bson","util","client","clientcpp","ncurses","mon", "charset"],

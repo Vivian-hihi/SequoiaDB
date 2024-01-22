@@ -3039,6 +3039,7 @@ INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize,
    reply->version                            = version ;
    reply->subVersion                         = subVersion ;
    reply->fixVersion                         = fixVersion ;
+   reply->msgVersion                         = SDB_PROTOCOL_VER_3 ;
    ossMemset( reply->pad, 0, sizeof( reply->pad ) ) ;
 
    md5::md5( (const void *)reply,
@@ -3089,12 +3090,26 @@ INT32 msgExtractSysInfoReply ( const CHAR *pBuffer, BOOLEAN &endianConvert,
       md5::md5( (const void *)reply,
                 sizeof(MsgSysInfoReply) - sizeof(reply->fingerprint),
                 digest ) ;
-      *protocolVer =
-            ( 0 == ossStrncmp( reply->fingerprint,
-                               (const char *)digest,
-                               sizeof(reply->fingerprint) ) ) ?
-            SDB_PROTOCOL_VER_2 : SDB_PROTOCOL_VER_1 ;
+
+      if ( 0 == ossStrncmp( reply->fingerprint,
+                            (const char *)digest,
+                            sizeof(reply->fingerprint) ) )
+      {
+         if ( 0 != reply->msgVersion )
+         {
+            *protocolVer = (SDB_PROTOCOL_VERSION)reply->msgVersion ;
+         }
+         else
+         {
+            *protocolVer = SDB_PROTOCOL_VER_2 ;
+         }
+      }
+      else
+      {
+         *protocolVer = SDB_PROTOCOL_VER_1 ;
+      }
    }
+
 done :
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTSYSINFOREPLY, rc ) ;
    return rc ;

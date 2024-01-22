@@ -631,8 +631,9 @@ namespace engine
 
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
-         UINT32 minMsgLen = (SDB_PROTOCOL_VER_2 == _peerVersion) ?
-                            sizeof(MsgHeader) : sizeof(MsgHeaderV1) ;
+         BOOLEAN isVersion1 = ( SDB_PROTOCOL_VER_1 == _peerVersion ) ;
+         UINT32 minMsgLen = isVersion1 ?
+                            sizeof(MsgHeaderV1) : sizeof(MsgHeader) ;
 
          /// error header
          if ( ( UINT32 )MSG_SYSTEM_INFO_LEN == (UINT32)_header.messageLength )
@@ -641,7 +642,7 @@ namespace engine
             // But some places in the new version will not send the system info
             // request too. So we can NOT be sure the version of peer node is
             // 1 if it hasn't sent the system info request.
-            _peerVersion = SDB_PROTOCOL_VER_2 ;
+            _peerVersion = SDB_PROTOCOL_VER_3 ;
             if ( SDB_OK != _allocateBuf( sizeof(MsgSysInfoRequest) ))
             {
                goto error_close ;
@@ -677,7 +678,8 @@ namespace engine
                   // already. We can check the version based on that.
                   _peerVersion =
                         ( MSG_COMM_EYE_DEFAULT == _header.eye ) ?
-                        SDB_PROTOCOL_VER_2 : SDB_PROTOCOL_VER_1 ;
+                        (SDB_PROTOCOL_VERSION)(_header.version) : SDB_PROTOCOL_VER_1 ;
+
                   if ( SDB_PROTOCOL_VER_1 == _peerVersion )
                   {
                      _headerSz = sizeof( MsgHeaderV1 ) ;
@@ -734,7 +736,7 @@ namespace engine
             // If peer node protocol version is 1, we can not print the message
             // like this, as the structure of the message is different. Once all
             // nodes in the cluster finish upgrading, the message can be logged.
-            if ( SDB_PROTOCOL_VER_2 == _peerVersion )
+            if ( _peerVersion >= SDB_PROTOCOL_VER_2 )
             {
                PD_LOG( PDDEBUG, "Connection[Handle:%d, Node:%s] received "
                                 "message[%s] from %s:%d", _handle,

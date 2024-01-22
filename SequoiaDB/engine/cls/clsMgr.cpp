@@ -723,6 +723,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+      _replNetRtAgent->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
 
       _shardNetRtAgent = SDB_OSS_NEW _netRouteAgent( _shdMsgHandlerObj ) ;
       if ( !_shardNetRtAgent )
@@ -731,6 +732,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+      _shardNetRtAgent->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
 
       rc = _initRemoteSession( _shardNetRtAgent ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init remote session, rc: %d", rc ) ;
@@ -1105,6 +1107,15 @@ namespace engine
 
       _shdObj->onConfigChange() ;
       _replObj->onConfigChange() ;
+
+      if ( _replNetRtAgent )
+      {
+         _replNetRtAgent->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
+      }
+      if ( _shardNetRtAgent )
+      {
+         _shardNetRtAgent->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
+      }
    }
 
    void* _clsMgr::queryInterface( SDB_INTERFACE_TYPE type )

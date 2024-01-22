@@ -683,7 +683,8 @@ netFiles = [
       "net/netEventSuit.cpp",
       "net/netFrame.cpp",
       "net/netRoute.cpp",
-      "net/netRouteAgent.cpp"
+      "net/netRouteAgent.cpp",
+      "net/netCompressor.cpp"
       ]
 
 sqlFiles= [
@@ -1180,7 +1181,7 @@ if hasTestcase:
    optTest = env.Program("optTest", [ optTestFiles, opttest ],
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon", "net", "sql","auth", "aggr", "spd", "omsvc", "charset"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
-   
+
    authTest = env.Program("authTest", [ authTestFiles, authtest ],
           LIBDEPS=["qgm","clientcpp","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon","net","sql","auth", "aggr", "spd", "omsvc", "charset"],
           _LIBDEPS='$_LIBDEPS_OBJS' )

@@ -3448,5 +3448,10 @@ namespace engine
       return _pNetRtAgent->netOut() ;
    }
 
+   const _netCompressionMonitorInfo& _clsShardMgr::netCompressMonInfo()
+   {
+      return _pNetRtAgent->netCompressMonInfo() ;
+   }
+
 }
 

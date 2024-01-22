@@ -1407,29 +1407,54 @@ namespace engine
               SDB_ROLE_CATALOG == role )
          {
             shardCB *pShardCB = sdbGetShardCB() ;
+            replCB *pReplCB = sdbGetReplCB() ;
+            _netCompressionMonitorInfo compressShardInfo = pShardCB->netCompressMonInfo() ;
+            _netCompressionMonitorInfo compressReplInfo = pReplCB->netCompressMonInfo() ;
+
             ob.append( FIELD_NAME_SHARD_NETIN, pShardCB->netIn() ) ;
             ob.append( FIELD_NAME_SHARD_NETOUT, pShardCB->netOut() ) ;
+            ob.append( FIELD_NAME_SHARD_UNCOMPRESSED, compressShardInfo.netUncompressMsgLen.peek() ) ;
+            ob.append( FIELD_NAME_SHARD_COMPRESSED, compressShardInfo.netCompressMsgLen.peek() ) ;
+            ob.append( FIELD_NAME_SHARD_UNCOMPRESSED_COUNT, compressShardInfo.netUncompressMsgCount.peek() ) ;
+            ob.append( FIELD_NAME_SHARD_COMPRESSED_COUNT, compressShardInfo.netCompressMsgCount.peek() ) ;
 
-            replCB *pReplCB = sdbGetReplCB() ;
             ob.append( FIELD_NAME_REPL_NETIN, pReplCB->netIn() ) ;
             ob.append( FIELD_NAME_REPL_NETOUT, pReplCB->netOut() ) ;
+            ob.append( FIELD_NAME_REPL_UNCOMPRESSED, compressReplInfo.netUncompressMsgLen.peek() ) ;
+            ob.append( FIELD_NAME_REPL_COMPRESSED, compressReplInfo.netCompressMsgLen.peek() ) ;
+            ob.append( FIELD_NAME_REPL_UNCOMPRESSED_COUNT, compressReplInfo.netUncompressMsgCount.peek() ) ;
+            ob.append( FIELD_NAME_REPL_COMPRESSED_COUNT, compressReplInfo.netCompressMsgCount.peek() ) ;
          }
          else if ( SDB_ROLE_COORD == role )
          {
             netRouteAgent *shardAgent = sdbGetCoordCB()->getRouteAgent() ;
             if ( shardAgent )
             {
+               _netCompressionMonitorInfo compressShardInfo = shardAgent->netCompressMonInfo() ;
+
                ob.append( FIELD_NAME_SHARD_NETIN, shardAgent->netIn() ) ;
                ob.append( FIELD_NAME_SHARD_NETOUT, shardAgent->netOut() ) ;
+               ob.append( FIELD_NAME_SHARD_UNCOMPRESSED, compressShardInfo.netUncompressMsgLen.peek() ) ;
+               ob.append( FIELD_NAME_SHARD_COMPRESSED, compressShardInfo.netCompressMsgLen.peek() ) ;
+               ob.append( FIELD_NAME_SHARD_UNCOMPRESSED_COUNT, compressShardInfo.netUncompressMsgCount.peek() ) ;
+               ob.append( FIELD_NAME_SHARD_COMPRESSED_COUNT, compressShardInfo.netCompressMsgCount.peek() ) ;
             }
             else
             {
                ob.append( FIELD_NAME_SHARD_NETIN, 0 ) ;
                ob.append( FIELD_NAME_SHARD_NETOUT, 0 ) ;
+               ob.append( FIELD_NAME_SHARD_UNCOMPRESSED, 0 ) ;
+               ob.append( FIELD_NAME_SHARD_COMPRESSED, 0 ) ;
+               ob.append( FIELD_NAME_SHARD_UNCOMPRESSED_COUNT, 0 ) ;
+               ob.append( FIELD_NAME_SHARD_COMPRESSED_COUNT, 0 ) ;
             }
 
             ob.append( FIELD_NAME_REPL_NETIN, 0 ) ;
             ob.append( FIELD_NAME_REPL_NETOUT, 0 ) ;
+            ob.append( FIELD_NAME_REPL_UNCOMPRESSED, 0 ) ;
+            ob.append( FIELD_NAME_REPL_COMPRESSED, 0 ) ;
+            ob.append( FIELD_NAME_REPL_UNCOMPRESSED_COUNT, 0 ) ;
+            ob.append( FIELD_NAME_REPL_COMPRESSED_COUNT, 0 ) ;
          }
          else
          {
@@ -1438,6 +1463,16 @@ namespace engine
 
             ob.append( FIELD_NAME_REPL_NETIN, 0 ) ;
             ob.append( FIELD_NAME_REPL_NETOUT, 0 ) ;
+
+            ob.append( FIELD_NAME_SHARD_UNCOMPRESSED, 0 ) ;
+            ob.append( FIELD_NAME_SHARD_COMPRESSED, 0 ) ;
+            ob.append( FIELD_NAME_SHARD_UNCOMPRESSED_COUNT, 0 ) ;
+            ob.append( FIELD_NAME_SHARD_COMPRESSED_COUNT, 0 ) ;
+
+            ob.append( FIELD_NAME_REPL_UNCOMPRESSED, 0 ) ;
+            ob.append( FIELD_NAME_REPL_COMPRESSED, 0 ) ;
+            ob.append( FIELD_NAME_REPL_UNCOMPRESSED_COUNT, 0 ) ;
+            ob.append( FIELD_NAME_REPL_COMPRESSED_COUNT, 0 ) ;
          }
 
          if ( SDB_ROLE_CATALOG == role )

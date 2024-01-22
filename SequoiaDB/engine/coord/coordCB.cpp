@@ -145,6 +145,7 @@ namespace engine
          optCB->maxSockPerThread() ) ;
       _pAgent->getFrame()->setMaxThreadNum(
          optCB->maxSockThread() ) ;
+      _pAgent->getFrame()->setNetCompressor( optCB->getNetCompressor() ) ;
 
       rc = _dsMgr.init( &_remoteSessionMgr ) ;
       PD_RC_CHECK( rc, PDERROR, "Init data source manager failed, rc: %d",
@@ -339,6 +340,7 @@ namespace engine
             optCB->maxSockPerThread() ) ;
          _pAgent->getFrame()->setMaxThreadNum(
             optCB->maxSockThread() ) ;
+         _pAgent->getFrame()->setNetCompressor( optCB->getNetCompressor() ) ;
       }
 
       // Also update options for communication chanel with data source.

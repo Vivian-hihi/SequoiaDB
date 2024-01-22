@@ -39,6 +39,7 @@
 *******************************************************************************/
 #include "core.hpp"
 #include <stdio.h>
+#include "netCompressor.hpp"
 #include "pd.hpp"
 #include "ossMem.hpp"
 #include "pmdEDU.hpp"
@@ -1584,6 +1585,8 @@ namespace engine
       UINT32 buffSize = 0 ;
       UINT16 reserveSize = 0 ;   // For possible message conversion.
       msgConvertorImpl *msgConvertor = NULL ;
+      _netMsgCompressor msgdecompressor ;
+      CHAR* decompressTmpBuff = NULL ;
 
    reSend:
       rc = pmdSend( (const CHAR *)pMsg, pMsg->messageLength, sock,
@@ -1701,6 +1704,25 @@ namespace engine
          rc = SDB_SYS ;
          sock->close() ;
          goto error ;
+      }
+
+      {
+         msgdecompressor.setNeedReleaseUncompressBuff( FALSE ) ;
+
+         rc = msgdecompressor.decompressNetMsg( (const MsgHeader*)pRecvBuf, &decompressTmpBuff ) ;
+         if ( rc )
+         {
+            msgdecompressor.setNeedReleaseUncompressBuff( TRUE ) ;
+            PD_LOG( PDSEVERE, "Failed to decompress network msg, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( decompressTmpBuff != pRecvBuf && pRecvBuf )
+         {
+            SDB_THREAD_FREE( pRecvBuf ) ;
+         }
+
+         pRecvBuf = decompressTmpBuff ;
       }
 
       recvEvent._eventType = PMD_EDU_EVENT_MSG ;

@@ -46,6 +46,7 @@
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
 #include "netRoute.hpp"
+#include "utilCompressorLZ4.hpp"
 #include <boost/bind.hpp>
 
 using namespace boost::asio::ip ;
@@ -55,6 +56,18 @@ namespace engine
 
    #define NET_IOPS_MIN_VALUE             ( 500 )
    #define NET_IOPS_THRESHOLD             ( 5000 )
+
+   static SDB_PROTOCOL_VERSION _netGetPeerVersion( NET_EH eh )
+   {
+      SDB_PROTOCOL_VERSION peerVersion = eh->getPeerVersion() ;
+
+      if ( SDB_PROTOCOL_VER_INVALID == peerVersion )
+      {
+         peerVersion = SDB_PROTOCOL_VER_3 ;
+      }
+
+      return peerVersion ;
+   }
 
    /*
      _netEHSegment implement
@@ -299,6 +312,8 @@ namespace engine
       _maxThreadNum = 0 ;
 
       _netTimeout = 0 ;
+      
+      _netCompressor = DEF_COMPRESSOR ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_DECONS, "_netFrame::~_netFrame" )
@@ -1335,6 +1350,9 @@ namespace engine
       NET_EH eh ;
       BOOLEAN compatibleMode = FALSE ;
       IMsgConvertor *convertor = NULL ;
+      CHAR* des = NULL ;
+      _netMsgCompressor *compressor = NULL ;
+      UINT32 msgLen = header->messageLength ;
 
       rc = _getHandle( id, eh ) ;
       if ( rc )
@@ -1356,11 +1374,29 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = _netGetPeerVersion( eh ) ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
+
+      compressor = eh->getCompressor( _netCompressor ) ;
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, header->messageLength,
+                                          &des, msgLen, _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         des = (CHAR*)header ;
+      }
+
       if ( pHandle )
       {
          *pHandle = eh->handle() ;
@@ -1369,11 +1405,11 @@ namespace engine
       if ( convertor )
       {
          compatibleMode = TRUE ;
-         rc = _syncSendCompatible( eh, header ) ;
+         rc = _syncSendCompatible( eh, (MsgHeader*)des ) ;
       }
       else
       {
-         rc = eh->syncSendRaw( header, header->messageLength ) ;
+         rc = eh->syncSendRaw( des, ((MsgHeader*)des)->messageLength ) ;
       }
       }
       if ( SDB_OK != rc )
@@ -1384,7 +1420,7 @@ namespace engine
 
       if ( !compatibleMode )
       {
-         _netOut.add( header->messageLength ) ;
+         _netOut.add( ((MsgHeader*)des)->messageLength ) ;
       }
 
    done:
@@ -1402,6 +1438,9 @@ namespace engine
       MAP_EVENT_IT itr ;
       BOOLEAN compatibleMode = FALSE ;
       IMsgConvertor *convertor = NULL ;
+      CHAR *des = NULL ;
+      _netMsgCompressor *compressor = NULL ;
+      UINT32 msgLen = header->messageLength ;
 
       {
       ossScopedLock lock( &_mtx, SHARED ) ;
@@ -1420,20 +1459,39 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = _netGetPeerVersion( eh ) ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
+
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, header->messageLength,
+                                          &des, msgLen, _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         des = (CHAR*)header ;
+      }
+
       convertor = eh->getOutMsgConvertor() ;
       if ( convertor )
       {
          compatibleMode = TRUE ;
-         rc = _syncSendCompatible( eh, header ) ;
+         rc = _syncSendCompatible( eh, ((MsgHeader*)des) ) ;
       }
       else
       {
-         rc = eh->syncSendRaw( header, header->messageLength ) ;
+         rc = eh->syncSendRaw( des, ((MsgHeader*)des)->messageLength ) ;
       }
       }
       if ( SDB_OK != rc )
@@ -1444,7 +1502,7 @@ namespace engine
 
       if ( !compatibleMode )
       {
-         _netOut.add( header->messageLength ) ;
+         _netOut.add( ((MsgHeader*)des)->messageLength ) ;
       }
 
    done:
@@ -1514,6 +1572,9 @@ namespace engine
       MAP_EVENT_IT itr ;
       IMsgConvertor *convertor = NULL ;
       UINT32 netOut = 0 ;
+      CHAR *headerDes = NULL ;
+      CHAR *bodyDes = NULL ;
+      _netMsgCompressor *compressor = NULL ;
 
       {
       ossScopedLock lock( &_mtx, SHARED ) ;
@@ -1535,29 +1596,51 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = _netGetPeerVersion( eh ) ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
+
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, (CHAR*)body, bodyLen,
+                                          &headerDes, &bodyDes, headLen, bodyLen,
+                                          _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         headerDes = (CHAR*)header ;
+         bodyDes = (CHAR*)body ;
+      }
+
       convertor = eh->getOutMsgConvertor() ;
       // If message convertor is enabled, the peer version is 1. Message should
       // be converted before sending.
       if ( convertor )
       {
          PD_LOG( PDDEBUG, "Message convertor is enabled. Convert the message "
-                 "for sending. Message: %s", msg2String( header ).c_str() ) ;
+                 "for sending. Message: %s", msg2String( (MsgHeader*)headerDes ).c_str() ) ;
          convertor->reset( FALSE ) ;
-         rc = convertor->push( (const CHAR *)header, headLen ) ;
+         rc = convertor->push( (const CHAR *)headerDes, headLen ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Push message into message convertor failed[%d]",
                     rc ) ;
             goto error ;
          }
-         if ( body && bodyLen > 0 )
+
+         if ( bodyDes && bodyLen > 0 )
          {
-            rc = convertor->push( (const CHAR *)body, bodyLen ) ;
+            rc = convertor->push( (const CHAR *)bodyDes, bodyLen ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Push message into message convertor failed[%d]",
@@ -1576,16 +1659,16 @@ namespace engine
       {
          // eh->mtx().get() ;
          /// header len should be computed. can not get sizeof(MsgHeader)
-         rc = eh->syncSendRaw( header, headLen ) ;
+         rc = eh->syncSendRaw( headerDes, headLen ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
          netOut += headLen ;
 
-         if ( NULL != body )
+         if ( NULL != bodyDes )
          {
-            rc = eh->syncSendRaw( body, bodyLen ) ;
+            rc = eh->syncSendRaw( bodyDes, bodyLen ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1622,6 +1705,9 @@ namespace engine
       MAP_EVENT_IT itHandle ;
       IMsgConvertor *convertor = NULL ;
       UINT32 netOut = 0 ;
+      CHAR *headerDes = NULL ;
+      netIOVec iovDes ;
+      _netMsgCompressor *compressor = NULL ;
 
       INT32 origLen = header->messageLength ;
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
@@ -1637,7 +1723,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
@@ -1651,24 +1737,45 @@ namespace engine
       eh = itHandle->second ;
       }
 
+      header->version = _netGetPeerVersion( eh ) ;
+
       SDB_ASSERT( NET_EVENT_HANDLER_TCP == eh->getHandlerType(),
                   "Should not use UDP socket to send multiple packets" ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
+
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, iov, &headerDes, iovDes,
+                                          _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         headerDes = (CHAR*)header ;
+         iovDes = iov ;
+      }
+
       convertor = eh->getOutMsgConvertor() ;
       if ( convertor )
       {
          PD_LOG( PDDEBUG, "Message convertor is enabled. Convert the message "
-                 "for sending. Message: %s", msg2String( header ).c_str() ) ;
+                 "for sending. Message: %s", msg2String( (MsgHeader*)headerDes ).c_str() ) ;
          convertor->reset( FALSE ) ;
-         rc = convertor->push( (const CHAR *)header, sizeof(MsgHeader) ) ;
+         rc = convertor->push( (const CHAR *)headerDes, sizeof(MsgHeader) ) ;
          if ( rc )
          {
             goto error ;
          }
 
-         for ( netIOVec::const_iterator itr = iov.begin(); itr != iov.end();
+         for ( netIOVec::const_iterator itr = iovDes.begin(); itr != iovDes.end();
                ++itr )
          {
             if ( itr->iovBase && itr->iovLen > 0 )
@@ -1689,14 +1796,14 @@ namespace engine
       }
       else
       {
-         rc = eh->syncSendRaw( header, sizeof( MsgHeader ) ) ;
+         rc = eh->syncSendRaw( headerDes, sizeof( MsgHeader ) ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
          netOut += sizeof(MsgHeader) ;
 
-         for ( netIOVec::const_iterator itr = iov.begin() ; itr != iov.end();
+         for ( netIOVec::const_iterator itr = iovDes.begin() ; itr != iovDes.end();
                ++itr )
          {
             SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
@@ -1745,6 +1852,9 @@ namespace engine
       NET_EH eh ;
       IMsgConvertor *convertor = NULL ;
       UINT32 netOut = 0 ;
+      CHAR* headerDes = NULL ;
+      CHAR* bodyDes = NULL ;
+      _netMsgCompressor *compressor = NULL ;
 
       rc = _getHandle( id, eh ) ;
       if ( rc )
@@ -1767,11 +1877,31 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = _netGetPeerVersion( eh ) ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, (CHAR*)body, bodyLen,
+                                          &headerDes, &bodyDes, headLen, bodyLen,
+                                          _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         headerDes = (CHAR*)header ;
+         bodyDes = (CHAR*)body ;
+      }
+
       if ( pHandle )
       {
          *pHandle = eh->handle() ;
@@ -1780,21 +1910,23 @@ namespace engine
       if ( convertor )
       {
          PD_LOG( PDDEBUG, "Message convertor is enabled. Convert the message "
-                 "for sending. Message: %s", msg2String( header ).c_str() ) ;
+                 "for sending. Message: %s", msg2String( (MsgHeader*)headerDes ).c_str() ) ;
          convertor->reset( FALSE ) ;
-         rc = convertor->push( (const CHAR *)header, headLen ) ;
+         rc = convertor->push( (const CHAR *)headerDes, headLen ) ;
          if ( rc )
          {
             goto error ;
          }
+
          if ( body )
          {
-            rc = convertor->push( (const CHAR *)body, bodyLen ) ;
+            rc = convertor->push( (const CHAR *)bodyDes, bodyLen ) ;
             if ( rc )
             {
                goto error ;
             }
          }
+
          rc = _msgConvertAndSend( convertor, eh ) ;
          if ( rc )
          {
@@ -1803,7 +1935,7 @@ namespace engine
       }
       else
       {
-         rc = eh->syncSendRaw( header, headLen ) ;
+         rc = eh->syncSendRaw( headerDes, headLen ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -1812,7 +1944,7 @@ namespace engine
 
          if ( NULL != body )
          {
-            rc = eh->syncSendRaw( body, bodyLen ) ;
+            rc = eh->syncSendRaw( bodyDes, bodyLen ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1851,6 +1983,9 @@ namespace engine
       NET_EH eh ;
       IMsgConvertor *convertor = NULL ;
       UINT32 netOut = 0 ;
+      CHAR *headerDes = NULL ;
+      netIOVec iovDes ;
+      _netMsgCompressor *compressor = NULL ;
 
       INT32 origLen = header->messageLength ;
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
@@ -1866,7 +2001,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       rc = _getHandle( id, eh ) ;
@@ -1884,8 +2019,28 @@ namespace engine
          }
       }
 
+      header->version = _netGetPeerVersion( eh ) ;
+
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, iov, &headerDes, iovDes,
+                                          _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         headerDes = (CHAR*)header ;
+         iovDes = iov ;
+      }
+
       if ( pHandle )
       {
          *pHandle = eh->handle() ;
@@ -1894,14 +2049,14 @@ namespace engine
       if ( convertor )
       {
          PD_LOG( PDDEBUG, "Message convertor is enabled. Convert the message "
-                 "for sending. Message: %s", msg2String( header ).c_str() ) ;
+                 "for sending. Message: %s", msg2String( (MsgHeader*)headerDes ).c_str() ) ;
          convertor->reset( FALSE ) ;
-         rc = convertor->push( (const CHAR *)header, sizeof(MsgHeader) ) ;
+         rc = convertor->push( (const CHAR *)headerDes, sizeof(MsgHeader) ) ;
          if ( rc )
          {
             goto error ;
          }
-         for ( netIOVec::const_iterator itr = iov.begin(); itr != iov.end();
+         for ( netIOVec::const_iterator itr = iovDes.begin(); itr != iovDes.end();
                ++itr )
          {
             if ( itr->iovBase && itr->iovLen > 0 )
@@ -1922,7 +2077,7 @@ namespace engine
       }
       else
       {
-         rc = eh->syncSendRaw( header, sizeof( MsgHeader ) ) ;
+         rc = eh->syncSendRaw( headerDes, sizeof( MsgHeader ) ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -1930,7 +2085,7 @@ namespace engine
 
          netOut += sizeof(MsgHeader) ;
 
-         for ( netIOVec::const_iterator itr = iov.begin() ; itr != iov.end() ;
+         for ( netIOVec::const_iterator itr = iovDes.begin() ; itr != iovDes.end() ;
                ++itr )
          {
             SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
@@ -1996,7 +2151,7 @@ namespace engine
       }
 
       message->eye = MSG_COMM_EYE_DEFAULT ;
-      message->version = SDB_PROTOCOL_VER_2 ;
+      message->version = _netGetPeerVersion( eh ) ;
       ossMemset( message->reserve, 0, sizeof(message->reserve) ) ;
 
       {
@@ -2026,7 +2181,6 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__NETFRAME_SYNCSENDUDP, rc ) ;
       return rc ;
-
    error:
       goto done ;
    }
@@ -2301,8 +2455,11 @@ namespace engine
       UINT32 len = 0 ;
       CHAR *message = NULL ;
       IMsgConvertor *convertor = NULL ;
+      _netMsgCompressor *decompressor = NULL ;
       BOOLEAN isNotSysInfoMsg =
          ( (INT32)MSG_SYSTEM_INFO_LEN != pMsg->messageLength ) ;
+      CHAR *des = NULL ;
+      UINT32 originalLen = pMsg->messageLength ;
 
       convertor = eh->getInMsgConvertor() ;
       if ( isNotSysInfoMsg && ( NULL != convertor ) )
@@ -2327,6 +2484,28 @@ namespace engine
          }
       }
 
+      decompressor = eh->getDecompressor() ;
+      if ( decompressor )
+      {
+         rc = decompressor->decompressNetMsg( pMsg, &des ) ;
+         if ( rc )
+         {
+            PD_LOG( PDSEVERE, "Failed to decompress network msg, rc: %d", rc ) ;
+            eh->close() ;
+            goto error ;
+         }
+         pMsg = (MsgHeader*)des ;
+      }
+      else
+      {
+         if ( !netIsCompressMsg( pMsg ) )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDSEVERE, "Failed to new decompressor, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
       // Heartbeat and heartbeat response should be handled in the network frame
       // itself. Only when it's not the sysinfo message can we check the opCode.
       if ( isNotSysInfoMsg && ( MSG_HEARTBEAT == pMsg->opCode ||
@@ -2344,7 +2523,7 @@ namespace engine
       else
       {
          rc = _handler->handleMsg( eh->handle(), pMsg, (const CHAR *)pMsg ) ;
-         _netIn.add( pMsg->messageLength ) ;
+         _netIn.add( originalLen ) ;
          if ( SDB_NET_BROKEN_MSG == rc )
          {
             eh->close() ;
@@ -2758,10 +2937,21 @@ namespace engine
       return _netOut.peek() ;
    }
 
+   const _netCompressionMonitorInfo& _netFrame::netCompressMonInfo()
+   {
+      return _netCompressInfo ;
+   }
+
+   void _netFrame::setNetCompressor( NET_COMPRESSOR netCompressor )
+   {
+      _netCompressor = netCompressor ;
+   }
+
    void _netFrame::resetMon()
    {
       _netIn.poke( 0 ) ;
       _netOut.poke( 0 ) ;
+      _netCompressInfo.reset() ;
    }
 
    /*
