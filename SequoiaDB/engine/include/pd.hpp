@@ -77,11 +77,18 @@
 
 #define PD_LOG(level, fmt, ...) \
    do { \
-      if ( getPDLevel() >= ( level ) && !pdIsShieldLog() ) \
-      { \
-         pdLog(( level ), __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-      } \
-   }while (0)
+         if ( pdIsShieldLog() ) \
+         { \
+            if ( getPDLevel() == PDDEBUG ) \
+            { \
+               pdLog(( PDDEBUG ), __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+            } \
+         } \
+         else if ( getPDLevel() >= ( level ) ) \
+         { \
+            pdLog(( level ), __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+         } \
+      }while (0)
 
 #define PD_LOG_MSG(level, fmt, ...) \
    do { \
@@ -95,7 +102,14 @@
             pdLocalEnableDiaglogSecure() ; \
          } \
       } \
-      if ( getPDLevel() >= ( level ) && !pdIsShieldLog() ) \
+      if ( pdIsShieldLog() ) \
+      { \
+         if ( getPDLevel() == PDDEBUG ) \
+         { \
+            pdLog(( PDDEBUG ), __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+         } \
+      } \
+      else if ( getPDLevel() >= ( level ) ) \
       { \
          pdLog(( level ), __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
       } \
