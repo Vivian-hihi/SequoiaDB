@@ -73,6 +73,8 @@ namespace engine
       _pTmpCompressBuff = NULL ;
       _tmpCompressBuffLen = 0 ;
 
+      _netCompressor = DEF_COMPRESSOR ;
+
       _needReleaseUncompressBuff = TRUE ;
    }
 
@@ -111,7 +113,7 @@ namespace engine
       utilCompressor * compressor = NULL ;
       UINT32 uncompressedLen = message->messageLength - sizeof(MsgHeader) ;
       UINT32 compressedLen = 0 ;
-      MsgHeader headerCpy = *message ;
+      MsgHeader headerCpy  ;
       UINT32 compressHeaderLen = uncompressedLen - bodyLen ;
       CHAR* pBuff = NULL ;
       CHAR* pTmpBuff = NULL ;
@@ -124,10 +126,14 @@ namespace engine
       info.netUncompressMsgLen.add( message->messageLength ) ;
       info.netUncompressMsgCount.add( 1 ) ;
 
-      if ( _netCompressor == DEF_COMPRESSOR || message->messageLength < NET_COMPRESS_MIN_SIZE )
+      if ( _netCompressor == DEF_COMPRESSOR ||
+           (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
+           message->messageLength < NET_COMPRESS_MIN_SIZE )
       {
          goto done ;
       }
+
+      headerCpy = *message ;
 
       compressor = getCompressor( _netCompressor ) ;
       if ( !compressor )
@@ -243,7 +249,7 @@ namespace engine
       utilCompressor * compressor = NULL ;
       UINT32 uncompressedLen = message->messageLength - sizeof(MsgHeader) ;
       UINT32 compressedLen = 0 ;
-      MsgHeader headerCpy = *message ;
+      MsgHeader headerCpy ;
       CHAR* pBuff = NULL ;
 
       *des = (CHAR*)message ;
@@ -252,10 +258,14 @@ namespace engine
       info.netUncompressMsgLen.add( message->messageLength) ;
       info.netUncompressMsgCount.add( 1 ) ;
 
-      if ( _netCompressor == DEF_COMPRESSOR || message->messageLength < NET_COMPRESS_MIN_SIZE )
+      if ( _netCompressor == DEF_COMPRESSOR ||
+           (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
+           message->messageLength < NET_COMPRESS_MIN_SIZE )
       {
          goto done ;
       }
+
+      headerCpy = *message ;
 
       compressor = getCompressor( _netCompressor ) ;
       if ( !compressor )
@@ -331,7 +341,9 @@ namespace engine
       info.netUncompressMsgLen.add( message->messageLength ) ;
       info.netUncompressMsgCount.add( 1 ) ;
 
-      if ( _netCompressor == DEF_COMPRESSOR || message->messageLength < NET_COMPRESS_MIN_SIZE )
+      if ( _netCompressor == DEF_COMPRESSOR ||
+           (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
+           message->messageLength < NET_COMPRESS_MIN_SIZE )
       {
          goto done ;
       }
@@ -440,8 +452,7 @@ namespace engine
       utilCompressor * compressor = NULL ;
       const CHAR* compressedData = NULL ;
       UINT32 compressedLen = 0 ;
-      MsgHeader headerCpy = *message ;
-      NET_COMPRESSOR flag = netGetCompressorFlag( message->flags ) ;
+      MsgHeader headerCpy ;
 
       *des = (CHAR*)message ;
 
@@ -450,7 +461,9 @@ namespace engine
          goto done ;
       }
 
-      compressor = getCompressor( flag ) ;
+      headerCpy = *message ;
+
+      compressor = getCompressor( netGetCompressorFlag( message->flags ) ) ;
       if ( !compressor )
       {
          rc = SDB_SYS ;
@@ -488,10 +501,12 @@ namespace engine
       return rc ;
    error:
       PD_LOG( PDERROR,
-              "Failed to decompress msg [ length: %d, type: [%d]%d, tid: %d, routeID: %d.%d.%d, requestID: %lld, flags: %u ], rc: %d",
+              "Failed to decompress msg [ length: %d, type: [%d]%d, tid: %d, "
+              "routeID: %d.%d.%d, requestID: %lld, flags: %u ], rc: %d",
               message->messageLength,
               IS_REPLY_TYPE(message->opCode), GET_REQUEST_TYPE(message->opCode), message->TID,
-              message->routeID.columns.groupID, message->routeID.columns.nodeID, message->routeID.columns.serviceID,
+              message->routeID.columns.groupID, message->routeID.columns.nodeID,
+              message->routeID.columns.serviceID,
               message->requestID, message->flags, rc ) ;
       goto done ;
    }
@@ -579,11 +594,10 @@ namespace engine
    BOOLEAN netIsCompressMsg( const MsgHeader *message )
    {
       SDB_ASSERT ( message, "Invalid message" ) ;
-      NET_COMPRESSOR flag = netGetCompressorFlag( message->flags ) ;
 
-      if ( -1 == message->messageLength || // It's a sysinfo msg
+      if ( (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength || // It's a sysinfo msg
            SDB_PROTOCOL_VER_3 != message->version ||
-           DEF_COMPRESSOR == flag )
+           DEF_COMPRESSOR == netGetCompressorFlag( message->flags ) )
       {
          return FALSE ;
       }

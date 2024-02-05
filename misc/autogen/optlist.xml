@@ -3284,7 +3284,7 @@
       <name>PMD_OPTION_NET_COMPRESSOR</name>
       <long>netcompressor</long>
       <description>
-         <en>Specify tne network message compression algorithm, default: "", value list: LZ4. Not specify parameter means disabling network message compression and the parameter values are case-insensitive</en>
+         <en>Specify the network message compression algorithm, default: "", value list: LZ4. Not specify parameter means disabling network message compression and the parameter values are case-insensitive</en>
          <cn>指定通信消息压缩算法, 默认值:"", 取值列表为: "LZ4"。不指定参数表示不开启通信消息压缩，参数取值忽略大小写</cn>
       </description>
       <reloadable>
@@ -3292,7 +3292,7 @@
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>Specify tne network message compression algorithm, the default value is "". Not specify parameter means disabling network message compression and the parameter values are case-insensitive. Optional parameter values are as follows:<fig></fig>
+         <en>Specify the network message compression algorithm, the default value is "". Not specify parameter means disabling network message compression and the parameter values are case-insensitive. Optional parameter values are as follows:<fig></fig>
              ● "LZ4": Compress the network message using LZ4 algorithm<fig></fig>
          </en>
          <cn>指定通信消息压缩算法，默认值为 ""。不指定参数表示关闭通信消息压缩，参数取值忽略大小写，可选值如下：<fig></fig>
