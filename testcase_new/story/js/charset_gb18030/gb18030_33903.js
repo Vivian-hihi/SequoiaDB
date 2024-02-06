@@ -14,6 +14,7 @@ function test ()
    var newCLName = "ÐÂ¼¯ºÏ_33903";
    db.setCharsets( "GB18030" );
 
+   commDropCS( db, csName );
    // create collectionSpace
    commCreateCS( db, csName, false );
    // create collection

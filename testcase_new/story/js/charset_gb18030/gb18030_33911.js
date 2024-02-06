@@ -11,6 +11,17 @@ function test ()
    var newSequenceName = "ÐÂÐòÁÐ_33911";
    db.setCharsets( "GB18030" );
 
+   try
+   {
+      db.dropSequence( sequenceName );
+   } catch( e )
+   {
+      if( e != SDB_SEQUENCE_NOT_EXIST )
+      {
+         throw e;
+      }
+   }
+
    // create sequence
    db.createSequence( sequenceName );
 
