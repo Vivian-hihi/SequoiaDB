@@ -737,6 +737,10 @@ namespace engine
          OSS_INLINE INT32  getMemTopPad() const { return _memTopPad ; }
 
          OSS_INLINE NET_COMPRESSOR getNetCompressor () const { return _netCompressor ; }
+
+         OSS_INLINE const CHAR * getFsCacheExpiredStr() const { return _fsCacheExpiredStr ; }
+         OSS_INLINE UINT64 getFsCacheExpiredMs() const { return _fsCacheExpiredMs ; }
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -903,6 +907,9 @@ namespace engine
 
          CHAR           _netCompressorStr[ PMD_NET_COMPRESSOR_MAX_STR_LENGTH + 1 ] ;
          NET_COMPRESSOR _netCompressor ;
+
+         CHAR        _fsCacheExpiredStr[ PMD_MAX_SHORT_STR_LEN + 1 ] ;
+         UINT64      _fsCacheExpiredMs ;
 
 #ifdef SDB_ENTERPRISE
 

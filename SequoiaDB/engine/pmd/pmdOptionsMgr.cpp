@@ -130,6 +130,8 @@ namespace engine
    #define PMD_DFT_MEM_MMAP_MAX        (4194304)
    #define PMD_DFT_MEM_TOP_PAD         (-1)
 
+   #define PMD_DFT_FS_CACHE_EXPIRED    ("72h")
+
    /*
       _pmdCfgExchange implement
    */
@@ -2062,6 +2064,8 @@ done:
 
       ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
       _netCompressor = DEF_COMPRESSOR ;
+      ossMemset( _fsCacheExpiredStr, 0, sizeof(_fsCacheExpiredStr) ) ;
+      _fsCacheExpiredMs = 0 ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2699,6 +2703,11 @@ done:
                  sizeof (_netCompressorStr), FALSE, PMD_CFG_CHANGE_RUN,
                  "" ) ;
 
+      // --fsCacheExpired
+      rdxString( pEX, PMD_OPTION_FS_CACHE_EXPIRED, _fsCacheExpiredStr,
+                 sizeof (_fsCacheExpiredStr), FALSE, PMD_CFG_CHANGE_RUN,
+                 PMD_DFT_FS_CACHE_EXPIRED, TRUE ) ;
+
       // end map
 
       return getResult () ;
@@ -3251,6 +3260,20 @@ done:
          ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
          _netCompressor = DEF_COMPRESSOR ;
          _invalidConfNum++ ;
+      }
+
+      if ( SDB_OK != utilStrToFsCacheExpiredMs( _fsCacheExpiredStr, _fsCacheExpiredMs ) )
+      {
+         std::cerr << PMD_OPTION_FS_CACHE_EXPIRED << " value error, use default"
+                   << std::endl ;
+         ossStrncpy( _fsCacheExpiredStr, PMD_DFT_FS_CACHE_EXPIRED,
+                     sizeof( _fsCacheExpiredStr ) ) ;
+         utilStrToFsCacheExpiredMs( _fsCacheExpiredStr, _fsCacheExpiredMs ) ;
+         _invalidConfNum++ ;
+      }
+      if ( 0 == _fsCacheExpiredMs )
+      {
+         _fsCacheExpiredMs = (UINT64)~0 ;
       }
 
    done:
@@ -3963,8 +3986,7 @@ done:
          case DPS_LOG_WRITE_MOD_FULL :
             ossStrncpy( str, PMD_OPTION_LOG_WRITEMOD_FULL_STR, len -1 ) ;
             break ;
-
-         default :
+default :
             str[0] = 0 ;
             rc = SDB_INVALIDARG ;
       }
