@@ -256,8 +256,6 @@ namespace engine
       _needForceSecondary  = FALSE ;
       _nodeInfoChanged     = FALSE ;
       _inPacketLevel       = 0 ;
-      _outMsgCount         = 0 ;
-      _outTimeoutMsgCount  = 0 ;
    }
 
    sdbCatalogueCB::~sdbCatalogueCB()
@@ -381,7 +379,6 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      _pNetWork->getFrame()->setNetTimeout( pmdGetOptionCB()->getNetTimeout() ) ;
       _pNetWork->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
 
       // 3. member objs init
@@ -537,12 +534,8 @@ namespace engine
       {
          _pNetWork->getFrame()->setBeatInfo(
                pmdGetOptionCB()->getOprTimeout() ) ;
-         _pNetWork->getFrame()->setNetTimeout(
-               pmdGetOptionCB()->getNetTimeout() ) ;
          _pNetWork->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
       }
-
-      _catMainCtrl.setNetTimeoutRetryTimes( pmdGetOptionCB()->getNetTimeoutRetryTimes() ) ;
    }
 
    void sdbCatalogueCB::onConfigSave()
@@ -1644,8 +1637,6 @@ namespace engine
       MsgOpReply errReply ;
       PD_TRACE_ENTRY( SDB_CATALOGCB_SENDREPLY ) ;
 
-      _outMsgCount++ ;
-
       rc = onSendReply( pReply, result ) ;
       PD_RC_CHECK( rc, PDERROR, "On send reply failed, rc: %d", rc ) ;
 
@@ -1656,19 +1647,7 @@ namespace engine
       }
 
    done :
-      if ( !netWork()->getFrame()->select( handle ) )
-      {
-         _outTimeoutMsgCount++ ;
-
-         if ( !delayCurOperation() )
-         {
-            rc = SDB_TIMEOUT ;
-            PD_LOG ( PDERROR, "Failed to delay current operation and we will close "
-                     "the network handle: %u, rc: %d", handle, rc ) ;
-            netWork()->close( handle ) ;
-         }
-      }
-      else if ( !isDelayed() && pReply && _inPacketLevel == 0 )
+      if ( !isDelayed() && pReply && _inPacketLevel == 0 )
       {
          BSONObj errInfo ;
 

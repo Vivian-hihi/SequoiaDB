@@ -79,8 +79,6 @@
                                                 shardNetOut:{$sum:\"$shardNetOut\"},\
                                                 replNetIn:{$sum:\"$replNetIn\"},\
                                                 replNetOut:{$sum:\"$replNetOut\"},\
-                                                cataNetMsgOutCount:{$sum:\"$cataNetMsgOutCount\"},\
-                                                cataNetMsgTimeoutCount:{$sum:\"$cataNetMsgTimeoutCount\"},\
                                                 shardUncompressed:{$sum:\"$shardUncompressed\"},\
                                                 shardCompressed:{$sum:\"$shardCompressed\"},\
                                                 shardUncompressedCount:{$sum:\"$shardUncompressedCount\"},\

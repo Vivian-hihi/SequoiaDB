@@ -574,8 +574,6 @@
 #define FIELD_NAME_REPL_NETOUT               "replNetOut"
 #define FIELD_NAME_SHARD_NETIN               "shardNetIn"
 #define FIELD_NAME_SHARD_NETOUT              "shardNetOut"
-#define FIELD_NAME_CATA_NET_MSG_COUNT        "cataNetMsgOutCount"
-#define FIELD_NAME_CATA_NET_MSG_TIMEOUT_COUNT "cataNetMsgTimeoutCount"
 #define FIELD_NAME_REPL_UNCOMPRESSED         "replUncompressed"
 #define FIELD_NAME_REPL_COMPRESSED           "replCompressed"
 #define FIELD_NAME_REPL_UNCOMPRESSED_COUNT   "replUncompressedCount"

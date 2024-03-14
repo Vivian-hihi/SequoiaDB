@@ -71,6 +71,7 @@ namespace engine
       CAT_DELAY_REPLY_SYNC,
    } ;
 
+   #define CAT_MAX_DELAY_RETRY_TIMES         ( 100 )
    #define CAT_DEALY_TIME_INTERVAL           ( 100 ) // ms
 
    /*
@@ -102,15 +103,14 @@ namespace engine
       ossEvent* getAttachEvent() { return &_attachEvent ; }
       ossEvent* getChangeEvent() { return &_changeEvent ; }
 
-      BOOLEAN   delayCurOperation ( UINT32 maxRetryTimes = 0 ) ;
+      BOOLEAN   delayCurOperation ( UINT32 maxRetryTimes =
+                                           CAT_MAX_DELAY_RETRY_TIMES ) ;
       BOOLEAN   isDelayed() const { return _isDelayed ; }
 
-      BOOLEAN   canDelayed( UINT32 maxRetryTimes = 0 ) ;
+      BOOLEAN   canDelayed( UINT32 maxRetryTimes = CAT_MAX_DELAY_RETRY_TIMES ) ;
 
       void addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
       void delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;
-
-      void setNetTimeoutRetryTimes( UINT32 times ){ _netTimeoutRetryTimes = times ; }
 
    public:
       INT32 handleMsg( const NET_HANDLE &handle,
@@ -242,8 +242,6 @@ namespace engine
       BOOLEAN           _delayWithoutSync ;
       UINT64            _lastCheckDelayTick ;
       BSONObj           _clMetaRecord ;
-
-      UINT32            _netTimeoutRetryTimes ;
    } ;
 
 }

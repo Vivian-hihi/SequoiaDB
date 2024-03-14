@@ -84,8 +84,6 @@ namespace engine
       _lastCheckDelayTick  = 0 ;
 
       _changeEvent.signal() ;
-
-      _netTimeoutRetryTimes = 0 ;
    }
 
    catMainController::~catMainController()
@@ -155,7 +153,6 @@ namespace engine
       pmdEDUEvent *last    = getLastEvent() ;
       UINT32 handle        = 0 ;
       UINT32 tryTime       = 0 ;
-      UINT32 maxRetryTimesTmp = ( maxRetryTimes == 0 ? _netTimeoutRetryTimes : maxRetryTimes ) ;
 
       if ( NULL == _lastDelayEvent._Data &&
            ( PMD_EDU_EVENT_MSG != last->_eventType ||
@@ -170,7 +167,7 @@ namespace engine
          {
             ossUnpack32From64( _lastDelayEvent._userData, tryTime, handle ) ;
 
-            if ( tryTime > maxRetryTimesTmp )
+            if ( tryTime > maxRetryTimes )
             {
                result = FALSE ;
             }
@@ -185,7 +182,6 @@ namespace engine
       pmdEDUEvent *last    = getLastEvent() ;
       UINT32 handle        = 0 ;
       UINT32 tryTime       = 0 ;
-      UINT32 maxRetryTimesTmp = ( maxRetryTimes == 0 ? _netTimeoutRetryTimes : maxRetryTimes ) ;
 
       if ( NULL == _lastDelayEvent._Data &&
            ( PMD_EDU_EVENT_MSG != last->_eventType ||
@@ -203,7 +199,7 @@ namespace engine
          {
             ossUnpack32From64( _lastDelayEvent._userData, tryTime, handle ) ;
 
-            if ( tryTime > maxRetryTimesTmp )
+            if ( tryTime > maxRetryTimes )
             {
                result = FALSE ;
                goto done ;
@@ -529,8 +525,6 @@ namespace engine
 
       // Set timer
       _checkEventTimerID = _pCatCB->setTimer( CAT_DEALY_TIME_INTERVAL ) ;
-
-      _netTimeoutRetryTimes = pKrcb->getOptionCB()->getNetTimeoutRetryTimes() ;
 
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_INIT, rc ) ;

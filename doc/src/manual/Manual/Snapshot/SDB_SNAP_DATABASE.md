@@ -4,7 +4,7 @@
     作者：何嘉文
     时间：20190307
     评审意见
-
+    
     王涛：
     许建辉：
     市场部：
@@ -113,8 +113,6 @@ SDB_SNAP_DATABASE
 | shardCompressedCount  | int64     | shard 平面端口压缩成功的消息总个数                              |
 | replNetIn             | int64     | 数据同步平面端口收到的网络流量，单位为字节                      |
 | replNetOut            | int64     | 数据同步平面端口发送的网络流量，单位为字节                      |
-| cataNetMsgOutCount    | int64     | cata平面端口发送消息的总个数                                     |
-| cataNetMsgTimeoutCount| int64     | cata平面端口消息发送超时的总个数                                 |
 | replUncompressed      | int64     | 数据同步平面端口消息压缩前的总长度，单位为字节                  |
 | replCompressed        | int64     | 数据同步平面端口消息压缩后的总长度，单位为字节                  |
 | replUncompressedCount | int64     | 数据同步平面端口消息总个数                                      |
@@ -180,8 +178,6 @@ SDB_SNAP_DATABASE
 | shardCompressedCount  | int64     | shard 平面端口压缩成功的消息总个数                              |
 | replNetIn         | int64     | 数据同步平面端口收到的网络流量，单位为字节    |
 | replNetOut        | int64     | 数据同步平面端口发送的网络流量，单位为字节    |
-| cataNetMsgOutCount    | int64  | cata平面端口发送消息的总个数                                     |
-| cataNetMsgTimeoutCount| int64  | cata平面端口消息发送超时的总个数                                 |
 | replUncompressed      | int64     | 数据同步平面端口消息压缩前的总长度，单位为字节                  |
 | replCompressed        | int64     | 数据同步平面端口消息压缩后的总长度，单位为字节                  |
 | replUncompressedCount | int64     | 数据同步平面端口消息总个数                                      |
@@ -314,8 +310,6 @@ SDB_SNAP_DATABASE
      "shardCompressedCount": 20013,
      "replNetIn": 0,
      "replNetOut": 0,
-     "cataNetMsgOutCount": 623,
-     "cataNetMsgTimeoutCount": 0,
      "replUncompressed": 38035936,
      "replCompressed": 16396306,
      "replUncompressedCount": 140482,
@@ -387,8 +381,6 @@ SDB_SNAP_DATABASE
      "shardCompressedCount": 20102,
      "replNetIn": 0,
      "replNetOut": 0,
-     "cataNetMsgOutCount": 623,
-     "cataNetMsgTimeoutCount": 0,
      "replUncompressed": 19089433,
      "replCompressed": 8243925,
      "replUncompressedCount": 70424,

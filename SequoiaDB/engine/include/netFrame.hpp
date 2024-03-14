@@ -462,10 +462,6 @@ namespace engine
             return (NET_HANDLE)( _handle.inc() ) ;
          }
 
-         BOOLEAN select( const NET_HANDLE &handle ) ;
-
-         void setNetTimeout( UINT32 timeout ) { _netTimeout = timeout ; }
-
       protected:
          netEvSuitPtr      _getEvSuit( BOOLEAN needLock ) ;
          void              _stopAllEvSuit() ;
@@ -550,8 +546,6 @@ namespace engine
 
          NET_UDP_EV_SUIT                  _udpMainSuit ;
 
-         UINT32                           _netTimeout ;
-         
          NET_COMPRESSOR                   _netCompressor ;
    } ;
 
