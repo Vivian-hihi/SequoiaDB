@@ -437,6 +437,29 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ASYNCSENDCOMPATIBLE, "_netFrame::_asyncSendCompatible" )
+   INT32 _netFrame::_asyncSendCompatible( NET_EH eh, MsgHeader *message )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__NETFRAME__ASYNCSENDCOMPATIBLE ) ;
+      IMsgConvertor *convertor = eh->getOutMsgConvertor() ;
+
+      convertor->reset( FALSE ) ;
+      rc = convertor->push( (const CHAR *)message, message->messageLength ) ;
+      PD_RC_CHECK( rc, PDERROR, "Push message into convertor failed[%d]. "
+                   "Message: %s", rc, msg2String( message ).c_str() ) ;
+
+      rc = _msgConvertAndASend( convertor, eh ) ;
+      PD_RC_CHECK( rc, PDERROR, "Convert message and send failed[%d]. "
+                   "Message: %s", rc, msg2String( message ).c_str() ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__NETFRAME__ASYNCSENDCOMPATIBLE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__MSGCONVERTANDSEND, "_netFrame::_msgConvertAndSend" )
    INT32 _netFrame::_msgConvertAndSend( IMsgConvertor *convertor, NET_EH eh )
    {
@@ -463,6 +486,37 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__NETFRAME__MSGCONVERTANDSEND, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__MSGCONVERTANDASEND, "_netFrame::_msgConvertAndASend" )
+   INT32 _netFrame::_msgConvertAndASend( IMsgConvertor *convertor, NET_EH eh )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__NETFRAME__MSGCONVERTANDASEND ) ;
+      CHAR *data = NULL ;
+      UINT32 len = 0 ;
+
+      while ( TRUE )
+      {
+         rc = convertor->output( data, len ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get message from message convertor "
+                      "failed[%d]", rc ) ;
+         if ( !data )
+         {
+            break ;
+         }
+
+         rc = eh->asyncWrite( data, len ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send message to [%s:%u] failed[%d]",
+                      eh->remoteAddr().c_str(), eh->remotePort(), rc ) ;
+         _netOut.add( len ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__NETFRAME__MSGCONVERTANDASEND, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -2180,6 +2234,230 @@ namespace engine
       PD_TRACE_EXITRC( SDB__NETFRAME_SYNCSENDUDP, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_ASYNCSEND2, "_netFrame::asyncSend" )
+   INT32 _netFrame::asyncSend( const NET_HANDLE &handle, MsgHeader *header )
+   {
+      PD_TRACE_ENTRY ( SDB__NETFRAME_ASYNCSEND2 ) ;
+      INT32 rc = SDB_OK ;
+      NET_EH eh ;
+      MAP_EVENT_IT itr ;
+      BOOLEAN compatibleMode = FALSE ;
+      IMsgConvertor *convertor = NULL ;
+      CHAR *des = NULL ;
+      _netMsgCompressor *compressor = NULL ;
+      UINT32 msgLen = header->messageLength ;
+
+      {
+      ossScopedLock lock( &_mtx, SHARED ) ;
+      itr = _opposite.find( handle ) ;
+      if ( _opposite.end() == itr )
+      {
+         rc = SDB_NET_INVALID_HANDLE ;
+         goto error ;
+      }
+      eh = itr->second ;
+      }
+
+      if ( MSG_INVALID_ROUTEID == header->routeID.value )
+      {
+         header->routeID = _local ;
+      }
+
+      header->eye = MSG_COMM_EYE_DEFAULT ;
+      header->version = _netGetPeerVersion( eh ) ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
+
+      {
+      ossScopedLock lock( &( eh->mtx() ) ) ;
+
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, header->messageLength,
+                                          &des, msgLen, _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         des = (CHAR*)header ;
+      }
+
+      convertor = eh->getOutMsgConvertor() ;
+      if ( convertor )
+      {
+         compatibleMode = TRUE ;
+         rc = _asyncSendCompatible( eh, ((MsgHeader*)des) ) ;
+      }
+      else
+      {
+         rc = eh->asyncWrite( des, ((MsgHeader*)des)->messageLength ) ;
+      }
+      }
+      if ( rc && rc != SDB_TIMEOUT )
+      {
+         eh->close() ;
+         goto error ;
+      }
+
+      if ( !compatibleMode )
+      {
+         _netOut.add( ((MsgHeader*)des)->messageLength ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__NETFRAME_ASYNCSEND2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_ASYNCSEND3, "_netFrame::asyncSend" )
+   INT32 _netFrame::asyncSend( const NET_HANDLE &handle,
+                               MsgHeader *header,
+                               const void *body,
+                               UINT32 bodyLen )
+   {
+      SDB_ASSERT( NULL != header, "header should not be NULL") ;
+      SDB_ASSERT( NET_INVALID_HANDLE != handle,
+                  "handle should not be invalid" ) ;
+
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__NETFRAME_ASYNCSEND3 );
+      // The header length should be calculated instead of using
+      // sizeof(MsgHeader), as the message may be a reply message, whose header
+      // size is greater than sizeof(MsgHeader).
+      UINT32 headLen = header->messageLength - bodyLen ;
+      NET_EH eh ;
+      MAP_EVENT_IT itr ;
+      IMsgConvertor *convertor = NULL ;
+      UINT32 netOut = 0 ;
+      CHAR *headerDes = NULL ;
+      CHAR *bodyDes = NULL ;
+      _netMsgCompressor *compressor = NULL ;
+
+      {
+      ossScopedLock lock( &_mtx, SHARED ) ;
+      itr = _opposite.find( handle ) ;
+      if ( _opposite.end() == itr )
+      {
+         rc = SDB_NET_INVALID_HANDLE ;
+         goto error ;
+      }
+      eh = itr->second ;
+      }
+
+      SDB_ASSERT( NET_EVENT_HANDLER_TCP == eh->getHandlerType(),
+                  "Should not use UDP socket to send multiple packets" ) ;
+
+      if ( MSG_INVALID_ROUTEID == header->routeID.value )
+      {
+         header->routeID = _local ;
+      }
+
+      header->eye = MSG_COMM_EYE_DEFAULT ;
+      header->version = _netGetPeerVersion( eh ) ;
+      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
+
+      {
+      ossScopedLock lock( &( eh->mtx() ) ) ;
+
+      compressor = eh->getCompressor( _netCompressor ) ;
+
+      if ( compressor )
+      {
+         rc = compressor->compressNetMsg( header, (CHAR*)body, bodyLen,
+                                          &headerDes, &bodyDes, headLen, bodyLen,
+                                          _netCompressInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         headerDes = (CHAR*)header ;
+         bodyDes = (CHAR*)body ;
+      }
+
+      convertor = eh->getOutMsgConvertor() ;
+      // If message convertor is enabled, the peer version is 1. Message should
+      // be converted before sending.
+      if ( convertor )
+      {
+         PD_LOG( PDDEBUG, "Message convertor is enabled. Convert the message "
+                 "for sending. Message: %s", msg2String( (MsgHeader*)headerDes ).c_str() ) ;
+         convertor->reset( FALSE ) ;
+         rc = convertor->push( (const CHAR *)headerDes, headLen ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Push message into message convertor failed[%d]",
+                    rc ) ;
+            goto error ;
+         }
+
+         if ( bodyDes && bodyLen > 0 )
+         {
+            rc = convertor->push( (const CHAR *)bodyDes, bodyLen ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Push message into message convertor failed[%d]",
+                       rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _msgConvertAndASend( convertor, eh ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      else
+      {
+         // eh->mtx().get() ;
+         /// header len should be computed. can not get sizeof(MsgHeader)
+         rc = eh->asyncWrite( headerDes, headLen ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         netOut += headLen ;
+
+         if ( NULL != bodyDes )
+         {
+            rc = eh->asyncWrite( bodyDes, bodyLen ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            netOut += bodyLen ;
+         }
+      }
+      }
+
+   done:
+      if ( netOut > 0 )
+      {
+         _netOut.add( netOut ) ;
+      }
+      PD_TRACE_EXITRC ( SDB__NETFRAME_ASYNCSEND3, rc );
+      return rc ;
+   error:
+      if ( NULL != eh.get() && rc != SDB_TIMEOUT )
+      {
+         eh->close() ;
+      }
       goto done ;
    }
 

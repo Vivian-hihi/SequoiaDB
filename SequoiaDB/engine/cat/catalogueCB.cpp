@@ -1670,18 +1670,32 @@ namespace engine
 
          if ( pReplyData )
          {
-            rc = netWork()->syncSend( handle, &(pReply->header),
-                                      pReplyData, replyDataLen ) ;
+            rc = netWork()->asyncSend( handle, &(pReply->header),
+                                       pReplyData, replyDataLen ) ;
          }
          else
          {
-            rc = netWork()->syncSend( handle, &(pReply->header) ) ;
+            rc = netWork()->asyncSend( handle, &(pReply->header) ) ;
          }
+
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDWARNING,
-                    "Failed to send reply message [%d], rc: %d",
-                    pReply->header.opCode, rc ) ;
+            if ( SDB_TIMEOUT == rc )
+            {
+               rc = _catMainCtrl.delayReplyEvent( handle, pReply, pReplyData, replyDataLen ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to delay current reply and we will close "
+                           "the network handle: %u, rc: %d", handle, rc ) ;
+                  netWork()->close( handle ) ;
+               }
+            }
+            else
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to send reply message [%d], rc: %d",
+                       pReply->header.opCode, rc ) ;
+            }
          }
       }
       PD_TRACE_EXITRC( SDB_CATALOGCB_SENDREPLY, rc ) ;

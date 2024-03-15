@@ -2305,6 +2305,11 @@ namespace engine
                          "sync failed, rc: %d", rc ) ;
             break ;
          }
+         case CAT_DELAY_REPLY :
+         {
+            // we just need to send the reply msg
+            break ;
+         }
          default :
             PD_LOG( PDERROR,
                     "Failed to extract delayed reply message, unknown type: %d",
@@ -2432,6 +2437,51 @@ namespace engine
       return rc ;
 
    error :
+      goto done ;
+   }
+
+   INT32 catMainController::delayReplyEvent ( const NET_HANDLE &handle,
+                                              MsgOpReply *pReply, void *pReplyData,
+                                              UINT32 replyDataLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      pmdEDUEvent event ;
+      CHAR *pBuffer = NULL ;
+      INT32 bufferSize = 0 ;
+      BSONObj boInfo ;
+
+      if ( _lastDelayEvent._Data )
+      {
+         if ( delayCurOperation() )
+         {
+            goto done ;
+         }
+         else
+         {
+            rc = SDB_TIMEOUT ;
+            PD_RC_CHECK( rc, PDERROR, "Delay reply failed, rc: %d", rc ) ;
+         }
+      }
+
+      rc = _buildDelayReplyEvent( &pBuffer, &bufferSize, CAT_DELAY_REPLY,
+                                  pReply, pReplyData, replyDataLen, boInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build catalog delay reply event failed, rc: %d", rc ) ;
+
+      event._eventType = PMD_EDU_EVENT_MSG ;
+      event._Data = pBuffer ;
+      event._dataMemType = PMD_EDU_MEM_SELF ;
+      event._eventType = PMD_EDU_EVENT_MSG ;
+      event._userData = ossPack32To64( 1, handle ) ;
+
+      _delayEvent( event ) ;
+
+      PD_LOG ( PDDEBUG, "Delay event handle: [%u] type: [%d]",
+               handle, event._eventType ) ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

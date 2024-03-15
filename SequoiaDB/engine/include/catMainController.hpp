@@ -69,6 +69,8 @@ namespace engine
       // Wait synchronization of transaction ending LSN
       // between Catalog replicas
       CAT_DELAY_REPLY_SYNC,
+
+      CAT_DELAY_REPLY,
    } ;
 
    #define CAT_MAX_DELAY_RETRY_TIMES         ( 100 )
@@ -192,6 +194,10 @@ namespace engine
       // functions of wait sync
       virtual INT32 waitSync( const NET_HANDLE &handle, MsgOpReply *pReply,
                               void *pReplyData, UINT32 replyDataLen ) ;
+
+      INT32 delayReplyEvent ( const NET_HANDLE &handle,
+                              MsgOpReply *pReply, void *pReplyData,
+                              UINT32 replyDataLen ) ;
 
    protected :
       INT32 _waitSyncInternal ( const NET_HANDLE &handle, BOOLEAN firstTry,
