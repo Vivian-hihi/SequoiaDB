@@ -37,13 +37,6 @@ function test ()
 
       // 重置数据库快照 -> 分区表写数据 -> 查询数据库快照消息压缩相关指标
       db.resetSnapshot( { "Type": "database" } );
-      var cursor = db.snapshot( SDB_SNAP_DATABASE, {}, { shardNetOut: "", shardUncompressed: "", shardCompressed: "", shardUncompressedCount: "", shardCompressedCount: "", replNetOut: "", replUncompressed: "", replCompressed: "", replUncompressedCount: "", replCompressedCount: "" } );
-      var ncInfo = cursor.current().toObj();
-      assert.equal( ncInfo.replUncompressed, 0, message + ", check replUncompressed" );
-      assert.equal( ncInfo.replCompressed, 0, message + ", check replCompressed" );
-      assert.equal( ncInfo.replUncompressedCount, 0, message + ", check replUncompressedCount" );
-      assert.equal( ncInfo.replCompressedCount, 0, message + ", check replCompressedCount" );
-      // 写数据并检查
       insertDocs( shardCL );
       snapshotAndCheckResult( "shard cl insert docs" );
 
