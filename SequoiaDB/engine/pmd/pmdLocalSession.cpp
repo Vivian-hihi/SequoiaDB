@@ -1001,6 +1001,7 @@ namespace engine
 
             tmpData.diff(*(eduCB()->getMonAppCB())) ;
             monQuery->incMetrics(tmpData) ;
+            monQuery->numMsgReply++ ;
 
             MONQUERY_SET_QUERY_TEXT( eduCB(),
                                      eduCB()->getMonAppCB()->getLastOpDetail() ) ;
