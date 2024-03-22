@@ -2029,7 +2029,15 @@ namespace engine
                        "%d seconds", primaryNodeID.columns.groupID,
                        primaryNodeID.columns.nodeID,
                        NET_NODE_FAULTUP_MIN_TIME ) ;
+
+               cb->setBlock( EDU_BLOCK_NODEFAULT, "" ) ;
+               cb->printInfo( EDU_INFO_DOING,
+                              "Primary node[%d.%d] is crashed, sleep %d seconds",
+                              primaryNodeID.columns.groupID,
+                              primaryNodeID.columns.nodeID,
+                              NET_NODE_FAULTUP_MIN_TIME ) ;
                ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+               cb->unsetBlock() ;
             }
             goto done ;
          }
@@ -2111,7 +2119,15 @@ namespace engine
                     "%d seconds", nodeID.columns.groupID,
                     nodeID.columns.nodeID,
                     NET_NODE_FAULTUP_MIN_TIME ) ;
+
+            cb->setBlock( EDU_BLOCK_NODEFAULT, "" ) ;
+            cb->printInfo( EDU_INFO_DOING,
+                           "Node[%d.%d] is doing shutdown, sleep %d seconds",
+                           nodeID.columns.groupID,
+                           nodeID.columns.nodeID,
+                           NET_NODE_FAULTUP_MIN_TIME ) ;
             ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+            cb->unsetBlock() ;
          }
          else if ( SDB_CLS_NODE_IN_MAINTENANCE == flag )
          {
