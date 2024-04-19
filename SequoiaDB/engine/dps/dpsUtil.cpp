@@ -220,9 +220,10 @@ namespace engine
       DPS_TRANS_ID resultID = DPS_INVALID_TRANS_ID ;
       if ( DPS_INVALID_TRANS_ID != transID._sn )
       {
-         ( ( (DPS_TRANS_ID)transID._nodeID ) << 48 ) ;
+         resultID |= ( ( (DPS_TRANS_ID)transID._nodeID ) << 48 ) ;
          resultID |= ( transID._sn & DPS_TRANSID_SN_BIT ) ;
-         resultID |= ( ( transID._sn & 0xF000000000000000 ) >> 20 ) ;
+         resultID |= ( ( transID._sn & 0xF000000000000000 ) >> 16 ) ;
+
          if ( transID._sn & 0x0100000000000000 )
          {
             PD_LOG( PDWARNING, "Will lose bits of global timestamp [%llx]",
