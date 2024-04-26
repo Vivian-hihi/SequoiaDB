@@ -41,8 +41,7 @@
 
 namespace engine
 {
-   #define NET_COMPRESS_MIN_SIZE   128                // 128 Bytes
-   #define NET_COMPRESS_MAX_SIZE   48 * 1000 * 1000   // 48 M
+   #define NET_COMPRESS_MIN_SIZE   64 * 1024   // 64K
 
    static utilCompressor* getCompressor( NET_COMPRESSOR compressorType )
    {
@@ -73,7 +72,7 @@ namespace engine
       _pTmpCompressBuff = NULL ;
       _tmpCompressBuffLen = 0 ;
 
-      _netCompressor = DEF_COMPRESSOR ;
+      _compressor = NONE_COMPRESSOR ;
 
       _needReleaseUncompressBuff = TRUE ;
    }
@@ -104,8 +103,7 @@ namespace engine
 
    INT32 _netMsgCompressor::compressNetMsg( const MsgHeader *message, const CHAR* body, UINT32 bodyLen,
                                             CHAR** headerDes, CHAR** bodyDes,
-                                            UINT32 &newHeaderLen, UINT32 &newBodyLen,
-                                            _netCompressionMonitorInfo &info )
+                                            UINT32 &newHeaderLen, UINT32 &newBodyLen )
    {
       // body may be null
       SDB_ASSERT ( message && headerDes && bodyDes, "Invalid message" ) ;
@@ -123,32 +121,22 @@ namespace engine
       newHeaderLen = message->messageLength - bodyLen ;
       newBodyLen = bodyLen ;
 
-      info.netUncompressMsgLen.add( message->messageLength ) ;
-      info.netUncompressMsgCount.add( 1 ) ;
-
-      if ( _netCompressor == DEF_COMPRESSOR ||
-           (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
-           message->messageLength < NET_COMPRESS_MIN_SIZE )
+      if ( !_needCompressMsg( message ) )
       {
          goto done ;
       }
 
       headerCpy = *message ;
 
-      compressor = getCompressor( _netCompressor ) ;
+      compressor = getCompressor( _compressor ) ;
       if ( !compressor )
       {
-         PD_LOG( PDERROR, "Failed to get compressor, rc: %d", SDB_SYS ) ;
+         PD_LOG( PDWARNING, "Failed to get compressor, rc: %d", SDB_SYS ) ;
          goto done ;
       }
 
       rc = compressor->compressBound( uncompressedLen, compressedLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get max compressed length, rc: %d", rc ) ;
-
-      if ( compressedLen > NET_COMPRESS_MAX_SIZE )
-      {
-         goto done ;
-      }
 
       pBuff = _getBuff( compressedLen + sizeof(MsgHeader), &_pCompressBuff, _compressBuffLen ) ;
       if ( !pBuff )
@@ -214,7 +202,7 @@ namespace engine
          SDB_ASSERT( FALSE, "Invalid msg length" ) ;
       }
 
-      netSetCompressorFlag( _netCompressor, headerCpy.flags ) ;
+      OSS_BIT_SET( headerCpy.flags, FLAG_COMPRESSED ) ;
       headerCpy.messageLength = sizeof(MsgHeader) + compressedLen ;
       ossMemcpy( pBuff, (CHAR*)(&headerCpy), sizeof(MsgHeader) ) ;
 
@@ -231,9 +219,6 @@ namespace engine
          newBodyLen = compressedLen ;
       }
 
-      info.netCompressMsgCount.add( 1 ) ;
-      info.netCompressMsgLen.add( ((MsgHeader*)(*headerDes))->messageLength ) ;
-
    done:
       return rc ;
    error:
@@ -241,8 +226,7 @@ namespace engine
    }
 
    INT32 _netMsgCompressor::compressNetMsg( const MsgHeader *message, UINT32 messageLen,
-                                            CHAR** des, UINT32 &messageLenDes,
-                                            _netCompressionMonitorInfo &info )
+                                            CHAR** des, UINT32 &messageLenDes )
    {
       SDB_ASSERT ( des && message, "Invalid message" ) ;
       INT32 rc = SDB_OK ;
@@ -255,32 +239,22 @@ namespace engine
       *des = (CHAR*)message ;
       messageLenDes = messageLen ;
 
-      info.netUncompressMsgLen.add( message->messageLength) ;
-      info.netUncompressMsgCount.add( 1 ) ;
-
-      if ( _netCompressor == DEF_COMPRESSOR ||
-           (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
-           message->messageLength < NET_COMPRESS_MIN_SIZE )
+      if ( !_needCompressMsg( message ) )
       {
          goto done ;
       }
 
       headerCpy = *message ;
 
-      compressor = getCompressor( _netCompressor ) ;
+      compressor = getCompressor( _compressor ) ;
       if ( !compressor )
       {
-         PD_LOG( PDERROR, "Failed to get compressor, rc: %d", SDB_SYS ) ;
+         PD_LOG( PDWARNING, "Failed to get compressor, rc: %d", SDB_SYS ) ;
          goto done ;
       }
 
       rc = compressor->compressBound( uncompressedLen, compressedLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get max compressed length, rc: %d", rc ) ;
-
-      if ( compressedLen > NET_COMPRESS_MAX_SIZE )
-      {
-         goto done ;
-      }
 
       pBuff = _getBuff( compressedLen + sizeof(MsgHeader), &_pCompressBuff, _compressBuffLen ) ;
       if ( !pBuff )
@@ -306,14 +280,11 @@ namespace engine
          }
       }
 
-      netSetCompressorFlag( _netCompressor, headerCpy.flags ) ;
+      OSS_BIT_SET( headerCpy.flags, FLAG_COMPRESSED ) ;
       headerCpy.messageLength = sizeof(MsgHeader) + compressedLen ;
       ossMemcpy( pBuff, (CHAR*)(&headerCpy), sizeof(MsgHeader) ) ;
       messageLenDes = headerCpy.messageLength ;
       *des = &pBuff[0] ;
-
-      info.netCompressMsgCount.add( 1 ) ;
-      info.netCompressMsgLen.add( ((MsgHeader*)(*des))->messageLength ) ;
 
    done:
       return rc ;
@@ -322,8 +293,7 @@ namespace engine
    }
 
    INT32 _netMsgCompressor::compressNetMsg( const MsgHeader *message, const netIOVec &iov,
-                                            CHAR** headerDes, netIOVec &iovDes,
-                                            _netCompressionMonitorInfo &info )
+                                            CHAR** headerDes, netIOVec &iovDes )
    {
       SDB_ASSERT ( message && headerDes, "Invalid message" ) ;
       INT32 rc = SDB_OK ;
@@ -338,30 +308,20 @@ namespace engine
 
       *headerDes = (CHAR*)message ;
 
-      info.netUncompressMsgLen.add( message->messageLength ) ;
-      info.netUncompressMsgCount.add( 1 ) ;
-
-      if ( _netCompressor == DEF_COMPRESSOR ||
-           (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
-           message->messageLength < NET_COMPRESS_MIN_SIZE )
+      if ( !_needCompressMsg( message ) )
       {
          goto done ;
       }
 
-      compressor = getCompressor( _netCompressor ) ;
+      compressor = getCompressor( _compressor ) ;
       if ( !compressor )
       {
-         PD_LOG( PDERROR, "Failed to get compressor, rc: %d", SDB_SYS ) ;
+         PD_LOG( PDWARNING, "Failed to get compressor, rc: %d", SDB_SYS ) ;
          goto done ;
       }
 
       rc = compressor->compressBound( uncompressedLenSum, compressedLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get max compressed length, rc: %d", rc ) ;
-
-      if ( compressedLen > NET_COMPRESS_MAX_SIZE )
-      {
-         goto done ;
-      }
 
       pBuff = _getBuff( compressedLen + sizeof(MsgHeader), &_pCompressBuff, _compressBuffLen ) ;
       if ( !pBuff )
@@ -409,8 +369,8 @@ namespace engine
       }
 
       ossMemcpy( pBuff, (CHAR*)message, sizeof(MsgHeader) ) ;
-      netSetCompressorFlag( _netCompressor, ((MsgHeader*)pBuff)->flags ) ;
       ((MsgHeader*)pBuff)->messageLength = sizeof(MsgHeader) + compressedLen ;
+      OSS_BIT_SET( ((MsgHeader*)pBuff)->flags, FLAG_COMPRESSED ) ;
 
       newIov.iovBase = (CHAR*)pBuff + sizeof(MsgHeader) ;
       newIov.iovLen = compressedLen ;
@@ -429,9 +389,6 @@ namespace engine
 
       *headerDes = &pBuff[0] ;
       hasCompressed = TRUE ;
-
-      info.netCompressMsgCount.add( 1 ) ;
-      info.netCompressMsgLen.add( ((MsgHeader*)(*headerDes))->messageLength ) ;
 
    done:
       if ( !hasCompressed )
@@ -456,14 +413,14 @@ namespace engine
 
       *des = (CHAR*)message ;
 
-      if ( !netIsCompressMsg( message ) )
+      if ( !_isCompressedMsg( message ) )
       {
          goto done ;
       }
 
       headerCpy = *message ;
 
-      compressor = getCompressor( netGetCompressorFlag( message->flags ) ) ;
+      compressor = getCompressor( _compressor ) ;
       if ( !compressor )
       {
          rc = SDB_SYS ;
@@ -492,7 +449,7 @@ namespace engine
                                    uncompressedLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to decompress data, rc: %d", rc ) ;
 
-      netSetCompressorFlag( DEF_COMPRESSOR, headerCpy.flags ) ;
+      OSS_BIT_CLEAR( headerCpy.flags, FLAG_COMPRESSED ) ;
       headerCpy.messageLength = sizeof(MsgHeader) + uncompressedLen ;
       ossMemcpy( pBuff, (CHAR*)(&headerCpy), sizeof(MsgHeader) ) ;
       *des = pBuff ;
@@ -511,9 +468,9 @@ namespace engine
       goto done ;
    }
 
-   void _netMsgCompressor::setNetCompressor( NET_COMPRESSOR netCompressor )
+   void _netMsgCompressor::setCompressor( NET_COMPRESSOR netCompressor )
    {
-      _netCompressor = netCompressor ;
+      _compressor = netCompressor ;
    }
 
    INT32 _netMsgCompressor::_allocBuff( UINT32 len, CHAR **ppBuff, UINT32 *pRealSize )
@@ -528,6 +485,7 @@ namespace engine
          goto error ;
       }
       *pRealSize = len ;
+      ossMemset( *ppBuff, 0, len ) ;
 
    done:
       return rc ;
@@ -557,47 +515,30 @@ namespace engine
       return *buff ;
    }
 
-   //                                 compression flag
-   //                                      ^ ^
-   //                                      | |
-   // INT16 flag = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-   //                                  ... 0 0 ...   It meads disabling compression
-   //                                  ... 0 1 ...   It meads LZ4 compression
-   void netSetCompressorFlag( NET_COMPRESSOR type, INT16 &flag )
-   {
-      if ( LZ4_COMPRESSOR == type )
-      {
-         flag = (INT16)(( flag | ( 1 << 2 ) ) & ~( 1 << 3 )) ;
-      }
-      else
-      {
-         flag = (INT16)(( flag & ~( 1 << 2 ) ) & ~( 1 << 3 )) ;
-      }
-   }
-
-   NET_COMPRESSOR netGetCompressorFlag( INT16 flag )
-   {
-      BOOLEAN thirdBit = ( flag & ( 1 << 2 ) ) == 0 ;
-      BOOLEAN fourthBit = ( flag & ( 1 << 3 ) ) == 0 ;
-
-      // flag = ... 0 1 ...
-      if ( !thirdBit && fourthBit )
-      {
-         return LZ4_COMPRESSOR ;
-      }
-      else
-      {
-         return DEF_COMPRESSOR ;
-      }
-   }
-
-   BOOLEAN netIsCompressMsg( const MsgHeader *message )
+   BOOLEAN _netMsgCompressor::_needCompressMsg( const MsgHeader *message )
    {
       SDB_ASSERT ( message, "Invalid message" ) ;
 
-      if ( (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength || // It's a sysinfo msg
-           SDB_PROTOCOL_VER_3 != message->version ||
-           DEF_COMPRESSOR == netGetCompressorFlag( message->flags ) )
+      if ( (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
+           _compressor == NONE_COMPRESSOR ||
+           message->messageLength < NET_COMPRESS_MIN_SIZE ||
+           OSS_BIT_TEST( message->flags, FLAG_NOCOMPRESSED_ADVICE ) )
+      {
+         return FALSE ;
+      }
+      else
+      {
+         return TRUE ;
+      }
+   }
+
+   BOOLEAN _netMsgCompressor::_isCompressedMsg( const MsgHeader *message )
+   {
+      SDB_ASSERT ( message, "Invalid message" ) ;
+
+      if ( (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
+           NONE_COMPRESSOR == _compressor ||
+           !OSS_BIT_TEST( message->flags, FLAG_COMPRESSED ) )
       {
          return FALSE ;
       }

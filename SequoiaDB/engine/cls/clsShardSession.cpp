@@ -1179,6 +1179,10 @@ namespace engine
       }
       else
       {
+         if ( opCode > ( SINT32 )MSG_LOB_BEGIN && opCode < ( SINT32 )MSG_LOB_END )
+         {
+            OSS_BIT_SET( _replyHeader.header.flags, FLAG_NOCOMPRESSED_ADVICE ) ;
+         }
          //Build reply message
          _replyHeader.header.opCode = MAKE_REPLY_TYPE( opCode ) ;
          _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;

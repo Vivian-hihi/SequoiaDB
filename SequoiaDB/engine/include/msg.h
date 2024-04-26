@@ -46,8 +46,7 @@ enum SDB_PROTOCOL_VERSION
 {
    SDB_PROTOCOL_VER_INVALID = 0,
    SDB_PROTOCOL_VER_1 = 1,
-   SDB_PROTOCOL_VER_2 = 2,
-   SDB_PROTOCOL_VER_3 = 3
+   SDB_PROTOCOL_VER_2 = 2
 } ;
 
 #define MAKE_REPLY_TYPE(type)       (INT32)((UINT32)type | 0x80000000)
@@ -697,8 +696,7 @@ struct _MsgSysInfoReply
    UINT8            fixVersion ;
    CHAR             reserved ;
    MsgGlobalID      globalID ;
-   UINT8            msgVersion ;
-   CHAR             pad[75] ;
+   CHAR             pad[76] ;
    CHAR             fingerprint[4] ;   // Fingerprint of the reply message.
                                        // Actually part of the md5 value.
 } ;
@@ -752,6 +750,8 @@ typedef struct _MsgHeaderV1 MsgHeaderV1 ;
 
 #define FLAG_RESULT_DETAIL             0x0001
 #define FLAG_PROCESS_DETAIL            0x0002
+#define FLAG_NOCOMPRESSED_ADVICE       0x0004
+#define FLAG_COMPRESSED                0x0008
 
 struct _MsgHeader
 {
@@ -762,11 +762,6 @@ struct _MsgHeader
    UINT64 requestID ;     // identifier for this message
    SINT32 opCode ;        // operation code
    SINT16 version ;
-   // flags = 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
-   //                                                                ...  1   FLAG_RESULT_DETAIL
-   //                                                          ...    1  ...  FLAG_PROCESS_DETAIL
-   //                                                  ...    0   0    ...    It meads disabling compression
-   //                                                  ...    0   1    ...    It meads LZ4 compression
    SINT16 flags ;         // Common flags for a query.
    MsgGlobalID globalID;
    CHAR reserve[4] ;
@@ -777,7 +772,7 @@ struct _MsgHeader
      TID(0),
      requestID(0),
      opCode(0),
-     version(SDB_PROTOCOL_VER_3),
+     version(SDB_PROTOCOL_VER_2),
      flags(0)
    {
       routeID.value = MSG_INVALID_ROUTEID ;
@@ -1188,6 +1183,11 @@ typedef struct _MsgOpAggregate
    CHAR      name[1] ;    // name of the object
 }MsgOpAggregate;
 
+typedef struct _MsgHeartBeatRequest
+{
+   MsgHeader header ;
+   // BSONObj obj ;
+}MsgHeartBeatRequest;
 
 /// read on primary node( use only in inner)
 #define FLG_LOBREAD_PRIMARY               0x00000001

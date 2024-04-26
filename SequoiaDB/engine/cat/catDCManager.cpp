@@ -966,7 +966,7 @@ namespace engine
             }
             else
             {
-               rc = pCatNodeMgr->stopGrpMode( groupMode ) ; 
+               rc = pCatNodeMgr->stopGrpMode( groupMode ) ;
                if ( SDB_OK != rc )
                {
                   failedGroups.push_back( groupID ) ;
@@ -1002,6 +1002,7 @@ namespace engine
       rspMsg->requestID = reqMsg->requestID ;
       rspMsg->routeID.value = 0 ;
       rspMsg->TID = reqMsg->TID ;
+      rspMsg->flags = 0 ;
       rspMsg->globalID = reqMsg->globalID ;
    }
 

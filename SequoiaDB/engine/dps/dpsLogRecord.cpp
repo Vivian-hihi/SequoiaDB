@@ -1855,4 +1855,25 @@ namespace engine
    {
       return &_timeMicroSeconds ;
    }
+
+   BOOLEAN dpsMessageBlockHasLobRecord( const _dpsMessageBlock *mb )
+   {
+      SDB_ASSERT( mb != NULL, "mb can't be null" ) ;
+      UINT32 offset = 0 ;
+      UINT32 length = mb->length() ;
+
+      while( offset < length )
+      {
+         dpsLogRecordHeader *header = (dpsLogRecordHeader * )mb->offset( offset ) ;
+         UINT16 type = header->_type ;
+         if ( type >= LOG_TYPE_LOB_WRITE && type <= LOG_TYPE_LOB_TRUNCATE )
+         {
+            return TRUE ;
+         }
+
+         offset += header->_length ;
+      }
+
+      return FALSE ;
+   }
 }

@@ -42,33 +42,10 @@
 #include "msg.h"
 #include "netDef.hpp"
 #include "utilPooledObject.hpp"
+#include "netCommon.hpp"
 
 namespace engine
 {
-   struct _netCompressionMonitorInfo
-   {
-      ossAtomicSigned64 netUncompressMsgLen ;
-      ossAtomicSigned64 netCompressMsgLen ;
-      ossAtomicSigned64 netUncompressMsgCount ;
-      ossAtomicSigned64 netCompressMsgCount ;
-
-      _netCompressionMonitorInfo() :
-      netUncompressMsgLen(0),
-      netCompressMsgLen(0),
-      netUncompressMsgCount(0),
-      netCompressMsgCount(0)
-      {
-      }
-
-      void reset()
-      {
-         netUncompressMsgLen.poke( 0 ) ;
-         netCompressMsgLen.poke( 0 ) ;
-         netUncompressMsgCount.poke( 0 ) ;
-         netCompressMsgCount.poke( 0 ) ;
-      }
-   };
-
    class _netMsgCompressor : public utilPooledObject
    {
    public:
@@ -77,26 +54,26 @@ namespace engine
 
       INT32 compressNetMsg( const MsgHeader *message, const CHAR* body, UINT32 bodyLen,
                             CHAR** headerDes, CHAR** bodyDes,
-                            UINT32 &newHeaderLen, UINT32 &newBodyLen,
-                            _netCompressionMonitorInfo &info ) ;
+                            UINT32 &newHeaderLen, UINT32 &newBodyLen ) ;
 
       INT32 compressNetMsg( const MsgHeader *message, UINT32 messageLen,
-                            CHAR** des, UINT32 &messageLenDes,
-                            _netCompressionMonitorInfo &info ) ;
+                            CHAR** des, UINT32 &messageLenDes ) ;
 
       INT32 compressNetMsg( const MsgHeader *message, const netIOVec &iov,
-                            CHAR** headerDes, netIOVec &iovDes,
-                            _netCompressionMonitorInfo &info ) ;
+                            CHAR** headerDes, netIOVec &iovDes ) ;
 
       INT32 decompressNetMsg( const MsgHeader *message, CHAR** des ) ;
 
-      void setNetCompressor( NET_COMPRESSOR netCompressor ) ;
+      void setCompressor( NET_COMPRESSOR netCompressor ) ;
 
       void setNeedReleaseUncompressBuff( BOOLEAN need ) ;
 
    private:
       INT32 _allocBuff( UINT32 len, CHAR **ppBuff, UINT32 *pRealSize ) ;
       CHAR* _getBuff( UINT32 desLen, CHAR** buff, UINT32 &realLen ) ;
+
+      BOOLEAN _needCompressMsg( const MsgHeader *message ) ;
+      BOOLEAN _isCompressedMsg( const MsgHeader *message ) ;
 
    private:
       CHAR   *_pCompressBuff ;
@@ -108,14 +85,11 @@ namespace engine
       CHAR   *_pTmpCompressBuff ;
       UINT32  _tmpCompressBuffLen ;
 
-      NET_COMPRESSOR _netCompressor ;
+      NET_COMPRESSOR _compressor ;
 
       BOOLEAN _needReleaseUncompressBuff ;
    } ;
 
-   void netSetCompressorFlag( NET_COMPRESSOR type, INT16 &flag ) ;
-   NET_COMPRESSOR netGetCompressorFlag( INT16 flag ) ;
-   BOOLEAN netIsCompressMsg( const MsgHeader *message ) ;
 }
 
 #endif

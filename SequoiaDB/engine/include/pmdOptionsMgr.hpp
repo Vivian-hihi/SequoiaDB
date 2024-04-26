@@ -49,7 +49,7 @@
 #include "sdbInterface.hpp"
 #include "ossMemPool.hpp"
 #include "pmdOptionsParse.hpp"
-#include "netDef.hpp"
+#include "netCommon.hpp"
 
 #include <string>
 #include <iostream>

@@ -379,7 +379,6 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      _pNetWork->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
       _pNetWork->getFrame()->setAsyncSend( TRUE ) ;
 
       // 3. member objs init
@@ -535,7 +534,6 @@ namespace engine
       {
          _pNetWork->getFrame()->setBeatInfo(
                pmdGetOptionCB()->getOprTimeout() ) ;
-         _pNetWork->getFrame()->setNetCompressor( pmdGetOptionCB()->getNetCompressor() ) ;
       }
    }
 

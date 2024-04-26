@@ -3042,7 +3042,6 @@ INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize,
    reply->version                            = version ;
    reply->subVersion                         = subVersion ;
    reply->fixVersion                         = fixVersion ;
-   reply->msgVersion                         = SDB_PROTOCOL_VER_3 ;
    ossMemset( reply->pad, 0, sizeof( reply->pad ) ) ;
 
    md5::md5( (const void *)reply,
@@ -3098,14 +3097,7 @@ INT32 msgExtractSysInfoReply ( const CHAR *pBuffer, BOOLEAN &endianConvert,
                             (const char *)digest,
                             sizeof(reply->fingerprint) ) )
       {
-         if ( 0 != reply->msgVersion )
-         {
-            *protocolVer = (SDB_PROTOCOL_VERSION)reply->msgVersion ;
-         }
-         else
-         {
-            *protocolVer = SDB_PROTOCOL_VER_2 ;
-         }
+         *protocolVer = SDB_PROTOCOL_VER_2 ;
       }
       else
       {
@@ -3937,6 +3929,94 @@ INT32 msgBuildDataSourceInvalidateCacheMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
 done:
    PD_TRACE_EXITRC( SDB_MSGBUILDDATASOURCEINVALIDATECACHEMSG, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 msgBuildHeartBeatMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                            UINT64 reqID, UINT64 routeID, const BSONObj &options,
+                            engine::IExecutor *cb )
+{
+   SDB_ASSERT( ppBuffer, "invalid input" ) ;
+   INT32 rc = SDB_OK ;
+   INT32 offset = 0 ;
+   MsgHeartBeatRequest *pMsg = NULL ;
+   INT32 packetLength = ossAlign4( sizeof( MsgHeartBeatRequest ) ) +
+                        ossAlign4( options.objsize() ) ;
+   PD_CHECK( (packetLength > 0), SDB_INVALIDARG, error, PDERROR,
+            "Packet size overflow" ) ;
+
+   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength, cb ) ;
+   PD_RC_CHECK( rc, PDERROR, "failed to check buffer" ) ;
+
+   pMsg = (MsgHeartBeatRequest *)(*ppBuffer) ;
+   pMsg->header.messageLength = packetLength ;
+   pMsg->header.eye = MSG_COMM_EYE_DEFAULT ;
+   pMsg->header.TID = ossGetCurrentThreadID() ;
+   pMsg->header.routeID.value = routeID ;
+   pMsg->header.requestID = reqID ;
+   pMsg->header.opCode = MSG_HEARTBEAT ;
+   pMsg->header.version = SDB_PROTOCOL_VER_2 ;
+   pMsg->header.flags = 0 ;
+   ossMemset( &(pMsg->header.globalID), 0, sizeof(pMsg->header.globalID) ) ;
+   ossMemset( pMsg->header.reserve, 0, sizeof(pMsg->header.reserve) ) ;
+
+   offset = ossAlign4( sizeof( MsgHeartBeatRequest ) ) ;
+   ossMemcpy ( &((*ppBuffer)[offset]), options.objdata(), options.objsize() ) ;
+   offset += ossAlign4( options.objsize() ) ;
+
+   if ( offset != packetLength )
+   {
+      PD_LOG ( PDERROR, "Invalid packet length" ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 msgExtractHeartBeatReply ( const CHAR *pBuffer, engine::NET_COMPRESSOR &peerNodeNetCompressor )
+{
+   INT32 rc = SDB_OK ;
+   INT32 flag = 0 ;
+   INT64 contextID = -1 ;
+   INT32 startFrom = 0 ;
+   INT32 numReturned = 0 ;
+   vector<BSONObj> objList ;
+
+   rc = msgExtractReply( pBuffer, &flag, &contextID, &startFrom, &numReturned, objList ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to extract heartbeat reply, rc: %d", rc ) ;
+
+   if ( !objList.empty() )
+   {
+      try
+      {
+         BSONObjIterator itr( objList[0] ) ;
+         while( itr.more() )
+         {
+            BSONElement ele = itr.next() ;
+            const CHAR* fieldName = ele.fieldName() ;
+            if ( ele.type() == bson::NumberInt &&
+                 0 == ossStrcasecmp( fieldName, FIELD_NAME_NET_MSG_COMPRESSOR ) )
+            {
+               peerNodeNetCompressor = (engine::NET_COMPRESSOR)ele.numberInt() ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = ossException2RC( &e ) ;
+         PD_LOG( PDERROR, "An exception occurred when extracting heartbeat reply: "
+                 "%s, rc: %d", e.what(), rc ) ;
+         goto error ;
+      }
+   }
+
+done:
    return rc ;
 error:
    goto done ;

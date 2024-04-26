@@ -245,6 +245,8 @@ namespace engine
                      pmdGetOptionCB()->monOptiLevel(),
                      pmdGetOptionCB()->monHistExpiredTime() ) ;
 
+      netUpdateNetcompressor( pmdGetOptionCB()->getNetCompressor() ) ;
+
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
 
       PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,

@@ -584,10 +584,12 @@
 #define FIELD_NAME_REPL_COMPRESSED           "replCompressed"
 #define FIELD_NAME_REPL_UNCOMPRESSED_COUNT   "replUncompressedCount"
 #define FIELD_NAME_REPL_COMPRESSED_COUNT     "replCompressedCount"
+#define FIELD_NAME_REPL_COMPRESSED_FAILED_COUNT     "replCompressedFailedCount"
 #define FIELD_NAME_SHARD_UNCOMPRESSED        "shardUncompressed"
 #define FIELD_NAME_SHARD_COMPRESSED          "shardCompressed"
 #define FIELD_NAME_SHARD_UNCOMPRESSED_COUNT  "shardUncompressedCount"
 #define FIELD_NAME_SHARD_COMPRESSED_COUNT    "shardCompressedCount"
+#define FIELD_NAME_SHARD_COMPRESSED_FAILED_COUNT    "shardCompressedFailedCount"
 #define FIELD_NAME_DOMAIN_AUTO_SPLIT         "AutoSplit"
 #define FIELD_NAME_DOMAIN_AUTO_REBALANCE     "AutoRebalance"
 #define FIELD_NAME_LOB_OID                   "Oid"
@@ -744,6 +746,8 @@
 
 #define FIELD_NAME_CREATE_TIME               "CreateTime"
 #define FIELD_NAME_UPDATE_TIME               "UpdateTime"
+
+#define FIELD_NAME_NET_MSG_COMPRESSOR        "NetCompressor"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

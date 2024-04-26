@@ -808,6 +808,7 @@ namespace engine
 
       if ( 0 != _mb.length() )
       {
+         OSS_BIT_SET( msg.header.header.flags, FLAG_NOCOMPRESSED_ADVICE ) ;
          msg.header.header.messageLength = sizeof( MsgClsFSNotifyRes ) +
                                            _mb.length() ;
          _agent->syncSend( handle, &(msg.header.header),
@@ -932,6 +933,10 @@ namespace engine
 
       if ( 0 != _mb.length() )
       {
+         if ( dpsMessageBlockHasLobRecord( &_mb ) )
+         {
+            OSS_BIT_SET( msg.header.header.flags, FLAG_NOCOMPRESSED_ADVICE ) ;
+         }
          msg.header.header.messageLength = sizeof( MsgClsFSNotifyRes ) +
                                            _mb.length() ;
          _agent->syncSend( handle, &(msg.header.header),
@@ -1840,7 +1845,7 @@ namespace engine
                if ( rc )
                {
                   PD_LOG( PDWARNING, "Session[%s]: Notify fullsync message to primary "
-                          "node[%u] failed, rc: %d", 
+                          "node[%u] failed, rc: %d",
                           sessionName(), primaryID.columns.nodeID, rc ) ;
                   _disconnect() ;
                   goto done ;

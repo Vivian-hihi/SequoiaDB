@@ -419,10 +419,7 @@ INT32 _mongoSession::_onMsgBegin( MsgHeader *msg )
    // start operator
    MON_START_OP( _pEDUCB->getMonAppCB() ) ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 void _mongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )

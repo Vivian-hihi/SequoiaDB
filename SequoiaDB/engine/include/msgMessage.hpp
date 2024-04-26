@@ -43,6 +43,7 @@
 #include "sdbInterface.hpp"
 #include <vector>
 #include <string>
+#include "netCommon.hpp"
 
 using namespace bson;
 using namespace std;
@@ -639,6 +640,11 @@ INT32 msgBuildDataSourceInvalidateCacheMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                             const BSONObj &boQuery,
                                             UINT64 reqID,
                                             engine::IExecutor *cb = NULL ) ;
+
+INT32 msgBuildHeartBeatMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                            UINT64 reqID, UINT64 routeID, const BSONObj &options,
+                            engine::IExecutor *cb = NULL ) ;
+INT32 msgExtractHeartBeatReply ( const CHAR *pBuffer, engine::NET_COMPRESSOR &peerNodeNetCompressor ) ;
 
 #endif // MSGMESSAGE_HPP_
 

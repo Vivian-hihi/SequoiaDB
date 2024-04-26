@@ -372,6 +372,7 @@ namespace engine
                      pmdGetOptionCB()->slowLockThreshold(),
                      pmdGetOptionCB()->monOptiLevel(),
                      pmdGetOptionCB()->monHistExpiredTime() ) ;
+      netUpdateNetcompressor( pmdGetOptionCB()->getNetCompressor() ) ;
    }
 
    void _pmdController::registerCB( SDB_ROLE dbrole )

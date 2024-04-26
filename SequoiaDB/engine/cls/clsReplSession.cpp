@@ -1820,6 +1820,10 @@ namespace engine
                                            _mb.length() ;
       if ( 0 != _mb.length() )
       {
+         if ( dpsMessageBlockHasLobRecord( &_mb ) )
+         {
+            OSS_BIT_SET( msg.header.header.flags, FLAG_NOCOMPRESSED_ADVICE ) ;
+         }
          rc = SDB_OK ;
          msg.header.res = SDB_OK ;
          routeAgent()->syncSend( handle, ( MsgHeader *)(&msg),

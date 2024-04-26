@@ -304,10 +304,5 @@ namespace engine
       return _frame.netOut() ;
    }
 
-   const _netCompressionMonitorInfo& _netRouteAgent::netCompressMonInfo()
-   {
-      return _frame.netCompressMonInfo() ;
-   }
-
 }
 

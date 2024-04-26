@@ -555,6 +555,7 @@ namespace engine
       pReply->header.opCode        = MSG_CAT_QUERY_CATALOG_RSP ;
       pReply->header.TID           = pCatReq->header.TID ;
       pReply->header.requestID     = pCatReq->header.requestID ;
+      pReply->header.flags         = 0 ;
       pReply->header.globalID      = pCatReq->header.globalID ;
       pReply->header.routeID.value = 0 ;
    done :
@@ -672,6 +673,7 @@ namespace engine
       pReply->header.TID           = pTaskRequest->header.TID ;
       pReply->header.requestID     = pTaskRequest->header.requestID ;
       pReply->header.routeID.value = 0 ;
+      pReply->header.flags         = 0 ;
       pReply->header.globalID      = pTaskRequest->header.globalID ;
 
    done :
@@ -1590,6 +1592,7 @@ namespace engine
       rspMsg->requestID = reqMsg->requestID ;
       rspMsg->routeID.value = 0 ;
       rspMsg->TID = reqMsg->TID ;
+      rspMsg->flags = 0 ;
       rspMsg->globalID = reqMsg->globalID ;
    }
 

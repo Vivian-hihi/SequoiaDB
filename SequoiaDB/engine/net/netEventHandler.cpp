@@ -271,6 +271,90 @@ namespace engine
       PD_TRACE_EXIT ( SDB__NETEVNHND_SETOPT );
    }
 
+   INT32 _netEventHandler::_syncCheckNetCompressor( ossSocket &socket, NET_COMPRESSOR &peerNodeNetCompressor )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 sentLen = 0 ;
+      INT32 recvLen = 0 ;
+      CHAR *pBuffer = NULL ;
+      INT32 bufferSize = 0 ;
+      BSONObj options ;
+      INT32 replyMsgSize = 0 ;
+      INT32 replyHeaderLen = sizeof(MsgOpReply) ;
+      CHAR *pReplyMsgBuff = NULL ;
+      NET_COMPRESSOR currentCompressor = netGetNetcompressor() ;
+
+      peerNodeNetCompressor = NONE_COMPRESSOR ;
+
+      try
+      {
+         options = BSON( FIELD_NAME_NET_MSG_COMPRESSOR << currentCompressor ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = ossException2RC( &e ) ;
+         PD_LOG( PDERROR, "An exception occurred when building heartbeat msg options: "
+                 "%s, rc: %d", e.what(), rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildHeartBeatMsg( &pBuffer, &bufferSize, getAndIncMsgID(),
+                                 _evSuitPtr->getFrame()->getLocal().value, options ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build heartbeat msg, rc: %d", rc ) ;
+
+      rc = socket.send( (const CHAR *)pBuffer, bufferSize, sentLen ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send heartbeat request failed[%d]", rc ) ;
+
+      PD_CHECK( sentLen == bufferSize, SDB_INVALIDARG, error, PDERROR,
+                "Invalid send message size[real: %d, act: %d]", bufferSize, sentLen ) ;
+
+      rc = socket.recv( (CHAR *)(&replyMsgSize), sizeof(INT32), recvLen ) ;
+      PD_RC_CHECK( rc, PDERROR, "Receive heartbeat reply failed[%d]", rc ) ;
+
+      PD_CHECK( sizeof(INT32) == recvLen && replyMsgSize >= replyHeaderLen &&
+                replyMsgSize <= SDB_MAX_MSG_LENGTH, SDB_INVALIDARG, error, PDERROR,
+                "Invalid recv message size[%d]", replyMsgSize ) ;
+
+      pReplyMsgBuff = (CHAR*)SDB_POOL_ALLOC(replyMsgSize) ;
+      if ( !pReplyMsgBuff )
+      {
+         rc = SDB_OOM ;
+         PD_RC_CHECK( rc, PDERROR, "Out of memory, rc: %d", rc ) ;
+      }
+      ossMemset( pReplyMsgBuff, 0, replyMsgSize ) ;
+      *(INT32*)pReplyMsgBuff = replyMsgSize ;
+
+      rc = socket.recv( pReplyMsgBuff + sizeof(INT32), replyMsgSize - sizeof(INT32),
+                        recvLen ) ;
+      PD_RC_CHECK( rc, PDERROR, "Receive heartbeat reply failed[%d]", rc ) ;
+
+      if ( replyMsgSize > (INT32)(sizeof(MsgOpReply)) )
+      {
+         rc = msgExtractHeartBeatReply( pReplyMsgBuff, peerNodeNetCompressor ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to extract heartbeat reply, rc: %d", rc ) ;
+
+         if ( currentCompressor != peerNodeNetCompressor )
+         {
+            peerNodeNetCompressor = NONE_COMPRESSOR ;
+         }
+      }
+
+   done:
+      if ( pReplyMsgBuff )
+      {
+         SDB_POOL_FREE( pReplyMsgBuff ) ;
+         pReplyMsgBuff = NULL ;
+      }
+      if ( pBuffer )
+      {
+         SDB_OSS_FREE( pBuffer ) ;
+         pBuffer = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SYNCCONN, "_netEventHandler::syncConnect" )
    INT32 _netEventHandler::syncConnect( const CHAR *hostName,
                                         const CHAR *serviceName )
@@ -279,6 +363,7 @@ namespace engine
       SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
 
       INT32 rc = SDB_OK ;
+      NET_COMPRESSOR peerNetCompressor = NONE_COMPRESSOR ;
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SYNCCONN );
 
       if ( _isConnected )
@@ -335,13 +420,32 @@ namespace engine
          rc = _syncCheckSysInfo( sock ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Connection[Handle%d] checking system info of "
+            PD_LOG( PDERROR, "Connection[Handle:%d] checking system info of "
                     "node[%s:%s] failed[%d]",
                     _handle, hostName, serviceName, rc ) ;
             boost::system::error_code ec ;
             close() ;
             _sock.close( ec ) ;
             goto error ;
+         }
+
+         rc = _syncCheckNetCompressor( sock, peerNetCompressor ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Connection[Handle:%d] checking network message compressor "
+                    "of node[%s:%s] failed[%d]", _handle, hostName, serviceName, rc ) ;
+            rc = SDB_OK ;
+         }
+         else
+         {
+            initCompressor( peerNetCompressor ) ;
+
+            PD_LOG( PDDEBUG, "Network message compressor of local node[%s:%d] is [%s] and "
+                    "remote node[%s:%d] is [%s], handle: %d",
+                    localAddr().c_str(), localPort(),
+                    netCompressorNum2Str( peerNetCompressor ),
+                    remoteAddr().c_str(), remotePort(),
+                    netCompressorNum2Str( peerNetCompressor ), handle() ) ;
          }
       }
 
@@ -849,9 +953,8 @@ namespace engine
 
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
-         BOOLEAN isVersion1 = ( SDB_PROTOCOL_VER_1 == _peerVersion ) ;
-         UINT32 minMsgLen = isVersion1 ?
-                            sizeof(MsgHeaderV1) : sizeof(MsgHeader) ;
+         UINT32 minMsgLen = (SDB_PROTOCOL_VER_2 == _peerVersion) ?
+                            sizeof(MsgHeader) : sizeof(MsgHeaderV1) ;
 
          /// error header
          if ( ( UINT32 )MSG_SYSTEM_INFO_LEN == (UINT32)_header.messageLength )
@@ -860,7 +963,7 @@ namespace engine
             // But some places in the new version will not send the system info
             // request too. So we can NOT be sure the version of peer node is
             // 1 if it hasn't sent the system info request.
-            _peerVersion = SDB_PROTOCOL_VER_3 ;
+            _peerVersion = SDB_PROTOCOL_VER_2 ;
             if ( SDB_OK != _allocateBuf( sizeof(MsgSysInfoRequest) ))
             {
                goto error_close ;
@@ -896,7 +999,7 @@ namespace engine
                   // already. We can check the version based on that.
                   _peerVersion =
                         ( MSG_COMM_EYE_DEFAULT == _header.eye ) ?
-                        (SDB_PROTOCOL_VERSION)(_header.version) : SDB_PROTOCOL_VER_1 ;
+                        SDB_PROTOCOL_VER_2 : SDB_PROTOCOL_VER_1 ;
 
                   if ( SDB_PROTOCOL_VER_1 == _peerVersion )
                   {
@@ -954,7 +1057,7 @@ namespace engine
             // If peer node protocol version is 1, we can not print the message
             // like this, as the structure of the message is different. Once all
             // nodes in the cluster finish upgrading, the message can be logged.
-            if ( _peerVersion >= SDB_PROTOCOL_VER_2 )
+            if ( SDB_PROTOCOL_VER_2 == _peerVersion )
             {
                PD_LOG( PDDEBUG, "Connection[Handle:%d, Node:%s] received "
                                 "message[%s] from %s:%d", _handle,

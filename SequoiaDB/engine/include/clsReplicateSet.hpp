@@ -464,8 +464,6 @@ namespace engine
          INT64 netIn() ;
          INT64 netOut() ;
 
-         const _netCompressionMonitorInfo& netCompressMonInfo() ;
-
          INT32 reelect( CLS_REELECTION_LEVEL lvl,
                         INT32 seconds,
                         pmdEDUCB *cb,

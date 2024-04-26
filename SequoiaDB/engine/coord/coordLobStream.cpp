@@ -2685,6 +2685,7 @@ namespace engine
       header.header.messageLength = msgLen < 0 ?
                                     sizeof( header ) + bsonLen :
                                     msgLen ;
+      OSS_BIT_SET( header.header.flags, FLAG_NOCOMPRESSED_ADVICE ) ;
    }
 
    void _coordLobStream::_add2Subs( UINT32 groupID,

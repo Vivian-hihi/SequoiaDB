@@ -683,7 +683,8 @@ netFiles = [
       "net/netFrame.cpp",
       "net/netRoute.cpp",
       "net/netRouteAgent.cpp",
-      "net/netCompressor.cpp"
+      "net/netCompressor.cpp",
+      "net/netCommon.cpp"
       ]
 
 sqlFiles= [

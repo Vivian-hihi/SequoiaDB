@@ -214,9 +214,9 @@ namespace engine
 
       SDB_PROTOCOL_VERSION msgVersion =
          ( MSG_COMM_EYE_DEFAULT == ((MsgHeader *)header)->eye ) ?
-         (SDB_PROTOCOL_VERSION)(((MsgHeader *)header)->version) : SDB_PROTOCOL_VER_1 ;
+         SDB_PROTOCOL_VER_2 : SDB_PROTOCOL_VER_1 ;
 
-      if ( msgVersion >= SDB_PROTOCOL_VER_2 )
+      if ( msgVersion == SDB_PROTOCOL_VER_2 )
       {
          _action = CONVERT_ACTION_DOWNGRADE ;
          _isReply = IS_REPLY_TYPE( ((MsgHeader *)header)->opCode ) ;
@@ -791,7 +791,7 @@ namespace engine
       newMsgHeader.messageLength = msgHeader->messageLength +
                                    ( sizeof(MsgHeader) - sizeof(MsgHeaderV1) ) ;
       newMsgHeader.eye = MSG_COMM_EYE_DEFAULT ;
-      newMsgHeader.version = SDB_PROTOCOL_VER_3 ;
+      newMsgHeader.version = SDB_PROTOCOL_VER_2 ;
       newMsgHeader.flags = 0 ;
       newMsgHeader.opCode = msgHeader->opCode ;
       newMsgHeader.TID = msgHeader->TID ;

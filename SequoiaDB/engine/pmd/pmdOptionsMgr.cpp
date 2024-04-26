@@ -2080,7 +2080,7 @@ done:
       _memTopPad = PMD_DFT_MEM_TOP_PAD ;
 
       ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
-      _netCompressor = DEF_COMPRESSOR ;
+      _netCompressor = NONE_COMPRESSOR ;
       ossMemset( _fsCacheExpiredStr, 0, sizeof(_fsCacheExpiredStr) ) ;
       _fsCacheExpiredMs = 0 ;
 
@@ -3290,13 +3290,13 @@ done:
       }
       else if ( 0 == ossStrcasecmp( "", _netCompressorStr ) )
       {
-         _netCompressor = DEF_COMPRESSOR ;
+         _netCompressor = NONE_COMPRESSOR ;
       }
       else
       {
          std::cerr << PMD_OPTION_NET_COMPRESSOR << " value error, use default" << std::endl ;
          ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
-         _netCompressor = DEF_COMPRESSOR ;
+         _netCompressor = NONE_COMPRESSOR ;
          _invalidConfNum++ ;
       }
 

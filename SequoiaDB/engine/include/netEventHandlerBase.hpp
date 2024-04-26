@@ -143,8 +143,8 @@ namespace engine
       IMsgConvertor *getInMsgConvertor() ;
       IMsgConvertor *getOutMsgConvertor() ;
 
-      _netMsgCompressor *getCompressor( NET_COMPRESSOR netCompressor ) ;
-      _netMsgCompressor *getDecompressor() ;
+      _netMsgCompressor& getCompressor() ;
+      _netMsgCompressor& getDecompressor() ;
 
       virtual NET_EVENT_HANDLER_TYPE getHandlerType() const = 0 ;
       virtual INT32 syncConnect( const CHAR *hostName,
@@ -176,9 +176,10 @@ namespace engine
       // check if the net suit is stopped
       virtual BOOLEAN isSuitStopped() const = 0 ;
 
-      OSS_INLINE SDB_PROTOCOL_VERSION getPeerVersion() const
+      OSS_INLINE void initCompressor( NET_COMPRESSOR compressor )
       {
-         return _peerVersion ;
+         _compressor.setCompressor( compressor ) ;
+         _decompressor.setCompressor( compressor ) ;
       }
 
    protected:
@@ -205,8 +206,8 @@ namespace engine
       SDB_PROTOCOL_VERSION    _peerVersion ;
       IMsgConvertor           *_inMsgConvertor ;
       IMsgConvertor           *_outMsgConvertor ;
-      _netMsgCompressor       *_compressor ;
-      _netMsgCompressor       *_decompressor ;
+      _netMsgCompressor       _compressor ;
+      _netMsgCompressor       _decompressor ;
    } ;
 
 }

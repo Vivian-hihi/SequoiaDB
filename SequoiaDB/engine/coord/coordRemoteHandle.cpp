@@ -102,6 +102,7 @@ namespace engine
          pNewAdd->routeID.value = pOldHeader->routeID.value ;
          pNewAdd->TID = pOldHeader->TID ;
          pNewAdd->globalID = pOldHeader->globalID ;
+         pNewAdd->flags = pOldHeader->flags ;
          pos += pHeader->messageLength ;
 
          if ( MSG_PACKET == pOldHeader->opCode )
@@ -116,6 +117,7 @@ namespace engine
             pMsgPacket->routeID.value = pOldHeader->routeID.value ;
             pMsgPacket->TID = pOldHeader->TID ;
             pMsgPacket->globalID = pOldHeader->globalID ;
+            pMsgPacket->flags = pOldHeader->flags ;
          }
          pMsgPacket->messageLength = totalLen ;
 
@@ -497,6 +499,7 @@ namespace engine
          goto error ;
       }
       pInitReq = (MsgComSessionInitReq*)pBuff ;
+      ossMemset( pBuff, 0, msgLength ) ;
 
       /// init message
       pInitReq->header.messageLength = msgLength ;
@@ -608,6 +611,7 @@ namespace engine
          goto error ;
       }
       pInitReq = (MsgComSessionInitReq*)pBuff ;
+      ossMemset( pBuff, 0, msgLength ) ;
 
       /// init message
       pInitReq->header.messageLength = msgLength ;

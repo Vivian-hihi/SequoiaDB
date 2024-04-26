@@ -498,6 +498,7 @@ namespace engine
       rspMsg->requestID = reqMsg->requestID ;
       rspMsg->routeID.value = 0 ;
       rspMsg->TID = reqMsg->TID ;
+      rspMsg->flags = 0 ;
       rspMsg->globalID = reqMsg->globalID ;
    }
 
@@ -2835,7 +2836,7 @@ namespace engine
          // Update grpMode in SYSCAT.SYSGROUPMODES
          rc = catGetGrpModeObj( grpMode.groupID, groupModeObj, _pEduCB ) ;
 
-         /* 
+         /*
             groupModeObj:
                {
                   GroupID: 1001,
@@ -2879,7 +2880,7 @@ namespace engine
          {
             BSONObj updator, matcher ;
             BSONObjBuilder updatorBuilder, matcherBuilder ;
-            
+
             rc = catUpdateGrpMode( grpMode, groupModeObj, updatorBuilder, matcherBuilder ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build update groupMode builder, rc: %d", rc ) ;
 

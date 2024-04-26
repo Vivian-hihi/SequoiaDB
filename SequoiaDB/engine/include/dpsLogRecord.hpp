@@ -39,6 +39,7 @@
 #ifndef DPSLOGRECORD_HPP__
 #define DPSLOGRECORD_HPP__
 #include "core.hpp"
+#include "dpsMessageBlock.hpp"
 #include "oss.hpp"
 #include "dpsLogDef.hpp"
 #include "dms.hpp"
@@ -291,6 +292,8 @@ const UINT32 DPS_RECORD_MAX_LEN = DMS_COLLECTION_SPACE_NAME_SZ +
                                   DMS_COLLECTION_NAME_SZ + 2 +
                                   sizeof( _dpsLogRecordHeader ) +
                                   DMS_RECORD_USER_MAX_SZ * 2 + 4096 ;
+
+BOOLEAN dpsMessageBlockHasLobRecord( const _dpsMessageBlock *mb ) ;
 }
 
 

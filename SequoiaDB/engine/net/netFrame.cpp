@@ -38,6 +38,7 @@
 
 #include "core.hpp"
 #include "netFrame.hpp"
+#include "msgMessage.hpp"
 #include "netMsgHandler.hpp"
 #include "msgDef.h"
 #include "pmdEnv.hpp"
@@ -56,18 +57,6 @@ namespace engine
 
    #define NET_IOPS_MIN_VALUE             ( 500 )
    #define NET_IOPS_THRESHOLD             ( 5000 )
-
-   static SDB_PROTOCOL_VERSION _netGetPeerVersion( NET_EH eh )
-   {
-      SDB_PROTOCOL_VERSION peerVersion = eh->getPeerVersion() ;
-
-      if ( SDB_PROTOCOL_VER_INVALID == peerVersion )
-      {
-         peerVersion = SDB_PROTOCOL_VER_3 ;
-      }
-
-      return peerVersion ;
-   }
 
    /*
      _netEHSegment implement
@@ -310,8 +299,6 @@ namespace engine
       _maxSockPerNode = 1 ;
       _maxSockPerThread = 0 ;
       _maxThreadNum = 0 ;
-
-      _netCompressor = DEF_COMPRESSOR ;
 
       _asyncSend = FALSE ;
    }
@@ -740,37 +727,138 @@ namespace engine
       }
    }
 
+   INT32 _netFrame::_processHeartBeatRequestMsg( NET_EH eh, const MsgHeader *message,
+                                                 BOOLEAN &hasBody,
+                                                 MsgOpReply **heartBeatReply )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj options ;
+      NET_COMPRESSOR peerCompressor = NONE_COMPRESSOR ;
+      CHAR *pBuffer = NULL ;
+      INT32 bufferSize = 0 ;
+      hasBody = FALSE ;
+
+      (*heartBeatReply)->header.messageLength = sizeof( MsgOpReply ) ;
+      (*heartBeatReply)->header.opCode = MSG_HEARTBEAT_RES ;
+      (*heartBeatReply)->header.requestID = message->requestID ;
+      (*heartBeatReply)->header.routeID.value = 0 ;
+      (*heartBeatReply)->header.TID = message->TID ;
+      (*heartBeatReply)->header.globalID = message->globalID ;
+      (*heartBeatReply)->contextID = -1 ;
+      (*heartBeatReply)->numReturned = 0 ;
+      (*heartBeatReply)->startFrom = 0 ;
+      (*heartBeatReply)->flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
+
+      if ( message->messageLength == sizeof(MsgHeartBeatRequest) )
+      {
+         goto done ;
+      }
+
+      hasBody = TRUE ;
+
+      try
+      {
+         // parse request
+         options = BSONObj( (CHAR*)message + sizeof(MsgHeartBeatRequest) ) ;
+         BSONObjIterator itr( options ) ;
+         while( itr.more() )
+         {
+            BSONElement ele = itr.next() ;
+            const CHAR* fieldName = ele.fieldName() ;
+            if ( ele.type() == bson::NumberInt &&
+                 0 == ossStrcasecmp( fieldName, FIELD_NAME_NET_MSG_COMPRESSOR ) )
+            {
+               peerCompressor = (NET_COMPRESSOR)(ele.numberInt()) ;
+               if ( !( peerCompressor > NONE_COMPRESSOR && peerCompressor < MAX_COMPRESSOR ) )
+               {
+                  peerCompressor = NONE_COMPRESSOR ;
+               }
+            }
+         }
+
+         eh->initCompressor( peerCompressor ) ;
+
+         // build reply
+         options = BSON( FIELD_NAME_NET_MSG_COMPRESSOR << peerCompressor ) ;
+
+         rc = msgBuildReplyMsg( &pBuffer, &bufferSize,
+                                (*heartBeatReply)->header.opCode, (*heartBeatReply)->flags,
+                                (*heartBeatReply)->contextID, (*heartBeatReply)->startFrom, 1,
+                                (*heartBeatReply)->header.requestID, &options ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build reply msg, rc: %d", rc ) ;
+
+         *heartBeatReply = ((MsgOpReply*)pBuffer) ;
+
+         PD_LOG( PDDEBUG, "Network message compressor of local node[%s:%d] is [%s] and "
+                 "remote node[%s:%d] is [%s], handle: %d",
+                 eh->localAddr().c_str(), eh->localPort(),
+                 netCompressorNum2Str( peerCompressor ),
+                 eh->remoteAddr().c_str(), eh->remotePort(),
+                 netCompressorNum2Str( peerCompressor ), eh->handle() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = ossException2RC( &e ) ;
+         PD_LOG( PDERROR, "An exception occurred when processing heartbeat msg: "
+                 "%s, rc: %d", e.what(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _netFrame::_handleHeartBeat( NET_EH eh, MsgHeader *message )
    {
       SDB_ASSERT( NULL != message, "message is invalid" ) ;
       MsgOpReply reply ;
+      MsgOpReply *heartBeatReply = &reply ;
       IMsgConvertor *convertor = NULL ;
-      reply.header.messageLength = sizeof( MsgOpReply ) ;
-      reply.header.opCode = MSG_HEARTBEAT_RES ;
-      reply.header.requestID = message->requestID ;
-      reply.header.routeID.value = 0 ;
-      reply.header.TID = message->TID ;
-      reply.header.globalID = message->globalID ;
-      reply.contextID = -1 ;
-      reply.numReturned = 0 ;
-      reply.startFrom = 0 ;
-      reply.flags = pmdDBIsAbnormal() ? SDB_SYS : SDB_OK ;
+      BOOLEAN hasBody = FALSE ;
 
-      // try to get lock of event handle
-      // if failed, means someone is using the handle to send data
-      // which can be just instead of heart beat
-      ossScopedTryLock lock( &( eh->mtx() ) ) ;
-      if ( lock.isLocked() )
+      _processHeartBeatRequestMsg( eh, message, hasBody, &heartBeatReply ) ;
+
+      if ( hasBody )
       {
-         reply.header.routeID = _local ;
+         ossScopedLock lock( &( eh->mtx() ) ) ;
+
+         heartBeatReply->header.routeID = _local ;
          convertor = eh->getOutMsgConvertor() ;
          if ( convertor )
          {
-            _syncSendCompatible( eh, (MsgHeader *)&reply ) ;
+            _syncSendCompatible( eh, (MsgHeader *)heartBeatReply ) ;
          }
          else
          {
-            eh->syncSendRaw( &reply, reply.header.messageLength ) ;
+            eh->syncSendRaw( heartBeatReply, heartBeatReply->header.messageLength ) ;
+         }
+
+         if ( heartBeatReply && heartBeatReply != &reply )
+         {
+            SDB_OSS_FREE( heartBeatReply ) ;
+            heartBeatReply = NULL ;
+         }
+      }
+      else
+      {
+         // try to get lock of event handle
+         // if failed, means someone is using the handle to send data
+         // which can be just instead of heart beat
+         ossScopedTryLock lock( &( eh->mtx() ) ) ;
+         if ( lock.isLocked() )
+         {
+            heartBeatReply->header.routeID = _local ;
+            convertor = eh->getOutMsgConvertor() ;
+            if ( convertor )
+            {
+               _syncSendCompatible( eh, (MsgHeader *)heartBeatReply ) ;
+            }
+            else
+            {
+               eh->syncSendRaw( heartBeatReply, heartBeatReply->header.messageLength ) ;
+            }
          }
       }
    }
@@ -1114,6 +1202,7 @@ namespace engine
       }
 
       {
+         ossScopedLock lock( &( eh->mtx() ) ) ;
          rc = eh->syncConnect( hostName, serviceName ) ;
          if ( SDB_OK != rc )
          {
@@ -1351,7 +1440,6 @@ namespace engine
       BOOLEAN compatibleMode = FALSE ;
       IMsgConvertor *convertor = NULL ;
       CHAR* des = NULL ;
-      _netMsgCompressor *compressor = NULL ;
       UINT32 msgLen = header->messageLength ;
 
       rc = _getHandle( id, eh ) ;
@@ -1374,27 +1462,19 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = _netGetPeerVersion( eh ) ;
-      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      header->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
 
-      compressor = eh->getCompressor( _netCompressor ) ;
-      if ( compressor )
+      rc = eh->getCompressor().compressNetMsg( header, header->messageLength,
+                                               &des, msgLen ) ;
+      if ( rc )
       {
-         rc = compressor->compressNetMsg( header, header->messageLength,
-                                          &des, msgLen, _netCompressInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         des = (CHAR*)header ;
+         PD_LOG( PDWARNING, "Failed to compress msg, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       if ( pHandle )
@@ -1439,7 +1519,6 @@ namespace engine
       BOOLEAN compatibleMode = FALSE ;
       IMsgConvertor *convertor = NULL ;
       CHAR *des = NULL ;
-      _netMsgCompressor *compressor = NULL ;
       UINT32 msgLen = header->messageLength ;
 
       {
@@ -1459,28 +1538,19 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = _netGetPeerVersion( eh ) ;
-      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      header->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
 
-      compressor = eh->getCompressor( _netCompressor ) ;
-
-      if ( compressor )
+      rc = eh->getCompressor().compressNetMsg( header, header->messageLength,
+                                               &des, msgLen ) ;
+      if ( rc )
       {
-         rc = compressor->compressNetMsg( header, header->messageLength,
-                                          &des, msgLen, _netCompressInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         des = (CHAR*)header ;
+         PD_LOG( PDWARNING, "Failed to compress msg, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       convertor = eh->getOutMsgConvertor() ;
@@ -1574,7 +1644,6 @@ namespace engine
       UINT32 netOut = 0 ;
       CHAR *headerDes = NULL ;
       CHAR *bodyDes = NULL ;
-      _netMsgCompressor *compressor = NULL ;
 
       {
       ossScopedLock lock( &_mtx, SHARED ) ;
@@ -1596,30 +1665,19 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = _netGetPeerVersion( eh ) ;
-      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      header->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
 
-      compressor = eh->getCompressor( _netCompressor ) ;
-
-      if ( compressor )
+      rc = eh->getCompressor().compressNetMsg( header, (CHAR*)body, bodyLen,
+                                               &headerDes, &bodyDes, headLen, bodyLen ) ;
+      if ( rc )
       {
-         rc = compressor->compressNetMsg( header, (CHAR*)body, bodyLen,
-                                          &headerDes, &bodyDes, headLen, bodyLen,
-                                          _netCompressInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         headerDes = (CHAR*)header ;
-         bodyDes = (CHAR*)body ;
+         PD_LOG( PDWARNING, "Failed to compress msg, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       convertor = eh->getOutMsgConvertor() ;
@@ -1707,7 +1765,6 @@ namespace engine
       UINT32 netOut = 0 ;
       CHAR *headerDes = NULL ;
       netIOVec iovDes ;
-      _netMsgCompressor *compressor = NULL ;
 
       INT32 origLen = header->messageLength ;
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
@@ -1723,7 +1780,8 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      header->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
@@ -1737,30 +1795,17 @@ namespace engine
       eh = itHandle->second ;
       }
 
-      header->version = _netGetPeerVersion( eh ) ;
-
       SDB_ASSERT( NET_EVENT_HANDLER_TCP == eh->getHandlerType(),
                   "Should not use UDP socket to send multiple packets" ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
 
-      compressor = eh->getCompressor( _netCompressor ) ;
-
-      if ( compressor )
+      rc = eh->getCompressor().compressNetMsg( header, iov, &headerDes, iovDes ) ;
+      if ( rc )
       {
-         rc = compressor->compressNetMsg( header, iov, &headerDes, iovDes,
-                                          _netCompressInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         headerDes = (CHAR*)header ;
-         iovDes = iov ;
+         PD_LOG( PDWARNING, "Failed to compress msg, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       convertor = eh->getOutMsgConvertor() ;
@@ -1854,7 +1899,6 @@ namespace engine
       UINT32 netOut = 0 ;
       CHAR* headerDes = NULL ;
       CHAR* bodyDes = NULL ;
-      _netMsgCompressor *compressor = NULL ;
 
       rc = _getHandle( id, eh ) ;
       if ( rc )
@@ -1877,29 +1921,19 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = _netGetPeerVersion( eh ) ;
-      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      header->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
-      compressor = eh->getCompressor( _netCompressor ) ;
 
-      if ( compressor )
+      rc = eh->getCompressor().compressNetMsg( header, (CHAR*)body, bodyLen,
+                                               &headerDes, &bodyDes, headLen, bodyLen ) ;
+      if ( rc )
       {
-         rc = compressor->compressNetMsg( header, (CHAR*)body, bodyLen,
-                                          &headerDes, &bodyDes, headLen, bodyLen,
-                                          _netCompressInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         headerDes = (CHAR*)header ;
-         bodyDes = (CHAR*)body ;
+         PD_LOG( PDWARNING, "Failed to compress msg, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       if ( pHandle )
@@ -1985,7 +2019,6 @@ namespace engine
       UINT32 netOut = 0 ;
       CHAR *headerDes = NULL ;
       netIOVec iovDes ;
-      _netMsgCompressor *compressor = NULL ;
 
       INT32 origLen = header->messageLength ;
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
@@ -2001,7 +2034,8 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      netSetCompressorFlag( DEF_COMPRESSOR, header->flags ) ;
+      header->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
       rc = _getHandle( id, eh ) ;
@@ -2019,26 +2053,14 @@ namespace engine
          }
       }
 
-      header->version = _netGetPeerVersion( eh ) ;
-
       {
       ossScopedLock lock( &( eh->mtx() ) ) ;
-      compressor = eh->getCompressor( _netCompressor ) ;
 
-      if ( compressor )
+      rc = eh->getCompressor().compressNetMsg( header, iov, &headerDes, iovDes ) ;
+      if ( rc )
       {
-         rc = compressor->compressNetMsg( header, iov, &headerDes, iovDes,
-                                          _netCompressInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to compress msg, rc: %d", rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-      else
-      {
-         headerDes = (CHAR*)header ;
-         iovDes = iov ;
+         PD_LOG( PDWARNING, "Failed to compress msg, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       if ( pHandle )
@@ -2151,7 +2173,8 @@ namespace engine
       }
 
       message->eye = MSG_COMM_EYE_DEFAULT ;
-      message->version = _netGetPeerVersion( eh ) ;
+      message->version = SDB_PROTOCOL_VER_2 ;
+      OSS_BIT_CLEAR( message->flags, FLAG_COMPRESSED ) ;
       ossMemset( message->reserve, 0, sizeof(message->reserve) ) ;
 
       {
@@ -2423,7 +2446,6 @@ namespace engine
       UINT32 len = 0 ;
       CHAR *message = NULL ;
       IMsgConvertor *convertor = NULL ;
-      _netMsgCompressor *decompressor = NULL ;
       BOOLEAN isNotSysInfoMsg =
          ( (INT32)MSG_SYSTEM_INFO_LEN != pMsg->messageLength ) ;
       CHAR *des = NULL ;
@@ -2452,27 +2474,14 @@ namespace engine
          }
       }
 
-      decompressor = eh->getDecompressor() ;
-      if ( decompressor )
+      rc = eh->getDecompressor().decompressNetMsg( pMsg, &des ) ;
+      if ( rc )
       {
-         rc = decompressor->decompressNetMsg( pMsg, &des ) ;
-         if ( rc )
-         {
-            PD_LOG( PDSEVERE, "Failed to decompress network msg, rc: %d", rc ) ;
-            eh->close() ;
-            goto error ;
-         }
-         pMsg = (MsgHeader*)des ;
+         PD_LOG( PDSEVERE, "Failed to decompress network msg, rc: %d", rc ) ;
+         eh->close() ;
+         goto error ;
       }
-      else
-      {
-         if ( !netIsCompressMsg( pMsg ) )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDSEVERE, "Failed to new decompressor, rc: %d", rc ) ;
-            goto error ;
-         }
-      }
+      pMsg = (MsgHeader*)des ;
 
       // Heartbeat and heartbeat response should be handled in the network frame
       // itself. Only when it's not the sysinfo message can we check the opCode.
@@ -2905,21 +2914,10 @@ namespace engine
       return _netOut.peek() ;
    }
 
-   const _netCompressionMonitorInfo& _netFrame::netCompressMonInfo()
-   {
-      return _netCompressInfo ;
-   }
-
-   void _netFrame::setNetCompressor( NET_COMPRESSOR netCompressor )
-   {
-      _netCompressor = netCompressor ;
-   }
-
    void _netFrame::resetMon()
    {
       _netIn.poke( 0 ) ;
       _netOut.poke( 0 ) ;
-      _netCompressInfo.reset() ;
    }
 
    /*

@@ -435,10 +435,6 @@ namespace engine
 
          INT64 netOut() ;
 
-         const _netCompressionMonitorInfo& netCompressMonInfo() ;
-
-         void  setNetCompressor( NET_COMPRESSOR netCompressor ) ;
-
          void  makeStat( UINT32 timeout ) ;
          void  setNetStartThreadFunc( NET_START_THREAD_FUNC pFunc ) ;
 
@@ -498,6 +494,10 @@ namespace engine
          void     _handleHeartBeatRes( NET_EH eh, MsgHeader *message ) ;
          void     _checkBreak( UINT32 timeout, const netFrameMon &mon ) ;
 
+         INT32    _processHeartBeatRequestMsg( NET_EH eh, const MsgHeader *message,
+                                               BOOLEAN &hasBody,
+                                               MsgOpReply **heartBeatReply ) ;
+
          void     _closeHandle( NET_HANDLE handle ) ;
 
          INT32    _syncSendCompatible( NET_EH eh, MsgHeader *message ) ;
@@ -526,7 +526,6 @@ namespace engine
          UINT32                           _timerID;
          ossAtomicSigned64                _netOut;
          ossAtomicSigned64                _netIn;
-         _netCompressionMonitorInfo       _netCompressInfo ;
 
          UINT32                           _beatInterval ;
          UINT32                           _beatPassiveInterval ;
@@ -548,8 +547,6 @@ namespace engine
          BOOLEAN                          _suiteStopFlag ;
 
          NET_UDP_EV_SUIT                  _udpMainSuit ;
-
-         NET_COMPRESSOR                   _netCompressor ;
 
          BOOLEAN                          _asyncSend ;
    } ;

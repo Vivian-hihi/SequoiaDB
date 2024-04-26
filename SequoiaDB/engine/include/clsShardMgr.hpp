@@ -211,8 +211,6 @@ namespace engine
          INT64 netIn() ;
          INT64 netOut() ;
 
-         const _netCompressionMonitorInfo& netCompressMonInfo() ;
-
          INT32 replyToRemoteEndpoint ( NET_HANDLE handle,
                                        MsgHeader * request,
                                        const BSONObj & replyObject ) ;

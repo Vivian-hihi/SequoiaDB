@@ -69,9 +69,7 @@ namespace engine
      _iops( 0 ),
      _peerVersion( SDB_PROTOCOL_VER_INVALID ),
      _inMsgConvertor( NULL ),
-     _outMsgConvertor( NULL ),
-     _compressor( NULL ),
-     _decompressor( NULL )
+     _outMsgConvertor( NULL )
    {
       _id.value = MSG_INVALID_ROUTEID ;
    }
@@ -87,16 +85,6 @@ namespace engine
       {
          SDB_OSS_DEL _outMsgConvertor ;
          _outMsgConvertor = NULL ;
-      }
-      if ( _compressor )
-      {
-         SDB_OSS_DEL _compressor ;
-         _compressor = NULL ;
-      }
-      if ( _decompressor )
-      {
-         SDB_OSS_DEL _decompressor ;
-         _decompressor = NULL ;
       }
    }
 
@@ -165,35 +153,13 @@ namespace engine
       return _outMsgConvertor ;
    }
 
-   _netMsgCompressor *_netEventHandlerBase::getCompressor( NET_COMPRESSOR netCompressor )
+   _netMsgCompressor& _netEventHandlerBase::getCompressor()
    {
-      if ( !_compressor )
-      {
-         _compressor = SDB_OSS_NEW _netMsgCompressor ;
-      }
-      if ( !_compressor )
-      {
-         PD_LOG( PDERROR, "Failed to init compressor, rc: %d", SDB_OOM ) ;
-      }
-      else
-      {
-         _compressor->setNetCompressor( netCompressor ) ;
-      }
-
       return _compressor ;
    }
 
-   _netMsgCompressor *_netEventHandlerBase::getDecompressor()
+   _netMsgCompressor& _netEventHandlerBase::getDecompressor()
    {
-      if ( !_decompressor )
-      {
-         _decompressor = SDB_OSS_NEW _netMsgCompressor ;
-      }
-      if ( !_decompressor )
-      {
-         PD_LOG( PDERROR, "Failed to init decompressor, rc: %d", SDB_OOM ) ;
-      }
-
       return _decompressor ;
    }
 }
