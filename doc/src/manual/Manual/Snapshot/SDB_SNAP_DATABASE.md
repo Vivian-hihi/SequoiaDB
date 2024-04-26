@@ -107,16 +107,8 @@ SDB_SNAP_DATABASE
 | svcNetOut             | int64     | 本地服务端口发送的网络流量，单位为字节                          |
 | shardNetIn            | int64     | shard 平面端口收到的网络流量，单位为字节                        |
 | shardNetOut           | int64     | shard 平面端口发送的网络流量，单位为字节                        |
-| shardUncompressed     | int64     | shard 平面端口消息压缩前的总长度，单位为字节                    |
-| shardCompressed       | int64     | shard 平面端口消息压缩后的总长度，单位为字节                    |
-| shardUncompressedCount| int64     | shard 平面端口消息总个数                                        |
-| shardCompressedCount  | int64     | shard 平面端口压缩成功的消息总个数                              |
 | replNetIn             | int64     | 数据同步平面端口收到的网络流量，单位为字节                      |
 | replNetOut            | int64     | 数据同步平面端口发送的网络流量，单位为字节                      |
-| replUncompressed      | int64     | 数据同步平面端口消息压缩前的总长度，单位为字节                  |
-| replCompressed        | int64     | 数据同步平面端口消息压缩后的总长度，单位为字节                  |
-| replUncompressedCount | int64     | 数据同步平面端口消息总个数                                      |
-| replCompressedCount   | int64     | 数据同步平面端口压缩成功的消息总个数                            |
 | SchdlrType            | int32     | 资源调度类型，取值如下：<br>0：没有开启资源调度 <br>1：开启FIFO资源调度 <br> 2：开启优先级资源调度 <br>3：开启基于容器的优先级资源调度 |
 | SchdlrTypeDesp        | string    | 资源调度类型描述，如：NONE、FIFO、PRIORITY、CONTAINER           |
 | Run                   | int32     | 当前正在运行的任务数量                                          |
@@ -172,16 +164,8 @@ SDB_SNAP_DATABASE
 | svcNetOut         | int64     | 本地服务端口发送的网络流量，单位为字节        |
 | shardNetIn        | int64     | shard 平面端口收到的网络流量，单位为字节      |
 | shardNetOut       | int64     | shard 平面端口发送的网络流量，单位为字节      |
-| shardUncompressed     | int64     | shard 平面端口消息压缩前的总长度，单位为字节                    |
-| shardCompressed       | int64     | shard 平面端口消息压缩后的总长度，单位为字节                    |
-| shardUncompressedCount| int64     | shard 平面端口消息总个数                                        |
-| shardCompressedCount  | int64     | shard 平面端口压缩成功的消息总个数                              |
 | replNetIn         | int64     | 数据同步平面端口收到的网络流量，单位为字节    |
 | replNetOut        | int64     | 数据同步平面端口发送的网络流量，单位为字节    |
-| replUncompressed      | int64     | 数据同步平面端口消息压缩前的总长度，单位为字节                  |
-| replCompressed        | int64     | 数据同步平面端口消息压缩后的总长度，单位为字节                  |
-| replUncompressedCount | int64     | 数据同步平面端口消息总个数                                      |
-| replCompressedCount   | int64     | 数据同步平面端口压缩成功的消息总个数                            |
 | MemPoolSize       | int64     | Pool Memory 的大小，单位为字节                                  |
 | MemPoolUsed       | int64     | Pool Memory 中被使用的大小，单位为字节                          |
 | MemPoolFree       | int64     | Pool Memory 中空闲的大小，单位为字节                            |
@@ -304,16 +288,8 @@ SDB_SNAP_DATABASE
      "svcNetOut": 6185,
      "shardNetIn": 9939,
      "shardNetOut": 9454,
-     "shardUncompressed": 15036126,
-     "shardCompressed": 4051857,
-     "shardUncompressedCount": 20056,
-     "shardCompressedCount": 20013,
      "replNetIn": 0,
      "replNetOut": 0,
-     "replUncompressed": 38035936,
-     "replCompressed": 16396306,
-     "replUncompressedCount": 140482,
-     "replCompressedCount": 20000
      "SchdlrType": 0,
      "SchdlrTypeDesp": "NONE",
      "Run": 0,
@@ -375,16 +351,8 @@ SDB_SNAP_DATABASE
      "svcNetOut": 1057,
      "shardNetIn": 33090,
      "shardNetOut": 22375,
-     "shardUncompressed": 15072003,
-     "shardCompressed": 4082466,
-     "shardUncompressedCount": 20236,
-     "shardCompressedCount": 20102,
      "replNetIn": 0,
      "replNetOut": 0,
-     "replUncompressed": 19089433,
-     "replCompressed": 8243925,
-     "replUncompressedCount": 70424,
-     "replCompressedCount": 10045
      "MemPoolSize": 108975104,
      "MemPoolUsed": 68871074,
      "MemPoolFree": 40104030,
