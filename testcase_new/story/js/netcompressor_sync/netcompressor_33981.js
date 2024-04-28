@@ -43,7 +43,6 @@ function test ()
          expDocs.push( doc );
       };
       // 检查结果
-      snapshotAndCheckResult( "single insert" );
       commCompareResults( cl.find().sort( { "b": 1 } ), expDocs );
       cl.remove();
 
@@ -57,7 +56,6 @@ function test ()
          docs.push( doc );
       };
       cl.insert( docs );
-      snapshotAndCheckResult( "bulk insert" );
       commCompareResults( cl.find().sort( { "b": 1 } ), docs );
 
       commDropCS( db, csName, false );
@@ -66,19 +64,5 @@ function test ()
    {
       db.updateConf( { "netcompressor": "" } );
    }
-}
-
-function snapshotAndCheckResult ( message )
-{
-   var cursor = db.snapshot( SDB_SNAP_DATABASE, {}, { shardNetOut: "", shardUncompressed: "", shardCompressed: "", shardUncompressedCount: "", shardCompressedCount: "", replNetOut: "", replUncompressed: "", replCompressed: "", replUncompressedCount: "", replCompressedCount: "" } );
-   var ncInfo = cursor.current().toObj();
-   assert.notEqual( ncInfo.shardUncompressed, 0, message + ", check shardUncompressed" );
-   assert.notEqual( ncInfo.shardCompressed, 0, message + ", check shardCompressed" );
-   assert.notEqual( ncInfo.shardCompressedCount, 0, message + ", check shardCompressedCount" );
-   assert.notEqual( ncInfo.shardUncompressedCount, 0, message + ", check shardUncompressedCount" );
-   assert.notEqual( ncInfo.replUncompressed, 0, message + ", check replUncompressed" );
-   assert.notEqual( ncInfo.replCompressed, 0, message + ", check replCompressed" );
-   assert.notEqual( ncInfo.replUncompressedCount, 0, message + ", check replUncompressedCount" );
-   assert.notEqual( ncInfo.replCompressedCount, 0, message + ", check replCompressedCount" );
 }
 

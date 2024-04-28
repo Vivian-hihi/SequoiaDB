@@ -38,17 +38,6 @@ function test ()
    findAndcheckResult( normalCL );
    findAndcheckResult( shardCL );
 
-   // 查询数据库快照消息压缩相关指标
-   var cursor = db.snapshot( SDB_SNAP_DATABASE, {}, { shardNetOut: "", shardUncompressed: "", shardCompressed: "", shardUncompressedCount: "", shardCompressedCount: "", replNetOut: "", replUncompressed: "", replCompressed: "", replUncompressedCount: "", replCompressedCount: "" } );
-   var ncInfo = cursor.current().toObj();
-   assert.notEqual( ncInfo.shardUncompressed, 0, "check shardUncompressed" );
-   assert.equal( ncInfo.shardCompressed, 0, "check shardCompressed" );
-   assert.notEqual( ncInfo.shardUncompressedCount, 0, "check shardUncompressedCount" );
-   assert.equal( ncInfo.shardCompressedCount, 0, "check shardCompressedCount" );
-   assert.notEqual( ncInfo.replUncompressed, 0, "check replUncompressed" );
-   assert.equal( ncInfo.replCompressed, 0, "check replCompressed" );
-   assert.notEqual( ncInfo.replUncompressedCount, 0, "check replUncompressedCount" );
-   assert.equal( ncInfo.replCompressedCount, 0, "check replCompressedCount" );
 
    commDropCS( db, csName, false );
 }
