@@ -84,6 +84,7 @@ public class GB18030_33928 extends SdbTestBase {
                 .getCollection( hashCLName ).getCount(), 50 );
 
         // create range collection
+        options = new BasicBSONObject();
         options.put( "ShardingType", "range" );
         options.put( "ShardingKey", new BasicBSONObject( shardKeyName, 1 ) );
         options.put( "Group", srcGroupName );
