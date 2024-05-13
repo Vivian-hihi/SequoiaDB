@@ -2,65 +2,32 @@
  * @Description   : seqDB-33947:开启消息压缩，构造重复率低的消息
  * @Author        : huangxiaoni
  * @CreateTime    : 2023.03.01
- * @LastEditTime  : 2023.03.01
+ * @LastEditTime  : 2024.05.10
  * @LastEditors   : huangxiaoni
+                    wenjingwang
  ******************************************************************************/
 testConf.skipStandAlone = true;
+testPara.csName = COMMCSNAME + "_33980";
+testPara.normalCLName = "cl_normal_33980";
+testPara.shardCLName = "cl_shard_33980";
 
-main( test );
-function test ()
+main( setUp, test );
+
+function test (testpara)
 {
-   var dmName = "dm_33980";
-   var csName = COMMCSNAME + "_33980";
-   var normalCLName = "cl_normal_33980";
-   var shardCLName = "cl_shard_33980";
-   var groupNames = commGetDataGroupNames( db );
    try
    {
       // 打开消息压缩
       db.updateConf( { "netcompressor": "lz4" } );
 
-      // 准备CL
-      commDropCS( db, csName, true );
-      commDropDomain( db, dmName, true );
-      db.createDomain( dmName, groupNames, { "AutoSplit": true } );
-      var cs = db.createCS( csName, { "Domain": dmName } );
-      var normalCL = cs.createCL( normalCLName, { "ReplSize": -1 } );
-      var shardCL = cs.createCL( shardCLName, { "ShardingKey": { "a": 1 }, "AutoSplit": true, "ReplSize": -1 } );
+      var docs = insertLowDuplicateDocs( testpara.normalCL  );
+      insertLowDuplicateDocs( testpara.shardCL );
 
-      insertDocs( normalCL );
-
-      insertDocs( shardCL );
-
-      // 重置数据库快照 -> 普通表和分区表读数据 -> 查询数据库快照消息压缩相关指标
-      db.resetSnapshot( { "Type": "database" } );
-      findAndcheckResult( normalCL );
-      findAndcheckResult( shardCL );
-
-      commDropCS( db, csName, false );
+      findAndcheckResult( testpara.normalCL, docs);
+      findAndcheckResult( testpara.shardCL , docs);
    }
    finally
    {
       db.updateConf( { "netcompressor": "" } );
    }
 }
-
-function insertDocs ( cl )
-{
-   for( var i = 0; i < 1000; i++ )
-   {
-      cl.insert( { "a": "test" + i, "b": "test" + i, "c": i } );
-   }
-}
-
-function findAndcheckResult ( cl )
-{
-   assert.equal( cl.count(), 1000 );
-   for( var i = 0; i < 1000; i++ )
-   {
-      var cursor = cl.find( { "a": "test" + i, "b": "test" + i, "c": i } );
-      assert.equal( cursor.size(), 1 );
-      cursor.close();
-   }
-}
-
