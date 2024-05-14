@@ -252,7 +252,12 @@ utilFiles = [
       "util/utilSecure.cpp",
       "util/utilTool.cpp",
       "util/utilLocation.cpp",
-      "util/utilCompressorLZ4.cpp"
+      "util/utilCompressorLZ4.cpp",
+      "util/utilCompressor.cpp",
+      "util/utilCompressorSnappy.cpp",
+      "util/utilCompressorLZW.cpp",
+      "util/utilCompressorZlib.cpp",
+      "util/utilLZWDictionary.cpp" 
       ]
 
 dpsFiles = [

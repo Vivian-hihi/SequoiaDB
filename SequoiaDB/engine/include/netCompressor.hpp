@@ -41,8 +41,8 @@
 
 #include "msg.h"
 #include "netDef.hpp"
+#include "utilCompression.hpp"
 #include "utilPooledObject.hpp"
-#include "netCommon.hpp"
 
 namespace engine
 {
@@ -64,7 +64,7 @@ namespace engine
 
       INT32 decompressNetMsg( const MsgHeader *message, CHAR** des ) ;
 
-      void setCompressor( NET_COMPRESSOR netCompressor ) ;
+      void setCompressor( UTIL_COMPRESSOR_TYPE netCompressor ) ;
 
       void setNeedReleaseUncompressBuff( BOOLEAN need ) ;
 
@@ -85,7 +85,7 @@ namespace engine
       CHAR   *_pTmpCompressBuff ;
       UINT32  _tmpCompressBuffLen ;
 
-      NET_COMPRESSOR _compressor ;
+      UTIL_COMPRESSOR_TYPE _compressor ;
 
       BOOLEAN _needReleaseUncompressBuff ;
    } ;

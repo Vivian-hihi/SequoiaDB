@@ -43,24 +43,6 @@ namespace engine
 {
    #define NET_COMPRESS_MIN_SIZE   64 * 1024   // 64K
 
-   static utilCompressor* getCompressor( NET_COMPRESSOR compressorType )
-   {
-      utilCompressor * compressor = NULL ;
-      static utilCompressorLZ4 lz4Compressor ;
-
-      switch ( compressorType )
-      {
-         case LZ4_COMPRESSOR :
-            compressor = &lz4Compressor ;
-            break ;
-         default :
-            compressor = NULL ;
-            break ;
-      }
-
-      return compressor ;
-   }
-
    _netMsgCompressor::_netMsgCompressor()
    {
       _pCompressBuff = NULL ;
@@ -72,7 +54,7 @@ namespace engine
       _pTmpCompressBuff = NULL ;
       _tmpCompressBuffLen = 0 ;
 
-      _compressor = NONE_COMPRESSOR ;
+      _compressor = UTIL_COMPRESSOR_INVALID ;
 
       _needReleaseUncompressBuff = TRUE ;
    }
@@ -128,7 +110,7 @@ namespace engine
 
       headerCpy = *message ;
 
-      compressor = getCompressor( _compressor ) ;
+      compressor = getCompressorByType( _compressor ) ;
       if ( !compressor )
       {
          PD_LOG( PDWARNING, "Failed to get compressor, rc: %d", SDB_SYS ) ;
@@ -246,7 +228,7 @@ namespace engine
 
       headerCpy = *message ;
 
-      compressor = getCompressor( _compressor ) ;
+      compressor = getCompressorByType( _compressor ) ;
       if ( !compressor )
       {
          PD_LOG( PDWARNING, "Failed to get compressor, rc: %d", SDB_SYS ) ;
@@ -313,7 +295,7 @@ namespace engine
          goto done ;
       }
 
-      compressor = getCompressor( _compressor ) ;
+      compressor = getCompressorByType( _compressor ) ;
       if ( !compressor )
       {
          PD_LOG( PDWARNING, "Failed to get compressor, rc: %d", SDB_SYS ) ;
@@ -420,7 +402,7 @@ namespace engine
 
       headerCpy = *message ;
 
-      compressor = getCompressor( _compressor ) ;
+      compressor = getCompressorByType( _compressor ) ;
       if ( !compressor )
       {
          rc = SDB_SYS ;
@@ -468,7 +450,7 @@ namespace engine
       goto done ;
    }
 
-   void _netMsgCompressor::setCompressor( NET_COMPRESSOR netCompressor )
+   void _netMsgCompressor::setCompressor( UTIL_COMPRESSOR_TYPE netCompressor )
    {
       _compressor = netCompressor ;
    }
@@ -520,7 +502,7 @@ namespace engine
       SDB_ASSERT ( message, "Invalid message" ) ;
 
       if ( (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
-           _compressor == NONE_COMPRESSOR ||
+           _compressor == UTIL_COMPRESSOR_INVALID ||
            message->messageLength < NET_COMPRESS_MIN_SIZE ||
            OSS_BIT_TEST( message->flags, FLAG_NOCOMPRESSED_ADVICE ) )
       {
@@ -537,7 +519,7 @@ namespace engine
       SDB_ASSERT ( message, "Invalid message" ) ;
 
       if ( (INT32)MSG_SYSTEM_INFO_LEN == message->messageLength ||
-           NONE_COMPRESSOR == _compressor ||
+           UTIL_COMPRESSOR_INVALID == _compressor ||
            !OSS_BIT_TEST( message->flags, FLAG_COMPRESSED ) )
       {
          return FALSE ;

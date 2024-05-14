@@ -2080,7 +2080,7 @@ done:
       _memTopPad = PMD_DFT_MEM_TOP_PAD ;
 
       ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
-      _netCompressor = NONE_COMPRESSOR ;
+      _netCompressor = UTIL_COMPRESSOR_INVALID ;
       ossMemset( _fsCacheExpiredStr, 0, sizeof(_fsCacheExpiredStr) ) ;
       _fsCacheExpiredMs = 0 ;
 
@@ -3284,19 +3284,19 @@ done:
          _maxSessionContextNum = RTN_MAX_SESS_CTX_NUM_MIN ;
       }
 
-      if ( 0 == ossStrcasecmp( NET_COMPRESSOR_STR_LZ4, _netCompressorStr ) )
+      if ( 0 == ossStrcasecmp( VALUE_NAME_LZ4, _netCompressorStr ) )
       {
-         _netCompressor = LZ4_COMPRESSOR ;
+         _netCompressor = UTIL_COMPRESSOR_LZ4 ;
       }
       else if ( 0 == ossStrcasecmp( "", _netCompressorStr ) )
       {
-         _netCompressor = NONE_COMPRESSOR ;
+         _netCompressor = UTIL_COMPRESSOR_INVALID ;
       }
       else
       {
          std::cerr << PMD_OPTION_NET_COMPRESSOR << " value error, use default" << std::endl ;
          ossMemset( _netCompressorStr, 0, sizeof(_netCompressorStr) ) ;
-         _netCompressor = NONE_COMPRESSOR ;
+         _netCompressor = UTIL_COMPRESSOR_INVALID ;
          _invalidConfNum++ ;
       }
 

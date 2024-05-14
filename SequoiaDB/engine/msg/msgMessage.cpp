@@ -3979,7 +3979,8 @@ error:
    goto done ;
 }
 
-INT32 msgExtractHeartBeatReply ( const CHAR *pBuffer, engine::NET_COMPRESSOR &peerNodeNetCompressor )
+INT32 msgExtractHeartBeatReply ( const CHAR *pBuffer,
+                                 engine::UTIL_COMPRESSOR_TYPE &peerNodeNetCompressor )
 {
    INT32 rc = SDB_OK ;
    INT32 flag = 0 ;
@@ -4003,7 +4004,7 @@ INT32 msgExtractHeartBeatReply ( const CHAR *pBuffer, engine::NET_COMPRESSOR &pe
             if ( ele.type() == bson::NumberInt &&
                  0 == ossStrcasecmp( fieldName, FIELD_NAME_NET_MSG_COMPRESSOR ) )
             {
-               peerNodeNetCompressor = (engine::NET_COMPRESSOR)ele.numberInt() ;
+               peerNodeNetCompressor = (UTIL_COMPRESSOR_TYPE)ele.numberInt() ;
             }
          }
       }

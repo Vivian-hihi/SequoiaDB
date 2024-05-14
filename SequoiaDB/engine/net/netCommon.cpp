@@ -37,48 +37,22 @@
 *******************************************************************************/
 
 #include "netCommon.hpp"
-#include "ossUtil.h"
 
 namespace engine
 {
-   static NET_COMPRESSOR& _netGetCompressor()
+   static UTIL_COMPRESSOR_TYPE& _netGetCompressor()
    {
-      static NET_COMPRESSOR  s_netCompressor = NONE_COMPRESSOR ;
+      static UTIL_COMPRESSOR_TYPE s_netCompressor = UTIL_COMPRESSOR_INVALID ;
       return s_netCompressor ;
    }
 
-   void netUpdateNetcompressor( NET_COMPRESSOR compressor )
+   void netUpdateNetcompressor( UTIL_COMPRESSOR_TYPE compressor )
    {
       _netGetCompressor() = compressor ;
    }
 
-   NET_COMPRESSOR netGetNetcompressor()
+   UTIL_COMPRESSOR_TYPE netGetNetcompressor()
    {
       return _netGetCompressor() ;
-   }
-
-   const CHAR* netCompressorNum2Str( NET_COMPRESSOR compressor )
-   {
-      if ( LZ4_COMPRESSOR == compressor )
-      {
-         return NET_COMPRESSOR_STR_LZ4 ;
-      }
-      else
-      {
-         return "" ;
-      }
-   }
-
-   NET_COMPRESSOR netCompressorStr2Num( const CHAR* compressor )
-   {
-      if ( compressor != NULL &&
-           0 == ossStrcasecmp( compressor, NET_COMPRESSOR_STR_LZ4 ) )
-      {
-         return LZ4_COMPRESSOR ;
-      }
-      else
-      {
-         return NONE_COMPRESSOR ;
-      }
    }
 }

@@ -117,7 +117,8 @@ namespace engine
          INT32 _allocateBuf( UINT32 len ) ;
          INT32 _syncCheckSysInfo( ossSocket &socket ) ;
 
-         INT32 _syncCheckNetCompressor( ossSocket &socket, NET_COMPRESSOR &peerNodeNetCompressor ) ;
+         INT32 _syncCheckNetCompressor( ossSocket &socket,
+                                        UTIL_COMPRESSOR_TYPE &peerNodeNetCompressor ) ;
 
          OSS_INLINE NET_TCP_EH _getShared()
          {

@@ -39,25 +39,12 @@
 #ifndef NETCOMMON_HPP_
 #define NETCOMMON_HPP_
 
-#include "ossTypes.h"
+#include "utilCompression.hpp"
 
 namespace engine
 {
-   enum NET_COMPRESSOR
-   {
-      NONE_COMPRESSOR = 0,
-      LZ4_COMPRESSOR = 1,
-
-      MAX_COMPRESSOR = 128,
-   } ;
-
-   #define NET_COMPRESSOR_STR_LZ4   "lz4"
-
-   void netUpdateNetcompressor( NET_COMPRESSOR compressor ) ;
-   NET_COMPRESSOR netGetNetcompressor() ;
-
-   const CHAR* netCompressorNum2Str( NET_COMPRESSOR compressor ) ;
-   NET_COMPRESSOR netCompressorStr2Num( const CHAR* compressor ) ;
+   void netUpdateNetcompressor( UTIL_COMPRESSOR_TYPE compressor ) ;
+   UTIL_COMPRESSOR_TYPE netGetNetcompressor() ;
 }
 
 #endif   // NETCOMMON_HPP_

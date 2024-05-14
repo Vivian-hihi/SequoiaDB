@@ -727,13 +727,13 @@ namespace engine
       }
    }
 
-   INT32 _netFrame::_processHeartBeatRequestMsg( NET_EH eh, const MsgHeader *message,
+   INT32 _netFrame::_processHeartBeatRequestMsg( const MsgHeader *message,
                                                  BOOLEAN &hasBody,
-                                                 MsgOpReply **heartBeatReply )
+                                                 MsgOpReply **heartBeatReply,
+                                                 UTIL_COMPRESSOR_TYPE &peerCompressor )
    {
       INT32 rc = SDB_OK ;
       BSONObj options ;
-      NET_COMPRESSOR peerCompressor = NONE_COMPRESSOR ;
       CHAR *pBuffer = NULL ;
       INT32 bufferSize = 0 ;
       hasBody = FALSE ;
@@ -768,15 +768,13 @@ namespace engine
             if ( ele.type() == bson::NumberInt &&
                  0 == ossStrcasecmp( fieldName, FIELD_NAME_NET_MSG_COMPRESSOR ) )
             {
-               peerCompressor = (NET_COMPRESSOR)(ele.numberInt()) ;
-               if ( !( peerCompressor > NONE_COMPRESSOR && peerCompressor < MAX_COMPRESSOR ) )
+               peerCompressor = (UTIL_COMPRESSOR_TYPE)(ele.numberInt()) ;
+               if ( peerCompressor != UTIL_COMPRESSOR_LZ4 )
                {
-                  peerCompressor = NONE_COMPRESSOR ;
+                  peerCompressor = UTIL_COMPRESSOR_INVALID ;
                }
             }
          }
-
-         eh->initCompressor( peerCompressor ) ;
 
          // build reply
          options = BSON( FIELD_NAME_NET_MSG_COMPRESSOR << peerCompressor ) ;
@@ -788,13 +786,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build reply msg, rc: %d", rc ) ;
 
          *heartBeatReply = ((MsgOpReply*)pBuffer) ;
-
-         PD_LOG( PDDEBUG, "Network message compressor of local node[%s:%d] is [%s] and "
-                 "remote node[%s:%d] is [%s], handle: %d",
-                 eh->localAddr().c_str(), eh->localPort(),
-                 netCompressorNum2Str( peerCompressor ),
-                 eh->remoteAddr().c_str(), eh->remotePort(),
-                 netCompressorNum2Str( peerCompressor ), eh->handle() ) ;
       }
       catch ( std::exception &e )
       {
@@ -813,14 +804,16 @@ namespace engine
    void _netFrame::_handleHeartBeat( NET_EH eh, MsgHeader *message )
    {
       SDB_ASSERT( NULL != message, "message is invalid" ) ;
+      INT32 rc = SDB_OK ;
       MsgOpReply reply ;
       MsgOpReply *heartBeatReply = &reply ;
       IMsgConvertor *convertor = NULL ;
+      UTIL_COMPRESSOR_TYPE peerCompressor = UTIL_COMPRESSOR_INVALID ;
       BOOLEAN hasBody = FALSE ;
 
-      _processHeartBeatRequestMsg( eh, message, hasBody, &heartBeatReply ) ;
+      rc = _processHeartBeatRequestMsg( message, hasBody, &heartBeatReply, peerCompressor ) ;
 
-      if ( hasBody )
+      if ( hasBody && SDB_OK == rc )
       {
          ossScopedLock lock( &( eh->mtx() ) ) ;
 
@@ -828,11 +821,23 @@ namespace engine
          convertor = eh->getOutMsgConvertor() ;
          if ( convertor )
          {
-            _syncSendCompatible( eh, (MsgHeader *)heartBeatReply ) ;
+            rc = _syncSendCompatible( eh, (MsgHeader *)heartBeatReply ) ;
          }
          else
          {
-            eh->syncSendRaw( heartBeatReply, heartBeatReply->header.messageLength ) ;
+            rc = eh->syncSendRaw( heartBeatReply, heartBeatReply->header.messageLength ) ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            eh->initCompressor( peerCompressor ) ;
+
+            PD_LOG( PDDEBUG, "Network message compressor of local node[%s:%d] is [%s] and "
+                    "remote node[%s:%d] is [%s], handle: %d",
+                    eh->localAddr().c_str(), eh->localPort(),
+                    utilCompressType2String( peerCompressor ),
+                    eh->remoteAddr().c_str(), eh->remotePort(),
+                    utilCompressType2String( peerCompressor ), eh->handle() ) ;
          }
 
          if ( heartBeatReply && heartBeatReply != &reply )

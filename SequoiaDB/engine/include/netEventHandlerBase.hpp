@@ -176,7 +176,7 @@ namespace engine
       // check if the net suit is stopped
       virtual BOOLEAN isSuitStopped() const = 0 ;
 
-      OSS_INLINE void initCompressor( NET_COMPRESSOR compressor )
+      OSS_INLINE void initCompressor( UTIL_COMPRESSOR_TYPE compressor )
       {
          _compressor.setCompressor( compressor ) ;
          _decompressor.setCompressor( compressor ) ;

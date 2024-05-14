@@ -47,6 +47,8 @@
 #include "netTrace.hpp"
 #include "msgMessageFormat.hpp"
 #include "netEventSuit.hpp"
+#include "utilCompression.hpp"
+#include "utilCompressor.hpp"
 #include <boost/bind.hpp>
 #if defined (_WINDOWS)
 #include <mstcpip.h>
@@ -271,7 +273,8 @@ namespace engine
       PD_TRACE_EXIT ( SDB__NETEVNHND_SETOPT );
    }
 
-   INT32 _netEventHandler::_syncCheckNetCompressor( ossSocket &socket, NET_COMPRESSOR &peerNodeNetCompressor )
+   INT32 _netEventHandler::_syncCheckNetCompressor( ossSocket &socket,
+                                                    UTIL_COMPRESSOR_TYPE &peerNodeNetCompressor )
    {
       INT32 rc = SDB_OK ;
       INT32 sentLen = 0 ;
@@ -282,9 +285,9 @@ namespace engine
       INT32 replyMsgSize = 0 ;
       INT32 replyHeaderLen = sizeof(MsgOpReply) ;
       CHAR *pReplyMsgBuff = NULL ;
-      NET_COMPRESSOR currentCompressor = netGetNetcompressor() ;
+      UTIL_COMPRESSOR_TYPE currentCompressor = netGetNetcompressor() ;
 
-      peerNodeNetCompressor = NONE_COMPRESSOR ;
+      peerNodeNetCompressor = UTIL_COMPRESSOR_INVALID ;
 
       try
       {
@@ -335,7 +338,7 @@ namespace engine
 
          if ( currentCompressor != peerNodeNetCompressor )
          {
-            peerNodeNetCompressor = NONE_COMPRESSOR ;
+            peerNodeNetCompressor = UTIL_COMPRESSOR_INVALID ;
          }
       }
 
@@ -363,7 +366,7 @@ namespace engine
       SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
 
       INT32 rc = SDB_OK ;
-      NET_COMPRESSOR peerNetCompressor = NONE_COMPRESSOR ;
+      UTIL_COMPRESSOR_TYPE peerNetCompressor = UTIL_COMPRESSOR_INVALID ;
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SYNCCONN );
 
       if ( _isConnected )
@@ -432,9 +435,12 @@ namespace engine
          rc = _syncCheckNetCompressor( sock, peerNetCompressor ) ;
          if ( rc )
          {
-            PD_LOG( PDWARNING, "Connection[Handle:%d] checking network message compressor "
+            PD_LOG( PDERROR, "Connection[Handle:%d] checking network message compressor "
                     "of node[%s:%s] failed[%d]", _handle, hostName, serviceName, rc ) ;
-            rc = SDB_OK ;
+            boost::system::error_code ec ;
+            close() ;
+            _sock.close( ec ) ;
+            goto error ;
          }
          else
          {
@@ -443,9 +449,9 @@ namespace engine
             PD_LOG( PDDEBUG, "Network message compressor of local node[%s:%d] is [%s] and "
                     "remote node[%s:%d] is [%s], handle: %d",
                     localAddr().c_str(), localPort(),
-                    netCompressorNum2Str( peerNetCompressor ),
+                    utilCompressType2String( peerNetCompressor ),
                     remoteAddr().c_str(), remotePort(),
-                    netCompressorNum2Str( peerNetCompressor ), handle() ) ;
+                    utilCompressType2String( peerNetCompressor ), handle() ) ;
          }
       }
 

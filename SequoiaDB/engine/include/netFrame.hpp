@@ -494,9 +494,10 @@ namespace engine
          void     _handleHeartBeatRes( NET_EH eh, MsgHeader *message ) ;
          void     _checkBreak( UINT32 timeout, const netFrameMon &mon ) ;
 
-         INT32    _processHeartBeatRequestMsg( NET_EH eh, const MsgHeader *message,
+         INT32    _processHeartBeatRequestMsg( const MsgHeader *message,
                                                BOOLEAN &hasBody,
-                                               MsgOpReply **heartBeatReply ) ;
+                                               MsgOpReply **heartBeatReply,
+                                               UTIL_COMPRESSOR_TYPE &peerCompressor ) ;
 
          void     _closeHandle( NET_HANDLE handle ) ;
 
