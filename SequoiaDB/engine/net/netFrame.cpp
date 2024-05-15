@@ -839,12 +839,6 @@ namespace engine
                     eh->remoteAddr().c_str(), eh->remotePort(),
                     utilCompressType2String( peerCompressor ), eh->handle() ) ;
          }
-
-         if ( heartBeatReply && heartBeatReply != &reply )
-         {
-            SDB_OSS_FREE( heartBeatReply ) ;
-            heartBeatReply = NULL ;
-         }
       }
       else
       {
@@ -865,6 +859,12 @@ namespace engine
                eh->syncSendRaw( heartBeatReply, heartBeatReply->header.messageLength ) ;
             }
          }
+      }
+
+      if ( heartBeatReply && heartBeatReply != &reply )
+      {
+         SDB_OSS_FREE( heartBeatReply ) ;
+         heartBeatReply = NULL ;
       }
    }
 
