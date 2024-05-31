@@ -50,6 +50,7 @@
 #include "rtnBackgroundJob.hpp"
 #include "pmdEnv.hpp"
 #include "pmdStartupHistoryLogger.hpp"
+#include "pmdStatusHistoryLogger.hpp"
 #include "pmdPipeManager.hpp"
 #include "charsetConvertorFactory.hpp"
 
@@ -115,6 +116,7 @@ namespace engine
       SDB_START_TYPE startType = SDB_START_NORMAL ;
       BOOLEAN bOk = TRUE ;
       pmdStartupHistoryLogger *logger = pmdGetStartupHstLogger() ;
+      pmdStatusHistoryLogger *statusLogger = pmdGetStatusHstLogger() ;
 
       // analysis the start type
       rc = pmdGetStartup().init( pmdGetOptionCB()->getDbPath() ) ;
@@ -136,6 +138,14 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "Failed to init start-up logger, rc: %d", rc );
+         rc = SDB_OK ;
+      }
+
+      // init status info, ignore error
+      rc = statusLogger->init() ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init status logger, rc: %d", rc ) ;
          rc = SDB_OK ;
       }
 
