@@ -156,8 +156,8 @@ public class DatasourceOptions implements Cloneable {
     public void setCheckInterval(int checkInterval) {
         if (checkInterval <= 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "checkInterval should be more than 0");
-        } else if ( checkInterval < 10 * 1000) {
-            _checkInterval = 10 * 1000;
+        } else if ( checkInterval < 2 * 1000) {
+            _checkInterval = 2 * 1000;
         } else {
             _checkInterval = checkInterval;
         }
