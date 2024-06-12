@@ -47,7 +47,7 @@ namespace import
    #define IMP_MAX_RECORDS_SIZE (SDB_MAX_MSG_LENGTH - 1024 * 1024 * 1)
    #define IMP_DEFAULT_NETWORK_TIMEOUT (-1)
    #define BSON_MIN_SIZE 5
-   #define IMP_DUPLICATED_NUMBER "DuplicatedNum" 
+   #define IMP_DUPLICATED_NUMBER "DuplicatedNum"
    static INT32 defaultVersion = 1 ;
    static INT16 defaultW = 0 ;
 
@@ -340,7 +340,7 @@ namespace import
    {
       INT32 rc = SDB_OK ;
 
-      if ( !result ) 
+      if ( !result )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -460,7 +460,11 @@ namespace import
       rc = _recv() ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to recv message, rc=%d", rc ) ;
+      #if defined (_WINDOWS)
+         PD_LOG( PDERROR, "Failed to recv message, rc=%d, errno=%d", rc, WSAGetLastError() ) ;
+      #else
+         PD_LOG( PDERROR, "Failed to recv message, rc=%d, errno=%d", rc, errno ) ;
+      #endif
          goto error ;
       }
 
@@ -471,7 +475,7 @@ namespace import
          goto error ;
       }
       // Since the memory space of the bson resExtract is shared,
-      // bson_destory(&resExtract) is not required.	  
+      // bson_destory(&resExtract) is not required.
       rc = _getLastResultObj( &resExtract ) ;
       if ( SDB_OK == rc )
       {
