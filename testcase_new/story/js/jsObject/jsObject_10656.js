@@ -90,7 +90,7 @@ SystemTest.prototype.listLoginUsers = function()
 
       if( username !== userObj.user || tty !== userObj.tty || time !== userObj.time || addr !== userObj.from )
       {
-         var parsedStr = "{ User: " + username + ", tty: " + tty + ", time: " + time + ", addr: " + addr + " }" ) ;
+         var parsedStr = "{ User: " + username + ", tty: " + tty + ", time: " + time + ", addr: " + addr + " }" ;
          throw new Error( "userObj: " + JSON.stringify( userObj ) + ", ParsedInfo: " + parsedStr + ", SourceLine: " + info[i] );
       }
    }
