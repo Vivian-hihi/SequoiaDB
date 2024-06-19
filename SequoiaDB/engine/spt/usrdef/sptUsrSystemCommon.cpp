@@ -4640,7 +4640,7 @@ namespace engine
                   while ( fromBeginPos > _timeBeginPos )
                   {
                      const string &tmpStr = columns[fromBeginPos] ;
-                     if ( tmpStr.at(0) == ')' )
+                     if ( tmpStr.at(0) == '(' )
                      {
                         UINT32 tmpLen = ( fromBeginPos == fromEndPos ) ? tmpStr.size() - 2 :
                                                                          tmpStr.size() - 1 ;
@@ -4656,6 +4656,12 @@ namespace engine
                         loginIp = tmpStr ;
                      }
                      --fromBeginPos ;
+                  }
+
+                  if ( fromBeginPos <= _timeBeginPos ) /// not found
+                  {
+                     fromBeginPos = fromEndPos ;
+                     loginIp = loginIp.substr( 0, loginIp.size() - 1 ) ;
                   }
 
                   /// build from
