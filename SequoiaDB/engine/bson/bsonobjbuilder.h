@@ -1023,6 +1023,8 @@ namespace bson {
 
         void abandon() { _b.abandon() ; }
 
+        bool isEmpty() const { return _b.isEmpty() ; }
+
         template <typename T>
         BSONArrayBuilder& append(const StringData& name, const T& x) {
             fill( name );
