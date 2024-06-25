@@ -2272,7 +2272,7 @@ done:
                  sizeof( _prefInstModeStr ), FALSE, PMD_CFG_CHANGE_RUN,
                  PMD_DFT_PREFINST_MODE ) ;
       // --clientcharset
-      rdxString( pEX, PMD_OPTION_CLIENT_CHARSET, _resultsCharsetStr,
+      rdxString( pEX, PMD_OPTION_CLIENT_CHARSET, _clientCharsetStr,
                  sizeof( _clientCharsetStr ), FALSE, PMD_CFG_CHANGE_RUN,
                  CHARSET_NAME_UTF8 ) ;
       // --resultscharset
