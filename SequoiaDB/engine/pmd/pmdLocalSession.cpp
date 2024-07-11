@@ -1315,11 +1315,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_PMDLOCALSESSION_CONVERTMSG ) ;
       INT32 rc = SDB_OK;
       INT32 opCode = in->opCode ;
-      pmdEDUCB *edu = eduCB() ;
 
-      // shield to avoid calling check urgent event during
-      // communicating messages with other nodes
-      pmdUrgentEventShield _shield( edu ) ;
       switch ( opCode )
       {
          case MSG_BS_MSG_REQ:
