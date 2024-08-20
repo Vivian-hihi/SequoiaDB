@@ -2809,7 +2809,7 @@ int linenoiseHistoryLoad(const char *filename)
     PD_TRACE_ENTRY ( SDB_LNHISTORYLOAD );
     int ret = 0 ;
     FILE *fp = fopen(filename,"r");
-    char buf[LINENOISE_MAX_LINE];
+    char buf[LINENOISE_MAX_LINE] = { 0 };
 
     if (fp == NULL)
     {
@@ -2819,7 +2819,8 @@ int linenoiseHistoryLoad(const char *filename)
 
     while (fgets(buf,LINENOISE_MAX_LINE,fp) != NULL)
     {
-        char *p;
+        char *p = NULL ;
+        const char *pLine = buf ;
 
         p = strchr(buf,'\r');
         if (!p) p = strchr(buf,'\n');
@@ -2831,14 +2832,10 @@ int linenoiseHistoryLoad(const char *filename)
         if (UTF8ToClientCnv)
         {
             UTF8ToClientCnv(buf, tmpStr);
-            p = tmpStr.c_str() ;
-        }
-        else
-        {
-            p = buf ;
+            pLine = tmpStr.c_str() ;
         }
 
-        linenoiseHistoryAdd( p ) ;
+        linenoiseHistoryAdd( pLine ) ;
     }
     fclose(fp);
 done:
