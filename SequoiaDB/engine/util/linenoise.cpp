@@ -2827,13 +2827,18 @@ int linenoiseHistoryLoad(const char *filename)
 
         // Convert historical commands to data in the encoding format
         // specified by the client
-        std::string tmpStr = p;
+        std::string tmpStr ;
         if (UTF8ToClientCnv)
         {
             UTF8ToClientCnv(buf, tmpStr);
+            p = tmpStr.c_str() ;
+        }
+        else
+        {
+            p = buf ;
         }
 
-        linenoiseHistoryAdd(tmpStr.c_str());
+        linenoiseHistoryAdd( p ) ;
     }
     fclose(fp);
 done:
