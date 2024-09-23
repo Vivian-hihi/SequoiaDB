@@ -94,6 +94,7 @@ sdbdmsdump --version | -v
      End Time               : 2024-09-24-00.20.19.358000
      Cost                   : 15.01 (sec)
      Output File Num        : 1
+     Total Errors           : -
      Total Data File Num    : 10
      Total Index File Num   : 10
      Total Lob File Num     : 1
