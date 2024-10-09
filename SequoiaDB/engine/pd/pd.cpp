@@ -816,9 +816,12 @@ void pdLogShield::addRC( INT32 rc )
 void pdRestoreCurShieldLogMask()
 {
    UINT64 valid = s_setShieldMaskTrace ^ s_unsetShieldMaskTrace ;
-   OSS_BIT_SET(s_shieldLogMask, s_unsetShieldMaskTrace & valid ) ;
-   OSS_BIT_CLEAR(s_shieldLogMask, s_setShieldMaskTrace & valid ) ;
-   --s_shieldLogVersion ;
+   if ( 0 != valid )
+   {
+      OSS_BIT_SET(s_shieldLogMask, s_unsetShieldMaskTrace & valid ) ;
+      OSS_BIT_CLEAR(s_shieldLogMask, s_setShieldMaskTrace & valid ) ;
+      --s_shieldLogVersion ;
+   }
 }
 
 #ifdef _DEBUG
