@@ -822,6 +822,9 @@ void pdRestoreCurShieldLogMask()
       OSS_BIT_CLEAR(s_shieldLogMask, s_setShieldMaskTrace & valid ) ;
       --s_shieldLogVersion ;
    }
+
+   s_setShieldMaskTrace = 0 ;
+   s_unsetShieldMaskTrace = 0 ;
 }
 
 #ifdef _DEBUG
