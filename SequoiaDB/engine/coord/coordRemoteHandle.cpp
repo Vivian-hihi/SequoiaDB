@@ -839,7 +839,7 @@ namespace engine
          }
          if ( 0 == calcTransVer && 0 != curTransVer )
          {
-            calcAuditVer = 0xFFFF ;
+            calcTransVer = 0xFFFF ;
          }
          if ( 0 == calcShieldVer && 0 != curShieldLogVer )
          {
