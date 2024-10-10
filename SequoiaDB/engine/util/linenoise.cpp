@@ -134,9 +134,11 @@
 #define REDIS_NOTUSED(V) ((void) V)
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 300
+#define LINENOISE_HISTORY_LASTEST_LEN     30
 #define LINENOISE_MAX_LINE 4096
 static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
+static linenoiseHistoryChangeCallback *historyCallback = NULL;
 
 static void setDisplayAttribute( bool enhancedDisplay, struct abuf *ab );
 
@@ -435,7 +437,6 @@ int linenoiseRead( struct linenoiseState * l, char * c,
    return nread ;
 }
 
-int linenoiseHistoryAdd(const char *line);
 static void refreshLine(struct linenoiseState *l);
 static void refreshLinePrompt ( struct linenoiseState * l,
                                 const char * prompt ) ;
@@ -844,8 +845,18 @@ error:
 void linenoiseHistoryClear(void)
 {
     PD_TRACE_ENTRY ( SDB_LNHISTORYCLEAR );
-    memset( history, 0, (sizeof(char*)*(history_max_len)) ) ;
-    history_len = 0 ;
+    if ( history )
+    {
+        int j = 0 ;
+        for ( ; j < history_len ; j++ )
+        {
+            linenoiseHistoryNotify( history[j], HISTORY_RM );
+            free(history[j]) ;
+        }
+        memset( history, 0, (sizeof(char*)*(history_max_len)) ) ;
+        history_len = 0 ;
+    }
+
     PD_TRACE_EXIT ( SDB_LNHISTORYCLEAR );
 }
 
@@ -856,6 +867,19 @@ void linenoiseSetCompletionCallback(linenoiseCompletionCallback *fn)
     PD_TRACE_ENTRY ( SDB_LNSETCPLCALLBACK );
     completionCallback = fn;
     PD_TRACE_EXIT ( SDB_LNSETCPLCALLBACK );
+}
+
+void linenoiseSetHistoryCallback(linenoiseHistoryChangeCallback *fn)
+{
+    historyCallback = fn;
+}
+
+void linenoiseHistoryNotify(const char *cmd, HISTORY_CHANGETYPE type )
+{
+    if ( cmd && *cmd && historyCallback )
+    {
+        historyCallback(cmd, type) ;
+    }
 }
 
 /* This function is used by the callback function registered by the user
@@ -1700,8 +1724,13 @@ void linenoiseEditHistoryNext(struct linenoiseState *l, int dir)
     {
         /* Update the current history entry before to
          * overwrite it with the next one. */
-        free(history[history_len - 1 - l->history_index]);
-        history[history_len - 1 - l->history_index] = strdup(l->buf);
+        if ( *(l->buf) && 0 != strcmp(history[history_len - 1 - l->history_index], l->buf) )
+        {
+            linenoiseHistoryNotify( history[history_len - 1 - l->history_index], HISTORY_RM );
+            free(history[history_len - 1 - l->history_index]);
+            history[history_len - 1 - l->history_index] = strdup(l->buf);
+            linenoiseHistoryNotify( history[history_len - 1 - l->history_index], HISTORY_ADD );
+        }
         /* Show the new entry */
         l->history_index += (dir == LINENOISE_HISTORY_PREV) ? 1 : -1;
         if (l->history_index < 0)
@@ -1781,8 +1810,8 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
 {
    PD_TRACE_ENTRY( SDB_LNREVINCSEARCH ) ;
 
-   char search_buf[ LINENOISE_MAX_LINE ] ;
-   char search_prompt[ LINENOISE_MAX_LINE ] ;
+   char search_buf[ LINENOISE_MAX_LINE ] = {0};
+   char search_prompt[ LINENOISE_MAX_LINE ] = {0} ;
    int search_len = 0 ;
    int search_pos = history_len - 1 - l->history_index ;
    int search_dir = -1 ;
@@ -1850,6 +1879,9 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
             if ( search_len > 0 )
             {
                search_buf[ --search_len ] = 0 ;
+               /// reset search info
+               search_pos = history_len - 1 - l->history_index ;
+               search_dir = -1 ;
             }
             else
             {
@@ -2565,7 +2597,7 @@ error:
 char *linenoise(const char *prompt)
 {
     PD_TRACE_ENTRY ( SDB_LN );
-    char buf[LINENOISE_MAX_LINE];
+    char buf[LINENOISE_MAX_LINE+1] = {0};
     char *ret = NULL;
     int count;
 
@@ -2682,10 +2714,37 @@ int linenoiseHistoryAdd(const char *line)
     }
 
     /* Don't add duplicated lines. */
-    if (history_len && !strcmp(history[history_len-1], line))
+    /// searh lastest
+    if ( history_len > 0 )
     {
-       ret = 0 ;
-       goto done;
+        int searchNum = 0;
+        int searchPos = history_len-1;
+        int found = 0 ;
+        while( searchPos >= 0 && searchNum < LINENOISE_HISTORY_LASTEST_LEN )
+        {
+            if( 0 == strcmp(history[searchPos], line) )
+            {
+                /// find
+                found = 1 ;
+                break ;
+            }
+            --searchPos ;
+            ++searchNum ;
+        }
+
+        if ( found )
+        {
+            if ( searchPos != history_len-1 )
+            {
+                /// not the last, move
+                char *tmpStr = history[searchPos] ;
+                memmove( history+searchPos,history+searchPos+1,
+                         sizeof(char*)*(history_len-1-searchPos) ) ;
+                history[history_len-1] = tmpStr ;
+            }
+            ret = 0 ;
+            goto done ;
+        }
     }
 
     /* Add an heap allocated copy of the line in the history.
@@ -2698,11 +2757,13 @@ int linenoiseHistoryAdd(const char *line)
     }
     if (history_len == history_max_len)
     {
+        linenoiseHistoryNotify( history[0], HISTORY_RM ) ;
         free(history[0]);
         memmove(history,history+1,sizeof(char*)*(history_max_len-1));
         history_len--;
     }
     history[history_len] = linecopy;
+    linenoiseHistoryNotify( history[history_len], HISTORY_ADD ) ;
     history_len++;
     ret = 1;
 done:
@@ -2720,7 +2781,7 @@ error:
 int linenoiseHistorySetMaxLen(int len)
 {
     PD_TRACE_ENTRY ( SDB_LNHISTORYSETMAXLEN );
-    char **newone;
+    char **newone = NULL ;
     int ret = 0 ;
     if (len < 1)
     {
@@ -2741,8 +2802,12 @@ int linenoiseHistorySetMaxLen(int len)
         /* If we can't copy everything, free the elements we'll not use. */
         if (len < tocopy)
         {
-            int j;
-            for (j = 0; j < tocopy-len; j++) free(history[j]);
+            int j = 0;
+            for (j = 0; j < tocopy-len; j++)
+            {
+               linenoiseHistoryNotify( history[j], HISTORY_RM );
+               free(history[j]);
+            }
             tocopy = len;
         }
         memset(newone,0,sizeof(char*)*len);

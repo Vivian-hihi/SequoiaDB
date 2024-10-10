@@ -452,11 +452,11 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
    // set sdb defined can continue get next line function
    setCanContinueNextLineCallback( boost::bind( sdbdefCanContinueGetNextLine,
                                                 scope, _1 ) ) ;
+   linenoiseSetHistoryCallback( (linenoiseHistoryChangeCallback*)linenoiseHistoryCallback ) ;
 
    // initialize and load the history
    historyInit () ;
    linenoiseHistoryLoad( historyFile.c_str() ) ;
-   g_lnBuilder.loadCmd( historyFile.c_str() ) ;
 
    ossPrintf ( "Welcome to SequoiaDB shell!"OSS_NEWLINE ) ;
    ossPrintf ( "help() for help, Ctrl+c or quit to exit"OSS_NEWLINE ) ;
@@ -516,7 +516,6 @@ INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
       if ( sdbIsNeedSaveHistory() )
       {
          linenoiseHistoryAdd ( tmpCode ) ;
-         g_lnBuilder.addCmd( tmpCode ) ;
       }
 
       ossGetCurrentTime ( tmEnd ) ;
