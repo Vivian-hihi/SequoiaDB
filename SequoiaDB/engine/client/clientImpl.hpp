@@ -1576,6 +1576,7 @@ namespace sdbclient
       BOOLEAN                  _isOldVersionLobServer ;
       engine::Charset          _clientCharset ;
       engine::Charset          _resultsCharset ;
+      BOOLEAN                  _isOperationInterrupted ;
 
       void _disconnect () ;
       void _removeObjects() ;
@@ -1658,6 +1659,8 @@ namespace sdbclient
       const CHAR* _charsetSerializer( engine::Charset charset) ;
 
       engine::Charset _charsetParse( const CHAR *charset ) ;
+
+      INT32 _sendInterruptOpMsg() ;
 
       friend class _sdbBase ;
       friend class _sdbCollectionSpaceImpl ;
