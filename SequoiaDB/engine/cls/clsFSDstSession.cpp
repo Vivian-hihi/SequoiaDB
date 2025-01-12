@@ -2934,6 +2934,9 @@ namespace engine
                continue ;
             }
 
+            rtnRecoverUnit recoverUnit ;
+            MAP_SU_STATUS items ;
+
             dmsStorageUnitID suID = DMS_INVALID_SUID ;
             dmsStorageUnit *su = NULL ;
             rc = dmsCB->nameToSUAndLock( csInfo._name, suID, &su ) ;
@@ -2944,9 +2947,13 @@ namespace engine
                goto error ;
             }
 
-            rtnRecoverUnit recoverUnit ;
-            recoverUnit.init( su ) ;
-            MAP_SU_STATUS items ;
+            rc = recoverUnit.init( su ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Init recover unit(%s) failed, rc: %d", su->CSName(), rc ) ;
+               goto error ;
+            }
+
             if ( 0 == recoverUnit.getValidCLItem( items ) )
             {
                dmsCB->suUnlock( suID ) ;

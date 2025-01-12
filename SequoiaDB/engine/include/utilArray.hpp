@@ -416,6 +416,7 @@ namespace engine
 
                if ( -1 != i )
                {
+                  ossScopedLock lock( &_latch ) ;
                   _slotStackFlag[i] = 0 ;
                }
             }
@@ -471,6 +472,8 @@ namespace engine
 
          T* _allocFromStack()
          {
+            ossScopedLock lock( &_latch ) ;
+
             for ( UINT32 i = 0 ; i < stackSize ; ++i )
             {
                if ( 0 == _slotStackFlag[ i ] )
