@@ -58,7 +58,8 @@ clsFiles = [
       "cls/clsCatalogAgent.cpp",
       "cls/clsAutoIncItem.cpp",
       "cls/clsCatalogMatcher.cpp",
-      "cls/clsCatalogPredicate.cpp"
+      "cls/clsCatalogPredicate.cpp",
+      "cls/clsUtil.cpp"
       ]
 
 ixmFiles = [
@@ -258,7 +259,7 @@ utilFiles = [
       "util/utilCompressorSnappy.cpp",
       "util/utilCompressorLZW.cpp",
       "util/utilCompressorZlib.cpp",
-      "util/utilLZWDictionary.cpp" 
+      "util/utilLZWDictionary.cpp"
       ]
 
 dpsFiles = [
