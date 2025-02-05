@@ -5616,6 +5616,9 @@ namespace engine
          goto error ;
       }
 
+      /// update context replsize
+      context->updateW( replSize, w ) ;
+
       /// if sequence 0 is not on this node, we have nothing to send back.
       if ( pData && dataLen > 0 )
       {
@@ -5670,7 +5673,7 @@ namespace engine
 
       eduCB()->setMonQueryCB( lobContext->getMonQueryCB() ) ;
       _setCollectionName( lobContext->getFullName() ) ;
-      wWhenOpen = lobContext->getW() ;
+      wWhenOpen = lobContext->getOrgW() ;
 
       // add last op info
       if ( lobContext->getSubCLName() )
@@ -5723,6 +5726,8 @@ namespace engine
          PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
+      /// update context w
+      lobContext->updateW( wWhenOpen, w ) ;
 
       if ( header->flags & FLG_LOBWRITE_OR_UPDATE )
       {
@@ -5794,6 +5799,13 @@ namespace engine
             rc = SDB_APP_INTERRUPT ;
             goto error ;
          }
+      }
+
+      rc = lobContext->waitSync( _pEDUCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Wait repl-sync failed, rc: %d", rc ) ;
+         goto error ;
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] write done",
@@ -5978,7 +5990,7 @@ namespace engine
       rc = lobContext->close( _pEDUCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to close lob, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -6149,7 +6161,7 @@ namespace engine
 
       eduCB()->setMonQueryCB( lobContext->getMonQueryCB() ) ;
       _setCollectionName( lobContext->getFullName() ) ;
-      wWhenOpen = lobContext->getW() ;
+      wWhenOpen = lobContext->getOrgW() ;
 
       // add last op info
       if ( lobContext->getSubCLName() )
@@ -6202,16 +6214,17 @@ namespace engine
          PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
+      /// update context w
+      lobContext->updateW( wWhenOpen, w ) ;
 
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
          const MsgLobTuple *curTuple = NULL ;
-         rc = msgExtractTuples( &begin, &tuplesSize,
-                                &curTuple, &got ) ;
+         rc = msgExtractTuples( &begin, &tuplesSize, &curTuple, &got ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to extract next tuple:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to extract next tuple, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -6220,11 +6233,10 @@ namespace engine
             break ;
          }
 
-         rc = lobContext->remove( curTuple->columns.sequence,
-                                  _pEDUCB ) ;
+         rc = lobContext->remove( curTuple->columns.sequence, _pEDUCB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to remove lob, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -6234,6 +6246,15 @@ namespace engine
             rc = SDB_APP_INTERRUPT ;
             goto error ;
          }
+      }
+
+      /// wait sync
+      rc = lobContext->waitSync( _pEDUCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Wait repl-sync failed, rc: %d", rc ) ;
+         /// ignore error
+         rc = SDB_OK ;
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] remove done",
@@ -6294,7 +6315,7 @@ namespace engine
 
       eduCB()->setMonQueryCB( lobContext->getMonQueryCB() ) ;
       _setCollectionName( lobContext->getFullName() ) ;
-      wWhenOpen = lobContext->getW() ;
+      wWhenOpen = lobContext->getOrgW() ;
 
       // add last op info
       if ( lobContext->getSubCLName() )
@@ -6347,6 +6368,8 @@ namespace engine
          PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
+      /// update context w
+      lobContext->updateW( wWhenOpen, w ) ;
 
       while ( TRUE )
       {
@@ -6356,7 +6379,7 @@ namespace engine
                                        &got ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to extract next tuple:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to extract next tuple, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -6371,7 +6394,7 @@ namespace engine
                                   data, _pEDUCB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
+            PD_LOG( PDERROR, "Failed to update lob, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -6381,6 +6404,13 @@ namespace engine
             rc = SDB_APP_INTERRUPT ;
             goto error ;
          }
+      }
+
+      rc = lobContext->waitSync( _pEDUCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Wait repl-sync failed, rc: %d", rc ) ;
+         goto error ;
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] update done",
