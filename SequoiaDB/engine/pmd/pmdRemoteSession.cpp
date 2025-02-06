@@ -1382,21 +1382,21 @@ namespace engine
                   rc = SDB_TIMEOUT ;
 
                   /// print un-replied nodes
-                  _pEDUCB->resetInfo( EDU_INFO_DOING ) ;
-                  _pEDUCB->printInfo( EDU_INFO_DOING,
-                                      "Waiting for node(Num:%u) reply timeout:",
+                  _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
+                  _pEDUCB->printInfo( EDU_INFO_ERROR,
+                                      "Wait for node(Num:%u) reply timeout:",
                                       totalUnReplyNum ) ;
                   /// detial nodes
                   pmdSubSessionItr itr = getSubSessionItr( PMD_SSITR_UNREPLY ) ;
                   while ( itr.more() )
                   {
                      MsgRouteID tmpNodeID = itr.next()->getNodeID() ;
-                     _pEDUCB->appendInfo( EDU_INFO_DOING,
+                     _pEDUCB->appendInfo( EDU_INFO_ERROR,
                                           " (%u.%u)",
                                           tmpNodeID.columns.groupID,
                                           tmpNodeID.columns.nodeID ) ;
                   }
-                  PD_LOG_MSG( PDERROR, "%s", _pEDUCB->getInfo( EDU_INFO_DOING ) ) ;
+                  PD_LOG( PDERROR, "%s", _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
 
                   goto error ;
                }
