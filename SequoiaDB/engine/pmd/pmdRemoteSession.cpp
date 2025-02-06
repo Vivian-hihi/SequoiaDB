@@ -1380,6 +1380,24 @@ namespace engine
                if ( _milliTimeout <= 0 )
                {
                   rc = SDB_TIMEOUT ;
+
+                  /// print un-replied nodes
+                  _pEDUCB->resetInfo( EDU_INFO_DOING ) ;
+                  _pEDUCB->printInfo( EDU_INFO_DOING,
+                                      "Waiting for node(Num:%u) reply timeout:",
+                                      totalUnReplyNum ) ;
+                  /// detial nodes
+                  pmdSubSessionItr itr = getSubSessionItr( PMD_SSITR_UNREPLY ) ;
+                  while ( itr.more() )
+                  {
+                     MsgRouteID tmpNodeID = itr.next()->getNodeID() ;
+                     _pEDUCB->appendInfo( EDU_INFO_DOING,
+                                          " (%u.%u)",
+                                          tmpNodeID.columns.groupID,
+                                          tmpNodeID.columns.nodeID ) ;
+                  }
+                  PD_LOG_MSG( PDERROR, "%s", _pEDUCB->getInfo( EDU_INFO_DOING ) ) ;
+
                   goto error ;
                }
             }
