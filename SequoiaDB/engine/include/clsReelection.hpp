@@ -117,8 +117,6 @@ namespace engine
                    pmdEDUCB *cb,
                    BOOLEAN canSetBlock ) ;
 
-      INT32 _asyncWait( pmdEDUCB *cb ) ;
-
       OSS_INLINE BOOLEAN _isLocation() const ;
 
    private:
