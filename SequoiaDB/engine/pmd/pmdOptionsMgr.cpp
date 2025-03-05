@@ -141,6 +141,7 @@ namespace engine
    #define PMD_DFT_FS_CACHE_EXPIRED    ("72h")
 
    #define PMD_DFT_RECORD_RECYCLE_DELAY (15)
+   #define PMD_DFT_RECORD_RECYCLE_RATIO (10)
 
    /*
       _pmdCfgExchange implement
@@ -2090,6 +2091,7 @@ done:
       _consistencyStrategy = SDB_CONSISTENCY_PRY_LOC_MAJOR ;
 
       _recordRecycleDelay = PMD_DFT_RECORD_RECYCLE_DELAY ;
+      _recordRecycleRatio = PMD_DFT_RECORD_RECYCLE_RATIO ;
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2768,6 +2770,11 @@ done:
       // --recordrecycledelay
       rdxUInt( pEX, PMD_OPTION_RECORD_RECYCLE_DELAY, _recordRecycleDelay, FALSE,
                PMD_CFG_CHANGE_RUN, PMD_DFT_RECORD_RECYCLE_DELAY, FALSE ) ;
+
+      // --forcerecyclethreshold
+      rdxUInt( pEX, PMD_OPTION_RECORD_RECYCLE_RATIO, _recordRecycleRatio, FALSE,
+               PMD_CFG_CHANGE_RUN, PMD_DFT_RECORD_RECYCLE_RATIO, FALSE ) ;
+      rdvMinMax( pEX, _recordRecycleRatio, 1, 100 ) ;
 
       // end map
 
