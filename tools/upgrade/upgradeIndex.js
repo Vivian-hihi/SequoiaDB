@@ -130,6 +130,7 @@ var checkInfos = "" ;
 var infoCount = 0 ;
 var jsCodes = "" ;
 var codeCount = 0 ;
+var supportOnlyUpgradeMeta = false ;
 
 function clearTmpCollectionSpace()
 {
@@ -328,6 +329,7 @@ function main()
          println( "Error: We must first execute the check process" ) ;
          return ;
       }
+      checkIfSupportOnlyUpgradeMeta() ;
       clearResultFiles( true ) ;
       File.mkdir( JS_DIR ) ;
       generateJsScripts() ;
@@ -399,6 +401,37 @@ function preCheck2()
       }
       println( "Failed to pre check, error Stack:\n" + e.stack ) ;
       throw e ;
+   }
+}
+
+function checkIfSupportOnlyUpgradeMeta()
+{
+   try
+   {
+      var beginTime = Date.now() ;
+      println( "(" + step + "/" + STEP_NUM + ")Begin to check if support only upgrade index meta" ) ;
+      var cl = db.getCS( TMP_CS_UPGRADE_INDEX ).getCL( TMP_CL_CACHE_INFO ) ;
+      cl.createIndex( "tmpIdx", { "tmpField": 1 }, {}, { "OnlyUpgradeMeta": true } ) ;
+      cl.dropIndex( "tmpIdx" ) ;
+      println( "Support OnlyUpgradeMeta parameter" ) ;
+      println( "(" + step + "/" + STEP_NUM + ")End to check if support only upgrade index meta: " +
+                ( (Date.now()) - beginTime )/1000 + "s" ) ;
+      step++ ;
+
+      supportOnlyUpgradeMeta = true ;
+   }
+   catch( e )
+   {
+      if( -6 == e )
+      {
+         println( "Don't support OnlyUpgradeMeta parameter" ) ;
+         supportOnlyUpgradeMeta = false ;
+      }
+      else
+      {
+         println( "Failed to check, error Stack:\n" + e.stack ) ;
+         throw e ;
+      }
    }
 }
 
@@ -2100,7 +2133,14 @@ function generateCreateIdxJsCodeWithoutSpentTime( clFullName, indexName, idxDef 
 
       if ( indexName == "$id" )
       {
-         code = "db." + clFullName +".createIdIndex()\n" ;
+         if ( supportOnlyUpgradeMeta )
+         {
+            code = "db." + clFullName +".createIdIndex( { 'OnlyUpgradeMeta': true } )\n" ;
+         }
+         else
+         {
+            code = "db." + clFullName +".createIdIndex()\n" ;
+         }
       }
       else if ( indexName == "$shard" )
       {
@@ -2108,10 +2148,20 @@ function generateCreateIdxJsCodeWithoutSpentTime( clFullName, indexName, idxDef 
       }
       else
       {
-         code = "db."+ clFullName +
-                 ".createIndex( '" + indexName +
-                 "', " + JSON.stringify( idxDef.key ) + ", " +
-                 JSON.stringify( getIdxAttr( idxDef ) ) + " )\n" ;
+         if ( supportOnlyUpgradeMeta )
+         {
+            code = "db."+ clFullName +
+                   ".createIndex( '" + indexName +
+                   "', " + JSON.stringify( idxDef.key ) + ", " +
+                   JSON.stringify( getIdxAttr( idxDef ) ) + ", { 'OnlyUpgradeMeta': true } )\n" ;
+         }
+         else
+         {
+            code = "db."+ clFullName +
+                   ".createIndex( '" + indexName +
+                   "', " + JSON.stringify( idxDef.key ) + ", " +
+                   JSON.stringify( getIdxAttr( idxDef ) ) + " )\n" ;
+         }
       }
       code += ( "println('Create index successfully[ ClFullName: " +
                 clFullName + ", IndexName: " + indexName + " ]' ) ;\n" ) ;

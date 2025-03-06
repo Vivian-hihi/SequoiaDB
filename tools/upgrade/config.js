@@ -210,6 +210,7 @@ const _CHECK_STEP_ARR =
 const _GENERATE_STEP_ARR =
 [
    "preCheck2",
+   "checkIfSupportOnlyUpgradeMeta",
    "clearResultFiles",
    "generateCanUpgradeIdxJsScript",
    "generateCannotUpgradeIdxJsScript"
