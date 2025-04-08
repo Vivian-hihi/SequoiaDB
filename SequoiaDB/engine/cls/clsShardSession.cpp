@@ -5880,13 +5880,6 @@ namespace engine
          }
       }
 
-      rc = lobContext->waitSync( _pEDUCB ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Wait repl-sync failed, rc: %d", rc ) ;
-         goto error ;
-      }
-
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] write done",
               tupleNum, lobContext->getOID().str().c_str() ) ;
    done:
@@ -6327,15 +6320,6 @@ namespace engine
          }
       }
 
-      /// wait sync
-      rc = lobContext->waitSync( _pEDUCB ) ;
-      if ( rc )
-      {
-         PD_LOG( PDWARNING, "Wait repl-sync failed, rc: %d", rc ) ;
-         /// ignore error
-         rc = SDB_OK ;
-      }
-
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] remove done",
               tupleNum, lobContext->getOID().str().c_str() ) ;
    done:
@@ -6483,13 +6467,6 @@ namespace engine
             rc = SDB_APP_INTERRUPT ;
             goto error ;
          }
-      }
-
-      rc = lobContext->waitSync( _pEDUCB ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Wait repl-sync failed, rc: %d", rc ) ;
-         goto error ;
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] update done",
