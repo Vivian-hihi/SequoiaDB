@@ -145,5 +145,7 @@ INT32 mongoGetNumberLongElement ( const BSONObj &obj,
 INT32 mongoBuildDupkeyErrObj( const BSONObj &sdbErrobj, const CHAR* clFullName,
                               BSONObj &mongoErrObj ) ;
 
+std::string mongoGetNonce() ;
+
 }
 #endif
