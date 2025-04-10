@@ -762,6 +762,9 @@
 
 #define FIELD_NAME_NET_MSG_COMPRESSOR        "NetCompressor"
 
+#define FIELD_NAME_STRICT                    "Strict"
+#define FIELD_NAME_ARRAY_INDEX_ALIAS         "ArrayIndexAlias"
+
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
 #define FIELD_NAME_TASK_NAME                 "TaskName"

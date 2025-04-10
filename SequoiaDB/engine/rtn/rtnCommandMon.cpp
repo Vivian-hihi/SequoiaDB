@@ -320,7 +320,7 @@ namespace engine
          /// add new matcher
          if ( !matcher.isEmpty() )
          {
-            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << matcher ),
+            rc = appendObj( BSON( AGGR_OPR_MATCH_NAME << matcher ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
                          rc ) ;
@@ -329,7 +329,7 @@ namespace engine
          /// order by
          if ( !orderBy.isEmpty() )
          {
-            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME << orderBy ),
+            rc = appendObj( BSON( AGGR_OPR_SORT_NAME << orderBy ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
                          rc ) ;
@@ -347,7 +347,7 @@ namespace engine
          /// offset
          if ( _numToSkip > 0 )
          {
-            rc = appendObj( BSON( AGGR_SKIP_PARSER_NAME << _numToSkip ),
+            rc = appendObj( BSON( AGGR_OPR_SKIP_NAME << _numToSkip ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append skip failed, rc: %d", rc ) ;
          }
@@ -355,7 +355,7 @@ namespace engine
          /// limit
          if ( _numToReturn != -1 )
          {
-            rc = appendObj( BSON( AGGR_LIMIT_PARSER_NAME << _numToReturn ),
+            rc = appendObj( BSON( AGGR_OPR_LIMIT_NAME << _numToReturn ),
                             pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Append limit failed, rc: %d", rc ) ;
          }

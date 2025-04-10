@@ -691,7 +691,7 @@ namespace engine
             {
                BSONObjBuilder sub( build.subobjStart( "$"FIELD_NAME_OPTIONS )  ) ;
                sub.appendElements( objOpt ) ;
-               sub.done() ;         
+               sub.done() ;
             }
             obj = build.obj() ;
          }
