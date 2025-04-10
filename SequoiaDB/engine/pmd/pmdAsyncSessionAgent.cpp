@@ -178,7 +178,7 @@ namespace engine
                   pBuffInfo->setFree () ;
                }
 
-               ((pmdOperator*)pSdbOp)->clearMsg() ;
+               ((pmdOperator*)pSdbOp)->reset() ;
             }
             else
             {

@@ -41,6 +41,7 @@
 #define PMDOPERATOR_HPP__
 
 #include "sdbInterface.hpp"
+#include "pmdEnv.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "utilReplSizePlan.hpp"
@@ -50,12 +51,18 @@
 namespace engine
 {
 
+   /*
+      _pmdOperator define
+   */
    class _pmdOperator : public _IOperator
    {
    public:
       _pmdOperator()
       {
          _pMsg = NULL ;
+         _maxTime = -1 ;
+         _beginTick = 0 ;
+         _hasInterruptOnTimeLimit = FALSE ;
 #if defined ( SDB_ENGINE )
          _orgReplSize = 1 ;
          _replStrategy = SDB_CONSISTENCY_PRY_LOC_MAJOR ;
@@ -84,6 +91,43 @@ namespace engine
             _pMsg->globalID = _globalID ;
          }
       }
+      /*
+         <0 means no limit
+      */
+      virtual INT64 getRemainingMaxTime() const
+      {
+         if ( _maxTime < 0 )
+         {
+            return -1 ;
+         }
+
+         UINT64 timeSpent = pmdGetTickSpanTime( _beginTick ) ;
+         if ( (UINT64)_maxTime > timeSpent )
+         {
+            return _maxTime - timeSpent ;
+         }
+         return 0 ;
+      }
+      virtual INT64 getMaxTime() const { return _maxTime ; }
+      virtual void  setMaxTime( INT64 maxTime )
+      {
+         _maxTime = maxTime ;
+         _beginTick = pmdGetDBTick() ;
+      }
+      virtual BOOLEAN needInterrupt() const
+      {
+         if ( !_hasInterruptOnTimeLimit && 0 == getRemainingMaxTime() )
+         {
+            _hasInterruptOnTimeLimit = TRUE ;
+         }
+         return _hasInterruptOnTimeLimit ;
+      }
+      virtual BOOLEAN isInterruptOnTimeLimit() const
+      {
+         return _hasInterruptOnTimeLimit ;
+      }
+
+   public:
       void setMsg( MsgHeader *pMsg )
       {
          if ( pMsg )
@@ -92,9 +136,12 @@ namespace engine
             _globalID = _pMsg->globalID ;
          }
       }
-      void clearMsg()
+      void reset()
       {
          _pMsg = NULL ;
+         _maxTime = -1 ;
+         _beginTick = 0 ;
+         _hasInterruptOnTimeLimit = FALSE ;
       }
 
 #if defined ( SDB_ENGINE )
@@ -166,12 +213,14 @@ namespace engine
    private:
       MsgHeader*               _pMsg ;
       MsgGlobalID              _globalID ;
+      INT64                    _maxTime ;     /// ms
+      UINT64                   _beginTick ;
+      mutable BOOLEAN          _hasInterruptOnTimeLimit ;
 #if defined ( SDB_ENGINE )
       INT16                    _orgReplSize ;
       SDB_CONSISTENCY_STRATEGY _replStrategy ;
       utilReplSizePlan         _waitPlan ;
 #endif // SDB_ENGINE
-
    } ;
    typedef _pmdOperator pmdOperator ;
 

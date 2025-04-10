@@ -356,6 +356,19 @@ namespace engine
       }
    }
 
+   BOOLEAN _SDB_RTNCB::contextFind( INT64 contextID, UINT64 &ownedEDUID )
+   {
+      RTN_CTX_MAP::Bucket &blk = _contextMap.getBucket( contextID ) ;
+      ossScopedLock lock( &blk, SHARED ) ;
+      RTN_CTX_MAP::map_const_iterator cit = blk.find( contextID ) ;
+      if ( cit != blk.end() )
+      {
+         ownedEDUID = cit->second->eduID() ;
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
    INT32 _SDB_RTNCB::contextFind( INT64 contextID,
                                   rtnContextPtr &context,
                                   _pmdEDUCB *cb )
@@ -788,6 +801,7 @@ namespace engine
 
       context->_setGlobalID( pEDUCB->getOperator()->getGlobalID() ) ;
       context->_setOrgW( pEDUCB->getOrgReplSize() ) ;
+      context->_setRemainingMaxTime( pEDUCB->getOperator()->getRemainingMaxTime() ) ;
 
       PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s], "
                "writing ID %llu)",

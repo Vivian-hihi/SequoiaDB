@@ -403,6 +403,10 @@ namespace engine
          {
             _orgW = w ;
          }
+         void _setRemainingMaxTime( INT64 maxTime )
+         {
+            _remainingMaxTime = maxTime ;
+         }
 
       // prefetch
       public:
@@ -673,7 +677,11 @@ namespace engine
          // indicates whether to close when EOF
          BOOLEAN                 _needCloseOnEOF ;
 
+         /*
+            Operation info
+         */
          MsgGlobalID             _globalID ;
+         INT64                   _remainingMaxTime ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
    typedef _rtnContextBase rtnContext ;

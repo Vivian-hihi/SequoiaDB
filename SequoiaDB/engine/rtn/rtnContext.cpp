@@ -537,6 +537,7 @@ namespace engine
       _lastProcessTick     = pmdGetDBTick() ;
       _needTimeout         = TRUE ;
       _needCloseOnEOF      = FALSE ;
+      _remainingMaxTime    = -1 ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -799,12 +800,17 @@ namespace engine
          goto done ;
       }
 
-      if ( _pMonAppCB && cb->getID() != eduID() )
+      if ( cb->getID() != eduID() )
       {
-         cb->getMonAppCB()->reset() ;
-         /// save task info
-         pOldInfo = cb->getMonAppCB()->getSvcTaskInfo() ;
-         cb->getMonAppCB()->setSvcTaskInfo( _pMonAppCB->getSvcTaskInfo() ) ;
+         if ( _pMonAppCB )
+         {
+            cb->getMonAppCB()->reset() ;
+            /// save task info
+            pOldInfo = cb->getMonAppCB()->getSvcTaskInfo() ;
+            cb->getMonAppCB()->setSvcTaskInfo( _pMonAppCB->getSvcTaskInfo() ) ;
+         }
+         /// set max time
+         cb->getOperator()->setMaxTime( _remainingMaxTime ) ;
       }
 
       logShield.addRC( SDB_IXM_ADVANCE_EOC ) ;
@@ -847,15 +853,20 @@ namespace engine
          PD_LOG( PDWARNING, "Prepare data failed, rc: %d", rc ) ;
       }
 
-      if ( _pMonAppCB && cb->getID() != eduID() )
+      if ( cb->getID() != eduID() )
       {
-         // merge monitor counts from prefetch thread
-         *_pMonAppCB += *cb->getMonAppCB() ;
-         _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead ) ;
-         _monCtxCB.monIndexReadInc( cb->getMonAppCB()->totalIndexRead ) ;
-         cb->getMonAppCB()->reset() ;
-         /// restore task info
-         cb->getMonAppCB()->setSvcTaskInfo( pOldInfo ) ;
+         if ( _pMonAppCB )
+         {
+            // merge monitor counts from prefetch thread
+            *_pMonAppCB += *cb->getMonAppCB() ;
+            _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead ) ;
+            _monCtxCB.monIndexReadInc( cb->getMonAppCB()->totalIndexRead ) ;
+            cb->getMonAppCB()->reset() ;
+            /// restore task info
+            cb->getMonAppCB()->setSvcTaskInfo( pOldInfo ) ;
+         }
+         /// update max time
+         _setRemainingMaxTime( cb->getOperator()->getRemainingMaxTime() ) ;
       }
 
       if ( SDB_OK == rc && isEmpty() && isOpened() && !eof() &&
@@ -996,6 +1007,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       PD_TRACE_ENTRY ( SDB_RTNCTXBASE_GETMORE ) ;
+
+      /// set the operation remaining max time
+      cb->getOperator()->setMaxTime( _remainingMaxTime ) ;
 
       // release buff obj
       buffObj.release() ;
@@ -1160,6 +1174,8 @@ namespace engine
       }
 
       updateLastProcessTick() ;
+      /// update remaining max time
+      _setRemainingMaxTime( cb->getOperator()->getRemainingMaxTime() ) ;
 
       PD_TRACE_EXITRC ( SDB_RTNCTXBASE_GETMORE, rc ) ;
       return rc ;

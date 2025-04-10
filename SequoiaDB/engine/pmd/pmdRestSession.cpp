@@ -638,7 +638,7 @@ namespace engine
 
       _pEDUCB->clearProcessInfo() ;
 
-      ((pmdOperator*)getOperator())->clearMsg() ;
+      ((pmdOperator*)getOperator())->reset() ;
    }
 
    INT32 _pmdRestSession::_processBusinessMsg( restAdaptor *pAdaptor,
@@ -814,7 +814,7 @@ namespace engine
                }
                bTime = eTime ;
                monQuery->rowsReturned += contextBuff.recordNum() ;
-            
+
                tmpData.diff(*(_pEDUCB->getMonAppCB())) ;
                monQuery->incMetrics(tmpData) ;
                monQuery->numMsgReply++ ;

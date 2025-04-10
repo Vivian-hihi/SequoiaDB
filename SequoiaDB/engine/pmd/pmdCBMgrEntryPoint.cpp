@@ -122,7 +122,7 @@ namespace engine
                           pMsg->TID, pMsg->messageLength, timeSpan ) ;
                }
 
-               ((pmdOperator*)pSdbOp)->clearMsg() ;
+               ((pmdOperator*)pSdbOp)->reset() ;
             }
             else
             {
