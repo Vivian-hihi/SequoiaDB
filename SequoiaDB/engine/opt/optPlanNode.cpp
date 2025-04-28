@@ -1325,7 +1325,7 @@ namespace engine
 
    double _optTbScanNode::_getHitRatio( double selectivity ) const
    {
-      if ( selectivity >= 1.0 || selectivity <= 0.0 )
+      if ( ( selectivity >= 1.0 && !isNeedMatch() ) || selectivity <= 0.0 )
       {
          return 1.0 ;
       }
